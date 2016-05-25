@@ -566,95 +566,213 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 	bitmapLock->Release();
 }
 
-void Canvas::DrawPathGeometry(const std::vector<GeometryPoint>& points, const Gdiplus::SolidBrush& fillBrush, const Gdiplus::Color& outlineColor, bool renderBackground, float lineWidth, bool connectEdges)
+
+Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> Canvas::CreateRectangle(D2D1_RECT_F rectangle)
 {
-	if (points.size() < 1) return;
-	if (!BeginTargetDraw()) return;
-	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_PathGeometry;
-	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_PathGeometry);
-		if (FAILED(hr)) return;
-	
-
-		Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink = NULL;
-		hr = c_PathGeometry->Open(&geometrySink);
-		if (SUCCEEDED(hr)) {
-			const auto& firstPoint = points[0];
-			geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING);
-			geometrySink->BeginFigure(firstPoint.m_point, D2D1_FIGURE_BEGIN_FILLED);
-			
-			bool first = true;
-			for (const auto& point : points)
-			{
-				//Skip first since we already handled that
-				if (first)
-				{
-					first = false;
-					continue;
-				}
-				switch (point.m_type)
-				{
-				case GeometryType::Line:
-					geometrySink->AddLine(point.m_point);
-					break;
-				case GeometryType::Arc:
-					geometrySink->AddArc(D2D1::ArcSegment(
-						point.m_point, // end point
-						point.m_size,
-						point.m_rotation, // rotation angle
-						D2D1_SWEEP_DIRECTION_CLOCKWISE,
-						D2D1_ARC_SIZE_SMALL
-						));
-
-					break;
-				case GeometryType::Bezier:
-					geometrySink->AddBezier(
-						D2D1::BezierSegment(
-							point.m_point,
-							point.m_controlpoint1,
-							point.m_controlpoint2
-							));
-
-					break;
-				default:
-					break;
-				}
-
-
-			}
-
-
-			if (connectEdges)
-				geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
-			else
-				geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
-			
-			Gdiplus::Color color;
-			geometrySink->Close();
-			
-			fillBrush.GetColor(&color);
-			if (m_Target) {
-				Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-				hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
-				if(renderBackground && SUCCEEDED(hr))
-					m_Target->FillGeometry(c_PathGeometry.Get(), solidBrush.Get());
-				solidBrush.Reset();
-				hr = m_Target->CreateSolidColorBrush(ToColorF(outlineColor), solidBrush.GetAddressOf());
-				if (SUCCEEDED(hr))
-					m_Target->DrawGeometry(c_PathGeometry.Get(), solidBrush.Get(), lineWidth);
-				solidBrush.Reset();
-
-			}
-			
-			
-		}
-		geometrySink.Reset();
-		geometrySink = nullptr;
-		c_PathGeometry.Reset();
-		c_PathGeometry = nullptr;
-
-	
-
+	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
 }
+
+Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> Canvas::CreateRoundedRectangle(D2D1_ROUNDED_RECT rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateRoundedRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> Canvas::CreateEllipse(D2D1_ELLIPSE rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateEllipseGeometry(rectangle, &c_Geometry);
+	
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
+{
+
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_Geometry);
+
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges)
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = CreatePathGeometry();
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink = NULL;
+	HRESULT hr = c_Geometry->Open(&geometrySink);
+	if (FAILED(hr))
+		return nullptr;
+	geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING);
+	geometrySink->BeginFigure(points[0].m_Geometry.lineSegment, D2D1_FIGURE_BEGIN_FILLED);
+	bool first = true;
+	for (const VectorPoint& point : points)
+	{
+		if (first)
+		{
+			first = false;
+			continue;
+		}
+		switch (point.m_type)
+		{
+		case GeometryType::Line:
+			geometrySink->AddLine(point.m_Geometry.lineSegment);
+
+			break;
+		case GeometryType::Arc:
+			geometrySink->AddArc(point.m_Geometry.arcSegment);
+
+			break;
+		case GeometryType::Bezier:
+			geometrySink->AddBezier(point.m_Geometry.bezierSegment);
+
+			break;
+		default:
+			break;
+		}
+	}
+	if(ConnectEdges)
+		geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	else
+		geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+	hr = geometrySink->Close();
+	return c_Geometry;
+}
+void Canvas::DrawGeometry(ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor,
+	const Gdiplus::Color& outlineColor, float lineWidth, float rotation, D2D1_POINT_2F rotationCenter)
+{
+
+	if (!BeginTargetDraw()) return;
+	if (m_Target) {
+		if (rotation != 0)
+		{
+			Microsoft::WRL::ComPtr<ID2D1TransformedGeometry> geometry;
+			c_D2DFactory->CreateTransformedGeometry(c_Geometry, D2D1::Matrix3x2F::Rotation(rotation, rotationCenter), &geometry);
+			DrawGeometry(geometry.Get(), fillColor, outlineColor, lineWidth, 0.0f, rotationCenter);
+			return;
+		}
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+		HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(fillColor), solidBrush.GetAddressOf());
+		if (true && SUCCEEDED(hr))
+			m_Target->FillGeometry(c_Geometry, solidBrush.Get());
+		solidBrush.Reset();
+		hr = m_Target->CreateSolidColorBrush(ToColorF(outlineColor), solidBrush.GetAddressOf());
+		if (SUCCEEDED(hr))
+			m_Target->DrawGeometry(c_Geometry, solidBrush.Get(), lineWidth);
+		solidBrush.Reset();
+		solidBrush = nullptr;
+	}
+}
+void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& dstRect, Gdiplus::Rect& srcRect, ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor, const Gdiplus::Color& outlineColor,
+	float lineWidth, float rotation, D2D1_POINT_2F rotationCenter)
+{
+
+	if (!BeginTargetDraw()) return;
+	if (m_Target) {
+		if (rotation != 0)
+		{
+			Microsoft::WRL::ComPtr<ID2D1TransformedGeometry> geometry;
+			c_D2DFactory->CreateTransformedGeometry(c_Geometry, D2D1::Matrix3x2F::Rotation(rotation, rotationCenter), &geometry);
+			DrawGeometry(geometry.Get(), fillColor, outlineColor, lineWidth, 0.0f, rotationCenter);
+			return;
+		}
+		ID2D1Layer* layer;
+		m_Target->CreateLayer(NULL, &layer);
+
+		m_Target->PushLayer(D2D1::LayerParameters(D2D1::InfiniteRect(), c_Geometry), layer);
+		/*
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+		HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(fillColor), solidBrush.GetAddressOf());
+		if (true && SUCCEEDED(hr))
+			m_Target->FillGeometry(c_Geometry, solidBrush.Get());
+		solidBrush.Reset();
+		hr = m_Target->CreateSolidColorBrush(ToColorF(outlineColor), solidBrush.GetAddressOf());
+		if (SUCCEEDED(hr))
+			m_Target->DrawGeometry(c_Geometry, solidBrush.Get(), lineWidth);
+		solidBrush.Reset();
+		solidBrush = nullptr;*/
+		DrawBitmap(bitmap, dstRect, srcRect);
+		m_Target->PopLayer();
+		layer->Release();
+		layer = NULL;
+
+	}
+}
+/*
+void Canvas::DrawCustomGeometry(D2D1_POINT_2F ShapePosition, std::vector<VectorPoint> points, const Gdiplus::Color& fillColor,
+	const Gdiplus::Color& outlineColor, float lineWidth, bool connectEdges)
+{
+	if (!BeginTargetDraw()) return;
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_PathGeometry = NULL;
+	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_PathGeometry);
+	if (FAILED(hr))
+	{
+		return;
+	}
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink = NULL;
+	hr = c_PathGeometry->Open(&geometrySink);
+	if (FAILED(hr)) 
+		return;
+	geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING);
+	geometrySink->BeginFigure(points[0].m_Position, D2D1_FIGURE_BEGIN_FILLED);
+	
+	bool next = true;
+	for (const VectorPoint& point : points)
+	{
+		if (next) {
+			next = false;
+			continue;
+		}
+		switch (point.m_LineType)
+		{
+		case GeometryType::Line:
+			geometrySink->AddLine(point.m_Position);
+			
+			break;
+		case GeometryType::Arc:
+			geometrySink->AddArc(D2D1::ArcSegment(
+				point.m_Position, // end point
+				point.m_Size,
+				point.m_Rotation, // rotation angle
+				point.m_Direction,
+				point.m_ArcSize
+				));
+
+			break;
+		case GeometryType::Bezier:
+			geometrySink->AddBezier(
+				D2D1::BezierSegment(
+					point.m_ControlPoint1,
+					point.m_ControlPoint1,
+					point.m_Position
+					));
+
+			break;
+		default:
+			break;
+		}
+	}
+	if (connectEdges)
+		geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	else
+		geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+	hr = geometrySink->Close();
+	if (FAILED(hr))
+		return;
+	if (m_Target) {
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+		HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(fillColor), solidBrush.GetAddressOf());
+		if (true && SUCCEEDED(hr))
+			m_Target->FillGeometry(c_PathGeometry.Get(), solidBrush.Get());
+		solidBrush.Reset();
+		hr = m_Target->CreateSolidColorBrush(ToColorF(outlineColor), solidBrush.GetAddressOf());
+		if (SUCCEEDED(hr))
+			m_Target->DrawGeometry(c_PathGeometry.Get(), solidBrush.Get(), lineWidth);
+		solidBrush.Reset();
+		solidBrush = nullptr;
+	}
+
+}*/
+
 
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {

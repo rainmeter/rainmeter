@@ -83,54 +83,58 @@ public:
 		Arc,
 		Bezier
 	};
-	struct GeometryPoint {
-		GeometryPoint(float x, float y, float type)
-		{
-			m_point.x = x;
-			m_point.y = y;
-			if (type == 0) m_type = GeometryType::Line;
-			else if (type == 1) m_type = GeometryType::Arc;
-			else if (type == 2) m_type = GeometryType::Bezier;
-			else m_type = GeometryType::Line;
 
-		}
-		GeometryPoint(float x, float y, float type, float ArcWidth, float ArcHeight, float rotation)
+	struct VectorPoint
+	{
+		VectorPoint(double x, double y)
 		{
-			//GeometryPoint(x, y, type);
-			m_point.x = x;
-			m_point.y = y;
-			if (type == 0) m_type = GeometryType::Line;
-			else if (type == 1) m_type = GeometryType::Arc;
-			else if (type == 2) m_type = GeometryType::Bezier;
-			else m_type = GeometryType::Line;
-			m_size.width = ArcWidth;
-			m_size.height = ArcHeight;
-			m_rotation = rotation;
-
+			m_Geometry.lineSegment = D2D1::Point2F(x, y);
+			m_type = Line;
 		}
-		GeometryPoint(float x, float y, float type, float controlX1, float controlY1, float controlX2, float controlY2)
+		VectorPoint(D2D1_ARC_SEGMENT& segment) 
 		{
-			//GeometryPoint(x, y, type);
-			m_point.x = x;
-			m_point.y = y;
-			if (type == 0) m_type = GeometryType::Line;
-			else if (type == 1) m_type = GeometryType::Arc;
-			else if (type == 2) m_type = GeometryType::Bezier;
-			else m_type = GeometryType::Line;
-			m_controlpoint1.x = controlX1;
-			m_controlpoint1.y = controlY1;
-			m_controlpoint2.x = controlX2;
-			m_controlpoint2.y = controlY2;
-
+			m_Geometry.arcSegment = segment;
+			m_type = Arc;
 		}
-		D2D1_POINT_2F m_point;
-		D2D1_POINT_2F m_controlpoint1;
-		D2D1_POINT_2F m_controlpoint2;
+		VectorPoint(D2D1_BEZIER_SEGMENT& segment)
+		{
+			m_Geometry.bezierSegment = segment;
+			m_type = Bezier;
+		}
+		union Geometry {
+			D2D1_ARC_SEGMENT arcSegment;
+			D2D1_POINT_2F lineSegment;
+			D2D1_BEZIER_SEGMENT bezierSegment;
+
+		} m_Geometry;
 		GeometryType m_type;
-		float m_rotation;
-		D2D1_SIZE_F m_size;
 	};
-	void DrawPathGeometry(const std::vector<GeometryPoint>& points, const Gdiplus::SolidBrush& fillBrush, const Gdiplus::Color& outlineColor, bool renderBackground, float lineWidth, bool connectEdges);
+
+
+	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(D2D1_RECT_F rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> CreateRoundedRectangle(D2D1_ROUNDED_RECT rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> CreateEllipse(D2D1_ELLIPSE rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreatePathGeometry();
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges);
+
+	void DrawCustomGeometry(D2D1_POINT_2F ShapePosition, std::vector<VectorPoint> points, const Gdiplus::Color& fillColor, 
+		const Gdiplus::Color& outlineColor, float lineWidth, bool connectEdges);
+	void DrawGeometry(ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor, const Gdiplus::Color& outlineColor, 
+		float lineWidth, float rotation, D2D1_POINT_2F rotationCenter);
+	void DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& dstRect, Gdiplus::Rect& srcRect, ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor, const Gdiplus::Color& outlineColor,
+		float lineWidth, float rotation, D2D1_POINT_2F rotationCenter);
+
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CombineGeometry(ID2D1Geometry* geometry1, ID2D1Geometry* geometry2, D2D1_COMBINE_MODE mode)
+	{
+		Microsoft::WRL::ComPtr<ID2D1PathGeometry> pathGeometry = CreatePathGeometry();
+		Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+		pathGeometry->Open(&sink);
+		geometry1->CombineWithGeometry(geometry2, mode, NULL, sink.Get());
+		sink->Close();
+
+		return pathGeometry;
+	}
+	//void DrawPathGeometry(const std::vector<GeometryPoint>& points, const Gdiplus::SolidBrush& fillBrush, const Gdiplus::Color& outlineColor, bool renderBackground, float lineWidth, bool connectEdges);
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
 
@@ -162,12 +166,14 @@ private:
 
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
 
+
 	// Underlying pixel data shared by both m_Target and m_GdipBitmap.
 	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
 	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
 	std::unique_ptr<Gdiplus::Bitmap> m_GdipBitmap;
+
 
 
 	bool m_TextAntiAliasing;
