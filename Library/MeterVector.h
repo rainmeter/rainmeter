@@ -44,6 +44,7 @@ protected:
 		float m_Rotation = 0;
 
 		bool m_ConnectEdges = true;
+		bool m_ShouldRender = true;
 
 		double m_X = 0;
 		double m_Y = 0;
@@ -147,9 +148,54 @@ protected:
 
 			shape.m_ImageW = imageW;
 			shape.m_ImageH = imageH;
+			m_Images.insert(std::map<std::wstring, TintedImage*>::value_type({ imageName ,image }));
+			return image;
 		}
-		m_Images.insert(std::map<std::wstring, TintedImage*>::value_type({ imageName ,image }));
-		return image;
+		delete image;
+		return nullptr;
+	}
+	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters)
+	{
+		std::vector<std::wstring> tokens;
+
+		size_t lastPos, pos = 0;
+		do
+		{
+			lastPos = str.find_first_not_of(delimiters, pos);
+			if (lastPos == std::wstring::npos) break;
+
+			pos = str.find_first_of(delimiters, lastPos + 1);
+			std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
+
+			size_t pos2 = token.find_first_not_of(L" \t\r\n");
+			if (pos2 != std::wstring::npos)
+			{
+				if (token.at(pos2) == L'(')
+				{
+					while (std::count(token.begin(), token.end(), L'(') != std::count(token.begin(), token.end(), L')') && pos != std::wstring::npos && lastPos != std::wstring::npos)
+					{
+						lastPos = str.find_first_not_of(delimiters, pos);
+						if (lastPos == std::wstring::npos) break;
+						pos = str.find_first_of(delimiters, lastPos + 1);
+						token += L":" + str.substr(lastPos, pos - lastPos);
+						if (pos == std::wstring::npos) break;
+						++pos;
+					}
+				}
+				size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
+				if (pos2 != 0 || lastPos2 != (token.size() - 1))
+				{
+					// Trim white-space
+					token.assign(token, pos2, lastPos2 - pos2 + 1);
+				}
+				tokens.push_back(token);
+			}
+
+			if (pos == std::wstring::npos) break;
+			++pos;
+		} while (true);
+
+		return tokens;
 	}
 
 private:

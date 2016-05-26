@@ -47,7 +47,7 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 	if (!canDraw) return false;
 	int i = 0;
 	for (const auto& shape : m_Shapes) {
-		if(shape.second.m_ShapeParsed)
+		if(shape.second.m_ShapeParsed && shape.second.m_ShouldRender)
 			if (!shape.second.m_Image) {
 				canvas.DrawGeometry(shape.second.m_Geometry.Get(), shape.second.m_FillColor, shape.second.m_OutlineColor,
 					shape.second.m_OutlineWidth, shape.second.m_Rotation, D2D1::Point2F(shape.second.m_X + (shape.second.m_W) / 2, shape.second.m_Y + (shape.second.m_H) / 2));
@@ -57,7 +57,7 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 
 				int imageW = bitmap->GetWidth();
 				int imageH = bitmap->GetHeight();
-				canvas.DrawMaskedGeometryBitmap(shape.second.m_Image->GetImage(), Gdiplus::Rect(0, 0, imageW, imageH), Gdiplus::Rect(0, 0, imageW, imageH), shape.second.m_Geometry.Get(), shape.second.m_FillColor, shape.second.m_OutlineColor,
+				canvas.DrawMaskedGeometryBitmap(shape.second.m_Image->GetImage(), Gdiplus::Rect(shape.second.m_X, shape.second.m_Y, shape.second.m_W, shape.second.m_H), Gdiplus::Rect(0, 0, imageW, imageH), shape.second.m_Geometry.Get(), shape.second.m_FillColor, shape.second.m_OutlineColor,
 					shape.second.m_OutlineWidth, shape.second.m_Rotation, D2D1::Point2F(shape.second.m_X + (shape.second.m_W) / 2, shape.second.m_Y + (shape.second.m_H) / 2));
 			}
 				//canvas.DrawCustomGeometry(D2D1::Point2F(20, 20), shape.m_Points, shape.m_FillColor, shape.m_OutlineColor, shape.m_OutlineWidth, true);
@@ -76,9 +76,10 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 
 
 	Meter::ReadOptions(parser, section);
-		std::wstring Shapeidentifier = L"Shape";
-		const std::wstring& curShape = parser.ReadString(section, Shapeidentifier.c_str(), L"");
-		std::vector<std::wstring> Shape = parser.Tokenize(curShape.c_str(), L"|");
+
+	{
+		 std::wstring Shapeidentifier = L"Shape";
+		const std::wstring& curShape = parser.ReadString(section, L"Shape", L"");
 		size_t ShapeIndex = 1;
 		;
 			while (!curShape.empty())
@@ -89,8 +90,8 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				std::wstring ShapeType = L"";
 				std::wstring ShapeOptions = L"";
 				bool ShapeFound = false;
-
-				Shape = parser.Tokenize(curShape.c_str(), L"|:");
+				//This might create problems for options using :
+				std::vector<std::wstring> Shape = CustomTokenize(curShape.c_str(), L"|:");
 
 				for (int id = 0; id < Shape.size(); id++)
 				{
@@ -107,9 +108,10 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 						{
 							ShapeType = currentOption;
 							ShapeOptions = Shape[++id].c_str();
+							ShapeFound = true;
 						}
 					}
-
+					
 					if (_wcsicmp(currentOption.c_str(), L"FillColor") == 0)				shape.m_FillColor = parser.ParseColor(Shape[++id].c_str());
 					else if (_wcsicmp(currentOption.c_str(), L"OutlineColor") == 0)		shape.m_OutlineColor = parser.ParseColor(Shape[++id].c_str());
 					else if (_wcsicmp(currentOption.c_str(), L"OutlineWidth") == 0)		shape.m_OutlineWidth = parser.ParseDouble(Shape[++id].c_str(), 1.0);
@@ -124,18 +126,20 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 
 				if (ShapeType == L"" || ShapeOptions == L"") break;
 
-				if (_wcsicmp(ShapeType.c_str(), L"Rectangle") == 0) ParseRect(shape, parser.ParseRECT(ShapeOptions.c_str()));
-				else if (_wcsicmp(ShapeType.c_str(), L"RoundedRectangle") == 0) ParseRoundedRect(shape, ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(ShapeType.c_str(), L"Ellipse") == 0) ParseEllipse(shape, ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(ShapeType.c_str(), L"Arc") == 0);
-				else if (_wcsicmp(ShapeType.c_str(), L"Curve") == 0);
-				else if (_wcsicmp(ShapeType.c_str(), L"Custom") == 0) ParseCustom(shape, ShapeOptions.c_str(), parser, section);
+					if (_wcsicmp(ShapeType.c_str(), L"Rectangle") == 0) ParseRect(shape, parser.ParseRECT(ShapeOptions.c_str()));
+					else if (_wcsicmp(ShapeType.c_str(), L"RoundedRectangle") == 0) ParseRoundedRect(shape, ShapeOptions.c_str(), parser);
+					else if (_wcsicmp(ShapeType.c_str(), L"Ellipse") == 0) ParseEllipse(shape, ShapeOptions.c_str(), parser);
+					else if (_wcsicmp(ShapeType.c_str(), L"Arc") == 0);
+					else if (_wcsicmp(ShapeType.c_str(), L"Curve") == 0);
+					else if (_wcsicmp(ShapeType.c_str(), L"Custom") == 0) ParseCustom(shape, ShapeOptions.c_str(), parser, section);
+				
 				m_Shapes[Shapeidentifier] = shape;
 				Shapeidentifier = L"Shape" + std::to_wstring(++ShapeIndex);
 				const std::wstring& curShape = parser.ReadString(section, Shapeidentifier.c_str(), L"");
 			}
 
 		End:;
+		}
 	
 	int i = 0;
 
@@ -170,13 +174,19 @@ void MeterVector::ParseRect(VectorShape& shape, RECT& rect)
 	shape.m_Y = geo_rect.top;
 	shape.m_W = geo_rect.right - geo_rect.left;
 	shape.m_H = geo_rect.bottom - geo_rect.top;
+
+	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
+		Meter::SetW(shape.m_W + shape.m_X);
+	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
+		Meter::SetH(shape.m_H + shape.m_Y);
+
 	shape.m_Geometry = Gfx::Canvas::CreateRectangle(geo_rect);
 	shape.m_ShapeParsed = true;
 	if (shape.m_CombineWith != L"" && shape.m_CombineMode != L"" && m_Shapes.find(shape.m_CombineWith) != m_Shapes.end()) {
 		auto newShape = CombineShapes(shape, m_Shapes[shape.m_CombineWith]);
 		if (newShape) {
 			shape.m_Geometry = newShape;
-			m_Shapes.erase(shape.m_CombineWith);
+			m_Shapes[shape.m_CombineWith].m_ShouldRender = false;
 		}
 	}
 }
@@ -200,13 +210,19 @@ bool MeterVector::ParseRoundedRect(VectorShape& shape, LPCWSTR option, ConfigPar
 	shape.m_Y = rect.rect.top;
 	shape.m_W = rect.rect.right - rect.rect.left;
 	shape.m_H = rect.rect.bottom - rect.rect.top;
+
+	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
+		Meter::SetW(shape.m_W + shape.m_X);
+	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
+		Meter::SetH(shape.m_H + shape.m_Y);
+
 	shape.m_Geometry = Gfx::Canvas::CreateRoundedRectangle(rect);
 	shape.m_ShapeParsed = true;
 	if (shape.m_CombineWith != L"" && shape.m_CombineMode != L"" && m_Shapes.find(shape.m_CombineWith) != m_Shapes.end()) {
 		auto newShape = CombineShapes(shape, m_Shapes[shape.m_CombineWith]);
 		if (newShape) {
 			shape.m_Geometry = newShape;
-			m_Shapes.erase(shape.m_CombineWith);
+			m_Shapes[shape.m_CombineWith].m_ShouldRender = false;
 		}
 	}
 	return true;
@@ -229,13 +245,19 @@ bool MeterVector::ParseEllipse(VectorShape& shape, LPCWSTR option, ConfigParser&
 	shape.m_Y = ellipse.point.y - ellipse.radiusY;
 	shape.m_W = ellipse.point.x + ellipse.radiusX;
 	shape.m_H = ellipse.point.y + ellipse.radiusY;
+
+	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
+		Meter::SetW(shape.m_W + shape.m_X);
+	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
+		Meter::SetH(shape.m_H + shape.m_Y);
+
 	shape.m_Geometry = Gfx::Canvas::CreateEllipse(ellipse);
 	shape.m_ShapeParsed = true;
 	if (shape.m_CombineWith != L"" && shape.m_CombineMode != L"" && m_Shapes.find(shape.m_CombineWith) != m_Shapes.end()) {
 		auto newShape = CombineShapes(shape, m_Shapes[shape.m_CombineWith]);
 		if (newShape) {
 			shape.m_Geometry = newShape;
-				m_Shapes.erase(shape.m_CombineWith);
+			m_Shapes[shape.m_CombineWith].m_ShouldRender = false;
 		}
 	}
 	return true;
@@ -338,6 +360,13 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			shape.m_W = x;
 		if (y > shape.m_H)
 			shape.m_H = y;
+
+
+		if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
+			Meter::SetW(shape.m_W + shape.m_X);
+		if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
+			Meter::SetH(shape.m_H + shape.m_Y);
+		
 	}
 	if (first)
 		return false;
@@ -345,7 +374,7 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 
 	if (shape.m_CombineWith != L"" && shape.m_CombineMode != L"" && m_Shapes.find(shape.m_CombineWith) != m_Shapes.end()) {
 		shape.m_Geometry = CombineShapes(shape, m_Shapes[shape.m_CombineWith]);
-		m_Shapes.erase(shape.m_CombineWith);
+		m_Shapes[shape.m_CombineWith].m_ShouldRender = false;
 	}
 
 	shape.m_ShapeParsed = true;

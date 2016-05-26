@@ -690,7 +690,33 @@ void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& ds
 			m_Target->DrawGeometry(c_Geometry, solidBrush.Get(), lineWidth);
 		solidBrush.Reset();
 		solidBrush = nullptr;*/
-		DrawBitmap(bitmap, dstRect, srcRect);
+		//DrawBitmap(bitmap, dstRect, srcRect);
+		// The D2D DrawBitmap seems to perform exactly like Gdiplus::Graphics::DrawImage since we are
+		// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
+		// the EndDraw() call needed for GDI+ drawing.
+		Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
+		Gdiplus::Rect lockRect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+		Gdiplus::Status status = bitmap->LockBits(
+			&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
+		if (status == Gdiplus::Ok)
+		{
+			D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
+				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+			Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
+			HRESULT hr = m_Target->CreateSharedBitmap(
+				__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
+			if (SUCCEEDED(hr))
+			{
+				auto rDst = ToRectF(dstRect);
+				auto rSrc = ToRectF(srcRect);
+				m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
+			}
+
+			// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
+			bitmap->UnlockBits(bitmapLock->GetBitmapData());
+		}
+
+		bitmapLock->Release();
 		m_Target->PopLayer();
 		layer->Release();
 		layer = NULL;
