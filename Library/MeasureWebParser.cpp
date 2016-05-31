@@ -192,7 +192,7 @@ private:
 	std::wstring m_GlobalUserAgent;
 };
 
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload);
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
@@ -350,6 +350,22 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Url = url;
 
+	m_Headers.clear();
+	size_t hNum = 1;
+	std::wstring hOption = L"Header";
+	std::wstring hValue = parser.ReadString(section, hOption.c_str(), L"");
+	while (!hValue.empty())
+	{
+		m_Headers += hOption + L"\r\n";
+		hOption = L"Header" + std::to_wstring(++hNum);
+		hValue = parser.ReadString(section, hOption.c_str(), L"");
+	}
+
+	if (!m_Headers.empty())
+	{
+		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
+	}
+
 	m_RegExp = parser.ReadString(section, L"RegExp", L"");
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
@@ -489,7 +505,7 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	{
 		LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
 	}
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, &dwSize, measure->m_ForceReload);
+	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_ForceReload);
 	if (!data)
 	{
 		ShowError(measure, L"Fetch error");
@@ -1078,7 +1094,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to free the returned string after use!
 */
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload)
 {
 	if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // Local file
 	{
@@ -1103,7 +1119,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags, 0);
 	if (!hUrlDump)
 	{
 		return nullptr;

@@ -54,6 +54,7 @@ private:
 	std::wstring m_DownloadFile;
 	std::wstring m_DownloadedFile;
 	std::wstring m_DebugFileLocation;
+	std::wstring m_Headers;
 	ProxySetting m_Proxy;
 	HANDLE m_ThreadHandle;
 	HANDLE m_DlThreadHandle;
