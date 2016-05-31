@@ -12,6 +12,7 @@
 
 struct ProxySetting
 {
+	std::wstring agent;
 	std::wstring server;
 	HINTERNET handle;
 
