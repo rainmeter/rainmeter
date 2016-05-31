@@ -356,7 +356,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring hValue = parser.ReadString(section, hOption.c_str(), L"");
 	while (!hValue.empty())
 	{
-		m_Headers += hOption + L"\r\n";
+		m_Headers += hValue + L"\r\n";
 		hOption = L"Header" + std::to_wstring(++hNum);
 		hValue = parser.ReadString(section, hOption.c_str(), L"");
 	}
