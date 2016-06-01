@@ -26,6 +26,46 @@
 #include <sstream>
 #include "../../Library/Logger.h"
 
+/*
+
+
+
+*/
+
+struct GeometryShape {
+
+	GeometryShape() : m_OutlineWidth(1),
+		m_OutlineColor(Gdiplus::Color::Black),
+		m_FillColor(Gdiplus::Color::White),
+		m_GradientStops(),
+		m_GradientProperties(),
+		m_StrokeProperties()
+	{}
+
+
+	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Geometry;
+	int m_OutlineWidth;
+	Gdiplus::Color m_OutlineColor;
+	Gdiplus::Color m_FillColor;
+
+	std::vector<D2D1_GRADIENT_STOP> m_GradientStops;
+	union GradientProperties {
+		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES m_LinearProperties;
+		D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES m_RadialProperties;
+	} m_GradientProperties;
+	enum BrushType {
+		Linear,
+		Radial,
+		Solid
+	} m_BrushType;
+
+	bool m_UseDashes = false;
+	std::vector<float> m_Dashes;
+	D2D1_STROKE_STYLE_PROPERTIES m_StrokeProperties;
+
+};
+
+
 namespace Gfx {
 
 // Wraps Direct2D/DirectWrite.
@@ -81,7 +121,8 @@ public:
 	enum GeometryType {
 		Line,
 		Arc,
-		Bezier
+		Bezier,
+		QuadBezier
 	};
 
 	struct VectorPoint
@@ -90,23 +131,38 @@ public:
 		{
 			m_Geometry.lineSegment = D2D1::Point2F(x, y);
 			m_type = Line;
+			m_x = x;
+			m_y = y;
 		}
 		VectorPoint(D2D1_ARC_SEGMENT& segment) 
 		{
 			m_Geometry.arcSegment = segment;
 			m_type = Arc;
+			m_x = segment.point.x;
+			m_y = segment.point.y;
 		}
 		VectorPoint(D2D1_BEZIER_SEGMENT& segment)
 		{
 			m_Geometry.bezierSegment = segment;
 			m_type = Bezier;
+			m_x = segment.point3.x;
+			m_y = segment.point3.y;
+		}
+		VectorPoint(D2D1_QUADRATIC_BEZIER_SEGMENT& segment)
+		{
+			m_Geometry.quadBezierSegment = segment;
+			m_type = QuadBezier;
+			m_x = segment.point2.x;
+			m_y = segment.point2.y;
 		}
 		union Geometry {
 			D2D1_ARC_SEGMENT arcSegment;
 			D2D1_POINT_2F lineSegment;
 			D2D1_BEZIER_SEGMENT bezierSegment;
+			D2D1_QUADRATIC_BEZIER_SEGMENT quadBezierSegment;
 
 		} m_Geometry;
+		double m_x, m_y;
 		GeometryType m_type;
 	};
 
@@ -117,12 +173,9 @@ public:
 	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreatePathGeometry();
 	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges);
 
-	void DrawCustomGeometry(D2D1_POINT_2F ShapePosition, std::vector<VectorPoint> points, const Gdiplus::Color& fillColor, 
-		const Gdiplus::Color& outlineColor, float lineWidth, bool connectEdges);
-	void DrawGeometry(ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor, const Gdiplus::Color& outlineColor, 
-		float lineWidth, float rotation, D2D1_POINT_2F rotationCenter);
-	void DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& dstRect, Gdiplus::Rect& srcRect, ID2D1Geometry* c_Geometry, const Gdiplus::Color& fillColor, const Gdiplus::Color& outlineColor,
-		float lineWidth, float rotation, D2D1_POINT_2F rotationCenter);
+
+	void DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform);
+	void DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& dstRect, Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform);
 
 	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CombineGeometry(ID2D1Geometry* geometry1, ID2D1Geometry* geometry2, D2D1_COMBINE_MODE mode)
 	{

@@ -79,6 +79,8 @@ public:
 	void DisposeImage();
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
+	void ReadFromArray(ConfigParser& parser, const WCHAR** optionArray);
+
 protected:
 	enum CROPMODE
 	{

@@ -783,6 +783,190 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);
 }
 
+//Wrapped the existing option array method into this! See MeterVector for usage
+void TintedImage::ReadFromArray(ConfigParser& parser, const WCHAR** optionArray)
+{
+	// Store the current values so we know if the image needs to be tinted or transformed
+	Rect oldCrop = m_Crop;
+	CROPMODE oldCropMode = m_CropMode;
+	bool oldGreyScale = m_GreyScale;
+	ColorMatrix oldColorMatrix = *m_ColorMatrix;
+	RotateFlipType oldFlip = m_Flip;
+	REAL oldRotate = m_Rotate;
+	std::wstring oldPath = m_Path;
+
+	m_Path = optionArray[OptionIndexImagePath];
+	PathUtil::AppendBacklashIfMissing(m_Path);
+
+	m_HasPathChanged = (oldPath != m_Path);
+
+	if (!m_DisableTransform)
+	{
+		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
+		m_CropMode = CROPMODE_TL;
+
+		const std::wstring& crop = optionArray[OptionIndexImageCrop];
+		if (!crop.empty())
+		{
+			if (wcschr(crop.c_str(), L','))
+			{
+				WCHAR* context = nullptr;
+				WCHAR* parseSz = _wcsdup(crop.c_str());
+				WCHAR* token;
+
+				token = wcstok(parseSz, L",", &context);
+				if (token)
+				{
+					m_Crop.X = parser.ParseInt(token, 0);
+
+					token = wcstok(nullptr, L",", &context);
+					if (token)
+					{
+						m_Crop.Y = parser.ParseInt(token, 0);
+
+						token = wcstok(nullptr, L",", &context);
+						if (token)
+						{
+							m_Crop.Width = parser.ParseInt(token, 0);
+
+							token = wcstok(nullptr, L",", &context);
+							if (token)
+							{
+								m_Crop.Height = parser.ParseInt(token, 0);
+
+								token = wcstok(nullptr, L",", &context);
+								if (token)
+								{
+									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);
+								}
+							}
+						}
+					}
+				}
+				free(parseSz);
+			}
+
+			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
+			{
+				m_CropMode = CROPMODE_TL;
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", optionArray[OptionIndexImageCrop], crop, L"Add later!");
+			}
+		}
+	}
+
+	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height || oldCropMode != m_CropMode);
+
+	if (_wcsicmp(optionArray[OptionIndexGreyscale], L"1") == 0)
+		m_GreyScale = true;
+	else
+		m_GreyScale = false;
+
+	Color tint = parser.ParseColor(optionArray[OptionIndexImageTint]);
+	int alpha = parser.ParseInt(optionArray[OptionIndexImageAlpha], tint.GetAlpha());
+	alpha = min(255, alpha);
+	alpha = max(0, alpha);
+
+	*m_ColorMatrix = c_IdentityMatrix;
+
+	// Read in the Color Matrix
+	// It has to be read in like this because it crashes when reading over 17 floats
+	// at one time. The parser does it fine, but after putting the returned values
+	// into the Color Matrix the next time the parser is used it crashes.
+	std::vector<Gdiplus::REAL> matrix1;// = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix1]);
+	if (matrix1.size() == 5)
+	{
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		{
+			m_ColorMatrix->m[0][i] = matrix1[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix->m[0][0] = (REAL)tint.GetRed() / 255.0f;
+	}
+
+	std::vector<Gdiplus::REAL> matrix2;// = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
+	if (matrix2.size() == 5)
+	{
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		{
+			m_ColorMatrix->m[1][i] = matrix2[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix->m[1][1] = (REAL)tint.GetGreen() / 255.0f;
+	}
+
+	std::vector<Gdiplus::REAL> matrix3;// = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
+	if (matrix3.size() == 5)
+	{
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		{
+			m_ColorMatrix->m[2][i] = matrix3[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix->m[2][2] = (REAL)tint.GetBlue() / 255.0f;
+	}
+
+	std::vector<Gdiplus::REAL> matrix4;// = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
+	if (matrix4.size() == 5)
+	{
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		{
+			m_ColorMatrix->m[3][i] = matrix4[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix->m[3][3] = (REAL)alpha / 255.0f;
+	}
+
+	std::vector<Gdiplus::REAL> matrix5;// = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
+	if (matrix5.size() == 5)
+	{
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
+		{
+			m_ColorMatrix->m[4][i] = matrix5[i];
+		}
+	}
+
+	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
+
+	m_UseExifOrientation = optionArray[OptionIndexUseExifOrientation];
+
+	const WCHAR* flip = optionArray[OptionIndexImageFlip];
+	if (_wcsicmp(flip, L"NONE") == 0 || _wcsicmp(flip, L"") == 0)
+	{
+		m_Flip = RotateNoneFlipNone;
+	}
+	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
+	{
+		m_Flip = RotateNoneFlipX;
+	}
+	else if (_wcsicmp(flip, L"VERTICAL") == 0)
+	{
+		m_Flip = RotateNoneFlipY;
+	}
+	else if (_wcsicmp(flip, L"BOTH") == 0)
+	{
+		m_Flip = RotateNoneFlipXY;
+	}
+	else
+	{
+		LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", optionArray[OptionIndexImageFlip], flip, L"Add later!");
+	}
+
+	if (!m_DisableTransform)
+	{
+		m_Rotate = (Gdiplus::REAL)parser.ParseDouble(optionArray[OptionIndexImageRotate], 0);
+	}
+
+	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);
+}
+
 /*
 ** Compares the two given color matrices.
 **
