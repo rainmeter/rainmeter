@@ -134,7 +134,7 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				else if (_wcsicmp(currentOption.c_str(), L"OutlineWidth") == 0)			shape.m_OutlineWidth = parser.ParseDouble(Shape[++id].c_str(), 1.0);
 				else if (_wcsicmp(currentOption.c_str(), L"Offset") == 0)				shape.m_Offset = ParseSize(Shape[++id].c_str(), parser);
 				else if (_wcsicmp(currentOption.c_str(), L"Scale") == 0)				shape.m_Scale = ParseSize(Shape[++id].c_str(), parser, 1);
-				else if (_wcsicmp(currentOption.c_str(), L"Skew") == 0)					shape.m_Skew = ParsePoint(Shape[++id].c_str(), parser);
+				else if (_wcsicmp(currentOption.c_str(), L"Skew") == 0)					shape.m_Skew = ParsePoint(Shape[++id].c_str(), parser, 0 );
 				else if (_wcsicmp(currentOption.c_str(), L"ConnectEdges") == 0)			shape.m_ConnectEdges = parser.ParseInt(Shape[++id].c_str(), 0) != 0;
 				else if (_wcsicmp(currentOption.c_str(), L"CombineWith") == 0)		  { shape.m_CombineWith = Shape[++id]; ShapeFound = true; }
 				else if (_wcsicmp(currentOption.c_str(), L"CombineMode") == 0)			shape.m_CombineMode = Shape[++id];
@@ -181,6 +181,7 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 		//Combine shapes post readOptions to make it possible for e.g Shape2 to be combined with Shape
 		for (auto& shape : m_Shapes)
 		{
+			if (shape.second.ShapeType == L"" || shape.second.ShapeOptions == L"") break;
 			CombineGeometry(shape.second);
 			D2D1_RECT_F bounds;
 			HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
@@ -223,9 +224,9 @@ void MeterVector::BindMeasures(ConfigParser& parser, const WCHAR* section)
 void MeterVector::ParseRect(VectorShape& shape, RECT& rect)
 {
 	D2D1_RECT_F geo_rect;
-	geo_rect.left = rect.left;
+	geo_rect.left = rect.left + shape.m_OutlineWidth / 2;
 	geo_rect.right = rect.right + rect.left;
-	geo_rect.top = rect.top;
+	geo_rect.top = rect.top + shape.m_OutlineWidth / 2;
 	geo_rect.bottom = rect.bottom + rect.top;
 
 
@@ -773,7 +774,7 @@ void MeterVector::ParseImage(std::wstring options, VectorShape& shape, ConfigPar
 		if (imageOptionPairs.size() <= id + 1) break;
 
 		if (_wcsicmp(currentOption.c_str(), L"Alpha") == 0) { c_CusomOptionArray[TintedImage::OptionIndexImageAlpha] = imageOptionPairs[++id].c_str(); }
-		else if (_wcsicmp(currentOption.c_str(), L"ImagePath") == 0) {
+		else if (_wcsicmp(currentOption.c_str(), L"Path") == 0) {
 			if (imageOptionPairs.size() <= id + 2) break;
 			imagePath = imageOptionPairs[id + 1] + L":" + imageOptionPairs[id + 2];
 			id += 2;
@@ -901,7 +902,7 @@ void MeterVector::ParseStrokeStyle(std::wstring options, VectorShape& shape, Con
 	else if (_wcsicmp(option.c_str(), L"MiterOrBevel") == 0) shape.m_StrokeProperties.lineJoin = D2D1_LINE_JOIN_MITER_OR_BEVEL;
 	if (StrokeOptions.size() < nextIt + 2) return;
 	option = StrokeOptions[++nextIt];
-	shape.m_StrokeProperties.miterLimit = parser.ParseDouble(option.c_str(), 5.0f);
+	shape.m_StrokeProperties.miterLimit = parser.ParseDouble(option.c_str(), 1.0f);
 	if (StrokeOptions.size() < nextIt + 2) return;
 	option = StrokeOptions[++nextIt];
 	shape.m_StrokeProperties.dashOffset = parser.ParseDouble(option.c_str(), 5.0f);
