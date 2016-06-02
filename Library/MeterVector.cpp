@@ -46,15 +46,12 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 	for (const auto& shape : m_Shapes) {
 		if (shape.second.m_ShapeParsed && shape.second.m_ShouldRender) {
 			D2D1_POINT_2F centerPoint;
-			if (shape.second.m_RotationCenter.x == FLT_MIN && shape.second.m_RotationCenter.y == FLT_MIN) 
-				centerPoint = D2D1::Point2F(shape.second.m_X + (shape.second.m_W) / 2, shape.second.m_Y + (shape.second.m_H) / 2);
-			else
 				centerPoint = D2D1::Point2F(shape.second.m_RotationCenter.x + shape.second.m_X, shape.second.m_RotationCenter.y + shape.second.m_Y);
 			D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F(
 				D2D1::Matrix3x2F::Rotation(shape.second.m_Rotation, centerPoint) *
 
 				D2D1::Matrix3x2F::Skew(shape.second.m_Skew.x, shape.second.m_Skew.y, D2D1::Point2F(shape.second.m_X, shape.second.m_Y)) *
-				D2D1::Matrix3x2F::Translation(shape.second.m_Offset)*
+				D2D1::Matrix3x2F::Translation(shape.second.m_Offset)* D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) * 
 				D2D1::Matrix3x2F::Scale(shape.second.m_Scale, D2D1::Point2F(shape.second.m_X, shape.second.m_Y))
 				);
 			if (shape.second.m_ImageName.empty()) {
@@ -66,7 +63,7 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 
 				int imageW = bitmap->GetWidth();
 				int imageH = bitmap->GetHeight();
-				canvas.DrawMaskedGeometryBitmap(bitmap, Gdiplus::Rect(shape.second.m_X, shape.second.m_Y, shape.second.m_W, shape.second.m_H),
+				canvas.DrawMaskedGeometryBitmap(bitmap, shape.second.m_ImageDstRect,
 					Gdiplus::Rect(0, 0, imageW, imageH), shape.second.m_ImageRotation, shape.second, transform);
 			}
 		}
@@ -79,7 +76,6 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 {
 
-
 	Meter::ReadOptions(parser, section);
 
 	
@@ -89,7 +85,6 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 
 		while (!curShape.empty())
 		{
-
 			if (m_Shapes.find(Shapeidentifier) == m_Shapes.end())
 				m_Shapes[Shapeidentifier] = VectorShape();
 			VectorShape& shape = m_Shapes[Shapeidentifier];
@@ -108,7 +103,9 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				if (Shape.size() <= id + 1) break;
 
 				bool skip = true;
-				if (_wcsicmp(currentOption.c_str(), L"Gradient") == 0) { postProcessInformation[currentOption] = Shape[++id];}
+				if (_wcsicmp(currentOption.c_str(), L"Gradient") == 0 || 
+					_wcsicmp(currentOption.c_str(), L"Image") == 0	||
+					_wcsicmp(currentOption.c_str(), L"Rotation") == 0) { postProcessInformation[currentOption] = Shape[++id];}
 				else skip = false;
 
 				if (skip) 
@@ -135,14 +132,12 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				else if (_wcsicmp(currentOption.c_str(), L"FillColor") == 0)			shape.m_FillColor = parser.ParseColor(Shape[++id].c_str());
 				else if (_wcsicmp(currentOption.c_str(), L"OutlineColor") == 0)			shape.m_OutlineColor = parser.ParseColor(Shape[++id].c_str());
 				else if (_wcsicmp(currentOption.c_str(), L"OutlineWidth") == 0)			shape.m_OutlineWidth = parser.ParseDouble(Shape[++id].c_str(), 1.0);
-				else if (_wcsicmp(currentOption.c_str(), L"Rotation") == 0)				shape.m_Rotation = ParseRotation(Shape[++id].c_str(), parser, shape);
 				else if (_wcsicmp(currentOption.c_str(), L"Offset") == 0)				shape.m_Offset = ParseSize(Shape[++id].c_str(), parser);
 				else if (_wcsicmp(currentOption.c_str(), L"Scale") == 0)				shape.m_Scale = ParseSize(Shape[++id].c_str(), parser, 1);
 				else if (_wcsicmp(currentOption.c_str(), L"Skew") == 0)					shape.m_Skew = ParsePoint(Shape[++id].c_str(), parser);
 				else if (_wcsicmp(currentOption.c_str(), L"ConnectEdges") == 0)			shape.m_ConnectEdges = parser.ParseInt(Shape[++id].c_str(), 0) != 0;
 				else if (_wcsicmp(currentOption.c_str(), L"CombineWith") == 0)		  { shape.m_CombineWith = Shape[++id]; ShapeFound = true; }
 				else if (_wcsicmp(currentOption.c_str(), L"CombineMode") == 0)			shape.m_CombineMode = Shape[++id];
-				else if (_wcsicmp(currentOption.c_str(), L"Image") == 0)				ParseImage(Shape[++id], shape, parser, section);
 				else if (_wcsicmp(currentOption.c_str(), L"StrokeStyle") == 0)			ParseStrokeStyle(Shape[++id], shape, parser, section);
 
 				
@@ -151,34 +146,71 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 
 			if (shape.ShapeType == L"" || shape.ShapeOptions == L"") break;
 			if (ShapeFound) {
-				if (_wcsicmp(shape.ShapeType.c_str(), L"Rectangle") == 0) ParseRect(shape, parser.ParseRECT(shape.ShapeOptions.c_str()));
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"RoundedRectangle") == 0) ParseRoundedRect(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Ellipse") == 0) ParseEllipse(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Pie") == 0) ParsePie(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Arc") == 0) ParseArc(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Curve") == 0)ParseCurve(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Custom") == 0) ParseCustom(shape, shape.ShapeOptions.c_str(), parser, section);
+				if (_wcsicmp(shape.ShapeType.c_str(), L"Rectangle") == 0)				ParseRect(shape, parser.ParseRECT(shape.ShapeOptions.c_str()));
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"RoundedRectangle") == 0)	ParseRoundedRect(shape, shape.ShapeOptions.c_str(), parser);
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"Ellipse") == 0)			ParseEllipse(shape, shape.ShapeOptions.c_str(), parser);
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"Pie") == 0)				ParsePie(shape, shape.ShapeOptions.c_str(), parser);
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"Arc") == 0)				ParseArc(shape, shape.ShapeOptions.c_str(), parser);
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"Curve") == 0)				ParseCurve(shape, shape.ShapeOptions.c_str(), parser);
+				else if (_wcsicmp(shape.ShapeType.c_str(), L"Custom") == 0)				ParseCustom(shape, shape.ShapeOptions.c_str(), parser, section);
+				D2D1_RECT_F bounds;
+				HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+				if (SUCCEEDED(hr))
+				{
+					if (bounds.left < shape.m_X)
+						shape.m_X = bounds.left;
+					if (bounds.top  < shape.m_Y)
+						shape.m_Y = bounds.top;
+					if (bounds.right - bounds.left + shape.m_OutlineWidth / 2 > shape.m_W)
+						shape.m_W = bounds.right - bounds.left + shape.m_OutlineWidth / 2;
+					if (bounds.bottom - bounds.top + shape.m_OutlineWidth / 2 > shape.m_H)
+						shape.m_H = bounds.bottom - bounds.top + shape.m_OutlineWidth / 2;
+
+				}
 			}
 
 			//Handle post options
 			for (auto& optionPairs : postProcessInformation)
 			{
 				if (_wcsicmp(optionPairs.first.c_str(), L"Gradient") == 0)			ParseGradient(optionPairs.second, shape, parser, section);
+				else if (_wcsicmp(optionPairs.first.c_str(), L"Image") == 0)		ParseImage(optionPairs.second, shape, parser, section);
+				else if (_wcsicmp(optionPairs.first.c_str(), L"Rotation") == 0)		shape.m_Rotation = ParseRotation(optionPairs.second.c_str(), parser, shape);
 
 			}
 
 			Shapeidentifier = L"Shape" + std::to_wstring(++ShapeIndex);
 			const std::wstring& curShape = parser.ReadString(section, Shapeidentifier.c_str(), L"");
+			FirstShape = false;
 		}
 
 		//Combine shapes post readOptions to make it possible for e.g Shape2 to be combined with Shape
 		for (auto& shape : m_Shapes)
 		{
 			CombineGeometry(shape.second);
+			D2D1_RECT_F bounds;
+			HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+			if (SUCCEEDED(hr))
+			{
+				if (bounds.left < shape.second.m_X)
+					shape.second.m_X = bounds.left;
+				if (bounds.top  < shape.second.m_Y)
+					shape.second.m_Y = bounds.top;
+				if (bounds.right - bounds.left + shape.second.m_OutlineWidth / 2 > shape.second.m_W)
+					shape.second.m_W = bounds.right - bounds.left + shape.second.m_OutlineWidth / 2;
+				if (bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2 > shape.second.m_H)
+					shape.second.m_H = bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2;
+
+				if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
+					Meter::SetW(bounds.right + shape.second.m_OutlineWidth / 2);
+				if (bounds.bottom + shape.second.m_OutlineWidth / 2 > Meter::GetH() && !Meter::IsHidden() && !m_HDefined) {
+					Meter::SetH(bounds.bottom + shape.second.m_OutlineWidth / 2);
+					m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+				}
+
+			}
 		}
 
 	int i = 0;
-
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
 		Initialize();
@@ -205,20 +237,7 @@ void MeterVector::ParseRect(VectorShape& shape, RECT& rect)
 	geo_rect.top = rect.top;
 	geo_rect.bottom = rect.bottom + rect.top;
 
-	shape.m_X = geo_rect.left;
-	shape.m_Y = geo_rect.top;
-	shape.m_W = geo_rect.right - geo_rect.left;
-	shape.m_H = geo_rect.bottom - geo_rect.top;
 
-
-	if (shape.m_X < Meter::GetX(true) && !Meter::IsHidden())
-		Meter::SetX(shape.m_X);
-	if (shape.m_Y < Meter::GetY(true) && !Meter::IsHidden())
-		Meter::SetY(shape.m_Y);
-	if (shape.m_W > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W);
-	if (shape.m_H > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H);
 
 	shape.m_Geometry = Gfx::Canvas::CreateRectangle(geo_rect);
 	shape.m_ShapeParsed = true;
@@ -234,25 +253,16 @@ bool MeterVector::ParseRoundedRect(VectorShape& shape, LPCWSTR option, ConfigPar
 		return false;
 
 	D2D1_ROUNDED_RECT rect;
-	rect.rect.left = parser.ParseDouble(Tokens[0].c_str(), 0);
-	rect.rect.top = parser.ParseDouble(Tokens[1].c_str(), 0);
+	rect.rect.left = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	rect.rect.top = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	rect.rect.right = parser.ParseDouble(Tokens[2].c_str(), 0) + rect.rect.left;
 	rect.rect.bottom = parser.ParseDouble(Tokens[3].c_str(), 0) + rect.rect.top;
 	rect.radiusX = parser.ParseDouble(Tokens[4].c_str(), 5);
 	rect.radiusY = parser.ParseDouble(Tokens[5].c_str(), 5);
-	shape.m_X = rect.rect.left;
-	shape.m_Y = rect.rect.top;
-	shape.m_W = rect.rect.right - rect.rect.left;
-	shape.m_H = rect.rect.bottom - rect.rect.top;
 
 
 	shape.m_Geometry = Gfx::Canvas::CreateRoundedRectangle(rect);
 	shape.m_ShapeParsed = true;
-
-	if (shape.m_X < Meter::GetX() && !Meter::IsHidden())
-		Meter::SetX(shape.m_X);
-	if (shape.m_Y < Meter::GetY() && !Meter::IsHidden())
-		Meter::SetH( shape.m_Y);
 	return true;
 }
 
@@ -265,18 +275,11 @@ bool MeterVector::ParseEllipse(VectorShape& shape, LPCWSTR option, ConfigParser&
 		return false;
 
 	D2D1_ELLIPSE ellipse;
-	ellipse.point.x = parser.ParseDouble(Tokens[0].c_str(), 0);
-	ellipse.point.y = parser.ParseDouble(Tokens[1].c_str(), 0);
+	ellipse.point.x = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	ellipse.point.y = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	ellipse.radiusX = parser.ParseDouble(Tokens[2].c_str(), 0);
 	ellipse.radiusY = parser.ParseDouble(Tokens[3].c_str(), 0);
-	shape.m_X = ellipse.point.x - ellipse.radiusX;
-	shape.m_Y = ellipse.point.y - ellipse.radiusY;
-	shape.m_W = 2 * ellipse.radiusX;
-	shape.m_H = 2 * ellipse.radiusY;
-	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W + shape.m_X);
-	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H + shape.m_Y);
+
 
 	shape.m_Geometry = Gfx::Canvas::CreateEllipse(ellipse);
 	shape.m_ShapeParsed = true;
@@ -289,8 +292,8 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	if (Tokens.size() != 6)
 		return false;
 
-	double sx = parser.ParseDouble(Tokens[0].c_str(), 0);
-	double sy = parser.ParseDouble(Tokens[1].c_str(), 0);
+	double sx = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	double sy = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double r = parser.ParseDouble(Tokens[2].c_str(), 0);
 	double startAngle = parser.ParseDouble(Tokens[4].c_str(), 0);
 	double sweepAngle = parser.ParseDouble(Tokens[5].c_str(), 0);
@@ -316,19 +319,19 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		return true;
 	}
 
-	std::vector<Gfx::Canvas::VectorPoint> points;
+	std::vector<Gfx::VectorPoint> points;
 
 	//Define start point in center
-	points.push_back(Gfx::Canvas::VectorPoint(sx, sy));
+	points.push_back(Gfx::VectorPoint(sx, sy));
 
 	//Start on circumference
-	points.push_back(Gfx::Canvas::VectorPoint(sx, sy));
+	points.push_back(Gfx::VectorPoint(sx, sy));
 
 	float p1x = sx + r * std::cos(startAngle);
 	float p1y = sy + r * std::sin(startAngle);
 
 	//Draw line to circumference 
-	points.push_back(Gfx::Canvas::VectorPoint(p1x, p1y));
+	points.push_back(Gfx::VectorPoint(p1x, p1y));
 
 	//Setup arc segment, simple trigonometry
 	D2D1_ARC_SEGMENT segment;
@@ -344,24 +347,16 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	if (sweepAngle > PI)
 		segment.arcSize = D2D1_ARC_SIZE_LARGE;
 	//Add arc to pie/sector shape
-	points.push_back(Gfx::Canvas::VectorPoint(segment));
+	points.push_back(Gfx::VectorPoint(segment));
 
 
 
-	shape.m_X = sx - r;
-	shape.m_Y = sy - r;
-	shape.m_W = 2* r;
-	shape.m_H = 2*r;
 
 
 	//Add shape and make edges connect, saves one line segment
 	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry(points, true);
 	shape.m_ShapeParsed = true;
 
-	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W + shape.m_X);
-	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H + shape.m_Y);
 	return true;
 }
 bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & parser)
@@ -377,8 +372,8 @@ bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	segment.sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
 	segment.arcSize = D2D1_ARC_SIZE_SMALL;
 
-	double x1 = parser.ParseDouble(Tokens[0].c_str(), 0);
-	double y1 = parser.ParseDouble(Tokens[1].c_str(), 0);
+	double x1 = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	double y1 = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double x2 = parser.ParseDouble(Tokens[2].c_str(), 0);
 	double y2 = parser.ParseDouble(Tokens[3].c_str(), 0);
 
@@ -398,35 +393,13 @@ bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		segment.size.height = radius;
 	}
 
-	if (x1 < x2) {
-		shape.m_X = x1;
-		shape.m_W = x2 - x1;
-	}
-	else
-	{
-		shape.m_X = x2;
-		shape.m_W = x1 - x2;
-	}
-	if (y1 < y2) {
-		shape.m_Y = y1;
-		shape.m_H = y2 - y1;
-	}
-	else
-	{
-		shape.m_Y = y2;
-		shape.m_H = y1 - y2;
-	}
 
 	if (Tokens.size() >= 7) segment.rotationAngle = parser.ParseDouble(Tokens[6].c_str(), 0);
 	if (Tokens.size() >= 8)segment.sweepDirection = (D2D1_SWEEP_DIRECTION)(parser.ParseInt(Tokens[7].c_str(), 0) == 0 ? 0 : 1);
 	if (Tokens.size() == 9)segment.arcSize = (D2D1_ARC_SIZE)(parser.ParseInt(Tokens[8].c_str(), 0) == 0 ? 0 : 1);
-	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry({ Gfx::Canvas::VectorPoint(x1,y1), Gfx::Canvas::VectorPoint(segment)}, shape.m_ConnectEdges);
+	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry({ Gfx::VectorPoint(x1,y1), Gfx::VectorPoint(segment)}, shape.m_ConnectEdges);
 	shape.m_ShapeParsed = true;
 
-	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W + shape.m_X);
-	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H + shape.m_Y);
 
 	return true;
 }
@@ -437,8 +410,8 @@ bool MeterVector::ParseCurve(VectorShape & shape, LPCWSTR option, ConfigParser &
 		return false;
 
 
-	double x1 = parser.ParseDouble(Tokens[0].c_str(), 0);
-	double y1 = parser.ParseDouble(Tokens[1].c_str(), 0);
+	double x1 = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	double y1 = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double x2 = parser.ParseDouble(Tokens[2].c_str(), 0);
 	double y2 = parser.ParseDouble(Tokens[3].c_str(), 0);
 
@@ -450,31 +423,8 @@ bool MeterVector::ParseCurve(VectorShape & shape, LPCWSTR option, ConfigParser &
 	segment.point2.x = parser.ParseDouble(Tokens[6].c_str(), 0);
 	segment.point2.y = parser.ParseDouble(Tokens[7].c_str(), 0);
 
-
-	if (x1 < x2) {
-		shape.m_X = x1;
-		shape.m_W = x2 - x1;
-	}
-	else
-	{
-		shape.m_X = x2;
-		shape.m_W = x1 - x2;
-	}
-	if (y1 < y2) {
-		shape.m_Y = y1;
-		shape.m_H = y2 - y1;
-	}
-	else
-	{
-		shape.m_Y = y2;
-		shape.m_H = y1 - y2;
-	}
-	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry({ Gfx::Canvas::VectorPoint(x1,y1), Gfx::Canvas::VectorPoint(segment) }, shape.m_ConnectEdges);
+	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry({ Gfx::VectorPoint(x1,y1), Gfx::VectorPoint(segment) }, shape.m_ConnectEdges);
 	shape.m_ShapeParsed = true;
-	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W + shape.m_X);
-	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H + shape.m_Y);
 
 	return true;
 }
@@ -490,7 +440,7 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 
 	if (shapePairs.size() == 0)
 		return false;
-	std::vector<Gfx::Canvas::VectorPoint> points;
+	std::vector<Gfx::VectorPoint> points;
 
 	double prevDx = 0;
 	double prevDy = 0;
@@ -527,8 +477,8 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 		std::vector<std::wstring> options = parser.Tokenize(shapePairs[++id].c_str(), L",");
 		if (options.size() < 2)
 			return false;
-		double x = parser.ParseDouble(options[0].c_str(), 0);
-		double y = parser.ParseDouble(options[1].c_str(), 0);
+		double x = parser.ParseDouble(options[0].c_str(), 0) + shape.m_OutlineWidth/2;
+		double y = parser.ParseDouble(options[1].c_str(), 0) + shape.m_OutlineWidth/2;
 
 		if (_wcsicmp(PathType, L"Start") == 0)
 		{
@@ -536,9 +486,9 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			if (first) {
 				shape.m_X = x;
 				shape.m_Y = y;
-				shape.m_W = 0;
-				shape.m_H = 0;
-				points.push_back(Gfx::Canvas::VectorPoint(x, y));
+				//shape.m_W = 0;
+				//shape.m_H = 0;
+				points.push_back(Gfx::VectorPoint(x, y));
 			}
 			first = false;
 
@@ -555,7 +505,7 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				prevDx = dx;
 				prevDy = dy;
 			}
-			points.push_back(Gfx::Canvas::VectorPoint(x, y));
+			points.push_back(Gfx::VectorPoint(x, y));
 		}
 		else if (_wcsicmp(PathType, L"ArcTo") == 0)
 		{
@@ -603,29 +553,13 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				segment.size.height = radius;
 			}
 
-			if (x1 < x2) {
-				shape.m_X = x1;
-				shape.m_W = x2 - x1;
-			}
-			else
-			{
-				shape.m_X = x2;
-				shape.m_W = x1 - x2;
-			}
-			if (y1 < y2) {
-				shape.m_Y = y1;
-				shape.m_H = y2 - y1;
-			}
-			else
-			{
-				shape.m_Y = y2;
-				shape.m_H = y1 - y2;
-			}
 
 			if (options.size() >= 5) segment.rotationAngle = parser.ParseDouble(options[4].c_str(), 0);
 			if (options.size() >= 6)segment.sweepDirection = (D2D1_SWEEP_DIRECTION)(parser.ParseInt(options[5].c_str(), 0) == 0 ? 0 : 1);
 			if (options.size() == 7)segment.arcSize = (D2D1_ARC_SIZE)(parser.ParseInt(options[6].c_str(), 0) == 0 ? 0 : 1);
-			points.push_back(Gfx::Canvas::VectorPoint(segment));
+
+
+			points.push_back(Gfx::VectorPoint(segment));
 		}
 		else if (_wcsicmp(PathType, L"CurveTo") == 0)
 		{
@@ -643,7 +577,7 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				segment->point1.y = parser.ParseDouble(options[3].c_str(), 0);
 				segment->point2.x = parser.ParseDouble(options[4].c_str(), 0);
 				segment->point2.y = parser.ParseDouble(options[5].c_str(), 0);
-				points.push_back(Gfx::Canvas::VectorPoint(*segment));
+				points.push_back(Gfx::VectorPoint(*segment));
 
 				prevDx = segment->point2.x;
 				prevDy = segment->point2.y;
@@ -653,7 +587,7 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				D2D1_QUADRATIC_BEZIER_SEGMENT segment2;
 				segment->point1.x = parser.ParseDouble(options[2].c_str(), 0);
 				segment->point1.y = parser.ParseDouble(options[3].c_str(), 0);
-				points.push_back(Gfx::Canvas::VectorPoint(segment2));
+				points.push_back(Gfx::VectorPoint(segment2));
 
 			}
 			else {
@@ -680,35 +614,24 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			if (first) {
 				shape.m_X = x;
 				shape.m_Y = y;
-				points.push_back(Gfx::Canvas::VectorPoint(0, 0));
+				points.push_back(Gfx::VectorPoint(0, 0));
 			}
 
 			first = false;
 		}
 		prevX = x;
 		prevY = y;
-		if (x < shape.m_X)
-			shape.m_X = x;
-		if (y < shape.m_Y)
-			shape.m_Y = y;
-		if (x - shape.m_X > shape.m_W)
-			shape.m_W = x - shape.m_X;
-		if (y - shape.m_Y > shape.m_H)
-			shape.m_H = y - shape.m_Y;
-
 
 	}
 
 	if (prevSegment)
 		bezierParser(prevX, prevY, prevDx, prevDy);
 
-	if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-		Meter::SetW(shape.m_W + shape.m_X);
-	if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-		Meter::SetH(shape.m_H + shape.m_Y);
 	if (first)
 		return false;
 	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry(points, shape.m_ConnectEdges);
+
+	
 	shape.m_ShapeParsed = true;
 	return true;
 }
@@ -734,10 +657,6 @@ bool MeterVector::CombineGeometry(VectorShape & shape)
 		auto newShape = CombineShapes(shape, shapes);
 		if (newShape) {
 			shape.m_Geometry = newShape;
-			if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-				Meter::SetW(shape.m_W + shape.m_X);
-			if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-				Meter::SetH(shape.m_H + shape.m_Y);
 		}
 	}
 	return true;
@@ -860,6 +779,17 @@ std::vector<std::wstring> MeterVector::CustomTokenize(const std::wstring& str, c
 CreateCustomOptionArray(c_CusomOptionArray);
 void MeterVector::ParseImage(std::wstring options, VectorShape& shape, ConfigParser& parser, const WCHAR* section)
 {
+	std::vector<std::wstring> optionTokens = CustomTokenize(options.c_str(), L",");
+	if (optionTokens.size() <= 0) return;
+
+	shape.m_ImageDstRect = Gdiplus::Rect(shape.m_X, shape.m_Y, shape.m_W, shape.m_H);
+
+	int next = 2;
+	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.X = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_X);
+	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Y = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_Y);
+	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Width = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_W);
+	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Height = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_H);
+
 	std::wstring imageOptions = parser.ReadString(section, options.c_str(), L"");
 	std::vector<std::wstring> imageOptionPairs = CustomTokenize(imageOptions, L"|:");
 	std::wstring imagePath = L"";
@@ -923,8 +853,8 @@ void MeterVector::ParseGradient(std::wstring options, VectorShape& shape, Config
 	nextIt += 2;
 	if (shape.m_BrushType == shape.Linear) point = &shape.m_GradientProperties.m_LinearProperties.startPoint;
 	else if (shape.m_BrushType == shape.Radial) point = &shape.m_GradientProperties.m_RadialProperties.center;
-	point->x = shape.m_X + shape.m_W * point1.x;
-	point->y = shape.m_Y + shape.m_H * point1.y;
+	point->x = shape.m_X + shape.m_W * point1.x - GetX();
+	point->y = shape.m_Y + shape.m_H * point1.y - GetY();
 
 	if (GradientOptions.size() < nextIt + 3) return;
 	D2D1_POINT_2F point2 = ParsePoint((GradientOptions[nextIt+1] + L"," + GradientOptions[nextIt+2]).c_str(), parser, 0);
@@ -935,8 +865,8 @@ void MeterVector::ParseGradient(std::wstring options, VectorShape& shape, Config
 	point->y = shape.m_H * point2.y;
 	if (shape.m_BrushType == shape.Linear)
 	{
-		point->x += shape.m_X;
-		point->y += shape.m_Y;
+		point->x += shape.m_X - GetX();
+		point->y += shape.m_Y - GetY();
 	}
 	if (shape.m_BrushType == shape.Radial) {
 		if (GradientOptions.size() < nextIt + 3) return;
@@ -967,7 +897,6 @@ void MeterVector::ParseStrokeStyle(std::wstring options, VectorShape& shape, Con
 		shape.m_Dashes.clear();
 		std::wstring customDashOption = parser.ReadString(section, CustomDashes.c_str(), L"");
 		std::vector<std::wstring> dashes = CustomTokenize(customDashOption, L"|");
-		LogDebug(CustomDashes.c_str());
 		for (int id = 0; id < dashes.size(); id++)
 			shape.m_Dashes.push_back(parser.ParseDouble(dashes[id].c_str(), 0));
 	}
@@ -1064,7 +993,14 @@ double MeterVector::ParseRotation(const LPCWSTR& string, ConfigParser& parser, V
 	std::vector<std::wstring> tokens = CustomTokenize(string, L",");
 	double rotation = 0;
 	if (tokens.size() > 0)  rotation = parser.ParseDouble(tokens[0].c_str(), 0);
-	if (tokens.size() > 2)
+	if (tokens.size() > 2) {
 		shape.m_RotationCenter = ParsePoint((tokens[1] + L"," + tokens[2]).c_str(), parser, FLT_MIN);
+		if (shape.m_RotationCenter.x == FLT_MIN) shape.m_RotationCenter.x = shape.m_W/2;
+		if (shape.m_RotationCenter.y == FLT_MIN) shape.m_RotationCenter.y = shape.m_H/2;
+	}
+	else {
+		shape.m_RotationCenter.x = shape.m_W/2;
+		shape.m_RotationCenter.y = shape.m_H/2;
+	}
 	return rotation;
 }

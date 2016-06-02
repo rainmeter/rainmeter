@@ -67,6 +67,7 @@
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="FileUtil.h" />
+    <ClInclude Include="GeometryShape.h" />
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />

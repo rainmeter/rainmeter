@@ -614,16 +614,16 @@ Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std
 		}
 		switch (point.m_type)
 		{
-		case GeometryType::Line:
+		case GeometryShape::GeometryType::Line:
 			geometrySink->AddLine(point.m_Geometry.lineSegment);
 			break;
-		case GeometryType::Arc:
+		case GeometryShape::GeometryType::Arc:
 			geometrySink->AddArc(point.m_Geometry.arcSegment);
 			break;
-		case GeometryType::Bezier:
+		case GeometryShape::GeometryType::Bezier:
 			geometrySink->AddBezier(point.m_Geometry.bezierSegment);
 			break;
-		case GeometryType::QuadBezier:
+		case GeometryShape::GeometryType::QuadBezier:
 			geometrySink->AddQuadraticBezier(point.m_Geometry.quadBezierSegment);
 			break;
 		default:
@@ -738,7 +738,7 @@ void Canvas::DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transfo
 }
 
 
-void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& dstRect, Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
+void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
 {
 
 	if (!BeginTargetDraw()) return;
@@ -799,6 +799,19 @@ void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Rect& ds
 		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
 
 	}
+}
+
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CombineGeometry(ID2D1Geometry * geometry1, ID2D1Geometry * geometry2, D2D1_COMBINE_MODE mode)
+{
+	
+		Microsoft::WRL::ComPtr<ID2D1PathGeometry> pathGeometry = CreatePathGeometry();
+		Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+		pathGeometry->Open(&sink);
+		geometry1->CombineWithGeometry(geometry2, mode, NULL, sink.Get());
+		sink->Close();
+
+		return pathGeometry;
+	
 }
 
 

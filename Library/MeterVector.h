@@ -13,6 +13,7 @@
 #include <map>
 #include "TintedImage.h"
 #include <memory>
+#include "../Common/Gfx/GeometryShape.h"
 
 #define CreateCustomOptionArray(name) \
 	const WCHAR* (name)[TintedImage::OptionCount] = { \
@@ -54,9 +55,9 @@ public:
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
-	struct VectorShape : GeometryShape {
+	struct VectorShape :  Gfx::GeometryShape {
 
-		VectorShape() : GeometryShape(),
+		VectorShape() : Gfx::GeometryShape(),
 			m_Rotation(),
 			m_RotationCenter(D2D1::Point2F(FLT_MIN, FLT_MIN)),
 			m_Skew(),
@@ -136,11 +137,8 @@ protected:
 
 private:
 
+	bool FirstShape = false;
 
-	Gdiplus::Color m_fillColor;
-	Gdiplus::Color m_outlineColor;
-	bool m_Solid;
-	bool m_connectedEdges;
 	float m_lineWidth;
 	std::map<std::wstring, VectorShape> m_Shapes;
 	std::map<std::wstring, std::unique_ptr<TintedImage>> m_Images;
