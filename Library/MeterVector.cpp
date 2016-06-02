@@ -51,7 +51,7 @@ bool MeterVector::Draw(Gfx::Canvas & canvas)
 				D2D1::Matrix3x2F::Rotation(shape.second.m_Rotation, centerPoint) *
 
 				D2D1::Matrix3x2F::Skew(shape.second.m_Skew.x, shape.second.m_Skew.y, D2D1::Point2F(shape.second.m_X, shape.second.m_Y)) *
-				D2D1::Matrix3x2F::Translation(shape.second.m_Offset)* D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) * 
+				D2D1::Matrix3x2F::Translation(shape.second.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) * 
 				D2D1::Matrix3x2F::Scale(shape.second.m_Scale, D2D1::Point2F(shape.second.m_X, shape.second.m_Y))
 				);
 			if (shape.second.m_ImageName.empty()) {
@@ -157,15 +157,10 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
 				if (SUCCEEDED(hr))
 				{
-					if (bounds.left < shape.m_X)
 						shape.m_X = bounds.left;
-					if (bounds.top  < shape.m_Y)
 						shape.m_Y = bounds.top;
-					if (bounds.right - bounds.left + shape.m_OutlineWidth / 2 > shape.m_W)
 						shape.m_W = bounds.right - bounds.left + shape.m_OutlineWidth / 2;
-					if (bounds.bottom - bounds.top + shape.m_OutlineWidth / 2 > shape.m_H)
 						shape.m_H = bounds.bottom - bounds.top + shape.m_OutlineWidth / 2;
-
 				}
 			}
 
@@ -191,13 +186,9 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 			HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
 			if (SUCCEEDED(hr))
 			{
-				if (bounds.left < shape.second.m_X)
 					shape.second.m_X = bounds.left;
-				if (bounds.top  < shape.second.m_Y)
 					shape.second.m_Y = bounds.top;
-				if (bounds.right - bounds.left + shape.second.m_OutlineWidth / 2 > shape.second.m_W)
 					shape.second.m_W = bounds.right - bounds.left + shape.second.m_OutlineWidth / 2;
-				if (bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2 > shape.second.m_H)
 					shape.second.m_H = bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2;
 
 				if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
@@ -305,14 +296,6 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		ellipse.point.y = sy;
 		ellipse.radiusX = r;
 		ellipse.radiusY = r;
-		shape.m_X = ellipse.point.x - ellipse.radiusX;
-		shape.m_Y = ellipse.point.y - ellipse.radiusY;
-		shape.m_W = 2 * ellipse.radiusX;
-		shape.m_H = 2 * ellipse.radiusY;
-		if (shape.m_W + shape.m_X > Meter::GetW() && !Meter::IsHidden())
-			Meter::SetW(shape.m_W + shape.m_X);
-		if (shape.m_H + shape.m_Y > Meter::GetH() && !Meter::IsHidden())
-			Meter::SetH(shape.m_H + shape.m_Y);
 
 		shape.m_Geometry = Gfx::Canvas::CreateEllipse(ellipse);
 		shape.m_ShapeParsed = true;
@@ -645,14 +628,6 @@ bool MeterVector::CombineGeometry(VectorShape & shape)
 			if (m_Shapes.find(with) != m_Shapes.end()) {
 				shapes.push_back(&m_Shapes[with]);
 				m_Shapes[with].m_ShouldRender = false;
-				if (shape.m_X > m_Shapes[with].m_X)
-					shape.m_X = m_Shapes[with].m_X;
-				if (shape.m_Y > m_Shapes[with].m_Y)
-					shape.m_Y = m_Shapes[with].m_Y;
-				if (shape.m_W < originalWidth + m_Shapes[with].m_W + m_Shapes[with].m_X)
-					shape.m_W = originalWidth + m_Shapes[with].m_W + m_Shapes[with].m_X;
-				if (shape.m_H < m_Shapes[with].m_H + m_Shapes[with].m_Y)
-					shape.m_H = m_Shapes[with].m_H + m_Shapes[with].m_Y;
 			}
 		auto newShape = CombineShapes(shape, shapes);
 		if (newShape) {
