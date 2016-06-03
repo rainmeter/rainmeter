@@ -154,13 +154,15 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				else if (_wcsicmp(shape.ShapeType.c_str(), L"Curve") == 0)				ParseCurve(shape, shape.ShapeOptions.c_str(), parser);
 				else if (_wcsicmp(shape.ShapeType.c_str(), L"Custom") == 0)				ParseCustom(shape, shape.ShapeOptions.c_str(), parser, section);
 				D2D1_RECT_F bounds;
-				HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
-				if (SUCCEEDED(hr))
-				{
+				if (shape.m_Geometry) {
+					HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+					if (SUCCEEDED(hr))
+					{
 						shape.m_X = bounds.left;
 						shape.m_Y = bounds.top;
 						shape.m_W = bounds.right - bounds.left + shape.m_OutlineWidth / 2;
 						shape.m_H = bounds.bottom - bounds.top + shape.m_OutlineWidth / 2;
+					}
 				}
 			}
 
@@ -181,25 +183,27 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 		//Combine shapes post readOptions to make it possible for e.g Shape2 to be combined with Shape
 		for (auto& shape : m_Shapes)
 		{
-			if (shape.second.ShapeType == L"" || shape.second.ShapeOptions == L"") break;
+			if (shape.second.ShapeType == L"" || shape.second.ShapeOptions == L"" || !shape.second.m_Geometry) break;
+			
 			CombineGeometry(shape.second);
 			D2D1_RECT_F bounds;
-			HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
-			if (SUCCEEDED(hr))
-			{
+				HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+				if (SUCCEEDED(hr))
+				{
 					shape.second.m_X = bounds.left;
 					shape.second.m_Y = bounds.top;
 					shape.second.m_W = bounds.right - bounds.left + shape.second.m_OutlineWidth / 2;
 					shape.second.m_H = bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2;
 
-				if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
-					Meter::SetW(bounds.right + shape.second.m_OutlineWidth / 2);
-				if (bounds.bottom + shape.second.m_OutlineWidth / 2 > Meter::GetH() && !Meter::IsHidden() && !m_HDefined) {
-					Meter::SetH(bounds.bottom + shape.second.m_OutlineWidth / 2);
-					m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
-				}
+					if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
+						Meter::SetW(bounds.right + shape.second.m_OutlineWidth / 2);
+					if (bounds.bottom + shape.second.m_OutlineWidth / 2 > Meter::GetH() && !Meter::IsHidden() && !m_HDefined) {
+						Meter::SetH(bounds.bottom + shape.second.m_OutlineWidth / 2);
+						m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+					}
 
-			}
+				}
+			
 		}
 
 	int i = 0;
@@ -281,14 +285,14 @@ bool MeterVector::ParseEllipse(VectorShape& shape, LPCWSTR option, ConfigParser&
 bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & parser)
 {
 	std::vector<std::wstring> Tokens = parser.Tokenize(option, L",");
-	if (Tokens.size() != 6)
+	if (Tokens.size() != 5)
 		return false;
 
 	double sx = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double sy = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double r = parser.ParseDouble(Tokens[2].c_str(), 0);
-	double startAngle = parser.ParseDouble(Tokens[4].c_str(), 0);
-	double sweepAngle = parser.ParseDouble(Tokens[5].c_str(), 0);
+	double startAngle = parser.ParseDouble(Tokens[3].c_str(), 0);
+	double sweepAngle = parser.ParseDouble(Tokens[4].c_str(), 0);
 
 	if (sweepAngle == 2 * PI)
 	{
@@ -309,7 +313,7 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	points.push_back(Gfx::VectorPoint(sx, sy));
 
 	//Start on circumference
-	points.push_back(Gfx::VectorPoint(sx, sy));
+	//points.push_back(Gfx::VectorPoint(sx, sy));
 
 	float p1x = sx + r * std::cos(startAngle);
 	float p1y = sy + r * std::sin(startAngle);

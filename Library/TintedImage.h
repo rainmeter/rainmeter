@@ -79,7 +79,7 @@ public:
 	void DisposeImage();
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
-	//Best way i could think of to expose the image to options not in the Meter. I don't think it was ever intended...
+	//Best way i could think of to expose the image to options not in the Meter. I don't think it was ever intended...m 
 	void ReadFromArray(ConfigParser& parser, const WCHAR** optionArray);
 
 protected:
