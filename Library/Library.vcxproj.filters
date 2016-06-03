@@ -131,7 +131,6 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="MeterGeometry.cpp" />
     <ClCompile Include="MeterVector.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -233,7 +232,6 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="MeterGeometry.h" />
     <ClInclude Include="MeterVector.h" />
   </ItemGroup>
   <ItemGroup>

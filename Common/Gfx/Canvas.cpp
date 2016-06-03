@@ -584,15 +584,12 @@ Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> Canvas::CreateEllipse(D2D1_ELLIPSE 
 {
 	Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> c_Geometry = NULL;
 	HRESULT hr = c_D2DFactory->CreateEllipseGeometry(rectangle, &c_Geometry);
-	
 	return c_Geometry;
 }
 Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
 {
-
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = NULL;
 	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_Geometry);
-
 	return c_Geometry;
 }
 Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges)
@@ -637,84 +634,12 @@ Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std
 	hr = geometrySink->Close();
 	return c_Geometry;
 }
-
-/*
-Wanted to do this, but i had to open m_Target and D2D1Factory, which i really don't want to... if anyone has a better solution to this, please implement!
-void Canvas::DrawGeometry(ID2D1Geometry * geometry, ID2D1Brush * fillBrush, ID2D1Brush * outlineBrush, float outlineWidth, D2D1_MATRIX_3X2_F * transform, ID2D1StrokeStyle * strokeStyle)
+void Canvas::DrawGeometryOutline(const GeometryShape& shape)
 {
-if (!BeginTargetDraw()) return;
-if (m_Target) {
-m_Target->SetTransform(transform);
-m_Target->FillGeometry(geometry, fillBrush);
-m_Target->DrawGeometry(geometry, outlineBrush, outlineWidth, strokeStyle);
-m_Target->SetTransform(D2D1::Matrix3x2F::Identity()); }}
-*/
-void Canvas::DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
-{
-
 	if (!BeginTargetDraw()) return;
-	if (m_Target) {
-
-
-
-		m_Target->SetTransform(transform);
-		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
-
-		HRESULT hr;
-		// Create the ID2D1GradientStopCollection from a previously
-		// declared array of D2D1_GRADIENT_STOP structs.
-		if (shape.m_GradientStops.size() > 0) {
-			Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops = nullptr;
-			hr = m_Target->CreateGradientStopCollection(
-				shape.m_GradientStops.data(),
-				shape.m_GradientStops.size(),
-				D2D1_GAMMA_2_2,
-				D2D1_EXTEND_MODE_CLAMP,
-				pGradientStops.GetAddressOf()
-				);
-			if (shape.m_BrushType == shape.Linear) {
-				Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> m_pLinearGradientBrush = nullptr;
-
-				if (SUCCEEDED(hr))
-				{
-					hr = m_Target->CreateLinearGradientBrush(
-						shape.m_GradientProperties.m_LinearProperties,
-						pGradientStops.Get(),
-						m_pLinearGradientBrush.GetAddressOf()
-						);
-					if (SUCCEEDED(hr))
-						m_Target->FillGeometry(shape.m_Geometry.Get(), m_pLinearGradientBrush.Get());
-				}
-				m_pLinearGradientBrush.Reset();
-			}
-			else if (shape.m_BrushType == shape.Radial)
-			{
-
-				Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radialBrush = nullptr;
-
-				if (SUCCEEDED(hr))
-				{
-					hr = m_Target->CreateRadialGradientBrush(
-						shape.m_GradientProperties.m_RadialProperties,
-						pGradientStops.Get(),
-						radialBrush.GetAddressOf()
-						);
-					if (SUCCEEDED(hr))
-						m_Target->FillGeometry(shape.m_Geometry.Get(), radialBrush.Get());
-				}
-				pGradientStops.Reset();
-				radialBrush.Reset();
-			}
-			pGradientStops.Reset();
-		}
-		else
-		{
-
-			hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_FillColor), solidBrush.GetAddressOf());
-			if (SUCCEEDED(hr))
-				m_Target->FillGeometry(shape.m_Geometry.Get(), solidBrush.Get());
-			solidBrush.Reset();
-		}
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_OutlineColor), solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr)) {
 		hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_OutlineColor), solidBrush.GetAddressOf());
 		if (shape.m_UseDashes) {
 			Microsoft::WRL::ComPtr<ID2D1StrokeStyle> strokeStyle = nullptr;
@@ -732,33 +657,105 @@ void Canvas::DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transfo
 			if (SUCCEEDED(hr))
 				m_Target->DrawGeometry(shape.m_Geometry.Get(), solidBrush.Get(), shape.m_OutlineWidth);
 		}
-		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+	}
+	solidBrush.Reset();
+	
+}
+void Canvas::DrawGeometryFill(const GeometryShape& shape)
+{
+	if (!BeginTargetDraw()) return;
+	Microsoft::WRL::ComPtr<ID2D1Brush> brush = nullptr;
+	HRESULT hr;
+	if (shape.m_BrushType == shape.Solid) {
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
+		hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_FillColor), solidBrush.GetAddressOf());
+		if (SUCCEEDED(hr))
+			brush = solidBrush;
 		solidBrush.Reset();
 	}
+
+	// Create the ID2D1GradientStopCollection from a previously
+	// declared array of D2D1_GRADIENT_STOP structs.
+	if (shape.m_GradientStops.size() > 0) {
+		Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops = nullptr;
+		hr = m_Target->CreateGradientStopCollection(
+			shape.m_GradientStops.data(),
+			shape.m_GradientStops.size(),
+			D2D1_GAMMA_2_2,
+			D2D1_EXTEND_MODE_CLAMP,
+			pGradientStops.GetAddressOf()
+			);
+		if (SUCCEEDED(hr))
+			if (shape.m_BrushType == shape.Linear) {
+				Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> m_pLinearGradientBrush = nullptr;
+				if (SUCCEEDED(hr))
+				{
+					hr = m_Target->CreateLinearGradientBrush(
+						shape.m_GradientProperties.m_LinearProperties,
+						pGradientStops.Get(),
+						m_pLinearGradientBrush.GetAddressOf()
+						);
+					if (SUCCEEDED(hr))
+						brush = m_pLinearGradientBrush;
+				}
+				m_pLinearGradientBrush.Reset();
+			}
+			else if (shape.m_BrushType == shape.Radial)
+			{
+				Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radialBrush = nullptr;
+				if (SUCCEEDED(hr))
+				{
+					hr = m_Target->CreateRadialGradientBrush(
+						shape.m_GradientProperties.m_RadialProperties,
+						pGradientStops.Get(),
+						radialBrush.GetAddressOf()
+						);
+					if (SUCCEEDED(hr))
+						brush = radialBrush;
+				}
+				radialBrush.Reset();
+			}
+		pGradientStops.Reset();
+	}
+	if (brush)
+		m_Target->FillGeometry(shape.m_Geometry.Get(), brush.Get());
+	
 }
-
-
+/*
+Wanted to do this, but i had to open m_Target and D2D1Factory, which i really don't want to... if anyone has a better solution to this, please implement!
+void Canvas::DrawGeometry(ID2D1Geometry * geometry, ID2D1Brush * fillBrush, ID2D1Brush * outlineBrush, float outlineWidth, D2D1_MATRIX_3X2_F * transform, ID2D1StrokeStyle * strokeStyle)
+{
+if (!BeginTargetDraw()) return;
+if (m_Target) {
+m_Target->SetTransform(transform);
+m_Target->FillGeometry(geometry, fillBrush);
+m_Target->DrawGeometry(geometry, outlineBrush, outlineWidth, strokeStyle);
+m_Target->SetTransform(D2D1::Matrix3x2F::Identity()); }}
+*/
+void Canvas::DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
+{
+	if (!BeginTargetDraw()) return;
+	m_Target->SetTransform(transform);
+	DrawGeometryFill(shape);
+	DrawGeometryOutline(shape);
+	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+}
 void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
 {
 
 	if (!BeginTargetDraw()) return;
-	if (m_Target) {
-		m_Target->SetTransform(transform);
-		ID2D1Layer* layer;
+	m_Target->SetTransform(transform);
+	ID2D1Layer* layer;
 
-		m_Target->CreateLayer(NULL, &layer);
+	HRESULT hr = m_Target->CreateLayer(NULL, &layer);
+	if (SUCCEEDED(hr)) {
 		m_Target->PushLayer(D2D1::LayerParameters(D2D1::InfiniteRect(), shape.m_Geometry.Get()), layer);
-		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-		HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_FillColor), solidBrush.GetAddressOf());
-		if (true && SUCCEEDED(hr))
-			m_Target->FillGeometry(shape.m_Geometry.Get(), solidBrush.Get());
-		solidBrush.Reset();
+
+		DrawGeometryFill(shape);
 
 		//Used D2D Image drawing since most of the code already depends on m_Target, shouldn't be hard to add gdi+ drawing, but i'll stick to pure D2D drawing for my purposes
+		//Would also propose the problem of creating, removing and creating the m_Target if i'm not mistaken
 
-		// The D2D DrawBitmap seems to perform exactly like Gdiplus::Graphics::DrawImage since we are
-		// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
-		// the EndDraw() call needed for GDI+ drawing.
 		Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
 		Gdiplus::Rect lockRect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
 		Gdiplus::Status status = bitmap->LockBits(
@@ -785,33 +782,24 @@ void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Re
 			// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
 			bitmap->UnlockBits(bitmapLock->GetBitmapData());
 		}
-
-
 		bitmapLock->Release();
 		m_Target->PopLayer();
-		hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_OutlineColor), solidBrush.GetAddressOf());
-		if (SUCCEEDED(hr))
-			m_Target->DrawGeometry(shape.m_Geometry.Get(), solidBrush.Get(), shape.m_OutlineWidth);
-		solidBrush.Reset();
-		solidBrush = nullptr;
+		DrawGeometryOutline(shape);
 		layer->Release();
-		layer = NULL;
 		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
-
 	}
+	
 }
 
 Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CombineGeometry(ID2D1Geometry * geometry1, ID2D1Geometry * geometry2, D2D1_COMBINE_MODE mode)
 {
 	
-		Microsoft::WRL::ComPtr<ID2D1PathGeometry> pathGeometry = CreatePathGeometry();
-		Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
-		pathGeometry->Open(&sink);
-		geometry1->CombineWithGeometry(geometry2, mode, NULL, sink.Get());
-		sink->Close();
-
-		return pathGeometry;
-	
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> pathGeometry = CreatePathGeometry();
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+	pathGeometry->Open(&sink);
+	geometry1->CombineWithGeometry(geometry2, mode, NULL, sink.Get());
+	sink->Close();
+	return pathGeometry;
 }
 
 

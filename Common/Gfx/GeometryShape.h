@@ -3,10 +3,7 @@
 #define RM_GFX_GEOMETRYSHAPE_H_
 
 namespace Gfx {
-
-
 	struct GeometryShape {
-
 		GeometryShape() : m_OutlineWidth(1),
 			m_OutlineColor(Gdiplus::Color::Black),
 			m_FillColor(Gdiplus::Color::White),
@@ -14,19 +11,16 @@ namespace Gfx {
 			m_GradientProperties(),
 			m_StrokeProperties()
 		{}
-
 		enum GeometryType {
 			Line,
 			Arc,
 			Bezier,
 			QuadBezier
 		};
-
 		Microsoft::WRL::ComPtr<ID2D1Geometry> m_Geometry;
 		int m_OutlineWidth;
 		Gdiplus::Color m_OutlineColor;
 		Gdiplus::Color m_FillColor;
-
 		std::vector<D2D1_GRADIENT_STOP> m_GradientStops;
 		union GradientProperties {
 			D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES m_LinearProperties;
@@ -37,16 +31,12 @@ namespace Gfx {
 			Radial,
 			Solid
 		} m_BrushType;
-
 		bool m_UseDashes = false;
 		std::vector<float> m_Dashes;
 		D2D1_STROKE_STYLE_PROPERTIES m_StrokeProperties;
-
-
 	};
 	struct VectorPoint
 	{
-
 		VectorPoint(double x, double y)
 		{
 			m_Geometry.lineSegment = D2D1::Point2F(x, y);

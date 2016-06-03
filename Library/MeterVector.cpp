@@ -16,8 +16,8 @@
 using namespace Gdiplus;
 
 MeterVector::MeterVector(Skin * skin, const WCHAR * name) : Meter(skin, name),
-m_Shapes(),
-m_Skin(skin)
+	m_Shapes(),
+	m_Images()
 {
 }
 
@@ -77,167 +77,134 @@ void MeterVector::ReadOptions(ConfigParser & parser, const WCHAR * section)
 {
 
 	Meter::ReadOptions(parser, section);
-
-	
-		std::wstring Shapeidentifier = L"Shape";
-		const std::wstring& curShape = parser.ReadString(section, L"Shape", L"");
-		size_t ShapeIndex = 1;
-
-		while (!curShape.empty())
+	std::wstring Shapeidentifier = L"Shape";
+	const std::wstring& curShape = parser.ReadString(section, L"Shape", L"");
+	size_t ShapeIndex = 1;
+	while (!curShape.empty())
+	{
+		if (m_Shapes.find(Shapeidentifier) == m_Shapes.end())
+			m_Shapes[Shapeidentifier] = VectorShape();
+		VectorShape& shape = m_Shapes[Shapeidentifier];
+		//Force all options to be loaded before the shape is handled, as some options is needed in the shape definition ;)
+		bool ShapeFound = false;
+		//This might create problems for options using :, should be no problem as long as they don't appear outside a '(, )' or a '[, ]' as i modifed the Tokenize method to exclude these!
+		std::vector<std::wstring> Shape = CustomTokenize(curShape.c_str(), L"|:");
+		//Store options that depends on other options before being able to load, this simply ensures that the order doesn't matter
+		std::map<std::wstring, std::wstring> postProcessInformation;
+		for (int id = 0; id < Shape.size(); id++)
 		{
-			if (m_Shapes.find(Shapeidentifier) == m_Shapes.end())
-				m_Shapes[Shapeidentifier] = VectorShape();
-			VectorShape& shape = m_Shapes[Shapeidentifier];
-			//Force all options to be loaded before the shape is handled, as some options is needed in the shape definition ;)
-			bool ShapeFound = false;
-			//This might create problems for options using :, should be no problem as long as they don't appear outside a '(, )' or a '[, ]' as i modifed the Tokenize method to exclude these!
-			std::vector<std::wstring> Shape = CustomTokenize(curShape.c_str(), L"|:");
-
-			//Store options that depends on other options before being able to load, this simply ensures that the order doesn't matter
-			std::map<std::wstring, std::wstring> postProcessInformation;
-
-			for (int id = 0; id < Shape.size(); id++)
-			{
-				std::wstring currentOption = Shape[id];
-
-				if (Shape.size() <= id + 1) break;
-
-				bool skip = true;
-				if (_wcsicmp(currentOption.c_str(), L"Gradient") == 0 || 
-					_wcsicmp(currentOption.c_str(), L"Image") == 0	||
-					_wcsicmp(currentOption.c_str(), L"Rotation") == 0) { postProcessInformation[currentOption] = Shape[++id];}
-				else skip = false;
-
-				if (skip) 
-					continue;
-
-				if (_wcsicmp(currentOption.c_str(), L"Rectangle") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"RoundedRectangle") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"Ellipse") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"Arc") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"Curve") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"Pie") == 0 ||
-					_wcsicmp(currentOption.c_str(), L"Custom") == 0)
-				{
-					if (ShapeFound) continue;
-					id += 1;
-					std::wstring ShapeOptions = Shape[id];;
-					if (_wcsicmp(ShapeOptions.c_str(), shape.ShapeOptions.c_str()) != 0 || _wcsicmp(currentOption.c_str(), L"Custom") == 0)
-					{
-						shape.ShapeType = currentOption;
-						shape.ShapeOptions = ShapeOptions;
-						ShapeFound = true;
-					}
-				}
-				else if (_wcsicmp(currentOption.c_str(), L"FillColor") == 0)			shape.m_FillColor = parser.ParseColor(Shape[++id].c_str());
-				else if (_wcsicmp(currentOption.c_str(), L"OutlineColor") == 0)			shape.m_OutlineColor = parser.ParseColor(Shape[++id].c_str());
-				else if (_wcsicmp(currentOption.c_str(), L"OutlineWidth") == 0)			shape.m_OutlineWidth = parser.ParseDouble(Shape[++id].c_str(), 1.0);
-				else if (_wcsicmp(currentOption.c_str(), L"Offset") == 0)				shape.m_Offset = ParseSize(Shape[++id].c_str(), parser);
-				else if (_wcsicmp(currentOption.c_str(), L"Scale") == 0)				shape.m_Scale = ParseSize(Shape[++id].c_str(), parser, 1);
-				else if (_wcsicmp(currentOption.c_str(), L"Skew") == 0)					shape.m_Skew = ParsePoint(Shape[++id].c_str(), parser, 0 );
-				else if (_wcsicmp(currentOption.c_str(), L"ConnectEdges") == 0)			shape.m_ConnectEdges = parser.ParseInt(Shape[++id].c_str(), 0) != 0;
-				else if (_wcsicmp(currentOption.c_str(), L"CombineWith") == 0)		  { shape.m_CombineWith = Shape[++id]; ShapeFound = true; }
-				else if (_wcsicmp(currentOption.c_str(), L"CombineMode") == 0)			shape.m_CombineMode = Shape[++id];
-				else if (_wcsicmp(currentOption.c_str(), L"StrokeStyle") == 0)			ParseStrokeStyle(Shape[++id], shape, parser, section);
-
-				
-			}
-
-
-			if (shape.ShapeType == L"" || shape.ShapeOptions == L"") break;
-			if (ShapeFound) {
-				if (_wcsicmp(shape.ShapeType.c_str(), L"Rectangle") == 0)				ParseRect(shape, parser.ParseRECT(shape.ShapeOptions.c_str()));
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"RoundedRectangle") == 0)	ParseRoundedRect(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Ellipse") == 0)			ParseEllipse(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Pie") == 0)				ParsePie(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Arc") == 0)				ParseArc(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Curve") == 0)				ParseCurve(shape, shape.ShapeOptions.c_str(), parser);
-				else if (_wcsicmp(shape.ShapeType.c_str(), L"Custom") == 0)				ParseCustom(shape, shape.ShapeOptions.c_str(), parser, section);
-				D2D1_RECT_F bounds;
-				if (shape.m_Geometry) {
-					HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
-					if (SUCCEEDED(hr))
-					{
-						shape.m_X = bounds.left;
-						shape.m_Y = bounds.top;
-						shape.m_W = bounds.right - bounds.left + shape.m_OutlineWidth / 2;
-						shape.m_H = bounds.bottom - bounds.top + shape.m_OutlineWidth / 2;
-					}
-				}
-			}
-
-			//Handle post options
-			for (auto& optionPairs : postProcessInformation)
-			{
-				if (_wcsicmp(optionPairs.first.c_str(), L"Gradient") == 0)			ParseGradient(optionPairs.second, shape, parser, section);
-				else if (_wcsicmp(optionPairs.first.c_str(), L"Image") == 0)		ParseImage(optionPairs.second, shape, parser, section);
-				else if (_wcsicmp(optionPairs.first.c_str(), L"Rotation") == 0)		shape.m_Rotation = ParseRotation(optionPairs.second.c_str(), parser, shape);
-
-			}
-
-			Shapeidentifier = L"Shape" + std::to_wstring(++ShapeIndex);
-			const std::wstring& curShape = parser.ReadString(section, Shapeidentifier.c_str(), L"");
-			FirstShape = false;
-		}
-
-		//Combine shapes post readOptions to make it possible for e.g Shape2 to be combined with Shape
-		for (auto& shape : m_Shapes)
-		{
-			if (shape.second.ShapeType == L"" || shape.second.ShapeOptions == L"" || !shape.second.m_Geometry) break;
+			std::wstring currentOption = Shape[id];
+			if (Shape.size() <= id + 1) break;
+			bool skip = true;
+			if (_wcsicmp(currentOption.c_str(), L"Gradient") == 0 || 
+				_wcsicmp(currentOption.c_str(), L"Image") == 0	||
+				_wcsicmp(currentOption.c_str(), L"Rotation") == 0) { postProcessInformation[currentOption] = Shape[++id];}
+			else skip = false;
 			
-			CombineGeometry(shape.second);
+			if (skip) 
+				continue;
+
+			if (_wcsicmp(currentOption.c_str(), L"Rectangle") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"RoundedRectangle") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"Ellipse") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"Arc") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"Curve") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"Pie") == 0 ||
+				_wcsicmp(currentOption.c_str(), L"Custom") == 0)
+			{
+				if (ShapeFound) continue;
+				id += 1;
+				std::wstring ShapeOptions = Shape[id];;
+				if (_wcsicmp(ShapeOptions.c_str(), shape.ShapeOptions.c_str()) != 0 || _wcsicmp(currentOption.c_str(), L"Custom") == 0)
+				{
+					shape.ShapeType = currentOption;
+					shape.ShapeOptions = ShapeOptions;
+					ShapeFound = true;
+				}
+			}
+			else if (_wcsicmp(currentOption.c_str(), L"FillColor") == 0)			shape.m_FillColor = parser.ParseColor(Shape[++id].c_str());
+			else if (_wcsicmp(currentOption.c_str(), L"OutlineColor") == 0)			shape.m_OutlineColor = parser.ParseColor(Shape[++id].c_str());
+			else if (_wcsicmp(currentOption.c_str(), L"OutlineWidth") == 0)			shape.m_OutlineWidth = parser.ParseDouble(Shape[++id].c_str(), 1.0);
+			else if (_wcsicmp(currentOption.c_str(), L"Offset") == 0)				shape.m_Offset = ParseSize(Shape[++id].c_str(), parser);
+			else if (_wcsicmp(currentOption.c_str(), L"Scale") == 0)				shape.m_Scale = ParseSize(Shape[++id].c_str(), parser, 1);
+			else if (_wcsicmp(currentOption.c_str(), L"Skew") == 0)					shape.m_Skew = ParsePoint(Shape[++id].c_str(), parser, 0 );
+			else if (_wcsicmp(currentOption.c_str(), L"ConnectEdges") == 0)			shape.m_ConnectEdges = parser.ParseInt(Shape[++id].c_str(), 0) != 0;
+			else if (_wcsicmp(currentOption.c_str(), L"CombineWith") == 0)		  { shape.m_CombineWith = Shape[++id]; ShapeFound = true; }
+			else if (_wcsicmp(currentOption.c_str(), L"CombineMode") == 0)			shape.m_CombineMode = Shape[++id];
+			else if (_wcsicmp(currentOption.c_str(), L"StrokeStyle") == 0)			ParseStrokeStyle(Shape[++id], shape, parser, section);
+		}
+		
+		if (shape.ShapeType == L"" || shape.ShapeOptions == L"") break;
+		if (ShapeFound) {
+			if (_wcsicmp(shape.ShapeType.c_str(), L"Rectangle") == 0)				ParseRect(shape, parser.ParseRECT(shape.ShapeOptions.c_str()));
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"RoundedRectangle") == 0)	ParseRoundedRect(shape, shape.ShapeOptions.c_str(), parser);
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"Ellipse") == 0)			ParseEllipse(shape, shape.ShapeOptions.c_str(), parser);
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"Pie") == 0)				ParsePie(shape, shape.ShapeOptions.c_str(), parser);
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"Arc") == 0)				ParseArc(shape, shape.ShapeOptions.c_str(), parser);
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"Curve") == 0)				ParseCurve(shape, shape.ShapeOptions.c_str(), parser);
+			else if (_wcsicmp(shape.ShapeType.c_str(), L"Custom") == 0)				ParseCustom(shape, shape.ShapeOptions.c_str(), parser, section);
 			D2D1_RECT_F bounds;
-				HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+			if (shape.m_Geometry) {
+				HRESULT hr = shape.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
 				if (SUCCEEDED(hr))
 				{
-					shape.second.m_X = bounds.left;
-					shape.second.m_Y = bounds.top;
-					shape.second.m_W = bounds.right - bounds.left + shape.second.m_OutlineWidth / 2;
-					shape.second.m_H = bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2;
-
-					if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
-						Meter::SetW(bounds.right + shape.second.m_OutlineWidth / 2);
-					if (bounds.bottom + shape.second.m_OutlineWidth / 2 > Meter::GetH() && !Meter::IsHidden() && !m_HDefined) {
-						Meter::SetH(bounds.bottom + shape.second.m_OutlineWidth / 2);
-						m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
-					}
-
+					shape.m_X = bounds.left;
+					shape.m_Y = bounds.top;
+					shape.m_W = bounds.right - bounds.left + shape.m_OutlineWidth / 2;
+					shape.m_H = bounds.bottom - bounds.top + shape.m_OutlineWidth / 2;
 				}
-			
+			}
 		}
+		//Handle post options
+		for (auto& optionPairs : postProcessInformation)
+		{
+			if (_wcsicmp(optionPairs.first.c_str(), L"Gradient") == 0)			ParseGradient(optionPairs.second, shape, parser, section);
+			else if (_wcsicmp(optionPairs.first.c_str(), L"Image") == 0)		ParseImage(optionPairs.second, shape, parser, section);
+			else if (_wcsicmp(optionPairs.first.c_str(), L"Rotation") == 0)		shape.m_Rotation = ParseRotation(optionPairs.second.c_str(), parser, shape);
+		}
+		Shapeidentifier = L"Shape" + std::to_wstring(++ShapeIndex);
+		const std::wstring& curShape = parser.ReadString(section, Shapeidentifier.c_str(), L"");
+	}
+	//Combine shapes post readOptions to make it possible for e.g Shape2 to be combined with Shape
+	for (auto& shape : m_Shapes)
+	{
+		if (shape.second.ShapeType == L"" || shape.second.ShapeOptions == L"" || !shape.second.m_Geometry) break;
+		CombineGeometry(shape.second);
+		D2D1_RECT_F bounds;
+		HRESULT hr = shape.second.m_Geometry->GetBounds(D2D1::Matrix3x2F::Identity(), &bounds);
+		if (SUCCEEDED(hr))
+		{
+			shape.second.m_X = bounds.left;
+			shape.second.m_Y = bounds.top;
+			shape.second.m_W = bounds.right - bounds.left + shape.second.m_OutlineWidth / 2;
+			shape.second.m_H = bounds.bottom - bounds.top + shape.second.m_OutlineWidth / 2;
+			if (bounds.right + shape.second.m_OutlineWidth / 2 > Meter::GetW() && !Meter::IsHidden() && !m_WDefined)
+				Meter::SetW(bounds.right + shape.second.m_OutlineWidth / 2);
+			if (bounds.bottom + shape.second.m_OutlineWidth / 2 > Meter::GetH() && !Meter::IsHidden() && !m_HDefined) {
+				Meter::SetH(bounds.bottom + shape.second.m_OutlineWidth / 2);
+				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+			}
+		}	
+	}
 
-	int i = 0;
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
 		Initialize();
 	}
 }
 
-/*
-** Overridden method. The Image meters need not to be bound on anything
-**
-*/
-void MeterVector::BindMeasures(ConfigParser& parser, const WCHAR* section)
-{
-	if (BindPrimaryMeasure(parser, section, true))
-	{
-		BindSecondaryMeasures(parser, section);
-	}
-}
 
-void MeterVector::ParseRect(VectorShape& shape, RECT& rect)
+
+bool MeterVector::ParseRect(VectorShape& shape, RECT& rect)
 {
 	D2D1_RECT_F geo_rect;
 	geo_rect.left = rect.left + shape.m_OutlineWidth / 2;
 	geo_rect.right = rect.right + rect.left;
 	geo_rect.top = rect.top + shape.m_OutlineWidth / 2;
 	geo_rect.bottom = rect.bottom + rect.top;
-
-
-
 	shape.m_Geometry = Gfx::Canvas::CreateRectangle(geo_rect);
 	shape.m_ShapeParsed = true;
-
+	return true;
 }
 
 
@@ -255,7 +222,6 @@ bool MeterVector::ParseRoundedRect(VectorShape& shape, LPCWSTR option, ConfigPar
 	rect.rect.bottom = parser.ParseDouble(Tokens[3].c_str(), 0) + rect.rect.top;
 	rect.radiusX = parser.ParseDouble(Tokens[4].c_str(), 5);
 	rect.radiusY = parser.ParseDouble(Tokens[5].c_str(), 5);
-
 
 	shape.m_Geometry = Gfx::Canvas::CreateRoundedRectangle(rect);
 	shape.m_ShapeParsed = true;
@@ -293,7 +259,6 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	double r = parser.ParseDouble(Tokens[2].c_str(), 0);
 	double startAngle = parser.ParseDouble(Tokens[3].c_str(), 0);
 	double sweepAngle = parser.ParseDouble(Tokens[4].c_str(), 0);
-
 	if (sweepAngle == 2 * PI)
 	{
 		D2D1_ELLIPSE ellipse;
@@ -306,14 +271,10 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		shape.m_ShapeParsed = true;
 		return true;
 	}
-
 	std::vector<Gfx::VectorPoint> points;
 
 	//Define start point in center
 	points.push_back(Gfx::VectorPoint(sx, sy));
-
-	//Start on circumference
-	//points.push_back(Gfx::VectorPoint(sx, sy));
 
 	float p1x = sx + r * std::cos(startAngle);
 	float p1y = sy + r * std::sin(startAngle);
@@ -337,14 +298,9 @@ bool MeterVector::ParsePie(VectorShape & shape, LPCWSTR option, ConfigParser & p
 	//Add arc to pie/sector shape
 	points.push_back(Gfx::VectorPoint(segment));
 
-
-
-
-
 	//Add shape and make edges connect, saves one line segment
 	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry(points, true);
 	shape.m_ShapeParsed = true;
-
 	return true;
 }
 bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & parser)
@@ -354,8 +310,6 @@ bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		return false;
 
 	D2D1_ARC_SEGMENT segment;
-
-
 	segment.rotationAngle = 0;
 	segment.sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
 	segment.arcSize = D2D1_ARC_SIZE_SMALL;
@@ -380,15 +334,11 @@ bool MeterVector::ParseArc(VectorShape & shape, LPCWSTR option, ConfigParser & p
 		segment.size.width = radius;
 		segment.size.height = radius;
 	}
-
-
 	if (Tokens.size() >= 7) segment.rotationAngle = parser.ParseDouble(Tokens[6].c_str(), 0);
 	if (Tokens.size() >= 8)segment.sweepDirection = (D2D1_SWEEP_DIRECTION)(parser.ParseInt(Tokens[7].c_str(), 0) == 0 ? 0 : 1);
 	if (Tokens.size() == 9)segment.arcSize = (D2D1_ARC_SIZE)(parser.ParseInt(Tokens[8].c_str(), 0) == 0 ? 0 : 1);
 	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry({ Gfx::VectorPoint(x1,y1), Gfx::VectorPoint(segment)}, shape.m_ConnectEdges);
 	shape.m_ShapeParsed = true;
-
-
 	return true;
 }
 bool MeterVector::ParseCurve(VectorShape & shape, LPCWSTR option, ConfigParser & parser)
@@ -396,8 +346,6 @@ bool MeterVector::ParseCurve(VectorShape & shape, LPCWSTR option, ConfigParser &
 	std::vector<std::wstring> Tokens = parser.Tokenize(option, L",");
 	if (Tokens.size() != 8)
 		return false;
-
-
 	double x1 = parser.ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double y1 = parser.ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
 	double x2 = parser.ParseDouble(Tokens[2].c_str(), 0);
@@ -420,23 +368,20 @@ bool MeterVector::ParseCurve(VectorShape & shape, LPCWSTR option, ConfigParser &
 
 bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& parser, const WCHAR * section)
 {
-
-
 	std::wstring ShapeDef = parser.ReadString(section, option, L"");
 	std::vector<std::wstring> shapePairs = parser.Tokenize(ShapeDef, L"|:");
 	bool first = true;
-
 	if (shapePairs.size() == 0)
 		return false;
 	std::vector<Gfx::VectorPoint> points;
 
 	double prevDx = 0;
 	double prevDy = 0;
-	D2D1_BEZIER_SEGMENT* prevSegment = NULL;
-
 	double prevX = 0;
 	double prevY = 0;
+	D2D1_BEZIER_SEGMENT* prevSegment = NULL;
 
+	//Used to calculate the bezier curves. The reason they get handled here is because they are affected by the next segment, and i need it to calculate the bezier position
 	auto bezierParser = [&](double nextX, double nextY, double nextdX, double nextdY)
 	{
 		if (prevSegment) {
@@ -467,21 +412,15 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			return false;
 		double x = parser.ParseDouble(options[0].c_str(), 0) + shape.m_OutlineWidth/2;
 		double y = parser.ParseDouble(options[1].c_str(), 0) + shape.m_OutlineWidth/2;
-
 		if (_wcsicmp(PathType, L"Start") == 0)
 		{
-
 			if (first) {
 				shape.m_X = x;
 				shape.m_Y = y;
-				//shape.m_W = 0;
-				//shape.m_H = 0;
 				points.push_back(Gfx::VectorPoint(x, y));
 			}
 			first = false;
-
 		}
-
 		else if (_wcsicmp(PathType, L"LineTo") == 0)
 		{
 			if (points.size() > 0)
@@ -497,8 +436,6 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 		}
 		else if (_wcsicmp(PathType, L"ArcTo") == 0)
 		{
-
-
 			if (points.size() > 0)
 			{
 				float angle = -std::atan2(y - prevY, x - prevX) + PI / 2;
@@ -514,19 +451,12 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			}
 
 			D2D1_ARC_SEGMENT segment;
-
-
 			segment.rotationAngle = 0;
 			segment.sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
 			segment.arcSize = D2D1_ARC_SIZE_SMALL;
 
-			double x1 = points[points.size()-1].m_x;
-			double y1 = points[points.size() - 1].m_y;
-			double x2 = x;
-			double y2 = y;
-
-			segment.point.x = x2;
-			segment.point.y = y2;
+			segment.point.x = x;
+			segment.point.y = y;
 			if (options.size() >= 4)
 			{
 				segment.size.width = parser.ParseDouble(options[2].c_str(), 0);
@@ -534,18 +464,16 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 			}
 			else
 			{
-				double dx = x2 - x1;
-				double dy = y2 - y1;
+				double dx = x - points[points.size() - 1].m_x;
+				double dy = y - points[points.size() - 1].m_y;
 				double radius = std::sqrtf(dx*dx + dy*dy) / 2;
 				segment.size.width = radius;
 				segment.size.height = radius;
 			}
 
-
 			if (options.size() >= 5) segment.rotationAngle = parser.ParseDouble(options[4].c_str(), 0);
 			if (options.size() >= 6)segment.sweepDirection = (D2D1_SWEEP_DIRECTION)(parser.ParseInt(options[5].c_str(), 0) == 0 ? 0 : 1);
 			if (options.size() == 7)segment.arcSize = (D2D1_ARC_SIZE)(parser.ParseInt(options[6].c_str(), 0) == 0 ? 0 : 1);
-
 
 			points.push_back(Gfx::VectorPoint(segment));
 		}
@@ -553,9 +481,6 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 		{
 			if (options.size() > 6)
 				return false;
-
-
-
 			D2D1_BEZIER_SEGMENT* segment = new D2D1_BEZIER_SEGMENT();
 			segment->point3.x = x;
 			segment->point3.y = y;
@@ -566,7 +491,6 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				segment->point2.x = parser.ParseDouble(options[4].c_str(), 0);
 				segment->point2.y = parser.ParseDouble(options[5].c_str(), 0);
 				points.push_back(Gfx::VectorPoint(*segment));
-
 				prevDx = segment->point2.x;
 				prevDy = segment->point2.y;
 			}
@@ -578,9 +502,8 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				points.push_back(Gfx::VectorPoint(segment2));
 
 			}
-			else {
+			else 
 				if (points.size() > 0)
-				{
 					if (prevSegment) {
 						double dx = -(x - prevX) / 3*2;
 						double dy = -(y - prevY) / 3*2;
@@ -589,8 +512,8 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 						prevDx = dx;
 						prevDy = dy;
 					}
-				}
-			}
+				
+			
 			if (prevSegment) {
 				delete prevSegment;
 				prevSegment = NULL;
@@ -604,12 +527,10 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 				shape.m_Y = y;
 				points.push_back(Gfx::VectorPoint(0, 0));
 			}
-
 			first = false;
 		}
 		prevX = x;
 		prevY = y;
-
 	}
 
 	if (prevSegment)
@@ -618,8 +539,6 @@ bool MeterVector::ParseCustom(VectorShape& shape, LPCWSTR option, ConfigParser& 
 	if (first)
 		return false;
 	shape.m_Geometry = Gfx::Canvas::CreateCustomGeometry(points, shape.m_ConnectEdges);
-
-	
 	shape.m_ShapeParsed = true;
 	return true;
 }
@@ -671,7 +590,6 @@ Microsoft::WRL::ComPtr<ID2D1Geometry> MeterVector::CombineShapes(VectorShape& sh
 		shape1.m_Geometry->CombineWithGeometry(shape->m_Geometry.Get(), mode, NULL, sink.Get());
 	}
 	sink->Close();
-
 	return pathGeometry;
 }
 /*
@@ -682,81 +600,22 @@ TintedImage* MeterVector::LoadVectorImage(const std::wstring imageName, const WC
 {
 	if (m_Images.find(imageName) == m_Images.end()) {
 		m_Images[imageName] = std::make_unique<TintedImage>(L"ImageName", nullptr, false, m_Skin);
-
 	}
 	m_Images[imageName]->ReadFromArray(parser, OptionArray);
-
 	TintedImage* image = m_Images[imageName].get();
 	image->LoadImage(imageName.c_str(), false);
 
 	if (image->IsLoaded())
 	{
-
 		Gdiplus::Bitmap* bitmap = image->GetImage();
-
-		int imageW = bitmap->GetWidth();
-		int imageH = bitmap->GetHeight();
-
-		shape.m_ImageW = imageW;
-		shape.m_ImageH = imageH;
+		shape.m_ImageW = bitmap->GetWidth();
+		shape.m_ImageH = bitmap->GetHeight();
 		return m_Images[imageName].get();
 	}
 	return nullptr;
 }
 
-std::vector<std::wstring> MeterVector::CustomTokenize(const std::wstring& str, const std::wstring& delimiters)
-{
-	std::vector<std::wstring> tokens;
 
-	size_t lastPos, pos = 0;
-	do
-	{
-		lastPos = str.find_first_not_of(delimiters, pos);
-		if (lastPos == std::wstring::npos) break;
-
-		pos = str.find_first_of(delimiters, lastPos + 1);
-		std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
-
-		size_t pos2 = token.find_first_not_of(L" \t\r\n");
-		//If a token fix was needed, then are the pos one token off, just needed to keep it right
-		bool offsett = false;
-		if (pos2 != std::wstring::npos)
-		{
-			//Check wether it's even needed to try combine mathematic expressions
-			if (token.find(L'(') != std::wstring::npos || token.find(L'[') != std::wstring::npos)
-			{
-				//Add the next token while the order of ( and ), and [ and ] are still uneven 
-				while (std::count(token.begin(), token.end(), L'(') != std::count(token.begin(), token.end(), L')') &&
-					std::count(token.begin(), token.end(), L'[') != std::count(token.begin(), token.end(), L']') &&
-					pos != std::wstring::npos && lastPos != std::wstring::npos)
-				{
-					lastPos = str.find_first_not_of(delimiters, pos);
-					if (lastPos == std::wstring::npos) break;
-					pos = str.find_first_of(delimiters, lastPos + 1);
-					token += str.at(lastPos - 1) + str.substr(lastPos, pos - lastPos);
-					if (pos == std::wstring::npos) break;
-					++pos;
-					offsett = true;
-				}
-			}
-			size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
-			if (pos2 != 0 || lastPos2 != (token.size() - 1))
-			{
-				// Trim white-space
-				token.assign(token, pos2, lastPos2 - pos2 + 1);
-			}
-			tokens.push_back(token);
-		}
-
-		if (pos == std::wstring::npos) break;
-		if (!offsett)
-			++pos;
-	} while (true);
-
-	return tokens;
-}
-
-CreateCustomOptionArray(c_CusomOptionArray);
 void MeterVector::ParseImage(std::wstring options, VectorShape& shape, ConfigParser& parser, const WCHAR* section)
 {
 	std::vector<std::wstring> optionTokens = CustomTokenize(options.c_str(), L",");
@@ -776,7 +635,6 @@ void MeterVector::ParseImage(std::wstring options, VectorShape& shape, ConfigPar
 	for (int id = 0; id < imageOptionPairs.size(); id++) {
 		std::wstring& currentOption = imageOptionPairs[id];
 		if (imageOptionPairs.size() <= id + 1) break;
-
 		if (_wcsicmp(currentOption.c_str(), L"Alpha") == 0) { c_CusomOptionArray[TintedImage::OptionIndexImageAlpha] = imageOptionPairs[++id].c_str(); }
 		else if (_wcsicmp(currentOption.c_str(), L"Path") == 0) {
 			if (imageOptionPairs.size() <= id + 2) break;
@@ -880,26 +738,19 @@ void MeterVector::ParseStrokeStyle(std::wstring options, VectorShape& shape, Con
 		for (int id = 0; id < dashes.size(); id++)
 			shape.m_Dashes.push_back(parser.ParseDouble(dashes[id].c_str(), 0));
 	}
-	if (StrokeOptions.size() < nextIt + 2) return;
-	std::wstring option = StrokeOptions[++nextIt];
-	if (_wcsicmp(option.c_str(), L"Flat") == 0) shape.m_StrokeProperties.startCap = D2D1_CAP_STYLE_FLAT;
-	else if (_wcsicmp(option.c_str(), L"Square") == 0) shape.m_StrokeProperties.startCap = D2D1_CAP_STYLE_SQUARE;
-	else if (_wcsicmp(option.c_str(), L"Round") == 0) shape.m_StrokeProperties.startCap = D2D1_CAP_STYLE_ROUND;
-	else if (_wcsicmp(option.c_str(), L"Triangle") == 0) shape.m_StrokeProperties.startCap = D2D1_CAP_STYLE_TRIANGLE;
-	if (StrokeOptions.size() < nextIt + 2) return;
-	option = StrokeOptions[++nextIt];
-	if (_wcsicmp(option.c_str(), L"Flat") == 0) shape.m_StrokeProperties.endCap = D2D1_CAP_STYLE_FLAT;
-	else if (_wcsicmp(option.c_str(), L"Square") == 0) shape.m_StrokeProperties.endCap = D2D1_CAP_STYLE_SQUARE;
-	else if (_wcsicmp(option.c_str(), L"Round") == 0) shape.m_StrokeProperties.endCap = D2D1_CAP_STYLE_ROUND;
-	else if (_wcsicmp(option.c_str(), L"Triangle") == 0) shape.m_StrokeProperties.endCap = D2D1_CAP_STYLE_TRIANGLE;
-	if (StrokeOptions.size() < nextIt + 2) return;
-	option = StrokeOptions[++nextIt];
-	if (_wcsicmp(option.c_str(), L"Flat") == 0) shape.m_StrokeProperties.dashCap = D2D1_CAP_STYLE_FLAT;
-	else if (_wcsicmp(option.c_str(), L"Square") == 0) shape.m_StrokeProperties.dashCap = D2D1_CAP_STYLE_SQUARE;
-	else if (_wcsicmp(option.c_str(), L"Round") == 0) shape.m_StrokeProperties.dashCap = D2D1_CAP_STYLE_ROUND;
-	else if (_wcsicmp(option.c_str(), L"Triangle") == 0) shape.m_StrokeProperties.dashCap = D2D1_CAP_STYLE_TRIANGLE;
-	if (StrokeOptions.size() < nextIt + 2) return;
-	option = StrokeOptions[++nextIt];
+	std::wstring option;
+	D2D1_CAP_STYLE* properties[3];
+	properties[0] = &shape.m_StrokeProperties.startCap;
+	properties[1] = &shape.m_StrokeProperties.endCap;
+	properties[2] = &shape.m_StrokeProperties.dashCap;
+	for (int i = 0; i < 3; i++) {
+		if (StrokeOptions.size() < nextIt + 2) return;
+		option = StrokeOptions[++nextIt];
+		if (_wcsicmp(option.c_str(), L"Flat") == 0) *properties[1] = D2D1_CAP_STYLE_FLAT;
+		else if (_wcsicmp(option.c_str(), L"Square") == 0) *properties[1] = D2D1_CAP_STYLE_SQUARE;
+		else if (_wcsicmp(option.c_str(), L"Round") == 0) *properties[1] = D2D1_CAP_STYLE_ROUND;
+		else if (_wcsicmp(option.c_str(), L"Triangle") == 0) *properties[1] = D2D1_CAP_STYLE_TRIANGLE;
+	}
 	if (_wcsicmp(option.c_str(), L"Miter") == 0) shape.m_StrokeProperties.lineJoin = D2D1_LINE_JOIN_MITER;
 	else if (_wcsicmp(option.c_str(), L"Bevel") == 0) shape.m_StrokeProperties.lineJoin = D2D1_LINE_JOIN_BEVEL;
 	else if (_wcsicmp(option.c_str(), L"Round") == 0) shape.m_StrokeProperties.lineJoin = D2D1_LINE_JOIN_ROUND;
@@ -913,6 +764,88 @@ void MeterVector::ParseStrokeStyle(std::wstring options, VectorShape& shape, Con
 
 
 }
+
+double MeterVector::ParseRotation(const LPCWSTR& string, ConfigParser& parser, VectorShape& shape)
+{
+	std::vector<std::wstring> tokens = CustomTokenize(string, L",");
+	double rotation = 0;
+	if (tokens.size() > 0)  rotation = parser.ParseDouble(tokens[0].c_str(), 0);
+	if (tokens.size() > 2) {
+		shape.m_RotationCenter = ParsePoint((tokens[1] + L"," + tokens[2]).c_str(), parser, FLT_MIN);
+		if (shape.m_RotationCenter.x == FLT_MIN) shape.m_RotationCenter.x = shape.m_W/2;
+		if (shape.m_RotationCenter.y == FLT_MIN) shape.m_RotationCenter.y = shape.m_H/2;
+	}
+	else {
+		shape.m_RotationCenter.x = shape.m_W/2;
+		shape.m_RotationCenter.y = shape.m_H/2;
+	}
+	return rotation;
+}
+/*
+** Overridden method. The Vector meters need not to be bound on anything
+**
+*/
+void MeterVector::BindMeasures(ConfigParser& parser, const WCHAR* section)
+{
+	if (BindPrimaryMeasure(parser, section, true))
+	{
+		BindSecondaryMeasures(parser, section);
+	}
+}
+
+//Here are the functions that could be moved to ConfigParser:
+std::vector<std::wstring> MeterVector::CustomTokenize(const std::wstring& str, const std::wstring& delimiters)
+{
+	std::vector<std::wstring> tokens;
+
+	size_t lastPos, pos = 0;
+	do
+	{
+		lastPos = str.find_first_not_of(delimiters, pos);
+		if (lastPos == std::wstring::npos) break;
+
+		pos = str.find_first_of(delimiters, lastPos + 1);
+		std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
+
+		size_t pos2 = token.find_first_not_of(L" \t\r\n");
+		//If a token fix was needed, then are the pos one token off, just needed to keep it right
+		bool offsett = false;
+		if (pos2 != std::wstring::npos)
+		{
+			//Check wether it's even needed to try combine mathematic expressions
+			if (token.find(L'(') != std::wstring::npos || token.find(L'[') != std::wstring::npos)
+			{
+				//Add the next token while the order of ( and ), and [ and ] are still uneven 
+				while (std::count(token.begin(), token.end(), L'(') != std::count(token.begin(), token.end(), L')') &&
+					std::count(token.begin(), token.end(), L'[') != std::count(token.begin(), token.end(), L']') &&
+					pos != std::wstring::npos && lastPos != std::wstring::npos)
+				{
+					lastPos = str.find_first_not_of(delimiters, pos);
+					if (lastPos == std::wstring::npos) break;
+					pos = str.find_first_of(delimiters, lastPos + 1);
+					token += str.at(lastPos - 1) + str.substr(lastPos, pos - lastPos);
+					if (pos == std::wstring::npos) break;
+					++pos;
+					offsett = true;
+				}
+			}
+			size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
+			if (pos2 != 0 || lastPos2 != (token.size() - 1))
+			{
+				// Trim white-space
+				token.assign(token, pos2, lastPos2 - pos2 + 1);
+			}
+			tokens.push_back(token);
+		}
+
+		if (pos == std::wstring::npos) break;
+		if (!offsett)
+			++pos;
+	} while (true);
+
+	return tokens;
+}
+
 D2D1_POINT_2F MeterVector::ParsePoint(const LPCWSTR& string, ConfigParser& parser, double defaultVal)
 {
 	double x = defaultVal, y = defaultVal;
@@ -966,21 +899,4 @@ D2D1_SIZE_F MeterVector::ParseSize(const LPCWSTR& string, ConfigParser& parser, 
 {
 	D2D1_POINT_2F point = ParsePoint(string, parser, defaultVal);
 	return D2D1::SizeF(point.x, point.y);
-}
-
-double MeterVector::ParseRotation(const LPCWSTR& string, ConfigParser& parser, VectorShape& shape)
-{
-	std::vector<std::wstring> tokens = CustomTokenize(string, L",");
-	double rotation = 0;
-	if (tokens.size() > 0)  rotation = parser.ParseDouble(tokens[0].c_str(), 0);
-	if (tokens.size() > 2) {
-		shape.m_RotationCenter = ParsePoint((tokens[1] + L"," + tokens[2]).c_str(), parser, FLT_MIN);
-		if (shape.m_RotationCenter.x == FLT_MIN) shape.m_RotationCenter.x = shape.m_W/2;
-		if (shape.m_RotationCenter.y == FLT_MIN) shape.m_RotationCenter.y = shape.m_H/2;
-	}
-	else {
-		shape.m_RotationCenter.x = shape.m_W/2;
-		shape.m_RotationCenter.y = shape.m_H/2;
-	}
-	return rotation;
 }
