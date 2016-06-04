@@ -674,14 +674,14 @@ void MeterVector::ParseGradient(std::wstring options, VectorShape& shape, Config
 
 	shape.m_GradientStops.clear();
 	std::wstring GradientStopsOption = parser.ReadString(section, GradientStops.c_str(), L"");
-	std::vector<std::wstring> stops = CustomTokenize(GradientStopsOption, L"|:");
+	std::vector<std::wstring> stops = CustomTokenize(GradientStopsOption, L"|;");
 	bool foundzero = false;
 	for (int id = 0; id < stops.size(); id++) {
 		std::wstring& currentOption = stops[id];
-		if (stops.size() <= id + 1) break;
-		double position = parser.ParseDouble(currentOption.c_str(), -1);
+		if (stops.size() < id + 2) break; //Partial gradient definition, or something else went wrong
+		double position = parser.ParseDouble(stops[++id].c_str(), -1);
 		if (position == 0) foundzero = true;
-		Gdiplus::Color color = parser.ParseColor(stops[++id].c_str());
+		Gdiplus::Color color = parser.ParseColor(currentOption.c_str());
 		shape.m_GradientStops.push_back(D2D1::GradientStop(position, D2D1::ColorF(color.GetR() / 255.0, color.GetG() / 255.0, color.GetB() / 255.0, color.GetA() / 255.0)));
 	}
 
