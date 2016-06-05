@@ -27,9 +27,9 @@ namespace Gfx {
 			D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES m_RadialProperties;
 		} m_GradientProperties;
 		enum BrushType {
+			Solid,
 			Linear,
-			Radial,
-			Solid
+			Radial
 		} m_BrushType;
 		bool m_UseDashes = false;
 		std::vector<float> m_Dashes;
