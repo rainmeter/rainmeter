@@ -9,7 +9,8 @@ namespace Gfx {
 			m_FillColor(Gdiplus::Color::White),
 			m_GradientStops(),
 			m_GradientProperties(),
-			m_StrokeProperties()
+			m_StrokeProperties(),
+			m_BrushType()
 		{}
 		enum GeometryType {
 			Line,

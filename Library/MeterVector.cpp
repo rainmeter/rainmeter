@@ -691,8 +691,8 @@ void MeterVector::ParseGradient(std::wstring options, VectorShape& shape, Config
 	nextIt += 2;
 	if (shape.m_BrushType == shape.Linear) point = &shape.m_GradientProperties.m_LinearProperties.startPoint;
 	else if (shape.m_BrushType == shape.Radial) point = &shape.m_GradientProperties.m_RadialProperties.center;
-	point->x = shape.m_X + shape.m_W * point1.x - GetX();
-	point->y = shape.m_Y + shape.m_H * point1.y - GetY();
+	point->x = shape.m_X + shape.m_W * point1.x;
+	point->y = shape.m_Y + shape.m_H * point1.y;
 
 	if (GradientOptions.size() < nextIt + 3) return;
 	D2D1_POINT_2F point2 = ParsePoint((GradientOptions[nextIt+1] + L"," + GradientOptions[nextIt+2]).c_str(), parser, 0);
@@ -703,8 +703,8 @@ void MeterVector::ParseGradient(std::wstring options, VectorShape& shape, Config
 	point->y = shape.m_H * point2.y;
 	if (shape.m_BrushType == shape.Linear)
 	{
-		point->x += shape.m_X - GetX();
-		point->y += shape.m_Y - GetY();
+		point->x += shape.m_X;
+		point->y += shape.m_Y;
 	}
 	if (shape.m_BrushType == shape.Radial) {
 		if (GradientOptions.size() < nextIt + 3) return;
