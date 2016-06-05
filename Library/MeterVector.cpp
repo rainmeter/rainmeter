@@ -623,13 +623,13 @@ void MeterVector::ParseImage(std::wstring options, VectorShape& shape, ConfigPar
 
 	shape.m_ImageDstRect = Gdiplus::Rect(shape.m_X, shape.m_Y, shape.m_W, shape.m_H);
 
-	int next = 2;
+	int next = 1;
 	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.X = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_X);
 	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Y = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_Y);
 	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Width = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_W);
 	if (optionTokens.size() >= next + 1) shape.m_ImageDstRect.Height = parser.ParseDouble(optionTokens[next++].c_str(), shape.m_H);
 
-	std::wstring imageOptions = parser.ReadString(section, options.c_str(), L"");
+	std::wstring imageOptions = parser.ReadString(section, optionTokens[0].c_str(), L"");
 	std::vector<std::wstring> imageOptionPairs = CustomTokenize(imageOptions, L"|:");
 	std::wstring imagePath = L"";
 	for (int id = 0; id < imageOptionPairs.size(); id++) {
