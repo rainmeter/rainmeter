@@ -70,6 +70,7 @@
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
+    <ClInclude Include="Gfx\Shape.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
     <ClInclude Include="Gfx\TextFormatD2D.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h" />

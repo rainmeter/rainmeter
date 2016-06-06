@@ -563,6 +563,34 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 	bitmapLock->Release();
 }
 
+Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> Canvas::CreateRectangle(D2D1_RECT_F rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+
+void Canvas::DrawGeometry(const Shape & shape, D2D1_MATRIX_3X2_F & transform)
+{
+	if (!BeginTargetDraw()) return;
+
+	D2D1_MATRIX_3X2_F worldTransform;
+	m_Target->GetTransform(&worldTransform);
+	m_Target->SetTransform(transform * worldTransform);
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_FillColor), solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr)) {
+		if (shape.m_FillColor.GetA() > 0)
+			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
+
+		solidBrush->SetColor(ToColorF(shape.m_OutlineColor));
+		if (shape.m_OutlineColor.GetA() > 0)
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_OutlineWidth);
+	}
+	solidBrush.Reset();
+	m_Target->SetTransform(worldTransform);
+}
+
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	if (!m_Target)  // Use GDI+ if D2D render target has not been created.

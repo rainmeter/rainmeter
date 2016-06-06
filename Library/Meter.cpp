@@ -17,6 +17,7 @@
 #include "MeterRoundLine.h"
 #include "MeterRotator.h"
 #include "MeterButton.h"
+#include "MeterGeometry.h"
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
@@ -416,6 +417,10 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"BUTTON", meter) == 0)
 	{
 		return new MeterButton(skin, name);
+	}
+	else if (_wcsicmp(L"GEOMETRY", meter) == 0)
+	{
+		return new MeterGeometry(skin, name);
 	}
 
 	LogErrorF(skin, L"Meter=%s is not valid in [%s]", meter, name);

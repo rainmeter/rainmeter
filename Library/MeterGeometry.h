@@ -1,0 +1,68 @@
+#pragma once
+#ifndef __METERGEOMETRY_H__
+#define __METERGEOMETRY_H__
+
+#include "Meter.h"
+#include <vector>
+#include "..\Common\Gfx\Shape.h"
+
+class MeterGeometry :
+	public Meter
+{
+public:
+	MeterGeometry(Skin* skin, const WCHAR* name);
+	~MeterGeometry();
+
+	MeterGeometry(const MeterGeometry& other) = delete;
+	MeterGeometry& operator=(MeterGeometry other) = delete;
+
+	virtual UINT GetTypeID() { return TypeID<MeterGeometry>(); }
+
+	virtual void Initialize();
+	virtual bool Update();
+	virtual bool Draw(Gfx::Canvas& canvas);
+
+protected:
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+
+	//virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
+
+private:
+	struct GeometryShape : Gfx::Shape {
+		GeometryShape() : 
+			m_Rotation(),
+			m_RotationCenter(),
+			m_Skew(),
+			m_Scale(D2D1::SizeF(1, 1)),
+			m_Offset()
+
+		{}
+
+		double m_Rotation;
+		D2D1_POINT_2F m_RotationCenter;
+		D2D1_POINT_2F m_Skew;
+		D2D1_SIZE_F m_Scale;
+		D2D1_SIZE_F m_Offset;
+
+		D2D1_RECT_F m_Bounds;
+	};
+	bool ParseShape(GeometryShape & shape, const LPCWSTR& optionName, const LPCWSTR& optionValue);
+	bool ReplaceShapeOption(GeometryShape & shape, const LPCWSTR& optionName, const LPCWSTR& optionValue);
+
+	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters);
+	D2D1_POINT_2F ParsePoint(const LPCWSTR& string, double defaultVal);
+	D2D1_SIZE_F ParseSize(const LPCWSTR& string, double defaultVal);
+	bool ContainsMeasures(const std::wstring& str);
+	bool IsPostOption(const LPCWSTR& option);
+	bool IsShape(const LPCWSTR& option);
+
+	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRect(GeometryShape& shape, RECT& rect);
+	double ParseRotation(const LPCWSTR& string, double defaultValue, GeometryShape& shape);
+
+	std::map<std::wstring, GeometryShape> m_Shapes;
+	std::map<const std::wstring, std::pair<std::wstring, std::wstring>> m_MeasureOptions;
+	bool m_NeedsRedraw;
+};
+
+#endif

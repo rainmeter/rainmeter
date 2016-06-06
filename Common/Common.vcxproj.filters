@@ -176,6 +176,9 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
+    <ClInclude Include="Gfx\Shape.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

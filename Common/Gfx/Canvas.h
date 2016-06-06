@@ -20,6 +20,7 @@
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include "Shape.h";
 
 namespace Gfx {
 
@@ -74,8 +75,13 @@ public:
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
-	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
+	//Needed to create shapes in meters, change it if you want. If you find a simpler way to expose this with templates etc
+	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(D2D1_RECT_F rectangle);
 
+	void DrawGeometry(const Shape& shape, D2D1_MATRIX_3X2_F& transform);
+
+	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
+	 
 private:
 	friend class Canvas;
 	friend class FontCollectionD2D;
