@@ -1,7 +1,17 @@
-#include "stdafx.h"
+/* Copyright (C) 2013 Rainmeter Project Developers
+*
+* This Source Code Form is subject to the terms of the GNU General Public
+* License; either version 2 of the License, or (at your option) any later
+* version. If a copy of the GPL was not distributed with this file, You can
+* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+#include "StdAfx.h"
 #include "MeterGeometry.h"
 #include "Logger.h"
 
+D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
+{
+	return D2D1::ColorF(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
+}
 
 MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes(),
@@ -9,7 +19,6 @@ MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_NeedsRedraw(false)
 {
 }
-
 
 MeterGeometry::~MeterGeometry()
 {
@@ -44,9 +53,9 @@ bool MeterGeometry::ParseShape(GeometryShape & shape, const LPCWSTR & optionName
 
 bool MeterGeometry::ReplaceShapeOption(GeometryShape & shape, const LPCWSTR & optionName, const LPCWSTR & optionValue)
 {
-	if (_wcsicmp(optionName, L"FillColor") == 0)			shape.m_FillColor = ConfigParser::ParseColor(optionValue);
+	if (_wcsicmp(optionName, L"FillColor") == 0)			shape.m_FillColor = ToColorF(ConfigParser::ParseColor(optionValue));
 	else if (_wcsicmp(optionName, L"OutlineWidth") == 0)	shape.m_OutlineWidth = (float)ConfigParser::ParseDouble(optionValue, 1.0f);
-	else if (_wcsicmp(optionName, L"OutlineColor") == 0)	shape.m_OutlineColor = ConfigParser::ParseColor(optionValue);
+	else if (_wcsicmp(optionName, L"OutlineColor") == 0)	shape.m_OutlineColor = ToColorF(ConfigParser::ParseColor(optionValue));
 	else if (_wcsicmp(optionName, L"Offset") == 0)			shape.m_Offset = ParseSize(optionName, 0);
 	else if (_wcsicmp(optionName, L"Scale") == 0)			shape.m_Scale = ParseSize(optionName, 1);
 	else if (_wcsicmp(optionName, L"Skew") == 0)			shape.m_Skew = ParsePoint(optionName, 0);
@@ -197,7 +206,7 @@ Microsoft::WRL::ComPtr<ID2D1Geometry> MeterGeometry::ParseRect(GeometryShape& sh
 	return Gfx::Canvas::CreateRectangle(geo_rect);
 }
 
-double MeterGeometry::ParseRotation(const LPCWSTR& string, double defaultValue, GeometryShape& shape)
+double MeterGeometry::ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape)
 {
 	std::vector<std::wstring> tokens = CustomTokenize(string, L",");
 	double rotation = 0;

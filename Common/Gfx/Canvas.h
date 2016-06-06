@@ -33,6 +33,7 @@ public:
 
 	static bool Initialize();
 	static void Finalize();
+	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(const D2D1_RECT_F& rectangle);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -74,9 +75,6 @@ public:
 	void DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
-
-	//Needed to create shapes in meters, change it if you want. If you find a simpler way to expose this with templates etc
-	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(D2D1_RECT_F rectangle);
 
 	void DrawGeometry(const Shape& shape, D2D1_MATRIX_3X2_F& transform);
 

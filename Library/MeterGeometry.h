@@ -1,6 +1,5 @@
-#pragma once
-#ifndef __METERGEOMETRY_H__
-#define __METERGEOMETRY_H__
+#ifndef RM_LIBRARY_METERGEOMETRY_H_
+#define RM_LIBRARY_METERGEOMETRY_H_
 
 #include "Meter.h"
 #include <vector>
@@ -11,12 +10,12 @@ class MeterGeometry :
 {
 public:
 	MeterGeometry(Skin* skin, const WCHAR* name);
-	~MeterGeometry();
+	virtual ~MeterGeometry();
 
 	MeterGeometry(const MeterGeometry& other) = delete;
 	MeterGeometry& operator=(MeterGeometry other) = delete;
 
-	virtual UINT GetTypeID() { return TypeID<MeterGeometry>(); }
+	UINT GetTypeID() override { return TypeID<MeterGeometry>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
@@ -25,8 +24,6 @@ public:
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
-
-	//virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 
 private:
 	struct GeometryShape : Gfx::Shape {
@@ -58,7 +55,7 @@ private:
 	bool IsShape(const LPCWSTR& option);
 
 	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRect(GeometryShape& shape, RECT& rect);
-	double ParseRotation(const LPCWSTR& string, double defaultValue, GeometryShape& shape);
+	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);
 
 	std::map<std::wstring, GeometryShape> m_Shapes;
 	std::map<const std::wstring, std::pair<std::wstring, std::wstring>> m_MeasureOptions;
