@@ -86,13 +86,14 @@ void MeterGeometry::ReadOptions(ConfigParser & parser, const WCHAR * section)
 	m_Shapes.clear();
 	m_MeasureOptions.clear();
 	size_t currentShapeId = 1;
+	std::wstring shapeName = L"Shape";
 	std::wstring shapeOption = parser.ReadString(section, L"Shape", L"");
 	std::map<LPCWSTR, std::pair<LPCWSTR, LPCWSTR>> postOptions;
 	if (!shapeOption.empty()) 
 		do
 		{
 			std::vector<std::wstring> shapeTokens = CustomTokenize(shapeOption.c_str(), L"|:");
-			m_Shapes.insert(std::pair<LPCWSTR, GeometryShape>(shapeOption.c_str(), GeometryShape()));
+			m_Shapes.insert(std::pair<LPCWSTR, GeometryShape>(shapeName.c_str(), GeometryShape()));
 			bool usingMeasures = false;
 			for (int optionId = 0; optionId < shapeTokens.size(); optionId++)
 			{
@@ -108,21 +109,22 @@ void MeterGeometry::ReadOptions(ConfigParser & parser, const WCHAR * section)
 				if (!usingMeasures) {
 					if (!IsShape(optionName.c_str())) {
 						if (!IsPostOption(optionName.c_str())) {
-							if (!ReplaceShapeOption(m_Shapes[shapeOption.c_str()], optionName.c_str(), optionValue.c_str()))
+							if (!ReplaceShapeOption(m_Shapes[shapeName.c_str()], optionName.c_str(), optionValue.c_str()))
 								break;
 						}
 						else
 							postOptions[shapeOption.c_str()] = std::pair<LPCWSTR, LPCWSTR>(optionName.c_str(), optionValue.c_str());
 					}
 					else
-						if (!ParseShape(m_Shapes[shapeOption.c_str()], optionName.c_str(), optionValue.c_str()))
+						if (!ParseShape(m_Shapes[shapeName.c_str()], optionName.c_str(), optionValue.c_str()))
 							break;
 				}
 				else
-					m_MeasureOptions[shapeOption.c_str()] = std::pair<std::wstring, std::wstring>(optionName, optionValue);
+					m_MeasureOptions[shapeName.c_str()].push_back(std::pair<std::wstring, std::wstring>(optionName, optionValue));
 				++optionId;
 			}
-			shapeOption = parser.ReadString(section, (L"Shape" + std::to_wstring(++currentShapeId)).c_str(), L"");
+			shapeName = L"Shape" + std::to_wstring(++currentShapeId);
+			shapeOption = parser.ReadString(section, shapeName.c_str(), L"");
 		} while (!shapeOption.empty());
 
 	for (const auto& option : postOptions)
@@ -143,18 +145,20 @@ bool MeterGeometry::Update()
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
-			for (const auto& option : m_MeasureOptions)
+			for (const auto& shape : m_MeasureOptions)
 			{
-				std::wstring optionValue = option.second.second;
-				bool replaced = ReplaceMeasures(optionValue);
-				if (replaced)
-					if (!IsShape(option.second.first.c_str())) {
-						if (!ReplaceShapeOption(m_Shapes[option.first], option.second.first.c_str(), optionValue.c_str()))
-							continue;
-					}
-					else
-						if (!ParseShape(m_Shapes[option.first], option.second.first.c_str(), optionValue.c_str()))
-							continue;
+				for (const auto& option : shape.second) {
+					std::wstring optionValue = option.second;
+					bool replaced = ReplaceMeasures(optionValue, AUTOSCALE::AUTOSCALE_OFF, 1.0, 6, false);
+					if (replaced)
+						if (!IsShape(option.first.c_str())) {
+							if (!ReplaceShapeOption(m_Shapes[shape.first], option.first.c_str(), optionValue.c_str()))
+								continue;
+						}
+						else
+							if (!ParseShape(m_Shapes[shape.first], option.first.c_str(), optionValue.c_str()))
+								continue;
+				}
 			}
 			return true;
 		}

@@ -65,7 +65,7 @@ private:
 	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);
 
 	std::map<std::wstring, GeometryShape> m_Shapes;
-	std::map<const std::wstring, std::pair<std::wstring, std::wstring>> m_MeasureOptions;
+	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureOptions;
 	bool m_NeedsRedraw;
 };
 
