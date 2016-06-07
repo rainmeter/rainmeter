@@ -37,14 +37,13 @@ bool MeterGeometry::ParseShape(GeometryShape & shape, const LPCWSTR & optionName
 	//Easy to do with a rectangle, but this will calculate the bounds of all shape types
 	if (shape.m_Shape) {
 		shape.m_Shape->GetBounds(D2D1::Matrix3x2F::Identity(), &shape.m_Bounds);
-		if (!m_WDefined && m_W < shape.m_Bounds.right + shape.m_OutlineWidth + GetWidthPadding()) {
-			m_W = shape.m_Bounds.right + shape.m_OutlineWidth + GetWidthPadding();
+		if (!m_WDefined && m_W < shape.m_Bounds.right + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetWidthPadding()) {
+			m_W = shape.m_Bounds.right + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetWidthPadding();
 			if (!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
-		float H = Meter::GetH();
-		if (!m_HDefined && m_H < shape.m_Bounds.bottom + shape.m_OutlineWidth + GetHeightPadding()) {
-			m_H = shape.m_Bounds.bottom + shape.m_OutlineWidth + GetHeightPadding();
+		if (!m_HDefined && m_H < shape.m_Bounds.bottom + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetHeightPadding()) {
+			m_H = shape.m_Bounds.bottom + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetHeightPadding();
 			if(!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
@@ -95,6 +94,9 @@ void MeterGeometry::ReadOptions(ConfigParser & parser, const WCHAR * section)
 			std::vector<std::wstring> shapeTokens = CustomTokenize(shapeOption.c_str(), L"|:");
 			m_Shapes.insert(std::pair<LPCWSTR, GeometryShape>(shapeName.c_str(), GeometryShape()));
 			bool usingMeasures = false;
+
+			std::wstring shapeType = L"", shapeParameters = L"";
+
 			for (int optionId = 0; optionId < shapeTokens.size(); optionId++)
 			{
 				if (shapeTokens.size() < optionId + 1) break; //not a pair
@@ -116,13 +118,20 @@ void MeterGeometry::ReadOptions(ConfigParser & parser, const WCHAR * section)
 							postOptions[shapeOption.c_str()] = std::pair<LPCWSTR, LPCWSTR>(optionName.c_str(), optionValue.c_str());
 					}
 					else
-						if (!ParseShape(m_Shapes[shapeName.c_str()], optionName.c_str(), optionValue.c_str()))
-							break;
+					{
+						
+						shapeType = optionName;
+						shapeParameters = optionValue;
+					}
 				}
 				else
 					m_MeasureOptions[shapeName.c_str()].push_back(std::pair<std::wstring, std::wstring>(optionName, optionValue));
 				++optionId;
 			}
+			if (shapeType.empty() || shapeParameters.empty())
+				break; //Invalid shape
+			if (!ParseShape(m_Shapes[shapeName.c_str()], shapeType.c_str(), shapeParameters.c_str()))
+				break;
 			shapeName = L"Shape" + std::to_wstring(++currentShapeId);
 			shapeOption = parser.ReadString(section, shapeName.c_str(), L"");
 		} while (!shapeOption.empty());
@@ -183,7 +192,7 @@ bool MeterGeometry::Draw(Gfx::Canvas & canvas)
 				D2D1::Matrix3x2F::Rotation(shape.second.m_Rotation, centerPoint) *
 
 				D2D1::Matrix3x2F::Skew(shape.second.m_Skew.x, shape.second.m_Skew.y, D2D1::Point2F(shape.second.m_Bounds.left, shape.second.m_Bounds.top)) *
-				D2D1::Matrix3x2F::Translation(shape.second.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) *
+				D2D1::Matrix3x2F::Translation(shape.second.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X + shape.second.m_Bounds.left, GetMeterRectPadding().Y + shape.second.m_Bounds.top)) *
 				D2D1::Matrix3x2F::Scale(shape.second.m_Scale, D2D1::Point2F(shape.second.m_Bounds.left, shape.second.m_Bounds.top))
 				);
 			canvas.DrawGeometry(shape.second, transform);
@@ -206,8 +215,8 @@ void MeterGeometry::BindMeasures(ConfigParser & parser, const WCHAR * section)
 Microsoft::WRL::ComPtr<ID2D1Geometry> MeterGeometry::ParseRect(GeometryShape& shape, RECT& rect)
 {
 	D2D1_RECT_F geo_rect = D2D1::RectF(rect.left, rect.top, rect.right + rect.left, rect.bottom + rect.top);
-	geo_rect.left += shape.m_OutlineWidth / 2;
-	geo_rect.top += shape.m_OutlineWidth / 2;
+	geo_rect.left += shape.m_OutlineWidth / 4;
+	geo_rect.top += shape.m_OutlineWidth / 4;
 	return Gfx::Canvas::CreateRectangle(geo_rect);
 }
 
