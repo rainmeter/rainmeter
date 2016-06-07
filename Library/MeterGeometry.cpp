@@ -38,12 +38,12 @@ bool MeterGeometry::ParseShape(GeometryShape & shape, const LPCWSTR & optionName
 	if (shape.m_Shape) {
 		shape.m_Shape->GetBounds(D2D1::Matrix3x2F::Identity(), &shape.m_Bounds);
 		if (!m_WDefined && m_W < shape.m_Bounds.right + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetWidthPadding()) {
-			m_W = shape.m_Bounds.right + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetWidthPadding();
+			m_W = std::ceil(shape.m_Bounds.right + shape.m_OutlineWidth / 4 * 3 + GetWidthPadding());
 			if (!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
 		if (!m_HDefined && m_H < shape.m_Bounds.bottom + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetHeightPadding()) {
-			m_H = shape.m_Bounds.bottom + std::ceilf(shape.m_OutlineWidth / 4 * 3) + GetHeightPadding();
+			m_H = std::ceil(shape.m_Bounds.bottom + shape.m_OutlineWidth / 4 * 3 + GetHeightPadding());
 			if(!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
@@ -99,7 +99,7 @@ void MeterGeometry::ReadOptions(ConfigParser & parser, const WCHAR * section)
 
 			for (int optionId = 0; optionId < shapeTokens.size(); optionId++)
 			{
-				if (shapeTokens.size() < optionId + 1) break; //not a pair
+				if (shapeTokens.size() < optionId + 2) break; //not a pair
 
 				std::wstring optionName = shapeTokens[optionId].c_str();
 				std::wstring optionValue = shapeTokens[optionId + 1].c_str();
@@ -192,7 +192,7 @@ bool MeterGeometry::Draw(Gfx::Canvas & canvas)
 				D2D1::Matrix3x2F::Rotation(shape.second.m_Rotation, centerPoint) *
 
 				D2D1::Matrix3x2F::Skew(shape.second.m_Skew.x, shape.second.m_Skew.y, D2D1::Point2F(shape.second.m_Bounds.left, shape.second.m_Bounds.top)) *
-				D2D1::Matrix3x2F::Translation(shape.second.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X + shape.second.m_Bounds.left, GetMeterRectPadding().Y + shape.second.m_Bounds.top)) *
+				D2D1::Matrix3x2F::Translation(shape.second.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) *
 				D2D1::Matrix3x2F::Scale(shape.second.m_Scale, D2D1::Point2F(shape.second.m_Bounds.left, shape.second.m_Bounds.top))
 				);
 			canvas.DrawGeometry(shape.second, transform);

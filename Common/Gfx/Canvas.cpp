@@ -574,6 +574,7 @@ void Canvas::DrawGeometry(const Shape & shape, D2D1_MATRIX_3X2_F & transform)
 {
 	if (!BeginTargetDraw()) return;
 
+	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);
 	m_Target->SetTransform(transform * worldTransform);
@@ -589,6 +590,7 @@ void Canvas::DrawGeometry(const Shape & shape, D2D1_MATRIX_3X2_F & transform)
 	}
 	solidBrush.Reset();
 	m_Target->SetTransform(worldTransform);
+	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 }
 
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
