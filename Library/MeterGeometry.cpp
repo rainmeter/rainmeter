@@ -37,14 +37,14 @@ bool MeterGeometry::ParseShape(GeometryShape & shape, const LPCWSTR & optionName
 	//Easy to do with a rectangle, but this will calculate the bounds of all shape types
 	if (shape.m_Shape) {
 		shape.m_Shape->GetBounds(D2D1::Matrix3x2F::Identity(), &shape.m_Bounds);
-		if (!m_WDefined && m_W < shape.m_Bounds.right + shape.m_OutlineWidth / 2 + GetWidthPadding()) {
-			m_W = shape.m_Bounds.right + shape.m_OutlineWidth / 2 + GetWidthPadding();
+		if (!m_WDefined && m_W < shape.m_Bounds.right + shape.m_OutlineWidth + GetWidthPadding()) {
+			m_W = shape.m_Bounds.right + shape.m_OutlineWidth + GetWidthPadding();
 			if (!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
 		float H = Meter::GetH();
-		if (!m_HDefined && m_H < shape.m_Bounds.bottom + shape.m_OutlineWidth / 2 + GetHeightPadding()) {
-			m_H = shape.m_Bounds.bottom + shape.m_OutlineWidth / 2 + GetHeightPadding();
+		if (!m_HDefined && m_H < shape.m_Bounds.bottom + shape.m_OutlineWidth + GetHeightPadding()) {
+			m_H = shape.m_Bounds.bottom + shape.m_OutlineWidth + GetHeightPadding();
 			if(!IsHidden())
 				m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
