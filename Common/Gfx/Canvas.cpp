@@ -570,29 +570,6 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 	bitmapLock->Release();
 }
 
-void Canvas::DrawGeometry(const Shape & shape, D2D1_MATRIX_3X2_F & transform)
-{
-	if (!BeginTargetDraw()) return;
-
-	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-	D2D1_MATRIX_3X2_F worldTransform;
-	m_Target->GetTransform(&worldTransform);
-	m_Target->SetTransform(transform * worldTransform);
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr)) {
-		if (shape.m_FillColor.a > 0)
-			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
-
-		solidBrush->SetColor(shape.m_OutlineColor);
-		if (shape.m_OutlineColor.a > 0)
-			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_OutlineWidth);
-	}
-	solidBrush.Reset();
-	m_Target->SetTransform(worldTransform);
-	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-}
-
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
@@ -610,6 +587,33 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	{
 		m_Target->FillRectangle(ToRectF(rect), solidBrush.Get());
 	}
+}
+
+void Canvas::DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform, bool antialias)
+{
+	if (!BeginTargetDraw()) return;
+
+	const auto originalAntialiasMode = m_Target->GetAntialiasMode();
+	if (antialias)
+		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+	D2D1_MATRIX_3X2_F worldTransform;
+	m_Target->GetTransform(&worldTransform);
+	m_Target->SetTransform(transform * worldTransform);
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr)) {
+		if (shape.m_FillColor.a > 0) {
+			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
+		}
+		solidBrush->SetColor(shape.m_OutlineColor);
+		if (shape.m_OutlineColor.a > 0) {
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_OutlineWidth);
+		}
+	}
+
+	m_Target->SetTransform(worldTransform);
+	m_Target->SetAntialiasMode(originalAntialiasMode);
 }
 
 }  // namespace Gfx

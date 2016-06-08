@@ -8,7 +8,8 @@
 #ifndef RM_GFX_SHAPE_H_
 #define RM_GFX_SHAPE_H_
 
-#include <gdiplus.h>
+#include <d2d1_1.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
@@ -27,5 +28,6 @@ struct Shape
 	D2D1_COLOR_F m_OutlineColor;
 };
 
-}
+} // Gfx
+
 #endif

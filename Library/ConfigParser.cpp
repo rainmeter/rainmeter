@@ -1209,7 +1209,7 @@ uint64_t ConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
 **
 */
 template <typename T>
-bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
+bool ConfigParser::ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 {
 	if (wcschr(string, L','))
 	{
@@ -1262,6 +1262,7 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 
 	return false;
 }
+template bool ConfigParser::ParseInt4<double>(LPCTSTR string, double& v1, double& v2, double& v3, double& v4);
 
 /*
 ** Helper method that parses the color values from the given string.

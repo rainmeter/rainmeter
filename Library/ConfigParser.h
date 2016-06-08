@@ -87,6 +87,9 @@ public:
 	static Gdiplus::ARGB ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);
+	template <typename T>
+	static bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4);
+
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }

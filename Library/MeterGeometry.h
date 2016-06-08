@@ -33,7 +33,8 @@ protected:
 	void BindMeasures(ConfigParser& parser, const WCHAR* section) override;
 
 private:
-	struct GeometryShape : Gfx::Shape {
+	struct GeometryShape : Gfx::Shape 
+	{
 		GeometryShape() : 
 			m_Rotation(),
 			m_RotationCenter(),
@@ -51,15 +52,16 @@ private:
 
 		D2D1_RECT_F m_Bounds;
 	};
-	bool ParseShape(GeometryShape & shape, const LPCWSTR& optionName, const LPCWSTR& optionValue);
-	bool ReplaceShapeOption(GeometryShape & shape, const LPCWSTR& optionName, const LPCWSTR& optionValue);
+	bool ParseShape(GeometryShape& shape, const WCHAR* optionName, const WCHAR* optionValue);
+	void UpdateSize(GeometryShape& shape);
+	bool ReplaceShapeOption(GeometryShape & shape, const WCHAR* optionName, const WCHAR* optionValue);
 
 	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters);
-	D2D1_POINT_2F ParsePoint(const LPCWSTR& string, double defaultVal);
-	D2D1_SIZE_F ParseSize(const LPCWSTR& string, double defaultVal);
+	D2D1_POINT_2F ParsePoint(const WCHAR* string, double defaultVal);
+	D2D1_SIZE_F ParseSize(const WCHAR* string, double defaultVal);
 	bool ContainsMeasures(const std::wstring& str);
-	bool IsPostOption(const LPCWSTR& option);
-	bool IsShape(const LPCWSTR& option);
+	bool IsPostOption(const WCHAR* option);
+	bool IsShape(const WCHAR* option);
 
 	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRect(GeometryShape& shape, RECT& rect);
 	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);

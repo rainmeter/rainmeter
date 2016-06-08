@@ -20,7 +20,7 @@
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
-#include "Shape.h";
+#include "Shape.h"
 
 namespace Gfx {
 
@@ -76,9 +76,8 @@ public:
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
-	void DrawGeometry(const Shape& shape, D2D1_MATRIX_3X2_F& transform);
-
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
+	void DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform, bool antialias);
 	 
 private:
 	friend class Canvas;
