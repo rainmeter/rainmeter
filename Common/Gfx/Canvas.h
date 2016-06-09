@@ -5,12 +5,14 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
+#pragma once
 #ifndef RM_GFX_CANVAS_H_
 #define RM_GFX_CANVAS_H_
 
 #include "FontCollectionD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/WICBitmapDIB.h"
+#include "GeometryShape.h"
 #include <memory>
 #include <string>
 #include <ole2.h>  // For Gdiplus.h.
@@ -20,6 +22,12 @@
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <vector>
+
+
+
+
+
 
 namespace Gfx {
 
@@ -74,7 +82,21 @@ public:
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
+	//Needed to create shapes in meters, change it if you want. If you find a simpler way to expose this with templates etc
+	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(D2D1_RECT_F rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> CreateRoundedRectangle(D2D1_ROUNDED_RECT rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> CreateEllipse(D2D1_ELLIPSE rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreatePathGeometry();
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges);
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CombineGeometry(ID2D1Geometry* geometry1, ID2D1Geometry* geometry2, D2D1_COMBINE_MODE mode);
+
+	void DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform);
+	void DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform);
+
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
+protected:
+	void DrawGeometryOutline(const GeometryShape& shape);
+	void DrawGeometryFill(const GeometryShape& shape);
 
 private:
 	friend class Canvas;

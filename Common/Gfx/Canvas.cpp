@@ -13,6 +13,8 @@
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Util.h"
 
+#include "../../Library/Logger.h"
+
 namespace {
 
 D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
@@ -88,6 +90,7 @@ bool Canvas::Initialize()
 
 		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
 		if (FAILED(hr)) return false;
+
 	}
 
 	return true;
@@ -161,7 +164,7 @@ bool Canvas::BeginTargetDraw()
 		SetTextAntiAliasing(m_TextAntiAliasing);
 
 		m_Target->BeginDraw();
-
+		
 		// Apply any transforms that occurred before creation of |m_Target|.
 		UpdateTargetTransform();
 
@@ -562,6 +565,243 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 
 	bitmapLock->Release();
 }
+
+
+Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> Canvas::CreateRectangle(D2D1_RECT_F rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+
+Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> Canvas::CreateRoundedRectangle(D2D1_ROUNDED_RECT rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateRoundedRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> Canvas::CreateEllipse(D2D1_ELLIPSE rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreateEllipseGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_Geometry);
+	return c_Geometry;
+}
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std::vector<VectorPoint>& points, bool ConnectEdges)
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = CreatePathGeometry();
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink = NULL;
+	HRESULT hr = c_Geometry->Open(&geometrySink);
+	if (FAILED(hr))
+		return nullptr;
+	geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING); 
+	geometrySink->BeginFigure(points[0].m_Geometry.lineSegment, D2D1_FIGURE_BEGIN_FILLED);
+	bool first = true;
+	for (const VectorPoint& point : points)
+	{
+		if (first)
+		{
+			first = false;
+			continue;
+		}
+		switch (point.m_type)
+		{
+		case GeometryShape::GeometryType::Line:
+			geometrySink->AddLine(point.m_Geometry.lineSegment);
+			break;
+		case GeometryShape::GeometryType::Arc:
+			geometrySink->AddArc(point.m_Geometry.arcSegment);
+			break;
+		case GeometryShape::GeometryType::Bezier:
+			geometrySink->AddBezier(point.m_Geometry.bezierSegment);
+			break;
+		case GeometryShape::GeometryType::QuadBezier:
+			geometrySink->AddQuadraticBezier(point.m_Geometry.quadBezierSegment);
+			break;
+		default:
+			break;
+		}
+	}
+	if(ConnectEdges)
+		geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	else
+		geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+	hr = geometrySink->Close();
+	return c_Geometry;
+}
+void Canvas::DrawGeometryOutline(const GeometryShape& shape)
+{
+	if (!BeginTargetDraw()) return;
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_OutlineColor), solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr)) {
+		hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_OutlineColor), solidBrush.GetAddressOf());
+		if (shape.m_UseDashes) {
+			Microsoft::WRL::ComPtr<ID2D1StrokeStyle> strokeStyle = nullptr;
+			hr = c_D2DFactory->CreateStrokeStyle(
+				shape.m_StrokeProperties,
+				shape.m_Dashes.data(),
+				shape.m_Dashes.size(),
+				strokeStyle.GetAddressOf()
+				);
+			if (SUCCEEDED(hr))
+				m_Target->DrawGeometry(shape.m_Geometry.Get(), solidBrush.Get(), shape.m_OutlineWidth, strokeStyle.Get());
+
+		}
+		else {
+			if (SUCCEEDED(hr))
+				m_Target->DrawGeometry(shape.m_Geometry.Get(), solidBrush.Get(), shape.m_OutlineWidth);
+		}
+	}
+	solidBrush.Reset();
+	
+}
+void Canvas::DrawGeometryFill(const GeometryShape& shape)
+{
+	if (!BeginTargetDraw()) return;
+	Microsoft::WRL::ComPtr<ID2D1Brush> brush = nullptr;
+	HRESULT hr;
+	if (shape.m_BrushType == shape.Solid) {
+		Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush = nullptr;
+		hr = m_Target->CreateSolidColorBrush(ToColorF(shape.m_FillColor), solidBrush.GetAddressOf());
+		if (SUCCEEDED(hr))
+			brush = solidBrush;
+		solidBrush.Reset();
+	}
+
+	// Create the ID2D1GradientStopCollection from a previously
+	// declared array of D2D1_GRADIENT_STOP structs.
+	if (shape.m_GradientStops.size() > 0) {
+		Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops = nullptr;
+		hr = m_Target->CreateGradientStopCollection(
+			shape.m_GradientStops.data(),
+			shape.m_GradientStops.size(),
+			D2D1_GAMMA_2_2,
+			D2D1_EXTEND_MODE_CLAMP,
+			pGradientStops.GetAddressOf()
+			);
+		if (SUCCEEDED(hr))
+			if (shape.m_BrushType == shape.Linear) {
+				Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> m_pLinearGradientBrush = nullptr;
+				if (SUCCEEDED(hr))
+				{
+					hr = m_Target->CreateLinearGradientBrush(
+						shape.m_GradientProperties.m_LinearProperties,
+						pGradientStops.Get(),
+						m_pLinearGradientBrush.GetAddressOf()
+						);
+					if (SUCCEEDED(hr))
+						brush = m_pLinearGradientBrush;
+				}
+				m_pLinearGradientBrush.Reset();
+			}
+			else if (shape.m_BrushType == shape.Radial)
+			{
+				Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radialBrush = nullptr;
+				if (SUCCEEDED(hr))
+				{
+					hr = m_Target->CreateRadialGradientBrush(
+						shape.m_GradientProperties.m_RadialProperties,
+						pGradientStops.Get(),
+						radialBrush.GetAddressOf()
+						);
+					if (SUCCEEDED(hr))
+						brush = radialBrush;
+				}
+				radialBrush.Reset();
+			}
+		pGradientStops.Reset();
+	}
+	if (brush)
+		m_Target->FillGeometry(shape.m_Geometry.Get(), brush.Get());
+	
+}
+/*
+Wanted to do this, but i had to open m_Target and D2D1Factory, which i really don't want to... if anyone has a better solution to this, please implement!
+void Canvas::DrawGeometry(ID2D1Geometry * geometry, ID2D1Brush * fillBrush, ID2D1Brush * outlineBrush, float outlineWidth, D2D1_MATRIX_3X2_F * transform, ID2D1StrokeStyle * strokeStyle)
+{
+if (!BeginTargetDraw()) return;
+if (m_Target) {
+m_Target->SetTransform(transform);
+m_Target->FillGeometry(geometry, fillBrush);
+m_Target->DrawGeometry(geometry, outlineBrush, outlineWidth, strokeStyle);
+m_Target->SetTransform(D2D1::Matrix3x2F::Identity()); }}
+*/
+void Canvas::DrawGeometry(const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
+{
+	if (!BeginTargetDraw()) return;
+	m_Target->SetTransform(transform);
+	DrawGeometryFill(shape);
+	DrawGeometryOutline(shape);
+	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+}
+void Canvas::DrawMaskedGeometryBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect, double imageRotation, const GeometryShape& shape, D2D1_MATRIX_3X2_F& transform)
+{
+
+	if (!BeginTargetDraw()) return;
+	m_Target->SetTransform(transform);
+	ID2D1Layer* layer;
+
+	HRESULT hr = m_Target->CreateLayer(NULL, &layer);
+	if (SUCCEEDED(hr)) {
+		m_Target->PushLayer(D2D1::LayerParameters(D2D1::InfiniteRect(), shape.m_Geometry.Get()), layer);
+
+		DrawGeometryFill(shape);
+
+		//Used D2D Image drawing since most of the code already depends on m_Target, shouldn't be hard to add gdi+ drawing, but i'll stick to pure D2D drawing for my purposes
+		//Would also propose the problem of creating, removing and creating the m_Target if i'm not mistaken
+
+		Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
+		Gdiplus::Rect lockRect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+		Gdiplus::Status status = bitmap->LockBits(
+			&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
+		if (status == Gdiplus::Ok)
+		{
+			D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
+				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+			Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
+			HRESULT hr = m_Target->CreateSharedBitmap(
+				__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
+			if (SUCCEEDED(hr))
+			{
+				auto rDst = ToRectF(dstRect);
+				auto rSrc = ToRectF(srcRect);
+				D2D1_MATRIX_3X2_F trans;
+				m_Target->GetTransform(&trans);
+				m_Target->SetTransform(D2D1::Matrix3x2F::Rotation(imageRotation, D2D1::Point2F(dstRect.X + dstRect.Width / 2, dstRect.Y + dstRect.Height / 2))*trans);
+				m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
+				m_Target->SetTransform(trans);
+
+			}
+
+			// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
+			bitmap->UnlockBits(bitmapLock->GetBitmapData());
+		}
+		bitmapLock->Release();
+		m_Target->PopLayer();
+		DrawGeometryOutline(shape);
+		layer->Release();
+		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+	}
+	
+}
+
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CombineGeometry(ID2D1Geometry * geometry1, ID2D1Geometry * geometry2, D2D1_COMBINE_MODE mode)
+{
+	
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> pathGeometry = CreatePathGeometry();
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+	pathGeometry->Open(&sink);
+	geometry1->CombineWithGeometry(geometry2, mode, NULL, sink.Get());
+	sink->Close();
+	return pathGeometry;
+}
+
 
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
