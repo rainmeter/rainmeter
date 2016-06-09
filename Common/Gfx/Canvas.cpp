@@ -117,6 +117,13 @@ Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> Canvas::CreateRectangle(const D2D
 	return c_Geometry;
 }
 
+Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> Canvas::CreateRoundedRectangle(const D2D1_ROUNDED_RECT& roundedRectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> c_Geometry;
+	HRESULT hr = c_D2DFactory->CreateRoundedRectangleGeometry(roundedRectangle, &c_Geometry);
+	return c_Geometry;
+}
+
 void Canvas::Resize(int w, int h)
 {
 	m_W = w;
@@ -594,7 +601,7 @@ void Canvas::DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform
 	if (!BeginTargetDraw()) return;
 
 	const auto originalAntialiasMode = m_Target->GetAntialiasMode();
-	if (antialias)
+	if (!antialias)
 		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);

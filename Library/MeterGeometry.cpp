@@ -16,7 +16,7 @@ D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
 
 MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes(),
-	m_MeasureOptions(),
+	m_MeasureModifiers(),
 	m_NeedsRedraw(false)
 {
 }
@@ -30,26 +30,27 @@ void MeterGeometry::Initialize()
 	Meter::Initialize();
 }
 
-bool MeterGeometry::ParseShape(GeometryShape& shape, const WCHAR* optionName, const WCHAR* optionValue)
+bool MeterGeometry::ParseShape(GeometryShape& shape, const WCHAR* shapeName, const WCHAR* shapeParameters)
 {
-	if (_wcsicmp(optionName, L"Rectangle") == 0) shape.m_Shape = ParseRect(shape, ConfigParser::ParseRECT(optionValue));
+	if (_wcsicmp(shapeName, L"Rectangle") == 0)				shape.m_Shape = ParseRectangle(shape, ConfigParser::ParseRECT(shapeParameters));
+	else if (_wcsicmp(shapeName, L"RoundedRectangle") == 0)	shape.m_Shape = ParseRoundedRectangle(shape, shapeParameters);
 	else {
 		return false;
 	}
 	UpdateSize(shape);
-	return true;
+	return shape.m_Shape;
 }
 
 void MeterGeometry::UpdateSize(GeometryShape & shape)
 {
 	if (shape.m_Shape) {
 		shape.m_Shape->GetBounds(D2D1::Matrix3x2F::Identity(), &shape.m_Bounds);
-		const auto shapeWidth = std::ceil(shape.m_Bounds.right + shape.m_OutlineWidth / 4 * 3 + GetWidthPadding());
+		const auto shapeWidth = std::ceil(shape.m_Bounds.right + shape.m_OutlineWidth/2 + GetWidthPadding());
 		if (!m_WDefined && m_W < shapeWidth) {
 			m_W = shapeWidth;
 			m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
-		const auto shapeHeight = std::ceil(shape.m_Bounds.bottom + shape.m_OutlineWidth / 4 * 3 + GetHeightPadding());
+		const auto shapeHeight = std::ceil(shape.m_Bounds.bottom + shape.m_OutlineWidth/2 + GetHeightPadding());
 		if (!m_HDefined && m_H < shapeHeight) {
 			m_H = shapeHeight;
 			m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);
@@ -57,15 +58,16 @@ void MeterGeometry::UpdateSize(GeometryShape & shape)
 	}
 }
 
-bool MeterGeometry::ReplaceShapeOption(GeometryShape& shape, const WCHAR* optionName, const WCHAR* optionValue)
+bool MeterGeometry::ReplaceShapeModifiers(GeometryShape& shape, const WCHAR* modifierName, const WCHAR* modifierValue)
 {
-	if (_wcsicmp(optionName, L"FillColor") == 0)			shape.m_FillColor = ToColorF(ConfigParser::ParseColor(optionValue));
-	else if (_wcsicmp(optionName, L"OutlineWidth") == 0)	shape.m_OutlineWidth = (float)ConfigParser::ParseDouble(optionValue, 1.0f);
-	else if (_wcsicmp(optionName, L"OutlineColor") == 0)	shape.m_OutlineColor = ToColorF(ConfigParser::ParseColor(optionValue));
-	else if (_wcsicmp(optionName, L"Offset") == 0)			shape.m_Offset = ParseSize(optionValue, 0);
-	else if (_wcsicmp(optionName, L"Scale") == 0)			shape.m_Scale = ParseSize(optionValue, 1);
-	else if (_wcsicmp(optionName, L"Skew") == 0)			shape.m_Skew = ParsePoint(optionValue, 0);
-	else if (_wcsicmp(optionName, L"Rotation") == 0)		shape.m_Rotation = ParseRotation(optionValue, 0, shape);
+	if (_wcsicmp(modifierName, L"FillColor") == 0)			shape.m_FillColor = ToColorF(ConfigParser::ParseColor(modifierValue));
+	else if (_wcsicmp(modifierName, L"OutlineWidth") == 0)	shape.m_OutlineWidth = (float)ConfigParser::ParseDouble(modifierValue, 1.0f);
+	else if (_wcsicmp(modifierName, L"OutlineColor") == 0)	shape.m_OutlineColor = ToColorF(ConfigParser::ParseColor(modifierValue));
+	else if (_wcsicmp(modifierName, L"Offset") == 0)		shape.m_Offset = ParseSize(modifierValue, 0);
+	else if (_wcsicmp(modifierName, L"Scale") == 0)			shape.m_Scale = ParseSize(modifierValue, 1);
+	else if (_wcsicmp(modifierName, L"Skew") == 0)			shape.m_Skew = ParsePoint(modifierValue, 0);
+	else if (_wcsicmp(modifierName, L"Rotation") == 0)		shape.m_Rotation = ParseRotation(modifierValue, 0, shape);
+	else if (_wcsicmp(modifierName, L"Antialias") == 0)		shape.m_Antialias = ConfigParser::ParseInt(modifierValue, 1) == 1;
 	else return false;
 	return true;
 }
@@ -77,11 +79,13 @@ bool MeterGeometry::IsPostOption(const WCHAR* option)
 
 bool MeterGeometry::IsShape(const WCHAR* option)
 {
-	return _wcsicmp(option, L"Rectangle") == 0;
+	return _wcsicmp(option, L"Rectangle") == 0			||
+		   _wcsicmp(option, L"RoundedRectangle") == 0;
 }
 void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
+	
 	//Setting Width and Height to 0 to stop padding from consuming everything
 	if (!m_WDefined)
 		m_W = 0;
@@ -89,14 +93,14 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_H = 0;
 
 	m_Shapes.clear();
-	m_MeasureOptions.clear();
+	m_MeasureModifiers.clear();
 	size_t currentShapeId = 1;
 	std::wstring shapeName = L"Shape";
 	std::wstring shapeOption = parser.ReadString(section, L"Shape", L"");
-	std::map<std::wstring, std::pair<std::wstring, std::wstring>> postOptions;
+	std::map<std::wstring, std::pair<std::wstring, std::wstring>> postModifiers;
 	while (!shapeOption.empty()) {
 		std::vector<std::wstring> shapeTokens = CustomTokenize(shapeOption.c_str(), L"|");
-		m_Shapes.insert(std::pair<LPCWSTR, GeometryShape>(shapeName.c_str(), GeometryShape()));
+		m_Shapes.insert(std::pair<std::wstring, GeometryShape>(shapeName.c_str(), GeometryShape()));
 		bool usingMeasures = false;
 
 		std::wstring shapeType = L"", shapeParameters = L"";
@@ -114,11 +118,12 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			if (!usingMeasures) {
 				if (!IsShape(optionName.c_str())) {
 					if (!IsPostOption(optionName.c_str())) {
-						if (!ReplaceShapeOption(m_Shapes[shapeName.c_str()], optionName.c_str(), optionValue.c_str()))
+						if (!ReplaceShapeModifiers(m_Shapes[shapeName.c_str()], optionName.c_str(), optionValue.c_str()))
 							break;
 					}
-					else
-						postOptions[shapeName.c_str()] = std::pair<std::wstring, std::wstring>(optionName, optionValue);
+					else {
+						postModifiers[shapeName.c_str()] = std::pair<std::wstring, std::wstring>(optionName, optionValue);
+					}
 				}
 				else
 				{			
@@ -127,8 +132,8 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				}
 			}
 			else
-				m_MeasureOptions[shapeName.c_str()].push_back(std::pair<std::wstring, std::wstring>(optionName, optionValue));
-			++optionId;
+				m_MeasureModifiers[shapeName.c_str()].push_back(std::pair<std::wstring, std::wstring>(optionName, optionValue));
+			
 		}
 		if (shapeType.empty() || shapeParameters.empty())
 			break; //Invalid shape
@@ -138,9 +143,10 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		shapeOption = parser.ReadString(section, shapeName.c_str(), L"");
 	}
 
-	for (const auto& option : postOptions)
+	for (const auto& shape : postModifiers)
 	{
-		if (!ReplaceShapeOption(m_Shapes[option.first], option.second.first.c_str(), option.second.second.c_str()))
+		const auto& modifier = shape.second;
+		if (!ReplaceShapeModifiers(m_Shapes[shape.first], modifier.first.c_str(), modifier.second.c_str()))
 			continue;
 	}
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
@@ -156,18 +162,18 @@ bool MeterGeometry::Update()
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
-			for (const auto& shape : m_MeasureOptions)
+			for (const auto& shape : m_MeasureModifiers)
 			{
-				for (const auto& option : shape.second) {
-					std::wstring optionValue = option.second;
-					bool replaced = ReplaceMeasures(optionValue, AUTOSCALE::AUTOSCALE_OFF, 1.0, 6, false);
+				for (const auto& modifier : shape.second) {
+					std::wstring modifierValue = modifier.second;
+					bool replaced = ReplaceMeasures(modifierValue, AUTOSCALE::AUTOSCALE_OFF, 1.0, 6, false);
 					if (replaced)
-						if (!IsShape(option.first.c_str())) {
-							if (!ReplaceShapeOption(m_Shapes[shape.first], option.first.c_str(), optionValue.c_str()))
+						if (!IsShape(modifier.first.c_str())) {
+							if (!ReplaceShapeModifiers(m_Shapes[shape.first], modifier.first.c_str(), modifierValue.c_str()))
 								continue;
 						}
 						else
-							if (!ParseShape(m_Shapes[shape.first], option.first.c_str(), optionValue.c_str()))
+							if (!ParseShape(m_Shapes[shape.first], modifier.first.c_str(), modifierValue.c_str()))
 								continue;
 				}
 			}
@@ -196,7 +202,7 @@ bool MeterGeometry::Draw(Gfx::Canvas & canvas)
 				D2D1::Matrix3x2F::Translation(shape.m_Offset) * D2D1::Matrix3x2F::Translation(D2D1::SizeF(GetMeterRectPadding().X, GetMeterRectPadding().Y)) *
 				D2D1::Matrix3x2F::Scale(shape.m_Scale, D2D1::Point2F(shape.m_Bounds.left, shape.m_Bounds.top))
 				);
-			canvas.DrawGeometry(shape, transform, !m_AntiAlias);
+			canvas.DrawGeometry(shape, transform, shape.m_Antialias);
 		}
 	}
 	return true;
@@ -209,12 +215,29 @@ void MeterGeometry::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-Microsoft::WRL::ComPtr<ID2D1Geometry> MeterGeometry::ParseRect(GeometryShape& shape, RECT& rect)
+Microsoft::WRL::ComPtr<ID2D1Geometry> MeterGeometry::ParseRectangle(GeometryShape& shape, RECT& rect)
 {
 	D2D1_RECT_F geo_rect = D2D1::RectF(rect.left, rect.top, rect.right + rect.left, rect.bottom + rect.top);
-	geo_rect.left += shape.m_OutlineWidth / 4;
-	geo_rect.top += shape.m_OutlineWidth / 4;
+	geo_rect.left += shape.m_OutlineWidth / 2;
+	geo_rect.top += shape.m_OutlineWidth / 2;
 	return Gfx::Canvas::CreateRectangle(geo_rect);
+}
+
+Microsoft::WRL::ComPtr<ID2D1Geometry> MeterGeometry::ParseRoundedRectangle(GeometryShape& shape, const WCHAR* modifier)
+{
+	std::vector<std::wstring> Tokens = CustomTokenize(modifier, L",");
+	if (Tokens.size() != 6)
+		return false;
+
+	D2D1_ROUNDED_RECT rect;
+	rect.rect.left = ConfigParser::ParseDouble(Tokens[0].c_str(), 0) + shape.m_OutlineWidth / 2;
+	rect.rect.top = ConfigParser::ParseDouble(Tokens[1].c_str(), 0) + shape.m_OutlineWidth / 2;
+	rect.rect.right = ConfigParser::ParseDouble(Tokens[2].c_str(), 0) + rect.rect.left;
+	rect.rect.bottom = ConfigParser::ParseDouble(Tokens[3].c_str(), 0) + rect.rect.top;
+	rect.radiusX = ConfigParser::ParseDouble(Tokens[4].c_str(), 5);
+	rect.radiusY = ConfigParser::ParseDouble(Tokens[5].c_str(), 5);
+
+	return Gfx::Canvas::CreateRoundedRectangle(rect);
 }
 
 double MeterGeometry::ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape)
@@ -290,10 +313,51 @@ std::vector<std::wstring> MeterGeometry::CustomTokenize(const std::wstring& str,
 //Modified version of ParseRect
 D2D1_POINT_2F MeterGeometry::ParsePoint(const WCHAR* string, double defaultVal)
 {
-	double x = defaultVal;
-	double y = defaultVal;
-	double dummy = 0.0;
-	ConfigParser::ParseInt4(string, x, y, dummy, dummy);
+	double x = defaultVal, y = defaultVal;
+	
+	if (wcschr(string, L','))
+	 {
+		std::wstring str = string;
+		std::vector<double> tokens;
+		size_t start = 0;
+		size_t end = 0;
+		int parens = 0;
+		auto getToken = [&]() -> void
+		{
+			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
+			if (start <= end)
+			{
+				tokens.push_back(ConfigParser::ParseDouble(str.substr(start, end - start).c_str(), 0));
+			}
+		};
+		for (auto iter : str)
+		{
+			switch (iter)
+			{
+				case '(': ++parens; break;
+				case ')': --parens; break;
+				case ',':
+				{
+					if (parens == 0)
+					{
+						getToken();
+						start = end + 1; // skip comma
+						break;
+					}
+				//else multi arg function ?
+				}
+			}
+		++end;
+		}
+		
+		// read last token
+		getToken();
+		
+		size_t size = tokens.size();
+		if (size > 0) x = tokens[0];
+		if (size > 1) y = tokens[1];
+		
+		}
 	return D2D1::Point2F(x, y);
 }
 D2D1_SIZE_F MeterGeometry::ParseSize(const WCHAR* string, double defaultVal)

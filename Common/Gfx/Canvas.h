@@ -34,6 +34,7 @@ public:
 	static bool Initialize();
 	static void Finalize();
 	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(const D2D1_RECT_F& rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> CreateRoundedRectangle(const D2D1_ROUNDED_RECT& roundedRectangle);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }

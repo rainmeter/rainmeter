@@ -40,7 +40,8 @@ private:
 			m_RotationCenter(),
 			m_Skew(),
 			m_Scale(D2D1::SizeF(1, 1)),
-			m_Offset()
+			m_Offset(),
+			m_Antialias(true)
 
 		{}
 
@@ -50,11 +51,13 @@ private:
 		D2D1_SIZE_F m_Scale;
 		D2D1_SIZE_F m_Offset;
 
+		bool m_Antialias;
+
 		D2D1_RECT_F m_Bounds;
 	};
-	bool ParseShape(GeometryShape& shape, const WCHAR* optionName, const WCHAR* optionValue);
+	bool ParseShape(GeometryShape& shape, const WCHAR* shapeName, const WCHAR* shapeParameters);
 	void UpdateSize(GeometryShape& shape);
-	bool ReplaceShapeOption(GeometryShape & shape, const WCHAR* optionName, const WCHAR* optionValue);
+	bool ReplaceShapeModifiers(GeometryShape & shape, const WCHAR* modifierName, const WCHAR* modifierValue);
 
 	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters);
 	D2D1_POINT_2F ParsePoint(const WCHAR* string, double defaultVal);
@@ -63,11 +66,12 @@ private:
 	bool IsPostOption(const WCHAR* option);
 	bool IsShape(const WCHAR* option);
 
-	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRect(GeometryShape& shape, RECT& rect);
+	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRectangle(GeometryShape& shape, RECT& rect);
+	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRoundedRectangle(GeometryShape& shape, const WCHAR* modifier);
 	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);
 
 	std::map<std::wstring, GeometryShape> m_Shapes;
-	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureOptions;
+	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureModifiers;
 	bool m_NeedsRedraw;
 };
 
