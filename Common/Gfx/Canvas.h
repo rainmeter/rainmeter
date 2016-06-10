@@ -80,7 +80,7 @@ public:
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
-	void DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform, bool antialias);
+	void DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform, bool antialias, const D2D1_RECT_F& bounds);
 	 
 private:
 	friend class Canvas;

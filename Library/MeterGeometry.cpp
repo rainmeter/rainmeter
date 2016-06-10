@@ -26,7 +26,9 @@ bool IsSegment(const WCHAR* option)
 MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes(),
 	m_MeasureModifiers(),
-	m_NeedsRedraw(false)
+	m_NeedsRedraw(false),
+	m_XDefined(false),
+	m_YDefined(false)
 {
 }
 
@@ -124,13 +126,19 @@ void MeterGeometry::UpdateSize(GeometryShape& shape)
 {
 	if (shape.m_Shape) {
 		D2D1_RECT_F& untransformedBounds = shape.m_UntransformedBounds;
+		D2D1_SIZE_F offsetPoint = D2D1::SizeF(0,0);
+		if (m_XDefined)
+			offsetPoint.width = m_X;
+		if (m_YDefined)
+			offsetPoint.height = m_Y;
+		D2D1_MATRIX_3X2_F moveMatrix = D2D1::Matrix3x2F::Translation(offsetPoint);
 		shape.m_Shape->GetWidenedBounds(shape.m_OutlineWidth, NULL, D2D1::IdentityMatrix(), &untransformedBounds);
-		shape.m_Shape->GetWidenedBounds(shape.m_OutlineWidth, NULL, GetShapeMatrix(shape, &untransformedBounds), &shape.m_Bounds);
-		if ((!m_X > shape.m_Bounds.left || m_X == 0))
+		shape.m_Shape->GetWidenedBounds(shape.m_OutlineWidth, NULL, GetShapeMatrix(shape, &untransformedBounds) * moveMatrix, &shape.m_Bounds);
+		if ((!m_X > shape.m_Bounds.left || m_X == 0) && !m_XDefined)
 		{
 			m_X = shape.m_Bounds.left;
 		}
-		if ((!m_Y > shape.m_Bounds.top || m_Y == 0))
+		if ((!m_Y > shape.m_Bounds.top || m_Y == 0) && !m_YDefined)
 		{
 			m_Y = shape.m_Bounds.top;
 		}
@@ -154,7 +162,7 @@ D2D1_MATRIX_3X2_F MeterGeometry::GetShapeMatrix(const GeometryShape& shape, cons
 			D2D1::Matrix3x2F::Rotation(shape.m_Rotation, center) *
 			D2D1::Matrix3x2F::Skew(shape.m_Skew.x, shape.m_Skew.y, D2D1::Point2F(untransformedBounds->left, untransformedBounds->top)) *
 			D2D1::Matrix3x2F::Translation(shape.m_Offset) *
-			D2D1::Matrix3x2F::Scale(shape.m_Scale, center)
+			D2D1::Matrix3x2F::Scale(shape.m_Scale, center) 
 			);
 	}
 }
@@ -189,6 +197,7 @@ bool MeterGeometry::IsShape(const WCHAR* option)
 
 void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
+
 	Meter::ReadOptions(parser, section);
 	
 	//Setting Width and Height to 0 to stop padding from consuming everything
@@ -196,7 +205,10 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_W = 0;
 	if (!m_HDefined)
 		m_H = 0;
-	
+
+	m_XDefined = parser.ReadInt(section, L"X", INT_MAX) != INT_MAX;
+	m_YDefined = parser.ReadInt(section, L"Y", INT_MAX) != INT_MAX;
+
 	m_Shapes.clear();
 	m_MeasureModifiers.clear();
 	size_t currentShapeId = 1;
@@ -311,8 +323,13 @@ bool MeterGeometry::Draw(Gfx::Canvas & canvas)
 	for (const auto& it : m_Shapes) {
 		const auto& shape = it.second;
 		if (shape.m_Shape) {
+			D2D1_SIZE_F offsetPoint = D2D1::SizeF(0, 0);
+			if (m_XDefined)
+				offsetPoint.width = m_X;
+			if (m_YDefined)
+				offsetPoint.height = m_Y;
 			const auto transform = GetShapeMatrix(shape, &shape.m_UntransformedBounds);
-			canvas.DrawGeometry(shape, transform, shape.m_Antialias);
+			canvas.DrawGeometry(shape, transform * D2D1::Matrix3x2F::Translation(offsetPoint), shape.m_Antialias, D2D1::RectF(m_X, m_Y, m_W + m_X, m_H + m_Y));
 		}
 	}
 	return true;
@@ -322,7 +339,12 @@ bool MeterGeometry::HitTest(int x, int y)
 	bool hit = false;
 	for (const auto& shape : m_Shapes)
 	{
-		auto matrix = GetShapeMatrix(shape.second, &shape.second.m_UntransformedBounds);
+		D2D1_SIZE_F offsetPoint = D2D1::SizeF(0, 0);
+		if (m_XDefined)
+			offsetPoint.width = m_X;
+		if (m_YDefined)
+			offsetPoint.height = m_Y;
+		auto matrix = GetShapeMatrix(shape.second, &shape.second.m_UntransformedBounds) * D2D1::Matrix3x2F::Translation(offsetPoint);
 		BOOL contains = false;
 		if (shape.second.m_FillColor.a != 0) {
 			HRESULT result = shape.second.m_Shape->FillContainsPoint(D2D1::Point2F(x, y), matrix, &contains);

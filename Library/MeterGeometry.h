@@ -81,6 +81,9 @@ private:
 	std::map<std::wstring, GeometryShape> m_Shapes;
 	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureModifiers;
 	bool m_NeedsRedraw;
+
+	bool m_XDefined;
+	bool m_YDefined;
 };
 
 #endif
