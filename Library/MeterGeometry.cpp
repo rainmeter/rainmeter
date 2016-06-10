@@ -200,7 +200,6 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 	
-	//Setting Width and Height to 0 to stop padding from consuming everything
 	if (!m_WDefined)
 		m_W = 0;
 	if (!m_HDefined)
@@ -329,7 +328,7 @@ bool MeterGeometry::Draw(Gfx::Canvas & canvas)
 			if (m_YDefined)
 				offsetPoint.height = m_Y;
 			const auto transform = GetShapeMatrix(shape, &shape.m_UntransformedBounds);
-			canvas.DrawGeometry(shape, transform * D2D1::Matrix3x2F::Translation(offsetPoint), shape.m_Antialias, D2D1::RectF(m_X, m_Y, m_W + m_X, m_H + m_Y));
+			canvas.DrawGeometry(shape, transform * D2D1::Matrix3x2F::Translation(offsetPoint), shape.m_Antialias, D2D1::RectF(0, 0, INT_MAX, INT_MAX));
 		}
 	}
 	return true;
