@@ -45,7 +45,7 @@ bool MeterGeometry::ReplaceModifierDef(std::wstring& option, ConfigParser& parse
 	size_t atLoc = option.find('@');
 	while (atLoc != std::string::npos)
 	{
-		size_t end = option.find_first_of(L",|:", atLoc);
+		size_t end = option.find_first_of(L",|: ", atLoc);
 		auto optionName = option.substr(atLoc+1, end - atLoc - 1);
 		auto Option = parser.ReadString(section, optionName.c_str(), L"");
 		if (Option != L"")
@@ -53,7 +53,7 @@ bool MeterGeometry::ReplaceModifierDef(std::wstring& option, ConfigParser& parse
 			option.replace(atLoc, end - atLoc, Option.c_str());
 			ModifierReplaced = true;
 		}
-		atLoc = option.find('@', atLoc);
+		atLoc = option.find('@', atLoc+1);
 	}
 	return ModifierReplaced;
 }
@@ -104,8 +104,8 @@ bool MeterGeometry::MergeShapeTokens(std::wstring& endToken, const std::vector<s
 	}
 	if (ChangedToken) {
 		endToken = fullToken;
+		tokenId -= 2;
 	}
-	tokenId -= 2;
 	return ChangedToken;
 }
 
