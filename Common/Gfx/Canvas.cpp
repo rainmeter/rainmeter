@@ -124,6 +124,58 @@ Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> Canvas::CreateRoundedRecta
 	return c_Geometry;
 }
 
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_Geometry);
+	return c_Geometry;
+}
+
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std::vector<ShapePoint>& points, bool ConnectEdges)
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = CreatePathGeometry();
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink;
+	HRESULT hr = c_Geometry->Open(&geometrySink);
+	if (FAILED(hr))
+		return nullptr;
+	geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING);
+	geometrySink->BeginFigure(points[0].m_Geometry.lineSegment, D2D1_FIGURE_BEGIN_FILLED); 
+	bool first = true;
+	for (const ShapePoint& point : points)
+	{
+		if (first)
+		{
+			first = false;
+			continue;
+		}
+		switch (point.m_Type)
+		{
+		case ShapePoint::Line:
+			geometrySink->AddLine(point.m_Geometry.lineSegment);
+			break;
+		case ShapePoint::Arc:
+			geometrySink->AddArc(point.m_Geometry.arcSegment);
+			break;
+		case ShapePoint::Bezier:
+			geometrySink->AddBezier(point.m_Geometry.bezierSegment);
+			break;
+		case ShapePoint::QuadBezier:
+			geometrySink->AddQuadraticBezier(point.m_Geometry.quadBezierSegment);
+			break;
+		default:
+			break;
+		}
+	}
+	if (ConnectEdges) {
+		geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	}
+	else {
+		geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+	}
+	hr = geometrySink->Close();
+	return c_Geometry;
+}
+
 void Canvas::Resize(int w, int h)
 {
 	m_W = w;

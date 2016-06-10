@@ -9,8 +9,8 @@
 #define RM_LIBRARY_METERGEOMETRY_H_
 
 #include "Meter.h"
-#include <vector>
 #include "..\Common\Gfx\Shape.h"
+#include <vector>
 
 class MeterGeometry :
 	public Meter
@@ -27,6 +27,7 @@ public:
 	void Initialize() override;
 	bool Update() override;
 	bool Draw(Gfx::Canvas& canvas) override;
+	bool HitTest(int x, int y) override;
 
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
@@ -54,9 +55,15 @@ private:
 		bool m_Antialias;
 
 		D2D1_RECT_F m_Bounds;
+		D2D1_RECT_F m_UntransformedBounds;
 	};
+	bool ReplaceModifierDef(std::wstring& option, ConfigParser& parser, const WCHAR*);
+	template <typename F>
+	bool MergeShapeTokens(std::wstring& endToken, const std::vector<std::wstring>& tokenArray, int& tokenId, F& tokenChecker);
+
 	bool ParseShape(GeometryShape& shape, const WCHAR* shapeName, const WCHAR* shapeParameters);
 	void UpdateSize(GeometryShape& shape);
+	D2D1_MATRIX_3X2_F GetShapeMatrix(const GeometryShape& shape, const D2D1_RECT_F* untransformedBounds = NULL);
 	bool ReplaceShapeModifiers(GeometryShape & shape, const WCHAR* modifierName, const WCHAR* modifierValue);
 
 	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters);
@@ -67,7 +74,8 @@ private:
 	bool IsShape(const WCHAR* option);
 
 	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRectangle(GeometryShape& shape, RECT& rect);
-	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRoundedRectangle(GeometryShape& shape, const WCHAR* modifier);
+	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRoundedRectangle(GeometryShape& shape, const WCHAR* parameters);
+	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseCustom(GeometryShape& shape, const WCHAR* parameters);
 	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);
 
 	std::map<std::wstring, GeometryShape> m_Shapes;

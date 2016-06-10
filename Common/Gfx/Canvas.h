@@ -35,6 +35,8 @@ public:
 	static void Finalize();
 	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(const D2D1_RECT_F& rectangle);
 	static Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> CreateRoundedRectangle(const D2D1_ROUNDED_RECT& roundedRectangle);
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreatePathGeometry();
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreateCustomGeometry(const std::vector<ShapePoint>& points, bool ConnectEdges);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
