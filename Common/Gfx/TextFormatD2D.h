@@ -68,6 +68,8 @@ private:
 		const std::vector<std::wstring> args, const bool altGamma);
 	void UpdateInlineItalic(const size_t& index, const std::wstring pattern);
 	void UpdateInlineOblique(const size_t& index, const std::wstring pattern);
+	void UpdateInlineShadow(const size_t& index, const std::wstring pattern, const FLOAT blur,
+		const D2D1_POINT_2F offset, const Gdiplus::Color color);
 	void UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size);
 	void UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
 	void UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern);
@@ -78,8 +80,10 @@ private:
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point);
 	void ApplyInlineCase(std::wstring& str);
+	bool ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+		const UINT32 strLen, const D2D1_POINT_2F& drawPosition);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
-	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT strLen);
+	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;

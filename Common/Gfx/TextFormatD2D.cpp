@@ -16,6 +16,7 @@
 #include "TextInlineFormat/TextInlineFormatGradientColor.h"
 #include "TextInlineFormat/TextInlineFormatItalic.h"
 #include "TextInlineFormat/TextInlineFormatOblique.h"
+#include "TextInlineFormat/TextInlineFormatShadow.h"
 #include "TextInlineFormat/TextInlineFormatSize.h"
 #include "TextInlineFormat/TextInlineFormatStretch.h"
 #include "TextInlineFormat/TextInlineFormatStrikethrough.h"
@@ -661,6 +662,20 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		UpdateInlineOblique(index, pattern);
 		return true;
 	}
+	else if (_wcsicmp(option, L"SHADOW") == 0)
+	{
+		if (optSize >= 5)
+		{
+			D2D1_POINT_2F offset = {
+				(FLOAT)ConfigParser::ParseDouble(options[1].c_str(), 1.0),
+				(FLOAT)ConfigParser::ParseDouble(options[2].c_str(), 1.0) };
+
+			FLOAT blur = (FLOAT)ConfigParser::ParseDouble(options[3].c_str(), 3.0);
+			Gdiplus::Color color = ConfigParser::ParseColor(options[4].c_str());
+			UpdateInlineShadow(index, pattern, blur, offset, color);
+			return true;
+		}
+	}
 	else if(_wcsicmp(option, L"SIZE") == 0)
 	{
 		if (optSize > 1)
@@ -918,6 +933,29 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 	}
 }
 
+void TextFormatD2D::UpdateInlineShadow(const size_t& index, const std::wstring pattern,
+	const FLOAT blur, const D2D1_POINT_2F offset, const Gdiplus::Color color)
+{
+	if (index >= m_TextInlineFormat.size())
+	{
+		m_TextInlineFormat.emplace_back(new TextInlineFormat_Shadow(pattern, blur, offset, color));
+		m_HasInlineOptionsChanged = true;
+	}
+	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Shadow)
+	{
+		auto option = dynamic_cast<TextInlineFormat_Shadow*>(m_TextInlineFormat[index].get());
+		if (option->CompareAndUpdateProperties(pattern, blur, offset, color))
+		{
+			m_HasInlineOptionsChanged = true;
+		}
+	}
+	else
+	{
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Shadow(pattern, blur, offset, color));
+		m_HasInlineOptionsChanged = true;
+	}
+}
+
 void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -1058,7 +1096,8 @@ void TextFormatD2D::ApplyInlineFormatting(IDWriteTextLayout* layout)
 		Gfx::InlineType type = fmt->GetType();
 		if (type != Gfx::InlineType::Color &&
 			type != Gfx::InlineType::GradientColor &&
-			type != Gfx::InlineType::Case)
+			type != Gfx::InlineType::Case &&
+			type != Gfx::InlineType::Shadow)
 		{
 			fmt->ApplyInlineFormat(layout);
 		}
@@ -1100,6 +1139,28 @@ void TextFormatD2D::ApplyInlineCase(std::wstring& str)
 	}
 }
 
+bool TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+	const UINT32 strLen, const D2D1_POINT_2F& drawPosition)
+{
+	bool hasShadow = false;
+	for (const auto& fmt : m_TextInlineFormat)
+	{
+		if (fmt->GetType() == Gfx::InlineType::Shadow)
+		{
+			auto option = dynamic_cast<TextInlineFormat_Shadow*>(fmt.get());
+			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawPosition);
+			hasShadow = true;
+
+			// We need to reset the color options after the shadow effect because the shadow effect
+			// can turn some characters invisible.
+			ResetInlineColoring(solidBrush, strLen);
+			ApplyInlineColoring(target, &drawPosition);
+		}
+	}
+
+	return hasShadow;
+}
+
 void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)
 {
 	for (const auto& fmt : m_TextInlineFormat)
@@ -1112,7 +1173,7 @@ void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)
 	}
 }
 
-void TextFormatD2D::ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT strLen)
+void TextFormatD2D::ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen)
 {
 	DWRITE_TEXT_RANGE range = { 0, strLen };
 	m_TextLayout->SetDrawingEffect(solidColor, range);

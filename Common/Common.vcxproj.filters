@@ -86,6 +86,9 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatShadow.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -174,6 +177,9 @@
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatShadow.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
   </ItemGroup>

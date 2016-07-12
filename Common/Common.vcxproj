@@ -42,6 +42,7 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatItalic.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatOblique.cpp" />
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatShadow.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatSize.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStretch.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.cpp" />
@@ -80,6 +81,7 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatItalic.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatOblique.h" />
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatShadow.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatSize.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStretch.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.h" />
