@@ -1139,17 +1139,15 @@ void TextFormatD2D::ApplyInlineCase(std::wstring& str)
 	}
 }
 
-bool TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+void TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
 	const UINT32 strLen, const D2D1_POINT_2F& drawPosition)
 {
-	bool hasShadow = false;
 	for (const auto& fmt : m_TextInlineFormat)
 	{
 		if (fmt->GetType() == Gfx::InlineType::Shadow)
 		{
 			auto option = dynamic_cast<TextInlineFormat_Shadow*>(fmt.get());
 			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawPosition);
-			hasShadow = true;
 
 			// We need to reset the color options after the shadow effect because the shadow effect
 			// can turn some characters invisible.
@@ -1157,8 +1155,6 @@ bool TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColor
 			ApplyInlineColoring(target, &drawPosition);
 		}
 	}
-
-	return hasShadow;
 }
 
 void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)

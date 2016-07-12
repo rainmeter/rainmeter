@@ -80,7 +80,7 @@ private:
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point);
 	void ApplyInlineCase(std::wstring& str);
-	bool ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+	void ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
 		const UINT32 strLen, const D2D1_POINT_2F& drawPosition);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
