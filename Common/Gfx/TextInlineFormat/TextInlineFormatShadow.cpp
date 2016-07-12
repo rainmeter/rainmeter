@@ -42,7 +42,6 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1RenderTarget* target, IDWri
 	// we want a shadow for onto a memory bitmap. From this bitmap we can create the shadow
 	// effect and draw it.
 
-	// Make entire string transparent
 	D2D1_COLOR_F color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f);
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> transparent;
 	HRESULT hr = target->CreateSolidColorBrush(color, transparent.GetAddressOf());
