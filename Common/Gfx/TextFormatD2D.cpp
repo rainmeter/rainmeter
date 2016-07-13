@@ -1152,6 +1152,7 @@ void TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColor
 			// We need to reset the color options after the shadow effect because the shadow effect
 			// can turn some characters invisible.
 			ResetInlineColoring(solidBrush, strLen);
+			ResetGradientPosition(&drawPosition);
 			ApplyInlineColoring(target, &drawPosition);
 		}
 	}
