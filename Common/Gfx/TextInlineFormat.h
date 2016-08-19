@@ -28,6 +28,7 @@ enum class InlineType : BYTE
 	Italic,
 	Kerning,
 	Oblique,
+	Shadow,
 	Size,
 	Stretch,
 	Strikethrough,

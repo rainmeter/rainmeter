@@ -20,14 +20,19 @@ void ShowError(MeasureWebParser* measure, WCHAR* description);
 class ProxyCachePool
 {
 public:
-	ProxyCachePool(LPCWSTR globalProxyName = nullptr) :
-		m_GlobalProxyName((globalProxyName && *globalProxyName) ? globalProxyName : L"/auto")
+	ProxyCachePool(LPCWSTR globalProxyName = nullptr, LPCWSTR globalUserAgent = nullptr) :
+		m_GlobalProxyName((globalProxyName && *globalProxyName) ? globalProxyName : L"/auto"),
+		m_GlobalUserAgent((globalUserAgent && *globalUserAgent) ? globalUserAgent : L"Rainmeter WebParser plugin")
 	{
-		m_GlobalProxyCache = new ProxyCache(CreateProxy(m_GlobalProxyName.c_str()), true);
+		m_GlobalProxyCache = new ProxyCache(
+			CreateProxy(m_GlobalProxyName.c_str(), m_GlobalUserAgent.c_str()),
+			m_GlobalUserAgent,
+			true);
 
 		_wcslwr(&m_GlobalProxyName[0]);
-		m_CacheMap[m_GlobalProxyName] = m_GlobalProxyCache;
-		//DebugLog(L"* ADD-GLOBAL: key=%s, handle=0x%p, ref=new", m_GlobalProxyName.c_str(), m_GlobalProxyCache->GetCache());
+		m_CacheMap.insert(std::make_pair(m_GlobalProxyName, m_GlobalProxyCache));
+		//LogDebugF(L"* ADD-GLOBAL: key=%s, handle=0x%p, ref=new, agent=%s", m_GlobalProxyName.c_str(),
+		//	m_GlobalProxyCache->GetCache(), m_GlobalUserAgent.c_str());
 	}
 
 	~ProxyCachePool()
@@ -35,74 +40,83 @@ public:
 		for (auto iter = m_CacheMap.begin(); iter != m_CacheMap.end(); ++iter)
 		{
 			ProxyCache* cache = (*iter).second;
-			//DebugLog(L"* FORCE-REMOVE: key=%s, global=%i, ref=%i", (*iter).first.c_str(), cache->IsGlobal(), cache->GetRef());
+			//LogDebugF(L"* FORCE-REMOVE: key=%s, global=%i, ref=%i, agent=%s", (*iter).first.c_str(),
+			//	cache->IsGlobal(), cache->GetRef(), (*iter).second->GetAgent().c_str());
 			delete cache;
 		}
 	}
 
-	HINTERNET GetCache(const std::wstring& proxyName)
+	HINTERNET GetCache(const std::wstring& proxyName, const std::wstring& userAgent)
 	{
 		ProxyCache* cache = nullptr;
 
-		if (proxyName.empty())
-		{
-			// Use global proxy setting
-			cache = m_GlobalProxyCache;
-		}
-		else
-		{
-			std::wstring key = proxyName;
-			_wcslwr(&key[0]);
+		std::wstring key = proxyName.empty() ? m_GlobalProxyName : proxyName;
+		std::wstring agent = userAgent.empty() ? m_GlobalUserAgent : userAgent;
+		_wcslwr(&key[0]);
 
-			auto iter = m_CacheMap.find(key);
-			if (iter != m_CacheMap.end())
+		bool found = false;
+		auto iters = m_CacheMap.equal_range(key);
+		for (auto it = iters.first; it != iters.second; ++it)
+		{
+			if (StringUtil::CaseInsensitiveFind(it->second->GetAgent(), agent) != std::wstring::npos)
 			{
-				cache = (*iter).second;
-			}
-			else  // cache not found
-			{
-				// Create new proxy
-				ProxyCache* cache = new ProxyCache(CreateProxy(proxyName.c_str()));
-				m_CacheMap[key] = cache;
-				//DebugLog(L"* ADD: key=%s, handle=0x%p, ref=new", key.c_str(), cache->GetCache());
-				return cache->GetCache();
+				found = true;
+				cache = it->second;
+				break;
 			}
 		}
 
+		if (!found)
+		{
+			// Create new proxy
+			cache = new ProxyCache(CreateProxy(key.c_str(), agent.c_str()), agent);
+			m_CacheMap.insert(std::make_pair(key, cache));
+			//LogDebugF(L"* ADD: key=%s, handle=0x%p, ref=new, agent=%s", key.c_str(), cache->GetCache(), agent.c_str());
+			return cache->GetCache();
+		}
+			
 		// Use proxy cache
 		cache->AddRef();
-		//DebugLog(L"* ADD-REF: key=%s, handle=0x%p, global=%i, ref=%i",
-		//	cache->IsGlobal() ? m_GlobalProxyName.c_str() : proxyName.c_str(), cache->GetCache(), cache->IsGlobal(), cache->GetRef());
+		//LogDebugF(L"* ADD-REF: key=%s, handle=0x%p, global=%i, ref=%i, agent=%s",
+		//	cache->IsGlobal() ? m_GlobalProxyName.c_str() : proxyName.c_str(), cache->GetCache(),
+		//	cache->IsGlobal(), cache->GetRef(), agent.c_str());
 		return cache->GetCache();
 	}
 
-	void RemoveCache(const std::wstring& proxyName)
+	void RemoveCache(const std::wstring& proxyName, const std::wstring& userAgent)
 	{
 		std::wstring key = proxyName.empty() ? m_GlobalProxyName : proxyName;
+		std::wstring agent = userAgent.empty() ? m_GlobalUserAgent : userAgent;
 
 		if (!proxyName.empty())
 		{
 			_wcslwr(&key[0]);
 		}
 
-		auto iter = m_CacheMap.find(key);
-		if (iter != m_CacheMap.end())
+		auto iters = m_CacheMap.equal_range(key);
+		for (auto it = iters.first; it != iters.second; ++it)
 		{
-			ProxyCache* cache = (*iter).second;
-			cache->Release();
-			//DebugLog(L"* REMOVE: key=%s, global=%i, ref=%i", key.c_str(), cache->IsGlobal(), cache->GetRef());
-
-			if (cache->IsInvalid())
+			if (StringUtil::CaseInsensitiveFind(it->second->GetAgent(), agent) != std::wstring::npos)
 			{
-				//DebugLog(L"* EMPTY-ERASE: key=%s", key.c_str());
-				m_CacheMap.erase(iter);
-				delete cache;
+				ProxyCache* cache = it->second;
+				cache->Release();
+				//LogDebugF(L"* REMOVE: key=%s, global=%i, ref=%i, agent=%s",
+				//	key.c_str(), cache->IsGlobal(), cache->GetRef(), agent.c_str());
+
+				if (cache->IsInvalid())
+				{
+					//LogDebugF(L"* EMPTY-ERASE: key=%s, agent=%s", key.c_str(), agent.c_str());
+					m_CacheMap.erase(it);
+					delete cache;
+				}
+
+				break;
 			}
 		}
 	}
 
 private:
-	HINTERNET CreateProxy(LPCWSTR proxyName)
+	HINTERNET CreateProxy(LPCWSTR proxyName, LPCWSTR userAgent)
 	{
 		DWORD proxyType;
 		LPCWSTR proxyServer;
@@ -123,21 +137,17 @@ private:
 			proxyServer = proxyName;
 		}
 
-		HINTERNET handle = InternetOpen(L"Rainmeter WebParser plugin",
-			proxyType,
-			proxyServer,
-			nullptr,
-			0);
-
+		HINTERNET handle = InternetOpen(userAgent, proxyType, proxyServer, nullptr, 0);
 		if (handle)
 		{
 			if (GetRainmeter().GetDebug())
 			{
 				LogDebugF(
-					L"ProxyServer=\"%s\" (type=%s, handle=0x%p)",
+					L"ProxyServer=\"%s\" (type=%s, handle=0x%p) UserAgent=%s",
 					proxyName,
 					proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
-					handle);				
+					handle,
+					userAgent);				
 			}
 		}
 		else
@@ -151,7 +161,8 @@ private:
 	class ProxyCache
 	{
 	public:
-		ProxyCache(HINTERNET handle, bool isGlobal = false) : m_Handle(handle), m_IsGlobal(isGlobal), m_Ref(1) {}
+		ProxyCache(HINTERNET handle, std::wstring agent, bool isGlobal = false) :
+			m_Handle(handle), m_Agent(agent), m_IsGlobal(isGlobal), m_Ref(1) {}
 		~ProxyCache() { Dispose(); }
 
 		void AddRef() { if (!IsInvalid()) { ++m_Ref; } }
@@ -161,6 +172,7 @@ private:
 		bool IsInvalid() { return (m_Ref <= 0 && !IsGlobal()); }
 		//int GetRef() { return m_Ref; }
 		HINTERNET GetCache() { return m_Handle; }
+		std::wstring& GetAgent() { return m_Agent; }
 
 	private:
 		ProxyCache() {}
@@ -169,16 +181,18 @@ private:
 		void Dispose() { if (m_Handle) { InternetCloseHandle(m_Handle); m_Handle = nullptr; } }
 
 		HINTERNET m_Handle;
+		std::wstring m_Agent;
 		bool m_IsGlobal;
 		int m_Ref;
 	};
 
-	std::unordered_map<std::wstring, ProxyCache*> m_CacheMap;
+	std::unordered_multimap<std::wstring, ProxyCache*> m_CacheMap;
 	ProxyCache* m_GlobalProxyCache;
 	std::wstring m_GlobalProxyName;
+	std::wstring m_GlobalUserAgent;
 };
 
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload);
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
@@ -192,11 +206,13 @@ void SetupGlobalProxySetting()
 {
 	if (!g_ProxyCachePool)
 	{
-		WCHAR buffer[MAX_PATH] = {0};
+		WCHAR server[MAX_PATH] = { 0 };
+		WCHAR agent[MAX_PATH] = { 0 };
 		LPCWSTR file = GetRainmeter().GetDataFile().c_str();
 
-		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, buffer, MAX_PATH, file);
-		g_ProxyCachePool = new ProxyCachePool(buffer);
+		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, server, MAX_PATH, file);
+		GetPrivateProfileString(L"WebParser.dll", L"UserAgent", nullptr, agent, MAX_PATH, file);
+		g_ProxyCachePool = new ProxyCachePool(server, agent);
 	}
 }
 
@@ -206,12 +222,13 @@ void ClearGlobalProxySetting()
 	g_ProxyCachePool = nullptr;
 }
 
-void SetupProxySetting(ProxySetting& setting, const std::wstring& proxyServer)
+void SetupProxySetting(ProxySetting& setting, const std::wstring proxyServer, const std::wstring userAgent)
 {
 	if (g_ProxyCachePool)
 	{
 		setting.server = proxyServer;
-		setting.handle = g_ProxyCachePool->GetCache(setting.server);
+		setting.agent = userAgent;
+		setting.handle = g_ProxyCachePool->GetCache(setting.server, setting.agent);
 	}
 }
 
@@ -219,11 +236,12 @@ void ClearProxySetting(ProxySetting& setting)
 {
 	if (g_ProxyCachePool)
 	{
-		g_ProxyCachePool->RemoveCache(setting.server);
+		g_ProxyCachePool->RemoveCache(setting.server, setting.agent);
 	}
 
 	setting.handle = nullptr;
 	setting.server.clear();
+	setting.agent.clear();
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
@@ -248,10 +266,11 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 		SetupGlobalProxySetting();
 	}
 
-	// No DynamicVariables support for ProxyServer
+	// No DynamicVariables support for ProxyServer or UserAgent
 	SetupProxySetting(
 		m_Proxy,
-		GetSkin()->GetParser().ReadString(name, L"ProxyServer", L""));
+		GetSkin()->GetParser().ReadString(name, L"ProxyServer", L""),
+		GetSkin()->GetParser().ReadString(name, L"UserAgent", L""));
 
 	++g_InstanceCount;
 }
@@ -330,6 +349,22 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	m_Url = url;
+
+	m_Headers.clear();
+	size_t hNum = 1;
+	std::wstring hOption = L"Header";
+	std::wstring hValue = parser.ReadString(section, hOption.c_str(), L"");
+	while (!hValue.empty())
+	{
+		m_Headers += hValue + L"\r\n";
+		hOption = L"Header" + std::to_wstring(++hNum);
+		hValue = parser.ReadString(section, hOption.c_str(), L"");
+	}
+
+	if (!m_Headers.empty())
+	{
+		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
+	}
 
 	m_RegExp = parser.ReadString(section, L"RegExp", L"");
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
@@ -470,7 +505,7 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	{
 		LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
 	}
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, &dwSize, measure->m_ForceReload);
+	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_ForceReload);
 	if (!data)
 	{
 		ShowError(measure, L"Fetch error");
@@ -1059,7 +1094,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to free the returned string after use!
 */
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload)
 {
 	if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // Local file
 	{
@@ -1084,7 +1119,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags, 0);
 	if (!hUrlDump)
 	{
 		return nullptr;

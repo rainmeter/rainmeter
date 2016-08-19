@@ -388,11 +388,14 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 	// When different "effects" are used with inline coloring options, we need to
 	// remove the previous inline coloring, then reapply them (if needed) - instead
 	// of destroying/recreating the text layout.
-	UINT strLen = (UINT)str.length();
+	UINT32 strLen = (UINT32)str.length();
 	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
 	if (applyInlineFormatting)
 	{
 		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
+
+		// Draw any 'shadow' effects
+		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawPosition);
 	}
 
 	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
