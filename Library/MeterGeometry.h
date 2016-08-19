@@ -9,8 +9,11 @@
 #define RM_LIBRARY_METERGEOMETRY_H_
 
 #include "Meter.h"
-#include "..\Common\Gfx\Shape.h"
+#include "..\Common\Gfx\Shape\Shape.h"
+#include "..\Common\Gfx\Shape\RectangleShape.h"
 #include <vector>
+#include <functional>
+#include <map>
 
 class MeterGeometry :
 	public Meter
@@ -34,56 +37,39 @@ protected:
 	void BindMeasures(ConfigParser& parser, const WCHAR* section) override;
 
 private:
-	struct GeometryShape : Gfx::Shape 
-	{
-		GeometryShape() : 
-			m_Rotation(),
-			m_RotationCenter(),
-			m_Skew(),
-			m_Scale(D2D1::SizeF(1, 1)),
-			m_Offset(),
-			m_Antialias(true)
 
-		{}
-
-		double m_Rotation;
-		D2D1_POINT_2F m_RotationCenter;
-		D2D1_POINT_2F m_Skew;
-		D2D1_SIZE_F m_Scale;
-		D2D1_SIZE_F m_Offset;
-
-		bool m_Antialias;
-
-		D2D1_RECT_F m_Bounds;
-		D2D1_RECT_F m_UntransformedBounds;
-	};
-	bool ReplaceModifierDef(std::wstring& option, ConfigParser& parser, const WCHAR*);
-	template <typename F>
-	bool MergeShapeTokens(std::wstring& endToken, const std::vector<std::wstring>& tokenArray, int& tokenId, F& tokenChecker);
-
-	bool ParseShape(GeometryShape& shape, const WCHAR* shapeName, const WCHAR* shapeParameters);
-	void UpdateSize(GeometryShape& shape);
-	D2D1_MATRIX_3X2_F GetShapeMatrix(const GeometryShape& shape, const D2D1_RECT_F* untransformedBounds = NULL);
-	bool ReplaceShapeModifiers(GeometryShape & shape, const WCHAR* modifierName, const WCHAR* modifierValue);
-
-	std::vector<std::wstring> CustomTokenize(const std::wstring& str, const std::wstring& delimiters);
-	D2D1_POINT_2F ParsePoint(const WCHAR* string, double defaultVal);
-	D2D1_SIZE_F ParseSize(const WCHAR* string, double defaultVal);
-	bool ContainsMeasures(const std::wstring& str);
-	bool IsPostOption(const WCHAR* option);
-	bool IsShape(const WCHAR* option);
-
-	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRectangle(GeometryShape& shape, RECT& rect);
-	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseRoundedRectangle(GeometryShape& shape, const WCHAR* parameters);
-	Microsoft::WRL::ComPtr<ID2D1Geometry> ParseCustom(GeometryShape& shape, const WCHAR* parameters);
-	double ParseRotation(const WCHAR* string, double defaultValue, GeometryShape& shape);
-
-	std::map<std::wstring, GeometryShape> m_Shapes;
+	std::map<const std::wstring, std::unique_ptr<Gfx::Shape>> m_Shapes;
 	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureModifiers;
+	void ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape** mainShape, const WCHAR* modifierString, bool isExtended = false);
 	bool m_NeedsRedraw;
 
-	bool m_XDefined;
-	bool m_YDefined;
+	D2D1_COLOR_F ToGeometryColor(const Gdiplus::Color& color) // Fix this and meter to color!
+	{
+		return D2D1::ColorF(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
+	}
+
+	Gfx::Shape* ParseRectangle(const std::wstring& parameters);
+
+	std::unordered_map<const WCHAR*, std::function<Gfx::Shape*(const std::wstring&)>> shapeRegistry
+	{
+		{ L"RECTANGLE",[&](const std::wstring& parameters) { return ParseRectangle(parameters); } }
+	};
+	std::unordered_map<const WCHAR*, std::function<void(ConfigParser&, const std::wstring&, Gfx::Shape* shape, const WCHAR*)>> modifierRegistry
+	{
+		{ L"FILLCOLOR",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetFillColor(ToGeometryColor(ConfigParser::ParseColor(parameters.c_str()))); } },
+		{ L"STROKEWIDTH",[](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetStrokeWidth(ConfigParser::ParseInt(parameters.c_str(), 0)); } },
+		{ L"STROKECOLOR",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetStrokeColor(ToGeometryColor(ConfigParser::ParseColor(parameters.c_str()))); } },
+		{ L"EXTEND",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) {
+			
+			std::vector<std::wstring> tokens = parser.Tokenize(parameters.c_str(), L",");
+			for (auto token : tokens) {
+				std::wstring options = parser.ReadString(section, token.c_str(), L"");
+				if (!options.empty())
+					ParseModifiers(parser, section, &shape, options.c_str(), true);
+			}
+		} 
+		}
+	};
 };
 
 #endif

@@ -86,6 +86,8 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\Shape\RectangleShape.cpp" />
+    <ClCompile Include="Gfx\Shape\Shape.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -176,9 +178,10 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Shape.h">
+    <ClInclude Include="Gfx\Shape\Shape.h">
       <Filter>Gfx</Filter>
     </ClInclude>
+    <ClInclude Include="Gfx\Shape\RectangleShape.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

@@ -131,50 +131,6 @@ Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
 	return c_Geometry;
 }
 
-Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreateCustomGeometry(const std::vector<ShapePoint>& points, bool ConnectEdges)
-{
-	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = CreatePathGeometry();
-	Microsoft::WRL::ComPtr<ID2D1GeometrySink> geometrySink;
-	HRESULT hr = c_Geometry->Open(&geometrySink);
-	if (FAILED(hr))
-		return nullptr;
-	geometrySink->SetFillMode(D2D1_FILL_MODE_WINDING);
-	geometrySink->BeginFigure(points[0].m_Geometry.lineSegment, D2D1_FIGURE_BEGIN_FILLED); 
-	bool first = true;
-	for (const ShapePoint& point : points)
-	{
-		if (first)
-		{
-			first = false;
-			continue;
-		}
-		switch (point.m_Type)
-		{
-		case ShapePoint::Line:
-			geometrySink->AddLine(point.m_Geometry.lineSegment);
-			break;
-		case ShapePoint::Arc:
-			geometrySink->AddArc(point.m_Geometry.arcSegment);
-			break;
-		case ShapePoint::Bezier:
-			geometrySink->AddBezier(point.m_Geometry.bezierSegment);
-			break;
-		case ShapePoint::QuadBezier:
-			geometrySink->AddQuadraticBezier(point.m_Geometry.quadBezierSegment);
-			break;
-		default:
-			break;
-		}
-	}
-	if (ConnectEdges) {
-		geometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
-	}
-	else {
-		geometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
-	}
-	hr = geometrySink->Close();
-	return c_Geometry;
-}
 
 void Canvas::Resize(int w, int h)
 {
@@ -648,17 +604,17 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	}
 }
 
-void Canvas::DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform, bool antialias, const D2D1_RECT_F& bounds)
+void Canvas::DrawGeometry(const Shape& shape)
 {
 	if (!BeginTargetDraw()) return;
 
 	const auto originalAntialiasMode = m_Target->GetAntialiasMode();
-	if (!antialias)
+	if (!shape.m_Antialias)
 		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-	m_Target->PushAxisAlignedClip(&bounds, D2D1_ANTIALIAS_MODE_ALIASED);
+	m_Target->PushAxisAlignedClip(&D2D1::RectF(0, 0, INT_MAX, INT_MAX), D2D1_ANTIALIAS_MODE_ALIASED);
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);
-	m_Target->SetTransform(transform * worldTransform);
+	m_Target->SetTransform(shape.GetShapeMatrix() * worldTransform);
 
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
@@ -667,9 +623,9 @@ void Canvas::DrawGeometry(const Shape& shape, const D2D1_MATRIX_3X2_F& transform
 		if (shape.m_FillColor.a > 0) {
 			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
 		}
-		solidBrush->SetColor(shape.m_OutlineColor);
-		if (shape.m_OutlineColor.a > 0) {
-			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_OutlineWidth);
+		solidBrush->SetColor(shape.m_StrokeColor);
+		if (shape.m_StrokeColor.a > 0) {
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth);
 		}
 	}
 	m_Target->PopAxisAlignedClip();

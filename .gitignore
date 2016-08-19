@@ -14,3 +14,4 @@ Certificate.bat
 *.suo
 *.txt
 *.user
+/Rainmeter.VC.db
