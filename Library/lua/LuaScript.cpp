@@ -22,7 +22,7 @@ LuaScript::~LuaScript()
 	Uninitialize();
 }
 
-bool LuaScript::Initialize(const std::wstring& scriptFile)
+bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& packagePath)
 {
 	assert(!IsInitialized());
 
@@ -74,6 +74,10 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		// Set the environment for the function to be run in to be the table that
 		// has been created for the script/
 		lua_setfenv(L, -2);
+
+		// Append package path for script's require function to use
+		if(!packagePath.empty())
+			RegisterPackagePath(packagePath);
 
 		// Execute the Lua script
 		int result = lua_pcall(L, 0, 0, 0);
@@ -234,4 +238,19 @@ void LuaScript::RunString(const std::wstring& str)
 			LuaManager::ReportErrors(m_File);
 		}
 	}
+}
+
+void LuaScript::RegisterPackagePath(const std::wstring& path)
+{
+	auto L = GetState();
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "path");
+	std::wstring curPath = LuaManager::ToWide(-1);
+	curPath.append(L";");
+	curPath.append(path.c_str());
+	curPath.append(L"?.lua");
+	lua_pop(L, 1);
+	LuaManager::PushWide(curPath);
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1);
 }

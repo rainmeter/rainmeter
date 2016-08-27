@@ -95,7 +95,12 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			UninitializeLuaScript();
 
-			if (m_LuaScript.Initialize(scriptFile))
+			std::wstring resourcesPath = L"";
+			if (m_Skin)
+			{
+				resourcesPath = m_Skin->GetResourcesPath();
+			}
+			if (m_LuaScript.Initialize(scriptFile, resourcesPath))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
