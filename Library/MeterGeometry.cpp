@@ -14,6 +14,16 @@ MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
+MeterGeometry::~MeterGeometry()
+{
+	for (auto& pair : m_Shapes)
+	{
+		if (pair.second)
+			delete pair.second;
+	}
+	m_Shapes.clear();
+}
+
 void MeterGeometry::Initialize()
 {
 	Meter::Initialize();
@@ -152,7 +162,7 @@ const WCHAR * MeterGeometry::HandleShape(Gfx::Shape*& shape, const WCHAR* shapeT
 		shape = ParseRectangle(parameters);
 		return nullptr;
 	}
-	return L"shape not found!";
+	return L"Shape not found";
 }
 
 const WCHAR * MeterGeometry::IsShape(const WCHAR * shape)
@@ -182,7 +192,7 @@ void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, G
 			const WCHAR* error = HandleShape(mainShape, shape, token.substr(token.find_first_not_of(' ', wcslen(shape))).c_str());
 			if (error)
 			{
-				// Handle shape error!
+				LogWarningF(section, error);
 			}
 
 			if (mainShape)
@@ -193,14 +203,10 @@ void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, G
 					const WCHAR* error = HandleModifier(modifier, parser, modifierToken.substr(modifierToken.find_first_not_of(' ', wcslen(modifier))).c_str(), mainShape, section, recursion);
 					if (error)
 					{
-						//Handle modifier error!
+						LogWarningF(section, error);
 					}
 				}
 				modifiers.clear();
-			}
-			else
-			{
-				//waht?
 			}
 		}
 		else if (modifier)
@@ -210,7 +216,7 @@ void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, G
 				const WCHAR* error = HandleModifier(modifier, parser, token.substr(token.find_first_not_of(' ', wcslen(modifier))).c_str(), mainShape, section, recursion);
 				if (error)
 				{
-					//Handle modifier error!
+					LogWarningF(section, error);
 				}
 			}
 			else
@@ -220,11 +226,9 @@ void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, G
 		}
 		else
 		{
-			//Unknown modifier / shape type
+			LogWarningF(section, L"%s not recognized as a modifier or shape", token);
 		}
 	}
-	if (!mainShape)
-		;//Shape was never found :X
 }
 
 Gfx::Shape * MeterGeometry::ParseRectangle(const std::wstring& parameters)

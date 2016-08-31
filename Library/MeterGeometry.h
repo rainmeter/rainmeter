@@ -18,6 +18,7 @@ class MeterGeometry :
 {
 public:
 	MeterGeometry(Skin* skin, const WCHAR* name);
+	virtual ~MeterGeometry();
 
 	MeterGeometry(const MeterGeometry& other) = delete;
 	MeterGeometry& operator=(MeterGeometry other) = delete;
