@@ -37,7 +37,9 @@ protected:
 	bool m_Unicode;
 
 private:
-	void RegisterPackagePath(const std::wstring& path);
+	void SetPackagePath(const std::wstring& path);
+	std::wstring GetPackagePath();
+	std::wstring m_scriptResourceFolder;
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
 #include "LuaManager.h"
+#include "../Logger.h"
 
 LuaScript::LuaScript() :
 	m_Ref(LUA_NOREF),
@@ -75,9 +76,14 @@ bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& p
 		// has been created for the script/
 		lua_setfenv(L, -2);
 
+		// Get the original package path
+		std::wstring oldPackagePath = GetPackagePath();
+
 		// Append package path for script's require function to use
-		if(!packagePath.empty())
-			RegisterPackagePath(packagePath);
+		if (!packagePath.empty()) {
+			m_scriptResourceFolder = packagePath;
+			SetPackagePath(packagePath);
+		}
 
 		// Execute the Lua script
 		int result = lua_pcall(L, 0, 0, 0);
@@ -90,6 +96,11 @@ bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& p
 		{
 			LuaManager::ReportErrors(scriptFile);
 			Uninitialize();
+		}
+
+		// Reset the package path to the original value
+		if (!packagePath.empty()) {
+			SetPackagePath(oldPackagePath);
 		}
 	}
 	else
@@ -151,12 +162,31 @@ void LuaScript::RunFunction(const char* funcName)
 		// Push our table onto the stack
 		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
+		// Pop table and set the environment of the loaded chunk to it
+		lua_setfenv(L, -2);
+
+		// Push our table onto the stack
+		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
+
+		// Get the original package path
+		std::wstring oldPackagePath = GetPackagePath();
+
+		// Append package path for script's require function to use
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(m_scriptResourceFolder);
+		}
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			LuaManager::ReportErrors(m_File);
+		}
+
+		// Reset the package path to the original value
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(oldPackagePath);
 		}
 
 		lua_pop(L, 1);
@@ -177,8 +207,22 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 		// Push our table onto the stack
 		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
+		// Pop table and set the environment of the loaded chunk to it
+		lua_setfenv(L, -2);
+
+		// Push our table onto the stack
+		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
+
+		// Get the original package path
+		std::wstring oldPackagePath = GetPackagePath();
+
+		// Append package path for script's require function to use
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(m_scriptResourceFolder);
+		}
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
@@ -202,6 +246,11 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			}
 
 			lua_pop(L, 2);
+		}
+
+		// Reset the package path to the original value
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(oldPackagePath);
 		}
 	}
 
@@ -233,24 +282,44 @@ void LuaScript::RunString(const std::wstring& str)
 		// Pop table and set the environment of the loaded chunk to it
 		lua_setfenv(L, -2);
 
+		// Get the original package path
+		std::wstring oldPackagePath = GetPackagePath();
+
+		// Append package path for script's require function to use
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(m_scriptResourceFolder);
+		}
+
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			LuaManager::ReportErrors(m_File);
 		}
+
+		// Reset the package path to the original value
+		if (!m_scriptResourceFolder.empty()) {
+			SetPackagePath(oldPackagePath);
+		}
 	}
 }
 
-void LuaScript::RegisterPackagePath(const std::wstring& path)
+void LuaScript::SetPackagePath(const std::wstring& path)
+{
+	auto L = GetState();
+	lua_getglobal(L, "package");
+	std::wstring packagepath = path;
+	packagepath.append(L"?.lua");
+	LuaManager::PushWide(packagepath);
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1);
+}
+
+std::wstring LuaScript::GetPackagePath()
 {
 	auto L = GetState();
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "path");
 	std::wstring curPath = LuaManager::ToWide(-1);
-	curPath.append(L";");
-	curPath.append(path.c_str());
-	curPath.append(L"?.lua");
 	lua_pop(L, 1);
-	LuaManager::PushWide(curPath);
-	lua_setfield(L, -2, "path");
 	lua_pop(L, 1);
+	return curPath;
 }
