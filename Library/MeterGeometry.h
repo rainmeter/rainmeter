@@ -11,8 +11,6 @@
 #include "Meter.h"
 #include "..\Common\Gfx\Shape\Shape.h"
 #include "..\Common\Gfx\Shape\RectangleShape.h"
-#include <vector>
-#include <functional>
 #include <map>
 
 class MeterGeometry :
@@ -37,10 +35,15 @@ protected:
 	void BindMeasures(ConfigParser& parser, const WCHAR* section) override;
 
 private:
+	const WCHAR* HandleModifier(const WCHAR* modifier, ConfigParser& parser, const WCHAR* parameters, Gfx::Shape* shape, const WCHAR* section, int recursion = 0);
+	const WCHAR* IsModifier(const WCHAR* modifier);
+	const WCHAR* HandleShape(Gfx::Shape*& shape, const WCHAR* shapeType, const WCHAR* parameters);
+	const WCHAR* IsShape(const WCHAR* shape);
+	bool CompareWChar(const WCHAR* str1, const WCHAR* str2);
 
-	std::map<const std::wstring, std::unique_ptr<Gfx::Shape>> m_Shapes;
+	std::map<const std::wstring, Gfx::Shape*> m_Shapes;
 	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureModifiers;
-	void ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape** mainShape, const WCHAR* modifierString, bool isExtended = false);
+	void ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape*& mainShape, const WCHAR* modifierString, int recursion = 0);
 	bool m_NeedsRedraw;
 
 	D2D1_COLOR_F ToGeometryColor(const Gdiplus::Color& color) // Fix this and meter to color!
@@ -50,26 +53,6 @@ private:
 
 	Gfx::Shape* ParseRectangle(const std::wstring& parameters);
 
-	std::unordered_map<const WCHAR*, std::function<Gfx::Shape*(const std::wstring&)>> shapeRegistry
-	{
-		{ L"RECTANGLE",[&](const std::wstring& parameters) { return ParseRectangle(parameters); } }
-	};
-	std::unordered_map<const WCHAR*, std::function<void(ConfigParser&, const std::wstring&, Gfx::Shape* shape, const WCHAR*)>> modifierRegistry
-	{
-		{ L"FILLCOLOR",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetFillColor(ToGeometryColor(ConfigParser::ParseColor(parameters.c_str()))); } },
-		{ L"STROKEWIDTH",[](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetStrokeWidth(ConfigParser::ParseInt(parameters.c_str(), 0)); } },
-		{ L"STROKECOLOR",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) { shape->SetStrokeColor(ToGeometryColor(ConfigParser::ParseColor(parameters.c_str()))); } },
-		{ L"EXTEND",[&](ConfigParser& parser, const std::wstring& parameters, Gfx::Shape* shape, const WCHAR* section) {
-			
-			std::vector<std::wstring> tokens = parser.Tokenize(parameters.c_str(), L",");
-			for (auto token : tokens) {
-				std::wstring options = parser.ReadString(section, token.c_str(), L"");
-				if (!options.empty())
-					ParseModifiers(parser, section, &shape, options.c_str(), true);
-			}
-		} 
-		}
-	};
 };
 
 #endif

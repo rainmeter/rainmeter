@@ -32,6 +32,7 @@ public:
 		m_Antialias(true)
 	{
 	}
+	~Shape();
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix() const;
 	virtual void UpdateShape(std::vector<Gdiplus::REAL> parameters) = 0;

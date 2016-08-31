@@ -29,16 +29,19 @@ void MeterGeometry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring shapeOption = parser.ReadString(section, L"Shape", L"");
 	size_t currentShapeId = 1;
 	std::wstring shapeId = L"Shape";
+	for (auto& pair : m_Shapes)
+	{
+		if (pair.second)
+			delete pair.second;
+	}
+	m_Shapes.clear();
 	while (!shapeOption.empty()) {
 		Gfx::Shape* shape = nullptr;
 		bool newShape = true;
-		if (m_Shapes.find(shapeId) != m_Shapes.end()) {
-			shape = m_Shapes.at(shapeId).get();
-			newShape = false;
+		ParseModifiers(parser, section, shape, shapeOption.c_str());
+		if (shape) {
+			m_Shapes.insert({ shapeId, shape });
 		}
-		ParseModifiers(parser, section, &shape, shapeOption.c_str());
-		if(shape && newShape)
-			m_Shapes.insert(std::pair<const std::wstring&, Gfx::Shape*>(shapeId, shape));
 		shapeId = L"Shape" + std::to_wstring(++currentShapeId);
 		shapeOption = parser.ReadString(section, shapeId.c_str(), L"");
 	}
@@ -91,63 +94,137 @@ void MeterGeometry::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape** mainShape, const WCHAR* modifierString, bool isExtended)
+const WCHAR* MeterGeometry::HandleModifier(const WCHAR* modifier, ConfigParser& parser, const WCHAR* parameters, Gfx::Shape* shape, const WCHAR* section, int recursion)
+{
+	if (CompareWChar(L"STROKEWIDTH", modifier))
+	{
+		shape->SetStrokeWidth(parser.ParseInt(parameters, 1));
+		return nullptr;
+	}
+	else if (CompareWChar(L"STROKECOLOR", modifier))
+	{
+		shape->SetStrokeColor(ToGeometryColor(parser.ParseColor(parameters)));
+		return nullptr;
+	}
+	else if (CompareWChar(L"FILLCOLOR", modifier))
+	{
+		shape->SetFillColor(ToGeometryColor(parser.ParseColor(parameters)));
+		return nullptr;
+	}
+	else if (CompareWChar(L"EXTEND", modifier))
+	{
+		if(recursion)
+			return L"Extend is used recursively, this is not good practise!";
+		std::vector<std::wstring> tokens = parser.Tokenize(parameters, L",");
+		for (auto token : tokens) {
+			std::wstring options = parser.ReadString(section, token.c_str(), L"");
+			if (!options.empty())
+				ParseModifiers(parser, section, shape, options.c_str(), true);
+		}
+
+		return nullptr;
+	}
+	return L"Modifier not found!";
+}
+
+const WCHAR* MeterGeometry::IsModifier(const WCHAR* modifier)
+{
+	if (CompareWChar(L"STROKEWIDTH", modifier)) 
+	{
+		return L"STROKEWIDTH";
+	}
+	else if (CompareWChar(L"STROKECOLOR", modifier)) 
+	{
+		return L"STROKECOLOR";
+	}
+	else if (CompareWChar(L"FILLCOLOR", modifier)) 
+	{
+		return L"FILLCOLOR";
+	}
+	else if (CompareWChar(L"EXTEND", modifier)) 
+	{
+		return L"EXTEND";
+	}
+
+	return nullptr;
+}
+
+const WCHAR * MeterGeometry::HandleShape(Gfx::Shape*& shape, const WCHAR* shapeType, const WCHAR* parameters)
+{
+	if (CompareWChar(L"RECTANGLE", shapeType))
+	{
+		shape = ParseRectangle(parameters);
+		return nullptr;
+	}
+	return L"shape not found!";
+}
+
+const WCHAR * MeterGeometry::IsShape(const WCHAR * shape)
+{
+	if (CompareWChar(L"RECTANGLE", shape)) 
+	{
+		return L"RECTANGLE";
+	}
+	
+	return nullptr;
+}
+
+bool MeterGeometry::CompareWChar(const WCHAR* str1, const WCHAR* str2)
+{
+	return _wcsnicmp(str2, str1, wcslen(str1)) == 0;
+}
+
+void MeterGeometry::ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape*& mainShape, const WCHAR* modifierString, int recursion)
 {
 	std::vector<std::wstring> shapeTokens = ConfigParser::Tokenize(modifierString, L"|");
 	std::vector<std::wstring> modifiers;
 	for (const auto& token : shapeTokens) {
-		for (const auto& shape : shapeRegistry)
+		const WCHAR* shape = IsShape(token.c_str());
+		const WCHAR* modifier = IsModifier(token.c_str());
+		if(shape) 
 		{
-			if (_wcsnicmp(token.c_str(), shape.first, wcslen(shape.first)) == 0 && !isExtended) // It shouldn't be possible to define the shape in a extended option!
+			const WCHAR* error = HandleShape(mainShape, shape, token.substr(token.find_first_not_of(' ', wcslen(shape))).c_str());
+			if (error)
 			{
-				if (*mainShape)
-				{
-					//Shape already defined
-					break;
-				}
-				(*mainShape) = shape.second(token.substr(token.find_first_not_of(' ') + wcslen(shape.first)));
+				// Handle shape error!
+			}
+
+			if (mainShape)
+			{
 				for (const auto& modifierToken : modifiers)
 				{
-					bool foundModifier = false;
-					for (const auto& modifier : modifierRegistry)
+					const WCHAR* modifier = IsModifier(modifierToken.c_str());
+					const WCHAR* error = HandleModifier(modifier, parser, modifierToken.substr(modifierToken.find_first_not_of(' ', wcslen(modifier))).c_str(), mainShape, section, recursion);
+					if (error)
 					{
-						if (_wcsnicmp(modifierToken.c_str(), modifier.first, wcslen(modifier.first)) == 0)
-						{
-							foundModifier = true;
-							if (*mainShape) {
-								modifier.second(parser, modifierToken.substr(token.find_first_not_of(' ', wcslen(modifier.first))), *mainShape, section);
-							}
-							else
-							{
-								//Shape suddenly dissappeared /shrug
-							}
-							break;
-						}
-						if (!foundModifier)
-							; // modifier or shape modifier doesn't exist!
+						//Handle modifier error!
 					}
 				}
-				break;
+				modifiers.clear();
+			}
+			else
+			{
+				//waht?
 			}
 		}
-
-		for (const auto& modifier : modifierRegistry)
+		else if (modifier)
 		{
-			if (_wcsnicmp(token.c_str(), modifier.first, wcslen(modifier.first)) == 0)
+			if (mainShape)
 			{
-				//Unneeded comment, remove later! Not happy with this, but i can't think of any other way to stop infinite recursions except using a static int to count, which would be even worse!
-				if (_wcsnicmp(token.c_str(), L"Extend", wcslen(L"Extend")) == 0 && isExtended) 
-					continue;
-				if (*mainShape) {
-					int strLen = wcslen(modifier.first);
-					modifier.second(parser, token.substr(token.find_first_not_of(' ', strLen)), *mainShape, section);
-				}
-				else
+				const WCHAR* error = HandleModifier(modifier, parser, token.substr(token.find_first_not_of(' ', wcslen(modifier))).c_str(), mainShape, section, recursion);
+				if (error)
 				{
-					modifiers.push_back(token);
+					//Handle modifier error!
 				}
-				break;
 			}
+			else
+			{
+				modifiers.push_back(token);
+			}
+		}
+		else
+		{
+			//Unknown modifier / shape type
 		}
 	}
 	if (!mainShape)

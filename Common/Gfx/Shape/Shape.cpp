@@ -10,7 +10,11 @@
 
 namespace Gfx {
 
-D2D1_MATRIX_3X2_F Shape::GetShapeMatrix() const
+Shape::~Shape()
+{
+}
+
+	D2D1_MATRIX_3X2_F Shape::GetShapeMatrix() const
 {
 	D2D1_POINT_2F center = D2D1::Point2F((m_UntransformedBounds.right - m_UntransformedBounds.left) / 2 + m_UntransformedBounds.left, (m_UntransformedBounds.bottom - m_UntransformedBounds.top) / 2 + m_UntransformedBounds.top);
 	return D2D1::Matrix3x2F(
