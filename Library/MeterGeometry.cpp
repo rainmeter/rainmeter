@@ -14,10 +14,6 @@ MeterGeometry::MeterGeometry(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-MeterGeometry::~MeterGeometry()
-{
-}
-
 void MeterGeometry::Initialize()
 {
 	Meter::Initialize();
