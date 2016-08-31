@@ -16,7 +16,7 @@ public:
 	LuaScript();
 	~LuaScript();
 
-	bool Initialize(const std::wstring& scriptFile);
+	bool Initialize(const std::wstring& scriptFile, const std::wstring& packagePath);
 	void Uninitialize();
 	bool IsInitialized() { return m_Ref != LUA_NOREF; }
 
@@ -35,6 +35,11 @@ protected:
 	std::wstring m_File;
 	int m_Ref;
 	bool m_Unicode;
+
+private:
+	void SetPackagePath(const std::wstring& path);
+	std::wstring GetPackagePath();
+	std::wstring m_scriptResourceFolder;
 };
 
 #endif

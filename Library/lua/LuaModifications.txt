@@ -7,9 +7,6 @@ liolib.c
 - Commented out createstdfile calls for stdin/stdout/stderr in luaopen_io
 - Commented out popen related calls in luaopen_io
 
-linit.c
-- Commented out debug and package libraries
-
 loslib.c
 - Commented out exit function in syslib array
 - Changed os_setlocale() to noop and to always return nil
