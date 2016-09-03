@@ -6,9 +6,10 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "../LuaManager.h"
+#include "../LuaScript.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
+#include "../../../Common/FileUtil.h"
 
 static int Print(lua_State* L)
 {
@@ -42,9 +43,74 @@ static int Print(lua_State* L)
 		// Pop result
 		lua_pop(L, 1);
 	}
+	if (LuaScript::GetActiveScript()) {
+		LogDebug(LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
+	}
+	else
+	{
+		// Could not find active script. Just assume that it is UTF-8
+		LogDebug(StringUtil::Widen(message).c_str());
+	}
+	return 0;
+}
 
-	LogDebug(LuaManager::IsUnicodeState() ?
-		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
+static int Dofile(lua_State* L)
+{
+	const char *fname = luaL_optstring(L, 1, NULL);
+	int n = lua_gettop(L);
+	std::wstring path;
+
+	if (LuaScript::GetActiveScript()) {
+		path = LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
+	}
+	else
+	{
+		path = StringUtil::Widen(fname);
+		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
+	}
+
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(path, &fileSize);
+	if (!fileData)
+	{
+		return false;
+	}
+
+	bool scriptLoaded = false;
+
+	// Treat the script as Unicode if it has the UTF-16 LE BOM.
+	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+	if (unicode)
+	{
+		const std::string utf8Data =
+			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+	}
+	else
+	{
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+	}
+
+	if (scriptLoaded)
+	{
+		// Execute the Lua script
+		int result = lua_pcall(L, 0, 0, 0);
+
+		if (result == 0)
+		{
+			return lua_gettop(L) - n;
+		}
+		else
+		{
+			LuaHelper::ReportErrors(L, path);
+		}
+	}
+	else
+	{
+		LuaHelper::ReportErrors(L, path);
+	}
 	return 0;
 }
 
@@ -55,9 +121,11 @@ static int tolua_cast(lua_State* L)
 	return 1;
 }
 
-void LuaManager::RegisterGlobal(lua_State* L)
+void LuaScript::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
+
+	lua_register(L, "dofile", Dofile);
 
 	// Register tolua.cast() for backwards compatibility.
 	const luaL_Reg toluaFuncs[] =
