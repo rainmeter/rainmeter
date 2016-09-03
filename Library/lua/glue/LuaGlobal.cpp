@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "../LuaManager.h"
+#include "../LuaScript.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
 
@@ -43,7 +43,8 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	LogDebug(LuaManager::IsUnicodeState() ?
+	//TODO: Fix this
+	LogDebug(/*LuaManager::IsUnicodeState()*/ true ?
 		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 	return 0;
 }
@@ -55,7 +56,7 @@ static int tolua_cast(lua_State* L)
 	return 1;
 }
 
-void LuaManager::RegisterGlobal(lua_State* L)
+void LuaScript::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
 

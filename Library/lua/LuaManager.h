@@ -28,28 +28,28 @@ public:
 		operator lua_State*() { return LuaManager::c_State; }
 	};
 
-	static void Initialize();
-	static void Finalize();
+	//static void Initialize();
+	//static void Finalize();
 
-	static ScopedLuaState GetState(bool unicode) { return ScopedLuaState(unicode); }
+	//static ScopedLuaState GetState(bool unicode) { return ScopedLuaState(unicode); }
 
-	static bool IsUnicodeState() { return c_UnicodeStateStack.back(); }
+	//static bool IsUnicodeState() { return c_UnicodeStateStack.back(); }
 
-	static void ReportErrors(const std::wstring& file);
+	static void ReportErrors(lua_State* L, const std::wstring& file);
 
-	static void PushWide(const WCHAR* str);
-	static void PushWide(const std::wstring& str);
-	static std::wstring ToWide(int narg);
+	static void PushWide(lua_State* L,  const WCHAR* str);
+	static void PushWide(lua_State* L,  const std::wstring& str);
+	static std::wstring ToWide(lua_State* L, int narg);
 
 protected:
 	static int c_RefCount;
 	static lua_State* c_State;
 
 private:
-	static void RegisterGlobal(lua_State* L);
-	static void RegisterMeasure(lua_State* L);
-	static void RegisterMeter(lua_State* L);
-	static void RegisterSkin(lua_State* L);
+	// static void RegisterGlobal(lua_State* L);
+	// static void RegisterMeasure(lua_State* L);
+	// static void RegisterMeter(lua_State* L);
+	// static void RegisterSkin(lua_State* L);
 	static void RegisterMeterString(lua_State* L);
 
 	// If the back of the vector is |true|, Lua strings converted to/from as if they were encoded

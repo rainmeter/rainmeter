@@ -20,13 +20,11 @@ MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
 {
-	LuaManager::Initialize();
 }
 
 MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();
-	LuaManager::Finalize();
 }
 
 void MeasureScript::UninitializeLuaScript()
