@@ -8,7 +8,7 @@ liolib.c
 - Commented out popen related calls in luaopen_io
 
 linit.c
-- Commented out debug and package libraries
+- Commented out debug libraries
 
 loslib.c
 - Commented out exit function in syslib array

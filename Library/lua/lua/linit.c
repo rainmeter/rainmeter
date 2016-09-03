@@ -16,7 +16,7 @@
 
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
-//  {LUA_LOADLIBNAME, luaopen_package},
+  {LUA_LOADLIBNAME, luaopen_package},
   {LUA_TABLIBNAME, luaopen_table},
   {LUA_IOLIBNAME, luaopen_io},
   {LUA_OSLIBNAME, luaopen_os},

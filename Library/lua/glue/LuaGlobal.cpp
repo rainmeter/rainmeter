@@ -71,47 +71,51 @@ static int Dofile(lua_State* L)
 		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
 	}
 
-	size_t fileSize = 0;
-	auto fileData = FileUtil::ReadFullFile(path, &fileSize);
-	if (!fileData)
-	{
-		return false;
-	}
+	LuaHelper::RunFile(L, path, n);
 
-	bool scriptLoaded = false;
-
-	// Treat the script as Unicode if it has the UTF-16 LE BOM.
-	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
-	if (unicode)
-	{
-		const std::string utf8Data =
-			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
-		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
-	}
-	else
-	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
-	}
-
-	if (scriptLoaded)
-	{
-		// Execute the Lua script
-		int result = lua_pcall(L, 0, 0, 0);
-
-		if (result == 0)
-		{
-			return lua_gettop(L) - n;
-		}
-		else
-		{
-			LuaHelper::ReportErrors(L, path);
-		}
-	}
-	else
-	{
-		LuaHelper::ReportErrors(L, path);
-	}
 	return 0;
+}
+
+static const std::wstring findfile(lua_State *L, const WCHAR *name,
+	const char *pname) {
+	const char *path;
+	std::wstring wname = name;
+	size_t start_pos = wname.find(L".");
+	if (start_pos != std::string::npos)
+		wname.replace(start_pos, 1, L"\\");
+	if(LuaScript::GetActiveScript()){
+		path = lua_tostring(L, -1);
+		std::wstring path = LuaScript::GetActiveScript()->GetResourceFolder();
+		path.append(wname);
+		path.append(L".lua");
+		return path;
+	}
+	return std::wstring();  /* not found */
+}
+
+static int packageLoader(lua_State* L)
+{
+	const char *name = luaL_checkstring(L, 1);
+	std::wstring wName;
+	if (LuaScript::GetActiveScript()) {
+		wName = LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(name) : StringUtil::Widen(name);
+	}
+	else
+	{
+		wName = StringUtil::Widen(name);
+		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
+	}
+
+	int n = lua_gettop(L);
+	
+
+	std::wstring path = findfile(L, wName.c_str(), "path");
+	if (path.empty()) {
+		return 0;  /* library not found in this path */
+	}
+	LuaHelper::LoadFile(L, path);
+	return 1;  /* library loaded successfully */
 }
 
 static int tolua_cast(lua_State* L)
@@ -126,6 +130,10 @@ void LuaScript::RegisterGlobal(lua_State* L)
 	lua_register(L, "print", Print);
 
 	lua_register(L, "dofile", Dofile);
+
+	luaL_loadstring(L, "package.loaders[2] = ... ");
+	lua_pushcfunction(L, packageLoader);
+	lua_call(L, 1, 0);
 
 	// Register tolua.cast() for backwards compatibility.
 	const luaL_Reg toluaFuncs[] =

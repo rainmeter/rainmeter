@@ -18,6 +18,9 @@ extern "C"
 class LuaHelper
 {
 public:	
+	static bool LoadFile(lua_State* L, const std::wstring& file);
+	static int RunFile(lua_State* L, const std::wstring& file, int n);
+
 	static void ReportErrors(lua_State* L, const std::wstring& file);
 
 	static void PushWide(lua_State* L, const WCHAR* str);

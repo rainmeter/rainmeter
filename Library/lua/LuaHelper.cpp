@@ -7,9 +7,59 @@
 
 #include "StdAfx.h"
 #include "../../Common/StringUtil.h"
+#include "../../Common/FileUtil.h"
 #include "LuaHelper.h"
 #include "../Logger.h"
 #include "LuaScript.h"
+
+bool LuaHelper::LoadFile(lua_State * L, const std::wstring & file)
+{
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(file, &fileSize);
+	if (!fileData)
+	{
+		return false;
+	}
+
+	bool scriptLoaded = false;
+
+	// Treat the script as Unicode if it has the UTF-16 LE BOM.
+	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+	if (unicode)
+	{
+		const std::string utf8Data =
+			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+	}
+	else
+	{
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+	}
+	return scriptLoaded;
+}
+
+int LuaHelper::RunFile(lua_State* L, const std::wstring& file, int n)
+{
+	if (LoadFile(L, file))
+	{
+		// Execute the Lua script
+		int result = lua_pcall(L, 0, 0, 0);
+
+		if (result == 0)
+		{
+			return lua_gettop(L) - n;
+		}
+		else
+		{
+			LuaHelper::ReportErrors(L, file);
+		}
+	}
+	else
+	{
+		LuaHelper::ReportErrors(L, file);
+	}
+	return 0;
+}
 
 void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 {

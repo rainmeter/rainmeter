@@ -25,6 +25,7 @@ MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name
 MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();
+	m_Parser = nullptr;
 }
 
 void MeasureScript::UninitializeLuaScript()
@@ -38,6 +39,9 @@ void MeasureScript::UninitializeLuaScript()
 void MeasureScript::Initialize()
 {
 	Measure::Initialize();
+
+	m_Initialized = false;
+	LoadLua();
 
 	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
 	{
@@ -63,37 +67,22 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-/*
-** Returns the value as a string.
-**
-*/
-const WCHAR* MeasureScript::GetStringValue()
+void MeasureScript::LoadLua()
 {
-	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
-}
-
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
-{
-	Measure::ReadOptions(parser, section);
-
-	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
-	if (!scriptFile.empty())
+	if (!m_ScriptFile.empty() && m_Parser)
 	{
+		std::wstring resroucesPath = L"";
 		if (m_Skin)
 		{
-			m_Skin->MakePathAbsolute(scriptFile);
+			m_Skin->MakePathAbsolute(m_ScriptFile);
+			resroucesPath = m_Skin->GetResourcesPath();
 		}
 
-		if (!m_Initialized ||
-			wcscmp(scriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
+		if (wcscmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 
-			if (m_LuaScript.Initialize(scriptFile))
+			if (m_LuaScript.Initialize(m_ScriptFile, resroucesPath))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
@@ -124,7 +113,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 					if (lua_isnil(L, -1) == 0)
 					{
 						lua_pushnil(L);
-					
+
 						// Look in the table for values to read from the section
 						while (lua_next(L, -2))
 						{
@@ -132,7 +121,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 							const char* strKey = lua_tostring(L, -1);
 							const std::wstring wstrKey = StringUtil::Widen(strKey);
 							const std::wstring& wstrValue =
-								parser.ReadString(section, wstrKey.c_str(), L"");
+								m_Parser->ReadString(m_Section, wstrKey.c_str(), L"");
 							if (!wstrValue.empty())
 							{
 								const std::string strStrVal = StringUtil::Narrow(wstrValue);
@@ -169,6 +158,28 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	LogErrorF(this, L"Script: File not valid");
 	UninitializeLuaScript();
+}
+
+/*
+** Returns the value as a string.
+**
+*/
+const WCHAR* MeasureScript::GetStringValue()
+{
+	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+}
+
+/*
+** Read the options specified in the ini file.
+**
+*/
+void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
+{
+	Measure::ReadOptions(parser, section);
+
+	m_ScriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	m_Parser = &parser;
+	m_Section = section;
 }
 
 /*

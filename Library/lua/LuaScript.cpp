@@ -23,9 +23,10 @@ LuaScript::~LuaScript()
 	Uninitialize();
 }
 
-bool LuaScript::Initialize(const std::wstring& scriptFile)
+bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& resourceFolder)
 {
 	assert(!IsInitialized());
+	m_ResourceFolder = resourceFolder;
 	
 	if (m_State == nullptr)
 	{
@@ -62,7 +63,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	{
 		scriptLoaded = luaL_loadbuffer(m_State, (char*)fileData.get(), fileSize, "") == 0;
 	}
-
+	
 	if (scriptLoaded)
 	{
 
