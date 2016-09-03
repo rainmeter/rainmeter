@@ -111,8 +111,16 @@ static int packageLoader(lua_State* L)
 	
 
 	std::wstring path = findfile(L, wName.c_str(), "path");
-	if (path.empty()) {
-		return 0;  /* library not found in this path */
+	bool isFile = true;
+	FILE *f = _wfopen(path.c_str(), L"r");  /* try to open file */
+	if (f == NULL) 
+		isFile = false;  /* open failed */
+	else
+		fclose(f);
+	if (!isFile) {
+		std::string spath = LuaScript::GetActiveScript()->IsUnicode() ? StringUtil::NarrowUTF8(path) : StringUtil::Narrow(path);
+		lua_pushfstring(L, "\n\tno file " LUA_QS, spath.c_str());
+		return 1;  /* library not found in this path */
 	}
 	LuaHelper::LoadFile(L, path);
 	return 1;  /* library loaded successfully */
