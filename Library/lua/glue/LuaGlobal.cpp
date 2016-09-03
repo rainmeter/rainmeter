@@ -9,6 +9,7 @@
 #include "../LuaManager.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
+#include "../../../Common/FileUtil.h"
 
 static int Print(lua_State* L)
 {
@@ -48,6 +49,56 @@ static int Print(lua_State* L)
 	return 0;
 }
 
+static int DoFile(lua_State* L)
+{
+	int ref = LuaManager::GetActiveScriptRef();
+	if (ref >= 0) {
+		// Modified version of luaB_dofile
+		std::wstring fname = StringUtil::WidenUTF8(luaL_optstring(L, 1, NULL));
+		int n = lua_gettop(L);
+
+		size_t fileSize = 0;
+		auto fileData = FileUtil::ReadFullFile(fname, &fileSize);
+		if (!fileData)
+		{
+			return 0;
+		}
+
+		bool scriptLoaded = false;
+		bool isUnicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+		if (isUnicode)
+		{
+			const std::string utf8Data =
+				StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
+			scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+		}
+		else
+		{
+			scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+		}
+
+		if (scriptLoaded) {
+			lua_rawgeti(L, LUA_GLOBALSINDEX, ref);
+
+			// Set the environment for the function to be run in to be the table that
+			// has been created for the script/
+			lua_setfenv(L, -2);
+			lua_call(L, 0, LUA_MULTRET);
+			return lua_gettop(L) - n;
+		}
+		else
+		{
+			LuaManager::ReportErrors(fname);
+			return 0;
+		}
+	}
+	else
+	{
+		LogDebug(L"Could not execute dofile due to no active script being set!");
+		return 0;
+	}
+}
+
 static int tolua_cast(lua_State* L)
 {
 	// Simply push first argument onto stack.
@@ -58,6 +109,8 @@ static int tolua_cast(lua_State* L)
 void LuaManager::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
+
+	lua_register(L, "dofile", DoFile);
 
 	// Register tolua.cast() for backwards compatibility.
 	const luaL_Reg toluaFuncs[] =

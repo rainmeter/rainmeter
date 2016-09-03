@@ -12,6 +12,7 @@
 
 int LuaManager::c_RefCount = 0;
 lua_State* LuaManager::c_State = 0;
+int LuaManager::m_ActiveScriptRef = -1;
 
 std::vector<bool> LuaManager::c_UnicodeStateStack;
 
@@ -89,4 +90,14 @@ std::wstring LuaManager::ToWide(int narg)
 	const char* str = lua_tolstring(L, narg, &strLen);
 	return IsUnicodeState() ?
 		StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+}
+
+int LuaManager::GetActiveScriptRef()
+{
+	return m_ActiveScriptRef;
+}
+
+void LuaManager::SetActiveScriptRef(int ref)
+{
+	m_ActiveScriptRef = ref;
 }

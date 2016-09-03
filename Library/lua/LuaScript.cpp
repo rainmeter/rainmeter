@@ -75,8 +75,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		// has been created for the script/
 		lua_setfenv(L, -2);
 
+		LuaManager::SetActiveScriptRef(m_Ref);
+
 		// Execute the Lua script
 		int result = lua_pcall(L, 0, 0, 0);
+
+		LuaManager::SetActiveScriptRef(-1);
+
 		if (result == 0)
 		{
 			m_File = scriptFile;
@@ -150,10 +155,14 @@ void LuaScript::RunFunction(const char* funcName)
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
 
+		LuaManager::SetActiveScriptRef(m_Ref);
+
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			LuaManager::ReportErrors(m_File);
 		}
+
+		LuaManager::SetActiveScriptRef(-1);
 
 		lua_pop(L, 1);
 	}
@@ -175,6 +184,8 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
+
+		LuaManager::SetActiveScriptRef(m_Ref);
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
@@ -199,6 +210,8 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 			lua_pop(L, 2);
 		}
+
+		LuaManager::SetActiveScriptRef(-1);
 	}
 
 	return type;
@@ -229,9 +242,13 @@ void LuaScript::RunString(const std::wstring& str)
 		// Pop table and set the environment of the loaded chunk to it
 		lua_setfenv(L, -2);
 
+		LuaManager::SetActiveScriptRef(m_Ref);
+
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			LuaManager::ReportErrors(m_File);
 		}
+
+		LuaManager::SetActiveScriptRef(-1);
 	}
 }

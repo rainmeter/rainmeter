@@ -41,6 +41,9 @@ public:
 	static void PushWide(const std::wstring& str);
 	static std::wstring ToWide(int narg);
 
+	static int GetActiveScriptRef();
+	static void SetActiveScriptRef(int ref);
+
 protected:
 	static int c_RefCount;
 	static lua_State* c_State;
@@ -56,6 +59,8 @@ private:
 	// in UTF-8. Otherwise Lua strings are treated as if they are encoded in the default system
 	// encoding.
 	static std::vector<bool> c_UnicodeStateStack;
+
+	static int m_ActiveScriptRef;
 };
 
 #endif
