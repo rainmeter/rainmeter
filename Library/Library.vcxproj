@@ -106,7 +106,7 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="lua\LuaManager.cpp" />
+    <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="lua\LuaScript.cpp" />
     <ClCompile Include="lua\glue\LuaMeasure.cpp" />
     <ClCompile Include="lua\glue\LuaMeter.cpp" />
@@ -187,7 +187,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="lua\LuaManager.h" />
+    <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="lua\LuaScript.h" />
   </ItemGroup>
   <ItemGroup>

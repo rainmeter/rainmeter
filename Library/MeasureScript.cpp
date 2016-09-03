@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "MeasureScript.h"
-#include "lua/LuaManager.h"
+#include "lua/LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
 
@@ -99,17 +99,16 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
 
 				auto L = m_LuaScript.GetState();
-				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(Skin**)lua_newuserdata(L, sizeof(Skin*)) = m_Skin;
 				lua_getglobal(L, "MeterWindow");
 				lua_setmetatable(L, -2);
-				lua_setfield(L, -2, "SKIN");
+				lua_setglobal(L, "SKIN");
 
 				*(Measure**)lua_newuserdata(L, sizeof(Measure*)) = this;
 				lua_getglobal(L, "Measure");
 				lua_setmetatable(L, -2);
-				lua_setfield(L, -2, "SELF");
+				lua_setglobal(L, "SELF");
 
 				if (!m_LuaScript.IsUnicode())
 				{
@@ -121,7 +120,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 						LogWarningF(this, L"Script: Using deprecated GetStringValue()");
 					}
 
-					lua_getfield(L, -1, "PROPERTIES");
+					lua_getglobal(L, "PROPERTIES");
 					if (lua_isnil(L, -1) == 0)
 					{
 						lua_pushnil(L);

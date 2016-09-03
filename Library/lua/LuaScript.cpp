@@ -9,13 +9,11 @@
 #include "../../Common/StringUtil.h"
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
-#include "LuaManager.h"
 
 LuaScript* LuaScript::m_ActiveScript = nullptr;
 
 LuaScript::LuaScript() :
 	m_State(nullptr),
-	m_Ref(LUA_NOREF),
 	m_Unicode(false)
 {
 }
@@ -67,29 +65,6 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 	if (scriptLoaded)
 	{
-		// Create the table this script will reside in
-		lua_newtable(m_State);
-
-		// Create the metatable that will store the global table
-		lua_createtable(m_State, 0, 1);
-
-		// Push the global teble
-		lua_pushvalue(m_State, LUA_GLOBALSINDEX);
-
-		// Set the __index of the table to be the global table
-		lua_setfield(m_State, -2, "__index");
-
-		// Set the metatable for the script's table
-		lua_setmetatable(m_State, -2);
-
-		// Put the table into the global table
-		m_Ref = luaL_ref(m_State, LUA_GLOBALSINDEX);
-
-		lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_Ref);
-
-		// Set the environment for the function to be run in to be the table that
-		// has been created for the script/
-		lua_setfenv(m_State, -2);
 
 		m_ActiveScript = this;
 
@@ -105,13 +80,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaManager::ReportErrors(m_State, scriptFile);
+			LuaHelper::ReportErrors(m_State, scriptFile);
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaManager::ReportErrors(m_State, scriptFile);
+		LuaHelper::ReportErrors(m_State, scriptFile);
 	}
 
 	return false;
@@ -119,16 +94,11 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	if (m_Ref != LUA_NOREF)
-	{
-		luaL_unref(m_State, LUA_GLOBALSINDEX, m_Ref);
-		m_Ref = LUA_NOREF;
-		m_File.clear();
-	}
 	if(m_State != nullptr)
 	{
 		lua_close(m_State);
 		m_State = nullptr;
+		m_File.clear();
 	}
 }
 
@@ -142,16 +112,13 @@ bool LuaScript::IsFunction(const char* funcName)
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_Ref);
-
 		// Push the function onto the stack
-		lua_getfield(m_State, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
 		bExists = lua_isfunction(m_State, -1);
 
 		// Pop both the table and the function off the stack.
-		lua_pop(m_State, 2);
+		lua_pop(m_State, 1);
 	}
 
 	return bExists;
@@ -166,22 +133,17 @@ void LuaScript::RunFunction(const char* funcName)
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_Ref);
-
 		// Push the function onto the stack
-		lua_getfield(m_State, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
 		m_ActiveScript = this;
 
 		if (lua_pcall(m_State, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_State, m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 
 		m_ActiveScript = nullptr;
-
-		lua_pop(m_State, 1);
 	}
 }
 
@@ -195,18 +157,15 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_Ref);
 
 		// Push the function onto the stack
-		lua_getfield(m_State, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
 		m_ActiveScript = this;
 
 		if (lua_pcall(m_State, 0, 1, 0))
 		{
-			LuaManager::ReportErrors(m_State, m_File);
-			lua_pop(m_State, 1);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 		else
 		{
@@ -224,7 +183,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 				numValue = strtod(str, nullptr);
 			}
 
-			lua_pop(m_State, 2);
+			lua_pop(m_State, 1);
 		}
 
 		m_ActiveScript = nullptr;
@@ -247,20 +206,14 @@ void LuaScript::RunString(const std::wstring& str)
 		// Load the string as a Lua chunk
 		if (luaL_loadstring(m_State, narrowStr.c_str()))
 		{
-			LuaManager::ReportErrors(m_State, m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
-
-		// Push our table onto the stack
-		lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_Ref);
-
-		// Pop table and set the environment of the loaded chunk to it
-		lua_setfenv(m_State, -2);
 
 		m_ActiveScript = this;
 
 		if (lua_pcall(m_State, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_State, m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 
 		m_ActiveScript = nullptr;
