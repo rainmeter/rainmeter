@@ -23,10 +23,9 @@ LuaScript::~LuaScript()
 	Uninitialize();
 }
 
-bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& resourceFolder)
+bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
-	m_ResourceFolder = resourceFolder;
 	
 	if (m_State == nullptr)
 	{
@@ -62,23 +61,6 @@ bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& r
 	else
 	{
 		scriptLoaded = luaL_loadbuffer(m_State, (char*)fileData.get(), fileSize, "") == 0;
-	}
-	
-	if (!resourceFolder.empty()) {
-		lua_getglobal(m_State, "package");
-		std::wstring lua_path = resourceFolder;
-		lua_path.append(L"?.lua");
-		const std::string narrowStrLua = m_Unicode ?
-			StringUtil::NarrowUTF8(lua_path) : StringUtil::Narrow(lua_path);
-		lua_pushlstring(m_State, narrowStrLua.c_str(), narrowStrLua.length());
-		lua_setfield(m_State, -2, "path");
-		std::wstring c_path = resourceFolder;
-		c_path.append(L"?.dll");
-		const std::string narrowStrC = m_Unicode ?
-			StringUtil::NarrowUTF8(c_path) : StringUtil::Narrow(c_path);
-		lua_pushlstring(m_State, narrowStrC.c_str(), narrowStrC.length());
-		lua_setfield(m_State, -2, "cpath");
-		lua_pop(m_State, 1); 
 	}
 	
 	if (scriptLoaded)

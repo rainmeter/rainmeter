@@ -16,12 +16,11 @@ public:
 	LuaScript();
 	~LuaScript();
 
-	bool Initialize(const std::wstring& scriptFile, const std::wstring& resourceFolder);
+	bool Initialize(const std::wstring& scriptFile);
 	void Uninitialize();
 	bool IsInitialized() { return m_State != nullptr; }
 
 	const std::wstring& GetFile() { return m_File; }
-	const std::wstring& GetResourceFolder() { return m_ResourceFolder; }
 	bool IsUnicode() const { return m_Unicode; }
 
 	lua_State* GetState() { return m_State; }
@@ -40,7 +39,6 @@ protected:
 	static void RegisterSkin(lua_State* L);
 
 	std::wstring m_File;
-	std::wstring m_ResourceFolder;
 	bool m_Unicode;
 	lua_State* m_State;
 

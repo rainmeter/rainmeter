@@ -71,18 +71,16 @@ void MeasureScript::LoadLua()
 {
 	if (!m_ScriptFile.empty() && m_Parser)
 	{
-		std::wstring resroucesPath = L"";
 		if (m_Skin)
 		{
 			m_Skin->MakePathAbsolute(m_ScriptFile);
-			resroucesPath = m_Skin->GetResourcesPath();
 		}
 
 		if (wcscmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 
-			if (m_LuaScript.Initialize(m_ScriptFile, resroucesPath))
+			if (m_LuaScript.Initialize(m_ScriptFile))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
