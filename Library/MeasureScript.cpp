@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "MeasureScript.h"
-#include "lua/LuaManager.h"
+#include "lua/LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
 
@@ -20,13 +20,12 @@ MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
 {
-	LuaManager::Initialize();
 }
 
 MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();
-	LuaManager::Finalize();
+	m_Parser = nullptr;
 }
 
 void MeasureScript::UninitializeLuaScript()
@@ -40,6 +39,9 @@ void MeasureScript::UninitializeLuaScript()
 void MeasureScript::Initialize()
 {
 	Measure::Initialize();
+
+	m_Initialized = false;
+	LoadLua();
 
 	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
 	{
@@ -65,53 +67,35 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-/*
-** Returns the value as a string.
-**
-*/
-const WCHAR* MeasureScript::GetStringValue()
+void MeasureScript::LoadLua()
 {
-	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
-}
-
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
-{
-	Measure::ReadOptions(parser, section);
-
-	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
-	if (!scriptFile.empty())
+	if (!m_ScriptFile.empty() && m_Parser)
 	{
 		if (m_Skin)
 		{
-			m_Skin->MakePathAbsolute(scriptFile);
+			m_Skin->MakePathAbsolute(m_ScriptFile);
 		}
 
-		if (!m_Initialized ||
-			wcscmp(scriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
+		if (wcscmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 
-			if (m_LuaScript.Initialize(scriptFile))
+			if (m_LuaScript.Initialize(m_ScriptFile))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
 
 				auto L = m_LuaScript.GetState();
-				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(Skin**)lua_newuserdata(L, sizeof(Skin*)) = m_Skin;
 				lua_getglobal(L, "MeterWindow");
 				lua_setmetatable(L, -2);
-				lua_setfield(L, -2, "SKIN");
+				lua_setglobal(L, "SKIN");
 
 				*(Measure**)lua_newuserdata(L, sizeof(Measure*)) = this;
 				lua_getglobal(L, "Measure");
 				lua_setmetatable(L, -2);
-				lua_setfield(L, -2, "SELF");
+				lua_setglobal(L, "SELF");
 
 				if (!m_LuaScript.IsUnicode())
 				{
@@ -123,11 +107,11 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 						LogWarningF(this, L"Script: Using deprecated GetStringValue()");
 					}
 
-					lua_getfield(L, -1, "PROPERTIES");
+					lua_getglobal(L, "PROPERTIES");
 					if (lua_isnil(L, -1) == 0)
 					{
 						lua_pushnil(L);
-					
+
 						// Look in the table for values to read from the section
 						while (lua_next(L, -2))
 						{
@@ -135,7 +119,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 							const char* strKey = lua_tostring(L, -1);
 							const std::wstring wstrKey = StringUtil::Widen(strKey);
 							const std::wstring& wstrValue =
-								parser.ReadString(section, wstrKey.c_str(), L"");
+								m_Parser->ReadString(m_Section, wstrKey.c_str(), L"");
 							if (!wstrValue.empty())
 							{
 								const std::string strStrVal = StringUtil::Narrow(wstrValue);
@@ -172,6 +156,28 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	LogErrorF(this, L"Script: File not valid");
 	UninitializeLuaScript();
+}
+
+/*
+** Returns the value as a string.
+**
+*/
+const WCHAR* MeasureScript::GetStringValue()
+{
+	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+}
+
+/*
+** Read the options specified in the ini file.
+**
+*/
+void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
+{
+	Measure::ReadOptions(parser, section);
+
+	m_ScriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	m_Parser = &parser;
+	m_Section = section;
 }
 
 /*
