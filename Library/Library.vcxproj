@@ -42,6 +42,7 @@
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
@@ -106,7 +107,6 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="lua\LuaManager.cpp" />
     <ClCompile Include="lua\LuaScript.cpp" />
     <ClCompile Include="lua\glue\LuaMeasure.cpp" />
     <ClCompile Include="lua\glue\LuaMeter.cpp" />
@@ -129,6 +129,7 @@
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
@@ -187,7 +188,6 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="lua\LuaManager.h" />
     <ClInclude Include="lua\LuaScript.h" />
   </ItemGroup>
   <ItemGroup>

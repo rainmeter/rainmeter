@@ -19,9 +19,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lua\LuaManager.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
@@ -131,11 +128,11 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="lua\LuaHelper.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lua\LuaManager.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
     </ClInclude>
@@ -231,6 +228,9 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="lua\LuaHelper.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

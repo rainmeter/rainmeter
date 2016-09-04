@@ -9,10 +9,11 @@
 #include "../../Common/StringUtil.h"
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
-#include "LuaManager.h"
+
+LuaScript* LuaScript::m_ActiveScript = nullptr;
 
 LuaScript::LuaScript() :
-	m_Ref(LUA_NOREF),
+	m_State(nullptr),
 	m_Unicode(false)
 {
 }
@@ -22,9 +23,24 @@ LuaScript::~LuaScript()
 	Uninitialize();
 }
 
-bool LuaScript::Initialize(const std::wstring& scriptFile)
+bool LuaScript::Initialize(const std::wstring& scriptFile, const std::wstring& resourceFolder)
 {
 	assert(!IsInitialized());
+	m_ResourceFolder = resourceFolder;
+	
+	if (m_State == nullptr)
+	{
+		// Initialize Lua
+		m_State = luaL_newstate();
+
+		luaL_openlibs(m_State);
+
+		// Register custom types and functions
+		RegisterGlobal(m_State);
+		RegisterMeasure(m_State);
+		RegisterMeter(m_State);
+		RegisterSkin(m_State);
+	}
 
 	size_t fileSize = 0;
 	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
@@ -33,7 +49,6 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		return false;
 	}
 
-	auto L = GetState();
 	bool scriptLoaded = false;
 
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
@@ -42,41 +57,40 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	{
 		const std::string utf8Data = 
 			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
-		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+		scriptLoaded = luaL_loadbuffer(m_State, utf8Data.c_str(), utf8Data.length(), "") == 0;
 	}
 	else
 	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+		scriptLoaded = luaL_loadbuffer(m_State, (char*)fileData.get(), fileSize, "") == 0;
 	}
-
+	
+	if (!resourceFolder.empty()) {
+		lua_getglobal(m_State, "package");
+		std::wstring lua_path = resourceFolder;
+		lua_path.append(L"?.lua");
+		const std::string narrowStrLua = m_Unicode ?
+			StringUtil::NarrowUTF8(lua_path) : StringUtil::Narrow(lua_path);
+		lua_pushlstring(m_State, narrowStrLua.c_str(), narrowStrLua.length());
+		lua_setfield(m_State, -2, "path");
+		std::wstring c_path = resourceFolder;
+		c_path.append(L"?.dll");
+		const std::string narrowStrC = m_Unicode ?
+			StringUtil::NarrowUTF8(c_path) : StringUtil::Narrow(c_path);
+		lua_pushlstring(m_State, narrowStrC.c_str(), narrowStrC.length());
+		lua_setfield(m_State, -2, "cpath");
+		lua_pop(m_State, 1); 
+	}
+	
 	if (scriptLoaded)
 	{
-		// Create the table this script will reside in
-		lua_newtable(L);
 
-		// Create the metatable that will store the global table
-		lua_createtable(L, 0, 1);
-
-		// Push the global teble
-		lua_pushvalue(L, LUA_GLOBALSINDEX);
-
-		// Set the __index of the table to be the global table
-		lua_setfield(L, -2, "__index");
-
-		// Set the metatable for the script's table
-		lua_setmetatable(L, -2);
-
-		// Put the table into the global table
-		m_Ref = luaL_ref(L, LUA_GLOBALSINDEX);
-
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-		// Set the environment for the function to be run in to be the table that
-		// has been created for the script/
-		lua_setfenv(L, -2);
+		m_ActiveScript = this;
 
 		// Execute the Lua script
-		int result = lua_pcall(L, 0, 0, 0);
+		int result = lua_pcall(m_State, 0, 0, 0);
+
+		m_ActiveScript = nullptr;
+		
 		if (result == 0)
 		{
 			m_File = scriptFile;
@@ -84,13 +98,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaManager::ReportErrors(scriptFile);
+			LuaHelper::ReportErrors(m_State, scriptFile);
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaManager::ReportErrors(scriptFile);
+		LuaHelper::ReportErrors(m_State, scriptFile);
 	}
 
 	return false;
@@ -98,12 +112,10 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	auto L = GetState();
-
-	if (m_Ref != LUA_NOREF)
+	if(m_State != nullptr)
 	{
-		luaL_unref(L, LUA_GLOBALSINDEX, m_Ref);
-		m_Ref = LUA_NOREF;
+		lua_close(m_State);
+		m_State = nullptr;
 		m_File.clear();
 	}
 }
@@ -114,21 +126,17 @@ void LuaScript::Uninitialize()
 */
 bool LuaScript::IsFunction(const char* funcName)
 {
-	auto L = GetState();
 	bool bExists = false;
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
 		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
-		bExists = lua_isfunction(L, -1);
+		bExists = lua_isfunction(m_State, -1);
 
 		// Pop both the table and the function off the stack.
-		lua_pop(L, 2);
+		lua_pop(m_State, 1);
 	}
 
 	return bExists;
@@ -140,22 +148,20 @@ bool LuaScript::IsFunction(const char* funcName)
 */
 void LuaScript::RunFunction(const char* funcName)
 {
-	auto L = GetState();
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
 		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
-		if (lua_pcall(L, 0, 0, 0))
+		m_ActiveScript = this;
+
+		if (lua_pcall(m_State, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 
-		lua_pop(L, 1);
+		m_ActiveScript = nullptr;
 	}
 }
 
@@ -165,40 +171,40 @@ void LuaScript::RunFunction(const char* funcName)
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
-	auto L = GetState();
 	int type = LUA_TNIL;
 
 	if (IsInitialized())
 	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
 		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
+		lua_getglobal(m_State, funcName);
 
-		if (lua_pcall(L, 0, 1, 0))
+		m_ActiveScript = this;
+
+		if (lua_pcall(m_State, 0, 1, 0))
 		{
-			LuaManager::ReportErrors(m_File);
-			lua_pop(L, 1);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 		else
 		{
-			type = lua_type(L, -1);
+			type = lua_type(m_State, -1);
 			if (type == LUA_TNUMBER)
 			{
-				numValue = lua_tonumber(L, -1);
+				numValue = lua_tonumber(m_State, -1);
 			}
 			else if (type == LUA_TSTRING)
 			{
 				size_t strLen = 0;
-				const char* str = lua_tolstring(L, -1, &strLen);
+				const char* str = lua_tolstring(m_State, -1, &strLen);
 				strValue = m_Unicode ?
 					StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 				numValue = strtod(str, nullptr);
 			}
 
-			lua_pop(L, 2);
+			lua_pop(m_State, 1);
 		}
+
+		m_ActiveScript = nullptr;
 	}
 
 	return type;
@@ -210,28 +216,24 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 */
 void LuaScript::RunString(const std::wstring& str)
 {
-	auto L = GetState();
-
 	if (IsInitialized())
 	{
 		const std::string narrowStr = m_Unicode ?
 			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 
 		// Load the string as a Lua chunk
-		if (luaL_loadstring(L, narrowStr.c_str()))
+		if (luaL_loadstring(m_State, narrowStr.c_str()))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
 
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		m_ActiveScript = this;
 
-		// Pop table and set the environment of the loaded chunk to it
-		lua_setfenv(L, -2);
-
-		if (lua_pcall(L, 0, 0, 0))
+		if (lua_pcall(m_State, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_State, m_File);
 		}
+
+		m_ActiveScript = nullptr;
 	}
 }

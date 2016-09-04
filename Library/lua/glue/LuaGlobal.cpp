@@ -6,9 +6,10 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "../LuaManager.h"
+#include "../LuaScript.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
+#include "../../../Common/FileUtil.h"
 
 static int Print(lua_State* L)
 {
@@ -42,10 +43,87 @@ static int Print(lua_State* L)
 		// Pop result
 		lua_pop(L, 1);
 	}
-
-	LogDebug(LuaManager::IsUnicodeState() ?
-		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
+	if (LuaScript::GetActiveScript()) {
+		LogDebug(LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
+	}
+	else
+	{
+		// Could not find active script. Just assume that it is UTF-8
+		LogDebug(StringUtil::Widen(message).c_str());
+	}
 	return 0;
+}
+
+static int Dofile(lua_State* L)
+{
+	const char *fname = luaL_optstring(L, 1, NULL);
+	int n = lua_gettop(L);
+	std::wstring path;
+
+	if (LuaScript::GetActiveScript()) {
+		path = LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
+	}
+	else
+	{
+		path = StringUtil::Widen(fname);
+		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
+	}
+
+	LuaHelper::RunFile(L, path, n);
+
+	return 0;
+}
+
+static const std::wstring findfile(lua_State *L, const WCHAR *name,
+	const char *pname) {
+	const char *path;
+	std::wstring wname = name;
+	size_t start_pos = wname.find(L".");
+	if (start_pos != std::string::npos)
+		wname.replace(start_pos, 1, L"\\");
+	if(LuaScript::GetActiveScript()){
+		path = lua_tostring(L, -1);
+		std::wstring path = LuaScript::GetActiveScript()->GetResourceFolder();
+		path.append(wname);
+		path.append(L".lua");
+		return path;
+	}
+	return std::wstring();  /* not found */
+}
+
+static int packageLoader(lua_State* L)
+{
+	const char *name = luaL_checkstring(L, 1);
+	std::wstring wName;
+	if (LuaScript::GetActiveScript()) {
+		wName = LuaScript::GetActiveScript()->IsUnicode() ?
+			StringUtil::WidenUTF8(name) : StringUtil::Widen(name);
+	}
+	else
+	{
+		wName = StringUtil::Widen(name);
+		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
+	}
+
+	int n = lua_gettop(L);
+	
+
+	std::wstring path = findfile(L, wName.c_str(), "path");
+	bool isFile = true;
+	FILE *f = _wfopen(path.c_str(), L"r");  /* try to open file */
+	if (f == NULL) 
+		isFile = false;  /* open failed */
+	else
+		fclose(f);
+	if (!isFile) {
+		std::string spath = LuaScript::GetActiveScript()->IsUnicode() ? StringUtil::NarrowUTF8(path) : StringUtil::Narrow(path);
+		lua_pushfstring(L, "\n\tno file " LUA_QS, spath.c_str());
+		return 1;  /* library not found in this path */
+	}
+	LuaHelper::LoadFile(L, path);
+	return 1;  /* library loaded successfully */
 }
 
 static int tolua_cast(lua_State* L)
@@ -55,9 +133,15 @@ static int tolua_cast(lua_State* L)
 	return 1;
 }
 
-void LuaManager::RegisterGlobal(lua_State* L)
+void LuaScript::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
+
+	lua_register(L, "dofile", Dofile);
+
+	luaL_loadstring(L, "package.loaders[2] = ... ");
+	lua_pushcfunction(L, packageLoader);
+	lua_call(L, 1, 0);
 
 	// Register tolua.cast() for backwards compatibility.
 	const luaL_Reg toluaFuncs[] =
