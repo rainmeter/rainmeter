@@ -35,6 +35,7 @@ bool LuaHelper::LoadFile(lua_State* L, const std::wstring& file)
 	{
 		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
 	}
+
 	return scriptLoaded;
 }
 
@@ -139,17 +140,20 @@ void LuaHelper::PushWide(lua_State* L, const std::wstring& str)
 
 std::wstring LuaHelper::ToWide(lua_State* L,  int narg)
 {
+	std::wstring result = L"";
+
 	LuaScript* activeScript = LuaScript::GetActiveScript();
 	if (activeScript)
 	{
 		size_t strLen = 0;
 		const char* str = lua_tolstring(L, narg, &strLen);
-		bool unicode = activeScript->IsUnicode();
-		return unicode ?
+		result = activeScript->IsUnicode() ?
 			StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 	}
 	else
 	{
 		LogDebug(L"No active script, could not get wide string from stack!");
 	}
+
+	return result;
 }
