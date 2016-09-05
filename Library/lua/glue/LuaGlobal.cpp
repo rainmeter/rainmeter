@@ -43,7 +43,9 @@ static int Print(lua_State* L)
 		// Pop result
 		lua_pop(L, 1);
 	}
-	if (LuaScript::GetActiveScript()) {
+
+	if (LuaScript::GetActiveScript())
+	{
 		LogDebug(LuaScript::GetActiveScript()->IsUnicode() ?
 			StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 	}
@@ -52,6 +54,7 @@ static int Print(lua_State* L)
 		// Could not find active script. Just assume that it is UTF-8
 		LogDebug(StringUtil::Widen(message).c_str());
 	}
+
 	return 0;
 }
 
@@ -61,7 +64,8 @@ static int Dofile(lua_State* L)
 	int n = lua_gettop(L);
 	std::wstring path;
 
-	if (LuaScript::GetActiveScript()) {
+	if (LuaScript::GetActiveScript())
+	{
 		path = LuaScript::GetActiveScript()->IsUnicode() ?
 			StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
 	}
@@ -86,7 +90,6 @@ static int tolua_cast(lua_State* L)
 void LuaScript::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
-
 	lua_register(L, "dofile", Dofile);
 
 	// Register tolua.cast() for backwards compatibility.

@@ -26,8 +26,8 @@ LuaScript::~LuaScript()
 bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
-	
-	if (m_State == nullptr)
+
+	if (!m_State)
 	{
 		// Initialize Lua
 		m_State = luaL_newstate();
@@ -62,17 +62,16 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	{
 		scriptLoaded = luaL_loadbuffer(m_State, (char*)fileData.get(), fileSize, "") == 0;
 	}
-	
+
 	if (scriptLoaded)
 	{
-
 		m_ActiveScript = this;
 
 		// Execute the Lua script
 		int result = lua_pcall(m_State, 0, 0, 0);
 
 		m_ActiveScript = nullptr;
-		
+
 		if (result == 0)
 		{
 			m_File = scriptFile;
@@ -94,7 +93,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	if(m_State != nullptr)
+	if (m_State)
 	{
 		lua_close(m_State);
 		m_State = nullptr;
@@ -130,7 +129,6 @@ bool LuaScript::IsFunction(const char* funcName)
 */
 void LuaScript::RunFunction(const char* funcName)
 {
-
 	if (IsInitialized())
 	{
 		// Push the function onto the stack
@@ -157,7 +155,6 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 	if (IsInitialized())
 	{
-
 		// Push the function onto the stack
 		lua_getglobal(m_State, funcName);
 

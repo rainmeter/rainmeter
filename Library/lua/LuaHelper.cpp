@@ -12,7 +12,7 @@
 #include "../Logger.h"
 #include "LuaScript.h"
 
-bool LuaHelper::LoadFile(lua_State * L, const std::wstring & file)
+bool LuaHelper::LoadFile(lua_State* L, const std::wstring& file)
 {
 	size_t fileSize = 0;
 	auto fileData = FileUtil::ReadFullFile(file, &fileSize);
@@ -58,6 +58,7 @@ int LuaHelper::RunFile(lua_State* L, const std::wstring& file, int n)
 	{
 		LuaHelper::ReportErrors(L, file);
 	}
+
 	return 0;
 }
 
@@ -70,9 +71,11 @@ void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 
 	std::wstring wc(strlen(error) + 1, L'#');
 	mbstowcs(&wc[0], error, strlen(error) + 1);
+
 	if (wcscmp(file.c_str(), wc.c_str()) == 0)
 	{
-		if (LuaScript::GetActiveScript()) {
+		if (LuaScript::GetActiveScript())
+		{
 			std::wstring originalFile(LuaScript::GetActiveScript()->GetFile(), LuaScript::GetActiveScript()->GetFile().find_last_of(L"\\") + 1);
 			lua_Debug ar;
 			lua_getstack(L, 1, &ar);
@@ -91,7 +94,8 @@ void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 		error = pos;
 	}
 
-	if (LuaScript::GetActiveScript()) {
+	if (LuaScript::GetActiveScript())
+	{
 		str += LuaScript::GetActiveScript()->IsUnicode() ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
 	}
 	else
@@ -99,13 +103,15 @@ void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 		str += StringUtil::Widen(error);
 		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
 	}
+
 	LogErrorF(L"Script: %s", str.c_str());
 }
 
 void LuaHelper::PushWide(lua_State* L, const WCHAR* str)
 {
 	LuaScript* activeScript = LuaScript::GetActiveScript();
-	if (activeScript) {
+	if (activeScript)
+	{
 		const std::string narrowStr = activeScript->IsUnicode() ?
 			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 		lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
@@ -119,7 +125,8 @@ void LuaHelper::PushWide(lua_State* L, const WCHAR* str)
 void LuaHelper::PushWide(lua_State* L, const std::wstring& str)
 {
 	LuaScript* activeScript = LuaScript::GetActiveScript();
-	if (activeScript) {
+	if (activeScript)
+	{
 		const std::string narrowStr = activeScript->IsUnicode() ?
 			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 		lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
@@ -133,7 +140,8 @@ void LuaHelper::PushWide(lua_State* L, const std::wstring& str)
 std::wstring LuaHelper::ToWide(lua_State* L,  int narg)
 {
 	LuaScript* activeScript = LuaScript::GetActiveScript();
-	if (activeScript) {
+	if (activeScript)
+	{
 		size_t strLen = 0;
 		const char* str = lua_tolstring(L, narg, &strLen);
 		bool unicode = activeScript->IsUnicode();
