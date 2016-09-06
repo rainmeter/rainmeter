@@ -88,7 +88,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_Skin->MakePathAbsolute(m_ScriptFile);
 		}
 
-		if (wcscmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
+		if (_wcsicmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 

@@ -27,7 +27,7 @@ bool LuaHelper::LoadFile(lua_State* L, const std::wstring& file, bool& unicode)
 
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
-	m_UnicodeFile.push_back({ unicode, file });
+	m_UnicodeFile.emplace_back(unicode, file);
 	if (unicode)
 	{
 		const std::string utf8Data =
@@ -44,7 +44,7 @@ bool LuaHelper::LoadFile(lua_State* L, const std::wstring& file, bool& unicode)
 
 bool LuaHelper::IsFunction(lua_State* L, const char* funcName, const std::wstring& file, bool unicode)
 {
-	m_UnicodeFile.push_back({ unicode, file });
+	m_UnicodeFile.emplace_back(unicode, file);
 	bool bExists = false;
 	lua_getglobal(L, funcName);
 	bExists = lua_isfunction(L, -1);
@@ -82,7 +82,7 @@ bool LuaHelper::RunFile(lua_State* L, const std::wstring& file, bool& unicode)
 
 bool LuaHelper::RunString(lua_State* L, const std::wstring& str, const std::wstring& file, bool unicode)
 {
-	m_UnicodeFile.push_back({ unicode, file });
+	m_UnicodeFile.emplace_back(unicode, file);
 	const std::string narrowStr = unicode ?
 		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 
@@ -107,7 +107,7 @@ bool LuaHelper::RunString(lua_State* L, const std::wstring& str, const std::wstr
 
 bool LuaHelper::RunFunctionWithReturn(lua_State* L, const char* funcName, const std::wstring& file, bool unicode)
 {
-	m_UnicodeFile.push_back({ unicode, file });
+	m_UnicodeFile.emplace_back(unicode, file);
 
 	// Push the function onto the stack
 	lua_getglobal(L, funcName);
@@ -124,7 +124,7 @@ bool LuaHelper::RunFunctionWithReturn(lua_State* L, const char* funcName, const 
 
 bool LuaHelper::RunFunction(lua_State* L, const char* funcName, const std::wstring& file, bool unicode)
 {
-	m_UnicodeFile.push_back({ unicode, file });
+	m_UnicodeFile.emplace_back(unicode, file);
 	int n = lua_gettop(L);
 	lua_getglobal(L, funcName);
 
@@ -156,7 +156,7 @@ void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 
 	std::wstring wc = curFile.first ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
 
-	if (wcscmp(file.c_str(), wc.c_str()) == 0)
+	if (_wcsicmp(file.c_str(), wc.c_str()) == 0)
 	{
 		std::pair<bool, std::wstring>& prevFile = m_UnicodeFile.front();
 		if (m_UnicodeFile.size() > 1)
