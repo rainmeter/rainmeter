@@ -10,8 +10,6 @@
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
 
-LuaScript* LuaScript::m_ActiveScript = nullptr;
-
 LuaScript::LuaScript() :
 	m_State(nullptr),
 	m_Unicode(false)
@@ -41,54 +39,16 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		RegisterSkin(m_State);
 	}
 
-	size_t fileSize = 0;
-	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
-	if (!fileData)
+	if (LuaHelper::RunFile(m_State, scriptFile, m_Unicode) != -1)
 	{
+		m_File = scriptFile;
+		return true;
+	}
+	else
+	{
+		Uninitialize();
 		return false;
 	}
-
-	bool scriptLoaded = false;
-
-	// Treat the script as Unicode if it has the UTF-16 LE BOM.
-	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
-	if (m_Unicode)
-	{
-		const std::string utf8Data = 
-			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
-		scriptLoaded = luaL_loadbuffer(m_State, utf8Data.c_str(), utf8Data.length(), "") == 0;
-	}
-	else
-	{
-		scriptLoaded = luaL_loadbuffer(m_State, (char*)fileData.get(), fileSize, "") == 0;
-	}
-
-	if (scriptLoaded)
-	{
-		m_ActiveScript = this;
-
-		// Execute the Lua script
-		int result = lua_pcall(m_State, 0, 0, 0);
-
-		m_ActiveScript = nullptr;
-
-		if (result == 0)
-		{
-			m_File = scriptFile;
-			return true;
-		}
-		else
-		{
-			LuaHelper::ReportErrors(m_State, scriptFile);
-			Uninitialize();
-		}
-	}
-	else
-	{
-		LuaHelper::ReportErrors(m_State, scriptFile);
-	}
-
-	return false;
 }
 
 void LuaScript::Uninitialize()
@@ -111,13 +71,7 @@ bool LuaScript::IsFunction(const char* funcName)
 
 	if (IsInitialized())
 	{
-		// Push the function onto the stack
-		lua_getglobal(m_State, funcName);
-
-		bExists = lua_isfunction(m_State, -1);
-
-		// Pop both the table and the function off the stack.
-		lua_pop(m_State, 1);
+		bExists = LuaHelper::IsFunction(m_State, funcName, m_File, m_Unicode);
 	}
 
 	return bExists;
@@ -131,17 +85,7 @@ void LuaScript::RunFunction(const char* funcName)
 {
 	if (IsInitialized())
 	{
-		// Push the function onto the stack
-		lua_getglobal(m_State, funcName);
-
-		m_ActiveScript = this;
-
-		if (lua_pcall(m_State, 0, 0, 0))
-		{
-			LuaHelper::ReportErrors(m_State, m_File);
-		}
-
-		m_ActiveScript = nullptr;
+		LuaHelper::RunFunction(m_State, funcName, m_File, m_Unicode);
 	}
 }
 
@@ -152,40 +96,23 @@ void LuaScript::RunFunction(const char* funcName)
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
 	int type = LUA_TNIL;
-
-	if (IsInitialized())
-	{
-		// Push the function onto the stack
-		lua_getglobal(m_State, funcName);
-
-		m_ActiveScript = this;
-
-		if (lua_pcall(m_State, 0, 1, 0))
+	if (LuaHelper::RunFunctionWithReturn(m_State, funcName, m_File, m_Unicode)) {
+		type = lua_type(m_State, -1);
+		if (type == LUA_TNUMBER)
 		{
-			LuaHelper::ReportErrors(m_State, m_File);
+			numValue = lua_tonumber(m_State, -1);
 		}
-		else
+		else if (type == LUA_TSTRING)
 		{
-			type = lua_type(m_State, -1);
-			if (type == LUA_TNUMBER)
-			{
-				numValue = lua_tonumber(m_State, -1);
-			}
-			else if (type == LUA_TSTRING)
-			{
-				size_t strLen = 0;
-				const char* str = lua_tolstring(m_State, -1, &strLen);
-				strValue = m_Unicode ?
-					StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
-				numValue = strtod(str, nullptr);
-			}
-
-			lua_pop(m_State, 1);
+			size_t strLen = 0;
+			const char* str = lua_tolstring(m_State, -1, &strLen);
+			strValue = m_Unicode ?
+				StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+			numValue = strtod(str, nullptr);
 		}
 
-		m_ActiveScript = nullptr;
+		lua_pop(m_State, 1);
 	}
-
 	return type;
 }
 
@@ -197,22 +124,6 @@ void LuaScript::RunString(const std::wstring& str)
 {
 	if (IsInitialized())
 	{
-		const std::string narrowStr = m_Unicode ?
-			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
-
-		// Load the string as a Lua chunk
-		if (luaL_loadstring(m_State, narrowStr.c_str()))
-		{
-			LuaHelper::ReportErrors(m_State, m_File);
-		}
-
-		m_ActiveScript = this;
-
-		if (lua_pcall(m_State, 0, 0, 0))
-		{
-			LuaHelper::ReportErrors(m_State, m_File);
-		}
-
-		m_ActiveScript = nullptr;
+		LuaHelper::RunString(m_State, str, m_File, m_Unicode);
 	}
 }

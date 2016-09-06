@@ -25,7 +25,6 @@ MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name
 MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();
-	m_Parser = nullptr;
 }
 
 void MeasureScript::UninitializeLuaScript()
@@ -39,9 +38,6 @@ void MeasureScript::UninitializeLuaScript()
 void MeasureScript::Initialize()
 {
 	Measure::Initialize();
-
-	m_Initialized = false;
-	LoadLua();
 
 	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
 	{
@@ -67,9 +63,25 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-void MeasureScript::LoadLua()
+/*
+** Returns the value as a string.
+**
+*/
+const WCHAR* MeasureScript::GetStringValue()
 {
-	if (!m_ScriptFile.empty() && m_Parser)
+	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+}
+
+/*
+** Read the options specified in the ini file.
+**
+*/
+void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
+{
+	Measure::ReadOptions(parser, section);
+
+	m_ScriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	if (!m_ScriptFile.empty())
 	{
 		if (m_Skin)
 		{
@@ -119,7 +131,7 @@ void MeasureScript::LoadLua()
 							const char* strKey = lua_tostring(L, -1);
 							const std::wstring wstrKey = StringUtil::Widen(strKey);
 							const std::wstring& wstrValue =
-								m_Parser->ReadString(m_Section, wstrKey.c_str(), L"");
+								parser.ReadString(section, wstrKey.c_str(), L"");
 							if (!wstrValue.empty())
 							{
 								const std::string strStrVal = StringUtil::Narrow(wstrValue);
@@ -156,28 +168,7 @@ void MeasureScript::LoadLua()
 
 	LogErrorF(this, L"Script: File not valid");
 	UninitializeLuaScript();
-}
 
-/*
-** Returns the value as a string.
-**
-*/
-const WCHAR* MeasureScript::GetStringValue()
-{
-	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
-}
-
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
-{
-	Measure::ReadOptions(parser, section);
-
-	m_ScriptFile = parser.ReadString(section, L"ScriptFile", L"");
-	m_Parser = &parser;
-	m_Section = section;
 }
 
 /*
