@@ -33,8 +33,6 @@ protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
-	void LoadLua();
-	
 private:
 	LuaScript m_LuaScript;
 
@@ -45,9 +43,6 @@ private:
 
 	std::wstring m_StringValue;
 	std::wstring m_ScriptFile;
-
-	ConfigParser* m_Parser;
-	const WCHAR* m_Section;
 };
 
 #endif

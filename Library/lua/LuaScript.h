@@ -30,8 +30,6 @@ public:
 	int RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
 	void RunString(const std::wstring& str);
 
-	static LuaScript* GetActiveScript() { return m_ActiveScript; }
-
 protected:
 	static void RegisterGlobal(lua_State* L);
 	static void RegisterMeasure(lua_State* L);
@@ -40,10 +38,9 @@ protected:
 
 	std::wstring m_File;
 	bool m_Unicode;
-	lua_State* m_State;
 
 private:
-	static LuaScript* m_ActiveScript;
+	lua_State* m_State;
 };
 
 #endif

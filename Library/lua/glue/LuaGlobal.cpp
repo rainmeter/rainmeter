@@ -44,16 +44,8 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	if (LuaScript::GetActiveScript())
-	{
-		LogDebug(LuaScript::GetActiveScript()->IsUnicode() ?
-			StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
-	}
-	else
-	{
-		// Could not find active script. Just assume that it is UTF-8
-		LogDebug(StringUtil::Widen(message).c_str());
-	}
+	std::pair<bool, std::wstring> curFile = LuaHelper::IsUnicodeFile();
+	LogDebug(curFile.first ? StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 
 	return 0;
 }
@@ -61,21 +53,13 @@ static int Print(lua_State* L)
 static int Dofile(lua_State* L)
 {
 	const char *fname = luaL_optstring(L, 1, NULL);
-	int n = lua_gettop(L);
 	std::wstring path;
 
-	if (LuaScript::GetActiveScript())
-	{
-		path = LuaScript::GetActiveScript()->IsUnicode() ?
-			StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
-	}
-	else
-	{
-		path = StringUtil::Widen(fname);
-		LogWarning(L"Could not find active script to determine if it's unicode. Will proceed with assuming that it's not!");
-	}
+	std::pair<bool, std::wstring> curFile = LuaHelper::IsUnicodeFile();
+	path = curFile.first ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
 
-	LuaHelper::RunFile(L, path, n);
+	bool isUnicode = false;
+	LuaHelper::RunFile(L, path, isUnicode);
 
 	return 0;
 }
