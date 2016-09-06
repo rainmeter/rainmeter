@@ -96,7 +96,8 @@ void LuaScript::RunFunction(const char* funcName)
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
 	int type = LUA_TNIL;
-	if (LuaHelper::RunFunctionWithReturn(m_State, funcName, m_File, m_Unicode)) {
+	if (LuaHelper::RunFunctionWithReturn(m_State, funcName, m_File, m_Unicode))
+	{
 		type = lua_type(m_State, -1);
 		if (type == LUA_TNUMBER)
 		{

@@ -75,6 +75,7 @@ bool LuaHelper::RunFile(lua_State* L, const std::wstring& file, bool& unicode)
 	{
 		LuaHelper::ReportErrors(L, file);
 	}
+
 	m_UnicodeFile.pop_back();
 	return -1;
 }
@@ -99,6 +100,7 @@ bool LuaHelper::RunString(lua_State* L, const std::wstring& str, const std::wstr
 		m_UnicodeFile.pop_back();
 		return false;
 	}
+
 	m_UnicodeFile.pop_back();
 	return true;
 }
@@ -115,6 +117,7 @@ bool LuaHelper::RunFunctionWithReturn(lua_State* L, const char* funcName, const 
 		LuaHelper::ReportErrors(L, file);
 		return false;
 	}
+
 	m_UnicodeFile.pop_back();
 	return true;
 }
@@ -124,11 +127,13 @@ bool LuaHelper::RunFunction(lua_State* L, const char* funcName, const std::wstri
 	m_UnicodeFile.push_back({ unicode, file });
 	int n = lua_gettop(L);
 	lua_getglobal(L, funcName);
+
 	if (lua_pcall(L, 0, 0, 0))
 	{
 		LuaHelper::ReportErrors(L, file);
 		return lua_gettop(L) - n;
 	}
+
 	m_UnicodeFile.pop_back();
 	return -1;
 }
@@ -171,8 +176,8 @@ void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 		LogErrorF(L"Script: %s", originalFile.c_str());
 		return;
 	}
-	str += wc;
 
+	str += wc;
 	LogErrorF(L"Script: %s", str.c_str());
 }
 
@@ -192,7 +197,7 @@ void LuaHelper::PushWide(lua_State* L, const std::wstring& str)
 	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
 
-std::wstring LuaHelper::ToWide(lua_State* L,  int narg)
+std::wstring LuaHelper::ToWide(lua_State* L, int narg)
 {
 	std::pair<bool, std::wstring>& curFile = m_UnicodeFile.back();
 	std::wstring result = L"";

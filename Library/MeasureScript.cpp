@@ -168,7 +168,6 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	LogErrorF(this, L"Script: File not valid");
 	UninitializeLuaScript();
-
 }
 
 /*
