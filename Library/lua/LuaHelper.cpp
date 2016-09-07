@@ -53,7 +53,6 @@ bool LuaHelper::IsFunction(lua_State* L, const char* funcName, const std::wstrin
 	return bExists;
 }
 
-// Runs file and return number of values that the file returned
 bool LuaHelper::RunFile(lua_State* L, const std::wstring& file, bool& unicode)
 {
 	if (LoadFile(L, file, unicode))
@@ -64,7 +63,7 @@ bool LuaHelper::RunFile(lua_State* L, const std::wstring& file, bool& unicode)
 		if (result >= 0)
 		{
 			m_UnicodeFile.pop_back();
-			return result;
+			return true;
 		}
 		else
 		{
@@ -77,7 +76,7 @@ bool LuaHelper::RunFile(lua_State* L, const std::wstring& file, bool& unicode)
 	}
 
 	m_UnicodeFile.pop_back();
-	return -1;
+	return false;
 }
 
 bool LuaHelper::RunString(lua_State* L, const std::wstring& str, const std::wstring& file, bool unicode)
@@ -125,28 +124,35 @@ bool LuaHelper::RunFunctionWithReturn(lua_State* L, const char* funcName, const 
 bool LuaHelper::RunFunction(lua_State* L, const char* funcName, const std::wstring& file, bool unicode)
 {
 	m_UnicodeFile.emplace_back(unicode, file);
-	int n = lua_gettop(L);
 	lua_getglobal(L, funcName);
 
 	if (lua_pcall(L, 0, 0, 0))
 	{
 		LuaHelper::ReportErrors(L, file);
-		return lua_gettop(L) - n;
+		return true;
 	}
 
 	m_UnicodeFile.pop_back();
-	return -1;
+	return false;
 }
 
 void LuaHelper::ReportErrors(lua_State* L, const std::wstring& file)
 {
 	const char* error = lua_tostring(L, -1);
 	lua_pop(L, 1);
-
-	std::wstring str(file, file.find_last_of(L'\\') + 1);
+	
+	size_t filePos = file.find_last_of(L"\\") + 1;
+	std::wstring str;
+	if (filePos != std::wstring::npos) 
+	{
+		str = std::wstring(file, filePos);
+	}
+	else
+	{
+		str = L"?";
+	}
 
 	std::pair<bool, std::wstring>& curFile = m_UnicodeFile.back();
-
 	// Skip "[string ...]".
 	const char* pos = strchr(error, ':');
 	if (pos)
