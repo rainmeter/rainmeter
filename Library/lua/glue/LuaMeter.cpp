@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Meter.h"
 #include "../../MeterString.h"
@@ -18,7 +19,7 @@
 static int GetName(lua_State* L)
 {
 	DECLARE_SELF(L)
-	LuaHelper::PushWide(L, self->GetName());
+	LuaHelper::PushWide(self->GetName());
 
 	return 1;
 }
@@ -29,11 +30,12 @@ static int GetOption(lua_State* L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
 
-	const std::wstring section = LuaHelper::ToWide(L, 2);
-	const std::wstring defValue = LuaHelper::ToWide(L, 3);
+	const std::wstring section = LuaHelper::ToWide(2);
+	const std::wstring defValue = LuaHelper::ToWide(3);
 	const std::wstring& value =
 		parser.ReadString(self->GetName(), section.c_str(), defValue.c_str());
-	LuaHelper::PushWide(L, value);
+	LuaHelper::PushWide(value);
+
 	return 1;
 }
 
@@ -51,7 +53,6 @@ static int GetH(lua_State* L)
 	lua_pushnumber(L, self->GetH());
 
 	return 1;
-
 }
 
 static int GetX(lua_State* L)
@@ -130,7 +131,7 @@ static int SetText(lua_State* L)
 	if (self->GetTypeID() == TypeID<MeterString>())
 	{
 		MeterString* string = (MeterString*)self;
-		std::wstring str = LuaHelper::ToWide(L, 2);
+		std::wstring str = LuaHelper::ToWide(2);
 		string->SetText(str.c_str());
 	}
 

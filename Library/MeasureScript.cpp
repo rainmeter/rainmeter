@@ -80,34 +80,36 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_ScriptFile = parser.ReadString(section, L"ScriptFile", L"");
-	if (!m_ScriptFile.empty())
+	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	if (!scriptFile.empty())
 	{
 		if (m_Skin)
 		{
-			m_Skin->MakePathAbsolute(m_ScriptFile);
+			m_Skin->MakePathAbsolute(scriptFile);
 		}
 
-		if (_wcsicmp(m_ScriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
+		if (!m_Initialized ||
+			wcscmp(scriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 
-			if (m_LuaScript.Initialize(m_ScriptFile))
+			if (m_LuaScript.Initialize(scriptFile))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
 
 				auto L = m_LuaScript.GetState();
+				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(Skin**)lua_newuserdata(L, sizeof(Skin*)) = m_Skin;
 				lua_getglobal(L, "MeterWindow");
 				lua_setmetatable(L, -2);
-				lua_setglobal(L, "SKIN");
+				lua_setfield(L, -2, "SKIN");
 
 				*(Measure**)lua_newuserdata(L, sizeof(Measure*)) = this;
 				lua_getglobal(L, "Measure");
 				lua_setmetatable(L, -2);
-				lua_setglobal(L, "SELF");
+				lua_setfield(L, -2, "SELF");
 
 				if (!m_LuaScript.IsUnicode())
 				{
@@ -119,7 +121,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 						LogWarningF(this, L"Script: Using deprecated GetStringValue()");
 					}
 
-					lua_getglobal(L, "PROPERTIES");
+					lua_getfield(L, -1, "PROPERTIES");
 					if (lua_isnil(L, -1) == 0)
 					{
 						lua_pushnil(L);
@@ -181,28 +183,28 @@ void MeasureScript::Command(const std::wstring& command)
 
 //static void stackDump(lua_State *L)
 //{
-//	LuaManager::LuaLogger::Debug(" ----------------  Stack Dump ----------------" );
+//	LuaHelper::LuaLogger::Debug(" ----------------  Stack Dump ----------------" );
 //	for (int i = lua_gettop(L); i > 0; --i)
 //	{
 //		int t = lua_type(L, i);
 //		switch (t)
 //		{
 //		case LUA_TSTRING:
-//			LuaManager::LuaLogger::Debug("%d:'%s'", i, lua_tostring(L, i));
+//			LuaHelper::LuaLogger::Debug("%d:'%s'", i, lua_tostring(L, i));
 //			break;
 //
 //		case LUA_TBOOLEAN:
-//			LuaManager::LuaLogger::Debug("%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
+//			LuaHelper::LuaLogger::Debug("%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
 //			break;
 //
 //		case LUA_TNUMBER:
-//			LuaManager::LuaLogger::Debug("%d: %g", i, lua_tonumber(L, i));
+//			LuaHelper::LuaLogger::Debug("%d: %g", i, lua_tonumber(L, i));
 //			break;
 //
 //		default:
-//			LuaManager::LuaLogger::Debug("%d: %s", i, lua_typename(L, t));
+//			LuaHelper::LuaLogger::Debug("%d: %s", i, lua_typename(L, t));
 //			break;
 //		}
 //	}
-//	LuaManager::LuaLogger::Debug("--------------- Stack Dump Finished ---------------" );
+//	LuaHelper::LuaLogger::Debug("--------------- Stack Dump Finished ---------------" );
 //}

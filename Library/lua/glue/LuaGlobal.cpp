@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
@@ -44,22 +45,64 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	std::pair<bool, std::wstring> curFile = LuaHelper::IsUnicodeFile();
-	LogDebug(curFile.first ? StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
+	LogDebug(LuaHelper::GetCurrentScript()->IsUnicode() ?
+		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 
 	return 0;
 }
 
 static int Dofile(lua_State* L)
 {
-	const char *fname = luaL_optstring(L, 1, NULL);
-	std::wstring path;
+	//Modified version of luaB_dofile()
+	auto curScript = LuaHelper::GetCurrentScript();
+	const char* fname = luaL_optstring(L, 1, NULL);
+	std::wstring path = curScript->IsUnicode() ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
 
-	std::pair<bool, std::wstring> curFile = LuaHelper::IsUnicodeFile();
-	path = curFile.first ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
+	int n = lua_gettop(L);
 
-	bool isUnicode = false;
-	LuaHelper::RunFile(L, path, isUnicode);
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(path, &fileSize);
+	if (!fileData)
+	{
+		LogErrorF(L"Script: Unable to open the file: %s", path.c_str());
+		return 0;
+	}
+
+	bool scriptLoaded = false;
+
+	// Treat the script as Unicode if it has the UTF-16 LE BOM.
+	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+	if (unicode)
+	{
+		const std::string utf8Data =
+			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+	}
+	else
+	{
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+	}
+
+	if (scriptLoaded)
+	{
+		auto script = LuaHelper::GetState(L, unicode, curScript->GetRef(), path);
+		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
+		lua_setfenv(L, -2);
+
+		int result = lua_pcall(L, 0, LUA_MULTRET, 0);
+		if (result == 0)
+		{
+			return lua_gettop(L) - n;
+		}
+		else
+		{
+			LuaHelper::ReportErrors(path);
+		}
+	}
+	else
+	{
+		LuaHelper::ReportErrors(path);
+	}
 
 	return 0;
 }

@@ -42,7 +42,6 @@ private:
 	int m_ValueType;
 
 	std::wstring m_StringValue;
-	std::wstring m_ScriptFile;
 };
 
 #endif

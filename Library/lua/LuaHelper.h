@@ -8,34 +8,51 @@
 #ifndef __LUAHELPER_H__
 #define __LUAHELPER_H__
 
+#include <vector>
+
 extern "C"
 {
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
 }
-#include <vector>
 
 class LuaHelper
 {
 public:
-	static bool LoadFile(lua_State* L, const std::wstring& file, bool& unicode);
-	static bool IsFunction(lua_State* L, const char* funcName, const std::wstring& file, bool unicode);
-	static bool RunFunction(lua_State* L, const char* funcName, const std::wstring& file, bool unicode);
-	static bool RunFile(lua_State* L, const std::wstring& file, bool& unicode);
-	static bool RunString(lua_State* L, const std::wstring& str, const std::wstring& file, bool unicode);
-	static bool RunFunctionWithReturn(lua_State* L, const char* funcName, const std::wstring& file, bool unicode);
+	class UnicodeScript
+	{
+	public:
+		UnicodeScript(lua_State* state, bool unicode, int ref, std::wstring path);
+		~UnicodeScript();
 
-	static void ReportErrors(lua_State* L, const std::wstring& file);
+		operator lua_State*() { return m_State; }
+		lua_State* GetState() { return m_State; }
 
-	static void PushWide(lua_State* L, const WCHAR* str);
-	static void PushWide(lua_State* L, const std::wstring& str);
-	static std::wstring ToWide(lua_State* L, int narg);
+		bool IsUnicode() { return m_Unicode; }
+		int GetRef() { return m_Ref; }
+		std::wstring GetSourceFile() { return m_File; }
 
-	static std::pair<bool, std::wstring> IsUnicodeFile() { return m_UnicodeFile.back(); }
+	private:
+		lua_State* m_State;
+		bool m_Unicode;
+		int m_Ref;
+		std::wstring m_File;
+	};
+
+	static UnicodeScript GetState(lua_State* state, bool unicode, int ref,
+		const std::wstring& path) { return UnicodeScript(state, unicode, ref, path); }
+
+	static UnicodeScript* GetCurrentScript() { return c_ScriptStack.back(); }
+
+	static void ReportErrors(const std::wstring& file);
+
+	static void PushWide(const WCHAR* str);
+	static void PushWide(const std::wstring& str);
+	static std::wstring ToWide(int narg);
 
 private:
-	static std::vector<std::pair<bool, std::wstring>> m_UnicodeFile;
+	static std::vector<UnicodeScript*> c_ScriptStack;
 };
 
 #endif

@@ -21,9 +21,10 @@ public:
 	bool IsInitialized() { return m_State != nullptr; }
 
 	const std::wstring& GetFile() { return m_File; }
+	int GetRef() { return m_Ref; }
 	bool IsUnicode() const { return m_Unicode; }
 
-	lua_State* GetState() { return m_State; }
+	LuaHelper::UnicodeScript GetState() { return LuaHelper::GetState(m_State, m_Unicode, m_Ref, m_File); }
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
@@ -38,8 +39,7 @@ protected:
 
 	std::wstring m_File;
 	bool m_Unicode;
-
-private:
+	int m_Ref;
 	lua_State* m_State;
 };
 
