@@ -115,7 +115,7 @@ bool MeterShape::HitTest(int x, int y)
 {
 	for (auto& shape : m_Shapes)
 	{
-		if (shape->ContainsPoint(x, y))
+		if (shape->ContainsPoint(x - m_X, y - m_Y))
 			return true;
 	}
 	return false;
