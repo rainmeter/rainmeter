@@ -10,25 +10,74 @@
 
 namespace Gfx {
 
-Shape::~Shape()
+Shape::Shape() :
+	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
+	m_StrokeWidth(1),
+	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
+	m_Rotation(),
+	m_RotationCenter(),
+	m_Skew(),
+	m_Scale(D2D1::SizeF(1, 1)),
+	m_Offset(),
+	m_Antialias(true)
 {
 }
 
-	D2D1_MATRIX_3X2_F Shape::GetShapeMatrix() const
+Shape::~Shape()
 {
-	D2D1_POINT_2F center = D2D1::Point2F((m_UntransformedBounds.right - m_UntransformedBounds.left) / 2 + m_UntransformedBounds.left, (m_UntransformedBounds.bottom - m_UntransformedBounds.top) / 2 + m_UntransformedBounds.top);
+
+}
+
+D2D1_MATRIX_3X2_F Shape::GetShapeMatrix() const
+{
+	D2D1_RECT_F bounds;
+	m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
+
+	//TODO: make rotation and scale center optional
 	return D2D1::Matrix3x2F(
-		//D2D1::Matrix3x2F::Translation(D2D1::SizeF(m_X, m_Y)) *
-		D2D1::Matrix3x2F::Rotation(m_Rotation, center) *
-		D2D1::Matrix3x2F::Skew(m_Skew.x, m_Skew.y, D2D1::Point2F(m_UntransformedBounds.left, m_UntransformedBounds.top)) *
+		D2D1::Matrix3x2F::Rotation(m_Rotation, D2D1::Point2F((bounds.right - bounds.left) / 2 + bounds.left, (bounds.bottom - bounds.top) / 2 + bounds.top)) *
+		D2D1::Matrix3x2F::Translation(D2D1::SizeF(m_StrokeWidth / 2, m_StrokeWidth / 2)) *
+		D2D1::Matrix3x2F::Skew(m_Skew.x, m_Skew.y, D2D1::Point2F(0, 0)) *
 		D2D1::Matrix3x2F::Translation(m_Offset) *
-		D2D1::Matrix3x2F::Scale(m_Scale, center)
+		D2D1::Matrix3x2F::Scale(m_Scale, D2D1::Point2F(bounds.right + bounds.left / 2, bounds.bottom + bounds.top / 2))
 	);
+}
+
+D2D1_RECT_F Shape::GetBounds()
+{
+	D2D1_RECT_F bounds;
+	if (m_Shape) {
+		HRESULT result = m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, GetShapeMatrix(), &bounds);
+		if (SUCCEEDED(result))
+		{
+			return bounds;
+		}
+	}
+	return D2D1::RectF();
 }
 
 bool Shape::IsShapeDefined()
 {
 	return m_Shape;
+}
+
+bool Shape::ContainsPoint(int x, int y)
+{
+	auto test = GetBounds();
+	if (m_Shape) {
+		BOOL outlineContains = false;
+		BOOL fillContains = false;
+		HRESULT result = m_Shape->StrokeContainsPoint(D2D1::Point2F(x, y), m_StrokeWidth, nullptr, GetShapeMatrix(), &outlineContains);
+		if (SUCCEEDED(result))
+			if (outlineContains)
+				return true;
+
+		HRESULT result2 = m_Shape->FillContainsPoint(D2D1::Point2F(x, y), GetShapeMatrix(), &fillContains);
+		if (SUCCEEDED(result2))
+			if (fillContains)
+				return true;
+	}
+	return false;
 }
 
 void Shape::SetFillColor(D2D1_COLOR_F fillColor)
@@ -66,9 +115,9 @@ void Shape::SetScale(D2D1_SIZE_F scale)
 	m_Scale = scale;
 }
 
-void Shape::SetOffset(D2D1_SIZE_F offset)
+void Shape::SetOffset(float offsetX, float offsetY)
 {
-	m_Offset = offset;
+	m_Offset = D2D1::SizeF(offsetX, offsetY);
 }
 
 void Shape::SetAntialias(bool antialias)

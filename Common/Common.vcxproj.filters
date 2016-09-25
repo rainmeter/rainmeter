@@ -86,10 +86,14 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Shape\RectangleShape.cpp" />
-    <ClCompile Include="Gfx\Shape\Shape.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatShadow.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Shape\Shape.cpp">
+      <Filter>Gfx\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Shape\RectangleShape.cpp">
+      <Filter>Gfx\Shapes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +185,13 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatShadow.h" />
+    <ClInclude Include="Gfx\Shape\Shape.h">
+      <Filter>Gfx\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Shape\RectangleShape.h">
+      <Filter>Gfx\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
@@ -191,6 +202,9 @@
     </Filter>
     <Filter Include="Gfx\TextInlineFormat">
       <UniqueIdentifier>{7914a5da-66c9-4775-8666-d25595e6e58e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gfx\Shapes">
+      <UniqueIdentifier>{257b3705-b60b-4bbd-8de1-8c25560fc6e1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

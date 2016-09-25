@@ -1,9 +1,9 @@
 /* Copyright (C) 2016 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+*
+* This Source Code Form is subject to the terms of the GNU General Public
+* License; either version 2 of the License, or (at your option) any later
+* version. If a copy of the GPL was not distributed with this file, You can
+* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #ifndef RM_GFX_SHAPE_H_
 #define RM_GFX_SHAPE_H_
@@ -20,32 +20,23 @@ class Canvas;
 class Shape
 {
 public:
-	Shape() :
-		m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
-		m_StrokeWidth(1),
-		m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
-		m_Rotation(),
-		m_RotationCenter(),
-		m_Skew(),
-		m_Scale(D2D1::SizeF(1, 1)),
-		m_Offset(),
-		m_Antialias(true)
-	{
-	}
+	Shape();
 	~Shape();
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix() const;
+	D2D1_RECT_F GetBounds();
 	virtual void UpdateShape(std::vector<Gdiplus::REAL> parameters) = 0;
 	bool IsShapeDefined();
+	bool ContainsPoint(int x, int y);
 
 	void SetFillColor(D2D1_COLOR_F fillColor);
 	void SetStrokeWidth(float strokeWidth);
 	void SetStrokeColor(D2D1_COLOR_F strokeColor);
 	void SetRotation(float rotation);
 	void SetRotationCenter(D2D1_POINT_2F rotationCenter);
-	void SetSkew(D2D1_POINT_2F skew);
+	void SetSkew(D2D1_POINT_2F);
 	void SetScale(D2D1_SIZE_F scale);
-	void SetOffset(D2D1_SIZE_F offset);
+	void SetOffset(float offsetX, float offsetY);
 	void SetAntialias(bool antialias);
 protected:
 
@@ -59,8 +50,6 @@ protected:
 	D2D1_SIZE_F m_Scale;
 	D2D1_SIZE_F m_Offset;
 	bool m_Antialias;
-	D2D1_RECT_F m_Bounds;
-	D2D1_RECT_F m_UntransformedBounds;
 
 	friend class Canvas;
 };

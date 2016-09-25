@@ -607,18 +607,17 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	}
 }
 
-void Canvas::DrawGeometry(const Shape& shape)
+void Canvas::DrawGeometry(const Shape& shape, int xPos, int yPos)
 {
 	if (!BeginTargetDraw()) return;
 
 	const auto originalAntialiasMode = m_Target->GetAntialiasMode();
 	if (!shape.m_Antialias)
 		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-	m_Target->PushAxisAlignedClip(&D2D1::RectF(0, 0, INT_MAX, INT_MAX), D2D1_ANTIALIAS_MODE_ALIASED);
+
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);
-	m_Target->SetTransform(shape.GetShapeMatrix() * worldTransform);
-
+	m_Target->SetTransform(shape.GetShapeMatrix() * worldTransform * D2D1::Matrix3x2F::Translation(xPos, yPos));
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
 	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
@@ -627,11 +626,11 @@ void Canvas::DrawGeometry(const Shape& shape)
 			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
 		}
 		solidBrush->SetColor(shape.m_StrokeColor);
-		if (shape.m_StrokeColor.a > 0) {
+		if (shape.m_StrokeColor.a > 0 && shape.m_StrokeWidth > 0) {
 			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth);
 		}
 	}
-	m_Target->PopAxisAlignedClip();
+
 	m_Target->SetTransform(worldTransform);
 	m_Target->SetAntialiasMode(originalAntialiasMode);
 }

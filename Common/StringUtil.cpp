@@ -134,4 +134,35 @@ void EncodeUrl(std::wstring& str)
 	}
 }
 
+
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
+{
+	// Do nothing.
+}
+
+std::wstring Format(const WCHAR* str, ...)
+{
+
+	va_list args;
+	va_start(args, str);
+	WCHAR* buffer = new WCHAR[1024];
+
+	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
+	_CrtSetReportMode(_CRT_ASSERT, 0);
+
+	errno = 0;
+	_vsnwprintf_s(buffer, 1024, _TRUNCATE, str, args);
+	if (errno != 0)
+	{
+		_snwprintf_s(buffer, 1024, _TRUNCATE, L"Internal error: %s", str);
+	}
+
+	_set_invalid_parameter_handler(oldHandler);
+
+	std::wstring end(buffer);
+	delete[] buffer;
+	va_end(args);
+	return end;
+}
+
 }  // namespace StringUtil

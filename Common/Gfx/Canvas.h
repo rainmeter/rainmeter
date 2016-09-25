@@ -80,7 +80,7 @@ public:
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
 
-	void DrawGeometry(const Shape& shape);
+	void DrawGeometry(const Shape& shape, int x, int y);
 	 
 private:
 	friend class Canvas;
