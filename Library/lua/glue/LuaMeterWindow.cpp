@@ -6,7 +6,8 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "../LuaManager.h"
+#include "../LuaHelper.h"
+#include "../LuaScript.h"
 #include "../../Rainmeter.h"
 #include "../../Skin.h"
 #include "../../MeterString.h"
@@ -21,7 +22,7 @@ static int Bang(lua_State* L)
 	DECLARE_SELF(L)
 	ConfigParser& parser = self->GetParser();
 
-	std::wstring bang = LuaManager::ToWide(2);
+	std::wstring bang = LuaHelper::ToWide(2);
 
 	int top = lua_gettop(L);
 	if (top == 2)	// 1 argument
@@ -38,7 +39,7 @@ static int Bang(lua_State* L)
 			std::vector<std::wstring> args;
 			for (int i = 3; i <= top; ++i)
 			{
-				std::wstring tmpSz = LuaManager::ToWide(i);
+				std::wstring tmpSz = LuaHelper::ToWide(i);
 				parser.ReplaceVariables(tmpSz);
 				args.push_back(tmpSz);
 			}
@@ -53,7 +54,7 @@ static int Bang(lua_State* L)
 static int GetMeter(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring meterName = LuaManager::ToWide(2);
+	const std::wstring meterName = LuaHelper::ToWide(2);
 
 	Meter* meter = self->GetMeter(meterName);
 	if (meter)
@@ -73,7 +74,7 @@ static int GetMeter(lua_State* L)
 static int GetMeasure(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring measureName = LuaManager::ToWide(2);
+	const std::wstring measureName = LuaHelper::ToWide(2);
 
 	Measure* measure = self->GetMeasure(measureName);
 	if (measure)
@@ -94,11 +95,11 @@ static int GetVariable(lua_State* L)
 {
 	DECLARE_SELF(L)
 
-	const std::wstring name = LuaManager::ToWide(2);
+	const std::wstring name = LuaHelper::ToWide(2);
 	const std::wstring* value = self->GetParser().GetVariable(name);
 	if (value)
 	{
-		LuaManager::PushWide(*value);
+		LuaHelper::PushWide(*value);
 	}
 	else if (lua_gettop(L) >= 3)
 	{
@@ -115,11 +116,11 @@ static int GetVariable(lua_State* L)
 static int ReplaceVariables(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring strTmp = LuaManager::ToWide(2);
+	std::wstring strTmp = LuaHelper::ToWide(2);
 
 	self->GetParser().ReplaceVariables(strTmp);
 	self->GetParser().ReplaceMeasures(strTmp);
-	LuaManager::PushWide(strTmp);
+	LuaHelper::PushWide(strTmp);
 
 	return 1;
 }
@@ -127,7 +128,7 @@ static int ReplaceVariables(lua_State* L)
 static int ParseFormula(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring strTmp = LuaManager::ToWide(2);
+	std::wstring strTmp = LuaHelper::ToWide(2);
 
 	double result;
 	if (!self->GetParser().ParseFormula(strTmp, &result))
@@ -195,14 +196,14 @@ static int GetY(lua_State* L)
 static int MakePathAbsolute(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring path = LuaManager::ToWide(2);
+	std::wstring path = LuaHelper::ToWide(2);
 	self->MakePathAbsolute(path);
-	LuaManager::PushWide(path);
+	LuaHelper::PushWide(path);
 
 	return 1;
 }
 
-void LuaManager::RegisterSkin(lua_State* L)
+void LuaScript::RegisterSkin(lua_State* L)
 {
 	const luaL_Reg functions[] =
 	{

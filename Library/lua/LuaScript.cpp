@@ -9,10 +9,11 @@
 #include "../../Common/StringUtil.h"
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
-#include "LuaManager.h"
+#include "LuaHelper.h"
 
 LuaScript::LuaScript() :
 	m_Ref(LUA_NOREF),
+	m_State(nullptr),
 	m_Unicode(false)
 {
 }
@@ -25,6 +26,20 @@ LuaScript::~LuaScript()
 bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
+
+	if (m_State == nullptr)
+	{
+		// Initialize Lua
+		m_State = luaL_newstate();
+
+		luaL_openlibs(m_State);
+
+		// Register custom types and functions
+		RegisterGlobal(m_State);
+		RegisterMeasure(m_State);
+		RegisterMeter(m_State);
+		RegisterSkin(m_State);
+	}
 
 	size_t fileSize = 0;
 	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
@@ -40,8 +55,8 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
 	if (m_Unicode)
 	{
-		const std::string utf8Data = 
-			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
+		const std::string utf8Data =
+			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
 		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
 	}
 	else
@@ -84,13 +99,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaManager::ReportErrors(scriptFile);
+			LuaHelper::ReportErrors(scriptFile);
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaManager::ReportErrors(scriptFile);
+		LuaHelper::ReportErrors(scriptFile);
 	}
 
 	return false;
@@ -98,12 +113,10 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	auto L = GetState();
-
-	if (m_Ref != LUA_NOREF)
+	if (m_State)
 	{
-		luaL_unref(L, LUA_GLOBALSINDEX, m_Ref);
-		m_Ref = LUA_NOREF;
+		lua_close(m_State);
+		m_State = nullptr;
 		m_File.clear();
 	}
 }
@@ -127,7 +140,7 @@ bool LuaScript::IsFunction(const char* funcName)
 
 		bExists = lua_isfunction(L, -1);
 
-		// Pop both the table and the function off the stack.
+		// Pop the function off the stack.
 		lua_pop(L, 2);
 	}
 
@@ -152,7 +165,7 @@ void LuaScript::RunFunction(const char* funcName)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_File);
 		}
 
 		lua_pop(L, 1);
@@ -178,7 +191,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_File);
 			lua_pop(L, 1);
 		}
 		else
@@ -220,7 +233,7 @@ void LuaScript::RunString(const std::wstring& str)
 		// Load the string as a Lua chunk
 		if (luaL_loadstring(L, narrowStr.c_str()))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_File);
 		}
 
 		// Push our table onto the stack
@@ -231,7 +244,7 @@ void LuaScript::RunString(const std::wstring& str)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(m_File);
+			LuaHelper::ReportErrors(m_File);
 		}
 	}
 }
