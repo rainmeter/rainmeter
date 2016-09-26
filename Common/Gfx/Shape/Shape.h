@@ -25,9 +25,12 @@ public:
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix() const;
 	D2D1_RECT_F GetBounds();
-	virtual void UpdateShape(std::vector<Gdiplus::REAL> parameters) = 0;
+	virtual void UpdateShape(std::vector<Gdiplus::REAL> parameters);
 	bool IsShapeDefined();
+	bool ShouldDraw();
 	bool ContainsPoint(int x, int y);
+	bool CombineWith(Shape* shape, D2D1_COMBINE_MODE mode, bool combineWithEmpty = false);
+	Shape* Clone();
 
 	void SetFillColor(D2D1_COLOR_F fillColor);
 	void SetStrokeWidth(float strokeWidth);
@@ -38,6 +41,7 @@ public:
 	void SetScale(D2D1_SIZE_F scale);
 	void SetOffset(float offsetX, float offsetY);
 	void SetAntialias(bool antialias);
+	void SetDraw(bool shouldDraw);
 protected:
 
 	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
@@ -50,6 +54,7 @@ protected:
 	D2D1_SIZE_F m_Scale;
 	D2D1_SIZE_F m_Offset;
 	bool m_Antialias;
+	bool m_ShoudDraw;
 
 	friend class Canvas;
 };

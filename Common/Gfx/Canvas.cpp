@@ -627,10 +627,10 @@ void Canvas::DrawGeometry(const Shape& shape, int xPos, int yPos)
 		}
 		solidBrush->SetColor(shape.m_StrokeColor);
 		if (shape.m_StrokeColor.a > 0 && shape.m_StrokeWidth > 0) {
-			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth);
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, nullptr);
 		}
 	}
-
+	
 	m_Target->SetTransform(worldTransform);
 	m_Target->SetAntialiasMode(originalAntialiasMode);
 }

@@ -61,19 +61,131 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			if (newShape && shape)
 				delete shape;
-			if (currentShapeId < m_Shapes.size())
-			{
-				for (int i = currentShapeId; i < m_Shapes.size(); ++i)
-				{
-					delete m_Shapes[i];
-				}
-				m_Shapes.resize(currentShapeId);
-			}
 			break;
 		}
 		shapeId = L"Shape" + std::to_wstring(++currentShapeId);
 		shapeOption = parser.ReadString(section, shapeId.c_str(), L"");
 	}
+
+	for (int i = 0; i < m_CombinedShapes.size(); ++i)
+		delete m_CombinedShapes[i];
+	m_CombinedShapes.clear();
+
+	std::wstring combineOption = parser.ReadString(section, L"Combine", L"");
+	size_t currentCombineId = 1;
+	std::wstring combineId = L"Combine";
+	int lastIndex = -1;
+	while (!combineOption.empty()) {
+		std::vector<std::wstring> combines = parser.Tokenize(combineOption, L"|");
+		Gfx::Shape* parentShape;
+		for (int i = 0; i < combines.size(); ++i)
+		{
+			std::wstring token = combines[i];
+			if (token.empty())
+				continue;
+
+			D2D1_COMBINE_MODE mode;
+			if (i != 0) {
+				int modeLength = 0;
+				mode = ToCombineMode(token.c_str(), modeLength);
+				if (mode == D2D1_COMBINE_MODE_FORCE_DWORD)
+				{
+					LogErrorF(L"%s: Combine mode in '%s' doesn't exist", combineId.c_str(), token.c_str());
+					break;
+				}
+				if (token.size() < modeLength)
+				{
+					LogErrorF(L"%s: %s is missing a parameter", combineId.c_str(), token.c_str());
+					break;
+				}
+				token = token.substr(token.find_first_not_of(' ', modeLength));
+			}
+			if (_wcsnicmp(token.c_str(), L"SHAPE", 5) == 0)
+			{
+				int size = 0;
+				if (token.length() > 5) {
+					std::wstring number = token.substr(5);
+					if (number.length() > 0 && isdigit(number[0]))
+					{
+						size = _wtoi(number.c_str()) - 1;
+					}
+					else
+					{
+						LogErrorF(L"%s: %s is not a valid shape", combineId.c_str(), token.c_str());
+						break;
+					}
+				}
+				if (size < m_Shapes.size())
+				{
+					if (m_Shapes[size])
+					{
+						m_Shapes[size]->SetDraw(false);
+						if (i == 0)
+						{
+							parentShape = m_Shapes[size]->Clone();
+							if (parentShape->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION, true))
+							{
+								if (size > lastIndex)
+								{
+									lastIndex = size;
+								}
+							}
+							else
+							{
+								LogErrorF(L"%s: Could not combine shape %s", combineId.c_str(), token.c_str());
+								break;
+							}
+						}
+						else
+						{
+							if (parentShape->CombineWith(m_Shapes[size], mode))
+							{
+								if (size > lastIndex)
+									lastIndex = size;
+							}
+							else
+							{
+								LogErrorF(L"%s: Could not combine shape %s", combineId.c_str(), token.c_str());
+								break;
+							}
+						}
+					}
+					else
+					{
+						LogErrorF(L"%s: %s is not a valid shape", combineId.c_str(), token.c_str());
+						break;
+					}
+				}
+				else
+				{
+					LogErrorF(L"%s: %s is not a valid shape", combineId.c_str(), token.c_str());
+					break;
+				}
+			}
+			else
+			{
+				LogErrorF(L"%s: %s is not a valid shape", combineId.c_str(), token.c_str());
+				break;
+			}
+		}
+		int insert = lastIndex;
+		if (m_CombinedShapes[insert]) {
+			for (int i = insert; i < m_CombinedShapes.rbegin()->first; ++i)
+			{
+				if (!m_CombinedShapes[i])
+				{
+					insert = i;
+				}
+			}
+			if (insert == lastIndex)
+				++insert;
+		}
+
+		m_CombinedShapes[insert] = parentShape;
+		combineId = L"Combine" + std::to_wstring(++currentCombineId);
+		combineOption = parser.ReadString(section, combineId.c_str(), L"");
+	}
+
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
 		Initialize();
@@ -103,9 +215,24 @@ bool MeterShape::Draw(Gfx::Canvas & canvas)
 	if (!Meter::Draw(canvas)) return false;
 	int x = GetX();
 	int y = GetY();
-	for (const auto& shape : m_Shapes) {
-		if (shape->IsShapeDefined()) {
+	int i;
+	for (i = 0; i < m_Shapes.size(); ++i) {
+		const auto& shape = m_Shapes[i];
+		if (shape->ShouldDraw() && shape->IsShapeDefined()) {
 			canvas.DrawGeometry(*shape, x, y);
+		}
+		if (m_CombinedShapes[i])
+		{
+			canvas.DrawGeometry(*m_CombinedShapes[i], x, y);
+		}
+	}
+	if (i < m_CombinedShapes.size())
+	{
+		for (; i < m_CombinedShapes.size(); ++i) {
+			if (m_CombinedShapes[i])
+			{
+				canvas.DrawGeometry(*m_CombinedShapes[i], x, y);
+			}
 		}
 	}
 	return true;
@@ -113,10 +240,26 @@ bool MeterShape::Draw(Gfx::Canvas & canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
-	for (auto& shape : m_Shapes)
-	{
-		if (shape->ContainsPoint(x - m_X, y - m_Y))
+	int i;
+	for (i = 0; i < m_Shapes.size(); ++i) {
+		const auto& shape = m_Shapes[i];
+		if (shape->ShouldDraw() && shape->ContainsPoint(x - m_X, y - m_Y))
+		{
 			return true;
+		}
+		if (m_CombinedShapes[i] && m_CombinedShapes[i]->ContainsPoint(x - m_X, y - m_Y))
+		{
+			return true;
+		}
+	}
+	if (m_CombinedShapes.size() != 0)
+	{
+		for (; i < m_CombinedShapes.rbegin()->first; ++i) {
+			if (m_CombinedShapes[i] && m_CombinedShapes[i]->ContainsPoint(x - m_X, y - m_Y))
+			{
+				return true;
+			}
+		}
 	}
 	return false;
 }
@@ -300,6 +443,32 @@ WCHAR * MeterShape::IsShape(const WCHAR * shape)
 bool MeterShape::CompareWChar(const WCHAR* str1, const WCHAR* str2)
 {
 	return _wcsnicmp(str2, str1, wcslen(str1)) == 0;
+}
+
+D2D1_COMBINE_MODE MeterShape::ToCombineMode(const WCHAR* mode, int& modeLength)
+{
+	if (CompareWChar(L"UNION", mode))
+	{
+		modeLength = 5;
+		return D2D1_COMBINE_MODE_UNION;
+	}
+	else if (CompareWChar(L"XOR", mode))
+	{
+		modeLength = 3;
+		return D2D1_COMBINE_MODE_XOR;
+	}
+	else if (CompareWChar(L"INTERSECT", mode))
+	{
+		modeLength = 9;
+		return D2D1_COMBINE_MODE_INTERSECT;
+	}
+	else if (CompareWChar(L"EXCLUDE", mode))
+	{
+		modeLength = 7;
+		return D2D1_COMBINE_MODE_EXCLUDE;
+	}
+
+	return D2D1_COMBINE_MODE_FORCE_DWORD;
 }
 
 bool MeterShape::ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape*& mainShape, const WCHAR* shapeId, const WCHAR* modifierString, int recursion)

@@ -40,8 +40,11 @@ private:
 	const WCHAR* HandleShape(Gfx::Shape*& shape, const WCHAR* shapeType, const WCHAR* parameters);
 	WCHAR* IsShape(const WCHAR* shape);
 	bool CompareWChar(const WCHAR* str1, const WCHAR* str2);
+	D2D1_COMBINE_MODE ToCombineMode(const WCHAR* mode, int& modeLength);
 
 	std::vector<Gfx::Shape*> m_Shapes;
+	std::map<int, Gfx::Shape*> m_CombinedShapes;
+	std::map<const std::wstring, std::vector<std::pair<std::wstring, std::wstring>>> m_MeasureModifiers;
 	bool ParseModifiers(ConfigParser& parser, const WCHAR* section, Gfx::Shape*& mainShape, const WCHAR* shapeId, const WCHAR* modifierString, int recursion = 0);
 	bool m_NeedsRedraw;
 
