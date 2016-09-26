@@ -128,9 +128,8 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="lua\LuaHelper.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
+    <ClCompile Include="lua\LuaHelper.cpp" />
+    <ClCompile Include="MeterShape.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -228,9 +227,8 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="lua\LuaHelper.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
+    <ClInclude Include="lua\LuaHelper.h" />
+    <ClInclude Include="MeterShape.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

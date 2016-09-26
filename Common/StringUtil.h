@@ -49,6 +49,7 @@ void EscapeRegExp(std::wstring& str);
 
 void EncodeUrl(std::wstring& str);
 
+std::wstring Format(const WCHAR* str, ...);
 
 /*
 ** Case insensitive find function for std::string and std::wstring.

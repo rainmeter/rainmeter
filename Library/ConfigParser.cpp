@@ -831,28 +831,7 @@ Measure* ConfigParser::GetMeasure(const std::wstring& name)
 
 std::vector<Gdiplus::REAL> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
-	std::vector<Gdiplus::REAL> result;
-	const std::wstring& str = ReadString(section, key, L"");
-	if (!str.empty())
-	{
-		// Tokenize and parse the floats
-		const WCHAR delimiter = L';';
-		size_t lastPos, pos = 0;
-		do
-		{
-			lastPos = str.find_first_not_of(delimiter, pos);
-			if (lastPos == std::wstring::npos) break;
-
-			pos = str.find_first_of(delimiter, lastPos + 1);
-
-			result.push_back((Gdiplus::REAL)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
-			if (pos == std::wstring::npos) break;
-
-			++pos;
-		}
-		while (true);
-	}
-	return result;
+	return ParseFloats(ReadString(section, key, L"").c_str());
 }
 
 int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
@@ -1316,6 +1295,29 @@ RECT ConfigParser::ParseRECT(LPCTSTR string)
 	RECT r = {0};
 	ParseInt4(string, r.left, r.top, r.right, r.bottom);
 	return r;
+}
+
+std::vector<Gdiplus::REAL> ConfigParser::ParseFloats(LPCTSTR string, const WCHAR delimiter)
+{
+	std::vector<Gdiplus::REAL> result;
+	const std::wstring& str = string;
+	if (!str.empty())
+	{
+		size_t lastPos, pos = 0;
+		do
+		{
+			lastPos = str.find_first_not_of(delimiter, pos);
+			if (lastPos == std::wstring::npos) break;
+
+			pos = str.find_first_of(delimiter, lastPos + 1);
+
+			result.push_back((Gdiplus::REAL)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
+			if (pos == std::wstring::npos) break;
+
+			++pos;
+		} while (true);
+	}
+	return result;
 }
 
 /*

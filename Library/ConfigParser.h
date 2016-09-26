@@ -87,6 +87,8 @@ public:
 	static Gdiplus::ARGB ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);
+	static std::vector<Gdiplus::REAL> ParseFloats(LPCTSTR string, const WCHAR delimiter = L';');
+
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }

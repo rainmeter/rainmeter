@@ -69,6 +69,7 @@
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
     <ClCompile Include="MeterButton.cpp" />
+    <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterHistogram.cpp" />
     <ClCompile Include="MeterImage.cpp" />
     <ClCompile Include="MeterLine.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
     <ClInclude Include="MeterButton.h" />
+    <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterHistogram.h" />
     <ClInclude Include="MeterImage.h" />
     <ClInclude Include="MeterLine.h" />

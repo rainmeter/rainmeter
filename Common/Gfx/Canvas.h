@@ -20,6 +20,7 @@
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include "Shape\Shape.h"
 
 namespace Gfx {
 
@@ -32,6 +33,9 @@ public:
 
 	static bool Initialize();
 	static void Finalize();
+	static Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> CreateRectangle(const D2D1_RECT_F& rectangle);
+	static Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> CreateRoundedRectangle(const D2D1_ROUNDED_RECT& roundedRectangle);
+	static Microsoft::WRL::ComPtr<ID2D1PathGeometry> CreatePathGeometry();
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -76,6 +80,8 @@ public:
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
 
+	void DrawGeometry(const Shape& shape, int x, int y);
+	 
 private:
 	friend class Canvas;
 	friend class FontCollectionD2D;

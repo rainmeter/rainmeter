@@ -110,6 +110,28 @@ void Canvas::Finalize()
 	}
 }
 
+Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> Canvas::CreateRectangle(const D2D1_RECT_F& rectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> c_Geometry;
+	HRESULT hr = c_D2DFactory->CreateRectangleGeometry(rectangle, &c_Geometry);
+	return c_Geometry;
+}
+
+Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> Canvas::CreateRoundedRectangle(const D2D1_ROUNDED_RECT& roundedRectangle)
+{
+	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> c_Geometry;
+	HRESULT hr = c_D2DFactory->CreateRoundedRectangleGeometry(roundedRectangle, &c_Geometry);
+	return c_Geometry;
+}
+
+Microsoft::WRL::ComPtr<ID2D1PathGeometry> Canvas::CreatePathGeometry()
+{
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> c_Geometry = NULL;
+	HRESULT hr = c_D2DFactory->CreatePathGeometry(&c_Geometry);
+	return c_Geometry;
+}
+
+
 void Canvas::Resize(int w, int h)
 {
 	m_W = w;
@@ -583,6 +605,34 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	{
 		m_Target->FillRectangle(ToRectF(rect), solidBrush.Get());
 	}
+}
+
+void Canvas::DrawGeometry(const Shape& shape, int xPos, int yPos)
+{
+	if (!BeginTargetDraw()) return;
+
+	const auto originalAntialiasMode = m_Target->GetAntialiasMode();
+	if (!shape.m_Antialias)
+		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+
+	D2D1_MATRIX_3X2_F worldTransform;
+	m_Target->GetTransform(&worldTransform);
+	m_Target->SetTransform(shape.GetShapeMatrix() * worldTransform * D2D1::Matrix3x2F::Translation(xPos, yPos));
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr)) {
+		if (shape.m_FillColor.a > 0) {
+			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
+		}
+		solidBrush->SetColor(shape.m_StrokeColor);
+		if (shape.m_StrokeColor.a > 0 && shape.m_StrokeWidth > 0) {
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, nullptr);
+		}
+	}
+	
+	m_Target->SetTransform(worldTransform);
+	m_Target->SetAntialiasMode(originalAntialiasMode);
 }
 
 }  // namespace Gfx

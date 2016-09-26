@@ -32,6 +32,8 @@
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
+    <ClCompile Include="Gfx\Shape\RectangleShape.cpp" />
+    <ClCompile Include="Gfx\Shape\Shape.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
     <ClCompile Include="Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp" />
@@ -71,6 +73,8 @@
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
+    <ClInclude Include="Gfx\Shape\RectangleShape.h" />
+    <ClInclude Include="Gfx\Shape\Shape.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
     <ClInclude Include="Gfx\TextFormatD2D.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h" />
