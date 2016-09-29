@@ -21,23 +21,6 @@ using namespace Gdiplus;
 
 namespace {
 
-/*struct PairInfo
-{
-	PairedPunctuation punct;
-	const WCHAR begin;
-	const WCHAR end;
-};
-
-const PairInfo s_PairedPunct[] =
-{
-	{ PairedPunctuation::SingleQuote, L'\'', L'\'' },
-	{ PairedPunctuation::DoubleQuote, L'\"', L'\"' },
-	{ PairedPunctuation::Parentheses, L'(', L')' },
-	{ PairedPunctuation::Brackets, L'[', L']' },
-	{ PairedPunctuation::Braces, L'{', L'}' },
-	{ PairedPunctuation::Guillemet, L'<', L'>' }
-};*/
-
 struct PairInfo
 {
 	const WCHAR begin;
