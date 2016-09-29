@@ -567,4 +567,33 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	}
 }
 
+void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
+{
+	if (!BeginTargetDraw()) return;
+
+	D2D1_MATRIX_3X2_F worldTransform;
+	m_Target->GetTransform(&worldTransform);
+	m_Target->SetTransform(shape.GetShapeMatrix() *
+		worldTransform *
+		D2D1::Matrix3x2F::Translation((FLOAT)xPos, (FLOAT)yPos));
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		if (shape.m_FillColor.a > 0)
+		{
+			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
+		}
+
+		solidBrush->SetColor(shape.m_StrokeColor);
+		if (shape.m_StrokeColor.a > 0 && shape.m_StrokeWidth > 0)
+		{
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, nullptr);
+		}
+	}
+
+	m_Target->SetTransform(worldTransform);
+}
+
 }  // namespace Gfx

@@ -74,6 +74,7 @@
     <ClCompile Include="MeterLine.cpp" />
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
+    <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="MeterLine.h" />
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
+    <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="NowPlaying\Cover.h" />
