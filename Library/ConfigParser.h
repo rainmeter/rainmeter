@@ -25,6 +25,16 @@ class Skin;
 class Measure;
 class Meter;
 
+enum class PairedPunctuation
+{
+	SingleQuote,
+	DoubleQuote,
+	Parentheses,
+	Brackets,
+	Braces,
+	Guillemet
+};
+
 class ConfigParser
 {
 public:
@@ -80,6 +90,8 @@ public:
 	bool ReplaceMeasures(std::wstring& result);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
+	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+
 	static double ParseDouble(LPCTSTR string, double defValue);
 	static int ParseInt(LPCTSTR string, int defValue);
 	static uint32_t ParseUInt(LPCTSTR string, uint32_t defValue);

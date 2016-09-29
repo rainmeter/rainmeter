@@ -19,6 +19,43 @@
 
 using namespace Gdiplus;
 
+namespace {
+
+/*struct PairInfo
+{
+	PairedPunctuation punct;
+	const WCHAR begin;
+	const WCHAR end;
+};
+
+const PairInfo s_PairedPunct[] =
+{
+	{ PairedPunctuation::SingleQuote, L'\'', L'\'' },
+	{ PairedPunctuation::DoubleQuote, L'\"', L'\"' },
+	{ PairedPunctuation::Parentheses, L'(', L')' },
+	{ PairedPunctuation::Brackets, L'[', L']' },
+	{ PairedPunctuation::Braces, L'{', L'}' },
+	{ PairedPunctuation::Guillemet, L'<', L'>' }
+};*/
+
+struct PairInfo
+{
+	const WCHAR begin;
+	const WCHAR end;
+};
+
+const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
+{
+	{ PairedPunctuation::SingleQuote, { L'\'', L'\'' } },
+	{ PairedPunctuation::DoubleQuote, { L'\"', L'\"' } },
+	{ PairedPunctuation::Parentheses, { L'(', L')' } },
+	{ PairedPunctuation::Brackets,    { L'[', L']' } },
+	{ PairedPunctuation::Braces,      { L'{', L'}' } },
+	{ PairedPunctuation::Guillemet,   { L'<', L'>' } }
+};
+
+}  // namespace
+
 std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
 
 ConfigParser::ConfigParser() :
@@ -1068,6 +1105,46 @@ std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const 
 		++pos;
 	}
 	while (true);
+
+	return tokens;
+}
+
+/*
+** Splits the string from a delimiter, but skips delimiters inside of the defined paired punctuation
+**
+*/
+std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
+{
+	std::vector<std::wstring> tokens;
+	
+	int pairs = 0;
+	size_t start = 0;
+	size_t end = 0;
+
+	auto getToken = [&]() -> void
+	{
+		start = str.find_first_not_of(L" \t\r\n", start); // skip any leading whitespace
+		if (start <= end)
+		{
+			tokens.push_back(str.substr(start, end - start));
+		}
+	};
+
+	for (auto& iter : str)
+	{
+		if (iter == s_PairedPunct.at(punct).begin) ++pairs;
+		else if (iter == s_PairedPunct.at(punct).end) --pairs;
+		else if (iter == delimiter && pairs == 0)
+		{
+			getToken();
+			start = end + 1;  // skip delimiter
+		}
+
+		++end;
+	}
+
+	// Get last token
+	getToken();
 
 	return tokens;
 }
