@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "TextFormatD2D.h"
 #include "Canvas.h"
+#include "Util/D2DUtil.h"
 #include "Util/DWriteHelpers.h"
 #include "TextInlineFormat/TextInlineFormatCase.h"
 #include "TextInlineFormat/TextInlineFormatCharacterSpacing.h"
@@ -31,11 +32,6 @@
 #include <GdiPlus.h>
 
 namespace {
-
-D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
-{
-	return D2D1::ColorF(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
-}
 
 int Clamp(int value, int _min, int _max)
 {
@@ -851,7 +847,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 		tokens = ConfigParser::Tokenize(args[i], L";");
 		if (tokens.size() == 2)
 		{
-			stops[i - 1].color = ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
+			stops[i - 1].color = Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
 			stops[i - 1].position = (float)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0f);
 		}
 	}

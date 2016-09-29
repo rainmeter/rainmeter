@@ -8,29 +8,11 @@
 #include "StdAfx.h"
 #include "Canvas.h"
 #include "TextFormatD2D.h"
+#include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
 #include "Util/DWriteHelpers.h"
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Util.h"
-
-namespace {
-
-D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
-{
-	return D2D1::ColorF(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
-}
-
-D2D1_RECT_F ToRectF(const Gdiplus::Rect& rect)
-{
-	return D2D1::RectF((FLOAT)rect.X, (FLOAT)rect.Y, (FLOAT)(rect.X + rect.Width), (FLOAT)(rect.Y + rect.Height));
-}
-
-D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
-{
-	return D2D1::RectF(rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height);
-}
-
-}  // namespace
 
 namespace Gfx {
 
@@ -295,7 +277,7 @@ void Canvas::Clear(const Gdiplus::Color& color)
 		return;
 	}
 
-	m_Target->Clear(ToColorF(color));
+	m_Target->Clear(Util::ToColorF(color));
 }
 
 void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect,
@@ -307,7 +289,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 	brush.GetColor(&color);
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
+	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
@@ -349,7 +331,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 
 	if (formatD2D.m_Trimming)
 	{
-		D2D1_RECT_F clipRect = ToRectF(rect);
+		D2D1_RECT_F clipRect = Util::ToRectF(rect);
 
 		if (m_CanUseAxisAlignClip)
 		{
@@ -474,8 +456,8 @@ void Canvas::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, c
 			__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
-			auto rDst = ToRectF(dstRect);
-			auto rSrc = ToRectF(srcRect);
+			auto rDst = Util::ToRectF(dstRect);
+			auto rSrc = Util::ToRectF(srcRect);
 			m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
 		}
 
@@ -491,8 +473,8 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 {
 	if (!BeginTargetDraw()) return;
 
-	auto rDst = ToRectF(dstRect);
-	auto rSrc = ToRectF(srcRect);
+	auto rDst = Util::ToRectF(dstRect);
+	auto rSrc = Util::ToRectF(srcRect);
 
 	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
 	Gdiplus::Rect lockRect(srcRect2);
@@ -578,10 +560,10 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	brush.GetColor(&color);
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
+	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		m_Target->FillRectangle(ToRectF(rect), solidBrush.Get());
+		m_Target->FillRectangle(Util::ToRectF(rect), solidBrush.Get());
 	}
 }
 

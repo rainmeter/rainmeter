@@ -7,15 +7,7 @@
 
 #include "StdAfx.h"
 #include "TextInlineFormatColor.h"
-
-namespace {
-
-D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
-{
-	return D2D1::ColorF(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
-}
-
-}  // namespace
+#include "Gfx/Util/D2DUtil.h"
 
 namespace Gfx {
 
@@ -34,7 +26,7 @@ void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWrit
 	if (!target || !layout) return;
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = target->CreateSolidColorBrush(ToColorF(m_Color), solidBrush.GetAddressOf());
+	HRESULT hr = target->CreateSolidColorBrush(Util::ToColorF(m_Color), solidBrush.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	for (const auto& range : GetRanges())
