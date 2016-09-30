@@ -7,7 +7,8 @@
 
 #include "StdAfx.h"
 #include "Rectangle.h"
-#include "Gfx\Canvas.h"
+#include "Gfx/Canvas.h"
+#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -22,13 +23,18 @@ Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height) : Shape(ShapeT
 
 	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> rectangle;
 	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, &rectangle);
-
-	if (!FAILED(hr)) hr = rectangle.CopyTo(m_Shape.GetAddressOf());
-
 	if (FAILED(hr))
 	{
-		//LogErrorF();
+		LogErrorF(
+			L"Could not create rectangle object. X=%i, Y=%i, W=%i, H=%i",
+			(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height);
+		return;
 	}
+
+	hr = rectangle.CopyTo(m_Shape.GetAddressOf());
+	if (FAILED(hr)) LogErrorF(
+		L"Could not copy rectangle object to shape object. X=%i, Y=%i, W=%i, H=%i",
+		(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height);
 }
 
 Rectangle::~Rectangle()

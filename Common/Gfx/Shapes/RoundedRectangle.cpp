@@ -7,7 +7,8 @@
 
 #include "StdAfx.h"
 #include "RoundedRectangle.h"
-#include "Gfx\Canvas.h"
+#include "Gfx/Canvas.h"
+#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -25,13 +26,18 @@ RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
 
 	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> rectangle;
 	hr = Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(rect, &rectangle);
-
-	if (!FAILED(hr)) hr = rectangle.CopyTo(m_Shape.GetAddressOf());
-
 	if (FAILED(hr))
 	{
-		//LogErrorF();
+		LogErrorF(
+			L"Could not create rounded rectangle object. X=%i, Y=%i, W=%i, H=%i, XRadius=%i, YRadius=%i",
+			(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height, (int)m_XRadius, (int)m_YRadius);
+		return;
 	}
+
+	hr = rectangle.CopyTo(m_Shape.GetAddressOf());
+	if (FAILED(hr)) LogErrorF(
+		L"Could not copy rounded rectangle object to shape object. X=%i, Y=%i, W=%i, H=%i, XRadius=%i, YRadius=%i",
+		(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height, (int)m_XRadius, (int)m_YRadius);
 }
 
 RoundedRectangle::~RoundedRectangle()

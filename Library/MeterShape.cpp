@@ -173,7 +173,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args)
 		}
 		else
 		{
-			// LogError
+			LogErrorF(this, L"Rectangle has too few parameters");
 			return false;
 		}
 	}
@@ -181,6 +181,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args)
 	//{
 	//}
 
+	LogErrorF(this, L"Invalid shape: %s", shapeName);
 	return false;
 }
 
@@ -197,18 +198,27 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			modifier += 9;
 			auto color = ConfigParser::ParseColor(modifier);
 			shape->SetFillColor(color);
+			continue;
 		}
 		else if (_wcsnicmp(modifier, L"STROKECOLOR", 11) == 0)
 		{
 			modifier += 11;
 			auto color = ConfigParser::ParseColor(modifier);
 			shape->SetStrokeColor(color);
+			continue;
 		}
 		else if (_wcsnicmp(modifier, L"STROKEWIDTH", 11) == 0)
 		{
 			modifier += 11;
 			int width = ConfigParser::ParseInt(modifier, 0);
+			if (width < 0)
+			{
+				LogWarningF(this, L"StrokeWidth must not be negative");
+				width = 0;
+			}
+
 			shape->SetStrokeWidth(width);
+			continue;
 		}
 		else if (_wcsnicmp(modifier, L"OFFSET", 6) == 0)
 		{
@@ -220,14 +230,18 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				int y = ConfigParser::ParseInt(offset[1].c_str(), 0);
 				shape->SetOffset(x, y);
 			}
-
-			// LogError
+			else
+			{
+				LogErrorF(this, L"Offset has too few parameters");
+			}
+			continue;
 		}
 		else if (_wcsnicmp(modifier, L"ROTATE", 6) == 0)
 		{
 			modifier += 6;
 			FLOAT rotate = (FLOAT)ConfigParser::ParseDouble(modifier, 0);
 			shape->SetRotation(rotate);
+			continue;
 		}
 		//else if (_wcsnicmp(modifier, L"", ) == 0)
 		//{
@@ -250,8 +264,14 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				// Error
+				LogErrorF(this, L"Extend cannot be used recursively");
 			}
+			continue;
+		}
+		else
+		{
+			LogErrorF(this, L"Invalid shape modifier: %s", modifier);
+			continue;
 		}
 	}
 }
