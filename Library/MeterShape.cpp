@@ -151,23 +151,23 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args)
 
 		if (tokSize == 4)
 		{
-			float x = (float)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			float y = (float)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			float w = (float)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			float h = (float)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
+			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
+			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
 			m_Shapes.emplace_back(new Gfx::Rectangle(x, y, w, h));
 			return true;
 		}
 		else if (tokSize > 4)
 		{
-			float x = (float)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			float y = (float)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			float w = (float)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			float h = (float)ConfigParser::ParseInt(tokens[3].c_str(), 0);
-			float xRadius = (float)ConfigParser::ParseInt(tokens[4].c_str(), 0);
-			float yRadius = xRadius;
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
+			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
+			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
+			FLOAT yRadius = xRadius;
 
-			if (tokSize > 5) yRadius = (float)ConfigParser::ParseInt(tokens[5].c_str(), 0);
+			if (tokSize > 5) yRadius = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0);
 			m_Shapes.emplace_back(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius));
 			return true;
 		}
@@ -226,7 +226,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		else if (_wcsnicmp(modifier, L"ROTATE", 6) == 0)
 		{
 			modifier += 6;
-			float rotate = (float)ConfigParser::ParseDouble(modifier, 0);
+			FLOAT rotate = (FLOAT)ConfigParser::ParseDouble(modifier, 0);
 			shape->SetRotation(rotate);
 		}
 		//else if (_wcsnicmp(modifier, L"", ) == 0)
