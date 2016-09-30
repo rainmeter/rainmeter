@@ -49,36 +49,33 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring shape = parser.ReadString(section, L"Shape", L"");
 
 	size_t i = 1;
-	if (!shape.empty())
+	while (!shape.empty())
 	{
-		do
+		std::vector<std::wstring> args = ConfigParser::Tokenize(shape, delimiter);
+
+		// Create shape
+		if (!CreateShape(args)) break;
+
+		// Remove shape from args
+		args.erase(args.begin());
+
+		// Parse any modifiers
+		ParseModifiers(args, parser, section);
+
+		D2D1_RECT_F bounds = m_Shapes.back()->GetBounds();
+		if (!m_WDefined && m_W < bounds.right)
 		{
-			std::vector<std::wstring> args = ConfigParser::Tokenize(shape, delimiter);
+			m_W = (int)bounds.right;
+		}
+		if (!m_HDefined && m_H < bounds.bottom)
+		{
+			m_H = (int)bounds.bottom;
+		}
 
-			// Create shape
-			if (!CreateShape(args)) break;
-
-			// Remove shape from args
-			args.erase(args.begin());
-
-			// Parse any modifiers
-			ParseModifiers(args, parser, section);
-
-			D2D1_RECT_F bounds = m_Shapes.back()->GetBounds();
-			if (!m_WDefined && m_W < bounds.right)
-			{
-				m_W = (int)bounds.right;
-			}
-			if (!m_HDefined && m_H < bounds.bottom)
-			{
-				m_H = (int)bounds.bottom;
-			}
-
-			// Check for Shape2 ... etc.
-			const std::wstring num = std::to_wstring(++i);
-			std::wstring key = L"Shape" + num;
-			shape = parser.ReadString(section, key.c_str(), L"");
-		} while (!shape.empty());
+		// Check for Shape2 ... etc.
+		const std::wstring num = std::to_wstring(++i);
+		std::wstring key = L"Shape" + num;
+		shape = parser.ReadString(section, key.c_str(), L"");
 	}
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
