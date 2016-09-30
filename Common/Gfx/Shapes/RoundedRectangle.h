@@ -15,19 +15,19 @@ namespace Gfx {
 class RoundedRectangle final : public Shape
 {
 public:
-	RoundedRectangle(float x, float y, float width, float height, float xRadius, float yRadius);
+	RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
 	~RoundedRectangle();
 
 private:
 	RoundedRectangle(const RoundedRectangle& other) = delete;
 	RoundedRectangle& operator=(RoundedRectangle other) = delete;
 
-	float m_X;
-	float m_Y;
-	float m_Width;
-	float m_Height;
-	float m_XRadius;
-	float m_YRadius;
+	FLOAT m_X;
+	FLOAT m_Y;
+	FLOAT m_Width;
+	FLOAT m_Height;
+	FLOAT m_XRadius;
+	FLOAT m_YRadius;
 };
 
 } // Gfx

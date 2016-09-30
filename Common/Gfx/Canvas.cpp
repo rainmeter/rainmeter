@@ -581,13 +581,13 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		if (shape.m_FillColor.a > 0)
+		if (shape.m_FillColor.a > 0.0f)
 		{
 			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
 		}
 
 		solidBrush->SetColor(shape.m_StrokeColor);
-		if (shape.m_StrokeColor.a > 0 && shape.m_StrokeWidth > 0)
+		if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
 		{
 			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, nullptr);
 		}

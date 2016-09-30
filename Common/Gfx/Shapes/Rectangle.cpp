@@ -11,7 +11,7 @@
 
 namespace Gfx {
 
-Rectangle::Rectangle(float x, float y, float width, float height) : Shape(ShapeType::Rectangle),
+Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height) : Shape(ShapeType::Rectangle),
 	m_X(x),
 	m_Y(y),
 	m_Width(width + x),

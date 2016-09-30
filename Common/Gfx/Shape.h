@@ -41,8 +41,8 @@ public:
 	void SetOffset(int x, int y) { m_Offset = D2D1::SizeF((FLOAT)x, (FLOAT)y); }
 	void SetFillColor(Gdiplus::Color color) { m_FillColor = Util::ToColorF(color); }
 	void SetStrokeColor(Gdiplus::Color color) { m_StrokeColor = Util::ToColorF(color); }
-	void SetStrokeWidth(int strokeWidth) { m_StrokeWidth = (float)strokeWidth; }
-	void SetRotation(float rotation) { m_Rotation = rotation; }
+	void SetStrokeWidth(int strokeWidth) { m_StrokeWidth = (FLOAT)strokeWidth; }
+	void SetRotation(FLOAT rotation) { m_Rotation = rotation; }
 
 protected:
 	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
@@ -56,8 +56,8 @@ private:
 	D2D1_SIZE_F m_Offset;
 	D2D1_COLOR_F m_FillColor;
 	D2D1_COLOR_F m_StrokeColor;
-	float m_StrokeWidth;
-	float m_Rotation;
+	FLOAT m_StrokeWidth;
+	FLOAT m_Rotation;
 };
 
 } // Gfx

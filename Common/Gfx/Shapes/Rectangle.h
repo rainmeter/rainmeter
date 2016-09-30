@@ -15,17 +15,17 @@ namespace Gfx {
 class Rectangle final : public Shape
 {
 public:
-	Rectangle(float x, float y, float width, float height);
+	Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
 	~Rectangle();
 	
 private:
 	Rectangle(const Rectangle& other) = delete;
 	Rectangle& operator=(Rectangle other) = delete;
 
-	float m_X;
-	float m_Y;
-	float m_Width;
-	float m_Height;
+	FLOAT m_X;
+	FLOAT m_Y;
+	FLOAT m_Width;
+	FLOAT m_Height;
 };
 
 } // Gfx

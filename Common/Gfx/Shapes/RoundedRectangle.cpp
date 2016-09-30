@@ -11,8 +11,8 @@
 
 namespace Gfx {
 
-RoundedRectangle::RoundedRectangle(float x, float y, float width, float height,
-	float xRadius, float yRadius) : Shape(ShapeType::RoundedRectangle),
+RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
+	FLOAT xRadius, FLOAT yRadius) : Shape(ShapeType::RoundedRectangle),
 		m_X(x),
 		m_Y(y),
 		m_Width(width + x),

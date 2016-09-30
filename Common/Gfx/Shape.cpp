@@ -32,8 +32,8 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	//TODO: make rotation and scale center optional
 	return D2D1::Matrix3x2F(
 		D2D1::Matrix3x2F::Rotation(m_Rotation,
-			D2D1::Point2F((bounds.right - bounds.left) / 2 + bounds.left, (bounds.bottom - bounds.top) / 2 + bounds.top)) *
-		D2D1::Matrix3x2F::Translation(D2D1::SizeF(m_StrokeWidth / 2, m_StrokeWidth / 2)) *
+			D2D1::Point2F((bounds.right - bounds.left) / 2.0f + bounds.left, (bounds.bottom - bounds.top) / 2.0f + bounds.top)) *
+		D2D1::Matrix3x2F::Translation(D2D1::SizeF(m_StrokeWidth / 2.0f, m_StrokeWidth / 2.0f)) *
 		D2D1::Matrix3x2F::Translation(m_Offset)
 	);
 }
@@ -61,11 +61,11 @@ bool Shape::ContainsPoint(int x, int y)
 	{
 		BOOL outlineContains = false;
 		BOOL fillContains = false;
-		HRESULT result = m_Shape->StrokeContainsPoint(D2D1::Point2F((float)x, (float)y),
+		HRESULT result = m_Shape->StrokeContainsPoint(D2D1::Point2F((FLOAT)x, (FLOAT)y),
 			m_StrokeWidth, nullptr, GetShapeMatrix(), &outlineContains);
 		if (SUCCEEDED(result) && outlineContains) return true;
 
-		result = m_Shape->FillContainsPoint(D2D1::Point2F((float)x, (float)y), GetShapeMatrix(), &fillContains);
+		result = m_Shape->FillContainsPoint(D2D1::Point2F((FLOAT)x, (FLOAT)y), GetShapeMatrix(), &fillContains);
 		if (SUCCEEDED(result) && fillContains) return true;
 	}
 
