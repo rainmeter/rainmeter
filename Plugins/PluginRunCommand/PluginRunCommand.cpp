@@ -171,17 +171,18 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 	if (measure->threadActive)
 	{
-		if (!TerminateApp(measure->hProc, measure->dwPID, (measure->state == SW_HIDE)))
-		{
-			measure->value = 105.0f;
-			RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
-		}
-
 		// Increment ref count of this module so that it will not be
 		// unloaded prior to thread completion.
 		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
 		HMODULE module;
 		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+
+		if (measure->hProc != INVALID_HANDLE_VALUE &&
+			!TerminateApp(measure->hProc, measure->dwPID, (measure->state == SW_HIDE)))
+		{
+			measure->value = 105.0f;
+			RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
+		}
 
 		// Tell the thread to perform any cleanup
 		measure->threadActive = false;
