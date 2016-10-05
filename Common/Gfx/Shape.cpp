@@ -18,7 +18,9 @@ Shape::Shape(ShapeType type) :
 	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
 	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeWidth(1.0f),
-	m_Rotation(0.0f)
+	m_Rotation(0.0f),
+	m_RotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
+	m_RotationAnchorDefined(false)
 {
 }
 
@@ -31,12 +33,17 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	D2D1_RECT_F bounds;
 	m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
 
-	//TODO: make rotation and scale center optional
+	// If the rotation anchor is not defined, use the center of the shape
+	D2D1_POINT_2F rotationPoint = m_RotationAnchorDefined ?
+		m_RotationAnchor :
+		D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
+
+	// Offset rotation point by the shapes bounds
+	rotationPoint.x += bounds.left;
+	rotationPoint.y += bounds.top;
+
 	return D2D1::Matrix3x2F(
-		D2D1::Matrix3x2F::Rotation(m_Rotation,
-			D2D1::Point2F(
-				((bounds.right - bounds.left) / 2.0f) + bounds.left,
-				((bounds.bottom - bounds.top) / 2.0f) + bounds.top)) *
+		D2D1::Matrix3x2F::Rotation(m_Rotation, rotationPoint) *
 		D2D1::Matrix3x2F::Translation(m_Offset)
 	);
 }
@@ -118,6 +125,15 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 	m_Offset = D2D1::SizeF(0.0f, 0.0f);
 
 	return true;
+}
+
+void Shape::SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined)
+{
+	m_Rotation = rotation;
+
+	m_RotationAnchor.x = anchorX;
+	m_RotationAnchor.y = anchorY;
+	m_RotationAnchorDefined = anchorDefined;
 }
 
 void Shape::CloneModifiers(Shape* otherShape)

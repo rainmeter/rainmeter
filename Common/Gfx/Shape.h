@@ -48,7 +48,8 @@ public:
 	void SetFillColor(Gdiplus::Color color) { m_FillColor = Util::ToColorF(color); }
 	void SetStrokeColor(Gdiplus::Color color) { m_StrokeColor = Util::ToColorF(color); }
 	void SetStrokeWidth(int strokeWidth) { m_StrokeWidth = (FLOAT)strokeWidth; }
-	void SetRotation(FLOAT rotation) { m_Rotation = rotation; }
+
+	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 
 protected:
 	void CloneModifiers(Shape* otherShape);
@@ -66,7 +67,10 @@ private:
 	D2D1_COLOR_F m_FillColor;
 	D2D1_COLOR_F m_StrokeColor;
 	FLOAT m_StrokeWidth;
+
 	FLOAT m_Rotation;
+	D2D1_POINT_2F m_RotationAnchor;
+	bool m_RotationAnchorDefined;
 };
 
 } // Gfx

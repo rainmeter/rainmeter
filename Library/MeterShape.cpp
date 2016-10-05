@@ -368,8 +368,27 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		else if (_wcsnicmp(modifier, L"ROTATE", 6) == 0)
 		{
 			modifier += 6;
-			FLOAT rotate = (FLOAT)ConfigParser::ParseDouble(modifier, 0);
-			shape->SetRotation(rotate);
+			auto rotate = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
+			size_t size = rotate.size();
+			if (size > 0)
+			{
+				bool anchorDefined = false;
+				FLOAT anchorX = 0.0f;
+				FLOAT anchorY = 0.0f;
+				FLOAT rotation = (FLOAT)ConfigParser::ParseInt(rotate[0].c_str(), 0);
+				if (size > 2)
+				{
+					anchorX = (FLOAT)ConfigParser::ParseInt(rotate[1].c_str(), 0);
+					anchorY = (FLOAT)ConfigParser::ParseInt(rotate[2].c_str(), 0);
+					anchorDefined = true;
+				}
+
+				shape->SetRotation(rotation, anchorX, anchorY, anchorDefined);
+			}
+			else
+			{
+				LogWarningF(this, L"Rotate has too few parameters");
+			}
 			continue;
 		}
 		// Add new modifiers here
