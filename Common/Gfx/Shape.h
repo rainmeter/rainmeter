@@ -33,6 +33,8 @@ public:
 
 	ShapeType GetShapeType() { return m_ShapeType; }
 
+	bool DoesShapeExist() { return m_Shape != nullptr; }
+
 	virtual Shape* Clone() = 0;
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix();

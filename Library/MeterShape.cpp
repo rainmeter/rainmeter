@@ -52,7 +52,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		std::vector<std::wstring> args = ConfigParser::Tokenize(shape, delimiter);
 
 		bool isCombined = false;
-		if (!CreateShape(args, isCombined)) break;
+		if (!CreateShape(args, isCombined, i - 1)) break;
 
 		// If the shape is combined with another, save the shape definition and
 		// process later. Otherwise, parse any modifiers for the shape.
@@ -140,8 +140,25 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined)
+bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, size_t keyId)
 {
+	auto createShape = [&](Gfx::Shape* shape) -> bool
+	{
+		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
+		bool exists = shape->DoesShapeExist();
+		if (exists)
+		{
+			m_Shapes.push_back(shape);
+		}
+		else
+		{
+			LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
+			delete shape;
+		}
+
+		return exists;
+	};
+
 	const size_t argSize = args.size();
 	const WCHAR* shapeName = args[0].c_str();
 	if (_wcsnicmp(shapeName, L"RECTANGLE", 9) == 0)
@@ -156,7 +173,12 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined)
 			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
 			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
 			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
-			m_Shapes.emplace_back(new Gfx::Rectangle(x, y, w, h));
+
+			if (!createShape(new Gfx::Rectangle(x, y, w, h)))
+			{
+				return false;
+			}
+
 			return true;
 		}
 		else if (tokSize > 4)
@@ -166,10 +188,15 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined)
 			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
 			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
 			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
-			FLOAT yRadius = xRadius;
+			FLOAT yRadius = (tokSize > 5) ?
+				yRadius = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0) :
+				xRadius;
 
-			if (tokSize > 5) yRadius = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0);
-			m_Shapes.emplace_back(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius));
+			if (!createShape(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
+			{
+				return false;
+			}
+
 			return true;
 		}
 		else

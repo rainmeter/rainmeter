@@ -34,7 +34,7 @@ protected:
 private:
 	void Dispose();
 
-	bool CreateShape(std::vector<std::wstring>& args, bool& isCombined);
+	bool CreateShape(std::vector<std::wstring>& args, bool& isCombined, size_t keyId);
 	bool CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args);
 
 	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
