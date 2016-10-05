@@ -17,6 +17,8 @@ class Rectangle final : public Shape
 public:
 	Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
 	~Rectangle();
+
+	virtual Shape* Clone() override;
 	
 private:
 	Rectangle(const Rectangle& other) = delete;

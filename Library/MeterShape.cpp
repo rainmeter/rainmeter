@@ -16,6 +16,7 @@
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes()
 {
+	Meter::Initialize();
 }
 
 MeterShape::~MeterShape()
@@ -33,17 +34,14 @@ void MeterShape::Dispose()
 	m_Shapes.clear();
 }
 
-void MeterShape::Initialize()
-{
-	Meter::Initialize();
-}
-
 void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
 
 	// Clear any shapes
 	Dispose();
+
+	std::unordered_map<size_t, std::wstring> combinedShapes;
 
 	const std::wstring delimiter(1, L'|');
 	std::wstring shape = parser.ReadString(section, L"Shape", L"");
@@ -53,14 +51,20 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		std::vector<std::wstring> args = ConfigParser::Tokenize(shape, delimiter);
 
-		// Create shape
-		if (!CreateShape(args)) break;
+		bool isCombined = false;
+		if (!CreateShape(args, isCombined)) break;
 
-		// Remove shape from args
-		args.erase(args.begin());
-
-		// Parse any modifiers
-		ParseModifiers(args, parser, section);
+		// If the shape is combined with another, save the shape definition and
+		// process later. Otherwise, parse any modifiers for the shape.
+		if (isCombined)
+		{
+			combinedShapes.insert(std::make_pair(i - 1, shape));
+		}
+		else
+		{
+			args.erase(args.begin());
+			ParseModifiers(args, parser, section);
+		}
 
 		D2D1_RECT_F bounds = m_Shapes.back()->GetBounds();
 		if (!m_WDefined && m_W < bounds.right)
@@ -78,10 +82,11 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		shape = parser.ReadString(section, key.c_str(), L"");
 	}
 
-	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
+	// Process combined shapes
+	for (const auto& shape : combinedShapes)
 	{
-		Initialize();
-		m_NeedsRedraw = true;
+		std::vector<std::wstring> args = ConfigParser::Tokenize(shape.second, delimiter);
+		if (!CreateCombinedShape(shape.first, args)) break;
 	}
 }
 
@@ -89,15 +94,7 @@ bool MeterShape::Update()
 {
 	if (Meter::Update())
 	{
-		if (!m_Measures.empty() || m_DynamicVariables)
-		{
-			return true;
-		}
-		else if (m_NeedsRedraw)
-		{
-			m_NeedsRedraw = false;
-			return true;
-		}
+		return true;
 	}
 
 	return false;
@@ -112,7 +109,7 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 	for (const auto& shape : m_Shapes)
 	{
-		if (shape->IsShapeDefined())
+		if (!shape->IsCombined())
 		{
 			canvas.DrawGeometry(*shape, x, y);
 		}
@@ -123,11 +120,15 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
+	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
 	for (auto& shape : m_Shapes)
 	{
-		if (shape->ContainsPoint(x - m_X, y - m_Y))
+		if (!shape->IsCombined() && shape->ContainsPoint(point))
+		{
 			return true;
+		}
 	}
+
 	return false;
 }
 
@@ -139,7 +140,7 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-bool MeterShape::CreateShape(std::vector<std::wstring>& args)
+bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined)
 {
 	const size_t argSize = args.size();
 	const WCHAR* shapeName = args[0].c_str();
@@ -177,12 +178,140 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args)
 			return false;
 		}
 	}
+	// Add new shapes here
 	//else if (_wcsnicmp(shapeName, L"", ) == 0)
 	//{
 	//}
+	else if (_wcsnicmp(shapeName, L"COMBINE", 7) == 0)
+	{
+		// Combined shapes are processed after all shapes are created
+		isCombined = true;
+		return true;
+	}
 
 	LogErrorF(this, L"Invalid shape: %s", shapeName);
 	return false;
+}
+
+bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args)
+{
+	auto showError = [&shapeId, this](const WCHAR* description, const WCHAR* error) -> void
+	{
+		std::wstring key = L"Shape";
+		key += std::to_wstring(shapeId + 1);
+		LogErrorF(this, L"%s %s \"%s\"", key.c_str(), description, error);
+	};
+
+	auto getShapeId = [=](const WCHAR* shape) -> size_t
+	{
+		int id = _wtoi(shape) - 1;
+		return id < 0 ? (size_t)0 : (size_t)id;
+	};
+
+	size_t parentId = 0;
+
+	const WCHAR* parentName = args[0].c_str();
+	parentName += 8;  // Strip off 'Combine '
+	if (_wcsnicmp(parentName, L"SHAPE", 5) == 0)
+	{
+		parentName += 5;  // Strip off 'Shape'
+		parentId = getShapeId(parentName);
+
+		if (parentId == shapeId)
+		{
+			// Cannot use myself as a parent shape
+			showError(L"cannot combine with:", parentName - 5);
+			return false;
+		}
+
+		if (parentId < m_Shapes.size())
+		{
+			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
+			if (clonedShape)
+			{
+				m_Shapes.insert(m_Shapes.begin() + shapeId, clonedShape);
+				m_Shapes[parentId]->SetCombined();
+
+				// Combine with empty shape
+				m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
+			}
+			else
+			{
+				// Shape could not be cloned
+				return false;
+			}
+		}
+		else
+		{
+			showError(L"definition contains invalid shape reference: ", parentName - 5);
+			return false;
+		}
+	}
+	else
+	{
+		showError(L"defintion contains invalid shape identifier: ", parentName);
+		return false;
+	}
+
+	args.erase(args.begin());  // Remove Combine definition
+
+	for (const auto& option : args)
+	{
+		D2D1_COMBINE_MODE mode = D2D1_COMBINE_MODE_FORCE_DWORD;
+		const WCHAR* combined = option.c_str();
+		if (_wcsnicmp(combined, L"UNION", 5) == 0)
+		{
+			combined += 6;
+			mode = D2D1_COMBINE_MODE_UNION;
+		}
+		else if (_wcsnicmp(combined, L"XOR", 3) == 0)
+		{
+			combined += 4;
+			mode = D2D1_COMBINE_MODE_XOR;
+		}
+		else if (_wcsnicmp(combined, L"INTERSECT", 9) == 0)
+		{
+			combined += 10;
+			mode = D2D1_COMBINE_MODE_INTERSECT;
+		}
+		else if (_wcsnicmp(combined, L"EXCLUDE", 7) == 0)
+		{
+			combined += 8;
+			mode = D2D1_COMBINE_MODE_EXCLUDE;
+		}
+		else
+		{
+			showError(L"definition contains invalid combine: ", combined);
+			return false;
+		}
+
+		combined += 5;  // Remove 'Shape'
+		size_t id = getShapeId(combined);
+		if (id == shapeId)
+		{
+			// Cannot combine with myself
+			showError(L"cannot combine with:", combined - 5);
+			return false;
+		}
+
+		if (id < m_Shapes.size())
+		{
+			m_Shapes[id]->SetCombined();
+
+			if (!m_Shapes[shapeId]->CombineWith(m_Shapes[id], mode))
+			{
+				showError(L"could not combine with: ", combined - 5);
+				return false;
+			}
+		}
+		else
+		{
+			showError(L"defintion contains invalid shape identifier: ", combined - 5);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
@@ -243,6 +372,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			shape->SetRotation(rotate);
 			continue;
 		}
+		// Add new modifiers here
 		//else if (_wcsnicmp(modifier, L"", ) == 0)
 		//{
 		//}

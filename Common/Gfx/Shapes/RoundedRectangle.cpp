@@ -25,7 +25,7 @@ RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
 	const D2D1_ROUNDED_RECT rect = { m_X, m_Y, m_Width, m_Height, m_XRadius, m_YRadius };
 
 	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> rectangle;
-	hr = Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(rect, &rectangle);
+	hr = Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(rect, rectangle.GetAddressOf());
 	if (FAILED(hr))
 	{
 		LogErrorF(
@@ -42,6 +42,13 @@ RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
 
 RoundedRectangle::~RoundedRectangle()
 {
+}
+
+Shape* RoundedRectangle::Clone()
+{
+	Shape* newShape = new RoundedRectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y, m_XRadius, m_YRadius);
+	CloneModifiers(newShape);
+	return newShape;
 }
 
 }  // namespace Gfx

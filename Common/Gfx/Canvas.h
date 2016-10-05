@@ -84,6 +84,7 @@ private:
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
 	friend class TextInlineFormat_Typography;
+	friend class Shape;
 	friend class Rectangle;
 	friend class RoundedRectangle;
 

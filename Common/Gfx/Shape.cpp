@@ -7,11 +7,13 @@
 
 #include "StdAfx.h"
 #include "Shape.h"
+#include "Canvas.h"
 
 namespace Gfx {
 
 Shape::Shape(ShapeType type) :
 	m_ShapeType(type),
+	m_IsCombined(false),
 	m_Offset(D2D1::SizeF(0.0f, 0.0f)),
 	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
 	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
@@ -32,8 +34,9 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	//TODO: make rotation and scale center optional
 	return D2D1::Matrix3x2F(
 		D2D1::Matrix3x2F::Rotation(m_Rotation,
-			D2D1::Point2F((bounds.right - bounds.left) / 2.0f + bounds.left, (bounds.bottom - bounds.top) / 2.0f + bounds.top)) *
-		D2D1::Matrix3x2F::Translation(D2D1::SizeF(m_StrokeWidth / 2.0f, m_StrokeWidth / 2.0f)) *
+			D2D1::Point2F(
+				((bounds.right - bounds.left) / 2.0f) + bounds.left,
+				((bounds.bottom - bounds.top) / 2.0f) + bounds.top)) *
 		D2D1::Matrix3x2F::Translation(m_Offset)
 	);
 }
@@ -55,21 +58,75 @@ bool Shape::IsShapeDefined()
 	return m_Shape;
 }
 
-bool Shape::ContainsPoint(int x, int y)
+bool Shape::ContainsPoint(D2D1_POINT_2F point)
 {
 	if (m_Shape)
 	{
-		BOOL outlineContains = false;
-		BOOL fillContains = false;
-		HRESULT result = m_Shape->StrokeContainsPoint(D2D1::Point2F((FLOAT)x, (FLOAT)y),
-			m_StrokeWidth, nullptr, GetShapeMatrix(), &outlineContains);
-		if (SUCCEEDED(result) && outlineContains) return true;
+		BOOL contains = FALSE;
+		HRESULT result = m_Shape->StrokeContainsPoint(point, m_StrokeWidth, nullptr, GetShapeMatrix(), &contains);
+		if (SUCCEEDED(result) && contains) return true;
 
-		result = m_Shape->FillContainsPoint(D2D1::Point2F((FLOAT)x, (FLOAT)y), GetShapeMatrix(), &fillContains);
-		if (SUCCEEDED(result) && fillContains) return true;
+		result = m_Shape->FillContainsPoint(point, GetShapeMatrix(), &contains);
+		if (SUCCEEDED(result) && contains) return true;
 	}
 
 	return false;
+}
+
+bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
+{
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
+	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = path->Open(sink.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	if (otherShape)
+	{
+		hr = m_Shape->CombineWithGeometry(
+			otherShape->m_Shape.Get(),
+			mode,
+			otherShape->GetShapeMatrix(),
+			sink.Get());
+		if (FAILED(hr)) return false;
+
+		sink->Close();
+
+		hr = path.CopyTo(m_Shape.ReleaseAndGetAddressOf());
+		if (FAILED(hr)) return false;
+
+		return true;
+	}
+
+	const D2D1_RECT_F rect = { 0, 0, 0, 0 };
+	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> emptyShape;
+	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, emptyShape.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = emptyShape->CombineWithGeometry(m_Shape.Get(), mode, GetShapeMatrix(), sink.Get());
+
+	sink->Close();
+
+	if (FAILED(hr)) return false;
+
+	hr = path.CopyTo(m_Shape.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	m_Rotation = 0.0f;
+	m_Offset = D2D1::SizeF(0.0f, 0.0f);
+
+	return true;
+}
+
+void Shape::CloneModifiers(Shape* otherShape)
+{
+	otherShape->m_Offset = m_Offset;
+	otherShape->m_FillColor = m_FillColor;
+	otherShape->m_StrokeColor = m_StrokeColor;
+	otherShape->m_StrokeWidth = m_StrokeWidth;
+	otherShape->m_Rotation = m_Rotation;
 }
 
 }  // namespace Gfx

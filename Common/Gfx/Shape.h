@@ -33,10 +33,16 @@ public:
 
 	ShapeType GetShapeType() { return m_ShapeType; }
 
+	virtual Shape* Clone() = 0;
+
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
 	D2D1_RECT_F GetBounds();
 	bool IsShapeDefined();
-	bool ContainsPoint(int x, int y);
+	bool ContainsPoint(D2D1_POINT_2F point);
+
+	bool IsCombined() { return m_IsCombined; }
+	void SetCombined() { m_IsCombined = true; }
+	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
 	void SetOffset(int x, int y) { m_Offset = D2D1::SizeF((FLOAT)x, (FLOAT)y); }
 	void SetFillColor(Gdiplus::Color color) { m_FillColor = Util::ToColorF(color); }
@@ -45,12 +51,15 @@ public:
 	void SetRotation(FLOAT rotation) { m_Rotation = rotation; }
 
 protected:
+	void CloneModifiers(Shape* otherShape);
+
 	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
 
 private:
 	friend class Canvas;
 
 	ShapeType m_ShapeType;
+	bool m_IsCombined;
 
 	// Modifiers
 	D2D1_SIZE_F m_Offset;

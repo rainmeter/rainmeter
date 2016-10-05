@@ -22,7 +22,6 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeterShape>(); }
 
-	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
@@ -35,11 +34,12 @@ protected:
 private:
 	void Dispose();
 
-	bool CreateShape(std::vector<std::wstring>& args);
+	bool CreateShape(std::vector<std::wstring>& args, bool& isCombined);
+	bool CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args);
+
 	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
 
 	std::vector<Gfx::Shape*> m_Shapes;
-	bool m_NeedsRedraw;
 };
 
 #endif

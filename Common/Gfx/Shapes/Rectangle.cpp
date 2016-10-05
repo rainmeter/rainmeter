@@ -22,7 +22,7 @@ Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height) : Shape(ShapeT
 	const D2D1_RECT_F rect = { m_X, m_Y, m_Width, m_Height };
 
 	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> rectangle;
-	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, &rectangle);
+	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, rectangle.GetAddressOf());
 	if (FAILED(hr))
 	{
 		LogErrorF(
@@ -39,6 +39,13 @@ Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height) : Shape(ShapeT
 
 Rectangle::~Rectangle()
 {
+}
+
+Shape* Rectangle::Clone()
+{
+	Shape* newShape = new Rectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y);
+	CloneModifiers(newShape);
+	return newShape;
 }
 
 }  // namespace Gfx
