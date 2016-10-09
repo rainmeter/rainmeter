@@ -599,11 +599,12 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 				shape.m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_SOLID;
 			}
 
-			HRESULT hr = Canvas::c_D2DFactory->CreateStrokeStyle(shape.m_StrokeProperties,
+			hr = Canvas::c_D2DFactory->CreateStrokeStyle(shape.m_StrokeProperties,
 				dashes, dashCount, stroke.GetAddressOf());
-			if (FAILED(hr)) return;
-
-			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, stroke.Get());
+			if (SUCCEEDED(hr))
+			{
+				m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, stroke.Get());
+			}
 		}
 	}
 
