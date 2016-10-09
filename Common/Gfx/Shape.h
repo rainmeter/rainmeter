@@ -53,6 +53,9 @@ public:
 
 	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 
+	void SetStrokeProperties(D2D1_STROKE_STYLE_PROPERTIES1 properties) { m_StrokeProperties = properties; }
+	void SetStrokeCustomDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
+
 protected:
 	void CloneModifiers(Shape* otherShape);
 
@@ -67,12 +70,15 @@ private:
 	// Modifiers
 	D2D1_SIZE_F m_Offset;
 	D2D1_COLOR_F m_FillColor;
-	D2D1_COLOR_F m_StrokeColor;
-	FLOAT m_StrokeWidth;
 
 	FLOAT m_Rotation;
 	D2D1_POINT_2F m_RotationAnchor;
 	bool m_RotationAnchorDefined;
+
+	FLOAT m_StrokeWidth;
+	D2D1_COLOR_F m_StrokeColor;
+	std::vector<FLOAT> m_StrokeCustomDashes;
+	D2D1_STROKE_STYLE_PROPERTIES1 m_StrokeProperties;
 };
 
 } // Gfx

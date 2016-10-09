@@ -589,7 +589,21 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		solidBrush->SetColor(shape.m_StrokeColor);
 		if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
 		{
-			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, nullptr);
+			Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> stroke;
+			UINT32 dashCount = (UINT32)shape.m_StrokeCustomDashes.size();
+			const FLOAT* dashes = shape.m_StrokeCustomDashes.empty() ? nullptr : &shape.m_StrokeCustomDashes[0];
+
+			// Make sure that if a custom dash style is used that there are actually custom dashes
+			if (!dashes && shape.m_StrokeProperties.dashStyle == D2D1_DASH_STYLE_CUSTOM)
+			{
+				shape.m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_SOLID;
+			}
+
+			HRESULT hr = Canvas::c_D2DFactory->CreateStrokeStyle(shape.m_StrokeProperties,
+				dashes, dashCount, stroke.GetAddressOf());
+			if (FAILED(hr)) return;
+
+			m_Target->DrawGeometry(shape.m_Shape.Get(), solidBrush.Get(), shape.m_StrokeWidth, stroke.Get());
 		}
 	}
 

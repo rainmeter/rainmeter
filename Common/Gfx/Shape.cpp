@@ -16,12 +16,17 @@ Shape::Shape(ShapeType type) :
 	m_IsCombined(false),
 	m_Offset(D2D1::SizeF(0.0f, 0.0f)),
 	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
-	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
-	m_StrokeWidth(1.0f),
 	m_Rotation(0.0f),
 	m_RotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	m_RotationAnchorDefined(false)
+	m_RotationAnchorDefined(false),
+	m_StrokeWidth(1.0f),
+	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
+	m_StrokeCustomDashes(),
+	m_StrokeProperties(D2D1::StrokeStyleProperties1())
 {
+	// Make sure the stroke width is exact, not altered by other
+	// transforms like Scale or Rotation
+	m_StrokeProperties.transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED;
 }
 
 Shape::~Shape()
