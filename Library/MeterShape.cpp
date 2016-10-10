@@ -38,6 +38,9 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
 
+	int newW = 0;
+	int newH = 0;
+
 	// Clear any shapes
 	Dispose();
 
@@ -67,14 +70,8 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 
 		D2D1_RECT_F bounds = m_Shapes.back()->GetBounds();
-		if (!m_WDefined && m_W < bounds.right)
-		{
-			m_W = (int)bounds.right;
-		}
-		if (!m_HDefined && m_H < bounds.bottom)
-		{
-			m_H = (int)bounds.bottom;
-		}
+		if (newW < (int)bounds.right) newW = (int)bounds.right;
+		if (newH < (int)bounds.bottom) newH = (int)bounds.bottom;
 
 		// Check for Shape2 ... etc.
 		const std::wstring num = std::to_wstring(++i);
@@ -88,6 +85,9 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		std::vector<std::wstring> args = ConfigParser::Tokenize(shape.second, delimiter);
 		if (!CreateCombinedShape(shape.first, args)) break;
 	}
+
+	if (!m_WDefined) m_W = newW;
+	if (!m_HDefined) m_H = newH;
 }
 
 bool MeterShape::Update()
