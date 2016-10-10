@@ -499,7 +499,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			FLOAT dashOffset = (FLOAT)ConfigParser::ParseInt(modifier, 0);
 			if (dashOffset < 0.0f)
 			{
-				LogWarningF(this, L"Invalid miter limit: %s", modifier);
+				LogWarningF(this, L"Invalid stroke offset: %s", modifier);
 				dashOffset = 0.0f;
 			}
 
