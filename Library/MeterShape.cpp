@@ -343,6 +343,20 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 
 void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
 {
+	auto parseCap = [this](const WCHAR* cap) -> D2D1_CAP_STYLE
+	{
+		while (iswspace(*cap)) ++cap;  // remove any leading whitespace
+		if (_wcsnicmp(cap, L"FLAT", 4) == 0) return D2D1_CAP_STYLE_FLAT;
+		else if (_wcsnicmp(cap, L"SQUARE", 6) == 0) return D2D1_CAP_STYLE_SQUARE;
+		else if (_wcsnicmp(cap, L"ROUND", 5) == 0) return D2D1_CAP_STYLE_ROUND;
+		else if (_wcsnicmp(cap, L"TRIANGLE", 8) == 0) return D2D1_CAP_STYLE_TRIANGLE;
+		else
+		{
+			if (*cap) LogWarningF(this, L"Invalid cap style: %s", cap);
+			return D2D1_CAP_STYLE_FLAT;
+		}
+	};
+
 	auto& shape = m_Shapes.back();
 
 	for (const auto& option : args)
@@ -418,14 +432,62 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			continue;
 		}
-		else if (_wcsnicmp(modifier, L"STROKESTYLE", 11) == 0)
+		else if (_wcsnicmp(modifier, L"STROKESTARTCAP", 14) == 0)
 		{
-			modifier += 11;
-			shape->SetStrokeProperties(CreateStrokeProperties(modifier));
+			modifier += 14;
+			shape->SetStrokeStartCap(parseCap(modifier));
 		}
-		else if (_wcsnicmp(modifier, L"STROKECUSTOMDASHES", 18) == 0)
+		else if (_wcsnicmp(modifier, L"STROKEENDCAP", 12) == 0)
 		{
-			modifier += 18;
+			modifier += 12;
+			shape->SetStrokeEndCap(parseCap(modifier));
+		}
+		else if (_wcsnicmp(modifier, L"STROKEDASHCAP", 13) == 0)
+		{
+			modifier += 13;
+			shape->SetStrokeDashCap(parseCap(modifier));
+		}
+		else if (_wcsnicmp(modifier, L"STROKELINEJOIN", 14) == 0)
+		{
+			modifier += 14;
+			auto style = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
+			size_t size = style.size();
+
+			if (size > 0)
+			{
+				const WCHAR* option = style[0].c_str();
+				D2D1_LINE_JOIN join = D2D1_LINE_JOIN_MITER;
+				FLOAT limit = 10.0f;
+
+				if (_wcsicmp(option, L"MITER") == 0) join = D2D1_LINE_JOIN_MITER;
+				else if (_wcsicmp(option, L"BEVEL") == 0) join = D2D1_LINE_JOIN_BEVEL;
+				else if (_wcsicmp(option, L"ROUND") == 0) join = D2D1_LINE_JOIN_ROUND;
+				else if (_wcsicmp(option, L"MITERORBEVEL") == 0) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
+				else
+				{
+					LogWarningF(this, L"Invalid line join style: %s", option);
+				}
+
+				if (size > 1)
+				{
+					limit = (FLOAT)ConfigParser::ParseDouble(style[1].c_str(), 10.0);
+					if (limit < 0.0f)
+					{
+						LogWarningF(this, L"Miter limit must be positive");
+						limit = 10.0f;
+					}
+				}
+
+				shape->SetStrokeLineJoin(join, limit);
+			}
+			else
+			{
+				LogErrorF(this, L"StrokeLineJoin has too few parameters");
+			}
+		}
+		else if (_wcsnicmp(modifier, L"STROKEDASHES", 12) == 0)
+		{
+			modifier += 12;
 			std::vector<FLOAT> dashes;
 			auto definedDashes = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
 			for (const auto& dash : definedDashes)
@@ -434,7 +496,19 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				dashes.emplace_back(value);
 			}
 
-			shape->SetStrokeCustomDashes(dashes);
+			shape->SetStrokeDashes(dashes);
+		}
+		else if (_wcsnicmp(modifier, L"STROKEOFFSET", 12) == 0)
+		{
+			modifier += 12;
+			FLOAT dashOffset = (FLOAT)ConfigParser::ParseInt(modifier, 0);
+			if (dashOffset < 0.0f)
+			{
+				LogWarningF(this, L"Invalid miter limit: %s", modifier);
+				dashOffset = 0.0f;
+			}
+
+			shape->SetStrokeDashOffset(dashOffset);
 		}
 		// Add new modifiers here
 		//else if (_wcsnicmp(modifier, L"", ) == 0)
@@ -468,94 +542,4 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			continue;
 		}
 	}
-}
-
-D2D1_STROKE_STYLE_PROPERTIES1 MeterShape::CreateStrokeProperties(const WCHAR* modifier)
-{
-	auto parseCap = [this](const WCHAR* cap) -> D2D1_CAP_STYLE
-	{
-		if (_wcsicmp(cap, L"FLAT") == 0) return D2D1_CAP_STYLE_FLAT;
-		else if (_wcsicmp(cap, L"SQUARE") == 0) return D2D1_CAP_STYLE_SQUARE;
-		else if (_wcsicmp(cap, L"ROUND") == 0) return D2D1_CAP_STYLE_ROUND;
-		else if (_wcsicmp(cap, L"TRIANGLE") == 0) return D2D1_CAP_STYLE_TRIANGLE;
-		else
-		{
-			if (*cap) LogWarningF(this, L"Invalid cap style: %s", cap);
-			return D2D1_CAP_STYLE_FLAT;
-		}
-	};
-
-	auto properties = D2D1::StrokeStyleProperties1();
-
-	auto style = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
-	size_t size = style.size();
-	if (size > 0)
-	{
-		properties.startCap = parseCap(style[0].c_str());
-
-		if (size > 1) properties.endCap = parseCap(style[1].c_str());
-		if (size > 2) properties.dashCap = parseCap(style[2].c_str());
-		if (size > 3)
-		{
-			const WCHAR* join = style[3].c_str();
-			if (_wcsicmp(join, L"MITER") == 0) properties.lineJoin = D2D1_LINE_JOIN_MITER;
-			else if (_wcsicmp(join, L"BEVEL") == 0) properties.lineJoin = D2D1_LINE_JOIN_BEVEL;
-			else if (_wcsicmp(join, L"ROUND") == 0) properties.lineJoin = D2D1_LINE_JOIN_ROUND;
-			else if (_wcsicmp(join, L"MITERORBEVEL") == 0) properties.lineJoin = D2D1_LINE_JOIN_MITER_OR_BEVEL;
-			else
-			{
-				if (*join) LogWarningF(this, L"Invalid line join style: %s", join);
-				properties.lineJoin = D2D1_LINE_JOIN_MITER;
-			}
-		}
-		if (size > 4)
-		{
-			const WCHAR* limit = style[4].c_str();
-			FLOAT miterLimit = (FLOAT)ConfigParser::ParseDouble(limit, 0.0);
-			if (miterLimit < 0.0f)
-			{
-				if (*limit) LogWarningF(this, L"Invalid miter limit: %s", limit);
-				miterLimit = 0.0f;
-			}
-
-			properties.miterLimit = miterLimit;
-		}
-		if (size > 5)
-		{
-			const WCHAR* dash = style[5].c_str();
-			if (_wcsicmp(dash, L"SOLID") == 0) properties.dashStyle = D2D1_DASH_STYLE_SOLID;
-			else if (_wcsicmp(dash, L"DASH") == 0) properties.dashStyle = D2D1_DASH_STYLE_DASH;
-			else if (_wcsicmp(dash, L"DOT") == 0) properties.dashStyle = D2D1_DASH_STYLE_DOT;
-			else if (_wcsicmp(dash, L"DASHDOT") == 0) properties.dashStyle = D2D1_DASH_STYLE_DASH_DOT;
-			else if (_wcsicmp(dash, L"DASHDOTDOT") == 0) properties.dashStyle = D2D1_DASH_STYLE_DASH_DOT_DOT;
-			else if (_wcsicmp(dash, L"CUSTOM") == 0) properties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
-			else
-			{
-				if (*dash) LogWarningF(this, L"Invalid dash style: %s", dash);
-				properties.dashStyle = D2D1_DASH_STYLE_SOLID;
-			}
-		}
-		if (size > 6)
-		{
-			const WCHAR* offset = style[6].c_str();
-			FLOAT dashOffset = (FLOAT)ConfigParser::ParseInt(offset, 0);
-			if (dashOffset < 0.0f)
-			{
-				if (*offset) LogWarningF(this, L"Invalid miter limit: %s", offset);
-				dashOffset = 0.0f;
-			}
-
-			properties.dashOffset = dashOffset;
-		}
-	}
-	else
-	{
-		LogWarningF(this, L"StrokeStyle has too few parameters");
-	}
-
-	// Make sure the stroke width is exact, not altered by other
-	// transforms like Scale or Rotation
-	properties.transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED;
-
-	return properties;
 }

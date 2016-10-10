@@ -53,8 +53,12 @@ public:
 
 	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 
-	void SetStrokeProperties(D2D1_STROKE_STYLE_PROPERTIES1 properties) { m_StrokeProperties = properties; }
-	void SetStrokeCustomDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
+	void SetStrokeStartCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.startCap = cap; }
+	void SetStrokeEndCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.endCap = cap; }
+	void SetStrokeDashCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.dashCap = cap; }
+	void SetStrokeLineJoin(D2D1_LINE_JOIN join, FLOAT limit) { m_StrokeProperties.lineJoin = join;}
+	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
+	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
 
 protected:
 	void CloneModifiers(Shape* otherShape);

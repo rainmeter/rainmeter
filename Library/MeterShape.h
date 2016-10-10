@@ -38,7 +38,6 @@ private:
 	bool CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args);
 
 	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
-	D2D1_STROKE_STYLE_PROPERTIES1 CreateStrokeProperties(const WCHAR* modifier);
 
 	std::vector<Gfx::Shape*> m_Shapes;
 };

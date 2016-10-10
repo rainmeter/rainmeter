@@ -591,12 +591,12 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		{
 			Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> stroke;
 			UINT32 dashCount = (UINT32)shape.m_StrokeCustomDashes.size();
-			const FLOAT* dashes = shape.m_StrokeCustomDashes.empty() ? nullptr : &shape.m_StrokeCustomDashes[0];
+			const FLOAT* dashes = nullptr;
 
-			// Make sure that if a custom dash style is used that there are actually custom dashes
-			if (!dashes && shape.m_StrokeProperties.dashStyle == D2D1_DASH_STYLE_CUSTOM)
+			if (!shape.m_StrokeCustomDashes.empty())
 			{
-				shape.m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_SOLID;
+				shape.m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
+				dashes = &shape.m_StrokeCustomDashes[0];
 			}
 
 			hr = Canvas::c_D2DFactory->CreateStrokeStyle(shape.m_StrokeProperties,
