@@ -148,6 +148,8 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_StrokeColor = m_StrokeColor;
 	otherShape->m_StrokeWidth = m_StrokeWidth;
 	otherShape->m_Rotation = m_Rotation;
+	otherShape->m_StrokeProperties = m_StrokeProperties;
+	otherShape->m_StrokeCustomDashes = m_StrokeCustomDashes;
 }
 
 }  // namespace Gfx
