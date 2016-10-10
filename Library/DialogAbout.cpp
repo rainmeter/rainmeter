@@ -503,12 +503,22 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 		break;
 	}
 
+	// ListView controls do not display the tab (\t) character,
+	// so replace any tab characters with 4 spaces.
+	std::wstring msg = message;
+	size_t pos = 0;
+	while ((pos = msg.find(L'\t', pos)) != std::string::npos)
+	{
+		msg.replace(pos, 1, L"    ");
+		pos += 4;
+	}
+
 	GetWindowText(item, buffer, 32);
 	item = GetControl(Id_ItemsListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)source);
-	ListView_SetItemText(item, vitem.iItem, 3, (WCHAR*)message);
+	ListView_SetItemText(item, vitem.iItem, 3, (WCHAR*)msg.c_str());
 	if (!ListView_IsItemVisible(item, 0))
 	{
 		ListView_Scroll(item, 0, 16);
