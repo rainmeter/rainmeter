@@ -368,14 +368,12 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			modifier += 9;
 			auto color = ConfigParser::ParseColor(modifier);
 			shape->SetFillColor(color);
-			continue;
 		}
 		else if (_wcsnicmp(modifier, L"STROKECOLOR", 11) == 0)
 		{
 			modifier += 11;
 			auto color = ConfigParser::ParseColor(modifier);
 			shape->SetStrokeColor(color);
-			continue;
 		}
 		else if (_wcsnicmp(modifier, L"STROKEWIDTH", 11) == 0)
 		{
@@ -388,7 +386,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 
 			shape->SetStrokeWidth(width);
-			continue;
 		}
 		else if (_wcsnicmp(modifier, L"OFFSET", 6) == 0)
 		{
@@ -404,7 +401,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			{
 				LogErrorF(this, L"Offset has too few parameters");
 			}
-			continue;
 		}
 		else if (_wcsnicmp(modifier, L"ROTATE", 6) == 0)
 		{
@@ -430,7 +426,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			{
 				LogWarningF(this, L"Rotate has too few parameters");
 			}
-			continue;
 		}
 		else if (_wcsnicmp(modifier, L"STROKESTARTCAP", 14) == 0)
 		{
@@ -534,12 +529,10 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			{
 				LogErrorF(this, L"Extend cannot be used recursively");
 			}
-			continue;
 		}
 		else
 		{
 			LogErrorF(this, L"Invalid shape modifier: %s", modifier);
-			continue;
 		}
 	}
 }
