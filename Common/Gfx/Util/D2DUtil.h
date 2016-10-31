@@ -18,6 +18,8 @@ D2D1_COLOR_F ToColorF(const Gdiplus::Color& color);
 D2D1_RECT_F ToRectF(const Gdiplus::Rect& rect);
 D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect);
 
+D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point2);
+
 }  // namespace Util
 }  // namespace Gfx
 

@@ -38,9 +38,6 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
 
-	int newW = 0;
-	int newH = 0;
-
 	// Clear any shapes
 	Dispose();
 
@@ -69,9 +66,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			ParseModifiers(args, parser, section);
 		}
 
-		D2D1_RECT_F bounds = m_Shapes.back()->GetBounds();
-		if (newW < (int)bounds.right) newW = (int)bounds.right;
-		if (newH < (int)bounds.bottom) newH = (int)bounds.bottom;
+		m_Shapes.back()->ValidateTransforms();
 
 		// Check for Shape2 ... etc.
 		const std::wstring num = std::to_wstring(++i);
@@ -86,8 +81,24 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (!CreateCombinedShape(shape.first, args)) break;
 	}
 
-	if (!m_WDefined) m_W = newW;
-	if (!m_HDefined) m_H = newH;
+	// Adjust width/height if necessary
+	if (!m_WDefined || !m_HDefined)
+	{
+		int newW = 0;
+		int newH = 0;
+
+		for (const auto& shape : m_Shapes)
+		{
+			D2D1_RECT_F bounds = shape->GetBounds();
+			int shapeW = (int)bounds.right;
+			int shapeH = (int)bounds.bottom;
+			if (newW < shapeW) newW = shapeW;
+			if (newH < shapeH) newH = shapeH;
+		}
+
+		m_W = newW;
+		m_H = newH;
+	}
 }
 
 bool MeterShape::Update()
@@ -427,6 +438,62 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				LogWarningF(this, L"Rotate has too few parameters");
 			}
 		}
+		else if (_wcsnicmp(modifier, L"SCALE", 5) == 0)
+		{
+			modifier += 5;
+			auto scale = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
+			size_t size = scale.size();
+			if (size > 1)
+			{
+				FLOAT anchorX = 0.0f;
+				FLOAT anchorY = 0.0f;
+				bool anchorDefined = false;
+
+				FLOAT scaleX = (FLOAT)ConfigParser::ParseDouble(scale[0].c_str(), 1.0);
+				FLOAT scaleY = (FLOAT)ConfigParser::ParseDouble(scale[1].c_str(), 1.0);
+
+				if (size > 3)
+				{
+					anchorX = (FLOAT)ConfigParser::ParseInt(scale[2].c_str(), 0);
+					anchorY = (FLOAT)ConfigParser::ParseInt(scale[3].c_str(), 0);
+					anchorDefined = true;
+				}
+
+				shape->SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
+			}
+			else
+			{
+				LogWarningF(this, L"Scale has too few parameters");
+			}
+		}
+		else if (_wcsnicmp(modifier, L"SKEW", 4) == 0)
+		{
+			modifier += 4;
+			auto skew = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
+			size_t size = skew.size();
+			if (size > 1)
+			{
+				FLOAT anchorX = 0.0f;
+				FLOAT anchorY = 0.0f;
+				bool anchorDefined = false;
+
+				FLOAT skewX = (FLOAT)ConfigParser::ParseDouble(skew[0].c_str(), 1.0);
+				FLOAT skewY = (FLOAT)ConfigParser::ParseDouble(skew[1].c_str(), 1.0);
+
+				if (size > 3)
+				{
+					anchorX = (FLOAT)ConfigParser::ParseInt(skew[2].c_str(), 0);
+					anchorY = (FLOAT)ConfigParser::ParseInt(skew[3].c_str(), 0);
+					anchorDefined = true;
+				}
+
+				shape->SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
+			}
+			else
+			{
+				LogWarningF(this, L"Skew has too few parameters");
+			}
+		}
 		else if (_wcsnicmp(modifier, L"STROKESTARTCAP", 14) == 0)
 		{
 			modifier += 14;
@@ -504,6 +571,30 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 
 			shape->SetStrokeDashOffset(dashOffset);
+		}
+		else if (_wcsnicmp(modifier, L"TRANSFORMORDER", 14) == 0)
+		{
+			modifier += 14;
+			auto order = ConfigParser::Tokenize(modifier, L",");
+			if (order.size() > 0)
+			{
+				Gfx::TransformType type = Gfx::TransformType::Invalid;
+				for (const auto& definedType : order)
+				{
+					const WCHAR* t = definedType.c_str();
+					if (_wcsnicmp(t, L"ROTATE", 6) == 0) type = Gfx::TransformType::Rotate;
+					else if (_wcsnicmp(t, L"SCALE", 5) == 0) type = Gfx::TransformType::Scale;
+					else if (_wcsnicmp(t, L"SKEW", 4) == 0) type = Gfx::TransformType::Skew;
+					else if (_wcsnicmp(t, L"OFFSET", 6) == 0) type = Gfx::TransformType::Offset;
+
+					if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t);
+					else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"Transform type already used: %s", t);
+				}
+			}
+			else
+			{
+				LogErrorF(this, L"TransformOrder has too few parameters");
+			}
 		}
 		// Add new modifiers here
 		//else if (_wcsnicmp(modifier, L"", ) == 0)

@@ -26,5 +26,10 @@ D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
 	return D2D1::RectF(rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height);
 }
 
+D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point2)
+{
+	return D2D1::Point2F(point1.x + point2.x, point1.y + point2.y);
+}
+
 }  // namespace Util
 }  // namespace Gfx
