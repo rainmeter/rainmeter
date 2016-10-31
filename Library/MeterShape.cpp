@@ -484,30 +484,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 			shape->SetStrokeDashOffset(dashOffset);
 		}
-		else if (_wcsnicmp(modifier, L"TRANSFORMORDER", 14) == 0)
-		{
-			modifier += 14;
-			auto order = ConfigParser::Tokenize(modifier, L",");
-			if (order.size() > 0)
-			{
-				Gfx::TransformType type = Gfx::TransformType::Invalid;
-				for (const auto& definedType : order)
-				{
-					const WCHAR* t = definedType.c_str();
-					if (_wcsnicmp(t, L"ROTATE", 6) == 0) type = Gfx::TransformType::Rotate;
-					else if (_wcsnicmp(t, L"SCALE", 5) == 0) type = Gfx::TransformType::Scale;
-					else if (_wcsnicmp(t, L"SKEW", 4) == 0) type = Gfx::TransformType::Skew;
-					else if (_wcsnicmp(t, L"OFFSET", 6) == 0) type = Gfx::TransformType::Offset;
-
-					if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t);
-					else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"Transform type already used: %s", t);
-				}
-			}
-			else
-			{
-				LogErrorF(this, L"TransformOrder has too few parameters");
-			}
-		}
 		// Add new modifiers here
 		//else if (_wcsnicmp(modifier, L"", ) == 0)
 		//{
@@ -646,6 +622,32 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, const WCHAR* transfor
 		else
 		{
 			LogWarningF(this, L"Skew has too few parameters");
+		}
+
+		return true;
+	}
+	else if (_wcsnicmp(transform, L"TRANSFORMORDER", 14) == 0)
+	{
+		transform += 14;
+		auto order = ConfigParser::Tokenize(transform, L",");
+		if (order.size() > 0)
+		{
+			Gfx::TransformType type = Gfx::TransformType::Invalid;
+			for (const auto& definedType : order)
+			{
+				const WCHAR* t = definedType.c_str();
+				if (_wcsnicmp(t, L"ROTATE", 6) == 0) type = Gfx::TransformType::Rotate;
+				else if (_wcsnicmp(t, L"SCALE", 5) == 0) type = Gfx::TransformType::Scale;
+				else if (_wcsnicmp(t, L"SKEW", 4) == 0) type = Gfx::TransformType::Skew;
+				else if (_wcsnicmp(t, L"OFFSET", 6) == 0) type = Gfx::TransformType::Offset;
+
+				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t);
+				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"Transform type already used: %s", t);
+			}
+		}
+		else
+		{
+			LogErrorF(this, L"TransformOrder has too few parameters");
 		}
 
 		return true;
