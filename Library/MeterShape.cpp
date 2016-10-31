@@ -560,9 +560,9 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 			shape->SetStrokeDashes(dashes);
 		}
-		else if (_wcsnicmp(modifier, L"STROKEDASHOFFSET", 12) == 0)
+		else if (_wcsnicmp(modifier, L"STROKEDASHOFFSET", 16) == 0)
 		{
-			modifier += 12;
+			modifier += 16;
 			FLOAT dashOffset = (FLOAT)ConfigParser::ParseInt(modifier, 0);
 			if (dashOffset < 0.0f)
 			{
