@@ -319,8 +319,16 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 		}
 		else
 		{
-			showError(L"definition contains invalid combine: ", combined);
-			return false;
+			// Combined shapes can have their own transforms
+			if (ParseTransformModifers(m_Shapes[shapeId], combined))
+			{
+				continue;
+			}
+			else
+			{
+				showError(L"definition contains invalid combine: ", combined);
+				return false;
+			}
 		}
 
 		combined += 5;  // Remove 'Shape'
@@ -397,102 +405,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 
 			shape->SetStrokeWidth(width);
-		}
-		else if (_wcsnicmp(modifier, L"OFFSET", 6) == 0)
-		{
-			modifier += 6;
-			auto offset = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
-			if (offset.size() >= 2)
-			{
-				int x = ConfigParser::ParseInt(offset[0].c_str(), 0);
-				int y = ConfigParser::ParseInt(offset[1].c_str(), 0);
-				shape->SetOffset(x, y);
-			}
-			else
-			{
-				LogErrorF(this, L"Offset has too few parameters");
-			}
-		}
-		else if (_wcsnicmp(modifier, L"ROTATE", 6) == 0)
-		{
-			modifier += 6;
-			auto rotate = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
-			size_t size = rotate.size();
-			if (size > 0)
-			{
-				bool anchorDefined = false;
-				FLOAT anchorX = 0.0f;
-				FLOAT anchorY = 0.0f;
-				FLOAT rotation = (FLOAT)ConfigParser::ParseInt(rotate[0].c_str(), 0);
-				if (size > 2)
-				{
-					anchorX = (FLOAT)ConfigParser::ParseInt(rotate[1].c_str(), 0);
-					anchorY = (FLOAT)ConfigParser::ParseInt(rotate[2].c_str(), 0);
-					anchorDefined = true;
-				}
-
-				shape->SetRotation(rotation, anchorX, anchorY, anchorDefined);
-			}
-			else
-			{
-				LogWarningF(this, L"Rotate has too few parameters");
-			}
-		}
-		else if (_wcsnicmp(modifier, L"SCALE", 5) == 0)
-		{
-			modifier += 5;
-			auto scale = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
-			size_t size = scale.size();
-			if (size > 1)
-			{
-				FLOAT anchorX = 0.0f;
-				FLOAT anchorY = 0.0f;
-				bool anchorDefined = false;
-
-				FLOAT scaleX = (FLOAT)ConfigParser::ParseDouble(scale[0].c_str(), 1.0);
-				FLOAT scaleY = (FLOAT)ConfigParser::ParseDouble(scale[1].c_str(), 1.0);
-
-				if (size > 3)
-				{
-					anchorX = (FLOAT)ConfigParser::ParseInt(scale[2].c_str(), 0);
-					anchorY = (FLOAT)ConfigParser::ParseInt(scale[3].c_str(), 0);
-					anchorDefined = true;
-				}
-
-				shape->SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
-			}
-			else
-			{
-				LogWarningF(this, L"Scale has too few parameters");
-			}
-		}
-		else if (_wcsnicmp(modifier, L"SKEW", 4) == 0)
-		{
-			modifier += 4;
-			auto skew = ConfigParser::Tokenize2(modifier, L',', PairedPunctuation::Parentheses);
-			size_t size = skew.size();
-			if (size > 1)
-			{
-				FLOAT anchorX = 0.0f;
-				FLOAT anchorY = 0.0f;
-				bool anchorDefined = false;
-
-				FLOAT skewX = (FLOAT)ConfigParser::ParseDouble(skew[0].c_str(), 1.0);
-				FLOAT skewY = (FLOAT)ConfigParser::ParseDouble(skew[1].c_str(), 1.0);
-
-				if (size > 3)
-				{
-					anchorX = (FLOAT)ConfigParser::ParseInt(skew[2].c_str(), 0);
-					anchorY = (FLOAT)ConfigParser::ParseInt(skew[3].c_str(), 0);
-					anchorDefined = true;
-				}
-
-				shape->SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
-			}
-			else
-			{
-				LogWarningF(this, L"Skew has too few parameters");
-			}
 		}
 		else if (_wcsnicmp(modifier, L"STROKESTARTCAP", 14) == 0)
 		{
@@ -623,7 +535,121 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		}
 		else
 		{
-			LogErrorF(this, L"Invalid shape modifier: %s", modifier);
+			// Parse any transform modifiers
+			if (!ParseTransformModifers(shape, modifier))
+			{
+				LogErrorF(this, L"Invalid shape modifier: %s", modifier);
+			}
 		}
 	}
+}
+
+bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, const WCHAR* transform)
+{
+	if (_wcsnicmp(transform, L"OFFSET", 6) == 0)
+	{
+		transform += 6;
+		auto offset = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		if (offset.size() >= 2)
+		{
+			int x = ConfigParser::ParseInt(offset[0].c_str(), 0);
+			int y = ConfigParser::ParseInt(offset[1].c_str(), 0);
+			shape->SetOffset(x, y);
+		}
+		else
+		{
+			LogErrorF(this, L"Offset has too few parameters");
+		}
+
+		return true;
+	}
+	else if (_wcsnicmp(transform, L"ROTATE", 6) == 0)
+	{
+		transform += 6;
+		auto rotate = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		size_t size = rotate.size();
+		if (size > 0)
+		{
+			bool anchorDefined = false;
+			FLOAT anchorX = 0.0f;
+			FLOAT anchorY = 0.0f;
+			FLOAT rotation = (FLOAT)ConfigParser::ParseInt(rotate[0].c_str(), 0);
+			if (size > 2)
+			{
+				anchorX = (FLOAT)ConfigParser::ParseInt(rotate[1].c_str(), 0);
+				anchorY = (FLOAT)ConfigParser::ParseInt(rotate[2].c_str(), 0);
+				anchorDefined = true;
+			}
+
+			shape->SetRotation(rotation, anchorX, anchorY, anchorDefined);
+		}
+		else
+		{
+			LogWarningF(this, L"Rotate has too few parameters");
+		}
+
+		return true;
+	}
+	else if (_wcsnicmp(transform, L"SCALE", 5) == 0)
+	{
+		transform += 5;
+		auto scale = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		size_t size = scale.size();
+		if (size > 1)
+		{
+			FLOAT anchorX = 0.0f;
+			FLOAT anchorY = 0.0f;
+			bool anchorDefined = false;
+
+			FLOAT scaleX = (FLOAT)ConfigParser::ParseDouble(scale[0].c_str(), 1.0);
+			FLOAT scaleY = (FLOAT)ConfigParser::ParseDouble(scale[1].c_str(), 1.0);
+
+			if (size > 3)
+			{
+				anchorX = (FLOAT)ConfigParser::ParseInt(scale[2].c_str(), 0);
+				anchorY = (FLOAT)ConfigParser::ParseInt(scale[3].c_str(), 0);
+				anchorDefined = true;
+			}
+
+			shape->SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
+		}
+		else
+		{
+			LogWarningF(this, L"Scale has too few parameters");
+		}
+
+		return true;
+	}
+	else if (_wcsnicmp(transform, L"SKEW", 4) == 0)
+	{
+		transform += 4;
+		auto skew = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		size_t size = skew.size();
+		if (size > 1)
+		{
+			FLOAT anchorX = 0.0f;
+			FLOAT anchorY = 0.0f;
+			bool anchorDefined = false;
+
+			FLOAT skewX = (FLOAT)ConfigParser::ParseDouble(skew[0].c_str(), 1.0);
+			FLOAT skewY = (FLOAT)ConfigParser::ParseDouble(skew[1].c_str(), 1.0);
+
+			if (size > 3)
+			{
+				anchorX = (FLOAT)ConfigParser::ParseInt(skew[2].c_str(), 0);
+				anchorY = (FLOAT)ConfigParser::ParseInt(skew[3].c_str(), 0);
+				anchorDefined = true;
+			}
+
+			shape->SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
+		}
+		else
+		{
+			LogWarningF(this, L"Skew has too few parameters");
+		}
+
+		return true;
+	}
+
+	return false;
 }
