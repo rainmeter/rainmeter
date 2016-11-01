@@ -67,6 +67,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 
 		m_Shapes.back()->ValidateTransforms();
+		m_Shapes.back()->CreateStrokeStyle();
 
 		// Check for Shape2 ... etc.
 		const std::wstring num = std::to_wstring(++i);

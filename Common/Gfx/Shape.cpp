@@ -98,7 +98,11 @@ D2D1_RECT_F Shape::GetBounds()
 	D2D1_RECT_F bounds;
 	if (m_Shape)
 	{
-		HRESULT result = m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, GetShapeMatrix(), &bounds);
+		HRESULT result = m_Shape->GetWidenedBounds(
+			m_StrokeWidth,
+			m_StrokeStyle.Get(),
+			GetShapeMatrix(),
+			&bounds);
 		if (SUCCEEDED(result)) return bounds;
 	}
 
@@ -115,7 +119,12 @@ bool Shape::ContainsPoint(D2D1_POINT_2F point)
 	if (m_Shape)
 	{
 		BOOL contains = FALSE;
-		HRESULT result = m_Shape->StrokeContainsPoint(point, m_StrokeWidth, nullptr, GetShapeMatrix(), &contains);
+		HRESULT result = m_Shape->StrokeContainsPoint(
+			point,
+			m_StrokeWidth,
+			m_StrokeStyle.Get(),
+			GetShapeMatrix(),
+			&contains);
 		if (SUCCEEDED(result) && contains) return true;
 
 		result = m_Shape->FillContainsPoint(point, GetShapeMatrix(), &contains);
@@ -209,6 +218,26 @@ void Shape::SetSkew(FLOAT skewX, FLOAT skewY, FLOAT anchorX, FLOAT anchorY, bool
 	m_SkewAnchorDefined = anchorDefined;
 }
 
+void Shape::CreateStrokeStyle()
+{
+	const FLOAT* dashes = nullptr;
+	if (!m_StrokeCustomDashes.empty())
+	{
+		m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
+		dashes = m_StrokeCustomDashes.data();
+	}
+
+	UINT32 dashCount = (UINT32)m_StrokeCustomDashes.size();
+	HRESULT hr = Canvas::c_D2DFactory->CreateStrokeStyle(
+		m_StrokeProperties,
+		dashes,
+		dashCount,
+		m_StrokeStyle.ReleaseAndGetAddressOf());
+
+	// If failed, make sure stroke is null
+	if (FAILED(hr)) m_StrokeStyle = nullptr;
+}
+
 bool Shape::AddToTransformOrder(TransformType type)
 {
 	// Don't add if 'type' is a duplicate
@@ -249,6 +278,8 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_StrokeProperties = m_StrokeProperties;
 	otherShape->m_StrokeCustomDashes = m_StrokeCustomDashes;
 	otherShape->m_TransformOrder = m_TransformOrder;
+
+	otherShape->CreateStrokeStyle();
 }
 
 }  // namespace Gfx

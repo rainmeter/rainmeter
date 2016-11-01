@@ -72,6 +72,7 @@ public:
 	void SetStrokeLineJoin(D2D1_LINE_JOIN join, FLOAT limit) { m_StrokeProperties.lineJoin = join; m_StrokeProperties.miterLimit = limit; }
 	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
 	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
+	void CreateStrokeStyle();
 
 	bool AddToTransformOrder(TransformType type);
 	void ValidateTransforms();
@@ -109,6 +110,7 @@ private:
 	D2D1_COLOR_F m_StrokeColor;
 	std::vector<FLOAT> m_StrokeCustomDashes;
 	D2D1_STROKE_STYLE_PROPERTIES1 m_StrokeProperties;
+	Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> m_StrokeStyle;
 };
 
 } // Gfx
