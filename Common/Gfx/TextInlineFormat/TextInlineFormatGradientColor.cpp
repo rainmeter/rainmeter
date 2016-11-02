@@ -6,73 +6,8 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "Gfx/Util/D2DUtil.h"
 #include "TextInlineFormatGradientColor.h"
-
-namespace {
-
-static const double M_PI = 3.14159265358979323846;
-
-static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const float top, const float width, const float height)
-{
-	double theta1 = theta * (M_PI / 180.0f);
-
-	while (theta1 < -M_PI) theta1 += (2 * M_PI);
-	while (theta1 > M_PI) theta1 -= (2 * M_PI);
-
-	const float recttan = atan2f(top + height, left + width);
-	const float thetatan = (float)tan(theta1);
-
-	enum Region
-	{
-		One,        // 315 - 45
-		Two,        // 45  - 135
-		Three,      // 135 - 225
-		Four        // 225 - 315
-	} region;
-
-	if (theta1 > -recttan && theta1 <= recttan)
-	{
-		region = One;
-	}
-	else if (theta1 > recttan && theta1 <= (M_PI - recttan))
-	{
-		region = Two;
-	}
-	else if (theta1 > (M_PI - recttan) || theta1 <= -(M_PI - recttan))
-	{
-		region = Three;
-	}
-	else
-	{
-		region = Four;
-	}
-
-	float xfactor = 1.0f;
-	float yfactor = -1.0f;
-	switch (region)
-	{
-	case One: yfactor = -yfactor; break;
-	case Two: yfactor = -yfactor; break;
-	case Three: xfactor = -xfactor; break;
-	case Four: xfactor = -xfactor; break;
-	}
-
-	D2D1_POINT_2F point = { left + (width / 2.0f), top + (height / 2.0f) };
-	if (region == One || region == Three)
-	{
-		point.x += xfactor * (width / 2.0f);
-		point.y += yfactor * (width / 2.0f) * thetatan;
-	}
-	else
-	{
-		point.x += xfactor * (height / (2.0f * thetatan));
-		point.y += yfactor * (height / 2.0f);
-	}
-
-	return point;
-}
-
-}  // namespace
 
 namespace Gfx {
 
@@ -123,8 +58,8 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 
 			if (FAILED(hr)) continue;
 
-			D2D1_POINT_2F start = FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
-			D2D1_POINT_2F end = FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F start = Util::FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F end = Util::FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
 
 			DWRITE_TEXT_RANGE innerRange = { hit.textPosition, hit.length };
 

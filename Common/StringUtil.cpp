@@ -134,4 +134,20 @@ void EncodeUrl(std::wstring& str)
 	}
 }
 
+/*
+** Case insensitive comparison of strings. If equal, strip str2 from str1 and any leading whitespace.
+*/
+bool CaseInsensitiveCompareN(std::wstring& str1, const std::wstring& str2)
+{
+	size_t pos = str2.length();
+	if (_wcsnicmp(str1.c_str(), str2.c_str(), pos) == 0)
+	{
+		str1 = str1.substr(pos);  // remove str2 from str1
+		str1.erase(0, str1.find_first_not_of(L" \t\r\n"));  // remove any leading whitespace
+		return true;
+	}
+
+	return false;
+}
+
 }  // namespace StringUtil

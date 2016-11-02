@@ -36,6 +36,15 @@ enum class TransformType : BYTE
 	MAX  // number of transforms
 };
 
+enum class BrushType : BYTE
+{
+	None = 0,
+	Solid,
+	LinearGradient,
+	RadialGradient,
+	//Image
+};
+
 class __declspec(novtable) Shape
 {
 public:
@@ -58,7 +67,6 @@ public:
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
 	void SetOffset(int x, int y) { m_Offset = D2D1::SizeF((FLOAT)x, (FLOAT)y); }
-	void SetFillColor(Gdiplus::Color color) { m_FillColor = Util::ToColorF(color); }
 	void SetStrokeColor(Gdiplus::Color color) { m_StrokeColor = Util::ToColorF(color); }
 	void SetStrokeWidth(int strokeWidth) { m_StrokeWidth = (FLOAT)strokeWidth; }
 
@@ -73,6 +81,11 @@ public:
 	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
 	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
 	void CreateStrokeStyle();
+
+	void SetFill(Gdiplus::Color color);
+	void SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	void SetFill(D2D1_POINT_2F offset, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
 
 	bool AddToTransformOrder(TransformType type);
 	void ValidateTransforms();
@@ -92,7 +105,6 @@ private:
 
 	// Modifiers
 	D2D1_SIZE_F m_Offset;
-	D2D1_COLOR_F m_FillColor;
 
 	FLOAT m_Rotation;
 	D2D1_POINT_2F m_RotationAnchor;
@@ -111,6 +123,18 @@ private:
 	std::vector<FLOAT> m_StrokeCustomDashes;
 	D2D1_STROKE_STYLE_PROPERTIES1 m_StrokeProperties;
 	Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> m_StrokeStyle;
+
+	// Brushes are created at drawing time and cached for subsequent drawing
+	// operations. They are recreated only when an option has changed.
+	D2D1_COLOR_F m_FillColor;
+	UINT32 m_LinearGradientAngle;
+	D2D1_POINT_2F m_RadialGradientOffset;
+	std::vector<D2D1_GRADIENT_STOP> m_GradientStops;
+	bool m_GradientAltGamma;
+
+	BrushType m_BrushType;
+	Microsoft::WRL::ComPtr<ID2D1Brush> m_Brush;
+	bool m_HasBrushChanged;
 };
 
 } // Gfx

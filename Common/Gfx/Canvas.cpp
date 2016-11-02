@@ -577,21 +577,21 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		worldTransform *
 		D2D1::Matrix3x2F::Translation((FLOAT)xPos, (FLOAT)yPos));
 
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_FillColor, solidBrush.GetAddressOf());
+	if (shape.m_FillColor.a > 0.0f)
+	{
+		auto brush = shape.GetFillBrush(m_Target.Get());
+		m_Target->FillGeometry(shape.m_Shape.Get(), brush.Get());
+	}
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> brush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_StrokeColor, brush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		if (shape.m_FillColor.a > 0.0f)
-		{
-			m_Target->FillGeometry(shape.m_Shape.Get(), solidBrush.Get());
-		}
-
-		solidBrush->SetColor(shape.m_StrokeColor);
 		if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
 		{
 			m_Target->DrawGeometry(
 				shape.m_Shape.Get(),
-				solidBrush.Get(),
+				brush.Get(),
 				shape.m_StrokeWidth,
 				shape.m_StrokeStyle.Get());
 		}

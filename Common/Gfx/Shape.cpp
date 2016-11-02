@@ -17,7 +17,6 @@ Shape::Shape(ShapeType type) :
 	m_TransformOrder(),
 	m_IsCombined(false),
 	m_Offset(D2D1::SizeF(0.0f, 0.0f)),
-	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
 	m_Rotation(0.0f),
 	m_RotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
 	m_RotationAnchorDefined(false),
@@ -30,7 +29,13 @@ Shape::Shape(ShapeType type) :
 	m_StrokeWidth(1.0f),
 	m_StrokeColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeCustomDashes(),
-	m_StrokeProperties(D2D1::StrokeStyleProperties1())
+	m_StrokeProperties(D2D1::StrokeStyleProperties1()),
+	m_BrushType(BrushType::Solid),
+	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
+	m_LinearGradientAngle(0),
+	m_RadialGradientOffset(D2D1::Point2F(0.0f, 0.0f)),
+	m_GradientAltGamma(false),
+	m_HasBrushChanged(true)
 {
 	// Make sure the stroke width is exact, not altered by other
 	// transforms like Scale or Rotation
@@ -238,6 +243,108 @@ void Shape::CreateStrokeStyle()
 	if (FAILED(hr)) m_StrokeStyle = nullptr;
 }
 
+void Shape::SetFill(Gdiplus::Color color)
+{
+	m_BrushType = BrushType::Solid;
+	m_FillColor = Util::ToColorF(color);
+	m_HasBrushChanged = true;
+}
+
+void Shape::SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
+{
+	m_BrushType = BrushType::LinearGradient;
+	m_LinearGradientAngle = angle;
+	m_GradientStops = stops;
+	m_GradientAltGamma = altGamma;
+	m_HasBrushChanged = true;
+}
+
+void Shape::SetFill(D2D1_POINT_2F point, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
+{
+	m_BrushType = BrushType::RadialGradient;
+	m_RadialGradientOffset = point;
+	m_GradientStops = stops;
+	m_GradientAltGamma = altGamma;
+	m_HasBrushChanged = true;
+}
+
+Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target)
+{
+	// If the brush hasn't changed, return current brush
+	if (!m_HasBrushChanged) return m_Brush;
+
+	HRESULT hr = E_FAIL;
+	Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> collection;
+
+	if (m_BrushType == BrushType::LinearGradient ||
+		m_BrushType == BrushType::RadialGradient)
+	{
+		hr = target->CreateGradientStopCollection(
+			&m_GradientStops[0],
+			(UINT32)m_GradientStops.size(),
+			m_GradientAltGamma ? D2D1_GAMMA_1_0 : D2D1_GAMMA_2_2,
+			D2D1_EXTEND_MODE_CLAMP,
+			collection.GetAddressOf());
+
+		if (FAILED(hr)) return nullptr;
+	}
+
+	switch (m_BrushType)
+	{
+	case BrushType::Solid:
+		{
+			Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solid;
+			hr = target->CreateSolidColorBrush(m_FillColor, solid.GetAddressOf());
+			if (FAILED(hr)) return nullptr;
+			solid.CopyTo(m_Brush.GetAddressOf());
+		}
+		break;
+
+	case BrushType::LinearGradient:
+		{
+			auto bounds = GetBounds();
+			D2D1_POINT_2F start = Util::FindEdgePoint(m_LinearGradientAngle,
+				bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+			D2D1_POINT_2F end = Util::FindEdgePoint(m_LinearGradientAngle + 180,
+				bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+
+			Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
+			hr = target->CreateLinearGradientBrush(
+				D2D1::LinearGradientBrushProperties(start, end),
+				collection.Get(),
+				linear.GetAddressOf());
+			if (FAILED(hr)) return nullptr;
+			linear.CopyTo(m_Brush.GetAddressOf());
+		}
+		break;
+
+	case BrushType::RadialGradient:
+		{
+			auto bounds = GetBounds();
+			D2D1_POINT_2F center = D2D1::Point2F(((bounds.left + bounds.right) / 2.0f), ((bounds.top + bounds.bottom) / 2.0f));
+
+			Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radial;
+			hr = target->CreateRadialGradientBrush(
+				D2D1::RadialGradientBrushProperties(
+					center,
+					m_RadialGradientOffset,
+					(bounds.right - bounds.left) / 2.0f,
+					(bounds.bottom - bounds.top) / 2.0f),
+				collection.Get(),
+				radial.GetAddressOf());
+			if (FAILED(hr)) return nullptr;
+			radial.CopyTo(m_Brush.GetAddressOf());
+		}
+		break;
+
+	default:
+		return nullptr;
+	}
+
+	m_HasBrushChanged = false;
+	return m_Brush;
+}
+
 bool Shape::AddToTransformOrder(TransformType type)
 {
 	// Don't add if 'type' is a duplicate
@@ -263,7 +370,6 @@ void Shape::ValidateTransforms()
 void Shape::CloneModifiers(Shape* otherShape)
 {
 	otherShape->m_Offset = m_Offset;
-	otherShape->m_FillColor = m_FillColor;
 	otherShape->m_StrokeColor = m_StrokeColor;
 	otherShape->m_StrokeWidth = m_StrokeWidth;
 	otherShape->m_Rotation = m_Rotation;
@@ -280,6 +386,16 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_TransformOrder = m_TransformOrder;
 
 	otherShape->CreateStrokeStyle();
+
+	otherShape->m_BrushType = m_BrushType;
+	otherShape->m_FillColor = m_FillColor;
+	otherShape->m_LinearGradientAngle = m_LinearGradientAngle;
+	otherShape->m_RadialGradientOffset = m_RadialGradientOffset;
+	otherShape->m_GradientStops = m_GradientStops;
+	otherShape->m_GradientAltGamma = m_GradientAltGamma;
+	
+	// Re-create brush on next draw
+	otherShape->m_HasBrushChanged = true;
 }
 
 }  // namespace Gfx
