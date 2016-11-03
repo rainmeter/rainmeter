@@ -91,6 +91,8 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		for (const auto& shape : m_Shapes)
 		{
+			if (shape->IsCombined()) continue;
+
 			D2D1_RECT_F bounds = shape->GetBounds();
 			int shapeW = (int)bounds.right;
 			int shapeH = (int)bounds.bottom;
