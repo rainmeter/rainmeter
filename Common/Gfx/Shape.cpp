@@ -258,10 +258,12 @@ void Shape::SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool al
 	m_HasBrushChanged = true;
 }
 
-void Shape::SetFill(D2D1_POINT_2F point, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
+void Shape::SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
 	m_BrushType = BrushType::RadialGradient;
-	m_RadialGradientOffset = point;
+	m_RadialGradientOffset = offset;
+	m_RadialGradientCenter = center;
+	m_RadialGradientRadius = radius;
 	m_GradientStops = stops;
 	m_GradientAltGamma = altGamma;
 	m_HasBrushChanged = true;
@@ -319,16 +321,31 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target
 
 	case BrushType::RadialGradient:
 		{
+			auto swapIfNotDefined = [](D2D1_POINT_2F& pt1, const D2D1_POINT_2F pt2) -> void
+			{
+				if (pt2.x != FLT_MAX) pt1.x = pt2.x;
+				if (pt2.y != FLT_MAX) pt1.y = pt2.y;
+			};
+
 			auto bounds = GetBounds(false);
+			D2D1_POINT_2F offset = D2D1::Point2F();
 			D2D1_POINT_2F center = D2D1::Point2F(((bounds.left + bounds.right) / 2.0f), ((bounds.top + bounds.bottom) / 2.0f));
+			D2D1_POINT_2F radius = D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
+
+			// Offset from actual center of shape
+			center = Util::AddPoint2F(center, m_RadialGradientCenter);
+
+			// Check if offset and radii are defined
+			swapIfNotDefined(offset, m_RadialGradientOffset);
+			swapIfNotDefined(radius, m_RadialGradientRadius);
 
 			Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radial;
 			hr = target->CreateRadialGradientBrush(
 				D2D1::RadialGradientBrushProperties(
 					center,
-					m_RadialGradientOffset,
-					(bounds.right - bounds.left) / 2.0f,
-					(bounds.bottom - bounds.top) / 2.0f),
+					offset,
+					radius.x,
+					radius.y),
 				collection.Get(),
 				radial.GetAddressOf());
 			if (FAILED(hr)) return nullptr;

@@ -84,7 +84,7 @@ public:
 
 	void SetFill(Gdiplus::Color color);
 	void SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
-	void SetFill(D2D1_POINT_2F offset, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	void SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
 
 	bool AddToTransformOrder(TransformType type);
@@ -129,6 +129,8 @@ private:
 	D2D1_COLOR_F m_FillColor;
 	UINT32 m_LinearGradientAngle;
 	D2D1_POINT_2F m_RadialGradientOffset;
+	D2D1_POINT_2F m_RadialGradientCenter;
+	D2D1_POINT_2F m_RadialGradientRadius;
 	std::vector<D2D1_GRADIENT_STOP> m_GradientStops;
 	bool m_GradientAltGamma;
 

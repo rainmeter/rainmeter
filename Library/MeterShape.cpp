@@ -685,12 +685,36 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		{
 			auto radial = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
 			size_t size = radial.size();
+
 			if (size > 1)
 			{
-				FLOAT offsetX = (FLOAT)ConfigParser::ParseInt(radial[0].c_str(), 0);
-				FLOAT offsetY = (FLOAT)ConfigParser::ParseInt(radial[1].c_str(), 0);
+				FLOAT centerX = (FLOAT)ConfigParser::ParseInt(radial[0].c_str(), 0);
+				FLOAT centerY = (FLOAT)ConfigParser::ParseInt(radial[1].c_str(), 0);
+				FLOAT offsetX = FLT_MAX;
+				FLOAT offsetY = FLT_MAX;
+				FLOAT radiusX = FLT_MAX;
+				FLOAT radiusY = FLT_MAX;
+
+				if (size > 3)
+				{
+					offsetX = (FLOAT)ConfigParser::ParseInt(radial[2].c_str(), 0);
+					offsetY = (FLOAT)ConfigParser::ParseInt(radial[3].c_str(), 0);
+				}
+
+				if (size > 5)
+				{
+					radiusX = (FLOAT)ConfigParser::ParseInt(radial[4].c_str(), 0);
+					radiusY = (FLOAT)ConfigParser::ParseInt(radial[5].c_str(), 0);
+				}
+
 				parseGradientStops();
-				shape->SetFill(D2D1::Point2F(offsetX, offsetY), stops, altGamma);
+				shape->SetFill(
+					D2D1::Point2F(offsetX, offsetY),
+					D2D1::Point2F(centerX, centerY),
+					D2D1::Point2F(radiusX, radiusY),
+					stops,
+					altGamma);
+
 				return true;
 			}
 		}
