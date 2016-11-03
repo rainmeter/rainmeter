@@ -58,7 +58,7 @@ public:
 	virtual Shape* Clone() = 0;
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
-	D2D1_RECT_F GetBounds();
+	D2D1_RECT_F GetBounds(bool useMatrix = true);
 	bool IsShapeDefined();
 	bool ContainsPoint(D2D1_POINT_2F point);
 

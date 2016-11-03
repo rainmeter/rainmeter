@@ -98,20 +98,19 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	return matrix;
 }
 
-D2D1_RECT_F Shape::GetBounds()
+D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 {
 	D2D1_RECT_F bounds;
-	if (m_Shape)
-	{
-		HRESULT result = m_Shape->GetWidenedBounds(
-			m_StrokeWidth,
-			m_StrokeStyle.Get(),
-			GetShapeMatrix(),
-			&bounds);
-		if (SUCCEEDED(result)) return bounds;
-	}
+	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
 
-	return D2D1::RectF();
+	HRESULT result = m_Shape->GetWidenedBounds(
+		m_StrokeWidth,
+		m_StrokeStyle.Get(),
+		matrix,
+		&bounds);
+	if (FAILED(result)) return D2D1::RectF();
+
+	return bounds;
 }
 
 bool Shape::IsShapeDefined()
@@ -302,7 +301,7 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target
 
 	case BrushType::LinearGradient:
 		{
-			auto bounds = GetBounds();
+			auto bounds = GetBounds(false);
 			D2D1_POINT_2F start = Util::FindEdgePoint(m_LinearGradientAngle,
 				bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
 			D2D1_POINT_2F end = Util::FindEdgePoint(m_LinearGradientAngle + 180,
@@ -320,7 +319,7 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target
 
 	case BrushType::RadialGradient:
 		{
-			auto bounds = GetBounds();
+			auto bounds = GetBounds(false);
 			D2D1_POINT_2F center = D2D1::Point2F(((bounds.left + bounds.right) / 2.0f), ((bounds.top + bounds.bottom) / 2.0f));
 
 			Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radial;
