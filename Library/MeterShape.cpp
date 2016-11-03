@@ -351,7 +351,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 	{
 		if (StringUtil::CaseInsensitiveCompareN(option, L"FILLTYPE"))
 		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"SOLID"))
+			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
 				shape->SetFill(color);
