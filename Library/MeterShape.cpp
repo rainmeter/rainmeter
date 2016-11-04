@@ -392,7 +392,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				// Log Error
+				LogErrorF(this, L"Invalid fill parameters: %s", option.c_str());
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
@@ -520,7 +520,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				// Error
+				LogErrorF(this, L"Invalid stroke parameters: %s", option.c_str());
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXTEND"))
