@@ -109,16 +109,7 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	return matrix;
 }
 
-D2D1_RECT_F Shape::GetBounds()
-{
-	D2D1_RECT_F bounds;
-	HRESULT hr = m_Shape->GetBounds(GetShapeMatrix(), &bounds);
-	if (FAILED(hr)) return D2D1::RectF();
-
-	return bounds;
-}
-
-D2D1_RECT_F Shape::GetWideBounds(bool useMatrix)
+D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 {
 	D2D1_RECT_F bounds;
 	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
@@ -416,7 +407,7 @@ void Shape::CreateSolidBrush(ID2D1RenderTarget* target, Microsoft::WRL::ComPtr<I
 void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
 	Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const UINT32 angle)
 {
-	auto bounds = GetWideBounds(false);
+	auto bounds = GetBounds(false);
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
 		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180,
@@ -440,7 +431,7 @@ void Shape::CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 		if (pt2.y != FLT_MAX) pt1.y = pt2.y;
 	};
 
-	auto bounds = GetWideBounds(false);
+	auto bounds = GetBounds(false);
 	D2D1_POINT_2F offset = D2D1::Point2F();
 	D2D1_POINT_2F center = D2D1::Point2F(((bounds.left + bounds.right) / 2.0f), ((bounds.top + bounds.bottom) / 2.0f));
 	D2D1_POINT_2F radius = D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
