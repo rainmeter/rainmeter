@@ -351,7 +351,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 	for (auto& option : args)
 	{
-		if (StringUtil::CaseInsensitiveCompareN(option, L"FILLTYPE"))
+		if (StringUtil::CaseInsensitiveCompareN(option, L"FILL"))
 		{
 			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
@@ -393,50 +393,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else
 			{
 				// Log Error
-			}
-		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKETYPE"))
-		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
-			{
-				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetStrokeFill(color);
-			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
-			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
-				}
-			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
-			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
-				}
-			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
-			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
-				}
-			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
-			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
-				}
-			}
-			else
-			{
-				// Error
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
@@ -522,6 +478,50 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 
 			shape->SetStrokeDashOffset(dashOffset);
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKE"))
+		{
+			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			{
+				auto color = ConfigParser::ParseColor(option.c_str());
+				shape->SetStrokeFill(color);
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
+				{
+					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
+				{
+					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
+				{
+					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
+				{
+					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else
+			{
+				// Error
+			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXTEND"))
 		{
