@@ -295,7 +295,7 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"INTERSECT")) mode = D2D1_COMBINE_MODE_INTERSECT;
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXCLUDE")) mode = D2D1_COMBINE_MODE_EXCLUDE;
-		else if (ParseTransformModifers(m_Shapes[shapeId], option)) continue;  // Parse any tranform attributes
+		else if (ParseTransformModifers(m_Shapes[shapeId], option)) continue;
 		else
 		{
 			showError(L"definition contains invalid combine: ", option.c_str());
@@ -342,7 +342,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		else if (StringUtil::CaseInsensitiveCompareN(cap, L"TRIANGLE")) return D2D1_CAP_STYLE_TRIANGLE;
 		else
 		{
-			if (!cap.empty()) LogWarningF(this, L"Invalid cap style: %s", cap.c_str());
+			if (!cap.empty()) LogErrorF(this, L"Invalid cap style: %s", cap.c_str());
 			return D2D1_CAP_STYLE_FLAT;
 		}
 	};
@@ -392,7 +392,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid fill parameters: %s", option.c_str());
+				LogErrorF(this, L"Fill has invalid parameters: %s", option.c_str());
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
@@ -452,7 +452,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				LogErrorF(this, L"StrokeLineJoin has too few parameters");
+				LogWarningF(this, L"StrokeLineJoin has too few parameters");
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHES"))
@@ -520,7 +520,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid stroke parameters: %s", option.c_str());
+				LogErrorF(this, L"Stroke has invalid parameters: %s", option.c_str());
 			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXTEND"))
@@ -540,16 +540,12 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			}
 			else
 			{
-				LogErrorF(this, L"Extend cannot be used recursively");
+				LogNoticeF(this, L"Extend cannot be used recursively");
 			}
 		}
-		else
+		else if (!ParseTransformModifers(shape, option))
 		{
-			// Parse any transform modifiers
-			if (!ParseTransformModifers(shape, option))
-			{
-				LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
-			}
+			LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
 		}
 	}
 }
@@ -567,7 +563,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 		}
 		else
 		{
-			LogErrorF(this, L"Offset has too few parameters");
+			LogWarningF(this, L"Offset has too few parameters");
 		}
 
 		return true;
@@ -676,7 +672,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 		}
 		else
 		{
-			LogErrorF(this, L"TransformOrder has too few parameters");
+			LogWarningF(this, L"TransformOrder has too few parameters");
 		}
 
 		return true;

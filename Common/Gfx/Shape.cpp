@@ -57,8 +57,11 @@ Shape::~Shape()
 
 D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 {
+	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
+
 	D2D1_RECT_F bounds;
-	m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
+	HRESULT hr = m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
+	if (FAILED(hr)) return matrix;
 
 	D2D1_POINT_2F point = D2D1::Point2F(bounds.left, bounds.top);
 
@@ -81,7 +84,6 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 
 	skewPoint = Util::AddPoint2F(point, skewPoint);
 
-	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
 	for (const auto& type : m_TransformOrder)
 	{
 		switch (type)
@@ -112,12 +114,12 @@ D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 	D2D1_RECT_F bounds;
 	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
 
-	HRESULT result = m_Shape->GetWidenedBounds(
+	HRESULT hr = m_Shape->GetWidenedBounds(
 		m_StrokeWidth,
 		m_StrokeStyle.Get(),
 		matrix,
 		&bounds);
-	if (FAILED(result)) return D2D1::RectF();
+	if (FAILED(hr)) return D2D1::RectF();
 
 	return bounds;
 }
@@ -129,20 +131,17 @@ bool Shape::IsShapeDefined()
 
 bool Shape::ContainsPoint(D2D1_POINT_2F point)
 {
-	if (m_Shape)
-	{
-		BOOL contains = FALSE;
-		HRESULT result = m_Shape->StrokeContainsPoint(
-			point,
-			m_StrokeWidth,
-			m_StrokeStyle.Get(),
-			GetShapeMatrix(),
-			&contains);
-		if (SUCCEEDED(result) && contains) return true;
+	BOOL contains = FALSE;
+	HRESULT hr = m_Shape->StrokeContainsPoint(
+		point,
+		m_StrokeWidth,
+		m_StrokeStyle.Get(),
+		GetShapeMatrix(),
+		&contains);
+	if (SUCCEEDED(hr) && contains) return true;
 
-		result = m_Shape->FillContainsPoint(point, GetShapeMatrix(), &contains);
-		if (SUCCEEDED(result) && contains) return true;
-	}
+	hr = m_Shape->FillContainsPoint(point, GetShapeMatrix(), &contains);
+	if (SUCCEEDED(hr) && contains) return true;
 
 	return false;
 }
@@ -402,7 +401,7 @@ void Shape::CreateSolidBrush(ID2D1RenderTarget* target, Microsoft::WRL::ComPtr<I
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solid;
 	HRESULT hr = target->CreateSolidColorBrush(color, solid.GetAddressOf());
 
-	if (SUCCEEDED(hr)) solid.CopyTo(brush.GetAddressOf());
+	if (SUCCEEDED(hr)) solid.CopyTo(brush.ReleaseAndGetAddressOf());
 }
 
 void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
@@ -420,7 +419,7 @@ void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 		collection,
 		linear.GetAddressOf());
 
-	if (SUCCEEDED(hr)) linear.CopyTo(brush.GetAddressOf());
+	if (SUCCEEDED(hr)) linear.CopyTo(brush.ReleaseAndGetAddressOf());
 }
 
 void Shape::CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
@@ -454,7 +453,7 @@ void Shape::CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 		collection,
 		radial.GetAddressOf());
 
-	if (SUCCEEDED(hr)) radial.CopyTo(brush.GetAddressOf());
+	if (SUCCEEDED(hr)) radial.CopyTo(brush.ReleaseAndGetAddressOf());
 }
 
 bool Shape::AddToTransformOrder(TransformType type)
