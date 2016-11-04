@@ -94,8 +94,8 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			if (shape->IsCombined()) continue;
 
 			D2D1_RECT_F bounds = shape->GetBounds();
-			int shapeW = (int)bounds.right;
-			int shapeH = (int)bounds.bottom;
+			int shapeW = (int)ceil(bounds.right);  // Account for 'half-pixels'
+			int shapeH = (int)ceil(bounds.bottom);
 			if (newW < shapeW) newW = shapeW;
 			if (newH < shapeH) newH = shapeH;
 		}
