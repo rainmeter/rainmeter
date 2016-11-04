@@ -100,8 +100,8 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			if (newH < shapeH) newH = shapeH;
 		}
 
-		m_W = newW;
-		m_H = newH;
+		m_W = newW + GetWidthPadding();
+		m_H = newH + GetHeightPadding();
 	}
 }
 
@@ -119,14 +119,13 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	int x = Meter::GetX();
-	int y = Meter::GetY();
+	auto padding = GetMeterRectPadding();
 
 	for (const auto& shape : m_Shapes)
 	{
 		if (!shape->IsCombined())
 		{
-			canvas.DrawGeometry(*shape, x, y);
+			canvas.DrawGeometry(*shape, padding.X, padding.Y);
 		}
 	}
 
