@@ -91,6 +91,7 @@ public:
 	void SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1RenderTarget* target);
 
+	void ResetTransformOrder() { m_TransformOrder.clear(); }
 	bool AddToTransformOrder(TransformType type);
 	void ValidateTransforms();
 

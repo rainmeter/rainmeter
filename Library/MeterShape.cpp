@@ -328,6 +328,7 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 		}
 	}
 
+	m_Shapes[shapeId]->ValidateTransforms();
 	return true;
 }
 
@@ -660,6 +661,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 		auto order = ConfigParser::Tokenize(transform, L",");
 		if (order.size() > 0)
 		{
+			shape->ResetTransformOrder();
 			Gfx::TransformType type = Gfx::TransformType::Invalid;
 			for (auto& t : order)
 			{
@@ -669,7 +671,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 				else if (StringUtil::CaseInsensitiveCompareN(t, L"OFFSET")) type = Gfx::TransformType::Offset;
 
 				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t.c_str());
-				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"Transform type already used: %s", t.c_str());
+				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
 			}
 		}
 		else
