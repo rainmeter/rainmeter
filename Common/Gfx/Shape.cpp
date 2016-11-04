@@ -441,8 +441,8 @@ void Shape::CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 	center = Util::AddPoint2F(center, isStroke ? m_StrokeRadialGradientCenter : m_FillRadialGradientCenter);
 
 	// Check if offset and radii are defined
-	swapIfNotDefined(offset, isStroke ? m_StrokeRadialGradientOffset : m_StrokeRadialGradientOffset);
-	swapIfNotDefined(radius, isStroke ? m_StrokeRadialGradientRadius : m_StrokeRadialGradientRadius);
+	swapIfNotDefined(offset, isStroke ? m_StrokeRadialGradientOffset : m_FillRadialGradientOffset);
+	swapIfNotDefined(radius, isStroke ? m_StrokeRadialGradientRadius : m_FillRadialGradientRadius);
 
 	Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radial;
 	HRESULT hr = target->CreateRadialGradientBrush(
