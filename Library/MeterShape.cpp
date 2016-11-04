@@ -361,7 +361,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true))
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -369,7 +369,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str()))
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -377,7 +377,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true))
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -385,16 +385,59 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str()))
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
 				}
 			}
+			else
+			{
+				// Log Error
+			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKECOLOR"))
+		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKETYPE"))
 		{
-			auto color = ConfigParser::ParseColor(option.c_str());
-			shape->SetStrokeColor(color);
+			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			{
+				auto color = ConfigParser::ParseColor(option.c_str());
+				shape->SetStrokeFill(color);
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
+				{
+					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
+				{
+					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
+				{
+					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			{
+				auto opt = parser.ReadString(section, option.c_str(), L"");
+				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
+				{
+					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
+				}
+			}
+			else
+			{
+				// Error
+			}
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
 		{
@@ -641,7 +684,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 	return false;
 }
 
-bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma)
+bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke)
 {
 	auto& shape = m_Shapes.back();
 
@@ -679,6 +722,13 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		{
 			const UINT32 angle = (360 + (ConfigParser::ParseInt(params[0].c_str(), 0) % 360)) % 360;
 			parseGradientStops();
+
+			if (isStroke)
+			{
+				shape->SetStrokeFill(angle, stops, altGamma);
+				return true;
+			}
+
 			shape->SetFill(angle, stops, altGamma);
 			return true;
 		}
@@ -710,6 +760,19 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 				}
 
 				parseGradientStops();
+
+				if (isStroke)
+				{
+					shape->SetStrokeFill(
+						D2D1::Point2F(offsetX, offsetY),
+						D2D1::Point2F(centerX, centerY),
+						D2D1::Point2F(radiusX, radiusY),
+						stops,
+						altGamma);
+
+					return true;
+				}
+
 				shape->SetFill(
 					D2D1::Point2F(offsetX, offsetY),
 					D2D1::Point2F(centerX, centerY),

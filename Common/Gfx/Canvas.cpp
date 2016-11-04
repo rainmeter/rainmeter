@@ -583,18 +583,14 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		m_Target->FillGeometry(shape.m_Shape.Get(), brush.Get());
 	}
 
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> brush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(shape.m_StrokeColor, brush.GetAddressOf());
-	if (SUCCEEDED(hr))
+	if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
 	{
-		if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
-		{
-			m_Target->DrawGeometry(
-				shape.m_Shape.Get(),
-				brush.Get(),
-				shape.m_StrokeWidth,
-				shape.m_StrokeStyle.Get());
-		}
+		auto brush = shape.GetStrokeFillBrush(m_Target.Get());
+		m_Target->DrawGeometry(
+			shape.m_Shape.Get(),
+			brush.Get(),
+			shape.m_StrokeWidth,
+			shape.m_StrokeStyle.Get());
 	}
 
 	m_Target->SetTransform(worldTransform);
