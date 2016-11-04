@@ -328,8 +328,8 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target
 
 	case BrushType::RadialGradient:
 		{
-			auto collection = CreateGradientStopCollection(target, m_StrokeGradientStops, m_StrokeGradientAltGamma);
-			CreateRadialGradient(target, collection, m_StrokeBrush, false);
+			auto collection = CreateGradientStopCollection(target, m_FillGradientStops, m_FillGradientAltGamma);
+			CreateRadialGradient(target, collection, m_FillBrush, false);
 			if (collection) collection->Release();
 		}
 		break;
