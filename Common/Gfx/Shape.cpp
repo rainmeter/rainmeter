@@ -257,7 +257,7 @@ void Shape::SetFill(Gdiplus::Color color)
 	m_HasFillBrushChanged = true;
 }
 
-void Shape::SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
+void Shape::SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
 	m_FillBrushType = BrushType::LinearGradient;
 	m_FillLinearGradientAngle = angle;
@@ -405,7 +405,7 @@ void Shape::CreateSolidBrush(ID2D1RenderTarget* target, Microsoft::WRL::ComPtr<I
 }
 
 void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
-	Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const UINT32 angle)
+	Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const FLOAT angle)
 {
 	auto bounds = GetBounds(false);
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,

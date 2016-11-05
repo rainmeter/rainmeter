@@ -577,7 +577,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 			bool anchorDefined = false;
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			FLOAT rotation = (FLOAT)ConfigParser::ParseInt(rotate[0].c_str(), 0);
+			FLOAT rotation = (FLOAT)ConfigParser::ParseDouble(rotate[0].c_str(), 0);
 			if (size > 2)
 			{
 				anchorX = (FLOAT)ConfigParser::ParseInt(rotate[1].c_str(), 0);
@@ -717,7 +717,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 	{
 	case Gfx::BrushType::LinearGradient:
 		{
-			const UINT32 angle = (360 + (ConfigParser::ParseInt(params[0].c_str(), 0) % 360)) % 360;
+			const UINT32 angle = fmod((360.0 + (ConfigParser::ParseDouble(params[0].c_str(), 0.0), 360.0)), 360.0);
 			parseGradientStops();
 
 			if (isStroke)

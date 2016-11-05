@@ -82,7 +82,7 @@ public:
 	void CreateStrokeStyle();
 
 	void SetFill(Gdiplus::Color color);
-	void SetFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	void SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
 
@@ -107,7 +107,7 @@ private:
 	ID2D1GradientStopCollection* CreateGradientStopCollection(
 		ID2D1RenderTarget* target, std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
 	void CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
-		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const UINT32 angle);
+		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const FLOAT angle);
 	void CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
 		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, bool isStroke);
 
@@ -139,7 +139,7 @@ private:
 	// Fill options
 	BrushType m_FillBrushType;
 	D2D1_COLOR_F m_FillColor;
-	UINT32 m_FillLinearGradientAngle;
+	FLOAT m_FillLinearGradientAngle;
 	D2D1_POINT_2F m_FillRadialGradientOffset;
 	D2D1_POINT_2F m_FillRadialGradientCenter;
 	D2D1_POINT_2F m_FillRadialGradientRadius;
@@ -151,7 +151,7 @@ private:
 	// Stroke fill options
 	BrushType m_StrokeBrushType;
 	D2D1_COLOR_F m_StrokeColor;
-	UINT32 m_StrokeLinearGradientAngle;
+	FLOAT m_StrokeLinearGradientAngle;
 	D2D1_POINT_2F m_StrokeRadialGradientOffset;
 	D2D1_POINT_2F m_StrokeRadialGradientCenter;
 	D2D1_POINT_2F m_StrokeRadialGradientRadius;
