@@ -11,7 +11,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring& pattern, UINT32 angle,
+TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring& pattern, FLOAT angle,
 	const std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma) :
 		TextInlineFormat(pattern),
 		m_Angle(angle),
@@ -132,7 +132,7 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 	}
 }
 
-bool TextInlineFormat_GradientColor::CompareAndUpdateProperties(const std::wstring& pattern, UINT32 angle,
+bool TextInlineFormat_GradientColor::CompareAndUpdateProperties(const std::wstring& pattern, FLOAT angle,
 	const std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma)
 {
 	// Check most options (and size of 'stops').

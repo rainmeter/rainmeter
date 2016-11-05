@@ -838,7 +838,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 	const std::vector<std::wstring> args, const bool altGamma)
 {
-	const UINT32 angle = (360 + (ConfigParser::ParseInt(args[0].c_str(), 0) % 360)) % 360;
+	const FLOAT angle = fmod((360.0 + (ConfigParser::ParseDouble(args[0].c_str(), 0.0), 360.0)), 360.0);
 
 	std::vector<std::wstring> tokens;
 	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
