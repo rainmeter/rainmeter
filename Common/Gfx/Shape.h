@@ -87,7 +87,7 @@ public:
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
 
 	void SetStrokeFill(Gdiplus::Color color);
-	void SetStrokeFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	void SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1RenderTarget* target);
 

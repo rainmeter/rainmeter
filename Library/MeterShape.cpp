@@ -717,7 +717,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 	{
 	case Gfx::BrushType::LinearGradient:
 		{
-			const FLOAT angle = fmod((360.0 + (ConfigParser::ParseDouble(params[0].c_str(), 0.0), 360.0)), 360.0);
+			const FLOAT angle = (FLOAT)fmod((360.0 + (ConfigParser::ParseDouble(params[0].c_str(), 0.0), 360.0)), 360.0);
 			parseGradientStops();
 
 			if (isStroke)

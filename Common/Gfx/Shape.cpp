@@ -284,7 +284,7 @@ void Shape::SetStrokeFill(Gdiplus::Color color)
 	m_HasStrokeBrushChanged = true;
 }
 
-void Shape::SetStrokeFill(UINT32 angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
+void Shape::SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
 	m_StrokeBrushType = BrushType::LinearGradient;
 	m_StrokeLinearGradientAngle = angle;
