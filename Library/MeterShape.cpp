@@ -42,7 +42,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Clear any shapes
 	Dispose();
 
-	std::unordered_map<size_t, std::wstring> combinedShapes;
+	std::map<size_t, std::wstring> combinedShapes;
 
 	const std::wstring delimiter(1, L'|');
 	std::wstring shape = parser.ReadString(section, L"Shape", L"");
