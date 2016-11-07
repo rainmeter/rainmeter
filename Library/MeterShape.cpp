@@ -203,7 +203,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
 			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
 			FLOAT yRadius = (tokSize > 5) ?
-				yRadius = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0) :
+				(FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0) :
 				xRadius;
 
 			if (!createShape(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
