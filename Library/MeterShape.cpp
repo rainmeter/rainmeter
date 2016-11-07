@@ -13,6 +13,7 @@
 #include "../Common/Gfx/Shape.h"
 #include "../Common/Gfx/Shapes/Rectangle.h"
 #include "../Common/Gfx/Shapes/RoundedRectangle.h"
+#include "../Common/Gfx/Shapes/Ellipse.h"
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes()
@@ -215,6 +216,31 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 		else
 		{
 			LogErrorF(this, L"Rectangle has too few parameters");
+			return false;
+		}
+	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ELLIPSE"))
+	{
+		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokSize = tokens.size();
+
+		if (tokSize > 2)
+		{
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
+			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
+			FLOAT yRadius = (tokSize > 3) ? (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0) : xRadius;
+
+			if (!createShape(new Gfx::Ellipse(x, y, xRadius, yRadius)))
+			{
+				return false;
+			}
+
+			return true;
+		}
+		else
+		{
+			LogErrorF(this, L"Ellipse has too few parameters");
 			return false;
 		}
 	}

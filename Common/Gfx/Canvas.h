@@ -87,6 +87,7 @@ private:
 	friend class Shape;
 	friend class Rectangle;
 	friend class RoundedRectangle;
+	friend class Ellipse;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

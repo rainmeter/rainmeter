@@ -101,6 +101,9 @@
     <ClCompile Include="Gfx\Shape.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\Shapes\Ellipse.cpp">
+      <Filter>Gfx\Shapes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -205,6 +208,9 @@
     </ClInclude>
     <ClInclude Include="Gfx\Shape.h">
       <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Shapes\Ellipse.h">
+      <Filter>Gfx\Shapes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

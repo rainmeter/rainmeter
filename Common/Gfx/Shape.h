@@ -23,6 +23,7 @@ enum class ShapeType : BYTE
 	None = 0,
 	Rectangle = 100,
 	RoundedRectangle,
+	Ellipse,
 };
 
 enum class TransformType : BYTE
