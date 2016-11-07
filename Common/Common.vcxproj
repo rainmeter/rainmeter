@@ -34,6 +34,7 @@
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
     <ClCompile Include="Gfx\Shapes\Ellipse.cpp" />
+    <ClCompile Include="Gfx\Shapes\Line.cpp" />
     <ClCompile Include="Gfx\Shapes\Rectangle.cpp" />
     <ClCompile Include="Gfx\Shapes\RoundedRectangle.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\Shape.h" />
     <ClInclude Include="Gfx\Shapes\Ellipse.h" />
+    <ClInclude Include="Gfx\Shapes\Line.h" />
     <ClInclude Include="Gfx\Shapes\Rectangle.h" />
     <ClInclude Include="Gfx\Shapes\RoundedRectangle.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
