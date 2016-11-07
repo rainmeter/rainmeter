@@ -32,7 +32,7 @@ Ellipse::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius) : Shape(ShapeTy
 
 	hr = geometry.CopyTo(m_Shape.GetAddressOf());
 	if (FAILED(hr)) LogErrorF(
-		L"Could not copy rectangle object to shape object. X=%i, Y=%i, RadiusX=%i, RadiusY=%i",
+		L"Could not copy ellipse object to shape object. X=%i, Y=%i, RadiusX=%i, RadiusY=%i",
 		(int)x, (int)y, (int)xRadius, (int)yRadius);
 }
 
