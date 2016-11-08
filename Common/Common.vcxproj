@@ -33,6 +33,7 @@
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
+    <ClCompile Include="Gfx\Shapes\Arc.cpp" />
     <ClCompile Include="Gfx\Shapes\Ellipse.cpp" />
     <ClCompile Include="Gfx\Shapes\Line.cpp" />
     <ClCompile Include="Gfx\Shapes\Rectangle.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\Shape.h" />
+    <ClInclude Include="Gfx\Shapes\Arc.h" />
     <ClInclude Include="Gfx\Shapes\Ellipse.h" />
     <ClInclude Include="Gfx\Shapes\Line.h" />
     <ClInclude Include="Gfx\Shapes\Rectangle.h" />

@@ -107,6 +107,9 @@
     <ClCompile Include="Gfx\Shapes\Line.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\Shapes\Arc.cpp">
+      <Filter>Gfx\Shapes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -216,6 +219,9 @@
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Shapes\Line.h">
+      <Filter>Gfx\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Shapes\Arc.h">
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
   </ItemGroup>

@@ -15,6 +15,7 @@
 #include "../Common/Gfx/Shapes/RoundedRectangle.h"
 #include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shapes/Arc.h"
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes()
@@ -267,6 +268,65 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 		else
 		{
 			LogErrorF(this, L"Line has too few parameters");
+			return false;
+		}
+	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ARC"))
+	{
+		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokSize = tokens.size();
+
+		if (tokSize > 3)
+		{
+			// Helpers to allow default values to be used instead of needing to be defined
+			auto parseNumber = [](auto var, const WCHAR* value, auto defValue, auto* func) -> decltype(var)
+			{
+				if (_wcsnicmp(value, L"*", 1) == 0) return var;
+				return (decltype(var))func(value, defValue);
+			};
+
+			auto parseBool = [](auto& var, const WCHAR* value)
+			{
+				if (_wcsnicmp(value, L"*", 1) != 0) var = (ConfigParser::ParseInt(value, 0) == 0);
+			};
+
+			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
+			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
+			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
+			FLOAT y2 = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT dx = x2 - x1;
+			FLOAT dy = y2 - y1;
+			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
+			FLOAT angle = 0.0f;
+			bool sweep = true;
+			bool size = true;
+			bool open = true;
+
+			if (tokSize > 4) xRadius = parseNumber(xRadius, tokens[4].c_str(), 0, ConfigParser::ParseInt);
+
+			FLOAT yRadius = xRadius;
+			if (tokSize > 5) yRadius = parseNumber(yRadius, tokens[5].c_str(), 0, ConfigParser::ParseInt);
+			if (tokSize > 6) angle = parseNumber(angle, tokens[6].c_str(), 0.0, ConfigParser::ParseDouble);
+			if (tokSize > 7) parseBool(sweep, tokens[7].c_str());
+			if (tokSize > 8) parseBool(size, tokens[8].c_str());
+			if (tokSize > 9) parseBool(open, tokens[9].c_str());
+
+			if (!createShape(new Gfx::Arc(x1, y1, x2, y2, xRadius, yRadius, angle,
+				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE,
+				open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+			{
+				return false;
+			}
+
+			// Set the 'Fill Color' to transparent for open shapes.
+			// This can be overridden if an actual 'Fill Color' is defined.
+			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+			return true;
+		}
+		else
+		{
+			LogErrorF(this, L"Arc has too few parameters");
 			return false;
 		}
 	}
