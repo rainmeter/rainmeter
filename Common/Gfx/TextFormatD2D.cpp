@@ -603,13 +603,19 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			FLOAT leading = (FLOAT)ConfigParser::ParseDouble(options[1].c_str(), FLT_MAX);
+			auto parseOptional = [](const WCHAR* value) -> FLOAT
+			{
+				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
+				return (FLOAT)ConfigParser::ParseDouble(value, FLT_MAX);
+			};
+
+			FLOAT leading = parseOptional(options[1].c_str());
 			FLOAT trailing = FLT_MAX;
 			FLOAT advanceWidth = -1.0f;
 
 			if (optSize > 2)
 			{
-				trailing = (FLOAT)ConfigParser::ParseDouble(options[2].c_str(), FLT_MAX);
+				trailing = parseOptional(options[2].c_str());
 			}
 
 			if (optSize > 3)
