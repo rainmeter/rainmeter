@@ -1,0 +1,62 @@
+/* Copyright (C) 2016 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+
+#include "StdAfx.h"
+#include "QuadraticCurve.h"
+#include "Gfx/Canvas.h"
+#include "../Library/Logger.h"
+
+namespace Gfx {
+
+QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
+	FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending) : Shape(ShapeType::QuadraticCurve),
+	m_Point1(D2D1::Point2F(x1, y1)),
+	m_QuadraticBezier(D2D1::QuadraticBezierSegment(
+		D2D1::Point2F(cx, cy),
+		D2D1::Point2F(x2, y2))),
+	m_FigureEnding(ending)
+{
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
+	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		hr = path->Open(sink.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			sink->BeginFigure(m_Point1, D2D1_FIGURE_BEGIN_FILLED);
+			sink->AddQuadraticBezier(m_QuadraticBezier);
+			sink->EndFigure(m_FigureEnding);
+			sink->Close();
+
+			hr = path.CopyTo(m_Shape.GetAddressOf());
+			if (SUCCEEDED(hr)) return;
+		}
+	}
+
+	LogErrorF(L"Could not create quadratic curve object. X1=%i, Y1=%i, X2=%i, Y2=%i", (int)x1, (int)y1, (int)x2, (int)y2);
+}
+
+QuadraticCurve::~QuadraticCurve()
+{
+}
+
+Shape* QuadraticCurve::Clone()
+{
+	Shape* newShape = new QuadraticCurve(
+		m_Point1.x,
+		m_Point1.y,
+		m_QuadraticBezier.point2.x,
+		m_QuadraticBezier.point2.y,
+		m_QuadraticBezier.point1.x,
+		m_QuadraticBezier.point1.y,
+		m_FigureEnding);
+	CloneModifiers(newShape);
+	return newShape;
+}
+
+}  // namespace Gfx

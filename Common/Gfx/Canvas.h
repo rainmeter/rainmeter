@@ -90,6 +90,8 @@ private:
 	friend class Ellipse;
 	friend class Line;
 	friend class Arc;
+	friend class Curve;
+	friend class QuadraticCurve;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

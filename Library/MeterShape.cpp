@@ -16,6 +16,8 @@
 #include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
 #include "../Common/Gfx/Shapes/Arc.h"
+#include "../Common/Gfx/Shapes/Curve.h"
+#include "../Common/Gfx/Shapes/QuadraticCurve.h"
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes()
@@ -328,6 +330,52 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 		{
 			LogErrorF(this, L"Arc has too few parameters");
 			return false;
+		}
+	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"CURVE"))
+	{
+		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokSize = tokens.size();
+
+		if (tokSize > 5)
+		{
+			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
+			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
+			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
+			FLOAT y2 = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT cx1 = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
+			FLOAT cy1 = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0);
+			bool open = true;
+
+			if (tokSize == 6 || tokSize == 7)
+			{
+				if (tokSize == 7) open = ConfigParser::ParseInt(tokens[6].c_str(), 0) == 0;
+				
+				if (!createShape(new Gfx::QuadraticCurve(x1, y1, x2, y2, cx1, cy1,
+					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+				{
+					return false;
+				}
+			}
+			else if (tokSize > 7)
+			{
+				FLOAT cx2 = (FLOAT)ConfigParser::ParseInt(tokens[6].c_str(), 0);
+				FLOAT cy2 = (FLOAT)ConfigParser::ParseInt(tokens[7].c_str(), 0);
+
+				if (tokSize > 8) open = ConfigParser::ParseInt(tokens[8].c_str(), 0) == 0;
+	
+				if (!createShape(new Gfx::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2,
+					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+				{
+					return false;
+				}
+			}
+
+			// Set the 'Fill Color' to transparent for open shapes.
+			// This can be overridden if an actual 'Fill Color' is defined.
+			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+
+			return true;
 		}
 	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
