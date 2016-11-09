@@ -14,8 +14,8 @@ namespace Gfx {
 
 Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 	FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending) : Shape(ShapeType::Curve),
-	m_Point1(D2D1::Point2F(x1, y1)),
-	m_Bezier(D2D1::BezierSegment(
+	m_StartPoint(D2D1::Point2F(x1, y1)),
+	m_BezierSegment(D2D1::BezierSegment(
 		D2D1::Point2F(cx1, cy1),
 		D2D1::Point2F(cx2, cy2),
 		D2D1::Point2F(x2, y2))),
@@ -29,8 +29,8 @@ Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 		hr = path->Open(sink.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
-			sink->BeginFigure(m_Point1, D2D1_FIGURE_BEGIN_FILLED);
-			sink->AddBezier(m_Bezier);
+			sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
+			sink->AddBezier(m_BezierSegment);
 			sink->EndFigure(m_FigureEnding);
 			sink->Close();
 
@@ -49,14 +49,14 @@ Curve::~Curve()
 Shape* Curve::Clone()
 {
 	Shape* newShape = new Curve(
-		m_Point1.x,
-		m_Point1.y,
-		m_Bezier.point3.x,
-		m_Bezier.point3.y,
-		m_Bezier.point1.x,
-		m_Bezier.point1.y,
-		m_Bezier.point2.x,
-		m_Bezier.point2.y,
+		m_StartPoint.x,
+		m_StartPoint.y,
+		m_BezierSegment.point3.x,
+		m_BezierSegment.point3.y,
+		m_BezierSegment.point1.x,
+		m_BezierSegment.point1.y,
+		m_BezierSegment.point2.x,
+		m_BezierSegment.point2.y,
 		m_FigureEnding);
 	CloneModifiers(newShape);
 	return newShape;

@@ -13,8 +13,8 @@
 namespace Gfx {
 
 Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) : Shape(ShapeType::Line),
-	m_Point1(D2D1::Point2F(x1, y1)),
-	m_Point2(D2D1::Point2F(x2, y2))
+	m_StartPoint(D2D1::Point2F(x1, y1)),
+	m_EndPoint(D2D1::Point2F(x2, y2))
 {
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
@@ -24,8 +24,8 @@ Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) : Shape(ShapeType::Line),
 		hr = path->Open(sink.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
-			sink->BeginFigure(m_Point1, D2D1_FIGURE_BEGIN_FILLED);
-			sink->AddLine(m_Point2);
+			sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
+			sink->AddLine(m_EndPoint);
 			sink->EndFigure(D2D1_FIGURE_END_OPEN);
 			sink->Close();
 
@@ -43,7 +43,7 @@ Line::~Line()
 
 Shape* Line::Clone()
 {
-	Shape* newShape = new Line(m_Point1.x, m_Point1.y, m_Point2.x, m_Point2.y);
+	Shape* newShape = new Line(m_StartPoint.x, m_StartPoint.y, m_EndPoint.x, m_EndPoint.y);
 	CloneModifiers(newShape);
 	return newShape;
 }

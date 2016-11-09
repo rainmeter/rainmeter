@@ -24,8 +24,8 @@ private:
 	Line(const Line& other) = delete;
 	Line& operator=(Line other) = delete;
 
-	D2D1_POINT_2F m_Point1;
-	D2D1_POINT_2F m_Point2;
+	D2D1_POINT_2F m_StartPoint;
+	D2D1_POINT_2F m_EndPoint;
 };
 
 } // Gfx

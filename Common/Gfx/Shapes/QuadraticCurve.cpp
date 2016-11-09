@@ -14,8 +14,8 @@ namespace Gfx {
 
 QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 	FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending) : Shape(ShapeType::QuadraticCurve),
-	m_Point1(D2D1::Point2F(x1, y1)),
-	m_QuadraticBezier(D2D1::QuadraticBezierSegment(
+	m_StartPoint(D2D1::Point2F(x1, y1)),
+	m_QuadraticBezierSegment(D2D1::QuadraticBezierSegment(
 		D2D1::Point2F(cx, cy),
 		D2D1::Point2F(x2, y2))),
 	m_FigureEnding(ending)
@@ -28,8 +28,8 @@ QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 		hr = path->Open(sink.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
-			sink->BeginFigure(m_Point1, D2D1_FIGURE_BEGIN_FILLED);
-			sink->AddQuadraticBezier(m_QuadraticBezier);
+			sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
+			sink->AddQuadraticBezier(m_QuadraticBezierSegment);
 			sink->EndFigure(m_FigureEnding);
 			sink->Close();
 
@@ -48,12 +48,12 @@ QuadraticCurve::~QuadraticCurve()
 Shape* QuadraticCurve::Clone()
 {
 	Shape* newShape = new QuadraticCurve(
-		m_Point1.x,
-		m_Point1.y,
-		m_QuadraticBezier.point2.x,
-		m_QuadraticBezier.point2.y,
-		m_QuadraticBezier.point1.x,
-		m_QuadraticBezier.point1.y,
+		m_StartPoint.x,
+		m_StartPoint.y,
+		m_QuadraticBezierSegment.point2.x,
+		m_QuadraticBezierSegment.point2.y,
+		m_QuadraticBezierSegment.point1.x,
+		m_QuadraticBezierSegment.point1.y,
 		m_FigureEnding);
 	CloneModifiers(newShape);
 	return newShape;
