@@ -1109,7 +1109,9 @@ std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const
 		start = str.find_first_not_of(L" \t\r\n", start); // skip any leading whitespace
 		if (start <= end)
 		{
-			tokens.push_back(str.substr(start, end - start));
+			std::wstring temp = str.substr(start, end - start);
+			temp.erase(temp.find_last_not_of(L" \t\r\n") + 1); // remove any trailing whitespace
+			tokens.push_back(temp);
 		}
 	};
 
