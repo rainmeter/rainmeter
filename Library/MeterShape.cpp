@@ -49,13 +49,13 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	std::map<size_t, std::wstring> combinedShapes;
 
-	const std::wstring delimiter(1, L'|');
+	const WCHAR delimiter = L'|';
 	std::wstring shape = parser.ReadString(section, L"Shape", L"");
 
 	size_t i = 1;
 	while (!shape.empty())
 	{
-		std::vector<std::wstring> args = ConfigParser::Tokenize(shape, delimiter);
+		auto args = ConfigParser::Tokenize2(shape, delimiter, PairedPunctuation::Parentheses);
 
 		bool isCombined = false;
 		if (!CreateShape(args, isCombined, i - 1)) break;
@@ -84,7 +84,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Process combined shapes
 	for (const auto& shape : combinedShapes)
 	{
-		std::vector<std::wstring> args = ConfigParser::Tokenize(shape.second, delimiter);
+		auto args = ConfigParser::Tokenize2(shape.second, delimiter, PairedPunctuation::Parentheses);
 		if (!CreateCombinedShape(shape.first, args)) break;
 	}
 
@@ -693,7 +693,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					std::wstring key = parser.ReadString(section, extend.c_str(), L"");
 					if (!key.empty())
 					{
-						std::vector<std::wstring> newArgs = ConfigParser::Tokenize(key, L"|");
+						auto newArgs = ConfigParser::Tokenize2(key, L'|', PairedPunctuation::Parentheses);
 						ParseModifiers(newArgs, parser, section, true);
 					}
 				}
@@ -845,7 +845,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 {
 	auto& shape = m_Shapes.back();
 
-	auto params = ConfigParser::Tokenize(options, L"|");
+	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
 	size_t paramSize = params.size();
 	if (paramSize < 2) return false;
 
@@ -855,7 +855,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		std::vector<std::wstring> tokens;
 		for (size_t i = 1; i < paramSize; ++i)
 		{
-			tokens = ConfigParser::Tokenize(params[i], L";");
+			tokens = ConfigParser::Tokenize2(params[i], L';', PairedPunctuation::Parentheses);
 			if (tokens.size() == 2)
 			{
 				stops[i - 1].color = Gfx::Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
