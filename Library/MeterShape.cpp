@@ -964,13 +964,6 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 
 bool MeterShape::ParsePath(std::wstring& options)
 {
-	// Break up into tokens.
-	// If more than 2 tokens, create shape with first parsed param as start point.
-	// iterate through tokens adding each segment to shape.
-	// Only allow 'Closed' to be the last param...ignore otherwise.
-	// Once done really create m_Shape and make sure to check if it was created without error
-	// Bobs your uncle.
-
 	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
 	auto paramSize = params.size();
 	if (paramSize < 2) return false;  // Must have a starting point and at least 1 segment
