@@ -978,7 +978,7 @@ bool MeterShape::ParsePath(std::wstring& options)
 	Gfx::Path* shape = new Gfx::Path(startX, startY);
 
 	bool error = false;
-	bool open = true;  // open
+	bool open = true;
 	D2D1_POINT_2F currentPoint = D2D1::Point2F(startX, startY);
 
 	for (size_t i = 1; i < paramSize; ++i)
