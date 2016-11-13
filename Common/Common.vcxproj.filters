@@ -116,6 +116,9 @@
     <ClCompile Include="Gfx\Shapes\QuadraticCurve.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\Shapes\Path.cpp">
+      <Filter>Gfx\Shapes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -234,6 +237,9 @@
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Shapes\QuadraticCurve.h">
+      <Filter>Gfx\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Shapes\Path.h">
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
   </ItemGroup>

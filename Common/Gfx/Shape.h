@@ -28,6 +28,7 @@ enum class ShapeType : BYTE
 	Arc,
 	Curve,
 	QuadraticCurve,
+	Path
 };
 
 enum class TransformType : BYTE

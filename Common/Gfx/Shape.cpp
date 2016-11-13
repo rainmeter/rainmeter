@@ -111,17 +111,28 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 
 D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 {
-	D2D1_RECT_F bounds;
+	D2D1_RECT_F strokedBounds;
+	D2D1_RECT_F fillBounds;
 	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
 
 	HRESULT hr = m_Shape->GetWidenedBounds(
 		m_StrokeWidth,
 		m_StrokeStyle.Get(),
 		matrix,
-		&bounds);
+		&strokedBounds);
 	if (FAILED(hr)) return D2D1::RectF();
 
-	return bounds;
+	hr = m_Shape->GetBounds(matrix, &fillBounds);
+	if (FAILED(hr)) return D2D1::RectF();
+
+	// The 'Path' shape can have un-stroked segments, so we need to also
+	// check the bounds of the fill to see which bounds are greater.
+	if (fillBounds.left < strokedBounds.left) strokedBounds.left = fillBounds.left;
+	if (fillBounds.top < strokedBounds.top) strokedBounds.top = fillBounds.top;
+	if (fillBounds.right > strokedBounds.right) strokedBounds.right = fillBounds.right;
+	if (fillBounds.bottom > strokedBounds.bottom) strokedBounds.bottom = fillBounds.bottom;
+
+	return strokedBounds;
 }
 
 bool Shape::IsShapeDefined()

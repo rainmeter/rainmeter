@@ -37,6 +37,7 @@
     <ClCompile Include="Gfx\Shapes\Curve.cpp" />
     <ClCompile Include="Gfx\Shapes\Ellipse.cpp" />
     <ClCompile Include="Gfx\Shapes\Line.cpp" />
+    <ClCompile Include="Gfx\Shapes\Path.cpp" />
     <ClCompile Include="Gfx\Shapes\QuadraticCurve.cpp" />
     <ClCompile Include="Gfx\Shapes\Rectangle.cpp" />
     <ClCompile Include="Gfx\Shapes\RoundedRectangle.cpp" />
@@ -85,6 +86,7 @@
     <ClInclude Include="Gfx\Shapes\Curve.h" />
     <ClInclude Include="Gfx\Shapes\Ellipse.h" />
     <ClInclude Include="Gfx\Shapes\Line.h" />
+    <ClInclude Include="Gfx\Shapes\Path.h" />
     <ClInclude Include="Gfx\Shapes\QuadraticCurve.h" />
     <ClInclude Include="Gfx\Shapes\Rectangle.h" />
     <ClInclude Include="Gfx\Shapes\RoundedRectangle.h" />

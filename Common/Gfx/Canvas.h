@@ -92,6 +92,7 @@ private:
 	friend class Arc;
 	friend class Curve;
 	friend class QuadraticCurve;
+	friend class Path;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

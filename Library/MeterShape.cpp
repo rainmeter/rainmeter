@@ -18,6 +18,23 @@
 #include "../Common/Gfx/Shapes/Arc.h"
 #include "../Common/Gfx/Shapes/Curve.h"
 #include "../Common/Gfx/Shapes/QuadraticCurve.h"
+#include "../Common//Gfx/Shapes/Path.h"
+
+namespace {
+
+// Helpers to allow default values to be used instead of needing to be defined
+auto ParseNumber = [](auto var, const WCHAR* value, auto defValue, auto* func) -> decltype(var)
+{
+	if (_wcsnicmp(value, L"*", 1) == 0) return var;
+	return (decltype(var))func(value, defValue);
+};
+
+auto ParseBool = [](auto& var, const WCHAR* value)
+{
+	if (_wcsnicmp(value, L"*", 1) != 0) var = (ConfigParser::ParseInt(value, 0) == 0);
+};
+
+}  // namespace
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Shapes()
@@ -58,7 +75,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		auto args = ConfigParser::Tokenize2(shape, delimiter, PairedPunctuation::Parentheses);
 
 		bool isCombined = false;
-		if (!CreateShape(args, isCombined, i - 1)) break;
+		if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
 
 		// If the shape is combined with another, save the shape definition and
 		// process later. Otherwise, parse any modifiers for the shape.
@@ -159,7 +176,8 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, size_t keyId)
+bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
+	const WCHAR* section, bool& isCombined, size_t keyId)
 {
 	auto createShape = [&](Gfx::Shape* shape) -> bool
 	{
@@ -280,18 +298,6 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 
 		if (tokSize > 3)
 		{
-			// Helpers to allow default values to be used instead of needing to be defined
-			auto parseNumber = [](auto var, const WCHAR* value, auto defValue, auto* func) -> decltype(var)
-			{
-				if (_wcsnicmp(value, L"*", 1) == 0) return var;
-				return (decltype(var))func(value, defValue);
-			};
-
-			auto parseBool = [](auto& var, const WCHAR* value)
-			{
-				if (_wcsnicmp(value, L"*", 1) != 0) var = (ConfigParser::ParseInt(value, 0) == 0);
-			};
-
 			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
 			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
 			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
@@ -304,14 +310,14 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 			bool size = true;
 			bool open = true;
 
-			if (tokSize > 4) xRadius = parseNumber(xRadius, tokens[4].c_str(), 0, ConfigParser::ParseInt);
+			if (tokSize > 4) xRadius = ParseNumber(xRadius, tokens[4].c_str(), 0, ConfigParser::ParseInt);
 
 			FLOAT yRadius = xRadius;
-			if (tokSize > 5) yRadius = parseNumber(yRadius, tokens[5].c_str(), 0, ConfigParser::ParseInt);
-			if (tokSize > 6) angle = parseNumber(angle, tokens[6].c_str(), 0.0, ConfigParser::ParseDouble);
-			if (tokSize > 7) parseBool(sweep, tokens[7].c_str());
-			if (tokSize > 8) parseBool(size, tokens[8].c_str());
-			if (tokSize > 9) parseBool(open, tokens[9].c_str());
+			if (tokSize > 5) yRadius = ParseNumber(yRadius, tokens[5].c_str(), 0, ConfigParser::ParseInt);
+			if (tokSize > 6) angle = ParseNumber(angle, tokens[6].c_str(), 0.0, ConfigParser::ParseDouble);
+			if (tokSize > 7) ParseBool(sweep, tokens[7].c_str());
+			if (tokSize > 8) ParseBool(size, tokens[8].c_str());
+			if (tokSize > 9) ParseBool(open, tokens[9].c_str());
 
 			if (!createShape(new Gfx::Arc(x1, y1, x2, y2, xRadius, yRadius, angle,
 				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
@@ -377,6 +383,17 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, bool& isCombined, 
 
 			return true;
 		}
+	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH"))
+	{
+		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
+		if (opt.empty() || !ParsePath(opt))
+		{
+			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
+			return false;
+		}
+
+		return true;
 	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
 	{
@@ -943,4 +960,152 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 	}
 
 	return false;
+}
+
+bool MeterShape::ParsePath(std::wstring& options)
+{
+	// Break up into tokens.
+	// If more than 2 tokens, create shape with first parsed param as start point.
+	// iterate through tokens adding each segment to shape.
+	// Only allow 'Closed' to be the last param...ignore otherwise.
+	// Once done really create m_Shape and make sure to check if it was created without error
+	// Bobs your uncle.
+
+	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
+	auto paramSize = params.size();
+	if (paramSize < 2) return false;  // Must have a starting point and at least 1 segment
+
+	// Parse starting point of shape
+	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
+	if (paramSize < 1) return false;  // Starting point must have a x and y
+
+	FLOAT startX = (FLOAT)ConfigParser::ParseInt(stPoint[0].c_str(), 0);
+	FLOAT startY = (FLOAT)ConfigParser::ParseInt(stPoint[1].c_str(), 0);
+
+	Gfx::Path* shape = new Gfx::Path(startX, startY);
+
+	bool error = false;
+	bool open = true;  // open
+	D2D1_POINT_2F currentPoint = D2D1::Point2F(startX, startY);
+
+	for (size_t i = 1; i < paramSize; ++i)
+	{
+		auto& type = params[i];
+		if (StringUtil::CaseInsensitiveCompareN(type, L"LINETO"))
+		{
+			auto lineTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			if (lineTo.size() < 2) { error = true; break; }
+
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(lineTo[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(lineTo[1].c_str(), 0);
+
+			shape->AddLine(x, y);
+
+			currentPoint = D2D1::Point2F(x, y);
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"ARCTO"))
+		{
+			auto arcTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			auto arcSize = arcTo.size();
+			if (arcSize < 2) { error = true; break; }
+
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(arcTo[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(arcTo[1].c_str(), 0);
+			FLOAT dx = x - currentPoint.x;
+			FLOAT dy = y - currentPoint.y;
+			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
+			FLOAT angle = 0.0f;
+			bool sweep = true;
+			bool size = true;
+
+			if (arcSize > 2) xRadius = ParseNumber(xRadius, arcTo[2].c_str(), 0, ConfigParser::ParseInt);
+
+			FLOAT yRadius = xRadius;
+			if (arcSize > 3) yRadius = ParseNumber(yRadius, arcTo[3].c_str(), 0, ConfigParser::ParseInt);
+			if (arcSize > 4) angle = ParseNumber(angle, arcTo[4].c_str(), 0.0, ConfigParser::ParseDouble);
+			if (arcSize > 5) ParseBool(sweep, arcTo[5].c_str());
+			if (arcSize > 6) ParseBool(size, arcTo[6].c_str());
+
+			shape->AddArc(x, y, xRadius, yRadius, angle,
+				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
+
+			currentPoint = D2D1::Point2F(x, y);
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"CURVETO"))
+		{
+			auto curveTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			auto curveSize = curveTo.size();
+			if (curveSize < 4) { error = true; break; }
+
+			FLOAT x = (FLOAT)ConfigParser::ParseInt(curveTo[0].c_str(), 0);
+			FLOAT y = (FLOAT)ConfigParser::ParseInt(curveTo[1].c_str(), 0);
+			FLOAT cx1 = (FLOAT)ConfigParser::ParseInt(curveTo[2].c_str(), 0);
+			FLOAT cy1 = (FLOAT)ConfigParser::ParseInt(curveTo[3].c_str(), 0);
+
+			if (curveSize < 6)
+			{
+				shape->AddQuadraticCurve(x, y, cx1, cy1);
+			}
+			else
+			{
+				FLOAT cx2 = (FLOAT)ConfigParser::ParseInt(curveTo[4].c_str(), 0);
+				FLOAT cy2 = (FLOAT)ConfigParser::ParseInt(curveTo[5].c_str(), 0);
+				
+				shape->AddCubicCurve(x, y, cx1, cy1, cx2, cy2);
+			}
+
+			currentPoint = D2D1::Point2F(x, y);
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"SEGMENT"))
+		{
+			auto seg = ConfigParser::Tokenize(type, L",");
+			if (seg.empty()) { error = true; break; }
+
+			D2D1_PATH_SEGMENT segment = D2D1_PATH_SEGMENT_NONE;
+			for (const auto& type : seg)
+			{
+				if (_wcsnicmp(type.c_str(), L"ROUND", 5) == 0)
+				{
+					segment |= D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN;
+				}
+				else if (_wcsnicmp(type.c_str(), L"NOSTROKE", 8) == 0)
+				{
+					segment |= D2D1_PATH_SEGMENT_FORCE_UNSTROKED;
+				}
+				else
+				{
+					LogWarningF(this, L"Invalid segment flag: %s", type.c_str());
+				}
+			}
+
+			shape->AddSegmentFlags(segment);
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSESHAPE"))
+		{
+			open = false;
+		}
+		else
+		{
+			LogErrorF(this, L"Invalid Path type: %s", type.c_str());
+			error = true;
+			break;
+		}
+	}
+
+	if (error)
+	{
+		delete shape;
+		return false;
+	}
+
+	shape->Close(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+
+	// Set the 'Fill Color' to transparent for open shapes.
+	// This can be overridden if an actual 'Fill Color' is defined.
+	if (open) shape->SetFill(Gdiplus::Color::Transparent);
+
+	m_Shapes.push_back(shape);
+
+	return true;
 }
