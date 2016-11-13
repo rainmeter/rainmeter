@@ -538,7 +538,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -546,7 +546,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -554,7 +554,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -562,7 +562,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -666,7 +666,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -674,7 +674,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -682,7 +682,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -690,7 +690,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (!opt.empty() && !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
+				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
 				}
