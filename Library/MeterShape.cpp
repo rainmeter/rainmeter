@@ -1074,7 +1074,7 @@ bool MeterShape::ParsePath(std::wstring& options)
 
 			shape->AddSegmentFlags(segment);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSESHAPE"))
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSEPATH"))
 		{
 			open = ConfigParser::ParseInt(type.c_str(), 0) == 0;
 		}
