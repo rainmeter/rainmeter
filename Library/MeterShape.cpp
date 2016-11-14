@@ -1076,7 +1076,7 @@ bool MeterShape::ParsePath(std::wstring& options)
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSESHAPE"))
 		{
-			open = false;
+			open = ConfigParser::ParseInt(type.c_str(), 0) == 0;
 		}
 		else
 		{
