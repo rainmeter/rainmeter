@@ -1056,13 +1056,13 @@ bool MeterShape::ParsePath(std::wstring& options)
 			if (seg.empty()) { error = true; break; }
 
 			D2D1_PATH_SEGMENT segment = D2D1_PATH_SEGMENT_NONE;
-			for (const auto& type : seg)
+			for (const auto& s : seg)
 			{
-				if (_wcsnicmp(type.c_str(), L"ROUND", 5) == 0)
+				if (_wcsnicmp(s.c_str(), L"ROUND", 5) == 0)
 				{
 					segment |= D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN;
 				}
-				else if (_wcsnicmp(type.c_str(), L"NOSTROKE", 8) == 0)
+				else if (_wcsnicmp(s.c_str(), L"NOSTROKE", 8) == 0)
 				{
 					segment |= D2D1_PATH_SEGMENT_FORCE_UNSTROKED;
 				}
