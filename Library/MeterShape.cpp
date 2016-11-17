@@ -205,10 +205,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		if (tokSize == 4)
 		{
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT w = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT h = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
 
 			if (!createShape(new Gfx::Rectangle(x, y, w, h)))
 			{
@@ -219,13 +219,13 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		}
 		else if (tokSize > 4)
 		{
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT w = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT h = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
-			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT w = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT h = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
+			FLOAT xRadius = (FLOAT)ConfigParser::ParseDouble(tokens[4].c_str(), 0.0);
 			FLOAT yRadius = (tokSize > 5) ?
-				(FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0) :
+				(FLOAT)ConfigParser::ParseDouble(tokens[5].c_str(), 0.0) :
 				xRadius;
 
 			if (!createShape(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
@@ -248,10 +248,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		if (tokSize > 2)
 		{
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT xRadius = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT yRadius = (tokSize > 3) ? (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0) : xRadius;
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT xRadius = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT yRadius = (tokSize > 3) ? (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0) : xRadius;
 
 			if (!createShape(new Gfx::Ellipse(x, y, xRadius, yRadius)))
 			{
@@ -273,10 +273,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		if (tokSize > 3)
 		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
 
 			if (!createShape(new Gfx::Line(x1, y1, x2, y2)))
 			{
@@ -298,10 +298,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		if (tokSize > 3)
 		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
+			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
 			FLOAT dx = x2 - x1;
 			FLOAT dy = y2 - y1;
 			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
@@ -310,10 +310,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			bool size = true;
 			bool open = true;
 
-			if (tokSize > 4) xRadius = ParseNumber(xRadius, tokens[4].c_str(), 0, ConfigParser::ParseInt);
+			if (tokSize > 4) xRadius = ParseNumber(xRadius, tokens[4].c_str(), 0.0, ConfigParser::ParseDouble);
 
 			FLOAT yRadius = xRadius;
-			if (tokSize > 5) yRadius = ParseNumber(yRadius, tokens[5].c_str(), 0, ConfigParser::ParseInt);
+			if (tokSize > 5) yRadius = ParseNumber(yRadius, tokens[5].c_str(), 0.0, ConfigParser::ParseDouble);
 			if (tokSize > 6) angle = ParseNumber(angle, tokens[6].c_str(), 0.0, ConfigParser::ParseDouble);
 			if (tokSize > 7) ParseBool(sweep, tokens[7].c_str());
 			if (tokSize > 8) ParseBool(size, tokens[8].c_str());
@@ -345,12 +345,12 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		if (tokSize > 5)
 		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseInt(tokens[0].c_str(), 0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseInt(tokens[1].c_str(), 0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseInt(tokens[2].c_str(), 0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseInt(tokens[3].c_str(), 0);
-			FLOAT cx1 = (FLOAT)ConfigParser::ParseInt(tokens[4].c_str(), 0);
-			FLOAT cy1 = (FLOAT)ConfigParser::ParseInt(tokens[5].c_str(), 0);
+			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
+			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
+			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
+			FLOAT cx1 = (FLOAT)ConfigParser::ParseDouble(tokens[4].c_str(), 0.0);
+			FLOAT cy1 = (FLOAT)ConfigParser::ParseDouble(tokens[5].c_str(), 0.0);
 			bool open = true;
 
 			if (tokSize == 6 || tokSize == 7)
@@ -365,8 +365,8 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			}
 			else if (tokSize > 7)
 			{
-				FLOAT cx2 = (FLOAT)ConfigParser::ParseInt(tokens[6].c_str(), 0);
-				FLOAT cy2 = (FLOAT)ConfigParser::ParseInt(tokens[7].c_str(), 0);
+				FLOAT cx2 = (FLOAT)ConfigParser::ParseDouble(tokens[6].c_str(), 0.0);
+				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(tokens[7].c_str(), 0.0);
 
 				if (tokSize > 8) open = ConfigParser::ParseInt(tokens[8].c_str(), 0) == 0;
 	
@@ -574,11 +574,11 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
 		{
-			int width = ConfigParser::ParseInt(option.c_str(), 0);
-			if (width < 0)
+			FLOAT width = (FLOAT)ConfigParser::ParseDouble(option.c_str(), 0.0);
+			if (width < 0.0f)
 			{
 				LogWarningF(this, L"StrokeWidth must not be negative");
-				width = 0;
+				width = 0.0f;
 			}
 
 			shape->SetStrokeWidth(width);
@@ -647,7 +647,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHOFFSET"))
 		{
 			const WCHAR* modifier = option.c_str();
-			FLOAT dashOffset = (FLOAT)ConfigParser::ParseInt(modifier, 0);
+			FLOAT dashOffset = (FLOAT)ConfigParser::ParseDouble(modifier, 0.0);
 			if (dashOffset < 0.0f)
 			{
 				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier);
@@ -734,8 +734,8 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 		auto offset = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
 		if (offset.size() >= 2)
 		{
-			int x = ConfigParser::ParseInt(offset[0].c_str(), 0);
-			int y = ConfigParser::ParseInt(offset[1].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(offset[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(offset[1].c_str(), 0.0);
 			shape->SetOffset(x, y);
 		}
 		else
@@ -754,11 +754,11 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 			bool anchorDefined = false;
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			FLOAT rotation = (FLOAT)ConfigParser::ParseDouble(rotate[0].c_str(), 0);
+			FLOAT rotation = (FLOAT)ConfigParser::ParseDouble(rotate[0].c_str(), 0.0);
 			if (size > 2)
 			{
-				anchorX = (FLOAT)ConfigParser::ParseInt(rotate[1].c_str(), 0);
-				anchorY = (FLOAT)ConfigParser::ParseInt(rotate[2].c_str(), 0);
+				anchorX = (FLOAT)ConfigParser::ParseDouble(rotate[1].c_str(), 0.0);
+				anchorY = (FLOAT)ConfigParser::ParseDouble(rotate[2].c_str(), 0.0);
 				anchorDefined = true;
 			}
 
@@ -786,8 +786,8 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 			if (size > 3)
 			{
-				anchorX = (FLOAT)ConfigParser::ParseInt(scale[2].c_str(), 0);
-				anchorY = (FLOAT)ConfigParser::ParseInt(scale[3].c_str(), 0);
+				anchorX = (FLOAT)ConfigParser::ParseDouble(scale[2].c_str(), 0.0);
+				anchorY = (FLOAT)ConfigParser::ParseDouble(scale[3].c_str(), 0.0);
 				anchorDefined = true;
 			}
 
@@ -815,8 +815,8 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 			if (size > 3)
 			{
-				anchorX = (FLOAT)ConfigParser::ParseInt(skew[2].c_str(), 0);
-				anchorY = (FLOAT)ConfigParser::ParseInt(skew[3].c_str(), 0);
+				anchorX = (FLOAT)ConfigParser::ParseDouble(skew[2].c_str(), 0.0);
+				anchorY = (FLOAT)ConfigParser::ParseDouble(skew[3].c_str(), 0.0);
 				anchorDefined = true;
 			}
 
@@ -876,7 +876,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 			if (tokens.size() == 2)
 			{
 				stops[i - 1].color = Gfx::Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
-				stops[i - 1].position = (float)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0f);
+				stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 			}
 		}
 
@@ -914,8 +914,8 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 
 			if (size > 1)
 			{
-				FLOAT centerX = (FLOAT)ConfigParser::ParseInt(radial[0].c_str(), 0);
-				FLOAT centerY = (FLOAT)ConfigParser::ParseInt(radial[1].c_str(), 0);
+				FLOAT centerX = (FLOAT)ConfigParser::ParseDouble(radial[0].c_str(), 0.0);
+				FLOAT centerY = (FLOAT)ConfigParser::ParseDouble(radial[1].c_str(), 0.0);
 				FLOAT offsetX = FLT_MAX;
 				FLOAT offsetY = FLT_MAX;
 				FLOAT radiusX = FLT_MAX;
@@ -923,14 +923,14 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 
 				if (size > 3)
 				{
-					offsetX = (FLOAT)ConfigParser::ParseInt(radial[2].c_str(), 0);
-					offsetY = (FLOAT)ConfigParser::ParseInt(radial[3].c_str(), 0);
+					offsetX = (FLOAT)ConfigParser::ParseDouble(radial[2].c_str(), 0.0);
+					offsetY = (FLOAT)ConfigParser::ParseDouble(radial[3].c_str(), 0.0);
 				}
 
 				if (size > 5)
 				{
-					radiusX = (FLOAT)ConfigParser::ParseInt(radial[4].c_str(), 0);
-					radiusY = (FLOAT)ConfigParser::ParseInt(radial[5].c_str(), 0);
+					radiusX = (FLOAT)ConfigParser::ParseDouble(radial[4].c_str(), 0.0);
+					radiusY = (FLOAT)ConfigParser::ParseDouble(radial[5].c_str(), 0.0);
 				}
 
 				parseGradientStops();
@@ -980,8 +980,8 @@ bool MeterShape::ParsePath(std::wstring& options)
 	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
 	if (paramSize < 1) return false;  // Starting point must have a x and y
 
-	FLOAT startX = (FLOAT)ConfigParser::ParseInt(stPoint[0].c_str(), 0);
-	FLOAT startY = (FLOAT)ConfigParser::ParseInt(stPoint[1].c_str(), 0);
+	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
+	FLOAT startY = (FLOAT)ConfigParser::ParseDouble(stPoint[1].c_str(), 0.0);
 
 	Gfx::Path* shape = new Gfx::Path(startX, startY);
 
@@ -999,8 +999,8 @@ bool MeterShape::ParsePath(std::wstring& options)
 			auto lineTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
 			if (lineTo.size() < 2) { error = true; break; }
 
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(lineTo[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(lineTo[1].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(lineTo[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(lineTo[1].c_str(), 0.0);
 
 			shape->AddLine(x, y);
 
@@ -1012,8 +1012,8 @@ bool MeterShape::ParsePath(std::wstring& options)
 			auto arcSize = arcTo.size();
 			if (arcSize < 2) { error = true; break; }
 
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(arcTo[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(arcTo[1].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(arcTo[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(arcTo[1].c_str(), 0.0);
 			FLOAT dx = x - currentPoint.x;
 			FLOAT dy = y - currentPoint.y;
 			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
@@ -1021,10 +1021,10 @@ bool MeterShape::ParsePath(std::wstring& options)
 			bool sweep = true;
 			bool size = true;
 
-			if (arcSize > 2) xRadius = ParseNumber(xRadius, arcTo[2].c_str(), 0, ConfigParser::ParseInt);
+			if (arcSize > 2) xRadius = ParseNumber(xRadius, arcTo[2].c_str(), 0.0, ConfigParser::ParseDouble);
 
 			FLOAT yRadius = xRadius;
-			if (arcSize > 3) yRadius = ParseNumber(yRadius, arcTo[3].c_str(), 0, ConfigParser::ParseInt);
+			if (arcSize > 3) yRadius = ParseNumber(yRadius, arcTo[3].c_str(), 0.0, ConfigParser::ParseDouble);
 			if (arcSize > 4) angle = ParseNumber(angle, arcTo[4].c_str(), 0.0, ConfigParser::ParseDouble);
 			if (arcSize > 5) ParseBool(sweep, arcTo[5].c_str());
 			if (arcSize > 6) ParseBool(size, arcTo[6].c_str());
@@ -1041,10 +1041,10 @@ bool MeterShape::ParsePath(std::wstring& options)
 			auto curveSize = curveTo.size();
 			if (curveSize < 4) { error = true; break; }
 
-			FLOAT x = (FLOAT)ConfigParser::ParseInt(curveTo[0].c_str(), 0);
-			FLOAT y = (FLOAT)ConfigParser::ParseInt(curveTo[1].c_str(), 0);
-			FLOAT cx1 = (FLOAT)ConfigParser::ParseInt(curveTo[2].c_str(), 0);
-			FLOAT cy1 = (FLOAT)ConfigParser::ParseInt(curveTo[3].c_str(), 0);
+			FLOAT x = (FLOAT)ConfigParser::ParseDouble(curveTo[0].c_str(), 0.0);
+			FLOAT y = (FLOAT)ConfigParser::ParseDouble(curveTo[1].c_str(), 0.0);
+			FLOAT cx1 = (FLOAT)ConfigParser::ParseDouble(curveTo[2].c_str(), 0.0);
+			FLOAT cy1 = (FLOAT)ConfigParser::ParseDouble(curveTo[3].c_str(), 0.0);
 
 			if (curveSize < 6)
 			{
@@ -1052,8 +1052,8 @@ bool MeterShape::ParsePath(std::wstring& options)
 			}
 			else
 			{
-				FLOAT cx2 = (FLOAT)ConfigParser::ParseInt(curveTo[4].c_str(), 0);
-				FLOAT cy2 = (FLOAT)ConfigParser::ParseInt(curveTo[5].c_str(), 0);
+				FLOAT cx2 = (FLOAT)ConfigParser::ParseDouble(curveTo[4].c_str(), 0.0);
+				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(curveTo[5].c_str(), 0.0);
 				
 				shape->AddCubicCurve(x, y, cx1, cy1, cx2, cy2);
 			}

@@ -72,8 +72,8 @@ public:
 	void SetCombined() { m_IsCombined = true; }
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
-	void SetOffset(int x, int y) { m_Offset = D2D1::SizeF((FLOAT)x, (FLOAT)y); }
-	void SetStrokeWidth(int strokeWidth) { m_StrokeWidth = (FLOAT)strokeWidth; }
+	void SetOffset(FLOAT x, FLOAT y) { m_Offset = D2D1::SizeF(x, y); }
+	void SetStrokeWidth(FLOAT strokeWidth) { m_StrokeWidth = strokeWidth; }
 
 	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 	void SetScale(FLOAT scaleX, FLOAT scaleY, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);

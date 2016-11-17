@@ -184,7 +184,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 		return true;
 	}
 
-	const D2D1_RECT_F rect = { 0, 0, 0, 0 };
+	static const D2D1_RECT_F rect = { 0.0f, 0.0f, 0.0f, 0.0f };
 	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> emptyShape;
 	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, emptyShape.GetAddressOf());
 	if (FAILED(hr)) return false;
