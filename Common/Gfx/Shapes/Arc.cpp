@@ -20,9 +20,10 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 		D2D1::SizeF(xRadius, yRadius),
 		angle,
 		sweep,
-		size)),
-	m_FigureEnding(ending)
+		size))
 {
+	m_ShapeEnding = ending;
+
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -33,7 +34,7 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 		{
 			sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
 			sink->AddArc(m_ArcSegment);
-			sink->EndFigure(m_FigureEnding);
+			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
 			hr = path.CopyTo(m_Shape.GetAddressOf());
@@ -61,7 +62,7 @@ Shape* Arc::Clone()
 		m_ArcSegment.rotationAngle,
 		m_ArcSegment.sweepDirection,
 		m_ArcSegment.arcSize,
-		m_FigureEnding);
+		m_ShapeEnding);
 	CloneModifiers(newShape);
 	return newShape;
 }

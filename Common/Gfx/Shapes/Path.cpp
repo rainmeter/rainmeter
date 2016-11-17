@@ -49,6 +49,9 @@ Shape* Path::Clone()
 	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 
 	CloneModifiers(newShape);
+
+	newShape->m_ShapeEnding = m_ShapeEnding;
+
 	return newShape;
 }
 
@@ -99,7 +102,10 @@ void Path::SetSegmentFlags(D2D1_PATH_SEGMENT flags)
 void Path::Close(D2D1_FIGURE_END ending)
 {
 	if (!m_Path || !m_Sink) return;
-	m_Sink->EndFigure(ending);
+
+	m_ShapeEnding = ending;
+
+	m_Sink->EndFigure(m_ShapeEnding);
 	m_Sink->Close();
 
 	m_Path.CopyTo(m_Shape.GetAddressOf());

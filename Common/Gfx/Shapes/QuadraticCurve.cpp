@@ -17,9 +17,10 @@ QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_QuadraticBezierSegment(D2D1::QuadraticBezierSegment(
 		D2D1::Point2F(cx, cy),
-		D2D1::Point2F(x2, y2))),
-	m_FigureEnding(ending)
+		D2D1::Point2F(x2, y2)))
 {
+	m_ShapeEnding = ending;
+
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -30,7 +31,7 @@ QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 		{
 			sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
 			sink->AddQuadraticBezier(m_QuadraticBezierSegment);
-			sink->EndFigure(m_FigureEnding);
+			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
 			hr = path.CopyTo(m_Shape.GetAddressOf());
@@ -54,7 +55,7 @@ Shape* QuadraticCurve::Clone()
 		m_QuadraticBezierSegment.point2.y,
 		m_QuadraticBezierSegment.point1.x,
 		m_QuadraticBezierSegment.point1.y,
-		m_FigureEnding);
+		m_ShapeEnding);
 	CloneModifiers(newShape);
 	return newShape;
 }

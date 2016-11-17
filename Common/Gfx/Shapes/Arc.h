@@ -27,7 +27,6 @@ private:
 
 	D2D1_POINT_2F m_StartPoint;
 	D2D1_ARC_SEGMENT m_ArcSegment;
-	D2D1_FIGURE_END m_FigureEnding;
 };
 
 } // Gfx
