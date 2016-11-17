@@ -850,11 +850,11 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
 	for (size_t i = 1; i < args.size(); ++i)
 	{
-		tokens = ConfigParser::Tokenize(args[i], L";");
+		tokens = ConfigParser::Tokenize2(args[i], L';', PairedPunctuation::Parentheses);
 		if (tokens.size() == 2)
 		{
 			stops[i - 1].color = Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
-			stops[i - 1].position = (float)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0f);
+			stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 		}
 	}
 
