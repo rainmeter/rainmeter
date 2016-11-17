@@ -29,7 +29,7 @@ Path::Path(FLOAT x, FLOAT y, bool isCloned) : Shape(ShapeType::Path),
 		}
 	}
 
-	LogErrorF(L"Could not create line object. X1=%i, Y1=%i", (int)x, (int)y);
+	LogErrorF(L"Could not create path object. X1=%i, Y1=%i", (int)x, (int)y);
 }
 
 Path::~Path()
