@@ -65,9 +65,10 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	if (FAILED(hr)) return matrix;
 
 	D2D1_POINT_2F point = D2D1::Point2F(bounds.left, bounds.top);
+
+	// Use the center of the shape as the default anchor point for all transforms
 	D2D1_POINT_2F center = D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
 
-	// If the rotation anchor is not defined, use the center of the shape
 	D2D1_POINT_2F rotationPoint = m_RotationAnchorDefined ? m_RotationAnchor : center;
 	rotationPoint = Util::AddPoint2F(point, rotationPoint);
 
