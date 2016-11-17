@@ -23,7 +23,7 @@ public:
 		D2D1_SWEEP_DIRECTION direction, D2D1_ARC_SIZE arcSize);
 	void AddQuadraticCurve(FLOAT x, FLOAT y, FLOAT cx, FLOAT cy);
 	void AddCubicCurve(FLOAT x, FLOAT y, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2);
-	void AddSegmentFlags(D2D1_PATH_SEGMENT flags);
+	void SetSegmentFlags(D2D1_PATH_SEGMENT flags);
 	void Close(D2D1_FIGURE_END ending);
 
 	virtual Shape* Clone() override;

@@ -90,7 +90,7 @@ void Path::AddCubicCurve(FLOAT x, FLOAT y, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOA
 	m_Sink->AddBezier(segment);
 }
 
-void Path::AddSegmentFlags(D2D1_PATH_SEGMENT flags)
+void Path::SetSegmentFlags(D2D1_PATH_SEGMENT flags)
 {
 	if (!m_Path || !m_Sink) return;
 	m_Sink->SetSegmentFlags(flags);

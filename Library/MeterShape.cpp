@@ -964,6 +964,14 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 
 bool MeterShape::ParsePath(std::wstring& options)
 {
+	auto createSegmentFlags = [](bool stroke, bool round) -> D2D1_PATH_SEGMENT
+	{
+		D2D1_PATH_SEGMENT flags = D2D1_PATH_SEGMENT_NONE;
+		if (stroke) flags |= D2D1_PATH_SEGMENT_FORCE_UNSTROKED;
+		if (round) flags |= D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN;
+		return flags;
+	};
+
 	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
 	auto paramSize = params.size();
 	if (paramSize < 2) return false;  // Must have a starting point and at least 1 segment
@@ -979,6 +987,8 @@ bool MeterShape::ParsePath(std::wstring& options)
 
 	bool error = false;
 	bool open = true;
+	bool setNoStroke = false;
+	bool setRoundJoin = false;
 	D2D1_POINT_2F currentPoint = D2D1::Point2F(startX, startY);
 
 	for (size_t i = 1; i < paramSize; ++i)
@@ -1050,29 +1060,15 @@ bool MeterShape::ParsePath(std::wstring& options)
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"SEGMENT"))
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETNOSTROKE"))
 		{
-			auto seg = ConfigParser::Tokenize(type, L",");
-			if (seg.empty()) { error = true; break; }
-
-			D2D1_PATH_SEGMENT segment = D2D1_PATH_SEGMENT_NONE;
-			for (const auto& s : seg)
-			{
-				if (_wcsnicmp(s.c_str(), L"ROUND", 5) == 0)
-				{
-					segment |= D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN;
-				}
-				else if (_wcsnicmp(s.c_str(), L"NOSTROKE", 8) == 0)
-				{
-					segment |= D2D1_PATH_SEGMENT_FORCE_UNSTROKED;
-				}
-				else
-				{
-					LogWarningF(this, L"Invalid segment flag: %s", type.c_str());
-				}
-			}
-
-			shape->AddSegmentFlags(segment);
+			setNoStroke = ConfigParser::ParseInt(type.c_str(), 0) != 0;
+			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+		}
+		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETROUNDJOIN"))
+		{
+			setRoundJoin = ConfigParser::ParseInt(type.c_str(), 0) != 0;
+			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
 		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSEPATH"))
 		{
