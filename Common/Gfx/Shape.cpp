@@ -174,7 +174,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 			if (FAILED(hr)) return false;
 
 			hr = otherShape->m_Shape.Get()->Widen(
-				otherShape->m_StrokeWidth,
+				0.01f,//otherShape->m_StrokeWidth,
 				otherShape->m_StrokeStyle.Get(),
 				D2D1::Matrix3x2F::Identity(),
 				sink2.Get());
