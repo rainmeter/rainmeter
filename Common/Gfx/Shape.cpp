@@ -223,15 +223,11 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 		if (FAILED(hr)) return false;
 
 		hr = m_Shape.Get()->Widen(
-			m_StrokeWidth,
+			0.01f,
 			m_StrokeStyle.Get(),
 			D2D1::Matrix3x2F::Identity(),
 			sink2.Get());
 		if (FAILED(hr)) return false;
-
-		m_StrokeWidth = 0.0f;
-		m_FillColor = m_StrokeColor;
-		m_StrokeColor = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f);
 
 		sink2->Close();
 
