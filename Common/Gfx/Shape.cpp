@@ -29,7 +29,6 @@ Shape::Shape(ShapeType type) :
 	m_StrokeWidth(1.0f),
 	m_StrokeCustomDashes(),
 	m_StrokeProperties(D2D1::StrokeStyleProperties1()),
-	m_ShapeEnding(D2D1_FIGURE_END_CLOSED),
 	m_FillBrushType(BrushType::Solid),
 	m_FillColor(D2D1::ColorF(D2D1::ColorF::White)),
 	m_FillLinearGradientAngle(0),
@@ -163,40 +162,11 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 	if (otherShape)
 	{
-		if (otherShape->m_ShapeEnding == D2D1_FIGURE_END_OPEN)
-		{
-			Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink2;
-			Microsoft::WRL::ComPtr<ID2D1PathGeometry> path2;
-			hr = Canvas::c_D2DFactory->CreatePathGeometry(path2.GetAddressOf());
-			if (FAILED(hr)) return false;
-
-			hr = path2->Open(sink2.GetAddressOf());
-			if (FAILED(hr)) return false;
-
-			hr = otherShape->m_Shape.Get()->Widen(
-				0.01f,
-				otherShape->m_StrokeStyle.Get(),
-				D2D1::Matrix3x2F::Identity(),
-				sink2.Get());
-			if (FAILED(hr)) return false;
-
-			sink2->Close();
-
-			hr = m_Shape->CombineWithGeometry(
-				path2.Get(),
-				mode,
-				otherShape->GetShapeMatrix(),
-				sink.Get());
-		}
-		else // D2D1_FIGURE_END_CLOSED
-		{
-			hr = m_Shape->CombineWithGeometry(
-				otherShape->m_Shape.Get(),
-				mode,
-				otherShape->GetShapeMatrix(),
-				sink.Get());
-		}
-
+		hr = m_Shape->CombineWithGeometry(
+			otherShape->m_Shape.Get(),
+			mode,
+			otherShape->GetShapeMatrix(),
+			sink.Get());
 		if (FAILED(hr)) return false;
 
 		sink->Close();
@@ -212,31 +182,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, emptyShape.GetAddressOf());
 	if (FAILED(hr)) return false;
 
-	if (m_ShapeEnding == D2D1_FIGURE_END_OPEN)
-	{
-		Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink2;
-		Microsoft::WRL::ComPtr<ID2D1PathGeometry> path2;
-		hr = Canvas::c_D2DFactory->CreatePathGeometry(path2.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = path2->Open(sink2.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = m_Shape.Get()->Widen(
-			0.01f,
-			m_StrokeStyle.Get(),
-			D2D1::Matrix3x2F::Identity(),
-			sink2.Get());
-		if (FAILED(hr)) return false;
-
-		sink2->Close();
-
-		hr = emptyShape->CombineWithGeometry(path2.Get(), mode, GetShapeMatrix(), sink.Get());
-	}
-	else // D2D1_FIGURE_END_CLOSED
-	{
-		hr = emptyShape->CombineWithGeometry(m_Shape.Get(), mode, GetShapeMatrix(), sink.Get());
-	}
+	hr = emptyShape->CombineWithGeometry(m_Shape.Get(), mode, GetShapeMatrix(), sink.Get());
 
 	sink->Close();
 

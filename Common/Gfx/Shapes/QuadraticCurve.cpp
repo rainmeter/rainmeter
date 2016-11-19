@@ -17,10 +17,9 @@ QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_QuadraticBezierSegment(D2D1::QuadraticBezierSegment(
 		D2D1::Point2F(cx, cy),
-		D2D1::Point2F(x2, y2)))
+		D2D1::Point2F(x2, y2))),
+	m_ShapeEnding(ending)
 {
-	m_ShapeEnding = ending;
-
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());

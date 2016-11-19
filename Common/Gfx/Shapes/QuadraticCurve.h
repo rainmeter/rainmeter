@@ -27,6 +27,7 @@ private:
 
 	D2D1_POINT_2F m_StartPoint;
 	D2D1_QUADRATIC_BEZIER_SEGMENT m_QuadraticBezierSegment;
+	D2D1_FIGURE_END m_ShapeEnding;
 };
 
 } // Gfx

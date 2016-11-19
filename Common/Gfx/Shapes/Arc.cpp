@@ -20,10 +20,9 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 		D2D1::SizeF(xRadius, yRadius),
 		angle,
 		sweep,
-		size))
+		size)),
+	m_ShapeEnding(ending)
 {
-	m_ShapeEnding = ending;
-
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());

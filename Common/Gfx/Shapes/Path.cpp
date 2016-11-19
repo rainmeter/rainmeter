@@ -50,8 +50,6 @@ Shape* Path::Clone()
 
 	CloneModifiers(newShape);
 
-	newShape->m_ShapeEnding = m_ShapeEnding;
-
 	return newShape;
 }
 
@@ -103,9 +101,7 @@ void Path::Close(D2D1_FIGURE_END ending)
 {
 	if (!m_Path || !m_Sink) return;
 
-	m_ShapeEnding = ending;
-
-	m_Sink->EndFigure(m_ShapeEnding);
+	m_Sink->EndFigure(ending);
 	m_Sink->Close();
 
 	m_Path.CopyTo(m_Shape.GetAddressOf());

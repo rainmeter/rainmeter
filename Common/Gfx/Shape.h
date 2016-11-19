@@ -105,7 +105,6 @@ protected:
 	void CloneModifiers(Shape* otherShape);
 
 	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
-	D2D1_FIGURE_END m_ShapeEnding;
 
 private:
 	friend class Canvas;

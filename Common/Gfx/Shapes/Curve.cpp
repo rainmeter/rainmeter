@@ -18,10 +18,9 @@ Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 	m_BezierSegment(D2D1::BezierSegment(
 		D2D1::Point2F(cx1, cy1),
 		D2D1::Point2F(cx2, cy2),
-		D2D1::Point2F(x2, y2)))
+		D2D1::Point2F(x2, y2))),
+	m_ShapeEnding(ending)
 {
-	m_ShapeEnding = ending;
-
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
