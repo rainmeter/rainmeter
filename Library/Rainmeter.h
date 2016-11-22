@@ -109,6 +109,7 @@ public:
 
 	const std::wstring& GetSkinEditor() { return m_SkinEditor; }
 	void SetSkinEditor(const std::wstring& path);
+    void RunSkinEditor(const std::wstring & file);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
 	HWND GetWindow() { return m_Window; }

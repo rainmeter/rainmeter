@@ -20,6 +20,8 @@
 #include "MeterString.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
+#include <regex> 
+
 
 using namespace Gdiplus;
 
@@ -762,21 +764,29 @@ void Rainmeter::ReloadSettings()
 	ReadGeneralSettings(m_IniFile);
 }
 
+void Rainmeter::RunSkinEditor(const std::wstring & filePath)
+{
+    std::wregex argsRegex(L"(.+\.exe)\\s+(.*)");
+    std::wsmatch base_match;
+    std::wstring args, editorPath = m_SkinEditor;
+    if (std::regex_match(m_SkinEditor, base_match, argsRegex)) {
+        editorPath = base_match[1].str();
+        args = base_match[2].str();
+    }
+    args += L" \"" + filePath + L'"';
+    //ShowMessage(nullptr, (args + L":" + m_SkinEditor).c_str(), MB_OK | MB_ICONINFORMATION);
+    CommandHandler::RunFile(editorPath.c_str(), args.c_str());
+}
+
 void Rainmeter::EditSettings()
 {
-	std::wstring file = L'"' + m_IniFile;
-	file += L'"';
-	CommandHandler::RunFile(m_SkinEditor.c_str(), file.c_str());
+    RunSkinEditor(m_IniFile);
 }
 
 void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
 {
-	std::wstring args = L'"' + m_SkinPath;
-	args += name;
-	args += L'\\';
-	args += iniFile;
-	args += L'"';
-	CommandHandler::RunFile(m_SkinEditor.c_str(), args.c_str());
+    std::wstring filePath = m_SkinPath + name + L'\\' + iniFile;
+    RunSkinEditor(filePath);
 }
 
 void Rainmeter::OpenSkinFolder(const std::wstring& name)
@@ -1788,10 +1798,9 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 
 void Rainmeter::ShowLogFile()
 {
-	std::wstring logFile = L'"' + GetLogger().GetLogFilePath();
-	logFile += L'"';
+	std::wstring logFile = GetLogger().GetLogFilePath();
 
-	CommandHandler::RunFile(m_SkinEditor.c_str(), logFile.c_str());
+    RunSkinEditor(logFile.c_str());
 }
 
 void Rainmeter::SetDebug(bool debug)
