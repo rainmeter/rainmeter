@@ -1,4 +1,6 @@
-﻿namespace InputText
+﻿using System.Windows.Forms;
+
+namespace InputText
 {
     partial class InputBox
     {
@@ -43,6 +45,7 @@
             this.txtInput.Size = new System.Drawing.Size(200, 22);
             this.txtInput.TabIndex = 0;
             this.txtInput.Leave += new System.EventHandler(this.txtInput_Leave);
+			this.txtInput.KeyPress += new KeyPressEventHandler(this.txtInput_KeyPressed);
             // 
             // btnOK
             // 

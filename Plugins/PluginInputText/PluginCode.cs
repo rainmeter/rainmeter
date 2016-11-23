@@ -31,8 +31,10 @@ namespace InputText
             ReadOption("SolidColor", param.Options);
             ReadOption("Password", param.Options);
             ReadOption("TopMost", param.Options);
+			ReadOption("InputLimit", param.Options, true);
+			ReadOption("InputNumber", param.Options);
 
-            param.DismissAction = rm.ReadString("OnDismissAction", "", false);
+			param.DismissAction = rm.ReadString("OnDismissAction", "", false);
 
             #region Handle a single parameter
 
@@ -292,7 +294,7 @@ namespace InputText
 
                 changeSetting("FontFace", input.ChangeFontFace);
                 changeSetting("FontSize", input.ChangeFontSize);
-
+				
                 changeSetting("W", input.ChangeW);
                 changeSetting("H", input.ChangeH);
                 changeSetting("X", input.ChangeX);
@@ -334,8 +336,15 @@ namespace InputText
 
                 changeSetting("DefaultValue", input.DefaultValue);
 
-                #endregion
-            }
+	            changeSetting("InputLimit", input.TextMaxLength);
+
+				if (Overrides.ContainsKey("InputNumber"))
+					input.MakeNumeric(Overrides["InputNumber"] == "1");
+				else if (Options.ContainsKey("InputNumber"))
+					input.MakeNumeric(Options["InputNumber"].Trim() == "1");
+
+				#endregion
+			}
 
             string result = null;
 
