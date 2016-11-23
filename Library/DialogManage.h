@@ -44,6 +44,7 @@ private:
 		enum Id
 		{
 			Id_ActiveSkinsButton = 100,
+			Id_NewSkinButton,
 			Id_SkinsTreeView,
 			Id_CreateSkinPackageButton,
 			Id_FileLabel,
@@ -73,6 +74,7 @@ private:
 		};
 
 		TabSkins();
+		~TabSkins();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -91,6 +93,12 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 
+		void CreateNewSkin();
+		static LRESULT CALLBACK TreeEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+
 		static std::wstring GetTreeSelectionPath(HWND tree);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index = 0);
 
@@ -98,7 +106,12 @@ private:
 		std::wstring m_SkinFolderPath;
 		Skin* m_SkinWindow;
 		bool m_HandleCommands;
+		bool m_HandleNotifications;
 		bool m_IgnoreUpdate;
+
+		HWND m_TreeEdit;
+		static HBRUSH s_NewSkinBkBrush;
+		static COLORREF s_NewSkinBkColor;
 	};
 
 	// Layouts tab

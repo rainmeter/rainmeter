@@ -5,6 +5,7 @@
 #define IDC_STATIC                                   -1
 #define IDI_RAINMETER                                100
 #define IDI_TRAY                                     101
+#define IDI_ADDFOLDER                                102
 
 #define IDI_SKININSTALLER                            200
 #define IDB_INSTALLHEADER                            201
@@ -228,6 +229,8 @@
 #define ID_STR_FAVORITES                             2144
 #define ID_STR_NOFAVORITES                           2145
 #define ID_STR_CUSTOMSKINACTIONS                     2146
+#define ID_STR_NEWSKIN                               2147
+#define ID_STR_CREATENEWSKIN                         2148
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002

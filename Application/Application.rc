@@ -55,3 +55,4 @@ VS_VERSION_INFO VERSIONINFO
 // remains consistent on all systems.
 IDI_RAINMETER           ICON    DISCARDABLE     "Rainmeter.ico"
 IDI_TRAY                ICON    DISCARDABLE     "Tray.ico"
+IDI_ADDFOLDER           ICON    DISCARDABLE     "AddFolder.ico"

@@ -66,7 +66,7 @@ void DialogManage::Open(int tab)
 
 	c_Dialog->ShowDialogWindow(
 		GetString(ID_STR_MANAGERAINMETER),
-		0, 0, 500, 322,
+		0, 0, 510, 322,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		GetRainmeter().GetWindow());
@@ -213,13 +213,13 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			buttonWidth + buttonWidth + 13, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_HelpButton, ID_STR_HELP,
-			389, 303, 50, 14,
+			397, 303, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
-			444, 303, 50, 14,
+			453, 303, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		CT_TAB(Id_Tab, 0,
-			6, 6, 488, 293,
+			6, 6, 498, 293,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
@@ -343,16 +343,33 @@ INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
+HBRUSH DialogManage::TabSkins::s_NewSkinBkBrush = NULL;
+COLORREF DialogManage::TabSkins::s_NewSkinBkColor = RGB(229, 241, 251); // default color
+
 DialogManage::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_HandleCommands(false),
-	m_IgnoreUpdate(false)
+	m_HandleNotifications(false),
+	m_IgnoreUpdate(false),
+	m_TreeEdit(nullptr)
 {
+}
+
+DialogManage::TabSkins::~TabSkins()
+{
+	HWND item = GetControl(Id_NewSkinButton);
+	RemoveWindowSubclass(item, &NewSkinButtonSubclass, 1);
+
+	if (s_NewSkinBkBrush)
+	{
+		DeleteObject(s_NewSkinBkBrush);
+		s_NewSkinBkBrush = nullptr;
+	}
 }
 
 void DialogManage::TabSkins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 470, 260, owner);
+	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
 	short labelWidth = (short)_wtoi(GetString(ID_STR_NUM_LABELWIDTH));
@@ -360,121 +377,146 @@ void DialogManage::TabSkins::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_BUTTON(Id_ActiveSkinsButton, ID_STR_ACTIVESKINS,
-			0, 0, 146, 14,
+			0, 0, 134, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_ICON(Id_NewSkinButton, ID_STR_NEWSKIN,
+			138, 0, 18, 14,
+			WS_VISIBLE | WS_TABSTOP | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY, 0),
 		CT_TREEVIEW(Id_SkinsTreeView, 0,
-			0, 18, 145, 221,
+			0, 18, 155, 221,
 			WS_VISIBLE | WS_TABSTOP | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_VSCROLL, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_CreateSkinPackageButton, ID_STR_CREATERMSKINPACKAGE,
-			0, 244, 146, 14,
+			0, 244, 156, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_LABEL(Id_FileLabel, ID_STR_ELLIPSIS,
-			165, 0, 130, 14,
+			175, 0, 130, 14,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(Id_ConfigLabel, 0,
-			165, 15, 130, 9,
+			175, 15, 130, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_BUTTON(Id_LoadButton, ID_STR_LOAD,
-			310, 0, 50, 14,
+			320, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_BUTTON(Id_RefreshButton, ID_STR_REFRESH,
-			364, 0, 50, 14,
+			374, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_BUTTON(Id_EditButton, ID_STR_EDIT,
-			418, 0, 50, 14,
+			428, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
 		CT_LABEL(-1, ID_STR_AUTHORSC,
-			165, 30, 80, 9,
+			175, 30, 80, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(Id_AuthorLabel, 0,
-			230, 30, 245, 9,
+			240, 30, 245, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(-1, ID_STR_VERSIONSC,
-			165, 43, 80, 9,
+			175, 43, 80, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(Id_VersionLabel, 0,
-			230, 43, 245, 9,
+			240, 43, 245, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(-1, ID_STR_LICENSESC,
-			165, 56, 80, 9,
+			175, 56, 80, 9,
 			WS_VISIBLE | WS_TABSTOP | SS_NOPREFIX, 0),
 		CT_LABEL(Id_LicenseLabel, 0,
-			230, 56, 245, 9,
+			240, 56, 245, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(-1, ID_STR_INFORMATIONSC,
-			165, 69, 80, 9,
+			175, 69, 80, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_EDIT(Id_DescriptionLabel, 0,
-			228, 69, 238, 64,
+			238, 69, 238, 64,
 			WS_VISIBLE | ES_MULTILINE | ES_READONLY, 0),
 		CT_LINKLABEL(Id_AddMetadataLink, ID_STR_ADDMETADATA,
-			165, 142, 150, 9,
+			175, 142, 150, 9,
 			0, 0),
 
 		CT_LINEH(-1, ID_STR_COORDINATESSC,
-			165, 156, 304, 1,
+			175, 156, 304, 1,
 			WS_VISIBLE, 0),
 
 		CT_LABEL(-1, ID_STR_COORDINATESSC,
-			165, 169, labelWidth, 9,
+			175, 169, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_XPositionEdit, 0,
-			165 + labelWidth, 166, 38, 14,
+			175 + labelWidth, 166, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_EDIT(Id_YPositionEdit, 0,
-			165 + labelWidth + 42, 166, 38, 14,
+			175 + labelWidth + 42, 166, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-1, ID_STR_POSITIONSC,
-			165, 190, labelWidth, 9,
+			175, 190, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_ZPositionDropDownList, 0,
-			165 + labelWidth, 187, 80, 14,
+			175 + labelWidth, 187, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-1, ID_STR_LOADORDERSC,
-			165, 208, labelWidth, 9,
+			175, 208, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_LoadOrderEdit, 0,
-			165 + labelWidth, 205, 80, 14,
+			175 + labelWidth, 205, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-1, ID_STR_TRANSPARENCYSC,
-			165, 229, labelWidth, 9,
+			175, 229, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_TransparencyDropDownList, 0,
-			165 + labelWidth, 226, 80, 14,
+			175 + labelWidth, 226, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-1, ID_STR_ONHOVERSC,
-			165, 247, labelWidth, 9,
+			175, 247, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_OnHoverDropDownList, 0,
-			165 + labelWidth, 244, 80, 14,
+			175 + labelWidth, 244, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 
 		CT_BUTTON(Id_DisplayMonitorButton, ID_STR_DISPLAYMONITOR,
-			350, 166, 118, 14,
+			360, 166, 118, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_DraggableCheckBox, ID_STR_DRAGGABLE,
-			350, 185, 118, 9,
+			360, 185, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_ClickThroughCheckBox, ID_STR_CLICKTHROUGH,
-			350, 198, 118, 9,
+			360, 198, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_KeepOnScreenCheckBox, ID_STR_KEEPONSCREEN,
-			350, 211, 118, 9,
+			360, 211, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_SavePositionCheckBox, ID_STR_SAVEPOSITION,
-			350, 224, 118, 9,
+			360, 224, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_SnapToEdgesCheckBox, ID_STR_SNAPTOEDGES,
-			350, 237, 118, 9,
+			360, 237, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_FavoriteCheckBox, ID_STR_FAVORITE,
-			350, 250, 118, 9,
+			360, 250, 118, 9,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+
+	// Create tooltips for 'New Skin' button
+	HWND item = GetControl(Id_NewSkinButton);
+
+	HWND hwndTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		m_Window, NULL,
+		GetModuleHandle(NULL), NULL);
+
+	if (!hwndTip) return;
+
+	TOOLINFO toolInfo = { 0 };
+	toolInfo.cbSize = sizeof(toolInfo);
+	toolInfo.hwnd = m_Window;
+	toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+	toolInfo.uId = (UINT_PTR)item;
+	toolInfo.lpszText = GetString(ID_STR_CREATENEWSKIN);
+	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+
+	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
 }
 
 void DialogManage::TabSkins::Initialize()
@@ -503,6 +545,10 @@ void DialogManage::TabSkins::Initialize()
 	item = GetControl(Id_SkinsTreeView);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
 	Update(nullptr, false);
+
+	// Apply icon to new skin button
+	hIcon = GetIcon(IDI_ADDFOLDER);
+	SendDlgItemMessage(m_Window, Id_NewSkinButton, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 	// Get rid of the EDITTEXT control border
 	item = GetControl(Id_DescriptionLabel);
@@ -537,6 +583,7 @@ void DialogManage::TabSkins::Initialize()
 
 	m_Initialized = true;
 	m_HandleCommands = true;
+	m_HandleNotifications = true;
 }
 
 /*
@@ -882,6 +929,119 @@ void DialogManage::TabSkins::ReadSkin()
 	delete [] buffer;
 }
 
+void DialogManage::TabSkins::CreateNewSkin()
+{
+	std::wstring name = L"NewSkin";
+	const std::wstring path = GetRainmeter().GetSkinPath();
+
+	// Check if directory already exists or is already in the skin registry
+	// Append numbers at the end until the directory does not exist (or in the skin registry)
+	std::wstring newPath = path + name;
+	BOOL exists = PathIsDirectory(newPath.c_str());
+	size_t i = 0;
+	while (exists || GetRainmeter().m_SkinRegistry.FindFolder(name) != nullptr)
+	{
+		name = L"NewSkin" + std::to_wstring(++i);
+		newPath = path + name;
+		exists = PathIsDirectory(newPath.c_str());
+	}
+
+	// Add |NewSkin| to tree
+	HWND tree = GetControl(Id_SkinsTreeView);
+	TVINSERTSTRUCT tvi = { 0 };
+	tvi.hInsertAfter = TVI_SORT;
+	tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+	tvi.item.iImage = tvi.item.iSelectedImage = 0;
+	tvi.item.pszText = (WCHAR*)name.c_str();
+	tvi.hParent = TreeView_InsertItem(tree, &tvi);
+
+	// Make tree nodes editable
+	LONG_PTR style = GetWindowLongPtr(tree, GWL_STYLE) | TVS_EDITLABELS;
+	SetWindowLongPtr(tree, GWL_STYLE, style);
+
+	// Enter 'edit mode' of treeview edit control
+	m_HandleNotifications = false;
+	TreeView_EditLabel(tree, tvi.hParent);
+	m_HandleNotifications = true;
+}
+
+LRESULT DialogManage::TabSkins::TreeEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	if (!lParam) return DefSubclassProc(hwnd, msg, wParam, lParam);
+
+	switch (msg)
+	{
+	case WM_GETDLGCODE:
+		{
+			LPMSG lpMsg = (LPMSG)lParam;
+			switch (lpMsg->message)
+			{
+			case WM_CHAR:
+			case WM_KEYDOWN:
+				switch (wParam)
+				{
+				case VK_ESCAPE:
+					TreeView_EndEditLabelNow(hwnd, FALSE);
+					break;
+
+				case VK_RETURN:
+					TreeView_EndEditLabelNow(hwnd, TRUE);
+					break;
+				}
+			}
+			return (DLGC_WANTMESSAGE | DefSubclassProc(hwnd, msg, wParam, lParam));
+		}
+		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	static bool hasEntered = false;
+
+	switch (msg)
+	{
+	case WM_MOUSEMOVE:
+		{
+			// Only re-create brush if needed
+			if (hasEntered) break;
+
+			hasEntered = true;
+
+			TRACKMOUSEEVENT tme;
+			tme.cbSize = sizeof(TRACKMOUSEEVENT);
+			tme.dwFlags = TME_HOVER | TME_LEAVE;
+			tme.dwHoverTime = 1;
+			tme.hwndTrack = hwnd;
+			TrackMouseEvent(&tme);
+
+			if (s_NewSkinBkBrush) DeleteObject(s_NewSkinBkBrush);
+			s_NewSkinBkBrush = CreateSolidBrush(s_NewSkinBkColor);
+			InvalidateRect(hwnd, 0, TRUE);
+		}
+		break;
+
+	case WM_MOUSELEAVE:
+		{
+			hasEntered = false;
+
+			if (s_NewSkinBkBrush)
+			{
+				DeleteObject(s_NewSkinBkBrush);
+				s_NewSkinBkBrush = NULL;
+				InvalidateRect(hwnd, 0, TRUE);
+			}
+		}
+		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 {
 	WCHAR buffer[MAX_PATH];
@@ -1016,6 +1176,16 @@ INT_PTR DialogManage::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM l
 
 	case WM_NOTIFY:
 		return OnNotify(wParam, lParam);
+
+	case WM_CTLCOLORSTATIC:
+		{
+			HWND hwnd = (HWND)lParam;
+			if (GetDlgCtrlID(hwnd) == Id_NewSkinButton)
+			{
+				return (INT_PTR)s_NewSkinBkBrush;
+			}
+		}
+		break;
 	}
 
 	return FALSE;
@@ -1065,6 +1235,10 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			DestroyMenu(menu);
 		}
+		break;
+
+	case Id_NewSkinButton:
+		CreateNewSkin();
 		break;
 
 	case Id_CreateSkinPackageButton:
@@ -1462,7 +1636,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TVN_SELCHANGED:
-		if (nm->idFrom == Id_SkinsTreeView)
+		if (m_HandleNotifications && nm->idFrom == Id_SkinsTreeView)
 		{
 			m_SkinWindow = nullptr;
 			m_SkinFileName.clear();
@@ -1509,6 +1683,134 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case TVN_BEGINLABELEDIT:
+		{
+			HWND tree = GetControl(Id_SkinsTreeView);
+			m_TreeEdit = TreeView_GetEditControl(tree);
+
+			// Install subclass to capture key strokes for edit control
+			SetWindowSubclass(m_TreeEdit, &TreeEditSubclass, 1, 0);
+			SetFocus(m_TreeEdit);
+
+			// Fake set the text in the edit control, so that |TVN_ENDLABELEDIT| sees it
+			LPNMTVDISPINFO dInfo = (LPNMTVDISPINFO)lParam;
+			SetWindowText(m_TreeEdit, dInfo->item.pszText);
+		}
+		break;
+
+	case TVN_ENDLABELEDIT:
+		{
+			m_HandleNotifications = false;
+			RemoveWindowSubclass(m_TreeEdit, &TreeEditSubclass, 1);
+
+			// Make tree nodes non-editable
+			HWND tree = GetControl(Id_SkinsTreeView);
+			LONG_PTR style = GetWindowLongPtr(tree, GWL_STYLE) & ~TVS_EDITLABELS;
+			SetWindowLongPtr(tree, GWL_STYLE, style);
+
+			LPNMTVDISPINFO dInfo = (LPNMTVDISPINFO)lParam;
+
+			// The items text will be |NULL| if the edit control was cancelled.
+			// So delete the item from the tree and return.
+			if (!dInfo->item.pszText)
+			{
+				TreeView_DeleteItem(tree, dInfo->item.hItem);
+				m_HandleNotifications = true;
+				return FALSE;
+			}
+
+			std::wstring name = dInfo->item.pszText;
+			const std::wstring originalName = name;
+			const std::wstring path = GetRainmeter().GetSkinPath();
+
+			// Check if directory already exists or is already in the skin registry
+			std::wstring newPath = path + name;
+			BOOL exists = PathIsDirectory(newPath.c_str());
+			size_t i = 0;
+			while (exists || GetRainmeter().m_SkinRegistry.FindFolder(name) != nullptr)
+			{
+				name = originalName + std::to_wstring(++i);
+				newPath = path + name;
+				exists = PathIsDirectory(newPath.c_str());
+			}
+
+			// Create directory
+			exists = CreateDirectory(newPath.c_str(), NULL);
+			if (!exists)
+			{
+				TreeView_DeleteItem(tree, dInfo->item.hItem);
+				MessageBox(m_Window, L"Error creating new skin directory.", L"Rainmeter", MB_OK | MB_ICONERROR);
+				m_HandleNotifications = true;
+				return FALSE;
+			}
+
+			// Set the text in case the directory or file was changed
+			TVITEM item;
+			item.hItem = dInfo->item.hItem;
+			item.iImage = item.iSelectedImage = 0;
+			item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+			item.pszText = (WCHAR*)name.c_str();
+			TreeView_SetItem(tree, &item);
+
+			newPath += L"\\";
+
+			// Check if template file exists
+			std::wstring templateFile = GetRainmeter().GetSettingsPath();
+			templateFile += L"NewSkin.template";
+			exists = PathFileExists(templateFile.c_str());
+			if (!exists)
+			{
+				// Create |NewSkin.template| file
+				FILE* file;
+				if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") != 0) return FALSE;
+
+				const WCHAR* str = L"[Rainmeter]\n"
+					L"Update=1000\n"
+					L"AccurateText=1\n\n"
+					L"[Metadata]\n"
+					L"Name=\n"
+					L"Author=\n"
+					L"Information=\n"
+					L"Version=\n"
+					L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
+					L"[Variables]\n\n"
+					L"[MeterString]\n"
+					L"Meter=String\n";
+
+				if (fputws(str, file) != 0 || fclose(file) != 0)
+				{
+					TreeView_DeleteItem(tree, dInfo->item.hItem);
+					MessageBox(m_Window, L"Could not create skin template.", L"Rainmeter", MB_OK | MB_ICONERROR);
+					m_HandleNotifications = true;
+					return FALSE;
+				}
+			}
+
+			// Copy template file to new path
+			std::wstring newFile = newPath + name + L".ini";
+			System::CopyFiles(templateFile, newFile);
+
+			// Create @Resources folder
+			std::wstring resources = newPath + L"@Resources";
+			CreateDirectory(resources.c_str(), NULL);
+
+			// Reload skin registry/settings/reload skins
+			GetRainmeter().RefreshAll();
+
+			m_HandleNotifications = true;
+
+			// Select new skin
+			std::wstring config = name;
+			config += L"\\";
+			config += name;
+			config += L".ini";
+			SelectTreeItem(tree, TreeView_GetRoot(tree), config.c_str());
+			
+			// Open skin in editor
+			GetRainmeter().EditSkinFile(m_SkinFolderPath, m_SkinFileName);
+		}
+		break;
+
 	default:
 		return FALSE;
 	}
@@ -1528,49 +1830,49 @@ DialogManage::TabLayouts::TabLayouts() : Tab()
 
 void DialogManage::TabLayouts::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 470, 260, owner);
+	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-1, ID_STR_SAVENEWTHEME,
-			0, 0, 230, 150,
+			0, 0, 235, 150,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_THEMEDESCRIPTION,
-			6, 16, 205, 44,
+			6, 16, 210, 44,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_SaveEmptyThemeCheckBox, ID_STR_SAVEASEMPTYTHEME,
-			6, 70, 220, 9,
+			6, 70, 225, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_ExcludeUnusedSkinsCheckBox, ID_STR_EXCLUDEUNUSEDSKINS,
-			6, 83, 220, 9,
+			6, 83, 225, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_IncludeWallpaperCheckBox, ID_STR_INCLUDEWALLPAPER,
-			6, 96, 220, 9,
+			6, 96, 225, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_LABEL(-1, ID_STR_NAMESC,
-			6, 115, 100, 9,
+			6, 115, 105, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_NameLabel, 0,
-			6, 128, 162, 14,
+			6, 128, 167, 14,
 			WS_VISIBLE | WS_TABSTOP, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_SaveButton, ID_STR_SAVE,
-			172, 128, 50, 14,
+			177, 128, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
 		CT_GROUPBOX(-1, ID_STR_SAVEDTHEMES,
-			238, 0, 230, 150,
+			243, 0, 235, 150,
 			WS_VISIBLE, 0),
 		CT_LISTBOX(Id_List, 0,
-			244, 16, 160, 125,
+			249, 16, 165, 125,
 			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_LoadButton, ID_STR_LOAD,
-			410, 16, 50, 14,
+			420, 16, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_BUTTON(Id_EditButton, ID_STR_EDIT,
-			410, 34, 50, 14,
+			420, 34, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_BUTTON(Id_DeleteButton, ID_STR_DELETE,
-			410, 52, 50, 14,
+			420, 52, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
 
@@ -1832,7 +2134,7 @@ DialogManage::TabSettings::TabSettings() : Tab()
 
 void DialogManage::TabSettings::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 470, 260, owner);
+	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
@@ -1840,22 +2142,22 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-1, ID_STR_GENERAL,
-			0, 0, 468, 118,
+			0, 0, 478, 118,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_LANGUAGESC,
 			6, 16, 107, 14,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_LanguageDropDownList, 0,
-			107, 13, 222, 14,
+			107, 13, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL, 0),
 		CT_LABEL(-1, ID_STR_EDITORSC,
 			6, 37, 107, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_EditorEdit, 0,
-			107, 34, 222, 14,
+			107, 34, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_EditorBrowseButton, ID_STR_ELLIPSIS,
-			333, 34, 25, 14,
+			361, 34, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_CheckForUpdatesCheckBox, ID_STR_CHECKFORUPDATES,
 			6, 55, 200, 9,
@@ -1871,7 +2173,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_LOGGING,
-			0, 125, 468, 66,
+			0, 125, 478, 66,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_VerboseLoggingCheckbox, ID_STR_DEBUGMODE,
 			6, 141, 200, 9,
