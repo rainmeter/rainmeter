@@ -45,7 +45,7 @@ namespace InputText
             this.txtInput.Size = new System.Drawing.Size(200, 22);
             this.txtInput.TabIndex = 0;
             this.txtInput.Leave += new System.EventHandler(this.txtInput_Leave);
-			this.txtInput.KeyPress += new KeyPressEventHandler(this.txtInput_KeyPressed);
+            this.txtInput.KeyPress += new KeyPressEventHandler(this.txtInput_KeyPressed);
             // 
             // btnOK
             // 

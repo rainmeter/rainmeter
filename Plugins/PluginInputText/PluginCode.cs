@@ -31,10 +31,10 @@ namespace InputText
             ReadOption("SolidColor", param.Options);
             ReadOption("Password", param.Options);
             ReadOption("TopMost", param.Options);
-			ReadOption("InputLimit", param.Options, true);
-			ReadOption("InputNumber", param.Options);
+            ReadOption("InputLimit", param.Options, true);
+            ReadOption("InputNumber", param.Options);
 
-			param.DismissAction = rm.ReadString("OnDismissAction", "", false);
+            param.DismissAction = rm.ReadString("OnDismissAction", "", false);
 
             #region Handle a single parameter
 
@@ -184,7 +184,7 @@ namespace InputText
                             break;
                         }
 
-                        // Ask Rainmeter to set the variable using a bang (http://rainmeter.net/RainCMS/?q=Bangs)
+                        // Ask Rainmeter to set the variable using a bang (https://docs.rainmeter.net/manual/bangs/)
                         API.Execute(rm.GetSkin(), "!SetVariable " + param.Command + " \"" + sInput + "\"");
 
                         // Note that the skin needs DynamicVariables=1 in the measure's settings or the above
@@ -294,7 +294,7 @@ namespace InputText
 
                 changeSetting("FontFace", input.ChangeFontFace);
                 changeSetting("FontSize", input.ChangeFontSize);
-				
+
                 changeSetting("W", input.ChangeW);
                 changeSetting("H", input.ChangeH);
                 changeSetting("X", input.ChangeX);
@@ -336,15 +336,20 @@ namespace InputText
 
                 changeSetting("DefaultValue", input.DefaultValue);
 
-	            changeSetting("InputLimit", input.TextMaxLength);
+                changeSetting("InputLimit", input.TextMaxLength);
 
-				if (Overrides.ContainsKey("InputNumber"))
-					input.MakeNumeric(Overrides["InputNumber"] == "1");
-				else if (Options.ContainsKey("InputNumber"))
-					input.MakeNumeric(Options["InputNumber"].Trim() == "1");
+                if (Overrides.ContainsKey("InputNumber"))
+                {
+                    input.MakeNumeric(Overrides["InputNumber"] == "1");
+                }
 
-				#endregion
-			}
+                else if (Options.ContainsKey("InputNumber"))
+                {
+                    input.MakeNumeric(Options["InputNumber"].Trim() == "1");
+                }
+
+                #endregion
+            }
 
             string result = null;
 
