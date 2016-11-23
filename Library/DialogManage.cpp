@@ -393,7 +393,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 			175, 0, 130, 14,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LABEL(Id_ConfigLabel, 0,
-			175, 15, 130, 9,
+			175, 15, 130, 14,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_BUTTON(Id_LoadButton, ID_STR_LOAD,
 			320, 0, 50, 14,
