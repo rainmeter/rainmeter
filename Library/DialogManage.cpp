@@ -337,6 +337,40 @@ INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+std::wstring DialogManage::GetNewSkinTemplate()
+{
+	// Check if template file exists
+	std::wstring templateFile = GetRainmeter().GetSettingsPath();
+	templateFile += L"NewSkin.template";
+	BOOL exists = PathFileExists(templateFile.c_str());
+	if (!exists)
+	{
+		// Create |NewSkin.template| file
+		FILE* file;
+		if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") != 0) return FALSE;
+
+		const WCHAR* str = L"[Rainmeter]\n"
+			L"Update=1000\n"
+			L"AccurateText=1\n\n"
+			L"[Metadata]\n"
+			L"Name=\n"
+			L"Author=\n"
+			L"Information=\n"
+			L"Version=\n"
+			L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
+			L"[Variables]\n\n"
+			L"[MeterString]\n"
+			L"Meter=String\n";
+
+		if (fputws(str, file) != 0 || fclose(file) != 0)
+		{
+			templateFile.clear();
+		}
+	}
+
+	return templateFile;
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                Skins tab
@@ -379,7 +413,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 		CT_BUTTON(Id_ActiveSkinsButton, ID_STR_ACTIVESKINS,
 			0, 0, 134, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_ICON(Id_NewSkinButton, ID_STR_NEWSKIN,
+		CT_ICON(Id_NewSkinButton, ID_STR_NEWSKINICON,
 			138, 0, 18, 14,
 			WS_VISIBLE | WS_TABSTOP | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY, 0),
 		CT_TREEVIEW(Id_SkinsTreeView, 0,
@@ -1754,36 +1788,14 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 			newPath += L"\\";
 
-			// Check if template file exists
-			std::wstring templateFile = GetRainmeter().GetSettingsPath();
-			templateFile += L"NewSkin.template";
-			exists = PathFileExists(templateFile.c_str());
-			if (!exists)
+			// Get template file
+			std::wstring templateFile = c_Dialog->GetNewSkinTemplate();
+			if (templateFile.empty())
 			{
-				// Create |NewSkin.template| file
-				FILE* file;
-				if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") != 0) return FALSE;
-
-				const WCHAR* str = L"[Rainmeter]\n"
-					L"Update=1000\n"
-					L"AccurateText=1\n\n"
-					L"[Metadata]\n"
-					L"Name=\n"
-					L"Author=\n"
-					L"Information=\n"
-					L"Version=\n"
-					L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
-					L"[Variables]\n\n"
-					L"[MeterString]\n"
-					L"Meter=String\n";
-
-				if (fputws(str, file) != 0 || fclose(file) != 0)
-				{
-					TreeView_DeleteItem(tree, dInfo->item.hItem);
-					MessageBox(m_Window, L"Could not create skin template.", L"Rainmeter", MB_OK | MB_ICONERROR);
-					m_HandleNotifications = true;
-					return FALSE;
-				}
+				TreeView_DeleteItem(tree, dInfo->item.hItem);
+				MessageBox(m_Window, L"Could not create skin template.", L"Rainmeter", MB_OK | MB_ICONERROR);
+				m_HandleNotifications = true;
+				return FALSE;
 			}
 
 			// Copy template file to new path
@@ -2186,7 +2198,11 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
 			buttonWidth + 30, 170, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			WS_VISIBLE | WS_TABSTOP, 0),
+
+		CT_LINKLABEL(Id_EditTemplate, ID_STR_EDITTEMPLATE,
+			0, 250, 150, 9,
+			WS_VISIBLE, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
@@ -2257,6 +2273,9 @@ INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARA
 	{
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -2419,4 +2438,24 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+INT_PTR DialogManage::TabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CLICK:
+		if (nm->idFrom == Id_EditTemplate)
+		{
+			std::wstring templateFile = c_Dialog->GetNewSkinTemplate();
+			CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), templateFile.c_str());
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }

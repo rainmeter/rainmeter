@@ -159,7 +159,8 @@ private:
 			Id_LanguageDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
-			Id_ShowTrayIconCheckBox
+			Id_ShowTrayIconCheckBox,
+			Id_EditTemplate
 		};
 
 		TabSettings();
@@ -170,6 +171,7 @@ private:
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
 	enum Id
@@ -181,6 +183,8 @@ private:
 		Id_OpenLogButton,
 		Id_HelpButton
 	};
+
+	std::wstring GetNewSkinTemplate();
 
 	Tab& GetActiveTab();
 

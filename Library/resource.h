@@ -229,8 +229,9 @@
 #define ID_STR_FAVORITES                             2144
 #define ID_STR_NOFAVORITES                           2145
 #define ID_STR_CUSTOMSKINACTIONS                     2146
-#define ID_STR_NEWSKIN                               2147
+#define ID_STR_NEWSKINICON                           2147
 #define ID_STR_CREATENEWSKIN                         2148
+#define ID_STR_EDITTEMPLATE                          2149
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
