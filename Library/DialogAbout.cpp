@@ -343,6 +343,11 @@ void DialogAbout::TabLog::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+
+	// Call resize to fix an issue of the Clear button being cut off on higher DPI monitors
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Resize(rc.right, rc.bottom);
 }
 
 /*
