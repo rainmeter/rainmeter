@@ -1817,7 +1817,10 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			config += name;
 			config += L".ini";
 			SelectTreeItem(tree, TreeView_GetRoot(tree), config.c_str());
-			
+
+			// Open skin folder
+			GetRainmeter().OpenSkinFolder(name);
+
 			// Open skin in editor
 			GetRainmeter().EditSkinFile(m_SkinFolderPath, m_SkinFileName);
 		}
