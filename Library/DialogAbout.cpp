@@ -890,11 +890,10 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 
 	ListView_SortItems(item, ListSortProc, 0);
 
-	if (selIndex != -1)
-	{
-		// Re-select previously selected item
-		ListView_SetItemState(item, selIndex, LVIS_FOCUSED | LVNI_SELECTED, LVIS_FOCUSED | LVNI_SELECTED);
-	}
+	UINT state = selIndex == -1 ? 0U : LVIS_FOCUSED | LVIS_SELECTED;
+
+	// Re-select previously selected item (or deselect group header)
+	ListView_SetItemState(item, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
 
 	SendMessage(item, WM_SETREDRAW, TRUE, 0);
 }
