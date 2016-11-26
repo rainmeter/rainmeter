@@ -136,9 +136,16 @@ bool Shape::IsShapeDefined()
 bool Shape::ContainsPoint(D2D1_POINT_2F point, const Gdiplus::Matrix* transformationMatrix)
 {
 	D2D1_MATRIX_3X2_F matrix;
-	transformationMatrix->GetElements((Gdiplus::REAL*)&matrix);
 
-	matrix = matrix * GetShapeMatrix();
+	if (transformationMatrix)
+	{
+		transformationMatrix->GetElements((Gdiplus::REAL*)&matrix);
+		matrix = matrix * GetShapeMatrix();
+	}
+	else
+	{
+		matrix = GetShapeMatrix();
+	}
 
 	BOOL contains = FALSE;
 	HRESULT hr = m_Shape->StrokeContainsPoint(
