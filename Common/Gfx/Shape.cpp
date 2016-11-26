@@ -133,18 +133,23 @@ bool Shape::IsShapeDefined()
 	return m_Shape;
 }
 
-bool Shape::ContainsPoint(D2D1_POINT_2F point)
+bool Shape::ContainsPoint(D2D1_POINT_2F point, const Gdiplus::Matrix* transformationMatrix)
 {
+	D2D1_MATRIX_3X2_F matrix;
+	transformationMatrix->GetElements((Gdiplus::REAL*)&matrix);
+
+	matrix = matrix * GetShapeMatrix();
+
 	BOOL contains = FALSE;
 	HRESULT hr = m_Shape->StrokeContainsPoint(
 		point,
 		m_StrokeWidth,
 		m_StrokeStyle.Get(),
-		GetShapeMatrix(),
+		matrix,
 		&contains);
 	if (SUCCEEDED(hr) && contains) return true;
 
-	hr = m_Shape->FillContainsPoint(point, GetShapeMatrix(), &contains);
+	hr = m_Shape->FillContainsPoint(point, matrix, &contains);
 	if (SUCCEEDED(hr) && contains) return true;
 
 	return false;

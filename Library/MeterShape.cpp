@@ -156,10 +156,11 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
+	const Gdiplus::Matrix* matrix = GetTransformationMatrix();
 	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
 	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined() && shape->ContainsPoint(point))
+		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
 		{
 			return true;
 		}
