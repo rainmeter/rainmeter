@@ -347,22 +347,27 @@ std::wstring DialogManage::GetNewSkinTemplate()
 	{
 		// Create |NewSkin.template| file
 		FILE* file;
-		if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") != 0) return FALSE;
+		if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") == 0)
+		{
+			const WCHAR* str = L"[Rainmeter]\n"
+				L"Update=1000\n"
+				L"AccurateText=1\n\n"
+				L"[Metadata]\n"
+				L"Name=\n"
+				L"Author=\n"
+				L"Information=\n"
+				L"Version=\n"
+				L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
+				L"[Variables]\n\n"
+				L"[MeterString]\n"
+				L"Meter=String\n";
 
-		const WCHAR* str = L"[Rainmeter]\n"
-			L"Update=1000\n"
-			L"AccurateText=1\n\n"
-			L"[Metadata]\n"
-			L"Name=\n"
-			L"Author=\n"
-			L"Information=\n"
-			L"Version=\n"
-			L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
-			L"[Variables]\n\n"
-			L"[MeterString]\n"
-			L"Meter=String\n";
-
-		if (fputws(str, file) != 0 || fclose(file) != 0)
+			if (fputws(str, file) != 0 || fclose(file) != 0)
+			{
+				templateFile.clear();  // Error writing/closing file
+			}
+		}
+		else  // Could not create file
 		{
 			templateFile.clear();
 		}
