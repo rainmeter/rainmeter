@@ -50,7 +50,23 @@ namespace InputText
         {
             if (_Numeric)
             {
-                e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar);
+                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar)) 
+                    && (e.KeyChar != '.') && (e.KeyChar != '-'))
+                {
+                    e.Handled = true;
+                }
+
+                // only allow one decimal point
+                if (e.KeyChar == '.' && (sender as TextBox).Text.IndexOf('.') > -1)
+                {
+                    e.Handled = true;
+                }
+
+                // only allow minus sign at the beginning
+                if (e.KeyChar == '-' && (sender as TextBox).Text.Length > 0)
+                {
+                    e.Handled = true;
+                }
             }
         }
 
