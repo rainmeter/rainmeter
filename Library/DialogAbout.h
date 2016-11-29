@@ -31,6 +31,8 @@ public:
 	static void UpdateSkins();
 	static void UpdateMeasures(Skin* skin);
 
+	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
+
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);

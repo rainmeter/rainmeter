@@ -132,6 +132,10 @@ Rainmeter::~Rainmeter()
 	CoUninitialize();
 
 	GdiplusShutdown(m_GDIplusToken);
+
+	// Close dialogs if open
+	DialogManage::CloseDialog();
+	DialogAbout::CloseDialog();
 }
 
 Rainmeter& Rainmeter::GetInstance()
