@@ -12,6 +12,13 @@
 #include "Logger.h"
 #include "Skin.h"
 
+enum class CloseType : BYTE
+{
+	None = 0,		// Nothing was added, or non-root folders were added
+	RootFolder,		// A root folder was added, but no skin files
+	SkinFile		// A skin was added
+};
+
 class DialogNewSkin : public Dialog
 {
 public:
@@ -132,7 +139,7 @@ private:
 	TabNew m_TabNew;
 	TabTemplate m_TabTemplate;
 
-	static bool c_WasSkinAdded;
+	static CloseType c_CloseAction;
 	static std::vector<std::wstring> c_Templates;
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogNewSkin* c_Dialog;

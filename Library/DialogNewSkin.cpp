@@ -15,7 +15,7 @@
 #include "DialogNewSkin.h"
 #include "DialogManage.h"
 
-bool DialogNewSkin::c_WasSkinAdded = false;
+CloseType DialogNewSkin::c_CloseAction = CloseType::None;
 std::vector<std::wstring> DialogNewSkin::c_Templates;
 WINDOWPLACEMENT DialogNewSkin::c_WindowPlacement = {0};
 DialogNewSkin* DialogNewSkin::c_Dialog = nullptr;
@@ -126,6 +126,97 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
+			switch (c_CloseAction)
+			{
+			case CloseType::RootFolder:
+				{
+					// If a root folder was created (without any skins being created),
+					// attempt to create a skin using the selected template using the
+					// the name of the root folder as the name of the skin. If the
+					// selected template is not longer valid, attempt to create a
+					// the skin using the default template.
+					const size_t pos = GetRainmeter().GetSkinPath().size();
+					std::wstring folder = c_Dialog->m_TabNew.GetParentFolder();
+					std::wstring file = folder.substr(pos);
+					file.pop_back();  // erase the trailing backslash
+					file += L".ini";
+					folder += file;
+
+					const std::wstring& selectedTemplate = c_Dialog->m_TabNew.GetSelectedTemplate();
+					if (!selectedTemplate.empty())
+					{
+						// Copy template file
+						bool templateExists = true;
+						std::wstring templateFile = GetTemplateFolder();
+						templateFile += selectedTemplate;
+						templateFile += L".template";
+						if (_waccess(templateFile.c_str(), 0) == -1)
+						{
+							// Template file doesn't exist, so ask user if they would like a default template instead.
+							templateExists = false;
+
+							std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
+							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
+							{
+								// Cancel
+								break;
+							}
+
+							templateFile = folder;
+							c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
+							if (templateFile.empty())
+							{
+								// Could not create the skin using the default template
+								std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+								break;
+							}
+						}
+
+						// If the template exists, copy the template file to new location
+						if (templateExists)
+						{
+							if (!System::CopyFiles(templateFile, folder))
+							{
+								// Could not create the skin using the selected template
+								std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+								break;
+							}
+						}
+					}
+					else
+					{
+						// Use default template
+						c_Dialog->m_TabTemplate.CreateTemplate(folder);
+						if (folder.empty())
+						{
+							// Could not create the skin
+							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+							break;
+						}
+					}
+				}
+				//break;  // Pass through
+
+			case CloseType::SkinFile:
+				{
+					GetRainmeter().RefreshAll();
+					const size_t pos = GetRainmeter().GetSkinPath().size();
+					const std::wstring folder = c_Dialog->m_TabNew.GetParentFolder().substr(pos);
+					DialogManage::Open(L"Skins", folder.c_str(), nullptr);
+				}
+				break;
+
+			//case CloseType::None:
+			//default:
+				// No actions needed
+			}
+
+			// Reset close action
+			c_CloseAction = CloseType::None;
+
 			GetWindowPlacement(m_Window, &c_WindowPlacement);
 			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
 			{
@@ -195,14 +286,6 @@ INT_PTR DialogNewSkin::OnCommand(WPARAM wParam, LPARAM lParam)
 	switch (LOWORD(wParam))
 	{
 	case Id_CloseButton:
-		if (c_WasSkinAdded)
-		{
-			c_WasSkinAdded = false;
-			GetRainmeter().RefreshAll();
-			const size_t pos = GetRainmeter().GetSkinPath().size();
-			std::wstring folder = c_Dialog->m_TabNew.GetParentFolder().substr(pos);
-			DialogManage::Open(L"Skins", folder.c_str(), nullptr);
-		}
 		PostMessage(m_Window, WM_CLOSE, 0, 0);
 		break;
 
@@ -738,11 +821,12 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					return TRUE;
 				}
 
-				// Change parent if skin was at root
+				// Change parent if folder is at root level
 				if (count == 1)
 				{
 					m_ParentFolder = newItem;
 					UpdateParentPathLabel();
+					c_CloseAction = CloseType::RootFolder;
 				}
 			}
 			else // not a folder
@@ -811,7 +895,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
 						if (templateFile.empty())
 						{
-							// Could not create default template file
+							// Could not create skin using the default template
 							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							TreeView_DeleteItem(tree, info->item.hItem);
@@ -824,7 +908,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						if (!System::CopyFiles(templateFile, newItem))
 						{
-							// Could not create default template file
+							// Could not create the skin using the selected template
 							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							TreeView_DeleteItem(tree, info->item.hItem);
@@ -834,7 +918,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 				}
 
 				// Do a 'refresh all' if a skin was added
-				if (!c_WasSkinAdded && isSkin) c_WasSkinAdded = true;
+				if (isSkin) c_CloseAction = CloseType::SkinFile;
 			}
 
 			// In case item's text has changed, delete it from tree, and re-insert it in correct position
