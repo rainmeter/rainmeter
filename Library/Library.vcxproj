@@ -38,6 +38,7 @@
     <ClCompile Include="DialogAbout.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
+    <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
@@ -124,6 +125,7 @@
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DialogInstall.h" />
+    <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />

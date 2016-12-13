@@ -132,6 +132,7 @@
     <ClCompile Include="lua\LuaHelper.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
+    <ClCompile Include="DialogNewSkin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -233,6 +234,7 @@
     <ClInclude Include="lua\LuaHelper.h">
       <Filter>Lua</Filter>
     </ClInclude>
+    <ClInclude Include="DialogNewSkin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

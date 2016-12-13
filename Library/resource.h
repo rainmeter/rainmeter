@@ -80,7 +80,6 @@
 #define IDM_INSTALL_SYSTEMFONTS                      4201
 #define IDM_INSTALL_FORMAT                           4202
 
-
 #define ID_STR_NUM_BUTTONWIDTH                       1998
 #define ID_STR_NUM_LABELWIDTH                        1999
 #define ID_STR_ISRTL                                 2000
@@ -229,9 +228,27 @@
 #define ID_STR_FAVORITES                             2144
 #define ID_STR_NOFAVORITES                           2145
 #define ID_STR_CUSTOMSKINACTIONS                     2146
-#define ID_STR_NEWSKINICON                           2147
-#define ID_STR_CREATENEWSKIN                         2148
-#define ID_STR_EDITTEMPLATE                          2149
+
+#define ID_STR_CREATENEWSKIN                         2998
+#define ID_STR_EDITTEMPLATE                          2999
+#define ID_STR_NEWSKIN                               3000
+#define ID_STR_TEMPLATE                              3001
+#define ID_STR_ADDFOLDER                             3002
+#define ID_STR_ADDRESOURCES                          3003
+#define ID_STR_ADDSKIN                               3004
+#define ID_STR_TEMPLATEE                             3005
+#define ID_STR_SAVENEWTEMPLATE                       3006
+#define ID_STR_SAVEDTEMPLATES                        3007
+#define ID_STR_USEDEFAULTTEMPLATE                    3008
+#define ID_STR_CREATEFOLDERFAIL                      3009
+#define ID_STR_CREATEFILEFAIL                        3010
+#define ID_STR_FOLDEREXISTS                          3011
+#define ID_STR_FILEEXISTS                            3012
+#define ID_STR_TEMPLATEDOESNOTEXIST                  3013
+#define ID_STR_TEMPLATEEXISTS                        3014
+#define ID_STR_TEMPLATEFOLDERFAIL                    3015
+#define ID_STR_TEMPLATEFILEFAIL                      3016
+#define ID_STR_TEMPLATEDELETE                        3017
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -289,6 +306,11 @@
 #define IDM_MANAGESKINSMENU_EDIT                     4058
 #define IDM_COPY                                     4059
 #define IDM_SKIN_FAVORITE                            4061
+#define IDM_CREATENEWSKIN                            4062
+#define IDM_DEFAULT_TEMPLATE                         4063
+#define IDM_NEWSKINMENU_EXPAND                       4094
+#define IDM_NEWSKINMENU_OPENFOLDER                   4095
+#define IDM_NEWSKINMENU_EDIT                         4096
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
@@ -300,3 +322,5 @@
 #define ID_THEME_LAST                                43000
 #define ID_MONITOR_FIRST                             43001
 #define ID_MONITOR_LAST                              44000
+#define ID_TEMPLATE_FIRST                            45001
+#define ID_TEMPLATE_LAST                             46000

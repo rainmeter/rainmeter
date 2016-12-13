@@ -15,6 +15,7 @@
 #include "Error.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
+#include "DialogNewSkin.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
@@ -136,6 +137,7 @@ Rainmeter::~Rainmeter()
 	// Close dialogs if open
 	DialogManage::CloseDialog();
 	DialogAbout::CloseDialog();
+	DialogNewSkin::CloseDialog();
 }
 
 Rainmeter& Rainmeter::GetInstance()

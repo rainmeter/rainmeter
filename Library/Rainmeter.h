@@ -174,6 +174,7 @@ public:
 	friend class CommandHandler;
 	friend class ContextMenu;
 	friend class DialogManage;
+	friend class DialogNewSkin;
 
 private:
 	Rainmeter();

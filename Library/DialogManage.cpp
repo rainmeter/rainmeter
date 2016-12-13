@@ -15,6 +15,7 @@
 #include "resource.h"
 #include "DialogManage.h"
 #include "DialogAbout.h"
+#include "DialogNewSkin.h"
 #include "../Version.h"
 #include <Commdlg.h>
 
@@ -337,45 +338,6 @@ INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-std::wstring DialogManage::GetNewSkinTemplate()
-{
-	// Check if template file exists
-	std::wstring templateFile = GetRainmeter().GetSettingsPath();
-	templateFile += L"NewSkin.template";
-	BOOL exists = PathFileExists(templateFile.c_str());
-	if (!exists)
-	{
-		// Create |NewSkin.template| file
-		FILE* file;
-		if (_wfopen_s(&file, templateFile.c_str(), L"w, ccs=UTF-16LE") == 0)
-		{
-			const WCHAR* str = L"[Rainmeter]\n"
-				L"Update=1000\n"
-				L"AccurateText=1\n\n"
-				L"[Metadata]\n"
-				L"Name=\n"
-				L"Author=\n"
-				L"Information=\n"
-				L"Version=\n"
-				L"License=Creative Commons Attribution - Non - Commercial - Share Alike 3.0\n\n"
-				L"[Variables]\n\n"
-				L"[MeterString]\n"
-				L"Meter=String\n";
-
-			if (fputws(str, file) != 0 || fclose(file) != 0)
-			{
-				templateFile.clear();  // Error writing/closing file
-			}
-		}
-		else  // Could not create file
-		{
-			templateFile.clear();
-		}
-	}
-
-	return templateFile;
-}
-
 // -----------------------------------------------------------------------------------------------
 //
 //                                Skins tab
@@ -388,9 +350,7 @@ COLORREF DialogManage::TabSkins::s_NewSkinBkColor = RGB(229, 241, 251); // defau
 DialogManage::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_HandleCommands(false),
-	m_HandleNotifications(false),
-	m_IgnoreUpdate(false),
-	m_TreeEdit(nullptr)
+	m_IgnoreUpdate(false)
 {
 }
 
@@ -418,7 +378,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 		CT_BUTTON(Id_ActiveSkinsButton, ID_STR_ACTIVESKINS,
 			0, 0, 134, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_ICON(Id_NewSkinButton, ID_STR_NEWSKINICON,
+		CT_ICON(Id_NewSkinButton, 0,
 			138, 0, 18, 14,
 			WS_VISIBLE | WS_TABSTOP | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY, 0),
 		CT_TREEVIEW(Id_SkinsTreeView, 0,
@@ -622,7 +582,6 @@ void DialogManage::TabSkins::Initialize()
 
 	m_Initialized = true;
 	m_HandleCommands = true;
-	m_HandleNotifications = true;
 }
 
 /*
@@ -968,75 +927,6 @@ void DialogManage::TabSkins::ReadSkin()
 	delete [] buffer;
 }
 
-void DialogManage::TabSkins::CreateNewSkin()
-{
-	std::wstring name = L"NewSkin";
-	const std::wstring path = GetRainmeter().GetSkinPath();
-
-	// Check if directory already exists or is already in the skin registry
-	// Append numbers at the end until the directory does not exist (or in the skin registry)
-	std::wstring newPath = path + name;
-	BOOL exists = PathIsDirectory(newPath.c_str());
-	size_t i = 0;
-	while (exists || GetRainmeter().m_SkinRegistry.FindFolder(name) != nullptr)
-	{
-		name = L"NewSkin" + std::to_wstring(++i);
-		newPath = path + name;
-		exists = PathIsDirectory(newPath.c_str());
-	}
-
-	// Add |NewSkin| to tree
-	HWND tree = GetControl(Id_SkinsTreeView);
-	TVINSERTSTRUCT tvi = { 0 };
-	tvi.hInsertAfter = TVI_SORT;
-	tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-	tvi.item.iImage = tvi.item.iSelectedImage = 0;
-	tvi.item.pszText = (WCHAR*)name.c_str();
-	tvi.hParent = TreeView_InsertItem(tree, &tvi);
-
-	// Make tree nodes editable
-	LONG_PTR style = GetWindowLongPtr(tree, GWL_STYLE) | TVS_EDITLABELS;
-	SetWindowLongPtr(tree, GWL_STYLE, style);
-
-	// Enter 'edit mode' of treeview edit control
-	m_HandleNotifications = false;
-	TreeView_EditLabel(tree, tvi.hParent);
-	m_HandleNotifications = true;
-}
-
-LRESULT DialogManage::TabSkins::TreeEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
-	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
-{
-	if (!lParam) return DefSubclassProc(hwnd, msg, wParam, lParam);
-
-	switch (msg)
-	{
-	case WM_GETDLGCODE:
-		{
-			LPMSG lpMsg = (LPMSG)lParam;
-			switch (lpMsg->message)
-			{
-			case WM_CHAR:
-			case WM_KEYDOWN:
-				switch (wParam)
-				{
-				case VK_ESCAPE:
-					TreeView_EndEditLabelNow(hwnd, FALSE);
-					break;
-
-				case VK_RETURN:
-					TreeView_EndEditLabelNow(hwnd, TRUE);
-					break;
-				}
-			}
-			return (DLGC_WANTMESSAGE | DefSubclassProc(hwnd, msg, wParam, lParam));
-		}
-		break;
-	}
-
-	return DefSubclassProc(hwnd, msg, wParam, lParam);
-}
-
 LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
 {
@@ -1277,7 +1167,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_NewSkinButton:
-		CreateNewSkin();
+		DialogNewSkin::Open(L"New", nullptr);
 		break;
 
 	case Id_CreateSkinPackageButton:
@@ -1522,6 +1412,14 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_CREATENEWSKIN:
+		{
+			HWND tree = GetControl(Id_SkinsTreeView);
+			std::wstring path = GetTreeSelectionPath(tree);
+			DialogNewSkin::Open(L"New", path.c_str());
+		}
+		break;
+
 	default:
 		if (wParam >= ID_CONFIG_FIRST && wParam <= ID_CONFIG_LAST)
 		{
@@ -1622,6 +1520,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						{
 							MENU_ITEM(IDM_MANAGESKINSMENU_EXPAND, ID_STR_EXPAND),
 							MENU_ITEM(IDM_MANAGESKINSMENU_OPENFOLDER, ID_STR_OPENFOLDER),
+							MENU_ITEM(IDM_CREATENEWSKIN, ID_STR_CREATENEWSKIN)
 						};
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -1675,7 +1574,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TVN_SELCHANGED:
-		if (m_HandleNotifications && nm->idFrom == Id_SkinsTreeView)
+		if (nm->idFrom == Id_SkinsTreeView)
 		{
 			m_SkinWindow = nullptr;
 			m_SkinFileName.clear();
@@ -1719,115 +1618,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			}
 
 			m_HandleCommands = true;
-		}
-		break;
-
-	case TVN_BEGINLABELEDIT:
-		{
-			HWND tree = GetControl(Id_SkinsTreeView);
-			m_TreeEdit = TreeView_GetEditControl(tree);
-
-			// Install subclass to capture key strokes for edit control
-			SetWindowSubclass(m_TreeEdit, &TreeEditSubclass, 1, 0);
-			SetFocus(m_TreeEdit);
-
-			// Fake set the text in the edit control, so that |TVN_ENDLABELEDIT| sees it
-			LPNMTVDISPINFO dInfo = (LPNMTVDISPINFO)lParam;
-			SetWindowText(m_TreeEdit, dInfo->item.pszText);
-		}
-		break;
-
-	case TVN_ENDLABELEDIT:
-		{
-			m_HandleNotifications = false;
-			RemoveWindowSubclass(m_TreeEdit, &TreeEditSubclass, 1);
-
-			// Make tree nodes non-editable
-			HWND tree = GetControl(Id_SkinsTreeView);
-			LONG_PTR style = GetWindowLongPtr(tree, GWL_STYLE) & ~TVS_EDITLABELS;
-			SetWindowLongPtr(tree, GWL_STYLE, style);
-
-			LPNMTVDISPINFO dInfo = (LPNMTVDISPINFO)lParam;
-
-			// The items text will be |NULL| if the edit control was cancelled.
-			// So delete the item from the tree and return.
-			if (!dInfo->item.pszText)
-			{
-				TreeView_DeleteItem(tree, dInfo->item.hItem);
-				m_HandleNotifications = true;
-				return FALSE;
-			}
-
-			std::wstring name = dInfo->item.pszText;
-			const std::wstring originalName = name;
-			const std::wstring path = GetRainmeter().GetSkinPath();
-
-			// Check if directory already exists or is already in the skin registry
-			std::wstring newPath = path + name;
-			BOOL exists = PathIsDirectory(newPath.c_str());
-			size_t i = 0;
-			while (exists || GetRainmeter().m_SkinRegistry.FindFolder(name) != nullptr)
-			{
-				name = originalName + std::to_wstring(++i);
-				newPath = path + name;
-				exists = PathIsDirectory(newPath.c_str());
-			}
-
-			// Create directory
-			exists = CreateDirectory(newPath.c_str(), NULL);
-			if (!exists)
-			{
-				TreeView_DeleteItem(tree, dInfo->item.hItem);
-				MessageBox(m_Window, L"Error creating new skin directory.", L"Rainmeter", MB_OK | MB_ICONERROR);
-				m_HandleNotifications = true;
-				return FALSE;
-			}
-
-			// Set the text in case the directory or file was changed
-			TVITEM item;
-			item.hItem = dInfo->item.hItem;
-			item.iImage = item.iSelectedImage = 0;
-			item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-			item.pszText = (WCHAR*)name.c_str();
-			TreeView_SetItem(tree, &item);
-
-			newPath += L"\\";
-
-			// Get template file
-			std::wstring templateFile = c_Dialog->GetNewSkinTemplate();
-			if (templateFile.empty())
-			{
-				TreeView_DeleteItem(tree, dInfo->item.hItem);
-				MessageBox(m_Window, L"Could not create skin template.", L"Rainmeter", MB_OK | MB_ICONERROR);
-				m_HandleNotifications = true;
-				return FALSE;
-			}
-
-			// Copy template file to new path
-			std::wstring newFile = newPath + name + L".ini";
-			System::CopyFiles(templateFile, newFile);
-
-			// Create @Resources folder
-			std::wstring resources = newPath + L"@Resources";
-			CreateDirectory(resources.c_str(), NULL);
-
-			// Reload skin registry/settings/reload skins
-			GetRainmeter().RefreshAll();
-
-			m_HandleNotifications = true;
-
-			// Select new skin
-			std::wstring config = name;
-			config += L"\\";
-			config += name;
-			config += L".ini";
-			SelectTreeItem(tree, TreeView_GetRoot(tree), config.c_str());
-
-			// Open skin folder
-			GetRainmeter().OpenSkinFolder(name);
-
-			// Open skin in editor
-			GetRainmeter().EditSkinFile(m_SkinFolderPath, m_SkinFileName);
 		}
 		break;
 
@@ -2206,11 +1996,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
 			buttonWidth + 30, 170, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-
-		CT_LINKLABEL(Id_EditTemplate, ID_STR_EDITTEMPLATE,
-			0, 250, 150, 9,
-			WS_VISIBLE, 0)
+			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
@@ -2281,9 +2067,6 @@ INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARA
 	{
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
-
-	case WM_NOTIFY:
-		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -2446,24 +2229,4 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
-}
-
-INT_PTR DialogManage::TabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->code)
-	{
-	case NM_CLICK:
-		if (nm->idFrom == Id_EditTemplate)
-		{
-			std::wstring templateFile = c_Dialog->GetNewSkinTemplate();
-			CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), templateFile.c_str());
-		}
-		break;
-
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
 }
