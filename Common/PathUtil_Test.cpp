@@ -43,18 +43,18 @@ public:
 		Assert::IsFalse(IsAbsolute(L"C:"));
 	}
 
-	TEST_METHOD(TestAppendBacklashIfMissing)
+	TEST_METHOD(TestAppendBackslashIfMissing)
 	{
 		std::wstring path;
-		AppendBacklashIfMissing(path);
+		AppendBackslashIfMissing(path);
 		Assert::IsTrue(path.empty());
 
 		std::wstring path2 = L"C:\\test";
-		AppendBacklashIfMissing(path2);
+		AppendBackslashIfMissing(path2);
 		Assert::IsTrue(path2 == L"C:\\test\\");
 
 		std::wstring path3 = L"C:\\test\\";
-		AppendBacklashIfMissing(path3);
+		AppendBackslashIfMissing(path3);
 		Assert::IsTrue(path3 == L"C:\\test\\");
 	}
 

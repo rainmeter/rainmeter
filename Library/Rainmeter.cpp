@@ -331,7 +331,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		// Try Rainmeter.ini first
 		m_SkinPath.assign(buffer, len);
 		PathUtil::ExpandEnvironmentVariables(m_SkinPath);
-		PathUtil::AppendBacklashIfMissing(m_SkinPath);
+		PathUtil::AppendBackslashIfMissing(m_SkinPath);
 	}
 	else if (bDefaultIniLocation &&
 		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))

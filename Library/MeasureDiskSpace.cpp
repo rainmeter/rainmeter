@@ -173,7 +173,7 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else
 	{
 		// A trailing backslash is required for GetDiskFreeSpaceEx().
-		PathUtil::AppendBacklashIfMissing(m_Drive);
+		PathUtil::AppendBackslashIfMissing(m_Drive);
 	}
 
 	m_Type = parser.ReadBool(section, L"Type", false);

@@ -32,7 +32,7 @@ bool IsAbsolute(const std::wstring& path)
 		IsUNC(path));
 }
 
-void AppendBacklashIfMissing(std::wstring& path)
+void AppendBackslashIfMissing(std::wstring& path)
 {
 	if (!path.empty() && !IsSeparator(path[path.length() - 1]))
 	{

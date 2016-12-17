@@ -579,7 +579,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND tree = GetControl(Id_ItemsTreeView);
 			std::wstring folder = m_ParentFolder + GetTreeSelectionPath(tree, false);
-			PathUtil::AppendBacklashIfMissing(folder);
+			PathUtil::AppendBackslashIfMissing(folder);
 			CommandHandler::RunFile(folder.c_str());
 		}
 		break;
@@ -850,7 +850,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 			// Add selection to item
 			newItem += GetTreeSelectionPath(tree, false);
-			PathUtil::AppendBacklashIfMissing(newItem);
+			PathUtil::AppendBackslashIfMissing(newItem);
 
 			if (isFolder)
 			{
@@ -874,7 +874,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 					newItem = newItem.substr(0, pos + 1);
 					newItem += name;
-					PathUtil::AppendBacklashIfMissing(newItem);
+					PathUtil::AppendBackslashIfMissing(newItem);
 
 					// New folder already exists, re-enter folder name
 					if (_waccess(newItem.c_str(), 0) == 0)

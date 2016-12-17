@@ -129,7 +129,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Deprecated!
 	std::wstring path = parser.ReadString(section, L"Path", L"");
-	PathUtil::AppendBacklashIfMissing(path);
+	PathUtil::AppendBackslashIfMissing(path);
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, section, path.c_str());
