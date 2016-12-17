@@ -40,6 +40,14 @@ void AppendBacklashIfMissing(std::wstring& path)
 	}
 }
 
+void RemoveTrailingBackslash(std::wstring& path)
+{
+	if (!path.empty() && IsSeparator(path[path.length() - 1]))
+	{
+		path.pop_back();
+	}
+}
+
 std::wstring GetFolderFromFilePath(const std::wstring& filePath)
 {
 	std::wstring::size_type pos = filePath.find_last_of(L"\\/");

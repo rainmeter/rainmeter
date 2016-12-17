@@ -244,11 +244,15 @@
 #define ID_STR_CREATEFILEFAIL                        3010
 #define ID_STR_FOLDEREXISTS                          3011
 #define ID_STR_FILEEXISTS                            3012
-#define ID_STR_TEMPLATEDOESNOTEXIST                  3013
-#define ID_STR_TEMPLATEEXISTS                        3014
-#define ID_STR_TEMPLATEFOLDERFAIL                    3015
-#define ID_STR_TEMPLATEFILEFAIL                      3016
-#define ID_STR_TEMPLATEDELETE                        3017
+#define ID_STR_RENAMEFOLDERFAIL                      3013
+#define ID_STR_RENAMEFILEFAIL                        3014
+#define ID_STR_TEMPLATEDOESNOTEXIST                  3015
+#define ID_STR_TEMPLATEEXISTS                        3016
+#define ID_STR_TEMPLATEFOLDERFAIL                    3017
+#define ID_STR_TEMPLATEFILEFAIL                      3018
+#define ID_STR_TEMPLATEDELETE                        3019
+#define ID_STR_EDITFOLDERNAME                        3020
+#define ID_STR_EDITFILENAME                          3021
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -311,6 +315,8 @@
 #define IDM_NEWSKINMENU_EXPAND                       4094
 #define IDM_NEWSKINMENU_OPENFOLDER                   4095
 #define IDM_NEWSKINMENU_EDIT                         4096
+#define IDM_NEWSKINMENU_EDITFOLDERNAME               4097
+#define IDM_NEWSKINMENU_EDITFILENAME                 4098
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

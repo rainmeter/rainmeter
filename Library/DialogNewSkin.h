@@ -76,23 +76,34 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
+		// Helper struct for sorting treeview items
+		struct SortInfo
+		{
+			bool type;
+			std::wstring name;
+			SortInfo(bool t, std::wstring n) : type(t), name(n) {}
+		};
+
 		void UpdateParentPathLabel();
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);
 		bool DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isFolder);
-		HTREEITEM FindInsertionNode(HTREEITEM parent, LPCWSTR text, bool isFolder);
 
+		static int CALLBACK TreeViewSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		static std::wstring GetTreeSelectionPath(HWND tree, bool allItems);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index, bool isParentFolder);
 		static LRESULT CALLBACK TreeEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		std::wstring m_ParentFolder;
+		std::wstring m_SelectedTemplate;
 		bool m_IsRoot;
 		bool m_CanAddResourcesFolder;
+		bool m_InRenameMode;
 		HWND m_TreeEdit;
 		HWND m_ParentPathTT;
-		std::wstring m_SelectedTemplate;
+
+		static std::vector<SortInfo> s_SortInfo;
 	};
 
 	// Template tab

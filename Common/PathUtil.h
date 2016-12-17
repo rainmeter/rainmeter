@@ -23,6 +23,8 @@ bool IsAbsolute(const std::wstring& path);
 
 void AppendBacklashIfMissing(std::wstring& path);
 
+void RemoveTrailingBackslash(std::wstring& path);
+
 std::wstring GetFolderFromFilePath(const std::wstring& filePath);
 
 std::wstring GetVolume(const std::wstring& path);

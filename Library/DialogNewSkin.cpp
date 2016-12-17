@@ -138,7 +138,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					const size_t pos = GetRainmeter().GetSkinPath().size();
 					std::wstring folder = c_Dialog->m_TabNew.GetParentFolder();
 					std::wstring file = folder.substr(pos);
-					file.pop_back();  // erase the trailing backslash
+					PathUtil::RemoveTrailingBackslash(file);
 					file += L".ini";
 					folder += file;
 
@@ -155,8 +155,8 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 							// Template file doesn't exist, so ask user if they would like a default template instead.
 							templateExists = false;
 
-							std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
-							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
+							const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
+							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 							{
 								// Cancel
 								break;
@@ -167,7 +167,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 							if (templateFile.empty())
 							{
 								// Could not create the skin using the default template
-								std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
 								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 								break;
 							}
@@ -179,7 +179,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 							if (!System::CopyFiles(templateFile, folder))
 							{
 								// Could not create the skin using the selected template
-								std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
 								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 								break;
 							}
@@ -192,7 +192,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						if (folder.empty())
 						{
 							// Could not create the skin
-							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							break;
 						}
@@ -392,10 +392,12 @@ void DialogNewSkin::ValidateSelectedTemplate()
 //
 // -----------------------------------------------------------------------------------------------
 
+std::vector<DialogNewSkin::TabNew::SortInfo> DialogNewSkin::TabNew::s_SortInfo;
+
 DialogNewSkin::TabNew::TabNew() : Tab(),
-	m_ParentFolder(),
 	m_IsRoot(true),
-	m_CanAddResourcesFolder(false)
+	m_CanAddResourcesFolder(false),
+	m_InRenameMode(false)
 {
 }
 
@@ -504,11 +506,15 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND tree = GetControl(Id_ItemsTreeView);
 			TVINSERTSTRUCT tvi = { 0 };
 			tvi.hInsertAfter = TVI_FIRST;
-			tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
+			tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE | TVIF_PARAM;
 			tvi.item.iImage = tvi.item.iSelectedImage = 0;
 			tvi.item.pszText = L"@Resources";
 			tvi.item.state = tvi.item.stateMask = TVIS_BOLD;
 			tvi.hParent = TreeView_GetRoot(tree);
+
+			s_SortInfo.emplace_back(true, L"@Resources");
+			tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+
 			TreeView_InsertItem(tree, &tvi);
 
 			TreeView_Expand(tree, tvi.hParent, TVE_EXPAND);
@@ -519,7 +525,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			BOOL exists = CreateDirectory(resources.c_str(), NULL);
 			if (!exists && GetLastError() == ERROR_PATH_NOT_FOUND)
 			{
-				std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, L"@Resources");
+				const std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, L"@Resources");
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				TreeView_DeleteItem(tree, tvi.item.hItem);
 				return 0;
@@ -572,32 +578,32 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_NEWSKINMENU_OPENFOLDER:
 		{
 			HWND tree = GetControl(Id_ItemsTreeView);
-
-			std::wstring folder = m_ParentFolder;
-			const std::wstring selectedPath = GetTreeSelectionPath(tree, false);
-			const size_t pos = selectedPath.find_first_of(L"\\");
-			if (pos != std::wstring::npos)
-			{
-				folder += selectedPath.substr(pos + 1);
-				PathUtil::AppendBacklashIfMissing(folder);
-			}
-
+			std::wstring folder = m_ParentFolder + GetTreeSelectionPath(tree, false);
+			PathUtil::AppendBacklashIfMissing(folder);
 			CommandHandler::RunFile(folder.c_str());
+		}
+		break;
+
+	case IDM_NEWSKINMENU_EDITFOLDERNAME:
+	case IDM_NEWSKINMENU_EDITFILENAME:
+		{
+			m_InRenameMode = true;
+
+			HWND tree = GetControl(Id_ItemsTreeView);
+
+			// Make tree nodes editable
+			LONG_PTR style = GetWindowLongPtr(tree, GWL_STYLE) | TVS_EDITLABELS;
+			SetWindowLongPtr(tree, GWL_STYLE, style);
+
+			// Enter 'edit mode' of treeview edit control
+			TreeView_EditLabel(tree, TreeView_GetSelection(tree));
 		}
 		break;
 
 	case IDM_NEWSKINMENU_EDIT:
 		{
 			HWND tree = GetControl(Id_ItemsTreeView);
-
-			std::wstring file = m_ParentFolder;
-			const std::wstring selectedPath = GetTreeSelectionPath(tree, true);
-			const size_t pos = selectedPath.find_first_of(L"\\");
-			if (pos != std::wstring::npos)
-			{
-				file += selectedPath.substr(pos + 1);
-			}
-
+			const std::wstring file = m_ParentFolder + GetTreeSelectionPath(tree, true);
 			CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), file.c_str());
 		}
 		break;
@@ -611,7 +617,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam >= ID_TEMPLATE_FIRST && wParam <= ID_TEMPLATE_LAST)
 		{
-			int index = (int)wParam - ID_TEMPLATE_FIRST;
+			size_t index = (size_t)wParam - ID_TEMPLATE_FIRST;
 			if (index < c_Templates.size())
 			{
 				m_SelectedTemplate = c_Templates[index];
@@ -659,12 +665,17 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				TreeView_SelectItem(nm->hwndFrom, ht.hItem);
 
+				WCHAR buffer[MAX_PATH];
+
 				TVITEM tvi = { 0 };
 				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
-				tvi.mask = TVIF_STATE | TVIF_IMAGE | TVIF_CHILDREN;
+				tvi.mask = TVIF_STATE | TVIF_IMAGE | TVIF_CHILDREN | TVIF_TEXT;
+				tvi.pszText = buffer;
+				tvi.cchTextMax = MAX_PATH;
 
 				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
+					bool isNewItem = (tvi.state & TVIS_BOLD) != 0;
 					HMENU menu = nullptr;
 
 					if (tvi.iImage == 0)
@@ -682,6 +693,23 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 						SetMenuDefaultItem(menu, IDM_NEWSKINMENU_EXPAND, MF_BYCOMMAND);
+
+						// Allow for renaming of new items *only* if not in the skin registry.
+						// Also, do not allow editing of the @Resources folder.
+						if (isNewItem && (_wcsicmp(buffer, L"@Resources") != 0))
+						{
+							std::wstring folder = m_ParentFolder + GetTreeSelectionPath(nm->hwndFrom, false);
+
+							// Remove trailing slash (not needed for skin registry)
+							PathUtil::RemoveTrailingBackslash(folder);
+
+							folder = folder.substr(GetRainmeter().GetSkinPath().size());
+							if (!GetRainmeter().m_SkinRegistry.FindFolder(folder))
+							{
+								const std::wstring text = GetString(ID_STR_EDITFOLDERNAME);
+								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFOLDERNAME, text.c_str());
+							}
+						}
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
@@ -705,6 +733,25 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 						SetMenuDefaultItem(menu, IDM_NEWSKINMENU_EDIT, MF_BYCOMMAND);
+
+						// Allow for renaming of new items *only* if not in the skin registry
+						if (isNewItem)
+						{
+							std::wstring folder = m_ParentFolder + GetTreeSelectionPath(nm->hwndFrom, false);
+							folder = folder.substr(GetRainmeter().GetSkinPath().size());
+
+							// Remove trailing slash (not needed for skin registry)
+							PathUtil::RemoveTrailingBackslash(folder);
+
+							const std::wstring file = buffer;
+							const SkinRegistry::Indexes indexes =
+								GetRainmeter().m_SkinRegistry.FindIndexes(folder, file);
+							if (!indexes.IsValid())
+							{
+								const std::wstring text = GetString(ID_STR_EDITFILENAME);
+								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFILENAME, text.c_str());
+							}
+						}
 					}
 
 					// Show context menu
@@ -733,14 +780,16 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			SetWindowSubclass(m_TreeEdit, &TreeEditSubclass, 1, 0);
 			SetFocus(m_TreeEdit);
 
-			// Fake set the text in the edit control, so that |TVN_ENDLABELEDIT| sees it
+			// Fake set the text in the edit control, so that |TVN_ENDLABELEDIT| notification sees it
 			LPNMTVDISPINFO info = (LPNMTVDISPINFO)lParam;
 			SetWindowText(m_TreeEdit, info->item.pszText);
 
 			// Only select the skin name, not the extension
-			if (_wcsicmp(info->item.pszText, L"NewSkin.ini") == 0)
+			const size_t len = wcslen(info->item.pszText);
+			const WCHAR* ext = PathFindExtension(info->item.pszText);
+			if (len > 4 && ((_wcsicmp(ext, L".ini") == 0) || (_wcsicmp(ext, L".inc") == 0)))
 			{
-				Edit_SetSel(m_TreeEdit, 0, 7);
+				Edit_SetSel(m_TreeEdit, 0, len - 4);
 			}
 		}
 		break;
@@ -757,12 +806,19 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			SetWindowLongPtr(tree, GWL_STYLE, style);
 
 			// The items text will be |NULL| if the edit control was cancelled.
-			// So delete the item from the tree and return.
+			// So delete the item from the tree unless the item is being renamed.
 			if (!info->item.pszText)
 			{
-				TreeView_DeleteItem(tree, info->item.hItem);
+				if (!m_InRenameMode)
+				{
+					TreeView_DeleteItem(tree, info->item.hItem);
+				}
+
+				m_InRenameMode = false;
 				return FALSE;
 			}
+
+			const UINT count = TreeView_GetCount(tree);
 
 			// Make sure the field is not empty
 			std::wstring name = info->item.pszText;
@@ -775,58 +831,112 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			// Determine if the item is a folder or skin file (.ini)
 			TVITEM tvitem = { 0 };
 			tvitem.hItem = info->item.hItem;
-			tvitem.mask = TVIF_IMAGE;
+			tvitem.mask = TVIF_IMAGE | TVIF_TEXT | TVIF_PARAM;
 			TreeView_GetItem(tree, &tvitem);
 
-			bool isFolder = tvitem.iImage == 0;
+			const bool isFolder = tvitem.iImage == 0;
 
 			// Find out if item already exists in tree
 			if (DoesNodeExist(info->item.hItem, info->item.pszText, isFolder))
 			{
-				UINT msg = isFolder ? ID_STR_FOLDEREXISTS : ID_STR_FILEEXISTS;
-				std::wstring text = GetFormattedString(msg, name.c_str());
-				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONASTERISK | MB_OK);
+				const UINT msg = isFolder ? ID_STR_FOLDEREXISTS : ID_STR_FILEEXISTS;
+				const std::wstring text = GetFormattedString(msg, name.c_str());
+				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 				enterEditMode(tree, info->item.hItem);
 				return TRUE;
 			}
 
 			std::wstring newItem = m_ParentFolder;
 
-			// If this is not the first item in the list, we need to strip the parent folder from the path
-			UINT count = TreeView_GetCount(tree);
-			if (count != 1)
-			{
-				const std::wstring selectedPath = GetTreeSelectionPath(tree, false);
-				const size_t pos = selectedPath.find_first_of(L"\\");
-				if (pos != std::wstring::npos)
-				{
-					newItem += selectedPath.substr(pos + 1);
-					PathUtil::AppendBacklashIfMissing(newItem);
-				}
-			}
+			// Add selection to item
+			newItem += GetTreeSelectionPath(tree, false);
+			PathUtil::AppendBacklashIfMissing(newItem);
 
 			if (isFolder)
 			{
-				newItem += name;
-				newItem += L"\\";
-
-				// The skin registry only has folders that contain skin files, so if a folder
-				// already exists, do not show error, just silently add folder to tree.
-				const BOOL exists = CreateDirectory(newItem.c_str(), NULL);
-				if (!exists && GetLastError() == ERROR_PATH_NOT_FOUND)
+				if (m_InRenameMode)
 				{
-					std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, name.c_str());
-					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-					TreeView_DeleteItem(tree, info->item.hItem);
-					return TRUE;
+					// |newItem| is now the 'old' path, so replace the last folder
+					// in the path with the |name| of the new folder
+					const std::wstring oldItem = newItem;
+					PathUtil::RemoveTrailingBackslash(newItem);
+
+					const size_t pos = newItem.find_last_of(L"\\");
+					if (pos == std::wstring::npos)
+					{
+						// Invalid path
+						m_InRenameMode = false;
+						const std::wstring error = std::to_wstring(GetLastError());
+						const std::wstring text = GetFormattedString(ID_STR_RENAMEFOLDERFAIL, name.c_str(), error.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+						return FALSE;
+					}
+
+					newItem = newItem.substr(0, pos + 1);
+					newItem += name;
+					PathUtil::AppendBacklashIfMissing(newItem);
+
+					// New folder already exists, re-enter folder name
+					if (_waccess(newItem.c_str(), 0) == 0)
+					{
+						const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
+						enterEditMode(tree, info->item.hItem);
+						return TRUE;
+					}
+
+					m_InRenameMode = false;
+
+					BOOL success = MoveFile(oldItem.c_str(), newItem.c_str());
+					if (!success)
+					{
+						const std::wstring error = std::to_wstring(GetLastError());
+						const std::wstring text = GetFormattedString(ID_STR_RENAMEFOLDERFAIL, name.c_str(), error.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+						return FALSE;
+					}
+
+					// If parent folder was changed, update label
+					if (info->item.hItem == TreeView_GetRoot(tree))
+					{
+						m_ParentFolder = newItem;
+						UpdateParentPathLabel();
+					}
 				}
-
-				// Change parent if folder is at root level
-				if (count == 1)
+				else  // Not in rename mode
 				{
-					m_ParentFolder = newItem;
-					UpdateParentPathLabel();
-					c_CloseAction = CloseType::RootFolder;
+					newItem += name;
+					newItem += L"\\";
+
+					// Create the folder
+					if (!CreateDirectory(newItem.c_str(), NULL))
+					{
+						// If the folder already exists, enter edit mode to rename,
+						// otherwise delete the item from the tree.
+						DWORD error = GetLastError();
+						if (error == ERROR_ALREADY_EXISTS)
+						{
+							const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
+							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
+							enterEditMode(tree, info->item.hItem);
+							return TRUE;
+						}
+						else
+						{
+							const std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, name.c_str());
+							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+							TreeView_DeleteItem(tree, info->item.hItem);
+							return FALSE;
+						}
+					}
+
+					// Change parent if folder is at root level
+					if (count == 1)
+					{
+						m_ParentFolder = newItem;
+						UpdateParentPathLabel();
+						c_CloseAction = CloseType::RootFolder;
+					}
 				}
 			}
 			else // not a folder
@@ -834,7 +944,8 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 				// Only allow .ini or .inc extensions
 				const WCHAR* ext = PathFindExtension(name.c_str());
 				bool isSkin = _wcsicmp(ext, L".ini") == 0;
-				if (!isSkin && (_wcsicmp(ext, L".inc") != 0))
+				bool isInc = _wcsicmp(ext, L".inc") == 0;
+				if (!isSkin && !isInc)
 				{
 					// Remove extension and add '.ini' as extension
 					LPWSTR temp = &name[0];
@@ -844,101 +955,143 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					isSkin = true;  // signal dialog that a skin was added (see below)
 				}
 
-				newItem += name;
-
-				if (PathFileExists(newItem.c_str()) == TRUE)
+				if (m_InRenameMode)
 				{
-					// The skin file already exists
-					std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
-					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONEXCLAMATION | MB_OK);
-					enterEditMode(tree, info->item.hItem);
-					return TRUE;
-				}
+					// Get the selected item (with filename)
+					newItem = m_ParentFolder + GetTreeSelectionPath(tree, true);
+					const std::wstring oldItem = newItem;
 
-				// Create or copy the selected template. If the selected template
-				// does not exist, attempt to create a default template in its place.
-				if (m_SelectedTemplate.empty())
-				{
-					// Create default template file
-					std::wstring newFile = newItem;
-					c_Dialog->m_TabTemplate.CreateTemplate(newFile);
-					if (newFile.empty())
+					const size_t pos = newItem.find_last_of(L"\\");
+					if (pos == std::wstring::npos)
 					{
-						// Could not create default template file
-						std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+						// Invalid path
+						m_InRenameMode = false;
+						const std::wstring error = std::to_wstring(GetLastError());
+						const std::wstring text = GetFormattedString(ID_STR_RENAMEFILEFAIL, name.c_str(), error.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-						TreeView_DeleteItem(tree, info->item.hItem);
+						return FALSE;
+					}
+
+					// Remove old filename and add new filename
+					newItem = newItem.substr(0, pos + 1);
+					newItem += name;
+
+					if (_waccess(newItem.c_str(), 0) == 0)
+					{
+						// File exists, enter edit mode
+						const std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
+						enterEditMode(tree, info->item.hItem);
 						return TRUE;
 					}
+
+					m_InRenameMode = false;
+
+					BOOL success = MoveFile(oldItem.c_str(), newItem.c_str());
+					if (!success)
+					{
+						// Could not rename file
+						const std::wstring error = std::to_wstring(GetLastError());
+						const std::wstring text = GetFormattedString(ID_STR_RENAMEFILEFAIL, name.c_str(), error.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+						return FALSE;
+					}
+
+					// Do a 'refresh all' if a skin was added
+					if (isSkin) c_CloseAction = CloseType::SkinFile;
 				}
-				else
+				else  // Not in rename mode
 				{
-					// Copy template file
-					bool templateExists = true;
-					std::wstring templateFile = GetTemplateFolder();
-					templateFile +=	m_SelectedTemplate;
-					templateFile += L".template";
-					if (_waccess(templateFile.c_str(), 0) == -1)
+					newItem += name;
+
+					if (PathFileExists(newItem.c_str()) == TRUE)
 					{
-						// Template file doesn't exist, so ask user if they would like a default template instead.
-						templateExists = false;
+						// The skin file already exists
+						const std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
+						enterEditMode(tree, info->item.hItem);
+						return TRUE;
+					}
 
-						std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, m_SelectedTemplate.c_str());
-						if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
+					// Create or copy the selected template. If the selected template
+					// does not exist, attempt to create a default template in its place.
+					if (m_SelectedTemplate.empty())
+					{
+						// Create default template file
+						std::wstring newFile = newItem;
+						c_Dialog->m_TabTemplate.CreateTemplate(newFile);
+						if (newFile.empty())
 						{
-							// 'No' button was pushed
-							TreeView_DeleteItem(tree, info->item.hItem);
-							return TRUE;
-						}
-
-						templateFile = newItem;
-						c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
-						if (templateFile.empty())
-						{
-							// Could not create skin using the default template
-							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+							// Could not create default template file
+							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							TreeView_DeleteItem(tree, info->item.hItem);
-							return TRUE;
+							return FALSE;
+						}
+					}
+					else
+					{
+						// Copy template file
+						bool templateExists = true;
+						std::wstring templateFile = GetTemplateFolder();
+						templateFile += m_SelectedTemplate;
+						templateFile += L".template";
+						if (_waccess(templateFile.c_str(), 0) == -1)
+						{
+							// Template file doesn't exist, so ask user if they would like a default template instead.
+							templateExists = false;
+
+							const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, m_SelectedTemplate.c_str());
+							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
+							{
+								// 'No' button was pushed
+								TreeView_DeleteItem(tree, info->item.hItem);
+								return FALSE;
+							}
+
+							templateFile = newItem;
+							c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
+							if (templateFile.empty())
+							{
+								// Could not create skin using the default template
+								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+								TreeView_DeleteItem(tree, info->item.hItem);
+								return FALSE;
+							}
+						}
+
+						// If the template exists, copy the template file to new location
+						if (templateExists)
+						{
+							if (!System::CopyFiles(templateFile, newItem))
+							{
+								// Could not create the skin using the selected template
+								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+								TreeView_DeleteItem(tree, info->item.hItem);
+								return FALSE;
+							}
 						}
 					}
 
-					// If the template exists, copy the template file to new location
-					if (templateExists)
-					{
-						if (!System::CopyFiles(templateFile, newItem))
-						{
-							// Could not create the skin using the selected template
-							std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
-							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-							TreeView_DeleteItem(tree, info->item.hItem);
-							return TRUE;
-						}
-					}
+					// Do a 'refresh all' if a skin was added
+					if (isSkin) c_CloseAction = CloseType::SkinFile;
 				}
-
-				// Do a 'refresh all' if a skin was added
-				if (isSkin) c_CloseAction = CloseType::SkinFile;
 			}
 
-			// In case item's text has changed, delete it from tree, and re-insert it in correct position
-			// Note: Do not use the tree view's sort function because we want the folders at the top of the list
-			HTREEITEM parent = TreeView_GetParent(tree, info->item.hItem);
-			TreeView_DeleteItem(tree, info->item.hItem);
-			HTREEITEM item = FindInsertionNode(parent, name.c_str(), isFolder);
+			// Update item text and sorting information
+			tvitem.pszText = (WCHAR*)name.c_str();
+			s_SortInfo.emplace_back(isFolder, name);
+			tvitem.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+			TreeView_SetItem(tree, &tvitem);
 
-			// Re-insert item into tree
-			TVINSERTSTRUCT tvi = { 0 };
-			tvi.hInsertAfter = item;
-			tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
-			tvi.item.iImage = tvi.item.iSelectedImage = isFolder ? 0 : 1;
-			tvi.item.pszText = (WCHAR*)name.c_str();
-			tvi.item.state = tvi.item.stateMask = TVIS_BOLD;
-			tvi.hParent = parent;
-
-			item = TreeView_InsertItem(tree, &tvi);
-
-			TreeView_Select(tree, item, TVGN_CARET);
+			// Sort items and select new item
+			TVSORTCB sort = { 0 };
+			sort.hParent = TreeView_GetParent(tree, info->item.hItem);
+			sort.lpfnCompare = TreeViewSortProc;
+			TreeView_SortChildrenCB(tree, &sort, 0);
+			TreeView_Select(tree, info->item.hItem, TVGN_CARET);
 
 			if (isFolder && count == 1)
 			{
@@ -970,12 +1123,12 @@ void DialogNewSkin::TabNew::SetParentFolder(const WCHAR* parentFolder)
 
 		TVINSERTSTRUCT tvi = { 0 };
 		tvi.hInsertAfter = TVI_LAST;
-		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
 
 		if (!GetRainmeter().m_SkinRegistry.IsEmpty())
 		{
-			int index = GetRainmeter().m_SkinRegistry.FindFolderIndex(parentFolder);
+			const int index = GetRainmeter().m_SkinRegistry.FindFolderIndex(parentFolder);
 			PopulateTree(tree, tvi, index, true);
 
 			// Select, expand, and focus first item in tree
@@ -1013,7 +1166,7 @@ void DialogNewSkin::TabNew::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR na
 	if (pos)
 	{
 		const int folderLen = (int)(pos - name);
-		tvi.cchTextMax = folderLen + 1;		// Length of folder name plus 1 for nullptr
+		tvi.cchTextMax = folderLen + 1;  // Length of folder name plus 1 for nullptr
 
 		// Find and expand the folder
 		do
@@ -1025,7 +1178,7 @@ void DialogNewSkin::TabNew::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR na
 				{
 					TreeView_Expand(tree, tvi.hItem, TVE_EXPAND);
 					TreeView_Select(tree, tvi.hItem, TVGN_CARET);
-					++pos;	// Skip the slash
+					++pos;  // Skip the slash
 					SelectTreeItem(tree, item, pos);
 				}
 
@@ -1056,7 +1209,7 @@ void DialogNewSkin::TabNew::UpdateParentPathLabel()
 {
 	// Only display the skins folder name plus any subfolder that is selected
 	const std::wstring sp = GetRainmeter().GetSkinPath();
-	size_t pos = sp.find_last_of(L'\\', sp.size() - 2);
+	const size_t pos = sp.find_last_of(L'\\', sp.size() - 2);
 
 	// Add some padding so the text does not touch the border
 	std::wstring text = L" ";
@@ -1086,7 +1239,7 @@ void DialogNewSkin::TabNew::UpdateParentPathTT(bool update)
 
 void DialogNewSkin::TabNew::AddTreeItem(bool isFolder)
 {
-	std::wstring name = isFolder ? L"NewFolder" : L"NewSkin.ini";
+	const std::wstring name = isFolder ? L"NewFolder" : L"NewSkin.ini";
 	const std::wstring path = GetRainmeter().GetSkinPath();
 
 	HWND tree = GetControl(Id_ItemsTreeView);
@@ -1101,18 +1254,26 @@ void DialogNewSkin::TabNew::AddTreeItem(bool isFolder)
 		tvitem.hItem = TreeView_GetParent(tree, tvitem.hItem);
 	}
 
-	HTREEITEM item = FindInsertionNode(tvitem.hItem, name.c_str(), isFolder);
-
 	// Add new item to tree
 	TVINSERTSTRUCT tvi = { 0 };
-	tvi.hInsertAfter = item;
-	tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
+	tvi.hInsertAfter = tvitem.hItem;
+	tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE | TVIF_PARAM;
 	tvi.item.iImage = tvi.item.iSelectedImage = isFolder ? 0 : 1;
 	tvi.item.pszText = (WCHAR*)name.c_str();
 	tvi.item.state = tvi.item.stateMask = TVIS_BOLD;
 	tvi.hParent = tvitem.hItem;
 
-	item = TreeView_InsertItem(tree, &tvi);
+	// Store sorting information
+	s_SortInfo.emplace_back(isFolder, name);
+	tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+
+	HTREEITEM item = TreeView_InsertItem(tree, &tvi);
+
+	// Sort items
+	TVSORTCB sort = { 0 };
+	sort.hParent = tvitem.hItem;
+	sort.lpfnCompare = TreeViewSortProc;
+	TreeView_SortChildrenCB(tree, &sort, 0);
 
 	TreeView_Expand(tree, tvi.hParent, TVE_EXPAND);
 
@@ -1154,51 +1315,27 @@ bool DialogNewSkin::TabNew::DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isF
 	return false;
 }
 
-HTREEITEM DialogNewSkin::TabNew::FindInsertionNode(HTREEITEM parent, LPCWSTR text, bool isFolder)
+int CALLBACK DialogNewSkin::TabNew::TreeViewSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-	HWND tree = GetControl(Id_ItemsTreeView);
+	const size_t index1 = (size_t)lParam1;
+	const size_t index2 = (size_t)lParam2;
 
-	HTREEITEM previous = parent;
-	HTREEITEM current = TreeView_GetChild(tree, parent);
-	HTREEITEM found = NULL;
-	while (current != NULL)
-	{
-		WCHAR buffer[MAX_PATH];
+	const size_t size = s_SortInfo.size();
+	if (index1 >= size || index2 >= size) return 0; // out of bounds
 
-		TVITEM tvi = { 0 };
-		tvi.hItem = current;
-		tvi.mask = TVIF_TEXT | TVIF_IMAGE;
-		tvi.cchTextMax = MAX_PATH;
-		tvi.pszText = buffer;
-		TreeView_GetItem(tree, &tvi);
+	const SortInfo& item1 = s_SortInfo[index1];
+	const SortInfo& item2 = s_SortInfo[index2];
 
-		// Send back the previous node (unless it is the parent, then insert at top of list)
-		if (isFolder && tvi.iImage == 1)
-		{
-			found = previous;
-			break;
-		}
+	if (item1.type && !item2.type) return -1;  // item1 is a folder, item2 is a file
+	if (!item1.type && item2.type) return 1;   // item1 is a file, item2 is a folder
 
-		if (((isFolder && tvi.iImage == 0) || (!isFolder && tvi.iImage == 1)) &&
-			_wcsicmp(buffer, text) > 0)
-		{
-			found = previous;
-			break;
-		}
-
-		previous = current;
-		current = TreeView_GetNextSibling(tree, previous);
-	}
-
-	// If the found node is the parent, make sure the item is inserted as the first child node
-	if (found == parent) return TVI_FIRST;
-
-	return found;
+	return wcscmp(item1.name.c_str(), item2.name.c_str());  // compare names
 }
 
 std::wstring DialogNewSkin::TabNew::GetTreeSelectionPath(HWND tree, bool allItems)
 {
 	WCHAR buffer[MAX_PATH];
+	std::wstring path;
 
 	// Get current selection name
 	TVITEM tvi = { 0 };
@@ -1207,8 +1344,6 @@ std::wstring DialogNewSkin::TabNew::GetTreeSelectionPath(HWND tree, bool allItem
 	tvi.pszText = buffer;
 	tvi.cchTextMax = MAX_PATH;
 	TreeView_GetItem(tree, &tvi);
-
-	std::wstring path;
 
 	// Only add files if necessary. Always add folders.
 	if (allItems || tvi.iImage == 0)
@@ -1223,14 +1358,19 @@ std::wstring DialogNewSkin::TabNew::GetTreeSelectionPath(HWND tree, bool allItem
 		path.insert(0, buffer);
 	}
 
+	// Remove the first folder in the path since it is already included
+	// in the parent path or is about to added to it.
+	const std::wstring first = path.substr(0, path.find_first_of(L"\\"));
+	path.erase(0, first.length() + 1);
+
 	return path;
 }
 
 int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index, bool isParentFolder)
 {
 	const int initialLevel = GetRainmeter().m_SkinRegistry.GetFolder(index).level;
-
 	const int max = GetRainmeter().m_SkinRegistry.GetFolderCount();
+
 	do
 	{
 		const auto& skinFolder = GetRainmeter().m_SkinRegistry.GetFolder(index);
@@ -1240,6 +1380,10 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		}
 
 		HTREEITEM oldParent = tvi.hParent;
+
+		// Add sorting identifier
+		s_SortInfo.emplace_back(true, skinFolder.name);
+		tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
 
 		// Add folder
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
@@ -1254,6 +1398,9 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 			resources += L"\\@Resources";
 			if (PathIsDirectory(resources.c_str()))
 			{
+				s_SortInfo.emplace_back(true, L"@Resources");
+				tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+
 				tvi.item.pszText = L"@Resources";
 				TreeView_InsertItem(tree, &tvi);
 			}
@@ -1275,6 +1422,9 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		tvi.item.iImage = tvi.item.iSelectedImage = 1;
 		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
+			s_SortInfo.emplace_back(false, skinFolder.files[i].filename);
+			tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+
 			tvi.item.pszText = (WCHAR*)skinFolder.files[i].filename.c_str();
 			TreeView_InsertItem(tree, &tvi);
 		}
@@ -1396,7 +1546,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
 			WCHAR buffer[32];
-			int len = Edit_GetText((HWND)lParam, buffer, 32);
+			const int len = Edit_GetText((HWND)lParam, buffer, 32);
 			EnableWindow(GetControl(Id_SaveButton), len > 0);
 		}
 		break;
@@ -1415,8 +1565,8 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess(templateFile.c_str(), 0) != -1);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(ID_STR_TEMPLATEEXISTS, buffer);
-				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONEXCLAMATION | MB_OK);
+				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEEXISTS, buffer);
+				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 				break;
 			}
 
@@ -1424,9 +1574,8 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 			BOOL exists = CreateDirectory(templateFolder.c_str(), NULL);
 			if (!exists && GetLastError() == ERROR_PATH_NOT_FOUND)
 			{
-				std::wstring text = GetString(ID_STR_TEMPLATEFOLDERFAIL);
+				const std::wstring text = GetString(ID_STR_TEMPLATEFOLDERFAIL);
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-				CloseDialog();
 				break;
 			}
 
@@ -1434,9 +1583,8 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (templateFile.empty())  // Could not create template file
 			{
-				std::wstring text = GetFormattedString(ID_STR_TEMPLATEFILEFAIL, buffer);
+				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEFILEFAIL, buffer);
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-				CloseDialog();
 				break;
 			}
 
@@ -1445,7 +1593,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			// Add string to listbox and select it
 			item = GetControl(Id_TemplateListBox);
-			int selected = ListBox_AddString(item, buffer);
+			const int selected = ListBox_AddString(item, buffer);
 			ListBox_SetCurSel(item, selected);
 
 			c_Templates.insert(c_Templates.begin() + selected, buffer);
@@ -1493,10 +1641,10 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND item = GetControl(Id_TemplateListBox);
 			WCHAR buffer[MAX_PATH];
-			int selected = ListBox_GetCurSel(item);
+			const int selected = ListBox_GetCurSel(item);
 			if (ListBox_GetText(item, selected, buffer) > 0)
 			{
-				std::wstring text = GetFormattedString(ID_STR_TEMPLATEDELETE, buffer);
+				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDELETE, buffer);
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1534,7 +1682,7 @@ void DialogNewSkin::TabTemplate::CreateTemplateMenu(HMENU menu, std::wstring sel
 	for (int i = 0; i < count; ++i)
 	{
 		WCHAR buffer[MAX_PATH];
-		int len = ListBox_GetText(listbox, i, buffer);
+		const int len = ListBox_GetText(listbox, i, buffer);
 		if (len > 0)
 		{
 			// Insert a separator
