@@ -876,6 +876,13 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					newItem += name;
 					PathUtil::AppendBackslashIfMissing(newItem);
 
+					// If items are the same, just return like nothing happened.
+					if (wcscmp(oldItem.c_str(), newItem.c_str()) == 0)
+					{
+						m_InRenameMode = false;
+						return TRUE;
+					}
+
 					// New folder already exists, re-enter folder name
 					if (_waccess(newItem.c_str(), 0) == 0)
 					{
@@ -975,6 +982,13 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					// Remove old filename and add new filename
 					newItem = newItem.substr(0, pos + 1);
 					newItem += name;
+
+					// If items are the same, just return like nothing happened.
+					if (wcscmp(oldItem.c_str(), newItem.c_str()) == 0)
+					{
+						m_InRenameMode = false;
+						return TRUE;
+					}
 
 					if (_waccess(newItem.c_str(), 0) == 0)
 					{
