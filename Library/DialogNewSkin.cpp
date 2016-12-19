@@ -734,13 +734,9 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				TreeView_SelectItem(nm->hwndFrom, ht.hItem);
 
-				WCHAR buffer[MAX_PATH];
-
 				TVITEM tvi = { 0 };
 				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
-				tvi.mask = TVIF_STATE | TVIF_IMAGE | TVIF_CHILDREN | TVIF_TEXT;
-				tvi.pszText = buffer;
-				tvi.cchTextMax = MAX_PATH;
+				tvi.mask = TVIF_IMAGE;
 
 				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
