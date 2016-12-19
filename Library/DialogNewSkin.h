@@ -12,13 +12,6 @@
 #include "Logger.h"
 #include "Skin.h"
 
-enum class CloseType : BYTE
-{
-	None = 0,		// Nothing was added, or non-root folders were added
-	RootFolder,		// A root folder was added, but no skin files
-	SkinFile		// A skin was added
-};
-
 class DialogNewSkin : public Dialog
 {
 public:
@@ -89,6 +82,7 @@ private:
 		void AddTreeItem(bool isFolder);
 		bool DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isFolder);
 
+		static UINT GetChildSkinCount(HWND tree, HTREEITEM item);
 		static int CALLBACK TreeViewSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		static std::wstring GetTreeSelectionPath(HWND tree, bool allItems);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index, bool isParentFolder);
@@ -139,6 +133,12 @@ private:
 	{
 		Id_CloseButton = IDCLOSE,
 		Id_Tab = 100
+	};
+
+	struct CloseType
+	{
+		bool rootFolder;
+		UINT skins;  // Not inc files
 	};
 
 	Tab& GetActiveTab();

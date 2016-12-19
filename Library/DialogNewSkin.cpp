@@ -15,9 +15,9 @@
 #include "DialogNewSkin.h"
 #include "DialogManage.h"
 
-CloseType DialogNewSkin::c_CloseAction = CloseType::None;
+DialogNewSkin::CloseType DialogNewSkin::c_CloseAction = { false, 0 };
 std::vector<std::wstring> DialogNewSkin::c_Templates;
-WINDOWPLACEMENT DialogNewSkin::c_WindowPlacement = {0};
+WINDOWPLACEMENT DialogNewSkin::c_WindowPlacement = { 0 };
 DialogNewSkin* DialogNewSkin::c_Dialog = nullptr;
 
 DialogNewSkin::DialogNewSkin() : Dialog()
@@ -126,96 +126,88 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
-			switch (c_CloseAction)
+			if (c_CloseAction.rootFolder && c_CloseAction.skins == 0)
 			{
-			case CloseType::RootFolder:
+				// If a root folder was created (without any skins being created), attempt to create a skin using
+				// the selected template using the name of the root folder as the name of the skin. If the selected
+				// template is not longer valid, attempt to create a the skin using the default template.
+				const size_t pos = GetRainmeter().GetSkinPath().size();
+				std::wstring folder = c_Dialog->m_TabNew.GetParentFolder();
+				std::wstring file = folder.substr(pos);
+				PathUtil::RemoveTrailingBackslash(file);
+				file += L".ini";
+				folder += file;
+
+				const std::wstring& selectedTemplate = c_Dialog->m_TabNew.GetSelectedTemplate();
+				if (!selectedTemplate.empty())
 				{
-					// If a root folder was created (without any skins being created),
-					// attempt to create a skin using the selected template using the
-					// the name of the root folder as the name of the skin. If the
-					// selected template is not longer valid, attempt to create a
-					// the skin using the default template.
-					const size_t pos = GetRainmeter().GetSkinPath().size();
-					std::wstring folder = c_Dialog->m_TabNew.GetParentFolder();
-					std::wstring file = folder.substr(pos);
-					PathUtil::RemoveTrailingBackslash(file);
-					file += L".ini";
-					folder += file;
-
-					const std::wstring& selectedTemplate = c_Dialog->m_TabNew.GetSelectedTemplate();
-					if (!selectedTemplate.empty())
+					// Copy template file
+					bool templateExists = true;
+					std::wstring templateFile = GetTemplateFolder();
+					templateFile += selectedTemplate;
+					templateFile += L".template";
+					if (_waccess(templateFile.c_str(), 0) == -1)
 					{
-						// Copy template file
-						bool templateExists = true;
-						std::wstring templateFile = GetTemplateFolder();
-						templateFile += selectedTemplate;
-						templateFile += L".template";
-						if (_waccess(templateFile.c_str(), 0) == -1)
+						// Template file doesn't exist, so ask user if they would like a default template instead.
+						templateExists = false;
+
+						const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
+						if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 						{
-							// Template file doesn't exist, so ask user if they would like a default template instead.
-							templateExists = false;
-
-							const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
-							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
-							{
-								// Cancel
-								break;
-							}
-
-							templateFile = folder;
-							c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
-							if (templateFile.empty())
-							{
-								// Could not create the skin using the default template
-								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
-								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-								break;
-							}
+							// Cancel
+							break;
 						}
 
-						// If the template exists, copy the template file to new location
-						if (templateExists)
+						templateFile = folder;
+						c_Dialog->m_TabTemplate.CreateTemplate(templateFile);
+						if (templateFile.empty())
 						{
-							if (!System::CopyFiles(templateFile, folder))
-							{
-								// Could not create the skin using the selected template
-								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
-								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
-								break;
-							}
+							// Could not create the skin using the default template
+							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+							break;
 						}
 					}
-					else
+
+					// If the template exists, copy the template file to new location
+					if (templateExists)
 					{
-						// Use default template
-						c_Dialog->m_TabTemplate.CreateTemplate(folder);
-						if (folder.empty())
+						if (!System::CopyFiles(templateFile, folder))
 						{
-							// Could not create the skin
+							// Could not create the skin using the selected template
 							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							break;
 						}
 					}
 				}
-				//break;  // Pass through
-
-			case CloseType::SkinFile:
+				else
 				{
-					GetRainmeter().RefreshAll();
-					const size_t pos = GetRainmeter().GetSkinPath().size();
-					const std::wstring folder = c_Dialog->m_TabNew.GetParentFolder().substr(pos);
-					DialogManage::Open(L"Skins", folder.c_str(), nullptr);
+					// Use default template
+					c_Dialog->m_TabTemplate.CreateTemplate(folder);
+					if (folder.empty())
+					{
+						// Could not create the skin
+						const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+						break;
+					}
 				}
-				break;
 
-			//case CloseType::None:
-			//default:
-				// No actions needed
+				++c_CloseAction.skins; // increase skin count
 			}
 
-			// Reset close action
-			c_CloseAction = CloseType::None;
+			// If any skins were created, refresh Rainmeter and select parent folder in the Manage dialog
+			if (c_CloseAction.skins > 0)
+			{
+				GetRainmeter().RefreshAll();
+				const size_t pos = GetRainmeter().GetSkinPath().size();
+				const std::wstring folder = c_Dialog->m_TabNew.GetParentFolder().substr(pos);
+				DialogManage::Open(L"Skins", folder.c_str(), nullptr);
+			}
+
+			// Reset any close action
+			c_CloseAction = { false, 0 };
 
 			GetWindowPlacement(m_Window, &c_WindowPlacement);
 			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
@@ -600,7 +592,84 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDM_NEWSKINMENU_EDIT:
+	case IDM_NEWSKINMENU_DELETEFOLDER:
+		{
+			HWND tree = GetControl(Id_ItemsTreeView);
+			std::wstring folder = m_ParentFolder + GetTreeSelectionPath(tree, false);
+			PathUtil::AppendBackslashIfMissing(folder);
+
+			std::wstring text = GetFormattedString(ID_STR_FOLDERDELETE, folder.c_str());
+			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
+			{
+				// Cancel
+				break;
+			}
+
+			if (!System::RemoveFolder(folder))
+			{
+				text = GetFormattedString(ID_STR_FOLDERDELETEFAIL, folder.c_str());
+				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+				return 0;
+			}
+
+			HTREEITEM item = TreeView_GetSelection(tree);
+
+			// Subtract any newly created skins in the folder and its subfolders.
+			// Note: This only checks .ini skin files, not .inc files. Also any folders
+			//       should only contain newly created items, not existing items.
+			UINT count = GetChildSkinCount(tree, item);
+			if (count > c_CloseAction.skins)
+			{
+				c_CloseAction.skins = 0;
+			}
+			else
+			{
+				c_CloseAction.skins -= count;
+			}
+
+			if (item == TreeView_GetRoot(tree))
+			{
+				// If deleting the 'root' item, all child skins and folders should be deleted,
+				// so no need to refresh Rainmeter or create any skins when the dialog is closed.
+				c_CloseAction = { false, 0 };
+
+				// Update the parent folder and label
+				m_ParentFolder = GetRainmeter().GetSkinPath();
+				UpdateParentPathLabel();
+
+				EnableWindow(GetControl(Id_AddResourcesButton), FALSE);
+				EnableWindow(GetControl(Id_AddSkinButton), FALSE);
+			}
+
+			TreeView_DeleteItem(tree, TreeView_GetSelection(tree));
+		}
+		break;
+
+	case IDM_NEWSKINMENU_DELETEFILE:
+		{
+			HWND tree = GetControl(Id_ItemsTreeView);
+			std::wstring file = m_ParentFolder + GetTreeSelectionPath(tree, true);
+
+			std::wstring text = GetFormattedString(ID_STR_FILEDELETE, file.c_str());
+			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
+			{
+				// Cancel
+				break;
+			}
+
+			if (!System::RemoveFile(file))
+			{
+				text = GetFormattedString(ID_STR_FOLDERDELETEFAIL, file.c_str());
+				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
+				return 0;
+			}
+
+			TreeView_DeleteItem(tree, TreeView_GetSelection(tree));
+			--c_CloseAction.skins;
+		}
+		break;
+
+	case IDM_NEWSKINMENU_EDITSKIN:
 		{
 			HWND tree = GetControl(Id_ItemsTreeView);
 			const std::wstring file = m_ParentFolder + GetTreeSelectionPath(tree, true);
@@ -706,8 +775,10 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							folder = folder.substr(GetRainmeter().GetSkinPath().size());
 							if (!GetRainmeter().m_SkinRegistry.FindFolder(folder))
 							{
-								const std::wstring text = GetString(ID_STR_EDITFOLDERNAME);
+								std::wstring text = GetString(ID_STR_RENAME);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFOLDERNAME, text.c_str());
+								text = GetString(ID_STR_DELETE);
+								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_DELETEFOLDER, text.c_str());
 							}
 						}
 
@@ -728,11 +799,11 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Skin menu.
 						static const MenuTemplate s_Menu[] =
 						{
-							MENU_ITEM(IDM_NEWSKINMENU_EDIT, ID_STR_EDITSKIN)
+							MENU_ITEM(IDM_NEWSKINMENU_EDITSKIN, ID_STR_EDITSKIN)
 						};
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
-						SetMenuDefaultItem(menu, IDM_NEWSKINMENU_EDIT, MF_BYCOMMAND);
+						SetMenuDefaultItem(menu, IDM_NEWSKINMENU_EDITSKIN, MF_BYCOMMAND);
 
 						// Allow for renaming of new items *only* if not in the skin registry
 						if (isNewItem)
@@ -748,8 +819,10 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 								GetRainmeter().m_SkinRegistry.FindIndexes(folder, file);
 							if (!indexes.IsValid())
 							{
-								const std::wstring text = GetString(ID_STR_EDITFILENAME);
+								std::wstring text = GetString(ID_STR_RENAME);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFILENAME, text.c_str());
+								text = GetString(ID_STR_DELETE);
+								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_DELETEFILE, text.c_str());
 							}
 						}
 					}
@@ -942,7 +1015,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						m_ParentFolder = newItem;
 						UpdateParentPathLabel();
-						c_CloseAction = CloseType::RootFolder;
+						c_CloseAction.rootFolder = true;
 					}
 				}
 			}
@@ -1012,7 +1085,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// Do a 'refresh all' if a skin was added
-					if (isSkin) c_CloseAction = CloseType::SkinFile;
+					if (isSkin) ++c_CloseAction.skins;
 				}
 				else  // Not in rename mode
 				{
@@ -1055,7 +1128,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							// Template file doesn't exist, so ask user if they would like a default template instead.
 							templateExists = false;
 
-							const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, m_SelectedTemplate.c_str());
+							std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, m_SelectedTemplate.c_str());
 							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 							{
 								// 'No' button was pushed
@@ -1068,7 +1141,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							if (templateFile.empty())
 							{
 								// Could not create skin using the default template
-								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+								text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
 								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 								TreeView_DeleteItem(tree, info->item.hItem);
 								return FALSE;
@@ -1090,7 +1163,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// Do a 'refresh all' if a skin was added
-					if (isSkin) c_CloseAction = CloseType::SkinFile;
+					if (isSkin) ++c_CloseAction.skins;
 				}
 			}
 
@@ -1327,6 +1400,47 @@ bool DialogNewSkin::TabNew::DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isF
 	}
 
 	return false;
+}
+
+UINT DialogNewSkin::TabNew::GetChildSkinCount(HWND tree, HTREEITEM item)
+{
+	if (item == nullptr) return 0;
+
+	UINT count = 0;
+	WCHAR buffer[MAX_PATH];
+	TVITEM tvi = { 0 };
+	tvi.hItem = item;
+	tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_CHILDREN;
+	tvi.pszText = buffer;
+	tvi.cchTextMax = MAX_PATH;
+	TreeView_GetItem(tree, &tvi);
+
+	if (tvi.cChildren > 0)
+	{
+		item = TreeView_GetChild(tree, item);
+		while (item)
+		{
+			tvi.hItem = item;
+			TreeView_GetItem(tree, &tvi);
+
+			if (tvi.iImage == 0)  // Is a folder
+			{
+				count += GetChildSkinCount(tree, item);
+			}
+			else  // Is a file
+			{
+				// Only add .ini files to count
+				const WCHAR* ext = PathFindExtension(buffer);
+				if (_wcsicmp(ext, L".ini") == 0)
+				{
+					++count;
+				}
+			}
+			item = TreeView_GetNextSibling(tree, item);
+		}
+	}
+
+	return count;
 }
 
 int CALLBACK DialogNewSkin::TabNew::TreeViewSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
