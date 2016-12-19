@@ -721,6 +721,39 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
+	case NM_DBLCLK:
+		if (nm->idFrom == Id_ItemsTreeView)
+		{
+			POINT pt = System::GetCursorPosition();
+
+			TVHITTESTINFO ht;
+			ht.pt = pt;
+			ScreenToClient(nm->hwndFrom, &ht.pt);
+
+			if (TreeView_HitTest(nm->hwndFrom, &ht) && !(ht.flags & TVHT_NOWHERE))
+			{
+				TreeView_SelectItem(nm->hwndFrom, ht.hItem);
+
+				WCHAR buffer[MAX_PATH];
+
+				TVITEM tvi = { 0 };
+				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
+				tvi.mask = TVIF_STATE | TVIF_IMAGE | TVIF_CHILDREN | TVIF_TEXT;
+				tvi.pszText = buffer;
+				tvi.cchTextMax = MAX_PATH;
+
+				if (TreeView_GetItem(nm->hwndFrom, &tvi))
+				{
+					if (tvi.iImage == 1)
+					{
+						// Double click on a .ini or .inc file
+						OnCommand(MAKEWPARAM(IDM_NEWSKINMENU_EDITSKIN, 0), 0);
+					}
+				}
+			}
+		}
+		break;
+
 	case NM_RCLICK:
 		if (nm->idFrom == Id_ItemsTreeView)
 		{
