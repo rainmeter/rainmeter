@@ -1699,6 +1699,14 @@ void DialogManage::TabLayouts::Initialize()
 		ListBox_AddString(item, layouts[i].c_str());
 	}
 
+	// Assure buttons are disabled
+	item = GetControl(Id_LoadButton);
+	EnableWindow(item, FALSE);
+	item = GetControl(Id_DeleteButton);
+	EnableWindow(item, FALSE);
+	item = GetControl(Id_EditButton);
+	EnableWindow(item, FALSE);
+
 	m_Initialized = true;
 }
 
