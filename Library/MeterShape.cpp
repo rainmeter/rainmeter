@@ -385,10 +385,21 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return true;
 		}
 	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH1"))
+	{
+		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
+		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_WINDING))
+		{
+			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
+			return false;
+		}
+
+		return true;
+	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH"))
 	{
 		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
-		if (opt.empty() || !ParsePath(opt))
+		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_ALTERNATE))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
 			return false;
@@ -963,7 +974,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 	return false;
 }
 
-bool MeterShape::ParsePath(std::wstring& options)
+bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 {
 	auto createSegmentFlags = [](bool stroke, bool round) -> D2D1_PATH_SEGMENT
 	{
@@ -984,7 +995,7 @@ bool MeterShape::ParsePath(std::wstring& options)
 	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
 	FLOAT startY = (FLOAT)ConfigParser::ParseDouble(stPoint[1].c_str(), 0.0);
 
-	Gfx::Path* shape = new Gfx::Path(startX, startY);
+	Gfx::Path* shape = new Gfx::Path(startX, startY, fillMode);
 
 	bool error = false;
 	bool open = true;
