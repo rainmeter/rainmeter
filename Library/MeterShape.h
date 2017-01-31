@@ -40,7 +40,7 @@ private:
 	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
 	bool ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform);
 	bool ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
-	bool ParsePath(std::wstring& options);
+	bool ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode);
 
 	std::vector<Gfx::Shape*> m_Shapes;
 };

@@ -12,8 +12,9 @@
 
 namespace Gfx {
 
-Path::Path(FLOAT x, FLOAT y, bool isCloned) : Shape(ShapeType::Path),
-	m_StartPoint(D2D1::Point2F(x, y))
+Path::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode, bool isCloned) : Shape(ShapeType::Path),
+	m_StartPoint(D2D1::Point2F(x, y)),
+	m_FillMode(fillMode)
 {
 	// If cloned, copy |m_Path| instead of re-creating it.
 	if (isCloned) return;
@@ -24,6 +25,7 @@ Path::Path(FLOAT x, FLOAT y, bool isCloned) : Shape(ShapeType::Path),
 		hr = m_Path->Open(m_Sink.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
+			m_Sink->SetFillMode(m_FillMode);
 			m_Sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
 			return;
 		}
@@ -44,7 +46,7 @@ void Path::Dispose()
 
 Shape* Path::Clone()
 {
-	Path* newShape = new Path(m_StartPoint.x, m_StartPoint.y, true);
+	Path* newShape = new Path(m_StartPoint.x, m_StartPoint.y, m_FillMode, true);
 
 	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 
