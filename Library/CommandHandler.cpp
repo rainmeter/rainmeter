@@ -153,7 +153,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 			// Use the specified window instead of skin parameter.
 			if (argsCount > bangInfo.argCount)
 			{
-				const std::wstring& folderPath = args[bangInfo.argCount];
+				std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
 					Skin* skin = GetRainmeter().GetSkin(folderPath);

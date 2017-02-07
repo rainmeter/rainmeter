@@ -1084,8 +1084,11 @@ bool Rainmeter::HasSkin(const Skin* skin) const
 	return false;
 }
 
-Skin* Rainmeter::GetSkin(const std::wstring& folderPath)
+Skin* Rainmeter::GetSkin(std::wstring folderPath)
 {
+	// Remove any leading slashes
+	PathUtil::RemoveLeadingBackslash(folderPath);
+
 	const WCHAR* folderSz = folderPath.c_str();
 	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)

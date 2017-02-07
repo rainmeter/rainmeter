@@ -85,7 +85,7 @@ public:
 		static Indexes Invalid() { return Indexes(-1, 0); }
 	};
 
-	int FindFolderIndex(const std::wstring& folderPath) const;
+	int FindFolderIndex(std::wstring folderPath) const;
 	Folder* FindFolder(const std::wstring& folderPath);
 
 	Indexes FindIndexes(const std::wstring& folderPath, const std::wstring& file);

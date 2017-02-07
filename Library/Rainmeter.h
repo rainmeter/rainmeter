@@ -67,7 +67,7 @@ public:
 
 	bool HasSkin(const Skin* skin) const;
 
-	Skin* GetSkin(const std::wstring& folderPath);
+	Skin* GetSkin(std::wstring folderPath);
 	Skin* GetSkinByINI(const std::wstring& ini_searching);
 
 	Skin* GetSkin(HWND hwnd);
