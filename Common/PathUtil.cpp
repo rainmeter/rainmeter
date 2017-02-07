@@ -56,6 +56,12 @@ void RemoveTrailingBackslash(std::wstring& path)
 	}
 }
 
+void RemoveLeadingAndTrailingBackslash(std::wstring& path)
+{
+	RemoveLeadingBackslash(path);
+	RemoveTrailingBackslash(path);
+}
+
 std::wstring GetFolderFromFilePath(const std::wstring& filePath)
 {
 	std::wstring::size_type pos = filePath.find_last_of(L"\\/");

@@ -27,6 +27,8 @@ void RemoveLeadingBackslash(std::wstring& path);
 
 void RemoveTrailingBackslash(std::wstring& path);
 
+void RemoveLeadingAndTrailingBackslash(std::wstring& path);
+
 std::wstring GetFolderFromFilePath(const std::wstring& filePath);
 
 std::wstring GetVolume(const std::wstring& path);

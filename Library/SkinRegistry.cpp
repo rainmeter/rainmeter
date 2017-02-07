@@ -36,8 +36,8 @@ std::wstring SkinRegistry::GetFolderPath(int folderIndex) const
 */
 int SkinRegistry::FindFolderIndex(std::wstring folderPath) const
 {
-	// Remove any leading slashes
-	PathUtil::RemoveLeadingBackslash(folderPath);
+	// Remove any leading and trailing slashes
+	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
 
 	if (folderPath.empty()) return -1;
 
