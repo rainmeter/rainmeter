@@ -990,7 +990,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Parse starting point of shape
 	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
-	if (stPoint.size() < 1) return false;  // Starting point must have a x and y
+	if (stPoint.size() < 2) return false;  // Starting point must have a x and y
 
 	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
 	FLOAT startY = (FLOAT)ConfigParser::ParseDouble(stPoint[1].c_str(), 0.0);
