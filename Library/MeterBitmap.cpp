@@ -265,10 +265,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_Extend)
 	{
-		int value = (int)m_Value;
+		__int64 value = (__int64)m_Value;
 		value = max(0, value);		// Only positive integers are supported
 
-		int transitionValue = (int)m_TransitionStartValue;
+		__int64 transitionValue = (__int64)m_TransitionStartValue;
 		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
@@ -280,7 +280,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		}
 		else
 		{
-			int tmpValue = value;
+			__int64 tmpValue = value;
 
 			do
 			{
