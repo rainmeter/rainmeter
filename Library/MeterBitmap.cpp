@@ -55,13 +55,28 @@ void MeterBitmap::Initialize()
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
 
+			int extraSpace = (m_Digits - 1) * m_Separation;
+			extraSpace = max(0, extraSpace);
+
 			if (m_H > m_W)
 			{
-				m_H = m_H / m_FrameCount;
+				m_H = (m_H / m_FrameCount);
+
+				if (m_Extend)  // Increase meter height to account for BitmapDigigts and BitmapSeparation options
+				{
+					m_H *= m_Digits;
+					m_H += extraSpace;
+				}
 			}
 			else
 			{
-				m_W = m_W / m_FrameCount;
+				m_W = (m_W / m_FrameCount);
+
+				if (m_Extend)  // Increase meter width to account for BitmapDigigts and BitmapSeparation options
+				{
+					m_W *= m_Digits;
+					m_W += extraSpace;
+				}
 			}
 
 			m_W += GetWidthPadding();
@@ -265,6 +280,23 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_Extend)
 	{
+		// The 'BitmapExtend' option expands the meters width and/or height by the amount
+		// of digits and separation. We need to subtract that amount here so that the meter
+		// will draw in the correct place.
+		int extraSpace = (m_Digits - 1) * m_Separation;
+		extraSpace = max(0, extraSpace);
+
+		if (bitmap->GetHeight() > bitmap->GetWidth())
+		{
+			meterRect.Height -= extraSpace;
+			meterRect.Height /= m_Digits;
+		}
+		else
+		{
+			meterRect.Width -= extraSpace;
+			meterRect.Width /= m_Digits;
+		}
+
 		__int64 value = (__int64)m_Value;
 		value = max(0, value);		// Only positive integers are supported
 
