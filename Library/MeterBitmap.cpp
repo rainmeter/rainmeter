@@ -456,7 +456,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, m_H));
+		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
 	}
 
 	return true;
