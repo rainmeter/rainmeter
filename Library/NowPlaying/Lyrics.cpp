@@ -107,27 +107,33 @@ bool Lyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title
 {
 	bool ret = false;
 
-	std::wstring url = L"http://letras.terra.com.br/winamp.php?musica=" + title;
+	std::wstring url = L"https://www.letras.mus.br/winamp.php?musica=" + title;
 	url += L"&artista=";
 	url += artist;
 	data = Internet::DownloadUrl(url, CP_ACP);
 	if (!data.empty())
 	{
-		std::wstring::size_type pos = data.find(L"\"letra\"");
+		std::wstring::size_type pos = data.find(L"\"letra-cnt\"");
 		pos = data.find(L"<p>", pos);
 		if (pos != std::wstring::npos)
 		{
-			pos += 3;
+			pos += 6;
 			data.erase(0, pos);
 
-			pos = data.find(L"</p>");
+			pos = data.find(L"</div>");
+			pos -= 9;				
 			data.resize(pos);
 
 			Internet::DecodeReferences(data);
 
 			while ((pos = data.find(L"<br/>"), pos) != std::wstring::npos)
 			{
-				data.erase(pos, 5);
+				data.replace(pos, 5, L"\n");
+			}
+
+			while ((pos = data.find(L"</p><p>"), pos) != std::wstring::npos)
+			{
+				data.replace(pos, 7, L"\n\n");
 			}
 
 			ret = true;
