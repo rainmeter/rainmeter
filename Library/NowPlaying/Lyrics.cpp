@@ -20,7 +20,6 @@ bool Lyrics::GetFromInternet(const std::wstring& artist, const std::wstring& tit
 	std::wstring encTitle = Internet::EncodeUrl(title);
 
 	bool found = GetFromWikia(encArtist, encTitle, out) ||
-				 GetFromLYRDB(encArtist, encTitle, out) ||
 				 GetFromLetras(encArtist, encTitle, out);
 
 	return found;
@@ -93,48 +92,6 @@ bool Lyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title,
 
 					ret = true;
 				}
-			}
-		}
-	}
-
-	return ret;
-}
-
-/*
-** Download lyrics from LYRDB.
-**
-*/
-bool Lyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title, std::wstring& data)
-{
-	bool ret = false;
-
-	std::wstring query = artist + L"|";
-	query += title;
-
-	// LYRDB doesn't like apostrophes
-	std::wstring::size_type pos = 0;
-	while ((pos = query.find(L"%27", pos)) != std::wstring::npos)
-	{
-		query.erase(pos, 3);
-	}
-
-	std::wstring url = L"http://webservices.lyrdb.com/lookup.php?q=" + query;
-	url += L"&for=match&agent=RainmeterNowPlaying";
-
-	data = Internet::DownloadUrl(url, CP_ACP);
-	if (!data.empty())
-	{
-		pos = data.find(L"\\");
-		if (pos != std::wstring::npos)
-		{
-			// Grab the first match
-			url.assign(data, 0, pos);
-			url.insert(0, L"http://webservices.lyrdb.com/getlyr.php?q=");
-
-			data = Internet::DownloadUrl(url, CP_ACP);
-			if (!data.empty())
-			{
-				ret = true;
 			}
 		}
 	}
