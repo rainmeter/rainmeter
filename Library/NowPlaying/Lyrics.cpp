@@ -81,6 +81,9 @@ bool Lyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title,
 						data.replace(pos, 6, L"\n");
 					}
 
+					pos = data.find(L"<div class='lyricsbreak'>");
+					data.resize(pos);
+
 					// Get rid of all HTML tags
 					std::wstring::size_type len = 0;
 					while ((pos = data.find_first_of(L'<'), pos) != std::wstring::npos)
