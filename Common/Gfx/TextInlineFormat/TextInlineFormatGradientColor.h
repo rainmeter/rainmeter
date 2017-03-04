@@ -20,9 +20,7 @@ struct GradientHelper
 {
 	DWRITE_TEXT_RANGE range;
 	std::vector<DWRITE_TEXT_RANGE> innerRanges;
-	std::vector<ID2D1LinearGradientBrush*> brushes;
-
-	~GradientHelper() { for (auto brush : brushes) { brush->Release(); brush = nullptr; } brushes.clear(); }
+	std::vector<Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush>> brushes;
 };
 
 }
