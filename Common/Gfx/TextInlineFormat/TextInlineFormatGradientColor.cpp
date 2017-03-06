@@ -54,7 +54,7 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 			if (FAILED(hr)) continue;
 
 			D2D1_POINT_2F start = Util::FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
-			D2D1_POINT_2F end = Util::FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F end = Util::FindEdgePoint(m_Angle + 180.0f, hit.left, hit.top, hit.width, hit.height);
 
 			DWRITE_TEXT_RANGE innerRange = { hit.textPosition, hit.length };
 
