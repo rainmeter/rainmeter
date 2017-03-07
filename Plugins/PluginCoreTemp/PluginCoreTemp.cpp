@@ -20,7 +20,11 @@ typedef enum eMeasureType
 	MeasureCpuSpeed,
 	MeasureBusSpeed,
 	MeasureBusMultiplier,
-	MeasureCpuName
+	MeasureCpuName,
+	MeasureCoreSpeed,
+	MeasureCoreBusMultiplier,
+	MeasureTdp,
+	MeasurePower,
 };
 
 struct MeasureData
@@ -39,18 +43,21 @@ float getHighestTemp();
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
+	UNREFERENCED_PARAMETER(rm);
 	MeasureData* measure = new MeasureData;
 	*data = measure;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
+	UNREFERENCED_PARAMETER(maxValue);
 	MeasureData* measure = (MeasureData*)data;
 
 	LPCWSTR value = RmReadString(rm, L"CoreTempType", L"Temperature");
 	measure->type = convertStringToMeasureType(value);
 
-	if (measure->type == MeasureTemperature || measure->type == MeasureTjMax || measure->type == MeasureLoad)
+	if (measure->type != MeasureMaxTemperature	&&	measure->type != MeasureVid && measure->type != MeasureCpuSpeed &&
+		measure->type != MeasureBusSpeed		&&	measure->type != MeasureBusMultiplier)
 	{
 		measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
 	}
@@ -95,6 +102,22 @@ PLUGIN_EXPORT double Update(void* data)
 
 		case MeasureBusMultiplier:
 			result = proxy.GetMultiplier();
+			break;
+
+		case MeasureCoreSpeed:
+			result = proxy.GetMultiplier(measure->index) * proxy.GetFSBSpeed();
+			break;
+
+		case MeasureCoreBusMultiplier:
+			result = proxy.GetMultiplier(measure->index);
+			break;
+
+		case MeasureTdp:
+			result = proxy.GetTdp(measure->index);
+			break;
+
+		case MeasurePower:
+			result = proxy.GetPower(measure->index);
 			break;
 		}
 	}
@@ -174,6 +197,22 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 	else if (areStringsEqual(i_String, L"CpuName"))
 	{
 		result = MeasureCpuName;
+	}
+	else if (areStringsEqual(i_String, L"CoreSpeed"))
+	{
+		result = MeasureCoreSpeed;
+	}
+	else if (areStringsEqual(i_String, L"CoreBusMultiplier"))
+	{
+		result = MeasureCoreBusMultiplier;
+	}
+	else if (areStringsEqual(i_String, L"Tdp"))
+	{
+		result = MeasureTdp;
+	}
+	else if (areStringsEqual(i_String, L"Power"))
+	{
+		result = MeasurePower;
 	}
 	else
 	{
