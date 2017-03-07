@@ -32,20 +32,26 @@ struct MeasureData
 	eMeasureType type;
 	int index;
 
-	MeasureData() : type(), index() {}
+	void* rm;
+
+	MeasureData() :
+		type(MeasureTemperature),
+		index(0),
+		rm(nullptr) {}
 };
 
 CoreTempProxy proxy;
 
-eMeasureType convertStringToMeasureType(LPCWSTR i_String);
+eMeasureType convertStringToMeasureType(LPCWSTR i_String, void* rm);
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2);
 float getHighestTemp();
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
-	UNREFERENCED_PARAMETER(rm);
 	MeasureData* measure = new MeasureData;
 	*data = measure;
+
+	measure->rm = rm;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -54,13 +60,9 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	MeasureData* measure = (MeasureData*)data;
 
 	LPCWSTR value = RmReadString(rm, L"CoreTempType", L"Temperature");
-	measure->type = convertStringToMeasureType(value);
+	measure->type = convertStringToMeasureType(value, rm);
 
-	if (measure->type != MeasureMaxTemperature	&&	measure->type != MeasureVid && measure->type != MeasureCpuSpeed &&
-		measure->type != MeasureBusSpeed		&&	measure->type != MeasureBusMultiplier)
-	{
-		measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
-	}
+	measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -158,7 +160,7 @@ bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2)
 	return _wcsicmp(i_String1, i_Strting2) == 0;
 }
 
-eMeasureType convertStringToMeasureType(LPCWSTR i_String)
+eMeasureType convertStringToMeasureType(LPCWSTR i_String, void* rm)
 {
 	eMeasureType result;
 
@@ -217,7 +219,7 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 	else
 	{
 		result = MeasureTemperature;
-		RmLog(LOG_WARNING, L"CoreTemp.dll: Invalid CoreTempType");
+		RmLogF(rm, LOG_WARNING, L"Invalid CoreTempType: %s", i_String);
 	}
 
 	return result;
@@ -225,14 +227,15 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 
 float getHighestTemp()
 {
-	float temp = -255;
+	float temp = -255.0f;
 	UINT coreCount = proxy.GetCoreCount();
 
 	for (UINT i = 0; i < coreCount; ++i)
 	{
-		if (temp < proxy.GetTemp(i))
+		const float getTemp = proxy.GetTemp(i);
+		if (temp < getTemp)
 		{
-			temp = proxy.GetTemp(i);
+			temp = getTemp;
 		}
 	}
 
