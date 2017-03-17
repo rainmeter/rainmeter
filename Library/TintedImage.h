@@ -94,6 +94,7 @@ protected:
 	void ApplyTransform();
 
 	Gdiplus::Bitmap* LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, HGLOBAL* phBuffer);
+	Gdiplus::Bitmap* LoadImageFromExeIcon(const std::wstring& exeFileName, DWORD nIconIndex, HGLOBAL* phBuffer);
 
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
 	static bool CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b);
@@ -109,6 +110,7 @@ protected:
 	bool m_NeedsTinting;
 	bool m_NeedsTransform;
 
+	Gdiplus::Size m_SysIconSize;
 	Gdiplus::Rect m_Crop;
 	CROPMODE m_CropMode;
 	bool m_GreyScale;
