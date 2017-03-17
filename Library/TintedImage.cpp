@@ -334,7 +334,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		bool bExeIcon = false;
 		
 		long iIconIndex = 0;
-		// Check file name start with <N>fileName, that means Nth icon in the filename
+		// Check whether the file name has the format "exefile,N", which means the Nth icon in the exefile
 		size_t pos = imageName.find(L",");
 		if (std::wstring::npos != pos)
 		{			
