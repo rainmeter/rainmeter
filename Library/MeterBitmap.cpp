@@ -20,14 +20,14 @@ MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
-	m_TransitionFrameCount(),
+	m_TransitionFrameCount(0),
 	m_Align(ALIGN_LEFT),
 	m_Extend(false),
-	m_Separation(),
-	m_Digits(),
-	m_Value(),
-	m_TransitionStartTicks(),
-	m_TransitionStartValue()
+	m_Separation(0),
+	m_Digits(0),
+	m_Value(0.0),
+	m_TransitionStartTicks(0),
+	m_TransitionStartValue(0.0)
 {
 }
 
@@ -54,7 +54,7 @@ void MeterBitmap::Initialize()
 
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
-			
+
 			int extraSpace = (m_Digits - 1) * m_Separation;
 			extraSpace = max(0, extraSpace);
 
