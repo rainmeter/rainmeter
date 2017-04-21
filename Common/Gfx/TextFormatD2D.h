@@ -94,6 +94,7 @@ private:
 	std::wstring m_LastString;
 
 	int m_FontWeight;
+	bool m_HasWeightChanged;
 
 	// Used to emulate GDI+ behaviour.
 	float m_ExtraHeight;

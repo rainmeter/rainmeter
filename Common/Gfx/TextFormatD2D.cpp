@@ -50,6 +50,7 @@ namespace Gfx {
 
 TextFormatD2D::TextFormatD2D() :
 	m_FontWeight(-1),
+	m_HasWeightChanged(false),
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
@@ -119,7 +120,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& 
 		m_HasInlineOptionsChanged = true;
 	};
 
-	if (m_TextLayout && !strChanged && !m_HasInlineOptionsChanged)
+	if (m_TextLayout && !strChanged && !m_HasInlineOptionsChanged && !m_HasWeightChanged)
 	{
 		bool hasChanged = false;
 		if (maxW != m_TextLayout->GetMaxWidth())
@@ -151,6 +152,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& 
 		if (m_FontWeight > 0 && m_FontWeight < 1000)
 		{
 			m_TextLayout->SetFontWeight((DWRITE_FONT_WEIGHT)m_FontWeight, range);
+			m_HasWeightChanged = false;
 		}
 
 		if (gdiEmulation)
@@ -323,12 +325,12 @@ void TextFormatD2D::SetProperties(
 
 void TextFormatD2D::SetFontWeight(int weight)
 {
-	if (weight < 1 || weight > 999) return;
+	if (weight < 1 || weight > 999 || weight == m_FontWeight) return;
 
 	m_FontWeight = weight;
 
-	// Change the 'last string' so that the layout is recreated on the next draw
-	m_LastString += L" ";
+	// Signal to recreate the layout
+	m_HasWeightChanged = true;
 }
 
 DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
