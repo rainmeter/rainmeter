@@ -11,7 +11,6 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "MeasureNet.h"
-#include "Error.h"
 #include "../Common/PathUtil.h"
 
 using namespace Gdiplus;

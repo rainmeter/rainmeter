@@ -10,7 +10,6 @@
 #include "TintedImage.h"
 #include "ConfigParser.h"
 #include "System.h"
-#include "Error.h"
 #include "Logger.h"
 
 using namespace Gdiplus;

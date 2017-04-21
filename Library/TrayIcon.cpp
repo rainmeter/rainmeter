@@ -14,7 +14,6 @@
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "System.h"
-#include "Error.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
 #include "../Version.h"

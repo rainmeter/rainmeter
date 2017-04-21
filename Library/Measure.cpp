@@ -28,7 +28,6 @@
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "Rainmeter.h"
-#include "Error.h"
 #include "Util.h"
 #include "pcre/config.h"
 #include "pcre/pcre.h"

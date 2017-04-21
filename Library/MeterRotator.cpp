@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterRotator.h"
 #include "Measure.h"
-#include "Error.h"
 #include "Util.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"

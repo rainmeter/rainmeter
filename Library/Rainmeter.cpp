@@ -12,7 +12,6 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
-#include "Error.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"

@@ -10,7 +10,6 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
-#include "Error.h"
 #include "Meter.h"
 #include "Measure.h"
 #include "DialogAbout.h"
