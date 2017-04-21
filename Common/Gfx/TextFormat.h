@@ -46,6 +46,9 @@ public:
 		const WCHAR* fontFamily, int size, bool bold, bool italic,
 		const FontCollection* fontCollection) = 0;
 
+	// Sets the font weight of the font used. |weight| should be between 1-999.
+	virtual void SetFontWeight(int weight) = 0;
+
 	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
 	// TextFormat object will produce clipped text with an ellipsis if the text overflows the
 	// bounding rectangle. 

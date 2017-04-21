@@ -98,6 +98,8 @@ private:
 	Gdiplus::REAL m_Angle;
 	Gdiplus::RectF m_Rect;
 
+	int m_FontWeight;
+
 	std::wstring m_String;
 };
 
