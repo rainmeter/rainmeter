@@ -127,7 +127,6 @@
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
-    <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="DialogManage.h" />

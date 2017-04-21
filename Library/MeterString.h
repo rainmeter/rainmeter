@@ -10,7 +10,6 @@
 
 #include "Meter.h"
 #include "Measure.h"
-#include <unordered_map>
 
 class MeterString : public Meter
 {
