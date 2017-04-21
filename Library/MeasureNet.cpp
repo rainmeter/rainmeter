@@ -347,7 +347,7 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 						LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
 					}
 
-					return (i + 1);
+					return (UINT)(i + 1);
 				}
 			}
 		}
@@ -359,7 +359,7 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 		{
 			if (_wcsicmp(iface, table[i].Description) == 0)
 			{
-				return (i + 1);
+				return (UINT)(i + 1);
 			}
 		}
 	}

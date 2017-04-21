@@ -2766,7 +2766,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }

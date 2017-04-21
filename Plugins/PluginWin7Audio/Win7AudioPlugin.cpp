@@ -22,7 +22,7 @@ static BOOL instance_created = FALSE;
 static BOOL is_mute = FALSE;
 static float master_volume = 0.5f;
 
-static enum VolumeAction
+enum VolumeAction
 {
 	INIT,
 	TOGGLE_MUTE,

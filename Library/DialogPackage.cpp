@@ -372,7 +372,7 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
 	std::string zipPathUTF8 = StringUtil::NarrowUTF8(zipPath);
-	for (int i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
+	for (size_t i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
 	{
 		if ((zipPathUTF8[i] & 0x80) != 0)
 		{
@@ -906,7 +906,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 					LVITEM lvi;
 					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-					lvi.iItem = c_Dialog->m_LayoutFolders.size() + 1;
+					lvi.iItem = (int)c_Dialog->m_LayoutFolders.size() + 1;
 					lvi.iSubItem = 0;
 					lvi.iGroupId = 1;
 					lvi.pszText = (WCHAR*)name.c_str();
@@ -925,7 +925,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 				LVITEM lvi;
 				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-				lvi.iItem = c_Dialog->m_PluginFolders.size() + 1;
+				lvi.iItem = (int)c_Dialog->m_PluginFolders.size() + 1;
 				lvi.iSubItem = 0;
 				lvi.iGroupId = 2;
 				lvi.pszText = (WCHAR*)name.c_str();
