@@ -326,6 +326,9 @@ void TextFormatD2D::SetFontWeight(int weight)
 	if (weight < 1 || weight > 999) return;
 
 	m_FontWeight = weight;
+
+	// Change the 'last string' so that the layout is recreated on the next draw
+	m_LastString += L" ";
 }
 
 DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
