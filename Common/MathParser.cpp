@@ -891,7 +891,7 @@ static double deg(double rad)
 
 static double sgn(double x)
 {
-	return (x > 0) ? 1 : (x < 0) ? -1 : 0;
+	return (x > 0.0) ? 1.0 : (x < 0.0) ? -1.0 : 0.0;
 }
 
 static double neg(double x)
@@ -970,7 +970,7 @@ static const WCHAR* round(int paramcnt, double* args, double* result)
 
 	for (int i = 0; i < sharpness; i++) x *= coef;
 
-	x = (x + ((x >= 0) ? 0.5 : -0.5));
+	x = (x + ((x >= 0.0) ? 0.5 : -0.5));
 	x = (x >= 0.0) ? floor(x) : ceil(x);
 
 	for (int i = 0; i < sharpness; i++) x /= coef;
