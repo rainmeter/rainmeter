@@ -957,15 +957,11 @@ static const WCHAR* round(int paramcnt, double* args, double* result)
 	}
 
 	double x = args[0];
-	double coef;
+	double coef = 10.0;
 	if (sharpness < 0)
 	{
 		coef = 0.1;
 		sharpness = -sharpness;
-	}
-	else
-	{
-		coef = 10;
 	}
 
 	for (int i = 0; i < sharpness; i++) x *= coef;
