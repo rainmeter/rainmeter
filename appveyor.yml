@@ -1,0 +1,10 @@
+# Build worker image (AppVeyor defaults to 'Visual Studio 2015')
+image: Visual Studio 2017
+
+# Build configuration: Debug, Release
+configuration: Release
+
+# Build both x86 and x64
+platform:
+  - x86
+  - x64
