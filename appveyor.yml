@@ -1,10 +1,20 @@
-# Build worker image (AppVeyor defaults to 'Visual Studio 2015')
-image: Visual Studio 2017
+version: 4.0.0.{build}
 
-# Build configuration: Debug, Release
-configuration: Release
+branches:
+  only:
+  - master
 
-# Build both x86 and x64
-platform:
-  - x86
-  - x64
+skip_tags: true
+
+image: Visual Studio 2015
+
+clone_depth: 1
+clone_folder: C:\build
+
+build:
+  project: Rainmeter.sln
+  parallel: true
+  verbosity: minimal
+
+test_script:
+- cmd: vstest.console /logger:Appveyor x32-Debug\Obj\Common_Test\Common_Test.dll
