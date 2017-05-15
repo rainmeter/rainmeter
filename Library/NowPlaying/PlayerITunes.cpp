@@ -310,7 +310,7 @@ void PlayerITunes::UpdateData()
 	{
 		long position = 0;
 		m_iTunes->get_PlayerPosition(&position);
-		m_Position = (UINT)position;
+		m_Position = position;
 	}
 }
 

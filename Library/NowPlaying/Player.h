@@ -87,7 +87,7 @@ public:
 	LPCTSTR GetCoverPath() const { return m_CoverPath.c_str(); }
 	LPCTSTR GetFilePath() const { return m_FilePath.c_str(); }
 	UINT GetDuration() const { return m_Duration; }
-	UINT GetPosition() const { return m_Position; }
+	double GetPosition() const { return m_Position; }
 	UINT GetRating() const { return m_Rating; }
 	UINT GetVolume() const { return m_Volume; }
 	UINT GetNumber() const { return m_Number; }
@@ -115,7 +115,7 @@ protected:
 	std::wstring m_CoverPath;		// Path to cover art image
 	std::wstring m_FilePath;		// Path to playing file
 	UINT m_Duration;				// Track duration in seconds
-	UINT m_Position;				// Current position in seconds
+	double m_Position;				// Current position in seconds
 	UINT m_Rating;					// Track rating from 0 to 100
 	UINT m_Volume;					// Volume from 0 to 100
 	UINT m_Number;

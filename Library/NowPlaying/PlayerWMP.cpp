@@ -400,7 +400,7 @@ void PlayerWMP::UpdateData()
 		{
 			double position;
 			m_IControls->get_currentPosition(&position);
-			m_Position = (UINT)position;
+			m_Position = position;
 		}
 
 		if (m_TrackChanged)
