@@ -13,6 +13,7 @@
 #include <random>
 #include "../API/RainmeterAPI.h"
 #include "../../Common/StringUtil.h"
+#include "../../Common/FileUtil.h"
 
 #define BUFFER_SIZE 4096
 
@@ -72,8 +73,7 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 				files.push_back(path + fileData.cFileName);
 			}
 		}
-	}
-	while (FindNextFile(hSearch, &fileData));
+	} while (FindNextFile(hSearch, &fileData));
 
 	FindClose(hSearch);
 }
@@ -131,54 +131,40 @@ PLUGIN_EXPORT double Update(void* data)
 
 	if (measure->files.empty())
 	{
-		BYTE buffer[BUFFER_SIZE + 2];
-		buffer[BUFFER_SIZE] = 0;
 
 		// Read the file
-		FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
-		if (file)
+		size_t size = 0;
+		auto buffer = FileUtil::ReadFullFile(measure->pathname, &size);
+		if (buffer && size > 0)
 		{
-			// Check if the file is unicode or ascii
-			fread(buffer, sizeof(WCHAR), 1, file);
-
-			fseek(file, 0, SEEK_END);
-			long size = ftell(file);
-
 			if (size > 0)
 			{
 				// Go to a random place
 				long pos = GetRandomNumber(size);
 
-				fseek(file, (pos / 2) * 2, SEEK_SET);
-
 				measure->value.clear();
 
-				if (0xFEFF == *(WCHAR*)buffer)
+				if (0xFEFF == *(WCHAR*)buffer.get())
 				{
 					// It's unicode
-					WCHAR* wBuffer = (WCHAR*)buffer;
+					WCHAR* wBuffer = (WCHAR*)buffer.get() + (pos / 2);
 
 					// Read until we find the first separator
 					WCHAR* sepPos1 = nullptr;
 					WCHAR* sepPos2 = nullptr;
+
+					bool fromStart = false;
 					do
 					{
-						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-						buffer[len] = 0;
-						buffer[len + 1] = 0;
-
 						sepPos1 = wcsstr(wBuffer, measure->separator.c_str());
 						if (sepPos1 == nullptr)
 						{
 							// The separator wasn't found
-							if (feof(file))
+							if (!fromStart)
 							{
 								// End of file reached -> read from start
-								fseek(file, 2, SEEK_SET);
-								len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
+								sepPos1 = (WCHAR*)buffer.get();
+								fromStart = true;
 							}
 							// else continue reading
 						}
@@ -186,50 +172,29 @@ PLUGIN_EXPORT double Update(void* data)
 						{
 							sepPos1 += measure->separator.size();
 						}
-					}
-					while (sepPos1 == nullptr);
+					} while (sepPos1 == nullptr);
 
 					// Find the second separator
-					do
+
+					sepPos2 = wcsstr(sepPos1, measure->separator.c_str());
+					if (sepPos2 == nullptr)
 					{
-						sepPos2 = wcsstr(sepPos1, measure->separator.c_str());
-						if (sepPos2 == nullptr)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read the rest
-								measure->value += sepPos1;
-								break;
-							}
-							else
-							{
-								measure->value += sepPos1;
-
-								// else continue reading
-								size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
-							}
-						}
-						else
-						{
-							if (sepPos2)
-							{
-								*sepPos2 = 0;
-							}
-
-							// Read until we find the second separator
-							measure->value += sepPos1;
-						}
+						// End of file reached -> read the rest
+						measure->value += sepPos1;
 					}
-					while (sepPos2 == nullptr);
+					else
+					{
+						if (sepPos2)
+						{
+							*sepPos2 = 0;
+						}
+						measure->value += sepPos1;
+					}
 				}
 				else
 				{
 					// It's ascii
-					char* aBuffer = (char*)buffer;
+					char* aBuffer = (char*)buffer.get() + pos;
 
 					const std::string separator = StringUtil::Narrow(measure->separator);
 					const char* separatorSz = separator.c_str();
@@ -237,22 +202,19 @@ PLUGIN_EXPORT double Update(void* data)
 					// Read until we find the first separator
 					char* sepPos1 = nullptr;
 					char* sepPos2 = nullptr;
+
+					bool fromStart = false;
 					do
 					{
-						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-						aBuffer[len] = 0;
-
 						sepPos1 = strstr(aBuffer, separatorSz);
 						if (sepPos1 == nullptr)
 						{
 							// The separator wasn't found
-							if (feof(file))
+							if (!fromStart)
 							{
 								// End of file reached -> read from start
-								fseek(file, 0, SEEK_SET);
-								len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
+								sepPos1 = (char*)buffer.get();
+								fromStart = true;
 							}
 							// else continue reading
 						}
@@ -260,56 +222,35 @@ PLUGIN_EXPORT double Update(void* data)
 						{
 							sepPos1 += separator.size();
 						}
-					}
-					while (sepPos1 == nullptr);
+					} while (sepPos1 == nullptr);
 
 					// Find the second separator
-					do
+
+					sepPos2 = strstr(sepPos1, separatorSz);
+					if (sepPos2 == nullptr)
 					{
-						sepPos2 = strstr(sepPos1, separatorSz);
-						if (sepPos2 == nullptr)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read the rest
-								measure->value += StringUtil::Widen(sepPos1);
-								break;
-							}
-							else
-							{
-								measure->value += StringUtil::Widen(sepPos1);
-
-								// else continue reading
-								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
-							}
-						}
-						else
-						{
-							if (sepPos2)
-							{
-								*sepPos2 = 0;
-							}
-
-							// Read until we find the second separator
-							measure->value += StringUtil::Widen(sepPos1);
-						}
+						// End of file reached -> read the rest
+						measure->value += StringUtil::Widen(sepPos1);
 					}
-					while (sepPos2 == nullptr);
+					else
+					{
+						if (sepPos2)
+						{
+							*sepPos2 = 0;
+						}
+						measure->value += StringUtil::Widen(sepPos1);
+					}
 				}
 			}
 
-			fclose(file);
 		}
+		//free(buffer);
 	}
 	else
 	{
 		// Select the filename
 		measure->value = measure->files[GetRandomNumber(measure->files.size() - 1)];
 	}
-
 	return 0;
 }
 
