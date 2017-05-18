@@ -22,6 +22,18 @@
     </ClCompile>
     <Link>
     </Link>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gdiplus.lib;$(SolutionDir)Plugins\API\x64\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gdiplus.lib;$(SolutionDir)Plugins\API\x64\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">gdiplus.lib;$(SolutionDir)Plugins\API\x32\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">gdiplus.lib;$(SolutionDir)Plugins\API\x32\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="PluginAudioLevel.cpp" />
