@@ -36,7 +36,11 @@ set SIGNTOOL="signtool.exe" sign /t http://timestamp.comodoca.com/authenticode /
 if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
 
 if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%MAKENSIS:NSIS\=NSIS\Unicode\%
+if exist "%MAKENSIS%" goto NSISFOUND
 set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
+if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%MAKENSIS:NSIS\=NSIS\Unicode\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 :NSISFOUND
 
