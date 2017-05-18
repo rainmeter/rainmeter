@@ -116,7 +116,7 @@ void PlayerWinamp::UpdateData()
 		else
 		{
 			m_State = (playing == 1) ? STATE_PLAYING : STATE_PAUSED;
-			m_Position = (UINT)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;  // ms to secs
+			m_Position = (double)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;  // ms to secs
 			m_Volume = ((UINT)SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;  // 0 - 255 to 0 - 100
 		}
 

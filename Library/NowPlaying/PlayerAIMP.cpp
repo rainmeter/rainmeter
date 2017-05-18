@@ -126,7 +126,7 @@ void PlayerAIMP::UpdateData()
 		return;
 	}
 
-	m_Position = (UINT)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_POS);
+	m_Position = (double)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_POS);
 	m_Volume = (UINT)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_VOLUME);
 
 	AIMP2FileInfo* info = (AIMP2FileInfo*)m_FileMap;

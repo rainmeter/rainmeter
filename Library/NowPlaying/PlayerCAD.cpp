@@ -412,7 +412,7 @@ void PlayerCAD::UpdateData()
 {
 	if (m_State != STATE_STOPPED)
 	{
-		m_Position = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
+		m_Position = (double)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
 		m_Volume = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
 	}
 }
