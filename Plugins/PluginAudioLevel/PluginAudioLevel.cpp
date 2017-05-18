@@ -12,6 +12,8 @@
 #include <MMDeviceApi.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <VersionHelpers.h>
+#include <ole2.h>  // For Gdiplus.h.
+#include <gdiplus.h>
 
 #include <cmath>
 #include <cassert>
@@ -53,6 +55,11 @@
 #define EXIT_ON_ERROR(hres)		if (FAILED(hres)) { goto Exit; }
 #define SAFE_RELEASE(p)			if ((p) != NULL) { (p)->Release(); (p) = NULL; }
 #define CLAMP01(x)				max(0.0, min(1.0, (x)))
+#define MAKE_COLOR(r, g, b, a)	((((UINT32)(a))<<24) | (((UINT32)(r))<<16) | (((UINT32)(g))<<8) | (UINT32)(b))
+#define COLOR_R(col)			(UINT8)(((UINT32)(col)>>16) & 0xff)
+#define COLOR_G(col)			(UINT8)(((UINT32)(col)>>8) & 0xff)
+#define COLOR_B(col)			(UINT8)((UINT32)(col) & 0xff)
+#define COLOR_A(col)			(UINT8)(((UINT32)(col)>>24) & 0xff)
 
 #define EMPTY_TIMEOUT			0.500
 #define DEVICE_TIMEOUT			1.500
@@ -93,6 +100,7 @@ struct Measure
 		TYPE_DEV_NAME,
 		TYPE_DEV_ID,
 		TYPE_DEV_LIST,
+		TYPE_WAVEFORM,
 		// ... //
 		NUM_TYPES
 	};
@@ -161,6 +169,19 @@ struct Measure
 	int						m_fftBufP;					// decremental counter - process FFT at zero
 	float*					m_bandFreq;					// buffer of band max frequencies
 	float*					m_bandOut[MAX_CHANNELS];	// buffer of band values
+	Gdiplus::BitmapData		m_bmpData;					// bitmap descriptor
+	DWORD*					m_pixels;					// pixel data buffer (all channels)
+	int*					m_bmpY;						// buffer of min/max Y values for each X (all channels)
+	int						m_bmpZoom;					// number of samples per horizontal pixel
+	int						m_bmpScroll;				// autoscroll waveform if true
+	UINT32					m_bmpCol0;					// waveform gradient source color
+	UINT32					m_bmpCol1;					// waveform gradient dest color
+	UINT32					m_bmpCol2;					// waveform cursor color
+	int						m_bmpFade;					// waveform gradient length in pixels
+	int						m_bmpX;						// current bitmap X index to write from audio data
+	int						m_iBmpAvg;					// current sample average index
+	Gdiplus::Bitmap*		m_bitmap[MAX_CHANNELS];		// waveform bitmap
+	float					m_bmpPeak[MAX_CHANNELS][2];	// accumulators for peaks
 
 	Measure() :
 		m_port(PORT_OUTPUT),
@@ -194,7 +215,17 @@ struct Measure
 		m_fftTmpOut(NULL),
 		m_fftBufW(0),
 		m_fftBufP(0),
-		m_bandFreq(NULL)
+		m_bandFreq(NULL),
+		m_pixels(NULL),
+		m_bmpY(NULL),
+		m_bmpZoom(1),
+		m_bmpScroll(false),
+		m_bmpCol0(0xffffffff),
+		m_bmpCol1(0xffffffff),
+		m_bmpCol2(0x00000000),
+		m_bmpFade(0),
+		m_bmpX(0),
+		m_iBmpAvg(0)
 	{
 		m_envRMS[0] = 300;
 		m_envRMS[1] = 300;
@@ -219,6 +250,9 @@ struct Measure
 			m_fftIn[iChan] = NULL;
 			m_fftOut[iChan] = NULL;
 			m_bandOut[iChan] = NULL;
+			m_bitmap[iChan] = NULL;
+			m_bmpPeak[iChan][0] = 1.0f;
+			m_bmpPeak[iChan][1] = -1.0f;
 		}
 
 		LARGE_INTEGER pcFreq;
@@ -228,6 +262,9 @@ struct Measure
 
 	HRESULT DeviceInit();
 	void DeviceRelease();
+	void BitmapInit(void* rm);
+	void BitmapRelease();
+	void BitmapUpdate(void* buffer, UINT32 nFrames);
 };
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -237,6 +274,52 @@ const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
 std::vector<Measure*> s_parents;
+
+
+/**
+ * Parse a color specification from text.
+ */
+UINT32 _ParseColor (void* rm, LPCWSTR option, UINT32 defValue)
+{
+	LPCWSTR str = RmReadString(rm, option, L"");
+	int r,g,b,a;
+	if(
+			(swscanf(str, L"%d, %d, %d, %d", &r, &g, &b, &a) == 4)
+			&& ((r >= 0) && (r < 256))
+			&& ((g >= 0) && (g < 256))
+			&& ((b >= 0) && (b < 256))
+			&& ((a >= 0) && (a < 256))
+	)
+	{
+		// return in ARGB format
+		return MAKE_COLOR(r, g, b, a);
+	}
+	else
+	{
+		RmLogF(rm, LOG_ERROR, L"Invalid %s color specifier '%s', should be R, G, B, A where each value is between 0 and 255.", option, str);
+	}
+	return defValue;
+}
+
+
+/**
+ * Color interpolation.
+ */
+UINT32 _InterpColor (UINT32 a, UINT32 b, float alpha)
+{
+	const UINT8	rA	= COLOR_R(a);
+	const UINT8	gA	= COLOR_G(a);
+	const UINT8	bA	= COLOR_B(a);
+	const UINT8	aA	= COLOR_A(a);
+	const UINT8	rB	= COLOR_R(b);
+	const UINT8	gB	= COLOR_G(b);
+	const UINT8	bB	= COLOR_B(b);
+	const UINT8	aB	= COLOR_A(b);
+	alpha			= max(0.0f, min(alpha, 1.0f));
+
+	return MAKE_COLOR(rA+(rB-rA)*alpha+0.5f, gA+(gB-gA)*alpha+0.5f, bA+(bB-bA)*alpha+0.5f, aA+(aB-aA)*alpha+0.5f);
+}
+
 
 /**
  * Create and initialize a measure instance.  Creates WASAPI loopback
@@ -329,6 +412,9 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 	m->m_freqMin = max(0.0, RmReadDouble(rm, L"FreqMin", m->m_freqMin));
 	m->m_freqMax = max(0.0, RmReadDouble(rm, L"FreqMax", m->m_freqMax));
 
+	// create the waveform bitmap
+	m->BitmapInit(rm);
+
 	// initialize the watchdog timer
 	QueryPerformanceCounter(&m->m_pcPoll);
 
@@ -353,6 +439,7 @@ PLUGIN_EXPORT void Finalize (void* data)
 {
 	Measure* m = (Measure*)data;
 
+	m->BitmapRelease();
 	m->DeviceRelease();
 	SAFE_RELEASE(m->m_enum);
 
@@ -388,6 +475,7 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 		L"DeviceName",						// TYPE_DEV_NAME
 		L"DeviceID",						// TYPE_DEV_ID
 		L"DeviceList",						// TYPE_DEV_LIST
+		L"Waveform",						// TYPE_WAVEFORM
 	};
 
 	static const LPCWSTR s_chanName[Measure::CHANNEL_SUM + 1][3] =
@@ -516,6 +604,15 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 				m->m_kFFT[1] = (float) exp(log10(0.01) / (freq / (m->m_fftSize-m->m_fftOverlap) * (double)m->m_envFFT[1] * 0.001));
 			}
 		}
+
+		// (re)parse waveform options
+		m->m_bmpZoom	= max(1, RmReadInt(rm, L"WaveformZoom", m->m_bmpZoom));
+		m->m_bmpScroll	= RmReadInt(rm, L"WaveformScroll", m->m_bmpScroll);
+		// (re)parse waveform gradient colors
+		m->m_bmpCol0	= _ParseColor(rm, L"WaveformColorStart",  m->m_bmpCol0);
+		m->m_bmpCol1	= _ParseColor(rm, L"WaveformColorEnd",    m->m_bmpCol0);		// Note: using color 0 as default intentionally
+		m->m_bmpCol2	= _ParseColor(rm, L"WaveformColorCursor", m->m_bmpCol2);
+		m->m_bmpFade	= max(0, RmReadInt(rm, L"WaveformFadeLength", m->m_bmpFade));
 	}
 }
 
@@ -746,6 +843,9 @@ PLUGIN_EXPORT double Update (void* data)
 				}
 			}
 
+			// update waveform display
+			m->BitmapUpdate(buffer, nFrames);
+
 			// release the buffer
 			m->m_clCapture->ReleaseBuffer(nFrames);
 
@@ -776,6 +876,55 @@ PLUGIN_EXPORT double Update (void* data)
 			break;
 		}
 
+		// lock the bitmap buffers and copy pixels
+		if (m->m_pixels && m->m_wfx)
+		{
+			const int		w		= m->m_bmpData.Width;
+			const int		h		= m->m_bmpData.Height;
+			Gdiplus::Rect	rect	(0, 0, w, h);
+			const UINT		flags	= Gdiplus::ImageLockModeWrite | Gdiplus::ImageLockModeUserInputBuf;
+			const int		bmpX	= m->m_bmpX;
+			const UINT32	colA	= m->m_bmpCol0;
+			const UINT32	colB	= m->m_bmpCol1;
+			const int		iXOfst	= m->m_bmpScroll? w - m->m_bmpX : 0;
+			for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+			{
+				DWORD*		dst		= &m->m_pixels[iChan * w * h];
+				memset(dst, 0, w * h * sizeof(DWORD));
+				// draw the channel to the temp buffer
+				const int*	bmpY	= &m->m_bmpY[iChan * w * 2];
+				for(int iXSrc=0; iXSrc < w; ++iXSrc)
+				{
+					const int		iXDst	= (iXSrc + iXOfst) % w;
+					float			alpha	= 0.0f;
+					UINT32			col		= colA;
+					if(m->m_bmpFade > 0) {
+						alpha				= ((iXSrc < m->m_bmpX)? (float)(m->m_bmpX - 1 - iXSrc) : (float)(m->m_bmpX + w - iXSrc)) / m->m_bmpFade;
+						col					= _InterpColor(colA, colB, alpha);
+					}
+					const int		iYMin	= *bmpY++;
+					const int		iYMax	= *bmpY++;
+					for (int iY=iYMin; iY <= iYMax; ++iY)
+					{
+						dst[iY * w + iXDst]	= col;
+					}
+				}
+				// draw the cursor
+				if(!m->m_bmpScroll && m->m_bmpCol2) {
+					const int iXDst	= (m->m_bmpX + iXOfst) % w;
+					for (int iY=0; iY < h; ++iY)
+					{
+						dst[iY * w + iXDst] = m->m_bmpCol2;
+					}
+				}
+				// copy to bitmap
+				m->m_bmpData.Scan0	= dst;
+				m->m_bitmap[iChan]->LockBits(&rect, flags, m->m_bmpData.PixelFormat, &m->m_bmpData);
+				m->m_bitmap[iChan]->UnlockBits(&m->m_bmpData);
+			}
+		}
+
+		// update poll timer
 		m->m_pcPoll = pcCur;
 
 	}
@@ -989,6 +1138,26 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	}
 
 	return buffer;
+}
+
+
+/**
+ * Get a GDI bitmap from the measure.
+ *
+ * @param[in]	data			Measure instance pointer.
+ * @return						The bitmap.
+ */
+PLUGIN_EXPORT Gdiplus::Bitmap* GetBitmap (void* data)
+{
+	Measure* m = (Measure*)data;
+	Measure* parent	= m->m_parent ? m->m_parent : m;
+
+	if(m->m_type == Measure::TYPE_WAVEFORM)
+	{
+		return parent->m_bitmap[m->m_channel];
+	}
+
+	return NULL;
 }
 
 
@@ -1271,4 +1440,118 @@ void Measure::DeviceRelease ()
 
 	m_devName[0] = '\0';
 	m_format = FMT_INVALID;
+}
+
+
+/**
+ * Create waveform display bitmap data.
+ */
+void Measure::BitmapInit (void* rm)
+{
+	// if waveform width and height specified, create bitmap structures
+	int			w, h;
+	if(
+			((w=RmReadInt(rm, L"WaveformWidth", 0)) > 0)
+			&& ((h=RmReadInt(rm, L"WaveformHeight", 0)) > 0)
+	)
+	{
+		// allocate the pixel and Y position buffers
+		m_pixels				= (DWORD*)calloc(MAX_CHANNELS * w * h * sizeof(DWORD), 1);
+		m_bmpY					= (int*)calloc(MAX_CHANNELS * w * 2 * sizeof(int), 1);
+
+		// fill in the bitmap descriptor
+		m_bmpData.Width			= w;
+		m_bmpData.Height		= h;
+		m_bmpData.Stride		= w * sizeof(DWORD);
+		m_bmpData.PixelFormat	= PixelFormat32bppARGB;
+		m_bmpData.Scan0			= NULL;
+
+		for (int iChan = 0; iChan < MAX_CHANNELS; ++iChan)
+		{
+			// create the bitmap
+			m_bitmap[iChan]		= new Gdiplus::Bitmap(w, h, w * sizeof(DWORD), m_bmpData.PixelFormat, (BYTE*)&m_pixels[iChan * w * h]);
+
+			// initialize the Y buffers
+			int*	bmpY		= &m_bmpY[iChan * w * 2];
+			for (int iX = 0; iX < w; ++iX)
+			{
+				*bmpY++			= h / 2;
+				*bmpY++			= h / 2;
+			}
+		}
+	}
+}
+
+
+/**
+ * Release bitmap data.
+ */
+void Measure::BitmapRelease ()
+{
+	for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+	{
+		if(m_bitmap[iChan]) {
+			delete m_bitmap[iChan];
+			m_bitmap[iChan] = NULL;
+		}
+		m_bmpPeak[iChan][0] = 1.0f;
+		m_bmpPeak[iChan][1] = -1.0f;
+	}
+	if(m_bmpY) {
+		free(m_bmpY);
+		m_bmpY = NULL;
+	}
+	if(m_pixels) {
+		free(m_pixels);
+		m_pixels = NULL;
+	}
+	m_bmpX = 0;
+	m_iBmpAvg = 0;
+}
+
+
+/**
+ * Update waveform display.
+ *
+ * @param[in]	buffer		Pointer to audio data.
+ * @param[in]	nFrames		Number of frames of audio.
+ */
+void Measure::BitmapUpdate (void* buffer, UINT32 nFrames)
+{
+	if(!m_pixels) return;
+
+	// update peak data
+	const int	w		= m_bmpData.Width;
+	const int	h		= m_bmpData.Height;
+	float*		sF32	= (float*)buffer;
+	INT16*		sI16	= (INT16*)buffer;
+
+	for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+	{
+		for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+		{
+			const float		val		= (m_format == Measure::FMT_PCM_F32) ? *sF32++ : (float)*sI16++ * 1.0f / 0x7fff;
+			m_bmpPeak[iChan][0]		= min(m_bmpPeak[iChan][0], val);
+			m_bmpPeak[iChan][1]		= max(m_bmpPeak[iChan][1], val);
+		}
+		if (++m_iBmpAvg == m_bmpZoom)
+		{
+			for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+			{
+				// save the min/max Y values for this scanline
+				const int	iYMin	= h/2 + (int)(m_bmpPeak[iChan][0] * (h-1) / 2.0f);
+				const int	iYMax	= h/2 + (int)(m_bmpPeak[iChan][1] * (h-1) / 2.0f);
+				int*		bmpY	= &m_bmpY[(iChan * w + m_bmpX) * 2];
+				bmpY[0]				= iYMin;
+				bmpY[1]				= iYMax;
+
+				// reset the accumulators
+				m_bmpPeak[iChan][0]	= 1.0f;
+				m_bmpPeak[iChan][1]	= -1.0f;
+			}
+			// advance to next scanline
+			m_iBmpAvg	= 0;
+			m_bmpX		= (m_bmpX+1) % w;
+		}
+	}
 }

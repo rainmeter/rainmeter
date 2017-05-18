@@ -19,7 +19,8 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_GetBitmapFunc()
 {
 }
 
@@ -133,6 +134,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	m_GetBitmapFunc = GetProcAddress(m_Plugin, "GetBitmap");
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -235,4 +237,25 @@ void MeasurePlugin::Command(const std::wstring& command)
 	{
 		Measure::Command(command);
 	}
+}
+
+/*
+** Gets the bitmap from the plugin.
+**
+*/
+Gdiplus::Bitmap* MeasurePlugin::GetBitmap()
+{
+	if (m_GetBitmapFunc)
+	{
+		if (IsNewApi())
+		{
+			return ((NEWGETBITMAP)m_GetBitmapFunc)(m_PluginData);
+		}
+		else
+		{
+			return ((GETBITMAP)m_GetStringFunc)(m_ID);
+		}
+	}
+
+	return nullptr;
 }

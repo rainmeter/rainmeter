@@ -20,6 +20,7 @@ TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
 	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
+	m_Bitmap(nullptr),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -51,40 +52,51 @@ void MeterImage::Initialize()
 */
 void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
+	m_Bitmap = nullptr;
 	m_Image.LoadImage(imageName, bLoadAlways);
 
 	if (m_Image.IsLoaded())
 	{
+		m_Bitmap = m_Image.GetImage();
+
 		bool useMaskSize = false;
 		m_MaskImage.LoadImage(m_MaskImageName, true);
 		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
 		Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
+		InitSize(bitmap);
+	}
+}
 
-		int imageW = bitmap->GetWidth();
-		int imageH = bitmap->GetHeight();
+/*
+** Initialize image size from a bitmap
+**
+*/
+void MeterImage::InitSize(Bitmap* bitmap)
+{
+	int imageW = bitmap->GetWidth();
+	int imageH = bitmap->GetHeight();
 
-		if (m_WDefined)
+	if (m_WDefined)
+	{
+		if (!m_HDefined)
 		{
-			if (!m_HDefined)
-			{
-				m_H = (imageW == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageH : m_W * imageH / imageW;
-				m_H += GetHeightPadding();
-			}
+			m_H = (imageW == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageH : m_W * imageH / imageW;
+			m_H += GetHeightPadding();
+		}
+	}
+	else
+	{
+		if (m_HDefined)
+		{
+			m_W = (imageH == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageW : m_H * imageW / imageH;
+			m_W += GetWidthPadding();
 		}
 		else
 		{
-			if (m_HDefined)
-			{
-				m_W = (imageH == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageW : m_H * imageW / imageH;
-				m_W += GetWidthPadding();
-			}
-			else
-			{
-				m_W = imageW + GetWidthPadding();
-				m_H = imageH + GetHeightPadding();
-			}
+			m_W = imageW + GetWidthPadding();
+			m_H = imageH + GetHeightPadding();
 		}
 	}
 }
@@ -152,31 +164,48 @@ bool MeterImage::Update()
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
-			// Store the current values so we know if the image needs to be updated
-			std::wstring oldResult = m_ImageNameResult;
-
-			if (!m_Measures.empty())  // read from the measures
+			// allow measure to supply the bitmap
+			Bitmap* bitmap = (!m_Measures.empty())? m_Measures[0]->GetBitmap() : nullptr;
+			if (bitmap)
 			{
-				if (m_ImageName.empty())
+				if(m_Bitmap) delete m_Bitmap;
+
+				// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
+				Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+				m_Bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+				Graphics graphics(m_Bitmap);
+				graphics.DrawImage(bitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
+
+				InitSize(m_Bitmap);
+			}
+			else
+			{
+				// Store the current values so we know if the image needs to be updated
+				std::wstring oldResult = m_ImageNameResult;
+
+				if (!m_Measures.empty())  // read from the measures
 				{
-					m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
-				}
-				else
-				{
-					m_ImageNameResult = m_ImageName;
-					if (!ReplaceMeasures(m_ImageNameResult, AUTOSCALE_OFF))
+					if (m_ImageName.empty())
 					{
-						// ImageName doesn't contain any measures, so use the result of MeasureName.
 						m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
+					else
+					{
+						m_ImageNameResult = m_ImageName;
+						if (!ReplaceMeasures(m_ImageNameResult, AUTOSCALE_OFF))
+						{
+							// ImageName doesn't contain any measures, so use the result of MeasureName.
+							m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+						}
+					}
 				}
-			}
-			else  // read from the skin
-			{
-				m_ImageNameResult = m_ImageName;
-			}
+				else  // read from the skin
+				{
+					m_ImageNameResult = m_ImageName;
+				}
 
-			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
+				LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
+			}
 
 			return true;
 		}
@@ -197,10 +226,10 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	if (m_Image.IsLoaded())
+	if (m_Bitmap)
 	{
 		// Copy the image over the doublebuffer
-		Bitmap* drawBitmap = m_Image.GetImage();
+		Bitmap* drawBitmap = m_Bitmap;
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
