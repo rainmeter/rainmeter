@@ -100,6 +100,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_SnapEdges(true),
 	m_AlphaValue(255),
 	m_FadeDuration(250),
+	m_NewFadeDuration(-1),
 	m_WindowZPosition(ZPOSITION_NORMAL),
 	m_DynamicWindowSize(false),
 	m_ClickThrough(false),
@@ -334,6 +335,8 @@ void Skin::RemoveWindowExStyle(LONG_PTR flag)
 */
 void Skin::Deactivate()
 {
+	UpdateFadeDuration();
+
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_CLOSING;
 
@@ -805,6 +808,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::ToggleFade:
 		DoBang(m_Hidden ? Bang::ShowFade : Bang::HideFade, args);
+		break;
+
+	case Bang::FadeDuration:
+		SetFadeDuration(m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
 
 	case Bang::Move:
@@ -2919,6 +2926,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::FadeWindow(int from, int to)
 {
+	UpdateFadeDuration();
+
 	if (m_FadeDuration == 0)
 	{
 		if (to == 0)
@@ -3595,6 +3604,21 @@ void Skin::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteOptions(OPTION_SNAPEDGES);
+}
+
+void Skin::SetFadeDuration(int duration)
+{
+	m_NewFadeDuration = duration;
+}
+
+void Skin::UpdateFadeDuration()
+{
+	if (m_NewFadeDuration >= 0)
+	{
+		m_FadeDuration = m_NewFadeDuration;
+		WriteOptions(OPTION_FADEDURATION);
+		m_NewFadeDuration = -1;
+	}
 }
 
 void Skin::SetWindowHide(HIDEMODE hide)

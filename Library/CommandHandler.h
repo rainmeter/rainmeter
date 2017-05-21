@@ -55,6 +55,7 @@ enum class Bang
 	ClickThrough,
 	Draggable,
 	SnapEdges,
+	FadeDuration,
 	KeepOnScreen,
 	AutoSelectScreen,
 	SetTransparency,

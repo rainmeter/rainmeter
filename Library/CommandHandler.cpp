@@ -48,6 +48,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::HideFade, L"HideFade", 0 },
 	{ Bang::ShowFade, L"ShowFade", 0 },
 	{ Bang::ToggleFade, L"ToggleFade", 0 },
+	{ Bang::FadeDuration, L"SetFadeDuration", 1 },
 	{ Bang::HideMeter, L"HideMeter", 1 },
 	{ Bang::ShowMeter, L"ShowMeter", 1 },
 	{ Bang::ToggleMeter, L"ToggleMeter", 1 },

@@ -297,6 +297,8 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void SetFadeDuration(int duration);
+	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zpos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
@@ -380,6 +382,7 @@ private:
 	bool m_SnapEdges;
 	int m_AlphaValue;
 	int m_FadeDuration;
+	int m_NewFadeDuration;
 	ZPOSITION m_WindowZPosition;
 	bool m_DynamicWindowSize;
 	bool m_ClickThrough;
