@@ -89,9 +89,6 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			ParseModifiers(args, parser, section);
 		}
 
-		m_Shapes.back()->ValidateTransforms();
-		m_Shapes.back()->CreateStrokeStyle();
-
 		// Check for Shape2 ... etc.
 		const std::wstring num = std::to_wstring(++i);
 		std::wstring key = L"Shape" + num;
@@ -186,6 +183,8 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		bool exists = shape->DoesShapeExist();
 		if (exists)
 		{
+			shape->ValidateTransforms();
+			shape->CreateStrokeStyle();
 			m_Shapes.push_back(shape);
 		}
 		else
