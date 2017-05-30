@@ -408,7 +408,18 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
 	{
-		// Combined shapes are processed after all shapes are created
+		// Because combined shapes need to be processed after the rest of the shapes
+		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
+		// the order in which the shapes are defined.
+
+		if (!createShape(new Gfx::Rectangle(0.0, 0.0, 0.0, 0.0)))
+		{
+			return false;
+		}
+
+		// Set the 'combined' flag on this dummy shape so it isn't drawn in cases
+		// where the combined shape is not valid (see CreateCombinedShapes)
+		m_Shapes.back()->SetCombined();
 		isCombined = true;
 		return true;
 	}
@@ -450,7 +461,14 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
 			if (clonedShape)
 			{
-				m_Shapes.insert(m_Shapes.begin() + shapeId, clonedShape);
+				// Delete and remove the shape from |m_Shapes|, then
+				// insert the cloned shape into the position of the
+				// deleted shape.
+
+				delete m_Shapes[shapeId];
+				auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
+				m_Shapes.insert(iter, clonedShape);
+
 				m_Shapes[parentId]->SetCombined();
 
 				// Combine with empty shape
