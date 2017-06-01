@@ -297,7 +297,6 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
-	void SetFadeDuration(int duration);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zpos);

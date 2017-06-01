@@ -811,7 +811,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::FadeDuration:
-		SetFadeDuration(m_Parser.ParseInt(args[0].c_str(), 0));
+		{
+			int duration = m_Parser.ParseInt(args[0].c_str(), 0);
+			m_NewFadeDuration = duration;
+		}
 		break;
 
 	case Bang::Move:
@@ -3604,11 +3607,6 @@ void Skin::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteOptions(OPTION_SNAPEDGES);
-}
-
-void Skin::SetFadeDuration(int duration)
-{
-	m_NewFadeDuration = duration;
 }
 
 void Skin::UpdateFadeDuration()
