@@ -86,6 +86,7 @@ enum class Bang
 	ClickThroughGroup,
 	DraggableGroup,
 	SnapEdgesGroup,
+	SetFadeDurationGroup,
 	KeepOnScreenGroup,
 	AutoSelectScreenGroup,
 	SetTransparencyGroup,

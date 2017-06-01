@@ -112,6 +112,7 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::ClickThrough, L"ClickThroughGroup", 1 },
 	{ Bang::Draggable, L"DraggableGroup", 1 },
 	{ Bang::SnapEdges, L"SnapEdgesGroup", 1 },
+	{ Bang::FadeDuration, L"SetFadeDurationGroup", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
 	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
