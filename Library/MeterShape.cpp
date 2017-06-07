@@ -1123,6 +1123,9 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 	// This can be overridden if an actual 'Fill Color' is defined.
 	if (open) shape->SetFill(Gdiplus::Color::Transparent);
 
+	shape->ValidateTransforms();
+	shape->CreateStrokeStyle();
+
 	m_Shapes.push_back(shape);
 
 	return true;
