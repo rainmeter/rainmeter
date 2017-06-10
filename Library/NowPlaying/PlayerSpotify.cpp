@@ -76,11 +76,13 @@ void PlayerSpotify::UpdateData()
 	{
 		// Parse title and artist from window title
 		WCHAR buffer[256];
-		if (GetWindowText(m_Window, buffer, 256) > 10)
-		{
-			std::wstring title = &buffer[10];  // Skip "Spotify - "
 
-			std::wstring::size_type pos = title.find(L" \u2013 ");
+		//Length of window is now 7 when not playing
+		if (GetWindowText(m_Window, buffer, 256) > 7)
+		{
+			std::wstring title = buffer;
+
+			std::wstring::size_type pos = title.find(L" - ");
 			if (pos != std::wstring::npos)
 			{
 				std::wstring artist(title, 0, pos);
