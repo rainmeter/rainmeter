@@ -400,47 +400,47 @@ void PlayerITunes::OnTrackChange()
 			{
 				++m_TrackCount;
 				m_FilePath = tmpStr;
+			}
+		}
 
-				if (m_Measures & MEASURE_COVER)
+		if (m_Measures & MEASURE_COVER)
+		{
+			m_CoverPath.clear();
+
+			// Check for embedded art through iTunes interface
+			IITArtworkCollection* artworkCollection;
+			hr = track->get_Artwork(&artworkCollection);
+
+			if (SUCCEEDED(hr))
+			{
+				long count;
+				artworkCollection->get_Count(&count);
+
+				if (count > 0)
 				{
-					m_CoverPath.clear();
-
-					// Check for embedded art through iTunes interface
-					IITArtworkCollection* artworkCollection;
-					hr = track->get_Artwork(&artworkCollection);
+					IITArtwork* artwork;
+					hr = artworkCollection->get_Item(1, &artwork);
 
 					if (SUCCEEDED(hr))
 					{
-						long count;
-						artworkCollection->get_Count(&count);
-
-						if (count > 0)
+						_bstr_t coverPath = m_TempCoverPath.c_str();
+						hr = artwork->SaveArtworkToFile(coverPath);
+						if (SUCCEEDED(hr))
 						{
-							IITArtwork* artwork;
-							hr = artworkCollection->get_Item(1, &artwork);
-
-							if (SUCCEEDED(hr))
-							{
-								_bstr_t coverPath = m_TempCoverPath.c_str();
-								hr = artwork->SaveArtworkToFile(coverPath);
-								if (SUCCEEDED(hr))
-								{
-									m_CoverPath = m_TempCoverPath;
-								}
-
-								artwork->Release();
-							}
+							m_CoverPath = m_TempCoverPath;
 						}
 
-						artworkCollection->Release();
+						artwork->Release();
 					}
 				}
 
-				if (m_Measures & MEASURE_LYRICS)
-				{
-					FindLyrics();
-				}
+				artworkCollection->Release();
 			}
+		}
+
+		if (m_Measures & MEASURE_LYRICS)
+		{
+			FindLyrics();
 		}
 
 		track->Release();
