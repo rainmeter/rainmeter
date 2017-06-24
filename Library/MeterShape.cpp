@@ -183,8 +183,6 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		bool exists = shape->DoesShapeExist();
 		if (exists)
 		{
-			shape->ValidateTransforms();
-			shape->CreateStrokeStyle();
 			m_Shapes.push_back(shape);
 		}
 		else
@@ -754,6 +752,12 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
 		}
 	}
+
+	if (!recursive)
+	{
+		shape->CreateStrokeStyle();
+		shape->ValidateTransforms();
+	}
 }
 
 bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform)
@@ -1122,9 +1126,6 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
 	if (open) shape->SetFill(Gdiplus::Color::Transparent);
-
-	shape->ValidateTransforms();
-	shape->CreateStrokeStyle();
 
 	m_Shapes.push_back(shape);
 
