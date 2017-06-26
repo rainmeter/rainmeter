@@ -3649,6 +3649,15 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = true;
 	m_Dragged = false;
 
+	// If the 'Show window contents while dragging' system option is
+	// checked, temporarily enable it while dragging the skin.
+	BOOL sysDrag = TRUE;
+	SystemParametersInfo(SPI_GETDRAGFULLWINDOWS, NULL, &sysDrag, NULL);
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, TRUE, NULL, NULL);
+	}
+
 	// Run the DefWindowProc so the dragging works
 	LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
 
@@ -3674,6 +3683,11 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Clear the dragging flags
 	m_Dragging = false;
 	m_Dragged = false;
+
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, FALSE, NULL, NULL);
+	}
 
 	return result;
 }
