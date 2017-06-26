@@ -3650,7 +3650,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragged = false;
 
 	// If the 'Show window contents while dragging' system option is
-	// checked, temporarily enable it while dragging the skin.
+	// not checked, temporarily enable it while dragging the skin.
 	BOOL sysDrag = TRUE;
 	SystemParametersInfo(SPI_GETDRAGFULLWINDOWS, NULL, &sysDrag, NULL);
 	if (!sysDrag)
@@ -3684,6 +3684,8 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = false;
 	m_Dragged = false;
 
+	// Disable the 'Show window contents while dragging' system option if
+	// it was already disabled before dragging.
 	if (!sysDrag)
 	{
 		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, FALSE, NULL, NULL);
