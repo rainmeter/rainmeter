@@ -138,6 +138,7 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::Log, L"Log", CommandHandler::DoLogBang },
 	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
 	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
+	{ Bang::EditSkin, L"EditSkin", CommandHandler::DoEditSkinBang },
 	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
 };
 
@@ -949,6 +950,27 @@ void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
 	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
+}
+
+void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	const size_t argSize = args.size();
+	if (argSize > 1)
+	{
+		const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(args[0], args[1]);
+		if (indexes.IsValid())
+		{
+			GetRainmeter().EditSkinFile(args[0], args[1]);
+		}
+	}
+	else if (argSize == 0 && skin)
+	{
+		GetRainmeter().EditSkinFile(skin->GetFolderPath(), skin->GetFileName());
+	}
+	else
+	{
+		LogErrorF(skin, L"!EditSkin: Invalid parameters");
+	}
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
