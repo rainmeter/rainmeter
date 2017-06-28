@@ -490,7 +490,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 ** Splits strings into parts.
 **
 */
-std::vector<std::wstring> CommandHandler::ParseString(LPCTSTR str, ConfigParser* parser)
+std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;
 
