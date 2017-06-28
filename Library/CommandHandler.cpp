@@ -962,6 +962,10 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 		{
 			GetRainmeter().EditSkinFile(args[0], args[1]);
 		}
+		else
+		{
+			LogErrorF(L"!EditSkin: Invalid parameters");
+		}
 	}
 	else if (argSize == 0 && skin)
 	{
