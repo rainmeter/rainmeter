@@ -6,7 +6,6 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "Error.h"
 #include "Meter.h"
 #include "MeterBitmap.h"
 #include "MeterBar.h"

@@ -35,6 +35,8 @@ public:
 		const WCHAR* fontFamily, int size, bool bold, bool italic,
 		const FontCollection* fontCollection) override;
 
+	virtual void SetFontWeight(int weight) override;
+
 	virtual void SetTrimming(bool trim) override;
 
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
@@ -90,6 +92,9 @@ private:
 	Microsoft::WRL::ComPtr<IDWriteInlineObject> m_InlineEllipsis;
 
 	std::wstring m_LastString;
+
+	int m_FontWeight;
+	bool m_HasWeightChanged;
 
 	// Used to emulate GDI+ behaviour.
 	float m_ExtraHeight;

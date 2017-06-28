@@ -330,7 +330,7 @@ void MeasureNowPlaying::UpdateValue()
 	case MEASURE_PROGRESS:
 		if (player->GetDuration())
 		{
-			m_Value = (player->GetPosition() * 100) / player->GetDuration();
+			m_Value = ((double)player->GetPosition() * 100.0) / player->GetDuration();
 		}
 		break;
 	case MEASURE_RATING:
@@ -468,7 +468,7 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 
 			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
-				int position = (_wtoi(arg) * (int)player->GetDuration()) / 100;
+				int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
 				if (arg[0] == L'+' || arg[0] == L'-')
 				{
 					position += player->GetPosition();

@@ -49,6 +49,8 @@ int Clamp(int value, int _min, int _max)
 namespace Gfx {
 
 TextFormatD2D::TextFormatD2D() :
+	m_FontWeight(-1),
+	m_HasWeightChanged(false),
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
@@ -118,7 +120,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& 
 		m_HasInlineOptionsChanged = true;
 	};
 
-	if (m_TextLayout && !strChanged && !m_HasInlineOptionsChanged)
+	if (m_TextLayout && !strChanged && !m_HasInlineOptionsChanged && !m_HasWeightChanged)
 	{
 		bool hasChanged = false;
 		if (maxW != m_TextLayout->GetMaxWidth())
@@ -145,6 +147,14 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& 
 			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
 		if (!m_TextLayout) return false;
 
+		// Set the font weight if valid
+		const DWRITE_TEXT_RANGE range = { 0, strLen };
+		if (m_FontWeight > 0 && m_FontWeight < 1000)
+		{
+			m_TextLayout->SetFontWeight((DWRITE_FONT_WEIGHT)m_FontWeight, range);
+			m_HasWeightChanged = false;
+		}
+
 		if (gdiEmulation)
 		{
 			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
@@ -152,7 +162,6 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& 
 
 			const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
 			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0, strLen};
 			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 
@@ -314,6 +323,16 @@ void TextFormatD2D::SetProperties(
 	}
 }
 
+void TextFormatD2D::SetFontWeight(int weight)
+{
+	if (weight < 1 || weight > 999 || weight == m_FontWeight) return;
+
+	m_FontWeight = weight;
+
+	// Signal to recreate the layout
+	m_HasWeightChanged = true;
+}
+
 DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
 {
 	UINT32 strLen = (UINT32)srcStr.length();
@@ -343,6 +362,13 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
+		// Set the font weight if valid
+		if (m_FontWeight > 0 && m_FontWeight < 1000)
+		{
+			const DWRITE_TEXT_RANGE range = { 0, strLen };
+			textLayout->SetFontWeight((DWRITE_FONT_WEIGHT)m_FontWeight, range);
+		}
+
 		ApplyInlineFormatting(textLayout.Get());
 
 		const float xOffset = m_TextFormat->GetFontSize() / 6.0f;

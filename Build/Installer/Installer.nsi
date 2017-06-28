@@ -93,6 +93,7 @@ Function .onInit
 		SetSilent normal
 
 		${If} ${IsWin7}
+		${OrIf} ${IsWin2008R2}
 			${IfNot} ${AtLeastServicePack} 1
 				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with Service Pack 1.$\n$\nPlease install Service Pack 1 or download Rainmeter 3.3 from www.rainmeter.net"
 				Quit

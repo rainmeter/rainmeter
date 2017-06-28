@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterHistogram.h"
 #include "Measure.h"
-#include "Error.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 

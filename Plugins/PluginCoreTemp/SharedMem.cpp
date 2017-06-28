@@ -9,10 +9,10 @@ CSharedMemClient::~CSharedMemClient(void)
 {
 }
 
-bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
+bool CSharedMemClient::ReadSharedMem(LPCoreTempSharedDataEx i_SharedData)
 {
 	bool bRet = false;
-	PCORE_TEMP_SHARED_DATA pSharedData;
+	LPCoreTempSharedDataEx pSharedData;
 	HANDLE hdlMemory;
 	HANDLE hdlMutex;
 
@@ -27,7 +27,7 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 	hdlMemory = OpenFileMapping(
 		FILE_MAP_READ,						// Read only permission.
 		TRUE,
-		CORE_TEMP_MAPPING_OBJECT);			// "CoreTempMappingObject"
+		CORE_TEMP_MAPPING_OBJECT_EX);		// "CoreTempMappingObject"
 
 	if (hdlMemory == nullptr)
 	{
@@ -36,7 +36,7 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 		return false;
 	}
 
-	pSharedData = (PCORE_TEMP_SHARED_DATA)MapViewOfFile(hdlMemory, FILE_MAP_READ, 0, 0, 0);
+	pSharedData = (LPCoreTempSharedDataEx)MapViewOfFile(hdlMemory, FILE_MAP_READ, 0, 0, 0);
 	if (pSharedData == nullptr)
 	{
 		CloseHandle(hdlMemory);
@@ -48,7 +48,7 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 
 	__try
 	{
-		memcpy_s(i_SharedData, sizeof(core_temp_shared_data), pSharedData, sizeof(core_temp_shared_data));
+		memcpy_s(i_SharedData, sizeof(CoreTempSharedDataEx), pSharedData, sizeof(CoreTempSharedDataEx));
 		bRet = true;
 	}
 	__except(1)

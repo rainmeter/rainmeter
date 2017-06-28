@@ -12,7 +12,6 @@
 #include <comdef.h>
 #include <string>
 #include "../Common/StringUtil.h"
-#include "Error.h"
 
 UINT GetUniqueID();
 

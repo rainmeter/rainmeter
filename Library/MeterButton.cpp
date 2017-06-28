@@ -9,7 +9,6 @@
 #include "MeterButton.h"
 #include "Measure.h"
 #include "Rainmeter.h"
-#include "Error.h"
 #include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;

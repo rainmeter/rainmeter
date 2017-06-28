@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterImage.h"
 #include "Measure.h"
-#include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/PathUtil.h"

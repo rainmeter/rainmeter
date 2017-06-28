@@ -284,7 +284,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 				item.parseError = false;
 
 				const WCHAR* str = measure.GetStringValue();
-				int strLen = str ? wcslen(str) : 0;
+				int strLen = str ? (int)wcslen(str) : 0;
 				int ovector[300];
 				int rc = pcre16_exec(
 					re,

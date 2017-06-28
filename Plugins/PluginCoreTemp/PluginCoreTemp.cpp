@@ -20,7 +20,11 @@ typedef enum eMeasureType
 	MeasureCpuSpeed,
 	MeasureBusSpeed,
 	MeasureBusMultiplier,
-	MeasureCpuName
+	MeasureCpuName,
+	MeasureCoreSpeed,
+	MeasureCoreBusMultiplier,
+	MeasureTdp,
+	MeasurePower,
 };
 
 struct MeasureData
@@ -28,12 +32,17 @@ struct MeasureData
 	eMeasureType type;
 	int index;
 
-	MeasureData() : type(), index() {}
+	void* rm;
+
+	MeasureData() :
+		type(MeasureTemperature),
+		index(0),
+		rm(nullptr) {}
 };
 
 CoreTempProxy proxy;
 
-eMeasureType convertStringToMeasureType(LPCWSTR i_String);
+eMeasureType convertStringToMeasureType(LPCWSTR i_String, void* rm);
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2);
 float getHighestTemp();
 
@@ -41,19 +50,19 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;
+
+	measure->rm = rm;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
+	UNREFERENCED_PARAMETER(maxValue);
 	MeasureData* measure = (MeasureData*)data;
 
 	LPCWSTR value = RmReadString(rm, L"CoreTempType", L"Temperature");
-	measure->type = convertStringToMeasureType(value);
+	measure->type = convertStringToMeasureType(value, rm);
 
-	if (measure->type == MeasureTemperature || measure->type == MeasureTjMax || measure->type == MeasureLoad)
-	{
-		measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
-	}
+	measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -96,6 +105,22 @@ PLUGIN_EXPORT double Update(void* data)
 		case MeasureBusMultiplier:
 			result = proxy.GetMultiplier();
 			break;
+
+		case MeasureCoreSpeed:
+			result = proxy.GetMultiplier(measure->index) * proxy.GetFSBSpeed();
+			break;
+
+		case MeasureCoreBusMultiplier:
+			result = proxy.GetMultiplier(measure->index);
+			break;
+
+		case MeasureTdp:
+			result = proxy.GetTdp(measure->index);
+			break;
+
+		case MeasurePower:
+			result = proxy.GetPower(measure->index);
+			break;
 		}
 	}
 
@@ -135,7 +160,7 @@ bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2)
 	return _wcsicmp(i_String1, i_Strting2) == 0;
 }
 
-eMeasureType convertStringToMeasureType(LPCWSTR i_String)
+eMeasureType convertStringToMeasureType(LPCWSTR i_String, void* rm)
 {
 	eMeasureType result;
 
@@ -175,10 +200,26 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 	{
 		result = MeasureCpuName;
 	}
+	else if (areStringsEqual(i_String, L"CoreSpeed"))
+	{
+		result = MeasureCoreSpeed;
+	}
+	else if (areStringsEqual(i_String, L"CoreBusMultiplier"))
+	{
+		result = MeasureCoreBusMultiplier;
+	}
+	else if (areStringsEqual(i_String, L"Tdp"))
+	{
+		result = MeasureTdp;
+	}
+	else if (areStringsEqual(i_String, L"Power"))
+	{
+		result = MeasurePower;
+	}
 	else
 	{
 		result = MeasureTemperature;
-		RmLog(LOG_WARNING, L"CoreTemp.dll: Invalid CoreTempType");
+		RmLogF(rm, LOG_WARNING, L"Invalid CoreTempType: %s", i_String);
 	}
 
 	return result;
@@ -186,14 +227,15 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 
 float getHighestTemp()
 {
-	float temp = -255;
+	float temp = -255.0f;
 	UINT coreCount = proxy.GetCoreCount();
 
 	for (UINT i = 0; i < coreCount; ++i)
 	{
-		if (temp < proxy.GetTemp(i))
+		const float getTemp = proxy.GetTemp(i);
+		if (temp < getTemp)
 		{
-			temp = proxy.GetTemp(i);
+			temp = getTemp;
 		}
 	}
 

@@ -10,7 +10,6 @@
 #include "Rainmeter.h"
 #include "Export.h"
 #include "System.h"
-#include "Error.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),

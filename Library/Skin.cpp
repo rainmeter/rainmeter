@@ -10,7 +10,6 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
-#include "Error.h"
 #include "Meter.h"
 #include "Measure.h"
 #include "DialogAbout.h"
@@ -101,6 +100,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_SnapEdges(true),
 	m_AlphaValue(255),
 	m_FadeDuration(250),
+	m_NewFadeDuration(-1),
 	m_WindowZPosition(ZPOSITION_NORMAL),
 	m_DynamicWindowSize(false),
 	m_ClickThrough(false),
@@ -335,6 +335,8 @@ void Skin::RemoveWindowExStyle(LONG_PTR flag)
 */
 void Skin::Deactivate()
 {
+	UpdateFadeDuration();
+
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_CLOSING;
 
@@ -806,6 +808,13 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::ToggleFade:
 		DoBang(m_Hidden ? Bang::ShowFade : Bang::HideFade, args);
+		break;
+
+	case Bang::FadeDuration:
+		{
+			int duration = m_Parser.ParseInt(args[0].c_str(), 0);
+			m_NewFadeDuration = duration;
+		}
 		break;
 
 	case Bang::Move:
@@ -2767,7 +2776,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
@@ -2920,6 +2929,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::FadeWindow(int from, int to)
 {
+	UpdateFadeDuration();
+
 	if (m_FadeDuration == 0)
 	{
 		if (to == 0)
@@ -3598,6 +3609,16 @@ void Skin::SetSnapEdges(bool b)
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
+void Skin::UpdateFadeDuration()
+{
+	if (m_NewFadeDuration >= 0)
+	{
+		m_FadeDuration = m_NewFadeDuration;
+		WriteOptions(OPTION_FADEDURATION);
+		m_NewFadeDuration = -1;
+	}
+}
+
 void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
@@ -3628,6 +3649,15 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = true;
 	m_Dragged = false;
 
+	// If the 'Show window contents while dragging' system option is
+	// not checked, temporarily enable it while dragging the skin.
+	BOOL sysDrag = TRUE;
+	SystemParametersInfo(SPI_GETDRAGFULLWINDOWS, NULL, &sysDrag, NULL);
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, TRUE, NULL, NULL);
+	}
+
 	// Run the DefWindowProc so the dragging works
 	LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
 
@@ -3653,6 +3683,13 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Clear the dragging flags
 	m_Dragging = false;
 	m_Dragged = false;
+
+	// Disable the 'Show window contents while dragging' system option if
+	// it was already disabled before dragging.
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, FALSE, NULL, NULL);
+	}
 
 	return result;
 }

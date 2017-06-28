@@ -3,21 +3,21 @@
 
 CoreTempProxy::CoreTempProxy(void)
 {
-	memset(&this->m_pCoreTempData, 0, sizeof(CORE_TEMP_SHARED_DATA));
+	memset(&this->m_pCoreTempData, 0, sizeof(CoreTempSharedDataEx));
 }
 
 CoreTempProxy::~CoreTempProxy(void)
 {
 }
 
-UINT CoreTempProxy::GetCoreLoad(int i_Index) const
+UINT CoreTempProxy::GetCoreLoad(int _index) const
 {
-	return this->m_pCoreTempData.uiLoad[i_Index];
+	return this->m_pCoreTempData.uiLoad[_index];
 }
 
-UINT CoreTempProxy::GetTjMax(int i_Index) const
+UINT CoreTempProxy::GetTjMax(int _index) const
 {
-	return this->m_pCoreTempData.uiTjMax[i_Index];
+	return this->m_pCoreTempData.uiTjMax[_index];
 }
 
 UINT CoreTempProxy::GetCoreCount() const
@@ -30,9 +30,9 @@ UINT CoreTempProxy::GetCPUCount() const
 	return this->m_pCoreTempData.uiCPUCnt;
 }
 
-float CoreTempProxy::GetTemp(int i_Index) const
+float CoreTempProxy::GetTemp(int _index) const
 {
-	return this->m_pCoreTempData.fTemp[i_Index];
+	return this->m_pCoreTempData.fTemp[_index];
 }
 
 float CoreTempProxy::GetVID() const
@@ -52,7 +52,7 @@ float CoreTempProxy::GetFSBSpeed() const
 
 float CoreTempProxy::GetMultiplier() const
 {
-	return this->m_pCoreTempData.fMultipier;
+	return this->m_pCoreTempData.fMultiplier;
 }
 
 LPCSTR CoreTempProxy::GetCPUName() const
@@ -70,7 +70,37 @@ bool CoreTempProxy::IsDistanceToTjMax() const
 	return this->m_pCoreTempData.ucDeltaToTjMax != 0;
 }
 
-const CORE_TEMP_SHARED_DATA &CoreTempProxy::GetDataStruct() const
+bool CoreTempProxy::IsTdpSupported() const
+{
+	return this->m_pCoreTempData.ucTdpSupported != 0;
+}
+
+bool CoreTempProxy::IsPowerSupported() const
+{
+	return this->m_pCoreTempData.ucPowerSupported != 0;
+}
+
+UINT CoreTempProxy::GetStructureVersion() const
+{
+	return this->m_pCoreTempData.uiStructVersion;
+}
+
+UINT CoreTempProxy::GetTdp(int _index) const
+{
+	return this->m_pCoreTempData.uiTdp[_index];
+}
+
+float CoreTempProxy::GetPower(int _index) const
+{
+	return this->m_pCoreTempData.fPower[_index];
+}
+
+float CoreTempProxy::GetMultiplier(int _index) const
+{
+	return this->m_pCoreTempData.fMultipliers[_index];
+}
+
+const CoreTempSharedDataEx &CoreTempProxy::GetDataStruct() const
 {
 	return this->m_pCoreTempData;
 }
@@ -91,7 +121,7 @@ LPCWSTR CoreTempProxy::GetErrorMessage()
 	}
 	else
 	{
-		::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, lastError, 0, this->m_ErrorMessage, 99, nullptr);
+		::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, lastError, 0, this->m_ErrorMessage, 99, NULL);
 	}
 
 	return this->m_ErrorMessage;

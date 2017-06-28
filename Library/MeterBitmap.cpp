@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterBitmap.h"
 #include "Measure.h"
-#include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
@@ -20,14 +19,14 @@ MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
-	m_TransitionFrameCount(),
+	m_TransitionFrameCount(0),
 	m_Align(ALIGN_LEFT),
 	m_Extend(false),
-	m_Separation(),
-	m_Digits(),
-	m_Value(),
-	m_TransitionStartTicks(),
-	m_TransitionStartValue()
+	m_Separation(0),
+	m_Digits(0),
+	m_Value(0.0),
+	m_TransitionStartTicks(0),
+	m_TransitionStartValue(0.0)
 {
 }
 
@@ -58,13 +57,15 @@ void MeterBitmap::Initialize()
 			int extraSpace = (m_Digits - 1) * m_Separation;
 			extraSpace = max(0, extraSpace);
 
+			int digits = max(1, m_Digits);
+
 			if (m_H > m_W)
 			{
 				m_H = (m_H / m_FrameCount);
 
 				if (m_Extend)  // Increase meter height to account for BitmapDigigts and BitmapSeparation options
 				{
-					m_H *= m_Digits;
+					m_H *= digits;
 					m_H += extraSpace;
 				}
 			}
@@ -74,7 +75,7 @@ void MeterBitmap::Initialize()
 
 				if (m_Extend)  // Increase meter width to account for BitmapDigigts and BitmapSeparation options
 				{
-					m_W *= m_Digits;
+					m_W *= digits;
 					m_W += extraSpace;
 				}
 			}
@@ -286,15 +287,17 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		int extraSpace = (m_Digits - 1) * m_Separation;
 		extraSpace = max(0, extraSpace);
 
+		int digits = max(1, m_Digits);
+
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			meterRect.Height -= extraSpace;
-			meterRect.Height /= m_Digits;
+			meterRect.Height /= digits;
 		}
 		else
 		{
 			meterRect.Width -= extraSpace;
-			meterRect.Width /= m_Digits;
+			meterRect.Width /= digits;
 		}
 
 		__int64 value = (__int64)m_Value;

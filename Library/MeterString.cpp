@@ -9,7 +9,6 @@
 #include "MeterString.h"
 #include "Rainmeter.h"
 #include "Measure.h"
-#include "Error.h"
 #include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
@@ -34,7 +33,8 @@ MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_ClipStringH(-1),
 	m_TextFormat(skin->GetCanvas().CreateTextFormat()),
 	m_NumOfDecimals(-1),
-	m_Angle()
+	m_Angle(),
+	m_FontWeight(-1)
 {
 }
 
@@ -267,6 +267,19 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"StringStyle=%s is not valid", style);
 	}
 
+	int weight = parser.ReadInt(section, L"FontWeight", -1);
+	if (parser.GetLastValueDefined())
+	{
+		if (weight > 0 && weight < 1000)
+		{
+			m_FontWeight = weight;
+		}
+		else
+		{
+			LogErrorF(this, L"Invalid FontWeight: %i", weight);
+		}
+	}
+
 	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
 	if (_wcsicmp(effect, L"NONE") == 0)
 	{
@@ -362,6 +375,7 @@ bool MeterString::Update()
 			}
 		}
 
+		m_TextFormat->SetFontWeight(m_FontWeight);
 		m_TextFormat->FindInlineRanges(m_String);
 
 		if (!m_WDefined || !m_HDefined)
