@@ -971,6 +971,12 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 	{
 		m_SkinEditor = path;
 		WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", path.c_str(), m_IniFile.c_str());
+
+		// Update #CONFIGEDITOR# built-in variable in all skins
+		for (auto iter : m_Skins)
+		{
+			iter.second->GetParser().SetBuiltInVariable(L"CONFIGEDITOR", m_SkinEditor);
+		}
 	}
 }
 

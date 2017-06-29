@@ -102,6 +102,8 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
 	insertVariable(L"ADDONSPATH", GetRainmeter().GetAddonPath());
 
+	insertVariable(L"CONFIGEDITOR", GetRainmeter().GetSkinEditor());
+
 	if (skin)
 	{
 		insertVariable(L"CURRENTFILE", skin->GetFileName());
