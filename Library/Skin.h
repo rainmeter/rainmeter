@@ -130,6 +130,12 @@ public:
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
 	void MoveWindow(int x, int y);
+	void MoveSelectedWindow(int dx, int dy);
+	bool IsSelected() { return m_Selected; }
+	void SelectSkinsGroup(std::unordered_set<std::wstring> groups);
+	void Select();
+	void Deselect();
+
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void ChangeSingleZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
@@ -245,6 +251,7 @@ protected:
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	enum STATE
@@ -312,6 +319,7 @@ private:
 	void SetWindowPositionVariables(int x, int y);
 	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
+	void DeselectSkinsIfAppropriate(HWND hwnd);
 
 	void ShowBlur();
 	void HideBlur();
@@ -395,6 +403,15 @@ private:
 	Gdiplus::REAL m_SolidAngle;
 	BEVELTYPE m_SolidBevel;
 
+	bool m_OldWindowDraggable;
+	bool m_OldKeepOnScreen;
+	bool m_OldClickThrough;
+
+	bool m_Selected;
+	Gdiplus::Color m_SelectedColor;
+
+	Group m_DragGroup;
+
 	bool m_Blur;
 	BLURMODE m_BlurMode;
 	HRGN m_BlurRegion;
@@ -429,6 +446,7 @@ private:
 	bool m_Favorite;
 
 	static int c_InstanceCount;
+	static bool c_IsInSelectionMode;
 };
 
 #endif

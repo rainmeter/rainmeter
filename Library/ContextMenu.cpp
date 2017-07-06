@@ -377,6 +377,14 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_FAVORITE, MF_BYCOMMAND | MF_CHECKED);
 		}
+
+		// Disable options if skin is selected
+		if (skin->IsSelected())
+		{
+			EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_GRAYED);
+			EnableMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_GRAYED);
+			EnableMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_GRAYED);
+		}
 	}
 
 	// Add the name of the Skin to the menu

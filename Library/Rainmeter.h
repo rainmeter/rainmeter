@@ -171,6 +171,8 @@ public:
 	bool IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename);
 	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
 
+	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+
 	friend class CommandHandler;
 	friend class ContextMenu;
 	friend class DialogManage;
@@ -244,6 +246,8 @@ private:
 	bool m_DisableDragging;
 
 	std::wstring m_SkinEditor;
+
+	Gdiplus::Color m_DefaultSelectedColor;
 
 	CommandHandler m_CommandHandler;
 	ContextMenu m_ContextMenu;

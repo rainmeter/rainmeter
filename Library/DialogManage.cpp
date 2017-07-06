@@ -131,6 +131,14 @@ void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* 
 	}
 }
 
+void DialogManage::UpdateSelectedSkinOptions(Skin* skin)
+{
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.UpdateSelected(skin);
+	}
+}
+
 void DialogManage::UpdateSkins(Skin* skin, bool deleted)
 {
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
@@ -582,6 +590,21 @@ void DialogManage::TabSkins::Initialize()
 
 	m_Initialized = true;
 	m_HandleCommands = true;
+}
+
+void DialogManage::TabSkins::UpdateSelected(Skin* skin)
+{
+	if (m_SkinWindow && m_SkinWindow == skin)
+	{
+		bool selected = skin->IsSelected();
+
+		HWND item = GetControl(Id_DraggableCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+		item = GetControl(Id_KeepOnScreenCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+		item = GetControl(Id_ClickThroughCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+	}
 }
 
 /*

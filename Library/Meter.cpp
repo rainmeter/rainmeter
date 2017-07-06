@@ -36,6 +36,7 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_ToolTipWidth(),
 	m_ToolTipType(false),
 	m_ToolTipHidden(skin->GetMeterToolTipHidden()),
+	m_ToolTipDisabled(false),
 	m_ToolTipHandle(),
 	m_Mouse(skin, this),
 	m_HasMouseAction(false),
@@ -646,7 +647,7 @@ void Meter::UpdateToolTip()
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
 
-	if (m_ToolTipHidden)
+	if (m_ToolTipHidden || m_ToolTipDisabled)
 	{
 		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, 0);
 	}

@@ -60,6 +60,8 @@ public:
 
 	void CreateToolTip(Skin* skin);
 	void UpdateToolTip();
+	void DisableToolTip() { m_ToolTipDisabled = true; UpdateToolTip(); }
+	void ResetToolTip() { m_ToolTipDisabled = false; UpdateToolTip(); }
 
 	void Hide();
 	void Show();
@@ -128,7 +130,7 @@ protected:
 	unsigned int m_ToolTipWidth;
 	bool m_ToolTipType;
 	bool m_ToolTipHidden;
-
+	bool m_ToolTipDisabled;  // Selected skins disable all tooltips
 	HWND m_ToolTipHandle;
 
 	Mouse m_Mouse;
