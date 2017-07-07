@@ -103,6 +103,7 @@ const WCHAR* ToErrorString(DWORD value)
 	case ERROR_INVALID_PARAMETER: return L"Invalid parameters";
 	case ERROR_NOT_ENOUGH_MEMORY: return L"Not enough memory";
 	case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED: return L"Too many handles already issued";
+	case ERROR_SERVICE_NOT_ACTIVE: return L"WLAN Auto Config (WLANSVC) service not active";
 	default: return L"Unknown error code";
 	}
 }
