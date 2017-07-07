@@ -777,6 +777,7 @@ CharType GetCharType(WCHAR ch)
 	case L'=':
 	case L'&':
 	case L'|':
+	case L'^':
 		return CharType::Symbol;
 	}
 
