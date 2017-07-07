@@ -150,8 +150,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 	if (g_Instances == 1)
 	{
-		WCHAR buffer[256];
-
 		// Create WINLAN API Handle
 		if (g_hClient == nullptr)
 		{
@@ -160,8 +158,9 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
-				RmLog(LOG_ERROR, buffer);
+
+				int level = (dwErr == ERROR_SERVICE_NOT_ACTIVE) ? LOG_DEBUG : LOG_ERROR;
+				RmLogF(rm, level, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
 				return;
 			}
 		}
@@ -173,14 +172,13 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
-				RmLog(LOG_ERROR, buffer);
+				RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
 				return;
 			}
 			else if (g_pIntfList->dwNumberOfItems == 0)
 			{
 				FinalizeHandle();
-				RmLog(LOG_ERROR, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
+				RmLog(rm, LOG_ERROR, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
 				return;
 			}
 		}
@@ -199,7 +197,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	auto logValueError = [&](const WCHAR* option)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: %s=%i not valid", option, value);
-		RmLog(LOG_ERROR, buffer);
+		RmLog(rm, LOG_ERROR, buffer);
 	};
 
 	// Select a WLAN interface, default 0.
@@ -259,7 +257,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
-		RmLog(LOG_ERROR, buffer);
+		RmLog(rm, LOG_ERROR, buffer);
 	}
 	if (infoType != measure->type)
 	{
