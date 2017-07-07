@@ -190,14 +190,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (g_hClient == nullptr) return;
 
 	MeasureData* measure = (MeasureData*)data;
-	WCHAR buffer[128];
 	bool changed = false;
 
 	int value = 0;
 	auto logValueError = [&](const WCHAR* option)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: %s=%i not valid", option, value);
-		RmLog(rm, LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: %s=%i not valid", option, value);
 	};
 
 	// Select a WLAN interface, default 0.
@@ -256,8 +254,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
-		RmLog(rm, LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
 	}
 	if (infoType != measure->type)
 	{
