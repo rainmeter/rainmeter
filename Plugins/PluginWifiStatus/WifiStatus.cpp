@@ -158,9 +158,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-
-				int level = (dwErr == ERROR_SERVICE_NOT_ACTIVE) ? LOG_DEBUG : LOG_ERROR;
-				RmLogF(rm, level, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
+				RmLogF(rm, LOG_DEBUG, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
 				return;
 			}
 		}
@@ -172,13 +170,13 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
+				RmLogF(rm, LOG_DEBUG, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
 				return;
 			}
 			else if (g_pIntfList->dwNumberOfItems == 0)
 			{
 				FinalizeHandle();
-				RmLog(rm, LOG_ERROR, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
+				RmLog(rm, LOG_DEBUG, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
 				return;
 			}
 		}
