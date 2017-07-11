@@ -10,20 +10,28 @@
 #include "TextFormatD2D.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
-#include "Util/DWriteHelpers.h"
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Util.h"
+#include "../../Library/Logger.h"
 
 namespace Gfx {
 
 UINT Canvas::c_Instances = 0;
+D3D_FEATURE_LEVEL Canvas::c_FeatureLevel;
+Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
+Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
+Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
+Microsoft::WRL::ComPtr<IDXGIDevice1> Canvas::c_DxgiDevice;
 Microsoft::WRL::ComPtr<ID2D1Factory1> Canvas::c_D2DFactory;
 Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
-Microsoft::WRL::ComPtr<IDWriteGdiInterop> Canvas::c_DWGDIInterop;
 Microsoft::WRL::ComPtr<IWICImagingFactory> Canvas::c_WICFactory;
 
 Canvas::Canvas() :
-	m_Bitmap(),
+	m_W(0),
+	m_H(0),
+	m_MaxBitmapSize(0U),
+	m_IsDrawing(false),
+	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
 	m_CanUseAxisAlignClip(false)
 {
@@ -40,15 +48,58 @@ bool Canvas::Initialize()
 	++c_Instances;
 	if (c_Instances == 1)
 	{
+		
+		// Required for Direct2D interopability.
+		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+#ifdef _DEBUG
+		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+		auto tryCreateContext = [&](D3D_DRIVER_TYPE driverType)
+		{
+			return D3D11CreateDevice(
+				NULL,
+				driverType,
+				NULL,
+				creationFlags,
+				NULL,
+				0u,
+				D3D11_SDK_VERSION,
+				c_D3DDevice.GetAddressOf(),
+				&c_FeatureLevel,
+				c_D3DContext.GetAddressOf());
+		};
+
+		// D3D selects the best feature level automatically and sets it
+		// to |c_FeatureLevel|. First, we try to use the hardware driver
+		// and if that fails, we try the WARP rasterizer for cases
+		// where there is no graphics card or other failures.
+
+		HRESULT hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE);
+		if (FAILED(hr))
+		{
+			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP);
+			if (FAILED(hr)) return false;
+		}
+
+		hr = c_D3DDevice.As(&c_DxgiDevice);
+		if (FAILED(hr)) return false;
+
 		D2D1_FACTORY_OPTIONS fo = {};
 #ifdef _DEBUG
 		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
 
-		HRESULT hr = D2D1CreateFactory(
+		hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			fo,
 			c_D2DFactory.GetAddressOf());
+		if (FAILED(hr)) return false;
+
+		hr = c_D2DFactory->CreateDevice(
+			c_DxgiDevice.Get(),
+			c_D2DDevice.GetAddressOf());
 		if (FAILED(hr)) return false;
 
 		hr = CoCreateInstance(
@@ -65,9 +116,6 @@ bool Canvas::Initialize()
 			(IUnknown**)c_DWFactory.GetAddressOf());
 		if (FAILED(hr)) return false;
 
-		hr = c_DWFactory->GetGdiInterop(c_DWGDIInterop.GetAddressOf());
-		if (FAILED(hr)) return false;
-
 		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
 		if (FAILED(hr)) return false;
 	}
@@ -80,9 +128,12 @@ void Canvas::Finalize()
 	--c_Instances;
 	if (c_Instances == 0)
 	{
+		c_D3DDevice.Reset();
+		c_D3DContext.Reset();
+		c_D2DDevice.Reset();
+		c_DxgiDevice.Reset();
 		c_D2DFactory.Reset();
 		c_WICFactory.Reset();
-		c_DWGDIInterop.Reset();
 
 		if (c_DWFactory)
 		{
@@ -92,190 +143,254 @@ void Canvas::Finalize()
 	}
 }
 
+bool Canvas::InitializeRenderTarget(HWND hwnd)
+{
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
+	swapChainDesc.Width = 1u;
+	swapChainDesc.Height = 1u;
+	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	swapChainDesc.Stereo = false;
+	swapChainDesc.SampleDesc.Count = 1u;
+	swapChainDesc.SampleDesc.Quality = 0u;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferCount = 2u;
+	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+
+	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
+	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+	if (FAILED(hr)) return false ;
+
+	// Ensure that DXGI does not queue more than one frame at a time.
+	hr = c_DxgiDevice->SetMaximumFrameLatency(1u);
+	if (FAILED(hr)) return false;
+
+	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
+	hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	hr = dxgiFactory->CreateSwapChainForHwnd(
+		c_DxgiDevice.Get(),
+		hwnd,
+		&swapChainDesc,
+		nullptr,
+		nullptr,
+		m_SwapChain.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = CreateRenderTarget();
+	if (FAILED(hr)) return false;
+
+	return CreateTargetBitmap(0U, 0U);
+}
+
 void Canvas::Resize(int w, int h)
 {
+	// Truncate the size of the skin if it's too big.
+	if (w > m_MaxBitmapSize) w = (int)m_MaxBitmapSize;
+	if (h > m_MaxBitmapSize) h = (int)m_MaxBitmapSize;
+
 	m_W = w;
 	m_H = h;
 
-	m_Target.Reset();
+	// Check if target, targetbitmap, backbuffer, swap chain are valid?
 
-	m_Bitmap.Resize(w, h);
+	// Unmap all resources tied to the swap chain.
+	m_Target->SetTarget(nullptr);
+	m_TargetBitmap.Reset();
+	m_BackBuffer.Reset();
 
-	m_GdipBitmap.reset(new Gdiplus::Bitmap(w, h, w * 4, PixelFormat32bppPARGB, m_Bitmap.GetData()));
-	m_GdipGraphics.reset(new Gdiplus::Graphics(m_GdipBitmap.get()));
+	// Resize swap chain.
+	HRESULT hr = m_SwapChain->ResizeBuffers(
+		0u,
+		(UINT)w,
+		(UINT)h,
+		DXGI_FORMAT_B8G8R8A8_UNORM,
+		DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
+	if (FAILED(hr)) return;
+
+	CreateTargetBitmap((UINT32)w, (UINT32)h);
 }
 
 bool Canvas::BeginDraw()
 {
+	if (!m_Target)
+	{
+		HRESULT hr = CreateRenderTarget();
+		if (FAILED(hr))
+		{
+			m_IsDrawing = false;
+			return false;
+		}
+
+		// Recreate target bitmap
+		Resize(m_W, m_H);
+	}
+
+	m_Target->BeginDraw();
+	m_IsDrawing = true;
 	return true;
 }
 
 void Canvas::EndDraw()
 {
-	EndTargetDraw();
-}
-
-bool Canvas::BeginTargetDraw()
-{
-	if (m_Target) return true;
-
-	const D2D1_PIXEL_FORMAT format = D2D1::PixelFormat(
-		DXGI_FORMAT_B8G8R8A8_UNORM,
-		D2D1_ALPHA_MODE_PREMULTIPLIED);
-
-	const D2D1_RENDER_TARGET_PROPERTIES properties = D2D1::RenderTargetProperties(
-		D2D1_RENDER_TARGET_TYPE_DEFAULT,
-		format,
-		0.0f,	// Default DPI
-		0.0f,	// Default DPI
-		D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE);
-
-	// A new Direct2D render target must be created for each sequence of Direct2D draw operations
-	// since we use GDI+ to render to the same pixel data. Without creating a new render target
-	// each time, it has been found that Direct2D may overwrite the draws by GDI+ since it is
-	// unaware of the changes made by GDI+. By creating a new render target and then releasing it
-	// before the next GDI+ draw operations, we ensure that the pixel data result is as expected
-	// Once GDI+ drawing is no longer needed, we change to recreate the render target only when the
-	// bitmap size is changed.
-	HRESULT hr = c_D2DFactory->CreateWicBitmapRenderTarget(&m_Bitmap, properties, &m_Target);
-	if (SUCCEEDED(hr))
+	HRESULT hr = m_Target->EndDraw();
+	if (FAILED(hr))
 	{
-		SetTextAntiAliasing(m_TextAntiAliasing);
-
-		m_Target->BeginDraw();
-
-		// Apply any transforms that occurred before creation of |m_Target|.
-		UpdateTargetTransform();
-
-		return true;
+		m_Target.Reset();
 	}
 
-	return false;
-}
+	m_IsDrawing = false;
 
-void Canvas::EndTargetDraw()
-{
-	if (m_Target)
+	if (m_TargetBitmap && m_BufferSnapshot)
 	{
-		m_Target->EndDraw();
-		m_Target.Reset();
+		// Create a snapshot to test for transparent pixels later.
+		auto point = D2D1::Point2U(0U, 0U);
+		auto srcRect = D2D1::RectU(0U, 0U, (UINT32)m_W, (UINT32)m_H);
+		m_BufferSnapshot->CopyFromBitmap(&point, m_TargetBitmap.Get(), &srcRect);
+
+		if (m_SwapChain)
+		{
+			// Present the frame to the screen. Wait until the next VSync to not
+			// waste time rendering frames that will never be displayed on the screen.
+			DXGI_PRESENT_PARAMETERS  presentParameters = { 0 };
+			hr = m_SwapChain->Present1(1u, NULL, &presentParameters);
+			if (FAILED(hr))
+			{
+				// Error, recreate all resources, or just swap chain?
+			}
+		}
+	}
+	else
+	{
+		// Recreate target bitmap?
 	}
 }
 
 Gdiplus::Graphics& Canvas::BeginGdiplusContext()
 {
-	EndTargetDraw();
+	m_GdipGraphics.reset(new Gdiplus::Graphics(GetDC()));
+
+	if (m_Target)
+	{
+		bool enable = m_Target->GetAntialiasMode() == D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+		SetAntiAliasing(enable);
+		UpdateGdiTransform();
+	}
+
 	return *m_GdipGraphics;
 }
 
 void Canvas::EndGdiplusContext()
 {
+	m_GdipGraphics.release();
+	ReleaseDC();
 }
 
 HDC Canvas::GetDC()
 {
-	EndTargetDraw();
+	if (m_IsDrawing)
+	{
+		m_EnableDrawAfterGdi = true;
+		EndDraw();
+	}
 
-	HDC dcMemory = CreateCompatibleDC(nullptr);
-	SelectObject(dcMemory, m_Bitmap.GetHandle());
-	return dcMemory;
+	HDC hdc;
+	HRESULT hr = m_BackBuffer->GetDC(FALSE, &hdc);
+	if (FAILED(hr)) return nullptr;
+
+	return hdc;
 }
 
-void Canvas::ReleaseDC(HDC dc)
+void Canvas::ReleaseDC()
 {
-	DeleteDC(dc);
+	m_BackBuffer->ReleaseDC(NULL);
+
+	if (m_EnableDrawAfterGdi)
+	{
+		m_EnableDrawAfterGdi = false;
+		BeginDraw();
+	}
 }
 
 bool Canvas::IsTransparentPixel(int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < m_W && y < m_H)) return false;
 
-	bool transparent = true;
+	D2D1_MAPPED_RECT data;
+	HRESULT hr = m_BufferSnapshot->Map(D2D1_MAP_OPTIONS_READ, &data);
+	if (FAILED(hr)) true;
 
-	DWORD* data = (DWORD*)m_Bitmap.GetData();
-	if (data)
+	int index = 4 * (y * m_W + x);
+	BYTE pixel = data.bits[index + 3];
+
+	hr = m_BufferSnapshot->Unmap();
+	if (FAILED(hr))
 	{
-		DWORD pixel = data[y * m_W + x];  // Top-down DIB.
-		transparent = (pixel & 0xFF000000) != 0;
+		// Error
 	}
 
-	return transparent;
+	return pixel != 0;
 }
 
-void Canvas::UpdateTargetTransform()
+void Canvas::SetTransform(const Gdiplus::Matrix& matrix)
 {
-	Gdiplus::Matrix gdipMatrix;
-	m_GdipGraphics->GetTransform(&gdipMatrix);
-
 	D2D1_MATRIX_3X2_F d2dMatrix;
-	gdipMatrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
-
+	matrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
 	m_Target->SetTransform(d2dMatrix);
+
+	UpdateGdiTransform();
+
 	m_CanUseAxisAlignClip =
 		d2dMatrix._12 == 0.0f && d2dMatrix._21 == 0.0f &&
 		d2dMatrix._31 == 0.0f && d2dMatrix._32 == 0.0f;
 }
 
-void Canvas::SetTransform(const Gdiplus::Matrix& matrix)
-{
-	m_GdipGraphics->SetTransform(&matrix);
-
-	if (m_Target)
-	{
-		UpdateTargetTransform();
-	}
-}
-
 void Canvas::ResetTransform()
 {
-	m_GdipGraphics->ResetTransform();
+	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
 
-	if (m_Target)
+	if (m_GdipGraphics)
 	{
-		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+		m_GdipGraphics->ResetTransform();
 	}
 }
 
 void Canvas::RotateTransform(float angle, float x, float y, float dx, float dy)
 {
-	m_GdipGraphics->TranslateTransform(x, y);
-	m_GdipGraphics->RotateTransform(angle);
-	m_GdipGraphics->TranslateTransform(dx, dy);
+	D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
+	m_Target->GetTransform(&transform);
+	transform.Rotation(angle, D2D1::Point2F(x, y));
+	transform.Translation(dx, dy);
+	m_Target->SetTransform(transform);
 
-	if (m_Target)
-	{
-		UpdateTargetTransform();
-	}
+	UpdateGdiTransform();
 }
 
 void Canvas::SetAntiAliasing(bool enable)
 {
-	// TODO: Set m_Target aliasing?
-	m_GdipGraphics->SetSmoothingMode(
-		enable ? Gdiplus::SmoothingModeHighQuality : Gdiplus::SmoothingModeNone);
-	m_GdipGraphics->SetPixelOffsetMode(
-		enable ? Gdiplus::PixelOffsetModeHighQuality : Gdiplus::PixelOffsetModeDefault);
+	if (m_GdipGraphics)
+	{
+		m_GdipGraphics->SetSmoothingMode(
+			enable ? Gdiplus::SmoothingModeHighQuality : Gdiplus::SmoothingModeNone);
+		m_GdipGraphics->SetPixelOffsetMode(
+			enable ? Gdiplus::PixelOffsetModeHighQuality : Gdiplus::PixelOffsetModeDefault);
+	}
+
+	m_Target->SetAntialiasMode(enable ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
 }
 
 void Canvas::SetTextAntiAliasing(bool enable)
 {
 	// TODO: Add support for D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE?
 	m_TextAntiAliasing = enable;
-
-	if (m_Target)
-	{
-		m_Target->SetTextAntialiasMode(
-			m_TextAntiAliasing ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
-	}
+	m_Target->SetTextAntialiasMode(enable ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
 }
 
 void Canvas::Clear(const Gdiplus::Color& color)
 {
-	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
-	{
-		m_GdipGraphics->Clear(color);
-		return;
-	}
+	if (!m_Target) return;
 
 	m_Target->Clear(Util::ToColorF(color));
 }
@@ -283,8 +398,6 @@ void Canvas::Clear(const Gdiplus::Color& color)
 void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect,
 	const Gdiplus::SolidBrush& brush, bool applyInlineFormatting)
 {
-	if (!BeginTargetDraw()) return;
-
 	Gdiplus::Color color;
 	brush.GetColor(&color);
 
@@ -339,8 +452,8 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 		}
 		else
 		{
-			const D2D1_LAYER_PARAMETERS layerParams =
-				D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+			const D2D1_LAYER_PARAMETERS1 layerParams =
+				D2D1::LayerParameters1(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
 			m_Target->PushLayer(layerParams, nullptr);
 		}
 	}
@@ -425,137 +538,58 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 
 void Canvas::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
-	if (srcRect.Width != dstRect.Width || srcRect.Height != dstRect.Height)
-	{
-		// If the bitmap needs to be scaled, get rid of the D2D target and use the GDI+ code path
-		// to draw the bitmap. This is due to antialiasing differences between GDI+ and D2D on
-		// scaled bitmaps.
-		EndTargetDraw();
-	}
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap = ConvertBitmap(bitmap);
+	if (!d2dBitmap) return;
 
-	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
-	{
-		m_GdipGraphics->DrawImage(
-			bitmap, dstRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, Gdiplus::UnitPixel);
-		return;
-	}
-
-	// The D2D DrawBitmap seems to perform exactly like Gdiplus::Graphics::DrawImage since we are
-	// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
-	// the EndDraw() call needed for GDI+ drawing.
-	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
-	Gdiplus::Rect lockRect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-	Gdiplus::Status status = bitmap->LockBits(
-		&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
-	if (status == Gdiplus::Ok)
-	{
-		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-		Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
-		HRESULT hr = m_Target->CreateSharedBitmap(
-			__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
-		if (SUCCEEDED(hr))
-		{
-			auto rDst = Util::ToRectF(dstRect);
-			auto rSrc = Util::ToRectF(srcRect);
-			m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
-		}
-
-		// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
-		bitmap->UnlockBits(bitmapLock->GetBitmapData());
-	}
-
-	bitmapLock->Release();
+	auto rDst = Util::ToRectF(dstRect);
+	auto rSrc = Util::ToRectF(srcRect);
+	m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
 }
 
 void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
 {
-	if (!BeginTargetDraw()) return;
-
 	auto rDst = Util::ToRectF(dstRect);
 	auto rSrc = Util::ToRectF(srcRect);
 
-	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
-	Gdiplus::Rect lockRect(srcRect2);
-	Gdiplus::Status status = bitmap->LockBits(
-		&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
-	if (status == Gdiplus::Ok)
-	{
-		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-		Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
-		HRESULT hr = m_Target->CreateSharedBitmap(
-			__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
-		if (SUCCEEDED(hr))
-		{
-			// Create bitmap brush from original |bitmap|.
-			Microsoft::WRL::ComPtr<ID2D1BitmapBrush> brush;
-			D2D1_BITMAP_BRUSH_PROPERTIES propertiesXClampYClamp = D2D1::BitmapBrushProperties(
-				D2D1_EXTEND_MODE_CLAMP,
-				D2D1_EXTEND_MODE_CLAMP,
-				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap = ConvertBitmap(bitmap);
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dMaskBitmap = ConvertBitmap(maskBitmap);
+	
+	if (!d2dBitmap || !d2dMaskBitmap) return;
 
-			// "Move" and "scale" the |bitmap| to match the destination.
-			D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
-			D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
-				D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
-			D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
+	// Create bitmap brush from original |bitmap|.
+	Microsoft::WRL::ComPtr<ID2D1BitmapBrush> brush;
+	D2D1_BITMAP_BRUSH_PROPERTIES propertiesXClampYClamp = D2D1::BitmapBrushProperties(
+		D2D1_EXTEND_MODE_CLAMP,
+		D2D1_EXTEND_MODE_CLAMP,
+		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
-			hr = m_Target->CreateBitmapBrush(
-				d2dBitmap.Get(),
-				propertiesXClampYClamp,
-				brushProps,
-				brush.GetAddressOf());
+	// "Move" and "scale" the |bitmap| to match the destination.
+	D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
+	D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
+		D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
+	D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
 
-			// Load the |maskBitmap| and use the bitmap brush to "fill" its contents.
-			// Note: The image must be aliased when applying the opacity mask.
-			if (SUCCEEDED(hr))
-			{
-				Util::WICBitmapLockGDIP* maskBitmapLock = new Util::WICBitmapLockGDIP();
-				Gdiplus::Rect maskLockRect(0, 0, maskBitmap->GetWidth(), maskBitmap->GetHeight());
-				status = maskBitmap->LockBits(
-					&maskLockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, maskBitmapLock->GetBitmapData());
-				if (status == Gdiplus::Ok)
-				{
-					D2D1_BITMAP_PROPERTIES maskProps = D2D1::BitmapProperties(
-						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-					Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dMaskBitmap;
-					hr = m_Target->CreateSharedBitmap(
-						__uuidof(IWICBitmapLock), maskBitmapLock, &props, d2dMaskBitmap.GetAddressOf());
-					if (SUCCEEDED(hr))
-					{
-						m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
-						m_Target->FillOpacityMask(
-							d2dMaskBitmap.Get(),
-							brush.Get(),
-							D2D1_OPACITY_MASK_CONTENT_GRAPHICS,
-							&rDst,
-							&rSrc);
-						m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-					}
+	HRESULT hr = m_Target->CreateBitmapBrush(
+		d2dBitmap.Get(),
+		propertiesXClampYClamp,
+		brushProps,
+		brush.GetAddressOf());
+	if (FAILED(hr)) return;
 
-					maskBitmap->UnlockBits(bitmapLock->GetBitmapData());
-				}
-
-				maskBitmapLock->Release();
-			}
-		}
-
-		bitmap->UnlockBits(bitmapLock->GetBitmapData());
-	}
-
-	bitmapLock->Release();
+	auto aaMode = m_Target->GetAntialiasMode();
+	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
+	m_Target->FillOpacityMask(
+		d2dMaskBitmap.Get(),
+		brush.Get(),
+		D2D1_OPACITY_MASK_CONTENT_GRAPHICS,
+		&rDst,
+		&rSrc);
+	m_Target->SetAntialiasMode(aaMode);
 }
 
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
-	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
-	{
-		m_GdipGraphics->FillRectangle(&brush, rect);
-		return;
-	}
-
 	Gdiplus::Color color;
 	brush.GetColor(&color);
 
@@ -569,8 +603,6 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 
 void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 {
-	if (!BeginTargetDraw()) return;
-
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);
 	m_Target->SetTransform(shape.GetShapeMatrix() *
@@ -594,6 +626,144 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	}
 
 	m_Target->SetTransform(worldTransform);
+}
+
+HRESULT Canvas::CreateRenderTarget()
+{
+	HRESULT hr = E_FAIL;
+	if (c_D2DDevice)
+	{
+		c_D2DDevice->ClearResources();
+
+		hr = c_D2DDevice->CreateDeviceContext(
+			D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+			m_Target.ReleaseAndGetAddressOf());
+		if (FAILED(hr))
+		{
+			hr = c_D2DDevice->CreateDeviceContext(
+				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+				m_Target.ReleaseAndGetAddressOf());
+		}
+	}
+
+	// Hardware accelerated targets have a hard limit to the size of bitmaps they can support.
+	// The size will depend on the D3D feature level of the driver used. The WARP software
+	// renderer has a limit of 16MP (16*1024*1024 = 16777216).
+
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/ff476876(v=vs.85).aspx#Overview
+	// Max Texture Dimension
+	// D3D_FEATURE_LEVEL_11_0 = 16348
+	// D3D_FEATURE_LEVEL_10_1 = 8192
+	// D3D_FEATURE_LEVEL_10_0 = 8192
+	// D3D_FEATURE_LEVEL_9_3  = 4096
+	// D3D_FEATURE_LEVEL_9_2  = 2048
+	// D3D_FEATURE_LEVEL_9_1  = 2048
+
+	if (SUCCEEDED(hr))
+	{
+		m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
+	}
+
+	return hr;
+}
+
+bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
+{
+	HRESULT hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE,
+		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+
+	hr = m_Target->CreateBitmapFromDxgiSurface(
+		m_BackBuffer.Get(),
+		&bProps,
+		m_TargetBitmap.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	bProps.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ;
+	hr = m_Target->CreateBitmap(
+		D2D1::SizeU(width, height),
+		nullptr,
+		0U,
+		bProps,
+		m_BufferSnapshot.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	m_Target->SetTarget(m_TargetBitmap.Get());
+	return true;
+}
+
+Microsoft::WRL::ComPtr<ID2D1Bitmap> Canvas::ConvertBitmap(Gdiplus::Bitmap* bitmap)
+{
+	UINT32 width = (UINT32)bitmap->GetWidth();
+	UINT32 height = (UINT32)bitmap->GetHeight();
+
+	// Truncate the bitmap if the size it too big.
+	if (width > m_MaxBitmapSize) width = m_MaxBitmapSize;
+	if (height > m_MaxBitmapSize) height = m_MaxBitmapSize;
+
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
+
+	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
+	Gdiplus::Rect lockRect(0, 0, (UINT)width, (UINT)height);
+	Gdiplus::Status status = bitmap->LockBits(
+		&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
+
+	if (status == Gdiplus::Ok)
+	{
+		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+
+		auto size = D2D1::SizeU(width, height);
+
+		HRESULT hr = m_Target->CreateBitmap(size, props, d2dBitmap.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			BYTE* data = nullptr;
+			UINT bufferSize = 0u;
+			hr = bitmapLock->GetDataPointer(&bufferSize, &data);
+			if (SUCCEEDED(hr))
+			{
+				UINT stride = 0u;
+				hr = bitmapLock->GetStride(&stride);
+				if (SUCCEEDED(hr))
+				{
+					hr = d2dBitmap->CopyFromMemory(nullptr, data, (UINT32)stride);
+					if (FAILED(hr))
+					{
+						d2dBitmap.Reset();
+					}
+				}
+			}
+		}
+
+		// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
+		bitmap->UnlockBits(bitmapLock->GetBitmapData());
+	}
+
+	bitmapLock->Release();
+
+	return d2dBitmap;
+}
+
+void Canvas::UpdateGdiTransform()
+{
+	if (!m_GdipGraphics || !m_Target) return;
+
+	D2D1_MATRIX_3X2_F transform;
+	m_Target->GetTransform(&transform);
+	
+	Gdiplus::Matrix matrix(
+		transform._11,
+		transform._12,
+		transform._21,
+		transform._22,
+		transform._31,
+		transform._32);
+
+	m_GdipGraphics->SetTransform(&matrix);
 }
 
 }  // namespace Gfx

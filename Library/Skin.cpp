@@ -260,6 +260,14 @@ void Skin::Initialize()
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
+	if (!m_Canvas.InitializeRenderTarget(m_Window))
+	{
+		LogErrorF(this, L"Could not intialize the render target.");
+
+		//Unload skin to prevent crashes
+		Deactivate();
+	}
+
 	Refresh(true, true);
 	if (!m_WindowStartHidden)
 	{
@@ -2869,7 +2877,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 		AddWindowExStyle(WS_EX_LAYERED);
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
-	m_Canvas.ReleaseDC(dcMemory);
+	m_Canvas.ReleaseDC();
 
 	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 

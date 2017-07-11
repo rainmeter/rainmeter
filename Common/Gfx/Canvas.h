@@ -14,13 +14,13 @@
 #include "Util/WICBitmapDIB.h"
 #include <memory>
 #include <string>
-#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 #include <d2d1_1.h>
-#include <d2d1helper.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <d3d11.h>
+#include <DXGI1_2.h>
 
 namespace Gfx {
 
@@ -33,6 +33,8 @@ public:
 
 	static bool Initialize();
 	static void Finalize();
+
+	bool InitializeRenderTarget(HWND hwnd);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -50,7 +52,7 @@ public:
 	void EndGdiplusContext();
 
 	HDC GetDC();
-	void ReleaseDC(HDC dc);
+	void ReleaseDC();
 	
 	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
 	TextFormat* CreateTextFormat() { return new TextFormatD2D(); }
@@ -97,14 +99,24 @@ private:
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
 
-	bool BeginTargetDraw();
-	void EndTargetDraw();
+	HRESULT CreateRenderTarget();
+	bool CreateTargetBitmap(UINT32 width, UINT32 height);
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> ConvertBitmap(Gdiplus::Bitmap* bitmap);
+	void UpdateGdiTransform();
 
-	// Sets the |m_Target| transformation to be equal to that of |m_GdipGraphics|.
-	void UpdateTargetTransform();
+	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
+	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
+	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
+	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
 
 	int m_W;
 	int m_H;
+	UINT32 m_MaxBitmapSize;
+
+	bool m_IsDrawing;
+	bool m_EnableDrawAfterGdi;
 
 	// GDI+, by default, includes padding around the string and also has a larger character spacing
 	// compared to DirectWrite. In order to minimize diffeences between the text renderers,
@@ -114,24 +126,19 @@ private:
 	// non-typographic GDI+.
 	bool m_AccurateText;
 
-	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
-
-	// Underlying pixel data shared by both m_Target and m_GdipBitmap.
-	Util::WICBitmapDIB m_Bitmap;
-
-	// GDI+ objects that share the pixel data of m_Bitmap.
-	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
-	std::unique_ptr<Gdiplus::Bitmap> m_GdipBitmap;
-
 	bool m_TextAntiAliasing;
 
 	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
 	bool m_CanUseAxisAlignClip;
 
 	static UINT c_Instances;
+	static D3D_FEATURE_LEVEL c_FeatureLevel;
+	static Microsoft::WRL::ComPtr<ID3D11Device> c_D3DDevice;
+	static Microsoft::WRL::ComPtr<ID3D11DeviceContext> c_D3DContext;
+	static Microsoft::WRL::ComPtr<ID2D1Device> c_D2DDevice;
+	static Microsoft::WRL::ComPtr<IDXGIDevice1> c_DxgiDevice;
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
 	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
-	static Microsoft::WRL::ComPtr<IDWriteGdiInterop> c_DWGDIInterop;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
 };
 

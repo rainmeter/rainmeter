@@ -140,6 +140,8 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 	auto padding = GetMeterRectPadding();
 
+	canvas.SetAntiAliasing(true);  // Temporary
+
 	for (const auto& shape : m_Shapes)
 	{
 		if (!shape->IsCombined())
