@@ -154,7 +154,8 @@ TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disa
 	m_Rotate(),
 	m_UseExifOrientation(false),
 	m_Skin(skin),
-	m_HasPathChanged(false)
+	m_HasPathChanged(false),
+	m_SysIconSize(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON))
 {
 }
 
@@ -291,6 +292,32 @@ Bitmap* TintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, 
 	return nullptr;
 }
 
+Bitmap* TintedImage::LoadImageFromExeIcon(const std::wstring& fileName, DWORD nIconIndex, HGLOBAL* phBuffer)
+{
+	Bitmap* bitmap = nullptr;
+
+	HICON hIcon;
+
+	UINT numberIcons = ExtractIconEx(fileName.c_str(), nIconIndex, &hIcon, nullptr, 1);
+
+	if (numberIcons >= 1)
+	{
+		bitmap = new Bitmap(m_SysIconSize.Width, m_SysIconSize.Height, PixelFormat32bppPARGB);
+		{
+			Graphics graphics(bitmap);
+			HDC hDC = graphics.GetHDC();
+			::DrawIcon(hDC, 0, 0, hIcon);
+			graphics.ReleaseHDC(hDC);
+		}
+
+		DestroyIcon(hIcon);
+	}
+
+	*phBuffer = nullptr;
+	return bitmap;
+}
+
+
 /*
 ** Loads the image from disk
 **
@@ -301,14 +328,42 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	if (!imageName.empty())
 	{
 		std::wstring filename = m_Path + imageName;
-		if (m_Skin) m_Skin->MakePathAbsolute(filename);
-		m_HasPathChanged = false;
+		std::wstring cachename = filename;
+		std::wstring sIconindex;
+		bool bExeIcon = false;
+		
+		long iIconIndex = 0;
+		// Check whether the file name has the format "exefile,N", which means the Nth icon in the exefile
+		size_t pos = imageName.find(L",");
+		if (std::wstring::npos != pos)
+		{			
+			filename = imageName.substr(0, pos);
+			if (m_Skin) m_Skin->MakePathAbsolute(filename);
 
-		// Check extension and if it is missing, add .png
-		size_t pos = filename.rfind(L'\\');
-		if (filename.find(L'.', (pos == std::wstring::npos) ? 0 : pos + 1) == std::wstring::npos)
+			sIconindex = imageName.substr(pos);			
+
+			iIconIndex = wcstol(sIconindex.c_str(), nullptr, 10);
+			if (iIconIndex != 0 || errno == 0 )
+				bExeIcon = true;
+		}	
+
+		if (m_Skin) m_Skin->MakePathAbsolute(filename);
+		
+		if (bExeIcon)
 		{
-			filename += L".png";
+			cachename = filename + L"," + sIconindex;
+		}
+		else
+		{			
+			m_HasPathChanged = false;
+
+			// Check extension and if it is missing, add .png
+			size_t pos = filename.rfind(L'\\');
+			if (filename.find(L'.', (pos == std::wstring::npos) ? 0 : pos + 1) == std::wstring::npos)
+			{
+				filename += L".png";
+			}
+			cachename = filename;
 		}
 
 		// Read the bitmap to memory so that it's not locked by GDI+
@@ -319,7 +374,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 			// Compare the filename/timestamp/filesize to check if the file has been changed (don't load if it's not)
 			ULONGLONG fileTime;
 			GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
-			std::wstring key = ImageCachePool::CreateKey(filename, fileTime, fileSize, m_UseExifOrientation ? L"EXIF" : L"NONE");
+			std::wstring key = ImageCachePool::CreateKey(cachename, fileTime, fileSize, m_UseExifOrientation ? L"EXIF" : L"NONE");
 
 			if (bLoadAlways || wcscmp(key.c_str(), m_CacheKey.c_str()) != 0)
 			{
@@ -327,10 +382,18 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 				Bitmap* bitmap = ImageCachePool::GetCache(key);
 				HGLOBAL hBuffer = nullptr;
+				Bitmap* bitmapLoad = nullptr;
+				
+				if (bExeIcon)
+				{
+					bitmapLoad = LoadImageFromExeIcon(filename, iIconIndex, &hBuffer);
+				}
+				else
+				{
+					bitmapLoad = LoadImageFromFileHandle(fileHandle, fileSize, &hBuffer);
+				}
 
-				m_Bitmap = (bitmap) ?
-					bitmap :
-					LoadImageFromFileHandle(fileHandle, fileSize, &hBuffer);
+				m_Bitmap = (bitmap) ? bitmap : bitmapLoad;
 
 				if (m_Bitmap)
 				{
