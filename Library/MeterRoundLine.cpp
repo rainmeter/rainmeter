@@ -115,8 +115,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	FLOAT cy = y + m_H / 2.0;
 
 	double angle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle;
-
-	if(angle >= 2 * PI)
+	auto mod = fmod(angle, 2 * PI);
+	if(mod >= 2 * PI || mod <= -2 * PI)
 	{
 		Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
 		Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
