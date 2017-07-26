@@ -114,9 +114,56 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	FLOAT cx = x + m_W / 2.0;
 	FLOAT cy = y + m_H / 2.0;
 
-	double angle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle;
-	auto mod = fmod(angle, 2 * PI);
-	if(mod >= 2 * PI || mod <= -2 * PI)
+	double calcAngle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle);
+	double angle = calcAngle + m_StartAngle;
+
+	if(!m_CntrlAngle) // For shady BWC with old gdi backend
+	{
+		angle = m_StartAngle + m_RotationAngle * m_Value;
+		FLOAT sox = cos(m_StartAngle) * lineLength + cx;
+		FLOAT soy = sin(m_StartAngle) * lineLength + cy;
+
+		FLOAT eox = cos(angle) * lineLength + cx;
+		FLOAT eoy = sin(angle) * lineLength + cy;
+
+		FLOAT eix = cos(angle) * lineStart + cx;
+		FLOAT eiy = sin(angle) * lineStart + cy;
+
+		FLOAT six = cos(m_StartAngle) * lineStart + cx;
+		FLOAT siy = sin(m_StartAngle) * lineStart + cy;
+		Gfx::Path roundline(sox, soy, D2D1_FILL_MODE_ALTERNATE);
+		Gfx::Path roundlineinner(six, siy, D2D1_FILL_MODE_ALTERNATE);
+		roundline.SetFill(m_LineColor);
+		roundline.SetStrokeWidth(0);
+
+		if (lineLength > 0)
+		{
+			roundline.AddArc(eox, eoy, lineLength, lineLength, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
+		}
+		else
+		{
+			roundline.AddLine(eox, eoy); // BWC
+		}
+
+		if (lineStart > 0)
+		{
+			roundlineinner.AddArc(eix, eiy, lineStart, lineStart, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
+		}
+		else
+		{
+			roundlineinner.AddLine(eix, eiy); // BWC
+		}
+
+		roundline.Close(D2D1_FIGURE_END_CLOSED);
+		roundlineinner.Close(D2D1_FIGURE_END_CLOSED);
+		roundline.CombineWith(&roundlineinner, D2D1_COMBINE_MODE_XOR);
+		canvas.DrawGeometry(roundline, 0, 0);
+		return true;
+	}
+
+	if (calcAngle >= 2 * PI || calcAngle <= -2 * PI)
 	{
 		Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
 		Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
@@ -155,7 +202,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 			roundline.AddLine(eox, eoy); // BWC
 		}
 
-		roundline.AddLine(eix, eiy);
+		roundline.AddLine(eix, eiy); 
+
 		if (lineStart > 0)
 		{
 			roundline.AddArc(six, siy, lineStart, lineStart, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE,
