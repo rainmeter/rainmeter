@@ -10,6 +10,7 @@
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/Gfx/Shapes/Path.h"
+#include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
 
 using namespace Gdiplus;
@@ -114,6 +115,17 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	FLOAT cy = y + m_H / 2.0;
 
 	double angle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle;
+
+	if(angle >= 2 * PI)
+	{
+		Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
+		Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
+		outer.CombineWith(&inner, D2D1_COMBINE_MODE_EXCLUDE);
+		outer.SetFill(m_LineColor);
+		outer.SetStrokeWidth(0);
+		canvas.DrawGeometry(outer, 0, 0);
+		return true;
+	}
 
 	FLOAT sox = cos(m_StartAngle) * lineLength + cx;
 	FLOAT soy = sin(m_StartAngle) * lineLength + cy;
