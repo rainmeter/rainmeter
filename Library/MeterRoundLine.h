@@ -30,7 +30,6 @@ protected:
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 private:
-	std::unique_ptr<Gfx::Shape> m_Shape;
 	bool m_Solid;
 	double m_LineWidth;
 	double m_LineLength;
@@ -45,8 +44,6 @@ private:
 	UINT m_ValueRemainder;
 	Gdiplus::Color m_LineColor;
 	double m_Value;
-
-	void CreateShapes();
 };
 
 #endif

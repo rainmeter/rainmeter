@@ -61,8 +61,6 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_CntrlLineLength = parser.ReadBool(section, L"ControlLength", false);
 	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0.0);
 	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
-
-	CreateShapes();
 }
 
 /*
@@ -73,17 +71,9 @@ bool MeterRoundLine::Update()
 {
 	if (Meter::Update())
 	{
-		auto prev = m_Value;
-		auto changed = [&]()
-		{
-			if (prev != m_Value)
-				CreateShapes();
-		};
-
 		if (m_Measures.empty())
 		{
 			m_Value = 1.0;
-			changed();
 			return true;
 		}
 
@@ -98,7 +88,6 @@ bool MeterRoundLine::Update()
 		{
 			m_Value = measure->GetRelativeValue();
 		}
-		changed();
 		return true;
 	}
 
@@ -113,24 +102,6 @@ bool MeterRoundLine::Update()
 bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
-
-	if(m_Shape)
-		canvas.DrawGeometry(*m_Shape.get(), 0, 0);
-
-	return true;
-}
-
-/*
-** Overridden method. The roundline meters need not to be bound on anything
-**
-*/
-void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
-{
-	BindPrimaryMeasure(parser, section, true);
-}
-
-void MeterRoundLine::CreateShapes()
-{
 
 	// Calculate the center of for the line
 	int x = GetX();
@@ -158,8 +129,7 @@ void MeterRoundLine::CreateShapes()
 
 	if (m_Solid)
 	{
-		m_Shape = std::make_unique<Gfx::Path>(sox, soy, D2D1_FILL_MODE_ALTERNATE);
-		Gfx::Path& roundline = static_cast<Gfx::Path&>(*m_Shape.get());
+		Gfx::Path roundline(sox, soy, D2D1_FILL_MODE_ALTERNATE);
 		roundline.SetFill(m_LineColor);
 		roundline.SetStrokeWidth(0);
 
@@ -184,13 +154,25 @@ void MeterRoundLine::CreateShapes()
 			roundline.AddLine(six, siy); // BWC
 		}
 
-		roundline.Close(D2D1_FIGURE_END_OPEN);
+		roundline.Close(D2D1_FIGURE_END_CLOSED);
+		canvas.DrawGeometry(roundline, 0, 0);
 	}
 	else
 	{
-		m_Shape = std::make_unique<Gfx::Line>(eix, eiy, eox, eoy);
-		Gfx::Line& line = static_cast<Gfx::Line&>(*m_Shape.get());
+		Gfx::Line line(eix, eiy, eox, eoy);
 		line.SetStrokeFill(m_LineColor);
 		line.SetStrokeWidth(m_LineWidth);
+		canvas.DrawGeometry(line, 0, 0);
 	}
+
+	return true;
+}
+
+/*
+** Overridden method. The roundline meters need not to be bound on anything
+**
+*/
+void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
+{
+	BindPrimaryMeasure(parser, section, true);
 }
