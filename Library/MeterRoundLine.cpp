@@ -110,8 +110,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	double lineStart = ((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0) + m_LineStart;
 	double lineLength = ((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0) + m_LineLength;
 
-	FLOAT cx = x + abs(lineLength);
-	FLOAT cy = y + abs(lineLength);
+	FLOAT cx = x + m_W / 2.0;
+	FLOAT cy = y + m_H / 2.0;
 
 	double angle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle;
 
