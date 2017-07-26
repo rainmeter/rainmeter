@@ -29,6 +29,7 @@
     <ClCompile Include="lua\lua\lauxlib.c" />
     <ClCompile Include="lua\lua\lbaselib.c" />
     <ClCompile Include="lua\lua\lcode.c" />
+    <ClCompile Include="lua\lua\ldblib.c" />
     <ClCompile Include="lua\lua\ldebug.c" />
     <ClCompile Include="lua\lua\ldo.c" />
     <ClCompile Include="lua\lua\ldump.c" />
