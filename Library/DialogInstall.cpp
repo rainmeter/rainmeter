@@ -13,6 +13,8 @@
 #include "System.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -374,7 +376,9 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	m_PackageUnzFile = unzOpen(StringUtil::Narrow(fileName).c_str());
+  zlib_filefunc64_def zlibFileFunc;
+  fill_win32_filefunc64W(&zlibFileFunc);
+  m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
 	if (!m_PackageUnzFile)
 	{
 		return false;

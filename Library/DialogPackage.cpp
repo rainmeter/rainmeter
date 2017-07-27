@@ -13,6 +13,8 @@
 #include "resource.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -255,7 +257,9 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(StringUtil::Narrow(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
+  zlib_filefunc64_def zlibFileFunc;
+  fill_win32_filefunc64W(&zlibFileFunc);
+  m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
 
 	auto cleanup = [&]()->bool
 	{
