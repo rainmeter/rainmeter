@@ -257,9 +257,9 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-  zlib_filefunc64_def zlibFileFunc;
-  fill_win32_filefunc64W(&zlibFileFunc);
-  m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
 
 	auto cleanup = [&]()->bool
 	{

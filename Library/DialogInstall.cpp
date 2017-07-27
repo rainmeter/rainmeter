@@ -376,9 +376,9 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-  zlib_filefunc64_def zlibFileFunc;
-  fill_win32_filefunc64W(&zlibFileFunc);
-  m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
 	if (!m_PackageUnzFile)
 	{
 		return false;
