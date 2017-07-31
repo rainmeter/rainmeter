@@ -23,16 +23,16 @@ MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_LineWidth(1.0),
 	m_LineLength(20.0),
 	m_LineStart(-1.0),
-	m_StartAngle(),
+	m_StartAngle(0.0),
 	m_RotationAngle(6.2832),
 	m_CntrlAngle(true),
 	m_CntrlLineStart(false),
 	m_CntrlLineLength(false),
-	m_LineStartShift(),
-	m_LineLengthShift(),
-	m_ValueRemainder(),
+	m_LineStartShift(0.0),
+	m_LineLengthShift(0.0),
+	m_ValueRemainder(0U),
 	m_LineColor(Color::Black),
-	m_Value()
+	m_Value(0.0)
 {
 }
 
@@ -50,11 +50,11 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
-	m_LineStart = parser.ReadFloat(section, L"LineStart", 0.0);
+	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
-	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
-	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
+	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
+	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
 	m_Solid = parser.ReadBool(section, L"Solid", false);
 	m_CntrlAngle = parser.ReadBool(section, L"ControlAngle", true);
@@ -104,125 +104,155 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
+	const FLOAT x = (FLOAT)GetX();
+	const FLOAT y = (FLOAT)GetY();
+	const FLOAT w = (FLOAT)m_W;
+	const FLOAT h = (FLOAT)m_H;
+
 	// Calculate the center of for the line
-	int x = GetX();
-	int y = GetY();
+	const FLOAT cx = x + m_W / 2.0f;
+	const FLOAT cy = y + m_H / 2.0f;
 
-	double lineStart = ((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0) + m_LineStart;
-	double lineLength = ((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0) + m_LineLength;
+	const FLOAT lineStart = (FLOAT)(((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0.0) + m_LineStart);
+	const FLOAT lineLength = (FLOAT)(((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0.0) + m_LineLength);
 
-	FLOAT cx = x + m_W / 2.0;
-	FLOAT cy = y + m_H / 2.0;
+	const FLOAT calculatedAngle = (FLOAT)(m_RotationAngle * m_Value);
+	const FLOAT angle = calculatedAngle + (FLOAT)m_StartAngle;
 
-	double calcAngle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle);
-	double angle = calcAngle + m_StartAngle;
+	const FLOAT s_cos = cos((FLOAT)m_StartAngle);
+	const FLOAT s_sin = sin((FLOAT)m_StartAngle);
+	const FLOAT e_cos = cos((FLOAT)angle);
+	const FLOAT e_sin = sin((FLOAT)angle);
 
-	if(!m_CntrlAngle) // For shady BWC with old gdi backend
+	const FLOAT sOuterX = s_cos * lineLength + cx;
+	const FLOAT sOuterY = s_sin * lineLength + cy;
+	const FLOAT eOuterX = e_cos * lineLength + cx;
+	const FLOAT eOuterY = e_sin * lineLength + cy;
+	const FLOAT sInnerX = s_cos * lineStart + cx;
+	const FLOAT sInnerY = s_sin * lineStart + cy;
+	const FLOAT eInnerX = e_cos * lineStart + cx;
+	const FLOAT eInnerY = e_sin * lineStart + cy;
+
+	const D2D1_SWEEP_DIRECTION eSweep = m_RotationAngle > 0.0 ?
+		D2D1_SWEEP_DIRECTION_CLOCKWISE :
+		D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE;
+
+	const D2D1_ARC_SIZE arcSize = abs(calculatedAngle) < PI ?
+		D2D1_ARC_SIZE_SMALL :
+		D2D1_ARC_SIZE_LARGE;
+
+	if (m_CntrlAngle)
 	{
-		angle = m_StartAngle + m_RotationAngle * m_Value;
-		FLOAT sox = cos(m_StartAngle) * lineLength + cx;
-		FLOAT soy = sin(m_StartAngle) * lineLength + cy;
-
-		FLOAT eox = cos(angle) * lineLength + cx;
-		FLOAT eoy = sin(angle) * lineLength + cy;
-
-		FLOAT eix = cos(angle) * lineStart + cx;
-		FLOAT eiy = sin(angle) * lineStart + cy;
-
-		FLOAT six = cos(m_StartAngle) * lineStart + cx;
-		FLOAT siy = sin(m_StartAngle) * lineStart + cy;
-		Gfx::Path roundline(sox, soy, D2D1_FILL_MODE_ALTERNATE);
-		Gfx::Path roundlineinner(six, siy, D2D1_FILL_MODE_ALTERNATE);
-		roundline.SetFill(m_LineColor);
-		roundline.SetStrokeWidth(0);
-
-		if (lineLength > 0)
+		// Special processing for 'out of bounds' angles
+		if (abs(calculatedAngle) >= (2.0f * PI))
 		{
-			roundline.AddArc(eox, eoy, lineLength, lineLength, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
+			Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
+			Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
+			outer.CombineWith(&inner, D2D1_COMBINE_MODE_EXCLUDE);
+			outer.SetFill(m_LineColor);
+			outer.SetStrokeWidth(0.0f);
+			canvas.DrawGeometry(outer, 0, 0);
+			return true;
+		}
+
+		if (m_Solid)
+		{
+			D2D1_SWEEP_DIRECTION sSweep = m_RotationAngle > 0.0 ?
+				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE :
+				D2D1_SWEEP_DIRECTION_CLOCKWISE;
+
+			Gfx::Path roundline(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
+			roundline.SetFill(m_LineColor);
+			roundline.SetStrokeWidth(0.0f);
+
+			if (lineLength > 0.0f)
+			{
+				roundline.AddArc(
+					eOuterX,
+					eOuterY,
+					lineLength,
+					lineLength,
+					0.0f,
+					eSweep,
+					arcSize);
+			}
+			else
+			{
+				roundline.AddLine(eOuterX, eOuterY);
+			}
+
+			roundline.AddLine(eInnerX, eInnerY);
+
+			if (lineStart > 0.0f)
+			{
+				roundline.AddArc(
+					sInnerX,
+					sInnerY,
+					lineStart,
+					lineStart,
+					0.0f,
+					sSweep,
+					arcSize);
+			}
+			else
+			{
+				roundline.AddLine(sInnerX, sInnerY);
+			}
+
+			roundline.Close(D2D1_FIGURE_END_CLOSED);
+			canvas.DrawGeometry(roundline, 0, 0);
 		}
 		else
 		{
-			roundline.AddLine(eox, eoy); // BWC
+			Gfx::Line line(eInnerX, eInnerY, eOuterX, eOuterY);
+			line.SetStrokeFill(m_LineColor);
+			line.SetStrokeWidth((FLOAT)m_LineWidth);
+			canvas.DrawGeometry(line, 0, 0);
 		}
-
-		if (lineStart > 0)
-		{
-			roundlineinner.AddArc(eix, eiy, lineStart, lineStart, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
-		}
-		else
-		{
-			roundlineinner.AddLine(eix, eiy); // BWC
-		}
-
-		roundline.Close(D2D1_FIGURE_END_CLOSED);
-		roundlineinner.Close(D2D1_FIGURE_END_CLOSED);
-		roundline.CombineWith(&roundlineinner, D2D1_COMBINE_MODE_XOR);
-		canvas.DrawGeometry(roundline, 0, 0);
-		return true;
-	}
-
-	if (calcAngle >= 2 * PI || calcAngle <= -2 * PI)
-	{
-		Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
-		Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
-		outer.CombineWith(&inner, D2D1_COMBINE_MODE_EXCLUDE);
-		outer.SetFill(m_LineColor);
-		outer.SetStrokeWidth(0);
-		canvas.DrawGeometry(outer, 0, 0);
-		return true;
-	}
-
-	FLOAT sox = cos(m_StartAngle) * lineLength + cx;
-	FLOAT soy = sin(m_StartAngle) * lineLength + cy;
-
-	FLOAT eox = cos(angle) * lineLength + cx;
-	FLOAT eoy = sin(angle) * lineLength + cy;
-
-	FLOAT eix = cos(angle) * lineStart + cx;
-	FLOAT eiy = sin(angle) * lineStart + cy;
-
-	FLOAT six = cos(m_StartAngle) * lineStart + cx;
-	FLOAT siy = sin(m_StartAngle) * lineStart + cy;
-
-	if (m_Solid)
-	{
-		Gfx::Path roundline(sox, soy, D2D1_FILL_MODE_ALTERNATE);
-		roundline.SetFill(m_LineColor);
-		roundline.SetStrokeWidth(0);
-
-		if (lineLength > 0)
-		{
-			roundline.AddArc(eox, eoy, lineLength, lineLength, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
-		}
-		else
-		{
-			roundline.AddLine(eox, eoy); // BWC
-		}
-
-		roundline.AddLine(eix, eiy); 
-
-		if (lineStart > 0)
-		{
-			roundline.AddArc(six, siy, lineStart, lineStart, 0, m_RotationAngle > 0 ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE,
-				abs(angle - m_StartAngle) < PI ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
-		}
-		else
-		{
-			roundline.AddLine(six, siy); // BWC
-		}
-
-		roundline.Close(D2D1_FIGURE_END_CLOSED);
-		canvas.DrawGeometry(roundline, 0, 0);
 	}
 	else
 	{
-		Gfx::Line line(eix, eiy, eox, eoy);
-		line.SetStrokeFill(m_LineColor);
-		line.SetStrokeWidth(m_LineWidth);
-		canvas.DrawGeometry(line, 0, 0);
+		Gfx::Path roundlineOuter(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
+		Gfx::Path roundlineInner(sInnerX, sInnerY, D2D1_FILL_MODE_ALTERNATE);
+		roundlineOuter.SetFill(m_LineColor);
+		roundlineOuter.SetStrokeWidth(0.0f);
+
+		if (lineLength > 0.0f)
+		{
+			roundlineOuter.AddArc(
+				eOuterX,
+				eOuterY,
+				lineLength,
+				lineLength,
+				0.0f,
+				eSweep,
+				arcSize);
+		}
+		else
+		{
+			roundlineOuter.AddLine(eOuterX, eOuterY);
+		}
+
+		if (lineStart > 0.0f)
+		{
+			roundlineInner.AddArc(
+				eInnerX,
+				eInnerY,
+				lineStart,
+				lineStart,
+				0.0f,
+				eSweep,
+				arcSize);
+		}
+		else
+		{
+			roundlineInner.AddLine(eInnerX, eInnerY);
+		}
+
+		roundlineOuter.Close(D2D1_FIGURE_END_CLOSED);
+		roundlineInner.Close(D2D1_FIGURE_END_CLOSED);
+		roundlineOuter.CombineWith(&roundlineInner, D2D1_COMBINE_MODE_XOR);
+		canvas.DrawGeometry(roundlineOuter, 0, 0);
 	}
 
 	return true;

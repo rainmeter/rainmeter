@@ -9,7 +9,6 @@
 #define __METERROUNDLINE_H__
 
 #include "Meter.h"
-#include <memory>
 
 class MeterRoundLine : public Meter
 {
