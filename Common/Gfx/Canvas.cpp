@@ -33,7 +33,8 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false)
+	m_CanUseAxisAlignClip(false),
+	m_Layers()
 {
 	Initialize();
 }
@@ -270,7 +271,7 @@ void Canvas::EndDraw()
 
 Gdiplus::Graphics& Canvas::BeginGdiplusContext()
 {
-	m_GdipGraphics.reset(new Gdiplus::Graphics(GetDC()));
+	m_GdiGraphics.reset(new Gdiplus::Graphics(GetDC()));
 
 	if (m_Target)
 	{
@@ -279,12 +280,12 @@ Gdiplus::Graphics& Canvas::BeginGdiplusContext()
 		UpdateGdiTransform();
 	}
 
-	return *m_GdipGraphics;
+	return *m_GdiGraphics;
 }
 
 void Canvas::EndGdiplusContext()
 {
-	m_GdipGraphics.release();
+	m_GdiGraphics.release();
 	ReleaseDC();
 }
 
@@ -293,6 +294,7 @@ HDC Canvas::GetDC()
 	if (m_IsDrawing)
 	{
 		m_EnableDrawAfterGdi = true;
+		m_IsDrawing = false;
 		EndDraw();
 	}
 
@@ -310,6 +312,7 @@ void Canvas::ReleaseDC()
 	if (m_EnableDrawAfterGdi)
 	{
 		m_EnableDrawAfterGdi = false;
+		m_IsDrawing = true;
 		BeginDraw();
 	}
 }
@@ -351,9 +354,9 @@ void Canvas::ResetTransform()
 {
 	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
 
-	if (m_GdipGraphics)
+	if (m_GdiGraphics)
 	{
-		m_GdipGraphics->ResetTransform();
+		m_GdiGraphics->ResetTransform();
 	}
 }
 
@@ -368,13 +371,31 @@ void Canvas::RotateTransform(float angle, float x, float y, float dx, float dy)
 	UpdateGdiTransform();
 }
 
+void Canvas::PushClip(Gfx::Shape* clip)
+{
+	Microsoft::WRL::ComPtr<ID2D1Layer> layer;
+	m_Target->CreateLayer(layer.GetAddressOf());
+	m_Target->PushLayer(D2D1::LayerParameters1(D2D1::InfiniteRect(), clip->m_Shape.Get(), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE), layer.Get());
+	m_Layers.push(layer);
+}
+
+void Canvas::PopClip()
+{
+	m_Target->PopLayer();
+	if (m_Layers.top())
+	{
+		m_Layers.pop();
+	}
+
+}
+
 void Canvas::SetAntiAliasing(bool enable)
 {
-	if (m_GdipGraphics)
+	if (m_GdiGraphics)
 	{
-		m_GdipGraphics->SetSmoothingMode(
+		m_GdiGraphics->SetSmoothingMode(
 			enable ? Gdiplus::SmoothingModeHighQuality : Gdiplus::SmoothingModeNone);
-		m_GdipGraphics->SetPixelOffsetMode(
+		m_GdiGraphics->SetPixelOffsetMode(
 			enable ? Gdiplus::PixelOffsetModeHighQuality : Gdiplus::PixelOffsetModeDefault);
 	}
 
@@ -750,7 +771,7 @@ Microsoft::WRL::ComPtr<ID2D1Bitmap> Canvas::ConvertBitmap(Gdiplus::Bitmap* bitma
 
 void Canvas::UpdateGdiTransform()
 {
-	if (!m_GdipGraphics || !m_Target) return;
+	if (!m_GdiGraphics || !m_Target) return;
 
 	D2D1_MATRIX_3X2_F transform;
 	m_Target->GetTransform(&transform);
@@ -763,7 +784,7 @@ void Canvas::UpdateGdiTransform()
 		transform._31,
 		transform._32);
 
-	m_GdipGraphics->SetTransform(&matrix);
+	m_GdiGraphics->SetTransform(&matrix);
 }
 
 }  // namespace Gfx

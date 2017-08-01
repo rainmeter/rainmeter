@@ -21,6 +21,7 @@
 #include <wrl/client.h>
 #include <d3d11.h>
 #include <DXGI1_2.h>
+#include <stack>
 
 namespace Gfx {
 
@@ -62,6 +63,9 @@ public:
 	void SetTransform(const Gdiplus::Matrix& matrix);
 	void ResetTransform();
 	void RotateTransform(float angle, float x, float y, float dx, float dy);
+
+	void PushClip(Gfx::Shape* clip);
+	void PopClip();
 
 	void SetAntiAliasing(bool enable);
 	void SetTextAntiAliasing(bool enable);
@@ -108,8 +112,10 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
-	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
+	std::unique_ptr<Gdiplus::Graphics> m_GdiGraphics;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
+
+	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
 
 	int m_W;
 	int m_H;
