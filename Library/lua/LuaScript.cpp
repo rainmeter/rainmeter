@@ -73,7 +73,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		lua_createtable(L, 0, 1);
 
 		// Push the global teble
-		lua_pushvalue(L, LUA_GLOBALSINDEX);
+		lua_pushvalue(L, LUA_REGISTRYINDEX);
 
 		// Set the __index of the table to be the global table
 		lua_setfield(L, -2, "__index");
@@ -82,13 +82,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		lua_setmetatable(L, -2);
 
 		// Put the table into the global table
-		m_Ref = luaL_ref(L, LUA_GLOBALSINDEX);
+		m_Ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, m_Ref);
 
 		// Set the environment for the function to be run in to be the table that
 		// has been created for the script/
-		lua_setfenv(L, -2);
+		lua_setuservalue(L, -2);
 
 		// Execute the Lua script
 		int result = lua_pcall(L, 0, 0, 0);
@@ -133,7 +133,7 @@ bool LuaScript::IsFunction(const char* funcName)
 	if (IsInitialized())
 	{
 		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, m_Ref);
 
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
@@ -158,7 +158,7 @@ void LuaScript::RunFunction(const char* funcName)
 	if (IsInitialized())
 	{
 		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, m_Ref);
 
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
@@ -184,7 +184,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 	if (IsInitialized())
 	{
 		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, m_Ref);
 
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
@@ -237,10 +237,10 @@ void LuaScript::RunString(const std::wstring& str)
 		}
 
 		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, m_Ref);
 
 		// Pop table and set the environment of the loaded chunk to it
-		lua_setfenv(L, -2);
+		lua_setuservalue(L, -2);
 
 		if (lua_pcall(L, 0, 0, 0))
 		{

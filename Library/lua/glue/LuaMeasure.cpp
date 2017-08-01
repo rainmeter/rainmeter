@@ -141,7 +141,8 @@ void LuaScript::RegisterMeasure(lua_State* L)
 		{ nullptr, nullptr }
 	};
 
-	luaL_register(L, "Measure", functions);
+	lua_newtable(L);
+	luaL_setfuncs(L, functions, 0);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);

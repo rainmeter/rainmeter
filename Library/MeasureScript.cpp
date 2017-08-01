@@ -99,7 +99,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
 
 				auto L = m_LuaScript.GetState();
-				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
+				lua_rawgeti(L, LUA_REGISTRYINDEX, m_LuaScript.GetRef());
 
 				*(Skin**)lua_newuserdata(L, sizeof(Skin*)) = m_Skin;
 				lua_getglobal(L, "MeterWindow");
