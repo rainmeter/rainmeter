@@ -157,7 +157,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 		if (m_Solid)
 		{
-			const D2D1_SWEEP_DIRECTION sSweep = m_RotationAngle > 0.0 ?
+			D2D1_SWEEP_DIRECTION sSweep = m_RotationAngle > 0.0 ?
 				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE :
 				D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
