@@ -33,7 +33,8 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false)
+	m_CanUseAxisAlignClip(false),
+	m_Layers()
 {
 	Initialize();
 }
@@ -366,6 +367,24 @@ void Canvas::RotateTransform(float angle, float x, float y, float dx, float dy)
 	m_Target->SetTransform(transform);
 
 	UpdateGdiTransform();
+}
+
+void Canvas::PushClip(Gfx::Shape* clip)
+{
+	Microsoft::WRL::ComPtr<ID2D1Layer> layer;
+	m_Target->CreateLayer(layer.GetAddressOf());
+	m_Target->PushLayer(D2D1::LayerParameters1(D2D1::InfiniteRect(), clip->m_Shape.Get(), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE), layer.Get());
+	m_Layers.push(layer.ReleaseAndGetAddressOf());
+}
+
+void Canvas::PopClip()
+{
+	m_Target->PopLayer();
+	if (m_Layers.top())
+	{
+		m_Layers.pop();
+	}
+
 }
 
 void Canvas::SetAntiAliasing(bool enable)

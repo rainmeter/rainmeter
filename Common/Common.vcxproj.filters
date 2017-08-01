@@ -9,9 +9,6 @@
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="MathParser.cpp" />
-    <ClCompile Include="Gfx\FontCollection.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\FontCollectionD2D.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
@@ -119,6 +116,7 @@
     <ClCompile Include="Gfx\Shapes\Path.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\FontCollection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />

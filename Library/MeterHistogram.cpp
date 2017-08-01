@@ -10,6 +10,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/Gfx/Shapes/Rectangle.h"
 
 using namespace Gdiplus;
 
@@ -396,9 +397,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
-	GraphicsPath primaryPath;
-	GraphicsPath secondaryPath;
-	GraphicsPath bothPath;
+	Gfx::Rectangle primaryPath(0, 0, 0, 0);
+	Gfx::Rectangle secondaryPath(0, 0, 0, 0);
+	Gfx::Rectangle bothPath(0, 0, 0, 0);
 
 	Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
 	Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
@@ -440,6 +441,10 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
+	auto combine = [](Gfx::Shape& shape1, Gfx::Shape& shape2) {
+		return shape1.CombineWith(&shape2, D2D1_COMBINE_MODE_UNION);
+	};
+
 	// Horizontal or Vertical graph
 	if (m_GraphHorizontalOrientation)
 	{
@@ -471,8 +476,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					Rect& r = m_GraphStartLeft ?
 						  Rect(meterRect.X, meterRect.Y + startValue + (step * i), bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - bothBarHeight, meterRect.Y + startValue + (step * i), bothBarHeight, 1);
-
-					bothPath.AddRectangle(r);  // cache
+					combine(bothPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 
 				// Cache the image/color rectangle for the rest
@@ -482,7 +486,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - secondaryBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
 
-					secondaryPath.AddRectangle(r);  // cache
+					combine(secondaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 				else
 				{
@@ -490,7 +494,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
 
-					primaryPath.AddRectangle(r);  // cache
+					combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 			}
 			else
@@ -499,7 +503,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					  Rect(meterRect.X, meterRect.Y + startValue + (step * i), primaryBarHeight, 1)
 					: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight, 1);
 
-				primaryPath.AddRectangle(r);  // cache
+				combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 			}
 		}
 	}
@@ -534,7 +538,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - bothBarHeight, 1, bothBarHeight);
 
-					bothPath.AddRectangle(r);  // cache
+					combine(bothPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 
 				// Cache the image/color rectangle for the rest
@@ -544,7 +548,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
 
-					secondaryPath.AddRectangle(r);  // cache
+					combine(secondaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 				else
 				{
@@ -552,7 +556,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
 
-					primaryPath.AddRectangle(r);  // cache
+					combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 				}
 			}
 			else
@@ -561,7 +565,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, primaryBarHeight)
 					: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight);
 
-				primaryPath.AddRectangle(r);  // cache
+				combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
 			}
 		}
 	}
@@ -571,14 +575,14 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
 
-		graphics.SetClip(&primaryPath);
+		canvas.PushClip(&primaryPath);
 		graphics.DrawImage(primaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
 		graphics.ResetClip();
 	}
 	else
 	{
-		SolidBrush brush(m_PrimaryColor);
-		graphics.FillPath(&brush, &primaryPath);
+		primaryPath.SetFill(m_PrimaryColor);
+		canvas.DrawGeometry(primaryPath, 0, 0);
 	}
 	if (secondaryMeasure)
 	{
@@ -586,27 +590,27 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		{
 			Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
 
-			graphics.SetClip(&secondaryPath);
+			canvas.PushClip(&secondaryPath);
 			graphics.DrawImage(secondaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
 			graphics.ResetClip();
 		}
 		else
 		{
-			SolidBrush brush(m_SecondaryColor);
-			graphics.FillPath(&brush, &secondaryPath);
+			primaryPath.SetFill(m_SecondaryColor);
+			canvas.DrawGeometry(secondaryPath, 0, 0);
 		}
 		if (bothBitmap)
 		{
 			Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
 
-			graphics.SetClip(&bothPath);
+			canvas.PushClip(&bothPath);
 			graphics.DrawImage(bothBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
 			graphics.ResetClip();
 		}
 		else
 		{
-			SolidBrush brush(m_OverlapColor);
-			graphics.FillPath(&brush, &bothPath);
+			primaryPath.SetFill(m_OverlapColor);
+			canvas.DrawGeometry(bothPath, 0, 0);
 		}
 	}
 
