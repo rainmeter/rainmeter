@@ -88,10 +88,10 @@ void PlayerSpotify::UpdateData()
 				std::wstring artist(title, 0, pos);
 				pos += 3;  // Skip " - "
 				std::wstring track(title, pos);
+				m_State = STATE_PLAYING;
 
 				if (track != m_Title || artist != m_Artist)
 				{
-					m_State = STATE_PLAYING;
 					m_Title = track;
 					m_Artist = artist;
 					++m_TrackCount;
