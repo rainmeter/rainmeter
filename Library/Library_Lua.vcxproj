@@ -28,10 +28,7 @@
     <ClCompile Include="lua\lua\lapi.c" />
     <ClCompile Include="lua\lua\lauxlib.c" />
     <ClCompile Include="lua\lua\lbaselib.c" />
-    <ClCompile Include="lua\lua\lbitlib.c" />
     <ClCompile Include="lua\lua\lcode.c" />
-    <ClCompile Include="lua\lua\lcorolib.c" />
-    <ClCompile Include="lua\lua\lctype.c" />
     <ClCompile Include="lua\lua\ldblib.c" />
     <ClCompile Include="lua\lua\ldebug.c" />
     <ClCompile Include="lua\lua\ldo.c" />
@@ -54,18 +51,16 @@
     <ClCompile Include="lua\lua\ltable.c" />
     <ClCompile Include="lua\lua\ltablib.c" />
     <ClCompile Include="lua\lua\ltm.c" />
-    <ClCompile Include="lua\lua\lua.c" />
     <ClCompile Include="lua\lua\luac.c" />
     <ClCompile Include="lua\lua\lundump.c" />
-    <ClCompile Include="lua\lua\lutf8lib.c" />
     <ClCompile Include="lua\lua\lvm.c" />
     <ClCompile Include="lua\lua\lzio.c" />
+    <ClCompile Include="lua\lua\print.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\lua\lapi.h" />
     <ClInclude Include="lua\lua\lauxlib.h" />
     <ClInclude Include="lua\lua\lcode.h" />
-    <ClInclude Include="lua\lua\lctype.h" />
     <ClInclude Include="lua\lua\ldebug.h" />
     <ClInclude Include="lua\lua\ldo.h" />
     <ClInclude Include="lua\lua\lfunc.h" />
@@ -76,13 +71,11 @@
     <ClInclude Include="lua\lua\lobject.h" />
     <ClInclude Include="lua\lua\lopcodes.h" />
     <ClInclude Include="lua\lua\lparser.h" />
-    <ClInclude Include="lua\lua\lprefix.h" />
     <ClInclude Include="lua\lua\lstate.h" />
     <ClInclude Include="lua\lua\lstring.h" />
     <ClInclude Include="lua\lua\ltable.h" />
     <ClInclude Include="lua\lua\ltm.h" />
     <ClInclude Include="lua\lua\lua.h" />
-    <ClInclude Include="lua\lua\lua.hpp" />
     <ClInclude Include="lua\lua\luaconf.h" />
     <ClInclude Include="lua\lua\lualib.h" />
     <ClInclude Include="lua\lua\lundump.h" />

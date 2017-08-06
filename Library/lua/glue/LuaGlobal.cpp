@@ -86,8 +86,8 @@ static int Dofile(lua_State* L)
 	if (scriptLoaded)
 	{
 		auto script = LuaHelper::GetState(L, unicode, curScript->GetRef(), path);
-		lua_rawgeti(L, LUA_REGISTRYINDEX, script.GetRef());
-		lua_setuservalue(L, -2);
+		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
+		lua_setfenv(L, -2);
 
 		int result = lua_pcall(L, 0, LUA_MULTRET, 0);
 		if (result == 0)
@@ -126,6 +126,5 @@ void LuaScript::RegisterGlobal(lua_State* L)
 		{ nullptr, nullptr }
 	};
 
-	lua_newtable(L);
-	luaL_setfuncs(L, toluaFuncs, 0);
+	luaL_register(L, "tolua", toluaFuncs);
 }

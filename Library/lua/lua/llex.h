@@ -1,5 +1,5 @@
 /*
-** $Id: llex.h,v 1.79 2016/05/02 14:02:12 roberto Exp $
+** $Id: llex.h,v 1.58.1.1 2007/12/27 13:02:25 roberto Exp $
 ** Lexical Analyzer
 ** See Copyright Notice in lua.h
 */
@@ -13,10 +13,8 @@
 
 #define FIRST_RESERVED	257
 
-
-#if !defined(LUA_ENV)
-#define LUA_ENV		"_ENV"
-#endif
+/* maximum length of a reserved word */
+#define TOKEN_LEN	(sizeof("function")/sizeof(char))
 
 
 /*
@@ -27,22 +25,23 @@ enum RESERVED {
   /* terminal symbols denoted by reserved words */
   TK_AND = FIRST_RESERVED, TK_BREAK,
   TK_DO, TK_ELSE, TK_ELSEIF, TK_END, TK_FALSE, TK_FOR, TK_FUNCTION,
-  TK_GOTO, TK_IF, TK_IN, TK_LOCAL, TK_NIL, TK_NOT, TK_OR, TK_REPEAT,
+  TK_IF, TK_IN, TK_LOCAL, TK_NIL, TK_NOT, TK_OR, TK_REPEAT,
   TK_RETURN, TK_THEN, TK_TRUE, TK_UNTIL, TK_WHILE,
   /* other terminal symbols */
-  TK_IDIV, TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE,
-  TK_SHL, TK_SHR,
-  TK_DBCOLON, TK_EOS,
-  TK_FLT, TK_INT, TK_NAME, TK_STRING
+  TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE, TK_NUMBER,
+  TK_NAME, TK_STRING, TK_EOS
 };
 
 /* number of reserved words */
 #define NUM_RESERVED	(cast(int, TK_WHILE-FIRST_RESERVED+1))
 
 
+/* array with token `names' */
+LUAI_DATA const char *const luaX_tokens [];
+
+
 typedef union {
   lua_Number r;
-  lua_Integer i;
   TString *ts;
 } SemInfo;  /* semantics information */
 
@@ -53,32 +52,29 @@ typedef struct Token {
 } Token;
 
 
-/* state of the lexer plus state of the parser when shared by all
-   functions */
 typedef struct LexState {
   int current;  /* current character (charint) */
   int linenumber;  /* input line counter */
-  int lastline;  /* line of last token 'consumed' */
+  int lastline;  /* line of last token `consumed' */
   Token t;  /* current token */
   Token lookahead;  /* look ahead token */
-  struct FuncState *fs;  /* current function (parser) */
+  struct FuncState *fs;  /* `FuncState' is private to the parser */
   struct lua_State *L;
   ZIO *z;  /* input stream */
   Mbuffer *buff;  /* buffer for tokens */
-  Table *h;  /* to avoid collection/reuse strings */
-  struct Dyndata *dyd;  /* dynamic structures used by the parser */
   TString *source;  /* current source name */
-  TString *envn;  /* environment variable name */
+  char decpoint;  /* locale decimal point */
 } LexState;
 
 
 LUAI_FUNC void luaX_init (lua_State *L);
 LUAI_FUNC void luaX_setinput (lua_State *L, LexState *ls, ZIO *z,
-                              TString *source, int firstchar);
+                              TString *source);
 LUAI_FUNC TString *luaX_newstring (LexState *ls, const char *str, size_t l);
 LUAI_FUNC void luaX_next (LexState *ls);
-LUAI_FUNC int luaX_lookahead (LexState *ls);
-LUAI_FUNC l_noret luaX_syntaxerror (LexState *ls, const char *s);
+LUAI_FUNC void luaX_lookahead (LexState *ls);
+LUAI_FUNC void luaX_lexerror (LexState *ls, const char *msg, int token);
+LUAI_FUNC void luaX_syntaxerror (LexState *ls, const char *s);
 LUAI_FUNC const char *luaX_token2str (LexState *ls, int token);
 
 

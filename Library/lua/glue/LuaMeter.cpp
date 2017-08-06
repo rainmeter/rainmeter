@@ -158,8 +158,7 @@ void LuaScript::RegisterMeter(lua_State* L)
 		{ nullptr, nullptr }
 	};
 
-	lua_newtable(L);
-	luaL_setfuncs(L, functions, 0);
+	luaL_register(L, "Meter", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);
