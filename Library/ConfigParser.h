@@ -38,6 +38,13 @@ enum class PairedPunctuation
 class ConfigParser
 {
 public:
+	enum class VariableType : BYTE
+	{					// Old Style:                         New Style:
+		Section,		// [MeasureName], [Meter:X], etc.     [&MeasureName], [&Meter:X], etc.
+		Variable,		// #Variable#                         [#Variable]
+		Mouse			// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
+	};
+
 	ConfigParser();
 	~ConfigParser();
 
@@ -86,8 +93,11 @@ public:
 
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
-	bool ReplaceVariables(std::wstring& result);
+	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
+
+	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
+	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
@@ -147,6 +157,7 @@ private:
 	Skin* m_Skin;
 
 	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
+	static std::unordered_map<VariableType, WCHAR> c_VariableMap;
 };
 
 #endif

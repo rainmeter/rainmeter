@@ -126,7 +126,6 @@ public:
 
 private:
 	void ReplaceMouseVariables(std::wstring& result) const;
-	std::wstring GetMouseVariable(const std::wstring& variable) const;
 
 	std::wstring m_MouseActions[MOUSEACTION_COUNT];
 
