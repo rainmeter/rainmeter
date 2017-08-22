@@ -13,6 +13,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
 #include "resource.h"
@@ -30,7 +31,8 @@ struct PairInfo
 const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
 {
 	{ PairedPunctuation::SingleQuote, { L'\'', L'\'' } },
-	{ PairedPunctuation::DoubleQuote, { L'\"', L'\"' } },
+	{ PairedPunctuation::DoubleQuote, { L'"', L'"' } },
+	{ PairedPunctuation::BothQuotes,  { L'"', L'\'' } },
 	{ PairedPunctuation::Parentheses, { L'(', L')' } },
 	{ PairedPunctuation::Brackets,    { L'[', L']' } },
 	{ PairedPunctuation::Braces,      { L'{', L'}' } },
@@ -192,7 +194,8 @@ const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 */
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
 {
-	size_t colonPos = strVariable.find_last_of(L':');
+	const size_t firstParens = strVariable.find_first_of(L'(');  // Assume section names do not have a left parenthesis?
+	size_t colonPos = strVariable.find_last_of(L':', firstParens);
 	if (colonPos == std::wstring::npos)
 	{
 		return false;
@@ -244,6 +247,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
 	// EncodeUrl: [Measure:EncodeUrl] (Escapes URL reserved characters)
 	// TimeStamp: [TimeMeasure:TimeStamp] (ONLY for Time measures, returns the Windows timestamp of the measure)
+
+	// Script: [ScriptMeasure:SomeFunction()], [ScriptMeasure:Something('Something')]
+	// NOTE: Parenthesis are required. Arguments enclosed in single or double quotes are treated as strings, otherwise
+	//   they are treated as numbers. If the lua function returns a number, it will be converted to a string.
 	enum class ValueType
 	{
 		Raw,
@@ -252,7 +259,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Min,
 		EscapeRegExp,
 		EncodeUrl,
-		TimeStamp
+		TimeStamp,
+		Script
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -279,6 +287,15 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else
 		{
+			// Check if calling a Script measure
+			Measure* measure = m_Skin->GetMeasure(strVariable);
+			if (measure && measure->GetTypeID() == TypeID<MeasureScript>())
+			{
+				valueType = ValueType::Script;  // Needed?
+				MeasureScript* script = (MeasureScript*)measure;
+				return script->CommandWithReturn(selectorSz, strValue);
+			}
+
 			return false;
 		}
 
@@ -635,6 +652,34 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	{
 		replaced = ParseVariables(result, VariableType::Variable);
 	}
+	else
+	{
+		// Special parsing for [#CURRENTSECTION] for use in actions
+		size_t start = 0;
+		bool loop = true;
+		const std::wstring strVariable = L"[#CURRENTSECTION]";
+		const size_t length = strVariable.length();
+		do
+		{
+			start = result.find(strVariable, start);
+			if (start != std::wstring::npos)
+			{
+				const std::wstring* value = GetVariable(L"CURRENTSECTION");
+				if (value)
+				{
+					// Variable found, replace it with the value
+					result.replace(start, length, *value);
+					start += length;
+					replaced = true;
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		}
+		while (loop);
+	}
 
 	// Check for old-style variables (#VAR#)
 	size_t start = 0, end;
@@ -831,9 +876,11 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 								std::wstring value;
 								if (GetSectionVariable(val, value))
 								{
+									size_t valueLen = value.length();
+
 									// Replace section variable with the value
 									result.replace(start, end - start + 1, value);
-									start += value.length();
+									start += valueLen;
 									replaced = true;
 									found = true;
 								}
@@ -843,15 +890,20 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 
 					case VariableType::Variable:
 						{
+							// Assign current section if available
+							if (meter) m_CurrentSection->assign(meter->GetName());
 							const std::wstring* value = GetVariable(val);
 							if (value)
 							{
+								size_t valueLen = (*value).length();
+
 								// Variable found, replace it with the value
 								result.replace(start, end - start + 1, *value);
-								start += (*value).length();
+								start += valueLen;
 								replaced = true;
 								found = true;
 							}
+							if (meter) m_CurrentSection->clear();
 						}
 						break;
 
@@ -860,9 +912,11 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 							std::wstring value = GetMouseVariable(val, meter);
 							if (!value.empty())
 							{
+								size_t valueLen = value.length();
+
 								// Mouse variable found, replace it with the value
 								result.replace(start, end - start + 1, value);
-								start += value.length();
+								start += valueLen;
 								replaced = true;
 								found = true;
 							}
@@ -1285,8 +1339,6 @@ std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const 
 std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
 {
 	std::vector<std::wstring> tokens;
-	
-	int pairs = 0;
 	size_t start = 0;
 	size_t end = 0;
 
@@ -1301,17 +1353,62 @@ std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const
 		}
 	};
 
-	for (auto& iter : str)
+	if (punct == PairedPunctuation::SingleQuote ||
+		punct == PairedPunctuation::DoubleQuote)
 	{
-		if (iter == s_PairedPunct.at(punct).begin) ++pairs;
-		else if (iter == s_PairedPunct.at(punct).end) --pairs;
-		else if (iter == delimiter && pairs == 0)
+		bool found = false;
+		for (auto& iter : str)
 		{
-			getToken();
-			start = end + 1;  // skip delimiter
+			if (iter == s_PairedPunct.at(punct).begin) found = !found;
+			else if (iter == delimiter && !found)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
 		}
-
-		++end;
+	}
+	else if (punct == PairedPunctuation::BothQuotes)
+	{
+		// Skip delimiters if inside either a pair of single quotes, or a pair of double quotes
+		bool found = false;
+		WCHAR current = L'\0';
+		for (auto& iter : str)
+		{
+			if (!current &&
+				(iter == s_PairedPunct.at(punct).begin ||	// single quote
+				 iter == s_PairedPunct.at(punct).end))		// double quote
+			{
+				current = iter;
+				found = true;
+			}
+			else if (iter == current)
+			{
+				current = L'\0';
+				found = false;
+			}
+			else if (iter == delimiter && !found)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
+		}
+	}
+	else
+	{
+		int pairs = 0;
+		for (auto& iter : str)
+		{
+			if (iter == s_PairedPunct.at(punct).begin) ++pairs;
+			else if (iter == s_PairedPunct.at(punct).end) --pairs;
+			else if (iter == delimiter && pairs == 0)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
+		}
 	}
 
 	// Get last token

@@ -30,6 +30,8 @@ public:
 	void RunFunction(const char* funcName);
 	int RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
 	void RunString(const std::wstring& str);
+	bool RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue);
+	bool GetLuaVariable(const std::wstring& varName, std::wstring& strValue);
 
 protected:
 	static void RegisterGlobal(lua_State* L);

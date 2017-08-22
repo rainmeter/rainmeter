@@ -26,6 +26,8 @@ public:
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
+	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue);
+
 	void UninitializeLuaScript();
 
 protected:

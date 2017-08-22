@@ -25,10 +25,11 @@ class Skin;
 class Measure;
 class Meter;
 
-enum class PairedPunctuation
+enum class PairedPunctuation : BYTE
 {
 	SingleQuote,
 	DoubleQuote,
+	BothQuotes,
 	Parentheses,
 	Brackets,
 	Braces,
