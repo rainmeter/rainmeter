@@ -17,3 +17,4 @@ Certificate.bat
 *.VC.db*
 *.ipch
 *.patch
+*.ide
