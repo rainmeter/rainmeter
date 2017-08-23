@@ -286,11 +286,11 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		value = GetRainmeter().GetGlobalOptions().netInSpeed + GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 
-	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
-	if (maxValue == -1)
+	double maxValue = parser.ReadFloat(section, L"MaxValue", -1.0);
+	if (maxValue == -1.0)
 	{
-		maxValue = parser.ReadFloat(section, netName, -1);
-		if (maxValue == -1)
+		maxValue = parser.ReadFloat(section, netName, -1.0);
+		if (maxValue == -1.0)
 		{
 			maxValue = value;
 		}
@@ -328,7 +328,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_MaxValue = maxValue / m_UseBits ? 1.0 : 8.0;
+		m_MaxValue = maxValue / (m_UseBits ? 1.0 : 8.0);
 		m_LogMaxValue = false;
 	}
 }
@@ -434,10 +434,10 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		statsDate = date;
 	}
 
-	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0);
+	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0U);
 	if (parser.GetLastDefaultUsed())
 	{
-		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0);
+		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0U);
 	}
 
 	c_StatValues.clear();
@@ -448,26 +448,26 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		ULARGE_INTEGER value;
 
 		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 		}
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"Out%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 		}
 		c_StatValues.push_back(value.QuadPart);
 	}

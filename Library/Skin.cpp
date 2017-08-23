@@ -2076,7 +2076,7 @@ bool Skin::ReadSkin()
 	CreateDoubleBuffer(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
+	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
 	if (appVersion > RAINMETER_VERSION)
 	{
 		if (appVersion % 1000 != 0)

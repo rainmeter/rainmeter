@@ -37,13 +37,13 @@ IfActions::~IfActions()
 void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
-	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0f);
+	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 
 	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
-	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0f);
+	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 
 	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
-	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0f);
+	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
 void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
