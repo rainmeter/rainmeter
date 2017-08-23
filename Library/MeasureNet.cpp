@@ -328,7 +328,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_MaxValue = maxValue / 8;
+		m_MaxValue = maxValue / m_UseBits ? 1.0 : 8.0;
 		m_LogMaxValue = false;
 	}
 }
