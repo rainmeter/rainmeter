@@ -1037,7 +1037,9 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 		{
 			if (result.find(L'#') != std::wstring::npos)
 			{
-				if (ReplaceVariables(result))
+				// Make sure new-style variables are processed for the [Variables] section
+				bool runNewStyle = strSection == L"Variables" ? true : false;
+				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
 				}
