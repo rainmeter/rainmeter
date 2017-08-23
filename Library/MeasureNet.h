@@ -56,6 +56,7 @@ private:
 	ULONG64 m_Octets;
 	bool m_FirstTime;
 	bool m_Cumulative;
+	bool m_UseBits;
 
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;

@@ -20,7 +20,8 @@ MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, 
 	m_Interface(),
 	m_Octets(),
 	m_FirstTime(true),
-	m_Cumulative(false)
+	m_Cumulative(false),
+	m_UseBits(false)
 {
 }
 
@@ -227,9 +228,11 @@ void MeasureNet::UpdateValue()
 {
 	if (c_Table == nullptr) return;
 
+	const ULONG64 bits = m_UseBits ? 8Ui64 : 1Ui64;
+
 	if (m_Cumulative)
 	{
-		m_Value = (double)(__int64)GetNetStatsValue(m_Net);
+		m_Value = (double)(__int64)(GetNetStatsValue(m_Net) * bits);
 	}
 	else
 	{
@@ -256,7 +259,7 @@ void MeasureNet::UpdateValue()
 			m_FirstTime = false;
 		}
 
-		m_Value = (double)(__int64)value;
+		m_Value = (double)(__int64)(value * bits);
 	}
 }
 
@@ -311,6 +314,8 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		GetRainmeter().SetNetworkStatisticsTimer();
 	}
+
+	m_UseBits = parser.ReadBool(section, L"UseBits", false);
 
 	if (maxValue == 0.0)
 	{
