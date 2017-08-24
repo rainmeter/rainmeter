@@ -823,7 +823,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 		start = result.rfind(L'[', ei);
 		if (start != std::wstring::npos)
 		{
-			size_t si = start + 2;  // Check for escaped variables 'names'
+			size_t si = start + 2;  // Check for escaped variable 'names'
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
 				result.erase(ei, 1);
