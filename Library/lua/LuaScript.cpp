@@ -360,7 +360,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 		}
 	}
 
-	lua_pop(L, 1);
+	lua_settop(L, 0);
 	return result;
 }
 
@@ -369,6 +369,8 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 	if (!IsInitialized()) return false;
 
 	auto L = GetState();
+
+	bool result = true;
 
 	const std::string nVarName = m_Unicode ?
 		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
@@ -404,7 +406,7 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 		strValue = L"Variable \"";
 		strValue += varName;
 		strValue += L"\" not found or is nil";
-		return false;
+		result = false;
 	}
 	else
 	{	
@@ -413,8 +415,9 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 		strValue += m_Unicode ?
 			StringUtil::WidenUTF8(t) : StringUtil::Widen(t);
 		strValue += L")";
-		return false;
+		result = false;
 	}
 
-	return true;
+	lua_settop(L, 0);
+	return result;
 }
