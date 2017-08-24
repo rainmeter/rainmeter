@@ -813,6 +813,8 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 {
 	bool replaced = false;
 
+	std::wstring originalResult = result;
+
 	size_t start = 0;
 	size_t end = 0;
 	while ((end = result.find(L']', start)) != std::wstring::npos)
@@ -931,6 +933,11 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 		{
 			start = end + 1;
 		}
+	}
+
+	if (!replaced && type == VariableType::Section)
+	{
+		result = originalResult;
 	}
 
 	return replaced;
