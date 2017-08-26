@@ -10,6 +10,8 @@
 #include "Measure.h"
 #include "Logger.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/Gfx/Shapes/Path.h"
+#include "../Common/Gfx/Shapes/Line.h"
 
 using namespace Gdiplus;
 
@@ -204,8 +206,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
-	
-	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -255,6 +255,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	}
 
 	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	
 
 	// Draw the horizontal lines
 	if (m_HorizontalLines)
@@ -272,14 +273,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 		numOfLines = ((int)maxValue % power) + 1;
 
-		Pen pen(m_HorizontalColor);
-
-		REAL Y;
+		FLOAT Y;
 		for (int j = 0; j < numOfLines; ++j)
 		{
-			Y = (REAL)((j + 1) * meterRect.Height / (numOfLines + 1));
+			Y = (FLOAT)((j + 1) * meterRect.Height / (numOfLines + 1));
 			Y = meterRect.Y + meterRect.Height - Y - 1;
-			graphics.DrawLine(&pen, (REAL)meterRect.X, Y, (REAL)(meterRect.X + meterRect.Width - 1), Y);	// GDI+
+			Gfx::Line line((FLOAT)meterRect.X, Y, (FLOAT)(meterRect.X + meterRect.Width - 1), Y);
+			line.SetStrokeFill(m_HorizontalColor);
+			canvas.DrawGeometry(line, 0, 0);
 		}
 	}
 
@@ -287,29 +288,29 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 	if (m_GraphHorizontalOrientation)
 	{
-		const REAL W = meterRect.Width - 1.0f;
+		const FLOAT W = meterRect.Width - 1.0f;
 		counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
 			// Draw a line
-			REAL X, oldX;
+			FLOAT X;
 
 			const double scale = m_ScaleValues[counter] * W / maxValue;
 
 			int pos = m_CurrentPos;
 
-			auto calcX = [&](REAL& _x)
+			auto calcX = [&](FLOAT& _x)
 			{
-				_x = (REAL)((*i)[pos] * scale);
+				_x = (FLOAT)((*i)[pos] * scale);
 				_x = min(_x, W);
 				_x = max(_x, 0.0f);
 				_x = meterRect.X + (m_GraphStartLeft ? _x : W - _x);
 			};
 
-			calcX(oldX);
+			calcX(X);
 
 			// Cache all lines
-			GraphicsPath path;
+			Gfx::Path path(X, !m_Flip ? meterRect.Y : meterRect.Y + meterRect.Height - 1, D2D1_FILL_MODE_WINDING);
 		
 			if (!m_Flip)
 			{
@@ -320,9 +321,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)j);
-
-					oldX = X;
+					path.AddLine(X, (FLOAT)j);
 				}
 			}
 			else
@@ -334,45 +333,45 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)(j - 2));
-
-					oldX = X;
+					path.AddLine(X, (FLOAT)(j - 2));
 				}
 			}
+			path.Close(D2D1_FIGURE_END_OPEN);
 
-			// Draw cached lines
-			Pen pen(m_Colors[counter], (REAL)m_LineWidth);
-			pen.SetLineJoin(LineJoinBevel);
-			graphics.DrawPath(&pen, &path);
+			path.SetFill(Gdiplus::Color::Transparent);
+			path.SetStrokeFill(m_Colors[counter]);
+			path.SetStrokeWidth((FLOAT)m_LineWidth);
+			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0);
+			canvas.DrawGeometry(path, 0, 0);
 
 			++counter;
 		}
 	}
 	else
 	{
-		const REAL H = meterRect.Height - 1.0f;
+		const FLOAT H = meterRect.Height - 1.0f;
 		counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
 			// Draw a line
-			REAL Y, oldY;
+			FLOAT Y;
 
 			const double scale = m_ScaleValues[counter] * H / maxValue;
 
 			int pos = m_CurrentPos;
 
-			auto calcY = [&](REAL& _y)
+			auto calcY = [&](FLOAT& _y)
 			{
-				_y = (REAL)((*i)[pos] * scale);
+				_y = (FLOAT)((*i)[pos] * scale);
 				_y = min(_y, H);
 				_y = max(_y, 0.0f);
 				_y = meterRect.Y + (m_Flip ? _y : H - _y);
 			};
 
-			calcY(oldY);
+			calcY(Y);
 
 			// Cache all lines
-			GraphicsPath path;
+			Gfx::Path path(!m_GraphStartLeft ? meterRect.X : meterRect.X + meterRect.Width - 1, Y, D2D1_FILL_MODE_WINDING);
 		
 			if (!m_GraphStartLeft)
 			{
@@ -383,9 +382,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
-
-					oldY = Y;
+					path.AddLine((FLOAT)j, Y);
 				}
 			}
 			else
@@ -397,16 +394,16 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine((REAL)(j - 1), oldY, (REAL)(j - 2), Y);
-
-					oldY = Y;
+					path.AddLine((FLOAT)(j - 2), Y);
 				}
 			}
+			path.Close(D2D1_FIGURE_END_OPEN);
 
-			// Draw cached lines
-			Pen pen(m_Colors[counter], (REAL)m_LineWidth);
-			pen.SetLineJoin(LineJoinBevel);
-			graphics.DrawPath(&pen, &path);
+			path.SetFill(Gdiplus::Color::Transparent);
+			path.SetStrokeFill(m_Colors[counter]);
+			path.SetStrokeWidth((FLOAT)m_LineWidth);
+			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 10.0);
+			canvas.DrawGeometry(path, 0, 0);
 
 			++counter;
 		}
