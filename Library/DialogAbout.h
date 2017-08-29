@@ -74,7 +74,7 @@ private:
 		bool m_Debug;
 	};
 
-	// Measures tab
+	// Skins tab
 	class TabSkins : public Tab
 	{
 	public:
@@ -97,6 +97,7 @@ private:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCustomDraw(WPARAM wParam, LPARAM lParam);
 
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);

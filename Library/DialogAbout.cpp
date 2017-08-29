@@ -962,11 +962,70 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case NM_CUSTOMDRAW:
+		return OnCustomDraw(wParam, lParam);
+
 	default:
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+INT_PTR DialogAbout::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
+{
+	static COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
+	static COLORREF paused = GetSysColor(COLOR_INFOBK);
+
+	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
+	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
+
+	switch (lvcd->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+		return TRUE;
+
+	case CDDS_ITEMPREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+		return TRUE;
+
+	case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
+		{
+			// Only process 1st column
+			if (lvcd->iSubItem != 0) return FALSE;
+
+			// Only process items in 1st group
+			WCHAR buffer[512];
+			LVITEM lvi;
+			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
+			lvi.iSubItem = 0;
+			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
+			lvi.pszText = buffer;
+			lvi.cchTextMax = 512;
+			ListView_GetItem(hwnd, &lvi);
+			if (lvi.iGroupId != 0) return FALSE;
+
+			std::wstring name = buffer;
+			Measure* measure = m_SkinWindow->GetMeasure(name);
+			if (!measure) return FALSE;
+
+			const bool isDisabled = measure->IsDisabled();
+			const bool isPaused = measure->IsPaused();
+
+			if (isPaused) lvcd->clrTextBk = paused;
+			if (isDisabled) lvcd->clrText = disabled;
+
+			if (isDisabled || isPaused)
+			{
+				SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
+				return TRUE;
+			}
+		}
+		break;
+	}
+
+	return FALSE;
 }
 
 // -----------------------------------------------------------------------------------------------
