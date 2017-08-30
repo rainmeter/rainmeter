@@ -1014,17 +1014,18 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case NM_RCLICK:
+		if (nm->idFrom == Id_SkinsListView)
 		{
-			if (nm->idFrom == Id_SkinsListView)
+			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
 			{
-				// Make sure the mouse is over an item
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
-				if (item->iItem < 0) break;
 
 				// Only show context menu for 'Measures' group
 				LVITEM lvi;
 				lvi.mask = LVIF_GROUPID;
 				lvi.iItem = item->iItem;
+				lvi.iSubItem = 0;
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
 				if (lvi.iGroupId != 0) break;
