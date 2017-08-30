@@ -245,11 +245,11 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	item = m_TabLog.GetControl(TabLog::Id_ItemsListView);
+	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabSkins.GetControl(TabSkins::Id_ItemsListView);
+	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabPlugins.GetControl(TabPlugins::Id_ItemsListView);
+	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 
 	if (c_WindowPlacement.length == 0)
@@ -325,7 +325,7 @@ void DialogAbout::TabLog::Create(HWND owner)
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_ItemsListView, 0,
+		CT_LISTVIEW(Id_LogListView, 0,
 			0, 0, 428, 135,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
 		CT_CHECKBOX(Id_ErrorCheckBox, ID_STR_ERROR,
@@ -355,7 +355,7 @@ void DialogAbout::TabLog::Create(HWND owner)
 void DialogAbout::TabLog::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_LogListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
@@ -454,7 +454,7 @@ void DialogAbout::TabLog::Resize(int w, int h)
 	item = GetControl(Id_DebugCheckBox);
 	SetWindowPos(item, nullptr, r.right * 3, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_LogListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - 10, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust 4th colum
@@ -519,7 +519,7 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 	}
 
 	GetWindowText(item, buffer, 32);
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_LogListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)source);
@@ -579,7 +579,7 @@ INT_PTR DialogAbout::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_ClearButton:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			HWND item = GetControl(Id_ItemsListView);
+			HWND item = GetControl(Id_LogListView);
 			ListView_DeleteAllItems(item);
 		}
 		break;
@@ -653,7 +653,7 @@ void DialogAbout::TabSkins::Create(HWND owner)
 		CT_LISTBOX(Id_SkinsListBox, 0,
 			0, 0, 120, 148,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
-		CT_LISTVIEW(Id_ItemsListView, 0,
+		CT_LISTVIEW(Id_SkinsListView, 0,
 			125, 0, 302, 148,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
@@ -664,7 +664,7 @@ void DialogAbout::TabSkins::Create(HWND owner)
 void DialogAbout::TabSkins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_SkinsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
@@ -721,7 +721,7 @@ void DialogAbout::TabSkins::Resize(int w, int h)
 	HWND item = GetControl(Id_SkinsListBox);
 	SetWindowPos(item, nullptr, 0, 0, 265, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_SkinsListView);
 	SetWindowPos(item, nullptr, 275, 0, w - 275, h, SWP_NOZORDER);
 
 	// Adjust 4th column
@@ -775,7 +775,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 		if (windows.empty())
 		{
 			m_SkinWindow = nullptr;
-			item = GetControl(Id_ItemsListView);
+			item = GetControl(Id_SkinsListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -816,7 +816,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		return;
 	}
 
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_SkinsListView);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
@@ -949,7 +949,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_COPYNUMBERVALUE:
 		{
-			HWND hwnd = GetControl(Id_ItemsListView);
+			HWND hwnd = GetControl(Id_SkinsListView);
 			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
@@ -962,7 +962,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_COPYSTRINGVALUE:
 		{
-			HWND hwnd = GetControl(Id_ItemsListView);
+			HWND hwnd = GetControl(Id_SkinsListView);
 			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
@@ -1015,7 +1015,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 	case NM_RCLICK:
 		{
-			if (nm->idFrom == Id_ItemsListView)
+			if (nm->idFrom == Id_SkinsListView)
 			{
 				// Make sure the mouse is over an item
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
@@ -1047,7 +1047,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						pt.x,
 						pt.y,
 						0,
-						m_Window,
+						hwnd,
 						nullptr);
 
 					DestroyMenu(menu);
@@ -1138,7 +1138,7 @@ void DialogAbout::TabPlugins::Create(HWND owner)
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_ItemsListView, 0,
+		CT_LISTVIEW(Id_PluginsListView, 0,
 			0, 0, 428, 148,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
@@ -1149,7 +1149,7 @@ void DialogAbout::TabPlugins::Create(HWND owner)
 void DialogAbout::TabPlugins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_PluginsListView);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1323,7 +1323,7 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_PluginsListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
