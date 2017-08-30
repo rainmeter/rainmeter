@@ -1047,7 +1047,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						pt.x,
 						pt.y,
 						0,
-						hwnd,
+						m_Window,
 						nullptr);
 
 					DestroyMenu(menu);
