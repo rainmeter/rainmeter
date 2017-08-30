@@ -849,8 +849,13 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
 		range += buffer;
 
+		std::wstring numValue;
+		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
+		Measure::RemoveTrailingZero(buffer, bufferLen);
+		numValue = buffer;
+
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*j)->GetFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)numValue.c_str());
 		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)(*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
 		++lvi.iItem;
 	}
