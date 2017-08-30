@@ -1001,7 +1001,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				if (sel != -1)
 				{
 					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(hwnd, sel, 2, &tmpSz[0], 512);
+					ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 512);
 					System::SetClipboardText(tmpSz);
 				}
 			}
