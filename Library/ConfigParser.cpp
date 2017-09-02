@@ -771,7 +771,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 				Measure* measure = GetMeasure(var);
 				if (measure)
 				{
-					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
+					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 					size_t valueLen = wcslen(value);
 
 					// Measure found, replace it with the value
@@ -865,7 +865,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 							Measure* measure = GetMeasure(val);
 							if (measure)
 							{
-								const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
+								const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 								size_t valueLen = wcslen(value);
 
 								// Measure found, replace it with the value

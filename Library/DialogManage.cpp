@@ -2241,7 +2241,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			Edit_SetText(GetControl(Id_EditorEdit), buffer);
 		}
-		break;	
+		break;
 
 	case Id_ShowTrayIconCheckBox:
 		{
