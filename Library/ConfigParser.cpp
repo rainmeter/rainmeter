@@ -825,7 +825,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 		start = result.rfind(L'[', ei);
 		if (start != std::wstring::npos)
 		{
-			size_t si = start + 1;
+			size_t si = start + 2;  // Check for escaped variable 'names'
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
 				result.erase(ei, 1);
@@ -834,6 +834,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 			}
 			else
 			{
+				--si;  // Get the key character (#, $, &)
 				const WCHAR key = result.substr(si, 1).c_str()[0];
 				std::wstring val = result.substr(si + 1, end - si - 1);
 
