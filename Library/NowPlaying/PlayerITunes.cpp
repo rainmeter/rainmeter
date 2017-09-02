@@ -306,11 +306,36 @@ bool PlayerITunes::CheckWindow()
 */
 void PlayerITunes::UpdateData()
 {
-	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
+	if ((m_Initialized || CheckWindow()))
 	{
-		long position = 0;
-		m_iTunes->get_PlayerPosition(&position);
-		m_Position = (UINT)position;
+		// Check the shuffle and repeat state since there is no onChange event
+		IITPlaylist* playlist;
+		HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
+		if (SUCCEEDED(hr) && playlist)
+		{
+			VARIANT_BOOL shuffle;
+			hr = playlist->get_Shuffle(&shuffle);
+			if (SUCCEEDED(hr))
+			{
+				m_Shuffle = shuffle != VARIANT_FALSE;
+			}
+
+			ITPlaylistRepeatMode repeat;
+			hr = playlist->get_SongRepeat(&repeat);
+			if (SUCCEEDED(hr))
+			{
+				m_Repeat = repeat != ITPlaylistRepeatModeOff;
+			}
+
+			playlist->Release();
+		}
+
+		if (m_State != STATE_STOPPED)
+		{
+			long position = 0;
+			m_iTunes->get_PlayerPosition(&position);
+			m_Position = (UINT)position;
+		}
 	}
 }
 
@@ -320,20 +345,6 @@ void PlayerITunes::UpdateData()
 */
 void PlayerITunes::OnDatabaseChange()
 {
-	// Check the shuffle state. TODO: Find better way
-	IITPlaylist* playlist;
-	HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
-	if (SUCCEEDED(hr) && playlist)
-	{
-		VARIANT_BOOL shuffle;
-		hr = playlist->get_Shuffle(&shuffle);
-		if (SUCCEEDED(hr))
-		{
-			m_Shuffle = shuffle != VARIANT_FALSE;
-		}
-
-		playlist->Release();
-	}
 }
 
 /*
