@@ -67,9 +67,6 @@ HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::Invoke(DISPID dispidMembe
 {
 	switch (dispidMember)
 	{
-	case ITEventDatabaseChanged:
-		m_Player->OnDatabaseChange();
-		break;
 
 	case ITEventPlayerPlay:
 		m_Player->OnStateChange(true);
@@ -215,8 +212,6 @@ void PlayerITunes::Initialize()
 		long volume;
 		m_iTunes->get_SoundVolume(&volume);
 		m_Volume = (UINT)volume;
-
-		OnDatabaseChange();
 	}
 	else
 	{
