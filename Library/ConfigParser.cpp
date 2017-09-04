@@ -15,6 +15,7 @@
 #include "Measure.h"
 #include "MeasureScript.h"
 #include "MeasureTime.h"
+#include "MeasurePlugin.h"
 #include "Meter.h"
 #include "resource.h"
 
@@ -350,6 +351,26 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			MeasureTime* time = (MeasureTime*)measure;
 			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 			return true;
+		}
+		else if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+
+			size_t startParens = selector.find_first_of('(');
+			size_t endParens = selector.find_last_of(')');
+
+			std::wstring function = selector;
+			std::wstring args = selector;
+
+			function = function.substr(0, startParens);
+			args = args.substr(startParens + 1, endParens - 1);
+
+			strValue = plugin->GetSectionVariable(function, args);
+			if (!strValue.empty())
+			{
+				return true;
+			}
+			return false;
 		}
 
 		int scale = 1;

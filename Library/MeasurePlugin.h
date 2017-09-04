@@ -24,6 +24,7 @@ typedef void (*NEWFINALIZE)(void*);
 typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
 typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
+typedef LPCWSTR (*GETSECTIONVAR)(void*, LPCWSTR, LPCWSTR);
 
 class MeasurePlugin : public Measure
 {
@@ -38,6 +39,7 @@ public:
 
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
+	virtual LPCWSTR GetSectionVariable(const std::wstring & function, const std::wstring & args);
 
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
@@ -67,6 +69,7 @@ private:
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
+	void* m_GetSectionVariableFunc;
 };
 
 #endif

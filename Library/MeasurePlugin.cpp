@@ -19,7 +19,8 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_GetSectionVariableFunc()
 {
 }
 
@@ -133,6 +134,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	m_GetSectionVariableFunc = GetProcAddress(m_Plugin, "GetSectionVariable");
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -234,5 +236,21 @@ void MeasurePlugin::Command(const std::wstring& command)
 	else
 	{
 		Measure::Command(command);
+	}
+}
+
+/*
+** Runs function GetSectionVariable expecting it to return a finished string
+**
+*/
+LPCWSTR MeasurePlugin::GetSectionVariable(const std::wstring& function, const std::wstring& args)
+{
+	if (m_GetSectionVariableFunc)
+	{
+		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, function.c_str(), args.c_str());
+	}
+	else
+	{
+		return L"";
 	}
 }
