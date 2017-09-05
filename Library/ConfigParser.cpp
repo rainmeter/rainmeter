@@ -252,6 +252,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// Script: [ScriptMeasure:SomeFunction()], [ScriptMeasure:Something('Something')]
 	// NOTE: Parenthesis are required. Arguments enclosed in single or double quotes are treated as strings, otherwise
 	//   they are treated as numbers. If the lua function returns a number, it will be converted to a string.
+	// Plugin: [PluginMeasure:()], [PluginMeasure:('Something')], [PluginMeasure:SomeFunction()], [PluginMeasure:SomeFunction('Something')]
+	// NOTE: Parenthesis are required. Arguments will be handled by plugin and will be passed as is combined as a single string
 	enum class ValueType
 	{
 		Raw,
@@ -261,7 +263,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		EscapeRegExp,
 		EncodeUrl,
 		TimeStamp,
-		Script
+		Script,
+		Plugin
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -296,8 +299,15 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				MeasureScript* script = (MeasureScript*)measure;
 				return script->CommandWithReturn(selectorSz, strValue);
 			}
-
-			return false;
+			else if (measure && measure->GetTypeID() == TypeID<MeasurePlugin>())
+			{
+				//Unused, this else if is just so a return does not happen too early
+				valueType = ValueType::Plugin;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		selectorSz = L"";
@@ -357,19 +367,18 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			MeasurePlugin* plugin = (MeasurePlugin*)measure;
 
 			size_t startParens = selector.find_first_of('(');
-			size_t endParens = selector.find_last_of(')');
+			size_t endParens = selector.find_last_of(')') -1;
 
-			std::wstring function = selector;
-			std::wstring args = selector;
-
-			function = function.substr(0, startParens);
-			args = args.substr(startParens + 1, endParens - 1);
+			//function is the part pre opening parens, args is the part in the parens
+			std::wstring function = selector.substr(0, startParens);
+			std::wstring args = selector.substr(startParens + 1, endParens - startParens);
 
 			strValue = plugin->GetSectionVariable(function, args);
 			if (!strValue.empty())
 			{
 				return true;
 			}
+			//If string was empty then plugin either does not support or had nothing to do with it
 			return false;
 		}
 

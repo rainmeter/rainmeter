@@ -243,11 +243,12 @@ void MeasurePlugin::Command(const std::wstring& command)
 ** Runs function GetSectionVariable expecting it to return a finished string
 **
 */
-LPCWSTR MeasurePlugin::GetSectionVariable(const std::wstring& function, const std::wstring& args)
+const WCHAR* MeasurePlugin::GetSectionVariable(const std::wstring& function, const std::wstring& arguments)
 {
+	//Check if plugin has section variable support
 	if (m_GetSectionVariableFunc)
 	{
-		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, function.c_str(), args.c_str());
+		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, function.c_str(), arguments.c_str());
 	}
 	else
 	{
