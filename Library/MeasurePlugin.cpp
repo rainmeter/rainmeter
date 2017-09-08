@@ -246,6 +246,13 @@ bool MeasurePlugin::GetSectionVariable(const std::string function, const WCHAR*&
 {
 	m_GetSectionVariableFunc = GetProcAddress(m_Plugin, function.c_str());
 
+	//Check if the function is offlimits
+	if (function == "Initialize" || function == "Reload" || function == "Update" ||
+		function == "GetString" || function == "ExecuteBang")
+	{
+		m_GetSectionVariableFunc = nullptr;
+	}
+
 	//Check if function exists
 	if (m_GetSectionVariableFunc)
 	{
