@@ -134,7 +134,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
-	m_GetSectionVariableFunc = GetProcAddress(m_Plugin, "GetSectionVariable");
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -243,15 +242,17 @@ void MeasurePlugin::Command(const std::wstring& command)
 ** Runs function GetSectionVariable expecting it to return a finished string
 **
 */
-const WCHAR* MeasurePlugin::GetSectionVariable(const std::wstring& function, const std::wstring& arguments)
+bool MeasurePlugin::GetSectionVariable(const std::string function, const WCHAR*& retValue, const int argc, const WCHAR* argv[])
 {
-	//Check if plugin has section variable support
+	m_GetSectionVariableFunc = GetProcAddress(m_Plugin, function.c_str());
+
+	//Check if function exists
 	if (m_GetSectionVariableFunc)
 	{
-		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, function.c_str(), arguments.c_str());
+		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, retValue, argc, argv);
 	}
 	else
 	{
-		return L"";
+		return false;
 	}
 }

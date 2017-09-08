@@ -102,6 +102,7 @@ public:
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+	static std::vector<LPCWSTR> Tokenize2WCHAR(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
 	static double ParseDouble(LPCTSTR string, double defValue);
 	static int ParseInt(LPCTSTR string, int defValue);
