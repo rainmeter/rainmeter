@@ -389,10 +389,13 @@ valueType = ValueType::EncodeUrl;
 			}
 
 			//Section variable will be stored here until returned
-			const WCHAR* temp;
+			const WCHAR* temp = L"";
 			bool outcome = plugin->GetSectionVariable(function, temp, tokenVector.size(), token.data());
 
-			strValue = temp;
+			if (outcome)
+			{
+				strValue = temp;
+			}
 			return outcome;
 
 		}
