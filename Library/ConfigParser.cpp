@@ -863,7 +863,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				//  Special case 3: Always process escaped character references.
 
 				if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
-					(kType == VariableType::CharacterReference) ||													// Special case 3
+					(kType == VariableType::CharacterReference) ||										// Special case 3
 					(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
 				{
 					switch (kType)
