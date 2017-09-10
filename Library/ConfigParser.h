@@ -40,10 +40,11 @@ class ConfigParser
 {
 public:
 	enum class VariableType : BYTE
-	{					// Old Style:                         New Style:
-		Section,		// [MeasureName], [Meter:X], etc.     [&MeasureName], [&Meter:X], etc.
-		Variable,		// #Variable#                         [#Variable]
-		Mouse			// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
+	{										// Old Style:                         New Style:
+		Section,							// [MeasureName], [Meter:X], etc.     [&MeasureName], [&Meter:X], etc.
+		Variable,							// #Variable#                         [#Variable]
+		Mouse,								// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
+		CharacterReference					// Not available.                     [\8364], [\x20AC], [\X20AC], etc.
 	};
 
 	ConfigParser();

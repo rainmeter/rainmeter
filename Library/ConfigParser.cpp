@@ -56,6 +56,7 @@ ConfigParser::ConfigParser() :
 		c_VariableMap.emplace(VariableType::Section, L'&');
 		c_VariableMap.emplace(VariableType::Variable, L'#');
 		c_VariableMap.emplace(VariableType::Mouse, L'$');
+		c_VariableMap.emplace(VariableType::CharacterReference, L'\\');
 	}
 }
 
@@ -832,9 +833,16 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 			}
 			else
 			{
-				--si;  // Get the key character (#, $, &)
+				--si;  // Get the key character (#, $, &, \)
 				const WCHAR key = result.substr(si, 1).c_str()[0];
 				std::wstring val = result.substr(si + 1, end - si - 1);
+
+				// Variable name is empty ([#], [&], [$], [\])
+				if (val.empty())
+				{
+					start = end + 1;
+					continue;
+				}
 
 				// Find "type" of key
 				VariableType kType = VariableType::Section;
@@ -852,8 +860,10 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				//    because mouse variables are parsed and replaced before the other new-style variables.
 				//  Special case 2: Places where regular variables need to be parsed without any section variables
 				//    parsed afterward. One example is when "@Include" is parsed.
+				//  Special case 3: Always process escaped character references.
 
-				if ((key == c_VariableMap.find(type)->second) ||										// Special cases
+				if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
+					(kType == VariableType::CharacterReference) ||													// Special case 3
 					(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
 				{
 					switch (kType)
@@ -921,6 +931,35 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 								replaced = true;
 								found = true;
 							}
+						}
+						break;
+
+					case VariableType::CharacterReference:
+						{
+							int base = 10;
+							if (val[0] == L'x' || val[0] == L'X')
+							{
+								base = 16;
+								val.erase(0, 1);  // remove 'x' or 'X'
+
+								if (val.empty())
+								{
+									break;  // Invalid escape sequence [\x]
+								}
+							}
+
+							WCHAR* pch = nullptr;
+							errno = 0;
+							long ch = wcstol(val.c_str(), &pch, base);
+							if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)
+							{
+								break;  // Invalid character
+							}
+
+							result.replace(start, end - start + 1, 1, (WCHAR)ch);
+							++start;
+							replaced = true;
+							found = true;
 						}
 						break;
 					}
