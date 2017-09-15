@@ -837,19 +837,24 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				const WCHAR key = result.substr(si, 1).c_str()[0];
 				std::wstring val = result.substr(si + 1, end - si - 1);
 
-				// Variable name is empty ([#], [&], [$], [\])
-				if (val.empty())
-				{
-					start = end + 1;
-					continue;
-				}
-
 				// Find "type" of key
+				bool isValid = false;
 				VariableType kType = VariableType::Section;
 				for (auto& t : c_VariableMap)
 				{
-					kType = t.first;
-					if (t.second == key) break;
+					if (t.second == key)
+					{
+						kType = t.first;
+						isValid = true;
+						break;
+					}
+				}
+
+				// |key| is invalid or variable name is empty ([#], [&], [$], [\])
+				if (!isValid || val.empty())
+				{
+					start = end + 1;
+					continue;
 				}
 
 				// Since regular variables are replaced just before section variables in most cases, we replace
