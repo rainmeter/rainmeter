@@ -303,11 +303,34 @@ void PlayerITunes::UpdateData()
 {
 	if ((m_Initialized || CheckWindow()))
 	{
+		// Try getting track info and player state
+		ITPlayerState state;
+		if (SUCCEEDED(m_iTunes->get_PlayerState(&state)))
+		{
+			if (state == ITPlayerStateStopped)
+			{
+				// Determine if paused of stopped
+				long position = 0;
+				m_iTunes->get_PlayerPosition(&position);
+
+				if (position != 0)
+				{
+					m_State = STATE_PAUSED;
+				}
+			}
+			else if (state == ITPlayerStatePlaying)
+			{
+				m_State = STATE_PLAYING;
+				OnTrackChange();
+			}
+		}
+
 		if (m_State != STATE_STOPPED)
 		{
 			long position = 0;
 			m_iTunes->get_PlayerPosition(&position);
 			m_Position = (UINT)position;
+			//OnTrackChange();
 		}
 		// Check the shuffle and repeat state since there is no onChange event
 		IITPlaylist* playlist;
@@ -346,98 +369,108 @@ void PlayerITunes::OnTrackChange()
 		BSTR tmpStr;
 		long tmpVal;
 
-		// Get metadata
-		track->get_Artist(&tmpStr);
-		tmpStr ? (m_Artist = tmpStr) : m_Artist.clear();
-
-		track->get_Name(&tmpStr);
-		tmpStr ? (m_Title = tmpStr) : m_Title.clear();
-
-		track->get_Album(&tmpStr);
-		tmpStr ? (m_Album = tmpStr) : m_Album.clear();
-
-		track->get_Genre(&tmpStr);;
-		tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
-
-		track->get_Duration(&tmpVal);
-		m_Duration = (UINT)tmpVal;
-
 		// Rating is 0 - 100, divide to 0 - 5
 		track->get_Rating(&tmpVal);
 		tmpVal /= 20L;
 		m_Rating = (UINT)tmpVal;
 
-		track->get_TrackNumber(&tmpVal);
-		m_Number = (UINT)tmpVal;
-
-		track->get_Year(&tmpVal);
-		m_Year = (UINT)tmpVal;
-
-		IITPlaylist* playlist;
-		hr = track->get_Playlist(&playlist);
-		if (SUCCEEDED(hr))
+		// Get metadata, check if the same as existing info and dont update any further if all the same
+		track->get_Name(&tmpStr);
+		if (m_Title != tmpStr)
 		{
-			ITPlaylistRepeatMode repeat;
-			hr = playlist->get_SongRepeat(&repeat);
-			if (SUCCEEDED(hr))
+			tmpStr ? (m_Title = tmpStr) : m_Title.clear();
+
+			track->get_Album(&tmpStr);
+			if (m_Album != tmpStr)
 			{
-				m_Repeat = repeat != ITPlaylistRepeatModeOff;
-			}
+				tmpStr ? (m_Album = tmpStr) : m_Album.clear();
 
-			playlist->Release();
-		}
-
-		IITFileOrCDTrack* file;
-		hr = track->QueryInterface(&file);
-		if (SUCCEEDED(hr))
-		{
-			file->get_Location(&tmpStr);
-			file->Release();
-			if (tmpStr && wcscmp(tmpStr, m_FilePath.c_str()) != 0)
-			{
-				++m_TrackCount;
-				m_FilePath = tmpStr;
-			}
-		}
-
-		if (m_Measures & MEASURE_COVER)
-		{
-			m_CoverPath.clear();
-
-			// Check for embedded art through iTunes interface
-			IITArtworkCollection* artworkCollection;
-			hr = track->get_Artwork(&artworkCollection);
-
-			if (SUCCEEDED(hr))
-			{
-				long count;
-				artworkCollection->get_Count(&count);
-
-				if (count > 0)
+				track->get_Artist(&tmpStr);
+				if (m_Artist != tmpStr)
 				{
-					IITArtwork* artwork;
-					hr = artworkCollection->get_Item(1, &artwork);
+					tmpStr ? (m_Artist = tmpStr) : m_Artist.clear();
 
+					track->get_Genre(&tmpStr);;
+					tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
+
+					track->get_Duration(&tmpVal);
+					m_Duration = (UINT)tmpVal;
+
+
+					track->get_TrackNumber(&tmpVal);
+					m_Number = (UINT)tmpVal;
+
+					track->get_Year(&tmpVal);
+					m_Year = (UINT)tmpVal;
+
+					IITPlaylist* playlist;
+					hr = track->get_Playlist(&playlist);
 					if (SUCCEEDED(hr))
 					{
-						_bstr_t coverPath = m_TempCoverPath.c_str();
-						hr = artwork->SaveArtworkToFile(coverPath);
+						ITPlaylistRepeatMode repeat;
+						hr = playlist->get_SongRepeat(&repeat);
 						if (SUCCEEDED(hr))
 						{
-							m_CoverPath = m_TempCoverPath;
+							m_Repeat = repeat != ITPlaylistRepeatModeOff;
 						}
 
-						artwork->Release();
+						playlist->Release();
+					}
+
+					IITFileOrCDTrack* file;
+					hr = track->QueryInterface(&file);
+					if (SUCCEEDED(hr))
+					{
+						file->get_Location(&tmpStr);
+						file->Release();
+						if (tmpStr && wcscmp(tmpStr, m_FilePath.c_str()) != 0)
+						{
+							++m_TrackCount;
+							m_FilePath = tmpStr;
+						}
+					}
+
+					if (m_Measures & MEASURE_COVER)
+					{
+						m_CoverPath.clear();
+
+						// Check for embedded art through iTunes interface
+						IITArtworkCollection* artworkCollection;
+						hr = track->get_Artwork(&artworkCollection);
+
+						if (SUCCEEDED(hr))
+						{
+							long count;
+							artworkCollection->get_Count(&count);
+
+							if (count > 0)
+							{
+								IITArtwork* artwork;
+								hr = artworkCollection->get_Item(1, &artwork);
+
+								if (SUCCEEDED(hr))
+								{
+									_bstr_t coverPath = m_TempCoverPath.c_str();
+									hr = artwork->SaveArtworkToFile(coverPath);
+									if (SUCCEEDED(hr))
+									{
+										m_CoverPath = m_TempCoverPath;
+									}
+
+									artwork->Release();
+								}
+							}
+
+							artworkCollection->Release();
+						}
+					}
+
+					if (m_Measures & MEASURE_LYRICS)
+					{
+						FindLyrics();
 					}
 				}
-
-				artworkCollection->Release();
 			}
-		}
-
-		if (m_Measures & MEASURE_LYRICS)
-		{
-			FindLyrics();
 		}
 
 		track->Release();
