@@ -19,7 +19,8 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_GetSectionVariableFunc()
 {
 }
 
@@ -234,5 +235,31 @@ void MeasurePlugin::Command(const std::wstring& command)
 	else
 	{
 		Measure::Command(command);
+	}
+}
+
+/*
+** Runs function GetSectionVariable expecting it to return a finished string
+**
+*/
+bool MeasurePlugin::GetSectionVariable(const std::string function, const WCHAR*& retValue, const int argc, const WCHAR* argv[])
+{
+	m_GetSectionVariableFunc = GetProcAddress(m_Plugin, function.c_str());
+
+	//Check if the function is offlimits
+	if (function == "Initialize" || function == "Reload" || function == "Update" ||
+		function == "GetString" || function == "ExecuteBang")
+	{
+		m_GetSectionVariableFunc = nullptr;
+	}
+
+	//Check if function exists
+	if (m_GetSectionVariableFunc)
+	{
+		return ((GETSECTIONVAR)m_GetSectionVariableFunc)(m_PluginData, retValue, argc, argv);
+	}
+	else
+	{
+		return false;
 	}
 }

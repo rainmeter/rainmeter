@@ -15,6 +15,7 @@
 #include "Measure.h"
 #include "MeasureScript.h"
 #include "MeasureTime.h"
+#include "MeasurePlugin.h"
 #include "Meter.h"
 #include "resource.h"
 
@@ -252,6 +253,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// Script: [ScriptMeasure:SomeFunction()], [ScriptMeasure:Something('Something')]
 	// NOTE: Parenthesis are required. Arguments enclosed in single or double quotes are treated as strings, otherwise
 	//   they are treated as numbers. If the lua function returns a number, it will be converted to a string.
+	// Plugin: [PluginMeasure:()], [PluginMeasure:('Something')], [PluginMeasure:SomeFunction()], [PluginMeasure:SomeFunction('Something')]
+	// NOTE: Parenthesis are required. Arguments will be handled by plugin and will be passed as is combined as a single string
 	enum class ValueType
 	{
 		Raw,
@@ -261,7 +264,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		EscapeRegExp,
 		EncodeUrl,
 		TimeStamp,
-		Script
+		Script,
+		Plugin
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -280,7 +284,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else if (_wcsicmp(selectorSz, L"EncodeUrl") == 0)
 		{
-			valueType = ValueType::EncodeUrl;
+valueType = ValueType::EncodeUrl;
 		}
 		else if (_wcsicmp(selectorSz, L"TimeStamp") == 0)
 		{
@@ -296,8 +300,15 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				MeasureScript* script = (MeasureScript*)measure;
 				return script->CommandWithReturn(selectorSz, strValue);
 			}
-
-			return false;
+			else if (measure && measure->GetTypeID() == TypeID<MeasurePlugin>())
+			{
+				//Unused, this else if is just so a return does not happen too early
+				valueType = ValueType::Plugin;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		selectorSz = L"";
@@ -326,8 +337,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				}
 
 				strVariable.resize(colonPos);
-			}
-			while (0);
+			} while (0);
 		}
 	}
 
@@ -351,6 +361,44 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			MeasureTime* time = (MeasureTime*)measure;
 			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 			return true;
+		}
+		else if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+
+			size_t startParens = selector.find_first_of('(');
+			size_t endParens = selector.find_last_of(')') - 1;
+
+			//function is the part pre opening parens, args is the part in the parens
+			std::wstring functionW = selector.substr(0, startParens);
+			std::wstring args = selector.substr(startParens + 1, endParens - startParens);
+
+			//Convert function from wide string to single byte
+			using convert_type = std::codecvt<wchar_t, char, std::mbstate_t>;
+			std::wstring_convert<convert_type, wchar_t> converter;
+			std::string function = converter.to_bytes(functionW);
+
+			//Tokenize args into a vector
+
+			std::vector<std::wstring> tokenVector = ConfigParser::Tokenize2(args, L',', PairedPunctuation::SingleQuote);
+			//std::vector<WCHAR*> token(tokenVector.begin(), tokenVector.end());
+			std::vector<const WCHAR*> token;
+
+			for (int i = 0; i < tokenVector.size(); ++i)
+			{
+				token.push_back(tokenVector.at(i).c_str());
+			}
+
+			//Section variable will be stored here until returned
+			const WCHAR* temp = L"";
+			bool outcome = plugin->GetSectionVariable(function, temp, tokenVector.size(), token.data());
+
+			if (outcome)
+			{
+				strValue = temp;
+			}
+			return outcome;
+
 		}
 
 		int scale = 1;
