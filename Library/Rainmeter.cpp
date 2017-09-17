@@ -1282,7 +1282,12 @@ void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, 
 */
 void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
-	m_CommandHandler.ExecuteCommand(command, skin, multi);
+	std::wstring tmpSz = command;
+	if (skin)
+	{
+		skin->GetParser().ReplaceMeasures(tmpSz);
+	}
+	m_CommandHandler.ExecuteCommand(tmpSz.c_str(), skin, multi);
 }
 
 /*

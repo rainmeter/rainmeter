@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "../Common/PathUtil.h"
 #include "CommandHandler.h"
-#include "ConfigParser.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "Measure.h"
@@ -257,7 +256,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			if (pos)
 			{
 				bang.assign(command, 0, pos - command);
-				args = ParseString(pos + 1, skin ? &skin->GetParser() : nullptr);
+				args = ParseString(pos + 1);
 			}
 			else
 			{
@@ -299,7 +298,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					const WCHAR* newCommand = bangs.c_str() + start;
 					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
 					{
-						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
+						auto args = ParseString(newCommand + wcslen(L"!Delay "));
 						if (args.size() == 1)
 						{
 							auto delay = ConfigParser::ParseUInt(args[0].c_str(), 0);
@@ -358,7 +357,6 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 
 					if (skin)
 					{
-						skin->GetParser().ReplaceMeasures(sound);
 						skin->MakePathAbsolute(sound);
 					}
 
@@ -374,12 +372,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 		}
 
 		// Run command
-		std::wstring tmpSz = command;
-		if (skin)
-		{
-			skin->GetParser().ReplaceMeasures(tmpSz);
-		}
-		RunCommand(tmpSz);
+		RunCommand(command);
 	}
 }
 
@@ -490,7 +483,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 ** Splits strings into parts.
 **
 */
-std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
+std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str)
 {
 	std::vector<std::wstring> result;
 
@@ -515,11 +508,6 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 					}
 				}
 				while (pos != std::wstring::npos);
-			}
-
-			if (parser)
-			{
-				parser->ReplaceMeasures(string);
 			}
 
 			result.push_back(string);
