@@ -13,6 +13,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "MeasurePlugin.h"
 #include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
@@ -261,7 +262,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		EscapeRegExp,
 		EncodeUrl,
 		TimeStamp,
-		Script
+		Script,
+		Plugin
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -290,11 +292,20 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			// Check if calling a Script measure
 			Measure* measure = m_Skin->GetMeasure(strVariable);
-			if (measure && measure->GetTypeID() == TypeID<MeasureScript>())
+			if (!measure) return false;
+
+			const auto type = measure->GetTypeID();
+			if (type == TypeID<MeasureScript>())
 			{
 				valueType = ValueType::Script;  // Needed?
 				MeasureScript* script = (MeasureScript*)measure;
 				return script->CommandWithReturn(selectorSz, strValue);
+			}
+			else if (type == TypeID<MeasurePlugin>())
+			{
+				valueType = ValueType::Plugin;  // Needed?
+				MeasurePlugin* plugin = (MeasurePlugin*)measure;
+				return plugin->CommandWithReturn(selectorSz, strValue);
 			}
 
 			return false;
