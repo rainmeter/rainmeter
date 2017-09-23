@@ -230,10 +230,8 @@
 #define ID_STR_CUSTOMSKINACTIONS                     2146
 #define ID_STR_NUMBER                                2147
 #define ID_STR_STRING                                2148
-#define ID_STR_COPYFROMNUMBER                        2149
-#define ID_STR_COPYFROMSTRING                        2150
-#define ID_STR_INSTALLEDPLUGINS                      2151
-#define ID_STR_BUILTINPLUGINS                        2152
+#define ID_STR_INSTALLEDPLUGINS                      2149
+#define ID_STR_BUILTINPLUGINS                        2150
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000

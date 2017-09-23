@@ -1044,8 +1044,8 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
-					MENU_ITEM(IDM_COPYNUMBERVALUE, ID_STR_COPYFROMNUMBER),
-					MENU_ITEM(IDM_COPYSTRINGVALUE, ID_STR_COPYFROMSTRING)
+					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
+					MENU_ITEM(IDM_COPYSTRINGVALUE, 0)
 				};
 
 				static const MenuTemplate s_VariableMenu[] =
@@ -1061,6 +1061,20 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				if (menu)
 				{
+					if (isMeasure)
+					{
+						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
+						{
+							std::wstring name = GetString(id);
+							name += L": ";
+							name += GetString(ID_STR_COPYTOCLIPBOARD);
+							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
+						};
+
+						setMenuItem(ID_STR_NUMBER, IDM_COPYNUMBERVALUE);
+						setMenuItem(ID_STR_STRING, IDM_COPYSTRINGVALUE);
+					}
+
 					POINT pt = System::GetCursorPosition();
 
 					// Show context menu
