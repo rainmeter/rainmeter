@@ -1194,7 +1194,7 @@ void DialogAbout::TabPlugins::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = GetString(ID_STR_INSTALLEDPLUGINS);
+	lvg.pszHeader = GetString(ID_STR_EXTERNALPLUGINS);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
 	lvg.pszHeader = GetString(ID_STR_BUILTINPLUGINS);
