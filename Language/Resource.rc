@@ -204,4 +204,6 @@ STRINGTABLE
     ID_STR_STRING, "String"
     ID_STR_COPYFROMNUMBER, "Copy number value"
     ID_STR_COPYFROMSTRING, "Copy string value"
+    ID_STR_INSTALLEDPLUGINS, "Installed plugins"
+    ID_STR_BUILTINPLUGINS, "Built-in plugins"
 }

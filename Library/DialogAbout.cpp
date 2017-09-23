@@ -1151,6 +1151,20 @@ void DialogAbout::TabPlugins::Initialize()
 {
 	// Add columns to the list view
 	HWND item = GetControl(Id_PluginsListView);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVGROUP lvg;
+	lvg.cbSize = sizeof(LVGROUP);
+	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+	lvg.iGroupId = 0;
+	lvg.pszHeader = GetString(ID_STR_INSTALLEDPLUGINS);
+	ListView_InsertGroup(item, 0, &lvg);
+	lvg.iGroupId = 1;
+	lvg.pszHeader = GetString(ID_STR_BUILTINPLUGINS);
+	ListView_InsertGroup(item, 1, &lvg);
+
+	ListView_EnableGroupView(item, TRUE);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1174,7 +1188,7 @@ void DialogAbout::TabPlugins::Initialize()
 	Resize(rc.right, rc.bottom);
 
 	LVITEM vitem;
-	vitem.mask = LVIF_TEXT;
+	vitem.mask = LVIF_TEXT | LVIF_GROUPID;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
@@ -1307,9 +1321,11 @@ void DialogAbout::TabPlugins::Initialize()
 		FindClose(hSearch);
 	};
 
+	vitem.iGroupId = 1;
 	findPlugins(GetRainmeter().GetPluginPath());
 	if (GetRainmeter().HasUserPluginPath())
 	{
+		vitem.iGroupId = 0;
 		findPlugins(GetRainmeter().GetUserPluginPath());
 	}
 
