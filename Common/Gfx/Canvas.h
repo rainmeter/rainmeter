@@ -12,6 +12,7 @@
 #include "Shape.h"
 #include "TextFormatD2D.h"
 #include "Util/WICBitmapDIB.h"
+#include "../Cache.h"
 #include <memory>
 #include <string>
 #include <GdiPlus.h>
@@ -24,6 +25,8 @@
 #include <stack>
 
 namespace Gfx {
+
+class BitmapBase;
 
 // Wraps Direct2D/DirectWrite.
 class Canvas
@@ -99,6 +102,9 @@ private:
 	friend class Curve;
 	friend class QuadraticCurve;
 	friend class Path;
+	friend class BitmapD2DLoader;
+	friend class BitmapD2D;
+	friend class SingleBitmapD2D;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
@@ -116,6 +122,8 @@ private:
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
 
 	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
+
+	Cache<BitmapBase*> m_BitmapCache;
 
 	int m_W;
 	int m_H;

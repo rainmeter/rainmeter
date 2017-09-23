@@ -25,11 +25,13 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Cache.cpp" />
+    <ClCompile Include="Gfx\BitmapD2D.cpp" />
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="FileUtil.cpp" />
+    <ClCompile Include="Gfx\Bitmap\BitmapD2DLoader.cpp" />
+    <ClCompile Include="Gfx\Bitmap\SingleBitmapD2D.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
@@ -76,10 +78,13 @@
     <ClCompile Include="StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Gfx\BitmapD2D.h" />
     <ClInclude Include="Cache.h" />
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="FileUtil.h" />
+    <ClInclude Include="Gfx\Bitmap\BitmapD2DLoader.h" />
+    <ClInclude Include="Gfx\Bitmap\SingleBitmapD2D.h" />
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />

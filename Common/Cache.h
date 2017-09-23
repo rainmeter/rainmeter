@@ -68,7 +68,7 @@ CacheItem<T>::CacheItem(void* cache, const std::wstring& key, T& newBitmap) : m_
 template <class T>
 CacheItem<T>::~CacheItem()
 {
-	Deleter<T>::Del(m_Bitmap);
+	Deleter<T>::Delete(m_Bitmap);
 }
 
 template <class T>
