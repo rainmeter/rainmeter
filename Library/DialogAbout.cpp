@@ -984,6 +984,19 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPY:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				std::wstring tmpSz(128, L'0');
+				ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 128);
+				System::SetClipboardText(tmpSz);
+			}
+		}
+		break;
+
 	default:
 		return 1;
 	}
@@ -1028,15 +1041,24 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				lvi.iSubItem = 0;
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
-				if (lvi.iGroupId != 0) break;
 
-				static const MenuTemplate s_Menu[] =
+				static const MenuTemplate s_MeasureMenu[] =
 				{
 					MENU_ITEM(IDM_COPYNUMBERVALUE, ID_STR_COPYFROMNUMBER),
 					MENU_ITEM(IDM_COPYSTRINGVALUE, ID_STR_COPYFROMSTRING)
 				};
 
-				HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+				static const MenuTemplate s_VariableMenu[] =
+				{
+					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+				};
+
+				bool isMeasure = lvi.iGroupId == 0;
+				HMENU menu = MenuTemplate::CreateMenu(
+					isMeasure ? s_MeasureMenu : s_VariableMenu,
+					isMeasure ? _countof(s_MeasureMenu) : _countof(s_VariableMenu),
+					GetString);
+
 				if (menu)
 				{
 					POINT pt = System::GetCursorPosition();
