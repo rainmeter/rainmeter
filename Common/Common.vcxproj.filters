@@ -119,6 +119,7 @@
     <ClCompile Include="Gfx\Shapes\Path.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
+    <ClCompile Include="Cache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -242,6 +243,7 @@
     <ClInclude Include="Gfx\Shapes\Path.h">
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
+    <ClInclude Include="Cache.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

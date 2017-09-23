@@ -25,6 +25,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cache.cpp" />
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
@@ -75,6 +76,7 @@
     <ClCompile Include="StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Cache.h" />
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="FileUtil.h" />
