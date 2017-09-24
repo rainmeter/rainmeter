@@ -690,6 +690,7 @@ Function HandlePlugins
 		Delete "$R9"
 	${ElseIf} $R7 != "ActionTimer.dll"
 	${AndIf} $R7 != "AdvancedCPU.dll"
+	${AndIf} $R7 != "AudioLevel.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
