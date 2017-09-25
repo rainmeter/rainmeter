@@ -32,7 +32,7 @@ VS_VERSION_INFO VERSIONINFO
             VALUE "OriginalFilename", "Rainmeter.exe"
             VALUE "CompanyName", "Rainmeter"
             VALUE "ProductName", "Rainmeter"
-            VALUE "FileDescription", "Rainmeter desktop customization tool"						
+            VALUE "FileDescription", "Rainmeter desktop customization tool"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
 #else
