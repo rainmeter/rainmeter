@@ -10,6 +10,7 @@ ${LangFileString} DOTNETINSTERROR         ".NET $instArc telepítése sikertelen
 ${LangFileString} RAINMETERCLOSEERROR     "A Rainmeter bezárása sikertelen volt.$\n$\nKérlek zárd be a Rainmetert manuálisan, majd próbáld újra."
 ${LangFileString} SETTINGSFILEERROR       "A beállításfájl (Rainmeter.ini) a telepítési mappában található. Ha ott marad, az problémát okozhat, ha az alkalmazást többen használják a programot, vagy valaki akinek korlátozott jogosultsága van.$\n$\nÁthelyezed a fájlt az application data mappába?"
 ${LangFileString} SETTINGSMOVEERROR       "Nem sikerült áthelyezni a '$INSTDIR\Rainmeter.ini' fájlt a(z) '$APPDATA\Rainmeter\Rainmeter.ini' helyre."
+${LangFileString} SELECTLANGUAGE          " "
 ${LangFileString} INSTALLOPTIONS          "Telepítési beállítások"
 ${LangFileString} INSTALLOPTIONSDESC      "További telepítési beállítások kiválasztása"
 ${LangFileString} STANDARDINST            "Szabványos telepítés (ajánlott)"
