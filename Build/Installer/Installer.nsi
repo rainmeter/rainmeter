@@ -22,6 +22,8 @@ Unicode true
  !define VERSION_FULL "0.0.0.0"
  !define VERSION_SHORT "0.0"
  !define VERSION_REVISION "000"
+ !define VERSION_MAJOR "0"
+ !define VERSION_MINOR "0"
 !else
  !define INCLUDEFILES
 !endif
@@ -67,6 +69,8 @@ Page custom PageOptions PageOptionsOnLeave
 
 UninstPage custom un.PageOptions un.GetOptions
 !insertmacro MUI_UNPAGE_INSTFILES
+
+!define /date INSTALLDATE "%Y%m%d"
 
 ; Include languages
 !macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
@@ -594,15 +598,32 @@ SkipIniMove:
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "Language" "$LANGUAGE"
 		WriteRegDWORD HKLM "SOFTWARE\Rainmeter" "NonDefault" $NonDefaultLanguage
 
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "Publisher" "Rainmeter"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayIcon" "$INSTDIR\Rainmeter.exe,0"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "Comments" "Rainmeter desktop customization tool"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "HelpLink" "http://rainmeter.net"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "URLUpdateInfo" "http://rainmeter.net"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "URLInfoAbout" "http://rainmeter.net"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "UninstallString" "$INSTDIR\uninst.exe"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallDate" "${INSTALLDATE}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallLocation" "$INSTDIR"
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "NoModify" "1"
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "NoRepair" "1"
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMajor" "${VERSION_MAJOR}"
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMinor" "${VERSION_MINOR}"
+
+		; Let Windows know the approximate size of the installation
+		${GetSize} "$INSTDIR" "/S=0K" $2 $3 $4
+		IntFmt $2 "0x%08X" $2
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize" "$2"
 
 !ifdef BETA
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Beta release"
 !else
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Final release"
 !endif
 
 		; Create .rmskin association
