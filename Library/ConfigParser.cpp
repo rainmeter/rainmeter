@@ -825,6 +825,9 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 {
 	bool replaced = false;
 
+	size_t prevStart = 0;
+	std::wstring prevVar = L"";
+
 	size_t start = 0;
 	size_t end = 0;
 	while ((end = result.find(L']', start)) != std::wstring::npos)
@@ -847,6 +850,14 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				--si;  // Get the key character (#, $, &, \)
 				const WCHAR key = result.substr(si, 1).c_str()[0];
 				std::wstring val = result.substr(si + 1, end - si - 1);
+
+				// Avoid self references
+				std::wstring original = result.substr(si, end - si).c_str();
+				if (prevStart == start &&
+					_wcsicmp(original.c_str(), prevVar.c_str()) == 0) break;
+
+				prevStart = start;
+				prevVar = original;
 
 				// Find "type" of key
 				bool isValid = false;
@@ -894,7 +905,6 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 
 								// Measure found, replace it with the value
 								result.replace(start, end - start + 1, value, valueLen);
-								start += valueLen;
 								replaced = true;
 								found = true;
 							}
@@ -903,11 +913,8 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 								std::wstring value;
 								if (GetSectionVariable(val, value))
 								{
-									size_t valueLen = value.length();
-
 									// Replace section variable with the value
 									result.replace(start, end - start + 1, value);
-									start += valueLen;
 									replaced = true;
 									found = true;
 								}
@@ -922,11 +929,8 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 							const std::wstring* value = GetVariable(val);
 							if (value)
 							{
-								size_t valueLen = (*value).length();
-
 								// Variable found, replace it with the value
 								result.replace(start, end - start + 1, *value);
-								start += valueLen;
 								replaced = true;
 								found = true;
 							}
@@ -939,11 +943,8 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 							std::wstring value = GetMouseVariable(val, meter);
 							if (!value.empty())
 							{
-								size_t valueLen = value.length();
-
 								// Mouse variable found, replace it with the value
 								result.replace(start, end - start + 1, value);
-								start += valueLen;
 								replaced = true;
 								found = true;
 							}
@@ -973,7 +974,6 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 							}
 
 							result.replace(start, end - start + 1, 1, (WCHAR)ch);
-							++start;
 							replaced = true;
 							found = true;
 						}
