@@ -854,7 +854,11 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				// Avoid self references
 				std::wstring original = result.substr(si, end - si).c_str();
 				if (prevStart == start &&
-					_wcsicmp(original.c_str(), prevVar.c_str()) == 0) break;
+					_wcsicmp(original.c_str(), prevVar.c_str()) == 0)
+				{
+					start = end + 1;
+					continue;
+				}
 
 				prevStart = start;
 				prevVar = original;
