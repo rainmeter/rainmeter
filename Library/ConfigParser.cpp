@@ -856,6 +856,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				if (prevStart == start &&
 					_wcsicmp(original.c_str(), prevVar.c_str()) == 0)
 				{
+					LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
 					start = end + 1;
 					continue;
 				}
