@@ -32,6 +32,13 @@ static int GetOption(lua_State* L)
 
 	const std::wstring section = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
+
+	const std::wstring& style = parser.ReadString(self->GetName(), L"MeterStyle", L"");
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
+
 	const std::wstring& value =
 		parser.ReadString(self->GetName(), section.c_str(), defValue.c_str());
 	LuaHelper::PushWide(value);
