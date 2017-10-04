@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+class ConfigParser;
 class Skin;
 
 enum class Bang
@@ -117,7 +118,7 @@ public:
 	static void RunCommand(std::wstring command);
 	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
 
-	static std::vector<std::wstring> ParseString(const WCHAR* str);
+	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
 
 	static void DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
