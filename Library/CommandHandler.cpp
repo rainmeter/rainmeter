@@ -297,7 +297,6 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					start = bangs.find_first_not_of(L" \t\r\n", start + 1, 4);
 
 					const WCHAR* newCommand = bangs.c_str() + start;
-
 					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
 					{
 						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
@@ -532,6 +531,11 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 					}
 				}
 				while (pos != std::wstring::npos);
+			}
+
+			if (parser)
+			{
+				parser->ReplaceMeasures(string);
 			}
 
 			result.push_back(string);
