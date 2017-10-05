@@ -1508,7 +1508,16 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_DBLCLK:
 		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
 		{
-			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+			POINT pt = System::GetCursorPosition();
+
+			TVHITTESTINFO ht;
+			ht.pt = pt;
+			ScreenToClient(nm->hwndFrom, &ht.pt);
+
+			if (TreeView_HitTest(nm->hwndFrom, &ht) && !(ht.flags & TVHT_ONITEMBUTTON))
+			{
+				OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+			}
 		}
 		break;
 
