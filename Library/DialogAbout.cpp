@@ -1034,7 +1034,6 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
 
-				// Only show context menu for 'Measures' group
 				LVITEM lvi;
 				lvi.mask = LVIF_GROUPID;
 				lvi.iItem = item->iItem;
