@@ -1018,7 +1018,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPYNUMBERVALUE:
 		{
 			HWND hwnd = GetControl(Id_SkinsListView);
-			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
 				std::wstring tmpSz(128, L'0');
@@ -1031,7 +1031,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPYSTRINGVALUE:
 		{
 			HWND hwnd = GetControl(Id_SkinsListView);
-			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
 				WCHAR buffer[512];
@@ -1055,7 +1055,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPY:
 		{
 			HWND hwnd = GetControl(Id_SkinsListView);
-			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
 				std::wstring tmpSz(128, L'0');
@@ -1097,7 +1097,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_RCLICK:
 		if (nm->idFrom == Id_SkinsListView)
 		{
-			int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
