@@ -584,6 +584,32 @@ INT_PTR DialogAbout::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPY:
+		{
+			HWND hwnd = GetControl(Id_LogListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512];
+
+				// Get message.
+				ListView_GetItemText(hwnd, sel, 3, buffer, 512);
+				std::wstring message = buffer;
+
+				// Get source (if any).
+				ListView_GetItemText(hwnd, sel, 2, buffer, 512);
+				if (*buffer)
+				{
+					message += L" (";
+					message += buffer;
+					message += L')';
+				}
+
+				System::SetClipboardText(message);
+			}
+		}
+		break;
+
 	default:
 		return 1;
 	}
@@ -621,6 +647,48 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					System::SetClipboardText(message);
+				}
+			}
+		}
+		break;
+
+	case NM_RCLICK:
+		if (nm->idFrom == Id_LogListView)
+		{
+			HWND hwnd = nm->hwndFrom;
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
+
+				LVITEM lvi;
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = item->iItem;
+				lvi.iSubItem = 0;
+				lvi.iGroupId = -1;
+				ListView_GetItem(hwnd, &lvi);
+				
+				static const MenuTemplate s_MessageMenu[] =
+				{
+					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+				};
+
+				HMENU menu = MenuTemplate::CreateMenu(s_MessageMenu, _countof(s_MessageMenu), GetString);
+				if (menu)
+				{
+					POINT pt = System::GetCursorPosition();
+
+					// Show context menu
+					TrackPopupMenu(
+						menu,
+						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+						pt.x,
+						pt.y,
+						0,
+						m_Window,
+						nullptr);
+
+					DestroyMenu(menu);
 				}
 			}
 		}
