@@ -50,7 +50,7 @@ struct Measure
 		state(0),
 		timeout(-1),
 		outputType(OUTPUTTYPE_UTF16),
-		value(-1.0f),
+		value(-1.0),
 		result(),
 		mutex(),
 		threadActive(false),

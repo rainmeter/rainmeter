@@ -131,12 +131,12 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			std::thread thread(RunCommand, measure);
 			thread.detach();
 
-			measure->value = 0.0f;
+			measure->value = 0.0;
 			measure->threadActive = true;
 		}
 		else
 		{
-			measure->value = 101.0f;
+			measure->value = 101.0;
 			RmLogF(measure->rm, LOG_NOTICE, err_CmdRunning, measure->program.c_str());	// Command still running
 		}
 	}
@@ -146,19 +146,19 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		{
 			if (!TerminateApp(measure->hProc, measure->dwPID, (_wcsicmp(args, L"KILL") == 0)))
 			{
-				measure->value = 105.0f;
+				measure->value = 105.0;
 				RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
 			}
 		}
 		else
 		{
-			measure->value = 102.0f;
+			measure->value = 102.0;
 			RmLogF(measure->rm, LOG_ERROR, err_NotRunning, measure->program.c_str());	// Command not running
 		}
 	}
 	else
 	{
-		measure->value = 100.0f;
+		measure->value = 100.0;
 		RmLogF(measure->rm, LOG_NOTICE, err_UnknownCmd, args);	// Unknown command
 	}
 }
@@ -180,7 +180,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 		if (measure->hProc != INVALID_HANDLE_VALUE &&
 			!TerminateApp(measure->hProc, measure->dwPID, (measure->state == SW_HIDE)))
 		{
-			measure->value = 105.0f;
+			measure->value = 105.0;
 			RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
 		}
 
@@ -332,7 +332,7 @@ void RunCommand(Measure* measure)
 					if (!TerminateApp(pi.hProcess, pi.dwProcessId, (state == SW_HIDE)))
 					{
 						lock.lock();
-							measure->value = 105.0f;
+							measure->value = 105.0;
 							RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
 							error = true;
 						lock.unlock();
@@ -358,7 +358,7 @@ void RunCommand(Measure* measure)
 		else
 		{
 			lock.lock();
-				measure->value = 103.0f;
+				measure->value = 103.0;
 				RmLogF(measure->rm, LOG_ERROR, err_Process, measure->program.c_str());	// Cannot start process
 				error = true;
 			lock.unlock();
@@ -367,7 +367,7 @@ void RunCommand(Measure* measure)
 	else
 	{
 		lock.lock();
-			measure->value = 106.0f;
+			measure->value = 106.0;
 			RmLog(measure->rm, LOG_ERROR, err_CreatePipe);	// Cannot create pipe
 			error = true;
 		lock.unlock();
@@ -413,7 +413,7 @@ void RunCommand(Measure* measure)
 			}
 			else
 			{
-				measure->value = 104.0f;
+				measure->value = 104.0;
 				RmLogF(measure->rm, LOG_ERROR, err_SaveFile, measure->outputFile.c_str());	// Cannot save file
 				error = true;
 			}
@@ -428,7 +428,7 @@ void RunCommand(Measure* measure)
 		// set number value of measure to 1 to indicate "Success".
 		if (!error)
 		{
-			measure->value = 1.0f;
+			measure->value = 1.0;
 		}
 
 		measure->threadActive = false;
