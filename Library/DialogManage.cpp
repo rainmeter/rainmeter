@@ -1000,7 +1000,8 @@ LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT m
 	return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
 {
 	switch (msg)
 	{
@@ -1521,12 +1522,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
 		break;
-	case NM_RETURN:
-		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
-		{
-			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
-		}
-		break;
+
 	case NM_DBLCLK:
 		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
 		{
@@ -1624,6 +1620,13 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					DestroyMenu(menu);
 				}
 			}
+		}
+		break;
+
+	case NM_RETURN:
+		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
+		{
+			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
 		}
 		break;
 
