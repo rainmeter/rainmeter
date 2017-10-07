@@ -367,6 +367,9 @@ DialogManage::TabSkins::~TabSkins()
 	HWND item = GetControl(Id_NewSkinButton);
 	RemoveWindowSubclass(item, &NewSkinButtonSubclass, 1);
 
+	item = GetControl(Id_SkinsTreeView);
+	RemoveWindowSubclass(item, &SkinsTreeViewSubclass, 1);
+
 	if (s_NewSkinBkBrush)
 	{
 		DeleteObject(s_NewSkinBkBrush);
@@ -524,6 +527,9 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
+
+	item = GetControl(Id_SkinsTreeView);
+	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, 0);
 }
 
 void DialogManage::TabSkins::Initialize()
@@ -989,6 +995,17 @@ LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT m
 			}
 		}
 		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	switch (msg)
+	{
+	case WM_GETDLGCODE:
+		return DLGC_WANTALLKEYS;
 	}
 
 	return DefSubclassProc(hwnd, msg, wParam, lParam);
@@ -1504,7 +1521,12 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
 		break;
-
+	case NM_RETURN:
+		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
+		{
+			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+		}
+		break;
 	case NM_DBLCLK:
 		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
 		{
