@@ -529,7 +529,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
 
 	item = GetControl(Id_SkinsTreeView);
-	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, 0);
+	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, (DWORD_PTR)this);
 }
 
 void DialogManage::TabSkins::Initialize()
@@ -1003,10 +1003,22 @@ LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT m
 LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
 {
+	TabSkins* tab = (TabSkins*)data;
+
 	switch (msg)
 	{
-	case WM_GETDLGCODE:
-		return DLGC_WANTALLKEYS;
+	case WM_KEYUP:
+		switch (wParam)
+		{
+			case VK_RETURN:
+				if (GetFocus() == tab->GetControl(Id_SkinsTreeView) &&
+					!tab->m_SkinFileName.empty())
+				{
+					return tab->OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+				}
+				break;
+		}
+		break;
 	}
 
 	return DefSubclassProc(hwnd, msg, wParam, lParam);
@@ -1620,13 +1632,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					DestroyMenu(menu);
 				}
 			}
-		}
-		break;
-
-	case NM_RETURN:
-		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
-		{
-			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
 		}
 		break;
 
