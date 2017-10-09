@@ -573,9 +573,11 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 
 	D2D1_MATRIX_3X2_F worldTransform;
 	m_Target->GetTransform(&worldTransform);
-	m_Target->SetTransform(shape.GetShapeMatrix() *
-		worldTransform *
-		D2D1::Matrix3x2F::Translation((FLOAT)xPos, (FLOAT)yPos));
+	m_Target->SetTransform(
+		shape.GetShapeMatrix() *
+		D2D1::Matrix3x2F::Translation((FLOAT)xPos, (FLOAT)yPos) *
+		worldTransform
+	);
 
 	if (shape.m_FillColor.a > 0.0f)
 	{
