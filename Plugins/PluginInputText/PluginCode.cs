@@ -374,13 +374,10 @@ namespace InputText
 
         private void FinalizePluginCode()
         {
-            lock (this._InputBoxLocker)
+            if (this._InputBox != null)
             {
-                if (this._InputBox != null)
-                {
-                    this._InputBox.Abort();
-                    System.Threading.Thread.Sleep(50);  // Wait for closing input box
-                }
+                this._InputBox.Abort();
+                System.Threading.Thread.Sleep(50);  // Wait for closing input box
             }
         }
         #endregion

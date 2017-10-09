@@ -20,7 +20,8 @@ MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, 
 	m_Interface(),
 	m_Octets(),
 	m_FirstTime(true),
-	m_Cumulative(false)
+	m_Cumulative(false),
+	m_UseBits(false)
 {
 }
 
@@ -227,9 +228,11 @@ void MeasureNet::UpdateValue()
 {
 	if (c_Table == nullptr) return;
 
+	const ULONG64 bits = m_UseBits ? 8Ui64 : 1Ui64;
+
 	if (m_Cumulative)
 	{
-		m_Value = (double)(__int64)GetNetStatsValue(m_Net);
+		m_Value = (double)(__int64)(GetNetStatsValue(m_Net) * bits);
 	}
 	else
 	{
@@ -256,7 +259,7 @@ void MeasureNet::UpdateValue()
 			m_FirstTime = false;
 		}
 
-		m_Value = (double)(__int64)value;
+		m_Value = (double)(__int64)(value * bits);
 	}
 }
 
@@ -283,11 +286,11 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		value = GetRainmeter().GetGlobalOptions().netInSpeed + GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 
-	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
-	if (maxValue == -1)
+	double maxValue = parser.ReadFloat(section, L"MaxValue", -1.0);
+	if (maxValue == -1.0)
 	{
-		maxValue = parser.ReadFloat(section, netName, -1);
-		if (maxValue == -1)
+		maxValue = parser.ReadFloat(section, netName, -1.0);
+		if (maxValue == -1.0)
 		{
 			maxValue = value;
 		}
@@ -312,6 +315,8 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		GetRainmeter().SetNetworkStatisticsTimer();
 	}
 
+	m_UseBits = parser.ReadBool(section, L"UseBits", false);
+
 	if (maxValue == 0.0)
 	{
 		if (!m_LogMaxValue)
@@ -323,7 +328,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_MaxValue = maxValue / 8;
+		m_MaxValue = maxValue / (m_UseBits ? 1.0 : 8.0);
 		m_LogMaxValue = false;
 	}
 }
@@ -347,7 +352,7 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 						LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
 					}
 
-					return (i + 1);
+					return (UINT)(i + 1);
 				}
 			}
 		}
@@ -359,7 +364,7 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 		{
 			if (_wcsicmp(iface, table[i].Description) == 0)
 			{
-				return (i + 1);
+				return (UINT)(i + 1);
 			}
 		}
 	}
@@ -429,10 +434,10 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		statsDate = date;
 	}
 
-	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0);
+	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0U);
 	if (parser.GetLastDefaultUsed())
 	{
-		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0);
+		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0U);
 	}
 
 	c_StatValues.clear();
@@ -443,26 +448,26 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		ULARGE_INTEGER value;
 
 		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 		}
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"Out%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0U);
 		}
 		c_StatValues.push_back(value.QuadPart);
 	}

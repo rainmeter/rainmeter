@@ -10,6 +10,7 @@
 #include "../../Common/FileUtil.h"
 #include "LuaScript.h"
 #include "LuaHelper.h"
+#include "Measure.h"
 
 LuaScript::LuaScript() :
 	m_Ref(LUA_NOREF),
@@ -247,4 +248,176 @@ void LuaScript::RunString(const std::wstring& str)
 			LuaHelper::ReportErrors(m_File);
 		}
 	}
+}
+
+bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue)
+{
+	if (!IsInitialized()) return false;
+
+	auto L = GetState();
+
+	const std::string nFuncName = m_Unicode ?
+		StringUtil::NarrowUTF8(funcName) : StringUtil::Narrow(funcName);
+	if (!IsFunction(nFuncName.c_str()))
+	{
+		strValue = L"Not a valid function name: \"" + funcName + L"\"";
+		return false;
+	}
+
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Push the function onto the stack
+	lua_getfield(L, -1, nFuncName.c_str());
+
+	// Add args
+	int numArgs = 0;
+	if (args.size() > 0)
+	{
+		for (const auto& iter : args)
+		{
+			std::string arg = m_Unicode ?
+				StringUtil::NarrowUTF8(iter) : StringUtil::Narrow(iter);
+			size_t argSize = arg.size();
+			if ((arg[0] == '\"' || arg[0] == '\'') && argSize > 1)
+			{
+				arg.erase(0, 1); // strip begin quote
+				--argSize;
+
+				auto ch = arg.back();
+				if (ch == '\"' || ch == '\'')
+				{
+					arg.pop_back();  // strip last quote
+					--argSize;
+				}
+
+				lua_pushlstring(L, arg.c_str(), argSize);
+			}
+			else if (arg == "true")
+			{
+				lua_pushboolean(L, 1);
+			}
+			else if (arg == "false")
+			{
+				lua_pushboolean(L, 0);
+			}
+			else
+			{
+				double num = strtod(arg.c_str(), nullptr);
+				lua_pushnumber(L, num);
+			}
+			++numArgs;
+		}
+	}
+
+	bool result = true;
+
+	if (lua_pcall(L, numArgs, 1, 0))
+	{
+		LuaHelper::ReportErrors(m_File);
+		strValue.clear();
+		result = false;
+	}
+	else
+	{
+		int type = lua_type(L, -1);
+		if (type == LUA_TNUMBER)
+		{
+			double val = lua_tonumber(L, -1);
+			WCHAR buffer[128];
+			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+			Measure::RemoveTrailingZero(buffer, bufferLen);
+			strValue = buffer;
+		}
+		else if (type == LUA_TBOOLEAN)
+		{
+			strValue = (lua_toboolean(L, -1) == 0) ? L"0" : L"1";
+		}
+		else if (type == LUA_TSTRING)
+		{
+			size_t strLen = 0;
+			const char* str = lua_tolstring(L, -1, &strLen);
+			strValue = m_Unicode ?
+				StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+		}
+		else if (type == LUA_TNONE || type == LUA_TNIL)
+		{
+			strValue = L"Return type in function \"";
+			strValue += funcName;
+			strValue += L"\" not found or is nil";
+			result = false;
+		}
+		else
+		{
+			const char* t = lua_typename(L, type);
+			strValue = L"Invalid return type in function \"";
+			strValue += funcName;
+			strValue += L"\" (";
+			strValue += m_Unicode ?
+				StringUtil::WidenUTF8(t) : StringUtil::Widen(t);
+			strValue += L")";
+			result = false;
+		}
+	}
+
+	lua_settop(L, 0);
+	return result;
+}
+
+bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strValue)
+{
+	if (!IsInitialized()) return false;
+
+	auto L = GetState();
+
+	bool result = true;
+
+	const std::string nVarName = m_Unicode ?
+		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
+
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Push the variable onto the stack
+	lua_getfield(L, -1, nVarName.c_str());
+
+	int type = lua_type(L, -1);
+	if (type == LUA_TNUMBER)
+	{
+		double val = lua_tonumber(L, -1);
+		WCHAR buffer[128];
+		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+		Measure::RemoveTrailingZero(buffer, bufferLen);
+		strValue = buffer;
+	}
+	else if (type == LUA_TBOOLEAN)
+	{
+		strValue = (lua_toboolean(L, -1) == 0) ? L"0" : L"1";
+	}
+	else if (type == LUA_TSTRING)
+	{
+		size_t strLen = 0;
+		const char* str = lua_tolstring(L, -1, &strLen);
+		strValue = m_Unicode ?
+			StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+	}
+	else if (type == LUA_TNONE || type == LUA_TNIL)
+	{
+		strValue = L"Variable \"";
+		strValue += varName;
+		strValue += L"\" not found or is nil";
+		result = false;
+	}
+	else
+	{	
+		const char* t = lua_typename(L, type);
+		strValue = L"Invalid variable type (";
+		strValue += m_Unicode ?
+			StringUtil::WidenUTF8(t) : StringUtil::Widen(t);
+		strValue += L")";
+		result = false;
+	}
+
+	lua_settop(L, 0);
+	return result;
 }

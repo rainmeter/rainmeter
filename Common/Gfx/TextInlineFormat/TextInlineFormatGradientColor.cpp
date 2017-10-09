@@ -30,11 +30,6 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 	{
 		// Since we are building the sub options (brushes, inner ranges) again,
 		// we need to destroy any previous sub options prior to building them.
-		for (size_t i = 0; i < sub.brushes.size(); ++i)
-		{
-			sub.brushes[i]->Release();
-			sub.brushes[i] = nullptr;
-		}
 		sub.innerRanges.clear();
 		sub.brushes.clear();
 
@@ -59,15 +54,15 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 			if (FAILED(hr)) continue;
 
 			D2D1_POINT_2F start = Util::FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
-			D2D1_POINT_2F end = Util::FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F end = Util::FindEdgePoint(m_Angle + 180.0f, hit.left, hit.top, hit.width, hit.height);
 
 			DWRITE_TEXT_RANGE innerRange = { hit.textPosition, hit.length };
 
-			ID2D1LinearGradientBrush* gradientBrush;
+			Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> gradientBrush;
 			hr = target->CreateLinearGradientBrush(
 				D2D1::LinearGradientBrushProperties(start, end),
 				collection.Get(),
-				&gradientBrush);
+				gradientBrush.GetAddressOf());
 
 			if (FAILED(hr)) continue;
 
@@ -123,7 +118,7 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 
 				if (beforeDrawing)
 				{
-					layout->SetDrawingEffect(sub.brushes[count], range);
+					layout->SetDrawingEffect(sub.brushes[count].Get(), range);
 				}
 			}
 

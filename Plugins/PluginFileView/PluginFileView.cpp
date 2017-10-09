@@ -162,7 +162,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		switch (recursive)
 		{
 		default:
-			RmLog(LOG_WARNING, L"Invalid Recursive type");
+			RmLog(child->parent->rm, LOG_WARNING, L"Invalid Recursive type");
 
 		case 0:
 			child->parent->recursiveType = RECURSIVE_NONE;

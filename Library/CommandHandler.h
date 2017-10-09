@@ -55,6 +55,7 @@ enum class Bang
 	ClickThrough,
 	Draggable,
 	SnapEdges,
+	FadeDuration,
 	KeepOnScreen,
 	AutoSelectScreen,
 	SetTransparency,
@@ -85,6 +86,7 @@ enum class Bang
 	ClickThroughGroup,
 	DraggableGroup,
 	SnapEdgesGroup,
+	SetFadeDurationGroup,
 	KeepOnScreenGroup,
 	AutoSelectScreenGroup,
 	SetTransparencyGroup,
@@ -102,6 +104,7 @@ enum class Bang
 	ResetStats,
 	Log,
 	Quit,
+	EditSkin,
 	LsBoxHook
 };
 
@@ -133,6 +136,8 @@ public:
 	static void DoLogBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoRefreshApp(std::vector<std::wstring>& args, Skin* skin);
 	static void DoQuitBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin);
+
 	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
 };
 

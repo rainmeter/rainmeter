@@ -48,6 +48,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::HideFade, L"HideFade", 0 },
 	{ Bang::ShowFade, L"ShowFade", 0 },
 	{ Bang::ToggleFade, L"ToggleFade", 0 },
+	{ Bang::FadeDuration, L"FadeDuration", 1 },
 	{ Bang::HideMeter, L"HideMeter", 1 },
 	{ Bang::ShowMeter, L"ShowMeter", 1 },
 	{ Bang::ToggleMeter, L"ToggleMeter", 1 },
@@ -111,6 +112,7 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::ClickThrough, L"ClickThroughGroup", 1 },
 	{ Bang::Draggable, L"DraggableGroup", 1 },
 	{ Bang::SnapEdges, L"SnapEdgesGroup", 1 },
+	{ Bang::FadeDuration, L"FadeDurationGroup", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
 	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
@@ -136,6 +138,7 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::Log, L"Log", CommandHandler::DoLogBang },
 	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
 	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
+	{ Bang::EditSkin, L"EditSkin", CommandHandler::DoEditSkinBang },
 	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
 };
 
@@ -153,7 +156,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 			// Use the specified window instead of skin parameter.
 			if (argsCount > bangInfo.argCount)
 			{
-				const std::wstring& folderPath = args[bangInfo.argCount];
+				std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
 					Skin* skin = GetRainmeter().GetSkin(folderPath);
@@ -374,8 +377,24 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 		std::wstring tmpSz = command;
 		if (skin)
 		{
+			// If the command is a section variable or a new style variable,
+			// surround the command with brackets and replace it with the variable.
+			// This allows for section variables to completely replace a bang sequence.
+			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
+			if (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz))
+			{
+				tmpSz.insert(0, L"[");
+				tmpSz.append(L"]");
+
+				skin->GetParser().ReplaceMeasures(tmpSz);
+
+				ExecuteCommand(tmpSz.c_str(), skin, true);
+				return;
+			}
+
 			skin->GetParser().ReplaceMeasures(tmpSz);
 		}
+
 		RunCommand(tmpSz);
 	}
 }
@@ -487,7 +506,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 ** Splits strings into parts.
 **
 */
-std::vector<std::wstring> CommandHandler::ParseString(LPCTSTR str, ConfigParser* parser)
+std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;
 
@@ -947,6 +966,31 @@ void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
 	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
+}
+
+void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	const size_t argSize = args.size();
+	if (argSize > 1)
+	{
+		const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(args[0], args[1]);
+		if (indexes.IsValid())
+		{
+			GetRainmeter().EditSkinFile(args[0], args[1]);
+		}
+		else
+		{
+			LogErrorF(L"!EditSkin: Invalid parameters");
+		}
+	}
+	else if (argSize == 0 && skin)
+	{
+		GetRainmeter().EditSkinFile(skin->GetFolderPath(), skin->GetFileName());
+	}
+	else
+	{
+		LogErrorF(skin, L"!EditSkin: Invalid parameters");
+	}
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)

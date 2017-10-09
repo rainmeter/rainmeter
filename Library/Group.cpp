@@ -27,6 +27,29 @@ void Group::InitializeGroup(const std::wstring& groups)
 	}
 }
 
+bool Group::AddToGroup(const std::wstring& group)
+{
+	if (!group.empty() && !BelongsToGroup(group))
+	{
+		if (!m_OldGroups.empty())
+		{
+			m_OldGroups.append(1, L'|');
+		}
+
+		m_OldGroups.append(group);
+
+		std::vector<std::wstring> vGroups = ConfigParser::Tokenize(group, L"|");
+		for (auto iter = vGroups.begin(); iter != vGroups.end(); ++iter)
+		{
+			m_Groups.insert(m_Groups.end(), CreateGroup(*iter));
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 bool Group::BelongsToGroup(const std::wstring& group) const
 {
 	return (m_Groups.find(VerifyGroup(group)) != m_Groups.end());

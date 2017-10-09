@@ -28,7 +28,6 @@
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "Rainmeter.h"
-#include "Error.h"
 #include "Util.h"
 #include "pcre/config.h"
 #include "pcre/pcre.h"
@@ -126,7 +125,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
-	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
+	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0U);
 
 	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");

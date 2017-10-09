@@ -14,4 +14,7 @@ Certificate.bat
 *.suo
 *.txt
 *.user
-*.VC.db
+*.VC.db*
+*.ipch
+*.patch
+*.ide

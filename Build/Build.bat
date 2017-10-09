@@ -1,13 +1,13 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=%VS140COMNTOOLS%..\..\VC\vcvarsall.bat
+set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=4
-set VERSION_MINOR=0
+set VERSION_MINOR=1
 set VERSION_SUBMINOR=0
 set VERSION_REVISION=0
 set ISBETA=true
@@ -162,7 +162,9 @@ set INSTALLER_DEFINES=^
 	/DOUTFILE="%INSTALLER_NAME%"^
 	/DVERSION_FULL="%VERSION_FULL%"^
 	/DVERSION_SHORT="%VERSION_SHORT%"^
-	/DVERSION_REVISION="%VERSION_REVISION%"
+	/DVERSION_REVISION="%VERSION_REVISION%"^
+	/DVERSION_MAJOR="%VERSION_MAJOR%"^
+	/DVERSION_MINOR="%VERSION_MINOR%"
 if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
 "%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi > "BuildLog.txt"

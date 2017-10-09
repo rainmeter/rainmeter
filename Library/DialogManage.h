@@ -27,6 +27,8 @@ public:
 	static void Open(int tab = 0);
 	static void OpenSkin(Skin* skin);
 
+	static void UpdateSelectedSkinOptions(Skin* skin);
+
 	static void UpdateSkins(Skin* skin, bool deleted = false);
 	static void UpdateLayouts();
 
@@ -81,6 +83,7 @@ private:
 		void Create(HWND owner);
 		virtual void Initialize();
 
+		void UpdateSelected(Skin* skin);
 		void Update(Skin* skin, bool deleted);
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
@@ -96,6 +99,8 @@ private:
 		void ReadSkin();
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		static std::wstring GetTreeSelectionPath(HWND tree);

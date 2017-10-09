@@ -907,7 +907,7 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	Measure* m = (Measure*)data;
 	Measure* parent	= m->m_parent ? m->m_parent : m;
 
-	static WCHAR buffer[512];
+	static WCHAR buffer[4096];
 	const WCHAR* s_fmtName[Measure::NUM_FORMATS] =
 	{
 		L"<invalid>",	// FMT_INVALID

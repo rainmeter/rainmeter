@@ -103,6 +103,7 @@ const WCHAR* ToErrorString(DWORD value)
 	case ERROR_INVALID_PARAMETER: return L"Invalid parameters";
 	case ERROR_NOT_ENOUGH_MEMORY: return L"Not enough memory";
 	case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED: return L"Too many handles already issued";
+	case ERROR_SERVICE_NOT_ACTIVE: return L"WLAN Auto Config (WLANSVC) service is not active";
 	default: return L"Unknown error code";
 	}
 }
@@ -149,8 +150,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 	if (g_Instances == 1)
 	{
-		WCHAR buffer[256];
-
 		// Create WINLAN API Handle
 		if (g_hClient == nullptr)
 		{
@@ -159,8 +158,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
-				RmLog(LOG_ERROR, buffer);
+				RmLogF(rm, LOG_DEBUG, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
 				return;
 			}
 		}
@@ -172,14 +170,13 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
-				RmLog(LOG_ERROR, buffer);
+				RmLogF(rm, LOG_DEBUG, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
 				return;
 			}
 			else if (g_pIntfList->dwNumberOfItems == 0)
 			{
 				FinalizeHandle();
-				RmLog(LOG_ERROR, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
+				RmLog(rm, LOG_DEBUG, L"WifiStatus.dll: No WLAN interfaces/adapters available.");
 				return;
 			}
 		}
@@ -191,14 +188,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (g_hClient == nullptr) return;
 
 	MeasureData* measure = (MeasureData*)data;
-	WCHAR buffer[128];
 	bool changed = false;
 
 	int value = 0;
 	auto logValueError = [&](const WCHAR* option)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: %s=%i not valid", option, value);
-		RmLog(LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: %s=%i not valid", option, value);
 	};
 
 	// Select a WLAN interface, default 0.
@@ -257,8 +252,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
-		RmLog(LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
 	}
 	if (infoType != measure->type)
 	{

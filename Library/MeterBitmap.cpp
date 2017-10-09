@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterBitmap.h"
 #include "Measure.h"
-#include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
@@ -20,14 +19,14 @@ MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
-	m_TransitionFrameCount(),
+	m_TransitionFrameCount(0),
 	m_Align(ALIGN_LEFT),
 	m_Extend(false),
-	m_Separation(),
-	m_Digits(),
-	m_Value(),
-	m_TransitionStartTicks(),
-	m_TransitionStartValue()
+	m_Separation(0),
+	m_Digits(0),
+	m_Value(0.0),
+	m_TransitionStartTicks(0),
+	m_TransitionStartValue(0.0)
 {
 }
 
@@ -55,13 +54,30 @@ void MeterBitmap::Initialize()
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
 
+			int extraSpace = (m_Digits - 1) * m_Separation;
+			extraSpace = max(0, extraSpace);
+
+			int digits = max(1, m_Digits);
+
 			if (m_H > m_W)
 			{
-				m_H = m_H / m_FrameCount;
+				m_H = (m_H / m_FrameCount);
+
+				if (m_Extend)  // Increase meter height to account for BitmapDigigts and BitmapSeparation options
+				{
+					m_H *= digits;
+					m_H += extraSpace;
+				}
 			}
 			else
 			{
-				m_W = m_W / m_FrameCount;
+				m_W = (m_W / m_FrameCount);
+
+				if (m_Extend)  // Increase meter width to account for BitmapDigigts and BitmapSeparation options
+				{
+					m_W *= digits;
+					m_W += extraSpace;
+				}
 			}
 
 			m_W += GetWidthPadding();
@@ -265,10 +281,29 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_Extend)
 	{
-		int value = (int)m_Value;
+		// The 'BitmapExtend' option expands the meters width and/or height by the amount
+		// of digits and separation. We need to subtract that amount here so that the meter
+		// will draw in the correct place.
+		int extraSpace = (m_Digits - 1) * m_Separation;
+		extraSpace = max(0, extraSpace);
+
+		int digits = max(1, m_Digits);
+
+		if (bitmap->GetHeight() > bitmap->GetWidth())
+		{
+			meterRect.Height -= extraSpace;
+			meterRect.Height /= digits;
+		}
+		else
+		{
+			meterRect.Width -= extraSpace;
+			meterRect.Width /= digits;
+		}
+
+		__int64 value = (__int64)m_Value;
 		value = max(0, value);		// Only positive integers are supported
 
-		int transitionValue = (int)m_TransitionStartValue;
+		__int64 transitionValue = (__int64)m_TransitionStartValue;
 		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
@@ -280,7 +315,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		}
 		else
 		{
-			int tmpValue = value;
+			__int64 tmpValue = value;
 
 			do
 			{
@@ -424,7 +459,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, m_H));
+		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
 	}
 
 	return true;

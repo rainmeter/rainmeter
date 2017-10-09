@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterRoundLine.h"
 #include "Measure.h"
-#include "Error.h"
 #include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;

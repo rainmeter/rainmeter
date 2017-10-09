@@ -10,7 +10,6 @@
 
 #include "Meter.h"
 #include "Measure.h"
-#include <unordered_map>
 
 class MeterString : public Meter
 {
@@ -98,6 +97,8 @@ private:
 	int m_NumOfDecimals;
 	Gdiplus::REAL m_Angle;
 	Gdiplus::RectF m_Rect;
+
+	int m_FontWeight;
 
 	std::wstring m_String;
 };

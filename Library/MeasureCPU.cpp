@@ -9,7 +9,6 @@
 #include "MeasureCPU.h"
 #include "Rainmeter.h"
 #include "System.h"
-#include "Error.h"
 
 #define STATUS_SUCCESS					0
 #define STATUS_INFO_LENGTH_MISMATCH		0xC0000004

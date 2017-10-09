@@ -89,9 +89,6 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			ParseModifiers(args, parser, section);
 		}
 
-		m_Shapes.back()->ValidateTransforms();
-		m_Shapes.back()->CreateStrokeStyle();
-
 		// Check for Shape2 ... etc.
 		const std::wstring num = std::to_wstring(++i);
 		std::wstring key = L"Shape" + num;
@@ -385,10 +382,21 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return true;
 		}
 	}
+	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH1"))
+	{
+		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
+		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_WINDING))
+		{
+			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
+			return false;
+		}
+
+		return true;
+	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH"))
 	{
 		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
-		if (opt.empty() || !ParsePath(opt))
+		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_ALTERNATE))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
 			return false;
@@ -398,7 +406,18 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	}
 	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
 	{
-		// Combined shapes are processed after all shapes are created
+		// Because combined shapes need to be processed after the rest of the shapes
+		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
+		// the order in which the shapes are defined.
+
+		if (!createShape(new Gfx::Rectangle(0.0, 0.0, 0.0, 0.0)))
+		{
+			return false;
+		}
+
+		// Set the 'combined' flag on this dummy shape so it isn't drawn in cases
+		// where the combined shape is not valid (see CreateCombinedShapes)
+		m_Shapes.back()->SetCombined();
 		isCombined = true;
 		return true;
 	}
@@ -424,7 +443,15 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 
 	size_t parentId = 0;
 
-	std::wstring parentName = args[0].substr(8); // Remove 'Combine '
+	if (args[0].length() < 8)
+	{
+		std::wstring key = L"Shape";
+		key += std::to_wstring(shapeId + 1);
+		LogErrorF(this, L"%s definition contains no shape identifiers", key.c_str());
+		return false;
+	}
+
+	std::wstring parentName = args[0].substr(8);  // Remove 'Combine '
 	if (StringUtil::CaseInsensitiveCompareN(parentName, L"SHAPE"))
 	{
 		parentId = getShapeId(parentName.c_str());
@@ -440,7 +467,14 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
 			if (clonedShape)
 			{
-				m_Shapes.insert(m_Shapes.begin() + shapeId, clonedShape);
+				// Delete and remove the shape from |m_Shapes|, then
+				// insert the cloned shape into the position of the
+				// deleted shape.
+
+				delete m_Shapes[shapeId];
+				auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
+				m_Shapes.insert(iter, clonedShape);
+
 				m_Shapes[parentId]->SetCombined();
 
 				// Combine with empty shape
@@ -726,6 +760,12 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
 		}
 	}
+
+	if (!recursive)
+	{
+		shape->CreateStrokeStyle();
+		shape->ValidateTransforms();
+	}
 }
 
 bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform)
@@ -963,7 +1003,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 	return false;
 }
 
-bool MeterShape::ParsePath(std::wstring& options)
+bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 {
 	auto createSegmentFlags = [](bool stroke, bool round) -> D2D1_PATH_SEGMENT
 	{
@@ -979,12 +1019,12 @@ bool MeterShape::ParsePath(std::wstring& options)
 
 	// Parse starting point of shape
 	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
-	if (paramSize < 1) return false;  // Starting point must have a x and y
+	if (stPoint.size() < 2) return false;  // Starting point must have a x and y
 
 	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
 	FLOAT startY = (FLOAT)ConfigParser::ParseDouble(stPoint[1].c_str(), 0.0);
 
-	Gfx::Path* shape = new Gfx::Path(startX, startY);
+	Gfx::Path* shape = new Gfx::Path(startX, startY, fillMode);
 
 	bool error = false;
 	bool open = true;

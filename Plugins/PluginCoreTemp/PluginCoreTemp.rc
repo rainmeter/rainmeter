@@ -7,7 +7,7 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
+ FILEVERSION 1,1,0,0
  PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -23,8 +23,8 @@ VS_VERSION_INFO VERSIONINFO
     {
         BLOCK "040904E4"
         {
-            VALUE "FileVersion", "1.0.0.0"
-            VALUE "LegalCopyright", "© 2011 - Arthur Liberman"
+            VALUE "FileVersion", "1.1.0.0"
+            VALUE "LegalCopyright", "© 2017 - Arthur Liberman"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"

@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeasureRegistry.h"
 #include "Rainmeter.h"
-#include "Error.h"
 
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_RegKey(),

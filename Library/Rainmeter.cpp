@@ -12,7 +12,6 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
-#include "Error.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
@@ -972,6 +971,12 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 	{
 		m_SkinEditor = path;
 		WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", path.c_str(), m_IniFile.c_str());
+
+		// Update #CONFIGEDITOR# built-in variable in all skins
+		for (auto iter : m_Skins)
+		{
+			iter.second->GetParser().SetBuiltInVariable(L"CONFIGEDITOR", m_SkinEditor);
+		}
 	}
 }
 
@@ -1084,8 +1089,11 @@ bool Rainmeter::HasSkin(const Skin* skin) const
 	return false;
 }
 
-Skin* Rainmeter::GetSkin(const std::wstring& folderPath)
+Skin* Rainmeter::GetSkin(std::wstring folderPath)
 {
+	// Remove any leading and trailing slashes
+	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
+
 	const WCHAR* folderSz = folderPath.c_str();
 	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
@@ -1323,6 +1331,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
+	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", Color::MakeARGB(90, 255, 0, 0));
+
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
 	{
@@ -1527,6 +1537,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"DisableVersionCheck");
 		PreserveSetting(backup, L"Language");
 		PreserveSetting(backup, L"NormalStayDesktop");
+		PreserveSetting(backup, L"SelectedColor");
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);

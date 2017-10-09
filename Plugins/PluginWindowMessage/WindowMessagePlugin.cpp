@@ -19,13 +19,17 @@ struct MeasureData
 	LPARAM lParam;
 	DWORD uMsg;
 
-	MeasureData() : wParam(), lParam(), uMsg() {}
+	void* rm;
+
+	MeasureData() : wParam(), lParam(), uMsg(), rm() {}
 };
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;
+
+	measure->rm = rm;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -120,17 +124,17 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				}
 				else
 				{
-					RmLog(LOG_ERROR, L"WindowMessagePlugin.dll: Unable to find window");
+					RmLog(measure->rm, LOG_ERROR, L"WindowMessagePlugin.dll: Unable to find window");
 				}
 			}
 			else
 			{
-				RmLog(LOG_WARNING, L"WindowMessagePlugin.dll: Incorrect number of arguments for bang");
+				RmLog(measure->rm, LOG_WARNING, L"WindowMessagePlugin.dll: Incorrect number of arguments for bang");
 			}
 
 			return;
 		}
 	}
 
-	RmLog(LOG_WARNING, L"WindowMessagePlugin.dll: Unknown bang");
+	RmLog(measure->rm, LOG_WARNING, L"WindowMessagePlugin.dll: Unknown bang");
 }

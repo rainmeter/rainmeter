@@ -10,7 +10,6 @@
 #include "Rainmeter.h"
 #include "Export.h"
 #include "System.h"
-#include "Error.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
@@ -236,4 +235,73 @@ void MeasurePlugin::Command(const std::wstring& command)
 	{
 		Measure::Command(command);
 	}
+}
+
+bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring& strValue)
+{
+	if (!m_Initialized)
+	{
+		strValue = L"0";
+		return true;
+	}
+
+	size_t sPos = command.find_first_of(L'(');
+	if (sPos != std::wstring::npos)
+	{
+		size_t ePos = command.find_last_of(L')');
+		if (ePos == std::wstring::npos ||
+			sPos > ePos ||
+			command.size() < 3)
+		{
+			LogErrorF(this, L"Invalid function call: %s", command.c_str());
+			return false;
+		}
+
+		// Prevent calling known API functions
+		std::string function = StringUtil::Narrow(command.substr(0, sPos));
+		if (function == "Initialize" ||
+			function == "Reload" ||
+			function == "Update" ||
+			function == "GetString" ||
+			function == "ExecuteBang" ||
+			function == "Finalize" ||
+			function == "Update2" ||				// Old API
+			function == "GetPluginAuthor" ||		// Old API
+			function == "GetPluginVersion")			// Old API
+			return false;
+
+		// Parse arguments
+		auto _args = ConfigParser::Tokenize2(
+			command.substr(sPos + 1, ePos - sPos - 1),
+			L',',
+			PairedPunctuation::BothQuotes);
+
+		// Convert strings in array to raw type
+		std::vector<LPCWSTR> args;
+		for (auto& str : _args)
+		{
+			args.emplace_back(str.c_str());
+		}
+
+		void* custom = GetProcAddress(m_Plugin, function.c_str());
+		if (custom)
+		{
+			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, args.size(), args.data());
+			if (result)
+			{
+				strValue = result;
+				return true;
+			}
+			else
+			{
+				LogErrorF(this, L"Invalid return type in function: %s", command.substr(0, sPos).c_str());
+			}
+		}
+		else
+		{
+			LogErrorF(this, L"Cannot find function: %s", command.substr(0, sPos).c_str());
+		}
+	}
+
+	return false;
 }

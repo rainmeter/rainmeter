@@ -15,7 +15,7 @@ namespace Gfx {
 class Path final : public Shape
 {
 public:
-	Path(FLOAT x, FLOAT y, bool isCloned = false);
+	Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode, bool isCloned = false);
 	~Path();
 
 	void AddLine(FLOAT x, FLOAT y);
@@ -35,6 +35,7 @@ private:
 	void Dispose();
 
 	D2D1_POINT_2F m_StartPoint;
+	D2D1_FILL_MODE m_FillMode;
 
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> m_Sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> m_Path;

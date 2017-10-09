@@ -67,9 +67,6 @@ HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::Invoke(DISPID dispidMembe
 {
 	switch (dispidMember)
 	{
-	case ITEventDatabaseChanged:
-		m_Player->OnDatabaseChange();
-		break;
 
 	case ITEventPlayerPlay:
 		m_Player->OnStateChange(true);
@@ -215,8 +212,6 @@ void PlayerITunes::Initialize()
 		long volume;
 		m_iTunes->get_SoundVolume(&volume);
 		m_Volume = (UINT)volume;
-
-		OnDatabaseChange();
 	}
 	else
 	{
@@ -306,33 +301,35 @@ bool PlayerITunes::CheckWindow()
 */
 void PlayerITunes::UpdateData()
 {
-	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
+	if ((m_Initialized || CheckWindow()))
 	{
-		long position = 0;
-		m_iTunes->get_PlayerPosition(&position);
-		m_Position = (UINT)position;
-	}
-}
-
-/*
-** Called by iTunes event handler when the database is changed.
-**
-*/
-void PlayerITunes::OnDatabaseChange()
-{
-	// Check the shuffle state. TODO: Find better way
-	IITPlaylist* playlist;
-	HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
-	if (SUCCEEDED(hr) && playlist)
-	{
-		VARIANT_BOOL shuffle;
-		hr = playlist->get_Shuffle(&shuffle);
-		if (SUCCEEDED(hr))
+		if (m_State != STATE_STOPPED)
 		{
-			m_Shuffle = shuffle != VARIANT_FALSE;
+			long position = 0;
+			m_iTunes->get_PlayerPosition(&position);
+			m_Position = (UINT)position;
 		}
+		// Check the shuffle and repeat state since there is no onChange event
+		IITPlaylist* playlist;
+		HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
+		if (SUCCEEDED(hr) && playlist)
+		{
+			VARIANT_BOOL shuffle;
+			hr = playlist->get_Shuffle(&shuffle);
+			if (SUCCEEDED(hr))
+			{
+				m_Shuffle = shuffle != VARIANT_FALSE;
+			}
 
-		playlist->Release();
+			ITPlaylistRepeatMode repeat;
+			hr = playlist->get_SongRepeat(&repeat);
+			if (SUCCEEDED(hr))
+			{
+				m_Repeat = repeat != ITPlaylistRepeatModeOff;
+			}
+
+			playlist->Release();
+		}
 	}
 }
 
@@ -400,47 +397,47 @@ void PlayerITunes::OnTrackChange()
 			{
 				++m_TrackCount;
 				m_FilePath = tmpStr;
+			}
+		}
 
-				if (m_Measures & MEASURE_COVER)
+		if (m_Measures & MEASURE_COVER)
+		{
+			m_CoverPath.clear();
+
+			// Check for embedded art through iTunes interface
+			IITArtworkCollection* artworkCollection;
+			hr = track->get_Artwork(&artworkCollection);
+
+			if (SUCCEEDED(hr))
+			{
+				long count;
+				artworkCollection->get_Count(&count);
+
+				if (count > 0)
 				{
-					m_CoverPath.clear();
-
-					// Check for embedded art through iTunes interface
-					IITArtworkCollection* artworkCollection;
-					hr = track->get_Artwork(&artworkCollection);
+					IITArtwork* artwork;
+					hr = artworkCollection->get_Item(1, &artwork);
 
 					if (SUCCEEDED(hr))
 					{
-						long count;
-						artworkCollection->get_Count(&count);
-
-						if (count > 0)
+						_bstr_t coverPath = m_TempCoverPath.c_str();
+						hr = artwork->SaveArtworkToFile(coverPath);
+						if (SUCCEEDED(hr))
 						{
-							IITArtwork* artwork;
-							hr = artworkCollection->get_Item(1, &artwork);
-
-							if (SUCCEEDED(hr))
-							{
-								_bstr_t coverPath = m_TempCoverPath.c_str();
-								hr = artwork->SaveArtworkToFile(coverPath);
-								if (SUCCEEDED(hr))
-								{
-									m_CoverPath = m_TempCoverPath;
-								}
-
-								artwork->Release();
-							}
+							m_CoverPath = m_TempCoverPath;
 						}
 
-						artworkCollection->Release();
+						artwork->Release();
 					}
 				}
 
-				if (m_Measures & MEASURE_LYRICS)
-				{
-					FindLyrics();
-				}
+				artworkCollection->Release();
 			}
+		}
+
+		if (m_Measures & MEASURE_LYRICS)
+		{
+			FindLyrics();
 		}
 
 		track->Release();

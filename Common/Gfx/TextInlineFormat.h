@@ -26,7 +26,6 @@ enum class InlineType : BYTE
 	Face,
 	GradientColor,
 	Italic,
-	Kerning,
 	Oblique,
 	Shadow,
 	Size,

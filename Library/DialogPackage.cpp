@@ -13,6 +13,8 @@
 #include "resource.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -255,7 +257,9 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(StringUtil::Narrow(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
 
 	auto cleanup = [&]()->bool
 	{
@@ -372,7 +376,7 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
 	std::string zipPathUTF8 = StringUtil::NarrowUTF8(zipPath);
-	for (int i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
+	for (size_t i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
 	{
 		if ((zipPathUTF8[i] & 0x80) != 0)
 		{
@@ -906,7 +910,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 					LVITEM lvi;
 					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-					lvi.iItem = c_Dialog->m_LayoutFolders.size() + 1;
+					lvi.iItem = (int)c_Dialog->m_LayoutFolders.size() + 1;
 					lvi.iSubItem = 0;
 					lvi.iGroupId = 1;
 					lvi.pszText = (WCHAR*)name.c_str();
@@ -925,7 +929,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 				LVITEM lvi;
 				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-				lvi.iItem = c_Dialog->m_PluginFolders.size() + 1;
+				lvi.iItem = (int)c_Dialog->m_PluginFolders.size() + 1;
 				lvi.iSubItem = 0;
 				lvi.iGroupId = 2;
 				lvi.pszText = (WCHAR*)name.c_str();

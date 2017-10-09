@@ -14,17 +14,18 @@
 class __declspec(novtable) Group
 {
 public:
+	Group() {}
 	virtual ~Group() {}
 
 	Group(const Group& other) = delete;
 	Group& operator=(Group other) = delete;
 
-	bool BelongsToGroup(const std::wstring& group) const;
-
-protected:
-	Group() {}
-
 	void InitializeGroup(const std::wstring& groups);
+
+	const std::unordered_set<std::wstring>& GetGroups() const { return m_Groups; }
+
+	bool AddToGroup(const std::wstring& group);
+	bool BelongsToGroup(const std::wstring& group) const;
 
 private:
 	std::wstring& CreateGroup(std::wstring& str) const;

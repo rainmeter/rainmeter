@@ -421,7 +421,7 @@ void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 	auto bounds = GetBounds(false);
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
 		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
-	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180,
+	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
 		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
 
 	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
@@ -512,6 +512,8 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_FillColor = m_FillColor;
 	otherShape->m_FillLinearGradientAngle = m_FillLinearGradientAngle;
 	otherShape->m_FillRadialGradientOffset = m_FillRadialGradientOffset;
+	otherShape->m_FillRadialGradientCenter = m_FillRadialGradientCenter;
+	otherShape->m_FillRadialGradientRadius = m_FillRadialGradientRadius;
 	otherShape->m_FillGradientStops = m_FillGradientStops;
 	otherShape->m_FillGradientAltGamma = m_FillGradientAltGamma;
 
@@ -519,6 +521,8 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_StrokeColor = m_StrokeColor;
 	otherShape->m_StrokeLinearGradientAngle = m_StrokeLinearGradientAngle;
 	otherShape->m_StrokeRadialGradientOffset = m_StrokeRadialGradientOffset;
+	otherShape->m_StrokeRadialGradientCenter = m_StrokeRadialGradientCenter;
+	otherShape->m_StrokeRadialGradientRadius = m_StrokeRadialGradientRadius;
 	otherShape->m_StrokeGradientStops = m_StrokeGradientStops;
 	otherShape->m_StrokeGradientAltGamma = m_StrokeGradientAltGamma;
 	

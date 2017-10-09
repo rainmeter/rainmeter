@@ -13,6 +13,8 @@
 #include "System.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -374,7 +376,9 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	m_PackageUnzFile = unzOpen(StringUtil::Narrow(fileName).c_str());
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
 	if (!m_PackageUnzFile)
 	{
 		return false;
@@ -398,7 +402,7 @@ bool DialogInstall::ReadPackage()
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
-			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			MultiByteToWideChar(codePage, 0, cBuffer, (int)strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}
@@ -709,7 +713,7 @@ bool DialogInstall::InstallPackage()
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
-			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			MultiByteToWideChar(codePage, 0, cBuffer, (int)strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}
@@ -948,7 +952,7 @@ void DialogInstall::KeepVariables()
 	WCHAR buffer[4];
 	std::wstring currKey, currValue;
 
-	for (int i = 0, isize = m_VariablesFiles.size(); i < isize; ++i)
+	for (size_t i = 0, isize = m_VariablesFiles.size(); i < isize; ++i)
 	{
 		std::wstring fromPath = g_Data.skinsPath + L"@Backup\\";
 		fromPath += m_VariablesFiles[i];
@@ -1298,7 +1302,7 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
-			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			MultiByteToWideChar(codePage, 0, cBuffer, (int)strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}

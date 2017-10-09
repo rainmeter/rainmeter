@@ -90,6 +90,7 @@ struct Function
 
 static double frac(double x);
 static double rad(double deg);
+static double deg(double rad);
 static double sgn(double x);
 static double neg(double x);
 static const WCHAR* Min(int paramcnt, double* args, double* result);
@@ -117,6 +118,7 @@ enum {
 	FUNC_ASIN,
 	FUNC_ACOS,
 	FUNC_RAD,
+	FUNC_DEG,
 	FUNC_SGN,
 	FUNC_NEG,
 	FUNC_MIN,
@@ -148,6 +150,7 @@ static Function g_Functions[NUM_FUNCS] =
 	{ L"asin", &asin, 4 },                         // FUNC_ASIN
 	{ L"acos", &acos, 4 },                         // FUNC_ACOS
 	{ L"rad", &rad, 3 },                           // FUNC_RAD
+	{ L"deg", &deg, 3 },                           // FUNC_DEG
 	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
 	{ L"neg", &neg, 3 },                           // FUNC_NEG
 	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
@@ -774,6 +777,7 @@ CharType GetCharType(WCHAR ch)
 	case L'=':
 	case L'&':
 	case L'|':
+	case L'^':
 		return CharType::Symbol;
 	}
 
@@ -881,9 +885,14 @@ static double rad(double deg)
 	return (deg / 180.0) * M_PI;
 }
 
+static double deg(double rad)
+{
+	return rad * (180.0 / M_PI);
+}
+
 static double sgn(double x)
 {
-	return (x > 0) ? 1 : (x < 0) ? -1 : 0;
+	return (x > 0.0) ? 1.0 : (x < 0.0) ? -1.0 : 0.0;
 }
 
 static double neg(double x)
@@ -949,20 +958,16 @@ static const WCHAR* round(int paramcnt, double* args, double* result)
 	}
 
 	double x = args[0];
-	double coef;
+	double coef = 10.0;
 	if (sharpness < 0)
 	{
 		coef = 0.1;
 		sharpness = -sharpness;
 	}
-	else
-	{
-		coef = 10;
-	}
 
 	for (int i = 0; i < sharpness; i++) x *= coef;
 
-	x = (x + ((x >= 0) ? 0.5 : -0.5));
+	x = (x + ((x >= 0.0) ? 0.5 : -0.5));
 	x = (x >= 0.0) ? floor(x) : ceil(x);
 
 	for (int i = 0; i < sharpness; i++) x /= coef;

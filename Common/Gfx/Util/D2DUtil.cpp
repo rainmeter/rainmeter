@@ -11,7 +11,7 @@
 namespace Gfx {
 namespace Util {
 
-static const double M_PI = 3.14159265358979323846;
+static const float M_PI = 3.14159265358979323846f;
 
 D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
 {
@@ -35,13 +35,13 @@ D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point
 
 D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float width, const float height)
 {
-	double theta1 = theta * (M_PI / 180.0f);
+	float theta1 = theta * (M_PI / 180.0f);
 
 	while (theta1 < -M_PI) theta1 += (2 * M_PI);
 	while (theta1 > M_PI) theta1 -= (2 * M_PI);
 
-	const float recttan = atan2f(top + height, left + width);
-	const float thetatan = (float)tan(theta1);
+	const float recttan = atan2f(height, width);
+	const float thetatan = tanf(theta1);
 
 	enum Region
 	{

@@ -1,0 +1,20 @@
+version: 4.0.0.{build}
+
+branches:
+  only:
+  - master
+
+skip_tags: true
+
+image: Visual Studio 2017
+
+clone_depth: 1
+clone_folder: C:\build
+
+build:
+  project: Rainmeter.sln
+  parallel: true
+  verbosity: minimal
+
+test_script:
+- cmd: vstest.console /logger:Appveyor x32-Debug\Obj\Common_Test\Common_Test.dll

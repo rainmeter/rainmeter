@@ -179,7 +179,6 @@
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />
-    <ClInclude Include="Error.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />

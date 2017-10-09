@@ -28,7 +28,7 @@ VS_VERSION_INFO VERSIONINFO
         BLOCK "040904E4"
         {
             VALUE "FileVersion", STRFILEVER
-            VALUE "LegalCopyright", "© 2009 Rainmeter Team"
+            VALUE "LegalCopyright", "© 2017 Rainmeter Team"
             VALUE "OriginalFilename", "Rainmeter.dll"
             VALUE "CompanyName", "Rainmeter"
             VALUE "ProductName", "Rainmeter"

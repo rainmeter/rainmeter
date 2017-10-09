@@ -92,14 +92,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 					}
 					else
 					{
-						RmLog(LOG_WARNING, L"PingPlugin.dll: Unable to get host by name");
+						RmLog(rm, LOG_WARNING, L"PingPlugin.dll: Unable to get host by name");
 					}
 
 					WSACleanup();
 				}
 				else
 				{
-					RmLog(LOG_WARNING, L"PingPlugin.dll: Unable to start WSA");
+					RmLog(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA");
 				}
 			}
 

@@ -34,8 +34,11 @@ std::wstring SkinRegistry::GetFolderPath(int folderIndex) const
 /*
 ** Finds the skin index for the specified skin folder path.
 */
-int SkinRegistry::FindFolderIndex(const std::wstring& folderPath) const
+int SkinRegistry::FindFolderIndex(std::wstring folderPath) const
 {
+	// Remove any leading and trailing slashes
+	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
+
 	if (folderPath.empty()) return -1;
 
 	const WCHAR* path = folderPath.c_str();

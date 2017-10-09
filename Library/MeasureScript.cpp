@@ -181,6 +181,57 @@ void MeasureScript::Command(const std::wstring& command)
 	m_LuaScript.RunString(command);
 }
 
+bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue)
+{
+	// Scripts need to be initialized so that any variables declared in
+	// the Initialize() function in the lua script file are accessible.
+	// Return "0" so that no errors are thrown for forumlas.
+	if (!m_Initialized)
+	{
+		strValue = L"0";
+		return true;
+	}
+
+	size_t sPos = command.find_first_of(L'(');
+	if (sPos != std::wstring::npos)
+	{
+		// Function call
+		size_t ePos = command.find_last_of(L')');
+		if (ePos == std::wstring::npos ||
+			sPos > ePos ||
+			command.size() < 3)
+		{
+			LogErrorF(this, L"Invalid function call: %s", command.c_str());
+			return false;
+		}
+
+		std::wstring funcName = command.substr(0, sPos);
+		auto args = ConfigParser::Tokenize2(
+			command.substr(sPos + 1, ePos - sPos - 1),
+			L',',
+			PairedPunctuation::BothQuotes);
+
+		if (!m_LuaScript.RunCustomFunction(funcName, args, strValue))
+		{
+			if (!strValue.empty())
+			{
+				LogErrorF(this, L"%s", strValue.c_str());
+			}
+			return false;
+		}
+	}
+	else
+	{
+		if (!m_LuaScript.GetLuaVariable(command, strValue))
+		{
+			LogErrorF(this, L"%s", strValue.c_str());
+			return false;
+		}
+	}
+
+	return true;
+}
+
 //static void stackDump(lua_State *L)
 //{
 //	LuaHelper::LuaLogger::Debug(" ----------------  Stack Dump ----------------" );

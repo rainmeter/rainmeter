@@ -10,7 +10,6 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
-#include "Error.h"
 #include "Meter.h"
 #include "Measure.h"
 #include "DialogAbout.h"
@@ -54,6 +53,7 @@ enum INTERVAL
 };
 
 int Skin::c_InstanceCount = 0;
+bool Skin::c_IsInSelectionMode = false;
 
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
 	m_Canvas(),
@@ -101,6 +101,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_SnapEdges(true),
 	m_AlphaValue(255),
 	m_FadeDuration(250),
+	m_NewFadeDuration(-1),
 	m_WindowZPosition(ZPOSITION_NORMAL),
 	m_DynamicWindowSize(false),
 	m_ClickThrough(false),
@@ -111,6 +112,12 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
 	m_SolidBevel(BEVELTYPE_NONE),
+	m_OldWindowDraggable(false),
+	m_OldKeepOnScreen(false),
+	m_OldClickThrough(false),
+	m_Selected(false),
+	m_SelectedColor(GetRainmeter().GetDefaultSelectionColor()),
+	m_DragGroup(),
 	m_Blur(false),
 	m_BlurMode(BLURMODE_NONE),
 	m_BlurRegion(),
@@ -305,7 +312,7 @@ void Skin::UnregisterMouseInput()
 		rid.usUsagePage = 0x01;
 		rid.usUsage = 0x02;  // HID mouse
 		rid.dwFlags = RIDEV_REMOVE;
-		rid.hwndTarget = m_Window;
+		rid.hwndTarget = NULL;
 		RegisterRawInputDevices(&rid, 1, sizeof(rid));
 		m_MouseInputRegistered = false;
 	}
@@ -335,6 +342,8 @@ void Skin::RemoveWindowExStyle(LONG_PTR flag)
 */
 void Skin::Deactivate()
 {
+	UpdateFadeDuration();
+
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_CLOSING;
 
@@ -541,6 +550,89 @@ void Skin::MoveWindow(int x, int y)
 	SetWindowPos(m_Window, nullptr, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	SavePositionIfAppropriate();
+}
+
+void Skin::MoveSelectedWindow(int dx, int dy)
+{
+	SetWindowPos(
+		m_Window,
+		nullptr,
+		m_ScreenX + dx,
+		m_ScreenY + dy,
+		0,
+		0,
+		SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+	SavePositionIfAppropriate();
+}
+
+void Skin::SelectSkinsGroup(std::unordered_set<std::wstring> groups)
+{
+	for (const auto& group : groups)
+	{
+		if (m_DragGroup.BelongsToGroup(group))
+		{
+			Select();
+			return;
+		}
+	}
+}
+
+void Skin::Select()
+{
+	m_Selected = true;
+
+	// When a skin is selected, it is implied that the purpose is to
+	// move a skin(s) around the desktop, so temporarily set the following
+	// settings to allow for easy movement of the selected skin(s).
+	m_OldWindowDraggable = m_WindowDraggable;
+	SetWindowDraggable(true);
+	m_OldKeepOnScreen = m_KeepOnScreen;
+	SetKeepOnScreen(false);
+	m_OldClickThrough = m_ClickThrough;
+	SetClickThrough(false);
+	DialogManage::UpdateSelectedSkinOptions(this);
+
+	// Disable each meter's tooltip
+	for (const auto& meter : m_Meters) meter->DisableToolTip();
+
+	Redraw();
+}
+
+void Skin::Deselect()
+{
+	m_Selected = false;
+
+	// Reset the following options to their original state
+	SetWindowDraggable(m_OldWindowDraggable);
+	SetKeepOnScreen(m_OldKeepOnScreen);
+	SetClickThrough(m_OldClickThrough);
+	DialogManage::UpdateSelectedSkinOptions(this);
+
+	// Reset each meter's tooltip
+	for (const auto& meter : m_Meters) meter->ResetToolTip();
+
+	Redraw();
+}
+
+void Skin::DeselectSkinsIfAppropriate(HWND hwnd)
+{
+	// Do not deselect any skins if CTRL+ALT is pressed
+	if (IsCtrlKeyDown() && IsAltKeyDown()) return;
+
+	// If the window that gets focus is a Rainmeter skin that is
+	// selected, then do not de-select any skins
+	const auto skin = GetRainmeter().GetSkin(hwnd);
+	if (skin && skin->IsSelected()) return;
+
+	for (const auto& skins : GetRainmeter().GetAllSkins())
+	{
+		Skin* skin = skins.second;
+		if (skin->IsSelected())
+		{
+			skin->Deselect();
+		}
+	}
 }
 
 void Skin::ChangeZPos(ZPOSITION zPos, bool all)
@@ -806,6 +898,13 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::ToggleFade:
 		DoBang(m_Hidden ? Bang::ShowFade : Bang::HideFade, args);
+		break;
+
+	case Bang::FadeDuration:
+		{
+			int duration = m_Parser.ParseInt(args[0].c_str(), 0);
+			m_NewFadeDuration = duration;
+		}
 		break;
 
 	case Bang::Move:
@@ -1845,6 +1944,9 @@ void Skin::ReadOptions()
 
 	m_SkinGroup = parser.ReadString(section, L"Group", L"");
 
+	const std::wstring dragGroup = parser.ReadString(section, L"DragGroup", L"");
+	m_DragGroup.InitializeGroup(dragGroup);
+
 	if (writeFlags != 0)
 	{
 		WriteOptions(writeFlags);
@@ -1974,7 +2076,7 @@ bool Skin::ReadSkin()
 	CreateDoubleBuffer(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
+	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
 	if (appVersion > RAINMETER_VERSION)
 	{
 		if (appVersion % 1000 != 0)
@@ -2008,6 +2110,9 @@ bool Skin::ReadSkin()
 	}
 	InitializeGroup(m_SkinGroup);
 
+	const std::wstring dragGroup = m_Parser.ReadString(L"Rainmeter", L"DragGroup", L"");
+	m_DragGroup.AddToGroup(dragGroup);
+
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
 	m_DragMargins = m_Parser.ReadRECT(L"Rainmeter", L"DragMargins", defMargins);
@@ -2033,6 +2138,9 @@ bool Skin::ReadSkin()
 			m_BackgroundMode = BGMODE_COPY;
 		}
 	}
+
+	auto& color = GetRainmeter().GetDefaultSelectionColor();
+	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", color.GetValue());
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
 
@@ -2565,6 +2673,13 @@ void Skin::Redraw()
 				(*j)->Draw(m_Canvas);
 			}
 		}
+
+		if (m_Selected)
+		{
+			Gdiplus::Rect rect(0, 0, m_WindowW, m_WindowH);
+			Gdiplus::SolidBrush brush(m_SelectedColor);
+			m_Canvas.FillRectangle(rect, brush);
+		}
 	}
 
 	UpdateWindow(m_TransparencyValue, true);
@@ -2767,7 +2882,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
@@ -2920,6 +3035,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::FadeWindow(int from, int to)
 {
+	UpdateFadeDuration();
+
 	if (m_FadeDuration == 0)
 	{
 		if (to == 0)
@@ -3226,6 +3343,9 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+	// If the skin is selected, do not process any mouse 'move' actions
+	if (m_Selected) return 0;
+
 	if (!m_ClickThrough || keyDown)
 	{
 		POINT pos;
@@ -3252,6 +3372,9 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process any mouse 'leave' actions
+	if (m_Selected) return 0;
+
 	POINT pos = System::GetCursorPosition();
 	HWND hWnd = WindowFromPoint(pos);
 	if (!hWnd || (hWnd != m_Window && GetParent(hWnd) != m_Window))  // ignore tooltips
@@ -3270,6 +3393,9 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process mouse 'scroll' actions
+	if (m_Selected) return 0;
+
 	if (uMsg == WM_MOUSEWHEEL)  // If sent through WM_INPUT, uMsg is WM_INPUT.
 	{
 		// Fix for Notepad++, which sends WM_MOUSEWHEEL to unfocused windows.
@@ -3296,6 +3422,9 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process mouse 'horizontal scroll' actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -3356,7 +3485,10 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_KEEPONSCREEN:
-		SetKeepOnScreen(!m_KeepOnScreen);
+		if (!m_Selected)
+		{
+			SetKeepOnScreen(!m_KeepOnScreen);
+		}
 		break;
 
 	case IDM_SKIN_FAVORITE:
@@ -3364,11 +3496,17 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_CLICKTHROUGH:
-		SetClickThrough(!m_ClickThrough);
+		if (!m_Selected)
+		{
+			SetClickThrough(!m_ClickThrough);
+		}		
 		break;
 
 	case IDM_SKIN_DRAGGABLE:
-		SetWindowDraggable(!m_WindowDraggable);
+		if (!m_Selected)
+		{
+			SetWindowDraggable(!m_WindowDraggable);
+		}
 		break;
 
 	case IDM_SKIN_HIDEONMOUSE:
@@ -3598,6 +3736,16 @@ void Skin::SetSnapEdges(bool b)
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
+void Skin::UpdateFadeDuration()
+{
+	if (m_NewFadeDuration >= 0)
+	{
+		m_FadeDuration = m_NewFadeDuration;
+		WriteOptions(OPTION_FADEDURATION);
+		m_NewFadeDuration = -1;
+	}
+}
+
 void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
@@ -3628,6 +3776,15 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = true;
 	m_Dragged = false;
 
+	// If the 'Show window contents while dragging' system option is
+	// not checked, temporarily enable it while dragging the skin.
+	BOOL sysDrag = TRUE;
+	SystemParametersInfo(SPI_GETDRAGFULLWINDOWS, NULL, &sysDrag, NULL);
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, TRUE, NULL, NULL);
+	}
+
 	// Run the DefWindowProc so the dragging works
 	LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
 
@@ -3653,6 +3810,13 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Clear the dragging flags
 	m_Dragging = false;
 	m_Dragged = false;
+
+	// Disable the 'Show window contents while dragging' system option if
+	// it was already disabled before dragging.
+	if (!sysDrag)
+	{
+		SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, FALSE, NULL, NULL);
+	}
 
 	return result;
 }
@@ -3772,7 +3936,8 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Snap to other windows
 				for (auto iter = GetRainmeter().GetAllSkins().cbegin(); iter != GetRainmeter().GetAllSkins().cend(); ++iter)
 				{
-					if ((*iter).second != this)
+					// Do not snap to |this| and to other selected skins
+					if ((*iter).second != this && !(*iter).second->IsSelected())
 					{
 						SnapToWindow((*iter).second, wp);
 					}
@@ -3914,6 +4079,10 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process any 'left down' mouse actions,
+	// but run the DefWindowProc so that dragging works.
+	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -3942,6 +4111,39 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Select/Deselect the skin if CTRL+ALT is pressed when the
+	// left mouse button is depressed. (Draws an overlay over the skin.)
+	if (IsCtrlKeyDown() && IsAltKeyDown())
+	{
+		if (!m_Selected)
+		{
+			Select();  // Select |this| skin
+
+			// Select any skins that belong to any group |this| belongs to
+			const auto& groups = m_DragGroup.GetGroups();
+			if (!groups.empty())  // Select all skins in group
+			{
+				for (const auto& skins : GetRainmeter().GetAllSkins())
+				{
+					Skin* skin = skins.second;
+					if (skin != this)  // Do not select |this| skin twice
+					{
+						skin->SelectSkinsGroup(groups);
+					}
+				}
+			}
+		}
+		else
+		{
+			Deselect();
+		}
+
+		return 0;
+	}
+
+	// If the skin is selected, do not process 'left up' mouse actions.
+	if (m_Selected) return 0;  // Make sure selection/deselection code is above this!
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -3962,6 +4164,9 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'left double click' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -3985,6 +4190,9 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'right down' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4005,6 +4213,10 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'right up' mouse actions,
+	// but run the DefWindowProc so the context menu works
+	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4024,6 +4236,9 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'right double click' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4047,6 +4262,9 @@ LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'middle down' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4067,6 +4285,9 @@ LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'middle up' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4087,6 +4308,9 @@ LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'middle double click' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4110,6 +4334,9 @@ LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'x button down' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4137,6 +4364,9 @@ LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'x button up' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4164,6 +4394,9 @@ LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the skin is selected, do not process 'x button double click' mouse actions
+	if (m_Selected) return 0;
+
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -4207,6 +4440,7 @@ LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			GetRainmeter().ExecuteCommand(m_OnUnfocusAction.c_str(), this);
 		}
+		DeselectSkinsIfAppropriate((HWND)wParam);
 		break;
 	}
 
@@ -4483,6 +4717,8 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// and in parent-client coordinates for child windows.
 
 	// Store the new window position
+	int oldX = m_ScreenX;
+	int oldY = m_ScreenY;
 	m_ScreenX = GET_X_LPARAM(lParam);
 	m_ScreenY = GET_Y_LPARAM(lParam);
 
@@ -4491,6 +4727,25 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_Dragging)
 	{
 		ScreenToWindow();
+	}
+
+	if (!c_IsInSelectionMode && m_Selected)
+	{
+		const int newX = m_ScreenX - oldX;
+		const int newY = m_ScreenY - oldY;
+
+		c_IsInSelectionMode = true;
+
+		for (const auto& skins : GetRainmeter().GetAllSkins())
+		{
+			Skin* skin = skins.second;
+			if (skin->IsSelected() && skin != this)
+			{
+				skin->MoveSelectedWindow(newX, newY);
+			}
+		}
+
+		c_IsInSelectionMode = false;
 	}
 
 	return 0;
@@ -4514,6 +4769,41 @@ LRESULT Skin::OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
 	{
 		GetRainmeter().ExecuteCommand(m_OnWakeAction.c_str(), this);
+	}
+
+	return 0;
+}
+
+LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (m_Selected)
+	{
+		int newX = 0;
+		int newY = 0;
+		int delta = IsCtrlKeyDown() ? SNAPDISTANCE : 1;
+
+		switch (wParam)
+		{
+		case VK_LEFT:  newX -= delta; break;
+		case VK_RIGHT: newX += delta; break;
+		case VK_UP:    newY -= delta; break;
+		case VK_DOWN:  newY += delta; break;
+		default:
+			return 0;
+		}
+
+		c_IsInSelectionMode = true;
+
+		for (const auto& skins : GetRainmeter().GetAllSkins())
+		{
+			Skin* skin = skins.second;
+			if (skin->IsSelected())
+			{
+				skin->MoveSelectedWindow(newX, newY);
+			}
+		}
+
+		c_IsInSelectionMode = false;
 	}
 
 	return 0;
@@ -4581,6 +4871,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)
 	MESSAGE(OnTimeChange, WM_TIMECHANGE)
 	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
+	MESSAGE(OnKeyDown, WM_KEYDOWN)
 	END_MESSAGEPROC
 }
 

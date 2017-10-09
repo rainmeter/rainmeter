@@ -184,7 +184,10 @@ void Mouse::DestroyCustomCursor()
 
 void Mouse::ReplaceMouseVariables(std::wstring& result) const
 {
-	// Check for variables ($VAR$)
+	// Check for new-style variables: [$MOUSEX]
+	m_Skin->GetParser().ParseVariables(result, ConfigParser::VariableType::Mouse, m_Meter);
+
+	// Check for old-style variables: $MOUSEX$
 	size_t start = 0, end;
 	bool loop = true;
 
@@ -207,7 +210,7 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 				else
 				{
 					std::wstring strVariable = result.substr(si, end - si);
-					std::wstring value = GetMouseVariable(strVariable);
+					std::wstring value = m_Skin->GetParser().GetMouseVariable(strVariable, m_Meter);
 					if (!value.empty())
 					{
 						// Variable found, replace it with the value
@@ -231,49 +234,4 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 		}
 	}
 	while (loop);
-}
-
-std::wstring Mouse::GetMouseVariable(const std::wstring& variable) const
-{
-	std::wstring result;
-	LPCWSTR var = variable.c_str();
-	WCHAR buffer[32];
-
-	POINT pt;
-	GetCursorPos(&pt);
-
-	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
-	{
-		var += 6;
-		int xOffset = m_Skin->GetX() + (m_Meter ? m_Meter->GetX() : 0);
-		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$
-		{
-			xOffset = (int)(((pt.x - xOffset + 1) / (double)(m_Meter ? m_Meter->GetW() : m_Skin->GetW())) * 100);
-			_itow_s(xOffset, buffer, 10);
-			result = buffer;
-		}
-		else if (*var == L'\0')  // $MOUSEX$
-		{
-			_itow_s(pt.x - xOffset, buffer, 10);
-			result = buffer;
-		}
-	}
-	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
-	{
-		var += 6;
-		int yOffset = m_Skin->GetY() + (m_Meter ? m_Meter->GetY() : 0);
-		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$
-		{
-			yOffset = (int)(((pt.y - yOffset + 1) / (double)(m_Meter ? m_Meter->GetH() : m_Skin->GetH())) * 100);
-			_itow_s(yOffset, buffer, 10);
-			result = buffer;
-		}
-		else if (*var == L'\0')  // $MOUSEY$
-		{
-			_itow_s(pt.y - yOffset, buffer, 10);
-			result = buffer;
-		}
-	}
-
-	return result;
 }

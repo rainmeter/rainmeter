@@ -1,6 +1,5 @@
 lbaselib.c
-- Commented out collectgarbage, getfenv, print, and setfenv functions in base_funcs array
-- Commented out luaL_register for coroutine library
+- Commented out collectgarbage and print functions in base_funcs array
 
 liolib.c
 - Commented out popen in iolib array
@@ -8,8 +7,11 @@ liolib.c
 - Commented out popen related calls in luaopen_io
 
 linit.c
-- Commented out debug and package libraries
+- Commented out package libraries
 
 loslib.c
 - Commented out exit function in syslib array
 - Changed os_setlocale() to noop and to always return nil
+
+luaconf.h
+- Commented out LUA_DL_DLL macro

@@ -40,12 +40,26 @@ void AppendBackslashIfMissing(std::wstring& path)
 	}
 }
 
+void RemoveLeadingBackslash(std::wstring& path)
+{
+	if (!path.empty() && IsSeparator(path[0]))
+	{
+		path.erase(path.begin());
+	}
+}
+
 void RemoveTrailingBackslash(std::wstring& path)
 {
 	if (!path.empty() && IsSeparator(path[path.length() - 1]))
 	{
 		path.pop_back();
 	}
+}
+
+void RemoveLeadingAndTrailingBackslash(std::wstring& path)
+{
+	RemoveLeadingBackslash(path);
+	RemoveTrailingBackslash(path);
 }
 
 std::wstring GetFolderFromFilePath(const std::wstring& filePath)

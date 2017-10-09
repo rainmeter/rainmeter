@@ -198,7 +198,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Parent->player->AddInstance();
 		m_Parent->playerPath = parser.ReadString(section, L"PlayerPath", L"");
 		m_Parent->trackChangeAction = parser.ReadString(section, L"TrackChangeAction", L"", false);
-		m_Parent->disableLeadingZero = parser.ReadInt(section, L"DisableLeadingZero", 0) != 0;
+		m_Parent->disableLeadingZero = parser.ReadBool(section, L"DisableLeadingZero", false);
 
 		if (oldPlayer)
 		{
@@ -330,7 +330,7 @@ void MeasureNowPlaying::UpdateValue()
 	case MEASURE_PROGRESS:
 		if (player->GetDuration())
 		{
-			m_Value = (player->GetPosition() * 100) / player->GetDuration();
+			m_Value = ((double)player->GetPosition() * 100.0) / player->GetDuration();
 		}
 		break;
 	case MEASURE_RATING:
@@ -468,7 +468,7 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 
 			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
-				int position = (_wtoi(arg) * (int)player->GetDuration()) / 100;
+				int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
 				if (arg[0] == L'+' || arg[0] == L'-')
 				{
 					position += player->GetPosition();

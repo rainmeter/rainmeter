@@ -131,6 +131,14 @@ void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* 
 	}
 }
 
+void DialogManage::UpdateSelectedSkinOptions(Skin* skin)
+{
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.UpdateSelected(skin);
+	}
+}
+
 void DialogManage::UpdateSkins(Skin* skin, bool deleted)
 {
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
@@ -359,6 +367,9 @@ DialogManage::TabSkins::~TabSkins()
 	HWND item = GetControl(Id_NewSkinButton);
 	RemoveWindowSubclass(item, &NewSkinButtonSubclass, 1);
 
+	item = GetControl(Id_SkinsTreeView);
+	RemoveWindowSubclass(item, &SkinsTreeViewSubclass, 1);
+
 	if (s_NewSkinBkBrush)
 	{
 		DeleteObject(s_NewSkinBkBrush);
@@ -437,31 +448,31 @@ void DialogManage::TabSkins::Create(HWND owner)
 			WS_VISIBLE, 0),
 
 		CT_LABEL(-1, ID_STR_COORDINATESSC,
-			175, 169, labelWidth, 9,
+			175, 167, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_XPositionEdit, 0,
-			175 + labelWidth, 166, 38, 14,
+			175 + labelWidth, 165, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_EDIT(Id_YPositionEdit, 0,
-			175 + labelWidth + 42, 166, 38, 14,
+			175 + labelWidth + 42, 165, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-1, ID_STR_POSITIONSC,
-			175, 190, labelWidth, 9,
+			175, 187, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_ZPositionDropDownList, 0,
-			175 + labelWidth, 187, 80, 14,
+			175 + labelWidth, 185, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-1, ID_STR_LOADORDERSC,
-			175, 208, labelWidth, 9,
+			175, 207, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_LoadOrderEdit, 0,
 			175 + labelWidth, 205, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-1, ID_STR_TRANSPARENCYSC,
-			175, 229, labelWidth, 9,
+			175, 227, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_TransparencyDropDownList, 0,
-			175 + labelWidth, 226, 80, 14,
+			175 + labelWidth, 224, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-1, ID_STR_ONHOVERSC,
 			175, 247, labelWidth, 9,
@@ -471,7 +482,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 
 		CT_BUTTON(Id_DisplayMonitorButton, ID_STR_DISPLAYMONITOR,
-			360, 166, 118, 14,
+			359, 165, 119, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_CHECKBOX(Id_DraggableCheckBox, ID_STR_DRAGGABLE,
 			360, 185, 118, 9,
@@ -516,6 +527,9 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
+
+	item = GetControl(Id_SkinsTreeView);
+	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, (DWORD_PTR)this);
 }
 
 void DialogManage::TabSkins::Initialize()
@@ -582,6 +596,21 @@ void DialogManage::TabSkins::Initialize()
 
 	m_Initialized = true;
 	m_HandleCommands = true;
+}
+
+void DialogManage::TabSkins::UpdateSelected(Skin* skin)
+{
+	if (m_SkinWindow && m_SkinWindow == skin)
+	{
+		bool selected = skin->IsSelected();
+
+		HWND item = GetControl(Id_DraggableCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+		item = GetControl(Id_KeepOnScreenCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+		item = GetControl(Id_ClickThroughCheckBox);
+		EnableWindow(item, selected ? FALSE : TRUE);
+	}
 }
 
 /*
@@ -964,6 +993,30 @@ LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT m
 				s_NewSkinBkBrush = NULL;
 				InvalidateRect(hwnd, 0, TRUE);
 			}
+		}
+		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	TabSkins* tab = (TabSkins*)data;
+
+	switch (msg)
+	{
+	case WM_KEYUP:
+		switch (wParam)
+		{
+			case VK_RETURN:
+				if (GetFocus() == tab->GetControl(Id_SkinsTreeView) &&
+					!tab->m_SkinFileName.empty())
+				{
+					return tab->OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+				}
+				break;
 		}
 		break;
 	}
@@ -1485,7 +1538,16 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_DBLCLK:
 		if (nm->idFrom == Id_SkinsTreeView && !m_SkinFileName.empty())
 		{
-			OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+			POINT pt = System::GetCursorPosition();
+
+			TVHITTESTINFO ht;
+			ht.pt = pt;
+			ScreenToClient(nm->hwndFrom, &ht.pt);
+
+			if (TreeView_HitTest(nm->hwndFrom, &ht) && !(ht.flags & TVHT_ONITEMBUTTON))
+			{
+				OnCommand(MAKEWPARAM(Id_LoadButton, 0), 0);
+			}
 		}
 		break;
 
@@ -1674,7 +1736,7 @@ void DialogManage::TabLayouts::Create(HWND owner)
 			WS_VISIBLE, 0),
 		CT_LISTBOX(Id_List, 0,
 			249, 16, 165, 125,
-			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE),
+			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_LoadButton, ID_STR_LOAD,
 			420, 16, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
@@ -1698,6 +1760,14 @@ void DialogManage::TabLayouts::Initialize()
 	{
 		ListBox_AddString(item, layouts[i].c_str());
 	}
+
+	// Assure buttons are disabled
+	item = GetControl(Id_LoadButton);
+	EnableWindow(item, FALSE);
+	item = GetControl(Id_DeleteButton);
+	EnableWindow(item, FALSE);
+	item = GetControl(Id_EditButton);
+	EnableWindow(item, FALSE);
 
 	m_Initialized = true;
 }
@@ -1955,13 +2025,13 @@ void DialogManage::TabSettings::Create(HWND owner)
 			0, 0, 478, 118,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_LANGUAGESC,
-			6, 16, 107, 14,
+			6, 15, 107, 14,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_LanguageDropDownList, 0,
 			107, 13, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL, 0),
 		CT_LABEL(-1, ID_STR_EDITORSC,
-			6, 37, 107, 9,
+			6, 36, 107, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_EditorEdit, 0,
 			107, 34, 250, 14,
@@ -2210,7 +2280,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			Edit_SetText(GetControl(Id_EditorEdit), buffer);
 		}
-		break;	
+		break;
 
 	case Id_ShowTrayIconCheckBox:
 		{

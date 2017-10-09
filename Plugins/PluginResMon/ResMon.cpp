@@ -75,9 +75,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else
 	{
-		WCHAR buffer[256];
-		_snwprintf_s(buffer, _TRUNCATE, L"ResMon.dll: GDICountType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
-		RmLog(LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"ResMon.dll: GDICountType=%s is not valid", type);
 	}
 
 	measure->process = RmReadString(rm, L"ProcessName", L"");
