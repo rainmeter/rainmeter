@@ -1295,7 +1295,9 @@ void DialogAbout::TabPlugins::Initialize()
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
-	auto findPlugins = [&](const std::wstring& path)
+	int index = 0;
+	
+	auto findPlugins = [&](const std::wstring& path) -> void
 	{
 		std::wstring filter = path + L"*.dll";
 
@@ -1306,7 +1308,6 @@ void DialogAbout::TabPlugins::Initialize()
 			return;
 		}
 
-		int index = 0;
 		do
 		{
 			// Try to get the version and author
@@ -1426,6 +1427,17 @@ void DialogAbout::TabPlugins::Initialize()
 
 	vitem.iGroupId = 1;
 	findPlugins(GetRainmeter().GetPluginPath());
+
+	// Add old plugins
+	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
+	{
+		vitem.iItem = index;
+		vitem.pszText = (LPWSTR)oldDefaultPlugin;
+		ListView_InsertItem(item, &vitem);
+		ListView_SetItemText(item, vitem.iItem, 2, L"*As an internal measure");
+		++index;
+	}
+
 	if (GetRainmeter().HasUserPluginPath())
 	{
 		vitem.iGroupId = 0;
@@ -1453,6 +1465,81 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
+}
+
+INT_PTR DialogAbout::TabPlugins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR DialogAbout::TabPlugins::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CUSTOMDRAW:
+		return OnCustomDraw(wParam, lParam);
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+INT_PTR DialogAbout::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
+{
+	static const COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
+
+	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
+	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
+
+	switch (lvcd->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+		return TRUE;
+
+	case CDDS_ITEMPREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+		return TRUE;
+
+	case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
+		{
+			// Only process 1st column
+			if (lvcd->iSubItem != 0) return FALSE;
+
+			// Only process items in 2nd group
+			WCHAR buffer[512];
+			LVITEM lvi;
+			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
+			lvi.iSubItem = 0;
+			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
+			lvi.pszText = buffer;
+			lvi.cchTextMax = 512;
+			ListView_GetItem(hwnd, &lvi);
+			if (lvi.iGroupId != 1) return FALSE;
+
+			for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
+			{
+				if (_wcsicmp(buffer, oldDefaultPlugin) == 0)
+				{
+					lvcd->clrText = disabled;
+					SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
+					return TRUE;
+				}
+			}
+		}
+		break;
+	}
+
+	return FALSE;
 }
 
 // -----------------------------------------------------------------------------------------------

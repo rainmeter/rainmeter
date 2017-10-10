@@ -1601,6 +1601,17 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 	}
 }
 
+const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
+{
+	static const std::vector<LPCWSTR> s_OldPlugins =
+	{
+		L"MediaKey",
+		L"NowPlaying",
+		L"RecycleManager",
+		L"WebParser"
+	};
+	return s_OldPlugins;
+}
 
 /*
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.

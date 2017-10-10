@@ -173,6 +173,8 @@ public:
 
 	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
+	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
+
 	friend class CommandHandler;
 	friend class ContextMenu;
 	friend class DialogManage;

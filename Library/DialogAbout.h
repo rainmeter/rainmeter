@@ -120,6 +120,11 @@ private:
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCustomDraw(WPARAM wParam, LPARAM lParam);
+
 	private:
 		typedef LPCTSTR (*GETPLUGINAUTHOR)();
 		typedef UINT (*GETPLUGINVERSION)();

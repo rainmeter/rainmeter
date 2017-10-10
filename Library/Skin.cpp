@@ -2284,14 +2284,7 @@ bool Skin::ReadSkin()
 						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
-					const WCHAR* const kOldDefaultPlugins[] =
-					{
-						L"MediaKey",
-						L"NowPlaying",
-						L"RecycleManager",
-						L"WebParser"
-					};
-					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
+					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 					{
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
 						{
