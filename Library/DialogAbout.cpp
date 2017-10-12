@@ -43,7 +43,7 @@ void DialogAbout::Open(int tab)
 
 	c_Dialog->ShowDialogWindow(
 		GetString(ID_STR_ABOUTRAINMETER),
-		0, 0, 460, 210,
+		0, 0, 600, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		GetRainmeter().GetWindow());
@@ -161,10 +161,10 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = 760;
-			mmi->ptMinTrackSize.y = 350;
+			mmi->ptMinTrackSize.x = 800;
+			mmi->ptMinTrackSize.y = 390;
 		}
-		return TRUE;
+		return FALSE;
 
 	case WM_SIZE:
 		{
@@ -213,10 +213,10 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
-			404, 191, 50, 14,
+			544, 231, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		CT_TAB(Id_Tab, 0,
-			6, 6, 448, 181,
+			6, 6, 588, 221,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
@@ -318,7 +318,7 @@ DialogAbout::TabLog::TabLog() : Tab(),
 
 void DialogAbout::TabLog::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 430, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
@@ -326,22 +326,22 @@ void DialogAbout::TabLog::Create(HWND owner)
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_LISTVIEW(Id_LogListView, 0,
-			0, 0, 428, 135,
+			0, 0, 568, 175,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
 		CT_CHECKBOX(Id_ErrorCheckBox, ID_STR_ERROR,
-			0, 139, 70, 9,
+			0, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_WarningCheckBox, ID_STR_WARNING,
-			70, 139, 70, 9,
+			80, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_NoticeCheckBox, ID_STR_NOTICE,
-			140, 139, 70, 9,
+			160, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_DebugCheckBox, ID_STR_DEBUG,
-			210, 139, 70, 9,
+			240, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ClearButton, ID_STR_CLEAR,
-			(428 - buttonWidth), 139, buttonWidth, 14,
+			(568 - buttonWidth), 179, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -714,15 +714,15 @@ DialogAbout::TabSkins::TabSkins() : Tab(),
 
 void DialogAbout::TabSkins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 430, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_LISTBOX(Id_SkinsListBox, 0,
-			0, 0, 120, 148,
+			0, 0, 120, 188,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
 		CT_LISTVIEW(Id_SkinsListView, 0,
-			125, 0, 302, 148,
+			125, 0, 442, 188,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
 
@@ -756,15 +756,15 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = 90;
+	lvc.cx = 80;
 	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 60;
+	lvc.cx = 90;
 	lvc.pszText = GetString(ID_STR_NUMBER);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
-	lvc.cx = 130;  // Resized later
+	lvc.cx = 110;  // Resized later
 	lvc.pszText = GetString(ID_STR_STRING);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -1238,12 +1238,12 @@ DialogAbout::TabPlugins::TabPlugins() : Tab()
 
 void DialogAbout::TabPlugins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 430, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_LISTVIEW(Id_PluginsListView, 0,
-			0, 0, 428, 148,
+			0, 0, 568, 188,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
 
@@ -1557,7 +1557,7 @@ DialogAbout::TabVersion::TabVersion() : Tab()
 
 void DialogAbout::TabVersion::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 430, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
