@@ -1281,14 +1281,9 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 250; // Resized later
+	lvc.cx = 250;  // Resized later
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
-
-	// Start 3rd column at max width
-	RECT rc;
-	GetClientRect(m_Window, &rc);
-	Resize(rc.right, rc.bottom);
 
 	LVITEM vitem;
 	vitem.mask = LVIF_TEXT | LVIF_GROUPID;
@@ -1443,6 +1438,14 @@ void DialogAbout::TabPlugins::Initialize()
 		vitem.iGroupId = 0;
 		findPlugins(GetRainmeter().GetUserPluginPath());
 	}
+
+	// Force first column to fit contents
+	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
+
+	// Start 3rd column at max width
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Resize(rc.right, rc.bottom);
 
 	m_Initialized = true;
 }
