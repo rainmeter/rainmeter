@@ -327,6 +327,7 @@
 #define IDM_NEWSKINMENU_DELETEFILE                   4070
 #define IDM_COPYNUMBERVALUE                          4071
 #define IDM_COPYSTRINGVALUE                          4072
+#define IDM_COPYRANGE                                4073
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

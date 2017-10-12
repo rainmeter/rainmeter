@@ -1052,6 +1052,36 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPYRANGE:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512];
+				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+				std::wstring temp = buffer;
+				Measure* measure = m_SkinWindow->GetMeasure(temp);
+				if (!measure)
+				{
+					ListView_GetItemText(hwnd, sel, 3, buffer, 512);
+					temp = buffer;
+				}
+				else
+				{
+					int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMinValue());
+					Measure::RemoveTrailingZero(buffer, bufferLen);
+					temp = buffer;
+					temp += L" - ";
+					bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMaxValue());
+					Measure::RemoveTrailingZero(buffer, bufferLen);
+					temp += buffer;
+				}
+				System::SetClipboardText(temp);
+			}
+		}
+		break;
+
 	case IDM_COPY:
 		{
 			HWND hwnd = GetControl(Id_SkinsListView);
@@ -1112,7 +1142,8 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				static const MenuTemplate s_MeasureMenu[] =
 				{
 					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
-					MENU_ITEM(IDM_COPYSTRINGVALUE, 0)
+					MENU_ITEM(IDM_COPYSTRINGVALUE, 0),
+					MENU_ITEM(IDM_COPYRANGE, 0)
 				};
 
 				static const MenuTemplate s_VariableMenu[] =
@@ -1140,6 +1171,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						setMenuItem(ID_STR_NUMBER, IDM_COPYNUMBERVALUE);
 						setMenuItem(ID_STR_STRING, IDM_COPYSTRINGVALUE);
+						setMenuItem(ID_STR_RANGE, IDM_COPYRANGE);
 					}
 
 					POINT pt = System::GetCursorPosition();
