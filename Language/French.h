@@ -131,7 +131,7 @@
 #define STR_BACKUP                "Sauvegarde"
 #define STR_BACKUPDESCRIPTION     "Une sauvegarde vous permet d'enregistrer une copie complète de votre installation, y compris les skins et statistiques. Contrairement à un thème, restaurer une sauvegarde remplacera toutes les modifications et les mises à jour de vos skins."
 #define STR_BACKUPE               "Sauvegarde..."
-#define STR_LANGUAGESC            "Langue:"
+#define STR_LANGUAGESC            "Langue (Language):"
 #define STR_EDITORSC              "Editeur:"
 #define STR_GENERAL               "Général"
 #define STR_CHECKFORUPDATES       "Rechercher des mises à jour"
