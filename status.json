@@ -1,0 +1,193 @@
+{
+  "release": {
+    "final": "4.0.0",
+    "final_revision": "2746"
+  },
+  "language": [
+    {
+      "id": 1025,
+      "name": "Arabic",
+      "obsolete": true
+    },
+    {
+      "id": 1026,
+      "name": "Bulgarian",
+      "obsolete": true
+    },
+    {
+      "id": 2052,
+      "name": "ChineseSimplified",
+      "obsolete": true
+    },
+    {
+      "id": 1028,
+      "name": "ChineseTraditional",
+      "obsolete": true
+    },
+    {
+      "id": 1050,
+      "name": "Croatian",
+      "obsolete": true
+    },
+    {
+      "id": 1029,
+      "name": "Czech",
+      "obsolete": true
+    },
+    {
+      "id": 1030,
+      "name": "Danish",
+      "obsolete": true
+    },
+    {
+      "id": 1043,
+      "name": "Dutch",
+      "obsolete": true
+    },
+    {
+      "id": 1033,
+      "name": "English",
+      "obsolete": false
+    },
+    {
+      "id": 1035,
+      "name": "Finnish",
+      "obsolete": true
+    },
+    {
+      "id": 1036,
+      "name": "French",
+      "obsolete": true
+    },
+    {
+      "id": 1031,
+      "name": "German",
+      "obsolete": true
+    },
+    {
+      "id": 1032,
+      "name": "Greek",
+      "obsolete": true
+    },
+    {
+      "id": 1037,
+      "name": "Hebrew",
+      "obsolete": true
+    },
+    {
+      "id": 1038,
+      "name": "Hungarian",
+      "obsolete": true
+    },
+    {
+      "id": 1057,
+      "name": "Indonesian",
+      "obsolete": true
+    },
+    {
+      "id": 1040,
+      "name": "Italian",
+      "obsolete": true
+    },
+    {
+      "id": 1041,
+      "name": "Japanese",
+      "obsolete": true
+    },
+    {
+      "id": 1042,
+      "name": "Korean",
+      "obsolete": true
+    },
+    {
+      "id": 1062,
+      "name": "Latvian",
+      "obsolete": true
+    },
+    {
+      "id": 1063,
+      "name": "Lithuanian",
+      "obsolete": true
+    },
+    {
+      "id": 1086,
+      "name": "Malay",
+      "obsolete": true
+    },
+    {
+      "id": 1044,
+      "name": "NorwegianBokmal",
+      "obsolete": true
+    },
+    {
+      "id": 1045,
+      "name": "Polish",
+      "obsolete": true
+    },
+    {
+      "id": 1046,
+      "name": "PortugueseBrazil",
+      "obsolete": true
+    },
+    {
+      "id": 2070,
+      "name": "PortuguesePortugal",
+      "obsolete": true
+    },
+    {
+      "id": 1048,
+      "name": "Romanian",
+      "obsolete": true
+    },
+    {
+      "id": 1049,
+      "name": "Russian",
+      "obsolete": true
+    },
+    {
+      "id": 3098,
+      "name": "SerbianCyrillic",
+      "obsolete": true
+    },
+    {
+      "id": 2074,
+      "name": "SerbianLatin",
+      "obsolete": true
+    },
+    {
+      "id": 1051,
+      "name": "Slovak",
+      "obsolete": true
+    },
+    {
+      "id": 1060,
+      "name": "Slovenian",
+      "obsolete": true
+    },
+    {
+      "id": 3082,
+      "name": "SpanishModern",
+      "obsolete": true
+    },
+    {
+      "id": 1053,
+      "name": "Swedish",
+      "obsolete": true
+    },
+    {
+      "id": 1055,
+      "name": "Turkish",
+      "obsolete": true
+    },
+    {
+      "id": 1058,
+      "name": "Ukrainian",
+      "obsolete": true
+    },
+    {
+      "id": 1066,
+      "name": "Vietnamese",
+      "obsolete": true
+    }
+  ]
+}
