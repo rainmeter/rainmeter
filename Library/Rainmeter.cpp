@@ -100,6 +100,7 @@ Rainmeter::Rainmeter() :
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
+	m_LanguageObsolete(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
 	m_NormalStayDesktop(true),
@@ -406,7 +407,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		CheckUpdate();
+		GetUpdater().CheckUpdate();
 	}
 
 	return 0;	// All is OK

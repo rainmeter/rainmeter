@@ -159,6 +159,7 @@ private:
 			Id_ShowLogFileButton,
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
+			Id_LanguageUpdateLink,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
 			Id_ShowTrayIconCheckBox
@@ -172,6 +173,7 @@ private:
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
 	enum Id

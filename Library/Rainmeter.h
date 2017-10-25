@@ -135,6 +135,8 @@ public:
 	void SetDisableVersionCheck(bool check);
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
+	bool GetLanguageStatus() { return m_LanguageObsolete; }
+	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; }
 
 	void ShowLogFile();
 
@@ -235,6 +237,7 @@ private:
 
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
+	bool m_LanguageObsolete;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;

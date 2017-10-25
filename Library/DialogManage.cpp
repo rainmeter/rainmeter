@@ -16,8 +16,11 @@
 #include "DialogManage.h"
 #include "DialogAbout.h"
 #include "DialogNewSkin.h"
+#include "UpdateCheck.h"
 #include "../Version.h"
 #include <Commdlg.h>
+
+#define RAINMETER_LANGUAGE L"https://www.rainmeter.net/localization"
 
 WINDOWPLACEMENT DialogManage::c_WindowPlacement = {0};
 DialogManage* DialogManage::c_Dialog = nullptr;
@@ -2030,6 +2033,9 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_COMBOBOX(Id_LanguageDropDownList, 0,
 			107, 13, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL, 0),
+		CT_LINKLABEL(Id_LanguageUpdateLink, 0,
+			361, 15, 114, 9,
+			0, 0),
 		CT_LABEL(-1, ID_STR_EDITORSC,
 			6, 36, 107, 9,
 			WS_VISIBLE, 0),
@@ -2074,8 +2080,16 @@ void DialogManage::TabSettings::Create(HWND owner)
 
 void DialogManage::TabSettings::Initialize()
 {
+	std::wstring lang = L"<a>";
+	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
+	lang += L"</a>";
+
+	HWND item = GetControl(Id_LanguageUpdateLink);
+	SetWindowText(item, lang.c_str());
+	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
+
 	// Scan for languages
-	HWND item = GetControl(Id_LanguageDropDownList);
+	item = GetControl(Id_LanguageDropDownList);
 
 	std::wstring files = GetRainmeter().GetPath() + L"Languages\\*.dll";
 	WIN32_FIND_DATA fd;
@@ -2137,6 +2151,9 @@ INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARA
 	{
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -2190,6 +2207,8 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 						GetRainmeter().DelayedExecuteCommand(L"!About Version");
 					}
 				}
+
+				GetUpdater().CheckLanguage();
 
 				SendMessage(c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
 				GetRainmeter().DelayedExecuteCommand(L"!Manage Settings");
@@ -2299,4 +2318,23 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+INT_PTR DialogManage::TabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CLICK:
+		if (nm->idFrom == Id_LanguageUpdateLink)
+		{
+			CommandHandler::RunFile(RAINMETER_LANGUAGE);
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }

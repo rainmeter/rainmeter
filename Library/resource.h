@@ -259,6 +259,8 @@
 #define ID_STR_TEMPLATEFOLDERFAIL                    3022
 #define ID_STR_TEMPLATEFILEFAIL                      3023
 #define ID_STR_TEMPLATEDELETE                        3024
+#define ID_STR_LANGUAGEOBSOLETE                      3025
+#define ID_STR_CLICKLANGUAGE                         3026
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -328,6 +330,7 @@
 #define IDM_COPYNUMBERVALUE                          4071
 #define IDM_COPYSTRINGVALUE                          4072
 #define IDM_COPYRANGE                                4073
+#define IDM_LANGUAGEOBSOLETE                         4074
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
