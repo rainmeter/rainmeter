@@ -37,7 +37,7 @@
     {
       "id": 1030,
       "name": "Danish",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1043,
@@ -57,12 +57,12 @@
     {
       "id": 1036,
       "name": "French",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1031,
       "name": "German",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1032,
@@ -87,7 +87,7 @@
     {
       "id": 1040,
       "name": "Italian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1041,
@@ -97,7 +97,7 @@
     {
       "id": 1042,
       "name": "Korean",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1062,
@@ -132,12 +132,12 @@
     {
       "id": 2070,
       "name": "PortuguesePortugal",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1048,
       "name": "Romanian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1049,
@@ -157,7 +157,7 @@
     {
       "id": 1051,
       "name": "Slovak",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1060,
@@ -167,7 +167,7 @@
     {
       "id": 3082,
       "name": "SpanishModern",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1053,
