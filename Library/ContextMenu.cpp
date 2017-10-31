@@ -147,11 +147,18 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 
 		// Add update notification item
-		if (rainmeter.m_NewVersion)
+		if (rainmeter.GetNewVersion())
 		{
 			InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
 			HiliteMenuItem(rainmeter.GetTrayIcon()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+		}
+
+		// Add language status if obsolete
+		if (rainmeter.GetLanguageStatus())
+		{
+			InsertMenu(menu, !rainmeter.m_NewVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(ID_STR_LANGUAGEOBSOLETE));
+			if (!rainmeter.GetNewVersion()) InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
 

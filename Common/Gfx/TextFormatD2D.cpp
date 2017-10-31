@@ -889,7 +889,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	{
 		D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		D2D1_GRADIENT_STOP stop = { 0.0f, color };
-		if (stops[0].position < 0.5)
+		if (stops[0].position < 0.5f)
 		{
 			stop.position = 1.0f;
 		}

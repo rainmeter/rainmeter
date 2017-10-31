@@ -100,6 +100,7 @@ Rainmeter::Rainmeter() :
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
+	m_LanguageObsolete(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
 	m_NormalStayDesktop(true),
@@ -406,7 +407,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		CheckUpdate();
+		GetUpdater().CheckUpdate();
 	}
 
 	return 0;	// All is OK
@@ -1282,12 +1283,7 @@ void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, 
 */
 void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
-	std::wstring tmpSz = command;
-	if (skin)
-	{
-		skin->GetParser().ReplaceMeasures(tmpSz);
-	}
-	m_CommandHandler.ExecuteCommand(tmpSz.c_str(), skin, multi);
+	m_CommandHandler.ExecuteCommand(command, skin, multi);
 }
 
 /*
@@ -1606,6 +1602,17 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 	}
 }
 
+const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
+{
+	static const std::vector<LPCWSTR> s_OldPlugins =
+	{
+		L"MediaKey",
+		L"NowPlaying",
+		L"RecycleManager",
+		L"WebParser"
+	};
+	return s_OldPlugins;
+}
 
 /*
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.

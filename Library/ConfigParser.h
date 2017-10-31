@@ -114,6 +114,7 @@ public:
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
+	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 private:
 	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);

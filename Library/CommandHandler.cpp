@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "../Common/PathUtil.h"
 #include "CommandHandler.h"
+#include "ConfigParser.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "Measure.h"
@@ -256,7 +257,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			if (pos)
 			{
 				bang.assign(command, 0, pos - command);
-				args = ParseString(pos + 1);
+				args = ParseString(pos + 1, skin ? &skin->GetParser() : nullptr);
 			}
 			else
 			{
@@ -298,7 +299,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					const WCHAR* newCommand = bangs.c_str() + start;
 					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
 					{
-						auto args = ParseString(newCommand + wcslen(L"!Delay "));
+						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
 						if (args.size() == 1)
 						{
 							auto delay = ConfigParser::ParseUInt(args[0].c_str(), 0);
@@ -357,6 +358,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 
 					if (skin)
 					{
+						skin->GetParser().ReplaceMeasures(sound);
 						skin->MakePathAbsolute(sound);
 					}
 
@@ -372,7 +374,28 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 		}
 
 		// Run command
-		RunCommand(command);
+		std::wstring tmpSz = command;
+		if (skin)
+		{
+			// If the command is a section variable or a new style variable,
+			// surround the command with brackets and replace it with the variable.
+			// This allows for section variables to completely replace a bang sequence.
+			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
+			if (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz))
+			{
+				tmpSz.insert(0, L"[");
+				tmpSz.append(L"]");
+
+				skin->GetParser().ReplaceMeasures(tmpSz);
+
+				ExecuteCommand(tmpSz.c_str(), skin, true);
+				return;
+			}
+
+			skin->GetParser().ReplaceMeasures(tmpSz);
+		}
+
+		RunCommand(tmpSz);
 	}
 }
 
@@ -483,7 +506,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 ** Splits strings into parts.
 **
 */
-std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str)
+std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;
 
@@ -508,6 +531,11 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str)
 					}
 				}
 				while (pos != std::wstring::npos);
+			}
+
+			if (parser)
+			{
+				parser->ReplaceMeasures(string);
 			}
 
 			result.push_back(string);

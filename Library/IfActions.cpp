@@ -14,8 +14,8 @@
 #include "pcre/pcre.h"
 
 IfActions::IfActions() :
-	m_AboveValue(0.0f),
-	m_BelowValue(0.0f),
+	m_AboveValue(0.0),
+	m_BelowValue(0.0),
 	m_EqualValue(0),
 	m_AboveAction(),
 	m_BelowAction(),
@@ -200,7 +200,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		++i;
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
-			double result = 0.0f;
+			double result = 0.0;
 			const WCHAR* errMsg = MathParser::Parse(
 				item.value.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
 			if (errMsg != nullptr)
@@ -222,7 +222,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			{
 				item.parseError = false;
 
-				if (result == 1.0f)			// "True"
+				if (result == 1.0)			// "True"
 				{
 					item.fCommitted = false;
 
@@ -232,7 +232,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 						GetRainmeter().ExecuteCommand(item.tAction.c_str(), measure.GetSkin());
 					}
 				}
-				else if (result == 0.0f)	// "False"
+				else if (result == 0.0)	// "False"
 				{
 					item.tCommitted = false;
 

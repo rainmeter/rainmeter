@@ -135,8 +135,8 @@ echo #include "English.h"> "..\Language\Language.rc"
 echo #include "Resource.rc">> "..\Language\Language.rc"
 if "%1" == "BUILDLANGUAGES" (
 	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Release\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
 	if exist "BuildLog.txt" del "BuildLog.txt"
 	goto END
 )

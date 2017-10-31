@@ -443,7 +443,15 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 
 	size_t parentId = 0;
 
-	std::wstring parentName = args[0].substr(8); // Remove 'Combine '
+	if (args[0].length() < 8)
+	{
+		std::wstring key = L"Shape";
+		key += std::to_wstring(shapeId + 1);
+		LogErrorF(this, L"%s definition contains no shape identifiers", key.c_str());
+		return false;
+	}
+
+	std::wstring parentName = args[0].substr(8);  // Remove 'Combine '
 	if (StringUtil::CaseInsensitiveCompareN(parentName, L"SHAPE"))
 	{
 		parentId = getShapeId(parentName.c_str());

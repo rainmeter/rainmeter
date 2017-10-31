@@ -1,11 +1,15 @@
 Bulgarian,Bulgarian,1026
 ChineseSimplified,SimpChinese,2052
 ChineseTraditional,TradChinese,1028
+Czech,Czech,1029
 Danish,Danish,1030
 Dutch,Dutch,1043
 English,English,1033
+Finnish,Finnish,1035
 French,French,1036
 German,German,1031
+Greek,Greek,1032
+Hebrew,Hebrew,1037
 Hungarian,Hungarian,1038
 Indonesian,Indonesian,1057
 Italian,Italian,1040
@@ -20,6 +24,7 @@ Russian,Russian,1049
 SerbianCyrillic,Serbian,3098
 SerbianLatin,SerbianLatin,2074
 Slovak,Slovak,1051
+Slovenian,Slovenian,1060
 SpanishModern,SpanishInternational,3082
 Swedish,Swedish,1053
 Turkish,Turkish,1055
