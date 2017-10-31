@@ -851,12 +851,12 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 				const WCHAR key = result.substr(si, 1).c_str()[0];
 				std::wstring val = result.substr(si + 1, end - si - 1);
 
-				// Avoid self references
+				// Avoid empty commands and self references
 				std::wstring original = result.substr(si, end - si).c_str();
-				if (prevStart == start &&
-					_wcsicmp(original.c_str(), prevVar.c_str()) == 0)
+				if (original.empty() ||
+					(prevStart == start && _wcsicmp(original.c_str(), prevVar.c_str()) == 0))
 				{
-					LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
+					if (!original.empty()) LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
 					start = end + 1;
 					continue;
 				}
