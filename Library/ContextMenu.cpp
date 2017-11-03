@@ -9,6 +9,7 @@
 #include "../Common/MenuTemplate.h"
 #include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
+#include "Meter.h"
 #include "Rainmeter.h"
 #include "Util.h"
 #include "Skin.h"
@@ -207,6 +208,10 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
 	}
 
+	// Disable each meter's tooltip
+	auto skin = GetRainmeter().GetSkin(parentWindow);
+	if (skin) for (const auto& meter : skin->GetMeters()) meter->DisableToolTip();
+
 	// Show context menu
 	TrackPopupMenu(
 		menu,
@@ -216,6 +221,9 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		0,
 		parentWindow,
 		nullptr);
+
+	// Re-enable each meter's tooltip
+	if (skin) for (const auto& meter : skin->GetMeters()) meter->ResetToolTip();
 }
 
 HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
