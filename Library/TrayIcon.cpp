@@ -20,6 +20,7 @@
 
 #define RAINMETER_OFFICIAL		L"https://www.rainmeter.net"
 #define RAINMETER_HELP			L"https://docs.rainmeter.net"
+#define RAINMETER_LOCALIZATION	L"https://www.rainmeter.net/localization"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
@@ -472,6 +473,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		case IDM_NEW_VERSION:
 			CommandHandler::RunFile(RAINMETER_OFFICIAL);
+			break;
+
+		case IDM_LANGUAGEOBSOLETE:
+			CommandHandler::RunFile(RAINMETER_LOCALIZATION);
 			break;
 
 		case IDM_REFRESH:
