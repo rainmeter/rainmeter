@@ -386,10 +386,11 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 				tmpSz.insert(0, L"[");
 				tmpSz.append(L"]");
 
-				skin->GetParser().ReplaceMeasures(tmpSz);
-
-				ExecuteCommand(tmpSz.c_str(), skin, true);
-				return;
+				if (skin->GetParser().ReplaceMeasures(tmpSz))
+				{
+					ExecuteCommand(tmpSz.c_str(), skin, true);
+					return;
+				}
 			}
 
 			skin->GetParser().ReplaceMeasures(tmpSz);
