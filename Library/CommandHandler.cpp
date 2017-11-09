@@ -382,8 +382,8 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			// This allows for section variables to completely replace a bang sequence.
 			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
 			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
-			bool isVar = false;
-			if (isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz)))
+			bool isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
+			if (isVar)
 			{
 				tmpSz.insert(0, L"[");
 				tmpSz.append(L"]");
