@@ -381,19 +381,19 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			// surround the command with brackets and replace it with the variable.
 			// This allows for section variables to completely replace a bang sequence.
 			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
-			if (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz))
+			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
+			bool isVar = false;
+			if (isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz)))
 			{
 				tmpSz.insert(0, L"[");
 				tmpSz.append(L"]");
-
-				if (skin->GetParser().ReplaceMeasures(tmpSz))
-				{
-					ExecuteCommand(tmpSz.c_str(), skin, true);
-					return;
-				}
 			}
 
-			skin->GetParser().ReplaceMeasures(tmpSz);
+			if (skin->GetParser().ReplaceMeasures(tmpSz) && isVar)
+			{
+				ExecuteCommand(tmpSz.c_str(), skin, true);
+				return;
+			}
 		}
 
 		RunCommand(tmpSz);
