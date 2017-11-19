@@ -50,19 +50,24 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	}
 
 	auto L = GetState();
-	bool scriptLoaded = false;
 
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+
+	std::wstring wfile = std::wstring(scriptFile, scriptFile.find_last_of(L'\\') + 1);
+	// @ modifier will transform [string.. into a file readable format
+	std::string file = "@" + (m_Unicode ? StringUtil::NarrowUTF8(wfile) : StringUtil::Narrow(wfile));
+	
+	bool scriptLoaded;
 	if (m_Unicode)
 	{
 		const std::string utf8Data =
 			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
-		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), file.c_str()) == 0;
 	}
 	else
 	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, file.c_str()) == 0;
 	}
 
 	if (scriptLoaded)
@@ -100,13 +105,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaHelper::ReportErrors(scriptFile);
+			LuaHelper::ReportErrors();
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaHelper::ReportErrors(scriptFile);
+		LuaHelper::ReportErrors();
 	}
 
 	return false;
@@ -166,7 +171,7 @@ void LuaScript::RunFunction(const char* funcName)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaHelper::ReportErrors(m_File);
+			LuaHelper::ReportErrors();
 		}
 
 		lua_pop(L, 1);
@@ -192,7 +197,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
-			LuaHelper::ReportErrors(m_File);
+			LuaHelper::ReportErrors();
 			lua_pop(L, 1);
 		}
 		else
@@ -234,7 +239,7 @@ void LuaScript::RunString(const std::wstring& str)
 		// Load the string as a Lua chunk
 		if (luaL_loadstring(L, narrowStr.c_str()))
 		{
-			LuaHelper::ReportErrors(m_File);
+			LuaHelper::ReportErrors();
 		}
 
 		// Push our table onto the stack
@@ -245,7 +250,7 @@ void LuaScript::RunString(const std::wstring& str)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaHelper::ReportErrors(m_File);
+			LuaHelper::ReportErrors();
 		}
 	}
 }
@@ -314,7 +319,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 
 	if (lua_pcall(L, numArgs, 1, 0))
 	{
-		LuaHelper::ReportErrors(m_File);
+		LuaHelper::ReportErrors();
 		strValue.clear();
 		result = false;
 	}

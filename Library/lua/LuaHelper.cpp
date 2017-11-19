@@ -27,22 +27,14 @@ LuaHelper::UnicodeScript::~UnicodeScript()
 	LuaHelper::c_ScriptStack.pop_back();
 }
 
-void LuaHelper::ReportErrors(const std::wstring& file)
+void LuaHelper::ReportErrors()
 {
 	auto script = GetCurrentScript();
 	lua_State* L = script->GetState();
 	const char* error = lua_tostring(L, -1);
 	lua_pop(L, 1);
 
-	// Skip "[string ...]".
-	const char* pos = strchr(error, ':');
-	if (pos)
-	{
-		error = pos;
-	}
-
-	std::wstring str(file, file.find_last_of(L'\\') + 1);
-	str += script->IsUnicode() ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
+	std::wstring str = script->IsUnicode() ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
 	LogErrorF(L"Script: %s", str.c_str());
 }
 
