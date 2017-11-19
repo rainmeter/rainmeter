@@ -54,11 +54,11 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
 
-	std::wstring wfile = std::wstring(scriptFile, scriptFile.find_last_of(L'\\') + 1);
-	// @ modifier will transform [string.. into a file readable format
-	std::string file = "@" + (m_Unicode ? StringUtil::NarrowUTF8(wfile) : StringUtil::Narrow(wfile));
-	
-	bool scriptLoaded;
+	std::wstring tmp = std::wstring(scriptFile, scriptFile.find_last_of(L'\\') + 1);
+	std::string file = m_Unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
+	file.insert(0, "@");
+
+	bool scriptLoaded = false;
 	if (m_Unicode)
 	{
 		const std::string utf8Data =

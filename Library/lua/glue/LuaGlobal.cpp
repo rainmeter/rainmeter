@@ -71,11 +71,11 @@ static int Dofile(lua_State* L)
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
 
-	std::wstring wfile = std::wstring(path, path.find_last_of(L'\\') + 1);
-	// @ modifier will transform [string.. into a file readable format
-	std::string file = "@" + (unicode ? StringUtil::NarrowUTF8(wfile) : StringUtil::Narrow(wfile));
+	std::wstring tmp = std::wstring(path, path.find_last_of(L'\\') + 1);
+	std::string file = unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
+	file.insert(0, "@");
 
-	bool scriptLoaded;
+	bool scriptLoaded = false;
 	if (unicode)
 	{
 		const std::string utf8Data =
