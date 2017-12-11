@@ -24,7 +24,7 @@ public:
 	virtual void UpdateCachedData();
 
 	//Used to check if track is different
-	IITTrack* m_Track;
+	long m_TrackID;
 
 	virtual void Pause();
 	virtual void Play();

@@ -152,6 +152,9 @@ void PlayerITunes::Initialize()
 	{
 		m_Initialized = true;
 
+		//Reset last trackID
+		m_TrackID = -1;
+
 		// Try getting track info and player state
 		ITPlayerState state;
 		if (SUCCEEDED(m_iTunes->get_PlayerState(&state)))
@@ -210,25 +213,6 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		player = (PlayerITunes*)(((CREATESTRUCT*)lParam)->lpCreateParams);
 		return 0;
 
-	case WM_USER:
-		if (wParam == ITEventAboutToPromptUserToQuit)
-		{
-			// Event handler calls this through a PostMessage when iTunes quits
-			player->Uninitialize();
-		}
-		return 0;
-
-	case WM_TIMER:
-		if (wParam == TIMER_CHECKACTIVE)
-		{
-			if (!FindWindow(L"iTunesApp", L"iTunes") && !FindWindow(L"iTunes", L"iTunes"))
-			{
-				player->m_iTunesActive = false;
-				KillTimer(hwnd, TIMER_CHECKACTIVE);
-			}
-		}
-		return 0;
-
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
@@ -241,18 +225,24 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 bool PlayerITunes::CheckWindow()
 {
 	DWORD time = GetTickCount();
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 500)
 	{
 		m_LastCheckTime = time;
 
-		if ((FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")) && !m_iTunesActive)
+		if ((FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")))
 		{
 			m_iTunesActive = true;
-			Initialize();
+			if (!m_Initialized)
+			{
+				Initialize();
+			}
+		}
+		else
+		{
+			m_iTunesActive = false;
 		}
 	}
-
-	return m_Initialized;
+	return m_iTunesActive;
 }
 
 /*
@@ -261,8 +251,7 @@ bool PlayerITunes::CheckWindow()
 */
 void PlayerITunes::UpdateData()
 {
-	// Check if iTunes exists, if it does update frequent data
-	if ((m_Initialized || CheckWindow()))
+	if (CheckWindow())
 	{
 		// Update player state, reset 
 		ITPlayerState state;
@@ -277,7 +266,7 @@ void PlayerITunes::UpdateData()
 			if (state == ITPlayerStateStopped)
 			{
 				// Determine if paused or stopped
-				if(position != 0)
+				if (position != 0)
 				{
 					m_State = STATE_PAUSED;
 
@@ -292,7 +281,6 @@ void PlayerITunes::UpdateData()
 				m_State = STATE_STOPPED;
 			}
 		}
-
 		// Volume onChange was removed, manually check 
 		long volume;
 		if (SUCCEEDED(m_iTunes->get_SoundVolume(&volume)))
@@ -327,6 +315,11 @@ void PlayerITunes::UpdateData()
 		{
 			UpdateCachedData();
 		}
+	}	
+	//Since we no longer have an event to tell us when iTunes has closed if it is initialized and we could not find window then deinit
+	else if(m_Initialized)
+	{
+		Uninitialize();
 	}
 }
 
@@ -339,91 +332,97 @@ void PlayerITunes::UpdateCachedData()
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
 	// If song is not current song
-	if (SUCCEEDED(hr) && track && m_Track != track)
+	if (SUCCEEDED(hr) && track)
 	{
-		//Increment song count since song count has changed
-		++m_TrackCount;
-
-		BSTR tmpStr;
-		long tmpVal;
-
-		// Update various metadata
-		track->get_Name(&tmpStr);
-		tmpStr ? m_Title = tmpStr : m_Title.clear();
-		track->get_Album(&tmpStr);
-		tmpStr ? m_Album = tmpStr : m_Album.clear();
-		track->get_Artist(&tmpStr);
-		tmpStr ? m_Artist = tmpStr : m_Artist.clear();
-
-		track->get_Genre(&tmpStr);;
-		tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
-
-		track->get_Duration(&tmpVal);
-		m_Duration = (UINT)tmpVal;
-
-
-		track->get_TrackNumber(&tmpVal);
-		m_Number = (UINT)tmpVal;
-
-		track->get_Year(&tmpVal);
-		m_Year = (UINT)tmpVal;
-
-		// Check if song still has file path
-		IITFileOrCDTrack* file;
-		hr = track->QueryInterface(&file);
-		if (SUCCEEDED(hr))
+		long trackID = -1;
+		hr = track->get_TrackID(&trackID);
+		if (SUCCEEDED(hr) && trackID != m_TrackID)
 		{
-			file->get_Location(&tmpStr);
-			file->Release();
-			tmpStr ? m_FilePath = tmpStr : m_FilePath.clear();
-		}
-		else
-		{
-			m_FilePath.clear();
-		}
+			m_TrackID = trackID;
+			//Increment song count since song count has changed
+			++m_TrackCount;
 
-		// Update album art
-		if (m_Measures & MEASURE_COVER)
-		{
-			m_CoverPath.clear();
+			BSTR tmpStr;
+			long tmpVal;
 
-			// Check for embedded art through iTunes interface
-			IITArtworkCollection* artworkCollection;
-			hr = track->get_Artwork(&artworkCollection);
+			// Update various metadata
+			track->get_Name(&tmpStr);
+			tmpStr ? m_Title = tmpStr : m_Title.clear();
+			track->get_Album(&tmpStr);
+			tmpStr ? m_Album = tmpStr : m_Album.clear();
+			track->get_Artist(&tmpStr);
+			tmpStr ? m_Artist = tmpStr : m_Artist.clear();
 
+			track->get_Genre(&tmpStr);;
+			tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
+
+			track->get_Duration(&tmpVal);
+			m_Duration = (UINT)tmpVal;
+
+
+			track->get_TrackNumber(&tmpVal);
+			m_Number = (UINT)tmpVal;
+
+			track->get_Year(&tmpVal);
+			m_Year = (UINT)tmpVal;
+
+			// Check if song still has file path
+			IITFileOrCDTrack* file;
+			hr = track->QueryInterface(&file);
 			if (SUCCEEDED(hr))
 			{
-				long count;
-				artworkCollection->get_Count(&count);
+				file->get_Location(&tmpStr);
+				file->Release();
+				tmpStr ? m_FilePath = tmpStr : m_FilePath.clear();
+			}
+			else
+			{
+				m_FilePath.clear();
+			}
 
-				if (count > 0)
+			// Update album art
+			if (m_Measures & MEASURE_COVER)
+			{
+				m_CoverPath.clear();
+
+				// Check for embedded art through iTunes interface
+				IITArtworkCollection* artworkCollection;
+				hr = track->get_Artwork(&artworkCollection);
+
+				if (SUCCEEDED(hr))
 				{
-					IITArtwork* artwork;
-					hr = artworkCollection->get_Item(1, &artwork);
+					long count;
+					artworkCollection->get_Count(&count);
 
-					if (SUCCEEDED(hr))
+					if (count > 0)
 					{
-						_bstr_t coverPath = m_TempCoverPath.c_str();
-						hr = artwork->SaveArtworkToFile(coverPath);
+						IITArtwork* artwork;
+						hr = artworkCollection->get_Item(1, &artwork);
+
 						if (SUCCEEDED(hr))
 						{
-							m_CoverPath = m_TempCoverPath;
+							_bstr_t coverPath = m_TempCoverPath.c_str();
+							hr = artwork->SaveArtworkToFile(coverPath);
+							if (SUCCEEDED(hr))
+							{
+								m_CoverPath = m_TempCoverPath;
+							}
+
+							artwork->Release();
 						}
-
-						artwork->Release();
 					}
+
+					artworkCollection->Release();
 				}
-
-				artworkCollection->Release();
 			}
-		}
 
-		if (m_Measures & MEASURE_LYRICS)
-		{
-			FindLyrics();
-		}
+			if (m_Measures & MEASURE_LYRICS)
+			{
+				FindLyrics();
+			}
 
-		track->Release();
+			track->Release();
+		}
 	}
 	else
 	{
@@ -566,6 +565,7 @@ void PlayerITunes::SetRepeat(bool state)
 void PlayerITunes::ClosePlayer()
 {
 	m_iTunes->Quit();
+	m_iTunesActive = false;
 	Uninitialize();
 	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
 }
