@@ -49,7 +49,7 @@ DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 {
 	std::wstring settingsFile = g_Data.settingsPath;
 	settingsFile += L"\\Rainmeter.data";
-	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 0, settingsFile.c_str()) != 0;
+	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 1, settingsFile.c_str()) != 0;
 }
 
 /*
