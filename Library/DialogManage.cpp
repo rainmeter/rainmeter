@@ -2075,7 +2075,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_SKININSTALLER,
-			0, 198, 478, 66,
+			0, 198, 478, 32,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_ArchivePlugins, ID_STR_ARCHIVEPLUGINS,
 			6, 214, 200, 9,
