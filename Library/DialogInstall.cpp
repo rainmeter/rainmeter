@@ -1103,7 +1103,7 @@ bool DialogInstall::IsIgnoredSkin(const WCHAR* name)
 	{
 		L"Backup",
 		L"@Backup",
-		L"@Plugins"
+		L"@Vault"
 	};
 
 	return IsIgnoredName(name, s_Skins, _countof(s_Skins));
