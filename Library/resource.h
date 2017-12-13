@@ -79,6 +79,7 @@
 #define IDM_INSTALL_BACKUPSKINS                      4200
 #define IDM_INSTALL_SYSTEMFONTS                      4201
 #define IDM_INSTALL_FORMAT                           4202
+#define IDM_INSTALL_ARCHIVEPLUGINS                   4203
 
 #define ID_STR_NUM_BUTTONWIDTH                       1998
 #define ID_STR_NUM_LABELWIDTH                        1999

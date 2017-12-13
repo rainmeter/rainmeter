@@ -78,6 +78,7 @@ private:
 
 	void LaunchRainmeter();
 	void KeepVariables();
+	void ArchivePlugin(const std::wstring& folder, const std::wstring& name);
 
 	static void CleanLayoutFile(const WCHAR* file);
 
@@ -115,6 +116,7 @@ private:
 	bool m_BackupSkins;
 	bool m_MergeSkins;
 	bool m_SystemFonts;
+	bool m_ArchivePlugins;
 	std::vector<std::wstring> m_VariablesFiles;
 	std::vector<std::wstring> m_LoadSkins;
 	std::wstring m_LoadLayout;

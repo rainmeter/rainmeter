@@ -44,8 +44,12 @@ DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 	m_BackupPackage(false),
 	m_BackupSkins(true),
 	m_MergeSkins(false),
-	m_SystemFonts(false)
+	m_SystemFonts(false),
+	m_ArchivePlugins(false)
 {
+	std::wstring settingsFile = g_Data.settingsPath;
+	settingsFile += L"\\Rainmeter.data";
+	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 0, settingsFile.c_str()) != 0;
 }
 
 /*
@@ -220,6 +224,15 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(subMenu, IDM_INSTALL_BACKUPSKINS, (m_BackupSkins ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
 			}
 
+			if (m_PackagePlugins.empty())
+			{
+				EnableMenuItem(subMenu, IDM_INSTALL_ARCHIVEPLUGINS, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				CheckMenuItem(subMenu, IDM_INSTALL_ARCHIVEPLUGINS, (m_ArchivePlugins ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
+			}
+
 			if (m_PackageFonts.empty())
 			{
 				EnableMenuItem(subMenu, IDM_INSTALL_SYSTEMFONTS, MF_BYCOMMAND | MF_GRAYED);
@@ -258,6 +271,20 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_INSTALL_BACKUPSKINS:
 		m_BackupSkins = !m_BackupSkins;
+		break;
+
+	case IDM_INSTALL_ARCHIVEPLUGINS:
+		{
+			m_ArchivePlugins = !m_ArchivePlugins;
+
+			std::wstring settingsFile = g_Data.settingsPath;
+			settingsFile += L"\\Rainmeter.data";
+			WritePrivateProfileString(
+				L"SkinInstaller",
+				L"ArchivePlugins",
+				m_ArchivePlugins ? L"1" : L"0",
+				settingsFile.c_str());
+		}
 		break;
 
 	case IDM_INSTALL_SYSTEMFONTS:
@@ -758,6 +785,16 @@ bool DialogInstall::InstallPackage()
 		{
 			const std::wstring item(path, pos - path);
 
+			if (_wcsicmp(component, L"Plugins") == 0 &&
+				m_ArchivePlugins &&
+				_wcsicmp(extension, L".dll") == 0 &&
+				!wcschr(pos + 1, L'\\'))
+			{
+				std::wstring plugin(pos + 1);
+				const std::wstring folder(path, pos - path);
+				ArchivePlugin(folder, plugin);
+			}
+
 			if (_wcsicmp(component, L"Skins") == 0 &&
 				m_PackageSkins.find(item) != m_PackageSkins.end())
 			{
@@ -988,6 +1025,31 @@ void DialogInstall::KeepVariables()
 	}
 }
 
+void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
+{
+	std::wstring path = g_Data.skinsPath + L"@Plugins\\";
+	path += name.substr(0, name.size() - 4) + L'\\';		// Remove extension from folder name
+
+	const std::wstring tmpPath = path + L".extracted\\";
+	const std::wstring plugin = tmpPath + name;
+
+	if (ExtractCurrentFile(plugin))
+	{
+		std::wstring finalPath = path;
+
+		const std::wstring version = GetFileVersionString(plugin.c_str());
+		if (!version.empty())
+		{
+			finalPath += version + L'\\';
+		}
+
+		finalPath += folder + L'\\';
+		finalPath += name;
+		System::CopyFiles(plugin, finalPath, true);
+		System::RemoveFolder(tmpPath);
+	}
+}
+
 void DialogInstall::LaunchRainmeter()
 {
 	// Execute Rainmeter and wait up to a minute for it process all messages
@@ -1063,7 +1125,8 @@ bool DialogInstall::IsIgnoredSkin(const WCHAR* name)
 	static const WCHAR* s_Skins[] =
 	{
 		L"Backup",
-		L"@Backup"
+		L"@Backup",
+		L"@Plugins"
 	};
 
 	return IsIgnoredName(name, s_Skins, _countof(s_Skins));
