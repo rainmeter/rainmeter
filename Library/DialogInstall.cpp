@@ -1025,8 +1025,6 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 		System::CopyFiles(plugin, finalPath, true);
 		System::RemoveFolder(tmpPath);
 	}
-
-	//
 }
 
 void DialogInstall::LaunchRainmeter()
