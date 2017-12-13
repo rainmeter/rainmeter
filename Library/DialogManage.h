@@ -162,7 +162,8 @@ private:
 			Id_LanguageUpdateLink,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
-			Id_ShowTrayIconCheckBox
+			Id_ShowTrayIconCheckBox,
+			Id_ArchivePlugins
 		};
 
 		TabSettings();

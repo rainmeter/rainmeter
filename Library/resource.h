@@ -79,7 +79,6 @@
 #define IDM_INSTALL_BACKUPSKINS                      4200
 #define IDM_INSTALL_SYSTEMFONTS                      4201
 #define IDM_INSTALL_FORMAT                           4202
-#define IDM_INSTALL_ARCHIVEPLUGINS                   4203
 
 #define ID_STR_NUM_BUTTONWIDTH                       1998
 #define ID_STR_NUM_LABELWIDTH                        1999
@@ -233,6 +232,8 @@
 #define ID_STR_STRING                                2148
 #define ID_STR_EXTERNALPLUGINS                       2149
 #define ID_STR_BUILTINPLUGINS                        2150
+#define ID_STR_SKININSTALLER                         2151
+#define ID_STR_VAULTPLUGINS                          2152
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000

@@ -65,7 +65,6 @@ IDR_INSTALL_MENU MENU
     POPUP " "
     {
         MENUITEM "Backup skins",                 IDM_INSTALL_BACKUPSKINS
-        MENUITEM "Archive plugins to @Plugins"   IDM_INSTALL_ARCHIVEPLUGINS
         MENUITEM "Install fonts to system",      IDM_INSTALL_SYSTEMFONTS, GRAYED
         MENUITEM SEPARATOR
         MENUITEM " ",                            IDM_INSTALL_FORMAT, GRAYED

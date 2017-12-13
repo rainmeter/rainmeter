@@ -45,7 +45,7 @@ DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 	m_BackupSkins(true),
 	m_MergeSkins(false),
 	m_SystemFonts(false),
-	m_ArchivePlugins(false)
+	m_ArchivePlugins()
 {
 	std::wstring settingsFile = g_Data.settingsPath;
 	settingsFile += L"\\Rainmeter.data";
@@ -224,15 +224,6 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(subMenu, IDM_INSTALL_BACKUPSKINS, (m_BackupSkins ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
 			}
 
-			if (m_PackagePlugins.empty())
-			{
-				EnableMenuItem(subMenu, IDM_INSTALL_ARCHIVEPLUGINS, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else
-			{
-				CheckMenuItem(subMenu, IDM_INSTALL_ARCHIVEPLUGINS, (m_ArchivePlugins ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
-			}
-
 			if (m_PackageFonts.empty())
 			{
 				EnableMenuItem(subMenu, IDM_INSTALL_SYSTEMFONTS, MF_BYCOMMAND | MF_GRAYED);
@@ -271,20 +262,6 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_INSTALL_BACKUPSKINS:
 		m_BackupSkins = !m_BackupSkins;
-		break;
-
-	case IDM_INSTALL_ARCHIVEPLUGINS:
-		{
-			m_ArchivePlugins = !m_ArchivePlugins;
-
-			std::wstring settingsFile = g_Data.settingsPath;
-			settingsFile += L"\\Rainmeter.data";
-			WritePrivateProfileString(
-				L"SkinInstaller",
-				L"ArchivePlugins",
-				m_ArchivePlugins ? L"1" : L"0",
-				settingsFile.c_str());
-		}
 		break;
 
 	case IDM_INSTALL_SYSTEMFONTS:
@@ -1027,7 +1004,7 @@ void DialogInstall::KeepVariables()
 
 void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
 {
-	std::wstring path = g_Data.skinsPath + L"@Plugins\\";
+	std::wstring path = g_Data.skinsPath + L"@Vault\\Plugins\\";
 	path += name.substr(0, name.size() - 4) + L'\\';		// Remove extension from folder name
 
 	const std::wstring tmpPath = path + L".extracted\\";
@@ -1048,6 +1025,8 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 		System::CopyFiles(plugin, finalPath, true);
 		System::RemoveFolder(tmpPath);
 	}
+
+	//
 }
 
 void DialogInstall::LaunchRainmeter()
