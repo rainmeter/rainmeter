@@ -643,6 +643,14 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 		}
 	}
 
+	path = m_SkinPath;
+	path += L"@Vault\\";
+	if (CreateDirectory(path.c_str(), nullptr))
+	{
+		path += L"Plugins\\";
+		CreateDirectory(path.c_str(), nullptr);
+	}
+
 	path = GetLayoutPath();
 	if (_waccess(path.c_str(), 0) == -1)
 	{
