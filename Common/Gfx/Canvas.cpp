@@ -27,15 +27,14 @@ Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
 Microsoft::WRL::ComPtr<IWICImagingFactory> Canvas::c_WICFactory;
 
 Canvas::Canvas() :
-	m_Layers(),
-	m_BitmapCache(),
 	m_W(0),
 	m_H(0),
 	m_MaxBitmapSize(0U),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false)
+	m_CanUseAxisAlignClip(false),
+	m_Layers()
 {
 	Initialize();
 }

@@ -119,11 +119,6 @@
     <ClCompile Include="Gfx\Shapes\Path.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Bitmap\BitmapD2DLoader.cpp" />
-    <ClCompile Include="Gfx\BitmapD2D.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Bitmap\SingleBitmapD2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -247,12 +242,6 @@
     <ClInclude Include="Gfx\Shapes\Path.h">
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
-    <ClInclude Include="Cache.h" />
-    <ClInclude Include="Gfx\Bitmap\BitmapD2DLoader.h" />
-    <ClInclude Include="Gfx\BitmapD2D.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Bitmap\SingleBitmapD2D.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
@@ -266,9 +255,6 @@
     </Filter>
     <Filter Include="Gfx\Shapes">
       <UniqueIdentifier>{b408511c-a54f-43e1-96bb-ac25be548071}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Gfx\Bitmap">
-      <UniqueIdentifier>{187fa4b3-cf77-41f0-9175-5ec1ec385a7c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
