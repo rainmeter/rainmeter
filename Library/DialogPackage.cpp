@@ -584,7 +584,8 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
 						!(fd.cFileName[0] == L'.' && (!fd.cFileName[1] || fd.cFileName[1] == L'.' && !fd.cFileName[2])) &&
 						wcscmp(fd.cFileName, L"Backup") != 0 &&
-						wcscmp(fd.cFileName, L"@Backup") != 0)
+						wcscmp(fd.cFileName, L"@Backup") != 0 &&
+						wcscmp(fd.cFileName, L"@Vault") != 0)
 					{
 						ComboBox_InsertString(item, -1, fd.cFileName);
 					}

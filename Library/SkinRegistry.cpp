@@ -167,6 +167,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::w
 				if (!PathUtil::IsDotOrDotDot(fileData.cFileName) &&
 					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
 					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
+					!(level == 0 && wcscmp(L"@Vault", fileData.cFileName) == 0) &&
 					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
 				{
 					subfolders.push_back(filename);
