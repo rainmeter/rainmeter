@@ -100,6 +100,8 @@ private:
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		static std::wstring GetTreeSelectionPath(HWND tree);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index = 0);
@@ -157,9 +159,11 @@ private:
 			Id_ShowLogFileButton,
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
+			Id_LanguageUpdateLink,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
-			Id_ShowTrayIconCheckBox
+			Id_ShowTrayIconCheckBox,
+			Id_ArchivePlugins
 		};
 
 		TabSettings();
@@ -170,6 +174,7 @@ private:
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
 	enum Id

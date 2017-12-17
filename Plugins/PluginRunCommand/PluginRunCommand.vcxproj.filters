@@ -1,26 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Common">
-      <UniqueIdentifier>{19312085-AA51-4BD6-BE92-4B6098CCA539}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Stdafx.h" />
-    <ClCompile Include="PluginRunCommand.h" />
-    <ClInclude Include="..\..\Common\StringUtil.h">
-      <Filter>Common</Filter>
-    </ClInclude>
+    <ClInclude Include="Stdafx.h" />
+    <ClInclude Include="PluginRunCommand.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PluginRunCommand.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginRunCommand.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Common\StringUtil.cpp">
-      <Filter>Common</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

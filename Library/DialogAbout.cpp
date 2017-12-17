@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "System.h"
@@ -42,7 +43,7 @@ void DialogAbout::Open(int tab)
 
 	c_Dialog->ShowDialogWindow(
 		GetString(ID_STR_ABOUTRAINMETER),
-		0, 0, 400, 210,
+		0, 0, 600, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		GetRainmeter().GetWindow());
@@ -160,10 +161,10 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = 700;
-			mmi->ptMinTrackSize.y = 350;
+			mmi->ptMinTrackSize.x = 800;
+			mmi->ptMinTrackSize.y = 390;
 		}
-		return TRUE;
+		return FALSE;
 
 	case WM_SIZE:
 		{
@@ -212,10 +213,10 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
-			344, 191, 50, 14,
+			544, 231, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		CT_TAB(Id_Tab, 0,
-			6, 6, 388, 181,
+			6, 6, 588, 221,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
@@ -244,9 +245,11 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	item = m_TabLog.GetControl(TabLog::Id_ItemsListView);
+	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabSkins.GetControl(TabSkins::Id_ItemsListView);
+	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
+	SetWindowTheme(item, L"explorer", nullptr);
+	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 
 	if (c_WindowPlacement.length == 0)
@@ -315,39 +318,34 @@ DialogAbout::TabLog::TabLog() : Tab(),
 
 void DialogAbout::TabLog::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 370, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_ItemsListView, 0,
-			0, 0, 368, 135,
+		CT_LISTVIEW(Id_LogListView, 0,
+			0, 0, 568, 175,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
 		CT_CHECKBOX(Id_ErrorCheckBox, ID_STR_ERROR,
-			0, 139, 70, 9,
+			0, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_WarningCheckBox, ID_STR_WARNING,
-			70, 139, 70, 9,
+			80, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_NoticeCheckBox, ID_STR_NOTICE,
-			140, 139, 70, 9,
+			160, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_DebugCheckBox, ID_STR_DEBUG,
-			210, 139, 70, 9,
+			240, 179, 80, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ClearButton, ID_STR_CLEAR,
-			(368 - buttonWidth), 139, buttonWidth, 14,
+			(568 - buttonWidth), 179, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
-
-	// Call resize to fix an issue of the Clear button being cut off on higher DPI monitors
-	RECT rc;
-	GetClientRect(m_Window, &rc);
-	Resize(rc.right, rc.bottom);
 }
 
 /*
@@ -357,7 +355,7 @@ void DialogAbout::TabLog::Create(HWND owner)
 void DialogAbout::TabLog::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_LogListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
@@ -393,13 +391,15 @@ void DialogAbout::TabLog::Initialize()
 	lvc.cx = 225;
 	lvc.pszText = GetString(ID_STR_SOURCE);
 	ListView_InsertColumn(item, 2, &lvc);
-	lvc.iSubItem = 4;
-	
-	// Start 4th column at max width
-	RECT rect;
-	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 405) : 180;
+	lvc.iSubItem = 3;
+	lvc.cx = 180;  // Resized later
 	lvc.pszText = GetString(ID_STR_MESSAGE);
 	ListView_InsertColumn(item, 3, &lvc);
+
+	// Start 4th column at max width
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Resize(rc.right, rc.bottom);
 
 	// Add stored entires
 	for (const auto& entry : GetLogger().GetEntries())
@@ -454,7 +454,7 @@ void DialogAbout::TabLog::Resize(int w, int h)
 	item = GetControl(Id_DebugCheckBox);
 	SetWindowPos(item, nullptr, r.right * 3, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_LogListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - 10, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust 4th colum
@@ -519,7 +519,7 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 	}
 
 	GetWindowText(item, buffer, 32);
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_LogListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)source);
@@ -579,8 +579,34 @@ INT_PTR DialogAbout::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_ClearButton:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			HWND item = GetControl(Id_ItemsListView);
+			HWND item = GetControl(Id_LogListView);
 			ListView_DeleteAllItems(item);
+		}
+		break;
+
+	case IDM_COPY:
+		{
+			HWND hwnd = GetControl(Id_LogListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512];
+
+				// Get message.
+				ListView_GetItemText(hwnd, sel, 3, buffer, 512);
+				std::wstring message = buffer;
+
+				// Get source (if any).
+				ListView_GetItemText(hwnd, sel, 2, buffer, 512);
+				if (*buffer)
+				{
+					message += L" (";
+					message += buffer;
+					message += L')';
+				}
+
+				System::SetClipboardText(message);
+			}
 		}
 		break;
 
@@ -626,6 +652,48 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case NM_RCLICK:
+		if (nm->idFrom == Id_LogListView)
+		{
+			HWND hwnd = nm->hwndFrom;
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
+
+				LVITEM lvi;
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = item->iItem;
+				lvi.iSubItem = 0;
+				lvi.iGroupId = -1;
+				ListView_GetItem(hwnd, &lvi);
+				
+				static const MenuTemplate s_MessageMenu[] =
+				{
+					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+				};
+
+				HMENU menu = MenuTemplate::CreateMenu(s_MessageMenu, _countof(s_MessageMenu), GetString);
+				if (menu)
+				{
+					POINT pt = System::GetCursorPosition();
+
+					// Show context menu
+					TrackPopupMenu(
+						menu,
+						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+						pt.x,
+						pt.y,
+						0,
+						m_Window,
+						nullptr);
+
+					DestroyMenu(menu);
+				}
+			}
+		}
+		break;
+
 	default:
 		return FALSE;
 	}
@@ -646,15 +714,15 @@ DialogAbout::TabSkins::TabSkins() : Tab(),
 
 void DialogAbout::TabSkins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 370, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_LISTBOX(Id_SkinsListBox, 0,
-			0, 0, 120, 148,
+			0, 0, 120, 188,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
-		CT_LISTVIEW(Id_ItemsListView, 0,
-			125, 0, 242, 148,
+		CT_LISTVIEW(Id_SkinsListView, 0,
+			125, 0, 442, 188,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
 
@@ -664,13 +732,13 @@ void DialogAbout::TabSkins::Create(HWND owner)
 void DialogAbout::TabSkins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_SkinsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = LVGS_COLLAPSIBLE;
+	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
 	lvg.pszHeader = GetString(ID_STR_MEASURES);
 	ListView_InsertGroup(item, 0, &lvg);
@@ -688,16 +756,22 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = 90;
+	lvc.cx = 80;
 	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-
-	// Start 3rd column at max width
-	RECT rect;
-	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 230) : 130;
-	lvc.pszText = GetString(ID_STR_VALUE);
+	lvc.cx = 90;
+	lvc.pszText = GetString(ID_STR_NUMBER);
 	ListView_InsertColumn(item, 2, &lvc);
+	lvc.iSubItem = 3;
+	lvc.cx = 110;  // Resized later
+	lvc.pszText = GetString(ID_STR_STRING);
+	ListView_InsertColumn(item, 3, &lvc);
+
+	// Start 4th column at max width
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Resize(rc.right, rc.bottom);
 
 	UpdateSkinList();
 
@@ -715,16 +789,17 @@ void DialogAbout::TabSkins::Resize(int w, int h)
 	HWND item = GetControl(Id_SkinsListBox);
 	SetWindowPos(item, nullptr, 0, 0, 265, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	item = GetControl(Id_ItemsListView);
+	item = GetControl(Id_SkinsListView);
 	SetWindowPos(item, nullptr, 275, 0, w - 275, h, SWP_NOZORDER);
 
-	// Adjust third column
+	// Adjust 4th column
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 275 - 20 -
 		(ListView_GetColumnWidth(item, 0) +
-		 ListView_GetColumnWidth(item, 1));
-	ListView_SetColumn(item, 2, &lvc);
+		 ListView_GetColumnWidth(item, 1) +
+		 ListView_GetColumnWidth(item, 2));
+	ListView_SetColumn(item, 3, &lvc);
 }
 
 /*
@@ -768,7 +843,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 		if (windows.empty())
 		{
 			m_SkinWindow = nullptr;
-			item = GetControl(Id_ItemsListView);
+			item = GetControl(Id_SkinsListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -809,7 +884,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		return;
 	}
 
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_SkinsListView);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
@@ -842,9 +917,14 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
 		range += buffer;
 
+		std::wstring numValue;
+		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
+		Measure::RemoveTrailingZero(buffer, bufferLen);
+		numValue = buffer;
+
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*j)->GetStringOrFormattedValue(
-			AUTOSCALE_OFF, 1, -1, false));
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)numValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)(*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
 		++lvi.iItem;
 	}
 
@@ -875,7 +955,8 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, L"");
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*iter).second.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, L"");
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)(*iter).second.c_str());
 		++lvi.iItem;
 	}
 
@@ -934,6 +1015,86 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPYNUMBERVALUE:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				std::wstring tmpSz(128, L'0');
+				ListView_GetItemText(hwnd, sel, 2, &tmpSz[0], 128);
+				System::SetClipboardText(tmpSz);
+			}
+		}
+		break;
+
+	case IDM_COPYSTRINGVALUE:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512];
+				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+				std::wstring temp = buffer;
+				Measure* measure = m_SkinWindow->GetMeasure(temp);
+				if (!measure)
+				{
+					ListView_GetItemText(hwnd, sel, 3, buffer, 512);
+					temp = buffer;
+				}
+				else
+				{
+					temp.assign(measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
+				}
+				System::SetClipboardText(temp);
+			}
+		}
+		break;
+
+	case IDM_COPYRANGE:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512];
+				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+				std::wstring temp = buffer;
+				Measure* measure = m_SkinWindow->GetMeasure(temp);
+				if (!measure)
+				{
+					ListView_GetItemText(hwnd, sel, 3, buffer, 512);
+					temp = buffer;
+				}
+				else
+				{
+					int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMinValue());
+					Measure::RemoveTrailingZero(buffer, bufferLen);
+					temp = buffer;
+					temp += L" - ";
+					bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMaxValue());
+					Measure::RemoveTrailingZero(buffer, bufferLen);
+					temp += buffer;
+				}
+				System::SetClipboardText(temp);
+			}
+		}
+		break;
+
+	case IDM_COPY:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				std::wstring tmpSz(128, L'0');
+				ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 128);
+				System::SetClipboardText(tmpSz);
+			}
+		}
+		break;
+
 	default:
 		return 1;
 	}
@@ -944,6 +1105,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
+	HWND hwnd = nm->hwndFrom;
 	switch (nm->code)
 	{
 	case LVN_KEYDOWN:
@@ -951,22 +1113,149 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
 			if (lvkd->wVKey == 0x43 && IsCtrlKeyDown()) // CTRL + C.
 			{
-				int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
 					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(nm->hwndFrom, sel, 2, &tmpSz[0], 512);
+					ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 512);
 					System::SetClipboardText(tmpSz);
 				}
 			}
 		}
 		break;
 
+	case NM_RCLICK:
+		if (nm->idFrom == Id_SkinsListView)
+		{
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
+
+				LVITEM lvi;
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = item->iItem;
+				lvi.iSubItem = 0;
+				lvi.iGroupId = -1;
+				ListView_GetItem(hwnd, &lvi);
+
+				static const MenuTemplate s_MeasureMenu[] =
+				{
+					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
+					MENU_ITEM(IDM_COPYSTRINGVALUE, 0),
+					MENU_ITEM(IDM_COPYRANGE, 0)
+				};
+
+				static const MenuTemplate s_VariableMenu[] =
+				{
+					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+				};
+
+				bool isMeasure = lvi.iGroupId == 0;
+				HMENU menu = MenuTemplate::CreateMenu(
+					isMeasure ? s_MeasureMenu : s_VariableMenu,
+					isMeasure ? _countof(s_MeasureMenu) : _countof(s_VariableMenu),
+					GetString);
+
+				if (menu)
+				{
+					if (isMeasure)
+					{
+						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
+						{
+							std::wstring name = GetString(id);
+							name += L": ";
+							name += GetString(ID_STR_COPYTOCLIPBOARD);
+							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
+						};
+
+						setMenuItem(ID_STR_NUMBER, IDM_COPYNUMBERVALUE);
+						setMenuItem(ID_STR_STRING, IDM_COPYSTRINGVALUE);
+						setMenuItem(ID_STR_RANGE, IDM_COPYRANGE);
+					}
+
+					POINT pt = System::GetCursorPosition();
+
+					// Show context menu
+					TrackPopupMenu(
+						menu,
+						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+						pt.x,
+						pt.y,
+						0,
+						m_Window,
+						nullptr);
+
+					DestroyMenu(menu);
+				}
+			}
+		}
+		break;
+
+	case NM_CUSTOMDRAW:
+		return OnCustomDraw(wParam, lParam);
+
 	default:
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+INT_PTR DialogAbout::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
+{
+	static COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
+	static COLORREF paused = GetSysColor(COLOR_INFOBK);
+
+	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
+	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
+
+	switch (lvcd->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+		return TRUE;
+
+	case CDDS_ITEMPREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+		return TRUE;
+
+	case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
+		{
+			// Only process 1st column
+			if (lvcd->iSubItem != 0) return FALSE;
+
+			// Only process items in 1st group
+			WCHAR buffer[512];
+			LVITEM lvi;
+			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
+			lvi.iSubItem = 0;
+			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
+			lvi.pszText = buffer;
+			lvi.cchTextMax = 512;
+			ListView_GetItem(hwnd, &lvi);
+			if (lvi.iGroupId != 0) return FALSE;
+
+			std::wstring name = buffer;
+			Measure* measure = m_SkinWindow->GetMeasure(name);
+			if (!measure) return FALSE;
+
+			const bool isDisabled = measure->IsDisabled();
+			const bool isPaused = measure->IsPaused();
+
+			if (isPaused) lvcd->clrTextBk = paused;
+			if (isDisabled) lvcd->clrText = disabled;
+
+			if (isDisabled || isPaused)
+			{
+				SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
+				return TRUE;
+			}
+		}
+		break;
+	}
+
+	return FALSE;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -981,12 +1270,12 @@ DialogAbout::TabPlugins::TabPlugins() : Tab()
 
 void DialogAbout::TabPlugins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 370, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_ItemsListView, 0,
-			0, 0, 368, 148,
+		CT_LISTVIEW(Id_PluginsListView, 0,
+			0, 0, 568, 188,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
 
@@ -996,7 +1285,21 @@ void DialogAbout::TabPlugins::Create(HWND owner)
 void DialogAbout::TabPlugins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_PluginsListView);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVGROUP lvg;
+	lvg.cbSize = sizeof(LVGROUP);
+	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+	lvg.iGroupId = 0;
+	lvg.pszHeader = GetString(ID_STR_EXTERNALPLUGINS);
+	ListView_InsertGroup(item, 0, &lvg);
+	lvg.iGroupId = 1;
+	lvg.pszHeader = GetString(ID_STR_BUILTINPLUGINS);
+	ListView_InsertGroup(item, 1, &lvg);
+
+	ListView_EnableGroupView(item, TRUE);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1010,19 +1313,18 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-
-	// Start 3rd column at max width
-	RECT rect;
-	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 193) : 290;
+	lvc.cx = 250;  // Resized later
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem;
-	vitem.mask = LVIF_TEXT;
+	vitem.mask = LVIF_TEXT | LVIF_GROUPID;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
-	auto findPlugins = [&](const std::wstring& path)
+	int index = 0;
+	
+	auto findPlugins = [&](const std::wstring& path) -> void
 	{
 		std::wstring filter = path + L"*.dll";
 
@@ -1033,7 +1335,6 @@ void DialogAbout::TabPlugins::Initialize()
 			return;
 		}
 
-		int index = 0;
 		do
 		{
 			// Try to get the version and author
@@ -1151,11 +1452,32 @@ void DialogAbout::TabPlugins::Initialize()
 		FindClose(hSearch);
 	};
 
+	vitem.iGroupId = 1;
 	findPlugins(GetRainmeter().GetPluginPath());
+
+	// Add old plugins
+	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
+	{
+		vitem.iItem = index;
+		vitem.pszText = (LPWSTR)oldDefaultPlugin;
+		ListView_InsertItem(item, &vitem);
+		ListView_SetItemText(item, vitem.iItem, 2, L"*As an internal measure");
+		++index;
+	}
+
 	if (GetRainmeter().HasUserPluginPath())
 	{
+		vitem.iGroupId = 0;
 		findPlugins(GetRainmeter().GetUserPluginPath());
 	}
+
+	// Force first column to fit contents
+	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
+
+	// Start 3rd column at max width
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Resize(rc.right, rc.bottom);
 
 	m_Initialized = true;
 }
@@ -1168,7 +1490,7 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetControl(Id_ItemsListView);
+	HWND item = GetControl(Id_PluginsListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
@@ -1178,6 +1500,81 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
+}
+
+INT_PTR DialogAbout::TabPlugins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR DialogAbout::TabPlugins::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CUSTOMDRAW:
+		return OnCustomDraw(wParam, lParam);
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+INT_PTR DialogAbout::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
+{
+	static const COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
+
+	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
+	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
+
+	switch (lvcd->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+		return TRUE;
+
+	case CDDS_ITEMPREPAINT:
+		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+		return TRUE;
+
+	case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
+		{
+			// Only process 1st column
+			if (lvcd->iSubItem != 0) return FALSE;
+
+			// Only process items in 2nd group
+			WCHAR buffer[512];
+			LVITEM lvi;
+			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
+			lvi.iSubItem = 0;
+			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
+			lvi.pszText = buffer;
+			lvi.cchTextMax = 512;
+			ListView_GetItem(hwnd, &lvi);
+			if (lvi.iGroupId != 1) return FALSE;
+
+			for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
+			{
+				if (_wcsicmp(buffer, oldDefaultPlugin) == 0)
+				{
+					lvcd->clrText = disabled;
+					SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
+					return TRUE;
+				}
+			}
+		}
+		break;
+	}
+
+	return FALSE;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1192,7 +1589,7 @@ DialogAbout::TabVersion::TabVersion() : Tab()
 
 void DialogAbout::TabVersion::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 370, 148, owner);
+	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));

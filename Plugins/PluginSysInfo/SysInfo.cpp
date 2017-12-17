@@ -67,7 +67,8 @@ enum MeasureType
 	MEASURE_TIMEZONE_STANDARD_BIAS,
 	MEASURE_TIMEZONE_STANDARD_NAME,
 	MEASURE_TIMEZONE_DAYLIGHT_BIAS,
-	MEASURE_TIMEZONE_DAYLIGHT_NAME
+	MEASURE_TIMEZONE_DAYLIGHT_NAME,
+	MEASURE_USER_LOGONTIME
 };
 
 struct MeasureData
@@ -263,6 +264,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else if (_wcsicmp(L"TIMEZONE_DAYLIGHT_NAME", type) == 0)
 	{
 		measure->type = MEASURE_TIMEZONE_DAYLIGHT_NAME;
+	}
+	else if (_wcsicmp(L"USER_LOGONTIME", type) == 0)
+	{
+		measure->type = MEASURE_USER_LOGONTIME;
 	}
 	else
 	{
@@ -692,6 +697,27 @@ PLUGIN_EXPORT double Update(void* data)
 			TIME_ZONE_INFORMATION tzi;
 			GetTimeZoneInformation(&tzi);
 			return (double)tzi.DaylightBias;
+		}
+
+	case MEASURE_USER_LOGONTIME:
+		{
+			// Get "last write time" of the current users environment
+			HKEY hKey;
+			FILETIME lastWrite;
+			if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
+			{
+				if (RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &lastWrite) == ERROR_SUCCESS)
+				{
+					RegCloseKey(hKey);
+					FileTimeToLocalFileTime(&lastWrite, &lastWrite);
+
+					LARGE_INTEGER li;
+					li.LowPart = lastWrite.dwLowDateTime;
+					li.HighPart = lastWrite.dwHighDateTime;
+					return (double)(li.QuadPart / 10000000);
+				}
+				RegCloseKey(hKey);
+			}
 		}
 	}
 

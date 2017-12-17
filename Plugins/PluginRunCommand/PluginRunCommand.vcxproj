@@ -24,10 +24,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Stdafx.h" />
-    <ClInclude Include="..\..\Common\StringUtil.h" />
-    <ClInclude Include="..\..\Common\StringUtil.cpp" />
-    <ClCompile Include="PluginRunCommand.h" />
+    <ClInclude Include="Stdafx.h" />
+    <ClInclude Include="PluginRunCommand.h" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="PluginRunCommand.cpp" />
   </ItemGroup>
   <ItemGroup>

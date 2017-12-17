@@ -13,6 +13,8 @@
 #include "resource.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -255,7 +257,9 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(StringUtil::Narrow(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
 
 	auto cleanup = [&]()->bool
 	{
@@ -580,7 +584,8 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
 						!(fd.cFileName[0] == L'.' && (!fd.cFileName[1] || fd.cFileName[1] == L'.' && !fd.cFileName[2])) &&
 						wcscmp(fd.cFileName, L"Backup") != 0 &&
-						wcscmp(fd.cFileName, L"@Backup") != 0)
+						wcscmp(fd.cFileName, L"@Backup") != 0 &&
+						wcscmp(fd.cFileName, L"@Vault") != 0)
 					{
 						ComboBox_InsertString(item, -1, fd.cFileName);
 					}

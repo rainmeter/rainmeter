@@ -13,6 +13,8 @@
 #include "System.h"
 #include "../Version.h"
 
+#include "iowin32.h"
+
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
@@ -42,8 +44,12 @@ DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 	m_BackupPackage(false),
 	m_BackupSkins(true),
 	m_MergeSkins(false),
-	m_SystemFonts(false)
+	m_SystemFonts(false),
+	m_ArchivePlugins()
 {
+	std::wstring settingsFile = g_Data.settingsPath;
+	settingsFile += L"\\Rainmeter.data";
+	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 1, settingsFile.c_str()) != 0;
 }
 
 /*
@@ -374,7 +380,9 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	m_PackageUnzFile = unzOpen(StringUtil::Narrow(fileName).c_str());
+	zlib_filefunc64_def zlibFileFunc;
+	fill_win32_filefunc64W(&zlibFileFunc);
+	m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
 	if (!m_PackageUnzFile)
 	{
 		return false;
@@ -754,6 +762,16 @@ bool DialogInstall::InstallPackage()
 		{
 			const std::wstring item(path, pos - path);
 
+			if (_wcsicmp(component, L"Plugins") == 0 &&
+				m_ArchivePlugins &&
+				_wcsicmp(extension, L".dll") == 0 &&
+				!wcschr(pos + 1, L'\\'))
+			{
+				std::wstring plugin(pos + 1);
+				const std::wstring folder(path, pos - path);
+				ArchivePlugin(folder, plugin);
+			}
+
 			if (_wcsicmp(component, L"Skins") == 0 &&
 				m_PackageSkins.find(item) != m_PackageSkins.end())
 			{
@@ -984,6 +1002,31 @@ void DialogInstall::KeepVariables()
 	}
 }
 
+void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
+{
+	std::wstring path = g_Data.skinsPath + L"@Vault\\Plugins\\";
+	path += name.substr(0, name.size() - 4) + L'\\';		// Remove extension from folder name
+
+	const std::wstring tmpPath = path + L".extracted\\";
+	const std::wstring plugin = tmpPath + name;
+
+	if (ExtractCurrentFile(plugin))
+	{
+		std::wstring finalPath = path;
+
+		const std::wstring version = GetFileVersionString(plugin.c_str());
+		if (!version.empty())
+		{
+			finalPath += version + L'\\';
+		}
+
+		finalPath += folder + L'\\';
+		finalPath += name;
+		System::CopyFiles(plugin, finalPath, true);
+		System::RemoveFolder(tmpPath);
+	}
+}
+
 void DialogInstall::LaunchRainmeter()
 {
 	// Execute Rainmeter and wait up to a minute for it process all messages
@@ -1059,7 +1102,8 @@ bool DialogInstall::IsIgnoredSkin(const WCHAR* name)
 	static const WCHAR* s_Skins[] =
 	{
 		L"Backup",
-		L"@Backup"
+		L"@Backup",
+		L"@Vault"
 	};
 
 	return IsIgnoredName(name, s_Skins, _countof(s_Skins));

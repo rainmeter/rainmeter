@@ -534,7 +534,7 @@ PLUGIN_EXPORT double Update (void* data)
 	QueryPerformanceCounter(&pcCur);
 
 	// query the buffer
-	if (m->m_clCapture && pcCur.QuadPart-m->m_pcPoll.QuadPart * m->m_pcMult >= QUERY_TIMEOUT)
+	if (m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= QUERY_TIMEOUT)
 	{
 		BYTE* buffer;
 		UINT32 nFrames;
@@ -728,7 +728,7 @@ PLUGIN_EXPORT double Update (void* data)
 							float fLog1 = m->m_bandFreq[iBand];
 							float x = (m->m_fftOut[iChan])[iBin];
 							float& y = (m->m_bandOut[iChan])[iBand];
-							
+
 							if(fLin1 <= fLog1)
 							{
 								y += (fLin1 - f0) * x * scalar;
@@ -779,7 +779,7 @@ PLUGIN_EXPORT double Update (void* data)
 		m->m_pcPoll = pcCur;
 
 	}
-	else if (!m->m_parent && !m->m_clCapture && pcCur.QuadPart - m->m_pcPoll.QuadPart * m->m_pcMult >= DEVICE_TIMEOUT)
+	else if (!m->m_parent && !m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= DEVICE_TIMEOUT)
 	{
 		// poll for new devices
 		assert(m->m_enum);
@@ -907,7 +907,7 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	Measure* m = (Measure*)data;
 	Measure* parent	= m->m_parent ? m->m_parent : m;
 
-	static WCHAR buffer[512];
+	static WCHAR buffer[4096];
 	const WCHAR* s_fmtName[Measure::NUM_FORMATS] =
 	{
 		L"<invalid>",	// FMT_INVALID
@@ -1117,7 +1117,7 @@ HRESULT	Measure::DeviceInit ()
 		m_bandFreq = (float*)malloc(m_nBands * sizeof(float));
 		const double step = (log(m_freqMax / m_freqMin) / m_nBands) / log(2.0);
 		m_bandFreq[0] = (float)(m_freqMin * pow(2.0, step / 2.0));
-		
+
 		for (int iBand = 1; iBand < m_nBands; ++iBand)
 		{
 			m_bandFreq[iBand] = (float)(m_bandFreq[iBand - 1] * pow(2.0, step));

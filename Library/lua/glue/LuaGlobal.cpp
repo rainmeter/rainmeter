@@ -68,19 +68,23 @@ static int Dofile(lua_State* L)
 		return 0;
 	}
 
-	bool scriptLoaded = false;
-
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	bool unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+
+	std::wstring tmp = std::wstring(path, path.find_last_of(L'\\') + 1);
+	std::string file = unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
+	file.insert(0, "@");
+
+	bool scriptLoaded = false;
 	if (unicode)
 	{
 		const std::string utf8Data =
 			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
-		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), file.c_str()) == 0;
 	}
 	else
 	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, file.c_str()) == 0;
 	}
 
 	if (scriptLoaded)
@@ -89,19 +93,12 @@ static int Dofile(lua_State* L)
 		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
 		lua_setfenv(L, -2);
 
-		int result = lua_pcall(L, 0, LUA_MULTRET, 0);
-		if (result == 0)
-		{
-			return lua_gettop(L) - n;
-		}
-		else
-		{
-			LuaHelper::ReportErrors(path);
-		}
+		lua_call(L, 0, -1);
+		return lua_gettop(L) - n;
 	}
 	else
 	{
-		LuaHelper::ReportErrors(path);
+		LuaHelper::ReportErrors();
 	}
 
 	return 0;

@@ -25,6 +25,8 @@ typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
 typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
 
+typedef LPCWSTR(*CUSTOMFUNCTION)(void*, const int, const WCHAR* argv[]);
+
 class MeasurePlugin : public Measure
 {
 public:
@@ -38,6 +40,8 @@ public:
 
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
+
+	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue);
 
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);

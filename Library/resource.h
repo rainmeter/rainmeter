@@ -228,6 +228,12 @@
 #define ID_STR_FAVORITES                             2144
 #define ID_STR_NOFAVORITES                           2145
 #define ID_STR_CUSTOMSKINACTIONS                     2146
+#define ID_STR_NUMBER                                2147
+#define ID_STR_STRING                                2148
+#define ID_STR_EXTERNALPLUGINS                       2149
+#define ID_STR_BUILTINPLUGINS                        2150
+#define ID_STR_SKININSTALLER                         2151
+#define ID_STR_ARCHIVEPLUGINS                        2152
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000
@@ -255,6 +261,8 @@
 #define ID_STR_TEMPLATEFOLDERFAIL                    3022
 #define ID_STR_TEMPLATEFILEFAIL                      3023
 #define ID_STR_TEMPLATEDELETE                        3024
+#define ID_STR_LANGUAGEOBSOLETE                      3025
+#define ID_STR_CLICKLANGUAGE                         3026
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -321,6 +329,10 @@
 #define IDM_NEWSKINMENU_EDITFILENAME                 4068
 #define IDM_NEWSKINMENU_DELETEFOLDER                 4069
 #define IDM_NEWSKINMENU_DELETEFILE                   4070
+#define IDM_COPYNUMBERVALUE                          4071
+#define IDM_COPYSTRINGVALUE                          4072
+#define IDM_COPYRANGE                                4073
+#define IDM_LANGUAGEOBSOLETE                         4074
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

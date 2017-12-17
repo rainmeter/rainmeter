@@ -13,6 +13,8 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "MeasurePlugin.h"
+#include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
 #include "resource.h"
@@ -30,7 +32,8 @@ struct PairInfo
 const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
 {
 	{ PairedPunctuation::SingleQuote, { L'\'', L'\'' } },
-	{ PairedPunctuation::DoubleQuote, { L'\"', L'\"' } },
+	{ PairedPunctuation::DoubleQuote, { L'"', L'"' } },
+	{ PairedPunctuation::BothQuotes,  { L'"', L'\'' } },
 	{ PairedPunctuation::Parentheses, { L'(', L')' } },
 	{ PairedPunctuation::Brackets,    { L'[', L']' } },
 	{ PairedPunctuation::Braces,      { L'{', L'}' } },
@@ -40,6 +43,7 @@ const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
 }  // namespace
 
 std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
+std::unordered_map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
 
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
@@ -48,6 +52,13 @@ ConfigParser::ConfigParser() :
 	m_CurrentSection(),
 	m_Skin()
 {
+	if (c_VariableMap.empty())
+	{
+		c_VariableMap.emplace(VariableType::Section, L'&');
+		c_VariableMap.emplace(VariableType::Variable, L'#');
+		c_VariableMap.emplace(VariableType::Mouse, L'$');
+		c_VariableMap.emplace(VariableType::CharacterReference, L'\\');
+	}
 }
 
 ConfigParser::~ConfigParser()
@@ -185,7 +196,8 @@ const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 */
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
 {
-	size_t colonPos = strVariable.find_last_of(L':');
+	const size_t firstParens = strVariable.find_first_of(L'(');  // Assume section names do not have a left parenthesis?
+	size_t colonPos = strVariable.find_last_of(L':', firstParens);
 	if (colonPos == std::wstring::npos)
 	{
 		return false;
@@ -237,6 +249,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
 	// EncodeUrl: [Measure:EncodeUrl] (Escapes URL reserved characters)
 	// TimeStamp: [TimeMeasure:TimeStamp] (ONLY for Time measures, returns the Windows timestamp of the measure)
+
+	// Script: [ScriptMeasure:SomeFunction()], [ScriptMeasure:Something('Something')]
+	// NOTE: Parenthesis are required. Arguments enclosed in single or double quotes are treated as strings, otherwise
+	//   they are treated as numbers. If the lua function returns a number, it will be converted to a string.
 	enum class ValueType
 	{
 		Raw,
@@ -245,7 +261,9 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Min,
 		EscapeRegExp,
 		EncodeUrl,
-		TimeStamp
+		TimeStamp,
+		Script,
+		Plugin
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -272,6 +290,24 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else
 		{
+			// Check if calling a Script measure
+			Measure* measure = m_Skin->GetMeasure(strVariable);
+			if (!measure) return false;
+
+			const auto type = measure->GetTypeID();
+			if (type == TypeID<MeasureScript>())
+			{
+				valueType = ValueType::Script;  // Needed?
+				MeasureScript* script = (MeasureScript*)measure;
+				return script->CommandWithReturn(selectorSz, strValue);
+			}
+			else if (type == TypeID<MeasurePlugin>())
+			{
+				valueType = ValueType::Plugin;  // Needed?
+				MeasurePlugin* plugin = (MeasurePlugin*)measure;
+				return plugin->CommandWithReturn(selectorSz, strValue);
+			}
+
 			return false;
 		}
 
@@ -609,7 +645,7 @@ void ConfigParser::SetAutoSelectedMonitorVariables(Skin* skin)
 ** Replaces environment and internal variables in the given string.
 **
 */
-bool ConfigParser::ReplaceVariables(std::wstring& result)
+bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
 	bool replaced = false;
 
@@ -620,7 +656,44 @@ bool ConfigParser::ReplaceVariables(std::wstring& result)
 		SetMultiMonitorVariables(true);
 	}
 
-	// Check for variables (#VAR#)
+	// Check for new-style variables ([#VAR])
+	// Note: Most new-style variables are parsed later (when section variables are parsed),
+	//   however, there are a few places where we just want to parse only variables (without
+	//   section variables).
+	if (isNewStyle)
+	{
+		replaced = ParseVariables(result, VariableType::Variable);
+	}
+	else
+	{
+		// Special parsing for [#CURRENTSECTION] for use in actions
+		size_t start = 0;
+		bool loop = true;
+		const std::wstring strVariable = L"[#CURRENTSECTION]";
+		const size_t length = strVariable.length();
+		do
+		{
+			start = result.find(strVariable, start);
+			if (start != std::wstring::npos)
+			{
+				const std::wstring* value = GetVariable(L"CURRENTSECTION");
+				if (value)
+				{
+					// Variable found, replace it with the value
+					result.replace(start, length, *value);
+					start += length;
+					replaced = true;
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		}
+		while (loop);
+	}
+
+	// Check for old-style variables (#VAR#)
 	size_t start = 0, end;
 	bool loop = true;
 
@@ -678,8 +751,11 @@ bool ConfigParser::ReplaceVariables(std::wstring& result)
 */
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
-	bool replaced = false;
+	// Check for new-style measures (and section variables) [&Measure], [&Meter]
+	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
+	bool replaced = ParseVariables(result, VariableType::Section);
 
+	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
 	size_t start = 0;
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
@@ -707,7 +783,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 				Measure* measure = GetMeasure(var);
 				if (measure)
 				{
-					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
+					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 					size_t valueLen = wcslen(value);
 
 					// Measure found, replace it with the value
@@ -739,6 +815,231 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	}
 	
 	return replaced;
+}
+
+/*
+** Replaces new-style measure/section variables, regular variables, and mouse variables in the given string.
+**
+*/
+bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type, Meter* meter)
+{
+	bool replaced = false;
+
+	size_t prevStart = 0;
+	std::wstring prevVar = L"";
+
+	size_t start = 0;
+	size_t end = 0;
+	while ((end = result.find(L']', start)) != std::wstring::npos)
+	{
+		bool found = false;
+
+		size_t ei = end - 1;
+		start = result.rfind(L'[', ei);
+		if (start != std::wstring::npos)
+		{
+			size_t si = start + 2;  // Check for escaped variable 'names'
+			if (si != ei && result[si] == L'*' && result[ei] == L'*')
+			{
+				result.erase(ei, 1);
+				result.erase(si, 1);
+				start = ei;
+			}
+			else
+			{
+				--si;  // Get the key character (#, $, &, \)
+				const WCHAR key = result.substr(si, 1).c_str()[0];
+				std::wstring val = result.substr(si + 1, end - si - 1);
+
+				// Avoid empty commands and self references
+				std::wstring original = result.substr(si, end - si).c_str();
+				if (original.empty() ||
+					(prevStart == start && _wcsicmp(original.c_str(), prevVar.c_str()) == 0))
+				{
+					if (!original.empty()) LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
+					start = end + 1;
+					continue;
+				}
+
+				prevStart = start;
+				prevVar = original;
+
+				// Find "type" of key
+				bool isValid = false;
+				VariableType kType = VariableType::Section;
+				for (auto& t : c_VariableMap)
+				{
+					if (t.second == key)
+					{
+						kType = t.first;
+						isValid = true;
+						break;
+					}
+				}
+
+				// |key| is invalid or variable name is empty ([#], [&], [$], [\])
+				if (!isValid || val.empty())
+				{
+					start = end + 1;
+					continue;
+				}
+
+				// Since regular variables are replaced just before section variables in most cases, we replace
+				// both types at the same time in case nesting of the different types occurs. The only side effect
+				// is new-style regular variables located in an action will now be "dynamic" just like section
+				// variables.
+				//  Special case 1: Mouse variables cannot be used in the outer part of a nested variable. This is
+				//    because mouse variables are parsed and replaced before the other new-style variables.
+				//  Special case 2: Places where regular variables need to be parsed without any section variables
+				//    parsed afterward. One example is when "@Include" is parsed.
+				//  Special case 3: Always process escaped character references.
+
+				if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
+					(kType == VariableType::CharacterReference) ||										// Special case 3
+					(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
+				{
+					switch (kType)
+					{
+					case VariableType::Section:
+						{
+							Measure* measure = GetMeasure(val);
+							if (measure)
+							{
+								const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+								size_t valueLen = wcslen(value);
+
+								// Measure found, replace it with the value
+								result.replace(start, end - start + 1, value, valueLen);
+								replaced = true;
+								found = true;
+							}
+							else
+							{
+								std::wstring value;
+								if (GetSectionVariable(val, value))
+								{
+									// Replace section variable with the value
+									result.replace(start, end - start + 1, value);
+									replaced = true;
+									found = true;
+								}
+							}
+						}
+						break;
+
+					case VariableType::Variable:
+						{
+							// Assign current section if available
+							if (meter) m_CurrentSection->assign(meter->GetName());
+							const std::wstring* value = GetVariable(val);
+							if (value)
+							{
+								// Variable found, replace it with the value
+								result.replace(start, end - start + 1, *value);
+								replaced = true;
+								found = true;
+							}
+							if (meter) m_CurrentSection->clear();
+						}
+						break;
+
+					case VariableType::Mouse:
+						{
+							std::wstring value = GetMouseVariable(val, meter);
+							if (!value.empty())
+							{
+								// Mouse variable found, replace it with the value
+								result.replace(start, end - start + 1, value);
+								replaced = true;
+								found = true;
+							}
+						}
+						break;
+
+					case VariableType::CharacterReference:
+						{
+							int base = 10;
+							if (val[0] == L'x' || val[0] == L'X')
+							{
+								base = 16;
+								val.erase(0, 1);  // remove 'x' or 'X'
+
+								if (val.empty())
+								{
+									break;  // Invalid escape sequence [\x]
+								}
+							}
+
+							WCHAR* pch = nullptr;
+							errno = 0;
+							long ch = wcstol(val.c_str(), &pch, base);
+							if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)
+							{
+								break;  // Invalid character
+							}
+
+							result.replace(start, end - start + 1, 1, (WCHAR)ch);
+							replaced = true;
+							found = true;
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		if (!found)
+		{
+			start = end + 1;
+		}
+	}
+
+	return replaced;
+}
+
+std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter* meter)
+{
+	std::wstring result;
+	LPCWSTR var = variable.c_str();
+	WCHAR buffer[32];
+
+	POINT pt;
+	GetCursorPos(&pt);
+
+	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
+	{
+		var += 6;
+		int xOffset = m_Skin->GetX() + (meter ? meter->GetX() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
+		{
+			xOffset = (int)(((pt.x - xOffset + 1) / (double)(meter ? meter->GetW() : m_Skin->GetW())) * 100);
+			_itow_s(xOffset, buffer, 10);
+			result = buffer;
+		}
+		else if (*var == L'\0')  // $MOUSEX$ or [$MOUSEX]
+		{
+			_itow_s(pt.x - xOffset, buffer, 10);
+			result = buffer;
+		}
+	}
+	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
+	{
+		var += 6;
+		int yOffset = m_Skin->GetY() + (meter ? meter->GetY() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
+		{
+			yOffset = (int)(((pt.y - yOffset + 1) / (double)(meter ? meter->GetH() : m_Skin->GetH())) * 100);
+			_itow_s(yOffset, buffer, 10);
+			result = buffer;
+		}
+		else if (*var == L'\0')  // $MOUSEY$ or [$MOUSEY]
+		{
+			_itow_s(pt.y - yOffset, buffer, 10);
+			result = buffer;
+		}
+	}
+
+	return result;
 }
 
 const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
@@ -790,20 +1091,19 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 
 	if (!result.empty())
 	{
+		m_CurrentSection->assign(strSection);  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
 		{
 			if (result.find(L'#') != std::wstring::npos)
 			{
-				m_CurrentSection->assign(strSection);  // Set temporarily
-
-				if (ReplaceVariables(result))
+				// Make sure new-style variables are processed for the [Variables] section
+				bool runNewStyle = strSection == L"Variables" ? true : false;
+				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
 				}
-
-				m_CurrentSection->clear();  // Reset
 			}
 			else
 			{
@@ -815,6 +1115,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 				m_LastReplaced = true;
 			}
 		}
+		m_CurrentSection->clear();  // Reset
 	}
 
 	return result;
@@ -1101,8 +1402,6 @@ std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const 
 std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
 {
 	std::vector<std::wstring> tokens;
-	
-	int pairs = 0;
 	size_t start = 0;
 	size_t end = 0;
 
@@ -1117,17 +1416,62 @@ std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const
 		}
 	};
 
-	for (auto& iter : str)
+	if (punct == PairedPunctuation::SingleQuote ||
+		punct == PairedPunctuation::DoubleQuote)
 	{
-		if (iter == s_PairedPunct.at(punct).begin) ++pairs;
-		else if (iter == s_PairedPunct.at(punct).end) --pairs;
-		else if (iter == delimiter && pairs == 0)
+		bool found = false;
+		for (auto& iter : str)
 		{
-			getToken();
-			start = end + 1;  // skip delimiter
+			if (iter == s_PairedPunct.at(punct).begin) found = !found;
+			else if (iter == delimiter && !found)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
 		}
-
-		++end;
+	}
+	else if (punct == PairedPunctuation::BothQuotes)
+	{
+		// Skip delimiters if inside either a pair of single quotes, or a pair of double quotes
+		bool found = false;
+		WCHAR current = L'\0';
+		for (auto& iter : str)
+		{
+			if (!current &&
+				(iter == s_PairedPunct.at(punct).begin ||	// single quote
+				 iter == s_PairedPunct.at(punct).end))		// double quote
+			{
+				current = iter;
+				found = true;
+			}
+			else if (iter == current)
+			{
+				current = L'\0';
+				found = false;
+			}
+			else if (iter == delimiter && !found)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
+		}
+	}
+	else
+	{
+		int pairs = 0;
+		for (auto& iter : str)
+		{
+			if (iter == s_PairedPunct.at(punct).begin) ++pairs;
+			else if (iter == s_PairedPunct.at(punct).end) --pairs;
+			else if (iter == delimiter && pairs == 0)
+			{
+				getToken();
+				start = end + 1;  // skip delimiter
+			}
+			++end;
+		}
 	}
 
 	// Get last token
@@ -1547,7 +1891,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 							{
 								value.assign(sep, clen);
 								ReadVariables();
-								ReplaceVariables(value);
+								ReplaceVariables(value, true);
 								if (!PathUtil::IsAbsolute(value))
 								{
 									// Relative to the ini folder

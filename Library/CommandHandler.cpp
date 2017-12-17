@@ -377,8 +377,25 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 		std::wstring tmpSz = command;
 		if (skin)
 		{
-			skin->GetParser().ReplaceMeasures(tmpSz);
+			// If the command is a section variable or a new style variable,
+			// surround the command with brackets and replace it with the variable.
+			// This allows for section variables to completely replace a bang sequence.
+			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
+			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
+			bool isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
+			if (isVar)
+			{
+				tmpSz.insert(0, L"[");
+				tmpSz.append(L"]");
+			}
+
+			if (skin->GetParser().ReplaceMeasures(tmpSz) && isVar)
+			{
+				ExecuteCommand(tmpSz.c_str(), skin, true);
+				return;
+			}
 		}
+
 		RunCommand(tmpSz);
 	}
 }

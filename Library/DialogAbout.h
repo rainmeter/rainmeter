@@ -46,7 +46,7 @@ private:
 	public:
 		enum Id
 		{
-			Id_ItemsListView = 100,
+			Id_LogListView = 100,
 			Id_ErrorCheckBox,
 			Id_WarningCheckBox,
 			Id_NoticeCheckBox,
@@ -74,14 +74,14 @@ private:
 		bool m_Debug;
 	};
 
-	// Measures tab
+	// Skins tab
 	class TabSkins : public Tab
 	{
 	public:
 		enum Id
 		{
-			Id_SkinsListBox = 100,
-			Id_ItemsListView
+			Id_SkinsListBox = 200,
+			Id_SkinsListView
 		};
 
 		TabSkins();
@@ -97,6 +97,7 @@ private:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCustomDraw(WPARAM wParam, LPARAM lParam);
 
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
@@ -110,7 +111,7 @@ private:
 	public:
 		enum Id
 		{
-			Id_ItemsListView = 100
+			Id_PluginsListView = 300
 		};
 
 		TabPlugins();
@@ -118,6 +119,11 @@ private:
 		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCustomDraw(WPARAM wParam, LPARAM lParam);
 
 	private:
 		typedef LPCTSTR (*GETPLUGINAUTHOR)();
@@ -130,7 +136,7 @@ private:
 	public:
 		enum Id
 		{
-			Id_AppIcon = 100,
+			Id_AppIcon = 400,
 			Id_VersionLabel,
 			Id_HomeLink,
 			Id_LicenseLink,
@@ -156,7 +162,7 @@ private:
 	enum Id
 	{
 		Id_CloseButton = IDCLOSE,
-		Id_Tab = 100
+		Id_Tab = 500
 	};
 
 	Tab& GetActiveTab();

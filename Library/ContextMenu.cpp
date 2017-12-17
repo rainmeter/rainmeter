@@ -9,6 +9,7 @@
 #include "../Common/MenuTemplate.h"
 #include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
+#include "Meter.h"
 #include "Rainmeter.h"
 #include "Util.h"
 #include "Skin.h"
@@ -147,11 +148,18 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 
 		// Add update notification item
-		if (rainmeter.m_NewVersion)
+		if (rainmeter.GetNewVersion())
 		{
 			InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
 			HiliteMenuItem(rainmeter.GetTrayIcon()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+		}
+
+		// Add language status if obsolete
+		if (rainmeter.GetLanguageStatus())
+		{
+			InsertMenu(menu, !rainmeter.m_NewVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(ID_STR_LANGUAGEOBSOLETE));
+			if (!rainmeter.GetNewVersion()) InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
 
@@ -200,6 +208,10 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
 	}
 
+	// Disable each meter's tooltip
+	auto skin = GetRainmeter().GetSkin(parentWindow);
+	if (skin) for (const auto& meter : skin->GetMeters()) meter->DisableToolTip();
+
 	// Show context menu
 	TrackPopupMenu(
 		menu,
@@ -209,6 +221,9 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		0,
 		parentWindow,
 		nullptr);
+
+	// Re-enable each meter's tooltip
+	if (skin) for (const auto& meter : skin->GetMeters()) meter->ResetToolTip();
 }
 
 HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)

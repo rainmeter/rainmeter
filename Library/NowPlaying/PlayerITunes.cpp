@@ -17,9 +17,9 @@ extern HINSTANCE g_Instance;
 */
 PlayerITunes::CEventHandler::CEventHandler(PlayerITunes* player) :
 	m_Player(player),
-	m_RefCount(),
+	m_RefCount(0UL),
 	m_ConnectionPoint(),
-	m_ConnectionCookie()
+	m_ConnectionCookie(0UL)
 {
 	IConnectionPointContainer* icpc;
 	m_Player->m_iTunes->QueryInterface(IID_IConnectionPointContainer, (void**)&icpc);
@@ -63,53 +63,19 @@ ULONG STDMETHODCALLTYPE PlayerITunes::CEventHandler::Release()
 	return --m_RefCount;
 }
 
-HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::Invoke(DISPID dispidMember, REFIID, LCID, WORD, DISPPARAMS* dispParams, VARIANT*, EXCEPINFO*, UINT*)
-{
-	switch (dispidMember)
-	{
-	case ITEventDatabaseChanged:
-		m_Player->OnDatabaseChange();
-		break;
-
-	case ITEventPlayerPlay:
-		m_Player->OnStateChange(true);
-		m_Player->OnTrackChange();
-		break;
-
-	case ITEventPlayerStop:
-		m_Player->OnStateChange(false);
-		break;
-
-	case ITEventPlayerPlayingTrackChanged:
-		m_Player->OnTrackChange();
-		break;
-
-	case ITEventSoundVolumeChanged:
-		m_Player->OnVolumeChange(dispParams->rgvarg[0].intVal);
-		break;
-
-	case ITEventAboutToPromptUserToQuit:
-		PostMessage(m_Player->m_CallbackWindow, WM_USER, ITEventAboutToPromptUserToQuit, 0);
-		SetTimer(m_Player->m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
-		break;
-	}
-
-	return S_OK;
-}
-
 /*
 ** Constructor.
 **
 */
 PlayerITunes::PlayerITunes() : Player(),
 	m_CallbackWindow(),
-	m_LastCheckTime(0),
+	m_LastCheckTime(0UL),
 	m_iTunesActive(false),
 	m_iTunes(),
 	m_iTunesEvent()
 {
 	// Create windows class
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"NowPlayingITunesClass";
@@ -166,7 +132,6 @@ void PlayerITunes::Initialize()
 	while (true)
 	{
 		HRESULT hr = CoCreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID*)&m_iTunes);
-
 		if (hr == CO_E_SERVER_EXEC_FAILURE)
 		{
 			// This seems to happen if there is a modal dialog being shown in iTunes
@@ -178,7 +143,7 @@ void PlayerITunes::Initialize()
 			// Failed to get hold of iTunes instance via COM
 			m_iTunes = nullptr;
 		}
-			
+
 		break;
 	}
 
@@ -186,37 +151,29 @@ void PlayerITunes::Initialize()
 	{
 		m_Initialized = true;
 
-		// Set up event handler
-		m_iTunesEvent = new CEventHandler(this);
+		//Reset last trackID
+		m_TrackID = -1L;
 
 		// Try getting track info and player state
-		ITPlayerState state;
+		ITPlayerState state = ITPlayerStateStopped;
 		if (SUCCEEDED(m_iTunes->get_PlayerState(&state)))
 		{
 			if (state == ITPlayerStateStopped)
 			{
-				// Determine if paused of stopped
-				long position = 0;
+				// Determine if paused or stopped
+				long position = 0L;
 				m_iTunes->get_PlayerPosition(&position);
 
-				if (position != 0)
+				if (SUCCEEDED(m_iTunes->get_PlayerPosition(&position)) && position != 0)
 				{
 					m_State = STATE_PAUSED;
-					OnTrackChange();
 				}
 			}
 			else if (state == ITPlayerStatePlaying)
 			{
 				m_State = STATE_PLAYING;
-				OnTrackChange();
 			}
 		}
-
-		long volume;
-		m_iTunes->get_SoundVolume(&volume);
-		m_Volume = (UINT)volume;
-
-		OnDatabaseChange();
 	}
 	else
 	{
@@ -253,30 +210,10 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_CREATE:
 		// Get pointer to the PlayerITunes class from the CreateWindow call
 		player = (PlayerITunes*)(((CREATESTRUCT*)lParam)->lpCreateParams);
-		return 0;
-
-	case WM_USER:
-		if (wParam == ITEventAboutToPromptUserToQuit)
-		{
-			// Event handler calls this through a PostMessage when iTunes quits
-			player->Uninitialize();
-		}
-		return 0;
-
-	case WM_TIMER:
-		if (wParam == TIMER_CHECKACTIVE)
-		{
-			if (!FindWindow(L"iTunesApp", L"iTunes") && !FindWindow(L"iTunes", L"iTunes"))
-			{
-				player->m_iTunesActive = false;
-				KillTimer(hwnd, TIMER_CHECKACTIVE);
-			}
-		}
-		return 0;
-
-	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
+		return 0L;
 	}
+
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 /*
@@ -286,18 +223,24 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 bool PlayerITunes::CheckWindow()
 {
 	DWORD time = GetTickCount();
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 500UL)
 	{
 		m_LastCheckTime = time;
 
-		if ((FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")) && !m_iTunesActive)
+		if ((FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")))
 		{
 			m_iTunesActive = true;
-			Initialize();
+			if (!m_Initialized)
+			{
+				Initialize();
+			}
+		}
+		else
+		{
+			m_iTunesActive = false;
 		}
 	}
-
-	return m_Initialized;
+	return m_iTunesActive;
 }
 
 /*
@@ -306,81 +249,57 @@ bool PlayerITunes::CheckWindow()
 */
 void PlayerITunes::UpdateData()
 {
-	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
+	if (CheckWindow())
 	{
-		long position = 0;
-		m_iTunes->get_PlayerPosition(&position);
-		m_Position = (UINT)position;
-	}
-}
-
-/*
-** Called by iTunes event handler when the database is changed.
-**
-*/
-void PlayerITunes::OnDatabaseChange()
-{
-	// Check the shuffle state. TODO: Find better way
-	IITPlaylist* playlist;
-	HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
-	if (SUCCEEDED(hr) && playlist)
-	{
-		VARIANT_BOOL shuffle;
-		hr = playlist->get_Shuffle(&shuffle);
-		if (SUCCEEDED(hr))
+		// Update player state, reset 
+		ITPlayerState state = ITPlayerStateStopped;
+		if (SUCCEEDED(m_iTunes->get_PlayerState(&state)))
 		{
-			m_Shuffle = shuffle != VARIANT_FALSE;
+			long position = 0L;
+			if (SUCCEEDED(m_iTunes->get_PlayerPosition(&position)))
+			{
+				m_Position = (UINT)position;
+
+			}
+			if (state == ITPlayerStateStopped)
+			{
+				// Determine if paused or stopped
+				if (position != 0L)
+				{
+					m_State = STATE_PAUSED;
+
+				}
+			}
+			else if (state == ITPlayerStatePlaying)
+			{
+				m_State = STATE_PLAYING;
+			}
+			else
+			{
+				m_State = STATE_STOPPED;
+			}
 		}
 
-		playlist->Release();
-	}
-}
-
-/*
-** Called by iTunes event handler on track change.
-**
-*/
-void PlayerITunes::OnTrackChange()
-{
-	IITTrack* track;
-	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-	if (SUCCEEDED(hr) && track)
-	{
-		BSTR tmpStr;
-		long tmpVal;
-
-		// Get metadata
-		track->get_Artist(&tmpStr);
-		tmpStr ? (m_Artist = tmpStr) : m_Artist.clear();
-
-		track->get_Name(&tmpStr);
-		tmpStr ? (m_Title = tmpStr) : m_Title.clear();
-
-		track->get_Album(&tmpStr);
-		tmpStr ? (m_Album = tmpStr) : m_Album.clear();
-
-		track->get_Genre(&tmpStr);;
-		tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
-
-		track->get_Duration(&tmpVal);
-		m_Duration = (UINT)tmpVal;
-
-		// Rating is 0 - 100, divide to 0 - 5
-		track->get_Rating(&tmpVal);
-		tmpVal /= 20L;
-		m_Rating = (UINT)tmpVal;
-
-		track->get_TrackNumber(&tmpVal);
-		m_Number = (UINT)tmpVal;
-
-		track->get_Year(&tmpVal);
-		m_Year = (UINT)tmpVal;
-
-		IITPlaylist* playlist;
-		hr = track->get_Playlist(&playlist);
-		if (SUCCEEDED(hr))
+		// Volume onChange was removed, manually check 
+		long volume = 0L;
+		if (SUCCEEDED(m_iTunes->get_SoundVolume(&volume)))
 		{
-			ITPlaylistRepeatMode repeat;
+			m_Volume = (UINT)volume;
+		}
+
+		// Check the shuffle and repeat state since there is no onChange event
+		IITPlaylist* playlist = nullptr;
+		HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
+		if (SUCCEEDED(hr) && playlist)
+		{
+			VARIANT_BOOL shuffle = VARIANT_FALSE;
+			hr = playlist->get_Shuffle(&shuffle);
+			if (SUCCEEDED(hr))
+			{
+				m_Shuffle = shuffle != VARIANT_FALSE;
+			}
+
+			ITPlaylistRepeatMode repeat = ITPlaylistRepeatModeOff;
 			hr = playlist->get_SongRepeat(&repeat);
 			if (SUCCEEDED(hr))
 			{
@@ -390,98 +309,124 @@ void PlayerITunes::OnTrackChange()
 			playlist->Release();
 		}
 
-		IITFileOrCDTrack* file;
-		hr = track->QueryInterface(&file);
-		if (SUCCEEDED(hr))
+		// If playing a song check if metadata needs updated
+		if (m_State != STATE_STOPPED)
 		{
-			file->get_Location(&tmpStr);
-			file->Release();
-			if (tmpStr && wcscmp(tmpStr, m_FilePath.c_str()) != 0)
-			{
-				++m_TrackCount;
-				m_FilePath = tmpStr;
-			}
+			UpdateCachedData();
 		}
+	}
+	else if (m_Initialized)
+	{
+		// Since iTunes no longer supports status events, we need to Uninitialize
+		// the measure if the window could not be found after initalization.
+		Uninitialize();
+	}
+}
 
-		if (m_Measures & MEASURE_COVER)
+/*
+** Called during measure update, for data that only needs updated on song change
+**
+*/
+void PlayerITunes::UpdateCachedData()
+{
+	IITTrack* track = nullptr;
+	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
+	// If song is not current song
+	if (SUCCEEDED(hr) && track)
+	{
+		long trackID = -1L;
+		hr = track->get_TrackID(&trackID);
+		if (SUCCEEDED(hr) && trackID != m_TrackID)
 		{
-			m_CoverPath.clear();
+			m_TrackID = trackID;
+			//Increment song count since song count has changed
+			++m_TrackCount;
 
-			// Check for embedded art through iTunes interface
-			IITArtworkCollection* artworkCollection;
-			hr = track->get_Artwork(&artworkCollection);
+			BSTR tmpStr;
+			long tmpVal = 0L;
 
+			// Update various metadata
+			track->get_Name(&tmpStr);
+			tmpStr ? m_Title = tmpStr : m_Title.clear();
+			track->get_Album(&tmpStr);
+			tmpStr ? m_Album = tmpStr : m_Album.clear();
+			track->get_Artist(&tmpStr);
+			tmpStr ? m_Artist = tmpStr : m_Artist.clear();
+
+			track->get_Genre(&tmpStr);;
+			tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
+
+			track->get_Duration(&tmpVal);
+			m_Duration = (UINT)tmpVal;
+
+			track->get_TrackNumber(&tmpVal);
+			m_Number = (UINT)tmpVal;
+
+			track->get_Year(&tmpVal);
+			m_Year = (UINT)tmpVal;
+
+			// Check if song still has file path
+			IITFileOrCDTrack* file = nullptr;
+			hr = track->QueryInterface(&file);
 			if (SUCCEEDED(hr))
 			{
-				long count;
-				artworkCollection->get_Count(&count);
+				file->get_Location(&tmpStr);
+				file->Release();
+				tmpStr ? m_FilePath = tmpStr : m_FilePath.clear();
+			}
+			else
+			{
+				m_FilePath.clear();
+			}
 
-				if (count > 0)
+			// Update album art
+			if (m_Measures & MEASURE_COVER)
+			{
+				m_CoverPath.clear();
+
+				// Check for embedded art through iTunes interface
+				IITArtworkCollection* artworkCollection;
+				hr = track->get_Artwork(&artworkCollection);
+
+				if (SUCCEEDED(hr))
 				{
-					IITArtwork* artwork;
-					hr = artworkCollection->get_Item(1, &artwork);
+					long count = 0L;
+					artworkCollection->get_Count(&count);
 
-					if (SUCCEEDED(hr))
+					if (count > 0L)
 					{
-						_bstr_t coverPath = m_TempCoverPath.c_str();
-						hr = artwork->SaveArtworkToFile(coverPath);
+						IITArtwork* artwork = nullptr;
+						hr = artworkCollection->get_Item(1, &artwork);
+
 						if (SUCCEEDED(hr))
 						{
-							m_CoverPath = m_TempCoverPath;
+							_bstr_t coverPath = m_TempCoverPath.c_str();
+							hr = artwork->SaveArtworkToFile(coverPath);
+							if (SUCCEEDED(hr))
+							{
+								m_CoverPath = m_TempCoverPath;
+							}
+
+							artwork->Release();
 						}
-
-						artwork->Release();
 					}
+
+					artworkCollection->Release();
 				}
-
-				artworkCollection->Release();
 			}
-		}
 
-		if (m_Measures & MEASURE_LYRICS)
-		{
-			FindLyrics();
-		}
+			if (m_Measures & MEASURE_LYRICS)
+			{
+				FindLyrics();
+			}
 
-		track->Release();
+			track->Release();
+		}
 	}
 	else
 	{
 		ClearData(false);
 	}
-}
-
-/*
-** Called by iTunes event handler on player state change.
-**
-*/
-void PlayerITunes::OnStateChange(bool playing)
-{
-	if (playing)
-	{
-		m_State = STATE_PLAYING;
-	}
-	else
-	{
-		long position = 0;
-		m_iTunes->get_PlayerPosition(&position);
-
-		// Guess if paused or stopped from track time
-		m_State = (position == 0) ? STATE_STOPPED : STATE_PAUSED;
-		if (m_State == STATE_STOPPED)
-		{
-			ClearData(false);
-		}
-	}
-}
-
-/*
-** Called by iTunes event handler on volume change.
-**
-*/
-void PlayerITunes::OnVolumeChange(int volume)
-{
-	m_Volume = volume;
 }
 
 /*
@@ -544,7 +489,7 @@ void PlayerITunes::SetPosition(int position)
 */
 void PlayerITunes::SetRating(int rating)
 {
-	IITTrack* track;
+	IITTrack* track = nullptr;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
 	if (SUCCEEDED(hr) && track)
 	{
@@ -569,17 +514,16 @@ void PlayerITunes::SetVolume(int volume)
 */
 void PlayerITunes::SetShuffle(bool state)
 {
-	IITTrack* track;
+	IITTrack* track = nullptr;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
 	if (SUCCEEDED(hr) && track)
 	{
-		IITPlaylist* playlist;
+		IITPlaylist* playlist = nullptr;
 		hr = track->get_Playlist(&playlist);
 		if (SUCCEEDED(hr))
 		{
 			m_Shuffle = state;
-			VARIANT_BOOL shuffle = m_Shuffle ? VARIANT_TRUE : VARIANT_FALSE;
-			playlist->put_Shuffle(shuffle);
+			playlist->put_Shuffle(m_Shuffle ? VARIANT_TRUE : VARIANT_FALSE);
 
 			playlist->Release();
 		}
@@ -594,11 +538,11 @@ void PlayerITunes::SetShuffle(bool state)
 */
 void PlayerITunes::SetRepeat(bool state)
 {
-	IITTrack* track;
+	IITTrack* track = nullptr;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
 	if (SUCCEEDED(hr) && track)
 	{
-		IITPlaylist* playlist;
+		IITPlaylist* playlist = nullptr;
 		hr = track->get_Playlist(&playlist);
 		if (SUCCEEDED(hr))
 		{
@@ -619,8 +563,9 @@ void PlayerITunes::SetRepeat(bool state)
 void PlayerITunes::ClosePlayer()
 {
 	m_iTunes->Quit();
+	m_iTunesActive = false;
 	Uninitialize();
-	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
+	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500U, nullptr);
 }
 
 /*

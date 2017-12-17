@@ -100,6 +100,7 @@ Rainmeter::Rainmeter() :
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
+	m_LanguageObsolete(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
 	m_NormalStayDesktop(true),
@@ -406,7 +407,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		CheckUpdate();
+		GetUpdater().CheckUpdate();
 	}
 
 	return 0;	// All is OK
@@ -640,6 +641,14 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 			std::wstring newPath = m_SkinPath + L"@Backup";
 			MoveFile(path.c_str(), newPath.c_str());
 		}
+	}
+
+	path = m_SkinPath;
+	path += L"@Vault\\";
+	if (CreateDirectory(path.c_str(), nullptr))
+	{
+		path += L"Plugins\\";
+		CreateDirectory(path.c_str(), nullptr);
 	}
 
 	path = GetLayoutPath();
@@ -1601,6 +1610,17 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 	}
 }
 
+const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
+{
+	static const std::vector<LPCWSTR> s_OldPlugins =
+	{
+		L"MediaKey",
+		L"NowPlaying",
+		L"RecycleManager",
+		L"WebParser"
+	};
+	return s_OldPlugins;
+}
 
 /*
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.

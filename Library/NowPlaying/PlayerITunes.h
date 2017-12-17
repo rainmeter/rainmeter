@@ -21,6 +21,10 @@ public:
 	static Player* Create();
 
 	virtual void UpdateData();
+	virtual void UpdateCachedData();
+
+	//Used to check if track is different
+	long m_TrackID;
 
 	virtual void Pause();
 	virtual void Play();
@@ -54,7 +58,6 @@ private:
 		HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT*) { return E_NOTIMPL; }
 		HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID, ITypeInfo**) { return E_NOTIMPL; }
 		HRESULT STDMETHODCALLTYPE GetIDsOfNames(const IID&, LPOLESTR*, UINT, LCID, DISPID*) { return E_NOTIMPL; }
-		HRESULT STDMETHODCALLTYPE Invoke(DISPID dispidMember, REFIID, LCID, WORD, DISPPARAMS* pDispParams, VARIANT*, EXCEPINFO*, UINT*);
 
 	private:
 		ULONG m_RefCount;
@@ -65,10 +68,6 @@ private:
 
 	void Initialize();
 	void Uninitialize();
-	void OnDatabaseChange();
-	void OnTrackChange();
-	void OnStateChange(bool playing);
-	void OnVolumeChange(int volume);
 	bool CheckWindow();
 
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -1,9 +1,9 @@
 /* Copyright (C) 2015 Rainmeter Project Developers
-*
-* This Source Code Form is subject to the terms of the GNU General Public
-* License; either version 2 of the License, or (at your option) any later
-* version. If a copy of the GPL was not distributed with this file, You can
-* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include <string>
 #include <thread>
@@ -118,6 +118,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 					// Erase repeat command from tokens if valid;
 					tokens.erase(tokens.begin() + j);
 
+					// Replace any section variables
+					repeat[1] = RmReplaceVariables(rm, repeat[1].c_str());  // Wait time
+					repeat[2] = RmReplaceVariables(rm, repeat[2].c_str());  // Number of repeats
+
 					const std::wstring act = RmReadString(rm, repeat[0].c_str(), L"[]", FALSE);
 					const std::wstring wait = L"Wait " + repeat[1];
 					const int size = (_wtoi(repeat[2].c_str()) * 2) - 1;	// because we dont want a |wait| after the last command
@@ -131,10 +135,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 						else            tokens.insert(tokens.begin() + (j + k), wait);
 					}
 
-					j += k;		// Skip over inserted items
+					j += (k - 1);		// Skip over inserted items
 				}
 			}
-			else if (_wcsnicmp(tokens[j].c_str(), L"WAIT ", 5) != 0)
+			else if (_wcsnicmp(tokens[j].c_str(), L"WAIT ", 5) == 0)
+			{
+				tokens[j] = RmReplaceVariables(rm, tokens[j].c_str());
+			}
+			else
 			{
 				tokens[j] = RmReadString(rm, tokens[j].c_str(), L"[]", FALSE);
 			}

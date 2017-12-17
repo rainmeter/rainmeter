@@ -24,7 +24,7 @@
 /* #undef SUPPORT_JIT */
 #define SUPPORT_PCREGREP_JIT 1
 #define SUPPORT_UTF 1
-/* #undef SUPPORT_UCP */
+#define SUPPORT_UCP 1
 /* #undef EBCDIC */
 /* #undef EBCDIC_NL25 */
 /* #undef BSR_ANYCRLF */

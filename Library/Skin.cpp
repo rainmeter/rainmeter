@@ -2084,7 +2084,7 @@ bool Skin::ReadSkin()
 	CreateDoubleBuffer(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
+	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
 	if (appVersion > RAINMETER_VERSION)
 	{
 		if (appVersion % 1000 != 0)
@@ -2292,14 +2292,7 @@ bool Skin::ReadSkin()
 						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
-					const WCHAR* const kOldDefaultPlugins[] =
-					{
-						L"MediaKey",
-						L"NowPlaying",
-						L"RecycleManager",
-						L"WebParser"
-					};
-					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
+					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 					{
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
 						{
@@ -3852,6 +3845,7 @@ LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	RedrawWindow();
 	return 0;
 }
 
@@ -4861,12 +4855,12 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnMiddleButtonUp, WM_NCMBUTTONUP)
 	MESSAGE(OnMiddleButtonDoubleClick, WM_MBUTTONDBLCLK)
 	MESSAGE(OnMiddleButtonDoubleClick, WM_NCMBUTTONDBLCLK)
-	MESSAGE(OnXButtonDown, WM_XBUTTONDOWN);
-	MESSAGE(OnXButtonDown, WM_NCXBUTTONDOWN);
-	MESSAGE(OnXButtonUp, WM_XBUTTONUP);
-	MESSAGE(OnXButtonUp, WM_NCXBUTTONUP);
-	MESSAGE(OnXButtonDoubleClick, WM_XBUTTONDBLCLK);
-	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK);
+	MESSAGE(OnXButtonDown, WM_XBUTTONDOWN)
+	MESSAGE(OnXButtonDown, WM_NCXBUTTONDOWN)
+	MESSAGE(OnXButtonUp, WM_XBUTTONUP)
+	MESSAGE(OnXButtonUp, WM_NCXBUTTONUP)
+	MESSAGE(OnXButtonDoubleClick, WM_XBUTTONDBLCLK)
+	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)

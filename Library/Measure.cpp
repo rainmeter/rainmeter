@@ -125,7 +125,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
-	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
+	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0U);
 
 	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
@@ -277,9 +277,10 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 						for (int j = rc - 1 ; j >= 0 ; --j)
 						{
 							int newStart = ovector[2 * j];
-							size_t inLength = ovector[2 * j + 1] - ovector[2 * j];
+							int inLength = ovector[2 * j + 1] - ovector[2 * j];
 
-							if (newStart < 0) break;	// Match was not found, so skip to the next item
+							// Match was not found, or length of capture is invalid
+							if (newStart < 0 || inLength < 1) continue;
 
 							WCHAR tmpName[64];
 							size_t cutLength = _snwprintf_s(tmpName, _TRUNCATE, L"\\%i", j);
@@ -289,7 +290,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 								pos = result.find(tmpName, start, cutLength);
 								if (pos != std::string::npos)
 								{
-									result.replace(pos, cutLength, str, (size_t)newStart, inLength);
+									result.replace(pos, cutLength, str, newStart, inLength);
 									start = pos + inLength;
 								}
 							}

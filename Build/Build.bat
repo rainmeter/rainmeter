@@ -7,7 +7,7 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=4
-set VERSION_MINOR=1
+set VERSION_MINOR=2
 set VERSION_SUBMINOR=0
 set VERSION_REVISION=0
 set ISBETA=true
@@ -135,8 +135,8 @@ echo #include "English.h"> "..\Language\Language.rc"
 echo #include "Resource.rc">> "..\Language\Language.rc"
 if "%1" == "BUILDLANGUAGES" (
 	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Release\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
 	if exist "BuildLog.txt" del "BuildLog.txt"
 	goto END
 )
@@ -162,7 +162,9 @@ set INSTALLER_DEFINES=^
 	/DOUTFILE="%INSTALLER_NAME%"^
 	/DVERSION_FULL="%VERSION_FULL%"^
 	/DVERSION_SHORT="%VERSION_SHORT%"^
-	/DVERSION_REVISION="%VERSION_REVISION%"
+	/DVERSION_REVISION="%VERSION_REVISION%"^
+	/DVERSION_MAJOR="%VERSION_MAJOR%"^
+	/DVERSION_MINOR="%VERSION_MINOR%"
 if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
 "%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi > "BuildLog.txt"

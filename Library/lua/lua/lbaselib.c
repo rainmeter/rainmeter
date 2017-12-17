@@ -450,7 +450,7 @@ static const luaL_Reg base_funcs[] = {
   {"dofile", luaB_dofile},
   {"error", luaB_error},
 //  {"gcinfo", luaB_gcinfo},
-//  {"getfenv", luaB_getfenv},
+  {"getfenv", luaB_getfenv},
   {"getmetatable", luaB_getmetatable},
   {"loadfile", luaB_loadfile},
   {"load", luaB_load},
@@ -462,7 +462,7 @@ static const luaL_Reg base_funcs[] = {
   {"rawget", luaB_rawget},
   {"rawset", luaB_rawset},
   {"select", luaB_select},
-//  {"setfenv", luaB_setfenv},
+  {"setfenv", luaB_setfenv},
   {"setmetatable", luaB_setmetatable},
   {"tonumber", luaB_tonumber},
   {"tostring", luaB_tostring},
@@ -647,7 +647,7 @@ static void base_open (lua_State *L) {
 
 LUALIB_API int luaopen_base (lua_State *L) {
   base_open(L);
-//  luaL_register(L, LUA_COLIBNAME, co_funcs);
+  luaL_register(L, LUA_COLIBNAME, co_funcs);
   return 2;
 }
 

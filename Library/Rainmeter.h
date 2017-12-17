@@ -135,6 +135,8 @@ public:
 	void SetDisableVersionCheck(bool check);
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
+	bool GetLanguageStatus() { return m_LanguageObsolete; }
+	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; }
 
 	void ShowLogFile();
 
@@ -172,6 +174,8 @@ public:
 	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
 
 	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+
+	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
 	friend class CommandHandler;
 	friend class ContextMenu;
@@ -233,6 +237,7 @@ private:
 
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
+	bool m_LanguageObsolete;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
