@@ -395,13 +395,14 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
-	Gfx::Rectangle primaryPath(0, 0, 0, 0);
-	Gfx::Rectangle secondaryPath(0, 0, 0, 0);
-	Gfx::Rectangle bothPath(0, 0, 0, 0);
+	Gfx::Rectangle primaryPath(0.0f, 0.0f, 0.0f, 0.0f);
+	Gfx::Rectangle secondaryPath(0.0f, 0.0f, 0.0f, 0.0f);
+	Gfx::Rectangle bothPath(0.0f, 0.0f, 0.0f, 0.0f);
 
-	auto applyStyles = [](Gfx::Shape& shape, const Gdiplus::Color& fill) {
+	auto applyStyles = [](Gfx::Shape& shape, const Gdiplus::Color& fill) -> void
+	{
 		shape.SetFill(fill);
-		shape.SetStrokeWidth(0);
+		shape.SetStrokeWidth(0.0f);
 		shape.SetStrokeFill(Gdiplus::Color::Transparent);
 	};
 
@@ -449,8 +450,10 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	auto combine = [](Gfx::Shape& shape1, Gfx::Shape& shape2) {
-		return shape1.CombineWith(&shape2, D2D1_COMBINE_MODE_UNION);
+	auto combine = [](Gfx::Rectangle& shape1, const Rect& r) -> void
+	{
+		Gfx::Rectangle shape2((FLOAT)r.X, (FLOAT)r.Y, (FLOAT)r.Width, (FLOAT)r.Height);
+		shape1.CombineWith(&shape2, D2D1_COMBINE_MODE_UNION);
 	};
 
 	// Horizontal or Vertical graph
@@ -462,6 +465,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				  0.0
 				: m_PrimaryValues[(i + (m_MeterPos % meterRect.Height)) % meterRect.Height] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
+
 			int primaryBarHeight = (int)(meterRect.Width * value);
 			primaryBarHeight = min(meterRect.Width, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
@@ -472,46 +476,44 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					  0.0
 					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Height] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
+
 				int secondaryBarHeight = (int)(meterRect.Width * value);
 				secondaryBarHeight = min(meterRect.Width, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
-				int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
+				const int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
 
 				// Cache image/color rectangle for the both lines
 				{
-					Rect& r = m_GraphStartLeft ?
+					const Rect& r = m_GraphStartLeft ?
 						  Rect(meterRect.X, meterRect.Y + startValue + (step * i), bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - bothBarHeight, meterRect.Y + startValue + (step * i), bothBarHeight, 1);
-					combine(bothPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(bothPath, r);
 				}
 
 				// Cache the image/color rectangle for the rest
 				if (secondaryBarHeight > primaryBarHeight)
 				{
-					Rect& r = m_GraphStartLeft ?
+					const Rect& r = m_GraphStartLeft ?
 						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - secondaryBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
-
-					combine(secondaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(secondaryPath, r);
 				}
 				else
 				{
-					Rect& r = m_GraphStartLeft ?
+					const Rect& r = m_GraphStartLeft ?
 						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
 						: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
-
-					combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(primaryPath, r);
 				}
 			}
 			else
 			{
-				Rect& r = m_GraphStartLeft ?
+				const Rect& r = m_GraphStartLeft ?
 					  Rect(meterRect.X, meterRect.Y + startValue + (step * i), primaryBarHeight, 1)
 					: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight, 1);
-
-				combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+				combine(primaryPath, r);
 			}
 		}
 	}
@@ -523,6 +525,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				  0.0
 				: m_PrimaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
+
 			int primaryBarHeight = (int)(meterRect.Height * value);
 			primaryBarHeight = min(meterRect.Height, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
@@ -533,47 +536,44 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					  0.0
 					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
+
 				int secondaryBarHeight = (int)(meterRect.Height * value);
 				secondaryBarHeight = min(meterRect.Height, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
-				int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
+				const int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
 
 				// Cache image/color rectangle for the both lines
 				{
-					Rect& r = m_Flip ?
+					const Rect& r = m_Flip ?
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - bothBarHeight, 1, bothBarHeight);
-
-					combine(bothPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(bothPath, r);
 				}
 
 				// Cache the image/color rectangle for the rest
 				if (secondaryBarHeight > primaryBarHeight)
 				{
-					Rect& r = m_Flip ?
+					const Rect& r = m_Flip ?
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
-
-					combine(secondaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(secondaryPath, r);
 				}
 				else
 				{
-					Rect& r = m_Flip ?
+					const Rect& r = m_Flip ?
 						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
 						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
-
-					combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+					combine(primaryPath, r);
 				}
 			}
 			else
 			{
-				Rect& r = m_Flip ?
+				const Rect& r = m_Flip ?
 					  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, primaryBarHeight)
 					: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight);
-
-				combine(primaryPath, Gfx::Rectangle(r.X, r.Y, r.Width, r.Height));
+				combine(primaryPath, r);
 			}
 		}
 	}
@@ -581,7 +581,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	// Draw cached rectangles
 	if (primaryBitmap)
 	{
-		Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
+		const Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
 
 		//canvas.PushClip(&primaryPath);
 		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
@@ -594,11 +594,12 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		primaryPath.SetFill(m_PrimaryColor);
 		canvas.DrawGeometry(primaryPath, 0, 0);
 	}
+
 	if (secondaryMeasure)
 	{
 		if (secondaryBitmap)
 		{
-			Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
+			const Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
 
 			//canvas.PushClip(&secondaryPath);
 			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
@@ -611,9 +612,10 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			primaryPath.SetFill(m_SecondaryColor);
 			canvas.DrawGeometry(secondaryPath, 0, 0);
 		}
+
 		if (bothBitmap)
 		{
-			Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
+			const Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
 
 			//canvas.PushClip(&bothPath);
 			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
