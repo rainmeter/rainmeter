@@ -99,6 +99,7 @@ private:
 	friend class Curve;
 	friend class QuadraticCurve;
 	friend class Path;
+	friend class BitmapLoader;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
