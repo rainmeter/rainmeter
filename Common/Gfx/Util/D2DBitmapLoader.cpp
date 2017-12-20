@@ -1,132 +1,149 @@
+/* Copyright (C) 2017 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+
 #include "StdAfx.h"
-#include "BitmapLoader.h"
+#include "Gfx/Canvas.h"
+#include "Gfx/Util/D2DBitmapLoader.h"
 
-namespace Gfx
+namespace Gfx {
+namespace Util {
+
+HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
 {
+	if (!bitmap) return E_FAIL;
 
-HRESULT BitmapLoader::LoadBitmapFromFile(Canvas& canvas, BitmapD2D* bitmap)
-{
-	if (!bitmap || bitmap->m_Path.empty()) return E_FAIL;
-	HRESULT hr = S_OK;
+	std::wstring& path = bitmap->GetPath();
+	if (path.empty()) return E_FAIL;
 
-	Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder = NULL;
-	Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> decoderFrame = NULL;
-
-	HANDLE fileHandle = CreateFile(bitmap->m_Path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+	HANDLE fileHandle = CreateFile(
+		path.c_str(),
+		GENERIC_READ, FILE_SHARE_READ,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+		nullptr);
 	if (fileHandle == INVALID_HANDLE_VALUE) return S_FALSE;
 
-	hr = Canvas::c_WICFactory->CreateDecoderFromFileHandle((ULONG_PTR)fileHandle, NULL, WICDecodeMetadataCacheOnDemand, decoder.ReleaseAndGetAddressOf());
+	Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
+	Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> decoderFrame;
+	Microsoft::WRL::ComPtr<IWICBitmapSource> source;
+
+	HRESULT hr = Canvas::c_WICFactory->CreateDecoderFromFileHandle(
+		(ULONG_PTR)fileHandle,
+		nullptr,
+		WICDecodeMetadataCacheOnDemand,
+		decoder.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		hr = decoder->GetFrame(0U, decoderFrame.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			hr = ConvertToD2DFormat(decoderFrame.Get(), source);
+		}
+	}
+
+	CloseHandle(fileHandle);
 	if (FAILED(hr)) return hr;
 
-	hr = decoder->GetFrame(0, decoderFrame.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return hr;
-
-	Microsoft::WRL::ComPtr<IWICBitmapSource> source = decoderFrame;
-	hr = ConvertToD2DFormat(decoderFrame.Get(), source);
-	if (FAILED(hr)) return hr;
-
-	UINT width = 0, height = 0;
+	UINT width = 0U;
+	UINT height = 0U;
 	hr = source->GetSize(&width, &height);
 	if (FAILED(hr)) return hr;
-	FLOAT maxBitmapSize = (FLOAT)canvas.m_MaxBitmapSize;
 
+	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	if (width <= maxBitmapSize && height <= maxBitmapSize)
 	{
 		Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
-		hr = canvas.m_Target->CreateBitmapFromWicBitmap(source.Get(), NULL, d2dbitmap.GetAddressOf());
+		hr = canvas.m_Target->CreateBitmapFromWicBitmap(
+			source.Get(),
+			nullptr,
+			d2dbitmap.GetAddressOf());
+		if (FAILED(hr)) return hr;
+		
+		BitmapSegment bmp(d2dbitmap, 0, 0, width, height);
+		hr = bitmap->AddSegment(bmp);
 		if (FAILED(hr)) return hr;
 
-		BitmapSegment bmp({ d2dbitmap, 0, 0, width, height });
-		bmp.m_Width = width;
-		bmp.m_Height = height;
-
-		const BitmapHandle handle({bmp}, width, height);
-		
-		bitmap->m_Bitmap = handle;
-
-		CloseHandle(fileHandle);
+		bitmap->SetSize(width, height);
 		return S_OK;
 	}
 
-	std::vector<BitmapSegment> segments;
-	for (int y = 0; y < ceil(height / maxBitmapSize); ++y)
-		for (int x = 0; x < ceil(width / maxBitmapSize); ++x)
+	for (UINT y = 0U, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
+	{
+		for (UINT x = 0U, W = (UINT)floor(width / maxBitmapSize); x <= W; ++x)
 		{
-			WICRect rcClip = { x * maxBitmapSize, y * maxBitmapSize, maxBitmapSize, maxBitmapSize };
+			WICRect rcClip = {
+				(INT)(x * maxBitmapSize),
+				(INT)(y * maxBitmapSize),
+				(INT)(x == W ? (width - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
+				(INT)(y == H ? (height - maxBitmapSize * y) : maxBitmapSize) };		// If last y coordinate, find cutoff
 
-			// if last x, find cutoff point
-			if (x == ceil(width / maxBitmapSize) - 1)
-			{
-				rcClip.Width = round(width - maxBitmapSize * x);
-			}
-
-			// if last y, find cutoff point
-			if (y == ceil(height / maxBitmapSize) - 1)
-			{
-				rcClip.Height = round(height - maxBitmapSize * y);
-			}
-
-			Microsoft::WRL::ComPtr<IWICBitmapSource> bitmapSegment = NULL;
-
+			Microsoft::WRL::ComPtr<IWICBitmapSource> bitmapSegment;
 			hr = CropWICBitmapSource(rcClip, source.Get(), bitmapSegment);
 			if (FAILED(hr)) return hr;
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
-			hr = canvas.m_Target->CreateBitmapFromWicBitmap(bitmapSegment.Get(), NULL, d2dbitmap.GetAddressOf());
+			hr = canvas.m_Target->CreateBitmapFromWicBitmap(
+				bitmapSegment.Get(),
+				nullptr,
+				d2dbitmap.GetAddressOf());
 			if (FAILED(hr)) return hr;
 
-			segments.emplace_back(d2dbitmap, rcClip.X, rcClip.Y, rcClip.Width, rcClip.Height);
+			BitmapSegment segment(d2dbitmap, rcClip);
+			hr = bitmap->AddSegment(segment);
+			if (FAILED(hr)) return hr;
 		}
-
-	const BitmapHandle bitmapHandle(segments, width, height);
-	bitmap->m_Bitmap = bitmapHandle;
-
-	CloseHandle(fileHandle);
-	return hr;
-}
-
-HRESULT BitmapLoader::CropWICBitmapSource(WICRect& clipRect, IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
-{
-	if (clipRect.Width > 0 && clipRect.Height > 0)
-	{
-		Microsoft::WRL::ComPtr<IWICBitmapClipper> clipper = NULL;
-		HRESULT hr = S_OK;
-		hr = Canvas::c_WICFactory->CreateBitmapClipper(clipper.GetAddressOf());
-		if (FAILED(hr))
-		{
-			return hr;
-		}
-
-		hr = clipper->Initialize(source, &clipRect);
-		if (FAILED(hr))
-		{
-			return hr;
-		}
-
-		dest = clipper;
 	}
-	else
-	{
-		return E_FAIL;
-	}
+
+	bitmap->SetSize(width, height);
 	return S_OK;
 }
 
-HRESULT BitmapLoader::ConvertToD2DFormat(IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
+HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,
+	IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
 {
-	Microsoft::WRL::ComPtr<IWICFormatConverter> converter = NULL;
-	HRESULT hr = S_OK;
+	if (clipRect.Width > 0 && clipRect.Height > 0)
+	{
+		Microsoft::WRL::ComPtr<IWICBitmapClipper> clipper;
+		HRESULT hr = Canvas::c_WICFactory->CreateBitmapClipper(clipper.GetAddressOf());
+		if (FAILED(hr)) return hr;
 
-	// Convert the image format to 32bppPBGRA
-	// (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-	hr = Canvas::c_WICFactory->CreateFormatConverter(converter.GetAddressOf());
-	if (FAILED(hr)) return hr;
+		hr = clipper->Initialize(source, &clipRect);
+		if (FAILED(hr)) return hr;
 
-	hr = converter->Initialize(source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-	if (FAILED(hr)) return hr;
+		dest.Swap(clipper);
+		return S_OK;
+	}
 
-	dest = converter;
-	return hr;
+	return E_FAIL;
 }
 
-} // namespace Gfx
+HRESULT D2DBitmapLoader::ConvertToD2DFormat(
+	IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
+{
+	// Convert the image format to 32bppPBGRA
+	// (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
+
+	Microsoft::WRL::ComPtr<IWICFormatConverter> converter;
+	HRESULT hr = Canvas::c_WICFactory->CreateFormatConverter(converter.GetAddressOf());
+	if (FAILED(hr)) return hr;
+
+	hr = converter->Initialize(
+		source,
+		GUID_WICPixelFormat32bppPBGRA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.0f,
+		WICBitmapPaletteTypeMedianCut);
+	if (FAILED(hr)) return hr;
+
+	dest.Swap(converter);
+	return S_OK;
+}
+
+}  // namespace Util
+}  // namespace Gfx

@@ -25,6 +25,11 @@
 
 namespace Gfx {
 
+// Forward declaration
+namespace Util {
+	class D2DBitmapLoader;
+}
+
 // Wraps Direct2D/DirectWrite.
 class Canvas
 {
@@ -99,7 +104,7 @@ private:
 	friend class Curve;
 	friend class QuadraticCurve;
 	friend class Path;
-	friend class BitmapLoader;
+	friend class Gfx::Util::D2DBitmapLoader;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
