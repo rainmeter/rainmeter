@@ -119,12 +119,10 @@
     <ClCompile Include="Gfx\Shapes\Path.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DBitmap.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\D2DBitmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -248,12 +246,10 @@
     <ClInclude Include="Gfx\Shapes\Path.h">
       <Filter>Gfx\Shapes</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DBitmap.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\Util\D2DBitmapLoader.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
+    <ClInclude Include="Gfx\D2DBitmap.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

@@ -8,7 +8,7 @@
 #ifndef RM_GFX_UTIL_D2DBITMAPLOADER_H_
 #define RM_GFX_UTIL_D2DBITMAPLOADER_H_
 
-#include "D2DBitmap.h"
+#include "../D2DBitmap.h"
 
 namespace Gfx {
 namespace Util {

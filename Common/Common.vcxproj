@@ -30,6 +30,7 @@
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
+    <ClCompile Include="Gfx\D2DBitmap.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
@@ -58,7 +59,6 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatTypography.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp" />
-    <ClCompile Include="Gfx\Util\D2DBitmap.cpp" />
     <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp" />
     <ClCompile Include="Gfx\Util\D2DUtil.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp" />
@@ -81,6 +81,7 @@
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
+    <ClInclude Include="Gfx\D2DBitmap.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\Shape.h" />
@@ -109,7 +110,6 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatTypography.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h" />
-    <ClInclude Include="Gfx\Util\D2DBitmap.h" />
     <ClInclude Include="Gfx\Util\D2DBitmapLoader.h" />
     <ClInclude Include="Gfx\Util\D2DUtil.h" />
     <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h" />
