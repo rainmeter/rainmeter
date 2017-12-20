@@ -8,8 +8,11 @@
 #ifndef RM_GFX_UTIL_D2DBITMAP_H_
 #define RM_GFX_UTIL_D2DBITMAP_H_
 
+#include "Canvas.h"
+
 namespace Gfx {
-namespace Util {
+
+class Canvas;
 
 class BitmapSegment
 {
@@ -19,9 +22,9 @@ public:
 	~BitmapSegment() {}
 
 private:
+	friend class Canvas;
+
 	BitmapSegment() = delete;
-	BitmapSegment(const BitmapSegment& other) = delete;
-	BitmapSegment& operator=(BitmapSegment other) = delete;
 
 	UINT m_X;
 	UINT m_Y;
@@ -35,15 +38,22 @@ class D2DBitmap
 {
 public:
 	D2DBitmap(const std::wstring& path);
+	~D2DBitmap();
+
+	UINT GetWidth() const{ return m_Width; }
+	UINT GetHeight() const{ return m_Height; }
 
 	HRESULT AddSegment(const BitmapSegment& segment);
 	void SetSize(UINT width, UINT height) { m_Width = width; m_Height = height; }
 
 	std::wstring& GetPath() { return m_Path; }
 
+	bool Load(const Canvas& canvas);
+
 private:
+	friend class Canvas;
+
 	D2DBitmap() = delete;
-	~D2DBitmap() = delete;
 	D2DBitmap(const D2DBitmap& other) = delete;
 	D2DBitmap& operator=(D2DBitmap other) = delete;
 
@@ -55,7 +65,6 @@ private:
 	std::vector<BitmapSegment> m_Segments;
 };
 
-}  // namespace Util
 }  // namespace Gfx
 
 #endif

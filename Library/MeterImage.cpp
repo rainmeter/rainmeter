@@ -18,8 +18,8 @@ using namespace Gdiplus;
 TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Image(L"ImageName", nullptr, false, skin),
-	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
+	m_Image(skin),
+	m_MaskImage(skin),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -51,16 +51,16 @@ void MeterImage::Initialize()
 */
 void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
-	m_Image.LoadImage(imageName, bLoadAlways);
+	m_Image.LoadImage(imageName);
 
 	if (m_Image.IsLoaded())
 	{
 		bool useMaskSize = false;
-		m_MaskImage.LoadImage(m_MaskImageName, true);
+		m_MaskImage.LoadImage(m_MaskImageName);
 		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
-		Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
+		Gfx::D2DBitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
 
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
@@ -200,7 +200,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	if (m_Image.IsLoaded())
 	{
 		// Copy the image over the doublebuffer
-		Bitmap* drawBitmap = m_Image.GetImage();
+		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
@@ -214,7 +214,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		if (m_MaskImage.IsLoaded())
 		{
-			Bitmap* maskBitmap = m_MaskImage.GetImage();
+			Gfx::D2DBitmap* maskBitmap = m_MaskImage.GetImage();
 
 			imageW = maskBitmap->GetWidth();
 			imageH = maskBitmap->GetHeight();
@@ -243,7 +243,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Gdiplus::Rect(cropX, cropY, cropW, cropH));
+			//canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Gdiplus::Rect(cropX, cropY, cropW, cropH));
 		}
 
 		else if (drawW == imageW && drawH == imageH &&
@@ -259,7 +259,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 			imgAttr.SetWrapMode(WrapModeTile);
 
 			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
+			//graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
 
 			canvas.EndGdiplusContext();
 		}

@@ -8,11 +8,12 @@
 #include "StdAfx.h"
 #include "Gfx/Canvas.h"
 #include "Gfx/Util/D2DBitmapLoader.h"
+#include "Gfx/D2DBitmap.h"
 
 namespace Gfx {
 namespace Util {
 
-HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
+HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bitmap)
 {
 	if (!bitmap) return E_FAIL;
 
@@ -27,6 +28,12 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
 		nullptr);
 	if (fileHandle == INVALID_HANDLE_VALUE) return S_FALSE;
+
+	auto cleanup = [&](HRESULT hr)
+	{
+		CloseHandle(fileHandle);
+		return hr;
+	};
 
 	Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
 	Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> decoderFrame;
@@ -46,13 +53,12 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
 		}
 	}
 
-	CloseHandle(fileHandle);
-	if (FAILED(hr)) return hr;
+	if (FAILED(hr)) return cleanup(hr);
 
 	UINT width = 0U;
 	UINT height = 0U;
 	hr = source->GetSize(&width, &height);
-	if (FAILED(hr)) return hr;
+	if (FAILED(hr)) return cleanup(hr);
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	if (width <= maxBitmapSize && height <= maxBitmapSize)
@@ -62,14 +68,15 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
 			source.Get(),
 			nullptr,
 			d2dbitmap.GetAddressOf());
-		if (FAILED(hr)) return hr;
+		if (FAILED(hr)) return cleanup(hr);
 		
 		BitmapSegment bmp(d2dbitmap, 0, 0, width, height);
 		hr = bitmap->AddSegment(bmp);
-		if (FAILED(hr)) return hr;
+		if (FAILED(hr)) return cleanup(hr);
 
 		bitmap->SetSize(width, height);
-		return S_OK;
+
+		return cleanup(S_OK);
 	}
 
 	for (UINT y = 0U, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
@@ -84,23 +91,23 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap)
 
 			Microsoft::WRL::ComPtr<IWICBitmapSource> bitmapSegment;
 			hr = CropWICBitmapSource(rcClip, source.Get(), bitmapSegment);
-			if (FAILED(hr)) return hr;
+			if (FAILED(hr)) return cleanup(hr);
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
 			hr = canvas.m_Target->CreateBitmapFromWicBitmap(
 				bitmapSegment.Get(),
 				nullptr,
 				d2dbitmap.GetAddressOf());
-			if (FAILED(hr)) return hr;
+			if (FAILED(hr)) return cleanup(hr);
 
 			BitmapSegment segment(d2dbitmap, rcClip);
 			hr = bitmap->AddSegment(segment);
-			if (FAILED(hr)) return hr;
+			if (FAILED(hr)) return cleanup(hr);
 		}
 	}
 
 	bitmap->SetSize(width, height);
-	return S_OK;
+	return cleanup(S_OK);
 }
 
 HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,

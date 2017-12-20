@@ -16,7 +16,7 @@ namespace Util {
 class D2DBitmapLoader
 {
 public:
-	static HRESULT LoadBitmapFromFile(Canvas& canvas, D2DBitmap* bitmap);
+	static HRESULT LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bitmap);
 
 private:
 	friend class Gfx::Canvas;

@@ -13,6 +13,7 @@
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Util.h"
 #include "../../Library/Logger.h"
+#include "D2DBitmap.h"
 
 namespace Gfx {
 
@@ -565,6 +566,31 @@ void Canvas::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	auto rDst = Util::ToRectF(dstRect);
 	auto rSrc = Util::ToRectF(srcRect);
 	m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
+}
+
+void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
+{
+	auto& segments = bitmap->m_Segments;
+	const auto width = bitmap->m_Width;
+	const auto height = bitmap->m_Height;
+
+	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
+	{
+		return D2D1_RECT_F {
+			source.left / width * dst.Width + dst.X,
+			source.top / height * dst.Height + dst.Y,
+			source.right / width * dst.Width + dst.X,
+			source.bottom / height * dst.Height + dst.Y,
+		};
+	};
+
+	for (auto it = segments.begin(); it != segments.end(); ++it)
+	{
+		D2D1_RECT_F rSeg = { (FLOAT)it->m_X, (FLOAT)it->m_Y, (FLOAT)it->m_Width, (FLOAT)it->m_Height };
+		auto rSrc = getRectSubregion(rSeg, srcRect);
+		auto rDst = getRectSubregion(rSeg, dstRect);
+		m_Target->DrawBitmap(it->m_Bitmap.Get(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
+	}
 }
 
 void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,

@@ -7,9 +7,9 @@
 
 #include "StdAfx.h"
 #include "D2DBitmap.h"
+#include "Util/D2DBitmapLoader.h"
 
 namespace Gfx {
-namespace Util {
 
 BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap,
 	UINT x, UINT y, UINT width, UINT height) :
@@ -17,7 +17,7 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap,
 	m_X(x),
 	m_Y(y),
 	m_Width(width),
-	m_Height(height)
+	m_Height(height)	
 {
 }
 
@@ -35,10 +35,19 @@ D2DBitmap::D2DBitmap(const std::wstring& path) :
 {
 }
 
+D2DBitmap::~D2DBitmap()
+{
+}
+
 HRESULT D2DBitmap::AddSegment(const BitmapSegment& segment)
 {
+	m_Segments.emplace_back(segment);
 	return S_OK;
 }
 
-}  // namespace Util
+bool D2DBitmap::Load(const Canvas& canvas)
+{
+	return SUCCEEDED(Util::D2DBitmapLoader::LoadBitmapFromFile(canvas, this));
+}
+
 }  // namespace Gfx
