@@ -298,7 +298,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_WDefined = parser.GetLastValueDefined();
 
 	if (IsFixedSize(true)) m_W = w;
-	if (oldW != (m_W - widthPadding)) m_W += widthPadding;
+	if (!m_Initialized || oldW != (m_W - widthPadding)) m_W += widthPadding;
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
@@ -312,7 +312,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_HDefined = parser.GetLastValueDefined();
 	
 	if (IsFixedSize(true)) m_H = h;
-	if (oldH != (m_H - heightPadding)) m_H += heightPadding;
+	if (!m_Initialized || oldH != (m_H - heightPadding)) m_H += heightPadding;
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
