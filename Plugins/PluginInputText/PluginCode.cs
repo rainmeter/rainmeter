@@ -144,6 +144,8 @@ namespace InputText
                     sLine = ScanAndReplace(sLine, "SolidColor", Overrides);
                     sLine = ScanAndReplace(sLine, "Password", Overrides);
                     sLine = ScanAndReplace(sLine, "TopMost", Overrides);
+                    sLine = ScanAndReplace(sLine, "InputLimit", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "InputNumber", Overrides);
 
                     param.OverrideOptions.Add(Overrides);
                     #endregion
