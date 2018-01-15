@@ -23,6 +23,7 @@ public:
 
 private:
 	friend class Canvas;
+	friend class D2DBitmap;
 
 	BitmapSegment() = delete;
 
@@ -33,6 +34,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_Bitmap;
 };
+
 
 class D2DBitmap
 {
@@ -50,6 +52,8 @@ public:
 
 	bool Load(const Canvas& canvas);
 
+	D2DBitmap* Tint(Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
+
 private:
 	friend class Canvas;
 
@@ -63,6 +67,7 @@ private:
 	std::wstring m_Path;
 
 	std::vector<BitmapSegment> m_Segments;
+
 };
 
 }  // namespace Gfx

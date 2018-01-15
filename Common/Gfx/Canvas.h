@@ -108,6 +108,7 @@ private:
 	friend class QuadraticCurve;
 	friend class Path;
 	friend class Gfx::Util::D2DBitmapLoader;
+	friend class Gfx::D2DBitmap;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

@@ -15,11 +15,11 @@
 
 using namespace Gdiplus;
 
-TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
+GeneralImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Image(skin),
-	m_MaskImage(skin),
+	m_Image(L"ImageName", nullptr, skin),
+	m_MaskImage(L"MaskImageName", c_MaskOptionArray, skin),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
