@@ -18,7 +18,9 @@ class D2DEffectStream
 public:
 	void Crop(const Canvas& canvas, const D2D1_RECT_F& crop);
 	void Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
+	void Rotate(const Canvas& canvas, const FLOAT& matrix);
 	D2DBitmap* ToBitmap(Canvas& canvas);
+	D2D1_SIZE_F GetSize(const Canvas& canvas);
 
 private:
 	friend class Canvas;

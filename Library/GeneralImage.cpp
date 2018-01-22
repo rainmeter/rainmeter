@@ -39,6 +39,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, Skin* s
 	m_BitmapTinted(nullptr),
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
+	m_Rotate(),
 	m_Skin(skin)
 {
 }
@@ -52,6 +53,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 {
 	Rect oldCrop = m_Crop;
 	CROPMODE oldCropMode = m_CropMode;
+	REAL oldRotate = m_Rotate;
 
 	//if (!m_DisableTransform)
 	{
@@ -179,6 +181,11 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 			m_ColorMatrix.m[4][i] = matrix5[i];
 		}
 	}
+
+	//if (!m_DisableTransform)
+	{
+		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
+	}
 }
 
 bool GeneralImage::LoadImage(const std::wstring& imageName)
@@ -249,6 +256,9 @@ void GeneralImage::ApplyTransforms()
 	auto stream = m_Bitmap->CreateEffectStream();
 
 	ApplyCrop(stream);
+
+	if(m_Rotate != 0)
+		stream->Rotate(m_Skin->GetCanvas(), m_Rotate);
 
 	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
 		stream->Tint(m_Skin->GetCanvas(), m_ColorMatrix);

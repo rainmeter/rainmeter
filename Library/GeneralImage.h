@@ -84,6 +84,7 @@ private:
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
 	Gdiplus::Rect m_Crop;
 	CROPMODE m_CropMode;
+	FLOAT m_Rotate;
 
 	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();
