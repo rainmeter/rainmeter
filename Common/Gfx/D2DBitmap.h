@@ -14,6 +14,10 @@ namespace Gfx {
 
 class Canvas;
 
+namespace Util {
+	class D2DEffectStream;
+} // Util
+
 class BitmapSegment
 {
 public:
@@ -24,6 +28,7 @@ public:
 private:
 	friend class Canvas;
 	friend class D2DBitmap;
+	friend class Util::D2DEffectStream;
 
 	BitmapSegment() = delete;
 
@@ -52,10 +57,11 @@ public:
 
 	bool Load(const Canvas& canvas);
 
-	D2DBitmap* Tint(Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
+	Util::D2DEffectStream* CreateEffectStream();
 
 private:
 	friend class Canvas;
+	friend class Util::D2DEffectStream;
 
 	D2DBitmap() = delete;
 	D2DBitmap(const D2DBitmap& other) = delete;

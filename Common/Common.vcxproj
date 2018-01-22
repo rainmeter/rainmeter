@@ -60,6 +60,7 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp" />
     <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp" />
+    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp" />
     <ClCompile Include="Gfx\Util\D2DUtil.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h" />
     <ClInclude Include="Gfx\Util\D2DBitmapLoader.h" />
+    <ClInclude Include="Gfx\Util\D2DEffectStream.h" />
     <ClInclude Include="Gfx\Util\D2DUtil.h" />
     <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h" />
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h" />

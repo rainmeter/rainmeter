@@ -30,6 +30,7 @@ class D2DBitmap;
 
 namespace Util {
 	class D2DBitmapLoader;
+	class D2DEffectStream;
 }
 
 // Wraps Direct2D/DirectWrite.
@@ -108,6 +109,7 @@ private:
 	friend class QuadraticCurve;
 	friend class Path;
 	friend class Gfx::Util::D2DBitmapLoader;
+	friend class Gfx::Util::D2DEffectStream;
 	friend class Gfx::D2DBitmap;
 
 	Canvas(const Canvas& other) = delete;

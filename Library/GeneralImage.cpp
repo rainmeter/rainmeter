@@ -7,6 +7,8 @@
 
 #include "StdAfx.h"
 #include "GeneralImage.h"
+#include "../Common/Gfx/Util/D2DEffectStream.h"
+#include "Logger.h"
 
 using namespace Gdiplus;
 
@@ -35,6 +37,8 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, Skin* s
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_Bitmap(nullptr), 
 	m_BitmapTinted(nullptr),
+	m_Crop(-1, -1, -1, -1),
+	m_CropMode(CROPMODE_TL),
 	m_Skin(skin)
 {
 }
@@ -46,6 +50,63 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
+	Rect oldCrop = m_Crop;
+	CROPMODE oldCropMode = m_CropMode;
+
+	//if (!m_DisableTransform)
+	{
+		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
+		m_CropMode = CROPMODE_TL;
+
+		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
+		if (!crop.empty())
+		{
+			if (wcschr(crop.c_str(), L','))
+			{
+				WCHAR* context = nullptr;
+				WCHAR* parseSz = _wcsdup(crop.c_str());
+				WCHAR* token;
+
+				token = wcstok(parseSz, L",", &context);
+				if (token)
+				{
+					m_Crop.X = parser.ParseInt(token, 0);
+
+					token = wcstok(nullptr, L",", &context);
+					if (token)
+					{
+						m_Crop.Y = parser.ParseInt(token, 0);
+
+						token = wcstok(nullptr, L",", &context);
+						if (token)
+						{
+							m_Crop.Width = parser.ParseInt(token, 0);
+
+							token = wcstok(nullptr, L",", &context);
+							if (token)
+							{
+								m_Crop.Height = parser.ParseInt(token, 0);
+
+								token = wcstok(nullptr, L",", &context);
+								if (token)
+								{
+									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);
+								}
+							}
+						}
+					}
+				}
+				free(parseSz);
+			}
+
+			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
+			{
+				m_CropMode = CROPMODE_TL;
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop, section);
+			}
+		}
+	}
+
 	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
 	alpha = min(255, alpha);
@@ -123,16 +184,58 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
 	if (m_Skin == nullptr) return false;
-	if (m_Bitmap) delete m_Bitmap;
+	delete m_Bitmap;
 	m_Bitmap = new Gfx::D2DBitmap(imageName);
 	if (m_Bitmap->Load(m_Skin->GetCanvas()))
 	{
 		ApplyTransforms();
 		return true;
 	}
-	if (m_Bitmap) delete m_Bitmap;
+	delete m_Bitmap;
 	m_Bitmap = nullptr;
 	return false;
+}
+
+void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
+{
+	if (m_Crop.Width >= 0 && m_Crop.Height >= 0)
+	{
+		const int imageW = m_Bitmap->GetWidth();
+		const int imageH = m_Bitmap->GetHeight();
+
+		int x, y;
+
+		switch (m_CropMode)
+		{
+		case CROPMODE_TL:
+		default:
+			x = m_Crop.X;
+			y = m_Crop.Y;
+			break;
+
+		case CROPMODE_TR:
+			x = m_Crop.X + imageW;
+			y = m_Crop.Y;
+			break;
+
+		case CROPMODE_BR:
+			x = m_Crop.X + imageW;
+			y = m_Crop.Y + imageH;
+			break;
+
+		case CROPMODE_BL:
+			x = m_Crop.X;
+			y = m_Crop.Y + imageH;
+			break;
+
+		case CROPMODE_C:
+			x = m_Crop.X + (imageW / 2);
+			y = m_Crop.Y + (imageH / 2);
+			break;
+		}
+
+		stream->Crop(m_Skin->GetCanvas(), {(FLOAT)x, (FLOAT)y, (FLOAT)(m_Crop.Width + x), (FLOAT)(m_Crop.Height + y)});
+	}
 }
 
 void GeneralImage::ApplyTransforms()
@@ -142,8 +245,17 @@ void GeneralImage::ApplyTransforms()
 		delete m_BitmapTinted;
 		m_BitmapTinted = nullptr;
 	}
+
+	auto stream = m_Bitmap->CreateEffectStream();
+
+	ApplyCrop(stream);
+
 	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
-		m_BitmapTinted = m_Bitmap->Tint(m_Skin->GetCanvas(), m_ColorMatrix);
+		stream->Tint(m_Skin->GetCanvas(), m_ColorMatrix);
+	
+
+	m_BitmapTinted = stream->ToBitmap(m_Skin->GetCanvas());
+	delete stream;
 }
 
 /*

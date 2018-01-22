@@ -65,6 +65,15 @@ public:
 	bool LoadImage(const std::wstring& imageName);
 
 private:
+	enum CROPMODE
+	{
+		CROPMODE_TL = 1,
+		CROPMODE_TR,
+		CROPMODE_BR,
+		CROPMODE_BL,
+		CROPMODE_C
+	};
+
 	Gfx::D2DBitmap* m_Bitmap;
 	Gfx::D2DBitmap* m_BitmapTinted;
 	Skin* m_Skin;
@@ -73,7 +82,10 @@ private:
 	const WCHAR** m_OptionArray;
 
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
+	Gdiplus::Rect m_Crop;
+	CROPMODE m_CropMode;
 
+	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();
 
 	static bool CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b);
