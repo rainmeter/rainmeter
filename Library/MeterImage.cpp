@@ -18,8 +18,8 @@ using namespace Gdiplus;
 GeneralImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Image(L"ImageName", nullptr, skin),
-	m_MaskImage(L"MaskImageName", c_MaskOptionArray, skin),
+	m_Image(L"ImageName", nullptr, false, skin),
+	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()

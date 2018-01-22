@@ -61,6 +61,10 @@ void Gfx::Util::D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle
 
 Gfx::D2DBitmap* Gfx::Util::D2DEffectStream::ToBitmap(Canvas& canvas)
 {
+	bool changed = false;
+	for (auto& effect : m_Effects) changed = changed || effect;
+	if (!changed) return m_BaseImage;
+
 	D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 
