@@ -86,6 +86,7 @@ private:
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
 	Gdiplus::Rect m_Crop;
 	CROPMODE m_CropMode;
+	bool m_GreyScale;
 	FLOAT m_Rotate;
 	Gfx::Util::FlipType m_Flip;
 

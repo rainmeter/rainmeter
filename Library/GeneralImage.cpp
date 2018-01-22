@@ -40,6 +40,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_DisableTransform(disableTransform),
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
+	m_GreyScale(false),
 	m_Rotate(),
 	m_Flip(Gfx::Util::FlipType::None)
 {
@@ -52,10 +53,6 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
-	Rect oldCrop = m_Crop;
-	CROPMODE oldCropMode = m_CropMode;
-	REAL oldRotate = m_Rotate;
-
 	if (!m_DisableTransform)
 	{
 		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
@@ -109,6 +106,8 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 			}
 		}
 	}
+
+	m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
 	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
@@ -288,6 +287,8 @@ void GeneralImage::ApplyTransforms()
 	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
 		stream->Tint(m_Skin->GetCanvas(), m_ColorMatrix);
 	
+	if (m_GreyScale)
+		stream->Tint(m_Skin->GetCanvas(), c_GreyScaleMatrix);
 
 	m_BitmapTinted = stream->ToBitmap(m_Skin->GetCanvas());
 	delete stream;
