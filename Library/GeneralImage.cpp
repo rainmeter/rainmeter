@@ -32,15 +32,16 @@ const D2D1_MATRIX_5X4_F GeneralImage::c_IdentityMatrix = {
 
 GeneralImageHelper_DefineOptionArray(GeneralImage::c_DefaultOptionArray, L"");
 
-GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, Skin* skin) :
-	m_Name(name ? name : L"ImageName"),
-	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
-	m_Bitmap(nullptr), 
+GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, Skin* skin) :
+	m_Bitmap(nullptr),
 	m_BitmapTinted(nullptr),
+	m_Skin(skin),
+	m_Name(name ? name : L"ImageName"), 
+	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
+	m_DisableTransform(disableTransform),
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
-	m_Rotate(),
-	m_Skin(skin)
+	m_Rotate()
 {
 }
 
@@ -55,7 +56,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	CROPMODE oldCropMode = m_CropMode;
 	REAL oldRotate = m_Rotate;
 
-	//if (!m_DisableTransform)
+	if (!m_DisableTransform)
 	{
 		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
 		m_CropMode = CROPMODE_TL;
@@ -182,7 +183,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		}
 	}
 
-	//if (!m_DisableTransform)
+	if (!m_DisableTransform)
 	{
 		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
 	}

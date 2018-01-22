@@ -55,7 +55,7 @@ public:
 		OptionCount
 	};
 
-	GeneralImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, Skin* skin = nullptr);
+	GeneralImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false, Skin* skin = nullptr);
 	~GeneralImage();
 
 	bool IsLoaded() const { return m_Bitmap != nullptr; }
@@ -80,6 +80,7 @@ private:
 
 	const WCHAR* m_Name;
 	const WCHAR** m_OptionArray;
+	const bool m_DisableTransform;
 
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
 	Gdiplus::Rect m_Crop;
