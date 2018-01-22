@@ -13,12 +13,21 @@
 namespace Gfx {
 namespace Util {
 
+enum class FlipType
+{
+	None,
+	Vertical,
+	Horizontal,
+	Both
+};
+
 class D2DEffectStream
 {
 public:
 	void Crop(const Canvas& canvas, const D2D1_RECT_F& crop);
 	void Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
 	void Rotate(const Canvas& canvas, const FLOAT& matrix);
+	void Flip(const Canvas& canvas, const FlipType& flipType);
 	D2DBitmap* ToBitmap(Canvas& canvas);
 	D2D1_SIZE_F GetSize(const Canvas& canvas);
 

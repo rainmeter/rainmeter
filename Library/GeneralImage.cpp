@@ -7,7 +7,6 @@
 
 #include "StdAfx.h"
 #include "GeneralImage.h"
-#include "../Common/Gfx/Util/D2DEffectStream.h"
 #include "Logger.h"
 
 using namespace Gdiplus;
@@ -41,7 +40,8 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_DisableTransform(disableTransform),
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
-	m_Rotate()
+	m_Rotate(),
+	m_Flip(Gfx::Util::FlipType::None)
 {
 }
 
@@ -183,6 +183,28 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		}
 	}
 
+	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
+	if (_wcsicmp(flip, L"NONE") == 0)
+	{
+		m_Flip = Gfx::Util::FlipType::None;
+	}
+	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
+	{
+		m_Flip = Gfx::Util::FlipType::Horizontal;
+	}
+	else if (_wcsicmp(flip, L"VERTICAL") == 0)
+	{
+		m_Flip = Gfx::Util::FlipType::Vertical;
+	}
+	else if (_wcsicmp(flip, L"BOTH") == 0)
+	{
+		m_Flip = Gfx::Util::FlipType::Both;
+	}
+	else
+	{
+		LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageFlip], flip, section);
+	}
+
 	if (!m_DisableTransform)
 	{
 		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
@@ -260,6 +282,8 @@ void GeneralImage::ApplyTransforms()
 
 	if(m_Rotate != 0)
 		stream->Rotate(m_Skin->GetCanvas(), m_Rotate);
+
+	stream->Flip(m_Skin->GetCanvas(), m_Flip);
 
 	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
 		stream->Tint(m_Skin->GetCanvas(), m_ColorMatrix);

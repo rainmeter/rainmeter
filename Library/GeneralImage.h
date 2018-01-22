@@ -9,6 +9,7 @@
 #define __GENERALIMAGE_H__
 
 #include "../Common/Gfx/D2DBitmap.h"
+#include "../Common/Gfx/Util/D2DEffectStream.h"
 #include <string>
 #include "Skin.h"
 
@@ -86,6 +87,7 @@ private:
 	Gdiplus::Rect m_Crop;
 	CROPMODE m_CropMode;
 	FLOAT m_Rotate;
+	Gfx::Util::FlipType m_Flip;
 
 	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();

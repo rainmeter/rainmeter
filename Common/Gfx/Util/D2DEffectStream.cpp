@@ -59,6 +59,27 @@ void Gfx::Util::D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle
 	}
 }
 
+void Gfx::Util::D2DEffectStream::Flip(const Canvas& canvas, const FlipType& flipType)
+{
+	AddEffect(canvas, CLSID_D2D12DAffineTransform);
+	auto size = GetSize(canvas);
+	for (auto& effect : m_Effects)
+	{
+		FLOAT cw = size.width / 2.0f;
+		FLOAT ch = size.height / 2.0f;
+
+		D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Identity();
+		switch(flipType)
+		{
+		case FlipType::Vertical: transform = D2D1::Matrix3x2F::Scale(1, -1, D2D1::Point2F(cw, ch)); break;
+		case FlipType::Horizontal: transform = D2D1::Matrix3x2F::Scale(-1, 1, D2D1::Point2F(cw, ch)); break;
+		case FlipType::Both: transform = D2D1::Matrix3x2F::Scale(-1, -1, D2D1::Point2F(cw, ch)); break;
+		}
+
+		effect->SetValue(D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX, transform);
+	}
+}
+
 Gfx::D2DBitmap* Gfx::Util::D2DEffectStream::ToBitmap(Canvas& canvas)
 {
 	bool changed = false;
