@@ -27,8 +27,10 @@ T GetRandomNumber(T size)
 struct MeasureData
 {
 	std::wstring pathname;
+	bool isUniqueRandom = false;
 	std::wstring separator;
 	std::vector<std::wstring> files;
+	std::vector<std::wstring> usedFiles;
 	std::wstring value;
 };
 
@@ -89,6 +91,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	MeasureData* measure = (MeasureData*)data;
 
 	measure->pathname = RmReadPath(rm, L"PathName", L"");
+
+	measure->isUniqueRandom = RmReadInt(rm, L"UniqueRandom", 0) != 0;
 
 	if (PathIsDirectory(measure->pathname.c_str()))
 	{
@@ -307,7 +311,22 @@ PLUGIN_EXPORT double Update(void* data)
 	else
 	{
 		// Select the filename
-		measure->value = measure->files[GetRandomNumber(measure->files.size() - 1)];
+		size_t index = GetRandomNumber(measure->files.size() - 1);
+
+		measure->value = measure->files[index];
+
+		if (measure->isUniqueRandom)
+		{
+			measure->files.erase(measure->files.begin() + index);
+			measure->usedFiles.push_back(measure->value);
+
+			//We are out of files, swap file indexes
+			if (measure->files.empty())
+			{
+				measure->files = measure->usedFiles;
+				measure->usedFiles.clear();
+			}
+		}
 	}
 
 	return 0;
