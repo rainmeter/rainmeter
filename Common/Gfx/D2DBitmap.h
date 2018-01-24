@@ -44,7 +44,7 @@ private:
 class D2DBitmap
 {
 public:
-	D2DBitmap(const std::wstring& path);
+	D2DBitmap(const std::wstring& path, int exifOrientation = 0);
 	~D2DBitmap();
 
 	UINT GetWidth() const{ return m_Width; }
@@ -52,6 +52,8 @@ public:
 
 	HRESULT AddSegment(const BitmapSegment& segment);
 	void SetSize(UINT width, UINT height) { m_Width = width; m_Height = height; }
+	int GetOrientation() { return m_ExifOrientation; }
+	void SetOrientation(const int orientation) { m_ExifOrientation = orientation; }
 
 	std::wstring& GetPath() { return m_Path; }
 
@@ -69,6 +71,8 @@ private:
 
 	UINT m_Width;
 	UINT m_Height;
+
+	int m_ExifOrientation;
 
 	std::wstring m_Path;
 

@@ -29,6 +29,7 @@ private:
 	static HRESULT CropWICBitmapSource(WICRect& clipRect,
 		IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
 	static HRESULT ConvertToD2DFormat(IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
+	static HRESULT GetExifOrientation(IWICBitmapFrameDecode* source, int* orientation);
 };
 
 }  // namespace Util

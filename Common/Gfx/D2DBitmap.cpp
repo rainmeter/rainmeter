@@ -18,7 +18,7 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap,
 	m_X(x),
 	m_Y(y),
 	m_Width(width),
-	m_Height(height)	
+	m_Height(height)
 {
 }
 
@@ -31,7 +31,8 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRe
 {
 }
 
-D2DBitmap::D2DBitmap(const std::wstring& path) :
+D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation) :
+	m_ExifOrientation(exifOrientation),
 	m_Path(path)
 {
 }

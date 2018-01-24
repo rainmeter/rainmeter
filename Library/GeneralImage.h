@@ -89,6 +89,7 @@ private:
 	bool m_GreyScale;
 	FLOAT m_Rotate;
 	Gfx::Util::FlipType m_Flip;
+	bool m_UseExifOrientation;
 
 	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();

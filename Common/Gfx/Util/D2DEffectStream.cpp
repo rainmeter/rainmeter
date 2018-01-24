@@ -80,6 +80,22 @@ void Gfx::Util::D2DEffectStream::Flip(const Canvas& canvas, const FlipType& flip
 	}
 }
 
+void Gfx::Util::D2DEffectStream::ApplyExifOrientation(const Canvas& canvas)
+{
+	// Orientation reference: https://www.daveperrett.com/articles/2012/07/28/exif-orientation-handling-is-a-ghetto/
+	switch (m_BaseImage->GetOrientation())
+	{
+	case 2: Flip(canvas, FlipType::Horizontal); break;
+	case 3: Rotate(canvas, 180); break;
+	case 4: Flip(canvas, FlipType::Vertical); break;
+	case 5: Flip(canvas, FlipType::Horizontal); Rotate(canvas, 270);  break;
+	case 6: Rotate(canvas, 90); break;
+	case 7: Flip(canvas, FlipType::Horizontal); Rotate(canvas, 90); break;
+	case 8: Rotate(canvas, 270); break;
+	}
+
+}
+
 Gfx::D2DBitmap* Gfx::Util::D2DEffectStream::ToBitmap(Canvas& canvas)
 {
 	bool changed = false;
@@ -95,7 +111,7 @@ Gfx::D2DBitmap* Gfx::Util::D2DEffectStream::ToBitmap(Canvas& canvas)
 	D2D1_MATRIX_3X2_F transform = {0};
 	canvas.m_Target->GetTransform(&transform);
 
-	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path);
+	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
 
 	auto size = GetSize(canvas);
 

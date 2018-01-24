@@ -208,6 +208,8 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
 	}
+
+	m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
 bool GeneralImage::LoadImage(const std::wstring& imageName)
@@ -275,22 +277,26 @@ void GeneralImage::ApplyTransforms()
 		m_BitmapTinted = nullptr;
 	}
 
+	auto& canvas = m_Skin->GetCanvas();
 	auto stream = m_Bitmap->CreateEffectStream();
 
 	ApplyCrop(stream);
 
 	if(m_Rotate != 0)
-		stream->Rotate(m_Skin->GetCanvas(), m_Rotate);
+		stream->Rotate(canvas, m_Rotate);
 
-	stream->Flip(m_Skin->GetCanvas(), m_Flip);
+	stream->Flip(canvas, m_Flip);
+
+	if(m_UseExifOrientation)
+		stream->ApplyExifOrientation(canvas);
 
 	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
-		stream->Tint(m_Skin->GetCanvas(), m_ColorMatrix);
+		stream->Tint(canvas, m_ColorMatrix);
 	
 	if (m_GreyScale)
-		stream->Tint(m_Skin->GetCanvas(), c_GreyScaleMatrix);
+		stream->Tint(canvas, c_GreyScaleMatrix);
 
-	m_BitmapTinted = stream->ToBitmap(m_Skin->GetCanvas());
+	m_BitmapTinted = stream->ToBitmap(canvas);
 	delete stream;
 }
 
