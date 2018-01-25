@@ -190,8 +190,8 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 void Canvas::Resize(int w, int h)
 {
 	// Truncate the size of the skin if it's too big.
-	if (w > m_MaxBitmapSize) w = (int)m_MaxBitmapSize;
-	if (h > m_MaxBitmapSize) h = (int)m_MaxBitmapSize;
+	if (w > (int)m_MaxBitmapSize) w = (int)m_MaxBitmapSize;
+	if (h > (int)m_MaxBitmapSize) h = (int)m_MaxBitmapSize;
 
 	m_W = w;
 	m_H = h;
@@ -584,12 +584,12 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 		};
 	};
 
-	for (auto it = segments.begin(); it != segments.end(); ++it)
+	for (auto seg : segments)
 	{
-		D2D1_RECT_F rSeg = { (FLOAT)it->m_X, (FLOAT)it->m_Y, (FLOAT)it->m_Width, (FLOAT)it->m_Height };
-		auto rSrc = getRectSubregion(rSeg, srcRect);
-		auto rDst = getRectSubregion(rSeg, dstRect);
-		m_Target->DrawBitmap(it->m_Bitmap.Get(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
+		const D2D1_RECT_F& rSeg = seg.GetRect();
+		const auto rSrc = getRectSubregion(rSeg, srcRect);
+		const auto rDst = getRectSubregion(rSeg, dstRect);
+		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
 	}
 }
 

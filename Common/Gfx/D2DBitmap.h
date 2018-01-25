@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
+/* Copyright (C) 2018 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -14,22 +14,22 @@ namespace Gfx {
 
 class Canvas;
 
-namespace Util {
-	class D2DEffectStream;
-} // Util
-
 class BitmapSegment
 {
 public:
 	BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height);
+	BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect);
 	BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect);
-	~BitmapSegment() {}
+	~BitmapSegment() { }
+
+	UINT GetX() { return m_X; }
+	UINT GetY() { return m_Y; }
+
+	D2D1_RECT_F GetRect() { return D2D1::RectF((FLOAT)m_X, (FLOAT)m_Y, (FLOAT)m_Width, (FLOAT)m_Height); }
+
+	ID2D1Bitmap1* GetBitmap() { return m_Bitmap.Get(); }
 
 private:
-	friend class Canvas;
-	friend class D2DBitmap;
-	friend class Util::D2DEffectStream;
-
 	BitmapSegment() = delete;
 
 	UINT m_X;
@@ -50,14 +50,14 @@ public:
 	UINT GetWidth() const{ return m_Width; }
 	UINT GetHeight() const{ return m_Height; }
 
-	HRESULT AddSegment(const BitmapSegment& segment);
+	void AddSegment(const BitmapSegment& segment);
 	void SetSize(UINT width, UINT height) { m_Width = width; m_Height = height; }
 	int GetOrientation() { return m_ExifOrientation; }
 	void SetOrientation(const int orientation) { m_ExifOrientation = orientation; }
 
 	std::wstring& GetPath() { return m_Path; }
 
-	bool Load(const Canvas& canvas);
+	HRESULT Load(const Canvas& canvas);
 
 	Util::D2DEffectStream* CreateEffectStream();
 

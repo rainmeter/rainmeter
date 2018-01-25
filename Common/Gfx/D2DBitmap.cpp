@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
+/* Copyright (C) 2018 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -22,6 +22,15 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap,
 {
 }
 
+BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect) :
+	m_Bitmap(std::move(bitmap)),
+	m_X(rect.left),
+	m_Y(rect.top),
+	m_Width(rect.right),
+	m_Height(rect.bottom)
+{
+}
+
 BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect) :
 	m_Bitmap(std::move(bitmap)),
 	m_X(rect.X),
@@ -32,6 +41,8 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRe
 }
 
 D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation) :
+	m_Width(0U),
+	m_Height(0U),
 	m_ExifOrientation(exifOrientation),
 	m_Path(path)
 {
@@ -41,15 +52,14 @@ D2DBitmap::~D2DBitmap()
 {
 }
 
-HRESULT D2DBitmap::AddSegment(const BitmapSegment& segment)
+void D2DBitmap::AddSegment(const BitmapSegment& segment)
 {
 	m_Segments.emplace_back(segment);
-	return S_OK;
 }
 
-bool D2DBitmap::Load(const Canvas& canvas)
+HRESULT D2DBitmap::Load(const Canvas& canvas)
 {
-	return SUCCEEDED(Util::D2DBitmapLoader::LoadBitmapFromFile(canvas, this));
+	return Util::D2DBitmapLoader::LoadBitmapFromFile(canvas, this);
 }
 
 Util::D2DEffectStream* D2DBitmap::CreateEffectStream()

@@ -1,9 +1,9 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
-*
-* This Source Code Form is subject to the terms of the GNU General Public
-* License; either version 2 of the License, or (at your option) any later
-* version. If a copy of the GPL was not distributed with this file, You can
-* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+/* Copyright (C) 2018 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #ifndef RM_GFX_UTIL_D2DEFFECTSTREAM_H_
 #define RM_GFX_UTIL_D2DEFFECTSTREAM_H_
@@ -13,7 +13,7 @@
 namespace Gfx {
 namespace Util {
 
-enum class FlipType
+enum class FlipType : UINT
 {
 	None,
 	Vertical,
@@ -38,7 +38,7 @@ private:
 
 	D2DEffectStream(Gfx::D2DBitmap* base);
 
-	void AddEffect(const Canvas& canvas, const GUID& effectId);
+	void AddEffect(const Canvas& canvas, const IID& effectId);
 
 	std::vector<Microsoft::WRL::ComPtr<ID2D1Effect>> m_Effects;
 	Gfx::D2DBitmap* m_BaseImage;

@@ -1,9 +1,9 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
-*
-* This Source Code Form is subject to the terms of the GNU General Public
-* License; either version 2 of the License, or (at your option) any later
-* version. If a copy of the GPL was not distributed with this file, You can
-* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+/* Copyright (C) 2018 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
 #include "GeneralImage.h"
@@ -16,8 +16,8 @@ const D2D1_MATRIX_5X4_F GeneralImage::c_GreyScaleMatrix = {
 	0.299f, 0.299f, 0.299f, 0.0f,
 	0.587f, 0.587f, 0.587f, 0.0f,
 	0.114f, 0.114f, 0.114f, 0.0f,
-	0.0f,   0.0f,   0.0f, 1.0f,
-	0.0f,   0.0f,   0.0f, 0.0f
+	  0.0f,   0.0f,   0.0f, 1.0f,
+	  0.0f,   0.0f,   0.0f, 0.0f
 };
 
 
@@ -49,6 +49,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 GeneralImage::~GeneralImage()
 {
 	if (m_Bitmap) delete m_Bitmap;
+	if (m_BitmapTinted) delete m_BitmapTinted;
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -214,16 +215,21 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
-	if (m_Skin == nullptr) return false;
-	delete m_Bitmap;
+	if (!m_Skin) return false;
+
+	if (m_Bitmap) delete m_Bitmap;
 	m_Bitmap = new Gfx::D2DBitmap(imageName);
-	if (m_Bitmap->Load(m_Skin->GetCanvas()))
+
+	HRESULT hr = m_Bitmap->Load(m_Skin->GetCanvas());
+	if (SUCCEEDED(hr))
 	{
 		ApplyTransforms();
 		return true;
 	}
+
 	delete m_Bitmap;
 	m_Bitmap = nullptr;
+
 	return false;
 }
 
@@ -234,7 +240,8 @@ void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 		const int imageW = m_Bitmap->GetWidth();
 		const int imageH = m_Bitmap->GetHeight();
 
-		int x, y;
+		int x = 0;
+		int y = 0;
 
 		switch (m_CropMode)
 		{
@@ -265,7 +272,8 @@ void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 			break;
 		}
 
-		stream->Crop(m_Skin->GetCanvas(), {(FLOAT)x, (FLOAT)y, (FLOAT)(m_Crop.Width + x), (FLOAT)(m_Crop.Height + y)});
+		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(m_Crop.Width + x), (FLOAT)(m_Crop.Height + y));
+		stream->Crop(m_Skin->GetCanvas(), rect);
 	}
 }
 
@@ -282,28 +290,20 @@ void GeneralImage::ApplyTransforms()
 
 	ApplyCrop(stream);
 
-	if(m_Rotate != 0)
-		stream->Rotate(canvas, m_Rotate);
+	if (m_Rotate != 0.0f) stream->Rotate(canvas, m_Rotate);
 
 	stream->Flip(canvas, m_Flip);
 
-	if(m_UseExifOrientation)
-		stream->ApplyExifOrientation(canvas);
+	if (m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
 
-	if(!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix))
-		stream->Tint(canvas, m_ColorMatrix);
+	if (!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_ColorMatrix);
 	
-	if (m_GreyScale)
-		stream->Tint(canvas, c_GreyScaleMatrix);
+	if (m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
 
 	m_BitmapTinted = stream->ToBitmap(canvas);
 	delete stream;
 }
 
-/*
-** Compares the two given color matrices.
-**
-*/
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)
 {
 	for (int i = 0; i < 5; ++i)
@@ -318,4 +318,3 @@ bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MAT
 	}
 	return true;
 }
-

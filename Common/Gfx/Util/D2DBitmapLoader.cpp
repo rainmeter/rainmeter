@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
+/* Copyright (C) 2018 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -27,7 +27,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
 		nullptr);
-	if (fileHandle == INVALID_HANDLE_VALUE) return S_FALSE;
+	if (fileHandle == INVALID_HANDLE_VALUE) return E_FAIL;
 
 	auto cleanup = [&](HRESULT hr)
 	{
@@ -76,11 +76,8 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 			d2dbitmap.GetAddressOf());
 		if (FAILED(hr)) return cleanup(hr);
 		
-		BitmapSegment bmp(d2dbitmap, 0, 0, width, height);
-		hr = bitmap->AddSegment(bmp);
-		if (FAILED(hr)) return cleanup(hr);
-
-		bitmap->SetSize(width, height);
+		const BitmapSegment bmp(d2dbitmap, 0U, 0U, width, height);
+		bitmap->AddSegment(bmp);
 
 		return cleanup(S_OK);
 	}
@@ -106,9 +103,8 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 				d2dbitmap.GetAddressOf());
 			if (FAILED(hr)) return cleanup(hr);
 
-			BitmapSegment segment(d2dbitmap, rcClip);
-			hr = bitmap->AddSegment(segment);
-			if (FAILED(hr)) return cleanup(hr);
+			const BitmapSegment segment(d2dbitmap, rcClip);
+			bitmap->AddSegment(segment);
 		}
 	}
 
@@ -152,25 +148,23 @@ HRESULT D2DBitmapLoader::ConvertToD2DFormat(
 		nullptr,
 		0.0f,
 		WICBitmapPaletteTypeMedianCut);
-	if (FAILED(hr)) return hr;
+	if (SUCCEEDED(hr))
+	{
+		dest.Swap(converter);
+	}
 
-	dest.Swap(converter);
-	return S_OK;
+	return hr;
 }
 
 HRESULT D2DBitmapLoader::GetExifOrientation(IWICBitmapFrameDecode* source, int* orientation)
 {
-	Microsoft::WRL::ComPtr<IWICMetadataQueryReader> reader = NULL;
+	Microsoft::WRL::ComPtr<IWICMetadataQueryReader> reader;
 	HRESULT hr = source->GetMetadataQueryReader(reader.GetAddressOf());
-	if (FAILED(hr))
-	{
-		return hr;
-	}
+	if (FAILED(hr)) return hr;
 	
 	PROPVARIANT propValue;
 	PropVariantInit(&propValue);
 	hr = reader->GetMetadataByName(L"/app1/ifd/{ushort=274}", &propValue);
-	
 	if (FAILED(hr))
 	{
 		hr = reader->GetMetadataByName(L"/ifd/{ushort=274}", &propValue);
