@@ -16,13 +16,6 @@
 
 #define BUFFER_SIZE 4096
 
-template <typename T>
-T GetRandomNumber(T size)
-{
-	static std::mt19937 s_Engine((unsigned)time(nullptr));
-	const std::uniform_int_distribution<T> distribution(0, size);
-	return distribution(s_Engine);
-}
 
 struct MeasureData
 {
@@ -31,8 +24,90 @@ struct MeasureData
 	std::wstring separator;
 	std::vector<std::wstring> files;
 	std::vector<std::wstring> usedFiles;
+	std::vector<size_t> separators;
+	std::vector<size_t> usedSeparators;
 	std::wstring value;
 };
+
+void ReadFile(MeasureData* measure)
+{
+	BYTE buffer[BUFFER_SIZE + 2];
+	buffer[BUFFER_SIZE] = 0;
+
+	// Read the file
+	FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
+	if (file)
+	{
+		// Check if the file is unicode or ascii
+		fread(buffer, sizeof(WCHAR), 1, file);
+
+		fseek(file, 0, SEEK_END);
+		long size = ftell(file);
+
+		if (size > 0)
+		{
+			fseek(file, 0, SEEK_SET);
+
+			measure->value.clear();
+			measure->separators.clear();
+
+			if (0xFEFF == *(WCHAR*)buffer)
+			{
+
+				// It's unicode
+				WCHAR* wBuffer = (WCHAR*)buffer;
+
+				// Read until EOF
+				do
+				{
+					size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+					buffer[len] = 0;
+					buffer[len + 1] = 0;
+
+					std::wstring bufferString = std::wstring(wBuffer);
+					const wchar_t* separatorSz = measure->separator.c_str();
+
+					//Start of the file counts as a separator
+					size_t sepPos = 0;
+					do
+					{
+						measure->separators.push_back(sepPos);
+						sepPos = bufferString.find(separatorSz, sepPos + 1);
+					} while (sepPos != std::string::npos);
+
+				} while (!feof(file));
+			}
+			else
+			{
+				// It's ascii
+				char* aBuffer = (char*)buffer;
+
+				const std::string separator = StringUtil::Narrow(measure->separator);
+				const char* separatorSz = separator.c_str();
+
+				// Read until EOF
+				do
+				{
+					size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+					aBuffer[len] = 0;
+
+					std::string bufferString = std::string(aBuffer);
+
+					//Start of the file counts as a separator
+					size_t sepPos = 0;
+					do
+					{
+						measure->separators.push_back(sepPos);
+						sepPos = bufferString.find(separatorSz, sepPos + 1);
+					} while (sepPos != std::string::npos);
+
+				} while (!feof(file));
+			}
+		}
+
+		fclose(file);
+	}
+}
 
 void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
 {
@@ -80,123 +155,56 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 	FindClose(hSearch);
 }
 
-PLUGIN_EXPORT void Initialize(void** data, void* rm)
+
+template <typename T>
+T GetRandomNumber(T size)
 {
-	MeasureData* measure = new MeasureData;
-	*data = measure;
+	static std::mt19937 s_Engine((unsigned)time(nullptr));
+	const std::uniform_int_distribution<T> distribution(0, size);
+	return distribution(s_Engine);
 }
 
-PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+void GetRandomLine(MeasureData* measure, size_t startPos)
 {
-	MeasureData* measure = (MeasureData*)data;
-
-	measure->pathname = RmReadPath(rm, L"PathName", L"");
-
-	measure->isUniqueRandom = RmReadInt(rm, L"UniqueRandom", 0) != 0;
-
-	if (PathIsDirectory(measure->pathname.c_str()))
-	{
-		std::vector<std::wstring> fileFilters;
-		LPCWSTR filter = RmReadString(rm, L"FileFilter", L"");
-		if (*filter)
-		{
-			std::wstring ext = filter;
-
-			size_t start = 0;
-			size_t pos = ext.find(L';');
-			while (pos != std::wstring::npos)
-			{
-				fileFilters.push_back(ext.substr(start, pos - start));
-				start = pos + 1;
-				pos = ext.find(L';', pos + 1);
-			}
-			fileFilters.push_back(ext.substr(start));
-		}
-
-		if (measure->pathname[measure->pathname.size() - 1] != L'\\')
-		{
-			measure->pathname += L"\\";
-		}
-
-		// Scan files
-		measure->files.clear();
-		bool bSubfolders = RmReadInt(rm, L"Subfolders", 1) == 1;
-		ScanFolder(measure->files, fileFilters, bSubfolders, measure->pathname);
-	}
-	else
-	{
-		measure->separator = RmReadString(rm, L"Separator", L"\n");
-	}
-}
-
-PLUGIN_EXPORT double Update(void* data)
-{
-	MeasureData* measure = (MeasureData*)data;
-
-	if (measure->files.empty())
+	// Read the file from our selected pos
+	FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
+	if (file)
 	{
 		BYTE buffer[BUFFER_SIZE + 2];
 		buffer[BUFFER_SIZE] = 0;
 
-		// Read the file
-		FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
-		if (file)
+		// Check if the file is unicode or ascii
+		fread(buffer, sizeof(WCHAR), 1, file);
+
+		fseek(file, 0, SEEK_END);
+		long size = ftell(file);
+
+		if (size > 0)
 		{
-			// Check if the file is unicode or ascii
-			fread(buffer, sizeof(WCHAR), 1, file);
+			fseek(file, startPos, SEEK_SET);
 
-			fseek(file, 0, SEEK_END);
-			long size = ftell(file);
+			measure->value.clear();
 
-			if (size > 0)
+			if (0xFEFF == *(WCHAR*)buffer)
 			{
-				// Go to a random place
-				long pos = GetRandomNumber(size);
+				// It's unicode
+				WCHAR* wBuffer = (WCHAR*)buffer;
 
-				fseek(file, (pos / 2) * 2, SEEK_SET);
+				const wchar_t* separatorSz = measure->separator.c_str();
 
-				measure->value.clear();
+				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+				wBuffer[len] = 0;
 
-				if (0xFEFF == *(WCHAR*)buffer)
+				wchar_t* sepPos1 = wcsstr(wBuffer, separatorSz);
+				wchar_t* sepPos2 = nullptr;
+
+				//If separator is where we expect it
+				if (wcscmp(wBuffer, sepPos1) == 0)
 				{
-					// It's unicode
-					WCHAR* wBuffer = (WCHAR*)buffer;
-
-					// Read until we find the first separator
-					WCHAR* sepPos1 = nullptr;
-					WCHAR* sepPos2 = nullptr;
+					sepPos1 += measure->separator.size();
 					do
 					{
-						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-						buffer[len] = 0;
-						buffer[len + 1] = 0;
-
-						sepPos1 = wcsstr(wBuffer, measure->separator.c_str());
-						if (sepPos1 == nullptr)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read from start
-								fseek(file, 2, SEEK_SET);
-								len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
-							}
-							// else continue reading
-						}
-						else
-						{
-							sepPos1 += measure->separator.size();
-						}
-					}
-					while (sepPos1 == nullptr);
-
-					// Find the second separator
-					do
-					{
-						sepPos2 = wcsstr(sepPos1, measure->separator.c_str());
+						sepPos2 = wcsstr(sepPos1, separatorSz);
 						if (sepPos2 == nullptr)
 						{
 							// The separator wasn't found
@@ -211,9 +219,8 @@ PLUGIN_EXPORT double Update(void* data)
 								measure->value += sepPos1;
 
 								// else continue reading
-								size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
+								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+								wBuffer[len] = 0;
 								sepPos1 = wBuffer;
 							}
 						}
@@ -227,47 +234,32 @@ PLUGIN_EXPORT double Update(void* data)
 							// Read until we find the second separator
 							measure->value += sepPos1;
 						}
-					}
-					while (sepPos2 == nullptr);
+					} while (sepPos2 == nullptr);
 				}
 				else
 				{
-					// It's ascii
-					char* aBuffer = (char*)buffer;
+					//If separator is not where we expect it then file has been modified and needs reindexed
+					ReadFile(measure);
+				}
+			}
+			else
+			{
+				// It's ascii
+				char* aBuffer = (char*)buffer;
 
-					const std::string separator = StringUtil::Narrow(measure->separator);
-					const char* separatorSz = separator.c_str();
+				const std::string separator = StringUtil::Narrow(measure->separator);
+				const char* separatorSz = separator.c_str();
 
-					// Read until we find the first separator
-					char* sepPos1 = nullptr;
-					char* sepPos2 = nullptr;
-					do
-					{
-						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-						aBuffer[len] = 0;
+				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+				aBuffer[len] = 0;
 
-						sepPos1 = strstr(aBuffer, separatorSz);
-						if (sepPos1 == nullptr)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read from start
-								fseek(file, 0, SEEK_SET);
-								len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
-							}
-							// else continue reading
-						}
-						else
-						{
-							sepPos1 += separator.size();
-						}
-					}
-					while (sepPos1 == nullptr);
+				char* sepPos1 = strstr(aBuffer, separatorSz);
+				char* sepPos2 = nullptr;
 
-					// Find the second separator
+				//If separator is where we expect it
+				if (strcmp(aBuffer, sepPos1) == 0)
+				{
+					sepPos1 += separator.size();
 					do
 					{
 						sepPos2 = strstr(sepPos1, separatorSz);
@@ -300,15 +292,97 @@ PLUGIN_EXPORT double Update(void* data)
 							// Read until we find the second separator
 							measure->value += StringUtil::Widen(sepPos1);
 						}
-					}
-					while (sepPos2 == nullptr);
+					} while (sepPos2 == nullptr);
+				}
+				else
+				{
+					//If separator is not where we expect it then file has been modified and needs reindexed
+					ReadFile(measure);
 				}
 			}
-
-			fclose(file);
 		}
+
+		fclose(file);
+	}
+}
+
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
+{
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+}
+
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	measure->pathname = RmReadPath(rm, L"PathName", L"");
+
+	measure->isUniqueRandom = RmReadInt(rm, L"UniqueRandom", 0) != 0;
+
+	if (PathIsDirectory(measure->pathname.c_str()))
+	{
+		std::vector<std::wstring> fileFilters;
+		LPCWSTR filter = RmReadString(rm, L"FileFilter", L"");
+		if (*filter)
+		{
+			std::wstring ext = filter;
+
+			size_t start = 0;
+			size_t sepPos = ext.find(L';');
+			while (sepPos != std::wstring::npos)
+			{
+				fileFilters.push_back(ext.substr(start, sepPos - start));
+				start = sepPos + 1;
+				sepPos = ext.find(L';', sepPos + 1);
+			}
+			fileFilters.push_back(ext.substr(start));
+		}
+
+		if (measure->pathname[measure->pathname.size() - 1] != L'\\')
+		{
+			measure->pathname += L"\\";
+		}
+
+		// Scan files
+		measure->files.clear();
+		bool bSubfolders = RmReadInt(rm, L"Subfolders", 1) == 1;
+		ScanFolder(measure->files, fileFilters, bSubfolders, measure->pathname);
 	}
 	else
+	{
+		measure->separator = RmReadString(rm, L"Separator", L"\n");
+
+		ReadFile(measure);
+	}
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+	if (!measure->separators.empty())
+	{
+		// Select the filename
+		size_t index = GetRandomNumber(measure->separators.size() - 1);
+		size_t startPos = measure->separators[index];
+
+		// Remove separator if using unique random
+		if (measure->isUniqueRandom)
+		{
+			measure->separators.erase(measure->separators.begin() + index);
+			measure->usedSeparators.push_back(startPos);
+
+			// We are out of separators, swap separator indexes
+			if (measure->separators.empty())
+			{
+				measure->separators = measure->usedSeparators;
+				measure->usedSeparators.clear();
+			}
+		}
+
+		GetRandomLine(measure, startPos);
+	}
+	else if(!measure->files.empty())
 	{
 		// Select the filename
 		size_t index = GetRandomNumber(measure->files.size() - 1);
