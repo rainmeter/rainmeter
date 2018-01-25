@@ -21,15 +21,94 @@ struct MeasureData
 {
 	std::wstring pathname;
 	bool isUniqueRandom = false;
-	std::wstring separator;
+
 	std::vector<std::wstring> files;
 	std::vector<std::wstring> usedFiles;
+
+	std::wstring separator;
+	size_t fileSize = 0;
 	std::vector<size_t> separators;
 	std::vector<size_t> usedSeparators;
 	std::wstring value;
 };
 
-void ReadFile(MeasureData* measure)
+// Generates a random number from 0 (inclusive) to size (not inclusive)
+template <typename T>
+T GetRandomNumber(T size)
+{
+	static std::mt19937 s_Engine((unsigned)time(nullptr));
+	const std::uniform_int_distribution<T> distribution(0, size-1);
+	return distribution(s_Engine);
+}
+
+void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
+{
+	// Get folder listing
+	WIN32_FIND_DATA fileData;      // Data structure describes the file found
+	HANDLE hSearch;                // Search handle returned by FindFirstFile
+
+	std::wstring searchPath = path + L"*";
+
+	hSearch = FindFirstFile(searchPath.c_str(), &fileData);
+	if (hSearch == INVALID_HANDLE_VALUE) return;    // No more files found
+
+	do
+	{
+		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			if (bSubfolders &&
+				wcscmp(fileData.cFileName, L".") != 0 &&
+				wcscmp(fileData.cFileName, L"..") != 0)
+			{
+				ScanFolder(files, filters, bSubfolders, path + fileData.cFileName + L"\\");
+			}
+		}
+		else
+		{
+			if (!filters.empty())
+			{
+				for (size_t i = 0; i < filters.size(); ++i)
+				{
+					if (!filters[i].empty() && PathMatchSpec(fileData.cFileName, filters[i].c_str()))
+					{
+						files.push_back(path + fileData.cFileName);
+						break;
+					}
+				}
+			}
+			else
+			{
+				files.push_back(path + fileData.cFileName);
+			}
+		}
+	} while (FindNextFile(hSearch, &fileData));
+
+	FindClose(hSearch);
+}
+
+void GetRandomFile(MeasureData* measure)
+{
+
+	// Select the filename
+	size_t index = GetRandomNumber(measure->files.size());
+
+	measure->value = measure->files[index];
+
+	if (measure->isUniqueRandom)
+	{
+		measure->files.erase(measure->files.begin() + index);
+		measure->usedFiles.push_back(measure->value);
+
+		//We are out of files, swap file indexes
+		if (measure->files.empty())
+		{
+			measure->files = measure->usedFiles;
+			measure->usedFiles.clear();
+		}
+	}
+}
+
+void ScanFile(MeasureData* measure)
 {
 	BYTE buffer[BUFFER_SIZE + 2];
 	buffer[BUFFER_SIZE] = 0;
@@ -42,9 +121,9 @@ void ReadFile(MeasureData* measure)
 		fread(buffer, sizeof(WCHAR), 1, file);
 
 		fseek(file, 0, SEEK_END);
-		long size = ftell(file);
+		measure->fileSize = ftell(file);
 
-		if (size > 0)
+		if (measure->fileSize > 0)
 		{
 			fseek(file, 0, SEEK_SET);
 
@@ -109,67 +188,31 @@ void ReadFile(MeasureData* measure)
 	}
 }
 
-void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
+void GetRandomLine(MeasureData* measure)
 {
-	// Get folder listing
-	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	HANDLE hSearch;                // Search handle returned by FindFirstFile
+	// Select the string
+	size_t index = GetRandomNumber(measure->separators.size());
+	size_t startPos = measure->separators[index];
 
-	std::wstring searchPath = path + L"*";
-
-	hSearch = FindFirstFile(searchPath.c_str(), &fileData);
-	if (hSearch == INVALID_HANDLE_VALUE) return;    // No more files found
-
-	do
+	// Remove separator if using unique random
+	if (measure->isUniqueRandom)
 	{
-		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		measure->separators.erase(measure->separators.begin() + index);
+		measure->usedSeparators.push_back(startPos);
+
+		// We are out of separators, swap separator indexes
+		if (measure->separators.empty())
 		{
-			if (bSubfolders &&
-				wcscmp(fileData.cFileName, L".") != 0 &&
-				wcscmp(fileData.cFileName, L"..") != 0)
-			{
-				ScanFolder(files, filters, bSubfolders, path + fileData.cFileName + L"\\");
-			}
-		}
-		else
-		{
-			if (!filters.empty())
-			{
-				for (size_t i = 0; i < filters.size(); ++i)
-				{
-					if (!filters[i].empty() && PathMatchSpec(fileData.cFileName, filters[i].c_str()))
-					{
-						files.push_back(path + fileData.cFileName);
-						break;
-					}
-				}
-			}
-			else
-			{
-				files.push_back(path + fileData.cFileName);
-			}
+			measure->separators = measure->usedSeparators;
+			measure->usedSeparators.clear();
 		}
 	}
-	while (FindNextFile(hSearch, &fileData));
 
-	FindClose(hSearch);
-}
-
-
-template <typename T>
-T GetRandomNumber(T size)
-{
-	static std::mt19937 s_Engine((unsigned)time(nullptr));
-	const std::uniform_int_distribution<T> distribution(0, size);
-	return distribution(s_Engine);
-}
-
-void GetRandomLine(MeasureData* measure, size_t startPos)
-{
 	// Read the file from our selected pos
 	FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
 	if (file)
 	{
+
 		BYTE buffer[BUFFER_SIZE + 2];
 		buffer[BUFFER_SIZE] = 0;
 
@@ -179,7 +222,14 @@ void GetRandomLine(MeasureData* measure, size_t startPos)
 		fseek(file, 0, SEEK_END);
 		long size = ftell(file);
 
-		if (size > 0)
+		// File size does not match size when last indexed
+		if (measure->fileSize != size)
+		{
+			// Reindex
+			ScanFile(measure);
+			GetRandomLine(measure);
+		}
+		else if (size > 0)
 		{
 			fseek(file, startPos, SEEK_SET);
 
@@ -195,13 +245,18 @@ void GetRandomLine(MeasureData* measure, size_t startPos)
 				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 				wBuffer[len] = 0;
 
-				wchar_t* sepPos1 = wcsstr(wBuffer, separatorSz);
+				//If at start do not find first separator else set start pos to first separator
+				wchar_t* sepPos1 = startPos == 0 ? wBuffer : wcsstr(wBuffer, separatorSz);
 				wchar_t* sepPos2 = nullptr;
 
-				//If separator is where we expect it
-				if (wcscmp(wBuffer, sepPos1) == 0)
+				//If separator is where we expect it or this is the first line of the file
+				if (wcscmp(wBuffer, sepPos1) == 0 || startPos == 0)
 				{
-					sepPos1 += measure->separator.size();
+					if (startPos != 0)
+					{
+						sepPos1 += measure->separator.size();
+					}
+
 					do
 					{
 						sepPos2 = wcsstr(sepPos1, separatorSz);
@@ -238,8 +293,9 @@ void GetRandomLine(MeasureData* measure, size_t startPos)
 				}
 				else
 				{
-					//If separator is not where we expect it then file has been modified and needs reindexed
-					ReadFile(measure);
+					//If separator is not where we expect it then file has been modified and needs reindexed and we need to start over
+					ScanFile(measure);
+					GetRandomLine(measure);
 				}
 			}
 			else
@@ -253,13 +309,18 @@ void GetRandomLine(MeasureData* measure, size_t startPos)
 				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 				aBuffer[len] = 0;
 
-				char* sepPos1 = strstr(aBuffer, separatorSz);
+				//If at start do not find first separator else set start pos to first separator
+				char* sepPos1 = startPos == 0 ? aBuffer : strstr(aBuffer, separatorSz);
 				char* sepPos2 = nullptr;
 
-				//If separator is where we expect it
-				if (strcmp(aBuffer, sepPos1) == 0)
+				//If separator is where we expect it or this is the first line of the file
+				if (strcmp(aBuffer, sepPos1) == 0 || startPos == 0)
 				{
-					sepPos1 += separator.size();
+					if (startPos != 0)
+					{
+						sepPos1 += measure->separator.size();
+					}
+
 					do
 					{
 						sepPos2 = strstr(sepPos1, separatorSz);
@@ -296,8 +357,9 @@ void GetRandomLine(MeasureData* measure, size_t startPos)
 				}
 				else
 				{
-					//If separator is not where we expect it then file has been modified and needs reindexed
-					ReadFile(measure);
+					//If separator is not where we expect it then file has been modified and needs reindexed and we need to start over
+					ScanFile(measure);
+					GetRandomLine(measure);
 				}
 			}
 		}
@@ -353,7 +415,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->separator = RmReadString(rm, L"Separator", L"\n");
 
-		ReadFile(measure);
+		ScanFile(measure);
 	}
 }
 
@@ -362,45 +424,11 @@ PLUGIN_EXPORT double Update(void* data)
 	MeasureData* measure = (MeasureData*)data;
 	if (!measure->separators.empty())
 	{
-		// Select the filename
-		size_t index = GetRandomNumber(measure->separators.size() - 1);
-		size_t startPos = measure->separators[index];
-
-		// Remove separator if using unique random
-		if (measure->isUniqueRandom)
-		{
-			measure->separators.erase(measure->separators.begin() + index);
-			measure->usedSeparators.push_back(startPos);
-
-			// We are out of separators, swap separator indexes
-			if (measure->separators.empty())
-			{
-				measure->separators = measure->usedSeparators;
-				measure->usedSeparators.clear();
-			}
-		}
-
-		GetRandomLine(measure, startPos);
+		GetRandomLine(measure);
 	}
 	else if(!measure->files.empty())
 	{
-		// Select the filename
-		size_t index = GetRandomNumber(measure->files.size() - 1);
-
-		measure->value = measure->files[index];
-
-		if (measure->isUniqueRandom)
-		{
-			measure->files.erase(measure->files.begin() + index);
-			measure->usedFiles.push_back(measure->value);
-
-			//We are out of files, swap file indexes
-			if (measure->files.empty())
-			{
-				measure->files = measure->usedFiles;
-				measure->usedFiles.clear();
-			}
-		}
+		GetRandomFile(measure);
 	}
 
 	return 0;
