@@ -35,6 +35,14 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		return hr;
 	};
 
+	DWORD fileSize;
+	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE) return cleanup(E_FAIL);
+	bitmap->SetFileSize(fileSize);
+
+	ULONGLONG fileTime;
+	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	bitmap->SetFileTime(fileTime);
+
 	Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
 	Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> decoderFrame;
 	Microsoft::WRL::ComPtr<IWICBitmapSource> source;
@@ -109,6 +117,65 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	}
 
 	bitmap->SetSize(width, height);
+	return cleanup(S_OK);
+}
+
+bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
+{
+	std::wstring& path = bitmap->GetPath();
+	if (path.empty()) return false;
+
+	HANDLE fileHandle = CreateFile(
+		path.c_str(),
+		GENERIC_READ, FILE_SHARE_READ,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+		nullptr);
+	if (fileHandle == INVALID_HANDLE_VALUE) return E_FAIL;
+
+	auto cleanup = [&](bool result)
+	{
+		CloseHandle(fileHandle);
+		return result;
+	};
+
+	DWORD fileSize;
+	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE || fileSize != bitmap->GetFileSize()) return cleanup(false);
+
+	ULONGLONG fileTime;
+	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	
+	return cleanup(fileTime == bitmap->GetFileTime());
+}
+
+HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
+{
+	if (path.empty()) return false;
+
+	HANDLE fileHandle = CreateFile(
+		path.c_str(),
+		GENERIC_READ, FILE_SHARE_READ,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+		nullptr);
+	if (fileHandle == INVALID_HANDLE_VALUE) return E_FAIL;
+
+	const auto cleanup = [&](HRESULT result)
+	{
+		CloseHandle(fileHandle);
+		return result;
+	};
+
+	DWORD fileSize;
+	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE) return cleanup(E_FAIL);
+
+	ULONGLONG fileTime;
+	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	fileInfo->m_Path = path;
+	fileInfo->m_FileSize = fileSize;
+	fileInfo->m_FileTime = fileTime;
 	return cleanup(S_OK);
 }
 

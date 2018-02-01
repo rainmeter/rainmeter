@@ -134,6 +134,7 @@
     </ClCompile>
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -236,6 +237,8 @@
     </ClInclude>
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="GeneralImage.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="ImageOptions.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

@@ -43,6 +43,7 @@
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
@@ -132,6 +133,8 @@
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="DialogManage.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="ImageOptions.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />

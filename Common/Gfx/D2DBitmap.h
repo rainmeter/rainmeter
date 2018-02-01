@@ -40,6 +40,17 @@ private:
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_Bitmap;
 };
 
+struct FileInfo
+{
+	FileInfo() : m_Path(), m_FileSize(), m_FileTime()
+	{}
+
+	std::wstring m_Path;
+	DWORD m_FileSize;
+	ULONGLONG m_FileTime;
+
+	bool isValid() { return !m_Path.empty() && m_FileSize != 0 && m_FileTime != 0; }
+};
 
 class D2DBitmap
 {
@@ -54,12 +65,20 @@ public:
 	void SetSize(UINT width, UINT height) { m_Width = width; m_Height = height; }
 	int GetOrientation() { return m_ExifOrientation; }
 	void SetOrientation(const int orientation) { m_ExifOrientation = orientation; }
+	DWORD GetFileSize() { return m_FileSize; }
+	void SetFileSize(const DWORD& fileSize) { m_FileSize = fileSize; }
+	ULONGLONG GetFileTime() { return m_FileTime; }
+	void SetFileTime(const ULONGLONG& fileTime) { m_FileTime= fileTime; }
+
+	bool HasFileChanged();
 
 	std::wstring& GetPath() { return m_Path; }
 
 	HRESULT Load(const Canvas& canvas);
 
 	Util::D2DEffectStream* CreateEffectStream();
+
+	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 
 private:
 	friend class Canvas;
@@ -75,6 +94,8 @@ private:
 	int m_ExifOrientation;
 
 	std::wstring m_Path;
+	DWORD m_FileSize;
+	ULONGLONG m_FileTime;
 
 	std::vector<BitmapSegment> m_Segments;
 

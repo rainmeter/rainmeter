@@ -12,6 +12,8 @@
 #include "../Common/Gfx/Util/D2DEffectStream.h"
 #include <string>
 #include "Skin.h"
+#include "ImageCache.h"
+#include "ImageOptions.h"
 
 /*
 ** Helper macro to define an array of option names. A prefix must be given.
@@ -61,36 +63,22 @@ public:
 	~GeneralImage();
 
 	bool IsLoaded() { return m_Bitmap != nullptr; }
-	Gfx::D2DBitmap* GetImage() { return m_BitmapTinted ? m_BitmapTinted : m_Bitmap; }
+	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : m_Bitmap->GetBitmap(); }
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName);
 
 private:
-	enum CROPMODE
-	{
-		CROPMODE_TL = 1,
-		CROPMODE_TR,
-		CROPMODE_BR,
-		CROPMODE_BL,
-		CROPMODE_C
-	};
 
-	Gfx::D2DBitmap* m_Bitmap;
-	Gfx::D2DBitmap* m_BitmapTinted;
+	ImageCacheHandle* m_Bitmap;
+	ImageCacheHandle* m_BitmapProcessed;
 	Skin* m_Skin;
 
 	const WCHAR* m_Name;
 	const WCHAR** m_OptionArray;
 	const bool m_DisableTransform;
 
-	D2D1_MATRIX_5X4_F m_ColorMatrix;
-	Gdiplus::Rect m_Crop;
-	CROPMODE m_CropMode;
-	bool m_GreyScale;
-	FLOAT m_Rotate;
-	Gfx::Util::FlipType m_Flip;
-	bool m_UseExifOrientation;
+	ImageOptions m_Options;
 
 	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();

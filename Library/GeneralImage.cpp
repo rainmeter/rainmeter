@@ -33,31 +33,27 @@ GeneralImageHelper_DefineOptionArray(GeneralImage::c_DefaultOptionArray, L"");
 
 GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, Skin* skin) :
 	m_Bitmap(nullptr),
-	m_BitmapTinted(nullptr),
+	m_BitmapProcessed(nullptr),
 	m_Skin(skin),
 	m_Name(name ? name : L"ImageName"), 
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_DisableTransform(disableTransform),
-	m_Crop(-1, -1, -1, -1),
-	m_CropMode(CROPMODE_TL),
-	m_GreyScale(false),
-	m_Rotate(),
-	m_Flip(Gfx::Util::FlipType::None)
+	m_Options()
 {
 }
 
 GeneralImage::~GeneralImage()
 {
 	if (m_Bitmap) delete m_Bitmap;
-	if (m_BitmapTinted) delete m_BitmapTinted;
+	if (m_BitmapProcessed) delete m_BitmapProcessed;
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
 	if (!m_DisableTransform)
 	{
-		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
-		m_CropMode = CROPMODE_TL;
+		m_Options.m_Crop.X = m_Options.m_Crop.Y = m_Options.m_Crop.Width = m_Options.m_Crop.Height = -1;
+		m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
 
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
@@ -71,27 +67,27 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 				token = wcstok(parseSz, L",", &context);
 				if (token)
 				{
-					m_Crop.X = parser.ParseInt(token, 0);
+					m_Options.m_Crop.X = parser.ParseInt(token, 0);
 
 					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
-						m_Crop.Y = parser.ParseInt(token, 0);
+						m_Options.m_Crop.Y = parser.ParseInt(token, 0);
 
 						token = wcstok(nullptr, L",", &context);
 						if (token)
 						{
-							m_Crop.Width = parser.ParseInt(token, 0);
+							m_Options.m_Crop.Width = parser.ParseInt(token, 0);
 
 							token = wcstok(nullptr, L",", &context);
 							if (token)
 							{
-								m_Crop.Height = parser.ParseInt(token, 0);
+								m_Options.m_Crop.Height = parser.ParseInt(token, 0);
 
 								token = wcstok(nullptr, L",", &context);
 								if (token)
 								{
-									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);
+									m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(token, 0);
 								}
 							}
 						}
@@ -100,22 +96,22 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 				free(parseSz);
 			}
 
-			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
+			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
-				m_CropMode = CROPMODE_TL;
+				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
 				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop, section);
 			}
 		}
 	}
 
-	m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
+	m_Options.m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
 	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
 
-	m_ColorMatrix = c_IdentityMatrix;
+	m_Options.m_ColorMatrix = c_IdentityMatrix;
 
 	// Read in the Color Matrix
 	// It has to be read in like this because it crashes when reading over 17 floats
@@ -127,12 +123,12 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[0][i] = matrix1[i];
+			m_Options.m_ColorMatrix.m[0][i] = matrix1[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[0][0] = (Gdiplus::REAL)tint.GetRed() / 255.0f;
+		m_Options.m_ColorMatrix.m[0][0] = (Gdiplus::REAL)tint.GetRed() / 255.0f;
 	}
 
 	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
@@ -140,12 +136,12 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[1][i] = matrix2[i];
+			m_Options.m_ColorMatrix.m[1][i] = matrix2[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[1][1] = (Gdiplus::REAL)tint.GetGreen() / 255.0f;
+		m_Options.m_ColorMatrix.m[1][1] = (Gdiplus::REAL)tint.GetGreen() / 255.0f;
 	}
 
 	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
@@ -153,12 +149,12 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[2][i] = matrix3[i];
+			m_Options.m_ColorMatrix.m[2][i] = matrix3[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[2][2] = (Gdiplus::REAL)tint.GetBlue() / 255.0f;
+		m_Options.m_ColorMatrix.m[2][2] = (Gdiplus::REAL)tint.GetBlue() / 255.0f;
 	}
 
 	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
@@ -166,12 +162,12 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[3][i] = matrix4[i];
+			m_Options.m_ColorMatrix.m[3][i] = matrix4[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[3][3] = (Gdiplus::REAL)alpha / 255.0f;
+		m_Options.m_ColorMatrix.m[3][3] = (Gdiplus::REAL)alpha / 255.0f;
 	}
 
 	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
@@ -179,26 +175,26 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
 		{
-			m_ColorMatrix.m[4][i] = matrix5[i];
+			m_Options.m_ColorMatrix.m[4][i] = matrix5[i];
 		}
 	}
 
 	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
 	if (_wcsicmp(flip, L"NONE") == 0)
 	{
-		m_Flip = Gfx::Util::FlipType::None;
+		m_Options.m_Flip = Gfx::Util::FlipType::None;
 	}
 	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
 	{
-		m_Flip = Gfx::Util::FlipType::Horizontal;
+		m_Options.m_Flip = Gfx::Util::FlipType::Horizontal;
 	}
 	else if (_wcsicmp(flip, L"VERTICAL") == 0)
 	{
-		m_Flip = Gfx::Util::FlipType::Vertical;
+		m_Options.m_Flip = Gfx::Util::FlipType::Vertical;
 	}
 	else if (_wcsicmp(flip, L"BOTH") == 0)
 	{
-		m_Flip = Gfx::Util::FlipType::Both;
+		m_Options.m_Flip = Gfx::Util::FlipType::Both;
 	}
 	else
 	{
@@ -207,108 +203,153 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 	if (!m_DisableTransform)
 	{
-		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
+		m_Options.m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
 	}
 
-	m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
+	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
 bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
 	if (!m_Skin) return false;
 
-	if (m_Bitmap) delete m_Bitmap;
-	m_Bitmap = new Gfx::D2DBitmap(imageName);
-
-	HRESULT hr = m_Bitmap->Load(m_Skin->GetCanvas());
-	if (SUCCEEDED(hr))
+	if(m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged())
 	{
 		ApplyTransforms();
 		return true;
 	}
 
-	delete m_Bitmap;
-	m_Bitmap = nullptr;
+	ImageOptions info;
+	Gfx::D2DBitmap::GetFileInfo(imageName, &info);
 
-	return false;
+	if (!info.isValid()) return false;
+
+	ImageCacheHandle* handle = IMAGE_CACHE.Get(info);
+	if (handle == nullptr)
+	{
+		auto bitmap = new Gfx::D2DBitmap(imageName);
+
+		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
+		if (SUCCEEDED(hr))
+		{
+			IMAGE_CACHE.Put(info, bitmap);
+			handle = IMAGE_CACHE.Get(info);
+			if (handle == nullptr) return false;
+		}
+		else
+		{
+			delete bitmap;
+		}
+	}
+
+	if(handle)
+	{
+		m_Bitmap = handle;
+
+		m_Options.m_Path = info.m_Path;
+		m_Options.m_FileSize = info.m_FileSize;
+		m_Options.m_FileTime = info.m_FileTime;
+
+		ApplyTransforms();
+	}
+	return handle;
 }
 
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 {
-	if (m_Crop.Width >= 0 && m_Crop.Height >= 0)
+	if (m_Options.m_Crop.Width >= 0 && m_Options.m_Crop.Height >= 0)
 	{
-		const int imageW = m_Bitmap->GetWidth();
-		const int imageH = m_Bitmap->GetHeight();
+		const int imageW = m_Bitmap->GetBitmap()->GetWidth();
+		const int imageH = m_Bitmap->GetBitmap()->GetHeight();
 
 		int x = 0;
 		int y = 0;
 
-		switch (m_CropMode)
+		switch (m_Options.m_CropMode)
 		{
-		case CROPMODE_TL:
+		case ImageOptions::CROPMODE_TL:
 		default:
-			x = m_Crop.X;
-			y = m_Crop.Y;
+			x = m_Options.m_Crop.X;
+			y = m_Options.m_Crop.Y;
 			break;
 
-		case CROPMODE_TR:
-			x = m_Crop.X + imageW;
-			y = m_Crop.Y;
+		case ImageOptions::CROPMODE_TR:
+			x = m_Options.m_Crop.X + imageW;
+			y = m_Options.m_Crop.Y;
 			break;
 
-		case CROPMODE_BR:
-			x = m_Crop.X + imageW;
-			y = m_Crop.Y + imageH;
+		case ImageOptions::CROPMODE_BR:
+			x = m_Options.m_Crop.X + imageW;
+			y = m_Options.m_Crop.Y + imageH;
 			break;
 
-		case CROPMODE_BL:
-			x = m_Crop.X;
-			y = m_Crop.Y + imageH;
+		case ImageOptions::CROPMODE_BL:
+			x = m_Options.m_Crop.X;
+			y = m_Options.m_Crop.Y + imageH;
 			break;
 
-		case CROPMODE_C:
-			x = m_Crop.X + (imageW / 2);
-			y = m_Crop.Y + (imageH / 2);
+		case ImageOptions::CROPMODE_C:
+			x = m_Options.m_Crop.X + (imageW / 2);
+			y = m_Options.m_Crop.Y + (imageH / 2);
 			break;
 		}
 
-		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(m_Crop.Width + x), (FLOAT)(m_Crop.Height + y));
+		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(m_Options.m_Crop.Width + x), (FLOAT)(m_Options.m_Crop.Height + y));
 		stream->Crop(m_Skin->GetCanvas(), rect);
 	}
 }
 
 void GeneralImage::ApplyTransforms()
 {
-	if (m_BitmapTinted)
+	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+
+	if(m_BitmapProcessed)
 	{
-		delete m_BitmapTinted;
-		m_BitmapTinted = nullptr;
+		delete m_BitmapProcessed;
 	}
 
-	auto& canvas = m_Skin->GetCanvas();
-	auto stream = m_Bitmap->CreateEffectStream();
+	ImageCacheHandle* handle = IMAGE_CACHE.Get(m_Options);
 
-	ApplyCrop(stream);
+	if (handle == nullptr)
+	{
+		auto& canvas = m_Skin->GetCanvas();
+		auto stream = m_Bitmap->GetBitmap()->CreateEffectStream();
 
-	if (m_Rotate != 0.0f) stream->Rotate(canvas, m_Rotate);
+		ApplyCrop(stream);
 
-	stream->Flip(canvas, m_Flip);
+		if (m_Options.m_Rotate != 0.0f) stream->Rotate(canvas, m_Options.m_Rotate);
 
-	if (m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
+		stream->Flip(canvas, m_Options.m_Flip);
 
-	if (!CompareColorMatrix(m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_ColorMatrix);
-	
-	if (m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
+		if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
 
-	m_BitmapTinted = stream->ToBitmap(canvas);
-	delete stream;
+		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
+
+		if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
+
+		auto bitmap = stream->ToBitmap(canvas);
+		delete stream;
+
+		if(bitmap != nullptr)
+		{
+			IMAGE_CACHE.Put(m_Options, bitmap);
+			handle = IMAGE_CACHE.Get(m_Options);
+			if (handle == nullptr) return;
+		}
+	}
+
+	if (handle)
+	{
+		m_BitmapProcessed = handle;
+	}
+
 }
 
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)
 {
 	for (int i = 0; i < 5; ++i)
 	{
-		for (int j = 0; j < 4; ++j)  // The fifth column is reserved.
+		for (int j = 0; j < 4; ++j)
 		{
 			if (a.m[i][j] != b.m[i][j])
 			{

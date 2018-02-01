@@ -17,6 +17,8 @@ class D2DBitmapLoader
 {
 public:
 	static HRESULT LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bitmap);
+	static bool HasFileChanged(D2DBitmap* bitmap);
+	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 
 private:
 	friend class Gfx::Canvas;

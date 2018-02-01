@@ -44,7 +44,10 @@ D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation) :
 	m_Width(0U),
 	m_Height(0U),
 	m_ExifOrientation(exifOrientation),
-	m_Path(path)
+	m_Path(path),
+	m_FileSize(0),
+	m_FileTime(0)
+	
 {
 }
 
@@ -57,6 +60,11 @@ void D2DBitmap::AddSegment(const BitmapSegment& segment)
 	m_Segments.emplace_back(segment);
 }
 
+bool D2DBitmap::HasFileChanged()
+{
+	return Util::D2DBitmapLoader::HasFileChanged(this);
+}
+
 HRESULT D2DBitmap::Load(const Canvas& canvas)
 {
 	return Util::D2DBitmapLoader::LoadBitmapFromFile(canvas, this);
@@ -67,4 +75,8 @@ Util::D2DEffectStream* D2DBitmap::CreateEffectStream()
 	return new Util::D2DEffectStream(this);
 }
 
+HRESULT D2DBitmap::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
+{
+	return Util::D2DBitmapLoader::GetFileInfo(path, fileInfo);
+}
 }  // namespace Gfx
