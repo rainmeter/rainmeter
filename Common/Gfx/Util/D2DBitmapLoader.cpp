@@ -129,7 +129,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
 {
 	std::wstring& path = bitmap->GetPath();
-	if (path.empty()) return false;
+	if (path.empty()) return true;
 
 	HANDLE fileHandle = CreateFile(
 		path.c_str(),
@@ -138,20 +138,20 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
 		nullptr);
-	if (fileHandle == INVALID_HANDLE_VALUE) return false;
+	if (fileHandle == INVALID_HANDLE_VALUE) return true;
 	
 	const DWORD fileSize = GetFileSize(fileHandle, nullptr);
 	if (fileSize == INVALID_FILE_SIZE || fileSize != bitmap->GetFileSize())
 	{
 		CloseHandle(fileHandle);
-		return false;
+		return true;
 	}
 
 	ULONGLONG fileTime = 0ULL;
 	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
 	CloseHandle(fileHandle);
 	
-	return lastWrite ? (fileTime == bitmap->GetFileTime()) : false;
+	return lastWrite ? (fileTime != bitmap->GetFileTime()) : true;
 }
 
 HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)

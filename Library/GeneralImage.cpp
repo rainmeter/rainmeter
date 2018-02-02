@@ -44,8 +44,15 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 
 GeneralImage::~GeneralImage()
 {
-	if (m_Bitmap) delete m_Bitmap;
-	if (m_BitmapProcessed) delete m_BitmapProcessed;
+	DisposeImage();
+}
+
+void GeneralImage::DisposeImage()
+{
+	delete m_Bitmap;
+	delete m_BitmapProcessed;
+	m_Bitmap = nullptr;
+	m_BitmapProcessed = nullptr;
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -222,7 +229,11 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	ImageOptions info;
 	Gfx::D2DBitmap::GetFileInfo(imageName, &info);
 
-	if (!info.isValid()) return false;
+	if (!info.isValid())
+	{
+		DisposeImage();
+		return false;
+	}
 
 	ImageCacheHandle* handle = IMAGE_CACHE.Get(info);
 	if (!handle)
@@ -254,6 +265,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		ApplyTransforms();
 		return true;
 	}
+
+	DisposeImage();
 
 	return false;
 }

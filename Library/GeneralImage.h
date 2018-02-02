@@ -62,8 +62,10 @@ public:
 		bool disableTransform = false, Skin* skin = nullptr);
 	~GeneralImage();
 
+	void DisposeImage();
+
 	bool IsLoaded() { return m_Bitmap != nullptr; }
-	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : m_Bitmap->GetBitmap(); }
+	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : m_Bitmap  ? m_Bitmap->GetBitmap() : nullptr; }
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName);
