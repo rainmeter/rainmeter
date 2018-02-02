@@ -16,7 +16,6 @@ using namespace Gdiplus;
 
 MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BitmapImage", nullptr, true, skin),
-	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
 	m_TransitionFrameCount(0),
@@ -45,11 +44,11 @@ void MeterBitmap::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName, m_NeedsReload);
+		m_Image.LoadImage(m_ImageName);
 
 		if (m_Image.IsLoaded())
 		{
-			Bitmap* bitmap = m_Image.GetImage();
+			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
@@ -157,8 +156,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
-	int oldW = m_W;
-	int oldH = m_H;
 
 	Meter::ReadOptions(parser, section);
 
@@ -167,10 +164,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
-	}
-	else
-	{
-		m_Image.ClearOptionFlags();
 	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
@@ -202,19 +195,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
-
-		if (m_NeedsReload ||
-			m_Image.IsOptionsChanged())
-		{
 			Initialize();  // Reload the image
-		}
-		else
-		{
-			// Reset to old dimensions
-			m_W = oldW;
-			m_H = oldH;
-		}
 	}
 }
 
@@ -275,7 +256,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
-	Bitmap* bitmap = m_Image.GetImage();
+	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
 	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
