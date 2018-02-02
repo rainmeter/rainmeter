@@ -94,9 +94,11 @@ private:
 class ImageCachePool
 {
 public:
-	ImageCacheHandle * Get(const ImageOptions& key);
+	ImageCacheHandle* Get(const ImageOptions& key);
 	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
 	void Cleanup();
+	
+	static ImageCachePool& GetInstance();
 
 private:
 	friend struct ImageCacheHandle;
@@ -107,7 +109,5 @@ private:
 	std::unordered_map<ImageOptions, int> m_CachePoolWeight;
 	std::unordered_map<ImageOptions, int> m_CleanupPool;
 };
-
-static ImageCachePool IMAGE_CACHE;
 
 #endif

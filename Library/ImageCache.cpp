@@ -29,6 +29,12 @@ void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
 	// Already exists in the cache... replace?
 }
 
+ImageCachePool& ImageCachePool::GetInstance()
+{
+	static ImageCachePool cachePool;
+	return cachePool;
+}
+
 ImageCacheHandle* ImageCachePool::Get(const ImageOptions& key)
 {
 	const auto find = m_CachePool.find(key);
