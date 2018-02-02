@@ -16,7 +16,6 @@ using namespace Gdiplus;
 
 MeterBar::MeterBar(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BarImage", nullptr, false, skin),
-	m_NeedsReload(false),
 	m_Color(Color::Green),
 	m_Orientation(VERTICAL),
 	m_Value(),
@@ -41,11 +40,11 @@ void MeterBar::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName, m_NeedsReload);
+		m_Image.LoadImage(m_ImageName);
 
 		if (m_Image.IsLoaded())
 		{
-			Bitmap* bitmap = m_Image.GetImage();
+			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth() + GetWidthPadding();
 			m_H = bitmap->GetHeight() + GetHeightPadding();
@@ -65,10 +64,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
-	int oldW = m_W;
-	int oldH = m_H;
-
-	Meter::ReadOptions(parser, section);
 
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
@@ -77,10 +72,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
-	}
-	else
-	{
-		m_Image.ClearOptionFlags();
 	}
 
 	m_Border = parser.ReadInt(section, L"BarBorder", 0);
@@ -103,20 +94,10 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
-
-		if (m_NeedsReload ||
-			m_Image.IsOptionsChanged())
-		{
-			Initialize();  // Reload the image
-		}
-		else if (!m_ImageName.empty())
-		{
-			// Reset to old dimensions
-			m_W = oldW;
-			m_H = oldH;
-		}
+		Initialize();  // Reload the image
 	}
+
+	Meter::ReadOptions(parser, section);
 }
 
 /*
@@ -143,7 +124,7 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 
 	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
-	Bitmap* drawBitmap = m_Image.GetImage();
+	Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
 	if (m_Orientation == VERTICAL)
 	{

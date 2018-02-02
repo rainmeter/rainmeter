@@ -9,7 +9,7 @@
 #define __METERBAR_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 class MeterBar : public Meter
 {
@@ -29,7 +29,7 @@ public:
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
-	virtual bool IsFixedSize(bool overwrite = false) { return m_ImageName.empty(); }
+	virtual bool IsFixedSize(bool overwrite = false) { return !m_Image.IsLoaded(); }
 
 private:
 	enum ORIENTATION
@@ -38,9 +38,8 @@ private:
 		VERTICAL
 	};
 
-	TintedImage m_Image;
+	GeneralImage m_Image;
 	std::wstring m_ImageName;
-	bool m_NeedsReload;
 
 	Gdiplus::Color m_Color;
 	ORIENTATION m_Orientation;	// Growth direction
