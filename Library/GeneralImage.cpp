@@ -213,7 +213,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
 	if (!m_Skin) return false;
 
-	if(m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged())
+	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged())
 	{
 		ApplyTransforms();
 		return true;
@@ -225,7 +225,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	if (!info.isValid()) return false;
 
 	ImageCacheHandle* handle = IMAGE_CACHE.Get(info);
-	if (handle == nullptr)
+	if (!handle)
 	{
 		auto bitmap = new Gfx::D2DBitmap(imageName);
 
@@ -234,15 +234,16 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		{
 			IMAGE_CACHE.Put(info, bitmap);
 			handle = IMAGE_CACHE.Get(info);
-			if (handle == nullptr) return false;
+			if (!handle) return false;
 		}
 		else
 		{
 			delete bitmap;
+			bitmap = nullptr;
 		}
 	}
 
-	if(handle)
+	if (handle)
 	{
 		m_Bitmap = handle;
 
@@ -251,8 +252,10 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		m_Options.m_FileTime = info.m_FileTime;
 
 		ApplyTransforms();
+		return true;
 	}
-	return handle;
+
+	return false;
 }
 
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
@@ -303,14 +306,14 @@ void GeneralImage::ApplyTransforms()
 {
 	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
 
-	if(m_BitmapProcessed)
+	if (m_BitmapProcessed)
 	{
 		delete m_BitmapProcessed;
+		m_BitmapProcessed = nullptr;
 	}
 
 	ImageCacheHandle* handle = IMAGE_CACHE.Get(m_Options);
-
-	if (handle == nullptr)
+	if (!handle)
 	{
 		auto& canvas = m_Skin->GetCanvas();
 		auto stream = m_Bitmap->GetBitmap()->CreateEffectStream();
@@ -329,12 +332,13 @@ void GeneralImage::ApplyTransforms()
 
 		auto bitmap = stream->ToBitmap(canvas);
 		delete stream;
+		stream = nullptr;
 
-		if(bitmap != nullptr)
+		if (bitmap != nullptr)
 		{
 			IMAGE_CACHE.Put(m_Options, bitmap);
 			handle = IMAGE_CACHE.Get(m_Options);
-			if (handle == nullptr) return;
+			if (!handle) return;
 		}
 	}
 

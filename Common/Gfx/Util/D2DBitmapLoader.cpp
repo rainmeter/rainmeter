@@ -35,12 +35,18 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		return hr;
 	};
 
-	DWORD fileSize;
-	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE) return cleanup(E_FAIL);
+	const DWORD fileSize = GetFileSize(fileHandle, nullptr);
+	if (fileSize == INVALID_FILE_SIZE)
+	{
+		return cleanup(E_FAIL);
+	}
 	bitmap->SetFileSize(fileSize);
 
-	ULONGLONG fileTime;
-	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	ULONGLONG fileTime = 0ULL;
+	if (GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime) == FALSE)
+	{
+		return cleanup(E_FAIL);
+	}
 	bitmap->SetFileTime(fileTime);
 
 	Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
@@ -132,26 +138,25 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
 		nullptr);
-	if (fileHandle == INVALID_HANDLE_VALUE) return E_FAIL;
-
-	auto cleanup = [&](bool result)
+	if (fileHandle == INVALID_HANDLE_VALUE) return false;
+	
+	const DWORD fileSize = GetFileSize(fileHandle, nullptr);
+	if (fileSize == INVALID_FILE_SIZE || fileSize != bitmap->GetFileSize())
 	{
 		CloseHandle(fileHandle);
-		return result;
-	};
+		return false;
+	}
 
-	DWORD fileSize;
-	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE || fileSize != bitmap->GetFileSize()) return cleanup(false);
-
-	ULONGLONG fileTime;
-	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	ULONGLONG fileTime = 0ULL;
+	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	CloseHandle(fileHandle);
 	
-	return cleanup(fileTime == bitmap->GetFileTime());
+	return lastWrite ? (fileTime == bitmap->GetFileTime()) : false;
 }
 
 HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
 {
-	if (path.empty()) return false;
+	if (path.empty()) return E_FAIL;
 
 	HANDLE fileHandle = CreateFile(
 		path.c_str(),
@@ -162,21 +167,26 @@ HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInf
 		nullptr);
 	if (fileHandle == INVALID_HANDLE_VALUE) return E_FAIL;
 
-	const auto cleanup = [&](HRESULT result)
+	const DWORD fileSize = GetFileSize(fileHandle, nullptr);
+	if (fileSize == INVALID_FILE_SIZE)
 	{
 		CloseHandle(fileHandle);
-		return result;
-	};
+		return E_FAIL;
+	}
 
-	DWORD fileSize;
-	if ((fileSize = GetFileSize(fileHandle, nullptr)) == INVALID_FILE_SIZE) return cleanup(E_FAIL);
+	ULONGLONG fileTime = 0ULL;
+	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
+	CloseHandle(fileHandle);
 
-	ULONGLONG fileTime;
-	GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
-	fileInfo->m_Path = path;
-	fileInfo->m_FileSize = fileSize;
-	fileInfo->m_FileTime = fileTime;
-	return cleanup(S_OK);
+	if (lastWrite)
+	{
+		fileInfo->m_Path = path;
+		fileInfo->m_FileSize = fileSize;
+		fileInfo->m_FileTime = fileTime;
+		return S_OK;
+	}
+
+	return E_FAIL;
 }
 
 HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,

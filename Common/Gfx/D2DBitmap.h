@@ -49,7 +49,7 @@ struct FileInfo
 	DWORD m_FileSize;
 	ULONGLONG m_FileTime;
 
-	bool isValid() { return !m_Path.empty() && m_FileSize != 0 && m_FileTime != 0; }
+	bool isValid() { return !m_Path.empty() && m_FileSize != 0UL && m_FileTime != 0ULL; }
 };
 
 class D2DBitmap

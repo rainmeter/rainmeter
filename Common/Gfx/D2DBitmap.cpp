@@ -45,8 +45,8 @@ D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation) :
 	m_Height(0U),
 	m_ExifOrientation(exifOrientation),
 	m_Path(path),
-	m_FileSize(0),
-	m_FileTime(0)
+	m_FileSize(0UL),
+	m_FileTime(0ULL)
 	
 {
 }

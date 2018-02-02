@@ -125,7 +125,9 @@
     <ClCompile Include="Gfx\D2DBitmap.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp" />
+    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -255,7 +257,9 @@
     <ClInclude Include="Gfx\D2DBitmap.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DEffectStream.h" />
+    <ClInclude Include="Gfx\Util\D2DEffectStream.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
