@@ -19,7 +19,7 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:Configuration=Release
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
-set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
+set SIGNTOOL="signtool.exe" sign /t http://timestamp.comodoca.com/authenticode /f "%CERTFILE%" /p "%CERTKEY%"
 
 :: Update Version.h.
 > "..\RainLexer\Version.h" echo #pragma once
