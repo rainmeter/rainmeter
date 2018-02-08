@@ -332,9 +332,7 @@ void GeneralImage::ApplyTransforms()
 		m_BitmapProcessed = nullptr;
 	}
 
-	auto& cachePool = ImageCachePool::GetInstance();
-
-	ImageCacheHandle* handle = cachePool.Get(m_Options);
+	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
 	if (!handle)
 	{
 		auto& canvas = m_Skin->GetCanvas();
@@ -358,8 +356,8 @@ void GeneralImage::ApplyTransforms()
 
 		if (bitmap != nullptr)
 		{
-			cachePool.Put(m_Options, bitmap);
-			handle = cachePool.Get(m_Options);
+			GetImageCache().Put(m_Options, bitmap);
+			handle = GetImageCache().Get(m_Options);
 			if (!handle) return;
 		}
 	}
@@ -368,7 +366,6 @@ void GeneralImage::ApplyTransforms()
 	{
 		m_BitmapProcessed = handle;
 	}
-
 }
 
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)
