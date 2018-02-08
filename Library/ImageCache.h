@@ -70,6 +70,8 @@ struct ImageCache
 		m_Bitmap = nullptr;
 	}
 
+	void Update(const ImageOptions& key, Gfx::D2DBitmap* item);
+
 	ImageOptions m_Key;
 	Gfx::D2DBitmap* m_Bitmap;
 	ImageCachePool* m_Pool;
@@ -104,8 +106,6 @@ public:
 	ImageCacheHandle* Get(const ImageOptions& key);
 	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
 
-	void Cleanup();
-
 private:
 	friend struct ImageCacheHandle;
 
@@ -117,8 +117,6 @@ private:
 	void Remove(const ImageOptions& item);
 
 	std::unordered_map<ImageOptions, ImageCache*> m_CachePool;
-	std::unordered_map<ImageOptions, int> m_CachePoolWeight;
-	std::unordered_map<ImageOptions, int> m_CleanupPool;
 };
 
 // Convenience function.
