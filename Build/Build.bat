@@ -27,11 +27,8 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:Configuration=Release
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
-:: http://time.certum.pl/
-:: http://timestamp.comodoca.com/authenticode
-:: http://timestamp.verisign.com/scripts/timestamp.dll
-:: http://timestamp.globalsign.com/scripts/timestamp.dll
-set SIGNTOOL="signtool.exe" sign /t http://timestamp.comodoca.com/authenticode /f "%CERTFILE%" /p "%CERTKEY%"
+set SIGNTOOL_SHA1="signtool.exe" sign /t http://timestamp.comodoca.com /f "%CERTFILE%" /p "%CERTKEY%"
+set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /f "%CERTFILE%" /p "%CERTKEY%"
 
 if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
 
@@ -145,9 +142,9 @@ if "%1" == "BUILDLANGUAGES" (
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
-		%SIGNTOOL% ..\x32-Release\%%Z > BuildLog.txt
+		%SIGNTOOL_SHA2% ..\x32-Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x32\%%Z failed & goto END
-		%SIGNTOOL% ..\x64-Release\%%Z > BuildLog.txt
+		%SIGNTOOL_SHA2% ..\x64-Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x64\%%Z failed & goto END
 	)
 )
@@ -173,7 +170,11 @@ if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & 
 :: Sign installer
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
-	%SIGNTOOL% %INSTALLER_NAME% > BuildLog.txt
+	:: Sign installer with both SHA-1 and SHA-2 for XP SP3/Vista compatibility. We
+	:: don't actually support those operating systems so the installer will just error
+	:: out.
+	%SIGNTOOL_SHA1% %INSTALLER_NAME% > BuildLog.txt
+	%SIGNTOOL_SHA2% /as %INSTALLER_NAME% > BuildLog.txt
 	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 )
 
