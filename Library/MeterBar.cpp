@@ -65,6 +65,8 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
+	Meter::ReadOptions(parser, section);
+
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
@@ -96,8 +98,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		Initialize();  // Reload the image
 	}
-
-	Meter::ReadOptions(parser, section);
 }
 
 /*

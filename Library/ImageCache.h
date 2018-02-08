@@ -57,18 +57,23 @@ struct hash<ImageOptions>
 
 struct ImageCache
 {
-	ImageCache(const ImageOptions& key, Gfx::D2DBitmap* bitmap, ImageCachePool* pool) : m_Key(key), m_Bitmap(bitmap), m_Pool(pool), m_Instances(0)
-	{}
+	ImageCache(const ImageOptions& key, Gfx::D2DBitmap* bitmap, ImageCachePool* pool) :
+		m_Key(key),
+		m_Bitmap(bitmap),
+		m_Pool(pool),
+		m_Instances(0U)
+	{ }
 
 	~ImageCache()
 	{
 		delete m_Bitmap;
+		m_Bitmap = nullptr;
 	}
 
 	ImageOptions m_Key;
 	Gfx::D2DBitmap* m_Bitmap;
 	ImageCachePool* m_Pool;
-	int m_Instances;
+	UINT m_Instances;
 };
 
 struct ImageCacheHandle
@@ -94,14 +99,20 @@ private:
 class ImageCachePool
 {
 public:
+	static ImageCachePool& GetInstance();
+
 	ImageCacheHandle* Get(const ImageOptions& key);
 	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
+
 	void Cleanup();
-	
-	static ImageCachePool& GetInstance();
 
 private:
 	friend struct ImageCacheHandle;
+
+	ImageCachePool();
+	~ImageCachePool();
+	ImageCachePool(const ImageCachePool& other) = delete;
+	ImageCachePool& operator=(ImageCachePool other) = delete;
 
 	void Remove(const ImageOptions& item);
 
@@ -109,5 +120,8 @@ private:
 	std::unordered_map<ImageOptions, int> m_CachePoolWeight;
 	std::unordered_map<ImageOptions, int> m_CleanupPool;
 };
+
+// Convenience function.
+inline ImageCachePool& GetImageCache() { return ImageCachePool::GetInstance(); }
 
 #endif

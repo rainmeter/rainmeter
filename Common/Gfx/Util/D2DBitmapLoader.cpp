@@ -66,13 +66,9 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 			hr = ConvertToD2DFormat(decoderFrame.Get(), source);
 		}
 	}
-
 	if (FAILED(hr)) return cleanup(hr);
 
-	int orientation = 0;
-	hr = GetExifOrientation(decoderFrame.Get(), &orientation);
-	if (FAILED(hr)) return cleanup(hr);
-
+	const int orientation = GetExifOrientation(decoderFrame.Get());
 	bitmap->SetOrientation(orientation);
 
 	UINT width = 0U;
@@ -89,7 +85,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 			nullptr,
 			d2dbitmap.GetAddressOf());
 		if (FAILED(hr)) return cleanup(hr);
-		
+
 		const BitmapSegment bmp(d2dbitmap, 0U, 0U, width, height);
 		bitmap->AddSegment(bmp);
 
@@ -150,7 +146,7 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
 	ULONGLONG fileTime = 0ULL;
 	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
 	CloseHandle(fileHandle);
-	
+
 	return lastWrite ? (fileTime != bitmap->GetFileTime()) : true;
 }
 
@@ -233,24 +229,22 @@ HRESULT D2DBitmapLoader::ConvertToD2DFormat(
 	return hr;
 }
 
-HRESULT D2DBitmapLoader::GetExifOrientation(IWICBitmapFrameDecode* source, int* orientation)
+int D2DBitmapLoader::GetExifOrientation(IWICBitmapFrameDecode* source)
 {
 	Microsoft::WRL::ComPtr<IWICMetadataQueryReader> reader;
 	HRESULT hr = source->GetMetadataQueryReader(reader.GetAddressOf());
-	if (FAILED(hr)) return hr;
-	
+	if (FAILED(hr)) return 0;
+
 	PROPVARIANT propValue;
 	PropVariantInit(&propValue);
 	hr = reader->GetMetadataByName(L"/app1/ifd/{ushort=274}", &propValue);
 	if (FAILED(hr))
 	{
 		hr = reader->GetMetadataByName(L"/ifd/{ushort=274}", &propValue);
-		if (FAILED(hr)) return S_FALSE;
+		if (FAILED(hr)) return 0;
 	}
-	
-	(*orientation) = propValue.intVal;
-	
-	return hr;
+
+	return propValue.intVal;
 }
 
 }  // namespace Util

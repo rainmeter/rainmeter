@@ -136,7 +136,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	const auto image = m_Image.GetImage();
 	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
-	if(image)
+	if (image)
 	{
 		canvas.DrawBitmap(image, Rect(meterRect.X, meterRect.Y, m_W, m_H), m_BitmapsRects[m_State]);
 	}

@@ -133,7 +133,7 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 		Gdiplus::Matrix matrix;
 		matrix.Translate(cx, cy);
 		matrix.Rotate(angle);
-		matrix.Translate((REAL)-m_OffsetX, (REAL)-m_OffsetY);
+		matrix.Translate((REAL)(-m_OffsetX), (REAL)(-m_OffsetY));
 		canvas.SetTransform(matrix);
 
 		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
@@ -141,7 +141,8 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 		INT width = (INT)drawBitmap->GetWidth();
 		INT height = (INT)drawBitmap->GetHeight();
 
-		canvas.DrawBitmap(drawBitmap, { 0, 0, width,height }, { 0,0,width,height });
+		const Gdiplus::Rect rect = Gdiplus::Rect(0, 0, width, height);
+		canvas.DrawBitmap(drawBitmap, rect, rect);
 
 		canvas.ResetTransform();
 	}

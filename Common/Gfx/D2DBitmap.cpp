@@ -93,7 +93,7 @@ void D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 	if (FAILED(hr)) return;
 
 
-	for(auto& it : m_Segments)
+	for (auto& it : m_Segments)
 	{
 		auto rect = it.GetRect();
 		if(rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)

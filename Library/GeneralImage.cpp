@@ -49,10 +49,17 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::DisposeImage()
 {
-	delete m_Bitmap;
-	delete m_BitmapProcessed;
-	m_Bitmap = nullptr;
-	m_BitmapProcessed = nullptr;
+	if (m_Bitmap)
+	{
+		delete m_Bitmap;
+		m_Bitmap = nullptr;
+	}
+
+	if (m_BitmapProcessed)
+	{
+		delete m_BitmapProcessed;
+		m_BitmapProcessed = nullptr;
+	}
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
