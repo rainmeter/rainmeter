@@ -170,10 +170,8 @@ if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & 
 :: Sign installer
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
-	:: Sign installer with both SHA-1 and SHA-2 for XP SP3/Vista compatibility. We
-	:: don't actually support those operating systems so the installer will just error
-	:: out.
 	%SIGNTOOL_SHA1% %INSTALLER_NAME% > BuildLog.txt
+	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 	%SIGNTOOL_SHA2% /as %INSTALLER_NAME% > BuildLog.txt
 	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 )
