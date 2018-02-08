@@ -242,8 +242,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		return false;
 	}
 
-	auto& cachePool = ImageCachePool::GetInstance();
-	ImageCacheHandle* handle = cachePool.Get(info);
+	ImageCacheHandle* handle = GetImageCache().Get(info);
 	if (!handle)
 	{
 		auto bitmap = new Gfx::D2DBitmap(imageName);
@@ -251,8 +250,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
 		{
-			cachePool.Put(info, bitmap);
-			handle = cachePool.Get(info);
+			GetImageCache().Put(info, bitmap);
+			handle = GetImageCache().Get(info);
 			if (!handle) return false;
 		}
 		else
