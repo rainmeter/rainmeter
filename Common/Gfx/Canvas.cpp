@@ -635,7 +635,78 @@ void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitm
 	m_Target->SetAntialiasMode(aaMode);
 }
 
-void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
+void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const Gdiplus::Rect& dstRect,
+	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+{
+	if (!bitmap || !maskBitmap) return;
+
+	// Create bitmap brush from original |bitmap|.
+	Microsoft::WRL::ComPtr<ID2D1BitmapBrush> brush;
+	D2D1_BITMAP_BRUSH_PROPERTIES propertiesXClampYClamp = D2D1::BitmapBrushProperties(
+		D2D1_EXTEND_MODE_CLAMP,
+		D2D1_EXTEND_MODE_CLAMP,
+		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+
+	const auto width = bitmap->m_Width;
+	const auto height = bitmap->m_Height;
+
+	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
+	{
+		return D2D1_RECT_F{
+			source.left / width * dst.Width + dst.X,
+			source.top / height * dst.Height + dst.Y,
+			source.right / width * dst.Width + dst.X,
+			source.bottom / height * dst.Height + dst.Y,
+		};
+	};
+	auto aaMode = m_Target->GetAntialiasMode();
+	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
+
+	for (auto bseg : bitmap->m_Segments)
+	{
+		const D2D1_RECT_F& rSeg = bseg.GetRect();
+		const auto rSrc = getRectSubregion(rSeg, srcRect);
+		const auto rDst = getRectSubregion(rSeg, dstRect);
+
+		// "Move" and "scale" the |bitmap| to match the destination.
+		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
+		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
+			D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
+		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
+
+		HRESULT hr = m_Target->CreateBitmapBrush(
+			bseg.GetBitmap(),
+			propertiesXClampYClamp,
+			brushProps,
+			brush.ReleaseAndGetAddressOf());
+		if (FAILED(hr)) return;
+
+		for(auto mseg : maskBitmap->m_Segments)
+		{
+			const D2D1_RECT_F& rmSeg = mseg.GetRect();
+			const auto rmSrc = getRectSubregion(rmSeg, srcRect);
+			const auto rmDst = getRectSubregion(rmSeg, dstRect);
+
+			// If no overlap, don't draw
+			if ((rmDst.left < rDst.left + rDst.right &&
+				rmDst.right + rmDst.left > rDst.left &&
+				rmDst.top > rmDst.top + rmDst.bottom &&
+				rmDst.top + rmDst.bottom < rmDst.top)) continue;
+
+			m_Target->FillOpacityMask(
+				mseg.GetBitmap(),
+				brush.Get(),
+				D2D1_OPACITY_MASK_CONTENT_GRAPHICS,
+				&rDst,
+				&rSrc);
+		}
+	}
+	m_Target->SetAntialiasMode(aaMode);
+
+
+}
+
+	void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	Gdiplus::Color color;
 	brush.GetColor(&color);

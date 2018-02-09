@@ -89,6 +89,8 @@ public:
 	void DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
+	void DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const Gdiplus::Rect& dstRect,
+		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
 
