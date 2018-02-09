@@ -10,11 +10,12 @@
 
 void ImageCache::Update(const ImageOptions& key, Gfx::D2DBitmap* item)
 {
-	if(m_Bitmap)
+	if (m_Bitmap)
 	{
 		delete m_Bitmap;
 		m_Bitmap = nullptr;
 	}
+
 	m_Key = key;
 	m_Bitmap = item;
 }
@@ -56,9 +57,9 @@ void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
 		m_CachePool[key] = new ImageCache(key, item, this);
 		return;
 	}
-	
+
 	// sanity check
-	if(item != nullptr)
+	if (item != nullptr)
 	{
 		m_CachePool[key]->Update(key, item);
 	}
@@ -67,6 +68,8 @@ void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
 void ImageCachePool::Remove(const ImageOptions& item)
 {
 	auto it = m_CachePool.find(item);
+	if (it == m_CachePool.end()) return;
+
 	delete it->second;
 	m_CachePool.erase(it);
 }
