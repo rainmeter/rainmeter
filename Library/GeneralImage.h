@@ -82,6 +82,8 @@ private:
 
 	ImageOptions m_Options;
 
+	std::wstring m_Path;
+
 	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
 	void ApplyTransforms();
 

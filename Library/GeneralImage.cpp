@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "GeneralImage.h"
 #include "Logger.h"
+#include "../Common/PathUtil.h"
 
 using namespace Gdiplus;
 
@@ -64,6 +65,10 @@ void GeneralImage::DisposeImage()
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
+
+	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
+	PathUtil::AppendBackslashIfMissing(m_Path);
+
 	if (!m_DisableTransform)
 	{
 		m_Options.m_Crop.X = m_Options.m_Crop.Y = m_Options.m_Crop.Width = m_Options.m_Crop.Height = -1;
@@ -227,6 +232,16 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
 	if (!m_Skin) return false;
 
+	std::wstring filename = m_Path + imageName;
+	if (m_Skin) m_Skin->MakePathAbsolute(filename);
+
+	// Check extension and if it is missing, add .png
+	size_t pos = filename.rfind(L'\\');
+	if (filename.find(L'.', (pos == std::wstring::npos) ? 0 : pos + 1) == std::wstring::npos)
+	{
+		filename += L".png";
+	}
+
 	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged())
 	{
 		ApplyTransforms();
@@ -234,7 +249,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	}
 
 	ImageOptions info;
-	Gfx::D2DBitmap::GetFileInfo(imageName, &info);
+	Gfx::D2DBitmap::GetFileInfo(filename, &info);
 
 	if (!info.isValid())
 	{
@@ -245,7 +260,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	ImageCacheHandle* handle = GetImageCache().Get(info);
 	if (!handle)
 	{
-		auto bitmap = new Gfx::D2DBitmap(imageName);
+		auto bitmap = new Gfx::D2DBitmap(filename);
 
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
