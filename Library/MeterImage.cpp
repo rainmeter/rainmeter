@@ -253,15 +253,8 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		}
 		else if (m_DrawMode == DRAWMODE_TILE)
 		{
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
-			ImageAttributes imgAttr;
-			imgAttr.SetWrapMode(WrapModeTile);
-
 			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			//graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
-
-			canvas.EndGdiplusContext();
+			canvas.DrawTiledBitmap(drawBitmap, r, Rect(0,0,drawW, drawH));
 		}
 		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{

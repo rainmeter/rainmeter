@@ -593,8 +593,55 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	}
 }
 
+void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
+{
+	auto& segments = bitmap->m_Segments;
+	const auto width = bitmap->m_Width;
+	const auto height = bitmap->m_Height;
+
+	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
+	{
+		return D2D1_RECT_F{
+			source.left / width * dst.Width + dst.X,
+			source.top / height * dst.Height + dst.Y,
+			source.right / width * dst.Width + dst.X,
+			source.bottom / height * dst.Height + dst.Y,
+		};
+	};
+
+	FLOAT x = 0.0f, y = 0.0f;
+	while(x < dstRect.Width || y < dstRect.Height)
+	{
+		FLOAT w = width;
+		if (dstRect.Width - x < width)
+			w = dstRect.Width - x;
+		
+		FLOAT h = height;
+		if (dstRect.Height - y < height)
+			h = dstRect.Height - y;
+
+		auto dst = Gdiplus::Rect(x, y, w, h);
+		auto src = Gdiplus::Rect(0, 0, w, h);
+		for (auto seg : segments)
+		{
+			const D2D1_RECT_F& rSeg = seg.GetRect();
+			const auto rSrc = getRectSubregion(rSeg, src);
+			const auto rDst = getRectSubregion(rSeg, dst);
+			m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
+		}
+
+
+		x += width;
+		if (x >= dstRect.Width && y < dstRect.Height)
+		{
+			x = 0;
+			y += height;
+		}
+	}
+}
+
 void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
-	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
 {
 	auto rDst = Util::ToRectF(dstRect);
 	auto rSrc = Util::ToRectF(srcRect);
