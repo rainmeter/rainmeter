@@ -87,6 +87,7 @@ enum RESIZEMODE
 class Rainmeter;
 class Measure;
 class Meter;
+class GeneralImage;
 
 namespace Gfx {
 class FontCollection;
@@ -331,7 +332,7 @@ private:
 
 	ConfigParser m_Parser;
 
-	Gdiplus::Bitmap* m_Background;
+	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;

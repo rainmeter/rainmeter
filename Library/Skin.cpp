@@ -26,6 +26,7 @@
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
+#include "GeneralImage.h"
 
 using namespace Gdiplus;
 
@@ -2424,12 +2425,18 @@ bool Skin::ResizeWindow(bool reset)
 
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
-		// Load the background
-		TintedImage* tintedBackground = new TintedImage(L"Background");
-		tintedBackground->ReadOptions(m_Parser, L"Rainmeter");
-		tintedBackground->LoadImage(m_BackgroundName, true);
+		if(m_Background == nullptr)
+		{
+			m_Background = new GeneralImage(L"Background", nullptr, false, this);
+		}
 
-		if (!tintedBackground->IsLoaded())
+		// Load the background
+		m_Background->ReadOptions(m_Parser, L"Rainmeter");
+		m_Background->LoadImage(m_BackgroundName);
+
+		auto bitmap = m_Background->GetImage();
+
+		if (!m_Background->IsLoaded())
 		{
 			m_BackgroundSize.cx = 0;
 			m_BackgroundSize.cy = 0;
@@ -2439,11 +2446,9 @@ bool Skin::ResizeWindow(bool reset)
 		}
 		else
 		{
-			Bitmap* tempBackground = tintedBackground->GetImage();
-
 			// Calculate the window dimensions
-			m_BackgroundSize.cx = tempBackground->GetWidth();
-			m_BackgroundSize.cy = tempBackground->GetHeight();
+			m_BackgroundSize.cx = bitmap->GetWidth();
+			m_BackgroundSize.cy = bitmap->GetHeight();
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
@@ -2456,101 +2461,12 @@ bool Skin::ResizeWindow(bool reset)
 				h = max(h, m_BackgroundSize.cy);
 			}
 
-			Bitmap* background = new Bitmap(w, h, PixelFormat32bppPARGB);
-			Graphics graphics(background);
-
-			if (m_BackgroundMode == BGMODE_IMAGE)
-			{
-				Rect r(0, 0, w, h);
-				graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel);
-			}
-			else
-			{
-				// Scale the background to fill the whole window
-				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
-				{
-					const RECT m = m_BackgroundMargins;
-
-					if (m.top > 0)
-					{
-						if (m.left > 0)
-						{
-							// Top-Left
-							Rect r(0, 0, m.left, m.top);
-							graphics.DrawImage(tempBackground, r, 0, 0, m.left, m.top, UnitPixel);
-						}
-
-						// Top
-						Rect r(m.left, 0, w - m.left - m.right, m.top);
-						graphics.DrawImage(tempBackground, r, m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top, UnitPixel);
-
-						if (m.right > 0)
-						{
-							// Top-Right
-							Rect r(w - m.right, 0, m.right, m.top);
-							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, 0, m.right, m.top, UnitPixel);
-						}
-					}
-
-					if (m.left > 0)
-					{
-						// Left
-						Rect r(0, m.top, m.left, h - m.top - m.bottom);
-						graphics.DrawImage(tempBackground, r, 0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-					}
-
-					// Center
-					Rect r(m.left, m.top, w - m.left - m.right, h - m.top - m.bottom);
-					graphics.DrawImage(tempBackground, r, m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-
-					if (m.right > 0)
-					{
-						// Right
-						Rect r(w - m.right, m.top, m.right, h - m.top - m.bottom);
-						graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-					}
-
-					if (m.bottom > 0)
-					{
-						if (m.left > 0)
-						{
-							// Bottom-Left
-							Rect r(0, h - m.bottom, m.left, m.bottom);
-							graphics.DrawImage(tempBackground, r, 0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom, UnitPixel);
-						}
-
-						// Bottom
-						Rect r(m.left, h - m.bottom, w - m.left - m.right, m.bottom);
-						graphics.DrawImage(tempBackground, r, m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom, UnitPixel);
-
-						if (m.right > 0)
-						{
-							// Bottom-Right
-							Rect r(w - m.right, h - m.bottom, m.right, m.bottom);
-							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom, UnitPixel);
-						}
-					}
-				}
-				else
-				{
-					ImageAttributes imgAttr;
-					imgAttr.SetWrapMode(WrapModeTile);
-
-					Rect r(0, 0, w, h);
-					graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel, &imgAttr);
-				}
-			}
-
-			m_Background = background;
-
 			// Get the size form the background bitmap
-			m_WindowW = m_Background->GetWidth();
-			m_WindowH = m_Background->GetHeight();
+			m_WindowW = w;
+			m_WindowH = h;
 
 			WindowToScreen();
 		}
-
-		delete tintedBackground;
 	}
 	else
 	{
@@ -2614,9 +2530,85 @@ void Skin::Redraw()
 	{
 		if (m_Background)
 		{
-			const Rect dst(0, 0, m_WindowW, m_WindowH);
-			const Rect src(0, 0, m_Background->GetWidth(), m_Background->GetHeight());
-			m_Canvas.DrawBitmap(m_Background, dst, src);
+			const auto bitmap = m_Background->GetImage();
+			if (bitmap == nullptr) return;
+			
+			if(m_BackgroundMode == BGMODE_IMAGE)
+			{
+				const Rect dst(0, 0, m_WindowW, m_WindowH);
+				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+				m_Canvas.DrawBitmap(bitmap, dst, src);
+			}
+			else if(m_BackgroundMode == BGMODE_SCALED_IMAGE)
+			{
+				const RECT m = m_BackgroundMargins;
+
+				if (m.top > 0)
+				{
+					if (m.left > 0)
+					{
+						// Top-Left
+						Rect r(0, 0, m.left, m.top);
+						m_Canvas.DrawBitmap(bitmap, r, Rect(0, 0, m.left, m.top));
+					}
+
+					// Top
+					Rect r(m.left, 0, m_WindowW - m.left - m.right, m.top);
+					m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top));
+
+					if (m.right > 0)
+					{
+						// Top-Right
+						Rect r(m_WindowW - m.right, 0, m.right, m.top);
+						m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, 0, m.right, m.top));
+					}
+				}
+
+				if (m.left > 0)
+				{
+					// Left
+					Rect r(0, m.top, m.left, m_WindowH - m.top - m.bottom);
+					m_Canvas.DrawBitmap(bitmap, r, Rect(0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom));
+				}
+
+				// Center
+				Rect r(m.left, m.top, m_WindowW - m.left - m.right, m_WindowH - m.top - m.bottom);
+				m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom));
+
+				if (m.right > 0)
+				{
+					// Right
+					Rect r(m_WindowW - m.right, m.top, m.right, m_WindowH - m.top - m.bottom);
+					m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom));
+				}
+
+				if (m.bottom > 0)
+				{
+					if (m.left > 0)
+					{
+						// Bottom-Left
+						Rect r(0, m_WindowH - m.bottom, m.left, m.bottom);
+						m_Canvas.DrawBitmap(bitmap, r, Rect(0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom));
+					}
+
+					// Bottom
+					Rect r(m.left, m_WindowH - m.bottom, m_WindowW - m.left - m.right, m.bottom);
+					m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom));
+
+					if (m.right > 0)
+					{
+						// Bottom-Right
+						Rect r(m_WindowW - m.right, m_WindowH - m.bottom, m.right, m.bottom);
+						m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom));
+					}
+				}
+			}
+			else if(m_BackgroundMode == BGMODE_TILED_IMAGE)
+			{
+				const Rect dst(0, 0, m_WindowW, m_WindowH);
+				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+				m_Canvas.DrawTiledBitmap(bitmap, dst, src);
+			}
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
