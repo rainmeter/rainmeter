@@ -43,7 +43,7 @@ struct ImageOptions : Gfx::FileInfo
 		}
 
 		return
-			m_Path == other.m_Path &&
+			wcscmp(m_Path.c_str(), other.m_Path.c_str()) == 0 &&
 			m_FileSize == other.m_FileSize &&
 			m_FileTime == other.m_FileTime &&
 			m_Rotate == other.m_Rotate &&

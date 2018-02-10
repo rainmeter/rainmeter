@@ -72,6 +72,9 @@ public:
 
 private:
 
+	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
+	void ApplyTransforms();
+
 	ImageCacheHandle* m_Bitmap;
 	ImageCacheHandle* m_BitmapProcessed;
 	Skin* m_Skin;
@@ -84,14 +87,10 @@ private:
 
 	std::wstring m_Path;
 
-	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
-	void ApplyTransforms();
-
 	static bool CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b);
 
 	static const D2D1_MATRIX_5X4_F c_GreyScaleMatrix;
 	static const D2D1_MATRIX_5X4_F c_IdentityMatrix;
-
 	static const WCHAR* c_DefaultOptionArray[OptionCount];
 };
 
