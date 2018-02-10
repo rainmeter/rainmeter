@@ -89,6 +89,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		const BitmapSegment bmp(d2dbitmap, 0U, 0U, width, height);
 		bitmap->AddSegment(bmp);
 
+		bitmap->SetSize(width, height);
 		return cleanup(S_OK);
 	}
 

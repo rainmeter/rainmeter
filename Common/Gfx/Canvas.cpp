@@ -574,40 +574,54 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	const auto width = bitmap->m_Width;
 	const auto height = bitmap->m_Height;
 
+	auto getIntersection = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& src)
+	{
+		auto rect = D2D1_RECT_F{
+			max(source.left, src.X),
+			max(source.top, src.Y),
+			min(source.right + source.left, src.GetRight()),
+			min(source.bottom + source.top, src.GetBottom())
+		};
+		if(rect.left < rect.right && rect.top < rect.bottom)
+			return rect;
+		return D2D1::RectF();
+	};
+
 	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
 	{
 		return D2D1_RECT_F {
-			source.left / width * dst.Width + dst.X,
-			source.top / height * dst.Height + dst.Y,
-			source.right / width * dst.Width + dst.X,
-			source.bottom / height * dst.Height + dst.Y,
+			(source.left - srcRect.X) / srcRect.Height * dstRect.Width + dstRect.X,
+			(source.top - srcRect.Y) / srcRect.Height * dstRect.Height + dstRect.Y,
+			(source.right - srcRect.X) / srcRect.Width * dstRect.Width + dstRect.X,
+			(source.bottom - srcRect.Y) / srcRect.Height * dstRect.Height + dstRect.Y,
 		};
 	};
 
 	for (auto seg : segments)
 	{
 		const D2D1_RECT_F& rSeg = seg.GetRect();
-		const auto rSrc = getRectSubregion(rSeg, srcRect);
-		const auto rDst = getRectSubregion(rSeg, dstRect);
+		auto rSrc = getIntersection(rSeg, srcRect);
+		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
+		const auto rDst = getRectSubregion(rSrc, dstRect);
+		while(rSrc.top >= m_MaxBitmapSize)
+		{
+			rSrc.bottom -= m_MaxBitmapSize;
+			rSrc.top -= m_MaxBitmapSize;
+		}
+		while (rSrc.left >= m_MaxBitmapSize)
+		{
+			rSrc.right -= m_MaxBitmapSize;
+			rSrc.left -= m_MaxBitmapSize;
+		}
 		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
+
 	}
 }
 
 void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
-	auto& segments = bitmap->m_Segments;
 	const auto width = bitmap->m_Width;
 	const auto height = bitmap->m_Height;
-
-	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
-	{
-		return D2D1_RECT_F{
-			source.left / width * dst.Width + dst.X,
-			source.top / height * dst.Height + dst.Y,
-			source.right / width * dst.Width + dst.X,
-			source.bottom / height * dst.Height + dst.Y,
-		};
-	};
 
 	FLOAT x = 0.0f, y = 0.0f;
 	while(x < dstRect.Width || y < dstRect.Height)
@@ -620,16 +634,9 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRe
 		if (dstRect.Height - y < height)
 			h = dstRect.Height - y;
 
-		auto dst = Gdiplus::Rect(x, y, w, h);
-		auto src = Gdiplus::Rect(0, 0, w, h);
-		for (auto seg : segments)
-		{
-			const D2D1_RECT_F& rSeg = seg.GetRect();
-			const auto rSrc = getRectSubregion(rSeg, src);
-			const auto rDst = getRectSubregion(rSeg, dst);
-			m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
-		}
-
+		const auto dst = Gdiplus::Rect(x, y, w, h);
+		const auto src = Gdiplus::Rect(0, 0, w, h);
+		DrawBitmap(bitmap, dst, src);
 
 		x += width;
 		if (x >= dstRect.Width && y < dstRect.Height)

@@ -137,8 +137,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 			D2D1_RECT_U rect = D2D1::RectU(
 				(x * maxBitmapSize),
 				(y * maxBitmapSize),
-				(x == W ? ((UINT)size.width - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
-				(y == H ? ((UINT)size.height - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
+				(x == W ? ((UINT)m_BaseImage->GetWidth() - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
+				(y == H ? ((UINT)m_BaseImage->GetHeight() - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
 			HRESULT hr = canvas.m_Target->CreateBitmap(
@@ -158,8 +158,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 			canvas.m_Target->SetTarget(bitmap.Get());
 			canvas.m_Target->Clear();
 
-			FLOAT x2 = 0.0f;
-			FLOAT y2 = 0.0f;
+			FLOAT x2 = -(FLOAT)rect.left;
+			FLOAT y2 = -(FLOAT)rect.top;
 
 			for (size_t i = 0; i < m_Effects.size(); ++i)
 			{
@@ -178,9 +178,10 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 				canvas.m_Target->DrawImage(effect.Get(), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR); // We don't do any scaling with this image, so use the simplest interpolation
 
 				x2 += rect.right;
-				if (m_BaseImage->GetWidth() == (it.GetX() + it.GetY())) // only increment y if end of row
+				if (m_BaseImage->GetWidth() >= (it.GetX() + it.GetY())) // only increment y if end of row
 				{
 					y2 += rect.bottom;
+					x2 = 0;
 				}
 			}
 
@@ -200,8 +201,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 {
 	D2D1_SIZE_F size = { 0 };
-	for (const auto& effect : m_Effects)
+
+	UINT prevY = 0.0f;
+	bool first = true;
+	for(int i = 0; i < m_Effects.size(); ++i)
 	{
+		const auto& effect = m_Effects[i];
+		auto& segment = m_BaseImage->m_Segments[i];
+
 		Microsoft::WRL::ComPtr<ID2D1Image> image;
 		effect->GetOutput(image.GetAddressOf());
 
@@ -209,8 +216,25 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 		HRESULT hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
 		if (FAILED(hr)) return D2D1::SizeF();
 
-		size.width += rect.right;
-		size.height += rect.bottom;
+		if(first)
+		{
+			size.height = rect.bottom;
+			size.width = rect.right;
+			first = false;
+			continue;
+		}
+
+		const UINT y = segment.GetY();
+		
+		if(y != prevY)
+		{
+			prevY = y;
+			size.height += rect.bottom;
+		}
+		else
+		{
+			size.width += rect.right;
+		}
 	}
 
 	return size;
