@@ -243,7 +243,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Gdiplus::Rect(cropX, cropY, cropW, cropH));
+			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Rect(cropX, cropY, cropW, cropH));
 		}
 
 		else if (drawW == imageW && drawH == imageH &&

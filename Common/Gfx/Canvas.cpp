@@ -563,32 +563,25 @@ void Canvas::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap = ConvertBitmap(bitmap);
 	if (!d2dBitmap) return;
 
-	auto rDst = Util::ToRectF(dstRect);
-	auto rSrc = Util::ToRectF(srcRect);
+	const auto rDst = Util::ToRectF(dstRect);
+	const auto rSrc = Util::ToRectF(srcRect);
 	m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
 }
 
 void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
 	auto& segments = bitmap->m_Segments;
-	const auto width = bitmap->m_Width;
-	const auto height = bitmap->m_Height;
+	const FLOAT width = (FLOAT)bitmap->m_Width;
+	const FLOAT height = (FLOAT)bitmap->m_Height;
 
-	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
-	{
-		return D2D1_RECT_F {
-			source.left / width * dst.Width + dst.X,
-			source.top / height * dst.Height + dst.Y,
-			source.right / width * dst.Width + dst.X,
-			source.bottom / height * dst.Height + dst.Y,
-		};
-	};
+	const auto tDst = Util::ToRectF(dstRect);
+	const auto tSrc = Util::ToRectF(srcRect);
 
 	for (auto seg : segments)
 	{
-		const D2D1_RECT_F& rSeg = seg.GetRect();
-		const auto rSrc = getRectSubregion(rSeg, srcRect);
-		const auto rDst = getRectSubregion(rSeg, dstRect);
+		const auto rSeg = seg.GetRect();
+		const auto rDst = Util::GetRectSubRegion(width, height, rSeg, tDst);
+		const auto rSrc = Util::GetRectSubRegion(width, height, rSeg, tSrc);
 		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
 	}
 }
@@ -596,55 +589,44 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
 	auto& segments = bitmap->m_Segments;
-	const auto width = bitmap->m_Width;
-	const auto height = bitmap->m_Height;
+	const FLOAT width = (FLOAT)bitmap->m_Width;
+	const FLOAT height = (FLOAT)bitmap->m_Height;
 
-	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
+	const auto tDst = Util::ToRectF(dstRect);
+	const auto tSrc = Util::ToRectF(srcRect);
+
+	FLOAT x = 0.0f;
+	FLOAT y = 0.0f;
+
+	while (x < tDst.right || y < tDst.bottom)
 	{
-		return D2D1_RECT_F{
-			source.left / width * dst.Width + dst.X,
-			source.top / height * dst.Height + dst.Y,
-			source.right / width * dst.Width + dst.X,
-			source.bottom / height * dst.Height + dst.Y,
-		};
-	};
+		const FLOAT w = ((tDst.right - x) < width) ? (tDst.right - x) : width;
+		const FLOAT h = ((tDst.bottom - y) < height) ? (tDst.bottom - y) : height;
+		const auto dst = D2D1::RectF(x, y, w, h);
+		const auto src = D2D1::RectF(0.0f, 0.0f, w, h);
 
-	FLOAT x = 0.0f, y = 0.0f;
-	while(x < dstRect.Width || y < dstRect.Height)
-	{
-		FLOAT w = width;
-		if (dstRect.Width - x < width)
-			w = dstRect.Width - x;
-		
-		FLOAT h = height;
-		if (dstRect.Height - y < height)
-			h = dstRect.Height - y;
-
-		auto dst = Gdiplus::Rect(x, y, w, h);
-		auto src = Gdiplus::Rect(0, 0, w, h);
 		for (auto seg : segments)
 		{
-			const D2D1_RECT_F& rSeg = seg.GetRect();
-			const auto rSrc = getRectSubregion(rSeg, src);
-			const auto rDst = getRectSubregion(rSeg, dst);
+			const auto rSeg = seg.GetRect();
+			const auto rDst = Util::GetRectSubRegion(width, height, rSeg, dst);
+			const auto rSrc = Util::GetRectSubRegion(width, height, rSeg, src);
 			m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
 		}
 
-
 		x += width;
-		if (x >= dstRect.Width && y < dstRect.Height)
+		if (x >= tDst.right && y < tDst.bottom)
 		{
-			x = 0;
+			x = 0.0f;
 			y += height;
 		}
 	}
 }
 
 void Canvas::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
-const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
 {
-	auto rDst = Util::ToRectF(dstRect);
-	auto rSrc = Util::ToRectF(srcRect);
+	const auto rDst = Util::ToRectF(dstRect);
+	const auto rSrc = Util::ToRectF(srcRect);
 
 	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap = ConvertBitmap(bitmap);
 	Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dMaskBitmap = ConvertBitmap(maskBitmap);
@@ -661,8 +643,8 @@ const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
 	// "Move" and "scale" the |bitmap| to match the destination.
 	D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
 	D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
-		D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
-	D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
+		D2D1::SizeF((rDst.right - rDst.left) / (FLOAT)srcRect2.Width, (rDst.bottom - rDst.top) / (FLOAT)srcRect2.Height));
+	D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0f, scale * translate);
 
 	HRESULT hr = m_Target->CreateBitmapBrush(
 		d2dBitmap.Get(),
@@ -671,7 +653,7 @@ const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
 		brush.GetAddressOf());
 	if (FAILED(hr)) return;
 
-	auto aaMode = m_Target->GetAntialiasMode();
+	const auto aaMode = m_Target->GetAntialiasMode();
 	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
 	m_Target->FillOpacityMask(
 		d2dMaskBitmap.Get(),
@@ -694,32 +676,25 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 		D2D1_EXTEND_MODE_CLAMP,
 		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
-	const auto width = bitmap->m_Width;
-	const auto height = bitmap->m_Height;
+	const FLOAT width = (FLOAT)bitmap->m_Width;
+	const FLOAT height = (FLOAT)bitmap->m_Height;
+	const auto tDst = Util::ToRectF(dstRect);
+	const auto tSrc = Util::ToRectF(srcRect);
 
-	auto getRectSubregion = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
-	{
-		return D2D1_RECT_F{
-			source.left / width * dst.Width + dst.X,
-			source.top / height * dst.Height + dst.Y,
-			source.right / width * dst.Width + dst.X,
-			source.bottom / height * dst.Height + dst.Y,
-		};
-	};
-	auto aaMode = m_Target->GetAntialiasMode();
+	const auto aaMode = m_Target->GetAntialiasMode();
 	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
 
 	for (auto bseg : bitmap->m_Segments)
 	{
-		const D2D1_RECT_F& rSeg = bseg.GetRect();
-		const auto rSrc = getRectSubregion(rSeg, srcRect);
-		const auto rDst = getRectSubregion(rSeg, dstRect);
+		const auto rSeg = bseg.GetRect();
+		const auto rDst = Util::GetRectSubRegion(width, height, rSeg, tDst);
+		const auto rSrc = Util::GetRectSubRegion(width, height, rSeg, tSrc);
 
 		// "Move" and "scale" the |bitmap| to match the destination.
 		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
 		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
-			D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
-		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
+			D2D1::SizeF((rDst.right - rDst.left) / (FLOAT)srcRect2.Width, (rDst.bottom - rDst.top) / (FLOAT)srcRect2.Height));
+		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0f, scale * translate);
 
 		HRESULT hr = m_Target->CreateBitmapBrush(
 			bseg.GetBitmap(),
@@ -728,11 +703,11 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			brush.ReleaseAndGetAddressOf());
 		if (FAILED(hr)) return;
 
-		for(auto mseg : maskBitmap->m_Segments)
+		for (auto mseg : maskBitmap->m_Segments)
 		{
-			const D2D1_RECT_F& rmSeg = mseg.GetRect();
-			const auto rmSrc = getRectSubregion(rmSeg, srcRect);
-			const auto rmDst = getRectSubregion(rmSeg, dstRect);
+			const auto rmSeg = mseg.GetRect();
+			const auto rmDst = Util::GetRectSubRegion(width, height, rmSeg, tDst);
+			const auto rmSrc = Util::GetRectSubRegion(width, height, rmSeg, tSrc);
 
 			// If no overlap, don't draw
 			if ((rmDst.left < rDst.left + rDst.right &&
@@ -748,12 +723,11 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 				&rSrc);
 		}
 	}
+
 	m_Target->SetAntialiasMode(aaMode);
-
-
 }
 
-	void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
+void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	Gdiplus::Color color;
 	brush.GetColor(&color);

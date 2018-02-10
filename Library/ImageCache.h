@@ -18,42 +18,38 @@ class ImageCachePool;
 
 namespace std {
 
-template <>
-struct hash<ImageOptions>
+template <> struct hash<ImageOptions>
 {
-	std::size_t operator()(const ImageOptions& k) const
+	std::size_t operator()(const ImageOptions& opt) const noexcept
 	{
-		using std::size_t;
-		using std::hash;
-		using std::string;
-
 		size_t res = 17;
 
-		res = res * 31 + hash<std::wstring>()(k.m_Path);
-		res = res * 31 + hash<DWORD>()(k.m_FileSize);
-		res = res * 31 + hash<ULONGLONG>()(k.m_FileTime);
-		res = res * 31 + hash<FLOAT>()(k.m_Rotate);
-		res = res * 31 + hash<INT>()(k.m_Crop.X);
-		res = res * 31 + hash<INT>()(k.m_Crop.Y);
-		res = res * 31 + hash<INT>()(k.m_Crop.Width);
-		res = res * 31 + hash<INT>()(k.m_Crop.Height);
-		res = res * 31 + hash<INT>()((INT)k.m_CropMode);
-		res = res * 31 + hash<INT>()((INT)k.m_Flip);
-		res = res * 31 + hash<bool>()(k.m_GreyScale);
-		res = res * 31 + hash<bool>()(k.m_UseExifOrientation);
+		res = res * 31 + std::hash<std::wstring>()(opt.m_Path);
+		res = res * 31 + std::hash<DWORD>()(opt.m_FileSize);
+		res = res * 31 + std::hash<ULONGLONG>()(opt.m_FileTime);
+		res = res * 31 + std::hash<FLOAT>()(opt.m_Rotate);
+		res = res * 31 + std::hash<INT>()(opt.m_Crop.X);
+		res = res * 31 + std::hash<INT>()(opt.m_Crop.Y);
+		res = res * 31 + std::hash<INT>()(opt.m_Crop.Width);
+		res = res * 31 + std::hash<INT>()(opt.m_Crop.Height);
+		res = res * 31 + std::hash<INT>()((INT)opt.m_CropMode);
+		res = res * 31 + std::hash<INT>()((INT)opt.m_Flip);
+		res = res * 31 + std::hash<bool>()(opt.m_GreyScale);
+		res = res * 31 + std::hash<bool>()(opt.m_UseExifOrientation);
 
 		for (int i = 0; i < 5; ++i)
 		{
 			for (int j = 0; j < 4; ++j)
 			{
-				res = res * 31 + hash<FLOAT>()(k.m_ColorMatrix.m[i][j]);
+				res = res * 31 + std::hash<FLOAT>()(opt.m_ColorMatrix.m[i][j]);
 			}
 		}
 
 		return res;
 	}
 };
-}
+
+}  // namespace std
 
 struct ImageCache
 {

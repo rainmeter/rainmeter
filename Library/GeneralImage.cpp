@@ -65,7 +65,6 @@ void GeneralImage::DisposeImage()
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
-
 	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
 	PathUtil::AppendBackslashIfMissing(m_Path);
 
@@ -233,7 +232,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	if (!m_Skin) return false;
 
 	std::wstring filename = m_Path + imageName;
-	if (m_Skin) m_Skin->MakePathAbsolute(filename);
+	m_Skin->MakePathAbsolute(filename);
 
 	// Check extension and if it is missing, add .png
 	size_t pos = filename.rfind(L'\\');
