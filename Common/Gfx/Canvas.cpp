@@ -764,6 +764,53 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 	}
 }
 
+void Canvas::FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& color1, const Gdiplus::Color& color2, const FLOAT& angle)
+{
+	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
+		rect.X, rect.Y, rect.Width, rect.Height);
+	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
+		rect.X, rect.Y, rect.Width, rect.Height);
+
+	ID2D1GradientStopCollection *pGradientStops = NULL;
+
+	D2D1_GRADIENT_STOP gradientStops[2];
+	gradientStops[0].color = Util::ToColorF(color1);
+	gradientStops[0].position = 0.0f;
+	gradientStops[1].color = Util::ToColorF(color2);
+	gradientStops[1].position = 1.0f;
+
+	HRESULT hr = m_Target->CreateGradientStopCollection(
+		gradientStops,
+		2,
+		D2D1_GAMMA_2_2,
+		D2D1_EXTEND_MODE_CLAMP,
+		&pGradientStops
+	);
+
+	if (FAILED(hr)) return;
+
+	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
+	hr = m_Target->CreateLinearGradientBrush(
+		D2D1::LinearGradientBrushProperties(start, end),
+		pGradientStops,
+		linear.GetAddressOf());
+
+	if (SUCCEEDED(hr))
+	{
+		m_Target->FillRectangle(Util::ToRectF(rect), linear.Get());
+	}
+}
+
+void Canvas::DrawLine(const Gdiplus::Color& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
+{
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);
+	}
+}
+
 void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 {
 	D2D1_MATRIX_3X2_F worldTransform;

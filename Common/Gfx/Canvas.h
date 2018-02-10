@@ -62,7 +62,7 @@ public:
 
 	HDC GetDC();
 	void ReleaseDC();
-	
+
 	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
 	TextFormat* CreateTextFormat() { return new TextFormatD2D(); }
 
@@ -94,6 +94,9 @@ public:
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
+	void FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& color1, const Gdiplus::Color& color2, const FLOAT& angle);
+
+	void DrawLine(const Gdiplus::Color& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth = 1.0f);
 
 	void DrawGeometry(Shape& shape, int x, int y);
 

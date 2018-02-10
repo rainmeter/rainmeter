@@ -2629,10 +2629,7 @@ void Skin::Redraw()
 				}
 				else
 				{
-					Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
-					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-					graphics.FillRectangle(&gradient, r);
-					m_Canvas.EndGdiplusContext();
+					m_Canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, m_SolidAngle);
 				}
 			}
 
@@ -2647,12 +2644,7 @@ void Skin::Redraw()
 					darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
 				}
 
-				Pen light(lightColor);
-				Pen dark(darkColor);
-
-				Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
-				Meter::DrawBevel(graphics, r, light, dark);
-				m_Canvas.EndGdiplusContext();
+				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
 			}
 		}
 

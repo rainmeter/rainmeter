@@ -76,7 +76,7 @@ public:
 
 	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
 	
-	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);
+	static void DrawBevel(Gfx::Canvas& canvas, const Gdiplus::Rect& rect, const Gdiplus::Color& light, const Gdiplus::Color& dark);
 
 protected:
 

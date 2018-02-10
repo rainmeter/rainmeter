@@ -680,30 +680,12 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 		}
 		else
 		{
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
-			if (!m_AntiAlias)
-			{
-				// Fix the tiling issue in some GradientAngle values
-				graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
-			}
-
-			LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-			graphics.FillRectangle(&gradient, r);
-
-			if (!m_AntiAlias)
-			{
-				graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
-			}
-
-			canvas.EndGdiplusContext();
+			canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, (FLOAT)m_SolidAngle);
 		}
 	}
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
-		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
 		int x = GetX();
 		int y = GetY();
 
@@ -716,14 +698,9 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 			darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
 		}
 
-		Pen light(lightColor);
-		Pen dark(darkColor);
-
 		// The bevel is drawn outside the meter
 		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);
-		DrawBevel(graphics, rect, light, dark);
-
-		canvas.EndGdiplusContext();
+		DrawBevel(canvas, rect, lightColor, darkColor);
 	}
 
 	return true;
@@ -732,19 +709,19 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 /*
 ** Draws a bevel inside the given area
 */
-void Meter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)
+void Meter::DrawBevel(Gfx::Canvas& canvas, const Rect& rect, const Color& light, const Color& dark)
 {
 	int l = rect.GetLeft();
 	int r = rect.GetRight() - 1;
 	int t = rect.GetTop();
 	int b = rect.GetBottom() - 1;
 
-	graphics.DrawLine(&light, l,     t,     l,     b);
-	graphics.DrawLine(&light, l,     t,     r,     t);
-	graphics.DrawLine(&light, l + 1, t + 1, l + 1, b - 1);
-	graphics.DrawLine(&light, l + 1, t + 1, r - 1, t + 1);
-	graphics.DrawLine(&dark,  l,     b,     r,     b);
-	graphics.DrawLine(&dark,  r,     t,     r,     b);
-	graphics.DrawLine(&dark,  l + 1, b - 1, r - 1, b - 1);
-	graphics.DrawLine(&dark,  r - 1, t + 1, r - 1, b - 1);
+	canvas.DrawLine(light, l,     t,     l,     b, 2.0f);
+	canvas.DrawLine(light, l,     t,     r,     t, 2.0f);
+	canvas.DrawLine(light, l + 1, t + 1, l + 1, b - 1, 2.0f);
+	canvas.DrawLine(light, l + 1, t + 1, r - 1, t + 1, 2.0f);
+	canvas.DrawLine(dark,  l,     b,     r,     b, 2.0f);
+	canvas.DrawLine(dark,  r,     t,     r,     b, 2.0f);
+	canvas.DrawLine(dark,  l + 1, b - 1, r - 1, b - 1, 2.0f);
+	canvas.DrawLine(dark,  r - 1, t + 1, r - 1, b - 1, 2.0f);
 }
