@@ -14,9 +14,9 @@
 
 using namespace Gdiplus;
 
-TintedImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
-TintedImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
-TintedImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
+GeneralImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
+GeneralImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
+GeneralImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
 
 MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_PrimaryColor(Color::Green),
@@ -28,9 +28,6 @@ MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, skin),
 	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, skin),
 	m_OverlapImage(L"BothImage", c_BothOptionArray, false, skin),
-	m_PrimaryNeedsReload(false),
-	m_SecondaryNeedsReload(false),
-	m_OverlapNeedsReload(false),
 	m_PrimaryValues(),
 	m_SecondaryValues(),
 	m_MaxPrimaryValue(1.0),
@@ -110,13 +107,13 @@ void MeterHistogram::Initialize()
 		// Load the bitmaps if defined
 		if (!m_PrimaryImageName.empty())
 		{
-			m_PrimaryImage.LoadImage(m_PrimaryImageName, m_PrimaryNeedsReload);
+			m_PrimaryImage.LoadImage(m_PrimaryImageName);
 
 			if (m_PrimaryImage.IsLoaded())
 			{
 				int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-				Bitmap* bitmap = m_PrimaryImage.GetImage();
+				Gfx::D2DBitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
@@ -138,7 +135,7 @@ void MeterHistogram::Initialize()
 
 		if (!m_SecondaryImageName.empty())
 		{
-			m_SecondaryImage.LoadImage(m_SecondaryImageName, m_SecondaryNeedsReload);
+			m_SecondaryImage.LoadImage(m_SecondaryImageName);
 		}
 		else if (m_SecondaryImage.IsLoaded())
 		{
@@ -147,7 +144,7 @@ void MeterHistogram::Initialize()
 
 		if (!m_OverlapImageName.empty())
 		{
-			m_OverlapImage.LoadImage(m_OverlapImageName, m_OverlapNeedsReload);
+			m_OverlapImage.LoadImage(m_OverlapImageName);
 		}
 		else if (m_OverlapImage.IsLoaded())
 		{
@@ -178,9 +175,6 @@ void MeterHistogram::Initialize()
 void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
-	std::wstring oldPrimaryImageName = m_PrimaryImageName;
-	std::wstring oldSecondaryImageName = m_SecondaryImageName;
-	std::wstring oldBothImageName = m_OverlapImageName;
 	int oldW = m_W;
 	int oldH = m_H;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
@@ -197,10 +191,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
-	else
-	{
-		m_PrimaryImage.ClearOptionFlags();
-	}
 
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
@@ -208,20 +198,12 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
-	else
-	{
-		m_SecondaryImage.ClearOptionFlags();
-	}
 
 	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
 	if (!m_OverlapImageName.empty())
 	{
 		// Read tinting options
 		m_OverlapImage.ReadOptions(parser, section);
-	}
-	else
-	{
-		m_OverlapImage.ClearOptionFlags();
 	}
 
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
@@ -273,21 +255,11 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_W = oldW;
 			m_H = oldH;
 
-			m_PrimaryNeedsReload = (wcscmp(oldPrimaryImageName.c_str(), m_PrimaryImageName.c_str()) != 0);
-			m_SecondaryNeedsReload = (wcscmp(oldSecondaryImageName.c_str(), m_SecondaryImageName.c_str()) != 0);
-			m_OverlapNeedsReload = (wcscmp(oldBothImageName.c_str(), m_OverlapImageName.c_str()) != 0);
 			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
 
-			if (m_PrimaryNeedsReload ||
-				m_SecondaryNeedsReload ||
-				m_OverlapNeedsReload ||
-				m_PrimaryImage.IsOptionsChanged() ||
-				m_SecondaryImage.IsOptionsChanged() ||
-				m_OverlapImage.IsOptionsChanged())
-			{
-				Initialize();  // Reload the image
-			}
-			else if (m_SizeChanged)
+			Initialize();  // Reload the image
+			
+			if (m_SizeChanged)
 			{
 				CreateBuffer();
 			}
@@ -410,9 +382,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	applyStyles(secondaryPath, m_SecondaryColor);
 	applyStyles(bothPath, m_OverlapColor);
 
-	Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
-	Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
-	Bitmap* bothBitmap = m_OverlapImage.GetImage();
+	Gfx::D2DBitmap* primaryBitmap = m_PrimaryImage.GetImage();
+	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
+	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
 
 	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
@@ -582,12 +554,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	if (primaryBitmap)
 	{
 		const Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
+		const Rect src(0, 0, r.Width, r.Height);
 
-		//canvas.PushClip(&primaryPath);
-		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-		graphics.DrawImage(primaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
-		canvas.EndGdiplusContext();
-		//canvas.PopClip();
+		canvas.PushClip(&primaryPath);
+		canvas.DrawBitmap(primaryBitmap, r, src);
+		canvas.PopClip();
 	}
 	else
 	{
@@ -600,12 +571,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		if (secondaryBitmap)
 		{
 			const Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
+			const Rect src(0, 0, r.Width, r.Height);
 
-			//canvas.PushClip(&secondaryPath);
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-			graphics.DrawImage(secondaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
-			canvas.EndGdiplusContext();
-			//canvas.PopClip();
+			canvas.PushClip(&secondaryPath);
+			canvas.DrawBitmap(secondaryBitmap, r, src);
+			canvas.PopClip();
 		}
 		else
 		{
@@ -616,12 +586,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		if (bothBitmap)
 		{
 			const Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
+			const Rect src(0, 0, r.Width, r.Height);
 
-			//canvas.PushClip(&bothPath);
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-			graphics.DrawImage(bothBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
-			canvas.EndGdiplusContext();
-			//canvas.PopClip();
+			canvas.PushClip(&bothPath);
+			canvas.DrawBitmap(bothBitmap, r, src);
+			canvas.PopClip();
 		}
 		else
 		{
