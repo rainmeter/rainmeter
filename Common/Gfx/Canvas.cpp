@@ -626,21 +626,21 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRe
 	const auto tDst = Util::ToRectF(dstRect);
 	const auto tSrc = Util::ToRectF(srcRect);
 
-	FLOAT x = 0.0f;
-	FLOAT y = 0.0f;
+	FLOAT x = (FLOAT)dstRect.X;
+	FLOAT y = (FLOAT)dstRect.Y;
 	while(x < tDst.right || y < tDst.bottom)
 	{
-		const FLOAT w = ((tDst.right - x) < width) ? (tDst.right - x) : width;
-		const FLOAT h = ((tDst.bottom - y) < height) ? (tDst.bottom - y) : height;
+		const FLOAT w = ((tDst.right - x) > width) ? width : (tDst.right - x);
+		const FLOAT h = ((tDst.bottom - y) > height) ? height : (tDst.bottom - y);
 
 		const auto dst = Gdiplus::Rect(x, y, w, h);
-		const auto src = Gdiplus::Rect(0, 0, w, h);
+		auto src = Gdiplus::Rect(0, 0, w, h);
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
 		if (x >= tDst.right && y < tDst.bottom)
 		{
-			x = 0.0f;
+			x = (FLOAT)dstRect.X;
 			y += height;
 		}
 	}
