@@ -241,7 +241,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		filename += L".png";
 	}
 
-	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged())
+	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;

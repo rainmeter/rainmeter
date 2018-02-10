@@ -70,7 +70,7 @@ public:
 	ULONGLONG GetFileTime() { return m_FileTime; }
 	void SetFileTime(const ULONGLONG& fileTime) { m_FileTime= fileTime; }
 
-	bool HasFileChanged();
+	bool HasFileChanged(const std::wstring& file);
 
 	std::wstring& GetPath() { return m_Path; }
 

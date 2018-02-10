@@ -123,13 +123,12 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	return cleanup(S_OK);
 }
 
-bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap)
+bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file)
 {
-	std::wstring& path = bitmap->GetPath();
-	if (path.empty()) return true;
+	if (file.empty() || file != bitmap->GetPath()) return true;
 
 	HANDLE fileHandle = CreateFile(
-		path.c_str(),
+		file.c_str(),
 		GENERIC_READ, FILE_SHARE_READ,
 		nullptr,
 		OPEN_EXISTING,

@@ -60,9 +60,9 @@ void D2DBitmap::AddSegment(const BitmapSegment& segment)
 	m_Segments.emplace_back(segment);
 }
 
-bool D2DBitmap::HasFileChanged()
+bool D2DBitmap::HasFileChanged(const std::wstring& file)
 {
-	return Util::D2DBitmapLoader::HasFileChanged(this);
+	return Util::D2DBitmapLoader::HasFileChanged(this, file);
 }
 
 HRESULT D2DBitmap::Load(const Canvas& canvas)
