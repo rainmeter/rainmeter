@@ -261,9 +261,6 @@ void Skin::Initialize()
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
-	MARGINS margins = { -1 };
-	DwmExtendFrameIntoClientArea(m_Window, &margins);
-
 	if (!m_Canvas.InitializeRenderTarget(m_Window))
 	{
 		LogErrorF(this, L"Could not intialize the render target.");
@@ -284,9 +281,6 @@ void Skin::Initialize()
 			FadeWindow(0, m_AlphaValue);
 		}
 	}
-
-	// Do a redraw for fade effect to work properly
-	Redraw();
 }
 
 /*
@@ -2673,6 +2667,8 @@ void Skin::Redraw()
 		}
 	}
 
+	UpdateWindow(m_TransparencyValue, true);
+
 	m_Canvas.EndDraw();
 }
 
@@ -2838,12 +2834,41 @@ void Skin::Update(bool refresh)
 }
 
 /*
+** Updates the window contents
+**
+*/
+void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
+{
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
+	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
+	POINT ptSrc = {0, 0};
+	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
+
+	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
+
+	HDC dcMemory = m_Canvas.GetDC();
+	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
+	{
+		// Retry after resetting WS_EX_LAYERED flag.
+		RemoveWindowExStyle(WS_EX_LAYERED);
+		AddWindowExStyle(WS_EX_LAYERED);
+		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+	}
+	m_Canvas.ReleaseDC();
+
+	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
+
+	m_TransparencyValue = alpha;
+}
+
+/*
 ** Updates the window transparency (using existing contents).
 **
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
-	SetLayeredWindowAttributes(m_Window, 0, alpha, LWA_ALPHA);
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
+	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
 
