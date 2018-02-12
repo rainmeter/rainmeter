@@ -711,17 +711,17 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 */
 void Meter::DrawBevel(Gfx::Canvas& canvas, const Rect& rect, const Color& light, const Color& dark)
 {
-	int l = rect.GetLeft();
-	int r = rect.GetRight() - 1;
-	int t = rect.GetTop();
-	int b = rect.GetBottom() - 1;
+	FLOAT l = (FLOAT)rect.GetLeft();
+	FLOAT r = (FLOAT)rect.GetRight() - 1;
+	FLOAT t = (FLOAT)rect.GetTop();
+	FLOAT b = (FLOAT)rect.GetBottom() - 1;
 
-	canvas.DrawLine(light, l,     t,     l,     b, 2.0f);
-	canvas.DrawLine(light, l,     t,     r,     t, 2.0f);
-	canvas.DrawLine(light, l + 1, t + 1, l + 1, b - 1, 2.0f);
-	canvas.DrawLine(light, l + 1, t + 1, r - 1, t + 1, 2.0f);
-	canvas.DrawLine(dark,  l,     b,     r,     b, 2.0f);
-	canvas.DrawLine(dark,  r,     t,     r,     b, 2.0f);
-	canvas.DrawLine(dark,  l + 1, b - 1, r - 1, b - 1, 2.0f);
-	canvas.DrawLine(dark,  r - 1, t + 1, r - 1, b - 1, 2.0f);
+	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
+	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);
+	canvas.DrawLine(light, l + 1.0f, t + 1.0f, l + 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(light, l + 1.0f, t + 1.0f, r - 1.0f, t + 1.0f, 2.0f);
+	canvas.DrawLine(dark,  l,        b,        r,        b,        2.0f);
+	canvas.DrawLine(dark,  r,        t,        r,        b,        2.0f);
+	canvas.DrawLine(dark,  l + 1.0f, b - 1.0f, r - 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(dark,  r - 1.0f, t + 1.0f, r - 1.0f, b - 1.0f, 2.0f);
 }

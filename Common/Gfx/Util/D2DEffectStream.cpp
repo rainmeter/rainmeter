@@ -202,9 +202,9 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 {
 	D2D1_SIZE_F size = { 0 };
 
-	UINT prevY = 0.0f;
+	UINT prevY = 0u;
 	bool first = true;
-	for(int i = 0; i < m_Effects.size(); ++i)
+	for(size_t i = 0; i < m_Effects.size(); ++i)
 	{
 		const auto& effect = m_Effects[i];
 		auto& segment = m_BaseImage->m_Segments[i];

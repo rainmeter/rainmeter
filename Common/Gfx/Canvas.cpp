@@ -620,8 +620,8 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 
 void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
-	const FLOAT width = bitmap->m_Width;
-	const FLOAT height = bitmap->m_Height;
+	const FLOAT width = (FLOAT)bitmap->m_Width;
+	const FLOAT height = (FLOAT)bitmap->m_Height;
 
 	const auto tDst = Util::ToRectF(dstRect);
 	const auto tSrc = Util::ToRectF(srcRect);
@@ -630,11 +630,11 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRe
 	FLOAT y = (FLOAT)dstRect.Y;
 	while(x < tDst.right || y < tDst.bottom)
 	{
-		const FLOAT w = ((tDst.right - x) > width) ? width : (tDst.right - x);
-		const FLOAT h = ((tDst.bottom - y) > height) ? height : (tDst.bottom - y);
+		const FLOAT w = tDst.right - x > width ? width : tDst.right - x;
+		const FLOAT h = tDst.bottom - y > height ? height : tDst.bottom - y;
 
-		const auto dst = Gdiplus::Rect(x, y, w, h);
-		auto src = Gdiplus::Rect(0, 0, w, h);
+		const auto dst = Gdiplus::Rect((INT)x, (INT)y, (INT)w, (INT)h);
+		auto src = Gdiplus::Rect(0, 0, (INT)w, (INT)h);
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
@@ -767,9 +767,9 @@ void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush
 void Canvas::FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& color1, const Gdiplus::Color& color2, const FLOAT& angle)
 {
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
-		rect.X, rect.Y, rect.Width, rect.Height);
+		(FLOAT)rect.X, (FLOAT)rect.Y, (FLOAT)rect.Width, (FLOAT)rect.Height);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
-		rect.X, rect.Y, rect.Width, rect.Height);
+		(FLOAT)rect.X, (FLOAT)rect.Y, (FLOAT)rect.Width, (FLOAT)rect.Height);
 
 	ID2D1GradientStopCollection *pGradientStops = NULL;
 

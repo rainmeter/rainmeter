@@ -99,7 +99,7 @@ void D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 		if(rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)
 		{
 			auto point = D2D1::Point2U(0U, 0U);
-			auto srcRect = D2D1::RectU(px - rect.left, py - rect.top, (UINT32)(px - rect.left + 1), (UINT32)(py - rect.top + 1));
+			auto srcRect = D2D1::RectU(px - (UINT32)rect.left, py - (UINT32)rect.top, (UINT32)(px - rect.left + 1), (UINT32)(py - rect.top + 1));
 			hr = bitmap->CopyFromBitmap(&point, it.GetBitmap(), &srcRect);
 			break;
 		}
