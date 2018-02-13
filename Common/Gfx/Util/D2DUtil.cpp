@@ -93,14 +93,5 @@ D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top
 	return point;
 }
 
-D2D1_RECT_F GetRectSubRegion(const FLOAT& width, const FLOAT& height, const D2D1_RECT_F& r1, const D2D1_RECT_F& r2)
-{
-	return D2D1::RectF(
-		r1.left / width * r2.right + r2.left,
-		r1.top / height * r2.bottom + r2.top,
-		(r1.right - r1.left) / width * r2.right,
-		(r1.bottom - r1.top) / height * r2.bottom);
-}
-
 }  // namespace Util
 }  // namespace Gfx

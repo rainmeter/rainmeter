@@ -565,7 +565,7 @@ void Canvas::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, c
 
 	const auto rDst = Util::ToRectF(dstRect);
 	const auto rSrc = Util::ToRectF(srcRect);
-	m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
+	m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
 }
 
 void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
@@ -574,47 +574,40 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
 
-	auto getIntersection = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& src)
-	{
-		auto rect = D2D1_RECT_F{
-			max(source.left, src.X),
-			max(source.top, src.Y),
-			min(source.right + source.left, src.GetRight()),
-			min(source.bottom + source.top, src.GetBottom())
-		};
-		if(rect.left < rect.right && rect.top < rect.bottom)
-			return rect;
-		return D2D1::RectF();
-	};
-	// Move to util?
-	auto mapRectangleOnRectangle = [&](const D2D1_RECT_F& source, const Gdiplus::Rect& dst)
-	{
-		return D2D1_RECT_F {
-			(source.left - srcRect.X) / srcRect.Height * dstRect.Width + dstRect.X,
-			(source.top - srcRect.Y) / srcRect.Height * dstRect.Height + dstRect.Y,
-			(source.right - srcRect.X) / srcRect.Width * dstRect.Width + dstRect.X,
-			(source.bottom - srcRect.Y) / srcRect.Height * dstRect.Height + dstRect.Y,
-		};
-	};
+	const auto tDst = Util::ToRectF(dstRect);
+	const auto tSrc = Util::ToRectF(srcRect);
 
 	for (auto seg : segments)
 	{
-		const auto& rSeg = seg.GetRect();
-		auto rSrc = getIntersection(rSeg, srcRect);
+		const auto rSeg = seg.GetRect();
+		D2D1_RECT_F rSrc = (rSeg.left < rSeg.right && rSeg.top < rSeg.bottom) ?
+			D2D1::RectF(
+				max(rSeg.left, tSrc.left),
+				max(rSeg.top, tSrc.top),
+				min(rSeg.right + rSeg.left, tSrc.right - tSrc.left),
+				min(rSeg.bottom + rSeg.top, tSrc.bottom - tSrc.top)) :
+			D2D1::RectF();
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
-		const auto rDst = mapRectangleOnRectangle(rSrc, dstRect);
-		while(rSrc.top >= m_MaxBitmapSize)
+
+		const D2D1_RECT_F rDst = D2D1::RectF(
+			(rSrc.left - tSrc.left) / (tSrc.right - tSrc.left) * (tDst.right - tDst.left) + tDst.left,
+			(rSrc.top - tSrc.top) / (tSrc.bottom - tSrc.top) * (tDst.bottom - tDst.top) + tDst.top,
+			(rSrc.right - tSrc.left) / (tSrc.right - tSrc.left) * (tDst.right - tDst.left) + tDst.left,
+			(rSrc.bottom - tSrc.top) / (tSrc.bottom - tSrc.top) * (tDst.bottom - tDst.top) + tDst.top);
+
+		while (rSrc.top >= m_MaxBitmapSize)
 		{
 			rSrc.bottom -= m_MaxBitmapSize;
 			rSrc.top -= m_MaxBitmapSize;
 		}
+
 		while (rSrc.left >= m_MaxBitmapSize)
 		{
 			rSrc.right -= m_MaxBitmapSize;
 			rSrc.left -= m_MaxBitmapSize;
 		}
-		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
 
+		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
 	}
 }
 
@@ -626,21 +619,22 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRe
 	const auto tDst = Util::ToRectF(dstRect);
 	const auto tSrc = Util::ToRectF(srcRect);
 
-	FLOAT x = (FLOAT)dstRect.X;
-	FLOAT y = (FLOAT)dstRect.Y;
-	while(x < tDst.right || y < tDst.bottom)
+	FLOAT x = tDst.left;
+	FLOAT y = tDst.top;
+
+	while (x < tDst.right || y < tDst.bottom)
 	{
-		const FLOAT w = tDst.right - x > width ? width : tDst.right - x;
-		const FLOAT h = tDst.bottom - y > height ? height : tDst.bottom - y;
+		const FLOAT w = (tDst.right - x) > width ? width : (tDst.right - x);
+		const FLOAT h = (tDst.bottom - y) > height ? height : (tDst.bottom - y);
 
 		const auto dst = Gdiplus::Rect((INT)x, (INT)y, (INT)w, (INT)h);
-		auto src = Gdiplus::Rect(0, 0, (INT)w, (INT)h);
+		const auto src = Gdiplus::Rect(0, 0, (INT)w, (INT)h);
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
 		if (x >= tDst.right && y < tDst.bottom)
 		{
-			x = (FLOAT)dstRect.X;
+			x = tDst.left;
 			y += height;
 		}
 	}
@@ -705,14 +699,23 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 	const auto tDst = Util::ToRectF(dstRect);
 	const auto tSrc = Util::ToRectF(srcRect);
 
+	auto getRectSubRegion = [&width, &height](const D2D1_RECT_F& r1, const D2D1_RECT_F& r2) -> D2D1_RECT_F
+	{
+		return D2D1::RectF(
+			r1.left / width * r2.right + r2.left,
+			r1.top / height * r2.bottom + r2.top,
+			(r1.right - r1.left) / width * r2.right,
+			(r1.bottom - r1.top) / height * r2.bottom);
+	};
+
 	const auto aaMode = m_Target->GetAntialiasMode();
 	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
 
 	for (auto bseg : bitmap->m_Segments)
 	{
 		const auto rSeg = bseg.GetRect();
-		const auto rDst = Util::GetRectSubRegion(width, height, rSeg, tDst);
-		const auto rSrc = Util::GetRectSubRegion(width, height, rSeg, tSrc);
+		const auto rDst = getRectSubRegion(rSeg, tDst);
+		const auto rSrc = getRectSubRegion(rSeg, tSrc);
 
 		// "Move" and "scale" the |bitmap| to match the destination.
 		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
@@ -730,8 +733,8 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 		for (auto mseg : maskBitmap->m_Segments)
 		{
 			const auto rmSeg = mseg.GetRect();
-			const auto rmDst = Util::GetRectSubRegion(width, height, rmSeg, tDst);
-			const auto rmSrc = Util::GetRectSubRegion(width, height, rmSeg, tSrc);
+			const auto rmDst = getRectSubRegion(rmSeg, tDst);
+			const auto rmSrc = getRectSubRegion(rmSeg, tSrc);
 
 			// If no overlap, don't draw
 			if ((rmDst.left < rDst.left + rDst.right &&
