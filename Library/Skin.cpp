@@ -2425,12 +2425,8 @@ bool Skin::ResizeWindow(bool reset)
 
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
-		if(m_Background == nullptr)
-		{
-			m_Background = new GeneralImage(L"Background", nullptr, false, this);
-		}
+		m_Background = new GeneralImage(L"Background", nullptr, false, this);
 
-		// Load the background
 		m_Background->ReadOptions(m_Parser, L"Rainmeter");
 		m_Background->LoadImage(m_BackgroundName);
 
@@ -2447,8 +2443,8 @@ bool Skin::ResizeWindow(bool reset)
 		else
 		{
 			// Calculate the window dimensions
-			m_BackgroundSize.cx = bitmap->GetWidth();
-			m_BackgroundSize.cy = bitmap->GetHeight();
+			m_BackgroundSize.cx = (LONG)bitmap->GetWidth();
+			m_BackgroundSize.cy = (LONG)bitmap->GetHeight();
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
@@ -2533,13 +2529,13 @@ void Skin::Redraw()
 			const auto bitmap = m_Background->GetImage();
 			if (bitmap == nullptr) return;
 			
-			if(m_BackgroundMode == BGMODE_IMAGE)
+			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
 				const Rect dst(0, 0, m_WindowW, m_WindowH);
 				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
 				m_Canvas.DrawBitmap(bitmap, dst, src);
 			}
-			else if(m_BackgroundMode == BGMODE_SCALED_IMAGE)
+			else if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 			{
 				const RECT m = m_BackgroundMargins;
 
@@ -2603,7 +2599,7 @@ void Skin::Redraw()
 					}
 				}
 			}
-			else if(m_BackgroundMode == BGMODE_TILED_IMAGE)
+			else if (m_BackgroundMode == BGMODE_TILED_IMAGE)
 			{
 				const Rect dst(0, 0, m_WindowW, m_WindowH);
 				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
