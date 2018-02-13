@@ -708,9 +708,6 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			(r1.bottom - r1.top) / height * r2.bottom);
 	};
 
-	const auto aaMode = m_Target->GetAntialiasMode();
-	m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
-
 	for (auto bseg : bitmap->m_Segments)
 	{
 		const auto rSeg = bseg.GetRect();
@@ -729,6 +726,9 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			brushProps,
 			brush.ReleaseAndGetAddressOf());
 		if (FAILED(hr)) return;
+
+		const auto aaMode = m_Target->GetAntialiasMode();
+		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
 
 		for (auto mseg : maskBitmap->m_Segments)
 		{
@@ -749,9 +749,9 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 				&rDst,
 				&rSrc);
 		}
-	}
 
-	m_Target->SetAntialiasMode(aaMode);
+		m_Target->SetAntialiasMode(aaMode);
+	}
 }
 
 void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
