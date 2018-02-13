@@ -85,7 +85,7 @@ void D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 		D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 	HRESULT hr = canvas.m_Target->CreateBitmap(
-		D2D1::SizeU(1, 1),
+		D2D1::SizeU(1U, 1U),
 		nullptr,
 		0U,
 		bProps,
@@ -95,17 +95,21 @@ void D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 
 	for (auto& it : m_Segments)
 	{
-		auto rect = it.GetRect();
-		if(rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)
+		const auto rect = it.GetRect();
+		if (rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)
 		{
-			auto point = D2D1::Point2U(0U, 0U);
-			auto srcRect = D2D1::RectU(px - (UINT32)rect.left, py - (UINT32)rect.top, (UINT32)(px - rect.left + 1), (UINT32)(py - rect.top + 1));
-			hr = bitmap->CopyFromBitmap(&point, it.GetBitmap(), &srcRect);
+			const auto point = D2D1::Point2U(0U, 0U);
+			const auto srcRect = D2D1::RectU(
+				(UINT32)(px - rect.left),
+				(UINT32)(py - rect.top),
+				(UINT32)(px - rect.left + 1),
+				(UINT32)(py - rect.top + 1));
+			bitmap->CopyFromBitmap(&point, it.GetBitmap(), &srcRect);
 			break;
 		}
 	}
 
-	D2D1_MAPPED_RECT data;
+	D2D1_MAPPED_RECT data = { 0 };
 	hr = bitmap->Map(D2D1_MAP_OPTIONS_READ, &data);
 	if (FAILED(hr)) return;
 

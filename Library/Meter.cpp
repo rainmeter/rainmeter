@@ -712,9 +712,9 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 void Meter::DrawBevel(Gfx::Canvas& canvas, const Rect& rect, const Color& light, const Color& dark)
 {
 	FLOAT l = (FLOAT)rect.GetLeft();
-	FLOAT r = (FLOAT)rect.GetRight() - 1;
+	FLOAT r = (FLOAT)rect.GetRight() - 1.0f;
 	FLOAT t = (FLOAT)rect.GetTop();
-	FLOAT b = (FLOAT)rect.GetBottom() - 1;
+	FLOAT b = (FLOAT)rect.GetBottom() - 1.0f;
 
 	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
 	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);

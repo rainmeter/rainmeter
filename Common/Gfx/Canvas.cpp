@@ -787,31 +787,26 @@ void Canvas::FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& co
 		2,
 		D2D1_GAMMA_2_2,
 		D2D1_EXTEND_MODE_CLAMP,
-		&pGradientStops
-	);
-
+		&pGradientStops);
 	if (FAILED(hr)) return;
 
-	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
+	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> brush;
 	hr = m_Target->CreateLinearGradientBrush(
 		D2D1::LinearGradientBrushProperties(start, end),
 		pGradientStops,
-		linear.GetAddressOf());
+		brush.GetAddressOf());
+	if (FAILED(hr)) return;
 
-	if (SUCCEEDED(hr))
-	{
-		m_Target->FillRectangle(Util::ToRectF(rect), linear.Get());
-	}
+	m_Target->FillRectangle(Util::ToRectF(rect), brush.Get());
 }
 
 void Canvas::DrawLine(const Gdiplus::Color& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
 {
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
 	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr))
-	{
-		m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);
-	}
+	if (FAILED(hr)) return;
+
+	m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);
 }
 
 void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
