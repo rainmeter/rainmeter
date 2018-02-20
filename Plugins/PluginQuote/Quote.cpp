@@ -37,7 +37,6 @@ struct Options
 	//Settings that only matter when path is a file
 	std::wstring separator;
 };
-
 //Equality check for measure options, for checking options for important changes see note above
 //Optimally organized to ensure best performance and unneeded checks
 bool operator==(Options& lhs, Options& rhs)
@@ -103,12 +102,9 @@ T GetRandomNumber(T size)
 
 //Scan a folder for a list of all files, will recurse for each subfolder if subfolders is on
 //Note: Does not yet watch for file updates to see if new files have been added or removed
-void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& usedFiles, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
+void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& usedFiles, 
+	std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
 {
-	//Clear file list before going any further since we will be rebuilding them
-	files.clear();
-	usedFiles.clear();
-
 	// Get folder listing
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
@@ -153,24 +149,25 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& use
 }
 
 //Get random file from the list of files with option to prevent duplicates till a full cycle is done
-HRESULT GetRandomFile(MeasureData* measure)
+HRESULT GetRandomFile(std::wstring& value, std::vector<std::wstring>& files, std::vector<std::wstring>& usedFiles, 
+	bool isUniqueRandom)
 {
 	// Select the filename
-	size_t index = GetRandomNumber(measure->files.size());
+	size_t index = GetRandomNumber(files.size());
 
-	measure->value = measure->files[index].c_str();
+	value = files[index].c_str();
 
 	//If unique random is on swap the selected file to the list of used files
-	if (measure->options->isUniqueRandom)
+	if (isUniqueRandom)
 	{
-		measure->files.erase(measure->files.begin() + index);
-		measure->usedFiles.push_back(measure->value);
+		files.erase(files.begin() + index);
+		usedFiles.push_back(value);
 
 		//We are out of files that have not been used, swap file lists
-		if (measure->files.empty())
+		if (files.empty())
 		{
-			measure->files = measure->usedFiles;
-			measure->usedFiles.clear();
+			files = usedFiles;
+			usedFiles.clear();
 		}
 	}
 
@@ -178,30 +175,29 @@ HRESULT GetRandomFile(MeasureData* measure)
 }
 
 //Scan a file for all the seperators and make a list of them
-void ScanFile(MeasureData* measure)
+void ScanFile(std::vector<size_t>& separators, std::vector<size_t>& usedSeparators, size_t& fileSize, 
+	std::wstring pathname, std::wstring separator)
 {
 	//Clear seperator list before going any further since we will be rebuilding them
-	measure->separators.clear();
-	measure->usedSeparators.clear();
+	separators.clear();
+	usedSeparators.clear();
 
 	BYTE buffer[BUFFER_SIZE + 2];
 	buffer[BUFFER_SIZE] = 0;
 
 	// Read the file
-	FILE* file = _wfopen(measure->options->pathname.c_str(), L"rb");
+	FILE* file = _wfopen(pathname.c_str(), L"rb");
 	if (file)
 	{
 		// Check if the file is unicode or ascii
 		fread(buffer, sizeof(WCHAR), 1, file);
 
 		fseek(file, 0, SEEK_END);
-		measure->fileSize = ftell(file);
+		fileSize = ftell(file);
 
-		if (measure->fileSize > 0)
+		if (fileSize > 0)
 		{
 			fseek(file, 0, SEEK_SET);
-
-			measure->separators.clear();
 
 			if (0xFEFF == *(WCHAR*)buffer)
 			{
@@ -217,13 +213,13 @@ void ScanFile(MeasureData* measure)
 					buffer[len + 1] = 0;
 
 					std::wstring bufferString = std::wstring(wBuffer);
-					const wchar_t* separatorSz = measure->options->separator.c_str();
+					const wchar_t* separatorSz = separator.c_str();
 
 					//Start of the file counts as a separator
 					size_t sepPos = 0;
 					do
 					{
-						measure->separators.push_back(sepPos);
+						separators.push_back(sepPos);
 						sepPos = bufferString.find(separatorSz, sepPos + 1);
 					} while (sepPos != std::string::npos);
 
@@ -234,8 +230,9 @@ void ScanFile(MeasureData* measure)
 				// It's ascii
 				char* aBuffer = (char*)buffer;
 
-				const std::string separator = StringUtil::Narrow(measure->options->separator);
-				const char* separatorSz = separator.c_str();
+				//Yes this temp is needed 
+				std::string temp = StringUtil::Narrow(separator);
+				const char* separatorSz = temp.c_str();
 
 				// Read until EOF
 				do
@@ -249,7 +246,7 @@ void ScanFile(MeasureData* measure)
 					size_t sepPos = 0;
 					do
 					{
-						measure->separators.push_back(sepPos);
+						separators.push_back(sepPos);
 						sepPos = bufferString.find(separatorSz, sepPos + 1);
 					} while (sepPos != std::string::npos);
 
@@ -263,28 +260,29 @@ void ScanFile(MeasureData* measure)
 
 //Get a random line from the file with option to prevent duplicates till a full cycle is done
 //Returns E_ABORT if file had to be rebuilt and call was abort and needs to be run again
-HRESULT GetRandomLine(MeasureData* measure)
+HRESULT GetRandomLine(std::wstring& value, std::vector<size_t>& separators, std::vector<size_t>& usedSeparators, 
+	bool isUniqueRandom, size_t& fileSize, std::wstring pathname, std::wstring separator)
 {
 	// Select the string
-	size_t index = GetRandomNumber(measure->separators.size());
-	size_t startPos = measure->separators[index];
+	size_t index = GetRandomNumber(separators.size());
+	size_t startPos = separators[index];
 	
 	// Remove separator if using unique random
-	if (measure->options->isUniqueRandom)
+	if (isUniqueRandom)
 	{
-		measure->separators.erase(measure->separators.begin() + index);
-		measure->usedSeparators.push_back(startPos);
+		separators.erase(separators.begin() + index);
+		usedSeparators.push_back(startPos);
 
 		// We are out of separators, swap separator indexes
-		if (measure->separators.empty())
+		if (separators.empty())
 		{
-			measure->separators = measure->usedSeparators;
-			measure->usedSeparators.clear();
+			separators = usedSeparators;
+			usedSeparators.clear();
 		}
 	}
 
 	// Read the file from our selected position
-	FILE* file = _wfopen(measure->options->pathname.c_str(), L"rb");
+	FILE* file = _wfopen(pathname.c_str(), L"rb");
 	if (file)
 	{
 		std::wstring tempstr;
@@ -299,11 +297,11 @@ HRESULT GetRandomLine(MeasureData* measure)
 		long size = ftell(file);
 
 		// File size does not match size when last indexed
-		if (measure->fileSize != size)
+		if (fileSize != size)
 		{
 			// Reindex and abort
 			fclose(file);
-			ScanFile(measure);
+			ScanFile(separators, usedSeparators, fileSize, pathname, separator);
 			return E_ABORT;
 		}
 		else if (size > 0)
@@ -314,7 +312,7 @@ HRESULT GetRandomLine(MeasureData* measure)
 				// It's unicode
 				WCHAR* wBuffer = (WCHAR*)buffer;
 
-				const wchar_t* separatorSz = measure->options->separator.c_str();
+				const wchar_t* separatorSz = separator.c_str();
 
 				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 				wBuffer[len] = 0;
@@ -328,7 +326,7 @@ HRESULT GetRandomLine(MeasureData* measure)
 				{
 					if (startPos != 0)
 					{
-						sepPos1 += measure->options->separator.size();
+						sepPos1 += separator.size();
 					}
 
 					do
@@ -369,7 +367,7 @@ HRESULT GetRandomLine(MeasureData* measure)
 				{
 					//If separator is not where we expect it then file has been modified and needs reindexed and we need to abort
 					fclose(file);
-					ScanFile(measure);
+					ScanFile(separators, usedSeparators, fileSize, pathname, separator);
 					return E_ABORT;
 				}
 			}
@@ -378,8 +376,9 @@ HRESULT GetRandomLine(MeasureData* measure)
 				// It's ascii
 				char* aBuffer = (char*)buffer;
 
-				const std::string separator = StringUtil::Narrow(measure->options->separator);
-				const char* separatorSz = separator.c_str();
+				//Yes this temp is needed 
+				std::string temp = StringUtil::Narrow(separator);
+				const char* separatorSz = temp.c_str();
 
 				size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 				aBuffer[len] = 0;
@@ -393,7 +392,7 @@ HRESULT GetRandomLine(MeasureData* measure)
 				{
 					if (startPos != 0)
 					{
-						sepPos1 += measure->options->separator.size();
+						sepPos1 += separator.size();
 					}
 
 					do
@@ -434,14 +433,14 @@ HRESULT GetRandomLine(MeasureData* measure)
 				{
 					//If separator is not where we expect it then file has been modified and needs reindexed and we need to abort
 					fclose(file);
-					ScanFile(measure);
+					ScanFile(separators, usedSeparators, fileSize, pathname, separator);
 					return E_ABORT;
 				}
 			}
 		}
 
 		fclose(file);
-		measure->value = tempstr.c_str();
+		value = tempstr.c_str();
 		return S_OK;
 	}
 	return E_ACCESSDENIED;
@@ -473,14 +472,17 @@ void Setup(MeasureData* measure)
 			measure->options->pathname += L"\\";
 		}
 
-		// Scan files
+		measure->files.clear();
+		measure->usedFiles.clear();
+		// Scan folder to remember for later
 		ScanFolder(measure->files, measure->usedFiles, fileFilters, measure->options->includeSubfolders, measure->options->pathname);
 	}
 	else
 	{
 		measure->separators.clear();
 		measure->usedSeparators.clear();
-		ScanFile(measure);
+		// Scan file to remember for later
+		ScanFile(measure->separators, measure->usedSeparators, measure->fileSize, measure->options->pathname, measure->options->separator);
 	}
 }
 
@@ -526,7 +528,7 @@ PLUGIN_EXPORT double Update(void* data)
 	MeasureData* measure = (MeasureData*)data;
 	if (measure->options->isDirectory)
 	{
-		GetRandomFile(measure);
+		GetRandomFile(measure->value, measure->files, measure->usedFiles, measure->options->isUniqueRandom);
 	}
 	else
 	{
@@ -534,7 +536,8 @@ PLUGIN_EXPORT double Update(void* data)
 		HRESULT hr;
 		do
 		{
-			hr = GetRandomLine(measure);
+			hr = GetRandomLine(measure->value, measure->separators, measure->usedSeparators, measure->options->isUniqueRandom, 
+				measure->fileSize, measure->options->pathname, measure->options->separator);
 			i++;
 		//If GetRandomLine was aborted we will need to run it again till we have reach max we want to try on one go
 		} while (hr == E_ABORT && i < SANITY_CHECK);
