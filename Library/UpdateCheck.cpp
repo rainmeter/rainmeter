@@ -112,7 +112,7 @@ void Updater::CheckVersion(void* pParam)
 		free(buffer);
 		buffer = nullptr;
 
-		nlohmann::json status = nlohmann::json::parse(data, nullptr);
+		nlohmann::json status = nlohmann::json::parse(data, nullptr, false);
 		if (!status.is_discarded())
 		{
 			auto release = status["release"]["final"];
