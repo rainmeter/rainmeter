@@ -1276,15 +1276,18 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_XPositionEdit:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[32];
-			m_IgnoreUpdate = true;
-			int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-			m_SkinWindow->MoveWindow(x, m_SkinWindow->GetY());
-
-			if (x > m_SkinWindow->GetX())
+			if (m_SkinWindow)
 			{
-				_itow_s(m_SkinWindow->GetX(), buffer, 10);
-				Edit_SetText((HWND)lParam, buffer);
+				WCHAR buffer[32];
+				m_IgnoreUpdate = true;
+				int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetY());
+
+				if (x > m_SkinWindow->GetX())
+				{
+					_itow_s(m_SkinWindow->GetX(), buffer, 10);
+					Edit_SetText((HWND)lParam, buffer);
+				}
 			}
 		}
 		break;
@@ -1292,15 +1295,18 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_YPositionEdit:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[32];
-			m_IgnoreUpdate = true;
-			int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-			m_SkinWindow->MoveWindow(m_SkinWindow->GetX(), y);
-
-			if (y > m_SkinWindow->GetY())
+			if (m_SkinWindow)
 			{
-				_itow_s(m_SkinWindow->GetY(), buffer, 10);
-				Edit_SetText((HWND)lParam, buffer);
+				WCHAR buffer[32];
+				m_IgnoreUpdate = true;
+				int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(m_SkinWindow->GetX(), y);
+
+				if (y > m_SkinWindow->GetY())
+				{
+					_itow_s(m_SkinWindow->GetY(), buffer, 10);
+					Edit_SetText((HWND)lParam, buffer);
+				}
 			}
 		}
 		break;

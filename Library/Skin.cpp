@@ -2776,8 +2776,6 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 */
 void Skin::Update(bool refresh)
 {
-	if (m_State == STATE_CLOSING) return;
-
 	++m_UpdateCounter;
 
 	if (!m_Measures.empty())
