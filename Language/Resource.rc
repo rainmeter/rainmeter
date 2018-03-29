@@ -207,4 +207,5 @@ STRINGTABLE
     ID_STR_LANGUAGEOBSOLETE, STR_LANGUAGEOBSOLETE
     ID_STR_SKININSTALLER, "Skin Installer"
     ID_STR_ARCHIVEPLUGINS, "Archive plugins to @Vault"
+    ID_STR_HARDWAREACCELERATED, "Use hardwareacceleration (Requires restart)"
 }

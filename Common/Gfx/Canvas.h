@@ -40,7 +40,7 @@ public:
 	Canvas();
 	~Canvas();
 
-	static bool Initialize();
+	static bool Initialize(bool hardwareAccelerated);
 	static void Finalize();
 
 	bool InitializeRenderTarget(HWND hwnd);

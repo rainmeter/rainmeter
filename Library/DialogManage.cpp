@@ -2054,31 +2054,34 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 81, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_UseHardwareAcceleration, ID_STR_HARDWAREACCELERATED,
+			6, 94, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 97, buttonWidth + 20, 14,
+			6, 110, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_LOGGING,
-			0, 125, 478, 66,
+			0, 138, 478, 66,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_VerboseLoggingCheckbox, ID_STR_DEBUGMODE,
-			6, 141, 200, 9,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
 			6, 154, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+			6, 167, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 170, buttonWidth + 20, 14,
+			6, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 170, buttonWidth + 20, 14,
+			buttonWidth + 30, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_SKININSTALLER,
-			0, 198, 478, 32,
+			0, 211, 478, 32,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_ArchivePlugins, ID_STR_ARCHIVEPLUGINS,
-			6, 214, 200, 9,
+			6, 227, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2148,6 +2151,9 @@ void DialogManage::TabSettings::Initialize()
 
 	bool iconEnabled = GetRainmeter().GetTrayIcon()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
+
+	bool isHardwareAccelerated = GetRainmeter().IsHardwareAccelerated();
+	Button_SetCheck(GetControl(Id_UseHardwareAcceleration), isHardwareAccelerated);
 
 	bool archivePlugins = GetPrivateProfileInt(
 		L"SkinInstaller",
@@ -2327,7 +2333,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-		case Id_ArchivePlugins:
+	case Id_ArchivePlugins:
 		{
 			bool archivePlugins = SendMessage(GetControl(Id_ArchivePlugins), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
 			WritePrivateProfileString(
@@ -2337,6 +2343,12 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				GetRainmeter().GetDataFile().c_str());
 		}
 		break;
+
+	case Id_UseHardwareAcceleration:
+		{
+			bool hardwareAccelerated = SendMessage(GetControl(Id_UseHardwareAcceleration), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+			GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
+		}
 
 	default:
 		return 1;

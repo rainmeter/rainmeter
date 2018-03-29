@@ -37,7 +37,7 @@ Canvas::Canvas() :
 	m_CanUseAxisAlignClip(false),
 	m_Layers()
 {
-	Initialize();
+	Initialize(true);
 }
 
 Canvas::~Canvas()
@@ -45,7 +45,7 @@ Canvas::~Canvas()
 	Finalize();
 }
 
-bool Canvas::Initialize()
+bool Canvas::Initialize(bool hardwareAccelerated)
 {
 	++c_Instances;
 	if (c_Instances == 1)
@@ -77,8 +77,12 @@ bool Canvas::Initialize()
 		// to |c_FeatureLevel|. First, we try to use the hardware driver
 		// and if that fails, we try the WARP rasterizer for cases
 		// where there is no graphics card or other failures.
+		HRESULT hr = E_FAIL;
+		if (hardwareAccelerated)
+		{
+			hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE);
+		}
 
-		HRESULT hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE);
 		if (FAILED(hr))
 		{
 			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP);

@@ -111,6 +111,9 @@ public:
 	void SetSkinEditor(const std::wstring& path);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
+	bool IsHardwareAccelerated() { return m_HardwareAccelerated; }
+	void SetHardwareAccelerated(bool hardwareAccelerated);
+
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
@@ -238,6 +241,8 @@ private:
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
 	bool m_LanguageObsolete;
+
+	bool m_HardwareAccelerated;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
