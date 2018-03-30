@@ -588,8 +588,8 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 			D2D1::RectF(
 				max(rSeg.left, tSrc.left),
 				max(rSeg.top, tSrc.top),
-				min(rSeg.right + rSeg.left, tSrc.right - tSrc.left),
-				min(rSeg.bottom + rSeg.top, tSrc.bottom - tSrc.top)) :
+				min(rSeg.right + rSeg.left, tSrc.right),
+				min(rSeg.bottom + rSeg.top, tSrc.bottom)) :
 			D2D1::RectF();
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
 
