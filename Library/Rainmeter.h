@@ -176,7 +176,7 @@ public:
 	bool IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename);
 	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
 
-	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
@@ -257,7 +257,7 @@ private:
 
 	std::wstring m_SkinEditor;
 
-	Gdiplus::Color m_DefaultSelectedColor;
+	D2D1_COLOR_F m_DefaultSelectedColor;
 
 	CommandHandler m_CommandHandler;
 	ContextMenu m_ContextMenu;
