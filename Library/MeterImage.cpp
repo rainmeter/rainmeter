@@ -9,11 +9,8 @@
 #include "MeterImage.h"
 #include "Measure.h"
 #include "Rainmeter.h"
-#include "System.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Canvas.h"
-
-using namespace Gdiplus;
 
 GeneralImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
@@ -207,10 +204,10 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		
 		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
-		Gdiplus::Rect meterRect = GetMeterRectPadding();
+		D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
 
-		int drawW = meterRect.Width;
-		int drawH = meterRect.Height;
+		FLOAT drawW = meterRect.right - meterRect.left;
+		FLOAT drawH = meterRect.bottom - meterRect.top;
 
 		if (m_MaskImage.IsLoaded())
 		{
@@ -221,52 +218,49 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 			int imageMW = drawBitmap->GetWidth();
 			int imageMH = drawBitmap->GetHeight();
 
-			int cropX = 0;
-			int cropY = 0;
-			int cropW = imageMW;
-			int cropH = imageMH;
+			D2D1_RECT_F crop = {0};
+			crop.right = imageMW;
+			crop.bottom = imageMH;
 
-			REAL imageratio = imageMW / (REAL)imageMH;
-			REAL meterRatio = meterRect.Width / (REAL)meterRect.Height;
+			const FLOAT imageratio = imageMW / imageMH;
+			const FLOAT meterRatio = drawW / drawH;
 
 			if (imageratio != meterRatio)
 			{
 				if (imageratio > meterRatio)
 				{
-					cropW = (int)(imageMH * meterRatio);
-					cropX = (imageMW - cropW) / 2;
+					crop.left = (imageMW - imageMH * meterRatio) / 2;
+					crop.right = (imageMW + imageMH * meterRatio) / 2;
 				}
 				else
 				{
-					cropH = (int)(imageMW / meterRatio);
-					cropY = (imageMH - cropH) / 2;
+					crop.top = (imageMH - imageMW / meterRatio) / 2;
+					crop.bottom = (imageMH + imageMW / meterRatio) / 2;
 				}
 			}
 
-			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, Gfx::Util::ToRectF(meterRect), Gfx::Util::ToRectF(Rect(0, 0, imageW, imageH)), Gfx::Util::ToRectF(Rect(cropX, cropY, cropW, cropH)));
+			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, D2D1::RectF(0, 0, imageW, imageH), crop);
 		}
 
 		else if (drawW == imageW && drawH == imageH &&
 			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0)
 		{
-			canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(Rect(meterRect.X, meterRect.Y, drawW, drawH)), Gfx::Util::ToRectF(Rect(0, 0, imageW, imageH)));
+			canvas.DrawBitmap(drawBitmap, meterRect, D2D1::RectF(0, 0, drawW, drawH));
 		}
 		else if (m_DrawMode == DRAWMODE_TILE)
 		{
-			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			canvas.DrawTiledBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0,0,drawW, drawH)));
+			canvas.DrawTiledBitmap(drawBitmap, meterRect, D2D1::RectF(0,0,drawW, drawH));
 		}
 		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{
-			int cropX = 0;
-			int cropY = 0;
-			int cropW = imageW;
-			int cropH = imageH;
+			D2D1_RECT_F crop = {0};
+			crop.right = imageW;
+			crop.bottom = imageH;
 
 			if (m_WDefined && m_HDefined)
 			{
-				REAL imageRatio = imageW / (REAL)imageH;
-				REAL meterRatio = meterRect.Width / (REAL)meterRect.Height;
+				FLOAT imageRatio = imageW / (FLOAT)imageH;
+				FLOAT meterRatio = drawW / drawH;
 
 				if (imageRatio != meterRatio)
 				{
@@ -274,33 +268,32 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 					{
 						if (imageRatio > meterRatio)
 						{
-							drawH = meterRect.Width * imageH / imageW;
-							meterRect.Y += (meterRect.Height - drawH) / 2;
+							drawH = drawW * imageH / imageW;
+							meterRect.top += (meterRect.bottom - meterRect.top - drawH) / 2;
 						}
 						else
 						{
-							drawW = meterRect.Height * imageW / imageH;
-							meterRect.X += (meterRect.Width - drawW) / 2;
+							drawW = drawH * imageW / imageH;
+							meterRect.left += (meterRect.right - meterRect.left - drawW) / 2;
 						}
 					}
 					else
 					{
 						if (imageRatio > meterRatio)
 						{
-							cropW = (int)(imageH * meterRatio);
-							cropX = (imageW - cropW) / 2;
+							crop.left = (imageW - imageH * meterRatio) / 2;
+							crop.right = (imageW + imageH * meterRatio) / 2;
 						}
 						else
 						{
-							cropH = (int)(imageW / meterRatio);
-							cropY = (imageH - cropH) / 2;
+							crop.top = (imageH - imageW / meterRatio) / 2;
+							crop.right = (imageH + imageW / meterRatio) / 2;
 						}
 					}
 				}
 			}
 
-			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(cropX, cropY, cropW, cropH)));
+			canvas.DrawBitmap(drawBitmap, meterRect, crop);
 		}
 		else
 		{
@@ -311,38 +304,38 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				if (m.left > 0)
 				{
 					// Top-Left
-					Rect r(meterRect.X, meterRect.Y, m.left, m.top);
-					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, 0, m.left, m.top)));
+					D2D1_RECT_F r = { meterRect.left, meterRect.top, m.left + meterRect.left, m.top + meterRect.top };
+					canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(0, 0, m.left, m.top));
 				}
 
 				// Top
-				Rect r(meterRect.X + m.left, meterRect.Y, drawW - m.left - m.right, m.top);
-				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, 0, imageW - m.left - m.right, m.top)));
+				D2D1_RECT_F r = { meterRect.left + m.left, meterRect.top, meterRect.left + drawW - m.right, meterRect.top + m.top };
+				canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(m.left, 0, imageW - m.right, m.top));
 
 				if (m.right > 0)
 				{
 					// Top-Right
-					Rect r(meterRect.X + drawW - m.right, meterRect.Y, m.right, m.top);
-					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(imageW - m.right, 0, m.right, m.top)));
+					D2D1_RECT_F r = { meterRect.left + drawW - m.right, meterRect.top, meterRect.left + drawW, meterRect.top + m.top };
+					canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(imageW - m.right, 0, imageW, m.top));
 				}
 			}
 
 			if (m.left > 0)
 			{
 				// Left
-				Rect r(meterRect.X, meterRect.Y + m.top, m.left, drawH - m.top - m.bottom);
-				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m.top, m.left, imageH - m.top - m.bottom)));
+				D2D1_RECT_F r = { meterRect.left, meterRect.top + m.top, meterRect.left + m.left, meterRect.top + drawH - m.bottom };
+				canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(0, m.top, m.left, imageH - m.bottom));
 			}
 
 			// Center
-			Rect r(meterRect.X + m.left, meterRect.Y + m.top, drawW - m.left - m.right, drawH - m.top - m.bottom);
-			canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom)));
+			D2D1_RECT_F r = { meterRect.left + m.left, meterRect.top + m.top, meterRect.left + drawW - m.right, meterRect.top + drawH - m.bottom };
+			canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(m.left, m.top, imageW - m.right, imageH - m.bottom));
 
 			if (m.right > 0)
 			{
 				// Right
-				Rect r(meterRect.X + drawW - m.right, meterRect.Y + m.top, m.right, drawH - m.top - m.bottom);
-				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(imageW - m.right, m.top, m.right, imageH - m.top - m.bottom)));
+				D2D1_RECT_F r = { meterRect.left + drawW - m.right, meterRect.top + m.top, meterRect.left + drawW, meterRect.top + drawH - m.bottom };
+				canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(imageW - m.right, m.top, imageW, imageH - m.bottom));
 			}
 
 			if (m.bottom > 0)
@@ -350,19 +343,19 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				if (m.left > 0)
 				{
 					// Bottom-Left
-					Rect r(meterRect.X, meterRect.Y + drawH - m.bottom, m.left, m.bottom);
-					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, imageH - m.bottom, m.left, m.bottom)));
+					D2D1_RECT_F r = { meterRect.left, meterRect.top + drawH - m.bottom, meterRect.left + m.left, meterRect.top + drawH };
+					canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(0, imageH - m.bottom, m.left, imageH));
 				}
 
 				// Bottom
-				Rect r(meterRect.X + m.left, meterRect.Y + drawH - m.bottom, drawW - m.left - m.right, m.bottom);
-				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom)));
+				D2D1_RECT_F r = { meterRect.left + m.left, meterRect.top + drawH - m.bottom, meterRect.left + drawW - m.right, meterRect.top + drawH };
+				canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(m.left, imageH - m.bottom, imageW - m.right, imageH));
 
 				if (m.right > 0)
 				{
 					// Bottom-Right
-					Rect r(meterRect.X + drawW - m.right, meterRect.Y + drawH - m.bottom, m.right, m.bottom);
-					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(imageW - m.right, imageH - m.bottom, m.right, m.bottom)));
+					D2D1_RECT_F r = { meterRect.left + drawW - m.right, meterRect.top + drawH - m.bottom, meterRect.left + drawW, meterRect.top + drawH };
+					canvas.DrawBitmap(drawBitmap, r, D2D1::RectF(imageW - m.right, imageH - m.bottom, imageW, imageH));
 				}
 			}
 		}
