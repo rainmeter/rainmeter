@@ -373,9 +373,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	auto applyStyles = [](Gfx::Shape& shape, const Gdiplus::Color& fill) -> void
 	{
-		shape.SetFill(fill);
+		shape.SetFill(Gfx::Util::ToColorF(fill));
 		shape.SetStrokeWidth(0.0f);
-		shape.SetStrokeFill(Gdiplus::Color::Transparent);
+		shape.SetStrokeFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
 	};
 
 	applyStyles(primaryPath, m_PrimaryColor);
@@ -562,7 +562,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	}
 	else
 	{
-		primaryPath.SetFill(m_PrimaryColor);
+		primaryPath.SetFill(Gfx::Util::ToColorF(m_PrimaryColor));
 		canvas.DrawGeometry(primaryPath, 0, 0);
 	}
 
@@ -579,7 +579,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 		else
 		{
-			primaryPath.SetFill(m_SecondaryColor);
+			primaryPath.SetFill(Gfx::Util::ToColorF(m_SecondaryColor));
 			canvas.DrawGeometry(secondaryPath, 0, 0);
 		}
 
@@ -594,7 +594,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 		else
 		{
-			primaryPath.SetFill(m_OverlapColor);
+			primaryPath.SetFill(Gfx::Util::ToColorF(m_OverlapColor));
 			canvas.DrawGeometry(bothPath, 0, 0);
 		}
 	}

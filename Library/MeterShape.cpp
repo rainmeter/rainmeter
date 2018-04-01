@@ -156,10 +156,14 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 bool MeterShape::HitTest(int x, int y)
 {
 	const Gdiplus::Matrix* matrix = GetTransformationMatrix();
+	D2D1_MATRIX_3X2_F d2dmatrix = D2D1::Matrix3x2F::Identity();
+	// Apply TransformationMatrix if available
+	if (matrix) matrix->GetElements((Gdiplus::REAL*)&d2dmatrix);
+	
 	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
 	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
+		if (!shape->IsCombined() && shape->ContainsPoint(point, d2dmatrix))
 		{
 			return true;
 		}
@@ -329,7 +333,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+			if (open) m_Shapes.back()->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
 			return true;
 		}
 		else
@@ -379,7 +383,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+			if (open) m_Shapes.back()->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
 
 			return true;
 		}
@@ -570,7 +574,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetFill(color);
+				shape->SetFill(Gfx::Util::ToColorF(color));
 			}
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
@@ -698,7 +702,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetStrokeFill(color);
+				shape->SetStrokeFill(Gfx::Util::ToColorF(color));
 			}
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
@@ -1135,7 +1139,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(Gdiplus::Color::Transparent);
+	if (open) shape->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
 
 	m_Shapes.push_back(shape);
 

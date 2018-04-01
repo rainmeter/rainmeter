@@ -276,7 +276,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			Y = (FLOAT)(meterRect.Y + meterRect.Height) - Y - 1.0f;
 
 			Gfx::Line line((FLOAT)meterRect.X, Y, (FLOAT)(meterRect.X + meterRect.Width - 1), Y);
-			line.SetStrokeFill(m_HorizontalColor);
+			line.SetStrokeFill(Gfx::Util::ToColorF(m_HorizontalColor));
 
 			canvas.DrawGeometry(line, 0, 0);
 		}
@@ -337,8 +337,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(Gdiplus::Color::Transparent);
-			path.SetStrokeFill(m_Colors[counter]);
+			path.SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+			path.SetStrokeFill(Gfx::Util::ToColorF(m_Colors[counter]));
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
 			canvas.DrawGeometry(path, 0, 0);
@@ -399,8 +399,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(Gdiplus::Color::Transparent);
-			path.SetStrokeFill(m_Colors[counter]);
+			path.SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+			path.SetStrokeFill(Gfx::Util::ToColorF(m_Colors[counter]));
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
 			canvas.DrawGeometry(path, 0, 0);
