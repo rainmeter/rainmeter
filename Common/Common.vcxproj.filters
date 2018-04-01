@@ -30,15 +30,6 @@
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapDIB.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapLockDIB.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapLockGDIP.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp">
       <Filter>Gfx</Filter>
@@ -159,15 +150,6 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapDIB.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapLockDIB.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h" />

@@ -65,9 +65,6 @@
     <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp" />
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp" />
-    <ClCompile Include="Gfx\Util\WICBitmapDIB.cpp" />
-    <ClCompile Include="Gfx\Util\WICBitmapLockDIB.cpp" />
-    <ClCompile Include="Gfx\Util\WICBitmapLockGDIP.cpp" />
     <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="PathUtil.cpp" />
@@ -117,9 +114,6 @@
     <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h" />
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h" />
     <ClInclude Include="Gfx\Util\DWriteHelpers.h" />
-    <ClInclude Include="Gfx\Util\WICBitmapDIB.h" />
-    <ClInclude Include="Gfx\Util\WICBitmapLockDIB.h" />
-    <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h" />
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="MenuTemplate.h" />
