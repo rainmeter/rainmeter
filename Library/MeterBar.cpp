@@ -65,7 +65,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_Color = Gfx::Util::ToColorF(parser.ReadColor(section, L"BarColor", Gdiplus::Color::Green));
+	m_Color = parser.ReadColor(section, L"BarColor", D2D1::ColorF(D2D1::ColorF::Green));
 
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
 	if (!m_ImageName.empty())

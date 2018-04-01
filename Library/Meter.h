@@ -9,7 +9,6 @@
 #define __METER_H__
 
 #include <windows.h>
-#include <gdiplus.h>
 #include <vector>
 #include <string>
 #include "ConfigParser.h"

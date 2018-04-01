@@ -282,8 +282,8 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
-	static const Gdiplus::Rect defPadding;
-	m_Padding = Gfx::Util::ToRectF(parser.ReadRect(section, L"Padding", defPadding));
+	static const D2D1_RECT_F defPadding;
+	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
 	const int oldW = m_W;
 	const bool oldWDefined = m_WDefined;
@@ -323,10 +323,9 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
-	Gdiplus::ARGB color = parser.ReadColor(section, L"SolidColor", Gdiplus::Color::MakeARGB(0, 0, 0, 0));
-	m_SolidColor = Gfx::Util::ToColorF(color);
-	m_SolidColor2 = Gfx::Util::ToColorF(parser.ReadColor(section, L"SolidColor2", color));
-	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", D2D1::ColorF(0,0,0,0));
+	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
+	m_SolidAngle = (FLOAT)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
 	m_Mouse.ReadOptions(parser, section);
 	m_HasMouseAction = m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction();
@@ -340,7 +339,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
-	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
+	std::vector<FLOAT> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)
 	{
 		m_Transformation = D2D1::Matrix3x2F(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);

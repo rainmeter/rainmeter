@@ -1358,7 +1358,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
-	m_DefaultSelectedColor = Gfx::Util::ToColorF(parser.ReadColor(L"Rainmeter", L"SelectedColor", Color::MakeARGB(90, 255, 0, 0)));
+	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(1, 0, 0, 90 / 255.f));
 
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())

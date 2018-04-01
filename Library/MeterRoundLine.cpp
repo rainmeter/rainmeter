@@ -53,7 +53,7 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
-	m_LineColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"LineColor", Gdiplus::Color::Black));
+	m_LineColor = parser.ReadColor(section, L"LineColor", D2D1::ColorF(D2D1::ColorF::Black));
 	m_Solid = parser.ReadBool(section, L"Solid", false);
 	m_CntrlAngle = parser.ReadBool(section, L"ControlAngle", true);
 	m_CntrlLineStart = parser.ReadBool(section, L"ControlStart", false);

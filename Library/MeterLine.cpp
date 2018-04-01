@@ -108,7 +108,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			_snwprintf_s(tmpName, _TRUNCATE, L"LineColor%i", i + 1);
 		}
 
-		m_Colors.push_back(Gfx::Util::ToColorF(parser.ReadColor(section, tmpName, Gdiplus::Color::White)));
+		m_Colors.push_back(parser.ReadColor(section, tmpName, D2D1::ColorF(D2D1::ColorF::White)));
 
 		if (i == 0)
 		{
@@ -126,8 +126,8 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
-	Gdiplus::ARGB color = parser.ReadColor(section, L"HorizontalColor", Gdiplus::Color::Black);		// This is left here for backwards compatibility
-	m_HorizontalColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"HorizontalLineColor", color));	// This is what it should be
+	D2D1_COLOR_F color = parser.ReadColor(section, L"HorizontalColor", D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
+	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
 	if (_wcsicmp(graph, L"RIGHT") == 0)
@@ -337,7 +337,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+			path.SetFill(D2D1::ColorF(0,0,0,0));
 			path.SetStrokeFill(m_Colors[counter]);
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);

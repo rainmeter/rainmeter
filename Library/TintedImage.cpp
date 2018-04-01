@@ -676,7 +676,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 
 	m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
-	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
+	Color tint;
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);

@@ -2127,9 +2127,8 @@ bool Skin::ReadSkin()
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
 
-	auto color = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Gdiplus::Color::Gray);
-	m_SolidColor = Gfx::Util::ToColorF(color);
-	m_SolidColor2 = Gfx::Util::ToColorF(m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", color));
+	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", D2D1::ColorF(D2D1::ColorF::Gray));
+	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
 	m_SolidAngle = (FLOAT)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
 	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
@@ -2148,9 +2147,7 @@ bool Skin::ReadSkin()
 	}
 
 	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
-	Gdiplus::ARGB ARGBColor = Gdiplus::Color::MakeARGB((BYTE)(selectionColor.a * 255), (BYTE)(selectionColor.r * 255), 
-		(BYTE)(selectionColor.g * 255), (BYTE)(selectionColor.b * 255));
-	m_SelectedColor = Gfx::Util::ToColorF(m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", ARGBColor));
+	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", selectionColor);
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
 

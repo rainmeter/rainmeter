@@ -121,8 +121,8 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_Color = Gfx::Util::ToColorF(parser.ReadColor(section, L"FontColor", Gdiplus::Color::Black));
-	m_EffectColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"FontEffectColor", Gdiplus::Color::Black));
+	m_Color = parser.ReadColor(section, L"FontColor", D2D1::ColorF(D2D1::ColorF::Black));
+	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", D2D1::ColorF(D2D1::ColorF::Black));
 
 	m_Prefix = parser.ReadString(section, L"Prefix", L"");
 	m_Postfix = parser.ReadString(section, L"Postfix", L"");

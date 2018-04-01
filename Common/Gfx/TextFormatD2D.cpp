@@ -28,8 +28,6 @@
 #include "../../Library/ConfigParser.h"
 #include "../../Library/pcre/config.h"
 #include "../../Library/pcre/pcre.h"
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 
 namespace {
 
@@ -657,7 +655,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			D2D1_COLOR_F newColor = Util::ToColorF(ConfigParser::ParseColor(options[1].c_str()));
+			D2D1_COLOR_F newColor = ConfigParser::ParseColor(options[1].c_str());
 			UpdateInlineColor(index, pattern, newColor);
 			return true;
 		}
@@ -699,7 +697,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 				(FLOAT)ConfigParser::ParseDouble(options[2].c_str(), 1.0) };
 
 			FLOAT blur = (FLOAT)ConfigParser::ParseDouble(options[3].c_str(), 3.0);
-			D2D1_COLOR_F color = Util::ToColorF(ConfigParser::ParseColor(options[4].c_str()));
+			D2D1_COLOR_F color = ConfigParser::ParseColor(options[4].c_str());
 			UpdateInlineShadow(index, pattern, blur, offset, color);
 			return true;
 		}
@@ -879,7 +877,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 		tokens = ConfigParser::Tokenize2(args[i], L';', PairedPunctuation::Parentheses);
 		if (tokens.size() == 2)
 		{
-			stops[i - 1].color = Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
+			stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
 			stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 		}
 	}

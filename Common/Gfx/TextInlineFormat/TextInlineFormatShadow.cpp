@@ -9,15 +9,6 @@
 #include "TextInlineFormatShadow.h"
 #include "../../../Library/DialogAbout.h"
 
-namespace {
-
-D2D1_VECTOR_4F ToVector4F(const Gdiplus::Color& color)
-{
-	return D2D1::Vector4F(color.GetR() / 255.0f, color.GetG() / 255.0f, color.GetB() / 255.0f, color.GetA() / 255.0f);
-}
-
-}  // namespace
-
 namespace Gfx {
 
 TextInlineFormat_Shadow::TextInlineFormat_Shadow(const std::wstring& pattern, const FLOAT& blur,

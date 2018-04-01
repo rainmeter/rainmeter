@@ -179,9 +179,9 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_PrimaryColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"PrimaryColor", Gdiplus::Color::Green));
-	m_SecondaryColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"SecondaryColor", Gdiplus::Color::Red));
-	m_OverlapColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"BothColor", Gdiplus::Color::Yellow));
+	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", D2D1::ColorF(D2D1::ColorF::Green));
+	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", D2D1::ColorF(D2D1::ColorF::Red));
+	m_OverlapColor = parser.ReadColor(section, L"BothColor", D2D1::ColorF(D2D1::ColorF::Yellow));
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
@@ -373,7 +373,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		shape.SetFill(fill);
 		shape.SetStrokeWidth(0.0f);
-		shape.SetStrokeFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+		shape.SetStrokeFill(D2D1::ColorF(0,0,0,0));
 	};
 
 	applyStyles(primaryPath, m_PrimaryColor);

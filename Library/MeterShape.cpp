@@ -571,7 +571,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetFill(Gfx::Util::ToColorF(color));
+				shape->SetFill(color);
 			}
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
@@ -699,7 +699,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetStrokeFill(Gfx::Util::ToColorF(color));
+				shape->SetStrokeFill(color);
 			}
 			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
 			{
@@ -919,7 +919,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 			tokens = ConfigParser::Tokenize2(params[i], L';', PairedPunctuation::Parentheses);
 			if (tokens.size() == 2)
 			{
-				stops[i - 1].color = Gfx::Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
+				stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
 				stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 			}
 		}

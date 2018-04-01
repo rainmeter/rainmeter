@@ -122,7 +122,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 	m_Options.m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
-	D2D1_COLOR_F tint = Gfx::Util::ToColorF(parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Gdiplus::Color::White));
+	D2D1_COLOR_F tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
@@ -134,7 +134,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	// at one time. The parser does it fine, but after putting the returned values
 	// into the Color Matrix the next time the parser is used it crashes.
 	// Note: is this still relevant? Kept for BWC
-	std::vector<Gdiplus::REAL> matrix1 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix1]);
+	std::vector<FLOAT> matrix1 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix1]);
 	if (matrix1.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -147,7 +147,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		m_Options.m_ColorMatrix.m[0][0] = tint.r;
 	}
 
-	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
+	std::vector<FLOAT> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
 	if (matrix2.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -160,7 +160,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		m_Options.m_ColorMatrix.m[1][1] = tint.g;
 	}
 
-	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
+	std::vector<FLOAT> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
 	if (matrix3.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -173,7 +173,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		m_Options.m_ColorMatrix.m[2][2] = tint.b;
 	}
 
-	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
+	std::vector<FLOAT> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
 	if (matrix4.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -186,7 +186,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		m_Options.m_ColorMatrix.m[3][3] = (FLOAT)alpha;
 	}
 
-	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
+	std::vector<FLOAT> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
 	if (matrix5.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
