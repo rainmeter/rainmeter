@@ -12,7 +12,6 @@
 #include "Shape.h"
 #include "TextFormatD2D.h"
 #include <string>
-#include <GdiPlus.h>
 #include <d2d1_1.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
@@ -63,7 +62,7 @@ public:
 
 	bool IsTransparentPixel(int x, int y);
 
-	void SetTransform(const Gdiplus::Matrix& matrix);
+	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
 	void RotateTransform(float angle, float x, float y, float dx, float dy);
 
@@ -73,22 +72,22 @@ public:
 	void SetAntiAliasing(bool enable);
 	void SetTextAntiAliasing(bool enable);
 
-	void Clear(const Gdiplus::Color& color = Gdiplus::Color(0, 0, 0, 0));
+	void Clear(const D2D1_COLOR_F& color = D2D1::ColorF(0,0,0,0));
 
-	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect,
-		const Gdiplus::SolidBrush& brush, bool applyInlineFormatting = false);
-	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect);
-	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines);
+	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
+		const D2D1_COLOR_F& color, bool applyInlineFormatting = false);
+	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size);
+	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT& lines);
 
-	void DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
-	void DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
-	void DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const Gdiplus::Rect& dstRect,
-		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
+	void DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+		const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2);
 
-	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
-	void FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& color1, const Gdiplus::Color& color2, const FLOAT& angle);
+	void FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color);
+	void FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle);
 
-	void DrawLine(const Gdiplus::Color& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth = 1.0f);
+	void DrawLine(const D2D1_COLOR_F& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth = 1.0f);
 
 	void DrawGeometry(Shape& shape, int x, int y);
 

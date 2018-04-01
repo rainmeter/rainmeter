@@ -140,40 +140,39 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 				if (m_Border > 0)
 				{
 					Rect r2(meterRect.X, meterRect.Y, meterRect.Width, m_Border);
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, meterRect.Width, m_Border));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, 0, meterRect.Width, m_Border)));
 					r2.Y = meterRect.Y + size + m_Border;
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, meterRect.Height - m_Border, meterRect.Width, m_Border));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, meterRect.Height - m_Border, meterRect.Width, m_Border)));
 				}
 
 				Rect r(meterRect.X, meterRect.Y + m_Border, meterRect.Width, size);
-				canvas.DrawBitmap(drawBitmap, r, Rect(0, m_Border, meterRect.Width, size));
+				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m_Border, meterRect.Width, size)));
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(meterRect.X, meterRect.Y + meterRect.Height - size - 2 * m_Border, meterRect.Width, m_Border);
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, meterRect.Width, m_Border));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, 0, meterRect.Width, m_Border)));
 					r2.Y = meterRect.Y + meterRect.Height - m_Border;
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, meterRect.Height - m_Border, meterRect.Width, m_Border));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, meterRect.Height - m_Border, meterRect.Width, m_Border)));
 				}
 
 				Rect r(meterRect.X, meterRect.Y + meterRect.Height - size - m_Border, meterRect.Width, size);
-				canvas.DrawBitmap(drawBitmap, r, Rect(0, meterRect.Height - size - m_Border, meterRect.Width, size));
+				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, meterRect.Height - size - m_Border, meterRect.Width, size)));
 			}
 		}
 		else
 		{
-			SolidBrush brush(m_Color);
 			if (m_Flip)
 			{
 				Rect r(meterRect.X, meterRect.Y, meterRect.Width, size);
-				canvas.FillRectangle(r, brush);
+				canvas.FillRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_Color));
 			}
 			else
 			{
 				Rect r(meterRect.X, meterRect.Y + meterRect.Height - size, meterRect.Width, size);
-				canvas.FillRectangle(r, brush);
+				canvas.FillRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_Color));
 			}
 		}
 	}
@@ -191,40 +190,39 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 				if (m_Border > 0)
 				{
 					Rect r2(meterRect.X + meterRect.Width - size - 2 * m_Border, meterRect.Y, m_Border, meterRect.Height);
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_Border, meterRect.Height));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, 0, m_Border, meterRect.Height)));
 					r2.X = meterRect.X + meterRect.Width - m_Border;
-					canvas.DrawBitmap(drawBitmap, r2, Rect(meterRect.Width - m_Border, 0, m_Border, meterRect.Height));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(meterRect.Width - m_Border, 0, m_Border, meterRect.Height)));
 				}
 
 				Rect r(meterRect.X + meterRect.Width - size - m_Border, meterRect.Y, size, meterRect.Height);
-				canvas.DrawBitmap(drawBitmap, r, Rect(meterRect.Width - size - m_Border, 0, size, meterRect.Height));
+				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(meterRect.Width - size - m_Border, 0, size, meterRect.Height)));
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(meterRect.X, meterRect.Y, m_Border, meterRect.Height);
-					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_Border, meterRect.Height));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(0, 0, m_Border, meterRect.Height)));
 					r2.X = meterRect.X + size + m_Border;
-					canvas.DrawBitmap(drawBitmap, r2, Rect(meterRect.Width - m_Border, 0, m_Border, meterRect.Height));
+					canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r2), Gfx::Util::ToRectF(Rect(meterRect.Width - m_Border, 0, m_Border, meterRect.Height)));
 				}
 
 				Rect r(meterRect.X + m_Border, meterRect.Y, size, meterRect.Height);
-				canvas.DrawBitmap(drawBitmap, r, Rect(m_Border, 0, size, meterRect.Height));
+				canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_Border, 0, size, meterRect.Height)));
 			}
 		}
 		else
 		{
-			SolidBrush brush(m_Color);
 			if (m_Flip)
 			{
 				Rect r(meterRect.X + meterRect.Width - size, meterRect.Y, size, meterRect.Height);
-				canvas.FillRectangle(r, brush);
+				canvas.FillRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_Color));
 			}
 			else
 			{
 				Rect r(meterRect.X, meterRect.Y, size, meterRect.Height);
-				canvas.FillRectangle(r, brush);
+				canvas.FillRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_Color));
 			}
 		}
 	}

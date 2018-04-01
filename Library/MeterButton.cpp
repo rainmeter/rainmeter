@@ -138,7 +138,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 
 	if (image)
 	{
-		canvas.DrawBitmap(image, Rect(meterRect.X, meterRect.Y, m_W, m_H), m_BitmapsRects[m_State]);
+		canvas.DrawBitmap(image, Gfx::Util::ToRectF(Rect(meterRect.X, meterRect.Y, m_W, m_H)), Gfx::Util::ToRectF(m_BitmapsRects[m_State]));
 	}
 
 	return true;

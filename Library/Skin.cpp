@@ -2533,7 +2533,7 @@ void Skin::Redraw()
 			{
 				const Rect dst(0, 0, m_WindowW, m_WindowH);
 				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-				m_Canvas.DrawBitmap(bitmap, dst, src);
+				m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(dst), Gfx::Util::ToRectF(src));
 			}
 			else if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 			{
@@ -2545,18 +2545,18 @@ void Skin::Redraw()
 					{
 						// Top-Left
 						Rect r(0, 0, m.left, m.top);
-						m_Canvas.DrawBitmap(bitmap, r, Rect(0, 0, m.left, m.top));
+						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, 0, m.left, m.top)));
 					}
 
 					// Top
 					Rect r(m.left, 0, m_WindowW - m.left - m.right, m.top);
-					m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top));
+					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top)));
 
 					if (m.right > 0)
 					{
 						// Top-Right
 						Rect r(m_WindowW - m.right, 0, m.right, m.top);
-						m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, 0, m.right, m.top));
+						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, 0, m.right, m.top)));
 					}
 				}
 
@@ -2564,18 +2564,18 @@ void Skin::Redraw()
 				{
 					// Left
 					Rect r(0, m.top, m.left, m_WindowH - m.top - m.bottom);
-					m_Canvas.DrawBitmap(bitmap, r, Rect(0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom));
+					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom)));
 				}
 
 				// Center
 				Rect r(m.left, m.top, m_WindowW - m.left - m.right, m_WindowH - m.top - m.bottom);
-				m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom));
+				m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom)));
 
 				if (m.right > 0)
 				{
 					// Right
 					Rect r(m_WindowW - m.right, m.top, m.right, m_WindowH - m.top - m.bottom);
-					m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom));
+					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom)));
 				}
 
 				if (m.bottom > 0)
@@ -2584,18 +2584,18 @@ void Skin::Redraw()
 					{
 						// Bottom-Left
 						Rect r(0, m_WindowH - m.bottom, m.left, m.bottom);
-						m_Canvas.DrawBitmap(bitmap, r, Rect(0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom));
+						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom)));
 					}
 
 					// Bottom
 					Rect r(m.left, m_WindowH - m.bottom, m_WindowW - m.left - m.right, m.bottom);
-					m_Canvas.DrawBitmap(bitmap, r, Rect(m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom));
+					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom)));
 
 					if (m.right > 0)
 					{
 						// Bottom-Right
 						Rect r(m_WindowW - m.right, m_WindowH - m.bottom, m.right, m.bottom);
-						m_Canvas.DrawBitmap(bitmap, r, Rect(m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom));
+						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom)));
 					}
 				}
 			}
@@ -2603,7 +2603,7 @@ void Skin::Redraw()
 			{
 				const Rect dst(0, 0, m_WindowW, m_WindowH);
 				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-				m_Canvas.DrawTiledBitmap(bitmap, dst, src);
+				m_Canvas.DrawTiledBitmap(bitmap, Gfx::Util::ToRectF(dst), Gfx::Util::ToRectF(src));
 			}
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
@@ -2615,11 +2615,11 @@ void Skin::Redraw()
 			{
 				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 				{
-					m_Canvas.Clear(m_SolidColor);
+					m_Canvas.Clear(Gfx::Util::ToColorF(m_SolidColor));
 				}
 				else
 				{
-					m_Canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, m_SolidAngle);
+					m_Canvas.FillGradientRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_SolidColor), Gfx::Util::ToColorF(m_SolidColor2), m_SolidAngle);
 				}
 			}
 
@@ -2645,7 +2645,9 @@ void Skin::Redraw()
 			const Matrix* matrix = (*j)->GetTransformationMatrix();
 			if (matrix && !matrix->IsIdentity())
 			{
-				m_Canvas.SetTransform(*matrix);
+				D2D1_MATRIX_3X2_F d2dMatrix;
+				matrix->GetElements((Gdiplus::REAL*)&d2dMatrix);
+				m_Canvas.SetTransform(d2dMatrix);
 				(*j)->Draw(m_Canvas);
 				m_Canvas.ResetTransform();
 			}
@@ -2658,8 +2660,7 @@ void Skin::Redraw()
 		if (m_Selected)
 		{
 			Gdiplus::Rect rect(0, 0, m_WindowW, m_WindowH);
-			Gdiplus::SolidBrush brush(m_SelectedColor);
-			m_Canvas.FillRectangle(rect, brush);
+			m_Canvas.FillRectangle(Gfx::Util::ToRectF(rect), Gfx::Util::ToColorF(m_SelectedColor));
 		}
 	}
 

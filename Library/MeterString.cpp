@@ -432,8 +432,15 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 	{
 		rect->X = (REAL)meterRect.X;
 		rect->Y = (REAL)meterRect.Y;
-		if (canvas.MeasureTextW(m_String, *m_TextFormat, *rect) &&
-			m_ClipType == CLIP_AUTO)
+		D2D1_SIZE_F size = { 0 };
+		bool didMeasure = canvas.MeasureTextW(m_String, *m_TextFormat, size);
+		if(didMeasure)
+		{
+			rect->Width = size.width;
+			rect->Height = size.height;
+		}
+
+		if (didMeasure && m_ClipType == CLIP_AUTO)
 		{
 			// Set initial clipping
 			m_NeedsClipping = false;
@@ -509,11 +516,12 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 			{
 				UINT lines = 0;
 				RectF layout((REAL)meterRect.X, (REAL)meterRect.Y, w, h);
-				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, layout, lines) &&
+				D2D1_SIZE_F size = {0};
+				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) &&
 					lines != 0)
 				{
 					rect->Width = w;
-					rect->Height = layout.Height;
+					rect->Height = size.height;
 
 					if (m_HDefined || (m_ClipStringH != -1 && rect->Height > (REAL)m_ClipStringH))
 					{
@@ -536,29 +544,35 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 
 		if (m_Effect != EFFECT_NONE)
 		{
-			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rcDest);
+			const D2D1_COLOR_F solidBrush = Gfx::Util::ToColorF(m_EffectColor);
+			D2D1_RECT_F rcEffect = Gfx::Util::ToRectF(rcDest);
+
+			auto offsetEffect = [&](int x, int y)
+			{
+				rcEffect.left += x;
+				rcEffect.top += y;
+			};
 
 			if (m_Effect == EFFECT_SHADOW)
 			{
-				rcEffect.Offset(1, 1);
+				offsetEffect(1, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
-				rcEffect.Offset(0, 1);
+				offsetEffect(0, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(1, -1);
+				offsetEffect(1, -1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(-1, -1);
+				offsetEffect(-1, -1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(-1, 1);
+				offsetEffect(-1, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 		}
 
-		SolidBrush solidBrush(m_Color);
-		canvas.DrawTextW(m_String, *m_TextFormat, rcDest, solidBrush, true);
+		const D2D1_COLOR_F solidBrush = Gfx::Util::ToColorF(m_Color);
+		canvas.DrawTextW(m_String, *m_TextFormat, Gfx::Util::ToRectF(rcDest), solidBrush, true);
 
 		if (m_Angle != 0.0f)
 		{

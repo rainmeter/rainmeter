@@ -33,12 +33,15 @@ D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point
 	return D2D1::Point2F(point1.x + point2.x, point1.y + point2.y);
 }
 
-D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float width, const float height)
+D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float right, const float bottom)
 {
 	float theta1 = theta * (M_PI / 180.0f);
 
 	while (theta1 < -M_PI) theta1 += (2 * M_PI);
 	while (theta1 > M_PI) theta1 -= (2 * M_PI);
+
+	float width = right - left;
+	float height = bottom - top;
 
 	const float recttan = atan2f(height, width);
 	const float thetatan = tanf(theta1);

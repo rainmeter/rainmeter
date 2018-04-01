@@ -371,7 +371,8 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, Rect(meterRect.X + offset, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
+			canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(Rect(meterRect.X + offset, meterRect.Y, meterRect.Width, meterRect.Height)), 
+				Gfx::Util::ToRectF(Rect(newX, newY, meterRect.Width, meterRect.Height)));
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -440,7 +441,8 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
+		canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height)), 
+			Gfx::Util::ToRectF(Rect(newX, newY, meterRect.Width, meterRect.Height)));
 	}
 
 	return true;

@@ -309,15 +309,13 @@ bool Canvas::IsTransparentPixel(int x, int y)
 	return pixel != 0;
 }
 
-void Canvas::SetTransform(const Gdiplus::Matrix& matrix)
+void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 {
-	D2D1_MATRIX_3X2_F d2dMatrix;
-	matrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
-	m_Target->SetTransform(d2dMatrix);
+	m_Target->SetTransform(matrix);
 
 	m_CanUseAxisAlignClip =
-		d2dMatrix._12 == 0.0f && d2dMatrix._21 == 0.0f &&
-		d2dMatrix._31 == 0.0f && d2dMatrix._32 == 0.0f;
+		matrix._12 == 0.0f && matrix._21 == 0.0f &&
+		matrix._31 == 0.0f && matrix._32 == 0.0f;
 }
 
 void Canvas::ResetTransform()
@@ -363,21 +361,18 @@ void Canvas::SetTextAntiAliasing(bool enable)
 	m_Target->SetTextAntialiasMode(enable ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
 }
 
-void Canvas::Clear(const Gdiplus::Color& color)
+void Canvas::Clear(const D2D1_COLOR_F& color)
 {
 	if (!m_Target) return;
 
-	m_Target->Clear(Util::ToColorF(color));
+	m_Target->Clear(color);
 }
 
-void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect,
-	const Gdiplus::SolidBrush& brush, bool applyInlineFormatting)
+void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
+	const D2D1_COLOR_F& color, bool applyInlineFormatting)
 {
-	Gdiplus::Color color;
-	brush.GetColor(&color);
-
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
+	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
@@ -386,7 +381,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 	str = srcStr;
 	formatD2D.ApplyInlineCase(str);
 
-	if (!formatD2D.CreateLayout(m_Target.Get(), str, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing)) return;
+	if (!formatD2D.CreateLayout(m_Target.Get(), str, rect.right - rect.left, rect.bottom - rect.top, !m_AccurateText && m_TextAntiAliasing)) return;
 
 	D2D1_POINT_2F drawPosition;
 	drawPosition.x = [&]()
@@ -396,18 +391,18 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 			const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
 			switch (formatD2D.GetHorizontalAlignment())
 			{
-			case HorizontalAlignment::Left: return rect.X + xOffset;
-			case HorizontalAlignment::Right: return rect.X - xOffset;
+			case HorizontalAlignment::Left: return rect.left + xOffset;
+			case HorizontalAlignment::Right: return rect.left - xOffset;
 			}
 		}
 
-		return rect.X;
+		return rect.left;
 	} ();
 
 	drawPosition.y = [&]()
 	{
 		// GDI+ compatibility.
-		float yPos = rect.Y - formatD2D.m_LineGap;
+		float yPos = rect.top - formatD2D.m_LineGap;
 		switch (formatD2D.GetVerticalAlignment())
 		{
 		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
@@ -419,7 +414,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 
 	if (formatD2D.m_Trimming)
 	{
-		D2D1_RECT_F clipRect = Util::ToRectF(rect);
+		D2D1_RECT_F clipRect = rect;
 
 		if (m_CanUseAxisAlignClip)
 		{
@@ -469,7 +464,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdi
 	}
 }
 
-bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, Gdiplus::RectF& rect)
+bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size)
 {
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 
@@ -478,12 +473,12 @@ bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, Gdi
 	formatD2D.ApplyInlineCase(formatStr);
 
 	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText);
-	rect.Width = metrics.width;
-	rect.Height = metrics.height;
+	size.width = metrics.width;
+	size.height = metrics.height;
 	return true;
 }
 
-bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines)
+bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size, UINT& lines)
 {
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
@@ -492,16 +487,16 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	formatStr = str;
 	formatD2D.ApplyInlineCase(formatStr);
 
-	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText, rect.Width);
-	rect.Width = metrics.width;
-	rect.Height = metrics.height;
+	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText, size.width);
+	size.width = metrics.width;
+	size.height = metrics.height;
 	lines = metrics.lineCount;
 
-	if (rect.Height > 0.0f)
+	if (size.height > 0.0f)
 	{
 		// GDI+ draws multi-line text even though the last line may be clipped slightly at the
 		// bottom. This is a workaround to emulate that behaviour.
-		rect.Height += 1.0f;
+		size.height += 1.0f;
 	}
 	else
 	{
@@ -511,32 +506,26 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	return true;
 }
 
-void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
+void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	auto& segments = bitmap->m_Segments;
-	const FLOAT width = (FLOAT)bitmap->m_Width;
-	const FLOAT height = (FLOAT)bitmap->m_Height;
-
-	const auto tDst = Util::ToRectF(dstRect);
-	const auto tSrc = Util::ToRectF(srcRect);
-
 	for (auto seg : segments)
 	{
 		const auto rSeg = seg.GetRect();
 		D2D1_RECT_F rSrc = (rSeg.left < rSeg.right && rSeg.top < rSeg.bottom) ?
 			D2D1::RectF(
-				max(rSeg.left, tSrc.left),
-				max(rSeg.top, tSrc.top),
-				min(rSeg.right + rSeg.left, tSrc.right),
-				min(rSeg.bottom + rSeg.top, tSrc.bottom)) :
+				max(rSeg.left, srcRect.left),
+				max(rSeg.top, srcRect.top),
+				min(rSeg.right + rSeg.left, srcRect.right),
+				min(rSeg.bottom + rSeg.top, srcRect.bottom)) :
 			D2D1::RectF();
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
-
+		 
 		const D2D1_RECT_F rDst = D2D1::RectF(
-			(rSrc.left - tSrc.left) / (tSrc.right - tSrc.left) * (tDst.right - tDst.left) + tDst.left,
-			(rSrc.top - tSrc.top) / (tSrc.bottom - tSrc.top) * (tDst.bottom - tDst.top) + tDst.top,
-			(rSrc.right - tSrc.left) / (tSrc.right - tSrc.left) * (tDst.right - tDst.left) + tDst.left,
-			(rSrc.bottom - tSrc.top) / (tSrc.bottom - tSrc.top) * (tDst.bottom - tDst.top) + tDst.top);
+			(rSrc.left - srcRect.left) / (srcRect.right - srcRect.left) * (dstRect.right - dstRect.left) + dstRect.left,
+			(rSrc.top - srcRect.top) / (srcRect.bottom - srcRect.top) * (dstRect.bottom - dstRect.top) + dstRect.top,
+			(rSrc.right - srcRect.left) / (srcRect.right - srcRect.left) * (dstRect.right - dstRect.left) + dstRect.left,
+			(rSrc.bottom - srcRect.top) / (srcRect.bottom - srcRect.top) * (dstRect.bottom - dstRect.top) + dstRect.top);
 
 		while (rSrc.top >= m_MaxBitmapSize)
 		{
@@ -554,37 +543,34 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, c
 	}
 }
 
-void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
+void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
 
-	const auto tDst = Util::ToRectF(dstRect);
-	const auto tSrc = Util::ToRectF(srcRect);
+	FLOAT x = dstRect.left;
+	FLOAT y = dstRect.top;
 
-	FLOAT x = tDst.left;
-	FLOAT y = tDst.top;
-
-	while (x < tDst.right || y < tDst.bottom)
+	while (x < dstRect.right || y < dstRect.bottom)
 	{
-		const FLOAT w = (tDst.right - x) > width ? width : (tDst.right - x);
-		const FLOAT h = (tDst.bottom - y) > height ? height : (tDst.bottom - y);
+		const FLOAT w = (dstRect.right - x) > width ? width : (dstRect.right - x);
+		const FLOAT h = (dstRect.bottom - y) > height ? height : (dstRect.bottom - y);
 
-		const auto dst = Gdiplus::Rect((INT)x, (INT)y, (INT)w, (INT)h);
-		const auto src = Gdiplus::Rect(0, 0, (INT)w, (INT)h);
+		const auto dst = D2D1::RectF(x, y, x + w, y + h);;
+		const auto src = D2D1::RectF(0, 0, w, h);
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
-		if (x >= tDst.right && y < tDst.bottom)
+		if (x >= dstRect.right && y < dstRect.bottom)
 		{
-			x = tDst.left;
+			x = dstRect.left;
 			y += height;
 		}
 	}
 }
 
-void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const Gdiplus::Rect& dstRect,
-	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+	const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2)
 {
 	if (!bitmap || !maskBitmap) return;
 
@@ -597,8 +583,9 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
+	/*
 	const auto tDst = Util::ToRectF(dstRect);
-	const auto tSrc = Util::ToRectF(srcRect);
+	const auto tSrc = Util::ToRectF(srcRect);*/
 
 	auto getRectSubRegion = [&width, &height](const D2D1_RECT_F& r1, const D2D1_RECT_F& r2) -> D2D1_RECT_F
 	{
@@ -612,13 +599,15 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 	for (auto bseg : bitmap->m_Segments)
 	{
 		const auto rSeg = bseg.GetRect();
-		const auto rDst = getRectSubRegion(rSeg, tDst);
-		const auto rSrc = getRectSubRegion(rSeg, tSrc);
+		const auto rDst = getRectSubRegion(rSeg, dstRect);
+		const auto rSrc = getRectSubRegion(rSeg, srcRect);
 
+		FLOAT s2Width = srcRect2.right - srcRect2.left;
+		FLOAT s2Height = srcRect2.bottom - srcRect2.top;
 		// "Move" and "scale" the |bitmap| to match the destination.
 		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
 		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
-			D2D1::SizeF((rDst.right - rDst.left) / (FLOAT)srcRect2.Width, (rDst.bottom - rDst.top) / (FLOAT)srcRect2.Height));
+			D2D1::SizeF((rDst.right - rDst.left) / s2Width, (rDst.bottom - rDst.top) / s2Height));
 		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0f, scale * translate);
 
 		HRESULT hr = m_Target->CreateBitmapBrush(
@@ -634,8 +623,8 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 		for (auto mseg : maskBitmap->m_Segments)
 		{
 			const auto rmSeg = mseg.GetRect();
-			const auto rmDst = getRectSubRegion(rmSeg, tDst);
-			const auto rmSrc = getRectSubRegion(rmSeg, tSrc);
+			const auto rmDst = getRectSubRegion(rmSeg, dstRect);
+			const auto rmSrc = getRectSubRegion(rmSeg, srcRect);
 
 			// If no overlap, don't draw
 			if ((rmDst.left < rDst.left + rDst.right &&
@@ -655,32 +644,27 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 	}
 }
 
-void Canvas::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
+void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
 {
-	Gdiplus::Color color;
-	brush.GetColor(&color);
-
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
+	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		m_Target->FillRectangle(Util::ToRectF(rect), solidBrush.Get());
+		m_Target->FillRectangle(rect, solidBrush.Get());
 	}
 }
 
-void Canvas::FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& color1, const Gdiplus::Color& color2, const FLOAT& angle)
+void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle)
 {
-	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
-		(FLOAT)rect.X, (FLOAT)rect.Y, (FLOAT)rect.Width, (FLOAT)rect.Height);
-	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
-		(FLOAT)rect.X, (FLOAT)rect.Y, (FLOAT)rect.Width, (FLOAT)rect.Height);
+	D2D1_POINT_2F start = Util::FindEdgePoint(angle, rect.left, rect.top, rect.right, rect.bottom);
+	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f, rect.left, rect.top, rect.right, rect.bottom);
 
 	ID2D1GradientStopCollection *pGradientStops = NULL;
 
 	D2D1_GRADIENT_STOP gradientStops[2];
-	gradientStops[0].color = Util::ToColorF(color1);
+	gradientStops[0].color = color1;
 	gradientStops[0].position = 0.0f;
-	gradientStops[1].color = Util::ToColorF(color2);
+	gradientStops[1].color = color2;
 	gradientStops[1].position = 1.0f;
 
 	HRESULT hr = m_Target->CreateGradientStopCollection(
@@ -698,13 +682,13 @@ void Canvas::FillGradientRectangle(Gdiplus::Rect& rect, const Gdiplus::Color& co
 		brush.GetAddressOf());
 	if (FAILED(hr)) return;
 
-	m_Target->FillRectangle(Util::ToRectF(rect), brush.Get());
+	m_Target->FillRectangle(rect, brush.Get());
 }
 
-void Canvas::DrawLine(const Gdiplus::Color& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
+void Canvas::DrawLine(const D2D1_COLOR_F& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
 {
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(Util::ToColorF(color), solidBrush.GetAddressOf());
+	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);

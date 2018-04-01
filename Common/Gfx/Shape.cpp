@@ -420,9 +420,9 @@ void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 {
 	auto bounds = GetBounds(false);
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
-		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+		bounds.left, bounds.top, bounds.right, bounds.bottom);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
-		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+		bounds.left, bounds.top, bounds.right, bounds.bottom);
 
 	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
 	HRESULT hr = target->CreateLinearGradientBrush(

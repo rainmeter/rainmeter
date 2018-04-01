@@ -557,7 +557,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		const Rect src(0, 0, r.Width, r.Height);
 
 		canvas.PushClip(&primaryPath);
-		canvas.DrawBitmap(primaryBitmap, r, src);
+		canvas.DrawBitmap(primaryBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
 		canvas.PopClip();
 	}
 	else
@@ -574,7 +574,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const Rect src(0, 0, r.Width, r.Height);
 
 			canvas.PushClip(&secondaryPath);
-			canvas.DrawBitmap(secondaryBitmap, r, src);
+			canvas.DrawBitmap(secondaryBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
 			canvas.PopClip();
 		}
 		else
@@ -589,7 +589,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const Rect src(0, 0, r.Width, r.Height);
 
 			canvas.PushClip(&bothPath);
-			canvas.DrawBitmap(bothBitmap, r, src);
+			canvas.DrawBitmap(bothBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
 			canvas.PopClip();
 		}
 		else

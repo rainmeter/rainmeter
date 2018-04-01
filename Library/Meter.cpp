@@ -675,12 +675,11 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 		if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 		{
-			SolidBrush solid(m_SolidColor);
-			canvas.FillRectangle(r, solid);
+			canvas.FillRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_SolidColor));
 		}
 		else
 		{
-			canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, (FLOAT)m_SolidAngle);
+			canvas.FillGradientRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_SolidColor), Gfx::Util::ToColorF(m_SolidColor2), (FLOAT)m_SolidAngle);
 		}
 	}
 
@@ -716,12 +715,15 @@ void Meter::DrawBevel(Gfx::Canvas& canvas, const Rect& rect, const Color& light,
 	FLOAT t = (FLOAT)rect.GetTop();
 	FLOAT b = (FLOAT)rect.GetBottom() - 1.0f;
 
-	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
-	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);
-	canvas.DrawLine(light, l + 1.0f, t + 1.0f, l + 1.0f, b - 1.0f, 2.0f);
-	canvas.DrawLine(light, l + 1.0f, t + 1.0f, r - 1.0f, t + 1.0f, 2.0f);
-	canvas.DrawLine(dark,  l,        b,        r,        b,        2.0f);
-	canvas.DrawLine(dark,  r,        t,        r,        b,        2.0f);
-	canvas.DrawLine(dark,  l + 1.0f, b - 1.0f, r - 1.0f, b - 1.0f, 2.0f);
-	canvas.DrawLine(dark,  r - 1.0f, t + 1.0f, r - 1.0f, b - 1.0f, 2.0f);
+	D2D1_COLOR_F d2dlight = Gfx::Util::ToColorF(light);
+	D2D1_COLOR_F d2ddark = Gfx::Util::ToColorF(dark);
+
+	canvas.DrawLine(d2dlight, l,        t,        l,        b,        2.0f);
+	canvas.DrawLine(d2dlight, l,        t,        r,        t,        2.0f);
+	canvas.DrawLine(d2dlight, l + 1.0f, t + 1.0f, l + 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(d2dlight, l + 1.0f, t + 1.0f, r - 1.0f, t + 1.0f, 2.0f);
+	canvas.DrawLine(d2ddark,  l,        b,        r,        b,        2.0f);
+	canvas.DrawLine(d2ddark,  r,        t,        r,        b,        2.0f);
+	canvas.DrawLine(d2ddark,  l + 1.0f, b - 1.0f, r - 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(d2ddark,  r - 1.0f, t + 1.0f, r - 1.0f, b - 1.0f, 2.0f);
 }
