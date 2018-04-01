@@ -12,16 +12,14 @@
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/Gfx/Shapes/Rectangle.h"
 
-using namespace Gdiplus;
-
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
 
 MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_PrimaryColor(Color::Green),
-	m_SecondaryColor(Color::Red),
-	m_OverlapColor(Color::Yellow),
+	m_PrimaryColor(D2D1::ColorF(D2D1::ColorF::Green)),
+	m_SecondaryColor(D2D1::ColorF(D2D1::ColorF::Red)),
+	m_OverlapColor(D2D1::ColorF(D2D1::ColorF::Yellow)),
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
@@ -181,9 +179,9 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
-	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
-	m_OverlapColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
+	m_PrimaryColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"PrimaryColor", Gdiplus::Color::Green));
+	m_SecondaryColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"SecondaryColor", Gdiplus::Color::Red));
+	m_OverlapColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"BothColor", Gdiplus::Color::Yellow));
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
@@ -371,9 +369,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	Gfx::Rectangle secondaryPath(0.0f, 0.0f, 0.0f, 0.0f);
 	Gfx::Rectangle bothPath(0.0f, 0.0f, 0.0f, 0.0f);
 
-	auto applyStyles = [](Gfx::Shape& shape, const Gdiplus::Color& fill) -> void
+	auto applyStyles = [](Gfx::Shape& shape, const D2D1_COLOR_F& fill) -> void
 	{
-		shape.SetFill(Gfx::Util::ToColorF(fill));
+		shape.SetFill(fill);
 		shape.SetStrokeWidth(0.0f);
 		shape.SetStrokeFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
 	};
@@ -386,13 +384,15 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
 	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
 
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	int displayW = (int)(meterRect.right - meterRect.left);
+	int displayH = (int)(meterRect.bottom - meterRect.top);
 
 	// Default values (GraphStart=Right, GraphOrientation=Vertical)
 	int i;
 	int startValue = 0;
 	int* endValueLHS = &i;
-	int* endValueRHS = &meterRect.Width;
+	int* endValueRHS = &displayW;
 	int step = 1;
 	int endValue = -1; //(should be 0, but need to simulate <=)
 
@@ -401,7 +401,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (m_GraphStartLeft)
 		{
-			startValue = meterRect.Width - 1;
+			startValue = displayW - 1;
 			endValueLHS = &endValue;
 			endValueRHS = &i;
 			step = -1;
@@ -411,20 +411,21 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (!m_Flip)
 		{
-			endValueRHS = &meterRect.Height;
+			endValueRHS = &displayH;
 		}
 		else
 		{
-			startValue = meterRect.Height - 1;
+			startValue = displayH - 1;
 			endValueLHS = &endValue;
 			endValueRHS = &i;
 			step = -1;
 		}
 	}
 
-	auto combine = [](Gfx::Rectangle& shape1, const Rect& r) -> void
+	// Note: right and bottom is unsed for width and height
+	auto combine = [](Gfx::Rectangle& shape1, const D2D1_RECT_F& r) -> void
 	{
-		Gfx::Rectangle shape2((FLOAT)r.X, (FLOAT)r.Y, (FLOAT)r.Width, (FLOAT)r.Height);
+		Gfx::Rectangle shape2(r.left, r.top, r.right, r.bottom);
 		shape1.CombineWith(&shape2, D2D1_COMBINE_MODE_UNION);
 	};
 
@@ -435,22 +436,22 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		{
 			double value = (m_MaxPrimaryValue == 0.0) ?
 				  0.0
-				: m_PrimaryValues[(i + (m_MeterPos % meterRect.Height)) % meterRect.Height] / m_MaxPrimaryValue;
+				: m_PrimaryValues[(i + (m_MeterPos % displayH)) % displayH] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
 
-			int primaryBarHeight = (int)(meterRect.Width * value);
-			primaryBarHeight = min(meterRect.Width, primaryBarHeight);
+			int primaryBarHeight = (int)(displayW * value);
+			primaryBarHeight = min(displayW, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Height] / m_MaxSecondaryValue;
+					: m_SecondaryValues[(i + m_MeterPos) % displayH] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
 
-				int secondaryBarHeight = (int)(meterRect.Width * value);
-				secondaryBarHeight = min(meterRect.Width, secondaryBarHeight);
+				int secondaryBarHeight = (int)(displayW * value);
+				secondaryBarHeight = min(displayW, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
@@ -458,33 +459,33 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 				// Cache image/color rectangle for the both lines
 				{
-					const Rect& r = m_GraphStartLeft ?
-						  Rect(meterRect.X, meterRect.Y + startValue + (step * i), bothBarHeight, 1)
-						: Rect(meterRect.X + meterRect.Width - bothBarHeight, meterRect.Y + startValue + (step * i), bothBarHeight, 1);
+					const D2D1_RECT_F& r = m_GraphStartLeft ?
+						  D2D1::RectF(meterRect.left, meterRect.top + startValue + (step * i), (FLOAT)bothBarHeight, 1)
+						: D2D1::RectF(meterRect.left + displayW - bothBarHeight, meterRect.top + startValue + (step * i), (FLOAT)bothBarHeight, 1);
 					combine(bothPath, r);
 				}
 
 				// Cache the image/color rectangle for the rest
 				if (secondaryBarHeight > primaryBarHeight)
 				{
-					const Rect& r = m_GraphStartLeft ?
-						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
-						: Rect(meterRect.X + meterRect.Width - secondaryBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
+					const D2D1_RECT_F& r = m_GraphStartLeft ?
+						  D2D1::RectF(meterRect.left + bothBarHeight, meterRect.top + startValue + (step * i), (FLOAT)(secondaryBarHeight - bothBarHeight), 1)
+						: D2D1::RectF(meterRect.left + displayW - secondaryBarHeight, meterRect.top + startValue + (step * i), (FLOAT)(secondaryBarHeight - bothBarHeight), 1);
 					combine(secondaryPath, r);
 				}
 				else
 				{
-					const Rect& r = m_GraphStartLeft ?
-						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
-						: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
+					const D2D1_RECT_F& r = m_GraphStartLeft ?
+						  D2D1::RectF(meterRect.left + bothBarHeight, meterRect.top + startValue + (step * i), (FLOAT)(primaryBarHeight - bothBarHeight), 1)
+						: D2D1::RectF(meterRect.left + displayW - primaryBarHeight, meterRect.top + startValue + (step * i), (FLOAT)(primaryBarHeight - bothBarHeight), 1);
 					combine(primaryPath, r);
 				}
 			}
 			else
 			{
-				const Rect& r = m_GraphStartLeft ?
-					  Rect(meterRect.X, meterRect.Y + startValue + (step * i), primaryBarHeight, 1)
-					: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight, 1);
+				const D2D1_RECT_F& r = m_GraphStartLeft ?
+					  D2D1::RectF(meterRect.left, meterRect.top + startValue + (step * i), (FLOAT)primaryBarHeight, 1)
+					: D2D1::RectF(meterRect.left + displayW - primaryBarHeight, meterRect.top + startValue + (step * i), (FLOAT)primaryBarHeight, 1);
 				combine(primaryPath, r);
 			}
 		}
@@ -495,22 +496,22 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		{
 			double value = (m_MaxPrimaryValue == 0.0) ?
 				  0.0
-				: m_PrimaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxPrimaryValue;
+				: m_PrimaryValues[(i + m_MeterPos) % displayW] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
 
-			int primaryBarHeight = (int)(meterRect.Height * value);
-			primaryBarHeight = min(meterRect.Height, primaryBarHeight);
+			int primaryBarHeight = (int)(displayH * value);
+			primaryBarHeight = min(displayH, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxSecondaryValue;
+					: m_SecondaryValues[(i + m_MeterPos) % displayW] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
 
-				int secondaryBarHeight = (int)(meterRect.Height * value);
-				secondaryBarHeight = min(meterRect.Height, secondaryBarHeight);
+				int secondaryBarHeight = (int)(displayH * value);
+				secondaryBarHeight = min(displayH, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
@@ -518,33 +519,33 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 				// Cache image/color rectangle for the both lines
 				{
-					const Rect& r = m_Flip ?
-						  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, bothBarHeight)
-						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - bothBarHeight, 1, bothBarHeight);
+					const D2D1_RECT_F& r = m_Flip ?
+						  D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top, 1, (FLOAT)bothBarHeight)
+						: D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + displayH - bothBarHeight, 1, (FLOAT)bothBarHeight);
 					combine(bothPath, r);
 				}
 
 				// Cache the image/color rectangle for the rest
 				if (secondaryBarHeight > primaryBarHeight)
 				{
-					const Rect& r = m_Flip ?
-						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
-						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
+					const D2D1_RECT_F& r = m_Flip ?
+						  D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + bothBarHeight, 1, (FLOAT)(secondaryBarHeight - bothBarHeight))
+						: D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + displayH - secondaryBarHeight, 1, (FLOAT)(secondaryBarHeight - bothBarHeight));
 					combine(secondaryPath, r);
 				}
 				else
 				{
-					const Rect& r = m_Flip ?
-						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
-						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
+					const D2D1_RECT_F& r = m_Flip ?
+						  D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + bothBarHeight, 1, (FLOAT)(primaryBarHeight - bothBarHeight))
+						: D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + displayH - primaryBarHeight, 1, (FLOAT)(primaryBarHeight - bothBarHeight));
 					combine(primaryPath, r);
 				}
 			}
 			else
 			{
-				const Rect& r = m_Flip ?
-					  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, primaryBarHeight)
-					: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight);
+				const D2D1_RECT_F& r = m_Flip ?
+					  D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top, 1, (FLOAT)primaryBarHeight)
+					: D2D1::RectF(meterRect.left + startValue + (step * i), meterRect.top + displayH - primaryBarHeight, 1, (FLOAT)primaryBarHeight);
 				combine(primaryPath, r);
 			}
 		}
@@ -553,16 +554,16 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	// Draw cached rectangles
 	if (primaryBitmap)
 	{
-		const Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
-		const Rect src(0, 0, r.Width, r.Height);
+		const D2D1_RECT_F r = { meterRect.left, meterRect.top, meterRect.left + primaryBitmap->GetWidth(), meterRect.top + primaryBitmap->GetHeight() };
+		const D2D1_RECT_F src = { 0, 0, r.right - r.left, r.bottom  - r.top};
 
 		canvas.PushClip(&primaryPath);
-		canvas.DrawBitmap(primaryBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
+		canvas.DrawBitmap(primaryBitmap, r, src);
 		canvas.PopClip();
 	}
 	else
 	{
-		primaryPath.SetFill(Gfx::Util::ToColorF(m_PrimaryColor));
+		primaryPath.SetFill(m_PrimaryColor);
 		canvas.DrawGeometry(primaryPath, 0, 0);
 	}
 
@@ -570,31 +571,31 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (secondaryBitmap)
 		{
-			const Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
-			const Rect src(0, 0, r.Width, r.Height);
+			const D2D1_RECT_F r = { meterRect.left, meterRect.top, meterRect.left + secondaryBitmap->GetWidth(), meterRect.top + secondaryBitmap->GetHeight() };
+			const D2D1_RECT_F src = { 0, 0, r.right - r.left, r.bottom - r.top };
 
 			canvas.PushClip(&secondaryPath);
-			canvas.DrawBitmap(secondaryBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
+			canvas.DrawBitmap(secondaryBitmap, r, src);
 			canvas.PopClip();
 		}
 		else
 		{
-			primaryPath.SetFill(Gfx::Util::ToColorF(m_SecondaryColor));
+			primaryPath.SetFill(m_SecondaryColor);
 			canvas.DrawGeometry(secondaryPath, 0, 0);
 		}
 
 		if (bothBitmap)
 		{
-			const Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
-			const Rect src(0, 0, r.Width, r.Height);
+			const D2D1_RECT_F r = { meterRect.left, meterRect.top, meterRect.left + bothBitmap->GetWidth(), meterRect.top + bothBitmap->GetHeight() };
+			const D2D1_RECT_F src = { 0, 0, r.right - r.left, r.bottom - r.top };
 
 			canvas.PushClip(&bothPath);
-			canvas.DrawBitmap(bothBitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(src));
+			canvas.DrawBitmap(bothBitmap, r, src);
 			canvas.PopClip();
 		}
 		else
 		{
-			primaryPath.SetFill(Gfx::Util::ToColorF(m_OverlapColor));
+			primaryPath.SetFill(m_OverlapColor);
 			canvas.DrawGeometry(bothPath, 0, 0);
 		}
 	}

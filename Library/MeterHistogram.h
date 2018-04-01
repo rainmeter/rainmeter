@@ -36,9 +36,9 @@ private:
 	void DisposeBuffer();
 	void CreateBuffer();
 
-	Gdiplus::Color m_PrimaryColor;
-	Gdiplus::Color m_SecondaryColor;
-	Gdiplus::Color m_OverlapColor;
+	D2D1_COLOR_F m_PrimaryColor;
+	D2D1_COLOR_F m_SecondaryColor;
+	D2D1_COLOR_F m_OverlapColor;
 
 	int m_MeterPos;							// New value placement position
 	bool m_Autoscale;
