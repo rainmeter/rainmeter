@@ -12,8 +12,6 @@
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
@@ -122,29 +120,26 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 		int x = GetX();
 		int y = GetY();
 
-		REAL cx = (REAL)(x + m_W / 2.0);
-		REAL cy = (REAL)(y + m_H / 2.0);
+		FLOAT cx = (FLOAT)(x + m_W / 2.0);
+		FLOAT cy = (FLOAT)(y + m_H / 2.0);
 
 		// Calculate the rotation
-		REAL angle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
+		FLOAT angle = (FLOAT)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
 
 		// TODO: convert to Canvas: canvas.RotateTransform(angle, cx, cy, (REAL)-m_OffsetX, (REAL)-m_OffsetY);
 		// NOTE: canvas.RotateTransform does not work at all
-		Gdiplus::Matrix matrix;
-		matrix.Translate(cx, cy);
-		matrix.Rotate(angle);
-		matrix.Translate((REAL)(-m_OffsetX), (REAL)(-m_OffsetY));
-		D2D1_MATRIX_3X2_F d2dMatrix;
-		matrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
-		canvas.SetTransform(d2dMatrix);
+		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Translation(cx, cy) * 
+			D2D1::Matrix3x2F::Rotation(angle) * 
+			D2D1::Matrix3x2F::Translation((FLOAT)(-m_OffsetX), (FLOAT)(-m_OffsetY));
+		canvas.SetTransform(matrix);
 
 		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
 		INT width = (INT)drawBitmap->GetWidth();
 		INT height = (INT)drawBitmap->GetHeight();
 
-		const Gdiplus::Rect rect = Gdiplus::Rect(0, 0, width, height);
-		canvas.DrawBitmap(drawBitmap, Gfx::Util::ToRectF(rect), Gfx::Util::ToRectF(rect));
+		const D2D1_RECT_F rect = { 0, 0, (FLOAT)width, (FLOAT)height };
+		canvas.DrawBitmap(drawBitmap, rect, rect);
 
 		canvas.ResetTransform();
 	}
