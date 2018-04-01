@@ -22,7 +22,6 @@
 #include "MeasureTime.h"
 #include "MeterButton.h"
 #include "MeterString.h"
-#include "TintedImage.h"
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"

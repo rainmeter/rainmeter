@@ -125,7 +125,6 @@
     <ClCompile Include="SkinRegistry_Test.cpp" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="System.cpp" />
-    <ClCompile Include="TintedImage.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
@@ -228,7 +227,6 @@
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
-    <ClInclude Include="TintedImage.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />

@@ -9,7 +9,6 @@
 #define __METERIMAGE_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
 #include "GeneralImage.h"
 
 class MeterImage : public Meter
@@ -56,7 +55,7 @@ private:
 
 	RECT m_ScaleMargins;
 
-	static const WCHAR* c_MaskOptionArray[TintedImage::OptionCount];
+	static const WCHAR* c_MaskOptionArray[GeneralImage::OptionCount];
 };
 
 #endif
