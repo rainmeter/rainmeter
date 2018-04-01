@@ -101,5 +101,10 @@ bool RectContains(const D2D1_RECT_F& rect, const D2D1_POINT_2F& point)
 	return rect.left <= point.x && rect.right >= point.x && rect.top <= point.y && rect.bottom >= point.y;
 }
 
+bool ColorFEquals(const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2)
+{
+	return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b && color1.a == color2.a;
+}
+
 }  // namespace Util
 }  // namespace Gfx

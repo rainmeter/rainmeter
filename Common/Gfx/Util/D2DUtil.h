@@ -23,6 +23,7 @@ D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point
 D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float right, const float bottom);
 
 bool RectContains(const D2D1_RECT_F& rect, const D2D1_POINT_2F& point);
+bool ColorFEquals(const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2);
 
 }  // namespace Util
 }  // namespace Gfx
