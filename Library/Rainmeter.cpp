@@ -207,7 +207,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		}
 	}
 
-	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 1, m_IniFile.c_str());
+	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
 
 	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
 	{
