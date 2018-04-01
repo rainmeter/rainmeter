@@ -128,9 +128,9 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 
 		// TODO: convert to Canvas: canvas.RotateTransform(angle, cx, cy, (REAL)-m_OffsetX, (REAL)-m_OffsetY);
 		// NOTE: canvas.RotateTransform does not work at all
-		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Translation(cx, cy) * 
+		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Translation((FLOAT)(-m_OffsetX), (FLOAT)(-m_OffsetY)) * 
 			D2D1::Matrix3x2F::Rotation(angle) * 
-			D2D1::Matrix3x2F::Translation((FLOAT)(-m_OffsetX), (FLOAT)(-m_OffsetY));
+			D2D1::Matrix3x2F::Translation(cx, cy);
 		canvas.SetTransform(matrix);
 
 		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
