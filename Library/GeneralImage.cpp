@@ -183,7 +183,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[3][3] = (FLOAT)alpha;
+		m_Options.m_ColorMatrix.m[3][3] = alpha / 255.f;
 	}
 
 	std::vector<FLOAT> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
@@ -293,7 +293,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 {
 	const auto& crop = m_Options.m_Crop;
-	if (crop.right - crop.left >= 0 && crop.bottom - crop.top >= 0)
+	if (crop.right - crop.left > 0 && crop.bottom - crop.top > 0)
 	{
 		const int imageW = m_Bitmap->GetBitmap()->GetWidth();
 		const int imageH = m_Bitmap->GetBitmap()->GetHeight();
@@ -359,9 +359,9 @@ void GeneralImage::ApplyTransforms()
 
 		if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
 
-		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
-
 		if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
+
+		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
 
 		auto bitmap = stream->ToBitmap(canvas);
 		delete stream;
