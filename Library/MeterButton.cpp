@@ -175,23 +175,25 @@ bool MeterButton::HitTest2(int px, int py)
 		if (m_Image.IsLoaded())
 		{
 			Rect meterRect = GetMeterRectPadding();
-			int ix = meterRect.Width * m_State;
-			px = px - meterRect.X + ix;
+			px = px - meterRect.X;
 			py = py - meterRect.Y;
-			if (px >= ix && px < ix + meterRect.Width &&
+			
+			if (px >= 0 && px < meterRect.Width &&
 				py >= 0 && py < meterRect.Height)
 			{
+
 				auto bitmap = m_Image.GetImage();
 				if (!bitmap) return false;
+				int bitmapW = bitmap->GetWidth();
+				int bitmapH = bitmap->GetHeight();
+				if (bitmapW > bitmapH)
+					px -= meterRect.Width * m_State;
+				else
+					py -= meterRect.Height * m_State;
+
 				D2D1_COLOR_F color;
-				bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
-				return color.a != 0;
-				/*Color color;
-				Status status = m_Image.GetImage()->GetPixel(px, py, &color);
-				if (status != Ok || color.GetA() != 0)
-				{
-					return true;
-				}*/
+				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
+				return !valid || color.a != 0;
 			}
 		}
 		else

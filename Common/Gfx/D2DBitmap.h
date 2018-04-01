@@ -77,7 +77,7 @@ public:
 	HRESULT Load(const Canvas& canvas);
 
 	Util::D2DEffectStream* CreateEffectStream();
-	void GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
+	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
 
 	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 
