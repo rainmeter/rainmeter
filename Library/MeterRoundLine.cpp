@@ -13,8 +13,6 @@
 #include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
 
-using namespace Gdiplus;
-
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
@@ -31,7 +29,7 @@ MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_LineStartShift(0.0),
 	m_LineLengthShift(0.0),
 	m_ValueRemainder(0U),
-	m_LineColor(Color::Black),
+	m_LineColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_Value(0.0)
 {
 }
@@ -55,7 +53,7 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
-	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
+	m_LineColor = Gfx::Util::ToColorF(parser.ReadColor(section, L"LineColor", Gdiplus::Color::Black));
 	m_Solid = parser.ReadBool(section, L"Solid", false);
 	m_CntrlAngle = parser.ReadBool(section, L"ControlAngle", true);
 	m_CntrlLineStart = parser.ReadBool(section, L"ControlStart", false);
@@ -149,7 +147,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 			Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
 			Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
 			outer.CombineWith(&inner, D2D1_COMBINE_MODE_XOR);
-			outer.SetFill(Gfx::Util::ToColorF(m_LineColor));
+			outer.SetFill(m_LineColor);
 			outer.SetStrokeWidth(0.0f);
 			canvas.DrawGeometry(outer, 0, 0);
 			return true;
@@ -162,7 +160,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 				D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
 			Gfx::Path roundline(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
-			roundline.SetFill(Gfx::Util::ToColorF(m_LineColor));
+			roundline.SetFill(m_LineColor);
 			roundline.SetStrokeWidth(0.0f);
 
 			if (lineLength > 0.0f)
@@ -205,7 +203,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		else
 		{
 			Gfx::Line line(eInnerX, eInnerY, eOuterX, eOuterY);
-			line.SetStrokeFill(Gfx::Util::ToColorF(m_LineColor));
+			line.SetStrokeFill(m_LineColor);
 			line.SetStrokeWidth((FLOAT)m_LineWidth);
 			canvas.DrawGeometry(line, 0, 0);
 		}
@@ -214,7 +212,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	{
 		Gfx::Path roundlineOuter(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
 		Gfx::Path roundlineInner(sInnerX, sInnerY, D2D1_FILL_MODE_ALTERNATE);
-		roundlineOuter.SetFill(Gfx::Util::ToColorF(m_LineColor));
+		roundlineOuter.SetFill(m_LineColor);
 		roundlineOuter.SetStrokeWidth(0.0f);
 
 		if (lineLength > 0.0f)
