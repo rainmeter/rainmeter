@@ -279,7 +279,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			FLOAT height = drawH;
 			height -= extraSpace;
 			height /= digits;
-			meterRect.right = meterRect.left + height;
+			meterRect.bottom = meterRect.top + height;
 		}
 		else
 		{
@@ -382,7 +382,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, D2D1::RectF(meterRect.left + offset, meterRect.top, meterRect.left + offset, meterRect.top + height),
+			canvas.DrawBitmap(bitmap, D2D1::RectF(meterRect.left + offset, meterRect.top, meterRect.right + offset, meterRect.bottom),
 				D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + width, (FLOAT)newY + height));
 			if (m_FrameCount == 1)
 			{
