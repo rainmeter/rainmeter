@@ -28,10 +28,10 @@ template <> struct hash<ImageOptions>
 		res = res * 31 + std::hash<DWORD>()(opt.m_FileSize);
 		res = res * 31 + std::hash<ULONGLONG>()(opt.m_FileTime);
 		res = res * 31 + std::hash<FLOAT>()(opt.m_Rotate);
-		res = res * 31 + std::hash<INT>()(opt.m_Crop.X);
-		res = res * 31 + std::hash<INT>()(opt.m_Crop.Y);
-		res = res * 31 + std::hash<INT>()(opt.m_Crop.Width);
-		res = res * 31 + std::hash<INT>()(opt.m_Crop.Height);
+		res = res * 31 + std::hash<FLOAT>()(opt.m_Crop.left);
+		res = res * 31 + std::hash<FLOAT>()(opt.m_Crop.top);
+		res = res * 31 + std::hash<FLOAT>()(opt.m_Crop.right);
+		res = res * 31 + std::hash<FLOAT>()(opt.m_Crop.bottom);
 		res = res * 31 + std::hash<INT>()((INT)opt.m_CropMode);
 		res = res * 31 + std::hash<INT>()((INT)opt.m_Flip);
 		res = res * 31 + std::hash<bool>()(opt.m_GreyScale);

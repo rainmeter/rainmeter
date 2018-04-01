@@ -15,7 +15,7 @@ struct ImageOptions : Gfx::FileInfo
 {
 	ImageOptions() :
 		m_ColorMatrix(),
-		m_Crop(-1, -1, -1, -1),
+		m_Crop({ -1, -1, -1, -1 }),
 		m_CropMode(CROPMODE_TL),
 		m_GreyScale(false),
 		m_Rotate(),
@@ -51,14 +51,14 @@ struct ImageOptions : Gfx::FileInfo
 			m_UseExifOrientation == other.m_UseExifOrientation &&
 			m_Flip == other.m_Flip &&
 			m_CropMode == other.m_CropMode &&
-			m_Crop.X == other.m_Crop.X &&
-			m_Crop.Y == other.m_Crop.Y &&
-			m_Crop.Width == other.m_Crop.Width &&
-			m_Crop.Height == other.m_Crop.Height;
+			m_Crop.left == other.m_Crop.left &&
+			m_Crop.top == other.m_Crop.top &&
+			m_Crop.right == other.m_Crop.right &&
+			m_Crop.bottom == other.m_Crop.bottom;
 	}
 
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
-	Gdiplus::Rect m_Crop;
+	D2D1_RECT_F m_Crop;
 	CROPMODE m_CropMode;
 	bool m_GreyScale;
 	FLOAT m_Rotate;

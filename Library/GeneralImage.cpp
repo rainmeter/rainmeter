@@ -10,8 +10,6 @@
 #include "Logger.h"
 #include "../Common/PathUtil.h"
 
-using namespace Gdiplus;
-
 // GrayScale Matrix
 const D2D1_MATRIX_5X4_F GeneralImage::c_GreyScaleMatrix = {
 	0.299f, 0.299f, 0.299f, 0.0f,
@@ -70,7 +68,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 	if (!m_DisableTransform)
 	{
-		m_Options.m_Crop.X = m_Options.m_Crop.Y = m_Options.m_Crop.Width = m_Options.m_Crop.Height = -1;
+		m_Options.m_Crop.left = m_Options.m_Crop.top = m_Options.m_Crop.right = m_Options.m_Crop.bottom = -1;
 		m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
 
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
@@ -85,22 +83,22 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 				token = wcstok(parseSz, L",", &context);
 				if (token)
 				{
-					m_Options.m_Crop.X = parser.ParseInt(token, 0);
+					m_Options.m_Crop.left = (FLOAT)parser.ParseInt(token, 0);
 
 					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
-						m_Options.m_Crop.Y = parser.ParseInt(token, 0);
+						m_Options.m_Crop.top = (FLOAT)parser.ParseInt(token, 0);
 
 						token = wcstok(nullptr, L",", &context);
 						if (token)
 						{
-							m_Options.m_Crop.Width = parser.ParseInt(token, 0);
+							m_Options.m_Crop.right = (FLOAT)parser.ParseInt(token, 0) + m_Options.m_Crop.left;
 
 							token = wcstok(nullptr, L",", &context);
 							if (token)
 							{
-								m_Options.m_Crop.Height = parser.ParseInt(token, 0);
+								m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(token, 0) + m_Options.m_Crop.top;
 
 								token = wcstok(nullptr, L",", &context);
 								if (token)
@@ -124,8 +122,8 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 	m_Options.m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
-	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
-	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
+	D2D1_COLOR_F tint = Gfx::Util::ToColorF(parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Gdiplus::Color::White));
+	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
 
@@ -146,7 +144,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[0][0] = (Gdiplus::REAL)tint.GetRed() / 255.0f;
+		m_Options.m_ColorMatrix.m[0][0] = tint.r;
 	}
 
 	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
@@ -159,7 +157,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[1][1] = (Gdiplus::REAL)tint.GetGreen() / 255.0f;
+		m_Options.m_ColorMatrix.m[1][1] = tint.g;
 	}
 
 	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
@@ -172,7 +170,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[2][2] = (Gdiplus::REAL)tint.GetBlue() / 255.0f;
+		m_Options.m_ColorMatrix.m[2][2] = tint.b;
 	}
 
 	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
@@ -185,7 +183,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[3][3] = (Gdiplus::REAL)alpha / 255.0f;
+		m_Options.m_ColorMatrix.m[3][3] = (FLOAT)alpha;
 	}
 
 	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
@@ -221,7 +219,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 	if (!m_DisableTransform)
 	{
-		m_Options.m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
+		m_Options.m_Rotate = (FLOAT)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
 	}
 
 	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
@@ -294,7 +292,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 {
-	if (m_Options.m_Crop.Width >= 0 && m_Options.m_Crop.Height >= 0)
+	const auto& crop = m_Options.m_Crop;
+	if (crop.right - crop.left >= 0 && crop.bottom - crop.top >= 0)
 	{
 		const int imageW = m_Bitmap->GetBitmap()->GetWidth();
 		const int imageH = m_Bitmap->GetBitmap()->GetHeight();
@@ -306,32 +305,32 @@ void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 		{
 		case ImageOptions::CROPMODE_TL:
 		default:
-			x = m_Options.m_Crop.X;
-			y = m_Options.m_Crop.Y;
+			x = (int)crop.left;
+			y = (int)crop.top;
 			break;
 
 		case ImageOptions::CROPMODE_TR:
-			x = m_Options.m_Crop.X + imageW;
-			y = m_Options.m_Crop.Y;
+			x = (int)crop.left + imageW;
+			y = (int)crop.top;
 			break;
 
 		case ImageOptions::CROPMODE_BR:
-			x = m_Options.m_Crop.X + imageW;
-			y = m_Options.m_Crop.Y + imageH;
+			x = (int)crop.left + imageW;
+			y = (int)crop.top + imageH;
 			break;
 
 		case ImageOptions::CROPMODE_BL:
-			x = m_Options.m_Crop.X;
-			y = m_Options.m_Crop.Y + imageH;
+			x = (int)crop.left;
+			y = (int)crop.top + imageH;
 			break;
 
 		case ImageOptions::CROPMODE_C:
-			x = m_Options.m_Crop.X + (imageW / 2);
-			y = m_Options.m_Crop.Y + (imageH / 2);
+			x = (int)crop.left + (imageW / 2);
+			y = (int)crop.top + (imageH / 2);
 			break;
 		}
 
-		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(m_Options.m_Crop.Width + x), (FLOAT)(m_Options.m_Crop.Height + y));
+		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(crop.right - crop.left + x), (FLOAT)(crop.bottom - crop.top + y));
 		stream->Crop(m_Skin->GetCanvas(), rect);
 	}
 }

@@ -28,8 +28,6 @@
 #include "../Common/PathUtil.h"
 #include "GeneralImage.h"
 
-using namespace Gdiplus;
-
 #define SNAPDISTANCE 10
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
@@ -2129,9 +2127,10 @@ bool Skin::ReadSkin()
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Color::Gray);
-	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor.GetValue());
-	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
+	auto color = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Gdiplus::Color::Gray);
+	m_SolidColor = Gfx::Util::ToColorF(color);
+	m_SolidColor2 = Gfx::Util::ToColorF(m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", color));
+	m_SolidAngle = (FLOAT)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
 	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
 
@@ -2148,8 +2147,10 @@ bool Skin::ReadSkin()
 		}
 	}
 
-	auto& color = GetRainmeter().GetDefaultSelectionColor();
-	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", color.GetValue());
+	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
+	Gdiplus::ARGB ARGBColor = Gdiplus::Color::MakeARGB((BYTE)(selectionColor.a * 255), (BYTE)(selectionColor.r * 255), 
+		(BYTE)(selectionColor.g * 255), (BYTE)(selectionColor.b * 255));
+	m_SelectedColor = Gfx::Util::ToColorF(m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", ARGBColor));
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
 
@@ -2531,9 +2532,9 @@ void Skin::Redraw()
 			
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
-				const Rect dst(0, 0, m_WindowW, m_WindowH);
-				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-				m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(dst), Gfx::Util::ToRectF(src));
+				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				m_Canvas.DrawBitmap(bitmap, dst, src);
 			}
 			else if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 			{
@@ -2544,38 +2545,38 @@ void Skin::Redraw()
 					if (m.left > 0)
 					{
 						// Top-Left
-						Rect r(0, 0, m.left, m.top);
-						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, 0, m.left, m.top)));
+						D2D1_RECT_F r = { 0, 0, (FLOAT)m.left, (FLOAT)m.top };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, 0, (FLOAT)m.left, (FLOAT)m.top));
 					}
 
 					// Top
-					Rect r(m.left, 0, m_WindowW - m.left - m.right, m.top);
-					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top)));
+					D2D1_RECT_F r = { (FLOAT)m.left, 0, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
 
 					if (m.right > 0)
 					{
 						// Top-Right
-						Rect r(m_WindowW - m.right, 0, m.right, m.top);
-						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, 0, m.right, m.top)));
+						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), 0,(FLOAT)m_WindowW, (FLOAT)m.top };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), 0, (FLOAT)m_BackgroundSize.cx, (FLOAT)m.top));
 					}
 				}
 
 				if (m.left > 0)
 				{
 					// Left
-					Rect r(0, m.top, m.left, m_WindowH - m.top - m.bottom);
-					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom)));
+					D2D1_RECT_F r = { 0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom) };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 				}
 
 				// Center
-				Rect r(m.left, m.top, m_WindowW - m.left - m.right, m_WindowH - m.top - m.bottom);
-				m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom)));
+				D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom) };
+				m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 
 				if (m.right > 0)
 				{
 					// Right
-					Rect r(m_WindowW - m.right, m.top, m.right, m_WindowH - m.top - m.bottom);
-					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom)));
+					D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom) };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top, (FLOAT)m_BackgroundSize.cx, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 				}
 
 				if (m.bottom > 0)
@@ -2583,58 +2584,59 @@ void Skin::Redraw()
 					if (m.left > 0)
 					{
 						// Bottom-Left
-						Rect r(0, m_WindowH - m.bottom, m.left, m.bottom);
-						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom)));
+						D2D1_RECT_F r = { 0, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m.left, (FLOAT)m_BackgroundSize.cy));
 					}
 
 					// Bottom
-					Rect r(m.left, m_WindowH - m.bottom, m_WindowW - m.left - m.right, m.bottom);
-					m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom)));
+					D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m_BackgroundSize.cy));
 
 					if (m.right > 0)
 					{
 						// Bottom-Right
-						Rect r(m_WindowW - m.right, m_WindowH - m.bottom, m.right, m.bottom);
-						m_Canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(r), Gfx::Util::ToRectF(Rect(m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom)));
+						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m_BackgroundSize.cx, (FLOAT)m_BackgroundSize.cy));
 					}
 				}
 			}
 			else if (m_BackgroundMode == BGMODE_TILED_IMAGE)
 			{
-				const Rect dst(0, 0, m_WindowW, m_WindowH);
-				const Rect src(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-				m_Canvas.DrawTiledBitmap(bitmap, Gfx::Util::ToRectF(dst), Gfx::Util::ToRectF(src));
+				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				m_Canvas.DrawTiledBitmap(bitmap, dst, src);
 			}
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
 			// Draw the solid color background
-			Rect r(0, 0, m_WindowW, m_WindowH);
+			D2D1_RECT_F r = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
 
-			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+			if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
 			{
-				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
+				if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
+					m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
 				{
-					m_Canvas.Clear(Gfx::Util::ToColorF(m_SolidColor));
+					m_Canvas.Clear(m_SolidColor);
 				}
 				else
 				{
-					m_Canvas.FillGradientRectangle(Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(m_SolidColor), Gfx::Util::ToColorF(m_SolidColor2), m_SolidAngle);
+					m_Canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, m_SolidAngle);
 				}
 			}
 
 			if (m_SolidBevel != BEVELTYPE_NONE)
 			{
-				Color lightColor(255, 255, 255, 255);
-				Color darkColor(255, 0, 0, 0);
+				D2D1_COLOR_F lightColor = { 1,1,1,1 };
+				D2D1_COLOR_F darkColor = { 0, 0, 0, 1 };
 
 				if (m_SolidBevel == BEVELTYPE_DOWN)
 				{
-					lightColor.SetValue(Color::MakeARGB(255, 0, 0, 0));
-					darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
+					lightColor = { 0, 0, 0, 1 };
+					darkColor = { 1, 1, 1, 1 };
 				}
 
-				Meter::DrawBevel(m_Canvas, Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(lightColor), Gfx::Util::ToColorF(darkColor));
+				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
 			}
 		}
 
@@ -2658,8 +2660,8 @@ void Skin::Redraw()
 
 		if (m_Selected)
 		{
-			Gdiplus::Rect rect(0, 0, m_WindowW, m_WindowH);
-			m_Canvas.FillRectangle(Gfx::Util::ToRectF(rect), Gfx::Util::ToColorF(m_SelectedColor));
+			D2D1_RECT_F rect = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+			m_Canvas.FillRectangle(rect, m_SelectedColor);
 		}
 	}
 

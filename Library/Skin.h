@@ -399,9 +399,9 @@ private:
 	bool m_Dragging;
 	bool m_Dragged;
 	BGMODE m_BackgroundMode;
-	Gdiplus::Color m_SolidColor;
-	Gdiplus::Color m_SolidColor2;
-	Gdiplus::REAL m_SolidAngle;
+	D2D1_COLOR_F m_SolidColor;
+	D2D1_COLOR_F m_SolidColor2;
+	FLOAT m_SolidAngle;
 	BEVELTYPE m_SolidBevel;
 
 	bool m_OldWindowDraggable;
@@ -409,7 +409,7 @@ private:
 	bool m_OldClickThrough;
 
 	bool m_Selected;
-	Gdiplus::Color m_SelectedColor;
+	D2D1_COLOR_F m_SelectedColor;
 
 	Group m_DragGroup;
 
