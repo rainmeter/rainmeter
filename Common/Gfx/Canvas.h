@@ -11,8 +11,6 @@
 #include "FontCollectionD2D.h"
 #include "Shape.h"
 #include "TextFormatD2D.h"
-#include "Util/WICBitmapDIB.h"
-#include <memory>
 #include <string>
 #include <GdiPlus.h>
 #include <d2d1_1.h>
@@ -57,9 +55,6 @@ public:
 	bool BeginDraw();
 	void EndDraw();
 
-	Gdiplus::Graphics& BeginGdiplusContext();
-	void EndGdiplusContext();
-
 	HDC GetDC();
 	void ReleaseDC();
 
@@ -85,11 +80,8 @@ public:
 	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect);
 	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines);
 
-	void DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawTiledBitmap(const D2DBitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
-	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
-		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 	void DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
 
@@ -123,14 +115,11 @@ private:
 
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height);
-	Microsoft::WRL::ComPtr<ID2D1Bitmap> ConvertBitmap(Gdiplus::Bitmap* bitmap);
-	void UpdateGdiTransform();
 
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
-	std::unique_ptr<Gdiplus::Graphics> m_GdiGraphics;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
 
 	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
