@@ -46,7 +46,7 @@ private:
 	GeneralImage m_Image;
 	std::wstring m_ImageName;
 
-	Gdiplus::Rect m_BitmapsRects[BUTTON_FRAMES];	// Cached bitmaps
+	D2D1_RECT_F m_BitmapsRects[BUTTON_FRAMES];	// Cached bitmaps
 	std::wstring m_Command;
 	int m_State;
 	bool m_Clicked;

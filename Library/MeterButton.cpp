@@ -11,8 +11,6 @@
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 enum BUTTON_STATE
 {
 	BUTTON_STATE_NORMAL,
@@ -68,16 +66,13 @@ void MeterButton::Initialize()
 			// Separate the frames
 			for (int i = 0; i < BUTTON_FRAMES; ++i)
 			{
-				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppPARGB);
-				Graphics graphics(&bitmapPart);
-
 				if (bitmapH > bitmapW)
 				{
-					m_BitmapsRects[i] = Gdiplus::Rect(0, m_H * i, m_W, m_H);
+					m_BitmapsRects[i] = D2D1::RectF(0, (FLOAT)(m_H * i), (FLOAT)m_W, (FLOAT)(m_H * (i+1)));
 				}
 				else
 				{
-					m_BitmapsRects[i] = Gdiplus::Rect(m_W * i, 0, m_W, m_H);
+					m_BitmapsRects[i] = D2D1::RectF((FLOAT)(m_W * i), 0, (FLOAT)(m_W * (i+1)), (FLOAT)m_H);
 				}
 			}
 
@@ -134,11 +129,11 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	if (!Meter::Draw(canvas)) return false;
 	
 	const auto image = m_Image.GetImage();
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
 
 	if (image)
 	{
-		canvas.DrawBitmap(image, Gfx::Util::ToRectF(Rect(meterRect.X, meterRect.Y, m_W, m_H)), Gfx::Util::ToRectF(m_BitmapsRects[m_State]));
+		canvas.DrawBitmap(image, D2D1::RectF(meterRect.left, meterRect.top, meterRect.left + m_W, meterRect.top + m_H), m_BitmapsRects[m_State]);
 	}
 
 	return true;
@@ -174,22 +169,23 @@ bool MeterButton::HitTest2(int px, int py)
 		// Check transparent pixels
 		if (m_Image.IsLoaded())
 		{
-			Rect meterRect = GetMeterRectPadding();
-			px = px - meterRect.X;
-			py = py - meterRect.Y;
+			D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
 			
-			if (px >= 0 && px < meterRect.Width &&
-				py >= 0 && py < meterRect.Height)
+			if (Gfx::Util::RectContains(meterRect, D2D1::Point2F((FLOAT)px, (FLOAT)py)))
 			{
+				FLOAT drawW = meterRect.right - meterRect.left;
+				FLOAT drawH = meterRect.bottom - meterRect.top;
+				px = px - (int)meterRect.left;
+				py = py - (int)meterRect.top;
 
 				auto bitmap = m_Image.GetImage();
 				if (!bitmap) return false;
 				int bitmapW = bitmap->GetWidth();
 				int bitmapH = bitmap->GetHeight();
 				if (bitmapW > bitmapH)
-					px -= meterRect.Width * m_State;
+					px -= (int)(drawW * m_State);
 				else
-					py -= meterRect.Height * m_State;
+					py -= (int)(drawH * m_State);
 
 				D2D1_COLOR_F color;
 				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
