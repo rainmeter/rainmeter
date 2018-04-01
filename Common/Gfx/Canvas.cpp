@@ -255,18 +255,6 @@ void Canvas::EndDraw()
 		auto point = D2D1::Point2U(0U, 0U);
 		auto srcRect = D2D1::RectU(0U, 0U, (UINT32)m_W, (UINT32)m_H);
 		m_BufferSnapshot->CopyFromBitmap(&point, m_TargetBitmap.Get(), &srcRect);
-
-		if (m_SwapChain)
-		{
-			// Present the frame to the screen. Wait until the next VSync to not
-			// waste time rendering frames that will never be displayed on the screen.
-			DXGI_PRESENT_PARAMETERS  presentParameters = { 0 };
-			hr = m_SwapChain->Present1(1u, NULL, &presentParameters);
-			if (FAILED(hr))
-			{
-				// Error, recreate all resources, or just swap chain?
-			}
-		}
 	}
 	else
 	{
