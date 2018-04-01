@@ -430,7 +430,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	{
 		rect->left = meterRect.left;
 		rect->top = meterRect.top;
-		D2D1_SIZE_F size = { 0 };
+		D2D1_SIZE_F size = { rect->right-rect->left, rect->bottom-rect->top };
 		bool didMeasure = canvas.MeasureTextW(m_String, *m_TextFormat, size);
 		if(didMeasure)
 		{
@@ -513,7 +513,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 			if (updateSize)
 			{
 				UINT lines = 0;
-				D2D1_SIZE_F size = {0};
+				D2D1_SIZE_F size = {w, h};
 				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) &&
 					lines != 0)
 				{
