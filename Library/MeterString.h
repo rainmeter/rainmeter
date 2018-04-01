@@ -29,7 +29,7 @@ public:
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gfx::Canvas& canvas);
-	Gdiplus::RectF GetRect() { return m_Rect; }
+	D2D1_RECT_F GetRect() { return m_Rect; }
 
 	static void EnumerateInstalledFontFamilies();
 
@@ -73,10 +73,10 @@ private:
 		CLIP_AUTO
 	};
 
-	bool DrawString(Gfx::Canvas& canvas, Gdiplus::RectF* rect);
+	bool DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect);
 
-	Gdiplus::Color m_Color;
-	Gdiplus::Color m_EffectColor;
+	D2D1_COLOR_F m_Color;
+	D2D1_COLOR_F m_EffectColor;
 	std::wstring m_Postfix;
 	std::wstring m_Prefix;
 	std::wstring m_Text;
@@ -95,8 +95,8 @@ private:
 	int m_ClipStringH;
 	Gfx::TextFormat* m_TextFormat;
 	int m_NumOfDecimals;
-	Gdiplus::REAL m_Angle;
-	Gdiplus::RectF m_Rect;
+	FLOAT m_Angle;
+	D2D1_RECT_F m_Rect;
 
 	int m_FontWeight;
 
