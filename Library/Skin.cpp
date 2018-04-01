@@ -2634,7 +2634,7 @@ void Skin::Redraw()
 					darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
 				}
 
-				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
+				Meter::DrawBevel(m_Canvas, Gfx::Util::ToRectF(r), Gfx::Util::ToColorF(lightColor), Gfx::Util::ToColorF(darkColor));
 			}
 		}
 
@@ -2642,12 +2642,11 @@ void Skin::Redraw()
 		std::vector<Meter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
-			const Matrix* matrix = (*j)->GetTransformationMatrix();
-			if (matrix && !matrix->IsIdentity())
+			const D2D1_MATRIX_3X2_F matrix = (*j)->GetTransformationMatrix();
+			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
+			if (reinterpretMatrix->IsIdentity())
 			{
-				D2D1_MATRIX_3X2_F d2dMatrix;
-				matrix->GetElements((Gdiplus::REAL*)&d2dMatrix);
-				m_Canvas.SetTransform(d2dMatrix);
+				m_Canvas.SetTransform(matrix);
 				(*j)->Draw(m_Canvas);
 				m_Canvas.ResetTransform();
 			}

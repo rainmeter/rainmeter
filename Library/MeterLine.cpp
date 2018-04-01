@@ -250,7 +250,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	int drawW = (int)(meterRect.right - meterRect.left);
 	int drawH = (int)(meterRect.bottom - meterRect.top);
 

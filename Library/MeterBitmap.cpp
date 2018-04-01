@@ -260,7 +260,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
-	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	FLOAT drawW = meterRect.right - meterRect.left;
 	FLOAT drawH = meterRect.bottom - meterRect.top;
 

@@ -129,7 +129,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	if (!Meter::Draw(canvas)) return false;
 	
 	const auto image = m_Image.GetImage();
-	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 
 	if (image)
 	{
@@ -161,7 +161,7 @@ bool MeterButton::HitTest2(int px, int py)
 		px >= x && px < x + m_W &&
 		py >= y && py < y + m_H)
 	{
-		if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+		if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
 		{
 			return true;
 		}
@@ -169,7 +169,7 @@ bool MeterButton::HitTest2(int px, int py)
 		// Check transparent pixels
 		if (m_Image.IsLoaded())
 		{
-			D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+			D2D1_RECT_F meterRect = GetMeterRectPadding();
 			
 			if (Gfx::Util::RectContains(meterRect, D2D1::Point2F((FLOAT)px, (FLOAT)py)))
 			{

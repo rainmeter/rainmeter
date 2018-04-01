@@ -384,7 +384,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
 	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
 
-	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	int displayW = (int)(meterRect.right - meterRect.left);
 	int displayH = (int)(meterRect.bottom - meterRect.top);
 

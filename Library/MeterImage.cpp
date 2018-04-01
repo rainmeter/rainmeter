@@ -204,7 +204,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		
 		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
-		D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+		D2D1_RECT_F meterRect = GetMeterRectPadding();
 
 		FLOAT drawW = meterRect.right - meterRect.left;
 		FLOAT drawH = meterRect.bottom - meterRect.top;

@@ -424,7 +424,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 		m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 
-	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 
 	if (rect)
 	{

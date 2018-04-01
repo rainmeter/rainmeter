@@ -146,7 +146,7 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 	{
 		if (!shape->IsCombined())
 		{
-			canvas.DrawGeometry(*shape, padding.X, padding.Y);
+			canvas.DrawGeometry(*shape, (int)padding.left, (int)padding.top);
 		}
 	}
 
@@ -155,15 +155,12 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
-	const Gdiplus::Matrix* matrix = GetTransformationMatrix();
-	D2D1_MATRIX_3X2_F d2dmatrix = D2D1::Matrix3x2F::Identity();
-	// Apply TransformationMatrix if available
-	if (matrix) matrix->GetElements((Gdiplus::REAL*)&d2dmatrix);
+	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
 	
 	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
 	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined() && shape->ContainsPoint(point, d2dmatrix))
+		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
 		{
 			return true;
 		}

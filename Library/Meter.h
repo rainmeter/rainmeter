@@ -9,11 +9,9 @@
 #define __METER_H__
 
 #include <windows.h>
-#include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 #include <vector>
 #include <string>
-#include "Util.h"
 #include "ConfigParser.h"
 #include "Skin.h"
 #include "Section.h"
@@ -41,9 +39,9 @@ public:
 	virtual int GetY(bool abs = false);
 	RECT GetMeterRect();
 
-	Gdiplus::Rect GetMeterRectPadding();
-	int GetWidthPadding() { return m_Padding.X + m_Padding.Width; }
-	int GetHeightPadding() { return m_Padding.Y + m_Padding.Height; }
+	D2D1_RECT_F GetMeterRectPadding();
+	int GetWidthPadding() { return (int)m_Padding.right; }
+	int GetHeightPadding() { return (int)m_Padding.bottom; }
 
 	void SetW(int w) { m_W = w; }
 	void SetH(int h) { m_H = h; }
@@ -67,7 +65,7 @@ public:
 	void Show();
 	bool IsHidden() { return m_Hidden; }
 
-	const Gdiplus::Matrix* GetTransformationMatrix() { return m_Transformation; }
+	const D2D1_MATRIX_3X2_F& GetTransformationMatrix() { return m_Transformation; }
 
 	virtual bool HitTest(int x, int y);
 
@@ -76,7 +74,7 @@ public:
 
 	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
 	
-	static void DrawBevel(Gfx::Canvas& canvas, const Gdiplus::Rect& rect, const Gdiplus::Color& light, const Gdiplus::Color& dark);
+	static void DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark);
 
 protected:
 
@@ -122,7 +120,7 @@ protected:
 	bool m_HDefined;
 	Meter* m_RelativeMeter;
 
-	Gdiplus::Matrix* m_Transformation;
+	D2D1_MATRIX_3X2_F m_Transformation;
 
 	std::wstring m_ToolTipText;
 	std::wstring m_ToolTipTitle;
@@ -141,10 +139,10 @@ protected:
 	METER_POSITION m_RelativeY;
 
 	BEVELTYPE m_SolidBevel;
-	Gdiplus::Color m_SolidColor;
-	Gdiplus::Color m_SolidColor2;
-	Gdiplus::REAL m_SolidAngle;
-	Gdiplus::Rect m_Padding;
+	D2D1_COLOR_F m_SolidColor;
+	D2D1_COLOR_F m_SolidColor2;
+	FLOAT m_SolidAngle;
+	D2D1_RECT_F m_Padding;
 	bool m_AntiAlias;
 	bool m_Initialized;
 };
