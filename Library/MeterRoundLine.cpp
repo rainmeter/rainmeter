@@ -148,7 +148,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		{
 			Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
 			Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
-			outer.CombineWith(&inner, D2D1_COMBINE_MODE_EXCLUDE);
+			outer.CombineWith(&inner, D2D1_COMBINE_MODE_XOR);
 			outer.SetFill(m_LineColor);
 			outer.SetStrokeWidth(0.0f);
 			canvas.DrawGeometry(outer, 0, 0);
