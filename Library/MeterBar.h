@@ -41,7 +41,7 @@ private:
 	GeneralImage m_Image;
 	std::wstring m_ImageName;
 
-	Gdiplus::Color m_Color;
+	D2D1_COLOR_F m_Color;
 	ORIENTATION m_Orientation;	// Growth direction
 	double m_Value;
 	int m_Border;
