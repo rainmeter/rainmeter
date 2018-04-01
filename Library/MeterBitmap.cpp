@@ -12,8 +12,6 @@
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BitmapImage", nullptr, true, skin),
 	m_ZeroFrame(false),
@@ -125,18 +123,22 @@ bool MeterBitmap::HitTest(int x, int y)
 			while (tmpValue > 0);
 		}
 
-		Rect rect(GetX(), GetY(), m_W * numOfNums + (numOfNums - 1) * m_Separation, m_H);
+		D2D1_RECT_F rect = { (FLOAT)GetX(), (FLOAT)GetY(), (FLOAT)(GetX() + m_W * numOfNums + (numOfNums - 1) * m_Separation), (FLOAT)(GetY() + m_H) };
 
 		if (m_Align == ALIGN_CENTER)
 		{
-			rect.Offset(-rect.Width / 2, 0);
+			FLOAT offset = -(rect.right - rect.left) / 2.f;;
+			rect.left += offset;
+			rect.right += offset;
 		}
 		else if (m_Align == ALIGN_RIGHT)
 		{
-			rect.Offset(-rect.Width, 0);
+			FLOAT offset = -(rect.right - rect.left) / 2.f;
+			rect.left += offset;
+			rect.right += offset;
 		}
 
-		if (rect.Contains(x, y))
+		if (Gfx::Util::RectContains(rect, D2D1::Point2F((FLOAT)x, (FLOAT)y)))
 		{
 			return true;
 		}
@@ -258,7 +260,9 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	D2D1_RECT_F meterRect = Gfx::Util::ToRectF(GetMeterRectPadding());
+	FLOAT drawW = meterRect.right - meterRect.left;
+	FLOAT drawH = meterRect.bottom - meterRect.top;
 
 	if (m_Extend)
 	{
@@ -272,14 +276,21 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
-			meterRect.Height -= extraSpace;
-			meterRect.Height /= digits;
+			FLOAT height = drawH;
+			height -= extraSpace;
+			height /= digits;
+			meterRect.right = meterRect.left + height;
 		}
 		else
 		{
-			meterRect.Width -= extraSpace;
-			meterRect.Width /= digits;
+			FLOAT width = drawW;
+			width -= extraSpace;
+			width /= digits;
+			meterRect.right = meterRect.left + width;
 		}
+
+		FLOAT width = meterRect.right - meterRect.left;
+		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
 		value = max(0, value);		// Only positive integers are supported
@@ -321,16 +332,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		}
 		else if (m_Align == ALIGN_CENTER)
 		{
-			offset = numOfNums * (meterRect.Width + m_Separation) / 2;
+			offset = numOfNums * ((int)width + m_Separation) / 2;
 		}
 		else
 		{
-			offset = numOfNums * (meterRect.Width + m_Separation);
+			offset = numOfNums * ((int)width + m_Separation);
 		}
 
 		do
 		{
-			offset = offset - (meterRect.Width + m_Separation);
+			offset = offset - ((int)width + m_Separation);
 
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			int frame = (value % realFrames) * (m_TransitionFrameCount + 1);
@@ -363,16 +374,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
 				newX = 0;
-				newY = meterRect.Height * frame;
+				newY = (int)height * frame;
 			}
 			else
 			{
-				newX = meterRect.Width * frame;
+				newX = (int)width * frame;
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(Rect(meterRect.X + offset, meterRect.Y, meterRect.Width, meterRect.Height)), 
-				Gfx::Util::ToRectF(Rect(newX, newY, meterRect.Width, meterRect.Height)));
+			canvas.DrawBitmap(bitmap, D2D1::RectF(meterRect.left + offset, meterRect.top, meterRect.left + offset, meterRect.top + height),
+				D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + width, (FLOAT)newY + height));
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -433,16 +444,15 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			newX = 0;
-			newY = frame * meterRect.Height;
+			newY = frame * (int)drawH;
 		}
 		else
 		{
-			newX = frame * meterRect.Width;
+			newX = frame * (int)drawW;
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Gfx::Util::ToRectF(Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height)), 
-			Gfx::Util::ToRectF(Rect(newX, newY, meterRect.Width, meterRect.Height)));
+		canvas.DrawBitmap(bitmap, meterRect, D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + drawW, (FLOAT)newY + drawH));
 	}
 
 	return true;

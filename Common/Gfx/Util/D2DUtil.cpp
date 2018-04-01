@@ -96,5 +96,10 @@ D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top
 	return point;
 }
 
+bool RectContains(const D2D1_RECT_F& rect, const D2D1_POINT_2F& point)
+{
+	return rect.left <= point.x && rect.right >= point.x && rect.top <= point.y && rect.bottom >= point.y;
+}
+
 }  // namespace Util
 }  // namespace Gfx
