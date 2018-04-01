@@ -30,7 +30,7 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_WDefined(false),
 	m_HDefined(false),
 	m_RelativeMeter(),
-	m_Transformation(),
+	m_Transformation(D2D1::Matrix3x2F::Identity()),
 	m_ToolTipWidth(),
 	m_ToolTipType(false),
 	m_ToolTipHidden(skin->GetMeterToolTipHidden()),
@@ -346,6 +346,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else if (!matrix.empty())
 	{
+		m_Transformation = D2D1::Matrix3x2F::Identity();
 		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 }

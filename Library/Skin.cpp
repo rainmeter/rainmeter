@@ -2642,7 +2642,7 @@ void Skin::Redraw()
 		{
 			const D2D1_MATRIX_3X2_F matrix = (*j)->GetTransformationMatrix();
 			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
-			if (reinterpretMatrix->IsIdentity())
+			if (!reinterpretMatrix->IsIdentity())
 			{
 				m_Canvas.SetTransform(matrix);
 				(*j)->Draw(m_Canvas);
