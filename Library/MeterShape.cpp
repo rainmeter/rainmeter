@@ -333,7 +333,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0,0,0,0));
 			return true;
 		}
 		else
@@ -383,7 +383,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0, 0, 0, 0));
 
 			return true;
 		}
@@ -1139,7 +1139,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(Gfx::Util::ToColorF(Gdiplus::Color::Transparent));
+	if (open) shape->SetFill(D2D1::ColorF(0, 0, 0, 0));
 
 	m_Shapes.push_back(shape);
 
