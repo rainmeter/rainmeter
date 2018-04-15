@@ -60,6 +60,19 @@ void MeasureRegistry::UpdateValue()
 				m_StringValue.clear();
 				break;
 
+			case REG_BINARY:
+				m_Value = 0.0;
+				m_StringValue.clear();
+
+				for (DWORD i = 0; i < size; ++i)
+				{
+					WCHAR buffer[3];
+					_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
+					m_StringValue.append(buffer);
+				}
+
+				break;
+
 			default:	// Other types are not supported
 				m_Value = 0.0;
 				m_StringValue.clear();
