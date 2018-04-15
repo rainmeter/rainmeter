@@ -364,7 +364,7 @@ void Skin::Refresh(bool init, bool all)
 	m_State = STATE_REFRESHING;
 
 	GetRainmeter().SetCurrentParser(&m_Parser);
-	
+
 	LogNoticeF(this, L"Refreshing skin");
 
 	SetResizeWindowMode(RESIZEMODE_RESET);
@@ -2265,7 +2265,8 @@ bool Skin::ReadSkin()
 
 		if (_wcsicmp(L"Rainmeter", section) != 0 &&
 			_wcsicmp(L"Variables", section) != 0 &&
-			_wcsicmp(L"Metadata", section) != 0)
+			_wcsicmp(L"Metadata", section) != 0 &&
+			_wcsnicmp(L"Template:", section, 9) != 0)
 		{
 			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", false);
 			if (!measureName.empty())
@@ -3492,7 +3493,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!m_Selected)
 		{
 			SetClickThrough(!m_ClickThrough);
-		}		
+		}
 		break;
 
 	case IDM_SKIN_DRAGGABLE:
@@ -4681,7 +4682,7 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		const UINT dataSize = GetRawInputData(
 			(HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
 		if (dataSize != (UINT)-1 &&
-			ri.header.dwType == RIM_TYPEMOUSE) 
+			ri.header.dwType == RIM_TYPEMOUSE)
 		{
 			const WPARAM wheelDelta = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
 			const LPARAM wheelPos = MAKELPARAM(pos.x, pos.y);

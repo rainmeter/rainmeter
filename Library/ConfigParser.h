@@ -137,6 +137,10 @@ private:
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
+	void ReplaceParam(const std::wstring& strSection, const std::wstring& strParam);
+	void CloneSection(const std::wstring& strOriginalSection, const std::wstring& strBaseSectionName, const std::wstring& strParam, const std::list<std::wstring>& m_Templates);
+	void ProcessTemplates(const std::wstring& strParam, const std::list<std::wstring>& m_Templates);
+
 	std::unordered_map<std::wstring, Measure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;
