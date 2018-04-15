@@ -841,8 +841,14 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 			size_t si = start + 2;  // Check for escaped variable 'names'
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
-				result.erase(ei, 1);
-				result.erase(si, 1);
+				// Normally we remove the *'s for escaped variable names here, however mouse actions
+				// are parsed before being sent to the command handler where the rest of the variables
+				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
+				if (type != VariableType::Mouse)
+				{
+					result.erase(ei, 1);
+					result.erase(si, 1);
+				}
 				start = ei;
 			}
 			else
