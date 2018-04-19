@@ -1353,7 +1353,6 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 	unzGoToFirstFile(m_PackageUnzFile);
 
 	// Loop through the contents of the archive until the plugin file is found
-	WCHAR* path;
 	do
 	{
 		if (!getFileInfo())
@@ -1361,7 +1360,13 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 			return 0;
 		}
 
-		path = wcsrchr(buffer, L'\\');
+		// Plugins will be in "Plugins\\" folder, ignore any other files/folders
+		if (_wcsnicmp(buffer, L"Plugins\\", 8) != 0)
+		{
+			continue;
+		}
+
+		WCHAR* path = wcsrchr(buffer, L'\\');
 		if (!path)
 		{
 			path = buffer;
