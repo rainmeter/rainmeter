@@ -56,7 +56,6 @@
 
 #define EMPTY_TIMEOUT			0.500
 #define DEVICE_TIMEOUT			1.500
-#define QUERY_TIMEOUT			(1.0 / 60)
 
 struct Measure
 {
@@ -534,10 +533,16 @@ PLUGIN_EXPORT double Update (void* data)
 	QueryPerformanceCounter(&pcCur);
 
 	// query the buffer
-	if (m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= QUERY_TIMEOUT)
+	if (m->m_clCapture)
 	{
-		BYTE* buffer;
 		UINT32 nFrames;
+
+		// get number of frames in next capture
+		m->m_clCapture->GetNextPacketSize(&nFrames);
+
+		if (nFrames != 0)
+		{
+		BYTE* buffer;
 		DWORD flags;
 		UINT64 pos;
 		HRESULT hr;
@@ -778,6 +783,7 @@ PLUGIN_EXPORT double Update (void* data)
 
 		m->m_pcPoll = pcCur;
 
+		}
 	}
 	else if (!m->m_parent && !m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= DEVICE_TIMEOUT)
 	{
