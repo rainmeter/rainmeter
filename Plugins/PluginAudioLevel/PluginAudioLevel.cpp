@@ -760,20 +760,6 @@ PLUGIN_EXPORT double Update (void* data)
 		// detect device disconnection
 		switch(hr)
 		{
-		case AUDCLNT_S_BUFFER_EMPTY:
-			// Windows bug: sometimes when shutting down a playback application, it doesn't zero
-			// out the buffer.  Detect this by checking the time since the last successful fill
-			// and resetting the volumes if past the threshold.
-			if (((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
-			{
-				for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-				{
-					m->m_rms[iChan] = 0.0;
-					m->m_peak[iChan] = 0.0;
-				}
-			}
-			break;
-
 		case AUDCLNT_E_BUFFER_ERROR:
 		case AUDCLNT_E_DEVICE_INVALIDATED:
 		case AUDCLNT_E_SERVICE_NOT_RUNNING:
@@ -783,6 +769,18 @@ PLUGIN_EXPORT double Update (void* data)
 
 		m->m_pcPoll = pcCur;
 
+		}
+
+		// Windows bug: sometimes when shutting down a playback application, it doesn't zero
+		// out the buffer.  Detect this by checking the time since the last successful fill
+		// and resetting the volumes if past the threshold.
+		else if (((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
+		{
+			for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+			{
+				m->m_rms[iChan] = 0.0;
+				m->m_peak[iChan] = 0.0;
+			}
 		}
 	}
 	else if (!m->m_parent && !m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= DEVICE_TIMEOUT)
