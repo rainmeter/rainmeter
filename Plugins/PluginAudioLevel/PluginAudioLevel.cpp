@@ -549,6 +549,8 @@ PLUGIN_EXPORT double Update (void* data)
 
 		while ((hr = m->m_clCapture->GetBuffer(&buffer, &nFrames, &flags, &pos, NULL)) == S_OK)
 		{
+			if (m->m_type == Measure::TYPE_RMS || m->m_type == Measure::TYPE_PEAK)
+			{
 			// measure RMS and peak levels
 			float rms[Measure::MAX_CHANNELS];
 			float peak[Measure::MAX_CHANNELS];
@@ -658,6 +660,8 @@ PLUGIN_EXPORT double Update (void* data)
 			{
 				m->m_rms[iChan] = rms[iChan];
 				m->m_peak[iChan] = peak[iChan];
+			}
+
 			}
 
 			// process FFTs (optional)
@@ -774,7 +778,7 @@ PLUGIN_EXPORT double Update (void* data)
 		// Windows bug: sometimes when shutting down a playback application, it doesn't zero
 		// out the buffer.  Detect this by checking the time since the last successful fill
 		// and resetting the volumes if past the threshold.
-		else if (((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
+		else if ((m->m_type == Measure::TYPE_RMS || m->m_type == Measure::TYPE_PEAK) && ((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
 		{
 			for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
 			{
