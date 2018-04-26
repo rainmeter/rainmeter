@@ -85,7 +85,7 @@ namespace InputText
             }
             else
             {
-                API.Log(API.LogType.Error,
+                rm.Log(API.LogType.Error,
                     "Rainmeter told us the HWND for window '" + this._SkinName + "' is " + this._Handle.ToInt32().ToString() + "L, but couldn't receive a proper RECT from it");
             }
 
