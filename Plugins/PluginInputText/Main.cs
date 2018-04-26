@@ -71,7 +71,7 @@ namespace InputText
                         }
                         catch (Exception ex)
                         {
-                            API.Log(API.LogType.Error, "C# plugin in ExecuteBang(), " + ex.GetType().ToString() + ": " + ex.Message);
+                            rm.Log(API.LogType.Error, "C# plugin in ExecuteBang(), " + ex.GetType().ToString() + ": " + ex.Message);
                         }
 
                         lock (this.locker)

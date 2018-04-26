@@ -146,6 +146,7 @@ enum RmGetType
 /// Sends a message to the Rainmeter log with source
 /// </summary>
 /// <remarks>LOG_DEBUG messages are logged only when Rainmeter is in debug mode</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
 /// <param name="type">Log type (LOG_ERROR, LOG_WARNING, LOG_NOTICE, or LOG_DEBUG)</param>
 /// <param name="message">Message to be logged</param>
 /// <returns>No return type</returns>
@@ -249,7 +250,7 @@ __inline double RmReadDouble(void* rm, LPCWSTR option, double defValue)
 /// <summary>
 /// Retrieves the name of the measure
 /// </summary>
-/// <remarks>Call GetMeasureName() in the Initialize function and store the results for later use</remarks>
+/// <remarks>Call RmGetMeasureName() in the Initialize function and store the results for later use</remarks>
 /// <param name="rm">Pointer to the plugin measure</param>
 /// <returns>Returns the current measure name as a string (LPCWSTR)</returns>
 /// <example>
@@ -276,7 +277,9 @@ __inline LPCWSTR RmGetMeasureName(void* rm)
 /// <code>
 /// PLUGIN_EXPORT void Initialize(void** data, void* rm)
 /// {
-/// 	if (rmDataFile == nullptr) { rmDataFile = RmGetSettingsFile(); }  // 'rmDataFile' defined as a string (LPCWSTR) in global scope
+/// 	Measure* measure = new Measure;
+/// 	*data = measure;
+///		if (rmDataFile == nullptr) { rmDataFile = RmGetSettingsFile(); }  // 'rmDataFile' defined as a string (LPCWSTR) in global scope
 /// }
 /// </code>
 /// </example>
@@ -310,6 +313,7 @@ __inline void* RmGetSkin(void* rm)
 /// Retrieves full path and name of the skin
 /// </summary>
 /// <remarks>Call GetSkinName() in the Initialize function and store the results for later use</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
 /// <returns>Returns the path and filename of the skin as a string (LPCWSTR)</returns>
 /// <example>
 /// <code>
@@ -330,6 +334,7 @@ __inline LPCWSTR RmGetSkinName(void* rm)
 /// Returns a pointer to the handle of the skin window (HWND)
 /// </summary>
 /// <remarks>Call GetSkinWindow() in the Initialize function and store the results for later use</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
 /// <returns>Returns a handle to the skin window as a HWND</returns>
 /// <example>
 /// <code>
