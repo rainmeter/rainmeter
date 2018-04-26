@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UsageMonitor", "UsageMonitor.csproj", "{8B710F76-69EA-4803-9F0A-9DAABE563CF1}"
+EndProject
+Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x64.ActiveCfg = Debug|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x64.Build.0 = Debug|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x86.ActiveCfg = Debug|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x86.Build.0 = Debug|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x64.ActiveCfg = Release|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x64.Build.0 = Release|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x86.ActiveCfg = Release|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8DD79F8B-EFA1-4FF4-8870-C650E89302B9}
+	EndGlobalSection
+EndGlobal

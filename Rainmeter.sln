@@ -69,6 +69,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginSpeedFan", "Plugins\P
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginSysInfo", "Plugins\PluginSysInfo\PluginSysInfo.vcxproj", "{6EBCA4DA-8CC7-42FE-8F45-878ABE165078}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginUsageMonitor", "Plugins\PluginUsageMonitor\PluginUsageMonitor.csproj", "{8B710F76-69EA-4803-9F0A-9DAABE563CF1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWifiStatus", "Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj", "{45A34285-56DD-4521-912B-3F884D36FA35}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWin7Audio", "Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj", "{6D032D6B-7656-4743-B454-3388E2921EB0}"
@@ -331,8 +336,19 @@ Global
 		{B9184DBA-C6B7-44FE-8BBD-0852DB22D2E4}.Release|Win32.Build.0 = Release|Win32
 		{B9184DBA-C6B7-44FE-8BBD-0852DB22D2E4}.Release|x64.ActiveCfg = Release|x64
 		{B9184DBA-C6B7-44FE-8BBD-0852DB22D2E4}.Release|x64.Build.0 = Release|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|Win32.ActiveCfg = Debug|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|Win32.Build.0 = Debug|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x64.ActiveCfg = Debug|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Debug|x64.Build.0 = Debug|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|Win32.ActiveCfg = Release|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|Win32.Build.0 = Release|x86
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x64.ActiveCfg = Release|x64
+		{8B710F76-69EA-4803-9F0A-9DAABE563CF1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1638D66B-1685-4AEB-A57B-B5877B2899F1}
 	EndGlobalSection
 EndGlobal
