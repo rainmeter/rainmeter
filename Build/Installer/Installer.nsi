@@ -727,6 +727,7 @@ Function HandlePlugins
 	${AndIf} $R7 != "RunCommand.dll"
 	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "SysInfo.dll"
+	${AndIf} $R7 != "UsageMonitor.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
 	${AndIf} $R7 != "WifiStatus.dll"
 	${AndIf} $R7 != "Win7AudioPlugin.dll"

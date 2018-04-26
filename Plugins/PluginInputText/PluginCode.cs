@@ -161,7 +161,7 @@ namespace InputText
 
             // Unhandled command, log the message but otherwise do nothing
             param.Type = ExecuteBangParam.BangType.Unknown;
-            API.Log(API.LogType.Debug, "InputText: Received command \"" + sParts[0].Trim() + "\", left unhandled");
+            rm.Log(API.LogType.Debug, "InputText: Received command \"" + sParts[0].Trim() + "\", left unhandled");
 
             return false;
         }
@@ -240,7 +240,7 @@ namespace InputText
                 catch (Exception ex)
                 {
                     // If there was an error doing any of the above, log it for debugging purposes.
-                    API.Log(API.LogType.Warning, "InputText: Exception " + ex.GetType().ToString() + ": " + ex.Message);
+                    rm.Log(API.LogType.Warning, "InputText: Exception " + ex.GetType().ToString() + ": " + ex.Message);
                     return false;
                 }
             }
