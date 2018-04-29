@@ -12,6 +12,17 @@
 #include "System.h"
 #include "TrayIcon.h"
 #include "Measure.h"
+#include "Meter.h"
+#include "MeterString.h"
+#include "MeterImage.h"
+#include "MeterHistogram.h"
+#include "MeterBar.h"
+#include "MeterBitmap.h"
+#include "MeterLine.h"
+#include "MeterRoundLine.h"
+#include "MeterRotator.h"
+#include "MeterButton.h"
+#include "MeterShape.h"
 #include "resource.h"
 #include "DialogAbout.h"
 #include "../Version.h"
@@ -370,7 +381,7 @@ void DialogAbout::TabLog::Initialize()
 	ImageList_AddIcon(hImageList, hIcon);
 	DeleteObject(hIcon);
 
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR); 
+	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ImageList_AddIcon(hImageList, hIcon);
 	DeleteObject(hIcon);
 
@@ -667,7 +678,7 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 				lvi.iSubItem = 0;
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
-				
+
 				static const MenuTemplate s_MessageMenu[] =
 				{
 					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
@@ -743,8 +754,11 @@ void DialogAbout::TabSkins::Initialize()
 	lvg.pszHeader = GetString(ID_STR_MEASURES);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = GetString(ID_STR_VARIABLES);
+	lvg.pszHeader = GetString(ID_STR_METERS);
 	ListView_InsertGroup(item, 1, &lvg);
+	lvg.iGroupId = 2;
+	lvg.pszHeader = GetString(ID_STR_VARIABLES);
+	ListView_InsertGroup(item, 2, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
 
@@ -825,7 +839,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 		{
 			maxLength = curLength;
 		}
-		
+
 		const WCHAR* name = skinName.c_str();
 		int index = ListBox_AddString(item, name);
 		if (!found && m_SkinWindow == (*iter).second)
@@ -929,6 +943,80 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 	}
 
 	lvi.iGroupId = 1;
+	const std::vector <Meter*>& meters = m_SkinWindow->GetMeters();
+	for (auto k = meters.begin(); k != meters.end(); ++k)
+	{
+		lvi.pszText = (WCHAR*)(*k)->GetName();
+
+		if (lvi.iItem < count)
+		{
+			ListView_SetItem(item, &lvi);
+		}
+		else
+		{
+			ListView_InsertItem(item, &lvi);
+		}
+
+		std::wstring stype;
+
+		const auto type = (*k)->GetTypeID();
+		if (type == TypeID<MeterString>())
+		{
+			stype = L"String";
+		}
+		else if (type == TypeID<MeterImage>())
+		{
+			stype = L"Image";
+		}
+		else if (type == TypeID<MeterHistogram>())
+		{
+			stype = L"Histogram";
+		}
+		else if (type == TypeID<MeterBar>())
+		{
+			stype = L"Bar";
+		}
+		else if (type == TypeID<MeterBitmap>())
+		{
+			stype = L"Bitmap";
+		}
+		else if (type == TypeID<MeterLine>())
+		{
+			stype = L"Line";
+		}
+		else if (type == TypeID<MeterRoundLine>())
+		{
+			stype = L"RoundLine";
+		}
+		else if (type == TypeID<MeterRotator>())
+		{
+			stype = L"Rotator";
+		}
+		else if (type == TypeID<MeterButton>())
+		{
+			stype = L"Button";
+		}
+		else if (type == TypeID<MeterShape>())
+		{
+			stype = L"Shape";
+		}
+		else
+		{
+			stype = L"Unknown";
+		}
+
+		WCHAR buffer[50];
+		std::wstring dimensions;
+		_snwprintf_s(buffer, _TRUNCATE, L"X:%d Y:%d W:%d H:%d", (*k)->GetX(), (*k)->GetY(), (*k)->GetW(), (*k)->GetH());
+		dimensions = buffer;
+
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)stype.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)dimensions.c_str());
+		ListView_SetItemText(item, lvi.iItem, 3, L"");
+		++lvi.iItem;
+        }
+
+	lvi.iGroupId = 2;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
@@ -981,7 +1069,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 
 int CALLBACK DialogAbout::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-	// Measures
+	// Measures and Meters
 	if (!lParam1 && !lParam2) return 0;
 	if (!lParam1) return -1;
 	if (!lParam2) return 1;
@@ -1225,7 +1313,7 @@ INT_PTR DialogAbout::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 			// Only process 1st column
 			if (lvcd->iSubItem != 0) return FALSE;
 
-			// Only process items in 1st group
+			// Only process items in 1st and 2nd groups
 			WCHAR buffer[512];
 			LVITEM lvi;
 			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
@@ -1234,14 +1322,31 @@ INT_PTR DialogAbout::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 			lvi.pszText = buffer;
 			lvi.cchTextMax = 512;
 			ListView_GetItem(hwnd, &lvi);
-			if (lvi.iGroupId != 0) return FALSE;
 
-			std::wstring name = buffer;
-			Measure* measure = m_SkinWindow->GetMeasure(name);
-			if (!measure) return FALSE;
+			bool isDisabled = false;
+			bool isPaused = false;
 
-			const bool isDisabled = measure->IsDisabled();
-			const bool isPaused = measure->IsPaused();
+			if (lvi.iGroupId == 0)
+			{
+				std::wstring name = buffer;
+				Measure* measure = m_SkinWindow->GetMeasure(name);
+				if (!measure) return FALSE;
+
+				isDisabled = measure->IsDisabled();
+				isPaused = measure->IsPaused();
+			}
+			else if (lvi.iGroupId == 1)
+			{
+				std::wstring name = buffer;
+				Meter* meter = m_SkinWindow->GetMeter(name);
+				if (!meter) return FALSE;
+
+				isDisabled = meter->IsHidden();
+			}
+			else
+			{
+				return FALSE;
+			}
 
 			if (isPaused) lvcd->clrTextBk = paused;
 			if (isDisabled) lvcd->clrText = disabled;
@@ -1323,7 +1428,7 @@ void DialogAbout::TabPlugins::Initialize()
 	vitem.iSubItem = 0;
 
 	int index = 0;
-	
+
 	auto findPlugins = [&](const std::wstring& path) -> void
 	{
 		std::wstring filter = path + L"*.dll";
@@ -1496,7 +1601,7 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 	// Adjust third colum
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 20 - 
+	lvc.cx = w - 20 -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
