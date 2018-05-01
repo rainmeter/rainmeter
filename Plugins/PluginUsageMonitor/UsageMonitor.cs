@@ -54,17 +54,17 @@ namespace UsageMonitor
         public BlockType BlockType { get; private set; } = BlockType.B;
         public HashSet<String> BlockList { get; private set; } = new HashSet<string> { "_Total", "Idle" };
         //This is the key that is used to identify if a blocklist can be shared, it is the options rollup status, blocktype, and list
-        public String BlockString { get; private set; } = true.ToString() + BlockType.B + "|" + String.Join(",", new List<string> { "_Total", "Idle" }.ToArray());
+        public String BlockString { get; private set; } = true.ToString() + BlockType.B + "|" + String.Join("|", new List<string> { "_Total", "Idle" }.ToArray());
         public void UpdateBlockList(BlockType blockType, HashSet<String> blockList)
         {
             this.BlockType = blockType;
             this.BlockList = blockList;
-            this.BlockString = IsRollup.ToString() + this.BlockType + "|" + String.Join(",", this.BlockList.ToArray());
+            this.BlockString = IsRollup.ToString() + this.BlockType + "|" + String.Join("|", this.BlockList.ToArray());
         }
         public void UpdateBlockList(BlockType blockType, String blockList)
         {
             this.BlockType = blockType;
-            this.BlockList = new HashSet<string>(blockList.Split(',').Select(p => p.Trim()));
+            this.BlockList = new HashSet<string>(blockList.Split('|').Select(p => p.Trim()));
             this.BlockString = IsRollup.ToString() + this.BlockType + "|" + blockList;
         }
 
@@ -778,7 +778,21 @@ namespace UsageMonitor
             {
                 try
                 {
-                    var pidInstance = new PerformanceCounterCategory("Process").ReadCategory()["ID Process"];
+                    string category = "Process";
+                    string counter = "ID Process";
+                    if (Plugin.engToCurrLanguage != null)
+                    {
+                        if (Plugin.engToCurrLanguage.TryGetValue(category, out string translatedString))
+                        {
+                            category = translatedString;
+                        }
+                        //If there is a translation dictionary use it
+                        if (Plugin.engToCurrLanguage.TryGetValue(counter, out translatedString))
+                        {
+                            counter = translatedString;
+                        }
+                    }
+                    var pidInstance = new PerformanceCounterCategory(category).ReadCategory()[counter];
                     var tempPIDs = new Dictionary<int, String>(pidInstance.Count);
 
                     foreach (InstanceData pid in pidInstance.Values)
@@ -873,7 +887,7 @@ namespace UsageMonitor
 
     public class Plugin
     {
-        static Dictionary<string, string> engToCurrLanguage;
+        public static Dictionary<string, string> engToCurrLanguage;
 
         [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
@@ -1016,7 +1030,7 @@ namespace UsageMonitor
             }
             else
             {
-                String blacklist = measure.API.ReadString("Blacklist", "_Total,Idle");
+                String blacklist = measure.API.ReadString("Blacklist", "_Total|Idle");
                 if (blacklist.Length > 0)
                 {
                     options.UpdateBlockList(BlockType.B, blacklist);
