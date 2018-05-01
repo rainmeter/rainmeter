@@ -756,6 +756,63 @@ namespace UsageMonitor
                 }
                 return new Instance(instanceName, 0, new CounterSample());
             }
+            //Get an instance of a counter ordered by value, returns false if instance list exists and that instance does not
+            public bool GetInstance(MeasureOptions options, int instanceNumber, out Instance instance)
+            {
+                lock (dataLock)
+                {
+                    if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
+                    {
+                        if (instanceNumber == 0 && counterInfo.Sum.TryGetValue(options.BlockString, out double value))
+                        {
+                            instance = new Instance("Total", value, new CounterSample());
+                            return true;
+                        }
+                        //Instances in Rainmeter are not going to be 0 indexed so adjust them to be 0 indexed now
+                        instanceNumber--;
+                        if (counterInfo.ByUsage.TryGetValue(options.BlockString, out List<Instance> tempByUsage))
+                        {
+                            if (tempByUsage.Count() > instanceNumber)
+                            {
+                                instance = tempByUsage[instanceNumber];
+                                return true;
+                            }
+                        }
+                    }
+                    else if (CountersInfo.Count == 0)
+                    {
+                        instance = new Instance("", 0, new CounterSample());
+                        return true;
+                    }
+                }
+                instance = new Instance("", 0, new CounterSample());
+                return false;
+            }
+            //Get an instance of a counter by name, returns false if instance list exists and that instance does not
+            public bool GetInstance(MeasureOptions options, String instanceName, out Instance instance)
+            {
+                lock (dataLock)
+                {
+                    if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
+                    {
+                        if (counterInfo.ByName.TryGetValue(options.IsRollup, out Dictionary<String, Instance> tempByName))
+                        {
+                            if (tempByName.TryGetValue(instanceName, out Instance value))
+                            {
+                                instance = value;
+                                return true;
+                            }
+                        }
+                    }
+                    else if(CountersInfo.Count == 0)
+                    {
+                        instance = new Instance(instanceName, 0, new CounterSample());
+                        return true;
+                    }
+                }
+                instance = new Instance(instanceName, 0, new CounterSample());
+                return false;
+            }
             public int Count()
             {
                 return this.CounterOptions.Count();
@@ -872,6 +929,26 @@ namespace UsageMonitor
                 return instanceLists.GetInstance(options, instanceName);
             }
             return new Instance(instanceName, 0, new CounterSample());
+        }
+        //Get an instance of a counter ordered by value
+        public static bool GetInstance(MeasureOptions options, int instanceNumber, out Instance instance)
+        {
+            if (CategoriesCounters.TryGetValue(options.Category, out Counters instanceLists))
+            {
+                return instanceLists.GetInstance(options, instanceNumber, out instance);
+            }
+            instance = new Instance("", 0, new CounterSample());
+            return false;
+        }
+        //Get an instance of a counter by name
+        public static bool GetInstance(MeasureOptions options, String instanceName, out Instance instance)
+        {
+            if (CategoriesCounters.TryGetValue(options.Category, out Counters instanceLists))
+            {
+                return instanceLists.GetInstance(options, instanceName, out instance);
+            }
+            instance = new Instance(instanceName, 0, new CounterSample());
+            return false;
         }
     }
 
@@ -1112,12 +1189,17 @@ namespace UsageMonitor
                 //@TODO have an option to make this _Sum based?
                 if (options.IsPercent)
                 {
-                    double sum = Categories.GetInstance(options, "_Total").Value;
-                    //If sum is 0 ignore it because it does not have a total then
-                    if (sum != 0)
+                    bool hasInstace = Categories.GetInstance(options, "_Total", out Instance instance);
+                    //Check that it likely has the _Total instance
+                    if (hasInstace)
                     {
-                        ret = ret / sum * 100;
+                        //If instance.Value is 0 ignore it because _Total's value has not been populated yet
+                        if (instance.Value != 0)
+                        {
+                            ret = ret / instance.Value * 100;
+                        }
                     }
+                    //If it does not have this instace then log an notice
                     else
                     {
                         measure.API.Log(API.LogType.Notice, "Percent=1 was set on counter:" + measure.Options.Counter + " but that counter does not have an _Total instance");
