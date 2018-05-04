@@ -1638,15 +1638,28 @@ void DialogAbout::TabVersion::Initialize()
 	Static_SetIcon(item, icon);
 
 	item = GetControl(Id_VersionLabel);
+	WCHAR lang[MAX_PATH];
+	LCID lcid = GetRainmeter().GetResourceLCID();
+	std::wstring langId = std::to_wstring(lcid);
+	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
 	WCHAR tmpSz[64];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s) - %s (%s)",
+		APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE, lang, langId.c_str());
 	SetWindowText(item, tmpSz);
 
 	item = GetControl(Id_WinVerLabel);
-	SetWindowText(item, Platform::GetPlatformFriendlyName().c_str());
+	lcid = GetUserDefaultLCID();
+	langId = std::to_wstring(lcid);
+	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	std::wstring text = Platform::GetPlatformFriendlyName() + L" - ";
+	text += lang;
+	text += L" (";
+	text += langId;
+	text += L')';
+	SetWindowText(item, text.c_str());
 
 	item = GetControl(Id_PathLink);
-	std::wstring text = L"Path: <a>" + GetRainmeter().GetPath();
+	text = L"Path: <a>" + GetRainmeter().GetPath();
 	text += L"</a>";
 	SetWindowText(item, text.c_str());
 
@@ -1656,12 +1669,12 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, text.c_str());
 
 	item = GetControl(Id_SettingsPathLink);
-	text = L"Settings Path: <a>" + GetRainmeter().GetSettingsPath();
+	text = L"SettingsPath: <a>" + GetRainmeter().GetSettingsPath();
 	text += L"</a>";
 	SetWindowText(item, text.c_str());
 
 	item = GetControl(Id_IniFileLink);
-	text = L"Settings File: <a>" + GetRainmeter().GetIniFile();
+	text = L"IniFile: <a>" + GetRainmeter().GetIniFile();
 	text += L"</a>";
 	SetWindowText(item, text.c_str());
 
@@ -1697,18 +1710,34 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case Id_CopyButton:
 		{
+			WCHAR lang[MAX_PATH];
+			LCID lcid = GetRainmeter().GetResourceLCID();
+			std::wstring langId = std::to_wstring(lcid);
+			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+
 			WCHAR tmpSz[64];
-			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s) - %s (%s)",
+				APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE, lang, langId.c_str());
+
 			std::wstring text(tmpSz, len);
 			text += L'\n';
 			text += Platform::GetPlatformFriendlyName();
-			text += L"\nPath: ";
+
+			lcid = GetUserDefaultLCID();
+			langId = std::to_wstring(lcid);
+			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+
+			text += L" - ";
+			text += lang;
+			text += L" (";
+			text += langId;
+			text += L")\nPath: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nSkinPath: ";
 			text += GetRainmeter().GetSkinPath();
-			text += L"\nSettings Path: ";
+			text += L"\nSettingsPath: ";
 			text += GetRainmeter().GetSettingsPath();
-			text += L"\nSettings File: ";
+			text += L"\nIniFile: ";
 			text += GetRainmeter().GetIniFile();
 			System::SetClipboardText(text);
 		}
