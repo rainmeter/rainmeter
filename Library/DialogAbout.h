@@ -145,7 +145,7 @@ private:
 			Id_SkinPathLink,
 			Id_SettingsPathLink,
 			Id_IniFileLink,
-			Id_CopyButton,
+			Id_CopyButton
 		};
 
 		TabVersion();
