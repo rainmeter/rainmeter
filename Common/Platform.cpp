@@ -49,9 +49,24 @@ std::wstring GetPlatformFriendlyName()
 		if (RegQueryValueEx(hKey, L"ProductName", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 		{
 			name += buffer;
-			name += L' ';
-			name += Is64BitWindows() ? L"64" : L"32";
-			name += L"-bit";
+
+			// For Windows 10 (and above?), use the "ReleaseId" as part of the version number.
+			// (ie. 1507, 1511, 1607, 1703, 1709, 1803 ...)
+			size = _countof(buffer);
+			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+			{
+				if ((DWORD)buffer >= 10)
+				{
+					size = _countof(buffer);
+					if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+					{
+						name += L' ';
+						name += buffer;
+					}
+				}
+			}
+
+			name += Is64BitWindows() ? L" 64-bit" : L" 32-bit";
 
 			size = _countof(buffer);
 			if (RegQueryValueEx(hKey, L"CurrentBuildNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS ||
