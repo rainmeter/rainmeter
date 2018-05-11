@@ -201,9 +201,11 @@ namespace UsageMonitor
                 public Dictionary<bool, Dictionary<String, Instance>> ByName;
                 //Key for ByName will be the blocklist of the instaces, with the value being a list of the instances sorted by value
                 public Dictionary<string, List<Instance>> ByUsage;
-                //Key for _Sum will be the blocklist of the instaces, with the value being the sum of that lists value
+                //Key for Sum will be the blocklist of the instaces, with the value being the sum of that lists value
                 //I could pack this into the ByUsage list but it seemed pointless
                 public Dictionary<string, double> Sum;
+                //Same as Sum but stores averages
+                public Dictionary<string, double> Average;
                 public CounterInfo(int count)
                 {
                     //Key is roll up state as two dictionaries of names can not be shared if they are rolled up differently as they have different values
@@ -213,6 +215,7 @@ namespace UsageMonitor
                     //Key is block string as the list/sum can not be shared if they contain different instances
                     this.ByUsage = new Dictionary<string, List<Instance>>(count);
                     this.Sum = new Dictionary<string, double>(count);
+                    this.Average = new Dictionary<string, double>(count);
                 }
             }
 
@@ -240,7 +243,8 @@ namespace UsageMonitor
                     {
                         //This is the most expensive part accounting for a very large amount of the CPU, this is avoided at all costs
                         //Avoiding doing this is why this is why this loop is so complex
-                        InstanceDataCollectionCollection currCategoryData = new PerformanceCounterCategory(category).ReadCategory();
+                        var data = new PerformanceCounterCategory(category);
+                        InstanceDataCollectionCollection currCategoryData = data.ReadCategory();
 
                         //This will be our collection of counters for this category, we will build in this temp collection before changing the pointer at the end
                         Dictionary<String, CounterInfo> tempCounters = new Dictionary<string, CounterInfo>(this.CounterOptions.Count());
@@ -303,6 +307,15 @@ namespace UsageMonitor
                                             //Add to temp collection as we are done
                                             tempCounterInfo.ByUsage.Add(options.BlockString, tempByUsage);
                                             tempCounterInfo.Sum.Add(options.BlockString, tempSum);
+                                            //If summ is greater than 0 calculate average
+                                            if (tempSum > 0)
+                                            {
+                                                tempCounterInfo.Average.Add(options.BlockString, tempSum / tempByUsage.Count);
+                                            }
+                                            else
+                                            {
+                                                tempCounterInfo.Average.Add(options.BlockString, 0);
+                                            }
                                         }
                                         //If there was then we are done as nothing more needs done
                                     }
@@ -423,6 +436,15 @@ namespace UsageMonitor
                                         tempCounterInfo.ByName.Add(options.IsRollup, tempByName);
                                         tempCounterInfo.ByUsage.Add(options.BlockString, tempByUsage);
                                         tempCounterInfo.Sum.Add(options.BlockString, tempSum);
+                                        //If summ is greater than 0 calculate average
+                                        if (tempSum > 0)
+                                        {
+                                            tempCounterInfo.Average.Add(options.BlockString, tempSum / tempByUsage.Count);
+                                        }
+                                        else
+                                        {
+                                            tempCounterInfo.Average.Add(options.BlockString, 0);
+                                        }
                                     }
                                 }
 
@@ -714,17 +736,13 @@ namespace UsageMonitor
                 }
             }
 
-            //Get an instance of a counter ordered by value
+            //Get an instance of a counter ordered by value, if instance number is 0 or -1 it will respectively return CounterInfo.Sum or CounterInfo.Average
             public Instance GetInstance(MeasureOptions options, int instanceNumber)
             {
                 lock (dataLock)
                 {
                     if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
                     {
-                        if (instanceNumber == 0 && counterInfo.Sum.TryGetValue(options.BlockString, out double value))
-                        {
-                            return new Instance("Total", value, new CounterSample());
-                        }
                         //Instances in Rainmeter are not going to be 0 indexed so adjust them to be 0 indexed now
                         instanceNumber--;
                         if (counterInfo.ByUsage.TryGetValue(options.BlockString, out List<Instance> tempByUsage))
@@ -780,6 +798,35 @@ namespace UsageMonitor
                     return true;
                 }
             }
+            public Instance GetSum(MeasureOptions options)
+            {
+                lock (dataLock)
+                {
+                    if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
+                    {
+                        if (counterInfo.Sum.TryGetValue(options.BlockString, out double value))
+                        {
+                            return new Instance("Total", value, new CounterSample());
+                        }
+                    }
+                }
+                return new Instance("Total", 0, new CounterSample());
+            }
+            public Instance GetAverage(MeasureOptions options)
+            {
+                lock (dataLock)
+                {
+                    if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
+                    {
+                        if (counterInfo.Average.TryGetValue(options.BlockString, out double value))
+                        {
+                            return new Instance("Average", value, new CounterSample());
+                        }
+                    }
+                }
+                return new Instance("Average", 0, new CounterSample());
+            }
+
             public int Count()
             {
                 return this.CounterOptions.Count();
@@ -906,6 +953,24 @@ namespace UsageMonitor
             }
             instance = new Instance(instanceName, 0, new CounterSample());
             return true;
+        }
+        //Get an instance of a counter ordered by value
+        public static Instance GetSum(MeasureOptions options)
+        {
+            if (CategoriesCounters.TryGetValue(options.Category, out Counters instanceLists))
+            {
+                return instanceLists.GetSum(options);
+            }
+            return new Instance("", 0, new CounterSample());
+        }
+        //Get an instance of a counter ordered by value
+        public static Instance GetAverage(MeasureOptions options)
+        {
+            if (CategoriesCounters.TryGetValue(options.Category, out Counters instanceLists))
+            {
+                return instanceLists.GetAverage(options);
+            }
+            return new Instance("", 0, new CounterSample());
         }
     }
 
@@ -1127,25 +1192,37 @@ namespace UsageMonitor
                         ret = Categories.GetInstance(options, options.Name).Value;
                     }
                 }
-                else if (options.Index >= 0)
+                else
                 {
+                    Instance instance = new Instance("", 0, new CounterSample());
+                    //Get the correct instance needed (-1 & 0 result in Average and Sum respectively)
+                    if (options.Index == -1)
+                    {
+                        instance = Categories.GetAverage(options);
+                    }
+                    else if (options.Index == 0)
+                    {
+                        instance = Categories.GetSum(options);
+                    }
+                    else if (options.Index >= 0)
+                    {
+                        instance = Categories.GetInstance(options, options.Index);
+                    }
+
                     if (options.IsRawValue)
                     {
-                        ret = Categories.GetInstance(options, options.Index).Sample.RawValue;
+                        ret = instance.Sample.RawValue;
                     }
                     else
                     {
-                        ret = Categories.GetInstance(options, options.Index).Value;
+                        ret = instance.Value;
                     }
-                }
-                else if(options.Index == -1)
-                {
-                    ret = 1337;
                 }
                 //Scale it to be out of 100% if user requests it
                 //@TODO have an option to make this _Sum based?
                 if (options.IsPercent)
                 {
+                    //@TODO fix the issue where since this is grabbed at a different time after the lock has been freed it is possible for the instance and _Total to be on different cycles
                     bool hasInstace = Categories.GetInstance(options, "_Total", out Instance instance);
                     //Check that it likely has the _Total instance
                     if (hasInstace)
@@ -1179,19 +1256,29 @@ namespace UsageMonitor
                 {
                     return Marshal.StringToHGlobalUni(Categories.GetInstance(options, options.Name).Name);
                 }
-                else if (options.Index >= 0)
+                else
                 {
-                    var temp = Categories.GetInstance(options, options.Index);
+                    Instance instance = new Instance("", 0, new CounterSample());
+                    //Get the correct instance needed (-1 & 0 result in Average and Sum respectively)
+                    if (options.Index == -1)
+                    {
+                        instance = Categories.GetAverage(options);
+                    }
+                    else if (options.Index == 0)
+                    {
+                        instance = Categories.GetSum(options);
+                    }
+                    else if (options.Index >= 0)
+                    {
+                        instance = Categories.GetInstance(options, options.Index);
+                    }
+
                     //If temp.Value is 0 return empty string
-                    if (temp.Value == 0)
+                    if (instance.Value == 0)
                     {
                         return Marshal.StringToHGlobalUni("");
                     }
-                    return Marshal.StringToHGlobalUni(temp.Name);
-                }
-                else if (options.Index == -1)
-                {
-                    return Marshal.StringToHGlobalUni("tjhrulz loves you man");
+                    return Marshal.StringToHGlobalUni(instance.Name);
                 }
             }
 
