@@ -42,6 +42,8 @@ namespace UsageMonitor
             this.API = API;
         }
 
+        public Instance currInstace;
+
         //One of these will normally be empty/0
         public int Index;
         public String Name;
@@ -145,12 +147,21 @@ namespace UsageMonitor
         public String Name;
         public double Value;
         public CounterSample Sample;
+        public Instance _Total;
 
         public Instance(String Name, double Value, CounterSample Sample)
         {
             this.Name = Name;
             this.Value = Value;
             this.Sample = Sample;
+            this._Total = null;
+        }
+        public Instance(String Name, double Value, CounterSample Sample, Instance _Total)
+        {
+            this.Name = Name;
+            this.Value = Value;
+            this.Sample = Sample;
+            this._Total = _Total;
         }
 
         public int CompareTo(Instance that)
@@ -749,7 +760,13 @@ namespace UsageMonitor
                         {
                             if (tempByUsage.Count() > instanceNumber)
                             {
-                                return tempByUsage[instanceNumber];
+                                Instance instance =  tempByUsage[instanceNumber];
+                                //Grab the _Total for this Instance so it may be used if needed
+                                if (this.GetInstance(options, "_Total", out Instance _Total))
+                                {
+                                    instance._Total = _Total;
+                                }
+                                return instance;
                             }
                         }
                     }
@@ -767,6 +784,19 @@ namespace UsageMonitor
                         {
                             if (tempByName.TryGetValue(instanceName, out Instance value))
                             {
+                                //Check that we are not trying to get the _Total, if we are ignore getting _Total
+                                if (instanceName == "_Total")
+                                {
+                                    value._Total = value;
+                                }
+                                else
+                                {
+                                    //Grab the _Total for this Instance so it may be used if needed
+                                    if (this.GetInstance(options, "_Total", out Instance _Total))
+                                    {
+                                        value._Total = _Total;
+                                    }
+                                }
                                 return value;
                             }
                         }
@@ -786,6 +816,19 @@ namespace UsageMonitor
                         {
                             if (tempByName.TryGetValue(instanceName, out Instance value))
                             {
+                                //Check that we are not trying to get the _Total, if we are ignore getting _Total
+                                if (instanceName == "_Total")
+                                {
+                                    value._Total = value;
+                                }
+                                else
+                                {
+                                    //Grab the _Total for this Instance so it may be used if needed
+                                    if (this.GetInstance(options, "_Total", out Instance _Total))
+                                    {
+                                        value._Total = _Total;
+                                    }
+                                }
                                 instance = value;
                                 return true;
                             }
@@ -795,36 +838,48 @@ namespace UsageMonitor
                             }
                         }
                     }
-                    return true;
                 }
+                return true;
             }
             public Instance GetSum(MeasureOptions options)
             {
+                Instance instance = new Instance("Total", 0, new CounterSample());
                 lock (dataLock)
                 {
                     if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
                     {
                         if (counterInfo.Sum.TryGetValue(options.BlockString, out double value))
                         {
-                            return new Instance("Total", value, new CounterSample());
+                            instance = new Instance("Total", value, new CounterSample());
+                            //Grab the _Total for this Instance so it may be used if needed
+                            if (this.GetInstance(options, "_Total", out Instance _Total))
+                            {
+                                instance._Total = _Total;
+                            }
                         }
                     }
                 }
-                return new Instance("Total", 0, new CounterSample());
+                return instance;
             }
             public Instance GetAverage(MeasureOptions options)
             {
+                Instance instance = new Instance("Total", 0, new CounterSample());
                 lock (dataLock)
                 {
                     if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
                     {
                         if (counterInfo.Average.TryGetValue(options.BlockString, out double value))
                         {
-                            return new Instance("Average", value, new CounterSample());
+                            instance = new Instance("Total", value, new CounterSample());
+                            //Grab the _Total for this Instance so it may be used if needed
+                            if (this.GetInstance(options, "_Total", out Instance _Total))
+                            {
+                                instance._Total = _Total;
+                            }
                         }
                     }
                 }
-                return new Instance("Average", 0, new CounterSample());
+                return instance;
             }
 
             public int Count()
@@ -1178,69 +1233,50 @@ namespace UsageMonitor
             Measure measure = (Measure)data;
             MeasureOptions options = measure.Options;
             double ret = 0;
+            options.currInstace = new Instance("", 0, new CounterSample());
+
             if (options.Counter?.Length > 0 && options.Category?.Length > 0)
             {
                 if (options.Name.Length > 0)
                 {
-                    //Return raw value if the option is set (RawValue is the value before it goes through CounterSample.Calculate to become human readable)
-                    if (options.IsRawValue)
-                    {
-                        ret = Categories.GetInstance(options, options.Name).Sample.RawValue;
-                    }
-                    else
-                    {
-                        ret = Categories.GetInstance(options, options.Name).Value;
-                    }
+                    options.currInstace = Categories.GetInstance(options, options.Name);
                 }
                 else
                 {
-                    Instance instance = new Instance("", 0, new CounterSample());
                     //Get the correct instance needed (-1 & 0 result in Average and Sum respectively)
                     if (options.Index == -1)
                     {
-                        instance = Categories.GetAverage(options);
+                        options.currInstace = Categories.GetAverage(options);
                     }
                     else if (options.Index == 0)
                     {
-                        instance = Categories.GetSum(options);
+                        options.currInstace = Categories.GetSum(options);
                     }
                     else if (options.Index >= 0)
                     {
-                        instance = Categories.GetInstance(options, options.Index);
-                    }
-
-                    if (options.IsRawValue)
-                    {
-                        ret = instance.Sample.RawValue;
-                    }
-                    else
-                    {
-                        ret = instance.Value;
+                        options.currInstace = Categories.GetInstance(options, options.Index);
                     }
                 }
-                //Scale it to be out of 100% if user requests it
-                //@TODO have an option to make this _Sum based?
-                if (options.IsPercent)
+
+                ret = options.currInstace.Value;
+                //Make the ret value raw if requested (Overrides Percent=1)
+                if (options.IsRawValue)
                 {
-                    //@TODO fix the issue where since this is grabbed at a different time after the lock has been freed it is possible for the instance and _Total to be on different cycles
-                    bool hasInstace = Categories.GetInstance(options, "_Total", out Instance instance);
-                    //Check that it likely has the _Total instance
-                    if (hasInstace)
+                    ret = options.currInstace.Sample.RawValue;
+                }
+                //Scale it to be out of 100% if user requests it
+                else if (options.IsPercent)
+                {
+                    if (options.currInstace._Total != null)
                     {
-                        //If instance.Value is 0 ignore it because _Total's value has not been populated yet
-                        if (instance.Value != 0)
-                        {
-                            ret = ret / instance.Value * 100;
-                        }
+                        ret = ret / options.currInstace._Total.Value * 100;
                     }
-                    //If it does not have this instace then log an notice
                     else
                     {
                         measure.API.Log(API.LogType.Notice, "Percent=1 was set on counter:" + measure.Options.Counter + " but that counter does not have an _Total instance");
                     }
                 }
             }
-
             return ret;
         }
 
@@ -1250,35 +1286,20 @@ namespace UsageMonitor
             Measure measure = (Measure)data;
             MeasureOptions options = measure.Options;
 
-            if (options.Counter?.Length > 0 && options.Category?.Length > 0)
+            if (options.Counter?.Length > 0 && options.Category?.Length > 0 && options.currInstace != null)
             {
                 if (options.Name.Length > 0)
                 {
-                    return Marshal.StringToHGlobalUni(Categories.GetInstance(options, options.Name).Name);
+                    return Marshal.StringToHGlobalUni(options.currInstace.Name);
                 }
                 else
                 {
-                    Instance instance = new Instance("", 0, new CounterSample());
-                    //Get the correct instance needed (-1 & 0 result in Average and Sum respectively)
-                    if (options.Index == -1)
-                    {
-                        instance = Categories.GetAverage(options);
-                    }
-                    else if (options.Index == 0)
-                    {
-                        instance = Categories.GetSum(options);
-                    }
-                    else if (options.Index >= 0)
-                    {
-                        instance = Categories.GetInstance(options, options.Index);
-                    }
-
-                    //If temp.Value is 0 return empty string
-                    if (instance.Value == 0)
+                    //If current instance is 0 return empty string
+                    if (options.currInstace.Value == 0)
                     {
                         return Marshal.StringToHGlobalUni("");
                     }
-                    return Marshal.StringToHGlobalUni(instance.Name);
+                    return Marshal.StringToHGlobalUni(options.currInstace.Name);
                 }
             }
 
