@@ -147,7 +147,7 @@ private:
 					proxyName,
 					proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
 					handle,
-					userAgent);				
+					userAgent);
 			}
 		}
 		else
