@@ -39,7 +39,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_ToolTipDisabled(false),
 	m_ToolTipHandle(),
 	m_Mouse(skin, this),
-	m_HasMouseAction(false),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
@@ -333,7 +332,6 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
 	m_Mouse.ReadOptions(parser, section);
-	m_HasMouseAction = m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction();
 
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");

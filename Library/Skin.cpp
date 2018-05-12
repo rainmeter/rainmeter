@@ -815,6 +815,54 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		UpdateMeter(args[0], true);
 		break;
 
+	case Bang::DisableMouseAction:
+		DisableMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::ClearMouseAction:
+		ClearMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::EnableMouseAction:
+		EnableMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::ToggleMouseAction:
+		ToggleMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::DisableMouseActionGroup:
+		DisableMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::ClearMouseActionGroup:
+		ClearMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::EnableMouseActionGroup:
+		EnableMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::ToggleMouseActionGroup:
+		ToggleMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::DisableMouseActionSkinGroup:
+		DisableMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::ClearMouseActionSkinGroup:
+		ClearMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::EnableMouseActionSkinGroup:
+		EnableMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::ToggleMouseActionSkinGroup:
+		ToggleMouseAction(L"Rainmeter", args[0]);
+		break;
+
 	case Bang::ToggleMeasure:
 		ToggleMeasure(args[0]);
 		break;
@@ -1296,6 +1344,122 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	PostUpdate(bActiveTransition);
 
 	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
+}
+
+void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.DisableMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!DisableMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->DisableMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!DisableMouseAction: [%s] not found", meter);
+}
+
+void Skin::ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.ClearMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ClearMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->ClearMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!ClearMouseAction: [%s] not found", meter);
+}
+
+void Skin::EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.EnableMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!EnableMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->EnableMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!EnableMouseAction: [%s] not found", meter);
+}
+
+void Skin::ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.ToggleMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ToggleMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->ToggleMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!ToggleMouseAction: [%s] not found", meter);
 }
 
 void Skin::EnableMeasure(const std::wstring& name, bool group)
@@ -3255,7 +3419,7 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 				// Special case for Button meter: reacts only on valid pixel in button image
 				if (button && button->HitTest2(pos.x, pos.y))
 				{
-					cursor = (*j)->GetMouse().GetCursor();
+					cursor = (*j)->GetMouse().GetCursor(true);
 				}
 			}
 		}

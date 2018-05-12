@@ -54,6 +54,10 @@ const BangInfo s_Bangs[] =
 	{ Bang::ToggleMeter, L"ToggleMeter", 1 },
 	{ Bang::MoveMeter, L"MoveMeter", 3 },
 	{ Bang::UpdateMeter, L"UpdateMeter", 1 },
+	{ Bang::DisableMouseAction, L"DisableMouseAction", 2 },
+	{ Bang::ClearMouseAction, L"ClearMouseAction", 2 },
+	{ Bang::EnableMouseAction, L"EnableMouseAction", 2 },
+	{ Bang::ToggleMouseAction, L"ToggleMouseAction", 2 },
 	{ Bang::DisableMeasure, L"DisableMeasure", 1 },
 	{ Bang::EnableMeasure, L"EnableMeasure", 1 },
 	{ Bang::ToggleMeasure, L"ToggleMeasure", 1 },
@@ -85,6 +89,10 @@ const BangInfo s_Bangs[] =
 	{ Bang::ShowMeterGroup, L"ShowMeterGroup", 1 },
 	{ Bang::ToggleMeterGroup, L"ToggleMeterGroup", 1 },
 	{ Bang::UpdateMeterGroup, L"UpdateMeterGroup", 1 },
+	{ Bang::DisableMouseActionGroup, L"DisableMouseActionGroup", 2 },
+	{ Bang::ClearMouseActionGroup, L"ClearMouseActionGroup", 2 },
+	{ Bang::EnableMouseActionGroup, L"EnableMouseActionGroup", 2 },
+	{ Bang::ToggleMouseActionGroup, L"ToggleMouseActionGroup", 2 },
 	{ Bang::DisableMeasureGroup, L"DisableMeasureGroup", 1 },
 	{ Bang::EnableMeasureGroup, L"EnableMeasureGroup", 1 },
 	{ Bang::ToggleMeasureGroup, L"ToggleMeasureGroup", 1 },
@@ -116,7 +124,11 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
 	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
-	{ Bang::SetVariable, L"SetVariableGroup", 2 }
+	{ Bang::SetVariable, L"SetVariableGroup", 2 },
+	{ Bang::DisableMouseActionSkinGroup, L"DisableMouseActionSkinGroup", 1 },
+	{ Bang::ClearMouseActionSkinGroup, L"ClearMouseActionSkinGroup", 1 },
+	{ Bang::EnableMouseActionSkinGroup, L"EnableMouseActionSkinGroup", 1 },
+	{ Bang::ToggleMouseActionSkinGroup, L"ToggleMouseActionSkinGroup", 1 }
 };
 
 // Bangs that are to be handled using a custom handler function.

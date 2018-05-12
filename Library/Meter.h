@@ -53,7 +53,11 @@ public:
 	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
 
 	const Mouse& GetMouse() { return m_Mouse; }
-	bool HasMouseAction() { return m_HasMouseAction; }
+	bool HasMouseAction() { return m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction(); }
+	void DisableMouseAction(const std::wstring& options) { m_Mouse.DisableMouseAction(options); }
+	void ClearMouseAction(const std::wstring& options) { m_Mouse.ClearMouseAction(options); }
+	void EnableMouseAction(const std::wstring& options) { m_Mouse.EnableMouseAction(options); }
+	void ToggleMouseAction(const std::wstring& options) { m_Mouse.ToggleMouseAction(options); }
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != nullptr; }
@@ -134,7 +138,6 @@ protected:
 	HWND m_ToolTipHandle;
 
 	Mouse m_Mouse;
-	bool m_HasMouseAction;
 	bool m_MouseOver;
 
 	METER_POSITION m_RelativeX;
