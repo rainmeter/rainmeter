@@ -880,7 +880,7 @@ namespace UsageMonitor
             }
             public Instance GetAverage(MeasureOptions options)
             {
-                Instance instance = new Instance("Total", 0, new CounterSample());
+                Instance instance = new Instance("Average", 0, new CounterSample());
                 lock (dataLock)
                 {
                     if (CountersInfo.TryGetValue(options.Counter, out CounterInfo counterInfo))
