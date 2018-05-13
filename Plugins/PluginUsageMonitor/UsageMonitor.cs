@@ -1304,6 +1304,11 @@ namespace UsageMonitor
                         {
                             ret = ret / options.currInstace._Total.Value * 100;
                         }
+                        //If ret is bigger than 100 (Normally caused by double vs float differences since this plugin is more accurate than permon _Total is) cap it
+                        if(ret > 100)
+                        {
+                            ret = 100;
+                        }
                     }
                     else
                     {
