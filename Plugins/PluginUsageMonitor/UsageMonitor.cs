@@ -147,16 +147,16 @@ namespace UsageMonitor
         public String Name;
         public double Value;
         public CounterSample Sample;
-        public Instance _Total;
+        public double? _Total;
 
         public Instance(String Name, double Value, CounterSample Sample)
         {
             this.Name = Name;
             this.Value = Value;
             this.Sample = Sample;
-            this._Total = null;
+            this._Total = 0;
         }
-        public Instance(String Name, double Value, CounterSample Sample, Instance _Total)
+        public Instance(String Name, double Value, CounterSample Sample, double? _Total)
         {
             this.Name = Name;
             this.Value = Value;
@@ -494,7 +494,7 @@ namespace UsageMonitor
                     }
                     catch (Exception e)
                     {
-                        API.Log((int)API.LogType.Error, "UsageMonitor crashed trying to update the counterss");
+                        API.Log((int)API.LogType.Error, "UsageMonitor crashed trying to update the counters");
                         API.Log((int)API.LogType.Debug, e.Message);
                         API.Log((int)API.LogType.Debug, e.StackTrace);
                     }
@@ -573,6 +573,7 @@ namespace UsageMonitor
                     //If measure was already used and just needs values updated
                     if (counter.TryGetValue(options.ID, out MeasureOptions tempOptions))
                     {
+                        options.currInstace = tempOptions.currInstace;
                         tempOptions = options;
                     }
                     else
@@ -761,10 +762,14 @@ namespace UsageMonitor
                             if (tempByUsage.Count() > instanceNumber)
                             {
                                 Instance instance =  tempByUsage[instanceNumber];
-                                //Grab the _Total for this Instance so it may be used if needed
+                                //Grab the _Total for this Instance so it may be used if needed, if one does not exist set to null
                                 if (this.GetInstance(options, "_Total", out Instance _Total))
                                 {
-                                    instance._Total = _Total;
+                                    instance._Total = _Total.Value;
+                                }
+                                else
+                                {
+                                    instance._Total = null;
                                 }
                                 return instance;
                             }
@@ -782,22 +787,26 @@ namespace UsageMonitor
                     {
                         if (counterInfo.ByName.TryGetValue(options.IsRollup, out Dictionary<String, Instance> tempByName))
                         {
-                            if (tempByName.TryGetValue(instanceName, out Instance value))
+                            if (tempByName.TryGetValue(instanceName, out Instance instance))
                             {
                                 //Check that we are not trying to get the _Total, if we are ignore getting _Total
                                 if (instanceName == "_Total")
                                 {
-                                    value._Total = value;
+                                    instance._Total = instance.Value;
                                 }
                                 else
                                 {
-                                    //Grab the _Total for this Instance so it may be used if needed
+                                    //Grab the _Total for this Instance so it may be used if needed, if one does not exist set to null
                                     if (this.GetInstance(options, "_Total", out Instance _Total))
                                     {
-                                        value._Total = _Total;
+                                        instance._Total = _Total.Value;
+                                    }
+                                    else
+                                    {
+                                        instance._Total = null;
                                     }
                                 }
-                                return value;
+                                return instance;
                             }
                         }
                     }
@@ -814,22 +823,26 @@ namespace UsageMonitor
                     {
                         if (counterInfo.ByName.TryGetValue(options.IsRollup, out Dictionary<String, Instance> tempByName))
                         {
-                            if (tempByName.TryGetValue(instanceName, out Instance value))
+                            if (tempByName.TryGetValue(instanceName, out Instance tempInstance))
                             {
                                 //Check that we are not trying to get the _Total, if we are ignore getting _Total
                                 if (instanceName == "_Total")
                                 {
-                                    value._Total = value;
+                                    tempInstance._Total = tempInstance.Value;
                                 }
                                 else
                                 {
-                                    //Grab the _Total for this Instance so it may be used if needed
+                                    //Grab the _Total for this Instance so it may be used if needed, if one does not exist set to null
                                     if (this.GetInstance(options, "_Total", out Instance _Total))
                                     {
-                                        value._Total = _Total;
+                                        tempInstance._Total = _Total.Value;
+                                    }
+                                    else
+                                    {
+                                        tempInstance._Total = null;
                                     }
                                 }
-                                instance = value;
+                                instance = tempInstance;
                                 return true;
                             }
                             else
@@ -850,11 +863,15 @@ namespace UsageMonitor
                     {
                         if (counterInfo.Sum.TryGetValue(options.BlockString, out double value))
                         {
-                            instance = new Instance("Total", value, new CounterSample());
-                            //Grab the _Total for this Instance so it may be used if needed
+                            instance.Value = value;
+                            //Grab the _Total for this Instance so it may be used if needed, if one does not exist set to null
                             if (this.GetInstance(options, "_Total", out Instance _Total))
                             {
-                                instance._Total = _Total;
+                                instance._Total = _Total.Value;
+                            }
+                            else
+                            {
+                                instance._Total = null;
                             }
                         }
                     }
@@ -870,11 +887,15 @@ namespace UsageMonitor
                     {
                         if (counterInfo.Average.TryGetValue(options.BlockString, out double value))
                         {
-                            instance = new Instance("Total", value, new CounterSample());
-                            //Grab the _Total for this Instance so it may be used if needed
+                            instance.Value = value;
+                            //Grab the _Total for this Instance so it may be used if needed, if one does not exist set to null
                             if (this.GetInstance(options, "_Total", out Instance _Total))
                             {
-                                instance._Total = _Total;
+                                instance._Total = _Total.Value;
+                            }
+                            else
+                            {
+                                instance._Total = null;
                             }
                         }
                     }
@@ -1217,7 +1238,17 @@ namespace UsageMonitor
             }
 
             //Setup new instance if counter and category are set
-            if (options.Counter?.Length > 0 && options.Category?.Length > 0) Categories.AddMeasure(options);
+            if (options.Counter?.Length > 0 && options.Category?.Length > 0)
+            {
+                if (measure.API.ReadInt("Disabled", 0) == 1)
+                {
+                    Categories.RemoveMeasure(options);
+                }
+                else
+                {
+                    Categories.AddMeasure(options);
+                }
+            }
 
             //One of these will be used later to access data
             options.Index = measure.API.ReadInt("Index", 0);
@@ -1267,13 +1298,16 @@ namespace UsageMonitor
                 //Scale it to be out of 100% if user requests it
                 else if (options.IsPercent)
                 {
-                    if (options.currInstace._Total != null)
+                    if (options.currInstace._Total.HasValue)
                     {
-                        ret = ret / options.currInstace._Total.Value * 100;
+                        if (options.currInstace._Total.Value != 0)
+                        {
+                            ret = ret / options.currInstace._Total.Value * 100;
+                        }
                     }
                     else
                     {
-                        measure.API.Log(API.LogType.Notice, "Percent=1 was set on counter:" + measure.Options.Counter + " but that counter does not have an _Total instance");
+                        measure.API.Log(API.LogType.Notice, "Percent=1 was set on this measure with counter " + measure.Options.Counter + " but that counter does not have an _Total instance");
                     }
                 }
             }
