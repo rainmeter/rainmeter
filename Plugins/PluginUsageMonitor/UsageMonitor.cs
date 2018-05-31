@@ -501,7 +501,7 @@ namespace UsageMonitor
                     finally
                     {
                         Monitor.Exit(UpdateTimerLock);
-                        GC.Collect();
+                        //GC.Collect();
                     }
                 }
             }
@@ -1138,7 +1138,10 @@ namespace UsageMonitor
 
             Categories.RemoveMeasure(measure.Options);
 
-            GCHandle.FromIntPtr(measure.buffer).Free();
+            if (measure.buffer != IntPtr.Zero)
+            {
+                GCHandle.FromIntPtr(measure.buffer).Free();
+            }
             GCHandle.FromIntPtr(data).Free();
         }
 
@@ -1243,14 +1246,7 @@ namespace UsageMonitor
             //Setup new instance if counter and category are set
             if (options.Counter?.Length > 0 && options.Category?.Length > 0)
             {
-                if (measure.API.ReadInt("Disabled", 0) == 1)
-                {
-                    Categories.RemoveMeasure(options);
-                }
-                else
-                {
-                    Categories.AddMeasure(options);
-                }
+                Categories.AddMeasure(options);
             }
 
             //One of these will be used later to access data
