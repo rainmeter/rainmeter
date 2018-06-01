@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
+#include "Psapi.h"
 
 Player* PlayerSpotify::c_Player = nullptr;
 
@@ -43,26 +44,50 @@ Player* PlayerSpotify::Create()
 	return c_Player;
 }
 
+LPCWSTR GetExe(HWND hwnd)
+{
+	WCHAR procPath[400];
+	procPath[0] = 0;
+
+	DWORD procID;
+	GetWindowThreadProcessId(hwnd, &procID);
+
+	HANDLE checkProc = OpenProcess(PROCESS_ALL_ACCESS, false, procID);
+	if (checkProc != NULL)
+	{
+		GetModuleFileNameEx(checkProc, NULL, procPath, 400);
+		CloseHandle(checkProc);
+		if (procPath[0] != 0)
+		{
+			return PathFindFileName(procPath);
+		}
+	}
+
+	return L"";
+}
+
 /*
 ** Try to find Spotify periodically.
 **
 */
-bool PlayerSpotify::CheckWindow()
-{
+bool PlayerSpotify::CheckWindow() {
 	DWORD time = GetTickCount();
-		
+
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000)
-	{
+	if (time - m_LastCheckTime > 5000) {
 		m_LastCheckTime = time;
 
-		m_Window = FindWindow(L"SpotifyMainWindow", nullptr);
-		if (m_Window)
-		{
+		HWND prev = FindWindowEx(NULL, NULL, L"Chrome_WidgetWin_0", NULL);
+
+		while (prev != NULL && (GetWindowTextLength(prev) == 0 ||
+			_wcsicmp(GetExe(prev), L"SPOTIFY.EXE") != 0)) {
+			prev = FindWindowEx(NULL, prev, L"Chrome_WidgetWin_0", NULL);
+		}
+		if (prev != NULL) {
+			m_Window = prev;
 			m_Initialized = true;
 		}
 	}
-
 	return m_Initialized;
 }
 
