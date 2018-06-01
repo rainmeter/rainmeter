@@ -501,6 +501,7 @@ namespace UsageMonitor
                     finally
                     {
                         Monitor.Exit(UpdateTimerLock);
+                        //GC.Collect();
                     }
                 }
             }
@@ -1057,6 +1058,7 @@ namespace UsageMonitor
             return (Measure)GCHandle.FromIntPtr(data).Target;
         }
         public Rainmeter.API API;
+        public IntPtr buffer = IntPtr.Zero;
         public MeasureOptions Options;
     }
 
@@ -1136,6 +1138,10 @@ namespace UsageMonitor
 
             Categories.RemoveMeasure(measure.Options);
 
+            if (measure.buffer != IntPtr.Zero)
+            {
+                GCHandle.FromIntPtr(measure.buffer).Free();
+            }
             GCHandle.FromIntPtr(data).Free();
         }
 
@@ -1240,14 +1246,7 @@ namespace UsageMonitor
             //Setup new instance if counter and category are set
             if (options.Counter?.Length > 0 && options.Category?.Length > 0)
             {
-                if (measure.API.ReadInt("Disabled", 0) == 1)
-                {
-                    Categories.RemoveMeasure(options);
-                }
-                else
-                {
-                    Categories.AddMeasure(options);
-                }
+                Categories.AddMeasure(options);
             }
 
             //One of these will be used later to access data
@@ -1327,22 +1326,27 @@ namespace UsageMonitor
 
             if (options.Counter?.Length > 0 && options.Category?.Length > 0 && options.currInstace != null)
             {
+                if (measure.buffer != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(measure.buffer);
+                    measure.buffer = IntPtr.Zero;
+                }
+
                 if (options.Name.Length > 0)
                 {
-                    return Marshal.StringToHGlobalUni(options.currInstace.Name);
+                    measure.buffer = Marshal.StringToHGlobalUni(options.currInstace.Name);
                 }
                 else
                 {
                     //If current instance is 0 return empty string
                     if (options.currInstace.Value == 0)
                     {
-                        return Marshal.StringToHGlobalUni("");
+                        measure.buffer = Marshal.StringToHGlobalUni("");
                     }
-                    return Marshal.StringToHGlobalUni(options.currInstace.Name);
+                    measure.buffer = Marshal.StringToHGlobalUni(options.currInstace.Name);
                 }
             }
-
-            return IntPtr.Zero;
+            return measure.buffer;
         }
 
         //[DllExport]
