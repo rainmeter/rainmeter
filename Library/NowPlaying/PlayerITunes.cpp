@@ -331,19 +331,27 @@ void PlayerITunes::UpdateCachedData()
 {
 	IITTrack* track = nullptr;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-	// If song is not current song
 	if (SUCCEEDED(hr) && track)
 	{
+		BSTR tmpStr;
+		long tmpVal = 0L;
+
+		// Rating onChange was removed, manually check 
+		if (SUCCEEDED(track->get_Rating(&tmpVal)))
+		{
+			tmpVal /= 20L;
+			m_Rating = (UINT)tmpVal;
+		}
+
 		long trackID = -1L;
 		hr = track->get_TrackID(&trackID);
+
+		// If song is not current song
 		if (SUCCEEDED(hr) && trackID != m_TrackID)
 		{
 			m_TrackID = trackID;
 			//Increment song count since song count has changed
 			++m_TrackCount;
-
-			BSTR tmpStr;
-			long tmpVal = 0L;
 
 			// Update various metadata
 			track->get_Name(&tmpStr);
