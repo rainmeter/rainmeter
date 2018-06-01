@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 
 [assembly: AssemblyCopyright("© 2018 - Trevor Hamilton")]
-[assembly: AssemblyVersion("0.9.9")]
+[assembly: AssemblyVersion("1.0.1")]
 
 // Do not change the entries below!
 #if X64

@@ -44,7 +44,7 @@ Player* PlayerSpotify::Create()
 	return c_Player;
 }
 
-LPCWSTR GetExe(HWND hwnd)
+std::wstring GetExe(HWND hwnd)
 {
 	WCHAR procPath[400];
 	procPath[0] = 0;
@@ -80,7 +80,7 @@ bool PlayerSpotify::CheckWindow() {
 		HWND prev = FindWindowEx(NULL, NULL, L"Chrome_WidgetWin_0", NULL);
 
 		while (prev != NULL && (GetWindowTextLength(prev) == 0 ||
-			_wcsicmp(GetExe(prev), L"SPOTIFY.EXE") != 0)) {
+			_wcsicmp(GetExe(prev).c_str(), L"SPOTIFY.EXE") != 0)) {
 			prev = FindWindowEx(NULL, prev, L"Chrome_WidgetWin_0", NULL);
 		}
 		if (prev != NULL) {
