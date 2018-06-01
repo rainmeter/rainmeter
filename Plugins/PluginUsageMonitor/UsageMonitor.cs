@@ -1138,9 +1138,11 @@ namespace UsageMonitor
 
             Categories.RemoveMeasure(measure.Options);
 
+
             if (measure.buffer != IntPtr.Zero)
             {
-                GCHandle.FromIntPtr(measure.buffer).Free();
+                Marshal.FreeHGlobal(measure.buffer);
+                measure.buffer = IntPtr.Zero;
             }
             GCHandle.FromIntPtr(data).Free();
         }
@@ -1343,7 +1345,10 @@ namespace UsageMonitor
                     {
                         measure.buffer = Marshal.StringToHGlobalUni("");
                     }
-                    measure.buffer = Marshal.StringToHGlobalUni(options.currInstace.Name);
+                    else
+                    {
+                        measure.buffer = Marshal.StringToHGlobalUni(options.currInstace.Name);
+                    }
                 }
             }
             return measure.buffer;
