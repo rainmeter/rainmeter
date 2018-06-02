@@ -52,10 +52,13 @@ private:
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;
+	Gdiplus::InterpolationMode m_InterpolationMode;
 
 	RECT m_ScaleMargins;
 
 	static const WCHAR* c_MaskOptionArray[TintedImage::OptionCount];
+
+	void ReadInterpolationMode(const WCHAR* interpolationMode);
 };
 
 #endif

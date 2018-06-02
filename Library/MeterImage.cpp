@@ -123,6 +123,9 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
+	const WCHAR* interpolationMode = parser.ReadString(section, L"InterpolationMode", L"DEFAULT").c_str();
+	ReadInterpolationMode(interpolationMode);
+
 	static const RECT defMargins = {0};
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
 
@@ -209,6 +212,9 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		Gdiplus::Rect meterRect = GetMeterRectPadding();
 
+		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
+		graphics.SetInterpolationMode(m_InterpolationMode);
+
 		int drawW = meterRect.Width;
 		int drawH = meterRect.Height;
 
@@ -253,15 +259,11 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		}
 		else if (m_DrawMode == DRAWMODE_TILE)
 		{
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
 			ImageAttributes imgAttr;
 			imgAttr.SetWrapMode(WrapModeTile);
 
 			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
 			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
-
-			canvas.EndGdiplusContext();
 		}
 		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{
@@ -373,6 +375,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				}
 			}
 		}
+		canvas.EndGdiplusContext();
 	}
 
 	return true;
@@ -387,5 +390,50 @@ void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	if (BindPrimaryMeasure(parser, section, true))
 	{
 		BindSecondaryMeasures(parser, section);
+	}
+}
+
+/*
+** Translates the value of the interpolation mode option and sets the interpolation mode member.
+**
+*/
+void MeterImage::ReadInterpolationMode(const WCHAR* interpolationMode)
+{
+	if (_wcsicmp(interpolationMode, L"DEFAULT") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeDefault;
+	}
+	else if (_wcsicmp(interpolationMode, L"LOWQUALITY") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeLowQuality;
+	}
+	else if (_wcsicmp(interpolationMode, L"HIGHQUALITY") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeHighQuality;
+	}
+	else if (_wcsicmp(interpolationMode, L"BILINEAR") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeBilinear;
+	}
+	else if (_wcsicmp(interpolationMode, L"BICUBIC") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeBicubic;
+	}
+	else if (_wcsicmp(interpolationMode, L"HIGHQUALITYBILINEAR") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeHighQualityBilinear;
+	}
+	else if (_wcsicmp(interpolationMode, L"HIGHQUALITYBICUBIC") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeHighQualityBicubic;
+	}
+	else if (_wcsicmp(interpolationMode, L"NEARESTNEIGHBOR") == 0)
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeNearestNeighbor;
+	}
+	else
+	{
+		m_InterpolationMode = Gdiplus::InterpolationMode::InterpolationModeDefault;
+		LogErrorF(this, L"InterpolationMode=%s is not valid", interpolationMode);
 	}
 }
