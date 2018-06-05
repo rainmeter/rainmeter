@@ -986,7 +986,8 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// New folder already exists, re-enter folder name
-					if (_waccess(newItem.c_str(), 0) == 0)
+					if (_waccess(newItem.c_str(), 0) == 0 &&
+						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
 						const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
@@ -1092,7 +1093,8 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						return TRUE;
 					}
 
-					if (_waccess(newItem.c_str(), 0) == 0)
+					if (_waccess(newItem.c_str(), 0) == 0 &&
+						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
 						// File exists, enter edit mode
 						const std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
