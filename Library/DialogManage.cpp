@@ -2078,13 +2078,6 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
 			buttonWidth + 30, 170, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-
-		CT_GROUPBOX(-1, ID_STR_SKININSTALLER,
-			0, 198, 478, 32,
-			WS_VISIBLE, 0),
-		CT_CHECKBOX(Id_ArchivePlugins, ID_STR_ARCHIVEPLUGINS,
-			6, 214, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2154,13 +2147,6 @@ void DialogManage::TabSettings::Initialize()
 
 	bool iconEnabled = GetRainmeter().GetTrayIcon()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
-
-	bool archivePlugins = GetPrivateProfileInt(
-		L"SkinInstaller",
-		L"ArchivePlugins",
-		1,
-		GetRainmeter().GetDataFile().c_str()) != 0;
-	Button_SetCheck(GetControl(Id_ArchivePlugins), archivePlugins);
 
 	m_Initialized = true;
 }
@@ -2330,17 +2316,6 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				GetRainmeter().GetTrayIcon()->SetTrayIcon(true, true);
 			}
-		}
-		break;
-
-		case Id_ArchivePlugins:
-		{
-			bool archivePlugins = SendMessage(GetControl(Id_ArchivePlugins), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-			WritePrivateProfileString(
-				L"SkinInstaller",
-				L"ArchivePlugins",
-				archivePlugins ? L"1" : L"0",
-				GetRainmeter().GetDataFile().c_str());
 		}
 		break;
 
