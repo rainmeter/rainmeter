@@ -1934,11 +1934,14 @@ void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstr
 
 			// Since the options in the settings file may not have been read by Rainmeter,
 			// logging may be enabled at a later time. Set a log message here and log it later.
-			*log = L"Settings file \"";
-			*log += iniFile;
-			*log += (encoding == FileUtil::Encoding::UTF8) ? L"\" (UTF-8" : L"\" (ANSI";
-			*log += L") encoding converted to UTF-16LE. A backup will be saved to: ";
-			*log += layoutPath;
+			if (log)
+			{
+				*log = L"Settings file \"";
+				*log += iniFile;
+				*log += (encoding == FileUtil::Encoding::UTF8) ? L"\" (UTF-8" : L"\" (ANSI";
+				*log += L") encoding converted to UTF-16LE. A backup will be saved to: ";
+				*log += layoutPath;
+			}
 		}
 	}
 }
