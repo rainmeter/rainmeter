@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "Rainmeter.h"
@@ -263,6 +264,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		CreateOptionsFile();
 	}
 
+	// Check encoding of settings file
+	std::wstring encodingMsg;
+	CheckSettingsFileEncoding(m_IniFile, &encodingMsg);
+
 	bool dataFileCreated = false;
 	if (_waccess(m_DataFile.c_str(), 0) == -1)
 	{
@@ -354,6 +359,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	delete [] buffer;
 	buffer = nullptr;
+
+	if (!encodingMsg.empty())
+	{
+		// Log information about any encoding changes to |iniFile|
+		LogNotice(encodingMsg.c_str());
+	}
 
 	LogNoticeF(L"Path: %s", m_Path.c_str());
 	LogNoticeF(L"IniFile: %s", iniFile);
@@ -1520,6 +1531,15 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		return false;
 	}
 
+	// Check encoding of layout
+	std::wstring msg;
+	CheckSettingsFileEncoding(layout, &msg);
+	if (!msg.empty())
+	{
+		// Log information about any encoding changes to |layout|
+		LogNotice(msg.c_str());
+	}
+
 	DeleteAllUnmanagedSkins();
 	DeleteAllSkins();
 
@@ -1869,5 +1889,56 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		}
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
+	}
+}
+
+/*
+** Checks and converts (if necessary) the encoding of a settings file (Rainmeter.ini).
+**
+*/
+void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log)
+{
+	size_t size = 0;
+	auto raw = FileUtil::ReadFullFile(iniFile, &size);
+	if (!raw) return;
+
+	auto encoding = FileUtil::GetEncoding(raw.get(), size);
+	if (encoding != FileUtil::Encoding::UTF16LE)
+	{
+		// Make a backup of the settings file
+		std::wstring layoutPath = GetLayoutPath();
+		CreateDirectory(layoutPath.c_str(), nullptr);
+		System::CopyFiles(iniFile, layoutPath);
+
+		std::wstring wide;
+		std::string narrow = (char*)raw.get();
+
+		if (encoding == FileUtil::Encoding::UTF8)
+		{
+			narrow.erase(0, 3);				// Remove BOM
+			wide = StringUtil::WidenUTF8(narrow);
+		}
+		else // if (encoding == FileUtil::Encoding::ANSI)
+		{
+			// ANSI does not have a BOM
+			wide = StringUtil::Widen(narrow);
+		}
+
+		FILE* file;
+		if (_wfopen_s(&file, iniFile.c_str(), L"wbc, ccs=UTF-16LE") == 0)
+		{
+			fputs("\xFF\xFE", file);		// Write BOM
+			fputws(wide.c_str(), file);		// Write converted text
+			fflush(file);
+			fclose(file);
+
+			// Since the options in the settings file may not have been read by Rainmeter,
+			// logging may be enabled at a later time. Set a log message here and log it later.
+			*log = L"Settings file \"";
+			*log += iniFile;
+			*log += (encoding == FileUtil::Encoding::UTF8) ? L"\" (UTF-8" : L"\" (ANSI";
+			*log += L") encoding converted to UTF-16LE. A backup will be saved to: ";
+			*log += layoutPath;
+		}
 	}
 }
