@@ -208,6 +208,7 @@ private:
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
 	void TestSettingsFile(bool bDefaultIniLocation);
+	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
 	TrayIcon* m_TrayIcon;
 

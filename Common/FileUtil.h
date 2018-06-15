@@ -13,6 +13,15 @@
 
 namespace FileUtil {
 
+enum class Encoding : BYTE
+{
+	ANSI,
+	UTF8,
+	UTF16LE
+};
+
+Encoding GetEncoding(const BYTE* buffer, const size_t& size);
+
 /*
 ** Reads and allocates memory for file in path. Returns unique_ptr containing addres to
 ** allocated memory.

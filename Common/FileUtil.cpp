@@ -10,6 +10,14 @@
 
 namespace FileUtil {
 
+Encoding GetEncoding(const BYTE* buffer, const size_t& size)
+{
+	if (size >= 3 && buffer[0] == 0xEF && buffer[1] == 0xBB && buffer[2] == 0xBF) return Encoding::UTF8;
+	if (size >= 2 && buffer[0] == 0xFF && buffer[1] == 0xFE)                      return Encoding::UTF16LE;
+
+	return Encoding::ANSI;
+}
+
 std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size)
 {
 	FILE* file = _wfopen(path.c_str(), L"rb");
