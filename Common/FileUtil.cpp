@@ -20,22 +20,22 @@ Encoding GetEncoding(const BYTE* buffer, const size_t& size)
 
 std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size)
 {
-	FILE* file = _wfopen(path.c_str(), L"rb");
-	if (!file)
+	FILE* file;
+	if (_wfopen_s(&file, path.c_str(), L"rb") != 0)
 	{
 		return nullptr;
 	}
 
-	fseek(file, 0, SEEK_END);
+	fseek(file, 0L, SEEK_END);
 	size_t fileSize = ftell(file);
-	rewind(file);
+	fseek(file, 0L, SEEK_SET);
 
 	std::unique_ptr<BYTE[]> buffer(new (std::nothrow) BYTE[fileSize + 3]);
 	if (buffer)
 	{
-		fread(buffer.get(), 1, fileSize, file);
+		fread_s(buffer.get(), fileSize + 3, 1, fileSize, file);
 
-		// Triple null terminate the buffer.
+		// Triple null terminate the buffer
 		buffer[fileSize] = 0;
 		buffer[fileSize + 1] = 0;
 		buffer[fileSize + 2] = 0;
