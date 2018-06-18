@@ -257,6 +257,9 @@ void Skin::Initialize()
 
 	setlocale(LC_NUMERIC, "C");
 
+	std::wstring title = m_FolderPath + L">" + m_FileName;
+	SetWindowText(m_Window, title.c_str());
+
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
