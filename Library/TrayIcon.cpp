@@ -101,11 +101,13 @@ void TrayIcon::Initialize()
 		this);
 
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
+
+	// Remove any "ghost" icons
+	RemoveTrayIcon();
 }
 
 bool TrayIcon::AddTrayIcon()
 {
-	//CleanupTray();
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
 	tnid.guidItem = GUID_TRAY;
@@ -165,7 +167,7 @@ void TrayIcon::RemoveTrayIcon()
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
 	tnid.guidItem = GUID_TRAY;
-	tnid.uFlags = 0;
+	tnid.uFlags = NIF_GUID;
 
 	Shell_NotifyIcon(NIM_DELETE, &tnid);
 
