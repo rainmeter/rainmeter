@@ -6,7 +6,6 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include <initguid.h>
 #include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
@@ -24,9 +23,6 @@
 #define RAINMETER_LOCALIZATION	L"https://www.rainmeter.net/localization"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
-
- // {CEF28303-0443-419A-8777-E4A46A94465F}
-DEFINE_GUID(GUID_TRAY, 0xcef28303, 0x443, 0x419a, 0x87, 0x77, 0xe4, 0xa4, 0x6a, 0x94, 0x46, 0x5f);
 
 enum TIMER
 {
@@ -101,17 +97,14 @@ void TrayIcon::Initialize()
 		this);
 
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
-
-	// Remove any "ghost" icons
-	RemoveTrayIcon();
 }
 
 bool TrayIcon::AddTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.guidItem = GUID_TRAY;
-	tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_GUID;
+	tnid.uID = IDI_TRAY;
+	tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 	tnid.uCallbackMessage = WM_TRAY_NOTIFYICON;
 	tnid.hIcon = m_Icon;
 	wcsncpy_s(tnid.szTip, APPNAME, _TRUNCATE);
@@ -123,7 +116,7 @@ bool TrayIcon::IsTrayIconReady()
 {
 	NOTIFYICONIDENTIFIER nii = { sizeof(NOTIFYICONIDENTIFIER) };
 	nii.hWnd = m_Window;
-	nii.guidItem = GUID_TRAY;
+	nii.uID = IDI_TRAY;
 	RECT rect;
 
 	HRESULT hr = Shell_NotifyIconGetRect(&nii, &rect);
@@ -166,8 +159,8 @@ void TrayIcon::RemoveTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.guidItem = GUID_TRAY;
-	tnid.uFlags = NIF_GUID;
+	tnid.uID = IDI_TRAY;
+	tnid.uFlags = 0;
 
 	Shell_NotifyIcon(NIM_DELETE, &tnid);
 
@@ -190,8 +183,8 @@ void TrayIcon::ModifyTrayIcon(double value)
 
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.guidItem = GUID_TRAY;
-	tnid.uFlags = NIF_ICON | NIF_GUID;
+	tnid.uID = IDI_TRAY;
+	tnid.uFlags = NIF_ICON;
 	tnid.hIcon = m_Icon;
 
 	Shell_NotifyIcon(NIM_MODIFY, &tnid);
@@ -300,8 +293,8 @@ void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const 
 	{
 		NOTIFYICONDATA nid = {sizeof(NOTIFYICONDATA)};
 		nid.hWnd = m_Window;
-		nid.guidItem = GUID_TRAY;
-		nid.uFlags = NIF_INFO | NIF_GUID;
+		nid.uID = IDI_TRAY;
+		nid.uFlags = NIF_INFO;
 		nid.uTimeout = 30000;
 		nid.dwInfoFlags = NIIF_USER;
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
