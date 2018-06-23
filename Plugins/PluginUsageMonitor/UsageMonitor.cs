@@ -954,15 +954,15 @@ namespace UsageMonitor
                 {
                     string category = "Process";
                     string counter = "ID Process";
-                    if (Plugin.engToCurrLanguage != null)
+                    if (Plugin.currLanguageToEnglish != null)
                     {
-                        if (Plugin.engToCurrLanguage.TryGetValue(category, out string translatedString))
+                        if (Plugin.currLanguageToEnglish.TryGetValue(category, out string translatedString))
                         {
                             category = translatedString;
                         }
 
                         //If there is a translation dictionary use it
-                        if (Plugin.engToCurrLanguage.TryGetValue(counter, out translatedString))
+                        if (Plugin.currLanguageToEnglish.TryGetValue(counter, out translatedString))
                         {
                             counter = translatedString;
                         }
@@ -988,6 +988,12 @@ namespace UsageMonitor
                         }
                     }
                     pids = tempPIDs;
+                }
+                catch (Exception e)
+                {
+                    API.Log((int)API.LogType.Error, "UsageMonitor crashed trying to update the PIDs");
+                    API.Log((int)API.LogType.Debug, e.Message);
+                    API.Log((int)API.LogType.Debug, e.StackTrace);
                 }
                 finally
                 {
@@ -1098,7 +1104,8 @@ namespace UsageMonitor
 
     public class Plugin
     {
-        public static Dictionary<string, string> engToCurrLanguage;
+        //Will be used to translate custom categories and counters
+        public static Dictionary<string, string> currLanguageToEnglish;
 
         [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
@@ -1108,7 +1115,7 @@ namespace UsageMonitor
 
             //Check system language, if it is different from en-US build translation list
             var ci = System.Globalization.CultureInfo.InstalledUICulture.Name;
-            if (ci.CompareTo("en-US") != 0 && engToCurrLanguage == null)
+            if (ci.CompareTo("en-US") != 0 && currLanguageToEnglish == null)
             {
                 //English list
                 //HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\009\Counter
@@ -1116,7 +1123,7 @@ namespace UsageMonitor
                 //HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\CurrentLanguage\Counter
                 string[] eng = (string[])Microsoft.Win32.Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\009", "Counter", "");
                 string[] cur = (string[])Microsoft.Win32.Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\CurrentLanguage", "Counter", "");
-                engToCurrLanguage = new Dictionary<string, string>(cur.Length / 2);
+                currLanguageToEnglish = new Dictionary<string, string>(cur.Length / 2);
 
                 int i = 0;
                 bool isMatch = false;
@@ -1152,12 +1159,12 @@ namespace UsageMonitor
                         {
                             try
                             {
-                                engToCurrLanguage.Add(eng[i], item);
+                                currLanguageToEnglish.Add(item, eng[i]);
                                 isMatch = false;
                             }
                             catch
                             {
-
+                                //Cheaper to do a try catch than precheck the dictionary
                             }
                         }
                     }
@@ -1212,29 +1219,30 @@ namespace UsageMonitor
             String categoryString = measure.API.ReadString("Category", "");
             if (categoryString.Length > 0)
             {
-                options.Category = categoryString;
+                options.UntranslatedCategory = categoryString;
+                //If there is a translation dictionary use it
+                if (currLanguageToEnglish != null)
+                {
+                    //Try to output to the options the english category, if no match keep in original language (Which should then have 0% chance of collision)
+                    if(!currLanguageToEnglish.TryGetValue(categoryString, out options.Category))
+                    {
+                        options.Category = categoryString;
+                    }
+                }
             }
 
             String counterString = measure.API.ReadString("Counter", "");
             if (counterString.Length > 0)
             {
-                options.Counter = counterString;
-            }
-
-            //If there is a translation dictionary use it
-            if (engToCurrLanguage != null)
-            {
-                if (engToCurrLanguage.TryGetValue(options.Category, out string translatedString))
-                {
-                    options.UntranslatedCategory = options.Category;
-                    options.Category = translatedString;
-                }
-
+                options.UntranslatedCounter = counterString;
                 //If there is a translation dictionary use it
-                if (engToCurrLanguage.TryGetValue(options.Counter, out translatedString))
+                if (currLanguageToEnglish != null)
                 {
-                    options.UntranslatedCounter = options.Counter;
-                    options.Counter = translatedString;
+                    //Try to output to the options the english counter, if no match keep in original language (Which should then have 0% chance of collision)
+                    if (!currLanguageToEnglish.TryGetValue(counterString, out options.Counter))
+                    {
+                        options.Counter = counterString;
+                    }
                 }
             }
 
