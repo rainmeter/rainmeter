@@ -1237,7 +1237,7 @@ namespace UsageMonitor
                 }
                 else
                 {
-                    options.Counter = categoryString;
+                    options.Counter = counterString;
                 }
             }
 
