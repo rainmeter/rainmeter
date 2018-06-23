@@ -139,6 +139,7 @@ if "%1" == "BUILDLANGUAGES" (
 )
 
 :: Sign binaries
+TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
@@ -168,6 +169,7 @@ if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & goto END
 
 :: Sign installer
+TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
 	%SIGNTOOL_SHA1% %INSTALLER_NAME% > BuildLog.txt
