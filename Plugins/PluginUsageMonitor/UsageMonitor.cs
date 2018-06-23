@@ -954,19 +954,6 @@ namespace UsageMonitor
                 {
                     string category = "Process";
                     string counter = "ID Process";
-                    if (Plugin.currLanguageToEnglish != null)
-                    {
-                        if (Plugin.currLanguageToEnglish.TryGetValue(category, out string translatedString))
-                        {
-                            category = translatedString;
-                        }
-
-                        //If there is a translation dictionary use it
-                        if (Plugin.currLanguageToEnglish.TryGetValue(counter, out translatedString))
-                        {
-                            counter = translatedString;
-                        }
-                    }
 
                     var pidInstance = new PerformanceCounterCategory(category).ReadCategory()[counter];
                     var tempPIDs = new Dictionary<int, String>(pidInstance.Count);
@@ -1229,6 +1216,10 @@ namespace UsageMonitor
                         options.Category = categoryString;
                     }
                 }
+                else
+                {
+                    options.Category = categoryString;
+                }
             }
 
             String counterString = measure.API.ReadString("Counter", "");
@@ -1243,6 +1234,10 @@ namespace UsageMonitor
                     {
                         options.Counter = counterString;
                     }
+                }
+                else
+                {
+                    options.Counter = categoryString;
                 }
             }
 
