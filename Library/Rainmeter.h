@@ -15,6 +15,7 @@
 #include <string>
 #include "CommandHandler.h"
 #include "ContextMenu.h"
+#include "DialogManage.h"
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
@@ -135,7 +136,7 @@ public:
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
 	bool GetLanguageStatus() { return m_LanguageObsolete; }
-	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; }
+	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; DialogManage::UpdateLanguageStatus(); }
 
 	void ShowLogFile();
 

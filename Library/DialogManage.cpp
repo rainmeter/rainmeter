@@ -158,6 +158,14 @@ void DialogManage::UpdateLayouts()
 	}
 }
 
+void DialogManage::UpdateLanguageStatus()
+{
+	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
+	{
+		c_Dialog->m_TabSettings.UpdateLanguageStatus();
+	}
+}
+
 Dialog::Tab& DialogManage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
@@ -2086,16 +2094,10 @@ void DialogManage::TabSettings::Create(HWND owner)
 
 void DialogManage::TabSettings::Initialize()
 {
-	std::wstring lang = L"<a>";
-	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
-	lang += L"</a>";
-
-	HWND item = GetControl(Id_LanguageUpdateLink);
-	SetWindowText(item, lang.c_str());
-	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
+	UpdateLanguageStatus();
 
 	// Scan for languages
-	item = GetControl(Id_LanguageDropDownList);
+	HWND item = GetControl(Id_LanguageDropDownList);
 
 	std::wstring files = GetRainmeter().GetPath() + L"Languages\\*.dll";
 	WIN32_FIND_DATA fd;
@@ -2149,6 +2151,17 @@ void DialogManage::TabSettings::Initialize()
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
 	m_Initialized = true;
+}
+
+void DialogManage::TabSettings::UpdateLanguageStatus()
+{
+	std::wstring lang = L"<a>";
+	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
+	lang += L"</a>";
+
+	HWND item = GetControl(Id_LanguageUpdateLink);
+	SetWindowText(item, lang.c_str());
+	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
 }
 
 INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
