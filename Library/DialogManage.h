@@ -32,6 +32,8 @@ public:
 	static void UpdateSkins(Skin* skin, bool deleted = false);
 	static void UpdateLayouts();
 
+	static void UpdateLanguageStatus();
+
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
 
 protected:
@@ -169,6 +171,8 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+
+		void UpdateLanguageStatus();
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
