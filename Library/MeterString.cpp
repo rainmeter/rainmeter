@@ -607,15 +607,22 @@ void MeterString::EnumerateInstalledFontFamilies()
 					WCHAR familyName[LF_FACESIZE];
 					if (Ok == fontFamilies[i].GetFamilyName(familyName))
 					{
-						fonts += familyName;
+						if (*familyName)
+						{
+							fonts += familyName;
+						}
 					}
 					else
 					{
 						fonts += L"***";
 					}
-					fonts += L", ";
+
+					if (*familyName && i != (fontCount - 1))
+					{
+						fonts += L", ";
+					}
 				}
-				LogWarning(fonts.c_str());
+				LogDebug(fonts.c_str());
 			}
 			else
 			{
