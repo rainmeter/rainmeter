@@ -1368,14 +1368,8 @@ namespace UsageMonitor
             catch (Exception e)
             {
                 measure.API.Log(API.LogType.Error, "UsageMonitor crashed trying to update this measure");
-                measure.API.Log(API.LogType.Debug, e.Message);
-                // Get stack trace for the exception with source file information
-                var st = new StackTrace(e, true);
-                // Get the top stack frame
-                var frame = st.GetFrame(0);
-                // Get the line number from the stack frame
-                var line = frame.GetFileLineNumber();
-                measure.API.Log(API.LogType.Debug, e.StackTrace);
+                API.Log((int)API.LogType.Debug, e.Message);
+                API.Log((int)API.LogType.Debug, e.StackTrace);
             }
             return ret;
         }
@@ -1390,13 +1384,13 @@ namespace UsageMonitor
             {
                 if (options.Counter?.Length > 0 && options.Category?.Length > 0 && options.currInstace != null)
                 {
-                    if (measure.buffer != IntPtr.Zero)
+                    if (measure?.buffer != null && measure.buffer != IntPtr.Zero)
                     {
                         Marshal.FreeHGlobal(measure.buffer);
                         measure.buffer = IntPtr.Zero;
                     }
 
-                    if (options.Name.Length > 0)
+                    if (options.Name?.Length > 0)
                     {
                         measure.buffer = Marshal.StringToHGlobalUni(options.currInstace.Name);
                     }
@@ -1417,14 +1411,8 @@ namespace UsageMonitor
             catch (Exception e)
             {
                 measure.API.Log(API.LogType.Error, "UsageMonitor crashed trying to return the new String value of this measure");
-                measure.API.Log(API.LogType.Debug, e.Message);
-                // Get stack trace for the exception with source file information
-                var st = new StackTrace(e, true);
-                // Get the top stack frame
-                var frame = st.GetFrame(0);
-                // Get the line number from the stack frame
-                var line = frame.GetFileLineNumber();
-                measure.API.Log(API.LogType.Debug, e.StackTrace);
+                API.Log((int)API.LogType.Debug, e.Message);
+                API.Log((int)API.LogType.Debug, e.StackTrace);
             }
             return measure.buffer;
         }
