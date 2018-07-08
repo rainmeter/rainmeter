@@ -1642,7 +1642,7 @@ void DialogAbout::TabVersion::Initialize()
 	LCID lcid = GetRainmeter().GetResourceLCID();
 	std::wstring langId = std::to_wstring(lcid);
 	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
-	WCHAR tmpSz[64];
+	WCHAR tmpSz[128];
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s) - %s (%s)",
 		APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE, lang, langId.c_str());
 	SetWindowText(item, tmpSz);
