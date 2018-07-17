@@ -11,6 +11,8 @@ set VERSION_MINOR=3
 set VERSION_SUBMINOR=0
 set VERSION_REVISION=0
 set ISBETA=true
+set VERSION_HASH=0
+set BUILD_TIME=%date:~-4%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 if "%1" == "RELEASE" set ISBETA=false
 if "%1" == "BUILDVERSION" goto BUILDVERSION
@@ -58,6 +60,9 @@ set /a VERSION_REVISION=0
 :: the end of the pattern unless it contains a special glob char like [.
 for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
 
+:: Get hash of latest commit
+for /f "usebackq delims= " %%H in (`"%GIT%" rev-parse --short origin/master`) do set VERSION_HASH=%%H
+
 :UPDATEVERSION
 
 set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
@@ -73,6 +78,8 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo #define STRPRODUCTVER STRFILEVER
 	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
+	echo #define COMMIT_HASH L"%VERSION_HASH%"
+	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo const int revision_number = %VERSION_REVISION%;
 	echo const bool revision_beta = %ISBETA%;
 )

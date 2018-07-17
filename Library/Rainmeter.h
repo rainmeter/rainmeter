@@ -175,6 +175,8 @@ public:
 
 	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
+	const std::wstring& GetBuildTime() { return m_BuildTime; }
+
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
 	friend class CommandHandler;
@@ -271,6 +273,8 @@ private:
 	ULONG_PTR m_GDIplusToken;
 
 	GlobalOptions m_GlobalOptions;
+
+	std::wstring m_BuildTime;
 };
 
 // Convenience function.
