@@ -50,11 +50,13 @@ set GIT=%LOCALAPPDATA%\Programs\Git\bin\GIT.exe
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
-:: We really shouldn't be including revs from gh-pages, but it is too late to
-:: change that now. We are also using `gh-page[s]` instead of just `gh-pages`
-:: because Git adds ´/*´ to the end of the pattern unless it contains a
-:: special glob char like [.
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-page[s] --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
+:: Prior to revision 3111, we added the commits from both the master and gh-pages branches
+:: together to create the revision number. Revisions made after 3111 (97a59d91) will no longer
+:: contain the count from the gh-pages branch, and will only include the number of commits from
+:: the master branch. This change will reset the revision number back to 3086 for the start of
+:: the 4.3 beta cycle. Also, we use `maste[r]` instead of just `master` because git adds ´/*´ to
+:: the end of the pattern unless it contains a special glob char like [.
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
 
 :UPDATEVERSION
 
