@@ -579,18 +579,18 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		worldTransform
 	);
 
-	if (shape.m_FillColor.a > 0.0f)
+	auto fill = shape.GetFillBrush(m_Target.Get());
+	if (fill)
 	{
-		auto brush = shape.GetFillBrush(m_Target.Get());
-		m_Target->FillGeometry(shape.m_Shape.Get(), brush.Get());
+		m_Target->FillGeometry(shape.m_Shape.Get(), fill.Get());
 	}
 
-	if (shape.m_StrokeColor.a > 0.0f && shape.m_StrokeWidth > 0.0f)
+	auto stroke = shape.GetStrokeFillBrush(m_Target.Get());
+	if (stroke)
 	{
-		auto brush = shape.GetStrokeFillBrush(m_Target.Get());
 		m_Target->DrawGeometry(
 			shape.m_Shape.Get(),
-			brush.Get(),
+			stroke.Get(),
 			shape.m_StrokeWidth,
 			shape.m_StrokeStyle.Get());
 	}
