@@ -360,6 +360,36 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	delete [] buffer;
 	buffer = nullptr;
 
+	// Build.bat will write to the BUILD_TIME macro when the installer is created.
+	// For local builds, just use the current date and time as the build time.
+#ifdef BUILD_TIME
+	m_BuildTime = BUILD_TIME;
+#else
+	// For local builds, just create use the current date/time
+	if (m_BuildTime.empty())
+	{
+		time_t now;
+		time(&now);
+		WCHAR timestamp[MAX_PATH];
+		wcsftime(timestamp, MAX_PATH, L"%F %T", gmtime(&now));
+		m_BuildTime = timestamp;
+	}
+#endif // BUILD_TIME
+
+	WCHAR lang[MAX_PATH];
+	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	LogNoticeF(L"Rainmeter %s.%i%s (%s)", APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
+	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
+	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
+
+#ifdef COMMIT_HASH
+	LogNoticeF(L"Commit Hash: %s", COMMIT_HASH);
+#else
+	LogNoticeF(L"Commit Hash: %s", L"<Local build>");
+#endif // COMMIT_HASH
+
+	LogNoticeF(L"%s - %s (%lu)", Platform::GetPlatformFriendlyName().c_str(), lang, GetUserDefaultLCID());
+
 	if (!encodingMsg.empty())
 	{
 		// Log information about any encoding changes to |iniFile|
@@ -367,8 +397,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	LogNoticeF(L"Path: %s", m_Path.c_str());
-	LogNoticeF(L"IniFile: %s", iniFile);
 	LogNoticeF(L"SkinPath: %s", m_SkinPath.c_str());
+	LogNoticeF(L"SettingsPath: %s", m_SettingsPath.c_str());
+	LogNoticeF(L"IniFile: %s", iniFile);
 
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);

@@ -245,6 +245,9 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
+	item = m_TabVersion.GetControl(TabVersion::Id_VersionLabel);
+	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
+
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
@@ -1597,35 +1600,51 @@ void DialogAbout::TabVersion::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_ICON(Id_AppIcon, 0,
-			0, 8, 24, 24,
+			0, 12, 256, 256,
 			WS_VISIBLE, 0),
+
+		CT_LINEV(-1, 0,
+			180, 8, 5, 180,
+			WS_VISIBLE, 0),
+
 		CT_LABEL(Id_VersionLabel, 0,
-			28, 0, 300, 9,
+			190, 6, 380, 11,
 			WS_VISIBLE, 0),
-		CT_LINKLABEL(Id_HomeLink, ID_STR_GETLATESTVERSION,
-			28, 13, 300, 9,
+		CT_LABEL(Id_LanguageLabel, 0,
+			190, 21, 380, 9,
 			WS_VISIBLE, 0),
-		CT_LINKLABEL(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
-			28, 26, 300, 9,
+		CT_LABEL(Id_TimestampLabel, 0,
+			190, 34, 380, 9,
 			WS_VISIBLE, 0),
+		CT_LABEL(Id_BuildHashLabel, 0,
+			190, 47, 380, 9,
+			WS_VISIBLE, 0),
+
 		CT_LABEL(Id_WinVerLabel, 0,
-			0, 43, 570, 9,
+			190, 70, 380, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LINKLABEL(Id_PathLink, 0,
-			0, 56, 570, 9,
-			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+			190, 83, 380, 9,
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 		CT_LINKLABEL(Id_SkinPathLink, 0,
-			0, 69, 570, 9,
-			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+			190, 96, 380, 9,
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 		CT_LINKLABEL(Id_SettingsPathLink, 0,
-			0, 82, 570, 9,
-			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+			190, 109, 380, 9,
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 		CT_LINKLABEL(Id_IniFileLink, 0,
-			0, 95, 570, 9,
-			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+			190, 122, 380, 9,
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
-			0, 111, buttonWidth + 35, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			190, 138, buttonWidth + 35, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+
+		CT_LINKLABEL(Id_HomeLink, ID_STR_GETLATESTVERSION,
+			190, 165, 380, 9,
+			WS_VISIBLE, 0),
+		CT_LINKLABEL(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
+			190, 178, 380, 9,
+			WS_VISIBLE, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
@@ -1633,50 +1652,70 @@ void DialogAbout::TabVersion::Create(HWND owner)
 
 void DialogAbout::TabVersion::Initialize()
 {
+	// "SysLink" (CT_LINKLABEL) controls have no "ellipsis" styles, so trim any links if necessary
+	auto trimLink = [&](WCHAR* text) -> WCHAR*
+	{
+		if (wcsnlen_s(text, MAX_PATH) > 100)  // May need to be adjusted if the dialog's size changes
+		{
+			text[100] = L'\0';
+			wcscat(text, L"...</a>");
+		}
+		return text;
+	};
+
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIcon(IDI_RAINMETER, true);
+	HICON icon = GetIconBySize(IDI_RAINMETER, 256);
 	Static_SetIcon(item, icon);
 
+	WCHAR tmpSz[MAX_PATH];
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Rainmeter %s.%i%s (%s)",
+		APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
 	item = GetControl(Id_VersionLabel);
-	WCHAR lang[MAX_PATH];
-	LCID lcid = GetRainmeter().GetResourceLCID();
-	std::wstring langId = std::to_wstring(lcid);
-	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
-	WCHAR tmpSz[128];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s) - %s (%s)",
-		APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE, lang, langId.c_str());
 	SetWindowText(item, tmpSz);
 
-	item = GetControl(Id_WinVerLabel);
-	lcid = GetUserDefaultLCID();
-	langId = std::to_wstring(lcid);
+	WCHAR lang[MAX_PATH];
+	LCID lcid = GetRainmeter().GetResourceLCID();
 	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
-	std::wstring text = Platform::GetPlatformFriendlyName() + L" - ";
-	text += lang;
-	text += L" (";
-	text += langId;
-	text += L')';
-	SetWindowText(item, text.c_str());
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
+	item = GetControl(Id_LanguageLabel);
+	SetWindowText(item, tmpSz);
+	
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
+	item = GetControl(Id_TimestampLabel);
+	SetWindowText(item, tmpSz);
 
+	// Build.bat will write to the COMMIT_HASH macro when the installer is created.
+	// For local builds, add some text indicating a local build.
+#ifdef COMMIT_HASH
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s", COMMIT_HASH);
+#else
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s", L"<Local build>");
+#endif // COMMIT_HASH
+	item = GetControl(Id_BuildHashLabel);
+	SetWindowText(item, tmpSz);
+
+	lcid = GetUserDefaultLCID();
+	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%lu)",
+		Platform::GetPlatformFriendlyName().c_str(), lang, lcid);
+	item = GetControl(Id_WinVerLabel);
+	SetWindowText(item, tmpSz);
+
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Path: <a>%s</a>", GetRainmeter().GetPath().c_str());
 	item = GetControl(Id_PathLink);
-	text = L"Path: <a>" + GetRainmeter().GetPath();
-	text += L"</a>";
-	SetWindowText(item, text.c_str());
+	SetWindowText(item, trimLink(tmpSz));
 
+	_snwprintf_s(tmpSz, _TRUNCATE, L"SkinPath: <a>%s</a>", GetRainmeter().GetSkinPath().c_str());
 	item = GetControl(Id_SkinPathLink);
-	text = L"SkinPath: <a>" + GetRainmeter().GetSkinPath();
-	text += L"</a>";
-	SetWindowText(item, text.c_str());
+	SetWindowText(item, trimLink(tmpSz));
 
+	_snwprintf_s(tmpSz, _TRUNCATE, L"SettingsPath: <a>%s</a>", GetRainmeter().GetSettingsPath().c_str());
 	item = GetControl(Id_SettingsPathLink);
-	text = L"SettingsPath: <a>" + GetRainmeter().GetSettingsPath();
-	text += L"</a>";
-	SetWindowText(item, text.c_str());
+	SetWindowText(item, trimLink(tmpSz));
 
+	_snwprintf_s(tmpSz, _TRUNCATE, L"IniFile: <a>%s</a>", GetRainmeter().GetIniFile().c_str());
 	item = GetControl(Id_IniFileLink);
-	text = L"IniFile: <a>" + GetRainmeter().GetIniFile();
-	text += L"</a>";
-	SetWindowText(item, text.c_str());
+	SetWindowText(item, trimLink(tmpSz));
 
 	m_Initialized = true;
 }
@@ -1712,26 +1751,44 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WCHAR lang[MAX_PATH];
 			LCID lcid = GetRainmeter().GetResourceLCID();
-			std::wstring langId = std::to_wstring(lcid);
 			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
 
-			WCHAR tmpSz[64];
-			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s) - %s (%s)",
-				APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE, lang, langId.c_str());
+			WCHAR tmpSz[MAX_PATH];
+			int len =_snwprintf_s(
+				tmpSz,
+				_TRUNCATE,
+				L"Rainmeter %s.%i%s (%s)\nLanguage: %s (%lu)\nBuild time: %s\n",
+				APPVERSION,
+				revision_number,
+				revision_beta ? L" beta" : L"",
+				APPBITS,
+				lang,
+				lcid,
+				GetRainmeter().GetBuildTime().c_str());
 
 			std::wstring text(tmpSz, len);
-			text += L'\n';
-			text += Platform::GetPlatformFriendlyName();
+
+#ifdef COMMIT_HASH
+			_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s\n", COMMIT_HASH);
+#else
+			_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s\n", L"<Local build>");
+#endif // COMMIT_HASH
+
+			text += tmpSz;
 
 			lcid = GetUserDefaultLCID();
-			langId = std::to_wstring(lcid);
 			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
 
-			text += L" - ";
-			text += lang;
-			text += L" (";
-			text += langId;
-			text += L")\nPath: ";
+			_snwprintf_s(
+				tmpSz,
+				_TRUNCATE,
+				L"%s - %s (%lu)\n",
+				Platform::GetPlatformFriendlyName().c_str(),
+				lang,
+				lcid);
+
+			text += tmpSz;
+			text += L"Path: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nSkinPath: ";
 			text += GetRainmeter().GetSkinPath();

@@ -22,6 +22,7 @@ WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
 
 HICON GetIcon(UINT id, bool large = false);
+HICON GetIconBySize(UINT id, int size);
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved);
 

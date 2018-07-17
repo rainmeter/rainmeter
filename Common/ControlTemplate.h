@@ -58,6 +58,9 @@ void CreateControls(const Control* cts, UINT ctCount, HWND parent, HFONT font, G
 #define CT_LINEH(id, textId, x, y, w, h, style, exStyle) \
 	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_ETCHEDHORZ | style, exStyle)
 
+#define CT_LINEV(id, textId, x, y, w, h, style, exStyle) \
+	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_ETCHEDVERT | style, exStyle)
+
 #define CT_LINKLABEL(id, textId, x, y, w, h, style, exStyle) \
 	CT_ITEM(L"SysLink", id, textId, x, y, w, h, style, exStyle)
 

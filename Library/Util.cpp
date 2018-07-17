@@ -73,6 +73,17 @@ HICON GetIcon(UINT id, bool large)
 		LR_SHARED);
 }
 
+HICON GetIconBySize(UINT id, int size)
+{
+	return (HICON)LoadImage(
+		GetModuleHandle(nullptr),
+		MAKEINTRESOURCE(id),
+		IMAGE_ICON,
+		size,
+		size,
+		LR_SHARED);
+}
+
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
 	// Do nothing.
