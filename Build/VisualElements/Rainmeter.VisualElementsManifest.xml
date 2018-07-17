@@ -1,0 +1,9 @@
+<Application xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+  <VisualElements
+      ShowNameOnSquare150x150Logo='on'
+      Square150x150Logo='VisualElements\Rainmeter_600.png'
+      Square70x70Logo='VisualElements\Rainmeter_176.png'
+      Square44x44Logo='VisualElements\Rainmeter_176.png'
+      ForegroundText='light'
+      BackgroundColor='#212121'/>
+</Application>
