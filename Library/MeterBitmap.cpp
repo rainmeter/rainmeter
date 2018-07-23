@@ -123,17 +123,23 @@ bool MeterBitmap::HitTest(int x, int y)
 			while (tmpValue > 0);
 		}
 
-		D2D1_RECT_F rect = { (FLOAT)GetX(), (FLOAT)GetY(), (FLOAT)(GetX() + m_W * numOfNums + (numOfNums - 1) * m_Separation), (FLOAT)(GetY() + m_H) };
+		const FLOAT xF = GetX();
+		const FLOAT yF = GetY();
+		D2D1_RECT_F rect = D2D1::RectF(
+			xF,
+			yF,
+			xF + (FLOAT)(m_W * numOfNums + (numOfNums - 1) * m_Separation),
+			yF + (FLOAT)m_H);
 
 		if (m_Align == ALIGN_CENTER)
 		{
-			FLOAT offset = -(rect.right - rect.left) / 2.f;;
+			FLOAT offset = -(rect.right - rect.left) / 2.0f;
 			rect.left += offset;
 			rect.right += offset;
 		}
 		else if (m_Align == ALIGN_RIGHT)
 		{
-			FLOAT offset = -(rect.right - rect.left) / 2.f;
+			FLOAT offset = -(rect.right - rect.left) / 2.0f;
 			rect.left += offset;
 			rect.right += offset;
 		}
@@ -142,6 +148,7 @@ bool MeterBitmap::HitTest(int x, int y)
 		{
 			return true;
 		}
+
 		return false;
 	}
 	else
@@ -197,7 +204,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-			Initialize();  // Reload the image
+		Initialize();  // Reload the image
 	}
 }
 
@@ -230,6 +237,7 @@ bool MeterBitmap::Update()
 
 		return true;
 	}
+
 	return false;
 }
 
@@ -243,6 +251,7 @@ bool MeterBitmap::HasActiveTransition()
 	{
 		return true;
 	}
+
 	return false;
 }
 
@@ -254,7 +263,8 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	int newY, newX;
+	int newX = 0;
+	int newY = 0;
 
 	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
@@ -293,10 +303,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
-		value = max(0, value);		// Only positive integers are supported
+		value = max(0LL, value);		// Only positive integers are supported
 
 		__int64 transitionValue = (__int64)m_TransitionStartValue;
-		transitionValue = max(0, transitionValue);		// Only positive integers are supported
+		transitionValue = max(0LL, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
 		int numOfNums = 0;
@@ -314,14 +324,14 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				++numOfNums;
 				if (m_FrameCount == 1)
 				{
-					tmpValue /= 2;
+					tmpValue /= 2LL;
 				}
 				else
 				{
 					tmpValue /= m_FrameCount;
 				}
 			}
-			while (tmpValue > 0);
+			while (tmpValue > 0LL);
 		}
 
 		// Blit the images
@@ -369,7 +379,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-//			LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+			//LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -382,12 +392,19 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, D2D1::RectF(meterRect.left + offset, meterRect.top, meterRect.right + offset, meterRect.bottom),
+			canvas.DrawBitmap(
+				bitmap,
+				D2D1::RectF(
+					meterRect.left + (FLOAT)offset,
+					meterRect.top,
+					meterRect.right + (FLOAT)offset,
+					meterRect.bottom),
 				D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + width, (FLOAT)newY + height));
+
 			if (m_FrameCount == 1)
 			{
-				value /= 2;
-				transitionValue /= 2;
+				value /= 2LL;
+				transitionValue /= 2LL;
 			}
 			else
 			{
@@ -406,7 +423,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		if (m_ZeroFrame)
 		{
 			// Use the first frame only if the value is zero
-			if (m_Value > 0)
+			if (m_Value > 0.0)
 			{
 				frame = (int)(m_Value * (realFrames - 1)) * (m_TransitionFrameCount + 1);
 			}
@@ -439,7 +456,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			}
 		}
 
-//		LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+		//LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
@@ -452,7 +469,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, meterRect, D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + drawW, (FLOAT)newY + drawH));
+		canvas.DrawBitmap(
+			bitmap,
+			meterRect,
+			D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + drawW, (FLOAT)newY + drawH));
 	}
 
 	return true;
