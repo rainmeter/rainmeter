@@ -153,7 +153,7 @@ Rainmeter& Rainmeter::GetInstance()
 */
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
-	if (!IsWindows7SP1OrGreater() || !Gfx::Canvas::Initialize())
+	if (!IsWindows7SP1OrGreater())
 	{
 		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
@@ -205,6 +205,18 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
 			PathUtil::ExpandEnvironmentVariables(m_IniFile);
 			bDefaultIniLocation = true;
+		}
+	}
+
+	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
+
+	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+	{
+		SetHardwareAccelerated(false);
+		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+		{
+			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			return 1;
 		}
 	}
 
@@ -1031,6 +1043,12 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 	}
 }
 
+void Rainmeter::SetHardwareAccelerated(bool hardwareAccelerated)
+{
+	m_HardwareAccelerated = hardwareAccelerated;
+	WritePrivateProfileString(L"Rainmeter", L"HardwareAcceleration", m_HardwareAccelerated ? L"1" : L"0", m_IniFile.c_str());
+}
+
 void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
@@ -1382,7 +1400,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
-	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", Color::MakeARGB(90, 255, 0, 0));
+	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(1, 0, 0, 90 / 255.f));
 
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())

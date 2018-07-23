@@ -15,10 +15,8 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
-#include <algorithm>
 #include <cstdint>
-#include <ole2.h>  // For Gdiplus.h.
-#include <gdiplus.h>
+#include <d2d1.h>
 
 class Rainmeter;
 class Skin;
@@ -86,10 +84,10 @@ public:
 	uint32_t ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue);
 	uint64_t ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
-	Gdiplus::ARGB ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::ARGB defValue);
-	Gdiplus::Rect ReadRect(LPCTSTR section, LPCTSTR key, const Gdiplus::Rect& defValue);
+	D2D1_COLOR_F ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue);
+	D2D1_RECT_F ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue);
 	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
-	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
+	std::vector<FLOAT> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
 
@@ -108,8 +106,8 @@ public:
 	static int ParseInt(LPCTSTR string, int defValue);
 	static uint32_t ParseUInt(LPCTSTR string, uint32_t defValue);
 	static uint64_t ParseUInt64(LPCTSTR string, uint64_t defValue);
-	static Gdiplus::ARGB ParseColor(LPCTSTR string);
-	static Gdiplus::Rect ParseRect(LPCTSTR string);
+	static D2D1_COLOR_F ParseColor(LPCTSTR string);
+	static D2D1_RECT_F ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }

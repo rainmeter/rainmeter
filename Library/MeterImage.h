@@ -9,7 +9,7 @@
 #define __METERIMAGE_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 class MeterImage : public Meter
 {
@@ -43,11 +43,11 @@ private:
 
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
-	TintedImage m_Image;
+	GeneralImage m_Image;
 	std::wstring m_ImageName;
 	std::wstring m_ImageNameResult;
 
-	TintedImage m_MaskImage;
+	GeneralImage m_MaskImage;
 	std::wstring m_MaskImageName;
 
 	bool m_NeedsRedraw;
@@ -55,7 +55,7 @@ private:
 
 	RECT m_ScaleMargins;
 
-	static const WCHAR* c_MaskOptionArray[TintedImage::OptionCount];
+	static const WCHAR* c_MaskOptionArray[GeneralImage::OptionCount];
 };
 
 #endif

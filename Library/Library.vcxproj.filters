@@ -125,7 +125,6 @@
     <ClCompile Include="SkinRegistry_Test.cpp" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="System.cpp" />
-    <ClCompile Include="TintedImage.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
@@ -133,6 +132,8 @@
       <Filter>Lua</Filter>
     </ClCompile>
     <ClCompile Include="DialogNewSkin.cpp" />
+    <ClCompile Include="GeneralImage.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -226,7 +227,6 @@
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
-    <ClInclude Include="TintedImage.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
@@ -234,6 +234,9 @@
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="DialogNewSkin.h" />
+    <ClInclude Include="GeneralImage.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="ImageOptions.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

@@ -9,7 +9,7 @@
 #define __METERBUTTON_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 #define BUTTON_FRAMES 3
 
@@ -43,11 +43,10 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 private:
-	TintedImage m_Image;
+	GeneralImage m_Image;
 	std::wstring m_ImageName;
-	bool m_NeedsReload;
 
-	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// Cached bitmaps
+	D2D1_RECT_F m_BitmapsRects[BUTTON_FRAMES];	// Cached bitmaps
 	std::wstring m_Command;
 	int m_State;
 	bool m_Clicked;

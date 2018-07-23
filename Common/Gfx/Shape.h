@@ -12,7 +12,6 @@
 #include <d2d1_1.h>
 #include <wrl/client.h>
 #include <vector>
-#include <gdiplus.h>
 
 namespace Gfx {
 
@@ -66,7 +65,7 @@ public:
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
 	D2D1_RECT_F GetBounds(bool useMatrix = true);
 	bool IsShapeDefined();
-	bool ContainsPoint(D2D1_POINT_2F point, const Gdiplus::Matrix* transformationMatrix);
+	bool ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transformationMatrix = D2D1::Matrix3x2F::Identity());
 
 	bool IsCombined() { return m_IsCombined; }
 	void SetCombined() { m_IsCombined = true; }
@@ -87,12 +86,12 @@ public:
 	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
 	void CreateStrokeStyle();
 
-	void SetFill(Gdiplus::Color color);
+	void SetFill(const D2D1_COLOR_F& color);
 	void SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
 
-	void SetStrokeFill(Gdiplus::Color color);
+	void SetStrokeFill(const D2D1_COLOR_F& color);
 	void SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1RenderTarget* target);

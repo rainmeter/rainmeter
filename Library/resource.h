@@ -234,6 +234,7 @@
 #define ID_STR_BUILTINPLUGINS                        2150
 #define ID_STR_SKININSTALLER                         2151
 #define ID_STR_ARCHIVEPLUGINS                        2152
+#define ID_STR_HARDWAREACCELERATED                   2153
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000

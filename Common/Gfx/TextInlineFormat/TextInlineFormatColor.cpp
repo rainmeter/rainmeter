@@ -11,7 +11,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Color::TextInlineFormat_Color(const std::wstring& pattern, const Gdiplus::Color& color) :
+TextInlineFormat_Color::TextInlineFormat_Color(const std::wstring& pattern, const D2D1_COLOR_F& color) :
 	TextInlineFormat(pattern),
 	m_Color(color)
 {
@@ -26,7 +26,7 @@ void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWrit
 	if (!target || !layout) return;
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = target->CreateSolidColorBrush(Util::ToColorF(m_Color), solidBrush.GetAddressOf());
+	HRESULT hr = target->CreateSolidColorBrush(m_Color, solidBrush.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	for (const auto& range : GetRanges())
@@ -37,9 +37,9 @@ void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWrit
 	}
 }
 
-bool TextInlineFormat_Color::CompareAndUpdateProperties(const std::wstring& pattern, const Gdiplus::Color& color)
+bool TextInlineFormat_Color::CompareAndUpdateProperties(const std::wstring& pattern, const D2D1_COLOR_F& color)
 {
-	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Color.GetValue() != color.GetValue())
+	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || !Util::ColorFEquals(m_Color, color))
 	{
 		SetPattern(pattern);
 		m_Color = color;

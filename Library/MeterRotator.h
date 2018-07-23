@@ -9,7 +9,7 @@
 #define __METERROTATOR_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 class MeterRotator : public Meter
 {
@@ -30,9 +30,8 @@ protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 private:
-	TintedImage m_Image;
+	GeneralImage m_Image;
 	std::wstring m_ImageName;
-	bool m_NeedsReload;
 
 	double m_OffsetX;
 	double m_OffsetY;

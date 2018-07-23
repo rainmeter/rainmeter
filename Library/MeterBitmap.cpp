@@ -12,11 +12,8 @@
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BitmapImage", nullptr, true, skin),
-	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
 	m_TransitionFrameCount(0),
@@ -45,11 +42,11 @@ void MeterBitmap::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName, m_NeedsReload);
+		m_Image.LoadImage(m_ImageName);
 
 		if (m_Image.IsLoaded())
 		{
-			Bitmap* bitmap = m_Image.GetImage();
+			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
@@ -126,18 +123,22 @@ bool MeterBitmap::HitTest(int x, int y)
 			while (tmpValue > 0);
 		}
 
-		Rect rect(GetX(), GetY(), m_W * numOfNums + (numOfNums - 1) * m_Separation, m_H);
+		D2D1_RECT_F rect = { (FLOAT)GetX(), (FLOAT)GetY(), (FLOAT)(GetX() + m_W * numOfNums + (numOfNums - 1) * m_Separation), (FLOAT)(GetY() + m_H) };
 
 		if (m_Align == ALIGN_CENTER)
 		{
-			rect.Offset(-rect.Width / 2, 0);
+			FLOAT offset = -(rect.right - rect.left) / 2.f;;
+			rect.left += offset;
+			rect.right += offset;
 		}
 		else if (m_Align == ALIGN_RIGHT)
 		{
-			rect.Offset(-rect.Width, 0);
+			FLOAT offset = -(rect.right - rect.left) / 2.f;
+			rect.left += offset;
+			rect.right += offset;
 		}
 
-		if (rect.Contains(x, y))
+		if (Gfx::Util::RectContains(rect, D2D1::Point2F((FLOAT)x, (FLOAT)y)))
 		{
 			return true;
 		}
@@ -157,8 +158,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
-	int oldW = m_W;
-	int oldH = m_H;
 
 	Meter::ReadOptions(parser, section);
 
@@ -167,10 +166,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
-	}
-	else
-	{
-		m_Image.ClearOptionFlags();
 	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
@@ -202,19 +197,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
-
-		if (m_NeedsReload ||
-			m_Image.IsOptionsChanged())
-		{
 			Initialize();  // Reload the image
-		}
-		else
-		{
-			// Reset to old dimensions
-			m_W = oldW;
-			m_H = oldH;
-		}
 	}
 }
 
@@ -275,9 +258,11 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
-	Bitmap* bitmap = m_Image.GetImage();
+	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
+	FLOAT drawW = meterRect.right - meterRect.left;
+	FLOAT drawH = meterRect.bottom - meterRect.top;
 
 	if (m_Extend)
 	{
@@ -291,14 +276,21 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
-			meterRect.Height -= extraSpace;
-			meterRect.Height /= digits;
+			FLOAT height = drawH;
+			height -= extraSpace;
+			height /= digits;
+			meterRect.bottom = meterRect.top + height;
 		}
 		else
 		{
-			meterRect.Width -= extraSpace;
-			meterRect.Width /= digits;
+			FLOAT width = drawW;
+			width -= extraSpace;
+			width /= digits;
+			meterRect.right = meterRect.left + width;
 		}
+
+		FLOAT width = meterRect.right - meterRect.left;
+		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
 		value = max(0, value);		// Only positive integers are supported
@@ -340,16 +332,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		}
 		else if (m_Align == ALIGN_CENTER)
 		{
-			offset = numOfNums * (meterRect.Width + m_Separation) / 2;
+			offset = numOfNums * ((int)width + m_Separation) / 2;
 		}
 		else
 		{
-			offset = numOfNums * (meterRect.Width + m_Separation);
+			offset = numOfNums * ((int)width + m_Separation);
 		}
 
 		do
 		{
-			offset = offset - (meterRect.Width + m_Separation);
+			offset = offset - ((int)width + m_Separation);
 
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			int frame = (value % realFrames) * (m_TransitionFrameCount + 1);
@@ -382,15 +374,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
 				newX = 0;
-				newY = meterRect.Height * frame;
+				newY = (int)height * frame;
 			}
 			else
 			{
-				newX = meterRect.Width * frame;
+				newX = (int)width * frame;
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, Rect(meterRect.X + offset, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
+			canvas.DrawBitmap(bitmap, D2D1::RectF(meterRect.left + offset, meterRect.top, meterRect.right + offset, meterRect.bottom),
+				D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + width, (FLOAT)newY + height));
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -451,15 +444,15 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			newX = 0;
-			newY = frame * meterRect.Height;
+			newY = frame * (int)drawH;
 		}
 		else
 		{
-			newX = frame * meterRect.Width;
+			newX = frame * (int)drawW;
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
+		canvas.DrawBitmap(bitmap, meterRect, D2D1::RectF((FLOAT)newX, (FLOAT)newY, (FLOAT)newX + drawW, (FLOAT)newY + drawH));
 	}
 
 	return true;

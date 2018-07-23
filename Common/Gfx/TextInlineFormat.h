@@ -12,8 +12,6 @@
 #include <vector>
 #include <dwrite_1.h>
 #include <d2d1_1.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 #include <Windows.h>
 
 namespace Gfx {

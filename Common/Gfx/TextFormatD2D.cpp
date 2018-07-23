@@ -28,8 +28,6 @@
 #include "../../Library/ConfigParser.h"
 #include "../../Library/pcre/config.h"
 #include "../../Library/pcre/pcre.h"
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 
 namespace {
 
@@ -223,7 +221,7 @@ void TextFormatD2D::SetProperties(
 			dwriteFontStretch,
 			dwriteFontSize,
 			L"",
-			&m_TextFormat);
+			m_TextFormat.GetAddressOf());
 	}
 
 	if (FAILED(hr))
@@ -264,7 +262,7 @@ void TextFormatD2D::SetProperties(
 			dwriteFontStretch,
 			dwriteFontSize,
 			L"",
-			&m_TextFormat);
+			m_TextFormat.GetAddressOf());
 	}
 
 	if (SUCCEEDED(hr))
@@ -657,7 +655,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			Gdiplus::Color newColor = ConfigParser::ParseColor(options[1].c_str());
+			D2D1_COLOR_F newColor = ConfigParser::ParseColor(options[1].c_str());
 			UpdateInlineColor(index, pattern, newColor);
 			return true;
 		}
@@ -699,7 +697,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 				(FLOAT)ConfigParser::ParseDouble(options[2].c_str(), 1.0) };
 
 			FLOAT blur = (FLOAT)ConfigParser::ParseDouble(options[3].c_str(), 3.0);
-			Gdiplus::Color color = ConfigParser::ParseColor(options[4].c_str());
+			D2D1_COLOR_F color = ConfigParser::ParseColor(options[4].c_str());
 			UpdateInlineShadow(index, pattern, blur, offset, color);
 			return true;
 		}
@@ -823,7 +821,7 @@ void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std:
 	}
 }
 
-void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pattern, const Gdiplus::Color color)
+void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -879,7 +877,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 		tokens = ConfigParser::Tokenize2(args[i], L';', PairedPunctuation::Parentheses);
 		if (tokens.size() == 2)
 		{
-			stops[i - 1].color = Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
+			stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
 			stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 		}
 	}
@@ -962,7 +960,7 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 }
 
 void TextFormatD2D::UpdateInlineShadow(const size_t& index, const std::wstring pattern,
-	const FLOAT blur, const D2D1_POINT_2F offset, const Gdiplus::Color color)
+	const FLOAT blur, const D2D1_POINT_2F offset, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
 	{

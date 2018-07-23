@@ -112,6 +112,9 @@ public:
 	void SetSkinEditor(const std::wstring& path);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
+	bool IsHardwareAccelerated() { return m_HardwareAccelerated; }
+	void SetHardwareAccelerated(bool hardwareAccelerated);
+
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
@@ -173,7 +176,7 @@ public:
 	bool IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename);
 	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
 
-	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
 	const std::wstring& GetBuildTime() { return m_BuildTime; }
 
@@ -242,6 +245,8 @@ private:
 	bool m_NewVersion;
 	bool m_LanguageObsolete;
 
+	bool m_HardwareAccelerated;
+
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
 	std::map<UINT, RECT> m_DesktopWorkAreas;
@@ -255,7 +260,7 @@ private:
 
 	std::wstring m_SkinEditor;
 
-	Gdiplus::Color m_DefaultSelectedColor;
+	D2D1_COLOR_F m_DefaultSelectedColor;
 
 	CommandHandler m_CommandHandler;
 	ContextMenu m_ContextMenu;

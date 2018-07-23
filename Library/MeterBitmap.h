@@ -9,7 +9,7 @@
 #define __METERBITMAP_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 class MeterBitmap : public Meter
 {
@@ -33,9 +33,8 @@ protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 private:
-	TintedImage m_Image;
+	GeneralImage m_Image;
 	std::wstring m_ImageName;
-	bool m_NeedsReload;
 
 	bool m_ZeroFrame;			// If true, the first frame is only shown when the measured value is zero
 	int m_FrameCount;

@@ -9,7 +9,7 @@
 #define __METERHISTOGRAM_H__
 
 #include "Meter.h"
-#include "TintedImage.h"
+#include "GeneralImage.h"
 
 class MeterHistogram : public Meter
 {
@@ -36,9 +36,9 @@ private:
 	void DisposeBuffer();
 	void CreateBuffer();
 
-	Gdiplus::Color m_PrimaryColor;
-	Gdiplus::Color m_SecondaryColor;
-	Gdiplus::Color m_OverlapColor;
+	D2D1_COLOR_F m_PrimaryColor;
+	D2D1_COLOR_F m_SecondaryColor;
+	D2D1_COLOR_F m_OverlapColor;
 
 	int m_MeterPos;							// New value placement position
 	bool m_Autoscale;
@@ -48,13 +48,9 @@ private:
 	std::wstring m_SecondaryImageName;
 	std::wstring m_OverlapImageName;
 
-	TintedImage m_PrimaryImage;
-	TintedImage m_SecondaryImage;
-	TintedImage m_OverlapImage;
-
-	bool m_PrimaryNeedsReload;
-	bool m_SecondaryNeedsReload;
-	bool m_OverlapNeedsReload;
+	GeneralImage m_PrimaryImage;
+	GeneralImage m_SecondaryImage;
+	GeneralImage m_OverlapImage;
 
 	double* m_PrimaryValues;
 	double* m_SecondaryValues;
@@ -69,9 +65,9 @@ private:
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 
-	static const WCHAR* c_PrimaryOptionArray[TintedImage::OptionCount];
-	static const WCHAR* c_SecondaryOptionArray[TintedImage::OptionCount];
-	static const WCHAR* c_BothOptionArray[TintedImage::OptionCount];
+	static const WCHAR* c_PrimaryOptionArray[GeneralImage::OptionCount];
+	static const WCHAR* c_SecondaryOptionArray[GeneralImage::OptionCount];
+	static const WCHAR* c_BothOptionArray[GeneralImage::OptionCount];
 };
 
 #endif

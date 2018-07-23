@@ -41,7 +41,7 @@ private:
 	double m_LineStartShift;
 	double m_LineLengthShift;
 	UINT m_ValueRemainder;
-	Gdiplus::Color m_LineColor;
+	D2D1_COLOR_F m_LineColor;
 	double m_Value;
 };
 

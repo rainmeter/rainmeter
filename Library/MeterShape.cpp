@@ -140,11 +140,13 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 	auto padding = GetMeterRectPadding();
 
+	canvas.SetAntiAliasing(true);  // Temporary
+
 	for (const auto& shape : m_Shapes)
 	{
 		if (!shape->IsCombined())
 		{
-			canvas.DrawGeometry(*shape, padding.X, padding.Y);
+			canvas.DrawGeometry(*shape, (int)padding.left, (int)padding.top);
 		}
 	}
 
@@ -153,7 +155,8 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
-	const Gdiplus::Matrix* matrix = GetTransformationMatrix();
+	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
+	
 	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
 	for (auto& shape : m_Shapes)
 	{
@@ -327,7 +330,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0,0,0,0));
 			return true;
 		}
 		else
@@ -377,7 +380,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gdiplus::Color::Transparent);
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0, 0, 0, 0));
 
 			return true;
 		}
@@ -916,7 +919,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 			tokens = ConfigParser::Tokenize2(params[i], L';', PairedPunctuation::Parentheses);
 			if (tokens.size() == 2)
 			{
-				stops[i - 1].color = Gfx::Util::ToColorF(ConfigParser::ParseColor(tokens[0].c_str()));
+				stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
 				stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
 			}
 		}
@@ -1133,7 +1136,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(Gdiplus::Color::Transparent);
+	if (open) shape->SetFill(D2D1::ColorF(0, 0, 0, 0));
 
 	m_Shapes.push_back(shape);
 

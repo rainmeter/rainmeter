@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "ConfigParser.h"
 #include "../Common/UnitTest.h"
+#include "../Common/Gfx/Util/D2DUtil.h"
 
 TEST_CLASS(Library_ConfigParser_Test)
 {
@@ -39,11 +40,10 @@ public:
 		parser.SetValue(L"A", L"Color2", L"170,187,204,221");
 		parser.SetValue(L"A", L"Color3", L"AABBCC");
 		parser.SetValue(L"A", L"Color4", L"170,187,204");
-		Assert::AreEqual(parser.ReadColor(L"A", L"Color1", 0x00000000), (Gdiplus::ARGB)0xDDAABBCC);
-		Assert::AreEqual(parser.ReadColor(L"A", L"Color2", 0x00000000), (Gdiplus::ARGB)0xDDAABBCC);
-		Assert::AreEqual(parser.ReadColor(L"A", L"Color3", 0x00000000), (Gdiplus::ARGB)0xFFAABBCC);
-		Assert::AreEqual(parser.ReadColor(L"A", L"Color4", 0x00000000), (Gdiplus::ARGB)0xFFAABBCC);
-		Assert::AreEqual(parser.ReadColor(L"A", L"ColorNA", 0x00000000), (Gdiplus::ARGB)0x00000000);
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color1", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color2", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color3", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color4", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
 
 		parser.SetValue(L"A", L"Rect", L"1,2,11,22");
 		const RECT defRect = {};
@@ -55,7 +55,7 @@ public:
 		Assert::AreEqual(readRect.bottom, expRect.bottom);
 
 		parser.SetValue(L"A", L"Floats", L"1.1;2.1;;3.1");
-		std::vector<Gdiplus::REAL> expFloats;
+		std::vector<FLOAT> expFloats;
 		expFloats.push_back(1.1f);
 		expFloats.push_back(2.1f);
 		expFloats.push_back(3.1f);
