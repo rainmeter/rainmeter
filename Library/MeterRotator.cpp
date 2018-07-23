@@ -135,10 +135,10 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 
 		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
-		INT width = (INT)drawBitmap->GetWidth();
-		INT height = (INT)drawBitmap->GetHeight();
+		FLOAT width = (FLOAT)drawBitmap->GetWidth();
+		FLOAT height = (FLOAT)drawBitmap->GetHeight();
 
-		const D2D1_RECT_F rect = { 0, 0, (FLOAT)width, (FLOAT)height };
+		const D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, width, height);
 		canvas.DrawBitmap(drawBitmap, rect, rect);
 
 		canvas.ResetTransform();
