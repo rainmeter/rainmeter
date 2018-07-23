@@ -126,6 +126,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
+
 	D2D1_COLOR_F color = parser.ReadColor(section, L"HorizontalColor", D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 
@@ -275,7 +276,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
 			Y = meterRect.bottom - Y - 1.0f;
 
-			Gfx::Line line((FLOAT)meterRect.left, Y, meterRect.right - 1, Y);
+			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
 			line.SetStrokeFill(m_HorizontalColor);
 
 			canvas.DrawGeometry(line, 0, 0);
@@ -299,7 +300,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				_x = (FLOAT)((*i)[pos] * scale);
 				_x = min(_x, W);
 				_x = max(_x, 0.0f);
-				_x = (FLOAT)meterRect.left + (m_GraphStartLeft ? _x : W - _x);
+				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x);
 			};
 
 			FLOAT X = 0.0f;
@@ -308,7 +309,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			// Cache all lines
 			Gfx::Path path(
 				X,
-				(FLOAT)(!m_Flip ? meterRect.top : meterRect.bottom - 1),
+				!m_Flip ? meterRect.top : (meterRect.bottom - 1.0f),
 				D2D1_FILL_MODE_WINDING);
 		
 			if (!m_Flip)
@@ -337,7 +338,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(D2D1::ColorF(0,0,0,0));
+			path.SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 			path.SetStrokeFill(m_Colors[counter]);
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
@@ -348,7 +349,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	}
 	else
 	{
-		const FLOAT H = drawH - 1.0f;
+		const FLOAT H = (FLOAT)(drawH - 1);
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
@@ -361,7 +362,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				_y = (FLOAT)((*i)[pos] * scale);
 				_y = min(_y, H);
 				_y = max(_y, 0.0f);
-				_y = (FLOAT)meterRect.top + (m_Flip ? _y : H - _y);
+				_y = meterRect.top + (m_Flip ? _y : H - _y);
 			};
 
 			FLOAT Y = 0.0f;
@@ -369,7 +370,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			// Cache all lines
 			Gfx::Path path(
-				(FLOAT)(!m_GraphStartLeft ? meterRect.left : meterRect.right - 1),
+				!m_GraphStartLeft ? meterRect.left : (meterRect.right - 1.0f),
 				Y,
 				D2D1_FILL_MODE_WINDING);
 		
@@ -399,7 +400,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(D2D1::ColorF(0,0,0,0));
+			path.SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 			path.SetStrokeFill(m_Colors[counter]);
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
