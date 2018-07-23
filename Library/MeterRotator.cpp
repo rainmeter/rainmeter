@@ -12,14 +12,11 @@
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
 MeterRotator::MeterRotator(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
-	m_NeedsReload(false),
 	m_OffsetX(),
 	m_OffsetY(),
 	m_StartAngle(),
@@ -44,7 +41,7 @@ void MeterRotator::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName, m_NeedsReload);
+		m_Image.LoadImage(m_ImageName);
 	}
 	else if (m_Image.IsLoaded())
 	{
@@ -69,10 +66,6 @@ void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
-	else
-	{
-		m_Image.ClearOptionFlags();
-	}
 
 	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
 	m_OffsetY = parser.ReadFloat(section, L"OffsetY", 0.0);
@@ -84,13 +77,7 @@ void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
-
-		if (m_NeedsReload ||
-			m_Image.IsOptionsChanged())
-		{
-			Initialize();  // Reload the image
-		}
+		Initialize();  // Reload the image
 	}
 }
 
@@ -127,37 +114,35 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
 	if (m_Image.IsLoaded())
 	{
 		// Calculate the center for rotation
 		int x = GetX();
 		int y = GetY();
 
-		REAL cx = (REAL)(x + m_W / 2.0);
-		REAL cy = (REAL)(y + m_H / 2.0);
+		FLOAT cx = (FLOAT)(x + m_W / 2.0);
+		FLOAT cy = (FLOAT)(y + m_H / 2.0);
 
 		// Calculate the rotation
-		REAL angle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
+		FLOAT angle = (FLOAT)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
 
 		// TODO: convert to Canvas: canvas.RotateTransform(angle, cx, cy, (REAL)-m_OffsetX, (REAL)-m_OffsetY);
-		graphics.TranslateTransform(cx, cy);
-		graphics.RotateTransform(angle);
-		graphics.TranslateTransform((REAL)-m_OffsetX, (REAL)-m_OffsetY);
+		// NOTE: canvas.RotateTransform does not work at all
+		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Translation((FLOAT)(-m_OffsetX), (FLOAT)(-m_OffsetY)) * 
+			D2D1::Matrix3x2F::Rotation(angle) * 
+			D2D1::Matrix3x2F::Translation(cx, cy);
+		canvas.SetTransform(matrix);
 
-		Bitmap* drawBitmap = m_Image.GetImage();
+		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
-		UINT width = drawBitmap->GetWidth();
-		UINT height = drawBitmap->GetHeight();
+		INT width = (INT)drawBitmap->GetWidth();
+		INT height = (INT)drawBitmap->GetHeight();
 
-		// Blit the image
-		graphics.DrawImage(drawBitmap, 0, 0, width, height);
+		const D2D1_RECT_F rect = { 0, 0, (FLOAT)width, (FLOAT)height };
+		canvas.DrawBitmap(drawBitmap, rect, rect);
 
-		graphics.ResetTransform();
+		canvas.ResetTransform();
 	}
-
-	canvas.EndGdiplusContext();
 
 	return true;
 }

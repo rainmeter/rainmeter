@@ -21,8 +21,6 @@
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
 	m_Y(),
@@ -32,7 +30,7 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_WDefined(false),
 	m_HDefined(false),
 	m_RelativeMeter(),
-	m_Transformation(),
+	m_Transformation(D2D1::Matrix3x2F::Identity()),
 	m_ToolTipWidth(),
 	m_ToolTipType(false),
 	m_ToolTipHidden(skin->GetMeterToolTipHidden()),
@@ -52,8 +50,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 
 Meter::~Meter()
 {
-	delete m_Transformation;
-
 	if (m_ToolTipHandle != nullptr)
 	{
 		DestroyWindow(m_ToolTipHandle);
@@ -152,14 +148,13 @@ RECT Meter::GetMeterRect()
 ** Returns a Rect containing the adjusted meter location with "Padding" option
 **
 */
-Gdiplus::Rect Meter::GetMeterRectPadding()
+D2D1_RECT_F Meter::GetMeterRectPadding()
 {
-	Gdiplus::Rect meterRect;
-
-	meterRect.X = GetX() + m_Padding.X;
-	meterRect.Y = GetY() + m_Padding.Y;
-	meterRect.Width = m_W - m_Padding.X - m_Padding.Width;
-	meterRect.Height = m_H - m_Padding.Y - m_Padding.Height;
+	D2D1_RECT_F meterRect;
+	meterRect.left = GetX() + m_Padding.left;
+	meterRect.top = GetY() + m_Padding.top;
+	meterRect.right = meterRect.left + m_W - m_Padding.right;
+	meterRect.bottom = meterRect.top + m_H - m_Padding.bottom;
 
 	return meterRect;
 }
@@ -286,7 +281,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
-	static const Gdiplus::Rect defPadding;
+	static const D2D1_RECT_F defPadding;
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
 	const int oldW = m_W;
@@ -327,9 +322,9 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color::MakeARGB(0, 0, 0, 0));
-	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor.GetValue());
-	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", D2D1::ColorF(0,0,0,0));
+	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
+	m_SolidAngle = (FLOAT)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
 	m_Mouse.ReadOptions(parser, section);
 
@@ -342,23 +337,14 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
-	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
+	std::vector<FLOAT> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)
 	{
-		if (m_Transformation)
-		{
-			m_Transformation->SetElements(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
-		}
-		else
-		{
-			m_Transformation = new Matrix(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
-		}
+		m_Transformation = D2D1::Matrix3x2F(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
 	}
 	else if (!matrix.empty())
 	{
-		delete m_Transformation;
-		m_Transformation = nullptr;
-
+		m_Transformation = D2D1::Matrix3x2F::Identity();
 		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 }
@@ -664,64 +650,41 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 	canvas.SetAntiAliasing(m_AntiAlias);
 
-	if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+	if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
 	{
 		int x = GetX();
 		int y = GetY();
 
-		Rect r(x, y, m_W, m_H);
+		D2D1_RECT_F r = { (FLOAT)x, (FLOAT)y, (FLOAT)(x + m_W), (FLOAT)(y + m_H) };
 
-		if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
+		if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
+			m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
 		{
-			SolidBrush solid(m_SolidColor);
-			canvas.FillRectangle(r, solid);
+			canvas.FillRectangle(r, m_SolidColor);
 		}
 		else
 		{
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
-			if (!m_AntiAlias)
-			{
-				// Fix the tiling issue in some GradientAngle values
-				graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
-			}
-
-			LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-			graphics.FillRectangle(&gradient, r);
-
-			if (!m_AntiAlias)
-			{
-				graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
-			}
-
-			canvas.EndGdiplusContext();
+			canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, (FLOAT)m_SolidAngle);
 		}
 	}
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
-		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
 		int x = GetX();
 		int y = GetY();
 
-		Color lightColor(255, 255, 255, 255);
-		Color darkColor(255, 0, 0, 0);
-
+		D2D1_COLOR_F lightColor = D2D1::ColorF(1, 1, 1, 1);
+		D2D1_COLOR_F darkColor = D2D1::ColorF(0, 0, 0, 1);
+		
 		if (m_SolidBevel == BEVELTYPE_DOWN)
 		{
-			lightColor.SetValue(Color::MakeARGB(255, 0, 0, 0));
-			darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
+			lightColor = D2D1::ColorF(0, 0, 0, 1);
+			darkColor = D2D1::ColorF(1, 1, 1, 1);
 		}
 
-		Pen light(lightColor);
-		Pen dark(darkColor);
-
 		// The bevel is drawn outside the meter
-		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);
-		DrawBevel(graphics, rect, light, dark);
-
-		canvas.EndGdiplusContext();
+		D2D1_RECT_F rect = { (FLOAT)(x - 2), (FLOAT)(y - 2), (FLOAT)(x + m_W + 2), (FLOAT)(y + m_H + 2) };
+		DrawBevel(canvas, rect, lightColor, darkColor);
 	}
 
 	return true;
@@ -730,19 +693,19 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 /*
 ** Draws a bevel inside the given area
 */
-void Meter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)
+void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark)
 {
-	int l = rect.GetLeft();
-	int r = rect.GetRight() - 1;
-	int t = rect.GetTop();
-	int b = rect.GetBottom() - 1;
+	FLOAT l = rect.left;
+	FLOAT r = rect.right - 1.0f;
+	FLOAT t = rect.top;
+	FLOAT b = rect.bottom - 1.0f;
 
-	graphics.DrawLine(&light, l,     t,     l,     b);
-	graphics.DrawLine(&light, l,     t,     r,     t);
-	graphics.DrawLine(&light, l + 1, t + 1, l + 1, b - 1);
-	graphics.DrawLine(&light, l + 1, t + 1, r - 1, t + 1);
-	graphics.DrawLine(&dark,  l,     b,     r,     b);
-	graphics.DrawLine(&dark,  r,     t,     r,     b);
-	graphics.DrawLine(&dark,  l + 1, b - 1, r - 1, b - 1);
-	graphics.DrawLine(&dark,  r - 1, t + 1, r - 1, b - 1);
+	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
+	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);
+	canvas.DrawLine(light, l + 1.0f, t + 1.0f, l + 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(light, l + 1.0f, t + 1.0f, r - 1.0f, t + 1.0f, 2.0f);
+	canvas.DrawLine(dark,  l,        b,        r,        b,        2.0f);
+	canvas.DrawLine(dark,  r,        t,        r,        b,        2.0f);
+	canvas.DrawLine(dark,  l + 1.0f, b - 1.0f, r - 1.0f, b - 1.0f, 2.0f);
+	canvas.DrawLine(dark,  r - 1.0f, t + 1.0f, r - 1.0f, b - 1.0f, 2.0f);
 }

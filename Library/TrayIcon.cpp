@@ -385,8 +385,14 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-			m_Color1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color::MakeARGB(255, 0, 100, 0));
-			m_Color2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color::MakeARGB(255, 0, 255, 0));
+
+			auto toARGB = [](const D2D1_COLOR_F& color)
+			{
+				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
+			};
+
+			m_Color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0, 100 / 255.f, 0, 1)));
+			m_Color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0, 1, 0, 1) ));
 		}
 		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{

@@ -133,12 +133,9 @@ bool Shape::IsShapeDefined()
 	return m_Shape;
 }
 
-bool Shape::ContainsPoint(D2D1_POINT_2F point, const Gdiplus::Matrix* transformationMatrix)
+bool Shape::ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transformationMatrix)
 {
-	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
-
-	// Apply TransformationMatrix if available
-	if (transformationMatrix) transformationMatrix->GetElements((Gdiplus::REAL*)&matrix);
+	D2D1_MATRIX_3X2_F matrix = transformationMatrix;
 
 	matrix = matrix * GetShapeMatrix();
 
@@ -261,10 +258,10 @@ void Shape::CreateStrokeStyle()
 	if (FAILED(hr)) m_StrokeStyle = nullptr;
 }
 
-void Shape::SetFill(Gdiplus::Color color)
+void Shape::SetFill(const D2D1_COLOR_F& color)
 {
 	m_FillBrushType = BrushType::Solid;
-	m_FillColor = Util::ToColorF(color);
+	m_FillColor = color;
 	m_HasFillBrushChanged = true;
 }
 
@@ -288,10 +285,10 @@ void Shape::SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F ra
 	m_HasFillBrushChanged = true;
 }
 
-void Shape::SetStrokeFill(Gdiplus::Color color)
+void Shape::SetStrokeFill(const D2D1_COLOR_F& color)
 {
 	m_StrokeBrushType = BrushType::Solid;
-	m_StrokeColor = Util::ToColorF(color);
+	m_StrokeColor = color;
 	m_HasStrokeBrushChanged = true;
 }
 
@@ -420,9 +417,9 @@ void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCol
 {
 	auto bounds = GetBounds(false);
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle,
-		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+		bounds.left, bounds.top, bounds.right, bounds.bottom);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f,
-		bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+		bounds.left, bounds.top, bounds.right, bounds.bottom);
 
 	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> linear;
 	HRESULT hr = target->CreateLinearGradientBrush(

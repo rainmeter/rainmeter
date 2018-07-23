@@ -11,14 +11,12 @@
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
 MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Color(Color::White),
-	m_EffectColor(Color::Black),
+	m_Color(D2D1::ColorF(D2D1::ColorF::White)),
+	m_EffectColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_AutoScale(AUTOSCALE_OFF),
 	m_Style(NORMAL),
 	m_Effect(EFFECT_NONE),
@@ -123,8 +121,8 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
-	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
+	m_Color = parser.ReadColor(section, L"FontColor", D2D1::ColorF(D2D1::ColorF::Black));
+	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", D2D1::ColorF(D2D1::ColorF::Black));
 
 	m_Prefix = parser.ReadString(section, L"Prefix", L"");
 	m_Postfix = parser.ReadString(section, L"Postfix", L"");
@@ -168,7 +166,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
-	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
+	m_Angle = (FLOAT)parser.ReadFloat(section, L"Angle", 0.0);
 
 	const std::wstring& autoscale = parser.ReadString(section, L"AutoScale", L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());
@@ -381,13 +379,13 @@ bool MeterString::Update()
 		if (!m_WDefined || !m_HDefined)
 		{
 			// Calculate the text size
-			RectF rect;
+			D2D1_RECT_F rect;
 			if (DrawString(m_Skin->GetCanvas(), &rect))
 			{
 				if (!m_WDefined)
-					m_W = (int)rect.Width + GetWidthPadding();
+					m_W = (int)(rect.right - rect.left) + GetWidthPadding();
 				if (!m_HDefined)
-					m_H = (int)rect.Height + GetHeightPadding();
+					m_H = (int)(rect.bottom - rect.top) + GetHeightPadding();
 			}
 			else
 			{
@@ -416,7 +414,7 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 ** Draws the string or calculates it's size
 **
 */
-bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
+bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 {
 	if (!m_TextFormat->IsInitialized()) return false;
 
@@ -426,25 +424,32 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 		m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 
 	if (rect)
 	{
-		rect->X = (REAL)meterRect.X;
-		rect->Y = (REAL)meterRect.Y;
-		if (canvas.MeasureTextW(m_String, *m_TextFormat, *rect) &&
-			m_ClipType == CLIP_AUTO)
+		rect->left = meterRect.left;
+		rect->top = meterRect.top;
+		D2D1_SIZE_F size = { rect->right-rect->left, rect->bottom-rect->top };
+		bool didMeasure = canvas.MeasureTextW(m_String, *m_TextFormat, size);
+		if(didMeasure)
+		{
+			rect->right = rect->left + size.width;
+			rect->bottom = rect->top + size.height;
+		}
+
+		if (didMeasure && m_ClipType == CLIP_AUTO)
 		{
 			// Set initial clipping
 			m_NeedsClipping = false;
 
-			REAL w, h;
+			FLOAT w, h;
 			bool updateSize = true;
 
 			if (m_WDefined)
 			{
-				w = (REAL)meterRect.Width;
-				h = rect->Height;
+				w = (meterRect.right - meterRect.left);
+				h = (rect->bottom - rect->top);
 				m_NeedsClipping = true;
 			}
 			else if (m_HDefined)
@@ -452,28 +457,28 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 				if (m_ClipStringW == -1)
 				{
 					// Text does not fit in defined height, clip it
-					if (rect->Height > (REAL)meterRect.Height)
+					if (rect->bottom - rect->top > meterRect.bottom - meterRect.top)
 					{
 						m_NeedsClipping = true;
 					}
 
-					rect->Height = (REAL)meterRect.Height;
+					rect->right = rect->left + meterRect.right - meterRect.left;
 					updateSize = false;
 
 				}
 				else
 				{
-					if (rect->Width > (REAL)m_ClipStringW)
+					if (rect->right - rect->left > (FLOAT)m_ClipStringW)
 					{
-						w = (REAL)m_ClipStringW;
+						w = (FLOAT)m_ClipStringW;
 						m_NeedsClipping = true;
 					}
 					else
 					{
-						w = rect->Width;
+						w = rect->right - rect->left;
 					}
 
-					h = (REAL)meterRect.Height;
+					h = meterRect.bottom - meterRect.top;
 				}
 			}
 			else
@@ -481,43 +486,43 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 				if (m_ClipStringW == -1)
 				{
 					// Clip text if already larger than ClipStringH
-					if (m_ClipStringH != -1 && rect->Height > (REAL)m_ClipStringH)
+					if (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH)
 					{
 						m_NeedsClipping = true;
-						rect->Height = (REAL)m_ClipStringH;
+						rect->right = rect->left + (FLOAT)m_ClipStringH;
 					}
 
 					updateSize = false;
 				}
 				else
 				{
-					if (rect->Width > (REAL)m_ClipStringW)
+					if (rect->right - rect->left > (FLOAT)m_ClipStringW)
 					{
-						w = (REAL)m_ClipStringW;
+						w = (FLOAT)m_ClipStringW;
 						m_NeedsClipping = true;
 					}
 					else
 					{
-						w = rect->Width;
+						w = rect->right - rect->left;
 					}
 
-					h = rect->Height;
+					h = rect->bottom - rect->top;
 				}
 			}
 
 			if (updateSize)
 			{
 				UINT lines = 0;
-				RectF layout((REAL)meterRect.X, (REAL)meterRect.Y, w, h);
-				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, layout, lines) &&
+				D2D1_SIZE_F size = {w, h};
+				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) &&
 					lines != 0)
 				{
-					rect->Width = w;
-					rect->Height = layout.Height;
+					rect->right = rect->left + w;
+					rect->bottom = rect->top + size.height;
 
-					if (m_HDefined || (m_ClipStringH != -1 && rect->Height > (REAL)m_ClipStringH))
+					if (m_HDefined || (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH))
 					{
-						rect->Height = m_HDefined ? (REAL)meterRect.Height : (REAL)m_ClipStringH;
+						rect->bottom = rect->top +  m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH;
 					}
 				}
 			}
@@ -525,39 +530,45 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 	}
 	else
 	{
-		RectF rcDest((REAL)meterRect.X, (REAL)meterRect.Y, (REAL)meterRect.Width, (REAL)meterRect.Height);
+		D2D1_RECT_F rcDest = meterRect;
 		m_Rect = rcDest;
 
 		if (m_Angle != 0.0f)
 		{
 			const float baseX = (float)Meter::GetX();
-			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), baseX, (REAL)meterRect.Y, -baseX, -(REAL)meterRect.Y);
+			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), baseX, meterRect.top, -baseX, -meterRect.top);
 		}
 
 		if (m_Effect != EFFECT_NONE)
 		{
-			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rcDest);
+			const D2D1_COLOR_F solidBrush = m_EffectColor;
+			D2D1_RECT_F rcEffect = rcDest;
+
+			auto offsetEffect = [&](int x, int y)
+			{
+				rcEffect.left += x;
+				rcEffect.top += y;
+			};
 
 			if (m_Effect == EFFECT_SHADOW)
 			{
-				rcEffect.Offset(1, 1);
+				offsetEffect(1, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
-				rcEffect.Offset(0, 1);
+				offsetEffect(0, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(1, -1);
+				offsetEffect(1, -1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(-1, -1);
+				offsetEffect(-1, -1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				rcEffect.Offset(-1, 1);
+				offsetEffect(-1, 1);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 		}
 
-		SolidBrush solidBrush(m_Color);
+		const D2D1_COLOR_F solidBrush = m_Color;
 		canvas.DrawTextW(m_String, *m_TextFormat, rcDest, solidBrush, true);
 
 		if (m_Angle != 0.0f)
@@ -584,28 +595,30 @@ void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
 /*
 ** Static helper to log all installed font families.
 **
+** TODO: use Direct2d to enumrate the installed font families.
+** See: https://msdn.microsoft.com/en-us/library/windows/desktop/dd756583(v=vs.85).aspx
 */
 void MeterString::EnumerateInstalledFontFamilies()
 {
 	INT fontCount;
-	InstalledFontCollection fontCollection;
+	Gdiplus::InstalledFontCollection fontCollection;
 
-	if (Ok == fontCollection.GetLastStatus())
+	if (Gdiplus::Ok == fontCollection.GetLastStatus())
 	{
 		fontCount = fontCollection.GetFamilyCount();
 		if (fontCount > 0)
 		{
 			INT fontFound;
 
-			FontFamily* fontFamilies = new FontFamily[fontCount];
+			Gdiplus::FontFamily* fontFamilies = new Gdiplus::FontFamily[fontCount];
 
-			if (Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
+			if (Gdiplus::Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
 			{
 				std::wstring fonts;
 				for (INT i = 0; i < fontCount; ++i)
 				{
 					WCHAR familyName[LF_FACESIZE];
-					if (Ok == fontFamilies[i].GetFamilyName(familyName))
+					if (Gdiplus::Ok == fontFamilies[i].GetFamilyName(familyName))
 					{
 						if (*familyName)
 						{

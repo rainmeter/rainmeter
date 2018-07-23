@@ -22,7 +22,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>dwmapi.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
@@ -40,8 +40,10 @@
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
+    <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
@@ -105,7 +107,6 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="System.cpp" />
-    <ClCompile Include="TintedImage.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
@@ -127,9 +128,12 @@
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
+    <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="DialogManage.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="ImageOptions.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />
@@ -187,7 +191,6 @@
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
-    <ClInclude Include="TintedImage.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
