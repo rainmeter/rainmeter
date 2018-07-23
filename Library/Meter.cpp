@@ -650,7 +650,7 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 	canvas.SetAntiAliasing(m_AntiAlias);
 
-	if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
+	if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 	{
 		int x = GetX();
 		int y = GetY();
@@ -673,13 +673,13 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 		int x = GetX();
 		int y = GetY();
 
-		D2D1_COLOR_F lightColor = D2D1::ColorF(1, 1, 1, 1);
-		D2D1_COLOR_F darkColor = D2D1::ColorF(0, 0, 0, 1);
+		D2D1_COLOR_F lightColor = D2D1::ColorF(D2D1::ColorF::White);
+		D2D1_COLOR_F darkColor = D2D1::ColorF(D2D1::ColorF::Black);
 		
 		if (m_SolidBevel == BEVELTYPE_DOWN)
 		{
-			lightColor = D2D1::ColorF(0, 0, 0, 1);
-			darkColor = D2D1::ColorF(1, 1, 1, 1);
+			lightColor = D2D1::ColorF(D2D1::ColorF::Black);
+			darkColor = D2D1::ColorF(D2D1::ColorF::White);
 		}
 
 		// The bevel is drawn outside the meter
