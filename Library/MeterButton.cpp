@@ -127,7 +127,7 @@ bool MeterButton::Update()
 bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
-	
+
 	const auto image = m_Image.GetImage();
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 
@@ -161,7 +161,7 @@ bool MeterButton::HitTest2(int px, int py)
 		px >= x && px < x + m_W &&
 		py >= y && py < y + m_H)
 	{
-		if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
+		if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 		{
 			return true;
 		}
@@ -170,7 +170,7 @@ bool MeterButton::HitTest2(int px, int py)
 		if (m_Image.IsLoaded())
 		{
 			D2D1_RECT_F meterRect = GetMeterRectPadding();
-			
+
 			if (Gfx::Util::RectContains(meterRect, D2D1::Point2F((FLOAT)px, (FLOAT)py)))
 			{
 				FLOAT drawW = meterRect.right - meterRect.left;
@@ -180,16 +180,22 @@ bool MeterButton::HitTest2(int px, int py)
 
 				auto bitmap = m_Image.GetImage();
 				if (!bitmap) return false;
+
 				int bitmapW = bitmap->GetWidth();
 				int bitmapH = bitmap->GetHeight();
+
 				if (bitmapW > bitmapH)
+				{
 					px -= (int)(drawW * m_State);
+				}
 				else
+				{
 					py -= (int)(drawH * m_State);
+				}
 
 				D2D1_COLOR_F color;
 				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
-				return !valid || color.a != 0;
+				return !valid || (color.a != 0.0f);
 			}
 		}
 		else
