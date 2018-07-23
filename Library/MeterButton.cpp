@@ -68,11 +68,11 @@ void MeterButton::Initialize()
 			{
 				if (bitmapH > bitmapW)
 				{
-					m_BitmapsRects[i] = D2D1::RectF(0, (FLOAT)(m_H * i), (FLOAT)m_W, (FLOAT)(m_H * (i+1)));
+					m_BitmapsRects[i] = D2D1::RectF(0.0f, (FLOAT)(m_H * i), (FLOAT)m_W, (FLOAT)(m_H * (i + 1)));
 				}
 				else
 				{
-					m_BitmapsRects[i] = D2D1::RectF((FLOAT)(m_W * i), 0, (FLOAT)(m_W * (i+1)), (FLOAT)m_H);
+					m_BitmapsRects[i] = D2D1::RectF((FLOAT)(m_W * i), 0.0f, (FLOAT)(m_W * (i + 1)), (FLOAT)m_H);
 				}
 			}
 
@@ -133,7 +133,14 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 
 	if (image)
 	{
-		canvas.DrawBitmap(image, D2D1::RectF(meterRect.left, meterRect.top, meterRect.left + m_W, meterRect.top + m_H), m_BitmapsRects[m_State]);
+		canvas.DrawBitmap(
+			image,
+			D2D1::RectF(
+				meterRect.left,
+				meterRect.top,
+				meterRect.left + (FLOAT)m_W,
+				meterRect.top + (FLOAT)m_H),
+			m_BitmapsRects[m_State]);
 	}
 
 	return true;
@@ -158,8 +165,8 @@ bool MeterButton::HitTest2(int px, int py)
 	int y = GetY();
 
 	if (m_MouseOver &&
-		px >= x && px < x + m_W &&
-		py >= y && py < y + m_H)
+		px >= x && px < (x + m_W) &&
+		py >= y && py < (y + m_H))
 	{
 		if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 		{
@@ -169,28 +176,28 @@ bool MeterButton::HitTest2(int px, int py)
 		// Check transparent pixels
 		if (m_Image.IsLoaded())
 		{
-			D2D1_RECT_F meterRect = GetMeterRectPadding();
+			const D2D1_RECT_F meterRect = GetMeterRectPadding();
 
 			if (Gfx::Util::RectContains(meterRect, D2D1::Point2F((FLOAT)px, (FLOAT)py)))
 			{
-				FLOAT drawW = meterRect.right - meterRect.left;
-				FLOAT drawH = meterRect.bottom - meterRect.top;
+				const FLOAT drawW = meterRect.right - meterRect.left;
+				const FLOAT drawH = meterRect.bottom - meterRect.top;
 				px = px - (int)meterRect.left;
 				py = py - (int)meterRect.top;
 
 				auto bitmap = m_Image.GetImage();
 				if (!bitmap) return false;
 
-				int bitmapW = bitmap->GetWidth();
-				int bitmapH = bitmap->GetHeight();
+				const int bitmapW = bitmap->GetWidth();
+				const int bitmapH = bitmap->GetHeight();
 
 				if (bitmapW > bitmapH)
 				{
-					px -= (int)(drawW * m_State);
+					px -= (int)drawW * m_State;
 				}
 				else
 				{
-					py -= (int)(drawH * m_State);
+					py -= (int)drawH * m_State;
 				}
 
 				D2D1_COLOR_F color;
