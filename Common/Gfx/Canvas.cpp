@@ -336,7 +336,13 @@ void Canvas::PushClip(Gfx::Shape* clip)
 {
 	Microsoft::WRL::ComPtr<ID2D1Layer> layer;
 	m_Target->CreateLayer(layer.GetAddressOf());
-	m_Target->PushLayer(D2D1::LayerParameters1(D2D1::InfiniteRect(), clip->m_Shape.Get(), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE), layer.Get());
+	m_Target->PushLayer(
+		D2D1::LayerParameters1(
+			D2D1::InfiniteRect(),
+			clip->m_Shape.Get(),
+			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE),
+		layer.Get());
+
 	m_Layers.push(layer);
 }
 
@@ -381,7 +387,12 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 	str = srcStr;
 	formatD2D.ApplyInlineCase(str);
 
-	if (!formatD2D.CreateLayout(m_Target.Get(), str, rect.right - rect.left, rect.bottom - rect.top, !m_AccurateText && m_TextAntiAliasing)) return;
+	if (!formatD2D.CreateLayout(
+		m_Target.Get(),
+		str,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		!m_AccurateText && m_TextAntiAliasing)) return;
 
 	D2D1_POINT_2F drawPosition;
 	drawPosition.x = [&]()
@@ -520,7 +531,7 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, con
 				min(rSeg.bottom + rSeg.top, srcRect.bottom)) :
 			D2D1::RectF();
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
-		 
+
 		const D2D1_RECT_F rDst = D2D1::RectF(
 			(rSrc.left - srcRect.left) / (srcRect.right - srcRect.left) * (dstRect.right - dstRect.left) + dstRect.left,
 			(rSrc.top - srcRect.top) / (srcRect.bottom - srcRect.top) * (dstRect.bottom - dstRect.top) + dstRect.top,
@@ -556,7 +567,7 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect
 		const FLOAT w = (dstRect.right - x) > width ? width : (dstRect.right - x);
 		const FLOAT h = (dstRect.bottom - y) > height ? height : (dstRect.bottom - y);
 
-		const auto dst = D2D1::RectF(x, y, x + w, y + h);;
+		const auto dst = D2D1::RectF(x, y, x + w, y + h);
 		const auto src = D2D1::RectF(0, 0, w, h);
 		DrawBitmap(bitmap, dst, src);
 
@@ -583,9 +594,6 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
-	/*
-	const auto tDst = Util::ToRectF(dstRect);
-	const auto tSrc = Util::ToRectF(srcRect);*/
 
 	auto getRectSubRegion = [&width, &height](const D2D1_RECT_F& r1, const D2D1_RECT_F& r2) -> D2D1_RECT_F
 	{
@@ -604,6 +612,7 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 
 		FLOAT s2Width = srcRect2.right - srcRect2.left;
 		FLOAT s2Height = srcRect2.bottom - srcRect2.top;
+
 		// "Move" and "scale" the |bitmap| to match the destination.
 		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
 		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
@@ -669,7 +678,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 	HRESULT hr = m_Target->CreateGradientStopCollection(
 		gradientStops,
-		2,
+		2U,
 		D2D1_GAMMA_2_2,
 		D2D1_EXTEND_MODE_CLAMP,
 		&pGradientStops);
