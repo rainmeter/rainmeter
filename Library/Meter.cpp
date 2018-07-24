@@ -281,7 +281,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
-	static const D2D1_RECT_F defPadding;
+	static const D2D1_RECT_F defPadding = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
 	const int oldW = m_W;
@@ -322,7 +322,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = parser.ReadColor(section, L"SolidColor", D2D1::ColorF(0,0,0,0));
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
 	m_SolidAngle = (FLOAT)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
@@ -652,10 +652,10 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 	if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 	{
-		int x = GetX();
-		int y = GetY();
+		const FLOAT x = (FLOAT)GetX();
+		const FLOAT y = (FLOAT)GetY();
 
-		D2D1_RECT_F r = { (FLOAT)x, (FLOAT)y, (FLOAT)(x + m_W), (FLOAT)(y + m_H) };
+		const D2D1_RECT_F r = D2D1::RectF(x, y, x + (FLOAT)m_W, y + (FLOAT)m_H);
 
 		if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
 			m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
@@ -670,9 +670,6 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
-		int x = GetX();
-		int y = GetY();
-
 		D2D1_COLOR_F lightColor = D2D1::ColorF(D2D1::ColorF::White);
 		D2D1_COLOR_F darkColor = D2D1::ColorF(D2D1::ColorF::Black);
 		
@@ -683,7 +680,9 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 		}
 
 		// The bevel is drawn outside the meter
-		D2D1_RECT_F rect = { (FLOAT)(x - 2), (FLOAT)(y - 2), (FLOAT)(x + m_W + 2), (FLOAT)(y + m_H + 2) };
+		const FLOAT x = (FLOAT)GetX();
+		const FLOAT y = (FLOAT)GetY();
+		const D2D1_RECT_F rect = D2D1::RectF(x - 2.0f, y - 2.0f, x + (FLOAT)m_W + 2.0f, y + (FLOAT)m_H + 2.0f);
 		DrawBevel(canvas, rect, lightColor, darkColor);
 	}
 
@@ -695,10 +694,10 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 */
 void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark)
 {
-	FLOAT l = rect.left;
-	FLOAT r = rect.right - 1.0f;
-	FLOAT t = rect.top;
-	FLOAT b = rect.bottom - 1.0f;
+	const FLOAT l = rect.left;
+	const FLOAT r = rect.right - 1.0f;
+	const FLOAT t = rect.top;
+	const FLOAT b = rect.bottom - 1.0f;
 
 	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
 	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);
