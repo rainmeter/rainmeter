@@ -391,8 +391,8 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
 			};
 
-			m_Color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0, 100 / 255.f, 0, 1)));
-			m_Color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0, 1, 0, 1) ));
+			m_Color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
+			m_Color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
 		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{
