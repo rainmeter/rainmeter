@@ -183,7 +183,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	}
 	else
 	{
-		m_Options.m_ColorMatrix.m[3][3] = alpha / 255.f;
+		m_Options.m_ColorMatrix.m[3][3] = alpha / 255.0f;
 	}
 
 	std::vector<FLOAT> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
