@@ -430,99 +430,99 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	{
 		rect->left = meterRect.left;
 		rect->top = meterRect.top;
-		D2D1_SIZE_F size = { rect->right-rect->left, rect->bottom-rect->top };
-		bool didMeasure = canvas.MeasureTextW(m_String, *m_TextFormat, size);
-		if(didMeasure)
+
+		D2D1_SIZE_F size = D2D1::SizeF(rect->right - rect->left, rect->bottom - rect->top);
+		if (canvas.MeasureTextW(m_String, *m_TextFormat, size))
 		{
 			rect->right = rect->left + size.width;
 			rect->bottom = rect->top + size.height;
-		}
 
-		if (didMeasure && m_ClipType == CLIP_AUTO)
-		{
-			// Set initial clipping
-			m_NeedsClipping = false;
-
-			FLOAT w, h;
-			bool updateSize = true;
-
-			if (m_WDefined)
+			if (m_ClipType == CLIP_AUTO)
 			{
-				w = (meterRect.right - meterRect.left);
-				h = (rect->bottom - rect->top);
-				m_NeedsClipping = true;
-			}
-			else if (m_HDefined)
-			{
-				if (m_ClipStringW == -1)
+				// Set initial clipping
+				m_NeedsClipping = false;
+
+				FLOAT w = 0.0f;
+				FLOAT h = 0.0f;
+				bool updateSize = true;
+
+				if (m_WDefined)
 				{
-					// Text does not fit in defined height, clip it
-					if (rect->bottom - rect->top > meterRect.bottom - meterRect.top)
-					{
-						m_NeedsClipping = true;
-					}
-
-					rect->right = rect->left + meterRect.right - meterRect.left;
-					updateSize = false;
-
-				}
-				else
-				{
-					if (rect->right - rect->left > (FLOAT)m_ClipStringW)
-					{
-						w = (FLOAT)m_ClipStringW;
-						m_NeedsClipping = true;
-					}
-					else
-					{
-						w = rect->right - rect->left;
-					}
-
-					h = meterRect.bottom - meterRect.top;
-				}
-			}
-			else
-			{
-				if (m_ClipStringW == -1)
-				{
-					// Clip text if already larger than ClipStringH
-					if (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH)
-					{
-						m_NeedsClipping = true;
-						rect->right = rect->left + (FLOAT)m_ClipStringH;
-					}
-
-					updateSize = false;
-				}
-				else
-				{
-					if (rect->right - rect->left > (FLOAT)m_ClipStringW)
-					{
-						w = (FLOAT)m_ClipStringW;
-						m_NeedsClipping = true;
-					}
-					else
-					{
-						w = rect->right - rect->left;
-					}
-
+					w = meterRect.right - meterRect.left;
 					h = rect->bottom - rect->top;
+					m_NeedsClipping = true;
 				}
-			}
-
-			if (updateSize)
-			{
-				UINT lines = 0;
-				D2D1_SIZE_F size = {w, h};
-				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) &&
-					lines != 0)
+				else if (m_HDefined)
 				{
-					rect->right = rect->left + w;
-					rect->bottom = rect->top + size.height;
-
-					if (m_HDefined || (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH))
+					if (m_ClipStringW == -1)
 					{
-						rect->bottom = rect->top +  m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH;
+						// Text does not fit in defined height, clip it
+						if (rect->bottom - rect->top > meterRect.bottom - meterRect.top)
+						{
+							m_NeedsClipping = true;
+						}
+
+						rect->right = rect->left + meterRect.right - meterRect.left;
+						updateSize = false;
+
+					}
+					else
+					{
+						if (rect->right - rect->left > (FLOAT)m_ClipStringW)
+						{
+							w = (FLOAT)m_ClipStringW;
+							m_NeedsClipping = true;
+						}
+						else
+						{
+							w = rect->right - rect->left;
+						}
+
+						h = meterRect.bottom - meterRect.top;
+					}
+				}
+				else
+				{
+					if (m_ClipStringW == -1)
+					{
+						// Clip text if already larger than ClipStringH
+						if (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH)
+						{
+							m_NeedsClipping = true;
+							rect->right = rect->left + (FLOAT)m_ClipStringH;
+						}
+
+						updateSize = false;
+					}
+					else
+					{
+						if (rect->right - rect->left > (FLOAT)m_ClipStringW)
+						{
+							w = (FLOAT)m_ClipStringW;
+							m_NeedsClipping = true;
+						}
+						else
+						{
+							w = rect->right - rect->left;
+						}
+
+						h = rect->bottom - rect->top;
+					}
+				}
+
+				if (updateSize)
+				{
+					UINT lines = 0;
+					D2D1_SIZE_F size = D2D1::SizeF(w, h);
+					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0)
+					{
+						rect->right = rect->left + w;
+						rect->bottom = rect->top + size.height;
+
+						if (m_HDefined || (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH))
+						{
+							rect->bottom = rect->top + m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH;
+						}
 					}
 				}
 			}
@@ -544,7 +544,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 			const D2D1_COLOR_F solidBrush = m_EffectColor;
 			D2D1_RECT_F rcEffect = rcDest;
 
-			auto offsetEffect = [&](int x, int y)
+			auto offsetEffect = [&](FLOAT x, FLOAT y)
 			{
 				rcEffect.left += x;
 				rcEffect.top += y;
@@ -552,24 +552,23 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 			if (m_Effect == EFFECT_SHADOW)
 			{
-				offsetEffect(1, 1);
+				offsetEffect(1.0f, 1.0f);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
-				offsetEffect(0, 1);
+				offsetEffect(0.0f, 1.0f);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				offsetEffect(1, -1);
+				offsetEffect(1.0f, -1.0f);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				offsetEffect(-1, -1);
+				offsetEffect(-1.0f, -1.0f);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
-				offsetEffect(-1, 1);
+				offsetEffect(-1.0f, 1.0f);
 				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 		}
 
-		const D2D1_COLOR_F solidBrush = m_Color;
-		canvas.DrawTextW(m_String, *m_TextFormat, rcDest, solidBrush, true);
+		canvas.DrawTextW(m_String, *m_TextFormat, rcDest, m_Color, true);
 
 		if (m_Angle != 0.0f)
 		{
