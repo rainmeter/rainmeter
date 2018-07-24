@@ -15,10 +15,10 @@ struct ImageOptions : Gfx::FileInfo
 {
 	ImageOptions() :
 		m_ColorMatrix(),
-		m_Crop({ -1, -1, -1, -1 }),
+		m_Crop(D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f)),
 		m_CropMode(CROPMODE_TL),
 		m_GreyScale(false),
-		m_Rotate(),
+		m_Rotate(0.0f),
 		m_Flip(Gfx::Util::FlipType::None),
 		m_UseExifOrientation(false)
 	{}
@@ -42,8 +42,7 @@ struct ImageOptions : Gfx::FileInfo
 			}
 		}
 
-		return
-			wcscmp(m_Path.c_str(), other.m_Path.c_str()) == 0 &&
+		return wcscmp(m_Path.c_str(), other.m_Path.c_str()) == 0 &&
 			m_FileSize == other.m_FileSize &&
 			m_FileTime == other.m_FileTime &&
 			m_Rotate == other.m_Rotate &&
