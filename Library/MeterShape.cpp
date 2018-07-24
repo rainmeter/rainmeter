@@ -157,7 +157,7 @@ bool MeterShape::HitTest(int x, int y)
 {
 	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
 	
-	D2D1_POINT_2F point = { (FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()) };
+	D2D1_POINT_2F point = D2D1::Point2F((FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()));
 	for (auto& shape : m_Shapes)
 	{
 		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
@@ -330,7 +330,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0,0,0,0));
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 			return true;
 		}
 		else
@@ -380,7 +380,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(0, 0, 0, 0));
+			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 
 			return true;
 		}
@@ -413,7 +413,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
 		// the order in which the shapes are defined.
 
-		if (!createShape(new Gfx::Rectangle(0.0, 0.0, 0.0, 0.0)))
+		if (!createShape(new Gfx::Rectangle(0.0f, 0.0f, 0.0f, 0.0f)))
 		{
 			return false;
 		}
@@ -927,9 +927,8 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		// If gradient only has 1 stop, add a transparent stop at appropriate place
 		if (stops.size() == 1)
 		{
-			D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
-			D2D1_GRADIENT_STOP stop = { 0.0f, color };
-			if (stops[0].position < 0.5) stop.position = 1.0f;
+			D2D1_GRADIENT_STOP stop = D2D1::GradientStop(0.0f, D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			if (stops[0].position < 0.5f) stop.position = 1.0f;
 			stops.push_back(stop);
 		}
 	};
@@ -1136,7 +1135,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(D2D1::ColorF(0, 0, 0, 0));
+	if (open) shape->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 
 	m_Shapes.push_back(shape);
 
