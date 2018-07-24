@@ -1703,7 +1703,7 @@ D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR string)
 		}
 	}
 
-	return D2D1::ColorF(R / 255.f, G / 255.f, B / 255.f, A / 255.f);
+	return D2D1::ColorF(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
 }
 
 /*
