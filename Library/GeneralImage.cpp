@@ -293,44 +293,44 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 {
 	const auto& crop = m_Options.m_Crop;
-	if (crop.right - crop.left > 0 && crop.bottom - crop.top > 0)
+	if (crop.right - crop.left > 0.0f && crop.bottom - crop.top > 0.0f)
 	{
-		const int imageW = m_Bitmap->GetBitmap()->GetWidth();
-		const int imageH = m_Bitmap->GetBitmap()->GetHeight();
+		const FLOAT imageW = (FLOAT)m_Bitmap->GetBitmap()->GetWidth();
+		const FLOAT imageH = (FLOAT)m_Bitmap->GetBitmap()->GetHeight();
 
-		int x = 0;
-		int y = 0;
+		FLOAT x = 0.0f;
+		FLOAT y = 0.0f;
 
 		switch (m_Options.m_CropMode)
 		{
 		case ImageOptions::CROPMODE_TL:
 		default:
-			x = (int)crop.left;
-			y = (int)crop.top;
+			x = crop.left;
+			y = crop.top;
 			break;
 
 		case ImageOptions::CROPMODE_TR:
-			x = (int)crop.left + imageW;
-			y = (int)crop.top;
+			x = crop.left + imageW;
+			y = crop.top;
 			break;
 
 		case ImageOptions::CROPMODE_BR:
-			x = (int)crop.left + imageW;
-			y = (int)crop.top + imageH;
+			x = crop.left + imageW;
+			y = crop.top + imageH;
 			break;
 
 		case ImageOptions::CROPMODE_BL:
-			x = (int)crop.left;
-			y = (int)crop.top + imageH;
+			x = crop.left;
+			y = crop.top + imageH;
 			break;
 
 		case ImageOptions::CROPMODE_C:
-			x = (int)crop.left + (imageW / 2);
-			y = (int)crop.top + (imageH / 2);
+			x = crop.left + (imageW / 2.0f);
+			y = crop.top + (imageH / 2.0f);
 			break;
 		}
 
-		const D2D1_RECT_F rect = D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)(crop.right - crop.left + x), (FLOAT)(crop.bottom - crop.top + y));
+		const D2D1_RECT_F rect = D2D1::RectF(x, y, crop.right - crop.left + x, crop.bottom - crop.top + y);
 		stream->Crop(m_Skin->GetCanvas(), rect);
 	}
 }
