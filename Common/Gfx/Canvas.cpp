@@ -668,7 +668,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle, rect.left, rect.top, rect.right, rect.bottom);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f, rect.left, rect.top, rect.right, rect.bottom);
 
-	ID2D1GradientStopCollection *pGradientStops = NULL;
+	Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops = NULL;
 
 	D2D1_GRADIENT_STOP gradientStops[2];
 	gradientStops[0].color = color1;
@@ -681,13 +681,13 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 		2U,
 		D2D1_GAMMA_2_2,
 		D2D1_EXTEND_MODE_CLAMP,
-		&pGradientStops);
+		pGradientStops.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> brush;
 	hr = m_Target->CreateLinearGradientBrush(
 		D2D1::LinearGradientBrushProperties(start, end),
-		pGradientStops,
+		pGradientStops.Get(),
 		brush.GetAddressOf());
 	if (FAILED(hr)) return;
 
