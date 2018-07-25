@@ -273,6 +273,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		}
 	}
 
+	DisposeImage();
+
 	if (handle)
 	{
 		m_Bitmap = handle;
@@ -284,8 +286,6 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		ApplyTransforms();
 		return true;
 	}
-
-	DisposeImage();
 
 	return false;
 }
