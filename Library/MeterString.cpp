@@ -547,7 +547,9 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 			auto offsetEffect = [&](FLOAT x, FLOAT y)
 			{
 				rcEffect.left += x;
+				rcEffect.right += x;
 				rcEffect.top += y;
+				rcEffect.bottom += y;
 			};
 
 			if (m_Effect == EFFECT_SHADOW)
