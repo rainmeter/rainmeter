@@ -64,7 +64,7 @@ public:
 
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
-	void RotateTransform(float angle, float x, float y, float dx, float dy);
+	void RotateTransform(FLOAT angle, FLOAT cx, FLOAT cy);
 
 	void PushClip(Gfx::Shape* clip);
 	void PopClip();

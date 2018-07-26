@@ -29,7 +29,6 @@ public:
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gfx::Canvas& canvas);
-	D2D1_RECT_F GetRect() { return m_Rect; }
 
 	static void EnumerateInstalledFontFamilies();
 
@@ -96,7 +95,6 @@ private:
 	Gfx::TextFormat* m_TextFormat;
 	int m_NumOfDecimals;
 	FLOAT m_Angle;
-	D2D1_RECT_F m_Rect;
 
 	int m_FontWeight;
 

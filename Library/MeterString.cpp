@@ -531,12 +531,16 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	else
 	{
 		D2D1_RECT_F rcDest = meterRect;
-		m_Rect = rcDest;
 
 		if (m_Angle != 0.0f)
 		{
-			const float baseX = (float)Meter::GetX();
-			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), baseX, meterRect.top, -baseX, -meterRect.top);
+			FLOAT cx = (rcDest.left + rcDest.right) / 2.0f;
+			FLOAT cy = (rcDest.top + rcDest.bottom) / 2.0f;
+
+			// GDI+ compatibility.
+			cy -= (rcDest.bottom - rcDest.top) / 2.0f;
+
+			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), cx, cy);
 		}
 
 		if (m_Effect != EFFECT_NONE)

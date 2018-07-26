@@ -323,13 +323,15 @@ void Canvas::ResetTransform()
 	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
 }
 
-void Canvas::RotateTransform(float angle, float x, float y, float dx, float dy)
+void Canvas::RotateTransform(FLOAT angle, FLOAT cx, FLOAT cy)
 {
-	D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
-	m_Target->GetTransform(&transform);
-	transform.Rotation(angle, D2D1::Point2F(x, y));
-	transform.Translation(dx, dy);
-	m_Target->SetTransform(transform);
+	if (!m_Target) return;
+
+	D2D1::Matrix3x2F matrix;
+	m_Target->GetTransform(&matrix);
+
+	matrix = matrix * D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(cx, cy));
+	SetTransform(matrix);
 }
 
 void Canvas::PushClip(Gfx::Shape* clip)
