@@ -116,30 +116,26 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 
 	if (m_Image.IsLoaded())
 	{
-		// Calculate the center for rotation
-		int x = GetX();
-		int y = GetY();
+		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+		const FLOAT width = (FLOAT)drawBitmap->GetWidth();
+		const FLOAT height = (FLOAT)drawBitmap->GetHeight();
 
-		FLOAT cx = (FLOAT)(x + m_W / 2.0);
-		FLOAT cy = (FLOAT)(y + m_H / 2.0);
+		D2D1_RECT_F meterRect = GetMeterRectPadding();
+
+		FLOAT cx = meterRect.left + m_W;
+		FLOAT cy = meterRect.top + m_H;
 
 		// Calculate the rotation
 		FLOAT angle = (FLOAT)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
 
-		// TODO: convert to Canvas: canvas.RotateTransform(angle, cx, cy, (REAL)-m_OffsetX, (REAL)-m_OffsetY);
-		// NOTE: canvas.RotateTransform does not work at all
-		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Translation((FLOAT)(-m_OffsetX), (FLOAT)(-m_OffsetY)) * 
-			D2D1::Matrix3x2F::Rotation(angle) * 
-			D2D1::Matrix3x2F::Translation(cx, cy);
-		canvas.SetTransform(matrix);
+		FLOAT x = meterRect.left - (FLOAT)m_OffsetX;
+		FLOAT y = meterRect.right - (FLOAT)m_OffsetY;
 
-		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+		canvas.RotateTransform(angle, cx, cy);
 
-		FLOAT width = (FLOAT)drawBitmap->GetWidth();
-		FLOAT height = (FLOAT)drawBitmap->GetHeight();
-
-		const D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, width, height);
-		canvas.DrawBitmap(drawBitmap, rect, rect);
+		const D2D1_RECT_F rectSrc = D2D1::RectF(0.0f, 0.0f, width, height);
+		const D2D1_RECT_F rectDst = D2D1::RectF(x, y, x + width, y + height);
+		canvas.DrawBitmap(drawBitmap, rectDst, rectSrc);
 
 		canvas.ResetTransform();
 	}
