@@ -665,10 +665,17 @@ void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
 
 void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle)
 {
-	D2D1_POINT_2F start = Util::FindEdgePoint(angle, rect.left, rect.top, rect.right, rect.bottom);
-	D2D1_POINT_2F end = Util::FindEdgePoint(angle + 180.0f, rect.left, rect.top, rect.right, rect.bottom);
+	// D2D requires 2 points to draw the gradient along where GDI+ just requires a rectangle. To
+	// mimic GDI+ for SolidColor2, we have to find and swap the starting and ending points of where
+	// the gradient touches edge of the bounding rectangle. Normally we would offset the ending
+	// point by 180, but we do this on starting point for SolidColor2. This differs from the other
+	// D2D gradient options below:
+	//  Gfx::TextInlineFormat_GradientColor::BuildGradientBrushes
+	//  Gfx::Shape::CreateLinearGradient
+	D2D1_POINT_2F start = Util::FindEdgePoint(angle + 180.0f, rect.left, rect.top, rect.right, rect.bottom);
+	D2D1_POINT_2F end = Util::FindEdgePoint(angle, rect.left, rect.top, rect.right, rect.bottom);
 
-	Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops = NULL;
+	Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops;
 
 	D2D1_GRADIENT_STOP gradientStops[2];
 	gradientStops[0].color = color1;
