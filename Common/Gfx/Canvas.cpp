@@ -309,6 +309,14 @@ bool Canvas::IsTransparentPixel(int x, int y)
 	return pixel != 0;
 }
 
+void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
+{
+	if (m_Target)
+	{
+		m_Target->GetTransform(matrix);
+	}
+}
+
 void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 {
 	m_Target->SetTransform(matrix);
@@ -321,17 +329,6 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 void Canvas::ResetTransform()
 {
 	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
-}
-
-void Canvas::RotateTransform(FLOAT angle, FLOAT cx, FLOAT cy)
-{
-	if (!m_Target) return;
-
-	D2D1::Matrix3x2F matrix;
-	m_Target->GetTransform(&matrix);
-
-	matrix = matrix * D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(cx, cy));
-	SetTransform(matrix);
 }
 
 void Canvas::PushClip(Gfx::Shape* clip)
