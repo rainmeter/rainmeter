@@ -288,13 +288,17 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 						else
 						{
 							crop.top = (imageH - imageW / meterRatio) / 2.0f;
-							crop.right = (imageH + imageW / meterRatio) / 2.0f;
+							crop.bottom = (imageH + imageW / meterRatio) / 2.0f;
 						}
 					}
 				}
 			}
 
-			canvas.DrawBitmap(drawBitmap, meterRect, crop);
+			D2D1_RECT_F rect = meterRect;
+			rect.right = rect.left + drawW;
+			rect.bottom = rect.top + drawH;
+
+			canvas.DrawBitmap(drawBitmap, rect, crop);
 		}
 		else
 		{
