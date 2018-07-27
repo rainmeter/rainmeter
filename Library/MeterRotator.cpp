@@ -141,6 +141,8 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 
 		const D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, width, height);
 		canvas.DrawBitmap(drawBitmap, rect, rect);
+
+		canvas.ResetTransform();
 	}
 
 	return true;
