@@ -62,9 +62,9 @@ public:
 
 	bool IsTransparentPixel(int x, int y);
 
+	void GetTransform(D2D1_MATRIX_3X2_F* matrix);
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
-	void RotateTransform(FLOAT angle, FLOAT cx, FLOAT cy);
 
 	void PushClip(Gfx::Shape* clip);
 	void PopClip();
