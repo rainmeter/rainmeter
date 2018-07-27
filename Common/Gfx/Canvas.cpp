@@ -549,7 +549,7 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, con
 			rSrc.left -= m_MaxBitmapSize;
 		}
 
-		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rSrc);
+		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, &rSrc);
 	}
 }
 
@@ -585,11 +585,11 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 	if (!bitmap || !maskBitmap) return;
 
 	// Create bitmap brush from original |bitmap|.
-	Microsoft::WRL::ComPtr<ID2D1BitmapBrush> brush;
-	D2D1_BITMAP_BRUSH_PROPERTIES propertiesXClampYClamp = D2D1::BitmapBrushProperties(
+	Microsoft::WRL::ComPtr<ID2D1BitmapBrush1> brush;
+	D2D1_BITMAP_BRUSH_PROPERTIES1 propertiesXClampYClamp = D2D1::BitmapBrushProperties1(
 		D2D1_EXTEND_MODE_CLAMP,
 		D2D1_EXTEND_MODE_CLAMP,
-		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+		D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
