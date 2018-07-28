@@ -293,7 +293,13 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 {
 	const auto& crop = m_Options.m_Crop;
-	if (crop.right - crop.left > 0.0f && crop.bottom - crop.top > 0.0f)
+
+	if (crop.right == -1.0f && crop.left == -1.0f && crop.top == -1.0f && crop.bottom == -1.0f)
+	{
+		return;
+	}
+
+	if (crop.right - crop.left >= 0.0f && crop.bottom - crop.top >= 0.0f)
 	{
 		const FLOAT imageW = (FLOAT)m_Bitmap->GetBitmap()->GetWidth();
 		const FLOAT imageH = (FLOAT)m_Bitmap->GetBitmap()->GetHeight();
