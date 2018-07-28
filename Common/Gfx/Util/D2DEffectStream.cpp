@@ -125,6 +125,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	const auto size = GetSize(canvas);
+	if (size.width < 0 || size.height < 0) return nullptr;
 	d2dbitmap->m_Width = (UINT)size.width;
 	d2dbitmap->m_Height = (UINT)size.height;
 
