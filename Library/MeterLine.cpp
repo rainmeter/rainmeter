@@ -322,6 +322,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 					calcX(X);
 
 					path.AddLine(X, (FLOAT)j);
+					path.AddLine(X, (FLOAT)j);
 				}
 			}
 			else
@@ -333,6 +334,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
+					path.AddLine(X, (FLOAT)(j - 2));
 					path.AddLine(X, (FLOAT)(j - 2));
 				}
 			}
@@ -384,6 +386,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 					calcY(Y);
 
 					path.AddLine((FLOAT)j, Y);
+					path.AddLine((FLOAT)j, Y);
 				}
 			}
 			else
@@ -395,6 +398,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
+					path.AddLine((FLOAT)(j - 2), Y);
 					path.AddLine((FLOAT)(j - 2), Y);
 				}
 			}
