@@ -56,7 +56,6 @@
 
 #define EMPTY_TIMEOUT			0.500
 #define DEVICE_TIMEOUT			1.500
-#define QUERY_TIMEOUT			(1.0 / 60)
 
 struct Measure
 {
@@ -534,16 +533,24 @@ PLUGIN_EXPORT double Update (void* data)
 	QueryPerformanceCounter(&pcCur);
 
 	// query the buffer
-	if (m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= QUERY_TIMEOUT)
+	if (m->m_clCapture)
 	{
-		BYTE* buffer;
 		UINT32 nFrames;
+
+		// get number of frames in next capture
+		m->m_clCapture->GetNextPacketSize(&nFrames);
+
+		if (nFrames != 0)
+		{
+		BYTE* buffer;
 		DWORD flags;
 		UINT64 pos;
 		HRESULT hr;
 
 		while ((hr = m->m_clCapture->GetBuffer(&buffer, &nFrames, &flags, &pos, NULL)) == S_OK)
 		{
+			if (m->m_type == Measure::TYPE_RMS || m->m_type == Measure::TYPE_PEAK)
+			{
 			// measure RMS and peak levels
 			float rms[Measure::MAX_CHANNELS];
 			float peak[Measure::MAX_CHANNELS];
@@ -655,6 +662,8 @@ PLUGIN_EXPORT double Update (void* data)
 				m->m_peak[iChan] = peak[iChan];
 			}
 
+			}
+
 			// process FFTs (optional)
 			if(m->m_fftSize)
 			{
@@ -755,20 +764,6 @@ PLUGIN_EXPORT double Update (void* data)
 		// detect device disconnection
 		switch(hr)
 		{
-		case AUDCLNT_S_BUFFER_EMPTY:
-			// Windows bug: sometimes when shutting down a playback application, it doesn't zero
-			// out the buffer.  Detect this by checking the time since the last successful fill
-			// and resetting the volumes if past the threshold.
-			if (((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
-			{
-				for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-				{
-					m->m_rms[iChan] = 0.0;
-					m->m_peak[iChan] = 0.0;
-				}
-			}
-			break;
-
 		case AUDCLNT_E_BUFFER_ERROR:
 		case AUDCLNT_E_DEVICE_INVALIDATED:
 		case AUDCLNT_E_SERVICE_NOT_RUNNING:
@@ -778,6 +773,19 @@ PLUGIN_EXPORT double Update (void* data)
 
 		m->m_pcPoll = pcCur;
 
+		}
+
+		// Windows bug: sometimes when shutting down a playback application, it doesn't zero
+		// out the buffer.  Detect this by checking the time since the last successful fill
+		// and resetting the volumes if past the threshold.
+		else if ((m->m_type == Measure::TYPE_RMS || m->m_type == Measure::TYPE_PEAK) && ((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
+		{
+			for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+			{
+				m->m_rms[iChan] = 0.0;
+				m->m_peak[iChan] = 0.0;
+			}
+		}
 	}
 	else if (!m->m_parent && !m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= DEVICE_TIMEOUT)
 	{
