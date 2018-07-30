@@ -16,6 +16,7 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
+	m_MultiThreaded(false),
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
@@ -69,7 +70,10 @@ void MeasurePlugin::UpdateValue()
 		}
 
 		// Reset to default
-		System::ResetWorkingDirectory();
+		if (!m_MultiThreaded)
+		{
+			System::ResetWorkingDirectory();
+		}
 	}
 }
 
@@ -104,6 +108,11 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else
 	{
 		pluginName = plugin;
+	}
+
+	if (_wcsnicmp(pluginName.c_str(), L"ACTIONTIMER", 11) == 0)
+	{
+		m_MultiThreaded = true;
 	}
 
 	// First try from program path
@@ -184,7 +193,10 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Reset to default
 	SetDllDirectory(L"");
-	System::ResetWorkingDirectory();
+	if (!m_MultiThreaded)
+	{
+		System::ResetWorkingDirectory();
+	}
 
 	++id;
 }
