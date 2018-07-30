@@ -64,14 +64,14 @@ private:
 	void UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type);
 	void UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern, const FLOAT leading,
 		const FLOAT trailing, const FLOAT advanceWidth);
-	void UpdateInlineColor(const size_t& index, const std::wstring pattern, const Gdiplus::Color color);
+	void UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color);
 	void UpdateInlineFace(const size_t& index, const std::wstring pattern, const WCHAR* face);
 	void UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 		const std::vector<std::wstring> args, const bool altGamma);
 	void UpdateInlineItalic(const size_t& index, const std::wstring pattern);
 	void UpdateInlineOblique(const size_t& index, const std::wstring pattern);
 	void UpdateInlineShadow(const size_t& index, const std::wstring pattern, const FLOAT blur,
-		const D2D1_POINT_2F offset, const Gdiplus::Color color);
+		const D2D1_POINT_2F offset, const D2D1_COLOR_F& color);
 	void UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size);
 	void UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
 	void UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern);

@@ -7,10 +7,12 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=4
-set VERSION_MINOR=2
+set VERSION_MINOR=3
 set VERSION_SUBMINOR=0
 set VERSION_REVISION=0
 set ISBETA=true
+set VERSION_HASH=0
+set BUILD_TIME=%date:~-4%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 if "%1" == "RELEASE" set ISBETA=false
 if "%1" == "BUILDVERSION" goto BUILDVERSION
@@ -50,11 +52,16 @@ set GIT=%LOCALAPPDATA%\Programs\Git\bin\GIT.exe
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
-:: We really shouldn't be including revs from gh-pages, but it is too late to
-:: change that now. We are also using `gh-page[s]` instead of just `gh-pages`
-:: because Git adds ´/*´ to the end of the pattern unless it contains a
-:: special glob char like [.
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-page[s] --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
+:: Prior to revision 3111, we added the commits from both the master and gh-pages branches
+:: together to create the revision number. Revisions made after 3111 (97a59d91) will no longer
+:: contain the count from the gh-pages branch, and will only include the number of commits from
+:: the master branch. This change will reset the revision number back to 3086 for the start of
+:: the 4.3 beta cycle. Also, we use `maste[r]` instead of just `master` because git adds ´/*´ to
+:: the end of the pattern unless it contains a special glob char like [.
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
+
+:: Get hash of latest commit
+for /f "usebackq delims= " %%H in (`"%GIT%" rev-parse --short origin/master`) do set VERSION_HASH=%%H
 
 :UPDATEVERSION
 
@@ -71,6 +78,8 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo #define STRPRODUCTVER STRFILEVER
 	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
+	echo #define COMMIT_HASH L"%VERSION_HASH%"
+	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo const int revision_number = %VERSION_REVISION%;
 	echo const bool revision_beta = %ISBETA%;
 )
@@ -139,6 +148,7 @@ if "%1" == "BUILDLANGUAGES" (
 )
 
 :: Sign binaries
+TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
@@ -168,6 +178,7 @@ if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & goto END
 
 :: Sign installer
+TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
 	%SIGNTOOL_SHA1% %INSTALLER_NAME% > BuildLog.txt

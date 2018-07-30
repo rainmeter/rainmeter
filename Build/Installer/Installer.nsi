@@ -573,6 +573,11 @@ SkipIniMove:
 !ifdef INCLUDEFILES
 	File "..\..\Application\Rainmeter.exe.config"
 
+	File "..\VisualElements\Rainmeter.VisualElementsManifest.xml"
+	SetOutPath "$INSTDIR\VisualElements"
+	File "..\VisualElements\Rainmeter_600.png"
+	File "..\VisualElements\Rainmeter_176.png"
+
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32" "x86"
 	${Else}
@@ -727,6 +732,7 @@ Function HandlePlugins
 	${AndIf} $R7 != "RunCommand.dll"
 	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "SysInfo.dll"
+	${AndIf} $R7 != "UsageMonitor.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
 	${AndIf} $R7 != "WifiStatus.dll"
 	${AndIf} $R7 != "Win7AudioPlugin.dll"
@@ -839,9 +845,11 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Plugins"
 	RMDir /r "$INSTDIR\Runtime"
 	RMDir /r "$INSTDIR\Skins"
+	RMDir /r "$INSTRDIR\VisualElements"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"
+	Delete "$INSTDIR\Rainmeter.VisualElementsManifest.xml"
 	Delete "$INSTDIR\SkinInstaller.exe"
 	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\uninst.exe"

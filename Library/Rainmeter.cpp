@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "Rainmeter.h"
@@ -152,7 +153,7 @@ Rainmeter& Rainmeter::GetInstance()
 */
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
-	if (!IsWindows7SP1OrGreater() || !Gfx::Canvas::Initialize())
+	if (!IsWindows7SP1OrGreater())
 	{
 		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
@@ -204,6 +205,18 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
 			PathUtil::ExpandEnvironmentVariables(m_IniFile);
 			bDefaultIniLocation = true;
+		}
+	}
+
+	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
+
+	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+	{
+		SetHardwareAccelerated(false);
+		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+		{
+			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			return 1;
 		}
 	}
 
@@ -262,6 +275,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	{
 		CreateOptionsFile();
 	}
+
+	// Check encoding of settings file
+	std::wstring encodingMsg;
+	CheckSettingsFileEncoding(m_IniFile, &encodingMsg);
 
 	bool dataFileCreated = false;
 	if (_waccess(m_DataFile.c_str(), 0) == -1)
@@ -355,9 +372,46 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	delete [] buffer;
 	buffer = nullptr;
 
+	// Build.bat will write to the BUILD_TIME macro when the installer is created.
+	// For local builds, just use the current date and time as the build time.
+#ifdef BUILD_TIME
+	m_BuildTime = BUILD_TIME;
+#else
+	// For local builds, just create use the current date/time
+	if (m_BuildTime.empty())
+	{
+		time_t now;
+		time(&now);
+		WCHAR timestamp[MAX_PATH];
+		wcsftime(timestamp, MAX_PATH, L"%F %T", gmtime(&now));
+		m_BuildTime = timestamp;
+	}
+#endif // BUILD_TIME
+
+	WCHAR lang[MAX_PATH];
+	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	LogNoticeF(L"Rainmeter %s.%i%s (%s)", APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
+	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
+	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
+
+#ifdef COMMIT_HASH
+	LogNoticeF(L"Commit Hash: %s", COMMIT_HASH);
+#else
+	LogNoticeF(L"Commit Hash: %s", L"<Local build>");
+#endif // COMMIT_HASH
+
+	LogNoticeF(L"%s - %s (%lu)", Platform::GetPlatformFriendlyName().c_str(), lang, GetUserDefaultLCID());
+
+	if (!encodingMsg.empty())
+	{
+		// Log information about any encoding changes to |iniFile|
+		LogNotice(encodingMsg.c_str());
+	}
+
 	LogNoticeF(L"Path: %s", m_Path.c_str());
-	LogNoticeF(L"IniFile: %s", iniFile);
 	LogNoticeF(L"SkinPath: %s", m_SkinPath.c_str());
+	LogNoticeF(L"SettingsPath: %s", m_SettingsPath.c_str());
+	LogNoticeF(L"IniFile: %s", iniFile);
 
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
@@ -989,6 +1043,12 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 	}
 }
 
+void Rainmeter::SetHardwareAccelerated(bool hardwareAccelerated)
+{
+	m_HardwareAccelerated = hardwareAccelerated;
+	WritePrivateProfileString(L"Rainmeter", L"HardwareAcceleration", m_HardwareAccelerated ? L"1" : L"0", m_IniFile.c_str());
+}
+
 void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
@@ -1340,7 +1400,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
-	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", Color::MakeARGB(90, 255, 0, 0));
+	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::Red, 90.0f / 255.0f));  // RGBA: 255,0,0,90
 
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
@@ -1518,6 +1578,15 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 	if (_waccess(layout.c_str(), 0) == -1)
 	{
 		return false;
+	}
+
+	// Check encoding of layout
+	std::wstring msg;
+	CheckSettingsFileEncoding(layout, &msg);
+	if (!msg.empty())
+	{
+		// Log information about any encoding changes to |layout|
+		LogNotice(msg.c_str());
 	}
 
 	DeleteAllUnmanagedSkins();
@@ -1869,5 +1938,59 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		}
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
+	}
+}
+
+/*
+** Checks and converts (if necessary) the encoding of a settings file (Rainmeter.ini).
+**
+*/
+void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log)
+{
+	size_t size = 0;
+	auto raw = FileUtil::ReadFullFile(iniFile, &size);
+	if (!raw) return;
+
+	auto encoding = FileUtil::GetEncoding(raw.get(), size);
+	if (encoding != FileUtil::Encoding::UTF16LE)
+	{
+		// Make a backup of the settings file
+		std::wstring layoutPath = GetLayoutPath();
+		CreateDirectory(layoutPath.c_str(), nullptr);
+		System::CopyFiles(iniFile, layoutPath);
+
+		std::wstring wide;
+		std::string narrow = (char*)raw.get();
+
+		if (encoding == FileUtil::Encoding::UTF8)
+		{
+			narrow.erase(0, 3);				// Remove BOM
+			wide = StringUtil::WidenUTF8(narrow);
+		}
+		else // if (encoding == FileUtil::Encoding::ANSI)
+		{
+			// ANSI does not have a BOM
+			wide = StringUtil::Widen(narrow);
+		}
+
+		FILE* file;
+		if (_wfopen_s(&file, iniFile.c_str(), L"wbc, ccs=UTF-16LE") == 0)
+		{
+			fputs("\xFF\xFE", file);		// Write BOM
+			fputws(wide.c_str(), file);		// Write converted text
+			fflush(file);
+			fclose(file);
+
+			// Since the options in the settings file may not have been read by Rainmeter,
+			// logging may be enabled at a later time. Set a log message here and log it later.
+			if (log)
+			{
+				*log = L"Settings file \"";
+				*log += iniFile;
+				*log += (encoding == FileUtil::Encoding::UTF8) ? L"\" (UTF-8" : L"\" (ANSI";
+				*log += L") encoding converted to UTF-16LE. A backup will be saved to: ";
+				*log += layoutPath;
+			}
+		}
 	}
 }

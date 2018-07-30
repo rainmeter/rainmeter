@@ -15,6 +15,7 @@
 #include <string>
 #include "CommandHandler.h"
 #include "ContextMenu.h"
+#include "DialogManage.h"
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
@@ -111,6 +112,9 @@ public:
 	void SetSkinEditor(const std::wstring& path);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
+	bool IsHardwareAccelerated() { return m_HardwareAccelerated; }
+	void SetHardwareAccelerated(bool hardwareAccelerated);
+
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
@@ -126,7 +130,6 @@ public:
 	void EditSkinFile(const std::wstring& name, const std::wstring& iniFile);
 	void OpenSkinFolder(const std::wstring& name = std::wstring());
 
-	void UpdateStats();
 	void ReadStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
@@ -136,7 +139,7 @@ public:
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
 	bool GetLanguageStatus() { return m_LanguageObsolete; }
-	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; }
+	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; DialogManage::UpdateLanguageStatus(); }
 
 	void ShowLogFile();
 
@@ -173,7 +176,9 @@ public:
 	bool IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename);
 	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
 
-	Gdiplus::Color& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
+
+	const std::wstring& GetBuildTime() { return m_BuildTime; }
 
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
@@ -208,6 +213,7 @@ private:
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
 	void TestSettingsFile(bool bDefaultIniLocation);
+	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
 	TrayIcon* m_TrayIcon;
 
@@ -239,6 +245,8 @@ private:
 	bool m_NewVersion;
 	bool m_LanguageObsolete;
 
+	bool m_HardwareAccelerated;
+
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
 	std::map<UINT, RECT> m_DesktopWorkAreas;
@@ -252,7 +260,7 @@ private:
 
 	std::wstring m_SkinEditor;
 
-	Gdiplus::Color m_DefaultSelectedColor;
+	D2D1_COLOR_F m_DefaultSelectedColor;
 
 	CommandHandler m_CommandHandler;
 	ContextMenu m_ContextMenu;
@@ -270,6 +278,8 @@ private:
 	ULONG_PTR m_GDIplusToken;
 
 	GlobalOptions m_GlobalOptions;
+
+	std::wstring m_BuildTime;
 };
 
 // Convenience function.

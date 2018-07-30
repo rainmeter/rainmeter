@@ -30,15 +30,6 @@
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapDIB.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapLockDIB.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Util\WICBitmapLockGDIP.cpp">
-      <Filter>Gfx\Util</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp">
       <Filter>Gfx</Filter>
@@ -119,6 +110,15 @@
     <ClCompile Include="Gfx\Shapes\Path.cpp">
       <Filter>Gfx\Shapes</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\D2DBitmap.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -150,15 +150,6 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapDIB.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapLockDIB.h">
-      <Filter>Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h" />
@@ -241,6 +232,15 @@
     </ClInclude>
     <ClInclude Include="Gfx\Shapes\Path.h">
       <Filter>Gfx\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\D2DBitmapLoader.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\D2DBitmap.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\D2DEffectStream.h">
+      <Filter>Gfx\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

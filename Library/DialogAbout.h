@@ -138,12 +138,16 @@ private:
 		{
 			Id_AppIcon = 400,
 			Id_VersionLabel,
+			Id_LanguageLabel,
+			Id_TimestampLabel,
+			Id_BuildHashLabel,
 			Id_HomeLink,
 			Id_LicenseLink,
 			Id_WinVerLabel,
-			Id_PathLabel,
-			Id_IniFileLabel,
-			Id_SkinPathLabel,
+			Id_PathLink,
+			Id_SkinPathLink,
+			Id_SettingsPathLink,
+			Id_IniFileLink,
 			Id_CopyButton
 		};
 

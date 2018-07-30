@@ -17,20 +17,20 @@ namespace Gfx {
 class TextInlineFormat_Color final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Color(const std::wstring& pattern, const Gdiplus::Color& color);
+	TextInlineFormat_Color(const std::wstring& pattern, const D2D1_COLOR_F& color);
 	virtual ~TextInlineFormat_Color();
 	virtual InlineType GetType() override { return InlineType::Color; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
 	void ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
 
-	bool CompareAndUpdateProperties(const std::wstring& pattern, const Gdiplus::Color& color);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, const D2D1_COLOR_F& color);
 
 private:
 	TextInlineFormat_Color();
 	TextInlineFormat_Color(const TextInlineFormat_Color& other) = delete;
 
-	Gdiplus::Color m_Color;
+	D2D1_COLOR_F m_Color;
 };
 
 }  // namespace Gfx

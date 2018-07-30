@@ -201,8 +201,13 @@ void GetParentFolder(std::wstring& path)
 	}
 }
 
-bool ShowContextMenu(HWND hwnd, std::wstring& path)
+bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 {
+	// Convert any relative paths
+	WCHAR buffer[MAX_PATH];
+	if (!_wfullpath(buffer, path.c_str(), MAX_PATH))
+		return false;
+
 	POINT pos;
 	GetCursorPos(&pos);
 
@@ -218,7 +223,7 @@ bool ShowContextMenu(HWND hwnd, std::wstring& path)
 	}
 
 	ITEMIDLIST* id = nullptr;
-	HRESULT result = SHParseDisplayName(path.c_str(), nullptr, &id, 0, nullptr);
+	HRESULT result = SHParseDisplayName(buffer, nullptr, &id, 0, nullptr);
 	if (!SUCCEEDED(result) || !id)
 		return false;
 

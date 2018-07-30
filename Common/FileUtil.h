@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2015 Rainmeter Project Developers
+/* Copyright (C) 2015 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -12,6 +12,15 @@
 #include <memory>
 
 namespace FileUtil {
+
+enum class Encoding : BYTE
+{
+	ANSI,
+	UTF8,
+	UTF16LE
+};
+
+Encoding GetEncoding(const BYTE* buffer, const size_t& size);
 
 /*
 ** Reads and allocates memory for file in path. Returns unique_ptr containing addres to

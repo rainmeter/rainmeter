@@ -60,6 +60,7 @@ private:
 		{
 			UINT m_ID;
 			bool m_Update2;
+			bool m_MultiThreaded;
 		};
 
 		struct

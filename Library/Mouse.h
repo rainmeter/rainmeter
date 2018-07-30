@@ -37,6 +37,13 @@ enum MOUSEACTION
 	MOUSEACTION_COUNT
 };
 
+enum MOUSEACTIONSTATE
+{
+	MOUSEACTION_ENABLED,
+	MOUSEACTION_DISABLED,
+	MOUSEACTION_CLEARED
+};
+
 enum MOUSECURSOR
 {
 	MOUSECURSOR_ARROW,
@@ -47,6 +54,15 @@ enum MOUSECURSOR
 	MOUSECURSOR_CROSS,
 	MOUSECURSOR_PEN,
 	MOUSECURSOR_CUSTOM
+};
+
+struct MouseAction
+{
+	std::wstring action;
+	MOUSEACTIONSTATE state;
+	MOUSEACTIONSTATE previousState;
+
+	MouseAction() : state(MOUSEACTION_ENABLED), previousState(MOUSEACTION_DISABLED) { }
 };
 
 class Mouse
@@ -61,12 +77,17 @@ public:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
-	HCURSOR GetCursor() const;
-	bool GetCursorState() const {return m_CursorState; }
+	HCURSOR GetCursor(bool isButton = false) const;
+	bool GetCursorState() const { return m_CursorState; }
 
 	void DestroyCustomCursor();
 
-	bool HasActionCommand(MOUSEACTION action) const { return !m_MouseActions[action].empty(); }
+	void DisableMouseAction(const std::wstring& options);
+	void ClearMouseAction(const std::wstring& options);
+	void EnableMouseAction(const std::wstring& options);
+	void ToggleMouseAction(const std::wstring& options);
+
+	bool HasActionCommand(MOUSEACTION action) const { return !GetAction(action).empty(); }
 	std::wstring GetActionCommand(MOUSEACTION action) const;
 
 	bool HasButtonAction() const
@@ -100,34 +121,36 @@ public:
 			);
 	}
 
-	const std::wstring& GetLeftUpAction() const            { return m_MouseActions[MOUSE_LMB_UP]; }
-	const std::wstring& GetLeftDownAction() const          { return m_MouseActions[MOUSE_LMB_DOWN]; }
-	const std::wstring& GetLeftDoubleClickAction() const   { return m_MouseActions[MOUSE_LMB_DBLCLK]; }
-	const std::wstring& GetMiddleUpAction() const          { return m_MouseActions[MOUSE_MMB_UP]; }
-	const std::wstring& GetMiddleDownAction() const        { return m_MouseActions[MOUSE_MMB_DOWN]; }
-	const std::wstring& GetMiddleDoubleClickAction() const { return m_MouseActions[MOUSE_MMB_DBLCLK]; }
-	const std::wstring& GetRightUpAction() const           { return m_MouseActions[MOUSE_RMB_UP]; }
-	const std::wstring& GetRightDownAction() const         { return m_MouseActions[MOUSE_RMB_DOWN]; }
-	const std::wstring& GetRightDoubleClickAction() const  { return m_MouseActions[MOUSE_RMB_DBLCLK]; }
-	const std::wstring& GetX1UpAction() const              { return m_MouseActions[MOUSE_X1MB_UP]; }
-	const std::wstring& GetX1DownAction() const            { return m_MouseActions[MOUSE_X1MB_DOWN]; }
-	const std::wstring& GetX1DoubleClickAction() const     { return m_MouseActions[MOUSE_X1MB_DBLCLK]; }
-	const std::wstring& GetX2UpAction() const              { return m_MouseActions[MOUSE_X2MB_UP]; }
-	const std::wstring& GetX2DownAction() const            { return m_MouseActions[MOUSE_X2MB_DOWN]; }
-	const std::wstring& GetX2DoubleClickAction() const     { return m_MouseActions[MOUSE_X2MB_DBLCLK]; }
+	const std::wstring& GetLeftUpAction() const            { return GetAction(MOUSE_LMB_UP); }
+	const std::wstring& GetLeftDownAction() const          { return GetAction(MOUSE_LMB_DOWN); }
+	const std::wstring& GetLeftDoubleClickAction() const   { return GetAction(MOUSE_LMB_DBLCLK); }
+	const std::wstring& GetMiddleUpAction() const          { return GetAction(MOUSE_MMB_UP); }
+	const std::wstring& GetMiddleDownAction() const        { return GetAction(MOUSE_MMB_DOWN); }
+	const std::wstring& GetMiddleDoubleClickAction() const { return GetAction(MOUSE_MMB_DBLCLK); }
+	const std::wstring& GetRightUpAction() const           { return GetAction(MOUSE_RMB_UP); }
+	const std::wstring& GetRightDownAction() const         { return GetAction(MOUSE_RMB_DOWN); }
+	const std::wstring& GetRightDoubleClickAction() const  { return GetAction(MOUSE_RMB_DBLCLK); }
+	const std::wstring& GetX1UpAction() const              { return GetAction(MOUSE_X1MB_UP); }
+	const std::wstring& GetX1DownAction() const            { return GetAction(MOUSE_X1MB_DOWN); }
+	const std::wstring& GetX1DoubleClickAction() const     { return GetAction(MOUSE_X1MB_DBLCLK); }
+	const std::wstring& GetX2UpAction() const              { return GetAction(MOUSE_X2MB_UP); }
+	const std::wstring& GetX2DownAction() const            { return GetAction(MOUSE_X2MB_DOWN); }
+	const std::wstring& GetX2DoubleClickAction() const     { return GetAction(MOUSE_X2MB_DBLCLK); }
 
-	const std::wstring& GetMouseScrollUpAction() const     { return m_MouseActions[MOUSE_MW_UP]; }
-	const std::wstring& GetMouseScrollDownAction() const   { return m_MouseActions[MOUSE_MW_DOWN]; }
-	const std::wstring& GetMouseScrollLeftAction() const   { return m_MouseActions[MOUSE_MW_LEFT]; }
-	const std::wstring& GetMouseScrollRightAction() const  { return m_MouseActions[MOUSE_MW_RIGHT]; }
+	const std::wstring& GetMouseScrollUpAction() const     { return GetAction(MOUSE_MW_UP); }
+	const std::wstring& GetMouseScrollDownAction() const   { return GetAction(MOUSE_MW_DOWN); }
+	const std::wstring& GetMouseScrollLeftAction() const   { return GetAction(MOUSE_MW_LEFT); }
+	const std::wstring& GetMouseScrollRightAction() const  { return GetAction(MOUSE_MW_RIGHT); }
 
-	const std::wstring& GetOverAction() const              { return m_MouseActions[MOUSE_OVER]; }
-	const std::wstring& GetLeaveAction() const             { return m_MouseActions[MOUSE_LEAVE]; }
+	const std::wstring& GetOverAction() const              { return GetAction(MOUSE_OVER); }
+	const std::wstring& GetLeaveAction() const             { return GetAction(MOUSE_LEAVE); }
 
 private:
 	void ReplaceMouseVariables(std::wstring& result) const;
+	const std::wstring& GetAction(MOUSEACTION action) const;
+	std::vector<MOUSEACTION> Translate(const std::wstring& options) const;
 
-	std::wstring m_MouseActions[MOUSEACTION_COUNT];
+	MouseAction m_MouseActions[MOUSEACTION_COUNT];
 
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;

@@ -19,8 +19,6 @@
 #include "Meter.h"
 #include "resource.h"
 
-using namespace Gdiplus;
-
 namespace {
 
 struct PairInfo
@@ -1158,9 +1156,9 @@ Measure* ConfigParser::GetMeasure(const std::wstring& name)
 	return nullptr;
 }
 
-std::vector<Gdiplus::REAL> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
-	std::vector<Gdiplus::REAL> result;
+	std::vector<FLOAT> result;
 	const std::wstring& str = ReadString(section, key, L"");
 	if (!str.empty())
 	{
@@ -1174,7 +1172,7 @@ std::vector<Gdiplus::REAL> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key
 
 			pos = str.find_first_of(delimiter, lastPos + 1);
 
-			result.push_back((Gdiplus::REAL)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
+			result.push_back((FLOAT)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
 			if (pos == std::wstring::npos) break;
 
 			++pos;
@@ -1332,14 +1330,14 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 	return false;
 }
 
-ARGB ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, ARGB defValue)
+D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseColor(result.c_str());
 }
 
-Rect ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const Rect& defValue)
+D2D1_RECT_F ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1638,7 +1636,7 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
 			if (start <= end)
 			{
-				tokens.push_back(ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
+				tokens.push_back((T)ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
 			}
 		};
 
@@ -1683,7 +1681,7 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 ** hex-value.
 **
 */
-ARGB ConfigParser::ParseColor(LPCTSTR string)
+D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR string)
 {
 	int R = 255, G = 255, B = 255, A = 255;
 
@@ -1705,18 +1703,20 @@ ARGB ConfigParser::ParseColor(LPCTSTR string)
 		}
 	}
 
-	return Color::MakeARGB(A, R, G, B);
+	return D2D1::ColorF(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
 }
 
 /*
-** Helper method that parses the Gdiplus::Rect values from the given string.
+** Helper method that parses the D2D1::RectF values from the given string.
 ** The rect can be supplied as four comma separated values (X/Y/Width/Height).
 **
 */
-Rect ConfigParser::ParseRect(LPCTSTR string)
+D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR string)
 {
-	Rect r;
-	ParseInt4(string, r.X, r.Y, r.Width, r.Height);
+	D2D1_RECT_F r;
+	ParseInt4(string, r.left, r.top, r.right, r.bottom);
+	r.right += r.left;
+	r.bottom += r.top;
 	return r;
 }
 

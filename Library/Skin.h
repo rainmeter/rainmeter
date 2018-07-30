@@ -87,6 +87,7 @@ enum RESIZEMODE
 class Rainmeter;
 class Measure;
 class Meter;
+class GeneralImage;
 
 namespace Gfx {
 class FontCollection;
@@ -112,6 +113,10 @@ public:
 	void ToggleMeter(const std::wstring& name, bool group = false);
 	void MoveMeter(const std::wstring& name, int x, int y);
 	void UpdateMeter(const std::wstring& name, bool group = false);
+	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
+	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
+	void EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
+	void ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
 	void DisableMeasure(const std::wstring& name, bool group = false);
 	void EnableMeasure(const std::wstring& name, bool group = false);
 	void ToggleMeasure(const std::wstring& name, bool group = false);
@@ -331,7 +336,7 @@ private:
 
 	ConfigParser m_Parser;
 
-	Gdiplus::Bitmap* m_Background;
+	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;
@@ -398,9 +403,9 @@ private:
 	bool m_Dragging;
 	bool m_Dragged;
 	BGMODE m_BackgroundMode;
-	Gdiplus::Color m_SolidColor;
-	Gdiplus::Color m_SolidColor2;
-	Gdiplus::REAL m_SolidAngle;
+	D2D1_COLOR_F m_SolidColor;
+	D2D1_COLOR_F m_SolidColor2;
+	FLOAT m_SolidAngle;
 	BEVELTYPE m_SolidBevel;
 
 	bool m_OldWindowDraggable;
@@ -408,7 +413,7 @@ private:
 	bool m_OldClickThrough;
 
 	bool m_Selected;
-	Gdiplus::Color m_SelectedColor;
+	D2D1_COLOR_F m_SelectedColor;
 
 	Group m_DragGroup;
 

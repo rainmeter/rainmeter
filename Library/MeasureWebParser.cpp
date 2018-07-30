@@ -74,7 +74,7 @@ public:
 			//LogDebugF(L"* ADD: key=%s, handle=0x%p, ref=new, agent=%s", key.c_str(), cache->GetCache(), agent.c_str());
 			return cache->GetCache();
 		}
-			
+
 		// Use proxy cache
 		cache->AddRef();
 		//LogDebugF(L"* ADD-REF: key=%s, handle=0x%p, global=%i, ref=%i, agent=%s",
@@ -147,7 +147,7 @@ private:
 					proxyName,
 					proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
 					handle,
-					userAgent);				
+					userAgent);
 			}
 		}
 		else

@@ -11,8 +11,6 @@
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
 enum BUTTON_STATE
 {
 	BUTTON_STATE_NORMAL,
@@ -22,8 +20,7 @@ enum BUTTON_STATE
 
 MeterButton::MeterButton(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ButtonImage", nullptr, true, skin),
-	m_NeedsReload(false),
-	m_Bitmaps(),
+	m_BitmapsRects(),
 	m_State(BUTTON_STATE_NORMAL),
 	m_Clicked(false),
 	m_Focus(false)
@@ -32,10 +29,6 @@ MeterButton::MeterButton(Skin* skin, const WCHAR* name) : Meter(skin, name),
 
 MeterButton::~MeterButton()
 {
-	for (int i = 0; i < BUTTON_FRAMES; ++i)
-	{
-		delete m_Bitmaps[i];
-	}
 }
 
 /*
@@ -46,20 +39,14 @@ void MeterButton::Initialize()
 {
 	Meter::Initialize();
 
-	for (int i = 0; i < BUTTON_FRAMES; ++i)
-	{
-		delete m_Bitmaps[i];
-		m_Bitmaps[i] = nullptr;
-	}
-
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName, m_NeedsReload);
+		m_Image.LoadImage(m_ImageName);
 
 		if (m_Image.IsLoaded())
 		{
-			Bitmap* bitmap = m_Image.GetImage();
+			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
 
 			int bitmapW = bitmap->GetWidth();
 			int bitmapH = bitmap->GetHeight();
@@ -79,19 +66,14 @@ void MeterButton::Initialize()
 			// Separate the frames
 			for (int i = 0; i < BUTTON_FRAMES; ++i)
 			{
-				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppPARGB);
-				Graphics graphics(&bitmapPart);
-				Rect r(0, 0, m_W, m_H);
-
 				if (bitmapH > bitmapW)
 				{
-					graphics.DrawImage(bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
+					m_BitmapsRects[i] = D2D1::RectF(0.0f, (FLOAT)(m_H * i), (FLOAT)m_W, (FLOAT)(m_H * (i + 1)));
 				}
 				else
 				{
-					graphics.DrawImage(bitmap, r, m_W * i, 0, m_W, m_H, UnitPixel);
+					m_BitmapsRects[i] = D2D1::RectF((FLOAT)(m_W * i), 0.0f, (FLOAT)(m_W * (i + 1)), (FLOAT)m_H);
 				}
-				m_Bitmaps[i] = new CachedBitmap(&bitmapPart, &graphics);
 			}
 
 			m_W += GetWidthPadding();
@@ -112,9 +94,6 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
-	int oldW = m_W;
-	int oldH = m_H;
-
 	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
@@ -123,28 +102,12 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
-	else
-	{
-		m_Image.ClearOptionFlags();
-	}
 
 	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
-
-		if (m_NeedsReload ||
-			m_Image.IsOptionsChanged())
-		{
-			Initialize();  // Reload the image
-		}
-		else
-		{
-			// Reset to old dimensions
-			m_W = oldW;
-			m_H = oldH;
-		}
+		Initialize();  // Reload the image
 	}
 }
 
@@ -165,16 +128,20 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	if (m_Bitmaps[m_State] == nullptr) return false;	// Unable to continue
+	const auto image = m_Image.GetImage();
+	D2D1_RECT_F meterRect = GetMeterRectPadding();
 
-	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
-	Gdiplus::Rect meterRect = GetMeterRectPadding();
-
-	// Blit the image
-	graphics.DrawCachedBitmap(m_Bitmaps[m_State], meterRect.X, meterRect.Y);
-
-	canvas.EndGdiplusContext();
+	if (image)
+	{
+		canvas.DrawBitmap(
+			image,
+			D2D1::RectF(
+				meterRect.left,
+				meterRect.top,
+				meterRect.left + (FLOAT)m_W,
+				meterRect.top + (FLOAT)m_H),
+			m_BitmapsRects[m_State]);
+	}
 
 	return true;
 }
@@ -198,10 +165,10 @@ bool MeterButton::HitTest2(int px, int py)
 	int y = GetY();
 
 	if (m_MouseOver &&
-		px >= x && px < x + m_W &&
-		py >= y && py < y + m_H)
+		px >= x && px < (x + m_W) &&
+		py >= y && py < (y + m_H))
 	{
-		if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+		if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 		{
 			return true;
 		}
@@ -209,19 +176,33 @@ bool MeterButton::HitTest2(int px, int py)
 		// Check transparent pixels
 		if (m_Image.IsLoaded())
 		{
-			Rect meterRect = GetMeterRectPadding();
-			int ix = meterRect.Width * m_State;
-			px = px - meterRect.X + ix;
-			py = py - meterRect.Y;
-			if (px >= ix && px < ix + meterRect.Width &&
-				py >= 0 && py < meterRect.Height)
+			const D2D1_RECT_F meterRect = GetMeterRectPadding();
+
+			if (Gfx::Util::RectContains(meterRect, D2D1::Point2F((FLOAT)px, (FLOAT)py)))
 			{
-				Color color;
-				Status status = m_Image.GetImage()->GetPixel(px, py, &color);
-				if (status != Ok || color.GetA() != 0)
+				const FLOAT drawW = meterRect.right - meterRect.left;
+				const FLOAT drawH = meterRect.bottom - meterRect.top;
+				px = px - (int)meterRect.left;
+				py = py - (int)meterRect.top;
+
+				auto bitmap = m_Image.GetImage();
+				if (!bitmap) return false;
+
+				const int bitmapW = bitmap->GetWidth();
+				const int bitmapH = bitmap->GetHeight();
+
+				if (bitmapW > bitmapH)
 				{
-					return true;
+					px -= (int)drawW * m_State;
 				}
+				else
+				{
+					py -= (int)drawH * m_State;
+				}
+
+				D2D1_COLOR_F color;
+				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
+				return !valid || (color.a != 0.0f);
 			}
 		}
 		else

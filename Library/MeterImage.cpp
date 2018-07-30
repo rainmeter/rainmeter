@@ -9,13 +9,10 @@
 #include "MeterImage.h"
 #include "Measure.h"
 #include "Rainmeter.h"
-#include "System.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Canvas.h"
 
-using namespace Gdiplus;
-
-TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
+GeneralImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
@@ -51,16 +48,16 @@ void MeterImage::Initialize()
 */
 void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
-	m_Image.LoadImage(imageName, bLoadAlways);
+	m_Image.LoadImage(imageName);
 
 	if (m_Image.IsLoaded())
 	{
 		bool useMaskSize = false;
-		m_MaskImage.LoadImage(m_MaskImageName, true);
+		m_MaskImage.LoadImage(m_MaskImageName);
 		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
-		Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
+		Gfx::D2DBitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
 
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
@@ -200,80 +197,71 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	if (m_Image.IsLoaded())
 	{
 		// Copy the image over the doublebuffer
-		Bitmap* drawBitmap = m_Image.GetImage();
+		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
 		
 		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
-		Gdiplus::Rect meterRect = GetMeterRectPadding();
+		D2D1_RECT_F meterRect = GetMeterRectPadding();
 
-		int drawW = meterRect.Width;
-		int drawH = meterRect.Height;
+		FLOAT drawW = meterRect.right - meterRect.left;
+		FLOAT drawH = meterRect.bottom - meterRect.top;
 
 		if (m_MaskImage.IsLoaded())
 		{
-			Bitmap* maskBitmap = m_MaskImage.GetImage();
+			Gfx::D2DBitmap* maskBitmap = m_MaskImage.GetImage();
 
 			imageW = maskBitmap->GetWidth();
 			imageH = maskBitmap->GetHeight();
-			int imageMW = drawBitmap->GetWidth();
-			int imageMH = drawBitmap->GetHeight();
+			UINT imageMW = drawBitmap->GetWidth();
+			UINT imageMH = drawBitmap->GetHeight();
 
-			int cropX = 0;
-			int cropY = 0;
-			int cropW = imageMW;
-			int cropH = imageMH;
+			D2D1_RECT_F crop = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
+			crop.right = (FLOAT)imageMW;
+			crop.bottom = (FLOAT)imageMH;
 
-			REAL imageratio = imageMW / (REAL)imageMH;
-			REAL meterRatio = meterRect.Width / (REAL)meterRect.Height;
+			const FLOAT imageratio = imageMW / (FLOAT)imageMH;
+			const FLOAT meterRatio = drawW / drawH;
 
 			if (imageratio != meterRatio)
 			{
 				if (imageratio > meterRatio)
 				{
-					cropW = (int)(imageMH * meterRatio);
-					cropX = (imageMW - cropW) / 2;
+					crop.left = (imageMW - imageMH * meterRatio) / 2.0f;
+					crop.right = (imageMW + imageMH * meterRatio) / 2.0f;
 				}
 				else
 				{
-					cropH = (int)(imageMW / meterRatio);
-					cropY = (imageMH - cropH) / 2;
+					crop.top = (imageMH - imageMW / meterRatio) / 2.0f;
+					crop.bottom = (imageMH + imageMW / meterRatio) / 2.0f;
 				}
 			}
 
-			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Gdiplus::Rect(cropX, cropY, cropW, cropH));
+			canvas.DrawMaskedBitmap(
+				drawBitmap, maskBitmap, meterRect, D2D1::RectF(0.0f, 0.0f, (FLOAT)imageW, (FLOAT)imageH), crop);
 		}
 
 		else if (drawW == imageW && drawH == imageH &&
 			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0)
 		{
-			canvas.DrawBitmap(drawBitmap, Rect(meterRect.X, meterRect.Y, drawW, drawH), Rect(0, 0, imageW, imageH));
+			canvas.DrawBitmap(drawBitmap, meterRect, D2D1::RectF(0.0f, 0.0f, drawW, drawH));
 		}
 		else if (m_DrawMode == DRAWMODE_TILE)
 		{
-			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
-
-			ImageAttributes imgAttr;
-			imgAttr.SetWrapMode(WrapModeTile);
-
-			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
-
-			canvas.EndGdiplusContext();
+			canvas.DrawTiledBitmap(drawBitmap, meterRect, D2D1::RectF(0.0f, 0.0f, drawW, drawH));
 		}
 		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{
-			int cropX = 0;
-			int cropY = 0;
-			int cropW = imageW;
-			int cropH = imageH;
+			D2D1_RECT_F crop = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
+			crop.right = (FLOAT)imageW;
+			crop.bottom = (FLOAT)imageH;
 
 			if (m_WDefined && m_HDefined)
 			{
-				REAL imageRatio = imageW / (REAL)imageH;
-				REAL meterRatio = meterRect.Width / (REAL)meterRect.Height;
+				FLOAT imageRatio = imageW / (FLOAT)imageH;
+				FLOAT meterRatio = drawW / drawH;
 
 				if (imageRatio != meterRatio)
 				{
@@ -281,33 +269,36 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 					{
 						if (imageRatio > meterRatio)
 						{
-							drawH = meterRect.Width * imageH / imageW;
-							meterRect.Y += (meterRect.Height - drawH) / 2;
+							drawH = drawW * imageH / imageW;
+							meterRect.top += (meterRect.bottom - meterRect.top - drawH) / 2.0f;
 						}
 						else
 						{
-							drawW = meterRect.Height * imageW / imageH;
-							meterRect.X += (meterRect.Width - drawW) / 2;
+							drawW = drawH * imageW / imageH;
+							meterRect.left += (meterRect.right - meterRect.left - drawW) / 2.0f;
 						}
 					}
 					else
 					{
 						if (imageRatio > meterRatio)
 						{
-							cropW = (int)(imageH * meterRatio);
-							cropX = (imageW - cropW) / 2;
+							crop.left = (imageW - imageH * meterRatio) / 2.0f;
+							crop.right = (imageW + imageH * meterRatio) / 2.0f;
 						}
 						else
 						{
-							cropH = (int)(imageW / meterRatio);
-							cropY = (imageH - cropH) / 2;
+							crop.top = (imageH - imageW / meterRatio) / 2.0f;
+							crop.bottom = (imageH + imageW / meterRatio) / 2.0f;
 						}
 					}
 				}
 			}
 
-			Rect r(meterRect.X, meterRect.Y, drawW, drawH);
-			canvas.DrawBitmap(drawBitmap, r, Rect(cropX, cropY, cropW, cropH));
+			D2D1_RECT_F rect = meterRect;
+			rect.right = rect.left + drawW;
+			rect.bottom = rect.top + drawH;
+
+			canvas.DrawBitmap(drawBitmap, rect, crop);
 		}
 		else
 		{
@@ -318,38 +309,84 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				if (m.left > 0)
 				{
 					// Top-Left
-					Rect r(meterRect.X, meterRect.Y, m.left, m.top);
-					canvas.DrawBitmap(drawBitmap, r, Rect(0, 0, m.left, m.top));
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left,
+						meterRect.top,
+						(FLOAT)m.left + meterRect.left,
+						(FLOAT)m.top + meterRect.top);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top));
 				}
 
 				// Top
-				Rect r(meterRect.X + m.left, meterRect.Y, drawW - m.left - m.right, m.top);
-				canvas.DrawBitmap(drawBitmap, r, Rect(m.left, 0, imageW - m.left - m.right, m.top));
+				{
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left + (FLOAT)m.left,
+						meterRect.top,
+						meterRect.left + drawW - (FLOAT)m.right,
+						meterRect.top + (FLOAT)m.top);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(imageW - m.right), (FLOAT)m.top));
+				}
 
 				if (m.right > 0)
 				{
 					// Top-Right
-					Rect r(meterRect.X + drawW - m.right, meterRect.Y, m.right, m.top);
-					canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, 0, m.right, m.top));
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left + drawW - (FLOAT)m.right,
+						meterRect.top,
+						meterRect.left + drawW,
+						meterRect.top + (FLOAT)m.top);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF((FLOAT)(imageW - m.right), 0.0f, (FLOAT)imageW, (FLOAT)m.top));
 				}
 			}
 
 			if (m.left > 0)
 			{
 				// Left
-				Rect r(meterRect.X, meterRect.Y + m.top, m.left, drawH - m.top - m.bottom);
-				canvas.DrawBitmap(drawBitmap, r, Rect(0, m.top, m.left, imageH - m.top - m.bottom));
+				const D2D1_RECT_F r = D2D1::RectF(
+					meterRect.left,
+					meterRect.top + (FLOAT)m.top,
+					meterRect.left + (FLOAT)m.left,
+					meterRect.top + drawH - (FLOAT)m.bottom);
+				canvas.DrawBitmap(
+					drawBitmap,
+					r,
+					D2D1::RectF(0.0f, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(imageH - m.bottom)));
 			}
 
 			// Center
-			Rect r(meterRect.X + m.left, meterRect.Y + m.top, drawW - m.left - m.right, drawH - m.top - m.bottom);
-			canvas.DrawBitmap(drawBitmap, r, Rect(m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom));
+			{
+				const D2D1_RECT_F r = D2D1::RectF(
+					meterRect.left + (FLOAT)m.left,
+					meterRect.top + (FLOAT)m.top,
+					meterRect.left + drawW - (FLOAT)m.right,
+					meterRect.top + drawH - (FLOAT)m.bottom);
+				canvas.DrawBitmap(
+					drawBitmap,
+					r,
+					D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(imageW - m.right), (FLOAT)imageH - m.bottom));
+			}
 
 			if (m.right > 0)
 			{
 				// Right
-				Rect r(meterRect.X + drawW - m.right, meterRect.Y + m.top, m.right, drawH - m.top - m.bottom);
-				canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, m.top, m.right, imageH - m.top - m.bottom));
+				const D2D1_RECT_F r = D2D1::RectF(
+					meterRect.left + drawW - (FLOAT)m.right,
+					meterRect.top + (FLOAT)m.top,
+					meterRect.left + drawW,
+					meterRect.top + drawH - (FLOAT)m.bottom);
+				canvas.DrawBitmap(
+					drawBitmap,
+					r,
+					D2D1::RectF((FLOAT)(imageW - m.right), (FLOAT)m.top, (FLOAT)imageW, (FLOAT)(imageH - m.bottom)));
 			}
 
 			if (m.bottom > 0)
@@ -357,19 +394,42 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 				if (m.left > 0)
 				{
 					// Bottom-Left
-					Rect r(meterRect.X, meterRect.Y + drawH - m.bottom, m.left, m.bottom);
-					canvas.DrawBitmap(drawBitmap, r, Rect(0, imageH - m.bottom, m.left, m.bottom));
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left,
+						meterRect.top + drawH - (FLOAT)m.bottom,
+						meterRect.left + (FLOAT)m.left,
+						meterRect.top + drawH);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF(0, (FLOAT)(imageH - m.bottom), (FLOAT)m.left, (FLOAT)imageH));
 				}
 
 				// Bottom
-				Rect r(meterRect.X + m.left, meterRect.Y + drawH - m.bottom, drawW - m.left - m.right, m.bottom);
-				canvas.DrawBitmap(drawBitmap, r, Rect(m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom));
+				{
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left + (FLOAT)m.left,
+						meterRect.top + drawH - (FLOAT)m.bottom,
+						meterRect.left + drawW - (FLOAT)m.right,
+						meterRect.top + drawH);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF((FLOAT)m.left, (FLOAT)(imageH - m.bottom), (FLOAT)(imageW - m.right), (FLOAT)imageH));
+				}
 
 				if (m.right > 0)
 				{
 					// Bottom-Right
-					Rect r(meterRect.X + drawW - m.right, meterRect.Y + drawH - m.bottom, m.right, m.bottom);
-					canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, imageH - m.bottom, m.right, m.bottom));
+					const D2D1_RECT_F r = D2D1::RectF(
+						meterRect.left + drawW - (FLOAT)m.right,
+						meterRect.top + drawH - (FLOAT)m.bottom,
+						meterRect.left + drawW,
+						meterRect.top + drawH);
+					canvas.DrawBitmap(
+						drawBitmap,
+						r,
+						D2D1::RectF((FLOAT)(imageW - m.right), (FLOAT)(imageH - m.bottom), (FLOAT)imageW, (FLOAT)imageH));
 				}
 			}
 		}

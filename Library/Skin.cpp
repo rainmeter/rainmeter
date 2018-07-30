@@ -22,12 +22,10 @@
 #include "MeasureTime.h"
 #include "MeterButton.h"
 #include "MeterString.h"
-#include "TintedImage.h"
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
-
-using namespace Gdiplus;
+#include "GeneralImage.h"
 
 #define SNAPDISTANCE 10
 
@@ -257,8 +255,22 @@ void Skin::Initialize()
 
 	setlocale(LC_NUMERIC, "C");
 
+	std::wstring title = GetRainmeter().GetSkinPath();
+	title += m_FolderPath;
+	title += '\\';
+	title += m_FileName;
+	SetWindowText(m_Window, title.c_str());
+
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
+
+	if (!m_Canvas.InitializeRenderTarget(m_Window))
+	{
+		LogErrorF(this, L"Could not intialize the render target.");
+
+		//Unload skin to prevent crashes
+		Deactivate();
+	}
 
 	Refresh(true, true);
 	if (!m_WindowStartHidden)
@@ -312,7 +324,7 @@ void Skin::UnregisterMouseInput()
 		rid.usUsagePage = 0x01;
 		rid.usUsage = 0x02;  // HID mouse
 		rid.dwFlags = RIDEV_REMOVE;
-		rid.hwndTarget = NULL;
+		rid.hwndTarget = m_Window;
 		RegisterRawInputDevices(&rid, 1, sizeof(rid));
 		m_MouseInputRegistered = false;
 	}
@@ -815,6 +827,54 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		UpdateMeter(args[0], true);
 		break;
 
+	case Bang::DisableMouseAction:
+		DisableMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::ClearMouseAction:
+		ClearMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::EnableMouseAction:
+		EnableMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::ToggleMouseAction:
+		ToggleMouseAction(args[0], args[1]);
+		break;
+
+	case Bang::DisableMouseActionGroup:
+		DisableMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::ClearMouseActionGroup:
+		ClearMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::EnableMouseActionGroup:
+		EnableMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::ToggleMouseActionGroup:
+		ToggleMouseAction(args[1], args[0], true);
+		break;
+
+	case Bang::DisableMouseActionSkinGroup:
+		DisableMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::ClearMouseActionSkinGroup:
+		ClearMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::EnableMouseActionSkinGroup:
+		EnableMouseAction(L"Rainmeter", args[0]);
+		break;
+
+	case Bang::ToggleMouseActionSkinGroup:
+		ToggleMouseAction(L"Rainmeter", args[0]);
+		break;
+
 	case Bang::ToggleMeasure:
 		ToggleMeasure(args[0]);
 		break;
@@ -1296,6 +1356,122 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	PostUpdate(bActiveTransition);
 
 	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
+}
+
+void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.DisableMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!DisableMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->DisableMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!DisableMouseAction: [%s] not found", meter);
+}
+
+void Skin::ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.ClearMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ClearMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->ClearMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!ClearMouseAction: [%s] not found", meter);
+}
+
+void Skin::EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.EnableMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!EnableMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->EnableMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!EnableMouseAction: [%s] not found", meter);
+}
+
+void Skin::ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+{
+	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	{
+		m_Mouse.ToggleMouseAction(options);
+		return;
+	}
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ToggleMouseAction * ...]
+	{
+		all = true;
+		group = true;
+	}
+
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
+	{
+		if (all || CompareName((*j), meter, group))
+		{
+			(*j)->ToggleMouseAction(options);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!ToggleMouseAction: [%s] not found", meter);
 }
 
 void Skin::EnableMeasure(const std::wstring& name, bool group)
@@ -2120,9 +2296,9 @@ bool Skin::ReadSkin()
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Color::Gray);
-	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor.GetValue());
-	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
+	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", D2D1::ColorF(D2D1::ColorF::Gray));
+	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
+	m_SolidAngle = (FLOAT)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
 	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
 
@@ -2139,8 +2315,8 @@ bool Skin::ReadSkin()
 		}
 	}
 
-	auto& color = GetRainmeter().GetDefaultSelectionColor();
-	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", color.GetValue());
+	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
+	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", selectionColor);
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
 
@@ -2416,12 +2592,14 @@ bool Skin::ResizeWindow(bool reset)
 
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
-		// Load the background
-		TintedImage* tintedBackground = new TintedImage(L"Background");
-		tintedBackground->ReadOptions(m_Parser, L"Rainmeter");
-		tintedBackground->LoadImage(m_BackgroundName, true);
+		m_Background = new GeneralImage(L"Background", nullptr, false, this);
 
-		if (!tintedBackground->IsLoaded())
+		m_Background->ReadOptions(m_Parser, L"Rainmeter");
+		m_Background->LoadImage(m_BackgroundName);
+
+		auto bitmap = m_Background->GetImage();
+
+		if (!m_Background->IsLoaded())
 		{
 			m_BackgroundSize.cx = 0;
 			m_BackgroundSize.cy = 0;
@@ -2431,11 +2609,9 @@ bool Skin::ResizeWindow(bool reset)
 		}
 		else
 		{
-			Bitmap* tempBackground = tintedBackground->GetImage();
-
 			// Calculate the window dimensions
-			m_BackgroundSize.cx = tempBackground->GetWidth();
-			m_BackgroundSize.cy = tempBackground->GetHeight();
+			m_BackgroundSize.cx = (LONG)bitmap->GetWidth();
+			m_BackgroundSize.cy = (LONG)bitmap->GetHeight();
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
@@ -2448,101 +2624,12 @@ bool Skin::ResizeWindow(bool reset)
 				h = max(h, m_BackgroundSize.cy);
 			}
 
-			Bitmap* background = new Bitmap(w, h, PixelFormat32bppPARGB);
-			Graphics graphics(background);
-
-			if (m_BackgroundMode == BGMODE_IMAGE)
-			{
-				Rect r(0, 0, w, h);
-				graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel);
-			}
-			else
-			{
-				// Scale the background to fill the whole window
-				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
-				{
-					const RECT m = m_BackgroundMargins;
-
-					if (m.top > 0)
-					{
-						if (m.left > 0)
-						{
-							// Top-Left
-							Rect r(0, 0, m.left, m.top);
-							graphics.DrawImage(tempBackground, r, 0, 0, m.left, m.top, UnitPixel);
-						}
-
-						// Top
-						Rect r(m.left, 0, w - m.left - m.right, m.top);
-						graphics.DrawImage(tempBackground, r, m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top, UnitPixel);
-
-						if (m.right > 0)
-						{
-							// Top-Right
-							Rect r(w - m.right, 0, m.right, m.top);
-							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, 0, m.right, m.top, UnitPixel);
-						}
-					}
-
-					if (m.left > 0)
-					{
-						// Left
-						Rect r(0, m.top, m.left, h - m.top - m.bottom);
-						graphics.DrawImage(tempBackground, r, 0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-					}
-
-					// Center
-					Rect r(m.left, m.top, w - m.left - m.right, h - m.top - m.bottom);
-					graphics.DrawImage(tempBackground, r, m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-
-					if (m.right > 0)
-					{
-						// Right
-						Rect r(w - m.right, m.top, m.right, h - m.top - m.bottom);
-						graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
-					}
-
-					if (m.bottom > 0)
-					{
-						if (m.left > 0)
-						{
-							// Bottom-Left
-							Rect r(0, h - m.bottom, m.left, m.bottom);
-							graphics.DrawImage(tempBackground, r, 0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom, UnitPixel);
-						}
-
-						// Bottom
-						Rect r(m.left, h - m.bottom, w - m.left - m.right, m.bottom);
-						graphics.DrawImage(tempBackground, r, m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom, UnitPixel);
-
-						if (m.right > 0)
-						{
-							// Bottom-Right
-							Rect r(w - m.right, h - m.bottom, m.right, m.bottom);
-							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom, UnitPixel);
-						}
-					}
-				}
-				else
-				{
-					ImageAttributes imgAttr;
-					imgAttr.SetWrapMode(WrapModeTile);
-
-					Rect r(0, 0, w, h);
-					graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel, &imgAttr);
-				}
-			}
-
-			m_Background = background;
-
 			// Get the size form the background bitmap
-			m_WindowW = m_Background->GetWidth();
-			m_WindowH = m_Background->GetHeight();
+			m_WindowW = w;
+			m_WindowH = h;
 
 			WindowToScreen();
 		}
-
-		delete tintedBackground;
 	}
 	else
 	{
@@ -2606,47 +2693,116 @@ void Skin::Redraw()
 	{
 		if (m_Background)
 		{
-			const Rect dst(0, 0, m_WindowW, m_WindowH);
-			const Rect src(0, 0, m_Background->GetWidth(), m_Background->GetHeight());
-			m_Canvas.DrawBitmap(m_Background, dst, src);
+			const auto bitmap = m_Background->GetImage();
+			if (bitmap == nullptr) return;
+			
+			if (m_BackgroundMode == BGMODE_IMAGE)
+			{
+				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				m_Canvas.DrawBitmap(bitmap, dst, src);
+			}
+			else if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
+			{
+				const RECT m = m_BackgroundMargins;
+
+				if (m.top > 0)
+				{
+					if (m.left > 0)
+					{
+						// Top-Left
+						D2D1_RECT_F r = { 0, 0, (FLOAT)m.left, (FLOAT)m.top };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, 0, (FLOAT)m.left, (FLOAT)m.top));
+					}
+
+					// Top
+					D2D1_RECT_F r = { (FLOAT)m.left, 0, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
+
+					if (m.right > 0)
+					{
+						// Top-Right
+						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), 0,(FLOAT)m_WindowW, (FLOAT)m.top };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), 0, (FLOAT)m_BackgroundSize.cx, (FLOAT)m.top));
+					}
+				}
+
+				if (m.left > 0)
+				{
+					// Left
+					D2D1_RECT_F r = { 0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom) };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
+				}
+
+				// Center
+				D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom) };
+				m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom)));
+
+				if (m.right > 0)
+				{
+					// Right
+					D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom) };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top, (FLOAT)m_BackgroundSize.cx, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
+				}
+
+				if (m.bottom > 0)
+				{
+					if (m.left > 0)
+					{
+						// Bottom-Left
+						D2D1_RECT_F r = { 0, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m.left, (FLOAT)m_BackgroundSize.cy));
+					}
+
+					// Bottom
+					D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH };
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m_BackgroundSize.cy));
+
+					if (m.right > 0)
+					{
+						// Bottom-Right
+						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m_BackgroundSize.cx, (FLOAT)m_BackgroundSize.cy));
+					}
+				}
+			}
+			else if (m_BackgroundMode == BGMODE_TILED_IMAGE)
+			{
+				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				m_Canvas.DrawTiledBitmap(bitmap, dst, src);
+			}
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
 			// Draw the solid color background
-			Rect r(0, 0, m_WindowW, m_WindowH);
+			D2D1_RECT_F r = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
 
-			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+			if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
 			{
-				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
+				if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
+					m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
 				{
 					m_Canvas.Clear(m_SolidColor);
 				}
 				else
 				{
-					Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
-					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-					graphics.FillRectangle(&gradient, r);
-					m_Canvas.EndGdiplusContext();
+					m_Canvas.FillGradientRectangle(r, m_SolidColor, m_SolidColor2, m_SolidAngle);
 				}
 			}
 
 			if (m_SolidBevel != BEVELTYPE_NONE)
 			{
-				Color lightColor(255, 255, 255, 255);
-				Color darkColor(255, 0, 0, 0);
+				D2D1_COLOR_F lightColor = { 1,1,1,1 };
+				D2D1_COLOR_F darkColor = { 0, 0, 0, 1 };
 
 				if (m_SolidBevel == BEVELTYPE_DOWN)
 				{
-					lightColor.SetValue(Color::MakeARGB(255, 0, 0, 0));
-					darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
+					lightColor = { 0, 0, 0, 1 };
+					darkColor = { 1, 1, 1, 1 };
 				}
 
-				Pen light(lightColor);
-				Pen dark(darkColor);
-
-				Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
-				Meter::DrawBevel(graphics, r, light, dark);
-				m_Canvas.EndGdiplusContext();
+				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
 			}
 		}
 
@@ -2654,10 +2810,11 @@ void Skin::Redraw()
 		std::vector<Meter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
-			const Matrix* matrix = (*j)->GetTransformationMatrix();
-			if (matrix && !matrix->IsIdentity())
+			const D2D1_MATRIX_3X2_F matrix = (*j)->GetTransformationMatrix();
+			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
+			if (!reinterpretMatrix->IsIdentity())
 			{
-				m_Canvas.SetTransform(*matrix);
+				m_Canvas.SetTransform(matrix);
 				(*j)->Draw(m_Canvas);
 				m_Canvas.ResetTransform();
 			}
@@ -2669,9 +2826,8 @@ void Skin::Redraw()
 
 		if (m_Selected)
 		{
-			Gdiplus::Rect rect(0, 0, m_WindowW, m_WindowH);
-			Gdiplus::SolidBrush brush(m_SelectedColor);
-			m_Canvas.FillRectangle(rect, brush);
+			D2D1_RECT_F rect = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+			m_Canvas.FillRectangle(rect, m_SelectedColor);
 		}
 	}
 
@@ -2862,7 +3018,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 		AddWindowExStyle(WS_EX_LAYERED);
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
-	m_Canvas.ReleaseDC(dcMemory);
+	m_Canvas.ReleaseDC();
 
 	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 
@@ -3255,7 +3411,7 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 				// Special case for Button meter: reacts only on valid pixel in button image
 				if (button && button->HitTest2(pos.x, pos.y))
 				{
-					cursor = (*j)->GetMouse().GetCursor();
+					cursor = (*j)->GetMouse().GetCursor(true);
 				}
 			}
 		}

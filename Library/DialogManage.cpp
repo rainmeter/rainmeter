@@ -158,6 +158,14 @@ void DialogManage::UpdateLayouts()
 	}
 }
 
+void DialogManage::UpdateLanguageStatus()
+{
+	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
+	{
+		c_Dialog->m_TabSettings.UpdateLanguageStatus();
+	}
+}
+
 Dialog::Tab& DialogManage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
@@ -2031,7 +2039,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-1, ID_STR_GENERAL,
-			0, 0, 478, 118,
+			0, 0, 478, 131,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_LANGUAGESC,
 			6, 15, 107, 14,
@@ -2060,31 +2068,27 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 81, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_UseHardwareAcceleration, ID_STR_HARDWAREACCELERATED,
+			6, 94, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 97, buttonWidth + 20, 14,
+			6, 110, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_LOGGING,
-			0, 125, 478, 66,
+			0, 138, 478, 66,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_VerboseLoggingCheckbox, ID_STR_DEBUGMODE,
-			6, 141, 200, 9,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
 			6, 154, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+			6, 167, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 170, buttonWidth + 20, 14,
+			6, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 170, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-
-		CT_GROUPBOX(-1, ID_STR_SKININSTALLER,
-			0, 198, 478, 32,
-			WS_VISIBLE, 0),
-		CT_CHECKBOX(Id_ArchivePlugins, ID_STR_ARCHIVEPLUGINS,
-			6, 214, 200, 9,
+			buttonWidth + 30, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2093,16 +2097,10 @@ void DialogManage::TabSettings::Create(HWND owner)
 
 void DialogManage::TabSettings::Initialize()
 {
-	std::wstring lang = L"<a>";
-	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
-	lang += L"</a>";
-
-	HWND item = GetControl(Id_LanguageUpdateLink);
-	SetWindowText(item, lang.c_str());
-	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
+	UpdateLanguageStatus();
 
 	// Scan for languages
-	item = GetControl(Id_LanguageDropDownList);
+	HWND item = GetControl(Id_LanguageDropDownList);
 
 	std::wstring files = GetRainmeter().GetPath() + L"Languages\\*.dll";
 	WIN32_FIND_DATA fd;
@@ -2155,14 +2153,21 @@ void DialogManage::TabSettings::Initialize()
 	bool iconEnabled = GetRainmeter().GetTrayIcon()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
-	bool archivePlugins = GetPrivateProfileInt(
-		L"SkinInstaller",
-		L"ArchivePlugins",
-		1,
-		GetRainmeter().GetDataFile().c_str()) != 0;
-	Button_SetCheck(GetControl(Id_ArchivePlugins), archivePlugins);
+	bool isHardwareAccelerated = GetRainmeter().IsHardwareAccelerated();
+	Button_SetCheck(GetControl(Id_UseHardwareAcceleration), isHardwareAccelerated);
 
 	m_Initialized = true;
+}
+
+void DialogManage::TabSettings::UpdateLanguageStatus()
+{
+	std::wstring lang = L"<a>";
+	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
+	lang += L"</a>";
+
+	HWND item = GetControl(Id_LanguageUpdateLink);
+	SetWindowText(item, lang.c_str());
+	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
 }
 
 INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2333,14 +2338,10 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-		case Id_ArchivePlugins:
+	case Id_UseHardwareAcceleration:
 		{
-			bool archivePlugins = SendMessage(GetControl(Id_ArchivePlugins), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
-			WritePrivateProfileString(
-				L"SkinInstaller",
-				L"ArchivePlugins",
-				archivePlugins ? L"1" : L"0",
-				GetRainmeter().GetDataFile().c_str());
+			bool hardwareAccelerated = SendMessage(GetControl(Id_UseHardwareAcceleration), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+			GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
 		}
 		break;
 

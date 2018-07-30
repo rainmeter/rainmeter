@@ -103,7 +103,7 @@ bool TrayIcon::AddTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.uID = IDI_TRAY;
+	tnid.uID = IDI_RAINMETER;
 	tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 	tnid.uCallbackMessage = WM_TRAY_NOTIFYICON;
 	tnid.hIcon = m_Icon;
@@ -116,7 +116,7 @@ bool TrayIcon::IsTrayIconReady()
 {
 	NOTIFYICONIDENTIFIER nii = { sizeof(NOTIFYICONIDENTIFIER) };
 	nii.hWnd = m_Window;
-	nii.uID = IDI_TRAY;
+	nii.uID = IDI_RAINMETER;
 	RECT rect;
 
 	HRESULT hr = Shell_NotifyIconGetRect(&nii, &rect);
@@ -159,7 +159,7 @@ void TrayIcon::RemoveTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.uID = IDI_TRAY;
+	tnid.uID = IDI_RAINMETER;
 	tnid.uFlags = 0;
 
 	Shell_NotifyIcon(NIM_DELETE, &tnid);
@@ -183,7 +183,7 @@ void TrayIcon::ModifyTrayIcon(double value)
 
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
-	tnid.uID = IDI_TRAY;
+	tnid.uID = IDI_RAINMETER;
 	tnid.uFlags = NIF_ICON;
 	tnid.hIcon = m_Icon;
 
@@ -284,7 +284,7 @@ HICON TrayIcon::CreateTrayIcon(double value)
 	}
 
 	// Return the default icon if there is no valid measure
-	return GetIcon(IDI_TRAY);
+	return GetIcon(IDI_RAINMETER);
 }
 
 void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
@@ -293,7 +293,7 @@ void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const 
 	{
 		NOTIFYICONDATA nid = {sizeof(NOTIFYICONDATA)};
 		nid.hWnd = m_Window;
-		nid.uID = IDI_TRAY;
+		nid.uID = IDI_RAINMETER;
 		nid.uFlags = NIF_INFO;
 		nid.uTimeout = 30000;
 		nid.dwInfoFlags = NIIF_USER;
@@ -385,8 +385,14 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-			m_Color1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color::MakeARGB(255, 0, 100, 0));
-			m_Color2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color::MakeARGB(255, 0, 255, 0));
+
+			auto toARGB = [](const D2D1_COLOR_F& color)
+			{
+				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
+			};
+
+			m_Color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
+			m_Color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
 		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{
