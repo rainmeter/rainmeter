@@ -31,11 +31,10 @@ Canvas::Canvas() :
 	m_H(0),
 	m_MaxBitmapSize(0U),
 	m_IsDrawing(false),
+	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
 	m_CanUseAxisAlignClip(false),
-	m_Layers(),
-	m_ProcessedHDC(NULL),
-	m_ProcessedTexture(NULL)
+	m_Layers()
 {
 	Initialize(true);
 }
@@ -162,7 +161,7 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 	swapChainDesc.BufferCount = 2u;
 	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	swapChainDesc.Flags = 0;
+	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
 	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
@@ -206,9 +205,6 @@ void Canvas::Resize(int w, int h)
 	m_Target->SetTarget(nullptr);
 	m_TargetBitmap.Reset();
 	m_BackBuffer.Reset();
-	m_OffscreenTexture.Reset();
-	DeleteObject(m_ProcessedTexture);
-	ReleaseDC(NULL, m_ProcessedHDC);
 
 	// Resize swap chain.
 	HRESULT hr = m_SwapChain->ResizeBuffers(
@@ -216,7 +212,7 @@ void Canvas::Resize(int w, int h)
 		(UINT)w,
 		(UINT)h,
 		DXGI_FORMAT_B8G8R8A8_UNORM,
-		0);
+		DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
 	if (FAILED(hr)) return;
 
 	CreateTargetBitmap((UINT32)w, (UINT32)h);
@@ -245,44 +241,72 @@ bool Canvas::BeginDraw()
 void Canvas::EndDraw()
 {
 	HRESULT hr = m_Target->EndDraw();
-	if (FAILED(hr) || !UpdateHBitmap())
+	if (FAILED(hr))
 	{
 		m_Target.Reset();
 	}
 
+	m_IsDrawing = false;
+
+	if (m_TargetBitmap && m_BufferSnapshot)
+	{
+		// Create a snapshot to test for transparent pixels later.
+		auto point = D2D1::Point2U(0U, 0U);
+		auto srcRect = D2D1::RectU(0U, 0U, (UINT32)m_W, (UINT32)m_H);
+		m_BufferSnapshot->CopyFromBitmap(&point, m_TargetBitmap.Get(), &srcRect);
+	}
+	else
+	{
+		// Recreate target bitmap?
+	}
 }
 
-void Canvas::FlushDraw()
+HDC Canvas::GetDC()
 {
-	HRESULT hr = m_Target->Flush();
-	if (FAILED(hr) || !UpdateHBitmap())
+	if (m_IsDrawing)
 	{
-		m_Target.Reset();
+		m_EnableDrawAfterGdi = true;
 		m_IsDrawing = false;
+		EndDraw();
 	}
+
+	HDC hdc;
+	HRESULT hr = m_BackBuffer->GetDC(FALSE, &hdc);
+	if (FAILED(hr)) return nullptr;
+
+	return hdc;
 }
 
-HDC Canvas::GetHDC()
+void Canvas::ReleaseDC()
 {
-	return m_ProcessedHDC;
+	m_BackBuffer->ReleaseDC(NULL);
+
+	if (m_EnableDrawAfterGdi)
+	{
+		m_EnableDrawAfterGdi = false;
+		m_IsDrawing = true;
+		BeginDraw();
+	}
 }
 
 bool Canvas::IsTransparentPixel(int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < m_W && y < m_H)) return false;
 
-	D3D11_TEXTURE2D_DESC desc;
-	m_OffscreenTexture->GetDesc(&desc);
-	D3D11_MAPPED_SUBRESOURCE resource;
-	UINT subresource = D3D11CalcSubresource(0, 0, 0);
-	HRESULT hr = c_D3DContext->Map(m_OffscreenProcessed.Get(), subresource, D3D11_MAP_READ, 0, &resource);
-	// If failed, treat it as opaque
-	if (FAILED(hr)) return true;
+	D2D1_MAPPED_RECT data;
+	HRESULT hr = m_BufferSnapshot->Map(D2D1_MAP_OPTIONS_READ, &data);
+	if (FAILED(hr)) true;
 
-	uint8_t alpha = reinterpret_cast<uint8_t*>(resource.pData)[(x * 4 + y * resource.RowPitch)];
+	int index = 4 * (y * m_W + x);
+	BYTE pixel = data.bits[index + 3];
 
-	c_D3DContext->Unmap(m_OffscreenProcessed.Get(), subresource);
-	return alpha != 0;
+	hr = m_BufferSnapshot->Unmap();
+	if (FAILED(hr))
+	{
+		// Error
+	}
+
+	return pixel != 0;
 }
 
 void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
@@ -494,7 +518,6 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 
 void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
-	SetAntiAliasing(true);
 	auto& segments = bitmap->m_Segments;
 	for (auto seg : segments)
 	{
@@ -756,40 +779,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 {
-	D3D11_TEXTURE2D_DESC texDesc;
-	texDesc.ArraySize = 1;
-	texDesc.BindFlags = D3D10_BIND_RENDER_TARGET;
-	texDesc.CPUAccessFlags = 0;
-	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	texDesc.Height = height > 0 ? height : 1u;
-	texDesc.Width = width > 0 ? width : 1u;
-	texDesc.MipLevels = 1u;
-	texDesc.MiscFlags = 0u;
-	texDesc.SampleDesc.Count = 1u;
-	texDesc.SampleDesc.Quality = 0u;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
-
-	HRESULT hr = c_D3DDevice->CreateTexture2D(&texDesc, NULL, m_OffscreenTexture.GetAddressOf());
-	if (FAILED(hr)) return false;
-
-	texDesc.BindFlags = 0;
-	texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-	texDesc.Usage = D3D11_USAGE_STAGING;
-	texDesc.SampleDesc.Count = 1u;
-	hr = c_D3DDevice->CreateTexture2D(&texDesc, NULL, m_OffscreenProcessed.GetAddressOf());
-	if (FAILED(hr)) return false;
-
-	if (m_ProcessedTexture)
-	{
-		DeleteObject(m_ProcessedTexture);
-	}
-	if(!m_ProcessedHDC) m_ProcessedHDC = CreateCompatibleDC(GetDC(NULL));
-	m_ProcessedTexture = CreateCompatibleBitmap(GetDC(NULL), texDesc.Width, texDesc.Height);
-	// Always keep our texture selected
-	SelectObject(m_ProcessedHDC, m_ProcessedTexture);
-	
-	//hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	hr = m_OffscreenTexture.Get()->QueryInterface(m_BackBuffer.GetAddressOf());
+	HRESULT hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return false;
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
@@ -802,50 +792,17 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 		m_TargetBitmap.GetAddressOf());
 	if (FAILED(hr)) return false;
 
-	m_Target->SetTarget(m_TargetBitmap.Get());
-	return true;
-}
-
-bool Canvas::UpdateHBitmap()
-{
-	D3D11_TEXTURE2D_DESC desc;
-	m_OffscreenTexture->GetDesc(&desc);
-
-	c_D3DContext->CopyResource(m_OffscreenProcessed.Get(), m_OffscreenTexture.Get());
-
-	D3D11_MAPPED_SUBRESOURCE resource;
-	UINT subresource = D3D11CalcSubresource(0, 0, 0);
-	HRESULT hr = c_D3DContext->Map(m_OffscreenProcessed.Get(), subresource, D3D11_MAP_READ, 0, &resource);
+	bProps.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ;
+	hr = m_Target->CreateBitmap(
+		D2D1::SizeU(width, height),
+		nullptr,
+		0U,
+		bProps,
+		m_BufferSnapshot.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) return false;
 
-	uint8_t* sptr = reinterpret_cast<uint8_t*>(resource.pData);
-
-	// Copy the data rows (We can't copy the entire data because the RowPitch might differ from the Width)
-	uint8_t* dptr = new uint8_t[desc.Width*desc.Height * 4];
-	for (size_t h = 0; h < desc.Height; ++h)
-	{
-		size_t msize = std::min<size_t>(desc.Width * 4, resource.RowPitch);
-		memcpy(dptr, sptr, msize);
-		sptr += resource.RowPitch;
-		dptr += desc.Width * 4;
-	}
-	dptr -= desc.Width*desc.Height * 4;
-
-	BITMAPINFO info;
-	ZeroMemory(&info, sizeof(BITMAPINFO));
-	info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	info.bmiHeader.biBitCount = 32;
-	info.bmiHeader.biPlanes = 1;
-	info.bmiHeader.biCompression = BI_RGB;
-	info.bmiHeader.biSizeImage = desc.Width * desc.Height * 4;
-	info.bmiHeader.biWidth = desc.Width;
-	info.bmiHeader.biHeight = -desc.Height;
-	info.bmiHeader.biClrUsed = 0;
-
-	int r = SetDIBitsToDevice(m_ProcessedHDC, 0, 0, desc.Width, desc.Height, 0, 0, 0, desc.Height, dptr, &info, DIB_PAL_COLORS);
-	delete[] dptr;
-	c_D3DContext->Unmap(m_OffscreenProcessed.Get(), subresource);
-	return r == desc.Height;
+	m_Target->SetTarget(m_TargetBitmap.Get());
+	return true;
 }
 
 }  // namespace Gfx
