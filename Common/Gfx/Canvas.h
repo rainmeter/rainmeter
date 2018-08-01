@@ -53,9 +53,9 @@ public:
 
 	bool BeginDraw();
 	void EndDraw();
-	void FlushDraw();
 
-	HDC GetHDC();
+	HDC GetDC();
+	void ReleaseDC();
 
 	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
 	TextFormat* CreateTextFormat() { return new TextFormatD2D(); }
@@ -115,24 +115,20 @@ private:
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height);
 
-	bool UpdateHBitmap();
-
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> m_OffscreenTexture;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> m_OffscreenProcessed;
-	HBITMAP m_ProcessedTexture;
-	HDC m_ProcessedHDC;
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
 
 	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
-	
+
 	int m_W;
 	int m_H;
 	UINT32 m_MaxBitmapSize;
 
 	bool m_IsDrawing;
+	bool m_EnableDrawAfterGdi;
 
 	// GDI+, by default, includes padding around the string and also has a larger character spacing
 	// compared to DirectWrite. In order to minimize diffeences between the text renderers,

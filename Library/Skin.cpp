@@ -3008,10 +3008,9 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
 
-	// Flush data to copy
-	if (canvasBeginDrawCalled) m_Canvas.FlushDraw();
+	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
 
-	HDC dcMemory = m_Canvas.GetHDC();
+	HDC dcMemory = m_Canvas.GetDC();
 	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
 		// Retry after resetting WS_EX_LAYERED flag.
@@ -3019,6 +3018,9 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 		AddWindowExStyle(WS_EX_LAYERED);
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
+	m_Canvas.ReleaseDC();
+
+	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 
 	m_TransparencyValue = alpha;
 }
