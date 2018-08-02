@@ -11,6 +11,11 @@
 
 namespace Gfx {
 
+D2D1_VECTOR_4F ToVector4F(D2D1_COLOR_F color)
+{
+	return D2D1::Vector4F(color.r, color.g, color.b, color.a);
+}
+
 TextInlineFormat_Shadow::TextInlineFormat_Shadow(const std::wstring& pattern, const FLOAT& blur,
 	const D2D1_POINT_2F& offset, const D2D1_COLOR_F& color) :
 		TextInlineFormat(pattern),
@@ -62,17 +67,25 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		}
 	}
 
-	Microsoft::WRL::ComPtr<ID2D1Bitmap> bitmap;
-	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> bTarget;
-	hr = target->CreateCompatibleRenderTarget(bTarget.GetAddressOf());
-	if (FAILED(hr)) return;
-	
+	m_Bitmap.Reset();
+
+	if (!m_BitmapTarget)
+	{
+		m_BitmapTarget.Reset();
+
+		hr = target->CreateCompatibleRenderTarget(m_BitmapTarget.GetAddressOf());
+		if (FAILED(hr)) return;
+	}
+
 	// Draw onto memory bitmap target
-	bTarget->BeginDraw();
-	bTarget->Clear(color);
-	bTarget->DrawTextLayout(drawPosition, layout, solidBrush);
-	bTarget->EndDraw();
-	hr = bTarget->GetBitmap(bitmap.GetAddressOf());
+	// Note: Hardware acceleration seems to keep the bitmap render target in memory
+	// even though it is cleared, so manually "Clear" with a transparent color.
+	m_BitmapTarget->BeginDraw();
+	m_BitmapTarget->Clear(color);
+	m_BitmapTarget->DrawTextLayout(drawPosition, layout, solidBrush);
+	m_BitmapTarget->EndDraw();
+
+	hr = m_BitmapTarget->GetBitmap(m_Bitmap.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	// Create shadow effect
@@ -81,9 +94,9 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	if (FAILED(hr)) return;
 
 	// Load shadow options to effect
-	shadow->SetInput(0, bitmap.Get());
+	shadow->SetInput(0U, m_Bitmap.Get());
 	shadow->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, m_Blur);
-	shadow->SetValue(D2D1_SHADOW_PROP_COLOR, m_Color);
+	shadow->SetValue(D2D1_SHADOW_PROP_COLOR, ToVector4F(m_Color));
 	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);
 
 	// Draw effect

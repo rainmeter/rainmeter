@@ -36,6 +36,9 @@ private:
 	FLOAT m_Blur;
 	D2D1_POINT_2F m_Offset;
 	D2D1_COLOR_F m_Color;
+
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> m_Bitmap;
+	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> m_BitmapTarget;
 };
 
 }  // namespace Gfx
