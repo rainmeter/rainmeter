@@ -22,7 +22,7 @@ public:
 	virtual InlineType GetType() override { return InlineType::Color; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
-	void ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
+	void ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout);
 
 	bool CompareAndUpdateProperties(const std::wstring& pattern, const D2D1_COLOR_F& color);
 

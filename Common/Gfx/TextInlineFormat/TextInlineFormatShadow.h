@@ -23,7 +23,7 @@ public:
 	virtual InlineType GetType() override { return InlineType::Shadow; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
-	void ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout,
+	void ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout,
 		ID2D1SolidColorBrush* solidBrush, const UINT32& strLen, const D2D1_POINT_2F& drawPosition);
 
 	bool CompareAndUpdateProperties(const std::wstring& pattern, const FLOAT& blur,

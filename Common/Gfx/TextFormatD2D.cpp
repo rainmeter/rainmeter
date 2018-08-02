@@ -71,7 +71,7 @@ void TextFormatD2D::Dispose()
 	m_LineGap = 0.0f;
 }
 
-bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
+bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
 {
 	UINT32 strLen = (UINT32)srcStr.length();
 	const WCHAR* str = srcStr.c_str();
@@ -1130,7 +1130,7 @@ void TextFormatD2D::ApplyInlineFormatting(IDWriteTextLayout* layout)
 	}
 }
 
-void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point)
+void TextFormatD2D::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point)
 {
 	// Color option
 	for (const auto& fmt : m_TextInlineFormat)
@@ -1165,7 +1165,7 @@ void TextFormatD2D::ApplyInlineCase(std::wstring& str)
 	}
 }
 
-void TextFormatD2D::ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+void TextFormatD2D::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
 	const UINT32 strLen, const D2D1_POINT_2F& drawPosition)
 {
 	for (const auto& fmt : m_TextInlineFormat)

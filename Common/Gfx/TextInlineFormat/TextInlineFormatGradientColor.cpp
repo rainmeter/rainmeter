@@ -24,7 +24,7 @@ TextInlineFormat_GradientColor::~TextInlineFormat_GradientColor()
 {
 }
 
-void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout)
+void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1DeviceContext* target, IDWriteTextLayout* layout)
 {
 	for (auto& sub : m_SubOptions)
 	{

@@ -39,7 +39,7 @@ public:
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
 	void ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool beforeDrawing = true);
 
-	void BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
+	void BuildGradientBrushes(ID2D1DeviceContext* target, IDWriteTextLayout* layout);
 	void UpdateSubOptions(const size_t& index, const DWRITE_TEXT_RANGE& range);
 
 	bool CompareAndUpdateProperties(const std::wstring& pattern, FLOAT angle,

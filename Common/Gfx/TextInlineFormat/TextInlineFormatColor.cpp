@@ -21,7 +21,7 @@ TextInlineFormat_Color::~TextInlineFormat_Color()
 {
 }
 
-void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout)
+void TextInlineFormat_Color::ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout)
 {
 	if (!target || !layout) return;
 

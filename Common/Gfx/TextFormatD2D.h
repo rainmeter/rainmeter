@@ -55,7 +55,7 @@ private:
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
 	// the layout is costly, it is more efficient to keep reusing the text layout until the text
 	// changes. Returns true if the layout is valid for use.
-	bool CreateLayout(ID2D1RenderTarget* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation);
+	bool CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation);
 
 	DWRITE_TEXT_METRICS GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth = 10000.0f);
 
@@ -80,9 +80,9 @@ private:
 	void UpdateInlineUnderline(const size_t& index, const std::wstring pattern);
 	void UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
-	void ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point);
+	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
 	void ApplyInlineCase(std::wstring& str);
-	void ApplyInlineShadow(ID2D1RenderTarget* target, ID2D1SolidColorBrush* solidBrush,
+	void ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
 		const UINT32 strLen, const D2D1_POINT_2F& drawPosition);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
