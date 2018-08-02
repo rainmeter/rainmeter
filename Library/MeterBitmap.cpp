@@ -123,8 +123,8 @@ bool MeterBitmap::HitTest(int x, int y)
 			while (tmpValue > 0);
 		}
 
-		const FLOAT xF = GetX();
-		const FLOAT yF = GetY();
+		const FLOAT xF = (FLOAT)GetX();
+		const FLOAT yF = (FLOAT)GetY();
 		D2D1_RECT_F rect = D2D1::RectF(
 			xF,
 			yF,
