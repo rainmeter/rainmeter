@@ -2698,8 +2698,8 @@ void Skin::Redraw()
 			
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
-				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
-				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				const D2D1_RECT_F dst = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
+				const D2D1_RECT_F src = D2D1::RectF(0.0f, 0.0f, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight());
 				m_Canvas.DrawBitmap(bitmap, dst, src);
 			}
 			else if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
@@ -2711,37 +2711,37 @@ void Skin::Redraw()
 					if (m.left > 0)
 					{
 						// Top-Left
-						D2D1_RECT_F r = { 0, 0, (FLOAT)m.left, (FLOAT)m.top };
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, 0, (FLOAT)m.left, (FLOAT)m.top));
+						D2D1_RECT_F r = D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top);
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top));
 					}
 
 					// Top
-					D2D1_RECT_F r = { (FLOAT)m.left, 0, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top };
-					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
+					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top);
+					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
 
 					if (m.right > 0)
 					{
 						// Top-Right
-						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), 0,(FLOAT)m_WindowW, (FLOAT)m.top };
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), 0, (FLOAT)m_BackgroundSize.cx, (FLOAT)m.top));
+						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), 0.0f,(FLOAT)m_WindowW, (FLOAT)m.top);
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), 0.0f, (FLOAT)m_BackgroundSize.cx, (FLOAT)m.top));
 					}
 				}
 
 				if (m.left > 0)
 				{
 					// Left
-					D2D1_RECT_F r = { 0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom) };
+					D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom));
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 				}
 
 				// Center
-				D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom) };
+				D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom));
 				m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 
 				if (m.right > 0)
 				{
 					// Right
-					D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom) };
+					D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom));
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top, (FLOAT)m_BackgroundSize.cx, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 				}
 
@@ -2750,35 +2750,35 @@ void Skin::Redraw()
 					if (m.left > 0)
 					{
 						// Bottom-Left
-						D2D1_RECT_F r = { 0, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH };
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m.left, (FLOAT)m_BackgroundSize.cy));
+						D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH);
+						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0.0f, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m.left, (FLOAT)m_BackgroundSize.cy));
 					}
 
 					// Bottom
-					D2D1_RECT_F r = { (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH };
+					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH);
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m_BackgroundSize.cy));
 
 					if (m.right > 0)
 					{
 						// Bottom-Right
-						D2D1_RECT_F r = { (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH);
 						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m_BackgroundSize.cx, (FLOAT)m_BackgroundSize.cy));
 					}
 				}
 			}
 			else if (m_BackgroundMode == BGMODE_TILED_IMAGE)
 			{
-				const D2D1_RECT_F dst = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
-				const D2D1_RECT_F src = { 0, 0, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight() };
+				const D2D1_RECT_F dst = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
+				const D2D1_RECT_F src = D2D1::RectF(0.0f, 0.0f, (FLOAT)bitmap->GetWidth(), (FLOAT)bitmap->GetHeight());
 				m_Canvas.DrawTiledBitmap(bitmap, dst, src);
 			}
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
 			// Draw the solid color background
-			D2D1_RECT_F r = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+			D2D1_RECT_F r = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
 
-			if (m_SolidColor.a != 0 || m_SolidColor2.a != 0)
+			if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 			{
 				if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
 					m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
@@ -2793,13 +2793,12 @@ void Skin::Redraw()
 
 			if (m_SolidBevel != BEVELTYPE_NONE)
 			{
-				D2D1_COLOR_F lightColor = { 1,1,1,1 };
-				D2D1_COLOR_F darkColor = { 0, 0, 0, 1 };
+				D2D1_COLOR_F lightColor = D2D1::ColorF(D2D1::ColorF::White);
+				D2D1_COLOR_F darkColor = D2D1::ColorF(D2D1::ColorF::Black);
 
 				if (m_SolidBevel == BEVELTYPE_DOWN)
 				{
-					lightColor = { 0, 0, 0, 1 };
-					darkColor = { 1, 1, 1, 1 };
+					std::swap(lightColor, darkColor);
 				}
 
 				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
@@ -2826,7 +2825,7 @@ void Skin::Redraw()
 
 		if (m_Selected)
 		{
-			D2D1_RECT_F rect = { 0, 0, (FLOAT)m_WindowW, (FLOAT)m_WindowH };
+			D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
 			m_Canvas.FillRectangle(rect, m_SelectedColor);
 		}
 	}
