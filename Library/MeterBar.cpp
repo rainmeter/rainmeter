@@ -166,7 +166,7 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 				{
 					D2D1_RECT_F r2 = D2D1::RectF(
 						meterRect.left,
-						meterRect.bottom - sizeF - 2.0 * borderF,
+						meterRect.bottom - sizeF - 2.0f * borderF,
 						meterRect.right,
 						meterRect.bottom - sizeF - borderF);
 					canvas.DrawBitmap(drawBitmap, r2, D2D1::RectF(0.0f, 0.0f, drawW, borderF));
