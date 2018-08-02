@@ -246,18 +246,6 @@ void Canvas::EndDraw()
 	}
 
 	m_IsDrawing = false;
-
-	if (m_TargetBitmap && m_BufferSnapshot)
-	{
-		// Create a snapshot to test for transparent pixels later.
-		auto point = D2D1::Point2U(0U, 0U);
-		auto srcRect = D2D1::RectU(0U, 0U, (UINT32)m_W, (UINT32)m_H);
-		m_BufferSnapshot->CopyFromBitmap(&point, m_TargetBitmap.Get(), &srcRect);
-	}
-	else
-	{
-		// Recreate target bitmap?
-	}
 }
 
 HDC Canvas::GetDC()
@@ -278,7 +266,7 @@ HDC Canvas::GetDC()
 
 void Canvas::ReleaseDC()
 {
-	m_BackBuffer->ReleaseDC(NULL);
+	m_BackBuffer->ReleaseDC(nullptr);
 
 	if (m_EnableDrawAfterGdi)
 	{
@@ -292,20 +280,10 @@ bool Canvas::IsTransparentPixel(int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < m_W && y < m_H)) return false;
 
-	D2D1_MAPPED_RECT data;
-	HRESULT hr = m_BufferSnapshot->Map(D2D1_MAP_OPTIONS_READ, &data);
-	if (FAILED(hr)) true;
+	auto pixel = GetPixel(GetDC(), x, y);
+	ReleaseDC();
 
-	int index = 4 * (y * m_W + x);
-	BYTE pixel = data.bits[index + 3];
-
-	hr = m_BufferSnapshot->Unmap();
-	if (FAILED(hr))
-	{
-		// Error
-	}
-
-	return pixel != 0;
+	return (pixel & 0xFF000000) == 0;
 }
 
 void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
@@ -788,15 +766,6 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 		m_BackBuffer.Get(),
 		&bProps,
 		m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr)) return false;
-
-	bProps.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ;
-	hr = m_Target->CreateBitmap(
-		D2D1::SizeU(width, height),
-		nullptr,
-		0U,
-		bProps,
-		m_BufferSnapshot.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) return false;
 
 	m_Target->SetTarget(m_TargetBitmap.Get());

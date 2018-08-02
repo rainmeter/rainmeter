@@ -119,7 +119,6 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
-	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_BufferSnapshot;
 
 	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
 
