@@ -47,9 +47,8 @@ Canvas::~Canvas()
 bool Canvas::Initialize(bool hardwareAccelerated)
 {
 	++c_Instances;
-	if (c_Instances == 1)
+	if (c_Instances == 1u)
 	{
-		
 		// Required for Direct2D interopability.
 		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
@@ -131,7 +130,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 void Canvas::Finalize()
 {
 	--c_Instances;
-	if (c_Instances == 0)
+	if (c_Instances == 0u)
 	{
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
@@ -488,7 +487,7 @@ bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, D2D
 	return true;
 }
 
-bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size, UINT& lines)
+bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines)
 {
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
@@ -511,7 +510,7 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	else
 	{
 		// GDI+ compatibility: Zero height text has no visible lines.
-		lines = 0;
+		lines = 0U;
 	}
 	return true;
 }
@@ -532,10 +531,10 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, con
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
 
 		const D2D1_RECT_F rDst = D2D1::RectF(
-			(rSrc.left - srcRect.left) / (srcRect.right - srcRect.left) * (dstRect.right - dstRect.left) + dstRect.left,
-			(rSrc.top - srcRect.top) / (srcRect.bottom - srcRect.top) * (dstRect.bottom - dstRect.top) + dstRect.top,
-			(rSrc.right - srcRect.left) / (srcRect.right - srcRect.left) * (dstRect.right - dstRect.left) + dstRect.left,
-			(rSrc.bottom - srcRect.top) / (srcRect.bottom - srcRect.top) * (dstRect.bottom - dstRect.top) + dstRect.top);
+			(rSrc.left   - srcRect.left) / (srcRect.right  - srcRect.left) * (dstRect.right  - dstRect.left) + dstRect.left,
+			(rSrc.top    - srcRect.top)  / (srcRect.bottom - srcRect.top)  * (dstRect.bottom - dstRect.top)  + dstRect.top,
+			(rSrc.right  - srcRect.left) / (srcRect.right  - srcRect.left) * (dstRect.right  - dstRect.left) + dstRect.left,
+			(rSrc.bottom - srcRect.top)  / (srcRect.bottom - srcRect.top)  * (dstRect.bottom - dstRect.top)  + dstRect.top);
 
 		while (rSrc.top >= m_MaxBitmapSize)
 		{
@@ -567,7 +566,7 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect
 		const FLOAT h = (dstRect.bottom - y) > height ? height : (dstRect.bottom - y);
 
 		const auto dst = D2D1::RectF(x, y, x + w, y + h);
-		const auto src = D2D1::RectF(0, 0, w, h);
+		const auto src = D2D1::RectF(0.0f, 0.0f, w, h);
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
@@ -716,8 +715,7 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	m_Target->SetTransform(
 		shape.GetShapeMatrix() *
 		D2D1::Matrix3x2F::Translation((FLOAT)xPos, (FLOAT)yPos) *
-		worldTransform
-	);
+		worldTransform);
 
 	auto fill = shape.GetFillBrush(m_Target.Get());
 	if (fill)
@@ -779,7 +777,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 {
-	HRESULT hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	HRESULT hr = m_SwapChain->GetBuffer(0u, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return false;
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
