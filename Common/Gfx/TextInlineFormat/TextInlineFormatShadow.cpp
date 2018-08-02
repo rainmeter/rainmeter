@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "TextInlineFormatShadow.h"
-#include "../../../Library/DialogAbout.h"
+#include "Gfx/Util/D2DUtil.h"
 
 namespace Gfx {
 
@@ -68,6 +68,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	
 	// Draw onto memory bitmap target
 	bTarget->BeginDraw();
+	bTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 	bTarget->DrawTextLayout(drawPosition, layout, solidBrush);
 	bTarget->EndDraw();
 	hr = bTarget->GetBitmap(bitmap.GetAddressOf());
