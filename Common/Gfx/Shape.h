@@ -89,12 +89,12 @@ public:
 	void SetFill(const D2D1_COLOR_F& color);
 	void SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
-	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1RenderTarget* target);
+	Microsoft::WRL::ComPtr<ID2D1Brush> GetFillBrush(ID2D1DeviceContext* target);
 
 	void SetStrokeFill(const D2D1_COLOR_F& color);
 	void SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	void SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
-	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1RenderTarget* target);
+	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1DeviceContext* target);
 
 	void ResetTransformOrder() { m_TransformOrder.clear(); }
 	bool AddToTransformOrder(TransformType type);
@@ -108,12 +108,12 @@ protected:
 private:
 	friend class Canvas;
 
-	void CreateSolidBrush(ID2D1RenderTarget* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const D2D1_COLOR_F& color);
+	void CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const D2D1_COLOR_F& color);
 	ID2D1GradientStopCollection* CreateGradientStopCollection(
-		ID2D1RenderTarget* target, std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
-	void CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
+		ID2D1DeviceContext* target, std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
+	void CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
 		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const FLOAT angle);
-	void CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
+	void CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
 		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, bool isStroke);
 
 	ShapeType m_ShapeType;

@@ -24,7 +24,7 @@ TextInlineFormat_Shadow::~TextInlineFormat_Shadow()
 {
 }
 
-void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout,
+void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout,
 	ID2D1SolidColorBrush* solidBrush, const UINT32& strLen, const D2D1_POINT_2F& drawPosition)
 {
 	if (!target || !layout) return;
@@ -73,14 +73,9 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1RenderTarget* target, IDWri
 	hr = bTarget->GetBitmap(bitmap.GetAddressOf());
 	if (FAILED(hr)) return;
 
-	// Shadow effects can only be drawn with a D2D device context
-	Microsoft::WRL::ComPtr<ID2D1DeviceContext> dc;
-	hr = target->QueryInterface(__uuidof(ID2D1DeviceContext), reinterpret_cast<void**>(dc.GetAddressOf()));
-	if (FAILED(hr)) return;
-
 	// Create shadow effect
 	Microsoft::WRL::ComPtr<ID2D1Effect> shadow;
-	hr = dc->CreateEffect(CLSID_D2D1Shadow, shadow.GetAddressOf());
+	hr = target->CreateEffect(CLSID_D2D1Shadow, shadow.GetAddressOf());
 	if (FAILED(hr)) return;
 
 	// Load shadow options to effect
@@ -90,13 +85,13 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1RenderTarget* target, IDWri
 	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);
 
 	// Draw effect
-	dc->DrawImage(shadow.Get(), m_Offset);
+	target->DrawImage(shadow.Get(), m_Offset);
 }
 
 bool TextInlineFormat_Shadow::CompareAndUpdateProperties(const std::wstring& pattern, const FLOAT& blur,
 	const D2D1_POINT_2F& offset, const D2D1_COLOR_F& color)
 {
-	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || Util::ColorFEquals(m_Color, color))
+	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || !Util::ColorFEquals(m_Color, color))
 	{
 		SetPattern(pattern);
 		m_Offset = offset;
