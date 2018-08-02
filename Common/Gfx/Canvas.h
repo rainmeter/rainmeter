@@ -72,7 +72,7 @@ public:
 	void SetAntiAliasing(bool enable);
 	void SetTextAntiAliasing(bool enable);
 
-	void Clear(const D2D1_COLOR_F& color = D2D1::ColorF(0,0,0,0));
+	void Clear(const D2D1_COLOR_F& color = Util::c_Transparent_Color_F);
 
 	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
 		const D2D1_COLOR_F& color, bool applyInlineFormatting = false);

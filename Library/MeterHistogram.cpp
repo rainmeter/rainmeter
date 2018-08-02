@@ -371,7 +371,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		shape.SetFill(fill);
 		shape.SetStrokeWidth(0.0f);
-		shape.SetStrokeFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+		shape.SetStrokeFill(Gfx::Util::c_Transparent_Color_F);
 	};
 
 	applyStyles(primaryPath, m_PrimaryColor);

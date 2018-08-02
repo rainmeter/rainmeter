@@ -13,6 +13,8 @@
 namespace Gfx {
 namespace Util {
 
+const D2D1_COLOR_F c_Transparent_Color_F = D2D1::ColorF(D2D1::ColorF::Black, 0.0f);
+
 D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point2);
 
 D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float right, const float bottom);
