@@ -77,7 +77,7 @@ public:
 	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
 		const D2D1_COLOR_F& color, bool applyInlineFormatting = false);
 	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size);
-	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT& lines);
+	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
 
 	void DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
 	void DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
