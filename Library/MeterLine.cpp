@@ -340,7 +340,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			path.SetFill(Gfx::Util::c_Transparent_Color_F);
 			path.SetStrokeFill(m_Colors[counter]);
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
@@ -404,7 +404,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			path.SetFill(Gfx::Util::c_Transparent_Color_F);
 			path.SetStrokeFill(m_Colors[counter]);
 			path.SetStrokeWidth((FLOAT)m_LineWidth);
 			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);

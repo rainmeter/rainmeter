@@ -330,7 +330,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
 			return true;
 		}
 		else
@@ -380,7 +380,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
 
 			return true;
 		}
@@ -927,7 +927,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		// If gradient only has 1 stop, add a transparent stop at appropriate place
 		if (stops.size() == 1)
 		{
-			D2D1_GRADIENT_STOP stop = D2D1::GradientStop(0.0f, D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+			D2D1_GRADIENT_STOP stop = D2D1::GradientStop(0.0f, Gfx::Util::c_Transparent_Color_F);
 			if (stops[0].position < 0.5f) stop.position = 1.0f;
 			stops.push_back(stop);
 		}
@@ -1135,7 +1135,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+	if (open) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
 
 	m_Shapes.push_back(shape);
 

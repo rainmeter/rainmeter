@@ -322,7 +322,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = parser.ReadColor(section, L"SolidColor", D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", Gfx::Util::c_Transparent_Color_F);
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
 	m_SolidAngle = (FLOAT)parser.ReadFloat(section, L"GradientAngle", 0.0);
 

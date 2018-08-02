@@ -40,10 +40,13 @@ public:
 		parser.SetValue(L"A", L"Color2", L"170,187,204,221");
 		parser.SetValue(L"A", L"Color3", L"AABBCC");
 		parser.SetValue(L"A", L"Color4", L"170,187,204");
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color1", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color2", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color3", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color4", D2D1::ColorF(0, 0, 0, 0)), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
+
+		const D2D1_COLOR_F& transparent = Gfx::Util::c_Transparent_Color_F;
+
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color1", transparent), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color2", transparent), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 221 / 255.f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color3", transparent), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color4", transparent), D2D1::ColorF(170 / 255.f, 187 / 255.f, 204 / 255.f, 1)));
 
 		parser.SetValue(L"A", L"Rect", L"1,2,11,22");
 		const RECT defRect = {};

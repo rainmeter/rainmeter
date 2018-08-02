@@ -34,7 +34,8 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	// we want a shadow for onto a memory bitmap. From this bitmap we can create the shadow
 	// effect and draw it.
 
-	D2D1_COLOR_F color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f);
+	const D2D1_COLOR_F& color = Util::c_Transparent_Color_F;
+
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> transparent;
 	HRESULT hr = target->CreateSolidColorBrush(color, transparent.GetAddressOf());
 	if (FAILED(hr)) return;
@@ -68,7 +69,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	
 	// Draw onto memory bitmap target
 	bTarget->BeginDraw();
-	bTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+	bTarget->Clear(color);
 	bTarget->DrawTextLayout(drawPosition, layout, solidBrush);
 	bTarget->EndDraw();
 	hr = bTarget->GetBitmap(bitmap.GetAddressOf());
