@@ -16,11 +16,11 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
-	m_MultiThreaded(false),
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_OverrideDirectoryFunc()
 {
 }
 
@@ -70,7 +70,7 @@ void MeasurePlugin::UpdateValue()
 		}
 
 		// Reset to default
-		if (!m_MultiThreaded)
+		if (!m_OverrideDirectoryFunc)
 		{
 			System::ResetWorkingDirectory();
 		}
@@ -110,11 +110,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		pluginName = plugin;
 	}
 
-	if (_wcsnicmp(pluginName.c_str(), L"ACTIONTIMER", 11) == 0)
-	{
-		m_MultiThreaded = true;
-	}
-
 	// First try from program path
 	std::wstring pluginFile = GetRainmeter().GetPluginPath();
 	pluginFile += pluginName;
@@ -142,6 +137,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	m_OverrideDirectoryFunc = GetProcAddress(m_Plugin, "OverrideDirectory");
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -193,7 +189,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Reset to default
 	SetDllDirectory(L"");
-	if (!m_MultiThreaded)
+	if (!m_OverrideDirectoryFunc)
 	{
 		System::ResetWorkingDirectory();
 	}
@@ -276,6 +272,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			function == "Update" ||
 			function == "GetString" ||
 			function == "ExecuteBang" ||
+			function == "OverrideDirectory" ||
 			function == "Finalize" ||
 			function == "Update2" ||				// Old API
 			function == "GetPluginAuthor" ||		// Old API

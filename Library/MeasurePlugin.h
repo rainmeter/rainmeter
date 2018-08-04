@@ -60,7 +60,6 @@ private:
 		{
 			UINT m_ID;
 			bool m_Update2;
-			bool m_MultiThreaded;
 		};
 
 		struct
@@ -72,6 +71,7 @@ private:
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
+	void* m_OverrideDirectoryFunc;
 };
 
 #endif
