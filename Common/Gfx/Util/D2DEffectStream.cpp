@@ -125,7 +125,12 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	const auto size = GetSize(canvas);
-	if (size.width < 0 || size.height < 0) return nullptr;
+	if (size.width < 0 || size.height < 0)
+	{
+		delete d2dbitmap;
+		return nullptr;
+	}
+
 	d2dbitmap->m_Width = (UINT)size.width;
 	d2dbitmap->m_Height = (UINT)size.height;
 
@@ -153,6 +158,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 				canvas.EndDraw();
 				canvas.m_Target->SetTarget(target.Get());
 				canvas.m_Target->SetTransform(transform);
+				delete d2dbitmap;
 				return nullptr;
 			}
 
@@ -172,7 +178,11 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 
 				D2D1_RECT_F rect = { 0 };
 				hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
-				if (FAILED(hr)) return nullptr;
+				if (FAILED(hr))
+				{
+					delete d2dbitmap;
+					return nullptr;
+				}
 
 
 				canvas.m_Target->SetTransform(D2D1::Matrix3x2F::Translation(x2, y2));
