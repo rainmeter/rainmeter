@@ -227,7 +227,11 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 bool GeneralImage::LoadImage(const std::wstring& imageName)
 {
-	if (!m_Skin) return false;
+	if (!m_Skin || imageName.empty())
+	{
+		DisposeImage();
+		return false;
+	}
 
 	std::wstring filename = m_Path + imageName;
 	m_Skin->MakePathAbsolute(filename);
