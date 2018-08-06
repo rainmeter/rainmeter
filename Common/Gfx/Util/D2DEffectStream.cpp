@@ -121,15 +121,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 	D2D1_MATRIX_3X2_F transform = { 0 };
 	canvas.m_Target->GetTransform(&transform);
 
-	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
-
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	const auto size = GetSize(canvas);
 	if (size.width < 0 || size.height < 0)
 	{
-		delete d2dbitmap;
 		return nullptr;
 	}
+
+	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
 
 	d2dbitmap->m_Width = (UINT)size.width;
 	d2dbitmap->m_Height = (UINT)size.height;
