@@ -61,6 +61,8 @@ void D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 		effect->SetValue(D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,
 			D2D1::Matrix3x2F::Rotation(angle, pt) *
 			D2D1::Matrix3x2F::Translation(cx - pt.x, cy - pt.y));
+		if(fmod(angle, 90.0f) == 0)
+			effect->SetValue(D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);
 	}
 }
 
@@ -142,8 +144,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 			D2D1_RECT_U rect = D2D1::RectU(
 				(x * maxBitmapSize),
 				(y * maxBitmapSize),
-				(x == W ? ((UINT)m_BaseImage->GetWidth() - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
-				(y == H ? ((UINT)m_BaseImage->GetHeight() - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
+				(x == W ? ((UINT)size.width - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
+				(y == H ? ((UINT)size.height - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
 			HRESULT hr = canvas.m_Target->CreateBitmap(
@@ -182,7 +184,6 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 					delete d2dbitmap;
 					return nullptr;
 				}
-
 
 				canvas.m_Target->SetTransform(D2D1::Matrix3x2F::Translation(x2, y2));
 				canvas.m_Target->DrawImage(effect.Get(), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR); // We don't do any scaling with this image, so use the simplest interpolation
