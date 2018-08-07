@@ -61,12 +61,18 @@ public:
 	UINT GetWidth() const{ return m_Width; }
 	UINT GetHeight() const{ return m_Height; }
 
-	void AddSegment(const BitmapSegment& segment);
+	void AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height);
+	void AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect);
+	void AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect);
+
 	void SetSize(UINT width, UINT height) { m_Width = width; m_Height = height; }
+
 	int GetOrientation() { return m_ExifOrientation; }
 	void SetOrientation(const int orientation) { m_ExifOrientation = orientation; }
+
 	DWORD GetFileSize() { return m_FileSize; }
 	void SetFileSize(const DWORD& fileSize) { m_FileSize = fileSize; }
+
 	ULONGLONG GetFileTime() { return m_FileTime; }
 	void SetFileTime(const ULONGLONG& fileTime) { m_FileTime= fileTime; }
 
