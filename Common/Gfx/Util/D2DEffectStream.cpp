@@ -45,6 +45,8 @@ void D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 	const auto size = GetSize(canvas);
 	const FLOAT originalW = size.width;
 	const FLOAT originalH = size.height;
+	if (originalW == 0.0f || originalH == 0.0f) return;
+
 	const D2D1_POINT_2F pt = D2D1::Point2F(originalW / 2.0f, originalH / 2.0f);
 
 	for (auto& effect : m_Effects)
@@ -61,8 +63,11 @@ void D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 		effect->SetValue(D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,
 			D2D1::Matrix3x2F::Rotation(angle, pt) *
 			D2D1::Matrix3x2F::Translation(cx - pt.x, cy - pt.y));
-		if(fmod(angle, 90.0f) == 0)
+
+		if (fmod(angle, 90.0f) == 0.0f)
+		{
 			effect->SetValue(D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);
+		}
 	}
 }
 
@@ -70,6 +75,8 @@ void D2DEffectStream::Flip(const Canvas& canvas, const FlipType& flipType)
 {
 	AddEffect(canvas, CLSID_D2D12DAffineTransform);
 	const auto size = GetSize(canvas);
+	if (size.width == 0.0f || size.height == 0.0f) return;
+
 	const D2D1_POINT_2F pt = D2D1::Point2F(size.width / 2.0f, size.height / 2.0f);
 
 	for (auto& effect : m_Effects)
@@ -110,7 +117,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 	bool changed = false;
 	for (const auto& effect : m_Effects)
 	{
-		changed = changed || effect;
+		changed |= !!effect;
 	}
 	if (!changed) return m_BaseImage;
 
@@ -120,20 +127,22 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 	Microsoft::WRL::ComPtr<ID2D1Image> target;
 	canvas.m_Target->GetTarget(target.GetAddressOf());
 
-	D2D1_MATRIX_3X2_F transform = { 0 };
+	D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Identity();
 	canvas.m_Target->GetTransform(&transform);
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	const auto size = GetSize(canvas);
-	if (size.width < 0 || size.height < 0)
-	{
-		return nullptr;
-	}
+	if (size.width < 0.0f || size.height < 0.0f) return nullptr;
 
 	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
-
 	d2dbitmap->m_Width = (UINT)size.width;
 	d2dbitmap->m_Height = (UINT)size.height;
+
+	auto deleteImage = [&d2dbitmap]() -> void
+	{
+		delete d2dbitmap;
+		d2dbitmap = nullptr;
+	};
 
 	canvas.BeginDraw();
 
@@ -159,7 +168,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 				canvas.EndDraw();
 				canvas.m_Target->SetTarget(target.Get());
 				canvas.m_Target->SetTransform(transform);
-				delete d2dbitmap;
+				deleteImage();
 				return nullptr;
 			}
 
@@ -177,11 +186,11 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 				Microsoft::WRL::ComPtr<ID2D1Image> image;
 				effect->GetOutput(image.GetAddressOf());
 
-				D2D1_RECT_F rect = { 0 };
+				D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 				hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
 				if (FAILED(hr))
 				{
-					delete d2dbitmap;
+					deleteImage();
 					return nullptr;
 				}
 
@@ -192,14 +201,12 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 				if (m_BaseImage->GetWidth() >= (it.GetX() + it.GetY())) // only increment y if end of row
 				{
 					y2 += rect.bottom;
-					x2 = 0;
+					x2 = 0.0f;
 				}
 			}
 
 			canvas.m_Target->Flush();
-
-			const BitmapSegment segment(bitmap, rect);
-			d2dbitmap->AddSegment(segment);
+			d2dbitmap->AddSegment(bitmap, rect);
 		}
 	}
 	canvas.EndDraw();
@@ -211,10 +218,9 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 
 D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 {
-	D2D1_SIZE_F size = { 0 };
+	D2D1_SIZE_F size = D2D1::SizeF(0.0f, 0.0f);
 
 	UINT prevY = 0u;
-	bool first = true;
 	for (size_t i = 0; i < m_Effects.size(); ++i)
 	{
 		const auto& effect = m_Effects[i];
@@ -223,20 +229,18 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 		Microsoft::WRL::ComPtr<ID2D1Image> image;
 		effect->GetOutput(image.GetAddressOf());
 
-		D2D1_RECT_F rect = { 0 };
+		D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 		HRESULT hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
-		if (FAILED(hr)) return D2D1::SizeF();
+		if (FAILED(hr)) return D2D1::SizeF(0.0f, 0.0f);
 
-		if (first)
+		if (i == 0)
 		{
 			size.height = rect.bottom;
 			size.width = rect.right;
-			first = false;
 			continue;
 		}
 
 		const UINT y = segment.GetY();
-		
 		if (y != prevY)
 		{
 			prevY = y;

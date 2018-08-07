@@ -55,9 +55,19 @@ D2DBitmap::~D2DBitmap()
 {
 }
 
-void D2DBitmap::AddSegment(const BitmapSegment& segment)
+void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height)
 {
-	m_Segments.emplace_back(segment);
+	m_Segments.emplace_back(bitmap, x, y, width, height);
+}
+
+void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect)
+{
+	m_Segments.emplace_back(bitmap, rect);
+}
+
+void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect)
+{
+	m_Segments.emplace_back(bitmap, rect);
 }
 
 bool D2DBitmap::HasFileChanged(const std::wstring& file)

@@ -86,8 +86,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 			d2dbitmap.GetAddressOf());
 		if (FAILED(hr)) return cleanup(hr);
 
-		const BitmapSegment bmp(d2dbitmap, 0U, 0U, width, height);
-		bitmap->AddSegment(bmp);
+		bitmap->AddSegment(d2dbitmap, 0U, 0U, width, height);
 
 		bitmap->SetSize(width, height);
 		return cleanup(S_OK);
@@ -114,8 +113,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 				d2dbitmap.GetAddressOf());
 			if (FAILED(hr)) return cleanup(hr);
 
-			const BitmapSegment segment(d2dbitmap, rcClip);
-			bitmap->AddSegment(segment);
+			bitmap->AddSegment(d2dbitmap, rcClip);
 		}
 	}
 
