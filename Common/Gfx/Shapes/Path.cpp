@@ -64,6 +64,9 @@ void Path::AddLine(FLOAT x, FLOAT y)
 void Path::AddArc(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius, FLOAT angle,
 	D2D1_SWEEP_DIRECTION direction, D2D1_ARC_SIZE arcSize)
 {
+	xRadius = xRadius < 0.0f ? 0.0f : xRadius;
+	yRadius = yRadius < 0.0f ? 0.0f : yRadius;
+
 	if (!m_Path || !m_Sink) return;
 	D2D1_ARC_SEGMENT segment = D2D1::ArcSegment(
 		D2D1::Point2F(x, y),

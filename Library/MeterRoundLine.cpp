@@ -13,8 +13,8 @@
 #include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
 
-#define PI	(3.14159265358979323846)
-#define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
+#define PI	(3.14159265358979323846f)
+#define CONVERT_TO_DEGREES(X)	((FLOAT)((X) * (180.0f / PI)))
 
 MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Solid(false),
@@ -104,153 +104,61 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 	const FLOAT x = (FLOAT)GetX();
 	const FLOAT y = (FLOAT)GetY();
-	const FLOAT w = (FLOAT)m_W;
-	const FLOAT h = (FLOAT)m_H;
 
 	// Calculate the center of for the line
-	const FLOAT cx = x + m_W / 2.0f;
-	const FLOAT cy = y + m_H / 2.0f;
+	const FLOAT cx = x + (FLOAT)m_W / 2.0f;
+	const FLOAT cy = y + (FLOAT)m_H / 2.0f;
 
 	const FLOAT lineStart = (FLOAT)(((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0.0) + m_LineStart);
 	const FLOAT lineLength = (FLOAT)(((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0.0) + m_LineLength);
 
-	const FLOAT calculatedAngle = (FLOAT)(m_RotationAngle * m_Value);
-	const FLOAT angle = calculatedAngle + (FLOAT)m_StartAngle;
+	const FLOAT angle = (FLOAT)(((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle);
+	const FLOAT e_cos = std::cos(angle);
+	const FLOAT e_sin = std::sin(angle);
 
-	const FLOAT s_cos = cos((FLOAT)m_StartAngle);
-	const FLOAT s_sin = sin((FLOAT)m_StartAngle);
-	const FLOAT e_cos = cos((FLOAT)angle);
-	const FLOAT e_sin = sin((FLOAT)angle);
+	const FLOAT sx = e_cos * lineStart + cx;
+	const FLOAT sy = e_sin * lineStart + cy;
+	const FLOAT ex = e_cos * lineLength + cx;
+	const FLOAT ey = e_sin * lineLength + cy;
 
-	const FLOAT sOuterX = s_cos * lineLength + cx;
-	const FLOAT sOuterY = s_sin * lineLength + cy;
-	const FLOAT eOuterX = e_cos * lineLength + cx;
-	const FLOAT eOuterY = e_sin * lineLength + cy;
-	const FLOAT sInnerX = s_cos * lineStart + cx;
-	const FLOAT sInnerY = s_sin * lineStart + cy;
-	const FLOAT eInnerX = e_cos * lineStart + cx;
-	const FLOAT eInnerY = e_sin * lineStart + cy;
-
-	const D2D1_SWEEP_DIRECTION eSweep = m_RotationAngle > 0.0 ?
-		D2D1_SWEEP_DIRECTION_CLOCKWISE :
-		D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE;
-
-	const D2D1_ARC_SIZE arcSize = abs(calculatedAngle) < PI ?
-		D2D1_ARC_SIZE_SMALL :
-		D2D1_ARC_SIZE_LARGE;
-
-	if (m_CntrlAngle)
+	if (m_Solid)
 	{
-		// Special processing for 'out of bounds' angles
-		if (abs(calculatedAngle) >= (2.0f * PI))
-		{
-			Gfx::Ellipse outer(cx, cy, lineLength, lineLength);
-			Gfx::Ellipse inner(cx, cy, lineStart, lineStart);
-			outer.CombineWith(&inner, D2D1_COMBINE_MODE_XOR);
-			outer.SetFill(m_LineColor);
-			outer.SetStrokeWidth(0.0f);
-			canvas.DrawGeometry(outer, 0, 0);
-			return true;
-		}
+		const FLOAT sweepAngle = std::fmodf(CONVERT_TO_DEGREES(m_RotationAngle * m_Value), 360.0f);
 
-		if (m_Solid)
-		{
-			const D2D1_SWEEP_DIRECTION sSweep = m_RotationAngle > 0.0 ?
-				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE :
-				D2D1_SWEEP_DIRECTION_CLOCKWISE;
+		const D2D1_SWEEP_DIRECTION sweepInnerDir = sweepAngle > 0.0f ?
+			D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
-			Gfx::Path roundline(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
-			roundline.SetFill(m_LineColor);
-			roundline.SetStrokeWidth(0.0f);
+		const D2D1_SWEEP_DIRECTION sweepOuterDir = (D2D1_SWEEP_DIRECTION)(1 - sweepInnerDir);
 
-			if (lineLength > 0.0f)
-			{
-				roundline.AddArc(
-					eOuterX,
-					eOuterY,
-					lineLength,
-					lineLength,
-					0.0f,
-					eSweep,
-					arcSize);
-			}
-			else
-			{
-				roundline.AddLine(eOuterX, eOuterY);
-			}
+		const D2D1_ARC_SIZE arcSize = std::abs(sweepAngle) < 180.0f ?
+			D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
 
-			roundline.AddLine(eInnerX, eInnerY);
+		const FLOAT s_cos = std::cos((FLOAT)m_StartAngle + 0.00001f);  // Offset angle in case drawing points are too close to each other
+		const FLOAT s_sin = std::sin((FLOAT)m_StartAngle + 0.00001f);
 
-			if (lineStart > 0.0f)
-			{
-				roundline.AddArc(
-					sInnerX,
-					sInnerY,
-					lineStart,
-					lineStart,
-					0.0f,
-					sSweep,
-					arcSize);
-			}
-			else
-			{
-				roundline.AddLine(sInnerX, sInnerY);
-			}
+		const FLOAT ix = lineStart * s_cos + cx;
+		const FLOAT iy = lineStart * s_sin + cy;
+		const FLOAT ox = lineLength * s_cos + cx;
+		const FLOAT oy = lineLength * s_sin + cy;
 
-			roundline.Close(D2D1_FIGURE_END_CLOSED);
-			canvas.DrawGeometry(roundline, 0, 0);
-		}
-		else
-		{
-			Gfx::Line line(eInnerX, eInnerY, eOuterX, eOuterY);
-			line.SetStrokeFill(m_LineColor);
-			line.SetStrokeWidth((FLOAT)m_LineWidth);
-			canvas.DrawGeometry(line, 0, 0);
-		}
+		Gfx::Path path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
+		path.SetFill(m_LineColor);
+		path.SetStrokeWidth(0.0f);
+
+		path.AddLine(ox, oy);
+		path.AddArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
+		path.AddLine(sx, sy);
+		path.AddArc(ix, iy, lineStart, lineStart, sweepAngle, sweepInnerDir, arcSize);
+
+		path.Close(D2D1_FIGURE_END_CLOSED);
+		canvas.DrawGeometry(path, 0, 0);
 	}
 	else
 	{
-		Gfx::Path roundlineOuter(sOuterX, sOuterY, D2D1_FILL_MODE_ALTERNATE);
-		Gfx::Path roundlineInner(sInnerX, sInnerY, D2D1_FILL_MODE_ALTERNATE);
-		roundlineOuter.SetFill(m_LineColor);
-		roundlineOuter.SetStrokeWidth(0.0f);
-
-		if (lineLength > 0.0f)
-		{
-			roundlineOuter.AddArc(
-				eOuterX,
-				eOuterY,
-				lineLength,
-				lineLength,
-				0.0f,
-				eSweep,
-				arcSize);
-		}
-		else
-		{
-			roundlineOuter.AddLine(eOuterX, eOuterY);
-		}
-
-		if (lineStart > 0.0f)
-		{
-			roundlineInner.AddArc(
-				eInnerX,
-				eInnerY,
-				lineStart,
-				lineStart,
-				0.0f,
-				eSweep,
-				arcSize);
-		}
-		else
-		{
-			roundlineInner.AddLine(eInnerX, eInnerY);
-		}
-
-		roundlineOuter.Close(D2D1_FIGURE_END_CLOSED);
-		roundlineInner.Close(D2D1_FIGURE_END_CLOSED);
-		roundlineOuter.CombineWith(&roundlineInner, D2D1_COMBINE_MODE_XOR);
-		canvas.DrawGeometry(roundlineOuter, 0, 0);
+		Gfx::Line line(sx, sy, ex, ey);
+		line.SetStrokeFill(m_LineColor);
+		line.SetStrokeWidth((FLOAT)m_LineWidth);
+		canvas.DrawGeometry(line, 0, 0);
 	}
 
 	return true;
