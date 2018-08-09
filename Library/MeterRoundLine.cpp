@@ -50,7 +50,7 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
 	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
+	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 2.0f * PI);
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", D2D1::ColorF(D2D1::ColorF::Black));
@@ -112,7 +112,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	const FLOAT lineStart = (FLOAT)(((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0.0) + m_LineStart);
 	const FLOAT lineLength = (FLOAT)(((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0.0) + m_LineLength);
 
-	const FLOAT angle = (FLOAT)(((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle);
+	const FLOAT angle = (FLOAT)max(-2.0f * PI, min(2.0f * PI, (((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle)));;
 	const FLOAT e_cos = std::cos(angle);
 	const FLOAT e_sin = std::sin(angle);
 
@@ -123,8 +123,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 	if (m_Solid)
 	{
-		const FLOAT sweepAngle = std::fmodf(CONVERT_TO_DEGREES(m_RotationAngle * m_Value), 360.0f);
-
+		const FLOAT sweepAngle = max(-360.0f, min(360.0f, CONVERT_TO_DEGREES(m_RotationAngle * m_Value)));
+		
 		const D2D1_SWEEP_DIRECTION sweepInnerDir = sweepAngle > 0.0f ?
 			D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
