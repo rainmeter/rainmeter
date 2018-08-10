@@ -13,8 +13,15 @@
 #include "../Common/Gfx/Shapes/Ellipse.h"
 #include "../Common/Gfx/Shapes/Line.h"
 
-#define PI	(3.14159265358979323846f)
-#define CONVERT_TO_DEGREES(X)	((FLOAT)((X) * (180.0f / PI)))
+namespace {
+
+const FLOAT PI = 3.14159265358979323846f;
+const FLOAT PI2 = 2.0f * PI;
+
+constexpr FLOAT ToDegrees(FLOAT x) { return x * (180.0f / PI); }
+constexpr FLOAT Clamp(FLOAT num, FLOAT lower, FLOAT upper) { return max(lower, min(num, upper)); }
+
+}
 
 MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Solid(false),
@@ -102,6 +109,10 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
+	const FLOAT rotationAngle = (FLOAT)m_RotationAngle;
+	const FLOAT startAngle = (FLOAT)m_StartAngle;
+	const FLOAT value = (FLOAT)m_Value;
+
 	const FLOAT x = (FLOAT)GetX();
 	const FLOAT y = (FLOAT)GetY();
 
@@ -112,7 +123,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	const FLOAT lineStart = (FLOAT)(((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0.0) + m_LineStart);
 	const FLOAT lineLength = (FLOAT)(((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0.0) + m_LineLength);
 
-	const FLOAT angle = (FLOAT)(((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle);
+	const FLOAT angle = Clamp(rotationAngle * (m_CntrlAngle ? value : 1.0f), -PI2, PI2) + startAngle;
+
 	const FLOAT e_cos = std::cos(angle);
 	const FLOAT e_sin = std::sin(angle);
 
@@ -123,8 +135,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 	if (m_Solid)
 	{
-		const FLOAT sweepAngle = std::fmodf(CONVERT_TO_DEGREES(m_RotationAngle * m_Value), 360.0f);
-		
+		const FLOAT sweepAngle = ToDegrees(Clamp(rotationAngle * value, -PI2, PI2));
+
 		const D2D1_SWEEP_DIRECTION sweepInnerDir = sweepAngle > 0.0f ?
 			D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
@@ -133,8 +145,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const D2D1_ARC_SIZE arcSize = std::abs(sweepAngle) < 180.0f ?
 			D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
 
-		const FLOAT s_cos = std::cos((FLOAT)m_StartAngle + 0.00001f);  // Offset angle in case drawing points are too close to each other
-		const FLOAT s_sin = std::sin((FLOAT)m_StartAngle + 0.00001f);
+		const FLOAT s_cos = std::cos(startAngle + 0.00001f);  // Offset angle in case drawing points are too close to each other
+		const FLOAT s_sin = std::sin(startAngle + 0.00001f);
 
 		const FLOAT ix = lineStart * s_cos + cx;
 		const FLOAT iy = lineStart * s_sin + cy;
