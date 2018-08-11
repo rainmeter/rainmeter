@@ -123,18 +123,18 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	const FLOAT lineStart = (FLOAT)(((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0.0) + m_LineStart);
 	const FLOAT lineLength = (FLOAT)(((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0.0) + m_LineLength);
 
-	const FLOAT angle = Clamp(rotationAngle * (m_CntrlAngle ? value : 1.0f), -PI2, PI2) + startAngle;
-
-	const FLOAT e_cos = std::cos(angle);
-	const FLOAT e_sin = std::sin(angle);
-
-	const FLOAT sx = e_cos * lineStart + cx;
-	const FLOAT sy = e_sin * lineStart + cy;
-	const FLOAT ex = e_cos * lineLength + cx;
-	const FLOAT ey = e_sin * lineLength + cy;
-
 	if (m_Solid)
 	{
+		const FLOAT angle = Clamp(rotationAngle * (m_CntrlAngle ? value : 1.0f), -PI2, PI2) + startAngle;
+
+		const FLOAT e_cos = std::cos(angle);
+		const FLOAT e_sin = std::sin(angle);
+
+		const FLOAT sx = e_cos * lineStart + cx;
+		const FLOAT sy = e_sin * lineStart + cy;
+		const FLOAT ex = e_cos * lineLength + cx;
+		const FLOAT ey = e_sin * lineLength + cy;
+
 		const FLOAT sweepAngle = ToDegrees(Clamp(rotationAngle * value, -PI2, PI2));
 
 		const D2D1_SWEEP_DIRECTION sweepInnerDir = sweepAngle > 0.0f ?
@@ -167,6 +167,16 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	}
 	else
 	{
+		const FLOAT angle = (FLOAT)(((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle);
+
+		const FLOAT e_cos = std::cos(angle);
+		const FLOAT e_sin = std::sin(angle);
+
+		const FLOAT sx = e_cos * lineStart + cx;
+		const FLOAT sy = e_sin * lineStart + cy;
+		const FLOAT ex = e_cos * lineLength + cx;
+		const FLOAT ey = e_sin * lineLength + cy;
+
 		Gfx::Line line(sx, sy, ex, ey);
 		line.SetStrokeFill(m_LineColor);
 		line.SetStrokeWidth((FLOAT)m_LineWidth);
