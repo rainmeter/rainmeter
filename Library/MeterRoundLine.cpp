@@ -145,8 +145,8 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const D2D1_ARC_SIZE arcSize = std::abs(sweepAngle) < 180.0f ?
 			D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
 
-		const FLOAT s_cos = std::cos(startAngle + 0.00001f);  // Offset angle in case drawing points are too close to each other
-		const FLOAT s_sin = std::sin(startAngle + 0.00001f);
+		const FLOAT s_cos = std::cos(startAngle + 0.001f);  // Offset angle in case drawing points are too close to each other
+		const FLOAT s_sin = std::sin(startAngle + 0.001f);
 
 		const FLOAT ix = lineStart * s_cos + cx;
 		const FLOAT iy = lineStart * s_sin + cy;
