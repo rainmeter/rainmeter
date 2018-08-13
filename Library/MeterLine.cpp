@@ -125,6 +125,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
+	m_LineWidth = max(1.0, m_LineWidth);
 	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
 
 	D2D1_COLOR_F color = parser.ReadColor(section, L"HorizontalColor", D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
@@ -274,7 +275,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		for (int j = 0; j < numOfLines; ++j)
 		{
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
-			Y = meterRect.bottom - Y - 1.0f;
+			Y = meterRect.bottom - Y - 0.5f;
 
 			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
 			line.SetStrokeFill(m_HorizontalColor);
@@ -284,6 +285,21 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	}
 
 	// Draw all the lines
+	auto addLine = [](Gfx::Path& path, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) -> void
+	{
+		path.AddLine(x1 + 0.5f, y1 + 0.5f);
+		path.AddLine(x2 + 0.5f, y2 + 0.5f);
+	};
+
+	auto draw = [&](Gfx::Path& path, int& counter) -> void
+	{
+		path.Close(D2D1_FIGURE_END_OPEN);
+		path.SetFill(Gfx::Util::c_Transparent_Color_F);
+		path.SetStrokeFill(m_Colors[counter]);
+		path.SetStrokeWidth((FLOAT)m_LineWidth);
+		path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 10.0f);
+		canvas.DrawGeometry(path, 0, 0);
+	};
 
 	if (m_GraphHorizontalOrientation)
 	{
@@ -291,7 +307,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			// Draw a line
 			const double scale = m_ScaleValues[counter] * W / maxValue;
 			int pos = m_CurrentPos;
 
@@ -304,48 +319,44 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			};
 
 			FLOAT X = 0.0f;
-			calcX(X);
+			FLOAT oldX = 0.0f;
+			calcX(oldX);
 
-			// Cache all lines
 			Gfx::Path path(
-				X,
+				oldX,
 				!m_Flip ? meterRect.top : (meterRect.bottom - 1.0f),
 				D2D1_FILL_MODE_WINDING);
 		
 			if (!m_Flip)
 			{
-				for (int j = (int)meterRect.top + 1; j < (int)meterRect.bottom; ++j)
+				for (FLOAT j = meterRect.top + 1.0f; j < meterRect.bottom; ++j)
 				{
 					++pos;
 					pos %= drawH;
 
 					calcX(X);
 
-					path.AddLine(X, (FLOAT)j);
-					path.AddLine(X, (FLOAT)j);
+					addLine(path, oldX, j - 1.0f, X, j);
+
+					oldX = X;
 				}
 			}
 			else
 			{
-				for (int j = (int)meterRect.bottom; j > ((int)meterRect.top + 1); --j)
+				for (FLOAT j = meterRect.bottom; j > meterRect.top + 1.0f; --j)
 				{
 					++pos;
 					pos %= drawH;
 
 					calcX(X);
 
-					path.AddLine(X, (FLOAT)(j - 2));
-					path.AddLine(X, (FLOAT)(j - 2));
+					addLine(path, oldX, j - 1.0f, X, j - 2.0f);
+
+					oldX = X;
 				}
 			}
-			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(Gfx::Util::c_Transparent_Color_F);
-			path.SetStrokeFill(m_Colors[counter]);
-			path.SetStrokeWidth((FLOAT)m_LineWidth);
-			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
-			canvas.DrawGeometry(path, 0, 0);
-
+			draw(path, counter);
 			++counter;
 		}
 	}
@@ -355,7 +366,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			// Draw a line
 			const double scale = m_ScaleValues[counter] * H / maxValue;
 			int pos = m_CurrentPos;
 
@@ -368,48 +378,44 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			};
 
 			FLOAT Y = 0.0f;
-			calcY(Y);
+			FLOAT oldY = 0.0f;
+			calcY(oldY);
 
-			// Cache all lines
 			Gfx::Path path(
 				!m_GraphStartLeft ? meterRect.left : (meterRect.right - 1.0f),
-				Y,
+				oldY,
 				D2D1_FILL_MODE_WINDING);
 		
 			if (!m_GraphStartLeft)
 			{
-				for (int j = (int)meterRect.left + 1; j < (int)meterRect.right; ++j)
+				for (FLOAT j = meterRect.left + 1.0f; j < meterRect.right; ++j)
 				{
 					++pos;
 					pos %= drawW;
 
 					calcY(Y);
 
-					path.AddLine((FLOAT)j, Y);
-					path.AddLine((FLOAT)j, Y);
+					addLine(path, j - 1.0f, oldY, j, Y);
+
+					oldY = Y;
 				}
 			}
 			else
 			{
-				for (int j = (int)meterRect.right; j > ((int)meterRect.left + 1); --j)
+				for (FLOAT j = meterRect.right; j > meterRect.left + 1.0f; --j)
 				{
 					++pos;
 					pos %= drawW;
 
 					calcY(Y);
 
-					path.AddLine((FLOAT)(j - 2), Y);
-					path.AddLine((FLOAT)(j - 2), Y);
+					addLine(path, j - 1.0f, oldY, j - 2.0f, Y);
+
+					oldY = Y;
 				}
 			}
-			path.Close(D2D1_FIGURE_END_OPEN);
 
-			path.SetFill(Gfx::Util::c_Transparent_Color_F);
-			path.SetStrokeFill(m_Colors[counter]);
-			path.SetStrokeWidth((FLOAT)m_LineWidth);
-			path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 0.0f);
-			canvas.DrawGeometry(path, 0, 0);
-
+			draw(path, counter);
 			++counter;
 		}
 	}
