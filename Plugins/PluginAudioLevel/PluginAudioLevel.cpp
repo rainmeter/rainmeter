@@ -1207,19 +1207,18 @@ Exit:
 void Measure::DeviceRelease ()
 {
 #if (WINDOWS_BUG_WORKAROUND)
-	RmLog(LOG_DEBUG, L"Releasing dummy stream audio device.");
 	if (m_clBugAudio)
 	{
+		if (!m_parent) RmLog(LOG_DEBUG, L"Releasing dummy stream audio device.");
 		m_clBugAudio->Stop();
 	}
 	SAFE_RELEASE(m_clBugRender);
 	SAFE_RELEASE(m_clBugAudio);
 #endif
 
-	RmLog(LOG_DEBUG, L"Releasing audio device.");
-
 	if (m_clAudio)
 	{
+		if (!m_parent) RmLog(LOG_DEBUG, L"Releasing audio device.");
 		m_clAudio->Stop();
 	}
 
