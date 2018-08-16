@@ -11,6 +11,7 @@
 #include "FontCollection.h"
 #include <vector>
 #include <dwrite_1.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
@@ -39,6 +40,8 @@ private:
 
 	std::vector<IDWriteFontFile*> m_FileReferences;
 	IDWriteFontCollection* m_Collection;
+
+	static Microsoft::WRL::ComPtr<IDWriteFontCollection> c_SystemCollection;
 };
 
 }  // namespace Gfx
