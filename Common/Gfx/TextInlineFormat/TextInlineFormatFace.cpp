@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "TextInlineFormatFace.h"
+#include "../Canvas.h"
 
 namespace Gfx {
 
@@ -38,10 +39,18 @@ void TextInlineFormat_Face::ApplyInlineFormat(IDWriteTextLayout* layout)
 			UINT32 index = UINT_MAX;
 			BOOL exists = FALSE;
 			HRESULT hr = m_FontCollection->m_Collection->FindFamilyName(m_Face.c_str(), &index, &exists);
-
-			if (SUCCEEDED(hr) && exists)
+			if (SUCCEEDED(hr))
 			{
-				layout->SetFontCollection(m_FontCollection->m_Collection, range);
+				if (exists)
+				{
+					// Use the custom font collection (LocalFont, @Resources\Fonts)
+					layout->SetFontCollection(m_FontCollection->m_Collection, range);
+				}
+				else
+				{
+					// Use the system font collection
+					layout->SetFontCollection(m_FontCollection->c_SystemCollection.Get(), range);
+				}
 			}
 		}
 

@@ -12,6 +12,8 @@
 
 namespace Gfx {
 
+Microsoft::WRL::ComPtr<IDWriteFontCollection> FontCollectionD2D::c_SystemCollection;
+
 FontCollectionD2D::FontCollectionD2D() : FontCollection(),
 	m_Collection()
 {
@@ -33,6 +35,11 @@ void FontCollectionD2D::Dispose()
 
 bool FontCollectionD2D::InitializeCollection()
 {
+	if (!c_SystemCollection)
+	{
+		Canvas::c_DWFactory->GetSystemFontCollection(c_SystemCollection.GetAddressOf(), TRUE);
+	}
+
 	if (!m_Collection)
 	{
 		auto loader = Util::DWriteFontCollectionLoader::GetInstance();
@@ -45,7 +52,7 @@ bool FontCollectionD2D::InitializeCollection()
 
 bool FontCollectionD2D::AddFile(const WCHAR* file)
 {
-	// If DirecWrite font collection already exists, we need to destroy it as fonts cannot be added to
+	// If DirectWrite font collection already exists, we need to destroy it as fonts cannot be added to
 	// an existing collection. The collection will be recreated on the next call to
 	// InitializeCollection().
 	if (m_Collection)

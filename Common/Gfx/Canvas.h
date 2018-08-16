@@ -95,6 +95,7 @@ private:
 	friend class Canvas;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
+	friend class TextInlineFormat_Face;
 	friend class TextInlineFormat_Typography;
 	friend class Shape;
 	friend class Rectangle;
