@@ -538,14 +538,13 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect
 	FLOAT x = dstRect.left;
 	FLOAT y = dstRect.top;
 
-	while ( y < dstRect.bottom)
+	while (y < dstRect.bottom)
 	{
 		const FLOAT w = (dstRect.right - x) > width ? width : (dstRect.right - x);
 		const FLOAT h = (dstRect.bottom - y) > height ? height : (dstRect.bottom - y);
 
 		const auto dst = D2D1::RectF(x, y, x + w, y + h);
 		const auto src = D2D1::RectF(0.0f, 0.0f, w, h);
-
 		DrawBitmap(bitmap, dst, src);
 
 		x += width;
