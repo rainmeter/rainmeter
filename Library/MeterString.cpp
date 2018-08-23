@@ -462,7 +462,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 							m_NeedsClipping = true;
 						}
 
-						rect->right = rect->left + meterRect.right - meterRect.left;
+						rect->bottom = meterRect.bottom;
 						updateSize = false;
 
 					}
@@ -489,7 +489,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 						if (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH)
 						{
 							m_NeedsClipping = true;
-							rect->right = rect->left + (FLOAT)m_ClipStringH;
+							rect->bottom = rect->top + (FLOAT)m_ClipStringH;
 						}
 
 						updateSize = false;
@@ -512,7 +512,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 				if (updateSize)
 				{
-					UINT32 lines = 0;
+					UINT32 lines = 0U;
 					D2D1_SIZE_F size = D2D1::SizeF(w, h);
 					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0U)
 					{
@@ -521,7 +521,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 						if (m_HDefined || (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH))
 						{
-							rect->bottom = rect->top + m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH;
+							rect->bottom = rect->top + (m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH);
 						}
 					}
 				}
