@@ -40,6 +40,15 @@ void MeterImage::Initialize()
 		m_ImageNameResult = m_ImageName;
 		LoadImage(m_ImageName, true);
 	}
+	else if (m_Image.IsLoaded())
+	{
+		m_Image.DisposeImage();
+
+		if (m_MaskImage.IsLoaded())
+		{
+			m_MaskImage.DisposeImage();
+		}
+	}
 }
 
 /*
