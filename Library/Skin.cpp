@@ -2838,7 +2838,7 @@ void Skin::Redraw()
 		}
 	}
 
-	UpdateWindow(m_TransparencyValue, true);
+	UpdateWindow(m_TransparencyValue);
 
 	m_Canvas.EndDraw();
 }
@@ -3008,14 +3008,12 @@ void Skin::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
+void Skin::UpdateWindow(int alpha)
 {
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
-
-	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
 
 	HDC dcMemory = m_Canvas.GetDC();
 	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
@@ -3026,8 +3024,6 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 	m_Canvas.ReleaseDC();
-
-	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 
 	m_TransparencyValue = alpha;
 }
