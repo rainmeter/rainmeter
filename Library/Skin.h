@@ -294,7 +294,7 @@ private:
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
-	void UpdateWindow(int alpha, bool canvasBeginDrawCalled = false);
+	void UpdateWindow(int alpha);
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);
