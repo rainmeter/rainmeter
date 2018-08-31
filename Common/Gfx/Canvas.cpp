@@ -56,15 +56,16 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-		auto tryCreateContext = [&](D3D_DRIVER_TYPE driverType)
+		auto tryCreateContext = [&](D3D_DRIVER_TYPE driverType,
+			const D3D_FEATURE_LEVEL* levels, UINT numLevels)
 		{
 			return D3D11CreateDevice(
-				NULL,
+				nullptr,
 				driverType,
-				NULL,
+				nullptr,
 				creationFlags,
-				NULL,
-				0u,
+				levels,
+				numLevels,
 				D3D11_SDK_VERSION,
 				c_D3DDevice.GetAddressOf(),
 				&c_FeatureLevel,
@@ -75,15 +76,30 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		// to |c_FeatureLevel|. First, we try to use the hardware driver
 		// and if that fails, we try the WARP rasterizer for cases
 		// where there is no graphics card or other failures.
+		const D3D_FEATURE_LEVEL levels[] = 
+		{
+			D3D_FEATURE_LEVEL_11_1,
+			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_10_1,
+			D3D_FEATURE_LEVEL_10_0,
+			D3D_FEATURE_LEVEL_9_3,
+			D3D_FEATURE_LEVEL_9_2,
+			D3D_FEATURE_LEVEL_9_1
+		};
+
 		HRESULT hr = E_FAIL;
 		if (hardwareAccelerated)
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE);
+			hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, levels, _countof(levels));
+			if (hr == E_INVALIDARG)
+			{
+				hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, &levels[1], _countof(levels) - 1);
+			}
 		}
 
 		if (FAILED(hr))
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP);
+			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0u);
 			if (FAILED(hr)) return false;
 		}
 
@@ -745,8 +761,9 @@ HRESULT Canvas::CreateRenderTarget()
 	// The size will depend on the D3D feature level of the driver used. The WARP software
 	// renderer has a limit of 16MP (16*1024*1024 = 16777216).
 
-	// https://msdn.microsoft.com/en-us/library/windows/desktop/ff476876(v=vs.85).aspx#Overview
+	// https://docs.microsoft.com/en-us/windows/desktop/direct3d11/overviews-direct3d-11-devices-downlevel-intro#overview-for-each-feature-level
 	// Max Texture Dimension
+	// D3D_FEATURE_LEVEL_11_1 = 16348
 	// D3D_FEATURE_LEVEL_11_0 = 16348
 	// D3D_FEATURE_LEVEL_10_1 = 8192
 	// D3D_FEATURE_LEVEL_10_0 = 8192
