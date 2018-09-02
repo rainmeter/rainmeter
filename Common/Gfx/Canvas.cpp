@@ -264,7 +264,7 @@ void Canvas::EndDraw()
 	// Present the frame to the screen. Wait until the next VSync to not
 	// waste time rendering frames that will never be displayed to the screen.
 	DXGI_PRESENT_PARAMETERS params = { 0 };
-	hr = m_SwapChain->Present1(1u, 0, &params);
+	hr = m_SwapChain->Present1(0u, 0, &params);
 	if (FAILED(hr))
 	{
 		m_Target.Reset();
