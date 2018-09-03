@@ -441,14 +441,6 @@ void Skin::Refresh(bool init, bool all)
 
 	m_State = STATE_RUNNING;
 
-	if (init)
-	{
-		// Note: This fixes a visual glitch on Intel integrated graphics
-		// when using hardware acceleration.
-		// TODO: Find the root cause of this issue
-		Redraw();
-	}
-
 	if (!m_OnRefreshAction.empty())
 	{
 		GetRainmeter().ExecuteCommand(m_OnRefreshAction.c_str(), this);
