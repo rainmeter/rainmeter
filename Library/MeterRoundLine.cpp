@@ -156,6 +156,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		Gfx::Path path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
 		path.SetFill(m_LineColor);
 		path.SetStrokeWidth(0.0f);
+		path.CreateStrokeStyle();
 
 		path.AddLine(ox, oy);
 		path.AddArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
@@ -180,6 +181,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		Gfx::Line line(sx, sy, ex, ey);
 		line.SetStrokeFill(m_LineColor);
 		line.SetStrokeWidth((FLOAT)m_LineWidth);
+		line.CreateStrokeStyle();
 		canvas.DrawGeometry(line, 0, 0);
 	}
 
