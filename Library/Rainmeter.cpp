@@ -1610,7 +1610,6 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 	{
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
-		PreserveSetting(backup, L"LogViewer");
 		PreserveSetting(backup, L"Logging");
 		PreserveSetting(backup, L"DisableVersionCheck");
 		PreserveSetting(backup, L"Language");
