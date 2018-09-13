@@ -1616,6 +1616,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"Language");
 		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"SelectedColor");
+		PreserveSetting(backup, L"HardwareAcceleration");
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
