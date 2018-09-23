@@ -604,10 +604,11 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 		FLOAT s2Height = srcRect2.bottom - srcRect2.top;
 
 		// "Move" and "scale" the |bitmap| to match the destination.
+		D2D1_MATRIX_3X2_F translateMask = D2D1::Matrix3x2F::Translation(-srcRect2.left, -srcRect2.top);
 		D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
 		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
 			D2D1::SizeF((rDst.right - rDst.left) / s2Width, (rDst.bottom - rDst.top) / s2Height));
-		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0f, scale * translate);
+		D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0f, translateMask * scale * translate);
 
 		HRESULT hr = m_Target->CreateBitmapBrush(
 			bseg.GetBitmap(),
