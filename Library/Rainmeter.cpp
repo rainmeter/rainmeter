@@ -1482,6 +1482,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	{
 		m_TrayIcon->SetTrayIcon(true, true);
 	}
+
+	DialogManage::UpdateSettings();
 }
 
 /*

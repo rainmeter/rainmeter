@@ -166,6 +166,14 @@ void DialogManage::UpdateLanguageStatus()
 	}
 }
 
+void DialogManage::UpdateSettings()
+{
+	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
+	{
+		c_Dialog->m_TabSettings.Update();
+	}
+}
+
 Dialog::Tab& DialogManage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
@@ -2168,6 +2176,11 @@ void DialogManage::TabSettings::UpdateLanguageStatus()
 	HWND item = GetControl(Id_LanguageUpdateLink);
 	SetWindowText(item, lang.c_str());
 	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
+}
+
+void DialogManage::TabSettings::Update()
+{
+	Initialize();
 }
 
 INT_PTR DialogManage::TabSettings::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
