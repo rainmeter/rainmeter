@@ -34,6 +34,8 @@ public:
 
 	static void UpdateLanguageStatus();
 
+	static void UpdateSettings();
+
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
 
 protected:
@@ -174,6 +176,7 @@ private:
 		virtual void Initialize();
 
 		void UpdateLanguageStatus();
+		void Update();
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
