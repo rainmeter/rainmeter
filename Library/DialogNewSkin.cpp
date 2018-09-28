@@ -53,6 +53,14 @@ void DialogNewSkin::Open(int tab)
 	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
 	TabCtrl_SetCurSel(nm.hwndFrom, tab);
 	c_Dialog->OnNotify(0, (LPARAM)&nm);
+
+	const HWND& hwnd = c_Dialog->GetWindow();
+	GetWindowPlacement(hwnd, &c_WindowPlacement);
+	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
+	{
+		ShowWindow(hwnd, SW_RESTORE);
+	}
+	SetForegroundWindow(hwnd);
 }
 
 void DialogNewSkin::Open(const WCHAR* tabName, const WCHAR* parent)
