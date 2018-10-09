@@ -211,7 +211,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	// Find the maximum value
 	if (m_Autoscale)
 	{
-		double newValue = 0;
+		double newValue = 0.0;
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
@@ -285,11 +285,13 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
+	FLOAT offset = 0.5f;
+
 	// Draw all the lines
-	auto addLine = [](Gfx::Path& path, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) -> void
+	auto addLine = [&offset](Gfx::Path& path, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) -> void
 	{
-		path.AddLine(x1 + 0.5f, y1 + 0.5f);
-		path.AddLine(x2 + 0.5f, y2 + 0.5f);
+		path.AddLine(x1 + offset, y1 + offset);
+		path.AddLine(x2 + offset, y2 + offset);
 	};
 
 	auto draw = [&](Gfx::Path& path, int& counter) -> void
@@ -345,6 +347,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
+				offset = -0.5f;
+
 				for (FLOAT j = meterRect.bottom; j > meterRect.top + 1.0f; --j)
 				{
 					++pos;
@@ -405,6 +409,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
+				offset = -0.5f;
+
 				for (FLOAT j = meterRect.right; j > meterRect.left + 1.0f; --j)
 				{
 					++pos;
