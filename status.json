@@ -12,7 +12,7 @@
     {
       "id": 1026,
       "name": "Bulgarian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 2052,
@@ -32,7 +32,7 @@
     {
       "id": 1029,
       "name": "Czech",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1030,
