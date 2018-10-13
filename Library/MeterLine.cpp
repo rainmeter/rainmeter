@@ -285,15 +285,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	FLOAT offset = 0.5f;
+	// GDI+ compatibility.
+	FLOAT offset = 0.51f;
 
 	// Draw all the lines
-	auto addLine = [&offset](Gfx::Path& path, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) -> void
-	{
-		path.AddLine(x1 + offset, y1 + offset);
-		path.AddLine(x2 + offset, y2 + offset);
-	};
-
 	auto draw = [&](Gfx::Path& path, int& counter) -> void
 	{
 		path.Close(D2D1_FIGURE_END_OPEN);
@@ -315,10 +310,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto calcX = [&](FLOAT& _x)
 			{
-				_x = (FLOAT)((*i)[pos] * scale);
+				_x = ((FLOAT)((*i)[pos] * scale) + offset);
 				_x = min(_x, W);
 				_x = max(_x, 0.0f);
-				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x);
+				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
 			};
 
 			FLOAT X = 0.0f;
@@ -327,36 +322,36 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			Gfx::Path path(
 				oldX,
-				!m_Flip ? meterRect.top : (meterRect.bottom - 1.0f),
+				!m_Flip ? meterRect.top : meterRect.bottom,
 				D2D1_FILL_MODE_WINDING);
 			path.CreateStrokeStyle();
 		
 			if (!m_Flip)
 			{
-				for (FLOAT j = meterRect.top + 1.0f; j < meterRect.bottom; ++j)
+				for (FLOAT j = (meterRect.top + 1.0f + offset); j < (meterRect.bottom + offset); ++j)
 				{
 					++pos;
 					pos %= drawH;
 
 					calcX(X);
 
-					addLine(path, oldX, j - 1.0f, X, j);
+					path.AddLine(oldX, j - 1.0f);
+					path.AddLine(X, j);
 
 					oldX = X;
 				}
 			}
 			else
 			{
-				offset = -0.5f;
-
-				for (FLOAT j = meterRect.bottom; j > meterRect.top + 1.0f; --j)
+				for (FLOAT j = (meterRect.bottom - offset); j > (meterRect.top + 1.0f + offset); --j)
 				{
 					++pos;
 					pos %= drawH;
 
 					calcX(X);
 
-					addLine(path, oldX, j - 1.0f, X, j - 2.0f);
+					path.AddLine(oldX, j - 1.0f);
+					path.AddLine(X, j - 2.0f);
 
 					oldX = X;
 				}
@@ -377,10 +372,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto calcY = [&](FLOAT& _y)
 			{
-				_y = (FLOAT)((*i)[pos] * scale);
+				_y = ((FLOAT)((*i)[pos] * scale) + offset);
 				_y = min(_y, H);
 				_y = max(_y, 0.0f);
-				_y = meterRect.top + (m_Flip ? _y : H - _y);
+				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};
 
 			FLOAT Y = 0.0f;
@@ -388,37 +383,37 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			calcY(oldY);
 
 			Gfx::Path path(
-				!m_GraphStartLeft ? meterRect.left : (meterRect.right - 1.0f),
+				!m_GraphStartLeft ? meterRect.left : meterRect.right,
 				oldY,
 				D2D1_FILL_MODE_WINDING);
 			path.CreateStrokeStyle();
 		
 			if (!m_GraphStartLeft)
 			{
-				for (FLOAT j = meterRect.left + 1.0f; j < meterRect.right; ++j)
+				for (FLOAT j = (meterRect.left + 1.0f + offset); j < (meterRect.right + offset); ++j)
 				{
 					++pos;
 					pos %= drawW;
 
 					calcY(Y);
 
-					addLine(path, j - 1.0f, oldY, j, Y);
+					path.AddLine(j - 1.0f, oldY);
+					path.AddLine(j, Y);
 
 					oldY = Y;
 				}
 			}
 			else
 			{
-				offset = -0.5f;
-
-				for (FLOAT j = meterRect.right; j > meterRect.left + 1.0f; --j)
+				for (FLOAT j = (meterRect.right - offset); j > (meterRect.left + 1.0f + offset); --j)
 				{
 					++pos;
 					pos %= drawW;
 
 					calcY(Y);
 
-					addLine(path, j - 1.0f, oldY, j - 2.0f, Y);
+					path.AddLine(j - 1.0f, oldY);
+					path.AddLine(j - 2.0f, Y);
 
 					oldY = Y;
 				}
