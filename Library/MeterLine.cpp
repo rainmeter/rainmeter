@@ -373,7 +373,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			auto calcY = [&](FLOAT& _y)
 			{
 				_y = ((FLOAT)((*i)[pos] * scale) + offset);
-				_y = min(_y, H);
+				_y = min(_y, H + offset);
 				_y = max(_y, offset);
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};
