@@ -286,7 +286,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	}
 
 	// GDI+ compatibility.
-	FLOAT offset = 0.51f;
+	FLOAT offset = 0.55f;
 
 	// Draw all the lines
 	auto draw = [&](Gfx::Path& path, int& counter) -> void
@@ -311,8 +311,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			auto calcX = [&](FLOAT& _x)
 			{
 				_x = ((FLOAT)((*i)[pos] * scale) + offset);
-				_x = min(_x, W);
-				_x = max(_x, 0.0f);
+				_x = min(_x, W + offset);
+				_x = max(_x, offset);
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
 			};
 
@@ -374,7 +374,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			{
 				_y = ((FLOAT)((*i)[pos] * scale) + offset);
 				_y = min(_y, H);
-				_y = max(_y, 0.0f);
+				_y = max(_y, offset);
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};
 
