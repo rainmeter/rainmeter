@@ -46,9 +46,6 @@ Shape::Shape(ShapeType type) :
 	m_StrokeGradientAltGamma(false),
 	m_HasStrokeBrushChanged(true)
 {
-	// Make sure the stroke width is exact, not altered by other
-	// transforms like Scale or Rotation
-	m_StrokeProperties.transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED;
 }
 
 Shape::~Shape()
@@ -238,7 +235,7 @@ void Shape::SetSkew(FLOAT skewX, FLOAT skewY, FLOAT anchorX, FLOAT anchorY, bool
 	m_SkewAnchorDefined = anchorDefined;
 }
 
-void Shape::CreateStrokeStyle()
+void Shape::CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType)
 {
 	const FLOAT* dashes = nullptr;
 	if (!m_StrokeCustomDashes.empty())
@@ -246,6 +243,8 @@ void Shape::CreateStrokeStyle()
 		m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
 		dashes = m_StrokeCustomDashes.data();
 	}
+
+	m_StrokeProperties.transformType = transformType;
 
 	UINT32 dashCount = (UINT32)m_StrokeCustomDashes.size();
 	HRESULT hr = Canvas::c_D2DFactory->CreateStrokeStyle(
