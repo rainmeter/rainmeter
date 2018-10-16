@@ -279,7 +279,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
 			line.SetStrokeFill(m_HorizontalColor);
-			line.CreateStrokeStyle();
+			line.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
 
 			canvas.DrawGeometry(line, 0, 0);
 		}
@@ -324,8 +324,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				oldX,
 				!m_Flip ? meterRect.top : meterRect.bottom,
 				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle();
-		
+			path.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+
 			if (!m_Flip)
 			{
 				for (FLOAT j = (meterRect.top + 1.0f + offset); j < (meterRect.bottom + offset); ++j)
@@ -386,8 +386,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				!m_GraphStartLeft ? meterRect.left : meterRect.right,
 				oldY,
 				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle();
-		
+			path.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+
 			if (!m_GraphStartLeft)
 			{
 				for (FLOAT j = (meterRect.left + 1.0f + offset); j < (meterRect.right + offset); ++j)

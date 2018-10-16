@@ -84,7 +84,7 @@ public:
 	void SetStrokeLineJoin(D2D1_LINE_JOIN join, FLOAT limit) { m_StrokeProperties.lineJoin = join; m_StrokeProperties.miterLimit = limit; }
 	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
 	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
-	void CreateStrokeStyle();
+	void CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED);
 
 	void SetFill(const D2D1_COLOR_F& color);
 	void SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
