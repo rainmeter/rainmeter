@@ -19,6 +19,7 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Flip(false),
 	m_LineWidth(1.0),
 	m_HorizontalColor(D2D1::ColorF(D2D1::ColorF::Black)),
+	m_StrokeType(D2D1_STROKE_TRANSFORM_TYPE_NORMAL),
 	m_CurrentPos(),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
@@ -159,6 +160,16 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
 	}
 
+	const WCHAR* type = parser.ReadString(section, L"TransformStroke", L"NORMAL").c_str();
+	if (_wcsicmp(type, L"FIXED") == 0)
+	{
+		m_StrokeType = D2D1_STROKE_TRANSFORM_TYPE_FIXED;
+	}
+	else
+	{
+		m_StrokeType = D2D1_STROKE_TRANSFORM_TYPE_NORMAL;
+	}
+
 	if (m_Initialized)
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
@@ -279,7 +290,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
 			line.SetStrokeFill(m_HorizontalColor);
-			line.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+			line.CreateStrokeStyle(m_StrokeType);
 
 			canvas.DrawGeometry(line, 0, 0);
 		}
@@ -324,7 +335,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				oldX,
 				!m_Flip ? meterRect.top : meterRect.bottom,
 				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+			path.CreateStrokeStyle(m_StrokeType);
 
 			if (!m_Flip)
 			{
@@ -386,7 +397,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				!m_GraphStartLeft ? meterRect.left : meterRect.right,
 				oldY,
 				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+			path.CreateStrokeStyle(m_StrokeType);
 
 			if (!m_GraphStartLeft)
 			{
