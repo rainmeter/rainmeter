@@ -38,6 +38,7 @@ private:
 	bool m_Flip;
 	double m_LineWidth;
 	D2D1_COLOR_F m_HorizontalColor;
+	D2D1_STROKE_TRANSFORM_TYPE m_StrokeType;
 
 	std::vector< std::vector<double> > m_AllValues;
 	int m_CurrentPos;
