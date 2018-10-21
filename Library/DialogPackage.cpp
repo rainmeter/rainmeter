@@ -533,8 +533,8 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 void DialogPackage::ShowHelp()
 {
 	const WCHAR* url = revision_beta ?
-		L"https://docs.rainmeter.net/manual-beta/publishing-skins/" :
-		L"https://docs.rainmeter.net/manual/publishing-skins/";
+		L"https://docs.rainmeter.net/manual-beta/distributing-skins/" :
+		L"https://docs.rainmeter.net/manual/distributing-skins/";
 	ShellExecute(m_Window, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
