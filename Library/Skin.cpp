@@ -6,6 +6,9 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+
+#include <algorithm>
+
 #include "Skin.h"
 #include "Rainmeter.h"
 #include "TrayIcon.h"
@@ -26,6 +29,7 @@
 #include "../Version.h"
 #include "../Common/PathUtil.h"
 #include "GeneralImage.h"
+#include "../Common/Gfx/Util/D2DEffectStream.h"
 
 #define SNAPDISTANCE 10
 
@@ -131,7 +135,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_MouseMoveCounter(),
 	m_FontCollection(),
 	m_ToolTipHidden(false),
-	m_Favorite(false)
+	m_Favorite(false),
+	m_RecomputeZOrder(false)
 {
 	if (c_InstanceCount == 0)
 	{
@@ -2567,6 +2572,7 @@ bool Skin::ResizeWindow(bool reset)
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
+		if ((*j)->IsContained()) continue;
 		int mr = (*j)->GetX() + (*j)->GetW();
 		w = max(w, mr);
 		int mb = (*j)->GetY() + (*j)->GetH();
@@ -2658,6 +2664,8 @@ void Skin::CreateDoubleBuffer(int cx, int cy)
 */
 void Skin::Redraw()
 {
+	DoRecomputeZOrder();
+
 	if (m_ResizeWindow)
 	{
 		ResizeWindow(m_ResizeWindow == RESIZEMODE_RESET);
@@ -2806,20 +2814,22 @@ void Skin::Redraw()
 		}
 
 		// Draw the meters
-		std::vector<Meter*>::const_iterator j = m_Meters.begin();
-		for ( ; j != m_Meters.end(); ++j)
+		for (auto j : m_Meters)
 		{
-			const D2D1_MATRIX_3X2_F matrix = (*j)->GetTransformationMatrix();
+			if(HandleContainer(j)) continue;	
+
+			const D2D1_MATRIX_3X2_F matrix = j->GetTransformationMatrix();
 			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
+
 			if (!reinterpretMatrix->IsIdentity())
 			{
 				m_Canvas.SetTransform(matrix);
-				(*j)->Draw(m_Canvas);
+				j->Draw(m_Canvas);
 				m_Canvas.ResetTransform();
 			}
 			else
 			{
-				(*j)->Draw(m_Canvas);
+				j->Draw(m_Canvas);
 			}
 		}
 
@@ -2833,6 +2843,90 @@ void Skin::Redraw()
 	UpdateWindow(m_TransparencyValue);
 
 	m_Canvas.EndDraw();
+}
+
+bool Skin::HandleContainer(Meter* container) {
+	if(container->IsContained()) return true;
+	if (container->GetContainerItems().empty()) return false;
+
+	auto containerContentBitmap = container->GetContainerContentTexture();
+	m_Canvas.SetTarget(containerContentBitmap);
+	m_Canvas.Clear();
+
+	
+	Meter* relative = container;
+
+	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
+
+	for(auto it : container->GetContainerItems())
+	{
+		const D2D1_MATRIX_3X2_F cMatrix = it->GetTransformationMatrix() * offset;
+		m_Canvas.SetTransform(cMatrix);
+		it->Draw(m_Canvas);
+		m_Canvas.ResetTransform();
+		relative = it;
+		it++;
+	}
+
+	const D2D1_MATRIX_3X2_F matrix = container->GetTransformationMatrix() * offset;
+
+	auto containerBitmap = container->GetContainerTexture();
+	m_Canvas.SetTarget(containerBitmap);
+	m_Canvas.Clear();
+	m_Canvas.SetTransform(matrix);
+	container->Draw(m_Canvas);
+	m_Canvas.ResetTransform();
+	m_Canvas.ResetTarget();
+
+	const auto meterRect = container->GetMeterRect();
+	const auto containerContentD2DBitmap = containerContentBitmap->GetBitmap();
+	const auto containerD2DBitmap = containerBitmap->GetBitmap();
+	const D2D1_RECT_F srcRect = {0.0, 0.0, (FLOAT)containerContentD2DBitmap->GetWidth(), (FLOAT)containerContentD2DBitmap->GetHeight()};
+	const D2D1_RECT_F srcRect2 = {0.0, 0.0, (FLOAT)containerD2DBitmap->GetWidth(), (FLOAT)containerD2DBitmap->GetHeight()};
+	const D2D1_RECT_F destination = {(FLOAT)meterRect.left, (FLOAT)meterRect.top, (FLOAT)meterRect.right, (FLOAT)meterRect.bottom };
+	
+	m_Canvas.DrawMaskedBitmap(containerContentD2DBitmap, containerD2DBitmap, destination, srcRect2, srcRect);
+	return true; 
+}
+
+void Skin::DoRecomputeZOrder() {
+	if (!m_RecomputeZOrder) return;
+
+	std::map<Meter*, Meter*> containerLookup;
+	std::vector<Meter*> containedMeters;
+	Meter* prevMeter = nullptr;
+	for (auto meter : m_Meters) {
+
+		if (meter->IsContained()) {
+			containedMeters.push_back(meter);
+			continue;
+		}
+
+		if (prevMeter) {
+			if (meter->IsContainer()) {
+				containerLookup[meter] = meter;
+			}
+			meter->SetRelativeMeter(prevMeter);
+		}
+
+		prevMeter = meter;
+	}
+
+	for (auto meter : containedMeters) {
+		auto container = meter->GetContainerMeter();
+
+		auto it = containerLookup.find(container);
+		if (it != containerLookup.end()) {
+			meter->SetRelativeMeter(it->second);
+			containerLookup[container] = meter;
+		}
+	}
+	m_RecomputeZOrder = false;
+}
+
+void Skin::RecomputeZOrder()
+{
+	m_RecomputeZOrder = true;
 }
 
 /*
@@ -2956,6 +3050,8 @@ void Skin::Update(bool refresh)
 
 	DialogAbout::UpdateMeasures(this);
 
+	DoRecomputeZOrder();
+
 	// Update all meters
 	bool bActiveTransition = false;
 	bool bUpdate = false;
@@ -2968,6 +3064,8 @@ void Skin::Update(bool refresh)
 
 			(*j)->DoUpdateAction();
 		}
+
+		(*j)->UpdateContainer();
 	}
 
 	// Redraw all meters

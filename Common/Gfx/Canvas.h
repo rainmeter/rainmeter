@@ -25,6 +25,8 @@ namespace Gfx {
 // Forward declaration
 class D2DBitmap;
 
+class RenderTexture;
+
 namespace Util {
 	class D2DBitmapLoader;
 	class D2DEffectStream;
@@ -62,12 +64,17 @@ public:
 
 	bool IsTransparentPixel(int x, int y);
 
+	bool IsDrawing() { return m_IsDrawing; }
+
 	void GetTransform(D2D1_MATRIX_3X2_F* matrix);
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
 
 	void PushClip(Gfx::Shape* clip);
 	void PopClip();
+
+	bool SetTarget(Gfx::RenderTexture* texture);
+	void ResetTarget();
 
 	void SetAntiAliasing(bool enable);
 	void SetTextAntiAliasing(bool enable);
@@ -109,6 +116,7 @@ private:
 	friend class Gfx::Util::D2DBitmapLoader;
 	friend class Gfx::Util::D2DEffectStream;
 	friend class Gfx::D2DBitmap;
+	friend class Gfx::RenderTexture;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

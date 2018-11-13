@@ -15,6 +15,7 @@
 #include "Skin.h"
 #include "Section.h"
 #include "Measure.h"
+#include "../Common/Gfx/RenderTexture.h"
 
 class Measure;
 
@@ -41,6 +42,16 @@ public:
 	D2D1_RECT_F GetMeterRectPadding();
 	int GetWidthPadding() { return (int)m_Padding.right; }
 	int GetHeightPadding() { return (int)m_Padding.bottom; }
+
+	Gfx::RenderTexture* GetContainerContentTexture() { return m_ContainerContentTexture; }
+	Gfx::RenderTexture* GetContainerTexture() { return m_ContainerTexture; }
+	void AddContainerItem(Meter* item);
+	void RemoveContainerItem(Meter* item);
+	std::vector<Meter*> GetContainerItems() { return m_ContainerItems; }
+	bool IsContained() { return m_ContainerMeter; }
+	bool IsContainer() { return m_ContainerItems.size() > 0; }
+	Meter* GetContainerMeter() { return m_ContainerMeter; }
+	void UpdateContainer();
 
 	void SetW(int w) { m_W = w; }
 	void SetH(int h) { m_H = h; }
@@ -147,6 +158,11 @@ protected:
 	D2D1_RECT_F m_Padding;
 	bool m_AntiAlias;
 	bool m_Initialized;
+
+	Meter* m_ContainerMeter;
+	std::vector<Meter*> m_ContainerItems;
+	Gfx::RenderTexture* m_ContainerContentTexture;
+	Gfx::RenderTexture* m_ContainerTexture;
 };
 
 #endif
