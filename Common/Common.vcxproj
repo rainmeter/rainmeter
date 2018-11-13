@@ -33,6 +33,7 @@
     <ClCompile Include="Gfx\D2DBitmap.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
+    <ClCompile Include="Gfx\RenderTexture.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
     <ClCompile Include="Gfx\Shapes\Arc.cpp" />
     <ClCompile Include="Gfx\Shapes\Curve.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="Gfx\D2DBitmap.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
+    <ClInclude Include="Gfx\RenderTexture.h" />
     <ClInclude Include="Gfx\Shape.h" />
     <ClInclude Include="Gfx\Shapes\Arc.h" />
     <ClInclude Include="Gfx\Shapes\Curve.h" />

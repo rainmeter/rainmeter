@@ -144,7 +144,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 		d2dbitmap = nullptr;
 	};
 
-	canvas.BeginDraw();
+	auto didDraw = canvas.IsDrawing();
+
+	if (didDraw) {
+		canvas.m_Target->Flush();
+	}
+	else {
+		canvas.BeginDraw();
+	}
 
 	for (UINT y = 0U, H = (UINT)floor(size.height / maxBitmapSize); y <= H; ++y)
 	{
@@ -209,7 +216,13 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 			d2dbitmap->AddSegment(bitmap, rect);
 		}
 	}
-	canvas.EndDraw();
+
+	if (didDraw) {
+		canvas.m_Target->Flush();
+	}
+	else {
+		canvas.EndDraw();
+	}
 
 	canvas.m_Target->SetTarget(target.Get());
 	canvas.m_Target->SetTransform(transform);

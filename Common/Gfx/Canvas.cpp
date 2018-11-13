@@ -13,6 +13,7 @@
 #include "../../Library/Util.h"
 #include "../../Library/Logger.h"
 #include "D2DBitmap.h"
+#include "RenderTexture.h"
 
 namespace Gfx {
 
@@ -343,6 +344,19 @@ void Canvas::PopClip()
 	{
 		m_Layers.pop();
 	}
+}
+
+bool Canvas::SetTarget(RenderTexture* texture) {
+	auto bitmap = texture->GetBitmap();
+	if(bitmap->m_Segments.size() == 0) return false;
+	
+	auto image = texture->GetBitmap()->m_Segments[0].GetBitmap();
+	m_Target->SetTarget(image);
+	return true;
+}
+
+void Canvas::ResetTarget() {
+	m_Target->SetTarget(m_TargetBitmap.Get());
 }
 
 void Canvas::SetAntiAliasing(bool enable)

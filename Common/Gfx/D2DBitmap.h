@@ -27,7 +27,7 @@ public:
 
 	D2D1_RECT_F GetRect() { return D2D1::RectF((FLOAT)m_X, (FLOAT)m_Y, (FLOAT)m_Width, (FLOAT)m_Height); }
 
-	ID2D1Bitmap1* GetBitmap() { return m_Bitmap.Get(); }
+	ID2D1Bitmap1* GetBitmap() { return m_Bitmap.Get();  }
 
 private:
 	BitmapSegment() = delete;
@@ -90,8 +90,9 @@ public:
 private:
 	friend class Canvas;
 	friend class Util::D2DEffectStream;
+	friend class Gfx::RenderTexture;
 
-	D2DBitmap() = delete;
+	D2DBitmap();
 	D2DBitmap(const D2DBitmap& other) = delete;
 	D2DBitmap& operator=(D2DBitmap other) = delete;
 

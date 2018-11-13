@@ -44,7 +44,11 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_SolidAngle(),
 	m_Padding(),
 	m_AntiAlias(false),
-	m_Initialized(false)
+	m_Initialized(false),
+	m_ContainerMeter(),
+	m_ContainerContentTexture(),
+	m_ContainerTexture(),
+	m_ContainerItems()
 {
 }
 
@@ -53,6 +57,16 @@ Meter::~Meter()
 	if (m_ToolTipHandle != nullptr)
 	{
 		DestroyWindow(m_ToolTipHandle);
+	}
+
+	if (m_ContainerContentTexture != nullptr) {
+		delete m_ContainerContentTexture;
+		m_ContainerContentTexture = NULL;
+	}
+
+	if (m_ContainerTexture != nullptr) {
+		delete m_ContainerTexture;
+		m_ContainerTexture = NULL;
 	}
 }
 
@@ -72,6 +86,11 @@ void Meter::Initialize()
 */
 int Meter::GetX(bool abs)
 {
+	int containerOffset = 0;
+	if (m_ContainerMeter) {
+		containerOffset = m_ContainerMeter->GetX(true);
+	}
+
 	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeX == POSITION_RELATIVE_TL)
@@ -83,7 +102,7 @@ int Meter::GetX(bool abs)
 			return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
 		}
 	}
-	return m_X;
+	return containerOffset + m_X;
 }
 
 /*
@@ -92,6 +111,11 @@ int Meter::GetX(bool abs)
 */
 int Meter::GetY(bool abs)
 {
+	int containerOffset = 0;
+	if (m_ContainerMeter) {
+		containerOffset = m_ContainerMeter->GetY(true);
+	}
+
 	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeY == POSITION_RELATIVE_TL)
@@ -103,7 +127,7 @@ int Meter::GetY(bool abs)
 			return m_RelativeMeter->GetY(true) + m_RelativeMeter->GetH() + m_Y;
 		}
 	}
-	return m_Y;
+	return containerOffset + m_Y;
 }
 
 void Meter::SetX(int x)
@@ -168,6 +192,53 @@ bool Meter::HitTest(int x, int y)
 {
 	int p;
 	return (x >= (p = GetX()) && x < p + m_W && y >= (p = GetY()) && y < p + m_H);
+}
+
+void Meter::AddContainerItem(Meter* item)
+{
+	m_ContainerItems.push_back(item);
+	m_Skin->RecomputeZOrder();
+	
+	if (m_ContainerItems.size() == 1) {
+		delete m_ContainerTexture;
+		m_ContainerTexture = NULL;
+		m_ContainerTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), (UINT)GetW(), (UINT)GetH());
+
+		delete m_ContainerContentTexture;
+		m_ContainerContentTexture = NULL;
+		m_ContainerContentTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), (UINT)GetW(), (UINT)GetH());
+	}
+}
+
+void Meter::RemoveContainerItem(Meter* item)
+{
+	std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item);
+	m_Skin->RecomputeZOrder();
+
+	if (m_ContainerItems.size() == 0) {
+		if (m_ContainerContentTexture != nullptr) {
+			delete m_ContainerContentTexture;
+			m_ContainerContentTexture = NULL;
+		}
+
+		if (m_ContainerTexture != nullptr) {
+			delete m_ContainerTexture;
+			m_ContainerTexture = NULL;
+		}
+	}
+}
+
+void Meter::UpdateContainer()
+{
+	if(m_ContainerTexture)
+	{
+		m_ContainerTexture->Resize(m_Skin->GetCanvas(), (UINT)GetW(), (UINT)GetH());
+	}
+
+	if(m_ContainerContentTexture)
+	{
+		m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), (UINT)GetW(), (UINT)GetH());
+	}
 }
 
 /*
@@ -346,6 +417,20 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_Transformation = D2D1::Matrix3x2F::Identity();
 		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+	}
+
+	auto container = parser.ReadString(section, L"Container", L"");
+	if (m_ContainerMeter == nullptr || _wcsicmp(m_ContainerMeter->GetName(), container.c_str()) != 0) {
+		if (m_ContainerMeter) {
+			m_ContainerMeter->RemoveContainerItem(this);
+			m_ContainerMeter = nullptr;
+		}
+
+		auto meter = m_Skin->GetMeter(container);
+		if (meter != nullptr) {
+			meter->AddContainerItem(this);
+			m_ContainerMeter = meter;
+		}
 	}
 }
 
