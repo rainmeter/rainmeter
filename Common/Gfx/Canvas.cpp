@@ -346,7 +346,8 @@ void Canvas::PopClip()
 	}
 }
 
-bool Canvas::SetTarget(RenderTexture* texture) {
+bool Canvas::SetTarget(RenderTexture* texture)
+{
 	auto bitmap = texture->GetBitmap();
 	if(bitmap->m_Segments.size() == 0) return false;
 	
@@ -355,7 +356,8 @@ bool Canvas::SetTarget(RenderTexture* texture) {
 	return true;
 }
 
-void Canvas::ResetTarget() {
+void Canvas::ResetTarget()
+{
 	m_Target->SetTarget(m_TargetBitmap.Get());
 }
 

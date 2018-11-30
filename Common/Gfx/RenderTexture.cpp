@@ -25,7 +25,8 @@ RenderTexture::RenderTexture(Canvas& canvas, UINT width, UINT height) : m_Bitmap
     m_Bitmap.AddSegment(segment, 0u, 0u, width, height);
 }
 
-void RenderTexture::Resize(Canvas& canvas, UINT width, UINT height) {
+void RenderTexture::Resize(Canvas& canvas, UINT width, UINT height)
+{
 	if (width == m_Bitmap.m_Width && height == m_Bitmap.m_Height) return;
 
 	m_Bitmap.m_Segments.clear();

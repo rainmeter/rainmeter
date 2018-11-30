@@ -2845,7 +2845,8 @@ void Skin::Redraw()
 	m_Canvas.EndDraw();
 }
 
-bool Skin::HandleContainer(Meter* container) {
+bool Skin::HandleContainer(Meter* container)
+{
 	if(container->IsContained()) return true;
 	if (container->GetContainerItems().empty()) return false;
 	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
@@ -2890,21 +2891,26 @@ bool Skin::HandleContainer(Meter* container) {
 	return true; 
 }
 
-void Skin::DoRecomputeZOrder() {
+void Skin::DoRecomputeZOrder()
+{
 	if (!m_RecomputeZOrder) return;
 
 	std::map<Meter*, Meter*> containerLookup;
 	std::vector<Meter*> containedMeters;
 	Meter* prevMeter = nullptr;
-	for (auto meter : m_Meters) {
+	for (auto meter : m_Meters)
+	{
 
-		if (meter->IsContained()) {
+		if (meter->IsContained())
+		{
 			containedMeters.push_back(meter);
 			continue;
 		}
 
-		if (prevMeter) {
-			if (meter->IsContainer()) {
+		if (prevMeter)
+		{
+			if (meter->IsContainer())
+			{
 				containerLookup[meter] = meter;
 			}
 			meter->SetRelativeMeter(prevMeter);
@@ -2913,11 +2919,13 @@ void Skin::DoRecomputeZOrder() {
 		prevMeter = meter;
 	}
 
-	for (auto meter : containedMeters) {
+	for (auto meter : containedMeters)
+	{
 		auto container = meter->GetContainerMeter();
 
 		auto it = containerLookup.find(container);
-		if (it != containerLookup.end()) {
+		if (it != containerLookup.end())
+		{
 			meter->SetRelativeMeter(it->second);
 			containerLookup[container] = meter;
 		}
