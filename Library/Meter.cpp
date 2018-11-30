@@ -208,8 +208,8 @@ void Meter::AddContainerItem(Meter* item)
 		int width = GetW();
 		int height = GetH();
 
-		width = max(1, width);
-		height = max(1, height);
+		width = max(0, width);
+		height = max(0, height);
 
 		delete m_ContainerTexture;
 		m_ContainerTexture = NULL;
@@ -247,8 +247,8 @@ void Meter::UpdateContainer()
 	int width = GetW();
 	int height = GetH();
 
-	width = max(1, width);
-	height = max(1, height);
+	width = max(0, width);
+	height = max(0, height);
 
 	if(m_ContainerTexture)
 	{
