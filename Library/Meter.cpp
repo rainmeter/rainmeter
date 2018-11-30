@@ -223,7 +223,7 @@ void Meter::AddContainerItem(Meter* item)
 
 void Meter::RemoveContainerItem(Meter* item)
 {
-	std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item);
+	m_ContainerItems.erase(std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item));
 	m_Skin->RecomputeZOrder();
 
 	if (m_ContainerItems.size() == 0)
