@@ -59,12 +59,14 @@ Meter::~Meter()
 		DestroyWindow(m_ToolTipHandle);
 	}
 
-	if (m_ContainerContentTexture != nullptr) {
+	if (m_ContainerContentTexture != nullptr)
+	{
 		delete m_ContainerContentTexture;
 		m_ContainerContentTexture = NULL;
 	}
 
-	if (m_ContainerTexture != nullptr) {
+	if (m_ContainerTexture != nullptr)
+	{
 		delete m_ContainerTexture;
 		m_ContainerTexture = NULL;
 	}
@@ -87,7 +89,8 @@ void Meter::Initialize()
 int Meter::GetX(bool abs)
 {
 	int containerOffset = 0;
-	if (m_ContainerMeter) {
+	if (m_ContainerMeter)
+	{
 		containerOffset = m_ContainerMeter->GetX(true);
 	}
 
@@ -112,7 +115,8 @@ int Meter::GetX(bool abs)
 int Meter::GetY(bool abs)
 {
 	int containerOffset = 0;
-	if (m_ContainerMeter) {
+	if (m_ContainerMeter)
+	{
 		containerOffset = m_ContainerMeter->GetY(true);
 	}
 
@@ -199,7 +203,8 @@ void Meter::AddContainerItem(Meter* item)
 	m_ContainerItems.push_back(item);
 	m_Skin->RecomputeZOrder();
 	
-	if (m_ContainerItems.size() == 1) {
+	if (m_ContainerItems.size() == 1)
+	{
 		int width = GetW();
 		int height = GetH();
 
@@ -221,13 +226,16 @@ void Meter::RemoveContainerItem(Meter* item)
 	std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item);
 	m_Skin->RecomputeZOrder();
 
-	if (m_ContainerItems.size() == 0) {
-		if (m_ContainerContentTexture != nullptr) {
+	if (m_ContainerItems.size() == 0)
+	{
+		if (m_ContainerContentTexture != nullptr)
+		{
 			delete m_ContainerContentTexture;
 			m_ContainerContentTexture = NULL;
 		}
 
-		if (m_ContainerTexture != nullptr) {
+		if (m_ContainerTexture != nullptr)
+		{
 			delete m_ContainerTexture;
 			m_ContainerTexture = NULL;
 		}
@@ -432,14 +440,17 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	auto container = parser.ReadString(section, L"Container", L"");
-	if (m_ContainerMeter == nullptr || _wcsicmp(m_ContainerMeter->GetName(), container.c_str()) != 0) {
-		if (m_ContainerMeter) {
+	if (m_ContainerMeter == nullptr || _wcsicmp(m_ContainerMeter->GetName(), container.c_str()) != 0)
+	{
+		if (m_ContainerMeter)
+		{
 			m_ContainerMeter->RemoveContainerItem(this);
 			m_ContainerMeter = nullptr;
 		}
 
 		auto meter = m_Skin->GetMeter(container);
-		if (meter != nullptr) {
+		if (meter != nullptr)
+		{
 			meter->AddContainerItem(this);
 			m_ContainerMeter = meter;
 		}
