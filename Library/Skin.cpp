@@ -2848,11 +2848,11 @@ void Skin::Redraw()
 bool Skin::HandleContainer(Meter* container) {
 	if(container->IsContained()) return true;
 	if (container->GetContainerItems().empty()) return false;
+	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
 
 	auto containerContentBitmap = container->GetContainerContentTexture();
 	m_Canvas.SetTarget(containerContentBitmap);
 	m_Canvas.Clear();
-
 	
 	Meter* relative = container;
 
@@ -2875,6 +2875,7 @@ bool Skin::HandleContainer(Meter* container) {
 	m_Canvas.Clear();
 	m_Canvas.SetTransform(matrix);
 	container->Draw(m_Canvas);
+	
 	m_Canvas.ResetTransform();
 	m_Canvas.ResetTarget();
 
@@ -3010,6 +3011,8 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		meter->UpdateToolTip();
 	}
 
+	meter->UpdateContainer();
+
 	// Check for transitions
 	if (!bActiveTransition && meter->HasActiveTransition())
 	{
@@ -3064,8 +3067,6 @@ void Skin::Update(bool refresh)
 
 			(*j)->DoUpdateAction();
 		}
-
-		(*j)->UpdateContainer();
 	}
 
 	// Redraw all meters
