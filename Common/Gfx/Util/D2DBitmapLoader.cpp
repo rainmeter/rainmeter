@@ -22,7 +22,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 
 	HANDLE fileHandle = CreateFile(
 		path.c_str(),
-		GENERIC_READ, FILE_SHARE_READ,
+		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
 		nullptr,
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
@@ -127,7 +127,7 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file
 
 	HANDLE fileHandle = CreateFile(
 		file.c_str(),
-		GENERIC_READ, FILE_SHARE_READ,
+		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
 		nullptr,
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
@@ -154,7 +154,7 @@ HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInf
 
 	HANDLE fileHandle = CreateFile(
 		path.c_str(),
-		GENERIC_READ, FILE_SHARE_READ,
+		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
 		nullptr,
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
