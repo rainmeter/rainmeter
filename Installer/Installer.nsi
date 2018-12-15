@@ -22,6 +22,7 @@ Unicode true
 !include "nsDialogs.nsh"
 !include "FileFunc.nsh"
 !include "WordFunc.nsh"
+!include "x64.nsh"
 !include "UAC.nsh"
 
 !ifndef VERSION
@@ -115,6 +116,12 @@ ${DecalareStyleVariables} "USER_VARIABLE"
 Function .onInit
 	${IfNot} ${UAC_IsInnerInstance}
 		ReadRegStr $NppPath HKLM "SOFTWARE\Notepad++" ""
+		${If} $NppPath == ""
+		${AndIf} ${RunningX64}
+			SetRegView 64
+			ReadRegStr $NppPath HKLM "SOFTWARE\Notepad++" ""
+			SetRegView default
+		${EndIf}
 
 retry:
 		FindWindow $0 "Notepad++"
