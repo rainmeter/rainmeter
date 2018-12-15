@@ -234,9 +234,9 @@ Function PageOptionsOnLeave
 
 	MoreInfo::GetProductVersion "$NppPath\notepad++.exe"
 	Pop $0
-	${VersionCompare} "$0" "6.0.0" $0
+	${VersionCompare} "$0" "7.6.1" $0
 	${If} $0 = 2
-		MessageBox MB_OK|MB_ICONSTOP "Notepad++ 6.0.0 or higher is required to install RainLexer. Try again after installing the latest version of Notepad++."
+		MessageBox MB_OK|MB_ICONSTOP "Notepad++ 7.6.1 or higher is required to install RainLexer. Try again after installing the latest version of Notepad++."
 		Quit
 	${EndIf}
 
