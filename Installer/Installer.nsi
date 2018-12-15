@@ -52,6 +52,7 @@ Page InstFiles
 
 Var NppPath
 Var NppConfigPath
+Var NppPluginsPath
 Var NppExeFile
 Var NppThemeName
 
@@ -120,7 +121,7 @@ Function .onInit
 		${AndIf} ${RunningX64}
 			SetRegView 64
 			ReadRegStr $NppPath HKLM "SOFTWARE\Notepad++" ""
-			SetRegView default
+			SetRegView lastused
 		${EndIf}
 
 retry:
@@ -134,16 +135,18 @@ retry:
 		!insertmacro UAC_AsUser_Call Function ExchangeVariables ${UAC_SYNCREGISTERS}
 		StrCpy $NppPath $1
 		StrCpy $NppConfigPath $2
-		StrCpy $NppExeFile $3
-		StrCpy $ResetStyleSettings $4
+		StrCpy $NppPluginsPath $3
+		StrCpy $NppExeFile $4
+		StrCpy $ResetStyleSettings $5
 	${EndIf}
 FunctionEnd
 
 Function ExchangeVariables
 	StrCpy $1 $NppPath
 	StrCpy $2 $NppConfigPath
-	StrCpy $3 $NppExeFile
-	StrCpy $4 $ResetStyleSettings
+	StrCpy $3 $NppPluginsPath
+	StrCpy $4 $NppExeFile
+	StrCpy $5 $ResetStyleSettings
 	HideWindow
 FunctionEnd
 
@@ -208,14 +211,21 @@ Function PageOptionsOnLeave
 
 	${If} ${FileExists} "$NppPath\config.xml"
 		StrCpy $NppConfigPath "$NppPath"
+		StrCpy $NppPluginsPath "$NppPath\plugins"
 		StrCpy $NppExeFile "$NppPath\notepad++.exe"
 	${ElseIf} ${FileExists} "$NppPath\..\..\Notepad++Portable.exe"
 	${AndIf} ${FileExists} "$NppPath\..\..\Data\settings\config.xml"
 		; PortableApps install.
 		StrCpy $NppConfigPath "$NppPath"
+		StrCpy $NppPluginsPath "$NppPath\plugins"
 		StrCpy $NppExeFile "$NppPath\..\..\Notepad++Portable.exe"
 	${ElseIf} ${FileExists} "$APPDATA\Notepad++\config.xml"
 		StrCpy $NppConfigPath "$APPDATA\Notepad++"
+
+		SetShellVarContext all
+		StrCpy $NppPluginsPath "$NppPath\plugins"
+		SetShellVarContext current
+
 		StrCpy $NppExeFile "$NppPath\notepad++.exe"
 	${Else}
 		MessageBox MB_OK|MB_ICONSTOP "Unable to find config.xml."
@@ -296,8 +306,11 @@ Section
 	; Old versions were installed to %APPDATA%, so remove that first.
 	Delete "$NppConfigPath\plugins\RainLexer.dll"
 	Delete "$NppPath\plugins\RainLexer.dll"
-	
-	SetOutPath "$LOCALAPPDATA\Notepad++\plugins\RainLexer"
+	RMDir /r "$NppConfigPath\plugins\RainLexer"
+	RMDir /r "$NppPath\plugins\RainLexer"
+	RMDir /r "$NppPluginsPath\RainLexer"
+
+	SetOutPath "$NppPluginsPath\RainLexer"
 	StrCpy $0 "$NppPath\notepad++.exe"
 	System::Call "kernel32::GetBinaryType(t r0, *i .r1)"
 	${If} $1 = ${SCS_64BIT_BINARY}
