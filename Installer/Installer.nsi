@@ -223,7 +223,7 @@ Function PageOptionsOnLeave
 		StrCpy $NppConfigPath "$APPDATA\Notepad++"
 
 		SetShellVarContext all
-		StrCpy $NppPluginsPath "$NppPath\plugins"
+		StrCpy $NppPluginsPath "$APPDATA\Notepad++\plugins"
 		SetShellVarContext current
 
 		StrCpy $NppExeFile "$NppPath\notepad++.exe"
