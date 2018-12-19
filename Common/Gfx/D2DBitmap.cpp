@@ -59,7 +59,6 @@ D2DBitmap::D2DBitmap() :
 	m_FileSize(0UL),
 	m_FileTime(0ULL)
 {
-
 }
 
 D2DBitmap::~D2DBitmap()
