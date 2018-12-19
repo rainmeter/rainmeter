@@ -6,6 +6,9 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+
+#include <algorithm>
+
 #include "Skin.h"
 #include "Rainmeter.h"
 #include "TrayIcon.h"
@@ -23,9 +26,9 @@
 #include "MeterButton.h"
 #include "MeterString.h"
 #include "MeasureScript.h"
-#include "GeneralImage.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
+#include "GeneralImage.h"
 #include "../Common/Gfx/Util/D2DEffectStream.h"
 
 #define SNAPDISTANCE 10
@@ -2811,22 +2814,22 @@ void Skin::Redraw()
 		}
 
 		// Draw the meters
-		for (auto meter : m_Meters)
+		for (auto j : m_Meters)
 		{
-			if (HandleContainer(meter)) continue;
+			if(HandleContainer(j)) continue;	
 
-			const D2D1_MATRIX_3X2_F matrix = meter->GetTransformationMatrix();
+			const D2D1_MATRIX_3X2_F matrix = j->GetTransformationMatrix();
 			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
 
 			if (!reinterpretMatrix->IsIdentity())
 			{
 				m_Canvas.SetTransform(matrix);
-				meter->Draw(m_Canvas);
+				j->Draw(m_Canvas);
 				m_Canvas.ResetTransform();
 			}
 			else
 			{
-				meter->Draw(m_Canvas);
+				j->Draw(m_Canvas);
 			}
 		}
 
@@ -2844,59 +2847,46 @@ void Skin::Redraw()
 
 bool Skin::HandleContainer(Meter* container)
 {
-	const auto& containerItems = container->GetContainerItems();
-	if (containerItems.empty()) return false;
-
-	if (container->IsContained() || container->GetW() <= 0 || container->GetH() <= 0) return true;
+	if(container->IsContained()) return true;
+	if (container->GetContainerItems().empty()) return false;
+	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
 
 	auto containerContentBitmap = container->GetContainerContentTexture();
 	m_Canvas.SetTarget(containerContentBitmap);
 	m_Canvas.Clear();
-
+	
 	Meter* relative = container;
 
 	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
 
-	for (auto item : containerItems)
+	for(auto it : container->GetContainerItems())
 	{
-		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset);
-		item->Draw(m_Canvas);
+		const D2D1_MATRIX_3X2_F cMatrix = it->GetTransformationMatrix() * offset;
+		m_Canvas.SetTransform(cMatrix);
+		it->Draw(m_Canvas);
 		m_Canvas.ResetTransform();
-		relative = item;
-		item++;
+		relative = it;
+		it++;
 	}
+
+	const D2D1_MATRIX_3X2_F matrix = container->GetTransformationMatrix() * offset;
 
 	auto containerBitmap = container->GetContainerTexture();
 	m_Canvas.SetTarget(containerBitmap);
 	m_Canvas.Clear();
-	m_Canvas.SetTransform(container->GetTransformationMatrix() * offset);
+	m_Canvas.SetTransform(matrix);
 	container->Draw(m_Canvas);
-
+	
 	m_Canvas.ResetTransform();
 	m_Canvas.ResetTarget();
 
 	const auto meterRect = container->GetMeterRect();
 	const auto containerContentD2DBitmap = containerContentBitmap->GetBitmap();
 	const auto containerD2DBitmap = containerBitmap->GetBitmap();
-
-	const D2D1_RECT_F srcRect = D2D1::RectF(
-		0.0,
-		0.0,
-		(FLOAT)containerContentD2DBitmap->GetWidth(),
-		(FLOAT)containerContentD2DBitmap->GetHeight());
-
-	const D2D1_RECT_F srcRect2 = D2D1::RectF(
-		0.0,
-		0.0,
-		(FLOAT)containerD2DBitmap->GetWidth(),
-		(FLOAT)containerD2DBitmap->GetHeight());
-
-	const D2D1_RECT_F destination = D2D1::RectF(
-		(FLOAT)meterRect.left,
-		(FLOAT)meterRect.top,
-		(FLOAT)meterRect.right,
-		(FLOAT)meterRect.bottom);
-
+	const D2D1_RECT_F srcRect = {0.0, 0.0, (FLOAT)containerContentD2DBitmap->GetWidth(), (FLOAT)containerContentD2DBitmap->GetHeight()};
+	const D2D1_RECT_F srcRect2 = {0.0, 0.0, (FLOAT)containerD2DBitmap->GetWidth(), (FLOAT)containerD2DBitmap->GetHeight()};
+	const D2D1_RECT_F destination = {(FLOAT)meterRect.left, (FLOAT)meterRect.top, (FLOAT)meterRect.right, (FLOAT)meterRect.bottom };
+	
 	m_Canvas.DrawMaskedBitmap(containerContentD2DBitmap, containerD2DBitmap, destination, srcRect2, srcRect);
 	return true; 
 }
@@ -2908,9 +2898,9 @@ void Skin::DoRecomputeZOrder()
 	std::map<Meter*, Meter*> containerLookup;
 	std::vector<Meter*> containedMeters;
 	Meter* prevMeter = nullptr;
-
-	for (const auto meter : m_Meters)
+	for (auto meter : m_Meters)
 	{
+
 		if (meter->IsContained())
 		{
 			containedMeters.push_back(meter);
@@ -2929,17 +2919,17 @@ void Skin::DoRecomputeZOrder()
 		prevMeter = meter;
 	}
 
-	for (const auto meter : containedMeters)
+	for (auto meter : containedMeters)
 	{
 		auto container = meter->GetContainerMeter();
-		auto item = containerLookup.find(container);
-		if (item != containerLookup.end())
+
+		auto it = containerLookup.find(container);
+		if (it != containerLookup.end())
 		{
-			meter->SetRelativeMeter(item->second);
+			meter->SetRelativeMeter(it->second);
 			containerLookup[container] = meter;
 		}
 	}
-
 	m_RecomputeZOrder = false;
 }
 

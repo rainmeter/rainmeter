@@ -47,9 +47,9 @@ public:
 	Gfx::RenderTexture* GetContainerTexture() { return m_ContainerTexture; }
 	void AddContainerItem(Meter* item);
 	void RemoveContainerItem(Meter* item);
-	const std::vector<Meter*>& GetContainerItems() { return m_ContainerItems; }
-	bool IsContained() { return m_ContainerMeter != nullptr; }
-	bool IsContainer() { return !m_ContainerItems.empty(); }
+	std::vector<Meter*> GetContainerItems() { return m_ContainerItems; }
+	bool IsContained() { return m_ContainerMeter; }
+	bool IsContainer() { return m_ContainerItems.size() > 0; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
 	void UpdateContainer();
 

@@ -62,13 +62,13 @@ Meter::~Meter()
 	if (m_ContainerContentTexture != nullptr)
 	{
 		delete m_ContainerContentTexture;
-		m_ContainerContentTexture = nullptr;
+		m_ContainerContentTexture = NULL;
 	}
 
 	if (m_ContainerTexture != nullptr)
 	{
 		delete m_ContainerTexture;
-		m_ContainerTexture = nullptr;
+		m_ContainerTexture = NULL;
 	}
 }
 
@@ -105,7 +105,6 @@ int Meter::GetX(bool abs)
 			return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
 		}
 	}
-
 	return containerOffset + m_X;
 }
 
@@ -132,7 +131,6 @@ int Meter::GetY(bool abs)
 			return m_RelativeMeter->GetY(true) + m_RelativeMeter->GetH() + m_Y;
 		}
 	}
-
 	return containerOffset + m_Y;
 }
 
@@ -204,22 +202,22 @@ void Meter::AddContainerItem(Meter* item)
 {
 	m_ContainerItems.push_back(item);
 	m_Skin->RecomputeZOrder();
-
+	
 	if (m_ContainerItems.size() == 1)
 	{
-		UINT width = (UINT)GetW();
-		UINT height = (UINT)GetH();
+		int width = GetW();
+		int height = GetH();
 
-		width = max(0U, width);
-		height = max(0U, height);
+		width = max(0, width);
+		height = max(0, height);
 
 		delete m_ContainerTexture;
-		m_ContainerTexture = nullptr;
-		m_ContainerTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), width, height);
+		m_ContainerTexture = NULL;
+		m_ContainerTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), (UINT)width, (UINT)height);
 
 		delete m_ContainerContentTexture;
-		m_ContainerContentTexture = nullptr;
-		m_ContainerContentTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), width, height);
+		m_ContainerContentTexture = NULL;
+		m_ContainerContentTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), (UINT)width, (UINT)height);
 	}
 }
 
@@ -233,28 +231,34 @@ void Meter::RemoveContainerItem(Meter* item)
 		if (m_ContainerContentTexture != nullptr)
 		{
 			delete m_ContainerContentTexture;
-			m_ContainerContentTexture = nullptr;
+			m_ContainerContentTexture = NULL;
 		}
 
 		if (m_ContainerTexture != nullptr)
 		{
 			delete m_ContainerTexture;
-			m_ContainerTexture = nullptr;
+			m_ContainerTexture = NULL;
 		}
 	}
 }
 
 void Meter::UpdateContainer()
 {
-	UINT width = GetW();
-	UINT height = GetH();
+	int width = GetW();
+	int height = GetH();
 
-	width = max(0U, width);
-	height = max(0U, height);
+	width = max(0, width);
+	height = max(0, height);
 
-	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
+	if(m_ContainerTexture)
+	{
+		m_ContainerTexture->Resize(m_Skin->GetCanvas(), (UINT)width, (UINT)height);
+	}
 
-	if (m_ContainerContentTexture) m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), width, height);
+	if(m_ContainerContentTexture)
+	{
+		m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), (UINT)width, (UINT)height);
+	}
 }
 
 /*

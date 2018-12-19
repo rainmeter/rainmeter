@@ -27,7 +27,7 @@ public:
 
 	D2D1_RECT_F GetRect() { return D2D1::RectF((FLOAT)m_X, (FLOAT)m_Y, (FLOAT)m_Width, (FLOAT)m_Height); }
 
-	ID2D1Bitmap1* GetBitmap() { return m_Bitmap.Get(); }
+	ID2D1Bitmap1* GetBitmap() { return m_Bitmap.Get();  }
 
 private:
 	BitmapSegment() = delete;
@@ -106,6 +106,7 @@ private:
 	ULONGLONG m_FileTime;
 
 	std::vector<BitmapSegment> m_Segments;
+
 };
 
 }  // namespace Gfx
