@@ -1029,7 +1029,9 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 
 void DialogInstall::LaunchRainmeter()
 {
-	// Execute Rainmeter and wait up to a minute for it process all messages
+	// Execute Rainmeter and wait until it is ready to process messages
+	// Note: There may be a small delay between the time Rainmeter restarts,
+	// and any skins from the rmskin get loaded (if selected).
 	std::wstring rainmeterExe = g_Data.programPath + L"Rainmeter.exe";
 	std::wstring args;
 	if (!m_LoadLayout.empty())
@@ -1041,19 +1043,26 @@ void DialogInstall::LaunchRainmeter()
 
 	SHELLEXECUTEINFO sei = {0};
 	sei.cbSize = sizeof(SHELLEXECUTEINFO);
-	sei.fMask = SEE_MASK_WAITFORINPUTIDLE | SEE_MASK_UNICODE;
+	sei.fMask = SEE_MASK_WAITFORINPUTIDLE | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
+	sei.lpVerb = L"open";
 	sei.lpFile = rainmeterExe.c_str();
 	sei.lpParameters = args.c_str();
 	sei.lpDirectory = g_Data.programPath.c_str();
 	sei.nShow = SW_SHOWNORMAL;
 	ShellExecuteEx(&sei);
 
+	if (sei.hProcess)
+	{
+		WaitForSingleObject(sei.hProcess, 500);		// Half-second is enough?
+		CloseHandle(sei.hProcess);
+	}
+
 	if (!m_LoadSkins.empty())
 	{
-		std::wstring::size_type pos;
+		size_t pos;
 		std::wstring bang;
 
-		for (int i = 0, isize = (int)m_LoadSkins.size(); i < isize; ++i)
+		for (size_t i = 0, isize = m_LoadSkins.size(); i < isize; ++i)
 		{
 			const std::wstring& skinName = m_LoadSkins[i];
 			pos = skinName.find_last_of(L"\\");
@@ -1062,7 +1071,7 @@ void DialogInstall::LaunchRainmeter()
 				// Append with [!ActivateConfig "Config" "File.ini"]
 				bang += L"[!ActivateConfig \"";
 				bang.append(skinName, 0, pos);
-				bang += L"\" \"";;
+				bang += L"\" \"";
 				bang.append(skinName, pos + 1, skinName.length() - pos + 1);
 				bang += L"\"]";
 			}
@@ -1070,8 +1079,8 @@ void DialogInstall::LaunchRainmeter()
 
 		if (!bang.empty())
 		{
-			sei.fMask = SEE_MASK_UNICODE;
-			sei.lpParameters = (LPCTSTR)bang.c_str();
+			sei.fMask = SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
+			sei.lpParameters = bang.c_str();
 			ShellExecuteEx(&sei);
 		}
 	}
