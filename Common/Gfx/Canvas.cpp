@@ -7,13 +7,13 @@
 
 #include "StdAfx.h"
 #include "Canvas.h"
+#include "D2DBitmap.h"
+#include "RenderTexture.h"
 #include "TextFormatD2D.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
 #include "../../Library/Util.h"
 #include "../../Library/Logger.h"
-#include "D2DBitmap.h"
-#include "RenderTexture.h"
 
 namespace Gfx {
 
@@ -349,8 +349,8 @@ void Canvas::PopClip()
 bool Canvas::SetTarget(RenderTexture* texture)
 {
 	auto bitmap = texture->GetBitmap();
-	if(bitmap->m_Segments.size() == 0) return false;
-	
+	if (bitmap->m_Segments.size() == 0) return false;
+
 	auto image = texture->GetBitmap()->m_Segments[0].GetBitmap();
 	m_Target->SetTarget(image);
 	return true;
