@@ -100,8 +100,6 @@ public:
 
 private:
 	friend class Canvas;
-	friend class D2DBitmap;
-	friend class RenderTexture;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
 	friend class TextInlineFormat_Face;
@@ -115,8 +113,10 @@ private:
 	friend class Curve;
 	friend class QuadraticCurve;
 	friend class Path;
-	friend class Util::D2DBitmapLoader;
-	friend class Util::D2DEffectStream;
+	friend class Gfx::Util::D2DBitmapLoader;
+	friend class Gfx::Util::D2DEffectStream;
+	friend class Gfx::D2DBitmap;
+	friend class Gfx::RenderTexture;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
