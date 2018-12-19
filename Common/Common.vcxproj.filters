@@ -119,7 +119,9 @@
     <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\RenderTexture.cpp" />
+    <ClCompile Include="Gfx\RenderTexture.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -243,7 +245,9 @@
     <ClInclude Include="Gfx\Util\D2DEffectStream.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\RenderTexture.h" />
+    <ClInclude Include="Gfx\RenderTexture.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
