@@ -13,16 +13,16 @@
 
 namespace Gfx {
 
-class RenderTexture {
+class RenderTexture
+{
 public:
-    RenderTexture(Canvas& canvas, UINT width, UINT height);
-    
+	RenderTexture(Canvas& canvas, UINT width, UINT height);
+
 	void Resize(Canvas& canvas, UINT width, UINT height);
-	D2DBitmap* GetBitmap();
+	D2DBitmap* GetBitmap() { return &m_Bitmap; }
 
 private:
-    D2DBitmap m_Bitmap;
-    
+	D2DBitmap m_Bitmap;
 };
 
 } // namespace Gfx

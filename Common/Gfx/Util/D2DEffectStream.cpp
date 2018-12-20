@@ -143,7 +143,6 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const UINT width, const UIN
 	};
 
 	auto didDraw = canvas.IsDrawing();
-
 	if (didDraw)
 	{
 		canvas.m_Target->Flush();
@@ -217,10 +216,12 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const UINT width, const UIN
 		}
 	}
 
-	if (didDraw) {
+	if (didDraw)
+	{
 		canvas.m_Target->Flush();
 	}
-	else {
+	else
+	{
 		canvas.EndDraw();
 	}
 
