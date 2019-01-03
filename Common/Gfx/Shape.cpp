@@ -491,7 +491,7 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_StrokeWidth = m_StrokeWidth;
 	otherShape->m_Rotation = m_Rotation;
 	otherShape->m_RotationAnchor = m_RotationAnchor;
-	otherShape->m_RotationAnchorDefined;
+	otherShape->m_RotationAnchorDefined = m_RotationAnchorDefined;
 	otherShape->m_Scale = m_Scale;
 	otherShape->m_ScaleAnchor = m_ScaleAnchor;
 	otherShape->m_ScaleAnchorDefined = m_ScaleAnchorDefined;
