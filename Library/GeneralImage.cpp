@@ -373,9 +373,7 @@ void GeneralImage::ApplyTransforms()
 
 		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
 
-		const UINT width = m_Bitmap->GetBitmap()->GetWidth();
-		const UINT height = m_Bitmap->GetBitmap()->GetHeight();
-		auto bitmap = stream->ToBitmap(canvas, width, height);
+		auto bitmap = stream->ToBitmap(canvas);
 		delete stream;
 		stream = nullptr;
 
