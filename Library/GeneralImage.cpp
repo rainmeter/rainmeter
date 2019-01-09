@@ -361,17 +361,23 @@ void GeneralImage::ApplyTransforms()
 		auto& canvas = m_Skin->GetCanvas();
 		auto stream = m_Bitmap->GetBitmap()->CreateEffectStream();
 
-		ApplyCrop(stream);
-
-		if (m_Options.m_Rotate != 0.0f) stream->Rotate(canvas, m_Options.m_Rotate);
-
-		stream->Flip(canvas, m_Options.m_Flip);
+		// To preserve backwards compatibility, apply transforms in the following order:
+		// 1. Exif orientation
+		// 2. Crop
+		// 3. Tinting (greyscale first, then color matrix)
+		// 4. Transforms (GDI+ flips, then rotates)
 
 		if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
+
+		ApplyCrop(stream);
 
 		if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
 
 		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
+
+		stream->Flip(canvas, m_Options.m_Flip);
+
+		if (m_Options.m_Rotate != 0.0f) stream->Rotate(canvas, m_Options.m_Rotate);
 
 		auto bitmap = stream->ToBitmap(canvas);
 		delete stream;

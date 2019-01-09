@@ -26,7 +26,7 @@ class D2DEffectStream
 public:
 	void Crop(const Canvas& canvas, const D2D1_RECT_F& crop);
 	void Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
-	void Rotate(const Canvas& canvas, const FLOAT& matrix);
+	void Rotate(const Canvas& canvas, const FLOAT& angle);
 	void Flip(const Canvas& canvas, const FlipType& flipType);
 	void ApplyExifOrientation(const Canvas& canvas);
 	D2DBitmap* ToBitmap(Canvas& canvas);
