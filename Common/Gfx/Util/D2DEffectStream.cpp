@@ -112,7 +112,7 @@ void D2DEffectStream::ApplyExifOrientation(const Canvas& canvas)
 	}
 }
 
-D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const UINT width, const UINT height)
+D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 {
 	bool changed = false;
 	for (const auto& effect : m_Effects)
@@ -131,6 +131,11 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const UINT width, const UIN
 	canvas.m_Target->GetTransform(&transform);
 
 	const UINT maxBitmapSize = (UINT)canvas.m_MaxBitmapSize;
+	const auto size = GetSize(canvas);
+	if (size.width < 0.0f || size.height < 0.0f) return nullptr;
+
+	const UINT width = (UINT)size.width;
+	const UINT height = (UINT)size.height;
 
 	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
 	d2dbitmap->m_Width = width;
