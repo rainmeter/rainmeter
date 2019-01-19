@@ -112,7 +112,7 @@ void D2DEffectStream::ApplyExifOrientation(const Canvas& canvas)
 	}
 }
 
-D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
+D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 {
 	bool changed = false;
 	for (const auto& effect : m_Effects)
@@ -131,7 +131,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas)
 	canvas.m_Target->GetTransform(&transform);
 
 	const UINT maxBitmapSize = (UINT)canvas.m_MaxBitmapSize;
-	const auto size = GetSize(canvas);
+	const auto size = (imageSize) ? *imageSize : GetSize(canvas);
 	if (size.width < 0.0f || size.height < 0.0f) return nullptr;
 
 	const UINT width = (UINT)size.width;
@@ -243,6 +243,8 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 	for (size_t i = 0; i < m_Effects.size(); ++i)
 	{
 		const auto& effect = m_Effects[i];
+		if (!effect) return size;
+
 		auto& segment = m_BaseImage->m_Segments[i];
 
 		Microsoft::WRL::ComPtr<ID2D1Image> image;
@@ -250,7 +252,7 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 
 		D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 		HRESULT hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
-		if (FAILED(hr)) return D2D1::SizeF(0.0f, 0.0f);
+		if (FAILED(hr)) return size;
 
 		if (i == 0)
 		{
