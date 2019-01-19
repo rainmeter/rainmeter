@@ -1062,6 +1062,15 @@ HRESULT	Measure::DeviceInit ()
 	// parse audio format - Note: not all formats are supported.
 	hr = m_clAudio->GetMixFormat(&m_wfx);
 	EXIT_ON_ERROR(hr);
+	
+	if (m_wfx->nChannels == 8)
+	{
+		// Nahimic (the audio driver of MSI) is hooked into GetMixFormat and falsifies the WAVEFORMATEX 
+		// see: https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/bd8cd9f2-974f-4a9f-8e9c-e83001819942/iaudioclient-initialize-failure
+		m_wfx->nChannels = 2;
+		m_wfx->nBlockAlign = (2 * m_wfx->wBitsPerSample) / 8;
+		m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
+	}
 
 	switch(m_wfx->wFormatTag)
 	{
