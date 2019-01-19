@@ -397,6 +397,11 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 			}
 			else
 			{
+				// Make sure the fractional part of the width/height metrics are included
+				// in the calculation.
+				metrics.width = std::ceil(metrics.width);
+				metrics.height = std::ceil(metrics.height);
+
 				// GDI+ compatibility: With accurate metrics, the line gap needs to be subtracted
 				// from the overall height if the string does not contain newlines.
 				if (!strippedLastNewLine && wmemchr(str, L'\n', strLen) == nullptr)
