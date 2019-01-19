@@ -29,7 +29,7 @@ public:
 	void Rotate(const Canvas& canvas, const FLOAT& angle);
 	void Flip(const Canvas& canvas, const FlipType& flipType);
 	void ApplyExifOrientation(const Canvas& canvas);
-	D2DBitmap* ToBitmap(Canvas& canvas);
+	D2DBitmap* ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize);
 	D2D1_SIZE_F GetSize(const Canvas& canvas);
 
 private:

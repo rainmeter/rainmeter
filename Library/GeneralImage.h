@@ -64,15 +64,15 @@ public:
 
 	void DisposeImage();
 
-	bool IsLoaded() { return m_Bitmap != nullptr; }
-	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : m_Bitmap  ? m_Bitmap->GetBitmap() : nullptr; }
+	bool IsLoaded() { return m_BitmapProcessed != nullptr; }
+	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : nullptr; }
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName);
 
 private:
 
-	void ApplyCrop(Gfx::Util::D2DEffectStream* stream) const;
+	D2D1_SIZE_F ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const;
 	void ApplyTransforms();
 
 	ImageCacheHandle* m_Bitmap;

@@ -294,20 +294,29 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	return false;
 }
 
-void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
+D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const
 {
-	const auto& crop = m_Options.m_Crop;
+	const FLOAT imageW = (FLOAT)bitmap->GetWidth();
+	const FLOAT imageH = (FLOAT)bitmap->GetHeight();
 
+	auto& canvas = m_Skin->GetCanvas();
+
+	// Make sure to get the any size changes from EXIF data
+	auto size = stream->GetSize(canvas);
+	if (size.width <= 0.0f && size.height <= 0.0f)
+	{
+		size.width = imageW;
+		size.height = imageH;
+	}
+
+	const auto& crop = m_Options.m_Crop;
 	if (crop.right == -1.0f && crop.left == -1.0f && crop.top == -1.0f && crop.bottom == -1.0f)
 	{
-		return;
+		return size;
 	}
 
 	if (crop.right - crop.left >= 0.0f && crop.bottom - crop.top >= 0.0f)
 	{
-		const FLOAT imageW = (FLOAT)m_Bitmap->GetBitmap()->GetWidth();
-		const FLOAT imageH = (FLOAT)m_Bitmap->GetBitmap()->GetHeight();
-
 		FLOAT x = 0.0f;
 		FLOAT y = 0.0f;
 
@@ -341,8 +350,13 @@ void GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream) const
 		}
 
 		const D2D1_RECT_F rect = D2D1::RectF(x, y, crop.right - crop.left + x, crop.bottom - crop.top + y);
-		stream->Crop(m_Skin->GetCanvas(), rect);
+		stream->Crop(canvas, rect);
+
+		size.width = rect.right - rect.left;
+		size.height = rect.bottom - rect.top;
 	}
+
+	return size;
 }
 
 void GeneralImage::ApplyTransforms()
@@ -358,8 +372,9 @@ void GeneralImage::ApplyTransforms()
 	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
 	if (!handle)
 	{
+		auto* bitmap = m_Bitmap->GetBitmap();
 		auto& canvas = m_Skin->GetCanvas();
-		auto stream = m_Bitmap->GetBitmap()->CreateEffectStream();
+		auto* stream = bitmap->CreateEffectStream();
 
 		// To preserve backwards compatibility, apply transforms in the following order:
 		// 1. Exif orientation
@@ -369,7 +384,20 @@ void GeneralImage::ApplyTransforms()
 
 		if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
 
-		ApplyCrop(stream);
+		const auto crop = ApplyCrop(stream, bitmap);
+		auto* croppedBitmap = stream->ToBitmap(canvas, &crop);
+		if (!croppedBitmap)
+		{
+			delete stream;
+			stream = nullptr;
+			return;
+		}
+
+		if (croppedBitmap != bitmap)
+		{
+			delete stream;
+			stream = croppedBitmap->CreateEffectStream();
+		}
 
 		if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
 
@@ -379,13 +407,20 @@ void GeneralImage::ApplyTransforms()
 
 		if (m_Options.m_Rotate != 0.0f) stream->Rotate(canvas, m_Options.m_Rotate);
 
-		auto bitmap = stream->ToBitmap(canvas);
+		auto* newBitmap = stream->ToBitmap(canvas, nullptr);
+
 		delete stream;
 		stream = nullptr;
 
-		if (bitmap != nullptr)
+		if (croppedBitmap != bitmap)
 		{
-			GetImageCache().Put(m_Options, bitmap);
+			delete croppedBitmap;
+			croppedBitmap = nullptr;
+		}
+
+		if (newBitmap != nullptr)
+		{
+			GetImageCache().Put(m_Options, newBitmap);
 			handle = GetImageCache().Get(m_Options);
 			if (!handle) return;
 		}
