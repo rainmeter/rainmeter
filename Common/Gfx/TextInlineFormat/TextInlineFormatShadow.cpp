@@ -21,7 +21,8 @@ TextInlineFormat_Shadow::TextInlineFormat_Shadow(const std::wstring& pattern, co
 		TextInlineFormat(pattern),
 		m_Offset(offset),
 		m_Blur(blur),
-		m_Color(color)
+		m_Color(color),
+		m_PreviousPosition(D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f))
 {
 }
 
@@ -64,6 +65,22 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		{
 			DWRITE_TEXT_RANGE temp = { i, 1 };
 			layout->SetDrawingEffect(transparent.Get(), temp);
+		}
+	}
+
+	// Reset the shadow bitmap if the drawing position or size of target has changed.
+	if (m_BitmapTarget)
+	{
+		const auto tSize = target->GetSize();
+		const D2D1_RECT_F position = D2D1::RectF(drawPosition.x, drawPosition.y, tSize.width, tSize.height);
+
+		if (position.left != m_PreviousPosition.left ||
+			position.top != m_PreviousPosition.top ||
+			position.right != m_PreviousPosition.right ||
+			position.bottom != m_PreviousPosition.bottom)
+		{
+			m_BitmapTarget.Reset();
+			m_PreviousPosition = position;
 		}
 	}
 
