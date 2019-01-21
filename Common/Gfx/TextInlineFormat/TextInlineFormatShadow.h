@@ -37,6 +37,8 @@ private:
 	D2D1_POINT_2F m_Offset;
 	D2D1_COLOR_F m_Color;
 
+	D2D1_RECT_F m_PreviousPosition;
+
 	Microsoft::WRL::ComPtr<ID2D1Bitmap> m_Bitmap;
 	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> m_BitmapTarget;
 };
