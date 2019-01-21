@@ -672,6 +672,12 @@ SkipIniMove:
 			${Else}
 				!insertmacro UAC_AsUser_Call Function CreateUserStartupShortcut ${UAC_SYNCREGISTERS}
 			${EndIf}
+		${Else}
+			SetShellVarContext current
+			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+				; Remove startup shortcut if it exists
+				!insertmacro UAC_AsUser_Call Function RemoveUserStartupShortcut ${UAC_SYNCREGISTERS}
+			${EndIF}
 		${EndIf}
 
 		SetShellVarContext current
