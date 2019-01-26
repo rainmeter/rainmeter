@@ -2865,7 +2865,6 @@ bool Skin::HandleContainer(Meter* container)
 		item->Draw(m_Canvas);
 		m_Canvas.ResetTransform();
 		relative = item;
-		item++;
 	}
 
 	auto containerBitmap = container->GetContainerTexture();
