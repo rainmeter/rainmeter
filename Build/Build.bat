@@ -4,7 +4,7 @@ set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\A
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 
 set VERSION_MAJOR=2
-set VERSION_MINOR=2
+set VERSION_MINOR=3
 set VERSION_SUBMINOR=0
 
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END

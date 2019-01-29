@@ -310,7 +310,7 @@ Section
 	RMDir /r "$NppPath\plugins\RainLexer"
 	RMDir /r "$NppPluginsPath\RainLexer"
 
-	SetOutPath "$NppPluginsPath\RainLexer"
+	SetOutPath "$NppPath\plugins\RainLexer"
 	StrCpy $0 "$NppPath\notepad++.exe"
 	System::Call "kernel32::GetBinaryType(t r0, *i .r1)"
 	${If} $1 = ${SCS_64BIT_BINARY}
