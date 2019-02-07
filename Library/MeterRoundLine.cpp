@@ -137,7 +137,9 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 		const FLOAT sweepAngle = ToDegrees(Clamp(rotationAngle * value, -PI2, PI2));
 
-		const D2D1_SWEEP_DIRECTION sweepInnerDir = sweepAngle > 0.0f ?
+		// Use a counter clockwise inner direction for sweep angles larger than 0 or
+		// smaller than -360 (-6.283 radians). Apply a small offset to account for rounding errors.
+		const D2D1_SWEEP_DIRECTION sweepInnerDir = ((sweepAngle > 0.0f) || (sweepAngle < -359.935f)) ?
 			D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
 
 		const D2D1_SWEEP_DIRECTION sweepOuterDir = (D2D1_SWEEP_DIRECTION)(1 - sweepInnerDir);
