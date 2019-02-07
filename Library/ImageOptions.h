@@ -14,7 +14,11 @@
 struct ImageOptions : Gfx::FileInfo
 {
 	ImageOptions() :
-		m_ColorMatrix(),
+		m_ColorMatrix(D2D1::Matrix5x4F(
+			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f)),
 		m_Crop(D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f)),
 		m_CropMode(CROPMODE_TL),
 		m_GreyScale(false),
