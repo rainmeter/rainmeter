@@ -52,6 +52,7 @@ public:
 	bool IsContainer() { return m_ContainerItems.size() > 0; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
 	void UpdateContainer();
+	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
 
 	void SetW(int w) { m_W = w; }
 	void SetH(int h) { m_H = h; }

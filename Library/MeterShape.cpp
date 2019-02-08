@@ -155,6 +155,11 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 bool MeterShape::HitTest(int x, int y)
 {
+	if (!Meter::HitTestContainer(x, y))
+	{
+		return false;
+	}
+
 	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
 	
 	D2D1_POINT_2F point = D2D1::Point2F((FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()));

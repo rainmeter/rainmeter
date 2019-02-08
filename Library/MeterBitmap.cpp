@@ -95,6 +95,11 @@ bool MeterBitmap::HitTest(int x, int y)
 {
 	if (m_Extend)
 	{
+		if (!Meter::HitTestContainer(x, y))
+		{
+			return false;
+		}
+
 		// Calc the number of numbers
 		int numOfNums = 0;
 
