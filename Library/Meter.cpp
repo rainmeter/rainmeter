@@ -196,6 +196,11 @@ D2D1_RECT_F Meter::GetMeterRectPadding()
 */
 bool Meter::HitTest(int x, int y)
 {
+	if (!HitTestContainer(x, y))
+	{
+		return false;
+	}
+
 	int p;
 	return (x >= (p = GetX()) && x < p + m_W && y >= (p = GetY()) && y < p + m_H);
 }

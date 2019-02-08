@@ -161,6 +161,11 @@ void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
 */
 bool MeterButton::HitTest2(int px, int py)
 {
+	if (!Meter::HitTestContainer(px, py))
+	{
+		return false;
+	}
+
 	int x = GetX();
 	int y = GetY();
 
