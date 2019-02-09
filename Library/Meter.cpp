@@ -94,7 +94,7 @@ int Meter::GetX(bool abs)
 		containerOffset = m_ContainerMeter->GetX(true);
 	}
 
-	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
+	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter && !(IsContainer() && m_RelativeMeter->IsContained()))
 	{
 		if (m_RelativeX == POSITION_RELATIVE_TL)
 		{
@@ -121,7 +121,7 @@ int Meter::GetY(bool abs)
 		containerOffset = m_ContainerMeter->GetY(true);
 	}
 
-	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
+	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter && !(IsContainer() && m_RelativeMeter->IsContained()))
 	{
 		if (m_RelativeY == POSITION_RELATIVE_TL)
 		{
