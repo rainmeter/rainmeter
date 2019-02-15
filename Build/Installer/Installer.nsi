@@ -35,7 +35,7 @@ VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "© 2017 Rainmeter Team"
+VIAddVersionKey "LegalCopyright" "© 2019 Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
