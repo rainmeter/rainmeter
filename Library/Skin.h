@@ -131,7 +131,7 @@ public:
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 	bool HandleContainer(Meter* container);
-	void RecomputeZOrder();
+	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
@@ -327,7 +327,7 @@ private:
 	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
-	void DoRecomputeZOrder();
+	void UpdateRelativeMeters();
 
 	void ShowBlur();
 	void HideBlur();
@@ -339,6 +339,8 @@ private:
 
 	ConfigParser m_Parser;
 
+	bool m_ResetRelativeMeters;
+
 	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
@@ -348,7 +350,6 @@ private:
 	bool m_MouseOver;
 	bool m_MouseInputRegistered;
 	bool m_HasMouseScrollAction;
-	bool m_RecomputeZOrder;
 
 	std::wstring m_OnRefreshAction;
 	std::wstring m_OnCloseAction;

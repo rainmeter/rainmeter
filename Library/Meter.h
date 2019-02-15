@@ -27,6 +27,7 @@ public:
 	Meter(const Meter& other) = delete;
 
 	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
+	void ReadContainerOptions(ConfigParser& parser) { ReadContainerOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();
 	virtual bool Update();
@@ -119,6 +120,8 @@ protected:
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
+
+	void ReadContainerOptions(ConfigParser& parser, const WCHAR* section);
 
 	bool BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional);
 	void BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section);

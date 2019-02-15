@@ -133,7 +133,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_FontCollection(),
 	m_ToolTipHidden(false),
 	m_Favorite(false),
-	m_RecomputeZOrder(false)
+	m_ResetRelativeMeters(true)
 {
 	if (c_InstanceCount == 0)
 	{
@@ -2495,7 +2495,6 @@ bool Skin::ReadSkin()
 				if (meter)
 				{
 					m_Meters.push_back(meter);
-					meter->SetRelativeMeter(prevMeter);
 
 					if (meter->GetTypeID() == TypeID<MeterButton>())
 					{
@@ -2516,6 +2515,16 @@ bool Skin::ReadSkin()
 		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
+
+	// Setup each meter's relative meter used for positioning. This is done before
+	// initialization since any "container" meter's may modify another meter's X/Y values.
+	// First read the container option, then set the appropriate relative meter.
+	for (Meter* meter : m_Meters)
+	{
+		meter->ReadContainerOptions(m_Parser);
+	}
+	m_ResetRelativeMeters = true;
+	UpdateRelativeMeters();
 
 	// Read measure options. This is done before the meters to ensure that e.g. Substitute is used
 	// when the meters get the value of the measure. The measures cannot be initialized yet as som
@@ -2661,7 +2670,7 @@ void Skin::CreateDoubleBuffer(int cx, int cy)
 */
 void Skin::Redraw()
 {
-	DoRecomputeZOrder();
+	//UpdateRelativeMeters();
 
 	if (m_ResizeWindow)
 	{
@@ -2855,8 +2864,6 @@ bool Skin::HandleContainer(Meter* container)
 	m_Canvas.SetTarget(containerContentBitmap);
 	m_Canvas.Clear();
 
-	Meter* relative = container;
-
 	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
 
 	for (auto item : containerItems)
@@ -2864,7 +2871,6 @@ bool Skin::HandleContainer(Meter* container)
 		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset);
 		item->Draw(m_Canvas);
 		m_Canvas.ResetTransform();
-		relative = item;
 	}
 
 	auto containerBitmap = container->GetContainerTexture();
@@ -2881,14 +2887,14 @@ bool Skin::HandleContainer(Meter* container)
 	const auto containerD2DBitmap = containerBitmap->GetBitmap();
 
 	const D2D1_RECT_F srcRect = D2D1::RectF(
-		0.0,
-		0.0,
+		0.0f,
+		0.0f,
 		(FLOAT)containerContentD2DBitmap->GetWidth(),
 		(FLOAT)containerContentD2DBitmap->GetHeight());
 
 	const D2D1_RECT_F srcRect2 = D2D1::RectF(
-		0.0,
-		0.0,
+		0.0f,
+		0.0f,
 		(FLOAT)containerD2DBitmap->GetWidth(),
 		(FLOAT)containerD2DBitmap->GetHeight());
 
@@ -2899,12 +2905,12 @@ bool Skin::HandleContainer(Meter* container)
 		(FLOAT)meterRect.bottom);
 
 	m_Canvas.DrawMaskedBitmap(containerContentD2DBitmap, containerD2DBitmap, destination, srcRect2, srcRect);
-	return true; 
+	return true;
 }
 
-void Skin::DoRecomputeZOrder()
+void Skin::UpdateRelativeMeters()
 {
-	if (!m_RecomputeZOrder) return;
+	if (!m_ResetRelativeMeters) return;
 
 	std::map<Meter*, Meter*> containerLookup;
 	std::vector<Meter*> containedMeters;
@@ -2940,12 +2946,7 @@ void Skin::DoRecomputeZOrder()
 		}
 	}
 
-	m_RecomputeZOrder = false;
-}
-
-void Skin::RecomputeZOrder()
-{
-	m_RecomputeZOrder = true;
+	m_ResetRelativeMeters = false;
 }
 
 /*
@@ -3071,8 +3072,6 @@ void Skin::Update(bool refresh)
 
 	DialogAbout::UpdateMeasures(this);
 
-	DoRecomputeZOrder();
-
 	// Update all meters
 	bool bActiveTransition = false;
 	bool bUpdate = false;
@@ -3086,6 +3085,8 @@ void Skin::Update(bool refresh)
 			(*j)->DoUpdateAction();
 		}
 	}
+
+	UpdateRelativeMeters();
 
 	// Redraw all meters
 	if (bUpdate || m_ResizeWindow || refresh)
