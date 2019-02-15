@@ -45,31 +45,34 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Padding(),
 	m_AntiAlias(false),
 	m_Initialized(false),
-	m_ContainerMeter(),
-	m_ContainerContentTexture(),
-	m_ContainerTexture(),
+	m_ContainerMeter(nullptr),
+	m_ContainerContentTexture(nullptr),
+	m_ContainerTexture(nullptr),
 	m_ContainerItems()
 {
 }
 
 Meter::~Meter()
 {
-	if (m_ToolTipHandle != nullptr)
+	if (m_ToolTipHandle)
 	{
 		DestroyWindow(m_ToolTipHandle);
 	}
 
-	if (m_ContainerContentTexture != nullptr)
+	if (m_ContainerContentTexture)
 	{
 		delete m_ContainerContentTexture;
 		m_ContainerContentTexture = nullptr;
 	}
 
-	if (m_ContainerTexture != nullptr)
+	if (m_ContainerTexture)
 	{
 		delete m_ContainerTexture;
 		m_ContainerTexture = nullptr;
 	}
+
+	m_ContainerMeter = nullptr;
+	m_ContainerItems.clear();
 }
 
 /*
@@ -94,7 +97,7 @@ int Meter::GetX(bool abs)
 		containerOffset = m_ContainerMeter->GetX(true);
 	}
 
-	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter && !(IsContainer() && m_RelativeMeter->IsContained()))
+	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeX == POSITION_RELATIVE_TL)
 		{
@@ -121,7 +124,7 @@ int Meter::GetY(bool abs)
 		containerOffset = m_ContainerMeter->GetY(true);
 	}
 
-	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter && !(IsContainer() && m_RelativeMeter->IsContained()))
+	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeY == POSITION_RELATIVE_TL)
 		{
@@ -208,15 +211,12 @@ bool Meter::HitTest(int x, int y)
 void Meter::AddContainerItem(Meter* item)
 {
 	m_ContainerItems.push_back(item);
-	m_Skin->RecomputeZOrder();
+	m_Skin->ResetRelativeMeters();
 	
 	if (m_ContainerItems.size() == 1)
 	{
 		UINT width = (UINT)GetW();
 		UINT height = (UINT)GetH();
-
-		width = max(0U, width);
-		height = max(0U, height);
 
 		delete m_ContainerTexture;
 		m_ContainerTexture = nullptr;
@@ -231,7 +231,7 @@ void Meter::AddContainerItem(Meter* item)
 void Meter::RemoveContainerItem(Meter* item)
 {
 	m_ContainerItems.erase(std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item));
-	m_Skin->RecomputeZOrder();
+	m_Skin->ResetRelativeMeters();
 
 	if (m_ContainerItems.size() == 0)
 	{
@@ -253,9 +253,6 @@ void Meter::UpdateContainer()
 {
 	UINT width = (UINT)GetW();
 	UINT height = (UINT)GetH();
-
-	width = max(0U, width);
-	height = max(0U, height);
 
 	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
 
@@ -440,8 +437,25 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
-	auto container = parser.ReadString(section, L"Container", L"");
-	if (m_ContainerMeter == nullptr || _wcsicmp(m_ContainerMeter->GetName(), container.c_str()) != 0)
+	ReadContainerOptions(parser, section);
+}
+
+void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
+{
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
+
+	const std::wstring& container = parser.ReadString(section, L"Container", L"");
+	if (_wcsicmp(section, container.c_str()) == 0)
+	{
+		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
+		return;
+	}
+
+	if (!m_ContainerMeter || _wcsicmp(m_ContainerMeter->GetName(), container.c_str()) != 0)
 	{
 		if (m_ContainerMeter)
 		{
@@ -450,10 +464,14 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 
 		auto meter = m_Skin->GetMeter(container);
-		if (meter != nullptr)
+		if (meter)
 		{
 			meter->AddContainerItem(this);
 			m_ContainerMeter = meter;
+		}
+		else if (!container.empty())
+		{
+			LogErrorF(this, L"Invalid container: %s", container.c_str());
 		}
 	}
 }
