@@ -155,7 +155,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
 	if (!IsWindows7SP1OrGreater())
 	{
-		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
@@ -215,7 +215,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		SetHardwareAccelerated(false);
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
 		{
-			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			return 1;
 		}
 	}
