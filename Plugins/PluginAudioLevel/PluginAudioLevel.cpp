@@ -1184,7 +1184,7 @@ HRESULT	Measure::DeviceInit ()
 		if (hr != S_OK) 
 		{
 			// stereo waveformat didnt work either, throw an error
-			RmLog(LOG_WARNING, L"Failed to initialize audio client...");
+			RmLog(LOG_WARNING, L"Failed to initialize audio client.");
 		}
 	}
 	EXIT_ON_ERROR(hr);
