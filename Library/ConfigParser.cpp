@@ -230,6 +230,14 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			{
 				_itow_s(meter->GetH(), buffer, 10);
 			}
+			else if (_wcsicmp(selectorSz, L"XW") == 0)
+			{
+				_itow_s(meter->GetX() + meter->GetW(), buffer, 10);
+			}
+			else if (_wcsicmp(selectorSz, L"YH") == 0)
+			{
+				_itow_s(meter->GetY() + meter->GetH(), buffer, 10);
+			}
 			else
 			{
 				return false;
