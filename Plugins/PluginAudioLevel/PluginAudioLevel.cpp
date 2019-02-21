@@ -1170,6 +1170,10 @@ HRESULT	Measure::DeviceInit ()
 		hnsRequestedDuration, 0, m_wfx, NULL);
 	if (hr != S_OK)
 	{
+		// Compatibility with the Nahimic audio driver
+		// https://github.com/rainmeter/rainmeter/commit/0a3dfa35357270512ec4a3c722674b67bff541d6
+		// https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/bd8cd9f2-974f-4a9f-8e9c-e83001819942/iaudioclient-initialize-failure
+
 		// initialization failed, try to use stereo waveformat
 		m_wfx->nChannels = 2;
 		m_wfx->nBlockAlign = (2 * m_wfx->wBitsPerSample) / 8;
