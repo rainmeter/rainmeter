@@ -921,21 +921,30 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
+		// Range
 		WCHAR buffer[256];
 		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMinValue(), buffer, _countof(buffer));
 		std::wstring range = buffer;
-		range += L" - ";
+		range += L"- ";  // GetScaledValue returns an extra space
 		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
 		range += buffer;
 
-		std::wstring numValue;
+		// Number value
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
 		Measure::RemoveTrailingZero(buffer, bufferLen);
-		numValue = buffer;
+		std::wstring numValue = buffer;
+
+		// String value
+		std::wstring strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+		if (strValue.length() > 259)
+		{
+			strValue.erase(256);
+			strValue += L"...";
+		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)numValue.c_str());
-		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)(*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)strValue.c_str());
 		++lvi.iItem;
 	}
 
@@ -956,6 +965,14 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		_wcslwr(&tmpStr[0]);
 		lvi.pszText = (WCHAR*)tmpStr.c_str();
 
+		// Truncate and add "..." if necessary
+		std::wstring valStr = (*iter).second;
+		if (valStr.length() > 259)
+		{
+			valStr.erase(256);
+			valStr += L"...";
+		}
+
 		if (lvi.iItem < count)
 		{
 			ListView_SetItem(item, &lvi);
@@ -967,7 +984,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 
 		ListView_SetItemText(item, lvi.iItem, 1, L"");
 		ListView_SetItemText(item, lvi.iItem, 2, L"");
-		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)(*iter).second.c_str());
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
 	}
 
@@ -1017,6 +1034,25 @@ INT_PTR DialogAbout::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lP
 
 INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
+	auto getMeasure = [&]() -> Measure*
+	{
+		HWND hwnd = GetControl(Id_SkinsListView);
+		const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+		if (sel != -1)
+		{
+			WCHAR buffer[512];
+			ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+			std::wstring temp = buffer;
+			Measure* measure = m_SkinWindow->GetMeasure(temp);
+			if (measure)
+			{
+				return measure;
+			}
+		}
+
+		return nullptr;
+	};
+
 	switch (LOWORD(wParam))
 	{
 	case Id_SkinsListBox:
@@ -1028,80 +1064,57 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_COPYNUMBERVALUE:
 		{
-			HWND hwnd = GetControl(Id_SkinsListView);
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
+			Measure* measure = getMeasure();
+			if (measure)
 			{
-				std::wstring tmpSz(128, L'0');
-				ListView_GetItemText(hwnd, sel, 2, &tmpSz[0], 128);
-				System::SetClipboardText(tmpSz);
+				WCHAR buffer[256];
+				int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetValue());
+				Measure::RemoveTrailingZero(buffer, bufferLen);
+				std::wstring numValue = buffer;
+				System::SetClipboardText(numValue);
 			}
 		}
 		break;
 
 	case IDM_COPYSTRINGVALUE:
 		{
-			HWND hwnd = GetControl(Id_SkinsListView);
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
+			Measure* measure = getMeasure();
+			if (measure)
 			{
-				WCHAR buffer[512];
-				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
-				std::wstring temp = buffer;
-				Measure* measure = m_SkinWindow->GetMeasure(temp);
-				if (!measure)
-				{
-					ListView_GetItemText(hwnd, sel, 3, buffer, 512);
-					temp = buffer;
-				}
-				else
-				{
-					temp.assign(measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
-				}
-				System::SetClipboardText(temp);
+				std::wstring strValue = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+				System::SetClipboardText(strValue);
 			}
 		}
 		break;
 
 	case IDM_COPYRANGE:
 		{
-			HWND hwnd = GetControl(Id_SkinsListView);
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
+			Measure* measure = getMeasure();
+			if (measure)
 			{
-				WCHAR buffer[512];
-				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
-				std::wstring temp = buffer;
-				Measure* measure = m_SkinWindow->GetMeasure(temp);
-				if (!measure)
-				{
-					ListView_GetItemText(hwnd, sel, 3, buffer, 512);
-					temp = buffer;
-				}
-				else
-				{
-					int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMinValue());
-					Measure::RemoveTrailingZero(buffer, bufferLen);
-					temp = buffer;
-					temp += L" - ";
-					bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", measure->GetMaxValue());
-					Measure::RemoveTrailingZero(buffer, bufferLen);
-					temp += buffer;
-				}
-				System::SetClipboardText(temp);
+				WCHAR buffer[256];
+				Measure::GetScaledValue(AUTOSCALE_ON, 1, measure->GetMinValue(), buffer, _countof(buffer));
+				std::wstring range = buffer;
+				range += L"- ";  // GetScaledValue returns an extra space
+				Measure::GetScaledValue(AUTOSCALE_ON, 1, measure->GetMaxValue(), buffer, _countof(buffer));
+				range += buffer;
+				System::SetClipboardText(range);
 			}
 		}
 		break;
 
 	case IDM_COPY:
 		{
+			// Copy variable to clipboard
 			HWND hwnd = GetControl(Id_SkinsListView);
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
-				std::wstring tmpSz(128, L'0');
-				ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 128);
-				System::SetClipboardText(tmpSz);
+				WCHAR buffer[512];
+				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+				std::wstring var = buffer;
+				const std::wstring* variable = m_SkinWindow->GetParser().GetVariable(var);
+				System::SetClipboardText(*variable);
 			}
 		}
 		break;
@@ -1121,15 +1134,37 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	{
 	case LVN_KEYDOWN:
 		{
+			// Copy measure string value or variable to clipboard via CTRL + C
 			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
-			if (lvkd->wVKey == 0x43 && IsCtrlKeyDown()) // CTRL + C.
+			if (lvkd->wVKey == 0x43 && IsCtrlKeyDown())
 			{
 				int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
-					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(hwnd, sel, 3, &tmpSz[0], 512);
-					System::SetClipboardText(tmpSz);
+					WCHAR buffer[512];
+					ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+					std::wstring temp = buffer;
+
+					LVITEM lvi;
+					lvi.mask = LVIF_GROUPID;
+					lvi.iItem = sel;
+					lvi.iSubItem = 0;
+					lvi.iGroupId = -1;
+					ListView_GetItem(hwnd, &lvi);
+					if (lvi.iGroupId == 0)  // It's a measure
+					{
+						Measure* measure = m_SkinWindow->GetMeasure(temp);
+						if (measure)
+						{
+							const std::wstring strValue = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+							System::SetClipboardText(strValue);
+						}
+					}
+					else if (lvi.iGroupId == 1)  // It's a Variable
+					{
+						const std::wstring* variable = m_SkinWindow->GetParser().GetVariable(temp);
+						System::SetClipboardText(*variable);
+					}
 				}
 			}
 		}
