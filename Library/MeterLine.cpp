@@ -339,7 +339,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			if (!m_Flip)
 			{
-				for (FLOAT j = (meterRect.top + 1.0f + offset); j < (meterRect.bottom + offset); ++j)
+				for (FLOAT j = (meterRect.top + 1.0f); j < meterRect.bottom; ++j)
 				{
 					++pos;
 					pos %= drawH;
@@ -354,7 +354,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
-				for (FLOAT j = (meterRect.bottom - offset); j > (meterRect.top + 1.0f + offset); --j)
+				for (FLOAT j = meterRect.bottom; j > (meterRect.top + 1.0f); --j)
 				{
 					++pos;
 					pos %= drawH;
@@ -401,7 +401,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			if (!m_GraphStartLeft)
 			{
-				for (FLOAT j = (meterRect.left + 1.0f + offset); j < (meterRect.right + offset); ++j)
+				for (FLOAT j = (meterRect.left + 1.0f); j < meterRect.right; ++j)
 				{
 					++pos;
 					pos %= drawW;
@@ -416,7 +416,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
-				for (FLOAT j = (meterRect.right - offset); j > (meterRect.left + 1.0f + offset); --j)
+				for (FLOAT j = meterRect.right; j > (meterRect.left + 1.0f); --j)
 				{
 					++pos;
 					pos %= drawW;
