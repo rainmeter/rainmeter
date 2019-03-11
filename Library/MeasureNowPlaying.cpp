@@ -268,7 +268,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else if (_wcsicmp(L"LYRICS", str) == 0)
 	{
-		LogWarningF(this, L"Using undocumented PlayerType=LYRICS!");
+		//LogWarningF(this, L"Using undocumented PlayerType=LYRICS!");
 		m_Type = MEASURE_LYRICS;
 	}
 	else if (_wcsicmp(L"FILE", str) == 0)
