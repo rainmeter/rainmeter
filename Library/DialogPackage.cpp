@@ -1212,6 +1212,17 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDC_PACKAGEOPTIONS_LOADTHEME_COMBO:
+		if (HIWORD(wParam) == CBN_SELENDOK)
+		{
+			WCHAR buffer[MAX_PATH];
+			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);
+			GetWindowText(item, buffer, _countof(buffer));
+			c_Dialog->m_Load = buffer;
+			c_Dialog->m_LoadLayout = true;
+		}
+		break;
+
 	case IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON:
 		{
 			WCHAR buffer[MAX_PATH];
