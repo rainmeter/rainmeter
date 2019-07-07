@@ -139,7 +139,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// If a root folder was created (without any skins being created), attempt to create a skin using
 				// the selected template using the name of the root folder as the name of the skin. If the selected
 				// template is not longer valid, attempt to create a the skin using the default template.
-				const size_t pos = GetRainmeter().GetSkinPath().size();
+				const size_t pos = c_Dialog->m_TabNew.GetSkinsFolder().size();
 				std::wstring folder = c_Dialog->m_TabNew.GetParentFolder();
 				std::wstring file = folder.substr(pos);
 				PathUtil::RemoveTrailingBackslash(file);
@@ -209,7 +209,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (c_CloseAction.skins > 0)
 			{
 				GetRainmeter().RefreshAll();
-				const size_t pos = GetRainmeter().GetSkinPath().size();
+				const size_t pos = c_Dialog->m_TabNew.GetSkinsFolder().size();
 				const std::wstring folder = c_Dialog->m_TabNew.GetParentFolder().substr(pos);
 				DialogManage::Open(L"Skins", folder.c_str(), nullptr);
 			}
@@ -642,7 +642,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 				c_CloseAction = { false, 0 };
 
 				// Update the parent folder and label
-				m_ParentFolder = GetRainmeter().GetSkinPath();
+				m_ParentFolder = m_SkinsFolder;
 				UpdateParentPathLabel();
 
 				EnableWindow(GetControl(Id_AddResourcesButton), FALSE);
@@ -809,7 +809,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							// Remove trailing slash (not needed for skin registry)
 							PathUtil::RemoveTrailingBackslash(folder);
 
-							folder = folder.substr(GetRainmeter().GetSkinPath().size());
+							folder = folder.substr(m_SkinsFolder.size());
 							if (!GetRainmeter().m_SkinRegistry.FindFolder(folder))
 							{
 								std::wstring text = GetString(ID_STR_RENAME);
@@ -846,7 +846,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						if (isNewItem)
 						{
 							std::wstring folder = m_ParentFolder + GetTreeSelectionPath(nm->hwndFrom, false);
-							folder = folder.substr(GetRainmeter().GetSkinPath().size());
+							folder = folder.substr(m_SkinsFolder.size());
 
 							// Remove trailing slash (not needed for skin registry)
 							PathUtil::RemoveTrailingBackslash(folder);
@@ -1236,7 +1236,8 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 void DialogNewSkin::TabNew::SetParentFolder(const WCHAR* parentFolder)
 {
-	m_ParentFolder = GetRainmeter().GetSkinPath();
+	m_SkinsFolder = GetRainmeter().GetSkinPath(parentFolder);
+	m_ParentFolder = m_SkinsFolder;
 	if (parentFolder && *parentFolder)
 	{
 		m_ParentFolder += parentFolder;
@@ -1334,7 +1335,7 @@ void DialogNewSkin::TabNew::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR na
 void DialogNewSkin::TabNew::UpdateParentPathLabel()
 {
 	// Only display the skins folder name plus any subfolder that is selected
-	const std::wstring sp = GetRainmeter().GetSkinPath();
+	const std::wstring sp = m_SkinsFolder;
 	const size_t pos = sp.find_last_of(L'\\', sp.size() - 2);
 
 	// Add some padding so the text does not touch the border
@@ -1366,7 +1367,7 @@ void DialogNewSkin::TabNew::UpdateParentPathTT(bool update)
 void DialogNewSkin::TabNew::AddTreeItem(bool isFolder)
 {
 	const std::wstring name = isFolder ? L"NewFolder" : L"NewSkin.ini";
-	const std::wstring path = GetRainmeter().GetSkinPath();
+	const std::wstring path = m_SkinsFolder;
 
 	HWND tree = GetControl(Id_ItemsTreeView);
 	
@@ -1560,7 +1561,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		// Add @Resources file if it exists
 		if (skinFolder.level == 1)
 		{
-			std::wstring resources = GetRainmeter().GetSkinPath();
+			std::wstring resources = skinFolder.rootpath;
 			resources += skinFolder.name;
 			resources += L"\\@Resources";
 			if (PathIsDirectory(resources.c_str()))
@@ -1573,7 +1574,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 			}
 			else
 			{
-				c_Dialog->m_TabNew.m_CanAddResourcesFolder = true;
+				m_CanAddResourcesFolder = true;
 				Button_Enable(c_Dialog->m_TabNew.GetControl(Id_AddResourcesButton), TRUE);
 			}
 		}

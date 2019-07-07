@@ -9,6 +9,7 @@
 #include "../Common/PathUtil.h"
 #include "SkinRegistry.h"
 #include "resource.h"
+#include "Logger.h"
 
 /*
 ** Returns the skin folder path relative to the skin folder (e.g. illustro\Clock).
@@ -131,6 +132,19 @@ void SkinRegistry::Populate(const std::wstring& path, std::vector<std::wstring>&
 	PopulateRecursive(path, favorites, L"", 0, 0);
 }
 
+void SkinRegistry::Populate(const std::vector<std::wstring>& paths, std::vector<std::wstring>& favorites)
+{
+	m_Folders.clear();
+	int index = 0;
+
+	std::vector<std::wstring>::const_iterator iter = paths.begin();
+	for (; iter != paths.end(); ++iter)
+	{
+		LogNoticeF(L"Processng SkinPath: %s", (*iter).c_str());
+		index = PopulateRecursive((*iter), favorites, L"", index, 0);
+	}
+}
+
 int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
@@ -235,6 +249,8 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::w
 				std::wstring::size_type pos = base.rfind(L'\\') + 1;
 				folder.name.assign(base, pos, base.length() - pos);
 			}
+
+			folder.rootpath = path;
 
 			m_Folders.push_back(std::move(folder));
 		}

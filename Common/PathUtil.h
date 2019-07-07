@@ -10,6 +10,7 @@
 
 #include <Windows.h>
 #include <string>
+#include <vector>
 
 namespace PathUtil {
 
@@ -34,6 +35,8 @@ std::wstring GetFolderFromFilePath(const std::wstring& filePath);
 std::wstring GetVolume(const std::wstring& path);
 
 void ExpandEnvironmentVariables(std::wstring& strPath);
+
+std::vector<std::wstring> SplitMultiPathString(std::wstring& multipathstring);
 
 }  // namespace PathUtil
 

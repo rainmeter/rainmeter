@@ -40,6 +40,7 @@ public:
 	struct Folder 
 	{
 		std::wstring name;
+		std::wstring rootpath;
 		std::vector<SkinRegistry::File> files;
 		UINT baseID;
 
@@ -53,6 +54,7 @@ public:
 
 		Folder(Folder&& r) :
 			name(std::move(r.name)),
+			rootpath(std::move(r.rootpath)),
 			files(std::move(r.files)),
 			baseID(r.baseID),
 			active(r.active),
@@ -64,6 +66,7 @@ public:
 		Folder& operator=(Folder&& r)
 		{
 			name = std::move(r.name);
+			rootpath = std::move(r.rootpath);
 			files = std::move(r.files);
 			baseID = r.baseID;
 			active = r.active;
@@ -98,6 +101,7 @@ public:
 	bool IsEmpty() const { return m_Folders.empty(); }
 
 	void Populate(const std::wstring& path, std::vector<std::wstring>& favorites);
+	void Populate(const std::vector<std::wstring>& paths, std::vector<std::wstring>& favorites);
 
 	std::vector<std::wstring> UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite);
 

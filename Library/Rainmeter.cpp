@@ -342,28 +342,31 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
-	if (len > 0 &&
-		_waccess(buffer, 0) != -1)	// Temporary fix
+	if (len > 0)
 	{
+		std::wstring multipathstring(buffer, len);
+
+		PathUtil::ExpandEnvironmentVariables(multipathstring);
+		m_SkinPath = PathUtil::SplitMultiPathString(multipathstring);
+
+
+
 		// Try Rainmeter.ini first
-		m_SkinPath.assign(buffer, len);
-		PathUtil::ExpandEnvironmentVariables(m_SkinPath);
-		PathUtil::AppendBackslashIfMissing(m_SkinPath);
 	}
 	else if (bDefaultIniLocation &&
 		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
 	{
 		// Use My Documents/Rainmeter/Skins
-		m_SkinPath = buffer;
-		m_SkinPath += L"\\Rainmeter\\";
-		CreateDirectory(m_SkinPath.c_str(), nullptr);
-		m_SkinPath += L"Skins\\";
+		m_SkinPath.push_back(buffer);
+		m_SkinPath[0] += L"\\Rainmeter\\";
+		CreateDirectory(m_SkinPath[0].c_str(), nullptr);
+		m_SkinPath[0] += L"Skins\\";
 
-		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
+		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath[0].c_str(), iniFile);
 	}
 	else
 	{
-		m_SkinPath = m_Path + L"Skins\\";
+		m_SkinPath.push_back(m_Path + L"Skins\\");
 	}
 
 	// Create user skins, layouts, addons, and plugins folders if needed
@@ -409,7 +412,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	LogNoticeF(L"Path: %s", m_Path.c_str());
-	LogNoticeF(L"SkinPath: %s", m_SkinPath.c_str());
+	LogNoticeF(L"SkinPath: %s", m_SkinPath[0].c_str());
 	LogNoticeF(L"SettingsPath: %s", m_SettingsPath.c_str());
 	LogNoticeF(L"IniFile: %s", iniFile);
 
@@ -430,7 +433,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (m_SkinRegistry.IsEmpty())
 	{
-		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
+		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath[0].c_str());
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 
@@ -679,25 +682,25 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 {
 	std::wstring path;
 
-	if (CreateDirectory(m_SkinPath.c_str(), nullptr))
+	if (CreateDirectory(m_SkinPath[0].c_str(), nullptr))
 	{
 		// Folder just created, so copy default skins there
 		std::wstring from = GetDefaultSkinPath();
 		from += L"*.*";
-		System::CopyFiles(from, m_SkinPath);
+		System::CopyFiles(from, m_SkinPath[0]);
 	}
 	else
 	{
-		path = m_SkinPath;
+		path = m_SkinPath[0];
 		path += L"Backup";
 		if (_waccess(path.c_str(), 0) != -1)
 		{
-			std::wstring newPath = m_SkinPath + L"@Backup";
+			std::wstring newPath = m_SkinPath[0] + L"@Backup";
 			MoveFile(path.c_str(), newPath.c_str());
 		}
 	}
 
-	path = m_SkinPath;
+	path = m_SkinPath[0];
 	path += L"@Vault\\";
 	if (CreateDirectory(path.c_str(), nullptr))
 	{
@@ -837,9 +840,9 @@ void Rainmeter::EditSettings()
 	CommandHandler::RunFile(m_SkinEditor.c_str(), file.c_str());
 }
 
-void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
+void Rainmeter::EditSkinFile(const std::wstring& rootpath, const std::wstring& name, const std::wstring& iniFile)
 {
-	std::wstring args = L'"' + m_SkinPath;
+	std::wstring args = L'"' + rootpath;
 	args += name;
 	args += L'\\';
 	args += iniFile;
@@ -847,9 +850,9 @@ void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFi
 	CommandHandler::RunFile(m_SkinEditor.c_str(), args.c_str());
 }
 
-void Rainmeter::OpenSkinFolder(const std::wstring& name)
+void Rainmeter::OpenSkinFolder(const std::wstring& rootpath, const std::wstring& name)
 {
-	std::wstring folderPath = m_SkinPath + name;
+	std::wstring folderPath = rootpath + name;
 	CommandHandler::RunFile(folderPath.c_str());
 }
 
@@ -933,9 +936,12 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		}
 
 		// Verify whether the ini-file exists
-		std::wstring skinIniPath = m_SkinPath + folderPath;
+		std::wstring skinIniPath = skinFolder.rootpath + folderPath;
 		skinIniPath += L'\\';
 		skinIniPath += file;
+
+		LogNoticeF(L"!ActivateConfig: Scanned folder, rootpath: % s, name : % s", skinFolder.rootpath.c_str(), skinFolder.name.c_str());
+		LogNoticeF(L"!ActivateConfig: Activating %s", skinIniPath.c_str());
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
@@ -960,7 +966,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			m_TrayIcon->SetTrayIcon(m_TrayIcon->IsTrayIconEnabled());
 		}
 
-		CreateSkin(folderPath, file);
+		CreateSkin(skinFolder.rootpath, folderPath, file);
 	}
 }
 
@@ -1023,6 +1029,11 @@ void Rainmeter::ToggleSkinWithID(UINT id)
 	}
 }
 
+const std::wstring& Rainmeter::GetSkinPath(const std::wstring& name)
+{
+	return m_SkinRegistry.FindFolder(name)->rootpath;
+}
+
 void Rainmeter::SetSkinPath(const std::wstring& skinPath)
 {
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
@@ -1056,9 +1067,9 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file)
+void Rainmeter::CreateSkin(const std::wstring& rootPath, const std::wstring& folderPath, const std::wstring& file)
 {
-	Skin* skin = new Skin(folderPath, file);
+	Skin* skin = new Skin(rootPath, folderPath, file);
 
 	// Note: May modify existing key
 	m_Skins[folderPath] = skin;
@@ -1178,19 +1189,23 @@ Skin* Rainmeter::GetSkin(std::wstring folderPath)
 
 Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 {
-	if (_wcsnicmp(m_SkinPath.c_str(), ini_searching.c_str(), m_SkinPath.length()) == 0)
+	std::vector<std::wstring>::const_iterator spIter = m_SkinPath.begin();
+	for (; spIter != m_SkinPath.end(); ++spIter)
 	{
-		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
-
-		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
-		for (; iter != m_Skins.end(); ++iter)
+		if (_wcsnicmp((*spIter).c_str(), ini_searching.c_str(), (*spIter).length()) == 0)
 		{
-			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
-			config_current += (*iter).second->GetFileName();
+			const std::wstring config_searching = ini_searching.substr((*spIter).length());
 
-			if (_wcsicmp(config_current.c_str(), config_searching.c_str()) == 0)
+			std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+			for (; iter != m_Skins.end(); ++iter)
 			{
-				return (*iter).second;
+				std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
+				config_current += (*iter).second->GetFileName();
+
+				if (_wcsicmp(config_current.c_str(), config_searching.c_str()) == 0)
+				{
+					return (*iter).second;
+				}
 			}
 		}
 	}

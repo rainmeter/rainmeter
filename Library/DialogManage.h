@@ -112,6 +112,7 @@ private:
 
 		std::wstring m_SkinFileName;
 		std::wstring m_SkinFolderPath;
+		std::wstring m_SkinsFolderPath;
 		Skin* m_SkinWindow;
 		bool m_HandleCommands;
 		bool m_IgnoreUpdate;

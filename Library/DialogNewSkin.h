@@ -57,6 +57,7 @@ private:
 		virtual void Initialize();
 
 		std::wstring& GetParentFolder() { return m_ParentFolder; }
+		std::wstring& GetSkinsFolder() { return m_SkinsFolder; }
 		void SetParentFolder(const WCHAR* folder);
 
 		std::wstring& GetSelectedTemplate() { return m_SelectedTemplate; }
@@ -81,15 +82,16 @@ private:
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);
 		bool DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isFolder);
+		int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index, bool isParentFolder);
 
 		static UINT GetChildSkinCount(HWND tree, HTREEITEM item);
 		static int CALLBACK TreeViewSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		static std::wstring GetTreeSelectionPath(HWND tree, bool allItems);
-		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index, bool isParentFolder);
 		static LRESULT CALLBACK TreeEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		std::wstring m_ParentFolder;
+		std::wstring m_SkinsFolder;
 		std::wstring m_SelectedTemplate;
 		bool m_IsRoot;
 		bool m_CanAddResourcesFolder;

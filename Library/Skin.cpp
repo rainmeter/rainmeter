@@ -54,7 +54,7 @@ enum INTERVAL
 int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
 
-Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
+Skin::Skin(const std::wstring& rootPath, const std::wstring& folderPath, const std::wstring& file) : m_RootPath(rootPath), m_FolderPath(folderPath), m_FileName(file),
 	m_Canvas(),
 	m_Background(),
 	m_BackgroundSize(),
@@ -151,6 +151,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	// Favorites stored in skin registry.
 	m_Favorite = GetRainmeter().IsSkinAFavorite(folderPath, file);
 }
+
 
 Skin::~Skin()
 {
@@ -257,7 +258,7 @@ void Skin::Initialize()
 
 	setlocale(LC_NUMERIC, "C");
 
-	std::wstring title = GetRainmeter().GetSkinPath();
+	std::wstring title = m_RootPath;
 	title += m_FolderPath;
 	title += '\\';
 	title += m_FileName;
@@ -3711,7 +3712,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case IDM_SKIN_EDITSKIN:
-		GetRainmeter().EditSkinFile(m_FolderPath, m_FileName);
+		GetRainmeter().EditSkinFile(m_RootPath, m_FolderPath, m_FileName);
 		break;
 
 	case IDM_SKIN_REFRESH:
@@ -3719,7 +3720,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_OPENSKINSFOLDER:
-		GetRainmeter().OpenSkinFolder(m_FolderPath);
+		GetRainmeter().OpenSkinFolder(m_RootPath, m_FolderPath);
 		break;
 
 	case IDM_SKIN_MANAGESKIN:
@@ -5239,8 +5240,8 @@ void Skin::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(GetRainmeter().GetSkinPath().size() + m_FolderPath.size() + 1 + path.size());
-		absolute = GetRainmeter().GetSkinPath();
+		absolute.reserve(m_RootPath.size() + m_FolderPath.size() + 1 + path.size());
+		absolute = m_RootPath;
 		absolute += m_FolderPath;
 		absolute += L'\\';
 		absolute += path;
@@ -5250,7 +5251,7 @@ void Skin::MakePathAbsolute(std::wstring& path)
 
 std::wstring Skin::GetFilePath()
 {
-	std::wstring file = GetRainmeter().GetSkinPath() + m_FolderPath;
+	std::wstring file = m_RootPath + m_FolderPath;
 	file += L'\\';
 	file += m_FileName;
 	return file;
@@ -5269,7 +5270,7 @@ std::wstring Skin::GetRootName()
 
 std::wstring Skin::GetRootPath()
 {
-	std::wstring path = GetRainmeter().GetSkinPath();
+	std::wstring path = GetSkinRootPath();
 
 	std::wstring::size_type loc;
 	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)
@@ -5283,6 +5284,11 @@ std::wstring Skin::GetRootPath()
 	}
 
 	return path;
+}
+
+std::wstring Skin::GetSkinRootPath()
+{
+	return m_RootPath;
 }
 
 std::wstring Skin::GetResourcesPath()

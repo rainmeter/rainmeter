@@ -106,19 +106,22 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	insertVariable(L"PROGRAMPATH", GetRainmeter().GetPath());
 	insertVariable(L"PROGRAMDRIVE", GetRainmeter().GetDrive());
 	insertVariable(L"SETTINGSPATH", GetRainmeter().GetSettingsPath());
-	insertVariable(L"SKINSPATH", GetRainmeter().GetSkinPath());
 	insertVariable(L"PLUGINSPATH", GetRainmeter().GetPluginPath());
 	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
 	insertVariable(L"ADDONSPATH", GetRainmeter().GetAddonPath());
-
 	insertVariable(L"CONFIGEDITOR", GetRainmeter().GetSkinEditor());
 
 	if (skin)
 	{
+		insertVariable(L"SKINSPATH", skin->GetSkinRootPath());
 		insertVariable(L"CURRENTFILE", skin->GetFileName());
 		insertVariable(L"CURRENTCONFIG", skin->GetFolderPath());
 		insertVariable(L"ROOTCONFIG", skin->GetRootName());
 		insertVariable(L"ROOTCONFIGPATH", skin->GetRootPath());
+	}
+	else 
+	{
+		insertVariable(L"SKINSPATH", GetRainmeter().GetDefaultSkinsPath());
 	}
 
 	insertVariable(L"CRLF", L"\n");

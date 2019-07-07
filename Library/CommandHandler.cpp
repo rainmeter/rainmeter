@@ -828,7 +828,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 		return;
 	}
 
-	if (_wcsnicmp(iniFile, GetRainmeter().m_SkinPath.c_str(), GetRainmeter().m_SkinPath.size()) != 0 &&
+	if (_wcsnicmp(iniFile, GetRainmeter().GetDefaultSkinsPath().c_str(), GetRainmeter().GetDefaultSkinsPath().size()) != 0 &&
 		_wcsnicmp(iniFile, GetRainmeter().m_SettingsPath.c_str(), GetRainmeter().m_SettingsPath.size()) != 0)
 	{
 		LogErrorF(skin, L"!WriteKeyValue: Illegal path: %s", iniFile);
@@ -987,9 +987,11 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	if (argSize > 1)
 	{
 		const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(args[0], args[1]);
+
 		if (indexes.IsValid())
 		{
-			GetRainmeter().EditSkinFile(args[0], args[1]);
+			auto folder = GetRainmeter().m_SkinRegistry.FindFolder(args[0]);
+			GetRainmeter().EditSkinFile(folder->rootpath, args[0], args[1]);
 		}
 		else
 		{
@@ -998,7 +1000,7 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 	else if (argSize == 0 && skin)
 	{
-		GetRainmeter().EditSkinFile(skin->GetFolderPath(), skin->GetFileName());
+		GetRainmeter().EditSkinFile(skin->GetSkinRootPath(), skin->GetFolderPath(), skin->GetFileName());
 	}
 	else
 	{

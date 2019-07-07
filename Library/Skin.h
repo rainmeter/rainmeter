@@ -97,7 +97,8 @@ class TextFormat;
 class Skin : public Group
 {
 public:
-	Skin(const std::wstring& folderPath, const std::wstring& file);
+	Skin(const std::wstring& rootPath, const std::wstring& folderPath, const std::wstring& file);
+	//Skin(const std::wstring& folderPath, const std::wstring& file);
 	~Skin();
 
 	Skin(const Skin& other) = delete;
@@ -165,6 +166,7 @@ public:
 	std::wstring GetFilePath();
 	std::wstring GetRootName();
 	std::wstring GetRootPath();
+	std::wstring GetSkinRootPath();
 	std::wstring GetResourcesPath();
 	std::wstring GetSkinPath();
 
@@ -443,6 +445,7 @@ private:
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;
 
+	std::wstring m_RootPath;
 	const std::wstring m_FolderPath;
 	const std::wstring m_FileName;
 

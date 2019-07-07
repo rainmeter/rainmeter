@@ -92,7 +92,10 @@ public:
 	const std::wstring& GetIniFile() { return m_IniFile; }
 	const std::wstring& GetDataFile() { return m_DataFile; }
 	const std::wstring& GetSettingsPath() { return m_SettingsPath; }
-	const std::wstring& GetSkinPath() { return m_SkinPath; }
+	const std::wstring& GetSkinPath() { return m_SkinPath[0]; }
+	const std::wstring& GetSkinPath(const std::wstring& name);
+	const std::wstring& GetDefaultSkinsPath() { return m_SkinPath[0]; }
+	const std::vector<std::wstring>& GetSkinPaths() { return m_SkinPath; }
 	void SetSkinPath(const std::wstring& skinPath);
 	std::wstring GetLayoutPath() { return m_SettingsPath + L"Layouts\\"; }
 	std::wstring GetPluginPath() { return m_Path + L"Plugins\\"; }
@@ -127,8 +130,8 @@ public:
 
 	void ReloadSettings();
 	void EditSettings();
-	void EditSkinFile(const std::wstring& name, const std::wstring& iniFile);
-	void OpenSkinFolder(const std::wstring& name = std::wstring());
+	void EditSkinFile(const std::wstring& rootpath, const std::wstring& name, const std::wstring& iniFile);
+	void OpenSkinFolder(const std::wstring& rootpath, const std::wstring& name);
 
 	void ReadStats();
 	void WriteStats(bool bForce);
@@ -197,7 +200,7 @@ private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void ActivateActiveSkins();
-	void CreateSkin(const std::wstring& folderPath, const std::wstring& file);
+	void CreateSkin(const std::wstring& rootPath, const std::wstring& folderPath, const std::wstring& file);
 	void DeleteAllSkins();
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
@@ -228,7 +231,7 @@ private:
 	std::wstring m_DataFile;
 	std::wstring m_StatsFile;
 	std::wstring m_SettingsPath;
-	std::wstring m_SkinPath;
+	std::vector<std::wstring> m_SkinPath;
 
 	std::wstring m_Drive;
 

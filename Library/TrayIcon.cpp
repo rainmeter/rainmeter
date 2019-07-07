@@ -403,7 +403,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			// Load the bitmaps if defined
 			if (!imageName.empty())
 			{
-				imageName.insert(0, GetRainmeter().GetSkinPath());
+				imageName.insert(0, GetRainmeter().GetDefaultSkinsPath());
 				const WCHAR* imagePath = imageName.c_str();
 				if (_wcsicmp(imagePath + (imageName.size() - 4), L".ico") == 0)
 				{
@@ -522,7 +522,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 
 		case IDM_OPENSKINSFOLDER:
-			GetRainmeter().OpenSkinFolder();
+			GetRainmeter().OpenSkinFolder(GetRainmeter().GetDefaultSkinsPath(),L"");
 			break;
 
 		default:
@@ -661,7 +661,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			switch (wParam)
 			{
 			case RAINMETER_QUERY_ID_SKINS_PATH:
-				sendCopyData(GetRainmeter().GetSkinPath());
+				sendCopyData(GetRainmeter().GetDefaultSkinPath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_SETTINGS_PATH:

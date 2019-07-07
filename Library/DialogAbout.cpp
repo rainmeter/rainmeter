@@ -1748,7 +1748,7 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_PathLink);
 	SetWindowText(item, trimLink(tmpSz));
 
-	_snwprintf_s(tmpSz, _TRUNCATE, L"SkinPath: <a>%s</a>", GetRainmeter().GetSkinPath().c_str());
+	_snwprintf_s(tmpSz, _TRUNCATE, L"SkinPath: <a>%s</a>", GetRainmeter().GetDefaultSkinsPath().c_str());
 	item = GetControl(Id_SkinPathLink);
 	SetWindowText(item, trimLink(tmpSz));
 
@@ -1834,7 +1834,7 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			text += L"Path: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nSkinPath: ";
-			text += GetRainmeter().GetSkinPath();
+			text += GetRainmeter().GetDefaultSkinsPath();
 			text += L"\nSettingsPath: ";
 			text += GetRainmeter().GetSettingsPath();
 			text += L"\nIniFile: ";
@@ -1870,7 +1870,7 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		else if (nm->idFrom == Id_SkinPathLink)
 		{
-			CommandHandler::RunFile(GetRainmeter().GetSkinPath().c_str());
+			CommandHandler::RunFile(GetRainmeter().GetDefaultSkinsPath().c_str());
 		}
 		else if (nm->idFrom == Id_SettingsPathLink)
 		{

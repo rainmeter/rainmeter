@@ -892,7 +892,7 @@ void DialogManage::TabSkins::ReadSkin()
 	item = GetControl(Id_EditButton);
 	EnableWindow(item, TRUE);
 
-	std::wstring file = GetRainmeter().GetSkinPath() + m_SkinFolderPath;
+	std::wstring file = m_SkinsFolderPath + m_SkinFolderPath;
 	file += L'\\';
 	file += m_SkinFileName;
 	m_SkinWindow = GetRainmeter().GetSkinByINI(file);
@@ -1294,7 +1294,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_EditButton:
-		GetRainmeter().EditSkinFile(m_SkinFolderPath, m_SkinFileName);
+		GetRainmeter().EditSkinFile(m_SkinsFolderPath, m_SkinFolderPath, m_SkinFileName);
 		break;
 
 	case Id_XPositionEdit:
@@ -1494,7 +1494,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_MANAGESKINSMENU_OPENFOLDER:
 		{
 			HWND tree = GetControl(Id_SkinsTreeView);
-			GetRainmeter().OpenSkinFolder(GetTreeSelectionPath(tree));
+			GetRainmeter().OpenSkinFolder(GetRainmeter().GetSkinPath(GetTreeSelectionPath(tree)), GetTreeSelectionPath(tree));
 		}
 		break;
 
@@ -1552,7 +1552,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_CLICK:
 		if (nm->idFrom == Id_AddMetadataLink)
 		{
-			std::wstring file = GetRainmeter().GetSkinPath() + m_SkinFolderPath;
+			std::wstring file = m_SkinsFolderPath + m_SkinFolderPath;
 			file += L'\\';
 			file += m_SkinFileName;
 			const WCHAR* str = L"\r\n"  // Hack to add below [Rainmeter].
@@ -1704,6 +1704,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				}
 
 				m_SkinFolderPath.resize(m_SkinFolderPath.length() - 1);  // Get rid of trailing slash
+				m_SkinsFolderPath = GetRainmeter().GetSkinPath(m_SkinFolderPath);
 
 				ReadSkin();
 			}
