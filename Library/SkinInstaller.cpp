@@ -68,6 +68,7 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 		if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, buffer) > 0)
 		{
 			g_Data.skinsPath = buffer;
+			g_Data.skinsPath = g_Data.skinsPath.substr(0, g_Data.skinsPath.find(L"|", 0));
 			if (g_Data.skinsPath.back() != L'\\' && g_Data.skinsPath.back() != L'/')
 			{
 				g_Data.skinsPath += L'\\';
@@ -91,6 +92,7 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 			if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, buffer) > 0)
 			{
 				g_Data.skinsPath = buffer;
+				g_Data.skinsPath = g_Data.skinsPath.substr(0, g_Data.skinsPath.find(L"|", 0));
 				if (g_Data.skinsPath.back() != L'\\' && g_Data.skinsPath.back() != L'/')
 				{
 					g_Data.skinsPath += L'\\';

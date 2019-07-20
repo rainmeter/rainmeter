@@ -9,6 +9,7 @@
 #define SKININSTALLER_UTIL_H_
 
 #include <string>
+#include <vector>
 #include "zip.h"
 #include "unzip.h"
 
@@ -19,8 +20,8 @@ struct GlobalData
 {
 	std::wstring programPath;
 	std::wstring settingsPath;
-	std::wstring skinsPath;
 	std::wstring iniFile;
+	std::wstring skinsPath;
 };
 
 struct OsNameVersion

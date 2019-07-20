@@ -140,7 +140,6 @@ void SkinRegistry::Populate(const std::vector<std::wstring>& paths, std::vector<
 	std::vector<std::wstring>::const_iterator iter = paths.begin();
 	for (; iter != paths.end(); ++iter)
 	{
-		LogNoticeF(L"Processng SkinPath: %s", (*iter).c_str());
 		index = PopulateRecursive((*iter), favorites, L"", index, 0);
 	}
 }
