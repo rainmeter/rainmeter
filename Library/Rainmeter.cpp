@@ -342,16 +342,28 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
-	if (len > 0)
+	if (len > 0 &&
+		_waccess(buffer, 0) != -1)	// Temporary fix
 	{
-		std::wstring multipathstring(buffer, len);
-
-		PathUtil::ExpandEnvironmentVariables(multipathstring);
-		m_SkinPath = PathUtil::SplitMultiPathString(multipathstring);
-
-
-
 		// Try Rainmeter.ini first
+		std::wstring skinpathstring(buffer, len);
+		PathUtil::ExpandEnvironmentVariables(skinpathstring);
+		PathUtil::AppendBackslashIfMissing(skinpathstring);
+		m_SkinPath.push_back(skinpathstring);
+
+		for (int skinpathnum = 2; true; skinpathnum++)
+		{
+			const std::wstring skpi = L"SkinPath" + std::to_wstring(skinpathnum);
+			len = GetPrivateProfileString(L"Rainmeter", skpi.c_str(), L"", buffer, MAX_LINE_LENGTH, iniFile);
+
+			if (len <= 0 || _waccess(buffer, 0) == -1) break;
+
+			skinpathstring = std::wstring(buffer, len);
+			PathUtil::ExpandEnvironmentVariables(skinpathstring);
+			PathUtil::AppendBackslashIfMissing(skinpathstring);
+			m_SkinPath.push_back(skinpathstring);
+			skinpathnum++;
+		}
 	}
 	else if (bDefaultIniLocation &&
 		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
