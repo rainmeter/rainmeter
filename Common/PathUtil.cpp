@@ -157,25 +157,4 @@ void ExpandEnvironmentVariables(std::wstring& path)
 	}
 }
 
-std::vector<std::wstring> SplitMultiPathString(std::wstring& multipathstring) 
-{
-	std::vector<std::wstring> paths;
-	std::wstring delimiter(L"|");
-
-	size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-	std::wstring token;
-
-	while ((pos_end = multipathstring.find(delimiter, pos_start)) != std::wstring::npos) {
-		token = multipathstring.substr(pos_start, pos_end - pos_start);
-
-		PathUtil::AppendBackslashIfMissing(token);
-
-		pos_start = pos_end + delim_len;
-		paths.push_back(token);
-	}
-
-	paths.push_back(multipathstring.substr(pos_start));
-	return paths;
-}
-
 }  // namespace PathUtil

@@ -36,8 +36,6 @@ std::wstring GetVolume(const std::wstring& path);
 
 void ExpandEnvironmentVariables(std::wstring& strPath);
 
-std::vector<std::wstring> SplitMultiPathString(std::wstring& multipathstring);
-
 }  // namespace PathUtil
 
 #endif
