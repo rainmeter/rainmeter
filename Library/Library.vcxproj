@@ -70,6 +70,7 @@
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
+    <ClCompile Include="MeterPlugin.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
     <ClCompile Include="MeterButton.cpp" />
     <ClCompile Include="MeterHistogram.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
+    <ClInclude Include="MeterPlugin.h" />
     <ClInclude Include="MeterBitmap.h" />
     <ClInclude Include="MeterButton.h" />
     <ClInclude Include="MeterHistogram.h" />

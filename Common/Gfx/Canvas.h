@@ -73,6 +73,7 @@ public:
 	void PushClip(Gfx::Shape* clip);
 	void PopClip();
 
+	ID2D1DeviceContext* GetTarget() { return m_Target.Get(); };
 	bool SetTarget(Gfx::RenderTexture* texture);
 	void ResetTarget();
 

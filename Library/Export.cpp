@@ -10,7 +10,6 @@
 #include "Export.h"
 #include "Skin.h"
 #include "Measure.h"
-#include "MeasurePlugin.h"
 
 #define NULLCHECK(str) { if ((str) == nullptr) { (str) = L""; } }
 
@@ -21,26 +20,26 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 	NULLCHECK(option);
 	NULLCHECK(defValue);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetSkin()->GetParser();
-	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	Section* section = (Section*)rm;
+	ConfigParser& parser = section->GetSkin()->GetParser();
+	return parser.ReadString(section->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 {
 	NULLCHECK(option);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetSkin()->GetParser();
-	return parser.ReadFloat(measure->GetName(), option, defValue);
+	Section* section = (Section*)rm;
+	ConfigParser& parser = section->GetSkin()->GetParser();
+	return parser.ReadFloat(section->GetName(), option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 {
 	NULLCHECK(str);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetSkin()->GetParser();
+	Section* section = (Section*)rm;
+	ConfigParser& parser = section->GetSkin()->GetParser();
 	g_Buffer = str;
 	parser.ReplaceVariables(g_Buffer);
 	parser.ReplaceMeasures(g_Buffer);
@@ -51,7 +50,7 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
 	NULLCHECK(relativePath);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	Section* measure = (Section*)rm;
 	g_Buffer = relativePath;
 	measure->GetSkin()->MakePathAbsolute(g_Buffer);
 	return g_Buffer.c_str();
@@ -59,18 +58,18 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 
 void* __stdcall RmGet(void* rm, int type)
 {
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	Section* section = (Section*)rm;
 
 	switch (type)
 	{
 	case RMG_MEASURENAME:
 		{
-			return (void*)measure->GetName();
+			return (void*)section->GetName();
 		}
 
 	case RMG_SKIN:
 		{
-			return (void*)measure->GetSkin();
+			return (void*)section->GetSkin();
 		}
 
 	case RMG_SETTINGSFILE:
@@ -80,14 +79,14 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SKINNAME:
 		{
-			Skin* window = measure->GetSkin();
+			Skin* window = section->GetSkin();
 			if (!window) break;
 			return (void*)window->GetFolderPath().c_str();
 		}
 
 	case RMG_SKINWINDOWHANDLE:
 		{
-			Skin* window = measure->GetSkin();
+			Skin* window = section->GetSkin();
 			if (!window) break;
 			return (void*)window->GetWindow();
 		}
@@ -122,12 +121,13 @@ void __stdcall RmLog(void* rm, int level, LPCWSTR message)
 {
 	NULLCHECK(message);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	// could be MeasurePlugin or MeterPlugin
+	Section* section = (Section*)rm;
 
 	// Ignore Debug messages from plugins unless in debug mode.
 	if (level != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
 	{
-		GetLogger().LogSection((Logger::Level)level, measure, message);
+		GetLogger().LogSection((Logger::Level)level, section, message);
 	}
 }
 
@@ -135,14 +135,15 @@ void RmLogF(void* rm, int level, LPCWSTR format, ...)
 {
 	NULLCHECK(format);
 
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	// could be MeasurePlugin or MeterPlugin
+	Section* section = (Section*)rm;
 
 	// Ignore Debug messages from plugins unless in debug mode.
 	if (level != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
 	{
 		va_list args;
 		va_start(args, format);
-		GetLogger().LogSectionVF((Logger::Level)level, measure, format, args);
+		GetLogger().LogSectionVF((Logger::Level)level, section, format, args);
 		va_end(args);
 	}
 }

@@ -13,6 +13,7 @@
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
+	m_PluginName(),
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
@@ -96,19 +97,18 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
 	size_t pos = plugin.find_last_of(L"\\/");
-	std::wstring pluginName;
 	if (pos != std::wstring::npos)
 	{
-		pluginName.assign(plugin, pos, plugin.length() - pos);
+		m_PluginName.assign(plugin, pos, plugin.length() - pos);
 	}
 	else
 	{
-		pluginName = plugin;
+		m_PluginName = plugin;
 	}
 
 	// First try from program path
 	std::wstring pluginFile = GetRainmeter().GetPluginPath();
-	pluginFile += pluginName;
+	pluginFile += m_PluginName;
 	m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
@@ -116,14 +116,14 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			// Try from settings path
 			pluginFile = GetRainmeter().GetUserPluginPath();
-			pluginFile += pluginName;
+			pluginFile += m_PluginName;
 			m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 		}
 		if (!m_Plugin)
 		{
 			LogErrorF(
 				this, L"Plugin: Unable to load \"%s\" (error %ld)",
-				pluginName.c_str(), GetLastError());
+				m_PluginName.c_str(), GetLastError());
 			return;
 		}
 	}

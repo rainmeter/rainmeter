@@ -134,6 +134,7 @@
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="MeterPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -237,6 +238,7 @@
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="MeterPlugin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

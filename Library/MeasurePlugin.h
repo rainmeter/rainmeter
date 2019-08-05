@@ -43,6 +43,10 @@ public:
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue);
 
+	std::wstring& GetPluginName() { return m_PluginName; };
+	HMODULE& GetPlugin() { return m_Plugin; };
+	void* GetPluginData() { return m_PluginData; };
+
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
@@ -50,6 +54,7 @@ protected:
 private:
 	bool IsNewApi() { return m_ReloadFunc != nullptr; }
 
+	std::wstring m_PluginName;
 	HMODULE m_Plugin;
 
 	void* m_ReloadFunc;
