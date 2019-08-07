@@ -44,7 +44,6 @@ public:
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue);
 
 	std::wstring& GetPluginName() { return m_PluginName; };
-	HMODULE& GetPlugin() { return m_Plugin; };
 	void* GetPluginData() { return m_PluginData; };
 
 protected:

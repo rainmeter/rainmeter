@@ -16,7 +16,6 @@ MeterPlugin::MeterPlugin(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_PluginMeasure(),
 	m_PluginName(),
 	m_PluginData(),
-	m_PluginHandledByMeasure(false),
 	m_MeterReloadFunc(),
 	m_MeterUpdateFunc(),
 	m_MeterDrawFunc()
@@ -33,10 +32,7 @@ MeterPlugin::~MeterPlugin()
 			((NEWFINALIZE)finalizeFunc)(m_PluginData);
 		}
 
-		if (!m_PluginHandledByMeasure)
-		{
-			FreeLibrary(m_Plugin);
-		}
+		FreeLibrary(m_Plugin);
 	}
 }
 /*
@@ -56,55 +52,26 @@ void MeterPlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		return;
 	}
 
-	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
-	size_t pos = plugin.find_last_of(L"\\/");
-	if (pos != std::wstring::npos)
-	{
-		m_PluginName.assign(plugin, pos, plugin.length() - pos);
-	}
-	else
-	{
-		m_PluginName = plugin;
-	}
-
-	// If the measure loaded the same plugin library, we dont have to load it again
-	if (!m_Measures.empty() &&
-		m_Measures[0]->GetTypeID() == TypeID<MeasurePlugin>() && 
-		((MeasurePlugin*)m_Measures[0])->GetPluginName() == m_PluginName)
-	{
-		m_PluginMeasure = (MeasurePlugin*)m_Measures[0];
-		m_Plugin = m_PluginMeasure->GetPlugin();
-
-		// The measure takes care of the plugin
-		m_PluginHandledByMeasure = true;
-	}
-
+	// First try from program path
+	std::wstring pluginFile = GetRainmeter().GetPluginPath();
+	pluginFile += m_PluginName;
+	m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
-		// First try from program path
-		std::wstring pluginFile = GetRainmeter().GetPluginPath();
-		pluginFile += m_PluginName;
-		m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
+		if (GetRainmeter().HasUserPluginPath())
+		{
+			// Try from settings path
+			pluginFile = GetRainmeter().GetUserPluginPath();
+			pluginFile += m_PluginName;
+			m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
+		}
 		if (!m_Plugin)
 		{
-			if (GetRainmeter().HasUserPluginPath())
-			{
-				// Try from settings path
-				pluginFile = GetRainmeter().GetUserPluginPath();
-				pluginFile += m_PluginName;
-				m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
-			}
-			if (!m_Plugin)
-			{
-				LogErrorF(
-					this, L"Plugin: Unable to load \"%s\" (error %ld)",
-					m_PluginName.c_str(), GetLastError());
-				return;
-			}
+			LogErrorF(
+				this, L"Plugin: Unable to load \"%s\" (error %ld)",
+				m_PluginName.c_str(), GetLastError());
+			return;
 		}
-
-		// The meter takes care of the plugin
-		m_PluginHandledByMeasure = false;
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "MeterInitialize");
@@ -121,7 +88,7 @@ void MeterPlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		((NEWINITIALIZE)initializeFunc)(&m_PluginData, this);
 	}
 
-	if (m_MeterReloadFunc) 
+	if (m_MeterReloadFunc)
 	{
 		((METERRELOAD)m_MeterReloadFunc)(m_PluginData, this);
 	}
@@ -187,9 +154,33 @@ bool MeterPlugin::Draw(Gfx::Canvas& canvas)
 
 		return ((METERDRAW)m_MeterDrawFunc)(m_PluginData, measurePluginData, target);
 	}
+	return false;
 }
 
 void MeterPlugin::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
-	BindPrimaryMeasure(parser, section, true);
+	m_PluginMeasure = nullptr;
+	if (BindPrimaryMeasure(parser, section, true))
+	{
+		if (!m_Initialized)
+		{
+			const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
+			size_t pos = plugin.find_last_of(L"\\/");
+			if (pos != std::wstring::npos)
+			{
+				m_PluginName.assign(plugin, pos, plugin.length() - pos);
+			}
+			else
+			{
+				m_PluginName = plugin;
+			}
+		}
+
+		// check if the measure loaded the same plugin library
+		if (m_Measures[0]->GetTypeID() == TypeID<MeasurePlugin>() &&
+			((MeasurePlugin*)m_Measures[0])->GetPluginName() == m_PluginName)
+		{
+			m_PluginMeasure = (MeasurePlugin*)m_Measures[0];
+		}
+	}
 }

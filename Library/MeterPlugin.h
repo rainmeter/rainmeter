@@ -36,9 +36,6 @@ protected:
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 private:
-	// returns if loading and freeing the plugin library is handled by the measure
-	bool m_PluginHandledByMeasure;
-
 	std::wstring m_PluginName;
 	HMODULE m_Plugin;
 
