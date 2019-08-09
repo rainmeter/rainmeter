@@ -11,12 +11,7 @@ Alternatively, download the repository contents as a [ZIP archive](https://githu
 
 ### Building with Visual Studio
 
-Rainmeter can be built using any version of Visual Studio 2015. If you don't already have VS2015, you can download [Visual Studio Community 2015](https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx) for free. When installing, be sure to select the following components:
-
-* Programming Languages -> Visual C++ -> Common Tools for Visual C++ 2015
-* Programming Languages -> Visual C++ -> Windows XP Support for C++
-
-After Visual Studio has been installed and updated, open Rainmeter.sln at the root of the repository to build. You may have to install [.NET Framework 3.5](http://www.microsoft.com/en-us/download/details.aspx?id=21).
+Rainmeter can be built using any version of Visual Studio 2019. If you don't already have VS2019, you can download [Visual Studio Community 2019](https://www.visualstudio.com/downloads/) for free.
 
 
 ### Building the installer
