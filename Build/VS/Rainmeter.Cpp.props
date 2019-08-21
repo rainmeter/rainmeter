@@ -55,7 +55,8 @@
       <!-- Ignore C4351 to get rid of "new behavior: elements of array 'array' will be default initialized" -->
       <!-- Ignore C4003 to get rid of "not enough actual parameters for macro max in json.hpp (already fixed in 'develop' branch)" -->
       <!-- Ignore C4577 to get rid of "'noexcept' used with no exception handling mode specified in json.hpp" -->
-      <DisableSpecificWarnings>4351;4003;4577;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <!-- Ignore C4996 to get rid of "'xxx': was declared deprecated" warnings in: DialogInstall.cpp, iTunesPlugin.cpp -->
+      <DisableSpecificWarnings>4351;4003;4577;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 
       <ExceptionHandling>false</ExceptionHandling>
 

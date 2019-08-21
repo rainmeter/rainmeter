@@ -1325,7 +1325,7 @@ std::wstring DialogInstall::GetWindowsVersionString()
 {
 	WCHAR buffer[16];
 	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-	GetVersionEx((OSVERSIONINFO*)&osvi);
+	GetVersionEx((OSVERSIONINFO*)&osvi);  // C4996
 	_snwprintf_s(buffer, _TRUNCATE, L"%d.%d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
 
 	return buffer;

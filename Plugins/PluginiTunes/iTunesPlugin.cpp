@@ -450,7 +450,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 	}
 
-	const wchar_t* type = ReadConfigString(section, L"Command", L"");
+	const wchar_t* type = ReadConfigString(section, L"Command", L"");  // C4996
 	for (int i = 0; i < COMMAND_COUNT; i++)
 	{
 		if (CommandName[i] && type && _wcsicmp(CommandName[i], type) == 0)
@@ -459,7 +459,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 			if (COMMAND_GETCURRENTTRACK_ARTWORK == (COMMAND_TYPE)i)
 			{
-				const wchar_t* defaultArtwork = ReadConfigString(section, L"DefaultArtwork", L"");
+				const wchar_t* defaultArtwork = ReadConfigString(section, L"DefaultArtwork", L"");  // C4996
 				wcscpy(DefaultTrackArtworkPath, defaultArtwork);
 			}
 		}
