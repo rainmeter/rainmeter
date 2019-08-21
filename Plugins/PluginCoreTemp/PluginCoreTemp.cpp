@@ -10,7 +10,7 @@
 #include "CoreTempProxy.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
-typedef enum eMeasureType
+enum eMeasureType
 {
 	MeasureTemperature,
 	MeasureMaxTemperature,
