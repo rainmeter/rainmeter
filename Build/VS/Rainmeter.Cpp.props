@@ -48,9 +48,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <!-- Thread-safe statics don't work on XP... -->
-      <!-- See: https://connect.microsoft.com/VisualStudio/feedback/details/1789709/visual-c-2015-runtime-broken-on-windows-server-2003-c-11-magic-statics -->
-      <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
 
       <!-- Ignore C4351 to get rid of "new behavior: elements of array 'array' will be default initialized" -->
       <!-- Ignore C4003 to get rid of "not enough actual parameters for macro max in json.hpp (already fixed in 'develop' branch)" -->
