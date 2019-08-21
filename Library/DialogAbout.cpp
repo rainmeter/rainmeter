@@ -1646,7 +1646,7 @@ void DialogAbout::TabVersion::Create(HWND owner)
 			0, 12, 256, 256,
 			WS_VISIBLE, 0),
 
-		CT_LINEV(-1, 0,
+		CT_LINEV(-0, 0,
 			180, 8, 5, 180,
 			WS_VISIBLE, 0),
 

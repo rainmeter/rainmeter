@@ -1657,10 +1657,10 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_GROUPBOX(-1, ID_STR_SAVENEWTEMPLATE,
+		CT_GROUPBOX(-0, ID_STR_SAVENEWTEMPLATE,
 			0, 0, 268, 36,
 			WS_VISIBLE, 0),
-		CT_LABEL(-1, ID_STR_NAMESC,
+		CT_LABEL(-0, ID_STR_NAMESC,
 			6, 16, 55, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_NewEdit, 0,
@@ -1670,7 +1670,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 			column1, 14, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		CT_GROUPBOX(-1, ID_STR_SAVEDTEMPLATES,
+		CT_GROUPBOX(-0, ID_STR_SAVEDTEMPLATES,
 			0, 43, 268, 143,
 			WS_VISIBLE , 0),
 		CT_LISTBOX(Id_TemplateListBox, 0,
