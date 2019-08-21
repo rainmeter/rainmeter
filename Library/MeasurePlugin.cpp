@@ -141,7 +141,11 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (IsNewApi())
 	{
-		m_PluginData = (void*)id;
+		{
+			// Suppress C4312: 'type cast': conversion from 'UINT' to 'void*' of greater size
+			#pragma warning(suppress: 4312)
+			m_PluginData = (void*)id;
+		}
 
 		if (initializeFunc)
 		{
@@ -286,7 +290,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, args.size(), args.data());
+			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, (const int)args.size(), args.data());
 			if (result)
 			{
 				strValue = result;
