@@ -53,9 +53,11 @@ std::wstring GetPlatformFriendlyName()
 			// For Windows 10 (and above?), use the "ReleaseId" as part of the version number.
 			// (ie. 1507, 1511, 1607, 1703, 1709, 1803 ...)
 			size = _countof(buffer);
-			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+			DWORD major = 0;
+
+			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS)
 			{
-				if ((DWORD)buffer >= 10)
+				if (major >= 10)
 				{
 					size = _countof(buffer);
 					if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
