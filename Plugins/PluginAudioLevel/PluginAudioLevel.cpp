@@ -16,6 +16,7 @@
 #include <cmath>
 #include <cassert>
 #include <vector>
+#include <string>
 
 #include "../API/RainmeterAPI.h"
 
@@ -425,19 +426,15 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 
 		if (!found)
 		{
-			WCHAR msg[512];
-			WCHAR* d = msg;
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE,
-				L"Invalid Channel '%s', must be an integer between 0 and %d, or one of:", channel, Measure::MAX_CHANNELS - 1);
-
-			for (unsigned int i = 0; i <= Measure::CHANNEL_SUM; ++i)
+			std::wstring chanNames = s_chanName[0][0];
+			for (size_t i = 1; i <= Measure::CHANNEL_SUM; ++i)
 			{
-				d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE,
-					L"%s%s%s", i ? L", " : L" ", i == Measure::CHANNEL_SUM ? L"or " : L"", s_chanName[i][0]);
+				chanNames += L", ";
+				chanNames += s_chanName[i][0];
 			}
 
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".");
-			RmLogF(rm, LOG_ERROR, msg);
+			RmLogF(rm, LOG_ERROR, L"Invalid Channel: '%s', must be a number between 0 and %i, or one of: %s",
+				channel, Measure::MAX_CHANNELS - 1, chanNames.c_str());
 		}
 	}
 
@@ -457,19 +454,14 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 
 		if (!(iType < Measure::NUM_TYPES))
 		{
-			WCHAR msg[512];
-			WCHAR* d = msg;
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE,
-				L"Invalid Type '%s', must be one of:", type);
-
-			for (unsigned int i = 0; i < Measure::NUM_TYPES; ++i)
+			std::wstring typeNames = s_typeName[0];
+			for (size_t i = 1; i < Measure::NUM_TYPES; ++i)
 			{
-				d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE,
-					L"%s%s%s", i ? L", " : L" ", i == (Measure::NUM_TYPES - 1) ? L"or " : L"", s_typeName[i]);
+				typeNames += L", ";
+				typeNames += s_typeName[i];
 			}
 
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".");
-			RmLogF(rm, LOG_ERROR, msg);
+			RmLogF(rm, LOG_ERROR, L"Invalid Type: '%s', must be one of: %s", type, typeNames.c_str());
 		}
 	}
 
@@ -907,7 +899,6 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	Measure* m = (Measure*)data;
 	Measure* parent	= m->m_parent ? m->m_parent : m;
 
-	static WCHAR buffer[4096];
 	const WCHAR* s_fmtName[Measure::NUM_FORMATS] =
 	{
 		L"<invalid>",	// FMT_INVALID
@@ -915,6 +906,7 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 		L"PCM 32b",		// FMT_PCM_F32
 	};
 
+	static WCHAR buffer[4096];
 	buffer[0] = '\0';
 
 	switch(m->m_type)
@@ -953,9 +945,10 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 			if (parent->m_enum->EnumAudioEndpoints(parent->m_port == Measure::PORT_OUTPUT ? eRender : eCapture,
 				DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection) == S_OK)
 			{
-				WCHAR* d = &buffer[0];
 				UINT nDevices;
 				collection->GetCount(&nDevices);
+
+				std::wstring strDevices;
 
 				for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
 				{
@@ -969,8 +962,10 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 
 						if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
 						{
-							d += _snwprintf_s(d, (sizeof(buffer) + (UINT32)buffer - (UINT32)d) / sizeof(WCHAR), _TRUNCATE,
-								L"%s%s: %s", iDevice > 0 ? L"\n" : L"", id, varName.pwszVal);
+							strDevices += (iDevice > 0) ? L"\n" : L"";
+							strDevices += id;
+							strDevices += L": ";
+							strDevices += varName.pwszVal;
 						}
 
 						if (id) CoTaskMemFree(id);
@@ -981,6 +976,8 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 					SAFE_RELEASE(props);
 					SAFE_RELEASE(device);
 				}
+
+				_snwprintf_s(buffer, _TRUNCATE, L"%s", strDevices.c_str());
 			}
 
 			SAFE_RELEASE(collection);
