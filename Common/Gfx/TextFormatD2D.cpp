@@ -683,12 +683,12 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			return true;
 		}
 	}
-	else if(_wcsicmp(option, L"ITALIC") == 0)
+	else if (_wcsicmp(option, L"ITALIC") == 0)
 	{
 		UpdateInlineItalic(index, pattern);
 		return true;
 	}
-	else if(_wcsicmp(option, L"OBLIQUE") == 0)
+	else if (_wcsicmp(option, L"OBLIQUE") == 0)
 	{
 		UpdateInlineOblique(index, pattern);
 		return true;
@@ -707,7 +707,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			return true;
 		}
 	}
-	else if(_wcsicmp(option, L"SIZE") == 0)
+	else if (_wcsicmp(option, L"SIZE") == 0)
 	{
 		if (optSize > 1)
 		{
@@ -716,7 +716,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			return true;
 		}
 	}
-	else if(_wcsicmp(option, L"STRETCH") == 0)
+	else if (_wcsicmp(option, L"STRETCH") == 0)
 	{
 		if (optSize > 1)
 		{
@@ -729,12 +729,12 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			return true;
 		}
 	}
-	else if(_wcsicmp(option, L"STRIKETHROUGH") == 0)
+	else if (_wcsicmp(option, L"STRIKETHROUGH") == 0)
 	{
 		UpdateInlineStrikethrough(index, pattern);
 		return true;
 	}
-	else if(_wcsicmp(option, L"TYPOGRAPHY") == 0)
+	else if (_wcsicmp(option, L"TYPOGRAPHY") == 0)
 	{
 		// Typography 'tags' need to be extactly 4 characters.
 		if (optSize > 1 && options[1].size() == 4)
@@ -752,12 +752,12 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			return true;
 		}
 	}
-	else if(_wcsicmp(option, L"UNDERLINE") == 0)
+	else if (_wcsicmp(option, L"UNDERLINE") == 0)
 	{
 		UpdateInlineUnderline(index, pattern);
 		return true;
 	}
-	else if(_wcsicmp(option, L"WEIGHT") == 0)
+	else if (_wcsicmp(option, L"WEIGHT") == 0)
 	{
 		if (optSize > 1)
 		{

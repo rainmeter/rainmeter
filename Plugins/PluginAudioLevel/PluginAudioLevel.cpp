@@ -408,7 +408,7 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 
 	// parse channel specifier
 	LPCWSTR channel = RmReadString(rm, L"Channel", L"");
-	if(*channel)
+	if (*channel)
 	{
 		bool found = false;
 		for (int iChan = 0; iChan <= Measure::CHANNEL_SUM && !found; ++iChan)
@@ -648,7 +648,7 @@ PLUGIN_EXPORT double Update (void* data)
 			}
 
 			// process FFTs (optional)
-			if(m->m_fftSize)
+			if (m->m_fftSize)
 			{
 				float* sF32 = (float*)buffer;
 				INT16* sI16 = (INT16*)buffer;
@@ -721,7 +721,7 @@ PLUGIN_EXPORT double Update (void* data)
 							float x = (m->m_fftOut[iChan])[iBin];
 							float& y = (m->m_bandOut[iChan])[iBand];
 
-							if(fLin1 <= fLog1)
+							if (fLin1 <= fLog1)
 							{
 								y += (fLin1 - f0) * x * scalar;
 								f0 = fLin1;
@@ -745,7 +745,7 @@ PLUGIN_EXPORT double Update (void* data)
 			m->m_pcFill = pcCur;
 		}
 		// detect device disconnection
-		switch(hr)
+		switch (hr)
 		{
 		case AUDCLNT_S_BUFFER_EMPTY:
 			// Windows bug: sometimes when shutting down a playback application, it doesn't zero
@@ -780,7 +780,7 @@ PLUGIN_EXPORT double Update (void* data)
 		m->m_pcPoll = pcCur;
 	}
 
-	switch(m->m_type)
+	switch (m->m_type)
 	{
 	case Measure::TYPE_RMS:
 		if (m->m_channel == Measure::CHANNEL_SUM)
@@ -876,7 +876,7 @@ PLUGIN_EXPORT double Update (void* data)
 		if (parent->m_dev)
 		{
 			DWORD state;
-			if(parent->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
+			if (parent->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
 			{
 				return 1.0;
 			}
@@ -909,7 +909,7 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	static WCHAR buffer[4096];
 	buffer[0] = '\0';
 
-	switch(m->m_type)
+	switch (m->m_type)
 	{
 	default:
 		// return NULL for any numeric values, so Rainmeter can auto-convert them.
@@ -1060,7 +1060,7 @@ HRESULT	Measure::DeviceInit ()
 	hr = m_clAudio->GetMixFormat(&m_wfx);
 	EXIT_ON_ERROR(hr);
 
-	switch(m_wfx->wFormatTag)
+	switch (m_wfx->wFormatTag)
 	{
 	case WAVE_FORMAT_PCM:
 		if (m_wfx->wBitsPerSample == 16)
@@ -1081,7 +1081,7 @@ HRESULT	Measure::DeviceInit ()
 		break;
 	}
 
-	if(m_format == FMT_INVALID)
+	if (m_format == FMT_INVALID)
 	{
 		RmLog(LOG_WARNING, L"Invalid sample format.  Only PCM 16b integer or PCM 32b float are supported.");
 	}
