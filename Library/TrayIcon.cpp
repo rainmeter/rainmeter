@@ -420,7 +420,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 						if (hIcon) m_Icons.push_back(hIcon);
 						if (wcscmp(imagePath, buffer) == 0) break;
 					}
-					while(hIcon != nullptr);
+					while (hIcon != nullptr);
 				}
 
 				if (m_Icons.empty())

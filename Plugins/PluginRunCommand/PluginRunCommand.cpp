@@ -273,7 +273,7 @@ void RunCommand(Measure* measure)
 			std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
 			// Read output of program (if any)
-			while(true)
+			while (true)
 			{
 				auto ReadFileAndSetResult = [&]() -> void
 				{

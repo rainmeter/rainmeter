@@ -138,7 +138,7 @@ void ReadSharedData(SensorType type, ScaleType scale, UINT number, double* value
 
 	if (ptr->version == 1)
 	{
-		switch(type)
+		switch (type)
 		{
 		case TYPE_TEMP:
 			if (number < ptr->NumTemps)

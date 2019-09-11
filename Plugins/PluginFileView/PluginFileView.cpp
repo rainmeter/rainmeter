@@ -149,7 +149,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			{
 				child->parent->sortDateType = DTYPE_CREATED;
 			}
-			else if(_wcsicmp(date, L"ACCESSED") == 0)
+			else if (_wcsicmp(date, L"ACCESSED") == 0)
 			{
 				child->parent->sortDateType = DTYPE_ACCESSED;
 			}
@@ -238,7 +238,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			child->date = DTYPE_CREATED;
 		}
-		else if(_wcsicmp(date, L"ACCESSED") == 0)
+		else if (_wcsicmp(date, L"ACCESSED") == 0)
 		{
 			child->date = DTYPE_ACCESSED;
 		}
