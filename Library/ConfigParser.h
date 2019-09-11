@@ -97,6 +97,7 @@ public:
 	bool ReplaceMeasures(std::wstring& result);
 
 	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
+	bool ContainsNewStyleVariable(const std::wstring& str);
 	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);

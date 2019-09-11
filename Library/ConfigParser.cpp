@@ -1009,6 +1009,21 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 	return replaced;
 }
 
+bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
+{
+	if (str.find(L'[') == std::wstring::npos) return false;
+
+	for (const auto& key : c_VariableMap)
+	{
+		std::wstring var = L"[";
+		var += key.second;
+
+		if (str.find(var) != std::wstring::npos) return true;
+	}
+
+	return false;
+}
+
 std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter* meter)
 {
 	std::wstring result;
