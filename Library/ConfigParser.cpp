@@ -827,8 +827,11 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 ** Replaces new-style measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
-bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type, Meter* meter)
+bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
 {
+	// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
+	// Copy the result here, and replace it before returning.
+	std::wstring result = str;
 	bool replaced = false;
 
 	size_t prevStart = 0;
@@ -1006,6 +1009,7 @@ bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type,
 		}
 	}
 
+	str = result;
 	return replaced;
 }
 
