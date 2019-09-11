@@ -2912,38 +2912,38 @@ void Skin::UpdateRelativeMeters()
 {
 	if (!m_ResetRelativeMeters) return;
 
-	std::map<Meter*, Meter*> containerLookup;
-	std::vector<Meter*> containedMeters;
-	Meter* prevMeter = nullptr;
-	for (auto meter : m_Meters)
+	std::unordered_map<Meter*, Meter*> containers;
+	Meter* previousMeter = nullptr;
+
+	for (auto* meter : m_Meters)
 	{
 		if (meter->IsContained())
 		{
-			containedMeters.push_back(meter);
+			// Contained meters can only be relative to other meters contained
+			// in the same container, or to the container itself.
+			Meter* container = meter->GetContainerMeter();
+			auto item = containers.find(container);
+			if (item != containers.end())
+			{
+				meter->SetRelativeMeter(item->second);
+			}
+			else
+			{
+				meter->SetRelativeMeter(container);
+			}
+
+			containers[container] = meter;
 			continue;
 		}
 
-		if (prevMeter)
+		if (meter->IsContainer())
 		{
-			if (meter->IsContainer())
-			{
-				containerLookup[meter] = meter;
-			}
-			meter->SetRelativeMeter(prevMeter);
+			// Container meters can only be relative to other non-contained meters
+			containers[meter] = meter;
 		}
 
-		prevMeter = meter;
-	}
-
-	for (auto meter : containedMeters)
-	{
-		const auto container = meter->GetContainerMeter();
-		auto item = containerLookup.find(container);
-		if (item != containerLookup.end())
-		{
-			meter->SetRelativeMeter(item->second);
-			containerLookup[container] = meter;
-		}
+		meter->SetRelativeMeter(previousMeter);
+		previousMeter = meter;
 	}
 
 	m_ResetRelativeMeters = false;
