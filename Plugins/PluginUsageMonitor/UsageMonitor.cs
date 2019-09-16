@@ -1129,7 +1129,7 @@ namespace UsageMonitor
                                 }
                                 else if (engNum < num)
                                 {
-                                    while(engNum < num && i < eng.Length-1)
+                                    while (engNum < num && i < eng.Length-1)
                                     {
                                         i++;
                                         int.TryParse(eng[i], out engNum);
@@ -1211,7 +1211,7 @@ namespace UsageMonitor
                 if (currLanguageToEnglish != null)
                 {
                     //Try to output to the options the english category, if no match keep in original language (Which should then have 0% chance of collision)
-                    if(!currLanguageToEnglish.TryGetValue(categoryString, out options.Category))
+                    if (!currLanguageToEnglish.TryGetValue(categoryString, out options.Category))
                     {
                         options.Category = categoryString;
                     }

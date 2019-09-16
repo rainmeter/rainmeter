@@ -1,14 +1,16 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+:: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
+:: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
+set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=4
 set VERSION_MINOR=3
-set VERSION_SUBMINOR=0
+set VERSION_SUBMINOR=1
 set VERSION_REVISION=0
 set ISBETA=true
 set VERSION_HASH=0

@@ -79,13 +79,13 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			char* buffer = new char[bufLen];
 			WideCharToMultiByte(CP_ACP, 0, value, strLen, buffer, bufLen, nullptr, nullptr);
 
-			measure->destAddr = inet_addr(buffer);
+			measure->destAddr = inet_addr(buffer);  // C4996
 			if (measure->destAddr == INADDR_NONE)
 			{
 				WSADATA wsaData;
 				if (WSAStartup(0x0101, &wsaData) == 0)
 				{
-					LPHOSTENT pHost = gethostbyname(buffer);
+					LPHOSTENT pHost = gethostbyname(buffer);  // C4996
 					if (pHost)
 					{
 						measure->destAddr = *(DWORD*)pHost->h_addr;

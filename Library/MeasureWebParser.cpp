@@ -332,20 +332,10 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	std::wstring url = parser.ReadString(section, L"Url", L"", false);
 
-	std::wstring::size_type start = 0;
-	while ((start = url.find(L"[&", start)) != std::wstring::npos)
+	// Parse new-style variables without parsing old-style section variables
+	if (parser.ContainsNewStyleVariable(url))
 	{
-		std::wstring::size_type si = start + 1;
-		std::wstring::size_type end = url.find(L']', si);
-		if (end == std::wstring::npos) break;
-
-		std::wstring var = L"[";
-		var.append(url, si + 1, end - si);
-
-		parser.ReplaceVariables(var);
-		parser.ReplaceMeasures(var);
-		url.replace(start, end - start + 1, var);
-		start += var.length();
+		parser.ParseVariables(url, ConfigParser::VariableType::Section);
 	}
 
 	m_Url = url;

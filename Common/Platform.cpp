@@ -18,7 +18,8 @@ LPCWSTR GetPlatformName()
 
 		// Note: Place newer versions at the top.
 		const WCHAR* version =
-			IsWindowsVersionOrGreater(10, 0, 0) ? (isServer ? L"2016" : L"10") :
+			IsWindowsVersionOrGreater(10, 0, 17623) && isServer ? L"2019" :
+			IsWindows10OrGreater() ? (isServer ? L"2016" : L"10") :
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
 			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
@@ -53,9 +54,11 @@ std::wstring GetPlatformFriendlyName()
 			// For Windows 10 (and above?), use the "ReleaseId" as part of the version number.
 			// (ie. 1507, 1511, 1607, 1703, 1709, 1803 ...)
 			size = _countof(buffer);
-			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+			DWORD major = 0;
+
+			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS)
 			{
-				if ((DWORD)buffer >= 10)
+				if (major >= 10)
 				{
 					size = _countof(buffer);
 					if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
