@@ -474,6 +474,17 @@ void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 			LogErrorF(this, L"Invalid container: %s", container.c_str());
 		}
 	}
+
+	// The first contained meter in a container is required to be relative to
+	// the top/left of the container meter
+	if (m_ContainerMeter)
+	{
+		const auto& items = m_ContainerMeter->GetContainerItems();
+		if (items.size() > 0 && items[0] == this)
+		{
+			m_RelativeX = m_RelativeY = POSITION_RELATIVE_TL;
+		}
+	}
 }
 
 /*
