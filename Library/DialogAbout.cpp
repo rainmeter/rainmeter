@@ -1716,9 +1716,9 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_VersionLabel);
 	SetWindowText(item, tmpSz);
 
-	WCHAR lang[MAX_PATH];
+	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	LCID lcid = GetRainmeter().GetResourceLCID();
-	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, LOCALE_NAME_MAX_LENGTH);
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
 	item = GetControl(Id_LanguageLabel);
 	SetWindowText(item, tmpSz);
@@ -1737,10 +1737,10 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_BuildHashLabel);
 	SetWindowText(item, tmpSz);
 
-	lcid = GetUserDefaultLCID();
-	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%lu)",
-		Platform::GetPlatformFriendlyName().c_str(), lang, lcid);
+		Platform::GetPlatformFriendlyName().c_str(),
+		Platform::GetPlatformUserLanguage().c_str(),
+		GetUserDefaultLCID());
 	item = GetControl(Id_WinVerLabel);
 	SetWindowText(item, tmpSz);
 
