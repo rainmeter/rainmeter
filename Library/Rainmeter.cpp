@@ -388,8 +388,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 #endif // BUILD_TIME
 
-	WCHAR lang[MAX_PATH];
-	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
+	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i%s (%s)", APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
@@ -400,7 +400,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	LogNoticeF(L"Commit Hash: %s", L"<Local build>");
 #endif // COMMIT_HASH
 
-	LogNoticeF(L"%s - %s (%lu)", Platform::GetPlatformFriendlyName().c_str(), lang, GetUserDefaultLCID());
+	LogNoticeF(L"%s - %s (%lu)",
+		Platform::GetPlatformFriendlyName().c_str(),
+		Platform::GetPlatformUserLanguage().c_str(),
+		GetUserDefaultLCID());
 
 	if (!encodingMsg.empty())
 	{
