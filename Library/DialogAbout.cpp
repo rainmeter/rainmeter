@@ -1718,7 +1718,7 @@ void DialogAbout::TabVersion::Initialize()
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	LCID lcid = GetRainmeter().GetResourceLCID();
-	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, LOCALE_NAME_MAX_LENGTH);
+	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
 	item = GetControl(Id_LanguageLabel);
 	SetWindowText(item, tmpSz);
