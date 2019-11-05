@@ -55,6 +55,7 @@ private:
 		};
 
 		TabLog();
+		~TabLog();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -68,10 +69,14 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
+		void DestroyImageList();
+
 		bool m_Error;
 		bool m_Warning;
 		bool m_Notice;
 		bool m_Debug;
+
+		HIMAGELIST m_ImageList;
 	};
 
 	// Skins tab

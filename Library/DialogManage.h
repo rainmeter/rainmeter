@@ -101,6 +101,7 @@ private:
 		void SetControls();
 		void DisableControls(bool clear = false);
 		void ReadSkin();
+		void DestroyImageList();
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
@@ -115,6 +116,8 @@ private:
 		Skin* m_SkinWindow;
 		bool m_HandleCommands;
 		bool m_IgnoreUpdate;
+
+		HIMAGELIST m_ImageListHandle;
 
 		static HBRUSH s_NewSkinBkBrush;
 		static COLORREF s_NewSkinBkColor;
