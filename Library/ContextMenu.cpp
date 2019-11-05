@@ -55,17 +55,55 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			MENU_ITEM(IDM_DELETELOGFILE, ID_STR_DELETELOGFILE),
 			MENU_ITEM(IDM_DEBUGLOG, ID_STR_DEBUGMODE)),
 		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_TOGGLE_GAMEMODE, ID_STR_GAMEMODE),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
+	};
+
+	static const MenuTemplate s_GameModeMenu[] =
+	{
+		MENU_ITEM(IDM_TOGGLE_GAMEMODE, ID_STR_GAMEMODE),
+		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
 
 	if (m_MenuActive || (skin && skin->IsClosing())) return;
 
+	Rainmeter& rainmeter = GetRainmeter();
+
 	// Show context menu, if no actions were executed
-	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	HMENU menu = rainmeter.IsInGameMode() ?
+		MenuTemplate::CreateMenu(s_GameModeMenu, _countof(s_GameModeMenu), GetString) :
+		MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (!menu) return;
 
 	m_MenuActive = true;
-	Rainmeter& rainmeter = GetRainmeter();
+
+	auto displayMenu = [&]() -> void
+	{
+		HWND hWnd = WindowFromPoint(pos);
+		if (hWnd != nullptr)
+		{
+			Skin* s = rainmeter.GetSkin(hWnd);
+			if (s)
+			{
+				// Cancel the mouse event beforehand
+				s->SetMouseLeaveEvent(true);
+			}
+		}
+
+		DisplayMenu(pos, menu, skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow());
+		DestroyMenu(menu);
+
+		m_MenuActive = false;
+	};
+
+	if (rainmeter.IsInGameMode())
+	{
+		CheckMenuItem(menu, IDM_TOGGLE_GAMEMODE, MF_BYCOMMAND | MF_CHECKED);
+		displayMenu();
+		return;
+	}
 
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
@@ -163,21 +201,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 	}
 
-	HWND hWnd = WindowFromPoint(pos);
-	if (hWnd != nullptr)
-	{
-		Skin* skin = rainmeter.GetSkin(hWnd);
-		if (skin)
-		{
-			// Cancel the mouse event beforehand
-			skin->SetMouseLeaveEvent(true);
-		}
-	}
-
-	DisplayMenu(pos, menu, skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow());
-	DestroyMenu(menu);
-
-	m_MenuActive = false;
+	displayMenu();
 }
 
 void ContextMenu::ShowSkinCustomMenu(POINT pos, Skin* skin)
