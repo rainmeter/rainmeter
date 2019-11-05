@@ -52,6 +52,7 @@ private:
 		};
 
 		TabNew();
+		~TabNew();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -77,6 +78,7 @@ private:
 			SortInfo(bool t, std::wstring n) : type(t), name(n) {}
 		};
 
+		void DestroyImageList();
 		void UpdateParentPathLabel();
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);
@@ -96,6 +98,8 @@ private:
 		bool m_InRenameMode;
 		HWND m_TreeEdit;
 		HWND m_ParentPathTT;
+
+		HIMAGELIST m_ImageList;
 
 		static std::vector<SortInfo> s_SortInfo;
 	};

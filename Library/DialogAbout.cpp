@@ -323,8 +323,14 @@ DialogAbout::TabLog::TabLog() : Tab(),
 	m_Error(true),
 	m_Warning(true),
 	m_Notice(true),
-	m_Debug(true)
+	m_Debug(true),
+	m_ImageList(nullptr)
 {
+}
+
+DialogAbout::TabLog::~TabLog()
+{
+	DestroyImageList();
 }
 
 void DialogAbout::TabLog::Create(HWND owner)
@@ -430,7 +436,19 @@ void DialogAbout::TabLog::Initialize()
 	item = GetControl(Id_DebugCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
+	DestroyImageList();
+	m_ImageList = hImageList;
+
 	m_Initialized = true;
+}
+
+void DialogAbout::TabLog::DestroyImageList()
+{
+	if (m_ImageList)
+	{
+		ImageList_Destroy(m_ImageList);
+		m_ImageList = nullptr;
+	}
 }
 
 /*

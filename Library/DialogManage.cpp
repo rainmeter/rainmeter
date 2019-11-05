@@ -385,7 +385,8 @@ COLORREF DialogManage::TabSkins::s_NewSkinBkColor = RGB(229, 241, 251); // defau
 DialogManage::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_HandleCommands(false),
-	m_IgnoreUpdate(false)
+	m_IgnoreUpdate(false),
+	m_ImageListHandle(nullptr)
 {
 }
 
@@ -396,6 +397,8 @@ DialogManage::TabSkins::~TabSkins()
 
 	item = GetControl(Id_SkinsTreeView);
 	RemoveWindowSubclass(item, &SkinsTreeViewSubclass, 1);
+
+	DestroyImageList();
 
 	if (s_NewSkinBkBrush)
 	{
@@ -621,8 +624,20 @@ void DialogManage::TabSkins::Initialize()
 	ComboBox_AddString(item, GetString(ID_STR_FADEIN));
 	ComboBox_AddString(item, GetString(ID_STR_FADEOUT));
 
+	DestroyImageList();
+	m_ImageListHandle = hImageList;
+
 	m_Initialized = true;
 	m_HandleCommands = true;
+}
+
+void DialogManage::TabSkins::DestroyImageList()
+{
+	if (m_ImageListHandle)
+	{
+		ImageList_Destroy(m_ImageListHandle);
+		m_ImageListHandle = nullptr;
+	}
 }
 
 void DialogManage::TabSkins::UpdateSelected(Skin* skin)

@@ -397,8 +397,14 @@ std::vector<DialogNewSkin::TabNew::SortInfo> DialogNewSkin::TabNew::s_SortInfo;
 DialogNewSkin::TabNew::TabNew() : Tab(),
 	m_IsRoot(true),
 	m_CanAddResourcesFolder(false),
-	m_InRenameMode(false)
+	m_InRenameMode(false),
+	m_ImageList(nullptr)
 {
+}
+
+DialogNewSkin::TabNew::~TabNew()
+{
+	DestroyImageList();
 }
 
 void DialogNewSkin::TabNew::Create(HWND owner)
@@ -472,7 +478,19 @@ void DialogNewSkin::TabNew::Initialize()
 	item = GetControl(Id_ItemsTreeView);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
 
+	DestroyImageList();
+	m_ImageList = hImageList;
+
 	m_Initialized = true;
+}
+
+void DialogNewSkin::TabNew::DestroyImageList()
+{
+	if (m_ImageList)
+	{
+		ImageList_Destroy(m_ImageList);
+		m_ImageList = nullptr;
+	}
 }
 
 INT_PTR DialogNewSkin::TabNew::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
