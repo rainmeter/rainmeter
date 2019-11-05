@@ -460,6 +460,48 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	TrayIcon* tray = GetRainmeter().GetTrayIcon();
 
+	// In "Game mode", only allow its menu (toggle game mode & exit),
+	//  and access to the context menu
+	if (GetRainmeter().IsInGameMode())
+	{
+		switch (uMsg)
+		{
+		case WM_COMMAND:
+			switch (wParam)
+			{
+			case IDM_TOGGLE_GAMEMODE:
+				GetRainmeter().ToggleGameMode();
+				break;
+
+			case IDM_QUIT:
+				PostQuitMessage(0);
+				break;
+			}
+			break;
+
+		case WM_TRAY_NOTIFYICON:
+			{
+				UINT uMouseMsg = (UINT)lParam;
+				switch (uMouseMsg)
+				{
+				case WM_RBUTTONDOWN:
+					tray->m_TrayContextMenuEnabled = true;
+					break;
+
+				case WM_RBUTTONUP:
+					if (tray->m_TrayContextMenuEnabled)
+					{
+						POINT pos = System::GetCursorPosition();
+						GetRainmeter().ShowContextMenu(pos, nullptr);
+					}
+					break;
+				}
+			}
+			break;
+		}
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
 	switch (uMsg)
 	{
 	case WM_COMMAND:
@@ -475,6 +517,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		case IDM_SHOW_HELP:
 			CommandHandler::RunFile(RAINMETER_HELP);
+			break;
+
+		case IDM_TOGGLE_GAMEMODE:
+			GetRainmeter().ToggleGameMode();
 			break;
 
 		case IDM_NEW_VERSION:

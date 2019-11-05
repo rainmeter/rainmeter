@@ -107,6 +107,7 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
+	m_GameMode(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -595,7 +596,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			if (cds)
+			if (cds && !GetRainmeter().IsInGameMode())  // Disallow any bangs while in "Game mode"
 			{
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
@@ -1024,6 +1025,26 @@ void Rainmeter::ToggleSkinWithID(UINT id)
 	{
 		ToggleSkin(indexes.folder, indexes.file);
 	}
+}
+
+void Rainmeter::ToggleGameMode()
+{
+	if (m_GameMode)
+	{
+		ActivateActiveSkins();
+	}
+	else
+	{
+		// Close dialogs if open
+		DialogManage::CloseDialog();
+		DialogAbout::CloseDialog();
+		DialogNewSkin::CloseDialog();
+
+		DeleteAllUnmanagedSkins();
+		DeleteAllSkins();
+		DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
+	}
+	m_GameMode = !m_GameMode;
 }
 
 void Rainmeter::SetSkinPath(const std::wstring& skinPath)
