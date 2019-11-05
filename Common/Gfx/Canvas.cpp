@@ -45,6 +45,13 @@ Canvas::~Canvas()
 	Finalize();
 }
 
+bool Canvas::LogComError(HRESULT hr)
+{
+	_com_error err(hr);
+	LogErrorF(L"Error 0x%08x: %s", hr, err.ErrorMessage());
+	return false;
+}
+
 bool Canvas::Initialize(bool hardwareAccelerated)
 {
 	++c_Instances;
@@ -181,15 +188,15 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
 	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
-	if (FAILED(hr)) return false ;
+	if (FAILED(hr)) return LogComError(hr);
 
 	// Ensure that DXGI does not queue more than one frame at a time.
 	hr = c_DxgiDevice->SetMaximumFrameLatency(1u);
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
 	hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	hr = dxgiFactory->CreateSwapChainForHwnd(
 		c_DxgiDevice.Get(),
@@ -198,10 +205,10 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 		nullptr,
 		nullptr,
 		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	hr = CreateRenderTarget();
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	return CreateTargetBitmap(0U, 0U);
 }
@@ -788,7 +795,7 @@ HRESULT Canvas::CreateRenderTarget()
 bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 {
 	HRESULT hr = m_SwapChain->GetBuffer(0u, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
@@ -798,7 +805,7 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 		m_BackBuffer.Get(),
 		&bProps,
 		m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr)) return false;
+	if (FAILED(hr)) return LogComError(hr);
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
 	return true;
