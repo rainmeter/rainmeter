@@ -121,6 +121,8 @@ private:
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
 
+	bool LogComError(HRESULT hr);
+
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height);
 
