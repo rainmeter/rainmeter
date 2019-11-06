@@ -9,8 +9,8 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=4
-set VERSION_MINOR=3
-set VERSION_SUBMINOR=1
+set VERSION_MINOR=4
+set VERSION_SUBMINOR=0
 set VERSION_REVISION=0
 set ISBETA=true
 set VERSION_HASH=0
