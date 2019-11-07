@@ -401,10 +401,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	LogNoticeF(L"Commit Hash: %s", L"<Local build>");
 #endif // COMMIT_HASH
 
-	LogNoticeF(L"%s - %s (%lu)",
+	LogNoticeF(L"%s - %s (%hu)",
 		Platform::GetPlatformFriendlyName().c_str(),
 		Platform::GetPlatformUserLanguage().c_str(),
-		GetUserDefaultLCID());
+		GetUserDefaultUILanguage());
 
 	if (!encodingMsg.empty())
 	{

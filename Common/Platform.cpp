@@ -100,13 +100,14 @@ std::wstring GetPlatformFriendlyName()
 
 std::wstring GetPlatformUserLanguage()
 {
-	std::wstring language;
+	LANGID id = GetUserDefaultUILanguage();
+	LCID lcid = MAKELCID(id, SORT_DEFAULT);
 	WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
-	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SENGLISHLANGUAGENAME, buffer, _countof(buffer)) == 0)
+	if (GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, buffer, _countof(buffer)) == 0)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%s", L"<error>");
 	}
-	language = buffer;
+	std::wstring language = buffer;
 	return language;
 }
 

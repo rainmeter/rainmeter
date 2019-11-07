@@ -1755,10 +1755,10 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_BuildHashLabel);
 	SetWindowText(item, tmpSz);
 
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%lu)",
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
 		Platform::GetPlatformFriendlyName().c_str(),
 		Platform::GetPlatformUserLanguage().c_str(),
-		GetUserDefaultLCID());
+		GetUserDefaultUILanguage());
 	item = GetControl(Id_WinVerLabel);
 	SetWindowText(item, tmpSz);
 
@@ -1810,9 +1810,9 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case Id_CopyButton:
 		{
-			WCHAR lang[MAX_PATH];
+			WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 			LCID lcid = GetRainmeter().GetResourceLCID();
-			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
+			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 
 			WCHAR tmpSz[MAX_PATH];
 			int len =_snwprintf_s(
@@ -1837,16 +1837,13 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			text += tmpSz;
 
-			lcid = GetUserDefaultLCID();
-			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, MAX_PATH);
-
 			_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"%s - %s (%lu)\n",
+				L"%s - %s (%hu)\n",
 				Platform::GetPlatformFriendlyName().c_str(),
-				lang,
-				lcid);
+				Platform::GetPlatformUserLanguage().c_str(),
+				GetUserDefaultUILanguage());
 
 			text += tmpSz;
 			text += L"Path: ";
