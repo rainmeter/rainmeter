@@ -1031,6 +1031,7 @@ void Rainmeter::ToggleGameMode()
 {
 	if (m_GameMode)
 	{
+		ReloadSettings();
 		ActivateActiveSkins();
 	}
 	else
