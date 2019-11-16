@@ -103,7 +103,7 @@ public:
 	Skin(const Skin& other) = delete;
 	Skin& operator=(Skin other) = delete;
 
-	void Initialize();
+	void Initialize(bool hasSettings);
 
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
@@ -298,7 +298,7 @@ private:
 	void Update(bool refresh);
 	void UpdateWindow(int alpha);
 	void UpdateWindowTransparency(int alpha);
-	void ReadOptions();
+	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
 	bool ReadSkin();
 	void ShowWindowIfAppropriate();
@@ -334,6 +334,9 @@ private:
 
 	void Dispose(bool refresh);
 	void CreateDoubleBuffer(int cx, int cy);
+
+	bool m_IsFirstRun;  // Skin has no settings in Rainmeter.ini
+
 
 	Gfx::Canvas m_Canvas;
 
