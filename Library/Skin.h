@@ -337,7 +337,6 @@ private:
 
 	bool m_IsFirstRun;  // Skin has no settings in Rainmeter.ini
 
-
 	Gfx::Canvas m_Canvas;
 
 	ConfigParser m_Parser;
