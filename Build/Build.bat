@@ -1,10 +1,13 @@
 @echo off
 
-set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+:: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
+:: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
+set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
+set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 set VERSION_MAJOR=2
-set VERSION_MINOR=3
+set VERSION_MINOR=4
 set VERSION_SUBMINOR=0
 
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
