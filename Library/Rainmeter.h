@@ -200,7 +200,7 @@ private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void ActivateActiveSkins();
-	void CreateSkin(const std::wstring& folderPath, const std::wstring& file);
+	void CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings);
 	void DeleteAllSkins();
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);

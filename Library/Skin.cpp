@@ -55,6 +55,7 @@ int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
 
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
+	m_IsFirstRun(false),
 	m_Canvas(),
 	m_Background(),
 	m_BackgroundSize(),
@@ -67,6 +68,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_DragMargins(),
 	m_WindowX(1, L'0'),
 	m_WindowY(1, L'0'),
+	m_AnchorX(1, L'0'),
+	m_AnchorY(1, L'0'),
 	m_WindowXScreen(1),
 	m_WindowYScreen(1),
 	m_WindowXScreenDefined(false),
@@ -239,8 +242,10 @@ void Skin::Dispose(bool refresh)
 ** Initializes the window, creates the class and the window.
 **
 */
-void Skin::Initialize()
+void Skin::Initialize(bool hasSettings)
 {
+	m_IsFirstRun = !hasSettings;
+
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
 		METERWINDOW_CLASS_NAME,
@@ -2054,13 +2059,35 @@ void Skin::ScreenToWindow()
 ** Reads the skin options from Rainmeter.ini
 **
 */
-void Skin::ReadOptions()
+void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 {
+	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
+	const WCHAR* config = m_FolderPath.c_str();
+
 	WCHAR buffer[32];
 
-	const WCHAR* section = m_FolderPath.c_str();
-	ConfigParser parser;
-	parser.Initialize(GetRainmeter().GetIniFile(), nullptr, section);
+	auto makeKey = [&](LPCWSTR key) -> LPCWSTR
+	{
+		_snwprintf(buffer, _TRUNCATE, L"%s%s", isDefault ? L"Default" : L"", key);
+		return buffer;
+	};
+
+	auto writeDefaultString = [&](LPCWSTR key, LPCWSTR value)
+	{
+		if (parser.GetLastValueDefined())
+		{
+			WritePrivateProfileString(config, key, value, iniFile);
+		}
+	};
+
+	auto writeDefaultInt = [&](LPCWSTR key, int value)
+	{
+		if (parser.GetLastValueDefined())
+		{
+			_itow_s(value, buffer, 10);
+			WritePrivateProfileString(config, key, buffer, iniFile);
+		}
+	};
 
 	INT writeFlags = 0;
 	auto addWriteFlag = [&](INT flag)
@@ -2073,65 +2100,80 @@ void Skin::ReadOptions()
 
 	// Check if the window position should be read as a formula
 	double value;
-	m_WindowX = parser.ReadString(section, L"WindowX", L"0");
-	addWriteFlag(OPTION_POSITION);
+	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
+	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
 	if (parser.ParseFormula(m_WindowX, &value))
 	{
 		_itow_s((int)value, buffer, 10);
 		m_WindowX = buffer;
 	}
-	m_WindowY = parser.ReadString(section, L"WindowY", L"0");
-	addWriteFlag(OPTION_POSITION);
+
+	m_WindowY = parser.ReadString(section, makeKey(L"WindowY"), L"0");
+	isDefault ? writeDefaultString(L"WindowY", m_WindowY.c_str()) : addWriteFlag(OPTION_POSITION);
 	if (parser.ParseFormula(m_WindowY, &value))
 	{
 		_itow_s((int)value, buffer, 10);
 		m_WindowY = buffer;
 	}
 
-	m_AnchorX = parser.ReadString(section, L"AnchorX", L"0");
-	m_AnchorY = parser.ReadString(section, L"AnchorY", L"0");
+	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
 
-	int zPos = parser.ReadInt(section, L"AlwaysOnTop", ZPOSITION_NORMAL);
-	addWriteFlag(OPTION_ALWAYSONTOP);
+	m_AnchorY = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorY", m_AnchorY.c_str());
+
+	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
+	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
-	int hideMode = parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
+	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);
+	if (isDefault) writeDefaultInt(L"HideOnMouseOver", hideMode);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
-	m_WindowDraggable = parser.ReadBool(section, L"Draggable", true);
-	addWriteFlag(OPTION_DRAGGABLE);
+	m_WindowDraggable = parser.ReadBool(section, makeKey(L"Draggable"), true);
+	isDefault ? writeDefaultString(L"Draggable", m_WindowDraggable ? L"1" : L"0") : addWriteFlag(OPTION_DRAGGABLE);
 
-	m_SnapEdges = parser.ReadBool(section, L"SnapEdges", true);
-	addWriteFlag(OPTION_SNAPEDGES);
+	m_SnapEdges = parser.ReadBool(section, makeKey(L"SnapEdges"), true);
+	isDefault ? writeDefaultString(L"SnapEdges", m_SnapEdges ? L"1" : L"0") : addWriteFlag(OPTION_SNAPEDGES);
 
-	m_ClickThrough = parser.ReadBool(section, L"ClickThrough", false);
-	addWriteFlag(OPTION_CLICKTHROUGH);
+	m_ClickThrough = parser.ReadBool(section, makeKey(L"ClickThrough"), false);
+	isDefault ? writeDefaultString(L"ClickThrough", m_ClickThrough ? L"1" : L"0") : addWriteFlag(OPTION_CLICKTHROUGH);
 
-	m_KeepOnScreen = parser.ReadBool(section, L"KeepOnScreen", true);
-	addWriteFlag(OPTION_KEEPONSCREEN);
+	m_KeepOnScreen = parser.ReadBool(section, makeKey(L"KeepOnScreen"), true);
+	isDefault ? writeDefaultString(L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0") : addWriteFlag(OPTION_KEEPONSCREEN);
 
-	m_SavePosition = parser.ReadBool(section, L"SavePosition", true);
-	m_WindowStartHidden = parser.ReadBool(section, L"StartHidden", false);
-	m_AutoSelectScreen = parser.ReadBool(section, L"AutoSelectScreen", false);
+	m_SavePosition = parser.ReadBool(section, makeKey(L"SavePosition"), true);
+	if (isDefault) writeDefaultString(L"SavePosition", m_SavePosition ? L"1" : L"0");
 
-	m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
+	m_WindowStartHidden = parser.ReadBool(section, makeKey(L"StartHidden"), false);
+	if (isDefault) writeDefaultString(L"StartHidden", m_WindowStartHidden ? L"1" : L"0");
+
+	m_AutoSelectScreen = parser.ReadBool(section, makeKey(L"AutoSelectScreen"), false);
+	if (isDefault) writeDefaultString(L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0");
+
+	m_AlphaValue = parser.ReadInt(section, makeKey(L"AlphaValue"), 255);
 	m_AlphaValue = max(m_AlphaValue, 0);
 	m_AlphaValue = min(m_AlphaValue, 255);
+	if (isDefault) writeDefaultInt(L"AlphaValue", m_AlphaValue);
 
-	m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
+	m_FadeDuration = parser.ReadInt(section, makeKey(L"FadeDuration"), 250);
+	if (isDefault) writeDefaultInt(L"FadeDuration", m_FadeDuration);
 
-	m_SkinGroup = parser.ReadString(section, L"Group", L"");
-
-	const std::wstring dragGroup = parser.ReadString(section, L"DragGroup", L"");
-	m_DragGroup.InitializeGroup(dragGroup);
-
-	if (writeFlags != 0)
+	if (!isDefault)
 	{
-		WriteOptions(writeFlags);
-	}
+		m_SkinGroup = parser.ReadString(section, L"Group", L"");  // |DefaultGroup| not supported
 
-	// Set WindowXScreen/WindowYScreen temporarily
-	WindowToScreen();
+		const std::wstring dragGroup = parser.ReadString(section, L"DragGroup", L"");  // |DefaultDragGroup| not supported
+		m_DragGroup.InitializeGroup(dragGroup);
+
+		if (writeFlags != 0)
+		{
+			WriteOptions(writeFlags);
+		}
+
+		// Set WindowXScreen/WindowYScreen temporarily
+		WindowToScreen();
+	}
 }
 
 /*
@@ -2243,10 +2285,22 @@ bool Skin::ReadSkin()
 	std::wstring resourcePath = GetResourcesPath();
 	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
-	// Read options from Rainmeter.ini.
-	ReadOptions();
-
 	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
+
+	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
+	if (m_IsFirstRun)
+	{
+		ReadOptions(m_Parser, L"Rainmeter", true);
+		m_IsFirstRun = false;
+	}
+
+	// Read options from Rainmeter.ini
+	{
+		ConfigParser parser;
+		parser.Initialize(GetRainmeter().GetIniFile(), nullptr, m_FolderPath.c_str());
+
+		ReadOptions(parser, m_FolderPath.c_str(), false);
+	}
 
 	m_Canvas.SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 

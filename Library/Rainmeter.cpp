@@ -948,6 +948,10 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			return;
 		}
 
+		// Verify whether the skin config has an entry in the settings file
+		WCHAR buffer[SHRT_MAX];
+		bool hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
+
 		if (skinFolder.active != fileIndex + 1)
 		{
 			// Write only if changed.
@@ -964,7 +968,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			m_TrayIcon->SetTrayIcon(m_TrayIcon->IsTrayIconEnabled());
 		}
 
-		CreateSkin(folderPath, file);
+		CreateSkin(folderPath, file, hasSettings);
 	}
 }
 
@@ -1081,14 +1085,14 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file)
+void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings)
 {
 	Skin* skin = new Skin(folderPath, file);
 
 	// Note: May modify existing key
 	m_Skins[folderPath] = skin;
 
-	skin->Initialize();
+	skin->Initialize(hasSettings);
 
 	DialogAbout::UpdateSkins();
 	DialogManage::UpdateSkins(skin);
