@@ -996,9 +996,27 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 			LogErrorF(L"!EditSkin: Invalid parameters");
 		}
 	}
+	else if (argSize == 1)
+	{
+		// Could probably make a GetRainmeter().PassBangToSkin so we don't have to repeat this here and in the DoBang above
+		// But I'm not comfortable making a change that large
+		std::wstring& folderPath = args[0];
+		if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
+		{
+			Skin* Newskin = GetRainmeter().GetSkin(folderPath);
+			if (Newskin)
+			{
+				Newskin->EditFile();
+			}
+			else
+			{
+				LogErrorF(Newskin, L"!!EditSkin: Skin \"%s\" not found", folderPath.c_str());
+			}
+		}
+	}
 	else if (argSize == 0 && skin)
 	{
-		GetRainmeter().EditSkinFile(skin->GetFolderPath(), skin->GetFileName());
+		skin->EditFile();
 	}
 	else
 	{
