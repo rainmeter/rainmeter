@@ -107,7 +107,6 @@ public:
 
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
-	void EditFile();
 
 	void HideMeter(const std::wstring& name, bool group = false);
 	void ShowMeter(const std::wstring& name, bool group = false);

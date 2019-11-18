@@ -5372,8 +5372,3 @@ Meter* Skin::GetMeter(const std::wstring& meterName)
 	}
 	return nullptr;
 }
-
-void Skin::EditFile()
-{
-	GetRainmeter().EditSkinFile(GetFolderPath(), GetFileName());
-}

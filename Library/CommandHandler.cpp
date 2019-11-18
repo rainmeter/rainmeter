@@ -998,25 +998,20 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 	else if (argSize == 1)
 	{
-		// Could probably make a GetRainmeter().PassBangToSkin so we don't have to repeat this here and in the DoBang above
-		// But I'm not comfortable making a change that large
-		std::wstring& folderPath = args[0];
-		if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
+		std::wstring& config = args[0];
+		Skin* other = GetRainmeter().GetSkin(config);
+		if (other)
 		{
-			Skin* Newskin = GetRainmeter().GetSkin(folderPath);
-			if (Newskin)
-			{
-				Newskin->EditFile();
-			}
-			else
-			{
-				LogErrorF(Newskin, L"!!EditSkin: Skin \"%s\" not found", folderPath.c_str());
-			}
+			GetRainmeter().EditSkinFile(other->GetFolderPath(), other->GetFileName());
+		}
+		else
+		{
+			LogErrorF(other, L"!EditSkin: Config \"%s\" not running", config.c_str());
 		}
 	}
 	else if (argSize == 0 && skin)
 	{
-		skin->EditFile();
+		GetRainmeter().EditSkinFile(skin->GetFolderPath(), skin->GetFileName());
 	}
 	else
 	{
