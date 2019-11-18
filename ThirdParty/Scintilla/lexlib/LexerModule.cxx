@@ -5,12 +5,8 @@
 // Copyright 1998-2010 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cassert>
 
 #include <string>
 
@@ -26,41 +22,48 @@
 #include "LexerBase.h"
 #include "LexerSimple.h"
 
-#ifdef SCI_NAMESPACE
 using namespace Scintilla;
-#endif
 
 LexerModule::LexerModule(int language_,
 	LexerFunction fnLexer_,
 	const char *languageName_,
 	LexerFunction fnFolder_,
-        const char *const wordListDescriptions_[],
-	int styleBits_) :
+	const char *const wordListDescriptions_[],
+	const LexicalClass *lexClasses_,
+	size_t nClasses_) :
 	language(language_),
 	fnLexer(fnLexer_),
 	fnFolder(fnFolder_),
-	fnFactory(0),
+	fnFactory(nullptr),
 	wordListDescriptions(wordListDescriptions_),
-	styleBits(styleBits_),
+	lexClasses(lexClasses_),
+	nClasses(nClasses_),
 	languageName(languageName_) {
 }
 
 LexerModule::LexerModule(int language_,
 	LexerFactoryFunction fnFactory_,
 	const char *languageName_,
-	const char * const wordListDescriptions_[],
-	int styleBits_) :
+	const char * const wordListDescriptions_[]) :
 	language(language_),
-	fnLexer(0),
-	fnFolder(0),
+	fnLexer(nullptr),
+	fnFolder(nullptr),
 	fnFactory(fnFactory_),
 	wordListDescriptions(wordListDescriptions_),
-	styleBits(styleBits_),
+	lexClasses(nullptr),
+	nClasses(0),
 	languageName(languageName_) {
 }
 
+LexerModule::~LexerModule() {
+}
+
+int LexerModule::GetLanguage() const { 
+	return language;
+}
+
 int LexerModule::GetNumWordLists() const {
-	if (wordListDescriptions == NULL) {
+	if (!wordListDescriptions) {
 		return -1;
 	} else {
 		int numWordLists = 0;
@@ -74,41 +77,43 @@ int LexerModule::GetNumWordLists() const {
 }
 
 const char *LexerModule::GetWordListDescription(int index) const {
-	static const char *emptyStr = "";
-
 	assert(index < GetNumWordLists());
-	if (index >= GetNumWordLists()) {
-		return emptyStr;
+	if (!wordListDescriptions || (index >= GetNumWordLists())) {
+		return "";
 	} else {
 		return wordListDescriptions[index];
- 	}
+	}
 }
 
-int LexerModule::GetStyleBitsNeeded() const {
-	return styleBits;
+const LexicalClass *LexerModule::LexClasses() const {
+	return lexClasses;
 }
 
-ILexer *LexerModule::Create() const {
+size_t LexerModule::NamedStyles() const {
+	return nClasses;
+}
+
+ILexer4 *LexerModule::Create() const {
 	if (fnFactory)
 		return fnFactory();
 	else
 		return new LexerSimple(this);
 }
 
-void LexerModule::Lex(unsigned int startPos, int lengthDoc, int initStyle,
+void LexerModule::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle,
 	  WordList *keywordlists[], Accessor &styler) const {
 	if (fnLexer)
 		fnLexer(startPos, lengthDoc, initStyle, keywordlists, styler);
 }
 
-void LexerModule::Fold(unsigned int startPos, int lengthDoc, int initStyle,
+void LexerModule::Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle,
 	  WordList *keywordlists[], Accessor &styler) const {
 	if (fnFolder) {
-		int lineCurrent = styler.GetLine(startPos);
+		Sci_Position lineCurrent = styler.GetLine(startPos);
 		// Move back one line in case deletion wrecked current line fold state
 		if (lineCurrent > 0) {
 			lineCurrent--;
-			int newStartPos = styler.LineStart(lineCurrent);
+			const Sci_Position newStartPos = styler.LineStart(lineCurrent);
 			lengthDoc += startPos - newStartPos;
 			startPos = newStartPos;
 			initStyle = 0;

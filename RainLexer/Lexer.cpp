@@ -18,9 +18,10 @@
 #include "StdAfx.h"
 #include "Lexer.h"
 
+static const char styleSubable[] = { 0 };
 namespace RainLexer {
 
-ILexer* RainLexer::LexerFactory()
+ILexer4* RainLexer::LexerFactory()
 {
 	return new RainLexer();
 }
@@ -34,7 +35,7 @@ void SCI_METHOD RainLexer::Release() {
 }
 
 int SCI_METHOD RainLexer::Version() const {
-	return lvOriginal;
+	return dvRelease4;
 }
 
 const char* SCI_METHOD RainLexer::PropertyNames() {
@@ -49,7 +50,7 @@ const char* SCI_METHOD RainLexer::DescribeProperty(const char* name) {
 	return "";
 }
 
-int SCI_METHOD RainLexer::PropertySet(const char* key, const char* val) {
+Sci_Position SCI_METHOD RainLexer::PropertySet(const char* key, const char* val) {
 	return -1;
 }
 
@@ -57,7 +58,7 @@ const char* SCI_METHOD RainLexer::DescribeWordListSets() {
 	return "";
 }
 
-int SCI_METHOD RainLexer::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char *wl) {
 	if (n < _countof(m_WordLists)) {
 		WordList wlNew;
 		wlNew.Set(wl);
@@ -69,7 +70,7 @@ int SCI_METHOD RainLexer::WordListSet(int n, const char *wl) {
 	return -1;
 }
 
-void SCI_METHOD RainLexer::Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess)
+void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess)
 {
 	Accessor styler(pAccess, nullptr);
 
@@ -89,7 +90,7 @@ void SCI_METHOD RainLexer::Lex(unsigned int startPos, int length, int initStyle,
 	char* name = nullptr;
 	int count = 0;
 	int digits = 0;
-	for (int i = startPos; i < length; ++i)
+	for (auto i = startPos; i < (Sci_PositionU)length; ++i)
 	{
 		// Make ch 0 if at EOF.
 		char ch = (i == length - 1) ? '\0' : styler[i];
@@ -416,14 +417,14 @@ void SCI_METHOD RainLexer::Lex(unsigned int startPos, int length, int initStyle,
 	styler.Flush();
 }
 
-void SCI_METHOD RainLexer::Fold(unsigned int startPos, int length, int initStyle, IDocument* pAccess)
+void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess)
 {
 	Accessor styler(pAccess, nullptr);
 
 	length += startPos;
 	int line = styler.GetLine(startPos);
 
-	for (unsigned int i = startPos, isize = (unsigned int)length; i < isize; ++i)
+	for (auto i = startPos, isize = (Sci_PositionU)length; i < isize; ++i)
 	{
 		if ((styler[i] == '\n') || (i == length - 1))
 		{
@@ -445,6 +446,60 @@ void SCI_METHOD RainLexer::Fold(unsigned int startPos, int length, int initStyle
 
 void* SCI_METHOD RainLexer::PrivateCall(int operation, void* pointer) {
 	return nullptr;
+}
+
+int SCI_METHOD RainLexer::LineEndTypesSupported() {
+    return SC_LINE_END_TYPE_DEFAULT;
+}
+
+int SCI_METHOD RainLexer::AllocateSubStyles(int, int) {
+    return -1;
+}
+
+int SCI_METHOD RainLexer::SubStylesStart(int) {
+    return -1;
+}
+
+int SCI_METHOD RainLexer::SubStylesLength(int) {
+    return 0;
+}
+
+int SCI_METHOD RainLexer::StyleFromSubStyle(int subStyle) {
+    return subStyle;
+}
+
+int SCI_METHOD RainLexer::PrimaryStyleFromStyle(int style) {
+    return style;
+}
+
+void SCI_METHOD RainLexer::FreeSubStyles() {
+}
+
+void SCI_METHOD RainLexer::SetIdentifiers(int, const char*) {
+}
+
+int SCI_METHOD RainLexer::DistanceToSecondaryStyles() {
+    return 0;
+}
+
+const char* SCI_METHOD RainLexer::GetSubStyleBases() {
+    return styleSubable;
+}
+
+int SCI_METHOD RainLexer::NamedStyles() {
+    return static_cast<int>(nClasses);
+}
+
+const char* SCI_METHOD RainLexer::NameOfStyle(int style) {
+    return (style < NamedStyles()) ? lexClasses[style].name : "";
+}
+
+const char* SCI_METHOD RainLexer::TagsOfStyle(int style) {
+    return (style < NamedStyles()) ? lexClasses[style].tags : "";
+}
+
+const char* SCI_METHOD RainLexer::DescriptionOfStyle(int style) {
+    return (style < NamedStyles()) ? lexClasses[style].description : "";
 }
 
 //

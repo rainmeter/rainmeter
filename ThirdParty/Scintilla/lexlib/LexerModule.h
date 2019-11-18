@@ -8,21 +8,21 @@
 #ifndef LEXERMODULE_H
 #define LEXERMODULE_H
 
-#ifdef SCI_NAMESPACE
 namespace Scintilla {
-#endif
 
 class Accessor;
 class WordList;
+struct LexicalClass;
 
-typedef void (*LexerFunction)(unsigned int startPos, int lengthDoc, int initStyle,
+typedef void (*LexerFunction)(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle,
                   WordList *keywordlists[], Accessor &styler);
-typedef ILexer *(*LexerFactoryFunction)();
+typedef ILexer4 *(*LexerFactoryFunction)();
 
 /**
  * A LexerModule is responsible for lexing and folding a particular language.
- * The class maintains a list of LexerModules which can be searched to find a
+ * The Catalogue class maintains a list of LexerModules which can be searched to find a
  * module appropriate to a particular language.
+ * The ExternalLexerModule subclass holds lexers loaded from DLLs or shared libraries.
  */
 class LexerModule {
 protected:
@@ -31,36 +31,38 @@ protected:
 	LexerFunction fnFolder;
 	LexerFactoryFunction fnFactory;
 	const char * const * wordListDescriptions;
-	int styleBits;
+	const LexicalClass *lexClasses;
+	size_t nClasses;
 
 public:
 	const char *languageName;
-	LexerModule(int language_,
+	LexerModule(
+		int language_,
 		LexerFunction fnLexer_,
-		const char *languageName_=0,
-		LexerFunction fnFolder_=0,
-		const char * const wordListDescriptions_[] = NULL,
-		int styleBits_=5);
-	LexerModule(int language_,
+		const char *languageName_=nullptr,
+		LexerFunction fnFolder_= nullptr,
+		const char * const wordListDescriptions_[]=nullptr,
+		const LexicalClass *lexClasses_=nullptr,
+		size_t nClasses_=0);
+	LexerModule(
+		int language_,
 		LexerFactoryFunction fnFactory_,
 		const char *languageName_,
-		const char * const wordListDescriptions_[] = NULL,
-		int styleBits_=8);
-	virtual ~LexerModule() {
-	}
-	int GetLanguage() const { return language; }
+		const char * const wordListDescriptions_[]=nullptr);
+	virtual ~LexerModule();
+	int GetLanguage() const;
 
 	// -1 is returned if no WordList information is available
 	int GetNumWordLists() const;
 	const char *GetWordListDescription(int index) const;
+	const LexicalClass *LexClasses() const;
+	size_t NamedStyles() const;
 
-	int GetStyleBitsNeeded() const;
+	ILexer4 *Create() const;
 
-	ILexer *Create() const;
-
-	virtual void Lex(unsigned int startPos, int length, int initStyle,
+	virtual void Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle,
                   WordList *keywordlists[], Accessor &styler) const;
-	virtual void Fold(unsigned int startPos, int length, int initStyle,
+	virtual void Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle,
                   WordList *keywordlists[], Accessor &styler) const;
 
 	friend class Catalogue;
@@ -72,11 +74,14 @@ inline int Maximum(int a, int b) {
 
 // Shut up annoying Visual C++ warnings:
 #ifdef _MSC_VER
-#pragma warning(disable: 4244 4309 4514 4710)
+#pragma warning(disable: 4244 4456 4457)
 #endif
 
-#ifdef SCI_NAMESPACE
-}
+// Turn off shadow warnings for lexers as may be maintained by others
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wshadow"
 #endif
+
+}
 
 #endif

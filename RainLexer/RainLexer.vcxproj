@@ -18,57 +18,44 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C9A9618E-2871-4933-A1F6-F33E7678AF97}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RainLexer</RootNamespace>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-
   <PropertyGroup Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
-
   <PropertyGroup>
     <OutDir Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)x32-$(Configuration)\</OutDir>
     <OutDir Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</OutDir>
     <IntDir>$(OutDir)Obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-
   <PropertyGroup Label="UserMacros" />
-
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Thread-safe statics don't work on XP... -->
       <!-- See: https://connect.microsoft.com/VisualStudio/feedback/details/1789709/visual-c-2015-runtime-broken-on-windows-server-2003-c-11-magic-statics -->
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
-
       <ExceptionHandling>false</ExceptionHandling>
-
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
-
       <!-- Set WINVER=0x0601 and friends (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
       <!-- Set _HAS_EXCEPTIONS=0 to accompany the disabled exception handling above. -->
       <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -87,7 +74,6 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -101,7 +87,6 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
@@ -121,7 +106,6 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
     <ClCompile>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
@@ -130,7 +114,6 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
     <ResourceCompile>
       <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -139,31 +122,26 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemGroup>
     <ClCompile Include="..\ThirdParty\Scintilla\lexlib\Accessor.cxx" />
     <ClCompile Include="..\ThirdParty\Scintilla\lexlib\LexerBase.cxx" />
+    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\PropSetSimple.cxx" />
     <ClCompile Include="..\ThirdParty\Scintilla\lexlib\WordList.cxx" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Plugin.cpp" />
     <ClCompile Include="StdAfx.cpp" />
   </ItemGroup>
-
   <ItemGroup>
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="Exports.def" />
   </ItemGroup>
-
   <ItemGroup>
     <ResourceCompile Include="Plugin.rc" />
   </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

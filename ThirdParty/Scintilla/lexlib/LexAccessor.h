@@ -8,9 +8,9 @@
 #ifndef LEXACCESSOR_H
 #define LEXACCESSOR_H
 
-#ifdef SCI_NAMESPACE
 namespace Scintilla {
-#endif
+
+enum EncodingType { enc8bit, encUnicode, encDBCS };
 
 class LexAccessor {
 private:
@@ -22,19 +22,18 @@ private:
 	 * in case there is some backtracking. */
 	enum {bufferSize=4000, slopSize=bufferSize/8};
 	char buf[bufferSize+1];
-	int startPos;
-	int endPos;
+	Sci_Position startPos;
+	Sci_Position endPos;
 	int codePage;
-	int lenDoc;
-	int mask;
+	enum EncodingType encodingType;
+	Sci_Position lenDoc;
 	char styleBuf[bufferSize];
-	int validLen;
-	char chFlags;
-	char chWhile;
-	unsigned int startSeg;
-	int startPosStyling;
+	Sci_Position validLen;
+	Sci_PositionU startSeg;
+	Sci_Position startPosStyling;
+	int documentVersion;
 
-	void Fill(int position) {
+	void Fill(Sci_Position position) {
 		startPos = position - slopSize;
 		if (startPos + bufferSize > lenDoc)
 			startPos = lenDoc - bufferSize;
@@ -49,20 +48,40 @@ private:
 	}
 
 public:
-	LexAccessor(IDocument *pAccess_) :
+	explicit LexAccessor(IDocument *pAccess_) :
 		pAccess(pAccess_), startPos(extremePosition), endPos(0),
-		codePage(pAccess->CodePage()), lenDoc(pAccess->Length()),
-		mask(127), validLen(0), chFlags(0), chWhile(0),
-		startSeg(0), startPosStyling(0) {
+		codePage(pAccess->CodePage()),
+		encodingType(enc8bit),
+		lenDoc(pAccess->Length()),
+		validLen(0),
+		startSeg(0), startPosStyling(0),
+		documentVersion(pAccess->Version()) {
+		// Prevent warnings by static analyzers about uninitialized buf and styleBuf.
+		buf[0] = 0;
+		styleBuf[0] = 0;
+		switch (codePage) {
+		case 65001:
+			encodingType = encUnicode;
+			break;
+		case 932:
+		case 936:
+		case 949:
+		case 950:
+		case 1361:
+			encodingType = encDBCS;
+		}
 	}
-	char operator[](int position) {
+	char operator[](Sci_Position position) {
 		if (position < startPos || position >= endPos) {
 			Fill(position);
 		}
 		return buf[position - startPos];
 	}
+	IDocument *MultiByteAccess() const {
+		return pAccess;
+	}
 	/** Safe version of operator[], returning a defined value for invalid position. */
-	char SafeGetCharAt(int position, char chDefault=' ') {
+	char SafeGetCharAt(Sci_Position position, char chDefault=' ') {
 		if (position < startPos || position >= endPos) {
 			Fill(position);
 			if (position < startPos || position >= endPos) {
@@ -72,11 +91,13 @@ public:
 		}
 		return buf[position - startPos];
 	}
-	bool IsLeadByte(char ch) {
+	bool IsLeadByte(char ch) const {
 		return pAccess->IsDBCSLeadByte(ch);
 	}
-
-	bool Match(int pos, const char *s) {
+	EncodingType Encoding() const {
+		return encodingType;
+	}
+	bool Match(Sci_Position pos, const char *s) {
 		for (int i=0; *s; i++) {
 			if (*s != SafeGetCharAt(pos+i))
 				return false;
@@ -84,53 +105,49 @@ public:
 		}
 		return true;
 	}
-	char StyleAt(int position) {
-		return static_cast<char>(pAccess->StyleAt(position) & mask);
+	char StyleAt(Sci_Position position) const {
+		return pAccess->StyleAt(position);
 	}
-	int GetLine(int position) {
+	Sci_Position GetLine(Sci_Position position) const {
 		return pAccess->LineFromPosition(position);
 	}
-	int LineStart(int line) {
+	Sci_Position LineStart(Sci_Position line) const {
 		return pAccess->LineStart(line);
 	}
-	int LevelAt(int line) {
+	Sci_Position LineEnd(Sci_Position line) const {
+		return pAccess->LineEnd(line);
+	}
+	int LevelAt(Sci_Position line) const {
 		return pAccess->GetLevel(line);
 	}
-	int Length() const {
+	Sci_Position Length() const {
 		return lenDoc;
 	}
 	void Flush() {
-		startPos = extremePosition;
 		if (validLen > 0) {
 			pAccess->SetStyles(validLen, styleBuf);
 			startPosStyling += validLen;
 			validLen = 0;
 		}
 	}
-	int GetLineState(int line) {
+	int GetLineState(Sci_Position line) const {
 		return pAccess->GetLineState(line);
 	}
-	int SetLineState(int line, int state) {
+	int SetLineState(Sci_Position line, int state) {
 		return pAccess->SetLineState(line, state);
 	}
 	// Style setting
-	void StartAt(unsigned int start, char chMask=31) {
-		// Store the mask specified for use with StyleAt.
-		mask = chMask;
-		pAccess->StartStyling(start, chMask);
+	void StartAt(Sci_PositionU start) {
+		pAccess->StartStyling(start);
 		startPosStyling = start;
 	}
-	void SetFlags(char chFlags_, char chWhile_) {
-		chFlags = chFlags_;
-		chWhile = chWhile_;
-	}
-	unsigned int GetStartSegment() const {
+	Sci_PositionU GetStartSegment() const {
 		return startSeg;
 	}
-	void StartSegment(unsigned int pos) {
+	void StartSegment(Sci_PositionU pos) {
 		startSeg = pos;
 	}
-	void ColourTo(unsigned int pos, int chAttr) {
+	void ColourTo(Sci_PositionU pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
 			assert(pos >= startSeg);
@@ -140,36 +157,39 @@ public:
 
 			if (validLen + (pos - startSeg + 1) >= bufferSize)
 				Flush();
+			const char attr = static_cast<char>(chAttr);
 			if (validLen + (pos - startSeg + 1) >= bufferSize) {
 				// Too big for buffer so send directly
-				pAccess->SetStyleFor(pos - startSeg + 1, static_cast<char>(chAttr));
+				pAccess->SetStyleFor(pos - startSeg + 1, attr);
 			} else {
-				if (chAttr != chWhile)
-					chFlags = 0;
-				chAttr |= chFlags;
-				for (unsigned int i = startSeg; i <= pos; i++) {
+				for (Sci_PositionU i = startSeg; i <= pos; i++) {
 					assert((startPosStyling + validLen) < Length());
-					styleBuf[validLen++] = static_cast<char>(chAttr);
+					styleBuf[validLen++] = attr;
 				}
 			}
 		}
 		startSeg = pos+1;
 	}
-	void SetLevel(int line, int level) {
+	void SetLevel(Sci_Position line, int level) {
 		pAccess->SetLevel(line, level);
 	}
-	void IndicatorFill(int start, int end, int indicator, int value) {
+	void IndicatorFill(Sci_Position start, Sci_Position end, int indicator, int value) {
 		pAccess->DecorationSetCurrentIndicator(indicator);
 		pAccess->DecorationFillRange(start, value, end - start);
 	}
 
-	void ChangeLexerState(int start, int end) {
+	void ChangeLexerState(Sci_Position start, Sci_Position end) {
 		pAccess->ChangeLexerState(start, end);
 	}
 };
 
-#ifdef SCI_NAMESPACE
+struct LexicalClass {
+	int value;
+	const char *name;
+	const char *tags;
+	const char *description;
+};
+
 }
-#endif
 
 #endif
