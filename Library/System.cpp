@@ -1174,6 +1174,13 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 						{
 							wallStyle = L"10";
 						}
+						else if (IsWindows10OrGreater())
+						{
+							if (_wcsicmp(option, L"SPAN") == 0)
+							{
+								wallStyle = L"22";
+							}
+						}
 
 						if (wallStyle)
 						{
