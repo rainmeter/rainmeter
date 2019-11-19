@@ -1006,7 +1006,7 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 		}
 		else
 		{
-			LogErrorF(other, L"!EditSkin: Config \"%s\" not running", config.c_str());
+			LogErrorF(skin, L"!EditSkin: Config \"%s\" not running", config.c_str());
 		}
 	}
 	else if (argSize == 0 && skin)
