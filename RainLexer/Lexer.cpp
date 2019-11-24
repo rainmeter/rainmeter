@@ -93,11 +93,13 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 	int digits = 0;
 	for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
 	{
+		bool isEOF = (i == static_cast<Sci_PositionU>(length) - 1);
+
 		// Make ch 0 if at EOF.
-		char ch = (i == static_cast<Sci_PositionU>(length) - 1) ? '\0' : styler[i];
+		char ch = isEOF ? '\0' : styler[i];
 
 		// Amount of EOL chars is 2 (\r\n) with the Windows format and 1 (\n) with Unix format.
-		int chEOL = (styler[i] == '\n') ? ((styler[i - 1] == '\r') ? 2 : 1): 0;
+		int chEOL = (styler[i] == '\n' && styler[i - 1] == '\r') ? 2 : (isEOF ? 0 : 1);
 
 		switch(state)
 		{
@@ -247,7 +249,6 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				buffer[count++] = MakeLowerCase(styler[i++]);
 
 			case '\r':
-				++chEOL;
 			case '\n':
 				while (isspacechar(buffer[count - 1]))
 				{
