@@ -19,23 +19,27 @@
 #include "PluginInterface.h"
 #include "Version.h"
 
+NppData nppData;
+const TCHAR NPP_PLUGIN_NAME[] = TEXT("RainLexer");
+const int nbFunc = 3;
+
 namespace RainLexer {
 
 const int WM_QUERY_RAINMETER = WM_APP + 1000;
 const int RAINMETER_QUERY_ID_SKINS_PATH = 4101;
 
 HWND g_RainmeterWindow = nullptr;
-HWND g_NppWindow = nullptr;
+//HWND g_NppWindow = nullptr;
 WCHAR g_SkinsPath[MAX_PATH] = {0};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_COPYDATA)
 	{
-		COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
+		auto cds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
 		if (cds->dwData == RAINMETER_QUERY_ID_SKINS_PATH)
 		{
-			wcsncpy(g_SkinsPath, (const WCHAR*)cds->lpData, _countof(g_SkinsPath));
+			wcsncpy(g_SkinsPath, static_cast<const WCHAR*>(cds->lpData), _countof(g_SkinsPath));
 			g_SkinsPath[_countof(g_SkinsPath) - 1] = L'\0';
 		}
 
@@ -47,11 +51,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 bool GetRainmeter()
 {
-	if (!g_RainmeterWindow || !IsWindow(g_RainmeterWindow))
+	if (g_RainmeterWindow == nullptr || IsWindow(g_RainmeterWindow) == 0)
 	{
 		HWND trayWindow = FindWindow(L"RainmeterTrayClass", nullptr);
 		HWND meterWindow = FindWindow(L"RainmeterMeterWindow", nullptr);
-		if (trayWindow && meterWindow)
+		if (trayWindow != nullptr && meterWindow != nullptr)
 		{
 			// Create window to recieve WM_COPYDATA from Rainmeter
 			HWND wnd = CreateWindow(
@@ -65,14 +69,14 @@ bool GetRainmeter()
 				nullptr,
 				nullptr);
 
-			if (wnd)
+			if (wnd != nullptr)
 			{
-				SetWindowLongPtr(wnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+				SetWindowLongPtr(wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc));
 
-				SendMessage(trayWindow, WM_QUERY_RAINMETER, RAINMETER_QUERY_ID_SKINS_PATH, (LPARAM)wnd);
+				SendMessage(trayWindow, WM_QUERY_RAINMETER, RAINMETER_QUERY_ID_SKINS_PATH, reinterpret_cast<LPARAM>(wnd));
 				DestroyWindow(wnd);
 
-				if (*g_SkinsPath)
+				if (*g_SkinsPath != NULL)
 				{
 					g_RainmeterWindow = meterWindow;
 					return true;
@@ -90,12 +94,15 @@ bool GetRainmeter()
 
 void RefreshSkin()
 {
-	if (!GetRainmeter()) return;
+	if (!GetRainmeter())
+	{
+		return;
+	}
 
 	WCHAR currentPath[MAX_PATH];
-	BOOL ret = (BOOL)SendMessage(g_NppWindow, NPPM_GETFULLCURRENTPATH, MAX_PATH, (LPARAM)&currentPath);
+	auto ret = static_cast<BOOL>(SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, MAX_PATH, reinterpret_cast<LPARAM>(&currentPath)));
 
-	if (ret)
+	if (ret > 0)
 	{
 		const size_t skinsPathLen = wcslen(g_SkinsPath);
 		const size_t currentPathLen = wcslen(currentPath);
@@ -106,7 +113,7 @@ void RefreshSkin()
 		{
 			WCHAR* relativePath = &currentPath[skinsPathLen];
 			WCHAR* pos = wcsrchr(relativePath, L'\\');
-			if (pos)
+			if (pos != nullptr)
 			{
 				relativePath[pos - relativePath] = L'\0';
 				WCHAR buffer[512];
@@ -116,9 +123,9 @@ void RefreshSkin()
 
 				COPYDATASTRUCT cds;
 				cds.dwData = 1;
-				cds.cbData = (DWORD)(len + 1) * sizeof(WCHAR);
-				cds.lpData = (void*)buffer;
-				SendMessage(g_RainmeterWindow, WM_COPYDATA, 0, (LPARAM)&cds);
+				cds.cbData = static_cast<DWORD>(len + 1) * sizeof(WCHAR);
+				cds.lpData = static_cast<void*>(buffer);
+				SendMessage(g_RainmeterWindow, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));
 			}
 		}
 	}
@@ -126,19 +133,22 @@ void RefreshSkin()
 
 void RefreshAll()
 {
-	if (!GetRainmeter()) return;
+	if (!GetRainmeter())
+	{
+		return;
+	}
 
 	COPYDATASTRUCT cds;
 	cds.dwData = 1;
 	cds.cbData = sizeof(L"!Refresh *");
 	cds.lpData = L"!Refresh *";
-	SendMessage(g_RainmeterWindow, WM_COPYDATA, 0, (LPARAM)&cds);
+	SendMessage(g_RainmeterWindow, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));
 }
 
 void About()
 {
 	MessageBox(
-		g_NppWindow,
+		nppData._nppHandle,
 		L"By Birunthan Mohanathas.\n"
 		L"poiru.github.com/rainlexer",
 		RAINLEXER_TITLE,
@@ -149,17 +159,17 @@ void About()
 // Notepad++ exports
 //
 
-BOOL isUnicode()
+extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
-	return TRUE;
+	nppData = notpadPlusData;
 }
 
-const WCHAR* getName()
+extern "C" __declspec(dllexport) const TCHAR * getName()
 {
-	return L"&RainLexer";
+	return NPP_PLUGIN_NAME;
 }
 
-FuncItem* getFuncsArray(int* count)
+extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int* nbF)
 {
 	static FuncItem funcItems[] =
 	{
@@ -168,23 +178,40 @@ FuncItem* getFuncsArray(int* count)
 		{ L"&About...", About, 0, false, nullptr }
 	};
 
-	*count = _countof(funcItems);
-
+	*nbF = _countof(funcItems);
 	return funcItems;
 }
 
-void setInfo(NppData data)
+extern "C" __declspec(dllexport) void beNotified(SCNotification * notifyCode)
 {
-	g_NppWindow = data._nppHandle;
+	/*switch (notifyCode->nmhdr.code)
+	{
+	case NPPN_SHUTDOWN:
+	{
+		commandMenuCleanUp();
+	}
+	break;
+
+	default:
+		return;
+	}*/
 }
 
-void beNotified(SCNotification* scn)
-{
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT /*Message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
+{/*
+	if (Message == WM_MOVE)
+	{
+		::MessageBox(NULL, "move", "", MB_OK);
+	}
+*/
+	return TRUE;
 }
 
-LRESULT messageProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+#ifdef UNICODE
+extern "C" __declspec(dllexport) BOOL isUnicode()
 {
 	return TRUE;
 }
+#endif //UNICODE
 
 }	// namespace RainLexer

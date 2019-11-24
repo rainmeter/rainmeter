@@ -22,9 +22,11 @@ VS_VERSION_INFO VERSIONINFO
     {
         BLOCK "040904E4"
         {
-            VALUE "FileVersion", RAINLEXER_VERSION_STRING
-            VALUE "LegalCopyright", "© 2013 - Birunthan Mohanathas"
-            VALUE "ProductVersion", RAINLEXER_VERSION_STRING
+            VALUE "FileDescription",    "RainLexer - Notepad++ plugin"
+            VALUE "FileVersion",        RAINLEXER_VERSION_STRING
+            VALUE "LegalCopyright",     "© 2013 - Birunthan Mohanathas"
+            VALUE "OriginalFilename",   "RainLexer.dll"
+            VALUE "ProductVersion",     RAINLEXER_VERSION_STRING
         }
     }
     BLOCK "VarFileInfo"

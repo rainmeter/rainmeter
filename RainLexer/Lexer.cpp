@@ -19,11 +19,12 @@
 #include "Lexer.h"
 
 static const char styleSubable[] = { 0 };
+
 namespace RainLexer {
 
 ILexer4* RainLexer::LexerFactory()
 {
-	return new RainLexer();
+	return new RainLexer(nullptr, 0U);
 }
 
 //
@@ -35,22 +36,22 @@ void SCI_METHOD RainLexer::Release() {
 }
 
 int SCI_METHOD RainLexer::Version() const {
-	return dvRelease4;
+	return lvRelease4;
 }
 
 const char* SCI_METHOD RainLexer::PropertyNames() {
 	return "";
 }
 
-int SCI_METHOD RainLexer::PropertyType(const char* name) {
+int SCI_METHOD RainLexer::PropertyType(const char* /*name*/) {
 	return SC_TYPE_BOOLEAN;
 }
 
-const char* SCI_METHOD RainLexer::DescribeProperty(const char* name) {
+const char* SCI_METHOD RainLexer::DescribeProperty(const char* /*name*/) {
 	return "";
 }
 
-Sci_Position SCI_METHOD RainLexer::PropertySet(const char* key, const char* val) {
+Sci_Position SCI_METHOD RainLexer::PropertySet(const char* /*key*/, const char* /*val*/) {
 	return -1;
 }
 
@@ -70,7 +71,7 @@ Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char *wl) {
 	return -1;
 }
 
-void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess)
+void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
 	Accessor styler(pAccess, nullptr);
 
@@ -90,13 +91,13 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 	char* name = nullptr;
 	int count = 0;
 	int digits = 0;
-	for (auto i = startPos; i < (Sci_PositionU)length; ++i)
+	for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
 	{
 		// Make ch 0 if at EOF.
-		char ch = (i == length - 1) ? '\0' : styler[i];
+		char ch = (i == static_cast<Sci_PositionU>(length) - 1) ? '\0' : styler[i];
 
 		// Amount of EOL chars is 2 (\r\n) with the Windows format and 1 (\n) with Unix format.
-		int chEOL = (styler[i] == '\n' && styler[i - 1] == '\r') ? 2 : 1;
+		int chEOL = (styler[i] == '\n') ? ((styler[i - 1] == '\r') ? 2 : 1): 0;
 
 		switch(state)
 		{
@@ -121,11 +122,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				break;
 
 			default:
-				if (isalpha(ch) || ch == '@')
+				if (isalpha(ch) > 0|| ch == '@')
 				{
 					count = 0;
 					digits = 0;
-					buffer[count++] = tolower(ch);
+					buffer[count++] = MakeLowerCase(ch);
 					state = TS_KEYWORD;
 				}
 				else
@@ -171,7 +172,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
 			case '=':
 				// Ignore trailing whitespace
-				while (isspacechar(buffer[count - 1]))
+				while (count > 0 && isspacechar(buffer[count - 1]))
 				{
 					--count;
 				}
@@ -193,7 +194,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 						++i;
 					}
 				}
-				else if (digits)
+				else if (digits > 0)
 				{
 					// Try removing chars from the end to check for words like ScaleN
 					buffer[count - digits] = '\0';
@@ -222,7 +223,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					{
 						++digits;
 					}
-					buffer[count++] = tolower(ch);
+					buffer[count++] = MakeLowerCase(ch);
 				}
 				else
 				{
@@ -243,9 +244,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
 			case '\0':
 				// Read the last character if at EOF
-				buffer[count++] = tolower(styler[i++]);
+				buffer[count++] = MakeLowerCase(styler[i++]);
 
 			case '\r':
+				++chEOL;
 			case '\n':
 				while (isspacechar(buffer[count - 1]))
 				{
@@ -270,7 +272,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			default:
 				if (count < _countof(buffer))
 				{
-					buffer[count++] = tolower(ch);
+					buffer[count++] = MakeLowerCase(ch);
 				}
 				else
 				{
@@ -307,7 +309,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			switch (ch)
 			{
 			case '\0':
-				buffer[count++] = tolower(styler[i++]);
+				buffer[count++] = MakeLowerCase(styler[i++]);
 
 			case '\n':
 			case ' ':
@@ -337,7 +339,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			default:
 				if (count < _countof(buffer))
 				{
-					buffer[count++] = tolower(ch);
+					buffer[count++] = MakeLowerCase(ch);
 				}
 				else
 				{
@@ -392,7 +394,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			default:
 				if (count < _countof(buffer))
 				{
-					buffer[count++] = tolower(ch);
+					buffer[count++] = MakeLowerCase(ch);
 				}
 				else
 				{
@@ -417,14 +419,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 	styler.Flush();
 }
 
-void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess)
+void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
 	Accessor styler(pAccess, nullptr);
 
 	length += startPos;
 	int line = styler.GetLine(startPos);
 
-	for (auto i = startPos, isize = (Sci_PositionU)length; i < isize; ++i)
+	for (auto i = startPos, isize = static_cast<Sci_PositionU>(length); i < isize; ++i)
 	{
 		if ((styler[i] == '\n') || (i == length - 1))
 		{
@@ -444,7 +446,7 @@ void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int
 	styler.Flush();
 }
 
-void* SCI_METHOD RainLexer::PrivateCall(int operation, void* pointer) {
+void* SCI_METHOD RainLexer::PrivateCall(int /*operation*/, void* /*pointer*/) {
 	return nullptr;
 }
 
@@ -452,15 +454,15 @@ int SCI_METHOD RainLexer::LineEndTypesSupported() {
     return SC_LINE_END_TYPE_DEFAULT;
 }
 
-int SCI_METHOD RainLexer::AllocateSubStyles(int, int) {
+int SCI_METHOD RainLexer::AllocateSubStyles(int /*styleBase*/, int /*numberStyles*/) {
     return -1;
 }
 
-int SCI_METHOD RainLexer::SubStylesStart(int) {
+int SCI_METHOD RainLexer::SubStylesStart(int /*styleBase*/) {
     return -1;
 }
 
-int SCI_METHOD RainLexer::SubStylesLength(int) {
+int SCI_METHOD RainLexer::SubStylesLength(int /*styleBase*/) {
     return 0;
 }
 
@@ -475,7 +477,7 @@ int SCI_METHOD RainLexer::PrimaryStyleFromStyle(int style) {
 void SCI_METHOD RainLexer::FreeSubStyles() {
 }
 
-void SCI_METHOD RainLexer::SetIdentifiers(int, const char*) {
+void SCI_METHOD RainLexer::SetIdentifiers(int /*style*/, const char* /*identifiers*/) {
 }
 
 int SCI_METHOD RainLexer::DistanceToSecondaryStyles() {
@@ -511,13 +513,13 @@ int SCI_METHOD GetLexerCount()
 	return 1;
 }
 
-void SCI_METHOD GetLexerName(unsigned int index, char* name, int buflength)
+void SCI_METHOD GetLexerName(unsigned int /*index*/, char* name, int buflength)
 {
 	strncpy(name, "Rainmeter", buflength);
 	name[buflength - 1] = '\0';
 }
 
-void SCI_METHOD GetLexerStatusText(unsigned int index, WCHAR* desc, int buflength)
+void SCI_METHOD GetLexerStatusText(unsigned int /*index*/, WCHAR* desc, int buflength)
 {
 	wcsncpy(desc, L"Rainmeter skin file", buflength);
 	desc[buflength - 1] = L'\0';

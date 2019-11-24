@@ -26,18 +26,11 @@ public:
 	bool operator!=(const WordList &other) const;
 	int Length() const;
 	void Clear();
-	void Set(const char *s);
+	bool Set(const char *s);
 	bool InList(const char *s) const;
 	bool InListAbbreviated(const char *s, const char marker) const;
 	bool InListAbridged(const char *s, const char marker) const;
 	const char *WordAt(int n) const;
-	
-	void SetWordAt(int n, const char *word2Set) {
-		words[n] = (char *)word2Set;
-	};
-	int StartAt(int n) const {
-		return starts[n];
-	};
 };
 
 }

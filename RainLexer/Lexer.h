@@ -18,41 +18,46 @@
 #ifndef RAINLEXER_LEXER_H_
 #define RAINLEXER_LEXER_H_
 
-#include "PropSetSimple.h"
-#include "Sci_Position.h"
-#include "Scintilla.h"
 #include "ILexer.h"
+#include "Scintilla.h"
+#include "SciLexer.h"
+
 #include "WordList.h"
 #include "LexAccessor.h"
 #include "Accessor.h"
-#include "LexerModule.h"
 #include "StyleContext.h"
+#include "CharacterSet.h"
+#include "LexerModule.h"
 #include "CharacterSet.h"
 
 using namespace Scintilla;
+
 namespace RainLexer {
 
-class RainLexer final :
-	public ILexer4
+class RainLexer final : public ILexer4
 {
+protected:
+    const LexicalClass* lexClasses;
+    size_t nClasses;
 public:
-	RainLexer() {}
-	virtual ~RainLexer() {}
+    RainLexer(const LexicalClass* lexClasses_ = nullptr, size_t nClasses_ = 0) :
+        lexClasses(lexClasses_), nClasses(nClasses_) {};
+    virtual ~RainLexer() = default;
 
-	static ILexer4* LexerFactory();
+    static ILexer4* LexerFactory();
 
-	// ILexer
-	void SCI_METHOD Release() override;
-	int SCI_METHOD Version() const override;
-	const char* SCI_METHOD PropertyNames() override;
-	int SCI_METHOD PropertyType(const char* name) override;
-	const char* SCI_METHOD DescribeProperty(const char* name) override;
+    // ILexer
+    void SCI_METHOD Release() override;
+    int SCI_METHOD Version() const override;
+    const char* SCI_METHOD PropertyNames() override;
+    int SCI_METHOD PropertyType(const char* name) override;
+    const char* SCI_METHOD DescribeProperty(const char* name) override;
     Sci_Position SCI_METHOD PropertySet(const char* key, const char* val) override;
-	const char* SCI_METHOD DescribeWordListSets() override;
+    const char* SCI_METHOD DescribeWordListSets() override;
     Sci_Position SCI_METHOD WordListSet(int n, const char* wl) override;
-    void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) override;
-    void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) override;
-	void* SCI_METHOD PrivateCall(int operation, void* pointer) override;
+    void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument* pAccess) override;
+    void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument* pAccess) override;
+    void* SCI_METHOD PrivateCall(int operation, void* pointer) override;
     int SCI_METHOD LineEndTypesSupported() override;
     int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) override;
     int SCI_METHOD SubStylesStart(int styleBase) override;
@@ -69,38 +74,37 @@ public:
     const char* SCI_METHOD DescriptionOfStyle(int style) override;
 
 private:
-	enum TextState
-	{
-		TS_DEFAULT,
-		TS_COMMENT,
-		TS_SECTION,
-		TS_KEYWORD,
-		TS_OPTION,
-		TS_VALUE,
-		TS_BANG,
-		TS_VARIABLE,
-		TS_LINEEND
-	};
-	
-	enum TextColor
-	{
-		TC_DEFAULT,
-		TC_COMMENT,
-		TC_SECTION,
-		TC_KEYWORD,
-		TC_EQUALS,
-		TC_INVALID,
-		TC_VALID,
-		TC_BANG,
-		TC_INTVARIABLE,
-		TC_EXTVARIABLE
-	};
-    const LexicalClass* lexClasses;
-    size_t nClasses;
-    enum { numWordLists = KEYWORDSET_MAX + 1 };
-	WordList m_WordLists[6];
+    enum TextState
+    {
+        TS_DEFAULT,
+        TS_COMMENT,
+        TS_SECTION,
+        TS_KEYWORD,
+        TS_OPTION,
+        TS_VALUE,
+        TS_BANG,
+        TS_VARIABLE,
+        TS_LINEEND,
+        TS_DIGITS
+    };
+
+    enum TextColor
+    {
+        TC_DEFAULT,
+        TC_COMMENT,
+        TC_SECTION,
+        TC_KEYWORD,
+        TC_EQUALS,
+        TC_INVALID,
+        TC_VALID,
+        TC_BANG,
+        TC_INTVARIABLE,
+        TC_EXTVARIABLE,
+        TC_DIGITS
+    };
+    WordList m_WordLists[6];
 };
 
-}	// namespace RainLexer
+}// namespace RainLexer
 
 #endif
