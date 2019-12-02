@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2D8F1DDB-6470-45A1-B95A-3E2960641314}</ProjectGuid>

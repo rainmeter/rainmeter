@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Visual C++ project options meant to applied before the default Microsoft property sheets. -->
-<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="UserMacros">
     <WinDDK71Dir>$(SolutionDir)..\WinDDK\7600.16385.1\</WinDDK71Dir>
   </PropertyGroup>
