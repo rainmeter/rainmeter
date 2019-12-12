@@ -73,7 +73,7 @@ public:
     const char* SCI_METHOD DescriptionOfStyle(int style) override;
 
 private:
-    enum TextState
+    enum class TextState
     {
         TS_DEFAULT,
         TS_COMMENT,
@@ -99,9 +99,12 @@ private:
         TC_BANG,
         TC_INTVARIABLE,
         TC_EXTVARIABLE,
-        TC_DIGITS
+        TC_DIGITS,
+        TC_DEP_KEYWORD,
+        TC_DEP_VALID,
+        TC_DEP_BANG
     };
-    WordList m_WordLists[6];
+    WordList m_WordLists[9];
 };
 
 }// namespace RainLexer

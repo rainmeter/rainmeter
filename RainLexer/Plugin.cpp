@@ -141,7 +141,7 @@ void RefreshAll()
 	COPYDATASTRUCT cds;
 	cds.dwData = 1;
 	cds.cbData = sizeof(L"!Refresh *");
-	cds.lpData = L"!Refresh *";
+	cds.lpData = (PVOID)L"!Refresh *";
 	SendMessage(g_RainmeterWindow, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));
 }
 
