@@ -22,6 +22,17 @@ static const char styleSubable[] = { 0 };
 
 namespace RainLexer {
 
+bool IsReserved(int ch) {
+    if (IsAlphaNumeric(ch))
+    {
+        return false;
+    }
+
+    return (ch == '<' || ch == '>' || ch == ':' ||
+        ch == '"' || ch == '/' || ch == '\\' ||
+        ch == '|' || ch == '?' || ch == '*');
+}
+
 ILexer4* RainLexer::LexerFactory()
 {
     return new RainLexer(nullptr, 0U);
@@ -62,7 +73,7 @@ const char* SCI_METHOD RainLexer::DescribeWordListSets() {
 Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
     if (n < _countof(m_WordLists))
     {
-        WordList wlNew;
+        WordList wlNew(false);
         wlNew.Set(wl);
         if (m_WordLists[n] != wlNew)
         {
@@ -101,6 +112,15 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     bool isNested = false;
     auto stateIdx = startPos; // For cases like [#myVar#10]
 
+    bool onlyDigits = true;
+    bool isPipeOpt = false;
+    int countParentheses = 0;
+
+    bool isSubsOpt = false;
+    bool isFormatOpt = false;
+    bool isNotNumValOpt = false;
+    bool isExtOption = false;
+
     for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
     {
         bool isEOF = (i == static_cast<Sci_PositionU>(length) - 1);
@@ -124,12 +144,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             case '[':
                 state = TextState::TS_SECTION;
-                styler.ColourTo(i, TC_SECTION);
                 break;
 
             case ';':
                 state = TextState::TS_COMMENT;
-                styler.ColourTo(i, TC_COMMENT);
                 break;
 
             case '\t':
@@ -137,16 +155,27 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             default:
-                if (isalpha(ch) > 0 || ch == '@')
+                if (IsUpperOrLowerCase(ch) || ch == '@')
                 {
                     count = 0;
                     digits = 0;
                     buffer[count++] = MakeLowerCase(ch);
+
+                    isExtOption = false;
+                    isSubsOpt = false;
+                    isFormatOpt = false;
+                    isNotNumValOpt = false;
+                    isPipeOpt = false;
+
                     state = TextState::TS_KEYWORD;
+                }
+                else if (IsADigit(ch))
+                {
+                    state = TextState::TS_NOT_KEYWORD;
                 }
                 else
                 {
-                    state = TextState::TS_VALUE;
+                    state = TextState::TS_LINEEND;
                 }
             }
             break;
@@ -155,9 +184,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             // Style as comment when EOL (or EOF) is reached
             switch (ch)
             {
+            case '\0':
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
+                styler.ColourTo(i - chEOL, TC_COMMENT);
                 styler.ColourTo(i, TC_DEFAULT);
                 break;
 
@@ -170,6 +201,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             // Style as section when EOL (or EOF) is reached unless section name has a space
             switch (ch)
             {
+            case '\0':
+                if (styler.SafeGetCharAt(i, '\0') == ']')
+                {
+                    styler.ColourTo(i, TC_SECTION);
+                }
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
@@ -177,10 +213,12 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case ']':
+                styler.ColourTo(i, TC_SECTION);
                 state = TextState::TS_LINEEND;
+                break;
 
             default:
-                styler.ColourTo(i, TC_SECTION);
+                break;
             }
             break;
 
@@ -204,17 +242,24 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                 buffer[count] = '\0';
 
+                isPipeOpt = pipeWords.find(buffer) != pipeWords.end();
+                countParentheses = 0;
+                onlyDigits = true;
+
                 if (keywords.InList(buffer) || strncmp(buffer, "@include", 8) == 0)
                 {
+                    isSubsOpt = strcmp(buffer, "substitute") == 0;
+                    isFormatOpt = formatOpt.find(buffer) != formatOpt.end();
+                    isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+
                     state = TextState::TS_VALUE;
                     styler.ColourTo(i - 1, TC_KEYWORD);
                     styler.ColourTo(i, TC_EQUALS);
-                    break;
                 }
-
-                if (optwords.InList(buffer))
+                else if (optwords.InList(buffer))
                 {
                     state = TextState::TS_OPTION;
+                    isExtOption = extKeyWords.find(buffer) != extKeyWords.end();
 
                     if (depKeywords.InList(buffer))
                     {
@@ -234,49 +279,74 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     {
                         ++i;
                     }
-                    break;
                 }
-                
-                if (digits > 0)
+                else if (digits > 0)
                 {
-                    state = TextState::TS_VALUE;
-
                     // For cases with number in middle word or defined number at end, like UseD2D
                     if (depKeywords.InList(buffer))
                     {
+                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                        state = TextState::TS_VALUE;
                         styler.ColourTo(i - 1, TC_DEP_KEYWORD);
                         styler.ColourTo(i, TC_EQUALS);
                         break;
                     }
 
                     // Try removing chars from the end to check for words like ScaleN
-                    buffer[count - digits] = '\0';
+                    count -= digits;
+                    buffer[count] = '\0';
                     digits = 0;
 
+                    isExtOption = extKeyWords.find(buffer) != extKeyWords.end();
+                    isPipeOpt = pipeWords.find(buffer) != pipeWords.end();
+                    state = isExtOption ? TextState::TS_OPTION : TextState::TS_VALUE;
+
                     // Special case for option Command from iTunes plugin, and similar Command1, Command2, ... options from InputText plugin
-                    if (depKeywords.InList(buffer) && strncmp(buffer, "command", 7) != 0) 
+                    if (numwords.InList(buffer))
                     {
-                        styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                    }
-                    else if (numwords.InList(buffer))
-                    {
-                        styler.ColourTo(i - 1, TC_KEYWORD);
+                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                        if (depKeywords.InList(buffer) && strcmp(buffer, "command") != 0)
+                        {
+                            styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+                        }
+                        else
+                        {
+                            styler.ColourTo(i - 1, TC_KEYWORD);
+                        }
+
+                        if (isExtOption)
+                        {
+                            buffer[count++] = '=';
+                            beginValueIdx = count;
+                            while (IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
+                            {
+                                ++i;
+                            }
+                        }
                     }
                     else
                     {
-                        break;
+                        isPipeOpt = true;
+                        styler.ColourTo(i - 1, TC_DEFAULT);
                     }
                     styler.ColourTo(i, TC_EQUALS);
-                    break;
                 }
-
-                if (depKeywords.InList(buffer))
+                else
                 {
-                    styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                    styler.ColourTo(i, TC_EQUALS);
-                }
+                    if (depKeywords.InList(buffer))
+                    {
+                        styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                    }
+                    else
+                    {
+                        styler.ColourTo(i - 1, TC_DEFAULT);
+                        isPipeOpt = true;
+                    }
 
-                state = TextState::TS_VALUE;
+                    styler.ColourTo(i, TC_EQUALS);
+                    state = TextState::TS_VALUE;
+                }
                 break;
 
             default:
@@ -312,17 +382,39 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     buffer[count++] = MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
 
+            case '\t':
+            case ' ':
+                if (isExtOption)
+                {
+                    isPipeOpt = true;
+                }
+                else if (!isEOF)
+                {
+                    if (count < _countof(buffer))
+                    {
+                        buffer[count++] = MakeLowerCase(ch);
+                    }
+                    else
+                    {
+                        state = TextState::TS_LINEEND;
+                    }
+                    break;
+                }
             case '\r':
             case '\n':
-                while (IsASpaceOrTab(buffer[count - 1]))
+                if (!isExtOption || isEOF)
                 {
-                    --count;
+                    while (IsASpaceOrTab(buffer[count - 1]))
+                    {
+                        --count;
+                    }
                 }
 
                 buffer[count] = '\0';
-                state = TextState::TS_DEFAULT;
 
-                if (options.InList(buffer))
+                state = isExtOption ? TextState::TS_VALUE : TextState::TS_DEFAULT;
+
+                if (options.InList(buffer) || extOptions.find(buffer) != extOptions.end())
                 {
                     styler.ColourTo(i - chEOL, TC_VALID);
                 }
@@ -337,6 +429,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 else
                 {
                     styler.ColourTo(i - chEOL, TC_INVALID);
+                    state = TextState::TS_LINEEND;
                 }
                 styler.ColourTo(i, TC_DEFAULT);
                 beginValueIdx = 0;
@@ -366,19 +459,46 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             }
             break;
 
+        case TextState::TS_NOT_KEYWORD:
+            switch (ch)
+            {
+            case '\0':
+            case '\r':
+            case '\n':
+                state = TextState::TS_DEFAULT;
+                styler.ColourTo(i, TC_DEFAULT);
+                break;
+
+            case '=':
+                onlyDigits = true;
+                state = TextState::TS_VALUE;
+                styler.ColourTo(i - 1, TC_DEFAULT);
+                styler.ColourTo(i, TC_EQUALS);
+            default:
+                break;
+            }
+            break;
+
         case TextState::TS_VALUE:
             // Read values to highlight variables and bangs
             isNested = false;
-            
+
             switch (ch)
             {
             case '#':
+                onlyDigits = !isNotNumValOpt;
+                if (isFormatOpt && styler.SafeGetCharAt(i - 1, '\0') == '%')
+                {
+                    styler.ColourTo(i, TC_DEFAULT);
+                    break;
+                }
                 count = 0;
                 styler.ColourTo(i - 1, TC_DEFAULT);
                 state = TextState::TS_VARIABLE;
                 break;
 
             case '[':
+                onlyDigits = !isNotNumValOpt;
                 if (styler.SafeGetCharAt(i + 1, '\0') == '#')
                 {
                     isNested = true;
@@ -387,23 +507,151 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     stateIdx = i++;
                     state = TextState::TS_VARIABLE;
                 }
+                else if (styler.SafeGetCharAt(i + 1, '\0') == '\\')
+                {
+                    count = 1;
+                    if (MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
+                    {
+                        buffer[0] = '0';
+                    }
+                    else
+                    {
+                        buffer[0] = ' ';
+                    }
+
+                    styler.ColourTo(i - 1, TC_DEFAULT);
+                    state = TextState::TS_CHAR_VARIABLE;
+                    i++;
+                }
                 break;
 
             case '!':
+                if (!IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
+                {
+                    styler.ColourTo(i, TC_DEFAULT);
+                    break;
+                }
                 count = 0;
                 styler.ColourTo(i - 1, TC_DEFAULT);
                 state = TextState::TS_BANG;
                 break;
 
             case '\0':
+                if (onlyDigits && !isNotNumValOpt && IsADigit(styler.SafeGetCharAt(i, '\0')))
+                {
+                    styler.ColourTo(i, TC_DIGITS);
+                }
+                else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
+                {
+                    styler.ColourTo(i, TC_PIPE);
+                }
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
                 styler.ColourTo(i, TC_DEFAULT);
                 break;
 
-            default:
+            case '|':
+                onlyDigits = !isNotNumValOpt;
+                if (isPipeOpt && countParentheses == 0)
+                {
+                    styler.ColourTo(i - 1, TC_DEFAULT);
+                    styler.ColourTo(i, TC_PIPE);
+                }
+                break;
+
+            case '(':
+                ++countParentheses;
+                onlyDigits = !isNotNumValOpt;
                 styler.ColourTo(i, TC_DEFAULT);
+                break;
+
+            case ')':
+                --countParentheses;
+            default:
+                if (isNotNumValOpt)
+                {
+                    styler.ColourTo(i, TC_DEFAULT);
+                    break;
+                }
+
+                char prevCh = styler.SafeGetCharAt(i - 1, '\0');
+                if (onlyDigits && IsADigit(ch) && !IsUpperOrLowerCase(prevCh) && IsASCII(prevCh))
+                {
+                    styler.ColourTo(i - 1, TC_DEFAULT);
+                    styler.ColourTo(i, TC_DIGITS);
+                    state = TextState::TS_DIGITS;
+                    break;
+                }
+
+                if (IsUpperOrLowerCase(ch))
+                {
+                    onlyDigits = false;
+                }
+                else if (IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
+                    ch == '=' || ch == '%' || ch == '$' || ch == '(')
+                {
+                    onlyDigits = true;
+                }
+
+                styler.ColourTo(i, TC_DEFAULT);
+                break;
+            }
+            break;
+
+        case TextState::TS_DIGITS:
+            // Highlight digits
+            switch (ch)
+            {
+            case '\0':
+                if (IsADigit(styler.SafeGetCharAt(i, '\0')))
+                {
+                    styler.ColourTo(i, TC_DIGITS);
+                }
+                else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
+                {
+                    styler.ColourTo(i, TC_PIPE);
+                }
+            case '\r':
+            case '\n':
+                onlyDigits = false;
+                styler.ColourTo(i - 1, TC_DIGITS);
+                styler.ColourTo(i, TC_DEFAULT);
+                state = TextState::TS_DEFAULT;
+                break;
+
+            case '#':
+            case '[':
+            case '|':
+            case '(':
+            case ')':
+                state = TextState::TS_VALUE;
+                styler.ColourTo(i - 1, TC_DIGITS);
+                --i;
+                break;
+
+            case '.':
+                if (!IsADigit(styler.SafeGetCharAt(i + 1, '\0')))
+                {
+                    styler.ColourTo(i - 1, TC_DIGITS);
+                    styler.ColourTo(i, TC_DEFAULT);
+                    state = TextState::TS_VALUE;
+                }
+                break;
+                
+            default:
+                if (IsUpperOrLowerCase(ch) || !IsASCII(ch))
+                {
+                    onlyDigits = false;
+                }
+                else if (IsADigit(ch))
+                {
+                    styler.ColourTo(i, TC_DIGITS);
+                    break;
+                }
+
+                styler.ColourTo(i - 1, TC_DIGITS);
+                state = TextState::TS_VALUE;
                 break;
             }
             break;
@@ -418,13 +666,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     buffer[count++] = MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
 
+            case '\r':
             case '\n':
+            case '\t':
             case ' ':
             case '[':
             case ']':
                 buffer[count] = '\0';
                 count = 0;
-                state = (ch == '\n') ? TextState::TS_DEFAULT : TextState::TS_VALUE;
 
                 // Skip rainmeter before comparing the bang
                 skipRainmeterBang = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
@@ -436,10 +685,20 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     styler.ColourTo(i - chEOL, TC_DEP_BANG);
                 }
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
 
-            case '\r':
+                if (setterBangWords.find(&buffer[skipRainmeterBang]) != setterBangWords.end())
+                {
+                    isPipeOpt = true;
+                    isNotNumValOpt = false;
+                }
+                else
+                {
+                    isPipeOpt = false;
+                    isNotNumValOpt = true;
+                }
+
+                state = (ch == '\r' || ch == '\n') ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+                styler.ColourTo(i, TC_DEFAULT);
                 break;
 
             case '#':
@@ -499,6 +758,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     state = TextState::TS_VALUE;
                     break;
                 }
+
                 if (count > 0)
                 {
                     buffer[count] = '\0';
@@ -522,14 +782,8 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                     count = 0;
                 }
-                if (isEOF)
-                {
-                    state = TextState::TS_DEFAULT;
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
+
+                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
                 break;
 
             case '[':
@@ -538,8 +792,75 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 state = TextState::TS_VALUE;
                 break;
 
+            case '\'':
+            case '"':
+                if (isSubsOpt)
+                {
+                    state = TextState::TS_VALUE;
+                    break;
+                }
             default:
                 if (count < _countof(buffer))
+                {
+                    buffer[count++] = MakeLowerCase(ch);
+                }
+                else
+                {
+                    state = TextState::TS_VALUE;
+                }
+            }
+            break;
+
+        case TextState::TS_CHAR_VARIABLE:
+            // Highlight variables
+            if (isEOF)
+            {
+                if (styler.SafeGetCharAt(i, '\0') == ']')
+                {
+                    ch = ']';
+                }
+            }
+
+            switch (ch)
+            {
+            case '\0':
+            case '\r':
+            case '\n':
+                state = TextState::TS_DEFAULT;
+                styler.ColourTo(i, TC_DEFAULT);
+                break;
+
+            case ']':
+                if (count > 2 || (count == 2 && buffer[0] == ' '))
+                {
+                    buffer[count] = '\0';
+
+                    std::string charNumber = buffer;
+                    if (std::stol(charNumber, nullptr, 0) < 0xFFFF)
+                    {
+                        styler.ColourTo(i, TC_CHAR_VARIABLE);
+                    }
+                    else
+                    {
+                        styler.ColourTo(i, TC_DEFAULT);
+                    }
+                    count = 0;
+                }
+
+                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+                break;
+
+            case '[':
+                --i;
+                state = TextState::TS_VALUE;
+                break;
+
+            default:
+                if (count == 1 && buffer[0] == '0')
+                {
+                    buffer[count++] = 'x';
+                }
+                else if (count < 6 && IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < _countof(buffer))
                 {
                     buffer[count++] = MakeLowerCase(ch);
                 }
@@ -559,7 +880,6 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
-
             default:
                 styler.ColourTo(i, TC_DEFAULT);
             }

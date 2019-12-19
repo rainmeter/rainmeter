@@ -15,8 +15,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef RAINLEXER_LEXER_H_
-#define RAINLEXER_LEXER_H_
+#pragma once
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -32,6 +31,8 @@
 using namespace Scintilla;
 
 namespace RainLexer {
+
+inline bool IsReserved(int ch);
 
 class RainLexer final : public ILexer4
 {
@@ -80,11 +81,13 @@ private:
         TS_SECTION,
         TS_KEYWORD,
         TS_OPTION,
+        TS_NOT_KEYWORD,
         TS_VALUE,
+        TS_DIGITS,
         TS_BANG,
         TS_VARIABLE,
-        TS_LINEEND,
-        TS_DIGITS
+        TS_CHAR_VARIABLE,
+        TS_LINEEND = 27
     };
 
     enum TextColor
@@ -102,11 +105,71 @@ private:
         TC_DIGITS,
         TC_DEP_KEYWORD,
         TC_DEP_VALID,
-        TC_DEP_BANG
+        TC_DEP_BANG,
+        TC_CHAR_VARIABLE,
+        TC_PIPE
     };
+
     WordList m_WordLists[9];
+
+    // Options using '|' as delimiter
+    const std::set<std::string> pipeWords = { "actionlist", "blacklist", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
+
+    // Value and option bangs
+    const std::set<std::string> setterBangWords = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
+
+    // Options with values and subvalues on same line
+    const std::set<std::string> extKeyWords = { "inlinesetting", "shape" };
+
+    // Valid values for extKeyWords
+    const std::set<std::string> extOptions = {
+        "inlinesetting=case", "inlinesetting=color", "inlinesetting=characterspacing", "inlinesetting=face", "inlinesetting=gradientcolor",
+        "inlinesetting=italic", "inlinesetting=none", "inlinesetting=oblique", "inlinesetting=shadow", "inlinesetting=size",
+        "inlinesetting=stretch", "inlinesetting=strikethrough", "inlinesetting=typography", "inlinesetting=underline", "inlinesetting=weight",
+
+        "shape=arc", "shape=ellipse", "shape=combine", "shape=curve", "shape=line", "shape=path", "shape=path1", "shape=rectangle"
+    };
+
+    // Format options (options not using bangs)
+    const std::set<std::string> formatOpt = { "format", "timestampformat" };
+
+    // Options not using numeric values
+    const std::set<std::string> nonNumValOpt = {
+        "@include",
+        "author",
+        "background", "barimage", "bitmapimage", "blacklist", "bothimage", "bothimagepath", "bothimagepath", "buttoncommand", "buttonimage",
+        "category", "configeditor", "container", "contextaction", "contexttitle", "counter", "cpuexclude", "cpuinclude",
+        "debug2file", "defaultartwork", "defaultvalue", "description", "downloadfile", "draggroup", "drive",
+        "errorstring", "extensions",
+        "filefilter", "finishaction", "folder", "fontface", "formatlocale",
+        "group",
+        "header",
+        "iconpath", "id", "ifaboveaction", "ifbelowaction", "ifequalaction", "iffalseaction", "ifmatch", "ifmatchaction", "ifnotmatchaction",
+        "iftrueaction", "imagepath", "information", "inlinepattern", "instructions",
+
+        "leftmousedoubleclickaction", "leftmousedownaction", "leftmouseupaction", "localfont",
+        "maskimagename", "maskimagepath", "measure", "measurename", "meterstyle", "middlemousedoubleclickaction", "middlemousedownaction",
+        "middlemouseupaction", "mouseactioncursorname", "mouseleaveaction", "mouseoveraction", "mousescrolldownaction", "mousescrollleftaction",
+        "mousescrollrightaction", "mousescrollupaction",
+
+        "name",
+        "onchangeaction", "oncloseaction", "onconnecterroraction", "ondownloaderroraction", "onfocusaction", "onrefreshaction", "onregexperroraction",
+        "onunfocusaction", "onupdateaction", "onwakeaction", "outputfile",
+
+        "parameter", "parent", "path", "pathname", "perfmoncounter", "perfmoninstance", "perfmonobject", "playerpath", "plugin", "postfix", "prefix",
+        "primaryimage", "primaryimagepath", "primaryimagepath", "processname", "program",
+
+        "regexp", "regexpfilter", "regkey", "regvalue", "rightmousedoubleclickaction", "rightmousedownaction", "rightmouseupaction",
+        "scriptfile", "secondaryimage", "secondaryimage", "secondaryimagepath", "secondaryimagepath", "secondarymeasurename", "secondsvalue",
+        "separator", "skinpath", "startinfolder", "string", "stringindex", "stringindex2", "substitute", "sysinfodata",
+
+        "timestampformat", "timestamplocale", "tooltipicon", "tooltiptitle", "trackchangeaction", "traybitmap", "trayexecutedm", "trayexecutedr",
+        "trayexecutem", "trayexecuter",
+
+        "url",
+        "whitelist", "wifiinfotype", "wildcardsearch", "windowclass", "windowmessage", "windowname",
+        "x1mousedoubleclickaction", "x1mousedownaction", "x1mouseupaction", "x2mousedoubleclickaction", "x2mousedownaction", "x2mouseupaction"
+    };
 };
 
 }// namespace RainLexer
-
-#endif

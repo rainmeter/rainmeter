@@ -15,13 +15,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef RAINLEXER_STDAFX_H_
-#define RAINLEXER_STDAFX_H_
+#pragma once
 
 #include <Windows.h>
 
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#endif
+#include <set>
+#include <string>
