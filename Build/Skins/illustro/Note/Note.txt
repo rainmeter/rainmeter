@@ -1,0 +1,2 @@
+[Variables]
+Note=1#CRLF#2#CRLF#3
