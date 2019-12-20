@@ -1,0 +1,2 @@
+[Variables]
+Note=[\x2714] My Todos#CRLF##CRLF#1. Send report to Frank#CRLF#2. Schedule time with Stacy#CRLF#3. Create brief for the team#CRLF#4. Finish presentation#CRLF#5. Prepare vision workshop#CRLF##CRLF#Good Lock [\xd83d][\xdc4d]
