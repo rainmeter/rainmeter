@@ -203,6 +203,8 @@ public:
 	}
 	// Non-inline
 	bool MatchIgnoreCase(const char *s);
+	bool MatchIgnoreCase2(const char *s);
+	
 	void GetCurrent(char *s, Sci_PositionU len);
 	void GetCurrentLowered(char *s, Sci_PositionU len);
 };

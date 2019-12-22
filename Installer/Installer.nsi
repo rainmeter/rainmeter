@@ -77,6 +77,12 @@ ${DecalareStyleVariables} "VALUE"
 ${DecalareStyleVariables} "BANG"
 ${DecalareStyleVariables} "VARIABLE"
 ${DecalareStyleVariables} "USER_VARIABLE"
+${DecalareStyleVariables} "DEPRECATED_OPTION"
+${DecalareStyleVariables} "DEPRECATED_VALUE"
+${DecalareStyleVariables} "DEPRECATED_BANG"
+${DecalareStyleVariables} "DIGITS"
+${DecalareStyleVariables} "CHAR_VARIABLE"
+${DecalareStyleVariables} "PIPE"
 
 !macro ReadStyleVariables Key Name
 	${If} "$${Key}fgColor" == ""
@@ -342,6 +348,13 @@ Section
 			${ReadStyleVariables} "BANG" "BANG"
 			${ReadStyleVariables} "VARIABLE" "VARIABLE"
 			${ReadStyleVariables} "USER_VARIABLE" "USER VARIABLE"
+
+			${ReadStyleVariables} "DEPRECATED_OPTION" "DEPRECATED OPTION"
+			${ReadStyleVariables} "DEPRECATED_VALUE" "DEPRECATED VALUE"
+			${ReadStyleVariables} "DEPRECATED_BANG" "DEPRECATED BANG"
+			${ReadStyleVariables} "DIGITS" "DIGITS"
+			${ReadStyleVariables} "CHAR_VARIABLE" "CHAR VARIABLE"
+			${ReadStyleVariables} "PIPE" "PIPE"
 		${EndIf}
 
 		${If} $NppThemeName == "Zenburn.xml"
@@ -363,6 +376,12 @@ Section
 			${WriteStyleVariables} "BANG" "BANG"
 			${WriteStyleVariables} "VARIABLE" "VARIABLE"
 			${WriteStyleVariables} "USER_VARIABLE" "USER VARIABLE"
+			${WriteStyleVariables} "DEPRECATED_OPTION" "DEPRECATED OPTION"
+			${WriteStyleVariables} "DEPRECATED_VALUE" "DEPRECATED VALUE"
+			${WriteStyleVariables} "DEPRECATED_BANG" "DEPRECATED BANG"
+			${WriteStyleVariables} "DIGITS" "DIGITS"
+			${WriteStyleVariables} "CHAR_VARIABLE" "CHAR VARIABLE"
+			${WriteStyleVariables} "PIPE" "PIPE"
 			XML::save "$NppConfigPath\plugins\config\RainLexer.xml"
 		${EndIf}
 	${Else}

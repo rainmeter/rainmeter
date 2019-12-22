@@ -33,6 +33,24 @@ bool StyleContext::MatchIgnoreCase(const char *s) {
 	return true;
 }
 
+bool StyleContext::MatchIgnoreCase2(const char *s) {
+	if (MakeLowerCase(ch) != MakeLowerCase(static_cast<unsigned char>(*s)))
+		return false;
+	s++;
+	if (!*s)
+		return true;
+	if (MakeLowerCase(chNext) != MakeLowerCase(static_cast<unsigned char>(*s)))
+		return false;
+	s++;
+	for (int n = 2; *s; n++) {
+		if (MakeLowerCase(static_cast<unsigned char>(*s)) !=
+			MakeLowerCase(static_cast<unsigned char>(styler.SafeGetCharAt(currentPos + n))))
+			return false;
+		s++;
+	}
+	return true;
+}
+
 static void getRange(Sci_PositionU start,
 		Sci_PositionU end,
 		LexAccessor &styler,

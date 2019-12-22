@@ -113,7 +113,7 @@ private:
     WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const std::set<std::string> pipeWords = { "actionlist", "blacklist", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
+    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
 
     // Value and option bangs
     const std::set<std::string> setterBangWords = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
@@ -130,10 +130,10 @@ private:
         "shape=arc", "shape=ellipse", "shape=combine", "shape=curve", "shape=line", "shape=path", "shape=path1", "shape=rectangle"
     };
 
-    // Format options (options not using bangs)
+    // Format options
     const std::set<std::string> formatOpt = { "format", "timestampformat" };
 
-    // Options not using numeric values
+    // Options not using numeric values, and are not type 2 keywords (options with valid values, e.g. StringAlign=RIGHT)
     const std::set<std::string> nonNumValOpt = {
         "@include",
         "author",
@@ -161,7 +161,7 @@ private:
 
         "regexp", "regexpfilter", "regkey", "regvalue", "rightmousedoubleclickaction", "rightmousedownaction", "rightmouseupaction",
         "scriptfile", "secondaryimage", "secondaryimage", "secondaryimagepath", "secondaryimagepath", "secondarymeasurename", "secondsvalue",
-        "separator", "skinpath", "startinfolder", "string", "stringindex", "stringindex2", "substitute", "sysinfodata",
+        "separator", "skinpath", "startinfolder", "string", "substitute", "sysinfodata",
 
         "timestampformat", "timestamplocale", "tooltipicon", "tooltiptitle", "trackchangeaction", "traybitmap", "trayexecutedm", "trayexecutedr",
         "trayexecutem", "trayexecuter",
