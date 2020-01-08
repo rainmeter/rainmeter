@@ -118,6 +118,8 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring oldFontFace = m_FontFace;
 	int oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
+	Gfx::HorizontalAlignment oldHAlign = m_TextFormat->GetHorizontalAlignment();
+	Gfx::VerticalAlignment oldVAlign = m_TextFormat->GetVerticalAlignment();
 
 	Meter::ReadOptions(parser, section);
 
@@ -301,7 +303,9 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
 		oldFontSize != m_FontSize ||
-		oldStyle != m_Style))
+		oldStyle != m_Style ||
+		oldHAlign != m_TextFormat->GetHorizontalAlignment() ||
+		oldVAlign != m_TextFormat->GetVerticalAlignment()))
 	{
 		Initialize();	// Recreate the font
 	}
