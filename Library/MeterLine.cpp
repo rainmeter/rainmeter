@@ -217,6 +217,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
 
+	double minValue = 0.0;
 	double maxValue = 0.0;
 
 	// Find the maximum value
@@ -253,12 +254,13 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	{
 		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 		{
-			double val = (*i)->GetMaxValue();
-			maxValue = max(maxValue, val);
+			minValue = max(minValue, (*i)->GetMinValue());
+			maxValue = max(maxValue, (*i)->GetMaxValue());
 		}
 
-		if (maxValue == 0.0)
+		if ((minValue > maxValue) || (maxValue == 0.0))
 		{
+			minValue = 0.0;
 			maxValue = 1.0;
 		}
 	}
@@ -316,12 +318,21 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * W / maxValue;
+			const double scale = m_ScaleValues[counter];
 			int pos = m_CurrentPos;
+
+			if (!m_Autoscale)
+			{
+				minValue = (*(m_Measures.cbegin() + counter))->GetMinValue();
+				maxValue = (*(m_Measures.cbegin() + counter))->GetMaxValue();
+			}
 
 			auto calcX = [&](FLOAT& _x)
 			{
-				_x = ((FLOAT)((*i)[pos] * scale) + offset);
+				_x = (FLOAT)((*i)[pos] * scale - minValue);
+				_x /= maxValue - minValue;
+				_x *= W;
+				_x += offset;
 				_x = min(_x, W + offset);
 				_x = max(_x, offset);
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
@@ -378,12 +389,21 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * H / maxValue;
+			const double scale = m_ScaleValues[counter];
 			int pos = m_CurrentPos;
+
+			if (!m_Autoscale)
+			{
+				minValue = (*(m_Measures.cbegin() + counter))->GetMinValue();
+				maxValue = (*(m_Measures.cbegin() + counter))->GetMaxValue();
+			}
 
 			auto calcY = [&](FLOAT& _y)
 			{
-				_y = ((FLOAT)((*i)[pos] * scale) + offset);
+				_y = (FLOAT)((*i)[pos] * scale - minValue);
+				_y /= maxValue - minValue;
+				_y *= H;
+				_y += offset;
 				_y = min(_y, H + offset);
 				_y = max(_y, offset);
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
