@@ -41,7 +41,8 @@ private:
 	D2D1_COLOR_F m_OverlapColor;
 
 	int m_MeterPos;							// New value placement position
-	bool m_Autoscale;
+	bool m_AutoScale;
+	bool m_AutoScaleJoin;
 	bool m_Flip;
 
 	std::wstring m_PrimaryImageName;

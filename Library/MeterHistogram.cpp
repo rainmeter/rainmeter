@@ -21,7 +21,8 @@ MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_SecondaryColor(D2D1::ColorF(D2D1::ColorF::Red)),
 	m_OverlapColor(D2D1::ColorF(D2D1::ColorF::Yellow)),
 	m_MeterPos(),
-	m_Autoscale(false),
+	m_AutoScale(false),
+	m_AutoScaleJoin(false),
 	m_Flip(false),
 	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, skin),
 	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, skin),
@@ -202,7 +203,8 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_OverlapImage.ReadOptions(parser, section);
 	}
 
-	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
+	m_AutoScale = parser.ReadBool(section, L"AutoScale", false);
+	m_AutoScaleJoin = parser.ReadBool(section, L"AutoScaleJoin", false);
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
@@ -299,10 +301,9 @@ bool MeterHistogram::Update()
 				m_MinSecondaryValue = secondaryMeasure->GetMinValue();
 			}
 
-			if (m_Autoscale)
+			if (m_AutoScale)
 			{
-				// Go through all values and find the max
-
+				m_MinPrimaryValue = 0.0;
 				double newValue = 0.0;
 				for (int i = 0; i < maxSize; ++i)
 				{
@@ -325,6 +326,7 @@ bool MeterHistogram::Update()
 
 				if (secondaryMeasure && m_SecondaryValues)
 				{
+					m_MinSecondaryValue = 0.0;
 					for (int i = 0; i < maxSize; ++i)
 					{
 						newValue = max(newValue, m_SecondaryValues[i]);
@@ -343,7 +345,13 @@ bool MeterHistogram::Update()
 							m_MaxSecondaryValue *= 2.0;
 						}
 					}
-				}
+
+					if (m_AutoScaleJoin)
+					{
+						m_MaxPrimaryValue = max(m_MaxPrimaryValue, m_MaxSecondaryValue);
+						m_MaxSecondaryValue = m_MaxPrimaryValue;
+					}
+				}	
 			}
 		}
 		return true;
