@@ -14,7 +14,7 @@
 #include "../Common/Gfx/Shapes/Line.h"
 
 MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Autoscale(false),
+	m_AutoScale(false),
 	m_HorizontalLines(false),
 	m_Flip(false),
 	m_LineWidth(1.0),
@@ -124,7 +124,8 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	m_Flip = parser.ReadBool(section, L"Flip", false);
-	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
+	m_AutoScale = parser.ReadBool(section, L"AutoScale", false);
+	m_AutoScaleIndex = parser.ReadInt(section, L"AutoScaleIndex", 0);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_LineWidth = max(1.0, m_LineWidth);
 	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
@@ -221,17 +222,19 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	double maxValue = 0.0;
 
 	// Find the maximum value
-	if (m_Autoscale)
+	if (m_AutoScale)
 	{
 		double newValue = 0.0;
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			double scale = m_ScaleValues[counter];
-			for (auto j = (*i).cbegin(); j != (*i).cend(); ++j)
+			if (!m_AutoScaleIndex || m_AutoScaleIndex == counter)
 			{
-				double val = (*j) * scale;
-				newValue = max(newValue, val);
+				for (auto j = (*i).cbegin(); j != (*i).cend(); ++j)
+				{
+					double val = (*j) * m_ScaleValues[counter];
+					newValue = max(newValue, val);
+				}
 			}
 			++counter;
 		}
@@ -321,7 +324,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			const double scale = m_ScaleValues[counter];
 			int pos = m_CurrentPos;
 
-			if (!m_Autoscale)
+			if (!m_AutoScale)
 			{
 				minValue = (*(m_Measures.cbegin() + counter))->GetMinValue();
 				maxValue = (*(m_Measures.cbegin() + counter))->GetMaxValue();
@@ -392,7 +395,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			const double scale = m_ScaleValues[counter];
 			int pos = m_CurrentPos;
 
-			if (!m_Autoscale)
+			if (!m_AutoScale)
 			{
 				minValue = (*(m_Measures.cbegin() + counter))->GetMinValue();
 				maxValue = (*(m_Measures.cbegin() + counter))->GetMaxValue();
