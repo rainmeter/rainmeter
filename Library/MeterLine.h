@@ -33,7 +33,8 @@ private:
 	std::vector<D2D1_COLOR_F> m_Colors;
 	std::vector<double> m_ScaleValues;
 
-	bool m_Autoscale;
+	bool m_AutoScale;
+	int m_AutoScaleMeasure;
 	bool m_HorizontalLines;
 	bool m_Flip;
 	double m_LineWidth;

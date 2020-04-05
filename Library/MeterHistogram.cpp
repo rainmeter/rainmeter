@@ -21,7 +21,8 @@ MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_SecondaryColor(D2D1::ColorF(D2D1::ColorF::Red)),
 	m_OverlapColor(D2D1::ColorF(D2D1::ColorF::Yellow)),
 	m_MeterPos(),
-	m_Autoscale(false),
+	m_AutoScale(false),
+	m_AutoScaleType(NONE),
 	m_Flip(false),
 	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, skin),
 	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, skin),
@@ -202,7 +203,28 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_OverlapImage.ReadOptions(parser, section);
 	}
 
-	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
+	m_AutoScale = parser.ReadBool(section, L"AutoScale", false);
+	const WCHAR* autoScaleType = parser.ReadString(section, L"AutoScaleType", L"None").c_str();
+	if (_wcsicmp(autoScaleType, L"Independent") == 0)
+	{
+		m_AutoScaleType = INDEPENDENT;
+	}
+	else if (_wcsicmp(autoScaleType, L"Primary") == 0)
+	{
+		m_AutoScaleType = PRIMARY;
+	}
+	else if (_wcsicmp(autoScaleType, L"Secondary") == 0)
+	{
+		m_AutoScaleType = SECONDARY;
+	}
+	else if (_wcsicmp(autoScaleType, L"Maximum") == 0)
+	{
+		m_AutoScaleType = MAXIMUM;
+	}
+	else
+	{
+		m_AutoScaleType = NONE;
+	}
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
@@ -210,7 +232,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_GraphStartLeft = false;
 	}
-	else if (_wcsicmp(graph, L"LEFT") ==  0)
+	else if (_wcsicmp(graph, L"LEFT") == 0)
 	{
 		m_GraphStartLeft = true;
 	}
@@ -224,7 +246,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_GraphHorizontalOrientation = false;
 	}
-	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
+	else if (_wcsicmp(graph, L"HORIZONTAL") == 0)
 	{
 		m_GraphHorizontalOrientation = true;
 	}
@@ -254,7 +276,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
 
 			Initialize();  // Reload the image
-			
+
 			if (m_SizeChanged)
 			{
 				CreateBuffer();
@@ -299,37 +321,39 @@ bool MeterHistogram::Update()
 				m_MinSecondaryValue = secondaryMeasure->GetMinValue();
 			}
 
-			if (m_Autoscale)
+			if (m_AutoScale || m_AutoScaleType)
 			{
-				// Go through all values and find the max
-
+				m_MinPrimaryValue = 0.0;
 				double newValue = 0.0;
-				for (int i = 0; i < maxSize; ++i)
+				if ((m_AutoScaleType != SECONDARY) || !secondaryMeasure)
 				{
-					newValue = max(newValue, m_PrimaryValues[i]);
-				}
-
-				// Scale the value up to nearest power of 2
-				if (newValue > DBL_MAX / 2.0)
-				{
-					m_MaxPrimaryValue = DBL_MAX;
-				}
-				else
-				{
-					m_MaxPrimaryValue = 2.0;
-					while (m_MaxPrimaryValue < newValue)
+					for (int i = 0; i < maxSize; ++i)
 					{
-						m_MaxPrimaryValue *= 2.0;
+						newValue = max(newValue, m_PrimaryValues[i]);
+					}
+					// Scale the value up to nearest power of 2
+					if (newValue > DBL_MAX / 2.0)
+					{
+						m_MaxPrimaryValue = DBL_MAX;
+					}
+					else
+					{
+						m_MaxPrimaryValue = 2.0;
+						while (m_MaxPrimaryValue < newValue)
+						{
+							m_MaxPrimaryValue *= 2.0;
+						}
 					}
 				}
 
-				if (secondaryMeasure && m_SecondaryValues)
+				m_MinSecondaryValue = 0.0;
+				newValue = 0.0;
+				if ((m_AutoScaleType != PRIMARY) && secondaryMeasure && m_SecondaryValues)
 				{
 					for (int i = 0; i < maxSize; ++i)
 					{
 						newValue = max(newValue, m_SecondaryValues[i]);
 					}
-
 					// Scale the value up to nearest power of 2
 					if (newValue > DBL_MAX / 2.0)
 					{
@@ -343,6 +367,23 @@ bool MeterHistogram::Update()
 							m_MaxSecondaryValue *= 2.0;
 						}
 					}
+				}
+
+				switch (m_AutoScaleType)
+				{
+				case NONE:
+				case INDEPENDENT:
+					break;
+				case PRIMARY:
+					m_MaxSecondaryValue = m_MaxPrimaryValue;
+					break;
+				case SECONDARY:
+					m_MaxPrimaryValue = m_MaxSecondaryValue;
+					break;
+				case MAXIMUM:
+					m_MaxPrimaryValue = max(m_MaxPrimaryValue, m_MaxSecondaryValue);
+					m_MaxSecondaryValue = m_MaxPrimaryValue;
+					break;
 				}
 			}
 		}
@@ -433,9 +474,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const FLOAT startStep = (FLOAT)(startValue + (step * i));
 
 			double value = (m_MaxPrimaryValue == 0.0) ?
-				  0.0
-				: m_PrimaryValues[(i + (m_MeterPos % displayH)) % displayH] / m_MaxPrimaryValue;
-			value -= m_MinPrimaryValue;
+				0.0
+				: (m_PrimaryValues[(i + m_MeterPos) % displayH] - m_MinPrimaryValue)
+				/ (m_MaxPrimaryValue - m_MinPrimaryValue);
 
 			int primaryBarHeight = (int)(displayW * value);
 			primaryBarHeight = min(displayW, primaryBarHeight);
@@ -446,9 +487,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
-					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % displayH] / m_MaxSecondaryValue;
-				value -= m_MinSecondaryValue;
+					0.0
+					: (m_SecondaryValues[(i + m_MeterPos) % displayH] - m_MinSecondaryValue)
+					/ (m_MaxSecondaryValue - m_MinSecondaryValue);
 
 				int secondaryBarHeight = (int)(displayW * value);
 				secondaryBarHeight = min(displayW, secondaryBarHeight);
@@ -498,9 +539,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const FLOAT startStep = (FLOAT)(startValue + (step * i));
 
 			double value = (m_MaxPrimaryValue == 0.0) ?
-				  0.0
-				: m_PrimaryValues[(i + m_MeterPos) % displayW] / m_MaxPrimaryValue;
-			value -= m_MinPrimaryValue;
+				0.0
+				: (m_PrimaryValues[(i + m_MeterPos) % displayW] - m_MinPrimaryValue)
+				/ (m_MaxPrimaryValue - m_MinPrimaryValue);
 
 			int primaryBarHeight = (int)(displayH * value);
 			primaryBarHeight = min(displayH, primaryBarHeight);
@@ -511,9 +552,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
-					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % displayW] / m_MaxSecondaryValue;
-				value -= m_MinSecondaryValue;
+					0.0
+					: (m_SecondaryValues[(i + m_MeterPos) % displayW] - m_MinSecondaryValue)
+					/ (m_MaxSecondaryValue - m_MinSecondaryValue);
 
 				int secondaryBarHeight = (int)(displayH * value);
 				secondaryBarHeight = min(displayH, secondaryBarHeight);

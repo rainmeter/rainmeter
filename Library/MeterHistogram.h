@@ -27,6 +27,16 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
+
+	enum AUTOSCALE_TYPE
+	{
+		NONE = 0,
+		INDEPENDENT,
+		PRIMARY,
+		SECONDARY,
+		MAXIMUM
+	};
+
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
@@ -41,7 +51,8 @@ private:
 	D2D1_COLOR_F m_OverlapColor;
 
 	int m_MeterPos;							// New value placement position
-	bool m_Autoscale;
+	bool m_AutoScale;
+	AUTOSCALE_TYPE m_AutoScaleType;
 	bool m_Flip;
 
 	std::wstring m_PrimaryImageName;
@@ -61,7 +72,7 @@ private:
 	double m_MinSecondaryValue;
 
 	bool m_SizeChanged;
-	
+
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 
