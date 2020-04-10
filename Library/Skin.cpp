@@ -1925,6 +1925,9 @@ void Skin::WindowToScreen()
 		pixel = screeny + pixel;
 	}
 	m_ScreenY = pixel - m_AnchorScreenY;
+
+	// Update #CURRENTCONFIGX# and #CURRENTCONFIGY# variables
+	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 }
 
 /* ScreenToWindow
@@ -2171,7 +2174,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 			WriteOptions(writeFlags);
 		}
 
-		// Set WindowXScreen/WindowYScreen temporarily
+		// Set screen position temporarily
 		WindowToScreen();
 	}
 }
@@ -2329,8 +2332,7 @@ bool Skin::ReadSkin()
 	m_SkinW = m_Parser.ReadInt(L"Rainmeter", L"SkinWidth", 0);
 	m_SkinH = m_Parser.ReadInt(L"Rainmeter", L"SkinHeight", 0);
 
-	// Initialize window variables
-	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
+	// Initialize window size variables
 	SetWindowSizeVariables(m_SkinW, m_SkinH);
 
 	// Global settings
