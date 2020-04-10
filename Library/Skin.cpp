@@ -2174,7 +2174,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 			WriteOptions(writeFlags);
 		}
 
-		// Set screen position temporarily
+		// Set screen position variables temporarily
 		WindowToScreen();
 	}
 }
