@@ -4745,6 +4745,9 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Note: wParam can be NULL!
+	// https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-killfocus
+	HWND hwnd = (HWND)wParam;
 	switch (uMsg)
 	{
 	case WM_SETFOCUS:
@@ -4759,7 +4762,7 @@ LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			GetRainmeter().ExecuteCommand(m_OnUnfocusAction.c_str(), this);
 		}
-		DeselectSkinsIfAppropriate((HWND)wParam);
+		if (hwnd) DeselectSkinsIfAppropriate(hwnd);
 		break;
 	}
 
