@@ -5128,6 +5128,12 @@ LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT Skin::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	// Make sure the skin is sent the WM_SETFOCUS when activated from a inactive window
+	return MA_ACTIVATE;
+}
+
 /*
 ** The main window procedure for the meter window.
 **
@@ -5191,6 +5197,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnTimeChange, WM_TIMECHANGE)
 	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
 	MESSAGE(OnKeyDown, WM_KEYDOWN)
+	MESSAGE(OnMouseActivate, WM_MOUSEACTIVATE)
 	END_MESSAGEPROC
 }
 

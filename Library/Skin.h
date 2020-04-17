@@ -259,6 +259,7 @@ protected:
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	enum STATE
