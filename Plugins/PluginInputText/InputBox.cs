@@ -342,6 +342,7 @@ namespace InputText
             else
             {
                 this.ShowDialog(this.parent);
+                Application.DoEvents();
             }
 
             if (this.drBackup != DialogResult.None)
