@@ -94,10 +94,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		int wsaStartupError = WSAStartup(0x0101, &wsaData);
 		if (wsaStartupError == 0)
 		{
-			if (measure->destAddrInfo)
-			{
-				measure->Dispose();
-			}
+			measure->Dispose();
 
 			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 			if (GetAddrInfo(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
