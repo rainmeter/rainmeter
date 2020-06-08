@@ -207,4 +207,5 @@ STRINGTABLE
     ID_STR_LANGUAGEOBSOLETE, STR_LANGUAGEOBSOLETE
     ID_STR_HARDWAREACCELERATED, "Use hardware acceleration (Requires restart)"
     ID_STR_GAMEMODE, "Game mode"
+    ID_STR_MEASURE, "Measure"
 }
