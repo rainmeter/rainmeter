@@ -72,6 +72,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_Values.clear();
 	m_BuiltInVariables.clear();
 	m_Variables.clear();
+	m_OriginalVariableNames.clear();
 
 	m_StyleTemplate.clear();
 	m_LastReplaced = false;
@@ -146,8 +147,15 @@ void ConfigParser::ReadVariables()
 
 void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
 {
+	std::wstring original = strVariable;
+
 	StrToUpperC(strVariable);
 	m_Variables[strVariable] = strValue;
+
+	if (m_OriginalVariableNames.find(strVariable) == m_OriginalVariableNames.end())
+	{
+		m_OriginalVariableNames[strVariable] = original;
+	}
 }
 
 void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue)
@@ -180,6 +188,20 @@ const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 	// #3: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
+	{
+		return &(*iter).second;
+	}
+
+	return nullptr;
+}
+
+const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& strVariable)
+{
+	const std::wstring strTmp = StrToUpper(strVariable);
+
+	// User-defined variables
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_OriginalVariableNames.find(strTmp);
+	if (iter != m_OriginalVariableNames.end())
 	{
 		return &(*iter).second;
 	}
@@ -1905,7 +1927,9 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 				{
 					size_t clen = sep - pos;  // key's length
 
-					StrToUpperC(key.assign(pos, clen));
+					key.assign(pos, clen);
+					std::wstring original = key;
+					StrToUpperC(key);
 					if (unique.insert(key).second)
 					{
 						++sep;
@@ -1968,6 +1992,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 								if (isVariables)
 								{
 									m_ListVariables.push_back(key);
+									m_OriginalVariableNames[key] = original;
 								}
 							}
 						}

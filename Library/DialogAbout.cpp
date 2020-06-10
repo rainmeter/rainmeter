@@ -979,9 +979,10 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 			continue;
 		}
 
-		std::wstring tmpStr = (*iter).first;
-		_wcslwr(&tmpStr[0]);
-		lvi.pszText = (WCHAR*)tmpStr.c_str();
+		const std::wstring* tmpStr = m_SkinWindow->GetParser().GetVariableOriginalName((*iter).first);
+		if (!tmpStr) continue;  // Variable name does not exist
+
+		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
 		// Truncate and add "..." if necessary
 		std::wstring valStr = (*iter).second;
