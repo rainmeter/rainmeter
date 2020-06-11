@@ -115,7 +115,9 @@ Rainmeter::Rainmeter() :
 	m_ResourceInstance(),
 	m_ResourceLCID(),
 	m_GDIplusToken(),
-	m_GlobalOptions()
+	m_GlobalOptions(),
+	m_DefaultSelectedColor(),
+	m_HardwareAccelerated()
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -977,8 +979,13 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		}
 
 		// Verify whether the skin config has an entry in the settings file
-		WCHAR buffer[SHRT_MAX];
-		bool hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
+		bool hasSettings = false;
+		WCHAR* buffer = (WCHAR*)malloc(SHRT_MAX);
+		if (buffer)
+		{
+			hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
+			free(buffer);
+		}
 
 		if (skinFolder.active != fileIndex + 1)
 		{
