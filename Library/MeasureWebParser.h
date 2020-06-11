@@ -68,6 +68,7 @@ private:
 	bool m_Download;
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
+	DWORD m_InternetOpenUrlFlags;
 };
 
 #endif

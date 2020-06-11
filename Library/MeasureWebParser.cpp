@@ -192,7 +192,7 @@ private:
 	std::wstring m_GlobalUserAgent;
 };
 
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, DWORD flags);
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
@@ -256,7 +256,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_UpdateRate(),
 	m_UpdateCounter(),
 	m_Download(),
-	m_ForceReload()
+	m_ForceReload(),
+	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE)
 {
 	g_Measures.push_back(this);
 
@@ -372,7 +373,6 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_DecodeCharacterReference = parser.ReadInt(section, L"DecodeCharacterReference", 0);
 	m_UpdateRate = parser.ReadInt(section, L"UpdateRate", 600);
-	m_ForceReload = 0 != parser.ReadInt(section, L"ForceReload", 0);
 	m_Codepage = parser.ReadInt(section, L"CodePage", 0);
 	if (m_Codepage == 0)
 	{
@@ -397,6 +397,78 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_DebugFileLocation = parser.ReadString(section, L"Debug2File", L"WebParserDump.txt");
 		GetSkin()->MakePathAbsolute(m_DebugFileLocation);
 		LogNoticeF(this, L"Debug file: %s", m_DebugFileLocation.c_str());
+	}
+
+	{
+		m_ForceReload = parser.ReadBool(section, L"ForceReload", false);  // Deprecated
+
+		m_InternetOpenUrlFlags = m_ForceReload ? INTERNET_FLAG_RELOAD : INTERNET_FLAG_RESYNCHRONIZE;
+		std::wstring szFlags = parser.ReadString(section, L"Flags", L"");
+		if (!szFlags.empty())
+		{
+			// Flags: https://docs.microsoft.com/en-us/windows/win32/api/wininet/nf-wininet-internetopenurlw#parameters
+			std::vector<std::wstring> tokens = ConfigParser::Tokenize(szFlags, L"|");
+			for (const auto& token : tokens)
+			{
+				const WCHAR * flag = token.c_str();
+				if (_wcsicmp(flag, L"ForceReload") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_RELOAD;
+				}
+				else if (_wcsicmp(flag, L"Resync") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_RESYNCHRONIZE;
+				}
+				else if (_wcsicmp(flag, L"NoCookies") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_COOKIES;
+				}
+				else if (_wcsicmp(flag, L"Hyperlink") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_HYPERLINK;
+				}
+				else if (_wcsicmp(flag, L"TempFile") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_NEED_FILE;
+				}
+				else if (_wcsicmp(flag, L"NoAuth") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_AUTH;
+				}
+				else if (_wcsicmp(flag, L"NoCacheWrite") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_CACHE_WRITE;
+				}
+				else if (_wcsicmp(flag, L"PragmaNoCache") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_PRAGMA_NOCACHE;
+				}
+				else if (_wcsicmp(flag, L"Secure") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_SECURE;
+				}
+				else if (_wcsicmp(flag, L"IgnoreCertName") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_CN_INVALID;
+				}
+				else if (_wcsicmp(flag, L"IgnoreCertDate") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_DATE_INVALID;
+				}
+				else if (_wcsicmp(flag, L"IgnoreHTTPRedirect") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP;
+				}
+				else if (_wcsicmp(flag, L"IgnoreHTTPSRedirect") == 0)
+				{
+					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS;
+				}
+				else
+				{
+					LogErrorF(this, L"Invalid flag: %s", flag);
+				}
+			}
+		}
 	}
 
 	LeaveCriticalSection(&g_CriticalSection);
@@ -491,11 +563,10 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	auto* measure = (MeasureWebParser*)pParam;
 	DWORD dwSize = 0;
 
-	if (GetRainmeter().GetDebug())
-	{
-		LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
-	}
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_ForceReload);
+	bool isDebugging = GetRainmeter().GetDebug();
+	if (isDebugging) LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
+
+	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_InternetOpenUrlFlags);
 	if (!data)
 	{
 		ShowError(measure, L"Fetch error");
@@ -507,6 +578,8 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	}
 	else
 	{
+		if (isDebugging) LogDebugF(measure, L"Fetching: Success!");
+
 		if (measure->m_Debug == 2)
 		{
 			// Dump to a file
@@ -523,7 +596,9 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 			}
 		}
 
+		if (isDebugging) LogDebugF(measure, L"Parsing data...");
 		measure->ParseData(data, dwSize);
+		if (isDebugging) LogDebugF(measure, L"Parsing data...done!");
 
 		free(data);
 	}
@@ -1084,7 +1159,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to free the returned string after use!
 */
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, DWORD flags)
 {
 	if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // Local file
 	{
@@ -1101,12 +1176,6 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 		*dataSize = (DWORD)fileSize;
 
 		return buffer;
-	}
-
-	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
-	if (forceReload)
-	{
-		flags = INTERNET_FLAG_RELOAD;
 	}
 
 	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags, 0);
