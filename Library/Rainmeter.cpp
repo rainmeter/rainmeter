@@ -449,7 +449,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		int result = MessageBox(
 			nullptr,
-			L"This will unload all skins and start Rainmeter with the default \"illustro\" skins.\n"
+			L"This will unload all skins and start Rainmeter with the default \"illustro\" skins.\n\n"
 			L"Your current layout will be saved as: @Backup\n\n"
 			L"Use this if you are having trouble starting Rainmeter.\n\n"
 			L"Enter Rainmeter Safe Start?",
