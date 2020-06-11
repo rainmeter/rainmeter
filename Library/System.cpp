@@ -1238,6 +1238,76 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 }
 
 /*
+** Copies files and folders from one location to another ONLY if the destination does not exist.
+**
+*/
+bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to)
+{
+	auto checkDir = [](LPCWSTR str) -> bool
+	{
+		if (PathIsDirectory(str) == FALSE)
+		{
+			LogErrorF(L"Copy error: \"%s\" muse be a folder.", str);
+			return false;
+		}
+		return true;
+	};
+	if (!checkDir(from.c_str())) return false;
+	if (!checkDir(to.c_str())) return false;
+
+	PathUtil::AppendBackslashIfMissing(from);
+	const std::wstring::size_type len = from.length();
+
+	std::queue<std::wstring> dirs;
+	dirs.push(from);
+
+	while (!dirs.empty())
+	{
+		from = dirs.front();
+		dirs.pop();
+
+		PathUtil::AppendBackslashIfMissing(from);
+
+		std::wstring spec = from;
+		spec.append(1, L'*');
+
+		WIN32_FIND_DATA fd;
+		HANDLE find = FindFirstFileEx(spec.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
+		if (find != INVALID_HANDLE_VALUE)
+		{
+			do
+			{
+				if (wcscmp(fd.cFileName, L".") == 0 || wcscmp(fd.cFileName, L"..") == 0) continue;
+
+				std::wstring fromFile = from;
+				fromFile.append(fd.cFileName);
+
+				std::wstring toFile = to;
+				PathUtil::AppendBackslashIfMissing(toFile);
+				toFile.append(from.substr(len));
+				toFile.append(fd.cFileName);
+
+				if (_waccess(toFile.c_str(), 0) == -1)
+				{
+					System::CopyFiles(fromFile, toFile);
+				}
+
+				if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				{
+					dirs.push(fromFile);
+				}
+
+			} while (FindNextFile(find, &fd));
+
+			FindClose(find);
+			find = INVALID_HANDLE_VALUE;
+		}
+	}
+
+	return true;
+}
+
+/*
 ** Removes a file even if a file is read-only.
 **
 */
