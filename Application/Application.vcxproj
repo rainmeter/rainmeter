@@ -24,8 +24,8 @@
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
+      <Command>if not exist "$(OutDir)Defaults\Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Defaults\Skins\"
+if not exist "$(OutDir)Defaults\Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Defaults\Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
