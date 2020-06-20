@@ -1784,7 +1784,7 @@ void Skin::WindowToScreen()
 	num = (float)_wtof(m_AnchorY.substr(0,index).c_str());
 	index = m_AnchorY.find_last_of(L'%');
 	if (index != std::wstring::npos) m_AnchorYPercentage = true;
-	index = m_AnchorY.find_last_of(L'R');
+	index = m_AnchorY.find_last_of(L'B');
 	if (index != std::wstring::npos) m_AnchorYFromBottom = true;
 	if (m_AnchorYPercentage) //is a percentage
 	{
@@ -1871,7 +1871,7 @@ void Skin::WindowToScreen()
 	index = m_WindowY.find_first_not_of(L"-0123456789.");
 	num = (float)_wtof(m_WindowY.substr(0,index).c_str());
 	index = m_WindowY.find_last_of(L'%');
-	index2 = m_WindowX.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
+	index2 = m_WindowY.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
 	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
 	{
 		m_WindowYPercentage = true;
