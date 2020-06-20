@@ -34,8 +34,7 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false),
-	m_Layers()
+	m_CanUseAxisAlignClip(false)
 {
 	Initialize(true);
 }
@@ -328,29 +327,6 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 void Canvas::ResetTransform()
 {
 	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
-}
-
-void Canvas::PushClip(Gfx::Shape* clip)
-{
-	Microsoft::WRL::ComPtr<ID2D1Layer> layer;
-	m_Target->CreateLayer(layer.GetAddressOf());
-	m_Target->PushLayer(
-		D2D1::LayerParameters1(
-			D2D1::InfiniteRect(),
-			clip->m_Shape.Get(),
-			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE),
-		layer.Get());
-
-	m_Layers.push(layer);
-}
-
-void Canvas::PopClip()
-{
-	m_Target->PopLayer();
-	if (m_Layers.top())
-	{
-		m_Layers.pop();
-	}
 }
 
 bool Canvas::SetTarget(RenderTexture* texture)
