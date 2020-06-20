@@ -18,7 +18,6 @@
 #include <wrl/client.h>
 #include <d3d11.h>
 #include <DXGI1_2.h>
-#include <stack>
 
 namespace Gfx {
 
@@ -69,9 +68,6 @@ public:
 	void GetTransform(D2D1_MATRIX_3X2_F* matrix);
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
-
-	void PushClip(Gfx::Shape* clip);
-	void PopClip();
 
 	bool SetTarget(Gfx::RenderTexture* texture);
 	void ResetTarget();
@@ -130,8 +126,6 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
-
-	std::stack<Microsoft::WRL::ComPtr<ID2D1Layer>> m_Layers;
 
 	int m_W;
 	int m_H;
