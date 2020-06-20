@@ -320,8 +320,10 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 	m_Target->SetTransform(matrix);
 
 	m_CanUseAxisAlignClip =
-		matrix._12 == 0.0f && matrix._21 == 0.0f &&
-		matrix._31 == 0.0f && matrix._32 == 0.0f;
+		(matrix.m11 ==  1.0f && matrix.m12 ==  0.0f && matrix.m21 ==  0.0f && matrix.m22 ==  1.0f) ||	// Angle: 0
+		(matrix.m11 ==  0.0f && matrix.m12 ==  1.0f && matrix.m21 == -1.0f && matrix.m22 ==  0.0f) ||	// Angle: 90
+		(matrix.m11 == -1.0f && matrix.m12 ==  0.0f && matrix.m21 ==  0.0f && matrix.m22 == -1.0f) ||	// Angle: 180
+		(matrix.m11 ==  0.0f && matrix.m12 == -1.0f && matrix.m21 ==  1.0f && matrix.m22 ==  0.0f);		// Angle: 270
 }
 
 void Canvas::ResetTransform()
