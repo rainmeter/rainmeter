@@ -54,7 +54,7 @@ bool Canvas::LogComError(HRESULT hr)
 bool Canvas::Initialize(bool hardwareAccelerated)
 {
 	++c_Instances;
-	if (c_Instances == 1u)
+	if (c_Instances == 1U)
 	{
 		// Required for Direct2D interopability.
 		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -106,7 +106,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 
 		if (FAILED(hr))
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0u);
+			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
 			if (FAILED(hr)) return false;
 		}
 
@@ -153,7 +153,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 void Canvas::Finalize()
 {
 	--c_Instances;
-	if (c_Instances == 0u)
+	if (c_Instances == 0U)
 	{
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
@@ -172,25 +172,28 @@ void Canvas::Finalize()
 
 bool Canvas::InitializeRenderTarget(HWND hwnd)
 {
+	bool useFlip = c_D3DDevice->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0;
+
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-	swapChainDesc.Width = 1u;
-	swapChainDesc.Height = 1u;
+	swapChainDesc.Width = 1U;
+	swapChainDesc.Height = 1U;
 	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	swapChainDesc.Stereo = false;
-	swapChainDesc.SampleDesc.Count = 1u;
-	swapChainDesc.SampleDesc.Quality = 0u;
+	swapChainDesc.SampleDesc.Count = 1U;
+	swapChainDesc.SampleDesc.Quality = 0U;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2u;
+	swapChainDesc.BufferCount = 2U;
 	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapChainDesc.SwapEffect = useFlip ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
 	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
 	if (FAILED(hr)) return LogComError(hr);
 
 	// Ensure that DXGI does not queue more than one frame at a time.
-	hr = c_DxgiDevice->SetMaximumFrameLatency(1u);
+	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
 	if (FAILED(hr)) return LogComError(hr);
 
 	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
@@ -230,7 +233,7 @@ void Canvas::Resize(int w, int h)
 
 	// Resize swap chain.
 	HRESULT hr = m_SwapChain->ResizeBuffers(
-		0u,
+		0U,
 		(UINT)w,
 		(UINT)h,
 		DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -628,10 +631,10 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			const auto rmSrc = getRectSubRegion(rmSeg, srcRect);
 
 			// If no overlap, don't draw
-			if ((rmDst.left < rDst.left + rDst.right &&
-				rmDst.right + rmDst.left > rDst.left &&
-				rmDst.top > rmDst.top + rmDst.bottom &&
-				rmDst.top + rmDst.bottom < rmDst.top)) continue;
+			if ((rmDst.left < (rDst.left + rDst.right) &&
+				(rmDst.right + rmDst.left) > rDst.left &&
+				rmDst.top > (rmDst.top + rmDst.bottom) &&
+				(rmDst.top + rmDst.bottom) < rmDst.top)) continue;
 
 			m_Target->FillOpacityMask(
 				mseg.GetBitmap(),
@@ -772,7 +775,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 {
-	HRESULT hr = m_SwapChain->GetBuffer(0u, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	HRESULT hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return LogComError(hr);
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
