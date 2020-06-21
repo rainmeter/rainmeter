@@ -882,7 +882,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	const std::wstring& strValue = args[2];
 
 	bool formula = false;
-	BOOL write = 0;
+	BOOL write = FALSE;
 
 	if (skin)
 	{
@@ -905,7 +905,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 
 	if (temporary)
 	{
-		if (write != 0)
+		if (write != FALSE)
 		{
 			WritePrivateProfileString(nullptr, nullptr, nullptr, iniWrite);  // FLUSH
 
@@ -925,7 +925,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	}
 	else
 	{
-		if (write == 0)  // failed
+		if (write == FALSE)  // failed
 		{
 			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s", iniFile);
 		}
