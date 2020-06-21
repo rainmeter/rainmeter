@@ -171,10 +171,10 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 				std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
-					Skin* skin = GetRainmeter().GetSkin(folderPath);
-					if (skin)
+					Skin* other = GetRainmeter().GetSkin(folderPath);
+					if (other)
 					{
-						skin->DoBang(bangInfo.bang, args);
+						other->DoBang(bangInfo.bang, args);
 					}
 					else
 					{
