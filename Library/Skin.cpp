@@ -136,7 +136,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_FontCollection(),
 	m_ToolTipHidden(false),
 	m_Favorite(false),
-	m_ResetRelativeMeters(true)
+	m_ResetRelativeMeters(true),
+	m_SolidColor(D2D1::ColorF(D2D1::ColorF::Gray)),
+	m_SolidColor2(D2D1::ColorF(D2D1::ColorF::Gray))
 {
 	if (c_InstanceCount == 0)
 	{
@@ -3317,11 +3319,11 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				double value = (double)(__int64)(ticks - m_FadeStartTime);
-				value /= m_FadeDuration;
-				value *= m_FadeEndValue - m_FadeStartValue;
-				value += m_FadeStartValue;
-				value = min(value, 255);
-				value = max(value, 0);
+				value /= (double)m_FadeDuration;
+				value *= (double)(m_FadeEndValue - m_FadeStartValue);
+				value += (double)m_FadeStartValue;
+				value = min(value, 255.0);
+				value = max(value, 0.0);
 
 				UpdateWindowTransparency((int)value);
 			}
@@ -3329,7 +3331,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TIMER_DEACTIVATE:
-		if (m_FadeStartTime == 0)
+		if (m_FadeStartTime == 0ULL)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
 			GetRainmeter().RemoveUnmanagedSkin(this);

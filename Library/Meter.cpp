@@ -48,7 +48,9 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_ContainerMeter(nullptr),
 	m_ContainerContentTexture(nullptr),
 	m_ContainerTexture(nullptr),
-	m_ContainerItems()
+	m_ContainerItems(),
+	m_SolidColor(Gfx::Util::c_Transparent_Color_F),
+	m_SolidColor2(Gfx::Util::c_Transparent_Color_F)
 {
 }
 
