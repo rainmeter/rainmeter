@@ -300,7 +300,7 @@ void TextFormatD2D::SetProperties(
 		// |false|. The bottom padding seems to be based on the font metrics so we can calculate it
 		// once and keep using it regardless of the actual string. In some cases, GDI+ also adds
 		// the line gap to the overall height so we will store it as well.
-		const float pixelsPerDesignUnit =  dwriteFontSize / (float)fmetrics.designUnitsPerEm;
+		const float pixelsPerDesignUnit = dwriteFontSize / (float)fmetrics.designUnitsPerEm;
 		m_ExtraHeight =
 			(((float)fmetrics.designUnitsPerEm / 8.0f) - fmetrics.lineGap) * pixelsPerDesignUnit;
 		m_LineGap = fmetrics.lineGap * pixelsPerDesignUnit;
@@ -356,7 +356,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		strLen,
 		m_TextFormat.Get(),
 		maxWidth,
-		10000,
+		10000.0f,
 		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
@@ -376,7 +376,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 			textLayout.As(&textLayout1);
 
 			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0, strLen};
+			const DWRITE_TEXT_RANGE range = {0U, strLen};
 			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 
@@ -385,7 +385,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		{
 			if (gdiEmulation)
 			{
-				metrics.width += xOffset * 2;
+				metrics.width += xOffset * 2.0f;
 				metrics.height += m_ExtraHeight;
 
 				// GDI+ compatibility: If the string contains a newline (even if it is the

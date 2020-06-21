@@ -172,7 +172,7 @@ void Canvas::Finalize()
 
 bool Canvas::InitializeRenderTarget(HWND hwnd)
 {
-	bool useFlip = c_D3DDevice->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0;
+	bool useFlip = c_FeatureLevel >= D3D_FEATURE_LEVEL_10_0;
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
 	swapChainDesc.Width = 1U;
@@ -411,7 +411,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		switch (formatD2D.GetVerticalAlignment())
 		{
 		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
-		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2; break;
+		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2.0f; break;
 		}
 
 		return yPos;

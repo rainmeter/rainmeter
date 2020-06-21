@@ -525,7 +525,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 						if (m_HDefined || (m_ClipStringH != -1 && rect->bottom - rect->top > (FLOAT)m_ClipStringH))
 						{
-							rect->bottom = rect->top + (m_HDefined ? (FLOAT)meterRect.bottom - meterRect.top : (FLOAT)m_ClipStringH);
+							rect->bottom = rect->top + (m_HDefined ? (meterRect.bottom - meterRect.top) : (FLOAT)m_ClipStringH);
 						}
 					}
 				}
