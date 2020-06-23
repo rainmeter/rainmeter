@@ -279,6 +279,7 @@ HDC Canvas::GetDC()
 	if (m_IsDrawing)
 	{
 		m_EnableDrawAfterGdi = true;
+		m_IsDrawing = false;
 		EndDraw();
 	}
 
@@ -296,6 +297,7 @@ void Canvas::ReleaseDC()
 	if (m_EnableDrawAfterGdi)
 	{
 		m_EnableDrawAfterGdi = false;
+		m_IsDrawing = true;
 		BeginDraw();
 	}
 }
