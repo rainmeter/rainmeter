@@ -3371,7 +3371,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	default:
 		{
 			auto it = m_DelayedCommands.find(wParam);
-			if (it != m_DelayedCommands.end()) {
+			if (it != m_DelayedCommands.end())
+			{
 				KillTimer(m_Window, wParam);
 				GetRainmeter().ExecuteCommand(it->second.c_str(), this, true);
 				m_DelayedCommands.erase(it);

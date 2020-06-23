@@ -614,7 +614,8 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data)
 {
 	const int UTF16_CODEPAGE = 1200;
-	if (m_Codepage == UTF16_CODEPAGE) {
+	if (m_Codepage == UTF16_CODEPAGE)
+	{
 		utf16Data = true;
 	}
 

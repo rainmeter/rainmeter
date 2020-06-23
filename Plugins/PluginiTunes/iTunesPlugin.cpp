@@ -351,12 +351,14 @@ public:
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void **ppvObject)
 	{
-		if ((iid == IID_IDispatch)||(iid == DIID__IiTunesEvents)) {
+		if ((iid == IID_IDispatch)||(iid == DIID__IiTunesEvents))
+		{
 			m_dwRefCount++;
 			*ppvObject = this;//(_IiTunesEvents *)this;
 			return S_OK;
 		}
-		if (iid == IID_IUnknown) {
+		if (iid == IID_IUnknown)
+		{
 			m_dwRefCount++;
 			*ppvObject = this;//(IUnknown *)this;
 			return S_OK;
@@ -371,7 +373,8 @@ public:
 	ULONG STDMETHODCALLTYPE Release()
 	{
 		InterlockedDecrement(&m_dwRefCount);
-		if (m_dwRefCount == 0) {
+		if (m_dwRefCount == 0)
+		{
 			delete this;
 			return 0;
 		}
