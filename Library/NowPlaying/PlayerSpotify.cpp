@@ -70,20 +70,24 @@ std::wstring GetExe(HWND hwnd)
 ** Try to find Spotify periodically.
 **
 */
-bool PlayerSpotify::CheckWindow() {
+bool PlayerSpotify::CheckWindow()
+{
 	DWORD time = GetTickCount();
 
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000) {
+	if (time - m_LastCheckTime > 5000)
+	{
 		m_LastCheckTime = time;
 
 		HWND prev = FindWindowEx(NULL, NULL, L"Chrome_WidgetWin_0", NULL);
 
 		while (prev != NULL && (GetWindowTextLength(prev) == 0 ||
-			_wcsicmp(GetExe(prev).c_str(), L"SPOTIFY.EXE") != 0)) {
+			_wcsicmp(GetExe(prev).c_str(), L"SPOTIFY.EXE") != 0))
+		{
 			prev = FindWindowEx(NULL, prev, L"Chrome_WidgetWin_0", NULL);
 		}
-		if (prev != NULL) {
+		if (prev != NULL)
+		{
 			m_Window = prev;
 			m_Initialized = true;
 		}
