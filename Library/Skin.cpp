@@ -984,6 +984,25 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		}
 		break;
 
+	case Bang::SetWindowPosition:
+		{
+			m_WindowX = args[0];
+			m_WindowY = args[1];
+			WindowToScreen();
+			MoveWindow(m_ScreenX, m_ScreenY);
+		}
+		break;
+
+	case Bang::SetAnchor:
+		{
+			m_AnchorX = args[0];
+			m_AnchorY = args[1];
+			WriteOptions(OPTION_ANCHOR);
+			WindowToScreen();
+			MoveWindow(m_ScreenX, m_ScreenY);
+		}
+		break;
+
 	case Bang::ZPos:
 		SetWindowZPosition((ZPOSITION)m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
@@ -2197,6 +2216,12 @@ void Skin::WriteOptions(INT setting)
 		if (setting != OPTION_ALL)
 		{
 			DialogManage::UpdateSkins(this);
+		}
+
+		if (setting & OPTION_ANCHOR)
+		{
+			WritePrivateProfileString(section, L"AnchorX", m_AnchorX.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorY", m_AnchorY.c_str(), iniFile);
 		}
 
 		if (setting & OPTION_POSITION)

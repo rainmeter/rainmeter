@@ -54,6 +54,8 @@ enum class Bang
 	DeactivateConfig,
 	ToggleConfig,
 	Move,
+	SetWindowPosition,
+	SetAnchor,
 	ZPos,
 	ChangeZPos,
 	ClickThrough,
@@ -149,6 +151,7 @@ public:
 	static void DoRefreshApp(std::vector<std::wstring>& args, Skin* skin);
 	static void DoQuitBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin);
 
 	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
 };

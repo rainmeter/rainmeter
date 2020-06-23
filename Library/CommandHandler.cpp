@@ -73,6 +73,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::AddBlur, L"AddBlur", 1 },
 	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
 	{ Bang::Move, L"Move", 2 },
+	{ Bang::SetAnchor, L"SetAnchor", 2 },
 	{ Bang::ZPos, L"ZPos", 1 },
 	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
 	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
@@ -151,7 +152,8 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
 	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
 	{ Bang::EditSkin, L"EditSkin", CommandHandler::DoEditSkinBang },
-	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
+	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang },
+	{ Bang::SetWindowPosition, L"SetWindowPosition", CommandHandler::DoSetWindowPositionBang }
 };
 
 void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
@@ -1017,6 +1019,65 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	{
 		LogErrorF(skin, L"!EditSkin: Invalid parameters");
 	}
+}
+
+void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	// Two variations:
+	//  #1: !SetWindowPosition WindowX WindowY (config)
+	//  #2: !SetWindowPosition WindowX WindowY AnchorX AnchorY (config)
+	
+	Skin* other = nullptr;
+
+	size_t argCount = args.size();
+	if (argCount == 5 || argCount == 3)
+	{
+		std::wstring& folderPath = args[argCount - 1];
+		if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
+		{
+			other = GetRainmeter().GetSkin(folderPath);
+			if (!other)
+			{
+				LogErrorF(skin, L"!SetWindowPosition: Skin \"%s\" not found", folderPath.c_str());
+				return;
+			}
+		}
+		args.pop_back();  // Remove "config"
+		--argCount;
+	}
+
+	if (argCount == 4)  // Has "AnchorX/Y"
+	{
+		std::vector<std::wstring> anchors(args.begin() + 2, args.end());
+		args.pop_back();  // AnchorY
+		args.pop_back();  // AnchorX
+		argCount -= 2;
+
+		if (other)
+		{
+			other->DoBang(Bang::SetAnchor, anchors);
+		}
+		else if (skin)
+		{
+			skin->DoBang(Bang::SetAnchor, anchors);
+		}
+	}
+
+	if (argCount == 2) //  WindowX/Y
+	{
+		if (other)
+		{
+			other->DoBang(Bang::SetWindowPosition, args);
+			return;
+		}
+		else if (skin)
+		{
+			skin->DoBang(Bang::SetWindowPosition, args);
+			return;
+		}
+	}
+
+	LogErrorF(skin, L"!SetWindowPosition: Invalid parameters");
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
