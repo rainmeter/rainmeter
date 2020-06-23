@@ -144,12 +144,9 @@ static int ParseFormula(lua_State* L)
 static int MoveWindow(lua_State* L)
 {
 	DECLARE_SELF(L)
-
-	// Simulate the "Move" bang to support WindowX/Y modifiers
-	std::vector<std::wstring> args;
-	args.emplace_back(LuaHelper::ToWide(2));
-	args.emplace_back(LuaHelper::ToWide(3));
-	self->DoBang(Bang::Move, args);
+	int x = (int)lua_tonumber(L, 2);
+	int y = (int)lua_tonumber(L, 3);
+	self->MoveWindow(x, y);
 
 	return 0;
 }

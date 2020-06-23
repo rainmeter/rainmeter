@@ -978,15 +978,9 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::Move:
 		{
-			m_WindowX = args[0];
-			m_WindowY = args[1];
-			WindowToScreen();
-			MoveWindow(m_ScreenX, m_ScreenY);
-
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugF(this, L"!Move \"%s\" \"%s\" (%i, %i)", args[0].c_str(), args[1].c_str(), m_ScreenX, m_ScreenY);
-			}
+			int x = m_Parser.ParseInt(args[0].c_str(), 0);
+			int y = m_Parser.ParseInt(args[1].c_str(), 0);
+			MoveWindow(x, y);
 		}
 		break;
 
