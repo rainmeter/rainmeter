@@ -1033,15 +1033,13 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 	if (argCount == 5 || argCount == 3)
 	{
 		std::wstring& folderPath = args[argCount - 1];
-		if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
+		other = GetRainmeter().GetSkin(folderPath);
+		if (!other)
 		{
-			other = GetRainmeter().GetSkin(folderPath);
-			if (!other)
-			{
-				LogErrorF(skin, L"!SetWindowPosition: Skin \"%s\" not found", folderPath.c_str());
-				return;
-			}
+			LogErrorF(skin, L"!SetWindowPosition: Skin \"%s\" not found", folderPath.c_str());
+			return;
 		}
+
 		args.pop_back();  // Remove "config"
 		--argCount;
 	}
