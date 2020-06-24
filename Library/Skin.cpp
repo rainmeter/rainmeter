@@ -2124,19 +2124,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	double value;
 	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
-	if (parser.ParseFormula(m_WindowX, &value))
-	{
-		_itow_s((int)value, buffer, 10);
-		m_WindowX = buffer;
-	}
+	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
 
 	m_WindowY = parser.ReadString(section, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", m_WindowY.c_str()) : addWriteFlag(OPTION_POSITION);
-	if (parser.ParseFormula(m_WindowY, &value))
-	{
-		_itow_s((int)value, buffer, 10);
-		m_WindowY = buffer;
-	}
+	m_WindowY = parser.ParseFormulaWithModifiers(m_WindowY);
 
 	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
