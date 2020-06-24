@@ -207,7 +207,21 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 		nullptr,
 		nullptr,
 		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr))
+	{
+		if (useFlip && hr == DXGI_ERROR_INVALID_CALL)
+		{
+			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+			hr = dxgiFactory->CreateSwapChainForHwnd(
+				c_DxgiDevice.Get(),
+				hwnd,
+				&swapChainDesc,
+				nullptr,
+				nullptr,
+				m_SwapChain.ReleaseAndGetAddressOf());
+			if (FAILED(hr)) return LogComError(hr);
+		}
+	}
 
 	hr = CreateRenderTarget();
 	if (FAILED(hr)) return LogComError(hr);
