@@ -1044,34 +1044,15 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 		--argCount;
 	}
 
-	if (argCount == 4)  // Has "AnchorX/Y"
-	{
-		std::vector<std::wstring> anchors(args.begin() + 2, args.end());
-		args.pop_back();  // AnchorY
-		args.pop_back();  // AnchorX
-		argCount -= 2;
-
-		if (other)
-		{
-			other->DoBang(Bang::SetAnchor, anchors);
-		}
-		else if (skin)
-		{
-			skin->DoBang(Bang::SetAnchor, anchors);
-		}
-	}
-
-	if (argCount == 2) //  WindowX/Y
+	if (argCount == 4 || argCount == 2)
 	{
 		if (other)
 		{
 			other->DoBang(Bang::SetWindowPosition, args);
-			return;
 		}
 		else if (skin)
 		{
 			skin->DoBang(Bang::SetWindowPosition, args);
-			return;
 		}
 	}
 
