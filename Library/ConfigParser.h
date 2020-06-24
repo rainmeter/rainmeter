@@ -91,6 +91,7 @@ public:
 	std::vector<FLOAT> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
+	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
