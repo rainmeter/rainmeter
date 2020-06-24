@@ -2127,7 +2127,6 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	double value;
 	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
 	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
