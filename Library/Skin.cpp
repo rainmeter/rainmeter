@@ -992,13 +992,11 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::SetAnchor:
-		{
-			m_AnchorX = args[0];
-			m_AnchorY = args[1];
-			WriteOptions(OPTION_ANCHOR);
-			WindowToScreen();
-			MoveWindow(m_ScreenX, m_ScreenY);
-		}
+		m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[1]);
+		WriteOptions(OPTION_ANCHOR);
+		WindowToScreen();
+		MoveWindow(m_ScreenX, m_ScreenY);
 		break;
 
 	case Bang::ZPos:
@@ -2132,9 +2130,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
+	m_AnchorX = parser.ParseFormulaWithModifiers(m_AnchorX);
 
 	m_AnchorY = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorY", m_AnchorY.c_str());
+	m_AnchorY = parser.ParseFormulaWithModifiers(m_AnchorY);
 
 	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
