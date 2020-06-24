@@ -172,7 +172,7 @@ void Canvas::Finalize()
 
 bool Canvas::InitializeRenderTarget(HWND hwnd)
 {
-	bool useFlip = c_FeatureLevel >= D3D_FEATURE_LEVEL_10_0;
+	bool useFlip = IsWindows10OrGreater() && c_FeatureLevel >= D3D_FEATURE_LEVEL_10_0;
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
 	swapChainDesc.Width = 1U;
