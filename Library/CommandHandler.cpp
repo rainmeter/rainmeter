@@ -1049,10 +1049,12 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 		if (other)
 		{
 			other->DoBang(Bang::SetWindowPosition, args);
+			return;
 		}
 		else if (skin)
 		{
 			skin->DoBang(Bang::SetWindowPosition, args);
+			return;
 		}
 	}
 
