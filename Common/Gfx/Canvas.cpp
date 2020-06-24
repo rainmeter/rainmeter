@@ -34,7 +34,7 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false)
+	m_CanUseAxisAlignClip(true)
 {
 	Initialize(true);
 }
