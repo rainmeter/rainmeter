@@ -987,6 +987,14 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetWindowPosition:
 		m_WindowX = m_Parser.ParseFormulaWithModifiers(args[0]);
 		m_WindowY = m_Parser.ParseFormulaWithModifiers(args[1]);
+
+		if (args.size() == 4)
+		{
+			m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[2]);
+			m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[3]);
+			WriteOptions(OPTION_ANCHOR);
+		}
+
 		WindowToScreen();
 		MoveWindow(m_ScreenX, m_ScreenY);
 		break;
