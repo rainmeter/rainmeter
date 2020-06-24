@@ -1379,6 +1379,31 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 	return false;
 }
 
+// Strips any trailing modifiers before evaluating a formula, then
+//  appends the trailing modifiers for further processing.
+std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula)
+{
+	std::wstring modifiers;
+	double value = 0.0;
+
+	const size_t pos = formula.find_last_of(L')');
+	if (pos != std::wstring::npos)
+	{
+		modifiers = formula.substr(pos + 1);  // can be empty!
+		const std::wstring newFormula(formula, 0, pos + 1);
+		if (ParseFormula(newFormula, &value))
+		{
+			WCHAR buffer[128];
+			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
+			Measure::RemoveTrailingZero(buffer, bufferLen);
+			modifiers.insert(0, buffer);  // Insert the "value" in front of the modifiers.
+			return modifiers;
+		}
+	}
+
+	return formula;
+}
+
 D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
