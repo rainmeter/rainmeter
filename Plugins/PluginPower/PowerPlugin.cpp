@@ -47,11 +47,13 @@ struct MeasureData
 	bool suppressError;
 	bool updated;
 
+	DWORD cachedBatteryLifeTime;
+
 	void* rm;
 
 	ULONGLONG logonTime;
 	
-	MeasureData() : index(0U), type(POWER_UNKNOWN), suppressError(false), updated(false), rm(nullptr), logonTime(0ULL) {}
+	MeasureData() : index(0U), type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr), logonTime(0ULL) {}
 };
 
 UINT g_NumOfProcessors = 0U;
@@ -269,6 +271,7 @@ PLUGIN_EXPORT double Update(void* data)
 			return sps.BatteryFlag;
 
 		case POWER_LIFETIME:
+			measure->cachedBatteryLifeTime = sps.BatteryLifeTime;
 			return sps.BatteryLifeTime;
 
 		case POWER_PERCENT:
@@ -291,40 +294,31 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 
 	if (measure->type == POWER_LIFETIME)
 	{
-		SYSTEM_POWER_STATUS sps;
-		if (GetSystemPowerStatus(&sps))
+		DWORD value = measure->cachedBatteryLifeTime;
+		if (value == -1)
 		{
-			// Change it to time string
-			if (sps.BatteryLifeTime == -1)
-			{
-				return L"Unknown";
-			}
-			else
-			{
-				tm time = {0};
-				time.tm_sec = sps.BatteryLifeTime % 60;
-				time.tm_min = (sps.BatteryLifeTime / 60) % 60;
-				time.tm_hour = sps.BatteryLifeTime / 60 / 60;
-
-				_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
-				_CrtSetReportMode(_CRT_ASSERT, 0);
-
-				errno = 0;
-				wcsftime(buffer, 128, measure->format.c_str(), &time);
-				if (errno == EINVAL)
-				{
-					buffer[0] = L'\0';
-				}
-
-				_set_invalid_parameter_handler(oldHandler);
-
-				return buffer;
-			}
+			return L"Unknown";
 		}
-		else if (!measure->suppressError)
+		else
 		{
-			RmLogF(measure->rm, LOG_ERROR, L"Power status error: %ld", GetLastError());
-			measure->suppressError = true;
+			tm time = {0};
+			time.tm_sec = value % 60;
+			time.tm_min = (value / 60) % 60;
+			time.tm_hour = value / 60 / 60;
+
+			_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+			_CrtSetReportMode(_CRT_ASSERT, 0);
+
+			errno = 0;
+			wcsftime(buffer, 128, measure->format.c_str(), &time);
+			if (errno == EINVAL)
+			{
+				buffer[0] = L'\0';
+			}
+
+			_set_invalid_parameter_handler(oldHandler);
+
+			return buffer;
 		}
 	}
 
