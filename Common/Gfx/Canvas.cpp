@@ -219,9 +219,9 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 				nullptr,
 				nullptr,
 				m_SwapChain.ReleaseAndGetAddressOf());
-			if (FAILED(hr)) return LogComError(hr);
 		}
 	}
+	if (FAILED(hr)) return LogComError(hr);
 
 	hr = CreateRenderTarget();
 	if (FAILED(hr)) return LogComError(hr);
