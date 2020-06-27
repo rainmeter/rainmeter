@@ -40,7 +40,6 @@ enum MeasureType
 
 struct MeasureData
 {
-	UINT index;
 	MeasureType type;
 	RawString format;
 
@@ -53,7 +52,7 @@ struct MeasureData
 
 	ULONGLONG logonTime;
 	
-	MeasureData() : index(0U), type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr), logonTime(0ULL) {}
+	MeasureData() : type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr), logonTime(0ULL) {}
 };
 
 UINT g_NumOfProcessors = 0U;
@@ -100,16 +99,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	UINT oldIndex = measure->index;
 	MeasureType oldType = measure->type;
 	RawString oldFormat = measure->format;
-
-	auto readIndex = [&](LPCWSTR val) -> void
-	{
-		int index = RmReadInt(rm, L"Index", 0);  // 0 based index
-		index = max(0, min(index, static_cast<int>(g_NumOfProcessors - 1U)));  // clamp
-		measure->index = index;
-	};
 
 	LPCWSTR value = RmReadString(rm, L"PowerState", L"");
 	if (_wcsicmp(L"ACLINE", value) == 0)
@@ -143,12 +134,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else if (_wcsicmp(L"MHZ", value) == 0)
 	{
 		measure->type = POWER_MHZ;
-		readIndex(value);
 	}
 	else if (_wcsicmp(L"HZ", value) == 0)
 	{
 		measure->type = POWER_HZ;
-		readIndex(value);
 	}
 	else if (_wcsicmp(L"PERCENT", value) == 0)
 	{
@@ -167,7 +156,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (measure->updated)
 	{
 		measure->suppressError =
-			oldIndex == measure->index &&
 			oldType == measure->type &&
 			_wcsicmp(oldFormat.c_str(), measure->format.c_str()) == 0;
 	}
@@ -187,14 +175,13 @@ PLUGIN_EXPORT double Update(void* data)
 			if (g_NumOfProcessors > 0U)
 			{
 				double value = 0.0;
-				int index = measure->index;
 				PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
 				memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
 				LONG status = CallNtPowerInformation(
 					ProcessorInformation, nullptr, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
 				if (status == NT_STATUS_SUCCESS)
 				{
-					value = (measure->type == POWER_MHZ) ? ppi[index].CurrentMhz : ppi[index].CurrentMhz * 1000000.0;
+					value = (measure->type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
 				}
 				else if (!measure->suppressError)
 				{
@@ -215,7 +202,6 @@ PLUGIN_EXPORT double Update(void* data)
 			if (g_NumOfProcessors > 0U)
 			{
 				double value = 0.0;
-				int index = measure->index;
 				ULONGLONG nano = 0ULL;
 				LONG status = CallNtPowerInformation(
 					(measure->type == POWER_LASTWAKETIME) ? LastWakeTime : LastSleepTime, nullptr, 0, &nano, sizeof(ULONGLONG));
