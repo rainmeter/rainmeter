@@ -52,7 +52,7 @@ struct MeasureData
 };
 
 UINT g_NumOfProcessors = 0U;
-constexpr LONG NT_STATUS_SUCCESS = 0x00000000U;
+constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 
 void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
