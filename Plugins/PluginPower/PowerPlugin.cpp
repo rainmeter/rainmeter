@@ -33,9 +33,7 @@ enum MeasureType
 	POWER_LIFETIME,
 	POWER_PERCENT,
 	POWER_MHZ,
-	POWER_HZ,
-	POWER_LASTWAKETIME,
-	POWER_LASTSLEEPTIME
+	POWER_HZ
 };
 
 struct MeasureData
@@ -49,10 +47,8 @@ struct MeasureData
 	DWORD cachedBatteryLifeTime;
 
 	void* rm;
-
-	ULONGLONG logonTime;
 	
-	MeasureData() : type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr), logonTime(0ULL) {}
+	MeasureData() : type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr) {}
 };
 
 UINT g_NumOfProcessors = 0U;
@@ -76,23 +72,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	}
 
 	measure->rm = rm;
-
-	// Get user logon time (from SysInfo.cpp)
-	HKEY hKey;
-	if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
-	{
-		FILETIME lastWrite;
-		if (RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &lastWrite) == ERROR_SUCCESS)
-		{
-			FileTimeToLocalFileTime(&lastWrite, &lastWrite);
-
-			LARGE_INTEGER li;
-			li.LowPart = lastWrite.dwLowDateTime;
-			li.HighPart = lastWrite.dwHighDateTime;
-			measure->logonTime = static_cast<ULONGLONG>(li.QuadPart);
-		}
-		RegCloseKey(hKey);
-	}
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -144,14 +123,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->type = POWER_PERCENT;
 		*maxValue = 100.0;
 	}
-	else if (_wcsicmp(L"LASTWAKETIME", value) == 0)
-	{
-		measure->type = POWER_LASTWAKETIME;
-	}
-	else if (_wcsicmp(L"LASTSLEEPTIME", value) == 0)
-	{
-		measure->type = POWER_LASTSLEEPTIME;
-	}
 
 	if (measure->updated)
 	{
@@ -191,31 +162,6 @@ PLUGIN_EXPORT double Update(void* data)
 					measure->suppressError = true;
 				}
 				delete[] ppi;
-				return value;
-			}
-		}
-		break;
-
-	case POWER_LASTWAKETIME:
-	case POWER_LASTSLEEPTIME:
-		{
-			if (g_NumOfProcessors > 0U)
-			{
-				double value = 0.0;
-				ULONGLONG nano = 0ULL;
-				LONG status = CallNtPowerInformation(
-					(measure->type == POWER_LASTWAKETIME) ? LastWakeTime : LastSleepTime, nullptr, 0, &nano, sizeof(ULONGLONG));
-				if (status == NT_STATUS_SUCCESS)
-				{
-					value = (double)((measure->logonTime + nano) / 10000000);
-				}
-				else if (!measure->suppressError)
-				{
-					// NTSTATUS codes:
-					// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
-					RmLogF(measure->rm, LOG_ERROR, L"Last wake time error: 0x%08x", status);
-					measure->suppressError = true;
-				}
 				return value;
 			}
 		}
