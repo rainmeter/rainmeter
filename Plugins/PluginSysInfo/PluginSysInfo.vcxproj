@@ -21,8 +21,8 @@
       <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Rasapi32.lib;Iphlpapi.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>netapi32.dll</DelayLoadDLLs>
+      <AdditionalDependencies>Rasapi32.lib;Iphlpapi.lib;netapi32.lib;PowrProf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>netapi32.dll;PowrProf.dll;</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
