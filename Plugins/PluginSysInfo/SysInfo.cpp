@@ -32,6 +32,7 @@ MULTIMONITOR_INFO m_Monitors = { 0 };
 
 enum MeasureType
 {
+	MEASURE_UNKNOWN,
 	MEASURE_COMPUTER_NAME,
 	MEASURE_USER_NAME,
 	MEASURE_WORK_AREA,
@@ -41,11 +42,11 @@ enum MeasureType
 	MEASURE_PAGESIZE,
 	MEASURE_OS_BITS,
 	MEASURE_IDLE_TIME,
-	MEASURE_ADAPTER_DESCRIPTION,
-	MEASURE_ADAPTER_TYPE,
-	MEASURE_NET_MASK,
-	MEASURE_IP_ADDRESS,
-	MEASURE_GATEWAY_ADDRESS,
+	MEASURE_ADAPTER_DESCRIPTION,    // Do not change the order of //
+	MEASURE_ADAPTER_TYPE,           // these types. They are used //
+	MEASURE_NET_MASK,               // with specific interface    //
+	MEASURE_IP_ADDRESS,             // names or with the          //
+	MEASURE_GATEWAY_ADDRESS,        // SysInfoData=Best option.   //
 	MEASURE_HOST_NAME,
 	MEASURE_DOMAIN_NAME,
 	MEASURE_DOMAINWORKGROUP,
@@ -69,7 +70,7 @@ enum MeasureType
 	MEASURE_TIMEZONE_STANDARD_NAME,
 	MEASURE_TIMEZONE_DAYLIGHT_BIAS,
 	MEASURE_TIMEZONE_DAYLIGHT_NAME,
-	MEASURE_USER_LOGONTIME,
+	MEASURE_USER_LOGON_TIME,
 	MEASURE_USER_LAST_WAKE_TIME,
 	MEASURE_USER_LAST_SLEEP_TIME
 };
@@ -85,7 +86,7 @@ struct MeasureData
 	bool updated;
 	void* rm;
 
-	MeasureData() : type(), data(), useBestInterface(false), suppressError(false), updated(false), rm(nullptr) {}
+	MeasureData() : type(MEASURE_UNKNOWN), data(0), useBestInterface(false), suppressError(false), updated(false), rm(nullptr) {}
 };
 
 NLM_CONNECTIVITY GetNetworkConnectivity();
@@ -105,7 +106,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	{
 		if (GetSystemMetrics(SM_CMONITORS) > 32)
 		{
-			LSLog(LOG_ERROR, nullptr, L"SysInfo.dll: Max amount of monitors supported is 32.");
+			RmLogF(rm, LOG_ERROR, L"SysInfo.dll: Max amount of monitors supported is 32.");
 		}
 
 		m_Monitors.count = 0;
@@ -300,7 +301,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else if (_wcsicmp(L"USER_LOGONTIME", type) == 0)
 	{
-		measure->type = MEASURE_USER_LOGONTIME;
+		measure->type = MEASURE_USER_LOGON_TIME;
 	}
 	else if (_wcsicmp(L"USER_LAST_WAKE_TIME", type) == 0)
 	{
@@ -312,9 +313,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else
 	{
-		WCHAR buffer[256];
-		_snwprintf_s(buffer, _TRUNCATE, L"SysInfo.dll: SysInfoType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
-		RmLog(LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"SysInfo.dll: SysInfoType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
+		measure->type = MEASURE_UNKNOWN;
 	}
 
 	measure->useBestInterface = false;
@@ -750,7 +750,7 @@ PLUGIN_EXPORT double Update(void* data)
 			return (double)tzi.DaylightBias;
 		}
 
-	case MEASURE_USER_LOGONTIME:
+	case MEASURE_USER_LOGON_TIME:
 		return (double)(g_LogonTime / 10000000);
 
 	case MEASURE_USER_LAST_WAKE_TIME:
@@ -759,7 +759,7 @@ PLUGIN_EXPORT double Update(void* data)
 			bool isWake = measure->type == MEASURE_USER_LAST_WAKE_TIME;
 			double value = 0.0;
 			ULONGLONG nano = 0ULL;
-			LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime, nullptr, 0, &nano, sizeof(ULONGLONG));
+			LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime, nullptr, 0UL, &nano, sizeof(ULONGLONG));
 			if (status == NT_STATUS_SUCCESS)
 			{
 				value = (double)((g_LogonTime + (LONGLONG)nano) / 10000000);
