@@ -71,8 +71,8 @@ enum MeasureType
 	MEASURE_TIMEZONE_DAYLIGHT_BIAS,
 	MEASURE_TIMEZONE_DAYLIGHT_NAME,
 	MEASURE_USER_LOGON_TIME,
-	MEASURE_USER_LAST_WAKE_TIME,
-	MEASURE_USER_LAST_SLEEP_TIME
+	MEASURE_LAST_WAKE_TIME,
+	MEASURE_LAST_SLEEP_TIME
 };
 
 struct MeasureData
@@ -303,13 +303,13 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_USER_LOGON_TIME;
 	}
-	else if (_wcsicmp(L"USER_LAST_WAKE_TIME", type) == 0)
+	else if (_wcsicmp(L"LAST_WAKE_TIME", type) == 0)
 	{
-		measure->type = MEASURE_USER_LAST_WAKE_TIME;
+		measure->type = MEASURE_LAST_WAKE_TIME;
 	}
-	else if (_wcsicmp(L"USER_LAST_SLEEP_TIME", type) == 0)
+	else if (_wcsicmp(L"LAST_SLEEP_TIME", type) == 0)
 	{
-		measure->type = MEASURE_USER_LAST_SLEEP_TIME;
+		measure->type = MEASURE_LAST_SLEEP_TIME;
 	}
 	else
 	{
@@ -753,10 +753,10 @@ PLUGIN_EXPORT double Update(void* data)
 	case MEASURE_USER_LOGON_TIME:
 		return (double)(g_LogonTime / 10000000);
 
-	case MEASURE_USER_LAST_WAKE_TIME:
-	case MEASURE_USER_LAST_SLEEP_TIME:
+	case MEASURE_LAST_WAKE_TIME:
+	case MEASURE_LAST_SLEEP_TIME:
 		{
-			bool isWake = measure->type == MEASURE_USER_LAST_WAKE_TIME;
+			bool isWake = measure->type == MEASURE_LAST_WAKE_TIME;
 			double value = 0.0;
 			ULONGLONG nano = 0ULL;
 			LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime, nullptr, 0UL, &nano, sizeof(ULONGLONG));
