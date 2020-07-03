@@ -992,14 +992,10 @@ void DialogInstall::KeepVariables()
 
 		if (_waccess(fromPath.c_str(), 0) != 0 || _waccess(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
-		DWORD count = GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str());
-		if (count < 1U) continue;	// No variables in existing file
-
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1U) continue;	// No variables in existing file
 		getPairs(section, fromVariables);
 
-		count = GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str());
-		if (count < 1U) continue;	// No variables in the file from rmskin
-
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1U) continue;	// No variables in the file from rmskin
 		getPairs(section, toVariables);
 
 		for (const auto& var : fromVariables)
