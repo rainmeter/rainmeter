@@ -980,12 +980,9 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 
 		// Verify whether the skin config has an entry in the settings file
 		bool hasSettings = false;
-		WCHAR* buffer = (WCHAR*)malloc(SHRT_MAX);
-		if (buffer)
-		{
-			hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
-			free(buffer);
-		}
+		WCHAR* buffer = new WCHAR[SHRT_MAX];
+		hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
+		delete [] buffer;
 
 		if (skinFolder.active != fileIndex + 1)
 		{
