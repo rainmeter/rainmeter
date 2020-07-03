@@ -962,44 +962,54 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 void DialogInstall::KeepVariables()
 {
-	WCHAR keyname[32767];	// Max size returned by GetPrivateProfileSection
-	WCHAR buffer[4];
-	std::wstring currKey, currValue;
+	auto getPairs = [](WCHAR* section, std::unordered_map<std::wstring, std::wstring>& var) -> void
+	{
+		std::wstring str, key, value;
+		for (LPCWSTR ptr = section; *ptr; ptr += str.length() + 1)
+		{
+			str = ptr;
+			size_t pos = str.find(L'=');
+			if (pos == std::wstring::npos) continue;	// Only accept lines containing an '='
 
-	for (size_t i = 0, isize = m_VariablesFiles.size(); i < isize; ++i)
+			key.assign(str.begin(), str.begin() + pos);
+			value.assign(str.begin() + pos + 1, str.end());
+
+			var[key] = value;
+			key.clear();
+			value.clear();
+		}
+	};
+
+	WCHAR* section = new WCHAR[SHRT_MAX];
+	for (const auto& file : m_VariablesFiles)
 	{
 		std::wstring fromPath = g_Data.skinsPath + L"@Backup\\";
-		fromPath += m_VariablesFiles[i];
-		std::wstring toPath = g_Data.skinsPath + m_VariablesFiles[i];
+		fromPath.append(file);
+		std::wstring toPath = g_Data.skinsPath + file;
 
-		unsigned int count = GetPrivateProfileSection(L"Variables", keyname, 32767, fromPath.c_str());
+		std::unordered_map<std::wstring, std::wstring> fromVariables;
+		std::unordered_map<std::wstring, std::wstring> toVariables;
 
-		if ((_waccess(fromPath.c_str(), 0) == 0) && (_waccess(toPath.c_str(), 0) == 0)
-			&& (count > 0))
+		if (_waccess(fromPath.c_str(), 0) != 0 || _waccess(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
+
+		DWORD count = GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str());
+		if (count < 1U) continue;	// No variables in existing file
+
+		getPairs(section, fromVariables);
+
+		count = GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str());
+		if (count < 1U) continue;	// No variables in the file from rmskin
+
+		getPairs(section, toVariables);
+
+		for (const auto& var : fromVariables)
 		{
-			for (unsigned int j = 0; j < count; ++j)
-			{
-				if (keyname[j] == L'=')
-				{
-					if (GetPrivateProfileString(L"Variables", currKey.c_str(), nullptr, buffer, 4, toPath.c_str()) > 0)
-					{
-						while (keyname[++j] != L'\0') currValue += keyname[j];
-						WritePrivateProfileString(L"Variables", currKey.c_str(), currValue.c_str(), toPath.c_str());
-						currValue.clear();
-					}
-					else
-					{
-						while (keyname[j] != L'\0') ++j;
-					}
-					currKey.clear();
-				}
-				else
-				{
-					currKey += keyname[j];
-				}
-			}
+			if (toVariables.find(var.first) == toVariables.end()) continue;
+			
+			WritePrivateProfileString(L"Variables", var.first.c_str(), var.second.c_str(), toPath.c_str());
 		}
 	}
+	delete [] section;
 }
 
 void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
