@@ -7,7 +7,7 @@ set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 set VERSION_MAJOR=2
-set VERSION_MINOR=13
+set VERSION_MINOR=14
 set VERSION_SUBMINOR=0
 
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
