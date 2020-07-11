@@ -172,8 +172,6 @@ void Canvas::Finalize()
 
 bool Canvas::InitializeRenderTarget(HWND hwnd)
 {
-	bool useFlip = IsWindows10OrGreater() && c_FeatureLevel >= D3D_FEATURE_LEVEL_10_0;
-
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
 	swapChainDesc.Width = 1U;
 	swapChainDesc.Height = 1U;
@@ -184,7 +182,7 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 2U;
 	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = useFlip ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
@@ -207,20 +205,6 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 		nullptr,
 		nullptr,
 		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr))
-	{
-		if (useFlip && hr == DXGI_ERROR_INVALID_CALL)
-		{
-			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-			hr = dxgiFactory->CreateSwapChainForHwnd(
-				c_DxgiDevice.Get(),
-				hwnd,
-				&swapChainDesc,
-				nullptr,
-				nullptr,
-				m_SwapChain.ReleaseAndGetAddressOf());
-		}
-	}
 	if (FAILED(hr)) return LogComError(hr);
 
 	hr = CreateRenderTarget();
