@@ -12,7 +12,7 @@
 
 namespace CharacterEntityReference {
 
-void Decode(std::wstring& str, int opt);
+void Decode(std::wstring& str, int opt, bool unescape);
 
 } // namespace CharacterEntityReference
 

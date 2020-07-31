@@ -62,6 +62,7 @@ private:
 	int m_StringIndex;
 	int m_StringIndex2;
 	int m_DecodeCharacterReference;
+	bool m_DecodeCodePoints;
 	int m_Debug;
 	UINT m_UpdateRate;
 	UINT m_UpdateCounter;

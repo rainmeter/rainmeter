@@ -251,6 +251,7 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_StringIndex(),
 	m_StringIndex2(),
 	m_DecodeCharacterReference(),
+	m_DecodeCodePoints(false),
 	m_Debug(),
 	m_LogSubstringErrors(),
 	m_UpdateRate(),
@@ -372,6 +373,8 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_StringIndex2 = index < 0 ? 0 : index;
 
 	m_DecodeCharacterReference = parser.ReadInt(section, L"DecodeCharacterReference", 0);
+	m_DecodeCodePoints = parser.ReadBool(section, L"DecodeCodePoints", false);
+
 	m_UpdateRate = parser.ReadInt(section, L"UpdateRate", 600);
 	m_Codepage = parser.ReadInt(section, L"CodePage", 0);
 	if (m_Codepage == 0)
@@ -668,7 +671,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 					int matchLen = ovector[2 * m_StringIndex + 1] - ovector[2 * m_StringIndex];
 					EnterCriticalSection(&g_CriticalSection);
 					m_ResultString.assign(match, matchLen);
-					CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference);
+					CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 				else
@@ -725,7 +728,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 								(*i)->m_ResultString.replace(
 									StringUtil::CaseInsensitiveFind((*i)->m_ResultString, compareStr),
 									compareStr.size(), match, matchLen);
-								CharacterEntityReference::Decode((*i)->m_ResultString, (*i)->m_DecodeCharacterReference);
+								CharacterEntityReference::Decode((*i)->m_ResultString, (*i)->m_DecodeCharacterReference, (*i)->m_DecodeCodePoints);
 
 								// Start download threads for the references
 								if ((*i)->m_Download)
