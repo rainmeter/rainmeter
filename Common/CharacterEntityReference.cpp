@@ -303,12 +303,14 @@ WCHAR GetEntityChar(const std::wstring& entity)
 
 } // namespace
 
-void Decode(std::wstring& str, int opt)
+void Decode(std::wstring& str, int opt, bool unescape)
 {
 	// (opt <= 0 || opt > 3) : Do nothing.
 	// (opt == 1)            : Decode both numeric character references and character entity references.
 	// (opt == 2)            : Decode only numeric character references.
 	// (opt == 3)            : Decode only character entity references.
+
+	// (unescape == true)    : Unescape any \uXXXX or \UXXXXXXXX unicode code points.
 
 	if (opt >= 1 && opt <= 3)
 	{
@@ -385,6 +387,31 @@ void Decode(std::wstring& str, int opt)
 				}
 				++start;
 			}
+		}
+	}
+
+	if (unescape)
+	{
+		size_t len = 0;
+		size_t pos = -1;
+		while ((pos = str.find(L'\\', ++pos)) != std::wstring::npos)
+		{
+			switch (str[pos + 1])
+			{
+			case L'u': len = 4; break;
+			case L'U': len = 8; break;
+			default: continue;
+			}
+
+			std::wstring num(str, pos + 2, len);
+			WCHAR* pch = nullptr;
+			errno = 0;
+			long ch = wcstol(num.c_str(), &pch, 16);  // code points use hexidecimal format
+			if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)  // invalid character
+			{
+				continue;
+			}
+			str.replace(pos, len + 2, 1, (WCHAR)ch);
 		}
 	}
 }
