@@ -1182,6 +1182,27 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 		return buffer;
 	}
 
+	{
+		URL_COMPONENTS components = { 0 };
+		components.dwStructSize = sizeof(components);
+		components.dwExtraInfoLength = -1UL;
+		if (InternetCrackUrl(url.c_str(), static_cast<DWORD>(url.size()), 0, &components))
+		{
+			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0)
+			{
+				size_t position = url.find(components.lpszExtraInfo);  // Only percent encode characters in the query or fragment part of the URL
+				if (position != std::wstring::npos)
+				{
+					std::wstring extra = url.substr(position);
+					StringUtil::EncodeUrl(extra, false);  // Only percent encode spaces, control characters, and non-ascii characters (HEX: 80-255)
+
+					url.erase(position);
+					url.append(extra);
+				}
+			}
+		}
+	}
+
 	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags, 0);
 	if (!hUrlDump)
 	{
