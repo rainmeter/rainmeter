@@ -123,11 +123,13 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 bool TextInlineFormat_Shadow::CompareAndUpdateProperties(const std::wstring& pattern, const FLOAT& blur,
 	const D2D1_POINT_2F& offset, const D2D1_COLOR_F& color)
 {
-	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || !Util::ColorFEquals(m_Color, color))
+	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || !Util::ColorFEquals(m_Color, color) ||
+		blur != m_Blur || offset.x != m_Offset.x || offset.y != m_Offset.y)
 	{
 		SetPattern(pattern);
 		m_Offset = offset;
 		m_Color = color;
+		m_Blur = blur;
 		return true;
 	}
 
