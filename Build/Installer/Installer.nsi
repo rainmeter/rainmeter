@@ -717,6 +717,7 @@ FunctionEnd
 Function HandlePlugins
 	${If} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
+	${OrIf} $R7 == "Process.dll"
 	${OrIf} $R7 == "RecycleManager.dll"
 	${OrIf} $R7 == "WebParser.dll"
 		Delete "$R9"
@@ -731,7 +732,6 @@ Function HandlePlugins
 	${AndIf} $R7 != "PerfMon.dll"
 	${AndIf} $R7 != "PingPlugin.dll"
 	${AndIf} $R7 != "PowerPlugin.dll"
-	${AndIf} $R7 != "Process.dll"
 	${AndIf} $R7 != "QuotePlugin.dll"
 	${AndIf} $R7 != "RecycleManager.dll"
 	${AndIf} $R7 != "ResMon.dll"

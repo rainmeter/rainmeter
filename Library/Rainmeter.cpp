@@ -1747,6 +1747,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 	{
 		L"MediaKey",
 		L"NowPlaying",
+		L"Process",
 		L"RecycleManager",
 		L"WebParser"
 	};

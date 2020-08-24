@@ -57,8 +57,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginPing", "Plugins\Plugi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginPower", "Plugins\PluginPower\PluginPower.vcxproj", "{C30E7EB6-9655-4AF4-98AE-D6E6B14631AF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginProcess", "Plugins\PluginProcess\PluginProcess.vcxproj", "{05203741-CD80-4060-8218-EC5D1120FE3E}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginQuote", "Plugins\PluginQuote\PluginQuote.vcxproj", "{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginResMon", "Plugins\PluginResMon\PluginResMon.vcxproj", "{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}"
@@ -264,14 +262,6 @@ Global
 		{C30E7EB6-9655-4AF4-98AE-D6E6B14631AF}.Release|Win32.Build.0 = Release|Win32
 		{C30E7EB6-9655-4AF4-98AE-D6E6B14631AF}.Release|x64.ActiveCfg = Release|x64
 		{C30E7EB6-9655-4AF4-98AE-D6E6B14631AF}.Release|x64.Build.0 = Release|x64
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|Win32.ActiveCfg = Debug|Win32
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|Win32.Build.0 = Debug|Win32
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|x64.ActiveCfg = Debug|x64
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|x64.Build.0 = Debug|x64
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|Win32.ActiveCfg = Release|Win32
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|Win32.Build.0 = Release|Win32
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|x64.ActiveCfg = Release|x64
-		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|x64.Build.0 = Release|x64
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Debug|Win32.Build.0 = Debug|Win32
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Debug|x64.ActiveCfg = Debug|x64

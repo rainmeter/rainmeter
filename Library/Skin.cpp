@@ -19,6 +19,7 @@
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
+#include "MeasureProcess.h"
 #include "MeasureTime.h"
 #include "MeterButton.h"
 #include "MeterString.h"
