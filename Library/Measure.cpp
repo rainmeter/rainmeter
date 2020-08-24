@@ -19,6 +19,7 @@
 #include "MeasureDiskSpace.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
+#include "MeasureProcess.h"
 #include "MeasureRecycleManager.h"
 #include "MeasureRegistry.h"
 #include "MeasureString.h"
@@ -775,6 +776,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Plugin", measure) == 0)
 	{
 		return new MeasurePlugin(skin, name);
+	}
+	else if (_wcsicmp(L"Process", measure) == 0)
+	{
+		return new MeasureProcess(skin, name);
 	}
 	else if (_wcsicmp(L"RecycleManager", measure) == 0)
 	{

@@ -60,6 +60,7 @@
     <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
+    <ClCompile Include="MeasureProcess.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
     <ClInclude Include="MeasurePlugin.h" />
+    <ClInclude Include="MeasureProcess.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureScript.h" />
