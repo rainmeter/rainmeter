@@ -479,6 +479,8 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void MeasureWebParser::UpdateValue()
 {
+	m_Value = 0.0;  // Default "number" value to 0
+
 	if (m_Download && m_RegExp.empty() && m_Url.find(L'[') == std::wstring::npos)
 	{
 		// If RegExp is empty download the file that is pointed by the Url
