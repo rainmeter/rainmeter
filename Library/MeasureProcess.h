@@ -9,9 +9,6 @@
 #define RM_LIBRARY_MEASUREPROCESS_H_
 
 #include "Measure.h"
-#include <thread>
-#include <mutex>
-#include <future>
 
 class MeasureProcess : public Measure
 {
@@ -29,18 +26,7 @@ protected:
 	void UpdateValue() override;
 
 private:
-	static void MonitorProcesses();
-
-	std::wstring m_ProcessName;
-
-	static std::vector<std::wstring> c_Processes;
-	static std::thread c_ProcessThread;
-	static std::promise<void> c_ProcessExitSignal;
-	static std::future<void> c_ProcessFuture;
-	static std::mutex c_ProcessMutex;
-
-	static UINT c_References;
-	static int c_UpdateInterval;
+	std::wstring m_ProcessNameLowercase;
 };
 
 #endif
