@@ -9,99 +9,57 @@
 #include "MeasureProcess.h"
 #include "ConfigParser.h"
 #include "Logger.h"
-#include <chrono>
+#include "System.h"
 #include <TlHelp32.h>
 
-std::vector<std::wstring> MeasureProcess::c_Processes;
-std::thread MeasureProcess::c_ProcessThread;
-std::promise<void> MeasureProcess::c_ProcessExitSignal;
-std::future<void> MeasureProcess::c_ProcessFuture;
-std::mutex MeasureProcess::c_ProcessMutex;
-UINT MeasureProcess::c_References = 0;
-int MeasureProcess::c_UpdateInterval = 250;  // milliseconds
+std::unordered_set<std::wstring>& GetRunningProcessLowercase() {
+	static std::unordered_set<std::wstring> s_Processes;
+	static ULONGLONG s_LastUpdateTickCount = 0;
+	const ULONGLONG updateInterval = 250; // ms
+
+	ULONGLONG tickCount = System::GetTickCount64();
+	if (tickCount >= (s_LastUpdateTickCount + updateInterval))
+	{
+		s_LastUpdateTickCount = tickCount;
+
+		s_Processes = {};
+		HANDLE thSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (thSnapshot != INVALID_HANDLE_VALUE)
+		{
+			PROCESSENTRY32 processEntry = { sizeof(processEntry) };
+			if (Process32First(thSnapshot, &processEntry))
+			{
+				do
+				{
+					std::wstring name = processEntry.szExeFile;
+					StringUtil::ToLowerCase(name);
+					s_Processes.insert(name);
+				} while (Process32Next(thSnapshot, &processEntry));
+			}
+			CloseHandle(thSnapshot);
+		}
+	}
+
+	return s_Processes;
+}
 
 MeasureProcess::MeasureProcess(Skin* skin, const WCHAR* name) : Measure(skin, name)
 {
-	if (c_References == 0)
-	{
-		std::lock_guard<std::mutex> lock(c_ProcessMutex);
-		c_ProcessExitSignal = std::promise<void>();
-		c_ProcessFuture = c_ProcessExitSignal.get_future();
-		std::thread th(MeasureProcess::MonitorProcesses);
-		c_ProcessThread = std::move(th);
-		std::this_thread::sleep_for(std::chrono::milliseconds(25));  // Let the thread get an initial list of processes
-	}
-
-	++c_References;
 }
 
 MeasureProcess::~MeasureProcess()
 {
-	--c_References;
-	if (c_References == 0)
-	{
-		std::lock_guard<std::mutex> lock(c_ProcessMutex);
-		c_ProcessExitSignal.set_value();
-		if (c_ProcessThread.joinable())
-		{
-			c_ProcessThread.join();
-		}
-
-		c_Processes.clear();
-	}
 }
 
 void MeasureProcess::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_ProcessName = parser.ReadString(section, L"ProcessName", L"");
+	m_ProcessNameLowercase = parser.ReadString(section, L"ProcessName", L"");
+	StringUtil::ToLowerCase(m_ProcessNameLowercase);
 }
 
 void MeasureProcess::UpdateValue()
 {
-	std::vector<std::wstring> processes;
-	{
-		std::lock_guard<std::mutex> lock(c_ProcessMutex);
-		processes = c_Processes;
-	}
-
-	for (const auto& name : processes)
-	{
-		if (_wcsicmp(name.c_str(), m_ProcessName.c_str()) == 0)
-		{
-			m_Value = 1.0;
-			return;
-		}
-	}
-
-	m_Value = -1.0;
-}
-
-void MeasureProcess::MonitorProcesses()
-{
-	while (c_ProcessFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
-	{
-		{
-			std::lock_guard<std::mutex> lock(c_ProcessMutex);
-
-			c_Processes.clear();
-
-			HANDLE thSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-			if (thSnapshot != INVALID_HANDLE_VALUE)
-			{
-				PROCESSENTRY32 processEntry = { sizeof(processEntry) };
-				if (Process32First(thSnapshot, &processEntry))
-				{
-					do
-					{
-						c_Processes.emplace_back(processEntry.szExeFile);
-					}
-					while (Process32Next(thSnapshot, &processEntry));
-				}
-				CloseHandle(thSnapshot);
-			}
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(c_UpdateInterval));
-	}
+	m_Value = GetRunningProcessLowercase().count(m_ProcessNameLowercase) ? 1.0 : -1.0;
 }
