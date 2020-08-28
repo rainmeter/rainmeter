@@ -12,7 +12,7 @@
 #include "System.h"
 #include <TlHelp32.h>
 
-std::unordered_set<std::wstring>& GetRunningProcessLowercase() {
+bool IsProcessRunningCached(const std::wstring& lowercaseName) {
 	static std::unordered_set<std::wstring> s_Processes;
 	static ULONGLONG s_LastUpdateTickCount = 0;
 	const ULONGLONG updateInterval = 250; // ms
@@ -40,7 +40,7 @@ std::unordered_set<std::wstring>& GetRunningProcessLowercase() {
 		}
 	}
 
-	return s_Processes;
+	return s_Processes.count(lowercaseName);
 }
 
 MeasureProcess::MeasureProcess(Skin* skin, const WCHAR* name) : Measure(skin, name)
@@ -61,5 +61,5 @@ void MeasureProcess::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void MeasureProcess::UpdateValue()
 {
-	m_Value = GetRunningProcessLowercase().count(m_ProcessNameLowercase) ? 1.0 : -1.0;
+	m_Value = IsProcessRunningCached(m_ProcessNameLowercase) ? 1.0 : -1.0;
 }
