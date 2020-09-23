@@ -113,7 +113,7 @@ bool Lyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title
 	std::wstring url = L"https://www.letras.mus.br/winamp.php?musica=" + title;
 	url += L"&artista=";
 	url += artist;
-	data = Internet::DownloadUrl(url, CP_ACP);
+	data = Internet::DownloadUrl(url, CP_UTF8);
 	if (!data.empty())
 	{
 		std::wstring::size_type pos = data.find(L"\"letra-cnt\"");

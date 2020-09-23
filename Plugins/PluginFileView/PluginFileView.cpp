@@ -36,7 +36,7 @@ typedef struct	// 22 bytes
 unsigned __stdcall SystemThreadProc(void* pParam);
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
-HRESULT SaveIcon(HICON hIcon, FILE* fp);
+bool SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
@@ -328,6 +328,7 @@ PLUGIN_EXPORT double Update(void* data)
 
 				switch (child->date)
 				{
+				default:
 				case DTYPE_MODIFIED:
 					fTime = parent->files[trueIndex].modifiedTime;
 					break;
@@ -430,6 +431,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 
 				switch (child->date)
 				{
+				default:
 				case DTYPE_MODIFIED:
 					fTime = parent->files[trueIndex].modifiedTime;
 					break;
@@ -466,11 +468,15 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			break;
 
 		case TYPE_FILEPATH:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->files[trueIndex].path + parent->files[trueIndex].fileName;
+			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+				parent->path :
+				parent->files[trueIndex].path + parent->files[trueIndex].fileName;
 			break;
 
 		case TYPE_PATHTOFILE:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->files[trueIndex].path;
+			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+				parent->path :
+				parent->files[trueIndex].path;
 			break;
 		}
 	}
@@ -992,7 +998,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 	folder += (rType == RECURSIVE_NONE) ? parent->wildcardSearch : L"*";
 
 	WIN32_FIND_DATA fd;
-	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
+	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
 	if (find != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -1162,7 +1168,7 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 	DestroyIcon(icon);
 }
 
-HRESULT SaveIcon(HICON hIcon, FILE* fp)
+bool SaveIcon(HICON hIcon, FILE* fp)
 {
 	ICONINFO iconInfo;
 	BITMAP bmColor;

@@ -34,8 +34,7 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(false),
-	m_Layers()
+	m_CanUseAxisAlignClip(true)
 {
 	Initialize(true);
 }
@@ -55,7 +54,7 @@ bool Canvas::LogComError(HRESULT hr)
 bool Canvas::Initialize(bool hardwareAccelerated)
 {
 	++c_Instances;
-	if (c_Instances == 1u)
+	if (c_Instances == 1U)
 	{
 		// Required for Direct2D interopability.
 		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -107,7 +106,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 
 		if (FAILED(hr))
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0u);
+			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
 			if (FAILED(hr)) return false;
 		}
 
@@ -154,7 +153,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 void Canvas::Finalize()
 {
 	--c_Instances;
-	if (c_Instances == 0u)
+	if (c_Instances == 0U)
 	{
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
@@ -174,24 +173,25 @@ void Canvas::Finalize()
 bool Canvas::InitializeRenderTarget(HWND hwnd)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-	swapChainDesc.Width = 1u;
-	swapChainDesc.Height = 1u;
+	swapChainDesc.Width = 1U;
+	swapChainDesc.Height = 1U;
 	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	swapChainDesc.Stereo = false;
-	swapChainDesc.SampleDesc.Count = 1u;
-	swapChainDesc.SampleDesc.Quality = 0u;
+	swapChainDesc.SampleDesc.Count = 1U;
+	swapChainDesc.SampleDesc.Quality = 0U;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2u;
+	swapChainDesc.BufferCount = 2U;
 	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
 	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
 	if (FAILED(hr)) return LogComError(hr);
 
 	// Ensure that DXGI does not queue more than one frame at a time.
-	hr = c_DxgiDevice->SetMaximumFrameLatency(1u);
+	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
 	if (FAILED(hr)) return LogComError(hr);
 
 	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
@@ -231,7 +231,7 @@ void Canvas::Resize(int w, int h)
 
 	// Resize swap chain.
 	HRESULT hr = m_SwapChain->ResizeBuffers(
-		0u,
+		0U,
 		(UINT)w,
 		(UINT)h,
 		DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -277,6 +277,7 @@ HDC Canvas::GetDC()
 	if (m_IsDrawing)
 	{
 		m_EnableDrawAfterGdi = true;
+		m_IsDrawing = false;
 		EndDraw();
 	}
 
@@ -294,6 +295,7 @@ void Canvas::ReleaseDC()
 	if (m_EnableDrawAfterGdi)
 	{
 		m_EnableDrawAfterGdi = false;
+		m_IsDrawing = true;
 		BeginDraw();
 	}
 }
@@ -321,36 +323,15 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 	m_Target->SetTransform(matrix);
 
 	m_CanUseAxisAlignClip =
-		matrix._12 == 0.0f && matrix._21 == 0.0f &&
-		matrix._31 == 0.0f && matrix._32 == 0.0f;
+		(matrix.m11 ==  1.0f && matrix.m12 ==  0.0f && matrix.m21 ==  0.0f && matrix.m22 ==  1.0f) ||	// Angle: 0
+		(matrix.m11 ==  0.0f && matrix.m12 ==  1.0f && matrix.m21 == -1.0f && matrix.m22 ==  0.0f) ||	// Angle: 90
+		(matrix.m11 == -1.0f && matrix.m12 ==  0.0f && matrix.m21 ==  0.0f && matrix.m22 == -1.0f) ||	// Angle: 180
+		(matrix.m11 ==  0.0f && matrix.m12 == -1.0f && matrix.m21 ==  1.0f && matrix.m22 ==  0.0f);		// Angle: 270
 }
 
 void Canvas::ResetTransform()
 {
 	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
-}
-
-void Canvas::PushClip(Gfx::Shape* clip)
-{
-	Microsoft::WRL::ComPtr<ID2D1Layer> layer;
-	m_Target->CreateLayer(layer.GetAddressOf());
-	m_Target->PushLayer(
-		D2D1::LayerParameters1(
-			D2D1::InfiniteRect(),
-			clip->m_Shape.Get(),
-			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE),
-		layer.Get());
-
-	m_Layers.push(layer);
-}
-
-void Canvas::PopClip()
-{
-	m_Target->PopLayer();
-	if (m_Layers.top())
-	{
-		m_Layers.pop();
-	}
 }
 
 bool Canvas::SetTarget(RenderTexture* texture)
@@ -430,7 +411,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		switch (formatD2D.GetVerticalAlignment())
 		{
 		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
-		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2; break;
+		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2.0f; break;
 		}
 
 		return yPos;
@@ -650,10 +631,10 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			const auto rmSrc = getRectSubRegion(rmSeg, srcRect);
 
 			// If no overlap, don't draw
-			if ((rmDst.left < rDst.left + rDst.right &&
-				rmDst.right + rmDst.left > rDst.left &&
-				rmDst.top > rmDst.top + rmDst.bottom &&
-				rmDst.top + rmDst.bottom < rmDst.top)) continue;
+			if ((rmDst.left < (rDst.left + rDst.right) &&
+				(rmDst.right + rmDst.left) > rDst.left &&
+				rmDst.top > (rmDst.top + rmDst.bottom) &&
+				(rmDst.top + rmDst.bottom) < rmDst.top)) continue;
 
 			m_Target->FillOpacityMask(
 				mseg.GetBitmap(),
@@ -794,7 +775,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 {
-	HRESULT hr = m_SwapChain->GetBuffer(0u, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	HRESULT hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return LogComError(hr);
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(

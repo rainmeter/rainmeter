@@ -9,6 +9,7 @@
 #define __RAINMETER_SYSTEM_H__
 
 #include <windows.h>
+#include <queue>
 #include <vector>
 
 struct MonitorInfo
@@ -64,6 +65,7 @@ public:
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
 
 	static bool CopyFiles(std::wstring from, std::wstring to, bool bMove = false);
+	static bool CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to);
 	static bool RemoveFile(const std::wstring& file);
 	static bool RemoveFolder(std::wstring folder);
 

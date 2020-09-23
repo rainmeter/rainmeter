@@ -19,6 +19,7 @@
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
+#include "MeasureProcess.h"
 #include "MeasureTime.h"
 #include "MeterButton.h"
 #include "MeterString.h"
@@ -136,7 +137,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_FontCollection(),
 	m_ToolTipHidden(false),
 	m_Favorite(false),
-	m_ResetRelativeMeters(true)
+	m_ResetRelativeMeters(true),
+	m_SolidColor(D2D1::ColorF(D2D1::ColorF::Gray)),
+	m_SolidColor2(D2D1::ColorF(D2D1::ColorF::Gray))
 {
 	if (c_InstanceCount == 0)
 	{
@@ -982,6 +985,29 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		}
 		break;
 
+	case Bang::SetWindowPosition:
+		m_WindowX = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_WindowY = m_Parser.ParseFormulaWithModifiers(args[1]);
+
+		if (args.size() == 4)
+		{
+			m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[2]);
+			m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[3]);
+			WriteOptions(OPTION_ANCHOR);
+		}
+
+		WindowToScreen();
+		MoveWindow(m_ScreenX, m_ScreenY);
+		break;
+
+	case Bang::SetAnchor:
+		m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[1]);
+		WriteOptions(OPTION_ANCHOR);
+		WindowToScreen();
+		MoveWindow(m_ScreenX, m_ScreenY);
+		break;
+
 	case Bang::ZPos:
 		SetWindowZPosition((ZPOSITION)m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
@@ -1787,7 +1813,7 @@ void Skin::WindowToScreen()
 	num = (float)_wtof(m_AnchorY.substr(0,index).c_str());
 	index = m_AnchorY.find_last_of(L'%');
 	if (index != std::wstring::npos) m_AnchorYPercentage = true;
-	index = m_AnchorY.find_last_of(L'R');
+	index = m_AnchorY.find_last_of(L'B');
 	if (index != std::wstring::npos) m_AnchorYFromBottom = true;
 	if (m_AnchorYPercentage) //is a percentage
 	{
@@ -1874,7 +1900,7 @@ void Skin::WindowToScreen()
 	index = m_WindowY.find_first_not_of(L"-0123456789.");
 	num = (float)_wtof(m_WindowY.substr(0,index).c_str());
 	index = m_WindowY.find_last_of(L'%');
-	index2 = m_WindowX.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
+	index2 = m_WindowY.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
 	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
 	{
 		m_WindowYPercentage = true;
@@ -2105,28 +2131,21 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	double value;
 	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
-	if (parser.ParseFormula(m_WindowX, &value))
-	{
-		_itow_s((int)value, buffer, 10);
-		m_WindowX = buffer;
-	}
+	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
 
 	m_WindowY = parser.ReadString(section, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", m_WindowY.c_str()) : addWriteFlag(OPTION_POSITION);
-	if (parser.ParseFormula(m_WindowY, &value))
-	{
-		_itow_s((int)value, buffer, 10);
-		m_WindowY = buffer;
-	}
+	m_WindowY = parser.ParseFormulaWithModifiers(m_WindowY);
 
 	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
+	m_AnchorX = parser.ParseFormulaWithModifiers(m_AnchorX);
 
 	m_AnchorY = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorY", m_AnchorY.c_str());
+	m_AnchorY = parser.ParseFormulaWithModifiers(m_AnchorY);
 
 	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
@@ -2198,6 +2217,12 @@ void Skin::WriteOptions(INT setting)
 		if (setting != OPTION_ALL)
 		{
 			DialogManage::UpdateSkins(this);
+		}
+
+		if (setting & OPTION_ANCHOR)
+		{
+			WritePrivateProfileString(section, L"AnchorX", m_AnchorX.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorY", m_AnchorY.c_str(), iniFile);
 		}
 
 		if (setting & OPTION_POSITION)
@@ -2905,7 +2930,7 @@ void Skin::Redraw()
 		}
 	}
 
-	UpdateWindow(m_TransparencyValue);
+	UpdateWindow(m_TransparencyValue, true);
 
 	m_Canvas.EndDraw();
 }
@@ -3177,12 +3202,14 @@ void Skin::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void Skin::UpdateWindow(int alpha)
+void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
+
+	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
 
 	HDC dcMemory = m_Canvas.GetDC();
 	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
@@ -3193,6 +3220,8 @@ void Skin::UpdateWindow(int alpha)
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 	m_Canvas.ReleaseDC();
+
+	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 
 	m_TransparencyValue = alpha;
 }
@@ -3320,11 +3349,11 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				double value = (double)(__int64)(ticks - m_FadeStartTime);
-				value /= m_FadeDuration;
-				value *= m_FadeEndValue - m_FadeStartValue;
-				value += m_FadeStartValue;
-				value = min(value, 255);
-				value = max(value, 0);
+				value /= (double)m_FadeDuration;
+				value *= (double)(m_FadeEndValue - m_FadeStartValue);
+				value += (double)m_FadeStartValue;
+				value = min(value, 255.0);
+				value = max(value, 0.0);
 
 				UpdateWindowTransparency((int)value);
 			}
@@ -3332,7 +3361,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TIMER_DEACTIVATE:
-		if (m_FadeStartTime == 0)
+		if (m_FadeStartTime == 0ULL)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
 			GetRainmeter().RemoveUnmanagedSkin(this);
@@ -3343,7 +3372,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	default:
 		{
 			auto it = m_DelayedCommands.find(wParam);
-			if (it != m_DelayedCommands.end()) {
+			if (it != m_DelayedCommands.end())
+			{
 				KillTimer(m_Window, wParam);
 				GetRainmeter().ExecuteCommand(it->second.c_str(), this, true);
 				m_DelayedCommands.erase(it);

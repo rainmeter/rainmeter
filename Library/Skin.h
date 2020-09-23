@@ -283,6 +283,7 @@ private:
 		OPTION_KEEPONSCREEN     = 0x00000100,
 		OPTION_AUTOSELECTSCREEN = 0x00000200,
 		OPTION_ALWAYSONTOP      = 0x00000400,
+		OPTION_ANCHOR           = 0x00000800,
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
@@ -297,7 +298,7 @@ private:
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
-	void UpdateWindow(int alpha);
+	void UpdateWindow(int alpha, bool canvasBeginDrawCalled = false);
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);

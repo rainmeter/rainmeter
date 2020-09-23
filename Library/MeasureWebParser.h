@@ -62,12 +62,14 @@ private:
 	int m_StringIndex;
 	int m_StringIndex2;
 	int m_DecodeCharacterReference;
+	bool m_DecodeCodePoints;
 	int m_Debug;
 	UINT m_UpdateRate;
 	UINT m_UpdateCounter;
 	bool m_Download;
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
+	DWORD m_InternetOpenUrlFlags;
 };
 
 #endif

@@ -82,7 +82,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
 
 	auto& rainmeter = GetRainmeter();
-	int ret = rainmeter.Initialize(iniFile, layout);
+	int ret = rainmeter.Initialize(iniFile, layout, IsCtrlKeyDown());
 	if (ret == 0)
 	{
 		ret = rainmeter.MessagePump();
@@ -115,7 +115,9 @@ Rainmeter::Rainmeter() :
 	m_ResourceInstance(),
 	m_ResourceLCID(),
 	m_GDIplusToken(),
-	m_GlobalOptions()
+	m_GlobalOptions(),
+	m_DefaultSelectedColor(),
+	m_HardwareAccelerated()
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -152,7 +154,7 @@ Rainmeter& Rainmeter::GetInstance()
 ** The main initialization function for the module.
 **
 */
-int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
+int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 {
 	if (!IsWindows7SP1OrGreater())
 	{
@@ -272,8 +274,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Create a default Rainmeter.ini file if needed
+	bool iniFileCreated = false;
 	if (_waccess(iniFile, 0) == -1)
 	{
+		iniFileCreated = true;
 		CreateOptionsFile();
 	}
 
@@ -436,6 +440,32 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
+	}
+
+	// Rainmeter safe start
+	// Note: This copies the default illustro skins and layout (if needed) without overwriting any
+	//  changes the user has made to the skins or layout.
+	if (!iniFileCreated && (safeStart || IsCtrlKeyDown()))
+	{
+		int result = MessageBox(
+			nullptr,
+			L"This will unload all skins and start Rainmeter with the default \"illustro\" skins.\n\n"
+			L"Your current layout will be saved as: @Backup\n\n"
+			L"Use this if you are having trouble starting Rainmeter.\n\n"
+			L"Enter Rainmeter Safe Start?",
+			L"Rainmeter Safe Start",
+			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
+		if (result == IDYES)
+		{
+			// Copy the default illustro layout if needed
+			if (System::CopyFilesWithNoCollisions(GetDefaultLayoutPath(), GetLayoutPath()))
+			{
+				layout = L"\"illustro default\"";
+			}
+
+			// Copy any default illustro skins if needed
+			System::CopyFilesWithNoCollisions(GetDefaultSkinPath(), GetSkinPath());
+		}
 	}
 
 	ResetStats();
@@ -949,8 +979,9 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		}
 
 		// Verify whether the skin config has an entry in the settings file
-		WCHAR buffer[SHRT_MAX];
+		WCHAR* buffer = new WCHAR[SHRT_MAX];
 		bool hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
+		delete [] buffer;
 
 		if (skinFolder.active != fileIndex + 1)
 		{
@@ -1716,6 +1747,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 	{
 		L"MediaKey",
 		L"NowPlaying",
+		L"Process",
 		L"RecycleManager",
 		L"WebParser"
 	};

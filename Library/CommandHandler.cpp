@@ -73,6 +73,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::AddBlur, L"AddBlur", 1 },
 	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
 	{ Bang::Move, L"Move", 2 },
+	{ Bang::SetAnchor, L"SetAnchor", 2 },
 	{ Bang::ZPos, L"ZPos", 1 },
 	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
 	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
@@ -151,7 +152,8 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
 	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
 	{ Bang::EditSkin, L"EditSkin", CommandHandler::DoEditSkinBang },
-	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
+	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang },
+	{ Bang::SetWindowPosition, L"SetWindowPosition", CommandHandler::DoSetWindowPositionBang }
 };
 
 void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
@@ -171,10 +173,10 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 				std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
-					Skin* skin = GetRainmeter().GetSkin(folderPath);
-					if (skin)
+					Skin* other = GetRainmeter().GetSkin(folderPath);
+					if (other)
 					{
-						skin->DoBang(bangInfo.bang, args);
+						other->DoBang(bangInfo.bang, args);
 					}
 					else
 					{
@@ -882,7 +884,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	const std::wstring& strValue = args[2];
 
 	bool formula = false;
-	BOOL write = 0;
+	BOOL write = FALSE;
 
 	if (skin)
 	{
@@ -905,7 +907,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 
 	if (temporary)
 	{
-		if (write != 0)
+		if (write != FALSE)
 		{
 			WritePrivateProfileString(nullptr, nullptr, nullptr, iniWrite);  // FLUSH
 
@@ -925,7 +927,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	}
 	else
 	{
-		if (write == 0)  // failed
+		if (write == FALSE)  // failed
 		{
 			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s", iniFile);
 		}
@@ -1017,6 +1019,46 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	{
 		LogErrorF(skin, L"!EditSkin: Invalid parameters");
 	}
+}
+
+void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	// Two variations:
+	//  #1: !SetWindowPosition WindowX WindowY (config)
+	//  #2: !SetWindowPosition WindowX WindowY AnchorX AnchorY (config)
+	
+	Skin* other = nullptr;
+
+	size_t argCount = args.size();
+	if (argCount == 5 || argCount == 3)
+	{
+		std::wstring& folderPath = args[argCount - 1];
+		other = GetRainmeter().GetSkin(folderPath);
+		if (!other)
+		{
+			LogErrorF(skin, L"!SetWindowPosition: Skin \"%s\" not found", folderPath.c_str());
+			return;
+		}
+
+		args.pop_back();  // Remove "config"
+		--argCount;
+	}
+
+	if (argCount == 4 || argCount == 2)
+	{
+		if (other)
+		{
+			other->DoBang(Bang::SetWindowPosition, args);
+			return;
+		}
+		else if (skin)
+		{
+			skin->DoBang(Bang::SetWindowPosition, args);
+			return;
+		}
+	}
+
+	LogErrorF(skin, L"!SetWindowPosition: Invalid parameters");
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)

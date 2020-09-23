@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <windows.h>
+#include <Powrprof.h>
 #include <Iphlpapi.h>
 #include <Netlistmgr.h>
 #include <lm.h>
@@ -31,6 +32,7 @@ MULTIMONITOR_INFO m_Monitors = { 0 };
 
 enum MeasureType
 {
+	MEASURE_UNKNOWN,
 	MEASURE_COMPUTER_NAME,
 	MEASURE_USER_NAME,
 	MEASURE_WORK_AREA,
@@ -40,11 +42,11 @@ enum MeasureType
 	MEASURE_PAGESIZE,
 	MEASURE_OS_BITS,
 	MEASURE_IDLE_TIME,
-	MEASURE_ADAPTER_DESCRIPTION,
-	MEASURE_ADAPTER_TYPE,
-	MEASURE_NET_MASK,
-	MEASURE_IP_ADDRESS,
-	MEASURE_GATEWAY_ADDRESS,
+	MEASURE_ADAPTER_DESCRIPTION,    // Do not change the order of //
+	MEASURE_ADAPTER_TYPE,           // these types. They are used //
+	MEASURE_NET_MASK,               // with specific interface    //
+	MEASURE_IP_ADDRESS,             // names or with the          //
+	MEASURE_GATEWAY_ADDRESS,        // SysInfoData=Best option.   //
 	MEASURE_HOST_NAME,
 	MEASURE_DOMAIN_NAME,
 	MEASURE_DOMAINWORKGROUP,
@@ -68,7 +70,9 @@ enum MeasureType
 	MEASURE_TIMEZONE_STANDARD_NAME,
 	MEASURE_TIMEZONE_DAYLIGHT_BIAS,
 	MEASURE_TIMEZONE_DAYLIGHT_NAME,
-	MEASURE_USER_LOGONTIME
+	MEASURE_USER_LOGON_TIME,
+	MEASURE_LAST_WAKE_TIME,
+	MEASURE_LAST_SLEEP_TIME
 };
 
 struct MeasureData
@@ -78,7 +82,11 @@ struct MeasureData
 
 	bool useBestInterface;
 
-	MeasureData() : type(), data(), useBestInterface(false) {}
+	bool suppressError;
+	bool updated;
+	void* rm;
+
+	MeasureData() : type(MEASURE_UNKNOWN), data(0), useBestInterface(false), suppressError(false), updated(false), rm(nullptr) {}
 };
 
 NLM_CONNECTIVITY GetNetworkConnectivity();
@@ -86,6 +94,8 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 int GetBestInterfaceOrByName(LPCWSTR data, bool& found);
 
 bool g_Initialized = false;
+LONGLONG g_LogonTime = 0LL;
+constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
@@ -96,18 +106,42 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	{
 		if (GetSystemMetrics(SM_CMONITORS) > 32)
 		{
-			LSLog(LOG_ERROR, nullptr, L"SysInfo.dll: Max amount of monitors supported is 32.");
+			RmLogF(rm, LOG_ERROR, L"SysInfo.dll: Max amount of monitors supported is 32.");
 		}
 
 		m_Monitors.count = 0;
 		EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)(&m_Monitors));
+
+		// Get user logon time
+		HKEY hKey;
+		if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
+		{
+			FILETIME lastWrite;
+			if (RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &lastWrite) == ERROR_SUCCESS)
+			{
+				FileTimeToLocalFileTime(&lastWrite, &lastWrite);
+
+				LARGE_INTEGER li;
+				li.LowPart = lastWrite.dwLowDateTime;
+				li.HighPart = lastWrite.dwHighDateTime;
+				g_LogonTime = li.QuadPart;
+			}
+			RegCloseKey(hKey);
+		}
+
 		g_Initialized = true;
 	}
+
+	measure->rm = rm;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
+
+	MeasureType oldType = measure->type;
+	int oldData = measure->data;
+	bool oldBest = measure->useBestInterface;
 
 	int defaultData = -1;
 
@@ -267,13 +301,20 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else if (_wcsicmp(L"USER_LOGONTIME", type) == 0)
 	{
-		measure->type = MEASURE_USER_LOGONTIME;
+		measure->type = MEASURE_USER_LOGON_TIME;
+	}
+	else if (_wcsicmp(L"LAST_WAKE_TIME", type) == 0)
+	{
+		measure->type = MEASURE_LAST_WAKE_TIME;
+	}
+	else if (_wcsicmp(L"LAST_SLEEP_TIME", type) == 0)
+	{
+		measure->type = MEASURE_LAST_SLEEP_TIME;
 	}
 	else
 	{
-		WCHAR buffer[256];
-		_snwprintf_s(buffer, _TRUNCATE, L"SysInfo.dll: SysInfoType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
-		RmLog(LOG_ERROR, buffer);
+		RmLogF(rm, LOG_ERROR, L"SysInfo.dll: SysInfoType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
+		measure->type = MEASURE_UNKNOWN;
 	}
 
 	measure->useBestInterface = false;
@@ -292,6 +333,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else
 	{
 		measure->data = RmReadInt(rm, L"SysInfoData", defaultData);
+	}
+
+	if (measure->updated)
+	{
+		measure->suppressError =
+			oldType == measure->type &&
+			oldData == measure->data &&
+			oldBest == measure->useBestInterface;
 	}
 }
 
@@ -554,6 +603,8 @@ PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 
+	measure->updated = true;
+
 	switch (measure->type)
 	{
 	case MEASURE_PAGESIZE:
@@ -699,26 +750,30 @@ PLUGIN_EXPORT double Update(void* data)
 			return (double)tzi.DaylightBias;
 		}
 
-	case MEASURE_USER_LOGONTIME:
-		{
-			// Get "last write time" of the current users environment
-			HKEY hKey;
-			FILETIME lastWrite;
-			if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
-			{
-				if (RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &lastWrite) == ERROR_SUCCESS)
-				{
-					RegCloseKey(hKey);
-					FileTimeToLocalFileTime(&lastWrite, &lastWrite);
+	case MEASURE_USER_LOGON_TIME:
+		return (double)(g_LogonTime / 10000000);
 
-					LARGE_INTEGER li;
-					li.LowPart = lastWrite.dwLowDateTime;
-					li.HighPart = lastWrite.dwHighDateTime;
-					return (double)(li.QuadPart / 10000000);
-				}
-				RegCloseKey(hKey);
+	case MEASURE_LAST_WAKE_TIME:
+	case MEASURE_LAST_SLEEP_TIME:
+		{
+			bool isWake = measure->type == MEASURE_LAST_WAKE_TIME;
+			double value = 0.0;
+			ULONGLONG nano = 0ULL;
+			LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime, nullptr, 0UL, &nano, sizeof(ULONGLONG));
+			if (status == NT_STATUS_SUCCESS)
+			{
+				value = (double)((g_LogonTime + (LONGLONG)nano) / 10000000);
 			}
+			else if (!measure->suppressError)
+			{
+				// NTSTATUS codes:
+				// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+				RmLogF(measure->rm, LOG_ERROR, L"Last %s time error: 0x%08x", isWake ? L"wake" : L"sleep", status);
+				measure->suppressError = true;
+			}
+			return value;
 		}
+
 	}
 
 	return 0.0;

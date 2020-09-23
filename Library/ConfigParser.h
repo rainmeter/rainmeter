@@ -57,6 +57,7 @@ public:
 	Measure* GetMeasure(const std::wstring& name);
 
 	const std::wstring* GetVariable(const std::wstring& strVariable);
+	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
@@ -90,6 +91,7 @@ public:
 	std::vector<FLOAT> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
+	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
@@ -155,6 +157,7 @@ private:
 
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
 	std::unordered_map<std::wstring, std::wstring> m_Variables;
+	std::unordered_map<std::wstring, std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
 

@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <Winsock2.h>
+#include <Ws2tcpip.h>
 #include <string>
 #include <Ipexport.h>
 #include <Icmpapi.h>
@@ -14,7 +15,7 @@
 
 struct MeasureData
 {
-	IPAddr destAddr;
+	PADDRINFOW destAddrInfo;
 	DWORD timeout;
 	double timeoutValue;
 	DWORD updateRate;
@@ -25,7 +26,7 @@ struct MeasureData
 	void* skin;
 
 	MeasureData() :
-		destAddr(),
+		destAddrInfo(),
 		timeout(),
 		timeoutValue(),
 		updateRate(),
@@ -35,6 +36,23 @@ struct MeasureData
 		finishAction(),
 		skin(nullptr)
 	{
+	}
+
+	~MeasureData()
+	{
+		Dispose();
+	}
+
+	MeasureData(const MeasureData&) = delete;
+	MeasureData& operator=(const MeasureData&) = delete;
+
+	void Dispose()
+	{
+		if (destAddrInfo)
+		{
+			FreeAddrInfo(destAddrInfo);
+			destAddrInfo = nullptr;
+		}
 	}
 };
 
@@ -69,41 +87,54 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	LPCWSTR value = RmReadString(rm, L"DestAddress", L"");
-	if (*value)
+	LPCWSTR destination = RmReadString(rm, L"DestAddress", L"");
+	if (*destination)
 	{
-		int strLen = (int)wcslen(value) + 1;
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, value, strLen, nullptr, 0, nullptr, nullptr);
-		if (bufLen > 0)
+		WSADATA wsaData;
+		int wsaStartupError = WSAStartup(0x0101, &wsaData);
+		if (wsaStartupError == 0)
 		{
-			char* buffer = new char[bufLen];
-			WideCharToMultiByte(CP_ACP, 0, value, strLen, buffer, bufLen, nullptr, nullptr);
+			measure->Dispose();
 
-			measure->destAddr = inet_addr(buffer);  // C4996
-			if (measure->destAddr == INADDR_NONE)
+			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+			if (GetAddrInfo(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
 			{
-				WSADATA wsaData;
-				if (WSAStartup(0x0101, &wsaData) == 0)
+				RmLogF(rm, LOG_WARNING,
+					L"PingPlugin.dll: WSA failed for: %ls (Error: %d)", destination, WSAGetLastError());
+				measure->Dispose();
+			}
+			else
+			{
+				bool foundAnAddress = false;
+				int i = 0;
+				for (PADDRINFOW thisAddrInfo = measure->destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
 				{
-					LPHOSTENT pHost = gethostbyname(buffer);  // C4996
-					if (pHost)
+					RmLogF(rm, LOG_DEBUG, L"PingPlugin.dll: Evaluating: %ls (Index: %d)", destination, i++);
+					if (thisAddrInfo->ai_family == AF_INET)
 					{
-						measure->destAddr = *(DWORD*)pHost->h_addr;
+						foundAnAddress = true;
+						RmLogF(rm, LOG_DEBUG, L"PingPlugin.dll: Found IPv4 address for: %ls", destination);
 					}
-					else
+					else if (thisAddrInfo->ai_family == AF_INET6)
 					{
-						RmLog(rm, LOG_WARNING, L"PingPlugin.dll: Unable to get host by name");
+						foundAnAddress = true;
+						RmLogF(rm, LOG_DEBUG, L"PingPlugin.dll: Found IPv6 address for: %ls", destination);
 					}
-
-					WSACleanup();
 				}
-				else
+
+				if (!foundAnAddress)
 				{
-					RmLog(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA");
+					RmLogF(rm, LOG_WARNING,
+						L"PingPlugin.dll: Could not find any IPv4 or IPv6 address for: %ls", destination);
+					measure->Dispose();
 				}
 			}
 
-			delete [] buffer;
+			WSACleanup();
+		}
+		else
+		{
+			RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA (Error: %d)", wsaStartupError);
 		}
 	}
 
@@ -119,22 +150,61 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	// NOTE: Do not use CRT functions (since thread was created by CreateThread())!
 
 	MeasureData* measure = (MeasureData*)pParam;
-	const DWORD bufferSize = sizeof(ICMP_ECHO_REPLY) + 32;
-	BYTE buffer[bufferSize];
-
 	double value = 0.0;
-	HANDLE hIcmpFile = IcmpCreateFile();
-	if (hIcmpFile != INVALID_HANDLE_VALUE)
+
+	if (measure->destAddrInfo)
 	{
-		IcmpSendEcho(hIcmpFile, measure->destAddr, nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
-		IcmpCloseHandle(hIcmpFile);
-
-		ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
-		value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : reply->RoundTripTime;
-
-		if (!measure->finishAction.empty())
+		bool useIPv6 = false;
+		struct sockaddr* destAddr = nullptr;
+		for (PADDRINFOW thisAddrInfo = measure->destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
 		{
-			RmExecute(measure->skin, measure->finishAction.c_str());
+			if (thisAddrInfo->ai_family == AF_INET || thisAddrInfo->ai_family == AF_INET6)
+			{
+				destAddr = thisAddrInfo->ai_addr;
+				useIPv6 = (thisAddrInfo->ai_family == AF_INET6);
+				break;
+			}
+		}
+
+		if (destAddr)
+		{
+			DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32;
+			BYTE* buffer = new BYTE[bufferSize];
+
+			HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
+			if (hIcmpFile != INVALID_HANDLE_VALUE)
+			{
+				if (useIPv6)
+				{
+					struct sockaddr_in6 sourceAddr;
+					sourceAddr.sin6_family = AF_INET6;
+					sourceAddr.sin6_port = (USHORT)0;
+					sourceAddr.sin6_flowinfo = 0UL;
+					sourceAddr.sin6_addr = in6addr_any;
+
+					Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
+						(struct sockaddr_in6*)destAddr, nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
+
+					ICMPV6_ECHO_REPLY* reply = (ICMPV6_ECHO_REPLY*)buffer;
+					value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : (double)reply->RoundTripTime;
+				}
+				else
+				{
+					IcmpSendEcho2(hIcmpFile, nullptr, nullptr, nullptr, ((struct sockaddr_in*)destAddr)->sin_addr.s_addr,
+						nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
+
+					ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
+					value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : (double)reply->RoundTripTime;
+				}
+				IcmpCloseHandle(hIcmpFile);
+
+				if (!measure->finishAction.empty())
+				{
+					RmExecute(measure->skin, measure->finishAction.c_str());
+				}
+			}
+
+			delete[] buffer;
 		}
 	}
 

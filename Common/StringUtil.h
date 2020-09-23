@@ -47,7 +47,7 @@ void ToSentenceCase(std::wstring& str);
 
 void EscapeRegExp(std::wstring& str);
 
-void EncodeUrl(std::wstring& str);
+void EncodeUrl(std::wstring& str, bool doReserved = true);
 
 bool CaseInsensitiveCompareN(std::wstring& str1, const std::wstring& str2);
 

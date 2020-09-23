@@ -121,17 +121,24 @@ void EscapeRegExp(std::wstring& str)
 /*
 ** Escapes reserved URL characters.
 */
-void EncodeUrl(std::wstring& str)
+void EncodeUrl(std::wstring& str, bool doReserved)
 {
-	size_t pos = 0;
-	while ((pos = str.find_first_of(L" !*'();:@&=+$,/?#[]", pos)) != std::wstring::npos)
+	static const std::string unreserved = "0123456789-.ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcedefghijklmnopqrstuvwxyz~";
+	std::string utf8 = NarrowUTF8(str);
+	for (size_t pos = 0; pos < utf8.size(); ++pos)
 	{
-		WCHAR buffer[3];
-		_snwprintf_s(buffer, _countof(buffer), L"%.2X", str[pos]);
-		str[pos] = L'%';
-		str.insert(pos + 1, buffer);
-		pos += 3;
+		UCHAR ch = utf8[pos];
+		if ((ch <= 0x20 || ch >= 0x7F) ||                              // control characters and non-ascii (includes space)
+			(doReserved && unreserved.find(ch) == std::string::npos))  // any character other than unreserved characters
+		{
+			char buffer[3];
+			_snprintf_s(buffer, _countof(buffer), "%.2X", ch);
+			utf8[pos] = L'%';
+			utf8.insert(pos + 1, buffer);
+			pos += 2;
+		}
 	}
+	str = WidenUTF8(utf8);
 }
 
 /*

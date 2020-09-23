@@ -979,9 +979,10 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 			continue;
 		}
 
-		std::wstring tmpStr = (*iter).first;
-		_wcslwr(&tmpStr[0]);
-		lvi.pszText = (WCHAR*)tmpStr.c_str();
+		const std::wstring* tmpStr = m_SkinWindow->GetParser().GetVariableOriginalName((*iter).first);
+		if (!tmpStr) continue;  // Variable name does not exist
+
+		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
 		// Truncate and add "..." if necessary
 		std::wstring valStr = (*iter).second;
@@ -1077,6 +1078,16 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
 			UpdateMeasureList(nullptr);
+		}
+		break;
+
+	case IDM_COPYMEASURENAME:
+		{
+			Measure* measure = getMeasure();
+			if (measure)
+			{
+				System::SetClipboardText(measure->GetName());
+			}
 		}
 		break;
 
@@ -1205,6 +1216,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
+					MENU_ITEM(IDM_COPYMEASURENAME, 0),
 					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
 					MENU_ITEM(IDM_COPYSTRINGVALUE, 0),
 					MENU_ITEM(IDM_COPYRANGE, 0)
@@ -1233,6 +1245,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
 						};
 
+						setMenuItem(ID_STR_MEASURE, IDM_COPYMEASURENAME);
 						setMenuItem(ID_STR_NUMBER, IDM_COPYNUMBERVALUE);
 						setMenuItem(ID_STR_STRING, IDM_COPYSTRINGVALUE);
 						setMenuItem(ID_STR_RANGE, IDM_COPYRANGE);

@@ -40,11 +40,19 @@ struct MeasureData
 {
 	MeasureType type;
 	RawString format;
+
+	bool suppressError;
+	bool updated;
+
+	DWORD cachedBatteryLifeTime;
+
+	void* rm;
 	
-	MeasureData() : type(POWER_UNKNOWN) {}
+	MeasureData() : type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr) {}
 };
 
-UINT g_NumOfProcessors = 0;
+UINT g_NumOfProcessors = 0U;
+constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 
 void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
@@ -62,11 +70,16 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		GetSystemInfo(&si);
 		g_NumOfProcessors = (UINT)si.dwNumberOfProcessors;
 	}
+
+	measure->rm = rm;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
+
+	MeasureType oldType = measure->type;
+	RawString oldFormat = measure->format;
 
 	LPCWSTR value = RmReadString(rm, L"PowerState", L"");
 	if (_wcsicmp(L"ACLINE", value) == 0)
@@ -110,11 +123,50 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->type = POWER_PERCENT;
 		*maxValue = 100.0;
 	}
+
+	if (measure->updated)
+	{
+		measure->suppressError =
+			oldType == measure->type &&
+			_wcsicmp(oldFormat.c_str(), measure->format.c_str()) == 0;
+	}
 }
 
 PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
+
+	measure->updated = true;
+
+	switch (measure->type)
+	{
+	case POWER_HZ:
+	case POWER_MHZ:
+		{
+			if (g_NumOfProcessors > 0U)
+			{
+				double value = 0.0;
+				PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
+				memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				LONG status = CallNtPowerInformation(
+					ProcessorInformation, nullptr, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				if (status == NT_STATUS_SUCCESS)
+				{
+					value = (measure->type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
+				}
+				else if (!measure->suppressError)
+				{
+					// NTSTATUS codes:
+					// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+					RmLogF(measure->rm, LOG_ERROR, L"Processor power status error: 0x%08x", status);
+					measure->suppressError = true;
+				}
+				delete[] ppi;
+				return value;
+			}
+		}
+		break;
+	}
 
 	SYSTEM_POWER_STATUS sps;
 	if (GetSystemPowerStatus(&sps))
@@ -151,23 +203,17 @@ PLUGIN_EXPORT double Update(void* data)
 			return sps.BatteryFlag;
 
 		case POWER_LIFETIME:
+			measure->cachedBatteryLifeTime = sps.BatteryLifeTime;
 			return sps.BatteryLifeTime;
 
 		case POWER_PERCENT:
 			return sps.BatteryLifePercent == 255 ? 100.0 : sps.BatteryLifePercent;
-
-		case POWER_MHZ:
-		case POWER_HZ:
-			if (g_NumOfProcessors > 0)
-			{
-				PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
-				memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-				CallNtPowerInformation(ProcessorInformation, nullptr, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-				double value = (measure->type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
-				delete [] ppi;
-				return value;
-			}
 		}
+	}
+	else if (!measure->suppressError)
+	{
+		RmLogF(measure->rm, LOG_ERROR, L"Power status error: %ld", GetLastError());
+		measure->suppressError = true;
 	}
 
 	return 0.0;
@@ -180,35 +226,31 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 
 	if (measure->type == POWER_LIFETIME)
 	{
-		SYSTEM_POWER_STATUS sps;
-		if (GetSystemPowerStatus(&sps))
+		DWORD value = measure->cachedBatteryLifeTime;
+		if (value == -1)
 		{
-			// Change it to time string
-			if (sps.BatteryLifeTime == -1)
+			return L"Unknown";
+		}
+		else
+		{
+			tm time = {0};
+			time.tm_sec = value % 60;
+			time.tm_min = (value / 60) % 60;
+			time.tm_hour = value / 60 / 60;
+
+			_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+			_CrtSetReportMode(_CRT_ASSERT, 0);
+
+			errno = 0;
+			wcsftime(buffer, 128, measure->format.c_str(), &time);
+			if (errno == EINVAL)
 			{
-				return L"Unknown";
+				buffer[0] = L'\0';
 			}
-			else
-			{
-				tm time = {0};
-				time.tm_sec = sps.BatteryLifeTime % 60;
-				time.tm_min = (sps.BatteryLifeTime / 60) % 60;
-				time.tm_hour = sps.BatteryLifeTime / 60 / 60;
 
-				_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
-				_CrtSetReportMode(_CRT_ASSERT, 0);
+			_set_invalid_parameter_handler(oldHandler);
 
-				errno = 0;
-				wcsftime(buffer, 128, measure->format.c_str(), &time);
-				if (errno == EINVAL)
-				{
-					buffer[0] = L'\0';
-				}
-
-				_set_invalid_parameter_handler(oldHandler);
-
-				return buffer;
-			}
+			return buffer;
 		}
 	}
 
