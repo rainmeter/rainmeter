@@ -53,7 +53,7 @@ struct MeasureData
 	{
 		if (destAddrInfo)
 		{
-			FreeAddrInfo(destAddrInfo);
+			FreeAddrInfoW(destAddrInfo);
 			destAddrInfo = nullptr;
 		}
 	}
@@ -137,7 +137,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			measure->Dispose();
 
 			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-			if (GetAddrInfo(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
+			if (GetAddrInfoW(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
 			{
 				DWORD errorCode = WSAGetLastError();
 				RmLogF(rm, LOG_WARNING,
