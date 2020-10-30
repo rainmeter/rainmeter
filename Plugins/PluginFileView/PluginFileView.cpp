@@ -1128,27 +1128,6 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 
 			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
 		}
-		else
-		{
-			std::wstring browser;
-			WCHAR buffer[MAX_PATH];
-			DWORD size = MAX_PATH;
-			HKEY hKey;
-
-			RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey);
-			RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &size);
-			RegCloseKey(hKey);
-
-			//Strip quotes
-			if (buffer[0] == L'"')
-			{
-				browser = buffer; browser = browser.substr(1);
-				size_t pos = browser.find_first_of(L'"');
-				browser = browser.substr(0, pos);
-			}
-
-			filePath = browser;
-		}
 	}
 
 	if (icon == nullptr)
