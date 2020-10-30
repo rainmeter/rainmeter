@@ -99,7 +99,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	// even though it is cleared, so manually "Clear" with a transparent color.
 	m_BitmapTarget->BeginDraw();
 	m_BitmapTarget->Clear(color);
-	m_BitmapTarget->DrawTextLayout(drawPosition, layout, solidBrush);
+	m_BitmapTarget->DrawTextLayout(D2D1::Point2F(0.0f, 0.0f), layout, solidBrush);
 	m_BitmapTarget->EndDraw();
 
 	hr = m_BitmapTarget->GetBitmap(m_Bitmap.GetAddressOf());
@@ -117,7 +117,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);
 
 	// Draw effect
-	target->DrawImage(shadow.Get(), m_Offset);
+	target->DrawImage(shadow.Get(), Util::AddPoint2F(drawPosition, m_Offset));
 }
 
 bool TextInlineFormat_Shadow::CompareAndUpdateProperties(const std::wstring& pattern, const FLOAT& blur,
