@@ -254,6 +254,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	if (!info.isValid())
 	{
+		LogErrorF(m_Skin, L"%s: Unable to open: %s", m_Name, filename.c_str());
+
 		DisposeImage();
 		return false;
 	}
