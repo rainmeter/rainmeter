@@ -93,6 +93,11 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 			}
 		}
 	}
+	else
+	{
+		if (!m_WDefined) m_W = 0;
+		if (!m_HDefined) m_H = 0;
+	}
 }
 
 /*
