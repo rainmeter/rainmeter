@@ -35,7 +35,7 @@ VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "© 2019 Rainmeter Team"
+VIAddVersionKey "LegalCopyright" "(c) 2020 Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
@@ -49,8 +49,6 @@ ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
 ReserveFile ".\UAC.dll"
-
-!define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
 
 ; Additional Windows definitions
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
@@ -353,16 +351,6 @@ FunctionEnd
 
 Function PageOptionsDirectoryOnChange
 	${NSD_GetText} $R0 $0
-
-	; Disable Install button if not enough space
-	GetDlgItem $1 $HWNDPARENT 1
-	${GetRoot} $0 $2
-	${DriveSpace} "$2\" "/D=F /S=M" $3
-	${If} $3 < ${REQUIREDSPACE}
-		EnableWindow $1 0
-	${Else}
-		EnableWindow $1 1
-	${EndIf}
 
 	StrCpy $Install64Bit 0
 	${If} ${RunningX64}
