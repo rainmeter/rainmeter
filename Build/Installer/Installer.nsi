@@ -606,10 +606,8 @@ SkipIniMove:
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMajor" "${VERSION_MAJOR}"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMinor" "${VERSION_MINOR}"
 
-		; Let Windows know the approximate size of the installation
-		${GetSize} "$INSTDIR" "/S=0K" $2 $3 $4
-		IntFmt $2 "0x%08X" $2
-		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize" "$2"
+		; Get rid of approximate install size, which we wrote out in the past.
+		DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize"
 
 !ifdef BETA
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
