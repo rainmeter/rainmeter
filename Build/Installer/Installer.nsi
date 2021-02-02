@@ -35,7 +35,7 @@ VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "© 2019 Rainmeter Team"
+VIAddVersionKey "LegalCopyright" "(c) 2020 Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
@@ -49,8 +49,6 @@ ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
 ReserveFile ".\UAC.dll"
-
-!define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
 
 ; Additional Windows definitions
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
@@ -354,16 +352,6 @@ FunctionEnd
 Function PageOptionsDirectoryOnChange
 	${NSD_GetText} $R0 $0
 
-	; Disable Install button if not enough space
-	GetDlgItem $1 $HWNDPARENT 1
-	${GetRoot} $0 $2
-	${DriveSpace} "$2\" "/D=F /S=M" $3
-	${If} $3 < ${REQUIREDSPACE}
-		EnableWindow $1 0
-	${Else}
-		EnableWindow $1 1
-	${EndIf}
-
 	StrCpy $Install64Bit 0
 	${If} ${RunningX64}
 		${If} ${FileExists} "$0\Rainmeter.exe"
@@ -618,10 +606,8 @@ SkipIniMove:
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMajor" "${VERSION_MAJOR}"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMinor" "${VERSION_MINOR}"
 
-		; Let Windows know the approximate size of the installation
-		${GetSize} "$INSTDIR" "/S=0K" $2 $3 $4
-		IntFmt $2 "0x%08X" $2
-		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize" "$2"
+		; Get rid of approximate install size, which we wrote out in the past.
+		DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize"
 
 !ifdef BETA
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
