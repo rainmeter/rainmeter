@@ -245,6 +245,9 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 */
 void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
+	// Remove any leading whitespace
+	while (iswspace(command[0])) ++command;
+
 	if (command[0] == L'!')	// Bang
 	{
 		++command;	// Skip "!"
