@@ -5,7 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-!verbose 3
+!verbose 2
 
 Unicode true
 
