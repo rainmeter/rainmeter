@@ -153,7 +153,7 @@ set INSTALLER_DEFINES=^
 	/DVERSION_MINOR="%VERSION_MINOR%"
 if "%ISBETA%" == "true" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
-"%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
+"%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
 :: Sign installer
 if not "%CERTFILE%" == "" (
