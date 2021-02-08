@@ -14,14 +14,17 @@ Alternatively, download the repository contents as a [ZIP archive](https://githu
 Rainmeter can be built using any version of Visual Studio 2019. If you don't already have VS2019, you can download [Visual Studio Community 2019](https://www.visualstudio.com/downloads/) for free.
 
 
-### Building the installer
+### Building the installer manually
 
 First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
 
-Now you can simply run the <b>Build.bat</b> batch file in the Build folder of your local repository. If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment. To build the release (non-beta) installer, use `Build.bat RELEASE`.
+Then, in the Build directory, run e.g. `Build.bat beta 1 2 3 4 abc` to build the beta 1.2.3 r4 with commit hash abc.
+
+If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
+
+To build the release (non-beta) installer, use `Build.bat release`.
 
 To digitally sign the installer and the Rainmeter executables, obtain a Windows code signing certificate and create a Certificate.bat file alongside Build.bat with the following contents:
 
     set CERTFILE=/path/to/PFXcert.p12
     set CERTKEY=certpassword
-
