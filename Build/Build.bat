@@ -10,16 +10,16 @@ set /A VERSION_REVISION=%5
 set COMMIT_HASH=%6
 
 if "%BUILD_TYPE%" == "beta" set ISBETA=true & goto BUILD_TYPE_OK
-if "%BUILD_TYPE%" == "release" set ISBETA=false & goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "final" set ISBETA=false & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "languages" goto BUILD_TYPE_OK
-echo Unknown build type & exit 1
+echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
-if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit 1
-if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit 1
-if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit 1
-if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit 1
-if "%COMMIT_HASH%" == "" echo ERROR: COMMIT_HASH parameter missing & exit 1
+if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit /b 1
+if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit /b 1
+if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit /b 1
+if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit /b 1
+if "%COMMIT_HASH%" == "" echo ERROR: COMMIT_HASH parameter missing & exit /b 1
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
@@ -27,10 +27,10 @@ set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\A
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 
 if not exist "%VCVARSALL%" set VCVARSALL=%VCVARSALL:Community\=Enterprise\%
-if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit 1
+if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
 
 if not exist "%MAKENSIS%" set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
-if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit 1
+if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit /b 1
 
 echo Rainmeter Build
 echo ----------------------------------------------
@@ -97,12 +97,10 @@ for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 
 :: Build Library
 echo * Building 32-bit projects
-%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln
-if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & exit 1
+%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 echo * Building 64-bit projects
-%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln
-if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & exit 1
+%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 :BUILDLANGUAGES
 echo * Building languages
@@ -116,8 +114,7 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	set LANGDLL_PARAMS='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGDLL_PARAMS!
 	set LANGUAGE_IDS=${LANG_%%b},!LANGUAGE_IDS!
 
-	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln
-	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & exit 1
+	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln || (echo   ERROR: Building language %%a failed & exit /b 1)
 )
 >>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
 >>".\Installer\Languages.nsh" echo ^^!define LANGUAGE_IDS "%LANGUAGE_IDS%"
@@ -133,14 +130,11 @@ if "%BUILD_TYPE%" == "languages" (
 )
 
 :: Sign binaries
-TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
-		%SIGNTOOL_SHA2% ..\x32-Release\%%Z
-		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%Z failed & exit 1
-		%SIGNTOOL_SHA2% ..\x64-Release\%%Z
-		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%Z failed & exit 1
+		%SIGNTOOL_SHA2% ..\x32-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%Z failed & exit /b 1)
+		%SIGNTOOL_SHA2% ..\x64-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%Z failed & exit /b 1)
 	)
 )
 
@@ -159,17 +153,13 @@ set INSTALLER_DEFINES=^
 	/DVERSION_MINOR="%VERSION_MINOR%"
 if "%ISBETA%" == "true" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
-"%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi
-if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & exit 1
+"%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
 :: Sign installer
-TIMEOUT 2 > nul
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
-	%SIGNTOOL_SHA1% %INSTALLER_PATH%
-	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & exit 1
-	%SIGNTOOL_SHA2% /as %INSTALLER_PATH%
-	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & exit 1
+	%SIGNTOOL_SHA1% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
+	%SIGNTOOL_SHA2% /as %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
 :DONE
