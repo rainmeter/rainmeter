@@ -22,7 +22,7 @@ Then, in the Build directory, run e.g. `Build.bat beta 1 2 3 4 abc` to build the
 
 If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
 
-To build the release (non-beta) installer, use `Build.bat release`.
+To build the final (non-beta) installer, use `Build.bat final`.
 
 To digitally sign the installer and the Rainmeter executables, obtain a Windows code signing certificate and create a Certificate.bat file alongside Build.bat with the following contents:
 
