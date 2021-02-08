@@ -142,7 +142,7 @@ if not "%CERTFILE%" == "" (
 echo * Building installer
 
 set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%.exe
-if "%ISBETA%" == "true" set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%-r%VERSION_REVISION%-beta.exe
+if "%BUILD_TYPE%" == "beta" set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%-r%VERSION_REVISION%-beta.exe
 
 set INSTALLER_DEFINES=^
 	/DOUTFILE="%INSTALLER_PATH%"^
@@ -151,7 +151,7 @@ set INSTALLER_DEFINES=^
 	/DVERSION_REVISION="%VERSION_REVISION%"^
 	/DVERSION_MAJOR="%VERSION_MAJOR%"^
 	/DVERSION_MINOR="%VERSION_MINOR%"
-if "%ISBETA%" == "true" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
+if "%BUILD_TYPE%" == "beta" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
