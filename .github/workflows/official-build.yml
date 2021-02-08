@@ -1,0 +1,45 @@
+name: official-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Build type (release/beta)'
+        required: true
+      version:
+        description: 'Version (a.b.c.d)'
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+
+      - name: Setup Certificate.bat
+        run: |
+          echo "${CODESIGNING_CERT_BASE64}" | base64 --decode > "../authenticode.p12"
+
+          echo "set CERTFILE=..\..\authenticode.p12" > Build/Certificate.bat
+          echo "set CERTKEY=${CODESIGNING_CERT_PASSWORD}" >> Build/Certificate.bat
+        shell: bash
+        env:
+          CODESIGNING_CERT_BASE64: ${{ secrets.CODESIGNING_CERT_BASE64 }}
+          CODESIGNING_CERT_PASSWORD: ${{ secrets.CODESIGNING_CERT_PASSWORD }}
+
+      - name: Run Build.bat
+        run: |
+          cd Build
+          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION:.= % %GITHUB_SHA%
+        shell: cmd
+        env:
+          RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
+          RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v2
+        with:
+          name: installer
+          path: Build/Rainmeter-*.exe
+          if-no-files-found: error
