@@ -40,6 +40,6 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v2
         with:
-          name: installer
+          name: Rainmeter-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
           path: Build/Rainmeter-*.exe
           if-no-files-found: error
