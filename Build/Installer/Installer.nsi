@@ -837,7 +837,7 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Plugins"
 	RMDir /r "$INSTDIR\Runtime"
 	RMDir /r "$INSTDIR\Skins"
-	RMDir /r "$INSTRDIR\VisualElements"
+	RMDir /r "$INSTDIR\VisualElements"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"
