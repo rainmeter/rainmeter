@@ -17,6 +17,11 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v2
 
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::.github/msbuild-problem-matcher.json"
+        shell: bash
+
       - name: Setup Certificate.bat
         run: |
           echo "${CODESIGNING_CERT_BASE64}" | base64 --decode > "../authenticode.p12"

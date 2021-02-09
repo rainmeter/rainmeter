@@ -16,6 +16,11 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v2
 
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::.github/msbuild-problem-matcher.json"
+        shell: bash
+
       - name: Run Build.bat
         run: |
           cd Build
