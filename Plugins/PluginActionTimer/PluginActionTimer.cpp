@@ -124,7 +124,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 					const std::wstring act = RmReadString(rm, repeat[0].c_str(), L"[]", FALSE);
 					const std::wstring wait = L"Wait " + repeat[1];
-					const size_t size = (_wtoi(repeat[2].c_str()) * 2) - 1;	// because we dont want a |wait| after the last command
+					const int size = _wtoi(repeat[2].c_str()) * 2 - 1;	// because we dont want a |wait| after the last command
 					if (size <= 0) continue;
 
 					// Insert a |wait| in between each |act|.
