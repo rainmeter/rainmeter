@@ -16,8 +16,16 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v2
 
+      - name: Cache build
+        uses: actions/cache@v2
+        with:
+          path: |
+            x32-Release/Obj
+            x64-Release/Obj
+          key: build-release-obj-${{ runner.os }}-${{ hashFiles('Rainmeter.sln') }}
+
       - name: Run Build.bat
         run: |
           cd Build
-          Build.bat beta 0 0 0 0
+          Build.bat beta 0 0 0 0 build
         shell: cmd

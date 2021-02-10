@@ -1,12 +1,15 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build beta 2.0.1 r800, run: Build.bat beta 2 0 1 800 abcdef
+:: For example, to build beta 2.0.1 r800, run: Build.bat beta 2 0 1 800
 set BUILD_TYPE=%1
 set /A VERSION_MAJOR=%2
 set /A VERSION_MINOR=%3
 set /A VERSION_SUBMINOR=%4
 set /A VERSION_REVISION=%5
+
+:: Optional parameter, used by CI.
+set MSBUILD_TARGET=%6
 
 if "%BUILD_TYPE%" == "beta" set ISBETA=true & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "final" set ISBETA=false & goto BUILD_TYPE_OK
@@ -18,6 +21,7 @@ if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit /b
 if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit /b 1
 if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit /b 1
 if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit /b 1
+if "%MSBUILD_TARGET%" == "" set MSBUILD_TARGET=rebuild
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
@@ -35,8 +39,6 @@ echo ----------------------------------------------
 echo.
 
 set BUILD_TIME=%date:~-4%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
-
-md Out
 
 call "%VCVARSALL%" x86 > nul
 
@@ -94,10 +96,10 @@ for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 
 :: Build Library
 echo * Building 32-bit projects
-%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
+%MSBUILD% /t:%MSBUILD_TARGET% /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 echo * Building 64-bit projects
-%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
+%MSBUILD% /t:%MSBUILD_TARGET% /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 :BUILDLANGUAGES
 echo * Building languages
