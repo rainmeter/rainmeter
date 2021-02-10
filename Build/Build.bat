@@ -7,7 +7,6 @@ set /A VERSION_MAJOR=%2
 set /A VERSION_MINOR=%3
 set /A VERSION_SUBMINOR=%4
 set /A VERSION_REVISION=%5
-set COMMIT_HASH=%6
 
 if "%BUILD_TYPE%" == "beta" set ISBETA=true & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "final" set ISBETA=false & goto BUILD_TYPE_OK
@@ -19,7 +18,6 @@ if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit /b
 if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit /b 1
 if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit /b 1
 if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit /b 1
-if "%COMMIT_HASH%" == "" echo ERROR: COMMIT_HASH parameter missing & exit /b 1
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
@@ -66,7 +64,6 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo #define STRPRODUCTVER STRFILEVER
 	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
-	echo #define COMMIT_HASH L"%COMMIT_HASH%"
 	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo const int revision_number = %VERSION_REVISION%;
 	echo const bool revision_beta = %ISBETA%;
