@@ -224,7 +224,8 @@ void Updater::CheckVersion(void* pParam)
 				if (availableVersion > RAINMETER_VERSION || (revision_beta && availableVersion == RAINMETER_VERSION))
 				{
 					const bool isDevBuild = RAINMETER_VERSION == 0;
-					if (!isDevBuild) {
+					if (!isDevBuild)
+					{
 						GetRainmeter().SetNewVersion();
 					}
 
@@ -236,7 +237,8 @@ void Updater::CheckVersion(void* pParam)
 					const int lastVersion = ParseVersion(tmp);
 					if (availableVersion > lastVersion)
 					{
-						if (!isDevBuild) {
+						if (!isDevBuild)
+						{
 							GetRainmeter().GetTrayIcon()->ShowUpdateNotification(version);
 						}
 						WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
