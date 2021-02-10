@@ -31,7 +31,7 @@ jobs:
       - name: Run Build.bat
         run: |
           cd Build
-          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION:.= % %GITHUB_SHA%
+          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION:.= %
         shell: cmd
         env:
           RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
