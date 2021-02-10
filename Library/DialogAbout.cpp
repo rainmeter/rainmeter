@@ -1690,9 +1690,6 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		CT_LABEL(Id_TimestampLabel, 0,
 			190, 34, 380, 9,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_BuildHashLabel, 0,
-			190, 47, 380, 9,
-			WS_VISIBLE, 0),
 
 		CT_LABEL(Id_WinVerLabel, 0,
 			190, 70, 380, 9,
@@ -1756,16 +1753,6 @@ void DialogAbout::TabVersion::Initialize()
 	
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
 	item = GetControl(Id_TimestampLabel);
-	SetWindowText(item, tmpSz);
-
-	// Build.bat will write to the COMMIT_HASH macro when the installer is created.
-	// For local builds, add some text indicating a local build.
-#ifdef COMMIT_HASH
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s", COMMIT_HASH);
-#else
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s", L"<Local build>");
-#endif // COMMIT_HASH
-	item = GetControl(Id_BuildHashLabel);
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
@@ -1841,14 +1828,6 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 				GetRainmeter().GetBuildTime().c_str());
 
 			std::wstring text(tmpSz, len);
-
-#ifdef COMMIT_HASH
-			_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s\n", COMMIT_HASH);
-#else
-			_snwprintf_s(tmpSz, _TRUNCATE, L"Commit Hash: %s\n", L"<Local build>");
-#endif // COMMIT_HASH
-
-			text += tmpSz;
 
 			_snwprintf_s(
 				tmpSz,

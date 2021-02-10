@@ -18,7 +18,7 @@ Rainmeter can be built using any version of Visual Studio 2019. If you don't alr
 
 First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
 
-Then, in the Build directory, run e.g. `Build.bat beta 1 2 3 4 abc` to build the beta 1.2.3 r4 with commit hash abc.
+Then, in the Build directory, run e.g. `Build.bat beta 1 2 3 4` to build the beta 1.2.3 r4.
 
 If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
 
