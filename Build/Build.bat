@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build beta 2.0.1 r800, run: Build.bat beta 2 0 1 800 abcdef
+:: For example, to build beta 2.0.1 r800, run: Build.bat beta 2 0 1 800
 set BUILD_TYPE=%1
 set /A VERSION_MAJOR=%2
 set /A VERSION_MINOR=%3
@@ -35,8 +35,6 @@ echo ----------------------------------------------
 echo.
 
 set BUILD_TIME=%date:~-4%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
-
-md Out
 
 call "%VCVARSALL%" x86 > nul
 
