@@ -11,30 +11,33 @@
 #include <string>
 #include <Ipexport.h>
 #include <Icmpapi.h>
+#include <Iphlpapi.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
 struct MeasureData
 {
+	void* rm;
+	void* skin;
+	double value;
 	PADDRINFOW destAddrInfo;
 	DWORD timeout;
 	double timeoutValue;
 	DWORD updateRate;
 	DWORD updateCounter;
 	bool threadActive;
-	double value;
 	std::wstring finishAction;
-	void* skin;
 
-	MeasureData() :
+	MeasureData(void* rm) :
+		rm(rm),
+		skin(RmGetSkin(rm)),
+		value(),
 		destAddrInfo(),
 		timeout(),
 		timeoutValue(),
 		updateRate(),
 		updateCounter(),
 		threadActive(false),
-		value(),
-		finishAction(),
-		skin(nullptr)
+		finishAction()
 	{
 	}
 
@@ -50,7 +53,7 @@ struct MeasureData
 	{
 		if (destAddrInfo)
 		{
-			FreeAddrInfo(destAddrInfo);
+			FreeAddrInfoW(destAddrInfo);
 			destAddrInfo = nullptr;
 		}
 	}
@@ -79,8 +82,45 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
-	MeasureData* measure = new MeasureData;
+	MeasureData* measure = new MeasureData(rm);
 	*data = measure;
+}
+
+std::wstring lookupErrorCode(DWORD errorCode) {
+	LPWSTR lpMsgBuf;
+
+	if (!FormatMessageW(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		errorCode,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)& lpMsgBuf,
+		0,
+		NULL))
+	{
+		return L"";
+	}
+
+	std::wstring retval(lpMsgBuf);
+
+	LocalFree(lpMsgBuf);
+
+	return retval;
+}
+
+std::wstring lookupPingErrorCode(DWORD errorCode) {
+	DWORD bufSize = 1023;
+	WCHAR* buf = new WCHAR[(size_t)bufSize + 1]();
+
+	if (GetIpErrorString(errorCode, buf, &bufSize) != NO_ERROR) {
+		return lookupErrorCode(errorCode);
+	}
+
+	std::wstring retval(buf);
+
+	delete[] buf;
+
+	return retval;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -97,10 +137,11 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			measure->Dispose();
 
 			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-			if (GetAddrInfo(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
+			if (GetAddrInfoW(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
 			{
+				DWORD errorCode = WSAGetLastError();
 				RmLogF(rm, LOG_WARNING,
-					L"PingPlugin.dll: WSA failed for: %ls (Error: %d)", destination, WSAGetLastError());
+					L"PingPlugin.dll: WSA failed for: %ls (Error %d: %ls)", destination, errorCode, lookupErrorCode(errorCode).c_str());
 				measure->Dispose();
 			}
 			else
@@ -134,7 +175,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		}
 		else
 		{
-			RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA (Error: %d)", wsaStartupError);
+			RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA (Error %d: %ls)", wsaStartupError, lookupErrorCode(wsaStartupError).c_str());
 		}
 	}
 
@@ -142,7 +183,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->timeout = RmReadInt(rm, L"Timeout", 30000);
 	measure->timeoutValue = RmReadDouble(rm, L"TimeoutValue", 30000.0);
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", false);
-	measure->skin = RmGetSkin(rm);
 }
 
 DWORD WINAPI NetworkThreadProc(void* pParam)
@@ -150,7 +190,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	// NOTE: Do not use CRT functions (since thread was created by CreateThread())!
 
 	MeasureData* measure = (MeasureData*)pParam;
-	double value = 0.0;
+	double value = measure->timeoutValue;
 
 	if (measure->destAddrInfo)
 	{
@@ -169,11 +209,12 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 		if (destAddr)
 		{
 			DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32;
-			BYTE* buffer = new BYTE[bufferSize];
+			BYTE* buffer = new BYTE[bufferSize]();
 
 			HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
 			if (hIcmpFile != INVALID_HANDLE_VALUE)
 			{
+				DWORD result = 0;
 				if (useIPv6)
 				{
 					struct sockaddr_in6 sourceAddr;
@@ -182,19 +223,44 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 					sourceAddr.sin6_flowinfo = 0UL;
 					sourceAddr.sin6_addr = in6addr_any;
 
-					Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
+					result = Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
 						(struct sockaddr_in6*)destAddr, nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
-
-					ICMPV6_ECHO_REPLY* reply = (ICMPV6_ECHO_REPLY*)buffer;
-					value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : (double)reply->RoundTripTime;
 				}
 				else
 				{
-					IcmpSendEcho2(hIcmpFile, nullptr, nullptr, nullptr, ((struct sockaddr_in*)destAddr)->sin_addr.s_addr,
+					result = IcmpSendEcho2(hIcmpFile, nullptr, nullptr, nullptr, ((struct sockaddr_in*)destAddr)->sin_addr.s_addr,
 						nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
+				}
 
-					ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
-					value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : (double)reply->RoundTripTime;
+				if (result != 0)
+				{
+					if (useIPv6)
+					{
+						ICMPV6_ECHO_REPLY* reply = (ICMPV6_ECHO_REPLY*)buffer;
+						result = reply->Status;
+						if (result == IP_SUCCESS)
+						{
+							value = (double)reply->RoundTripTime;
+						}
+					}
+					else
+					{
+						ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
+						result = reply->Status;
+						if (result == IP_SUCCESS)
+						{
+							value = (double)reply->RoundTripTime;
+						}
+					}
+				}
+				else
+				{
+					result = GetLastError();
+				}
+
+				if (result != IP_SUCCESS && result != IP_REQ_TIMED_OUT)
+				{
+					RmLogF(measure->rm, LOG_DEBUG, L"PingPlugin.dll: Ping failed (Error %d: %ls)", result, lookupPingErrorCode(result).c_str());
 				}
 				IcmpCloseHandle(hIcmpFile);
 
