@@ -1,0 +1,23 @@
+name: build
+
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+
+      - name: Run Build.bat
+        run: |
+          cd Build
+          Build.bat beta 0 0 0 0
+        shell: cmd

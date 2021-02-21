@@ -5,7 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-!verbose 3
+!verbose 2
 
 Unicode true
 
@@ -837,7 +837,7 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Plugins"
 	RMDir /r "$INSTDIR\Runtime"
 	RMDir /r "$INSTDIR\Skins"
-	RMDir /r "$INSTRDIR\VisualElements"
+	RMDir /r "$INSTDIR\VisualElements"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"

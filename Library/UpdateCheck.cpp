@@ -221,10 +221,13 @@ void Updater::CheckVersion(void* pParam)
 				if (debug) LogDebugF(L"  Status file version: %s", version);
 
 				const int availableVersion = ParseVersion(version);
-				if (availableVersion > RAINMETER_VERSION ||
-					(revision_beta && availableVersion == RAINMETER_VERSION))
+				if (availableVersion > RAINMETER_VERSION || (revision_beta && availableVersion == RAINMETER_VERSION))
 				{
-					GetRainmeter().SetNewVersion();
+					const bool isDevBuild = RAINMETER_VERSION == 0;
+					if (!isDevBuild)
+					{
+						GetRainmeter().SetNewVersion();
+					}
 
 					WCHAR tmp[32];
 					LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
@@ -234,7 +237,10 @@ void Updater::CheckVersion(void* pParam)
 					const int lastVersion = ParseVersion(tmp);
 					if (availableVersion > lastVersion)
 					{
-						GetRainmeter().GetTrayIcon()->ShowUpdateNotification(version);
+						if (!isDevBuild)
+						{
+							GetRainmeter().GetTrayIcon()->ShowUpdateNotification(version);
+						}
 						WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
 					}
 				}

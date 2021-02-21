@@ -129,7 +129,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 					// Insert a |wait| in between each |act|.
 					size_t k = 0;
-					for (; k < size; ++k)
+					for (; k < (size_t)size; ++k)
 					{
 						if (k % 2 == 0) tokens.insert(tokens.begin() + (j + k), act);
 						else            tokens.insert(tokens.begin() + (j + k), wait);
