@@ -1187,7 +1187,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 	{
 		URL_COMPONENTS components = { 0 };
 		components.dwStructSize = sizeof(components);
-		components.dwExtraInfoLength = -1UL;
+		components.dwExtraInfoLength = ULONG_MAX;
 		if (InternetCrackUrl(url.c_str(), static_cast<DWORD>(url.size()), 0, &components))
 		{
 			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0)
