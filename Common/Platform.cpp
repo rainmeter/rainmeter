@@ -15,11 +15,13 @@ LPCWSTR GetPlatformName()
 	static std::wstring s_Name = []() -> std::wstring
 	{
 		const bool isServer = IsWindowsServer();
+		std::wstring releaseID = GetPlatformReleaseID();
 
 		// Note: Place newer versions at the top.
 		const WCHAR* version =
-			IsWindowsVersionOrGreater(10, 0, 17623) && isServer ? L"2019" :
-			IsWindows10OrGreater() ? (isServer ? L"2016" : L"10") :
+			IsWindows10OrGreater() ?
+				(isServer ? (releaseID == L"1809" ? L"2019" : L"2016") :
+				L"10") :
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
 			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
@@ -37,6 +39,32 @@ LPCWSTR GetPlatformName()
 	return s_Name.c_str();
 }
 
+std::wstring GetPlatformReleaseID()
+{
+	static std::wstring s_ID = []()->std::wstring
+	{
+		std::wstring id;
+
+		if (IsWindows10OrGreater())
+		{
+			WCHAR buffer[10];
+			DWORD size = _countof(buffer);
+
+			HKEY hKey;
+			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
+			{
+				if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+				{
+					id = buffer;
+				}
+				RegCloseKey(hKey);
+			}
+		}
+		return id;
+	} ();
+	return s_ID;  // Can be empty!
+}
+
 std::wstring GetPlatformFriendlyName()
 {
 	std::wstring name;
@@ -52,21 +80,12 @@ std::wstring GetPlatformFriendlyName()
 			name += buffer;
 
 			// For Windows 10 (and above?), use the "ReleaseId" as part of the version number.
-			// (ie. 1507, 1511, 1607, 1703, 1709, 1803 ...)
-			size = _countof(buffer);
-			DWORD major = 0;
-
-			if (RegQueryValueEx(hKey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS)
+			// (ie. 1507, 1511, 1607, 1703, 1709, 1803, 1809, 1903, 1909, 2004, 2009, ...)
+			std::wstring id = GetPlatformReleaseID();
+			if (!id.empty())
 			{
-				if (major >= 10)
-				{
-					size = _countof(buffer);
-					if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
-					{
-						name += L' ';
-						name += buffer;
-					}
-				}
+				name += L' ';
+				name += id;
 			}
 
 			name += Is64BitWindows() ? L" 64-bit" : L" 32-bit";
