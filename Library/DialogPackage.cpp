@@ -240,14 +240,17 @@ bool DialogPackage::CreatePackage()
 		WritePrivateProfileString(L"rmskin", L"Load", c_Dialog->m_Load.c_str(), tempFile);
 	}
 
-	if (!c_Dialog->m_VariableFiles.empty())
-	{
-		WritePrivateProfileString(L"rmskin", L"VariableFiles", m_VariableFiles.c_str(), tempFile);
-	}
-
 	if (c_Dialog->m_MergeSkins)
 	{
 		WritePrivateProfileString(L"rmskin", L"MergeSkins", L"1", tempFile);
+	}
+	else
+	{
+		// "Merge skins" not compatible with "Variable files"
+		if (!c_Dialog->m_VariableFiles.empty())
+		{
+			WritePrivateProfileString(L"rmskin", L"VariableFiles", m_VariableFiles.c_str(), tempFile);
+		}
 	}
 
 	WritePrivateProfileString(L"rmskin", L"MinimumRainmeter", m_MinimumRainmeter.c_str(), tempFile);
@@ -1393,7 +1396,13 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_PACKAGEADVANCED_MERGESKINS_CHECK:
-		c_Dialog->m_MergeSkins = !c_Dialog->m_MergeSkins;
+		{
+			c_Dialog->m_MergeSkins = !c_Dialog->m_MergeSkins;
+
+			// "Merge skins" not compatible with "Variable files"
+			HWND item = GetDlgItem(m_Window, IDC_PACKAGEADVANCED_VARIABLEFILES_EDIT);
+			Edit_Enable(item, !c_Dialog->m_MergeSkins);
+		}
 		break;
 
 	default:
