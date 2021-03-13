@@ -16,6 +16,7 @@
 #include "TextInlineFormat/TextInlineFormatFace.h"
 #include "TextInlineFormat/TextInlineFormatGradientColor.h"
 #include "TextInlineFormat/TextInlineFormatItalic.h"
+#include "TextInlineFormat/TextInlineFormatNone.h"
 #include "TextInlineFormat/TextInlineFormatOblique.h"
 #include "TextInlineFormat/TextInlineFormatShadow.h"
 #include "TextInlineFormat/TextInlineFormatSize.h"
@@ -600,13 +601,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	const WCHAR* option = options[0].c_str();
 	if (_wcsnicmp(option, L"NONE", 4) == 0)
 	{
-		if (index < m_TextInlineFormat.size())
-		{
-			// Special case to delete a specific index while keeping the rest of the options
-			m_TextInlineFormat.erase(m_TextInlineFormat.begin() + index);
-			m_HasInlineOptionsChanged = true;
-		}
-
+		UpdateInlineNone(index, pattern);
 		return true;
 	}
 	else if (_wcsicmp(option, L"CASE") == 0)
@@ -938,6 +933,28 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	else
 	{
 		m_TextInlineFormat[index].reset(new TextInlineFormat_Italic(pattern));
+		m_HasInlineOptionsChanged = true;
+	}
+}
+
+void TextFormatD2D::UpdateInlineNone(const size_t & index, const std::wstring pattern)
+{
+	if (index >= m_TextInlineFormat.size())
+	{
+		m_TextInlineFormat.emplace_back(new TextInlineFormat_None(pattern));
+		m_HasInlineOptionsChanged = true;
+	}
+	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::None)
+	{
+		auto option = dynamic_cast<TextInlineFormat_None*>(m_TextInlineFormat[index].get());
+		if (option->CompareAndUpdateProperties(pattern))
+		{
+			m_HasInlineOptionsChanged = true;
+		}
+	}
+	else
+	{
+		m_TextInlineFormat[index].reset(new TextInlineFormat_None(pattern));
 		m_HasInlineOptionsChanged = true;
 	}
 }

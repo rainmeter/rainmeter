@@ -69,6 +69,7 @@ private:
 	void UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 		const std::vector<std::wstring> args, const bool altGamma);
 	void UpdateInlineItalic(const size_t& index, const std::wstring pattern);
+	void UpdateInlineNone(const size_t& index, const std::wstring pattern);
 	void UpdateInlineOblique(const size_t& index, const std::wstring pattern);
 	void UpdateInlineShadow(const size_t& index, const std::wstring pattern, const FLOAT blur,
 		const D2D1_POINT_2F offset, const D2D1_COLOR_F& color);

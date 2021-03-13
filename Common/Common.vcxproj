@@ -52,6 +52,7 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatFace.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatItalic.cpp" />
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatNone.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatOblique.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatShadow.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatSize.cpp" />
@@ -102,6 +103,7 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatFace.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatItalic.h" />
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatNone.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatOblique.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatShadow.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatSize.h" />
