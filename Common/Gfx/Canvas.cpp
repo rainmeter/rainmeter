@@ -417,6 +417,19 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		return yPos;
 	} ();
 
+	// When different "effects" are used with inline coloring options, we need to
+	// remove the previous inline coloring, then reapply them (if needed) - instead
+	// of destroying/recreating the text layout.
+	UINT32 strLen = (UINT32)str.length();
+	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
+	if (applyInlineFormatting)
+	{
+		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
+
+		// Draw any 'shadow' effects
+		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawPosition);
+	}
+
 	if (formatD2D.m_Trimming)
 	{
 		D2D1_RECT_F clipRect = rect;
@@ -433,28 +446,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		}
 	}
 
-	// When different "effects" are used with inline coloring options, we need to
-	// remove the previous inline coloring, then reapply them (if needed) - instead
-	// of destroying/recreating the text layout.
-	UINT32 strLen = (UINT32)str.length();
-	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
-	if (applyInlineFormatting)
-	{
-		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
-
-		// Draw any 'shadow' effects
-		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawPosition);
-	}
-
 	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
-
-	if (applyInlineFormatting)
-	{
-		// Inline gradients require the drawing position, so in case that position
-		// changes, we need a way to reset it after drawing time so on the next
-		// iteration it will know the correct position.
-		formatD2D.ResetGradientPosition(&drawPosition);
-	}
 
 	if (formatD2D.m_Trimming)
 	{
@@ -466,6 +458,14 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		{
 			m_Target->PopLayer();
 		}
+	}
+
+	if (applyInlineFormatting)
+	{
+		// Inline gradients require the drawing position, so in case that position
+		// changes, we need a way to reset it after drawing time so on the next
+		// iteration it will know the correct position.
+		formatD2D.ResetGradientPosition(&drawPosition);
 	}
 }
 

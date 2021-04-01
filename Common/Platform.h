@@ -13,6 +13,7 @@
 namespace Platform {
 
 LPCWSTR GetPlatformName();
+std::wstring GetPlatformReleaseID();
 std::wstring GetPlatformFriendlyName();
 std::wstring GetPlatformUserLanguage();
 bool Is64BitWindows();
