@@ -894,18 +894,18 @@ HMENU ContextMenu::CreateGameModeMenu()
 		EnableMenuItem(menu, IDM_GAMEMODE_FULLSCREEN, MF_ENABLED);
 		EnableMenuItem(menu, IDM_GAMEMODE_PROCESSLIST, MF_ENABLED);
 
-		HMENU activateMenu = CreateGameModeOnStartMenu();
-		if (activateMenu)
+		HMENU onStartMenu = CreateGameModeOnStartMenu();
+		if (onStartMenu)
 		{
 			DeleteMenu(menu, 5, MF_BYPOSITION);
-			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)activateMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTART));
+			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStartMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTART));
 		}
 
-		HMENU deactivateMenu = CreateGameModeOnStopMenu();
-		if (deactivateMenu)
+		HMENU onStopMenu = CreateGameModeOnStopMenu();
+		if (onStopMenu)
 		{
 			DeleteMenu(menu, 6, MF_BYPOSITION);
-			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)deactivateMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTOP));
+			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStopMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTOP));
 		}
 	}
 
