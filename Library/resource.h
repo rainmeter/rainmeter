@@ -235,8 +235,20 @@
 #define ID_STR_SKININSTALLER                         2151
 #define ID_STR_ARCHIVEPLUGINS                        2152
 #define ID_STR_HARDWAREACCELERATED                   2153
-#define ID_STR_GAMEMODE                              2154
-#define ID_STR_MEASURE                               2155
+#define ID_STR_MEASURE                               2154
+
+#define ID_STR_GAMEMODE                              2155
+#define ID_STR_GAMEMODE_START                        2156
+#define ID_STR_GAMEMODE_STOP                         2157
+#define ID_STR_GAMEMODE_FULLSCREEN                   2158
+#define ID_STR_GAMEMODE_PROCESSLIST                  2159
+#define ID_STR_GAMEMODE_PROCESSLISTSC                2160
+#define ID_STR_GAMEMODE_SETTINGS_DESC                2161
+#define ID_STR_GAMEMODE_ACTIONS_ONSTART              2162
+#define ID_STR_GAMEMODE_ACTIONS_ONSTOP               2163
+#define ID_STR_GAMEMODE_ACTIONS_DESC                 2164
+#define ID_STR_GAMEMODE_ACTIONS_UNLOADALL            2165
+#define ID_STR_GAMEMODE_ACTIONS_CURRENT              2166
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000
@@ -336,8 +348,12 @@
 #define IDM_COPYSTRINGVALUE                          4072
 #define IDM_COPYRANGE                                4073
 #define IDM_LANGUAGEOBSOLETE                         4074
-#define IDM_TOGGLE_GAMEMODE                          4075
-#define IDM_COPYMEASURENAME                          4076
+#define IDM_COPYMEASURENAME                          4075
+
+#define IDM_GAMEMODE_START                           4076
+#define IDM_GAMEMODE_STOP                            4077
+#define IDM_GAMEMODE_FULLSCREEN                      4078
+#define IDM_GAMEMODE_PROCESSLIST                     4079
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
@@ -351,3 +367,7 @@
 #define ID_MONITOR_LAST                              44000
 #define ID_TEMPLATE_FIRST                            45001
 #define ID_TEMPLATE_LAST                             46000
+#define ID_GAMEMODE_ONSTART_FIRST                    50001
+#define ID_GAMEMODE_ONSTART_LAST                     53000
+#define ID_GAMEMODE_ONSTOP_FIRST                     53001
+#define ID_GAMEMODE_ONSTOP_LAST                      56000

@@ -28,6 +28,9 @@ public:
 
 	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
+	static HMENU CreateGameModeOnStartMenu();
+	static HMENU CreateGameModeOnStopMenu();
+
 private:
 	static void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
 
@@ -42,6 +45,8 @@ private:
 	static void CreateLayoutMenu(HMENU layoutMenu);
 
 	static void CreateFavoritesMenu(HMENU favoriteMenu) { CreateSkinsMenuRecursive(favoriteMenu, 0, true); }
+
+	static HMENU CreateGameModeMenu();
 
 	bool m_MenuActive;
 };

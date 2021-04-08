@@ -13,6 +13,7 @@
 #include "Rainmeter.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
+#include "GameMode.h"
 #include "System.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
@@ -460,17 +461,17 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	TrayIcon* tray = GetRainmeter().GetTrayIcon();
 
-	// In "Game mode", only allow its menu (toggle game mode & exit),
-	//  and access to the context menu
-	if (GetRainmeter().IsInGameMode())
+	// When in non-layout enabled "Game mode", only process
+	// the toggling of game mode and exit.
+	if (GetGameMode().IsEnabled())
 	{
 		switch (uMsg)
 		{
 		case WM_COMMAND:
 			switch (wParam)
 			{
-			case IDM_TOGGLE_GAMEMODE:
-				GetRainmeter().ToggleGameMode();
+			case IDM_GAMEMODE_STOP:
+				GetGameMode().ChangeStateManual(true);
 				break;
 
 			case IDM_QUIT:
@@ -517,10 +518,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		case IDM_SHOW_HELP:
 			CommandHandler::RunFile(RAINMETER_HELP);
-			break;
-
-		case IDM_TOGGLE_GAMEMODE:
-			GetRainmeter().ToggleGameMode();
 			break;
 
 		case IDM_NEW_VERSION:
@@ -571,6 +568,22 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			GetRainmeter().OpenSkinFolder();
 			break;
 
+		case IDM_GAMEMODE_START:
+			GetGameMode().ChangeStateManual(false);
+			break;
+
+		case IDM_GAMEMODE_STOP:
+			GetGameMode().ChangeStateManual(true);
+			break;
+
+		case IDM_GAMEMODE_FULLSCREEN:
+			GetGameMode().SetFullScreenMode(!GetGameMode().GetFullScreenMode());
+			break;
+
+		case IDM_GAMEMODE_PROCESSLIST:
+			GetGameMode().SetProcessListMode(!GetGameMode().GetProcessListMode());
+			break;
+
 		default:
 			{
 				UINT mID = wParam & 0x0FFFF;
@@ -588,6 +601,16 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
 				{
 					GetRainmeter().ToggleSkinWithID(mID);
+				}
+				else if (mID >= ID_GAMEMODE_ONSTART_FIRST && mID <= ID_GAMEMODE_ONSTART_LAST)
+				{
+					UINT index = mID - ID_GAMEMODE_ONSTART_FIRST;
+					GetGameMode().SetOnStartAction(index);
+				}
+				else if (mID >= ID_GAMEMODE_ONSTOP_FIRST && mID <= ID_GAMEMODE_ONSTOP_LAST)
+				{
+					UINT index = mID - ID_GAMEMODE_ONSTOP_FIRST;
+					GetGameMode().SetOnStopAction(index);
 				}
 				else
 				{

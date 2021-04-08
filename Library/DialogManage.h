@@ -31,6 +31,7 @@ public:
 
 	static void UpdateSkins(Skin* skin, bool deleted = false);
 	static void UpdateLayouts();
+	static void UpdateGameMode();
 
 	static void UpdateLanguageStatus();
 
@@ -151,7 +152,36 @@ private:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
-	
+
+	// Game mode tab
+	class TabGameMode : public Tab
+	{
+	public:
+		enum Id
+		{
+			Id_FullScreenCheckBox = 100,
+			Id_ProcessListCheckBox,
+			Id_ProcessListEdit,
+			Id_OnStartButton,
+			Id_OnStopButton
+		};
+
+		TabGameMode();
+
+		void Create(HWND owner);
+		virtual void Initialize();
+
+		void Update();
+
+		static void SetRestrictedEdit(HWND edit) { SetWindowSubclass(edit, RestrictedEditProc, 0, 0); }
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+
+		static LRESULT CALLBACK RestrictedEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	};
+
 	// Settings tab
 	class TabSettings : public Tab
 	{
@@ -201,6 +231,7 @@ private:
 
 	TabSkins m_TabSkins;
 	TabLayouts m_TabLayouts;
+	TabGameMode m_TabGameMode;
 	TabSettings m_TabSettings;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
