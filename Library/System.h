@@ -72,6 +72,8 @@ public:
 	static void UpdateIniFileMappingList();
 	static std::wstring GetTemporaryFile(const std::wstring& iniFile);
 
+	static bool IsProcessRunningCached(const std::wstring& lowercaseName);
+
 private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
