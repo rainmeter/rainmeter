@@ -16,6 +16,7 @@
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
+#include "GameMode.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
@@ -107,7 +108,6 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
-	m_GameMode(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -430,6 +430,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	ReloadSettings();
 
+	// Initialize "Game mode" and read its settings
+	GetGameMode().Initialize();
+
 	if (m_SkinRegistry.IsEmpty())
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
@@ -478,7 +481,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		layoutLoaded = (args.size() == 1 && LoadLayout(args[0]));
 	}
 
-	if (!layoutLoaded)
+	if (!layoutLoaded && GetGameMode().IsDisabled())
 	{
 		ActivateActiveSkins();
 	}
@@ -498,6 +501,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
+
+	GetGameMode().ForceExit();
 
 	DeleteAllUnmanagedSkins();
 	DeleteAllSkins();
@@ -620,7 +625,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			if (cds && !GetRainmeter().IsInGameMode())  // Disallow any bangs while in "Game mode"
+			if (cds && !GetGameMode().IsEnabled())  // Disallow any bangs in manual "Game mode"
 			{
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
@@ -637,6 +642,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			MeasureNet::UpdateIFTable();
 			MeasureNet::UpdateStats();
 			GetRainmeter().WriteStats(false);
+		}
+		else
+		{
+			GetGameMode().OnTimerEvent(wParam);
 		}
 		break;
 
@@ -1054,27 +1063,6 @@ void Rainmeter::ToggleSkinWithID(UINT id)
 	{
 		ToggleSkin(indexes.folder, indexes.file);
 	}
-}
-
-void Rainmeter::ToggleGameMode()
-{
-	if (m_GameMode)
-	{
-		ReloadSettings();
-		ActivateActiveSkins();
-	}
-	else
-	{
-		// Close dialogs if open
-		DialogManage::CloseDialog();
-		DialogAbout::CloseDialog();
-		DialogNewSkin::CloseDialog();
-
-		DeleteAllUnmanagedSkins();
-		DeleteAllSkins();
-		DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
-	}
-	m_GameMode = !m_GameMode;
 }
 
 void Rainmeter::SetSkinPath(const std::wstring& skinPath)
@@ -1684,10 +1672,14 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		}
 	}
 
-	ReloadSettings();
+	// Game mode: Only load layouts if not in game mode or in a game mode layout
+	if (!GetGameMode().IsEnabled())
+	{
+		ReloadSettings();
 
-	// Create meter windows for active skins
-	ActivateActiveSkins();
+		// Create meter windows for active skins
+		ActivateActiveSkins();
+	}
 
 	return true;
 }

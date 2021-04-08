@@ -206,6 +206,17 @@ STRINGTABLE
     ID_STR_BUILTINPLUGINS, STR_BUILTINPLUGINS
     ID_STR_LANGUAGEOBSOLETE, STR_LANGUAGEOBSOLETE
     ID_STR_HARDWAREACCELERATED, "Use hardware acceleration (Requires restart)"
-    ID_STR_GAMEMODE, "Game mode"
     ID_STR_MEASURE, "Measure"
+    ID_STR_GAMEMODE, "Game mode"
+    ID_STR_GAMEMODE_START, "Start game mode"
+    ID_STR_GAMEMODE_STOP, "Stop game mode"
+    ID_STR_GAMEMODE_FULLSCREEN, "Full-screen mode"
+    ID_STR_GAMEMODE_PROCESSLIST, "Additional process list"
+    ID_STR_GAMEMODE_PROCESSLISTSC, "Additional process list:"
+    ID_STR_GAMEMODE_SETTINGS_DESC, "You can also manually start/stop game mode by using the tray icon context menu. Manually starting/stopping game mode will uncheck both the ""Full-screen mode"" and ""Process list"" checkbox. You must re-enable those items for Rainmeter to start monitoring them again.\n\nClick the ""Help"" button for more information."
+    ID_STR_GAMEMODE_ACTIONS_ONSTART, "On start"
+    ID_STR_GAMEMODE_ACTIONS_ONSTOP, "On stop"
+    ID_STR_GAMEMODE_ACTIONS_DESC, "Select the action to perform when starting/stopping game mode. ""On start"" can unload all skins or load a layout. ""On stop"" can reload the current layout or another layout."
+    ID_STR_GAMEMODE_ACTIONS_UNLOADALL, "Unload all skins"
+    ID_STR_GAMEMODE_ACTIONS_CURRENT, "Load current layout"
 }

@@ -80,6 +80,7 @@
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
     <ClCompile Include="Export.cpp" />
+    <ClCompile Include="GameMode.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />
     <ClInclude Include="Export.h" />
+    <ClInclude Include="GameMode.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="Logger.h" />

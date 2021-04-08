@@ -9,6 +9,7 @@
 #include "../Common/MenuTemplate.h"
 #include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
+#include "GameMode.h"
 #include "Meter.h"
 #include "Rainmeter.h"
 #include "Util.h"
@@ -55,14 +56,14 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			MENU_ITEM(IDM_DELETELOGFILE, ID_STR_DELETELOGFILE),
 			MENU_ITEM(IDM_DEBUGLOG, ID_STR_DEBUGMODE)),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_TOGGLE_GAMEMODE, ID_STR_GAMEMODE),
+		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
 
 	static const MenuTemplate s_GameModeMenu[] =
 	{
-		MENU_ITEM(IDM_TOGGLE_GAMEMODE, ID_STR_GAMEMODE),
+		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
@@ -72,9 +73,10 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	Rainmeter& rainmeter = GetRainmeter();
 
 	// Show context menu, if no actions were executed
-	HMENU menu = rainmeter.IsInGameMode() ?
-		MenuTemplate::CreateMenu(s_GameModeMenu, _countof(s_GameModeMenu), GetString) :
-		MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	HMENU menu = !GetGameMode().IsEnabled() ?
+		MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString) :
+		MenuTemplate::CreateMenu(s_GameModeMenu, _countof(s_GameModeMenu), GetString);
+		
 	if (!menu) return;
 
 	m_MenuActive = true;
@@ -98,9 +100,16 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		m_MenuActive = false;
 	};
 
-	if (rainmeter.IsInGameMode())
+	int gamePos = GetMenuItemCount(menu) - 3;
+	HMENU gameMenu = CreateGameModeMenu();
+	if (gameMenu)
 	{
-		CheckMenuItem(menu, IDM_TOGGLE_GAMEMODE, MF_BYCOMMAND | MF_CHECKED);
+		DeleteMenu(menu, gamePos, MF_BYPOSITION);
+		InsertMenu(menu, gamePos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)gameMenu, GetString(ID_STR_GAMEMODE));
+	}
+
+	if (GetGameMode().IsEnabled())
+	{
 		displayMenu();
 		return;
 	}
@@ -762,4 +771,143 @@ void ContextMenu::ChangeSkinIndex(HMENU menu, int index)
 			}
 		}
 	}
+}
+
+HMENU ContextMenu::CreateGameModeOnStartMenu()
+{
+	static const MenuTemplate s_Menu[] =
+	{
+		MENU_ITEM(ID_GAMEMODE_ONSTART_FIRST, ID_STR_GAMEMODE_ACTIONS_UNLOADALL)
+	};
+
+	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	if (!menu) return nullptr;
+
+	std::wstring& action = GetGameMode().GetOnStartAction();
+	bool checked = false;
+
+	const auto& layouts = GetRainmeter().m_Layouts;
+	if (layouts.size() > 0)
+	{
+		InsertMenu(menu, 1, MF_BYPOSITION, MF_SEPARATOR, nullptr);
+
+		for (size_t i = 0, isize = layouts.size(); i < isize; ++i)
+		{
+			LPCWSTR item = layouts[i].c_str();
+			UINT pos = (UINT)(i + 2);
+			InsertMenu(menu, pos, MF_BYPOSITION, ID_GAMEMODE_ONSTART_FIRST + i + 1, item);
+			if (_wcsicmp(item, action.c_str()) == 0)
+			{
+				CheckMenuRadioItem(menu, pos, pos, pos, MF_BYPOSITION);
+				checked = true;
+			}
+		}
+	}
+
+	if (!checked)
+	{
+		CheckMenuRadioItem(menu, 0, 0, 0, MF_BYPOSITION);
+	}
+
+	return menu;
+}
+
+HMENU ContextMenu::CreateGameModeOnStopMenu()
+{
+	static const MenuTemplate s_Menu[] =
+	{
+		MENU_ITEM(ID_GAMEMODE_ONSTOP_FIRST, ID_STR_GAMEMODE_ACTIONS_CURRENT)
+	};
+
+	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	if (!menu) return nullptr;
+
+	std::wstring& action = GetGameMode().GetOnStopAction();
+	bool checked = false;
+
+	const auto& layouts = GetRainmeter().m_Layouts;
+	if (layouts.size() > 0)
+	{
+		InsertMenu(menu, 1, MF_BYPOSITION, MF_SEPARATOR, nullptr);
+
+		for (size_t i = 0, isize = layouts.size(); i < isize; ++i)
+		{
+			LPCWSTR item = layouts[i].c_str();
+			UINT pos = (UINT)(i + 2);
+			InsertMenu(menu, pos, MF_BYPOSITION, ID_GAMEMODE_ONSTOP_FIRST + i + 1, item);
+			if (_wcsicmp(item, action.c_str()) == 0)
+			{
+				CheckMenuRadioItem(menu, pos, pos, pos, MF_BYPOSITION);
+				checked = true;
+			}
+		}
+	}
+
+	if (!checked)
+	{
+		CheckMenuRadioItem(menu, 0, 0, 0, MF_BYPOSITION);
+	}
+
+	return menu;
+}
+
+HMENU ContextMenu::CreateGameModeMenu()
+{
+	static const MenuTemplate s_Menu[] =
+	{
+		MENU_ITEM(IDM_GAMEMODE_START, ID_STR_GAMEMODE_START),
+		MENU_SEPARATOR(),
+		MENU_ITEM_GRAYED(IDM_GAMEMODE_FULLSCREEN, ID_STR_GAMEMODE_FULLSCREEN),
+		MENU_ITEM_GRAYED(IDM_GAMEMODE_PROCESSLIST, ID_STR_GAMEMODE_PROCESSLIST),
+		MENU_SEPARATOR(),
+		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE_ACTIONS_ONSTART),
+		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE_ACTIONS_ONSTOP)
+	};
+
+	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	if (!menu) return nullptr;
+
+	GameMode& game = GetGameMode();
+	bool enabled = game.IsEnabled();
+
+	// If game is enabled (or in layout mode), change item 0 to "Disable"
+	if (!game.IsDisabled())
+	{
+		DeleteMenu(menu, 0, MF_BYPOSITION);
+		InsertMenu(menu, 0, MF_BYPOSITION, IDM_GAMEMODE_STOP, GetString(ID_STR_GAMEMODE_STOP));
+	}
+
+	// Tick the settings
+	if (game.GetFullScreenMode())
+	{
+		CheckMenuItem(menu, IDM_GAMEMODE_FULLSCREEN, MF_BYCOMMAND | MF_CHECKED);
+	}
+
+	if (game.GetProcessListMode())
+	{
+		CheckMenuItem(menu, IDM_GAMEMODE_PROCESSLIST, MF_BYCOMMAND | MF_CHECKED);
+	}
+
+	// Only allow changing of settings if not enabled (layout enabled or disabled is okay)
+	if (!game.IsEnabled())
+	{
+		EnableMenuItem(menu, IDM_GAMEMODE_FULLSCREEN, MF_ENABLED);
+		EnableMenuItem(menu, IDM_GAMEMODE_PROCESSLIST, MF_ENABLED);
+
+		HMENU activateMenu = CreateGameModeOnStartMenu();
+		if (activateMenu)
+		{
+			DeleteMenu(menu, 5, MF_BYPOSITION);
+			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)activateMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTART));
+		}
+
+		HMENU deactivateMenu = CreateGameModeOnStopMenu();
+		if (deactivateMenu)
+		{
+			DeleteMenu(menu, 6, MF_BYPOSITION);
+			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)deactivateMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTOP));
+		}
+	}
+
+	return menu;
 }

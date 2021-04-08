@@ -40,6 +40,7 @@
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
+    <ClCompile Include="GameMode.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
+    <ClInclude Include="GameMode.h" />
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
