@@ -2230,11 +2230,12 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == EN_KILLFOCUS)
 		{
 			std::wstring oldList = GetGameMode().GetProcessList();
+			std::wstring list;
 
 			WCHAR buffer[4096];
 			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				std::wstring list = buffer;
+				list = buffer;
 				std::vector<std::wstring> tokens = ConfigParser::Tokenize(list, L"\n");
 				list.clear();
 				for (auto& line : tokens)
@@ -2245,14 +2246,14 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 						list += L'|';
 					}
 				}
-
-				if (oldList != list)
-				{
-					GetGameMode().SetProcessList(list);  // Only update if needed
-				}
-
-				Update();  // Removes unneeded whitespace
 			}
+
+			if (oldList != list)
+			{
+				GetGameMode().SetProcessList(list);  // Only update if needed
+			}
+
+			Update();  // Removes unneeded whitespace
 		}
 		break;
 
