@@ -50,6 +50,7 @@ GameMode& GameMode::GetInstance()
 
 void GameMode::Initialize()
 {
+	LogDebug(L">> Intializing \"Game mode\" (v1)");
 	ReadSettings();
 }
 
@@ -261,11 +262,11 @@ void GameMode::ReadSettings()
 	const std::wstring& dataFile = GetRainmeter().GetDataFile();
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-	if (GetPrivateProfileString(L"GameMode", nullptr, nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) > 0)
+	if (GetPrivateProfileString(L"GameMode_v1", nullptr, nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) > 0)
 	{
 		auto getStr = [buffer, &dataFile](std::wstring& key, std::wstring& str) -> bool
 		{
-			bool ret = (GetPrivateProfileString(L"GameMode", key.c_str(), nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) == 0);
+			bool ret = (GetPrivateProfileString(L"GameMode_v1", key.c_str(), nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) == 0);
 			if (!ret) str = buffer;
 			return ret;
 		};
@@ -345,11 +346,11 @@ void GameMode::WriteSettings()
 	if (list.empty()) list = hashStr;
 
 	// Delete entire section
-	WritePrivateProfileString(L"GameMode", nullptr, nullptr, dataFile.c_str());
+	WritePrivateProfileString(L"GameMode_v1", nullptr, nullptr, dataFile.c_str());
 
 	auto setStr = [&dataFile](std::wstring& key, std::wstring& value) -> bool
 	{
-		return (WritePrivateProfileString(L"GameMode", key.c_str(), value.c_str(), dataFile.c_str()) == 0);
+		return (WritePrivateProfileString(L"GameMode_v1", key.c_str(), value.c_str(), dataFile.c_str()) == 0);
 	};
 
 	if (setStr(keyStar, star) || setStr(keyStop, stop) || setStr(keyFull, full) ||
