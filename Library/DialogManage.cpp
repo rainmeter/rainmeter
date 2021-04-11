@@ -341,7 +341,9 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_HelpButton:
 		{
-			std::wstring url = L"https://docs.rainmeter.net/manual/user-interface/manage#";
+			std::wstring url = revision_beta ?
+				L"https://docs.rainmeter.net/manual-beta/user-interface/manage#" :
+				L"https://docs.rainmeter.net/manual/user-interface/manage#";
 
 			Tab& tab = GetActiveTab();
 			if (&tab == &m_TabSkins)
