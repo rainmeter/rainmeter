@@ -92,6 +92,8 @@ const WCHAR* ToString(DOT11_PHY_TYPE value)
 	case dot11_phy_type_erp: return L"802.11g";
 	case dot11_phy_type_ht: return L"802.11n";
 	case dot11_phy_type_vht: return L"802.11ac";
+	case dot11_phy_type_dmg: return L"802.11ad";
+	case dot11_phy_type_he: return L"802.11ax";	
 	default: return L"???";
 	}
 }
