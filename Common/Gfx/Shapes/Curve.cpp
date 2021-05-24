@@ -12,8 +12,8 @@
 
 namespace Gfx {
 
-Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
-	FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending) : Shape(ShapeType::Curve),
+Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT cx2,
+	FLOAT cy2, D2D1_FIGURE_END ending, bool isCloned) : Shape(ShapeType::Curve),
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_BezierSegment(D2D1::BezierSegment(
 		D2D1::Point2F(cx1, cy1),
@@ -21,6 +21,9 @@ Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
 		D2D1::Point2F(x2, y2))),
 	m_ShapeEnding(ending)
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -48,7 +51,7 @@ Curve::~Curve()
 
 Shape* Curve::Clone()
 {
-	Shape* newShape = new Curve(
+	Curve* newShape = new Curve(
 		m_StartPoint.x,
 		m_StartPoint.y,
 		m_BezierSegment.point3.x,
@@ -57,7 +60,9 @@ Shape* Curve::Clone()
 		m_BezierSegment.point1.y,
 		m_BezierSegment.point2.x,
 		m_BezierSegment.point2.y,
-		m_ShapeEnding);
+		m_ShapeEnding,
+		true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }

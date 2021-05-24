@@ -15,8 +15,8 @@ namespace Gfx {
 class QuadraticCurve final : public Shape
 {
 public:
-	QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
-		FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending);
+	QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx,
+		FLOAT cy, D2D1_FIGURE_END ending, bool isCloned = false);
 	~QuadraticCurve();
 
 	virtual Shape* Clone() override;
