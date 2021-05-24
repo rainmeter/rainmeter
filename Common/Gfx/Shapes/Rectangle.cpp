@@ -12,12 +12,15 @@
 
 namespace Gfx {
 
-Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height) : Shape(ShapeType::Rectangle),
+Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, bool isCloned) : Shape(ShapeType::Rectangle),
 	m_X(x),
 	m_Y(y),
 	m_Width(width + x),
 	m_Height(height + y)
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	HRESULT hr = E_FAIL;
 	const D2D1_RECT_F rect = { m_X, m_Y, m_Width, m_Height };
 
@@ -43,7 +46,8 @@ Rectangle::~Rectangle()
 
 Shape* Rectangle::Clone()
 {
-	Shape* newShape = new Rectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y);
+	Rectangle* newShape = new Rectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y, true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }

@@ -15,8 +15,8 @@ namespace Gfx {
 class Curve final : public Shape
 {
 public:
-	Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2,
-		FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending);
+	Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1,
+		FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending, bool isCloned = false);
 	~Curve();
 
 	virtual Shape* Clone() override;

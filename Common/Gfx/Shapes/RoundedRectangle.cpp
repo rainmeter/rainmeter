@@ -13,7 +13,7 @@
 namespace Gfx {
 
 RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
-	FLOAT xRadius, FLOAT yRadius) : Shape(ShapeType::RoundedRectangle),
+	FLOAT xRadius, FLOAT yRadius, bool isCloned) : Shape(ShapeType::RoundedRectangle),
 		m_X(x),
 		m_Y(y),
 		m_Width(width + x),
@@ -21,6 +21,9 @@ RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
 		m_XRadius(xRadius),
 		m_YRadius(yRadius)
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	HRESULT hr = E_FAIL;
 	const D2D1_ROUNDED_RECT rect = { m_X, m_Y, m_Width, m_Height, m_XRadius, m_YRadius };
 
@@ -46,7 +49,8 @@ RoundedRectangle::~RoundedRectangle()
 
 Shape* RoundedRectangle::Clone()
 {
-	Shape* newShape = new RoundedRectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y, m_XRadius, m_YRadius);
+	RoundedRectangle* newShape = new RoundedRectangle(m_X, m_Y, m_Width - m_X, m_Height - m_Y, m_XRadius, m_YRadius, true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }

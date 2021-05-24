@@ -15,7 +15,7 @@ namespace Gfx {
 class Rectangle final : public Shape
 {
 public:
-	Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
+	Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, bool isCloned = false);
 	~Rectangle();
 
 	virtual Shape* Clone() override;

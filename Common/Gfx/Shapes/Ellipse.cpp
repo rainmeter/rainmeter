@@ -12,11 +12,15 @@
 
 namespace Gfx {
 
-Ellipse::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius) : Shape(ShapeType::Ellipse),
+Ellipse::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius,
+	bool isCloned) : Shape(ShapeType::Ellipse),
 	m_CenterPoint(D2D1::Point2F(x, y)),
 	m_RadiusX(xRadius),
 	m_RadiusY(yRadius)
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	HRESULT hr = E_FAIL;
 	const D2D1_ELLIPSE ellipse = D2D1::Ellipse(m_CenterPoint, m_RadiusX, m_RadiusY);
 
@@ -42,7 +46,8 @@ Ellipse::~Ellipse()
 
 Shape* Ellipse::Clone()
 {
-	Shape* newShape = new Ellipse(m_CenterPoint.x, m_CenterPoint.y, m_RadiusX, m_RadiusY);
+	Ellipse* newShape = new Ellipse(m_CenterPoint.x, m_CenterPoint.y, m_RadiusX, m_RadiusY, true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }

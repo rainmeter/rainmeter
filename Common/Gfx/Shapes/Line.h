@@ -15,7 +15,7 @@ namespace Gfx {
 class Line final : public Shape
 {
 public:
-	Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2);
+	Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, bool isCloned = false);
 	~Line();
 
 	virtual Shape* Clone() override;
