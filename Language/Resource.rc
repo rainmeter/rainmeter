@@ -213,7 +213,7 @@ STRINGTABLE
     ID_STR_GAMEMODE_FULLSCREEN, "Full-screen games"
     ID_STR_GAMEMODE_PROCESSLIST, "Additional process list"
     ID_STR_GAMEMODE_PROCESSLISTSC, "Additional process list:"
-    ID_STR_GAMEMODE_SETTINGS_DESC, "You can also manually start/stop game mode by using the tray icon context menu. Manually starting/stopping game mode will uncheck both the ""Full-screen games"" and ""Process list"" checkbox. You must re-enable those items for Rainmeter to start monitoring them again.\n\nClick the ""Help"" button for more information."
+    ID_STR_GAMEMODE_SETTINGS_DESC, "You can also manually start/stop game mode by using the tray icon context menu. Manually starting/stopping game mode will uncheck both the ""Full-screen games"" and ""Additional process list"" checkbox. You must re-enable those items for Rainmeter to start monitoring them again.\n\nClick the ""Help"" button for more information."
     ID_STR_GAMEMODE_ACTIONS_ONSTART, "On start"
     ID_STR_GAMEMODE_ACTIONS_ONSTOP, "On stop"
     ID_STR_GAMEMODE_ACTIONS_DESC, "Select the action to perform when starting/stopping game mode. ""On start"" can unload all skins or load a layout. ""On stop"" can reload the current layout or another layout."
