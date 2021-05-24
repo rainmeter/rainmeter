@@ -50,7 +50,7 @@ GameMode& GameMode::GetInstance()
 
 void GameMode::Initialize()
 {
-	LogDebug(L">> Intializing \"Game mode\" (v1)");
+	LogDebug(L">> Initializing \"Game mode\" (v1)");
 	ReadSettings();
 }
 
