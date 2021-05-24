@@ -16,7 +16,7 @@ class Arc final : public Shape
 {
 public:
 	Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle,
-		D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending);
+		D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending, bool isCloned = false);
 	~Arc();
 
 	virtual Shape* Clone() override;

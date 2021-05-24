@@ -12,10 +12,13 @@
 
 namespace Gfx {
 
-Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2) : Shape(ShapeType::Line),
+Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, bool isCloned) : Shape(ShapeType::Line),
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_EndPoint(D2D1::Point2F(x2, y2))
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -43,7 +46,8 @@ Line::~Line()
 
 Shape* Line::Clone()
 {
-	Shape* newShape = new Line(m_StartPoint.x, m_StartPoint.y, m_EndPoint.x, m_EndPoint.y);
+	Line* newShape = new Line(m_StartPoint.x, m_StartPoint.y, m_EndPoint.x, m_EndPoint.y, true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }
