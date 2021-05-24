@@ -63,7 +63,7 @@ namespace InputText
                 }
 
                 // only allow minus sign at the beginning
-                if (e.KeyChar == '-' && (sender as TextBox).Text.Length > 0)
+                if (e.KeyChar == '-' && (sender as TextBox).SelectionStart != 0)
                 {
                     e.Handled = true;
                 }
