@@ -322,21 +322,25 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
+			m_CurrentSection->assign(measure->GetName());
+			bool retValue = false;
+
 			const auto type = measure->GetTypeID();
 			if (type == TypeID<MeasureScript>())
 			{
 				valueType = ValueType::Script;  // Needed?
 				MeasureScript* script = (MeasureScript*)measure;
-				return script->CommandWithReturn(selectorSz, strValue);
+				retValue = script->CommandWithReturn(selectorSz, strValue);
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
 				valueType = ValueType::Plugin;  // Needed?
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				return plugin->CommandWithReturn(selectorSz, strValue);
+				retValue = plugin->CommandWithReturn(selectorSz, strValue);
 			}
 
-			return false;
+			m_CurrentSection->clear();
+			return retValue;
 		}
 
 		selectorSz = L"";
