@@ -66,12 +66,18 @@ void GetPropertiesFromDWriteFont(
 
 IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WCHAR* gdiFamilyName)
 {
+	// LOGFONT lfFaceName must not exceed 32 characters
+	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw
+	WCHAR family[LF_FACESIZE];
+	wcsncpy(family, gdiFamilyName, LF_FACESIZE);
+	family[LF_FACESIZE - 1] = '\0';
+
 	Microsoft::WRL::ComPtr<IDWriteGdiInterop> dwGdiInterop;
 	HRESULT hr = factory->GetGdiInterop(dwGdiInterop.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
 		LOGFONT lf = {};
-		wcscpy_s(lf.lfFaceName, gdiFamilyName);
+		wcscpy_s(lf.lfFaceName, family);
 		lf.lfHeight = -12;
 		lf.lfWeight = FW_DONTCARE;
 		lf.lfCharSet = DEFAULT_CHARSET;
