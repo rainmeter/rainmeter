@@ -117,7 +117,7 @@ private:
     WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flag", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
+    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
 
     // Value and option bangs
     const std::set<std::string> setterBangWords = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
