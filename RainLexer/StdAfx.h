@@ -25,3 +25,5 @@
 
 #include <set>
 #include <string>
+
+#include "resource.h"

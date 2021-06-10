@@ -150,10 +150,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Rainmeter.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Plugin.rc" />

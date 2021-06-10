@@ -34,7 +34,7 @@ namespace RainLexer {
 
 inline bool IsReserved(int ch);
 
-class RainLexer final : public ILexer4
+class RainLexer final : public ILexer5
 {
 protected:
     const LexicalClass* lexClasses;
@@ -44,7 +44,7 @@ public:
         lexClasses(lexClasses_), nClasses(nClasses_) {};
     virtual ~RainLexer() = default;
 
-    static ILexer4* LexerFactory();
+    static ILexer5* LexerFactory();
 
     // ILexer
     void SCI_METHOD Release() override;
@@ -72,6 +72,10 @@ public:
     const char* SCI_METHOD NameOfStyle(int style) override;
     const char* SCI_METHOD TagsOfStyle(int style) override;
     const char* SCI_METHOD DescriptionOfStyle(int style) override;
+
+    const char* SCI_METHOD GetName() override;
+    int SCI_METHOD  GetIdentifier() override;
+    const char* SCI_METHOD PropertyGet(const char* key) override;
 
 private:
     enum class TextState
@@ -113,7 +117,7 @@ private:
     WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
+    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
 
     // Value and option bangs
     const std::set<std::string> setterBangWords = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };

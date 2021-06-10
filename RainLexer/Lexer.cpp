@@ -33,7 +33,7 @@ bool IsReserved(int ch) {
         ch == '|' || ch == '?' || ch == '*');
 }
 
-ILexer4* RainLexer::LexerFactory()
+ILexer5* RainLexer::LexerFactory()
 {
     return new RainLexer(nullptr, 0U);
 }
@@ -47,7 +47,7 @@ void SCI_METHOD RainLexer::Release() {
 }
 
 int SCI_METHOD RainLexer::Version() const {
-    return lvRelease4;
+    return lvRelease5;
 }
 
 const char* SCI_METHOD RainLexer::PropertyNames() {
@@ -981,6 +981,18 @@ const char* SCI_METHOD RainLexer::TagsOfStyle(int style) {
 
 const char* SCI_METHOD RainLexer::DescriptionOfStyle(int style) {
     return (style < NamedStyles()) ? lexClasses[style].description : "";
+}
+
+const char* SCI_METHOD RainLexer::GetName() {
+    return "Rainmeter";
+}
+
+int SCI_METHOD RainLexer::GetIdentifier() {
+    return SCLEX_AUTOMATIC;
+}
+
+const char* SCI_METHOD RainLexer::PropertyGet(const char* /*key*/) {
+    return "";
 }
 
 //

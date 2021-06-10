@@ -155,6 +155,45 @@ void About()
 		MB_OK);
 }
 
+FuncItem funcItem[nbFunc] =
+{
+	{ L"Refresh skin", RefreshSkin, 0, false, nullptr },
+	{ L"Refresh all", RefreshAll, 0, false, nullptr },
+	{ L"&About...", About, 0, false, nullptr }
+};
+
+HMODULE GetCurrentModule()
+{
+	HMODULE hModule = nullptr;
+	GetModuleHandleEx(
+		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+		reinterpret_cast<LPCTSTR>(GetCurrentModule),
+		&hModule);
+
+	return hModule;
+}
+
+void addToolbarIcon()
+{
+	UINT style = (LR_SHARED | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
+
+	auto dpi = GetDeviceCaps(GetWindowDC(nppData._nppHandle), LOGPIXELSX);
+	int size = 16 * dpi / 96;
+
+	HMODULE hModule = nullptr;
+	auto hInstance = static_cast<HINSTANCE>(GetCurrentModule());
+
+	toolbarIconsWithDarkMode tbRefresh;
+	tbRefresh.hToolbarIcon = static_cast<HICON>(::LoadImage(hInstance, MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, size, size, style));
+	tbRefresh.hToolbarIconDarkMode = tbRefresh.hToolbarIcon;
+
+	ICONINFO iconinfo;
+	GetIconInfo(tbRefresh.hToolbarIcon, &iconinfo);
+	tbRefresh.hToolbarBmp = iconinfo.hbmColor;
+
+	::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, funcItem[0]._cmdID, reinterpret_cast<LPARAM>(&tbRefresh));
+}
+
 //
 // Notepad++ exports
 //
@@ -171,30 +210,27 @@ extern "C" __declspec(dllexport) const TCHAR * getName()
 
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int* nbF)
 {
-	static FuncItem funcItems[] =
-	{
-		{ L"Refresh skin", RefreshSkin, 0, false, nullptr },
-		{ L"Refresh all", RefreshAll, 0, false, nullptr },
-		{ L"&About...", About, 0, false, nullptr }
-	};
-
-	*nbF = _countof(funcItems);
-	return funcItems;
+	*nbF = nbFunc;
+	return funcItem;
 }
 
 extern "C" __declspec(dllexport) void beNotified(SCNotification * notifyCode)
 {
-	/*switch (notifyCode->nmhdr.code)
+	switch (notifyCode->nmhdr.code)
 	{
 	case NPPN_SHUTDOWN:
 	{
-		commandMenuCleanUp();
+		//commandMenuCleanUp();
+		break;
 	}
-	break;
+	case NPPN_TBMODIFICATION: {
+		addToolbarIcon();
+		break;
+	}
 
 	default:
 		return;
-	}*/
+	}
 }
 
 extern "C" __declspec(dllexport) LRESULT messageProc(UINT /*Message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
