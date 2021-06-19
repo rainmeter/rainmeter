@@ -117,7 +117,7 @@ Rainmeter::Rainmeter() :
 	m_GDIplusToken(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor(),
-	m_HardwareAccelerated()
+	m_HardwareAccelerated(false)
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 

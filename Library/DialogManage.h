@@ -200,7 +200,7 @@ private:
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
 			Id_ShowTrayIconCheckBox,
-			Id_UseHardwareAcceleration
+			Id_UseHardwareAccelerationCheckBox
 		};
 
 		TabSettings();

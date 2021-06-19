@@ -2352,7 +2352,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 81, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_UseHardwareAcceleration, ID_STR_HARDWAREACCELERATED,
+		CT_CHECKBOX(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
 			6, 94, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
@@ -2438,7 +2438,7 @@ void DialogManage::TabSettings::Initialize()
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
 	bool isHardwareAccelerated = GetRainmeter().IsHardwareAccelerated();
-	Button_SetCheck(GetControl(Id_UseHardwareAcceleration), isHardwareAccelerated);
+	Button_SetCheck(GetControl(Id_UseHardwareAccelerationCheckBox), isHardwareAccelerated);
 
 	m_Initialized = true;
 }
@@ -2627,10 +2627,31 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_UseHardwareAcceleration:
+	case Id_UseHardwareAccelerationCheckBox:
 		{
-			bool hardwareAccelerated = SendMessage(GetControl(Id_UseHardwareAcceleration), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+			bool hardwareAccelerated =
+				SendMessage(GetControl(Id_UseHardwareAccelerationCheckBox), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
 			GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
+
+			int result = MessageBox(
+				m_Window,
+				GetString(ID_STR_RESTART_CONFIRM),
+				GetString(ID_STR_MANAGERAINMETER),
+				MB_ICONQUESTION | MB_OKCANCEL | MB_DEFBUTTON1 | MB_TOPMOST);
+			if (result == IDOK)
+			{
+				std::wstring restart = GetRainmeter().GetPath();
+				restart += L"RestartRainmeter.exe";
+				CommandHandler::RunFile(restart.c_str());
+			}
+			else
+			{
+				// Reset the checkbox to original selection
+				hardwareAccelerated = !hardwareAccelerated;
+				SendMessage(GetControl(Id_UseHardwareAccelerationCheckBox), BM_SETCHECK,
+					hardwareAccelerated ? BST_CHECKED : BST_UNCHECKED, 0);
+				GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
+			}
 		}
 		break;
 
