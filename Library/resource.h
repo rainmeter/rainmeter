@@ -237,6 +237,8 @@
 #define ID_STR_HARDWAREACCELERATED                   2153
 #define ID_STR_RESTART_CONFIRM                       2154
 #define ID_STR_MEASURE                               2155
+#define ID_STR_SAFESTART_TITLE                       2156
+#define ID_STR_SAFESTART_MESSAGE                     2157
 
 #define ID_STR_GAMEMODE                              2800
 #define ID_STR_GAMEMODE_START                        2801

@@ -208,6 +208,8 @@ STRINGTABLE
     ID_STR_HARDWAREACCELERATED, "Use hardware acceleration"
     ID_STR_RESTART_CONFIRM, "This change requires Rainmeter to be restarted.\n\nWould you like to restart Rainmeter now?"
     ID_STR_MEASURE, "Measure"
+    ID_STR_SAFESTART_TITLE, "Rainmeter Safe Start"
+    ID_STR_SAFESTART_MESSAGE, "This will unload all skins and start Rainmeter with the default ""illustro"" skins.\n\nYour current layout will be saved as: @Backup\n\nUse this if you are having trouble starting Rainmeter.\n\nEnter Rainmeter Safe Start?"
     ID_STR_GAMEMODE, "Game mode"
     ID_STR_GAMEMODE_START, "Start game mode"
     ID_STR_GAMEMODE_STOP, "Stop game mode"
