@@ -119,7 +119,12 @@ Rainmeter::Rainmeter() :
 	m_DefaultSelectedColor(),
 	m_HardwareAccelerated(false)
 {
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		PostQuitMessage(1);
+	}
 
 	InitCommonControls();
 
