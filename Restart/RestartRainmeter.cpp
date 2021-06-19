@@ -94,6 +94,13 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdLine
 	KillTimer(window, g_AppCloseEventID);
 
 	CoUninitialize();
+
+	if (mutex)
+	{
+		ReleaseMutex(mutex);
+		mutex = nullptr;
+	}
+
 	return (int)msg.wParam;
 }
 
