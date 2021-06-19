@@ -39,7 +39,7 @@ GameMode::GameMode() :
 
 GameMode::~GameMode()
 {
-	StopTimer();
+	ForceExit();
 }
 
 GameMode& GameMode::GetInstance()
