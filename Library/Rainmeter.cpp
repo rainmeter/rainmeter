@@ -167,6 +167,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
 
+	auto clearBuffer = [&buffer]() -> void
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	};
+
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
 	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
@@ -219,6 +225,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
 		{
 			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			clearBuffer();
 			return 1;
 		}
 	}
@@ -226,6 +233,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (IsAlreadyRunning())
 	{
 		// Instance already running with same .ini file
+		clearBuffer();
 		return 1;
 	}
 
@@ -249,7 +257,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		m_Instance,
 		nullptr);
 
-	if (!m_Window) return 1;
+	if (!m_Window)
+	{
+		clearBuffer();
+		return 1;
+	}
 
 	Logger& logger = GetLogger();
 	const WCHAR* iniFile = m_IniFile.c_str();
@@ -341,6 +353,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (!m_ResourceInstance)
 		{
 			MessageBox(nullptr, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			clearBuffer();
 			return 1;
 		}
 	}
@@ -374,8 +387,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	// Create user skins, layouts, addons, and plugins folders if needed
 	CreateComponentFolders(bDefaultIniLocation);
 
-	delete [] buffer;
-	buffer = nullptr;
+	clearBuffer();
 
 	// Build.bat will write to the BUILD_TIME macro when the installer is created.
 	// For local builds, just use the current date and time as the build time.
