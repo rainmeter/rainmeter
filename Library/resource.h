@@ -235,20 +235,21 @@
 #define ID_STR_SKININSTALLER                         2151
 #define ID_STR_ARCHIVEPLUGINS                        2152
 #define ID_STR_HARDWAREACCELERATED                   2153
-#define ID_STR_MEASURE                               2154
+#define ID_STR_RESTART_CONFIRM                       2154
+#define ID_STR_MEASURE                               2155
 
-#define ID_STR_GAMEMODE                              2155
-#define ID_STR_GAMEMODE_START                        2156
-#define ID_STR_GAMEMODE_STOP                         2157
-#define ID_STR_GAMEMODE_FULLSCREEN                   2158
-#define ID_STR_GAMEMODE_PROCESSLIST                  2159
-#define ID_STR_GAMEMODE_PROCESSLISTSC                2160
-#define ID_STR_GAMEMODE_SETTINGS_DESC                2161
-#define ID_STR_GAMEMODE_ACTIONS_ONSTART              2162
-#define ID_STR_GAMEMODE_ACTIONS_ONSTOP               2163
-#define ID_STR_GAMEMODE_ACTIONS_DESC                 2164
-#define ID_STR_GAMEMODE_ACTIONS_UNLOADALL            2165
-#define ID_STR_GAMEMODE_ACTIONS_CURRENT              2166
+#define ID_STR_GAMEMODE                              2800
+#define ID_STR_GAMEMODE_START                        2801
+#define ID_STR_GAMEMODE_STOP                         2802
+#define ID_STR_GAMEMODE_FULLSCREEN                   2803
+#define ID_STR_GAMEMODE_PROCESSLIST                  2804
+#define ID_STR_GAMEMODE_PROCESSLISTSC                2805
+#define ID_STR_GAMEMODE_SETTINGS_DESC                2806
+#define ID_STR_GAMEMODE_ACTIONS_ONSTART              2807
+#define ID_STR_GAMEMODE_ACTIONS_ONSTOP               2808
+#define ID_STR_GAMEMODE_ACTIONS_DESC                 2809
+#define ID_STR_GAMEMODE_ACTIONS_UNLOADALL            2810
+#define ID_STR_GAMEMODE_ACTIONS_CURRENT              2811
 
 #define ID_STR_CREATENEWSKIN                         2999
 #define ID_STR_NEWSKIN                               3000

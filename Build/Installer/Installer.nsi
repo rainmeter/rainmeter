@@ -447,6 +447,7 @@ FunctionEnd
 	SetOutPath "$INSTDIR"
 	File "..\..\${DIR}-Release\Rainmeter.exe"
 	File "..\..\${DIR}-Release\Rainmeter.dll"
+	File "..\..\${DIR}-Release\RestartRainmeter.exe"
 	File "..\..\${DIR}-Release\SkinInstaller.exe"
 
 	SetOutPath "$INSTDIR\Plugins"
@@ -842,6 +843,7 @@ Section Uninstall
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.VisualElementsManifest.xml"
+	Delete "$INSTDIR\RestartRainmeter.exe"
 	Delete "$INSTDIR\SkinInstaller.exe"
 	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\uninst.exe"

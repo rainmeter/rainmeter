@@ -50,6 +50,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_Taglib", "Library\L
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_Zlib", "Library\Library_Zlib.vcxproj", "{5D164F45-CEED-47A3-8A5D-B752D09B09DB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RestartRainmeter", "Restart\RestartRainmeter.vcxproj", "{89A751C7-904B-486E-8C9D-85EFABD1387C}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinInstallerLauncher", "SkinInstaller\SkinInstallerLauncher.vcxproj", "{2D8F1DDB-6470-45A1-B95A-3E2960641314}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginActionTimer", "Plugins\PluginActionTimer\PluginActionTimer.vcxproj", "{1EC81ACD-9FAC-4A2C-B798-D397397D5E2E}"
@@ -186,6 +188,14 @@ Global
 		{5D164F45-CEED-47A3-8A5D-B752D09B09DB}.Release|Win32.Build.0 = Release|Win32
 		{5D164F45-CEED-47A3-8A5D-B752D09B09DB}.Release|x64.ActiveCfg = Release|x64
 		{5D164F45-CEED-47A3-8A5D-B752D09B09DB}.Release|x64.Build.0 = Release|x64
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Debug|Win32.Build.0 = Debug|Win32
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Debug|x64.ActiveCfg = Debug|x64
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Debug|x64.Build.0 = Debug|x64
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Release|Win32.ActiveCfg = Release|Win32
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Release|Win32.Build.0 = Release|Win32
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Release|x64.ActiveCfg = Release|x64
+		{89A751C7-904B-486E-8C9D-85EFABD1387C}.Release|x64.Build.0 = Release|x64
 		{2D8F1DDB-6470-45A1-B95A-3E2960641314}.Debug|Win32.ActiveCfg = Debug|Win32
 		{2D8F1DDB-6470-45A1-B95A-3E2960641314}.Debug|Win32.Build.0 = Debug|Win32
 		{2D8F1DDB-6470-45A1-B95A-3E2960641314}.Debug|x64.ActiveCfg = Debug|x64
