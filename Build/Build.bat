@@ -129,7 +129,9 @@ if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe RestartRainmeter.exe SkinInstaller.exe) do (
 		%SIGNTOOL_SHA2% ..\x32-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%Z failed & exit /b 1)
+		timeout 2 > nul
 		%SIGNTOOL_SHA2% ..\x64-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%Z failed & exit /b 1)
+		timeout 2 > nul
 	)
 )
 
@@ -154,6 +156,7 @@ if "%BUILD_TYPE%" == "beta" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
 	%SIGNTOOL_SHA1% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
+	timeout 2 > nul
 	%SIGNTOOL_SHA2% /as %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
