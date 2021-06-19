@@ -526,6 +526,7 @@ void Rainmeter::Finalize()
 	DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
 
 	delete m_TrayIcon;
+	m_TrayIcon = nullptr;
 
 	System::Finalize();
 
@@ -545,8 +546,17 @@ void Rainmeter::Finalize()
 		UpdateDesktopWorkArea(true);
 	}
 
-	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
-	if (m_Mutex) ReleaseMutex(m_Mutex);
+	if (m_ResourceInstance)
+	{
+		FreeLibrary(m_ResourceInstance);
+		m_ResourceInstance = nullptr;
+	}
+
+	if (m_Mutex)
+	{
+		ReleaseMutex(m_Mutex);
+		m_Mutex = nullptr;
+	}
 }
 
 bool Rainmeter::IsAlreadyRunning()
