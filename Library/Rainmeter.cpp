@@ -557,6 +557,14 @@ void Rainmeter::Finalize()
 		ReleaseMutex(m_Mutex);
 		m_Mutex = nullptr;
 	}
+
+	if (m_Window)
+	{
+		DestroyWindow(m_Window);
+		m_Window = nullptr;
+	}
+
+	UnregisterClass(RAINMETER_CLASS_NAME, m_Instance);
 }
 
 bool Rainmeter::IsAlreadyRunning()
