@@ -101,6 +101,8 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdLine
 		mutex = nullptr;
 	}
 
+	UnregisterClass(RESTART_RAINMETER_CLASSNAME, instance);
+
 	return (int)msg.wParam;
 }
 
