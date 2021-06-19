@@ -91,6 +91,7 @@ STRINGTABLE
     ID_STR_CLOSE, STR_CLOSE
     ID_STR_ABOUTRAINMETER, STR_ABOUTRAINMETER
     ID_STR_LOG, STR_LOG
+    ID_STR_MEASURE, STR_MEASURE
     ID_STR_MEASURES, STR_MEASURES
     ID_STR_VARIABLES, STR_VARIABLES
     ID_STR_PLUGINS, STR_PLUGINS
@@ -205,21 +206,20 @@ STRINGTABLE
     ID_STR_EXTERNALPLUGINS, STR_EXTERNALPLUGINS
     ID_STR_BUILTINPLUGINS, STR_BUILTINPLUGINS
     ID_STR_LANGUAGEOBSOLETE, STR_LANGUAGEOBSOLETE
-    ID_STR_HARDWAREACCELERATED, "Use hardware acceleration"
-    ID_STR_RESTART_CONFIRM, "This change requires Rainmeter to be restarted.\n\nWould you like to restart Rainmeter now?"
-    ID_STR_MEASURE, "Measure"
-    ID_STR_SAFESTART_TITLE, "Rainmeter Safe Start"
-    ID_STR_SAFESTART_MESSAGE, "This will unload all skins and start Rainmeter with the default ""illustro"" skins.\n\nYour current layout will be saved as: @Backup\n\nUse this if you are having trouble starting Rainmeter.\n\nEnter Rainmeter Safe Start?"
-    ID_STR_GAMEMODE, "Game mode"
-    ID_STR_GAMEMODE_START, "Start game mode"
-    ID_STR_GAMEMODE_STOP, "Stop game mode"
-    ID_STR_GAMEMODE_FULLSCREEN, "Full-screen games"
-    ID_STR_GAMEMODE_PROCESSLIST, "Additional process list"
-    ID_STR_GAMEMODE_PROCESSLISTSC, "Additional process list:"
-    ID_STR_GAMEMODE_SETTINGS_DESC, "You can also manually start/stop game mode by using the tray icon context menu. Manually starting/stopping game mode will uncheck both the ""Full-screen games"" and ""Additional process list"" checkbox. You must re-enable those items for Rainmeter to start monitoring them again.\n\nClick the ""Help"" button for more information."
-    ID_STR_GAMEMODE_ACTIONS_ONSTART, "On start"
-    ID_STR_GAMEMODE_ACTIONS_ONSTOP, "On stop"
-    ID_STR_GAMEMODE_ACTIONS_DESC, "Select the action to perform when starting/stopping game mode. ""On start"" can unload all skins or load a layout. ""On stop"" can reload the current layout or another layout."
-    ID_STR_GAMEMODE_ACTIONS_UNLOADALL, "Unload all skins"
-    ID_STR_GAMEMODE_ACTIONS_CURRENT, "Load current layout"
+    ID_STR_HARDWAREACCELERATED, STR_HARDWAREACCELERATED
+    ID_STR_RESTART_CONFIRM, STR_RESTART_CONFIRM
+    ID_STR_SAFESTART_TITLE, STR_SAFESTART_TITLE
+    ID_STR_SAFESTART_MESSAGE, STR_SAFESTART_MESSAGE
+    ID_STR_GAMEMODE, STR_GAMEMODE
+    ID_STR_GAMEMODE_START, STR_GAMEMODE_START
+    ID_STR_GAMEMODE_STOP, STR_GAMEMODE_STOP
+    ID_STR_GAMEMODE_FULLSCREEN, STR_GAMEMODE_FULLSCREEN
+    ID_STR_GAMEMODE_PROCESSLIST, STR_GAMEMODE_PROCESSLIST
+    ID_STR_GAMEMODE_PROCESSLISTSC, STR_GAMEMODE_PROCESSLISTSC
+    ID_STR_GAMEMODE_SETTINGS_DESC, STR_GAMEMODE_SETTINGS_DESC
+    ID_STR_GAMEMODE_ACTIONS_ONSTART, STR_GAMEMODE_ACTIONS_ONSTART
+    ID_STR_GAMEMODE_ACTIONS_ONSTOP, STR_GAMEMODE_ACTIONS_ONSTOP
+    ID_STR_GAMEMODE_ACTIONS_DESC, STR_GAMEMODE_ACTIONS_DESC
+    ID_STR_GAMEMODE_ACTIONS_UNLOADALL, STR_GAMEMODE_ACTIONS_UNLOADALL
+    ID_STR_GAMEMODE_ACTIONS_CURRENT, STR_GAMEMODE_ACTIONS_CURRENT
 }
