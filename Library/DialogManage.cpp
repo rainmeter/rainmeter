@@ -2123,7 +2123,7 @@ void DialogManage::TabGameMode::Create(HWND owner)
 			6, 170, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		CT_LABEL(-0, ID_STR_GAMEMODE_ACTIONS_DESC,
-			230, 148, 242, 36,
+			230, 148, 242, 38,
 			WS_VISIBLE, 0)
 	};
 
