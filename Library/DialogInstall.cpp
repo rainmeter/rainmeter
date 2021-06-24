@@ -1010,16 +1010,57 @@ void DialogInstall::KeepVariables()
 
 void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
 {
-	std::wstring path = g_Data.skinsPath + L"@Vault\\Plugins\\";
-	path += name.substr(0, name.size() - 4) + L'\\';		// Remove extension from folder name
+	// Extract name without ".dll" extension
+	size_t pos = name.rfind(L'.');
+	if (pos == std::wstring::npos) return;
 
-	const std::wstring tmpPath = path + L".extracted\\";
-	const std::wstring plugin = tmpPath + name;
+	std::wstring finalName = name.substr(0, pos);
+	if (finalName.empty()) return;
+
+	std::wstring finalPath = g_Data.skinsPath + L"@Vault\\Plugins\\";
+	finalPath += finalName + L'\\';
+
+	WCHAR tempFolder[MAX_PATH];
+	DWORD retVal = GetTempPath(MAX_PATH, tempFolder);
+	if (retVal > MAX_PATH || retVal == 0)
+	{
+		// Could not get user "TEMP" folder, so just use the final path as a temporary folder
+		wcscpy_s(tempFolder, MAX_PATH, finalPath.c_str());
+	}
+	else
+	{
+		wcscat_s(tempFolder, MAX_PATH, L"rmskin\\");
+	}
+
+	wcscat_s(tempFolder, MAX_PATH, finalName.c_str());
+
+	// Create a random folder
+	GUID guid;
+	HRESULT hr = CoCreateGuid(&guid);
+	if (SUCCEEDED(hr))
+	{
+		RPC_WSTR guidStr;
+		if (RPC_S_OK == UuidToString(&guid, &guidStr))
+		{
+			wcscat_s(tempFolder, MAX_PATH, L"_");
+			wcscat_s(tempFolder, MAX_PATH, (LPCWSTR)guidStr);
+			RpcStringFree(&guidStr);
+		}
+	}
+
+	PathAddBackslash(tempFolder);
+
+	// Remove folder if it exists (should be rare)
+	if (_waccess_s(tempFolder, 0) == 0)
+	{
+		System::RemoveFolder(tempFolder);
+	}
+
+	std::wstring plugin = tempFolder;
+	plugin += name;
 
 	if (ExtractCurrentFile(plugin))
 	{
-		std::wstring finalPath = path;
-
 		const std::wstring version = GetFileVersionString(plugin.c_str());
 		if (!version.empty())
 		{
@@ -1028,8 +1069,9 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 
 		finalPath += folder + L'\\';
 		finalPath += name;
+
 		System::CopyFiles(plugin, finalPath, true);
-		System::RemoveFolder(tmpPath);
+		RemoveDirectory(tempFolder);  // Folder should be empty
 	}
 }
 
