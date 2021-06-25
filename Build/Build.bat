@@ -37,7 +37,8 @@ echo Rainmeter Build
 echo ----------------------------------------------
 echo.
 
-set BUILD_TIME=%date:~-4%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
+set BUILD_YEAR=%date:~-4%
+set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 call "%VCVARSALL%" x86 > nul
 
@@ -66,6 +67,7 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
 	echo #define BUILD_TIME L"%BUILD_TIME%"
+	echo #define STRCOPYRIGHT "%BUILD_YEAR% Rainmeter Team"
 	echo const int revision_number = %VERSION_REVISION%;
 	echo const bool revision_beta = %ISBETA%;
 )
@@ -155,7 +157,8 @@ set INSTALLER_DEFINES=^
 	/DVERSION_SHORT="%VERSION_SHORT%"^
 	/DVERSION_REVISION="%VERSION_REVISION%"^
 	/DVERSION_MAJOR="%VERSION_MAJOR%"^
-	/DVERSION_MINOR="%VERSION_MINOR%"
+	/DVERSION_MINOR="%VERSION_MINOR%"^
+	/DBUILD_YEAR="%BUILD_YEAR%"
 if "%BUILD_TYPE%" == "beta" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)

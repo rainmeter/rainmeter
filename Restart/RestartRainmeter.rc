@@ -28,7 +28,7 @@ VS_VERSION_INFO VERSIONINFO
         {
             VALUE "FileDescription", "Restarts Rainmeter"
             VALUE "FileVersion", STRFILEVER
-            VALUE "LegalCopyright", "© 2021 Rainmeter Team"
+            VALUE "LegalCopyright", "© " STRCOPYRIGHT
             VALUE "OriginalFilename", "RestartRainmeter.exe"
             VALUE "CompanyName", "Rainmeter"
             VALUE "ProductName", "Rainmeter"
