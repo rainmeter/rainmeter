@@ -1063,7 +1063,7 @@ void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin
 
 bool CommandHandler::ParseBangReplacementVariables(std::wstring bang, Skin* skin, std::wstring otherBangs)
 {
-	// Note: This function assumes ExecuteBang has already stripped the brackets from |bang|
+	// Note: This function assumes CommandHandler::ExecuteCommand has already stripped the brackets from |bang| !!
 
 	// If the command is a section variable or a new style variable,
 	// surround the command with brackets and replace it with the variable.
