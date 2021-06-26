@@ -314,6 +314,14 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					start = bangs.find_first_not_of(L" \t\r\n", start + 1, 4);
 
 					const WCHAR* newCommand = bangs.c_str() + start;
+
+					// Parse any "bang replacement variables"
+					// Do this before parsing the "!Delay" bang
+					if (ParseBangReplacementVariables(newCommand, skin, bangs.substr(i + 1)))
+					{
+						return;
+					}
+
 					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
 					{
 						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
@@ -390,30 +398,14 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			}
 		}
 
-		// Run command
-		std::wstring tmpSz = command;
-		if (skin)
+		// Parse any "bang replacement variables"
+		if (ParseBangReplacementVariables(command, skin))
 		{
-			// If the command is a section variable or a new style variable,
-			// surround the command with brackets and replace it with the variable.
-			// This allows for section variables to completely replace a bang sequence.
-			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
-			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
-			bool isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
-			if (isVar)
-			{
-				tmpSz.insert(0, L"[");
-				tmpSz.append(L"]");
-			}
-
-			if (skin->GetParser().ReplaceMeasures(tmpSz) && isVar)
-			{
-				ExecuteCommand(tmpSz.c_str(), skin, true);
-				return;
-			}
+			return;
 		}
 
-		RunCommand(tmpSz);
+		// Run command
+		RunCommand(command);
 	}
 }
 
@@ -1067,4 +1059,31 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Deprecated.
+}
+
+bool CommandHandler::ParseBangReplacementVariables(std::wstring bang, Skin* skin, std::wstring otherBangs)
+{
+	// Note: This function assumes ExecuteBang has already stripped the brackets from |bang|
+
+	// If the command is a section variable or a new style variable,
+	// surround the command with brackets and replace it with the variable.
+	// This allows for section variables to completely replace a bang sequence.
+	// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
+	// Note: This assumes the |bang| does not start with a variable key (&, #, $, \)
+
+	if (!skin) return false;
+
+	if (ConfigParser::IsVariableKey(bang[0]) || skin->GetMeasure(bang))
+	{
+		bang.insert(0, L"[");
+		bang.append(L"]");
+
+		if (skin->GetParser().ReplaceMeasures(bang))
+		{
+			bang.append(otherBangs);
+			ExecuteCommand(bang.c_str(), skin, true);
+			return true;
+		}
+	}
+	return false;
 }
