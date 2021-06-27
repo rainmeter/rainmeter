@@ -315,13 +315,11 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 
 					const WCHAR* newCommand = bangs.c_str() + start;
 
+					
+					// Parse any "bang replacement variables"
+					if (ParseBangReplacementVariables(newCommand, skin, bangs.substr(i + 1)))
 					{
-						// Parse any "bang replacement variables"
-						std::wstring tmpSz = newCommand;
-						if (ParseBangReplacementVariables(tmpSz, skin, bangs.substr(i + 1)))
-						{
-							return;
-						}
+						return;
 					}
 
 					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
@@ -1065,7 +1063,7 @@ void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin
 	// Deprecated.
 }
 
-bool CommandHandler::ParseBangReplacementVariables(std::wstring& bang, Skin* skin, std::wstring otherBangs)
+bool CommandHandler::ParseBangReplacementVariables(std::wstring bang, Skin* skin, std::wstring otherBangs)
 {
 	// Note: This function assumes CommandHandler::ExecuteCommand has already stripped the brackets from |bang| !!
 
@@ -1077,18 +1075,17 @@ bool CommandHandler::ParseBangReplacementVariables(std::wstring& bang, Skin* ski
 
 	if (!skin) return false;
 
-	bool isVar = ConfigParser::IsVariableKey(bang[0]) || skin->GetMeasure(bang);
-	if (isVar)
+	if (ConfigParser::IsVariableKey(bang[0]) || skin->GetMeasure(bang))
 	{
 		bang.insert(0, L"[");
 		bang.append(L"]");
-	}
 
-	if (skin->GetParser().ReplaceMeasures(bang) && isVar)
-	{
-		bang.append(otherBangs);
-		ExecuteCommand(bang.c_str(), skin, true);
-		return true;
+		if (skin->GetParser().ReplaceMeasures(bang))
+		{
+			bang.append(otherBangs);
+			ExecuteCommand(bang.c_str(), skin, true);
+			return true;
+		}
 	}
 
 	return false;
