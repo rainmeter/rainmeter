@@ -156,7 +156,7 @@ public:
 	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
 
 private:
-	bool ParseBangReplacementVariables(std::wstring& bang, Skin* skin, std::wstring otherBangs = L"");
+	bool ParseBangReplacementVariables(std::wstring bang, Skin* skin, std::wstring otherBangs = L"");
 };
 
 #endif
