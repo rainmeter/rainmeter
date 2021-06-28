@@ -30,12 +30,12 @@ struct MeasureData
 	MeasureData(void* rm) :
 		rm(rm),
 		skin(RmGetSkin(rm)),
-		value(),
+		value(0.0),
 		destAddrInfo(),
-		timeout(),
-		timeoutValue(),
-		updateRate(),
-		updateCounter(),
+		timeout(30000UL),
+		timeoutValue(30000.0),
+		updateRate(32UL),
+		updateCounter(0UL),
 		threadActive(false),
 		finishAction()
 	{
@@ -53,11 +53,15 @@ struct MeasureData
 	{
 		if (destAddrInfo)
 		{
-			FreeAddrInfoW(destAddrInfo);
+			FreeAddrInfo(destAddrInfo);
 			destAddrInfo = nullptr;
 		}
 	}
 };
+
+DWORD WINAPI NetworkThreadProc(void* pParam);
+std::wstring LookupPingErrorCode(DWORD errorCode);
+std::wstring LookupErrorCode(DWORD errorCode);
 
 static CRITICAL_SECTION g_CriticalSection;
 
@@ -86,43 +90,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	*data = measure;
 }
 
-std::wstring lookupErrorCode(DWORD errorCode) {
-	LPWSTR lpMsgBuf;
-
-	if (!FormatMessageW(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		errorCode,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPWSTR)& lpMsgBuf,
-		0,
-		NULL))
-	{
-		return L"";
-	}
-
-	std::wstring retval(lpMsgBuf);
-
-	LocalFree(lpMsgBuf);
-
-	return retval;
-}
-
-std::wstring lookupPingErrorCode(DWORD errorCode) {
-	DWORD bufSize = 1023;
-	WCHAR* buf = new WCHAR[(size_t)bufSize + 1]();
-
-	if (GetIpErrorString(errorCode, buf, &bufSize) != NO_ERROR) {
-		return lookupErrorCode(errorCode);
-	}
-
-	std::wstring retval(buf);
-
-	delete[] buf;
-
-	return retval;
-}
-
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
@@ -137,11 +104,11 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			measure->Dispose();
 
 			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-			if (GetAddrInfoW(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
+			if (GetAddrInfo(destination, nullptr, nullptr, &measure->destAddrInfo) != 0)
 			{
 				DWORD errorCode = WSAGetLastError();
 				RmLogF(rm, LOG_WARNING,
-					L"PingPlugin.dll: WSA failed for: %ls (Error %d: %ls)", destination, errorCode, lookupErrorCode(errorCode).c_str());
+					L"PingPlugin.dll: WSA failed for: %ls (Error %d: %ls)", destination, errorCode, LookupErrorCode(errorCode).c_str());
 				measure->Dispose();
 			}
 			else
@@ -175,7 +142,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		}
 		else
 		{
-			RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA (Error %d: %ls)", wsaStartupError, lookupErrorCode(wsaStartupError).c_str());
+			RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Unable to start WSA (Error %d: %ls)", wsaStartupError, LookupErrorCode(wsaStartupError).c_str());
 		}
 	}
 
@@ -183,6 +150,61 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->timeout = RmReadInt(rm, L"Timeout", 30000);
 	measure->timeoutValue = RmReadDouble(rm, L"TimeoutValue", 30000.0);
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", false);
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	EnterCriticalSection(&g_CriticalSection);
+	if (!measure->threadActive)
+	{
+		if (measure->updateCounter == 0)
+		{
+			// Launch a new thread to fetch the web data
+			DWORD id;
+			HANDLE thread = CreateThread(nullptr, 0, NetworkThreadProc, measure, 0, &id);
+			if (thread)
+			{
+				CloseHandle(thread);
+				measure->threadActive = true;
+			}
+		}
+
+		measure->updateCounter++;
+		if (measure->updateCounter >= measure->updateRate)
+		{
+			measure->updateCounter = 0;
+		}
+	}
+
+	double value = measure->value;
+	LeaveCriticalSection(&g_CriticalSection);
+
+	return value;
+}
+
+PLUGIN_EXPORT void Finalize(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	EnterCriticalSection(&g_CriticalSection);
+	if (measure->threadActive)
+	{
+		// Increment ref count of this module so that it will not be unloaded prior to
+		// thread completion.
+		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
+		HMODULE module;
+		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+
+		// Thread will perform cleanup.
+		measure->threadActive = false;
+	}
+	else
+	{
+		delete measure;
+	}
+	LeaveCriticalSection(&g_CriticalSection);
 }
 
 DWORD WINAPI NetworkThreadProc(void* pParam)
@@ -260,7 +282,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 
 				if (result != IP_SUCCESS && result != IP_REQ_TIMED_OUT)
 				{
-					RmLogF(measure->rm, LOG_DEBUG, L"PingPlugin.dll: Ping failed (Error %d: %ls)", result, lookupPingErrorCode(result).c_str());
+					RmLogF(measure->rm, LOG_DEBUG, L"PingPlugin.dll: Ping failed (Error %d: %ls)", result, LookupPingErrorCode(result).c_str());
 				}
 				IcmpCloseHandle(hIcmpFile);
 
@@ -270,7 +292,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 				}
 			}
 
-			delete[] buffer;
+			delete [] buffer;
 		}
 	}
 
@@ -303,57 +325,48 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	return 0;
 }
 
-PLUGIN_EXPORT double Update(void* data)
+std::wstring LookupErrorCode(DWORD errorCode)
 {
-	MeasureData* measure = (MeasureData*)data;
+	LPWSTR lpMsgBuf;
 
-	EnterCriticalSection(&g_CriticalSection);
-	if (!measure->threadActive)
+	if (!FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		errorCode,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&lpMsgBuf,
+		0,
+		NULL))
 	{
-		if (measure->updateCounter == 0)
-		{
-			// Launch a new thread to fetch the web data
-			DWORD id;
-			HANDLE thread = CreateThread(nullptr, 0, NetworkThreadProc, measure, 0, &id);
-			if (thread)
-			{
-				CloseHandle(thread);
-				measure->threadActive = true;
-			}
-		}
-
-		measure->updateCounter++;
-		if (measure->updateCounter >= measure->updateRate)
-		{
-			measure->updateCounter = 0;
-		}
+		return L"";
 	}
 
-	double value = measure->value;
-	LeaveCriticalSection(&g_CriticalSection);
+	std::wstring retval(lpMsgBuf);
 
-	return value;
+	LocalFree(lpMsgBuf);
+
+	return retval;
 }
 
-PLUGIN_EXPORT void Finalize(void* data)
+std::wstring LookupPingErrorCode(DWORD errorCode)
 {
-	MeasureData* measure = (MeasureData*)data;
+	DWORD bufferSize = 1023;
+	WCHAR* buffer = new WCHAR[(size_t)bufferSize + 1]();
 
-	EnterCriticalSection(&g_CriticalSection);
-	if (measure->threadActive)
+	auto cleanup = [&buffer]() -> void
 	{
-		// Increment ref count of this module so that it will not be unloaded prior to
-		// thread completion.
-		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
-		HMODULE module;
-		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+		delete [] buffer;
+	};
 
-		// Thread will perform cleanup.
-		measure->threadActive = false;
-	}
-	else
+	if (GetIpErrorString(errorCode, buffer, &bufferSize) != NO_ERROR)
 	{
-		delete measure;
+		cleanup();
+		return LookupErrorCode(errorCode);
 	}
-	LeaveCriticalSection(&g_CriticalSection);
+
+	std::wstring retval(buffer);
+
+	cleanup();
+
+	return retval;
 }

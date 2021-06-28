@@ -13,7 +13,7 @@
 namespace Gfx {
 
 Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle,
-	D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending) : Shape(ShapeType::Arc),
+	D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending, bool isCloned) : Shape(ShapeType::Arc),
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_ArcSegment(D2D1::ArcSegment(
 		D2D1::Point2F(x2, y2),
@@ -23,6 +23,9 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 		size)),
 	m_ShapeEnding(ending)
 {
+	// Cloned shapes do not need to re-create any resources
+	if (isCloned) return;
+
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -51,7 +54,7 @@ Arc::~Arc()
 
 Shape* Arc::Clone()
 {
-	Shape* newShape = new Arc(
+	Arc* newShape = new Arc(
 		m_StartPoint.x,
 		m_StartPoint.y,
 		m_ArcSegment.point.x,
@@ -61,7 +64,9 @@ Shape* Arc::Clone()
 		m_ArcSegment.rotationAngle,
 		m_ArcSegment.sweepDirection,
 		m_ArcSegment.arcSize,
-		m_ShapeEnding);
+		m_ShapeEnding,
+		true);
+	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
 	CloneModifiers(newShape);
 	return newShape;
 }

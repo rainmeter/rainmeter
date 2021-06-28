@@ -15,7 +15,8 @@ namespace Gfx {
 class RoundedRectangle final : public Shape
 {
 public:
-	RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
+	RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
+		FLOAT xRadius, FLOAT yRadius, bool isCloned = false);
 	~RoundedRectangle();
 
 	virtual Shape* Clone() override;

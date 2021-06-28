@@ -12,6 +12,7 @@
 #include "Skin.h"
 #include "MeasureNet.h"
 #include "../Common/PathUtil.h"
+#include <TlHelp32.h>
 
 using namespace Gdiplus;
 
@@ -1469,4 +1470,36 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 	}
 
 	return temporary;
+}
+
+bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
+{
+	static std::unordered_set<std::wstring> s_Processes;
+	static ULONGLONG s_LastUpdateTickCount = 0ULL;
+	const ULONGLONG updateInterval = 250ULL; // ms
+
+	ULONGLONG tickCount = GetTickCount64();
+	if (tickCount >= (s_LastUpdateTickCount + updateInterval))
+	{
+		s_LastUpdateTickCount = tickCount;
+
+		s_Processes = {};
+		HANDLE thSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (thSnapshot != INVALID_HANDLE_VALUE)
+		{
+			PROCESSENTRY32 processEntry = { sizeof(processEntry) };
+			if (Process32First(thSnapshot, &processEntry))
+			{
+				do
+				{
+					std::wstring name = processEntry.szExeFile;
+					StringUtil::ToLowerCase(name);
+					s_Processes.insert(name);
+				} while (Process32Next(thSnapshot, &processEntry));
+			}
+			CloseHandle(thSnapshot);
+		}
+	}
+
+	return s_Processes.count(lowercaseName) != 0;
 }

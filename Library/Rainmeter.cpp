@@ -16,6 +16,7 @@
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
+#include "GameMode.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
@@ -107,7 +108,6 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
-	m_GameMode(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -117,9 +117,14 @@ Rainmeter::Rainmeter() :
 	m_GDIplusToken(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor(),
-	m_HardwareAccelerated()
+	m_HardwareAccelerated(false)
 {
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		PostQuitMessage(1);
+	}
 
 	InitCommonControls();
 
@@ -166,6 +171,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
+
+	auto clearBuffer = [&buffer]() -> void
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	};
 
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
@@ -219,6 +230,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
 		{
 			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			clearBuffer();
 			return 1;
 		}
 	}
@@ -226,6 +238,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (IsAlreadyRunning())
 	{
 		// Instance already running with same .ini file
+		clearBuffer();
 		return 1;
 	}
 
@@ -249,7 +262,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		m_Instance,
 		nullptr);
 
-	if (!m_Window) return 1;
+	if (!m_Window)
+	{
+		clearBuffer();
+		return 1;
+	}
 
 	Logger& logger = GetLogger();
 	const WCHAR* iniFile = m_IniFile.c_str();
@@ -341,6 +358,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (!m_ResourceInstance)
 		{
 			MessageBox(nullptr, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			clearBuffer();
 			return 1;
 		}
 	}
@@ -374,8 +392,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	// Create user skins, layouts, addons, and plugins folders if needed
 	CreateComponentFolders(bDefaultIniLocation);
 
-	delete [] buffer;
-	buffer = nullptr;
+	clearBuffer();
 
 	// Build.bat will write to the BUILD_TIME macro when the installer is created.
 	// For local builds, just use the current date and time as the build time.
@@ -430,6 +447,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	ReloadSettings();
 
+	// Initialize "Game mode" and read its settings
+	GetGameMode().Initialize();
+
 	if (m_SkinRegistry.IsEmpty())
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
@@ -443,11 +463,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		int result = MessageBox(
 			nullptr,
-			L"This will unload all skins and start Rainmeter with the default \"illustro\" skins.\n\n"
-			L"Your current layout will be saved as: @Backup\n\n"
-			L"Use this if you are having trouble starting Rainmeter.\n\n"
-			L"Enter Rainmeter Safe Start?",
-			L"Rainmeter Safe Start",
+			GetString(ID_STR_SAFESTART_MESSAGE),
+			GetString(ID_STR_SAFESTART_TITLE),
 			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
 		if (result == IDYES)
 		{
@@ -478,7 +495,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		layoutLoaded = (args.size() == 1 && LoadLayout(args[0]));
 	}
 
-	if (!layoutLoaded)
+	if (!layoutLoaded && GetGameMode().IsDisabled())
 	{
 		ActivateActiveSkins();
 	}
@@ -499,11 +516,14 @@ void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
 
+	GetGameMode().ForceExit();
+
 	DeleteAllUnmanagedSkins();
 	DeleteAllSkins();
 	DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
 
 	delete m_TrayIcon;
+	m_TrayIcon = nullptr;
 
 	System::Finalize();
 
@@ -523,8 +543,25 @@ void Rainmeter::Finalize()
 		UpdateDesktopWorkArea(true);
 	}
 
-	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
-	if (m_Mutex) ReleaseMutex(m_Mutex);
+	if (m_ResourceInstance)
+	{
+		FreeLibrary(m_ResourceInstance);
+		m_ResourceInstance = nullptr;
+	}
+
+	if (m_Mutex)
+	{
+		ReleaseMutex(m_Mutex);
+		m_Mutex = nullptr;
+	}
+
+	if (m_Window)
+	{
+		DestroyWindow(m_Window);
+		m_Window = nullptr;
+	}
+
+	UnregisterClass(RAINMETER_CLASS_NAME, m_Instance);
 }
 
 bool Rainmeter::IsAlreadyRunning()
@@ -620,7 +657,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			if (cds && !GetRainmeter().IsInGameMode())  // Disallow any bangs while in "Game mode"
+			if (cds && !GetGameMode().IsEnabled())  // Disallow any bangs in manual "Game mode"
 			{
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
@@ -637,6 +674,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			MeasureNet::UpdateIFTable();
 			MeasureNet::UpdateStats();
 			GetRainmeter().WriteStats(false);
+		}
+		else
+		{
+			GetGameMode().OnTimerEvent(wParam);
 		}
 		break;
 
@@ -1054,27 +1095,6 @@ void Rainmeter::ToggleSkinWithID(UINT id)
 	{
 		ToggleSkin(indexes.folder, indexes.file);
 	}
-}
-
-void Rainmeter::ToggleGameMode()
-{
-	if (m_GameMode)
-	{
-		ReloadSettings();
-		ActivateActiveSkins();
-	}
-	else
-	{
-		// Close dialogs if open
-		DialogManage::CloseDialog();
-		DialogAbout::CloseDialog();
-		DialogNewSkin::CloseDialog();
-
-		DeleteAllUnmanagedSkins();
-		DeleteAllSkins();
-		DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
-	}
-	m_GameMode = !m_GameMode;
 }
 
 void Rainmeter::SetSkinPath(const std::wstring& skinPath)
@@ -1684,10 +1704,14 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		}
 	}
 
-	ReloadSettings();
+	// Game mode: Only load layouts if not in game mode or in a game mode layout
+	if (!GetGameMode().IsEnabled())
+	{
+		ReloadSettings();
 
-	// Create meter windows for active skins
-	ActivateActiveSkins();
+		// Create meter windows for active skins
+		ActivateActiveSkins();
+	}
 
 	return true;
 }

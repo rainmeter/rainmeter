@@ -16,6 +16,7 @@
 #include "DialogManage.h"
 #include "DialogAbout.h"
 #include "DialogNewSkin.h"
+#include "GameMode.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
 #include <Commdlg.h>
@@ -48,9 +49,13 @@ void DialogManage::Open(const WCHAR* name)
 		{
 			tab = 1;
 		}
-		else if (_wcsicmp(name, L"Settings") == 0)
+		else if (_wcsicmp(name, L"GameMode") == 0)
 		{
 			tab = 2;
+		}
+		else if (_wcsicmp(name, L"Settings") == 0)
+		{
+			tab = 3;
 		}
 	}
 
@@ -166,6 +171,14 @@ void DialogManage::UpdateLayouts()
 	}
 }
 
+void DialogManage::UpdateGameMode()
+{
+	if (c_Dialog && c_Dialog->m_TabGameMode.IsInitialized())
+	{
+		c_Dialog->m_TabGameMode.Update();
+	}
+}
+
 void DialogManage::UpdateLanguageStatus()
 {
 	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
@@ -193,7 +206,11 @@ Dialog::Tab& DialogManage::GetActiveTab()
 	{
 		return m_TabLayouts;
 	}
-	else // if (sel == 2)
+	else if (sel == 2)
+	{
+		return m_TabGameMode;
+	}
+	else // if (sel == 3)
 	{
 		return m_TabSettings;
 	}
@@ -264,6 +281,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HWND item = GetControl(Id_Tab);
 	m_TabSkins.Create(m_Window);
 	m_TabLayouts.Create(m_Window);
+	m_TabGameMode.Create(m_Window);
 	m_TabSettings.Create(m_Window);
 
 	TCITEM tci = {0};
@@ -272,8 +290,10 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	TabCtrl_InsertItem(item, 0, &tci);
 	tci.pszText = GetString(ID_STR_THEMES);
 	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = GetString(ID_STR_SETTINGS);
+	tci.pszText = GetString(ID_STR_GAMEMODE);
 	TabCtrl_InsertItem(item, 2, &tci);
+	tci.pszText = GetString(ID_STR_SETTINGS);
+	TabCtrl_InsertItem(item, 3, &tci);
 
 	HICON hIcon = GetIcon(IDI_RAINMETER);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
@@ -321,7 +341,9 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_HelpButton:
 		{
-			std::wstring url = L"https://docs.rainmeter.net/manual/user-interface/manage#";
+			std::wstring url = revision_beta ?
+				L"https://docs.rainmeter.net/manual-beta/user-interface/manage#" :
+				L"https://docs.rainmeter.net/manual/user-interface/manage#";
 
 			Tab& tab = GetActiveTab();
 			if (&tab == &m_TabSkins)
@@ -330,7 +352,11 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 			else if (&tab == &m_TabLayouts)
 			{
-				url  += L"Layouts";
+				url += L"Layouts";
+			}
+			else if (&tab == &m_TabGameMode)
+			{
+				url += L"GameMode";
 			}
 			else // if (&tab == &m_TabSettings)
 			{
@@ -360,6 +386,7 @@ INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 			// Disable all tab windows first
 			EnableWindow(m_TabSkins.GetWindow(), FALSE);
 			EnableWindow(m_TabLayouts.GetWindow(), FALSE);
+			EnableWindow(m_TabGameMode.GetWindow(), FALSE);
 			EnableWindow(m_TabSettings.GetWindow(), FALSE);
 
 			GetActiveTab().Activate();
@@ -2039,6 +2066,9 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				EnableWindow(GetControl(Id_LoadButton), FALSE);
 				EnableWindow(GetControl(Id_DeleteButton), FALSE);
 				EnableWindow(GetControl(Id_EditButton), FALSE);
+
+				// Validate game mode actions
+				GetGameMode().ValidateActions();
 			}
 		}
 		break;
@@ -2048,6 +2078,229 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+// -----------------------------------------------------------------------------------------------
+//
+//                                Game mode tab
+//
+// -----------------------------------------------------------------------------------------------
+
+DialogManage::TabGameMode::TabGameMode() : Tab()
+{
+}
+
+void DialogManage::TabGameMode::Create(HWND owner)
+{
+	Tab::CreateTabWindow(15, 30, 480, 260, owner);
+
+	// FIXME: Temporary hack.
+	short labelWidth = (short)_wtoi(GetString(ID_STR_NUM_LABELWIDTH));
+
+	const ControlTemplate::Control s_Controls[] =
+	{
+		CT_GROUPBOX(-0, ID_STR_SETTINGS,
+			0, 0, 478, 190,
+			WS_VISIBLE, 0),
+
+		CT_CHECKBOX(Id_FullScreenCheckBox, ID_STR_GAMEMODE_FULLSCREEN,
+			6, 15, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_ProcessListCheckBox, ID_STR_GAMEMODE_PROCESSLISTSC,
+			6, 28, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_EDIT(Id_ProcessListEdit, 0,
+			6, 44, 200, 90,
+			WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL, WS_EX_CLIENTEDGE),
+		CT_LABEL(-0, ID_STR_GAMEMODE_SETTINGS_DESC,
+			230, 44, 242, 90,
+			WS_VISIBLE, 0),
+
+		CT_BUTTON(Id_OnStartButton, ID_STR_GAMEMODE_ACTIONS_ONSTART,
+			6, 148, 200, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
+		CT_BUTTON(Id_OnStopButton, ID_STR_GAMEMODE_ACTIONS_ONSTOP,
+			6, 170, 200, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
+		CT_LABEL(-0, ID_STR_GAMEMODE_ACTIONS_DESC,
+			230, 148, 242, 38,
+			WS_VISIBLE, 0)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+}
+
+void DialogManage::TabGameMode::Initialize()
+{
+	HWND item = GetControl(Id_OnStartButton);
+	Dialog::SetMenuButton(item);
+	EnableWindow(item, TRUE);
+
+	item = GetControl(Id_OnStopButton);
+	Dialog::SetMenuButton(item);
+	EnableWindow(item, TRUE);
+
+	item = GetControl(Id_FullScreenCheckBox);
+	Button_SetCheck(item, GetGameMode().GetFullScreenMode());
+
+	item = GetControl(Id_ProcessListCheckBox);
+	Button_SetCheck(item, GetGameMode().GetProcessListMode());
+
+	item = GetControl(Id_ProcessListEdit);
+	ShowScrollBar(item, SB_VERT, TRUE);
+
+	// Replace | with newline
+	std::wstring text = GetGameMode().GetProcessList();
+	std::size_t pos = 0;
+	while ((pos = text.find_first_of(L'|', pos)) != std::wstring::npos)
+	{
+		text.replace(pos, 1, L"\r\n");
+		++pos;
+	}
+	SetWindowText(item, text.c_str());
+
+	// Subclass edit control to restrict invalid path characters
+	if (!m_Initialized)
+	{
+		SetRestrictedEdit(item);
+	}
+
+	m_Initialized = true;
+}
+
+void DialogManage::TabGameMode::Update()
+{
+	Initialize();
+}
+
+INT_PTR DialogManage::TabGameMode::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_COMMAND:
+		return OnCommand(wParam, lParam);
+	};
+
+	return FALSE;
+}
+
+INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	if (!m_Initialized)
+	{
+		return FALSE;
+	}
+
+	switch (LOWORD(wParam))
+	{
+	case Id_OnStartButton:
+	case Id_OnStopButton:
+		{
+			HMENU menu = (LOWORD(wParam) == Id_OnStartButton) ?
+				ContextMenu::CreateGameModeOnStartMenu() :
+				ContextMenu::CreateGameModeOnStopMenu();
+			if (menu)
+			{
+				RECT r;
+				GetWindowRect((HWND)lParam, &r);
+
+				// Show context menu
+				TrackPopupMenu(
+					menu,
+					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
+					--r.bottom,
+					0,
+					m_Window,
+					nullptr
+				);
+
+				DestroyMenu(menu);
+			}
+		}
+		break;
+
+	case Id_FullScreenCheckBox:
+		GetGameMode().SetFullScreenMode(!GetGameMode().GetFullScreenMode());
+		break;
+
+	case Id_ProcessListCheckBox:
+		GetGameMode().SetProcessListMode(!GetGameMode().GetProcessListMode());
+		break;
+
+	case Id_ProcessListEdit:
+		if (HIWORD(wParam) == EN_KILLFOCUS)
+		{
+			std::wstring oldList = GetGameMode().GetProcessList();
+			std::wstring list;
+
+			WCHAR buffer[4096];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
+			{
+				list = buffer;
+				std::vector<std::wstring> tokens = ConfigParser::Tokenize(list, L"\n");
+				list.clear();
+				for (auto& line : tokens)
+				{
+					list += line;
+					if (line != tokens.back())
+					{
+						list += L'|';
+					}
+				}
+			}
+
+			if (oldList != list)
+			{
+				GetGameMode().SetProcessList(list);  // Only update if needed
+			}
+
+			Update();  // Removes unneeded whitespace
+		}
+		break;
+
+	default:
+		if (wParam >= ID_GAMEMODE_ONSTART_FIRST && wParam <= ID_GAMEMODE_ONSTART_LAST)
+		{
+			UINT index = (UINT)wParam - ID_GAMEMODE_ONSTART_FIRST;
+			GetGameMode().SetOnStartAction(index);  // Can be empty (Unload all skins)
+			break;
+		}
+		else if (wParam >= ID_GAMEMODE_ONSTOP_FIRST && wParam <= ID_GAMEMODE_ONSTOP_LAST)
+		{
+			UINT index = (UINT)wParam - ID_GAMEMODE_ONSTOP_FIRST;
+			GetGameMode().SetOnStopAction(index);  // Can be empty (Load current layout or @Backup)
+			break;
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
+LRESULT CALLBACK DialogManage::TabGameMode::RestrictedEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	switch (uMsg)
+	{
+	case WM_KEYDOWN:
+	case WM_CHAR:
+		{
+			// Do not allow invalid path characters: /:*?"\<>|
+			switch (wParam)
+			{
+			case '/': case ':': case '*': case '?': case '"':
+			case '<': case '>': case '|': case '\\': return 0;
+			}
+		}
+		break;
+
+	case WM_NCDESTROY:
+		RemoveWindowSubclass(hWnd, RestrictedEditProc, uIdSubclass);
+		break;
+	}
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -2099,7 +2352,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 81, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_UseHardwareAcceleration, ID_STR_HARDWAREACCELERATED,
+		CT_CHECKBOX(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
 			6, 94, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
@@ -2185,7 +2438,7 @@ void DialogManage::TabSettings::Initialize()
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
 	bool isHardwareAccelerated = GetRainmeter().IsHardwareAccelerated();
-	Button_SetCheck(GetControl(Id_UseHardwareAcceleration), isHardwareAccelerated);
+	Button_SetCheck(GetControl(Id_UseHardwareAccelerationCheckBox), isHardwareAccelerated);
 
 	m_Initialized = true;
 }
@@ -2338,7 +2591,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WCHAR buffer[MAX_PATH];
 			buffer[0] = L'\0';
-			
+
 			std::wstring editor = GetRainmeter().GetSkinEditor();
 			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str(); 
 
@@ -2374,10 +2627,31 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_UseHardwareAcceleration:
+	case Id_UseHardwareAccelerationCheckBox:
 		{
-			bool hardwareAccelerated = SendMessage(GetControl(Id_UseHardwareAcceleration), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
+			bool hardwareAccelerated =
+				SendMessage(GetControl(Id_UseHardwareAccelerationCheckBox), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
 			GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
+
+			int result = MessageBox(
+				m_Window,
+				GetString(ID_STR_RESTART_CONFIRM),
+				GetString(ID_STR_MANAGERAINMETER),
+				MB_ICONQUESTION | MB_OKCANCEL | MB_DEFBUTTON1 | MB_TOPMOST);
+			if (result == IDOK)
+			{
+				std::wstring restart = GetRainmeter().GetPath();
+				restart += L"RestartRainmeter.exe";
+				CommandHandler::RunFile(restart.c_str());
+			}
+			else
+			{
+				// Reset the checkbox to original selection
+				hardwareAccelerated = !hardwareAccelerated;
+				SendMessage(GetControl(Id_UseHardwareAccelerationCheckBox), BM_SETCHECK,
+					hardwareAccelerated ? BST_CHECKED : BST_UNCHECKED, 0);
+				GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
+			}
 		}
 		break;
 

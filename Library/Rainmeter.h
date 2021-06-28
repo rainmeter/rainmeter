@@ -88,9 +88,6 @@ public:
 	void ToggleSkin(int folderIndex, int fileIndex);
 	void ToggleSkinWithID(UINT id);
 
-	bool IsInGameMode() { return m_GameMode; }
-	void ToggleGameMode();
-
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
 	const std::wstring& GetDataFile() { return m_DataFile; }
@@ -189,6 +186,7 @@ public:
 	friend class ContextMenu;
 	friend class DialogManage;
 	friend class DialogNewSkin;
+	friend class GameMode;
 
 private:
 	Rainmeter();
@@ -260,8 +258,6 @@ private:
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
-
-	bool m_GameMode;
 
 	std::wstring m_SkinEditor;
 

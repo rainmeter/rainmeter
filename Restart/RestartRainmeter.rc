@@ -26,9 +26,10 @@ VS_VERSION_INFO VERSIONINFO
     {
         BLOCK "040904E4"
         {
+            VALUE "FileDescription", "Restarts Rainmeter"
             VALUE "FileVersion", STRFILEVER
             VALUE "LegalCopyright", "© " STRCOPYRIGHT
-            VALUE "OriginalFilename", "SkinInstaller.exe"
+            VALUE "OriginalFilename", "RestartRainmeter.exe"
             VALUE "CompanyName", "Rainmeter"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
@@ -43,10 +44,3 @@ VS_VERSION_INFO VERSIONINFO
         VALUE "Translation", 0x409, 1252
     }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-100           ICON    DISCARDABLE     "res/Rainstaller.ico"
