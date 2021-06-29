@@ -2386,6 +2386,8 @@ void DialogManage::TabSettings::Initialize()
 	// Scan for languages
 	HWND item = GetControl(Id_LanguageDropDownList);
 
+	ComboBox_ResetContent(item);
+
 	std::wstring files = GetRainmeter().GetPath() + L"Languages\\*.dll";
 	WIN32_FIND_DATA fd;
 	HANDLE hSearch = FindFirstFile(files.c_str(), &fd);
