@@ -20,6 +20,7 @@
 
 class Rainmeter;
 class Skin;
+class Section;
 class Measure;
 class Meter;
 

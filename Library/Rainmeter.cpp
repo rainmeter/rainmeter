@@ -1429,6 +1429,24 @@ void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 }
 
 /*
+** Runs the given command or bang (sent from an Action)
+**
+*/
+void Rainmeter::ExecuteActionCommand(const WCHAR* command, Section* section)
+{
+	Skin* skin = nullptr;
+	if (section && (skin = section->GetSkin()))
+	{
+		skin->SetCurrentActionSection(section);
+		m_CommandHandler.ExecuteCommand(command, skin);
+		skin->ResetCurrentActionSection();
+		return;
+	}
+
+	m_CommandHandler.ExecuteCommand(command, skin);
+}
+
+/*
 ** Executes command when current processing is done.
 **
 */

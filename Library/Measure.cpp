@@ -706,7 +706,7 @@ void Measure::DoChangeAction(bool execute)
 		{
 			if (m_OldValue->IsChanged(newValue, newStringValue))
 			{
-				GetRainmeter().ExecuteCommand(m_OnChangeAction.c_str(), m_Skin);
+				GetRainmeter().ExecuteActionCommand(m_OnChangeAction.c_str(), this);
 			}
 		}
 		else
