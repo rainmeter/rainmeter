@@ -65,6 +65,6 @@ void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), m_Skin);
+		GetRainmeter().ExecuteActionCommand(m_OnUpdateAction.c_str(), this);
 	}
 }

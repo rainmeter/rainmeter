@@ -136,6 +136,10 @@ public:
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
+	Section* GetCurrentActionSection() { return m_CurrentActionSection; }
+	void SetCurrentActionSection(Section* section) { m_CurrentActionSection = section; }
+	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
+
 	void MoveWindow(int x, int y);
 	void MoveSelectedWindow(int dx, int dy);
 	bool IsSelected() { return m_Selected; }
@@ -361,6 +365,8 @@ private:
 	std::wstring m_OnUnfocusAction;
 	std::wstring m_OnUpdateAction;
 	std::wstring m_OnWakeAction;
+
+	Section* m_CurrentActionSection;
 
 	std::wstring m_SkinGroup;
 	std::wstring m_BackgroundName;
