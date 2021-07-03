@@ -22,7 +22,7 @@
     {
       "id": 1028,
       "name": "ChineseTraditional",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1050,
@@ -137,7 +137,7 @@
     {
       "id": 1048,
       "name": "Romanian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1049,
