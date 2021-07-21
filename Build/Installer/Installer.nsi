@@ -85,9 +85,37 @@ Var NonDefaultLanguage
 Var AutoStartup
 Var Install64Bit
 Var InstallPortable
+Var RestartAfterInstall
 Var un.DeleteAll
 
-${StrStr}	; Must be called before any sections for functions
+${StrStr}	; Must be called before any sections or functions
+
+!macro Elevate
+UAC_TryAgain:
+	!insertmacro UAC_RunElevated
+	${Switch} $0
+	${Case} 0
+		${IfThen} $1 = 1 ${|} Quit ${|}			; This is the outer process, the inner process is done
+		${IfThen} $3 <> 0 ${|} ${Break} ${|}	; We are the admin
+		${If} $1 = 3							; RunAs completed successfully with a non-admin user
+			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(ADMINERROR)" /SD IDNO IDOK UAC_TryAgain IDNO 0
+			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
+		${EndIf}
+		; Fall-through
+	${Case} 1223
+		Quit
+	${Case} 1062
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LOGONERROR)" /SD IDOK
+		!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
+		Quit
+	${Default}
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UACERROR) ($0)" /SD IDOK
+		!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
+		Quit
+	${EndSwitch}
+
+SetShellVarContext all
+!macroend
 
 ; Install
 ; --------------------------------------
@@ -171,6 +199,16 @@ Function .onInit
 				StrCpy $LANGUAGE $0
 			${EndIf}
 
+			StrCpy $RestartAfterInstall 999
+			${GetOptions} $R1 "/RESTART=" $0
+			${If} $0 != ""
+				${If} $0 = 0
+					StrCpy $RestartAfterInstall 0
+				${ElseIf} $0 = 1
+					StrCpy $RestartAfterInstall 1
+				${EndIf}
+			${EndIf}
+
 			StrCpy $AutoStartup 1
 			${GetOptions} $R1 "/AUTOSTARTUP=" $0  ; Note this value is ignored on portable installations
 			${If} $0 = 0
@@ -181,12 +219,6 @@ Function .onInit
 			${GetOptions} $R1 "/PORTABLE=" $0
 			${If} $0 = 1
 				StrCpy $InstallPortable 1
-			${Else}
-				; Standard installation requires admin rights
-				${IfNot} ${UAC_IsAdmin}
-					!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-					Quit
-				${EndIf}
 			${EndIf}
 
 			StrCpy $Install64Bit 1
@@ -232,17 +264,6 @@ Function .onInit
 					${EndIf}
 				${EndIf}
 			${EndIf}
-
-			ClearErrors
-			CreateDirectory "$INSTDIR"
-			WriteINIStr "$INSTDIR\writetest~.rm" "1" "1" "1"
-			Delete "$INSTDIR\writetest~.rm"
-
-			${If} ${Errors}
-				RMDir "$INSTDIR"
-				!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
-				Quit
-			${EndIf}
 		${EndIf}
 
 		; If the language was set to a non-existent language, reset it back to English.
@@ -256,8 +277,9 @@ Function .onInit
 		StrCpy $AutoStartup $1
 		StrCpy $Install64Bit $2
 		StrCpy $NonDefaultLanguage $3
-		StrCpy $LANGUAGE $4
-		StrCpy $INSTDIR $5
+		StrCpy $RestartAfterInstall $4
+		StrCpy $LANGUAGE $5
+		StrCpy $INSTDIR $6
 	${EndIf}
 FunctionEnd
 
@@ -265,9 +287,17 @@ Function ExchangeSettings
 	StrCpy $1 $AutoStartup
 	StrCpy $2 $Install64Bit
 	StrCpy $3 $NonDefaultLanguage
-	StrCpy $4 $LANGUAGE
-	StrCpy $5 $INSTDIR
+	StrCpy $4 $RestartAfterInstall
+	StrCpy $5 $LANGUAGE
+	StrCpy $6 $INSTDIR
 	HideWindow
+FunctionEnd
+
+Function .onInstSuccess
+	${If} ${Silent}
+	${AndIf} $RestartAfterInstall = 1
+		Call FinishRun
+	${EndIf}
 FunctionEnd
 
 Function PageWelcome
@@ -483,24 +513,7 @@ Function PageOptionsBrowseOnClick
 FunctionEnd
 
 Function PageOptionsOnLeave
-	; Verify that selected folder is writable
 	${NSD_GetText} $R0 $0
-	${If} $InstallPortable = 1
-		ClearErrors
-		CreateDirectory "$0"
-		WriteINIStr "$0\writetest~.rm" "1" "1" "1"
-		Delete "$0\writetest~.rm"
-
-		${If} ${Errors}
-			RMDir "$0"
-			MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)" /SD IDOK
-			!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
-			Abort
-		${EndIf}
-
-		RMDir "$0"
-	${EndIf}
-
 	StrCpy $INSTDIR $0
 
 	GetDlgItem $0 $HWNDPARENT 1
@@ -512,37 +525,6 @@ Function PageOptionsOnLeave
 
 	${If} $R3 != 0
 		${NSD_GetState} $R3 $AutoStartup
-	${EndIf}
-
-	${If} $InstallPortable <> 1
-		${IfNot} ${UAC_IsAdmin}
-			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
-			UserInfo::GetAccountType
-			Pop $0
-			${If} $0 != "Admin"
-UAC_TryAgain:
-				!insertmacro UAC_RunElevated
-				${Switch} $0
-				${Case} 0
-					${IfThen} $1 = 1 ${|} Quit ${|}
-					${IfThen} $3 <> 0 ${|} ${Break} ${|}
-					${If} $1 = 3
-						MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(ADMINERROR)" /SD IDNO IDOK UAC_TryAgain IDNO 0
-						!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-					${EndIf}
-				${Case} 1223
-					Quit
-				${Case} 1062
-					MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LOGONERROR)" /SD IDOK
-					!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
-					Quit
-				${Default}
-					MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UACERROR) ($0)" /SD IDOK
-					!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-					Quit
-				${EndSwitch}
-			${EndIf}
-		${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -573,6 +555,30 @@ FunctionEnd
 !macroend
 
 Section
+	${If} $InstallPortable <> 1
+		${IfNot} ${UAC_IsAdmin}
+			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
+			UserInfo::GetAccountType
+			Pop $0
+			${If} $0 != "Admin"
+				!insertmacro Elevate
+			${EndIf}
+		${EndIf}
+	${EndIf}
+
+	; Verify that the selected folder is writable
+	ClearErrors
+	CreateDirectory "$INSTDIR"
+	WriteINIStr "$INSTDIR\writetest~.rm" "1" "1" "1"
+	Delete "$INSTDIR\writetest~.rm"
+
+	${If} ${Errors}
+		RMDir "$INSTDIR"
+		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)" /SD IDOK
+		!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
+		Quit
+	${EndIf}
+
 	SetOutPath "$PLUGINSDIR"
 	SetShellVarContext current
 
@@ -588,6 +594,11 @@ Section
 	; Close Rainmeter (and wait up to five seconds)
 	${ForEach} $0 10 0 - 1
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
+		${If} $1 <> 0
+		${AndIf} $RestartAfterInstall = 999
+			StrCpy $RestartAfterInstall 1
+		${EndIf}
+
 		ClearErrors
 		Delete "$INSTDIR\Rainmeter.exe"
 		${If} $1 = 0
@@ -598,12 +609,12 @@ Section
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY SectionRetry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}
 
-SectionRetry:
+Retry:
 		Sleep 500
 	${Next}
 
@@ -866,28 +877,7 @@ FunctionEnd
 ; Uninstall
 ; --------------------------------------
 Function un.onInit
-UAC_TryAgain:
-	; Request administrative rights
-	!insertmacro UAC_RunElevated
-	${Switch} $0
-	${Case} 0
-		${IfThen} $1 = 1 ${|} Quit ${|}
-		${IfThen} $3 <> 0 ${|} ${Break} ${|}
-		${If} $1 = 3
-			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(ADMINERROR)" /SD IDNO IDOK UAC_TryAgain IDNO 0
-			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-		${EndIf}
-	${Case} 1223
-		Quit
-	${Case} 1062
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LOGONERROR)" /SD IDOK
-		!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
-		Quit
-	${Default}
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UACERROR) ($0)" /SD IDOK
-		!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-		Quit
-	${EndSwitch}
+	!insertmacro Elevate
 
 	ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
 	${If} $0 != ""
@@ -931,12 +921,12 @@ Section Uninstall
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY UninstallRetry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}
 
-UninstallRetry:
+Retry:
 		Sleep 500
 	${Next}
 
