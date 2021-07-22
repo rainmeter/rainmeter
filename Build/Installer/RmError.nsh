@@ -17,6 +17,7 @@ Var LogFile
 ; Simple log macro
 ; Only created on silent installs
 !macro LOG_ERROR ERROR
+	SetErrorLevel ${ERROR}
 	${If} ${Silent}
 		!insertmacro GetTime
 		${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
