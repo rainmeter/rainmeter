@@ -318,25 +318,32 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else
 		{
-			// Check if calling a Script measure
+			// Check if calling a Script/Plugin measure
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
+			// Lua (and possibly plugins) can reset the style template when
+			// reading values, so save the style template here and reset it
+			// back after the lua/plugin has returned.
+			std::vector<std::wstring> meterStyle = m_StyleTemplate;
+
+			bool retValue = false;
 			const auto type = measure->GetTypeID();
 			if (type == TypeID<MeasureScript>())
 			{
 				valueType = ValueType::Script;  // Needed?
 				MeasureScript* script = (MeasureScript*)measure;
-				return script->CommandWithReturn(selectorSz, strValue);
+				retValue = script->CommandWithReturn(selectorSz, strValue);
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
 				valueType = ValueType::Plugin;  // Needed?
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				return plugin->CommandWithReturn(selectorSz, strValue);
+				retValue = plugin->CommandWithReturn(selectorSz, strValue);
 			}
 
-			return false;
+			m_StyleTemplate = meterStyle;
+			return retValue;
 		}
 
 		selectorSz = L"";
