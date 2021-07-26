@@ -71,8 +71,6 @@ Page custom PageOptions PageOptionsOnLeave
 UninstPage custom un.PageOptions un.GetOptions
 !insertmacro MUI_UNPAGE_INSTFILES
 
-!define /date INSTALLDATE "%Y%m%d"
-
 ; Include languages
 !macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
 	!insertmacro MUI_LANGUAGE ${LANGUAGE}
@@ -710,28 +708,32 @@ SkipIniMove:
 		WriteRegDWORD HKLM "SOFTWARE\Rainmeter" "NonDefault" $NonDefaultLanguage
 
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "Publisher" "Rainmeter"
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayIcon" "$INSTDIR\Rainmeter.exe,0"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "Comments" "Rainmeter desktop customization tool"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "HelpLink" "https://rainmeter.net"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "URLUpdateInfo" "https://rainmeter.net"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "URLInfoAbout" "https://rainmeter.net"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "UninstallString" "$INSTDIR\uninst.exe"
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallDate" "${INSTALLDATE}"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallLocation" "$INSTDIR"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "NoModify" "1"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "NoRepair" "1"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMajor" "${VERSION_MAJOR}"
 		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "VersionMinor" "${VERSION_MINOR}"
 
+		; Get the current date (runtime) [YMD]
+		${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallDate" "$2$1$3"
+
 		; Get rid of approximate install size, which we wrote out in the past.
 		DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize"
 
 !ifdef BETA
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter (beta)"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_FULL}"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Beta release"
 !else
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT}"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Final release"
 !endif
 
