@@ -207,10 +207,22 @@ Function .onInit
 				${EndIf}
 			${EndIf}
 
-			StrCpy $AutoStartup 1
+			StrCpy $AutoStartup 0
 			${GetOptions} $R1 "/AUTOSTARTUP=" $0  ; Note this value is ignored on portable installations
-			${If} $0 = 0
-				StrCpy $AutoStartup 0
+			${If} $0 != ""
+				${If} $0 = 1
+					StrCpy $AutoStartup 1
+				${EndIf}
+			${Else}
+				SetShellVarContext all
+				${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+					StrCpy $AutoStartup 1
+				${EndIf}
+
+				SetShellVarContext current
+				${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+					StrCpy $AutoStartup 1
+				${EndIf}
 			${EndIf}
 
 			StrCpy $InstallPortable 0
