@@ -65,6 +65,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_MouseOver(false),
 	m_MouseInputRegistered(false),
 	m_HasMouseScrollAction(false),
+	m_CurrentActionSection(nullptr),
 	m_BackgroundMargins(),
 	m_DragMargins(),
 	m_WindowX(1, L'0'),
@@ -4842,6 +4843,7 @@ LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
+	Meter* meter = nullptr;
 	std::wstring command;
 
 	// Check if the hitpoint was over some meter
@@ -4854,6 +4856,7 @@ bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 		const Mouse& mouse = (*j)->GetMouse();
 		if (mouse.HasActionCommand(action) && (*j)->HitTest(x, y))
 		{
+			meter = (*j);
 			command = mouse.GetActionCommand(action);
 			break;
 		}
@@ -4871,7 +4874,14 @@ bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 	{
 		if (!test)
 		{
-			GetRainmeter().ExecuteCommand(command.c_str(), this);
+			if (meter)
+			{
+				GetRainmeter().ExecuteActionCommand(command.c_str(), meter);
+			}
+			else
+			{
+				GetRainmeter().ExecuteCommand(command.c_str(), this);
+			}
 		}
 
 		return true;
@@ -4944,7 +4954,7 @@ bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
 						if (!mouse.GetOverAction().empty())
 						{
 							UINT currCounter = m_MouseMoveCounter;
-							GetRainmeter().ExecuteCommand(mouse.GetOverAction().c_str(), this);
+							GetRainmeter().ExecuteActionCommand(mouse.GetOverAction().c_str(), (*j));
 							return (currCounter == m_MouseMoveCounter);
 						}
 					}
@@ -4970,7 +4980,7 @@ bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
 					const Mouse& mouse = (*j)->GetMouse();
 					if (!mouse.GetLeaveAction().empty())
 					{
-						GetRainmeter().ExecuteCommand(mouse.GetLeaveAction().c_str(), this);
+						GetRainmeter().ExecuteActionCommand(mouse.GetLeaveAction().c_str(), (*j));
 						return true;
 					}
 				}

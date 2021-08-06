@@ -318,13 +318,16 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else
 		{
-			// Check if calling a Script measure
+			// Check if calling a Script/Plugin measure
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
-			m_CurrentSection->assign(measure->GetName());
-			bool retValue = false;
+			// Lua (and possibly plugins) can reset the style template when
+			// reading values, so save the style template here and reset it
+			// back after the lua/plugin has returned.
+			std::vector<std::wstring> meterStyle = m_StyleTemplate;
 
+			bool retValue = false;
 			const auto type = measure->GetTypeID();
 			if (type == TypeID<MeasureScript>())
 			{
@@ -339,7 +342,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				retValue = plugin->CommandWithReturn(selectorSz, strValue);
 			}
 
-			m_CurrentSection->clear();
+			m_StyleTemplate = meterStyle;
 			return retValue;
 		}
 
@@ -855,6 +858,19 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 */
 bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
 {
+	// Since actions are parsed when executed, get the current active
+	// section in case the current section variable is used.
+	bool hasCurrentAction = false;
+	if (m_Skin && (m_CurrentSection->empty() || meter))
+	{
+		Section* section = m_Skin->GetCurrentActionSection();
+		if (section || meter)
+		{
+			m_CurrentSection->assign(meter ? meter->GetName() : section->GetName());
+			hasCurrentAction = true;
+		}
+	}
+
 	// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
 	// Copy the result here, and replace it before returning.
 	std::wstring result = str;
@@ -970,8 +986,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 					case VariableType::Variable:
 						{
-							// Assign current section if available
-							if (meter) m_CurrentSection->assign(meter->GetName());
 							const std::wstring* value = GetVariable(val);
 							if (value)
 							{
@@ -980,7 +994,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 								replaced = true;
 								found = true;
 							}
-							if (meter) m_CurrentSection->clear();
 						}
 						break;
 
@@ -1033,6 +1046,12 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		{
 			start = end + 1;
 		}
+	}
+
+	// Reset the current section
+	if (hasCurrentAction)
+	{
+		m_CurrentSection->clear();
 	}
 
 	str = result;
