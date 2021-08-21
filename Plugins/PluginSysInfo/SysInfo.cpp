@@ -19,6 +19,8 @@
 #include "../../Common/StringUtil.h"
 
 #define INADDR_ANY (ULONG)0x00000000
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
 typedef struct
 {
@@ -830,12 +832,26 @@ int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
 	}
 	else
 	{
-		BYTE buffer[7168];
-		ULONG bufLen = _countof(buffer);
+		PIP_ADAPTER_INFO pAdapterInfo;
+		ULONG ulOutBufLen = sizeof(IP_ADAPTER_INFO);
+		pAdapterInfo = (IP_ADAPTER_INFO*)MALLOC(sizeof(IP_ADAPTER_INFO));
+		if (pAdapterInfo == NULL) {
+			printf("Error allocating memory needed to call GetAdaptersinfo\n");
+			return 1;
+		}
 
-		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &bufLen))
+		if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
+			FREE(pAdapterInfo);
+			pAdapterInfo = (IP_ADAPTER_INFO*)MALLOC(ulOutBufLen);
+			if (pAdapterInfo == NULL) {
+				printf("Error allocating memory needed to call GetAdaptersinfo\n");
+				return 1;
+			}
+		}
+
+		if (ERROR_SUCCESS == GetAdaptersInfo(pAdapterInfo, &ulOutBufLen))
 		{
-			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
+			PIP_ADAPTER_INFO info = pAdapterInfo;
 			int i = 0;
 			while (info)
 			{
