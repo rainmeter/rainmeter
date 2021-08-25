@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       type:
-        description: 'Build type (beta/final)'
+        description: 'Build type (release/pre)'
         required: true
       version:
         description: 'Version (a.b.c.d)'

@@ -1739,8 +1739,8 @@ void DialogAbout::TabVersion::Initialize()
 	Static_SetIcon(item, icon);
 
 	WCHAR tmpSz[MAX_PATH];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Rainmeter %s.%i%s (%s)",
-		APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Rainmeter %s.%i (%s)",
+		APPVERSION, revision_number, APPBITS);
 	item = GetControl(Id_VersionLabel);
 	SetWindowText(item, tmpSz);
 
@@ -1818,10 +1818,9 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len =_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"Rainmeter %s.%i%s (%s)\nLanguage: %s (%lu)\nBuild time: %s\n",
+				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\n",
 				APPVERSION,
 				revision_number,
-				revision_beta ? L" beta" : L"",
 				APPBITS,
 				lang,
 				lcid,

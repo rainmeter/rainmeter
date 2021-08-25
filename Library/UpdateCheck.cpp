@@ -221,7 +221,7 @@ void Updater::CheckVersion(void* pParam)
 				if (debug) LogDebugF(L"  Status file version: %s", version);
 
 				const int availableVersion = ParseVersion(version);
-				if (availableVersion > RAINMETER_VERSION || (revision_beta && availableVersion == RAINMETER_VERSION))
+				if (availableVersion > RAINMETER_VERSION)
 				{
 					const bool isDevBuild = RAINMETER_VERSION == 0;
 					if (!isDevBuild)
