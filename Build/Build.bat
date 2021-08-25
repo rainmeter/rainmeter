@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 
 :: For example, to build release 4.4.1 r3500, run: Build.bat release 4 4 1 3500
 :: Parameters: build_type version_major version_minor version_subminor version_revision
-:: |build_type|: release, pre, lanuages
+:: |build_type|: release, pre, languages
 :: Examples:
 ::		Build.bat final 4 4 0 3520		-> Rainmeter-4.4.0.exe
 ::		Build.bat pre 4 4 1 3521		-> Rainmeter-4.4.1-prerelease.exe
