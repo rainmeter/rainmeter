@@ -412,7 +412,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
-	LogNoticeF(L"Rainmeter %s.%i%s (%s)", APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
+	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 

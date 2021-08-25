@@ -1,7 +1,14 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build beta 2.0.1 r800, run: Build.bat beta 2 0 1 800
+:: For example, to build release 4.4.1 r3500, run: Build.bat release 4 4 1 3500
+:: Parameters: build_type version_major version_minor version_subminor version_revision
+:: |build_type|: release, pre, lanuages
+:: Examples:
+::		Build.bat final 4 4 0 3520		-> Rainmeter-4.4.0.exe
+::		Build.bat pre 4 4 1 3521		-> Rainmeter-4.4.1-prerelease.exe
+::		Build.bat languages				-> No installer, just update the language .dll files
+
 set BUILD_TYPE=%1
 
 if "%BUILD_TYPE%" == "languages" goto VERSION_OK
@@ -11,8 +18,8 @@ set /A VERSION_MINOR=%3
 set /A VERSION_SUBMINOR=%4
 set /A VERSION_REVISION=%5
 
-if "%BUILD_TYPE%" == "beta" set ISBETA=true & goto BUILD_TYPE_OK
-if "%BUILD_TYPE%" == "final" set ISBETA=false & goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
@@ -32,6 +39,11 @@ if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
 
 if not exist "%MAKENSIS%" set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit /b 1
+
+:: Begin timestamp
+for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
+	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
+)
 
 echo Rainmeter Build
 echo ----------------------------------------------
@@ -53,9 +65,8 @@ set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /tr http://timestamp.comodoca.c
 
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
 
-set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
-set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
-if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
+set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
+set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 
 :: Update Version.h
 > "..\Version.h" (
@@ -64,12 +75,11 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo #define PRODUCTVER FILEVER
 	echo #define STRFILEVER "%VERSION_FULL%"
 	echo #define STRPRODUCTVER STRFILEVER
-	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
+	echo #define APPVERSION L"%VERSION_SHORT%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
 	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo #define STRCOPYRIGHT "%BUILD_YEAR% Rainmeter Team"
 	echo const int revision_number = %VERSION_REVISION%;
-	echo const bool revision_beta = %ISBETA%;
 )
 
 :: Update Version.cs
@@ -87,13 +97,9 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 	echo }
 )
 
-echo * Updated Version.h
+echo * Updated Version.{cs,h}
 
-:: Set vcbuild environment variables and begin build
 echo * Starting build for %VERSION_FULL%
-for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
-	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
-)
 
 :: Build Library
 echo * Building 32-bit projects
@@ -103,11 +109,6 @@ echo * Building 64-bit projects
 %MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 :BUILDLANGUAGES
-if "%BUILD_TYPE%" == "languages" (
-	for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
-		set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
-	)
-)
 echo * Building languages
 
 :: Build all language libraries
@@ -149,7 +150,7 @@ if not "%CERTFILE%" == "" (
 echo * Building installer
 
 set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%.exe
-if "%BUILD_TYPE%" == "beta" set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%-r%VERSION_REVISION%-beta.exe
+if "%BUILD_TYPE%" == "pre" set INSTALLER_PATH=Rainmeter-%VERSION_FULL%-prerelease.exe
 
 set INSTALLER_DEFINES=^
 	/DOUTFILE="%INSTALLER_PATH%"^
@@ -159,7 +160,6 @@ set INSTALLER_DEFINES=^
 	/DVERSION_MAJOR="%VERSION_MAJOR%"^
 	/DVERSION_MINOR="%VERSION_MINOR%"^
 	/DBUILD_YEAR="%BUILD_YEAR%"
-if "%BUILD_TYPE%" == "beta" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
 
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
