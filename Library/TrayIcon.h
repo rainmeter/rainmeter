@@ -43,7 +43,8 @@ public:
 	void SetTrayIcon(bool enabled, bool setTemporarily = false);
 
 	void ShowWelcomeNotification();
-	void ShowUpdateNotification(const WCHAR* newVersion);
+	void ShowUpdateNotification(LPCWSTR newVersion);
+	void ShowInstallUpdateNotification(LPCWSTR newVersion);
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -53,7 +54,8 @@ private:
 	{
 		TRAY_NOTIFICATION_NONE,
 		TRAY_NOTIFICATION_WELCOME,
-		TRAY_NOTIFICATION_UPDATE
+		TRAY_NOTIFICATION_UPDATE,
+		TRAY_NOTIFICATION_INSTALL_UPDATE
 	};
 
 	bool AddTrayIcon();

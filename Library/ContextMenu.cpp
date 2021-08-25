@@ -194,19 +194,32 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			++index;
 		}
 
+		bool newVersion = rainmeter.GetNewVersion();
+		bool downloadedNewVersion = rainmeter.GetDownloadedNewVersion();
+		bool obsoleteLanguage = rainmeter.GetLanguageStatus();
+		int sepPos = 0;
+
 		// Add update notification item
-		if (rainmeter.GetNewVersion())
+		if (newVersion || downloadedNewVersion)
 		{
-			InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
+			UINT_PTR idm = downloadedNewVersion ? IDM_INSTALL_NEW_VERSION : IDM_NEW_VERSION;
+			WCHAR * str = GetString(downloadedNewVersion ? ID_STR_INSTALL_NEW_VERSION : ID_STR_UPDATEAVAILABLE);
+			InsertMenu(menu, 0, MF_BYPOSITION, idm, str);
 			HiliteMenuItem(rainmeter.GetTrayIcon()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
-			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+			++sepPos;
 		}
 
 		// Add language status if obsolete
-		if (rainmeter.GetLanguageStatus())
+		if (obsoleteLanguage)
 		{
-			InsertMenu(menu, !rainmeter.m_NewVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(ID_STR_LANGUAGEOBSOLETE));
-			if (!rainmeter.GetNewVersion()) InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+			InsertMenu(menu, !newVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(ID_STR_LANGUAGEOBSOLETE));
+			++sepPos;
+		}
+
+		// Add separator if necessary
+		if (sepPos > 0)
+		{
+			InsertMenu(menu, sepPos, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
 

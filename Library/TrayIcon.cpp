@@ -315,10 +315,16 @@ void TrayIcon::ShowWelcomeNotification()
 	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
 }
 
-void TrayIcon::ShowUpdateNotification(const WCHAR* newVersion)
+void TrayIcon::ShowUpdateNotification(LPCWSTR newVersion)
 {
 	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
+}
+
+void TrayIcon::ShowInstallUpdateNotification(LPCWSTR newVersion)
+{
+	std::wstring text = GetFormattedString(ID_STR_CLICK_TO_INSTALL, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(ID_STR_INSTALL_NEW_VERSION), text.c_str());
 }
 
 void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)
@@ -524,6 +530,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			CommandHandler::RunFile(RAINMETER_OFFICIAL);
 			break;
 
+		case IDM_INSTALL_NEW_VERSION:
+			GetRainmeter().RestartRainmeter();
+			break;
+
 		case IDM_LANGUAGEOBSOLETE:
 			CommandHandler::RunFile(RAINMETER_LOCALIZATION);
 			break;
@@ -703,6 +713,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				else if (tray->m_Notification == TRAY_NOTIFICATION_UPDATE)
 				{
 					CommandHandler::RunFile(RAINMETER_OFFICIAL);
+				}
+				else if (tray->m_Notification == TRAY_NOTIFICATION_INSTALL_UPDATE)
+				{
+					GetRainmeter().RestartRainmeter();
 				}
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 				break;

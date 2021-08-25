@@ -2321,7 +2321,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-0, ID_STR_GENERAL,
-			0, 0, 478, 131,
+			0, 0, 478, 144,
 			WS_VISIBLE, 0),
 		CT_LABEL(-0, ID_STR_LANGUAGESC,
 			6, 15, 107, 14,
@@ -2344,33 +2344,36 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_CheckForUpdatesCheckBox, ID_STR_CHECKFORUPDATES,
 			6, 55, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_LockSkinsCheckBox, ID_STR_DISABLEDRAGGING,
+		CT_CHECKBOX(Id_AutoInstallCheckBox, ID_STR_AUTOMATICUPDATE,
 			6, 68, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
+		CT_CHECKBOX(Id_LockSkinsCheckBox, ID_STR_DISABLEDRAGGING,
 			6, 81, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
+		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 94, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
+			6, 107, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 110, buttonWidth + 20, 14,
+			6, 123, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-0, ID_STR_LOGGING,
-			0, 138, 478, 66,
+			0, 151, 478, 66,
 			WS_VISIBLE, 0),
-		CT_CHECKBOX(Id_VerboseLoggingCheckbox, ID_STR_DEBUGMODE,
-			6, 154, 200, 9,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+		CT_CHECKBOX(Id_VerboseLoggingCheckBox, ID_STR_DEBUGMODE,
 			6, 167, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+			6, 180, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 183, buttonWidth + 20, 14,
+			6, 196, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 183, buttonWidth + 20, 14,
+			buttonWidth + 30, 196, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2423,10 +2426,14 @@ void DialogManage::TabSettings::Initialize()
 		FindClose(hSearch);
 	}
 
-	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), !GetRainmeter().GetDisableVersionCheck());
+	BOOL check = !GetRainmeter().GetDisableVersionCheck();
+	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), check);
+	Button_SetCheck(GetControl(Id_AutoInstallCheckBox), !GetRainmeter().GetDisableAutoUpdate());
+	EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
+
 	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), GetRainmeter().GetDisableDragging());
 	Button_SetCheck(GetControl(Id_LogToFileCheckBox), GetLogger().IsLogToFile());
-	Button_SetCheck(GetControl(Id_VerboseLoggingCheckbox), GetRainmeter().GetDebug());
+	Button_SetCheck(GetControl(Id_VerboseLoggingCheckBox), GetRainmeter().GetDebug());
 
 	BOOL isLogFile = (_waccess(GetLogger().GetLogFilePath().c_str(), 0) != -1);
 	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
@@ -2522,7 +2529,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 				}
 
-				GetUpdater().CheckLanguage();
+				GetUpdater().GetLanguageStatus();
 
 				SendMessage(c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
 				GetRainmeter().DelayedExecuteCommand(L"!Manage Settings");
@@ -2531,7 +2538,15 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_CheckForUpdatesCheckBox:
-		GetRainmeter().SetDisableVersionCheck(!GetRainmeter().GetDisableVersionCheck());
+		{
+			BOOL check = GetRainmeter().GetDisableVersionCheck();
+			GetRainmeter().SetDisableVersionCheck(!check);
+			EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
+		}
+		break;
+
+	case Id_AutoInstallCheckBox:
+		GetRainmeter().SetDisableAutoUpdate(!GetRainmeter().GetDisableAutoUpdate());
 		break;
 
 	case Id_LockSkinsCheckBox:
@@ -2572,7 +2587,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_VerboseLoggingCheckbox:
+	case Id_VerboseLoggingCheckBox:
 		GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
 		break;
 
@@ -2640,9 +2655,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				MB_ICONQUESTION | MB_OKCANCEL | MB_DEFBUTTON1 | MB_TOPMOST);
 			if (result == IDOK)
 			{
-				std::wstring restart = GetRainmeter().GetPath();
-				restart += L"RestartRainmeter.exe";
-				CommandHandler::RunFile(restart.c_str());
+				GetRainmeter().RestartRainmeter();
 			}
 			else
 			{

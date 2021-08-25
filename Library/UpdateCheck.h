@@ -12,13 +12,18 @@
 
 #include "json/json.hpp"
 
+using nlohmann::json;
+
 class Updater
 {
 public:
 	static Updater& GetInstance();
 
-	void CheckUpdate();
-	void CheckLanguage();
+	void CheckForUpdates(bool download);
+	void GetLanguageStatus();
+
+	static bool VerifyInstaller(const std::wstring& path, const std::wstring& filename,
+		const std::wstring& sha256, bool writeToDataFile);
 
 private:
 	Updater();
@@ -27,12 +32,16 @@ private:
 	Updater(const Updater& other) = delete;
 	Updater& operator=(Updater other) = delete;
 
-	static void CheckVersion(void* dummy);
+	static void GetStatus(void* pParam);
+	static bool DownloadStatusFile(std::string& data, DWORD* dataSize);
+	static void CheckVersion(json& status, bool downloadNewVersion);
 	static int ParseVersion(LPCWSTR str);
+	static bool DownloadNewVersion(json & status);
 
-	nlohmann::json m_Status;
+	json m_Status;
+	bool m_DownloadInstaller;
 
-	static LPCWSTR c_UpdateURL;
+	static LPCWSTR s_UpdateURL;
 };
 
 // Convenience function.
