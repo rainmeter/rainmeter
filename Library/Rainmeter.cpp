@@ -612,7 +612,7 @@ void Rainmeter::Finalize()
 
 void Rainmeter::RestartRainmeter()
 {
-	// Make sure to call after m_Path is initialized in Rainmeter::Initialize
+	// Make sure to call this function after m_Path is initialized in Rainmeter::Initialize
 	std::wstring restart = m_Path;
 	restart += L"RestartRainmeter.exe";
 	CommandHandler::RunFile(restart.c_str());

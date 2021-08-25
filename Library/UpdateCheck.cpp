@@ -470,6 +470,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	auto cleanup = [&](bool ret) -> bool
 	{
 		free(buffer);
+		buffer = nullptr;
 		if (!ret && debug) LogErrorF(L">>Verify installer error: 0x%08x (%d)", status, status);
 		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);

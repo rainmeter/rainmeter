@@ -36,7 +36,7 @@ private:
 	static bool DownloadStatusFile(std::string& data, DWORD* dataSize);
 	static void CheckVersion(json& status, bool downloadNewVersion);
 	static int ParseVersion(LPCWSTR str);
-	static bool DownloadNewVersion(json & status);
+	static bool DownloadNewVersion(json& status);
 
 	json m_Status;
 	bool m_DownloadInstaller;
