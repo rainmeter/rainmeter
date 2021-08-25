@@ -1,7 +1,10 @@
 {
   "release": {
     "final": "4.3.1",
-    "final_revision": "3321"
+    "version": "7.0.0",
+    "revision": "9999",
+    "download_url": "https://builds.rainmeter.net/test_2/Rainmeter-7.0.0.exe",
+    "download_sha256": "f911907ee43f2d0bf98b28676f1e76e0c7e3893a2eedd835cce4f147fa5cd14d"
   },
   "language": [
     {
