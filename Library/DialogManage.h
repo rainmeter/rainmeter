@@ -189,10 +189,11 @@ private:
 		enum Id
 		{
 			Id_CheckForUpdatesCheckBox = 100,
+			Id_AutoInstallCheckBox,
 			Id_LockSkinsCheckBox,
 			Id_ResetStatisticsButton,
 			Id_LogToFileCheckBox,
-			Id_VerboseLoggingCheckbox,
+			Id_VerboseLoggingCheckBox,
 			Id_ShowLogFileButton,
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
