@@ -178,6 +178,11 @@
       "obsolete": true
     },
     {
+      "id": 1054,
+      "name": "Thai",
+      "obsolete": false
+    },
+    {
       "id": 1055,
       "name": "Turkish",
       "obsolete": false
