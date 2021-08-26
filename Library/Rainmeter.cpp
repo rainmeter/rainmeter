@@ -102,6 +102,8 @@ Rainmeter::Rainmeter() :
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
+	m_DisableAutoUpdate(false),
+	m_DownloadedNewVersion(false),
 	m_LanguageObsolete(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
@@ -309,6 +311,50 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		CreateDataFile();
 	}
 
+	// Install new version
+	if (GetPrivateProfileString(L"Rainmeter", L"InstallerName", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+	{
+		bool runInstaller = false;
+		const std::wstring installerName = buffer;
+		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
+		const std::wstring fullPath = updatePath + installerName;
+		if (PathFileExists(fullPath.c_str()))
+		{
+			if (GetPrivateProfileString(L"Rainmeter", L"InstallerSha256", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+			{
+				const std::wstring sha256 = buffer;
+				runInstaller = Updater::VerifyInstaller(updatePath, installerName, sha256, false);
+				WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", nullptr, m_DataFile.c_str());
+			}
+		}
+
+		WritePrivateProfileString(L"Rainmeter", L"InstallerName", nullptr, m_DataFile.c_str());
+		WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", installerName.c_str(), m_DataFile.c_str());
+
+		if (runInstaller)
+		{
+			const std::wstring isPortable = _wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) == 0 ? L"1" : L"0";
+			const std::wstring is64Bit = APPBITS == L"64-bit" ? L"1" : L"0";
+			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION" + is64Bit + L" /D=" + m_Path.c_str();
+			CommandHandler::RunFile(fullPath.c_str(), args.c_str());
+			clearBuffer();
+			return -1;
+		}
+	}
+
+	// Delete installer if necessary
+	if (GetPrivateProfileString(L"Rainmeter", L"DeleteInstaller", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+	{
+		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
+		const std::wstring fullPath = updatePath + buffer;
+		if (PathFileExists(fullPath.c_str()))
+		{
+			System::RemoveFile(fullPath);
+		}
+		WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", nullptr, m_DataFile.c_str());
+		RemoveDirectory(updatePath.c_str());
+	}
+
 	// Reset log file
 	System::RemoveFile(logger.GetLogFilePath());
 
@@ -412,7 +458,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
-	LogNoticeF(L"Rainmeter %s.%i%s (%s)", APPVERSION, revision_number, revision_beta ? L" beta" : L"", APPBITS);
+	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 
@@ -506,7 +552,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		GetUpdater().CheckUpdate();
+		GetUpdater().CheckForUpdates(!m_DisableAutoUpdate);
 	}
 
 	return 0;	// All is OK
@@ -562,6 +608,14 @@ void Rainmeter::Finalize()
 	}
 
 	UnregisterClass(RAINMETER_CLASS_NAME, m_Instance);
+}
+
+void Rainmeter::RestartRainmeter()
+{
+	// Make sure to call this function after m_Path is initialized in Rainmeter::Initialize
+	std::wstring restart = m_Path;
+	restart += L"RestartRainmeter.exe";
+	CommandHandler::RunFile(restart.c_str());
 }
 
 bool Rainmeter::IsAlreadyRunning()
@@ -1514,6 +1568,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
+	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
 
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
@@ -1706,6 +1761,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"ConfigEditor");
 		PreserveSetting(backup, L"Logging");
 		PreserveSetting(backup, L"DisableVersionCheck");
+		PreserveSetting(backup, L"DisableAutoUpdate");
 		PreserveSetting(backup, L"Language");
 		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"SelectedColor");
@@ -2015,6 +2071,12 @@ void Rainmeter::SetDisableVersionCheck(bool check)
 {
 	m_DisableVersionCheck = check;
 	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
+}
+
+void Rainmeter::SetDisableAutoUpdate(bool check)
+{
+	m_DisableAutoUpdate = check;
+	WritePrivateProfileString(L"Rainmeter", L"DisableAutoUpdate", check ? L"1" : L"0", m_IniFile.c_str());
 }
 
 void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)

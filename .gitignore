@@ -9,6 +9,7 @@
 /Version.h
 bin
 Certificate.bat
+Manifest.bat
 obj
 x32*
 x64*

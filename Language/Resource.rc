@@ -21,6 +21,41 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION FILEVER
+ PRODUCTVERSION PRODUCTVER
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+ {
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904E4"
+        {
+            VALUE "FileVersion", STRFILEVER
+            VALUE "LegalCopyright", "© " STRCOPYRIGHT
+            VALUE "CompanyName", "Rainmeter"
+            VALUE "ProductName", "Rainmeter"
+            VALUE "ProductVersion", STRPRODUCTVER
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x409, 1252
+    }
+ }
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
@@ -222,4 +257,7 @@ STRINGTABLE
     ID_STR_GAMEMODE_ACTIONS_DESC, STR_GAMEMODE_ACTIONS_DESC
     ID_STR_GAMEMODE_ACTIONS_UNLOADALL, STR_GAMEMODE_ACTIONS_UNLOADALL
     ID_STR_GAMEMODE_ACTIONS_CURRENT, STR_GAMEMODE_ACTIONS_CURRENT
+    ID_STR_AUTOMATICUPDATE, "Automatically install updates"
+    ID_STR_INSTALL_NEW_VERSION, "Install new version"
+    ID_STR_CLICK_TO_INSTALL, "Restart Rainmeter to install version: %1"
 }

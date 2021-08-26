@@ -56,6 +56,8 @@ public:
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart);
 	void Finalize();
 
+	void RestartRainmeter();
+
 	bool IsAlreadyRunning();
 	int MessagePump();
 
@@ -138,6 +140,10 @@ public:
 	void SetDisableVersionCheck(bool check);
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
+	bool GetDisableAutoUpdate() { return m_DisableAutoUpdate; }
+	void SetDisableAutoUpdate(bool check);
+	bool GetDownloadedNewVersion() { return m_DownloadedNewVersion; }
+	void SetDownloadedNewVersion() { m_DownloadedNewVersion = true; }
 	bool GetLanguageStatus() { return m_LanguageObsolete; }
 	void SetLanguageStatus(bool status) { m_LanguageObsolete = status; DialogManage::UpdateLanguageStatus(); }
 
@@ -245,6 +251,8 @@ private:
 
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
+	bool m_DisableAutoUpdate;
+	bool m_DownloadedNewVersion;
 	bool m_LanguageObsolete;
 
 	bool m_HardwareAccelerated;

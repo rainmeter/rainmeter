@@ -237,8 +237,13 @@
 #define ID_STR_HARDWAREACCELERATED                   2153
 #define ID_STR_RESTART_CONFIRM                       2154
 #define ID_STR_MEASURE                               2155
-#define ID_STR_SAFESTART_TITLE                       2156
-#define ID_STR_SAFESTART_MESSAGE                     2157
+#define ID_STR_LANGUAGEOBSOLETE                      2156
+#define ID_STR_CLICKLANGUAGE                         2157
+#define ID_STR_SAFESTART_TITLE                       2158
+#define ID_STR_SAFESTART_MESSAGE                     2159
+#define ID_STR_AUTOMATICUPDATE                       2160
+#define ID_STR_INSTALL_NEW_VERSION                   2161
+#define ID_STR_CLICK_TO_INSTALL                      2162
 
 #define ID_STR_GAMEMODE                              2800
 #define ID_STR_GAMEMODE_START                        2801
@@ -279,8 +284,6 @@
 #define ID_STR_TEMPLATEFOLDERFAIL                    3022
 #define ID_STR_TEMPLATEFILEFAIL                      3023
 #define ID_STR_TEMPLATEDELETE                        3024
-#define ID_STR_LANGUAGEOBSOLETE                      3025
-#define ID_STR_CLICKLANGUAGE                         3026
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -352,11 +355,11 @@
 #define IDM_COPYRANGE                                4073
 #define IDM_LANGUAGEOBSOLETE                         4074
 #define IDM_COPYMEASURENAME                          4075
-
 #define IDM_GAMEMODE_START                           4076
 #define IDM_GAMEMODE_STOP                            4077
 #define IDM_GAMEMODE_FULLSCREEN                      4078
 #define IDM_GAMEMODE_PROCESSLIST                     4079
+#define IDM_INSTALL_NEW_VERSION                      4080
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
