@@ -1,10 +1,10 @@
 {
   "release": {
-    "final": "4.3.1",
-    "version": "7.0.0",
-    "revision": "9999",
-    "download_url": "https://builds.rainmeter.net/test_2/Rainmeter-7.0.0.exe",
-    "download_sha256": "f911907ee43f2d0bf98b28676f1e76e0c7e3893a2eedd835cce4f147fa5cd14d"
+    "final": "4.5.0",
+    "version": "4.5.0",
+    "revision": "3518",
+    "download_url": "https://github.com/rainmeter/rainmeter/releases/download/v4.5.0.3518/Rainmeter-4.5.0.exe",
+    "download_sha256": "E501FD184FFE7186B133DF8302E97F19B21D8C225326EB7F7ECE6C5D049453E6"
   },
   "language": [
     {
@@ -120,7 +120,7 @@
     {
       "id": 1044,
       "name": "NorwegianBokmal",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1045,
