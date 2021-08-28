@@ -151,7 +151,7 @@
 #define STR_GAMEMODE_SETTINGS_DESC      "Możesz dodatkowo ręcznie włączyć/wyłączyć tryb gry używając kontekstowego menu w ikonce na pasku zadań (trayu). Ręczne włączenie/wyłączenie trybu gry odznaczy checkboxy od ""Gier pełnoekranowych"" i ""Dodatkowej listy procesów"". Musisz włączyć ponownie te opcje w Rainmeterze aby znowu je śledzić.\n\nKliknij przycisk ""Pomoc"" po więcej informacji"
 #define STR_GAMEMODE_ACTIONS_ONSTART    "Przy włączeniu"
 #define STR_GAMEMODE_ACTIONS_ONSTOP     "Przy wyłączeniu"
-#define STR_GAMEMODE_ACTIONS_DESC       "Wybierz akcję do wykonania podczas włączania/wyłączania trybu gry. ""Przy włączeniu"" może odłączyć wszystkie skórki lub załadować temat. '"Przy wyłączeniu"" może załączyć obecny lub inny temmat."
+#define STR_GAMEMODE_ACTIONS_DESC       "Wybierz akcję do wykonania podczas włączania/wyłączania trybu gry. ""Przy włączeniu"" może odłączyć wszystkie skórki lub załadować temat. ""Przy wyłączeniu"" może załączyć obecny lub inny temmat."
 #define STR_GAMEMODE_ACTIONS_UNLOADALL  "Odłącz wszystkie skórki"
 #define STR_GAMEMODE_ACTIONS_CURRENT    "Załaduj obecny wygląd"
 
