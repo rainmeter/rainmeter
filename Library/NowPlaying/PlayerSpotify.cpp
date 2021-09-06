@@ -103,11 +103,31 @@ void PlayerSpotify::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
 	{
-		// Parse title and artist from window title
 		WCHAR buffer[256];
 
-		//Length of window is now 7 when not playing
-		if (GetWindowText(m_Window, buffer, 256) > 7)
+		int windowLength = GetWindowText(m_Window, buffer, 256); //this function is only used to cast the window title to a buffer
+		
+		bool foundSpotifyTitle = false; //setup to be not found by default
+
+		//the original code did not account for Premium users because it only looked at the length of the WindowTitle. 
+		if (buffer[0] == 'S') { //scan for the word 'Spotify' in the window title. This works for 'Spotify' or 'Spotify Premium'. I'm a C# coder, but I was at least able to figure out this bit of inefficient code
+			if (buffer[1] == 'p') {
+				if (buffer[2] == 'o') {
+					if (buffer[3] == 't') {
+						if (buffer[4] == 'i') {
+							if (buffer[5] == 'f') {
+								if (buffer[6] == 'y') {
+									foundSpotifyTitle = true; //if all letters of 'Spotify' are found, then change the found bool to true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+
+		if (foundSpotifyTitle == false) //if the word 'Spotify' is not found in the windowTitle, assume a song is playing, and extract the info
 		{
 			std::wstring title = buffer;
 
@@ -133,7 +153,7 @@ void PlayerSpotify::UpdateData()
 				return;
 			}
 		}
-		else if (IsWindow(m_Window))
+		else if (foundSpotifyTitle == true) //if 'Spotify' is found in the window title, the music is paused
 		{
 			m_State = STATE_PAUSED;
 		}
