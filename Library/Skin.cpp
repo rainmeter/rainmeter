@@ -3324,7 +3324,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 
-			ULONGLONG ticks = System::GetTickCount64();
+			ULONGLONG ticks = GetTickCount64();
 			if (m_FadeStartTime == 0)
 			{
 				m_FadeStartTime = ticks;

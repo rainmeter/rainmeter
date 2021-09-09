@@ -222,8 +222,8 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 */
 bool PlayerITunes::CheckWindow()
 {
-	DWORD time = GetTickCount();
-	if (time - m_LastCheckTime > 500UL)
+	ULONGLONG time = GetTickCount64();
+	if (time - m_LastCheckTime > 500ULL)
 	{
 		m_LastCheckTime = time;
 

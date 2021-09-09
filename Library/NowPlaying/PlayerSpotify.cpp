@@ -17,7 +17,7 @@ Player* PlayerSpotify::c_Player = nullptr;
 */
 PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(),
-	m_LastCheckTime(0)
+	m_LastCheckTime(0ULL)
 {
 }
 
@@ -72,10 +72,10 @@ std::wstring GetExe(HWND hwnd)
 */
 bool PlayerSpotify::CheckWindow()
 {
-	DWORD time = GetTickCount();
+	ULONGLONG time = GetTickCount64();
 
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 5000ULL)
 	{
 		m_LastCheckTime = time;
 

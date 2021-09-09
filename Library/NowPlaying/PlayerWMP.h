@@ -121,7 +121,7 @@ private:
 
 	bool m_TrackChanged;
 	HWND m_Window;
-	DWORD m_LastCheckTime;
+	ULONGLONG m_LastCheckTime;
 
 	Microsoft::WRL::ComPtr<IWMPPlayer4> m_IPlayer;
 	Microsoft::WRL::ComPtr<IWMPControls> m_IControls;
