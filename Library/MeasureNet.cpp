@@ -45,7 +45,7 @@ void MeasureNet::UpdateIFTable()
 		LogDebug(L"------------------------------");
 		LogDebugF(L"* NETWORK-INTERFACE: Count=%i", newCount);
 
-		for (size_t i = 0; i < newCount; ++i)
+		for (size_t i = 0ULL; i < newCount; ++i)
 		{
 			LPCWSTR type = NetworkUtil::GetInterfaceTypeString(table[i].Type);
 			LPCWSTR state = NetworkUtil::GetInterfaceMediaConnectionString(table[i].MediaConnectState);
@@ -88,7 +88,7 @@ ULONG64 MeasureNet::GetNetOctets(NET net)
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
-		for (UINT i = 0; i < interfaceCount; ++i)
+		for (ULONG i = 0UL; i < interfaceCount; ++i)
 		{
 			// Ignore the loopback and filter interfaces
 			if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
@@ -150,10 +150,10 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 	if (!table) return value;
 
 	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-	if (m_Interface == 0)
+	if (m_Interface == 0UL)
 	{
 		// Get all interfaces
-		for (size_t i = 0; i < statsSize; ++i)
+		for (size_t i = 0ULL; i < statsSize; ++i)
 		{
 			// Ignore the loopback and filter interfaces
 			if (interfaceCount == statsSize)
@@ -218,7 +218,7 @@ void MeasureNet::UpdateValue()
 	}
 	else
 	{
-		ULONG64 value = 0;
+		ULONG64 value = 0ULL;
 
 		if (!m_FirstTime)
 		{
@@ -232,7 +232,7 @@ void MeasureNet::UpdateValue()
 			else
 			{
 				m_Octets = value;
-				value = 0;
+				value = 0ULL;
 			}
 		}
 		else
@@ -249,7 +249,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
 
-	double value;
+	double value = 0.0;
 	const WCHAR* netName = nullptr;
 
 	if (m_Net == NET_IN)
@@ -288,7 +288,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (GetRainmeter().GetDebug())
 		{
 			MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
-			for (size_t i = 0; i < NetworkUtil::GetInterfaceCount(); ++i)
+			for (size_t i = 0ULL; i < NetworkUtil::GetInterfaceCount(); ++i)
 			{
 				if (table[i].InterfaceIndex == m_Interface)
 				{
@@ -338,19 +338,19 @@ void MeasureNet::UpdateStats()
 	// Fill the vectors
 	if (c_StatValues.size() < statsSize)
 	{
-		c_StatValues.resize(statsSize, 0);
+		c_StatValues.resize(statsSize, 0ULL);
 	}
 
 	if (c_OldStatValues.size() < statsSize)
 	{
-		c_OldStatValues.resize(statsSize, 0);
+		c_OldStatValues.resize(statsSize, 0ULL);
 	}
 
-	for (size_t i = 0; i < interfaceCount; ++i)
+	for (size_t i = 0ULL; i < interfaceCount; ++i)
 	{
 		ULONG64 in = table[i].InOctets;
 		ULONG64 out = table[i].OutOctets;
-		if (c_OldStatValues[i * 2 + 0] != 0)
+		if (c_OldStatValues[i * 2 + 0] != 0ULL)
 		{
 			if (in > c_OldStatValues[i * 2 + 0])
 			{
@@ -358,7 +358,7 @@ void MeasureNet::UpdateStats()
 			}
 		}
 
-		if (c_OldStatValues[i * 2 + 1] != 0)
+		if (c_OldStatValues[i * 2 + 1] != 0ULL)
 		{
 			if (out > c_OldStatValues[i * 2 + 1])
 			{
@@ -398,9 +398,9 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	c_StatValues.clear();
 	c_StatValues.reserve(count * 2);
 
-	for (uint32_t i = 1; i <= count; ++i)
+	for (uint32_t i = 1U; i <= count; ++i)
 	{
-		ULARGE_INTEGER value;
+		ULARGE_INTEGER value = { 0 };
 
 		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
 		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
@@ -431,7 +431,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 {
 	WCHAR buffer[48];
-	int len;
+	int len = 0;
 
 	uint32_t count = (uint32_t)c_StatValues.size() / 2;
 
@@ -455,17 +455,17 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 	appendStatsValue();
 
 	// Add stats
-	for (uint32_t i = 0; i < count; ++i)
+	for (uint32_t i = 0U; i < count; ++i)
 	{
-		if (c_StatValues[i * 2] > 0)
+		if (c_StatValues[i * 2] > 0ULL)
 		{
-			len  = _snwprintf_s(buffer, _TRUNCATE, L"In%u=%llu", i + 1, c_StatValues[i * 2]);
+			len  = _snwprintf_s(buffer, _TRUNCATE, L"In%u=%llu", i + 1U, c_StatValues[i * 2]);
 			appendStatsValue();
 		}
 
-		if (c_StatValues[i * 2 + 1] > 0)
+		if (c_StatValues[i * 2 + 1] > 0ULL)
 		{
-			len  = _snwprintf_s(buffer, _TRUNCATE, L"Out%u=%llu", i + 1, c_StatValues[i * 2 + 1]);
+			len  = _snwprintf_s(buffer, _TRUNCATE, L"Out%u=%llu", i + 1U, c_StatValues[i * 2 + 1]);
 			appendStatsValue();
 		}
 	}
