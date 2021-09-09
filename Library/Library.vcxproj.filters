@@ -103,6 +103,7 @@
     <ClCompile Include="MeasureRegistry.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
     <ClCompile Include="MeasureString.cpp" />
+    <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
@@ -206,6 +207,7 @@
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureScript.h" />
     <ClInclude Include="MeasureString.h" />
+    <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />

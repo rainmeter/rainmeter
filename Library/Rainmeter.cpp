@@ -1841,6 +1841,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"NowPlaying",
 		L"Process",
 		L"RecycleManager",
+		L"SysInfo",
 		L"WebParser"
 	};
 	return s_OldPlugins;
@@ -2020,12 +2021,11 @@ void Rainmeter::WriteStats(bool bForce)
 void Rainmeter::ResetStats()
 {
 	// Set the stats-date string
-	tm* newtime;
-	time_t long_time;
-	time(&long_time);
-	newtime = localtime(&long_time);
-	m_StatsDate = _wasctime(newtime);
-	m_StatsDate.erase(m_StatsDate.size() - 1);
+	time_t now;
+	time(&now);
+	WCHAR timestamp[MAX_PATH];
+	wcsftime(timestamp, MAX_PATH, L"%F %T", gmtime(&now));
+	m_StatsDate = timestamp;
 
 	// Only Net measure has stats at the moment
 	MeasureNet::ResetStats();
