@@ -46,7 +46,7 @@ private:
 	static Player* c_Player;
 
 	HWND m_Window;
-	DWORD m_LastCheckTime;
+	ULONGLONG m_LastCheckTime;
 };
 
 #endif

@@ -21,7 +21,7 @@ Player* PlayerWinamp::c_Player = nullptr;
 */
 PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_Window(),
-	m_LastCheckTime(0),
+	m_LastCheckTime(0ULL),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
@@ -60,10 +60,10 @@ Player* PlayerWinamp::Create(WINAMPTYPE type)
 */
 bool PlayerWinamp::CheckWindow()
 {
-	DWORD time = GetTickCount();
+	ULONGLONG time = GetTickCount64();
 
 	// Try to find Winamp window every 5 seconds
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 5000ULL)
 	{
 		m_LastCheckTime = time;
 

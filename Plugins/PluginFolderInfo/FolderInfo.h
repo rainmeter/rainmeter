@@ -23,7 +23,7 @@ public:
 	void RemoveInstance();
 
 	void* GetSkin() { return m_Skin; }
-	DWORD GetLastUpdateTime() { return m_LastUpdateTime; }
+	ULONGLONG GetLastUpdateTime() { return m_LastUpdateTime; }
 
 	void SetPath(LPCWSTR path);
 	void SetRegExpFilter(LPCWSTR filter);
@@ -53,5 +53,5 @@ private:
 	UINT m_FileCount;
 	UINT m_FolderCount;
 	pcre16* m_RegExpFilter;
-	DWORD m_LastUpdateTime;
+	ULONGLONG m_LastUpdateTime;
 };

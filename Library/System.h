@@ -52,7 +52,6 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
 
-	static ULONGLONG GetTickCount64();
 	static POINT GetCursorPosition();
 
 	static bool IsFileWritable(LPCWSTR file);

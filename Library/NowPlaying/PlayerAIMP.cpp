@@ -19,7 +19,7 @@ Player* PlayerAIMP::c_Player = nullptr;
 PlayerAIMP::PlayerAIMP() : Player(),
 	m_Window(),
 	m_WinampWindow(),
-	m_LastCheckTime(0),
+	m_LastCheckTime(0ULL),
 	m_LastFileSize(0),
 	m_LastTitleSize(0),
 	m_FileMap(),
@@ -58,10 +58,10 @@ Player* PlayerAIMP::Create()
 */
 bool PlayerAIMP::CheckWindow()
 {
-	DWORD time = GetTickCount();
+	ULONGLONG time = GetTickCount64();
 
 	// Try to find AIMP every 5 seconds
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 5000ULL)
 	{
 		m_LastCheckTime = time;
 		m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");

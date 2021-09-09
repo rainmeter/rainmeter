@@ -991,30 +991,6 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 
 /*
-** Retrieves the number of milliseconds that have elapsed since the system was started.
-** In XP, returns the predictive value due to the 32bit limitation.
-**
-*/
-ULONGLONG System::GetTickCount64()
-{
-	static auto s_GetTickCount64 =
-		(decltype(GetTickCount64)*)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
-
-	if (s_GetTickCount64)
-	{
-		return s_GetTickCount64();
-	}
-	else
-	{
-		static ULONGLONG lastTicks = 0;
-		ULONGLONG ticks = GetTickCount();
-		while (ticks < lastTicks) ticks += 0x100000000;
-		lastTicks = ticks;
-		return ticks;
-	}
-}
-
-/*
 ** Gets the cursor position in last message retrieved by GetMessage().
 **
 */

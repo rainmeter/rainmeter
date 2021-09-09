@@ -131,32 +131,13 @@ bool CheckProcess(MeasureData* measure, const WCHAR* name)
 	return false;
 }
 
-ULONGLONG _GetTickCount64()
-{
-	typedef ULONGLONG (WINAPI * FPGETTICKCOUNT64)();
-	static FPGETTICKCOUNT64 c_GetTickCount64 = (FPGETTICKCOUNT64)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
-
-	if (c_GetTickCount64)
-	{
-		return c_GetTickCount64();
-	}
-	else
-	{
-		static ULONGLONG lastTicks = 0;
-		ULONGLONG ticks = GetTickCount();
-		while (ticks < lastTicks) ticks += 0x100000000;
-		lastTicks = ticks;
-		return ticks;
-	}
-}
-
 PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	static ULONGLONG oldTime = 0;
 
 	// Only update twice per second
-	ULONGLONG time = _GetTickCount64();
+	ULONGLONG time = GetTickCount64();
 	if (oldTime == 0 || time - oldTime > 500)
 	{
 		UpdateProcesses();

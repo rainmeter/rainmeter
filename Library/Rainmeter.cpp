@@ -1999,7 +1999,7 @@ void Rainmeter::WriteStats(bool bForce)
 {
 	static ULONGLONG lastWrite = 0;
 
-	ULONGLONG ticks = System::GetTickCount64();
+	ULONGLONG ticks = GetTickCount64();
 
 	if (bForce || (lastWrite + INTERVAL_NETSTATS < ticks))
 	{

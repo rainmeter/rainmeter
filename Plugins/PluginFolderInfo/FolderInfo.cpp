@@ -10,7 +10,7 @@
 #include <list>
 #include "../API/RainmeterAPI.h"
 
-#define UPDATE_TIME_MIN_MS 10000
+#define UPDATE_TIME_MIN_MS (10000ULL)
 
 CFolderInfo::CFolderInfo(void* ownerSkin) :
 	m_InstanceCount(1),
@@ -63,7 +63,7 @@ void CFolderInfo::FreePcre()
 
 void CFolderInfo::Update()
 {
-	DWORD now = GetTickCount();
+	ULONGLONG now = GetTickCount64();
 	if (now - m_LastUpdateTime > UPDATE_TIME_MIN_MS)
 	{
 		Clear();
@@ -157,7 +157,7 @@ void CFolderInfo::SetPath(LPCWSTR path)
 		m_Path = path;
 
 		// Force update next time
-		m_LastUpdateTime = 0;
+		m_LastUpdateTime = 0ULL;
 	}
 }
 
