@@ -143,11 +143,11 @@ private:
 			if (GetRainmeter().GetDebug())
 			{
 				LogDebugF(
-					L"ProxyServer=\"%s\" (type=%s, handle=0x%p) UserAgent=%s",
+					L"ProxyServer=\"%s\" (type=%s, handle=0x%p)",
 					proxyName,
 					proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
-					handle,
-					userAgent);
+					handle);
+				LogDebugF(L"Useragent=\"%s\"", userAgent);
 			}
 		}
 		else
@@ -210,8 +210,14 @@ void SetupGlobalProxySetting()
 		WCHAR agent[MAX_PATH] = { 0 };
 		LPCWSTR file = GetRainmeter().GetDataFile().c_str();
 
-		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, server, MAX_PATH, file);
-		GetPrivateProfileString(L"WebParser.dll", L"UserAgent", nullptr, agent, MAX_PATH, file);
+		if (GetPrivateProfileString(L"WebParser", L"ProxyServer", nullptr, server, MAX_PATH, file) == 0)
+		{
+			GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, server, MAX_PATH, file);  // For backwards compatibility
+		}
+		if (GetPrivateProfileString(L"WebParser", L"UserAgent", nullptr, agent, MAX_PATH, file) == 0)
+		{
+			GetPrivateProfileString(L"WebParser.dll", L"UserAgent", nullptr, agent, MAX_PATH, file);  // For backwards compatibility
+		}
 		g_ProxyCachePool = new ProxyCachePool(server, agent);
 	}
 }
