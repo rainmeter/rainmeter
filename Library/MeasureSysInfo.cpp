@@ -463,7 +463,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0; i < interfaceCount; ++i)
+			for (size_t i = 0ULL; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -606,7 +606,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0; i < interfaceCount; ++i)
+			for (size_t i = 0ULL; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -646,7 +646,7 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::IP_ADDRESS:
 		{
 			const bool isIpAddress = m_Type == SysInfoType::IP_ADDRESS;
-			ULONG tableSize = 0;
+			ULONG tableSize = 0UL;
 			GetIpAddrTable(nullptr, &tableSize, TRUE);
 			if (tableSize <= 0) break;
 
