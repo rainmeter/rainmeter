@@ -48,10 +48,9 @@ protected:
 private:
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
-	UINT GetBestInterfaceOrByName(const WCHAR* iface);
 
 	NET m_Net;
-	UINT m_Interface;
+	ULONG m_Interface;
 
 	ULONG64 m_Octets;
 	bool m_FirstTime;
@@ -60,8 +59,6 @@ private:
 
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;
-	static MIB_IF_TABLE2* c_Table;
-	static UINT c_NumOfTables;
 };
 
 #endif

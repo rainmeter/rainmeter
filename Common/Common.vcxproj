@@ -69,6 +69,7 @@
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp" />
     <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
+    <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -121,6 +122,7 @@
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="MenuTemplate.h" />
+    <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
