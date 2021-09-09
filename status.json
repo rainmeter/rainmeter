@@ -125,7 +125,7 @@
     {
       "id": 1045,
       "name": "Polish",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1046,
@@ -135,7 +135,7 @@
     {
       "id": 2070,
       "name": "PortuguesePortugal",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1048,
@@ -165,7 +165,7 @@
     {
       "id": 1060,
       "name": "Slovenian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 3082,
