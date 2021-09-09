@@ -739,15 +739,9 @@ SkipIniMove:
 		; Get rid of approximate install size, which we wrote out in the past.
 		DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize"
 
-!ifdef BETA
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter (beta)"
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_FULL}"
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Beta release"
-!else
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT}"
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Final release"
-!endif
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "ReleaseType" "Release"
 
 		; Create .rmskin association
 		WriteRegStr HKCR ".rmskin" "" "Rainmeter.SkinInstaller"
