@@ -24,6 +24,7 @@
 #include "MeterButton.h"
 #include "MeterString.h"
 #include "MeasureScript.h"
+#include "MeasureSysInfo.h"
 #include "GeneralImage.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
@@ -1640,7 +1641,7 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 	{
 		if (all || CompareName((*i), measure, group))
 		{
-			if (bNetStats && (*i)->GetTypeID() == TypeID<MeasureNet>())
+			if (bNetStats && IsNetworkMeasure((*i)))
 			{
 				MeasureNet::UpdateIFTable();
 				MeasureNet::UpdateStats();
@@ -2560,10 +2561,7 @@ bool Skin::ReadSkin()
 					m_Measures.push_back(measure);
 					m_Parser.AddMeasure(measure);
 
-					if (measure->GetTypeID() == TypeID<MeasureNet>())
-					{
-						m_HasNetMeasures = true;
-					}
+					m_HasNetMeasures = IsNetworkMeasure(measure);
 				}
 
 				continue;
@@ -5420,4 +5418,10 @@ Meter* Skin::GetMeter(const std::wstring& meterName)
 		}
 	}
 	return nullptr;
+}
+
+bool Skin::IsNetworkMeasure(Measure* measure)
+{
+	return measure->GetTypeID() == TypeID<MeasureNet>() ||
+		measure->GetTypeID() == TypeID<MeasureSysInfo>();
 }
