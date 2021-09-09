@@ -106,8 +106,9 @@ void PlayerSpotify::UpdateData()
 		// Parse title and artist from window title
 		WCHAR buffer[256];
 
-		//Length of window is now 7 when not playing
-		if (GetWindowText(m_Window, buffer, 256) > 7)
+		// Check length of window text for "Spotify" and "Spotify Premium"
+		int len = GetWindowText(m_Window, buffer, _countof(buffer));
+		if (len > 7 && _wcsnicmp(buffer, L"Spotify", 7) != 0)
 		{
 			std::wstring title = buffer;
 
