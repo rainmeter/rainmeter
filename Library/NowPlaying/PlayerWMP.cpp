@@ -502,7 +502,7 @@ void PlayerWMP::UpdateData()
 		ULONGLONG time = GetTickCount64();
 		
 		// Try to find WMP window every 5 seconds
-		if (m_LastCheckTime = 0 || time - m_LastCheckTime > 5000ULL)
+		if (m_LastCheckTime = 0ULL || time - m_LastCheckTime > 5000ULL)
 		{
 			m_LastCheckTime = time;
 
