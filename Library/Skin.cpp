@@ -2562,6 +2562,10 @@ bool Skin::ReadSkin()
 					m_Parser.AddMeasure(measure);
 
 					m_HasNetMeasures = IsNetworkMeasure(measure);
+					if (m_HasNetMeasures)
+					{
+						MeasureNet::UpdateIFTable();
+					}
 				}
 
 				continue;
