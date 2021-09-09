@@ -218,6 +218,16 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		defaultData = 0;
 		m_Type = SysInfoType::GATEWAY_ADDRESS;
 	}
+	else if (_wcsicmp(L"GATEWAY_ADDRESS_V4", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::GATEWAY_ADDRESS_V4;
+	}
+	else if (_wcsicmp(L"GATEWAY_ADDRESS_V6", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::GATEWAY_ADDRESS_V6;
+	}
 	else if (_wcsicmp(L"TIMEZONE_ISDST", type) == 0)			// BLOCK 4000
 	{
 		m_Type = SysInfoType::TIMEZONE_ISDST;
@@ -264,7 +274,7 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Type = SysInfoType::UNKNOWN;
 	}
 
-	if (m_Type >= SysInfoType::ADAPTER_DESCRIPTION && m_Type <= SysInfoType::GATEWAY_ADDRESS) // BLOCK 3500
+	if (m_Type >= SysInfoType::ADAPTER_DESCRIPTION && m_Type <= SysInfoType::GATEWAY_ADDRESS_V6) // BLOCK 3500
 	{
 		std::wstring siData = parser.ReadString(section, L"SysInfoData", L"BEST");
 		if (!siData.empty() && !std::all_of(siData.begin(), siData.end(), iswdigit))
@@ -668,14 +678,17 @@ void MeasureSysInfo::UpdateValue()
 		break;
 
 	case SysInfoType::GATEWAY_ADDRESS:
+	case SysInfoType::GATEWAY_ADDRESS_V4:
+	case SysInfoType::GATEWAY_ADDRESS_V6:
 		{
+			ULONG family = m_Type == SysInfoType::GATEWAY_ADDRESS_V6 ? AF_INET6 : AF_INET;
 			ULONG adapterSize = 0UL;
-			GetAdaptersAddresses(AF_UNSPEC, 0, nullptr, nullptr, &adapterSize);
+			GetAdaptersAddresses(family, 0, nullptr, nullptr, &adapterSize);
 			if (adapterSize <= 0) break;
 
 			ULONG flags = GAA_FLAG_INCLUDE_GATEWAYS;
 			auto tmp = std::make_unique<BYTE[]>(adapterSize);
-			if (GetAdaptersAddresses(AF_UNSPEC, flags, nullptr,
+			if (GetAdaptersAddresses(family, flags, nullptr,
 				(PIP_ADAPTER_ADDRESSES)tmp.get(), &adapterSize) != ERROR_SUCCESS) break;
 
 			PIP_ADAPTER_ADDRESSES info = (PIP_ADAPTER_ADDRESSES)tmp.get();
