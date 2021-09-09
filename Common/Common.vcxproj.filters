@@ -4,6 +4,7 @@
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
+    <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StringUtil.cpp" />
@@ -129,6 +130,7 @@
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="MenuTemplate.h" />
+    <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
