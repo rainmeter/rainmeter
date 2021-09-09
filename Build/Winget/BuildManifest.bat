@@ -6,6 +6,8 @@ if not "%BUILD_TYPE%" == "release" echo   Notice: Only releases are uploaded to 
 :: This is called from Build.bat (only if a Manifest.bat file exists)
 if not exist "%INSTALLER_PATH%" echo   Invalid installer path: %INSTALLER_PATH% & goto :EOF
 
+echo * Building winget manifest
+
 :: Get parent folder
 for %%a in ("%~dp0.") do for %%b in ("%%~dpa") do set INSTALLER_FULLPATH=%%~b
 set INSTALLER_FULLPATH=!INSTALLER_FULLPATH!%INSTALLER_PATH%

@@ -172,11 +172,9 @@ if not "%CERTFILE%" == "" (
 )
 
 :: Create winget manifest
+if not "%BUILD_TYPE%" == "release" goto DONE
 if exist "Manifest.bat" call "Manifest.bat" > nul
-if not "%MANIFEST_PATH%" == "" (
-	echo * Building winget manifest
-	call ".\Winget\BuildManifest.bat"
-)
+if not "%MANIFEST_PATH%" == "" call ".\Winget\BuildManifest.bat"
 
 :DONE
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
