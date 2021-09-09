@@ -660,7 +660,8 @@ void DialogManage::TabSkins::DestroyImageList()
 {
 	if (m_ImageListHandle)
 	{
-		ImageList_Destroy(m_ImageListHandle);
+		HWND item = GetControl(Id_SkinsTreeView);
+		ImageList_Destroy(TreeView_SetImageList(item, nullptr, TVSIL_STATE));
 		m_ImageListHandle = nullptr;
 	}
 }

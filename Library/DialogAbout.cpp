@@ -446,7 +446,8 @@ void DialogAbout::TabLog::DestroyImageList()
 {
 	if (m_ImageList)
 	{
-		ImageList_Destroy(m_ImageList);
+		HWND item = GetControl(Id_LogListView);
+		ImageList_Destroy(ListView_SetImageList(item, nullptr, LVSIL_STATE));
 		m_ImageList = nullptr;
 	}
 }
