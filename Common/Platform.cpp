@@ -10,6 +10,42 @@
 
 namespace Platform {
 
+namespace {
+
+bool isWin11()
+{
+	// Temporary Windows 11 check
+	static bool s_IsWin11 = []() -> bool
+	{
+		if (IsWindows10OrGreater())
+		{
+			WCHAR buffer[256] = { 0 };
+			DWORD size = _countof(buffer);
+			int buildNumber = 0;
+
+			HKEY hKey;
+			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
+			{
+				if (RegQueryValueEx(hKey, L"CurrentBuildNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+				{
+					buildNumber = _wtoi(buffer);
+				}
+				RegCloseKey(hKey);
+			}
+
+			// |GetTempPath2W| doesn't exist in Windows version prior to Windows 11 (as of yet)
+			typedef void* (__stdcall* TempPath2)();
+			TempPath2 tmpPath2 = (TempPath2)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTempPath2W");
+
+			return tmpPath2&& buildNumber >= 22000;
+		}
+		return false;
+	} ();
+	return s_IsWin11;
+}
+
+}  // namespace
+
 LPCWSTR GetPlatformName()
 {
 	static std::wstring s_Name = []() -> std::wstring
@@ -19,13 +55,12 @@ LPCWSTR GetPlatformName()
 
 		// Note: Place newer versions at the top.
 		const WCHAR* version =
-			IsWindows10OrGreater() ?
-				(isServer ? (releaseID == L"1809" ? L"2019" : L"2016") :
-				L"10") :
+			isWin11() ? L"11" :		// Temporary hack
+			IsWindows10OrGreater() ? (isServer ? (releaseID == L"1809" ? L"2019" : L"2016") : L"10") :
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
 			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
-			nullptr;
+			nullptr;  // Unknown
 		if (version)
 		{
 			std::wstring name = L"Windows ";
@@ -77,7 +112,15 @@ std::wstring GetPlatformFriendlyName()
 	{
 		if (RegQueryValueEx(hKey, L"ProductName", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 		{
-			name += buffer;
+			name = buffer;
+			if (isWin11())  // Temporary hack
+			{
+				size_t pos = name.find(L"Windows 10");
+				if (pos != std::wstring::npos)
+				{
+					name.replace(pos, 10, L"Windows 11");
+				}
+			}
 
 			// For Windows 10 (and above?), use the "ReleaseId" as part of the version number.
 			// (ie. 1507, 1511, 1607, 1703, 1709, 1803, 1809, 1903, 1909, 2004, 2009, ...)
