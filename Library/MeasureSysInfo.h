@@ -52,10 +52,14 @@ enum class SysInfoType : UINT
 	LAN_CONNECTIVITY_V6,
 
 	ADAPTER_DESCRIPTION = 3500U,   // BLOCK 3500: Do not change   //
-	ADAPTER_TYPE,                  // the order of these types.   //
-	ADAPTER_STATE,                 // They are used with specific //
-	ADAPTER_STATUS,                // interface names or with the //
-	MAC_ADDRESS,                   // SysInfoData=Best option.    //
+	ADAPTER_ALIAS,                 // the order of these types.   //
+	ADAPTER_GUID,                  // They are used with specific //
+	ADAPTER_TYPE,                  // interface names or with the //
+	ADAPTER_STATE,                 // SysInfoData=Best option.    //
+	ADAPTER_STATUS,
+	ADAPTER_TRANSMIT_SPEED,
+	ADAPTER_RECEIVE_SPEED,
+	MAC_ADDRESS,
 	NET_MASK,
 	IP_ADDRESS,
 	GATEWAY_ADDRESS,
