@@ -741,7 +741,11 @@ void MeasureSysInfo::UpdateValue()
 
 const WCHAR* MeasureSysInfo::GetStringValue()
 {
-	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+	// Note: In the old plugin, |SysInfoType=IP_ADDRESS| would
+	// return an empty string, instead of |nullptr|.
+	return !m_StringValue.empty() || m_Type == SysInfoType::IP_ADDRESS
+		? CheckSubstitute(m_StringValue.c_str())
+		: nullptr;
 }
 
 NLM_CONNECTIVITY MeasureSysInfo::GetNetworkConnectivity()
