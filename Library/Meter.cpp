@@ -169,14 +169,9 @@ void Meter::SetY(int y)
 */
 RECT Meter::GetMeterRect()
 {
-	RECT meterRect;
-
-	meterRect.left = GetX();
-	meterRect.top = GetY();
-	meterRect.right = meterRect.left + m_W;
-	meterRect.bottom = meterRect.top + m_H;
-
-	return meterRect;
+	int x = GetX();
+	int y = GetY();
+	return { x, y, x + m_W, y + m_H };
 }
 
 /*
@@ -185,13 +180,12 @@ RECT Meter::GetMeterRect()
 */
 D2D1_RECT_F Meter::GetMeterRectPadding()
 {
-	D2D1_RECT_F meterRect;
-	meterRect.left = GetX() + m_Padding.left;
-	meterRect.top = GetY() + m_Padding.top;
-	meterRect.right = meterRect.left + m_W - m_Padding.right;
-	meterRect.bottom = meterRect.top + m_H - m_Padding.bottom;
-
-	return meterRect;
+	RECT rect = GetMeterRect();
+	return D2D1::RectF(
+		rect.left + m_Padding.left,
+		rect.top + m_Padding.top,
+		rect.right + m_Padding.left - m_Padding.right,
+		rect.bottom + m_Padding.top - m_Padding.bottom);
 }
 
 /*
