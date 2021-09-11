@@ -82,7 +82,7 @@ std::wstring GetPlatformReleaseID()
 
 		if (IsWindows10OrGreater())
 		{
-			WCHAR buffer[10];
+			WCHAR buffer[10] = { 0 };
 			DWORD size = _countof(buffer);
 
 			HKEY hKey;
@@ -104,7 +104,7 @@ std::wstring GetPlatformFriendlyName()
 {
 	std::wstring name;
 
-	WCHAR buffer[256];
+	WCHAR buffer[256] = { 0 };
 	DWORD size = _countof(buffer);
 
 	HKEY hKey;
