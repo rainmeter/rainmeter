@@ -183,6 +183,16 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		defaultData = 0;
 		m_Type = SysInfoType::ADAPTER_DESCRIPTION;
 	}
+	else if (_wcsicmp(L"ADAPTER_ALIAS", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::ADAPTER_ALIAS;
+	}
+	else if (_wcsicmp(L"ADAPTER_GUID", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::ADAPTER_GUID;
+	}
 	else if (_wcsicmp(L"ADAPTER_TYPE", type) == 0)
 	{
 		defaultData = 0;
@@ -197,6 +207,16 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		defaultData = 0;
 		m_Type = SysInfoType::ADAPTER_STATUS;
+	}
+	else if (_wcsicmp(L"ADAPTER_TRANSMIT_SPEED", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::ADAPTER_TRANSMIT_SPEED;
+	}
+	else if (_wcsicmp(L"ADAPTER_RECEIVE_SPEED", type) == 0)
+	{
+		defaultData = 0;
+		m_Type = SysInfoType::ADAPTER_RECEIVE_SPEED;
 	}
 	else if (_wcsicmp(L"MAC_ADDRESS", type) == 0)
 	{
@@ -468,6 +488,8 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::ADAPTER_TYPE:
 	case SysInfoType::ADAPTER_STATE:
 	case SysInfoType::ADAPTER_STATUS:
+	case SysInfoType::ADAPTER_TRANSMIT_SPEED:
+	case SysInfoType::ADAPTER_RECEIVE_SPEED:
 		{
 			MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
 			if (!table) break;
@@ -503,6 +525,14 @@ void MeasureSysInfo::UpdateValue()
 					case IfOperStatusDormant:        m_Value =  2.0; break;
 					case IfOperStatusTesting:        m_Value =  3.0; break;
 					}
+					break;
+
+				case SysInfoType::ADAPTER_TRANSMIT_SPEED:
+					m_Value = (double)table[i].TransmitLinkSpeed;
+					break;
+
+				case SysInfoType::ADAPTER_RECEIVE_SPEED:
+					m_Value = (double)table[i].ReceiveLinkSpeed;
 					break;
 				}
 				break;
@@ -607,6 +637,8 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::ADAPTER_DESCRIPTION:
+	case SysInfoType::ADAPTER_ALIAS:
+	case SysInfoType::ADAPTER_GUID:
 	case SysInfoType::ADAPTER_TYPE:
 	case SysInfoType::ADAPTER_STATE:
 	case SysInfoType::ADAPTER_STATUS:
@@ -625,6 +657,20 @@ void MeasureSysInfo::UpdateValue()
 				case SysInfoType::ADAPTER_DESCRIPTION:
 					m_StringValue = table[i].Description;
 					break;
+
+				case SysInfoType::ADAPTER_ALIAS:
+					m_StringValue = table[i].Alias;
+					break;
+
+				case SysInfoType::ADAPTER_GUID:
+				{
+					WCHAR guid[64] = { 0 };
+					if (StringFromGUID2(table[i].InterfaceGuid, guid, 64) > 0)
+					{
+						m_StringValue = guid;
+					}
+				}
+				break;
 
 				case SysInfoType::ADAPTER_TYPE:
 					m_StringValue = NetworkUtil::GetInterfaceTypeString(table[i].Type);
