@@ -195,6 +195,25 @@ D2D1_RECT_F Meter::GetMeterRectPadding()
 }
 
 /*
+** Returns the visible portion of the meter or the meter's bounds
+**
+*/
+bool Meter::GetMeterVisibleRect(RECT& rect)
+{
+	rect = GetMeterRect();
+	if (!m_ContainerMeter) return true;
+
+	const RECT cRect = m_ContainerMeter->GetMeterRect();
+	RECT dest = { 0 };
+	if (IntersectRect(&dest, &rect, &cRect))
+	{
+		rect = dest;
+		return true;
+	}
+	return false;
+}
+
+/*
 ** Checks if the given point is inside the meter.
 ** This function doesn't check Hidden state, so check it before calling this function if needed.
 **
@@ -691,7 +710,10 @@ void Meter::CreateToolTip(Skin* skin)
 	{
 		SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-		TOOLINFO ti = {sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0, GetMeterRect(), hInstance};
+		RECT rc = { 0 };
+		GetMeterVisibleRect(rc);
+
+		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0ULL, rc, hInstance };
 
 		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
@@ -766,12 +788,13 @@ void Meter::UpdateToolTip()
 	text = m_ToolTipText;
 	ReplaceMeasures(text);
 	ti.lpszText = (LPTSTR)text.c_str();
-	ti.rect = GetMeterRect();
+
+	const bool isVisible = GetMeterVisibleRect(ti.rect);
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
 
-	if (m_ToolTipHidden || m_ToolTipDisabled)
+	if (m_ToolTipHidden || m_ToolTipDisabled || !isVisible)
 	{
 		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, 0);
 	}

@@ -2625,11 +2625,6 @@ bool Skin::ReadSkin()
 		Meter* meter = *iter;
 		meter->ReadOptions(m_Parser);
 		meter->Initialize();
-
-		if (!meter->GetToolTipText().empty())
-		{
-			meter->CreateToolTip(this);
-		}
 	}
 
 	// Initialize measures.
