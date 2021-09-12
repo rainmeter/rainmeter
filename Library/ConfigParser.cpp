@@ -382,13 +382,15 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	{
 		if (valueType == ValueType::EscapeRegExp)
 		{
-			strValue = measure->GetStringValue();
+			const WCHAR* tmp = measure->GetStringValue();
+			strValue = tmp ? tmp : L"";
 			StringUtil::EscapeRegExp(strValue);
 			return true;
 		}
 		else if (valueType == ValueType::EncodeUrl)
 		{
-			strValue = measure->GetStringValue();
+			const WCHAR* tmp = measure->GetStringValue();
+			strValue = tmp ? tmp : L"";
 			StringUtil::EncodeUrl(strValue);
 			return true;
 		}
