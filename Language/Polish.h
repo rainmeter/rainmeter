@@ -140,7 +140,7 @@
 #define STR_SHOWNOTIFAREAICON           "Pokaż ikonę obszaru powiadamiania"
 #define STR_RESETSTATISTICS             "Wyzeruj statystyki"
 #define STR_LOGTOFILE                   "Zapisz logi do pliku"
-#define STR_HARDWAREACCELERATED         "Use hardware acceleration"
+#define STR_HARDWAREACCELERATED         "Użyj przyspieszenia sprzętowego"
 
 #define STR_GAMEMODE                    "Tryb gry"
 #define STR_GAMEMODE_START              "Rozpocznij tryb gry"
