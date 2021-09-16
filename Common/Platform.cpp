@@ -12,7 +12,7 @@ namespace Platform {
 
 namespace {
 
-bool isWin11()
+bool IsWin11()
 {
 	// Temporary Windows 11 check
 	static bool s_IsWin11 = []() -> bool
@@ -37,7 +37,7 @@ bool isWin11()
 			typedef void* (__stdcall* TempPath2)();
 			TempPath2 tmpPath2 = (TempPath2)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTempPath2W");
 
-			return tmpPath2&& buildNumber >= 22000;
+			return tmpPath2 && buildNumber >= 22000;
 		}
 		return false;
 	} ();
@@ -55,7 +55,7 @@ LPCWSTR GetPlatformName()
 
 		// Note: Place newer versions at the top.
 		const WCHAR* version =
-			isWin11() ? L"11" :		// Temporary hack
+			IsWin11() ? L"11" :		// Temporary hack
 			IsWindows10OrGreater() ? (isServer ? (releaseID == L"1809" ? L"2019" : L"2016") : L"10") :
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
@@ -86,7 +86,7 @@ std::wstring GetPlatformReleaseID()
 			DWORD size = _countof(buffer);
 
 			HKEY hKey;
-			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
+			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
 			{
 				if (RegQueryValueEx(hKey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 				{
@@ -108,17 +108,17 @@ std::wstring GetPlatformFriendlyName()
 	DWORD size = _countof(buffer);
 
 	HKEY hKey;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, L"ProductName", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 		{
 			name = buffer;
-			if (isWin11())  // Temporary hack
+			if (IsWin11())  // Temporary hack
 			{
 				size_t pos = name.find(L"Windows 10");
 				if (pos != std::wstring::npos)
 				{
-					name.replace(pos, 10, L"Windows 11");
+					name.replace(pos, 10ULL, L"Windows 11");
 				}
 			}
 

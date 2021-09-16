@@ -631,6 +631,7 @@ void MeterString::EnumerateInstalledFontFamilies()
 
 			if (Gdiplus::Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
 			{
+				LogDebugF(L"* Font families: Count=%i", fontCount);
 				std::wstring fonts;
 				for (INT i = 0; i < fontCount; ++i)
 				{
@@ -677,7 +678,6 @@ void MeterString::InitializeStatic()
 	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(L"------------------------------");
-		LogDebug(L"* Font families:");
 		EnumerateInstalledFontFamilies();
 		LogDebug(L"------------------------------");
 	}
