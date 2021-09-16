@@ -704,7 +704,7 @@ void MeasureSysInfo::UpdateValue()
 			const bool isIpAddress = m_Type == SysInfoType::IP_ADDRESS;
 			ULONG tableSize = 0UL;
 			GetIpAddrTable(nullptr, &tableSize, TRUE);
-			if (tableSize <= 0) break;
+			if (tableSize <= 0UL) break;
 
 			auto tmp = std::make_unique<BYTE[]>(tableSize);
 			if (GetIpAddrTable((PMIB_IPADDRTABLE)tmp.get(),
@@ -729,8 +729,8 @@ void MeasureSysInfo::UpdateValue()
 		{
 			ULONG family = m_Type == SysInfoType::GATEWAY_ADDRESS_V6 ? AF_INET6 : AF_INET;
 			ULONG adapterSize = 0UL;
-			GetAdaptersAddresses(family, 0, nullptr, nullptr, &adapterSize);
-			if (adapterSize <= 0) break;
+			GetAdaptersAddresses(family, 0UL, nullptr, nullptr, &adapterSize);
+			if (adapterSize <= 0UL) break;
 
 			ULONG flags = GAA_FLAG_INCLUDE_GATEWAYS;
 			auto tmp = std::make_unique<BYTE[]>(adapterSize);
@@ -800,7 +800,7 @@ NLM_CONNECTIVITY MeasureSysInfo::GetNetworkConnectivity()
 
 	INetworkListManager* nlm = { 0 };
 	HRESULT hr = CoCreateInstance(
-		CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, __uuidof(INetworkListManager), (void**)&nlm);
+		CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, __uuidof(INetworkListManager), (LPVOID*)&nlm);
 	if (SUCCEEDED(hr))
 	{
 		nlm->GetConnectivity(&connectivity);
