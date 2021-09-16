@@ -281,7 +281,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Option 'Interface' represents either the number of the interface in the 'iftable',
 	// or the name of the interface (ie. its Description). Optionally, if 'Interface=Best',
 	// there will be an attempt to find the best interface.
-	std::wstring iface = parser.ReadString(section, L"Interface", L"");
+	std::wstring iface = parser.ReadString(section, L"Interface", L"BEST");
 	if (!iface.empty() && !std::all_of(iface.begin(), iface.end(), iswdigit))
 	{
 		m_Interface = NetworkUtil::FindBestInterface(iface.c_str());
