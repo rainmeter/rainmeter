@@ -33,7 +33,7 @@ private:
 	Updater& operator=(Updater other) = delete;
 
 	static void GetStatus(void* pParam);
-	static bool DownloadStatusFile(std::string& data, DWORD* dataSize);
+	static bool DownloadStatusFile(std::string& data);
 	static void CheckVersion(json& status, bool downloadNewVersion);
 	static int ParseVersion(LPCWSTR str);
 	static bool DownloadNewVersion(json& status);

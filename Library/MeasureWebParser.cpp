@@ -1034,7 +1034,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 
 				HKEY hKey;
 				LONG ret;
-				DWORD mode;
+				DWORD mode = 0UL;
 
 				ret = RegOpenKeyEx(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", 0, KEY_QUERY_VALUE, &hKey);
 				if (ret == ERROR_SUCCESS)
@@ -1183,7 +1183,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 			return nullptr;
 		}
 		
-		size_t fileSize = 0;
+		size_t fileSize = 0ULL;
 		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
 		*dataSize = (DWORD)fileSize;
 
@@ -1196,7 +1196,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 		components.dwExtraInfoLength = ULONG_MAX;
 		if (InternetCrackUrl(url.c_str(), static_cast<DWORD>(url.size()), 0, &components))
 		{
-			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0)
+			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0ULL)
 			{
 				size_t position = url.find(components.lpszExtraInfo);  // Only percent encode characters in the query or fragment part of the URL
 				if (position != std::wstring::npos)
@@ -1222,7 +1222,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 	const int CHUNK_SIZE = 8192;
 	DWORD bufferSize = CHUNK_SIZE;
 	BYTE* buffer = (BYTE*)malloc(bufferSize + 3);
-	*dataSize = 0;
+	*dataSize = 0UL;
 
 	// Read the data.
 	do
