@@ -478,7 +478,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 		return ret;
 	};
 
-	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, BCRYPT_HASH_REUSABLE_FLAG);
+	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
 	if (!NT_SUCCESS(status)) return cleanup(false);
 
 	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
