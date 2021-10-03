@@ -467,11 +467,11 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	DWORD hashLength = 0UL;
 	DWORD resultLength = 0UL;
 
-	auto cleanup = [&](bool ret) -> bool
+	auto cleanup = [&](LPCWSTR func, bool ret) -> bool
 	{
 		free(buffer);
 		buffer = nullptr;
-		if (!ret && debug) LogErrorF(L">>Verify installer error: 0x%08x (%d)", status, status);
+		if (!ret && func && debug) LogErrorF(L">>Verify installer error (%s): 0x%08x (%lu)", func, status, status);
 		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);
 		if (provider) BCryptCloseAlgorithmProvider(provider, 0UL);
@@ -479,26 +479,26 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	};
 
 	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"OpenProvider", false);
 
 	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"GetProperty", false);
 
 	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0UL, hashLength);
 	if (!hash)
 	{
 		status = STATUS_NO_MEMORY;
-		return cleanup(false);
+		return cleanup(L"No Memory", false);
 	}
 
 	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0UL, nullptr, 0UL, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"CreateHash", false);
 
 	status = BCryptHashData(hashHandle, buffer, (ULONG)fileSize, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"HashData", false);
 
 	status = BCryptFinishHash(hashHandle, hash, hashLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"FinishHash", false);
 
 	// Convert the hash to a hex string
 	std::stringstream ss;
@@ -508,7 +508,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 		ss << std::setw(2) << static_cast<int>(hash[i]);
 	}
 	std::wstring hashStr = StringUtil::Widen(ss.str());
-	cleanup(true);
+	cleanup(nullptr, true);
 
 	bool isVerified = _wcsicmp(sha256.c_str(), hashStr.c_str()) == 0;
 	if (isVerified && writeToDataFile)
