@@ -488,7 +488,8 @@ void DialogNewSkin::TabNew::DestroyImageList()
 {
 	if (m_ImageList)
 	{
-		ImageList_Destroy(m_ImageList);
+		HWND item = GetControl(Id_ItemsTreeView);
+		ImageList_Destroy(TreeView_SetImageList(item, nullptr, TVSIL_STATE));
 		m_ImageList = nullptr;
 	}
 }

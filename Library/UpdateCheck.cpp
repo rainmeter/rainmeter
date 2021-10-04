@@ -19,7 +19,7 @@
 #include <iomanip>
 
 #include <bcrypt.h>
-#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0L)
 
 namespace {
 
@@ -122,7 +122,7 @@ void Updater::GetLanguageStatus()
 
 	bool obsolete = false;
 	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
-	const auto lang = m_Status["language"];
+	const auto& lang = m_Status["language"];
 	if (lang.is_null() || lang.empty() ||
 		!lang.is_structured() || !lang.is_array())
 	{
@@ -168,9 +168,8 @@ void Updater::GetStatus(void* pParam)
 	}
 
 	// Download the status file |status.json|
-	DWORD dwSize = 0;
 	std::string data;
-	if (!DownloadStatusFile(data, &dwSize) || data.empty())
+	if (!DownloadStatusFile(data) || data.empty())
 	{
 		if (debug) ShowError(L">>Status file: Download failed");
 		return;
@@ -192,22 +191,21 @@ void Updater::GetStatus(void* pParam)
 	updater->GetLanguageStatus();
 }
 
-bool Updater::DownloadStatusFile(std::string& data, DWORD* dataSize)
+bool Updater::DownloadStatusFile(std::string& data)
 {
 	LPCWSTR url = Updater::s_UpdateURL;
 	if (_wcsnicmp(url, L"file://", 7) == 0)  // Local file
 	{
 		WCHAR path[MAX_PATH];
 		DWORD pathLength = _countof(path);
-		HRESULT hr = PathCreateFromUrl(url, path, &pathLength, 0);
+		HRESULT hr = PathCreateFromUrl(url, path, &pathLength, 0UL);
 		if (FAILED(hr))
 		{
 			return false;
 		}
 
-		size_t fileSize = 0;
+		size_t fileSize = 0ULL;
 		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
-		*dataSize = (DWORD)fileSize;
 
 		data = (char*)buffer;
 		free(buffer);
@@ -215,10 +213,10 @@ bool Updater::DownloadStatusFile(std::string& data, DWORD* dataSize)
 		return true;
 	}
 
-	HINTERNET hRootHandle = InternetOpen(L"Rainmeter", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+	HINTERNET hRootHandle = InternetOpen(L"Rainmeter", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0UL);
 	if (!hRootHandle) return false;
 
-	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, url, nullptr, 0, INTERNET_FLAG_RESYNCHRONIZE, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, url, nullptr, 0UL, INTERNET_FLAG_RESYNCHRONIZE, 0UL);
 	if (!hUrlDump)
 	{
 		InternetCloseHandle(hRootHandle);
@@ -227,16 +225,16 @@ bool Updater::DownloadStatusFile(std::string& data, DWORD* dataSize)
 
 	// The |status.json| file should be UTF-8 (or ANSI) encoded, however, allocate the buffer
 	// with 3 extra bytes for triple null termination in case the encoding changes.
-	const int CHUNK_SIZE = 8192;
+	const DWORD CHUNK_SIZE = 8192UL;
 	DWORD bufferSize = CHUNK_SIZE;
-	BYTE * buffer = (BYTE*)malloc(bufferSize + 3);
-	*dataSize = 0;
+	BYTE* buffer = (BYTE*)malloc(bufferSize + 3);
+	DWORD dataSize = 0UL;
 
 	// Read the data.
 	do
 	{
-		DWORD readSize;
-		if (!InternetReadFile(hUrlDump, buffer + *dataSize, bufferSize - *dataSize, &readSize))
+		DWORD readSize = 0UL;
+		if (!InternetReadFile(hUrlDump, buffer + dataSize, bufferSize - dataSize, &readSize))
 		{
 			free(buffer);
 			buffer = nullptr;
@@ -244,13 +242,13 @@ bool Updater::DownloadStatusFile(std::string& data, DWORD* dataSize)
 			InternetCloseHandle(hRootHandle);
 			return false;
 		}
-		else if (readSize == 0)
+		else if (readSize == 0UL)
 		{
 			// All data read.
 			break;
 		}
 
-		*dataSize += readSize;
+		dataSize += readSize;
 
 		bufferSize += CHUNK_SIZE;
 		buffer = (BYTE*)realloc(buffer, bufferSize + 3);
@@ -261,9 +259,9 @@ bool Updater::DownloadStatusFile(std::string& data, DWORD* dataSize)
 	InternetCloseHandle(hRootHandle);
 
 	// Triple null terminate the buffer.
-	buffer[*dataSize] = 0;
-	buffer[*dataSize + 1] = 0;
-	buffer[*dataSize + 2] = 0;
+	buffer[dataSize] = 0;
+	buffer[dataSize + 1] = 0;
+	buffer[dataSize + 2] = 0;
 
 	data = (char*)buffer;
 	free(buffer);
@@ -394,7 +392,7 @@ bool Updater::DownloadNewVersion(json& status)
 	}
 	filename = filename.substr(pos + 1);
 
-	std::wstring fullPath = path + filename;
+	const std::wstring fullPath = path + filename;
 	if (PathFileExists(fullPath.c_str()))
 	{
 		if (VerifyInstaller(path, filename, sha, true))
@@ -418,11 +416,11 @@ bool Updater::DownloadNewVersion(json& status)
 		return ret;
 	};
 
-	HRESULT result = URLDownloadToFile(nullptr, url.c_str(), fullPath.c_str(), 0, nullptr);
+	HRESULT result = URLDownloadToFile(nullptr, url.c_str(), fullPath.c_str(), 0UL, nullptr);
 	if (result != S_OK)
 	{
 		LogErrorF(L">>New installer download failed (res=0x%08X, COM=0x%08X): %s",
-		result, resultCoInitialize, url.c_str());
+			result, resultCoInitialize, url.c_str());
 		return cleanup(false);
 	}
 
@@ -467,48 +465,48 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	DWORD hashLength = 0UL;
 	DWORD resultLength = 0UL;
 
-	auto cleanup = [&](bool ret) -> bool
+	auto cleanup = [&](LPCWSTR func, bool ret) -> bool
 	{
 		free(buffer);
 		buffer = nullptr;
-		if (!ret && debug) LogErrorF(L">>Verify installer error: 0x%08x (%d)", status, status);
+		if (!ret && func && debug) LogErrorF(L">>Verify installer error (%s): 0x%08x (%lu)", func, status, status);
 		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);
 		if (provider) BCryptCloseAlgorithmProvider(provider, 0UL);
 		return ret;
 	};
 
-	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, BCRYPT_HASH_REUSABLE_FLAG);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
+	if (!NT_SUCCESS(status)) return cleanup(L"OpenProvider", false);
 
 	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"GetProperty", false);
 
 	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0UL, hashLength);
 	if (!hash)
 	{
 		status = STATUS_NO_MEMORY;
-		return cleanup(false);
+		return cleanup(L"No Memory", false);
 	}
 
 	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0UL, nullptr, 0UL, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"CreateHash", false);
 
 	status = BCryptHashData(hashHandle, buffer, (ULONG)fileSize, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"HashData", false);
 
 	status = BCryptFinishHash(hashHandle, hash, hashLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(false);
+	if (!NT_SUCCESS(status)) return cleanup(L"FinishHash", false);
 
 	// Convert the hash to a hex string
 	std::stringstream ss;
 	ss << std::hex << std::setfill('0');
-	for (DWORD i = 0; i < hashLength; ++i)
+	for (DWORD i = 0UL; i < hashLength; ++i)
 	{
 		ss << std::setw(2) << static_cast<int>(hash[i]);
 	}
 	std::wstring hashStr = StringUtil::Widen(ss.str());
-	cleanup(true);
+	cleanup(nullptr, true);
 
 	bool isVerified = _wcsicmp(sha256.c_str(), hashStr.c_str()) == 0;
 	if (isVerified && writeToDataFile)

@@ -24,6 +24,7 @@
 #include "MeterButton.h"
 #include "MeterString.h"
 #include "MeasureScript.h"
+#include "MeasureSysInfo.h"
 #include "GeneralImage.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
@@ -1643,7 +1644,7 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 	{
 		if (all || CompareName((*i), measure, group))
 		{
-			if (bNetStats && (*i)->GetTypeID() == TypeID<MeasureNet>())
+			if (bNetStats && IsNetworkMeasure((*i)))
 			{
 				MeasureNet::UpdateIFTable();
 				MeasureNet::UpdateStats();
@@ -2563,9 +2564,10 @@ bool Skin::ReadSkin()
 					m_Measures.push_back(measure);
 					m_Parser.AddMeasure(measure);
 
-					if (measure->GetTypeID() == TypeID<MeasureNet>())
+					if (IsNetworkMeasure(measure))
 					{
 						m_HasNetMeasures = true;
+						MeasureNet::UpdateIFTable();
 					}
 				}
 
@@ -2626,11 +2628,6 @@ bool Skin::ReadSkin()
 		Meter* meter = *iter;
 		meter->ReadOptions(m_Parser);
 		meter->Initialize();
-
-		if (!meter->GetToolTipText().empty())
-		{
-			meter->CreateToolTip(this);
-		}
 	}
 
 	// Initialize measures.
@@ -3327,7 +3324,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 
-			ULONGLONG ticks = System::GetTickCount64();
+			ULONGLONG ticks = GetTickCount64();
 			if (m_FadeStartTime == 0)
 			{
 				m_FadeStartTime = ticks;
@@ -5423,4 +5420,10 @@ Meter* Skin::GetMeter(const std::wstring& meterName)
 		}
 	}
 	return nullptr;
+}
+
+bool Skin::IsNetworkMeasure(Measure* measure)
+{
+	return measure->GetTypeID() == TypeID<MeasureNet>() ||
+		measure->GetTypeID() == TypeID<MeasureSysInfo>();
 }

@@ -17,7 +17,7 @@ Player* PlayerSpotify::c_Player = nullptr;
 */
 PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(),
-	m_LastCheckTime(0)
+	m_LastCheckTime(0ULL)
 {
 }
 
@@ -72,10 +72,10 @@ std::wstring GetExe(HWND hwnd)
 */
 bool PlayerSpotify::CheckWindow()
 {
-	DWORD time = GetTickCount();
+	ULONGLONG time = GetTickCount64();
 
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000)
+	if (time - m_LastCheckTime > 5000ULL)
 	{
 		m_LastCheckTime = time;
 
@@ -106,8 +106,9 @@ void PlayerSpotify::UpdateData()
 		// Parse title and artist from window title
 		WCHAR buffer[256];
 
-		//Length of window is now 7 when not playing
-		if (GetWindowText(m_Window, buffer, 256) > 7)
+		// Check length of window text for "Spotify" and "Spotify Premium"
+		int len = GetWindowText(m_Window, buffer, _countof(buffer));
+		if (len > 7 && _wcsnicmp(buffer, L"Spotify", 7) != 0)
 		{
 			std::wstring title = buffer;
 

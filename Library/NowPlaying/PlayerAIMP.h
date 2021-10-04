@@ -43,7 +43,7 @@ private:
 	
 	HWND m_Window;				// AIMP window
 	HWND m_WinampWindow;		// AIMP Winamp API window
-	DWORD m_LastCheckTime;
+	ULONGLONG m_LastCheckTime;
 	INT64 m_LastFileSize;
 	DWORD m_LastTitleSize;
 	LPVOID m_FileMap;

@@ -203,7 +203,7 @@ void PlayerWMP::CRemoteHost::SwitchedToControl()
 PlayerWMP::PlayerWMP() : Player(),
 	m_TrackChanged(false),
 	m_Window(),
-	m_LastCheckTime(0),
+	m_LastCheckTime(0ULL),
 	m_ConnectionCookie()
 {
 }
@@ -499,10 +499,10 @@ void PlayerWMP::UpdateData()
 	}
 	else
 	{
-		DWORD time = GetTickCount();
+		ULONGLONG time = GetTickCount64();
 		
 		// Try to find WMP window every 5 seconds
-		if (m_LastCheckTime = 0 || time - m_LastCheckTime > 5000)
+		if (m_LastCheckTime = 0ULL || time - m_LastCheckTime > 5000ULL)
 		{
 			m_LastCheckTime = time;
 

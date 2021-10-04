@@ -660,7 +660,8 @@ void DialogManage::TabSkins::DestroyImageList()
 {
 	if (m_ImageListHandle)
 	{
-		ImageList_Destroy(m_ImageListHandle);
+		HWND item = GetControl(Id_SkinsTreeView);
+		ImageList_Destroy(TreeView_SetImageList(item, nullptr, TVSIL_STATE));
 		m_ImageListHandle = nullptr;
 	}
 }
@@ -686,6 +687,11 @@ void DialogManage::TabSkins::UpdateSelected(Skin* skin)
 */
 void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 {
+	const size_t skinCount = GetRainmeter().GetAllSkins().size();
+
+	HWND item = GetControl(Id_ActiveSkinsButton);
+	Button_Enable(item, skinCount != 0ULL);
+
 	if (skin)
 	{
 		if (!deleted && m_IgnoreUpdate)
@@ -717,7 +723,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 	else
 	{
 		// Populate tree
-		HWND item = GetControl(Id_SkinsTreeView);
+		item = GetControl(Id_SkinsTreeView);
 		TreeView_DeleteAllItems(item);
 
 		TVINSERTSTRUCT tvi = {0};

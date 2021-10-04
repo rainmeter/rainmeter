@@ -58,7 +58,7 @@ void MeasureUptime::UpdateValue()
 {
 	if (!m_SecondsDefined)
 	{
-		ULONGLONG ticks = System::GetTickCount64();
+		ULONGLONG ticks = GetTickCount64();
 		m_Value = (double)(__int64)(ticks / 1000);
 	}
 	else

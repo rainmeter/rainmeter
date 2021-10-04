@@ -755,9 +755,6 @@ CharType GetCharType(WCHAR ch)
 	case L'\n':
 		return CharType::Separator;
 
-	case L'_':
-		return CharType::Letter;
-
 	case L'-':
 		return CharType::MinusSymbol;
 
@@ -781,8 +778,12 @@ CharType GetCharType(WCHAR ch)
 		return CharType::Symbol;
 	}
 
-	if (iswalpha(ch)) return CharType::Letter;
 	if (iswdigit(ch)) return CharType::Digit;
+
+	// Make sure this is the last character test before "Unknown".
+	// This will catch all characters with graphical representation and treat them as a "Letter".
+	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'";
+	if (iswgraph(ch)) return CharType::Letter;
 
 	return CharType::Unknown;
 }

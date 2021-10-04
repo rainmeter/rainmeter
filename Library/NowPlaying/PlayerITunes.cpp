@@ -43,7 +43,7 @@ PlayerITunes::CEventHandler::~CEventHandler()
 
 HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::QueryInterface(REFIID iid, void** ppvObject)
 {
-	if (iid == IID_IUnknown || iid == IID_IUnknown || iid == DIID__IiTunesEvents)
+	if (iid == IID_IUnknown || iid == DIID__IiTunesEvents)
 	{
 		++m_RefCount;
 		*ppvObject = this;
@@ -164,7 +164,7 @@ void PlayerITunes::Initialize()
 				long position = 0L;
 				m_iTunes->get_PlayerPosition(&position);
 
-				if (SUCCEEDED(m_iTunes->get_PlayerPosition(&position)) && position != 0)
+				if (SUCCEEDED(m_iTunes->get_PlayerPosition(&position)) && position != 0L)
 				{
 					m_State = STATE_PAUSED;
 				}
@@ -222,8 +222,8 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 */
 bool PlayerITunes::CheckWindow()
 {
-	DWORD time = GetTickCount();
-	if (time - m_LastCheckTime > 500UL)
+	ULONGLONG time = GetTickCount64();
+	if (time - m_LastCheckTime > 500ULL)
 	{
 		m_LastCheckTime = time;
 
@@ -404,7 +404,7 @@ void PlayerITunes::UpdateCachedData()
 					if (count > 0L)
 					{
 						IITArtwork* artwork = nullptr;
-						hr = artworkCollection->get_Item(1, &artwork);
+						hr = artworkCollection->get_Item(1L, &artwork);
 
 						if (SUCCEEDED(hr))
 						{

@@ -230,7 +230,7 @@ bool MeterBitmap::Update()
 			if ((int)(value * realFrames) != (int)(m_Value * realFrames))
 			{
 				m_TransitionStartValue = m_Value;
-				m_TransitionStartTicks = System::GetTickCount64();
+				m_TransitionStartTicks = GetTickCount64();
 			}
 			else
 			{
@@ -364,7 +364,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			// If transition is ongoing the pick the correct frame
 			if (m_TransitionStartTicks > 0)
 			{
-				int diffTicks = (int)(System::GetTickCount64() - m_TransitionStartTicks);
+				int diffTicks = (int)(GetTickCount64() - m_TransitionStartTicks);
 
 				int range = ((value % realFrames) - (transitionValue % realFrames)) * (m_TransitionFrameCount + 1);
 				if (range < 0)
@@ -384,7 +384,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-			//LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+			//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
 
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -442,7 +442,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		// If transition is ongoing the pick the correct frame
 		if (m_TransitionStartTicks > 0)
 		{
-			int diffTicks = (int)(System::GetTickCount64() - m_TransitionStartTicks);
+			int diffTicks = (int)(GetTickCount64() - m_TransitionStartTicks);
 
 			if (diffTicks > ((m_TransitionFrameCount + 1) * m_Skin->GetTransitionUpdate()))
 			{
@@ -461,7 +461,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			}
 		}
 
-		//LogDebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+		//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{

@@ -75,7 +75,7 @@ private:
 	static Player* c_Player;
 
 	HWND m_CallbackWindow;
-	DWORD m_LastCheckTime;
+	ULONGLONG m_LastCheckTime;
 	bool m_iTunesActive;
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;
