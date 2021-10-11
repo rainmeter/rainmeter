@@ -37,6 +37,8 @@ public:
 
 	virtual void SetFontWeight(int weight) override;
 
+	virtual void MeasureTrailingWhitespace(bool measure) override { m_MeasureTrailingWhitespace = measure; }
+
 	virtual void SetTrimming(bool trim) override;
 
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
@@ -96,6 +98,8 @@ private:
 
 	int m_FontWeight;
 	bool m_HasWeightChanged;
+
+	bool m_MeasureTrailingWhitespace;
 
 	// Used to emulate GDI+ behaviour.
 	float m_ExtraHeight;

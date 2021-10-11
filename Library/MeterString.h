@@ -95,8 +95,8 @@ private:
 	Gfx::TextFormat* m_TextFormat;
 	int m_NumOfDecimals;
 	FLOAT m_Angle;
-
 	int m_FontWeight;
+	bool m_MeasureTrailingWhitespace;
 
 	std::wstring m_String;
 };
