@@ -32,8 +32,7 @@ MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_TextFormat(skin->GetCanvas().CreateTextFormat()),
 	m_NumOfDecimals(-1),
 	m_Angle(),
-	m_FontWeight(-1),
-	m_MeasureTrailingWhitespace(false)
+	m_FontWeight(-1)
 {
 }
 
@@ -299,8 +298,6 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"StringEffect=%s is not valid", effect);
 	}
 
-	m_MeasureTrailingWhitespace = parser.ReadBool(section, L"TrailingSpaces", false);
-
 	m_TextFormat->ReadInlineOptions(parser, section);
 
 	if (m_Initialized &&
@@ -380,7 +377,6 @@ bool MeterString::Update()
 			}
 		}
 
-		m_TextFormat->MeasureTrailingWhitespace(m_MeasureTrailingWhitespace);
 		m_TextFormat->SetFontWeight(m_FontWeight);
 		m_TextFormat->FindInlineRanges(m_String);
 
