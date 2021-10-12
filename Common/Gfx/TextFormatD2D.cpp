@@ -50,7 +50,6 @@ namespace Gfx {
 TextFormatD2D::TextFormatD2D() :
 	m_FontWeight(-1),
 	m_HasWeightChanged(false),
-	m_MeasureTrailingWhitespace(false),
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
@@ -383,11 +382,6 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		}
 
 		textLayout->GetMetrics(&metrics);
-		if (m_MeasureTrailingWhitespace)
-		{
-			metrics.width = metrics.widthIncludingTrailingWhitespace;
-		}
-
 		if (metrics.width > 0.0f)
 		{
 			if (gdiEmulation)
