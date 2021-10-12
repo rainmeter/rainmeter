@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include "../Version.h"
 
+#define IDI_SKININSTALLER 200
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #pragma code_page(1252)
 
@@ -49,4 +51,4 @@ VS_VERSION_INFO VERSIONINFO
 // Icon
 //
 
-100           ICON    DISCARDABLE     "res/Rainstaller.ico"
+IDI_SKININSTALLER           ICON    DISCARDABLE     "res/Rainstaller.ico"
