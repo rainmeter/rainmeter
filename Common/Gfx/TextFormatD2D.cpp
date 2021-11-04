@@ -50,6 +50,8 @@ namespace Gfx {
 TextFormatD2D::TextFormatD2D() :
 	m_FontWeight(-1),
 	m_HasWeightChanged(false),
+	m_MeasureTrailingWhitespace(false),
+	m_SpaceWidth(0.0f),
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
@@ -68,6 +70,7 @@ void TextFormatD2D::Dispose()
 	m_TextLayout.Reset();
 	m_InlineEllipsis.Reset();
 
+	m_SpaceWidth = 0.0f;
 	m_ExtraHeight = 0.0f;
 	m_LineGap = 0.0f;
 }
@@ -315,6 +318,24 @@ void TextFormatD2D::SetProperties(
 				face->SetFontCollection(fontCollectionD2D);
 			}
 		}
+
+		Microsoft::WRL::ComPtr<IDWriteFontFace> fontFace;
+		hr = font->CreateFontFace(fontFace.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			UINT32 codePoint = L' '; // space
+			UINT16 glyphIndex = 0;
+			hr = fontFace->GetGlyphIndices(&codePoint, 1, &glyphIndex);
+			if (SUCCEEDED(hr))
+			{
+				DWRITE_GLYPH_METRICS gmetrics = { 0 };
+				hr = fontFace->GetDesignGlyphMetrics(&glyphIndex, 1U, &gmetrics);
+				if (SUCCEEDED(hr))
+				{
+					m_SpaceWidth = (gmetrics.advanceWidth / (float)fmetrics.designUnitsPerEm) * dwriteFontSize;
+				}
+			}
+		}
 	}
 	else
 	{
@@ -382,6 +403,11 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		}
 
 		textLayout->GetMetrics(&metrics);
+		if (m_MeasureTrailingWhitespace)
+		{
+			metrics.width = metrics.widthIncludingTrailingWhitespace;
+		}
+
 		if (metrics.width > 0.0f)
 		{
 			if (gdiEmulation)
