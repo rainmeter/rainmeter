@@ -401,16 +401,6 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 			}
 		}
 
-		if (formatD2D.GetTrailingWhitespace())
-		{
-			const float trailingSpaces = (FLOAT)(str.size() - str.find_last_not_of(L" ") - 1ULL);
-			switch (formatD2D.GetHorizontalAlignment())
-			{
-			case HorizontalAlignment::Center: return rect.left - ((trailingSpaces * formatD2D.GetSpaceWidth()) / 2.0f);
-			case HorizontalAlignment::Right: return rect.left - (trailingSpaces * formatD2D.GetSpaceWidth());
-			}
-		}
-
 		return rect.left;
 	} ();
 

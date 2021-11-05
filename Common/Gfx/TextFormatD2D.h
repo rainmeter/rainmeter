@@ -37,8 +37,6 @@ public:
 
 	virtual void SetFontWeight(int weight) override;
 
-	virtual void MeasureTrailingWhitespace(bool measure) override { m_MeasureTrailingWhitespace = measure; }
-
 	virtual void SetTrimming(bool trim) override;
 
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
@@ -46,9 +44,6 @@ public:
 
 	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) override;
 	virtual void FindInlineRanges(const std::wstring& str) override;
-
-	bool GetTrailingWhitespace() { return m_MeasureTrailingWhitespace; }
-	FLOAT GetSpaceWidth() { return m_SpaceWidth; }
 
 private:
 	friend class Canvas;
@@ -101,9 +96,6 @@ private:
 
 	int m_FontWeight;
 	bool m_HasWeightChanged;
-
-	bool m_MeasureTrailingWhitespace;
-	float m_SpaceWidth;
 
 	// Used to emulate GDI+ behaviour.
 	float m_ExtraHeight;
