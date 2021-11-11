@@ -46,7 +46,7 @@ void DialogAbout::Open(int tab)
 		0, 0, 600, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
-		GetRainmeter().GetWindow());
+		nullptr);
 
 	// Fake WM_NOTIFY to change tab
 	NMHDR nm;

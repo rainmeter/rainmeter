@@ -216,6 +216,8 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 */
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
 {
+	if (!m_Skin) return false;
+
 	const size_t firstParens = strVariable.find_first_of(L'(');  // Assume section names do not have a left parenthesis?
 	size_t colonPos = strVariable.find_last_of(L':', firstParens);
 	if (colonPos == std::wstring::npos)

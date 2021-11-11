@@ -95,7 +95,6 @@ private:
 	Gfx::TextFormat* m_TextFormat;
 	int m_NumOfDecimals;
 	FLOAT m_Angle;
-
 	int m_FontWeight;
 
 	std::wstring m_String;
