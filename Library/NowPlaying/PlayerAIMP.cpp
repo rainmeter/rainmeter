@@ -333,7 +333,7 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 				}
 			}
 
-			delete[] data;
+			delete [] data;
 			RegCloseKey(hKey);
 
 			return success;
