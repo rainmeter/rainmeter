@@ -96,6 +96,7 @@ private:
 	int m_NumOfDecimals;
 	FLOAT m_Angle;
 	int m_FontWeight;
+	bool m_TrailingSpaces;
 
 	std::wstring m_String;
 };
