@@ -25,8 +25,7 @@ PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
-	m_WinampHandle(),
-	m_WinampAddress()
+	m_WinampHandle()
 {
 }
 
@@ -70,14 +69,13 @@ bool PlayerWinamp::CheckWindow()
 		m_Window = FindWindow(L"Winamp v1.x", nullptr);
 		if (m_Window)
 		{
-			DWORD pID;
+			DWORD pID = 0;
 			GetWindowThreadProcessId(m_Window, &pID);
 			m_WinampHandle = OpenProcess(PROCESS_VM_READ, FALSE, pID);
 
 			if (m_WinampHandle)
 			{
-				m_WinampAddress = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
-				m_UseUnicodeAPI = m_WinampAddress ? true : false;
+				m_UseUnicodeAPI = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME) ? true : false;
 				m_Initialized = true;
 			}
 		}
@@ -125,7 +123,8 @@ void PlayerWinamp::UpdateData()
 
 		if (m_UseUnicodeAPI)
 		{
-			if (!ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), nullptr))
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
+			if (!ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), nullptr))
 			{
 				// Failed to read memory
 				return;
@@ -237,7 +236,7 @@ void PlayerWinamp::UpdateData()
 					}
 
 					if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-						!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+					    !CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
 					{
 						// Nothing found
 						m_CoverPath.clear();
