@@ -236,7 +236,7 @@ void PlayerWinamp::UpdateData()
 					}
 
 					if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-					    !CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+						!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
 					{
 						// Nothing found
 						m_CoverPath.clear();
