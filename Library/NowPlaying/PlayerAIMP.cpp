@@ -299,8 +299,86 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 		DWORD type = 0;
 		HKEY hKey;
 
+		std::wstring regkey_location;
+
+		UINT is32 = GetSystemWow64Directory(NULL, 0);
+
+		if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+		{
+			regkey_location = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
+		}
+		else
+		{
+			regkey_location = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
+		}
+
+		// try AIMP first, covers AIMP4 and up
+		RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			(regkey_location + L"AIMP").c_str(),
+			0,
+			KEY_QUERY_VALUE,
+			&hKey
+		);
+
+		if (RegQueryValueEx(
+				hKey,
+				L"DisplayIcon",
+				nullptr,
+				(LPDWORD)&type,
+				(LPBYTE)data,
+				(LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			if (type == REG_SZ)
+			{
+				path = data;
+				path.resize(path.find_last_of(L'\\') + 1);
+				path += L"AIMP.exe";
+				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
+			}
+
+			delete[] data;
+			RegCloseKey(hKey);
+			return;
+		}
+
+		RegCloseKey(hKey);
+
+		// try AIMP3
+		RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			(regkey_location + L"AIMP3").c_str(),
+			0,
+			KEY_QUERY_VALUE,
+			&hKey
+		);
+
+		if (RegQueryValueEx(
+			hKey,
+			L"DisplayIcon",
+			nullptr,
+			(LPDWORD)&type,
+			(LPBYTE)data,
+			(LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			if (type == REG_SZ)
+			{
+				path = data;
+				path.resize(path.find_last_of(L'\\') + 1);
+				path += L"AIMP3.exe";
+				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
+			}
+
+			delete[] data;
+			RegCloseKey(hKey);
+			return;
+		}
+
+		RegCloseKey(hKey);
+
+		// try AIMP2
 		RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-						L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AIMP2",
+						(regkey_location + L"AIMP2").c_str(),
 						0,
 						KEY_QUERY_VALUE,
 						&hKey);
@@ -316,32 +394,6 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 			{
 				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
 				path = data;
-			}
-		}
-		else
-		{
-			// Let's try AIMP3
-			RegCloseKey(hKey);
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-							L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AIMP3",
-							0,
-							KEY_QUERY_VALUE,
-							&hKey);
-
-			if (RegQueryValueEx(hKey,
-								L"DisplayIcon",
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
-			{
-				if (type == REG_SZ)
-				{
-					path = data;
-					path.resize(path.find_last_of(L'\\') + 1);
-					path += L"AIMP3.exe";
-					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
-				}
 			}
 		}
 
