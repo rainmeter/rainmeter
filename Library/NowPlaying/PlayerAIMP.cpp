@@ -293,114 +293,62 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 {
 	if (path.empty())
 	{
-		// Check for AIMP2 first
-		DWORD size = 512;
-		WCHAR* data = new WCHAR[size];
-		DWORD type = 0;
-		HKEY hKey;
-
-		std::wstring regkey_location;
-
-		UINT is32 = GetSystemWow64Directory(NULL, 0);
-
-		if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+		const auto registry_key = [&]() -> std::wstring
 		{
-			regkey_location = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
-		}
-		else
-		{
-			regkey_location = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
-		}
-
-		// try AIMP first, covers AIMP4 and up
-		RegOpenKeyEx(
-			HKEY_LOCAL_MACHINE,
-			(regkey_location + L"AIMP").c_str(),
-			0,
-			KEY_QUERY_VALUE,
-			&hKey
-		);
-
-		if (RegQueryValueEx(
-				hKey,
-				L"DisplayIcon",
-				nullptr,
-				(LPDWORD)&type,
-				(LPBYTE)data,
-				(LPDWORD)&size) == ERROR_SUCCESS)
-		{
-			if (type == REG_SZ)
+			GetSystemWow64Directory(nullptr, 0U);
+			if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
 			{
-				path = data;
-				path.resize(path.find_last_of(L'\\') + 1);
-				path += L"AIMP.exe";
-				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
+				return L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
+			}
+			return L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
+		} ();
+
+		auto getPath = [&](LPCWSTR version, bool appendExe) -> bool
+		{
+			bool success = false;
+
+			DWORD size = 512UL;
+			WCHAR* data = new WCHAR[size];
+			DWORD type = 0UL;
+			HKEY hKey;
+
+			std::wstring key = registry_key;
+			key += version;
+
+			RegOpenKeyEx(HKEY_LOCAL_MACHINE, key.c_str(), 0UL, KEY_QUERY_VALUE, &hKey);
+
+			if (RegQueryValueEx(hKey, L"DisplayIcon", nullptr, (LPDWORD)&type,
+				(LPBYTE)data, (LPDWORD)&size) == ERROR_SUCCESS)
+			{
+				if (type == REG_SZ)
+				{
+					success = true;
+					path = data;
+					if (appendExe)
+					{
+						path.resize(path.find_last_of(L'\\') + 1);
+						path += version;
+						path += L".exe";
+					}
+				}
 			}
 
 			delete[] data;
 			RegCloseKey(hKey);
-			return;
-		}
 
-		RegCloseKey(hKey);
+			return success;
+		};
 
-		// try AIMP3
-		RegOpenKeyEx(
-			HKEY_LOCAL_MACHINE,
-			(regkey_location + L"AIMP3").c_str(),
-			0,
-			KEY_QUERY_VALUE,
-			&hKey
-		);
-
-		if (RegQueryValueEx(
-			hKey,
-			L"DisplayIcon",
-			nullptr,
-			(LPDWORD)&type,
-			(LPBYTE)data,
-			(LPDWORD)&size) == ERROR_SUCCESS)
+		if (!getPath(L"AIMP", true))		// AIMP4+
 		{
-			if (type == REG_SZ)
+			if (!getPath(L"AIMP3", true))	// AIMP3
 			{
-				path = data;
-				path.resize(path.find_last_of(L'\\') + 1);
-				path += L"AIMP3.exe";
-				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
-			}
-
-			delete[] data;
-			RegCloseKey(hKey);
-			return;
-		}
-
-		RegCloseKey(hKey);
-
-		// try AIMP2
-		RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-						(regkey_location + L"AIMP2").c_str(),
-						0,
-						KEY_QUERY_VALUE,
-						&hKey);
-
-		if (RegQueryValueEx(hKey,
-							L"DisplayIcon",
-							nullptr,
-							(LPDWORD)&type,
-							(LPBYTE)data,
-							(LPDWORD)&size) == ERROR_SUCCESS)
-		{
-			if (type == REG_SZ)
-			{
-				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
-				path = data;
+				getPath(L"AIMP2", false);	// AIMP2
 			}
 		}
-
-		delete [] data;
-		RegCloseKey(hKey);
 	}
-	else
+
+	if (!path.empty())
 	{
 		ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 	}
