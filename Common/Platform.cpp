@@ -169,8 +169,7 @@ std::wstring GetPlatformUserLanguage()
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%s", L"<error>");
 	}
-	std::wstring language = buffer;
-	return language;
+	return std::wstring(buffer);
 }
 
 /*

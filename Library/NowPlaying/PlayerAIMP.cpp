@@ -293,62 +293,62 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 {
 	if (path.empty())
 	{
-		// Check for AIMP2 first
-		DWORD size = 512;
-		WCHAR* data = new WCHAR[size];
-		DWORD type = 0;
-		HKEY hKey;
-
-		RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-						L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AIMP2",
-						0,
-						KEY_QUERY_VALUE,
-						&hKey);
-
-		if (RegQueryValueEx(hKey,
-							L"DisplayIcon",
-							nullptr,
-							(LPDWORD)&type,
-							(LPBYTE)data,
-							(LPDWORD)&size) == ERROR_SUCCESS)
+		const auto registry_key = [&]() -> std::wstring
 		{
-			if (type == REG_SZ)
+			GetSystemWow64Directory(nullptr, 0U);
+			if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
 			{
-				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
-				path = data;
+				return L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
 			}
-		}
-		else
-		{
-			// Let's try AIMP3
-			RegCloseKey(hKey);
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-							L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AIMP3",
-							0,
-							KEY_QUERY_VALUE,
-							&hKey);
+			return L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
+		} ();
 
-			if (RegQueryValueEx(hKey,
-								L"DisplayIcon",
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
+		auto getPath = [&](LPCWSTR version, bool appendExe) -> bool
+		{
+			bool success = false;
+
+			DWORD size = 512UL;
+			WCHAR* data = new WCHAR[size];
+			DWORD type = 0UL;
+			HKEY hKey;
+
+			std::wstring key = registry_key;
+			key += version;
+
+			RegOpenKeyEx(HKEY_LOCAL_MACHINE, key.c_str(), 0UL, KEY_QUERY_VALUE, &hKey);
+
+			if (RegQueryValueEx(hKey, L"DisplayIcon", nullptr, (LPDWORD)&type,
+				(LPBYTE)data, (LPDWORD)&size) == ERROR_SUCCESS)
 			{
 				if (type == REG_SZ)
 				{
+					success = true;
 					path = data;
-					path.resize(path.find_last_of(L'\\') + 1);
-					path += L"AIMP3.exe";
-					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
+					if (appendExe)
+					{
+						path.resize(path.find_last_of(L'\\') + 1);
+						path += version;
+						path += L".exe";
+					}
 				}
 			}
-		}
 
-		delete [] data;
-		RegCloseKey(hKey);
+			delete [] data;
+			RegCloseKey(hKey);
+
+			return success;
+		};
+
+		if (!getPath(L"AIMP", true))		// AIMP4+
+		{
+			if (!getPath(L"AIMP3", true))	// AIMP3
+			{
+				getPath(L"AIMP2", false);	// AIMP2
+			}
+		}
 	}
-	else
+
+	if (!path.empty())
 	{
 		ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 	}
