@@ -150,12 +150,12 @@
     {
       "id": 3098,
       "name": "SerbianCyrillic",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 2074,
       "name": "SerbianLatin",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1051,
