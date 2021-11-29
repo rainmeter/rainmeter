@@ -92,7 +92,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	s_Interface = &s_InterfaceList->InterfaceInfo[value];
 
 	value = parser.ReadInt(section, L"WifiListStyle", 0);
-	if (value < 0 || value > 3)
+	if (value < 0 || value > 7)
 	{
 		LogErrorF(this, L"WifiStatus: WifiListStyle=%i is not valid", value);
 		value = 0;
@@ -212,13 +212,13 @@ void MeasureWifiStatus::UpdateValue()
 					m_StatusString += ssid;
 					if (m_ListStyle > 0U)
 					{
-						if (m_ListStyle == 1U || m_ListStyle == 3U)
+						if (m_ListStyle == 1U || m_ListStyle == 3U || m_ListStyle == 5U || m_ListStyle == 7U)
 						{
 							// ADD PHY type
 							m_StatusString += L" @";
 							m_StatusString += GetPHYString(pwnl->Network[i].dot11PhyTypes[0]);
 						}
-						if (m_ListStyle == 2U || m_ListStyle == 3U)
+						if (m_ListStyle == 2U || m_ListStyle == 3U || m_ListStyle == 6U || m_ListStyle == 7U)
 						{
 							// ADD cipher and authentication
 							m_StatusString += L" (";
@@ -226,6 +226,16 @@ void MeasureWifiStatus::UpdateValue()
 							m_StatusString += L':';
 							m_StatusString += GetAuthAlgorithmString(pwnl->Network[i].dot11DefaultAuthAlgorithm);
 							m_StatusString += L')';
+						}
+						if (m_ListStyle == 4U || m_ListStyle == 5U || m_ListStyle == 6U || m_ListStyle == 7U)
+						{
+							// ADD signal quality
+							WCHAR buffer[32];
+							_snwprintf_s(buffer, _TRUNCATE, L"%lu", (ULONG)pwnl->Network[i].wlanSignalQuality);
+
+							m_StatusString += L" [";
+							m_StatusString += buffer;
+							m_StatusString += L']';
 						}
 					}
 					m_StatusString += L'\n';
