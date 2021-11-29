@@ -300,11 +300,11 @@ void MeasureWifiStatus::UpdateValue()
 				break;
 
 			case MeasureType::TXRATE:
-				m_Value = (double)wlan_cattr->wlanAssociationAttributes.ulRxRate;
+				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
 				break;
 
 			case MeasureType::RXRATE:
-				m_Value = (double)wlan_cattr->wlanAssociationAttributes.ulRxRate;
+				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
 				break;
 
 			default:  // Invalid type
