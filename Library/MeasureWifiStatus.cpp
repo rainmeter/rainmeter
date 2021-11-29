@@ -133,6 +133,14 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		infoType = MeasureType::QUALITY;
 	}
+	else if (_wcsicmp(L"TXRATE", type) == 0)
+	{
+		infoType = MeasureType::TXRATE;
+	}
+	else if (_wcsicmp(L"RXRATE", type) == 0)
+	{
+		infoType = MeasureType::RXRATE;
+	}
 	else
 	{
 		LogErrorF(this, L"WifiStatus: WifiInfoType=%s not valid", type);
@@ -277,6 +285,14 @@ void MeasureWifiStatus::UpdateValue()
 
 			case MeasureType::QUALITY:
 				m_Value = (double)wlan_cattr->wlanAssociationAttributes.wlanSignalQuality;
+				break;
+
+			case MeasureType::TXRATE:
+				m_Value = (double)wlan_cattr->wlanAssociationAttributes.ulRxRate;
+				break;
+
+			case MeasureType::RXRATE:
+				m_Value = (double)wlan_cattr->wlanAssociationAttributes.ulRxRate;
 				break;
 
 			default:  // Invalid type

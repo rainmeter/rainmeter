@@ -39,6 +39,8 @@ private:
 		PHY,
 
 		QUALITY = 200U,
+		TXRATE,
+		RXRATE,
 
 		UNKNOWN = 9999U
 	};
