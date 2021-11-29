@@ -350,6 +350,8 @@ const WCHAR* MeasureWifiStatus::GetAuthAlgorithmString(DOT11_AUTH_ALGORITHM valu
 	case DOT11_AUTH_ALGO_WPA_NONE: return L"WPA-NONE";
 	case DOT11_AUTH_ALGO_RSNA: return L"WPA2-Enterprise";
 	case DOT11_AUTH_ALGO_RSNA_PSK: return L"WPA2-Personal";
+	case DOT11_AUTH_ALGO_WPA3: return L"WPA3-Enterprise";
+	case DOT11_AUTH_ALGO_WPA3_SAE: return L"WPA3-Personal";
 	default: return L"???";
 	}
 }
