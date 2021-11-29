@@ -359,6 +359,8 @@ const WCHAR* MeasureWifiStatus::GetCipherAlgorithmString(DOT11_CIPHER_ALGORITHM 
 	case DOT11_CIPHER_ALGO_TKIP: return L"TKIP";
 	case DOT11_CIPHER_ALGO_CCMP: return L"AES";
 	case DOT11_CIPHER_ALGO_WEP104: return L"WEP104";
+	case DOT11_CIPHER_ALGO_BIP: return L"BIP";
+	case DOT11_CIPHER_ALGO_GCMP: return L"GCMP";
 	case DOT11_CIPHER_ALGO_WPA_USE_GROUP: return L"WPA-GROUP";
 	case DOT11_CIPHER_ALGO_WEP: return L"WEP";
 	default: return L"???";
