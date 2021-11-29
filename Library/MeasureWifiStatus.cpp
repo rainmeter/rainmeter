@@ -326,7 +326,7 @@ const WCHAR* MeasureWifiStatus::GetStringValue()
 	case MeasureType::PHY:
 	case MeasureType::ENCRYPTION:
 	case MeasureType::AUTH:
-		return m_StatusString.c_str();
+		return !m_StatusString.empty() ? CheckSubstitute(m_StatusString.c_str()) : nullptr;
 
 	default:
 		return nullptr;
