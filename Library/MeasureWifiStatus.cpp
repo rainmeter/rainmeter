@@ -263,6 +263,8 @@ void MeasureWifiStatus::UpdateValue()
 				m_StatusString = L"-1";
 				break;
 			case MeasureType::QUALITY:
+			case MeasureType::TXRATE:
+			case MeasureType::RXRATE:
 				m_Value = 0.0;
 				break;
 			}
