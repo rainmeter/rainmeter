@@ -22,7 +22,7 @@
 #define STR_REFRESHALL                  "Osveži sve"
 #define STR_LOGGING                     "Evidencija"
 #define STR_SHOWLOGFILE                 "Prikaži datoteku evidencije"
-#define STR_LOGGING                     "Počni vođenje evidencije"
+#define STR_STARTLOGGING                "Počni vođenje evidencije"
 #define STR_STOPLOGGING                 "Prekini vođenje evidencije"
 #define STR_DELETELOGFILE               "Izbriši datoteku evidencije"
 #define STR_DEBUGMODE                   "Režim za otklanjanje grešaka"
