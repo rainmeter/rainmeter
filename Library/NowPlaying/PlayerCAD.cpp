@@ -224,13 +224,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_VOLUME_CHANGED_NOTIFICATION:
 			{
-				UINT volume = (UINT)wParam;
-				if(volume <= 100)
-				{
-					// Range check the volume, so we don't see buggy values
-					player->m_Volume = volume;
-					break;
-				}
+				player->m_Volume = min((UINT)wParam, 100U);
 				break;
 			}
 
@@ -419,12 +413,8 @@ void PlayerCAD::UpdateData()
 	if (m_State != STATE_STOPPED)
 	{
 		m_Position = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
-		UINT volume = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
-		if(volume <= 100)
-		{
-			// Range check the volume, so we don't see buggy values
-			m_Volume = volume;
-		}
+		m_Volume = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
+		m_Volume = min(m_Volume, 100U);
 	}
 }
 
