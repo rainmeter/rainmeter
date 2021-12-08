@@ -46,10 +46,10 @@ ULONG NetworkUtil::FindBestInterface(LPCWSTR interfaceName)
 	{
 		if (_wcsicmp(interfaceName, L"BEST") == 0)
 		{
-			DWORD dwBestIndex = 0;
+			DWORD dwBestIndex = 0UL;
 			if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
 			{
-				return (ULONG)dwBestIndex;
+				return dwBestIndex;
 			}
 		}
 		else
@@ -112,9 +112,9 @@ ULONG NetworkUtil::GetIndexFromIfIndex(const ULONG ifIndex)
 {
 	if (s_InterfaceTable)
 	{
-		for (ULONG i = 0; i < s_InterfaceCount; ++i)
+		MIB_IF_ROW2* table = s_InterfaceTable->Table;
+		for (ULONG i = 0UL; i < s_InterfaceCount; ++i)
 		{
-			MIB_IF_ROW2* table = s_InterfaceTable->Table;
 			if (ifIndex == table[i].InterfaceIndex)
 			{
 				return i;
