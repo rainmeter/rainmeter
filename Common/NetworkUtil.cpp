@@ -54,14 +54,55 @@ ULONG NetworkUtil::FindBestInterface(LPCWSTR interfaceName)
 		}
 		else
 		{
-			for (size_t i = 0; i < s_InterfaceCount; ++i)
+			auto findIndex = [&](bool useAlias) -> ULONG
 			{
+				ULONG firstMatch = ULONG_MAX;
+				ULONG bestStatus = ULONG_MAX;
+				ULONG bestConnected = ULONG_MAX;
+				ULONG bestDisconnected = ULONG_MAX;
 				MIB_IF_ROW2* table = s_InterfaceTable->Table;
-				if (_wcsicmp(interfaceName, table[i].Description) == 0)
+
+				for (ULONG i = 0UL; i < s_InterfaceCount; ++i)
 				{
-					return table[i].InterfaceIndex;
+					bool found = useAlias ?
+						(_wcsicmp(interfaceName, table[i].Alias) == 0) :
+						(_wcsicmp(interfaceName, table[i].Description) == 0);
+					if (found)
+					{
+						if (firstMatch == ULONG_MAX)
+						{
+							firstMatch = table[i].InterfaceIndex;
+						}
+
+						bool isPresent = table[i].OperStatus != IfOperStatusNotPresent;
+						bool isConnected = table[i].MediaConnectState == MediaConnectStateConnected;
+						bool isDisconnected = table[i].MediaConnectState == MediaConnectStateDisconnected;
+
+						if (isPresent && isConnected)
+						{
+							return table[i].InterfaceIndex;
+						}
+
+						if (isPresent) bestStatus = table[i].InterfaceIndex;
+						if (isConnected) bestConnected = table[i].InterfaceIndex;
+						if (isDisconnected) bestDisconnected = table[i].InterfaceIndex;
+					}
 				}
+
+				if (bestConnected != ULONG_MAX)         return bestConnected;
+				else if (bestStatus != ULONG_MAX)       return bestStatus;
+				else if (bestDisconnected != ULONG_MAX) return bestDisconnected;
+				else if (firstMatch != ULONG_MAX)       return firstMatch;
+
+				return ULONG_MAX;
+			};
+
+			ULONG index = findIndex(false);			// Search for "Description" first
+			if (index == ULONG_MAX)
+			{
+				index = findIndex(true);			// If no "Description" is matched, search for "Alias"
 			}
+			if (index != ULONG_MAX) return index;
 		}
 	}
 	return 0UL;
