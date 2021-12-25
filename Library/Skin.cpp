@@ -117,6 +117,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
 	m_SolidBevel(BEVELTYPE_NONE),
+	m_BevelColor(Gfx::Util::c_Transparent_Color_F),
+	m_BevelColor2(Gfx::Util::c_Transparent_Color_F),
 	m_OldWindowDraggable(false),
 	m_OldKeepOnScreen(false),
 	m_OldClickThrough(false),
@@ -2380,6 +2382,8 @@ bool Skin::ReadSkin()
 
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
+	m_BevelColor = m_Parser.ReadColor(L"Rainmeter", L"BevelColor", D2D1::ColorF(D2D1::ColorF::White));
+	m_BevelColor2 = m_Parser.ReadColor(L"Rainmeter", L"BevelColor2", D2D1::ColorF(D2D1::ColorF::Black));
 
 	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", D2D1::ColorF(D2D1::ColorF::Gray));
 	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
@@ -2886,8 +2890,8 @@ void Skin::Redraw()
 
 			if (m_SolidBevel != BEVELTYPE_NONE)
 			{
-				D2D1_COLOR_F lightColor = D2D1::ColorF(D2D1::ColorF::White);
-				D2D1_COLOR_F darkColor = D2D1::ColorF(D2D1::ColorF::Black);
+				D2D1_COLOR_F lightColor = m_BevelColor;
+				D2D1_COLOR_F darkColor = m_BevelColor2;
 
 				if (m_SolidBevel == BEVELTYPE_DOWN)
 				{
