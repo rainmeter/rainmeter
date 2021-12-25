@@ -423,7 +423,10 @@ private:
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;
 	FLOAT m_SolidAngle;
+
 	BEVELTYPE m_SolidBevel;
+	D2D1_COLOR_F m_BevelColor;
+	D2D1_COLOR_F m_BevelColor2;
 
 	bool m_OldWindowDraggable;
 	bool m_OldKeepOnScreen;

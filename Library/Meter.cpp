@@ -41,6 +41,8 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
 	m_SolidBevel(BEVELTYPE_NONE),
+	m_BevelColor(Gfx::Util::c_Transparent_Color_F),
+	m_BevelColor2(Gfx::Util::c_Transparent_Color_F),
 	m_SolidAngle(),
 	m_Padding(),
 	m_AntiAlias(false),
@@ -425,6 +427,8 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
+	m_BevelColor = parser.ReadColor(section, L"BevelColor", D2D1::ColorF(D2D1::ColorF::White));
+	m_BevelColor2 = parser.ReadColor(section, L"BevelColor2", D2D1::ColorF(D2D1::ColorF::Black));
 
 	m_SolidColor = parser.ReadColor(section, L"SolidColor", Gfx::Util::c_Transparent_Color_F);
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
@@ -827,13 +831,12 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
-		D2D1_COLOR_F lightColor = D2D1::ColorF(D2D1::ColorF::White);
-		D2D1_COLOR_F darkColor = D2D1::ColorF(D2D1::ColorF::Black);
+		D2D1_COLOR_F lightColor = m_BevelColor;
+		D2D1_COLOR_F darkColor = m_BevelColor2;
 		
 		if (m_SolidBevel == BEVELTYPE_DOWN)
 		{
-			lightColor = D2D1::ColorF(D2D1::ColorF::Black);
-			darkColor = D2D1::ColorF(D2D1::ColorF::White);
+			std::swap(lightColor, darkColor);
 		}
 
 		// The bevel is drawn outside the meter
@@ -851,17 +854,21 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 */
 void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark)
 {
-	const FLOAT l = rect.left;
-	const FLOAT r = rect.right - 1.0f;
-	const FLOAT t = rect.top;
-	const FLOAT b = rect.bottom - 1.0f;
+	const FLOAT w = 1.0f;
+	const FLOAT l = rect.left   + w;
+	const FLOAT r = rect.right  - w;
+	const FLOAT t = rect.top    + w;
+	const FLOAT b = rect.bottom - w;
 
-	canvas.DrawLine(light, l,        t,        l,        b,        2.0f);
-	canvas.DrawLine(light, l,        t,        r,        t,        2.0f);
-	canvas.DrawLine(light, l + 1.0f, t + 1.0f, l + 1.0f, b - 1.0f, 2.0f);
-	canvas.DrawLine(light, l + 1.0f, t + 1.0f, r - 1.0f, t + 1.0f, 2.0f);
-	canvas.DrawLine(dark,  l,        b,        r,        b,        2.0f);
-	canvas.DrawLine(dark,  r,        t,        r,        b,        2.0f);
-	canvas.DrawLine(dark,  l + 1.0f, b - 1.0f, r - 1.0f, b - 1.0f, 2.0f);
-	canvas.DrawLine(dark,  r - 1.0f, t + 1.0f, r - 1.0f, b - 1.0f, 2.0f);
+	// GDI+ offset for innermost lines
+	const FLOAT o = 0.155f;
+
+	canvas.DrawLine(light, l,         t,         l,         b,         w);
+	canvas.DrawLine(light, l,         t,         r,         t,         w);
+	canvas.DrawLine(light, l + w - o, t + w,     l + w - o, b - w,     w - (2 * o));
+	canvas.DrawLine(light, l + w,     t + w - o, r - w,     t + w - o, w - (2 * o));
+	canvas.DrawLine(dark,  l,         b,         r,         b,         w);
+	canvas.DrawLine(dark,  r,         t,         r,         b,         w);
+	canvas.DrawLine(dark,  l + w,     b - w,     r - w,     b - w,     w);
+	canvas.DrawLine(dark,  r - w,     t + w,     r - w,     b - w,     w);
 }
