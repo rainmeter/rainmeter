@@ -117,8 +117,8 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	> "..\Language\Language.rc" echo #include "%%a.h"
 	>>"..\Language\Language.rc" echo #include "Resource.rc"
 	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
-	set LANGDLL_PARAMS='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGDLL_PARAMS!
-	set LANGUAGE_IDS=${LANG_%%b},!LANGUAGE_IDS!
+	set "LANGDLL_PARAMS=!LANGDLL_PARAMS!'%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' "
+	set "LANGUAGE_IDS=!LANGUAGE_IDS!${LANG_%%b},"
 
 	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln || (echo   ERROR: Building language %%a failed & exit /b 1)
 )
