@@ -29,17 +29,23 @@ void MeasureRegistry::UpdateValue()
 {
 	if (m_RegKey != nullptr)
 	{
-		DWORD size = 4096;
+		const DWORD INCREMENT = 4096UL;
+		DWORD size = INCREMENT;
 		WCHAR* data = new WCHAR[size];
-		DWORD type = 0;
+		DWORD type = 0UL;
 
-		if (RegQueryValueEx(
-				m_RegKey,
-				m_RegValueName.c_str(),
-				nullptr,
-				(LPDWORD)&type,
-				(LPBYTE)data,
-				(LPDWORD)&size) == ERROR_SUCCESS)
+		DWORD dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
+			(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+		while (dwRet == ERROR_MORE_DATA)
+		{
+			size += INCREMENT;
+			delete [] data;
+			data = new WCHAR[size];
+			dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
+				(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+		}
+
+		if (dwRet == ERROR_SUCCESS)
 		{
 			switch (type)
 			{
@@ -50,9 +56,26 @@ void MeasureRegistry::UpdateValue()
 
 			case REG_SZ:
 			case REG_EXPAND_SZ:
-			case REG_MULTI_SZ:
 				m_Value = wcstod(data, nullptr);
 				m_StringValue = data;
+				break;
+
+			case REG_MULTI_SZ:
+				{
+					m_Value = wcstod(data, nullptr);
+					m_StringValue.clear();
+
+					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
+					// separators from the BYTE array (returned from RegQueryValueEx) into a newline
+					const DWORD dwSize = size / sizeof(WCHAR);
+					m_StringValue.resize(dwSize);
+
+					for (ULONG pos = 0UL; pos < (dwSize - 1UL); ++pos)
+					{
+						if (data[pos]) m_StringValue[pos] = data[pos];
+						else m_StringValue[pos] = L'\n';  // Substitute newline for null
+					}
+				}
 				break;
 
 			case REG_QWORD:
