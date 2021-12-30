@@ -842,8 +842,12 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 		// The bevel is drawn outside the meter
 		const FLOAT x = (FLOAT)GetX();
 		const FLOAT y = (FLOAT)GetY();
-		const D2D1_RECT_F rect = D2D1::RectF(x - 2.0f, y - 2.0f, x + (FLOAT)m_W + 2.0f, y + (FLOAT)m_H + 2.0f);
-		DrawBevel(canvas, rect, lightColor, darkColor);
+		const D2D1_RECT_F rect = D2D1::RectF(
+			x - 2.0f,
+			y - 2.0f,
+			x + (FLOAT)m_W + 2.0f,
+			y + (FLOAT)m_H + 2.0f);
+		DrawBevel(canvas, rect, lightColor, darkColor, m_AntiAlias);
 	}
 
 	return true;
@@ -852,23 +856,24 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 /*
 ** Draws a bevel inside the given area
 */
-void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark)
+void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode)
 {
+	// Simulate GDI+ "PixelOffsetModeHalf" offset mode
+	const FLOAT offset = offsetMode ? 0.0f : 0.5f;
+
 	const FLOAT w = 1.0f;
-	const FLOAT l = rect.left   + w;
-	const FLOAT r = rect.right  - w;
-	const FLOAT t = rect.top    + w;
-	const FLOAT b = rect.bottom - w;
+	const FLOAT l = rect.left + offset;
+	const FLOAT t = rect.top + offset;
+	const FLOAT r = rect.right;
+	const FLOAT b = rect.bottom;
 
-	// GDI+ offset for innermost lines
-	const FLOAT o = 0.155f;
+	canvas.DrawLine(light, l,     t,     l,     b,     w);
+	canvas.DrawLine(light, l,     t,     r,     t,     w);
+	canvas.DrawLine(light, l + w, t,     l + w, b - w, w);
+	canvas.DrawLine(light, l,     t + w, r - w, t + w, w);
 
-	canvas.DrawLine(light, l,         t,         l,         b,         w);
-	canvas.DrawLine(light, l,         t,         r,         t,         w);
-	canvas.DrawLine(light, l + w - o, t + w,     l + w - o, b - w,     w - (2 * o));
-	canvas.DrawLine(light, l + w,     t + w - o, r - w,     t + w - o, w - (2 * o));
-	canvas.DrawLine(dark,  l,         b,         r,         b,         w);
-	canvas.DrawLine(dark,  r,         t,         r,         b,         w);
-	canvas.DrawLine(dark,  l + w,     b - w,     r - w,     b - w,     w);
-	canvas.DrawLine(dark,  r - w,     t + w,     r - w,     b - w,     w);
+	canvas.DrawLine(dark,  l,     b,     r,     b,     w);
+	canvas.DrawLine(dark,  r,     t,     r,     b,     w);
+	canvas.DrawLine(dark,  l + w, b - w, r - w, b - w, w);
+	canvas.DrawLine(dark,  r - w, t + w, r - w, b - w, w);
 }
