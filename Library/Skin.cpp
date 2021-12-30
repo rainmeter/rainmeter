@@ -2898,7 +2898,7 @@ void Skin::Redraw()
 					std::swap(lightColor, darkColor);
 				}
 
-				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor);
+				Meter::DrawBevel(m_Canvas, r, lightColor, darkColor, false);
 			}
 		}
 
