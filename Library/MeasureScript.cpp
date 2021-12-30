@@ -168,7 +168,13 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
+	// Disabled measures do not log any messages.
+	// In this case, temporarily enable the measure to log the error message.
+	bool isDisabled = m_Disabled;
+	m_Disabled = false;
 	LogErrorF(this, L"Script: File not valid");
+	m_Disabled = isDisabled;
+
 	UninitializeLuaScript();
 }
 
