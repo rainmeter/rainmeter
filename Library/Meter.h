@@ -92,7 +92,7 @@ public:
 
 	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
 	
-	static void DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark);
+	static void DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode);
 
 protected:
 
@@ -158,6 +158,9 @@ protected:
 	METER_POSITION m_RelativeY;
 
 	BEVELTYPE m_SolidBevel;
+	D2D1_COLOR_F m_BevelColor;
+	D2D1_COLOR_F m_BevelColor2;
+
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;
 	FLOAT m_SolidAngle;

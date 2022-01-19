@@ -224,7 +224,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_VOLUME_CHANGED_NOTIFICATION:
 			{
-				player->m_Volume = (UINT)wParam;
+				player->m_Volume = min((UINT)wParam, 100U);
 				break;
 			}
 
@@ -414,6 +414,7 @@ void PlayerCAD::UpdateData()
 	{
 		m_Position = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
 		m_Volume = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
+		m_Volume = min(m_Volume, 100U);
 	}
 }
 

@@ -482,7 +482,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)System::GetMonitorCount();
+		m_Value = (double)GetSystemMetrics(SM_CMONITORS);
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:

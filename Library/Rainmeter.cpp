@@ -1842,7 +1842,8 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"Process",
 		L"RecycleManager",
 		L"SysInfo",
-		L"WebParser"
+		L"WebParser",
+		L"WifiStatus"
 	};
 	return s_OldPlugins;
 }
