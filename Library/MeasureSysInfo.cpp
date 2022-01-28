@@ -12,6 +12,7 @@
 #include "../Common/NetworkUtil.h"
 #include "../Common/Platform.h"
 
+#include <sddl.h>
 #include <LM.h>
 #include <Powrprof.h>
 #include <Ip2string.h>
@@ -72,6 +73,10 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else if (_wcsicmp(L"USER_NAME", type) == 0)
 	{
 		m_Type = SysInfoType::USER_NAME;
+	}
+	else if (_wcsicmp(L"USER_SID", type) == 0)
+	{
+		m_Type = SysInfoType::USER_SID;
 	}
 	else if (_wcsicmp(L"OS_VERSION", type) == 0)
 	{
@@ -587,6 +592,34 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::USER_NAME:
 		GetUserName(buffer, &bufferLen);
 		break;
+
+	case SysInfoType::USER_SID:
+		{
+			HANDLE hToken = INVALID_HANDLE_VALUE;
+			if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken) == TRUE)
+			{
+				std::vector<BYTE> tokenBuffer;
+				DWORD tokenBufferLen = 0UL;
+				if ((GetTokenInformation(hToken, TokenUser, nullptr, 0UL, &tokenBufferLen) == FALSE) &&
+					(GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
+					(tokenBufferLen > 0UL))
+				{
+					tokenBuffer.resize(tokenBufferLen);
+					PTOKEN_USER token = reinterpret_cast<PTOKEN_USER>(&tokenBuffer[0]);
+					LPWSTR temp = nullptr;
+					if ((GetTokenInformation(hToken, TokenUser, token, tokenBufferLen, &tokenBufferLen) == TRUE) &&
+						(IsValidSid(token->User.Sid) == TRUE) &&
+						(ConvertSidToStringSid(token->User.Sid, &temp) == TRUE))
+					{
+						m_StringValue = temp;
+					}
+					LocalFree(temp);
+				}
+				CloseHandle(hToken);
+				hToken = nullptr;
+			}
+		}
+		return;
 
 	case SysInfoType::OS_VERSION:
 		m_StringValue = Platform::GetPlatformName();
