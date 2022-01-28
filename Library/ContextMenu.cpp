@@ -181,13 +181,16 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	}
 	else
 	{
-		InsertMenu(menu, 13, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-
 		// Create a menu for all active skins
 		int index = 0;
 		std::map<std::wstring, Skin*>::const_iterator iter = rainmeter.m_Skins.begin();
 		for (; iter != rainmeter.m_Skins.end(); ++iter)
 		{
+			if (index == 0)
+			{
+				InsertMenu(menu, 13, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+			}
+
 			Skin* skin = ((*iter).second);
 			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
 			InsertMenu(menu, 13, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
