@@ -65,8 +65,6 @@ void Player::AddInstance()
 */
 void Player::RemoveInstance()
 {
-	m_UpdateCount = 0;
-
 	if (--m_InstanceCount == 0)
 	{
 		delete this;
@@ -88,7 +86,7 @@ void Player::AddMeasure(INT type)
 */
 void Player::UpdateMeasure()
 {
-	if (++m_UpdateCount == m_InstanceCount)
+	if (++m_UpdateCount >= m_InstanceCount)
 	{
 		UpdateData();
 		m_UpdateCount = 0;
