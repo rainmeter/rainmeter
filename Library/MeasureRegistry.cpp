@@ -9,7 +9,15 @@
 #include "MeasureRegistry.h"
 #include "Rainmeter.h"
 
+namespace {
+
+const int MAX_KEY_LENGTH = 255;
+const int MAX_VALUE_NAME = 16383;
+
+}  // namespace
+
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_OutputType(OutputType::Value),
 	m_RegKey(),
 	m_HKey(HKEY_CURRENT_USER)
 {
@@ -29,38 +37,80 @@ void MeasureRegistry::UpdateValue()
 {
 	if (m_RegKey != nullptr)
 	{
-		const DWORD INCREMENT = 4096UL;
-		DWORD size = INCREMENT;
-		WCHAR* data = new WCHAR[size];
-		DWORD type = 0UL;
-
-		DWORD dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-			(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
-		while (dwRet == ERROR_MORE_DATA)
+		if (m_OutputType != OutputType::Value)
 		{
-			size += INCREMENT;
-			delete [] data;
-			data = new WCHAR[size];
-			dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-				(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
-		}
-
-		if (dwRet == ERROR_SUCCESS)
-		{
-			switch (type)
+			auto getList = [&](const DWORD objNum, const int objMaxSize, auto* func) -> void
 			{
-			case REG_DWORD:
-				m_Value = *((LPDWORD)data);
-				m_StringValue.clear();
-				break;
+				WCHAR* objName = new WCHAR[objMaxSize];
+				DWORD objSize = 0UL;
+				for (DWORD i = 0UL; i < objNum; ++i)
+				{
+					objName[0] = L'\0';
+					objSize = objMaxSize;
+					if (func(m_RegKey, i, objName, &objSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
+					{
+						m_StringValue += objName;
+						if (i < objNum - 1UL)
+						{
+							m_StringValue += m_OutputDelimiter;
+						}
+					}
+				}
+				delete [] objName;
+			};
 
-			case REG_SZ:
-			case REG_EXPAND_SZ:
-				m_Value = wcstod(data, nullptr);
-				m_StringValue = data;
-				break;
+			m_Value = 0.0;
+			m_StringValue.clear();
 
-			case REG_MULTI_SZ:
+			DWORD numSubKeys = 0UL;
+			DWORD numValues = 0UL;
+			if (ERROR_SUCCESS == RegQueryInfoKey(m_RegKey, nullptr, nullptr, nullptr, &numSubKeys,
+				nullptr, nullptr, &numValues, nullptr, nullptr, nullptr, nullptr))
+			{
+				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0UL)
+				{
+					getList(numSubKeys, MAX_KEY_LENGTH, RegEnumKeyEx);
+				}
+				else if (m_OutputType == OutputType::ValueList && numValues > 0UL)
+				{
+					getList(numValues, MAX_VALUE_NAME, RegEnumValue);
+				}
+			}
+		}
+		else
+		{
+			const DWORD INCREMENT = 4096UL;
+			DWORD size = INCREMENT;
+			WCHAR* data = new WCHAR[size];
+			DWORD type = 0UL;
+
+			DWORD dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
+				(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+			while (dwRet == ERROR_MORE_DATA)
+			{
+				size += INCREMENT;
+				delete[] data;
+				data = new WCHAR[size];
+				dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
+					(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+			}
+
+			if (dwRet == ERROR_SUCCESS)
+			{
+				switch (type)
+				{
+				case REG_DWORD:
+					m_Value = *((LPDWORD)data);
+					m_StringValue.clear();
+					break;
+
+				case REG_SZ:
+				case REG_EXPAND_SZ:
+					m_Value = wcstod(data, nullptr);
+					m_StringValue = data;
+					break;
+
+				case REG_MULTI_SZ:
 				{
 					m_Value = wcstod(data, nullptr);
 					m_StringValue.clear();
@@ -78,37 +128,38 @@ void MeasureRegistry::UpdateValue()
 				}
 				break;
 
-			case REG_QWORD:
-				m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
-				m_StringValue.clear();
-				break;
+				case REG_QWORD:
+					m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
+					m_StringValue.clear();
+					break;
 
-			case REG_BINARY:
-				m_Value = 0.0;
-				m_StringValue.clear();
+				case REG_BINARY:
+					m_Value = 0.0;
+					m_StringValue.clear();
 
-				for (DWORD i = 0; i < size; ++i)
-				{
-					WCHAR buffer[3];
-					_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
-					m_StringValue.append(buffer);
+					for (DWORD i = 0; i < size; ++i)
+					{
+						WCHAR buffer[3];
+						_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
+						m_StringValue.append(buffer);
+					}
+
+					break;
+
+				default:	// Other types are not supported
+					m_Value = 0.0;
+					m_StringValue.clear();
 				}
-
-				break;
-
-			default:	// Other types are not supported
+			}
+			else
+			{
 				m_Value = 0.0;
 				m_StringValue.clear();
+				RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 			}
-		}
-		else
-		{
-			m_Value = 0.0;
-			m_StringValue.clear();
-			RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
-		}
 
-		delete [] data;
+			delete [] data;
+		}
 	}
 	else
 	{
@@ -153,6 +204,26 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		LogErrorF(this, L"RegHKey=%s is not valid", keyname);
 	}
+
+	const WCHAR* type = parser.ReadString(section, L"OutputType", L"Value").c_str();
+	if (_wcsicmp(type, L"SubKeyList") == 0)
+	{
+		m_OutputType = OutputType::SubKeyList;
+	}
+	else if (_wcsicmp(type, L"ValueList") == 0)
+	{
+		m_OutputType = OutputType::ValueList;
+	}
+	else
+	{
+		m_OutputType = OutputType::Value;
+		if (_wcsicmp(type, L"Value") != 0)
+		{
+			LogErrorF(this, L"OutputType=%s is not valid", type);
+		}
+	}
+
+	m_OutputDelimiter = parser.ReadString(section, L"OutputDelimiter", L"\n");
 
 	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");
 	m_RegValueName = parser.ReadString(section, L"RegValue", L"");
