@@ -122,19 +122,17 @@ void MeasureRegistry::UpdateValue()
 					m_Value = wcstod(data, nullptr);
 
 					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
-					// separators from the BYTE array (returned from RegQueryValueEx) into a newline
+					// separators from the BYTE array (returned from RegQueryValueEx) into a delimiter
 					const DWORD dwSize = size / sizeof(WCHAR);
-					m_StringValue.resize(dwSize);
-
 					for (ULONG pos = 0UL; pos < (dwSize - 1UL); ++pos)
 					{
 						if (data[pos])
 						{
-							m_StringValue[pos] = data[pos];
+							m_StringValue.append(1, data[pos]);
 						}
 						else
 						{
-							m_StringValue[pos] = L'\n';  // Substitute newline for null
+							m_StringValue.append(m_OutputDelimiter);  // Substitute null for delimiter
 						}
 					}
 				}
