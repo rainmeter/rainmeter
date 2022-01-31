@@ -26,7 +26,15 @@ MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, 
 
 MeasureRegistry::~MeasureRegistry()
 {
-	if (m_RegKey) RegCloseKey(m_RegKey);
+	Dispose();
+}
+
+void MeasureRegistry::Dispose()
+{
+	if (m_RegKey)
+	{
+		RegCloseKey(m_RegKey);
+	}
 }
 
 /*
@@ -37,6 +45,9 @@ void MeasureRegistry::UpdateValue()
 {
 	if (m_RegKey != nullptr)
 	{
+		m_Value = 0.0;
+		m_StringValue.clear();
+
 		if (m_OutputType != OutputType::Value)
 		{
 			auto getList = [&](const DWORD objNum, const int objMaxSize, auto* func) -> void
@@ -50,7 +61,7 @@ void MeasureRegistry::UpdateValue()
 					if (func(m_RegKey, i, objName, &objSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
 					{
 						m_StringValue += objName;
-						if (i < objNum - 1UL)
+						if (i < (objNum - 1UL))
 						{
 							m_StringValue += m_OutputDelimiter;
 						}
@@ -58,9 +69,6 @@ void MeasureRegistry::UpdateValue()
 				}
 				delete [] objName;
 			};
-
-			m_Value = 0.0;
-			m_StringValue.clear();
 
 			DWORD numSubKeys = 0UL;
 			DWORD numValues = 0UL;
@@ -101,7 +109,6 @@ void MeasureRegistry::UpdateValue()
 				{
 				case REG_DWORD:
 					m_Value = *((LPDWORD)data);
-					m_StringValue.clear();
 					break;
 
 				case REG_SZ:
@@ -113,7 +120,6 @@ void MeasureRegistry::UpdateValue()
 				case REG_MULTI_SZ:
 				{
 					m_Value = wcstod(data, nullptr);
-					m_StringValue.clear();
 
 					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
 					// separators from the BYTE array (returned from RegQueryValueEx) into a newline
@@ -122,22 +128,24 @@ void MeasureRegistry::UpdateValue()
 
 					for (ULONG pos = 0UL; pos < (dwSize - 1UL); ++pos)
 					{
-						if (data[pos]) m_StringValue[pos] = data[pos];
-						else m_StringValue[pos] = L'\n';  // Substitute newline for null
+						if (data[pos])
+						{
+							m_StringValue[pos] = data[pos];
+						}
+						else
+						{
+							m_StringValue[pos] = L'\n';  // Substitute newline for null
+						}
 					}
 				}
 				break;
 
 				case REG_QWORD:
 					m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
-					m_StringValue.clear();
 					break;
 
 				case REG_BINARY:
-					m_Value = 0.0;
-					m_StringValue.clear();
-
-					for (DWORD i = 0; i < size; ++i)
+					for (DWORD i = 0UL; i < size; ++i)
 					{
 						WCHAR buffer[3];
 						_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
@@ -145,17 +153,11 @@ void MeasureRegistry::UpdateValue()
 					}
 
 					break;
-
-				default:	// Other types are not supported
-					m_Value = 0.0;
-					m_StringValue.clear();
 				}
 			}
 			else
 			{
-				m_Value = 0.0;
-				m_StringValue.clear();
-				RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
+				RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 			}
 
 			delete [] data;
@@ -163,7 +165,7 @@ void MeasureRegistry::UpdateValue()
 	}
 	else
 	{
-		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
+		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 	}
 }
 
@@ -235,8 +237,8 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	// Try to open the key
-	if (m_RegKey) RegCloseKey(m_RegKey);
-	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
+	Dispose();
+	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 }
 
 /*
