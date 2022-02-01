@@ -1,10 +1,10 @@
 {
   "release": {
-    "final": "4.5.9",
-    "version": "4.5.9",
-    "revision": "3592",
-    "download_url": "https://github.com/rainmeter/rainmeter/releases/download/v4.5.9.3592/Rainmeter-4.5.9.exe",
-    "download_sha256": "28AAFDFD072AC782BD4C6BE6E100156367713E4E1E7F3F31860319ABBECB7BA4"
+    "final": "4.5.10",
+    "version": "4.5.10",
+    "revision": "3597",
+    "download_url": "https://github.com/rainmeter/rainmeter/releases/download/v4.5.10.3597/Rainmeter-4.5.10.exe",
+    "download_sha256": "71D29ED56B703315CE9D363F69F2DA8FE1DA67B264A846205EEE27CFB97204D9"
   },
   "language": [
     {
