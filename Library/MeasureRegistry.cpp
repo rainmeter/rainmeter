@@ -97,7 +97,7 @@ void MeasureRegistry::UpdateValue()
 			while (dwRet == ERROR_MORE_DATA)
 			{
 				size += INCREMENT;
-				delete[] data;
+				delete [] data;
 				data = new WCHAR[size];
 				dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
 					(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
