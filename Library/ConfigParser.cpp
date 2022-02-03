@@ -880,6 +880,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	std::wstring result = str;
 	bool replaced = false;
 
+	bool prevValid = true;
 	size_t prevStart = 0;
 	std::wstring prevVar = L"";
 
@@ -891,6 +892,13 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 		size_t ei = end - 1;
 		start = result.rfind(L'[', ei);
+		if (start != std::wstring::npos && !prevValid && prevStart == start)
+		{
+			// Previous "variable" was invalid (maybe embedded brackets within string?), so
+			// skip this starting bracket and reverse find the next starting bracket.
+			start = result.rfind(L'[', start - 1);
+		}
+
 		if (start != std::wstring::npos)
 		{
 			size_t si = start + 2;  // Check for escaped variable 'names'
@@ -913,11 +921,14 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				std::wstring val = result.substr(si + 1, end - si - 1);
 
 				// Avoid empty commands and self references
-				std::wstring original = result.substr(si, end - si).c_str();
+				std::wstring original = result.substr(si, end - si);
 				if (original.empty() ||
 					(prevStart == start && _wcsicmp(original.c_str(), prevVar.c_str()) == 0))
 				{
-					if (!original.empty()) LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
+					if (!original.empty())
+					{
+						LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
+					}
 					start = end + 1;
 					continue;
 				}
@@ -937,6 +948,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 						break;
 					}
 				}
+
+				prevValid = isValid;
 
 				// |key| is invalid or variable name is empty ([#], [&], [$], [\])
 				if (!isValid || val.empty())
