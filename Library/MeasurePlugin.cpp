@@ -242,13 +242,15 @@ void MeasurePlugin::Command(const std::wstring& command)
 	}
 }
 
-bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring& strValue)
+bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
 {
 	if (!m_Initialized)
 	{
 		strValue = L"0";
 		return true;
 	}
+
+	WCHAR errMsg[MAX_LINE_LENGTH];
 
 	size_t sPos = command.find_first_of(L'(');
 	if (sPos != std::wstring::npos)
@@ -258,7 +260,26 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			sPos > ePos ||
 			command.size() < 3)
 		{
-			LogErrorF(this, L"Invalid function call: %s", command.c_str());
+			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
+			if (delayedLogEntry)
+			{
+				std::wstring source = m_Skin->GetSkinPath();
+				source += L" - [";
+				source += GetOriginalName();
+				source += L']';
+
+				// Since plugins can accept single brackets as input, the nested variable parser
+				// can send incomplete section variable to the plugin, so store a delayed message
+				// in case the "actual" section variable is invalid. If the "final" variable the
+				// parser finds is a valid variable, this error message will not be logged.
+				// See: |ConfigParser::ParseVariables|
+				auto* log = (Logger::Entry*)delayedLogEntry;
+				*log = { Logger::Level::Error, L"", source.c_str(), errMsg };
+			}
+			else
+			{
+				LogErrorF(this, errMsg);
+			}
 			return false;
 		}
 

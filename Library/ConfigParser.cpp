@@ -214,7 +214,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 ** The selector is stripped from strVariable.
 **
 */
-bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
+bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
 {
 	if (!m_Skin) return false;
 
@@ -335,13 +335,13 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			{
 				valueType = ValueType::Script;  // Needed?
 				MeasureScript* script = (MeasureScript*)measure;
-				retValue = script->CommandWithReturn(selectorSz, strValue);
+				retValue = script->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
 				valueType = ValueType::Plugin;  // Needed?
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				retValue = plugin->CommandWithReturn(selectorSz, strValue);
+				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 
 			m_StyleTemplate = meterStyle;
@@ -852,12 +852,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			start = next;
 		}
 	}
-	
+
 	return replaced;
 }
 
 /*
-** Replaces new-style measure/section variables, regular variables, and mouse variables in the given string.
+** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
 bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
@@ -883,16 +883,21 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	size_t previousStart = 0UL;
 	std::wstring previousVariable;
 
+	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
+
+	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0UL;
 	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
+		bool found = false;
+
 		const size_t ei = end - 1UL;
 		size_t start = ei;
 
 		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
 		{
-			bool found = false;
-			size_t si = start + 2UL;
+			found = false;
+			size_t si = start + 2UL;  // Start index where escaped variable "should" be: [ *   *]
 
 			// Check for escaped variables first, if found, skip to the next variable
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
@@ -908,23 +913,27 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
-			--si;
+			--si;  // Move index to the "key" character (if it exists)
 
-			// Avoid empty commands and self references
+			// Avoid empty commands
 			std::wstring original = result.substr(si, end - si);
-			if (original.empty() ||
-				(previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0))
+			if (original.empty())
 			{
-				if (!original.empty())
-				{
-					LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
-				}
+				break;		// Break out of inner "start" loop and continue to the next nested variable
+			}
+
+			// Avoid self references
+			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
+			{
+				LogErrorSF(m_Skin, m_CurrentSection->c_str(),
+					L"Cannot replace variable with itself: \"%s\"", original.c_str());
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
 			previousVariable = original;
 			previousStart = start;
 
+			// Separate "key" character from variable
 			const WCHAR key = result.substr(si, 1UL).c_str()[0];
 			std::wstring variable = result.substr(si + 1UL, end - si - 1UL);
 			if (variable.empty())
@@ -948,10 +957,9 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
 			if (!isValid)
 			{
-				if (start != 0UL)
-				{
-					--start;	// Check for any "starting" brackets in string prior to the current starting position
-				}
+				if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
+
+				--start;		// Check for any "starting" brackets in string prior to the current starting position
 				continue;		// This is not a valid nested variable, check the next starting bracket
 			}
 
@@ -965,6 +973,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			//    parsed afterward. One example is when "@Include" is parsed.
 			//  Special case 3: Always process escaped character references.
 
+			std::wstring foundValue;
+
 			if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
 				(kType == VariableType::CharacterReference) ||										// Special case 3
 				(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
@@ -972,105 +982,96 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				switch (kType)
 				{
 				case VariableType::Section:
-				{
-					Measure* measure = GetMeasure(variable);
-					if (measure)
 					{
-						const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-						size_t valueLen = wcslen(value);
-
-						// Measure found, replace it with the value
-						result.replace(start, end - start + 1UL, value, valueLen);
-						replaced = true;
-						found = true;
-					}
-					else
-					{
-						std::wstring value;
-						if (GetSectionVariable(variable, value))
+						Measure* measure = GetMeasure(variable);
+						if (measure)
 						{
-							// Replace section variable with the value
-							result.replace(start, end - start + 1UL, value);
-							replaced = true;
+							const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+							foundValue.assign(value, wcslen(value));
+							found = true;
+							break;
+						}
+						found = GetSectionVariable(variable, foundValue, &delayedLogEntry);
+					}
+					break;
+
+				case VariableType::Variable:
+					{
+						const std::wstring* value = GetVariable(variable);
+						if (value)
+						{
+							foundValue.assign(*value);
 							found = true;
 						}
 					}
-				}
-				break;
-
-				case VariableType::Variable:
-				{
-					const std::wstring* value = GetVariable(variable);
-					if (value)
-					{
-						// Variable found, replace it with the value
-						result.replace(start, end - start + 1UL, *value);
-						replaced = true;
-						found = true;
-					}
-				}
-				break;
+					break;
 
 				case VariableType::Mouse:
-				{
-					std::wstring value = GetMouseVariable(variable, meter);
-					if (!value.empty())
 					{
-						// Mouse variable found, replace it with the value
-						result.replace(start, end - start + 1UL, value);
-						replaced = true;
-						found = true;
+						foundValue = GetMouseVariable(variable, meter);
+						found = !foundValue.empty();
 					}
-				}
-				break;
+					break;
 
 				case VariableType::CharacterReference:
-				{
-					int base = 10;
-					if (variable[0] == L'x' || variable[0] == L'X')
 					{
-						base = 16;
-						variable.erase(0UL, 1UL);  // remove 'x' or 'X'
-
-						if (variable.empty())
+						int base = 10;
+						if (variable[0] == L'x' || variable[0] == L'X')
 						{
-							break;  // Invalid escape sequence [\x]
+							base = 16;
+							variable.erase(0UL, 1UL);  // remove 'x' or 'X'
+
+							if (variable.empty())
+							{
+								break;  // Invalid escape sequence [\x]
+							}
 						}
-					}
 
-					WCHAR* pch = nullptr;
-					errno = 0;
-					long ch = wcstol(variable.c_str(), &pch, base);
-					if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
-					{
-						break;  // Invalid character
-					}
+						WCHAR* pch = nullptr;
+						errno = 0;
+						long ch = wcstol(variable.c_str(), &pch, base);
+						if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
+						{
+							break;  // Invalid character
+						}
 
-					result.replace(start, end - start + 1UL, 1UL, (WCHAR)ch);
-					replaced = true;
-					found = true;
-				}
-				break;
+						foundValue.assign(1UL, (WCHAR)ch);
+						found = true;
+					}
+					break;
 				}
 			}
 
 			if (found)
 			{
-				// The outer "end" loop will increase |end| by 1, but we need to re-evaluate at
-				// the starting position of where the variable was replaced in case of the text
-				// also has a variable within it.
+				result.replace(start, end - start + 1UL, foundValue);
+				replaced = true;
+
 				end = start - 1UL;
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
-			if (start != 0UL)
-			{
-				// No variable was found.
-				// Check for any "starting" brackets in string prior to the current starting position
-				--start;
-			}
+			// No variable found
+
+			if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
+
+			--start;		// Check for any "starting" brackets in string prior to the current starting position
 		}
-		++end;	// Check for any other variables after the current ending bracket
+
+		if (!delayedLogEntry.message.empty() && found && start == previousStart)
+		{
+			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
+			// the nested variable parser can produce errors when determining function names. Reset any delayed
+			// messages if the variable at the starting position was found.
+			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" }; 
+		}
+
+		++end;	// Check for the next "end" bracket after the current ending bracket
+	}
+
+	if (!delayedLogEntry.message.empty())
+	{
+		GetLogger().Log(&delayedLogEntry);
 	}
 
 	// Reset the current section
