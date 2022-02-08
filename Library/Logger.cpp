@@ -162,6 +162,14 @@ void Logger::WriteToLogFile(Entry& entry)
 	}
 }
 
+void Logger::Log(Logger::Entry* entry)
+{
+	if (entry)
+	{
+		Log(entry->level, entry->source.c_str(), entry->message.c_str());
+	}
+}
+
 void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 {
 	struct DelayedEntry
@@ -264,6 +272,22 @@ void Logger::LogSkinVF(Logger::Level level, Skin* skin, const WCHAR* format, va_
 	if (skin)
 	{
 		source = skin->GetSkinPath();
+	}
+	GetLogger().LogVF(level, source.c_str(), format, args);
+}
+
+void Logger::LogSkinSVF(Logger::Level level, Skin* skin, const WCHAR* section, const WCHAR* format, va_list args)
+{
+	std::wstring source;
+	if (skin)
+	{
+		source = skin->GetSkinPath();
+		if (section)
+		{
+			source += L" - [";
+			source += section;
+			source += L']';
+		}
 	}
 	GetLogger().LogVF(level, source.c_str(), format, args);
 }
