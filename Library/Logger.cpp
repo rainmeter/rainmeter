@@ -176,6 +176,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 	{
 		Level level;
 		std::chrono::system_clock::time_point timestamp;
+		std::wstring source;
 		std::wstring message;
 	};
 	static std::list<DelayedEntry> s_DelayedEntries;
@@ -190,7 +191,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 		while (!s_DelayedEntries.empty())
 		{
 			DelayedEntry& entry = s_DelayedEntries.front();
-			LogInternal(entry.level, entry.timestamp, source, entry.message.c_str());
+			LogInternal(entry.level, entry.timestamp, entry.source.c_str(), entry.message.c_str());
 
 			s_DelayedEntries.erase(s_DelayedEntries.begin());
 		}
@@ -207,7 +208,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 		// Queue message.
 		EnterCriticalSection(&m_CsLogDelay);
 
-		DelayedEntry entry = {level, timestamp, msg};
+		DelayedEntry entry = {level, timestamp, source, msg};
 		s_DelayedEntries.push_back(entry);
 
 		LeaveCriticalSection(&m_CsLogDelay);
