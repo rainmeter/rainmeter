@@ -1755,6 +1755,13 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 	}
 }
 
+void Skin::SetZPosVariable(ZPOSITION zPos)
+{
+	WCHAR buffer[32];
+	_itow_s(zPos, buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGZPOS", buffer);
+}
+
 /*
 ** Calculates the screen cordinates from the WindowX/Y options
 **
@@ -2199,6 +2206,9 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 		// Set screen position variables temporarily
 		WindowToScreen();
+
+		// Set built-in "settings" variables
+		SetZPosVariable((ZPOSITION)zPos);
 	}
 }
 
@@ -4103,9 +4113,10 @@ void Skin::SetWindowHide(HIDEMODE hide)
 	WriteOptions(OPTION_HIDEONMOUSEOVER);
 }
 
-void Skin::SetWindowZPosition(ZPOSITION zpos)
+void Skin::SetWindowZPosition(ZPOSITION zPos)
 {
-	ChangeSingleZPos(zpos);
+	SetZPosVariable(zPos);
+	ChangeSingleZPos(zPos);
 	WriteOptions(OPTION_ALWAYSONTOP);
 }
 
