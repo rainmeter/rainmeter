@@ -20,7 +20,7 @@ ${LangFileString} PORTABLEINSTDESC        "Nicht auswählen, es sei denn, Sie wi
 ${LangFileString} AUTOSTARTUP             "Rainmeter mit Windows starten"
 ${LangFileString} ADDITIONALOPTIONS       "Zusätzliche Optionen"
 ${LangFileString} INSTALL64BIT            "64-Bit-Version installieren"
-${LangFileString} SENDINFORMATION         "Send information about your computer"
+${LangFileString} SENDINFORMATION         "Informationen über Ihren Computer schicken"
 ${LangFileString} SENDINFORMATIONDESC     "Während der Installation wird einmalig Ihre Windows-Version, Sprache und Hardware-Konfiguration gesendet um Rainmeter zu verbessern. Es werden keine persönlichen Informationen gesendet."
 ${LangFileString} UNSTALLOPTIONS          "Deinstallationsoptionen"
 ${LangFileString} UNSTALLOPTIONSDESC      "Zusätzliche Optionen auswählen"
