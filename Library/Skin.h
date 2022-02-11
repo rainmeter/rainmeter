@@ -133,6 +133,8 @@ public:
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 
+	void SetZPosVariable(ZPOSITION zPos);
+
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
@@ -319,7 +321,7 @@ private:
 	void SetSnapEdges(bool b);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
-	void SetWindowZPosition(ZPOSITION zpos);
+	void SetWindowZPosition(ZPOSITION zPos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
