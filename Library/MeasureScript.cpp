@@ -187,7 +187,7 @@ void MeasureScript::Command(const std::wstring& command)
 	m_LuaScript.RunString(command);
 }
 
-bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue)
+bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
 {
 	// Scripts need to be initialized so that any variables declared in
 	// the Initialize() function in the lua script file are accessible.
@@ -198,6 +198,8 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
+	WCHAR errMsg[MAX_LINE_LENGTH];
+
 	size_t sPos = command.find_first_of(L'(');
 	if (sPos != std::wstring::npos)
 	{
@@ -207,7 +209,26 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 			sPos > ePos ||
 			command.size() < 3)
 		{
-			LogErrorF(this, L"Invalid function call: %s", command.c_str());
+			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
+			if (delayedLogEntry)
+			{
+				std::wstring source = m_Skin->GetSkinPath();
+				source += L" - [";
+				source += GetOriginalName();
+				source += L']';
+
+				// Since scripts can accept single brackets as input, the nested variable parser
+				// can send incomplete section variable to the script, so store a delayed message
+				// in case the "actual" section variable is invalid. If the "final" variable the
+				// parser finds is a valid variable, this error message will not be logged.
+				// See: |ConfigParser::ParseVariables|
+				auto* log = (Logger::Entry*)delayedLogEntry;
+				*log = { Logger::Level::Error, L"", source.c_str(), errMsg };
+			}
+			else
+			{
+				LogErrorF(this, errMsg);
+			}
 			return false;
 		}
 

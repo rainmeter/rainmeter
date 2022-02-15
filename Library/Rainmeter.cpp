@@ -705,6 +705,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	switch (uMsg)
 	{
 	case WM_DESTROY:
+		PlaySound(nullptr, nullptr, SND_PURGE);  // Stop any sounds. See CommandHandler::ExecuteCommand
 		PostQuitMessage(0);
 		break;
 

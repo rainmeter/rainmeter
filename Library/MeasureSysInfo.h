@@ -18,6 +18,7 @@ enum class SysInfoType : UINT
 	// General system
 	COMPUTER_NAME = 1000U,
 	USER_NAME,
+	USER_SID,
 	OS_VERSION,
 	PAGESIZE,
 	OS_BITS,

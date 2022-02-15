@@ -49,9 +49,11 @@ public:
 	bool IsLogToFile() { return m_LogToFile; }
 	void SetLogToFile(bool logToFile);
 
+	void Log(Logger::Entry* entry);
 	void Log(Level level, const WCHAR* source, const WCHAR* msg);
 	void LogVF(Level level, const WCHAR* source, const WCHAR* format, va_list args);
 	void LogSkinVF(Logger::Level level, Skin* skin, const WCHAR* format, va_list args);
+	void LogSkinSVF(Logger::Level level, Skin* skin, const WCHAR* section, const WCHAR* format, va_list args);
 	void LogSection(Logger::Level level, Section* section, const WCHAR* message);
 	void LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args);
 	void LogMeasureVF(Logger::Level level, Measure* section, const WCHAR* format, va_list args);
@@ -97,6 +99,13 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 		GetLogger().LogVF(Logger::Level::name, L"", format, args); \
 		va_end(args); \
 	} \
+	inline void Log ## name ## SF(Skin* skin, const WCHAR* section, const WCHAR* format, ...) \
+	{ \
+		va_list args; \
+		va_start(args, format); \
+		GetLogger().LogSkinSVF(Logger::Level::name, skin, section, format, args); \
+		va_end(args); \
+	} \
 	\
 	inline void Log ## name ## F(Section* section, const WCHAR* format, ...) \
 	{ \
@@ -114,7 +123,7 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 		va_end(args); \
 	} \
 	\
-	inline void Log ## name ## F(Measure* measure, const WCHAR* format, ...)\
+	inline void Log ## name ## F(Measure* measure, const WCHAR* format, ...) \
 	{ \
 		va_list args; \
 		va_start(args, format); \

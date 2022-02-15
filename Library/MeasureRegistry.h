@@ -28,6 +28,17 @@ protected:
 	virtual void UpdateValue();
 
 private:
+	enum class OutputType : BYTE
+	{
+		Value = 0,
+		SubKeyList,
+		ValueList
+	};
+
+	void Dispose();
+
+	OutputType m_OutputType;
+	std::wstring m_OutputDelimiter;
 	std::wstring m_RegKeyName;
 	std::wstring m_RegValueName;
 	std::wstring m_StringValue;

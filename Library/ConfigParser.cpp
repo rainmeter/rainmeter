@@ -214,7 +214,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 ** The selector is stripped from strVariable.
 **
 */
-bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
+bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
 {
 	if (!m_Skin) return false;
 
@@ -335,13 +335,13 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			{
 				valueType = ValueType::Script;  // Needed?
 				MeasureScript* script = (MeasureScript*)measure;
-				retValue = script->CommandWithReturn(selectorSz, strValue);
+				retValue = script->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
 				valueType = ValueType::Plugin;  // Needed?
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				retValue = plugin->CommandWithReturn(selectorSz, strValue);
+				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 
 			m_StyleTemplate = meterStyle;
@@ -852,12 +852,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			start = next;
 		}
 	}
-	
+
 	return replaced;
 }
 
 /*
-** Replaces new-style measure/section variables, regular variables, and mouse variables in the given string.
+** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
 bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
@@ -880,20 +880,26 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	std::wstring result = str;
 	bool replaced = false;
 
-	size_t prevStart = 0;
-	std::wstring prevVar = L"";
+	size_t previousStart = 0UL;
+	std::wstring previousVariable;
 
-	size_t start = 0;
-	size_t end = 0;
-	while ((end = result.find(L']', start)) != std::wstring::npos)
+	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
+
+	// Find the innermost section variable(s) first, then move outward (working left to right)
+	size_t end = 0UL;
+	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
 		bool found = false;
 
-		size_t ei = end - 1;
-		start = result.rfind(L'[', ei);
-		if (start != std::wstring::npos)
+		const size_t ei = end - 1UL;
+		size_t start = ei;
+
+		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
 		{
-			size_t si = start + 2;  // Check for escaped variable 'names'
+			found = false;
+			size_t si = start + 2UL;  // Start index where escaped variable "should" be: [ *   *]
+
+			// Check for escaped variables first, if found, skip to the next variable
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
@@ -901,155 +907,171 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
 				if (type != VariableType::Mouse)
 				{
-					result.erase(ei, 1);
-					result.erase(si, 1);
+					result.erase(ei, 1UL);
+					result.erase(si, 1UL);
 				}
-				start = ei;
+				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
-			else
+
+			--si;  // Move index to the "key" character (if it exists)
+
+			// Avoid empty commands
+			std::wstring original = result.substr(si, end - si);
+			if (original.empty())
 			{
-				--si;  // Get the key character (#, $, &, \)
-				const WCHAR key = result.substr(si, 1).c_str()[0];
-				std::wstring val = result.substr(si + 1, end - si - 1);
+				break;		// Break out of inner "start" loop and continue to the next nested variable
+			}
 
-				// Avoid empty commands and self references
-				std::wstring original = result.substr(si, end - si).c_str();
-				if (original.empty() ||
-					(prevStart == start && _wcsicmp(original.c_str(), prevVar.c_str()) == 0))
+			// Avoid self references
+			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
+			{
+				LogErrorSF(m_Skin, m_CurrentSection->c_str(),
+					L"Cannot replace variable with itself: \"%s\"", original.c_str());
+				break;		// Break out of inner "start" loop and continue to the next nested variable
+			}
+
+			previousVariable = original;
+			previousStart = start;
+
+			// Separate "key" character from variable
+			const WCHAR key = result.substr(si, 1UL).c_str()[0];
+			std::wstring variable = result.substr(si + 1UL, end - si - 1UL);
+			if (variable.empty())
+			{
+				break; // Break out of inner "start" loop and continue to the next nested variable
+			}
+
+			// Find "type" of key
+			bool isValid = false;
+			VariableType kType = VariableType::Section;
+			for (const auto& t : c_VariableMap)
+			{
+				if (t.second == key)
 				{
-					if (!original.empty()) LogErrorF(m_Skin, L"Error: Cannot replace variable with itself \"%s\"", original.c_str());
-					start = end + 1;
-					continue;
+					kType = t.first;
+					isValid = true;
+					break;
 				}
+			}
 
-				prevStart = start;
-				prevVar = original;
+			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
+			if (!isValid)
+			{
+				if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
 
-				// Find "type" of key
-				bool isValid = false;
-				VariableType kType = VariableType::Section;
-				for (auto& t : c_VariableMap)
+				--start;		// Check for any "starting" brackets in string prior to the current starting position
+				continue;		// This is not a valid nested variable, check the next starting bracket
+			}
+
+			// Since regular variables are replaced just before section variables in most cases, we replace
+			// both types at the same time in case nesting of the different types occurs. The only side effect
+			// is new-style regular variables located in an action will now be "dynamic" just like section
+			// variables.
+			//  Special case 1: Mouse variables cannot be used in the outer part of a nested variable. This is
+			//    because mouse variables are parsed and replaced before the other new-style variables.
+			//  Special case 2: Places where regular variables need to be parsed without any section variables
+			//    parsed afterward. One example is when "@Include" is parsed.
+			//  Special case 3: Always process escaped character references.
+
+			std::wstring foundValue;
+
+			if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
+				(kType == VariableType::CharacterReference) ||										// Special case 3
+				(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
+			{
+				switch (kType)
 				{
-					if (t.second == key)
+				case VariableType::Section:
 					{
-						kType = t.first;
-						isValid = true;
-						break;
+						Measure* measure = GetMeasure(variable);
+						if (measure)
+						{
+							const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+							foundValue.assign(value, wcslen(value));
+							found = true;
+							break;
+						}
+						found = GetSectionVariable(variable, foundValue, &delayedLogEntry);
 					}
-				}
+					break;
 
-				// |key| is invalid or variable name is empty ([#], [&], [$], [\])
-				if (!isValid || val.empty())
-				{
-					start = end + 1;
-					continue;
-				}
-
-				// Since regular variables are replaced just before section variables in most cases, we replace
-				// both types at the same time in case nesting of the different types occurs. The only side effect
-				// is new-style regular variables located in an action will now be "dynamic" just like section
-				// variables.
-				//  Special case 1: Mouse variables cannot be used in the outer part of a nested variable. This is
-				//    because mouse variables are parsed and replaced before the other new-style variables.
-				//  Special case 2: Places where regular variables need to be parsed without any section variables
-				//    parsed afterward. One example is when "@Include" is parsed.
-				//  Special case 3: Always process escaped character references.
-
-				if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
-					(kType == VariableType::CharacterReference) ||										// Special case 3
-					(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
-				{
-					switch (kType)
+				case VariableType::Variable:
 					{
-					case VariableType::Section:
+						const std::wstring* value = GetVariable(variable);
+						if (value)
 						{
-							Measure* measure = GetMeasure(val);
-							if (measure)
-							{
-								const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-								size_t valueLen = wcslen(value);
-
-								// Measure found, replace it with the value
-								result.replace(start, end - start + 1, value, valueLen);
-								replaced = true;
-								found = true;
-							}
-							else
-							{
-								std::wstring value;
-								if (GetSectionVariable(val, value))
-								{
-									// Replace section variable with the value
-									result.replace(start, end - start + 1, value);
-									replaced = true;
-									found = true;
-								}
-							}
-						}
-						break;
-
-					case VariableType::Variable:
-						{
-							const std::wstring* value = GetVariable(val);
-							if (value)
-							{
-								// Variable found, replace it with the value
-								result.replace(start, end - start + 1, *value);
-								replaced = true;
-								found = true;
-							}
-						}
-						break;
-
-					case VariableType::Mouse:
-						{
-							std::wstring value = GetMouseVariable(val, meter);
-							if (!value.empty())
-							{
-								// Mouse variable found, replace it with the value
-								result.replace(start, end - start + 1, value);
-								replaced = true;
-								found = true;
-							}
-						}
-						break;
-
-					case VariableType::CharacterReference:
-						{
-							int base = 10;
-							if (val[0] == L'x' || val[0] == L'X')
-							{
-								base = 16;
-								val.erase(0, 1);  // remove 'x' or 'X'
-
-								if (val.empty())
-								{
-									break;  // Invalid escape sequence [\x]
-								}
-							}
-
-							WCHAR* pch = nullptr;
-							errno = 0;
-							long ch = wcstol(val.c_str(), &pch, base);
-							if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)
-							{
-								break;  // Invalid character
-							}
-
-							result.replace(start, end - start + 1, 1, (WCHAR)ch);
-							replaced = true;
+							foundValue.assign(*value);
 							found = true;
 						}
-						break;
 					}
+					break;
+
+				case VariableType::Mouse:
+					{
+						foundValue = GetMouseVariable(variable, meter);
+						found = !foundValue.empty();
+					}
+					break;
+
+				case VariableType::CharacterReference:
+					{
+						int base = 10;
+						if (variable[0] == L'x' || variable[0] == L'X')
+						{
+							base = 16;
+							variable.erase(0UL, 1UL);  // remove 'x' or 'X'
+
+							if (variable.empty())
+							{
+								break;  // Invalid escape sequence [\x]
+							}
+						}
+
+						WCHAR* pch = nullptr;
+						errno = 0;
+						long ch = wcstol(variable.c_str(), &pch, base);
+						if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
+						{
+							break;  // Invalid character
+						}
+
+						foundValue.assign(1UL, (WCHAR)ch);
+						found = true;
+					}
+					break;
 				}
 			}
+
+			if (found)
+			{
+				result.replace(start, end - start + 1UL, foundValue);
+				replaced = true;
+
+				end = start - 1UL;
+				break;		// Break out of inner "start" loop and continue to the next nested variable
+			}
+
+			// No variable found
+
+			if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
+
+			--start;		// Check for any "starting" brackets in string prior to the current starting position
 		}
 
-		if (!found)
+		if (!delayedLogEntry.message.empty() && found && start == previousStart)
 		{
-			start = end + 1;
+			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
+			// the nested variable parser can produce errors when determining function names. Reset any delayed
+			// messages if the variable at the starting position was found.
+			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" }; 
 		}
+
+		++end;	// Check for the next "end" bracket after the current ending bracket
+	}
+
+	if (!delayedLogEntry.message.empty())
+	{
+		GetLogger().Log(&delayedLogEntry);
 	}
 
 	// Reset the current section
