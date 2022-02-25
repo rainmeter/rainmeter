@@ -101,6 +101,38 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_CursorType = MOUSECURSOR_PEN;
 	}
+	else if (_wcsicmp(mouseCursor, L"NO") == 0)
+	{
+		m_CursorType = MOUSECURSOR_NO;
+	}
+	else if (_wcsicmp(mouseCursor, L"SIZE_ALL") == 0)
+	{
+		m_CursorType = MOUSECURSOR_SIZE_ALL;
+	}
+	else if (_wcsicmp(mouseCursor, L"SIZE_NESW") == 0)
+	{
+		m_CursorType = MOUSECURSOR_SIZE_NESW;
+	}
+	else if (_wcsicmp(mouseCursor, L"SIZE_NS") == 0)
+	{
+		m_CursorType = MOUSECURSOR_SIZE_NS;
+	}
+	else if (_wcsicmp(mouseCursor, L"SIZE_NWSE") == 0)
+	{
+		m_CursorType = MOUSECURSOR_SIZE_NWSE;
+	}
+	else if (_wcsicmp(mouseCursor, L"SIZE_WE") == 0)
+	{
+		m_CursorType = MOUSECURSOR_SIZE_WE;
+	}
+	else if (_wcsicmp(mouseCursor, L"UPARROW") == 0)
+	{
+		m_CursorType = MOUSECURSOR_UPARROW;
+	}
+	else if (_wcsicmp(mouseCursor, L"WAIT") == 0)
+	{
+		m_CursorType = MOUSECURSOR_WAIT;
+	}
 	else if (wcschr(mouseCursor, L'.'))
 	{
 		m_CursorType = MOUSECURSOR_CUSTOM;
@@ -171,6 +203,38 @@ HCURSOR Mouse::GetCursor(bool isButton) const
 
 	case MOUSECURSOR_PEN:
 		name = MAKEINTRESOURCE(32631);
+		break;
+
+	case MOUSECURSOR_NO:
+		name = IDC_NO;
+		break;
+
+	case MOUSECURSOR_SIZE_ALL:
+		name = IDC_SIZEALL;
+		break;
+
+	case MOUSECURSOR_SIZE_NESW:
+		name = IDC_SIZENESW;
+		break;
+
+	case MOUSECURSOR_SIZE_NS:
+		name = IDC_SIZENS;
+		break;
+
+	case MOUSECURSOR_SIZE_NWSE:
+		name = IDC_SIZENWSE;
+		break;
+
+	case MOUSECURSOR_SIZE_WE:
+		name = IDC_SIZEWE;
+		break;
+
+	case MOUSECURSOR_UPARROW:
+		name = IDC_UPARROW;
+		break;
+
+	case MOUSECURSOR_WAIT:
+		name = IDC_WAIT;
 		break;
 
 	case MOUSECURSOR_CUSTOM:
