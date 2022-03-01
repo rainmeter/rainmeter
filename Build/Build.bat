@@ -30,8 +30,8 @@ if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & e
 :VERSION_OK
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
-:: directly to the default location of "vcvarsall.bat" (Visual Studio 2019 Communnity)
-set VCVARSALL=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat
+:: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
+set VCVARSALL=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 
 if not exist "%VCVARSALL%" set VCVARSALL=%VCVARSALL:Community\=Enterprise\%
