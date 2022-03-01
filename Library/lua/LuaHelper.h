@@ -50,6 +50,7 @@ public:
 	static void PushWide(const WCHAR* str);
 	static void PushWide(const std::wstring& str);
 	static std::wstring ToWide(int narg);
+	static bool ToBool(int narg);
 
 private:
 	static std::vector<UnicodeScript*> c_ScriptStack;
