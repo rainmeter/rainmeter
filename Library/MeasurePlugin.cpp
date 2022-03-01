@@ -306,6 +306,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		std::vector<LPCWSTR> args;
 		for (auto& str : _args)
 		{
+			StringUtil::StripLeadingAndTrailingQuotes(str, true);
 			args.emplace_back(str.c_str());
 		}
 
