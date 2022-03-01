@@ -832,13 +832,18 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 				}
 				else
 				{
+					// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
+					// Copy the result here, and replace it before returning.
+					std::wstring str = result;
+
 					std::wstring value;
 					if (GetSectionVariable(var, value))
 					{
 						// Replace section variable with the value.
-						result.replace(start, end - start + 1, value);
+						str.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
+						result = str;
 					}
 					else
 					{
