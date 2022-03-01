@@ -1517,6 +1517,9 @@ void Rainmeter::DelayedExecuteCommand(const WCHAR* command, Skin* skin)
 */
 void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
+	// Force the reload of system cursors
+	SystemParametersInfo(SPI_SETCURSORS, 0U, nullptr, 0U);
+
 	WCHAR buffer[MAX_PATH];
 
 	// Clear old settings
