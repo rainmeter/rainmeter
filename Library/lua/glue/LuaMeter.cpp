@@ -33,6 +33,12 @@ static int GetOption(lua_State* L)
 
 	const std::wstring section = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
+	
+	bool bReplaceMeasures = true;
+	if (lua_gettop(L) > 3)
+	{
+		bReplaceMeasures = LuaHelper::ToBool(4);
+	}
 
 	const std::wstring& style = parser.ReadString(name, L"MeterStyle", L"");
 	if (!style.empty())
@@ -41,7 +47,7 @@ static int GetOption(lua_State* L)
 	}
 
 	const std::wstring& value =
-		parser.ReadString(name, section.c_str(), defValue.c_str());
+		parser.ReadString(name, section.c_str(), defValue.c_str(), bReplaceMeasures);
 	LuaHelper::PushWide(value);
 
 	parser.ClearStyleTemplate();
