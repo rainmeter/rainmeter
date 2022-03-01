@@ -29,9 +29,9 @@ static int GetOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-	const WCHAR* name = self->GetName();
 
-	const std::wstring section = LuaHelper::ToWide(2);
+	const WCHAR* section = self->GetName();
+	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
 	
 	bool bReplaceMeasures = true;
@@ -40,14 +40,14 @@ static int GetOption(lua_State* L)
 		bReplaceMeasures = LuaHelper::ToBool(4);
 	}
 
-	const std::wstring& style = parser.ReadString(name, L"MeterStyle", L"");
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
 	if (!style.empty())
 	{
 		parser.SetStyleTemplate(style);
 	}
 
 	const std::wstring& value =
-		parser.ReadString(name, section.c_str(), defValue.c_str(), bReplaceMeasures);
+		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
 	LuaHelper::PushWide(value);
 
 	parser.ClearStyleTemplate();
