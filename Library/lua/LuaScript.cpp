@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "../../Common/StringUtil.h"
 #include "../../Common/FileUtil.h"
+#include "../../Common/MathParser.h"
 #include "LuaScript.h"
 #include "LuaHelper.h"
 #include "Measure.h"
@@ -277,38 +278,54 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 
 	// Add args
 	int numArgs = 0;
-	if (args.size() > 0)
+	if (args.size() > 0ULL)
 	{
-		for (const auto& iter : args)
+		for (auto iter : args)
 		{
-			std::string arg = m_Unicode ?
-				StringUtil::NarrowUTF8(iter) : StringUtil::Narrow(iter);
-			size_t argSize = arg.size();
-			if ((arg[0] == '\"' || arg[0] == '\'') && argSize > 1)
+			size_t argSize = iter.size();
+			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1ULL)
 			{
-				arg.erase(0, 1); // strip begin quote
-				--argSize;
+				argSize = StringUtil::StripLeadingAndTrailingQuotes(iter, true);
 
-				auto ch = arg.back();
-				if (ch == '\"' || ch == '\'')
-				{
-					arg.pop_back();  // strip last quote
-					--argSize;
-				}
+				std::string arg = m_Unicode ?
+					StringUtil::NarrowUTF8(iter) : StringUtil::Narrow(iter);
 
 				lua_pushlstring(L, arg.c_str(), argSize);
 			}
-			else if (arg == "true")
+			else if (_wcsicmp(iter.c_str(), L"true") == 0)
 			{
 				lua_pushboolean(L, 1);
 			}
-			else if (arg == "false")
+			else if (_wcsicmp(iter.c_str(), L"false") == 0)
 			{
 				lua_pushboolean(L, 0);
 			}
+			else if (_wcsicmp(iter.c_str(), L"nil") == 0)
+			{
+				lua_pushnil(L);
+			}
 			else
 			{
-				double num = strtod(arg.c_str(), nullptr);
+				double num = 0.0;
+				const WCHAR* str = iter.c_str();
+				if (*str == L'(')
+				{
+					const WCHAR* errMsg = MathParser::CheckedParse(str, &num);
+					if (errMsg)
+					{
+						strValue = L"Formula: ";
+						strValue += errMsg;
+						strValue += L" in parameter: \"";
+						strValue += iter;
+						strValue += L'"';
+						return false;
+					}
+				}
+				else
+				{
+					num = wcstod(str, nullptr);
+				}
+
 				lua_pushnumber(L, num);
 			}
 			++numArgs;

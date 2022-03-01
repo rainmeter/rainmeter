@@ -81,6 +81,22 @@ void Trim(std::wstring& str)
 	RTrim(str);
 }
 
+size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
+{
+	if (str.size() > 1ULL)
+	{
+		WCHAR first = str.front();
+		WCHAR last = str.back();
+		if ((first == L'"' && last == L'"') ||				// "some string"
+			(single && first == L'\'' && last == L'\''))	// 'some string'
+		{
+			str.erase(0ULL, 1ULL);
+			str.erase(str.size() - 1ULL);
+		}
+	}
+	return str.size();
+}
+
 void ToLowerCase(std::wstring& str)
 {
 	WCHAR* srcAndDest = &str[0];
