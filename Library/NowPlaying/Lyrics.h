@@ -15,7 +15,6 @@ public:
 
 private:
 	static bool GetFromLetras(const std::wstring& artist, const std::wstring& title, std::wstring& data);
-	static bool GetFromWikia(const std::wstring& artist, const std::wstring& title, std::wstring& data);
 };
 
 #endif

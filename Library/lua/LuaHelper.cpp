@@ -65,3 +65,10 @@ std::wstring LuaHelper::ToWide(int narg)
 	return script->IsUnicode() ?
 		StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 }
+
+bool LuaHelper::ToBool(int narg)
+{
+	auto script = GetCurrentScript();
+	lua_State* L = script->GetState();
+	return lua_toboolean(L, narg);
+}

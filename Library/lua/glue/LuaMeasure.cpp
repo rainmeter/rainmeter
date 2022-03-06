@@ -30,10 +30,18 @@ static int GetOption(lua_State* L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
 
-	const std::wstring section = LuaHelper::ToWide(2);
+	const WCHAR* section = self->GetName();
+	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
+
+	bool bReplaceMeasures = true;
+	if (lua_gettop(L) > 3)
+	{
+		bReplaceMeasures = LuaHelper::ToBool(4);
+	}
+
 	const std::wstring& value =
-		parser.ReadString(self->GetName(), section.c_str(), defValue.c_str());
+		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
 	LuaHelper::PushWide(value);
 	return 1;
 }
@@ -44,8 +52,9 @@ static int GetNumberOption(lua_State* L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
 
-	std::wstring strTmp = LuaHelper::ToWide(2);
-	double value = parser.ReadFloat(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));
+	const WCHAR* section = self->GetName();
+	const std::wstring key = LuaHelper::ToWide(2);
+	double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
 	return 1;

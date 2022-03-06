@@ -45,6 +45,8 @@ void LTrim(std::wstring& str);
 void RTrim(std::wstring& str);
 void Trim(std::wstring& str);
 
+size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single = false);
+
 void ToLowerCase(std::wstring& str);
 void ToUpperCase(std::wstring& str);
 void ToProperCase(std::wstring& str);
