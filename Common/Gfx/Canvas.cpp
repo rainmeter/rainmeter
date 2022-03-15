@@ -14,6 +14,9 @@
 #include "Util/DWriteFontCollectionLoader.h"
 #include "../../Library/Util.h"
 #include "../../Library/Logger.h"
+#include "../../Library/Rainmeter.h"
+
+#include <dxgidebug.h>
 
 namespace Gfx {
 
@@ -155,6 +158,26 @@ void Canvas::Finalize()
 	--c_Instances;
 	if (c_Instances == 0U)
 	{
+
+// Dump extra dxgi debugging information (if needed)
+// On the following line, change |FALSE| to |TRUE|
+#if defined(_DEBUG) && FALSE
+		// More info: https://docs.microsoft.com/en-us/windows/win32/api/dxgidebug/nf-dxgidebug-dxgigetdebuginterface
+		typedef HRESULT(__stdcall* fDebugInterface)(const IID&, void**);
+		HMODULE hDll = GetModuleHandle(L"Dxgidebug.dll");
+		if (hDll)
+		{
+			fDebugInterface DXGIGetDebugInterface = (fDebugInterface)GetProcAddress(hDll, "DXGIGetDebugInterface");
+			IDXGIDebug* pDxgiDebug = nullptr;
+			HRESULT hr = DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDxgiDebug);
+			if (SUCCEEDED(hr))
+			{
+				pDxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);  // Use |DXGI_DEBUG_RLO_SUMMARY| if needed
+				pDxgiDebug->Release();
+			}
+		}
+#endif
+
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
 		c_D2DDevice.Reset();
@@ -206,6 +229,13 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 		nullptr,
 		m_SwapChain.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) return LogComError(hr);
+
+	// Prevent DXGI from monitoring window changes through "alt + enter" (full screen mode)
+	hr = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+	if (FAILED(hr) && GetRainmeter().GetDebug())
+	{
+		LogComError(hr);  // Non-fatal error - only log error in debug mode
+	}
 
 	hr = CreateRenderTarget();
 	if (FAILED(hr)) return LogComError(hr);
