@@ -22,11 +22,9 @@ enum class Encoding : BYTE
 
 Encoding GetEncoding(const BYTE* buffer, const size_t& size);
 
-/*
-** Reads and allocates memory for file in path. Returns unique_ptr containing addres to
-** allocated memory.
-*/
 std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size = nullptr);
+
+bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness);
 
 } // namespace FileUtil
 

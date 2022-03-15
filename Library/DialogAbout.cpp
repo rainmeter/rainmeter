@@ -15,9 +15,9 @@
 #include "resource.h"
 #include "DialogAbout.h"
 #include "../Version.h"
+#include "../Common/FileUtil.h"
 #include "../Common/Platform.h"
 #include "../Common/StringUtil.h"
-#include <Imagehlp.h>
 
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
 DialogAbout* DialogAbout::c_Dialog = nullptr;
@@ -1402,9 +1402,9 @@ void DialogAbout::TabPlugins::Initialize()
 
 	int index = 0;
 	
-	auto findPlugins = [&](const std::wstring& path) -> void
+	auto findPlugins = [&](const std::wstring& pluginPath) -> void
 	{
-		std::wstring filter = path + L"*.dll";
+		std::wstring filter = pluginPath + L"*.dll";
 
 		WIN32_FIND_DATA fd;
 		HANDLE hSearch = FindFirstFile(filter.c_str(), &fd);
@@ -1416,18 +1416,15 @@ void DialogAbout::TabPlugins::Initialize()
 		do
 		{
 			// Try to get the version and author
-			std::wstring tmpSz = path + fd.cFileName;
+			std::wstring tmpSz = pluginPath + fd.cFileName;
 			const WCHAR* path = tmpSz.c_str();
 
-			LOADED_IMAGE* loadedImage = ImageLoad(StringUtil::Narrow(path).c_str(), nullptr);
-			if (!loadedImage)
+			WORD imageBitness = 0U;
+			if (!FileUtil::GetBinaryFileBitness(path, imageBitness))
 			{
 				LogErrorF(L"About Dialog - Unable to load plugin: %s", fd.cFileName);
 				continue;
 			}
-
-			const WORD imageBitness = loadedImage->FileHeader->FileHeader.Machine;
-			ImageUnload(loadedImage);
 
 #ifdef _WIN64
 			const WORD rainmeterBitness = IMAGE_FILE_MACHINE_AMD64;
