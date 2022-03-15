@@ -50,7 +50,10 @@ GameMode& GameMode::GetInstance()
 
 void GameMode::Initialize()
 {
-	LogDebug(L">> Initializing \"Game mode\" (v1)");
+	if (GetRainmeter().GetDebug())
+	{
+		LogDebug(L">> Initializing \"Game mode\" (v1)");
+	}
 	ReadSettings();
 }
 
