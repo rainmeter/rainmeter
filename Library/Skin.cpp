@@ -278,12 +278,19 @@ void Skin::Initialize(bool hasSettings)
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
-	if (!m_Canvas.InitializeRenderTarget(m_Window))
+	LONG errCode = 0L;
+	if (!m_Canvas.InitializeRenderTarget(m_Window, &errCode))
 	{
-		LogErrorF(this, L"Could not intialize the render target.");
+		LogErrorF(this, L"Intialize: Could not intialize the render target.");
 
 		//Unload skin to prevent crashes
 		Deactivate();
+	}
+
+	if (errCode != 0L)
+	{
+		_com_error err(errCode);
+		LogErrorF(this, L"Intialize: Com Error: %s (0x%08x)", err.ErrorMessage(), errCode);
 	}
 
 	Refresh(true, true);

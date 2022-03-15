@@ -41,7 +41,7 @@ public:
 	static bool Initialize(bool hardwareAccelerated);
 	static void Finalize();
 
-	bool InitializeRenderTarget(HWND hwnd);
+	bool InitializeRenderTarget(HWND hwnd, LONG* errCode);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -120,7 +120,7 @@ private:
 	bool LogComError(HRESULT hr);
 
 	HRESULT CreateRenderTarget();
-	bool CreateTargetBitmap(UINT32 width, UINT32 height);
+	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
 
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;

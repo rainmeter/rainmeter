@@ -12,9 +12,6 @@
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
-#include "../../Library/Util.h"
-#include "../../Library/Logger.h"
-#include "../../Library/Rainmeter.h"
 
 #include <dxgidebug.h>
 
@@ -45,13 +42,6 @@ Canvas::Canvas() :
 Canvas::~Canvas()
 {
 	Finalize();
-}
-
-bool Canvas::LogComError(HRESULT hr)
-{
-	_com_error err(hr);
-	LogErrorF(L"Error 0x%08x: %s", hr, err.ErrorMessage());
-	return false;
 }
 
 bool Canvas::Initialize(bool hardwareAccelerated)
@@ -193,8 +183,16 @@ void Canvas::Finalize()
 	}
 }
 
-bool Canvas::InitializeRenderTarget(HWND hwnd)
+bool Canvas::InitializeRenderTarget(HWND hwnd, LONG* errCode)
 {
+	HRESULT hr = E_FAIL;
+
+	auto cleanUp = [&]() -> bool
+	{
+		*errCode = hr;
+		return false;
+	};
+
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
 	swapChainDesc.Width = 1U;
 	swapChainDesc.Height = 1U;
@@ -210,16 +208,16 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
-	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
-	if (FAILED(hr)) return LogComError(hr);
+	hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+	if (FAILED(hr)) return cleanUp();
 
 	// Ensure that DXGI does not queue more than one frame at a time.
 	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr)) return cleanUp();
 
 	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
 	hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr)) return cleanUp();
 
 	hr = dxgiFactory->CreateSwapChainForHwnd(
 		c_DxgiDevice.Get(),
@@ -228,19 +226,19 @@ bool Canvas::InitializeRenderTarget(HWND hwnd)
 		nullptr,
 		nullptr,
 		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr)) return cleanUp();
 
 	// Prevent DXGI from monitoring window changes through "alt + enter" (full screen mode)
 	hr = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-	if (FAILED(hr) && GetRainmeter().GetDebug())
+	if (FAILED(hr))
 	{
-		LogComError(hr);  // Non-fatal error - only log error in debug mode
+		*errCode = hr;  // Non-fatal error
 	}
 
 	hr = CreateRenderTarget();
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr)) return cleanUp();
 
-	return CreateTargetBitmap(0U, 0U);
+	return CreateTargetBitmap(0U, 0U, errCode);
 }
 
 void Canvas::Resize(int w, int h)
@@ -803,10 +801,14 @@ HRESULT Canvas::CreateRenderTarget()
 	return hr;
 }
 
-bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
+bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
 {
 	HRESULT hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr))
+	{
+		if (errCode) *errCode = hr;
+		return false;
+	}
 
 	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
@@ -816,7 +818,11 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height)
 		m_BackBuffer.Get(),
 		&bProps,
 		m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr)) return LogComError(hr);
+	if (FAILED(hr))
+	{
+		if (errCode) *errCode = hr;
+		return false;
+	}
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
 	return true;
