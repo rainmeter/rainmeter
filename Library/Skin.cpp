@@ -2159,8 +2159,9 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
-	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);
-	if (isDefault) writeDefaultInt(L"HideOnMouseOver", hideMode);
+	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
+	hideMode = parser.ReadInt(section, makeKey(L"OnHover"), hideMode);
+	if (isDefault) writeDefaultInt(L"OnHover", hideMode);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
 	m_WindowDraggable = parser.ReadBool(section, makeKey(L"Draggable"), true);
@@ -2272,10 +2273,13 @@ void Skin::WriteOptions(INT setting)
 			WritePrivateProfileString(section, L"Draggable", m_WindowDraggable ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & OPTION_HIDEONMOUSEOVER)
+		if (setting & OPTION_ONHOVER)
 		{
+			// "HideOnMouseOver" is now deprecated, remove the key
+			WritePrivateProfileString(section, L"HideOnMouseOver", nullptr, iniFile);
+
 			_itow_s(m_WindowHide, buffer, 10);
-			WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
+			WritePrivateProfileString(section, L"OnHover", buffer, iniFile);
 		}
 
 		if (setting & OPTION_SAVEPOSITION)
@@ -4126,7 +4130,7 @@ void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
 	UpdateWindowTransparency(m_AlphaValue);
-	WriteOptions(OPTION_HIDEONMOUSEOVER);
+	WriteOptions(OPTION_ONHOVER);
 }
 
 void Skin::SetWindowZPosition(ZPOSITION zPos)
