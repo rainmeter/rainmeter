@@ -479,10 +479,6 @@ Function PageOptions
 		SendMessage $0 ${BCM_SETSHIELD} 0 0
 	${Else}
 		SendMessage $0 ${BCM_SETSHIELD} 0 1
-
-		; Hide Back button
-		GetDlgItem $0 $HWNDPARENT 3
-		ShowWindow $0 ${SW_HIDE}
 	${EndIf}
 
 	nsDialogs::Show
