@@ -48,6 +48,7 @@
 #define STR_XASPERCENTAGE               "X kao procenat"
 #define STR_YASPERCENTAGE               "Y kao procenat"
 #define STR_TRANSPARENCY                "Prozirnost"
+#define STR_ONHOVER                     "Pri prelazu miša"
 #define STR_FADEIN                      "Postepeno pojavljivanje"
 #define STR_FADEOUT                     "Postepeno nestajanje"
 #define STR_HIDEONMOUSEOVER             "Sakrij pri prelasku miša"

@@ -244,6 +244,7 @@
 #define ID_STR_AUTOMATICUPDATE                       2160
 #define ID_STR_INSTALL_NEW_VERSION                   2161
 #define ID_STR_CLICK_TO_INSTALL                      2162
+#define ID_STR_ONHOVER                               2163
 
 #define ID_STR_GAMEMODE                              2800
 #define ID_STR_GAMEMODE_START                        2801
@@ -360,6 +361,7 @@
 #define IDM_GAMEMODE_FULLSCREEN                      4078
 #define IDM_GAMEMODE_PROCESSLIST                     4079
 #define IDM_INSTALL_NEW_VERSION                      4080
+#define IDM_SKIN_HIDEONMOUSE_NONE                    4081
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

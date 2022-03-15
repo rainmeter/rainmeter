@@ -3869,16 +3869,32 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_SKIN_HIDEONMOUSE_NONE:
+		if (m_WindowHide != HIDEMODE_NONE)
+		{
+			SetWindowHide(HIDEMODE_NONE);
+		}
+		break;
+
 	case IDM_SKIN_HIDEONMOUSE:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_HIDE)
+		{
+			SetWindowHide(HIDEMODE_HIDE);
+		}
 		break;
 
 	case IDM_SKIN_TRANSPARENCY_FADEIN:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_FADEIN)
+		{
+			SetWindowHide(HIDEMODE_FADEIN);
+		}
 		break;
 
 	case IDM_SKIN_TRANSPARENCY_FADEOUT:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_FADEOUT)
+		{
+			SetWindowHide(HIDEMODE_FADEOUT);
+		}
 		break;
 
 	case IDM_SKIN_REMEMBERPOSITION:
