@@ -48,6 +48,7 @@
 #define STR_XASPERCENTAGE               "X sebagai persentase"
 #define STR_YASPERCENTAGE               "Y sebagai persentase"
 #define STR_TRANSPARENCY                "Transparansi"
+#define STR_ONHOVER                     "Saat kursor berada diatas"
 #define STR_FADEIN                      "Efek muncul"
 #define STR_FADEOUT                     "Efek menghilang"
 #define STR_HIDEONMOUSEOVER             "Sembunyikan saat kursor berada diatas"
