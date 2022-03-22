@@ -292,7 +292,7 @@ WCHAR GetEntityChar(const std::wstring& entity)
 		map.rehash(entityCount);
 		for (size_t i = 0; i < entityCount; ++i)
 		{
-			map.insert(std::make_pair(kEntities[i].name, kEntities[i].ch));
+			map.emplace(kEntities[i].name, kEntities[i].ch);
 		}
 		return map;
 	} ();

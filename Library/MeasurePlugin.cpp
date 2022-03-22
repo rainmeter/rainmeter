@@ -163,7 +163,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			auto iter = s_PluginReferences.find(tmpStr);
 			if (iter == s_PluginReferences.end())
 			{
-				s_PluginReferences.insert(std::make_pair<std::wstring&, UINT>(tmpStr, 1U));
+				s_PluginReferences.emplace(tmpStr, 1U);
 				if (GetRainmeter().GetDebug())
 				{
 					LogDebugF(L"Plugin loaded: %s", pluginPath);

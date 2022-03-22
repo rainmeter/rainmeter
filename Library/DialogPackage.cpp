@@ -905,7 +905,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				std::wstring name = PathFindFileName(folder.c_str());
 				name.pop_back();	// Remove slash
 
-				if (c_Dialog->m_LayoutFolders.insert(std::make_pair(name, folder)).second)
+				if (c_Dialog->m_LayoutFolders.emplace(name, folder).second)
 				{
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 					LVITEM lvi;
@@ -924,7 +924,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			std::pair<std::wstring, std::wstring> plugins = SelectPlugin(m_Window);
 			std::wstring name = PathFindFileName(plugins.first.c_str());
-			if (!name.empty() && c_Dialog->m_PluginFolders.insert(std::make_pair(name, plugins)).second)
+			if (!name.empty() && c_Dialog->m_PluginFolders.emplace(name, plugins).second)
 			{
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 				LVITEM lvi;
