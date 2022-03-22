@@ -81,7 +81,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// process later. Otherwise, parse any modifiers for the shape.
 		if (isCombined)
 		{
-			combinedShapes.insert(std::make_pair(i - 1, shape));
+			combinedShapes.emplace(i - 1, shape);
 		}
 		else
 		{

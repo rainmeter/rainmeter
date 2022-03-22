@@ -101,7 +101,7 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 {
 	auto insertVariable = [&](const WCHAR* name, std::wstring value)
 	{
-		return m_BuiltInVariables.insert(std::make_pair(name, value));
+		return m_BuiltInVariables.emplace(name, value);
 	};
 
 	insertVariable(L"PROGRAMPATH", GetRainmeter().GetPath());
