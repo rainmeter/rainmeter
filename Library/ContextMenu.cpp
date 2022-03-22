@@ -303,6 +303,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				MENU_ITEM(IDM_SKIN_FROMBOTTOM, ID_STR_FROMBOTTOM),
 				MENU_ITEM(IDM_SKIN_XPERCENTAGE, ID_STR_XASPERCENTAGE),
 				MENU_ITEM(IDM_SKIN_YPERCENTAGE, ID_STR_YASPERCENTAGE)),
+			MENU_SEPARATOR(),
 			MENU_SUBMENU(ID_STR_TRANSPARENCY,
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, ID_STR_0PERCENT),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, ID_STR_10PERCENT),
@@ -361,7 +362,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		}
 
 		// Tick the transparency
-		HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
+		HMENU alphaMenu = GetSubMenu(settingsMenu, 2);
 		if (alphaMenu)
 		{
 			int alpha = skin->GetAlphaValue();
@@ -379,7 +380,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		}
 
 		// Tick the mouse over options (On hover)
-		HMENU hoverMenu = GetSubMenu(settingsMenu, 2);
+		HMENU hoverMenu = GetSubMenu(settingsMenu, 3);
 		if (hoverMenu)
 		{
 			int mode = skin->GetWindowHide();
