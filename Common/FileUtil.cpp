@@ -57,11 +57,28 @@ bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness)
 {
 	HANDLE hFile = INVALID_HANDLE_VALUE;
 	HANDLE hMapping = INVALID_HANDLE_VALUE;
+	LPVOID addrMapping = nullptr;
 
 	auto cleanUp = [&](bool ret) -> bool
 	{
-		if (hFile) CloseHandle(hFile);
-		if (hMapping) CloseHandle(hMapping);
+		if (addrMapping)
+		{
+			UnmapViewOfFile(addrMapping);
+			addrMapping = nullptr;
+		}
+
+		if (hMapping)
+		{
+			CloseHandle(hMapping);
+			hMapping = nullptr;
+		}
+
+		if (hFile)
+		{
+			CloseHandle(hFile);
+			hFile = nullptr;
+		}
+
 		return ret;
 	};
 
@@ -71,7 +88,7 @@ bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness)
 	hMapping = CreateFileMapping(hFile, nullptr, PAGE_READONLY | SEC_IMAGE, 0UL, 0UL, nullptr);
 	if (hMapping == INVALID_HANDLE_VALUE) return cleanUp(false);
 
-	LPVOID addrMapping = MapViewOfFile(hMapping, FILE_MAP_READ, 0UL, 0UL, 0UL);
+	addrMapping = MapViewOfFile(hMapping, FILE_MAP_READ, 0UL, 0UL, 0UL);
 	if (!addrMapping) return cleanUp(false);
 
 	PIMAGE_NT_HEADERS pHeader = ImageNtHeader(addrMapping);
