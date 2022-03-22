@@ -174,29 +174,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				++iter->second;
 			}
 		}
-
-		/*size_t pluginNameSize = pluginFile.size();
-		if (pluginNameSize > 3 && pluginFile.substr(pluginFile.size() - 4) != L".dll")
-		{
-			pluginFile += L".dll";
-		}
-
-		WCHAR plugin[MAX_PATH];
-		wcsncpy_s(plugin, MAX_PATH, pluginFile.c_str(), pluginFile.size());
-
-		auto iter = s_PluginReferences.find(plugin);
-		if (iter == s_PluginReferences.end())
-		{
-			s_PluginReferences.insert(std::make_pair<std::wstring, UINT>(plugin, 1U));
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugF(this, L"Plugin loaded: &s", plugin);
-			}
-		}
-		else
-		{
-			++iter->second;
-		}*/
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");
