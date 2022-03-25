@@ -368,6 +368,10 @@ Function PageWelcome
 		${NSD_Check} $R1
 	${EndIf}
 
+	; Remove UAC shield on button in case user clicked "Back" on next dialog
+	GetDlgItem $0 $HWNDPARENT 1
+	SendMessage $0 ${BCM_SETSHIELD} 0 0
+
 	Call muiPageLoadFullWindow
 
 	nsDialogs::Show
