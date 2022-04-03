@@ -22,8 +22,16 @@ static const char styleSubable[] = { 0 };
 
 namespace RainLexer {
 
+static char* LexerName() {
+    return const_cast<char*>(LEXER_NAME);
+}
+
+static TCHAR* LexerStatusText() {
+    return const_cast<TCHAR*>(LEXER_STATUS_TEXT);
+}
+
 bool IsReserved(int ch) {
-    if (IsAlphaNumeric(ch))
+    if (Lexilla::IsAlphaNumeric(ch))
     {
         return false;
     }
@@ -47,7 +55,7 @@ void SCI_METHOD RainLexer::Release() {
 }
 
 int SCI_METHOD RainLexer::Version() const {
-    return lvRelease5;
+    return Scintilla::lvRelease5;
 }
 
 const char* SCI_METHOD RainLexer::PropertyNames() {
@@ -73,7 +81,7 @@ const char* SCI_METHOD RainLexer::DescribeWordListSets() {
 Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
     if (n < _countof(m_WordLists))
     {
-        WordList wlNew(false);
+        Lexilla::WordList wlNew(false);
         wlNew.Set(wl);
         if (m_WordLists[n] != wlNew)
         {
@@ -86,18 +94,23 @@ Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
 
 void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Accessor styler(pAccess, nullptr);
+    Lexilla::Accessor styler(pAccess, nullptr);
 
-    char buffer[128];
-    const WordList& keywords = m_WordLists[0];
-    const WordList& numwords = m_WordLists[1];
-    const WordList& optwords = m_WordLists[2];
-    const WordList& options = m_WordLists[3];
-    const WordList& bangs = m_WordLists[4];
-    const WordList& variables = m_WordLists[5];
-    const WordList& depKeywords = m_WordLists[6];
-    const WordList& depOtions = m_WordLists[7];
-    const WordList& depBangs = m_WordLists[8];
+    char buffer[128]{};
+    const Lexilla::WordList& keywords = m_WordLists[0];
+    const Lexilla::WordList& numwords = m_WordLists[1];
+    const Lexilla::WordList& optwords = m_WordLists[2];
+    const Lexilla::WordList& options = m_WordLists[3];
+    const Lexilla::WordList& bangs = m_WordLists[4];
+    const Lexilla::WordList& variables = m_WordLists[5];
+    const Lexilla::WordList& depKeywords = m_WordLists[6];
+    const Lexilla::WordList& depOptions = m_WordLists[7];
+    const Lexilla::WordList& depBangs = m_WordLists[8];
+
+    auto IsOptionInExtList = [] (const std::set<std::string> option, char* optBuffer)
+    {
+        return option.find(optBuffer) != option.end();
+    };
 
     length += startPos;
     styler.StartAt(startPos);
@@ -156,11 +169,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             default:
-                if (IsUpperOrLowerCase(ch) || ch == '@')
+                if (Lexilla::IsUpperOrLowerCase(ch) || ch == '@')
                 {
                     count = 0;
                     digits = 0;
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
 
                     isExtOption = false;
                     isSubsOpt = false;
@@ -170,7 +183,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                     state = TextState::TS_KEYWORD;
                 }
-                else if (IsADigit(ch))
+                else if (Lexilla::IsADigit(ch))
                 {
                     state = TextState::TS_NOT_KEYWORD;
                 }
@@ -236,22 +249,22 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             case '=':
                 // Ignore trailing whitespace
-                while (count > 0 && IsASpaceOrTab(buffer[count - 1]))
+                while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
                 {
                     --count;
                 }
 
                 buffer[count] = '\0';
 
-                isPipeOpt = pipeOpt.find(buffer) != pipeOpt.end();
+                isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
                 countParentheses = 0;
                 onlyDigits = true;
 
                 if (keywords.InList(buffer) || strncmp(buffer, "@include", 8) == 0)
                 {
                     isSubsOpt = strcmp(buffer, "substitute") == 0;
-                    isFormatOpt = formatOpt.find(buffer) != formatOpt.end();
-                    isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                    isFormatOpt = IsOptionInExtList(formatOpt, buffer);
+                    isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
 
                     state = TextState::TS_VALUE;
                     styler.ColourTo(i - 1, TC_KEYWORD);
@@ -260,7 +273,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 else if (optwords.InList(buffer))
                 {
                     state = TextState::TS_OPTION;
-                    isExtOption = extKeyWords.find(buffer) != extKeyWords.end();
+                    isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
 
                     if (depKeywords.InList(buffer))
                     {
@@ -276,7 +289,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     styler.ColourTo(i, TC_EQUALS);
 
                     // Ignore leading whitepsace
-                    while (IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
+                    while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
                     {
                         ++i;
                     }
@@ -286,7 +299,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     // For cases with number in middle word or defined number at end, like UseD2D
                     if (depKeywords.InList(buffer))
                     {
-                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
                         state = TextState::TS_VALUE;
                         styler.ColourTo(i - 1, TC_DEP_KEYWORD);
                         styler.ColourTo(i, TC_EQUALS);
@@ -298,14 +311,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     buffer[count] = '\0';
                     digits = 0;
 
-                    isExtOption = extKeyWords.find(buffer) != extKeyWords.end();
-                    isPipeOpt = pipeOpt.find(buffer) != pipeOpt.end();
+                    isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
+                    isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
                     state = isExtOption ? TextState::TS_OPTION : TextState::TS_VALUE;
 
                     // Special case for option Command from iTunes plugin, and similar Command1, Command2, ... options from InputText plugin
                     if (numwords.InList(buffer))
                     {
-                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
                         if (depKeywords.InList(buffer) && strcmp(buffer, "command") != 0)
                         {
                             styler.ColourTo(i - 1, TC_DEP_KEYWORD);
@@ -319,7 +332,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         {
                             buffer[count++] = '=';
                             beginValueIdx = count;
-                            while (IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
+                            while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
                             {
                                 ++i;
                             }
@@ -337,7 +350,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     if (depKeywords.InList(buffer))
                     {
                         styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                        isNotNumValOpt = nonNumValOpt.find(buffer) != nonNumValOpt.end();
+                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
                     }
                     else
                     {
@@ -357,7 +370,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     {
                         ++digits;
                     }
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
                 else
                 {
@@ -380,7 +393,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 // Read the last character if at EOF
                 if (isEOF)
                 {
-                    buffer[count++] = MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
+                    buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
             case '\t':
             case ' ':
@@ -392,7 +405,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     if (count < _countof(buffer))
                     {
-                        buffer[count++] = MakeLowerCase(ch);
+                        buffer[count++] = Lexilla::MakeLowerCase(ch);
                     }
                     else
                     {
@@ -404,7 +417,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\n':
                 if (!isExtOption || isEOF)
                 {
-                    while (IsASpaceOrTab(buffer[count - 1]))
+                    while (Lexilla::IsASpaceOrTab(buffer[count - 1]))
                     {
                         --count;
                     }
@@ -414,11 +427,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                 state = isExtOption ? TextState::TS_VALUE : TextState::TS_DEFAULT;
 
-                if (options.InList(buffer) || extOptions.find(buffer) != extOptions.end())
+                if (options.InList(buffer) || IsOptionInExtList(extOpt, buffer))
                 {
                     styler.ColourTo(i - chEOL, TC_VALID);
                 }
-                else if (depOtions.InList(buffer))
+                else if (depOptions.InList(buffer))
                 {
                     styler.ColourTo(i - chEOL, TC_DEP_VALID);
                 }
@@ -450,7 +463,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             default:
                 if (count < _countof(buffer))
                 {
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
                 else
                 {
@@ -512,7 +525,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 else if (styler.SafeGetCharAt(i + 1, '\0') == '\\')
                 {
                     count = 1;
-                    if (MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
+                    if (Lexilla::MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
                     {
                         buffer[0] = '0';
                     }
@@ -528,7 +541,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '!':
-                if (!IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
+                if (!Lexilla::IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
                 {
                     styler.ColourTo(i, TC_DEFAULT);
                 }
@@ -543,7 +556,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
                 if (isEOF)
                 {
-                    if (onlyDigits && !isNotNumValOpt && IsADigit(styler.SafeGetCharAt(i, '\0')))
+                    if (onlyDigits && !isNotNumValOpt && Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
                     {
                         styler.ColourTo(i, TC_DIGITS);
                     }
@@ -583,7 +596,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 }
 
                 char prevCh = styler.SafeGetCharAt(i - 1, '\0');
-                if (onlyDigits && IsADigit(ch) && !IsUpperOrLowerCase(prevCh) && IsASCII(prevCh))
+                if (onlyDigits && Lexilla::IsADigit(ch) && !Lexilla::IsUpperOrLowerCase(prevCh) && Lexilla::IsASCII(prevCh))
                 {
                     styler.ColourTo(i - 1, TC_DEFAULT);
                     styler.ColourTo(i, TC_DIGITS);
@@ -591,11 +604,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     break;
                 }
 
-                if (IsUpperOrLowerCase(ch))
+                if (Lexilla::IsUpperOrLowerCase(ch))
                 {
                     onlyDigits = false;
                 }
-                else if (IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
+                else if (Lexilla::IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
                     ch == '=' || ch == '%' || ch == '$' || ch == '(')
                 {
                     onlyDigits = true;
@@ -613,7 +626,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
                 if (isEOF)
                 {
-                    if (IsADigit(styler.SafeGetCharAt(i, '\0')))
+                    if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
                     {
                         styler.ColourTo(i, TC_DIGITS);
                     }
@@ -641,7 +654,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '.':
-                if (!IsADigit(styler.SafeGetCharAt(i + 1, '\0')))
+                if (!Lexilla::IsADigit(styler.SafeGetCharAt(i + 1, '\0')))
                 {
                     styler.ColourTo(i - 1, TC_DIGITS);
                     styler.ColourTo(i, TC_DEFAULT);
@@ -650,11 +663,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
                 
             default:
-                if (IsUpperOrLowerCase(ch) || !IsASCII(ch))
+                if (Lexilla::IsUpperOrLowerCase(ch) || !Lexilla::IsASCII(ch))
                 {
                     onlyDigits = false;
                 }
-                else if (IsADigit(ch))
+                else if (Lexilla::IsADigit(ch))
                 {
                     styler.ColourTo(i, TC_DIGITS);
                     break;
@@ -673,7 +686,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
                 if (isEOF)
                 {
-                    buffer[count++] = MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
+                    buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
             case '\r':
             case '\n':
@@ -695,7 +708,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     styler.ColourTo(i - chEOL, TC_DEP_BANG);
                 }
 
-                if (setterBangWords.find(&buffer[skipRainmeterBang]) != setterBangWords.end())
+                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipRainmeterBang]))
                 {
                     isPipeOpt = true;
                     isNotNumValOpt = false;
@@ -719,7 +732,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             default:
                 if (count < _countof(buffer))
                 {
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
                 else
                 {
@@ -813,7 +826,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             default:
                 if (count < _countof(buffer))
                 {
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
                 else
                 {
@@ -868,9 +881,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count++] = 'x';
                 }
-                else if (count < 6 && IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < _countof(buffer))
+                else if (count < 6 && Lexilla::IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < _countof(buffer))
                 {
-                    buffer[count++] = MakeLowerCase(ch);
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
                 else
                 {
@@ -900,7 +913,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
 void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Accessor styler(pAccess, nullptr);
+    Lexilla::Accessor styler(pAccess, nullptr);
 
     length += startPos;
     int line = styler.GetLine(startPos);
@@ -984,7 +997,7 @@ const char* SCI_METHOD RainLexer::DescriptionOfStyle(int style) {
 }
 
 const char* SCI_METHOD RainLexer::GetName() {
-    return "Rainmeter";
+    return LexerName();
 }
 
 int SCI_METHOD RainLexer::GetIdentifier() {
@@ -1006,19 +1019,24 @@ int SCI_METHOD GetLexerCount()
 
 void SCI_METHOD GetLexerName(unsigned int /*index*/, char* name, int buflength)
 {
-    strncpy(name, "Rainmeter", buflength);
+    strncpy(name, LexerName(), buflength);
     name[buflength - 1] = '\0';
 }
 
 void SCI_METHOD GetLexerStatusText(unsigned int /*index*/, WCHAR* desc, int buflength)
 {
-    wcsncpy(desc, L"Rainmeter skin file", buflength);
+    wcsncpy(desc, LexerStatusText(), buflength);
     desc[buflength - 1] = L'\0';
 }
 
-LexerFactoryFunction SCI_METHOD GetLexerFactory(unsigned int index)
+Lexilla::LexerFactoryFunction SCI_METHOD GetLexerFactory(unsigned int index)
 {
     return (index == 0) ? RainLexer::LexerFactory : nullptr;
+}
+
+ILexer5* SCI_METHOD CreateLexer(const char* name)
+{
+    return (strcmp(name, LexerName()) == 0) ? RainLexer::LexerFactory() : nullptr;
 }
 
 }	// namespace RainLexer

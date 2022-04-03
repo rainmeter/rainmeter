@@ -18,13 +18,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\LexerBase.cxx">
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\LexerBase.cxx">
       <Filter>Scintilla</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\WordList.cxx">
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\WordList.cxx">
       <Filter>Scintilla</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\Accessor.cxx">
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\Accessor.cxx">
       <Filter>Scintilla</Filter>
     </ClCompile>
     <ClCompile Include="Lexer.cpp">
@@ -36,7 +36,7 @@
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\PropSetSimple.cxx">
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\PropSetSimple.cxx">
       <Filter>Scintilla</Filter>
     </ClCompile>
   </ItemGroup>

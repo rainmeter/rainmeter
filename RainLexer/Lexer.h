@@ -28,19 +28,25 @@
 #include "LexerModule.h"
 #include "CharacterSet.h"
 
+constexpr auto LEXER_NAME = "Rainmeter";
+constexpr auto LEXER_STATUS_TEXT = L"Rainmeter skin file";
+
 using namespace Scintilla;
 
 namespace RainLexer {
+
+inline static char* LexerName();
+inline static TCHAR* LexerStatusText();
 
 inline bool IsReserved(int ch);
 
 class RainLexer final : public ILexer5
 {
 protected:
-    const LexicalClass* lexClasses;
+    const Lexilla::LexicalClass* lexClasses;
     size_t nClasses;
 public:
-    RainLexer(const LexicalClass* lexClasses_ = nullptr, size_t nClasses_ = 0) :
+    RainLexer(const Lexilla::LexicalClass* lexClasses_ = nullptr, size_t nClasses_ = 0) :
         lexClasses(lexClasses_), nClasses(nClasses_) {};
     virtual ~RainLexer() = default;
 
@@ -114,19 +120,19 @@ private:
         TC_PIPE
     };
 
-    WordList m_WordLists[9];
+    Lexilla::WordList m_WordLists[9];
 
     // Options using '|' as delimiter
     const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
 
     // Value and option bangs
-    const std::set<std::string> setterBangWords = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
+    const std::set<std::string> setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
 
     // Options with values and subvalues on same line
-    const std::set<std::string> extKeyWords = { "inlinesetting", "shape" };
+    const std::set<std::string> extKeywordsOpt = { "inlinesetting", "shape" };
 
     // Valid values for extKeyWords
-    const std::set<std::string> extOptions = {
+    const std::set<std::string> extOpt = {
         "inlinesetting=case", "inlinesetting=color", "inlinesetting=characterspacing", "inlinesetting=face", "inlinesetting=gradientcolor",
         "inlinesetting=italic", "inlinesetting=none", "inlinesetting=oblique", "inlinesetting=shadow", "inlinesetting=size",
         "inlinesetting=stretch", "inlinesetting=strikethrough", "inlinesetting=typography", "inlinesetting=underline", "inlinesetting=weight",

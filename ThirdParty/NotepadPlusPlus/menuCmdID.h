@@ -165,6 +165,11 @@
     #define    IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING (IDM_EDIT + 81)
     #define    IDM_EDIT_COPY_LINK                               (IDM_EDIT + 82)
     #define    IDM_EDIT_SORTLINES_REVERSE_ORDER                 (IDM_EDIT + 83)
+    #define    IDM_EDIT_INSERT_DATETIME_SHORT                   (IDM_EDIT + 84)
+    #define    IDM_EDIT_INSERT_DATETIME_LONG                    (IDM_EDIT + 85)
+    #define    IDM_EDIT_INSERT_DATETIME_CUSTOMIZED              (IDM_EDIT + 86)
+    #define    IDM_EDIT_COPY_ALL_NAMES                          (IDM_EDIT + 87)
+    #define    IDM_EDIT_COPY_ALL_PATHS                          (IDM_EDIT + 88)
 
     #define    IDM_EDIT_AUTOCOMPLETE                            (50000 + 0)
     #define    IDM_EDIT_AUTOCOMPLETE_CURRENTFILE                (50000 + 1)
@@ -244,8 +249,10 @@
     #define    IDM_SEARCH_MARKONEEXT5          (IDM_SEARCH + 66)
 
 #define    IDM_MISC    (IDM + 3500)
-    #define    IDM_FILESWITCHER_FILESCLOSE            (IDM_MISC + 1)
-    #define    IDM_FILESWITCHER_FILESCLOSEOTHERS      (IDM_MISC + 2)
+    #define    IDM_DOCLIST_FILESCLOSE             (IDM_MISC + 1)
+    #define    IDM_DOCLIST_FILESCLOSEOTHERS       (IDM_MISC + 2)
+    #define    IDM_DOCLIST_COPYNAMES              (IDM_MISC + 3)
+    #define    IDM_DOCLIST_COPYPATHS              (IDM_MISC + 4)
 
 
 #define IDM_VIEW    (IDM + 4000)                
@@ -319,7 +326,7 @@
         #define    IDM_VIEW_UNFOLD_7    (IDM_VIEW_UNFOLD + 7)
         #define    IDM_VIEW_UNFOLD_8    (IDM_VIEW_UNFOLD + 8)
     
-    #define    IDM_VIEW_FILESWITCHER_PANEL        (IDM_VIEW + 70)
+    #define    IDM_VIEW_DOCLIST                   (IDM_VIEW + 70)
     #define    IDM_VIEW_SWITCHTO_OTHER_VIEW       (IDM_VIEW + 72)
     #define    IDM_EXPORT_FUNC_LIST_AND_QUIT      (IDM_VIEW + 73)
 
@@ -356,6 +363,7 @@
     #define    IDM_VIEW_SWITCHTO_PROJECT_PANEL_3  (IDM_VIEW + 106)
     #define    IDM_VIEW_SWITCHTO_FILEBROWSER      (IDM_VIEW + 107)
     #define    IDM_VIEW_SWITCHTO_FUNC_LIST        (IDM_VIEW + 108)
+    #define    IDM_VIEW_SWITCHTO_DOCLIST          (IDM_VIEW + 109)
 
     #define    IDM_VIEW_GOTO_ANOTHER_VIEW        10001
     #define    IDM_VIEW_CLONE_TO_ANOTHER_VIEW    10002
@@ -516,6 +524,7 @@
     #define    IDM_LANG_SPICE              (IDM_LANG + 81)
     #define    IDM_LANG_TXT2TAGS           (IDM_LANG + 82)
     #define    IDM_LANG_VISUALPROLOG       (IDM_LANG + 83)
+    #define    IDM_LANG_TYPESCRIPT         (IDM_LANG + 84)
 
     #define    IDM_LANG_EXTERNAL           (IDM_LANG + 165)
     #define    IDM_LANG_EXTERNAL_LIMIT     (IDM_LANG + 179)
@@ -524,6 +533,7 @@
     #define    IDM_LANG_USER_LIMIT         (IDM_LANG + 210)     //46210: Ajust with IDM_LANG_USER
     #define    IDM_LANG_USER_DLG           (IDM_LANG + 250)     //46250: Used for translation
     #define    IDM_LANG_OPENUDLDIR         (IDM_LANG + 300)
+    #define    IDM_LANG_UDLCOLLECTION_PROJECT_SITE   (IDM_LANG + 301)
 
 
 
@@ -575,3 +585,18 @@
     #define IDM_SYSTRAYPOPUP_NEW_AND_PASTE    (IDM_SYSTRAYPOPUP + 3)
     #define IDM_SYSTRAYPOPUP_OPENFILE         (IDM_SYSTRAYPOPUP + 4)
     #define IDM_SYSTRAYPOPUP_CLOSE            (IDM_SYSTRAYPOPUP + 5)
+
+#define IDR_WINDOWS_MENU 11000
+    #define  IDM_WINDOW_WINDOWS   	(IDR_WINDOWS_MENU + 1)
+    #define  IDM_WINDOW_SORT_FN_ASC	(IDR_WINDOWS_MENU + 2)
+    #define  IDM_WINDOW_SORT_FN_DSC	(IDR_WINDOWS_MENU + 3)
+    #define  IDM_WINDOW_SORT_FP_ASC	(IDR_WINDOWS_MENU + 4)
+    #define  IDM_WINDOW_SORT_FP_DSC	(IDR_WINDOWS_MENU + 5)
+    #define  IDM_WINDOW_SORT_FT_ASC	(IDR_WINDOWS_MENU + 6)
+    #define  IDM_WINDOW_SORT_FT_DSC	(IDR_WINDOWS_MENU + 7)
+    #define  IDM_WINDOW_SORT_FS_ASC	(IDR_WINDOWS_MENU + 8)
+    #define  IDM_WINDOW_SORT_FS_DSC	(IDR_WINDOWS_MENU + 9)
+    #define  IDM_WINDOW_MRU_FIRST 	(IDR_WINDOWS_MENU + 20)
+    #define  IDM_WINDOW_MRU_LIMIT 	(IDR_WINDOWS_MENU + 29)
+    #define  IDM_WINDOW_COPY_NAME 	(IDM_WINDOW_MRU_LIMIT + 1)
+    #define  IDM_WINDOW_COPY_PATH 	(IDM_WINDOW_MRU_LIMIT + 2)
