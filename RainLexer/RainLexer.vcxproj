@@ -28,7 +28,7 @@
   <PropertyGroup Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -60,7 +60,7 @@
       <!-- Set WINVER=0x0601 and friends (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
       <!-- Set _HAS_EXCEPTIONS=0 to accompany the disabled exception handling above. -->
       <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../ThirdParty/Scintilla/include;../ThirdParty/Scintilla/lexlib;../ThirdParty/NotepadPlusPlus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../ThirdParty/Scintilla/include;../ThirdParty/lexilla/include;../ThirdParty/lexilla/lexlib;../ThirdParty/NotepadPlusPlus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
@@ -140,10 +140,10 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\Accessor.cxx" />
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\LexerBase.cxx" />
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\PropSetSimple.cxx" />
-    <ClCompile Include="..\ThirdParty\Scintilla\lexlib\WordList.cxx" />
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\Accessor.cxx" />
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\LexerBase.cxx" />
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\PropSetSimple.cxx" />
+    <ClCompile Include="..\ThirdParty\lexilla\lexlib\WordList.cxx" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Plugin.cpp" />
     <ClCompile Include="StdAfx.cpp" />

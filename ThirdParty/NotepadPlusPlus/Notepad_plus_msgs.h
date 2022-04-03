@@ -32,13 +32,15 @@ enum LangType {L_TEXT, L_PHP , L_C, L_CPP, L_CS, L_OBJC, L_JAVA, L_RC,\
 			   L_ASN1, L_AVS, L_BLITZBASIC, L_PUREBASIC, L_FREEBASIC, \
 			   L_CSOUND, L_ERLANG, L_ESCRIPT, L_FORTH, L_LATEX, \
 			   L_MMIXAL, L_NIM, L_NNCRONTAB, L_OSCRIPT, L_REBOL, \
-			   L_REGISTRY, L_RUST, L_SPICE, L_TXT2TAGS, L_VISUALPROLOG,\
+			   L_REGISTRY, L_RUST, L_SPICE, L_TXT2TAGS, L_VISUALPROLOG, L_TYPESCRIPT,\
 			   // Don't use L_JS, use L_JAVASCRIPT instead
 			   // The end of enumated language type, so it should be always at the end
 			   L_EXTERNAL};
+enum class ExternalLexerAutoIndentMode { Standard, C_Like, Custom };
+enum class MacroStatus { Idle, RecordInProgress, RecordingStopped, PlayingBack };
 
-enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, WV_S2003, WV_XPX64, WV_VISTA, WV_WIN7, WV_WIN8, WV_WIN81, WV_WIN10};
-enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
+enum winVer { WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, WV_S2003, WV_XPX64, WV_VISTA, WV_WIN7, WV_WIN8, WV_WIN81, WV_WIN10 };
+enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64, PF_ARM64 };
 
 
 
@@ -346,7 +348,8 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
 	#define NPPM_ALLOCATEMARKER  (NPPMSG + 82)
     // BOOL NPPM_ALLOCATEMARKER(int numberRequested, int* startNumber)
     // sets startNumber to the initial command ID if successful
-    // Allocates a marker number to a plugin
+    // Allocates a marker number to a plugin: if a plugin need to add a marker on Notepad++'s Scintilla marker margin,
+	// it has to use this message to get marker number, in order to prevent from the conflict with the other plugins.
     // Returns: TRUE if successful, FALSE otherwise. startNumber will also be set to 0 if unsuccessful
 
 	#define NPPM_GETLANGUAGENAME  (NPPMSG + 83)
@@ -365,14 +368,14 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
     // You allocate a buffer of the length of (the number of characters + 1) then call NPPM_GETLANGUAGEDESC function the 2nd time
 	// by passing allocated buffer as argument langDesc
 
-	#define NPPM_SHOWDOCSWITCHER    (NPPMSG + 85)
-	// VOID NPPM_SHOWDOCSWITCHER(0, BOOL toShowOrNot)
-	// Send this message to show or hide doc switcher.
-	// if toShowOrNot is TRUE then show doc switcher, otherwise hide it.
+	#define NPPM_SHOWDOCLIST    (NPPMSG + 85)
+	// VOID NPPM_SHOWDOCLIST(0, BOOL toShowOrNot)
+	// Send this message to show or hide Document List.
+	// if toShowOrNot is TRUE then show Document List, otherwise hide it.
 
-	#define NPPM_ISDOCSWITCHERSHOWN    (NPPMSG + 86)
-	// BOOL NPPM_ISDOCSWITCHERSHOWN(0, 0)
-	// Check to see if doc switcher is shown.
+	#define NPPM_ISDOCLISTSHOWN    (NPPMSG + 86)
+	// BOOL NPPM_ISDOCLISTSHOWN(0, 0)
+	// Check to see if Document List is shown.
 
 	#define NPPM_GETAPPDATAPLUGINSALLOWED    (NPPMSG + 87)
 	// BOOL NPPM_GETAPPDATAPLUGINSALLOWED(0, 0)
@@ -382,9 +385,13 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
 	// INT NPPM_GETCURRENTVIEW(0, 0)
 	// Return: current edit view of Notepad++. Only 2 possible values: 0 = Main, 1 = Secondary
 
-	#define NPPM_DOCSWITCHERDISABLECOLUMN    (NPPMSG + 89)
-	// VOID NPPM_DOCSWITCHERDISABLECOLUMN(0, BOOL disableOrNot)
-	// Disable or enable extension column of doc switcher
+	#define NPPM_DOCLISTDISABLEEXTCOLUMN    (NPPMSG + 89)
+	// VOID NPPM_DOCLISTDISABLEEXTCOLUMN(0, BOOL disableOrNot)
+	// Disable or enable extension column of Document List
+
+	#define NPPM_DOCLISTDISABLEPATHCOLUMN    (NPPMSG + 102)
+	// VOID NPPM_DOCLISTDISABLEPATHCOLUMN(0, BOOL disableOrNot)
+	// Disable or enable path column of Document List
 
 	#define NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR    (NPPMSG + 90)
 	// INT NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR(0, 0)
@@ -449,6 +456,32 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
 		HICON	hToolbarIconDarkMode;
 	};
 
+	#define NPPM_GETEXTERNALLEXERAUTOINDENTMODE  (NPPMSG + 103)
+	// BOOL NPPM_GETEXTERNALLEXERAUTOINDENTMODE(const TCHAR *languageName, ExternalLexerAutoIndentMode &autoIndentMode)
+	// Get ExternalLexerAutoIndentMode for an installed external programming language.
+	// - Standard means Notepad++ will keep the same TAB indentation between lines;
+	// - C_Like means Notepad++ will perform a C-Language style indentation for the selected external language;
+	// - Custom means a Plugin will be controlling auto-indentation for the current language.
+	// returned values: TRUE for successful searches, otherwise FALSE.
+
+	#define NPPM_SETEXTERNALLEXERAUTOINDENTMODE  (NPPMSG + 104)
+	// BOOL NPPM_SETEXTERNALLEXERAUTOINDENTMODE(const TCHAR *languageName, ExternalLexerAutoIndentMode autoIndentMode)
+	// Set ExternalLexerAutoIndentMode for an installed external programming language.
+	// - Standard means Notepad++ will keep the same TAB indentation between lines;
+	// - C_Like means Notepad++ will perform a C-Language style indentation for the selected external language;
+	// - Custom means a Plugin will be controlling auto-indentation for the current language.
+	// returned value: TRUE if function call was successful, otherwise FALSE.
+
+	#define NPPM_ISAUTOINDENTON  (NPPMSG + 105)
+	// BOOL NPPM_ISAUTOINDENTON(0, 0)
+	// Returns the current Use Auto-Indentation setting in Notepad++ Preferences.
+
+	#define NPPM_GETCURRENTMACROSTATUS (NPPMSG + 106)
+	// MacroStatus NPPM_GETCURRENTMACROSTATUS(0, 0)
+	// Gets current enum class MacroStatus { Idle - means macro is not in use and it's empty, RecordInProgress, RecordingStopped, PlayingBack }
+
+
+
 #define VAR_NOT_RECOGNIZED 0
 #define FULL_CURRENT_PATH 1
 #define CURRENT_DIRECTORY 2
@@ -461,6 +494,7 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
 #define CURRENT_COLUMN 9
 #define NPP_FULL_FILE_PATH 10
 #define GETFILENAMEATCURSOR 11
+#define CURRENT_LINESTR 12
 
 #define	RUNCOMMAND_USER    (WM_USER + 3000)
 	#define NPPM_GETFULLCURRENTPATH		(RUNCOMMAND_USER + FULL_CURRENT_PATH)
@@ -471,6 +505,7 @@ enum Platform { PF_UNKNOWN, PF_X86, PF_X64, PF_IA64 };
 	#define NPPM_GETCURRENTWORD			(RUNCOMMAND_USER + CURRENT_WORD)
 	#define NPPM_GETNPPDIRECTORY		(RUNCOMMAND_USER + NPP_DIRECTORY)
 	#define NPPM_GETFILENAMEATCURSOR	(RUNCOMMAND_USER + GETFILENAMEATCURSOR)
+	#define NPPM_GETCURRENTLINESTR      (RUNCOMMAND_USER + CURRENT_LINESTR)
 	// BOOL NPPM_GETXXXXXXXXXXXXXXXX(size_t strLen, TCHAR *str)
 	// where str is the allocated TCHAR array,
 	//	     strLen is the allocated array size
