@@ -132,32 +132,32 @@ enum {
 
 static const std::array<Function, NUM_FUNCS> g_Functions =
 {
-	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
-	{ L"atan", &atan, 4 },                         // FUNC_ATAN
-	{ L"cos", &cos, 3 },                           // FUNC_COS
-	{ L"sin", &sin, 3 },                           // FUNC_SIN
-	{ L"tan", &tan, 3 },                           // FUNC_TAN
-	{ L"abs", &fabs, 3 },                          // FUNC_ABS
-	{ L"exp", &exp, 3 },                           // FUNC_EXP
-	{ L"ln", &log, 2 },                            // FUNC_LN
-	{ L"log", &log10, 3 },                         // FUNC_LOG
-	{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
-	{ L"frac", &frac, 4 },                         // FUNC_FRAC
-	{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
-	{ L"floor", &floor, 5 },                       // FUNC_FLOOR
-	{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
-	{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
-	{ L"asin", &asin, 4 },                         // FUNC_ASIN
-	{ L"acos", &acos, 4 },                         // FUNC_ACOS
-	{ L"rad", &rad, 3 },                           // FUNC_RAD
-	{ L"deg", &deg, 3 },                           // FUNC_DEG
-	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
-	{ L"neg", &neg, 3 },                           // FUNC_NEG
-	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
-	{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
-	{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
-	{ L"e", nullptr, 1 },                          // FUNC_E
-	{ L"pi", nullptr, 2 }                          // FUNC_PI
+	Function{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
+	Function{ L"atan", &atan, 4 },                         // FUNC_ATAN
+	Function{ L"cos", &cos, 3 },                           // FUNC_COS
+	Function{ L"sin", &sin, 3 },                           // FUNC_SIN
+	Function{ L"tan", &tan, 3 },                           // FUNC_TAN
+	Function{ L"abs", &fabs, 3 },                          // FUNC_ABS
+	Function{ L"exp", &exp, 3 },                           // FUNC_EXP
+	Function{ L"ln", &log, 2 },                            // FUNC_LN
+	Function{ L"log", &log10, 3 },                         // FUNC_LOG
+	Function{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
+	Function{ L"frac", &frac, 4 },                         // FUNC_FRAC
+	Function{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
+	Function{ L"floor", &floor, 5 },                       // FUNC_FLOOR
+	Function{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
+	Function{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
+	Function{ L"asin", &asin, 4 },                         // FUNC_ASIN
+	Function{ L"acos", &acos, 4 },                         // FUNC_ACOS
+	Function{ L"rad", &rad, 3 },                           // FUNC_RAD
+	Function{ L"deg", &deg, 3 },                           // FUNC_DEG
+	Function{ L"sgn", &sgn, 3 },                           // FUNC_SGN
+	Function{ L"neg", &neg, 3 },                           // FUNC_NEG
+	Function{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
+	Function{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
+	Function{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
+	Function{ L"e", nullptr, 1 },                          // FUNC_E
+	Function{ L"pi", nullptr, 2 }                          // FUNC_PI
 };
 
 static const int FUNC_MAX_LEN = 5;
