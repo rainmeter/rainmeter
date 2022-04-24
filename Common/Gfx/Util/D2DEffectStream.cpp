@@ -11,7 +11,7 @@
 namespace Gfx {
 namespace Util {
 
-const FLOAT PI = 3.14159265f;
+constexpr static FLOAT PI = 3.14159265f;
 constexpr FLOAT ToRadians(FLOAT deg) { return deg * (PI / 180.0f); }
 
 void D2DEffectStream::Crop(const Canvas& canvas, const D2D1_RECT_F& crop)

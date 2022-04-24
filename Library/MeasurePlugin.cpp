@@ -18,7 +18,7 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
-	m_PluginData(),
+	/*m_PluginData(),*/
 	m_UpdateFunc(),
 	m_GetStringFunc(),
 	m_ExecuteBangFunc()
@@ -113,7 +113,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
 		}
-		
+
 		// DynamicVariables doesn't work with old plugins
 		return;
 	}

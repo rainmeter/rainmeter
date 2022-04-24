@@ -22,10 +22,30 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="ClangDebug|x64">
+      <Configuration>ClangDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ClangRelease|x64">
+      <Configuration>ClangRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
+
+  <!-- to use other version of clang -->
+  <!--<PropertyGroup Label="Globals">
+    <LLVMInstallDir>C:\clang</LLVMInstallDir>
+  </PropertyGroup>-->
 
   <PropertyGroup Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
+
+  <PropertyGroup Label="Configuration" Condition=" '$(Configuration)' == 'ClangDebug' OR '$(Configuration)' == 'ClangRelease' ">
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <!-- to use other version of clang -->
+    <!--<LLVMToolsVersion>13.0.1</LLVMToolsVersion>-->
+  </PropertyGroup>
+
 </Project>

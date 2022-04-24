@@ -583,7 +583,7 @@ void PlayerWMP::SetRating(int rating)
 
 		if (spMedia)
 		{
-			BSTR val;
+			LPCWSTR val;
 			switch (rating)
 			{
 			case 0:
@@ -611,7 +611,7 @@ void PlayerWMP::SetRating(int rating)
 				break;
 			}
 
-			spMedia->setItemInfo(_bstr_t(L"UserRating"), val);
+			spMedia->setItemInfo(_bstr_t(L"UserRating"), (BSTR)val);
 			m_Rating = rating;
 		}
 	}

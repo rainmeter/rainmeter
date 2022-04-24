@@ -411,7 +411,7 @@ std::vector<MOUSEACTION> Mouse::Translate(const std::wstring& options) const
 		auto tokens = ConfigParser::Tokenize(options, L"|");
 		if (!tokens.empty())
 		{
-			for (const auto token : tokens)
+			for (const auto &token : tokens)
 			{
 				const WCHAR* tok = token.c_str();
 

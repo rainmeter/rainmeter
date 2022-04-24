@@ -15,7 +15,7 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-void ShowError(MeasureWebParser* measure, WCHAR* description);
+void ShowError(MeasureWebParser* measure, LPCWCHAR description);
 
 class ProxyCachePool
 {
@@ -1260,7 +1260,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 /*
   Writes the last error to log.
 */
-void ShowError(MeasureWebParser* measure, WCHAR* description)
+void ShowError(MeasureWebParser* measure, LPCWCHAR description)
 {
 	DWORD dwErr = GetLastError();
 	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)

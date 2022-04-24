@@ -20,7 +20,7 @@ public:
 	MeasureWifiStatus(const MeasureWifiStatus& other) = delete;
 	MeasureWifiStatus& operator=(MeasureWifiStatus other) = delete;
 
-	virtual const WCHAR* GetStringValue();
+	virtual const WCHAR* GetStringValue() override;
 
 	UINT GetTypeID() override { return TypeID<MeasureWifiStatus>(); }
 

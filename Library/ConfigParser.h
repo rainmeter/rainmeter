@@ -59,7 +59,7 @@ public:
 
 	const std::wstring* GetVariable(const std::wstring& strVariable);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
-	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
+	void SetVariable(const std::wstring &strVariable, const std::wstring& strValue);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
 	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Visual C++ project options meant to applied after the default Microsoft property sheets. -->
 <Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='ClangDebug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Release' OR '$(Configuration)'=='ClangRelease'" Label="Configuration">
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
 
@@ -27,7 +27,9 @@
   <!-- Macros for unit testing. -->
   <PropertyGroup Label="UserMacros">
     <!-- This is set to true by Build.bat when building full builds. -->
-    <ExcludeTests>false</ExcludeTests>
+    <ExcludeTests Condition="'$(PlatformToolset)'!='ClangCL'">false</ExcludeTests>
+    <!-- due clang can't find Microsoft.VisualStudio.TestTools.CppUnitTestFramework.lib -->
+    <ExcludeTests Condition="'$(PlatformToolset)'=='ClangCL'">true</ExcludeTests>
 
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
@@ -48,7 +50,8 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)'!='ClangCL'">/bigobj /utf-8 /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions  Condition="'$(PlatformToolset)'=='ClangCL'">-Wno-reorder-ctor -Wno-nonportable-include-path -Wno-header-guard -Wno-ignored-attributes -Wno-switch -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Wno-sometimes-uninitialized -Wno-microsoft-extra-qualification -Wno-delete-non-abstract-non-virtual-dtor -Wno-extra-tokens -Wno-microsoft-unqualified-friend -Wno-shift-negative-value -Wno-delete-abstract-non-virtual-dtor -Wno-empty-body -Wno-unused-but-set-variable -Wno-missing-braces -Wno-logical-op-parentheses -Wno-misleading-indentation -Wno-int-to-pointer-cast -Wno-string-compare -Wno-delete-incomplete -Wno-pointer-bool-conversion -Wno-unused-value -Wno-char-subscripts -Wno-microsoft-enum-forward-reference -Wno-microsoft-cast -Wno-inconsistent-missing-override -Wno-parentheses /bigobj /utf-8 /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
 
       <!-- Ignore C4996 to get rid of "'xxx': was declared deprecated" warnings in: DialogInstall.cpp, iTunesPlugin.cpp -->
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
@@ -75,7 +78,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
 
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='ClangDebug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -89,7 +92,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
 
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release' OR '$(Configuration)'=='ClangRelease'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -97,7 +100,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalOptions>/Gw %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /utf-8 /Zc:__cplusplus /Gw %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -28,7 +28,7 @@ namespace {
 // Remember to set this back to an empty string before committing any changes to this file!!
 std::wstring LOCAL_STATUS_FILE = L"";
 
-void ShowError(WCHAR* description)
+void ShowError(LPCWCHAR description)
 {
 	DWORD dwErr = GetLastError();
 	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
@@ -71,7 +71,7 @@ void ShowError(WCHAR* description)
 
 LPCWSTR Updater::s_UpdateURL = L"http://rainmeter.github.io/rainmeter/status.json";
 
-Updater::Updater() : 
+Updater::Updater() :
 	m_Status(nullptr),
 	m_DownloadInstaller(true)
 {
@@ -134,7 +134,7 @@ void Updater::GetLanguageStatus()
 		return;
 	}
 
-	for (auto& it = lang.cbegin(); it != lang.cend(); ++it)
+	for (auto it = lang.cbegin(); it != lang.cend(); ++it)
 	{
 		const auto& id = it.value()["id"];
 		if (id.is_number_unsigned() && id.get<unsigned>() == lcid)

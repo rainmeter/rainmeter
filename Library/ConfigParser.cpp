@@ -138,23 +138,22 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 */
 void ConfigParser::ReadVariables()
 {
-	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
-	for ( ; iter != m_ListVariables.end(); ++iter)
+	for (auto &iter : m_ListVariables)
 	{
-		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", false));
+		SetVariable(iter, ReadString(L"Variables", iter.c_str(), L"", false));
 	}
 }
 
-void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
+void ConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
-	std::wstring original = strVariable;
+	std::wstring dest = strVariable;
 
-	StrToUpperC(strVariable);
-	m_Variables[strVariable] = strValue;
+	StrToUpperC(dest);
+	m_Variables[dest] = strValue;
 
-	if (m_OriginalVariableNames.find(strVariable) == m_OriginalVariableNames.end())
+	if (m_OriginalVariableNames.find(dest) == m_OriginalVariableNames.end())
 	{
-		m_OriginalVariableNames[strVariable] = original;
+		m_OriginalVariableNames[dest] = strVariable;
 	}
 }
 
@@ -467,7 +466,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		WCHAR buffer[128];
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
-			
+
 		if (!decimalsSz)
 		{
 			// Remove trailing zeros if decimal count was not specified.
@@ -478,7 +477,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		strValue.assign(buffer, bufferLen);
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -1068,7 +1067,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
 			// the nested variable parser can produce errors when determining function names. Reset any delayed
 			// messages if the variable at the starting position was found.
-			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" }; 
+			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 		}
 
 		++end;	// Check for the next "end" bracket after the current ending bracket

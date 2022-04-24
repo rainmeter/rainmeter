@@ -998,6 +998,11 @@ HRESULT	Measure::DeviceInit ()
 {
 	HRESULT hr;
 
+	// store device name
+	IPropertyStore* props = NULL;
+
+	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+
 	// get the device handle
 	assert(m_enum && !m_dev);
 
@@ -1021,8 +1026,6 @@ HRESULT	Measure::DeviceInit ()
 
 	EXIT_ON_ERROR(hr);
 
-	// store device name
-	IPropertyStore*	props = NULL;
 	if (m_dev->OpenPropertyStore(STGM_READ, &props) == S_OK)
 	{
 		PROPVARIANT	varName;
@@ -1125,8 +1128,6 @@ HRESULT	Measure::DeviceInit ()
 			m_bandOut[iChan] = (float*)calloc(m_nBands * sizeof(float), 1);
 		}
 	}
-
-	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 
 #if (WINDOWS_BUG_WORKAROUND)
 	// ---------------------------------------------------------------------------------------

@@ -21,7 +21,7 @@ WCHAR* GetString(UINT id)
 {
 	LPWSTR pData;
 	int len = LoadString(GetRainmeter().GetResourceInstance(), id, (LPWSTR)&pData, 0);
-	return len ? pData : L"";
+	return len ? pData : (WCHAR*)L"";
 }
 
 std::wstring GetFormattedString(UINT id, ...)

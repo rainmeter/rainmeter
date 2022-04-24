@@ -66,14 +66,14 @@ bool CaseInsensitiveCompareN(std::wstring& str1, const std::wstring& str2);
 template<typename T>
 std::size_t CaseInsensitiveFind(const T& str1, const T& str2, const std::locale& loc = std::locale())
 {
-	T::const_iterator iter = std::search(str1.begin(), str1.end(),
-		str2.begin(), str2.end(), Is_Equal<T::value_type>(loc));
+	typename T::const_iterator iter = std::search(str1.begin(), str1.end(),
+		str2.begin(), str2.end(), Is_Equal<typename T::value_type>(loc));
 
 	if (iter != str1.end())
 	{
 		return (iter - str1.begin());
 	}
-	
+
 	return -1; // not found
 }
 }  // namespace StringUtil

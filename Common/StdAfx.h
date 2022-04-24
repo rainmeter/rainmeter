@@ -33,5 +33,6 @@
 
 #include <string>
 #include <unordered_map>
+#include <array>
 
 #endif

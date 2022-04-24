@@ -29,7 +29,7 @@ public:
 		Assert::AreEqual(parser.ReadFloat(L"A", L"NumberFloat", 0.0), 1.23);
 
 		parser.SetValue(L"A", L"NumberU64", L"18446744073709551615");
-		Assert::AreEqual(parser.ReadUInt64(L"A", L"NumberU64", 0Ui64), 18446744073709551615);
+		Assert::AreEqual(parser.ReadUInt64(L"A", L"NumberU64", 0Ui64), 18446744073709551615u);
 
 		parser.SetValue(L"A", L"Formula", L"(1 + 2)");
 		Assert::AreEqual(parser.ReadInt(L"A", L"Formula", 0), 3);

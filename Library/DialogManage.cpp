@@ -260,10 +260,10 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			5, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_EditSettingsButton, ID_STR_EDITSETTINGS,
-			buttonWidth + 9, 303, buttonWidth, 14,
+			short(buttonWidth + 9), 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_OpenLogButton, ID_STR_OPENLOG,
-			buttonWidth + buttonWidth + 13, 303, buttonWidth, 14,
+			short(buttonWidth + buttonWidth + 13), 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_HelpButton, ID_STR_HELP,
 			397, 303, 50, 14,
@@ -506,34 +506,34 @@ void DialogManage::TabSkins::Create(HWND owner)
 			175, 167, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_XPositionEdit, 0,
-			175 + labelWidth, 165, 38, 14,
+			short(175 + labelWidth), 165, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_EDIT(Id_YPositionEdit, 0,
-			175 + labelWidth + 42, 165, 38, 14,
+			short(175 + labelWidth + 42), 165, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-0, ID_STR_POSITIONSC,
 			175, 187, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_ZPositionDropDownList, 0,
-			175 + labelWidth, 185, 80, 14,
+			short(175 + labelWidth), 185, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-0, ID_STR_LOADORDERSC,
 			175, 207, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_LoadOrderEdit, 0,
-			175 + labelWidth, 205, 80, 14,
+			short(175 + labelWidth), 205, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
 		CT_LABEL(-0, ID_STR_TRANSPARENCYSC,
 			175, 227, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_TransparencyDropDownList, 0,
-			175 + labelWidth, 224, 80, 14,
+			short(175 + labelWidth), 224, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 		CT_LABEL(-0, ID_STR_ONHOVERSC,
 			175, 247, labelWidth, 9,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_OnHoverDropDownList, 0,
-			175 + labelWidth, 244, 80, 14,
+			short(175 + labelWidth), 244, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 
 		CT_BUTTON(Id_DisplayMonitorButton, ID_STR_DISPLAYMONITOR,
@@ -606,7 +606,7 @@ void DialogManage::TabSkins::Initialize()
 
 	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(4), IMAGE_ICON, 16, 16, LR_SHARED);
 	ImageList_AddIcon(hImageList, hIcon);
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED); 
+	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED);
 	ImageList_AddIcon(hImageList, hIcon);
 
 	// Apply icons and populate tree
@@ -621,7 +621,7 @@ void DialogManage::TabSkins::Initialize()
 	// Get rid of the EDITTEXT control border
 	item = GetControl(Id_DescriptionLabel);
 	SetWindowLongPtr(item, GWL_EXSTYLE, GetWindowLongPtr(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
-	SetWindowPos(item, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
+	SetWindowPos(item, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetControl(Id_TransparencyDropDownList);
 	ComboBox_AddString(item, L"0%");
@@ -699,7 +699,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 			// Changed setting from dialog, no need to update
 			m_IgnoreUpdate = false;
 		}
-		else if (m_SkinWindow && m_SkinWindow == skin) 
+		else if (m_SkinWindow && m_SkinWindow == skin)
 		{
 			// Update from currently open skin
 			m_HandleCommands = false;
@@ -845,7 +845,7 @@ void DialogManage::TabSkins::DisableControls(bool clear)
 
 		item = GetControl(Id_EditButton);
 		EnableWindow(item, FALSE);
-		
+
 		item = GetControl(Id_FileLabel);
 		SetWindowText(item, GetString(ID_STR_ELLIPSIS));
 
@@ -1108,7 +1108,7 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	tvi.pszText = buffer;
 	tvi.cchTextMax = MAX_PATH;
 	TreeView_GetItem(tree, &tvi);
-	
+
 	std::wstring path = buffer;
 	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != nullptr)
 	{
@@ -1739,7 +1739,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				// Current selection is file
 				m_SkinFileName = buffer;
 				tvi.mask = TVIF_TEXT;
-			
+
 				// Loop through parents to get skin folder
 				m_SkinFolderPath.clear();
 				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != nullptr)
@@ -1909,11 +1909,11 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				EnableWindow(item, TRUE);
 				item = GetControl(Id_EditButton);
 				EnableWindow(item, TRUE);
-				
+
 				const std::vector<std::wstring>& layouts = GetRainmeter().GetAllLayouts();
 				item  = GetControl(Id_List);
 				int sel = ListBox_GetCurSel(item);
-				
+
 				item = GetControl(Id_NameLabel);
 				Edit_SetText(item, layouts[sel].c_str());
 			}
@@ -2363,7 +2363,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			6, 107, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 123, buttonWidth + 20, 14,
+			6, 123, short(buttonWidth + 20), 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-0, ID_STR_LOGGING,
@@ -2376,10 +2376,10 @@ void DialogManage::TabSettings::Create(HWND owner)
 			6, 180, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 196, buttonWidth + 20, 14,
+			6, 196, short(buttonWidth + 20), 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 196, buttonWidth + 20, 14,
+			short(buttonWidth + 30), 196, short(buttonWidth + 20), 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2614,7 +2614,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 			buffer[0] = L'\0';
 
 			std::wstring editor = GetRainmeter().GetSkinEditor();
-			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str(); 
+			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str();
 
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 			ofn.Flags = OFN_FILEMUSTEXIST;

@@ -321,7 +321,7 @@ INT_PTR DialogNewSkin::OnNotify(WPARAM wParam, LPARAM lParam)
 
 const std::wstring& DialogNewSkin::GetTemplateFolder()
 {
-	static std::wstring& folder = GetRainmeter().GetSettingsPath() + L"Templates\\";
+	static std::wstring folder = GetRainmeter().GetSettingsPath() + L"Templates\\";
 	return folder;
 }
 
@@ -421,7 +421,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 			0, 0, 268, 14,
 			WS_VISIBLE | SS_CENTERIMAGE | SS_PATHELLIPSIS | SS_NOTIFY | WS_BORDER, 0),
 		CT_TREEVIEW(Id_ItemsTreeView, 0,
-			0, 19, 268 - buttonWidth - 10, 169,
+			0, 19, short(268 - buttonWidth - 10), 169,
 			WS_VISIBLE | WS_TABSTOP | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_VSCROLL, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_AddFolderButton, ID_STR_ADDFOLDER,
 			column1, 19, buttonWidth, 14,
@@ -527,7 +527,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			tvi.hInsertAfter = TVI_FIRST;
 			tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE | TVIF_PARAM;
 			tvi.item.iImage = tvi.item.iSelectedImage = 0;
-			tvi.item.pszText = L"@Resources";
+			tvi.item.pszText = (WCHAR*)L"@Resources";
 			tvi.item.state = tvi.item.stateMask = TVIS_BOLD;
 			tvi.hParent = TreeView_GetRoot(tree);
 
@@ -1587,7 +1587,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 				s_SortInfo.emplace_back(true, L"@Resources");
 				tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
 
-				tvi.item.pszText = L"@Resources";
+				tvi.item.pszText = (WCHAR*)L"@Resources";
 				TreeView_InsertItem(tree, &tvi);
 			}
 			else
@@ -1683,7 +1683,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 			6, 16, 55, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_NewEdit, 0,
-			66, 14, column1 - 66 - 10, 14,
+			66, 14, short(column1 - 66 - 10), 14,
 			WS_VISIBLE | WS_TABSTOP, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_SaveButton, ID_STR_SAVE,
 			column1, 14, buttonWidth, 14,
@@ -1693,7 +1693,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 			0, 43, 268, 143,
 			WS_VISIBLE , 0),
 		CT_LISTBOX(Id_TemplateListBox, 0,
-			6, 59, column1 - 16, 119,
+			6, 59, short(column1 - 16), 119,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_SORT | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_EditButton, ID_STR_EDIT,
 			column1, 59, buttonWidth, 14,

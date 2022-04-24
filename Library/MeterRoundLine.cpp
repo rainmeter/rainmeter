@@ -15,8 +15,8 @@
 
 namespace {
 
-const FLOAT PI = 3.14159265358979323846f;
-const FLOAT PI2 = 2.0f * PI;
+static constexpr FLOAT PI = 3.14159265358979323846f;
+static constexpr FLOAT PI2 = 2.0f * PI;
 
 constexpr FLOAT ToDegrees(FLOAT x) { return x * (180.0f / PI); }
 constexpr FLOAT Clamp(FLOAT num, FLOAT lower, FLOAT upper) { return max(lower, min(num, upper)); }

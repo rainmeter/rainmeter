@@ -83,7 +83,7 @@ struct Operation
 
 struct Function
 {
-	WCHAR* name;
+	LPCWSTR name;
 	SingleArgFunction proc;
 	BYTE length;
 };
@@ -130,7 +130,7 @@ enum {
 	NUM_FUNCS
 };
 
-static Function g_Functions[NUM_FUNCS] =
+static const std::array<Function, NUM_FUNCS> g_Functions =
 {
 	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
 	{ L"atan", &atan, 4 },                         // FUNC_ATAN
@@ -195,7 +195,7 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 	0, // Operator::ClosingBracket
 	2, // Operator::Comma
 	6, // Operator::SingleArgFunction
-	6  // Operator::MultiArgFunction
+	6, // Operator::MultiArgFunction
 };
 
 static CharType GetCharType(WCHAR ch);
@@ -346,7 +346,7 @@ const WCHAR* Parse(
 			case Operator::Comma:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
-						
+
 					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
 					{
 						parser.opStack[++parser.opTop] = g_BrOp;
@@ -461,7 +461,7 @@ static const WCHAR* Calc(Parser& parser)
 	// Multi-argument function
 	if (op.type == Operator::Conditional)
 	{
-		return nullptr; 
+		return nullptr;
 	}
 	else if (op.type == Operator::MultiArgFunction)
 	{
@@ -796,8 +796,8 @@ bool IsDelimiter(WCHAR ch)
 
 BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
 {
-	const int funcCount = sizeof(g_Functions) / sizeof(Function);
-	for (int i = 0; i < funcCount; ++i)
+  static_assert(BYTE(g_Functions.size()) == g_Functions.size(), "g_Functions must be fit in a BYTE");
+	for (BYTE i = 0; i < BYTE(g_Functions.size()); ++i)
 	{
 		if (g_Functions[i].length == len &&
 			_wcsnicmp(str, g_Functions[i].name, len) == 0)

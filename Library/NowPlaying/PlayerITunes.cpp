@@ -355,14 +355,14 @@ void PlayerITunes::UpdateCachedData()
 
 			// Update various metadata
 			track->get_Name(&tmpStr);
-			tmpStr ? m_Title = tmpStr : m_Title.clear();
+			tmpStr ? void(m_Title = tmpStr) : m_Title.clear();
 			track->get_Album(&tmpStr);
-			tmpStr ? m_Album = tmpStr : m_Album.clear();
+			tmpStr ? void(m_Album = tmpStr) : m_Album.clear();
 			track->get_Artist(&tmpStr);
-			tmpStr ? m_Artist = tmpStr : m_Artist.clear();
+			tmpStr ? void(m_Artist = tmpStr) : m_Artist.clear();
 
 			track->get_Genre(&tmpStr);;
-			tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
+			tmpStr ? void(m_Genre = tmpStr) : m_Genre.clear();
 
 			track->get_Duration(&tmpVal);
 			m_Duration = (UINT)tmpVal;
@@ -380,7 +380,7 @@ void PlayerITunes::UpdateCachedData()
 			{
 				file->get_Location(&tmpStr);
 				file->Release();
-				tmpStr ? m_FilePath = tmpStr : m_FilePath.clear();
+				tmpStr ? void(m_FilePath.assign(tmpStr)) : m_FilePath.clear();
 			}
 			else
 			{

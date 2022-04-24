@@ -115,7 +115,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
 				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
-				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop, section);
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(), section);
 			}
 		}
 	}

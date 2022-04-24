@@ -26,13 +26,13 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 	PTSTR psz009RegValue, pszLastIndexRegValue;
 	if ( PERF_TITLE_COUNTER == titleType )
 	{
-		psz009RegValue = TEXT("Counter 009");
-		pszLastIndexRegValue = TEXT("Last Counter");
+		psz009RegValue = (WCHAR*)TEXT("Counter 009");
+		pszLastIndexRegValue = (WCHAR*)TEXT("Last Counter");
 	}
 	else if ( PERF_TITLE_EXPLAIN == titleType )
 	{
-		psz009RegValue = TEXT("Explain 009");
-		pszLastIndexRegValue = TEXT("Last Help");
+		psz009RegValue = (WCHAR*)TEXT("Explain 009");
+		pszLastIndexRegValue = (WCHAR*)TEXT("Last Help");
 	}
 	else
 		return;

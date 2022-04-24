@@ -53,7 +53,7 @@ CPerfCounter::Format( PTSTR pszBuffer, DWORD nSize, BOOL fHex )
 {
 	// Do better formatting!!!  Check length!!!
 
-	PTSTR pszPrefix = TEXT("");
+	PTSTR pszPrefix = (WCHAR*)TEXT("");
 	TCHAR szTemp[512];
 
 	// First, ascertain the basic type (number, counter, text, or zero)
@@ -72,24 +72,24 @@ CPerfCounter::Format( PTSTR pszBuffer, DWORD nSize, BOOL fHex )
 			switch( m_type & 0x00070000 )
 			{
 				case PERF_COUNTER_RATE:
-					pszPrefix = TEXT("counter rate "); break;
+					pszPrefix = (WCHAR*)TEXT("counter rate "); break;
 				case PERF_COUNTER_FRACTION:
-					pszPrefix = TEXT("counter fraction "); break;
+					pszPrefix = (WCHAR*)TEXT("counter fraction "); break;
 				case PERF_COUNTER_BASE:
-					pszPrefix = TEXT("counter base "); break;
+					pszPrefix = (WCHAR*)TEXT("counter base "); break;
 				case PERF_COUNTER_ELAPSED:
-					pszPrefix = TEXT("counter elapsed "); break;
+					pszPrefix = (WCHAR*)TEXT("counter elapsed "); break;
 				case PERF_COUNTER_QUEUELEN:
-					pszPrefix = TEXT("counter queuelen "); break;
+					pszPrefix = (WCHAR*)TEXT("counter queuelen "); break;
 				case PERF_COUNTER_HISTOGRAM:
-					pszPrefix = TEXT("counter histogram "); break;
+					pszPrefix = (WCHAR*)TEXT("counter histogram "); break;
 				default:
-					pszPrefix = TEXT("counter value "); break;
+					pszPrefix = (WCHAR*)TEXT("counter value "); break;
 			}
 		}
 	}
 
-	PTSTR pszFmt = fHex ? TEXT("%s%Xh") : TEXT("%s%u");
+	PTSTR pszFmt = fHex ? (WCHAR*)TEXT("%s%Xh") : (WCHAR*)TEXT("%s%u");
 
 	switch ( m_cbData )
 	{

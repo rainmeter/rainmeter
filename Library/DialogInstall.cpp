@@ -1482,11 +1482,11 @@ void DialogInstall::TabInstall::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = 180;
-	lvc.pszText = L"Name";
+	lvc.pszText = (WCHAR*)L"Name";
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 150;
-	lvc.pszText = L"Action";
+	lvc.pszText = (WCHAR*)L"Action";
 	ListView_InsertColumn(item, 1, &lvc);
 
 	// Add groups and items
@@ -1515,7 +1515,7 @@ void DialogInstall::TabInstall::Initialize()
 			ListView_SetCheckState(item, lvi.iItem, TRUE);
 
 			std::wstring itemPath = path + *iter;
-			WCHAR* text = L"Add";
+			LPCWCHAR text = L"Add";
 			bool disablePlugin = false;
 			if (_waccess(itemPath.c_str(), 0) != -1)
 			{
@@ -1538,7 +1538,7 @@ void DialogInstall::TabInstall::Initialize()
 					text = backup ? L"Backup and replace" : L"Replace";
 				}
 			}
-			ListView_SetItemText(item, lvi.iItem, 1, text);
+			ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)text);
 
 			if (disablePlugin)
 			{
