@@ -60,7 +60,7 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:Configuration=Release
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
-set SIGNTOOL_SHA1="signtool.exe" sign /t http://timestamp.comodoca.com /f "%CERTFILE%" /p "%CERTKEY%"
+set SIGNTOOL_SHA1="signtool.exe" sign /fd sha1 /t http://timestamp.comodoca.com /f "%CERTFILE%" /p "%CERTKEY%"
 set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /f "%CERTFILE%" /p "%CERTKEY%"
 
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
