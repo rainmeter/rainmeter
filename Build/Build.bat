@@ -1,13 +1,15 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build release 4.4.1 r3500, run: Build.bat release 4 4 1 3500
-:: Parameters: build_type version_major version_minor version_subminor version_revision
+:: For example, to build release 4.4.1 r3500, run: Build.bat release 4 4 1 3500 1
+:: Parameters: build_type version_major version_minor version_subminor version_revision skip_delay_flag
 :: |build_type|: release, pre, languages
+:: |skip_delay_flag|: 1 or 0. 1 = skip any "timeout" commands (for github actions). 0 = adds a 2 second
+::		delay when signing the binaries to prevent file locking by Windows.
 :: Examples:
-::		Build.bat final 4 4 0 3520		-> Rainmeter-4.4.0.exe
-::		Build.bat pre 4 4 1 3521		-> Rainmeter-4.4.1-prerelease.exe
-::		Build.bat languages				-> No installer, just update the language .dll files
+::		Build.bat final 4 4 0 3520 0		-> Rainmeter-4.4.0.exe
+::		Build.bat pre 4 4 1 3521 1			-> Rainmeter-4.4.1-prerelease.exe
+::		Build.bat languages					-> No installer, just update the language .dll files
 
 set BUILD_TYPE=%1
 
@@ -17,6 +19,10 @@ set /A VERSION_MAJOR=%2
 set /A VERSION_MINOR=%3
 set /A VERSION_SUBMINOR=%4
 set /A VERSION_REVISION=%5
+
+:: Skip any "timeout" delays
+set SKIP_DELAY=%6
+if "%SKIP_DELAY%" == "" set /A SKIP_DELAY=0
 
 if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
@@ -140,9 +146,9 @@ if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe RestartRainmeter.exe SkinInstaller.exe) do (
 		%SIGNTOOL_SHA2% ..\x32-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%Z failed & exit /b 1)
-		timeout 2 > nul
+		if "%SKIP_DELAY%" == "0" timeout 2 > nul
 		%SIGNTOOL_SHA2% ..\x64-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%Z failed & exit /b 1)
-		timeout 2 > nul
+		if "%SKIP_DELAY%" == "0" timeout 2 > nul
 	)
 )
 
@@ -167,7 +173,7 @@ set INSTALLER_DEFINES=^
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
 	%SIGNTOOL_SHA1% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
-	timeout 2 > nul
+	if "%SKIP_DELAY%" == "0" timeout 2 > nul
 	%SIGNTOOL_SHA2% /as %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
