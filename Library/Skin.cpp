@@ -278,12 +278,19 @@ void Skin::Initialize(bool hasSettings)
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
-	if (!m_Canvas.InitializeRenderTarget(m_Window))
+	LONG errCode = 0L;
+	if (!m_Canvas.InitializeRenderTarget(m_Window, &errCode))
 	{
-		LogErrorF(this, L"Could not intialize the render target.");
+		LogErrorF(this, L"Initialize: Could not initialize the render target.");
 
 		//Unload skin to prevent crashes
 		Deactivate();
+	}
+
+	if (errCode != 0L)
+	{
+		_com_error err(errCode);
+		LogErrorF(this, L"Initialize: Com Error: %s (0x%08x)", err.ErrorMessage(), errCode);
 	}
 
 	Refresh(true, true);
@@ -2162,8 +2169,9 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
-	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);
-	if (isDefault) writeDefaultInt(L"HideOnMouseOver", hideMode);
+	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
+	hideMode = parser.ReadInt(section, makeKey(L"OnHover"), hideMode);
+	if (isDefault) writeDefaultInt(L"OnHover", hideMode);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
 	m_WindowDraggable = parser.ReadBool(section, makeKey(L"Draggable"), true);
@@ -2275,10 +2283,13 @@ void Skin::WriteOptions(INT setting)
 			WritePrivateProfileString(section, L"Draggable", m_WindowDraggable ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & OPTION_HIDEONMOUSEOVER)
+		if (setting & OPTION_ONHOVER)
 		{
+			// "HideOnMouseOver" is now deprecated, remove the key
+			WritePrivateProfileString(section, L"HideOnMouseOver", nullptr, iniFile);
+
 			_itow_s(m_WindowHide, buffer, 10);
-			WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
+			WritePrivateProfileString(section, L"OnHover", buffer, iniFile);
 		}
 
 		if (setting & OPTION_SAVEPOSITION)
@@ -3872,16 +3883,32 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_SKIN_HIDEONMOUSE_NONE:
+		if (m_WindowHide != HIDEMODE_NONE)
+		{
+			SetWindowHide(HIDEMODE_NONE);
+		}
+		break;
+
 	case IDM_SKIN_HIDEONMOUSE:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_HIDE)
+		{
+			SetWindowHide(HIDEMODE_HIDE);
+		}
 		break;
 
 	case IDM_SKIN_TRANSPARENCY_FADEIN:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_FADEIN)
+		{
+			SetWindowHide(HIDEMODE_FADEIN);
+		}
 		break;
 
 	case IDM_SKIN_TRANSPARENCY_FADEOUT:
-		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
+		if (m_WindowHide != HIDEMODE_FADEOUT)
+		{
+			SetWindowHide(HIDEMODE_FADEOUT);
+		}
 		break;
 
 	case IDM_SKIN_REMEMBERPOSITION:
@@ -4113,7 +4140,7 @@ void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
 	UpdateWindowTransparency(m_AlphaValue);
-	WriteOptions(OPTION_HIDEONMOUSEOVER);
+	WriteOptions(OPTION_ONHOVER);
 }
 
 void Skin::SetWindowZPosition(ZPOSITION zPos)

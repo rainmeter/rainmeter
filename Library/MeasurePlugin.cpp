@@ -11,6 +11,8 @@
 #include "Export.h"
 #include "System.h"
 
+std::unordered_map<std::wstring, UINT> MeasurePlugin::s_PluginReferences;
+
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_ReloadFunc(),
@@ -37,6 +39,27 @@ MeasurePlugin::~MeasurePlugin()
 			else
 			{
 				((FINALIZE)finalizeFunc)(m_Plugin, m_ID);
+			}
+		}
+
+		WCHAR pluginPath[MAX_PATH];
+		if (GetModuleFileName(m_Plugin, pluginPath, MAX_PATH) > 0UL)
+		{
+			std::wstring tmpStr = pluginPath;
+			StringUtil::ToLowerCase(tmpStr);
+
+			auto iter = s_PluginReferences.find(tmpStr);
+			if (iter != s_PluginReferences.end())
+			{
+				--iter->second;
+				if (iter->second == 0)
+				{
+					if (GetRainmeter().GetDebug())
+					{
+						LogDebugF(L"Plugin unloaded: %s", pluginPath);
+					}
+					s_PluginReferences.erase(tmpStr);
+				}
 			}
 		}
 
@@ -126,6 +149,30 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				this, L"Plugin: Unable to load \"%s\" (error %ld)",
 				pluginName.c_str(), GetLastError());
 			return;
+		}
+	}
+
+	// Log plugin references
+	{
+		WCHAR pluginPath[MAX_PATH];
+		if (GetModuleFileName(m_Plugin, pluginPath, MAX_PATH) > 0UL)
+		{
+			std::wstring tmpStr = pluginPath;
+			StringUtil::ToLowerCase(tmpStr);
+
+			auto iter = s_PluginReferences.find(tmpStr);
+			if (iter == s_PluginReferences.end())
+			{
+				s_PluginReferences.emplace(tmpStr, 1U);
+				if (GetRainmeter().GetDebug())
+				{
+					LogDebugF(L"Plugin loaded: %s", pluginPath);
+				}
+			}
+			else
+			{
+				++iter->second;
+			}
 		}
 	}
 

@@ -30,7 +30,7 @@ public:
 			true);
 
 		_wcslwr(&m_GlobalProxyName[0]);
-		m_CacheMap.insert(std::make_pair(m_GlobalProxyName, m_GlobalProxyCache));
+		m_CacheMap.emplace(m_GlobalProxyName, m_GlobalProxyCache);
 		//LogDebugF(L"* ADD-GLOBAL: key=%s, handle=0x%p, ref=new, agent=%s", m_GlobalProxyName.c_str(),
 		//	m_GlobalProxyCache->GetCache(), m_GlobalUserAgent.c_str());
 	}
@@ -70,7 +70,7 @@ public:
 		{
 			// Create new proxy
 			cache = new ProxyCache(CreateProxy(key.c_str(), agent.c_str()), agent);
-			m_CacheMap.insert(std::make_pair(key, cache));
+			m_CacheMap.emplace(key, cache);
 			//LogDebugF(L"* ADD: key=%s, handle=0x%p, ref=new, agent=%s", key.c_str(), cache->GetCache(), agent.c_str());
 			return cache->GetCache();
 		}

@@ -7,10 +7,11 @@
 
 #include "StdAfx.h"
 #include "DialogPackage.h"
-#include "../Common/StringUtil.h"
 #include "SkinInstaller.h"
 #include "DialogInstall.h"
 #include "resource.h"
+#include "../Common/FileUtil.h"
+#include "../Common/StringUtil.h"
 #include "../Version.h"
 
 #include "iowin32.h"
@@ -751,12 +752,9 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
 
-				LOADED_IMAGE* loadedImage = ImageLoad(StringUtil::Narrow(buffer).c_str(), nullptr);
-				if (loadedImage)
+				WORD machine = 0U;
+				if (FileUtil::GetBinaryFileBitness(buffer, machine))
 				{
-					WORD machine = loadedImage->FileHeader->FileHeader.Machine;
-					ImageUnload(loadedImage);
-
 					if ((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64))
 					{
 						// Check if same name as other DLL
@@ -907,7 +905,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				std::wstring name = PathFindFileName(folder.c_str());
 				name.pop_back();	// Remove slash
 
-				if (c_Dialog->m_LayoutFolders.insert(std::make_pair(name, folder)).second)
+				if (c_Dialog->m_LayoutFolders.emplace(name, folder).second)
 				{
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 					LVITEM lvi;
@@ -926,7 +924,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			std::pair<std::wstring, std::wstring> plugins = SelectPlugin(m_Window);
 			std::wstring name = PathFindFileName(plugins.first.c_str());
-			if (!name.empty() && c_Dialog->m_PluginFolders.insert(std::make_pair(name, plugins)).second)
+			if (!name.empty() && c_Dialog->m_PluginFolders.emplace(name, plugins).second)
 			{
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 				LVITEM lvi;
