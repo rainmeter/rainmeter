@@ -11,7 +11,7 @@
 HINTERNET Internet::c_NetHandle = nullptr;
 
 /*
-** Initialize internet handle and crtical section.
+** Initialize internet handle and critical section.
 **
 */
 void Internet::Initialize()
