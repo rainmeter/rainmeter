@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2011 Rainmeter Project Developers
+/* Copyright (C) 2011 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -7,16 +7,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
-using Microsoft.Build.Utilities;
 using System.IO;
+using Microsoft.Build.Utilities;
 
 namespace DllExporter
 {
-    class Program
+    public class Program
     {
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
             if (args.Length < 4)
             {
@@ -24,24 +23,24 @@ namespace DllExporter
                 return 1;
             }
 
-            string configurationName = args[0];
-            string platformTarget = args[1];
-            string targetDirectory = args[2];
-            string targetDllName = targetDirectory + args[3];
-            string targetIlName = targetDllName + ".il";
-            string targetResName = targetDllName + ".res";
+            var configurationName = args[0];
+            var platformTarget = args[1];
+            var targetDirectory = args[2];
+            var targetDllName = targetDirectory + args[3];
+            var targetIlName = targetDllName + ".il";
+            var targetResName = targetDllName + ".res";
 
-            bool is64 = platformTarget.ToLower().Equals("x64");
-            bool isDebug = configurationName.ToLower().Equals("debug");
+            var is64 = platformTarget.ToLower().Equals("x64");
+            var isDebug = configurationName.ToLower().Equals("debug");
 
-            string ilasmPath = FindIlasmPath(is64);
+            var ilasmPath = FindIlasmPath(is64);
             if (ilasmPath == null)
             {
                 Console.WriteLine("DllExporter error: ilasm.exe not found");
                 return 1;
             }
 
-            string ildasmPath = FindIldasmPath();
+            var ildasmPath = FindIldasmPath();
             if (ildasmPath == null)
             {
                 Console.WriteLine("DllExporter error: ildasm.exe not found");
@@ -51,17 +50,24 @@ namespace DllExporter
             Directory.SetCurrentDirectory(targetDirectory);
 
             // Disassemble
-            Process ildasmProc = new Process();
-            string ildasmArgs = string.Format(
+
+            var ildasmArgs = string.Format(
                 "/nobar {0} /output=\"{1}\" \"{2}\"",
                 isDebug ? "/linenum" : "",
                 targetIlName,
                 targetDllName);
-
-            ildasmProc.StartInfo = new ProcessStartInfo(ildasmPath, ildasmArgs);
-            ildasmProc.StartInfo.UseShellExecute = false;
-            ildasmProc.StartInfo.CreateNoWindow = false;
-            ildasmProc.StartInfo.RedirectStandardOutput = true;
+            var ildasmProc = new Process()
+            {
+                StartInfo = new ProcessStartInfo()
+                {
+                    FileName = ildasmPath,
+                    Arguments = ildasmArgs,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                },
+            };
             ildasmProc.Start();
             ildasmProc.WaitForExit();
 
@@ -72,40 +78,40 @@ namespace DllExporter
                 return ildasmProc.ExitCode;
             }
 
-            bool hasResource = File.Exists(targetResName);
+            var hasResource = File.Exists(targetResName);
 
             // Read disassembly and find methods marked with DllExport attribute
-            List<string> lines = new List<string>(File.ReadAllLines(targetIlName));
-            int attributeIndex = 0;
-            int exportCount = 0;
+            var lines = new List<string>(File.ReadAllLines(targetIlName));
+            var attributeIndex = 0;
+            var exportCount = 0;
             while (true)
             {
                 attributeIndex = lines.FindIndex(attributeIndex, new Predicate<string>(x => x.Contains(".custom instance void") && x.Contains("DllExport::.ctor()")));
-                if (attributeIndex < 8) break;
+                if (attributeIndex < 8) { break; }
 
-                int methodIndex = lines.FindLastIndex(attributeIndex, attributeIndex, new Predicate<string>(x => x.Contains(".method")));
+                var methodIndex = lines.FindLastIndex(attributeIndex, attributeIndex, new Predicate<string>(x => x.Contains(".method")));
                 if (methodIndex == -1)
                 {
                     Console.WriteLine("DllExporter error: Unable to parse disassembly (.method not found)!");
                     return 1;
                 }
 
-                int functionIndex = lines.FindIndex(methodIndex, new Predicate<string>(x => x.Contains("(")));
+                var functionIndex = lines.FindIndex(methodIndex, new Predicate<string>(x => x.Contains("(")));
                 if (functionIndex == -1)
                 {
                     Console.WriteLine("DllExporter error: Unable to parse disassembly (bracket not found)!");
                     return 1;
                 }
 
-                int bracketPos = lines[functionIndex].IndexOf('(');
-                int functionNamePos = lines[functionIndex].LastIndexOf(' ', bracketPos);
-                string functionName = lines[functionIndex].Substring(functionNamePos, bracketPos - functionNamePos);
+                var bracketPos = lines[functionIndex].IndexOf('(');
+                var functionNamePos = lines[functionIndex].LastIndexOf(' ', bracketPos);
+                var functionName = lines[functionIndex].Substring(functionNamePos, bracketPos - functionNamePos);
 
                 // Change calling convention to cdecl
                 lines[functionIndex] = string.Format("{0} modopt([mscorlib]System.Runtime.CompilerServices.CallConvCdecl) {1}", lines[functionIndex].Substring(0, functionNamePos - 1), lines[functionIndex].Substring(functionNamePos));
 
-                int attributeBeginPos = lines[attributeIndex].IndexOf('.');
-                string spaces = new string(' ', attributeBeginPos);
+                var attributeBeginPos = lines[attributeIndex].IndexOf('.');
+                var spaces = new string(' ', attributeBeginPos);
 
                 // Replace attribute with export
                 ++exportCount;
@@ -120,7 +126,7 @@ namespace DllExporter
             }
 
             // Remove the DllExport class
-            int classIndex = lines.FindIndex(new Predicate<string>(x => x.Contains(".class ") && x.EndsWith(".DllExport")));
+            var classIndex = lines.FindIndex(new Predicate<string>(x => x.Contains(".class ") && x.EndsWith(".DllExport")));
             if (classIndex == -1)
             {
                 Console.WriteLine("DllExporter error: Unable to parse disassembly (DllExport class not found)!");
@@ -128,7 +134,7 @@ namespace DllExporter
             }
             else
             {
-                int classEndIndex = lines.FindIndex(classIndex, new Predicate<string>(x => x.Contains("} // end of class") && x.EndsWith(".DllExport")));
+                var classEndIndex = lines.FindIndex(classIndex, new Predicate<string>(x => x.Contains("} // end of class") && x.EndsWith(".DllExport")));
                 if (classEndIndex == -1)
                 {
                     Console.WriteLine("DllExporter error: Unable to parse disassembly (DllExport class end not found)!");
@@ -142,13 +148,21 @@ namespace DllExporter
             File.WriteAllLines(targetIlName, lines.ToArray());
 
             // Reassemble
-            Process ilasmProc = new Process();
-            string resource = hasResource ? string.Format("/resource=\"{0}\"", targetResName) : "";
-            string ilasmArgs = string.Format("/nologo /quiet /dll {0} {1} /output=\"{2}\" {3} \"{4}\"", isDebug ? "/debug /pdb" : "/optimize", is64 ? "/x64 /PE64" : "", targetDllName, resource, targetIlName);
-            ilasmProc.StartInfo = new ProcessStartInfo(ilasmPath, ilasmArgs);
-            ilasmProc.StartInfo.UseShellExecute = false;
-            ilasmProc.StartInfo.CreateNoWindow = false;
-            ilasmProc.StartInfo.RedirectStandardOutput = true;
+            
+            var resource = hasResource ? string.Format("/resource=\"{0}\"", targetResName) : "";
+            var ilasmArgs = string.Format("/nologo /quiet /dll {0} {1} /output=\"{2}\" {3} \"{4}\"", isDebug ? "/debug /pdb" : "/optimize", is64 ? "/x64 /PE64" : "", targetDllName, resource, targetIlName);
+            var ilasmProc = new Process()
+            {
+                StartInfo = new ProcessStartInfo()
+                {
+                    FileName = ilasmPath,
+                    Arguments = ilasmArgs,
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    RedirectStandardOutput = true,
+                },
+            };
+            
             ilasmProc.Start();
             ilasmProc.WaitForExit();
 
@@ -175,7 +189,7 @@ namespace DllExporter
         {
             var arch = x64 ? DotNetFrameworkArchitecture.Bitness64 : DotNetFrameworkArchitecture.Bitness32;
             var path = ToolLocationHelper.GetPathToDotNetFrameworkFile(
-                "ilasm.exe", TargetDotNetFrameworkVersion.Version20, arch);
+                "ilasm.exe", TargetDotNetFrameworkVersion.VersionLatest, arch);
             return File.Exists(path) ? path : null;
         }
 
