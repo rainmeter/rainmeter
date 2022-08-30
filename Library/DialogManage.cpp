@@ -295,8 +295,9 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.pszText = GetString(ID_STR_SETTINGS);
 	TabCtrl_InsertItem(item, 3, &tci);
 
-	HICON hIcon = GetIcon(IDI_RAINMETER);
-	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+	HICON hIcon = GetIcon(IDI_RAINMETER, true);
+	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
+	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
