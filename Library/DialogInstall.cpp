@@ -11,6 +11,7 @@
 #include "SkinInstaller.h"
 #include "resource.h"
 #include "System.h"
+#include "Util.h"
 #include "../Version.h"
 
 #include "iowin32.h"
@@ -148,8 +149,9 @@ INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
-	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
+	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
+	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
 	SetDialogFont();
 
