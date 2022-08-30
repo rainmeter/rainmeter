@@ -2493,13 +2493,14 @@ bool Skin::ReadSkin()
 	}
 
 	// Load fonts in Resources folder
+	bool hasResourceFonts = false;
 	if (hasResourcesFolder)
 	{
 		WIN32_FIND_DATA fd;
-		resourcePath += L"Fonts\\*";
+		std::wstring resourceFontPath = resourcePath + L"Fonts\\*";
 
 		HANDLE find = FindFirstFileEx(
-			resourcePath.c_str(),
+			resourceFontPath.c_str(),
 			FindExInfoBasic,
 			&fd,
 			FindExSearchNameMatch,
@@ -2514,9 +2515,13 @@ bool Skin::ReadSkin()
 			{
 				if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					std::wstring file(resourcePath, 0, resourcePath.length() - 1);
+					std::wstring file(resourceFontPath, 0, resourceFontPath.length() - 1);
 					file += fd.cFileName;
-					if (!m_FontCollection->AddFile(file.c_str()))
+					if (m_FontCollection->AddFile(file.c_str()))
+					{
+						hasResourceFonts = true;
+					}
+					else
 					{
 						LogErrorF(this, L"Unable to load font: %s", file.c_str());
 					}
@@ -2529,6 +2534,7 @@ bool Skin::ReadSkin()
 	}
 
 	// Load local fonts
+	bool hasLocalFonts = false;
 	const WCHAR* localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"").c_str();
 	if (*localFont)
 	{
@@ -2547,7 +2553,11 @@ bool Skin::ReadSkin()
 			{
 				szFontFile = localFont;
 				MakePathAbsolute(szFontFile);
-				if (!m_FontCollection->AddFile(szFontFile.c_str()))
+				if (m_FontCollection->AddFile(szFontFile.c_str()))
+				{
+					hasLocalFonts = true;
+				}
+				else
 				{
 					LogErrorF(this, L"Unable to load font: %s", localFont);
 				}
@@ -2558,6 +2568,40 @@ bool Skin::ReadSkin()
 			localFont = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 		}
 		while (*localFont);
+	}
+
+	// Log available non-installed fonts
+	if ((hasResourceFonts || hasLocalFonts) && GetRainmeter().GetDebug())
+	{
+		auto fontCollectionD2D = (Gfx::FontCollectionD2D*)m_FontCollection;
+		if (fontCollectionD2D && fontCollectionD2D->InitializeCollection())
+		{
+			std::wstring fontResourcePath = resourcePath + L"Fonts\\";
+			std::wstring fontSource = L"Source: ";
+			if (hasLocalFonts) fontSource += L"LocalFont";
+			if (hasResourceFonts)
+			{
+				if (hasLocalFonts) fontSource += L", ";
+				fontSource += L"@Resources=";
+				fontSource += fontResourcePath;
+			}
+
+			UINT32 familyCount = 0U;
+			std::wstring families;
+			bool success = fontCollectionD2D->GetFontFamilies(familyCount, families);
+			if (familyCount > 0U && !families.empty())
+			{
+				LogDebugF(this, L"Local Font families: Count=%i %s", familyCount, fontSource.c_str());
+				if (success)
+				{
+					LogDebugF(this, L"Local Font families: %s", families.c_str());
+				}
+				else
+				{
+					LogErrorF(this, L"Local Font families: %s", families.c_str());
+				}
+			}
+		}
 	}
 
 	// Create all meters and measures. The meters and measures are not initialized in this loop
