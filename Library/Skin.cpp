@@ -56,8 +56,10 @@ enum INTERVAL
 int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
 
-Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
-	m_IsFirstRun(false),
+Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings) :
+	m_FolderPath(folderPath),
+	m_FileName(file),
+	m_IsFirstRun(!hasSettings),
 	m_Canvas(),
 	m_Background(),
 	m_BackgroundSize(),
@@ -249,10 +251,8 @@ void Skin::Dispose(bool refresh)
 ** Initializes the window, creates the class and the window.
 **
 */
-void Skin::Initialize(bool hasSettings)
+void Skin::Initialize()
 {
-	m_IsFirstRun = !hasSettings;
-
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
 		METERWINDOW_CLASS_NAME,
@@ -2250,6 +2250,9 @@ void Skin::WriteOptions(INT setting)
 
 	if (*iniFile)
 	{
+		// Insert section name in settings file, if needed
+		GetRainmeter().DoesSkinHaveSettings(m_FolderPath);
+
 		WCHAR buffer[32];
 		const WCHAR* section = m_FolderPath.c_str();
 

@@ -131,6 +131,7 @@ public:
 	void EditSettings();
 	void EditSkinFile(const std::wstring& name, const std::wstring& iniFile);
 	void OpenSkinFolder(const std::wstring& name = std::wstring());
+	bool DoesSkinHaveSettings(const std::wstring& folderPath);
 
 	void ReadStats();
 	void WriteStats(bool bForce);

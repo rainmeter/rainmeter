@@ -97,13 +97,13 @@ class TextFormat;
 class Skin : public Group
 {
 public:
-	Skin(const std::wstring& folderPath, const std::wstring& file);
+	Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings);
 	~Skin();
 
 	Skin(const Skin& other) = delete;
 	Skin& operator=(Skin other) = delete;
 
-	void Initialize(bool hasSettings);
+	void Initialize();
 
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
