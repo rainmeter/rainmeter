@@ -1994,8 +1994,7 @@ void Skin::WindowToScreen()
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 }
 
-/* ScreenToWindow
-**
+/* 
 ** Calculates the WindowX/Y cordinates from the ScreenX/Y
 **
 */
