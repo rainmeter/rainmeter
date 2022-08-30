@@ -19,7 +19,6 @@ const D2D1_MATRIX_5X4_F GeneralImage::c_GreyScaleMatrix = {
 	  0.0f,   0.0f,   0.0f, 0.0f
 };
 
-
 const D2D1_MATRIX_5X4_F GeneralImage::c_IdentityMatrix = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f,
