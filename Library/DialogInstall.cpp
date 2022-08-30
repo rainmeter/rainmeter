@@ -1589,26 +1589,109 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_INSTALLTAB_COMPONENTS_LIST:
 		{
-			LPNMLISTVIEW pNMLV = (LPNMLISTVIEW)lParam;
-			if (pNMLV->uChanged == LVIF_STATE && (pNMLV->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2))
+			LPNMLISTVIEW pnmlv = (LPNMLISTVIEW)lParam;
+
+			if (pnmlv->hdr.code != LVN_ITEMCHANGED) break;  // Only respond to "changed" events
+
+			if (pnmlv->uChanged & LVIF_STATE)
 			{
-				HWND hwnd = pNMLV->hdr.hwndFrom;
+				const bool isChecked = (pnmlv->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2);
+				const bool isUnchecked = (pnmlv->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1);
 
-				// Get needed information from item
-				WCHAR text[80];
-				ListView_GetItemText(hwnd, pNMLV->iItem, 1, text, 80);
-				BOOL checked = ListView_GetCheckState(hwnd, pNMLV->iItem);
+				if (!isUnchecked && !isChecked) break;  // Disregard any listview "states" that are unrelated to the checkboxes "state"
 
-				// Make sure we only display a message box if the plugin is older than the installed version
-				if (!checked && wcscmp(L"Newer version installed", text) == 0)
+				HWND hwndFrom = pnmlv->hdr.hwndFrom;
+				HWND hwndDialogTab = c_Dialog->GetActiveTab().GetWindow();
+				HWND hwndListview = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_COMPONENTS_LIST);
+				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_THEME_CHECKBOX);
+				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), IDC_INSTALL_INSTALL_BUTTON);
+
+				// "Load included layout" / "Load included skins" checkbox: Remember the "last state"
+				// the user has clicked, since this will be unchecked when disabled.
+				static bool isLayoutChecked = Button_GetCheck(hwndLayoutCheckbox);
+
+				LVITEM lvi = { 0 };
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = pnmlv->iItem;
+				if (!ListView_GetItem(hwndFrom, &lvi)) break;
+
+				const int groupId = lvi.iGroupId;
+
+				if (isUnchecked)
 				{
-					const WCHAR* message = L"There is already a newer version of this plugin installed " \
-						L"on your computer. Installing an older plugin is not recommended.\n\n" \
-						L"Proceed with caution.";
-					MessageBox(hwnd, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
-				}
+					// Perform 2 actions.
+					// #1. Disable the "Load included layout" checkbox if necessary
+					// #2. Disable the "Install" button if all the checkboxes in the listview are unchecked
 
-				return TRUE;
+					bool isAnyItemChecked = false;
+					bool isAnyGroupItemChecked = false;
+					const int itemCount = ListView_GetItemCount(hwndListview);
+					for (int i = 0; i < itemCount; ++i)
+					{
+						lvi.iItem = i;
+						if (!ListView_GetItem(hwndListview, &lvi)) continue;
+
+						// Check if the item is checked
+						if (ListView_GetCheckState(hwndListview, i) == TRUE)
+						{
+							isAnyItemChecked = true;  // An item is checked, make sure to NOT disable "Install" button (see below)
+
+							if (lvi.iGroupId == groupId)
+							{
+								isAnyGroupItemChecked = true;  // Checked item is in the same group
+							}
+						}
+					}
+
+					// Disable the "Install" button if all items are unchecked
+					if (!isAnyItemChecked)
+					{
+						EnableWindow(hwndInstallButton, FALSE);
+					}
+
+					// Disable "Load included layout" / "Load included skins" checkbox, but save the last user state if re-enabled (see below)
+					if (!isAnyGroupItemChecked)
+					{
+						if ((!c_Dialog->m_LoadLayout.empty() && groupId == 1) ||
+							(!c_Dialog->m_LoadSkins.empty() && groupId == 0))
+						{
+							isLayoutChecked = Button_GetCheck(hwndLayoutCheckbox);
+
+							Button_SetCheck(hwndLayoutCheckbox, BST_UNCHECKED);
+							EnableWindow(hwndLayoutCheckbox, FALSE);
+						}
+					}
+
+					return TRUE;
+				}
+				else if (isChecked)
+				{
+					// Re-enable "Install" button if any checkbox is checked
+					EnableWindow(hwndInstallButton, TRUE);
+
+					if (groupId == 0 || groupId == 1)  // Skins or Layout group
+					{
+						// Restore check state and enable checkbox
+						Button_SetCheck(hwndLayoutCheckbox, isLayoutChecked ? BST_CHECKED : BST_UNCHECKED);
+						EnableWindow(hwndLayoutCheckbox, TRUE);
+					}
+					else if (groupId == 3)  // Plugins
+					{
+						WCHAR text[80] = { 0 };
+						ListView_GetItemText(hwndFrom, pnmlv->iItem, 1, text, 80);  // Get sub-item text
+
+						// Make sure we only display a message box if the plugin is older than the installed version
+						if (wcscmp(L"Newer version installed", text) == 0)
+						{
+							const WCHAR* message = L"There is already a newer version of this plugin installed " \
+								L"on your computer. Installing an older plugin is not recommended.\n\n" \
+								L"Proceed with caution.";
+							MessageBox(hwndFrom, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
+						}
+					}
+
+					return TRUE;
+				}
 			}
 		}
 	}
