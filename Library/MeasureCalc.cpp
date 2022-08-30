@@ -202,7 +202,7 @@ int MeasureCalc::GetRandom()
 	}
 	else
 	{
-		const std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
+		std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
 		return distribution(GetRandomEngine());
 	}
 }
