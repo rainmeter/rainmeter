@@ -977,6 +977,56 @@ void Rainmeter::OpenSkinFolder(const std::wstring& name)
 	CommandHandler::RunFile(folderPath.c_str());
 }
 
+bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
+{
+	WCHAR* buffer = new WCHAR[SHRT_MAX];
+	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0UL);
+	delete[] buffer;
+
+	if (!hasSettings)
+	{
+		// Since there are no settings for this skin in Rainmeter.ini, attempt to insert
+		// a empty line between the last defined section, and the new section for this skin.
+
+		HANDLE hFile = CreateFile(m_IniFile.c_str(), GENERIC_READ | GENERIC_WRITE, 0UL,
+			nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (hFile != INVALID_HANDLE_VALUE)
+		{
+			LARGE_INTEGER fileSize = { 0 };
+			if (GetFileSizeEx(hFile, &fileSize) != FALSE && fileSize.QuadPart > 4LL)
+			{
+				LARGE_INTEGER newSize = { 0 };
+				newSize.QuadPart = -4LL;
+
+				while (SetFilePointerEx(hFile, newSize, nullptr, FILE_END) == TRUE)
+				{
+					WCHAR lastTwoChars[2] = { 0 };
+					if (ReadFile(hFile, lastTwoChars, 4UL, nullptr, nullptr) == FALSE) break;
+
+					if (lastTwoChars[0] != L'\r' && lastTwoChars[1] != L'\n')
+					{
+						break;  // Found the last non newline character sequence (\r\n)
+					}
+
+					fileSize.QuadPart -= 4LL;
+
+					SetFilePointerEx(hFile, fileSize, nullptr, FILE_BEGIN);
+					SetEndOfFile(hFile);
+				}
+
+				// Insert skin entry
+				std::wstring section = L"\r\n\r\n[";
+				section += folderPath;
+				section += L"]\r\nActive=0\r\n";  // The "Active" setting is set later
+				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2UL), nullptr, nullptr);
+			}
+			CloseHandle(hFile);
+		}
+	}
+
+	return hasSettings;
+}
+
 void Rainmeter::ActivateActiveSkins()
 {
 	std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
@@ -1069,9 +1119,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		}
 
 		// Verify whether the skin config has an entry in the settings file
-		WCHAR* buffer = new WCHAR[SHRT_MAX];
-		bool hasSettings = GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0;
-		delete [] buffer;
+		const bool hasSettings = DoesSkinHaveSettings(folderPath);
 
 		if (skinFolder.active != fileIndex + 1)
 		{
@@ -1182,17 +1230,20 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
 	_itow_s(fileIndex + 1, buffer, 10);
+
+	DoesSkinHaveSettings(folderPath);
+
 	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
 void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings)
 {
-	Skin* skin = new Skin(folderPath, file);
+	Skin* skin = new Skin(folderPath, file, hasSettings);
 
 	// Note: May modify existing key
 	m_Skins[folderPath] = skin;
 
-	skin->Initialize(hasSettings);
+	skin->Initialize();
 
 	DialogAbout::UpdateSkins();
 	DialogManage::UpdateSkins(skin);
