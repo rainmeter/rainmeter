@@ -677,19 +677,19 @@ Token GetNextToken(Lexer& lexer)
 			if (lexer.string[0] == L'0')
 			{
 				bool valid = true;
-				int num = 0;
+				long long num = 0;
 				switch (lexer.string[1])
 				{
 				case L'x':	// Hexadecimal
-					num = wcstol(lexer.string, &newString, 16);
+					num = wcstoll(lexer.string, &newString, 16);
 					break;
 
 				case L'o':	// Octal
-					num = wcstol(lexer.string + 2, &newString, 8);
+					num = wcstoll(lexer.string + 2, &newString, 8);
 					break;
 
 				case L'b':	// Binary
-					num = wcstol(lexer.string + 2, &newString, 2);
+					num = wcstoll(lexer.string + 2, &newString, 2);
 					break;
 
 				default:
@@ -702,7 +702,7 @@ Token GetNextToken(Lexer& lexer)
 					if (lexer.string != newString)
 					{
 						lexer.token = Token::Number;
-						lexer.value.num = num;
+						lexer.value.num = (double)num;
 						lexer.string = newString;
 						lexer.charType = GetCharType(*lexer.string);
 					}
