@@ -30,8 +30,6 @@ public:
 	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gfx::Canvas& canvas);
 
-	static void EnumerateInstalledFontFamilies();
-
 	static void InitializeStatic();
 	static void FinalizeStatic();
 

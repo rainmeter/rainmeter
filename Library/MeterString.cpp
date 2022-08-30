@@ -617,76 +617,25 @@ void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Static helper to log all installed font families.
-**
-** TODO: use Direct2d to enumrate the installed font families.
-** See: https://msdn.microsoft.com/en-us/library/windows/desktop/dd756583(v=vs.85).aspx
-*/
-void MeterString::EnumerateInstalledFontFamilies()
-{
-	INT fontCount;
-	Gdiplus::InstalledFontCollection fontCollection;
-
-	if (Gdiplus::Ok == fontCollection.GetLastStatus())
-	{
-		fontCount = fontCollection.GetFamilyCount();
-		if (fontCount > 0)
-		{
-			INT fontFound;
-
-			Gdiplus::FontFamily* fontFamilies = new Gdiplus::FontFamily[fontCount];
-
-			if (Gdiplus::Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
-			{
-				LogDebugF(L"* Font families: Count=%i", fontCount);
-				std::wstring fonts;
-				for (INT i = 0; i < fontCount; ++i)
-				{
-					WCHAR familyName[LF_FACESIZE];
-					if (Gdiplus::Ok == fontFamilies[i].GetFamilyName(familyName))
-					{
-						if (*familyName)
-						{
-							fonts += familyName;
-						}
-					}
-					else
-					{
-						fonts += L"***";
-					}
-
-					if (*familyName && i != (fontCount - 1))
-					{
-						fonts += L", ";
-					}
-				}
-				LogDebug(fonts.c_str());
-			}
-			else
-			{
-				LogError(L"Font enumeration: GetFamilies failed");
-			}
-
-			delete [] fontFamilies;
-		}
-		else
-		{
-			LogWarning(L"No installed fonts");
-		}
-	}
-	else
-	{
-		LogError(L"Font enumeration: InstalledFontCollection failed");
-	}
-}
-
 void MeterString::InitializeStatic()
 {
 	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(L"------------------------------");
-		EnumerateInstalledFontFamilies();
+
+		UINT32 familyCount = 0U;
+		std::wstring families;
+		bool success = Gfx::Canvas::EnumerateInstalledFontFamilies(familyCount, families);
+		LogDebugF(L"* Font families: Count=%i", familyCount);
+		if (success)
+		{
+			LogDebug(families.c_str());
+		}
+		else
+		{
+			LogError(families.c_str());
+		}
+
 		LogDebug(L"------------------------------");
 	}
 }

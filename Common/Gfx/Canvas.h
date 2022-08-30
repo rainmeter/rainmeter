@@ -39,6 +39,7 @@ public:
 	~Canvas();
 
 	static bool Initialize(bool hardwareAccelerated);
+	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
 	static void Finalize();
 
 	bool InitializeRenderTarget(HWND hwnd, LONG* errCode);

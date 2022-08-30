@@ -143,6 +143,23 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 	return true;
 }
 
+bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring & families)
+{
+	bool success = false;
+	FontCollectionD2D * collection = new FontCollectionD2D();
+	collection->InitializeCollection();
+
+	success = collection->GetSystemFontFamilies(familyCount, families);
+
+	if (collection)
+	{
+		delete collection;
+		collection = nullptr;
+	}
+
+	return success;
+}
+
 void Canvas::Finalize()
 {
 	--c_Instances;
