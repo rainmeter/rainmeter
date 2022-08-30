@@ -17,9 +17,9 @@ public:
 
 	void OnTimerEvent(WPARAM wParam);
 
-	bool IsEnabled() { return m_State == State::Enabled; }
-	bool IsLayoutEnabled() { return m_State == State::LayoutEnabled; }
 	bool IsDisabled() { return m_State == State::Disabled; }
+	bool IsEnabled() { return m_State == State::Enabled; }
+	bool IsForcedExit() { return m_State == State::ForcedExit; }
 
 	std::wstring& GetOnStartAction() { return m_OnStartAction; }
 	void SetOnStartAction(const std::wstring& action);
@@ -46,9 +46,9 @@ public:
 private:
 	enum class State : UINT
 	{
-		Enabled = 1U,
-		LayoutEnabled,
-		Disabled
+		Disabled = 0U,
+		Enabled,
+		ForcedExit = 999U
 	};
 
 	GameMode();
@@ -68,7 +68,7 @@ private:
 	void EnterGameMode();
 	void ExitGameMode(bool force = false);
 
-	void LoadLayout(const std::wstring& layout, bool delay = true);
+	void LoadLayout(const std::wstring& layout);
 
 	State m_State;
 
