@@ -74,48 +74,29 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			if (wcschr(crop.c_str(), L','))
+			const auto tokens = ConfigParser::Tokenize2(crop, L',', PairedPunctuation::Parentheses);
+			const size_t tokSize = tokens.size();
+			if (tokSize > 3ULL)
 			{
-				WCHAR* context = nullptr;
-				WCHAR* parseSz = _wcsdup(crop.c_str());
-				WCHAR* token;
+				m_Options.m_Crop.left   = (FLOAT)parser.ParseInt(tokens[0].c_str(), 0);
+				m_Options.m_Crop.top    = (FLOAT)parser.ParseInt(tokens[1].c_str(), 0);
+				m_Options.m_Crop.right  = (FLOAT)parser.ParseInt(tokens[2].c_str(), 0);
+				m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(tokens[3].c_str(), 0);
 
-				token = wcstok(parseSz, L",", &context);
-				if (token)
+				if (tokSize > 4ULL)
 				{
-					m_Options.m_Crop.left = (FLOAT)parser.ParseInt(token, 0);
-
-					token = wcstok(nullptr, L",", &context);
-					if (token)
-					{
-						m_Options.m_Crop.top = (FLOAT)parser.ParseInt(token, 0);
-
-						token = wcstok(nullptr, L",", &context);
-						if (token)
-						{
-							m_Options.m_Crop.right = (FLOAT)parser.ParseInt(token, 0) + m_Options.m_Crop.left;
-
-							token = wcstok(nullptr, L",", &context);
-							if (token)
-							{
-								m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(token, 0) + m_Options.m_Crop.top;
-
-								token = wcstok(nullptr, L",", &context);
-								if (token)
-								{
-									m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(token, 0);
-								}
-							}
-						}
-					}
+					m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(tokens[4].c_str(), 0);
 				}
-				free(parseSz);
+			}
+			else
+			{
+				LogErrorF(m_Skin, L"%s=%s is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(), section);
 			}
 
 			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
 				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
-				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop, section);
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(), section);
 			}
 		}
 	}
