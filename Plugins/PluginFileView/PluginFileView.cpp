@@ -1215,8 +1215,8 @@ bool SaveIcon(HICON hIcon, FILE* fp)
 	// Clean up
 	DeleteObject(iconInfo.hbmColor);
 	DeleteObject(iconInfo.hbmMask);
-	delete[] colorBits;
-	delete[] maskBits;
+	delete [] colorBits;
+	delete [] maskBits;
 
 	fclose(fp);
 

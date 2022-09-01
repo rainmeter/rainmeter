@@ -176,7 +176,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	auto clearBuffer = [&buffer]() -> void
 	{
-		delete[] buffer;
+		delete [] buffer;
 		buffer = nullptr;
 	};
 
@@ -981,7 +981,7 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 {
 	WCHAR* buffer = new WCHAR[SHRT_MAX];
 	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0UL);
-	delete[] buffer;
+	delete [] buffer;
 
 	if (!hasSettings)
 	{

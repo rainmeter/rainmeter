@@ -29,7 +29,7 @@ public:
 	bool InitializeCollection();
 
 	bool GetSystemFontFamilies(UINT32& familyCount, std::wstring& families);
-	bool GetFontFamilies(UINT32 & familyCount, std::wstring & families);
+	bool GetFontFamilies(UINT32& familyCount, std::wstring& families);
 
 protected:
 	FontCollectionD2D();
