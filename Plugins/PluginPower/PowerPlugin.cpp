@@ -161,7 +161,7 @@ PLUGIN_EXPORT double Update(void* data)
 					RmLogF(measure->rm, LOG_ERROR, L"Processor power status error: 0x%08x", status);
 					measure->suppressError = true;
 				}
-				delete[] ppi;
+				delete [] ppi;
 				return value;
 			}
 		}

@@ -247,7 +247,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 		auto lastItem = std::unique(familyList.begin(), familyList.end());  // Remove duplicates
 		familyList.erase(lastItem, familyList.end());  // Remove remaining commas
 
-		familyCount = (UINT32)familyList.size() - lockedEntries;;
+		familyCount = (UINT32)familyList.size() - lockedEntries;
 
 		// Convert list to a string to be logged
 		for (size_t i = 0ULL, size = familyList.size(); i < size; ++i)
