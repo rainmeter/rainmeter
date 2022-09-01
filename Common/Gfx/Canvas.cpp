@@ -472,7 +472,9 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
 
 		// Draw any 'shadow' effects
-		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawPosition);
+		const D2D1_RECT_F drawRect = D2D1::RectF(
+			drawPosition.x, drawPosition.y, rect.right - rect.left, rect.bottom - rect.top);
+		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
 	}
 
 	if (formatD2D.m_Trimming)
