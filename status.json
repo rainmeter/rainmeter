@@ -40,7 +40,7 @@
     {
       "id": 1030,
       "name": "Danish",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1043,
@@ -140,7 +140,7 @@
     {
       "id": 1048,
       "name": "Romanian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1049,
