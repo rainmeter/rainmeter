@@ -175,7 +175,7 @@ namespace DllExporter
         {
             var arch = x64 ? DotNetFrameworkArchitecture.Bitness64 : DotNetFrameworkArchitecture.Bitness32;
             var path = ToolLocationHelper.GetPathToDotNetFrameworkFile(
-                "ilasm.exe", TargetDotNetFrameworkVersion.Version20, arch);
+                "ilasm.exe", TargetDotNetFrameworkVersion.VersionLatest, arch);
             return File.Exists(path) ? path : null;
         }
 
