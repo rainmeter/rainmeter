@@ -1188,17 +1188,19 @@ void TextFormatD2D::ApplyInlineCase(std::wstring& str)
 }
 
 void TextFormatD2D::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
-	const UINT32 strLen, const D2D1_POINT_2F& drawPosition)
+	const UINT32 strLen, const D2D1_RECT_F& drawRect)
 {
 	for (const auto& fmt : m_TextInlineFormat)
 	{
 		if (fmt->GetType() == Gfx::InlineType::Shadow)
 		{
 			auto option = dynamic_cast<TextInlineFormat_Shadow*>(fmt.get());
-			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawPosition);
+			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawRect);
 
 			// We need to reset the color options after the shadow effect because the shadow effect
 			// can turn some characters invisible.
+			D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
+
 			ResetInlineColoring(solidBrush, strLen);
 			ResetGradientPosition(&drawPosition);
 			ApplyInlineColoring(target, &drawPosition);

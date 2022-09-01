@@ -33,7 +33,7 @@ TextInlineFormat_Shadow::~TextInlineFormat_Shadow()
 }
 
 void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout,
-	ID2D1SolidColorBrush* solidBrush, const UINT32& strLen, const D2D1_POINT_2F& drawPosition)
+	ID2D1SolidColorBrush* solidBrush, const UINT32& strLen, const D2D1_RECT_F& drawRect)
 {
 	if (!target || !layout) return;
 
@@ -70,20 +70,18 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		}
 	}
 
-	// Reset the shadow bitmap if the drawing position or size of target has changed.
-	if (m_BitmapTarget)
-	{
-		const auto tSize = target->GetSize();
-		const D2D1_RECT_F position = D2D1::RectF(drawPosition.x, drawPosition.y, tSize.width, tSize.height);
+	const D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
+	const D2D1_SIZE_F drawSize = D2D1::SizeF(drawRect.right, drawRect.bottom);
 
-		if (position.left != m_PreviousPosition.left ||
-			position.top != m_PreviousPosition.top ||
-			position.right != m_PreviousPosition.right ||
-			position.bottom != m_PreviousPosition.bottom)
-		{
-			m_BitmapTarget.Reset();
-			m_PreviousPosition = position;
-		}
+	// Reset the shadow bitmap if the drawing position or size of target has changed.
+	if (m_BitmapTarget && (
+		drawRect.left != m_PreviousPosition.left ||
+		drawRect.top != m_PreviousPosition.top ||
+		drawRect.right != m_PreviousPosition.right ||
+		drawRect.bottom != m_PreviousPosition.bottom))
+	{
+		m_BitmapTarget.Reset();
+		m_PreviousPosition = drawRect;
 	}
 
 	m_Bitmap.Reset();
@@ -92,9 +90,11 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	{
 		m_BitmapTarget.Reset();
 
-		hr = target->CreateCompatibleRenderTarget(m_BitmapTarget.GetAddressOf());
+		hr = target->CreateCompatibleRenderTarget(drawSize, m_BitmapTarget.GetAddressOf());
 		if (FAILED(hr)) return;
 	}
+
+	
 
 	// Draw onto memory bitmap target
 	// Note: Hardware acceleration seems to keep the bitmap render target in memory

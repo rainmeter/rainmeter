@@ -84,7 +84,7 @@ private:
 	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
 	void ApplyInlineCase(std::wstring& str);
 	void ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
-		const UINT32 strLen, const D2D1_POINT_2F& drawPosition);
+		const UINT32 strLen, const D2D1_RECT_F& drawRect);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
 
