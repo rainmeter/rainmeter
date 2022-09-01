@@ -10,7 +10,7 @@
     {
       "id": 1025,
       "name": "Arabic",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1026,
@@ -20,12 +20,12 @@
     {
       "id": 2052,
       "name": "ChineseSimplified",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1028,
       "name": "ChineseTraditional",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1050,
@@ -35,12 +35,12 @@
     {
       "id": 1029,
       "name": "Czech",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1030,
       "name": "Danish",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1043,
@@ -55,22 +55,22 @@
     {
       "id": 1035,
       "name": "Finnish",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1036,
       "name": "French",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1031,
       "name": "German",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1032,
       "name": "Greek",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1037,
@@ -80,17 +80,17 @@
     {
       "id": 1038,
       "name": "Hungarian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1057,
       "name": "Indonesian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1040,
       "name": "Italian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1041,
@@ -100,7 +100,7 @@
     {
       "id": 1042,
       "name": "Korean",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1062,
@@ -120,27 +120,27 @@
     {
       "id": 1044,
       "name": "NorwegianBokmal",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1045,
       "name": "Polish",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1046,
       "name": "PortugueseBrazil",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 2070,
       "name": "PortuguesePortugal",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1048,
       "name": "Romanian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1049,
@@ -150,52 +150,52 @@
     {
       "id": 3098,
       "name": "SerbianCyrillic",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 2074,
       "name": "SerbianLatin",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1051,
       "name": "Slovak",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1060,
       "name": "Slovenian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 3082,
       "name": "SpanishModern",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1053,
       "name": "Swedish",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1054,
       "name": "Thai",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1055,
       "name": "Turkish",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1058,
       "name": "Ukrainian",
-      "obsolete": false
+      "obsolete": true
     },
     {
       "id": 1066,
       "name": "Vietnamese",
-      "obsolete": false
+      "obsolete": true
     }
   ]
 }
