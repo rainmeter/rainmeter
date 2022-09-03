@@ -204,17 +204,57 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 		else
 		{
 			type = lua_type(L, -1);
-			if (type == LUA_TNUMBER)
+			switch (type)
 			{
+			case LUA_TNUMBER:
 				numValue = lua_tonumber(L, -1);
-			}
-			else if (type == LUA_TSTRING)
+				break;
+			case LUA_TSTRING:
 			{
 				size_t strLen = 0;
 				const char* str = lua_tolstring(L, -1, &strLen);
-				strValue = m_Unicode ?
-					StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+				strValue = m_Unicode ? StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 				numValue = strtod(str, nullptr);
+				break;
+			}
+			case LUA_TTABLE:
+				for (int i = 0; i < 2; i++)
+				{
+					lua_pushnumber(L, i + 1);
+					lua_gettable(L, -2);
+					switch (lua_type(L, -1))
+					{
+					case LUA_TBOOLEAN:
+						if (i == 0)
+							numValue = lua_toboolean(L, -1);
+						if (i == 1)
+							strValue = std::to_wstring(lua_toboolean(L, -1));
+						break;
+					case LUA_TNUMBER:
+						if (i == 0)
+							numValue = lua_tonumber(L, -1);
+						if (i == 1)
+							strValue = std::to_wstring(lua_tonumber(L, -1));
+						break;
+					case LUA_TSTRING:
+					{
+						size_t strLen = 0;
+						const char* str = lua_tolstring(L, -1, &strLen);
+						if (i == 0)
+							numValue = strtod(str, nullptr);
+						if (i == 1)
+							strValue = m_Unicode ? StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+						break;
+					}
+					default:
+						if (i == 0)
+							numValue = 0;
+						if (i == 1)
+							strValue = L"";
+						break;
+					}
+					lua_pop(L, 1);
+				}
 			}
 
 			lua_pop(L, 2);
