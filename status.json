@@ -20,7 +20,7 @@
     {
       "id": 2052,
       "name": "ChineseSimplified",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1028,
@@ -100,7 +100,7 @@
     {
       "id": 1042,
       "name": "Korean",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1062,
