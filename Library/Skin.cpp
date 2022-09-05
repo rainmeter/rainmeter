@@ -2187,7 +2187,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
 	hideMode = parser.ReadInt(section, makeKey(L"OnHover"), hideMode);
-	if (isDefault) writeDefaultInt(L"OnHover", hideMode);
+	if (isDefault && (parser.GetLastKeyDefined() || parser.IsValueDefined(section, makeKey(L"HideOnMouseOver"))))
+	{
+		_itow_s(hideMode, buffer, 10);
+		WritePrivateProfileString(config, L"OnHover", buffer, iniFile);
+	}
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
 	m_WindowDraggable = parser.ReadBool(section, makeKey(L"Draggable"), true);
