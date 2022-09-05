@@ -186,7 +186,6 @@ void LuaScript::RunFunction(const char* funcName)
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
 	auto L = GetState();
-	int type = LUA_TNIL;
 
 	if (IsInitialized())
 	{
@@ -196,32 +195,57 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
 
-		if (lua_pcall(L, 0, 1, 0))
+		if (lua_pcall(L, 0, 2, 0))
 		{
 			LuaHelper::ReportErrors();
-			lua_pop(L, 1);
+			lua_pop(L, 2);
 		}
 		else
 		{
-			type = lua_type(L, -1);
-			if (type == LUA_TNUMBER)
-			{
-				numValue = lua_tonumber(L, -1);
-			}
-			else if (type == LUA_TSTRING)
-			{
-				size_t strLen = 0;
-				const char* str = lua_tolstring(L, -1, &strLen);
-				strValue = m_Unicode ?
-					StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
-				numValue = strtod(str, nullptr);
-			}
+			bool hasNumberResult = false;
+			bool hasStringResult = false;
 
-			lua_pop(L, 2);
+			auto getReturnedValue = [&]() -> void
+			{
+				int type = lua_type(L, -1);
+				switch (type)
+				{
+					case LUA_TNUMBER:
+						numValue = lua_tonumber(L, -1);
+						hasNumberResult = true;
+						break;
+
+					case LUA_TSTRING:
+						if (!hasStringResult)
+						{
+							size_t strLen = 0;
+							const char* str = lua_tolstring(L, -1, &strLen);
+							strValue = m_Unicode ?
+								StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+
+							hasStringResult = true;
+							if (!hasNumberResult)
+							{
+								// Only convert the string value to number if number value has not been set
+								numValue = strtod(str, nullptr);
+								hasNumberResult = true;
+							}
+
+						}
+						break;
+				}
+				lua_pop(L, 1);
+			};
+
+			getReturnedValue();  // Get first returned value
+			getReturnedValue();  // Get second returned value
+
+			if (hasStringResult) return LUA_TSTRING;
+			if (hasNumberResult) return LUA_TNUMBER;
 		}
 	}
 
-	return type;
+	return LUA_TNIL;
 }
 
 /*
