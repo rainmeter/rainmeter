@@ -92,7 +92,7 @@ private:
 	std::wstring m_Name;
 	std::wstring m_Author;
 	std::wstring m_Version;
-	std::pair<std::wstring, std::wstring> m_SkinFolder;
+	std::map<std::wstring, std::wstring> m_SkinFolders;
 	std::map<std::wstring, std::wstring> m_LayoutFolders;
 	std::map<std::wstring, std::pair<std::wstring, std::wstring>> m_PluginFolders;
 

@@ -222,7 +222,7 @@ INT_PTR DialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
 
 void DialogPackage::SetNextButtonState()
 {
-	BOOL state = !(m_Name.empty() || m_Author.empty() || m_SkinFolder.second.empty());
+	BOOL state = !(m_Name.empty() || m_Author.empty() || m_SkinFolders.empty());
 	EnableWindow(GetDlgItem(m_Window, IDC_PACKAGE_NEXT_BUTTON), state);
 }
 
@@ -285,12 +285,18 @@ bool DialogPackage::CreatePackage()
 		return cleanup();
 	}
 
-	// Add skin
+	// Add skins
+	for (auto iter = m_SkinFolders.cbegin(); iter != m_SkinFolders.cend(); ++iter)
 	{
-		std::wstring zipPrefix = L"Skins\\" + m_SkinFolder.first;
+		std::wstring zipPrefix = L"Skins\\" + (*iter).first;
 		zipPrefix += L'\\';
-		if (!AddFolderToPackage(m_SkinFolder.second, L"", zipPrefix.c_str()))
+		if (!AddFolderToPackage((*iter).second, L"", zipPrefix.c_str()))
 		{
+			std::wstring error = L"Error adding skin '";
+			error += (*iter).first;
+			error += L"'.";
+			error += L"\n\nClick OK to close Packager.";
+			MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 			return cleanup();
 		}
 	}
@@ -878,23 +884,24 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_PACKAGEINFO_ADDSKIN_BUTTON:
 		{
-			c_Dialog->m_SkinFolder.second = SelectFolder(m_Window, g_Data.skinsPath);
-			if (!c_Dialog->m_SkinFolder.second.empty())
+			std::wstring folder = SelectFolder(m_Window, g_Data.skinsPath);
+			if (!folder.empty())
 			{
-				c_Dialog->m_SkinFolder.first = PathFindFileName(c_Dialog->m_SkinFolder.second.c_str());
-				c_Dialog->m_SkinFolder.first.pop_back();	// Remove slash
+				std::wstring name = PathFindFileName(folder.c_str());
+				name.pop_back();	// Remove slash
 
-				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
-				LVITEM lvi;
-				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-				lvi.iItem = 1;
-				lvi.iSubItem = 0;
-				lvi.iGroupId = 0;
-				lvi.pszText = (WCHAR*)c_Dialog->m_SkinFolder.first.c_str();
-				ListView_InsertItem(item, &lvi);
-
-				EnableWindow((HWND)lParam, FALSE);
-				c_Dialog->SetNextButtonState();
+				if (c_Dialog->m_SkinFolders.insert(std::make_pair(name, folder)).second)
+				{
+					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
+					LVITEM lvi;
+					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
+					lvi.iItem = c_Dialog->m_SkinFolders.size() + 1;
+					lvi.iSubItem = 0;
+					lvi.iGroupId = 0;
+					lvi.pszText = (WCHAR*)name.c_str();
+					ListView_InsertItem(item, &lvi);
+					c_Dialog->SetNextButtonState();
+				}
 			}
 		}
 		break;
@@ -966,8 +973,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 					{
 						item = GetDlgItem(m_Window, IDC_PACKAGEINFO_ADDSKIN_BUTTON);
 						EnableWindow(item, TRUE);
-						c_Dialog->m_SkinFolder.first.clear();
-						c_Dialog->m_SkinFolder.second.clear();
+						c_Dialog->m_SkinFolders.erase(c_Dialog->m_SkinFolders.find(name));
 						c_Dialog->SetNextButtonState();
 					}
 					break;
@@ -1238,18 +1244,21 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			ofn.lpstrDefExt = L"ini";
 			ofn.lpstrFile = buffer;
 			ofn.nMaxFile = _countof(buffer);
-			ofn.lpstrInitialDir = c_Dialog->m_SkinFolder.second.c_str();
+			ofn.lpstrInitialDir = g_Data.skinsPath.c_str();
 			ofn.hwndOwner = c_Dialog->GetWindow();
 
 			if (GetOpenFileName(&ofn))
 			{
-				// Make sure user didn't browse to some random folder
-				if (_wcsnicmp(ofn.lpstrInitialDir, buffer, c_Dialog->m_SkinFolder.second.length()) == 0)
+				for (auto iter = c_Dialog->m_SkinFolders.cbegin(); iter != c_Dialog->m_SkinFolders.cend(); ++iter)
 				{
-					// Skip everything before actual skin folder
-					const WCHAR* folderPath = buffer + c_Dialog->m_SkinFolder.second.length() - c_Dialog->m_SkinFolder.first.length() - 1;
-					SetWindowText(item, folderPath);
-					c_Dialog->m_Load = folderPath;
+					// Make sure user didn't browse to some random folder
+					if (_wcsnicmp((*iter).second.c_str(), buffer, (*iter).second.length()) == 0)
+					{
+						// Skip everything before actual skin folder
+						const WCHAR* folderPath = buffer + (*iter).second.length() - (*iter).first.length() - 1;
+						SetWindowText(item, folderPath);
+						c_Dialog->m_Load = folderPath;
+					}
 				}
 			}
 		}
