@@ -20,6 +20,7 @@ enum class SysInfoType : UINT
 	USER_NAME,
 	USER_SID,
 	OS_VERSION,
+	OS_PRODUCT_NAME,
 	PAGESIZE,
 	OS_BITS,
 
