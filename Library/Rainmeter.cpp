@@ -463,8 +463,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 
 	LogNoticeF(L"%s - %s (%hu)",
-		Platform::GetPlatformFriendlyName().c_str(),
-		Platform::GetPlatformUserLanguage().c_str(),
+		GetPlatform().GetFriendlyName().c_str(),
+		GetPlatform().GetUserLanguage().c_str(),
 		GetUserDefaultUILanguage());
 
 	if (!encodingMsg.empty())

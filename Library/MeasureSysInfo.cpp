@@ -622,7 +622,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::OS_VERSION:
-		m_StringValue = Platform::GetPlatformName();
+		m_StringValue = GetPlatform().GetName();
 		return;
 
 	case SysInfoType::SCREEN_SIZE:
