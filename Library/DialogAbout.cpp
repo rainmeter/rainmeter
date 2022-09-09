@@ -1755,8 +1755,8 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
-		Platform::GetPlatformFriendlyName().c_str(),
-		Platform::GetPlatformUserLanguage().c_str(),
+		GetPlatform().GetFriendlyName().c_str(),
+		GetPlatform().GetUserLanguage().c_str(),
 		GetUserDefaultUILanguage());
 	item = GetControl(Id_WinVerLabel);
 	SetWindowText(item, tmpSz);
@@ -1831,8 +1831,8 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 				tmpSz,
 				_TRUNCATE,
 				L"%s - %s (%hu)\n",
-				Platform::GetPlatformFriendlyName().c_str(),
-				Platform::GetPlatformUserLanguage().c_str(),
+				GetPlatform().GetFriendlyName().c_str(),
+				GetPlatform().GetUserLanguage().c_str(),
 				GetUserDefaultUILanguage());
 
 			text += tmpSz;
