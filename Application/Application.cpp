@@ -75,7 +75,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 			}
 		}
 
-		WCHAR message[128] = { 0 };
+		WCHAR message[128];
 		wsprintf(
 			message,
 			L"Rainmeter.dll load error %ld.",
@@ -90,7 +90,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, desiredSam, &hKey) == ERROR_SUCCESS)
 		{
 			const DWORD size = MAX_PATH;
-			WCHAR buffer[size] = { 0 };
+			WCHAR buffer[size];
 			DWORD type = 0UL;
 			if (RegQueryValueEx(hKey, nullptr , nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
 				type == REG_SZ)
