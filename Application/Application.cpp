@@ -56,7 +56,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	//_CrtSetBreakAlloc(000);
 
 	// Prevent system error message boxes.
-	UINT oldMode = SetErrorMode(0);
+	UINT oldMode = SetErrorMode(0U);
 	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
 
 	HINSTANCE instance = (HINSTANCE)&__ImageBase;
@@ -75,7 +75,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 			}
 		}
 
-		WCHAR message[128];
+		WCHAR message[128] = { 0 };
 		wsprintf(
 			message,
 			L"Rainmeter.dll load error %ld.",
@@ -85,13 +85,13 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	else
 	{
 		// Stub prodecure. If icon resources have been removed, try to launch the actual Rainmeter.exe.
-		HKEY hKey;
+		HKEY hKey = nullptr;
 		const REGSAM desiredSam = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, desiredSam, &hKey) == ERROR_SUCCESS)
 		{
 			const DWORD size = MAX_PATH;
-			WCHAR buffer[size];
-			DWORD type = 0;
+			WCHAR buffer[size] = { 0 };
+			DWORD type = 0UL;
 			if (RegQueryValueEx(hKey, nullptr , nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
 				type == REG_SZ)
 			{
@@ -100,6 +100,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 				ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
 			}
 			RegCloseKey(hKey);
+			hKey = nullptr;
 		}
 
 		return 0;

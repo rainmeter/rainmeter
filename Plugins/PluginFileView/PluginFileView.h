@@ -204,16 +204,16 @@ void GetParentFolder(std::wstring& path)
 bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 {
 	// Convert any relative paths
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	if (!_wfullpath(buffer, path.c_str(), MAX_PATH))
 		return false;
 
-	POINT pos;
+	POINT pos = { 0 };
 	GetCursorPos(&pos);
 
 	// If the mouse is outside of the boundaries of
 	// the skin, use the upper-left corner of the skin
-	RECT rect;
+	RECT rect = { 0 };
 	GetWindowRect(hwnd, &rect);
 	if (pos.x < rect.left || pos.x > rect.right ||
 		pos.y < rect.top || pos.y > rect.bottom)
@@ -239,8 +239,7 @@ bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 		return false;
 
 	HMENU hMenu = CreatePopupMenu();
-	if (!hMenu)
-		return false;
+	if (!hMenu) return false;
 
 	if (SUCCEEDED(iMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL)))
 	{

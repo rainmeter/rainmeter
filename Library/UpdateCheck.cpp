@@ -33,8 +33,8 @@ void ShowError(WCHAR* description)
 	DWORD dwErr = GetLastError();
 	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
 	{
-		WCHAR szBuffer[1024];
-		DWORD dwError, dwLen = 1024;
+		WCHAR szBuffer[1024] = { 0 };
+		DWORD dwError = 0UL, dwLen = _countof(szBuffer);
 		LPCWSTR error = L"Unknown Error";
 		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen))
 		{
@@ -196,7 +196,7 @@ bool Updater::DownloadStatusFile(std::string& data)
 	LPCWSTR url = Updater::s_UpdateURL;
 	if (_wcsnicmp(url, L"file://", 7) == 0)  // Local file
 	{
-		WCHAR path[MAX_PATH];
+		WCHAR path[MAX_PATH] = { 0 };
 		DWORD pathLength = _countof(path);
 		HRESULT hr = PathCreateFromUrl(url, path, &pathLength, 0UL);
 		if (FAILED(hr))
@@ -227,7 +227,7 @@ bool Updater::DownloadStatusFile(std::string& data)
 	// with 3 extra bytes for triple null termination in case the encoding changes.
 	const DWORD CHUNK_SIZE = 8192UL;
 	DWORD bufferSize = CHUNK_SIZE;
-	BYTE* buffer = (BYTE*)malloc(bufferSize + 3);
+	BYTE* buffer = (BYTE*)malloc(bufferSize + 3UL);
 	DWORD dataSize = 0UL;
 
 	// Read the data.
@@ -251,7 +251,16 @@ bool Updater::DownloadStatusFile(std::string& data)
 		dataSize += readSize;
 
 		bufferSize += CHUNK_SIZE;
-		buffer = (BYTE*)realloc(buffer, bufferSize + 3);
+
+		BYTE* oldBuffer = buffer;
+		if ((buffer = (BYTE*)realloc(buffer, bufferSize + 3UL)) == nullptr)
+		{
+			free(oldBuffer);  // In case realloc fails
+			oldBuffer = nullptr;
+			InternetCloseHandle(hUrlDump);
+			InternetCloseHandle(hRootHandle);
+			return false;
+		}
 
 	} while (true);
 
@@ -311,7 +320,7 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 			return false;
 		} ();
 
-		WCHAR tmp[32];
+		WCHAR tmp[32] = { 0 };
 		LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
 		GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", tmp, _countof(tmp), dataFile);
 
@@ -455,10 +464,10 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	}
 
 	// Dump installer contents into byte array
-	size_t fileSize = 0;
+	size_t fileSize = 0ULL;
 	BYTE * buffer = FileUtil::ReadFullFile(fullpath, &fileSize).release();
 
-	NTSTATUS status;
+	NTSTATUS status = 0L;
 	BCRYPT_ALG_HANDLE provider = nullptr;
 	BCRYPT_HASH_HANDLE hashHandle = nullptr;
 	PBYTE hash = nullptr;

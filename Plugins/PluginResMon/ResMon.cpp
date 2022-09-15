@@ -14,6 +14,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <psapi.h>
 #include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
@@ -96,11 +97,11 @@ PLUGIN_EXPORT double Update(void* data)
 	const WCHAR* processName = measure->process.c_str();
 	bool name = !measure->process.empty();
 
-	DWORD aProcesses[1024];
-	DWORD bytesNeeded;
-	WCHAR buffer[1024];
-	HMODULE hMod[1024];
-	DWORD cbNeeded;
+	DWORD aProcesses[1024] = { 0 };
+	DWORD bytesNeeded = 0UL;
+	WCHAR buffer[1024] = { 0 };
+	HMODULE hMod[1024] = { 0 };
+	DWORD cbNeeded = 0UL;
 
 	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &bytesNeeded))
 	{
@@ -115,8 +116,8 @@ PLUGIN_EXPORT double Update(void* data)
 		flags |= PROCESS_VM_READ;
 	}
 
-	UINT resourceCount = 0;
-	for (UINT i = 0, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
+	UINT resourceCount = 0U;
+	for (UINT i = 0U, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
 	{
 		HANDLE hProcess = OpenProcess(flags, true, aProcesses[i]);
 		if (hProcess != nullptr)
@@ -125,7 +126,7 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				if (EnumProcessModules(hProcess, hMod, sizeof(hMod), &cbNeeded))
 				{
-					if (GetModuleBaseName(hProcess, hMod[0], buffer, sizeof(buffer)))
+					if (GetModuleBaseName(hProcess, hMod[0], buffer, _countof(buffer)))
 					{
 						if (_wcsicmp(buffer, processName) != 0)
 						{
@@ -156,12 +157,13 @@ PLUGIN_EXPORT double Update(void* data)
 			}
 			else if (measure->type == HANDLE_COUNT)
 			{
-				DWORD tempHandleCount = 0;
+				DWORD tempHandleCount = 0ULL;
 				GetProcessHandleCount(hProcess, &tempHandleCount);
 				resourceCount += tempHandleCount;
 			}
+
+			CloseHandle(hProcess);
 		}
-		CloseHandle(hProcess);
 	}
 
 	return resourceCount;
@@ -171,4 +173,5 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }

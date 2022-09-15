@@ -47,7 +47,7 @@ void DialogNewSkin::Open(int tab)
 		nullptr);
 
 	// Fake WM_NOTIFY to change tab
-	NMHDR nm;
+	NMHDR nm = { 0 };
 	nm.code = TCN_SELCHANGE;
 	nm.idFrom = Id_Tab;
 	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
@@ -154,7 +154,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					std::wstring templateFile = GetTemplateFolder();
 					templateFile += selectedTemplate;
 					templateFile += L".template";
-					if (_waccess(templateFile.c_str(), 0) == -1)
+					if (_waccess_s(templateFile.c_str(), 0) != 0)
 					{
 						// Template file doesn't exist, so ask user if they would like a default template instead.
 						templateExists = false;
@@ -253,7 +253,7 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	m_TabNew.Create(m_Window);
 	m_TabTemplate.Create(m_Window);
 
-	TCITEM tci = {0};
+	TCITEM tci = { 0 };
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_NEWSKIN);
 	TabCtrl_InsertItem(item, 0, &tci);
@@ -334,7 +334,7 @@ void DialogNewSkin::LoadTemplates()
 
 	// If |NewSkin.template| exists in the settings path, move to Templates folder
 	const std::wstring oldTemplate = GetRainmeter().GetSettingsPath() + L"NewSkin.template";
-	if (_waccess(oldTemplate.c_str(), 0) != -1)
+	if (_waccess_s(oldTemplate.c_str(), 0) == 0)
 	{
 		// Move file to new location
 		const std::wstring newTemplate = templateFolder + L"NewSkin.template";
@@ -343,7 +343,7 @@ void DialogNewSkin::LoadTemplates()
 
 	// Add template files
 	std::wstring files = templateFolder + L"*.template";
-	WIN32_FIND_DATA fd;
+	WIN32_FIND_DATA fd = { 0 };
 	HANDLE hSearch = FindFirstFile(files.c_str(), &fd);
 	if (hSearch != INVALID_HANDLE_VALUE)
 	{
@@ -399,6 +399,8 @@ DialogNewSkin::TabNew::TabNew() : Tab(),
 	m_IsRoot(true),
 	m_CanAddResourcesFolder(false),
 	m_InRenameMode(false),
+	m_TreeEdit(nullptr),
+	m_ParentPathTT(nullptr),
 	m_ImageList(nullptr)
 {
 }
@@ -452,7 +454,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 	UpdateParentPathTT(false);
 
 	// Get selected template for drop down menu
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	GetPrivateProfileString(L"Dialog_NewSkin", L"SelectedTemplate", L"", buffer, MAX_PATH, GetRainmeter().GetDataFile().c_str());
 	if (buffer && *buffer)
 	{
@@ -568,7 +570,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				TabTemplate::CreateTemplateMenu(menu, m_SelectedTemplate);
 
-				RECT r;
+				RECT r = { 0 };
 				GetWindowRect((HWND)lParam, &r);
 
 				// Show context menu
@@ -754,7 +756,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			POINT pt = System::GetCursorPosition();
 
-			TVHITTESTINFO ht;
+			TVHITTESTINFO ht = { 0 };
 			ht.pt = pt;
 			ScreenToClient(nm->hwndFrom, &ht.pt);
 
@@ -783,7 +785,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			POINT pt = System::GetCursorPosition();
 
-			TVHITTESTINFO ht;
+			TVHITTESTINFO ht = { 0 };
 			ht.pt = pt;
 			ScreenToClient(nm->hwndFrom, &ht.pt);
 
@@ -791,13 +793,13 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				TreeView_SelectItem(nm->hwndFrom, ht.hItem);
 
-				WCHAR buffer[MAX_PATH];
+				WCHAR buffer[MAX_PATH] = { 0 };
 
 				TVITEM tvi = { 0 };
 				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
 				tvi.mask = TVIF_STATE | TVIF_IMAGE | TVIF_CHILDREN | TVIF_TEXT;
 				tvi.pszText = buffer;
-				tvi.cchTextMax = MAX_PATH;
+				tvi.cchTextMax = _countof(buffer);
 
 				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
@@ -1014,7 +1016,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// New folder already exists, re-enter folder name
-					if (_waccess(newItem.c_str(), 0) == 0 &&
+					if (_waccess_s(newItem.c_str(), 0) == 0 &&
 						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
 						const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
@@ -1069,7 +1071,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// Change parent if folder is at root level
-					if (count == 1)
+					if (count == 1U)
 					{
 						m_ParentFolder = newItem;
 						UpdateParentPathLabel();
@@ -1121,7 +1123,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						return TRUE;
 					}
 
-					if (_waccess(newItem.c_str(), 0) == 0 &&
+					if (_waccess_s(newItem.c_str(), 0) == 0 &&
 						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
 						// File exists, enter edit mode
@@ -1182,7 +1184,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						std::wstring templateFile = GetTemplateFolder();
 						templateFile += m_SelectedTemplate;
 						templateFile += L".template";
-						if (_waccess(templateFile.c_str(), 0) == -1)
+						if (_waccess_s(templateFile.c_str(), 0) != 0)
 						{
 							// Template file doesn't exist, so ask user if they would like a default template instead.
 							templateExists = false;
@@ -1302,7 +1304,7 @@ void DialogNewSkin::TabNew::SetParentFolder(const WCHAR* parentFolder)
 
 void DialogNewSkin::TabNew::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name)
 {
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	TVITEM tvi = { 0 };
 	tvi.mask = TVIF_TEXT;
 	tvi.hItem = item;
@@ -1439,12 +1441,12 @@ bool DialogNewSkin::TabNew::DoesNodeExist(HTREEITEM item, LPCWSTR text, bool isF
 
 	while (current != NULL && current != item)
 	{
-		WCHAR buffer[MAX_PATH];
+		WCHAR buffer[MAX_PATH] = { 0 };
 
 		TVITEM tvi = { 0 };
 		tvi.hItem = current;
 		tvi.mask = TVIF_TEXT | TVIF_IMAGE;
-		tvi.cchTextMax = MAX_PATH;
+		tvi.cchTextMax = _countof(buffer);
 		tvi.pszText = buffer;
 		TreeView_GetItem(tree, &tvi);
 
@@ -1465,13 +1467,13 @@ UINT DialogNewSkin::TabNew::GetChildSkinCount(HWND tree, HTREEITEM item)
 {
 	if (item == nullptr) return 0;
 
-	UINT count = 0;
-	WCHAR buffer[MAX_PATH];
+	UINT count = 0U;
+	WCHAR buffer[MAX_PATH] = { 0 };
 	TVITEM tvi = { 0 };
 	tvi.hItem = item;
 	tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_CHILDREN;
 	tvi.pszText = buffer;
-	tvi.cchTextMax = MAX_PATH;
+	tvi.cchTextMax = _countof(buffer);
 	TreeView_GetItem(tree, &tvi);
 
 	if (tvi.cChildren > 0)
@@ -1521,7 +1523,7 @@ int CALLBACK DialogNewSkin::TabNew::TreeViewSortProc(LPARAM lParam1, LPARAM lPar
 
 std::wstring DialogNewSkin::TabNew::GetTreeSelectionPath(HWND tree, bool allItems)
 {
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	std::wstring path;
 
 	// Get current selection name
@@ -1529,7 +1531,7 @@ std::wstring DialogNewSkin::TabNew::GetTreeSelectionPath(HWND tree, bool allItem
 	tvi.hItem = TreeView_GetSelection(tree);
 	tvi.mask = TVIF_TEXT | TVIF_IMAGE;
 	tvi.pszText = buffer;
-	tvi.cchTextMax = MAX_PATH;
+	tvi.cchTextMax = _countof(buffer);
 	TreeView_GetItem(tree, &tvi);
 
 	// Only add files if necessary. Always add folders.
@@ -1610,7 +1612,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
 			s_SortInfo.emplace_back(false, skinFolder.files[i].filename);
-			tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
+			tvi.item.lParam = (LPARAM)(s_SortInfo.size() - 1ULL);
 
 			tvi.item.pszText = (WCHAR*)skinFolder.files[i].filename.c_str();
 			TreeView_InsertItem(tree, &tvi);
@@ -1733,24 +1735,24 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_NewEdit:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[32];
-			const int len = Edit_GetText((HWND)lParam, buffer, 32);
+			WCHAR buffer[32] = { 0 };
+			const int len = Edit_GetText((HWND)lParam, buffer, _countof(buffer));
 			EnableWindow(GetControl(Id_SaveButton), len > 0);
 		}
 		break;
 
 	case Id_SaveButton:
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetControl(Id_NewEdit);
-			Edit_GetText(item, buffer, MAX_PATH);
+			Edit_GetText(item, buffer, _countof(buffer));
 
 			const auto& templateFolder = GetTemplateFolder();
 			std::wstring templateFile = templateFolder + buffer;
 			templateFile += L".template";
 
 			// Check if template already exists
-			bool alreadyExists = (_waccess(templateFile.c_str(), 0) != -1);
+			bool alreadyExists = (_waccess_s(templateFile.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
 				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEEXISTS, buffer);
@@ -1814,7 +1816,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_EditButton:
 		{
 			HWND item = GetControl(Id_TemplateListBox);
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			if (ListBox_GetText(item, ListBox_GetCurSel(item), buffer) > 0)
 			{
 				std::wstring args = L"\"" + GetTemplateFolder();
@@ -1828,7 +1830,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_DeleteButton:
 		{
 			HWND item = GetControl(Id_TemplateListBox);
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			const int selected = ListBox_GetCurSel(item);
 			if (ListBox_GetText(item, selected, buffer) > 0)
 			{
@@ -1869,7 +1871,7 @@ void DialogNewSkin::TabTemplate::CreateTemplateMenu(HMENU menu, std::wstring sel
 	int sel = 0;
 	for (int i = 0; i < count; ++i)
 	{
-		WCHAR buffer[MAX_PATH];
+		WCHAR buffer[MAX_PATH] = { 0 };
 		const int len = ListBox_GetText(listbox, i, buffer);
 		if (len > 0)
 		{
@@ -1925,7 +1927,7 @@ void DialogNewSkin::TabTemplate::CreateTemplate(std::wstring& file)
 				L"[MeterString]\n"
 				L"Meter=String\n";
 
-			if (fputws(str, fp) != 0 || fclose(fp) != 0)
+			if (fp && (fputws(str, fp) != 0 || fclose(fp) != 0))
 			{
 				file.clear();  // Error writing/closing file
 			}

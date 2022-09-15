@@ -162,6 +162,7 @@ PLUGIN_EXPORT double Update(void* data)
 					measure->suppressError = true;
 				}
 				delete [] ppi;
+				ppi = nullptr;
 				return value;
 			}
 		}
@@ -261,4 +262,5 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }

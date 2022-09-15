@@ -14,8 +14,7 @@
 #include "PolicyConfig.h"
 #include "../API/RainmeterAPI.h"
 
-#define SAFE_RELEASE(punk)  \
-			  if ((punk) != nullptr) { (punk)->Release(); (punk) = nullptr; }
+#define SAFE_RELEASE(punk)  if ((punk) != nullptr) { (punk)->Release(); (punk) = nullptr; }
 
 static BOOL com_initialized = FALSE;
 static BOOL instance_created = FALSE;
@@ -67,8 +66,8 @@ bool InitCom()
 		else if (hr == E_NOINTERFACE) dbg_str += L" E_NOINTERFACE";
 		else
 		{
-			static WCHAR e_code[256];
-			wsprintf(e_code, L" %li", (long)hr);
+			static WCHAR e_code[256] = { 0 };
+			_snwprintf_s(e_code, _countof(e_code), L" %li", (long)hr);
 
 			dbg_str += e_code;
 		}
@@ -223,7 +222,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		return;
 	}
 
-	UINT count;
+	UINT count =0U;
 	if (!pCollection || (S_OK != pCollection->GetCount(&count)))
 	{
 		UnInitCom();
@@ -254,7 +253,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	*maxValue = 100;
+	*maxValue = 100.0;
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -266,12 +265,13 @@ PLUGIN_EXPORT double Update(void* data)
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
-	static WCHAR result[256];
-	wsprintf(result, L"ERROR");
+	static WCHAR result[256] = { 0 };
+	_snwprintf_s(result, _countof(result), L"ERROR");
+
 	if (!InitCom() || !pEnumerator)
 	{
 		UnInitCom();
-		wsprintf(result, L"ERROR - Initializing COM");
+		_snwprintf_s(result, _countof(result), L"ERROR - Initializing COM");
 		return result;
 	}
 
@@ -297,20 +297,20 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 				PropVariantClear(&varName);
 				SAFE_RELEASE(pProps)
 				SAFE_RELEASE(pEndpoint)
-				wsprintf(result, L"ERROR - Getting Device Description");
+				_snwprintf_s(result, _countof(result), L"ERROR - Getting Device Description");
 			}
 		}
 		else
 		{
 			SAFE_RELEASE(pProps)
 			SAFE_RELEASE(pEndpoint)
-			wsprintf(result, L"ERROR - Getting Property");
+			_snwprintf_s(result, _countof(result), L"ERROR - Getting Property");
 		}
 	}
 	else
 	{
 		SAFE_RELEASE(pEndpoint)
-		wsprintf(result, L"ERROR - Getting Default Device");
+		_snwprintf_s(result, _countof(result), L"ERROR - Getting Default Device");
 	}
 
 	UnInitCom();

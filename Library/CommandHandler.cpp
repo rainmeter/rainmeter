@@ -864,7 +864,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	}
 
 	// Verify whether the file exists.
-	if (_waccess(iniFile, 0) == -1)
+	if (_waccess_s(iniFile, 0) != 0)
 	{
 		LogErrorF(skin, L"!WriteKeyValue: File not found: %s", iniFile);
 		return;

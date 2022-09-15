@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
@@ -21,7 +22,7 @@ struct MeasureData
 
 	void* rm;
 
-	MeasureData() : wParam(), lParam(), uMsg(), rm() {}
+	MeasureData() : wParam(0), lParam(0), uMsg(0UL), rm(nullptr) {}
 };
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
@@ -39,9 +40,9 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->windowName = RmReadString(rm, L"WindowName", L"");
 	measure->windowClass = RmReadString(rm, L"WindowClass", L"");
 
-	DWORD uMsg, wParam, lParam;
+	DWORD uMsg = 0UL, wParam = 0UL, lParam = 0UL;
 	LPCWSTR message = RmReadString(rm, L"WindowMessage", L"");
-	if (3 == swscanf(message, L"%u %u %u", &uMsg, &wParam, &lParam))
+	if (3 == swscanf_s(message, L"%u %u %u", &uMsg, &wParam, &lParam))
 	{
 		measure->uMsg = uMsg;
 		measure->wParam = wParam;
@@ -62,8 +63,8 @@ PLUGIN_EXPORT double Update(void* data)
 		if (measure->uMsg == 0)
 		{
 			// Get window text
-			WCHAR buffer[256];
-			GetWindowText(hwnd, buffer, 256);
+			WCHAR buffer[256] = { 0 };
+			GetWindowText(hwnd, buffer, _countof(buffer));
 			measure->value = buffer;
 		}
 		else
@@ -95,6 +96,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }
 
 PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
@@ -110,8 +112,8 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			++pos;
 
 			// Parse parameters
-			DWORD uMsg, wParam, lParam;
-			if (3 == swscanf(pos, L"%u %u %u", &uMsg, &wParam, &lParam))
+			DWORD uMsg = 0UL, wParam = 0UL, lParam = 0UL;
+			if (3 == swscanf_s(pos, L"%u %u %u", &uMsg, &wParam, &lParam))
 			{
 				
 				HWND hwnd = FindWindow(

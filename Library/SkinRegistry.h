@@ -27,8 +27,9 @@ public:
 		std::wstring filename;
 		bool isFavorite;
 
-		File() {}
+		File() : isFavorite(false) {}
 		~File() {}
+
 		File(std::wstring name) : filename(name), isFavorite(false) {}
 
 		const bool operator==(const File& rhs) const
@@ -48,10 +49,10 @@ public:
 
 		bool hasFavorite;
 
-		Folder() {}
+		Folder() : baseID(0U), active(0), level(0), hasFavorite(false) {}
 		~Folder() {}
 
-		Folder(Folder&& r) :
+		Folder(Folder&& r) noexcept :
 			name(std::move(r.name)),
 			files(std::move(r.files)),
 			baseID(r.baseID),
@@ -61,7 +62,7 @@ public:
 		{
 		}
 
-		Folder& operator=(Folder&& r)
+		Folder& operator=(Folder&& r) noexcept
 		{
 			name = std::move(r.name);
 			files = std::move(r.files);

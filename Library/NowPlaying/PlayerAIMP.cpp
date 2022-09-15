@@ -295,8 +295,8 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 	{
 		const auto registry_key = [&]() -> std::wstring
 		{
-			GetSystemWow64Directory(nullptr, 0U);
-			if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+			UINT retVal = GetSystemWow64Directory(nullptr, 0U);
+			if (retVal == 0U || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
 			{
 				return L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
 			}
@@ -310,7 +310,7 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 			DWORD size = 512UL;
 			WCHAR* data = new WCHAR[size];
 			DWORD type = 0UL;
-			HKEY hKey;
+			HKEY hKey = nullptr;
 
 			std::wstring key = registry_key;
 			key += version;
@@ -334,7 +334,9 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 			}
 
 			delete [] data;
+			data = nullptr;
 			RegCloseKey(hKey);
+			hKey = nullptr;
 
 			return success;
 		};

@@ -116,7 +116,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
-	if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
+	if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) != 0)
 	{
 		EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -566,7 +566,7 @@ void ContextMenu::AppendSkinCustomMenu(
 			}
 			else
 			{
-				const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+				const UINT_PTR id = ((UINT_PTR)index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
 				InsertMenu(menu, (UINT)(position + 1), MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
 			}
 
@@ -592,7 +592,7 @@ void ContextMenu::AppendSkinCustomMenu(
 			}
 			else
 			{
-				const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+				const UINT_PTR id = ((UINT_PTR)index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
 				AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
 			}
 		}

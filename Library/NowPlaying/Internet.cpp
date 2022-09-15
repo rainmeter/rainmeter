@@ -49,14 +49,14 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 	}
 
 	// Allocate the buffer.
-	const int CHUNK_SIZE = 8192;
+	const DWORD CHUNK_SIZE = 8192UL;
 	BYTE* lpData = new BYTE[CHUNK_SIZE];
-	BYTE* lpOutPut;
+	BYTE* lpOutPut = nullptr;
 	BYTE* lpHolding = nullptr;
 	int nCounter = 1;
-	int nBufferSize;
-	DWORD dwDataSize = 0;
-	DWORD dwSize = 0;
+	int nBufferSize = 0;
+	DWORD dwDataSize = 0UL;
+	DWORD dwSize = 0UL;
 
 	do
 	{
@@ -69,7 +69,7 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 		{
 			// Check if all of the data has been read. This should
 			// never get called on the first time through the loop.
-			if (dwSize == 0)
+			if (dwSize == 0UL)
 			{
 				break;
 			}
@@ -105,7 +105,7 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 
 			// End with double null
 			lpOutPut[dwSize] = 0;
-			lpOutPut[dwSize + 1] = 0;
+			lpOutPut[dwSize + 1UL] = 0;
 
 			// Increment the number of buffers read.
 			++nCounter;
@@ -118,11 +118,13 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 	InternetCloseHandle(hUrlDump);
 
 	delete [] lpData;
+	lpData = nullptr;
 
 	if (lpHolding)
 	{
 		result = ConvertToWide((LPCSTR)lpHolding, codepage);
 		delete [] lpHolding;
+		lpHolding = nullptr;
 	}
 
 	return result;
@@ -144,7 +146,7 @@ std::wstring Internet::EncodeUrl(const std::wstring& url)
 		{
 			// If reserved character
 			ret.append(L"%");
-			WCHAR buffer[3];
+			WCHAR buffer[3] = { 0 };
 			_snwprintf_s(buffer, 3, L"%.2X", url[i]);
 			ret.append(buffer);
 		}
@@ -163,21 +165,21 @@ std::wstring Internet::EncodeUrl(const std::wstring& url)
 void Internet::DecodeReferences(std::wstring& str)
 {
 	// From WebParser.cpp
-	std::wstring::size_type start = 0;
+	std::wstring::size_type start = 0ULL;
 
 	while ((start = str.find(L'&', start)) != std::wstring::npos)
 	{
 		std::wstring::size_type end, pos;
 
 		if ((end = str.find(L';', start)) == std::wstring::npos) break;
-		pos = start + 1;
+		pos = start + 1ULL;
 
 		if (pos == end)  // &; - skip
 		{
-			start = end + 1;
+			start = end + 1ULL;
 			continue;
 		}
-		else if ((end - pos) > 10)  // name (or number) is too long
+		else if ((end - pos) > 10ULL)  // name (or number) is too long
 		{
 			++start;
 			continue;
@@ -187,16 +189,16 @@ void Internet::DecodeReferences(std::wstring& str)
 		{
 			if (++pos == end)  // &#; - skip
 			{
-				start = end + 1;
+				start = end + 1ULL;
 				continue;
 			}
 
-			int base;
+			int base = 0;
 			if (str[pos] == L'x' || str[pos] == L'X')
 			{
 				if (++pos == end)  // &#x; or &#X; - skip
 				{
-					start = end + 1;
+					start = end + 1ULL;
 					continue;
 				}
 				base = 16;
@@ -215,12 +217,12 @@ void Internet::DecodeReferences(std::wstring& str)
 				start = pos;
 				continue;
 			}
-			str.replace(start, end - start + 1, 1, (WCHAR)ch);
+			str.replace(start, end - start + 1UL, 1UL, (WCHAR)ch);
 			++start;
 		}
 		else  // Character entity reference
 		{
-			start = end + 1;
+			start = end + 1UL;
 			continue;
 		}
 	}

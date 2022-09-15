@@ -21,6 +21,8 @@ struct GradientHelper
 	DWRITE_TEXT_RANGE range;
 	std::vector<DWRITE_TEXT_RANGE> innerRanges;
 	std::vector<Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush>> brushes;
+
+	GradientHelper() : range() {}
 };
 
 }

@@ -23,8 +23,8 @@ extern HINSTANCE g_Instance;
 **
 */
 PlayerCAD::PlayerCAD() : Player(),
-	m_Window(),
-	m_PlayerWindow(),
+	m_Window(nullptr),
+	m_PlayerWindow(nullptr),
 	m_ExtendedAPI(false),
 	m_Open(false)
 {
@@ -62,7 +62,7 @@ Player* PlayerCAD::Create()
 void PlayerCAD::Initialize()
 {
 	// Create windows class
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"NowPlayingCADClass";
@@ -105,17 +105,17 @@ void PlayerCAD::Initialize()
 		}
 	}
 
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	LPCTSTR file = GetRainmeter().GetDataFile().c_str();
 
 	// Read saved settings
-	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", nullptr, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", nullptr, buffer, _countof(buffer), file);
 	std::wstring className = buffer;
 
-	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", nullptr, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", nullptr, buffer, _countof(buffer), file);
 	std::wstring windowName = buffer;
 
-	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", nullptr, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", nullptr, buffer, _countof(buffer), file);
 	m_PlayerPath = buffer;
 
 	LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
@@ -133,15 +133,15 @@ void PlayerCAD::Initialize()
 		{
 			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
 
-			windowSz = (GetWindowText(m_PlayerWindow, buffer, MAX_PATH) > 0) ? buffer : nullptr;
+			windowSz = (GetWindowText(m_PlayerWindow, buffer, _countof(buffer)) > 0) ? buffer : nullptr;
 			WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
 
-			DWORD pID;
+			DWORD pID = 0UL;
 			GetWindowThreadProcessId(m_PlayerWindow, &pID);
 			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pID);
 			if (hProcess)
 			{
-				if (GetModuleFileNameEx(hProcess, nullptr, buffer, MAX_PATH) > 0)
+				if (GetModuleFileNameEx(hProcess, nullptr, buffer, _countof(buffer)) > 0)
 				{
 					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", buffer, file);
 				}
@@ -177,6 +177,7 @@ void PlayerCAD::Initialize()
 void PlayerCAD::Uninitialize()
 {
 	DestroyWindow(m_Window);
+	m_Window = nullptr;
 	UnregisterClass(L"NowPlayingCADClass", g_Instance);
 }
 
@@ -242,7 +243,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_RATING_CHANGED_NOTIFICATION:
 			{
-				player->m_Rating = ((UINT)wParam + 1) / 2;  // From 0 - 10 to 0 - 5
+				player->m_Rating = ((UINT)wParam + 1U) / 2U;  // From 0 - 10 to 0 - 5
 				break;
 			}
 
@@ -267,49 +268,49 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				++player->m_TrackCount;
 
 				WCHAR* data = (WCHAR*)cds->lpData;
-				WCHAR* pos;
-				UINT index = 1;
-				while ((pos = wcschr(data, '\t')) != nullptr)
+				WCHAR* pos = nullptr;
+				UINT index = 1U;
+				while ((pos = wcschr(data, L'\t')) != nullptr)
 				{
 					switch (index)
 					{
-					case 1:
+					case 1U:
 						player->m_Title.assign(data, pos - data);
 						break;
 
-					case 2:
+					case 2U:
 						player->m_Artist.assign(data, pos - data);
 						break;
 
-					case 3:
+					case 3U:
 						player->m_Album.assign(data, pos - data);
 						break;
 
-					case 4:
+					case 4U:
 						player->m_Genre.assign(data, pos - data);
 						break;
 
-					case 5:
+					case 5U:
 						player->m_Year = (UINT)_wtoi(data);
 						break;
 
-					case 7:
+					case 7U:
 						player->m_Number = (UINT)_wtoi(data);
 						break;
 
-					case 8:
+					case 8U:
 						player->m_Duration = (UINT)_wtoi(data);
 						break;
 
-					case 9:
+					case 9U:
 						player->m_FilePath.assign(data, pos - data);
 						break;
 
-					case 10:
-						player->m_Rating = ((UINT)_wtoi(data) + 1) / 2;	// 0 - 10 -> 0 - 5
+					case 10U:
+						player->m_Rating = ((UINT)_wtoi(data) + 1U) / 2U;	// 0 - 10 -> 0 - 5
 						break;
 
-					case 11:
+					case 11U:
 						if (*data == L' ')
 						{
 							player->FindCover();
@@ -321,10 +322,10 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 						break;
 					}
 
-					data = pos + 1;
+					data = pos + 1U;
 					++index;
 
-					if (index == 12)
+					if (index == 12U)
 					{
 						break;
 					}
@@ -348,19 +349,19 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				std::wstring data = (WCHAR*)cds->lpData;
 				if (data[0] == L'1')
 				{
-					data.erase(0, 2);	// Get rid of the 1\t at the beginning
+					data.erase(0ULL, 2ULL);	// Get rid of the 1\t at the beginning
 
 					std::wstring::size_type len = data.find_first_of(L'\t');
 					std::wstring className(data, 0, len);
-					data.erase(0, ++len);
+					data.erase(0ULL, ++len);
 
 					len = data.find_first_of(L'\t');
 					std::wstring windowName(data, 0, len);
-					data.erase(0, ++len);
+					data.erase(0ULL, ++len);
 
 					len = data.find_first_of(L'\t');
 					player->m_PlayerPath.assign(data, 0, len);
-					data.erase(0, ++len);
+					data.erase(0ULL, ++len);
 
 					LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
 					LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();
@@ -478,7 +479,7 @@ void PlayerCAD::SetPosition(int position)
 */
 void PlayerCAD::SetRating(int rating) 
 {
-	m_Rating = rating;
+	m_Rating = (UINT)rating;
 	rating *= 2; // From 0 - 5 to 0 - 10
 	SendMessage(m_PlayerWindow, WM_USER, rating, IPC_SET_RATING);
 }

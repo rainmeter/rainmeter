@@ -91,7 +91,6 @@ private:
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static bool CreateDirectoryRecursive(const std::wstring& path);
 	static std::wstring GetFileVersionString(const WCHAR* fileName);
-	static std::wstring GetDotNetVersionString();
 	static std::wstring GetWindowsVersionString();
 
 	TabInstall m_TabInstall;

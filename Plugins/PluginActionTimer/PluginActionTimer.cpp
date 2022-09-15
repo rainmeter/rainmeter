@@ -82,7 +82,7 @@ struct Measure
 	void* rm;
 	HWND mainRainmeterWindow;
 
-	Measure() : ignoreWarnings(false), mainRainmeterWindow(nullptr) { }
+	Measure() : ignoreWarnings(false), rm(nullptr), mainRainmeterWindow(nullptr) { }
 };
 
 void ExecuteAction(Action* action);
@@ -253,6 +253,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 	measure->list.clear();
 	delete measure;
+	measure = nullptr;
 }
 
 void ExecuteAction(Action* action)

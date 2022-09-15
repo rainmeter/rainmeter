@@ -149,7 +149,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 {
 	if (c_InstanceCount == 0)
 	{
-		WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
+		WNDCLASSEX wc = { sizeof(WNDCLASSEX) };
 		wc.style = CS_NOCLOSE | CS_DBLCLKS;
 		wc.lpfnWndProc = InitialWndProc;
 		wc.hInstance = GetRainmeter().GetModuleInstance();
@@ -195,7 +195,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
 
-	m_FadeStartTime = 0;
+	m_FadeStartTime = 0ULL;
 
 	UnregisterMouseInput();
 	m_HasMouseScrollAction = false;
@@ -222,7 +222,7 @@ void Skin::Dispose(bool refresh)
 	delete m_Background;
 	m_Background = nullptr;
 
-	m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
+	m_BackgroundSize.cx = m_BackgroundSize.cy = 0L;
 	m_BackgroundName.clear();
 
 	if (m_BlurRegion)
@@ -325,7 +325,7 @@ void Skin::RegisterMouseInput()
 {
 	if (!m_MouseInputRegistered && m_HasMouseScrollAction)
 	{
-		RAWINPUTDEVICE rid;
+		RAWINPUTDEVICE rid = { 0 };
 		rid.usUsagePage = 0x01;
 		rid.usUsage = 0x02;  // HID mouse
 		rid.dwFlags = RIDEV_INPUTSINK;
@@ -341,7 +341,7 @@ void Skin::UnregisterMouseInput()
 {
 	if (m_MouseInputRegistered)
 	{
-		RAWINPUTDEVICE rid;
+		RAWINPUTDEVICE rid = { 0 };
 		rid.usUsagePage = 0x01;
 		rid.usUsage = 0x02;  // HID mouse
 		rid.dwFlags = RIDEV_REMOVE;
@@ -473,7 +473,7 @@ void Skin::SetMouseLeaveEvent(bool cancel)
 	if (!cancel && (!m_MouseOver || m_ClickThrough)) return;
 
 	// Check whether the mouse event is set
-	TRACKMOUSEEVENT tme = {sizeof(TRACKMOUSEEVENT)};
+	TRACKMOUSEEVENT tme = { sizeof(TRACKMOUSEEVENT) };
 	tme.hwndTrack = m_Window;
 	tme.dwFlags = TME_QUERY;
 
@@ -520,7 +520,7 @@ void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 	// Check that the window is inside the screen area
-	POINT pt = {x + w / 2, y + h / 2};
+	POINT pt = { x + w / 2, y + h / 2 };
 	for (int i = 0; i < 5; ++i)
 	{
 		switch (i)
@@ -567,7 +567,8 @@ void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
 	}
 
 	// No monitor found for the window -> Use the default work area
-	const RECT r = monitors[System::GetMultiMonitorInfo().primary - 1].work;
+	const int index = System::GetMultiMonitorInfo().primary - 1;
+	const RECT r = monitors[index].work;
 	x = min(x, r.right - w);
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
@@ -719,7 +720,7 @@ void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 					if (GetWindowLongPtr(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
 					{
 						// Insert after the found window
-						if (0 != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
+						if (FALSE != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
 						{
 							break;
 						}
@@ -1162,8 +1163,10 @@ void Skin::ShowBlur()
 	SetBlur(true);
 
 	// Check that Aero and transparency is enabled
-	DWORD color;
-	BOOL opaque, enabled;
+	DWORD color = 0UL;
+	BOOL opaque = FALSE;
+	BOOL enabled = FALSE;
+
 	if (DwmGetColorizationColor(&color, &opaque) != S_OK)
 	{
 		opaque = TRUE;
@@ -1197,7 +1200,7 @@ void Skin::HideBlur()
 void Skin::ResizeBlur(const std::wstring& arg, int mode)
 {
 	WCHAR* parseSz = _wcsdup(arg.c_str());
-	int type, x, y, w = 0, h = 0;
+	int type = 0, x = 0, y = 0, w = 0, h = 0;
 
 	WCHAR* context = nullptr;
 	WCHAR* token = wcstok(parseSz, L",", &context);
@@ -1237,7 +1240,7 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 
 	if (w && h)
 	{
-		HRGN tempRegion;
+		HRGN tempRegion = nullptr;
 
 		switch (type)
 		{
@@ -1672,15 +1675,14 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 
 void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 {
-	double result;
+	double result = 0.0;
 	if (m_Parser.ParseFormula(value, &result))
 	{
-		WCHAR buffer[256];
+		WCHAR buffer[256] = { 0 };
 		int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", result);
 		Measure::RemoveTrailingZero(buffer, len);
 
 		const std::wstring& resultString = buffer;
-
 		m_Parser.SetVariable(variable, resultString);
 	}
 	else
@@ -1764,7 +1766,7 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 
 void Skin::SetZPosVariable(ZPOSITION zPos)
 {
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 	_itow_s(zPos, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGZPOS", buffer);
 }
@@ -1874,8 +1876,9 @@ void Skin::WindowToScreen()
 			std::wstring screenStr = m_WindowX.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
 			if (!screenStr.empty())
 			{
-				int screenIndex = _wtoi(screenStr.c_str());
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
+				const int screenIndex = _wtoi(screenStr.c_str());
+				const int monitorIndex = screenIndex - 1;
+				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
 				{
 					m_WindowXScreen = screenIndex;
 					m_WindowXScreenDefined = true;
@@ -1911,8 +1914,9 @@ void Skin::WindowToScreen()
 			std::wstring screenStr = m_WindowY.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
 			if (!screenStr.empty())
 			{
-				int screenIndex = _wtoi(screenStr.c_str());
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
+				const int screenIndex = _wtoi(screenStr.c_str());
+				const int monitorIndex = screenIndex - 1;
+				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
 				{
 					m_WindowYScreen = screenIndex;
 					m_WindowYScreenDefined = true;
@@ -1932,8 +1936,9 @@ void Skin::WindowToScreen()
 		}
 		else
 		{
-			screenY = monitors[m_WindowYScreen - 1].screen.top;
-			screenH = monitors[m_WindowYScreen - 1].screen.bottom - monitors[m_WindowYScreen - 1].screen.top;
+			const int index = m_WindowYScreen - 1;
+			screenY = monitors[index].screen.top;
+			screenH = monitors[index].screen.bottom - monitors[index].screen.top;
 		}
 		if (m_WindowYPercentage) //is a percentage
 		{
@@ -1968,8 +1973,9 @@ void Skin::WindowToScreen()
 		}
 		else
 		{
-			screenX = monitors[m_WindowXScreen - 1].screen.left;
-			screenW = monitors[m_WindowXScreen - 1].screen.right - monitors[m_WindowXScreen - 1].screen.left;
+			const int index = m_WindowXScreen - 1;
+			screenX = monitors[index].screen.left;
+			screenW = monitors[index].screen.right - monitors[index].screen.left;
 		}
 		if (m_WindowXPercentage) // is a percentage
 		{
@@ -2000,10 +2006,10 @@ void Skin::WindowToScreen()
 */
 void Skin::ScreenToWindow()
 {
-	WCHAR buffer[256];
+	WCHAR buffer[256] = { 0 };
 	int pixel = 0;
-	float num;
-	int screenx, screeny, screenh, screenw;
+	float num = 0.0f;
+	int screenX = 0, screenY = 0, screenH = 0, screenW = 0;
 
 	const size_t numOfMonitors = System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
@@ -2012,7 +2018,7 @@ void Skin::ScreenToWindow()
 	// Correct to auto-selected screen
 	if (m_AutoSelectScreen)
 	{
-		RECT rect = {m_ScreenX, m_ScreenY, m_ScreenX + m_WindowW, m_ScreenY + m_WindowH};
+		RECT rect = { m_ScreenX, m_ScreenY, m_ScreenX + m_WindowW, m_ScreenY + m_WindowH };
 		HMONITOR hMonitor = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
 
 		if (hMonitor != nullptr)
@@ -2042,27 +2048,28 @@ void Skin::ScreenToWindow()
 
 	if (m_WindowXScreen == 0)
 	{
-		screenx = monitorsInfo.vsL;
-		screenw = monitorsInfo.vsW;
+		screenX = monitorsInfo.vsL;
+		screenW = monitorsInfo.vsW;
 	}
 	else
 	{
-		screenx = monitors[m_WindowXScreen - 1].screen.left;
-		screenw = monitors[m_WindowXScreen - 1].screen.right - monitors[m_WindowXScreen - 1].screen.left;
+		const int index = m_WindowXScreen - 1;
+		screenX = monitors[index].screen.left;
+		screenW = monitors[index].screen.right - monitors[index].screen.left;
 	}
 	if (m_WindowXFromRight)
 	{
-		pixel = (screenx + screenw) - m_ScreenX;
+		pixel = (screenX + screenW) - m_ScreenX;
 		pixel -= m_AnchorScreenX;
 	}
 	else
 	{
-		pixel = m_ScreenX - screenx;
+		pixel = m_ScreenX - screenX;
 		pixel += m_AnchorScreenX;
 	}
 	if (m_WindowXPercentage)
 	{
-		num = 100.0f * (float)pixel / (float)screenw;
+		num = 100.0f * (float)pixel / (float)screenW;
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
@@ -2083,27 +2090,28 @@ void Skin::ScreenToWindow()
 
 	if (m_WindowYScreen == 0)
 	{
-		screeny = monitorsInfo.vsT;
-		screenh = monitorsInfo.vsH;
+		screenY = monitorsInfo.vsT;
+		screenH = monitorsInfo.vsH;
 	}
 	else
 	{
-		screeny = monitors[m_WindowYScreen - 1].screen.top;
-		screenh = monitors[m_WindowYScreen - 1].screen.bottom - monitors[m_WindowYScreen - 1].screen.top;
+		const int index = m_WindowYScreen - 1;
+		screenY = monitors[index].screen.top;
+		screenH = monitors[index].screen.bottom - monitors[index].screen.top;
 	}
 	if (m_WindowYFromBottom)
 	{
-		pixel = (screeny + screenh) - m_ScreenY;
+		pixel = (screenY + screenH) - m_ScreenY;
 		pixel -= m_AnchorScreenY;
 	}
 	else
 	{
-		pixel = m_ScreenY - screeny;
+		pixel = m_ScreenY - screenY;
 		pixel += m_AnchorScreenY;
 	}
 	if (m_WindowYPercentage)
 	{
-		num = 100.0f * (float)pixel / (float)screenh;
+		num = 100.0f * (float)pixel / (float)screenH;
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
@@ -2130,11 +2138,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
 	const WCHAR* config = m_FolderPath.c_str();
 
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 
 	auto makeKey = [&](LPCWSTR key) -> LPCWSTR
 	{
-		_snwprintf(buffer, _TRUNCATE, L"%s%s", isDefault ? L"Default" : L"", key);
+		_snwprintf_s(buffer, _TRUNCATE, L"%s%s", isDefault ? L"Default" : L"", key);
 		return buffer;
 	};
 
@@ -2256,7 +2264,7 @@ void Skin::WriteOptions(INT setting)
 		// Insert section name in settings file, if needed
 		GetRainmeter().DoesSkinHaveSettings(m_FolderPath);
 
-		WCHAR buffer[32];
+		WCHAR buffer[32] = { 0 };
 		const WCHAR* section = m_FolderPath.c_str();
 
 		if (setting != OPTION_ALL)
@@ -2349,12 +2357,11 @@ void Skin::WriteOptions(INT setting)
 */
 bool Skin::ReadSkin()
 {
-	WCHAR buffer[128];
-
+	WCHAR buffer[128] = { 0 };
 	std::wstring iniFile = GetFilePath();
 
 	// Verify whether the file exists
-	if (_waccess(iniFile.c_str(), 0) == -1)
+	if (_waccess_s(iniFile.c_str(), 0) != 0)
 	{
 		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_FolderPath.c_str(), m_FileName.c_str());
 		GetRainmeter().ShowMessage(m_Window, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
@@ -2362,7 +2369,7 @@ bool Skin::ReadSkin()
 	}
 
 	std::wstring resourcePath = GetResourcesPath();
-	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
+	bool hasResourcesFolder = (_waccess_s(resourcePath.c_str(), 0) == 0);
 
 	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
@@ -2423,7 +2430,7 @@ bool Skin::ReadSkin()
 	const std::wstring dragGroup = m_Parser.ReadString(L"Rainmeter", L"DragGroup", L"");
 	m_DragGroup.AddToGroup(dragGroup);
 
-	static const RECT defMargins = {0};
+	static const RECT defMargins = { 0 };
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
 	m_DragMargins = m_Parser.ReadRECT(L"Rainmeter", L"DragMargins", defMargins);
 
@@ -2502,7 +2509,7 @@ bool Skin::ReadSkin()
 	bool hasResourceFonts = false;
 	if (hasResourcesFolder)
 	{
-		WIN32_FIND_DATA fd;
+		WIN32_FIND_DATA fd = { 0 };
 		std::wstring resourceFontPath = resourcePath + L"Fonts\\*";
 
 		HANDLE find = FindFirstFileEx(
@@ -2636,8 +2643,7 @@ bool Skin::ReadSkin()
 				//   Measure=Foo
 				if (_wcsicmp(measureName.c_str(), L"Plugin") == 0)
 				{
-					WCHAR* plugin =
-						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
+					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
@@ -2787,8 +2793,8 @@ bool Skin::ResizeWindow(bool reset)
 
 		if (!m_Background->IsLoaded())
 		{
-			m_BackgroundSize.cx = 0;
-			m_BackgroundSize.cy = 0;
+			m_BackgroundSize.cx = 0L;
+			m_BackgroundSize.cy = 0L;
 
 			m_WindowW = 0;
 			m_WindowH = 0;
@@ -2894,9 +2900,9 @@ void Skin::Redraw()
 			{
 				const RECT m = m_BackgroundMargins;
 
-				if (m.top > 0)
+				if (m.top > 0L)
 				{
-					if (m.left > 0)
+					if (m.left > 0L)
 					{
 						// Top-Left
 						D2D1_RECT_F r = D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top);
@@ -2907,7 +2913,7 @@ void Skin::Redraw()
 					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top);
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
 
-					if (m.right > 0)
+					if (m.right > 0L)
 					{
 						// Top-Right
 						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), 0.0f,(FLOAT)m_WindowW, (FLOAT)m.top);
@@ -2915,7 +2921,7 @@ void Skin::Redraw()
 					}
 				}
 
-				if (m.left > 0)
+				if (m.left > 0L)
 				{
 					// Left
 					D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom));
@@ -2926,16 +2932,16 @@ void Skin::Redraw()
 				D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom));
 				m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 
-				if (m.right > 0)
+				if (m.right > 0L)
 				{
 					// Right
 					D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom));
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top, (FLOAT)m_BackgroundSize.cx, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
 				}
 
-				if (m.bottom > 0)
+				if (m.bottom > 0L)
 				{
-					if (m.left > 0)
+					if (m.left > 0L)
 					{
 						// Bottom-Left
 						D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH);
@@ -2946,7 +2952,7 @@ void Skin::Redraw()
 					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH);
 					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m_BackgroundSize.cy));
 
-					if (m.right > 0)
+					if (m.right > 0L)
 					{
 						// Bottom-Right
 						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH);
@@ -3158,8 +3164,7 @@ bool Skin::UpdateMeasure(Measure* measure, bool force)
 	int updateDivider = measure->GetUpdateDivider();
 	if (updateDivider >= 0 || force)
 	{
-		const bool rereadOptions =
-			measure->HasDynamicVariables() && (measure->GetUpdateCounter() + 1) >= updateDivider;
+		const bool rereadOptions = measure->HasDynamicVariables() && (measure->GetUpdateCounter() + 1) >= updateDivider;
 		bUpdate = measure->Update(rereadOptions);
 	}
 
@@ -3294,10 +3299,10 @@ void Skin::Update(bool refresh)
 */
 void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
-	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
-	POINT ptSrc = {0, 0};
-	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
+	POINT ptWindowScreenPosition = { m_ScreenX, m_ScreenY };
+	POINT ptSrc = { 0 };
+	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
 
 	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
 
@@ -3322,7 +3327,7 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
@@ -3369,7 +3374,6 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else
 				{
 					bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
-
 					if (!keyDown || GetWindowFromPoint(pos) != m_Window)
 					{
 						// Run all mouse leave actions
@@ -3417,7 +3421,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			ULONGLONG ticks = GetTickCount64();
-			if (m_FadeStartTime == 0)
+			if (m_FadeStartTime == 0ULL)
 			{
 				m_FadeStartTime = ticks;
 			}
@@ -3426,7 +3430,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_ActiveFade = false;
 				KillTimer(m_Window, TIMER_FADE);
-				m_FadeStartTime = 0;
+				m_FadeStartTime = 0ULL;
 				if (m_FadeEndValue == 0)
 				{
 					ShowWindow(m_Window, SW_HIDE);
@@ -3789,9 +3793,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!m_ClickThrough || keyDown)
 	{
-		POINT pos;
-		pos.x = GET_X_LPARAM(lParam);
-		pos.y = GET_Y_LPARAM(lParam);
+		POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 		if (uMsg == WM_NCMOUSEMOVE)
 		{
@@ -3822,7 +3824,7 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		++m_MouseMoveCounter;
 
-		POINT pos = {SHRT_MIN, SHRT_MIN};
+		POINT pos = { SHRT_MIN, SHRT_MIN };
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
 
 		// Handle buttons
@@ -3846,9 +3848,7 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
 
@@ -3866,9 +3866,7 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process mouse 'horizontal scroll' actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
 
@@ -4044,8 +4042,8 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 			const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
-			int screenIndex;
-			bool screenDefined;
+			int screenIndex = 0;
+			bool screenDefined = false;
 			if (wParam == IDM_SKIN_MONITOR_PRIMARY)
 			{
 				screenIndex = monitorsInfo.primary;
@@ -4057,7 +4055,8 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				screenDefined = true;
 			}
 
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
+			const int monitorIndex = screenIndex - 1;
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
 			{
 				m_AutoSelectScreen = false;
 
@@ -4079,8 +4078,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				WCHAR buffer[128];
-
+				WCHAR buffer[128] = { 0 };
 				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
 				action = m_Parser.ReadString(L"Rainmeter", buffer, L"", false);
 			}
@@ -4314,9 +4312,7 @@ LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
-		POINT pos;
-		pos.x = GET_X_LPARAM(lParam);
-		pos.y = GET_Y_LPARAM(lParam);
+		POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 		MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 		int x1 = m_DragMargins.left;
@@ -4374,13 +4370,13 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 				const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
-				const RECT windowRect = {wp->x, wp->y, wp->x + (m_WindowW ? m_WindowW : 1), wp->y + (m_WindowH ? m_WindowH : 1)};
+				const RECT windowRect = { wp->x, wp->y, wp->x + (m_WindowW ? m_WindowW : 1), wp->y + (m_WindowH ? m_WindowH : 1) };
 				const RECT* workArea = nullptr;
 
-				size_t maxSize = 0;
+				size_t maxSize = 0ULL;
 				for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
 				{
-					RECT r;
+					RECT r = { 0 };
 					if ((*iter).active && IntersectRect(&r, &windowRect, &(*iter).screen))
 					{
 						size_t size = (r.right - r.left) * (r.bottom - r.top);
@@ -4459,14 +4455,14 @@ LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur())
 	{
-		DWORD color;
-		BOOL opaque;
+		DWORD color = 0UL;
+		BOOL opaque = FALSE;
 		if (DwmGetColorizationColor(&color, &opaque) != S_OK)
 		{
 			opaque = TRUE;
 		}
 
-		BlurBehindWindow(!opaque);
+		BlurBehindWindow(!opaque ? TRUE : FALSE);
 	}
 
 	return 0;
@@ -4480,7 +4476,7 @@ LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur())
 	{
-		BOOL enabled;
+		BOOL enabled = FALSE;
 		if (DwmIsCompositionEnabled(&enabled) != S_OK)
 		{
 			enabled = FALSE;
@@ -4498,7 +4494,7 @@ LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 void Skin::BlurBehindWindow(BOOL fEnable)
 {
-	DWM_BLURBEHIND bb = {0};
+	DWM_BLURBEHIND bb = { 0 };
 	bb.fEnable = fEnable;
 
 	if (fEnable)
@@ -4542,9 +4538,7 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// but run the DefWindowProc so that dragging works.
 	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCLBUTTONDOWN)
 	{
@@ -4603,9 +4597,7 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'left up' mouse actions.
 	if (m_Selected) return 0;  // Make sure selection/deselection code is above this!
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCLBUTTONUP)
 	{
@@ -4626,9 +4618,7 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'left double click' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
@@ -4652,9 +4642,7 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'right down' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCRBUTTONDOWN)
 	{
@@ -4676,9 +4664,7 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// but run the DefWindowProc so the context menu works
 	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -4698,9 +4684,7 @@ LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'right double click' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
@@ -4724,9 +4708,7 @@ LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'middle down' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCMBUTTONDOWN)
 	{
@@ -4747,9 +4729,7 @@ LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'middle up' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCMBUTTONUP)
 	{
@@ -4770,9 +4750,7 @@ LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'middle double click' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
@@ -4796,9 +4774,7 @@ LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'x button down' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCXBUTTONDOWN)
 	{
@@ -4826,9 +4802,7 @@ LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'x button up' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCXBUTTONUP)
 	{
@@ -4856,9 +4830,7 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process 'x button double click' mouse actions
 	if (m_Selected) return 0;
 
-	POINT pos;
-	pos.x = GET_X_LPARAM(lParam);
-	pos.y = GET_Y_LPARAM(lParam);
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	if (uMsg == WM_NCXBUTTONDBLCLK)
 	{
@@ -4908,8 +4880,8 @@ LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	POINT pos;
-	RECT rect;
+	POINT pos = { 0 };
+	RECT rect = { 0 };
 	GetWindowRect(m_Window, &rect);
 
 	if ((lParam & 0xFFFFFFFF) == 0xFFFFFFFF)  // WM_CONTEXTMENU is generated from the keyboard (Shift+F10/VK_APPS)
@@ -5150,10 +5122,9 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Only process for unfocused skin window.
 	if (m_Window == WindowFromPoint(pos) && m_Window != GetFocus())
 	{
-		RAWINPUT ri;
+		RAWINPUT ri = { 0 };
 		UINT riSize = sizeof(ri);
-		const UINT dataSize = GetRawInputData(
-			(HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
+		const UINT dataSize = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
 		if (dataSize != (UINT)-1 &&
 			ri.header.dwType == RIM_TYPEMOUSE) 
 		{
@@ -5420,7 +5391,7 @@ LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SetWindowPositionVariables(int x, int y)
 {
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 
 	_itow_s(x, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
@@ -5430,7 +5401,7 @@ void Skin::SetWindowPositionVariables(int x, int y)
 
 void Skin::SetWindowSizeVariables(int w, int h)
 {
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 
 	_itow_s(w, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);

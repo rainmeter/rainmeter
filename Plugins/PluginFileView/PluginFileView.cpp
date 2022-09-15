@@ -40,7 +40,7 @@ bool SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
-static std::string g_SysProperties;
+static std::wstring g_SysProperties;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -68,11 +68,15 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 	if (g_SysProperties.empty())
 	{
-		std::wstring dir = RmReplaceVariables(rm, L"%WINDIR%");
-		dir.append(L"\\system32\\control.exe");
-		dir.append(L" system");
-
-		g_SysProperties = StringUtil::Narrow(dir);
+		if (IsWindows10OrGreater())
+		{
+			g_SysProperties = L"ms-settings:about";
+		}
+		else
+		{
+			g_SysProperties = RmReplaceVariables(rm, L"%WINDIR%");
+			g_SysProperties += L"\\system32\\control.exe system";
+		}
 	}
 }
 
@@ -248,7 +252,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		child->type = TYPE_ICON;
 
 		std::wstring temp = L"icon";
-		WCHAR buffer[MAX_PATH];
+		WCHAR buffer[MAX_PATH] = { 0 };
 		_itow_s(child->index + 1, buffer, 10);
 		temp += buffer;
 		temp += L".ico";
@@ -322,9 +326,9 @@ PLUGIN_EXPORT double Update(void* data)
 
 		case TYPE_FILEDATE:
 			{
-				FILETIME fTime;
-				SYSTEMTIME stUTC, stLOCAL;
-				ULARGE_INTEGER time;
+				FILETIME fTime = { 0 };
+				SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
+				ULARGE_INTEGER time = { 0 };
 
 				switch (child->date)
 				{
@@ -460,6 +464,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 					child->strValue = L"";
 				}
 				delete [] temp;
+				temp = nullptr;
 			}
 			break;
 
@@ -513,28 +518,34 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
 	{
-		// Display computer system properties
-		if (isProperty && dir.empty() && fileName.empty())
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(hr))
 		{
-			WinExec(g_SysProperties.c_str(), SW_SHOWNORMAL);
-			return;
+			std::wstring cmd = dir + fileName;
+
+			SHELLEXECUTEINFO si = { sizeof(SHELLEXECUTEINFO) };
+			si.nShow = SW_SHOWNORMAL;
+			si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
+			si.lpDirectory = dir.c_str();
+			si.lpFile = cmd.c_str();
+
+			if (isProperty)
+			{
+				si.fMask |= SEE_MASK_INVOKEIDLIST;
+
+				if (cmd.empty())
+				{
+					si.lpFile = g_SysProperties.c_str();
+				}
+				else
+				{
+					si.lpVerb = L"properties";
+				}
+			}
+
+			ShellExecuteEx(&si);
+			CoUninitialize();
 		}
-
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
-		std::wstring file = dir + fileName;
-		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
-
-		si.lpVerb = isProperty ? L"properties" : nullptr;
-		si.lpFile = file.c_str();
-		si.nShow = SW_SHOWNORMAL;
-		si.lpDirectory = dir.c_str();
-		si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
-		
-		if (isProperty) si.fMask |= SEE_MASK_INVOKEIDLIST;
-
-		ShellExecuteEx(&si);
-		CoUninitialize();
 	};
 
 	// Parent only commands
@@ -751,7 +762,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 	{
 		if (parent->thread)
 		{
-			TerminateThread(parent->thread, 0);
+			TerminateThread(parent->thread, 0UL);
 			parent->thread = nullptr;
 		}
 
@@ -759,15 +770,18 @@ PLUGIN_EXPORT void Finalize(void* data)
 		g_ParentMeasures.erase(iter);
 
 		delete parent;
+		parent = nullptr;
 	}
 
 	delete child;
+	child = nullptr;
 	LeaveCriticalSection(&g_CriticalSection);
 }
 
 unsigned __stdcall SystemThreadProc(void* pParam)
 {
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(hr)) return 0;
 
 	ParentMeasure* parent = (ParentMeasure*)pParam;
 
@@ -838,7 +852,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 		// Sort
 		const int sortAsc = tmp->sortAscending ? 1 : -1;
-		auto begin = (!tmp->path.empty() && 
+		const auto& begin = (!tmp->path.empty() && 
 			(tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ? tmp->files.begin() + 1: tmp->files.begin();
 
 		switch (tmp->sortType)
@@ -987,6 +1001,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	}
 
 	delete tmp;
+	tmp = nullptr;
 
 	CoUninitialize();
 	return 0;
@@ -997,7 +1012,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 	std::wstring path = folder;
 	folder += (rType == RECURSIVE_NONE) ? parent->wildcardSearch : L"*";
 
-	WIN32_FIND_DATA fd;
+	WIN32_FIND_DATA fd = { 0 };
 	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
 	if (find != INVALID_HANDLE_VALUE)
 	{
@@ -1041,7 +1056,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 					if (parent->extensions.size() > 0)
 					{
 						bool found = false;
-						for (auto iter : parent->extensions)
+						for (const auto& iter : parent->extensions)
 						{
 							if (_wcsicmp(iter.c_str(), file.ext.c_str()) == 0)
 							{
@@ -1097,7 +1112,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize)
 {
-	SHFILEINFO shFileInfo;
+	SHFILEINFO shFileInfo = { 0 };
 	HICON icon = nullptr;
 	HIMAGELIST* hImageList = nullptr;
 	FILE* fp = nullptr;
@@ -1105,14 +1120,14 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 	// Special case for .url files
 	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
 	{
-		WCHAR buffer[MAX_PATH] = L"";
-		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, sizeof(buffer), filePath.c_str());
+		WCHAR buffer[MAX_PATH] = { 0 };
+		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, _countof(buffer), filePath.c_str());
 		if (*buffer)
 		{
 			std::wstring file = buffer;
 			int iconIndex = 0;
 
-			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, sizeof(buffer), filePath.c_str());
+			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, _countof(buffer), filePath.c_str());
 			if (buffer != L"-1")
 			{
 				iconIndex = _wtoi(buffer);
@@ -1140,8 +1155,11 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 	errno_t error = _wfopen_s(&fp, iconPath.c_str(), L"wb");
 	if (filePath == INVALID_FILE || icon == nullptr || (error == 0 && !SaveIcon(icon, fp)))
 	{
-		fwrite(iconPath.c_str(), 1, 1, fp);		// Clears previous icon
-		fclose(fp);
+		if (fp)
+		{
+			fwrite(iconPath.c_str(), 1, 1, fp);		// Clears previous icon
+			fclose(fp);
+		}
 	}
 
 	DestroyIcon(icon);
@@ -1149,9 +1167,9 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 
 bool SaveIcon(HICON hIcon, FILE* fp)
 {
-	ICONINFO iconInfo;
-	BITMAP bmColor;
-	BITMAP bmMask;
+	ICONINFO iconInfo = { 0 };
+	BITMAP bmColor = { 0 };
+	BITMAP bmMask = { 0 };
 	if (!fp || nullptr == hIcon || !GetIconInfo(hIcon, &iconInfo) ||
 		!GetObject(iconInfo.hbmColor, sizeof(bmColor), &bmColor) ||
 		!GetObject(iconInfo.hbmMask,  sizeof(bmMask),  &bmMask))
@@ -1162,7 +1180,7 @@ bool SaveIcon(HICON hIcon, FILE* fp)
 		return false;
 
 	HDC dc = GetDC(nullptr);
-	BYTE bmiBytes[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+	BYTE bmiBytes[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)] = { 0 };
 	BITMAPINFO* bmi = (BITMAPINFO*)bmiBytes;
 
 	// color bits
@@ -1194,7 +1212,7 @@ bool SaveIcon(HICON hIcon, FILE* fp)
 	bmihIcon.biSizeImage = colorBytesCount + maskBytesCount;
 
 	// icon header
-	ICONDIR dir;
+	ICONDIR dir = { 0 };
 	dir.idReserved = 0;		// must be 0
 	dir.idType = 1;			// 1 for icons
 	dir.idCount = 1;
@@ -1216,7 +1234,9 @@ bool SaveIcon(HICON hIcon, FILE* fp)
 	DeleteObject(iconInfo.hbmColor);
 	DeleteObject(iconInfo.hbmMask);
 	delete [] colorBits;
+	colorBits = nullptr;
 	delete [] maskBits;
+	maskBits = nullptr;
 
 	fclose(fp);
 

@@ -57,7 +57,7 @@ HMODULE InitializeAtlLibrary()
 
 PlayerWMP::CRemoteHost::CRemoteHost() :
 	m_Player(),
-	m_RefCount(0)
+	m_RefCount(0UL)
 {
 }
 
@@ -74,10 +74,10 @@ ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::AddRef()
 ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::Release()
 {
 	--m_RefCount;
-	if (m_RefCount == 0)
+	if (m_RefCount == 0UL)
 	{
 		delete this;
-		return 0;
+		return 0UL;
 	}
 	return m_RefCount;
 }
@@ -202,9 +202,9 @@ void PlayerWMP::CRemoteHost::SwitchedToControl()
 
 PlayerWMP::PlayerWMP() : Player(),
 	m_TrackChanged(false),
-	m_Window(),
+	m_Window(nullptr),
 	m_LastCheckTime(0ULL),
-	m_ConnectionCookie()
+	m_ConnectionCookie(0UL)
 {
 }
 
@@ -244,7 +244,7 @@ void PlayerWMP::Initialize()
 	auto atlAxGetControl = (AtlAxGetControlFunc)GetProcAddress(atl, "AtlAxGetControl");
 	auto atlAxGetHost = (AtlAxGetHostFunc)GetProcAddress(atl, "AtlAxGetHost");
 
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = DefWindowProc;
 	wc.lpszClassName = L"NowPlayingWMP";
@@ -379,6 +379,7 @@ void PlayerWMP::Uninitialize()
 		m_IConnectionPoint.Reset();
 		m_IPlayer.Reset();
 		DestroyWindow(m_Window);
+		m_Window = nullptr;
 		UnregisterClass(L"NowPlayingWMP", g_Instance);
 	}
 }
@@ -392,13 +393,13 @@ void PlayerWMP::UpdateData()
 	if (m_Initialized)
 	{
 		// Get the volume
-		long volume;
+		long volume = 0L;
 		m_ISettings->get_volume(&volume);
 		m_Volume = (UINT)volume;
 
 		if (m_State != STATE_STOPPED)
 		{
-			double position;
+			double position = 0.0;
 			m_IControls->get_currentPosition(&position);
 			m_Position = (UINT)position;
 		}
@@ -412,7 +413,7 @@ void PlayerWMP::UpdateData()
 
 			if (spMedia)
 			{
-				BSTR val;
+				BSTR val = nullptr;
 
 				spMedia->getItemInfo(_bstr_t(L"Artist"), &val);
 				m_Artist = val;
@@ -431,19 +432,19 @@ void PlayerWMP::UpdateData()
 
 				if (rating > 75)
 				{
-					m_Rating = 5;
+					m_Rating = 5U;
 				}
 				else if (rating > 50)
 				{
-					m_Rating = 4;
+					m_Rating = 4U;
 				}
 				else if (rating > 25)
 				{
-					m_Rating = 3;
+					m_Rating = 3U;
 				}
 				else if (rating > 1)
 				{
-					m_Rating = 2;
+					m_Rating = 2U;
 				}
 				else
 				{
@@ -456,11 +457,11 @@ void PlayerWMP::UpdateData()
 				spMedia->getItemInfo(_bstr_t(L"WM/Year"), &val);
 				m_Year = (UINT)_wtoi(val);
 
-				double duration;
+				double duration = 0.0;
 				spMedia->get_duration(&duration);
 				m_Duration = (UINT)duration;
 
-				BSTR url;
+				BSTR url = nullptr;
 				spMedia->get_sourceURL(&url);
 				std::wstring targetPath = url;
 
@@ -479,7 +480,7 @@ void PlayerWMP::UpdateData()
 						targetPath += val;
 						targetPath += L"_Large.jpg";
 
-						if (_waccess(targetPath.c_str(), 0) == 0)
+						if (_waccess_s(targetPath.c_str(), 0) == 0)
 						{
 							m_CoverPath = targetPath;
 						}

@@ -18,7 +18,7 @@ const int MAX_VALUE_NAME = 16383;
 
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_OutputType(OutputType::Value),
-	m_RegKey(),
+	m_RegKey(nullptr),
 	m_HKey(HKEY_CURRENT_USER)
 {
 	m_MaxValue = 0.0;
@@ -34,6 +34,7 @@ void MeasureRegistry::Dispose()
 	if (m_RegKey)
 	{
 		RegCloseKey(m_RegKey);
+		m_RegKey = nullptr;
 	}
 }
 
@@ -68,6 +69,7 @@ void MeasureRegistry::UpdateValue()
 					}
 				}
 				delete [] objName;
+				objName = nullptr;
 			};
 
 			DWORD numSubKeys = 0UL;
@@ -159,6 +161,7 @@ void MeasureRegistry::UpdateValue()
 			}
 
 			delete [] data;
+			data = nullptr;
 		}
 	}
 	else

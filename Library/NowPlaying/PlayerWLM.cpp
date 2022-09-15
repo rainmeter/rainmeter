@@ -19,10 +19,10 @@ extern HINSTANCE g_Instance;
 **
 */
 PlayerWLM::PlayerWLM() : Player(),
-	m_Window()
+	m_Window(nullptr)
 {
 	// Create windows class
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"MsnMsgrUIManager";
@@ -52,6 +52,7 @@ PlayerWLM::~PlayerWLM()
 {
 	c_Player = nullptr;
 	DestroyWindow(m_Window);
+	m_Window = nullptr;
 	UnregisterClass(L"MsnMsgrUIManager", g_Instance);
 }
 
@@ -92,7 +93,7 @@ LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
 			// Some players include player name in the beginning. Skip that.
 			std::wstring::size_type len = data.find(L"\\0Music\\0");
-			len += 9;
+			len += 9ULL;
 			data.erase(0, len); // Get rid of \0Music\0
 
 			bool playing = (data[0] == L'1');
@@ -101,25 +102,25 @@ LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			{
 				++player->m_TrackCount;
 				player->m_State = STATE_PLAYING;
-				data.erase(0, 3);	// Get rid of the status
+				data.erase(0ULL, 3ULL);	// Get rid of the status
 
 				// TODO: Handle invalid
 				len = data.find_first_of(L'\\');
-				len += 2;
-				data.erase(0, len); // Get rid of the format
+				len += 2ULL;
+				data.erase(0ULL, len); // Get rid of the format
 
 				len = data.find_first_of(L'\\');
-				player->m_Title.assign(data, 0, len);
-				len += 2;
-				data.erase(0, len);
+				player->m_Title.assign(data, 0ULL, len);
+				len += 2ULL;
+				data.erase(0ULL, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Artist.assign(data, 0, len);
-				len += 2;
-				data.erase(0, len);
+				player->m_Artist.assign(data, 0ULL, len);
+				len += 2ULL;
+				data.erase(0ULL, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Album.assign(data, 0, len);
+				player->m_Album.assign(data, 0ULL, len);
 
 				if (player->m_Measures & MEASURE_LYRICS)
 				{
@@ -140,15 +141,15 @@ LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
 void PlayerWLM::SendKeyInput(WORD key)
 {
-	KEYBDINPUT kbi = {0};
+	KEYBDINPUT kbi = { 0 };
 	kbi.wVk = key;
 	kbi.dwExtraInfo = (ULONG_PTR)GetMessageExtraInfo();
 
-	INPUT input = {0};
+	INPUT input = { 0 };
 	input.type = INPUT_KEYBOARD;
 	input.ki = kbi;
 
-	SendInput(1, &input, sizeof(INPUT));
+	SendInput(1U, &input, sizeof(INPUT));
 }
 
 /*

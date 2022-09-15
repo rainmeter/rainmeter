@@ -16,12 +16,12 @@ OldDialog::OldDialog(HWND wnd) :
 	m_Font(),
 	m_FontBold()
 {
-	NONCLIENTMETRICS ncm;
+	NONCLIENTMETRICS ncm = { 0 };
 	ncm.cbSize = sizeof(NONCLIENTMETRICS) - sizeof(ncm.iPaddedBorderWidth);
 	SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
 	m_Font = CreateFontIndirect(&ncm.lfMenuFont);
 	ncm.lfMenuFont.lfWeight = FW_BOLD;
-	ncm.lfMenuFont.lfHeight -= 2;
+	ncm.lfMenuFont.lfHeight -= 2L;
 	m_FontBold = CreateFontIndirect(&ncm.lfMenuFont);
 }
 
@@ -83,11 +83,11 @@ LRESULT CALLBACK OldDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	case WM_PAINT:
 		{
 			// Draw arrow on top of the button
-			RECT buttonRect;
+			RECT buttonRect = { 0 };
 			GetClientRect(hWnd, &buttonRect);
-			int arrowX = buttonRect.right - 18;
-			int arrowY = buttonRect.top + 4;
-			RECT arrowRect = { arrowX, arrowY, arrowX + 14, arrowY + 14 };
+			LONG arrowX = buttonRect.right - 18L;
+			LONG arrowY = buttonRect.top + 4L;
+			RECT arrowRect = { arrowX, arrowY, arrowX + 14L, arrowY + 14L };
 
 			HDC dc = GetDC(hWnd);
 			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented

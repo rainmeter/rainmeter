@@ -192,7 +192,7 @@ void MeasureWifiStatus::UpdateValue()
 		{
 			// Size of network name can be up to 64 chars, set to 80 to add room for delimiters
 			m_StatusString.clear();
-			m_StatusString.reserve(80 * m_ListMax);
+			m_StatusString.reserve((size_t)m_ListMax * 80ULL);
 
 			UINT printed = 0U;  // count of how many networks have been printed already
 
@@ -230,7 +230,7 @@ void MeasureWifiStatus::UpdateValue()
 						if (m_ListStyle == 4U || m_ListStyle == 5U || m_ListStyle == 6U || m_ListStyle == 7U)
 						{
 							// ADD signal quality
-							WCHAR buffer[32];
+							WCHAR buffer[32] = { 0 };
 							_snwprintf_s(buffer, _TRUNCATE, L"%lu", (ULONG)pwnl->Network[i].wlanSignalQuality);
 
 							m_StatusString += L" [";

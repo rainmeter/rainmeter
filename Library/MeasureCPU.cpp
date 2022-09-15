@@ -97,12 +97,11 @@ void MeasureCPU::UpdateValue()
 		status = GetSystemTimes(&ftIdleTime, &ftKernelTime, &ftUserTime);
 		if (status == 0) return;
 
-		CalcUsage(Ft2Double(ftIdleTime),
-			Ft2Double(ftKernelTime) + Ft2Double(ftUserTime));
+		CalcUsage(Ft2Double(ftIdleTime), Ft2Double(ftKernelTime) + Ft2Double(ftUserTime));
 	}
 	else if (c_NtQuerySystemInformation)
 	{
-		LONG status;
+		LONG status = 0L;
 		ULONG bufSize = c_BufferSize;
 		BYTE* buf = (bufSize > 0) ? new BYTE[bufSize] : nullptr;
 
@@ -110,7 +109,7 @@ void MeasureCPU::UpdateValue()
 
 		do
 		{
-			ULONG size = 0;
+			ULONG size = 0UL;
 
 			status = c_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
 			if (status == STATUS_INFO_LENGTH_MISMATCH)
@@ -159,14 +158,17 @@ void MeasureCPU::UpdateValue()
 			}
 
 			PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION systemPerfInfo = (PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)buf;
+			if (systemPerfInfo)
+			{
+				int processor = m_Processor - 1;
 
-			int processor = m_Processor - 1;
-
-			CalcUsage(Li2Double(systemPerfInfo[processor].IdleTime),
-				Li2Double(systemPerfInfo[processor].KernelTime) + Li2Double(systemPerfInfo[processor].UserTime));
+				CalcUsage(Li2Double(systemPerfInfo[processor].IdleTime),
+					Li2Double(systemPerfInfo[processor].KernelTime) + Li2Double(systemPerfInfo[processor].UserTime));
+			}
 		}
 
 		delete [] buf;
+		buf = nullptr;
 	}
 }
 
@@ -189,7 +191,11 @@ void MeasureCPU::CalcUsage(double idleTime, double systemTime)
 
 void MeasureCPU::InitializeStatic()
 {
-	c_NtQuerySystemInformation = (FPNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
+	HMODULE hmod = GetModuleHandle(L"ntdll");
+	if (hmod)
+	{
+		c_NtQuerySystemInformation = (FPNTQSI)GetProcAddress(hmod, "NtQuerySystemInformation");
+	}
 
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);

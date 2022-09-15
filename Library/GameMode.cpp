@@ -22,7 +22,7 @@ struct GameHash
 {
 	std::size_t operator()(std::wstring const& str) const noexcept
 	{
-		return 17 * 31 + std::hash<std::wstring>()(str);
+		return 17ULL * 31ULL + std::hash<std::wstring>()(str);
 	}
 };
 }
@@ -112,9 +112,9 @@ void GameMode::SetOnStartAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0 && layouts.size() > 0)
+	if (index > 0U && layouts.size() > 0ULL)
 	{
-		action = layouts[index - 1];
+		action = layouts[(size_t)index - 1ULL];
 	}
 	SetOnStartAction(action);  // Can be empty (Unload all skins)
 }
@@ -128,9 +128,9 @@ void GameMode::SetOnStopAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0 && layouts.size() > 0)
+	if (index > 0U && layouts.size() > 0ULL)
 	{
-		action = layouts[index - 1];
+		action = layouts[(size_t)index - 1ULL];
 	}
 	SetOnStopAction(action);  // Can be empty (Load current layout or @Backup)
 }
@@ -324,6 +324,7 @@ void GameMode::ReadSettings()
 		}
 	}
 	delete [] buffer;
+	buffer = nullptr;
 }
 
 void GameMode::WriteSettings()

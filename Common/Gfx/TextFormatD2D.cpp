@@ -79,7 +79,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 
 	bool strChanged = false;
 	if (strLen != m_LastString.length() ||
-		memcmp(str, m_LastString.c_str(), (strLen + 1) * sizeof(WCHAR)) != 0)
+		memcmp(str, m_LastString.c_str(), ((size_t)strLen + 1ULL) * sizeof(WCHAR)) != 0)
 	{
 		strChanged = true;
 		m_LastString.assign(str, strLen);

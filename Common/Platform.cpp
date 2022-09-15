@@ -38,7 +38,7 @@ std::wstring& GetBuildNumberFromRegistry()
 	return s_BuildNumber;
 }
 
-};
+};  // namespace
 
 inline bool IsWindows11OrGreater()
 {
@@ -77,8 +77,7 @@ Platform& Platform::GetInstance()
 
 void Platform::Initialize()
 {
-	// Is Windows 64 bit?
-	m_Is64BitWindows = [&]() -> bool
+	m_Is64Bit = [&]() -> bool
 	{
 #if _WIN64
 		return true;
@@ -185,7 +184,7 @@ void Platform::Initialize()
 
 		m_FriendlyName += L')';
 	}
-	m_FriendlyName += m_Is64BitWindows ? L" 64-bit" : L" 32-bit";
+	m_FriendlyName += m_Is64Bit ? L" 64-bit" : L" 32-bit";
 
 	// Retrieve user language LCID
 	LANGID id = GetUserDefaultUILanguage();

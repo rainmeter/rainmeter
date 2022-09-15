@@ -14,25 +14,25 @@
 */
 Player::Player() :
 	m_Initialized(false),
-	m_InstanceCount(),
-	m_UpdateCount(),
-	m_TrackCount(),
-	m_Measures(),
+	m_InstanceCount(0U),
+	m_UpdateCount(0U),
+	m_TrackCount(0U),
+	m_Measures(0),
 	m_State(),
-	m_Number(),
-	m_Year(),
+	m_Number(0U),
+	m_Year(0U),
 	m_Shuffle(false),
 	m_Repeat(false),
-	m_Duration(),
-	m_Position(),
-	m_Rating(),
-	m_Volume(),
-	m_InternetThread()
+	m_Duration(0U),
+	m_Position(0U),
+	m_Rating(0U),
+	m_Volume(0U),
+	m_InternetThread(nullptr)
 {
 	// Get temporary file for cover art
-	WCHAR buffer[MAX_PATH];
-	GetTempPath(MAX_PATH, buffer);
-	GetTempFileName(buffer, L"jpg", 0, buffer);
+	WCHAR buffer[MAX_PATH] = { 0 };
+	GetTempPath(_countof(buffer), buffer);
+	GetTempFileName(buffer, L"jpg", 0U, buffer);
 	m_TempCoverPath = buffer;
 }
 
@@ -46,7 +46,7 @@ Player::~Player()
 
 	if (m_InternetThread)
 	{
-		TerminateThread(m_InternetThread, 0);
+		TerminateThread(m_InternetThread, 0UL);
 	}
 }
 
@@ -65,7 +65,7 @@ void Player::AddInstance()
 */
 void Player::RemoveInstance()
 {
-	if (--m_InstanceCount == 0)
+	if (--m_InstanceCount == 0U)
 	{
 		delete this;
 	}
@@ -89,7 +89,7 @@ void Player::UpdateMeasure()
 	if (++m_UpdateCount >= m_InstanceCount)
 	{
 		UpdateData();
-		m_UpdateCount = 0;
+		m_UpdateCount = 0U;
 	}
 }
 
@@ -127,8 +127,8 @@ void Player::FindLyrics()
 	{
 		m_Lyrics.clear();
 
-		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, LyricsThreadProc, this, 0, &id);
+		unsigned int id = 0U;
+		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0U, LyricsThreadProc, this, 0U, &id);
 		if (thread)
 		{
 			m_InternetThread = thread;
@@ -145,7 +145,7 @@ unsigned __stdcall Player::LyricsThreadProc(void* pParam)
 	Player* player = (Player*)pParam;
 
 	std::wstring lyrics;
-	bool found;
+	bool found = false;
 
 	while (true)
 	{
@@ -170,7 +170,7 @@ unsigned __stdcall Player::LyricsThreadProc(void* pParam)
 	CloseHandle(player->m_InternetThread);
 	player->m_InternetThread = nullptr;
 
-	return 0;
+	return 0U;
 }
 
 /*
@@ -187,15 +187,15 @@ void Player::ClearData(bool all)
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
-	m_Duration = 0;
-	m_Position = 0;
-	m_Rating = 0;
-	m_Number = 0;
-	m_Year = 0;
+	m_Duration = 0U;
+	m_Position = 0U;
+	m_Rating = 0U;
+	m_Number = 0U;
+	m_Year = 0U;
 
 	if (all)
 	{
-		m_Volume = 0;
+		m_Volume = 0U;
 		m_Shuffle = false;
 		m_Repeat = false;
 	}

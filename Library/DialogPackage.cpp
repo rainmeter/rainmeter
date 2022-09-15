@@ -263,7 +263,7 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-	zlib_filefunc64_def zlibFileFunc;
+	zlib_filefunc64_def zlibFileFunc = { 0 };
 	fill_win32_filefunc64W(&zlibFileFunc);
 	m_ZipFile = zipOpen2_64(m_TargetFile.c_str(), APPEND_STATUS_CREATE, nullptr, &zlibFileFunc);
 
@@ -333,7 +333,7 @@ bool DialogPackage::CreatePackage()
 	}
 
 	// Add footer
-	FILE* file;
+	FILE* file = nullptr;
 	if (zipClose(m_ZipFile, nullptr) == ZIP_OK &&
 		(file = _wfopen(m_TargetFile.c_str(), L"r+b")) != nullptr)
 	{
@@ -400,7 +400,7 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 	}
 
 	const uLong ZIP_UTF8_FLAG = 1 << 11;
-	zip_fileinfo fi = {0};
+	zip_fileinfo fi = { 0 };
 	if (zipOpenNewFileInZip4(
 		m_ZipFile, zipPathUTF8.c_str(), &fi,
 		nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION,
@@ -422,9 +422,9 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 		{
 			do
 			{
-				const DWORD bufferSize = 16 * 1024;
-				BYTE buffer[bufferSize];
-				DWORD readSize;
+				const DWORD bufferSize = 16UL * 1024UL;
+				BYTE buffer[bufferSize] = { 0 };
+				DWORD readSize = 0UL;
 				if (!ReadFile(file, buffer, bufferSize, &readSize, nullptr))
 				{
 					result = false;
@@ -457,7 +457,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 	std::wstring currentPath = path + base;
 	currentPath += L'*';
 
-	WIN32_FIND_DATA fd;
+	WIN32_FIND_DATA fd = { 0 };
 	HANDLE hFind = FindFirstFileEx(
 		currentPath.c_str(),
 		FindExInfoBasic,
@@ -566,7 +566,7 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 			SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
 
 			*existingPath += L'*';
-			WIN32_FIND_DATA fd;
+			WIN32_FIND_DATA fd = { 0 };
 			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
 			existingPath->pop_back();
 
@@ -637,8 +637,8 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 		case IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT:
 			if (HIWORD(wParam) == EN_CHANGE)
 			{
-				WCHAR buffer[MAX_PATH];
-				int len = Edit_GetText((HWND)lParam, buffer, MAX_PATH);
+				WCHAR buffer[MAX_PATH] = { 0 };
+				int len = Edit_GetText((HWND)lParam, buffer, _countof(buffer));
 
 				// Disable Add button if invalid directory
 				DWORD attributes = GetFileAttributes(buffer);
@@ -650,8 +650,8 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 		case IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON:
 			{
-				WCHAR buffer[MAX_PATH];
-				BROWSEINFO bi = {0};
+				WCHAR buffer[MAX_PATH] = { 0 };
+				BROWSEINFO bi = { 0 };
 				bi.hwndOwner = hWnd;
 				bi.ulFlags = BIF_USENEWUI | BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS;
 
@@ -667,7 +667,7 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 		case IDOK:
 			{
-				WCHAR buffer[MAX_PATH];
+				WCHAR buffer[MAX_PATH] = { 0 };
 				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_RADIO);
 				bool existing = Button_GetCheck(item) == BST_CHECKED;
 
@@ -734,15 +734,13 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 		case IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON:
 		case IDC_PACKAGESELECTPLUGIN_64BITBROWSE_BUTTON:
 			{
-				WCHAR buffer[MAX_PATH];
-				buffer[0] = L'\0';
-
+				WCHAR buffer[MAX_PATH] = { 0 };
 				OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 				ofn.Flags = OFN_FILEMUSTEXIST;
 				ofn.lpstrFilter = L"Plugins (.dll)\0*.dll";
 				ofn.lpstrTitle = L"Select plugin file";
 				ofn.lpstrDefExt = L"dll";
-				ofn.nFilterIndex = 0;
+				ofn.nFilterIndex = 0UL;
 				ofn.lpstrFile = buffer;
 				ofn.nMaxFile = _countof(buffer);
 				ofn.hwndOwner = c_Dialog->GetWindow();
@@ -754,7 +752,7 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
 
-				WORD machine = 0U;
+				WORD machine = 0;
 				if (FileUtil::GetBinaryFileBitness(buffer, machine))
 				{
 					if ((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64))
@@ -827,14 +825,13 @@ void DialogPackage::TabInfo::Initialize()
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 
-	DWORD extendedFlags =
-		LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
+	DWORD extendedFlags = LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	SetWindowTheme(item, L"explorer", nullptr);
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
 	// Add columns
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
@@ -843,7 +840,7 @@ void DialogPackage::TabInfo::Initialize()
 	ListView_InsertColumn(item, 0, &lvc);
 
 	// Add groups
-	LVGROUP lvg;
+	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = LVGS_COLLAPSIBLE;
@@ -885,7 +882,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				c_Dialog->m_SkinFolder.first.pop_back();	// Remove slash
 
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
-				LVITEM lvi;
+				LVITEM lvi = { 0 };
 				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
 				lvi.iItem = 1;
 				lvi.iSubItem = 0;
@@ -910,7 +907,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (c_Dialog->m_LayoutFolders.emplace(name, folder).second)
 				{
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
-					LVITEM lvi;
+					LVITEM lvi = { 0 };
 					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
 					lvi.iItem = (int)c_Dialog->m_LayoutFolders.size() + 1;
 					lvi.iSubItem = 0;
@@ -929,7 +926,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (!name.empty() && c_Dialog->m_PluginFolders.emplace(name, plugins).second)
 			{
 				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
-				LVITEM lvi;
+				LVITEM lvi = { 0 };
 				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
 				lvi.iItem = (int)c_Dialog->m_PluginFolders.size() + 1;
 				lvi.iSubItem = 0;
@@ -946,10 +943,10 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
-				WCHAR buffer[MAX_PATH];
+				WCHAR buffer[MAX_PATH] = { 0 };
 
 				// Remove unchecked items from the component sets
-				LVITEM lvi;
+				LVITEM lvi = { 0 };
 				lvi.mask = LVIF_GROUPID | LVIF_TEXT;
 				lvi.iSubItem = 0;
 				lvi.iItem = sel;
@@ -963,13 +960,11 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				switch (lvi.iGroupId)
 				{
 				case 0:
-					{
-						item = GetDlgItem(m_Window, IDC_PACKAGEINFO_ADDSKIN_BUTTON);
-						EnableWindow(item, TRUE);
-						c_Dialog->m_SkinFolder.first.clear();
-						c_Dialog->m_SkinFolder.second.clear();
-						c_Dialog->SetNextButtonState();
-					}
+					item = GetDlgItem(m_Window, IDC_PACKAGEINFO_ADDSKIN_BUTTON);
+					EnableWindow(item, TRUE);
+					c_Dialog->m_SkinFolder.first.clear();
+					c_Dialog->m_SkinFolder.second.clear();
+					c_Dialog->SetNextButtonState();
 					break;
 
 				case 1:
@@ -989,7 +984,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_PACKAGEINFO_VERSION_EDIT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[64];
+			WCHAR buffer[64] = { 0 };
 			int len = GetWindowText((HWND)lParam, buffer, _countof(buffer));
 			if (LOWORD(wParam) == IDC_PACKAGEINFO_NAME_EDIT)
 			{
@@ -1063,7 +1058,7 @@ void DialogPackage::TabOptions::Initialize()
 {
 	m_Initialized = true;
 
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 	SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, SHGFP_TYPE_CURRENT, buffer);
 
 	c_Dialog->m_TargetFile = buffer;
@@ -1124,8 +1119,8 @@ void DialogPackage::TabOptions::Initialize()
 	ComboBox_AddString(item, L"XP");
 	ComboBox_AddString(item, L"Vista");
 	ComboBox_AddString(item, L"7");
-	ComboBox_AddString(item, L"8");	
-	ComboBox_AddString(item, L"10");	
+	ComboBox_AddString(item, L"8");
+	ComboBox_AddString(item, L"10");
 	ComboBox_SetCurSel(item, 2);
 	c_Dialog->m_MinimumWindows = g_OsNameVersions[0].version;
 }
@@ -1147,7 +1142,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_PACKAGEOPTIONS_FILEBROWSE_BUTTON:
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_FILE_EDIT);
 			GetWindowText(item, buffer, _countof(buffer));
 
@@ -1185,7 +1180,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADSKIN_EDIT);
 			ShowWindow(item, SW_SHOWNORMAL);
 
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
 			c_Dialog->m_LoadLayout = false;
@@ -1206,7 +1201,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);
 			ShowWindow(item, SW_SHOWNORMAL);
 
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
 			c_Dialog->m_LoadLayout = true;
@@ -1216,7 +1211,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_PACKAGEOPTIONS_LOADTHEME_COMBO:
 		if (HIWORD(wParam) == CBN_SELENDOK)
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
@@ -1226,7 +1221,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON:
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADSKIN_EDIT);
 			GetWindowText(item, buffer, _countof(buffer));
 
@@ -1258,7 +1253,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_PACKAGEOPTIONS_RAINMETERVERSION_EDIT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[32];
+			WCHAR buffer[32] = { 0 };
 			GetWindowText((HWND)lParam, buffer, _countof(buffer));
 
 			// Get caret position
@@ -1337,7 +1332,7 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_PACKAGEADVANCED_HEADERROWSE_BUTTON:
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEADVANCED_HEADER_EDIT);
 			GetWindowText(item, buffer, _countof(buffer));
 

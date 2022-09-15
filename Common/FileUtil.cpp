@@ -83,10 +83,10 @@ bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness)
 	};
 
 	hFile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
-	if (hFile == INVALID_HANDLE_VALUE) return cleanUp(false);
+	if (!hFile || hFile == INVALID_HANDLE_VALUE) return cleanUp(false);
 
 	hMapping = CreateFileMapping(hFile, nullptr, PAGE_READONLY | SEC_IMAGE, 0UL, 0UL, nullptr);
-	if (hMapping == INVALID_HANDLE_VALUE) return cleanUp(false);
+	if (!hMapping || hMapping == INVALID_HANDLE_VALUE) return cleanUp(false);
 
 	addrMapping = MapViewOfFile(hMapping, FILE_MAP_READ, 0UL, 0UL, 0UL);
 	if (!addrMapping) return cleanUp(false);

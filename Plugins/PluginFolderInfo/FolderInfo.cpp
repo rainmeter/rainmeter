@@ -13,16 +13,16 @@
 #define UPDATE_TIME_MIN_MS (10000ULL)
 
 CFolderInfo::CFolderInfo(void* ownerSkin) :
-	m_InstanceCount(1),
+	m_InstanceCount(1U),
 	m_Skin(ownerSkin),
 	m_IncludeSubFolders(false),
 	m_IncludeHiddenFiles(false),
 	m_IncludeSystemFiles(false),
-	m_Size(),
-	m_FileCount(),
-	m_FolderCount(),
-	m_RegExpFilter(),
-	m_LastUpdateTime()
+	m_Size(0ULL),
+	m_FileCount(0U),
+	m_FolderCount(0U),
+	m_RegExpFilter(nullptr),
+	m_LastUpdateTime(0ULL)
 {
 }
 
@@ -39,7 +39,7 @@ void CFolderInfo::AddInstance()
 void CFolderInfo::RemoveInstance()
 {
 	--m_InstanceCount;
-	if (m_InstanceCount == 0)
+	if (m_InstanceCount == 0U)
 	{
 		delete this;
 	}
@@ -47,9 +47,9 @@ void CFolderInfo::RemoveInstance()
 
 void CFolderInfo::Clear()
 {
-	m_Size = 0;
-	m_FileCount = 0;
-	m_FolderCount = 0;
+	m_Size = 0ULL;
+	m_FileCount = 0U;
+	m_FolderCount = 0U;
 }
 
 void CFolderInfo::FreePcre()
@@ -82,14 +82,14 @@ void CFolderInfo::CalculateSize()
 	std::list<RawString> folderQueue;
 	folderQueue.push_back(m_Path.c_str());
 
-	WCHAR searchPattern[MAX_PATH + 10];
-	WCHAR buffer[MAX_PATH];
-	WIN32_FIND_DATA findData;
-	HANDLE findHandle;
+	WCHAR searchPattern[MAX_PATH + 10] = { 0 };
+	WCHAR buffer[MAX_PATH] = { 0 };
+	WIN32_FIND_DATA findData = { 0 };
+	HANDLE findHandle = nullptr;
 	while (!folderQueue.empty())
 	{
 		const RawString& ref = folderQueue.front();
-		wsprintf(searchPattern, L"%s%s", ref.c_str(), L"\\*.*");
+		_snwprintf_s(searchPattern, _countof(searchPattern), L"%s%s", ref.c_str(), L"\\*.*");
 
 		findHandle = FindFirstFile(searchPattern, &findData);
 		if (INVALID_HANDLE_VALUE == findHandle)
@@ -130,21 +130,22 @@ void CFolderInfo::CalculateSize()
 
 			if (isFolder)
 			{
-				m_FolderCount++;
+				++m_FolderCount;
 				if (m_IncludeSubFolders)
 				{
-					wsprintf(buffer, L"%s\\%s", ref.c_str(), findData.cFileName);
+					_snwprintf_s(buffer, _countof(buffer), L"%s\\%s", ref.c_str(), findData.cFileName);
 					folderQueue.push_back(buffer);
 				}
 			}
 			else
 			{
-				m_FileCount++;
+				++m_FileCount;
 				m_Size += ((UINT64)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
 			}
 		}
 		while (FindNextFile(findHandle, &findData));
 		FindClose(findHandle);
+		findHandle = nullptr;
 
 		folderQueue.pop_front();
 	}
@@ -167,8 +168,8 @@ void CFolderInfo::SetRegExpFilter(LPCWSTR filter)
 
 	if (*filter)
 	{
-		const char* error;
-		int erroffset;
+		const char* error = nullptr;
+		int erroffset = 0;
 		m_RegExpFilter = pcre16_compile(
 			(PCRE_SPTR16)filter, PCRE_UTF16, &error, &erroffset, nullptr);
 	}
