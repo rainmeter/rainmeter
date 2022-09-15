@@ -90,7 +90,7 @@
     {
       "id": 1040,
       "name": "Italian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1041,
@@ -130,7 +130,7 @@
     {
       "id": 1046,
       "name": "PortugueseBrazil",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 2070,
