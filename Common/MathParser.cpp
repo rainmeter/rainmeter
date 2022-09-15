@@ -210,7 +210,7 @@ struct Parser
 	char valTop;
 	int obrDist;
 
-	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = Operator::OpeningBracket; }
+	Parser() : opStack(), numStack(), opTop(0), valTop(-1), obrDist(2) { opStack[0].type = Operator::OpeningBracket; }
 };
 
 static const WCHAR* CalcToObr(Parser& parser);
@@ -361,7 +361,7 @@ const WCHAR* Parse(
 
 			default:
 				{
-					Operation op;
+					Operation op = {};
 					op.type = lexer.value.oper;
 					switch (op.type)
 					{
@@ -401,7 +401,7 @@ const WCHAR* Parse(
 
 		case Token::Name:
 			{
-				Operation op;
+				Operation op = {};
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
 					((op.funcIndex = GetFunctionIndex(lexer.name, (BYTE)lexer.nameLen)) != FUNC_INVALID))
 				{

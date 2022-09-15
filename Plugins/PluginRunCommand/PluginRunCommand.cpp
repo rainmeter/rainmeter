@@ -191,6 +191,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 	lock.unlock();
 	delete measure;
+	measure = nullptr;
 }
 
 void RunCommand(Measure* measure)
@@ -220,13 +221,13 @@ void RunCommand(Measure* measure)
 	HANDLE hInputRead;		3
 	HANDLE hErrorWrite;		4
 */
-	HANDLE loadHandles[5];
+	HANDLE loadHandles[5] = { 0 };
 	for (int i = 0; i < sizeof(loadHandles) / sizeof(loadHandles[0]); ++i)
 	{
 		loadHandles[i] = INVALID_HANDLE_VALUE;
 	}
 
-	SECURITY_ATTRIBUTES sa;
+	SECURITY_ATTRIBUTES sa = { 0 };
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
@@ -240,16 +241,16 @@ void RunCommand(Measure* measure)
 		DuplicateHandle(hProc, loadHandles[0], hProc, &read, 0, FALSE, DUPLICATE_SAME_ACCESS) &&
 		DuplicateHandle(hProc, loadHandles[2], hProc, &write, 0, FALSE, DUPLICATE_SAME_ACCESS))
 	{
-		BYTE buffer[MAX_LINE_LENGTH + 3];
-		DWORD bytesRead = 0;
-		DWORD totalBytes = 0;
-		DWORD bytesLeft = 0;
-		DWORD exit = 0;
+		BYTE buffer[MAX_LINE_LENGTH + 3] = { 0 };
+		DWORD bytesRead = 0UL;
+		DWORD totalBytes = 0UL;
+		DWORD bytesLeft = 0UL;
+		DWORD exit = 0UL;
 
-		PROCESS_INFORMATION pi;
+		PROCESS_INFORMATION pi = { 0 };
 		SecureZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 
-		STARTUPINFO si;
+		STARTUPINFO si = { 0 };
 		SecureZeroMemory(&si, sizeof(STARTUPINFO));
 		si.cb = sizeof(STARTUPINFO);
 		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
@@ -267,8 +268,8 @@ void RunCommand(Measure* measure)
 			lock.unlock();
 
 			// Send command
-			DWORD written;
-			WriteFile(write, &command[0], MAX_LINE_LENGTH, &written, NULL);
+			DWORD written = 0UL;
+			WriteFile(write, &command[0], MAX_LINE_LENGTH, &written, nullptr);
 
 			std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
@@ -277,28 +278,29 @@ void RunCommand(Measure* measure)
 			{
 				auto ReadFileAndSetResult = [&]() -> void
 				{
-					ReadFile(read, buffer, MAX_LINE_LENGTH, &bytesRead, NULL);
-
-					// Triple "null" the buffer in case an odd number bytes is
-					// converted to a multi-byte string.
-					buffer[bytesRead] = '\0';
-					buffer[bytesRead + 1] = '\0';
-					buffer[bytesRead + 2] = '\0';
-
-					switch (type)
+					if (ReadFile(read, buffer, MAX_LINE_LENGTH, &bytesRead, nullptr) != FALSE)
 					{
-					case OUTPUTTYPE_ANSI:
-						result += StringUtil::Widen((LPCSTR)buffer);
-						break;
+						// Triple "null" the buffer in case an odd number bytes is
+						// converted to a multi-byte string.
+						buffer[bytesRead] = '\0';
+						buffer[bytesRead + 1] = '\0';
+						buffer[bytesRead + 2] = '\0';
 
-					case OUTPUTTYPE_UTF8:
-						result += StringUtil::WidenUTF8((LPCSTR)buffer);
-						break;
+						switch (type)
+						{
+						case OUTPUTTYPE_ANSI:
+							result += StringUtil::Widen((LPCSTR)buffer);
+							break;
 
-					default:
-					case OUTPUTTYPE_UTF16:
-						result += (LPCWSTR)buffer;
-						break;
+						case OUTPUTTYPE_UTF8:
+							result += StringUtil::WidenUTF8((LPCSTR)buffer);
+							break;
+
+						default:
+						case OUTPUTTYPE_UTF16:
+							result += (LPCWSTR)buffer;
+							break;
+						}
 					}
 
 					SecureZeroMemory(buffer, sizeof(buffer));	// clear the buffer
@@ -406,8 +408,8 @@ void RunCommand(Measure* measure)
 			case OUTPUTTYPE_UTF16: { encoding.append(L", ccs=UTF-16LE"); break; }
 			}
 
-			FILE* file;
-			if (_wfopen_s(&file, measure->outputFile.c_str(), encoding.c_str()) == 0)
+			FILE* file = nullptr;
+			if ((_wfopen_s(&file, measure->outputFile.c_str(), encoding.c_str()) == 0) && file)
 			{
 				fputws(result.c_str(), file);
 			}
@@ -445,6 +447,7 @@ void RunCommand(Measure* measure)
 
 	lock.unlock();
 	delete measure;
+	measure = nullptr;
 
 	DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
 	GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
@@ -474,7 +477,7 @@ BOOL WINAPI TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force)
 
 BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam)
 {
-	DWORD dwID;
+	DWORD dwID = 0UL;
 	GetWindowThreadProcessId(hwnd, &dwID);
 
 	if (dwID == (DWORD)lParam)

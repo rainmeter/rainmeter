@@ -81,6 +81,7 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 Measure::~Measure()
 {
 	delete m_OldValue;
+	m_OldValue = nullptr;
 }
 
 /*
@@ -472,7 +473,7 @@ bool Measure::Update(bool rereadOptions)
 			++m_MedianPos;
 			m_MedianPos %= MEDIAN_SIZE;
 
-			auto medianArray = m_MedianValues;
+			std::vector<double> medianArray = m_MedianValues;
 			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
 
 			double medianValue = medianArray[MEDIAN_SIZE / 2];
@@ -620,7 +621,7 @@ const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int d
 
 void Measure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
-	WCHAR format[32];
+	WCHAR format[32] = { 0 };
 	double value = 0;
 
 	if (decimals == 0)

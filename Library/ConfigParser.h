@@ -106,13 +106,13 @@ public:
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
-	static double ParseDouble(LPCTSTR string, double defValue);
-	static int ParseInt(LPCTSTR string, int defValue);
-	static uint32_t ParseUInt(LPCTSTR string, uint32_t defValue);
-	static uint64_t ParseUInt64(LPCTSTR string, uint64_t defValue);
-	static D2D1_COLOR_F ParseColor(LPCTSTR string);
-	static D2D1_RECT_F ParseRect(LPCTSTR string);
-	static RECT ParseRECT(LPCTSTR string);
+	static double ParseDouble(LPCTSTR str, double defValue);
+	static int ParseInt(LPCTSTR str, int defValue);
+	static uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
+	static uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
+	static D2D1_COLOR_F ParseColor(LPCTSTR str);
+	static D2D1_RECT_F ParseRect(LPCTSTR str);
+	static RECT ParseRECT(LPCTSTR str);
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
@@ -129,11 +129,7 @@ private:
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
-	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue);
-
 	static void SetMultiMonitorVariables(bool reset);
-	static void SetMonitorVariable(const WCHAR* strVariable, const WCHAR* strValue);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }

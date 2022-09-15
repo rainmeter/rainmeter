@@ -10,12 +10,14 @@
 
 #include <string>
 
+inline bool IsWindows11OrGreater();
+
 class Platform
 {
 public:
 	static Platform& GetInstance();
 
-	bool Is64BitWindows() { return m_Is64BitWindows; }
+	bool Is64Bit() { return m_Is64Bit; }
 
 	std::wstring GetName() { return m_Name; }
 	std::wstring GetFriendlyName() { return m_FriendlyName; }
@@ -33,7 +35,7 @@ private:
 
 	void Initialize();
 
-	bool m_Is64BitWindows;
+	bool m_Is64Bit;
 
 	std::wstring m_Name;
 	std::wstring m_FriendlyName;

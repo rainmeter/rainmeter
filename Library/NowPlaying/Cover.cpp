@@ -15,7 +15,7 @@ bool WriteCoverToFile(const TagLib::ByteVector& data, const std::wstring& target
 	FILE* f = _wfopen(target.c_str(), L"wb");
 	if (f)
 	{
-		const bool written = fwrite(data.data(), 1, data.size(), f) == data.size();
+		const bool written = fwrite(data.data(), 1ULL, data.size(), f) == data.size();
 		fclose(f);
 		return written;
 	}
@@ -113,7 +113,7 @@ bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
 bool CCover::GetCached(std::wstring& path)
 {
 	path += L".art";
-	return (_waccess(path.c_str(), 0) == 0) ? true : false;
+	return (_waccess_s(path.c_str(), 0) == 0) ? true : false;
 }
 
 /*
@@ -132,7 +132,7 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 	for (int i = 0; i < extCount; ++i)
 	{
 		testPath += extName[i];
-		if (_waccess(testPath.c_str(), 0) == 0)
+		if (_waccess_s(testPath.c_str(), 0) == 0)
 		{
 			target = testPath;
 			return true;
@@ -210,7 +210,7 @@ std::wstring CCover::GetFileFolder(const std::wstring& file)
 	std::wstring::size_type pos = file.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		return file.substr(0, ++pos);
+		return file.substr(0ULL, ++pos);
 	}
 
 	return file;

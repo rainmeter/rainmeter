@@ -133,8 +133,8 @@ void SkinRegistry::Populate(const std::wstring& path, std::vector<std::wstring>&
 
 int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level)
 {
-	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	HANDLE hSearch;                // Search handle returned by FindFirstFile
+	WIN32_FIND_DATA fileData = { 0 };			// Data structure describes the file foun;
+	HANDLE hSearch = nullptr;					// Search handle returned by FindFirstFile
 	std::list<std::wstring> subfolders;
 
 	// Find all .ini files and subfolders

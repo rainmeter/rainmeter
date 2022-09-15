@@ -15,8 +15,8 @@ namespace {
 
 bool g_Thread = false;
 
-double g_BinCount = 0;
-double g_BinSize = 0;
+double g_BinCount = 0.0;
+double g_BinSize = 0.0;
 
 int g_UpdateCount = 0;
 int g_InstanceCount = 0;
@@ -34,24 +34,23 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 
 	g_Thread = false;
 
-	return 0;
+	return 0UL;
 }
 
 bool HasRecycleBinChanged()
 {
-	static DWORD s_LastVolumeCount = 0;
-	static ULONGLONG s_LastWriteTime = 0;
+	static DWORD s_LastVolumeCount = 0UL;
+	static ULONGLONG s_LastWriteTime = 0ULL;
 
 	bool changed = false;
 
 	// Check if items have been added to recycle bin since last check.
-	HKEY volumeKey;
-	const WCHAR* subKey =
-		L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume";
+	HKEY volumeKey = nullptr;
+	const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume";
 	LSTATUS ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &volumeKey);
 	if (ls == ERROR_SUCCESS)
 	{
-		DWORD volumeCount = 0;
+		DWORD volumeCount = 0UL;
 		RegQueryInfoKey(volumeKey, nullptr, nullptr, nullptr, &volumeCount, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 		if (volumeCount != s_LastVolumeCount)
 		{
@@ -59,17 +58,17 @@ bool HasRecycleBinChanged()
 			changed = true;
 		}
 
-		WCHAR buffer[64];
+		WCHAR buffer[64] = { 0 };
 		DWORD bufferSize = _countof(buffer);
-		DWORD index = 0;
+		DWORD index = 0UL;
 
 		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, nullptr, nullptr, nullptr, nullptr)) == ERROR_SUCCESS)
 		{
-			HKEY volumeSubKey;
+			HKEY volumeSubKey = nullptr;
 			ls = RegOpenKeyEx(volumeKey, buffer, 0, KEY_QUERY_VALUE, &volumeSubKey);
 			if (ls == ERROR_SUCCESS)
 			{
-				ULONGLONG lastWriteTime;
+				ULONGLONG lastWriteTime = 0ULL;
 				ls = RegQueryInfoKey(volumeSubKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 				if (ls == ERROR_SUCCESS)
 				{
@@ -81,6 +80,7 @@ bool HasRecycleBinChanged()
 				}
 
 				RegCloseKey(volumeSubKey);
+				volumeSubKey = nullptr;
 			}
 
 			bufferSize = _countof(buffer);
@@ -88,17 +88,18 @@ bool HasRecycleBinChanged()
 		}
 
 		RegCloseKey(volumeKey);
+		volumeKey = nullptr;
 	}
 
 	if (!changed)
 	{
 		// Check if recycle bin has been emptied.
-		HKEY iconKey;
+		HKEY iconKey = nullptr;
 		const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\DefaultIcon";
 		ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE, &iconKey);
 		if (ls == ERROR_SUCCESS)
 		{
-			ULONGLONG lastWriteTime;
+			ULONGLONG lastWriteTime = 0ULL;
 			ls = RegQueryInfoKey(iconKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 			if (ls == ERROR_SUCCESS)
 			{
@@ -110,13 +111,14 @@ bool HasRecycleBinChanged()
 			}
 
 			RegCloseKey(iconKey);
+			iconKey = nullptr;
 		}
 	}
 
 	return changed;
 }
 
-}
+}  // namespace
 
 enum class MeasureRecycleManager::Type
 {
@@ -175,8 +177,8 @@ void MeasureRecycleManager::UpdateValue()
 					// Delay next check.
 					g_UpdateCount = g_InstanceCount * -2;
 
-					DWORD id;
-					HANDLE thread = CreateThread(nullptr, 0, QueryRecycleBinThreadProc, nullptr, 0, &id);
+					DWORD id = 0UL;
+					HANDLE thread = CreateThread(nullptr, 0ULL, QueryRecycleBinThreadProc, nullptr, 0UL, &id);
 					if (thread)
 					{
 						CloseHandle(thread);

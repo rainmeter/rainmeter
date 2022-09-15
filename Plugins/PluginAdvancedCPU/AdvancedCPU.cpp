@@ -77,6 +77,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		WCHAR* buffer = _wcsdup(value);
 		SplitName(buffer, measure->includes);
 		delete buffer;
+		buffer = nullptr;
 		changed = true;
 	}
 
@@ -89,6 +90,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		WCHAR* buffer = _wcsdup(value);
 		SplitName(buffer, measure->excludes);
 		delete buffer;
+		buffer = nullptr;
 		changed = true;
 	}
 
@@ -193,6 +195,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 
 	CPerfSnapshot::CleanUp();
 }
@@ -202,8 +205,8 @@ PLUGIN_EXPORT void Finalize(void* data)
 */
 void UpdateProcesses()
 {
-	BYTE data[256];
-	WCHAR name[256];
+	BYTE data[256] = { 0 };
+	WCHAR name[256] = { 0 };
 
 	std::vector<ProcessValues> newProcesses;
 	newProcesses.reserve(g_Processes.size());
@@ -226,6 +229,7 @@ void UpdateProcesses()
 					if (_wcsicmp(name, L"_Total") == 0)
 					{
 						delete pObjInst;
+						pObjInst = nullptr;
 						continue;
 					}
 
@@ -257,13 +261,16 @@ void UpdateProcesses()
 						}
 
 						delete pPerfCntr;
+						pPerfCntr = nullptr;
 					}
 				}
 
 				delete pObjInst;
+				pObjInst = nullptr;
 			}
 
 			delete pPerfObj;
+			pPerfObj = nullptr;
 		}
 	}
 

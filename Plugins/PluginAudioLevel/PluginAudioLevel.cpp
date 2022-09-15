@@ -364,6 +364,7 @@ PLUGIN_EXPORT void Finalize (void* data)
 	}
 
 	delete m;
+	m = nullptr;
 }
 
 

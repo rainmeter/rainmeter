@@ -149,7 +149,7 @@ void Meter::SetX(int x)
 	m_RelativeX = POSITION_ABSOLUTE;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 	_itow_s(x, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
 }
@@ -160,7 +160,7 @@ void Meter::SetY(int y)
 	m_RelativeY = POSITION_ABSOLUTE;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 	_itow_s(y, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
 }

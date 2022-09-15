@@ -81,7 +81,7 @@ void DialogManage::Open(int tab)
 		nullptr);
 
 	// Fake WM_NOTIFY to change tab
-	NMHDR nm;
+	NMHDR nm = { 0 };
 	nm.code = TCN_SELCHANGE;
 	nm.idFrom = Id_Tab;
 	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
@@ -590,7 +590,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 
 void DialogManage::TabSkins::Initialize()
 {
-	BUTTON_SPLITINFO bsi;
+	BUTTON_SPLITINFO bsi = { 0 };
 	bsi.mask = BCSIF_SIZE;
 	bsi.size.cx = 20;
 	bsi.size.cy = 14;
@@ -741,7 +741,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 
 void DialogManage::TabSkins::SetControls()
 {
-	WCHAR buffer[64];
+	WCHAR buffer[64] = { 0 };
 
 	HWND item = GetControl(Id_EditButton);
 	EnableWindow(item, TRUE);
@@ -995,14 +995,15 @@ void DialogManage::TabSkins::ReadSkin()
 		}
 
 		// Replace | with newline
-		std::wstring::size_type pos;
+		std::wstring::size_type pos = 0ULL;
 		while ((pos = text.find_first_of(L'|')) != std::wstring::npos)
 		{
-			size_t count = (pos + 1 < text.length() && text[pos + 1] == L' ') ? 2 : 1;
-			if (text[pos - 1] == L' ')
+			size_t next = pos + 1UL;
+			size_t count = (next < text.length() && text[next] == L' ') ? 2ULL : 1ULL;
+			if (text[pos - 1ULL] == L' ')
 			{
 				--pos;
-				count += 1;
+				count += 1ULL;
 			}
 			text.replace(pos, count, L"\r\n");
 		}
@@ -1028,6 +1029,7 @@ void DialogManage::TabSkins::ReadSkin()
 	}
 
 	delete [] buffer;
+	buffer = nullptr;
 }
 
 LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
@@ -1044,7 +1046,7 @@ LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT m
 
 			hasEntered = true;
 
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_HOVER | TME_LEAVE;
 			tme.dwHoverTime = 1;
@@ -1100,14 +1102,14 @@ LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARA
 
 std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 {
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 
 	// Get current selection name
 	TVITEM tvi = {0};
 	tvi.hItem = TreeView_GetSelection(tree);
 	tvi.mask = TVIF_TEXT;
 	tvi.pszText = buffer;
-	tvi.cchTextMax = MAX_PATH;
+	tvi.cchTextMax = _countof(buffer);
 	TreeView_GetItem(tree, &tvi);
 	
 	std::wstring path = buffer;
@@ -1174,8 +1176,8 @@ int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int ind
 */
 void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name)
 {
-	WCHAR buffer[MAX_PATH];
-	TVITEM tvi = {0};
+	WCHAR buffer[MAX_PATH] = { 0 };
+	TVITEM tvi = { 0 };
 	tvi.mask = TVIF_TEXT;
 	tvi.hItem = item;
 	tvi.pszText = buffer;
@@ -1318,7 +1320,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 					m_HandleCommands = true;
 
 					// Fake selection change to update controls
-					NMHDR nm;
+					NMHDR nm = { 0 };
 					nm.code = TVN_SELCHANGED;
 					nm.idFrom = Id_SkinsTreeView;
 					nm.hwndFrom = GetControl(Id_SkinsTreeView);
@@ -1620,7 +1622,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			POINT pt = System::GetCursorPosition();
 
-			TVHITTESTINFO ht;
+			TVHITTESTINFO ht = { 0 };
 			ht.pt = pt;
 			ScreenToClient(nm->hwndFrom, &ht.pt);
 
@@ -1636,7 +1638,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			POINT pt = System::GetCursorPosition();
 
-			TVHITTESTINFO ht;
+			TVHITTESTINFO ht = { 0 };
 			ht.pt = pt;
 			ScreenToClient(nm->hwndFrom, &ht.pt);
 
@@ -1725,14 +1727,14 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			// Temporarily disable handling commands
 			m_HandleCommands = false;
 
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 
 			// Get current selection name
-			TVITEM tvi = {0};
+			TVITEM tvi = { 0 };
 			tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
 			tvi.mask = TVIF_TEXT | TVIF_CHILDREN;
 			tvi.pszText = buffer;
-			tvi.cchTextMax = MAX_PATH;
+			tvi.cchTextMax = _countof(buffer);
 			TreeView_GetItem(nm->hwndFrom, &tvi);
 
 			if (tvi.cChildren == 0)
@@ -1932,7 +1934,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			CreateDirectory(path.c_str(), 0);
 
 			path += layout;
-			bool alreadyExists = (_waccess(path.c_str(), 0) != -1);
+			bool alreadyExists = (_waccess_s(path.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
 				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, layout.c_str());
@@ -2442,7 +2444,7 @@ void DialogManage::TabSettings::Initialize()
 	Button_SetCheck(GetControl(Id_LogToFileCheckBox), GetLogger().IsLogToFile());
 	Button_SetCheck(GetControl(Id_VerboseLoggingCheckBox), GetRainmeter().GetDebug());
 
-	BOOL isLogFile = (_waccess(GetLogger().GetLogFilePath().c_str(), 0) != -1);
+	BOOL isLogFile = (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) == 0);
 	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
 	EnableWindow(GetControl(Id_DeleteLogFileButton), isLogFile);
 
@@ -2570,7 +2572,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_DeleteLogFileButton:
 		GetLogger().DeleteLogFile();
-		if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
+		if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) != 0)
 		{
 			Button_SetCheck(GetControl(Id_LogToFileCheckBox), BST_UNCHECKED);
 			EnableWindow(GetControl(Id_ShowLogFileButton), FALSE);
@@ -2586,7 +2588,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		else
 		{
 			GetLogger().StartLogFile();
-			if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) != -1)
+			if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) == 0)
 			{
 				EnableWindow(GetControl(Id_ShowLogFileButton), TRUE);
 				EnableWindow(GetControl(Id_DeleteLogFileButton), TRUE);
@@ -2611,7 +2613,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_EditorBrowseButton:
 		{
-			WCHAR buffer[MAX_PATH];
+			WCHAR buffer[MAX_PATH] = { 0 };
 			buffer[0] = L'\0';
 
 			std::wstring editor = GetRainmeter().GetSkinEditor();

@@ -84,6 +84,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 	}
 
 	delete [] dt;
+	dt = nullptr;
 }
 
 void BaseDialog::CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString)

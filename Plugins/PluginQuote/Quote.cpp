@@ -323,4 +323,5 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }

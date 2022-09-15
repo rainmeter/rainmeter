@@ -31,7 +31,8 @@ CPerfCounter::CPerfCounter( PTSTR const pszName, DWORD type,
 CPerfCounter::~CPerfCounter( void )
 {
 	free( m_pszName );
-	delete []m_pData;
+	delete [] m_pData;
+	m_pData = nullptr;
 }
 
 BOOL
@@ -54,7 +55,7 @@ CPerfCounter::Format( PTSTR pszBuffer, DWORD nSize, BOOL fHex )
 	// Do better formatting!!!  Check length!!!
 
 	PTSTR pszPrefix = TEXT("");
-	TCHAR szTemp[512];
+	TCHAR szTemp[512] = { 0 };
 
 	// First, ascertain the basic type (number, counter, text, or zero)
 	switch ( m_type & 0x00000C00 )

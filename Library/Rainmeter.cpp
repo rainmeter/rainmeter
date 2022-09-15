@@ -51,7 +51,7 @@ int RainmeterMain(LPWSTR cmdLine)
 		if (wnd)
 		{
 			// Deliver bang to existing Rainmeter instance
-			COPYDATASTRUCT cds;
+			COPYDATASTRUCT cds = { 0 };
 			cds.dwData = 1;
 			cds.cbData = (DWORD)((wcslen(cmdLine) + 1) * sizeof(WCHAR));
 			cds.lpData = (PVOID)cmdLine;
@@ -216,7 +216,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		m_IniFile += L"Rainmeter.ini";
 
 		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
-		if (_waccess(m_IniFile.c_str(), 0) == -1)
+		if (_waccess_s(m_IniFile.c_str(), 0) != 0)
 		{
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
 			PathUtil::ExpandEnvironmentVariables(m_IniFile);
@@ -294,7 +294,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	// Create a default Rainmeter.ini file if needed
 	bool iniFileCreated = false;
-	if (_waccess(iniFile, 0) == -1)
+	if (_waccess_s(iniFile, 0) != 0)
 	{
 		iniFileCreated = true;
 		CreateOptionsFile();
@@ -305,7 +305,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	CheckSettingsFileEncoding(m_IniFile, &encodingMsg);
 
 	bool dataFileCreated = false;
-	if (_waccess(m_DataFile.c_str(), 0) == -1)
+	if (_waccess_s(m_DataFile.c_str(), 0) != 0)
 	{
 		dataFileCreated = true;
 		CreateDataFile();
@@ -411,16 +411,14 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
-	if (len > 0 &&
-		_waccess(buffer, 0) != -1)	// Temporary fix
+	if (len > 0 && _waccess_s(buffer, 0) == 0)	// Temporary fix
 	{
 		// Try Rainmeter.ini first
 		m_SkinPath.assign(buffer, len);
 		PathUtil::ExpandEnvironmentVariables(m_SkinPath);
 		PathUtil::AppendBackslashIfMissing(m_SkinPath);
 	}
-	else if (bDefaultIniLocation &&
-		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
+	else if (bDefaultIniLocation && SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
 	{
 		// Use My Documents/Rainmeter/Skins
 		m_SkinPath = buffer;
@@ -784,7 +782,7 @@ void Rainmeter::CreateDataFile()
 	const WCHAR* pluginsFile = tmpSz.c_str();
 	const WCHAR* dataFile = m_DataFile.c_str();
 
-	if (_waccess(pluginsFile, 0) == 0)
+	if (_waccess_s(pluginsFile, 0) == 0)
 	{
 		MoveFile(pluginsFile, dataFile);
 	}
@@ -814,7 +812,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 	{
 		path = m_SkinPath;
 		path += L"Backup";
-		if (_waccess(path.c_str(), 0) != -1)
+		if (_waccess_s(path.c_str(), 0) == 0)
 		{
 			std::wstring newPath = m_SkinPath + L"@Backup";
 			MoveFile(path.c_str(), newPath.c_str());
@@ -830,17 +828,17 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 	}
 
 	path = GetLayoutPath();
-	if (_waccess(path.c_str(), 0) == -1)
+	if (_waccess_s(path.c_str(), 0) != 0)
 	{
 		std::wstring themesPath = m_SettingsPath + L"Themes";
-		if (_waccess(themesPath.c_str(), 0) != -1)
+		if (_waccess_s(themesPath.c_str(), 0) == 0)
 		{
 			// Migrate Themes into Layouts for backwards compatibility and rename
 			// Rainmeter.thm to Rainmeter.ini and RainThemes.bmp to Wallpaper.bmp.
 			MoveFile(themesPath.c_str(), path.c_str());
 
 			path += L'*';  // For FindFirstFile.
-			WIN32_FIND_DATA fd;
+			WIN32_FIND_DATA fd = { 0 };
 			HANDLE hFind = FindFirstFile(path.c_str(), &fd);
 			path.pop_back();  // Remove '*'.
 
@@ -855,14 +853,14 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 						layoutFolder += L'\\';
 
 						std::wstring file = layoutFolder + L"Rainmeter.thm";
-						if (_waccess(file.c_str(), 0) != -1)
+						if (_waccess_s(file.c_str(), 0) == 0)
 						{
 							std::wstring newFile = layoutFolder + L"Rainmeter.ini";
 							MoveFile(file.c_str(), newFile.c_str());
 						}
 
 						file = layoutFolder + L"RainThemes.bmp";
-						if (_waccess(file.c_str(), 0) != -1)
+						if (_waccess_s(file.c_str(), 0) == 0)
 						{
 							std::wstring newFile = layoutFolder + L"Wallpaper.bmp";
 							MoveFile(file.c_str(), newFile.c_str());
@@ -877,7 +875,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 		else
 		{
 			std::wstring from = GetDefaultLayoutPath();
-			if (_waccess(from.c_str(), 0) != -1)
+			if (_waccess_s(from.c_str(), 0) == 0)
 			{
 				System::CopyFiles(from, m_SettingsPath);
 			}
@@ -886,7 +884,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 	else
 	{
 		path += L"Backup";
-		if (_waccess(path.c_str(), 0) != -1)
+		if (_waccess_s(path.c_str(), 0) == 0)
 		{
 			std::wstring newPath = GetLayoutPath();
 			newPath += L"@Backup";
@@ -897,20 +895,20 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 	if (defaultIniLocation)
 	{
 		path = GetUserPluginPath();
-		if (_waccess(path.c_str(), 0) == -1)
+		if (_waccess_s(path.c_str(), 0) != 0)
 		{
 			std::wstring from = GetDefaultPluginPath();
-			if (_waccess(from.c_str(), 0) != -1)
+			if (_waccess_s(from.c_str(), 0) == 0)
 			{
 				System::CopyFiles(from, m_SettingsPath);
 			}
 		}
 
 		path = GetAddonPath();
-		if (_waccess(path.c_str(), 0) == -1)
+		if (_waccess_s(path.c_str(), 0) != 0)
 		{
 			std::wstring from = GetDefaultAddonPath();
-			if (_waccess(from.c_str(), 0) != -1)
+			if (_waccess_s(from.c_str(), 0) == 0)
 			{
 				System::CopyFiles(from, m_SettingsPath);
 			}
@@ -919,7 +917,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 		path = m_SettingsPath;
 		path += L"Rainmeter.exe";
 		const WCHAR* pathSz = path.c_str();
-		if (_waccess(pathSz, 0) == -1)
+		if (_waccess_s(pathSz, 0) != 0)
 		{
 			// Create a hidden stub Rainmeter.exe into SettingsPath for old addon
 			// using relative path to Rainmeter.exe
@@ -931,13 +929,19 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 
 			// Add the manifest of Rainmeter.dll to the stub
 			HRSRC manifest = FindResource(m_Instance, MAKEINTRESOURCE(2), RT_MANIFEST);
-			DWORD manifestSize = SizeofResource(m_Instance, manifest);
-			HGLOBAL	manifestLoad = LoadResource(m_Instance, manifest);
-			void* manifestLoadData = LockResource(manifestLoad);
-			if (manifestLoadData)
+			if (manifest)
 			{
-				LANGID langID = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
-				UpdateResource(stub, RT_MANIFEST, MAKEINTRESOURCE(1), langID, manifestLoadData, manifestSize);
+				DWORD manifestSize = SizeofResource(m_Instance, manifest);
+				HGLOBAL	manifestLoad = LoadResource(m_Instance, manifest);
+				if (manifestLoad)
+				{
+					void* manifestLoadData = LockResource(manifestLoad);
+					if (manifestLoadData)
+					{
+						LANGID langID = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+						UpdateResource(stub, RT_MANIFEST, MAKEINTRESOURCE(1), langID, manifestLoadData, manifestSize);
+					}
+				}
 			}
 
 			EndUpdateResource(stub, FALSE);
@@ -982,6 +986,7 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 	WCHAR* buffer = new WCHAR[SHRT_MAX];
 	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0UL);
 	delete [] buffer;
+	buffer = nullptr;
 
 	if (!hasSettings)
 	{
@@ -1111,7 +1116,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		skinIniPath += L'\\';
 		skinIniPath += file;
 
-		if (_waccess(skinIniPath.c_str(), 0) == -1)
+		if (_waccess_s(skinIniPath.c_str(), 0) != 0)
 		{
 			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
 			ShowMessage(nullptr, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
@@ -1213,7 +1218,7 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 		WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", path.c_str(), m_IniFile.c_str());
 
 		// Update #CONFIGEDITOR# built-in variable in all skins
-		for (auto iter : m_Skins)
+		for (auto& iter : m_Skins)
 		{
 			iter.second->GetParser().SetBuiltInVariable(L"CONFIGEDITOR", m_SkinEditor);
 		}
@@ -1228,7 +1233,7 @@ void Rainmeter::SetHardwareAccelerated(bool hardwareAccelerated)
 
 void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
-	WCHAR buffer[32];
+	WCHAR buffer[32] = { 0 };
 	_itow_s(fileIndex + 1, buffer, 10);
 
 	DoesSkinHaveSettings(folderPath);
@@ -1259,6 +1264,7 @@ void Rainmeter::DeleteAllSkins()
 
 		DialogManage::UpdateSkins(skin, true);
 		delete skin;
+		skin = nullptr;
 
 		// Get next valid iterator (Fix for iterator invalidation caused by OnCloseAction)
 		it = m_Skins.cbegin();
@@ -1462,8 +1468,8 @@ void Rainmeter::ScanForLayouts()
 {
 	m_Layouts.clear();
 
-	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	HANDLE hSearch;                // Search handle returned by FindFirstFile
+	WIN32_FIND_DATA fileData = { 0 };		// Data structure describes the file found
+	HANDLE hSearch = nullptr;				// Search handle returned by FindFirstFile
 
 	// Scan for folders
 	std::wstring folders = GetLayoutPath();
@@ -1509,7 +1515,7 @@ void Rainmeter::ReadFavorites()
 
 		do
 		{
-			_snwprintf(buffer, _TRUNCATE, L"Favorite%i", ++i);
+			_snwprintf_s(buffer, _TRUNCATE, L"Favorite%i", ++i);
 			DWORD res = GetPrivateProfileString(L"Favorites", buffer, L"", favorite, MAX_LINE_LENGTH, m_DataFile.c_str());
 
 			if (res > 4)
@@ -1779,7 +1785,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 	std::wstring wallpaper = layout + L"\\Wallpaper.bmp";
 	layout += L"\\Rainmeter.ini";
 
-	if (_waccess(layout.c_str(), 0) == -1)
+	if (_waccess_s(layout.c_str(), 0) != 0)
 	{
 		return false;
 	}
@@ -1827,7 +1833,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"TrayExecuteDR", false);
 
 		// Set wallpaper if it exists
-		if (_waccess(wallpaper.c_str(), 0) != -1)
+		if (_waccess_s(wallpaper.c_str(), 0) == 0)
 		{
 			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
 		}
@@ -1856,6 +1862,7 @@ void Rainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool repl
 	}
 
 	delete [] buffer;
+	buffer = nullptr;
 }
 
 bool Rainmeter::IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename)
@@ -1879,11 +1886,11 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 	WritePrivateProfileSection(L"Favorites", nullptr, m_DataFile.c_str());
 
 	// Write new section
-	WCHAR buffer[128];
+	WCHAR buffer[128] = { 0 };
 	int i = 0;
 	for (const auto& fav : m_Favorites)
 	{
-		_snwprintf(buffer, _TRUNCATE, L"Favorite%i", ++i);
+		_snwprintf_s(buffer, _TRUNCATE, L"Favorite%i", ++i);
 		WritePrivateProfileString(L"Favorites", buffer, fav.c_str(), m_DataFile.c_str());
 	}
 }
@@ -1965,23 +1972,25 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 				// Move rect to correct offset
 				if (m_DesktopWorkAreaType)
 				{
-					RECT margin = r;
-					r = (i == 0) ? monitors[monitorsInfo.primary - 1].screen : monitors[i - 1].screen;
-					r.left += margin.left;
-					r.top += margin.top;
-					r.right -= margin.right;
-					r.bottom -= margin.bottom;
-				}
-				else
-				{
-					if (i != 0)
+					r = [&]()
 					{
-						const RECT screenRect = monitors[i - 1].screen;
-						r.left += screenRect.left;
-						r.top += screenRect.top;
-						r.right += screenRect.left;
-						r.bottom += screenRect.top;
-					}
+						const int index = ((i == 0) ? monitorsInfo.primary : i) - 1;
+						RECT rect = {
+							monitors[index].screen.left + r.left,
+							monitors[index].screen.top + r.top,
+							monitors[index].screen.right - r.right,
+							monitors[index].screen.bottom - r.bottom };
+						return rect;
+					}();
+				}
+				else if (i != 0)
+				{
+					const int index = i - 1;
+					const RECT screenRect = monitors[index].screen;
+					r.left += screenRect.left;
+					r.top += screenRect.top;
+					r.right += screenRect.left;
+					r.bottom += screenRect.top;
 				}
 
 				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
@@ -2026,10 +2035,10 @@ void Rainmeter::ReadStats()
 	const WCHAR* statsFile = m_StatsFile.c_str();
 
 	// If m_StatsFile doesn't exist, create it and copy the stats section from m_IniFile
-	if (_waccess(statsFile, 0) == -1)
+	if (_waccess_s(statsFile, 0) != 0)
 	{
 		const WCHAR* iniFile = m_IniFile.c_str();
-		WCHAR* tmpSz = new WCHAR[SHRT_MAX];	// Max size returned by GetPrivateProfileSection()
+		WCHAR* tmpSz = new WCHAR[SHRT_MAX]; 	// Max size returned by GetPrivateProfileSection()
 
 		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, iniFile) > 0)
 		{
@@ -2042,6 +2051,7 @@ void Rainmeter::ReadStats()
 		WritePrivateProfileSection(L"Statistics", tmpSz, statsFile);
 
 		delete [] tmpSz;
+		tmpSz = nullptr;
 	}
 
 	// Only Net measure has stats at the moment
@@ -2164,7 +2174,7 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 */
 void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log)
 {
-	size_t size = 0;
+	size_t size = 0ULL;
 	auto raw = FileUtil::ReadFullFile(iniFile, &size);
 	if (!raw) return;
 
@@ -2190,8 +2200,8 @@ void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstr
 			wide = StringUtil::Widen(narrow);
 		}
 
-		FILE* file;
-		if (_wfopen_s(&file, iniFile.c_str(), L"wbc, ccs=UTF-16LE") == 0)
+		FILE* file = nullptr;
+		if ((_wfopen_s(&file, iniFile.c_str(), L"wbc, ccs=UTF-16LE") == 0) && file)
 		{
 			fputs("\xFF\xFE", file);		// Write BOM
 			fputws(wide.c_str(), file);		// Write converted text

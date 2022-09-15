@@ -52,6 +52,7 @@ void MeterShape::Dispose()
 	for (auto& shape : m_Shapes)
 	{
 		delete shape;
+		shape = nullptr;
 	}
 
 	m_Shapes.clear();
@@ -197,6 +198,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		{
 			LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
 			delete shape;
+			shape = nullptr;
 		}
 
 		return exists;
@@ -1133,6 +1135,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 	if (error)
 	{
 		delete shape;
+		shape = nullptr;
 		return false;
 	}
 

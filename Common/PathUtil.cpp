@@ -147,6 +147,7 @@ void ExpandEnvironmentVariables(std::wstring& path)
 				}
 
 				delete [] buffer;
+				buffer = nullptr;
 				bufSize = ret;
 				buffer = new WCHAR[bufSize];
 			}
@@ -154,6 +155,7 @@ void ExpandEnvironmentVariables(std::wstring& path)
 		}
 
 		delete [] buffer;
+		buffer = nullptr;
 	}
 }
 

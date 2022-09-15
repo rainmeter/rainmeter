@@ -132,8 +132,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 				if (!foundAnAddress)
 				{
-					RmLogF(rm, LOG_WARNING,
-						L"PingPlugin.dll: Could not find any IPv4 or IPv6 address for: %ls", destination);
+					RmLogF(rm, LOG_WARNING, L"PingPlugin.dll: Could not find any IPv4 or IPv6 address for: %ls", destination);
 					measure->Dispose();
 				}
 			}
@@ -162,8 +161,8 @@ PLUGIN_EXPORT double Update(void* data)
 		if (measure->updateCounter == 0)
 		{
 			// Launch a new thread to fetch the web data
-			DWORD id;
-			HANDLE thread = CreateThread(nullptr, 0, NetworkThreadProc, measure, 0, &id);
+			DWORD id = 0UL;
+			HANDLE thread = CreateThread(nullptr, 0ULL, NetworkThreadProc, measure, 0UL, &id);
 			if (thread)
 			{
 				CloseHandle(thread);
@@ -171,10 +170,10 @@ PLUGIN_EXPORT double Update(void* data)
 			}
 		}
 
-		measure->updateCounter++;
+		++measure->updateCounter;
 		if (measure->updateCounter >= measure->updateRate)
 		{
-			measure->updateCounter = 0;
+			measure->updateCounter = 0UL;
 		}
 	}
 
@@ -194,7 +193,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 		// Increment ref count of this module so that it will not be unloaded prior to
 		// thread completion.
 		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
-		HMODULE module;
+		HMODULE module = nullptr;
 		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
 
 		// Thread will perform cleanup.
@@ -203,6 +202,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 	else
 	{
 		delete measure;
+		measure = nullptr;
 	}
 	LeaveCriticalSection(&g_CriticalSection);
 }
@@ -230,16 +230,16 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 
 		if (destAddr)
 		{
-			DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32;
+			DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32UL;
 			BYTE* buffer = new BYTE[bufferSize]();
 
 			HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
 			if (hIcmpFile != INVALID_HANDLE_VALUE)
 			{
-				DWORD result = 0;
+				DWORD result = 0UL;
 				if (useIPv6)
 				{
-					struct sockaddr_in6 sourceAddr;
+					struct sockaddr_in6 sourceAddr = { 0 };
 					sourceAddr.sin6_family = AF_INET6;
 					sourceAddr.sin6_port = (USHORT)0;
 					sourceAddr.sin6_flowinfo = 0UL;
@@ -254,7 +254,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 						nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
 				}
 
-				if (result != 0)
+				if (result != 0UL)
 				{
 					if (useIPv6)
 					{
@@ -293,6 +293,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 			}
 
 			delete [] buffer;
+			buffer = nullptr;
 		}
 	}
 
@@ -309,6 +310,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 		// Thread is not attached to an existing measure any longer, so delete
 		// unreferenced data.
 		delete measure;
+		measure = nullptr;
 
 		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
 		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
@@ -319,7 +321,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	{
 		// Decrement the ref count and possibly unload the module if this is
 		// the last instance.
-		FreeLibraryAndExitThread(module, 0);
+		FreeLibraryAndExitThread(module, 0UL);
 	}
 
 	return 0;
@@ -327,7 +329,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 
 std::wstring LookupErrorCode(DWORD errorCode)
 {
-	LPWSTR lpMsgBuf;
+	LPWSTR lpMsgBuf = nullptr;
 
 	if (!FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -350,23 +352,20 @@ std::wstring LookupErrorCode(DWORD errorCode)
 
 std::wstring LookupPingErrorCode(DWORD errorCode)
 {
-	DWORD bufferSize = 1023;
-	WCHAR* buffer = new WCHAR[(size_t)bufferSize + 1]();
-
-	auto cleanup = [&buffer]() -> void
-	{
-		delete [] buffer;
-	};
+	DWORD bufferSize = 1023UL;
+	WCHAR* buffer = new WCHAR[bufferSize + 1UL]();
 
 	if (GetIpErrorString(errorCode, buffer, &bufferSize) != NO_ERROR)
 	{
-		cleanup();
+		delete [] buffer;
+		buffer = nullptr;
 		return LookupErrorCode(errorCode);
 	}
 
 	std::wstring retval(buffer);
 
-	cleanup();
+	delete [] buffer;
+	buffer = nullptr;
 
 	return retval;
 }

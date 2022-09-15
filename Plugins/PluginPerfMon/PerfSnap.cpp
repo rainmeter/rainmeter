@@ -71,6 +71,7 @@ CPerfSnapshot::TakeSnapshot( PCTSTR pszSnapshotItems )
 		// If we get here, our buffer wasn't big enough.  Delete it and
 		// try again with a bigger buffer.
 		delete [] c_pBuffer;
+		c_pBuffer = nullptr;
 
 		// The new buffer size will be 4096 bytes bigger than the larger
 		// of: 1) The previous allocation size, or 2) The size that the
@@ -102,7 +103,7 @@ void
 CPerfSnapshot::CleanUp( void )
 {
 	delete [] c_pBuffer;
-	c_pBuffer = 0;
+	c_pBuffer = nullptr;
 	c_cbBufferSize = 0;
 }
 

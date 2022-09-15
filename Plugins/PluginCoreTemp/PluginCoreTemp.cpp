@@ -153,6 +153,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }
 
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2)

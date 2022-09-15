@@ -162,19 +162,22 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 					table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 			}
 
+			size_t index = i * 2ULL;
 			switch (net)
 			{
 			case NET_IN:
-				value += c_StatValues[i * 2 + 0];
+				value += c_StatValues[index];
 				break;
 
 			case NET_OUT:
-				value += c_StatValues[i * 2 + 1];
+				++index;
+				value += c_StatValues[index];
 				break;
 
 			case NET_TOTAL:
-				value += c_StatValues[i * 2 + 0];
-				value += c_StatValues[i * 2 + 1];
+				value += c_StatValues[index];
+				++index;
+				value += c_StatValues[index];
 				break;
 			}
 		}
@@ -184,20 +187,22 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 		// Get the selected interface
 		if (m_Interface <= statsSize)
 		{
-			ULONG index = NetworkUtil::GetIndexFromIfIndex(m_Interface);
+			ULONG index = NetworkUtil::GetIndexFromIfIndex(m_Interface) * 2UL;
 			switch (net)
 			{
 			case NET_IN:
-				value += c_StatValues[index * 2 + 0];
+				value += c_StatValues[index];
 				break;
 
 			case NET_OUT:
-				value += c_StatValues[index * 2 + 1];
+				++index;
+				value += c_StatValues[index];
 				break;
 
 			case NET_TOTAL:
-				value += c_StatValues[index * 2 + 0];
-				value += c_StatValues[index * 2 + 1];
+				value += c_StatValues[index];
+				++index;
+				value += c_StatValues[index];
 				break;
 			}
 		}
@@ -333,7 +338,7 @@ void MeasureNet::UpdateStats()
 	if (!table) return;
 
 	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-	size_t statsSize = interfaceCount * 2;
+	size_t statsSize = (size_t)interfaceCount * 2ULL;
 
 	// Fill the vectors
 	if (c_StatValues.size() < statsSize)
@@ -396,7 +401,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	}
 
 	c_StatValues.clear();
-	c_StatValues.reserve(count * 2);
+	c_StatValues.reserve((ULONG64)count * 2ULL);
 
 	for (uint32_t i = 1U; i <= count; ++i)
 	{
@@ -430,7 +435,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 
 void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 {
-	WCHAR buffer[48];
+	WCHAR buffer[48] = { 0 };
 	int len = 0;
 
 	uint32_t count = (uint32_t)c_StatValues.size() / 2;

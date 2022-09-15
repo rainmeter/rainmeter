@@ -74,7 +74,7 @@ MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_FormatLocale(nullptr),
 	m_Delta(),
 	m_Time(),
-	m_TimeStamp(-1),
+	m_TimeStamp(-1.0),
 	m_TimeStampType(INVALID),
 	m_TimeZone(LOCAL_TIMEZONE),
 	m_DaylightSavingTime(true)
@@ -130,14 +130,14 @@ void MeasureTime::FillCurrentTime()
 {
 	auto getTZSysTime = [&](bool getDaylight) -> DWORD
 	{
-		SYSTEMTIME st;
+		SYSTEMTIME st = { 0 };
 		if (m_TimeStamp == DBL_MIN)
 		{
 			GetSystemTime(&st);
 			m_TimeStamp = (int)st.wYear;
 		}
 
-		TIME_ZONE_INFORMATION tzi;
+		TIME_ZONE_INFORMATION tzi = { 0 };
 		DWORD ret = GetTimeZoneInformation(&tzi);
 		st = getDaylight ? tzi.DaylightDate : tzi.StandardDate;
 		st.wYear = (int)m_TimeStamp;
@@ -148,7 +148,7 @@ void MeasureTime::FillCurrentTime()
 			return ret;
 		}
 
-		FILETIME ft;
+		FILETIME ft = { 0 };
 		SystemTimeToFileTime(&st, &ft);
 		m_Time.HighPart = ft.dwHighDateTime;
 		m_Time.LowPart = ft.dwLowDateTime;
@@ -234,8 +234,8 @@ void MeasureTime::UpdateValue()
 	{
 		// If there is some date format, parse the value from it instead
 		WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
-		SYSTEMTIME sysToday;
-		FILETIME ftToday;
+		SYSTEMTIME sysToday = { 0 };
+		FILETIME ftToday = { 0 };
 
 		tmpSz[0] = 0;
 
@@ -255,7 +255,7 @@ void MeasureTime::UpdateValue()
 		}
 		else
 		{
-			struct tm today;
+			struct tm today = { 0 };
 			today.tm_isdst = 0;
 			today.tm_hour = sysToday.wHour;
 			today.tm_mday = sysToday.wDay;
@@ -272,6 +272,7 @@ void MeasureTime::UpdateValue()
 		m_Value = wcstod(tmpSz, nullptr);
 
 		delete [] tmpSz;
+		tmpSz = nullptr;
 	}
 	else
 	{
@@ -287,12 +288,12 @@ void MeasureTime::UpdateValue()
 const WCHAR* MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
-	struct tm today;
+	struct tm today = { 0 };
 
 	tmpSz[0] = 0;
 
-	SYSTEMTIME sysToday;
-	FILETIME ftToday;
+	SYSTEMTIME sysToday = { 0 };
+	FILETIME ftToday = { 0 };
 	ftToday.dwHighDateTime = m_Time.HighPart;
 	ftToday.dwLowDateTime = m_Time.LowPart;
 
@@ -436,7 +437,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			else
 			{
 				// Convert std::tm -> SYSTEMTIME -> FILETIME -> LARGE_INTEGER
-				SYSTEMTIME st;
+				SYSTEMTIME st = { 0 };
 				st.wDay = time.tm_mday;
 				st.wDayOfWeek = time.tm_wday;
 				st.wHour = time.tm_hour;
@@ -459,7 +460,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				}
 				else
 				{
-					LARGE_INTEGER li;
+					LARGE_INTEGER li = { 0 };
 					li.HighPart = ft.dwHighDateTime;
 					li.LowPart = ft.dwLowDateTime;
 
@@ -501,15 +502,15 @@ void MeasureTime::UpdateDelta()
 {
 	if (m_TimeZone == LOCAL_TIMEZONE)
 	{
-		SYSTEMTIME sysLocalTime, sysUTCTime;
+		SYSTEMTIME sysLocalTime = { 0 }, sysUTCTime = { 0 };
 		GetLocalTime(&sysLocalTime);
 		GetSystemTime(&sysUTCTime);
 
-		FILETIME ftLocalTime, ftUTCTime;
+		FILETIME ftLocalTime = { 0 }, ftUTCTime = { 0 };
 		SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
 		SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
 
-		LARGE_INTEGER largeInt1, largeInt2;
+		LARGE_INTEGER largeInt1 = { 0 }, largeInt2 = { 0 };
 		largeInt1.HighPart = ftLocalTime.dwHighDateTime;
 		largeInt1.LowPart = ftLocalTime.dwLowDateTime;
 		largeInt2.HighPart = ftUTCTime.dwHighDateTime;
@@ -519,13 +520,13 @@ void MeasureTime::UpdateDelta()
 	}
 	else
 	{
-		time_t now;
+		time_t now = 0LL;
 		time(&now);
 		tm* today = localtime(&now);
 		if (m_DaylightSavingTime && today->tm_isdst)
 		{
 			// Add DST
-			TIME_ZONE_INFORMATION tzi;
+			TIME_ZONE_INFORMATION tzi = { 0 };
 			GetTimeZoneInformation(&tzi);
 
 			m_Delta.QuadPart = (LONGLONG)((m_TimeZone * 3600) - tzi.DaylightBias * 60) * 10000000;
