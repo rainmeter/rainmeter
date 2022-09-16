@@ -47,7 +47,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	switch (fdwReason)
 	{
 	case DLL_PROCESS_ATTACH:
-		InitializeCriticalSection(&g_CriticalSection);
+		// See |Library\System.cpp:InitialCriticalSection| for details
+		if (InitializeCriticalSectionEx(&g_CriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == FALSE)
+		{
+			if (InitializeCriticalSectionAndSpinCount(&g_CriticalSection, 0UL) == FALSE)
+			{
+				// This should never be reached
+			}
+		}
 
 		// Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notification calls.
 		DisableThreadLibraryCalls(hinstDLL);
