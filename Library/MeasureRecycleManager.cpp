@@ -130,10 +130,10 @@ enum class MeasureRecycleManager::Type
 MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(Type::None)
 {
-	static bool s_Init = [] {
+	if (g_InstanceCount <= 0)
+	{
 		System::InitializeCriticalSection(&g_CriticalSection);
-		return true;
-	} ();
+	}
 
 	++g_InstanceCount;
 }
@@ -141,6 +141,11 @@ MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Me
 MeasureRecycleManager::~MeasureRecycleManager()
 {
 	--g_InstanceCount;
+
+	if (g_InstanceCount <= 0)
+	{
+		DeleteCriticalSection(&g_CriticalSection);
+	}
 }
 
 void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)

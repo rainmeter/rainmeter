@@ -1078,14 +1078,14 @@ void System::ResetWorkingDirectory()
 */
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	if (InitializeCriticalSectionEx(lpCriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO))
+	if (InitializeCriticalSectionEx(lpCriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
 	{
 		return;
 	}
 
 	// The following should "always succeed" according to:
 	// https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializecriticalsectionandspincount
-	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0UL))
+	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0UL) == TRUE)
 	{
 		return;
 	}
