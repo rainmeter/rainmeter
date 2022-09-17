@@ -217,9 +217,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
 
-	double maxValue = 0.0;
+	double maxValue = 0.0, minValue = 0.0;
 
-	// Find the maximum value
+	// Find the maximum / minimum value
 	if (m_Autoscale)
 	{
 		double newValue = 0.0;
@@ -248,6 +248,12 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				maxValue *= 2.0;
 			}
 		}
+
+		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
+		{
+			double val = (*i)->GetMinValue();
+			minValue = max(minValue, val);
+		}
 	}
 	else
 	{
@@ -255,12 +261,20 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		{
 			double val = (*i)->GetMaxValue();
 			maxValue = max(maxValue, val);
-		}
 
-		if (maxValue == 0.0)
-		{
-			maxValue = 1.0;
+			val = (*i)->GetMinValue();
+			minValue = max(minValue, val);
 		}
+	}
+
+	if (maxValue <= 0.0)
+	{
+		maxValue = 1.0;
+	}
+
+	if (minValue <= 0.0)
+	{
+		minValue = 0.0;
 	}
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
@@ -310,18 +324,19 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
+	const double range = maxValue - minValue;
 	if (m_GraphHorizontalOrientation)
 	{
 		const FLOAT W = (FLOAT)(drawW - 1);
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * W / maxValue;
+			const double scale = (m_ScaleValues[counter] * W) / range;
 			int pos = m_CurrentPos;
 
 			auto calcX = [&](FLOAT& _x)
 			{
-				_x = ((FLOAT)((*i)[pos] * scale) + offset);
+				_x = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
 				_x = min(_x, W + offset);
 				_x = max(_x, offset);
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
@@ -372,18 +387,18 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			++counter;
 		}
 	}
-	else
+	else	// GraphOrientation=Vertical
 	{
 		const FLOAT H = (FLOAT)(drawH - 1);
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * H / maxValue;
+			const double scale = (m_ScaleValues[counter] * H) / range;
 			int pos = m_CurrentPos;
 
 			auto calcY = [&](FLOAT& _y)
 			{
-				_y = ((FLOAT)((*i)[pos] * scale) + offset);
+				_y = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
 				_y = min(_y, H + offset);
 				_y = max(_y, offset);
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
