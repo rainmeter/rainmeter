@@ -217,7 +217,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
 
-	double maxValue = 0.0, minValue = 0.0;
+	// Set the max/min values to the floating point limits
+	double maxValue = -(DBL_MAX);  // Intentional
+	double minValue = DBL_MAX;
 
 	// Find the maximum / minimum value
 	if (m_Autoscale)
@@ -252,7 +254,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 		{
 			double val = (*i)->GetMinValue();
-			minValue = max(minValue, val);
+			minValue = min(minValue, val);
 		}
 	}
 	else
@@ -263,18 +265,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			maxValue = max(maxValue, val);
 
 			val = (*i)->GetMinValue();
-			minValue = max(minValue, val);
+			minValue = min(minValue, val);
 		}
 	}
 
-	if (maxValue <= 0.0)
-	{
-		maxValue = 1.0;
-	}
-
-	if (minValue <= 0.0)
+	if (maxValue == minValue)
 	{
 		minValue = 0.0;
+		maxValue = 1.0;
 	}
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
