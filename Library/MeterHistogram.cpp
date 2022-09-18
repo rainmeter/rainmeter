@@ -20,18 +20,18 @@ MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_PrimaryColor(D2D1::ColorF(D2D1::ColorF::Green)),
 	m_SecondaryColor(D2D1::ColorF(D2D1::ColorF::Red)),
 	m_OverlapColor(D2D1::ColorF(D2D1::ColorF::Yellow)),
-	m_MeterPos(),
+	m_MeterPos(0),
 	m_Autoscale(false),
 	m_Flip(false),
 	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, skin),
 	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, skin),
 	m_OverlapImage(L"BothImage", c_BothOptionArray, false, skin),
-	m_PrimaryValues(),
-	m_SecondaryValues(),
+	m_PrimaryValues(nullptr),
+	m_SecondaryValues(nullptr),
 	m_MaxPrimaryValue(1.0),
-	m_MinPrimaryValue(),
+	m_MinPrimaryValue(0.0),
 	m_MaxSecondaryValue(1.0),
-	m_MinSecondaryValue(),
+	m_MinSecondaryValue(0.0),
 	m_SizeChanged(true),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
@@ -372,7 +372,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	int displayH = (int)(meterRect.bottom - meterRect.top);
 
 	// Default values (GraphStart=Right, GraphOrientation=Vertical)
-	int i;
+	int i = 0;
 	int startValue = 0;
 	int* endValueLHS = &i;
 	int* endValueRHS = &displayW;
