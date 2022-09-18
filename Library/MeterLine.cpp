@@ -20,7 +20,7 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_LineWidth(1.0),
 	m_HorizontalColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeType(D2D1_STROKE_TRANSFORM_TYPE_NORMAL),
-	m_CurrentPos(),
+	m_CurrentPos(0),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
 {
@@ -84,7 +84,7 @@ void MeterLine::Initialize()
 */
 void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	WCHAR tmpName[64];
+	WCHAR tmpName[64] = { 0 };
 
 	// Store the current number of lines so we know if the buffer needs to be updated
 	int oldLineCount = (int)m_Colors.size();
