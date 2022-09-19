@@ -41,7 +41,7 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 		if (!s_Client)
 		{
 			DWORD dwNegotiatedVersion = 0UL;
-			DWORD dwErr =WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
+			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
