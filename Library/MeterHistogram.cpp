@@ -433,8 +433,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const FLOAT startStep = (FLOAT)(startValue + (step * i));
 
 			double range = m_MaxPrimaryValue - m_MinPrimaryValue;
-			double value = (range <= 0.0) ? 0.0 :
-				(m_PrimaryValues[(i + (m_MeterPos % displayH)) % displayH] - m_MinPrimaryValue) / range;
+			double value = (range < 0.0) ? 0.0 : (range == 0.0) ? 1.0 :
+				(m_PrimaryValues[(i + m_MeterPos) % displayH] - m_MinPrimaryValue) / range;
 
 			int primaryBarHeight = (int)(displayW * value);
 			primaryBarHeight = min(displayW, primaryBarHeight);
@@ -445,7 +445,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			if (secondaryMeasure)
 			{
 				range = m_MaxSecondaryValue - m_MinSecondaryValue;
-				value = (range <= 0.0) ? 0.0 :
+				value = (range < 0.0) ? 0.0 : (range == 0.0) ? 1.0 :
 					(m_SecondaryValues[(i + m_MeterPos) % displayH] - m_MinSecondaryValue) / range;
 
 				int secondaryBarHeight = (int)(displayW * value);
@@ -496,7 +496,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			const FLOAT startStep = (FLOAT)(startValue + (step * i));
 
 			double range = m_MaxPrimaryValue - m_MinPrimaryValue;
-			double value = (range <= 0.0) ? 0.0 :
+			double value = (range < 0.0) ? 0.0 : (range == 0.0) ? 1.0 :
 				(m_PrimaryValues[((i + m_MeterPos) % displayW)] - m_MinPrimaryValue) / range;
 
 			int primaryBarHeight = (int)(displayH * value);
@@ -508,7 +508,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			if (secondaryMeasure)
 			{
 				range = m_MaxSecondaryValue - m_MinSecondaryValue;
-				value = (range <= 0.0) ? 0.0 :
+				value = (range < 0.0) ? 0.0 : (range == 0.0) ? 1.0 :
 					(m_SecondaryValues[(i + m_MeterPos) % displayW] - m_MinSecondaryValue) / range;
 
 				int secondaryBarHeight = (int)(displayH * value);

@@ -271,8 +271,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 	if (maxValue == minValue)
 	{
-		minValue = 0.0;
-		maxValue = 1.0;
+		//minValue = 0.0;
+		//maxValue = 1.0;
 	}
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
@@ -334,9 +334,20 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto calcX = [&](FLOAT& _x)
 			{
-				_x = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
-				_x = min(_x, W + offset);
-				_x = max(_x, offset);
+				if (range == 0.0)
+				{
+					_x = W;
+				}
+				else if (range < 0.0)
+				{
+					_x = 1.0f;
+				}
+				else
+				{
+					_x = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
+					_x = min(_x, W + offset);
+					_x = max(_x, offset);
+				}
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
 			};
 
@@ -396,9 +407,20 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto calcY = [&](FLOAT& _y)
 			{
-				_y = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
-				_y = min(_y, H + offset);
-				_y = max(_y, offset);
+				if (range == 0.0)
+				{
+					_y = H;
+				}
+				else if (range < 0.0)
+				{
+					_y = 0.0f;
+				}
+				else
+				{
+					_y = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
+					_y = min(_y, H + offset);
+					_y = max(_y, offset);
+				}
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};
 
