@@ -25,6 +25,18 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 
 	if (s_Instances == 1U)
 	{
+		// Temporarily load the "wlanapi.dll" library as a data file to test if it exists.
+		// Note: Freeing the temporary library should be okay since delay loading
+		// of the library occurs later (when WlanOpenHandle is called).
+		HMODULE lib = LoadLibraryEx(L"wlanapi.dll", nullptr,
+			LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_SEARCH_SYSTEM32);
+		if (!lib)
+		{
+			LogDebugF(this, L"WifiStatus: Cannot find wlanapi.dll");
+			return;
+		}
+		FreeLibrary(lib);
+
 		// Create WINLAN API Handle
 		if (!s_Client)
 		{
