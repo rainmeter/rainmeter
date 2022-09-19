@@ -91,6 +91,27 @@ Measure::~Measure()
 void Measure::Initialize()
 {
 	m_Initialized = true;
+
+	if (GetRainmeter().GetDebug())
+	{
+		if (m_MaxValue == m_MinValue)
+		{
+			WCHAR buffer[32] = { 0 };
+			_snwprintf_s(buffer, _TRUNCATE, L"%f", m_MaxValue);
+			RemoveTrailingZero(buffer, (int)wcslen(buffer));
+			LogWarningF(this, L"Warning: MaxValue = MinValue: %s", buffer);
+		}
+		else if (m_MaxValue < m_MinValue)
+		{
+			WCHAR maxValue[32] = { 0 };
+			WCHAR minValue[32] = { 0 };
+			_snwprintf_s(maxValue, _TRUNCATE, L"%f", m_MaxValue);
+			_snwprintf_s(minValue, _TRUNCATE, L"%f", m_MinValue);
+			RemoveTrailingZero(maxValue, (int)wcslen(maxValue));
+			RemoveTrailingZero(minValue, (int)wcslen(minValue));
+			LogWarningF(this, L"Warning: MaxValue is less than MinValue: MaxValue=%s MinValue=%s", maxValue, minValue);
+		}
+	}
 }
 
 /*
