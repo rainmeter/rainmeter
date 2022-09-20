@@ -60,7 +60,6 @@ MeasureNowPlaying::~MeasureNowPlaying()
 		{
 			player->RemoveInstance();
 			delete m_Parent;
-			m_Parent = nullptr;
 
 			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
 			g_ParentMeasures.erase(iter);
