@@ -189,11 +189,15 @@ ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterN
 					break;	// No need to continue
 				}
 
-				delete pObjInst;
-				pObjInst = nullptr;
+				if (pObjInst)
+				{
+					delete pObjInst;
+					pObjInst = nullptr;
+				}
 			}
 
 			delete pPerfObj;
+			pPerfObj = nullptr;
 		}
 	}
 

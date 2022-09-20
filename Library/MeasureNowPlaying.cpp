@@ -59,10 +59,12 @@ MeasureNowPlaying::~MeasureNowPlaying()
 		if (--m_Parent->measureCount == 0)
 		{
 			player->RemoveInstance();
-			delete m_Parent;
 
 			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
 			g_ParentMeasures.erase(iter);
+
+			delete m_Parent;
+			m_Parent = nullptr;
 
 			if (g_ParentMeasures.empty())
 			{

@@ -73,7 +73,11 @@ TrayIcon::~TrayIcon()
 	}
 	m_Icons.clear();
 
-	if (m_Window) DestroyWindow(m_Window);
+	if (m_Window)
+	{
+		DestroyWindow(m_Window);
+		m_Window = nullptr;
+	}
 }
 
 void TrayIcon::Initialize()
