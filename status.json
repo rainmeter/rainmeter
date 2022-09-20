@@ -10,7 +10,7 @@
     {
       "id": 1025,
       "name": "Arabic",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1026,
@@ -190,7 +190,7 @@
     {
       "id": 1058,
       "name": "Ukrainian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1066,
