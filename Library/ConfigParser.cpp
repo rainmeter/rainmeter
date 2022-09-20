@@ -1124,8 +1124,8 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 		int xOffset = m_Skin->GetX() + (meter ? meter->GetX() : 0);
 		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
 		{
-			double width = (meter ? meter->GetW() : m_Skin->GetW()) * 100.0;
-			xOffset = (int)((pt.x - xOffset + 1) / width);
+			double width = (meter ? meter->GetW() : m_Skin->GetW());
+			xOffset = (int)(((pt.x - xOffset + 1) / width) * 100.0);
 			_itow_s(xOffset, buffer, 10);
 			result = buffer;
 		}
@@ -1141,8 +1141,8 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 		int yOffset = m_Skin->GetY() + (meter ? meter->GetY() : 0);
 		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
 		{
-			double width = (meter ? meter->GetH() : m_Skin->GetH()) * 100.0;
-			yOffset = (int)((pt.y - yOffset + 1) / width);
+			double width = (meter ? meter->GetH() : m_Skin->GetH());
+			yOffset = (int)(((pt.y - yOffset + 1) / width) * 100.0);
 			_itow_s(yOffset, buffer, 10);
 			result = buffer;
 		}
