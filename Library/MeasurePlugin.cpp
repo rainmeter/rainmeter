@@ -42,27 +42,31 @@ MeasurePlugin::~MeasurePlugin()
 			}
 		}
 
-		WCHAR pluginPath[MAX_PATH] = { 0 };
-		if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
+		// Debug mode
+		if (GetRainmeter().GetDebug())
 		{
-			// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-			// in the wrong case (ex. ".DLL", instead of ".dll"), so get the acutal file path
-			if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
+			WCHAR pluginPath[MAX_PATH] = { 0 };
+			if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
 			{
-				std::wstring tmpStr = pluginPath;
-				StringUtil::ToLowerCase(tmpStr);
-
-				auto iter = s_PluginReferences.find(tmpStr);
-				if (iter != s_PluginReferences.end())
+				// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
+				// in the wrong case (ex. ".DLL", instead of ".dll"), so get the acutal file path
+				if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
 				{
-					--iter->second;
-					if (iter->second == 0)
+					std::wstring tmpStr = pluginPath;
+					StringUtil::ToLowerCase(tmpStr);
+
+					auto iter = s_PluginReferences.find(tmpStr);
+					if (iter != s_PluginReferences.end())
 					{
-						if (GetRainmeter().GetDebug())
+						--iter->second;
+						if (iter->second == 0)
 						{
-							LogDebugF(L"Plugin unloaded: %s", pluginPath);
+							if (GetRainmeter().GetDebug())
+							{
+								LogDebugF(L"Plugin unloaded: %s", pluginPath);
+							}
+							s_PluginReferences.erase(tmpStr);
 						}
-						s_PluginReferences.erase(tmpStr);
 					}
 				}
 			}
@@ -135,6 +139,15 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		pluginName = plugin;
 	}
 
+	// Append ".dll" if it doesn't exist (for debug mode)
+	if (GetRainmeter().GetDebug())
+	{
+		if (_wcsicmp(PathFindExtension(plugin.c_str()), L"") == 0)
+		{
+			pluginName.append(L".dll");
+		}
+	}
+
 	// First try from program path
 	std::wstring pluginFile = GetRainmeter().GetPluginPath();
 	pluginFile += pluginName;
@@ -157,7 +170,8 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	// Log plugin references
+	// Log plugin references (debug mode)
+	if (GetRainmeter().GetDebug())
 	{
 		WCHAR pluginPath[MAX_PATH] = { 0 };
 		if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
