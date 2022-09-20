@@ -1,5 +1,5 @@
-# Created using YamlCreate.ps1 v1.1.5
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.0.0.schema.json
+# Created with YamlCreate.ps1 v2.2.0 $debug=NVS2.CRLF.5-1-19041-1682.Win32NT
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.2.0.schema.json
 
 PackageIdentifier: Rainmeter.Rainmeter
 PackageVersion: {VERSION}
@@ -7,7 +7,7 @@ PackageLocale: en-US
 Publisher: Rainmeter
 PublisherUrl: https://www.rainmeter.net
 PublisherSupportUrl: https://forum.rainmeter.net
-#PrivacyUrl: 
+# PrivacyUrl:
 Author: Rainmeter Team
 PackageName: Rainmeter
 PackageUrl: https://www.rainmeter.net
@@ -19,10 +19,16 @@ ShortDescription: Desktop Customization Tool
 Description: Rainmeter allows you to display customizable skins on your desktop, from hardware usage meters to fully functional audio visualizers. You are only limited by your imagination and creativity.
 Moniker: rainmeter
 Tags:
+- gadget
 - rainmeter
 - rmskin
-- widget
-- gadget
 - skin
+- widget
+# Agreements:
+# ReleaseNotes:
+# ReleaseNotesUrl:
+# PurchaseUrl:
+# InstallationNotes:
+# Documentations:
 ManifestType: defaultLocale
-ManifestVersion: 1.0.0
+ManifestVersion: 1.2.0
