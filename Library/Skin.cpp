@@ -2238,16 +2238,16 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		const std::wstring dragGroup = parser.ReadString(section, L"DragGroup", L"");  // |DefaultDragGroup| not supported
 		m_DragGroup.InitializeGroup(dragGroup);
 
-		if (writeFlags != 0)
-		{
-			WriteOptions(writeFlags);
-		}
-
 		// Set screen position variables temporarily
 		WindowToScreen();
 
 		// Set built-in "settings" variables
 		SetZPosVariable((ZPOSITION)zPos);
+
+		if (writeFlags != 0)
+		{
+			WriteOptions(writeFlags);
+		}
 	}
 }
 
