@@ -993,7 +993,7 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 		// Since there are no settings for this skin in Rainmeter.ini, attempt to insert
 		// a empty line between the last defined section, and the new section for this skin.
 
-		HANDLE hFile = CreateFile(m_IniFile.c_str(), GENERIC_READ | GENERIC_WRITE, 0UL,
+		HANDLE hFile = CreateFile(m_IniFile.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
 			nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
@@ -1003,27 +1003,43 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 				LARGE_INTEGER newSize = { 0 };
 				newSize.QuadPart = -4LL;
 
-				while (SetFilePointerEx(hFile, newSize, nullptr, FILE_END) == TRUE)
+				LARGE_INTEGER newPtr = { 0 };
+				while (SetFilePointerEx(hFile, newSize, &newPtr, FILE_END) == TRUE)
 				{
 					WCHAR lastTwoChars[2] = { 0 };
-					if (ReadFile(hFile, lastTwoChars, 4UL, nullptr, nullptr) == FALSE) break;
-
-					if (lastTwoChars[0] != L'\r' && lastTwoChars[1] != L'\n')
+					DWORD bytesRead = 0UL;
+					if (ReadFile(hFile, lastTwoChars, 4UL, &bytesRead, nullptr) == FALSE)
 					{
-						break;  // Found the last non newline character sequence (\r\n)
+						break;
+					}
+
+					if (bytesRead > 0 && lastTwoChars[0] != L'\r' && lastTwoChars[1] != L'\n')
+					{
+						break;  // Found the last non newline character sequence "\r\n"
 					}
 
 					fileSize.QuadPart -= 4LL;
 
-					SetFilePointerEx(hFile, fileSize, nullptr, FILE_BEGIN);
-					SetEndOfFile(hFile);
+					if (SetFilePointerEx(hFile, fileSize, &newPtr, FILE_BEGIN) == FALSE)
+					{
+						break;
+					}
+
+					if (SetEndOfFile(hFile) == FALSE)
+					{
+						break;
+					}
 				}
 
 				// Insert skin entry
 				std::wstring section = L"\r\n\r\n[";
 				section += folderPath;
 				section += L"]\r\nActive=0\r\n";  // The "Active" setting is set later
-				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2UL), nullptr, nullptr);
+
+				// If the following WriteFile fails, there will be no space between sections, however,
+				// WritePrivateProfileSection will automatically create the section at the end of the file
+				DWORD bytesWritten = 0UL;
+				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2UL), &bytesWritten, nullptr);
 			}
 			CloseHandle(hFile);
 		}
