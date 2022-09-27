@@ -210,7 +210,7 @@ struct Parser
 	char valTop;
 	int obrDist;
 
-	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = Operator::OpeningBracket; }
+	Parser() : opStack(), numStack(), opTop(0), valTop(-1), obrDist(2) { opStack[0].type = Operator::OpeningBracket; }
 };
 
 static const WCHAR* CalcToObr(Parser& parser);
@@ -361,7 +361,7 @@ const WCHAR* Parse(
 
 			default:
 				{
-					Operation op;
+					Operation op = {};
 					op.type = lexer.value.oper;
 					switch (op.type)
 					{
@@ -401,7 +401,7 @@ const WCHAR* Parse(
 
 		case Token::Name:
 			{
-				Operation op;
+				Operation op = {};
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
 					((op.funcIndex = GetFunctionIndex(lexer.name, (BYTE)lexer.nameLen)) != FUNC_INVALID))
 				{
@@ -677,19 +677,19 @@ Token GetNextToken(Lexer& lexer)
 			if (lexer.string[0] == L'0')
 			{
 				bool valid = true;
-				int num = 0;
+				long long num = 0;
 				switch (lexer.string[1])
 				{
 				case L'x':	// Hexadecimal
-					num = wcstol(lexer.string, &newString, 16);
+					num = wcstoll(lexer.string, &newString, 16);
 					break;
 
 				case L'o':	// Octal
-					num = wcstol(lexer.string + 2, &newString, 8);
+					num = wcstoll(lexer.string + 2, &newString, 8);
 					break;
 
 				case L'b':	// Binary
-					num = wcstol(lexer.string + 2, &newString, 2);
+					num = wcstoll(lexer.string + 2, &newString, 2);
 					break;
 
 				default:
@@ -702,7 +702,7 @@ Token GetNextToken(Lexer& lexer)
 					if (lexer.string != newString)
 					{
 						lexer.token = Token::Number;
-						lexer.value.num = num;
+						lexer.value.num = (double)num;
 						lexer.string = newString;
 						lexer.charType = GetCharType(*lexer.string);
 					}

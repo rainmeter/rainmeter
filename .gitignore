@@ -2,6 +2,7 @@
 *.patch
 *.txt
 *.user
+*.aps
 /.vs
 /ipch
 /TestBench

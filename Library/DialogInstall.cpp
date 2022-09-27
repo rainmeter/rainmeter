@@ -8,9 +8,11 @@
 #include "StdAfx.h"
 #include "DialogInstall.h"
 #include "../Common/StringUtil.h"
+#include "../Common/Platform.h"
 #include "SkinInstaller.h"
 #include "resource.h"
 #include "System.h"
+#include "Util.h"
 #include "../Version.h"
 
 #include "iowin32.h"
@@ -20,15 +22,6 @@
 extern GlobalData g_Data;
 
 DialogInstall* DialogInstall::c_Dialog = nullptr;
-
-inline bool IsWin32Build()
-{
-#ifdef _WIN64
-	return false;
-#else
-	return true;
-#endif
-}
 
 /*
 ** Constructor.
@@ -71,17 +64,16 @@ DialogInstall::~DialogInstall()
 void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
 	// Prompt to select .rmskin file if needed
-	WCHAR buffer[MAX_PATH];
 	if (!*lpCmdLine)
 	{
-		buffer[0] = L'\0';
+		WCHAR buffer[MAX_PATH] = { 0 };
 
-		OPENFILENAME ofn = {0};
+		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.lpstrFilter = L"Rainmeter skin file (.rmskin)\0*.rmskin;*.zip";
 		ofn.nFilterIndex = 1;
 		ofn.lpstrFile = buffer;
-		ofn.nMaxFile = MAX_PATH;
+		ofn.nMaxFile = _countof(buffer);
 		ofn.lpstrTitle = L"Select Rainmeter skin file";
 		ofn.lpstrDefExt = L"rmskin";
 		ofn.Flags = OFN_FILEMUSTEXIST;
@@ -94,7 +86,7 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 		lpCmdLine = buffer;
 	}
 
-	HANDLE hMutex;
+	HANDLE hMutex = nullptr;
 	if (IsRunning(L"Rainmeter Skin Installer", &hMutex))
 	{
 		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Installer");
@@ -104,6 +96,7 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	{
 		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_INSTALL_DIALOG), nullptr, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
 		ReleaseMutex(hMutex);
+		hMutex = nullptr;
 	}
 }
 
@@ -148,8 +141,9 @@ INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
-	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
+	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
+	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
 	SetDialogFont();
 
@@ -165,7 +159,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			RECT r;
+			RECT r = { 0 };
 			GetClientRect(item, &r);
 			ShowWindow(item, SW_HIDE);
 			int yDiff = r.bottom;
@@ -200,7 +194,6 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		EndDialog(m_Window, 0);
 	}
 
-
 	return TRUE;
 }
 
@@ -210,7 +203,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_INSTALL_ADVANCED_BUTTON:
 		{
-			RECT r;
+			RECT r = { 0 };
 			GetWindowRect((HWND)lParam, &r);
 			HMENU menu = LoadMenu(GetInstanceHandle(), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
@@ -322,12 +315,12 @@ bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 		return false;
 	}
 
-	int read;
+	int read = 0;
 	do
 	{
-		BYTE buffer[16384];
-		DWORD written;
-		read = unzReadCurrentFile(m_PackageUnzFile, buffer, 16384);
+		BYTE buffer[16384] = { 0 };
+		DWORD written = 0UL;
+		read = unzReadCurrentFile(m_PackageUnzFile, buffer, _countof(buffer));
 		if (read < 0 || !WriteFile(hFile, (LPCVOID)buffer, read, &written, nullptr) || read != written)
 		{
 			read = UNZ_ERRNO;
@@ -380,7 +373,7 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	zlib_filefunc64_def zlibFileFunc;
+	zlib_filefunc64_def zlibFileFunc = { 0 };
 	fill_win32_filefunc64W(&zlibFileFunc);
 	m_PackageUnzFile = unzOpen2_64(fileName, &zlibFileFunc);
 	if (!m_PackageUnzFile)
@@ -388,7 +381,7 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 
 	// Get temporary file to extract the options file and header bitmap
 	GetTempPath(MAX_PATH, buffer);
@@ -397,12 +390,11 @@ bool DialogInstall::ReadPackage()
 	const WCHAR* tempFileSz = tempFile.c_str();
 
 	// Helper to sets buffer with current file name
-	auto getFileInfo = [&]()->bool
+	auto getFileInfo = [&]() -> bool
 	{
-		char cBuffer[MAX_PATH * 3];
-		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(
-				m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
+		char cBuffer[MAX_PATH * 3] = { 0 };
+		unz_file_info ufi = { 0 };
+		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
@@ -415,7 +407,7 @@ bool DialogInstall::ReadPackage()
 	};
 
 	// Loop through the contents of the archive until the settings file is found
-	WCHAR* path;
+	WCHAR* path = nullptr;
 	bool optionsFound = false;
 	do
 	{
@@ -525,7 +517,7 @@ bool DialogInstall::ReadPackage()
 				m_PackageAddons.insert(item);
 			}
 			else if (_wcsicmp(component, L"Plugins") == 0 &&
-				_wcsicmp(itemSz, IsWin32Build() ? L"32bit" : L"64bit") == 0 &&
+				_wcsicmp(itemSz, GetPlatform().Is64Bit() ? L"64bit" : L"32bit") == 0 &&
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
@@ -564,7 +556,7 @@ bool DialogInstall::ReadPackage()
 
 bool DialogInstall::ReadOptions(const WCHAR* file)
 {
-	WCHAR buffer[MAX_LINE_LENGTH];
+	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
 
 	const bool newFormat = m_PackageFormat == PackageFormat::New;
 	const WCHAR* section = newFormat ? L"rmskin" : L"Rainstaller";
@@ -580,8 +572,8 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 	if (!newFormat)
 	{
 		// Determine if skins need to backed up based on name
-		int s;
-		int scanned = swscanf(buffer, L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
+		int s = 0;
+		int scanned = swscanf_s(buffer, L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
 		m_BackupPackage = scanned == 5;
 	}
 
@@ -634,15 +626,6 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 
 	if (newFormat)
 	{
-		if (GetPrivateProfileString(section, L"MinimumDotNET", L"", buffer, MAX_LINE_LENGTH, file) > 0 &&
-			CompareVersions(buffer, GetDotNetVersionString()) == 1)
-		{
-			m_ErrorMessage = L".NET framework ";
-			m_ErrorMessage += buffer;
-			m_ErrorMessage += L" or higher is required to install this package.";
-			return false;
-		}
-
 		if (GetPrivateProfileString(section, L"MinimumWindows", L"", buffer, MAX_LINE_LENGTH, file) > 0 &&
 			CompareVersions(buffer, GetWindowsVersionString()) == 1)
 		{
@@ -663,7 +646,7 @@ bool DialogInstall::InstallPackage()
 		for (auto iter = m_PackageSkins.cbegin(); iter != m_PackageSkins.cend(); ++iter)
 		{
 			std::wstring from = g_Data.skinsPath + *iter;
-			if (_waccess(from.c_str(), 0) == -1)
+			if (_waccess_s(from.c_str(), 0) != 0)
 			{
 				continue;
 			}
@@ -705,15 +688,14 @@ bool DialogInstall::InstallPackage()
 		}
 	}
 
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 
 	// Helper to sets buffer with current file name
-	auto getFileInfo = [&]()->bool
+	auto getFileInfo = [&]() -> bool
 	{
-		char cBuffer[MAX_PATH * 3];
-		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(
-				m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
+		char cBuffer[MAX_PATH * 3] = { 0 };
+		unz_file_info ufi = { 0 };
+		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
@@ -785,7 +767,7 @@ bool DialogInstall::InstallPackage()
 				targetPath += L"Addons\\";
 			}
 			else if (_wcsicmp(component, L"Plugins") == 0 &&
-				_wcsnicmp(path, IsWin32Build() ? L"32bit" : L"64bit", pos - path) == 0 &&
+				_wcsnicmp(path, GetPlatform().Is64Bit() ? L"64bit" : L"32bit", pos - path) == 0 &&
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
@@ -883,7 +865,7 @@ void DialogInstall::BeginInstall()
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_COMPONENTS_LIST);
 	{
 		// Remove unchecked items from the component sets
-		LVITEM lvi;
+		LVITEM lvi = { 0 };
 		lvi.mask = LVIF_GROUPID | LVIF_PARAM;
 		lvi.iSubItem = 0;
 		lvi.iItem = 0;
@@ -990,7 +972,7 @@ void DialogInstall::KeepVariables()
 		std::unordered_map<std::wstring, std::wstring> fromVariables;
 		std::unordered_map<std::wstring, std::wstring> toVariables;
 
-		if (_waccess(fromPath.c_str(), 0) != 0 || _waccess(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
+		if (_waccess_s(fromPath.c_str(), 0) != 0 || _waccess_s(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
 		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1U) continue;	// No variables in existing file
 		getPairs(section, fromVariables);
@@ -1006,6 +988,7 @@ void DialogInstall::KeepVariables()
 		}
 	}
 	delete [] section;
+	section = nullptr;
 }
 
 void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
@@ -1020,7 +1003,7 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 	std::wstring finalPath = g_Data.skinsPath + L"@Vault\\Plugins\\";
 	finalPath += finalName + L'\\';
 
-	WCHAR tempFolder[MAX_PATH];
+	WCHAR tempFolder[MAX_PATH] = { 0 };
 	DWORD retVal = GetTempPath(MAX_PATH, tempFolder);
 	if (retVal > MAX_PATH || retVal == 0)
 	{
@@ -1035,11 +1018,11 @@ void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring
 	wcscat_s(tempFolder, MAX_PATH, finalName.c_str());
 
 	// Create a random folder
-	GUID guid;
+	GUID guid = { 0 };
 	HRESULT hr = CoCreateGuid(&guid);
 	if (SUCCEEDED(hr))
 	{
-		RPC_WSTR guidStr;
+		RPC_WSTR guidStr = nullptr;
 		if (RPC_S_OK == UuidToString(&guid, &guidStr))
 		{
 			wcscat_s(tempFolder, MAX_PATH, L"_");
@@ -1089,25 +1072,24 @@ void DialogInstall::LaunchRainmeter()
 		args += L'"';
 	}
 
-	SHELLEXECUTEINFO sei = {0};
-	sei.cbSize = sizeof(SHELLEXECUTEINFO);
-	sei.fMask = SEE_MASK_WAITFORINPUTIDLE | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
-	sei.lpVerb = L"open";
-	sei.lpFile = rainmeterExe.c_str();
-	sei.lpParameters = args.c_str();
-	sei.lpDirectory = g_Data.programPath.c_str();
-	sei.nShow = SW_SHOWNORMAL;
-	ShellExecuteEx(&sei);
+	SHELLEXECUTEINFO si = { sizeof(SHELLEXECUTEINFO) };
+	si.fMask = SEE_MASK_WAITFORINPUTIDLE | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
+	si.lpVerb = L"open";
+	si.lpFile = rainmeterExe.c_str();
+	si.lpParameters = args.c_str();
+	si.lpDirectory = g_Data.programPath.c_str();
+	si.nShow = SW_SHOWNORMAL;
+	ShellExecuteEx(&si);
 
-	if (sei.hProcess)
+	if (si.hProcess)
 	{
-		WaitForSingleObject(sei.hProcess, 500);		// Half-second is enough?
-		CloseHandle(sei.hProcess);
+		WaitForSingleObject(si.hProcess, 500);		// Half-second is enough?
+		CloseHandle(si.hProcess);
 	}
 
 	if (!m_LoadSkins.empty())
 	{
-		size_t pos;
+		size_t pos = 0ULL;
 		std::wstring bang;
 
 		for (size_t i = 0, isize = m_LoadSkins.size(); i < isize; ++i)
@@ -1127,9 +1109,9 @@ void DialogInstall::LaunchRainmeter()
 
 		if (!bang.empty())
 		{
-			sei.fMask = SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
-			sei.lpParameters = bang.c_str();
-			ShellExecuteEx(&sei);
+			si.fMask = SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
+			si.lpParameters = bang.c_str();
+			ShellExecuteEx(&si);
 		}
 	}
 }
@@ -1319,8 +1301,8 @@ std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 {
 	DWORD bufSize = GetFileVersionInfoSize(fileName, 0);
 	void* versionInfo = new WCHAR[bufSize];
-	void* fileVersion = 0;
-	UINT valueSize;
+	void* fileVersion = nullptr;
+	UINT valueSize = 0U;
 	std::wstring result;
 
 	if (GetFileVersionInfo(fileName, 0, bufSize, versionInfo))
@@ -1329,7 +1311,7 @@ std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 		{
 			WORD wLanguage;
 			WORD wCodePage;
-		} *languageInfo;
+		} *languageInfo = nullptr;
 
 		VerQueryValue(versionInfo, L"\\VarFileInfo\\Translation", (LPVOID*)&languageInfo, &valueSize);
 		WCHAR blockName[64];
@@ -1342,37 +1324,15 @@ std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 		}
 	}
 
-	delete [] (WCHAR*)versionInfo;
+	delete [] versionInfo;
+	versionInfo = nullptr;
 	return result;
-}
-
-std::wstring DialogInstall::GetDotNetVersionString()
-{
-	WCHAR buffer[255];
-	HKEY hKey;
-	LONG lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP", 0L, KEY_READ, &hKey);
-	std::wstring currVer(L"v0"), prevVer;
-	int i = 0;
-
-	while (lRet == ERROR_SUCCESS)
-	{
-		lRet = RegEnumKey(hKey, i, buffer, 255);
-		if (buffer[0] == L'v')
-		{
-			currVer = buffer;
-		}
-		++i;
-	}
-
-	RegCloseKey(hKey);
-	currVer.erase(0, 1); // Get rid of the 'v'
-	return currVer;
 }
 
 std::wstring DialogInstall::GetWindowsVersionString()
 {
-	WCHAR buffer[16];
-	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+	WCHAR buffer[16] = { 0 };
+	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };
 	GetVersionEx((OSVERSIONINFO*)&osvi);  // C4996
 	_snwprintf_s(buffer, _TRUNCATE, L"%d.%d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
 
@@ -1382,7 +1342,7 @@ std::wstring DialogInstall::GetWindowsVersionString()
 int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& itemPath)
 {
 	std::wstring itemVersion;
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[MAX_PATH] = { 0 };
 
 	// Get temporary file to extract the plugin file
 	GetTempPath(MAX_PATH, buffer);
@@ -1391,12 +1351,11 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 	const WCHAR* tempFileSz = tempFile.c_str();
 
 	// Helper to sets buffer with current file name
-	auto getFileInfo = [&]()->bool
+	auto getFileInfo = [&]() -> bool
 	{
-		char cBuffer[MAX_PATH * 3];
-		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(
-			m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
+		char cBuffer[MAX_PATH * 3] = { 0 };
+		unz_file_info ufi = { 0 };
+		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
 			const uLong ZIP_UTF8_FLAG = 1 << 11;
 			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
@@ -1477,7 +1436,7 @@ void DialogInstall::TabInstall::Initialize()
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
 	// Add columns
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
@@ -1490,12 +1449,12 @@ void DialogInstall::TabInstall::Initialize()
 	ListView_InsertColumn(item, 1, &lvc);
 
 	// Add groups and items
-	LVGROUP lvg;
+	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = LVGS_COLLAPSIBLE;
 
-	LVITEM lvi;
+	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
 	lvi.iSubItem = 0;
 
@@ -1517,7 +1476,7 @@ void DialogInstall::TabInstall::Initialize()
 			std::wstring itemPath = path + *iter;
 			WCHAR* text = L"Add";
 			bool disablePlugin = false;
-			if (_waccess(itemPath.c_str(), 0) != -1)
+			if (_waccess_s(itemPath.c_str(), 0) == 0)
 			{
 				if (groupId == 3)
 				{
@@ -1589,26 +1548,109 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_INSTALLTAB_COMPONENTS_LIST:
 		{
-			LPNMLISTVIEW pNMLV = (LPNMLISTVIEW)lParam;
-			if (pNMLV->uChanged == LVIF_STATE && (pNMLV->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2))
+			LPNMLISTVIEW pnmlv = (LPNMLISTVIEW)lParam;
+
+			if (pnmlv->hdr.code != LVN_ITEMCHANGED) break;  // Only respond to "changed" events
+
+			if (pnmlv->uChanged & LVIF_STATE)
 			{
-				HWND hwnd = pNMLV->hdr.hwndFrom;
+				const bool isChecked = (pnmlv->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2);
+				const bool isUnchecked = (pnmlv->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1);
 
-				// Get needed information from item
-				WCHAR text[80];
-				ListView_GetItemText(hwnd, pNMLV->iItem, 1, text, 80);
-				BOOL checked = ListView_GetCheckState(hwnd, pNMLV->iItem);
+				if (!isUnchecked && !isChecked) break;  // Disregard any listview "states" that are unrelated to the checkboxes "state"
 
-				// Make sure we only display a message box if the plugin is older than the installed version
-				if (!checked && wcscmp(L"Newer version installed", text) == 0)
+				HWND hwndFrom = pnmlv->hdr.hwndFrom;
+				HWND hwndDialogTab = c_Dialog->GetActiveTab().GetWindow();
+				HWND hwndListview = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_COMPONENTS_LIST);
+				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_THEME_CHECKBOX);
+				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), IDC_INSTALL_INSTALL_BUTTON);
+
+				// "Load included layout" / "Load included skins" checkbox: Remember the "last state"
+				// the user has clicked, since this will be unchecked when disabled.
+				static bool isLayoutChecked = Button_GetCheck(hwndLayoutCheckbox);
+
+				LVITEM lvi = { 0 };
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = pnmlv->iItem;
+				if (!ListView_GetItem(hwndFrom, &lvi)) break;
+
+				const int groupId = lvi.iGroupId;
+
+				if (isUnchecked)
 				{
-					const WCHAR* message = L"There is already a newer version of this plugin installed " \
-						L"on your computer. Installing an older plugin is not recommended.\n\n" \
-						L"Proceed with caution.";
-					MessageBox(hwnd, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
-				}
+					// Perform 2 actions.
+					// #1. Disable the "Load included layout" checkbox if necessary
+					// #2. Disable the "Install" button if all the checkboxes in the listview are unchecked
 
-				return TRUE;
+					bool isAnyItemChecked = false;
+					bool isAnyGroupItemChecked = false;
+					const int itemCount = ListView_GetItemCount(hwndListview);
+					for (int i = 0; i < itemCount; ++i)
+					{
+						lvi.iItem = i;
+						if (!ListView_GetItem(hwndListview, &lvi)) continue;
+
+						// Check if the item is checked
+						if (ListView_GetCheckState(hwndListview, i) == TRUE)
+						{
+							isAnyItemChecked = true;  // An item is checked, make sure to NOT disable "Install" button (see below)
+
+							if (lvi.iGroupId == groupId)
+							{
+								isAnyGroupItemChecked = true;  // Checked item is in the same group
+							}
+						}
+					}
+
+					// Disable the "Install" button if all items are unchecked
+					if (!isAnyItemChecked)
+					{
+						EnableWindow(hwndInstallButton, FALSE);
+					}
+
+					// Disable "Load included layout" / "Load included skins" checkbox, but save the last user state if re-enabled (see below)
+					if (!isAnyGroupItemChecked)
+					{
+						if ((!c_Dialog->m_LoadLayout.empty() && groupId == 1) ||
+							(!c_Dialog->m_LoadSkins.empty() && groupId == 0))
+						{
+							isLayoutChecked = Button_GetCheck(hwndLayoutCheckbox);
+
+							Button_SetCheck(hwndLayoutCheckbox, BST_UNCHECKED);
+							EnableWindow(hwndLayoutCheckbox, FALSE);
+						}
+					}
+
+					return TRUE;
+				}
+				else if (isChecked)
+				{
+					// Re-enable "Install" button if any checkbox is checked
+					EnableWindow(hwndInstallButton, TRUE);
+
+					if (groupId == 0 || groupId == 1)  // Skins or Layout group
+					{
+						// Restore check state and enable checkbox
+						Button_SetCheck(hwndLayoutCheckbox, isLayoutChecked ? BST_CHECKED : BST_UNCHECKED);
+						EnableWindow(hwndLayoutCheckbox, TRUE);
+					}
+					else if (groupId == 3)  // Plugins
+					{
+						WCHAR text[80] = { 0 };
+						ListView_GetItemText(hwndFrom, pnmlv->iItem, 1, text, 80);  // Get sub-item text
+
+						// Make sure we only display a message box if the plugin is older than the installed version
+						if (wcscmp(L"Newer version installed", text) == 0)
+						{
+							const WCHAR* message = L"There is already a newer version of this plugin installed " \
+								L"on your computer. Installing an older plugin is not recommended.\n\n" \
+								L"Proceed with caution.";
+							MessageBox(hwndFrom, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
+						}
+					}
+
+					return TRUE;
+				}
 			}
 		}
 	}

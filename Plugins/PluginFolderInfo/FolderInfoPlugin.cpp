@@ -140,8 +140,9 @@ PLUGIN_EXPORT void Finalize(void* data)
 		measure->folder->RemoveInstance();
 	}
 
-	delete measure;
-
 	std::vector<MeasureData*>::iterator iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
 	g_Measures.erase(iter);
+
+	delete measure;
+	measure = nullptr;
 }

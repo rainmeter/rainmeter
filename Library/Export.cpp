@@ -190,14 +190,14 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() >= 1)
+		if (subStrings.size() >= 1ULL)
 		{
 			std::wstring& config = subStrings[0];
 
 			Skin* skin = GetRainmeter().GetSkin(config);
 			if (skin)
 			{
-				WCHAR buf1[64];
+				WCHAR buf1[64] = { 0 };
 				_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(skin->GetWindow()));
 				g_Buffer = buf1;
 				return g_Buffer.c_str();
@@ -210,7 +210,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() >= 2)
+		if (subStrings.size() >= 2ULL)
 		{
 			std::wstring& config = subStrings[0];
 			Skin* skin = GetRainmeter().GetSkin(config);
@@ -232,7 +232,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() == 3)
+		if (subStrings.size() == 3ULL)
 		{
 			Skin* skin = GetRainmeter().GetSkin(subStrings[0]);
 			if (skin)

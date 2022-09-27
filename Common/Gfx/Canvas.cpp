@@ -143,6 +143,23 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 	return true;
 }
 
+bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring & families)
+{
+	bool success = false;
+	FontCollectionD2D * collection = new FontCollectionD2D();
+	collection->InitializeCollection();
+
+	success = collection->GetSystemFontFamilies(familyCount, families);
+
+	if (collection)
+	{
+		delete collection;
+		collection = nullptr;
+	}
+
+	return success;
+}
+
 void Canvas::Finalize()
 {
 	--c_Instances;
@@ -416,7 +433,7 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		rect.bottom - rect.top,
 		!m_AccurateText && m_TextAntiAliasing)) return;
 
-	D2D1_POINT_2F drawPosition;
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
 	drawPosition.x = [&]()
 	{
 		if (!m_AccurateText)
@@ -455,7 +472,9 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
 
 		// Draw any 'shadow' effects
-		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawPosition);
+		const D2D1_RECT_F drawRect = D2D1::RectF(
+			drawPosition.x, drawPosition.y, rect.right - rect.left, rect.bottom - rect.top);
+		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
 	}
 
 	if (formatD2D.m_Trimming)
@@ -539,12 +558,11 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	return true;
 }
 
-void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
-	auto& segments = bitmap->m_Segments;
-	for (auto seg : segments)
+	for (auto& segment : bitmap->m_Segments)
 	{
-		const auto rSeg = seg.GetRect();
+		const auto& rSeg = segment.GetRect();
 		D2D1_RECT_F rSrc = (rSeg.left < rSeg.right && rSeg.top < rSeg.bottom) ?
 			D2D1::RectF(
 				max(rSeg.left, srcRect.left),
@@ -572,11 +590,11 @@ void Canvas::DrawBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, con
 			rSrc.left -= m_MaxBitmapSize;
 		}
 
-		m_Target->DrawBitmap(seg.GetBitmap(), rDst, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, &rSrc);
+		m_Target->DrawBitmap(segment.GetBitmap(), rDst, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, &rSrc);
 	}
 }
 
-void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
@@ -602,7 +620,7 @@ void Canvas::DrawTiledBitmap(const D2DBitmap* bitmap, const D2D1_RECT_F& dstRect
 	}
 }
 
-void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 	const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2)
 {
 	if (!bitmap || !maskBitmap) return;
@@ -626,7 +644,7 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 			(r1.bottom - r1.top) / height * r2.bottom);
 	};
 
-	for (auto bseg : bitmap->m_Segments)
+	for (auto& bseg : bitmap->m_Segments)
 	{
 		const auto rSeg = bseg.GetRect();
 		const auto rDst = getRectSubRegion(rSeg, dstRect);
@@ -652,7 +670,7 @@ void Canvas::DrawMaskedBitmap(const D2DBitmap* bitmap, const D2DBitmap* maskBitm
 		const auto aaMode = m_Target->GetAntialiasMode();
 		m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
 
-		for (auto mseg : maskBitmap->m_Segments)
+		for (auto& mseg : maskBitmap->m_Segments)
 		{
 			const auto rmSeg = mseg.GetRect();
 			const auto rmDst = getRectSubRegion(rmSeg, dstRect);
@@ -700,7 +718,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 	Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> pGradientStops;
 
-	D2D1_GRADIENT_STOP gradientStops[2];
+	D2D1_GRADIENT_STOP gradientStops[2] = { 0 };
 	gradientStops[0].color = color1;
 	gradientStops[0].position = 0.0f;
 	gradientStops[1].color = color2;

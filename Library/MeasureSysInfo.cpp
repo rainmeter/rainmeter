@@ -82,6 +82,10 @@ void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_Type = SysInfoType::OS_VERSION;
 	}
+	else if (_wcsicmp(L"OS_PRODUCT_NAME", type) == 0)
+	{
+		m_Type = SysInfoType::OS_PRODUCT_NAME;
+	}
 	else if (_wcsicmp(L"PAGESIZE", type) == 0)
 	{
 		m_Type = SysInfoType::PAGESIZE;
@@ -622,7 +626,11 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::OS_VERSION:
-		m_StringValue = Platform::GetPlatformName();
+		m_StringValue = GetPlatform().GetName();
+		return;
+
+	case SysInfoType::OS_PRODUCT_NAME:
+		m_StringValue = GetPlatform().GetProductName();
 		return;
 
 	case SysInfoType::SCREEN_SIZE:

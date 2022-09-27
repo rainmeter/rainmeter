@@ -20,12 +20,12 @@ Player* PlayerWinamp::c_Player = nullptr;
 **
 */
 PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
-	m_Window(),
+	m_Window(nullptr),
 	m_LastCheckTime(0ULL),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
-	m_WinampHandle()
+	m_WinampHandle(nullptr)
 {
 }
 
@@ -36,7 +36,11 @@ PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 PlayerWinamp::~PlayerWinamp()
 {
 	c_Player = nullptr;
-	if (m_WinampHandle) CloseHandle(m_WinampHandle);
+	if (m_WinampHandle)
+	{
+		CloseHandle(m_WinampHandle);
+		m_WinampHandle = nullptr;
+	}
 }
 
 /*
@@ -69,7 +73,7 @@ bool PlayerWinamp::CheckWindow()
 		m_Window = FindWindow(L"Winamp v1.x", nullptr);
 		if (m_Window)
 		{
-			DWORD pID = 0;
+			DWORD pID = 0UL;
 			GetWindowThreadProcessId(m_Window, &pID);
 			m_WinampHandle = OpenProcess(PROCESS_VM_READ, FALSE, pID);
 
@@ -118,8 +122,8 @@ void PlayerWinamp::UpdateData()
 			m_Volume = ((UINT)SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;  // 0 - 255 to 0 - 100
 		}
 
-		WCHAR wBuffer[MAX_PATH];
-		char cBuffer[MAX_PATH];
+		WCHAR wBuffer[MAX_PATH] = { 0 };
+		char cBuffer[MAX_PATH] = { 0 };
 
 		if (m_UseUnicodeAPI)
 		{
@@ -250,17 +254,17 @@ void PlayerWinamp::UpdateData()
 			}
 			else
 			{
-				m_Rating = 0;
-				m_Duration = 0;
+				m_Rating = 0U;
+				m_Duration = 0U;
 				m_CoverPath.clear();
 			}
 		}
 		else if (!m_PlayingStream)
 		{
-			if (m_Duration == 0)
+			if (m_Duration == 0U)
 			{
 				const int duration = (int)SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
-				m_Duration = (duration != -1) ? duration : 0;
+				m_Duration = (duration != -1) ? (UINT)duration : 0U;
 			}
 
 			return;
@@ -284,8 +288,8 @@ void PlayerWinamp::UpdateData()
 		std::wstring::size_type pos = title.find(L" - ");
 		if (pos != std::wstring::npos)
 		{
-			m_Artist.assign(title, 0, pos);
-			pos += 3;  // Skip " - "
+			m_Artist.assign(title, 0ULL, pos);
+			pos += 3ULL;  // Skip " - "
 			m_Title.assign(title, pos, title.length() - pos);
 			m_Album.clear();
 
@@ -454,16 +458,16 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
-			HKEY hKey;
+			HKEY hKey = nullptr;
 			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
 						 L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command",
 						 0,
 						 KEY_QUERY_VALUE,
 						 &hKey);
 
-			DWORD size = 512;
+			DWORD size = 512UL;
 			WCHAR* data = new WCHAR[size];
-			DWORD type = 0;
+			DWORD type = 0UL;
 
 			if (RegQueryValueEx(hKey,
 								nullptr,
@@ -480,7 +484,9 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 			}
 
 			delete [] data;
+			data = nullptr;
 			RegCloseKey(hKey);
+			hKey = nullptr;
 		}
 		else
 		{

@@ -75,7 +75,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
-	const size_t range = (m_HighBound - m_LowBound) + 1;
+	const size_t range = (m_HighBound - m_LowBound) + 1ULL;
 
 	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && parser.ReadBool(section, L"UniqueRandom", false);
 	if (!m_UniqueRandom)
@@ -137,7 +137,7 @@ void MeasureCalc::FormulaReplace()
 			{
 				int randNumber = GetRandom();
 
-				WCHAR buffer[32];
+				WCHAR buffer[32] = { 0 };
 				_itow_s(randNumber, buffer, 10);
 				size_t len = wcslen(buffer);
 
@@ -202,14 +202,14 @@ int MeasureCalc::GetRandom()
 	}
 	else
 	{
-		const std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
+		std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
 		return distribution(GetRandomEngine());
 	}
 }
 
 void MeasureCalc::UpdateUniqueNumberList()
 {
-	const size_t range = (m_HighBound - m_LowBound) + 1;
+	const size_t range = (m_HighBound - m_LowBound) + 1ULL;
 	m_UniqueNumbers.resize(range);
 
 	for (int i = 0; i < (int)range; ++i)

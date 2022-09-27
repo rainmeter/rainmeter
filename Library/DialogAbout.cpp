@@ -49,7 +49,7 @@ void DialogAbout::Open(int tab)
 		nullptr);
 
 	// Fake WM_NOTIFY to change tab
-	NMHDR nm;
+	NMHDR nm = { 0 };
 	nm.code = TCN_SELCHANGE;
 	nm.idFrom = Id_Tab;
 	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
@@ -247,8 +247,9 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.pszText = GetString(ID_STR_VERSION);
 	TabCtrl_InsertItem(item, 3, &tci);
 
-	HICON hIcon = GetIcon(IDI_RAINMETER);
-	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+	HICON hIcon = GetIcon(IDI_RAINMETER, true);
+	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
+	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
@@ -393,7 +394,7 @@ void DialogAbout::TabLog::Initialize()
 
 	ListView_SetImageList(item, (WPARAM)hImageList, LVSIL_SMALL);
 
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
@@ -488,7 +489,7 @@ void DialogAbout::TabLog::Resize(int w, int h)
 	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - 10, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust 4th colum
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 20 -
 		(ListView_GetColumnWidth(item, 0) +
@@ -503,13 +504,13 @@ void DialogAbout::TabLog::Resize(int w, int h)
 */
 void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
 {
-	WCHAR buffer[32];
-	LVITEM vitem;
+	WCHAR buffer[32] = { 0 };
+	LVITEM vitem = { 0 };
 	vitem.mask = LVIF_IMAGE | LVIF_TEXT;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 	vitem.pszText = buffer;
-	HWND item;
+	HWND item = nullptr;
 
 	switch (level)
 	{
@@ -547,6 +548,8 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 		msg.replace(pos, 1, L"    ");
 		pos += 4;
 	}
+
+	if (!item) return;
 
 	GetWindowText(item, buffer, 32);
 	item = GetControl(Id_LogListView);
@@ -620,7 +623,7 @@ INT_PTR DialogAbout::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
-				WCHAR buffer[512];
+				WCHAR buffer[512] = { 0 };
 
 				// Get message.
 				ListView_GetItemText(hwnd, sel, 3, buffer, 512);
@@ -661,7 +664,7 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 				const int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
-					WCHAR buffer[512];
+					WCHAR buffer[512] = { 0 };
 
 					// Get message.
 					ListView_GetItemText(nm->hwndFrom, sel, 3, buffer, 512);
@@ -691,7 +694,7 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
 
-				LVITEM lvi;
+				LVITEM lvi = { 0 };
 				lvi.mask = LVIF_GROUPID;
 				lvi.iItem = item->iItem;
 				lvi.iSubItem = 0;
@@ -765,7 +768,7 @@ void DialogAbout::TabSkins::Initialize()
 	HWND item = GetControl(Id_SkinsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-	LVGROUP lvg;
+	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
@@ -778,7 +781,7 @@ void DialogAbout::TabSkins::Initialize()
 
 	ListView_EnableGroupView(item, TRUE);
 
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
@@ -823,7 +826,7 @@ void DialogAbout::TabSkins::Resize(int w, int h)
 	SetWindowPos(item, nullptr, 275, 0, w - 275, h, SWP_NOZORDER);
 
 	// Adjust 4th column
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 275 - 20 -
 		(ListView_GetColumnWidth(item, 0) +
@@ -918,7 +921,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
-	LVITEM lvi;
+	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
 	lvi.iSubItem = 0;
 	lvi.iItem = 0;
@@ -1060,8 +1063,8 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 		if (sel != -1)
 		{
-			WCHAR buffer[512];
-			ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+			WCHAR buffer[512] = { 0 };
+			ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
 			std::wstring temp = buffer;
 			Measure* measure = m_SkinWindow->GetMeasure(temp);
 			if (measure)
@@ -1140,8 +1143,8 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
-				WCHAR buffer[512];
-				ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+				WCHAR buffer[512] = { 0 };
+				ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
 				std::wstring var = buffer;
 				const std::wstring* variable = m_SkinWindow->GetParser().GetVariable(var);
 				System::SetClipboardText(*variable);
@@ -1171,11 +1174,11 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
-					WCHAR buffer[512];
-					ListView_GetItemText(hwnd, sel, 0, buffer, 512);
+					WCHAR buffer[512] = { 0 };
+					ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
 					std::wstring temp = buffer;
 
-					LVITEM lvi;
+					LVITEM lvi = { 0 };
 					lvi.mask = LVIF_GROUPID;
 					lvi.iItem = sel;
 					lvi.iSubItem = 0;
@@ -1208,7 +1211,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
 
-				LVITEM lvi;
+				LVITEM lvi = { 0 };
 				lvi.mask = LVIF_GROUPID;
 				lvi.iItem = item->iItem;
 				lvi.iSubItem = 0;
@@ -1304,13 +1307,13 @@ INT_PTR DialogAbout::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 			if (lvcd->iSubItem != 0) return FALSE;
 
 			// Only process items in 1st group
-			WCHAR buffer[512];
-			LVITEM lvi;
+			WCHAR buffer[512] = { 0 };
+			LVITEM lvi = { 0 };
 			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
 			lvi.iSubItem = 0;
 			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
 			lvi.pszText = buffer;
-			lvi.cchTextMax = 512;
+			lvi.cchTextMax = _countof(buffer);
 			ListView_GetItem(hwnd, &lvi);
 			if (lvi.iGroupId != 0) return FALSE;
 
@@ -1366,7 +1369,7 @@ void DialogAbout::TabPlugins::Initialize()
 	HWND item = GetControl(Id_PluginsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-	LVGROUP lvg;
+	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
@@ -1379,7 +1382,7 @@ void DialogAbout::TabPlugins::Initialize()
 
 	ListView_EnableGroupView(item, TRUE);
 
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
@@ -1395,7 +1398,7 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
-	LVITEM vitem;
+	LVITEM vitem = { 0 };
 	vitem.mask = LVIF_TEXT | LVIF_GROUPID;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
@@ -1442,7 +1445,7 @@ void DialogAbout::TabPlugins::Initialize()
 			vitem.pszText = fd.cFileName;
 
 			// Try to get version and author from file resources first
-			DWORD handle;
+			DWORD handle = 0UL;
 			DWORD versionSize = GetFileVersionInfoSize(path, &handle);
 			if (versionSize)
 			{
@@ -1450,17 +1453,17 @@ void DialogAbout::TabPlugins::Initialize()
 				void* data = new BYTE[versionSize];
 				if (GetFileVersionInfo(path, 0, versionSize, data))
 				{
-					UINT len;
+					UINT len = 0U;
 					struct LANGCODEPAGE
 					{
 						WORD wLanguage;
 						WORD wCodePage;
-					} *lcp;
+					} *lcp = nullptr;
 
 					if (VerQueryValue(data, L"\\VarFileInfo\\Translation", (LPVOID*)&lcp, &len))
 					{
-						WCHAR key[64];
-						LPWSTR value;
+						WCHAR key[64] = { 0 };
+						LPWSTR value = nullptr;
 
 						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\ProductName", lcp[0].wLanguage, lcp[0].wCodePage);
 						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len) &&
@@ -1486,6 +1489,7 @@ void DialogAbout::TabPlugins::Initialize()
 				}
 
 				delete [] data;
+				data = nullptr;
 				if (found) continue;
 			}
 
@@ -1569,7 +1573,7 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 	SetWindowPos(item, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
-	LVCOLUMN lvc;
+	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 20 - 
 		(ListView_GetColumnWidth(item, 0) +
@@ -1626,13 +1630,13 @@ INT_PTR DialogAbout::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 			if (lvcd->iSubItem != 0) return FALSE;
 
 			// Only process items in 2nd group
-			WCHAR buffer[512];
-			LVITEM lvi;
+			WCHAR buffer[512] = { 0 };
+			LVITEM lvi = { 0 };
 			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
 			lvi.iSubItem = 0;
 			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
 			lvi.pszText = buffer;
-			lvi.cchTextMax = 512;
+			lvi.cchTextMax = _countof(buffer);
 			ListView_GetItem(hwnd, &lvi);
 			if (lvi.iGroupId != 1) return FALSE;
 
@@ -1754,8 +1758,8 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
-		Platform::GetPlatformFriendlyName().c_str(),
-		Platform::GetPlatformUserLanguage().c_str(),
+		GetPlatform().GetFriendlyName().c_str(),
+		GetPlatform().GetUserLanguage().c_str(),
 		GetUserDefaultUILanguage());
 	item = GetControl(Id_WinVerLabel);
 	SetWindowText(item, tmpSz);
@@ -1830,8 +1834,8 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 				tmpSz,
 				_TRUNCATE,
 				L"%s - %s (%hu)\n",
-				Platform::GetPlatformFriendlyName().c_str(),
-				Platform::GetPlatformUserLanguage().c_str(),
+				GetPlatform().GetFriendlyName().c_str(),
+				GetPlatform().GetUserLanguage().c_str(),
 				GetUserDefaultUILanguage());
 
 			text += tmpSz;

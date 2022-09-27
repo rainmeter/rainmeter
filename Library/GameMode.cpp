@@ -22,7 +22,7 @@ struct GameHash
 {
 	std::size_t operator()(std::wstring const& str) const noexcept
 	{
-		return 17 * 31 + std::hash<std::wstring>()(str);
+		return 17ULL * 31ULL + std::hash<std::wstring>()(str);
 	}
 };
 }
@@ -39,7 +39,7 @@ GameMode::GameMode() :
 
 GameMode::~GameMode()
 {
-	ForceExit();
+	if (!IsForcedExit()) ForceExit();
 }
 
 GameMode& GameMode::GetInstance()
@@ -112,9 +112,9 @@ void GameMode::SetOnStartAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0 && layouts.size() > 0)
+	if (index > 0U && layouts.size() > 0ULL)
 	{
-		action = layouts[index - 1];
+		action = layouts[(size_t)index - 1ULL];
 	}
 	SetOnStartAction(action);  // Can be empty (Unload all skins)
 }
@@ -128,9 +128,9 @@ void GameMode::SetOnStopAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0 && layouts.size() > 0)
+	if (index > 0U && layouts.size() > 0ULL)
 	{
-		action = layouts[index - 1];
+		action = layouts[(size_t)index - 1ULL];
 	}
 	SetOnStopAction(action);  // Can be empty (Load current layout or @Backup)
 }
@@ -324,6 +324,7 @@ void GameMode::ReadSettings()
 		}
 	}
 	delete [] buffer;
+	buffer = nullptr;
 }
 
 void GameMode::WriteSettings()
@@ -380,14 +381,13 @@ void GameMode::EnterGameMode()
 		rainmeter.DeleteAllUnmanagedSkins();
 		rainmeter.DeleteAllSkins();
 		rainmeter.DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
-
-		m_State = State::Enabled;
 	}
 	else
 	{
 		LoadLayout(m_OnStartAction);
-		m_State = State::LayoutEnabled;
 	}
+
+	m_State = State::Enabled;
 }
 
 void GameMode::ExitGameMode(bool force)
@@ -396,12 +396,14 @@ void GameMode::ExitGameMode(bool force)
 
 	LogNotice(L">> Exiting \"Game mode\"");
 
-	m_State = State::Disabled;
+	m_State = force ? State::ForcedExit : State::Disabled;
 
 	if (m_OnStopAction.empty())
 	{
-		if (!force && m_OnStartAction.empty())
+		if (m_OnStartAction.empty())
 		{
+			if (force) return;  // Current layout will be loaded on next startup
+
 			// Since no layout was loaded during "on start" action, reload the current layout
 			Rainmeter& rainmeter = GetRainmeter();
 			rainmeter.ReloadSettings();
@@ -411,30 +413,29 @@ void GameMode::ExitGameMode(bool force)
 		{
 			// A layout was loaded during the "on start" action, so the "old" layout is in the @Backup folder
 			std::wstring backup = L"@Backup";
-			LoadLayout(backup, !force);
+			LoadLayout(backup);
 		}
 	}
 	else
 	{
-		LoadLayout(m_OnStopAction, !force);
+		LoadLayout(m_OnStopAction);
 	}
 }
 
-void GameMode::LoadLayout(const std::wstring& layout, bool delay)
+void GameMode::LoadLayout(const std::wstring& layout)
 {
 	std::wstring action = L"!LoadLayout \"";
 	action += layout;
 	action += L'"';
 
-	if (delay)
+	if (IsForcedExit())
 	{
-		GetRainmeter().DelayedExecuteCommand(action.c_str());
+		// If exiting Rainmeter, load the layout, but do not activate any skins. See Rainmeter::LoadLayout
+		GetRainmeter().ExecuteCommand(action.c_str(), nullptr);
 	}
 	else
 	{
-		// When exiting, set the state to enabled in case a "on stop" action is
-		// launched (to prevent any skins from loading). See Rainmeter::LoadLayout.
-		m_State = State::Enabled;
-		GetRainmeter().ExecuteCommand(action.c_str(), nullptr);
+		// Delay load the layout
+		GetRainmeter().DelayedExecuteCommand(action.c_str());
 	}
 }

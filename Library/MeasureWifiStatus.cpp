@@ -25,11 +25,23 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 
 	if (s_Instances == 1U)
 	{
+		// Temporarily load the "wlanapi.dll" library as a data file to test if it exists.
+		// Note: Freeing the temporary library should be okay since delay loading
+		// of the library occurs later (when WlanOpenHandle is called).
+		HMODULE lib = LoadLibraryEx(L"wlanapi.dll", nullptr,
+			LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_SEARCH_SYSTEM32);
+		if (!lib)
+		{
+			LogDebugF(this, L"WifiStatus: Cannot find wlanapi.dll");
+			return;
+		}
+		FreeLibrary(lib);
+
 		// Create WINLAN API Handle
 		if (!s_Client)
 		{
 			DWORD dwNegotiatedVersion = 0UL;
-			DWORD dwErr =WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
+			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
@@ -192,7 +204,7 @@ void MeasureWifiStatus::UpdateValue()
 		{
 			// Size of network name can be up to 64 chars, set to 80 to add room for delimiters
 			m_StatusString.clear();
-			m_StatusString.reserve(80 * m_ListMax);
+			m_StatusString.reserve((size_t)m_ListMax * 80ULL);
 
 			UINT printed = 0U;  // count of how many networks have been printed already
 
@@ -230,7 +242,7 @@ void MeasureWifiStatus::UpdateValue()
 						if (m_ListStyle == 4U || m_ListStyle == 5U || m_ListStyle == 6U || m_ListStyle == 7U)
 						{
 							// ADD signal quality
-							WCHAR buffer[32];
+							WCHAR buffer[32] = { 0 };
 							_snwprintf_s(buffer, _TRUNCATE, L"%lu", (ULONG)pwnl->Network[i].wlanSignalQuality);
 
 							m_StatusString += L" [";

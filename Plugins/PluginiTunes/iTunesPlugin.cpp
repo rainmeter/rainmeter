@@ -280,7 +280,8 @@ static bool updateCurrentTrack()
 	clock_t currentClock = clock();
 	if (0 == lastClock || currentClock - lastClock > CLOCKS_PER_SEC)
 	{
-		wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
+		_snwprintf_s(CurrentTrackArtworkPath, _countof(CurrentTrackArtworkPath),
+			L"%s%s", BaseDir, DefaultTrackArtworkPath);
 		if (CurrentTrack != nullptr)
 			CurrentTrack.Release();
 		if (FAILED(iTunes->get_CurrentTrack(&CurrentTrack)) || !CurrentTrack)
@@ -302,7 +303,8 @@ static bool updateCurrentTrack()
 			{
 				_bstr_t path;
 
-				wsprintf(CurrentTrackArtworkPath, L"%s\\iTunesArtwork", BaseDir);
+				_snwprintf_s(CurrentTrackArtworkPath, _countof(CurrentTrackArtworkPath),
+					L"%s\\iTunesArtwork", BaseDir);
 				CreateDirectory(CurrentTrackArtworkPath, nullptr);
 
 				switch (artworkFormat)
@@ -320,7 +322,8 @@ static bool updateCurrentTrack()
 				path = CurrentTrackArtworkPath;
 				if (FAILED(artwork->SaveArtworkToFile(path)))
 				{
-					wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
+					_snwprintf_s(CurrentTrackArtworkPath, _countof(CurrentTrackArtworkPath),
+						L"%s%s", BaseDir, DefaultTrackArtworkPath);
 				}
 			}
 		}
@@ -543,7 +546,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 	buffer[0] = 0;
 	if (!CoInitialized)
 	{
-		wsprintf(buffer, L"Fail to initialize");
+		_snwprintf_s(buffer, _countof(buffer), L"Fail to initialize");
 		return buffer;
 	}
 
@@ -552,19 +555,20 @@ LPCTSTR GetString(UINT id, UINT flags)
 
 	if (!InstanceCreated)
 	{
-		//wsprintf(buffer, L"iTunes is not running");
+		//_snwprintf_s(buffer, _countof(buffer), L"iTunes is not running");
 		if (COMMAND_GETCURRENTTRACK_ARTWORK == command)
-			wsprintf(buffer, L"%s%s", BaseDir, DefaultTrackArtworkPath);
+		{
+			_snwprintf_s(buffer, _countof(buffer), L"%s%s", BaseDir, DefaultTrackArtworkPath);
+		}
 		return buffer;
 	}
 
 	if (command >= COMMAND_GETCURRENTTRACK_ALBUM && command <= COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
-		if (!updateCurrentTrack())
-			return buffer;
+		if (!updateCurrentTrack()) return buffer;
 
-		BSTR bstrValue;
-		long longValue;
+		BSTR bstrValue = nullptr;
+		long longValue = 0L;
 		bool bstrUsed = false;
 
 		switch (command)
@@ -572,88 +576,111 @@ LPCTSTR GetString(UINT id, UINT flags)
 			case COMMAND_GETCURRENTTRACK_ALBUM:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Album(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_ARTIST:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Artist(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_BITRATE:
 				if (SUCCEEDED(CurrentTrack->get_BitRate(&longValue)))
 				{
-					wsprintf(buffer, L"%dkbps", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%dkbps", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_BPM:
 				if (SUCCEEDED(CurrentTrack->get_BPM(&longValue)))
 				{
-					wsprintf(buffer, L"%dbpm", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%dbpm", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_COMMENT:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Comment(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_COMPOSER:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Composer(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_EQ:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_EQ(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_GENRE:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Genre(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_KINDASSTRING:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_KindAsString(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_NAME:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Name(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_RATING:
 				if (SUCCEEDED(CurrentTrack->get_Rating(&longValue)))
 				{
-					wsprintf(buffer, L"%d/100", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%d/100", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_SAMPLERATE:
 				if (SUCCEEDED(CurrentTrack->get_SampleRate(&longValue)))
 				{
-					wsprintf(buffer, L"%dHz", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%dHz", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_SIZE:
 				if (SUCCEEDED(CurrentTrack->get_Size(&longValue)))
 				{
-					if (longValue < 1024)
-						wsprintf(buffer, L"%dbytes", longValue);
-					else if (longValue < 1024 * 1024)
-						wsprintf(buffer, L"%d.%dKbytes", longValue/1024, (longValue*10/1024)%10);
+					if (longValue < 1024L)
+					{
+						_snwprintf_s(buffer, _countof(buffer), L"%dbytes", longValue);
+					}
+					else if (longValue < 1024L * 1024L)
+					{
+						_snwprintf_s(buffer, _countof(buffer), L"%d.%dKbytes", longValue / 1024, (longValue * 10 / 1024) % 10);
+					}
 					else
-						wsprintf(buffer, L"%d.%dMbytes", longValue/1024/1024, (longValue*10/1024/1024)%10);
+					{
+						_snwprintf_s(buffer, _countof(buffer), L"%d.%dMbytes", longValue / 1024 / 1024, (longValue * 10 / 1024 / 1024) % 10);
+					}
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_TIME:
 				bstrUsed = SUCCEEDED(CurrentTrack->get_Time(&bstrValue));
 				break;
+
 			case COMMAND_GETCURRENTTRACK_TRACKCOUNT:
 				if (SUCCEEDED(CurrentTrack->get_TrackCount(&longValue)))
 				{
-					wsprintf(buffer, L"%d", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%d", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_TRACKNUMBER:
 				if (SUCCEEDED(CurrentTrack->get_TrackNumber(&longValue)))
 				{
-					wsprintf(buffer, L"%d", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%d", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_YEAR:
 				if (SUCCEEDED(CurrentTrack->get_Year(&longValue)))
 				{
-					wsprintf(buffer, L"%d", longValue);
+					_snwprintf_s(buffer, _countof(buffer), L"%d", longValue);
 				}
 				break;
+
 			case COMMAND_GETCURRENTTRACK_ARTWORK:
-			{
-				wsprintf(buffer, L"%s", CurrentTrackArtworkPath);
+				{
+					_snwprintf_s(buffer, _countof(buffer), L"%s", CurrentTrackArtworkPath);
+				}
 				break;
-			}
 		}
 
 		if (bstrUsed && bstrValue)
@@ -665,7 +692,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 		return buffer;
 	}
 
-	wsprintf(buffer, L"Type Incorrect");
+	_snwprintf_s(buffer, _countof(buffer), L"Type Incorrect");
 	return buffer;
 }
 

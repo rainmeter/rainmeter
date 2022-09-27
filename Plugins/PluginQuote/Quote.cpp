@@ -20,7 +20,7 @@ template <typename T>
 T GetRandomNumber(T size)
 {
 	static std::mt19937 s_Engine((unsigned)time(nullptr));
-	const std::uniform_int_distribution<T> distribution(0, size);
+	std::uniform_int_distribution<T> distribution(0, size);
 	return distribution(s_Engine);
 }
 
@@ -323,4 +323,5 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 }

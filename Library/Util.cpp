@@ -19,9 +19,9 @@ UINT GetUniqueID()
 
 WCHAR* GetString(UINT id)
 {
-	LPWSTR pData;
+	LPWSTR pData = nullptr;
 	int len = LoadString(GetRainmeter().GetResourceInstance(), id, (LPWSTR)&pData, 0);
-	return len ? pData : L"";
+	return len > 0 ? pData : L"";
 }
 
 std::wstring GetFormattedString(UINT id, ...)
@@ -55,7 +55,7 @@ HICON GetIcon(UINT id, bool large)
 		auto loadIconMetric = (decltype(LoadIconMetric)*)GetProcAddress(hComctl, "LoadIconMetric");
 		if (loadIconMetric)
 		{
-			HICON icon;
+			HICON icon = { 0 };
 			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(id), large ? LIM_LARGE : LIM_SMALL, &icon);
 			if (SUCCEEDED(hr))
 			{

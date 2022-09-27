@@ -84,7 +84,7 @@ bool MeterRoundLine::Update()
 		}
 
 		Measure* measure = m_Measures[0];
-		if (m_ValueRemainder > 0)
+		if (m_ValueRemainder > 0U)
 		{
 			LONGLONG time = (LONGLONG)measure->GetValue();
 			m_Value = (double)(time % m_ValueRemainder);

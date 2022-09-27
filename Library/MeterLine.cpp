@@ -20,7 +20,7 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_LineWidth(1.0),
 	m_HorizontalColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeType(D2D1_STROKE_TRANSFORM_TYPE_NORMAL),
-	m_CurrentPos(),
+	m_CurrentPos(0),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
 {
@@ -84,7 +84,7 @@ void MeterLine::Initialize()
 */
 void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	WCHAR tmpName[64];
+	WCHAR tmpName[64] = { 0 };
 
 	// Store the current number of lines so we know if the buffer needs to be updated
 	int oldLineCount = (int)m_Colors.size();
@@ -217,9 +217,11 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
 
-	double maxValue = 0.0;
+	// Set the max/min values to the floating point limits
+	double maxValue = -(DBL_MAX);  // Intentional
+	double minValue = DBL_MAX;
 
-	// Find the maximum value
+	// Find the maximum / minimum value
 	if (m_Autoscale)
 	{
 		double newValue = 0.0;
@@ -248,6 +250,12 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				maxValue *= 2.0;
 			}
 		}
+
+		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
+		{
+			double val = (*i)->GetMinValue();
+			minValue = min(minValue, val);
+		}
 	}
 	else
 	{
@@ -255,11 +263,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		{
 			double val = (*i)->GetMaxValue();
 			maxValue = max(maxValue, val);
-		}
 
-		if (maxValue == 0.0)
-		{
-			maxValue = 1.0;
+			val = (*i)->GetMinValue();
+			minValue = min(minValue, val);
 		}
 	}
 
@@ -310,20 +316,32 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
+	const double range = maxValue - minValue;
 	if (m_GraphHorizontalOrientation)
 	{
 		const FLOAT W = (FLOAT)(drawW - 1);
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * W / maxValue;
+			const double scale = (m_ScaleValues[counter] * W) / range;
 			int pos = m_CurrentPos;
 
 			auto calcX = [&](FLOAT& _x)
 			{
-				_x = ((FLOAT)((*i)[pos] * scale) + offset);
-				_x = min(_x, W + offset);
-				_x = max(_x, offset);
+				if (range == 0.0)
+				{
+					_x = W;
+				}
+				else if (range < 0.0)
+				{
+					_x = 1.0f;
+				}
+				else
+				{
+					_x = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
+					_x = min(_x, W + offset);
+					_x = max(_x, offset);
+				}
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
 			};
 
@@ -372,20 +390,31 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			++counter;
 		}
 	}
-	else
+	else	// GraphOrientation=Vertical
 	{
 		const FLOAT H = (FLOAT)(drawH - 1);
 		int counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
-			const double scale = m_ScaleValues[counter] * H / maxValue;
+			const double scale = (m_ScaleValues[counter] * H) / range;
 			int pos = m_CurrentPos;
 
 			auto calcY = [&](FLOAT& _y)
 			{
-				_y = ((FLOAT)((*i)[pos] * scale) + offset);
-				_y = min(_y, H + offset);
-				_y = max(_y, offset);
+				if (range == 0.0)
+				{
+					_y = H;
+				}
+				else if (range < 0.0)
+				{
+					_y = 0.0f;
+				}
+				else
+				{
+					_y = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
+					_y = min(_y, H + offset);
+					_y = max(_y, offset);
+				}
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};
 

@@ -26,6 +26,11 @@ public:
 
 	virtual bool AddFile(const WCHAR* file) override;
 
+	bool InitializeCollection();
+
+	bool GetSystemFontFamilies(UINT32& familyCount, std::wstring& families);
+	bool GetFontFamilies(UINT32& familyCount, std::wstring& families);
+
 protected:
 	FontCollectionD2D();
 
@@ -36,7 +41,8 @@ private:
 
 	void Dispose();
 
-	bool InitializeCollection();
+	bool GetFontFamiliesFromCollection(IDWriteFontCollection* collection, UINT32& familyCount,
+		std::wstring & families, bool isSystemCollection);
 
 	std::vector<IDWriteFontFile*> m_FileReferences;
 	IDWriteFontCollection* m_Collection;

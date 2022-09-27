@@ -77,7 +77,8 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 							psz009RegValue, 0, 0, (PBYTE)m_pszRawStrings,
 							&cbTitleStrings ) )
 	{
-		delete []m_pszRawStrings;
+		delete [] m_pszRawStrings;
+		m_pszRawStrings = nullptr;
 		return;
 	}
 
@@ -85,7 +86,8 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 	m_TitleStrings = new PTSTR[ m_nLastIndex+1 ];
 	if ( !m_TitleStrings )
 	{
-		delete []m_pszRawStrings;
+		delete [] m_pszRawStrings;
+		m_pszRawStrings = nullptr;
 		return;
 	}
 
@@ -123,10 +125,10 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 
 CPerfTitleDatabase::~CPerfTitleDatabase( )
 {
-	delete []m_TitleStrings;
-	m_TitleStrings = 0;
-	delete []m_pszRawStrings;
-	m_pszRawStrings = 0;
+	delete [] m_TitleStrings;
+	m_TitleStrings = nullptr;
+	delete [] m_pszRawStrings;
+	m_pszRawStrings = nullptr;
 	m_nLastIndex = 0;
 }
 

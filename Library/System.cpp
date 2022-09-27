@@ -150,7 +150,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 {
 	MultiMonitorInfo* m = (MultiMonitorInfo*)dwData;
 
-	MONITORINFOEX info;
+	MONITORINFOEX info = {};
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
@@ -313,7 +313,7 @@ void System::SetMultiMonitorInfo()
 
 			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
 			{
-				MonitorInfo monitor = {0};
+				MonitorInfo monitor = { 0 };
 
 				monitor.handle = nullptr;
 				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
@@ -1078,12 +1078,19 @@ void System::ResetWorkingDirectory()
 */
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
+	if (InitializeCriticalSectionEx(lpCriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
 	{
 		return;
 	}
 
-	InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0);
+	// The following should "always succeed" according to:
+	// https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializecriticalsectionandspincount
+	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0UL) == TRUE)
+	{
+		return;
+	}
+
+	// error?
 }
 
 /*
@@ -1095,19 +1102,22 @@ void System::SetClipboardText(const std::wstring& text)
 	if (OpenClipboard(nullptr))
 	{
 		// Include terminating null char
-		size_t len = text.length() + 1;
+		size_t len = text.length() + 1ULL;
 
 		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(WCHAR));
 		if (hMem)
 		{
 			LPVOID data = GlobalLock(hMem);
-			memcpy(data, text.c_str(), len * sizeof(WCHAR));
-			GlobalUnlock(hMem);
-
-			EmptyClipboard();
-			if (!SetClipboardData(CF_UNICODETEXT, hMem))
+			if (data)
 			{
-				GlobalFree(hMem);
+				memcpy(data, text.c_str(), len * sizeof(WCHAR));
+				GlobalUnlock(hMem);
+
+				EmptyClipboard();
+				if (!SetClipboardData(CF_UNICODETEXT, hMem))
+				{
+					GlobalFree(hMem);
+				}
 			}
 		}
 
@@ -1123,7 +1133,7 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 {
 	if (!wallpaper.empty())
 	{
-		if (_waccess(wallpaper.c_str(), 0) == -1)
+		if (_waccess_s(wallpaper.c_str(), 0) != 0)
 		{
 			LogErrorF(L"!SetWallpaper: Unable to read file: %s", wallpaper.c_str());
 			return;
@@ -1264,7 +1274,7 @@ bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to
 		std::wstring spec = from;
 		spec.append(1, L'*');
 
-		WIN32_FIND_DATA fd;
+		WIN32_FIND_DATA fd = { 0 };
 		HANDLE find = FindFirstFileEx(spec.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
 		if (find != INVALID_HANDLE_VALUE)
 		{
@@ -1280,7 +1290,7 @@ bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to
 				toFile.append(from.substr(len));
 				toFile.append(fd.cFileName);
 
-				if (_waccess(toFile.c_str(), 0) == -1)
+				if (_waccess_s(toFile.c_str(), 0) != 0)
 				{
 					System::CopyFiles(fromFile, toFile);
 				}
@@ -1349,14 +1359,14 @@ bool System::RemoveFolder(std::wstring folder)
 */
 void System::UpdateIniFileMappingList()
 {
-	static ULONGLONG s_LastWriteTime = 0;
+	static ULONGLONG s_LastWriteTime = 0ULL;
 
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
 	if (ret == ERROR_SUCCESS)
 	{
-		DWORD numSubKeys;
-		ULONGLONG ftLastWriteTime;
+		DWORD numSubKeys = 0UL;
+		ULONGLONG ftLastWriteTime = 0ULL;
 		bool changed = false;
 
 		ret = RegQueryInfoKey(hKey, nullptr, nullptr, nullptr, &numSubKeys, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (LPFILETIME)&ftLastWriteTime);
@@ -1401,9 +1411,11 @@ void System::UpdateIniFileMappingList()
 			}
 
 			delete [] buffer;
+			buffer = nullptr;
 		}
 
 		RegCloseKey(hKey);
+		hKey = nullptr;
 	}
 }
 
@@ -1456,6 +1468,7 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 				}
 
 				delete [] buffer;
+				buffer = nullptr;
 				break;
 			}
 		}

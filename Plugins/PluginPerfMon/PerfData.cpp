@@ -117,6 +117,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
+	measure = nullptr;
 
 	CPerfSnapshot::CleanUp();
 }
@@ -147,12 +148,14 @@ ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterN
 						if (_wcsicmp(instanceName, name) != 0)
 						{
 							delete pObjInst;
+							pObjInst = nullptr;
 							continue;
 						}
 					}
 					else
 					{
 						delete pObjInst;
+						pObjInst = nullptr;
 						continue;
 					}
 				}
@@ -180,14 +183,21 @@ ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterN
 					}
 
 					delete pPerfCntr;
+					pPerfCntr = nullptr;
 					delete pObjInst;
+					pObjInst = nullptr;
 					break;	// No need to continue
 				}
 
-				delete pObjInst;
+				if (pObjInst)
+				{
+					delete pObjInst;
+					pObjInst = nullptr;
+				}
 			}
 
 			delete pPerfObj;
+			pPerfObj = nullptr;
 		}
 	}
 

@@ -16,7 +16,7 @@ Player* PlayerSpotify::c_Player = nullptr;
 **
 */
 PlayerSpotify::PlayerSpotify() : Player(),
-	m_Window(),
+	m_Window(nullptr),
 	m_LastCheckTime(0ULL)
 {
 }
@@ -46,16 +46,15 @@ Player* PlayerSpotify::Create()
 
 std::wstring GetExe(HWND hwnd)
 {
-	WCHAR procPath[400];
-	procPath[0] = 0;
+	WCHAR procPath[400] = { 0 };
 
-	DWORD procID;
+	DWORD procID = 0UL;
 	GetWindowThreadProcessId(hwnd, &procID);
 
 	HANDLE checkProc = OpenProcess(PROCESS_ALL_ACCESS, false, procID);
 	if (checkProc != NULL)
 	{
-		GetModuleFileNameEx(checkProc, NULL, procPath, 400);
+		GetModuleFileNameEx(checkProc, NULL, procPath, _countof(procPath));
 		CloseHandle(checkProc);
 		if (procPath[0] != 0)
 		{
@@ -79,14 +78,14 @@ bool PlayerSpotify::CheckWindow()
 	{
 		m_LastCheckTime = time;
 
-		HWND prev = FindWindowEx(NULL, NULL, L"Chrome_WidgetWin_0", NULL);
+		HWND prev = FindWindowEx(nullptr, nullptr, L"Chrome_WidgetWin_0", nullptr);
 
-		while (prev != NULL && (GetWindowTextLength(prev) == 0 ||
+		while (prev != nullptr && (GetWindowTextLength(prev) == 0 ||
 			_wcsicmp(GetExe(prev).c_str(), L"SPOTIFY.EXE") != 0))
 		{
-			prev = FindWindowEx(NULL, prev, L"Chrome_WidgetWin_0", NULL);
+			prev = FindWindowEx(nullptr, prev, L"Chrome_WidgetWin_0", nullptr);
 		}
-		if (prev != NULL)
+		if (prev != nullptr)
 		{
 			m_Window = prev;
 			m_Initialized = true;
@@ -104,7 +103,7 @@ void PlayerSpotify::UpdateData()
 	if (m_Initialized || CheckWindow())
 	{
 		// Parse title and artist from window title
-		WCHAR buffer[256];
+		WCHAR buffer[256] = { 0 };
 
 		// Check length of window text for "Spotify" and "Spotify Premium"
 		int len = GetWindowText(m_Window, buffer, _countof(buffer));
@@ -116,7 +115,7 @@ void PlayerSpotify::UpdateData()
 			if (pos != std::wstring::npos)
 			{
 				std::wstring artist(title, 0, pos);
-				pos += 3;  // Skip " - "
+				pos += 3ULL;  // Skip " - "
 				std::wstring track(title, pos);
 				m_State = STATE_PLAYING;
 
@@ -190,12 +189,12 @@ void PlayerSpotify::Previous()
 void PlayerSpotify::ClosePlayer()
 {
 	// A little harsh...
-	DWORD pID;
+	DWORD pID = 0UL;
 	GetWindowThreadProcessId(m_Window, &pID);
 	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pID);
 	if (hProcess)
 	{
-		TerminateProcess(hProcess, 0);
+		TerminateProcess(hProcess, 0U);
 		CloseHandle(hProcess);
 	}
 }
@@ -218,9 +217,9 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 						 KEY_QUERY_VALUE,
 						 &hKey);
 
-			DWORD size = 512;
+			DWORD size = 512UL;
 			WCHAR* data = new WCHAR[size];
-			DWORD type = 0;
+			DWORD type = 0UL;
 
 			if (RegQueryValueEx(hKey,
 								nullptr,
@@ -239,7 +238,9 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 			}
 
 			delete [] data;
+			data = nullptr;
 			RegCloseKey(hKey);
+			hKey = nullptr;
 		}
 		else
 		{

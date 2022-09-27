@@ -81,6 +81,7 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 Measure::~Measure()
 {
 	delete m_OldValue;
+	m_OldValue = nullptr;
 }
 
 /*
@@ -90,6 +91,27 @@ Measure::~Measure()
 void Measure::Initialize()
 {
 	m_Initialized = true;
+
+	if (GetRainmeter().GetDebug())
+	{
+		if (m_MaxValue == m_MinValue)
+		{
+			WCHAR buffer[32] = { 0 };
+			_snwprintf_s(buffer, _TRUNCATE, L"%f", m_MaxValue);
+			RemoveTrailingZero(buffer, (int)wcslen(buffer));
+			LogWarningF(this, L"Warning: MaxValue = MinValue: %s", buffer);
+		}
+		else if (m_MaxValue < m_MinValue)
+		{
+			WCHAR maxValue[32] = { 0 };
+			WCHAR minValue[32] = { 0 };
+			_snwprintf_s(maxValue, _TRUNCATE, L"%f", m_MaxValue);
+			_snwprintf_s(minValue, _TRUNCATE, L"%f", m_MinValue);
+			RemoveTrailingZero(maxValue, (int)wcslen(maxValue));
+			RemoveTrailingZero(minValue, (int)wcslen(minValue));
+			LogWarningF(this, L"Warning: MaxValue is less than MinValue: MaxValue=%s MinValue=%s", maxValue, minValue);
+		}
+	}
 }
 
 /*
@@ -472,7 +494,7 @@ bool Measure::Update(bool rereadOptions)
 			++m_MedianPos;
 			m_MedianPos %= MEDIAN_SIZE;
 
-			auto medianArray = m_MedianValues;
+			std::vector<double> medianArray = m_MedianValues;
 			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
 
 			double medianValue = medianArray[MEDIAN_SIZE / 2];
@@ -620,7 +642,7 @@ const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int d
 
 void Measure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
-	WCHAR format[32];
+	WCHAR format[32] = { 0 };
 	double value = 0;
 
 	if (decimals == 0)
