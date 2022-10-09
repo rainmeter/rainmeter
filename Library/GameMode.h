@@ -19,6 +19,7 @@ public:
 
 	bool IsDisabled() { return m_State == State::Disabled; }
 	bool IsEnabled() { return m_State == State::Enabled; }
+	bool IsLayoutEnabled() { return m_State == State::LayoutEnabled; }
 	bool IsForcedExit() { return m_State == State::ForcedExit; }
 
 	std::wstring& GetOnStartAction() { return m_OnStartAction; }
@@ -48,6 +49,7 @@ private:
 	{
 		Disabled = 0U,
 		Enabled,
+		LayoutEnabled,
 		ForcedExit = 999U
 	};
 

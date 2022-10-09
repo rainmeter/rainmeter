@@ -381,13 +381,14 @@ void GameMode::EnterGameMode()
 		rainmeter.DeleteAllUnmanagedSkins();
 		rainmeter.DeleteAllSkins();
 		rainmeter.DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
+
+		m_State = State::Enabled;
 	}
 	else
 	{
 		LoadLayout(m_OnStartAction);
+		m_State = State::LayoutEnabled;
 	}
-
-	m_State = State::Enabled;
 }
 
 void GameMode::ExitGameMode(bool force)
