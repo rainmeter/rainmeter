@@ -7,7 +7,7 @@ setlocal EnableDelayedExpansion
 :: |skip_delay_flag|: 1 or 0. 1 = skip any "timeout" commands (for github actions). 0 = adds a 2 second
 ::		delay when signing the binaries to prevent file locking by Windows.
 :: Examples:
-::		Build.bat final 4 4 0 3520 0		-> Rainmeter-4.4.0.exe
+::		Build.bat release 4 4 0 3520 0		-> Rainmeter-4.4.0.exe
 ::		Build.bat pre 4 4 1 3521 1			-> Rainmeter-4.4.1-prerelease.exe
 ::		Build.bat languages					-> No installer, just update the language .dll files
 
