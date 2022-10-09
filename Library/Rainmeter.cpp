@@ -1856,7 +1856,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 	}
 
 	// Game mode: Only load layouts if game is disabled. Enabled or "ForcedExit" should not any skins.
-	if (GetGameMode().IsDisabled())
+	if (GetGameMode().IsDisabled() || GetGameMode().IsLayoutEnabled())
 	{
 		ReloadSettings();
 
