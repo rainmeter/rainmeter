@@ -49,7 +49,7 @@ MeasurePlugin::~MeasurePlugin()
 			if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
 			{
 				// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-				// in the wrong case (ex. ".DLL", instead of ".dll"), so get the acutal file path
+				// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
 				if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
 				{
 					std::wstring tmpStr = pluginPath;
@@ -177,7 +177,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
 		{
 			// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-			// in the wrong case (ex. ".DLL", instead of ".dll"), so get the acutal file path
+			// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
 			if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
 			{
 				std::wstring tmpStr = pluginPath;
