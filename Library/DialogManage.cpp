@@ -163,6 +163,14 @@ void DialogManage::UpdateSkins(Skin* skin, bool deleted)
 	}
 }
 
+void DialogManage::UpdateSkinDraggableCheckBox()
+{
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.UpdateDraggableCheckBox();
+	}
+}
+
 void DialogManage::UpdateLayouts()
 {
 	if (c_Dialog && c_Dialog->m_TabLayouts.IsInitialized())
@@ -769,17 +777,7 @@ void DialogManage::TabSkins::SetControls()
 		item = GetControl(Id_DisplayMonitorButton);
 		EnableWindow(item, TRUE);
 
-		item = GetControl(Id_DraggableCheckBox);
-		if (GetRainmeter().GetDisableDragging())
-		{
-			EnableWindow(item, FALSE);
-			Button_SetCheck(item, BST_UNCHECKED);
-		}
-		else
-		{
-			EnableWindow(item, TRUE);
-			Button_SetCheck(item, m_SkinWindow->GetWindowDraggable());
-		}
+		UpdateDraggableCheckBox();
 
 		item = GetControl(Id_ClickThroughCheckBox);
 		EnableWindow(item, TRUE);
@@ -832,6 +830,24 @@ void DialogManage::TabSkins::SetControls()
 	else
 	{
 		SetWindowText(item, GetString(ID_STR_LOAD));
+	}
+}
+
+void DialogManage::TabSkins::UpdateDraggableCheckBox()
+{
+	if (m_SkinWindow)
+	{
+		HWND item = GetControl(Id_DraggableCheckBox);
+		if (GetRainmeter().GetDisableDragging())
+		{
+			EnableWindow(item, FALSE);
+			Button_SetCheck(item, BST_UNCHECKED);
+		}
+		else
+		{
+			EnableWindow(item, TRUE);
+			Button_SetCheck(item, m_SkinWindow->GetWindowDraggable());
+		}
 	}
 }
 
