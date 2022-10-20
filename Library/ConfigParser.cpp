@@ -1469,7 +1469,7 @@ D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_CO
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : ParseColor(result.c_str());
+	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
 D2D1_RECT_F ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue)

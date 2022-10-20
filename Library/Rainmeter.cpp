@@ -1856,7 +1856,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 	}
 
 	// Game mode: Only load layouts if game is disabled. Enabled or "ForcedExit" should not any skins.
-	if (GetGameMode().IsDisabled())
+	if (GetGameMode().IsDisabled() || GetGameMode().IsLayoutEnabled())
 	{
 		ReloadSettings();
 
@@ -2146,6 +2146,7 @@ void Rainmeter::SetDebug(bool debug)
 void Rainmeter::SetDisableDragging(bool dragging)
 {
 	m_DisableDragging = dragging;
+	DialogManage::UpdateSkinDraggableCheckBox();
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
