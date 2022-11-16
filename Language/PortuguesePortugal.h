@@ -28,7 +28,7 @@
 #define STR_DEBUGMODE                   "Modo de depuração"
 #define STR_EXIT                        "Sair"
 #define STR_FAVORITES                   "Favoritos"
-#define STR_NOFAVORITES                 "Não ha´favoritos"
+#define STR_NOFAVORITES                 "Não possui favoritos"
 
 // Skin menu
 #define STR_VARIANTS                    "Variantes"
@@ -142,7 +142,7 @@
 #define STR_RESETSTATISTICS             "Repor estatísticas"
 #define STR_LOGTOFILE                   "Registar num ficheiro"
 #define STR_HARDWAREACCELERATED         "Utilizar aceleração de hardware"
-#define STR_AUTOMATICUPDATE             "Automatically install updates"
+#define STR_AUTOMATICUPDATE             "Instalar atualizações automaticamente"
 
 #define STR_GAMEMODE                    "Modo de Jogo"
 #define STR_GAMEMODE_START              "Iniciar modo de jogo"
