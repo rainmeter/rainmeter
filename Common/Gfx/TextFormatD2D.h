@@ -32,7 +32,7 @@ public:
 	virtual bool IsInitialized() const override { return m_TextFormat != nullptr; }
 
 	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
+		const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
 		const FontCollection* fontCollection) override;
 
 	virtual void SetFontWeight(int weight) override;
