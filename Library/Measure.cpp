@@ -61,11 +61,13 @@ static const double g_TblScale[2][4] = {
 const int MEDIAN_SIZE = 3;
 
 Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
+	m_Value(0.0),
 	m_Invert(false),
 	m_LogMaxValue(false),
-	m_MinValue(),
+	m_MinValue(0.0),
 	m_MaxValue(1.0),
-	m_Value(),
+	m_MinValueDefined(false),
+	m_MaxValueDefined(false),
 	m_RegExpSubstitute(false),
 	m_MedianPos(),
 	m_AveragePos(),
@@ -92,7 +94,7 @@ void Measure::Initialize()
 {
 	m_Initialized = true;
 
-	if (GetRainmeter().GetDebug())
+	if (GetRainmeter().GetDebug() && (m_MinValueDefined || m_MaxValueDefined))
 	{
 		if (m_MaxValue == m_MinValue)
 		{
@@ -137,7 +139,10 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Paused = parser.ReadBool(section, L"Paused", false);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
+	m_MaxValueDefined = parser.GetLastValueDefined();
+
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
+	m_MaxValueDefined = parser.GetLastValueDefined();
 
 	m_IfActions.ReadOptions(parser, section);
 
