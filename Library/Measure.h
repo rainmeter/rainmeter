@@ -94,24 +94,29 @@ protected:
 	const WCHAR* CheckSubstitute(const WCHAR* buffer);
 	bool MakePlainSubstitute(std::wstring& str, size_t index);
 
-	bool m_Invert;					// If true, the value should be inverted
-	bool m_LogMaxValue;				// If true, The maximum & minimum values are logged
-	double m_MinValue;				// The minimum value (so far)
-	double m_MaxValue;				// The maximum value (so far)
-	double m_Value;					// The current value
+	double m_Value;
 
-	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
+	bool m_Invert;
+	
+	bool m_LogMaxValue;
+	double m_MinValue;
+	double m_MaxValue;
+	bool m_MinValueDefined;
+	bool m_MaxValueDefined;
+
+	std::vector<std::wstring> m_Substitute;
 	bool m_RegExpSubstitute;
 
 	std::vector<double> m_MedianValues;	// The values for the median filtering
-	UINT m_MedianPos;				// Position in the median array, where the new value is placed
+	UINT m_MedianPos;					// Position in the median array, where the new value is placed
 
 	std::vector<double> m_AverageValues;
 	UINT m_AveragePos;
 	UINT m_AverageSize;
 
 	IfActions m_IfActions;
-	bool m_Disabled;				// Status of the measure
+
+	bool m_Disabled;
 	bool m_Paused;
 	bool m_Initialized;
 
