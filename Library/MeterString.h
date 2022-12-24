@@ -82,7 +82,7 @@ private:
 	TEXTSTYLE m_Style;
 	TEXTEFFECT m_Effect;
 	TEXTCASE m_Case;
-	int m_FontSize;
+	FLOAT m_FontSize;
 	double m_Scale;
 	bool m_NoDecimals;
 	bool m_Percentual;

@@ -191,7 +191,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 }
 
 void TextFormatD2D::SetProperties(
-	const WCHAR* fontFamily, int size, bool bold, bool italic,
+	const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
 	const FontCollection* fontCollection)
 {
 	auto fontCollectionD2D = (FontCollectionD2D*)fontCollection;
@@ -706,7 +706,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			FLOAT size = (FLOAT)ConfigParser::ParseInt(options[1].c_str(), 0);
+			FLOAT size = (FLOAT)ConfigParser::ParseDouble(options[1].c_str(), 10.0);
 			UpdateInlineSize(index, pattern, size);
 			return true;
 		}

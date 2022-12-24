@@ -21,7 +21,7 @@ MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Style(NORMAL),
 	m_Effect(EFFECT_NONE),
 	m_Case(TEXTCASE_NONE),
-	m_FontSize(10),
+	m_FontSize(10.0f),
 	m_Scale(1.0),
 	m_NoDecimals(true),
 	m_Percentual(true),
@@ -117,7 +117,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
-	int oldFontSize = m_FontSize;
+	FLOAT oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
 	Gfx::HorizontalAlignment oldHAlign = m_TextFormat->GetHorizontalAlignment();
 	Gfx::VerticalAlignment oldVAlign = m_TextFormat->GetVerticalAlignment();
@@ -161,10 +161,10 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_FontFace = L"Arial";
 	}
 
-	m_FontSize = parser.ReadInt(section, L"FontSize", 10);
-	if (m_FontSize < 0)
+	m_FontSize = (FLOAT)parser.ReadFloat(section, L"FontSize", 10.0);
+	if (m_FontSize < 0.0f)
 	{
-		m_FontSize = 10;
+		m_FontSize = 10.0f;
 	}
 
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
