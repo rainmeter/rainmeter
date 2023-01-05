@@ -2265,6 +2265,12 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				list.clear();
 				for (auto& line : tokens)
 				{
+					// No self-references
+					if (_wcsicmp(line.c_str(), L"Rainmeter.exe") == 0)
+					{
+						continue;
+					}
+
 					list += line;
 					if (line != tokens.back())
 					{
