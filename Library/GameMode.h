@@ -44,6 +44,10 @@ public:
 
 	void ValidateActions();
 
+	bool HasBangOverride(LPCWSTR str);
+
+	static const std::vector<LPCWSTR>& GetBangOverrideList();
+
 private:
 	enum class State : UINT
 	{
