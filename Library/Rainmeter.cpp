@@ -1187,11 +1187,7 @@ void Rainmeter::DeactivateSkin(Skin* skin, int folderIndex, bool save)
 
 		skin->Deactivate();
 
-		// Show tray icon if no skins are active
-		if (m_Skins.empty())
-		{
-			m_TrayIcon->SetTrayIcon(true, true);
-		}
+		ShowTrayIconIfNecessary();
 	}
 }
 
@@ -2236,5 +2232,13 @@ void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstr
 				*log += layoutPath;
 			}
 		}
+	}
+}
+
+void Rainmeter::ShowTrayIconIfNecessary()
+{
+	if (m_Skins.empty())  // Show tray icon if no skins are active
+	{
+		m_TrayIcon->SetTrayIcon(true, true);
 	}
 }

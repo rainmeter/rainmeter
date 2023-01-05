@@ -224,6 +224,8 @@ private:
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
+	void ShowTrayIconIfNecessary();
+
 	TrayIcon* m_TrayIcon;
 
 	std::multimap<int, int> m_SkinOrders;
