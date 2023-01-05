@@ -221,6 +221,34 @@ void GameMode::ValidateActions()
 	}
 }
 
+bool GameMode::HasBangOverride(LPCWSTR str)
+{
+	std::wstring tmp = str;
+	std::wstring::size_type pos = tmp.find_first_of('!');
+	if (pos != std::wstring::npos)
+	{
+		tmp = tmp.substr(pos + 1).c_str();
+		for (const auto item : GetBangOverrideList())
+		{
+			if (_wcsicmp(tmp.c_str(), item) == 0)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+const std::vector<LPCWSTR>& GameMode::GetBangOverrideList()
+{
+	static const std::vector<LPCWSTR> s_BangOverrideList =
+	{
+		L"Quit"
+	};
+	return s_BangOverrideList;
+}
+
 void GameMode::StartTimer()
 {
 	OnTimerEvent(s_TimerEventID);  // Don't wait for the first interval
