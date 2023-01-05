@@ -382,6 +382,8 @@ void GameMode::EnterGameMode()
 		rainmeter.DeleteAllSkins();
 		rainmeter.DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
 
+		rainmeter.ShowTrayIconIfNecessary();
+
 		m_State = State::Enabled;
 	}
 	else
