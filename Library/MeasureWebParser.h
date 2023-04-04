@@ -10,6 +10,8 @@
 
 #include "Measure.h"
 
+#include <vector>
+
 struct ProxySetting
 {
 	std::wstring agent;
@@ -17,6 +19,12 @@ struct ProxySetting
 	HINTERNET handle;
 
 	ProxySetting() : handle() {}
+};
+
+enum class ParseMode
+{
+	Regex,
+	Json
 };
 
 class MeasureWebParser : public Measure
@@ -41,9 +49,13 @@ private:
 	static unsigned __stdcall NetworkThreadProc(void* pParam);
 	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
+	void ParseDataRegex(const WCHAR *data, DWORD dataLength);
+	void ParseDataJson(const WCHAR *data, DWORD dataLength);
 
 	std::wstring m_Url;
+	ParseMode m_ParseMode;
 	std::wstring m_RegExp;
+	std::vector<std::wstring> m_JsonValueSpecs;
 	std::wstring m_ResultString;
 	std::wstring m_ErrorString;
 	std::wstring m_FinishAction;
