@@ -16,86 +16,48 @@ namespace Lexilla {
 // syntactically significant. UTF-8 avoids this as all trail bytes are >= 0x80
 class StyleContext {
 	LexAccessor &styler;
-	Scintilla::IDocument *multiByteAccess;
-	Sci_PositionU endPos;
-	Sci_PositionU lengthDocument;
+	Scintilla::IDocument * const multiByteAccess;
+	const Sci_PositionU lengthDocument;
+	const Sci_PositionU endPos;
+	const Sci_Position lineDocEnd;
 
 	// Used for optimizing GetRelativeCharacter
-	Sci_PositionU posRelative;
+	Sci_PositionU posRelative = 0;
 	Sci_PositionU currentPosLastRelative;
-	Sci_Position offsetRelative;
+	Sci_Position offsetRelative = 0;
 
 	void GetNextChar() {
 		if (multiByteAccess) {
 			chNext = multiByteAccess->GetCharacterAndWidth(currentPos+width, &widthNext);
 		} else {
-			chNext = static_cast<unsigned char>(styler.SafeGetCharAt(currentPos+width, 0));
-			widthNext = 1;
+			const unsigned char charNext = styler.SafeGetCharAt(currentPos + width, 0);
+			chNext = charNext;
 		}
 		// End of line determined from line end position, allowing CR, LF,
 		// CRLF and Unicode line ends as set by document.
+		const Sci_Position currentPosSigned = currentPos;
 		if (currentLine < lineDocEnd)
-			atLineEnd = static_cast<Sci_Position>(currentPos) >= (lineStartNext-1);
+			atLineEnd = currentPosSigned >= (lineStartNext-1);
 		else // Last line
-			atLineEnd = static_cast<Sci_Position>(currentPos) >= lineStartNext;
+			atLineEnd = currentPosSigned >= lineStartNext;
 	}
 
 public:
 	Sci_PositionU currentPos;
 	Sci_Position currentLine;
-	Sci_Position lineDocEnd;
 	Sci_Position lineEnd;
 	Sci_Position lineStartNext;
 	bool atLineStart;
-	bool atLineEnd;
+	bool atLineEnd = false;
 	int state;
-	int chPrev;
-	int ch;
-	Sci_Position width;
-	int chNext;
-	Sci_Position widthNext;
+	int chPrev = 0;
+	int ch = 0;
+	Sci_Position width = 0;
+	int chNext = 0;
+	Sci_Position widthNext = 1;
 
 	StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-                        int initStyle, LexAccessor &styler_, char chMask='\377') :
-		styler(styler_),
-		multiByteAccess(nullptr),
-		endPos(startPos + length),
-		posRelative(0),
-		currentPosLastRelative(0x7FFFFFFF),
-		offsetRelative(0),
-		currentPos(startPos),
-		currentLine(-1),
-		lineEnd(-1),
-		lineStartNext(-1),
-		atLineEnd(false),
-		state(initStyle & chMask), // Mask off all bits which aren't in the chMask.
-		chPrev(0),
-		ch(0),
-		width(0),
-		chNext(0),
-		widthNext(1) {
-		if (styler.Encoding() != EncodingType::eightBit) {
-			multiByteAccess = styler.MultiByteAccess();
-		}
-		styler.StartAt(startPos /*, chMask*/);
-		styler.StartSegment(startPos);
-		currentLine = styler.GetLine(startPos);
-		lineEnd = styler.LineEnd(currentLine);
-		lineStartNext = styler.LineStart(currentLine+1);
-		lengthDocument = static_cast<Sci_PositionU>(styler.Length());
-		if (endPos == lengthDocument)
-			endPos++;
-		lineDocEnd = styler.GetLine(lengthDocument);
-		atLineStart = static_cast<Sci_PositionU>(styler.LineStart(currentLine)) == startPos;
-
-		// Variable width is now 0 so GetNextChar gets the char at currentPos into chNext/widthNext
-		width = 0;
-		GetNextChar();
-		ch = chNext;
-		width = widthNext;
-
-		GetNextChar();
-	}
+                        int initStyle, LexAccessor &styler_, char chMask = '\377');
 	// Deleted so StyleContext objects can not be copied.
 	StyleContext(const StyleContext &) = delete;
 	StyleContext &operator=(const StyleContext &) = delete;
@@ -155,11 +117,12 @@ public:
 		styler.ColourTo(currentPos - ((currentPos > lengthDocument) ? 2 : 1), state);
 		state = state_;
 	}
-	Sci_Position LengthCurrent() const {
+	Sci_Position LengthCurrent() const noexcept {
 		return currentPos - styler.GetStartSegment();
 	}
 	int GetRelative(Sci_Position n, char chDefault='\0') {
-		return static_cast<unsigned char>(styler.SafeGetCharAt(currentPos+n, chDefault));
+		const unsigned char chRelative = styler.SafeGetCharAt(currentPos + n, chDefault);
+		return chRelative;
 	}
 	int GetRelativeCharacter(Sci_Position n) {
 		if (n == 0)
@@ -180,25 +143,32 @@ public:
 			return chReturn;
 		} else {
 			// fast version for single byte encodings
-			return static_cast<unsigned char>(styler.SafeGetCharAt(currentPos + n, 0));
+			const unsigned char chRelative = styler.SafeGetCharAt(currentPos + n, 0);
+			return chRelative;
 		}
 	}
 	bool MatchLineEnd() const noexcept {
-		return static_cast<Sci_Position>(currentPos) == lineEnd;
+		const Sci_Position currentPosSigned = currentPos;
+		return currentPosSigned == lineEnd;
 	}
-	bool Match(char ch0) const {
-		return ch == static_cast<unsigned char>(ch0);
+	bool Match(char ch0) const noexcept {
+		const unsigned char uch0 = ch0;
+		return ch == uch0;
 	}
-	bool Match(char ch0, char ch1) const {
-		return (ch == static_cast<unsigned char>(ch0)) && (chNext == static_cast<unsigned char>(ch1));
+	bool Match(char ch0, char ch1) const noexcept {
+		const unsigned char uch0 = ch0;
+		const unsigned char uch1 = ch1;
+		return (ch == uch0) && (chNext == uch1);
 	}
 	bool Match(const char *s) {
-		if (ch != static_cast<unsigned char>(*s))
+		const unsigned char su = *s;
+		if (ch != su)
 			return false;
 		s++;
 		if (!*s)
 			return true;
-		if (chNext != static_cast<unsigned char>(*s))
+		const unsigned char sNext = *s;
+		if (chNext != sNext)
 			return false;
 		s++;
 		for (int n=2; *s; n++) {
@@ -213,6 +183,8 @@ public:
 	bool MatchIgnoreCase2(const char *s);
 	void GetCurrent(char *s, Sci_PositionU len);
 	void GetCurrentLowered(char *s, Sci_PositionU len);
+	enum class Transform { none, lower };
+	void GetCurrentString(std::string &string, Transform transform);
 };
 
 }

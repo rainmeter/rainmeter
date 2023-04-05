@@ -216,10 +216,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (styler.SafeGetCharAt(i, '\0') == ']')
                 {
                     styler.ColourTo(i, TC_SECTION);
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
@@ -390,13 +394,18 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '\0':
+            {
                 // Read the last character if at EOF
                 if (isEOF)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
+            }
+            [[fallthrough]];
+
             case '\t':
             case ' ':
+            {
                 if (isExtOption)
                 {
                     isPipeOpt = true;
@@ -413,6 +422,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     }
                     break;
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 if (!isExtOption || isEOF)
@@ -450,6 +462,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '[':
+            {
                 if (styler.SafeGetCharAt(i + 1, '\0') == '#')
                 {
                     isNested = true;
@@ -459,6 +472,8 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     state = TextState::TS_VARIABLE;
                     break;
                 }
+            }
+            [[fallthrough]];
 
             default:
                 if (count < _countof(buffer))
@@ -483,10 +498,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '=':
+            {
                 onlyDigits = true;
                 state = TextState::TS_VALUE;
                 styler.ColourTo(i - 1, TC_DEFAULT);
                 styler.ColourTo(i, TC_EQUALS);
+                break;
+            }
+
             default:
                 break;
             }
@@ -554,6 +573,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '\0':
+            {
                 if (isEOF)
                 {
                     if (onlyDigits && !isNotNumValOpt && Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
@@ -565,6 +585,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         styler.ColourTo(i, TC_PIPE);
                     }
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
@@ -587,7 +610,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case ')':
+            {
                 --countParentheses;
+            }
+            [[fallthrough]];
+
             default:
                 if (isNotNumValOpt)
                 {
@@ -624,6 +651,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (isEOF)
                 {
                     if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
@@ -635,6 +663,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         styler.ColourTo(i, TC_PIPE);
                     }
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 onlyDigits = false;
@@ -684,10 +715,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (isEOF)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
             case '\t':
@@ -765,6 +800,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '#':
+            {
                 if (isNested)
                 {
                     if (styler.SafeGetCharAt(i - 1, '\0') == '[')
@@ -776,6 +812,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     styler.ColourTo(nestVarIdx, TC_DEFAULT);
                     isNested = false;
                 }
+            }
+            [[fallthrough]];
+
             case ']':
                 if (!isNested && ch == ']')
                 {
@@ -811,18 +850,26 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '[':
+            {
                 --i;
+            }
+            [[fallthrough]];
+
             case ' ':
                 state = TextState::TS_VALUE;
                 break;
 
             case '\'':
             case '"':
+            {
                 if (isSubsOpt)
                 {
                     state = TextState::TS_VALUE;
                     break;
                 }
+            }
+            [[fallthrough]];
+
             default:
                 if (count < _countof(buffer))
                 {
@@ -900,7 +947,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
             case '\r':
             case '\n':
+            {
                 state = TextState::TS_DEFAULT;
+            }
+            [[fallthrough]];
+
             default:
                 styler.ColourTo(i, TC_DEFAULT);
             }

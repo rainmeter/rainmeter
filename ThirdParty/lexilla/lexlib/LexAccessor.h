@@ -69,6 +69,9 @@ public:
 		case 950:
 		case 1361:
 			encodingType = EncodingType::dbcs;
+			break;
+		default:
+			break;
 		}
 	}
 	char operator[](Sci_Position position) {
@@ -92,8 +95,9 @@ public:
 		return buf[position - startPos];
 	}
 	bool IsLeadByte(char ch) const {
+		const unsigned char uch = ch;
 		return
-			(static_cast<unsigned char>(ch) >= 0x80) &&	// non-ASCII
+			(uch >= 0x80) &&	// non-ASCII
 			(encodingType == EncodingType::dbcs) &&		// IsDBCSLeadByte only for DBCS
 			pAccess->IsDBCSLeadByte(ch);
 	}
@@ -101,6 +105,7 @@ public:
 		return encodingType;
 	}
 	bool Match(Sci_Position pos, const char *s) {
+		assert(s);
 		for (int i=0; *s; i++) {
 			if (*s != SafeGetCharAt(pos+i))
 				return false;
@@ -120,14 +125,20 @@ public:
 	char StyleAt(Sci_Position position) const {
 		return pAccess->StyleAt(position);
 	}
+	int StyleIndexAt(Sci_Position position) const {
+		const unsigned char style = pAccess->StyleAt(position);
+		return style;
+	}
 	// Return style value from buffer when in buffer, else retrieve from document.
 	// This is faster and can avoid calls to Flush() as that may be expensive.
-	char BufferStyleAt(Sci_Position position) const {
+	int BufferStyleAt(Sci_Position position) const {
 		const Sci_Position index = position - startPosStyling;
 		if (index >= 0 && index < validLen) {
-			return styleBuf[index];
+			const unsigned char style = styleBuf[index];
+			return style;
 		}
-		return pAccess->StyleAt(position);
+		const unsigned char style = pAccess->StyleAt(position);
+		return style;
 	}
 	Sci_Position GetLine(Sci_Position position) const {
 		return pAccess->LineFromPosition(position);
@@ -141,7 +152,7 @@ public:
 	int LevelAt(Sci_Position line) const {
 		return pAccess->GetLevel(line);
 	}
-	Sci_Position Length() const {
+	Sci_Position Length() const noexcept {
 		return lenDoc;
 	}
 	void Flush() {
@@ -162,10 +173,10 @@ public:
 		pAccess->StartStyling(start);
 		startPosStyling = start;
 	}
-	Sci_PositionU GetStartSegment() const {
+	Sci_PositionU GetStartSegment() const noexcept {
 		return startSeg;
 	}
-	void StartSegment(Sci_PositionU pos) {
+	void StartSegment(Sci_PositionU pos) noexcept {
 		startSeg = pos;
 	}
 	void ColourTo(Sci_PositionU pos, int chAttr) {
@@ -178,7 +189,7 @@ public:
 
 			if (validLen + (pos - startSeg + 1) >= bufferSize)
 				Flush();
-			const char attr = static_cast<char>(chAttr);
+			const unsigned char attr = chAttr & 0xffU;
 			if (validLen + (pos - startSeg + 1) >= bufferSize) {
 				// Too big for buffer so send directly
 				pAccess->SetStyleFor(pos - startSeg + 1, attr);

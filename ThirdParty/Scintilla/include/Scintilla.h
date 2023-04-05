@@ -57,11 +57,13 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_GETCURRENTPOS 2008
 #define SCI_GETANCHOR 2009
 #define SCI_GETSTYLEAT 2010
+#define SCI_GETSTYLEINDEXAT 2038
 #define SCI_REDO 2011
 #define SCI_SETUNDOCOLLECTION 2012
 #define SCI_SELECTALL 2013
 #define SCI_SETSAVEPOINT 2014
 #define SCI_GETSTYLEDTEXT 2015
+#define SCI_GETSTYLEDTEXTFULL 2778
 #define SCI_CANREDO 2016
 #define SCI_MARKERLINEFROMHANDLE 2017
 #define SCI_MARKERDELETEHANDLE 2018
@@ -151,7 +153,12 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_MARK_RGBAIMAGE 30
 #define SC_MARK_BOOKMARK 31
 #define SC_MARK_VERTICALBOOKMARK 32
+#define SC_MARK_BAR 33
 #define SC_MARK_CHARACTER 10000
+#define SC_MARKNUM_HISTORY_REVERTED_TO_ORIGIN 21
+#define SC_MARKNUM_HISTORY_SAVED 22
+#define SC_MARKNUM_HISTORY_MODIFIED 23
+#define SC_MARKNUM_HISTORY_REVERTED_TO_MODIFIED 24
 #define SC_MARKNUM_FOLDEREND 25
 #define SC_MARKNUM_FOLDEROPENMID 26
 #define SC_MARKNUM_FOLDERMIDTAIL 27
@@ -274,6 +281,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_STYLESETHOTSPOT 2409
 #define SCI_STYLESETCHECKMONOSPACED 2254
 #define SCI_STYLEGETCHECKMONOSPACED 2255
+#define SCI_STYLESETINVISIBLEREPRESENTATION 2256
+#define SCI_STYLEGETINVISIBLEREPRESENTATION 2257
 #define SC_ELEMENT_LIST 0
 #define SC_ELEMENT_LIST_BACK 1
 #define SC_ELEMENT_LIST_SELECTED 2
@@ -352,7 +361,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define INDIC_POINTCHARACTER 19
 #define INDIC_GRADIENT 20
 #define INDIC_GRADIENTCENTRE 21
-#define INDIC_EXPLORERLINK 22
+#define INDIC_POINT_TOP 22
+#define INDIC_EXPLORERLINK 23
 #define INDIC_CONTAINER 8
 #define INDIC_IME 32
 #define INDIC_IME_MAX 35
@@ -360,7 +370,15 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define INDICATOR_CONTAINER 8
 #define INDICATOR_IME 32
 #define INDICATOR_IME_MAX 35
-#define INDICATOR_MAX 35
+#define INDICATOR_HISTORY_REVERTED_TO_ORIGIN_INSERTION 36
+#define INDICATOR_HISTORY_REVERTED_TO_ORIGIN_DELETION 37
+#define INDICATOR_HISTORY_SAVED_INSERTION 38
+#define INDICATOR_HISTORY_SAVED_DELETION 39
+#define INDICATOR_HISTORY_MODIFIED_INSERTION 40
+#define INDICATOR_HISTORY_MODIFIED_DELETION 41
+#define INDICATOR_HISTORY_REVERTED_TO_MODIFIED_INSERTION 42
+#define INDICATOR_HISTORY_REVERTED_TO_MODIFIED_DELETION 43
+#define INDICATOR_MAX 43
 #define SCI_INDICSETSTYLE 2080
 #define SCI_INDICGETSTYLE 2081
 #define SCI_INDICSETFORE 2082
@@ -474,7 +492,15 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCFIND_POSIX 0x00400000
 #define SCFIND_CXX11REGEX 0x00800000
 #define SCI_FINDTEXT 2150
+#define SCI_FINDTEXTFULL 2196
 #define SCI_FORMATRANGE 2151
+#define SCI_FORMATRANGEFULL 2777
+#define SC_CHANGE_HISTORY_DISABLED 0
+#define SC_CHANGE_HISTORY_ENABLED 1
+#define SC_CHANGE_HISTORY_MARKERS 2
+#define SC_CHANGE_HISTORY_INDICATORS 4
+#define SCI_SETCHANGEHISTORY 2780
+#define SCI_GETCHANGEHISTORY 2781
 #define SCI_GETFIRSTVISIBLELINE 2152
 #define SCI_GETLINE 2153
 #define SCI_GETLINECOUNT 2154
@@ -487,7 +513,9 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_SETSEL 2160
 #define SCI_GETSELTEXT 2161
 #define SCI_GETTEXTRANGE 2162
+#define SCI_GETTEXTRANGEFULL 2039
 #define SCI_HIDESELECTION 2163
+#define SCI_GETSELECTIONHIDDEN 2088
 #define SCI_POINTXFROMPOSITION 2164
 #define SCI_POINTYFROMPOSITION 2165
 #define SCI_LINEFROMPOSITION 2166
@@ -530,6 +558,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_TARGETWHOLEDOCUMENT 2690
 #define SCI_REPLACETARGET 2194
 #define SCI_REPLACETARGETRE 2195
+#define SCI_REPLACETARGETMINIMAL 2779
 #define SCI_SEARCHINTARGET 2197
 #define SCI_SETSEARCHFLAGS 2198
 #define SCI_GETSEARCHFLAGS 2199
@@ -574,6 +603,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_FOLDACTION_CONTRACT 0
 #define SC_FOLDACTION_EXPAND 1
 #define SC_FOLDACTION_TOGGLE 2
+#define SC_FOLDACTION_CONTRACT_EVERY_LEVEL 4
 #define SCI_FOLDLINE 2237
 #define SCI_FOLDCHILDREN 2238
 #define SCI_EXPANDCHILDREN 2239
@@ -1212,6 +1242,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_AC_TAB 3
 #define SC_AC_NEWLINE 4
 #define SC_AC_COMMAND 5
+#define SC_AC_SINGLE_CHOICE 6
 #define SC_CHARACTERSOURCE_DIRECT_INPUT 0
 #define SC_CHARACTERSOURCE_TENTATIVE_INPUT 1
 #define SC_CHARACTERSOURCE_IME_RESULT 2
@@ -1271,8 +1302,18 @@ struct Sci_CharacterRange {
 	Sci_PositionCR cpMax;
 };
 
+struct Sci_CharacterRangeFull {
+	Sci_Position cpMin;
+	Sci_Position cpMax;
+};
+
 struct Sci_TextRange {
 	struct Sci_CharacterRange chrg;
+	char *lpstrText;
+};
+
+struct Sci_TextRangeFull {
+	struct Sci_CharacterRangeFull chrg;
 	char *lpstrText;
 };
 
@@ -1280,6 +1321,12 @@ struct Sci_TextToFind {
 	struct Sci_CharacterRange chrg;
 	const char *lpstrText;
 	struct Sci_CharacterRange chrgText;
+};
+
+struct Sci_TextToFindFull {
+	struct Sci_CharacterRangeFull chrg;
+	const char *lpstrText;
+	struct Sci_CharacterRangeFull chrgText;
 };
 
 typedef void *Sci_SurfaceID;
@@ -1300,6 +1347,14 @@ struct Sci_RangeToFormat {
 	struct Sci_Rectangle rc;
 	struct Sci_Rectangle rcPage;
 	struct Sci_CharacterRange chrg;
+};
+
+struct Sci_RangeToFormatFull {
+	Sci_SurfaceID hdc;
+	Sci_SurfaceID hdcTarget;
+	struct Sci_Rectangle rc;
+	struct Sci_Rectangle rcPage;
+	struct Sci_CharacterRangeFull chrg;
 };
 
 #ifndef __cplusplus
@@ -1358,14 +1413,14 @@ struct SCNotification {
 	int characterSource;	/* SCN_CHARADDED */
 };
 
-struct SearchResultMarking {
-	intptr_t _start;
-	intptr_t _end;
+#include <vector>
+struct SearchResultMarkingLine { // each line could have several segments if user want to see only 1 found line which contains several results
+	std::vector<std::pair<intptr_t, intptr_t>> _segmentPostions; // a vector of pair of start & end of occurrence for colourizing
 };
 
 struct SearchResultMarkings {
 	intptr_t _length;
-	SearchResultMarking *_markings;
+	SearchResultMarkingLine *_markings;
 };
 #ifdef INCLUDE_DEPRECATED_FEATURES
 
