@@ -38,7 +38,7 @@ namespace RainLexer {
 inline static char* LexerName();
 inline static TCHAR* LexerStatusText();
 
-inline bool IsReserved(int ch);
+inline constexpr bool IsReserved(int ch);
 
 class RainLexer final : public ILexer5
 {
@@ -97,6 +97,8 @@ private:
         TS_BANG,
         TS_VARIABLE,
         TS_CHAR_VARIABLE,
+        TS_MEASURE_VARIABLE,
+        TS_MOUSE_VARIABLE,
         TS_LINEEND = 27
     };
 
@@ -117,7 +119,9 @@ private:
         TC_DEP_VALID,
         TC_DEP_BANG,
         TC_CHAR_VARIABLE,
-        TC_PIPE
+        TC_PIPE,
+        TS_MEASURE_VARIABLE,
+        TS_MOUSE_VARIABLE
     };
 
     Lexilla::WordList m_WordLists[9];
@@ -126,7 +130,7 @@ private:
     const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
 
     // Value and option bangs
-    const std::set<std::string> setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "writekeyvalue" };
+    const std::set<std::string> setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
 
     // Options with values and subvalues on same line
     const std::set<std::string> extKeywordsOpt = { "inlinesetting", "shape" };
@@ -180,6 +184,9 @@ private:
         "whitelist", "wifiinfotype", "wildcardsearch", "windowclass", "windowmessage", "windowname",
         "x1mousedoubleclickaction", "x1mousedownaction", "x1mouseupaction", "x2mousedoubleclickaction", "x2mousedownaction", "x2mouseupaction"
     };
+
+    // Mouse variables
+    const std::set<std::string> mouseVar = { "mousex", "mousex:%", "mousey", "mousey:%" };
 };
 
 }// namespace RainLexer
