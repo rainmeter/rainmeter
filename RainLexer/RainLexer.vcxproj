@@ -62,7 +62,7 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../ThirdParty/Scintilla/include;../ThirdParty/lexilla/include;../ThirdParty/lexilla/lexlib;../ThirdParty/NotepadPlusPlus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
@@ -94,7 +94,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalOptions>/Gw %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /GA %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -109,14 +109,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
     <ClCompile>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</SDLCheck>
       <IntrinsicFunctions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</IntrinsicFunctions>
       <FavorSizeOrSpeed Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Speed</FavorSizeOrSpeed>
       <StringPooling Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</StringPooling>
       <ControlFlowGuard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Guard</ControlFlowGuard>
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ConformanceMode>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp17</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp20</LanguageStandard>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</SDLCheck>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpp20</LanguageStandard>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ConformanceMode>
+      <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</OmitFramePointers>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -136,7 +140,14 @@
       <StringPooling Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</StringPooling>
       <ControlFlowGuard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Guard</ControlFlowGuard>
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ConformanceMode>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp17</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp20</LanguageStandard>
+      <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</OmitFramePointers>
+      <GuardEHContMetadata Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GuardEHContMetadata>
+    </ClCompile>
+    <ClCompile>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</SDLCheck>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ConformanceMode>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

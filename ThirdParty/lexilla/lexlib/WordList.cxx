@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstring>
 
+#include <string>
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -24,6 +25,7 @@ namespace {
  * after each word.
  */
 std::unique_ptr<char *[]> ArrayFromWordList(char *wordlist, size_t slen, size_t *len, bool onlyLineEnds = false) {
+	assert(wordlist);
 	size_t words = 0;
 	// For rapid determination of whether a character is a separator, build
 	// a look up table.
@@ -146,10 +148,11 @@ bool WordList::Set(const char *s) {
 bool WordList::InList(const char *s) const noexcept {
 	if (!words)
 		return false;
-	const unsigned char firstChar = s[0];
+	const char first = s[0];
+	const unsigned char firstChar = first;
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (words[j][0] == firstChar) {
+		while (words[j][0] == first) {
 			if (s[1] == words[j][1]) {
 				const char *a = words[j] + 1;
 				const char *b = s + 1;
@@ -180,6 +183,12 @@ bool WordList::InList(const char *s) const noexcept {
 	return false;
 }
 
+/** convenience overload so can easily call with std::string.
+ */
+bool WordList::InList(const std::string &s) const noexcept {
+	return InList(s.c_str());
+}
+
 /** similar to InList, but word s can be a substring of keyword.
  * eg. the keyword define is defined as def~ine. This means the word must start
  * with def to be a keyword, but also defi, defin and define are valid.
@@ -188,10 +197,11 @@ bool WordList::InList(const char *s) const noexcept {
 bool WordList::InListAbbreviated(const char *s, const char marker) const noexcept {
 	if (!words)
 		return false;
-	const unsigned char firstChar = s[0];
+	const char first = s[0];
+	const unsigned char firstChar = first;
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (words[j][0] == firstChar) {
+		while (words[j][0] == first) {
 			bool isSubword = false;
 			int start = 1;
 			if (words[j][1] == marker) {
@@ -242,10 +252,11 @@ bool WordList::InListAbbreviated(const char *s, const char marker) const noexcep
 bool WordList::InListAbridged(const char *s, const char marker) const noexcept {
 	if (!words)
 		return false;
-	const unsigned char firstChar = s[0];
+	const char first = s[0];
+	const unsigned char firstChar = first;
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (words[j][0] == firstChar) {
+		while (words[j][0] == first) {
 			const char *a = words[j];
 			const char *b = s;
 			while (*a && *a == *b) {

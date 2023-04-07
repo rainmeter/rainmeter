@@ -30,7 +30,7 @@ const int RAINMETER_QUERY_ID_SKINS_PATH = 4101;
 
 HWND g_RainmeterWindow = nullptr;
 //HWND g_NppWindow = nullptr;
-WCHAR g_SkinsPath[MAX_PATH] = {0};
+WCHAR g_SkinsPath[MAX_PATH]{};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -99,7 +99,7 @@ void RefreshSkin()
 		return;
 	}
 
-	WCHAR currentPath[MAX_PATH];
+	WCHAR currentPath[MAX_PATH]{};
 	auto ret = static_cast<BOOL>(SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, MAX_PATH, reinterpret_cast<LPARAM>(&currentPath)));
 
 	if (ret > 0)
@@ -116,12 +116,12 @@ void RefreshSkin()
 			if (pos != nullptr)
 			{
 				relativePath[pos - relativePath] = L'\0';
-				WCHAR buffer[512];
+				WCHAR buffer[512]{};
 				const int len = _snwprintf(
 					buffer, _countof(buffer), L"!Refresh \"%s\"", relativePath);
 				buffer[_countof(buffer) - 1] = L'\0';
 
-				COPYDATASTRUCT cds;
+				COPYDATASTRUCT cds{};
 				cds.dwData = 1;
 				cds.cbData = static_cast<DWORD>(len + 1) * sizeof(WCHAR);
 				cds.lpData = static_cast<void*>(buffer);
@@ -138,7 +138,7 @@ void RefreshAll()
 		return;
 	}
 
-	COPYDATASTRUCT cds;
+	COPYDATASTRUCT cds{};
 	cds.dwData = 1;
 	cds.cbData = sizeof(L"!Refresh *");
 	cds.lpData = (PVOID)L"!Refresh *";
@@ -180,14 +180,13 @@ void addToolbarIcon()
 	auto dpi = GetDeviceCaps(GetWindowDC(nppData._nppHandle), LOGPIXELSX);
 	int size = 16 * dpi / 96;
 
-	HMODULE hModule = nullptr;
 	auto hInstance = static_cast<HINSTANCE>(GetCurrentModule());
 
-	toolbarIconsWithDarkMode tbRefresh;
+	toolbarIconsWithDarkMode tbRefresh{};
 	tbRefresh.hToolbarIcon = static_cast<HICON>(::LoadImage(hInstance, MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, size, size, style));
 	tbRefresh.hToolbarIconDarkMode = tbRefresh.hToolbarIcon;
 
-	ICONINFO iconinfo;
+	ICONINFO iconinfo{};
 	GetIconInfo(tbRefresh.hToolbarIcon, &iconinfo);
 	tbRefresh.hToolbarBmp = iconinfo.hbmColor;
 

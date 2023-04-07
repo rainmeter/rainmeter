@@ -30,7 +30,7 @@ static TCHAR* LexerStatusText() {
     return const_cast<TCHAR*>(LEXER_STATUS_TEXT);
 }
 
-bool IsReserved(int ch) {
+constexpr bool IsReserved(int ch) {
     if (Lexilla::IsAlphaNumeric(ch))
     {
         return false;
@@ -107,7 +107,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     const Lexilla::WordList& depOptions = m_WordLists[7];
     const Lexilla::WordList& depBangs = m_WordLists[8];
 
-    auto IsOptionInExtList = [] (const std::set<std::string> option, char* optBuffer)
+    auto IsOptionInExtList = [] (const std::set<std::string> option, char* optBuffer) -> bool
     {
         return option.find(optBuffer) != option.end();
     };
@@ -216,10 +216,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (styler.SafeGetCharAt(i, '\0') == ']')
                 {
                     styler.ColourTo(i, TC_SECTION);
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
@@ -390,13 +394,18 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '\0':
+            {
                 // Read the last character if at EOF
                 if (isEOF)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
+            }
+            [[fallthrough]];
+
             case '\t':
             case ' ':
+            {
                 if (isExtOption)
                 {
                     isPipeOpt = true;
@@ -413,6 +422,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     }
                     break;
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 if (!isExtOption || isEOF)
@@ -450,6 +462,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '[':
+            {
                 if (styler.SafeGetCharAt(i + 1, '\0') == '#')
                 {
                     isNested = true;
@@ -459,6 +472,8 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     state = TextState::TS_VARIABLE;
                     break;
                 }
+            }
+            [[fallthrough]];
 
             default:
                 if (count < _countof(buffer))
@@ -483,10 +498,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '=':
+            {
                 onlyDigits = true;
                 state = TextState::TS_VALUE;
                 styler.ColourTo(i - 1, TC_DEFAULT);
                 styler.ColourTo(i, TC_EQUALS);
+                break;
+            }
+
             default:
                 break;
             }
@@ -499,6 +518,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '#':
+            {
                 onlyDigits = !isNotNumValOpt;
                 if (isFormatOpt && styler.SafeGetCharAt(i - 1, '\0') == '%')
                 {
@@ -511,18 +531,53 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     state = TextState::TS_VARIABLE;
                 }
                 break;
+            }
+
+            case '$':
+            {
+                onlyDigits = !isNotNumValOpt;
+                count = 0;
+                styler.ColourTo(i - 1, TC_DEFAULT);
+                state = TextState::TS_MOUSE_VARIABLE;
+                break;
+            }
 
             case '[':
+            {
                 onlyDigits = !isNotNumValOpt;
-                if (styler.SafeGetCharAt(i + 1, '\0') == '#')
+                switch (styler.SafeGetCharAt(i + 1, '\0'))
+                {
+                case '#':
                 {
                     isNested = true;
                     count = 0;
                     styler.ColourTo(i - 1, TC_DEFAULT);
                     nestVarIdx = i++;
                     state = TextState::TS_VARIABLE;
+                    break;
                 }
-                else if (styler.SafeGetCharAt(i + 1, '\0') == '\\')
+
+
+                case '$':
+                {
+                    isNested = true;
+                    count = 0;
+                    styler.ColourTo(i - 1, TC_DEFAULT);
+                    nestVarIdx = i++;
+                    state = TextState::TS_MOUSE_VARIABLE;
+                    break;
+                }
+
+                case '&':
+                {
+                    count = 0;
+                    styler.ColourTo(i - 1, TC_DEFAULT);
+                    i++;
+                    state = TextState::TS_MEASURE_VARIABLE;
+                    break;
+                }
+
+                case '\\':
                 {
                     count = 1;
                     if (Lexilla::MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
@@ -537,8 +592,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     styler.ColourTo(i - 1, TC_DEFAULT);
                     state = TextState::TS_CHAR_VARIABLE;
                     ++i;
+                    break;
+                }
+
+                default:
+                    break;
                 }
                 break;
+            }
 
             case '!':
                 if (!Lexilla::IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
@@ -554,6 +615,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case '\0':
+            {
                 if (isEOF)
                 {
                     if (onlyDigits && !isNotNumValOpt && Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
@@ -565,6 +627,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         styler.ColourTo(i, TC_PIPE);
                     }
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 state = TextState::TS_DEFAULT;
@@ -587,7 +652,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             case ')':
+            {
                 --countParentheses;
+            }
+            [[fallthrough]];
+
             default:
                 if (isNotNumValOpt)
                 {
@@ -609,7 +678,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     onlyDigits = false;
                 }
                 else if (Lexilla::IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
-                    ch == '=' || ch == '%' || ch == '$' || ch == '(')
+                    ch == '=' || ch == '%' || ch == '$' || ch == '(' || ch == '+' || ch == '-')
                 {
                     onlyDigits = true;
                 }
@@ -624,6 +693,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (isEOF)
                 {
                     if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
@@ -635,6 +705,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         styler.ColourTo(i, TC_PIPE);
                     }
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
                 onlyDigits = false;
@@ -684,10 +757,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             switch (ch)
             {
             case '\0':
+            {
                 if (isEOF)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
                 }
+            }
+            [[fallthrough]];
+
             case '\r':
             case '\n':
             case '\t':
@@ -742,6 +819,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             break;
 
         case TextState::TS_VARIABLE:
+        {
             // Highlight variables
             if (isEOF)
             {
@@ -760,11 +838,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
             case '\r':
             case '\n':
+            {
                 state = TextState::TS_DEFAULT;
                 styler.ColourTo(i, TC_DEFAULT);
                 break;
+            }
 
             case '#':
+            {
                 if (isNested)
                 {
                     if (styler.SafeGetCharAt(i - 1, '\0') == '[')
@@ -776,7 +857,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                     styler.ColourTo(nestVarIdx, TC_DEFAULT);
                     isNested = false;
                 }
+            }
+            [[fallthrough]];
+
             case ']':
+            {
                 if (!isNested && ch == ']')
                 {
                     state = TextState::TS_VALUE;
@@ -809,21 +894,34 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                 state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
                 break;
+            }
 
+            case '$':
             case '[':
+            {
                 --i;
+            }
+            [[fallthrough]];
+
             case ' ':
+            {
                 state = TextState::TS_VALUE;
                 break;
+            }
 
             case '\'':
             case '"':
+            {
                 if (isSubsOpt)
                 {
                     state = TextState::TS_VALUE;
                     break;
                 }
+            }
+            [[fallthrough]];
+
             default:
+            {
                 if (count < _countof(buffer))
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
@@ -832,10 +930,14 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     state = TextState::TS_VALUE;
                 }
+                break;
+            }
             }
             break;
+        }
 
         case TextState::TS_CHAR_VARIABLE:
+        {
             // Highlight variables
             if (isEOF && styler.SafeGetCharAt(i, '\0') == ']')
             {
@@ -891,6 +993,198 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 }
             }
             break;
+        }
+
+        case TextState::TS_MEASURE_VARIABLE:
+        {
+            // Highlight variables
+            if (isEOF)
+            {
+                if (styler.SafeGetCharAt(i, '\0') == ']')
+                {
+                    ch = ']';
+                }
+            }
+
+            switch (ch)
+            {
+            case '\0':
+            case '\r':
+            case '\n':
+            {
+                state = TextState::TS_DEFAULT;
+                styler.ColourTo(i, TC_DEFAULT);
+                break;
+            }
+
+            case ']':
+            {
+                if (count > 0)
+                {
+                    buffer[count] = '\0';
+
+                    if (buffer[0] == '*' && buffer[count - 1] == '*')
+                    {
+                        // Escaped variable, don't highlight
+                        styler.ColourTo(i, TC_DEFAULT);
+                    }
+                    else
+                    {
+                        styler.ColourTo(i, TS_MEASURE_VARIABLE);
+                    }
+
+                    count = 0;
+                }
+
+                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+                break;
+            }
+
+            case '#':
+            case '$':
+            case '[':
+            {
+                --i;
+            }
+            [[fallthrough]];
+
+            case ' ':
+            {
+                state = TextState::TS_VALUE;
+                break;
+            }
+
+            case '\'':
+            case '"':
+            {
+                if (isSubsOpt)
+                {
+                    state = TextState::TS_VALUE;
+                    break;
+                }
+            }
+            [[fallthrough]];
+
+            default:
+            {
+                if (count < _countof(buffer))
+                {
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
+                }
+                else
+                {
+                    state = TextState::TS_VALUE;
+                }
+                break;
+            }
+            }
+            break;
+        }
+
+        case TextState::TS_MOUSE_VARIABLE:
+        {
+            // Highlight variables
+            if (isEOF)
+            {
+                if (styler.SafeGetCharAt(i, '\0') == '$')
+                {
+                    ch = '$';
+                }
+                else if (styler.SafeGetCharAt(i, '\0') == ']')
+                {
+                    ch = ']';
+                }
+            }
+
+            switch (ch)
+            {
+            case '\0':
+            case '\r':
+            case '\n':
+            {
+                state = TextState::TS_DEFAULT;
+                styler.ColourTo(i, TC_DEFAULT);
+                break;
+            }
+
+            case '$':
+            {
+                if (isNested)
+                {
+                    if (styler.SafeGetCharAt(i - 1, '\0') == '[')
+                    {
+                        --i;
+                        state = TextState::TS_VALUE;
+                        break;
+                    }
+                    styler.ColourTo(nestVarIdx, TC_DEFAULT);
+                    isNested = false;
+                }
+            }
+            [[fallthrough]];
+
+            case ']':
+                if (!isNested && ch == ']')
+                {
+                    state = TextState::TS_VALUE;
+                    break;
+                }
+
+                if (count > 0)
+                {
+                    buffer[count] = '\0';
+
+                    if (IsOptionInExtList(mouseVar, buffer))
+                    {
+                        styler.ColourTo(i, TS_MOUSE_VARIABLE);
+                    }
+ 
+                    count = 0;
+                }
+
+                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+                break;
+
+            case '#':
+            case '[':
+            {
+                --i;
+            }
+            [[fallthrough]];
+
+            case ' ':
+            {
+                state = TextState::TS_VALUE;
+                break;
+            }
+
+            case '\'':
+            case '"':
+            {
+                if (isSubsOpt)
+                {
+                    state = TextState::TS_VALUE;
+                    break;
+                }
+            }
+            [[fallthrough]];
+
+            default:
+            {
+                if (count < _countof(buffer))
+                {
+                    buffer[count++] = Lexilla::MakeLowerCase(ch);
+                }
+                else
+                {
+                    state = TextState::TS_VALUE;
+                }
+                break;
+            }
+            }
+            break;
+        }
+
 
         default:
         case TextState::TS_LINEEND:
@@ -900,7 +1194,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\0':
             case '\r':
             case '\n':
+            {
                 state = TextState::TS_DEFAULT;
+            }
+            [[fallthrough]];
+
             default:
                 styler.ColourTo(i, TC_DEFAULT);
             }
@@ -917,10 +1215,10 @@ void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int
 
     length += startPos;
     int line = styler.GetLine(startPos);
-
-    for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
+    auto uLength = static_cast<Sci_PositionU>(length);
+    for (auto i = startPos; i < uLength; ++i)
     {
-        if ((styler[i] == '\n') || (i == length - 1))
+        if ((styler[i] == '\n') || (i == uLength - 1))
         {
             int level = (styler.StyleAt(i - 2) == static_cast<int>(TextState::TS_SECTION))
                 ? SC_FOLDLEVELBASE | SC_FOLDLEVELHEADERFLAG
