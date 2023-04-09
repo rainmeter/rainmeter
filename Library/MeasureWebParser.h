@@ -49,8 +49,8 @@ private:
 	static unsigned __stdcall NetworkThreadProc(void* pParam);
 	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 	void ParseData(const WCHAR* data, DWORD dataLength);
-	void ParseDataRegex(const WCHAR *data, DWORD dataLength);
-	void ParseDataJson(const WCHAR *data, DWORD dataLength);
+	bool ParseDataRegex(const WCHAR *data, DWORD dataLength);
+	bool ParseDataJson(const WCHAR *data, DWORD dataLength);
 	bool IsParsingConfigured() const;
 	void ClearResult();
 
@@ -61,7 +61,7 @@ private:
 	std::wstring m_ResultString;
 	std::wstring m_ErrorString;
 	std::wstring m_FinishAction;
-	std::wstring m_OnRegExpErrAction;
+	std::wstring m_OnParseErrAction;
 	std::wstring m_OnConnectErrAction;
 	std::wstring m_OnDownloadErrAction;
 	std::wstring m_DownloadFolder;

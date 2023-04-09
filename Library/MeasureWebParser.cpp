@@ -405,7 +405,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_RegExp = parser.ReadString(section, L"RegExp", L"");
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
-	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
+	m_OnParseErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
 	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
 	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
 	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
@@ -702,22 +702,34 @@ void MeasureWebParser::ClearResult()
 
 void MeasureWebParser::ParseData(const WCHAR *data, DWORD dataLength)
 {
+	bool error = false;
 	if (m_ParseMode == ParseMode::Regex)
 	{
-		ParseDataRegex(data, dataLength);
+		error = ParseDataRegex(data, dataLength);
 	}
 	else if (m_ParseMode == ParseMode::Json)
 	{
-		ParseDataJson(data, dataLength);
+		error = ParseDataJson(data, dataLength);
 	}
 	else
 	{
 		LogErrorF(this, L"Unknown parse mode: %d", m_ParseMode);
 	}
+
+	if (error && !m_OnParseErrAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_OnParseErrAction.c_str(), GetSkin());
+	}
+	else if (!m_Download && !m_FinishAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
+	}
 }
 
-void MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
+bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 {
+	bool error = false;
+
 	const auto numJsonSpecs = static_cast<int>(m_JsonValueSpecs.size());
 	std::vector<std::wstring> matches;
 	matches.reserve(numJsonSpecs+1); // index 0 == raw data, others are matches
@@ -767,6 +779,8 @@ void MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 	{
 		if (m_LogSubstringErrors)
 			LogWarningF(this, L"Not enough JSON matches");
+
+		error = true;
 
 		ClearResult();
 	}
@@ -835,6 +849,8 @@ void MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 	};
 
 	for_each_if(g_Measures.begin(), g_Measures.end(), referencesThisMeasurePredicate, updateOtherMeasure);
+
+	return error;
 }
 
 /**
@@ -842,7 +858,7 @@ void MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
  * and updates the values of any measures that refence this one
  * according to their defined StringIndex.
  */
-void MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
+bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 {
 	const char *error = nullptr;
 	int erroffset = 0;
@@ -999,21 +1015,13 @@ void MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 		}
 	}
 
-	if (doErrorAction && !m_OnRegExpErrAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
-	}
-	else if (!m_Download && !m_FinishAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
-	}
+	return doErrorAction;
 }
 
 bool MeasureWebParser::IsParsingConfigured() const
 {
 	return !m_RegExp.empty() || !m_JsonValueSpecs.empty();
 }
-
 
 // Downloads file from the net
 unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
