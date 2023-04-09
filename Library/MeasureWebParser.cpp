@@ -710,6 +710,11 @@ void MeasureWebParser::ParseData(const WCHAR *data, DWORD dataLength)
 		LogErrorF(this, L"Unknown parse mode: %d", m_ParseMode);
 	}
 
+	if (m_Download)
+	{
+		StartDownloadThread();
+	}
+
 	if (error && !m_OnParseErrAction.empty())
 	{
 		GetRainmeter().DelayedExecuteCommand(m_OnParseErrAction.c_str(), GetSkin());
@@ -781,51 +786,18 @@ bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 
 	// Then update the references to this measure, e.g. inject the parsed matches into the other measures
 	// that reference this one according to their StringIndex property
-	const std::wstring compareStr = L"[" + GetOriginalName() + L"]";
-	auto referencesThisMeasurePredicate = [&compareStr, this](MeasureWebParser *parser)
+	const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
+	auto referencesThisMeasurePredicate = [&thisMeasureReference, this](MeasureWebParser *parser)
 	{
 		return GetSkin() == parser->GetSkin() &&
-			   StringUtil::CaseInsensitiveFind(parser->m_Url, compareStr) != std::wstring::npos;
+			   StringUtil::CaseInsensitiveFind(parser->m_Url, thisMeasureReference) != std::wstring::npos;
 	};
-	auto updateOtherMeasure = [&matches, &compareStr, this](MeasureWebParser *otherParser)
+	auto updateOtherMeasure = [&matches, &thisMeasureReference, this](MeasureWebParser *otherParser)
 	{
 		if (static_cast<size_t>(otherParser->m_StringIndex) < matches.size())
 		{
 			auto match = matches.at(otherParser->m_StringIndex);
-			if (otherParser->IsParsingConfigured())
-			{
-				// The other parser also wants to do Json parsing
-				// based on this parsers result, so do that here.
-				// StringIndex2 contains the index of the match to
-				// assign to that measure, so set it temporarily
-				// to StringIndex so that the Parse function
-				// implicitly does that.
-				int index = otherParser->m_StringIndex;
-				otherParser->m_StringIndex = otherParser->m_StringIndex2;
-				otherParser->ParseData(match.c_str(), match.size());
-				otherParser->m_StringIndex = index;
-			}
-			else
-			{
-				// Otherwise set the result based on the StringIndex
-				EnterCriticalSection(&g_CriticalSection);
-
-				// Substitude the [measure] with result
-				otherParser->m_ResultString = otherParser->m_Url;
-				otherParser->m_ResultString.replace(
-					StringUtil::CaseInsensitiveFind(otherParser->m_ResultString, compareStr),
-					compareStr.size(), match
-				);
-				CharacterEntityReference::Decode(otherParser->m_ResultString, otherParser->m_DecodeCharacterReference, otherParser->m_DecodeCodePoints);
-
-				// Start download threads for the references
-				if (otherParser->m_Download)
-				{
-					otherParser->StartDownloadThread();
-				}
-
-				LeaveCriticalSection(&g_CriticalSection);
-			}
+			otherParser->ProcessMatch(match, thisMeasureReference);
 		}
 		else
 		{
@@ -901,44 +873,18 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 
 				// Then update the references to this measure, e.g. inject the parsed matches into the other measures
 				// that reference this one according to their StringIndex property
-				const std::wstring compareStr = L"[" + GetOriginalName() + L"]";
+				const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
 				for (auto &measure : g_Measures)
 				{
 					if (GetSkin() == measure->GetSkin() &&
-						StringUtil::CaseInsensitiveFind(measure->m_Url, compareStr) != std::wstring::npos)
+						StringUtil::CaseInsensitiveFind(measure->m_Url, thisMeasureReference) != std::wstring::npos)
 					{
 						if (measure->m_StringIndex < rc)
 						{
 							const WCHAR *match = data + ovector[2 * measure->m_StringIndex];
 							int matchLen = ovector[2 * measure->m_StringIndex + 1] - ovector[2 * measure->m_StringIndex];
-							if (measure->IsParsingConfigured())
-							{
-								// Change the index and parse the substring
-								int index = measure->m_StringIndex;
-								measure->m_StringIndex = measure->m_StringIndex2;
-								measure->ParseData(match, matchLen);
-								measure->m_StringIndex = index;
-							}
-							else
-							{
-								// Set the result
-								EnterCriticalSection(&g_CriticalSection);
-
-								// Substitude the [measure] with result
-								measure->m_ResultString = measure->m_Url;
-								measure->m_ResultString.replace(
-									StringUtil::CaseInsensitiveFind(measure->m_ResultString, compareStr),
-									compareStr.size(), match, matchLen);
-								CharacterEntityReference::Decode(measure->m_ResultString, measure->m_DecodeCharacterReference, measure->m_DecodeCodePoints);
-
-								// Start download threads for the references
-								if (measure->m_Download)
-								{
-									measure->StartDownloadThread();
-								}
-
-								LeaveCriticalSection(&g_CriticalSection);
-							}
+							std::wstring matchStr(match, matchLen);
+							measure->ProcessMatch(matchStr, thisMeasureReference);
 						}
 						else
 						{
@@ -961,16 +907,13 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 			m_ResultString = m_ErrorString;
 
 			// Update the references
-			auto i = g_Measures.begin();
-			std::wstring compareStr = L"[";
-			compareStr += GetOriginalName();
-			compareStr += L']';
-			for ( ; i != g_Measures.end(); ++i)
+			const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
+			for (auto &measure : g_Measures)
 			{
-				if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-					(GetSkin() == (*i)->GetSkin()))
+				if ((StringUtil::CaseInsensitiveFind(measure->m_Url, thisMeasureReference) != std::wstring::npos) &&
+					(GetSkin() == measure->GetSkin()))
 				{
-					(*i)->m_ResultString = (*i)->m_ErrorString;
+					measure->m_ResultString = measure->m_ErrorString;
 				}
 			}
 			LeaveCriticalSection(&g_CriticalSection);
@@ -986,12 +929,40 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 		doErrorAction = true;
 	}
 
-	if (m_Download)
-	{
-		StartDownloadThread();
-	}
-
 	return doErrorAction;
+}
+
+void MeasureWebParser::ProcessMatch(const std::wstring& match, const std::wstring& parentMeasureReference)
+{
+	if (IsParsingConfigured())
+	{
+		// Change the index and parse the substring
+		int index = m_StringIndex;
+		m_StringIndex = m_StringIndex2;
+		ParseData(match.c_str(), match.length());
+		m_StringIndex = index;
+	}
+	else
+	{
+		// Set the result
+		EnterCriticalSection(&g_CriticalSection);
+
+		// Substitude the [measure] with result
+		m_ResultString = m_Url;
+		m_ResultString.replace(
+			StringUtil::CaseInsensitiveFind(m_ResultString, parentMeasureReference),
+			parentMeasureReference.size(), match);
+		CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
+
+		// Start download threads for the references in case a child measure wants to download
+		// an Url that is based on the match of the parent
+		if (m_Download)
+		{
+			StartDownloadThread();
+		}
+
+		LeaveCriticalSection(&g_CriticalSection);
+	}
 }
 
 void MeasureWebParser::StartDownloadThread()

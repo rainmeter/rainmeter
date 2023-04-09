@@ -51,6 +51,7 @@ private:
 	void ParseData(const WCHAR* data, DWORD dataLength);
 	bool ParseDataRegex(const WCHAR *data, DWORD dataLength);
 	bool ParseDataJson(const WCHAR *data, DWORD dataLength);
+	void ProcessMatch(const std::wstring& match, const std::wstring& parentMeasureReference);
 	bool IsParsingConfigured() const;
 	void ClearResult();
 	void StartDownloadThread();
