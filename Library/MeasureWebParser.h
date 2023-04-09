@@ -48,9 +48,11 @@ protected:
 private:
 	static unsigned __stdcall NetworkThreadProc(void* pParam);
 	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
-	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
+	void ParseData(const WCHAR* data, DWORD dataLength);
 	void ParseDataRegex(const WCHAR *data, DWORD dataLength);
 	void ParseDataJson(const WCHAR *data, DWORD dataLength);
+	bool IsParsingConfigured() const;
+	void ClearResult();
 
 	std::wstring m_Url;
 	ParseMode m_ParseMode;
