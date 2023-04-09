@@ -536,13 +536,7 @@ void MeasureWebParser::UpdateValue()
 		{
 			if (m_UpdateCounter == 0U)
 			{
-				// Launch a new thread to fetch the web data
-				unsigned int id = 0U;
-				HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
-				if (threadHandle)
-				{
-					m_DlThreadHandle = threadHandle;
-				}
+				StartDownloadThread();
 			}
 
 			++m_UpdateCounter;
@@ -576,7 +570,7 @@ void MeasureWebParser::UpdateValue()
 			{
 				if (m_UpdateCounter == 0U)
 				{
-					// Launch a new thread to fetch the web data
+					// Launch a new thread to fetch the web data and parse the content
 					unsigned int id = 0U;
 					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkThreadProc, this, 0U, &id);
 					if (threadHandle)
@@ -827,13 +821,7 @@ bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 				// Start download threads for the references
 				if (otherParser->m_Download)
 				{
-					// Start the download thread
-					unsigned int id = 0U;
-					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, otherParser, 0U, &id);
-					if (threadHandle)
-					{
-						otherParser->m_DlThreadHandle = threadHandle;
-					}
+					otherParser->StartDownloadThread();
 				}
 
 				LeaveCriticalSection(&g_CriticalSection);
@@ -928,7 +916,7 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 								// Change the index and parse the substring
 								int index = measure->m_StringIndex;
 								measure->m_StringIndex = measure->m_StringIndex2;
-								measure->ParseData(match, matchLen * 2);
+								measure->ParseData(match, matchLen);
 								measure->m_StringIndex = index;
 							}
 							else
@@ -946,13 +934,7 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 								// Start download threads for the references
 								if (measure->m_Download)
 								{
-									// Start the download thread
-									unsigned int id = 0U;
-									HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, measure, 0U, &id);
-									if (threadHandle)
-									{
-										measure->m_DlThreadHandle = threadHandle;
-									}
+									measure->StartDownloadThread();
 								}
 
 								LeaveCriticalSection(&g_CriticalSection);
@@ -1006,7 +988,18 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 
 	if (m_Download)
 	{
-		// Start the download thread
+		StartDownloadThread();
+	}
+
+	return doErrorAction;
+}
+
+void MeasureWebParser::StartDownloadThread()
+{
+	// Run the thread only if it is not running already
+	EnterCriticalSection(&g_CriticalSection);
+	if (m_DlThreadHandle == nullptr)
+	{
 		unsigned int id = 0U;
 		HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
 		if (threadHandle)
@@ -1014,8 +1007,7 @@ bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
 			m_DlThreadHandle = threadHandle;
 		}
 	}
-
-	return doErrorAction;
+	LeaveCriticalSection(&g_CriticalSection);
 }
 
 bool MeasureWebParser::IsParsingConfigured() const

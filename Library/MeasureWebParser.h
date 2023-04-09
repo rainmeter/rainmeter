@@ -53,6 +53,7 @@ private:
 	bool ParseDataJson(const WCHAR *data, DWORD dataLength);
 	bool IsParsingConfigured() const;
 	void ClearResult();
+	void StartDownloadThread();
 
 	std::wstring m_Url;
 	ParseMode m_ParseMode;
