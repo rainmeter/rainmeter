@@ -710,12 +710,16 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			if (cds && !GetGameMode().IsEnabled())  // Disallow any bangs in manual "Game mode"
+			if (cds)
 			{
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
 				{
-					GetRainmeter().DelayedExecuteCommand(data);
+					// Disallow any bangs in manual "Game mode" except any overrides. See GameMode::GetBangOverrideList
+					if (!GetGameMode().IsEnabled() || GetGameMode().HasBangOverride(data))
+					{
+						GetRainmeter().DelayedExecuteCommand(data);
+					}
 				}
 			}
 		}
@@ -1187,11 +1191,7 @@ void Rainmeter::DeactivateSkin(Skin* skin, int folderIndex, bool save)
 
 		skin->Deactivate();
 
-		// Show tray icon if no skins are active
-		if (m_Skins.empty())
-		{
-			m_TrayIcon->SetTrayIcon(true, true);
-		}
+		ShowTrayIconIfNecessary();
 	}
 }
 
@@ -2236,5 +2236,13 @@ void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstr
 				*log += layoutPath;
 			}
 		}
+	}
+}
+
+void Rainmeter::ShowTrayIconIfNecessary()
+{
+	if (m_Skins.empty())  // Show tray icon if no skins are active
+	{
+		m_TrayIcon->SetTrayIcon(true, true);
 	}
 }
