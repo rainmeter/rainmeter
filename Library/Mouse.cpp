@@ -162,7 +162,7 @@ HCURSOR Mouse::GetCursor(bool isButton) const
 	{
 		// Disabled non-button mouse actions should use the default "arrow" pointer
 		bool getCursor = false;
-		for (size_t i = 0; i < (MOUSEACTION_COUNT - 2); ++i)	// Do not process Over/Leave
+		for (size_t i = 0; i < (MOUSEACTION_COUNT - 6); ++i)	// Do not process mouse wheel and Over/Leave
 		{
 			if (m_MouseActions[i].state == MOUSEACTION_ENABLED &&
 				!m_MouseActions[i].action.empty())
