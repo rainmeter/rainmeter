@@ -306,6 +306,12 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 	{
 		for (auto iter : args)
 		{
+			if (lua_checkstack(L, 1) == FALSE)
+			{
+				strValue = L"Lua: Could not increase the stack size";
+				return false;
+			}
+
 			size_t argSize = iter.size();
 			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1ULL)
 			{
