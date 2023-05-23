@@ -75,7 +75,7 @@
     {
       "id": 1032,
       "name": "Greek",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1037,
@@ -85,7 +85,7 @@
     {
       "id": 1038,
       "name": "Hungarian",
-      "obsolete": true
+      "obsolete": false
     },
     {
       "id": 1057,
