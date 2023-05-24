@@ -195,6 +195,14 @@ void DialogManage::UpdateLanguageStatus()
 	}
 }
 
+void DialogManage::UpdateGlobalDraggableCheckBox()
+{
+	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
+	{
+		c_Dialog->m_TabSettings.UpdateDraggableCheckBox();
+	}
+}
+
 void DialogManage::UpdateSettings()
 {
 	if (c_Dialog && c_Dialog->m_TabSettings.IsInitialized())
@@ -2462,7 +2470,7 @@ void DialogManage::TabSettings::Initialize()
 	Button_SetCheck(GetControl(Id_AutoInstallCheckBox), !GetRainmeter().GetDisableAutoUpdate());
 	EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
 
-	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), GetRainmeter().GetDisableDragging());
+	UpdateDraggableCheckBox();
 	Button_SetCheck(GetControl(Id_LogToFileCheckBox), GetLogger().IsLogToFile());
 	Button_SetCheck(GetControl(Id_VerboseLoggingCheckBox), GetRainmeter().GetDebug());
 
@@ -2490,6 +2498,11 @@ void DialogManage::TabSettings::UpdateLanguageStatus()
 	HWND item = GetControl(Id_LanguageUpdateLink);
 	SetWindowText(item, lang.c_str());
 	ShowWindow(item, GetRainmeter().GetLanguageStatus() ? SW_SHOWNOACTIVATE : SW_HIDE);
+}
+
+void DialogManage::TabSettings::UpdateDraggableCheckBox()
+{
+	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), GetRainmeter().GetDisableDragging());
 }
 
 void DialogManage::TabSettings::Update()
