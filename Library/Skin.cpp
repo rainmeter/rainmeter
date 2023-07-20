@@ -507,7 +507,7 @@ void Skin::SetMouseLeaveEvent(bool cancel)
 
 	// Set the mouse event
 	tme.dwFlags = TME_LEAVE;
-	if (m_WindowDraggable)
+	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
 		tme.dwFlags |= TME_NONCLIENT;
 	}
