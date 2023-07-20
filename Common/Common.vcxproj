@@ -130,6 +130,7 @@
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
