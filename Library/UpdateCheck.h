@@ -35,7 +35,6 @@ private:
 	static void GetStatus(void* pParam);
 	static bool DownloadStatusFile(std::string& data);
 	static void CheckVersion(json& status, bool downloadNewVersion);
-	static int ParseVersion(LPCWSTR str);
 	static bool DownloadNewVersion(json& status);
 
 	json m_Status;

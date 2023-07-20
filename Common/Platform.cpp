@@ -91,6 +91,10 @@ void Platform::Initialize()
 		return false;
 	} ();
 
+	// Retrieve build number
+	m_BuildNumber = GetBuildNumberFromRegistry();
+
+	// Retrieve information from registry
 	std::wstring ubrStr;
 	std::wstring servicePack;
 
@@ -100,7 +104,7 @@ void Platform::Initialize()
 		WCHAR buffer[256] = { 0 };
 		DWORD size = _countof(buffer);
 
-		// Get Windows 10/11 specific values
+		// DisplayVersion (Windows10+)
 		if (IsWindows10OrGreater())
 		{
 			// Prefer "DisplayVersion" over "ReleaseId"
@@ -111,6 +115,7 @@ void Platform::Initialize()
 			}
 		}
 
+		// ProductName
 		size = _countof(buffer);
 		if (RegQueryValueEx(hkey, L"ProductName", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 		{
@@ -126,6 +131,38 @@ void Platform::Initialize()
 			}
 		}
 
+		// "Raw" version number
+		if (IsWindows10OrGreater())
+		{
+			// Note: "CurrentVersion" is no longer updated as of Windows 10, use Major/Minor versions instead
+			DWORD major = 0UL;
+			size = sizeof(DWORD);
+			if (RegQueryValueEx(hkey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS && major >= 10UL)
+			{
+				DWORD minor = 0UL;
+				size = sizeof(DWORD);
+				if (RegQueryValueEx(hkey, L"CurrentMinorVersionNumber", nullptr, nullptr, (LPBYTE)&minor, (LPDWORD)&size) == ERROR_SUCCESS && minor >= 0UL)
+				{
+					m_RawVersion = std::to_wstring(major);
+					m_RawVersion += L'.';
+					m_RawVersion += std::to_wstring(minor);
+					m_RawVersion += L'.';
+					m_RawVersion += m_BuildNumber;
+				}
+			}
+		}
+		else // Windows 7, 8, 8.1
+		{
+			size = _countof(buffer);
+			if (RegQueryValueEx(hkey, L"CurrentVersion", nullptr, nullptr, (LPBYTE)&buffer, (LPDWORD)&size) == ERROR_SUCCESS)
+			{
+				m_RawVersion = buffer;
+				m_RawVersion += L'.';
+				m_RawVersion += m_BuildNumber;
+			}
+		}
+
+		// UBR (used in "friendly name")
 		DWORD ubr = 0UL;
 		size = sizeof(DWORD);
 		if (RegQueryValueEx(hkey, L"UBR", nullptr, nullptr, (LPBYTE)&ubr, &size) == ERROR_SUCCESS && ubr > 0UL)
@@ -144,10 +181,7 @@ void Platform::Initialize()
 		hkey = nullptr;
 	}
 
-	// Retrieve build number
-	m_BuildNumber = GetBuildNumberFromRegistry();
-
-	// Set Name
+	// Name
 	const bool isServer = IsWindowsServer();
 	m_Name = isServer ? L"Windows Server " : L"Windows ";
 	m_Name += [&]() -> LPCWSTR
@@ -163,7 +197,7 @@ void Platform::Initialize()
 			L"Unknown";
 	} ();
 
-	// Set "friendly" name
+	// "Friendly" name
 	m_FriendlyName = m_ProductName;
 	if (!m_DisplayVersion.empty())
 	{
