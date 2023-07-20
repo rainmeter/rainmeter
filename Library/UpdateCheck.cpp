@@ -530,7 +530,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 
 	// Dump installer contents into byte array
 	size_t fileSize = 0ULL;
-	BYTE * buffer = FileUtil::ReadFullFile(fullpath, &fileSize).release();
+	BYTE* buffer = FileUtil::ReadFullFile(fullpath, &fileSize).release();
 
 	NTSTATUS status = 0L;
 	BCRYPT_ALG_HANDLE provider = nullptr;
