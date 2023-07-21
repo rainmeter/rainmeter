@@ -23,6 +23,15 @@ extern GlobalData g_Data;
 
 DialogInstall* DialogInstall::c_Dialog = nullptr;
 
+inline bool IsWin32Build()
+{
+#ifdef _WIN64
+	return false;
+#else
+	return true;
+#endif
+}
+
 /*
 ** Constructor.
 **
@@ -517,7 +526,7 @@ bool DialogInstall::ReadPackage()
 				m_PackageAddons.insert(item);
 			}
 			else if (_wcsicmp(component, L"Plugins") == 0 &&
-				_wcsicmp(itemSz, GetPlatform().Is64Bit() ? L"64bit" : L"32bit") == 0 &&
+				_wcsicmp(itemSz, IsWin32Build() ? L"32bit" : L"64bit") == 0 &&
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
@@ -767,7 +776,7 @@ bool DialogInstall::InstallPackage()
 				targetPath += L"Addons\\";
 			}
 			else if (_wcsicmp(component, L"Plugins") == 0 &&
-				_wcsnicmp(path, GetPlatform().Is64Bit() ? L"64bit" : L"32bit", pos - path) == 0 &&
+				_wcsnicmp(path, IsWin32Build() ? L"32bit" : L"64bit", pos - path) == 0 &&
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
