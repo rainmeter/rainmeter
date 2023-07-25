@@ -55,6 +55,8 @@ enum INTERVAL
 
 int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
+FPRSRN Skin::c_RegisterSuspendResumeNotification = nullptr;
+FPUSRN Skin::c_UnregisterSuspendResumeNotification = nullptr;
 
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings) :
 	m_FolderPath(folderPath),
@@ -64,6 +66,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_Background(),
 	m_BackgroundSize(),
 	m_Window(),
+	m_SuspendResumeNotification(nullptr),
 	m_Mouse(this),
 	m_MouseOver(false),
 	m_MouseInputRegistered(false),
@@ -156,6 +159,13 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 		wc.hCursor = nullptr;  // The cursor should be controlled by using SetCursor() when needed.
 		wc.lpszClassName = METERWINDOW_CLASS_NAME;
 		RegisterClassEx(&wc);
+
+		HMODULE hmod = GetModuleHandle(L"user32");
+		if (hmod)
+		{
+			c_RegisterSuspendResumeNotification = (FPRSRN)GetProcAddress(hmod, "RegisterSuspendResumeNotification");
+			c_UnregisterSuspendResumeNotification = (FPUSRN)GetProcAddress(hmod, "UnregisterSuspendResumeNotification");
+		}
 	}
 
 	++c_InstanceCount;
@@ -244,6 +254,12 @@ void Skin::Dispose(bool refresh)
 			DestroyWindow(m_Window);
 			m_Window = nullptr;
 		}
+
+		// Unregister the SuspendResumeNotification for some devices. See: Skin::Initialize
+		if (IsWindows8OrGreater() && c_UnregisterSuspendResumeNotification && m_SuspendResumeNotification)
+		{
+			c_UnregisterSuspendResumeNotification(m_SuspendResumeNotification);
+		}
 	}
 }
 
@@ -304,6 +320,13 @@ void Skin::Initialize()
 		{
 			FadeWindow(0, m_AlphaValue);
 		}
+	}
+
+	// Register to receive "PBT_APMRESUMEAUTOMATIC" power messages for some devices (ex. Microsoft Surface) that
+	// utilize Connected Standby (InstantGo). Reference: OnWakeAction, OnPowerBroadcast
+	if (m_Window && IsWindows8OrGreater() && c_RegisterSuspendResumeNotification)
+	{
+		m_SuspendResumeNotification = c_RegisterSuspendResumeNotification(m_Window, DEVICE_NOTIFY_WINDOW_HANDLE);
 	}
 }
 
@@ -5207,10 +5230,11 @@ LRESULT Skin::OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_OnWakeAction.c_str(), this);
+		GetRainmeter().DelayedExecuteCommand(m_OnWakeAction.c_str(), this);
+		return TRUE;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
