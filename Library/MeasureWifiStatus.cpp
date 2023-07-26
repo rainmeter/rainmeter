@@ -422,6 +422,7 @@ const WCHAR* MeasureWifiStatus::GetPHYString(DOT11_PHY_TYPE value)
 	case dot11_phy_type_vht: return L"802.11ac";
 	case dot11_phy_type_dmg: return L"802.11ad";
 	case dot11_phy_type_he: return L"802.11ax";
+	case dot11_phy_type_eht: return L"802.11be";
 	default: return L"???";
 	}
 }
