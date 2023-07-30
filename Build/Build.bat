@@ -58,6 +58,9 @@ echo.
 set BUILD_YEAR=%date:~-4%
 set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
+:: Speed up build by bypassing VS telemetry
+set VSCMD_SKIP_SENDTELEMETRY=1
+
 call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
