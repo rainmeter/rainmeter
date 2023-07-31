@@ -51,7 +51,7 @@ private:
 			int m = 0, n = 0;
 
 			while (i < size1 && m_Version[i] != L'.') { m = (m * 10) + (m_Version[i] - L'0'); ++i; }
-			while (j < size1 && version2[j] != L'.') { n = (n * 10) + (version2[j] - L'0'); ++j; }
+			while (j < size2 && version2[j] != L'.') { n = (n * 10) + (version2[j] - L'0'); ++j; }
 
 			if (m < n) return -1;
 			if (m > n) return +1;
