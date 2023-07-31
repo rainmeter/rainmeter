@@ -20,7 +20,7 @@ namespace InputText
         private bool _Numeric = false;
         private string _TextValue = string.Empty;
 
-        private static Regex numberRegex = new Regex(@"^[-+]?(?>0b[10]*|0o[0-7]*|0x[A-Fa-f]*|\d*(?>\.\d*|[eE]\d*)?)", RegexOptions.Compiled);
+        private static Regex numberRegex = new Regex(@"^[-+]?(?>0b[10]*|0o[0-7]*|0x[A-Fa-f\d]*|\d*(?>\.\d*|[eE]\d*)?)", RegexOptions.Compiled);
 
         public InputBox(SkinWindow parent)
         {
