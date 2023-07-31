@@ -7,17 +7,90 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Rainmeter;
 
 namespace InputText
 {
+    /**
+     * Utility class
+     */
+    public class NumberParser
+    {
+        public static bool TryParse(string input, out double result)
+        {
+            // Following
+            // https://docs.rainmeter.net/manual/measures/calc/#Bases
+
+            input = input.Trim().Replace(",", ""); // Remove commas from numbers like 1,000
+            double sign = 1.0;
+
+            if (input.StartsWith("+")) {
+                input = input.Substring(1);
+            } else if (input.StartsWith("-"))
+            {
+                input = input.Substring(1);
+                sign = -1;
+            }
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                result = double.NaN;
+                return false;
+            }
+
+            bool res = TryParseNumberWithPrefix(input, "0b", NumberStyles.Integer, out result)
+                || TryParseNumberWithPrefix(input, "0o", NumberStyles.Integer, out result)
+                || TryParseNumberWithPrefix(input, "0x", NumberStyles.HexNumber, out result)
+                || double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+
+            result *= sign; // NaN safe
+
+            return res;
+        }
+
+        private static bool TryParseNumberWithPrefix(string input, string prefix, NumberStyles style, out double result)
+        {
+            if (input.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                input = input.Substring(prefix.Length);
+                if (int.TryParse(input, style, CultureInfo.InvariantCulture, out int intValue))
+                {
+                    result = (double)intValue;
+                    return true;
+                }
+            }
+            result = double.NaN;
+            return false;
+        }
+    }
     internal partial class Measure
     {
+        private static double StringToDoubleOrNaN(string input)
+        {
+            double result;
+            if (NumberParser.TryParse(input, out result))
+            {
+                return result;
+            }
+            return double.NaN;
+        }
+
         private Rainmeter.API rm;
 
-        private string LastInput = string.Empty;
+        private string lastInput = string.Empty;
+        private double LastInputParsed = double.NaN;
+        private string LastInput {
+            get { return lastInput; }
+            set {
+                lastInput = value;
+                // This value is always parsed, but the calculation is rather low overhead and
+                // we can certainly afford it
+                LastInputParsed = StringToDoubleOrNaN(value);
+            }
+        }
         private bool IsExecuteBangRunning = false;
 
         private object locker = new object();
@@ -34,7 +107,8 @@ namespace InputText
 
         internal double Update()
         {
-            return 0.0;
+            // Does not need a lock
+            return this.LastInputParsed;
         }
 
         internal string GetString()
