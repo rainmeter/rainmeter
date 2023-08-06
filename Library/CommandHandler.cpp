@@ -683,22 +683,26 @@ void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin*
 
 void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	if (args.size() >= 2)
+	if (skin)
 	{
-		Skin* skin = GetRainmeter().GetSkin(args[0]);
-		if (skin)
-		{
-			GetRainmeter().DeactivateSkin(skin, -1);
-			return;
-		}
-
-		// If the skin wasn't active, activate it.
-		DoActivateSkinBang(args, nullptr);
+		GetRainmeter().DeactivateSkin(skin, -1);
+		return;
 	}
 	else
 	{
-		LogErrorF(skin, L"!ToggleConfig: Invalid parameters");
+		if (args.size() == 1)
+		{
+			GetRainmeter().ActivateSkin(args[0]);
+			return;
+		}
+		else if (args.size > 1)
+		{
+			GetRainmeter().ActivateSkin(args[0],args[1]);
+			return;
+		}
 	}
+	
+	LogErrorF(skin, L"!ToggleConfig: Invalid parameters");
 }
 
 void CommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, Skin* skin)
