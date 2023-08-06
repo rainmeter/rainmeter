@@ -162,6 +162,8 @@ PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 
+	double value = 0.0;
+
 	EnterCriticalSection(&g_CriticalSection);
 	if (!measure->threadActive)
 	{
@@ -184,7 +186,7 @@ PLUGIN_EXPORT double Update(void* data)
 		}
 	}
 
-	double value = measure->value;
+	value = measure->value;
 	LeaveCriticalSection(&g_CriticalSection);
 
 	return value;
@@ -220,6 +222,8 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 
 	MeasureData* measure = (MeasureData*)pParam;
 	double value = measure->timeoutValue;
+
+	bool doFinishAction = false;
 
 	if (measure->destAddrInfo)
 	{
@@ -293,10 +297,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 				}
 				IcmpCloseHandle(hIcmpFile);
 
-				if (!measure->finishAction.empty())
-				{
-					RmExecute(measure->skin, measure->finishAction.c_str());
-				}
+				doFinishAction = true;
 			}
 
 			delete [] buffer;
@@ -329,6 +330,11 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 		// Decrement the ref count and possibly unload the module if this is
 		// the last instance.
 		FreeLibraryAndExitThread(module, 0UL);
+	}
+	else if (doFinishAction && !measure->finishAction.empty())
+	{
+		// Perform the FinishAction
+		RmExecute(measure->skin, measure->finishAction.c_str());
 	}
 
 	return 0;
