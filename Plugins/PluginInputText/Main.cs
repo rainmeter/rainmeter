@@ -19,6 +19,8 @@ namespace InputText
      */
     public class NumberParser
     {
+        public static double NaN = 0xfff8000000000000;
+
         public static bool TryParse(string input, out double result)
         {
             // Following
@@ -37,7 +39,7 @@ namespace InputText
 
             if (string.IsNullOrWhiteSpace(input))
             {
-                result = double.NaN;
+                result = NaN;
                 return false;
             }
 
@@ -62,7 +64,7 @@ namespace InputText
                     return true;
                 }
             }
-            result = double.NaN;
+            result = NaN;
             return false;
         }
     }
@@ -75,13 +77,13 @@ namespace InputText
             {
                 return result;
             }
-            return double.NaN;
+            return NumberParser.NaN;
         }
 
         private Rainmeter.API rm;
 
         private string lastInput = string.Empty;
-        private double LastInputParsed = double.NaN;
+        private double LastInputParsed = NumberParser.NaN;
         private string LastInput {
             get { return lastInput; }
             set {
