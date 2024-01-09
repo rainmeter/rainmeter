@@ -421,7 +421,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			std::vector<std::wstring> tokens = ConfigParser::Tokenize(szFlags, L"|");
 			for (const auto& token : tokens)
 			{
-				const WCHAR * flag = token.c_str();
+				const WCHAR* flag = token.c_str();
 				if (_wcsicmp(flag, L"ForceReload") == 0)
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_RELOAD;

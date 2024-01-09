@@ -2147,6 +2147,7 @@ void Rainmeter::SetDisableDragging(bool dragging)
 {
 	m_DisableDragging = dragging;
 	DialogManage::UpdateSkinDraggableCheckBox();
+	DialogManage::UpdateGlobalDraggableCheckBox();
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 

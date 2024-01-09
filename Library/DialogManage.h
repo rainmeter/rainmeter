@@ -35,6 +35,7 @@ public:
 	static void UpdateGameMode();
 
 	static void UpdateLanguageStatus();
+	static void UpdateGlobalDraggableCheckBox();
 
 	static void UpdateSettings();
 
@@ -212,6 +213,7 @@ private:
 		virtual void Initialize();
 
 		void UpdateLanguageStatus();
+		void UpdateDraggableCheckBox();
 		void Update();
 
 	protected:

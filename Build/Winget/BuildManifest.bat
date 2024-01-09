@@ -16,10 +16,12 @@ if not exist "%INSTALLER_FULLPATH%" echo   ERROR: "%INSTALLER_FULLPATH%" not fou
 :: Build powershell script
 > "create-manifest.ps1" (
 	echo $global:hash = ^(Get-FileHash -Algorithm SHA256 -Path '%INSTALLER_FULLPATH%' ^| Select -ExpandProperty Hash^)
+	echo $global:date = ^(Get-Date -Format 'yyyy-MM-dd'^)
 	echo function ReplaceValues^($template_file, $output_file^)
 	echo {
 	echo   ^(Get-Content $template_file^) ^| Foreach-Object {
 	echo     $_ -replace '{VERSION}', '%VERSION_SHORT%' `
+	echo        -replace '{DATE}', $date `
 	echo        -replace '{INSTALLERURL}', 'https://github.com/rainmeter/rainmeter/releases/download/v%VERSION_FULL%/Rainmeter-%VERSION_SHORT%.exe' `
 	echo        -replace '{INSTALLERSHA256}', $hash `
 	echo        -replace '{YEAR}', '%BUILD_YEAR%'

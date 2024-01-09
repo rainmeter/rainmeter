@@ -7,7 +7,9 @@
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
+#include "../Common/Platform.h"
 #include "../Common/StringUtil.h"
+#include "../Common/Version.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -282,30 +284,106 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 {
 	const bool debug = GetRainmeter().GetDebug();
 
-	std::string release;
-	if (!status["release"]["version"].empty())
+	std::wstring buffer;
+
+	auto getStatusValue = [&buffer](json& key) -> bool
 	{
-		release = status["release"]["version"].get<std::string>();
-	}
-	if (release.empty())
+		buffer.clear();
+		if (!key.empty())
+		{
+			std::string value = key.get<std::string>();
+			if (!value.empty())
+			{
+				buffer = StringUtil::Widen(value);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	// Get "release version" from the status file
+	if (!getStatusValue(status["release"]["version"]))
 	{
-		if (debug) LogError(L">>Status file: Parsing \"version\" failed");
+		if (debug)
+		{
+			buffer = StringUtil::Widen(status["release"].dump());
+			LogErrorF(L">>Status File: Parsing error: release:%s", buffer.c_str());
+		}
 		return;
 	}
 
-	const std::wstring tmpSz = StringUtil::Widen(release);
-	LPCWSTR version = tmpSz.c_str();
+	VersionHelper::Version availableVersion = { buffer };
+	if (!availableVersion.IsValid())
+	{
+		if (debug) LogErrorF(L">>Status File: Invalid \"version\": %s", buffer.c_str());
+		return;
+	}
 
-	if (debug) LogDebugF(L"  Status file version: %s", version);
+	if (debug) LogDebugF(L"  Status file version: %s", buffer.c_str());
 
-	const int availableVersion = ParseVersion(version);
-	if (availableVersion > RAINMETER_VERSION)
+	// Get "Rainmeter version"
+	VersionHelper::Version rainmeterVersion = { APPVERSION };
+	if (!rainmeterVersion.IsValid())
+	{
+		if (debug) LogErrorF(L">>Status File: Invalid Rainmeter version: %s", APPVERSION);  // Probably never reach this
+		return;
+	}
+
+	if (availableVersion > rainmeterVersion)
 	{
 		const bool isDevBuild = []()
 		{
-			if (!LOCAL_STATUS_FILE.empty()) return false;
+			if (!LOCAL_STATUS_FILE.empty()) return true;
 			return RAINMETER_VERSION == 0;
 		} ();
+
+		// Get "minimum Windows version" from the status file
+		if (!getStatusValue(status["release"]["minimum_windows"]["version"]))
+		{
+			if (debug)
+			{
+				buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
+				LogErrorF(L">>Status File: Error parsing \"version\": minimum_windows:%s", buffer.c_str());
+			}
+			return;
+		}
+
+		VersionHelper::Version statusWinVer = { buffer };
+		if (!statusWinVer.IsValid())
+		{
+			if (debug) LogErrorF(L">>Status File: Invalid \"minimum_windows\" version: %s", buffer.c_str());  // Probably never reach this
+			return;
+		}
+
+		// Get the user's Windows version
+		VersionHelper::Version systemWinVer = { GetPlatform().GetRawVersion() };
+		if (!systemWinVer.IsValid())
+		{
+			if (debug) LogErrorF(L">>Status File: Invalid system version: %s", systemWinVer.Get().c_str());
+			return;
+		}
+
+		// Check if the new Rainmeter version requires a Windows version that is newer than the user's installed version
+		if (statusWinVer > systemWinVer)
+		{
+			if (!getStatusValue(status["release"]["minimum_windows"]["name"]))
+			{
+				if (debug)
+				{
+					buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
+					LogErrorF(L">>Status File: Error parsing \"name\": minimum_windows:%s", buffer.c_str());
+				}
+				buffer = L"Windows build";  // For error message below
+			}
+
+			LogNoticeF(
+				L"* A new version of Rainmeter is available, however, your system does not meet the minimum required Windows version."
+				L" Rainmeter %s requires \"%s (%s)\" or higher.",
+				availableVersion.Get().c_str(),
+				buffer.c_str(),
+				statusWinVer.Get().c_str());
+			return;
+		}
 
 		if (!isDevBuild)
 		{
@@ -325,40 +403,27 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 		GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", tmp, _countof(tmp), dataFile);
 
 		// Show tray notification only once per new version
-		const int lastVersion = ParseVersion(tmp);
+		VersionHelper::Version lastVersion = { tmp };
+		if (!lastVersion.IsValid())
+		{
+			lastVersion.Set(L"0");  // "LastCheck" probably doesn't exist yet.
+		}
+
+		buffer = availableVersion.Get();
 		if (availableVersion > lastVersion)
 		{
-			WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
+			WritePrivateProfileString(L"Rainmeter", L"LastCheck", buffer.c_str(), dataFile);
 			if (!isDevBuild && !downloadedNewVersion)
 			{
-				GetRainmeter().GetTrayIcon()->ShowUpdateNotification(version);
+				GetRainmeter().GetTrayIcon()->ShowUpdateNotification(buffer.c_str());
 			}
 		}
 
 		if (!isDevBuild && downloadedNewVersion)
 		{
-			GetRainmeter().GetTrayIcon()->ShowInstallUpdateNotification(version);
+			GetRainmeter().GetTrayIcon()->ShowInstallUpdateNotification(buffer.c_str());
 		}
 	}
-}
-
-int Updater::ParseVersion(LPCWSTR str)
-{
-	int version = _wtoi(str) * 1000000;
-	const WCHAR* pos = wcschr(str, L'.');
-	if (pos)
-	{
-		++pos;	// Skip .
-		version += _wtoi(pos) * 1000;
-
-		pos = wcschr(pos, '.');
-		if (pos)
-		{
-			++pos;	// Skip .
-			version += _wtoi(pos);
-		}
-	}
-	return version;
 }
 
 bool Updater::DownloadNewVersion(json& status)
@@ -465,7 +530,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 
 	// Dump installer contents into byte array
 	size_t fileSize = 0ULL;
-	BYTE * buffer = FileUtil::ReadFullFile(fullpath, &fileSize).release();
+	BYTE* buffer = FileUtil::ReadFullFile(fullpath, &fileSize).release();
 
 	NTSTATUS status = 0L;
 	BCRYPT_ALG_HANDLE provider = nullptr;

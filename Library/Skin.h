@@ -30,6 +30,9 @@
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
 
+typedef HPOWERNOTIFY(WINAPI * FPRSRN)(HANDLE, DWORD);
+typedef BOOL(WINAPI * FPUSRN)(HPOWERNOTIFY);
+
 enum BUTTONPROC
 {
 	BUTTONPROC_DOWN,
@@ -357,6 +360,7 @@ private:
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;
+	HPOWERNOTIFY m_SuspendResumeNotification;
 
 	Mouse m_Mouse;
 	bool m_MouseOver;
@@ -474,6 +478,9 @@ private:
 
 	static int c_InstanceCount;
 	static bool c_IsInSelectionMode;
+
+	static FPRSRN c_RegisterSuspendResumeNotification;
+	static FPUSRN c_UnregisterSuspendResumeNotification;
 };
 
 #endif
