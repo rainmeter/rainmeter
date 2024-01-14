@@ -735,24 +735,31 @@ bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 	matches.emplace_back(std::wstring{data, dataLength});
 
 	// Parse the json and perform the matches
-	const auto json = json::parse(std::wstring(data, dataLength));
-	for (const auto &specUtf16 : m_JsonValueSpecs)
-	{
-		const auto specUtf8 = StringUtil::NarrowUTF8(specUtf16);
-		std::wstring matchUtf16;
-		const auto jsonPointer = json::json_pointer(specUtf8);
-		if (json.contains(jsonPointer)) {
-			const auto match = json[jsonPointer];
-			const auto matchStr = match.dump();
-			matchUtf16 = StringUtil::Widen(matchStr);
-		} else {
-			matchUtf16 = L"N/A";
-		}
-		matches.push_back(matchUtf16);
-
-		if (GetRainmeter().GetDebug() && m_Debug != 0)
+	const auto json = json::parse(std::wstring(data, dataLength), /*cb=*/nullptr, /*allow_exceptions=*/false);
+	if(!json.is_discarded()) {
+		// Got valid JSON, parse all specs accordingly
+		// Config name options are starting with index 1 (index 0 is implied and is the entire source string)
+		int jsonSpecIndex = 1;
+		for (const auto &specUtf16 : m_JsonValueSpecs)
 		{
-			LogNoticeF(this, L"Json match: %s = %s", specUtf16.c_str(), matchUtf16.c_str());
+			const auto specUtf8 = StringUtil::NarrowUTF8(specUtf16);
+			std::wstring matchUtf16;
+			const auto jsonPointer = json::json_pointer(specUtf8);
+			if (json.contains(jsonPointer)) {
+				const auto match = json[jsonPointer];
+				const auto matchStr = match.dump();
+				matchUtf16 = StringUtil::Widen(matchStr);
+			} else {
+				matchUtf16 = L"N/A";
+			}
+			matches.push_back(matchUtf16);
+
+			if (GetRainmeter().GetDebug() && m_Debug != 0)
+			{
+				const auto jsonSpecConfigName = L"JsonValuePath" + std::to_wstring(jsonSpecIndex);
+				LogNoticeF(this, L"Json match %s: %s = %s", jsonSpecConfigName.c_str(), specUtf16.c_str(), matchUtf16.c_str());
+			}
+			jsonSpecIndex++;
 		}
 	}
 
@@ -761,14 +768,6 @@ bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
 	// First determine the value for the match according to the StringIndex defined on this measure
 	if (m_StringIndex < numMatches)
 	{
-		if (GetRainmeter().GetDebug() && m_Debug != 0)
-		{
-			for (int i = 0; i < numMatches; ++i)
-			{
-				LogDebugF(this, L"Json match index %2d: %s", i, matches[i].c_str());
-			}
-		}
-
 		EnterCriticalSection(&g_CriticalSection);
 		m_ResultString.assign(matches.at(m_StringIndex));
 		CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
