@@ -11,10 +11,8 @@ image: Visual Studio 2022
 clone_depth: 1
 clone_folder: C:\build
 
-build:
-  project: Rainmeter.sln
-  parallel: true
-  verbosity: minimal
+build_script:
+- cmd: cd Build && Build.bat pre 0 0 0 0 1
 
 test_script:
 - cmd: vstest.console /logger:Appveyor x32-Debug\Obj\Common_Test\Common_Test.dll
