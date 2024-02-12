@@ -195,4 +195,4 @@ echo * Build complete. Elapsed time: %BUILD_ELAPSED_TIME% sec
 :END
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
 echo.
-pause
+if "%CI%" == "" pause
