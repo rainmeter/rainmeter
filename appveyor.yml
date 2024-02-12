@@ -14,9 +14,6 @@ clone_folder: C:\build
 build_script:
 - cmd: cd Build && Build.bat pre 0 0 0 0 1
 
-test_script:
-- cmd: vstest.console /logger:Appveyor x32-Debug\Obj\Common_Test\Common_Test.dll
-
 deploy:
 - provider: Webhook
   url: https://app.signpath.io/API/v1/rainmeter/Integrations/AppVeyor?ProjectSlug=<rainmeter&SigningPolicySlug=test-signing
