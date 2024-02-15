@@ -2,9 +2,11 @@
 
 For build instructions, see [this](https://github.com/rainmeter/rainmeter/blob/master/Docs/Building.md).
 
-### Code signing
+### Code signing policy
 
-Free code signing provided by [SignPath.io], certificate by [SignPath Foundation].
+Our official releases are signed with a valid code signing certificate under the name of [SignPath Foundation].
+
+We appreciate the free code signing provided by [SignPath.io] and the free certificate provided by [SignPath Foundation] 🙏
 
 ### Privacy policy
 
