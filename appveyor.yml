@@ -11,7 +11,7 @@ clone_depth: 1
 clone_folder: C:\build
 
 build_script:
-- cmd: cd Build && Build.bat
+- cmd: cd Build && Build.bat ci
 
 artifacts:
   - path: Build/Rainmeter-*.exe

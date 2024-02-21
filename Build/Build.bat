@@ -1,45 +1,39 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build prerelease 4.4.1 r3500, run: Build.bat pre 4 4 1 3500
-:: Parameters: build_type version_major version_minor version_subminor version_revision
-:: |build_type|: release, pre, languages
-:: Examples:
-::		Build.bat release 4 4 0 3520		-> Rainmeter-4.4.0.exe
-::		Build.bat pre 4 4 1 3521			-> Rainmeter-4.4.1-prerelease.exe
-::		Build.bat languages					-> No installer, just update the language .dll files
-
-if "%APPVEYOR_REPO_TAG%" == "true" (
-	set BUILD_TYPE=release
-	for /F "tokens=1-4 delims=:." %%a in ("%APPVEYOR_REPO_TAG_NAME:~1%") do (
-		set /A VERSION_MAJOR=%%a
-		set /A VERSION_MINOR=%%b
-		set /A VERSION_SUBMINOR=%%c
-		set /A VERSION_REVISION=%%d
-	)
-
-	goto VERSION_OK
-)
+:: Parameters: type version
+::
+:: Available build types:
+::		release    -> outputs Rainmeter-x.x.x.exe
+::		pre        -> outputs Rainmeter-x.x.x-prerelease.exe
+::		languages  -> no installer, updates the language .dll files
 
 set BUILD_TYPE=%1
 
-if "%BUILD_TYPE%" == "languages" goto VERSION_OK
+if "%BUILD_TYPE%" == "ci" (
+	if "%APPVEYOR_REPO_TAG%" == "true" (
+		set BUILD_TYPE=release
+		set VERSION=%APPVEYOR_REPO_TAG_NAME:~1%
+	) else (
+		set BUILD_TYPE=pre
+		set VERSION=%APPVEYOR_BUILD_VERSION%
+	)
+) else (
+	set VERSION=%2
+)
 
-set /A VERSION_MAJOR=%2
-set /A VERSION_MINOR=%3
-set /A VERSION_SUBMINOR=%4
-set /A VERSION_REVISION=%5
-
+if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
-if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit /b 1
-if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit /b 1
-if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit /b 1
-if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit /b 1
-:VERSION_OK
+for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
+	set /A VERSION_MAJOR=%%a
+	set /A VERSION_MINOR=%%b
+	set /A VERSION_SUBMINOR=%%c
+	set /A VERSION_REVISION=%%d
+)
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
