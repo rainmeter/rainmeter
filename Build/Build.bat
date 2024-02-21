@@ -4,13 +4,14 @@ setlocal EnableDelayedExpansion
 :: Parameters: type version
 ::
 :: Available build types:
-::		release    -> outputs Rainmeter-x.x.x.exe
-::		pre        -> outputs Rainmeter-x.x.x-prerelease.exe
+::		release    -> builds release installer
+::		pre        -> builds prerelease installer
 ::		languages  -> no installer, updates the language .dll files
 
-set BUILD_TYPE=%1
-
-if "%BUILD_TYPE%" == "ci" (
+if "%CI%" == "" (
+	set BUILD_TYPE=%1
+	set VERSION=%2
+) else (
 	if "%APPVEYOR_REPO_TAG%" == "true" (
 		set BUILD_TYPE=release
 		set VERSION=%APPVEYOR_REPO_TAG_NAME:~1%
@@ -18,8 +19,6 @@ if "%BUILD_TYPE%" == "ci" (
 		set BUILD_TYPE=pre
 		set VERSION=%APPVEYOR_BUILD_VERSION%
 	)
-) else (
-	set VERSION=%2
 )
 
 if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
@@ -34,6 +33,9 @@ for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
 	set /A VERSION_SUBMINOR=%%c
 	set /A VERSION_REVISION=%%d
 )
+
+set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
+set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
@@ -70,8 +72,7 @@ set MSBUILD="msbuild.exe" /nologo^
 
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
 
-set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
-set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
+echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 
 :: Update Version.h
 > "..\Version.h" (
@@ -101,10 +102,6 @@ set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 	echo     }
 	echo }
 )
-
-echo * Updated Version.{cs,h}
-
-echo * Starting build for %VERSION_FULL%
 
 :: Build Library
 echo * Building 32-bit projects
@@ -143,7 +140,7 @@ if "%BUILD_TYPE%" == "languages" (
 :: Build installer
 echo * Building installer
 
-set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%.exe
+set INSTALLER_PATH=Rainmeter-%VERSION_FULL%.exe
 if "%BUILD_TYPE%" == "pre" set INSTALLER_PATH=Rainmeter-%VERSION_FULL%-prerelease.exe
 
 set INSTALLER_DEFINES=^
