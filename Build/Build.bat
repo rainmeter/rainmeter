@@ -70,7 +70,7 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
-set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%"
+set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%" /q
 
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
 
@@ -141,11 +141,13 @@ if "%BUILD_TYPE%" == "languages" (
 
 :: Sign binaries
 if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
-	echo * Self-signing binaries
-	for /R %%f in (..\x32-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-	for /R %%f in (..\x32-Release\*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-	for /R %%f in (..\x64-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-	for /R %%f in (..\x64-Release\*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	echo * Self-signing 32-bit binaries
+	for /R "..\x32-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R "..\x32-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+
+	echo * Self-signing 64-bit binaries
+	for /R "..\x64-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R "..\x64-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 )
 
 :: Build installer
