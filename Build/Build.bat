@@ -141,13 +141,13 @@ if "%BUILD_TYPE%" == "languages" (
 
 :: Sign binaries
 if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
-	echo * Signing binaries (self-signed)
+	echo * Self-signing binaries
 	for /R %%f in (..\x32-Release\*.dll) do echo "%%f"
 	for /R %%f in (..\x32-Release\*.exe) do echo "%%f"
-	for /R %%f in (..\x32-Release\*.dll) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%f failed & exit /b 1)
-	for /R %%f in (..\x32-Release\*.exe) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%f failed & exit /b 1)
-	for /R %%f in (..\x64-Release\*.dll) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%f failed & exit /b 1)
-	for /R %%f in (..\x64-Release\*.exe) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%f failed & exit /b 1)
+	for /R %%f in (..\x32-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R %%f in (..\x32-Release\*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R %%f in (..\x64-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R %%f in (..\x64-Release\*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 )
 
 :: Build installer
@@ -169,7 +169,7 @@ set INSTALLER_DEFINES=^
 
 :: Sign installer
 if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
-	echo * Signing installer (self-signed)
+	echo * Self-signing installer
 	%SIGNTOOL_SHA2% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
