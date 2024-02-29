@@ -142,8 +142,6 @@ if "%BUILD_TYPE%" == "languages" (
 :: Sign binaries
 if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 	echo * Self-signing binaries
-	for /R %%f in (..\x32-Release\*.dll) do echo "%%f"
-	for /R %%f in (..\x32-Release\*.exe) do echo "%%f"
 	for /R %%f in (..\x32-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 	for /R %%f in (..\x32-Release\*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 	for /R %%f in (..\x64-Release\*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
