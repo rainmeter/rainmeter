@@ -70,6 +70,8 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
+set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%"
+
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
 
 echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
@@ -137,6 +139,17 @@ if "%BUILD_TYPE%" == "languages" (
 	goto DONE
 )
 
+:: Sign binaries
+if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
+	echo * Signing binaries (self-signed)
+	for /R %%f in (..\x32-Release\*.dll) do echo "%%f"
+	for /R %%f in (..\x32-Release\*.exe) do echo "%%f"
+	for /R %%f in (..\x32-Release\*.dll) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%f failed & exit /b 1)
+	for /R %%f in (..\x32-Release\*.exe) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%f failed & exit /b 1)
+	for /R %%f in (..\x64-Release\*.dll) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%f failed & exit /b 1)
+	for /R %%f in (..\x64-Release\*.exe) do %SIGNTOOL_SHA2% ..\x32-Release\%%f || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%f failed & exit /b 1)
+)
+
 :: Build installer
 echo * Building installer
 
@@ -153,6 +166,12 @@ set INSTALLER_DEFINES=^
 	/DBUILD_YEAR="%BUILD_YEAR%"
 
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
+
+:: Sign installer
+if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
+	echo * Signing installer (self-signed)
+	%SIGNTOOL_SHA2% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
+)
 
 :: Create winget manifest
 if not "%BUILD_TYPE%" == "release" goto DONE
