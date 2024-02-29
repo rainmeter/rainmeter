@@ -10,8 +10,12 @@ image: Visual Studio 2022
 clone_depth: 1
 clone_folder: C:\build
 
+environment:
+  SELF_SIGNED_CERTIFICATE_PASSWORD:
+    secure: Gq8/2YxZYUsUkyG9wl5L02sJG6Vuvf3GJEXulu7oSci4RJvoT0CMze9PgaTYU9Xh
+
 build_script:
-- cmd: cd Build && Build.bat
+  - cmd: cd Build && Build.bat
 
 artifacts:
   - path: Build/Rainmeter-*.exe
