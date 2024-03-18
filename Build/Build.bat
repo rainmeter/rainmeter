@@ -1,39 +1,41 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: For example, to build release 4.4.1 r3500, run: Build.bat release 4 4 1 3500 1
-:: Parameters: build_type version_major version_minor version_subminor version_revision skip_delay_flag
-:: |build_type|: release, pre, languages
-:: |skip_delay_flag|: 1 or 0. 1 = skip any "timeout" commands (for github actions). 0 = adds a 2 second
-::		delay when signing the binaries to prevent file locking by Windows.
-:: Examples:
-::		Build.bat release 4 4 0 3520 0		-> Rainmeter-4.4.0.exe
-::		Build.bat pre 4 4 1 3521 1			-> Rainmeter-4.4.1-prerelease.exe
-::		Build.bat languages					-> No installer, just update the language .dll files
+:: Parameters: type version
+::
+:: Available build types:
+::		release    -> builds release installer
+::		pre        -> builds prerelease installer
+::		languages  -> no installer, updates the language .dll files
 
-set BUILD_TYPE=%1
+if "%CI%" == "" (
+	set BUILD_TYPE=%1
+	set VERSION=%2
+) else (
+	if "%APPVEYOR_REPO_TAG%" == "true" (
+		set BUILD_TYPE=release
+		set VERSION=%APPVEYOR_REPO_TAG_NAME:~1%
+	) else (
+		set BUILD_TYPE=pre
+		set VERSION=%APPVEYOR_BUILD_VERSION%
+	)
+)
 
-if "%BUILD_TYPE%" == "languages" goto VERSION_OK
-
-set /A VERSION_MAJOR=%2
-set /A VERSION_MINOR=%3
-set /A VERSION_SUBMINOR=%4
-set /A VERSION_REVISION=%5
-
-:: Skip any "timeout" delays
-set SKIP_DELAY=%6
-if "%SKIP_DELAY%" == "" set /A SKIP_DELAY=0
-
+if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
-if "%VERSION_MAJOR%" == "" echo ERROR: VERSION_MAJOR parameter missing & exit /b 1
-if "%VERSION_MINOR%" == "" echo ERROR: VERSION_MINOR parameter missing & exit /b 1
-if "%VERSION_SUBMINOR%" == "" echo ERROR: VERSION_SUBMINOR parameter missing & exit /b 1
-if "%VERSION_REVISION%" == "" echo ERROR: VERSION_REVISION parameter missing & exit /b 1
-:VERSION_OK
+for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
+	set /A VERSION_MAJOR=%%a
+	set /A VERSION_MINOR=%%b
+	set /A VERSION_SUBMINOR=%%c
+	set /A VERSION_REVISION=%%d
+)
+
+set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
+set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
@@ -68,14 +70,11 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
-if exist "Certificate.bat" call "Certificate.bat" > nul
-set SIGNTOOL_SHA1="signtool.exe" sign /fd sha1 /t http://timestamp.comodoca.com /f "%CERTFILE%" /p "%CERTKEY%"
-set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /f "%CERTFILE%" /p "%CERTKEY%"
+set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%" /q
 
 if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
 
-set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
-set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
+echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 
 :: Update Version.h
 > "..\Version.h" (
@@ -105,10 +104,6 @@ set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 	echo     }
 	echo }
 )
-
-echo * Updated Version.{cs,h}
-
-echo * Starting build for %VERSION_FULL%
 
 :: Build Library
 echo * Building 32-bit projects
@@ -145,20 +140,20 @@ if "%BUILD_TYPE%" == "languages" (
 )
 
 :: Sign binaries
-if not "%CERTFILE%" == "" (
-	echo * Signing binaries
-	for %%Z in (Rainmeter.dll Rainmeter.exe RestartRainmeter.exe SkinInstaller.exe) do (
-		%SIGNTOOL_SHA2% ..\x32-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x32-Release\%%Z failed & exit /b 1)
-		if "%SKIP_DELAY%" == "0" timeout 2 > nul
-		%SIGNTOOL_SHA2% ..\x64-Release\%%Z || (echo   ERROR %ERRORLEVEL%: Signing x64-Release\%%Z failed & exit /b 1)
-		if "%SKIP_DELAY%" == "0" timeout 2 > nul
-	)
+if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
+	echo * Self-signing 32-bit binaries
+	for /R "..\x32-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R "..\x32-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+
+	echo * Self-signing 64-bit binaries
+	for /R "..\x64-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
+	for /R "..\x64-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 )
 
 :: Build installer
 echo * Building installer
 
-set INSTALLER_PATH=Rainmeter-%VERSION_SHORT%.exe
+set INSTALLER_PATH=Rainmeter-%VERSION_FULL%.exe
 if "%BUILD_TYPE%" == "pre" set INSTALLER_PATH=Rainmeter-%VERSION_FULL%-prerelease.exe
 
 set INSTALLER_DEFINES=^
@@ -173,11 +168,9 @@ set INSTALLER_DEFINES=^
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
 :: Sign installer
-if not "%CERTFILE%" == "" (
-	echo * Signing installer
-	%SIGNTOOL_SHA1% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
-	if "%SKIP_DELAY%" == "0" timeout 2 > nul
-	%SIGNTOOL_SHA2% /as %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
+if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
+	echo * Self-signing installer
+	%SIGNTOOL_SHA2% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
 :: Create winget manifest
@@ -195,4 +188,4 @@ echo * Build complete. Elapsed time: %BUILD_ELAPSED_TIME% sec
 :END
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
 echo.
-pause
+if "%CI%" == "" pause

@@ -18,13 +18,8 @@ Rainmeter can be built using any version of Visual Studio 2022. If you don't alr
 
 First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
 
-Then, in the Build directory, run e.g. `Build.bat pre 1 2 3 4` to build the pre-release 1.2.3 r4.
+Then, in the Build directory, run e.g. `Build.bat pre 1.2.3.4` to build the pre-release 1.2.3 r4.
 
 If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
 
-To build a release installer, use `Build.bat release 1 2 3 4`.
-
-To digitally sign the installer and the Rainmeter executables, obtain a Windows code signing certificate and create a Certificate.bat file alongside Build.bat with the following contents:
-
-    set CERTFILE=/path/to/PFXcert.p12
-    set CERTKEY=certpassword
+To build a release installer, use `Build.bat release 1.2.3.4`.
