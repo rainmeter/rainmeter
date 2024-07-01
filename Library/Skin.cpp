@@ -1553,7 +1553,10 @@ void Skin::EnableMeasure(const std::wstring& name, bool group)
 	{
 		if (CompareName((*i), measure, group))
 		{
+			// The Enable() call will fail unless DynamicVariables are forced on
+			(*i)->SetDynamicVariables(true);
 			(*i)->Enable();
+
 			if (!group) return;
 		}
 	}
