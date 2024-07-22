@@ -157,12 +157,12 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(info.szDevice);
-		LogDebugF(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-		LogDebugF(L"  Handle   : 0x%p", hMonitor);
-		LogDebugF(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		LogDebugF(L"  Flags       : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
+		LogDebugF(L"  Handle      : 0x%p", hMonitor);
+		LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
 			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-		LogDebugF(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 	}
@@ -329,7 +329,13 @@ void System::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							LogDebugF(L"  Name     : %s", monitor.monitorName.c_str());
+							LogDebugF(L"  Name        : %s", monitor.monitorName.c_str());
+
+							if (*dd.DeviceID && *dd.DeviceKey)
+							{
+								LogDebugF(L"  DeviceID    : %s", dd.DeviceID);
+								LogDebugF(L"  DeviceKey   : %s", dd.DeviceKey);
+							}
 						}
 						break;
 					}
@@ -337,8 +343,15 @@ void System::SetMultiMonitorInfo()
 
 				if (logging)
 				{
-					LogDebugF(L"  Adapter  : %s", deviceString.c_str());
-					LogDebugF(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
+
+					if (*ddm.DeviceID && *ddm.DeviceKey)
+					{
+						LogDebugF(L"  AdapterID   : %s", ddm.DeviceID);
+						LogDebugF(L"  AdapterKey  : %s", ddm.DeviceKey);
+					}
+
+					LogDebugF(L"  DeviceFlags : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 
 				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
@@ -355,7 +368,86 @@ void System::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							LogDebugF(L"  Handle   : 0x%p", monitor.handle);
+							msg.clear();
+							auto buildMessage = [&](LPCWSTR key, LPCWSTR value) -> void
+							{
+								if (!msg.empty()) msg += L", ";
+								msg += key;
+								msg += L'=';
+								msg += value;
+							};
+
+							LogDebugF(L"  Handle      : 0x%p", monitor.handle);
+
+							// Pixel Info
+							if (dm.dmLogPixels > 0)          buildMessage(L"LogicalPixels", std::to_wstring(dm.dmLogPixels).c_str());
+							if (dm.dmFields & DM_BITSPERPEL) buildMessage(L"BitsPerPixel", std::to_wstring(dm.dmBitsPerPel).c_str());
+							if (dm.dmFields & DM_PELSWIDTH && dm.dmFields & DM_PELSHEIGHT)
+							{
+								std::wstring visibleResolution = std::to_wstring(dm.dmPelsWidth);
+								visibleResolution += L'x';
+								visibleResolution += std::to_wstring(dm.dmPelsHeight);
+
+								buildMessage(L"VisibleResolution", visibleResolution.c_str());
+							}
+							if (!msg.empty())
+							{
+								LogDebugF(L"  PixelInfo   : %s", msg.c_str());
+								msg.clear();
+							}
+
+								// Display Info
+								if (dm.dmFields & DM_DISPLAYORIENTATION)
+								{
+								switch (dm.dmDisplayOrientation)
+								{
+									default:
+									case DMDO_DEFAULT: buildMessage(L"Orientation", L"0°"); break;
+									case DMDO_90:      buildMessage(L"Orientation", L"90° (clockwise)"); break;
+									case DMDO_180:     buildMessage(L"Orientation", L"180° (clockwise)"); break;
+									case DMDO_270:     buildMessage(L"Orientation", L"270° (clockwise)"); break;
+								}
+							}
+							if (dm.dmFields & DM_DISPLAYFREQUENCY)
+							{
+								buildMessage(L"Frequency", std::to_wstring(dm.dmDisplayFrequency).c_str());
+								msg += L"Hz";
+							}
+							if (!msg.empty())
+							{
+								LogDebugF(L"  DisplayInfo : %s", msg.c_str());
+								msg.clear();
+							}
+
+							// Display Flags
+							if (dm.dmFields & DM_DISPLAYFLAGS)
+							{
+								std::wstring mode = L"Non-Interlaced";
+								if (dm.dmDisplayFlags & DM_INTERLACED)
+								{
+									mode = L"Interlaced";
+								}
+								if (dm.dmFields & DMDISPLAYFLAGS_TEXTMODE) mode += L"|TextMode";
+								if (dm.dmDisplayFlags & 0x00000001)        mode += L"|Grayscale";  //DM_GRAYSCALE, no longer valid?
+
+								buildMessage(L"Mode", mode.c_str());
+							}
+							if (dm.dmFields & DM_DISPLAYFIXEDOUTPUT)
+							{
+								std::wstring output = L"Default";
+								switch (dm.dmDisplayFixedOutput)
+								{
+									default:
+									case DMDFO_DEFAULT: buildMessage(L"FixedOutput", L"Default"); break;
+									case DMDFO_CENTER:  buildMessage(L"FixedOutput", L"Center"); break;
+									case DMDFO_STRETCH: buildMessage(L"FixedOutput", L"Stretch"); break;
+								}
+							}
+							if (!msg.empty())
+							{
+								LogDebugF(L"  DisplayFlags: %s", msg.c_str());
+								msg.clear();
+							}
 						}
 					}
 
@@ -369,10 +461,10 @@ void System::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							LogDebugF(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
 								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-							LogDebugF(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 						}
@@ -399,8 +491,8 @@ void System::SetMultiMonitorInfo()
 			{
 				if (logging)
 				{
-					LogDebugF(L"  Adapter  : %s", deviceString.c_str());
-					LogDebugF(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
+					LogDebugF(L"  Flags       : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 			}
 			++dwDevice;
@@ -490,6 +582,10 @@ void System::SetMultiMonitorInfo()
 				LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					(*iter).screen.left, (*iter).screen.top, (*iter).screen.right, (*iter).screen.bottom,
 					(*iter).screen.right - (*iter).screen.left, (*iter).screen.bottom - (*iter).screen.top);
+			}
+			else if ((*iter).monitorName.empty())
+			{
+				LogDebugF(L"@%i: %s (inactive)", i, (*iter).deviceName.c_str());
 			}
 			else
 			{
