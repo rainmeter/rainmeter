@@ -2069,7 +2069,13 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 									}
 								}
 
+								// Save the section insertion position in case the included file also uses an @Include
+								std::list<std::wstring>::const_iterator prevInsertPos = m_SectionInsertPos;
+
 								ReadIniFile(value, skinSection, depth + 1);
+
+								// Reset the section insertion position to previous position
+								m_SectionInsertPos = prevInsertPos;
 							}
 						}
 						else
