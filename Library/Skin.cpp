@@ -1008,7 +1008,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::FadeDuration:
 		{
 			int duration = m_Parser.ParseInt(args[0].c_str(), 0);
-			m_NewFadeDuration = duration;
+			m_NewFadeDuration = max(duration, 0);
 		}
 		break;
 
@@ -2252,6 +2252,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	if (isDefault) writeDefaultInt(L"AlphaValue", m_AlphaValue);
 
 	m_FadeDuration = parser.ReadInt(section, makeKey(L"FadeDuration"), 250);
+	m_FadeDuration = max(m_FadeDuration, 0);
 	if (isDefault) writeDefaultInt(L"FadeDuration", m_FadeDuration);
 
 	if (!isDefault)
