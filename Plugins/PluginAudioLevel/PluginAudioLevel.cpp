@@ -711,9 +711,9 @@ PLUGIN_EXPORT double Update (void* data)
 					for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
 					{
 						memset(m->m_bandOut[iChan], 0, m->m_nBands * sizeof(float));
-						int iBin = 0;
+						int iBin = (int)roundf((float)m->m_freqMin / df);
 						int iBand = 0;
-						float f0 = 0.0f;
+						float f0 = (float)m->m_freqMin;
 
 						while (iBin <= (m->m_fftSize / 2) && iBand < m->m_nBands)
 						{
