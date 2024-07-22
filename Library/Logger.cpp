@@ -216,11 +216,22 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 
 void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_list args)
 {
-	const size_t bufSize = 1024ULL;
-	WCHAR* buffer = new WCHAR[bufSize];
+	auto getSize = [&]() -> size_t
+	{
+		errno = 0;
+		size_t size = _vscwprintf(format, args);
+		if (errno != 0 || size <= 0ULL)
+		{
+			return 1024ULL;
+		}
+		 return ++size;  // +1 for null termination
+	};
 
 	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 	_CrtSetReportMode(_CRT_ASSERT, 0);
+
+	const size_t bufSize = getSize();
+	WCHAR* buffer = new WCHAR[bufSize];
 
 	errno = 0;
 	_vsnwprintf_s(buffer, bufSize, _TRUNCATE, format, args);
@@ -232,9 +243,13 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	Log(level, source, buffer);
-	delete [] buffer;
-	buffer = nullptr;
+	if (buffer)
+	{
+		Log(level, source, buffer);
+
+		delete [] buffer;
+		buffer = nullptr;
+	}
 }
 
 std::wstring GetSectionSourceString(Section* section)
