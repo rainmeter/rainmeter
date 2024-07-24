@@ -88,7 +88,7 @@ void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* 
 {
 
 #ifdef _DEBUG
-	if (*function && *file)
+	if (function && file)
 	{
 		LogErrorF(L"Invalid parameter detected. Function: \"%s\" File: \"%s:%d\" Expression: \"%s\"", function, file, line, expression);
 		return;
