@@ -895,10 +895,30 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
+	// Because each nested variable needs to be re-parsed from the beginning of the replaced string,
+	// self-references can be detected multiple times during the variable replacement process.
+	// In these cases, provide a warning to the user before returning.
+	std::wstring selfReferencedVariable;
+
+	// Max number of variable replacements for |str|
+	static const size_t maxReplacements = 1000ULL;
+
 	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0UL;
+	size_t counter = 0ULL;
 	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
+		// Restrict the number of variable replacements to a reseasonable amount
+		if (++counter >= maxReplacements)
+		{
+			LogErrorSF(m_Skin, m_CurrentSection->c_str(), L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
+			if (GetRainmeter().GetDebug())
+			{
+				LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Parsing Error: Result: %s", result.c_str());
+			}
+			break;
+		}
+
 		bool found = false;
 
 		const size_t ei = end - 1UL;
@@ -1054,6 +1074,23 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (found)
 			{
+				// Look for any potential self-references in the "found" value
+				auto findVariable = [&](WCHAR postfix) -> void
+				{
+					// Only check for self-references if none have been found
+					if (selfReferencedVariable.empty())
+					{
+						const std::wstring var = L"[" + original + postfix;
+						if (StringUtil::CaseInsensitiveFind(foundValue, var) != -1)
+						{
+							selfReferencedVariable = original;  // Reports only the first self-reference
+						}
+					}
+				};
+
+				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
+				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
+
 				result.replace(start, end - start + 1UL, foundValue);
 				replaced = true;
 
@@ -1082,6 +1119,17 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	if (!delayedLogEntry.message.empty())
 	{
 		GetLogger().Log(&delayedLogEntry);
+	}
+
+	// Log the self reference warning(s)
+	if (!selfReferencedVariable.empty())
+	{
+		LogWarningSF(m_Skin, m_CurrentSection->c_str(), L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Original string: %s", str.c_str());
+			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Replaced string: %s", result.c_str());
+		}
 	}
 
 	// Reset the current section
