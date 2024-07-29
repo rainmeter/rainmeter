@@ -55,6 +55,24 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
 
+	WCHAR path[MAX_PATH];
+	SecureZeroMemory(path, _countof(path));
+
+	DWORD num = GetModuleFileName(nullptr, path, _countof(path));
+	if (path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	{
+		WCHAR* file = PathFindFileName(path);
+		if (file && lstrcmpi(file, L"Rainmeter.exe") != 0)
+		{
+			WCHAR message[MAX_PATH];
+			SecureZeroMemory(message, _countof(message));
+
+			wsprintf(message, L"Please rename \"%s\" to Rainmeter.exe", file);
+			MessageBox(nullptr, message, L"Rainmeter", MB_OK | MB_ICONERROR);
+			return 1;
+		}
+	}
+
 	// Prevent system error message boxes.
 	UINT oldMode = SetErrorMode(0U);
 	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
