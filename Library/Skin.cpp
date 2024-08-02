@@ -398,6 +398,8 @@ void Skin::RemoveWindowExStyle(LONG_PTR flag)
 */
 void Skin::Deactivate()
 {
+	LogNoticeF(this, L"Deactivating skin");
+
 	UpdateFadeDuration();
 
 	if (m_State == STATE_CLOSING) return;

@@ -156,6 +156,21 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::SetWindowPosition, L"SetWindowPosition", CommandHandler::DoSetWindowPositionBang }
 };
 
+std::wstring BuildConfigPath(const std::wstring& folderPath, const std::wstring& file)
+{
+	return std::wstring(folderPath + (file.empty() ? L"" : L"\\") + file);
+}
+
+bool DoesConfigExist(const std::wstring& folderPath, const std::wstring& file = std::wstring())
+{
+	if (!folderPath.empty())
+	{
+		std::wstring path = GetRainmeter().GetSkinPath() + BuildConfigPath(folderPath, file);
+		return (_waccess_s(path.c_str(), 0) == 0);
+	}
+	return false;
+}
+
 void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argsCount = args.size();
@@ -178,9 +193,13 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 					{
 						other->DoBang(bangInfo.bang, args);
 					}
+					else if (DoesConfigExist(folderPath))
+					{
+						LogWarningF(skin, L"!%s: Skin \"%s\" is not active", bangInfo.name, folderPath.c_str());
+					}
 					else
 					{
-						LogErrorF(skin, L"!%s: Skin \"%s\" not found", bangInfo.name, folderPath.c_str());
+						LogErrorF(skin, L"!%s: Skin \"%s\" does not exist", bangInfo.name, folderPath.c_str());
 					}
 					return;
 				}
@@ -652,23 +671,32 @@ void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, Skin* s
 
 void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
+	Skin* other = nullptr;
+
 	if (!args.empty())
 	{
-		skin = GetRainmeter().GetSkin(args[0]);
-		if (!skin)
+		other = GetRainmeter().GetSkin(args[0]);
+		if (!other)
 		{
-			LogWarningF(L"!DeactivateConfig: \"%s\" not active", args[0].c_str());
+			if (DoesConfigExist(args[0]))
+			{
+				LogWarningF(skin, L"!DeactivateConfig: \"%s\" is not active", args[0].c_str());
+			}
+			else
+			{
+				LogErrorF(skin, L"!DeactivateConfig: \"%s\" does not exist", args[0].c_str());
+			}
 			return;
 		}
 	}
 
-	if (skin)
+	if (other)
 	{
-		GetRainmeter().DeactivateSkin(skin, -1);
+		GetRainmeter().DeactivateSkin(other, -1);
 	}
 	else
 	{
-		LogError(L"!DeactivateConfig: Invalid parameters");
+		LogErrorF(skin, L"!DeactivateConfig: Invalid parameters");
 	}
 }
 
@@ -676,15 +704,15 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* ski
 {
 	if (args.size() >= 1)
 	{
-		Skin* skin = GetRainmeter().GetSkin(args[0]);
-		if (skin)
+		Skin* other = GetRainmeter().GetSkin(args[0]);
+		if (other)
 		{
-			GetRainmeter().DeactivateSkin(skin, -1);
+			GetRainmeter().DeactivateSkin(other, -1);
 			return;
 		}
 
 		// If the skin wasn't active, activate it.
-		Internal_DoActivateBang(args, skin, L"ToggleConfig");
+		Internal_DoActivateBang(args, other, L"ToggleConfig");
 	}
 	else
 	{
@@ -788,24 +816,33 @@ void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)
 
 void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin)
 {
+	Skin* other = nullptr;
+
 	if (!args.empty())
 	{
-		skin = GetRainmeter().GetSkin(args[0]);
-		if (!skin)
+		other = GetRainmeter().GetSkin(args[0]);
+		if (!other)
 		{
-			LogWarningF(L"!SkinMenu: \"%s\" not active", args[0].c_str());
+			if (DoesConfigExist(args[0]))
+			{
+				LogWarningF(skin, L"!SkinMenu: \"%s\" is not active", args[0].c_str());
+			}
+			else
+			{
+				LogErrorF(skin, L"!SkinMenu: \"%s\" does not exist", args[0].c_str());
+			}
 			return;
 		}
 	}
 
-	if (skin)
+	if (other)
 	{
 		POINT pos = System::GetCursorPosition();
-		GetRainmeter().ShowContextMenu(pos, skin);
+		GetRainmeter().ShowContextMenu(pos, other);
 	}
 	else
 	{
-		LogError(L"!SkinMenu: Invalid parameter");
+		LogErrorF(skin, L"!SkinMenu: Invalid parameter");
 	}
 }
 
@@ -1012,7 +1049,7 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 		}
 		else
 		{
-			LogErrorF(L"!EditSkin: Invalid parameters");
+			LogErrorF(skin, L"!EditSkin: Invalid parameters");
 		}
 	}
 	else if (argSize == 1)
@@ -1023,9 +1060,13 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 		{
 			GetRainmeter().EditSkinFile(other->GetFolderPath(), other->GetFileName());
 		}
+		else if (DoesConfigExist(config))
+		{
+			LogWarningF(skin, L"!EditSkin: \"%s\" is not active", config.c_str());
+		}
 		else
 		{
-			LogErrorF(skin, L"!EditSkin: Config \"%s\" not running", config.c_str());
+			LogErrorF(skin, L"!EditSkin: \"%s\" does not exist", config.c_str());
 		}
 	}
 	else if (argSize == 0 && skin)
@@ -1086,13 +1127,35 @@ void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin
 void CommandHandler::Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName)
 {
 	// References: CommandHandler::DoActivateSkinBang, CommandHandler::DoToggleSkinBang
-	if (args.size() == 1)
+	std::wstring folderPath;
+	std::wstring file;
+	const size_t argCount = args.size();
+	if (argCount > 0ULL)
 	{
-		if (GetRainmeter().ActivateSkin(args[0])) return;
+		folderPath = args[0];
+		if (argCount == 1ULL)
+		{
+			if (GetRainmeter().ActivateSkin(folderPath)) return;
+		}
+		else
+		{
+			file = args[1];
+			if (GetRainmeter().ActivateSkin(folderPath, file)) return;
+		}
 	}
-	else if (args.size() > 1)
+
+	if (!folderPath.empty())
 	{
-		if (GetRainmeter().ActivateSkin(args[0], args[1])) return;
+		std::wstring path = BuildConfigPath(folderPath, file);
+		if (DoesConfigExist(folderPath, file))
+		{
+			LogNoticeF(skin, L"!%s: \"%s\" exists, but is not available. Please refresh Rainmeter.", bangName, path.c_str());
+		}
+		else
+		{
+			LogErrorF(skin, L"!%s: \"%s\" does not exist", bangName, path.c_str());
+		}
+		return;
 	}
 
 	LogErrorF(skin, L"!%s: Invalid parameters", bangName);
