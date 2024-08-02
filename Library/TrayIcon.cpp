@@ -82,7 +82,7 @@ TrayIcon::~TrayIcon()
 
 void TrayIcon::Initialize()
 {
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = GetRainmeter().GetModuleInstance();
 	wc.lpszClassName = L"RainmeterTrayClass";

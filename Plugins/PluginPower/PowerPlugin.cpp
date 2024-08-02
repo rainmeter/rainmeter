@@ -234,7 +234,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		}
 		else
 		{
-			tm time = {0};
+			tm time = { 0 };
 			time.tm_sec = value % 60;
 			time.tm_min = (value / 60) % 60;
 			time.tm_hour = value / 60 / 60;

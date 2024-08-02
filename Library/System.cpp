@@ -55,7 +55,7 @@ void System::Initialize(HINSTANCE instance)
 	// Update the CRT timezone variables.
 	_tzset();
 
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = instance;
 	wc.lpszClassName = L"RainmeterSystem";
@@ -358,7 +358,7 @@ void System::SetMultiMonitorInfo()
 				{
 					monitor.active = true;
 
-					DEVMODE dm = {0};
+					DEVMODE dm = { 0 };
 					dm.dmSize = sizeof(DEVMODE);
 
 					if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
@@ -1157,7 +1157,7 @@ HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 */
 void System::ResetWorkingDirectory()
 {
-	WCHAR directory[MAX_PATH] = {0};
+	WCHAR directory[MAX_PATH] = { 0 };
 	GetCurrentDirectory(MAX_PATH, directory);
 
 	const WCHAR* workDir = c_WorkingDirectory.c_str();

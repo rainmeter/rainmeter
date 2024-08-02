@@ -19,7 +19,7 @@
 #include "../Common/Platform.h"
 #include "../Common/StringUtil.h"
 
-WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
+WINDOWPLACEMENT DialogAbout::c_WindowPlacement = { 0 };
 DialogAbout* DialogAbout::c_Dialog = nullptr;
 
 DialogAbout::DialogAbout() : Dialog()
@@ -236,7 +236,7 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	m_TabPlugins.Create(m_Window);
 	m_TabVersion.Create(m_Window);
 
-	TCITEM tci = {0};
+	TCITEM tci = { 0 };
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_LOG);
 	TabCtrl_InsertItem(item, 0, &tci);

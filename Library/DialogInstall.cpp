@@ -351,7 +351,7 @@ bool DialogInstall::ReadPackage()
 	if (_wcsicmp(fileExtension, L".rmskin") == 0)
 	{
 		// Check if the footer is present (for new .rmskin format)
-		PackageFooter footer = {0};
+		PackageFooter footer = { 0 };
 
 		FILE* file = _wfopen(fileName, L"rb");
 		__int64 fileSize = 0;
