@@ -256,6 +256,43 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 	}
 }
 
+void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName)
+{
+	// References: CommandHandler::DoActivateSkinBang, CommandHandler::DoToggleSkinBang
+	std::wstring folderPath;
+	std::wstring file;
+	const size_t argCount = args.size();
+	if (argCount > 0ULL)
+	{
+		folderPath = args[0];
+		if (argCount == 1ULL)
+		{
+			if (GetRainmeter().ActivateSkin(folderPath)) return;
+		}
+		else
+		{
+			file = args[1];
+			if (GetRainmeter().ActivateSkin(folderPath, file)) return;
+		}
+	}
+
+	if (!folderPath.empty())
+	{
+		std::wstring path = BuildConfigPath(folderPath, file);
+		if (DoesConfigExist(folderPath, file))
+		{
+			LogNoticeF(skin, L"!%s: \"%s\" exists, but is not available. Please refresh Rainmeter.", bangName, path.c_str());
+		}
+		else
+		{
+			LogErrorF(skin, L"!%s: \"%s\" does not exist", bangName, path.c_str());
+		}
+		return;
+	}
+
+	LogErrorF(skin, L"!%s: Invalid parameters", bangName);
+}
+
 }  // namespace
 
 /*
@@ -1122,41 +1159,4 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Deprecated.
-}
-
-void CommandHandler::Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName)
-{
-	// References: CommandHandler::DoActivateSkinBang, CommandHandler::DoToggleSkinBang
-	std::wstring folderPath;
-	std::wstring file;
-	const size_t argCount = args.size();
-	if (argCount > 0ULL)
-	{
-		folderPath = args[0];
-		if (argCount == 1ULL)
-		{
-			if (GetRainmeter().ActivateSkin(folderPath)) return;
-		}
-		else
-		{
-			file = args[1];
-			if (GetRainmeter().ActivateSkin(folderPath, file)) return;
-		}
-	}
-
-	if (!folderPath.empty())
-	{
-		std::wstring path = BuildConfigPath(folderPath, file);
-		if (DoesConfigExist(folderPath, file))
-		{
-			LogNoticeF(skin, L"!%s: \"%s\" exists, but is not available. Please refresh Rainmeter.", bangName, path.c_str());
-		}
-		else
-		{
-			LogErrorF(skin, L"!%s: \"%s\" does not exist", bangName, path.c_str());
-		}
-		return;
-	}
-
-	LogErrorF(skin, L"!%s: Invalid parameters", bangName);
 }
