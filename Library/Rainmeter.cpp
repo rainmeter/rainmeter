@@ -1121,7 +1121,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" already active", folderPath.c_str());
+				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" is already active", folderPath.c_str());
 				return;
 			}
 			else
