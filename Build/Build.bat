@@ -173,11 +173,6 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 	%SIGNTOOL_SHA2% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
 )
 
-:: Create winget manifest
-if not "%BUILD_TYPE%" == "release" goto DONE
-if exist "Manifest.bat" call "Manifest.bat" > nul
-if not "%MANIFEST_PATH%" == "" call ".\Winget\BuildManifest.bat"
-
 :DONE
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 	set /A "BUILD_END_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + %%c %% 100) * 100 + 1%%d %% 100"
