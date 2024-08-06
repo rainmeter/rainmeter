@@ -71,7 +71,7 @@ void ShowError(WCHAR* description)
 
 }  // namespace
 
-LPCWSTR Updater::s_UpdateURL = L"http://rainmeter.github.io/rainmeter/status.json";
+LPCWSTR Updater::s_UpdateURL = L"https://rainmeter.github.io/rainmeter/status.json";
 
 Updater::Updater() : 
 	m_Status(nullptr),
