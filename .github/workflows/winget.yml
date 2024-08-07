@@ -2,10 +2,12 @@ name: Publish to WinGet
 
 on:
   release:
-    branches:
-      - master
     types: [released]
   workflow_dispatch:
+    inputs:
+      release-tag:
+        type: string
+        required: true
 
 jobs:
   publish:
@@ -15,5 +17,6 @@ jobs:
         with:
           identifier: Rainmeter.Rainmeter
           installers-regex: '\.exe$' # Only .exe files
+          release-tag: ${{ inputs.release-tag }}
           token: ${{ secrets.WINGET_TOKEN }}
           fork-user: brianferguson
