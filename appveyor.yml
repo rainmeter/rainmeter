@@ -1,4 +1,4 @@
-version: 4.5.27-{build}
+version: 4.5.28-{build}
 
 branches:
   only:
