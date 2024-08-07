@@ -708,32 +708,30 @@ void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, Skin* s
 
 void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	Skin* other = nullptr;
-
 	if (!args.empty())
 	{
-		other = GetRainmeter().GetSkin(args[0]);
-		if (!other)
+		skin = GetRainmeter().GetSkin(args[0]);
+		if (!skin)
 		{
 			if (DoesConfigExist(args[0]))
 			{
-				LogWarningF(skin, L"!DeactivateConfig: \"%s\" is not active", args[0].c_str());
+				LogWarningF(L"!DeactivateConfig: \"%s\" is not active", args[0].c_str());
 			}
 			else
 			{
-				LogErrorF(skin, L"!DeactivateConfig: \"%s\" does not exist", args[0].c_str());
+				LogErrorF(L"!DeactivateConfig: \"%s\" does not exist", args[0].c_str());
 			}
 			return;
 		}
 	}
 
-	if (other)
+	if (skin)
 	{
-		GetRainmeter().DeactivateSkin(other, -1);
+		GetRainmeter().DeactivateSkin(skin, -1);
 	}
 	else
 	{
-		LogErrorF(skin, L"!DeactivateConfig: Invalid parameters");
+		LogErrorF(L"!DeactivateConfig: Invalid parameters");
 	}
 }
 
@@ -853,33 +851,31 @@ void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)
 
 void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	Skin* other = nullptr;
-
 	if (!args.empty())
 	{
-		other = GetRainmeter().GetSkin(args[0]);
-		if (!other)
+		skin = GetRainmeter().GetSkin(args[0]);
+		if (!skin)
 		{
 			if (DoesConfigExist(args[0]))
 			{
-				LogWarningF(skin, L"!SkinMenu: \"%s\" is not active", args[0].c_str());
+				LogWarningF(L"!SkinMenu: \"%s\" is not active", args[0].c_str());
 			}
 			else
 			{
-				LogErrorF(skin, L"!SkinMenu: \"%s\" does not exist", args[0].c_str());
+				LogErrorF(L"!SkinMenu: \"%s\" does not exist", args[0].c_str());
 			}
 			return;
 		}
 	}
 
-	if (other)
+	if (skin)
 	{
 		POINT pos = System::GetCursorPosition();
-		GetRainmeter().ShowContextMenu(pos, other);
+		GetRainmeter().ShowContextMenu(pos, skin);
 	}
 	else
 	{
-		LogErrorF(skin, L"!SkinMenu: Invalid parameter");
+		LogErrorF(L"!SkinMenu: Invalid parameter");
 	}
 }
 
