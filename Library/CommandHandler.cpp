@@ -647,7 +647,16 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 
 void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	Internal_DoActivateBang(args, skin, L"ActivateConfig");
+	if (args.size() == 1)
+	{
+		if (GetRainmeter().ActivateSkin(args[0])) return;
+	}
+	else if (args.size() > 1)
+	{
+		if (GetRainmeter().ActivateSkin(args[0], args[1])) return;
+	}
+
+	LogErrorF(skin, L"!ActivateConfig: Invalid parameters");
 }
 
 void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
@@ -674,7 +683,7 @@ void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin*
 
 void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	if (args.size() >= 1)
+	if (args.size() >= 2)
 	{
 		Skin* skin = GetRainmeter().GetSkin(args[0]);
 		if (skin)
@@ -684,7 +693,7 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* ski
 		}
 
 		// If the skin wasn't active, activate it.
-		Internal_DoActivateBang(args, skin, L"ToggleConfig");
+		DoActivateSkinBang(args, nullptr);
 	}
 	else
 	{
@@ -1081,19 +1090,4 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Deprecated.
-}
-
-void CommandHandler::Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName)
-{
-	// References: CommandHandler::DoActivateSkinBang, CommandHandler::DoToggleSkinBang
-	if (args.size() == 1)
-	{
-		if (GetRainmeter().ActivateSkin(args[0])) return;
-	}
-	else if (args.size() > 1)
-	{
-		if (GetRainmeter().ActivateSkin(args[0], args[1])) return;
-	}
-
-	LogErrorF(skin, L"!%s: Invalid parameters", bangName);
 }
