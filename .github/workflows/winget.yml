@@ -3,20 +3,30 @@ name: Publish to WinGet
 on:
   release:
     types: [released]
-  workflow_dispatch:
-    inputs:
-      release-tag:
-        type: string
-        required: true
 
 jobs:
   publish:
     runs-on: windows-latest
     steps:
-      - uses:  vedantmgoyal9/winget-releaser@main
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Mandatory to use the extract version from tag action
+
+      - name: Extract version from tag
+        uses: damienaicheh/extract-version-from-tag-action@v1.3.0
+
+      - name: Verify version information
+        if: ${{ env.MAJOR == '' || env.MINOR == '' || env.PATCH == '' }}
+        run: |
+          echo 'ERROR: Invalid version: ${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}'
+          exit 1
+
+      - name: Publish to WinGet
+        uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: Rainmeter.Rainmeter
+          version: ${{ env.MAJOR}}.${{ env.MINOR }}.${{ env.PATCH }}
           installers-regex: '\.exe$' # Only .exe files
-          release-tag: ${{ inputs.release-tag }}
           token: ${{ secrets.WINGET_TOKEN }}
           fork-user: brianferguson
