@@ -227,7 +227,7 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 		 return ++size;  // +1 for null termination
 	};
 
-	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
+	_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	const size_t bufSize = getSize();
@@ -241,7 +241,7 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 		_snwprintf_s(buffer, bufSize, _TRUNCATE, L"Internal error: %s", format);
 	}
 
-	_set_invalid_parameter_handler(oldHandler);
+	_set_thread_local_invalid_parameter_handler(oldHandler);
 
 	if (buffer)
 	{
