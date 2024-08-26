@@ -37,6 +37,8 @@ private:
 	static void CheckVersion(json& status, bool downloadNewVersion);
 	static bool DownloadNewVersion(json& status);
 
+	static bool VerifySignedInstaller(const std::wstring& file);
+
 	json m_Status;
 	bool m_DownloadInstaller;
 
