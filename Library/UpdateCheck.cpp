@@ -71,7 +71,9 @@ void ShowError(WCHAR* description)
 
 }  // namespace
 
-LPCWSTR Updater::s_UpdateURL = L"https://rainmeter.github.io/rainmeter/status.json";
+LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status.json";
+LPCWSTR Updater::s_DownloadServer1 = L"https://github.com/rainmeter/rainmeter/";
+LPCWSTR Updater::s_DownloadServer2 = L"https://builds.rainmeter.net/";
 
 Updater::Updater() : 
 	m_Status(nullptr),
@@ -457,6 +459,14 @@ bool Updater::DownloadNewVersion(json& status)
 	std::wstring path = GetRainmeter().GetSettingsPath();
 	path += L"Updates\\";
 
+	// Check to see if installer download location is correct
+	if (_wcsnicmp(url.c_str(), s_DownloadServer1, wcslen(s_DownloadServer1)) != 0 &&
+		_wcsnicmp(url.c_str(), s_DownloadServer2, wcslen(s_DownloadServer2)) != 0)
+	{
+		if (debug) LogErrorF(L">>Status file: Invalid \"download_url\": %s", url.c_str());
+		return false;
+	}
+
 	std::wstring filename = url;
 	std::wstring::size_type pos = filename.rfind(L'/');
 	if (pos == std::wstring::npos)
@@ -465,6 +475,11 @@ bool Updater::DownloadNewVersion(json& status)
 		return false;
 	}
 	filename = filename.substr(pos + 1);
+	if (_wcsnicmp(filename.c_str(), L"Rainmeter", 9) != 0)
+	{
+		if (debug) LogErrorF(L">>Status file: Invalid installer name: %s", filename.c_str());
+		return false;
+	}
 
 	const std::wstring fullPath = path + filename;
 	if (PathFileExists(fullPath.c_str()))
