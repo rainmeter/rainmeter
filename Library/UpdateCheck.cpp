@@ -17,9 +17,6 @@
 #include "Util.h"
 #include "../Version.h"
 
-#include <sstream>
-#include <iomanip>
-
 #include <SoftPub.h>
 #include <bcrypt.h>
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0L)
@@ -597,13 +594,24 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	if (!NT_SUCCESS(status)) return cleanup(L"FinishHash", false);
 
 	// Convert the hash to a hex string
-	std::stringstream ss;
-	ss << std::hex << std::setfill('0');
+	std::wstring hashStr;
+	WCHAR hashChar[3] = { 0 };  // 2 chars + null terminator
 	for (DWORD i = 0UL; i < hashLength; ++i)
 	{
-		ss << std::setw(2) << static_cast<int>(hash[i]);
+		_snwprintf_s(hashChar, _countof(hashChar), L"%02hhX", hash[i]);
+		hashStr += hashChar;
 	}
-	std::wstring hashStr = StringUtil::Widen(ss.str());
+
+	// Make sure hash string has the right length for the algorithm.
+	// |hashLength| should be 32. Hex string should be 64.
+	if (hashStr.length() != (size_t)(hashLength * 2))
+	{
+		LogErrorF(L">>Verify installer error: Invalid hash: %s (%llu)",
+			hashStr.empty() ? L"[empty]" : hashStr.c_str(), hashStr.length());
+		return false;
+	}
+
+	// Clean up bcrypt info
 	cleanup(nullptr, true);
 
 	// Verify hash and installer signature
