@@ -12,6 +12,7 @@ linit.c
 loslib.c
 - Commented out exit function in syslib array
 - Changed os_setlocale() to noop and to always return nil
+- Added invalid parameter handler for strftime
 
 luaconf.h
 - Commented out LUA_DL_DLL macro

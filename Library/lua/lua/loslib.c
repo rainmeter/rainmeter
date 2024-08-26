@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <crtdbg.h>
+
 #define loslib_c
 #define LUA_LIB
 
@@ -18,6 +20,12 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
+
+
+static void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
+{
+    // Do nothing
+}
 
 
 static int os_pushresult (lua_State *L, int i, const char *filename) {
@@ -157,7 +165,20 @@ static int os_date (lua_State *L) {
         size_t reslen;
         char buff[200];  /* should be big enough for any conversion result */
         cc[1] = *(++s);
+
+        // Rainmeter edit: strftime can cause an invalid parameter exception with an invalid format
+        _invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+        _CrtSetReportMode(_CRT_ASSERT, 0);
+
+        errno = 0;
         reslen = strftime(buff, sizeof(buff), cc, stm);
+        if (errno == EINVAL)
+        {
+            buff[0] = 0;
+        }
+
+        _set_thread_local_invalid_parameter_handler(oldHandler);
+
         luaL_addlstring(&b, buff, reslen);
       }
     }
