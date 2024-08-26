@@ -59,12 +59,12 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	SecureZeroMemory(path, _countof(path));
 
 	DWORD num = GetModuleFileName(nullptr, path, _countof(path));
-	if (path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	if (num > 0UL && *path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		WCHAR* file = PathFindFileName(path);
 		if (file && lstrcmpi(file, L"Rainmeter.exe") != 0)
 		{
-			WCHAR message[MAX_PATH];
+			WCHAR message[1024];
 			SecureZeroMemory(message, _countof(message));
 
 			wsprintf(message, L"Please rename \"%s\" to Rainmeter.exe", file);
@@ -93,7 +93,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 			}
 		}
 
-		WCHAR message[128];
+		WCHAR message[1024];
 		wsprintf(
 			message,
 			L"Rainmeter.dll load error %ld.",
