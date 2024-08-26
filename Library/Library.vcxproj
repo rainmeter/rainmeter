@@ -22,7 +22,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;ws2_32.lib;PowrProf.lib;netapi32.lib;Ntdll.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;Rpcrt4.lib;wlanapi.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Bcrypt.lib;Wintrust.lib;comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;ws2_32.lib;PowrProf.lib;netapi32.lib;Ntdll.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;Rpcrt4.lib;wlanapi.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;wlanapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
