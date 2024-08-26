@@ -104,7 +104,7 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 {
 	if (bufLen > 0)
 	{
-		_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
+		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;
@@ -122,7 +122,7 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 			buf[0] = 0;
 		}
 
-		_set_invalid_parameter_handler(oldHandler);
+		_set_thread_local_invalid_parameter_handler(oldHandler);
 	}
 }
 
