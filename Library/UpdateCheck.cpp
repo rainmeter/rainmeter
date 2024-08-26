@@ -347,8 +347,6 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 			return RAINMETER_VERSION == 0;
 		} ();
 
-		const bool isDevBuild = false;
-
 		// Get "minimum Windows version" from the status file
 		if (!getStatusValue(status["release"]["minimum_windows"]["version"]))
 		{
