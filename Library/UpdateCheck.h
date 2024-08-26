@@ -41,6 +41,8 @@ private:
 	bool m_DownloadInstaller;
 
 	static LPCWSTR s_UpdateURL;
+	static LPCWSTR s_DownloadServer1;
+	static LPCWSTR s_DownloadServer2;
 };
 
 // Convenience function.
