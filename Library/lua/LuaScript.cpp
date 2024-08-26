@@ -273,16 +273,10 @@ void LuaScript::RunString(const std::wstring& str)
 		// Pop table and set the environment of the loaded chunk to it
 		lua_setfenv(L, -2);
 
-		// Ignore any CRT invalid parameter exceptions (like os.date with an invalid format)
-		_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
-		_CrtSetReportMode(_CRT_ASSERT, 0);
-
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			LuaHelper::ReportErrors();
 		}
-
-		_set_invalid_parameter_handler(oldHandler);
 	}
 }
 
