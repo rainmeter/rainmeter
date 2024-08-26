@@ -208,7 +208,6 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			UINT_PTR idm = downloadedNewVersion ? IDM_INSTALL_NEW_VERSION : IDM_NEW_VERSION;
 			WCHAR* str = GetString(downloadedNewVersion ? ID_STR_INSTALL_NEW_VERSION : ID_STR_UPDATEAVAILABLE);
 			InsertMenu(menu, 0, MF_BYPOSITION, idm, str);
-			HiliteMenuItem(rainmeter.GetTrayIcon()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
 			++sepPos;
 		}
 
