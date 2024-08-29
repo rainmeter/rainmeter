@@ -350,7 +350,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 		}
 	}
 
-	DWRITE_TEXT_METRICS metrics = {0};
+	DWRITE_TEXT_METRICS metrics = { 0 };
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
 	HRESULT hr = Canvas::c_DWFactory->CreateTextLayout(
 		str,

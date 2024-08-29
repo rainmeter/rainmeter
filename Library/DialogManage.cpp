@@ -23,7 +23,7 @@
 
 #define RAINMETER_LANGUAGE L"https://www.rainmeter.net/localization"
 
-WINDOWPLACEMENT DialogManage::c_WindowPlacement = {0};
+WINDOWPLACEMENT DialogManage::c_WindowPlacement = { 0 };
 DialogManage* DialogManage::c_Dialog = nullptr;
 
 DialogManage::DialogManage() : Dialog()
@@ -300,7 +300,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	m_TabGameMode.Create(m_Window);
 	m_TabSettings.Create(m_Window);
 
-	TCITEM tci = {0};
+	TCITEM tci = { 0 };
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_SKINS);
 	TabCtrl_InsertItem(item, 0, &tci);
@@ -743,7 +743,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 		item = GetControl(Id_SkinsTreeView);
 		TreeView_DeleteAllItems(item);
 
-		TVINSERTSTRUCT tvi = {0};
+		TVINSERTSTRUCT tvi = { 0 };
 		tvi.hInsertAfter = TVI_LAST;
 		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
@@ -1129,7 +1129,7 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	WCHAR buffer[MAX_PATH] = { 0 };
 
 	// Get current selection name
-	TVITEM tvi = {0};
+	TVITEM tvi = { 0 };
 	tvi.hItem = TreeView_GetSelection(tree);
 	tvi.mask = TVIF_TEXT;
 	tvi.pszText = buffer;
@@ -1677,7 +1677,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
 					HMENU menu = nullptr;
-					MENUITEMINFO mii = {0};
+					MENUITEMINFO mii = { 0 };
 					mii.cbSize = sizeof(MENUITEMINFO);
 					mii.fMask = MIIM_STRING;
 

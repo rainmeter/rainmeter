@@ -154,9 +154,6 @@ public:
 	static void DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin);
 
 	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
-
-private:
-	static void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName);
 };
 
 #endif

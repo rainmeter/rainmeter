@@ -134,7 +134,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	static const RECT defMargins = {0};
+	static const RECT defMargins = { 0 };
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
 
 	// Deprecated!

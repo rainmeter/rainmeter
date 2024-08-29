@@ -131,7 +131,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_PACKAGE_NEXT_BUTTON:
 		{
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGE_TAB);
-			TCITEM tci = {0};
+			TCITEM tci = { 0 };
 			tci.mask = TCIF_TEXT;
 			tci.pszText = L"Options";
 			TabCtrl_InsertItem(item, 0, &tci);

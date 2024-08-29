@@ -86,5 +86,17 @@ HICON GetIconBySize(UINT id, int size)
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
-	// Do nothing.
+
+#ifdef _DEBUG
+	if (function && file)
+	{
+		LogErrorF(L"Invalid parameter detected. Function: \"%s\" File: \"%s:%d\" Expression: \"%s\"", function, file, line, expression);
+		return;
+	}
+#endif
+
+	if (GetRainmeter().GetDebug())
+	{
+		LogError(L"Invalid parameter detected");
+	}
 }

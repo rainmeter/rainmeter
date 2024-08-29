@@ -244,7 +244,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		return 1;
 	}
 
-	WNDCLASS wc = {0};
+	WNDCLASS wc = { 0 };
 	wc.lpfnWndProc = (WNDPROC)MainWndProc;
 	wc.hInstance = m_Instance;
 	wc.lpszClassName = RAINMETER_CLASS_NAME;
@@ -644,7 +644,7 @@ bool Rainmeter::IsAlreadyRunning()
 			std::wstring data = m_IniFile;
 			_wcsupr(&data[0]);
 
-			MD5_CTX ctx = {0};
+			MD5_CTX ctx = { 0 };
 			MD5Init(&ctx);
 			MD5Update(&ctx, (LPBYTE)&data[0], (UINT)data.length() * sizeof(WCHAR));
 			MD5Final(&ctx);
@@ -1121,7 +1121,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" already active", folderPath.c_str());
+				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" is already active", folderPath.c_str());
 				return;
 			}
 			else

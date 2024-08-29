@@ -1,0 +1,27 @@
+name: Manual publish to WinGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        type: string
+        description: Github release tag (vX.X.X.X)
+        required: true
+      version:
+        type: string
+        description: Rainmeter version (X.X.X)
+        required: true
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses:  vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: Rainmeter.Rainmeter
+          version: ${{ inputs.version }}
+          installers-regex: '\.exe$' # Only .exe files
+          max-versions-to-keep: 1
+          release-tag: ${{ inputs.release-tag }}
+          token: ${{ secrets.WINGET_TOKEN }}
+          fork-user: brianferguson

@@ -890,24 +890,45 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	std::wstring result = str;
 	bool replaced = false;
 
-	size_t previousStart = 0UL;
+	size_t previousStart = 0ULL;
 	std::wstring previousVariable;
 
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
+	// Because each nested variable needs to be re-parsed from the beginning of the replaced string,
+	// self-references can be detected multiple times during the variable replacement process.
+	// In these cases, provide a warning to the user before returning.
+	std::wstring selfReferencedVariable;
+
+	// Max number of variable replacements for |str|
+	static const size_t maxReplacements = 1000ULL;
+
 	// Find the innermost section variable(s) first, then move outward (working left to right)
-	size_t end = 0UL;
+	size_t end = 0ULL;
+	size_t counter = 0ULL;
 	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
+		// Restrict the number of variable replacements to a reseasonable amount
+		if (++counter >= maxReplacements)
+		{
+			LogErrorSF(m_Skin, m_CurrentSection->c_str(),
+				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
+			if (GetRainmeter().GetDebug())
+			{
+				LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Parsing Error: Result: %s", result.c_str());
+			}
+			break;
+		}
+
 		bool found = false;
 
-		const size_t ei = end - 1UL;
+		const size_t ei = end - 1ULL;
 		size_t start = ei;
 
 		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
 		{
 			found = false;
-			size_t si = start + 2UL;  // Start index where escaped variable "should" be: [ *   *]
+			size_t si = start + 2ULL;  // Start index where escaped variable "should" be: [ *   *]
 
 			// Check for escaped variables first, if found, skip to the next variable
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
@@ -917,8 +938,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
 				if (type != VariableType::Mouse)
 				{
-					result.erase(ei, 1UL);
-					result.erase(si, 1UL);
+					result.erase(ei, 1ULL);
+					result.erase(si, 1ULL);
 				}
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
@@ -944,8 +965,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			previousStart = start;
 
 			// Separate "key" character from variable
-			const WCHAR key = result.substr(si, 1UL).c_str()[0];
-			std::wstring variable = result.substr(si + 1UL, end - si - 1UL);
+			const WCHAR key = result.substr(si, 1ULL).c_str()[0];
+			std::wstring variable = result.substr(si + 1ULL, end - si - 1ULL);
 			if (variable.empty())
 			{
 				break; // Break out of inner "start" loop and continue to the next nested variable
@@ -967,7 +988,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
 			if (!isValid)
 			{
-				if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
+				if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
 
 				--start;		// Check for any "starting" brackets in string prior to the current starting position
 				continue;		// This is not a valid nested variable, check the next starting bracket
@@ -1029,7 +1050,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 						if (variable[0] == L'x' || variable[0] == L'X')
 						{
 							base = 16;
-							variable.erase(0UL, 1UL);  // remove 'x' or 'X'
+							variable.erase(0ULL, 1ULL);  // remove 'x' or 'X'
 
 							if (variable.empty())
 							{
@@ -1045,7 +1066,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 							break;  // Invalid character
 						}
 
-						foundValue.assign(1UL, (WCHAR)ch);
+						foundValue.assign(1ULL, (WCHAR)ch);
 						found = true;
 					}
 					break;
@@ -1054,16 +1075,33 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (found)
 			{
-				result.replace(start, end - start + 1UL, foundValue);
+				// Look for any potential self-references in the "found" value
+				auto findVariable = [&](WCHAR postfix) -> void
+				{
+					// Only check for self-references if none have been found
+					if (selfReferencedVariable.empty())
+					{
+						const std::wstring var = L"[" + original + postfix;
+						if (StringUtil::CaseInsensitiveFind(foundValue, var) != -1)
+						{
+							selfReferencedVariable = original;  // Reports only the first self-reference
+						}
+					}
+				};
+
+				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
+				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
+
+				result.replace(start, end - start + 1ULL, foundValue);
 				replaced = true;
 
-				end = start - 1UL;
+				end = start - 1ULL;
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
 			// No variable found
 
-			if (start == 0UL) break;	// Already at beginning of string, try next ending bracket
+			if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
 
 			--start;		// Check for any "starting" brackets in string prior to the current starting position
 		}
@@ -1082,6 +1120,17 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	if (!delayedLogEntry.message.empty())
 	{
 		GetLogger().Log(&delayedLogEntry);
+	}
+
+	// Log the self reference warning(s)
+	if (!selfReferencedVariable.empty())
+	{
+		LogWarningSF(m_Skin, m_CurrentSection->c_str(), L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Original string: %s", str.c_str());
+			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Replaced string: %s", result.c_str());
+		}
 	}
 
 	// Reset the current section
@@ -2069,7 +2118,13 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 									}
 								}
 
+								// Save the section insertion position in case the included file also uses an @Include
+								std::list<std::wstring>::const_iterator prevInsertPos = m_SectionInsertPos;
+
 								ReadIniFile(value, skinSection, depth + 1);
+
+								// Reset the section insertion position to previous position
+								m_SectionInsertPos = prevInsertPos;
 							}
 						}
 						else

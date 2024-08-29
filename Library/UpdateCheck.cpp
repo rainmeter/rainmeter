@@ -17,9 +17,7 @@
 #include "Util.h"
 #include "../Version.h"
 
-#include <sstream>
-#include <iomanip>
-
+#include <SoftPub.h>
 #include <bcrypt.h>
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0L)
 
@@ -30,7 +28,29 @@ namespace {
 // Remember to set this back to an empty string before committing any changes to this file!!
 std::wstring LOCAL_STATUS_FILE = L"";
 
-void ShowError(WCHAR* description)
+namespace FormattedError {
+	static void ShowError(WCHAR* description, DWORD dwErr, HMODULE module)
+	{
+		LPVOID lpMsgBuf = nullptr;
+
+		DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_MAX_WIDTH_MASK;
+		DWORD res = FormatMessage(flags, module, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
+		if (res == 0UL || res == ERROR_RESOURCE_NOT_FOUND)
+		{
+			// Try again if the message isn't found in the module (or if there is no message table)
+			flags ^= FORMAT_MESSAGE_FROM_HMODULE;
+			res = FormatMessage(flags, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
+		}
+
+		LPCWSTR error = lpMsgBuf && res > 0UL ? (WCHAR*)lpMsgBuf : L"Unknown error";
+		LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
+
+		if (lpMsgBuf) LocalFree(lpMsgBuf);
+	}
+}  // FormattedError namespace
+
+void ShowInternetError(WCHAR* description)
 {
 	DWORD dwErr = GetLastError();
 	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
@@ -38,40 +58,30 @@ void ShowError(WCHAR* description)
 		WCHAR szBuffer[1024] = { 0 };
 		DWORD dwError = 0UL, dwLen = _countof(szBuffer);
 		LPCWSTR error = L"Unknown Error";
-		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen))
+
+		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen) == TRUE)
 		{
 			error = szBuffer;
 			dwErr = dwError;
 		}
 
-		LogErrorF(L"(%s) %s (ErrorCode=%i)", description, error, dwErr);
+		LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
+		return;
 	}
-	else
-	{
-		LPVOID lpMsgBuf = nullptr;
-		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_HMODULE |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS |
-			FORMAT_MESSAGE_MAX_WIDTH_MASK,
-			GetModuleHandle(L"wininet"),
-			dwErr,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR)&lpMsgBuf,
-			0,
-			nullptr);
 
-		LPCWSTR error = lpMsgBuf ? (WCHAR*)lpMsgBuf : L"Unknown error";
-		LogErrorF(L"(%s) %s (ErrorCode=%i)", description, error, dwErr);
+	FormattedError::ShowError(description, dwErr, GetModuleHandle(L"wininet"));
+}
 
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
-	}
+void ShowWinTrustError(WCHAR* description)
+{
+	FormattedError::ShowError(description, GetLastError(), GetModuleHandle(L"Wintrust"));
 }
 
 }  // namespace
 
-LPCWSTR Updater::s_UpdateURL = L"http://rainmeter.github.io/rainmeter/status.json";
+LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status.json";
+LPCWSTR Updater::s_DownloadServer1 = L"https://github.com/rainmeter/rainmeter/";
+LPCWSTR Updater::s_DownloadServer2 = L"https://builds.rainmeter.net/";
 
 Updater::Updater() : 
 	m_Status(nullptr),
@@ -173,7 +183,7 @@ void Updater::GetStatus(void* pParam)
 	std::string data;
 	if (!DownloadStatusFile(data) || data.empty())
 	{
-		if (debug) ShowError(L">>Status file: Download failed");
+		if (debug) ShowInternetError(L">>Status file: Download failed");
 		return;
 	}
 
@@ -457,6 +467,14 @@ bool Updater::DownloadNewVersion(json& status)
 	std::wstring path = GetRainmeter().GetSettingsPath();
 	path += L"Updates\\";
 
+	// Check to see if installer download location is correct
+	if (_wcsnicmp(url.c_str(), s_DownloadServer1, wcslen(s_DownloadServer1)) != 0 &&
+		_wcsnicmp(url.c_str(), s_DownloadServer2, wcslen(s_DownloadServer2)) != 0)
+	{
+		if (debug) LogErrorF(L">>Status file: Invalid \"download_url\": %s", url.c_str());
+		return false;
+	}
+
 	std::wstring filename = url;
 	std::wstring::size_type pos = filename.rfind(L'/');
 	if (pos == std::wstring::npos)
@@ -465,6 +483,11 @@ bool Updater::DownloadNewVersion(json& status)
 		return false;
 	}
 	filename = filename.substr(pos + 1);
+	if (_wcsnicmp(filename.c_str(), L"Rainmeter", 9) != 0)
+	{
+		if (debug) LogErrorF(L">>Status file: Invalid installer name: %s", filename.c_str());
+		return false;
+	}
 
 	const std::wstring fullPath = path + filename;
 	if (PathFileExists(fullPath.c_str()))
@@ -498,14 +521,10 @@ bool Updater::DownloadNewVersion(json& status)
 		return cleanup(false);
 	}
 
+	if (debug) LogDebug(L"  Downloading new installer: Success!");
+
 	if (VerifyInstaller(path, filename, sha, true))
 	{
-		if (debug)
-		{
-			LogDebug(L"  Downloading new installer: Success!");
-			LogDebug(L"  Verifying installer integrity: Success!");
-			LogDebugF(L"  Installer location: %s", fullPath.c_str());
-		}
 		GetRainmeter().SetDownloadedNewVersion();
 		return cleanup(true);
 	}
@@ -573,29 +592,128 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	if (!NT_SUCCESS(status)) return cleanup(L"FinishHash", false);
 
 	// Convert the hash to a hex string
-	std::stringstream ss;
-	ss << std::hex << std::setfill('0');
+	std::wstring hashStr;
+	WCHAR hashChar[3] = { 0 };  // 2 chars + null terminator
 	for (DWORD i = 0UL; i < hashLength; ++i)
 	{
-		ss << std::setw(2) << static_cast<int>(hash[i]);
+		_snwprintf_s(hashChar, _countof(hashChar), L"%02hhX", hash[i]);
+		hashStr += hashChar;
 	}
-	std::wstring hashStr = StringUtil::Widen(ss.str());
+
+	// Make sure hash string has the right length for the algorithm.
+	// |hashLength| should be 32. Hex string should be 64.
+	if (hashStr.length() != (size_t)(hashLength * 2))
+	{
+		LogErrorF(L">>Verify installer error: Invalid hash: %s (%llu)",
+			hashStr.empty() ? L"[empty]" : hashStr.c_str(), hashStr.length());
+		return false;
+	}
+
+	// Clean up bcrypt info
 	cleanup(nullptr, true);
 
-	bool isVerified = _wcsicmp(sha256.c_str(), hashStr.c_str()) == 0;
-	if (isVerified && writeToDataFile)
+	// Verify hash and installer signature
+	bool isHashVerified = _wcsicmp(sha256.c_str(), hashStr.c_str()) == 0;
+	if (isHashVerified)
 	{
-		LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
-		WritePrivateProfileString(L"Rainmeter", L"InstallerName", filename.c_str(), dataFile);
-		WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", sha256.c_str(), dataFile);
+		LogDebug(L"  Verifying installer integrity: Success!");
+	}
+	else
+	{
+		if (debug)
+		{
+			LogError(L">>Verify installer error: Hashes do not match!");
+			LogErrorF(L">>>Status file SHA256 hash:    %s", sha256.c_str());
+			LogErrorF(L">>>Installer file SHA256 hash: %s", hashStr.c_str());
+		}
+		return false;
 	}
 
-	if (!isVerified && debug)
+	bool isVerified = isHashVerified && VerifySignedInstaller(fullpath);
+	if (isVerified)
 	{
-		LogError(L">>Verify installer error: Hashes do not match!");
-		LogErrorF(L">>>Status file SHA256 hash:    %s", sha256.c_str());
-		LogErrorF(L">>>Installer file SHA256 hash: %s", hashStr.c_str());
+		if (writeToDataFile)
+		{
+			LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
+			WritePrivateProfileString(L"Rainmeter", L"InstallerName", filename.c_str(), dataFile);
+			WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", sha256.c_str(), dataFile);
+		}
+
+		if (debug) LogDebugF(L"  Installer location: %s", fullpath.c_str());
 	}
 
 	return isVerified;
+}
+
+bool Updater::VerifySignedInstaller(const std::wstring& file)
+{
+	const bool debug = GetRainmeter().GetDebug();
+	bool isSuccessful = false;
+
+	WINTRUST_FILE_INFO fileData = { 0 };
+	fileData.cbStruct = sizeof(WINTRUST_FILE_INFO);
+	fileData.pcwszFilePath = file.c_str();
+	fileData.hFile = nullptr;
+	fileData.pgKnownSubject = nullptr;
+
+	GUID guid = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+	WINTRUST_DATA data = { 0 };
+	data.cbStruct = sizeof(WINTRUST_DATA);
+	data.pPolicyCallbackData = nullptr;
+	data.pSIPClientData = nullptr;
+	data.dwUIChoice = WTD_UI_NONE;
+	data.fdwRevocationChecks = WTD_REVOKE_NONE;
+	data.dwUnionChoice = WTD_CHOICE_FILE;
+	data.pFile = &fileData;
+	data.dwStateAction = WTD_STATEACTION_VERIFY;
+	data.hWVTStateData = nullptr;
+	data.dwProvFlags = WTD_SAFER_FLAG;  // See WinTrust.h WinVerifyTrust() notes
+	data.pwszURLReference = nullptr;
+	data.dwUIContext = WTD_UICONTEXT_EXECUTE;
+
+	LONG lStatus = WinVerifyTrust((HWND)INVALID_HANDLE_VALUE, &guid, &data);
+	if (lStatus == ERROR_SUCCESS)
+	{
+		isSuccessful = true;
+
+		if (debug)
+		{
+			LogDebug(L"  Verifying installer signature: Success!");
+		}
+	}
+	else if (debug)
+	{
+		switch (lStatus)
+		{
+		case TRUST_E_NOSIGNATURE:          ShowWinTrustError(L">>Installer signature is missing or invalid"); break;
+		case TRUST_E_EXPLICIT_DISTRUST:    ShowWinTrustError(L">>Installer signature explicitly disallowed"); break;
+		case CRYPT_E_SECURITY_SETTINGS:    ShowWinTrustError(L">>Installer signature trusted, but admin policy has disabled user trust"); break;
+
+		// It is unclear if the following cases will ever be returned based on the options specified in |data| (WINTRUST_DATA)
+		case TRUST_E_PROVIDER_UNKNOWN:     ShowWinTrustError(L">>Installer signature provider error"); break;
+		case TRUST_E_ACTION_UNKNOWN:       ShowWinTrustError(L">>Installer signature verification action unknown"); break;
+		case TRUST_E_SUBJECT_FORM_UNKNOWN: ShowWinTrustError(L">>Installer signature provider specified form is unknown"); break;
+
+		// It is unclear if this error will be returned based on |data.dwUIChoice = WTD_UI_NONE|.
+		// Also, due to |CVE-2013-3900|, this error might happen on verification actions without the registry key(s):
+		//   32/64-bit Windows:   [HKEY_LOCAL_MACHINE\Software\Microsoft\Cryptography\Wintrust\Config] "EnableCertPaddingCheck"="1"
+		//   64-bit Windows only: [HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Cryptography\Wintrust\Config] "EnableCertPaddingCheck"="1"
+		// >> These keys are OPT-IN on all Windows version from XP+ <<
+		// WinTrustVerify:            https://learn.microsoft.com/en-us/windows/win32/api/wintrust/nf-wintrust-winverifytrust#return-value
+		// Original advisory:         https://learn.microsoft.com/en-us/security-updates/SecurityAdvisories/2014/2915720
+		// Original bulletin:         https://learn.microsoft.com/en-us/security-updates/SecurityBulletins/2013/ms13-098
+		// CVE reissue update (2022): https://msrc.microsoft.com/update-guide/vulnerability/CVE-2013-3900
+		case TRUST_E_SUBJECT_NOT_TRUSTED: ShowWinTrustError(L">>Installer signature present, but not trusted"); break;  // User clicked "No" in the popup UI
+
+		// Default errors provided by the policy provider
+		default: ShowWinTrustError(L">>Installer signature verification error"); break;
+		}
+	}
+
+	// Release state data
+	data.dwStateAction = WTD_STATEACTION_CLOSE;
+	WinVerifyTrust((HWND)INVALID_HANDLE_VALUE, &guid, &data);
+
+	return isSuccessful;
 }
