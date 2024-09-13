@@ -351,9 +351,13 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		{
 			System::RemoveFile(fullPath);
 		}
-		WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", nullptr, m_DataFile.c_str());
 		RemoveDirectory(updatePath.c_str());
 	}
+
+	// Clean-up any installer keys
+	WritePrivateProfileString(L"Rainmeter", L"InstallerName", nullptr, m_DataFile.c_str());    // Shouldn't exist at this point
+	WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", nullptr, m_DataFile.c_str());  // Might exist if installer (or "Updates" folder) was deleted before installation
+	WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", nullptr, m_DataFile.c_str());
 
 	// Reset log file
 	System::RemoveFile(logger.GetLogFilePath());
