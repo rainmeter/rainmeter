@@ -734,7 +734,7 @@ SkipIniMove:
 
 		; Get the current date (runtime) [YMD]
 		${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallDate" "$2$1$3"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "InstallDate" "$2$1$0"
 
 		; Get rid of approximate install size, which we wrote out in the past.
 		DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "EstimatedSize"
