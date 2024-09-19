@@ -39,8 +39,18 @@ private:
 
 	static bool VerifySignedInstaller(const std::wstring& file);
 
+	static void ShowInternetError(WCHAR* description);
+	static void ShowWinTrustError(WCHAR* description);
+	static void ShowError(WCHAR* description, DWORD dwErr, HMODULE module);
+
+	// Log helper methods (checks debugging mode first)
+	static void LogIfInDebugMode(LPCWSTR message);
+	static void LogIfInDebugModeF(LPCWSTR format, ...);
+
 	json m_Status;
 	bool m_DownloadInstaller;
+
+	static bool s_IsInDebugMode;
 
 	static LPCWSTR s_UpdateURL;
 	static LPCWSTR s_DownloadServer1;

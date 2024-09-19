@@ -28,57 +28,9 @@ namespace {
 // Remember to set this back to an empty string before committing any changes to this file!!
 std::wstring LOCAL_STATUS_FILE = L"";
 
-namespace FormattedError {
-	static void ShowError(WCHAR* description, DWORD dwErr, HMODULE module)
-	{
-		LPVOID lpMsgBuf = nullptr;
-
-		DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_MAX_WIDTH_MASK;
-		DWORD res = FormatMessage(flags, module, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
-		if (res == 0UL || res == ERROR_RESOURCE_NOT_FOUND)
-		{
-			// Try again if the message isn't found in the module (or if there is no message table)
-			flags ^= FORMAT_MESSAGE_FROM_HMODULE;
-			res = FormatMessage(flags, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
-		}
-
-		LPCWSTR error = lpMsgBuf && res > 0UL ? (WCHAR*)lpMsgBuf : L"Unknown error";
-		LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
-
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
-	}
-}  // FormattedError namespace
-
-void ShowInternetError(WCHAR* description)
-{
-	DWORD dwErr = GetLastError();
-	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
-	{
-		WCHAR szBuffer[1024] = { 0 };
-		DWORD dwError = 0UL, dwLen = _countof(szBuffer);
-		LPCWSTR error = L"Unknown Error";
-
-		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen) == TRUE)
-		{
-			error = szBuffer;
-			dwErr = dwError;
-		}
-
-		LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
-		return;
-	}
-
-	FormattedError::ShowError(description, dwErr, GetModuleHandle(L"wininet"));
-}
-
-void ShowWinTrustError(WCHAR* description)
-{
-	FormattedError::ShowError(description, GetLastError(), GetModuleHandle(L"Wintrust"));
-}
-
 }  // namespace
 
+bool Updater::s_IsInDebugMode = false;
 LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status.json";
 LPCWSTR Updater::s_DownloadServer1 = L"https://github.com/rainmeter/rainmeter/";
 LPCWSTR Updater::s_DownloadServer2 = L"https://builds.rainmeter.net/";
@@ -95,6 +47,8 @@ Updater::Updater() :
 		}
 		s_UpdateURL = LOCAL_STATUS_FILE.c_str();
 	}
+
+	s_IsInDebugMode = GetRainmeter().GetDebug();
 }
 
 Updater::~Updater()
@@ -115,20 +69,13 @@ void Updater::CheckForUpdates(bool download)
 
 void Updater::GetLanguageStatus()
 {
-	const bool debug = GetRainmeter().GetDebug();
-	if (debug)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* Checking language status:");
-	}
+	LogIfInDebugMode(L"------------------------------");
+	LogIfInDebugMode(L"* Checking language status:");
 
 	if (m_Status.is_null() || m_Status.is_discarded())
 	{
-		if (debug)
-		{
-			LogError(L">>Status file: Invalid (may not have been downloaded)");
-			LogDebug(L"------------------------------");
-		}
+		LogError(L">>Status file: Invalid (may not have been downloaded)");
+		LogIfInDebugMode(L"------------------------------");
 		return;
 	}
 
@@ -138,11 +85,8 @@ void Updater::GetLanguageStatus()
 	if (lang.is_null() || lang.empty() ||
 		!lang.is_structured() || !lang.is_array())
 	{
-		if (debug)
-		{
-			LogDebug(L">>Status file: Invalid (possibly corrupt?)");
-			LogDebug(L"------------------------------");
-		}
+		LogError(L">>Status file: Invalid (possibly corrupt?)");
+		LogIfInDebugMode(L"------------------------------");
 		return;
 	}
 
@@ -151,52 +95,48 @@ void Updater::GetLanguageStatus()
 		const auto& id = it.value()["id"];
 		if (id.is_number_unsigned() && id.get<unsigned>() == lcid)
 		{
-			if (debug) LogDebugF(L"  Language ID found: %u", lcid);
+			LogIfInDebugModeF(L"  Language ID found: %u", lcid);
 
 			const auto& obs = it.value()["obsolete"];
 			if (obs.is_boolean())
 			{
 				obsolete = obs.get<bool>();
 
-				if (debug) LogDebugF(L"  Language status: %s", obsolete ? L"Obsolete" : L"Current");
+				LogIfInDebugModeF(L"  Language status: %s", obsolete ? L"Obsolete" : L"Current");
 			}
 			break;
 		}
 	}
 
 	GetRainmeter().SetLanguageStatus(obsolete);
-	if (debug) LogDebug(L"------------------------------");
+	LogIfInDebugMode(L"------------------------------");
 }
 
 void Updater::GetStatus(void* pParam)
 {
 	auto updater = (Updater*)pParam;
 
-	const bool debug = GetRainmeter().GetDebug();
-	if (debug)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* Checking for status updates:");
-	}
+	LogIfInDebugMode(L"------------------------------");
+	LogIfInDebugMode(L"* Checking for status updates:");
 
 	// Download the status file |status.json|
 	std::string data;
 	if (!DownloadStatusFile(data) || data.empty())
 	{
-		if (debug) ShowInternetError(L">>Status file: Download failed");
+		if (s_IsInDebugMode) ShowInternetError(L">>Status file: Download failed");
 		return;
 	}
 
-	if (debug) LogDebug(L"  Downloading status file: Success!");
+	LogIfInDebugMode(L"  Downloading status file: Success!");
 
 	json status = json::parse(data, nullptr, false);
 	if (status.is_null() || status.is_discarded())
 	{
-		if (debug) LogError(L">>Status file: Invalid status file");
+		LogError(L">>Status file: Invalid status file");
 		return;
 	}
 
-	if (debug) LogDebug(L"  Parsing status file: Success!");
+	LogIfInDebugMode(L"  Parsing status file: Success!");
 
 	CheckVersion(status, updater->m_DownloadInstaller);
 	updater->m_Status = std::move(status);
@@ -292,8 +232,6 @@ bool Updater::DownloadStatusFile(std::string& data)
 
 void Updater::CheckVersion(json& status, bool downloadNewVersion)
 {
-	const bool debug = GetRainmeter().GetDebug();
-
 	std::wstring buffer;
 
 	auto getStatusValue = [&buffer](json& key) -> bool
@@ -314,28 +252,25 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 	// Get "release version" from the status file
 	if (!getStatusValue(status["release"]["version"]))
 	{
-		if (debug)
-		{
-			buffer = StringUtil::Widen(status["release"].dump());
-			LogErrorF(L">>Status File: Parsing error: release:%s", buffer.c_str());
-		}
+		buffer = StringUtil::Widen(status["release"].dump());
+		LogErrorF(L">>Status File: Parsing error: release: %s", buffer.c_str());
 		return;
 	}
 
 	VersionHelper::Version availableVersion = { buffer };
 	if (!availableVersion.IsValid())
 	{
-		if (debug) LogErrorF(L">>Status File: Invalid \"version\": %s", buffer.c_str());
+		LogErrorF(L">>Status File: Invalid \"version\": %s", buffer.c_str());
 		return;
 	}
 
-	if (debug) LogDebugF(L"  Status file version: %s", buffer.c_str());
+	LogIfInDebugModeF(L"  Status file version: %s", buffer.c_str());
 
 	// Get "Rainmeter version"
 	VersionHelper::Version rainmeterVersion = { APPVERSION };
 	if (!rainmeterVersion.IsValid())
 	{
-		if (debug) LogErrorF(L">>Status File: Invalid Rainmeter version: %s", APPVERSION);  // Probably never reach this
+		LogErrorF(L">>Status File: Invalid Rainmeter version: %s", APPVERSION);  // Probably never reach this
 		return;
 	}
 
@@ -345,23 +280,21 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 		{
 			if (!LOCAL_STATUS_FILE.empty()) return true;
 			return RAINMETER_VERSION == 0;
+			return false;
 		} ();
 
 		// Get "minimum Windows version" from the status file
 		if (!getStatusValue(status["release"]["minimum_windows"]["version"]))
 		{
-			if (debug)
-			{
-				buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
-				LogErrorF(L">>Status File: Error parsing \"version\": minimum_windows:%s", buffer.c_str());
-			}
+			buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
+			LogErrorF(L">>Status File: Error parsing \"version\": minimum_windows: %s", buffer.c_str());
 			return;
 		}
 
 		VersionHelper::Version statusWinVer = { buffer };
 		if (!statusWinVer.IsValid())
 		{
-			if (debug) LogErrorF(L">>Status File: Invalid \"minimum_windows\" version: %s", buffer.c_str());  // Probably never reach this
+			LogErrorF(L">>Status File: Invalid \"minimum_windows\" version: %s", buffer.c_str());  // Probably never reach this
 			return;
 		}
 
@@ -369,7 +302,7 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 		VersionHelper::Version systemWinVer = { GetPlatform().GetRawVersion() };
 		if (!systemWinVer.IsValid())
 		{
-			if (debug) LogErrorF(L">>Status File: Invalid system version: %s", systemWinVer.Get().c_str());
+			LogErrorF(L">>Status File: Invalid system version: %s", systemWinVer.Get().c_str());
 			return;
 		}
 
@@ -378,11 +311,9 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 		{
 			if (!getStatusValue(status["release"]["minimum_windows"]["name"]))
 			{
-				if (debug)
-				{
-					buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
-					LogErrorF(L">>Status File: Error parsing \"name\": minimum_windows:%s", buffer.c_str());
-				}
+				buffer = StringUtil::Widen(status["release"]["minimum_windows"].dump());
+				LogErrorF(L">>Status File: Error parsing \"name\": minimum_windows: %s", buffer.c_str());
+
 				buffer = L"Windows build";  // For error message below
 			}
 
@@ -438,8 +369,6 @@ void Updater::CheckVersion(json& status, bool downloadNewVersion)
 
 bool Updater::DownloadNewVersion(json& status)
 {
-	const bool debug = GetRainmeter().GetDebug();
-
 	std::string download_url;
 	if (!status["release"]["download_url"].empty())
 	{
@@ -447,7 +376,7 @@ bool Updater::DownloadNewVersion(json& status)
 	}
 	if (download_url.empty())
 	{
-		if (debug) LogError(L">>Status file: Parsing \"download_url\" failed");
+		LogError(L">>Status file: Parsing \"download_url\" failed");
 		return false;
 	}
 
@@ -458,7 +387,7 @@ bool Updater::DownloadNewVersion(json& status)
 	}
 	if (download_sha256.empty())
 	{
-		if (debug) LogError(L">>Status file: Parsing \"download_sha256\" failed");
+		LogError(L">>Status file: Parsing \"download_sha256\" failed");
 		return false;
 	}
 
@@ -471,7 +400,7 @@ bool Updater::DownloadNewVersion(json& status)
 	if (_wcsnicmp(url.c_str(), s_DownloadServer1, wcslen(s_DownloadServer1)) != 0 &&
 		_wcsnicmp(url.c_str(), s_DownloadServer2, wcslen(s_DownloadServer2)) != 0)
 	{
-		if (debug) LogErrorF(L">>Status file: Invalid \"download_url\": %s", url.c_str());
+		LogErrorF(L">>Status file: Invalid \"download_url\": %s", url.c_str());
 		return false;
 	}
 
@@ -479,13 +408,13 @@ bool Updater::DownloadNewVersion(json& status)
 	std::wstring::size_type pos = filename.rfind(L'/');
 	if (pos == std::wstring::npos)
 	{
-		if (debug) LogError(L">>Status file: Invalid \"download_url\"");
+		LogError(L">>Status file: Invalid \"download_url\"");
 		return false;
 	}
 	filename = filename.substr(pos + 1);
 	if (_wcsnicmp(filename.c_str(), L"Rainmeter", 9) != 0)
 	{
-		if (debug) LogErrorF(L">>Status file: Invalid installer name: %s", filename.c_str());
+		LogErrorF(L">>Status file: Invalid installer name: %s", filename.c_str());
 		return false;
 	}
 
@@ -521,7 +450,7 @@ bool Updater::DownloadNewVersion(json& status)
 		return cleanup(false);
 	}
 
-	if (debug) LogDebug(L"  Downloading new installer: Success!");
+	LogIfInDebugMode(L"  Downloading new installer: Success!");
 
 	if (VerifyInstaller(path, filename, sha, true))
 	{
@@ -538,12 +467,10 @@ bool Updater::DownloadNewVersion(json& status)
 
 bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& filename, const std::wstring& sha256, bool writeToDataFile)
 {
-	const bool debug = GetRainmeter().GetDebug();
-
 	const std::wstring fullpath = path + filename;
 	if (!PathFileExists(fullpath.c_str()))
 	{
-		if (debug) LogErrorF(L">>Verify installer: Installer file does not exist");
+		LogError(L">>Verify installer: Installer file does not exist");
 		return false;
 	}
 
@@ -562,7 +489,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	{
 		free(buffer);
 		buffer = nullptr;
-		if (!ret && func && debug) LogErrorF(L">>Verify installer error (%s): 0x%08x (%lu)", func, status, status);
+		if (!ret && func) LogErrorF(L">>Verify installer error (%s): 0x%08x (%lu)", func, status, status);
 		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);
 		if (provider) BCryptCloseAlgorithmProvider(provider, 0UL);
@@ -616,16 +543,13 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	bool isHashVerified = _wcsicmp(sha256.c_str(), hashStr.c_str()) == 0;
 	if (isHashVerified)
 	{
-		LogDebug(L"  Verifying installer integrity: Success!");
+		LogIfInDebugMode(L"  Verifying installer integrity: Success!");
 	}
 	else
 	{
-		if (debug)
-		{
-			LogError(L">>Verify installer error: Hashes do not match!");
-			LogErrorF(L">>>Status file SHA256 hash:    %s", sha256.c_str());
-			LogErrorF(L">>>Installer file SHA256 hash: %s", hashStr.c_str());
-		}
+		LogError(L">>Verify installer error: Hashes do not match!");
+		LogErrorF(L">>>Status file SHA256 hash:    %s", sha256.c_str());
+		LogErrorF(L">>>Installer file SHA256 hash: %s", hashStr.c_str());
 		return false;
 	}
 
@@ -639,7 +563,7 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 			WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", sha256.c_str(), dataFile);
 		}
 
-		if (debug) LogDebugF(L"  Installer location: %s", fullpath.c_str());
+		LogIfInDebugModeF(L"  Installer location: %s", fullpath.c_str());
 	}
 
 	return isVerified;
@@ -647,7 +571,6 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 
 bool Updater::VerifySignedInstaller(const std::wstring& file)
 {
-	const bool debug = GetRainmeter().GetDebug();
 	bool isSuccessful = false;
 
 	WINTRUST_FILE_INFO fileData = { 0 };
@@ -676,13 +599,9 @@ bool Updater::VerifySignedInstaller(const std::wstring& file)
 	if (lStatus == ERROR_SUCCESS)
 	{
 		isSuccessful = true;
-
-		if (debug)
-		{
-			LogDebug(L"  Verifying installer signature: Success!");
-		}
+		LogIfInDebugMode(L"  Verifying installer signature: Success!");
 	}
-	else if (debug)
+	else if (s_IsInDebugMode)
 	{
 		switch (lStatus)
 		{
@@ -716,4 +635,70 @@ bool Updater::VerifySignedInstaller(const std::wstring& file)
 	WinVerifyTrust((HWND)INVALID_HANDLE_VALUE, &guid, &data);
 
 	return isSuccessful;
+}
+
+void Updater::ShowInternetError(WCHAR* description)
+{
+	DWORD dwErr = GetLastError();
+	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
+	{
+		WCHAR szBuffer[1024] = { 0 };
+		DWORD dwError = 0UL, dwLen = _countof(szBuffer);
+		LPCWSTR error = L"Unknown Error";
+
+		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen) == TRUE)
+		{
+			error = szBuffer;
+			dwErr = dwError;
+		}
+
+		LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
+		return;
+	}
+
+	ShowError(description, dwErr, GetModuleHandle(L"wininet"));
+}
+
+void Updater::ShowWinTrustError(WCHAR* description)
+{
+	ShowError(description, GetLastError(), GetModuleHandle(L"Wintrust"));
+}
+
+void Updater::ShowError(WCHAR* description, DWORD dwErr, HMODULE module)
+{
+	LPVOID lpMsgBuf = nullptr;
+
+	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_MAX_WIDTH_MASK;
+	DWORD res = FormatMessage(flags, module, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
+	if (res == 0UL || res == ERROR_RESOURCE_NOT_FOUND)
+	{
+		// Try again if the message isn't found in the module (or if there is no message table)
+		flags ^= FORMAT_MESSAGE_FROM_HMODULE;
+		res = FormatMessage(flags, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0UL, nullptr);
+	}
+
+	LPCWSTR error = lpMsgBuf && res > 0UL ? (WCHAR*)lpMsgBuf : L"Unknown error";
+	LogErrorF(L"%s: %s (ErrorCode=0x%X)", description, error, dwErr);
+
+	if (lpMsgBuf) LocalFree(lpMsgBuf);
+}
+
+void Updater::LogIfInDebugMode(LPCWSTR message)
+{
+	if (s_IsInDebugMode)
+	{
+		LogDebug(message);
+	}
+}
+
+void Updater::LogIfInDebugModeF(LPCWSTR format, ...)
+{
+	if (s_IsInDebugMode)
+	{
+		va_list args;
+		va_start(args, format);
+		GetLogger().LogVF(Logger::Level::Debug, L"", format, args);
+		va_end(args);
+	}
 }
