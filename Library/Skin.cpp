@@ -2681,6 +2681,57 @@ bool Skin::ReadSkin()
 						}
 					}
 				}
+				else if (_wcsicmp(measureName.c_str(), L"Repeater") == 0) {
+
+					const std::wstring repeater = m_Parser.ReadString(section, L"Repeater", L"", false);
+					if (!repeater.empty()) {
+						measureName = repeater.c_str();
+
+						LogDebugF(L"RepeaterMeasureName: %s", repeater.c_str());
+
+						WCHAR buffer[3];
+						uint32_t count = m_Parser.ReadUInt(section, L"RepeaterCount", 0U);
+						if (count > 100) {
+							count = 100;
+						}
+
+						m_Parser.SetValue(section, L"Measure", measureName);
+						m_Parser.DeleteValue(section, L"RepeaterCount");
+						m_Parser.DeleteValue(section, L"Repeater");
+
+						for (uint32_t i = 1U; i <= count; ++i) {
+							_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+							std::wstring sectionName = section;
+
+							size_t pos = 0;
+							while ((pos = sectionName.find(L"#i#", pos)) != std::string::npos)
+							{
+								sectionName.replace(pos, 3, buffer);
+								pos += 3; // buffer.length() ?
+							}
+
+							//m_Parser.CopySection(section, sectionName);
+							m_Parser.CopySectionRepeater(section, sectionName, i);
+
+//							CopySectionRepeater
+
+							Measure* measure = Measure::Create(measureName.c_str(), this, sectionName.c_str());
+							if (measure)
+							{
+								m_Measures.push_back(measure);
+								m_Parser.AddMeasure(measure);
+
+								if (IsNetworkMeasure(measure))
+								{
+									m_HasNetMeasures = true;
+									MeasureNet::UpdateIFTable();
+								}
+							}
+						}				
+					}
+
+					continue;
+				}
 
 				Measure* measure = Measure::Create(measureName.c_str(), this, section);
 				if (measure)
@@ -2701,21 +2752,85 @@ bool Skin::ReadSkin()
 			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", false);
 			if (!meterName.empty())
 			{
-				// It's a meter
-				Meter* meter = Meter::Create(meterName.c_str(), this, section);
-				if (meter)
-				{
-					m_Meters.push_back(meter);
 
-					if (meter->GetTypeID() == TypeID<MeterButton>())
+				if (_wcsicmp(L"REPEATER", meterName.c_str()) == 0) {
+					/*
+
+					[MeterFoo#i#]
+					Meter=Repeater
+					Repeater=String
+					RepeaterCount=5
+					Text=Foo#i#
+					Y=0R
+					*/
+					//const std::wstring& 
+					const std::wstring repeaterMeterName = m_Parser.ReadString(section, L"Repeater", L"", false);
+					if (!repeaterMeterName.empty()) {
+						LogDebugF(L"RepeaterMeterName: %s", repeaterMeterName.c_str());
+						
+						//std::wstring meterType = repeaterMeterName;
+
+						WCHAR buffer[3];
+						uint32_t count = m_Parser.ReadUInt(section, L"RepeaterCount", 0U);
+						if (count > 100) { 
+							count = 100; 
+						}
+
+						m_Parser.SetValue(section, L"Meter", repeaterMeterName.c_str());
+						m_Parser.DeleteValue(section, L"RepeaterCount");
+						m_Parser.DeleteValue(section, L"Repeater");
+						
+						for (uint32_t i = 1U; i <= count; ++i) {
+							_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+							std::wstring sectionName = section;
+
+							size_t pos = 0;
+							while ((pos = sectionName.find(L"#i#", pos)) != std::string::npos)
+							{
+								sectionName.replace(pos, 3, buffer);
+								pos += 3; // buffer.length() ?
+							}
+
+							//LogDebugF(L"RepeaterMeterName: %s", repeaterMeterName.c_str());
+
+							//m_Parser.CopySection(section, sectionName);
+							m_Parser.CopySectionRepeater(section, sectionName, i);
+
+							Meter* meter = Meter::Create(repeaterMeterName.c_str(), this, sectionName.c_str());
+							if (meter)
+							{
+								m_Meters.push_back(meter);
+
+								if (meter->GetTypeID() == TypeID<MeterButton>())
+								{
+									m_HasButtons = true;
+								}
+
+								prevMeter = meter;
+							}
+
+							continue;
+						}
+					}
+				}
+				else {
+					// 
+					// It's a meter
+					Meter* meter = Meter::Create(meterName.c_str(), this, section);
+					if (meter)
 					{
-						m_HasButtons = true;
+						m_Meters.push_back(meter);
+
+						if (meter->GetTypeID() == TypeID<MeterButton>())
+						{
+							m_HasButtons = true;
+						}
+
+						prevMeter = meter;
 					}
 
-					prevMeter = meter;
+					continue;
 				}
-
-				continue;
 			}
 		}
 	}

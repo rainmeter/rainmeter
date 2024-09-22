@@ -2208,3 +2208,55 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
 	return (iter != m_Values.end()) ? (*iter).second : strDefault;
 }
+
+/*
+** Copies all values based on section name
+**
+*/
+
+void ConfigParser::CopySection(const std::wstring& fromSection, const std::wstring& toSection)
+{
+	std::wstring strFrom;
+	strFrom.reserve(fromSection.size() + 1ULL);
+	strFrom = StrToUpper(fromSection);
+	strFrom += L'~';
+
+	for (auto &iter = m_Values.begin(); iter != m_Values.end(); ++iter) {
+		if (iter->first.compare(0, strFrom.size(), strFrom) == 0) {
+			size_t pos = iter->first.find(L'~');
+			std::wstring strKey = iter->first.substr(pos + 1ULL);
+			//LogDebugF(L"CopySection: [%s->%s] %s => %s", fromSection.c_str(), toSection.c_str(), strKey, iter->second.c_str());
+			SetValue(toSection, strKey, (*iter).second);
+		}
+	}
+}
+
+void ConfigParser::CopySectionRepeater(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count)
+{
+	std::wstring strFrom;
+	strFrom.reserve(fromSection.size() + 1ULL);
+	strFrom = StrToUpper(fromSection);
+	strFrom += L'~';
+	
+	WCHAR buffer[3];
+	_snwprintf_s(buffer, _TRUNCATE, L"%u", count);
+
+	for (auto& iter = m_Values.begin(); iter != m_Values.end(); ++iter) {
+		if (iter->first.compare(0, strFrom.size(), strFrom) == 0) {
+			size_t pos = iter->first.find(L'~');
+			std::wstring strKey = iter->first.substr(pos + 1ULL);
+			std::wstring strValue = iter->second;
+
+			//LogDebugF(L"CopySection: [%s->%s] %s => %s", fromSection.c_str(), toSection.c_str(), strKey, iter->second.c_str());
+
+			pos = 0;			
+			while ((pos = strValue.find(L"#i#", pos)) != std::string::npos)
+			{
+				strValue.replace(pos, 3, buffer);
+				pos += 3; // buffer.length() ?
+			}
+
+			SetValue(toSection, strKey, strValue);
+		}
+	}
+}
