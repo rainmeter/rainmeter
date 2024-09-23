@@ -2213,7 +2213,7 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const
 ** Copies all values based on section name
 ** replace #i# with count value
 */
-void ConfigParser::CopySectionValuesWithRepeat(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count)
+void ConfigParser::CopySectionValuesWithReplace(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count)
 {
 	std::wstring strFrom;
 	strFrom.reserve(fromSection.size() + 1ULL);

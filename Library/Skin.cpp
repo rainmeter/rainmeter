@@ -2647,7 +2647,6 @@ bool Skin::ReadSkin()
 	// to avoid errors caused by referencing nonexistent [sections] in the options.
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
-	//uint32_t repeat = 0;
 
 	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
@@ -2657,8 +2656,6 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
-			//repeat = m_Parser.ReadUInt(section, L"Repeat", 0U);
-
 			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", false);
 			if (!measureName.empty())
 			{
@@ -2684,6 +2681,7 @@ bool Skin::ReadSkin()
 						}
 					}
 				}
+
 				uint32_t repeat = m_Parser.ReadUInt(section, L"Repeat", 0U);
 				if (repeat > 0) {
 					if (repeat > 100) {
@@ -2697,7 +2695,7 @@ bool Skin::ReadSkin()
 						std::wstring sectionName = section;
 						sectionName += buffer;
 
-						m_Parser.CopySectionValuesWithRepeat(section, sectionName, i);
+						m_Parser.CopySectionValuesWithReplace(section, sectionName, i);
 
 						Measure* measure = Measure::Create(measureName.c_str(), this, sectionName.c_str());
 						if (measure)
@@ -2753,7 +2751,7 @@ bool Skin::ReadSkin()
 							sectionName += buffer;
 							const std::wstring strMeterType = m_Parser.GetValue(repeatMeter, L"Meter", L"");
 
-							m_Parser.CopySectionValuesWithRepeat(repeatMeter, sectionName, i);
+							m_Parser.CopySectionValuesWithReplace(repeatMeter, sectionName, i);
 							
 							Meter* meter = Meter::Create(strMeterType.c_str(), this, sectionName.c_str());
 							if (meter)
