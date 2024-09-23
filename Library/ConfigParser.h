@@ -118,7 +118,8 @@ public:
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
-	void CopySectionWithRepeat(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count);
+	void CopySectionValuesWithRepeat(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count);
+	void DeleteSectionValues(const std::wstring& section);
 
 private:
 	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);
