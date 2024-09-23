@@ -2647,7 +2647,8 @@ bool Skin::ReadSkin()
 	// to avoid errors caused by referencing nonexistent [sections] in the options.
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
-	Meter* prevMeter = nullptr;
+	//uint32_t repeat = 0;
+
 	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
@@ -2656,6 +2657,8 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
+			//repeat = m_Parser.ReadUInt(section, L"Repeat", 0U);
+
 			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", false);
 			if (!measureName.empty())
 			{
@@ -2681,53 +2684,33 @@ bool Skin::ReadSkin()
 						}
 					}
 				}
-				else if (_wcsicmp(measureName.c_str(), L"Repeater") == 0) {
+				uint32_t repeat = m_Parser.ReadUInt(section, L"Repeat", 0U);
+				if (repeat > 0) {
+					if (repeat > 100) {
+						repeat = 100;
+					}
+					WCHAR buffer[3];
+					m_Parser.DeleteValue(section, L"Repeat");
 
-					const std::wstring repeater = m_Parser.ReadString(section, L"Repeater", L"", false);
-					if (!repeater.empty()) {
-						measureName = repeater.c_str();
+					for (uint32_t i = 1U; i <= repeat; ++i) {
+						_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+						std::wstring sectionName = section;
+						sectionName += buffer;
 
-						LogDebugF(L"RepeaterMeasureName: %s", repeater.c_str());
+						m_Parser.CopySectionWithRepeat(section, sectionName, i);
 
-						WCHAR buffer[3];
-						uint32_t count = m_Parser.ReadUInt(section, L"RepeaterCount", 0U);
-						if (count > 100) {
-							count = 100;
+						Measure* measure = Measure::Create(measureName.c_str(), this, sectionName.c_str());
+						if (measure)
+						{
+							m_Measures.push_back(measure);
+							m_Parser.AddMeasure(measure);
+
+							if (IsNetworkMeasure(measure))
+							{
+								m_HasNetMeasures = true;
+								MeasureNet::UpdateIFTable();
+							}
 						}
-
-						m_Parser.SetValue(section, L"Measure", measureName);
-						m_Parser.DeleteValue(section, L"RepeaterCount");
-						m_Parser.DeleteValue(section, L"Repeater");
-
-						for (uint32_t i = 1U; i <= count; ++i) {
-							_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
-							std::wstring sectionName = section;
-
-							size_t pos = 0;
-							while ((pos = sectionName.find(L"#i#", pos)) != std::string::npos)
-							{
-								sectionName.replace(pos, 3, buffer);
-								pos += 3; // buffer.length() ?
-							}
-
-							//m_Parser.CopySection(section, sectionName);
-							m_Parser.CopySectionRepeater(section, sectionName, i);
-
-//							CopySectionRepeater
-
-							Measure* measure = Measure::Create(measureName.c_str(), this, sectionName.c_str());
-							if (measure)
-							{
-								m_Measures.push_back(measure);
-								m_Parser.AddMeasure(measure);
-
-								if (IsNetworkMeasure(measure))
-								{
-									m_HasNetMeasures = true;
-									MeasureNet::UpdateIFTable();
-								}
-							}
-						}				
 					}
 
 					continue;
@@ -2752,51 +2735,57 @@ bool Skin::ReadSkin()
 			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", false);
 			if (!meterName.empty())
 			{
+				/*
+				if (repeat > 0) {
+					if (repeat > 100) {
+						repeat = 100;
+					}
+					WCHAR buffer[3];
+					m_Parser.DeleteValue(section, L"Repeat");
 
-				if (_wcsicmp(L"REPEATER", meterName.c_str()) == 0) {
-					/*
+					for (uint32_t i = 1U; i <= repeat; ++i) {
+						_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+						std::wstring sectionName = section;
+						sectionName += buffer;
 
-					[MeterFoo#i#]
-					Meter=Repeater
-					Repeater=String
-					RepeaterCount=5
-					Text=Foo#i#
-					Y=0R
-					*/
-					//const std::wstring& 
-					const std::wstring repeaterMeterName = m_Parser.ReadString(section, L"Repeater", L"", false);
-					if (!repeaterMeterName.empty()) {
-						LogDebugF(L"RepeaterMeterName: %s", repeaterMeterName.c_str());
-						
-						//std::wstring meterType = repeaterMeterName;
+						m_Parser.CopySectionWithRepeat(section, sectionName, i);
 
-						WCHAR buffer[3];
-						uint32_t count = m_Parser.ReadUInt(section, L"RepeaterCount", 0U);
-						if (count > 100) { 
-							count = 100; 
-						}
+						Meter* meter = Meter::Create(meterName.c_str(), this, sectionName.c_str());
+						if (meter)
+						{
+							m_Meters.push_back(meter);
 
-						m_Parser.SetValue(section, L"Meter", repeaterMeterName.c_str());
-						m_Parser.DeleteValue(section, L"RepeaterCount");
-						m_Parser.DeleteValue(section, L"Repeater");
-						
-						for (uint32_t i = 1U; i <= count; ++i) {
-							_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
-							std::wstring sectionName = section;
-
-							size_t pos = 0;
-							while ((pos = sectionName.find(L"#i#", pos)) != std::string::npos)
+							if (meter->GetTypeID() == TypeID<MeterButton>())
 							{
-								sectionName.replace(pos, 3, buffer);
-								pos += 3; // buffer.length() ?
+								m_HasButtons = true;
 							}
+						}
+					}
 
-							//LogDebugF(L"RepeaterMeterName: %s", repeaterMeterName.c_str());
+					continue;
+				}
+				*/
+				if (_wcsicmp(meterName.c_str(), L"Repeat") == 0) {
+					const std::wstring strMeter = meterName;
+					uint32_t count = m_Parser.ReadUInt(section, L"Count", 0U);
+					if (count > 100) {
+						count = 100;
+					}
+					const std::wstring strMeters = m_Parser.ReadString(section, L"RepeatMeters", L"", false);
+					WCHAR buffer[3];
+					std::vector<std::wstring> repeatMeters = ConfigParser::Tokenize(strMeters, L",");
 
-							//m_Parser.CopySection(section, sectionName);
-							m_Parser.CopySectionRepeater(section, sectionName, i);
+					for (uint32_t i = 1U; i <= count; ++i) {
+						_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+						for (auto& repeatMeter : repeatMeters)
+						{
+							std::wstring sectionName = repeatMeter;
+							sectionName += buffer;
+							const std::wstring strMeterType = m_Parser.GetValue(repeatMeter, L"Meter", L"");
 
-							Meter* meter = Meter::Create(repeaterMeterName.c_str(), this, sectionName.c_str());
+							m_Parser.CopySectionWithRepeat(repeatMeter, sectionName, i);
+							
+							Meter* meter = Meter::Create(strMeterType.c_str(), this, sectionName.c_str());
 							if (meter)
 							{
 								m_Meters.push_back(meter);
@@ -2805,32 +2794,31 @@ bool Skin::ReadSkin()
 								{
 									m_HasButtons = true;
 								}
-
-								prevMeter = meter;
 							}
-
-							continue;
 						}
 					}
-				}
-				else {
-					// 
-					// It's a meter
-					Meter* meter = Meter::Create(meterName.c_str(), this, section);
-					if (meter)
+
+					for (auto& repeatMeter : repeatMeters)
 					{
-						m_Meters.push_back(meter);
-
-						if (meter->GetTypeID() == TypeID<MeterButton>())
-						{
-							m_HasButtons = true;
-						}
-
-						prevMeter = meter;
+						m_Parser.SetValue(repeatMeter, L"Hidden", L"1");
 					}
 
 					continue;
 				}
+
+				// It's a meter
+				Meter* meter = Meter::Create(meterName.c_str(), this, section);
+				if (meter)
+				{
+					m_Meters.push_back(meter);
+
+					if (meter->GetTypeID() == TypeID<MeterButton>())
+					{
+						m_HasButtons = true;
+					}
+				}
+
+				continue;
 			}
 		}
 	}

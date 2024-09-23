@@ -2211,27 +2211,9 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const
 
 /*
 ** Copies all values based on section name
-**
+** replace #i# with count value
 */
-
-void ConfigParser::CopySection(const std::wstring& fromSection, const std::wstring& toSection)
-{
-	std::wstring strFrom;
-	strFrom.reserve(fromSection.size() + 1ULL);
-	strFrom = StrToUpper(fromSection);
-	strFrom += L'~';
-
-	for (auto &iter = m_Values.begin(); iter != m_Values.end(); ++iter) {
-		if (iter->first.compare(0, strFrom.size(), strFrom) == 0) {
-			size_t pos = iter->first.find(L'~');
-			std::wstring strKey = iter->first.substr(pos + 1ULL);
-			//LogDebugF(L"CopySection: [%s->%s] %s => %s", fromSection.c_str(), toSection.c_str(), strKey, iter->second.c_str());
-			SetValue(toSection, strKey, (*iter).second);
-		}
-	}
-}
-
-void ConfigParser::CopySectionRepeater(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count)
+void ConfigParser::CopySectionWithRepeat(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count)
 {
 	std::wstring strFrom;
 	strFrom.reserve(fromSection.size() + 1ULL);
@@ -2247,13 +2229,11 @@ void ConfigParser::CopySectionRepeater(const std::wstring& fromSection, const st
 			std::wstring strKey = iter->first.substr(pos + 1ULL);
 			std::wstring strValue = iter->second;
 
-			//LogDebugF(L"CopySection: [%s->%s] %s => %s", fromSection.c_str(), toSection.c_str(), strKey, iter->second.c_str());
-
 			pos = 0;			
 			while ((pos = strValue.find(L"#i#", pos)) != std::string::npos)
 			{
 				strValue.replace(pos, 3, buffer);
-				pos += 3; // buffer.length() ?
+				pos += 3;
 			}
 
 			SetValue(toSection, strKey, strValue);
