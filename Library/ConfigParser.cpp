@@ -2265,29 +2265,28 @@ void ConfigParser::DeleteSectionValues(const std::wstring& section)
 ** Insert Section 
 ** 
 */
-void ConfigParser::SectionInsert(const std::wstring& fromSection, const std::wstring& toSection)
+void ConfigParser::InsertSection(const std::wstring& fromSection, const std::wstring& toSection)
 {
+	const WCHAR* nameFrom = fromSection.c_str();
+
 	// Find the appropriate insertion place
 	for (std::list<std::wstring>::const_iterator jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
 	{
-		if (_wcsicmp((*jt).c_str(), fromSection.c_str()) == 0)
+		if (_wcsicmp((*jt).c_str(), nameFrom) == 0)
 		{
-			LogDebugF(L"Found!: [%s => %s]", fromSection.c_str(), toSection.c_str());
-
 			StrToUpper(toSection);
 			m_Sections.insert(++jt, toSection);
 
-			//			m_SectionInsertPos = ++jt;
-			//			if (m_FoundSections.insert(fromSection).first)
-			//			{
-			//				m_Sections.insert(m_SectionInsertPos, fromSection);
-			//			}
 			break;
 		}
 	}
 }
 
-void ConfigParser::SectionDelete(const std::wstring& section)
+/*
+** Delete Section
+**
+*/
+void ConfigParser::DeleteSection(const std::wstring& section)
 {
 	const WCHAR* name = section.c_str();
 
@@ -2295,7 +2294,6 @@ void ConfigParser::SectionDelete(const std::wstring& section)
 	{
 		if (_wcsicmp((*jt).c_str(), name) == 0)
 		{
-			LogDebugF(L"DELTE!: %s", name);
 			m_Sections.erase(jt);
 			break;
 		}

@@ -2752,9 +2752,7 @@ bool Skin::ReadSkin()
 							const std::wstring strMeterType = m_Parser.GetValue(repeatMeter, L"Meter", L"");
 
 							m_Parser.CopySectionValuesWithReplace(repeatMeter, sectionName, i);
-							
-							// TODO:???
-							m_Parser.SectionInsert(repeatMeter, sectionName);
+							m_Parser.InsertSection(repeatMeter, sectionName);
 
 							Meter* meter = Meter::Create(strMeterType.c_str(), this, sectionName.c_str());
 							if (meter)
@@ -2771,13 +2769,9 @@ bool Skin::ReadSkin()
 
 					for (auto& repeatMeter : repeatMeters)
 					{
-
-						// Might not be necessary?  keep anyway?
-						m_Parser.SectionDelete(repeatMeter);
-						
+						m_Parser.DeleteSection(repeatMeter);
 						m_Parser.DeleteSectionValues(repeatMeter);
 						DeleteMeter(repeatMeter);
-
 					}
 
 					continue;
@@ -3226,10 +3220,6 @@ void Skin::UpdateRelativeMeters()
 		{
 			// Container meters can only be relative to other non-contained meters
 			containers[meter] = meter;
-		}
-
-		if (previousMeter) {
-			LogDebugF(L"Releative!: %s: Prev: %s", meter->GetName(), previousMeter->GetName());
 		}
 
 		meter->SetRelativeMeter(previousMeter);
@@ -5613,12 +5603,6 @@ Meter* Skin::GetMeter(const std::wstring& meterName)
 	return nullptr;
 }
 
-bool Skin::IsNetworkMeasure(Measure* measure)
-{
-	return measure->GetTypeID() == TypeID<MeasureNet>() ||
-		measure->GetTypeID() == TypeID<MeasureSysInfo>();
-}
-
 void Skin::DeleteMeter(const std::wstring& meterName)
 {
 	const WCHAR* name = meterName.c_str();
@@ -5635,4 +5619,10 @@ void Skin::DeleteMeter(const std::wstring& meterName)
 			m_Meters.erase(j);
 		}
 	}
+}
+
+bool Skin::IsNetworkMeasure(Measure* measure)
+{
+	return measure->GetTypeID() == TypeID<MeasureNet>() ||
+		measure->GetTypeID() == TypeID<MeasureSysInfo>();
 }

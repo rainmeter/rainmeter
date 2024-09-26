@@ -119,9 +119,9 @@ public:
 	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 	void CopySectionValuesWithReplace(const std::wstring& fromSection, const std::wstring& toSection, uint32_t count);
+	void InsertSection(const std::wstring& fromSection, const std::wstring& toSection);
+	void DeleteSection(const std::wstring& section);
 	void DeleteSectionValues(const std::wstring& section);
-	void SectionInsert(const std::wstring& fromSection, const std::wstring& toSection);
-	void SectionDelete(const std::wstring& section);
 
 private:
 	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);
