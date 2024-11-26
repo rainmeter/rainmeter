@@ -994,18 +994,12 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	{
 		if (!c_ShowDesktop)
 		{
-			HWND ShellW = GetDefaultShellWindow();
-			if (hwnd == ShellW)
-			{
-				CheckDesktopState(ShellW);
-				return;
-			}
-
 			const int classLen = _countof(L"WorkerW") + 1;
 			WCHAR className[classLen];
-			if (GetClassName(hwnd, className, classLen) > 0 &&
-				wcscmp(className, L"WorkerW") == 0 &&
-				BelongToSameProcess(ShellW, hwnd))
+			if ((hwnd == ShellW) ||
+					(GetClassName(hwnd, className, classLen) > 0 &&
+						wcscmp(className, L"WorkerW") == 0 &&
+						BelongToSameProcess(ShellW, hwnd)))
 			{
 				const int max = 5;
 				int loop = 0;
