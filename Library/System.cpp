@@ -994,6 +994,7 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	{
 		if (!c_ShowDesktop)
 		{
+			HWND ShellW = GetDefaultShellWindow();
 			const int classLen = _countof(L"WorkerW") + 1;
 			WCHAR className[classLen];
 			if ((hwnd == ShellW) ||
