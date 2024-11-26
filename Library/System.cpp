@@ -666,22 +666,6 @@ HWND System::GetDefaultShellWindow()
 ** Finds the WorkerW window.
 ** If the WorkerW window is not active, returns nullptr.
 **
-** Spy++ output before Windows 11 24H2:
-**
-**   0x00010190 "" WorkerW
-**     ...
-**     0x000100EE "" SHELLDLL_DefView
-**       0x000100F0 "FolderView" SysListView32
-**   0x00100B8A "" WorkerW
-**   0x000100EC "Program Manager" Progman
-**
-** Spy++ output after Windows 11 24H2:
-**
-**   0x000100EC "Program Manager" Progman
-**     0x000100EE "" SHELLDLL_DefView
-**       0x000100F0 "FolderView" SysListView32
-**     0x00100B8A "" WorkerW
-**
 */
 HWND System::GetWorkerW()
 {
@@ -696,7 +680,7 @@ HWND System::GetWorkerW()
 		{
 			if (parent == ShellW)
 			{
-				return FindWindowEx(ShellW, nullptr, L"WorkerW", L"") ? ShellW : nullptr;
+				return nullptr;
 			}
 			else
 			{
@@ -711,8 +695,7 @@ HWND System::GetWorkerW()
 		}
 	}
 
-	HWND WorkerW = nullptr;
-	HWND DefView = FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L"");
+	HWND WorkerW = nullptr, DefView = FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L"");
 	if (DefView == nullptr)
 	{
 		while (WorkerW = FindWindowEx(nullptr, WorkerW, L"WorkerW", L""))
@@ -724,10 +707,6 @@ HWND System::GetWorkerW()
 				break;
 			}
 		}
-	}
-	else if (FindWindowEx(ShellW, nullptr, L"WorkerW", L""))
-	{
-		WorkerW = ShellW;
 	}
 
 	c_DefView = DefView;
@@ -994,13 +973,11 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	{
 		if (!c_ShowDesktop)
 		{
-			HWND ShellW = GetDefaultShellWindow();
 			const int classLen = _countof(L"WorkerW") + 1;
 			WCHAR className[classLen];
-			if ((hwnd == ShellW) ||
-					(GetClassName(hwnd, className, classLen) > 0 &&
-						wcscmp(className, L"WorkerW") == 0 &&
-						BelongToSameProcess(ShellW, hwnd)))
+			if (GetClassName(hwnd, className, classLen) > 0 &&
+				wcscmp(className, L"WorkerW") == 0 &&
+				BelongToSameProcess(GetDefaultShellWindow(), hwnd))
 			{
 				const int max = 5;
 				int loop = 0;
