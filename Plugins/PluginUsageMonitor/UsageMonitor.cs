@@ -382,12 +382,29 @@ namespace UsageMonitor
 
                                                 //If we are rolling up similar names then take the last # in the name and remove all after it
                                                 //NOTE: If we wanted to add another way to rollup names it would go here
+                                                //NOTE: Unlike Process counters, the Process V2 counters are in "exename:pid" format; since
+                                                //      colons are common in other counters (e.g., LogicalDisk, PhysicalDisk), split names
+                                                //      at colons for the Process V2 counters only. Process V2 is available on Win11 and higher.
                                                 if (options.IsRollup)
                                                 {
-                                                    int index = instance.Name.LastIndexOf('#');
-                                                    if (index > 0)
+                                                    int index;
+                                                    switch (options.Category)
                                                     {
-                                                        instance.Name = instance.Name.Substring(0, index);
+                                                        case "Process V2":
+                                                            index = instance.Name.LastIndexOf(':');
+                                                            if (index > 0) {
+                                                                instance.Name = instance.Name.Substring(0, index);
+                                                            }
+                                                            break;
+
+                                                        default:
+                                                            // catch-all case for all other categories
+                                                            index = instance.Name.LastIndexOf('#');
+                                                            if (index > 0)
+                                                            {
+                                                                instance.Name = instance.Name.Substring(0, index);
+                                                            }
+                                                            break;
                                                     }
                                                 }
 
@@ -432,7 +449,7 @@ namespace UsageMonitor
                                             }
                                             catch (Exception e)
                                             {
-                                                options.API.Log(API.LogType.Error, "UsageMonitor crashed while updating the " + options.Counter + " counter's instace called " + instanceData.InstanceName);
+                                                options.API.Log(API.LogType.Error, "UsageMonitor crashed while updating the " + options.Counter + " counter's instance called " + instanceData.InstanceName);
                                                 options.API.Log(API.LogType.Debug, e.Message);
                                                 options.API.Log(API.LogType.Debug, e.StackTrace);
                                                 continue;
