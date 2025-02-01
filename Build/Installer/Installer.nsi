@@ -454,6 +454,10 @@ Function PageOptions
 	${If} $InstallPortable = 1
 		${GetRoot} "$WINDIR" $0
 		${NSD_SetText} $R0 "$0\Rainmeter"
+
+		${If} ${RunningX64}
+			${NSD_Check} $R2
+		${EndIf}
 	${Else}
 		; Disable Directory editbox and Browse button if already installed
 		SendMessage $R0 ${EM_SETREADONLY} 1 0
