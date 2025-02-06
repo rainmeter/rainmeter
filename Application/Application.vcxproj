@@ -30,6 +30,9 @@ if not exist "$(OutDir)Defaults\Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutD
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
     </Manifest>
+    <ClCompile>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
