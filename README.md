@@ -30,15 +30,22 @@ These changes enhance the visual appeal and provide better language support for 
 First, you need to download *Rainmeter* from [rainmeter.net](https://www.rainmeter.net/).
 
 
-## Download the Mond Theme
+## Download the Mond Theme (ZIP)
 
 You can download the modified **Mond** theme from the latest release:
 
-[📥 Download Mond Theme](https://github.com/fatekkl/rainmeter/releases/tag/MondTranslation)
+[📥 Download Mond Theme ZIP](https://github.com/fatekkl/rainmeter/releases/tag/MondTranslation)
 
 Second, navigate to `C:\Users\YourUser\Documents\Rainmeter\Skins` and extract the downloaded folder there.
 
 Now, something you need its change your *skin* on **rainmeter** to **MondPoppins**.
+
+
+## Download the Mond Theme (Package Installer)
+
+[📥 Download Mond Theme ZIP](https://github.com/fatekkl/rainmeter/releases/tag/MondPackage)
+
+Here is the MondPortuguesePoppins package installer. Just open the archive, and the installation will proceed.
 
 
 
