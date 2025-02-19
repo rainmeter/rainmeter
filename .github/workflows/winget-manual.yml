@@ -21,7 +21,6 @@ jobs:
           identifier: Rainmeter.Rainmeter
           version: ${{ inputs.version }}
           installers-regex: '\.exe$' # Only .exe files
-          max-versions-to-keep: 1
           release-tag: ${{ inputs.release-tag }}
           token: ${{ secrets.WINGET_TOKEN }}
           fork-user: brianferguson
