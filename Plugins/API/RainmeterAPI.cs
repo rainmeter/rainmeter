@@ -39,6 +39,22 @@ namespace Rainmeter
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode)]
         private extern static IntPtr RmPathToAbsolute(IntPtr rm, string relativePath);
 
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall)]
+        public static extern IntPtr RmGetOption(IntPtr rm, string section, string option, string defValue, int replaceMeasures);
+
+        /// <summary>
+        /// Retrieves the option defined in a specific section of the skin file and converts a relative path to an absolute path.
+        /// </summary>
+        /// <param name="section">Section name to be read from</param>
+        /// <param name="option">Option name to be read from the specified section</param>
+        /// <param name="defValue">Default value for the option if it is not found or invalid</param>
+        /// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
+        /// <returns>Returns the option value as a string</returns>
+        public static string GetOption(IntPtr rm, string section, string option, string defValue, bool replaceMeasures) {
+          IntPtr ptr = RmGetOption(rm, section, option, defValue, replaceMeasures ? 1 : 0);
+          return ptr == IntPtr.Zero ? string.Empty : Marshal.PtrToStringUni(ptr);
+        }
+
         /// <summary>
         /// Executes a command
         /// </summary>
