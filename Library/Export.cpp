@@ -16,34 +16,6 @@
 
 static std::wstring g_Buffer;
 
-LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
-{
-	// Validate pointers
-	if (section == nullptr) { section = L""; }
-	if (option == nullptr) { option = L""; }
-	if (defValue == nullptr) { defValue = L""; }
-
-	// Cast the measure pointer
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetSkin()->GetParser();
-
-	// Apply MeterStyle from the specified section if available.
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
-
-	// Read the option value from the specified section.
-	const std::wstring& value = parser.ReadString(section, option, defValue, replaceMeasures != FALSE);
-	g_Buffer = value;
-
-	// Clear the style template to avoid affecting subsequent reads.
-	parser.ClearStyleTemplate();
-
-	return g_Buffer.c_str();
-}
-
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
 	NULLCHECK(option);
