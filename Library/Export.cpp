@@ -16,6 +16,30 @@
 
 static std::wstring g_Buffer;
 
+LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
+{
+	NULLCHECK(section);
+	NULLCHECK(option);
+	NULLCHECK(defValue);
+
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	ConfigParser& parser = measure->GetSkin()->GetParser();
+
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
+
+	const std::wstring& value = parser.ReadString(section, option, defValue, replaceMeasures != FALSE);
+	g_Buffer = value;
+
+	parser.ClearStyleTemplate();
+
+	return g_Buffer.c_str();
+}
+
+
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
 	NULLCHECK(option);
