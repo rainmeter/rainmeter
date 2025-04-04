@@ -14,7 +14,6 @@ EXPORTS
 	LSLog
 	ReadConfigString
 	PluginBridge
-	RmGetOption
 
 	; Private
 	RainmeterMain		@1 NONAME
