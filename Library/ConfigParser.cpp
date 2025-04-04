@@ -210,10 +210,10 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 }
 
 /*
-** Gets the value of a section variable. Returns true if strValue is set.
-** The selector is stripped from strVariable.
-**
-*/
+ ** Gets the value of a section variable. Returns true if strValue is set.
+ ** The selector is stripped from strVariable.
+ **
+ */
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
 {
 	if (!m_Skin) return false;
@@ -233,7 +233,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 	if (isKeySelector)
 	{
-		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
+		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H], etc.
 		Meter* meter = m_Skin->GetMeter(strVariable);
 		if (meter)
 		{
@@ -264,6 +264,13 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			}
 			else
 			{
+				// Fallback for meter: use ReadString for non-numeric properties.
+				const std::wstring optionValue = m_Skin->GetParser().ReadString(strVariable.c_str(), selector.c_str(), L"");
+				if (!optionValue.empty())
+				{
+					strValue = optionValue;
+					return true;
+				}
 				return false;
 			}
 
@@ -279,7 +286,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
 	// EncodeUrl: [Measure:EncodeUrl] (Escapes URL reserved characters)
 	// TimeStamp: [TimeMeasure:TimeStamp] (ONLY for Time measures, returns the Windows timestamp of the measure)
-
+	//
 	// Script: [ScriptMeasure:SomeFunction()], [ScriptMeasure:Something('Something')]
 	// NOTE: Parenthesis are required. Arguments enclosed in single or double quotes are treated as strings, otherwise
 	//   they are treated as numbers. If the lua function returns a number, it will be converted to a string.
@@ -320,7 +327,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 		else
 		{
-			// Check if calling a Script/Plugin measure
+			// Check if calling a Script/Plugin measure, or fallback to ReadString.
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
@@ -342,6 +349,20 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				valueType = ValueType::Plugin;  // Needed?
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
 				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
+			}
+			else
+			{
+				// Fallback for measures: use ReadString for non-command properties.
+				const std::wstring optionValue = m_Skin->GetParser().ReadString(strVariable.c_str(), selector.c_str(), L"");
+				if (!optionValue.empty())
+				{
+					strValue = optionValue;
+					retValue = true;
+				}
+				else
+				{
+					retValue = false;
+				}
 			}
 
 			m_StyleTemplate = meterStyle;
@@ -374,8 +395,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				}
 
 				strVariable.resize(colonPos);
-			}
-			while (0);
+			} while (0);
 		}
 	}
 
@@ -443,9 +463,9 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 		const double value =
 			(valueType == ValueType::Percentual) ? measure->GetRelativeValue() * 100.0 :
-			(valueType == ValueType::Max)        ? measure->GetMaxValue() / scale :
-			(valueType == ValueType::Min)        ? measure->GetMinValue() / scale :
-			                                       measure->GetValue() / scale;
+			(valueType == ValueType::Max) ? measure->GetMaxValue() / scale :
+			(valueType == ValueType::Min) ? measure->GetMinValue() / scale :
+			measure->GetValue() / scale;
 		int decimals = 10;
 		if (decimalsSz)
 		{
@@ -467,7 +487,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		WCHAR buffer[128] = { 0 };
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
-			
+
 		if (!decimalsSz)
 		{
 			// Remove trailing zeros if decimal count was not specified.
@@ -478,7 +498,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		strValue.assign(buffer, bufferLen);
 		return true;
 	}
-	
+
 	return false;
 }
 
