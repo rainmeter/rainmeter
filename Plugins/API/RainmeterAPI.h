@@ -179,6 +179,20 @@ LIBRARY_EXPORT void __cdecl RmLogF(void* rm, int level, LPCWSTR format, ...);
 /// </summary>
 LIBRARY_EXPORT BOOL __cdecl LSLog(int level, LPCWSTR unused, LPCWSTR message);
 
+/// <summary>
+/// Retrieves the option defined in a specific section of the skin file, allowing MeterStyle inheritance.
+/// </summary>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Section name to be read from</param>
+/// <param name="option">Option name to be read from the specified section</param>
+/// <param name="defValue">Default value if the option is not found or invalid</param>
+/// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
+/// <returns>Returns the option value as a string (LPCWSTR)</returns>
+#ifdef __cplusplus
+LIBRARY_EXPORT LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE);
+#else
+LIBRARY_EXPORT LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures);
+#endif // __cplusplus
 //
 // Wrapper functions
 //
@@ -205,6 +219,39 @@ __inline LPCWSTR RmReadPath(void* rm, LPCWSTR option, LPCWSTR defValue)
 	return RmPathToAbsolute(rm, relativePath);
 }
 
+/// <summary>
+/// Safely retrieves the option defined in a specific section of the skin file.
+/// If RmGetOption is not available (e.g., in older Rainmeter versions), returns the default value.
+/// </summary>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Section name to be read from</param>
+/// <param name="option">Option name to be read from the specified section</param>
+/// <param name="defValue">Default value if the option is not found or RmGetOption is unavailable</param>
+/// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
+/// <returns>Returns the option value if available, otherwise the default value</returns>
+/// /// <example>
+/// <code>
+/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+/// {
+///     LPCWSTR value = RmGetOptionSafe(rm, L"CustomSection", L"Value", L"DefaultValue", TRUE);
+/// }
+/// </code>
+/// </example>
+inline LPCWSTR RmGetOptionSafe(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE) {
+    typedef LPCWSTR (__stdcall *RmGetOptionFunc)(void*, LPCWSTR, LPCWSTR, LPCWSTR, BOOL);
+    static RmGetOptionFunc rmGetOption = nullptr;
+    if (rmGetOption == nullptr) {
+        HMODULE rainmeterDll = GetModuleHandle(L"Rainmeter.dll");
+        if (rainmeterDll != nullptr) {
+            rmGetOption = (RmGetOptionFunc)GetProcAddress(rainmeterDll, "RmGetOption");
+        }
+    }
+    if (rmGetOption != nullptr) {
+        return rmGetOption(rm, section, option, defValue, replaceMeasures);
+    } else {
+        return defValue;
+    }
+}
 /// <summary>
 /// Retrieves the option defined in the skin file and converts it to an integer
 /// </summary>

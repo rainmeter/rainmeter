@@ -247,3 +247,27 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	return L"noop";
 }
+
+LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
+{
+
+	if (section == nullptr) { section = L""; }
+	if (option == nullptr) { option = L""; }
+	if (defValue == nullptr) { defValue = L""; }
+
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	ConfigParser& parser = measure->GetSkin()->GetParser();
+
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
+
+	const std::wstring& value = parser.ReadString(section, option, defValue, replaceMeasures != FALSE);
+	g_Buffer = value;
+
+	parser.ClearStyleTemplate();
+
+	return g_Buffer.c_str();
+}
