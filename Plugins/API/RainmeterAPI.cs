@@ -16,6 +16,17 @@ namespace Rainmeter
     public class API
     {
         private IntPtr m_Rm;
+        private static bool _rmGetOptionExists;
+
+        static API()
+        {
+            IntPtr hModule = LoadLibrary("Rainmeter.dll");
+            if (hModule != IntPtr.Zero)
+            {
+                IntPtr procAddress = GetProcAddress(hModule, "RmGetOption");
+                _rmGetOptionExists = (procAddress != IntPtr.Zero);
+            }
+        }
 
         public API(IntPtr rm)
         {
@@ -430,6 +441,49 @@ namespace Rainmeter
         public void LogF(LogType type, string format, params Object[] args)
         {
             RmLog(this.m_Rm, type, string.Format(format, args));
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadLibrary(string lpFileName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, EntryPoint = "RmGetOption")]
+        private static extern IntPtr GetOptionStatic(IntPtr rm, string section, string option, string defValue, int replaceMeasures);
+
+        // <summary>
+        /// Retrieves the option defined in a specific section of the skin file.
+        /// If RmGetOption is not available in the loaded Rainmeter.dll, returns the default value.
+        /// </summary>
+        /// <param name="rm">Rainmeter handle</param>
+        /// <param name="section">Section name to be read from</param>
+        /// <param name="option">Option name to be read</param>
+        /// <param name="defValue">Default value to return if not found</param>
+        /// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
+        /// <returns>The option value or defValue if not available.</returns>
+        /// <example>
+        /// <code>
+        ///[DllExport]
+        ///public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
+        ///{
+        ///    Measure measure = data;
+        ///    Rainmeter.API api = (Rainmeter.API)rm;
+        ///    string sectionName = api.ReadString("SectionName", "MySection");
+        ///    string keyOption = api.ReadString("KeyOption", "MyOption");
+        ///    string value = API.GetOption(rm, sectionName, keyOption, "DefaultValue", true);
+        ///}
+        /// </code>
+        /// </example>
+        public static string GetOption(IntPtr rm, string section, string option, string defValue, bool replaceMeasures)
+        {
+            if (!_rmGetOptionExists)
+            {
+                return defValue;
+            }
+
+            IntPtr ptr = GetOptionStatic(rm, section, option, defValue, replaceMeasures ? 1 : 0);
+            return ptr == IntPtr.Zero ? defValue : Marshal.PtrToStringUni(ptr);
         }
     }
     /// <summary>
