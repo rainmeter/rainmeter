@@ -221,7 +221,7 @@ __inline LPCWSTR RmReadPath(void* rm, LPCWSTR option, LPCWSTR defValue)
 
 /// <summary>
 /// Safely retrieves the option defined in a specific section of the skin file.
-/// If RmGetOption is not available (e.g., in older Rainmeter versions), returns the default value.
+/// In older Rainmeter versions where RmGetOption is not available, always returns the default value.
 /// </summary>
 /// <param name="rm">Pointer to the plugin measure</param>
 /// <param name="section">Section name to be read from</param>
