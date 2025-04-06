@@ -237,21 +237,18 @@ __inline LPCWSTR RmReadPath(void* rm, LPCWSTR option, LPCWSTR defValue)
 /// }
 /// </code>
 /// </example>
-inline LPCWSTR RmGetOptionSafe(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE) {
-    typedef LPCWSTR (__stdcall *RmGetOptionFunc)(void*, LPCWSTR, LPCWSTR, LPCWSTR, BOOL);
-    static RmGetOptionFunc rmGetOption = nullptr;
-    if (rmGetOption == nullptr) {
-        HMODULE rainmeterDll = GetModuleHandle(L"Rainmeter.dll");
-        if (rainmeterDll != nullptr) {
-            rmGetOption = (RmGetOptionFunc)GetProcAddress(rainmeterDll, "RmGetOption");
-        }
-    }
-    if (rmGetOption != nullptr) {
-        return rmGetOption(rm, section, option, defValue, replaceMeasures);
-    } else {
-        return defValue;
-    }
+inline LPCWSTR RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE)
+{
+	typedef LPCWSTR (__stdcall *RmGetOptionFunc)(void*, LPCWSTR, LPCWSTR, LPCWSTR, BOOL);
+	static RmGetOptionFunc delayedFunc = (RmGetOptionFunc)GetProcAddress(GetModuleHandle(L"Rainmeter.dll"), "RmGetOption");
+	if (delayedFunc)
+	{
+		return delayedFunc(rm, section, option, defValue, replaceMeasures);
+	}
+
+	return defValue;
 }
+
 /// <summary>
 /// Retrieves the option defined in the skin file and converts it to an integer
 /// </summary>
