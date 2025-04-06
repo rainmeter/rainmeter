@@ -250,10 +250,9 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 LPCWSTR __stdcall RmGetOption(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
-
-	if (section == nullptr) { section = L""; }
-	if (option == nullptr) { option = L""; }
-	if (defValue == nullptr) { defValue = L""; }
+	NULLCHECK(section);
+	NULLCHECK(option);
+	NULLCHECK(defValue);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
