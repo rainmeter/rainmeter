@@ -456,7 +456,6 @@ namespace Rainmeter
         /// Retrieves the option defined in a specific section of the skin file.
         /// If RmGetOption is not available in the loaded Rainmeter.dll, returns the default value.
         /// </summary>
-        /// <param name="rm">Rainmeter handle</param>
         /// <param name="section">Section name to be read from</param>
         /// <param name="option">Option name to be read</param>
         /// <param name="defValue">Default value to return if not found</param>
@@ -471,19 +470,21 @@ namespace Rainmeter
         ///    Rainmeter.API api = (Rainmeter.API)rm;
         ///    string sectionName = api.ReadString("SectionName", "MySection");
         ///    string keyOption = api.ReadString("KeyOption", "MyOption");
-        ///    string value = API.GetOption(rm, sectionName, keyOption, "DefaultValue", true);
+        ///    string value = api.GetOption(sectionName, keyOption, "DefaultValue", true);
         ///}
         /// </code>
         /// </example>
-        public static string GetOption(IntPtr rm, string section, string option, string defValue, bool replaceMeasures)
+        public string GetOption(string section, string option, string defValue, bool replaceMeasures = true)
         {
-            if (!_rmGetOptionExists)
+            try
+            {
+                IntPtr ptr = GetOptionStatic(m_Rm, section, option, defValue, replaceMeasures ? 1 : 0);
+                return ptr == IntPtr.Zero ? defValue : Marshal.PtrToStringUni(ptr);
+            }
+            catch (EntryPointNotFoundException)
             {
                 return defValue;
             }
-
-            IntPtr ptr = GetOptionStatic(rm, section, option, defValue, replaceMeasures ? 1 : 0);
-            return ptr == IntPtr.Zero ? defValue : Marshal.PtrToStringUni(ptr);
         }
     }
     /// <summary>
