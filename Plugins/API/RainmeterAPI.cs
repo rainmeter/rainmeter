@@ -432,12 +432,6 @@ namespace Rainmeter
             RmLog(this.m_Rm, type, string.Format(format, args));
         }
 
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        private static extern IntPtr LoadLibrary(string lpFileName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
-
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, EntryPoint = "RmGetOption")]
         private static extern IntPtr GetOptionStatic(IntPtr rm, string section, string option, string defValue, int replaceMeasures);
 
