@@ -16,17 +16,6 @@ namespace Rainmeter
     public class API
     {
         private IntPtr m_Rm;
-        private static bool _rmGetOptionExists;
-
-        static API()
-        {
-            IntPtr hModule = LoadLibrary("Rainmeter.dll");
-            if (hModule != IntPtr.Zero)
-            {
-                IntPtr procAddress = GetProcAddress(hModule, "RmGetOption");
-                _rmGetOptionExists = (procAddress != IntPtr.Zero);
-            }
-        }
 
         public API(IntPtr rm)
         {
