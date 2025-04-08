@@ -31,7 +31,13 @@ namespace Rainmeter
         private extern static IntPtr RmReadString(IntPtr rm, string option, string defValue, bool replaceMeasures);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode)]
+        private extern static IntPtr RmReadStringFromSection(IntPtr rm, string section, string option, string defValue, bool replaceMeasures);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode)]
         private extern static double RmReadFormula(IntPtr rm, string option, double defValue);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode)]
+        private extern static double RmReadFormulaFromSection(IntPtr rm, string section, string option, double defValue);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode)]
         private extern static IntPtr RmReplaceVariables(IntPtr rm, string str);
@@ -86,9 +92,9 @@ namespace Rainmeter
         }
 
         /// <summary>
-        /// Retrieves the option defined in the skin file
+        /// Retrieves an option of the plugin script measure
         /// </summary>
-        /// <param name="option">Option name to be read from skin</param>
+        /// <param name="option">Option name</param>
         /// <param name="defValue">Default value for the option if it is not found or invalid</param>
         /// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
         /// <returns>Returns the option value as a string</returns>
@@ -100,13 +106,44 @@ namespace Rainmeter
         ///     Measure measure = (Measure)data;
         ///     Rainmeter.API api = (Rainmeter.API)rm;
         ///     string value = api.ReadString("Value", "DefaultValue");
-        ///     string action = api.ReadString("Action", "", false);  // [MeasureNames] will be parsed/replaced when the action is executed with RmExecute
         /// }
         /// </code>
         /// </example>
         public string ReadString(string option, string defValue, bool replaceMeasures = true)
         {
             return Marshal.PtrToStringUni(RmReadString(m_Rm, option, defValue, replaceMeasures));
+        }
+
+        /// <summary>
+        /// Retrieves an option of a meter/measure
+        /// </summary>
+        /// <remarks>In older Rainmeter versions without support for this API, always returns the default value</remarks>
+        /// <param name="section">Meter/measure section name</param>
+        /// <param name="option">Option name</param>
+        /// <param name="defValue">Default value for the option if it is not found or invalid</param>
+        /// <param name="replaceMeasures">If true, replaces section variables in the returned string</param>
+        /// <returns>Returns the option value as a string</returns>
+        /// <example>
+        /// <code>
+        /// [DllExport]
+        /// public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
+        /// {
+        ///     Measure measure = (Measure)data;
+        ///     Rainmeter.API api = (Rainmeter.API)rm;
+        ///     string value = api.ReadString("MySection", Value", "DefaultValue");
+        /// }
+        /// </code>
+        /// </example>
+        public string ReadStringFromSection(string section, string option, string defValue, bool replaceMeasures = true)
+        {
+            try
+            {
+                return Marshal.PtrToStringUni(RmReadStringFromSection(m_Rm, section, option, defValue, replaceMeasures));
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return defValue;
+            }
         }
 
         /// <summary>
