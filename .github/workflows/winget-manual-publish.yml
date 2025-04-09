@@ -1,4 +1,4 @@
-name: Manual publish to WinGet
+name: winget-manual-publish
 
 on:
   workflow_dispatch:
