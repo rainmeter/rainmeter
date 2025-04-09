@@ -130,7 +130,7 @@ namespace Rainmeter
         /// {
         ///     Measure measure = (Measure)data;
         ///     Rainmeter.API api = (Rainmeter.API)rm;
-        ///     string value = api.ReadString("MySection", Value", "DefaultValue");
+        ///     string value = api.ReadString("MySection", "Value", "DefaultValue");
         /// }
         /// </code>
         /// </example>
@@ -192,6 +192,37 @@ namespace Rainmeter
         }
 
         /// <summary>
+        /// Retrieves the option defined in a section and converts it to a double
+        /// </summary>
+        /// <remarks>In older Rainmeter versions without support for this API, always returns the default value</remarks>
+        /// <param name="section">Meter/measure section name</param>
+        /// <param name="option">Option name</param>
+        /// <param name="defValue">Default value for the option if it is not found or invalid</param>
+        /// <returns>Returns the option value as a double</returns>
+        /// <example>
+        /// <code>
+        /// [DllExport]
+        /// public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
+        /// {
+        ///     Measure measure = (Measure)data;
+        ///     Rainmeter.API api = (Rainmeter.API)rm;
+        ///     double value = api.ReadDoubleFromSection("Section", "Option", 20.0);
+        /// }
+        /// </code>
+        /// </example>
+        public double ReadDoubleFromSection(string section, string option, double defValue)
+        {
+            try
+            {
+                return RmReadFormulaFromSection(m_Rm, section, option, defValue);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return defValue;
+            }
+        }
+
+        /// <summary>
         /// Retrieves the option defined in the skin file and converts it to an integer
         /// </summary>
         /// <remarks>If the option is a formula, the returned value will be the result of the parsed formula</remarks>
@@ -212,6 +243,37 @@ namespace Rainmeter
         public int ReadInt(string option, int defValue)
         {
             return (int)RmReadFormula(m_Rm, option, defValue);
+        }
+
+        /// <summary>
+        /// Retrieves the option defined in a section and converts it to an integer
+        /// </summary>
+        /// <remarks>In older Rainmeter versions without support for this API, always returns the default value</remarks>
+        /// <param name="section">Meter/measure section name</param>
+        /// <param name="option">Option name</param>
+        /// <param name="defValue">Default value for the option if it is not found or invalid</param>
+        /// <returns>Returns the option value as an integer</returns>
+        /// <example>
+        /// <code>
+        /// [DllExport]
+        /// public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
+        /// {
+        ///     Measure measure = (Measure)data;
+        ///     Rainmeter.API api = (Rainmeter.API)rm;
+        ///     int value = api.ReadIntFromSection("Section", "Option", 20);
+        /// }
+        /// </code>
+        /// </example>
+        public int ReadIntFromSection(string section, string option, int defValue)
+        {
+            try
+            {
+                return (int)RmReadFormulaFromSection(m_Rm, section, option, defValue);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return defValue;
+            }
         }
 
         /// <summary>
