@@ -3,7 +3,6 @@ version: 4.5.21-{build}
 
 branches:
   only:
-    - master
     - /v\d+\.\d+\.\d+/
 
 image: Visual Studio 2022
