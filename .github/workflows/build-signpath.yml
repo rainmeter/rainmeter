@@ -39,7 +39,7 @@ jobs:
         uses: signpath/github-action-submit-signing-request@3c306158facd969ebdb385c6845dee38afc2ebf9 # v1.1
         with:
           api-token: '${{ secrets.SIGNPATH_API_KEY }}'
-          organization-id: 'rainmeter'
+          organization-id: '2d37d539-98b7-4649-9469-4097b1099202'
           project-slug: 'rainmeter'
           signing-policy-slug: 'release-signing'
           github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
