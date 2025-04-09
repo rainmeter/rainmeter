@@ -4,7 +4,7 @@ on: push
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Install NSIS
         run: choco install nsis --version=3.11.0 --no-progress
