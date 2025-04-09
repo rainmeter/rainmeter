@@ -662,6 +662,32 @@ HWND System::GetDefaultShellWindow()
 	return ShellW;
 }
 
+// Windows 11 24H2 reordered the the desktop windows.
+//
+// Spy++ output before Windows 11 24H2:
+//
+//   0x00010190 "" WorkerW
+//     ...
+//     0x000100EE "" SHELLDLL_DefView
+//       0x000100F0 "FolderView" SysListView32
+//   0x00100B8A "" WorkerW
+//   0x000100EC "Program Manager" Progman
+//
+// Spy++ output after Windows 11 24H2:
+//
+//   0x000100EC "Program Manager" Progman
+//     0x000100EE "" SHELLDLL_DefView
+//       0x000100F0 "FolderView" SysListView32
+//     0x00100B8A "" WorkerW
+//
+// So if we're on 24H2+, we should be using the shell window instead of WorkerW.
+bool ShouldUseShellWindowInsteadOfWorkerW() {
+	// Check for the existence of GetCurrentMonitorTopologyId, which should be present only
+	// on Windows 11 build 10.0.26100.2454
+	static bool result = GetProcAddress(GetModuleHandle(L"user32"), "GetCurrentMonitorTopologyId") != nullptr;
+	return result;
+}
+
 /*
 ** Finds the WorkerW window.
 ** If the WorkerW window is not active, returns nullptr.
@@ -672,6 +698,16 @@ HWND System::GetWorkerW()
 	static HWND c_DefView = nullptr;  // cache
 	HWND ShellW = GetDefaultShellWindow();
 	if (!ShellW) return nullptr;  // Default Shell (Explorer) not running
+
+	// On Windows 11 24H2 and later, the shell window should be used in place of WorkerW.
+	if (ShouldUseShellWindowInsteadOfWorkerW()) {
+		if (FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L""))
+		{
+			return ShellW;
+		}
+
+		return nullptr;
+	}
 
 	if (c_DefView && IsWindow(c_DefView))
 	{
@@ -973,6 +1009,22 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	{
 		if (!c_ShowDesktop)
 		{
+			if (ShouldUseShellWindowInsteadOfWorkerW())
+			{
+				if (hwnd == GetDefaultShellWindow())
+				{
+					const int max = 5;
+					int loop = 0;
+					while (loop < max && !CheckDesktopState(hwnd))
+					{
+						Sleep(2);  // Wait for 2-16 ms before retrying
+						++loop;
+					}
+				}
+
+				return;
+			}
+
 			const int classLen = _countof(L"WorkerW") + 1;
 			WCHAR className[classLen];
 			if (GetClassName(hwnd, className, classLen) > 0 &&
