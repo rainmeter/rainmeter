@@ -8,7 +8,7 @@ setlocal EnableDelayedExpansion
 ::		pre        -> builds prerelease installer
 ::		languages  -> no installer, updates the language .dll files
 
-if "%CI%" == "" (
+if "%APPVEYOR%" == "" (
 	set BUILD_TYPE=%1
 	set VERSION=%2
 ) else (
