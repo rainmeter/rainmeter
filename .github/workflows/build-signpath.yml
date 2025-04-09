@@ -1,4 +1,4 @@
-name: official-build
+name: build-signpath
 
 on:
   workflow_dispatch:
