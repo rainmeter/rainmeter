@@ -43,3 +43,4 @@ jobs:
           project-slug: 'rainmeter'
           signing-policy-slug: 'release-signing'
           github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
+          wait-for-completion: false
