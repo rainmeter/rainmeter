@@ -61,7 +61,7 @@ LIBRARY_EXPORT LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR secti
 #else
 inline LPCWSTR RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE)
 {
-	typedef LPCWSTR (__stdcall* RmReadStringFromSectionFunc)(void*, LPCWSTR, LPCWSTR, LPCWSTR, BOOL);
+	typedef LPCWSTR(__stdcall* RmReadStringFromSectionFunc)(void*, LPCWSTR, LPCWSTR, LPCWSTR, BOOL);
 	static auto delayedFunc = (RmReadStringFromSectionFunc)GetProcAddress(GetModuleHandle(L"Rainmeter.dll"), "RmReadStringFromSection");
 	if (delayedFunc)
 	{
@@ -111,7 +111,7 @@ LIBRARY_EXPORT double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR secti
 #else
 inline double RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
 {
-	typedef double (__stdcall* RmReadFormulaFromSectionFunc)(void*, LPCWSTR, LPCWSTR, double);
+	typedef double(__stdcall* RmReadFormulaFromSectionFunc)(void*, LPCWSTR, LPCWSTR, double);
 	static auto delayedFunc = (RmReadFormulaFromSectionFunc)GetProcAddress(GetModuleHandle(L"Rainmeter.dll"), "RmReadFormulaFromSection");
 	if (delayedFunc)
 	{
@@ -121,6 +121,50 @@ inline double RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option
 	return defValue;
 }
 #endif
+
+/// <summary>
+/// Retrieves the option defined in a section and converts it to an integer.
+/// </summary>
+/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Meter/measure section name</param>
+/// <param name="option">Option name</param>
+/// <param name="defValue">Default value if the option is not found or invalid</param>
+/// <returns>Returns the option value as an integer</returns>
+/// <example>
+/// <code>
+/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+/// {
+///     int value = RmReadIntFromSection(rm, L"Section", L"Option", 20);
+/// }
+/// </code>
+/// </example>
+__inline int RmReadIntFromSection(void* rm, LPCWSTR section, LPCWSTR option, int defValue)
+{
+	return (int)RmReadFormulaFromSection(rm, section, option, defValue);
+}
+
+/// <summary>
+/// Retrieves the option defined in a section and converts it to a double.
+/// </summary>
+/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Meter/measure section name</param>
+/// <param name="option">Option name</param>
+/// <param name="defValue">Default value if the option is not found or invalid</param>
+/// <returns>Returns the option value as a double</returns>
+/// <example>
+/// <code>
+/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+/// {
+///     double value = RmReadDoubleFromSection(rm, L"Section", L"Option", 20.0);
+/// }
+/// </code>
+/// </example>
+__inline double RmReadDoubleFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
+{
+	return RmReadFormulaFromSection(rm, section, option, defValue);
+}
 
 /// <summary>
 /// Returns a string, replacing any variables (or section variables) within the inputted string
