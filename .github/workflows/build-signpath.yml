@@ -12,8 +12,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
+      - name: Install NSIS
+        run: choco install nsis --version=3.11.0
+
       - name: Clone repo
         uses: actions/checkout@v4
 
