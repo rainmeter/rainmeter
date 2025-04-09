@@ -1,0 +1,45 @@
+name: official-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Build type (release/pre)'
+        required: true
+      version:
+        description: 'Version (a.b.c.d)'
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Run Build.bat
+        run: |
+          cd Build
+          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION%
+        shell: cmd
+        env:
+          RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
+          RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
+          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        id: upload-installer
+        with:
+          name: Rainmeter-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
+          path: Build/Rainmeter-*.exe
+          if-no-files-found: error
+
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@3c306158facd969ebdb385c6845dee38afc2ebf9 # v1.1
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_KEY }}'
+          organization-id: 'rainmeter'
+          project-slug: 'rainmeter'
+          signing-policy-slug: 'release-signing'
+          github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
