@@ -73,50 +73,6 @@ inline LPCWSTR RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option
 #endif
 
 /// <summary>
-/// Retrieves the option defined in a section and converts it to an integer.
-/// </summary>
-/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
-/// <param name="rm">Pointer to the plugin measure</param>
-/// <param name="section">Meter/measure section name</param>
-/// <param name="option">Option name</param>
-/// <param name="defValue">Default value if the option is not found or invalid</param>
-/// <returns>Returns the option value as an integer</returns>
-/// <example>
-/// <code>
-/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
-/// {
-///     int value = RmReadIntFromSection(rm, L"Section", L"Option", 20);
-/// }
-/// </code>
-/// </example>
-__inline int RmReadIntFromSection(void* rm, LPCWSTR section, LPCWSTR option, int defValue)
-{
-	return (int)RmReadFormulaFromSection(rm, section, option, defValue);
-}
-
-/// <summary>
-/// Retrieves the option defined in a section and converts it to a double.
-/// </summary>
-/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
-/// <param name="rm">Pointer to the plugin measure</param>
-/// <param name="section">Meter/measure section name</param>
-/// <param name="option">Option name</param>
-/// <param name="defValue">Default value if the option is not found or invalid</param>
-/// <returns>Returns the option value as a double</returns>
-/// <example>
-/// <code>
-/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
-/// {
-///     double value = RmReadDoubleFromSection(rm, L"Section", L"Option", 20.0);
-/// }
-/// </code>
-/// </example>
-__inline double RmReadDoubleFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
-{
-	return RmReadFormulaFromSection(rm, section, option, defValue);
-}
-
-/// <summary>
 /// Retrieves an option of the plugin script measure as a number after parsing possible formula
 /// </summary>
 /// <param name="rm">Pointer to the plugin measure</param>
@@ -165,6 +121,50 @@ inline double RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option
 	return defValue;
 }
 #endif
+
+/// <summary>
+/// Retrieves the option defined in a section and converts it to an integer.
+/// </summary>
+/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Meter/measure section name</param>
+/// <param name="option">Option name</param>
+/// <param name="defValue">Default value if the option is not found or invalid</param>
+/// <returns>Returns the option value as an integer</returns>
+/// <example>
+/// <code>
+/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+/// {
+///     int value = RmReadIntFromSection(rm, L"Section", L"Option", 20);
+/// }
+/// </code>
+/// </example>
+__inline int RmReadIntFromSection(void* rm, LPCWSTR section, LPCWSTR option, int defValue)
+{
+	return (int)RmReadFormulaFromSection(rm, section, option, defValue);
+}
+
+/// <summary>
+/// Retrieves the option defined in a section and converts it to a double.
+/// </summary>
+/// <remarks>If the option is a formula, the returned value will be the result of the parsed formula.</remarks>
+/// <param name="rm">Pointer to the plugin measure</param>
+/// <param name="section">Meter/measure section name</param>
+/// <param name="option">Option name</param>
+/// <param name="defValue">Default value if the option is not found or invalid</param>
+/// <returns>Returns the option value as a double</returns>
+/// <example>
+/// <code>
+/// PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+/// {
+///     double value = RmReadDoubleFromSection(rm, L"Section", L"Option", 20.0);
+/// }
+/// </code>
+/// </example>
+__inline double RmReadDoubleFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
+{
+	return RmReadFormulaFromSection(rm, section, option, defValue);
+}
 
 /// <summary>
 /// Returns a string, replacing any variables (or section variables) within the inputted string
