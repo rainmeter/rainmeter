@@ -638,31 +638,31 @@ void System::UpdateWorkareaInfo()
 HWND System::GetDefaultShellWindow()
 {
 	static HWND c_ShellW = nullptr;  // cache
-	HWND ShellW = GetShellWindow();
+	HWND shellW = GetShellWindow();
 
-	if (ShellW)
+	if (shellW)
 	{
-		if (ShellW == c_ShellW)
+		if (shellW == c_ShellW)
 		{
-			return ShellW;
+			return shellW;
 		}
 		else
 		{
 			const int classLen = _countof(L"Progman") + 1;
 			WCHAR className[classLen];
-			if (!(GetClassName(ShellW, className, classLen) > 0 &&
+			if (!(GetClassName(shellW, className, classLen) > 0 &&
 				wcscmp(className, L"Progman") == 0))
 			{
-				ShellW = nullptr;
+				shellW = nullptr;
 			}
 		}
 	}
 
-	c_ShellW = ShellW;
-	return ShellW;
+	c_ShellW = shellW;
+	return shellW;
 }
 
-// Windows 11 24H2 reordered the the desktop windows.
+// Windows 11 24H2 reordered the desktop shell window hierarchy.
 //
 // Spy++ output before Windows 11 24H2:
 //
@@ -680,30 +680,26 @@ HWND System::GetDefaultShellWindow()
 //       0x000100F0 "FolderView" SysListView32
 //     0x00100B8A "" WorkerW
 //
-// So if we're on 24H2+, we should be using the shell window instead of WorkerW.
-bool ShouldUseShellWindowInsteadOfWorkerW() {
+// So if we're on 24H2+, we should be using the shell window (Progman) instead of WorkerW.
+bool ShouldUseShellWindowAsDesktopIconsHost() {
 	// Check for the existence of GetCurrentMonitorTopologyId, which should be present only
-	// on Windows 11 build 10.0.26100.2454
+	// on Windows 11 build 10.0.26100.2454.
 	static bool result = GetProcAddress(GetModuleHandle(L"user32"), "GetCurrentMonitorTopologyId") != nullptr;
 	return result;
 }
 
-/*
-** Finds the WorkerW window.
-** If the WorkerW window is not active, returns nullptr.
-**
-*/
-HWND System::GetWorkerW()
+// We position our windows relative to the parent of SHELLDLL_DefView, which is what
+// contains the desktop icons.
+HWND System::GetDesktopIconsHostWindow()
 {
 	static HWND c_DefView = nullptr;  // cache
-	HWND ShellW = GetDefaultShellWindow();
-	if (!ShellW) return nullptr;  // Default Shell (Explorer) not running
+	HWND shellW = GetDefaultShellWindow();
+	if (!shellW) return nullptr;  // Default Shell (Explorer) not running
 
-	// On Windows 11 24H2 and later, the shell window should be used in place of WorkerW.
-	if (ShouldUseShellWindowInsteadOfWorkerW()) {
-		if (FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L""))
+	if (ShouldUseShellWindowAsDesktopIconsHost()) {
+		if (FindWindowEx(shellW, nullptr, L"SHELLDLL_DefView", L""))
 		{
-			return ShellW;
+			return shellW;
 		}
 
 		return nullptr;
@@ -714,7 +710,7 @@ HWND System::GetWorkerW()
 		HWND parent = GetAncestor(c_DefView, GA_PARENT);
 		if (parent)
 		{
-			if (parent == ShellW)
+			if (parent == shellW)
 			{
 				return nullptr;
 			}
@@ -731,22 +727,23 @@ HWND System::GetWorkerW()
 		}
 	}
 
-	HWND WorkerW = nullptr, DefView = FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L"");
-	if (DefView == nullptr)
+	HWND workerW = nullptr;
+	HWND defView = FindWindowEx(shellW, nullptr, L"SHELLDLL_DefView", L"");
+	if (defView == nullptr)
 	{
-		while (WorkerW = FindWindowEx(nullptr, WorkerW, L"WorkerW", L""))
+		while (workerW = FindWindowEx(nullptr, workerW, L"WorkerW", L""))
 		{
-			if (IsWindowVisible(WorkerW) &&
-				BelongToSameProcess(ShellW, WorkerW) &&
-				(DefView = FindWindowEx(WorkerW, nullptr, L"SHELLDLL_DefView", L"")))
+			if (IsWindowVisible(workerW) &&
+				BelongToSameProcess(shellW, workerW) &&
+				(defView = FindWindowEx(workerW, nullptr, L"SHELLDLL_DefView", L"")))
 			{
 				break;
 			}
 		}
 	}
 
-	c_DefView = DefView;
-	return WorkerW;
+	c_DefView = defView;
+	return workerW;
 }
 
 /*
@@ -891,19 +888,19 @@ void System::ChangeZPosInOrder()
 ** Moves the helper window to the reference position.
 **
 */
-void System::PrepareHelperWindow(HWND WorkerW)
+void System::PrepareHelperWindow(HWND desktopIconsHostWindow)
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);  // always on bottom
 
-	if (c_ShowDesktop && WorkerW)
+	if (c_ShowDesktop && desktopIconsHostWindow)
 	{
 		// Set WS_EX_TOPMOST flag
 		SetWindowPos(c_HelperWindow, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
 
 		// Find the "backmost" topmost window
-		HWND hwnd = WorkerW;
+		HWND hwnd = desktopIconsHostWindow;
 		while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
 		{
 			if (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
@@ -923,8 +920,8 @@ void System::PrepareHelperWindow(HWND WorkerW)
 				{
 					if (logging)
 					{
-						LogDebugF(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - %s",
-							c_HelperWindow, WorkerW, hwnd, windowText, className, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+						LogDebugF(L"System: HelperWindow: hwnd=0x%p (desktopIconsHostWindow=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - %s",
+							c_HelperWindow, desktopIconsHostWindow, hwnd, windowText, className, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 					}
 					return;
 				}
@@ -932,16 +929,16 @@ void System::PrepareHelperWindow(HWND WorkerW)
 				if (logging)
 				{
 					DWORD err = GetLastError();
-					LogDebugF(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED (ErrorCode=0x%08X)",
-						c_HelperWindow, WorkerW, hwnd, windowText, className, err);
+					LogDebugF(L"System: HelperWindow: hwnd=0x%p (desktopIconsHostWindow=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED (ErrorCode=0x%08X)",
+						c_HelperWindow, desktopIconsHostWindow, hwnd, windowText, className, err);
 				}
 			}
 		}
 
 		if (logging)
 		{
-			LogDebugF(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_TOPMOST - %s",
-				c_HelperWindow, WorkerW, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+			LogDebugF(L"System: HelperWindow: hwnd=0x%p (desktopIconsHostWindow=0x%p), hwndInsertAfter=HWND_TOPMOST - %s",
+				c_HelperWindow, desktopIconsHostWindow, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
 	else
@@ -951,8 +948,8 @@ void System::PrepareHelperWindow(HWND WorkerW)
 
 		if (logging)
 		{
-			LogDebugF(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_BOTTOM - %s",
-				c_HelperWindow, WorkerW, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+			LogDebugF(L"System: HelperWindow: hwnd=0x%p (desktopIconsHostWindow=0x%p), hwndInsertAfter=HWND_BOTTOM - %s",
+				c_HelperWindow, desktopIconsHostWindow, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
 }
@@ -961,13 +958,13 @@ void System::PrepareHelperWindow(HWND WorkerW)
 ** Changes the "Show Desktop" state.
 **
 */
-bool System::CheckDesktopState(HWND WorkerW)
+bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 {
 	HWND hwnd = nullptr;
 
-	if (WorkerW && IsWindowVisible(WorkerW))
+	if (desktopIconsHostWindow && IsWindowVisible(desktopIconsHostWindow))
 	{
-		hwnd = FindWindowEx(nullptr, WorkerW, L"RainmeterSystem", L"System");
+		hwnd = FindWindowEx(nullptr, desktopIconsHostWindow, L"RainmeterSystem", L"System");
 	}
 
 	bool stateChanged = (hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop);
@@ -982,7 +979,7 @@ bool System::CheckDesktopState(HWND WorkerW)
 				c_ShowDesktop ? L"desktop" : L"open windows");
 		}
 
-		PrepareHelperWindow(WorkerW);
+		PrepareHelperWindow(desktopIconsHostWindow);
 
 		ChangeZPosInOrder();
 
@@ -1009,7 +1006,7 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	{
 		if (!c_ShowDesktop)
 		{
-			if (ShouldUseShellWindowInsteadOfWorkerW())
+			if (ShouldUseShellWindowAsDesktopIconsHost())
 			{
 				if (hwnd == GetDefaultShellWindow())
 				{
@@ -1081,7 +1078,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case TIMER_SHOWDESKTOP:
 			if (wParam == TIMER_SHOWDESKTOP)
 			{
-				CheckDesktopState(GetWorkerW());
+				CheckDesktopState(GetDesktopIconsHostWindow());
 			}
 			break;
 
