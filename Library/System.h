@@ -50,7 +50,7 @@ public:
 	static HWND GetBackmostTopWindow();
 
 	static HWND GetHelperWindow() { return c_HelperWindow; }
-	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
+	static void PrepareHelperWindow(HWND desktopIconsHostWindow = GetDesktopIconsHostWindow());
 
 	static POINT GetCursorPosition();
 
@@ -82,10 +82,10 @@ private:
 	static void UpdateWorkareaInfo();
 
 	static HWND GetDefaultShellWindow();
-	static HWND GetWorkerW();
+	static HWND GetDesktopIconsHostWindow();
 	static void ChangeZPosInOrder();
 
-	static bool CheckDesktopState(HWND WorkerW);
+	static bool CheckDesktopState(HWND desktopIconsHostWindow);
 	static bool BelongToSameProcess(HWND hwndA, HWND hwndB);
 
 	static HWND c_Window;
