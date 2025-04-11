@@ -20,6 +20,7 @@ jobs:
         with:
           identifier: Rainmeter.Rainmeter
           version: ${{ inputs.version }}
+          release-notes-url: https://docs.rainmeter.net/history/
           installers-regex: '\.exe$' # Only .exe files
           release-tag: ${{ inputs.release-tag }}
           token: ${{ secrets.WINGET_TOKEN }}
