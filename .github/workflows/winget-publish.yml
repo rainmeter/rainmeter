@@ -27,6 +27,7 @@ jobs:
         with:
           identifier: Rainmeter.Rainmeter
           version: ${{ env.MAJOR}}.${{ env.MINOR }}.${{ env.PATCH }}
+          release-notes-url: https://docs.rainmeter.net/history/
           installers-regex: '\.exe$' # Only .exe files
           token: ${{ secrets.WINGET_TOKEN }}
           fork-user: brianferguson
