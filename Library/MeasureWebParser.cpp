@@ -405,9 +405,14 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Debug = parser.ReadInt(section, L"Debug", 0);
 	if (m_Debug == 2)
 	{
+		std::wstring oldDebugFileLocation = m_DebugFileLocation;
 		m_DebugFileLocation = parser.ReadString(section, L"Debug2File", L"WebParserDump.txt");
 		GetSkin()->MakePathAbsolute(m_DebugFileLocation);
-		LogNoticeF(this, L"Debug file: %s", m_DebugFileLocation.c_str());
+
+		if (_wcsicmp(oldDebugFileLocation.c_str(), m_DebugFileLocation.c_str()) != 0)
+		{
+			LogNoticeF(this, L"Debug file: %s", m_DebugFileLocation.c_str());
+		}
 	}
 
 	{
