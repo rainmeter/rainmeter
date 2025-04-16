@@ -2647,7 +2647,7 @@ bool Skin::ReadSkin()
 	// to avoid errors caused by referencing nonexistent [sections] in the options.
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
-	Meter* prevMeter = nullptr;
+
 	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
@@ -2682,6 +2682,38 @@ bool Skin::ReadSkin()
 					}
 				}
 
+				uint32_t repeat = m_Parser.ReadUInt(section, L"Repeat", 0U);
+				if (repeat > 0) {
+					if (repeat > 100) {
+						repeat = 100;
+					}
+					WCHAR buffer[3];
+					m_Parser.DeleteValue(section, L"Repeat");
+
+					for (uint32_t i = 1U; i <= repeat; ++i) {
+						_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+						std::wstring sectionName = section;
+						sectionName += buffer;
+
+						m_Parser.CopySectionValuesWithReplace(section, sectionName, i);
+
+						Measure* measure = Measure::Create(measureName.c_str(), this, sectionName.c_str());
+						if (measure)
+						{
+							m_Measures.push_back(measure);
+							m_Parser.AddMeasure(measure);
+
+							if (IsNetworkMeasure(measure))
+							{
+								m_HasNetMeasures = true;
+								MeasureNet::UpdateIFTable();
+							}
+						}
+					}
+
+					continue;
+				}
+
 				Measure* measure = Measure::Create(measureName.c_str(), this, section);
 				if (measure)
 				{
@@ -2701,6 +2733,50 @@ bool Skin::ReadSkin()
 			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", false);
 			if (!meterName.empty())
 			{
+				if (_wcsicmp(meterName.c_str(), L"Repeat") == 0) {
+					const std::wstring strMeter = meterName;
+					uint32_t count = m_Parser.ReadUInt(section, L"Count", 0U);
+					if (count > 100) {
+						count = 100;
+					}
+					const std::wstring strMeters = m_Parser.ReadString(section, L"RepeatMeters", L"", false);
+					WCHAR buffer[3];
+					std::vector<std::wstring> repeatMeters = ConfigParser::Tokenize(strMeters, L",");
+
+					for (uint32_t i = 1U; i <= count; ++i) {
+						_snwprintf_s(buffer, _TRUNCATE, L"%u", i);
+						for (auto& repeatMeter : repeatMeters)
+						{
+							std::wstring sectionName = repeatMeter;
+							sectionName += buffer;
+							const std::wstring strMeterType = m_Parser.GetValue(repeatMeter, L"Meter", L"");
+
+							m_Parser.CopySectionValuesWithReplace(repeatMeter, sectionName, i);
+							m_Parser.InsertSection(repeatMeter, sectionName);
+
+							Meter* meter = Meter::Create(strMeterType.c_str(), this, sectionName.c_str());
+							if (meter)
+							{
+								m_Meters.push_back(meter);
+
+								if (meter->GetTypeID() == TypeID<MeterButton>())
+								{
+									m_HasButtons = true;
+								}
+							}
+						}
+					}
+
+					for (auto& repeatMeter : repeatMeters)
+					{
+						m_Parser.DeleteSection(repeatMeter);
+						m_Parser.DeleteSectionValues(repeatMeter);
+						DeleteMeter(repeatMeter);
+					}
+
+					continue;
+				}
+
 				// It's a meter
 				Meter* meter = Meter::Create(meterName.c_str(), this, section);
 				if (meter)
@@ -2711,8 +2787,6 @@ bool Skin::ReadSkin()
 					{
 						m_HasButtons = true;
 					}
-
-					prevMeter = meter;
 				}
 
 				continue;
@@ -5527,6 +5601,24 @@ Meter* Skin::GetMeter(const std::wstring& meterName)
 		}
 	}
 	return nullptr;
+}
+
+void Skin::DeleteMeter(const std::wstring& meterName)
+{
+	const WCHAR* name = meterName.c_str();
+
+	for (auto j = m_Meters.begin(); j != m_Meters.end(); ++j)
+	{
+		if (_wcsicmp((*j)->GetName(), name) == 0)
+		{
+			auto next = j + 1;
+			if (next != m_Meters.end()) {
+				auto relativeMeter = (*j)->GetRelativeMeter();
+				(*next)->SetRelativeMeter(relativeMeter);
+			}
+			m_Meters.erase(j);
+		}
+	}
 }
 
 bool Skin::IsNetworkMeasure(Measure* measure)
