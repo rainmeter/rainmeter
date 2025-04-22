@@ -15,7 +15,23 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-void ShowError(MeasureWebParser* measure, WCHAR* description);
+#include "json/json.hpp"
+
+using nlohmann::json;
+
+void ShowError(MeasureWebParser *measure, WCHAR *description);
+
+template <typename Iterator, typename Pred, typename Operation>
+void for_each_if(Iterator begin, Iterator end, Pred p, Operation op)
+{
+	for (; begin != end; begin++)
+	{
+		if (p(*begin))
+		{
+			op(*begin);
+		}
+	}
+}
 
 class ProxyCachePool
 {
@@ -366,14 +382,35 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
 	}
 
+	std::wstring parseModeConfig = parser.ReadString(section, L"ParseMode", L"Regex");
+	if (parseModeConfig == L"Json")
+	{
+		m_ParseMode = ParseMode::Json;
+
+		m_JsonValueSpecs.clear();
+		for (int i = 1; true; ++i)
+		{
+			auto configName = L"JsonValuePath" + std::to_wstring(i);
+			auto jsonPathSpec = parser.ReadString(section, configName.c_str(), L"N/A");
+			if (jsonPathSpec == L"N/A")
+				break;
+			LogNoticeF(this, L"%s = %s", configName.c_str(), jsonPathSpec.c_str());
+			m_JsonValueSpecs.push_back(jsonPathSpec);
+		}
+	}
+	else
+	{
+		m_ParseMode = ParseMode::Regex;
+	}
+
 	m_RegExp = parser.ReadString(section, L"RegExp", L"");
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
-	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
+	m_OnParseErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
 	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
 	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
 	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
 	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
-	
+
 	int index = parser.ReadInt(section, L"StringIndex", 0);
 	m_StringIndex = index < 0 ? 0 : index;
 
@@ -494,20 +531,17 @@ void MeasureWebParser::UpdateValue()
 {
 	m_Value = 0.0;  // Default "number" value to 0
 
-	if (m_Download && m_RegExp.empty() && m_Url.find(L'[') == std::wstring::npos)
+	if (m_Download && !IsParsingConfigured() && m_Url.find(L'[') == std::wstring::npos)
 	{
-		// If RegExp is empty download the file that is pointed by the Url
+		// If no RegExp/JsonSpec is configured and the Url is not a reference to another measure
+		// then download the file that is pointed by the Url
+
+		// Run the download thread only if not running already
 		if (m_DlThreadHandle == nullptr)
 		{
 			if (m_UpdateCounter == 0U)
 			{
-				// Launch a new thread to fetch the web data
-				unsigned int id = 0U;
-				HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
-				if (threadHandle)
-				{
-					m_DlThreadHandle = threadHandle;
-				}
+				StartDownloadThread();
 			}
 
 			++m_UpdateCounter;
@@ -521,6 +555,9 @@ void MeasureWebParser::UpdateValue()
 	}
 	else
 	{
+		// Otherwise assign the result from a previous parsing step
+		// or fetch the URL and parse it according to the configuration
+
 		// Make sure that the thread is not writing to the result at the same time
 		EnterCriticalSection(&g_CriticalSection);
 
@@ -538,7 +575,7 @@ void MeasureWebParser::UpdateValue()
 			{
 				if (m_UpdateCounter == 0U)
 				{
-					// Launch a new thread to fetch the web data
+					// Launch a new thread to fetch the web data and parse the content
 					unsigned int id = 0U;
 					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkThreadProc, this, 0U, &id);
 					if (threadHandle)
@@ -584,8 +621,8 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	bool isDebugging = GetRainmeter().GetDebug();
 	if (isDebugging) LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
 
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_InternetOpenUrlFlags);
-	if (!data)
+	BYTE* rawByteData = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_InternetOpenUrlFlags);
+	if (!rawByteData)
 	{
 		ShowError(measure, L"Fetch error");
 
@@ -605,7 +642,7 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 			FILE* file = _wfopen(measure->m_DebugFileLocation.c_str(), L"wb");
 			if (file)
 			{
-				fwrite(data, sizeof(BYTE), dwSize, file);
+				fwrite(rawByteData, sizeof(BYTE), dwSize, file);
 				fclose(file);
 			}
 			else
@@ -614,12 +651,25 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 			}
 		}
 
+		// Convert data to UTF16 string data for parsing
+		std::wstring buffer;
+		auto data = (const WCHAR *)rawByteData;
+		DWORD dataLength = dwSize / 2;
+
+		const int UTF16_CODEPAGE = 1200;
+		if (measure->m_Codepage != UTF16_CODEPAGE)
+		{
+			buffer = StringUtil::Widen((LPCSTR)data, dwSize, measure->m_Codepage);
+			data = buffer.c_str();
+			dataLength = (DWORD)buffer.length();
+		}
+
 		if (isDebugging) LogDebugF(measure, L"Parsing data...");
-		measure->ParseData(data, dwSize);
+		measure->ParseData(data, dataLength);
 		if (isDebugging) LogDebugF(measure, L"Parsing data...done!");
 
-		free(data);
-		data = nullptr;
+		free(rawByteData);
+		rawByteData = nullptr;
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
@@ -630,37 +680,163 @@ unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 	return 0;   // thread completed successfully
 }
 
-void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data)
+void MeasureWebParser::ClearResult()
 {
-	const int UTF16_CODEPAGE = 1200;
-	if (m_Codepage == UTF16_CODEPAGE)
+	EnterCriticalSection(&g_CriticalSection);
+	m_ResultString.clear();
+	if (m_Download)
 	{
-		utf16Data = true;
+		if (m_DownloadFile.empty()) // cache mode
+		{
+			if (!m_DownloadedFile.empty())
+			{
+				// Delete old downloaded file
+				DeleteFile(m_DownloadedFile.c_str());
+			}
+		}
+		m_DownloadedFile.clear();
+	}
+	LeaveCriticalSection(&g_CriticalSection);
+}
+
+void MeasureWebParser::ParseData(const WCHAR *data, DWORD dataLength)
+{
+	bool error = false;
+	if (m_ParseMode == ParseMode::Regex)
+	{
+		error = ParseDataRegex(data, dataLength);
+	}
+	else if (m_ParseMode == ParseMode::Json)
+	{
+		error = ParseDataJson(data, dataLength);
+	}
+	else
+	{
+		LogErrorF(this, L"Unknown parse mode: %d", m_ParseMode);
 	}
 
-	const char* error = nullptr;
+	if (m_Download)
+	{
+		StartDownloadThread();
+	}
+
+	if (error && !m_OnParseErrAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_OnParseErrAction.c_str(), GetSkin());
+	}
+	else if (!m_Download && !m_FinishAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
+	}
+}
+
+bool MeasureWebParser::ParseDataJson(const WCHAR *data, DWORD dataLength)
+{
+	bool error = false;
+
+	const auto numJsonSpecs = static_cast<int>(m_JsonValueSpecs.size());
+	std::vector<std::wstring> matches;
+	matches.reserve(numJsonSpecs+1); // index 0 == raw data, others are matches
+	matches.emplace_back(std::wstring{data, dataLength});
+
+	// Parse the json and perform the matches
+	const auto json = json::parse(std::wstring(data, dataLength), /*cb=*/nullptr, /*allow_exceptions=*/false);
+	if(!json.is_discarded()) {
+		// Got valid JSON, parse all specs accordingly
+		// Config name options are starting with index 1 (index 0 is implied and is the entire source string)
+		int jsonSpecIndex = 1;
+		for (const auto &specUtf16 : m_JsonValueSpecs)
+		{
+			const auto specUtf8 = StringUtil::NarrowUTF8(specUtf16);
+			std::wstring matchUtf16;
+			const auto jsonPointer = json::json_pointer(specUtf8);
+			if (json.contains(jsonPointer)) {
+				const auto match = json[jsonPointer];
+				const auto matchStr = match.dump();
+				matchUtf16 = StringUtil::Widen(matchStr);
+			} else {
+				matchUtf16 = L"N/A";
+			}
+			matches.push_back(matchUtf16);
+
+			if (GetRainmeter().GetDebug() && m_Debug != 0)
+			{
+				const auto jsonSpecConfigName = L"JsonValuePath" + std::to_wstring(jsonSpecIndex);
+				LogNoticeF(this, L"Json match %s: %s = %s", jsonSpecConfigName.c_str(), specUtf16.c_str(), matchUtf16.c_str());
+			}
+			jsonSpecIndex++;
+		}
+	}
+
+	const auto numMatches = static_cast<int>(matches.size());
+
+	// First determine the value for the match according to the StringIndex defined on this measure
+	if (m_StringIndex < numMatches)
+	{
+		EnterCriticalSection(&g_CriticalSection);
+		m_ResultString.assign(matches.at(m_StringIndex));
+		CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
+		LeaveCriticalSection(&g_CriticalSection);
+	}
+	else
+	{
+		if (m_LogSubstringErrors)
+			LogWarningF(this, L"Not enough JSON matches");
+
+		error = true;
+
+		ClearResult();
+	}
+
+	// Then update the references to this measure, e.g. inject the parsed matches into the other measures
+	// that reference this one according to their StringIndex property
+	const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
+	auto referencesThisMeasurePredicate = [&thisMeasureReference, this](MeasureWebParser *parser)
+	{
+		return GetSkin() == parser->GetSkin() &&
+			   StringUtil::CaseInsensitiveFind(parser->m_Url, thisMeasureReference) != std::wstring::npos;
+	};
+	auto updateOtherMeasure = [&matches, &thisMeasureReference, this](MeasureWebParser *otherParser)
+	{
+		if (static_cast<size_t>(otherParser->m_StringIndex) < matches.size())
+		{
+			auto match = matches.at(otherParser->m_StringIndex);
+			otherParser->ProcessMatch(match, thisMeasureReference);
+		}
+		else
+		{
+			if (m_LogSubstringErrors)
+				LogWarningF(otherParser, L"Not enough substrings");
+
+			otherParser->ClearResult();
+		}
+	};
+
+	for_each_if(g_Measures.begin(), g_Measures.end(), referencesThisMeasurePredicate, updateOtherMeasure);
+
+	return error;
+}
+
+/**
+ * Takes the string data, applies the regex, evalutes the matches
+ * and updates the values of any measures that refence this one
+ * according to their defined StringIndex.
+ */
+bool MeasureWebParser::ParseDataRegex(const WCHAR *data, DWORD dataLength)
+{
+	const char *error = nullptr;
 	int erroffset = 0;
-	int ovector[OVECCOUNT] = { 0 };
+	int ovector[OVECCOUNT] = {0};
 	int rc = 0;
 	bool doErrorAction = false;
 
 	// Compile the regular expression in the first argument
-	pcre16* re = pcre16_compile(
+	pcre16 *re = pcre16_compile(
 		(PCRE_SPTR16)m_RegExp.c_str(),
 		PCRE_UTF16, &error, &erroffset, nullptr);
 	if (re != nullptr)
 	{
 		// Compilation succeeded: match the subject in the second argument
-		std::wstring buffer;
-		auto data = (const WCHAR*)rawData;
-		DWORD dataLength = rawSize / 2;
-		if (!utf16Data)
-		{
-			buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
-			data = buffer.c_str();
-			dataLength = (DWORD)buffer.length();
-		}
-
 		rc = pcre16_exec(re, nullptr, (PCRE_SPTR16)data, dataLength, 0, 0, ovector, OVECCOUNT);
 		if (rc >= 0)
 		{
@@ -671,6 +847,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			}
 			else
 			{
+				// First determine the value for the match according to the StringIndex defined on this measure
 				if (m_StringIndex < rc)
 				{
 					if (GetRainmeter().GetDebug() && m_Debug != 0)
@@ -695,92 +872,30 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 					if (m_LogSubstringErrors) LogWarningF(this, L"Not enough substrings");
 
 					// Clear the old result
-					EnterCriticalSection(&g_CriticalSection);
-					m_ResultString.clear();
-					if (m_Download)
-					{
-						if (m_DownloadFile.empty())  // cache mode
-						{
-							if (!m_DownloadedFile.empty())
-							{
-								// Delete old downloaded file
-								DeleteFile(m_DownloadedFile.c_str());
-							}
-						}
-						m_DownloadedFile.clear();
-					}
-					LeaveCriticalSection(&g_CriticalSection);
+					ClearResult();
 				}
 
-				// Update the references
-				auto i = g_Measures.begin();
-				std::wstring compareStr = L"[";
-				compareStr += GetOriginalName();
-				compareStr += L']';
-				for ( ; i != g_Measures.end(); ++i)
+				// Then update the references to this measure, e.g. inject the parsed matches into the other measures
+				// that reference this one according to their StringIndex property
+				const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
+				for (auto &measure : g_Measures)
 				{
-					if (GetSkin() == (*i)->GetSkin() &&
-						StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos)
+					if (GetSkin() == measure->GetSkin() &&
+						StringUtil::CaseInsensitiveFind(measure->m_Url, thisMeasureReference) != std::wstring::npos)
 					{
-						if ((*i)->m_StringIndex < rc)
+						if (measure->m_StringIndex < rc)
 						{
-							const WCHAR* match = data + ovector[2 * (*i)->m_StringIndex];
-							int matchLen = ovector[2 * (*i)->m_StringIndex + 1] - ovector[2 * (*i)->m_StringIndex];
-							if (!(*i)->m_RegExp.empty())
-							{
-								// Change the index and parse the substring
-								int index = (*i)->m_StringIndex;
-								(*i)->m_StringIndex = (*i)->m_StringIndex2;
-								(*i)->ParseData((BYTE*)match, matchLen * 2, true);
-								(*i)->m_StringIndex = index;
-							}
-							else
-							{
-								// Set the result
-								EnterCriticalSection(&g_CriticalSection);
-
-								// Substitude the [measure] with result
-								(*i)->m_ResultString = (*i)->m_Url;
-								(*i)->m_ResultString.replace(
-									StringUtil::CaseInsensitiveFind((*i)->m_ResultString, compareStr),
-									compareStr.size(), match, matchLen);
-								CharacterEntityReference::Decode((*i)->m_ResultString, (*i)->m_DecodeCharacterReference, (*i)->m_DecodeCodePoints);
-
-								// Start download threads for the references
-								if ((*i)->m_Download)
-								{
-									// Start the download thread
-									unsigned int id = 0U;
-									HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, (*i), 0U, &id);
-									if (threadHandle)
-									{
-										(*i)->m_DlThreadHandle = threadHandle;
-									}
-								}
-
-								LeaveCriticalSection(&g_CriticalSection);
-							}
+							const WCHAR *match = data + ovector[2 * measure->m_StringIndex];
+							int matchLen = ovector[2 * measure->m_StringIndex + 1] - ovector[2 * measure->m_StringIndex];
+							std::wstring matchStr(match, matchLen);
+							measure->ProcessMatch(matchStr, thisMeasureReference);
 						}
 						else
 						{
-							if (m_LogSubstringErrors) LogWarningF(*i, L"Not enough substrings");
+							if (m_LogSubstringErrors) LogWarningF(measure, L"Not enough substrings");
 
 							// Clear the old result
-							EnterCriticalSection(&g_CriticalSection);
-							(*i)->m_ResultString.clear();
-							if ((*i)->m_Download)
-							{
-								if ((*i)->m_DownloadFile.empty())  // cache mode
-								{
-									if (!(*i)->m_DownloadedFile.empty())
-									{
-										// Delete old downloaded file
-										DeleteFile((*i)->m_DownloadedFile.c_str());
-									}
-								}
-								(*i)->m_DownloadedFile.clear();
-							}
-							LeaveCriticalSection(&g_CriticalSection);
+							measure->ClearResult();
 						}
 					}
 				}
@@ -796,16 +911,13 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			m_ResultString = m_ErrorString;
 
 			// Update the references
-			auto i = g_Measures.begin();
-			std::wstring compareStr = L"[";
-			compareStr += GetOriginalName();
-			compareStr += L']';
-			for ( ; i != g_Measures.end(); ++i)
+			const std::wstring thisMeasureReference = L"[" + GetOriginalName() + L"]";
+			for (auto &measure : g_Measures)
 			{
-				if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-					(GetSkin() == (*i)->GetSkin()))
+				if ((StringUtil::CaseInsensitiveFind(measure->m_Url, thisMeasureReference) != std::wstring::npos) &&
+					(GetSkin() == measure->GetSkin()))
 				{
-					(*i)->m_ResultString = (*i)->m_ErrorString;
+					measure->m_ResultString = measure->m_ErrorString;
 				}
 			}
 			LeaveCriticalSection(&g_CriticalSection);
@@ -821,9 +933,48 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		doErrorAction = true;
 	}
 
-	if (m_Download)
+	return doErrorAction;
+}
+
+void MeasureWebParser::ProcessMatch(const std::wstring& match, const std::wstring& parentMeasureReference)
+{
+	if (IsParsingConfigured())
 	{
-		// Start the download thread
+		// Change the index and parse the substring
+		int index = m_StringIndex;
+		m_StringIndex = m_StringIndex2;
+		ParseData(match.c_str(), match.length());
+		m_StringIndex = index;
+	}
+	else
+	{
+		// Set the result
+		EnterCriticalSection(&g_CriticalSection);
+
+		// Substitude the [measure] with result
+		m_ResultString = m_Url;
+		m_ResultString.replace(
+			StringUtil::CaseInsensitiveFind(m_ResultString, parentMeasureReference),
+			parentMeasureReference.size(), match);
+		CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
+
+		// Start download threads for the references in case a child measure wants to download
+		// an Url that is based on the match of the parent
+		if (m_Download)
+		{
+			StartDownloadThread();
+		}
+
+		LeaveCriticalSection(&g_CriticalSection);
+	}
+}
+
+void MeasureWebParser::StartDownloadThread()
+{
+	// Run the thread only if it is not running already
+	EnterCriticalSection(&g_CriticalSection);
+	if (m_DlThreadHandle == nullptr)
+	{
 		unsigned int id = 0U;
 		HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
 		if (threadHandle)
@@ -831,15 +982,12 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			m_DlThreadHandle = threadHandle;
 		}
 	}
+	LeaveCriticalSection(&g_CriticalSection);
+}
 
-	if (doErrorAction && !m_OnRegExpErrAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
-	}
-	else if (!m_Download && !m_FinishAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
-	}
+bool MeasureWebParser::IsParsingConfigured() const
+{
+	return !m_RegExp.empty() || !m_JsonValueSpecs.empty();
 }
 
 // Downloads file from the net
@@ -851,13 +999,18 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 
 	std::wstring url;
 
-	if (measure->m_RegExp.empty() && measure->m_ResultString.empty())
+	// If there is no parsing configured and the Url is not a reference
+	// then use the Url for download
+	if (!measure->IsParsingConfigured() && measure->m_ResultString.empty())
 	{
 		if (!measure->m_Url.empty() && measure->m_Url[0] != L'[')
 		{
 			url = measure->m_Url;
 		}
 	}
+	// Otherwise take the result string from the measure and treat it as the Url,
+	// e.g. this measure references another one and the match should be treated
+	// as an Url for download
 	else
 	{
 		EnterCriticalSection(&g_CriticalSection);
@@ -1191,7 +1344,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 		{
 			return nullptr;
 		}
-		
+
 		size_t fileSize = 0ULL;
 		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
 		*dataSize = (DWORD)fileSize;
