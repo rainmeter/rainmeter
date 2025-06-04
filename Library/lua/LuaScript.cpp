@@ -320,7 +320,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 				std::string arg = m_Unicode ?
 					StringUtil::NarrowUTF8(iter) : StringUtil::Narrow(iter);
 
-				lua_pushlstring(L, arg.c_str(), argSize);
+				lua_pushlstring(L, arg.c_str(), arg.size());
 			}
 			else if (_wcsicmp(iter.c_str(), L"true") == 0)
 			{
