@@ -25,29 +25,45 @@ D2D1_POINT_2F AddPoint2F(const D2D1_POINT_2F& point1, const D2D1_POINT_2F& point
 
 D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top, const float right, const float bottom)
 {
-	float theta1 = theta * (M_PI / 180.0f);
+	float base_angle = theta;  // In degrees
 
-	while (theta1 < 0.0f * M_PI) theta1 += (2 * M_PI);
-	while (theta1 > 2.0f * M_PI) theta1 -= (2 * M_PI);
+	// Restrict |base_angle| to [0..360] degrees
+	while (base_angle < 0.0f) base_angle += 360.0f;
+	base_angle = fmodf(base_angle, 360.0f);
 
-	float width = right - left;
-	float height = bottom - top;
+	// Convert |base_angle| from degrees to radians
+	const float base_radians = base_angle * (M_PI / 180.0f);
 
-	const float recttan = atan2f(height, width);
+	// Get the shape area diagonal
+	const float width = right - left;
+	const float height = bottom - top;
+	const float rectangle_tangent = atan2f(height, width);
 
-	int quadrant = int(ceilf(theta1 / (M_PI / 2.0f)));
-	float theta2 = 0.0f;
-	switch (quadrant)
+	// Find the quadrant the |base_angle| is in
+	const int quadrant = (int)fmodf(base_angle / 90.0f, 4.0f) + 1;
+
+	// Get the gradient axis angle based on quadrant the |base_radians| is in
+	const float axis_angle = [&]() -> float
 	{
-	case 1: theta2 = theta1 - M_PI * 0.0f; break;
-	case 2: theta2 = M_PI * 1.0f - theta1; break;
-	case 3: theta2 = theta1 - M_PI * 1.0f; break;
-	case 4: theta2 = M_PI * 2.0f - theta1; break;
-	}
+		switch (quadrant)
+		{
+		default:
+		case 1: return base_radians - M_PI * 0.0f;
+		case 2: return M_PI * 1.0f - base_radians;
+		case 3: return base_radians - M_PI * 1.0f;
+		case 4: return M_PI * 2.0f - base_radians;
+		}
+	}();
 
-	D2D1_POINT_2F point = { left + (width / 2.0f) + sqrtf(pow(width, 2.0f) + pow(height, 2.0f)) / 2.0f * cosf(abs(theta2 - recttan)) * cosf(theta1), top + (height / 2.0f) + sqrtf(pow(width, 2.0f) + pow(height, 2.0f)) / 2.0f * cosf(abs(theta2 - recttan)) * sinf(theta1) };
+	// Calculate the point by:
+	// x = center of shape width  + half of shape area * cos(axis_angle - rectangle_tangent) * cos(base_angle)
+	// y = center of shape height + half of shape area * cos(axis angle - rectangle_tangent) * sin(base_angle)
+	const float half_area = sqrtf(powf(width, 2.0f) + powf(height, 2.0f)) / 2.0f;
+	const float cos_axis = cosf(fabsf(axis_angle - rectangle_tangent));
 
-	return point;
+	return D2D1::Point2F(
+		left + (width / 2.0f) + (half_area * cos_axis * cosf(base_radians)),
+		top + (height / 2.0f) + (half_area * cos_axis * sinf(base_radians)));
 }
 
 bool RectContains(const D2D1_RECT_F& rect, const D2D1_POINT_2F& point)
