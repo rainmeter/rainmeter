@@ -27,61 +27,25 @@ D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top
 {
 	float theta1 = theta * (M_PI / 180.0f);
 
-	while (theta1 < -M_PI) theta1 += (2 * M_PI);
-	while (theta1 > M_PI) theta1 -= (2 * M_PI);
+	while (theta1 < 0.0f * M_PI) theta1 += (2 * M_PI);
+	while (theta1 > 2.0f * M_PI) theta1 -= (2 * M_PI);
 
 	float width = right - left;
 	float height = bottom - top;
 
 	const float recttan = atan2f(height, width);
-	const float thetatan = tanf(theta1);
 
-	enum Region
+	int quadrant = int(ceilf(theta1 / (M_PI / 2.0f)));
+	float theta2 = 0.0f;
+	switch (quadrant)
 	{
-		One,        // 315 - 45
-		Two,        // 45  - 135
-		Three,      // 135 - 225
-		Four        // 225 - 315
-	} region;
-
-	if (theta1 > -recttan && theta1 <= recttan)
-	{
-		region = One;
-	}
-	else if (theta1 > recttan && theta1 <= (M_PI - recttan))
-	{
-		region = Two;
-	}
-	else if (theta1 > (M_PI - recttan) || theta1 <= -(M_PI - recttan))
-	{
-		region = Three;
-	}
-	else
-	{
-		region = Four;
+	case 1: theta2 = theta1 - M_PI * 0.0f; break;
+	case 2: theta2 = M_PI * 1.0f - theta1; break;
+	case 3: theta2 = theta1 - M_PI * 1.0f; break;
+	case 4: theta2 = M_PI * 2.0f - theta1; break;
 	}
 
-	float xfactor = 1.0f;
-	float yfactor = -1.0f;
-	switch (region)
-	{
-	case One: yfactor = -yfactor; break;
-	case Two: yfactor = -yfactor; break;
-	case Three: xfactor = -xfactor; break;
-	case Four: xfactor = -xfactor; break;
-	}
-
-	D2D1_POINT_2F point = { left + (width / 2.0f), top + (height / 2.0f) };
-	if (region == One || region == Three)
-	{
-		point.x += xfactor * (width / 2.0f);
-		point.y += yfactor * (width / 2.0f) * thetatan;
-	}
-	else
-	{
-		point.x += xfactor * (height / (2.0f * thetatan));
-		point.y += yfactor * (height / 2.0f);
-	}
+	D2D1_POINT_2F point = { left + (width / 2.0f) + sqrtf(pow(width, 2.0f) + pow(height, 2.0f)) / 2.0f * cosf(abs(theta2 - recttan)) * cosf(theta1), top + (height / 2.0f) + sqrtf(pow(width, 2.0f) + pow(height, 2.0f)) / 2.0f * cosf(abs(theta2 - recttan)) * sinf(theta1) };
 
 	return point;
 }
