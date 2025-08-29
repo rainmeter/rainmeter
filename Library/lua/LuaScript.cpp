@@ -240,6 +240,8 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			getReturnedValue();  // Get first returned value
 			getReturnedValue();  // Get second returned value
 
+			lua_settop(L, 0);  // Remove any remaining items from the stack
+
 			if (hasStringResult) return LUA_TSTRING;
 			if (hasNumberResult) return LUA_TNUMBER;
 		}
