@@ -180,7 +180,7 @@ void LuaScript::RunFunction(const char* funcName)
 }
 
 /*
-** Runs given function in script file and stores the retruned number or string.
+** Runs given function in script file and stores the returned number or string.
 **
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
@@ -234,7 +234,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 						}
 						break;
 				}
-				lua_pop(L, 1);
+				lua_pop(L, 1);  // Remove the returned value from the stack
 			};
 
 			getReturnedValue();  // Get first returned value
