@@ -52,6 +52,8 @@ public:
 	static std::wstring ToWide(int narg);
 	static bool ToBool(int narg);
 
+	static void StackDump();
+
 private:
 	static std::vector<UnicodeScript*> c_ScriptStack;
 };
