@@ -91,7 +91,7 @@ void LuaHelper::StackDump()
 			break;
 
 		case LUA_TBOOLEAN:
-			LogDebugF(L"%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
+			LogDebugF(L"%d: %s", i, lua_toboolean(L, i) ? L"true" : L"false");
 			break;
 
 		case LUA_TNUMBER:
