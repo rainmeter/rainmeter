@@ -258,31 +258,3 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 
 	return true;
 }
-
-//static void stackDump(lua_State *L)
-//{
-//	LuaHelper::LuaLogger::Debug(" ----------------  Stack Dump ----------------" );
-//	for (int i = lua_gettop(L); i > 0; --i)
-//	{
-//		int t = lua_type(L, i);
-//		switch (t)
-//		{
-//		case LUA_TSTRING:
-//			LuaHelper::LuaLogger::Debug("%d:'%s'", i, lua_tostring(L, i));
-//			break;
-//
-//		case LUA_TBOOLEAN:
-//			LuaHelper::LuaLogger::Debug("%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
-//			break;
-//
-//		case LUA_TNUMBER:
-//			LuaHelper::LuaLogger::Debug("%d: %g", i, lua_tonumber(L, i));
-//			break;
-//
-//		default:
-//			LuaHelper::LuaLogger::Debug("%d: %s", i, lua_typename(L, t));
-//			break;
-//		}
-//	}
-//	LuaHelper::LuaLogger::Debug("--------------- Stack Dump Finished ---------------" );
-//}

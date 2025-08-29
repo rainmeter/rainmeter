@@ -72,3 +72,38 @@ bool LuaHelper::ToBool(int narg)
 	lua_State* L = script->GetState();
 	return lua_toboolean(L, narg);
 }
+
+void LuaHelper::StackDump()
+{
+	auto script = GetCurrentScript();
+	lua_State* L = script->GetState();
+
+	LogDebug(L"--------------- Lua Stack Dump Start ------------------");
+	for (int i = lua_gettop(L); i > 0; --i)
+	{
+		int t = lua_type(L, i);
+		switch (t)
+		{
+		case LUA_TSTRING:
+			LogDebugF(L"%d:'%s'", i, script->IsUnicode() ?
+				StringUtil::WidenUTF8(lua_tostring(L, i)).c_str() :
+				StringUtil::Widen(lua_tostring(L, i)).c_str());
+			break;
+
+		case LUA_TBOOLEAN:
+			LogDebugF(L"%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
+			break;
+
+		case LUA_TNUMBER:
+			LogDebugF(L"%d: %g", i, lua_tonumber(L, i));
+			break;
+
+		default:
+			LogDebugF(L"%d: %s", i, script->IsUnicode() ?
+				StringUtil::WidenUTF8(lua_typename(L, t)).c_str() :
+				StringUtil::Widen(lua_typename(L, t)).c_str());
+			break;
+		}
+	}
+	LogDebug(L"--------------- Lua Stack Dump Finished ---------------");
+}
