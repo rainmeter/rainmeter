@@ -29,6 +29,7 @@
 #include "../Version.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Util/D2DEffectStream.h"
+#include <VersionHelpers.h>
 
 #define SNAPDISTANCE 10
 
@@ -1199,6 +1200,13 @@ void Skin::ShowBlur()
 	if (DwmIsCompositionEnabled(&enabled) != S_OK)
 	{
 		enabled = FALSE;
+	}
+	if (m_BlurMode == BLURMODE_FORCE&& enabled==1)
+	{
+		if (m_BlurRegion) DeleteObject(m_BlurRegion);
+		m_BlurRegion = CreateRectRgn(0, 0, GetW(), GetH());
+		BlurBehindWindow(TRUE);
+		return;
 	}
 	if (opaque || !enabled) return;
 
@@ -2523,7 +2531,7 @@ bool Skin::ReadSkin()
 		}
 		else
 		{
-			m_BlurMode = BLURMODE_FULL;
+			m_BlurMode = (BLURMODE)m_Parser.ReadInt(L"Rainmeter", L"Blur", false);
 		}
 	}
 	else
@@ -4513,7 +4521,30 @@ LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
-
+struct WINDOWCOMPOSITIONATTRIBDATA
+{
+	DWORD attribute;
+	PVOID pData;
+	ULONG dataSize;
+};
+typedef enum _ACCENT_STATE
+{
+	ACCENT_DISABLED = 0,
+	ACCENT_ENABLE_GRADIENT = 1,
+	ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+	ACCENT_ENABLE_BLURBEHIND = 3,
+	ACCENT_ENABLE_ACRYLICBLURBEHIND = 4, // RS4 1803
+	ACCENT_ENABLE_HOSTBACKDROP = 5, // RS5 1809
+	ACCENT_INVALID_STATE = 6
+} ACCENT_STATE;
+typedef struct _ACCENT_POLICY
+{
+	ACCENT_STATE AccentState;
+	DWORD AccentFlags;
+	DWORD GradientColor;
+	DWORD AnimationId;
+} ACCENT_POLICY;
+typedef BOOL(WINAPI* pfnSetWindowCompositionAttribute)(HWND, WINDOWCOMPOSITIONATTRIBDATA*);
 /*
 ** Adds the blur region to the window
 **
@@ -4525,16 +4556,74 @@ void Skin::BlurBehindWindow(BOOL fEnable)
 
 	if (fEnable)
 	{
-		// Restore blur with whatever the region was prior to disabling
-		bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
-		bb.hRgnBlur = m_BlurRegion;
-		DwmEnableBlurBehindWindow(m_Window, &bb);
+		if (!IsWindows8OrGreater())
+		{
+			// Restore blur with whatever the region was prior to disabling
+			bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+			bb.hRgnBlur = m_BlurRegion;
+			DwmEnableBlurBehindWindow(m_Window, &bb);
+		}
+		else
+		{
+			bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+			bb.hRgnBlur = m_BlurRegion;
+			DwmEnableBlurBehindWindow(m_Window, &bb);
+			WCHAR dll_name[128];
+			wsprintf(dll_name, L"user32.dll");
+			HMODULE module = LoadLibrary(dll_name);
+			if (module == NULL)
+			{
+				return;
+			}
+			else
+			{
+				pfnSetWindowCompositionAttribute setWindowCompositionAttribute = (pfnSetWindowCompositionAttribute)GetProcAddress(module, "SetWindowCompositionAttribute");
+				if (setWindowCompositionAttribute)
+				{
+					ACCENT_POLICY accent = { ACCENT_ENABLE_BLURBEHIND, 0, 0, 0 };
+					WINDOWCOMPOSITIONATTRIBDATA data;
+					data.attribute = 19;
+					data.pData = &accent;
+					data.dataSize = sizeof(accent);
+					setWindowCompositionAttribute(m_Window, &data);
+				}
+			}
+		}
 	}
 	else
 	{
 		// Disable blur
-		bb.dwFlags = DWM_BB_ENABLE;
-		DwmEnableBlurBehindWindow(m_Window, &bb);
+		if (!IsWindows8OrGreater())
+		{
+			bb.dwFlags = DWM_BB_ENABLE;
+			DwmEnableBlurBehindWindow(m_Window, &bb);
+		}
+		else
+		{
+			bb.dwFlags = DWM_BB_ENABLE;
+			DwmEnableBlurBehindWindow(m_Window, &bb);
+			WCHAR dll_name[128];
+			wsprintf(dll_name, L"user32.dll");
+			HMODULE module = LoadLibrary(dll_name);
+			if (module == NULL)
+			{
+				return;
+			}
+			else
+			{
+				pfnSetWindowCompositionAttribute setWindowCompositionAttribute = (pfnSetWindowCompositionAttribute)GetProcAddress(module, "SetWindowCompositionAttribute");
+				if (setWindowCompositionAttribute)
+				{
+					ACCENT_POLICY accent = { ACCENT_DISABLED, 0, 0, 0 };
+					WINDOWCOMPOSITIONATTRIBDATA data;
+					data.attribute = 0;
+					data.pData = &accent;
+					data.dataSize = sizeof(accent);
+					setWindowCompositionAttribute(m_Window, &data);
+				}
+			}
+		}
+
 	}
 }
 
