@@ -150,7 +150,7 @@ void About()
 	MessageBox(
 		nppData._nppHandle,
 		L"By Birunthan Mohanathas.\n"
-		L"poiru.github.com/rainlexer",
+		L"https://github.com/rainmeter/rainlexer",
 		RAINLEXER_TITLE,
 		MB_OK);
 }
