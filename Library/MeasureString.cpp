@@ -10,7 +10,8 @@
 #include "Rainmeter.h"
 
 MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_String()
+	m_String(),
+	m_StringValue()
 {
 }
 
@@ -35,6 +36,7 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureString::UpdateValue()
 {
+	m_StringValue = m_String;
 	m_Value = _wtof(m_String.c_str());
 }
 
@@ -44,5 +46,5 @@ void MeasureString::UpdateValue()
 */
 const WCHAR* MeasureString::GetStringValue()
 {
-	return CheckSubstitute(m_String.c_str());
+	return CheckSubstitute(m_String .c_str());
 }
