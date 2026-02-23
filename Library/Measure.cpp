@@ -446,16 +446,16 @@ std::wstring Measure::ExtractWord(std::wstring& buffer)
 
 bool Measure::Update(bool rereadOptions)
 {
-	if (rereadOptions)
-	{
-		ReadOptions(m_Skin->GetParser());
-	}
-
 	// Don't do anything if paused
 	if (m_Paused) return false;
 
 	if (!m_Disabled)
 	{
+		if (rereadOptions)
+		{
+			ReadOptions(m_Skin->GetParser());
+		}
+
 		// Only update the counter if the divider
 		if (!UpdateCounter()) return false;
 
