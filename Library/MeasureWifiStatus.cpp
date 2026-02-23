@@ -312,7 +312,7 @@ void MeasureWifiStatus::UpdateValue()
 				break;
 
 			case MeasureType::TXRATE:
-				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
+				m_Value = wlan_cattr->wlanAssociationAttributes.ulTxRate * 1000.0;
 				break;
 
 			case MeasureType::RXRATE:
