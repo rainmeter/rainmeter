@@ -73,7 +73,7 @@ enum HIDEMODE
 	HIDEMODE_FADEOUT
 };
 
-enum BEVELTYPE 
+enum BEVELTYPE
 {
 	BEVELTYPE_NONE,
 	BEVELTYPE_UP,
@@ -108,6 +108,7 @@ public:
 
 	void Initialize();
 
+    void SetSkipUpdate(bool flag);
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
 
@@ -394,7 +395,7 @@ private:
 	bool m_WindowYPercentage;
 	int m_WindowW;
 	int m_WindowH;
-	int m_ScreenX;								// X-postion on the virtual screen 
+	int m_ScreenX;								// X-postion on the virtual screen
 	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin

@@ -1364,6 +1364,13 @@ bool Rainmeter::HasSkin(const Skin* skin) const
 	return false;
 }
 
+void Rainmeter::SetSkipUpdate(bool flag) {
+	for (auto it = m_Skins.begin(); it != m_Skins.end(); ++it) {
+		Skin* skin = (*it).second;
+		skin->SetSkipUpdate(flag);
+	}
+}
+
 Skin* Rainmeter::GetSkin(std::wstring folderPath)
 {
 	// Remove any leading and trailing slashes
@@ -1606,7 +1613,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	parser.Initialize(iniFile, nullptr, nullptr);
 
 	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
-	
+
 	// Read Logging settings
 	Logger& logger = GetLogger();
 	const bool logging = parser.ReadBool(L"Rainmeter", L"Logging", false);

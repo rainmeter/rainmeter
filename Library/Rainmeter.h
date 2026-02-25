@@ -69,6 +69,7 @@ public:
 	TrayIcon* GetTrayIcon() { return m_TrayIcon; }
 
 	bool HasSkin(const Skin* skin) const;
+	void SetSkipUpdate(bool flag);
 
 	Skin* GetSkin(std::wstring folderPath);
 	Skin* GetSkinByINI(const std::wstring& ini_searching);

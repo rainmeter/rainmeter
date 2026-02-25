@@ -25,7 +25,7 @@ public:
 	std::wstring& GetOnStartAction() { return m_OnStartAction; }
 	void SetOnStartAction(const std::wstring& action);
 	void SetOnStartAction(UINT index);
-	
+
 	std::wstring& GetOnStopAction() { return m_OnStopAction; }
 	void SetOnStopAction(const std::wstring& action);
 	void SetOnStopAction(UINT index);
@@ -82,6 +82,7 @@ private:
 	std::wstring m_OnStopAction;
 	bool m_FullScreenMode;
 	bool m_ProcessListMode;
+	bool m_DesktopVisibleMode;
 	std::vector<std::wstring> m_ProcessList;
 	std::wstring m_ProcessListOriginal;
 

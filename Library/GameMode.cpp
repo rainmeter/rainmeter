@@ -15,6 +15,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/StringUtil.h"
+#include "IsDesktopVisible.hpp"
 
 namespace
 {
@@ -33,7 +34,8 @@ const UINT_PTR GameMode::s_TimerEventID = 1000ULL;
 GameMode::GameMode() :
 	m_State(State::Disabled),
 	m_FullScreenMode(false),
-	m_ProcessListMode(false)
+	m_ProcessListMode(false),
+    m_DesktopVisibleMode(false)
 {
 }
 
@@ -52,7 +54,7 @@ void GameMode::Initialize()
 {
 	if (GetRainmeter().GetDebug())
 	{
-		LogDebug(L">> Initializing \"Game mode\" (v1)");
+		LogDebug(L">> Initializing \"Game mode\" (v2)");
 	}
 	ReadSettings();
 }
@@ -75,6 +77,11 @@ void GameMode::OnTimerEvent(WPARAM wParam)
 			isFullScreenOrProcessList = true;
 		}
 	}
+
+	if (!isFullScreenOrProcessList/* && !m_DesktopVisibleMode*/) {
+        POINT pt = { 0, 0 };
+        isFullScreenOrProcessList = IsDesktopCoveredOnMonitor(pt);
+    }
 
 	if (!isFullScreenOrProcessList && m_ProcessListMode)
 	{
@@ -400,17 +407,8 @@ void GameMode::EnterGameMode()
 
 	if (m_OnStartAction.empty())  // "Unload all skins"
 	{
-		// Close dialogs if open
-		DialogManage::CloseDialog();
-		DialogAbout::CloseDialog();
-		DialogNewSkin::CloseDialog();
-
 		Rainmeter& rainmeter = GetRainmeter();
-		rainmeter.DeleteAllUnmanagedSkins();
-		rainmeter.DeleteAllSkins();
-		rainmeter.DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
-
-		rainmeter.ShowTrayIconIfNecessary();
+		rainmeter.SetSkipUpdate(true);
 
 		m_State = State::Enabled;
 	}
@@ -437,8 +435,7 @@ void GameMode::ExitGameMode(bool force)
 
 			// Since no layout was loaded during "on start" action, reload the current layout
 			Rainmeter& rainmeter = GetRainmeter();
-			rainmeter.ReloadSettings();
-			rainmeter.ActivateActiveSkins();
+		    rainmeter.SetSkipUpdate(false);
 		}
 		else
 		{
