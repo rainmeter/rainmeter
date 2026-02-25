@@ -46,5 +46,5 @@ void MeasureString::UpdateValue()
 */
 const WCHAR* MeasureString::GetStringValue()
 {
-	return CheckSubstitute(m_String .c_str());
+	return CheckSubstitute(m_StringValue .c_str());
 }
