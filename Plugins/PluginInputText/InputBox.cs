@@ -7,6 +7,7 @@
 
 using System;
 using System.Drawing;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace InputText
@@ -18,6 +19,8 @@ namespace InputText
         private bool _FocusDismiss = true;
         private bool _Numeric = false;
         private string _TextValue = string.Empty;
+
+        private static Regex numberRegex = new Regex(@"^[-+]?(?>0b[10]*|0o[0-7]*|0x[A-Fa-f\d]*|\d*(?>\.\d*|[eE][+-]?\d*)?)", RegexOptions.Compiled);
 
         public InputBox(SkinWindow parent)
         {
@@ -48,25 +51,21 @@ namespace InputText
 
         private void txtInput_KeyPressed(object sender, KeyPressEventArgs e)
         {
-            if (_Numeric)
-            {
-                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar)) 
-                    && (e.KeyChar != '.') && (e.KeyChar != '-'))
-                {
-                    e.Handled = true;
-                }
+            if (!_Numeric) return;
 
-                // only allow one decimal point
-                if (e.KeyChar == '.' && (sender as TextBox).Text.IndexOf('.') > -1)
-                {
-                    e.Handled = true;
-                }
+            // We don't know how to handle these
+            if (char.IsControl(e.KeyChar)) return;
+            if (this.txtInput.SelectionLength > 0) return;
 
-                // only allow minus sign at the beginning
-                if (e.KeyChar == '-' && (sender as TextBox).SelectionStart != 0)
-                {
-                    e.Handled = true;
-                }
+            TextBox textBox = (TextBox)sender;
+
+            Match match = numberRegex.Match(textBox.Text + e.KeyChar);
+
+            // assert
+            if (!match.Success) return;
+
+            if (match.Value.Length <= textBox.Text.Length) { 
+                e.Handled = true;
             }
         }
 

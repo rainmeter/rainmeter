@@ -265,6 +265,24 @@ namespace InputText
             // No INI overrides provided, so create an empty list
             return GetUserInput(Options, new Dictionary<string, string>());
         }
+
+        /**
+         * Returns null if not found
+         */
+        private string GetOptionValue(Dictionary<string, string> Options, Dictionary<string, string> Overrides, string prop)
+        {
+            if (Options.ContainsKey(prop)) return Options[prop].Trim();
+            if (Overrides.ContainsKey(prop)) return Overrides[prop].Trim();
+            return null;
+        }
+        /**
+         * Returns true if value == cmp
+         */
+        private bool GetOptionValue(Dictionary<string, string> Options, Dictionary<string, string> Overrides, string prop, string cmp)
+        {
+            return cmp == prop || cmp != null && cmp.Equals(GetOptionValue(Options, Overrides, prop));
+        }
+
         private string GetUserInput(Dictionary<string, string> Options, Dictionary<string, string> Overrides)
         {
             InputBox input = null;
@@ -288,10 +306,8 @@ namespace InputText
 
                 ChangeInputBoxSetting changeSetting = (opt, change) =>
                 {
-                    if (Overrides.ContainsKey(opt))
-                        change(Overrides[opt]);
-                    else if (Options.ContainsKey(opt))
-                        change(Options[opt]);
+                    string changeValue = GetOptionValue(Options, Overrides, opt);
+                    if (changeValue != null) change(changeValue);
                 };
 
                 changeSetting("FontFace", input.ChangeFontFace);
@@ -308,22 +324,11 @@ namespace InputText
                 changeSetting("FontColor", input.ChangeFontColor);
                 changeSetting("SolidColor", input.ChangeBackColor);
 
-                if (Overrides.ContainsKey("FocusDismiss"))
-                    input.MakeFocusDismiss(Overrides["FocusDismiss"] == "1");
-                else if (Options.ContainsKey("FocusDismiss"))
-                    input.MakeFocusDismiss(Options["FocusDismiss"].Trim() == "1");
+                if (GetOptionValue(Options, Overrides, "FocusDismiss", "1")) input.MakeFocusDismiss(true);
 
-                if (Overrides.ContainsKey("Password"))
-                    input.MakePassword(Overrides["Password"] == "1");
-                else if (Options.ContainsKey("Password"))
-                    input.MakePassword(Options["Password"].Trim() == "1");
-
-                string topmost = null;
-                if (Overrides.ContainsKey("TopMost"))
-                    topmost = Overrides["TopMost"];
-                else if (Options.ContainsKey("TopMost"))
-                    topmost = Options["TopMost"].Trim();
-                switch (topmost)
+                if (GetOptionValue(Options, Overrides, "Password", "1")) input.MakePassword(true);
+                
+                switch (GetOptionValue(Options, Overrides, "TopMost"))
                 {
                     case "1":
                         input.MakeTopmost();
@@ -340,15 +345,7 @@ namespace InputText
 
                 changeSetting("InputLimit", input.TextMaxLength);
 
-                if (Overrides.ContainsKey("InputNumber"))
-                {
-                    input.MakeNumeric(Overrides["InputNumber"] == "1");
-                }
-
-                else if (Options.ContainsKey("InputNumber"))
-                {
-                    input.MakeNumeric(Options["InputNumber"].Trim() == "1");
-                }
+                if (GetOptionValue(Options, Overrides, "InputNumber", "1")) input.MakeNumeric(true);
 
                 #endregion
             }
@@ -371,6 +368,7 @@ namespace InputText
                 this._InputBox.Dispose();
                 this._InputBox = null;
             }
+
             return result;
         }
 
