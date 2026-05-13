@@ -73,7 +73,7 @@ std::size_t CaseInsensitiveFind(const T& str1, const T& str2, const std::locale&
 	{
 		return (iter - str1.begin());
 	}
-	
+
 	return -1; // not found
 }
 }  // namespace StringUtil

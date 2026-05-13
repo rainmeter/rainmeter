@@ -8,7 +8,7 @@ class CoreTempProxy
 public:
 	CoreTempProxy(void);
 	virtual ~CoreTempProxy(void);
-	
+
 	UINT GetCoreLoad(int Index) const;
 	UINT GetTjMax(int Index) const;
 	UINT GetCoreCount() const;

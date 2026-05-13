@@ -94,7 +94,7 @@ private:
 		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
-	
+
 		void UpdateSkinList();
 		void UpdateMeasureList(Skin* skin);
 

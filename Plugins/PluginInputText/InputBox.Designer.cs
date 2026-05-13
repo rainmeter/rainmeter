@@ -34,9 +34,9 @@ namespace InputText
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
-            // 
+            //
             // txtInput
-            // 
+            //
             this.txtInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtInput.Location = new System.Drawing.Point(0, 0);
             this.txtInput.Margin = new System.Windows.Forms.Padding(0);
@@ -46,9 +46,9 @@ namespace InputText
             this.txtInput.TabIndex = 0;
             this.txtInput.Leave += new System.EventHandler(this.txtInput_Leave);
             this.txtInput.KeyPress += new KeyPressEventHandler(this.txtInput_KeyPressed);
-            // 
+            //
             // btnOK
-            // 
+            //
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btnOK.Location = new System.Drawing.Point(2, 2);
             this.btnOK.Margin = new System.Windows.Forms.Padding(0);
@@ -59,9 +59,9 @@ namespace InputText
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = true;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
-            // 
+            //
             // btnCancel
-            // 
+            //
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.Location = new System.Drawing.Point(2, 2);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(0);
@@ -72,9 +72,9 @@ namespace InputText
             this.btnCancel.Text = "btnCancel";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
+            //
             // InputBox
-            // 
+            //
             this.AcceptButton = this.btnOK;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.AutoSize = true;

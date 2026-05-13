@@ -38,7 +38,7 @@ private:
 	static void AppendSkinCustomMenu(
 		Skin* skin, int index, HMENU menu, bool standaloneMenu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
-	
+
 	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateSkinsMenuRecursive(skinMenu, 0, false); }
 	static int CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavoriteMenu);
 

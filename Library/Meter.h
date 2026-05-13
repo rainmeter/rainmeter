@@ -91,7 +91,7 @@ public:
 	bool IsMouseOver() { return m_MouseOver; }
 
 	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
-	
+
 	static void DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode);
 
 protected:
@@ -108,7 +108,7 @@ protected:
 		ALIGN_RIGHTCENTER,
 		ALIGN_CENTERCENTER
 	};
-	
+
 	enum METER_POSITION
 	{
 		POSITION_ABSOLUTE,

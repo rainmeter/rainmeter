@@ -51,7 +51,7 @@ public:
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;
-		
+
 		metrics = textFormat->GetMetrics(L"test\n", 5, false);
 		Assert::AreEqual(15, (int)metrics.height);
 		metrics = textFormat->GetMetrics(L"test\r\n", 6, false);

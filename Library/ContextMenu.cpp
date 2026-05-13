@@ -76,7 +76,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	HMENU menu = !GetGameMode().IsEnabled() ?
 		MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString) :
 		MenuTemplate::CreateMenu(s_GameModeMenu, _countof(s_GameModeMenu), GetString);
-		
+
 	if (!menu) return;
 
 	m_MenuActive = true;

@@ -20,7 +20,7 @@ public:
 	~Arc();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Arc(const Arc& other) = delete;
 	Arc& operator=(Arc other) = delete;

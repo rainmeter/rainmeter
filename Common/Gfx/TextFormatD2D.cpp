@@ -115,7 +115,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 
 		// Because the text layout can be created without any changes to any
 		// 'color' inline options, we need a way to update any color changes
-		// at drawing time. 
+		// at drawing time.
 		m_HasInlineOptionsChanged = true;
 	};
 
@@ -461,7 +461,7 @@ void TextFormatD2D::SetHorizontalAlignment(HorizontalAlignment alignment)
 void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 {
 	__super::SetVerticalAlignment(alignment);
-	
+
 	if (m_TextFormat)
 	{
 		m_TextFormat->SetParagraphAlignment(

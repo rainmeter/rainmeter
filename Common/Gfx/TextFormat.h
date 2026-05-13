@@ -51,7 +51,7 @@ public:
 
 	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
 	// TextFormat object will produce clipped text with an ellipsis if the text overflows the
-	// bounding rectangle. 
+	// bounding rectangle.
 	virtual void SetTrimming(bool trim) = 0;
 
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment);

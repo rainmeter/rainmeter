@@ -210,7 +210,7 @@ void PlayerAIMP::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerAIMP::Next() 
+void PlayerAIMP::Next()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
 }

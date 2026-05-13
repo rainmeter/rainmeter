@@ -94,8 +94,6 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		if (FAILED(hr)) return;
 	}
 
-	
-
 	// Draw onto memory bitmap target
 	// Note: Hardware acceleration seems to keep the bitmap render target in memory
 	// even though it is cleared, so manually "Clear" with a transparent color.

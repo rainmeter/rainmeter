@@ -19,7 +19,7 @@ public:
 	~Line();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Line(const Line& other) = delete;
 	Line& operator=(Line other) = delete;

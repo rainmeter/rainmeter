@@ -33,7 +33,7 @@ static int GetOption(lua_State* L)
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
-	
+
 	bool bReplaceMeasures = true;
 	if (lua_gettop(L) > 3)
 	{

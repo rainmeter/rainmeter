@@ -47,7 +47,7 @@ struct MeasureData
 	DWORD cachedBatteryLifeTime;
 
 	void* rm;
-	
+
 	MeasureData() : type(POWER_UNKNOWN), suppressError(false), updated(false), cachedBatteryLifeTime(0UL), rm(nullptr) {}
 };
 

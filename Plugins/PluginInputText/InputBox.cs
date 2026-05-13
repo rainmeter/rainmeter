@@ -50,7 +50,7 @@ namespace InputText
         {
             if (_Numeric)
             {
-                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar)) 
+                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar))
                     && (e.KeyChar != '.') && (e.KeyChar != '-'))
                 {
                     e.Handled = true;
@@ -71,7 +71,7 @@ namespace InputText
         }
 
         // All exceptions are swallowed for the sake of this example.  Since the majority
-        // (if not all) of these are rather simple in nature, debugging without errors 
+        // (if not all) of these are rather simple in nature, debugging without errors
         // should be fairly simple anyway.
         //
         // However, if you wanted to log errors, a simple way would be to add something like

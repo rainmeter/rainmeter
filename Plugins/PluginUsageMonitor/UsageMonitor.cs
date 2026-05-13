@@ -183,7 +183,7 @@ namespace UsageMonitor
             return 0;
         }
     }
-    
+
     //This class handles taking a measures options and turning it in to an organized list of performance categories that it then keeps up to date
     //It is highly scalable and multithreaded and will share as many resources as possible between measures
     //Resouce sharing is reduced slightly when two measures dont share the same block list, even more when they are not the same rollup state
@@ -209,7 +209,7 @@ namespace UsageMonitor
 
         private class Counters
         {
-            //Locks data from being read when 
+            //Locks data from being read when
             private Object dataLock = new Object();
 
             //This class is mainly just to tidy things up while building the lists that end up being exposed
@@ -627,7 +627,7 @@ namespace UsageMonitor
                 }
             }
 
-            //Removes a a reference to a given counter (Counter is only removed if it is the last reference to that counter) 
+            //Removes a a reference to a given counter (Counter is only removed if it is the last reference to that counter)
             //Will also change update rate if the one removed was the last one with that update rate
             public void RemoveCounter(MeasureOptions options)
             {
@@ -676,7 +676,6 @@ namespace UsageMonitor
                         {
                             this.CounterOptions.Remove(options.Counter);
                         }
-
 
                         if (options.IsPID && pidIDs.Remove(options.ID))
                         {
@@ -1276,7 +1275,7 @@ namespace UsageMonitor
             //options.UpdateInMS = measure.API.ReadInt("PollRate", options.UpdateInMS);
             //ID of this options set
             options.ID = measure.API.GetSkin() + measure.API.GetMeasureName();
-            
+
             //This is to prevent !SetOption/DynamicVariables=1 from causing us to keep outdated threads or info
             //If we have existing options then this measure existed before and needs to be updated
             if (measure.Options != null && measure.Options.Counter?.Length > 0 && measure.Options.Category?.Length > 0)

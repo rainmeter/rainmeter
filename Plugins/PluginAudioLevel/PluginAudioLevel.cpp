@@ -1179,7 +1179,7 @@ HRESULT	Measure::DeviceInit ()
 
 		hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
 			hnsRequestedDuration, 0, m_wfx, NULL);
-		if (hr != S_OK) 
+		if (hr != S_OK)
 		{
 			// stereo waveformat didnt work either, throw an error
 			RmLog(LOG_WARNING, L"Failed to initialize audio client.");

@@ -521,7 +521,7 @@ void Shape::CloneModifiers(Shape* otherShape)
 	otherShape->m_StrokeRadialGradientRadius = m_StrokeRadialGradientRadius;
 	otherShape->m_StrokeGradientStops = m_StrokeGradientStops;
 	otherShape->m_StrokeGradientAltGamma = m_StrokeGradientAltGamma;
-	
+
 	// Re-create brushes on next draw
 	otherShape->m_HasFillBrushChanged = true;
 	otherShape->m_HasStrokeBrushChanged = true;

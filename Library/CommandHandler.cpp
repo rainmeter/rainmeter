@@ -660,7 +660,7 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 				}
 				else
 				{
-					// Eat found quote and find ending quote 
+					// Eat found quote and find ending quote
 					arg.erase(0, pos + 1);
 					pos = arg.find_first_of(L'"');
 				}
@@ -976,7 +976,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	if (skin)
 	{
 		double value;
-		formula = skin->GetParser().ParseFormula(strValue, &value); 
+		formula = skin->GetParser().ParseFormula(strValue, &value);
 		if (formula)
 		{
 			WCHAR buffer[256];
@@ -1117,7 +1117,7 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 	// Two variations:
 	//  #1: !SetWindowPosition WindowX WindowY (config)
 	//  #2: !SetWindowPosition WindowX WindowY AnchorX AnchorY (config)
-	
+
 	Skin* other = nullptr;
 
 	size_t argCount = args.size();

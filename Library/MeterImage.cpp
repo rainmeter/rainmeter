@@ -215,7 +215,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
-		
+
 		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
 		D2D1_RECT_F meterRect = GetMeterRectPadding();

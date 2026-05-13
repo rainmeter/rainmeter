@@ -129,7 +129,7 @@ bool TrayIcon::IsTrayIconReady()
 
 	HRESULT hr = Shell_NotifyIconGetRect(&nii, &rect);
 	if (FAILED(hr)) return false;
-	
+
 	return true;
 }
 

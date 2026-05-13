@@ -122,7 +122,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
 		}
-		
+
 		// DynamicVariables doesn't work with old plugins
 		return;
 	}

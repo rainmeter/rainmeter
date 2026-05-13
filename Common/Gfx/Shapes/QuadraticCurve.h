@@ -20,7 +20,7 @@ public:
 	~QuadraticCurve();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	QuadraticCurve(const QuadraticCurve& other) = delete;
 	QuadraticCurve& operator=(QuadraticCurve other) = delete;

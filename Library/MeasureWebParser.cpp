@@ -373,7 +373,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
 	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
 	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
-	
+
 	int index = parser.ReadInt(section, L"StringIndex", 0);
 	m_StringIndex = index < 0 ? 0 : index;
 
@@ -1191,7 +1191,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DW
 		{
 			return nullptr;
 		}
-		
+
 		size_t fileSize = 0ULL;
 		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
 		*dataSize = (DWORD)fileSize;

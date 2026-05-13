@@ -623,7 +623,7 @@ void DialogManage::TabSkins::Initialize()
 
 	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(4), IMAGE_ICON, 16, 16, LR_SHARED);
 	ImageList_AddIcon(hImageList, hIcon);
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED); 
+	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED);
 	ImageList_AddIcon(hImageList, hIcon);
 
 	// Apply icons and populate tree
@@ -638,7 +638,7 @@ void DialogManage::TabSkins::Initialize()
 	// Get rid of the EDITTEXT control border
 	item = GetControl(Id_DescriptionLabel);
 	SetWindowLongPtr(item, GWL_EXSTYLE, GetWindowLongPtr(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
-	SetWindowPos(item, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
+	SetWindowPos(item, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetControl(Id_TransparencyDropDownList);
 	ComboBox_AddString(item, L"0%");
@@ -716,7 +716,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 			// Changed setting from dialog, no need to update
 			m_IgnoreUpdate = false;
 		}
-		else if (m_SkinWindow && m_SkinWindow == skin) 
+		else if (m_SkinWindow && m_SkinWindow == skin)
 		{
 			// Update from currently open skin
 			m_HandleCommands = false;
@@ -870,7 +870,7 @@ void DialogManage::TabSkins::DisableControls(bool clear)
 
 		item = GetControl(Id_EditButton);
 		EnableWindow(item, FALSE);
-		
+
 		item = GetControl(Id_FileLabel);
 		SetWindowText(item, GetString(ID_STR_ELLIPSIS));
 
@@ -1135,7 +1135,7 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	tvi.pszText = buffer;
 	tvi.cchTextMax = _countof(buffer);
 	TreeView_GetItem(tree, &tvi);
-	
+
 	std::wstring path = buffer;
 	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != nullptr)
 	{
@@ -1766,7 +1766,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				// Current selection is file
 				m_SkinFileName = buffer;
 				tvi.mask = TVIF_TEXT;
-			
+
 				// Loop through parents to get skin folder
 				m_SkinFolderPath.clear();
 				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != nullptr)
@@ -1936,11 +1936,11 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				EnableWindow(item, TRUE);
 				item = GetControl(Id_EditButton);
 				EnableWindow(item, TRUE);
-				
+
 				const std::vector<std::wstring>& layouts = GetRainmeter().GetAllLayouts();
 				item  = GetControl(Id_List);
 				int sel = ListBox_GetCurSel(item);
-				
+
 				item = GetControl(Id_NameLabel);
 				Edit_SetText(item, layouts[sel].c_str());
 			}
@@ -2652,7 +2652,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 			buffer[0] = L'\0';
 
 			std::wstring editor = GetRainmeter().GetSkinEditor();
-			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str(); 
+			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str();
 
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 			ofn.Flags = OFN_FILEMUSTEXIST;

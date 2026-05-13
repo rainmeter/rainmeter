@@ -97,7 +97,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (path[0] == L'[' && path[path.size() - 1] == L']')
 	{
 		path = path.substr(1, path.size() - 2);
-		
+
 		for (auto iter : g_ParentMeasures)
 		{
 			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == skin)
@@ -797,7 +797,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	parent->needsUpdating = false;						// Set to false here in case skin is reloaded
 	parent->needsIcons = false;							// Set to false here in case skin is reloaded
 	LeaveCriticalSection(&g_CriticalSection);
-	
+
 	FileInfo file;
 
 	if (tmp->needsUpdating)
@@ -845,7 +845,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 			std::queue<std::wstring> folderQueue;
 			std::wstring folder = tmp->path;
-			
+
 			RecursiveType rType = tmp->recursiveType;
 			GetFolderInfo(folderQueue, folder, tmp, (rType == RECURSIVE_PARTIAL) ? RECURSIVE_NONE : rType);
 
@@ -859,7 +859,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 		// Sort
 		const int sortAsc = tmp->sortAscending ? 1 : -1;
-		const auto& begin = (!tmp->path.empty() && 
+		const auto& begin = (!tmp->path.empty() &&
 			(tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ? tmp->files.begin() + 1: tmp->files.begin();
 
 		switch (tmp->sortType)

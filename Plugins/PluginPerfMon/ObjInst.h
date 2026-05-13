@@ -14,16 +14,16 @@ class CPerfCounter;
 class CPerfObjectInstance
 {
     public:
-        
+
     CPerfObjectInstance(
             PPERF_INSTANCE_DEFINITION const pPerfInstDef,
             PPERF_COUNTER_DEFINITION const pPerfCntrDef, DWORD nCounters,
             CPerfTitleDatabase * const pPerfTitleDatabase, BOOL fDummy );
 
     ~CPerfObjectInstance( void ){ }
-    
+
     BOOL GetObjectInstanceName( PTSTR pszObjInstName, DWORD nSize );
-    
+
     // Functions that return CPerfCounter pointers.  Caller is
     // responsible for deleting the CPerfCounter * when done with it.
 
@@ -34,13 +34,13 @@ class CPerfObjectInstance
     CPerfCounter * GetCounterByName( PCTSTR const pszName );
 
     protected:
-        
+
     PPERF_INSTANCE_DEFINITION m_pPerfInstDef;
 
     unsigned m_nCounters;
-    
+
     unsigned m_currentCounter;
-    
+
     PPERF_COUNTER_DEFINITION m_pPerfCntrDef;
 
     CPerfTitleDatabase * m_pPerfCounterTitles;

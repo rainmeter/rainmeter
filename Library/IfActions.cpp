@@ -245,7 +245,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			}
 		}
 	}
-	
+
 	// IfMatch
 	i = 0;
 	for (auto& item : m_Matches)

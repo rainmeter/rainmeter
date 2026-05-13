@@ -76,7 +76,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		// to |c_FeatureLevel|. First, we try to use the hardware driver
 		// and if that fails, we try the WARP rasterizer for cases
 		// where there is no graphics card or other failures.
-		const D3D_FEATURE_LEVEL levels[] = 
+		const D3D_FEATURE_LEVEL levels[] =
 		{
 			D3D_FEATURE_LEVEL_11_1,
 			D3D_FEATURE_LEVEL_11_0,

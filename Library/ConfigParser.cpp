@@ -467,7 +467,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		WCHAR buffer[128] = { 0 };
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
-			
+
 		if (!decimalsSz)
 		{
 			// Remove trailing zeros if decimal count was not specified.
@@ -478,7 +478,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		strValue.assign(buffer, bufferLen);
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -1111,7 +1111,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
 			// the nested variable parser can produce errors when determining function names. Reset any delayed
 			// messages if the variable at the starting position was found.
-			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" }; 
+			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 		}
 
 		++end;	// Check for the next "end" bracket after the current ending bracket

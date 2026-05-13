@@ -346,7 +346,7 @@ const WCHAR* Parse(
 			case Operator::Comma:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
-						
+
 					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
 					{
 						parser.opStack[++parser.opTop] = g_BrOp;
@@ -461,7 +461,7 @@ static const WCHAR* Calc(Parser& parser)
 	// Multi-argument function
 	if (op.type == Operator::Conditional)
 	{
-		return nullptr; 
+		return nullptr;
 	}
 	else if (op.type == Operator::MultiArgFunction)
 	{

@@ -1606,7 +1606,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	parser.Initialize(iniFile, nullptr, nullptr);
 
 	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
-	
+
 	// Read Logging settings
 	Logger& logger = GetLogger();
 	const bool logging = parser.ReadBool(L"Rainmeter", L"Logging", false);

@@ -77,7 +77,7 @@ public:
 
 		WCHAR windirPath[MAX_PATH];
 		ExpandEnvironmentStrings(L"%WINDIR%", windirPath, MAX_PATH);
-		
+
 		std::wstring test = L"%APPDATA%";
 		PathUtil::ExpandEnvironmentVariables(test);
 		Assert::IsTrue(test == appdataPath);

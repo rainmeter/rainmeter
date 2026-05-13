@@ -501,7 +501,7 @@ void PlayerWMP::UpdateData()
 	else
 	{
 		ULONGLONG time = GetTickCount64();
-		
+
 		// Try to find WMP window every 5 seconds
 		if (m_LastCheckTime = 0ULL || time - m_LastCheckTime > 5000ULL)
 		{
@@ -519,7 +519,7 @@ void PlayerWMP::UpdateData()
 ** Handles the Pause bang.
 **
 */
-void PlayerWMP::Pause() 
+void PlayerWMP::Pause()
 {
 	m_IControls->pause();
 }
@@ -528,7 +528,7 @@ void PlayerWMP::Pause()
 ** Handles the Play bang.
 **
 */
-void PlayerWMP::Play() 
+void PlayerWMP::Play()
 {
 	m_IControls->play();
 }
@@ -537,7 +537,7 @@ void PlayerWMP::Play()
 ** Handles the Stop bang.
 **
 */
-void PlayerWMP::Stop() 
+void PlayerWMP::Stop()
 {
 	m_IControls->stop();
 	// TODO: FIXME
@@ -548,7 +548,7 @@ void PlayerWMP::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerWMP::Next() 
+void PlayerWMP::Next()
 {
 	m_IControls->next();
 }
@@ -557,7 +557,7 @@ void PlayerWMP::Next()
 ** Handles the Previous bang.
 **
 */
-void PlayerWMP::Previous() 
+void PlayerWMP::Previous()
 {
 	m_IControls->previous();
 }

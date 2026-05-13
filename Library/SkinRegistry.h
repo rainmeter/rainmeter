@@ -38,7 +38,7 @@ public:
 		}
 	};
 
-	struct Folder 
+	struct Folder
 	{
 		std::wstring name;
 		std::vector<SkinRegistry::File> files;

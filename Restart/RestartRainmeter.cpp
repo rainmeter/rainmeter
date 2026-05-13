@@ -85,7 +85,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdLine
 	while ((ret = GetMessage(&msg, nullptr, 0, 0)) != 0)
 	{
 		if (ret == -1) break;
-		
+
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

@@ -97,7 +97,7 @@ protected:
 	double m_Value;
 
 	bool m_Invert;
-	
+
 	bool m_LogMaxValue;
 	double m_MinValue;
 	double m_MaxValue;

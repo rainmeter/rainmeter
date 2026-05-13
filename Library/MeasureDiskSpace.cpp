@@ -181,7 +181,7 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Label = parser.ReadBool(section, L"Label", false);
 	m_IgnoreRemovable = parser.ReadBool(section, L"IgnoreRemovable", true);
 	m_DiskQuota = parser.ReadBool(section, L"DiskQuota", true);
-	
+
 	// Set the m_MaxValue
 	if (!m_Initialized)
 	{

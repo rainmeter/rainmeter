@@ -67,7 +67,7 @@ private:
 	virtual ~DialogPackage();
 
 	void SetNextButtonState();
-	
+
 	bool CreatePackage();
 	static unsigned __stdcall PackagerThreadProc(void* pParam);
 

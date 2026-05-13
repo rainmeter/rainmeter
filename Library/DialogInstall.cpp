@@ -593,7 +593,7 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_VERSION_TEXT), buffer);
 
 	m_MergeSkins = GetPrivateProfileInt(section, newFormat ? L"MergeSkins" : L"Merge", 0, file) != 0;
-	
+
 	GetPrivateProfileString(section, newFormat ? L"VariableFiles" : L"KeepVar", L"", buffer, MAX_LINE_LENGTH, file);
 	m_VariablesFiles = Tokenize(buffer, L"|");
 
@@ -992,7 +992,7 @@ void DialogInstall::KeepVariables()
 		for (const auto& var : fromVariables)
 		{
 			if (toVariables.find(var.first) == toVariables.end()) continue;
-			
+
 			WritePrivateProfileString(L"Variables", var.first.c_str(), var.second.c_str(), toPath.c_str());
 		}
 	}

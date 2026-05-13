@@ -162,7 +162,7 @@ bool MeterShape::HitTest(int x, int y)
 	}
 
 	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
-	
+
 	D2D1_POINT_2F point = D2D1::Point2F((FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()));
 	for (auto& shape : m_Shapes)
 	{
@@ -364,7 +364,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			if (tokSize == 6 || tokSize == 7)
 			{
 				if (tokSize == 7) open = ConfigParser::ParseInt(tokens[6].c_str(), 0) == 0;
-				
+
 				if (!createShape(new Gfx::QuadraticCurve(x1, y1, x2, y2, cx1, cy1,
 					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
 				{
@@ -377,7 +377,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(tokens[7].c_str(), 0.0);
 
 				if (tokSize > 8) open = ConfigParser::ParseInt(tokens[8].c_str(), 0) == 0;
-	
+
 				if (!createShape(new Gfx::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2,
 					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
 				{
@@ -1104,7 +1104,7 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 			{
 				FLOAT cx2 = (FLOAT)ConfigParser::ParseDouble(curveTo[4].c_str(), 0.0);
 				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(curveTo[5].c_str(), 0.0);
-				
+
 				shape->AddCubicCurve(x, y, cx1, cy1, cx2, cy2);
 			}
 

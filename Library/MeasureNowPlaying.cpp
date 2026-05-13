@@ -494,7 +494,7 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 					// Relative to current volume
 					volume += player->GetVolume();
 				}
-					
+
 				if (volume < 0)
 				{
 					volume = 0;
