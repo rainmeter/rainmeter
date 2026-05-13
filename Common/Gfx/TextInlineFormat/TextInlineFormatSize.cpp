@@ -28,7 +28,11 @@ void TextInlineFormat_Size::ApplyInlineFormat(IDWriteTextLayout* layout)
 	{
 		if (range.length <= 0) continue;
 
-		layout->SetFontSize(m_Size * (4.0f / 3.0f), range);
+		FLOAT size = m_Size * (4.0f / 3.0f);
+		if (size <= 0.0f) size = 0.000001f;
+
+		HRESULT hr = layout->SetFontSize(size, range);
+		if (FAILED(hr)) continue;
 	}
 }
 
