@@ -1,10 +1,10 @@
 {
   "release": {
-    "final": "4.5.23",
-    "version": "4.5.23",
-    "revision": "3836",
-    "download_url": "https://github.com/rainmeter/rainmeter/releases/download/v4.5.23.3836/Rainmeter-4.5.23.exe",
-    "download_sha256": "A613E59A8E51511330B9DA874A2FC928266F44CA4FEBB117910001BB3D9C5E69",
+    "final": "4.5.24",
+    "version": "4.5.24",
+    "revision": "3857",
+    "download_url": "https://github.com/rainmeter/rainmeter/releases/download/v4.5.24.3857/Rainmeter-4.5.24.exe",
+    "download_sha256": "714770F49A7A27FCD15B90136C1D875459F8ED1A7FCE85366AF6DBB8B19455E9",
     "minimum_windows": {
       "version": "6.1.7601",
       "name": "Windows 7 Service Pack 1"
