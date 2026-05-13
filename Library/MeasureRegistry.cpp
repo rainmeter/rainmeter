@@ -31,6 +31,8 @@ MeasureRegistry::~MeasureRegistry()
 
 void MeasureRegistry::Dispose()
 {
+	m_StringValue.clear();
+
 	if (m_RegKey)
 	{
 		RegCloseKey(m_RegKey);
