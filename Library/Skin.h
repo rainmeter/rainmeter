@@ -73,7 +73,7 @@ enum HIDEMODE
 	HIDEMODE_FADEOUT
 };
 
-enum BEVELTYPE 
+enum BEVELTYPE
 {
 	BEVELTYPE_NONE,
 	BEVELTYPE_UP,
@@ -394,7 +394,7 @@ private:
 	bool m_WindowYPercentage;
 	int m_WindowW;
 	int m_WindowH;
-	int m_ScreenX;								// X-postion on the virtual screen 
+	int m_ScreenX;								// X-postion on the virtual screen
 	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin

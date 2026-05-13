@@ -25,7 +25,7 @@ public:
 	std::wstring& GetOnStartAction() { return m_OnStartAction; }
 	void SetOnStartAction(const std::wstring& action);
 	void SetOnStartAction(UINT index);
-	
+
 	std::wstring& GetOnStopAction() { return m_OnStopAction; }
 	void SetOnStopAction(const std::wstring& action);
 	void SetOnStopAction(UINT index);

@@ -346,7 +346,7 @@ void PlayerWinamp::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerWinamp::Next() 
+void PlayerWinamp::Next()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
 }

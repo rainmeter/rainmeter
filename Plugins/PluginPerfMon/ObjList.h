@@ -16,7 +16,7 @@ class CPerfObject;
 class CPerfObjectList
 {
     public:
-        
+
     CPerfObjectList(CPerfSnapshot * const pPerfSnapshot,
                     CPerfTitleDatabase * const pPerfTitleDatabase );
 
@@ -28,7 +28,7 @@ class CPerfObjectList
     CPerfObject * GetFirstPerfObject( void );
 
     CPerfObject * GetNextPerfObject( void );
-    
+
     CPerfObject * GetPerfObject( PCTSTR const pszObjListName );
 
     protected:

@@ -173,7 +173,7 @@ void PlayerWLM::Play()
 ** Handles the Stop bang.
 **
 */
-void PlayerWLM::Stop() 
+void PlayerWLM::Stop()
 {
 	SendKeyInput(VK_MEDIA_STOP);
 }
@@ -182,7 +182,7 @@ void PlayerWLM::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerWLM::Next() 
+void PlayerWLM::Next()
 {
 	SendKeyInput(VK_MEDIA_NEXT_TRACK);
 }
@@ -191,7 +191,7 @@ void PlayerWLM::Next()
 ** Handles the Previous bang.
 **
 */
-void PlayerWLM::Previous() 
+void PlayerWLM::Previous()
 {
 	SendKeyInput(VK_MEDIA_PREV_TRACK);
 }

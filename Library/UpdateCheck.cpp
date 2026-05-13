@@ -35,7 +35,7 @@ LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status.
 LPCWSTR Updater::s_DownloadServer1 = L"https://github.com/rainmeter/rainmeter/";
 LPCWSTR Updater::s_DownloadServer2 = L"https://builds.rainmeter.net/";
 
-Updater::Updater() : 
+Updater::Updater() :
 	m_Status(nullptr),
 	m_DownloadInstaller(true)
 {

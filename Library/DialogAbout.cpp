@@ -388,7 +388,7 @@ void DialogAbout::TabLog::Initialize()
 	ImageList_AddIcon(hImageList, hIcon);
 	DeleteObject(hIcon);
 
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR); 
+	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ImageList_AddIcon(hImageList, hIcon);
 	DeleteObject(hIcon);
 
@@ -700,7 +700,7 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 				lvi.iSubItem = 0;
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
-				
+
 				static const MenuTemplate s_MessageMenu[] =
 				{
 					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
@@ -858,7 +858,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 		{
 			maxLength = curLength;
 		}
-		
+
 		const WCHAR* name = skinName.c_str();
 		int index = ListBox_AddString(item, name);
 		if (!found && m_SkinWindow == (*iter).second)
@@ -1404,7 +1404,7 @@ void DialogAbout::TabPlugins::Initialize()
 	vitem.iSubItem = 0;
 
 	int index = 0;
-	
+
 	auto findPlugins = [&](const std::wstring& pluginPath) -> void
 	{
 		std::wstring filter = pluginPath + L"*.dll";
@@ -1575,7 +1575,7 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 	// Adjust third colum
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 20 - 
+	lvc.cx = w - 20 -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
@@ -1752,7 +1752,7 @@ void DialogAbout::TabVersion::Initialize()
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
 	item = GetControl(Id_LanguageLabel);
 	SetWindowText(item, tmpSz);
-	
+
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
 	item = GetControl(Id_TimestampLabel);
 	SetWindowText(item, tmpSz);

@@ -167,7 +167,7 @@ void MeasureRegistry::UpdateValue()
 	}
 	else
 	{
-		Dispose();		
+		Dispose();
 		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 	}
 }

@@ -441,7 +441,7 @@ void PlayerCAD::Play()
 ** Handles the Stop bang.
 **
 */
-void PlayerCAD::Stop() 
+void PlayerCAD::Stop()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_STOP);
 }
@@ -450,7 +450,7 @@ void PlayerCAD::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerCAD::Next() 
+void PlayerCAD::Next()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_NEXT);
 }
@@ -459,7 +459,7 @@ void PlayerCAD::Next()
 ** Handles the Previous bang.
 **
 */
-void PlayerCAD::Previous() 
+void PlayerCAD::Previous()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PREVIOUS);
 }
@@ -477,7 +477,7 @@ void PlayerCAD::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void PlayerCAD::SetRating(int rating) 
+void PlayerCAD::SetRating(int rating)
 {
 	m_Rating = (UINT)rating;
 	rating *= 2; // From 0 - 5 to 0 - 10
@@ -488,7 +488,7 @@ void PlayerCAD::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void PlayerCAD::SetVolume(int volume) 
+void PlayerCAD::SetVolume(int volume)
 {
 	SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
 }

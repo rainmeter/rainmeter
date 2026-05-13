@@ -33,7 +33,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_Bitmap(nullptr),
 	m_BitmapProcessed(nullptr),
 	m_Skin(skin),
-	m_Name(name ? name : L"ImageName"), 
+	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_DisableTransform(disableTransform),
 	m_Options()

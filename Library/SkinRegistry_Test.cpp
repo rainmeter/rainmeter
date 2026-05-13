@@ -67,7 +67,7 @@ public:
 	{
 		const auto indexes1 = m_SkinRegistry.FindIndexes(L"A1\\B2", L"1.ini");
 		Assert::IsTrue(indexes1.folder == 2 && indexes1.file == 0);
-		
+
 		const auto indexes2 = m_SkinRegistry.FindIndexes(L"A2", L"2.ini");
 		Assert::IsTrue(indexes2.folder == 4 && indexes2.file == 1);
 

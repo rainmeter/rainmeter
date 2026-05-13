@@ -20,7 +20,7 @@ public:
 	~Ellipse ();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Ellipse(const Ellipse& other) = delete;
 	Ellipse& operator=(Ellipse other) = delete;

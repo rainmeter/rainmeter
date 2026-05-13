@@ -1391,7 +1391,7 @@ void DialogNewSkin::TabNew::AddTreeItem(bool isFolder)
 	const std::wstring path = GetRainmeter().GetSkinPath();
 
 	HWND tree = GetControl(Id_ItemsTreeView);
-	
+
 	TVITEM tvitem = { 0 };
 	tvitem.hItem = TreeView_GetSelection(tree);
 	tvitem.mask = TVIF_IMAGE;
@@ -1880,7 +1880,7 @@ void DialogNewSkin::TabTemplate::CreateTemplateMenu(HMENU menu, std::wstring sel
 			{
 				AppendMenu(menu, MF_SEPARATOR, 0, nullptr);
 			}
-			
+
 			if (_wcsicmp(selected.c_str(), buffer) == 0)
 			{
 				sel = i + 2;

@@ -422,7 +422,7 @@ void Skin::Refresh(bool init, bool all)
 	m_State = STATE_REFRESHING;
 
 	GetRainmeter().SetCurrentParser(&m_Parser);
-	
+
 	LogNoticeF(this, L"Refreshing skin");
 
 	SetResizeWindowMode(RESIZEMODE_RESET);
@@ -2025,7 +2025,7 @@ void Skin::WindowToScreen()
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 }
 
-/* 
+/*
 ** Calculates the WindowX/Y cordinates from the ScreenX/Y
 **
 */
@@ -2915,7 +2915,7 @@ void Skin::Redraw()
 		{
 			const auto bitmap = m_Background->GetImage();
 			if (bitmap == nullptr) return;
-			
+
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
 				const D2D1_RECT_F dst = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
@@ -3000,7 +3000,7 @@ void Skin::Redraw()
 
 			if (m_SolidColor.a != 0.0f || m_SolidColor2.a != 0.0f)
 			{
-				if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
+				if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g &&
 					m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
 				{
 					m_Canvas.Clear(m_SolidColor);
@@ -3964,7 +3964,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!m_Selected)
 		{
 			SetClickThrough(!m_ClickThrough);
-		}		
+		}
 		break;
 
 	case IDM_SKIN_DRAGGABLE:
@@ -5151,8 +5151,7 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		RAWINPUT ri = { 0 };
 		UINT riSize = sizeof(ri);
 		const UINT dataSize = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
-		if (dataSize != (UINT)-1 &&
-			ri.header.dwType == RIM_TYPEMOUSE) 
+		if (dataSize != (UINT)-1 && ri.header.dwType == RIM_TYPEMOUSE)
 		{
 			const WPARAM wheelDelta = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
 			const LPARAM wheelPos = MAKELPARAM(pos.x, pos.y);

@@ -42,7 +42,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			
+
 			// Copy ID and string to local
 			DWORD id = cds->dwData;                       // contains QUERY ID (RAINMETER_QUERY_ID_XXXXX)
 			std::wstring string = (WCHAR*)cds->lpData;    // contains requested string in wide char
@@ -83,7 +83,7 @@ These Queries return a string in a wide char format
 #define RAINMETER_QUERY_ID_CONFIG_EDITOR		4106
 
 /*
-These Queries return a numerical value in a direct message, the data 
+These Queries return a numerical value in a direct message, the data
 is stored in the lParam of the message sent to your window, and the msg section
 will contain WM_QUERY_RAINMETER_RETURN
 */
@@ -91,7 +91,7 @@ will contain WM_QUERY_RAINMETER_RETURN
 
 /*QUERY IDs used with WM_COPYDATA
 Usage: Send a WM_COPYDATA message to rainmeter via SendMessage().
-Rainmeter will set the return value depending on the contents 
+Rainmeter will set the return value depending on the contents
 of the COPYDATASTRUCT.
 */
 #define RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE	5101

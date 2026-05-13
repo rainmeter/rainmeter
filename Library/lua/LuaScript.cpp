@@ -463,7 +463,7 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 		result = false;
 	}
 	else
-	{	
+	{
 		const char* t = lua_typename(L, type);
 		strValue = L"Invalid variable type (";
 		strValue += m_Unicode ?

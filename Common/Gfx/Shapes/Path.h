@@ -27,7 +27,7 @@ public:
 	void Close(D2D1_FIGURE_END ending);
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Path(const Path& other) = delete;
 	Path& operator=(Path other) = delete;

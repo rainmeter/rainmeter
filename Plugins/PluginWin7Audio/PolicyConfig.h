@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // class CPolicyConfigClient
 // {294935CE-F637-4E7C-A41B-AB255460B862}
-// 
+//
 // interface IPolicyConfig
 // {568b9108-44bf-40b4-9006-86afe5b5a620}
 //
@@ -80,7 +80,7 @@ public:
 
     virtual HRESULT STDMETHODCALLTYPE SetDefaultEndpoint(
         __in PCWSTR wszDeviceId,
-        __in ERole eRole 
+        __in ERole eRole
     );
 
     virtual HRESULT STDMETHODCALLTYPE SetEndpointVisibility(

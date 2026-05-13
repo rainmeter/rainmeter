@@ -32,7 +32,7 @@ public:
 	{
 		clear();
 	}
-	
+
 	RawString& operator=(const wchar_t* rhs)
 	{
 		clear();

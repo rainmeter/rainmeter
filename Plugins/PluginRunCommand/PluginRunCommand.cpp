@@ -197,7 +197,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 void RunCommand(Measure* measure)
 {
 	std::unique_lock<std::recursive_mutex> lock(measure->mutex);
-	
+
 	std::wstring command = measure->program + L" " + measure->parameter;
 	std::wstring folder = measure->folder;
 	WORD state = measure->state;

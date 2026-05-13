@@ -96,7 +96,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		str = RmReadString(rm, L"RegExpFilter", L"");
 		folder->SetRegExpFilter(str);
-		
+
 		folder->SetSubFolders(RmReadInt(rm, L"IncludeSubFolders", 0) == 1);
 		folder->SetHiddenFiles(RmReadInt(rm, L"IncludeHiddenFiles", 0) == 1);
 		folder->SetSystemFiles(RmReadInt(rm, L"IncludeSystemFiles", 0) == 1);

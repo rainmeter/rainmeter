@@ -115,7 +115,6 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			DWORD uMsg = 0UL, wParam = 0UL, lParam = 0UL;
 			if (3 == swscanf_s(pos, L"%u %u %u", &uMsg, &wParam, &lParam))
 			{
-				
 				HWND hwnd = FindWindow(
 					measure->windowClass.empty() ? nullptr : measure->windowClass.c_str(),
 					measure->windowName.empty() ? nullptr : measure->windowName.c_str());

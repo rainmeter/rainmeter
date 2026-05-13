@@ -760,7 +760,7 @@ HWND System::GetBackmostTopWindow()
 	{
 		Skin* wnd = GetRainmeter().GetSkin(winPos);
 		if (!wnd ||
-			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL && 
+			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL &&
 			wnd->GetWindowZPosition() != ZPOSITION_ONDESKTOP &&
 			wnd->GetWindowZPosition() != ZPOSITION_ONBOTTOM))
 		{

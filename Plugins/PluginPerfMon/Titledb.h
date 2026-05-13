@@ -10,9 +10,9 @@ class CPerfTitleDatabase
     unsigned    m_nLastIndex;
     PTSTR       * m_TitleStrings;
     PTSTR       m_pszRawStrings;
-    
+
     public:
-        
+
     CPerfTitleDatabase( PERFORMANCE_TITLE_TYPE titleType );
     ~CPerfTitleDatabase( );
 

@@ -256,7 +256,7 @@ void PlayerITunes::UpdateData()
 {
 	if (CheckWindow())
 	{
-		// Update player state, reset 
+		// Update player state, reset
 		ITPlayerState state = ITPlayerStateStopped;
 		if (SUCCEEDED(m_iTunes->get_PlayerState(&state)))
 		{
@@ -285,7 +285,7 @@ void PlayerITunes::UpdateData()
 			}
 		}
 
-		// Volume onChange was removed, manually check 
+		// Volume onChange was removed, manually check
 		long volume = 0L;
 		if (SUCCEEDED(m_iTunes->get_SoundVolume(&volume)))
 		{
@@ -341,7 +341,7 @@ void PlayerITunes::UpdateCachedData()
 		BSTR tmpStr = nullptr;
 		long tmpVal = 0L;
 
-		// Rating onChange was removed, manually check 
+		// Rating onChange was removed, manually check
 		if (SUCCEEDED(track->get_Rating(&tmpVal)))
 		{
 			tmpVal /= 20L;
@@ -464,7 +464,7 @@ void PlayerITunes::Play()
 ** Handles the Stop bang.
 **
 */
-void PlayerITunes::Stop() 
+void PlayerITunes::Stop()
 {
 	m_iTunes->Stop();
 }
@@ -473,7 +473,7 @@ void PlayerITunes::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerITunes::Next() 
+void PlayerITunes::Next()
 {
 	m_iTunes->NextTrack();
 }
@@ -482,7 +482,7 @@ void PlayerITunes::Next()
 ** Handles the Previous bang.
 **
 */
-void PlayerITunes::Previous() 
+void PlayerITunes::Previous()
 {
 	m_iTunes->PreviousTrack();
 }

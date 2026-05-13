@@ -133,7 +133,7 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
 		nullptr);
 	if (fileHandle == INVALID_HANDLE_VALUE) return true;
-	
+
 	const DWORD fileSize = GetFileSize(fileHandle, nullptr);
 	if (fileSize == INVALID_FILE_SIZE || fileSize != bitmap->GetFileSize())
 	{

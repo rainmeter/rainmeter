@@ -20,7 +20,7 @@ public:
 	~Curve();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Curve(const Curve& other) = delete;
 	Curve& operator=(Curve other) = delete;

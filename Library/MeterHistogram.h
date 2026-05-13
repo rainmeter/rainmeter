@@ -61,7 +61,7 @@ private:
 	double m_MinSecondaryValue;
 
 	bool m_SizeChanged;
-	
+
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 

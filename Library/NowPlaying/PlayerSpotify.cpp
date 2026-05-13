@@ -158,7 +158,7 @@ void PlayerSpotify::Play()
 ** Handles the Stop bang.
 **
 */
-void PlayerSpotify::Stop() 
+void PlayerSpotify::Stop()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
 }
@@ -167,7 +167,7 @@ void PlayerSpotify::Stop()
 ** Handles the Next bang.
 **
 */
-void PlayerSpotify::Next() 
+void PlayerSpotify::Next()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
 }
@@ -176,7 +176,7 @@ void PlayerSpotify::Next()
 ** Handles the Previous bang.
 **
 */
-void PlayerSpotify::Previous() 
+void PlayerSpotify::Previous()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
 }

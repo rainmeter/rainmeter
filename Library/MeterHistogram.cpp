@@ -254,7 +254,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
 
 			Initialize();  // Reload the image
-			
+
 			if (m_SizeChanged)
 			{
 				CreateBuffer();

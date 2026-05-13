@@ -47,7 +47,6 @@ D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation) :
 	m_Path(path),
 	m_FileSize(0UL),
 	m_FileTime(0ULL)
-	
 {
 }
 
@@ -97,7 +96,7 @@ Util::D2DEffectStream* D2DBitmap::CreateEffectStream()
 
 bool D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 {
-	// TODO: Create a duplicate bitmap for every one with CPU_READ instead of creating a small 1 px bitmap? 
+	// TODO: Create a duplicate bitmap for every one with CPU_READ instead of creating a small 1 px bitmap?
 	// Maybe have a 1px bitmap in Canvas since we won't ever check two different bitmaps at once and use that to fetch the pixel data?
 	// Creating a bitmap every time we have to check a pixel is bad though, so we should consider the above.
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;

@@ -19,7 +19,7 @@ public:
 	~Rectangle();
 
 	virtual Shape* Clone() override;
-	
+
 private:
 	Rectangle(const Rectangle& other) = delete;
 	Rectangle& operator=(Rectangle other) = delete;

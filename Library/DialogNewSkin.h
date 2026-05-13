@@ -27,7 +27,7 @@ public:
 	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
 	static void ShowNewSkinDialog();
-	
+
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
 
 protected:

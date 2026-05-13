@@ -10,7 +10,7 @@ class CPerfTitleDatabase;
 class CPerfSnapshot
 {
     private:
-    
+
 	static PBYTE c_pBuffer;
 	static DWORD c_cbBufferSize;
 
@@ -24,7 +24,7 @@ class CPerfSnapshot
     public:
 
     CPerfSnapshot( CPerfTitleDatabase * pCounterTitles );
-    
+
     ~CPerfSnapshot( void );
 
     BOOL TakeSnapshot( PCTSTR pszSnapshotItems );
@@ -34,7 +34,7 @@ class CPerfSnapshot
     DWORD GetNumObjectTypes( void );    // # of objects the snapshot includes
 
     BOOL GetSystemName( PTSTR pszSystemName, DWORD nSize );
-    
+
     PVOID GetPostHeaderPointer( void ); // Pointer to data following header
 
     static void CleanUp( void );

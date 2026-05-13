@@ -54,7 +54,7 @@ protected:
 private:
 	static BOOL CALLBACK SetFontProc(HWND hWnd, LPARAM lParam);
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-	
+
 	static HWND c_ActiveDialogWindow;
 	static HWND c_ActiveTabWindow;
 };

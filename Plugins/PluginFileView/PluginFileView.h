@@ -272,7 +272,7 @@ bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 		value /= 10;
 	}
 	while (value);
-	
+
 	std::reverse(result.begin(), result.end());
 
 	return result;

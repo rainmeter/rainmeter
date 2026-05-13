@@ -229,7 +229,7 @@ void Meter::AddContainerItem(Meter* item)
 {
 	m_ContainerItems.push_back(item);
 	m_Skin->ResetRelativeMeters();
-	
+
 	if (m_ContainerItems.size() == 1)
 	{
 		UINT width = (UINT)GetW();
@@ -403,14 +403,14 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_W = 0;
 	}
-	
+
 	const int oldH = m_H;
 	const bool oldHDefined = m_HDefined;
 	const int heightPadding = GetHeightPadding();
 
 	const int h = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
-	
+
 	if (IsFixedSize(true)) m_H = h;
 	if (!m_Initialized || oldH != (m_H - heightPadding)) m_H += heightPadding;
 	if (!m_HDefined && oldHDefined && IsFixedSize())
@@ -818,7 +818,7 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 
 		const D2D1_RECT_F r = D2D1::RectF(x, y, x + (FLOAT)m_W, y + (FLOAT)m_H);
 
-		if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g && 
+		if (m_SolidColor.r == m_SolidColor2.r && m_SolidColor.g == m_SolidColor2.g &&
 			m_SolidColor.b == m_SolidColor2.b && m_SolidColor.a == m_SolidColor2.a)
 		{
 			canvas.FillRectangle(r, m_SolidColor);
@@ -833,7 +833,7 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 	{
 		D2D1_COLOR_F lightColor = m_BevelColor;
 		D2D1_COLOR_F darkColor = m_BevelColor2;
-		
+
 		if (m_SolidBevel == BEVELTYPE_DOWN)
 		{
 			std::swap(lightColor, darkColor);
