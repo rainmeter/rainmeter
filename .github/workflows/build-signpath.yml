@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
-          name: build
+          name: Build-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
           path: |
             x32-Release
             x64-Release
@@ -48,7 +48,7 @@ jobs:
         run: rm -rf {x32,x64}-Release
         shell: bash
 
-      - name: Sign uploaded build
+      - name: Sign Rainmeter
         uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
         with:
           api-token: '${{ secrets.SIGNPATH_API_KEY }}'
@@ -59,7 +59,7 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: .
 
-      - name: Rebuild installer with signed build
+      - name: Build installer
         run: |
           cd Build
           Build.bat installer %RAINMETER_BUILD_VERSION%

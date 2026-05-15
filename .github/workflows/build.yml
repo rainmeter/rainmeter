@@ -12,7 +12,7 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Build Rainmeter and installer
+      - name: Build Rainmeter
         run: |
           cd Build
           Build.bat pre 0.0.0.0
