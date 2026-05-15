@@ -7,6 +7,7 @@ setlocal EnableDelayedExpansion
 ::		release    -> builds release installer
 ::		pre        -> builds prerelease installer
 ::		languages  -> no installer, updates the language .dll files
+::		installer  -> only installer
 
 if "%APPVEYOR%" == "" (
 	set BUILD_TYPE=%1
@@ -21,9 +22,10 @@ if "%APPVEYOR%" == "" (
 	)
 )
 
-if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
-if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "installer" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
@@ -48,15 +50,6 @@ if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
 if not exist "%MAKENSIS%" set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit /b 1
 
-:: Begin timestamp
-for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
-	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
-)
-
-echo Rainmeter Build
-echo ----------------------------------------------
-echo.
-
 set BUILD_YEAR=%date:~-4%
 set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
@@ -72,7 +65,8 @@ set MSBUILD="msbuild.exe" /nologo^
 
 set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%" /q
 
-if "%BUILD_TYPE%" == "languages" goto BUILDLANGUAGES
+if "%BUILD_TYPE%" == "languages" goto BUILD_LANGUAGES
+if "%BUILD_TYPE%" == "installer" goto BUILD_INSTALLER
 
 echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 
@@ -112,7 +106,7 @@ echo * Building 32-bit projects
 echo * Building 64-bit projects
 %MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
-:BUILDLANGUAGES
+:BUILD_LANGUAGES
 echo * Building languages
 
 :: Build all language libraries
@@ -150,7 +144,10 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 	for /R "..\x64-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
 )
 
-:: Build installer
+:: If we're in CI, the installer will be built separately
+if not "%CI%" == "" exit
+
+:BUILD_INSTALLER
 echo * Building installer
 
 set INSTALLER_PATH=Rainmeter-%VERSION_FULL%.exe
@@ -174,13 +171,6 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 )
 
 :DONE
-for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
-	set /A "BUILD_END_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + %%c %% 100) * 100 + 1%%d %% 100"
-)
-set /A "BUILD_ELAPSED_TIME=(%BUILD_END_TIMESTAMP% - %BUILD_BEGIN_TIMESTAMP%) / 100"
-echo * Build complete. Elapsed time: %BUILD_ELAPSED_TIME% sec
-
-:END
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
 echo.
 if "%CI%" == "" pause
