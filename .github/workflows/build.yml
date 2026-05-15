@@ -10,18 +10,19 @@ jobs:
         run: choco install nsis --version=3.10.0 --no-progress
 
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Run Build.bat
+      - name: Build Rainmeter and installer
         run: |
           cd Build
           Build.bat pre 0.0.0.0
+          Build.bat installer 0.0.0.0
         shell: cmd
         env:
           SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Upload installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Rainmeter
           path: Build/Rainmeter-*.exe
