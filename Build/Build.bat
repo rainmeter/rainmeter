@@ -145,7 +145,7 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 )
 
 :: If we're in CI, the installer will be built separately
-if not "%CI%" == "" exit /b
+if not "%CI%" == "" goto END
 
 :BUILD_INSTALLER
 echo * Building installer
@@ -174,3 +174,5 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
 echo.
 if "%CI%" == "" pause
+
+:END
