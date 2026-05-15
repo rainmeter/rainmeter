@@ -57,8 +57,8 @@ jobs:
         uses: actions/upload-artifact@v7
         id: upload-installer
         with:
-          name: RainmeterInstaller-${{ github.ref_name }}
           path: Build/Rainmeter-*.exe
+          archive: false
           if-no-files-found: error
 
       - name: Sign installer
