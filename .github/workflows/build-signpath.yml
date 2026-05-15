@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    environment: release
+    environment: signpath
     runs-on: windows-2025
     steps:
       - name: Install NSIS
