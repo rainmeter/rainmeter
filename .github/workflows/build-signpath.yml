@@ -62,10 +62,9 @@ jobs:
       - name: Rebuild installer with signed build
         run: |
           cd Build
-          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION%
+          Build.bat installer %RAINMETER_BUILD_VERSION%
         shell: cmd
         env:
-          RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
           RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
           SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
