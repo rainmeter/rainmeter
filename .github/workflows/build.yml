@@ -26,6 +26,6 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v7
         with:
-          name: Rainmeter
           path: Build/Rainmeter-*.exe
+          archive: false
           if-no-files-found: error
