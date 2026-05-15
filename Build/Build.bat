@@ -145,7 +145,7 @@ if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
 )
 
 :: If we're in CI, the installer will be built separately
-if not "%CI%" == "" exit
+if not "%CI%" == "" exit /b
 
 :BUILD_INSTALLER
 echo * Building installer
