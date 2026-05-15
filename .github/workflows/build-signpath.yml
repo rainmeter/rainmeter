@@ -1,14 +1,9 @@
 name: build-signpath
 
 on:
-  workflow_dispatch:
-    inputs:
-      type:
-        description: 'Build type (release/pre)'
-        required: true
-      version:
-        description: 'Version (a.b.c.d)'
-        required: true
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+.[0-9]+
 
 jobs:
   build:
@@ -23,11 +18,9 @@ jobs:
       - name: Build Rainmeter
         run: |
           cd Build
-          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION%
+          Build.bat release %GITHUB_REF_NAME:~1%
         shell: cmd
         env:
-          RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
-          RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
           SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Remove object directories
@@ -38,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
-          name: Build-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
+          name: RainmeterBuild-${{ github.ref_name }}
           path: |
             x32-Release
             x64-Release
@@ -62,17 +55,16 @@ jobs:
       - name: Build installer
         run: |
           cd Build
-          Build.bat installer %RAINMETER_BUILD_VERSION%
+          Build.bat installer %GITHUB_REF_NAME:~1%
         shell: cmd
         env:
-          RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
           SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v7
         id: upload-installer
         with:
-          name: Rainmeter-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
+          name: RainmeterInstaller-${{ github.ref_name }}
           path: Build/Rainmeter-*.exe
           if-no-files-found: error
 
