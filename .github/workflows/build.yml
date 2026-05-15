@@ -16,20 +16,12 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build Rainmeter
-        run: |
-          cd Build
-          Build.bat pre 0.0.0.0
+        run: cd Build && Build.bat pre 0.0.0.0
         shell: cmd
-        env:
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Build installer
-        run: |
-          cd Build
-          Build.bat installer 0.0.0.0
+        run: cd Build && Build.bat installer 0.0.0.0
         shell: cmd
-        env:
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

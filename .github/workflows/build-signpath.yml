@@ -17,12 +17,8 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build Rainmeter
-        run: |
-          cd Build
-          Build.bat release %GITHUB_REF_NAME:~1%
+        run: cd Build && Build.bat release %GITHUB_REF_NAME:~1%
         shell: cmd
-        env:
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Remove object directories
         run: rm -rf {x32,x64}-Release/Obj
@@ -54,12 +50,8 @@ jobs:
           output-artifact-directory: .
 
       - name: Build installer
-        run: |
-          cd Build
-          Build.bat installer %GITHUB_REF_NAME:~1%
+        run: cd Build && Build.bat installer %GITHUB_REF_NAME:~1%
         shell: cmd
-        env:
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

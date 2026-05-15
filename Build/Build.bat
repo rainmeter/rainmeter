@@ -63,8 +63,6 @@ set MSBUILD="msbuild.exe" /nologo^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
-set SIGNTOOL_SHA2="signtool.exe" sign /fd sha256 /f "SelfSignedCertificate.p12" /p "%SELF_SIGNED_CERTIFICATE_PASSWORD%" /q
-
 if "%BUILD_TYPE%" == "languages" goto BUILD_LANGUAGES
 if "%BUILD_TYPE%" == "installer" goto BUILD_INSTALLER
 
@@ -133,17 +131,6 @@ if "%BUILD_TYPE%" == "languages" (
 	goto DONE
 )
 
-:: Sign binaries
-if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
-	echo * Self-signing 32-bit binaries
-	for /R "..\x32-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-	for /R "..\x32-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-
-	echo * Self-signing 64-bit binaries
-	for /R "..\x64-Release" %%f in (*.dll) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-	for /R "..\x64-Release" %%f in (*.exe) do %SIGNTOOL_SHA2% %%f || (echo   ERROR %ERRORLEVEL%: Signing %%f failed & exit /b 1)
-)
-
 :: If we're in CI, the installer will be built separately
 if not "%CI%" == "" goto END
 
@@ -163,12 +150,6 @@ set INSTALLER_DEFINES=^
 	/DBUILD_YEAR="%BUILD_YEAR%"
 
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
-
-:: Sign installer
-if not "%SELF_SIGNED_CERTIFICATE_PASSWORD%" == "" (
-	echo * Self-signing installer
-	%SIGNTOOL_SHA2% %INSTALLER_PATH% || (echo   ERROR %ERRORLEVEL%: Signing installer failed & exit /b 1)
-)
 
 :DONE
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
