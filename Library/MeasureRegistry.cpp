@@ -131,7 +131,7 @@ void MeasureRegistry::UpdateValue()
 
 					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
 					// separators from the BYTE array (returned from RegQueryValueEx) into a delimiter
-					const DWORD dwSize = size / sizeof(WCHAR);
+					const DWORD dwSize = resultSize / sizeof(WCHAR);
 					for (ULONG pos = 0UL; pos < (dwSize - 1UL); ++pos)
 					{
 						if (data[pos])
@@ -151,7 +151,7 @@ void MeasureRegistry::UpdateValue()
 					break;
 
 				case REG_BINARY:
-					for (DWORD i = 0UL; i < size; ++i)
+					for (DWORD i = 0UL; i < resultSize; ++i)
 					{
 						WCHAR buffer[3];
 						_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
