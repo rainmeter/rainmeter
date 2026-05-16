@@ -188,7 +188,11 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 
 	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
-	if (_wcsicmp(keyname, L"HKEY_LOCAL_MACHINE") == 0)
+	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
+	{
+		m_HKey = HKEY_CURRENT_USER;
+	}
+	else if (_wcsicmp(keyname, L"HKEY_LOCAL_MACHINE") == 0)
 	{
 		m_HKey = HKEY_LOCAL_MACHINE;
 	}
@@ -210,11 +214,8 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_HKey = HKEY_CURRENT_USER;  // Default
-		if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") != 0)
-		{
-			LogErrorF(this, L"RegHKey=%s is not valid", keyname);
-		}
+		m_HKey = HKEY_CURRENT_USER; // Default
+		LogErrorF(this, L"RegHKey=%s is not valid", keyname);
 	}
 
 	const WCHAR* type = parser.ReadString(section, L"OutputType", L"Value").c_str();
