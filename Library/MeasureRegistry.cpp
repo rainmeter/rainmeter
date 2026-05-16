@@ -89,20 +89,22 @@ void MeasureRegistry::UpdateValue()
 		}
 		else
 		{
-			const DWORD INCREMENT = 4096UL;
-			DWORD size = INCREMENT;
-			WCHAR* data = new WCHAR[size];
+			DWORD dataSize = 64;
+			WCHAR* data = new WCHAR[dataSize];
 			DWORD type = 0UL;
 
+			DWORD resultSize = dataSize;
 			DWORD dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-				(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+				(LPDWORD)&type, (LPBYTE)data, &resultSize);
 			while (dwRet == ERROR_MORE_DATA)
 			{
-				size += INCREMENT;
+				dataSize += 4096;
 				delete [] data;
-				data = new WCHAR[size];
+				data = new WCHAR[dataSize];
+
+				resultSize = dataSize;
 				dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-					(LPDWORD)&type, (LPBYTE)data, (LPDWORD)&size);
+					(LPDWORD)&type, (LPBYTE)data, &resultSize);
 			}
 
 			if (dwRet == ERROR_SUCCESS)
