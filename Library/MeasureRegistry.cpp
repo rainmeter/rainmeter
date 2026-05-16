@@ -31,8 +31,6 @@ MeasureRegistry::~MeasureRegistry()
 
 void MeasureRegistry::Dispose()
 {
-	m_StringValue.clear();
-
 	if (m_RegKey)
 	{
 		RegCloseKey(m_RegKey);
@@ -46,11 +44,11 @@ void MeasureRegistry::Dispose()
 */
 void MeasureRegistry::UpdateValue()
 {
+	m_Value = 0.0;
+	m_StringValue.clear();
+
 	if (m_RegKey != nullptr)
 	{
-		m_Value = 0.0;
-		m_StringValue.clear();
-
 		if (m_OutputType != OutputType::Value)
 		{
 			auto getList = [&](const DWORD objNum, const int objMaxSize, auto* func) -> void
