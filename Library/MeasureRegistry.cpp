@@ -9,13 +9,6 @@
 #include "MeasureRegistry.h"
 #include "Rainmeter.h"
 
-namespace {
-
-const int MAX_KEY_LENGTH = 255;
-const int MAX_VALUE_NAME = 16383;
-
-}  // namespace
-
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_OutputType(OutputType::Value),
 	m_RegKey(nullptr),
@@ -56,25 +49,22 @@ void MeasureRegistry::UpdateValue()
 	{
 		if (m_OutputType != OutputType::Value)
 		{
-			auto getList = [&](const DWORD objNum, const int objMaxSize, auto* func) -> void
+			auto getList = [&](const DWORD objNum, auto* func) -> void
 			{
-				WCHAR* objName = new WCHAR[objMaxSize];
-				DWORD objSize = 0UL;
-				for (DWORD i = 0UL; i < objNum; ++i)
+				for (DWORD i = 0; i < objNum; ++i)
 				{
-					objName[0] = L'\0';
-					objSize = objMaxSize;
-					if (func(m_RegKey, i, objName, &objSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
+					// See size limits: https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
+					WCHAR buffer[16383];
+					DWORD bufferSize = _countof(buffer);
+					if (func(m_RegKey, i, buffer, &bufferSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
 					{
-						m_StringValue += objName;
-						if (i < (objNum - 1UL))
+						m_StringValue.append(buffer, bufferSize);
+						if (i < (objNum - 1))
 						{
 							m_StringValue += m_OutputDelimiter;
 						}
 					}
 				}
-				delete [] objName;
-				objName = nullptr;
 			};
 
 			DWORD numSubKeys = 0UL;
@@ -84,11 +74,11 @@ void MeasureRegistry::UpdateValue()
 			{
 				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0UL)
 				{
-					getList(numSubKeys, MAX_KEY_LENGTH, RegEnumKeyEx);
+					getList(numSubKeys, RegEnumKeyEx);
 				}
 				else if (m_OutputType == OutputType::ValueList && numValues > 0UL)
 				{
-					getList(numValues, MAX_VALUE_NAME, RegEnumValue);
+					getList(numValues, RegEnumValue);
 				}
 			}
 		}
