@@ -84,28 +84,24 @@ void MeasureRegistry::UpdateValue()
 		}
 		else
 		{
-			// E.g. REG_SZ may not be null-terminated so always allocate extra space to ensure null-termination.
-			const DWORD nullTerminatorSize = 1;
-			DWORD dataSize = 64;
-			WCHAR* data = new WCHAR[dataSize + nullTerminatorSize];
+			DWORD dataSize = 128;
+			BYTE* data = new BYTE[dataSize];
 			DWORD type = 0UL;
 
 			DWORD resultSize = dataSize;
-			DWORD dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-				(LPDWORD)&type, (LPBYTE)data, &resultSize);
-			while (dwRet == ERROR_MORE_DATA)
+			DWORD result = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr, &type, data, &resultSize);
+			while (result == ERROR_MORE_DATA)
 			{
 				// Apparently `resultSize` may be erratic in case we are dealing with HKEY_PERFORMANCE_DATA.
-				dataSize = resultSize <= dataSize ? dataSize + 4096 : resultSize;
+				dataSize = resultSize <= dataSize ? dataSize + 1024 : resultSize;
 				delete [] data;
-				data = new WCHAR[dataSize + nullTerminatorSize];
+				data = new BYTE[dataSize];
 
 				resultSize = dataSize;
-				dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
-					(LPDWORD)&type, (LPBYTE)data, &resultSize);
+				result = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr, &type, data, &resultSize);
 			}
 
-			if (dwRet == ERROR_SUCCESS)
+			if (result == ERROR_SUCCESS)
 			{
 				switch (type)
 				{
@@ -115,32 +111,54 @@ void MeasureRegistry::UpdateValue()
 
 				case REG_SZ:
 				case REG_EXPAND_SZ:
-					data[resultSize] = L'\0';
-					m_Value = wcstod(data, nullptr);
-					m_StringValue = data;
-					break;
-
 				case REG_MULTI_SZ:
-				{
-					data[resultSize] = L'\0';
-					m_Value = wcstod(data, nullptr);
-
-					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
-					// separators from the BYTE array (returned from RegQueryValueEx) into a delimiter
-					const DWORD dwSize = resultSize / sizeof(WCHAR);
-					for (ULONG pos = 0UL; pos < (dwSize - 1UL); ++pos)
 					{
-						if (data[pos])
+						WCHAR* rawStringData = (WCHAR*)data;
+						DWORD rawStringLength = resultSize / sizeof(WCHAR);
+
+						// Exclude the possible null-terminator from the length.
+						if (rawStringData[rawStringLength - 1] == L'\0')
 						{
-							m_StringValue.append(1, data[pos]);
+							rawStringLength -= 1;
 						}
-						else
+
+						if (type == REG_SZ || type == REG_EXPAND_SZ)
 						{
-							m_StringValue.append(m_OutputDelimiter);  // Substitute null for delimiter
+							// Use assign with length in case the data is not null-terminated.
+							m_StringValue.assign(rawStringData, rawStringLength);
+							m_Value = wcstod(m_StringValue.c_str(), nullptr);
+						}
+						else if (type == REG_MULTI_SZ)
+						{
+							bool convertedToNumber = false;
+							m_StringValue.reserve(rawStringLength);
+							for (DWORD i = 0; i < rawStringLength; ++i)
+							{
+								if (rawStringData[i])
+								{
+									m_StringValue.append(1, rawStringData[i]);
+								}
+								else
+								{
+									if (!convertedToNumber)
+									{
+										// Convert the first string to a number.
+										m_Value = wcstod(m_StringValue.c_str(), nullptr);
+										convertedToNumber = true;
+									}
+
+									// Substitute null for delimiter
+									m_StringValue.append(m_OutputDelimiter);
+								}
+							}
+
+							if (!convertedToNumber)
+							{
+								m_Value = wcstod(m_StringValue.c_str(), nullptr);
+							}
 						}
 					}
-				}
-				break;
+					break;
 
 				case REG_QWORD:
 					m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
@@ -150,7 +168,7 @@ void MeasureRegistry::UpdateValue()
 					for (DWORD i = 0UL; i < resultSize; ++i)
 					{
 						WCHAR buffer[3];
-						_snwprintf_s(buffer, 3, L"%02X", ((LPBYTE)data)[i]);
+						_snwprintf_s(buffer, 3, L"%02X", data[i]);
 						m_StringValue.append(buffer);
 					}
 
