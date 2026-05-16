@@ -89,8 +89,10 @@ void MeasureRegistry::UpdateValue()
 		}
 		else
 		{
+			// E.g. REG_SZ may not be null-terminated so always allocate extra space to ensure null-termination.
+			const DWORD nullTerminatorSize = 1;
 			DWORD dataSize = 64;
-			WCHAR* data = new WCHAR[dataSize];
+			WCHAR* data = new WCHAR[dataSize + nullTerminatorSize];
 			DWORD type = 0UL;
 
 			DWORD resultSize = dataSize;
@@ -100,7 +102,7 @@ void MeasureRegistry::UpdateValue()
 			{
 				dataSize += 4096;
 				delete [] data;
-				data = new WCHAR[dataSize];
+				data = new WCHAR[dataSize + nullTerminatorSize];
 
 				resultSize = dataSize;
 				dwRet = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr,
@@ -117,12 +119,14 @@ void MeasureRegistry::UpdateValue()
 
 				case REG_SZ:
 				case REG_EXPAND_SZ:
+					data[resultSize] = L'\0';
 					m_Value = wcstod(data, nullptr);
 					m_StringValue = data;
 					break;
 
 				case REG_MULTI_SZ:
 				{
+					data[resultSize] = L'\0';
 					m_Value = wcstod(data, nullptr);
 
 					// |REG_MULTI_SZ| returns a sequence of null terminated strings, so convert the null
