@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     environment: signpath
-    runs-on: windows-2025
+    runs-on: windows-2022
     steps:
       - name: Install NSIS
         run: choco install nsis --version=3.12.0 --no-progress
