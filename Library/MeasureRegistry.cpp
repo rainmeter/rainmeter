@@ -47,7 +47,12 @@ void MeasureRegistry::UpdateValue()
 	m_Value = 0.0;
 	m_StringValue.clear();
 
-	if (m_RegKey != nullptr)
+	if (!m_RegKey)
+	{
+		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
+	}
+
+	if (m_RegKey)
 	{
 		if (m_OutputType != OutputType::Value)
 		{
@@ -165,17 +170,11 @@ void MeasureRegistry::UpdateValue()
 			else
 			{
 				Dispose();
-				RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 			}
 
 			delete [] data;
 			data = nullptr;
 		}
-	}
-	else
-	{
-		Dispose();
-		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
 	}
 }
 
