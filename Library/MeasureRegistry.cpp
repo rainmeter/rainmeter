@@ -100,7 +100,8 @@ void MeasureRegistry::UpdateValue()
 				(LPDWORD)&type, (LPBYTE)data, &resultSize);
 			while (dwRet == ERROR_MORE_DATA)
 			{
-				dataSize += 4096;
+				// Apparently `resultSize` may be erratic in case we are dealing with HKEY_PERFORMANCE_DATA.
+				dataSize = resultSize <= dataSize ? dataSize + 4096 : resultSize;
 				delete [] data;
 				data = new WCHAR[dataSize + nullTerminatorSize];
 
