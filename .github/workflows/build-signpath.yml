@@ -5,22 +5,49 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+.[0-9]+
 
+env:
+  BUILD_VERSION: ${{ github.ref_name }}
+
 jobs:
-  build:
-    environment: signpath
+  rainmeter:
+    strategy:
+      matrix:
+        arch: [32, 64]
+
     runs-on: windows-2022
     steps:
-      - name: Install NSIS
-        run: choco install nsis --version=3.12.0 --no-progress
-
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Build Rainmeter
-        run: cd Build && Build.bat release %GITHUB_REF_NAME:~1%
+      - name: Build ${{ matrix.arch }}-bit Rainmeter
+        run: cd Build && Build.bat rainmeter-${{ matrix.arch }} %BUILD_VERSION:~1%
         shell: cmd
 
-      - name: Upload build
+      - name: Upload ${{ matrix.arch }}-bit build
+        uses: actions/upload-artifact@v7
+        with:
+          name: x${{ matrix.arch }}-Release
+          path: |
+            x${{ matrix.arch }}-Release
+            !x${{ matrix.arch }}-Release/Obj
+          if-no-files-found: error
+
+  installer:
+    environment:
+      name: signpath
+      deployment: false
+    needs: rainmeter
+    runs-on: windows-2022
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Download 32-bit & 64-bit builds
+        uses: actions/download-artifact@v8
+        with:
+          pattern: x*-Release
+
+      - name: Upload combined build
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
@@ -28,8 +55,11 @@ jobs:
           path: |
             x32-Release
             x64-Release
-            !*-Release/Obj
           if-no-files-found: error
+
+      - name: Remove build directories
+        run: rm -rf {x32,x64}-Release
+        shell: bash
 
       - name: Sign Rainmeter
         uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
@@ -43,8 +73,11 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: .
 
+      - name: Install NSIS
+        run: choco install nsis --version=3.12.0 --no-progress
+
       - name: Build installer
-        run: cd Build && Build.bat installer %GITHUB_REF_NAME:~1%
+        run: cd Build && Build.bat installer %BUILD_VERSION:~1%
         shell: cmd
 
       - name: Upload installer

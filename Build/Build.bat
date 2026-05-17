@@ -4,30 +4,24 @@ setlocal EnableDelayedExpansion
 :: Parameters: type version
 ::
 :: Available build types:
-::		release    -> builds release installer
-::		pre        -> builds prerelease installer
-::		languages  -> no installer, updates the language .dll files
-::		installer  -> only installer
+::		full          -> build everything
+::		rainmeter-32  -> build 32-bit Rainmeter
+::		rainmeter-64  -> build 64-bit Rainmeter
+::		languages     -> build language .dll files for all targets
+::		installer     -> build installer
 
-if "%APPVEYOR%" == "" (
-	set BUILD_TYPE=%1
-	set VERSION=%2
-) else (
-	if "%APPVEYOR_REPO_TAG%" == "true" (
-		set BUILD_TYPE=release
-		set VERSION=%APPVEYOR_REPO_TAG_NAME:~1%
-	) else (
-		set BUILD_TYPE=pre
-		set VERSION=%APPVEYOR_BUILD_VERSION%
-	)
-)
+set BUILD_TYPE=%1
+set VERSION=%2
 
-if "%BUILD_TYPE%" == "release" goto BUILD_TYPE_OK
-if "%BUILD_TYPE%" == "pre" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "full" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "rainmeter-32" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "rainmeter-64" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "installer" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
+
+if "%VERSION%" == "" echo Invalid version & exit /b 1
 
 for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
 	set /A VERSION_MAJOR=%%a
@@ -39,19 +33,13 @@ for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
 set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
 set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 
+set BUILD_YEAR=%date:~-4%
+
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
 set VCVARSALL=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
-set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
-
 if not exist "%VCVARSALL%" set VCVARSALL=%VCVARSALL:Community\=Enterprise\%
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
-
-if not exist "%MAKENSIS%" set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
-if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit /b 1
-
-set BUILD_YEAR=%date:~-4%
-set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 :: Speed up build by bypassing VS telemetry
 set VSCMD_SKIP_SENDTELEMETRY=1
@@ -97,29 +85,26 @@ if not "%GITHUB_SHA%" == "" echo #define BUILD_HASH L"%GITHUB_SHA%">> "..\Versio
 	echo }
 )
 
-:: Build Library
+if "%BUILD_TYPE%" == "rainmeter-64" goto BUILD_RAINMETER_64
+
+:BUILD_RAINMETER_32
 echo * Building 32-bit projects
 %MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
+if "%BUILD_TYPE%" == "rainmeter-32" goto BUILD_LANGUAGES
+
+:BUILD_RAINMETER_64
 echo * Building 64-bit projects
 %MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
 
 :BUILD_LANGUAGES
 echo * Building languages
 
-:: Build all language libraries
->".\Installer\Languages.nsh" echo.
 for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	> "..\Language\Language.rc" echo #include "%%a.h"
 	>>"..\Language\Language.rc" echo #include "Resource.rc"
-	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
-	set "LANGDLL_PARAMS=!LANGDLL_PARAMS!'%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' "
-	set "LANGUAGE_IDS=!LANGUAGE_IDS!${LANG_%%b},"
-
 	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln || (echo   ERROR: Building language %%a failed & exit /b 1)
 )
->>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
->>".\Installer\Languages.nsh" echo ^^!define LANGUAGE_IDS "%LANGUAGE_IDS%"
 
 :: Restore English
 echo #include "English.h"> "..\Language\Language.rc"
@@ -131,14 +116,17 @@ if "%BUILD_TYPE%" == "languages" (
 	goto DONE
 )
 
-:: If we're in CI, the installer will be built separately
-if not "%CI%" == "" goto END
+if "%BUILD_TYPE%" == "rainmeter-32" goto DONE
+if "%BUILD_TYPE%" == "rainmeter-64" goto DONE
 
 :BUILD_INSTALLER
 echo * Building installer
 
+set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
+if not exist "%MAKENSIS%" set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
+if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & exit /b 1
+
 set INSTALLER_PATH=Rainmeter-%VERSION_FULL%.exe
-if "%BUILD_TYPE%" == "pre" set INSTALLER_PATH=Rainmeter-%VERSION_FULL%-prerelease.exe
 
 set INSTALLER_DEFINES=^
 	/DOUTFILE="%INSTALLER_PATH%"^
@@ -149,11 +137,17 @@ set INSTALLER_DEFINES=^
 	/DVERSION_MINOR="%VERSION_MINOR%"^
 	/DBUILD_YEAR="%BUILD_YEAR%"
 
+>".\Installer\Languages.nsh" echo.
+for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
+	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
+	set "LANGDLL_PARAMS=!LANGDLL_PARAMS!'%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' "
+	set "LANGUAGE_IDS=!LANGUAGE_IDS!${LANG_%%b},"
+)
+>>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
+>>".\Installer\Languages.nsh" echo ^^!define LANGUAGE_IDS "%LANGUAGE_IDS%"
+
 "%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
 
 :DONE
-if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
 echo.
 if "%CI%" == "" pause
-
-:END
