@@ -77,10 +77,10 @@ echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 	echo #define STRPRODUCTVER STRFILEVER
 	echo #define APPVERSION L"%VERSION_SHORT%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
-	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo #define STRCOPYRIGHT "%BUILD_YEAR% Rainmeter Team"
 	echo const int revision_number = %VERSION_REVISION%;
 )
+if not "%GITHUB_SHA%" == "" echo #define BUILD_HASH L"%GITHUB_SHA%">> "..\Version.h"
 
 :: Update Version.cs
 > "..\Version.cs" (

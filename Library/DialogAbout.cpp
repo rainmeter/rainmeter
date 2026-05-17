@@ -1689,7 +1689,7 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		CT_LABEL(Id_LanguageLabel, 0,
 			190, 21, 380, 9,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_TimestampLabel, 0,
+		CT_LABEL(Id_HashLabel, 0,
 			190, 34, 380, 9,
 			WS_VISIBLE, 0),
 
@@ -1753,8 +1753,8 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_LanguageLabel);
 	SetWindowText(item, tmpSz);
 
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
-	item = GetControl(Id_TimestampLabel);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: %s", GetRainmeter().GetBuildHash().c_str());
+	item = GetControl(Id_HashLabel);
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
@@ -1820,13 +1820,13 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len =_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\n",
+				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild hash: %s\n",
 				APPVERSION,
 				revision_number,
 				APPBITS,
 				lang,
 				lcid,
-				GetRainmeter().GetBuildTime().c_str());
+				GetRainmeter().GetBuildHash().c_str());
 
 			std::wstring text(tmpSz, len);
 
