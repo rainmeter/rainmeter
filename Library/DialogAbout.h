@@ -144,7 +144,7 @@ private:
 			Id_AppIcon = 400,
 			Id_VersionLabel,
 			Id_LanguageLabel,
-			Id_TimestampLabel,
+			Id_HashLabel,
 			Id_HomeLink,
 			Id_LicenseLink,
 			Id_WinVerLabel,

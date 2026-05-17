@@ -186,7 +186,7 @@ public:
 
 	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
-	const std::wstring& GetBuildTime() { return m_BuildTime; }
+	const std::wstring& GetBuildHash() { return m_BuildHash; }
 
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
@@ -292,7 +292,7 @@ private:
 
 	GlobalOptions m_GlobalOptions;
 
-	std::wstring m_BuildTime;
+	std::wstring m_BuildHash;
 };
 
 // Convenience function.
