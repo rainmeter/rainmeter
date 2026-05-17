@@ -7,6 +7,8 @@
 
 #include "StdAfx.h"
 #include "MeasurePower.h"
+#include "ConfigParser.h"
+#include "Rainmeter.h"
 
 #include <Powrprof.h>
 #include <time.h>
