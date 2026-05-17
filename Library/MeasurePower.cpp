@@ -12,19 +12,10 @@
 #include <time.h>
 #include <errno.h>
 #include <crtdbg.h>
+#include <memory>
 
 namespace
 {
-	typedef struct _PROCESSOR_POWER_INFORMATION
-	{
-		ULONG Number;
-		ULONG MaxMhz;
-		ULONG CurrentMhz;
-		ULONG MhzLimit;
-		ULONG MaxIdleState;
-		ULONG CurrentIdleState;
-	} PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
-
 	constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 	UINT g_NumOfProcessors = 0U;
 
