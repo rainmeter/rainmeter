@@ -35,7 +35,7 @@ namespace TagLib {
 
     class File;
 
-    static const uint HeaderSize = 8*7;
+    static const unsigned int HeaderSize = 8 * 7;
 
     //! An implementation of audio property reading for MPC
 
@@ -66,19 +66,55 @@ namespace TagLib {
        */
       virtual ~Properties();
 
-      // Reimplementations.
+      /*!
+       * Returns the length of the file in seconds.  The length is rounded down to
+       * the nearest whole second.
+       *
+       * \note This method is just an alias of lengthInSeconds().
+       *
+       * \deprecated Use lengthInSeconds().
+       */
+      TAGLIB_DEPRECATED virtual int length() const;
 
-      virtual int length() const;
+      /*!
+       * Returns the length of the file in seconds.  The length is rounded down to
+       * the nearest whole second.
+       *
+       * \see lengthInMilliseconds()
+       */
+      // BIC: make virtual
+      int lengthInSeconds() const;
+
+      /*!
+       * Returns the length of the file in milliseconds.
+       *
+       * \see lengthInSeconds()
+       */
+      // BIC: make virtual
+      int lengthInMilliseconds() const;
+
+      /*!
+       * Returns the average bit rate of the file in kb/s.
+       */
       virtual int bitrate() const;
+
+      /*!
+       * Returns the sample rate in Hz.
+       */
       virtual int sampleRate() const;
+
+      /*!
+       * Returns the number of audio channels.
+       */
       virtual int channels() const;
 
       /*!
        * Returns the version of the bitstream (SV4-SV8)
        */
       int mpcVersion() const;
-      uint totalFrames() const;
-      uint sampleFrames() const;
+
+      unsigned int totalFrames() const;
+      unsigned int sampleFrames() const;
 
       /*!
       * Returns the track gain as an integer value,
@@ -110,13 +146,13 @@ namespace TagLib {
       Properties(const Properties &);
       Properties &operator=(const Properties &);
 
-      void readSV7(const ByteVector &data);
-      void readSV8(File *file);
+      void readSV7(const ByteVector &data, long streamLength);
+      void readSV8(File *file, long streamLength);
 
       class PropertiesPrivate;
       PropertiesPrivate *d;
     };
-  }
-}
+  }  // namespace MPC
+}  // namespace TagLib
 
 #endif

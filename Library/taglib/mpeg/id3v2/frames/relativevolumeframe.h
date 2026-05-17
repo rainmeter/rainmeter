@@ -131,16 +131,16 @@ namespace TagLib {
       /*!
        * \deprecated Always returns master volume.
        */
-      ChannelType channelType() const;
+      TAGLIB_DEPRECATED ChannelType channelType() const;
 
       /*!
        * \deprecated This method no longer has any effect.
        */
-      void setChannelType(ChannelType t);
+      TAGLIB_DEPRECATED void setChannelType(ChannelType t);
 
       /*
        * There was a terrible API goof here, and while this can't be changed to
-       * the way it appears below for binary compaibility reasons, let's at
+       * the way it appears below for binary compatibility reasons, let's at
        * least pretend that it looks clean.
        */
 
@@ -149,25 +149,25 @@ namespace TagLib {
       /*!
        * Returns the relative volume adjustment "index".  As indicated by the
        * ID3v2 standard this is a 16-bit signed integer that reflects the
-       * decibils of adjustment when divided by 512.
+       * decibels of adjustment when divided by 512.
        *
        * This defaults to returning the value for the master volume channel if
        * available and returns 0 if the specified channel does not exist.
        *
        * \see setVolumeAdjustmentIndex()
-       * \see volumeAjustment()
+       * \see volumeAdjustment()
        */
       short volumeAdjustmentIndex(ChannelType type = MasterVolume) const;
 
       /*!
        * Set the volume adjustment to \a index.  As indicated by the ID3v2
-       * standard this is a 16-bit signed integer that reflects the decibils of
+       * standard this is a 16-bit signed integer that reflects the decibels of
        * adjustment when divided by 512.
        *
        * By default this sets the value for the master volume.
        *
        * \see volumeAdjustmentIndex()
-       * \see setVolumeAjustment()
+       * \see setVolumeAdjustment()
        */
       void setVolumeAdjustmentIndex(short index, ChannelType type = MasterVolume);
 
@@ -269,6 +269,6 @@ namespace TagLib {
       RelativeVolumeFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

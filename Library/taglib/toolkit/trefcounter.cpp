@@ -29,20 +29,10 @@
 
 #include "trefcounter.h"
 
-#if defined(HAVE_STD_ATOMIC)
-# include <atomic>
-# define ATOMIC_INT std::atomic<unsigned int>
-# define ATOMIC_INC(x) x.fetch_add(1)
-# define ATOMIC_DEC(x) (x.fetch_sub(1) - 1)
-#elif defined(HAVE_BOOST_ATOMIC)
-# include <boost/atomic.hpp>
-# define ATOMIC_INT boost::atomic<unsigned int>
-# define ATOMIC_INC(x) x.fetch_add(1)
-# define ATOMIC_DEC(x) (x.fetch_sub(1) - 1)
-#elif defined(HAVE_GCC_ATOMIC)
+#if defined(HAVE_GCC_ATOMIC)
 # define ATOMIC_INT int
-# define ATOMIC_INC(x) __sync_add_and_fetch(&x, 1)
-# define ATOMIC_DEC(x) __sync_sub_and_fetch(&x, 1)
+# define ATOMIC_INC(x) __sync_add_and_fetch(&(x), 1)
+# define ATOMIC_DEC(x) __sync_sub_and_fetch(&(x), 1)
 #elif defined(HAVE_WIN_ATOMIC)
 # if !defined(NOMINMAX)
 #   define NOMINMAX
@@ -69,20 +59,18 @@
 
 namespace TagLib
 {
+
   class RefCounter::RefCounterPrivate
   {
   public:
-    RefCounterPrivate() : refCount(1) {}
-
-    void ref() { ATOMIC_INC(refCount); }
-    bool deref() { return (ATOMIC_DEC(refCount) == 0); }
-    int count() const { return refCount; }
+    RefCounterPrivate() :
+      refCount(1) {}
 
     volatile ATOMIC_INT refCount;
   };
 
-  RefCounter::RefCounter()
-    : d(new RefCounterPrivate())
+  RefCounter::RefCounter() :
+    d(new RefCounterPrivate())
   {
   }
 
@@ -91,18 +79,18 @@ namespace TagLib
     delete d;
   }
 
-  void RefCounter::ref() 
-  { 
-    d->ref(); 
+  void RefCounter::ref()
+  {
+    ATOMIC_INC(d->refCount);
   }
 
-  bool RefCounter::deref() 
-  { 
-    return d->deref(); 
+  bool RefCounter::deref()
+  {
+    return (ATOMIC_DEC(d->refCount) == 0);
   }
 
-  int RefCounter::count() const 
-  { 
-    return d->count(); 
+  int RefCounter::count() const
+  {
+    return static_cast<int>(d->refCount);
   }
-}
+}  // namespace TagLib

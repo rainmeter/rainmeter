@@ -94,21 +94,21 @@ namespace TagLib {
        * \see pricePaid()
        */
       void setPricePaid(const String &pricePaid);
-      
+
       /*!
        * Returns the seller.
        *
        * \see setSeller()
        */
       String seller() const;
-      
+
       /*!
        * Set the seller.
        *
        * \see seller()
        */
       void setSeller(const String &seller);
-      
+
       /*!
        * Returns the text encoding that will be used in rendering this frame.
        * This defaults to the type that was either specified in the constructor
@@ -118,7 +118,7 @@ namespace TagLib {
        * \see render()
        */
       String::Type textEncoding() const;
-      
+
       /*!
        * Sets the text encoding to be used when rendering this frame to
        * \a encoding.
@@ -146,6 +146,6 @@ namespace TagLib {
       OwnershipFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

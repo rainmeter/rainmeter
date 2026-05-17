@@ -86,6 +86,6 @@ namespace TagLib {
     ByteVectorListPrivate *d;
   };
 
-}
+}  // namespace TagLib
 
 #endif

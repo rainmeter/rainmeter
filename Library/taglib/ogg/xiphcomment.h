@@ -32,7 +32,13 @@
 #include "tstring.h"
 #include "tstringlist.h"
 #include "tbytevector.h"
+#include "flacpicture.h"
 #include "taglib_export.h"
+
+#ifdef _MSC_VER
+// Explained at end of tpropertymap.cpp
+extern template class TAGLIB_EXPORT TagLib::Map<TagLib::String, TagLib::StringList>;
+#endif
 
 namespace TagLib {
 
@@ -84,23 +90,23 @@ namespace TagLib {
       virtual String album() const;
       virtual String comment() const;
       virtual String genre() const;
-      virtual uint year() const;
-      virtual uint track() const;
+      virtual unsigned int year() const;
+      virtual unsigned int track() const;
 
       virtual void setTitle(const String &s);
       virtual void setArtist(const String &s);
       virtual void setAlbum(const String &s);
       virtual void setComment(const String &s);
       virtual void setGenre(const String &s);
-      virtual void setYear(uint i);
-      virtual void setTrack(uint i);
+      virtual void setYear(unsigned int i);
+      virtual void setTrack(unsigned int i);
 
       virtual bool isEmpty() const;
 
       /*!
        * Returns the number of fields present in the comment.
        */
-      uint fieldCount() const;
+      unsigned int fieldCount() const;
 
       /*!
        * Returns a reference to the map of field lists.  Because Xiph comments
@@ -181,8 +187,32 @@ namespace TagLib {
       /*!
        * Remove the field specified by \a key with the data \a value.  If
        * \a value is null, all of the fields with the given key will be removed.
+       *
+       * \deprecated Using this method may lead to a linkage error.
        */
-      void removeField(const String &key, const String &value = String::null);
+      // BIC: remove and merge with below
+      TAGLIB_DEPRECATED void removeField(const String &key, const String &value = String());
+
+      /*!
+       * Remove all the fields specified by \a key.
+       *
+       * \see removeAllFields()
+       */
+      void removeFields(const String &key);
+
+      /*!
+       * Remove all the fields specified by \a key with the data \a value.
+       *
+       * \see removeAllFields()
+       */
+      void removeFields(const String &key, const String &value);
+
+      /*!
+       * Remove all the fields in the comment.
+       *
+       * \see removeFields()
+       */
+      void removeAllFields();
 
       /*!
        * Returns true if the field is contained within the comment.
@@ -205,6 +235,31 @@ namespace TagLib {
        */
       ByteVector render(bool addFramingBit) const;
 
+
+      /*!
+       * Returns a list of pictures attached to the xiph comment.
+       */
+      List<FLAC::Picture *> pictureList();
+
+      /*!
+       * Removes an picture. If \a del is true the picture's memory
+       * will be freed; if it is false, it must be deleted by the user.
+       */
+      void removePicture(FLAC::Picture *picture, bool del = true);
+
+      /*!
+       * Remove all pictures.
+       */
+      void removeAllPictures();
+
+      /*!
+       * Add a new picture to the comment block. The comment block takes ownership of the
+       * picture and will handle freeing its memory.
+       *
+       * \note The file will be saved only after calling save().
+       */
+      void addPicture(FLAC::Picture *picture);
+
     protected:
       /*!
        * Reads the tag from the file specified in the constructor and fills the
@@ -219,7 +274,7 @@ namespace TagLib {
       class XiphCommentPrivate;
       XiphCommentPrivate *d;
     };
-  }
-}
+  }  // namespace Ogg
+}  // namespace TagLib
 
 #endif

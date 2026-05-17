@@ -104,7 +104,7 @@ namespace TagLib {
       /*!
        * Sets the description of the unsynchronized lyrics frame to \a s.
        *
-       * \see decription()
+       * \see description()
        */
       void setDescription(const String &s);
 
@@ -149,7 +149,7 @@ namespace TagLib {
 
       /*!
        * LyricsFrames each have a unique description.  This searches for a lyrics
-       * frame with the decription \a d and returns a pointer to it.  If no
+       * frame with the description \a d and returns a pointer to it.  If no
        * frame is found that matches the given description null is returned.
        *
        * \see description()
@@ -174,6 +174,6 @@ namespace TagLib {
       UnsynchronizedLyricsFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

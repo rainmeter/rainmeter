@@ -29,10 +29,10 @@
 #include "taglib_config.h"
 
 #define TAGLIB_MAJOR_VERSION 1
-#define TAGLIB_MINOR_VERSION 9
+#define TAGLIB_MINOR_VERSION 13
 #define TAGLIB_PATCH_VERSION 1
 
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 1))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 1)) || defined(__clang__)
 #define TAGLIB_IGNORE_MISSING_DESTRUCTOR _Pragma("GCC diagnostic ignored \"-Wnon-virtual-dtor\"")
 #else
 #define TAGLIB_IGNORE_MISSING_DESTRUCTOR
@@ -42,6 +42,16 @@
 #define TAGLIB_CONSTRUCT_BITSET(x) static_cast<unsigned long long>(x)
 #else
 #define TAGLIB_CONSTRUCT_BITSET(x) static_cast<unsigned long>(x)
+#endif
+
+#if __cplusplus >= 201402
+#define TAGLIB_DEPRECATED [[deprecated]]
+#elif defined(__GNUC__) || defined(__clang__)
+#define TAGLIB_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define TAGLIB_DEPRECATED __declspec(deprecated)
+#else
+#define TAGLIB_DEPRECATED
 #endif
 
 #include <string>
@@ -60,21 +70,21 @@ namespace TagLib {
 
   class String;
 
+  // These integer types are deprecated. Do not use them.
+
   typedef wchar_t            wchar;   // Assumed to be sufficient to store a UTF-16 char.
   typedef unsigned char      uchar;
   typedef unsigned short     ushort;
   typedef unsigned int       uint;
+  typedef unsigned long      ulong;
   typedef unsigned long long ulonglong;
-
-  // long/ulong can be either 32-bit or 64-bit wide.
-  typedef unsigned long  ulong;
 
   /*!
    * Unfortunately std::wstring isn't defined on some systems, (i.e. GCC < 3)
    * so I'm providing something here that should be constant.
    */
-  typedef std::basic_string<wchar> wstring;
-}
+  typedef std::basic_string<wchar_t> wstring;
+}  // namespace TagLib
 
 /*!
  * \mainpage TagLib
@@ -94,7 +104,7 @@ namespace TagLib {
  * - Full support for unicode and internationalized tags.
  * - Dual <a href="http://www.mozilla.org/MPL/MPL-1.1.html">MPL</a> and
  *   <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">LGPL</a> licenses.
- * - No external toolkit dependancies.
+ * - No external toolkit dependencies.
  *
  * \section why Why TagLib?
  *
@@ -115,7 +125,7 @@ namespace TagLib {
  *
  * \section installing Installing TagLib
  *
- * Please see the <a href="http://developer.kde.org/~wheeler/taglib.html">TagLib website</a> for the latest
+ * Please see the <a href="http://taglib.org/">TagLib website</a> for the latest
  * downloads.
  *
  * TagLib can be built using the CMake build system. TagLib installs a taglib-config and pkg-config file to
@@ -160,11 +170,10 @@ namespace TagLib {
  *
  * Questions about TagLib should be directed to the TagLib mailing list, not directly to the author.
  *
- *  - <a href="http://developer.kde.org/~wheeler/taglib/">TagLib Homepage</a>
+ *  - <a href="http://taglib.org/">TagLib Homepage</a>
  *  - <a href="https://mail.kde.org/mailman/listinfo/taglib-devel">TagLib Mailing List (taglib-devel@kde.org)</a>
  *
- * \author Scott Wheeler <wheeler@kde.org> et al.
- *
+ * \author <a href="https://github.com/taglib/taglib/blob/master/AUTHORS">TagLib authors</a>.
  */
 
 #endif

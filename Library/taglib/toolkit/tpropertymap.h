@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,15 +15,24 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,            *
- *   MA  02110-1301  USA                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#ifndef PROPERTYMAP_H_
-#define PROPERTYMAP_H_
+#ifndef TAGLIB_PROPERTYMAP_H_
+#define TAGLIB_PROPERTYMAP_H_
 
 #include "tmap.h"
 #include "tstringlist.h"
+
+#ifdef _MSC_VER
+// Explained at end of tpropertymap.cpp
+extern template class TAGLIB_EXPORT TagLib::Map<TagLib::String, TagLib::StringList>;
+#endif
 
 namespace TagLib {
 
@@ -34,13 +43,13 @@ namespace TagLib {
   /*!
    * This map implements a generic representation of textual audio metadata
    * ("tags") realized as pairs of a case-insensitive key
-   * and a nonempty list of corresponding values, each value being an an arbitrary
+   * and a nonempty list of corresponding values, each value being an arbitrary
    * unicode String.
    *
    * Note that most metadata formats pose additional conditions on the tag keys. The
    * most popular ones (Vorbis, APE, ID3v2) should support all ASCII only words of
    * length between 2 and 16.
-   * 
+   *
    * This class can contain any tags, but here is a list of "well-known" tags that
    * you might want to use:
    *
@@ -64,6 +73,7 @@ namespace TagLib {
    *  - ALBUMSORT
    *  - ARTISTSORT
    *  - ALBUMARTISTSORT
+   *  - COMPOSERSORT
    *
    * Credits:
    *
@@ -71,7 +81,7 @@ namespace TagLib {
    *  - LYRICIST
    *  - CONDUCTOR
    *  - REMIXER
-   *  - PERFORMER:<XXXX>
+   *  - PERFORMER:\<XXXX>
    *
    * Other tags:
    *
@@ -81,17 +91,21 @@ namespace TagLib {
    *  - COPYRIGHT
    *  - ENCODEDBY
    *  - MOOD
-   *  - COMMENT 
+   *  - COMMENT
    *  - MEDIA
    *  - LABEL
    *  - CATALOGNUMBER
    *  - BARCODE
+   *  - RELEASECOUNTRY
+   *  - RELEASESTATUS
+   *  - RELEASETYPE
    *
    * MusicBrainz identifiers:
-   * 
+   *
    *  - MUSICBRAINZ_TRACKID
    *  - MUSICBRAINZ_ALBUMID
    *  - MUSICBRAINZ_RELEASEGROUPID
+   *  - MUSICBRAINZ_RELEASETRACKID
    *  - MUSICBRAINZ_WORKID
    *  - MUSICBRAINZ_ARTISTID
    *  - MUSICBRAINZ_ALBUMARTISTID
@@ -123,7 +137,7 @@ namespace TagLib {
 
     /*!
      * Inserts \a values under \a key in the map.  If \a key already exists,
-     * then \values will be appended to the existing StringList.
+     * then \a values will be appended to the existing StringList.
      * The returned value indicates success, i.e. whether \a key is a
      * valid key.
      */
@@ -178,6 +192,15 @@ namespace TagLib {
     PropertyMap &merge(const PropertyMap &other);
 
     /*!
+     * Returns the value associated with \a key.
+     *
+     * If the map does not contain \a key, it returns defaultValue.
+     * If no defaultValue is specified, it returns an empty string list.
+     */
+    StringList value(const String &key,
+                           const StringList &defaultValue = StringList()) const;
+
+    /*!
      * Returns a reference to the value associated with \a key.
      *
      * \note: If \a key is not contained in the map, an empty
@@ -195,12 +218,12 @@ namespace TagLib {
     StringList &operator[](const String &key);
 
     /*!
-     * Returns true if and only if \other has the same contents as this map.
+     * Returns true if and only if \a other has the same contents as this map.
      */
     bool operator==(const PropertyMap &other) const;
 
     /*!
-     * Returns false if and only \other has the same contents as this map.
+     * Returns false if and only \a other has the same contents as this map.
      */
     bool operator!=(const PropertyMap &other) const;
 
@@ -229,5 +252,5 @@ namespace TagLib {
     StringList unsupported;
   };
 
-}
-#endif /* PROPERTYMAP_H_ */
+}  // namespace TagLib
+#endif /* TAGLIB_PROPERTYMAP_H_ */

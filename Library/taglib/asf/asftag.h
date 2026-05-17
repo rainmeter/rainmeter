@@ -90,13 +90,13 @@ namespace TagLib {
       /*!
        * Returns the year; if there is no year set, this will return 0.
        */
-      virtual uint year() const;
+      virtual unsigned int year() const;
 
       /*!
        * Returns the track number; if there is no track number set, this will
        * return 0.
        */
-      virtual uint track() const;
+      virtual unsigned int track() const;
 
       /*!
        * Sets the title to \a s.
@@ -137,12 +137,12 @@ namespace TagLib {
       /*!
        * Sets the year to \a i.  If \a s is 0 then this value will be cleared.
        */
-      virtual void setYear(uint i);
+      virtual void setYear(unsigned int i);
 
       /*!
        * Sets the track to \a i.  If \a s is 0 then this value will be cleared.
        */
-      virtual void setTrack(uint i);
+      virtual void setTrack(unsigned int i);
 
       /*!
        * Returns true if the tag does not contain any data.  This should be
@@ -152,12 +152,22 @@ namespace TagLib {
       virtual bool isEmpty() const;
 
       /*!
-       * Returns a reference to the item list map.  This is an AttributeListMap of
-       * all of the items in the tag.
-       *
-       * This is the most powerfull structure for accessing the items of the tag.
+       * \deprecated Use attributeListMap() const, contains(), removeItem(),
+       * attribute(), setAttribute(), addAttribute().
        */
       AttributeListMap &attributeListMap();
+
+      /*!
+       * Returns a reference to the item list map.  This is an AttributeListMap of
+       * all of the items in the tag.
+       */
+      // BIC: return by value
+      const AttributeListMap &attributeListMap() const;
+
+      /*!
+       * \return True if a value for \a attribute is currently set.
+       */
+      bool contains(const String &name) const;
 
       /*!
        * Removes the \a key attribute from the tag
@@ -165,10 +175,21 @@ namespace TagLib {
       void removeItem(const String &name);
 
       /*!
+       * \return The list of values for the key \a name, or an empty list if no
+       * values have been set.
+       */
+      AttributeList attribute(const String &name) const;
+
+      /*!
        * Sets the \a key attribute to the value of \a attribute. If an attribute
        * with the \a key is already present, it will be replaced.
        */
       void setAttribute(const String &name, const Attribute &attribute);
+
+      /*!
+       * Sets multiple \a values to the key \a name.
+       */
+      void setAttribute(const String &name, const AttributeList &values);
 
       /*!
        * Sets the \a key attribute to the value of \a attribute. If an attribute
@@ -185,6 +206,6 @@ namespace TagLib {
       class TagPrivate;
       TagPrivate *d;
     };
-  }
-}
+  }  // namespace ASF
+}  // namespace TagLib
 #endif

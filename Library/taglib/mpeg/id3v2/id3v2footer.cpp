@@ -31,30 +31,27 @@ using namespace ID3v2;
 
 class Footer::FooterPrivate
 {
-public:
-  static const uint size = 10;
 };
 
-Footer::Footer()
+Footer::Footer() :
+  d(0)
 {
-
 }
 
 Footer::~Footer()
 {
-
 }
 
-TagLib::uint Footer::size()
+unsigned int Footer::size()
 {
-  return FooterPrivate::size;
+  return 10;
 }
 
 ByteVector Footer::render(const Header *header) const
 {
-    ByteVector headerData = header->render();
-    headerData[0] = '3';
-    headerData[1] = 'D';
-    headerData[2] = 'I';
-    return headerData;
+  ByteVector headerData = header->render();
+  headerData[0] = '3';
+  headerData[1] = 'D';
+  headerData[2] = 'I';
+  return headerData;
 }

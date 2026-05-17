@@ -224,7 +224,7 @@ namespace TagLib {
       AttachedPictureFrameV22(const ByteVector &data, Header *h);
       friend class FrameFactory;
     };
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 
 #endif

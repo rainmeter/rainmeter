@@ -38,7 +38,7 @@ namespace TagLib {
   //! A list of strings
 
   /*!
-   * This is a spcialization of the List class with some members convention for
+   * This is a specialization of the List class with some members convention for
    * string operations.
    */
 
@@ -104,12 +104,12 @@ namespace TagLib {
     StringListPrivate *d;
   };
 
-}
+}  // namespace TagLib
 
 /*!
  * \related TagLib::StringList
  * Send the StringList to an output stream.
  */
-std::ostream &operator<<(std::ostream &s, const TagLib::StringList &l);
+std::ostream TAGLIB_EXPORT &operator<<(std::ostream &s, const TagLib::StringList &l);
 
 #endif

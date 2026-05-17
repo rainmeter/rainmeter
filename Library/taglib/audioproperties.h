@@ -34,7 +34,7 @@ namespace TagLib {
 
   /*!
    * The values here are common to most audio formats.  For more specific, codec
-   * dependant values, please see see the subclasses APIs.  This is meant to
+   * dependent values, please see see the subclasses APIs.  This is meant to
    * compliment the TagLib::File and TagLib::Tag APIs in providing a simple
    * interface that is sufficient for most applications.
    */
@@ -68,6 +68,23 @@ namespace TagLib {
      * Returns the length of the file in seconds.
      */
     virtual int length() const = 0;
+
+    /*!
+     * Returns the length of the file in seconds.  The length is rounded down to
+     * the nearest whole second.
+     *
+     * \see lengthInMilliseconds()
+     */
+    // BIC: make virtual
+    int lengthInSeconds() const;
+
+    /*!
+     * Returns the length of the file in milliseconds.
+     *
+     * \see lengthInSeconds()
+     */
+    // BIC: make virtual
+    int lengthInMilliseconds() const;
 
     /*!
      * Returns the most appropriate bit rate for the file in kb/s.  For constant
@@ -105,6 +122,6 @@ namespace TagLib {
     AudioPropertiesPrivate *d;
   };
 
-}
+}  // namespace TagLib
 
 #endif

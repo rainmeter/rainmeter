@@ -89,9 +89,9 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
-List<T>::List()
+List<T>::List() :
+  d(new ListPrivate<T>())
 {
-  d = new ListPrivate<T>;
 }
 
 template <class T>
@@ -194,9 +194,9 @@ List<T> &List<T>::clear()
 }
 
 template <class T>
-TagLib::uint List<T>::size() const
+unsigned int List<T>::size() const
 {
-  return d->list.size();
+  return static_cast<unsigned int>(d->list.size());
 }
 
 template <class T>
@@ -208,6 +208,7 @@ bool List<T>::isEmpty() const
 template <class T>
 typename List<T>::Iterator List<T>::find(const T &value)
 {
+  detach();
   return std::find(d->list.begin(), d->list.end(), value);
 }
 
@@ -262,23 +263,19 @@ T &List<T>::back()
 }
 
 template <class T>
-T &List<T>::operator[](uint i)
+T &List<T>::operator[](unsigned int i)
 {
   Iterator it = d->list.begin();
-
-  for(uint j = 0; j < i; j++)
-    ++it;
+  std::advance(it, i);
 
   return *it;
 }
 
 template <class T>
-const T &List<T>::operator[](uint i) const
+const T &List<T>::operator[](unsigned int i) const
 {
   ConstIterator it = d->list.begin();
-
-  for(uint j = 0; j < i; j++)
-    ++it;
+  std::advance(it, i);
 
   return *it;
 }
@@ -286,14 +283,16 @@ const T &List<T>::operator[](uint i) const
 template <class T>
 List<T> &List<T>::operator=(const List<T> &l)
 {
-  if(&l == this)
-    return *this;
-
-  if(d->deref())
-    delete d;
-  d = l.d;
-  d->ref();
+  List<T>(l).swap(*this);
   return *this;
+}
+
+template <class T>
+void List<T>::swap(List<T> &l)
+{
+  using std::swap;
+
+  swap(d, l.d);
 }
 
 template <class T>

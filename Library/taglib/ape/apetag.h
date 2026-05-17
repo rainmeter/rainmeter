@@ -92,16 +92,16 @@ namespace TagLib {
       virtual String album() const;
       virtual String comment() const;
       virtual String genre() const;
-      virtual uint year() const;
-      virtual uint track() const;
+      virtual unsigned int year() const;
+      virtual unsigned int track() const;
 
       virtual void setTitle(const String &s);
       virtual void setArtist(const String &s);
       virtual void setAlbum(const String &s);
       virtual void setComment(const String &s);
       virtual void setGenre(const String &s);
-      virtual void setYear(uint i);
-      virtual void setTrack(uint i);
+      virtual void setYear(unsigned int i);
+      virtual void setTrack(unsigned int i);
 
       /*!
        * Implements the unified tag dictionary interface -- export function.
@@ -143,7 +143,7 @@ namespace TagLib {
        * Returns a reference to the item list map.  This is an ItemListMap of
        * all of the items in the tag.
        *
-       * This is the most powerfull structure for accessing the items of the tag.
+       * This is the most powerful structure for accessing the items of the tag.
        *
        * APE tags are case-insensitive, all keys in this map have been converted
        * to upper case.
@@ -202,7 +202,7 @@ namespace TagLib {
       class TagPrivate;
       TagPrivate *d;
     };
-  }
-}
+  }  // namespace APE
+}  // namespace TagLib
 
 #endif

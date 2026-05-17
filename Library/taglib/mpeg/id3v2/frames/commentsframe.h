@@ -36,7 +36,7 @@ namespace TagLib {
     //! An implementation of ID3v2 comments
 
     /*!
-     * This implements the ID3v2 comment format.  An ID3v2 comment concists of
+     * This implements the ID3v2 comment format.  An ID3v2 comment consists of
      * a language encoding, a description and a single text field.
      */
 
@@ -106,7 +106,7 @@ namespace TagLib {
       /*!
        * Sets the description of the comment to \a s.
        *
-       * \see decription()
+       * \see description()
        */
       void setDescription(const String &s);
 
@@ -149,7 +149,7 @@ namespace TagLib {
 
       /*!
        * Comments each have a unique description.  This searches for a comment
-       * frame with the decription \a d and returns a pointer to it.  If no
+       * frame with the description \a d and returns a pointer to it.  If no
        * frame is found that matches the given description null is returned.
        *
        * \see description()
@@ -174,6 +174,6 @@ namespace TagLib {
       CommentsFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

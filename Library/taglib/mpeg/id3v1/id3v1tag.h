@@ -85,7 +85,7 @@ namespace TagLib {
     //! The main class in the ID3v1 implementation
 
     /*!
-     * This is an implementation of the ID3v1 format.  ID3v1 is both the simplist
+     * This is an implementation of the ID3v1 format.  ID3v1 is both the simplest
      * and most common of tag formats but is rather limited.  Because of its
      * pervasiveness and the way that applications have been written around the
      * fields that it provides, the generic TagLib::Tag API is a mirror of what is
@@ -140,31 +140,31 @@ namespace TagLib {
       virtual String album() const;
       virtual String comment() const;
       virtual String genre() const;
-      virtual TagLib::uint year() const;
-      virtual TagLib::uint track() const;
+      virtual unsigned int year() const;
+      virtual unsigned int track() const;
 
       virtual void setTitle(const String &s);
       virtual void setArtist(const String &s);
       virtual void setAlbum(const String &s);
       virtual void setComment(const String &s);
       virtual void setGenre(const String &s);
-      virtual void setYear(TagLib::uint i);
-      virtual void setTrack(TagLib::uint i);
+      virtual void setYear(unsigned int i);
+      virtual void setTrack(unsigned int i);
 
       /*!
        * Returns the genre in number.
        *
-       * /note Normally 255 indicates that this tag contains no genre.
+       * \note Normally 255 indicates that this tag contains no genre.
        */
-      TagLib::uint genreNumber() const;
+      unsigned int genreNumber() const;
 
       /*!
        * Sets the genre in number to \a i.
        *
-       * /note Valid value is from 0 up to 255. Normally 255 indicates that
+       * \note Valid value is from 0 up to 255. Normally 255 indicates that
        * this tag contains no genre.
        */
-      void setGenreNumber(TagLib::uint i);
+      void setGenreNumber(unsigned int i);
 
       /*!
        * Sets the string handler that decides how the ID3v1 data will be
@@ -196,7 +196,7 @@ namespace TagLib {
       class TagPrivate;
       TagPrivate *d;
     };
-  }
-}
+  }  // namespace ID3v1
+}  // namespace TagLib
 
 #endif

@@ -25,10 +25,12 @@
 
 #include <taglib.h>
 #include <tdebug.h>
-#include "trefcounter.h"
+#include <trefcounter.h>
+
 #include "asfattribute.h"
 #include "asffile.h"
 #include "asfpicture.h"
+#include "asfutils.h"
 
 using namespace TagLib;
 
@@ -46,14 +48,14 @@ public:
 // Picture class members
 ////////////////////////////////////////////////////////////////////////////////
 
-ASF::Picture::Picture()
+ASF::Picture::Picture() :
+  d(new PicturePrivate())
 {
-  d = new PicturePrivate();
   d->valid = true;
 }
 
-ASF::Picture::Picture(const Picture& other)
-  : d(other.d)
+ASF::Picture::Picture(const Picture& other) :
+  d(other.d)
 {
   d->ref();
 }
@@ -118,24 +120,27 @@ int ASF::Picture::dataSize() const
 
 ASF::Picture& ASF::Picture::operator=(const ASF::Picture& other)
 {
-  if(other.d != d) {
-    if(d->deref())
-      delete d;
-    d = other.d;
-    d->ref();
-  }
+  Picture(other).swap(*this);
   return *this;
+}
+
+void ASF::Picture::swap(Picture &other)
+{
+  using std::swap;
+
+  swap(d, other.d);
 }
 
 ByteVector ASF::Picture::render() const
 {
   if(!isValid())
-    return ByteVector::null;
+    return ByteVector();
+
   return
-    ByteVector((char)d->type) +
+    ByteVector(static_cast<char>(d->type)) +
     ByteVector::fromUInt(d->picture.size(), false) +
-    ASF::File::renderString(d->mimeType) +
-    ASF::File::renderString(d->description) +
+    renderString(d->mimeType) +
+    renderString(d->description) +
     d->picture;
 }
 
@@ -145,8 +150,8 @@ void ASF::Picture::parse(const ByteVector& bytes)
   if(bytes.size() < 9)
     return;
   int pos = 0;
-  d->type = (Type)bytes[0]; ++pos;
-  const uint dataLen = bytes.toUInt(pos, false); pos+=4;
+  d->type = static_cast<Type>(bytes[0]); ++pos;
+  const unsigned int dataLen = bytes.toUInt(pos, false); pos+=4;
 
   const ByteVector nullStringTerminator(2, 0);
 
@@ -167,7 +172,6 @@ void ASF::Picture::parse(const ByteVector& bytes)
 
   d->picture = bytes.mid(pos, dataLen);
   d->valid = true;
-  return;
 }
 
 ASF::Picture ASF::Picture::fromInvalid()
@@ -176,4 +180,3 @@ ASF::Picture ASF::Picture::fromInvalid()
   ret.d->valid = false;
   return ret;
 }
-

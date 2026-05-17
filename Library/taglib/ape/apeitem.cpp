@@ -34,7 +34,9 @@ using namespace APE;
 class APE::Item::ItemPrivate
 {
 public:
-  ItemPrivate() : type(Text), readOnly(false) {}
+  ItemPrivate() :
+    type(Text),
+    readOnly(false) {}
 
   Item::ItemTypes type;
   String key;
@@ -43,40 +45,45 @@ public:
   bool readOnly;
 };
 
-APE::Item::Item()
+////////////////////////////////////////////////////////////////////////////////
+// public members
+////////////////////////////////////////////////////////////////////////////////
+
+APE::Item::Item() :
+  d(new ItemPrivate())
 {
-  d = new ItemPrivate;
 }
 
-APE::Item::Item(const String &key, const String &value)
+APE::Item::Item(const String &key, const String &value) :
+  d(new ItemPrivate())
 {
-  d = new ItemPrivate;
   d->key = key;
   d->text.append(value);
 }
 
-APE::Item::Item(const String &key, const StringList &values)
+APE::Item::Item(const String &key, const StringList &values) :
+  d(new ItemPrivate())
 {
-  d = new ItemPrivate;
   d->key = key;
   d->text = values;
 }
 
-APE::Item::Item(const String &key, const ByteVector &value, bool binary)
+APE::Item::Item(const String &key, const ByteVector &value, bool binary) :
+  d(new ItemPrivate())
 {
-  d = new ItemPrivate;
   d->key = key;
   if(binary) {
     d->type = Binary;
     d->value = value;
   }
-  else
+  else {
     d->text.append(value);
+  }
 }
 
-APE::Item::Item(const Item &item)
+APE::Item::Item(const Item &item) :
+  d(new ItemPrivate(*item.d))
 {
-  d = new ItemPrivate(*item.d);
 }
 
 APE::Item::~Item()
@@ -86,9 +93,15 @@ APE::Item::~Item()
 
 Item &APE::Item::operator=(const Item &item)
 {
-  delete d;
-  d = new ItemPrivate(*item.d);
+  Item(item).swap(*this);
   return *this;
+}
+
+void APE::Item::swap(Item &item)
+{
+  using std::swap;
+
+  swap(d, item.d);
 }
 
 void APE::Item::setReadOnly(bool readOnly)
@@ -171,11 +184,10 @@ void APE::Item::appendValues(const StringList &values)
 
 int APE::Item::size() const
 {
-  // SFB: Why is d->key.size() used when size() returns the length in UniChars and not UTF-8?
-  int result = 8 + d->key.size() /* d->key.data(String::UTF8).size() */ + 1;
-  switch (d->type) {
+  int result = 8 + d->key.size() + 1;
+  switch(d->type) {
     case Text:
-      if(d->text.size()) {
+      if(!d->text.isEmpty()) {
         StringList::ConstIterator it = d->text.begin();
 
         result += it->data(String::UTF8).size();
@@ -207,8 +219,7 @@ String APE::Item::toString() const
 {
   if(d->type == Text && !isEmpty())
     return d->text.front();
-  else
-    return String::null;
+  return String();
 }
 
 bool APE::Item::isEmpty() const
@@ -217,9 +228,7 @@ bool APE::Item::isEmpty() const
     case Text:
       if(d->text.isEmpty())
         return true;
-      if(d->text.size() == 1 && d->text.front().isEmpty())
-        return true;
-      return false;
+      return d->text.size() == 1 && d->text.front().isEmpty();
     case Binary:
     case Locator:
       return d->value.isEmpty();
@@ -237,17 +246,20 @@ void APE::Item::parse(const ByteVector &data)
     return;
   }
 
-  const uint valueLength  = data.toUInt(0, false);
-  const uint flags        = data.toUInt(4, false);
+  const unsigned int valueLength  = data.toUInt(0, false);
+  const unsigned int flags        = data.toUInt(4, false);
 
-  d->key = String(data.mid(8), String::UTF8);
+  // An item key can contain ASCII characters from 0x20 up to 0x7E, not UTF-8.
+  // We assume that the validity of the given key has been checked.
+
+  d->key = String(&data[8], String::Latin1);
 
   const ByteVector value = data.mid(8 + d->key.size() + 1, valueLength);
 
   setReadOnly(flags & 1);
-  setType(ItemTypes((flags >> 1) & 3));
+  setType(static_cast<ItemTypes>((flags >> 1) & 3));
 
-  if(Text == d->type) 
+  if(Text == d->type)
     d->text = StringList(ByteVectorList::split(value, '\0'), String::UTF8);
   else
     d->value = value;
@@ -256,7 +268,7 @@ void APE::Item::parse(const ByteVector &data)
 ByteVector APE::Item::render() const
 {
   ByteVector data;
-  TagLib::uint flags = ((d->readOnly) ? 1 : 0) | (d->type << 1);
+  unsigned int flags = ((d->readOnly) ? 1 : 0) | (d->type << 1);
   ByteVector value;
 
   if(isEmpty())
@@ -278,7 +290,7 @@ ByteVector APE::Item::render() const
 
   data.append(ByteVector::fromUInt(value.size(), false));
   data.append(ByteVector::fromUInt(flags, false));
-  data.append(d->key.data(String::UTF8));
+  data.append(d->key.data(String::Latin1));
   data.append(ByteVector('\0'));
   data.append(value);
 

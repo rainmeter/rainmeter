@@ -64,27 +64,72 @@ namespace TagLib {
        */
       virtual ~Properties();
 
-      // Reimplementations.
+      /*!
+       * Returns the length of the file in seconds.  The length is rounded down to
+       * the nearest whole second.
+       *
+       * \note This method is just an alias of lengthInSeconds().
+       *
+       * \deprecated Use lengthInSeconds().
+       */
+      TAGLIB_DEPRECATED virtual int length() const;
 
-      virtual int length() const;
+      /*!
+       * Returns the length of the file in seconds.  The length is rounded down to
+       * the nearest whole second.
+       *
+       * \see lengthInMilliseconds()
+       */
+      // BIC: make virtual
+      int lengthInSeconds() const;
+
+      /*!
+       * Returns the length of the file in milliseconds.
+       *
+       * \see lengthInSeconds()
+       */
+      // BIC: make virtual
+      int lengthInMilliseconds() const;
+
+      /*!
+       * Returns the average bit rate of the file in kb/s.
+       */
       virtual int bitrate() const;
+
+      /*!
+       * Returns the sample rate in Hz.
+       */
       virtual int sampleRate() const;
+
+      /*!
+       * Returns the number of audio channels.
+       */
       virtual int channels() const;
+
+      /*!
+       * Returns the number of bits per audio sample as read from the FLAC
+       * identification header.
+       */
+      int bitsPerSample() const;
 
       /*!
        * Returns the sample width as read from the FLAC identification
        * header.
+       *
+       * \note This method is just an alias of bitsPerSample().
+       *
+       * \deprecated Use bitsPerSample().
        */
-      int sampleWidth() const;
+      TAGLIB_DEPRECATED int sampleWidth() const;
 
       /*!
-       * Return the number of sample frames
+       * Return the number of sample frames.
        */
       unsigned long long sampleFrames() const;
 
       /*!
        * Returns the MD5 signature of the uncompressed audio stream as read
-       * from the stream info header header.
+       * from the stream info header.
        */
       ByteVector signature() const;
 
@@ -92,12 +137,12 @@ namespace TagLib {
       Properties(const Properties &);
       Properties &operator=(const Properties &);
 
-      void read();
+      void read(const ByteVector &data, long streamLength);
 
       class PropertiesPrivate;
       PropertiesPrivate *d;
     };
-  }
-}
+  }  // namespace FLAC
+}  // namespace TagLib
 
 #endif

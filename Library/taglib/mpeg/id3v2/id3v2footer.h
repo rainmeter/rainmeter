@@ -62,7 +62,7 @@ namespace TagLib {
       /*!
        * Returns the size of the footer.  Presently this is always 10 bytes.
        */
-      static uint size();
+      static unsigned int size();
 
       /*!
        * Renders the footer based on the data in \a header.
@@ -77,6 +77,6 @@ namespace TagLib {
       FooterPrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

@@ -45,7 +45,7 @@ namespace TagLib {
     operator const char *() const;
 
     const std::wstring &wstr() const;
-    const std::string  &str() const; 
+    const std::string  &str() const;
 
     String toString() const;
 
@@ -89,7 +89,7 @@ namespace TagLib {
     /*!
      * Reads a block of size \a length at the current get pointer.
      */
-    virtual ByteVector readBlock(ulong length) = 0;
+    virtual ByteVector readBlock(unsigned long length) = 0;
 
     /*!
      * Attempts to write the block \a data at the current get pointer.  If the
@@ -109,7 +109,8 @@ namespace TagLib {
      * \note This method is slow since it requires rewriting all of the file
      * after the insertion point.
      */
-    virtual void insert(const ByteVector &data, ulong start = 0, ulong replace = 0) = 0;
+    virtual void insert(const ByteVector &data,
+                        unsigned long start = 0, unsigned long replace = 0) = 0;
 
     /*!
      * Removes a block of the file starting a \a start and continuing for
@@ -118,7 +119,7 @@ namespace TagLib {
      * \note This method is slow since it involves rewriting all of the file
      * after the removed portion.
      */
-    virtual void removeBlock(ulong start = 0, ulong length = 0) = 0;
+    virtual void removeBlock(unsigned long start = 0, unsigned long length = 0) = 0;
 
     /*!
      * Returns true if the file is read only (or if the file can not be opened).
@@ -164,6 +165,6 @@ namespace TagLib {
     IOStream &operator=(const IOStream &);
   };
 
-}
+}  // namespace TagLib
 
 #endif

@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,15 +15,20 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,            *
- *   MA  02110-1301  USA                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
+
 
 #include "tpropertymap.h"
 using namespace TagLib;
 
 
-PropertyMap::PropertyMap() : SimplePropertyMap()
+PropertyMap::PropertyMap()
 {
 }
 
@@ -35,7 +40,7 @@ PropertyMap::PropertyMap(const SimplePropertyMap &m)
 {
   for(SimplePropertyMap::ConstIterator it = m.begin(); it != m.end(); ++it){
     String key = it->first.upper();
-    if(!key.isNull())
+    if(!key.isEmpty())
       insert(it->first, it->second);
     else
       unsupported.append(it->first);
@@ -112,6 +117,12 @@ PropertyMap &PropertyMap::merge(const PropertyMap &other)
   return *this;
 }
 
+StringList PropertyMap::value(const String &key,
+                                    const StringList &defaultValue) const
+{
+  return SimplePropertyMap::value(key.upper(), defaultValue);
+}
+
 const StringList &PropertyMap::operator[](const String &key) const
 {
   return SimplePropertyMap::operator[](key.upper());
@@ -144,7 +155,8 @@ bool PropertyMap::operator!=(const PropertyMap &other) const
 
 String PropertyMap::toString() const
 {
-  String ret = "";
+  String ret;
+
   for(ConstIterator it = begin(); it != end(); ++it)
     ret += it->first+"="+it->second.toString(", ") + "\n";
   if(!unsupported.isEmpty())
@@ -154,12 +166,12 @@ String PropertyMap::toString() const
 
 void PropertyMap::removeEmpty()
 {
-  StringList emptyKeys;
-  for(Iterator it = begin(); it != end(); ++it)
-    if(it->second.isEmpty())
-      emptyKeys.append(it->first);
-  for(StringList::Iterator emptyIt = emptyKeys.begin(); emptyIt != emptyKeys.end(); emptyIt++ )
-    erase(*emptyIt);
+  PropertyMap m;
+  for(ConstIterator it = begin(); it != end(); ++it) {
+    if(!it->second.isEmpty())
+      m.insert(it->first, it->second);
+  }
+  *this = m;
 }
 
 StringList &PropertyMap::unsupportedData()
@@ -171,3 +183,12 @@ const StringList &PropertyMap::unsupportedData() const
 {
   return unsupported;
 }
+
+#ifdef _MSC_VER
+// When building with shared libraries and tests, MSVC will fail with
+// "already defined in test_opus.obj" as soon as operator[] of
+// Ogg::FieldListMap is used because this will instantiate the same template
+// Map<String, StringList>. Therefore this template is instantiated here
+// and declared extern in the headers using it.
+template class TagLib::Map<TagLib::String, TagLib::StringList>;
+#endif

@@ -42,7 +42,7 @@ namespace TagLib {
 
   /*!
    * This is implementation of FLAC metadata for Ogg FLAC files.  For "pure"
-   * FLAC files look under the FLAC hiearchy.
+   * FLAC files look under the FLAC hierarchy.
    *
    * Unlike "pure" FLAC-files, Ogg FLAC only supports Xiph-comments,
    * while the audio-properties are the same.
@@ -64,7 +64,7 @@ namespace TagLib {
     {
     public:
       /*!
-       * Constructs an Ogg/FLAC file from \a file.  If \a readProperties is true 
+       * Constructs an Ogg/FLAC file from \a file.  If \a readProperties is true
        * the file's audio properties will also be read.
        *
        * \note In the current implementation, \a propertiesStyle is ignored.
@@ -73,7 +73,7 @@ namespace TagLib {
            Properties::ReadStyle propertiesStyle = Properties::Average);
 
       /*!
-       * Constructs an Ogg/FLAC file from \a stream.  If \a readProperties is true 
+       * Constructs an Ogg/FLAC file from \a stream.  If \a readProperties is true
        * the file's audio properties will also be read.
        *
        * \note TagLib will *not* take ownership of the stream, the caller is
@@ -92,10 +92,10 @@ namespace TagLib {
       /*!
        * Returns the Tag for this file.  This will always be a XiphComment.
        *
-       * \note This always returns a valid pointer regardless of whether or not 
-       * the file on disk has a XiphComment.  Use hasXiphComment() to check if 
+       * \note This always returns a valid pointer regardless of whether or not
+       * the file on disk has a XiphComment.  Use hasXiphComment() to check if
        * the file on disk actually has a XiphComment.
-       * 
+       *
        * \note The Tag <b>is still</b> owned by the FLAC::File and should not be
        * deleted by the user.  It will be deleted when the file (object) is
        * destroyed.
@@ -111,17 +111,17 @@ namespace TagLib {
       virtual Properties *audioProperties() const;
 
 
-      /*! 
+      /*!
        * Implements the unified property interface -- export function.
        * This forwards directly to XiphComment::properties().
        */
       PropertyMap properties() const;
 
-      /*! 
+      /*!
        * Implements the unified tag dictionary interface -- import function.
        * Like properties(), this is a forwarder to the file's XiphComment.
        */
-      PropertyMap setProperties(const PropertyMap &); 
+      PropertyMap setProperties(const PropertyMap &);
 
 
       /*!
@@ -142,6 +142,14 @@ namespace TagLib {
        * \see tag()
        */
       bool hasXiphComment() const;
+
+      /*!
+       * Check if the given \a stream can be opened as an Ogg FLAC file.
+       *
+       * \note This method is designed to do a quick check.  The result may
+       * not necessarily be correct.
+       */
+      static bool isSupported(IOStream *stream);
 
     private:
       File(const File &);

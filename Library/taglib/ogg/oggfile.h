@@ -56,15 +56,15 @@ namespace TagLib {
        * Returns the packet contents for the i-th packet (starting from zero)
        * in the Ogg bitstream.
        *
-       * \warning The requires reading at least the packet header for every page
+       * \warning This requires reading at least the packet header for every page
        * up to the requested page.
        */
-      ByteVector packet(uint i);
+      ByteVector packet(unsigned int i);
 
       /*!
        * Sets the packet with index \a i to the value \a p.
        */
-      void setPacket(uint i, const ByteVector &p);
+      void setPacket(unsigned int i, const ByteVector &p);
 
       /*!
        * Returns a pointer to the PageHeader for the first page in the stream or
@@ -107,16 +107,21 @@ namespace TagLib {
       File &operator=(const File &);
 
       /*!
-       * Reads the next page and updates the internal "current page" pointer.
+       * Reads the pages from the beginning of the file until enough to compose
+       * the requested packet.
        */
-      bool nextPage();
-      void writePageGroup(const List<int> &group);
+      bool readPages(unsigned int i);
+
+      /*!
+       * Writes the requested packet to the file.
+       */
+      void writePacket(unsigned int i, const ByteVector &packet);
 
       class FilePrivate;
       FilePrivate *d;
     };
 
-  }
-}
+  }  // namespace Ogg
+}  // namespace TagLib
 
 #endif

@@ -46,7 +46,7 @@ namespace TagLib {
   /*!
    * This is implementation of FLAC metadata for non-Ogg FLAC files.  At some
    * point when Ogg / FLAC is more common there will be a similar implementation
-   * under the Ogg hiearchy.
+   * under the Ogg hierarchy.
    *
    * This supports ID3v1, ID3v2 and Xiph style comments as well as reading stream
    * properties from the file.
@@ -67,6 +67,23 @@ namespace TagLib {
     {
     public:
       /*!
+       * This set of flags is used for various operations and is suitable for
+       * being OR-ed together.
+       */
+      enum TagTypes {
+        //! Empty set.  Matches no tag types.
+        NoTags      = 0x0000,
+        //! Matches Vorbis comments.
+        XiphComment = 0x0001,
+        //! Matches ID3v1 tags.
+        ID3v1       = 0x0002,
+        //! Matches ID3v2 tags.
+        ID3v2       = 0x0004,
+        //! Matches all tag types.
+        AllTags     = 0xffff
+      };
+
+      /*!
        * Constructs a FLAC file from \a file.  If \a readProperties is true the
        * file's audio properties will also be read.
        *
@@ -79,7 +96,7 @@ namespace TagLib {
            Properties::ReadStyle propertiesStyle = Properties::Average);
 
       /*!
-       * Constructs an APE file from \a file.  If \a readProperties is true the
+       * Constructs an FLAC file from \a file.  If \a readProperties is true the
        * file's audio properties will also be read.
        *
        * If this file contains and ID3v2 tag the frames will be created using
@@ -165,8 +182,8 @@ namespace TagLib {
        * if there is no valid ID3v2 tag.  If \a create is true it will create
        * an ID3v2 tag if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has an ID3v2 tag.  Use hasID3v2Tag() to check if the file 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has an ID3v2 tag.  Use hasID3v2Tag() to check if the file
        * on disk actually has an ID3v2 tag.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
@@ -184,8 +201,8 @@ namespace TagLib {
        * if there is no valid APE tag.  If \a create is true it will create
        * an APE tag if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has an ID3v1 tag.  Use hasID3v1Tag() to check if the file 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has an ID3v1 tag.  Use hasID3v1Tag() to check if the file
        * on disk actually has an ID3v1 tag.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
@@ -203,10 +220,10 @@ namespace TagLib {
        * if there is no valid XiphComment.  If \a create is true it will create
        * a XiphComment if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has a XiphComment.  Use hasXiphComment() to check if the 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has a XiphComment.  Use hasXiphComment() to check if the
        * file on disk actually has a XiphComment.
-       * 
+       *
        * \note The Tag <b>is still</b> owned by the FLAC::File and should not be
        * deleted by the user.  It will be deleted when the file (object) is
        * destroyed.
@@ -221,24 +238,25 @@ namespace TagLib {
        * when
        *
        * \see ID3v2FrameFactory
+       * \deprecated This value should be passed in via the constructor.
        */
-      void setID3v2FrameFactory(const ID3v2::FrameFactory *factory);
+      TAGLIB_DEPRECATED void setID3v2FrameFactory(const ID3v2::FrameFactory *factory);
 
       /*!
        * Returns the block of data used by FLAC::Properties for parsing the
        * stream properties.
        *
-       * \deprecated This method will not be public in a future release.
+       * \deprecated Always returns an empty vector.
        */
-      ByteVector streamInfoData(); // BIC: remove
+      TAGLIB_DEPRECATED ByteVector streamInfoData(); // BIC: remove
 
       /*!
        * Returns the length of the audio-stream, used by FLAC::Properties for
        * calculating the bitrate.
        *
-       * \deprecated This method will not be public in a future release.
+       * \deprecated Always returns zero.
        */
-      long streamLength();  // BIC: remove
+      TAGLIB_DEPRECATED long streamLength();  // BIC: remove
 
       /*!
        * Returns a list of pictures attached to the FLAC file.
@@ -265,6 +283,21 @@ namespace TagLib {
       void addPicture(Picture *picture);
 
       /*!
+       * This will remove the tags that match the OR-ed together TagTypes from
+       * the file.  By default it removes all tags.
+       *
+       * \warning This will also invalidate pointers to the tags as their memory
+       * will be freed.
+       *
+       * \note In order to make the removal permanent save() still needs to be
+       * called.
+       *
+       * \note This won't remove the Vorbis comment block completely.  The
+       * vendor ID will be preserved.
+       */
+      void strip(int tags = AllTags);
+
+      /*!
        * Returns whether or not the file on disk actually has a XiphComment.
        *
        * \see xiphComment()
@@ -285,21 +318,26 @@ namespace TagLib {
        */
       bool hasID3v2Tag() const;
 
+      /*!
+       * Returns whether or not the given \a stream can be opened as a FLAC
+       * file.
+       *
+       * \note This method is designed to do a quick check.  The result may
+       * not necessarily be correct.
+       */
+      static bool isSupported(IOStream *stream);
+
     private:
       File(const File &);
       File &operator=(const File &);
 
-      void read(bool readProperties, Properties::ReadStyle propertiesStyle);
+      void read(bool readProperties);
       void scan();
-      long findID3v2();
-      long findID3v1();
-      ByteVector xiphCommentData() const;
-      long findPaddingBreak(long nextPageOffset, long targetOffset, bool *isLast);
 
       class FilePrivate;
       FilePrivate *d;
     };
-  }
-}
+  }  // namespace FLAC
+}  // namespace TagLib
 
 #endif

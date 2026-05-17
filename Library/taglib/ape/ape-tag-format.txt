@@ -49,8 +49,8 @@ APE Tag Version 2.000 (with header, recommended):
 
 APE tag items should be sorted ascending by size.  When streaming, parts of the
 APE tag may be dropped to reduce the danger of drop outs between tracks.  This
-is not required, but is strongly recommended.  It would be desirable for the i
-tems to be sorted by importance / size, but this is not feasible.  This
+is not required, but is strongly recommended.  It would be desirable for the
+items to be sorted by importance / size, but this is not feasible.  This
 convention should only be broken when adding less important small items and it
 is not desirable to rewrite the entire tag.  An APE tag at the end of a file
 (the recommended location) must have at least a footer; an APE tag at the

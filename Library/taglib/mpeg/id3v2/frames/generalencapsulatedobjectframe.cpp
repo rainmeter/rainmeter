@@ -1,6 +1,7 @@
 /***************************************************************************
     copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
+
     copyright            : (C) 2006 by Aaron VonderHaar
     email                : avh4@users.sourceforge.net
  ***************************************************************************/
@@ -26,6 +27,7 @@
  ***************************************************************************/
 
 #include <tdebug.h>
+#include <tstringlist.h>
 
 #include "generalencapsulatedobjectframe.h"
 
@@ -48,14 +50,16 @@ public:
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame() : Frame("GEOB")
+GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame() :
+  Frame("GEOB"),
+  d(new GeneralEncapsulatedObjectFramePrivate())
 {
-    d = new GeneralEncapsulatedObjectFramePrivate;
 }
 
-GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame(const ByteVector &data) : Frame(data)
+GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame(const ByteVector &data) :
+  Frame(data),
+  d(new GeneralEncapsulatedObjectFramePrivate())
 {
-  d = new GeneralEncapsulatedObjectFramePrivate;
   setData(data);
 }
 
@@ -138,7 +142,7 @@ void GeneralEncapsulatedObjectFrame::parseFields(const ByteVector &data)
     return;
   }
 
-  d->textEncoding = String::Type(data[0]);
+  d->textEncoding = static_cast<String::Type>(data[0]);
 
   int pos = 1;
 
@@ -151,15 +155,21 @@ void GeneralEncapsulatedObjectFrame::parseFields(const ByteVector &data)
 
 ByteVector GeneralEncapsulatedObjectFrame::renderFields() const
 {
+  StringList sl;
+  sl.append(d->fileName);
+  sl.append(d->description);
+
+  const String::Type encoding = checkTextEncoding(sl, d->textEncoding);
+
   ByteVector data;
 
-  data.append(char(d->textEncoding));
+  data.append(static_cast<char>(encoding));
   data.append(d->mimeType.data(String::Latin1));
   data.append(textDelimiter(String::Latin1));
-  data.append(d->fileName.data(d->textEncoding));
-  data.append(textDelimiter(d->textEncoding));
-  data.append(d->description.data(d->textEncoding));
-  data.append(textDelimiter(d->textEncoding));
+  data.append(d->fileName.data(encoding));
+  data.append(textDelimiter(encoding));
+  data.append(d->description.data(encoding));
+  data.append(textDelimiter(encoding));
   data.append(d->data);
 
   return data;
@@ -169,8 +179,9 @@ ByteVector GeneralEncapsulatedObjectFrame::renderFields() const
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h) : Frame(h)
+GeneralEncapsulatedObjectFrame::GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h) :
+  Frame(h),
+  d(new GeneralEncapsulatedObjectFramePrivate())
 {
-  d = new GeneralEncapsulatedObjectFramePrivate;
   parseFields(fieldData(data));
 }
