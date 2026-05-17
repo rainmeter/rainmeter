@@ -97,6 +97,7 @@
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePower.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
     <ClCompile Include="MeasureProcess.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePower.h" />
     <ClInclude Include="MeasurePlugin.h" />
     <ClInclude Include="MeasureProcess.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
