@@ -9,6 +9,7 @@
 #include "MeasurePower.h"
 #include "ConfigParser.h"
 #include "Rainmeter.h"
+#include "Util.h"
 
 #include <Powrprof.h>
 #include <time.h>
@@ -29,15 +30,6 @@ namespace
 
 	constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 	UINT g_NumOfProcessors = 0U;
-
-	void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
-	{
-		UNREFERENCED_PARAMETER(expression);
-		UNREFERENCED_PARAMETER(function);
-		UNREFERENCED_PARAMETER(file);
-		UNREFERENCED_PARAMETER(line);
-		UNREFERENCED_PARAMETER(pReserved);
-	}
 }
 
 MeasurePower::MeasurePower(Skin* skin, const WCHAR* name) : Measure(skin, name),
@@ -197,7 +189,7 @@ const WCHAR* MeasurePower::GetStringValue()
 		time.tm_min = (value / 60) % 60;
 		time.tm_hour = value / 60 / 60;
 
-		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;
