@@ -14,10 +14,19 @@
 #include <time.h>
 #include <errno.h>
 #include <crtdbg.h>
-#include <memory>
 
 namespace
 {
+	typedef struct _RM_PROCESSOR_POWER_INFORMATION
+	{
+		ULONG Number;
+		ULONG MaxMhz;
+		ULONG CurrentMhz;
+		ULONG MhzLimit;
+		ULONG MaxIdleState;
+		ULONG CurrentIdleState;
+	} RM_PROCESSOR_POWER_INFORMATION, *PRM_PROCESSOR_POWER_INFORMATION;
+
 	constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 	UINT g_NumOfProcessors = 0U;
 
@@ -112,25 +121,26 @@ void MeasurePower::UpdateValue()
 	switch (m_Type)
 	{
 	case POWER_HZ:
-	case POWER_MHZ:
-		if (g_NumOfProcessors > 0U)
-		{
-			double value = 0.0;
-			auto ppi = std::make_unique<PROCESSOR_POWER_INFORMATION[]>(g_NumOfProcessors);
-			memset(ppi.get(), 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-			LONG status = CallNtPowerInformation(ProcessorInformation, nullptr, 0, ppi.get(), sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-			if (status == NT_STATUS_SUCCESS)
+		case POWER_MHZ:
+			if (g_NumOfProcessors > 0U)
 			{
-				value = (m_Type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
-			}
-			else if (!m_SuppressError)
+				double value = 0.0;
+				PRM_PROCESSOR_POWER_INFORMATION ppi = new RM_PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
+				memset(ppi, 0, sizeof(RM_PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				LONG status = CallNtPowerInformation(ProcessorInformation, nullptr, 0, ppi, sizeof(RM_PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				if (status == NT_STATUS_SUCCESS)
+				{
+					value = (m_Type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
+				}
+				else if (!m_SuppressError)
 			{
-				LogErrorF(this, L"Power: Processor power status error: 0x%08x", status);
-				m_SuppressError = true;
+					LogErrorF(this, L"Power: Processor power status error: 0x%08x", status);
+					m_SuppressError = true;
+				}
+				delete[] ppi;
+				m_Value = value;
+				return;
 			}
-			m_Value = value;
-			return;
-		}
 		break;
 	}
 
