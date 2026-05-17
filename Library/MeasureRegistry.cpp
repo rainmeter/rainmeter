@@ -113,6 +113,11 @@ void MeasureRegistry::UpdateValue()
 				case REG_EXPAND_SZ:
 				case REG_MULTI_SZ:
 					{
+						if (resultSize < sizeof(WCHAR))
+						{
+							break;
+						}
+
 						WCHAR* rawStringData = (WCHAR*)data;
 						DWORD rawStringLength = resultSize / sizeof(WCHAR);
 
