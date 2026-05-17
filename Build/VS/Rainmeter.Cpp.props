@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- Avoid .lib files in TestBench. -->
+    <!-- Avoid .lib files in RmOutDirRoot. -->
     <OutDir Condition="'$(ConfigurationType)'=='StaticLibrary'">$(IntDir)</OutDir>
   </PropertyGroup>
 

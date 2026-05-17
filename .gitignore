@@ -5,12 +5,11 @@
 *.aps
 /.vs
 /ipch
-/TestBench
+bin
+obj
+
+/Installer/Languages.nsh
 /Version.cs
 /Version.h
-bin
-Certificate.bat
-Manifest.bat
-obj
 x32*
 x64*

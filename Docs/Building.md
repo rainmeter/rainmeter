@@ -18,8 +18,6 @@ Rainmeter can be built using any version of Visual Studio 2022. If you don't alr
 
 First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
 
-Then, in the Build directory, run e.g. `Build.bat pre 1.2.3.4` to build the pre-release 1.2.3 r4.
+Then, in the Build directory, run e.g. `Build.bat full 1.2.3.4` to build all components with the version 1.2.3.4.
 
 If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
-
-To build a release installer, use `Build.bat release 1.2.3.4`.
