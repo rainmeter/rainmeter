@@ -1,6 +1,7 @@
 /***************************************************************************
     copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
+
     copyright            : (C) 2006 by Urs Fleisch
     email                : ufleisch@users.sourceforge.net
  ***************************************************************************/
@@ -49,16 +50,16 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 
 UnsynchronizedLyricsFrame::UnsynchronizedLyricsFrame(String::Type encoding) :
-  Frame("USLT")
+  Frame("USLT"),
+  d(new UnsynchronizedLyricsFramePrivate())
 {
-  d = new UnsynchronizedLyricsFramePrivate;
   d->textEncoding = encoding;
 }
 
 UnsynchronizedLyricsFrame::UnsynchronizedLyricsFrame(const ByteVector &data) :
-  Frame(data)
+  Frame(data),
+  d(new UnsynchronizedLyricsFramePrivate())
 {
-  d = new UnsynchronizedLyricsFramePrivate;
   setData(data);
 }
 
@@ -117,10 +118,8 @@ PropertyMap UnsynchronizedLyricsFrame::asProperties() const
 {
   PropertyMap map;
   String key = description().upper();
-  if(key.isEmpty() || key.upper() == "LYRICS")
+  if(key.isEmpty() || key == "LYRICS")
     map.insert("LYRICS", text());
-  else if(key.isNull())
-    map.unsupportedData().append(L"USLT/" + description());
   else
     map.insert("LYRICS:" + key, text());
   return map;
@@ -148,7 +147,7 @@ void UnsynchronizedLyricsFrame::parseFields(const ByteVector &data)
     return;
   }
 
-  d->textEncoding = String::Type(data[0]);
+  d->textEncoding = static_cast<String::Type>(data[0]);
   d->language = data.mid(1, 3);
 
   int byteAlign
@@ -164,19 +163,25 @@ void UnsynchronizedLyricsFrame::parseFields(const ByteVector &data)
     } else {
       d->description = String(l.front(), d->textEncoding);
       d->text = String(l.back(), d->textEncoding);
-    }  
+    }
   }
 }
 
 ByteVector UnsynchronizedLyricsFrame::renderFields() const
 {
+  StringList sl;
+  sl.append(d->description);
+  sl.append(d->text);
+
+  const String::Type encoding = checkTextEncoding(sl, d->textEncoding);
+
   ByteVector v;
 
-  v.append(char(d->textEncoding));
+  v.append(static_cast<char>(encoding));
   v.append(d->language.size() == 3 ? d->language : "XXX");
-  v.append(d->description.data(d->textEncoding));
-  v.append(textDelimiter(d->textEncoding));
-  v.append(d->text.data(d->textEncoding));
+  v.append(d->description.data(encoding));
+  v.append(textDelimiter(encoding));
+  v.append(d->text.data(encoding));
 
   return v;
 }
@@ -185,9 +190,9 @@ ByteVector UnsynchronizedLyricsFrame::renderFields() const
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-UnsynchronizedLyricsFrame::UnsynchronizedLyricsFrame(const ByteVector &data, Header *h)
-  : Frame(h)
+UnsynchronizedLyricsFrame::UnsynchronizedLyricsFrame(const ByteVector &data, Header *h) :
+  Frame(h),
+  d(new UnsynchronizedLyricsFramePrivate())
 {
-  d = new UnsynchronizedLyricsFramePrivate();
   parseFields(fieldData(data));
 }

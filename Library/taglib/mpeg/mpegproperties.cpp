@@ -29,16 +29,16 @@
 #include "mpegproperties.h"
 #include "mpegfile.h"
 #include "xingheader.h"
+#include "apetag.h"
+#include "apefooter.h"
 
 using namespace TagLib;
 
 class MPEG::Properties::PropertiesPrivate
 {
 public:
-  PropertiesPrivate(File *f, ReadStyle s) :
-    file(f),
+  PropertiesPrivate() :
     xingHeader(0),
-    style(s),
     length(0),
     bitrate(0),
     sampleRate(0),
@@ -55,9 +55,7 @@ public:
     delete xingHeader;
   }
 
-  File *file;
   XingHeader *xingHeader;
-  ReadStyle style;
   int length;
   int bitrate;
   int sampleRate;
@@ -74,12 +72,11 @@ public:
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-MPEG::Properties::Properties(File *file, ReadStyle style) : AudioProperties(style)
+MPEG::Properties::Properties(File *file, ReadStyle style) :
+  AudioProperties(style),
+  d(new PropertiesPrivate())
 {
-  d = new PropertiesPrivate(file, style);
-
-  if(file && file->isOpen())
-    read();
+  read(file);
 }
 
 MPEG::Properties::~Properties()
@@ -88,6 +85,16 @@ MPEG::Properties::~Properties()
 }
 
 int MPEG::Properties::length() const
+{
+  return lengthInSeconds();
+}
+
+int MPEG::Properties::lengthInSeconds() const
+{
+  return d->length / 1000;
+}
+
+int MPEG::Properties::lengthInMilliseconds() const
 {
   return d->length;
 }
@@ -146,109 +153,69 @@ bool MPEG::Properties::isOriginal() const
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void MPEG::Properties::read()
+void MPEG::Properties::read(File *file)
 {
-  // Since we've likely just looked for the ID3v1 tag, start at the end of the
-  // file where we're least likely to have to have to move the disk head.
+  // Only the first valid frame is required if we have a VBR header.
 
-  long last = d->file->lastFrameOffset();
-
-  if(last < 0) {
-    debug("MPEG::Properties::read() -- Could not find a valid last MPEG frame in the stream.");
+  const long firstFrameOffset = file->firstFrameOffset();
+  if(firstFrameOffset < 0) {
+    debug("MPEG::Properties::read() -- Could not find an MPEG frame in the stream.");
     return;
   }
 
-  d->file->seek(last);
-  Header lastHeader(d->file->readBlock(4));
+  const Header firstHeader(file, firstFrameOffset, false);
 
-  long first = d->file->firstFrameOffset();
-
-  if(first < 0) {
-    debug("MPEG::Properties::read() -- Could not find a valid first MPEG frame in the stream.");
-    return;
-  }
-
-  if(!lastHeader.isValid()) {
-
-    long pos = last;
-
-    while(pos > first) {
-
-      pos = d->file->previousFrameOffset(pos);
-
-      if(pos < 0)
-        break;
-
-      d->file->seek(pos);
-      Header header(d->file->readBlock(4));
-
-      if(header.isValid()) {
-        lastHeader = header;
-        last = pos;
-        break;
-      }
-    }
-  }
-
-  // Now jump back to the front of the file and read what we need from there.
-
-  d->file->seek(first);
-  Header firstHeader(d->file->readBlock(4));
-
-  if(!firstHeader.isValid() || !lastHeader.isValid()) {
-    debug("MPEG::Properties::read() -- Page headers were invalid.");
-    return;
-  }
-
-  // Check for a Xing header that will help us in gathering information about a
+  // Check for a VBR header that will help us in gathering information about a
   // VBR stream.
 
-  int xingHeaderOffset = MPEG::XingHeader::xingHeaderOffset(firstHeader.version(),
-                                                            firstHeader.channelMode());
-
-  d->file->seek(first + xingHeaderOffset);
-  d->xingHeader = new XingHeader(d->file->readBlock(16));
-
-  // Read the length and the bitrate from the Xing header.
-
-  if(d->xingHeader->isValid() &&
-     firstHeader.sampleRate() > 0 &&
-     d->xingHeader->totalFrames() > 0)
-  {
-      double timePerFrame =
-        double(firstHeader.samplesPerFrame()) / firstHeader.sampleRate();
-
-      double length = timePerFrame * d->xingHeader->totalFrames();
-
-      d->length = int(length);
-      d->bitrate = d->length > 0 ? (int)(d->xingHeader->totalSize() * 8 / length / 1000) : 0;
-  }
-  else {
-    // Since there was no valid Xing header found, we hope that we're in a constant
-    // bitrate file.
-
+  file->seek(firstFrameOffset);
+  d->xingHeader = new XingHeader(file->readBlock(firstHeader.frameLength()));
+  if(!d->xingHeader->isValid()) {
     delete d->xingHeader;
     d->xingHeader = 0;
+  }
+
+  if(d->xingHeader && firstHeader.samplesPerFrame() > 0 && firstHeader.sampleRate() > 0) {
+
+    // Read the length and the bitrate from the VBR header.
+
+    const double timePerFrame = firstHeader.samplesPerFrame() * 1000.0 / firstHeader.sampleRate();
+    const double length = timePerFrame * d->xingHeader->totalFrames();
+
+    d->length  = static_cast<int>(length + 0.5);
+    d->bitrate = static_cast<int>(d->xingHeader->totalSize() * 8.0 / length + 0.5);
+  }
+  else if(firstHeader.bitrate() > 0) {
+
+    // Since there was no valid VBR header found, we hope that we're in a constant
+    // bitrate file.
 
     // TODO: Make this more robust with audio property detection for VBR without a
     // Xing header.
 
-    if(firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
-      int frames = (last - first) / firstHeader.frameLength() + 1;
+    d->bitrate = firstHeader.bitrate();
 
-      d->length = int(float(firstHeader.frameLength() * frames) /
-                      float(firstHeader.bitrate() * 125) + 0.5);
-      d->bitrate = firstHeader.bitrate();
+    // Look for the last MPEG audio frame to calculate the stream length.
+
+    const long lastFrameOffset = file->lastFrameOffset();
+    if(lastFrameOffset < 0) {
+      debug("MPEG::Properties::read() -- Could not find an MPEG frame in the stream.");
+    }
+    else
+    {
+      const Header lastHeader(file, lastFrameOffset, false);
+      const long streamLength = lastFrameOffset - firstFrameOffset + lastHeader.frameLength();
+      if (streamLength > 0)
+        d->length = static_cast<int>(streamLength * 8.0 / d->bitrate + 0.5);
     }
   }
 
-
-  d->sampleRate = firstHeader.sampleRate();
-  d->channels = firstHeader.channelMode() == Header::SingleChannel ? 1 : 2;
-  d->version = firstHeader.version();
-  d->layer = firstHeader.layer();
+  d->sampleRate        = firstHeader.sampleRate();
+  d->channels          = firstHeader.channelMode() == Header::SingleChannel ? 1 : 2;
+  d->version           = firstHeader.version();
+  d->layer             = firstHeader.layer();
   d->protectionEnabled = firstHeader.protectionEnabled();
-  d->channelMode = firstHeader.channelMode();
-  d->isCopyrighted = firstHeader.isCopyrighted();
-  d->isOriginal = firstHeader.isOriginal();
+  d->channelMode       = firstHeader.channelMode();
+  d->isCopyrighted     = firstHeader.isCopyrighted();
+  d->isOriginal        = firstHeader.isOriginal();
 }

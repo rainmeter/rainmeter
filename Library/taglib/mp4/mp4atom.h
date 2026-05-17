@@ -34,9 +34,7 @@
 #include "tlist.h"
 
 namespace TagLib {
-
   namespace MP4 {
-
     class Atom;
     typedef TagLib::List<Atom *> AtomList;
 
@@ -59,7 +57,7 @@ namespace TagLib {
       TypeDateTime  = 17, // in UTC, counting seconds since midnight, January 1, 1904; 32 or 64-bits
       TypeGenred    = 18, // a list of enumerated values
       TypeInteger   = 21, // a signed big-endian integer with length one of { 1,2,3,4,8 } bytes
-      TypeRIAAPA    = 24, // RIAA parental advisory; { -1=no, 1=yes, 0=unspecified }, 8-bit ingteger
+      TypeRIAAPA    = 24, // RIAA parental advisory; { -1=no, 1=yes, 0=unspecified }, 8-bit integer
       TypeUPC       = 25, // Universal Product Code, in text UTF-8 format (valid as an ID)
       TypeBMP       = 27, // Windows bitmap image
       TypeUndefined = 255 // undefined
@@ -74,37 +72,35 @@ namespace TagLib {
 
     typedef TagLib::List<AtomData> AtomDataList;
 
-    class Atom
+    class TAGLIB_EXPORT Atom
     {
     public:
-        Atom(File *file);
-        ~Atom();
-        Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
-        bool path(AtomList &path, const char *name1, const char *name2 = 0, const char *name3 = 0);
-        AtomList findall(const char *name, bool recursive = false);
-        long offset;
-        long length;
-        TagLib::ByteVector name;
-        AtomList children;
+      Atom(File *file);
+      ~Atom();
+      Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
+      bool path(AtomList &path, const char *name1, const char *name2 = 0, const char *name3 = 0);
+      AtomList findall(const char *name, bool recursive = false);
+      long offset;
+      long length;
+      TagLib::ByteVector name;
+      AtomList children;
     private:
-        static const int numContainers = 11;
-        static const char *containers[11];
+      static const int numContainers = 11;
+      static const char *const containers[11];
     };
 
     //! Root-level atoms
-    class Atoms
+    class TAGLIB_EXPORT Atoms
     {
     public:
-        Atoms(File *file);
-        ~Atoms();
-        Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
-        AtomList path(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
-        AtomList atoms;
+      Atoms(File *file);
+      ~Atoms();
+      Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
+      AtomList path(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
+      AtomList atoms;
     };
-
-  }
-
-}
+  }  // namespace MP4
+}  // namespace TagLib
 
 #endif
 

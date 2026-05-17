@@ -28,6 +28,7 @@
 #include <tdebug.h>
 
 #include "xingheader.h"
+#include "mpegfile.h"
 
 using namespace TagLib;
 
@@ -37,17 +38,21 @@ public:
   XingHeaderPrivate() :
     frames(0),
     size(0),
-    valid(false)
-    {}
+    type(MPEG::XingHeader::Invalid) {}
 
-  uint frames;
-  uint size;
-  bool valid;
+  unsigned int frames;
+  unsigned int size;
+
+  MPEG::XingHeader::HeaderType type;
 };
 
-MPEG::XingHeader::XingHeader(const ByteVector &data)
+////////////////////////////////////////////////////////////////////////////////
+// public members
+////////////////////////////////////////////////////////////////////////////////
+
+MPEG::XingHeader::XingHeader(const ByteVector &data) :
+  d(new XingHeaderPrivate())
 {
-  d = new XingHeaderPrivate;
   parse(data);
 }
 
@@ -58,58 +63,78 @@ MPEG::XingHeader::~XingHeader()
 
 bool MPEG::XingHeader::isValid() const
 {
-  return d->valid;
+  return (d->type != Invalid && d->frames > 0 && d->size > 0);
 }
 
-TagLib::uint MPEG::XingHeader::totalFrames() const
+unsigned int MPEG::XingHeader::totalFrames() const
 {
   return d->frames;
 }
 
-TagLib::uint MPEG::XingHeader::totalSize() const
+unsigned int MPEG::XingHeader::totalSize() const
 {
   return d->size;
 }
 
-int MPEG::XingHeader::xingHeaderOffset(TagLib::MPEG::Header::Version v,
-                                       TagLib::MPEG::Header::ChannelMode c)
+MPEG::XingHeader::HeaderType MPEG::XingHeader::type() const
 {
-  if(v == MPEG::Header::Version1) {
-    if(c == MPEG::Header::SingleChannel)
-      return 0x15;
-    else
-      return 0x24;
-  }
-  else {
-    if(c == MPEG::Header::SingleChannel)
-      return 0x0D;
-    else
-      return 0x15;
-  }
+  return d->type;
 }
+
+int MPEG::XingHeader::xingHeaderOffset(TagLib::MPEG::Header::Version /*v*/,
+                                       TagLib::MPEG::Header::ChannelMode /*c*/)
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// private members
+////////////////////////////////////////////////////////////////////////////////
 
 void MPEG::XingHeader::parse(const ByteVector &data)
 {
-  // Check to see if a valid Xing header is available.
+  // Look for a Xing header.
 
-  if(!data.startsWith("Xing") && !data.startsWith("Info"))
-    return;
+  long offset = data.find("Xing");
+  if(offset < 0)
+    offset = data.find("Info");
 
-  // If the XingHeader doesn't contain the number of frames and the total stream
-  // info it's invalid.
+  if(offset >= 0) {
 
-  if(!(data[7] & 0x01)) {
-    debug("MPEG::XingHeader::parse() -- Xing header doesn't contain the total number of frames.");
-    return;
+    // Xing header found.
+
+    if(data.size() < static_cast<unsigned long>(offset + 16)) {
+      debug("MPEG::XingHeader::parse() -- Xing header found but too short.");
+      return;
+    }
+
+    if((data[offset + 7] & 0x03) != 0x03) {
+      debug("MPEG::XingHeader::parse() -- Xing header doesn't contain the required information.");
+      return;
+    }
+
+    d->frames = data.toUInt(offset + 8,  true);
+    d->size   = data.toUInt(offset + 12, true);
+    d->type   = Xing;
   }
+  else {
 
-  if(!(data[7] & 0x02)) {
-    debug("MPEG::XingHeader::parse() -- Xing header doesn't contain the total stream size.");
-    return;
+    // Xing header not found. Then look for a VBRI header.
+
+    offset = data.find("VBRI");
+
+    if(offset >= 0) {
+
+      // VBRI header found.
+
+      if(data.size() < static_cast<unsigned long>(offset + 32)) {
+        debug("MPEG::XingHeader::parse() -- VBRI header found but too short.");
+        return;
+      }
+
+      d->frames = data.toUInt(offset + 14, true);
+      d->size   = data.toUInt(offset + 10, true);
+      d->type   = VBRI;
+    }
   }
-
-  d->frames = data.toUInt(8U);
-  d->size   = data.toUInt(12U);
-
-  d->valid = true;
 }

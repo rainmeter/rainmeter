@@ -33,22 +33,22 @@
 #include "id3v2tag.h"
 #include "apeproperties.h"
 #include "apefile.h"
+#include "apetag.h"
+#include "apefooter.h"
 
 using namespace TagLib;
 
 class APE::Properties::PropertiesPrivate
 {
 public:
-  PropertiesPrivate(File *file, long streamLength) :
+  PropertiesPrivate() :
     length(0),
     bitrate(0),
     sampleRate(0),
     channels(0),
     version(0),
     bitsPerSample(0),
-    sampleFrames(0),
-    file(file),
-    streamLength(streamLength) {}
+    sampleFrames(0) {}
 
   int length;
   int bitrate;
@@ -56,19 +56,25 @@ public:
   int channels;
   int version;
   int bitsPerSample;
-  uint sampleFrames;
-  File *file;
-  long streamLength;
+  unsigned int sampleFrames;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-APE::Properties::Properties(File *file, ReadStyle style) : AudioProperties(style)
+APE::Properties::Properties(File *, ReadStyle style) :
+  AudioProperties(style),
+  d(new PropertiesPrivate())
 {
-  d = new PropertiesPrivate(file, file->length());
-  read();
+  debug("APE::Properties::Properties() -- This constructor is no longer used.");
+}
+
+APE::Properties::Properties(File *file, long streamLength, ReadStyle style) :
+  AudioProperties(style),
+  d(new PropertiesPrivate())
+{
+  read(file, streamLength);
 }
 
 APE::Properties::~Properties()
@@ -77,6 +83,16 @@ APE::Properties::~Properties()
 }
 
 int APE::Properties::length() const
+{
+  return lengthInSeconds();
+}
+
+int APE::Properties::lengthInSeconds() const
+{
+  return d->length / 1000;
+}
+
+int APE::Properties::lengthInMilliseconds() const
 {
   return d->length;
 }
@@ -106,7 +122,7 @@ int APE::Properties::bitsPerSample() const
   return d->bitsPerSample;
 }
 
-TagLib::uint APE::Properties::sampleFrames() const
+unsigned int APE::Properties::sampleFrames() const
 {
   return d->sampleFrames;
 }
@@ -115,118 +131,122 @@ TagLib::uint APE::Properties::sampleFrames() const
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-
-void APE::Properties::read()
+namespace
 {
-  // First we are searching the descriptor
-  long offset = findDescriptor();
-  if(offset < 0)
-    return;
+  int headerVersion(const ByteVector &header)
+  {
+    if(header.size() < 6 || !header.startsWith("MAC "))
+      return -1;
 
-  // Then we read the header common for all versions of APE
-  d->file->seek(offset);
-  ByteVector commonHeader = d->file->readBlock(6);
-  if(!commonHeader.startsWith("MAC "))
-    return;
-  d->version = commonHeader.toUShort(4, false);
-
-  if(d->version >= 3980) {
-    analyzeCurrent();
+    return header.toUShort(4, false);
   }
-  else {
-    analyzeOld();
-  }
-}
+} // namespace
 
-long APE::Properties::findDescriptor()
+void APE::Properties::read(File *file, long streamLength)
 {
-  long ID3v2Location = findID3v2();
-  long ID3v2OriginalSize = 0;
-  bool hasID3v2 = false;
-  if(ID3v2Location >= 0) {
-    ID3v2::Tag tag(d->file, ID3v2Location);
-    ID3v2OriginalSize = tag.header()->completeTagSize();
-    if(tag.header()->tagSize() > 0)
-      hasID3v2 = true;
+  // First, we assume that the file pointer is set at the first descriptor.
+  long offset = file->tell();
+  int version = headerVersion(file->readBlock(6));
+
+  // Next, we look for the descriptor.
+  if(version < 0) {
+    offset = file->find("MAC ", offset);
+    file->seek(offset);
+    version = headerVersion(file->readBlock(6));
   }
 
-  long offset = 0;
-  if(hasID3v2)
-    offset = d->file->find("MAC ", ID3v2Location + ID3v2OriginalSize);
+  if(version < 0) {
+    debug("APE::Properties::read() -- APE descriptor not found");
+    return;
+  }
+
+  d->version = version;
+
+  if(d->version >= 3980)
+    analyzeCurrent(file);
   else
-    offset = d->file->find("MAC ");
+    analyzeOld(file);
 
-  if(offset < 0) {
-    debug("APE::Properties::findDescriptor() -- APE descriptor not found");
-    return -1;
+  if(d->sampleFrames > 0 && d->sampleRate > 0) {
+    const double length = d->sampleFrames * 1000.0 / d->sampleRate;
+    d->length  = static_cast<int>(length + 0.5);
+    d->bitrate = static_cast<int>(streamLength * 8.0 / length + 0.5);
   }
-
-  return offset;
 }
 
-long APE::Properties::findID3v2()
-{
-  if(!d->file->isValid())
-    return -1;
-
-  d->file->seek(0);
-
-  if(d->file->readBlock(3) == ID3v2::Header::fileIdentifier())
-    return 0;
-
-  return -1;
-}
-
-void APE::Properties::analyzeCurrent()
+void APE::Properties::analyzeCurrent(File *file)
 {
   // Read the descriptor
-  d->file->seek(2, File::Current);
-  ByteVector descriptor = d->file->readBlock(44);
-  const uint descriptorBytes = descriptor.toUInt(0, false);
+  file->seek(2, File::Current);
+  const ByteVector descriptor = file->readBlock(44);
+  if(descriptor.size() < 44) {
+    debug("APE::Properties::analyzeCurrent() -- descriptor is too short.");
+    return;
+  }
 
-  if ((descriptorBytes - 52) > 0)
-    d->file->seek(descriptorBytes - 52, File::Current);
+  const unsigned int descriptorBytes = descriptor.toUInt(0, false);
+
+  if((descriptorBytes - 52) > 0)
+    file->seek(descriptorBytes - 52, File::Current);
 
   // Read the header
-  ByteVector header = d->file->readBlock(24);
+  const ByteVector header = file->readBlock(24);
+  if(header.size() < 24) {
+    debug("APE::Properties::analyzeCurrent() -- MAC header is too short.");
+    return;
+  }
 
   // Get the APE info
   d->channels      = header.toShort(18, false);
   d->sampleRate    = header.toUInt(20, false);
   d->bitsPerSample = header.toShort(16, false);
-  //d->compressionLevel =
 
-  const uint totalFrames      = header.toUInt(12, false);
-  const uint blocksPerFrame   = header.toUInt(4, false);
-  const uint finalFrameBlocks = header.toUInt(8, false);
-  d->sampleFrames = totalFrames > 0 ? (totalFrames -  1) * blocksPerFrame + finalFrameBlocks : 0;
-  d->length = d->sampleRate > 0 ? d->sampleFrames / d->sampleRate : 0;
-  d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
+  const unsigned int totalFrames = header.toUInt(12, false);
+  if(totalFrames == 0)
+    return;
+
+  const unsigned int blocksPerFrame   = header.toUInt(4, false);
+  const unsigned int finalFrameBlocks = header.toUInt(8, false);
+  d->sampleFrames = (totalFrames - 1) * blocksPerFrame + finalFrameBlocks;
 }
 
-void APE::Properties::analyzeOld()
+void APE::Properties::analyzeOld(File *file)
 {
-  ByteVector header = d->file->readBlock(26);
-  const uint totalFrames = header.toUInt(18, false);
+  const ByteVector header = file->readBlock(26);
+  if(header.size() < 26) {
+    debug("APE::Properties::analyzeOld() -- MAC header is too short.");
+    return;
+  }
+
+  const unsigned int totalFrames = header.toUInt(18, false);
 
   // Fail on 0 length APE files (catches non-finalized APE files)
   if(totalFrames == 0)
     return;
 
   const short compressionLevel = header.toShort(0, false);
-  uint blocksPerFrame;
+  unsigned int blocksPerFrame;
   if(d->version >= 3950)
     blocksPerFrame = 73728 * 4;
   else if(d->version >= 3900 || (d->version >= 3800 && compressionLevel == 4000))
     blocksPerFrame = 73728;
   else
     blocksPerFrame = 9216;
+
+  // Get the APE info
   d->channels   = header.toShort(4, false);
   d->sampleRate = header.toUInt(6, false);
-  const uint finalFrameBlocks = header.toUInt(22, false);
-  const uint totalBlocks 
-    = totalFrames > 0 ? (totalFrames - 1) * blocksPerFrame + finalFrameBlocks : 0;
-  d->length = totalBlocks / d->sampleRate;
-  d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
-}
 
+  const unsigned int finalFrameBlocks = header.toUInt(22, false);
+  d->sampleFrames = (totalFrames - 1) * blocksPerFrame + finalFrameBlocks;
+
+  // Get the bit depth from the RIFF-fmt chunk.
+  file->seek(16, File::Current);
+  const ByteVector fmt = file->readBlock(28);
+  if(fmt.size() < 28 || !fmt.startsWith("WAVEfmt ")) {
+    debug("APE::Properties::analyzeOld() -- fmt header is too short.");
+    return;
+  }
+
+  d->bitsPerSample = fmt.toShort(26, false);
+}

@@ -31,9 +31,7 @@
 #include "taglib_export.h"
 
 namespace TagLib {
-
   namespace FLAC {
-
     class TAGLIB_EXPORT MetadataBlock
     {
     public:
@@ -67,9 +65,6 @@ namespace TagLib {
       class MetadataBlockPrivate;
       MetadataBlockPrivate *d;
     };
-
-  }
-
-}
-
+  }  // namespace FLAC
+}  // namespace TagLib
 #endif

@@ -39,16 +39,14 @@ public:
   AttributeListMap attributeListMap;
 };
 
-ASF::Tag::Tag()
-: TagLib::Tag()
+ASF::Tag::Tag() :
+  d(new TagPrivate())
 {
-  d = new TagPrivate;
 }
 
 ASF::Tag::~Tag()
 {
-  if(d)
-    delete d;
+  delete d;
 }
 
 String ASF::Tag::title() const
@@ -65,7 +63,7 @@ String ASF::Tag::album() const
 {
   if(d->attributeListMap.contains("WM/AlbumTitle"))
     return d->attributeListMap["WM/AlbumTitle"][0].toString();
-  return String::null;
+  return String();
 }
 
 String ASF::Tag::copyright() const
@@ -96,8 +94,7 @@ unsigned int ASF::Tag::track() const
     const ASF::Attribute attr = d->attributeListMap["WM/TrackNumber"][0];
     if(attr.type() == ASF::Attribute::DWordType)
       return attr.toUInt();
-    else
-      return attr.toString().toInt();
+    return attr.toString().toInt();
   }
   if(d->attributeListMap.contains("WM/Track"))
     return d->attributeListMap["WM/Track"][0].toUInt();
@@ -108,7 +105,7 @@ String ASF::Tag::genre() const
 {
   if(d->attributeListMap.contains("WM/Genre"))
     return d->attributeListMap["WM/Genre"][0].toString();
-  return String::null;
+  return String();
 }
 
 void ASF::Tag::setTitle(const String &value)
@@ -146,12 +143,12 @@ void ASF::Tag::setGenre(const String &value)
   setAttribute("WM/Genre", value);
 }
 
-void ASF::Tag::setYear(uint value)
+void ASF::Tag::setYear(unsigned int value)
 {
   setAttribute("WM/Year", String::number(value));
 }
 
-void ASF::Tag::setTrack(uint value)
+void ASF::Tag::setTrack(unsigned int value)
 {
   setAttribute("WM/TrackNumber", String::number(value));
 }
@@ -161,11 +158,24 @@ ASF::AttributeListMap& ASF::Tag::attributeListMap()
   return d->attributeListMap;
 }
 
+const ASF::AttributeListMap &ASF::Tag::attributeListMap() const
+{
+  return d->attributeListMap;
+}
+
+bool ASF::Tag::contains(const String &key) const
+{
+  return d->attributeListMap.contains(key);
+}
+
 void ASF::Tag::removeItem(const String &key)
 {
-  AttributeListMap::Iterator it = d->attributeListMap.find(key);
-  if(it != d->attributeListMap.end())
-    d->attributeListMap.erase(it);
+  d->attributeListMap.erase(key);
+}
+
+ASF::AttributeList ASF::Tag::attribute(const String &name) const
+{
+  return d->attributeListMap[name];
 }
 
 void ASF::Tag::setAttribute(const String &name, const Attribute &attribute)
@@ -173,6 +183,11 @@ void ASF::Tag::setAttribute(const String &name, const Attribute &attribute)
   AttributeList value;
   value.append(attribute);
   d->attributeListMap.insert(name, value);
+}
+
+void ASF::Tag::setAttribute(const String &name, const AttributeList &values)
+{
+  d->attributeListMap.insert(name, values);
 }
 
 void ASF::Tag::addAttribute(const String &name, const Attribute &attribute)
@@ -193,57 +208,70 @@ bool ASF::Tag::isEmpty() const
          d->attributeListMap.isEmpty();
 }
 
-static const char *keyTranslation[][2] = {
-  { "WM/AlbumTitle", "ALBUM" },
-  { "WM/Composer", "COMPOSER" },
-  { "WM/Writer", "WRITER" },
-  { "WM/Conductor", "CONDUCTOR" },
-  { "WM/ModifiedBy", "REMIXER" },
-  { "WM/Year", "DATE" },
-  { "WM/OriginalReleaseYear", "ORIGINALDATE" },
-  { "WM/Producer", "PRODUCER" },
-  { "WM/ContentGroupDescription", "GROUPING" },
-  { "WM/SubTitle", "SUBTITLE" },
-  { "WM/SetSubTitle", "DISCSUBTITLE" },
-  { "WM/TrackNumber", "TRACKNUMBER" },
-  { "WM/PartOfSet", "DISCNUMBER" },
-  { "WM/Genre", "GENRE" },
-  { "WM/BeatsPerMinute", "BPM" },
-  { "WM/Mood", "MOOD" },
-  { "WM/ISRC", "ISRC" },
-  { "WM/Lyrics", "LYRICS" },
-  { "WM/Media", "MEDIA" },
-  { "WM/Publisher", "LABEL" },
-  { "WM/CatalogNo", "CATALOGNUMBER" },
-  { "WM/Barcode", "BARCODE" },
-  { "WM/EncodedBy", "ENCODEDBY" },
-  { "WM/AlbumSortOrder", "ALBUMSORT" },
-  { "WM/AlbumArtistSortOrder", "ALBUMARTISTSORT" },
-  { "WM/ArtistSortOrder", "ARTISTSORT" },
-  { "WM/TitleSortOrder", "TITLESORT" },
-  { "WM/Script", "SCRIPT" },
-  { "WM/Language", "LANGUAGE" },
-  { "MusicBrainz/Track Id", "MUSICBRAINZ_TRACKID" },
-  { "MusicBrainz/Artist Id", "MUSICBRAINZ_ARTISTID" },
-  { "MusicBrainz/Album Id", "MUSICBRAINZ_ALBUMID" },
-  { "MusicBrainz/Album Artist Id", "MUSICBRAINZ_ALBUMARTISTID" },
-  { "MusicBrainz/Release Group Id", "MUSICBRAINZ_RELEASEGROUPID" },
-  { "MusicBrainz/Work Id", "MUSICBRAINZ_WORKID" },
-  { "MusicIP/PUID", "MUSICIP_PUID" },
-  { "Acoustid/Id", "ACOUSTID_ID" },
-  { "Acoustid/Fingerprint", "ACOUSTID_FINGERPRINT" },
-};
+namespace
+{
+  const std::pair<const char *, const char *> keyTranslation[] = {
+    std::make_pair("WM/AlbumTitle", "ALBUM"),
+    std::make_pair("WM/AlbumArtist", "ALBUMARTIST"),
+    std::make_pair("WM/Composer", "COMPOSER"),
+    std::make_pair("WM/Writer", "LYRICIST"),
+    std::make_pair("WM/Conductor", "CONDUCTOR"),
+    std::make_pair("WM/ModifiedBy", "REMIXER"),
+    std::make_pair("WM/Year", "DATE"),
+    std::make_pair("WM/OriginalReleaseYear", "ORIGINALDATE"),
+    std::make_pair("WM/Producer", "PRODUCER"),
+    std::make_pair("WM/ContentGroupDescription", "WORK"),
+    std::make_pair("WM/SubTitle", "SUBTITLE"),
+    std::make_pair("WM/SetSubTitle", "DISCSUBTITLE"),
+    std::make_pair("WM/TrackNumber", "TRACKNUMBER"),
+    std::make_pair("WM/PartOfSet", "DISCNUMBER"),
+    std::make_pair("WM/Genre", "GENRE"),
+    std::make_pair("WM/BeatsPerMinute", "BPM"),
+    std::make_pair("WM/Mood", "MOOD"),
+    std::make_pair("WM/ISRC", "ISRC"),
+    std::make_pair("WM/Lyrics", "LYRICS"),
+    std::make_pair("WM/Media", "MEDIA"),
+    std::make_pair("WM/Publisher", "LABEL"),
+    std::make_pair("WM/CatalogNo", "CATALOGNUMBER"),
+    std::make_pair("WM/Barcode", "BARCODE"),
+    std::make_pair("WM/EncodedBy", "ENCODEDBY"),
+    std::make_pair("WM/AlbumSortOrder", "ALBUMSORT"),
+    std::make_pair("WM/AlbumArtistSortOrder", "ALBUMARTISTSORT"),
+    std::make_pair("WM/ArtistSortOrder", "ARTISTSORT"),
+    std::make_pair("WM/TitleSortOrder", "TITLESORT"),
+    std::make_pair("WM/Script", "SCRIPT"),
+    std::make_pair("WM/Language", "LANGUAGE"),
+    std::make_pair("WM/ARTISTS", "ARTISTS"),
+    std::make_pair("ASIN", "ASIN"),
+    std::make_pair("MusicBrainz/Track Id", "MUSICBRAINZ_TRACKID"),
+    std::make_pair("MusicBrainz/Artist Id", "MUSICBRAINZ_ARTISTID"),
+    std::make_pair("MusicBrainz/Album Id", "MUSICBRAINZ_ALBUMID"),
+    std::make_pair("MusicBrainz/Album Artist Id", "MUSICBRAINZ_ALBUMARTISTID"),
+    std::make_pair("MusicBrainz/Album Release Country", "RELEASECOUNTRY"),
+    std::make_pair("MusicBrainz/Album Status", "RELEASESTATUS"),
+    std::make_pair("MusicBrainz/Album Type", "RELEASETYPE"),
+    std::make_pair("MusicBrainz/Release Group Id", "MUSICBRAINZ_RELEASEGROUPID"),
+    std::make_pair("MusicBrainz/Release Track Id", "MUSICBRAINZ_RELEASETRACKID"),
+    std::make_pair("MusicBrainz/Work Id", "MUSICBRAINZ_WORKID"),
+    std::make_pair("MusicIP/PUID", "MUSICIP_PUID"),
+    std::make_pair("Acoustid/Id", "ACOUSTID_ID"),
+    std::make_pair("Acoustid/Fingerprint", "ACOUSTID_FINGERPRINT"),
+  };
+  const size_t keyTranslationSize = sizeof(keyTranslation) / sizeof(keyTranslation[0]);
+
+  String translateKey(const String &key)
+  {
+    for(size_t i = 0; i < keyTranslationSize; ++i) {
+      if(key == keyTranslation[i].first)
+        return keyTranslation[i].second;
+    }
+
+    return String();
+  }
+}  // namespace
 
 PropertyMap ASF::Tag::properties() const
 {
-  static Map<String, String> keyMap;
-  if(keyMap.isEmpty()) {
-    int numKeys = sizeof(keyTranslation) / sizeof(keyTranslation[0]);
-    for(int i = 0; i < numKeys; i++) {
-      keyMap[keyTranslation[i][0]] = keyTranslation[i][1];
-    }
-  }
-
   PropertyMap props;
 
   if(!d->title.isEmpty()) {
@@ -261,8 +289,8 @@ PropertyMap ASF::Tag::properties() const
 
   ASF::AttributeListMap::ConstIterator it = d->attributeListMap.begin();
   for(; it != d->attributeListMap.end(); ++it) {
-    if(keyMap.contains(it->first)) {
-      String key = keyMap[it->first];
+    const String key = translateKey(it->first);
+    if(!key.isEmpty()) {
       AttributeList::ConstIterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2) {
         if(key == "TRACKNUMBER") {
@@ -294,9 +322,8 @@ PropertyMap ASF::Tag::setProperties(const PropertyMap &props)
 {
   static Map<String, String> reverseKeyMap;
   if(reverseKeyMap.isEmpty()) {
-    int numKeys = sizeof(keyTranslation) / sizeof(keyTranslation[0]);
-    for(int i = 0; i < numKeys; i++) {
-      reverseKeyMap[keyTranslation[i][1]] = keyTranslation[i][0];
+    for(size_t i = 0; i < keyTranslationSize; i++) {
+      reverseKeyMap[keyTranslation[i].second] = keyTranslation[i].first;
     }
   }
 
@@ -305,16 +332,16 @@ PropertyMap ASF::Tag::setProperties(const PropertyMap &props)
   for(; it != origProps.end(); ++it) {
     if(!props.contains(it->first) || props[it->first].isEmpty()) {
       if(it->first == "TITLE") {
-        d->title = String::null;
+        d->title.clear();
       }
       else if(it->first == "ARTIST") {
-        d->artist = String::null;
+        d->artist.clear();
       }
       else if(it->first == "COMMENT") {
-        d->comment = String::null;
+        d->comment.clear();
       }
       else if(it->first == "COPYRIGHT") {
-        d->copyright = String::null;
+        d->copyright.clear();
       }
       else {
         d->attributeListMap.erase(reverseKeyMap[it->first]);

@@ -34,16 +34,16 @@ class ExtendedHeader::ExtendedHeaderPrivate
 public:
   ExtendedHeaderPrivate() : size(0) {}
 
-  uint size;
+  unsigned int size;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // public methods
 ////////////////////////////////////////////////////////////////////////////////
 
-ExtendedHeader::ExtendedHeader()
+ExtendedHeader::ExtendedHeader() :
+  d(new ExtendedHeaderPrivate())
 {
-  d = new ExtendedHeaderPrivate();
 }
 
 ExtendedHeader::~ExtendedHeader()
@@ -51,7 +51,7 @@ ExtendedHeader::~ExtendedHeader()
   delete d;
 }
 
-TagLib::uint ExtendedHeader::size() const
+unsigned int ExtendedHeader::size() const
 {
   return d->size;
 }

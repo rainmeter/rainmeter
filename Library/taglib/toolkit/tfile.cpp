@@ -62,55 +62,44 @@
 //#include "s3mfile.h"
 //#include "itfile.h"
 //#include "xmfile.h"
-//#include "mp4file.h"
 
 using namespace TagLib;
-
-namespace
-{
-#ifdef _WIN32
-  const TagLib::uint BufferSize = 8192;
-#else
-  const TagLib::uint BufferSize = 1024;
-#endif
-}
 
 class File::FilePrivate
 {
 public:
-  FilePrivate(IOStream *stream, bool owner);
+  FilePrivate(IOStream *stream, bool owner) :
+    stream(stream),
+    streamOwner(owner),
+    valid(true) {}
+
+  ~FilePrivate()
+  {
+    if(streamOwner)
+      delete stream;
+  }
 
   IOStream *stream;
   bool streamOwner;
   bool valid;
 };
 
-File::FilePrivate::FilePrivate(IOStream *stream, bool owner) :
-  stream(stream),
-  streamOwner(owner),
-  valid(true)
-{
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-File::File(FileName fileName)
+File::File(FileName fileName) :
+  d(new FilePrivate(new FileStream(fileName), true))
 {
-  IOStream *stream = new FileStream(fileName);
-  d = new FilePrivate(stream, true);
 }
 
-File::File(IOStream *stream)
+File::File(IOStream *stream) :
+  d(new FilePrivate(stream, false))
 {
-  d = new FilePrivate(stream, false);
 }
 
 File::~File()
 {
-  if(d->stream && d->streamOwner)
-    delete d->stream;
   delete d;
 }
 
@@ -195,45 +184,44 @@ PropertyMap File::setProperties(const PropertyMap &properties)
 {
   if(dynamic_cast<APE::File* >(this))
     return dynamic_cast<APE::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<FLAC::File* >(this))
+  if(dynamic_cast<FLAC::File* >(this))
     return dynamic_cast<FLAC::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<IT::File* >(this))
+//  if(dynamic_cast<IT::File* >(this))
 //    return dynamic_cast<IT::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<Mod::File* >(this))
+//  if(dynamic_cast<Mod::File* >(this))
 //    return dynamic_cast<Mod::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<MPC::File* >(this))
+  if(dynamic_cast<MPC::File* >(this))
     return dynamic_cast<MPC::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<MPEG::File* >(this))
+  if(dynamic_cast<MPEG::File* >(this))
     return dynamic_cast<MPEG::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<Ogg::FLAC::File* >(this))
+  if(dynamic_cast<Ogg::FLAC::File* >(this))
     return dynamic_cast<Ogg::FLAC::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<Ogg::Speex::File* >(this))
+//  if(dynamic_cast<Ogg::Speex::File* >(this))
 //    return dynamic_cast<Ogg::Speex::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<Ogg::Opus::File* >(this))
+//  if(dynamic_cast<Ogg::Opus::File* >(this))
 //    return dynamic_cast<Ogg::Opus::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<Ogg::Vorbis::File* >(this))
+  if(dynamic_cast<Ogg::Vorbis::File* >(this))
     return dynamic_cast<Ogg::Vorbis::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<RIFF::AIFF::File* >(this))
+//  if(dynamic_cast<RIFF::AIFF::File* >(this))
 //    return dynamic_cast<RIFF::AIFF::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<RIFF::WAV::File* >(this))
+//  if(dynamic_cast<RIFF::WAV::File* >(this))
 //    return dynamic_cast<RIFF::WAV::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<S3M::File* >(this))
+//  if(dynamic_cast<S3M::File* >(this))
 //    return dynamic_cast<S3M::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<TrueAudio::File* >(this))
+//  if(dynamic_cast<TrueAudio::File* >(this))
 //    return dynamic_cast<TrueAudio::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<WavPack::File* >(this))
+//  if(dynamic_cast<WavPack::File* >(this))
 //    return dynamic_cast<WavPack::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<XM::File* >(this))
+//  if(dynamic_cast<XM::File* >(this))
 //    return dynamic_cast<XM::File* >(this)->setProperties(properties);
-//  else if(dynamic_cast<MP4::File* >(this))
+//  if(dynamic_cast<MP4::File* >(this))
 //    return dynamic_cast<MP4::File* >(this)->setProperties(properties);
-  else if(dynamic_cast<ASF::File* >(this))
+  if(dynamic_cast<ASF::File* >(this))
     return dynamic_cast<ASF::File* >(this)->setProperties(properties);
-  else
-    return tag()->setProperties(properties);
+  return tag()->setProperties(properties);
 }
 
-ByteVector File::readBlock(ulong length)
+ByteVector File::readBlock(unsigned long length)
 {
   return d->stream->readBlock(length);
 }
@@ -278,7 +266,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
   // (2) The search pattern is wholly contained within the current buffer.
   //
   // (3) The current buffer ends with a partial match of the pattern.  We will
-  // note this for use in the next itteration, where we will check for the rest
+  // note this for use in the next iteration, where we will check for the rest
   // of the pattern.
   //
   // All three of these are done in two steps.  First we check for the pattern
@@ -290,7 +278,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
 
     // (1) previous partial match
 
-    if(previousPartialMatch >= 0 && int(bufferSize()) > previousPartialMatch) {
+    if(previousPartialMatch >= 0 && static_cast<int>(bufferSize()) > previousPartialMatch) {
       const int patternOffset = (bufferSize() - previousPartialMatch);
       if(buffer.containsAt(pattern, 0, patternOffset)) {
         seek(originalPosition);
@@ -298,7 +286,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
       }
     }
 
-    if(!before.isNull() && beforePreviousPartialMatch >= 0 && int(bufferSize()) > beforePreviousPartialMatch) {
+    if(!before.isEmpty() && beforePreviousPartialMatch >= 0 && static_cast<int>(bufferSize()) > beforePreviousPartialMatch) {
       const int beforeOffset = (bufferSize() - beforePreviousPartialMatch);
       if(buffer.containsAt(before, 0, beforeOffset)) {
         seek(originalPosition);
@@ -314,7 +302,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
       return bufferOffset + location;
     }
 
-    if(!before.isNull() && buffer.find(before) >= 0) {
+    if(!before.isEmpty() && buffer.find(before) >= 0) {
       seek(originalPosition);
       return -1;
     }
@@ -323,7 +311,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
 
     previousPartialMatch = buffer.endsWithPartialMatch(pattern);
 
-    if(!before.isNull())
+    if(!before.isEmpty())
       beforePreviousPartialMatch = buffer.endsWithPartialMatch(before);
 
     bufferOffset += bufferSize();
@@ -363,39 +351,45 @@ long File::rfind(const ByteVector &pattern, long fromOffset, const ByteVector &b
 
   // Start the search at the offset.
 
-  long bufferOffset;
-  if(fromOffset == 0) {
-    seek(-1 * int(bufferSize()), End);
-    bufferOffset = tell();
-  }
-  else {
-    seek(fromOffset + -1 * int(bufferSize()), Beginning);
-    bufferOffset = tell();
-  }
+  if(fromOffset == 0)
+    fromOffset = length();
+
+  long bufferLength = bufferSize();
+  long bufferOffset = fromOffset + pattern.size();
 
   // See the notes in find() for an explanation of this algorithm.
 
-  for(buffer = readBlock(bufferSize()); buffer.size() > 0; buffer = readBlock(bufferSize())) {
+  while(true) {
+
+    if(bufferOffset > bufferLength) {
+      bufferOffset -= bufferLength;
+    }
+    else {
+      bufferLength = bufferOffset;
+      bufferOffset = 0;
+    }
+    seek(bufferOffset);
+
+    buffer = readBlock(bufferLength);
+    if(buffer.isEmpty())
+      break;
 
     // TODO: (1) previous partial match
 
     // (2) pattern contained in current buffer
 
-    long location = buffer.rfind(pattern);
+    const long location = buffer.rfind(pattern);
     if(location >= 0) {
       seek(originalPosition);
       return bufferOffset + location;
     }
 
-    if(!before.isNull() && buffer.find(before) >= 0) {
+    if(!before.isEmpty() && buffer.find(before) >= 0) {
       seek(originalPosition);
       return -1;
     }
 
     // TODO: (3) partial match
-
-    bufferOffset -= bufferSize();
-    seek(bufferOffset);
   }
 
   // Since we hit the end of the file, reset the status before continuing.
@@ -407,12 +401,12 @@ long File::rfind(const ByteVector &pattern, long fromOffset, const ByteVector &b
   return -1;
 }
 
-void File::insert(const ByteVector &data, ulong start, ulong replace)
+void File::insert(const ByteVector &data, unsigned long start, unsigned long replace)
 {
   d->stream->insert(data, start, replace);
 }
 
-void File::removeBlock(ulong start, ulong length)
+void File::removeBlock(unsigned long start, unsigned long length)
 {
   d->stream->removeBlock(start, length);
 }
@@ -434,7 +428,7 @@ bool File::isValid() const
 
 void File::seek(long offset, Position p)
 {
-  d->stream->seek(offset, IOStream::Position(p));
+  d->stream->seek(offset, static_cast<IOStream::Position>(p));
 }
 
 void File::truncate(long length)
@@ -491,9 +485,9 @@ bool File::isWritable(const char *file)
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-TagLib::uint File::bufferSize()
+unsigned int File::bufferSize()
 {
-  return BufferSize;
+  return 1024;
 }
 
 void File::setValid(bool valid)

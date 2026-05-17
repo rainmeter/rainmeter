@@ -28,9 +28,9 @@
 #include <tstring.h>
 #include <tdebug.h>
 #include <tpropertymap.h>
+#include <tagutils.h>
 
 #include "vorbisfile.h"
-
 
 using namespace TagLib;
 
@@ -57,26 +57,38 @@ namespace TagLib {
    * an Ogg stream.  0x03 indicates the comment header.
    */
   static const char vorbisCommentHeaderID[] = { 0x03, 'v', 'o', 'r', 'b', 'i', 's', 0 };
+} // namespace TagLib
+
+////////////////////////////////////////////////////////////////////////////////
+// static members
+////////////////////////////////////////////////////////////////////////////////
+
+bool Vorbis::File::isSupported(IOStream *stream)
+{
+  // An Ogg Vorbis file has IDs "OggS" and "\x01vorbis" somewhere.
+
+  const ByteVector buffer = Utils::readHeader(stream, bufferSize(), false);
+  return (buffer.find("OggS") >= 0 && buffer.find("\x01vorbis") >= 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Vorbis::File::File(FileName file, bool readProperties,
-                   Properties::ReadStyle propertiesStyle) : Ogg::File(file)
+Vorbis::File::File(FileName file, bool readProperties, Properties::ReadStyle) :
+  Ogg::File(file),
+  d(new FilePrivate())
 {
-  d = new FilePrivate;
   if(isOpen())
-    read(readProperties, propertiesStyle);
+    read(readProperties);
 }
 
-Vorbis::File::File(IOStream *stream, bool readProperties,
-                   Properties::ReadStyle propertiesStyle) : Ogg::File(stream)
+Vorbis::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) :
+  Ogg::File(stream),
+  d(new FilePrivate())
 {
-  d = new FilePrivate;
   if(isOpen())
-    read(readProperties, propertiesStyle);
+    read(readProperties);
 }
 
 Vorbis::File::~File()
@@ -109,7 +121,7 @@ bool Vorbis::File::save()
   ByteVector v(vorbisCommentHeaderID);
 
   if(!d->comment)
-    d->comment = new Ogg::XiphComment;
+    d->comment = new Ogg::XiphComment();
   v.append(d->comment->render());
 
   setPacket(1, v);
@@ -121,7 +133,7 @@ bool Vorbis::File::save()
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void Vorbis::File::read(bool readProperties, Properties::ReadStyle propertiesStyle)
+void Vorbis::File::read(bool readProperties)
 {
   ByteVector commentHeaderData = packet(1);
 
@@ -134,5 +146,5 @@ void Vorbis::File::read(bool readProperties, Properties::ReadStyle propertiesSty
   d->comment = new Ogg::XiphComment(commentHeaderData.mid(7));
 
   if(readProperties)
-    d->properties = new Properties(this, propertiesStyle);
+    d->properties = new Properties(this);
 }

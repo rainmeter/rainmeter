@@ -38,54 +38,51 @@ using namespace APE;
 class APE::Footer::FooterPrivate
 {
 public:
-  FooterPrivate() : version(0),
-                    footerPresent(true),
-                    headerPresent(false),
-                    isHeader(false),
-                    itemCount(0),
-                    tagSize(0) {}
+  FooterPrivate() :
+    version(0),
+    footerPresent(true),
+    headerPresent(false),
+    isHeader(false),
+    itemCount(0),
+    tagSize(0) {}
 
-  ~FooterPrivate() {}
-
-  uint version;
+  unsigned int version;
 
   bool footerPresent;
   bool headerPresent;
 
   bool isHeader;
 
-  uint itemCount;
-  uint tagSize;
-
-  static const uint size = 32;
+  unsigned int itemCount;
+  unsigned int tagSize;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-TagLib::uint APE::Footer::size()
+unsigned int APE::Footer::size()
 {
-  return FooterPrivate::size;
+  return 32;
 }
 
 ByteVector APE::Footer::fileIdentifier()
 {
-  return ByteVector::fromCString("APETAGEX");
+  return ByteVector("APETAGEX");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-APE::Footer::Footer()
+APE::Footer::Footer() :
+  d(new FooterPrivate())
 {
-  d = new FooterPrivate;
 }
 
-APE::Footer::Footer(const ByteVector &data)
+APE::Footer::Footer(const ByteVector &data) :
+  d(new FooterPrivate())
 {
-  d = new FooterPrivate;
   parse(data);
 }
 
@@ -94,7 +91,7 @@ APE::Footer::~Footer()
   delete d;
 }
 
-TagLib::uint APE::Footer::version() const
+unsigned int APE::Footer::version() const
 {
   return d->version;
 }
@@ -119,30 +116,29 @@ void APE::Footer::setHeaderPresent(bool b) const
   d->headerPresent = b;
 }
 
-TagLib::uint APE::Footer::itemCount() const
+unsigned int APE::Footer::itemCount() const
 {
   return d->itemCount;
 }
 
-void APE::Footer::setItemCount(uint s)
+void APE::Footer::setItemCount(unsigned int s)
 {
   d->itemCount = s;
 }
 
-TagLib::uint APE::Footer::tagSize() const
+unsigned int APE::Footer::tagSize() const
 {
   return d->tagSize;
 }
 
-TagLib::uint APE::Footer::completeTagSize() const
+unsigned int APE::Footer::completeTagSize() const
 {
   if(d->headerPresent)
-    return d->tagSize + d->size;
-  else
-    return d->tagSize;
+    return d->tagSize + size();
+  return d->tagSize;
 }
 
-void APE::Footer::setTagSize(uint s)
+void APE::Footer::setTagSize(unsigned int s)
 {
   d->tagSize = s;
 }
@@ -154,14 +150,14 @@ void APE::Footer::setData(const ByteVector &data)
 
 ByteVector APE::Footer::renderFooter() const
 {
-    return render(false);
+  return render(false);
 }
 
 ByteVector APE::Footer::renderHeader() const
 {
-    if (!d->headerPresent) return ByteVector();
-
-    return render(true);
+  if(!d->headerPresent)
+    return ByteVector();
+  return render(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

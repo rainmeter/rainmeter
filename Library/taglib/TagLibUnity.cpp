@@ -18,11 +18,12 @@
 #include "tag.cpp"
 #include "tagunion.cpp"
 #include "audioproperties.cpp"
+#include "tagutils.cpp"
 
 #include "mpc\mpcfile.cpp"
 #include "mpc\mpcproperties.cpp"
 
-// Included here due to mismatch with toolkit\tfilestream.cpp.
+// Included here due to mismatches.
 #include "toolkit\tfile.cpp"
 
 #pragma warning(pop)

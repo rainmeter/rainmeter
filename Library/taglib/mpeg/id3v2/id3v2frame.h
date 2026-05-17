@@ -47,7 +47,7 @@ namespace TagLib {
      * split between a collection of frames (which are in turn split into fields
      * (Structure, <a href="id3v2-structure.html#4">4</a>)
      * (<a href="id3v2-frames.html">Frames</a>).  This class provides an API for
-     * gathering information about and modifying ID3v2 frames.  Funtionallity
+     * gathering information about and modifying ID3v2 frames.  Functionality
      * specific to a given frame type is handed in one of the many subclasses.
      */
 
@@ -55,6 +55,8 @@ namespace TagLib {
     {
       friend class Tag;
       friend class FrameFactory;
+      friend class TableOfContentsFrame;
+      friend class ChapterFrame;
 
     public:
 
@@ -79,7 +81,7 @@ namespace TagLib {
       /*!
        * Returns the size of the frame.
        */
-      uint size() const;
+      unsigned int size() const;
 
       /*!
        * Returns the size of the frame header
@@ -89,14 +91,15 @@ namespace TagLib {
        * non-binary compatible release this will be made into a non-static
        * member that checks the internal ID3v2 version.
        */
-      static uint headerSize(); // BIC: remove and make non-static
+      static unsigned int headerSize(); // BIC: make non-static
 
       /*!
        * Returns the size of the frame header for the given ID3v2 version.
        *
        * \deprecated Please see the explanation above.
        */
-      static uint headerSize(uint version); // BIC: remove and make non-static
+      // BIC: remove
+      static unsigned int headerSize(unsigned int version);
 
       /*!
        * Sets the data that will be used as the frame.  Since the length is not
@@ -165,7 +168,7 @@ namespace TagLib {
        * All other processing of \a data should be handled in a subclass.
        *
        * \note This need not contain anything more than a frame ID, but
-       * \e must constain at least that.
+       * \e must contain at least that.
        */
       explicit Frame(const ByteVector &data);
 
@@ -218,13 +221,13 @@ namespace TagLib {
       ByteVector fieldData(const ByteVector &frameData) const;
 
       /*!
-       * Reads a String of type \a encodiong from the ByteVector \a data.  If \a
+       * Reads a String of type \a encoding from the ByteVector \a data.  If \a
        * position is passed in it is used both as the starting point and is
-       * updated to replect the position just after the string that has been read.
+       * updated to return the position just after the string that has been read.
        * This is useful for reading strings sequentially.
        */
       String readStringField(const ByteVector &data, String::Type encoding,
-                             int *positon = 0);
+                             int *position = 0);
 
       /*!
        * Checks a the list of string values to see if they can be used with the
@@ -242,7 +245,7 @@ namespace TagLib {
        */
       // BIC: remove and make non-static
       static String::Type checkEncoding(const StringList &fields,
-                                        String::Type encoding, uint version);
+                                        String::Type encoding, unsigned int version);
 
       /*!
        * Checks a the list of string values to see if they can be used with the
@@ -255,7 +258,7 @@ namespace TagLib {
 
 
       /*!
-       * Parses the contents of this frame as PropertyMap. If that fails, the returend
+       * Parses the contents of this frame as PropertyMap. If that fails, the returned
        * PropertyMap will be empty, and its unsupportedData() will contain this frame's
        * ID.
        * BIC: Will be a virtual function in future releases.
@@ -264,13 +267,13 @@ namespace TagLib {
 
       /*!
        * Returns an appropriate ID3 frame ID for the given free-form tag key. This method
-       * will return ByteVector::null if no specialized translation is found.
+       * will return an empty ByteVector if no specialized translation is found.
        */
       static ByteVector keyToFrameID(const String &);
 
       /*!
        * Returns a free-form tag name for the given ID3 frame ID. Note that this does not work
-       * for general frame IDs such as TXXX or WXXX; in such a case String::null is returned.
+       * for general frame IDs such as TXXX or WXXX; in such a case an empty string is returned.
        */
       static String frameIDToKey(const ByteVector &);
 
@@ -334,7 +337,7 @@ namespace TagLib {
        * \deprecated Please use the constructor below that accepts a version
        * number.
        */
-      Header(const ByteVector &data, bool synchSafeInts);
+      TAGLIB_DEPRECATED Header(const ByteVector &data, bool synchSafeInts);
 
       /*!
        * Construct a Frame Header based on \a data.  \a data must at least
@@ -343,7 +346,7 @@ namespace TagLib {
        *
        * \a version should be the ID3v2 version of the tag.
        */
-      explicit Header(const ByteVector &data, uint version = 4);
+      explicit Header(const ByteVector &data, unsigned int version = 4);
 
       /*!
        * Destroys this Header instance.
@@ -356,13 +359,13 @@ namespace TagLib {
        * \deprecated Please use the version below that accepts an ID3v2 version
        * number.
        */
-      void setData(const ByteVector &data, bool synchSafeInts);
+      TAGLIB_DEPRECATED void setData(const ByteVector &data, bool synchSafeInts);
 
       /*!
        * Sets the data for the Header.  \a version should indicate the ID3v2
        * version number of the tag that this frame is contained in.
        */
-      void setData(const ByteVector &data, uint version = 4);
+      void setData(const ByteVector &data, unsigned int version = 4);
 
       /*!
        * Returns the Frame ID (Structure, <a href="id3v2-structure.html#4">4</a>)
@@ -384,24 +387,24 @@ namespace TagLib {
        * Returns the size of the frame data portion, as set when setData() was
        * called or set explicitly via setFrameSize().
        */
-      uint frameSize() const;
+      unsigned int frameSize() const;
 
       /*!
        * Sets the size of the frame data portion.
        */
-      void setFrameSize(uint size);
+      void setFrameSize(unsigned int size);
 
       /*!
        * Returns the ID3v2 version of the header, as passed in from the
        * construction of the header or set via setVersion().
        */
-      uint version() const;
+      unsigned int version() const;
 
       /*!
        * Sets the ID3v2 version of the header, changing has impact on the
        * correct parsing/rendering of frame data.
        */
-      void setVersion(uint version);
+      void setVersion(unsigned int version);
 
       /*!
        * Returns the size of the frame header in bytes.
@@ -411,7 +414,8 @@ namespace TagLib {
        * removed in the next binary incompatible release (2.0) and will be
        * replaced with a non-static method that checks the frame version.
        */
-      static uint size();
+      // BIC: make non-static
+      static unsigned int size();
 
       /*!
        * Returns the size of the frame header in bytes for the ID3v2 version
@@ -419,7 +423,8 @@ namespace TagLib {
        *
        * \deprecated Please see the explanation in the version above.
        */
-      static uint size(uint version);
+      // BIC: remove
+      static unsigned int size(unsigned int version);
 
       /*!
        * Returns true if the flag for tag alter preservation is set.
@@ -460,7 +465,7 @@ namespace TagLib {
       bool readOnly() const;
 
       /*!
-       * Returns true if the flag for the grouping identifity is set.
+       * Returns true if the flag for the grouping identity is set.
        *
        * \note This flag is currently ignored internally in TagLib.
        */
@@ -500,9 +505,9 @@ namespace TagLib {
       ByteVector render() const;
 
       /*!
-       * \deprecated
+       * \deprecated Use fileAlterPreservation().
        */
-      bool frameAlterPreservation() const;
+      TAGLIB_DEPRECATED bool frameAlterPreservation() const;
 
     private:
       Header(const Header &);
@@ -512,7 +517,7 @@ namespace TagLib {
       HeaderPrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 
 #endif

@@ -106,6 +106,6 @@ namespace TagLib {
       PrivateFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

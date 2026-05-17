@@ -11,8 +11,9 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "mpeg\mpegfile.cpp"
 #include "mpeg\mpegheader.cpp"
+
+#include "mpeg\mpegfile.cpp"
 #include "mpeg\mpegproperties.cpp"
 #include "mpeg\xingheader.cpp"
 
