@@ -10,6 +10,7 @@
       "name": "Windows 7 Service Pack 1"
     }
   },
+  "obsolete_languages": [1026, 1029, 1037, 1043, 1044, 1050, 1060, 1062, 1063, 1086],
   "language": [
     { "id": 1026, "obsolete": true },
     { "id": 1029, "obsolete": true },
