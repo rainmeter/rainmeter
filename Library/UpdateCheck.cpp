@@ -69,47 +69,32 @@ void Updater::CheckForUpdates(bool download)
 
 void Updater::GetLanguageStatus()
 {
-	LogIfInDebugMode(L"------------------------------");
-	LogIfInDebugMode(L"* Checking language status:");
-
 	if (m_Status.is_null() || m_Status.is_discarded())
 	{
 		LogError(L">>Status file: Invalid (may not have been downloaded)");
-		LogIfInDebugMode(L"------------------------------");
 		return;
 	}
 
 	bool obsolete = false;
 	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
-	const auto& lang = m_Status["language"];
-	if (lang.is_null() || lang.empty() ||
-		!lang.is_structured() || !lang.is_array())
+	const auto& lang = m_Status["obsolete_languages"];
+	if (!lang.is_array())
 	{
-		LogError(L">>Status file: Invalid (possibly corrupt?)");
-		LogIfInDebugMode(L"------------------------------");
 		return;
 	}
 
 	for (auto& it = lang.cbegin(); it != lang.cend(); ++it)
 	{
-		const auto& id = it.value()["id"];
+		const auto& id = *it;
 		if (id.is_number_unsigned() && id.get<unsigned>() == lcid)
 		{
-			LogIfInDebugModeF(L"  Language ID found: %u", lcid);
-
-			const auto& obs = it.value()["obsolete"];
-			if (obs.is_boolean())
-			{
-				obsolete = obs.get<bool>();
-
-				LogIfInDebugModeF(L"  Language status: %s", obsolete ? L"Obsolete" : L"Current");
-			}
+			obsolete = true;
+			LogIfInDebugModeF(L"  Language status: %s", obsolete ? L"Obsolete" : L"Current");
 			break;
 		}
 	}
 
 	GetRainmeter().SetLanguageStatus(obsolete);
-	LogIfInDebugMode(L"------------------------------");
 }
 
 void Updater::GetStatus(void* pParam)
