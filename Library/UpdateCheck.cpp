@@ -89,10 +89,13 @@ void Updater::GetLanguageStatus()
 		if (id.is_number_unsigned() && id.get<unsigned>() == lcid)
 		{
 			obsolete = true;
-			LogIfInDebugModeF(L"  Language status: %s", obsolete ? L"Obsolete" : L"Current");
 			break;
 		}
 	}
+
+	WCHAR language[LOCALE_NAME_MAX_LENGTH];
+	GetLocaleInfo(GetRainmeter().GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
+	LogIfInDebugModeF(L"  Language status: %s (%s)", obsolete ? L"Obsolete" : L"Current", language);
 
 	GetRainmeter().SetLanguageStatus(obsolete);
 }
