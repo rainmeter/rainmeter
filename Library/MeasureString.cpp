@@ -28,6 +28,11 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 
 	m_String = parser.ReadString(section, L"String", L"");
+
+	if (!m_Initialized)
+	{
+		m_StringValue = m_String;
+	}
 }
 
 /*
