@@ -471,7 +471,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build hash: %s", m_BuildHash.c_str());
 
-	LogNoticeF(L"%s - %s (%hu)",
+	LogNoticeF(L"OS: %s - %s (%hu)",
 		GetPlatform().GetFriendlyName().c_str(),
 		GetPlatform().GetUserLanguage().c_str(),
 		GetUserDefaultUILanguage());
