@@ -1764,7 +1764,7 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_HashLabel);
 	SetWindowText(item, tmpSz);
 
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s - %s (%hu)",
+	_snwprintf_s(tmpSz, _TRUNCATE, L"OS: %s - %s (%hu)",
 		GetPlatform().GetFriendlyName().c_str(),
 		GetPlatform().GetUserLanguage().c_str(),
 		GetUserDefaultUILanguage());
@@ -1841,7 +1841,7 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"%s - %s (%hu)\n",
+				L"OS: %s - %s (%hu)\n",
 				GetPlatform().GetFriendlyName().c_str(),
 				GetPlatform().GetUserLanguage().c_str(),
 				GetUserDefaultUILanguage());
