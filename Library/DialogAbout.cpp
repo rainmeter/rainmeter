@@ -1689,27 +1689,30 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		CT_LABEL(Id_LanguageLabel, 0,
 			190, 21, 380, 9,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_HashLabel, 0,
+		CT_LABEL(Id_TimestampLabel, 0,
 			190, 34, 380, 9,
+			WS_VISIBLE, 0),
+		CT_LABEL(Id_HashLabel, 0,
+			190, 47, 300, 9,
 			WS_VISIBLE, 0),
 
 		CT_LABEL(Id_WinVerLabel, 0,
-			190, 57, 380, 9,
+			190, 70, 380, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_LINKLABEL(Id_PathLink, 0,
-			190, 70, 380, 9,
-			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_SkinPathLink, 0,
 			190, 83, 380, 9,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_SettingsPathLink, 0,
+		CT_LINKLABEL(Id_SkinPathLink, 0,
 			190, 96, 380, 9,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_IniFileLink, 0,
+		CT_LINKLABEL(Id_SettingsPathLink, 0,
 			190, 109, 380, 9,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
+		CT_LINKLABEL(Id_IniFileLink, 0,
+			190, 122, 380, 9,
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
-			190, 125, buttonWidth + 35, 14,
+			190, 135, buttonWidth + 35, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_LINKLABEL(Id_HomeLink, ID_STR_GETLATESTVERSION,
@@ -1751,6 +1754,10 @@ void DialogAbout::TabVersion::Initialize()
 	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
 	item = GetControl(Id_LanguageLabel);
+	SetWindowText(item, tmpSz);
+
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
+	item = GetControl(Id_TimestampLabel);
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: %s", GetRainmeter().GetBuildHash().c_str());
@@ -1820,12 +1827,13 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len =_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild hash: %s\n",
+				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\nBuild hash: %s\n",
 				APPVERSION,
 				revision_number,
 				APPBITS,
 				lang,
 				lcid,
+				GetRainmeter().GetBuildTime().c_str(),
 				GetRainmeter().GetBuildHash().c_str());
 
 			std::wstring text(tmpSz, len);
