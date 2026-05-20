@@ -11,6 +11,7 @@
 #include <locale>
 #include <sstream>
 #include <iomanip>
+#include <ctime>
 
 const double LOCAL_TIMEZONE = DBL_MIN;
 
@@ -376,22 +377,22 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		std::wstring tsformat = parser.ReadString(section, L"TimeStampFormat", L"");
 		if (tsformat.empty())
 		{
+			const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
+			if (_wcsicmp(L"local", timezone) == 0)
+			{
+				m_TimeZone = LOCAL_TIMEZONE;
+			}
+			else
+			{
+				m_TimeZone = parser.ParseDouble(timezone, 0.0);
+				m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
+			}
+
 			m_TimeStamp = parser.ParseDouble(timeStamp.c_str(), -1.0);
 			if (m_TimeStamp < 0.0)
 			{
 				// |TimeStamp| is invalid, measure returns the current time
 				m_TimeStampType = INVALID;
-
-				const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
-				if (_wcsicmp(L"local", timezone) == 0)
-				{
-					m_TimeZone = LOCAL_TIMEZONE;
-				}
-				else
-				{
-					m_TimeZone = parser.ParseDouble(timezone, 0.0);
-					m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
-				}
 
 				UpdateDelta();
 			}
@@ -399,6 +400,25 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			{
 				// |TimeStamp| is a Windows timestamp
 				m_TimeStampType = FIXED;
+
+				const bool isUtc = parser.ReadBool(section, L"IsUTC", false);
+				const bool isUnix = parser.ReadBool(section, L"IsUnix", false);
+				if (isUtc && m_TimeZone == LOCAL_TIMEZONE) {
+					if (!isUnix) {
+						// timestamp is a Windows Timestamp -> convert to Unix first for timezone adjustment
+						m_TimeStamp -= 11644473600;
+					}
+
+					const std::time_t utctimestamp = static_cast<std::time_t>(m_TimeStamp);
+					std::tm* localtime = std::localtime(&utctimestamp);
+					const auto localtimestr = std::string(std::asctime(localtime));
+					// convert the localtime to a timestamp without any timezone adjustment,
+					// e.g. localtimestamp will be seconds since epoch with the local timezone applied already
+					const std::time_t localtimestamp = _mkgmtime(localtime);
+
+					// convert to windows timestamp
+					m_TimeStamp = static_cast<double>(localtimestamp + 11644473600);
+				}
 			}
 		}
 		else
