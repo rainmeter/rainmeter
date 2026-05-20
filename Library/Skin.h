@@ -221,6 +221,7 @@ public:
 	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
 	Meter* GetMeter(const std::wstring& meterName);
+	void DeleteMeter(const std::wstring& meterName);
 	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class DialogManage;
