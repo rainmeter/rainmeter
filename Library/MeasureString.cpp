@@ -29,8 +29,11 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_String = parser.ReadString(section, L"String", L"");
 
-	if (!m_Initialized)
+	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{
+		// This sets the "initial" value of the measure to be more consistent with how
+		// other measures work. A measure that is initially disabled/paused should
+		// return an empty string.
 		m_StringValue = m_String;
 	}
 }
