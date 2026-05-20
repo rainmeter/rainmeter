@@ -1692,9 +1692,9 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		CT_LABEL(Id_TimestampLabel, 0,
 			190, 34, 380, 9,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_HashLabel, 0,
+		CT_LINKLABEL(Id_HashLink, 0,
 			190, 47, 300, 9,
-			WS_VISIBLE, 0),
+			WS_VISIBLE | LWS_NOPREFIX, 0),
 
 		CT_LABEL(Id_WinVerLabel, 0,
 			190, 70, 380, 9,
@@ -1760,8 +1760,16 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_TimestampLabel);
 	SetWindowText(item, tmpSz);
 
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: %s", GetRainmeter().GetBuildHash().c_str());
-	item = GetControl(Id_HashLabel);
+	std::wstring hash = GetRainmeter().GetBuildHash();
+	if (hash.length() == 7ULL)  // Short hash is exactly 7 chars
+	{
+		_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: <a>%s</a>", hash.c_str());
+	}
+	else
+	{
+		_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: %s", hash.c_str());  // Local build
+	}
+	item = GetControl(Id_HashLink);
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"OS: %s - %s (%hu)",
@@ -1872,7 +1880,12 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		if (nm->idFrom == Id_HomeLink)
+		if (nm->idFrom == Id_HashLink)
+		{
+			std::wstring hashLink = L"https://github.com/rainmeter/rainmeter/commit/" + GetRainmeter().GetBuildHash();
+			CommandHandler::RunFile(hashLink.c_str());
+		}
+		else if (nm->idFrom == Id_HomeLink)
 		{
 			CommandHandler::RunFile(L"https://www.rainmeter.net");
 		}

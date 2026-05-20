@@ -459,7 +459,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 #ifdef COMMIT_HASH
 	m_BuildHash = COMMIT_HASH;
-	m_BuildHash = hash.substr(0, 7);  // Only use the short hash
+	m_BuildHash = m_BuildHash.substr(0, 7);  // Only use the short hash
 #else
 	m_BuildHash = L"<Local build>";
 #endif // COMMIT_HASH
