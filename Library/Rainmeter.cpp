@@ -442,14 +442,33 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	clearBuffer();
 
-#ifdef BUILD_HASH
-	m_BuildHash = BUILD_HASH;
-#endif
+#ifdef BUILD_TIME
+	// Build.bat will write to the BUILD_TIME macro when the installer is created
+	m_BuildTime = BUILD_TIME;
+#else
+	// For local builds, just use the current date/time
+	if (m_BuildTime.empty())
+	{
+		time_t now;
+		time(&now);
+		WCHAR timestamp[MAX_PATH];
+		wcsftime(timestamp, MAX_PATH, L"%F %T", gmtime(&now));
+		m_BuildTime = timestamp;
+	}
+#endif // BUILD_TIME
+
+#ifdef COMMIT_HASH
+	m_BuildHash = COMMIT_HASH;
+	m_BuildHash = hash.substr(0, 7);  // Only use the short hash
+#else
+	m_BuildHash = L"<Local build>";
+#endif // COMMIT_HASH
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
+	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build hash: %s", m_BuildHash.c_str());
 
 	LogNoticeF(L"%s - %s (%hu)",

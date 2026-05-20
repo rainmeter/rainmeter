@@ -34,6 +34,7 @@ set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
 set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
 
 set BUILD_YEAR=%date:~-4%
+set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
 :: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
@@ -65,10 +66,11 @@ echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 	echo #define STRPRODUCTVER STRFILEVER
 	echo #define APPVERSION L"%VERSION_SHORT%"
 	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
+	echo #define BUILD_TIME L"%BUILD_TIME%"
 	echo #define STRCOPYRIGHT "%BUILD_YEAR% Rainmeter Team"
 	echo const int revision_number = %VERSION_REVISION%;
 )
-if not "%GITHUB_SHA%" == "" echo #define BUILD_HASH L"%GITHUB_SHA%">> "..\Version.h"
+if not "%GITHUB_SHA%" == "" echo #define COMMIT_HASH L"%GITHUB_SHA%">> "..\Version.h"
 
 :: Update Version.cs
 > "..\Version.cs" (
