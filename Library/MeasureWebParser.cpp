@@ -15,7 +15,7 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-void ShowError(MeasureWebParser* measure, WCHAR* description);
+void LogWininetError(MeasureWebParser* measure, DWORD errorCode, WCHAR* description);
 
 class ProxyCachePool
 {
@@ -154,7 +154,7 @@ private:
 		}
 		else
 		{
-			ShowError(nullptr, L"InternetOpen error");
+			LogWininetError(nullptr, GetLastError(), L"InternetOpen error");
 		}
 
 		return handle;
@@ -193,8 +193,6 @@ private:
 	std::wstring m_GlobalProxyName;
 	std::wstring m_GlobalUserAgent;
 };
-
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, DWORD flags);
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
@@ -253,7 +251,6 @@ void ClearProxySetting(ProxySetting& setting)
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_ThreadHandle(),
 	m_DlThreadHandle(),
 	m_Codepage(),
 	m_StringIndex(),
@@ -266,7 +263,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_UpdateCounter(),
 	m_Download(),
 	m_ForceReload(),
-	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE)
+	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE),
+	m_AsyncFetch()
 {
 	g_Measures.push_back(this);
 
@@ -287,15 +285,10 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 
 MeasureWebParser::~MeasureWebParser()
 {
-	if (m_ThreadHandle)
+	if (m_AsyncFetch)
 	{
-		// Thread is killed inside critical section so that itself is not inside one when it is terminated
-		EnterCriticalSection(&g_CriticalSection);
-
-		TerminateThread(m_ThreadHandle, 0);
-		m_ThreadHandle = nullptr;
-
-		LeaveCriticalSection(&g_CriticalSection);
+		m_AsyncFetch->AbortWhenPossible();
+		m_AsyncFetch = nullptr;
 	}
 
 	if (m_DlThreadHandle)
@@ -534,16 +527,18 @@ void MeasureWebParser::UpdateValue()
 		if (m_Url.size() > 0ULL && m_Url.find(L'[') == std::wstring::npos)
 		{
 			// This is not a reference; need to update.
-			if (m_ThreadHandle == nullptr && m_DlThreadHandle == nullptr)
+			if (!m_AsyncFetch && m_DlThreadHandle == nullptr)
 			{
 				if (m_UpdateCounter == 0U)
 				{
-					// Launch a new thread to fetch the web data
-					unsigned int id = 0U;
-					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkThreadProc, this, 0U, &id);
-					if (threadHandle)
+
+					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
+
+					m_AsyncFetch = new AsyncFetch((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, MeasureWebParser::FetchResultCallback);
+					if (!m_AsyncFetch->Start())
 					{
-						m_ThreadHandle = threadHandle;
+						delete m_AsyncFetch;
+						m_AsyncFetch = nullptr;
 					}
 				}
 
@@ -575,59 +570,54 @@ const WCHAR* MeasureWebParser::GetStringValue()
 	return CheckSubstitute(s_ResultString.c_str());
 }
 
-// Fetches the data from the net and parses the page
-unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
+void MeasureWebParser::FetchResultCallback(const AsyncFetch* fetch, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
-	auto* measure = (MeasureWebParser*)pParam;
-	DWORD dwSize = 0UL;
+	auto measure = (MeasureWebParser*)requestor;
+	auto iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
+	if (iter != g_Measures.end())
+	{
+		if (measure->m_AsyncFetch == fetch)
+		{
+			measure->HandleFetchResult(data, dataSize, errorCode);
+			measure->m_AsyncFetch = nullptr;
+		}
+	}
+}
 
-	bool isDebugging = GetRainmeter().GetDebug();
-	if (isDebugging) LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
-
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_InternetOpenUrlFlags);
+void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode)
+{
 	if (!data)
 	{
-		ShowError(measure, L"Fetch error");
+		LogWininetError(this, errorCode, L"Fetch error");
 
-		if (!measure->m_OnConnectErrAction.empty())
+		if (!m_OnConnectErrAction.empty())
 		{
-			GetRainmeter().DelayedExecuteCommand(measure->m_OnConnectErrAction.c_str(), measure->GetSkin());
+			GetRainmeter().ExecuteCommand(m_OnConnectErrAction.c_str(), GetSkin());
 		}
 	}
 	else
 	{
-		if (isDebugging) LogDebugF(measure, L"Fetching: Success!");
-
-		if (measure->m_Debug == 2)
+		if (m_Debug == 2)
 		{
 			// Dump to a file
 
-			FILE* file = _wfopen(measure->m_DebugFileLocation.c_str(), L"wb");
+			FILE* file = _wfopen(m_DebugFileLocation.c_str(), L"wb");
 			if (file)
 			{
-				fwrite(data, sizeof(BYTE), dwSize, file);
+				fwrite(data, sizeof(BYTE), dataSize, file);
 				fclose(file);
+				file = nullptr;
 			}
 			else
 			{
-				LogErrorF(measure, L"Failed to dump debug data");
+				LogErrorF(this, L"Failed to dump debug data");
 			}
 		}
 
-		if (isDebugging) LogDebugF(measure, L"Parsing data...");
-		measure->ParseData(data, dwSize);
-		if (isDebugging) LogDebugF(measure, L"Parsing data...done!");
-
-		free(data);
-		data = nullptr;
+		if (GetRainmeter().GetDebug()) LogDebugF(this, L"Parsing data...");
+		ParseData(data, dataSize);
+		if (GetRainmeter().GetDebug()) LogDebugF(this, L"Parsed data!");
 	}
-
-	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(measure->m_ThreadHandle);
-	measure->m_ThreadHandle = 0;
-	LeaveCriticalSection(&g_CriticalSection);
-
-	return 0;   // thread completed successfully
 }
 
 void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data)
@@ -834,11 +824,11 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 
 	if (doErrorAction && !m_OnRegExpErrAction.empty())
 	{
-		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
+		GetRainmeter().ExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
 	}
 	else if (!m_Download && !m_FinishAction.empty())
 	{
-		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
+		GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), GetSkin());
 	}
 }
 
@@ -1176,123 +1166,20 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 	return 0U;   // thread completed successfully
 }
 
-/*
-	Downloads the given url and returns the webpage as dynamically allocated string.
-	You need to free the returned string after use!
-*/
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, DWORD flags)
+void LogWininetError(MeasureWebParser* measure, DWORD errorCode, WCHAR* description)
 {
-	if (_wcsnicmp(url.c_str(), L"file://", 7ULL) == 0)  // Local file
-	{
-		WCHAR path[MAX_PATH] = { 0 };
-		DWORD pathLength = _countof(path);
-		HRESULT hr = PathCreateFromUrl(url.c_str(), path, &pathLength, 0);
-		if (FAILED(hr))
-		{
-			return nullptr;
-		}
-
-		size_t fileSize = 0ULL;
-		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
-		*dataSize = (DWORD)fileSize;
-
-		return buffer;
-	}
-
-	{
-		URL_COMPONENTS components = { 0 };
-		components.dwStructSize = sizeof(components);
-		components.dwExtraInfoLength = ULONG_MAX;
-		if (InternetCrackUrl(url.c_str(), static_cast<DWORD>(url.size()), 0, &components))
-		{
-			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0ULL)
-			{
-				size_t position = url.find(components.lpszExtraInfo);  // Only percent encode characters in the query or fragment part of the URL
-				if (position != std::wstring::npos)
-				{
-					std::wstring extra = url.substr(position);
-					StringUtil::EncodeUrl(extra, false);  // Only percent encode spaces, control characters, and non-ascii characters (HEX: 80-255)
-
-					url.erase(position);
-					url.append(extra);
-				}
-			}
-		}
-	}
-
-	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags, 0);
-	if (!hUrlDump)
-	{
-		return nullptr;
-	}
-
-	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
-	// invalid (e.g. when incorrectly using the UTF-16LE codepage for the data).
-	const DWORD CHUNK_SIZE = 8192UL;
-	DWORD bufferSize = CHUNK_SIZE;
-	BYTE* buffer = (BYTE*)malloc(bufferSize + 3UL);
-	*dataSize = 0UL;
-
-	// Read the data.
-	do
-	{
-		DWORD readSize = 0UL;
-		if (!InternetReadFile(hUrlDump, buffer + *dataSize, bufferSize - *dataSize, &readSize))
-		{
-			free(buffer);
-			buffer = nullptr;
-			InternetCloseHandle(hUrlDump);
-			return nullptr;
-		}
-		else if (readSize == 0UL)
-		{
-			// All data read.
-			break;
-		}
-
-		*dataSize += readSize;
-
-		bufferSize += CHUNK_SIZE;
-
-		BYTE* oldBuffer = buffer;
-		if ((buffer = (BYTE*)realloc(buffer, bufferSize + 3UL)) == nullptr)
-		{
-			free(oldBuffer);  // In case realloc fails
-			oldBuffer = nullptr;
-			InternetCloseHandle(hUrlDump);
-			return nullptr;
-		}
-	}
-	while (true);
-
-	InternetCloseHandle(hUrlDump);
-
-	// Triple null terminate the buffer.
-	buffer[*dataSize] = 0;
-	buffer[*dataSize + 1] = 0;
-	buffer[*dataSize + 2] = 0;
-
-	return buffer;
-}
-
-/*
-  Writes the last error to log.
-*/
-void ShowError(MeasureWebParser* measure, WCHAR* description)
-{
-	DWORD dwErr = GetLastError();
-	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
+	if (errorCode == ERROR_INTERNET_EXTENDED_ERROR)
 	{
 		WCHAR szBuffer[1024];
-		DWORD dwError, dwLen = 1024;
+		DWORD responseError, dwLen = 1024;
 		const WCHAR* error = L"Unknown error";
-		if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen))
+		if (InternetGetLastResponseInfo(&responseError, szBuffer, &dwLen))
 		{
 			error = szBuffer;
-			dwErr = dwError;
+			errorCode = responseError;
 		}
 
-		LogErrorF(measure, L"(%s) %s (ErrorCode=%i)", description, error, dwErr);
+		LogErrorF(measure, L"(%s) %s (ErrorCode=%i)", description, error, errorCode);
 	}
 	else
 	{
@@ -1305,7 +1192,7 @@ void ShowError(MeasureWebParser* measure, WCHAR* description)
 			FORMAT_MESSAGE_IGNORE_INSERTS |
 			FORMAT_MESSAGE_MAX_WIDTH_MASK,
 			GetModuleHandle(L"wininet"),
-			dwErr,
+			errorCode,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 			(LPTSTR) &lpMsgBuf,
 			0,
@@ -1313,7 +1200,7 @@ void ShowError(MeasureWebParser* measure, WCHAR* description)
 		);
 
 		const WCHAR* error = lpMsgBuf ? (WCHAR*)lpMsgBuf : L"Unknown error";
-		LogErrorF(measure, L"(%s) %s (ErrorCode=%i)", description, error, dwErr);
+		LogErrorF(measure, L"(%s) %s (ErrorCode=%i)", description, error, errorCode);
 
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
 	}
@@ -1326,15 +1213,10 @@ void MeasureWebParser::Command(const std::wstring& command)
 	// Kill the threads (if any) and reset the update counter
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
-		if (m_ThreadHandle)
+		if (m_AsyncFetch)
 		{
-			// Thread is killed inside critical section so that itself is not inside one when it is terminated
-			EnterCriticalSection(&g_CriticalSection);
-
-			TerminateThread(m_ThreadHandle, 0UL);
-			m_ThreadHandle = nullptr;
-
-			LeaveCriticalSection(&g_CriticalSection);
+			m_AsyncFetch->AbortWhenPossible();
+			m_AsyncFetch = nullptr;
 		}
 
 		if (m_DlThreadHandle)

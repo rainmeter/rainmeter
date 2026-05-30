@@ -38,6 +38,7 @@
 #include <unordered_set>
 #include <list>
 #include <algorithm>
+#include <atomic>
 #include <memory>
 #include <ctime>
 #include <cstdlib>
