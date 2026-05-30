@@ -10,8 +10,6 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 
-#include <atomic>
-
 namespace {
 
 std::atomic<bool> g_Thread = false;
