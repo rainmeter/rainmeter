@@ -18,6 +18,7 @@
 #include "DialogNewSkin.h"
 #include "GameMode.h"
 #include "MeasureNet.h"
+#include "MeasureWebParser.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
 #include "UpdateCheck.h"
@@ -767,6 +768,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		{
 			GetRainmeter().ExecuteCommand((const WCHAR*)lParam, (Skin*)wParam);
 		}
+		break;
+
+	case WM_RAINMETER_WEBPARSER_DOWNLOAD_COMPLETE:
+		HandleWebParserNetworkDownloadComplete((void*)lParam);
 		break;
 
 	default:

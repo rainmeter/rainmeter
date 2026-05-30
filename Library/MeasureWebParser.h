@@ -32,6 +32,8 @@ public:
 
 	const WCHAR* GetStringValue() override;
 
+	void HandleNetworkDownloadComplete(UINT requestId, BYTE* data, DWORD dataSize, bool success);
+
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
 	void UpdateValue() override;
@@ -70,6 +72,9 @@ private:
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
 	DWORD m_InternetOpenUrlFlags;
+	UINT m_RequestId;
 };
+
+void HandleWebParserNetworkDownloadComplete(void* payload);
 
 #endif

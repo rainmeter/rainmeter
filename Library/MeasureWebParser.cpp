@@ -204,6 +204,27 @@ static std::vector<MeasureWebParser*> g_Measures;
 
 #define OVECCOUNT 300    // should be a multiple of 3
 
+struct NetworkThreadParam
+{
+	MeasureWebParser* measure;
+	UINT requestId;
+	std::wstring url;
+	std::wstring headers;
+	HINTERNET proxyHandle;
+	DWORD internetOpenUrlFlags;
+	bool logDebug;
+};
+
+struct NetworkDownloadCompletePayload
+{
+	MeasureWebParser* measure;
+	UINT requestId;
+	BYTE* data;
+	DWORD dataSize;
+	bool success;
+	DWORD lastError;
+};
+
 void SetupGlobalProxySetting()
 {
 	if (!g_ProxyCachePool)
@@ -266,7 +287,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_UpdateCounter(),
 	m_Download(),
 	m_ForceReload(),
-	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE)
+	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE),
+	m_RequestId()
 {
 	g_Measures.push_back(this);
 
@@ -539,11 +561,24 @@ void MeasureWebParser::UpdateValue()
 				if (m_UpdateCounter == 0U)
 				{
 					// Launch a new thread to fetch the web data
+					NetworkThreadParam* param = new NetworkThreadParam();
+					param->measure = this;
+					param->requestId = ++m_RequestId;
+					param->url = m_Url;
+					param->headers = m_Headers;
+					param->proxyHandle = m_Proxy.handle;
+					param->internetOpenUrlFlags = m_InternetOpenUrlFlags;
+					param->logDebug = GetRainmeter().GetDebug();
+
 					unsigned int id = 0U;
-					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkThreadProc, this, 0U, &id);
+					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkThreadProc, param, 0U, &id);
 					if (threadHandle)
 					{
 						m_ThreadHandle = threadHandle;
+					}
+					else
+					{
+						delete param;
 					}
 				}
 
@@ -575,59 +610,109 @@ const WCHAR* MeasureWebParser::GetStringValue()
 	return CheckSubstitute(s_ResultString.c_str());
 }
 
-// Fetches the data from the net and parses the page
+// Fetches the data from the net and notifies the main thread when complete
 unsigned __stdcall MeasureWebParser::NetworkThreadProc(void* pParam)
 {
-	auto* measure = (MeasureWebParser*)pParam;
-	DWORD dwSize = 0UL;
+	NetworkThreadParam* param = (NetworkThreadParam*)pParam;
+	DWORD dataSize = 0UL;
 
-	bool isDebugging = GetRainmeter().GetDebug();
-	if (isDebugging) LogDebugF(measure, L"Fetching: %s", measure->m_Url.c_str());
+	if (param->logDebug) LogDebugF(L"WebParser: Fetching: %s", param->url.c_str());
 
-	BYTE* data = DownloadUrl(measure->m_Proxy.handle, measure->m_Url, measure->m_Headers, &dwSize, measure->m_InternetOpenUrlFlags);
-	if (!data)
+	BYTE* data = DownloadUrl(param->proxyHandle, param->url, param->headers, &dataSize, param->internetOpenUrlFlags);
+	const bool success = (data != nullptr);
+	const DWORD lastError = success ? ERROR_SUCCESS : GetLastError();
+
+	if (param->logDebug && success) LogDebugF(L"WebParser: Fetching: Success!");
+
+	NetworkDownloadCompletePayload* payload = new NetworkDownloadCompletePayload();
+	payload->measure = param->measure;
+	payload->requestId = param->requestId;
+	payload->data = data;
+	payload->dataSize = dataSize;
+	payload->success = success;
+	payload->lastError = lastError;
+
+	if (!PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_WEBPARSER_DOWNLOAD_COMPLETE, 0, (LPARAM)payload))
 	{
-		ShowError(measure, L"Fetch error");
+		free(data);
+		delete payload;
+	}
 
-		if (!measure->m_OnConnectErrAction.empty())
+	delete param;
+
+	return 0;   // thread completed successfully
+}
+
+void HandleWebParserNetworkDownloadComplete(void* pParam)
+{
+	NetworkDownloadCompletePayload* payload = (NetworkDownloadCompletePayload*)pParam;
+	if (!payload)
+	{
+		return;
+	}
+
+	MeasureWebParser* measure = payload->measure;
+	auto iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
+	if (iter != g_Measures.end())
+	{
+		SetLastError(payload->lastError);
+		measure->HandleNetworkDownloadComplete(payload->requestId, payload->data, payload->dataSize, payload->success);
+	}
+	else
+	{
+		free(payload->data);
+	}
+
+	delete payload;
+}
+
+void MeasureWebParser::HandleNetworkDownloadComplete(UINT requestId, BYTE* data, DWORD dataSize, bool success)
+{
+	if (std::find(g_Measures.begin(), g_Measures.end(), this) == g_Measures.end() || requestId != m_RequestId)
+	{
+		free(data);
+		return;
+	}
+
+	const bool isDebugging = GetRainmeter().GetDebug();
+	if (!success)
+	{
+		ShowError(this, L"Fetch error");
+
+		if (!m_OnConnectErrAction.empty())
 		{
-			GetRainmeter().DelayedExecuteCommand(measure->m_OnConnectErrAction.c_str(), measure->GetSkin());
+			GetRainmeter().DelayedExecuteCommand(m_OnConnectErrAction.c_str(), GetSkin());
 		}
 	}
 	else
 	{
-		if (isDebugging) LogDebugF(measure, L"Fetching: Success!");
-
-		if (measure->m_Debug == 2)
+		if (m_Debug == 2)
 		{
 			// Dump to a file
 
-			FILE* file = _wfopen(measure->m_DebugFileLocation.c_str(), L"wb");
+			FILE* file = _wfopen(m_DebugFileLocation.c_str(), L"wb");
 			if (file)
 			{
-				fwrite(data, sizeof(BYTE), dwSize, file);
+				fwrite(data, sizeof(BYTE), dataSize, file);
 				fclose(file);
 			}
 			else
 			{
-				LogErrorF(measure, L"Failed to dump debug data");
+				LogErrorF(this, L"Failed to dump debug data");
 			}
 		}
 
-		if (isDebugging) LogDebugF(measure, L"Parsing data...");
-		measure->ParseData(data, dwSize);
-		if (isDebugging) LogDebugF(measure, L"Parsing data...done!");
-
-		free(data);
-		data = nullptr;
+		if (isDebugging) LogDebugF(this, L"Parsing data...");
+		ParseData(data, dataSize);
+		if (isDebugging) LogDebugF(this, L"Parsing data...done!");
 	}
 
-	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(measure->m_ThreadHandle);
-	measure->m_ThreadHandle = 0;
-	LeaveCriticalSection(&g_CriticalSection);
+	free(data);
 
-	return 0;   // thread completed successfully
+	EnterCriticalSection(&g_CriticalSection);
+	if (m_ThreadHandle) CloseHandle(m_ThreadHandle);
+	m_ThreadHandle = nullptr;
+	LeaveCriticalSection(&g_CriticalSection);
 }
 
 void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data)
@@ -1326,6 +1411,8 @@ void MeasureWebParser::Command(const std::wstring& command)
 	// Kill the threads (if any) and reset the update counter
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
+		++m_RequestId;
+
 		if (m_ThreadHandle)
 		{
 			// Thread is killed inside critical section so that itself is not inside one when it is terminated
