@@ -169,11 +169,8 @@ void MeasureRecycleManager::UpdateValue()
 				// Delay next check.
 				g_UpdateCount = g_InstanceCount * -2;
 
-				DWORD id = 0UL;
-				HANDLE thread = CreateThread(nullptr, 0ULL, QueryRecycleBinThreadProc, nullptr, 0UL, &id);
-				if (thread)
+				if (QueueUserWorkItem(QueryRecycleBinThreadProc, nullptr, 0))
 				{
-					CloseHandle(thread);
 					g_Thread = true;
 				}
 			}
