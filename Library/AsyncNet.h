@@ -46,6 +46,4 @@ private:
 	DWORD m_ErrorCode;
 };
 
-
-
 #endif

@@ -31,8 +31,6 @@ public:
 
 		_wcslwr(&m_GlobalProxyName[0]);
 		m_CacheMap.emplace(m_GlobalProxyName, m_GlobalProxyCache);
-		//LogDebugF(L"* ADD-GLOBAL: key=%s, handle=0x%p, ref=new, agent=%s", m_GlobalProxyName.c_str(),
-		//	m_GlobalProxyCache->GetCache(), m_GlobalUserAgent.c_str());
 	}
 
 	~ProxyCachePool()
@@ -40,8 +38,6 @@ public:
 		for (auto iter = m_CacheMap.begin(); iter != m_CacheMap.end(); ++iter)
 		{
 			ProxyCache* cache = (*iter).second;
-			//LogDebugF(L"* FORCE-REMOVE: key=%s, global=%i, ref=%i, agent=%s", (*iter).first.c_str(),
-			//	cache->IsGlobal(), cache->GetRef(), (*iter).second->GetAgent().c_str());
 			delete cache;
 			cache = nullptr;
 		}
@@ -72,15 +68,11 @@ public:
 			// Create new proxy
 			cache = new ProxyCache(CreateProxy(key.c_str(), agent.c_str()), agent);
 			m_CacheMap.emplace(key, cache);
-			//LogDebugF(L"* ADD: key=%s, handle=0x%p, ref=new, agent=%s", key.c_str(), cache->GetCache(), agent.c_str());
 			return cache->GetCache();
 		}
 
 		// Use proxy cache
 		cache->AddRef();
-		//LogDebugF(L"* ADD-REF: key=%s, handle=0x%p, global=%i, ref=%i, agent=%s",
-		//	cache->IsGlobal() ? m_GlobalProxyName.c_str() : proxyName.c_str(), cache->GetCache(),
-		//	cache->IsGlobal(), cache->GetRef(), agent.c_str());
 		return cache->GetCache();
 	}
 
@@ -101,12 +93,9 @@ public:
 			{
 				ProxyCache* cache = it->second;
 				cache->Release();
-				//LogDebugF(L"* REMOVE: key=%s, global=%i, ref=%i, agent=%s",
-				//	key.c_str(), cache->IsGlobal(), cache->GetRef(), agent.c_str());
 
 				if (cache->IsInvalid())
 				{
-					//LogDebugF(L"* EMPTY-ERASE: key=%s, agent=%s", key.c_str(), agent.c_str());
 					m_CacheMap.erase(it);
 					delete cache;
 					cache = nullptr;
@@ -172,7 +161,6 @@ private:
 
 		bool IsGlobal() { return m_IsGlobal; }
 		bool IsInvalid() { return (m_Ref <= 0 && !IsGlobal()); }
-		//int GetRef() { return m_Ref; }
 		HINTERNET GetCache() { return m_Handle; }
 		std::wstring& GetAgent() { return m_Agent; }
 
@@ -531,7 +519,6 @@ void MeasureWebParser::UpdateValue()
 			{
 				if (m_UpdateCounter == 0U)
 				{
-
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
 					m_AsyncFetch = new AsyncFetch((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, MeasureWebParser::FetchResultCallback);
