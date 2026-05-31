@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rainmeter",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "x32-Debug/Rainmeter.exe",
+            "cwd": "${workspaceRoot}",
+            "logging": {
+              "moduleLoad": false,
+              "trace": true
+            },
+          }
+    ]
+}
