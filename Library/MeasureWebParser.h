@@ -9,7 +9,7 @@
 #define RM_LIBRARY_MEASUREWEBPARSER_H_
 
 #include "Measure.h"
-#include "AsyncNet.h"
+#include "Net.h"
 
 struct ProxySetting
 {
@@ -40,7 +40,7 @@ protected:
 
 private:
 	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
-	static void FetchResultCallback(const AsyncFetch* fetch, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	static void FetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 	void HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
 
 	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
@@ -72,7 +72,7 @@ private:
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
 	DWORD m_InternetOpenUrlFlags;
-	AsyncFetch* m_AsyncFetch;
+	Net::Task* m_FetchTask;
 };
 
 #endif

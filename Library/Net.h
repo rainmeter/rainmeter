@@ -5,25 +5,27 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_ASYNC_NET_H_
-#define RM_ASYNC_NET_H_
+#ifndef RM_LIBRARY_NET_H_
+#define RM_LIBRARY_NET_H_
 
 #include <Windows.h>
 #include <atomic>
 #include <string>
 
-class AsyncFetch
+namespace Net {
+
+class Task
 {
 public:
-	typedef void (* ResultCallback)(const AsyncFetch*, void*, BYTE*, DWORD, DWORD);
+	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
 
-	AsyncFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
-	~AsyncFetch();
+	Task(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
+	~Task();
 
 	bool Start();
 	void AbortWhenPossible();
 
-	static void HandleAsyncFetchResult(WPARAM wParam, LPARAM lParam);
+	static void HandleResultMessage(WPARAM wParam, LPARAM lParam);
 
 private:
 	static DWORD WINAPI ThreadProc(void* param);
@@ -45,5 +47,7 @@ private:
 	DWORD m_DataSize;
 	DWORD m_ErrorCode;
 };
+
+}  // namespace Net
 
 #endif

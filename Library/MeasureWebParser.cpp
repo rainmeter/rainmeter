@@ -252,7 +252,7 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_Download(),
 	m_ForceReload(),
 	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE),
-	m_AsyncFetch()
+	m_FetchTask()
 {
 	g_Measures.push_back(this);
 
@@ -273,10 +273,10 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 
 MeasureWebParser::~MeasureWebParser()
 {
-	if (m_AsyncFetch)
+	if (m_FetchTask)
 	{
-		m_AsyncFetch->AbortWhenPossible();
-		m_AsyncFetch = nullptr;
+		m_FetchTask->AbortWhenPossible();
+		m_FetchTask = nullptr;
 	}
 
 	if (m_DlThreadHandle)
@@ -515,17 +515,17 @@ void MeasureWebParser::UpdateValue()
 		if (m_Url.size() > 0ULL && m_Url.find(L'[') == std::wstring::npos)
 		{
 			// This is not a reference; need to update.
-			if (!m_AsyncFetch && m_DlThreadHandle == nullptr)
+			if (!m_FetchTask && m_DlThreadHandle == nullptr)
 			{
 				if (m_UpdateCounter == 0U)
 				{
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
-					m_AsyncFetch = new AsyncFetch((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, MeasureWebParser::FetchResultCallback);
-					if (!m_AsyncFetch->Start())
+					m_FetchTask = new Net::Task((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, MeasureWebParser::FetchResultCallback);
+					if (!m_FetchTask->Start())
 					{
-						delete m_AsyncFetch;
-						m_AsyncFetch = nullptr;
+						delete m_FetchTask;
+						m_FetchTask = nullptr;
 					}
 				}
 
@@ -557,16 +557,16 @@ const WCHAR* MeasureWebParser::GetStringValue()
 	return CheckSubstitute(s_ResultString.c_str());
 }
 
-void MeasureWebParser::FetchResultCallback(const AsyncFetch* fetch, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
+void MeasureWebParser::FetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
 	auto measure = (MeasureWebParser*)requestor;
 	auto iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
 	if (iter != g_Measures.end())
 	{
-		if (measure->m_AsyncFetch == fetch)
+		if (measure->m_FetchTask == fetchTask)
 		{
 			measure->HandleFetchResult(data, dataSize, errorCode);
-			measure->m_AsyncFetch = nullptr;
+			measure->m_FetchTask = nullptr;
 		}
 	}
 }
@@ -1200,10 +1200,10 @@ void MeasureWebParser::Command(const std::wstring& command)
 	// Kill the threads (if any) and reset the update counter
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
-		if (m_AsyncFetch)
+		if (m_FetchTask)
 		{
-			m_AsyncFetch->AbortWhenPossible();
-			m_AsyncFetch = nullptr;
+			m_FetchTask->AbortWhenPossible();
+			m_FetchTask = nullptr;
 		}
 
 		if (m_DlThreadHandle)
