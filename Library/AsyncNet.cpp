@@ -35,15 +35,7 @@ AsyncFetch::~AsyncFetch()
 
 bool AsyncFetch::Start()
 {
-	unsigned int threadID = 0U;
-	HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, AsyncFetch::ThreadProc, this, 0U, &threadID);
-	if (threadHandle)
-	{
-		CloseHandle(threadHandle);
-		return true;
-	}
-
-	return false;
+	return QueueUserWorkItem(AsyncFetch::ThreadProc, this, 0);
 }
 
 void AsyncFetch::AbortWhenPossible()
@@ -51,7 +43,7 @@ void AsyncFetch::AbortWhenPossible()
 	m_AbortRequested = true;
 }
 
-unsigned __stdcall AsyncFetch::ThreadProc(void* param)
+DWORD WINAPI AsyncFetch::ThreadProc(void* param)
 {
 	auto fetch = (AsyncFetch*)param;
 	fetch->m_Data = fetch->FetchData();
