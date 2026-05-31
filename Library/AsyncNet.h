@@ -26,7 +26,7 @@ public:
 	static void HandleAsyncFetchResult(WPARAM wParam, LPARAM lParam);
 
 private:
-	static unsigned __stdcall ThreadProc(void* param);
+	static DWORD WINAPI ThreadProc(void* param);
 
 	BYTE* FetchData();
 
