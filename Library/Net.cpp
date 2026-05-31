@@ -6,12 +6,14 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "AsyncNet.h"
+#include "Net.h"
 #include "Rainmeter.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-AsyncFetch::AsyncFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) :
+namespace Web {
+
+Task::Task(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) :
 	m_Requestor(requestor),
 	m_Url(std::move(url)),
 	m_Headers(std::move(headers)),
@@ -24,7 +26,7 @@ AsyncFetch::AsyncFetch(void* requestor, std::wstring url, std::wstring headers, 
 {
 }
 
-AsyncFetch::~AsyncFetch()
+Task::~Task()
 {
 	if (m_Data)
 	{
@@ -33,40 +35,40 @@ AsyncFetch::~AsyncFetch()
 	}
 }
 
-bool AsyncFetch::Start()
+bool Task::Start()
 {
-	return QueueUserWorkItem(AsyncFetch::ThreadProc, this, 0);
+	return QueueUserWorkItem(Task::ThreadProc, this, 0);
 }
 
-void AsyncFetch::AbortWhenPossible()
+void Task::AbortWhenPossible()
 {
 	m_AbortRequested = true;
 }
 
-DWORD WINAPI AsyncFetch::ThreadProc(void* param)
+DWORD WINAPI Task::ThreadProc(void* param)
 {
-	auto fetch = (AsyncFetch*)param;
-	fetch->m_Data = fetch->FetchData();
-	fetch->m_ErrorCode = fetch->m_Data ? ERROR_SUCCESS : GetLastError();
+	auto task = (Task*)param;
+	task->m_Data = task->FetchData();
+	task->m_ErrorCode = task->m_Data ? ERROR_SUCCESS : GetLastError();
 
-	// Continue processing the request on the main thread in AsyncFetch::HandleAsyncFetchResult.
-	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_ASYNC_FETCH_RESULT, (WPARAM)fetch, 0);
+	// Continue processing the request on the main thread in Task::HandleResultMessage.
+	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_NET_FETCH_RESULT, (WPARAM)task, 0);
 
 	return 0;
 }
 
-void AsyncFetch::HandleAsyncFetchResult(WPARAM wParam, LPARAM lParam)
+void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
 {
-	auto fetch = (AsyncFetch*)wParam;
-	if (fetch && fetch->m_ResultCallback)
+	auto task = (Task*)wParam;
+	if (task && task->m_ResultCallback)
 	{
-		fetch->m_ResultCallback(fetch, fetch->m_Requestor, fetch->m_Data, fetch->m_DataSize, fetch->m_ErrorCode);
+		task->m_ResultCallback(task, task->m_Requestor, task->m_Data, task->m_DataSize, task->m_ErrorCode);
 	}
 
-	delete fetch;
+	delete task;
 }
 
-BYTE* AsyncFetch::FetchData()
+BYTE* Task::FetchData()
 {
 	m_DataSize = 0UL;
 
@@ -166,3 +168,6 @@ BYTE* AsyncFetch::FetchData()
 
 	return buffer;
 }
+
+}  // namespace Net
+

@@ -28,7 +28,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AsyncNet.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp">
@@ -85,6 +84,7 @@
     <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="Net.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
     <ClCompile Include="NowPlaying\Internet.cpp" />
     <ClCompile Include="NowPlaying\Lyrics.cpp" />
@@ -125,7 +125,6 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AsyncNet.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
@@ -180,6 +179,7 @@
     <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="Net.h" />
     <ClInclude Include="NowPlaying\Cover.h" />
     <ClInclude Include="NowPlaying\Internet.h" />
     <ClInclude Include="NowPlaying\Lyrics.h" />

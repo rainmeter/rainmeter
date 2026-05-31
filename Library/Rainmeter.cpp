@@ -11,7 +11,7 @@
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "Rainmeter.h"
-#include "AsyncNet.h"
+#include "Net.h"
 #include "TrayIcon.h"
 #include "System.h"
 #include "DialogAbout.h"
@@ -770,8 +770,8 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		break;
 
-	case WM_RAINMETER_HANDLE_ASYNC_FETCH_RESULT:
-		AsyncFetch::HandleAsyncFetchResult(wParam, lParam);
+	case WM_RAINMETER_HANDLE_NET_FETCH_RESULT:
+		Net::Task::HandleResultMessage(wParam, lParam);
 		break;
 
 	default:
