@@ -27,7 +27,7 @@ LuaHelper::UnicodeScript::~UnicodeScript()
 	LuaHelper::c_ScriptStack.pop_back();
 }
 
-void LuaHelper::ReportErrors()
+void LuaHelper::LogAndPopError()
 {
 	auto script = GetCurrentScript();
 	lua_State* L = script->GetState();

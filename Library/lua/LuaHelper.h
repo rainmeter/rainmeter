@@ -45,7 +45,7 @@ public:
 
 	static UnicodeScript* GetCurrentScript() { return c_ScriptStack.back(); }
 
-	static void ReportErrors();
+	static void LogAndPopError();
 
 	static void PushWide(const WCHAR* str);
 	static void PushWide(const std::wstring& str);
