@@ -39,9 +39,12 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 	static void FetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 	void HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
+
+	void StartDownloadTask();
+	static void DownloadResultCallback(const Net::Task* downloadTask, void* requestor, const std::wstring&, HRESULT result);
+	void HandleDownloadResult(const std::wstring&, HRESULT result);
 
 	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
 
@@ -59,7 +62,6 @@ private:
 	std::wstring m_DebugFileLocation;
 	std::wstring m_Headers;
 	ProxySetting m_Proxy;
-	HANDLE m_DlThreadHandle;
 	int m_Codepage;
 	int m_StringIndex;
 	int m_StringIndex2;
@@ -73,6 +75,7 @@ private:
 	bool m_LogSubstringErrors;
 	DWORD m_InternetOpenUrlFlags;
 	Net::Task* m_FetchTask;
+	Net::Task* m_DownloadTask;
 };
 
 #endif

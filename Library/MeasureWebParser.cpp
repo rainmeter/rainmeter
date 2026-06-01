@@ -239,7 +239,6 @@ void ClearProxySetting(ProxySetting& setting)
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_DlThreadHandle(),
 	m_Codepage(),
 	m_StringIndex(),
 	m_StringIndex2(),
@@ -252,13 +251,13 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_Download(),
 	m_ForceReload(),
 	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE),
-	m_FetchTask()
+	m_FetchTask(),
+	m_DownloadTask()
 {
 	g_Measures.push_back(this);
 
 	if (g_InstanceCount == 0)
 	{
-		System::InitializeCriticalSection(&g_CriticalSection);
 		SetupGlobalProxySetting();
 	}
 
@@ -279,15 +278,10 @@ MeasureWebParser::~MeasureWebParser()
 		m_FetchTask = nullptr;
 	}
 
-	if (m_DlThreadHandle)
+	if (m_DownloadTask)
 	{
-		// Thread is killed inside critical section so that itself is not inside one when it is terminated
-		EnterCriticalSection(&g_CriticalSection);
-
-		TerminateThread(m_DlThreadHandle, 0);
-		m_DlThreadHandle = nullptr;
-
-		LeaveCriticalSection(&g_CriticalSection);
+		m_DownloadTask->AbortWhenPossible();
+		m_DownloadTask = nullptr;
 	}
 
 	if (m_DownloadFile.empty())  // cache mode
@@ -309,16 +303,11 @@ MeasureWebParser::~MeasureWebParser()
 	{
 		// Last one, close all handles
 		ClearGlobalProxySetting();
-
-		// Last instance deletes the critical section
-		DeleteCriticalSection(&g_CriticalSection);
 	}
 }
 
 void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	EnterCriticalSection(&g_CriticalSection);
-
 	Measure::ReadOptions(parser, section);
 
 	std::wstring url = parser.ReadString(section, L"Url", L"", false);
@@ -467,8 +456,6 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			}
 		}
 	}
-
-	LeaveCriticalSection(&g_CriticalSection);
 }
 
 void MeasureWebParser::UpdateValue()
@@ -478,17 +465,12 @@ void MeasureWebParser::UpdateValue()
 	if (m_Download && m_RegExp.empty() && m_Url.find(L'[') == std::wstring::npos)
 	{
 		// If RegExp is empty download the file that is pointed by the Url
-		if (m_DlThreadHandle == nullptr)
+		if (!m_DownloadTask)
 		{
 			if (m_UpdateCounter == 0U)
 			{
 				// Launch a new thread to fetch the web data
-				unsigned int id = 0U;
-				HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
-				if (threadHandle)
-				{
-					m_DlThreadHandle = threadHandle;
-				}
+				StartDownloadTask();
 			}
 
 			++m_UpdateCounter;
@@ -502,20 +484,15 @@ void MeasureWebParser::UpdateValue()
 	}
 	else
 	{
-		// Make sure that the thread is not writing to the result at the same time
-		EnterCriticalSection(&g_CriticalSection);
-
 		if (!m_ResultString.empty())
 		{
 			m_Value = wcstod(m_ResultString.c_str(), nullptr);
 		}
 
-		LeaveCriticalSection(&g_CriticalSection);
-
 		if (m_Url.size() > 0ULL && m_Url.find(L'[') == std::wstring::npos)
 		{
 			// This is not a reference; need to update.
-			if (!m_FetchTask && m_DlThreadHandle == nullptr)
+			if (!m_FetchTask && !m_DownloadTask)
 			{
 				if (m_UpdateCounter == 0U)
 				{
@@ -538,7 +515,6 @@ const WCHAR* MeasureWebParser::GetStringValue()
 {
 	static std::wstring s_ResultString;
 
-	EnterCriticalSection(&g_CriticalSection);
 	if (m_Download)
 	{
 		s_ResultString = m_DownloadedFile;
@@ -547,7 +523,6 @@ const WCHAR* MeasureWebParser::GetStringValue()
 	{
 		s_ResultString = m_ResultString;
 	}
-	LeaveCriticalSection(&g_CriticalSection);
 
 	return CheckSubstitute(s_ResultString.c_str());
 }
@@ -555,14 +530,10 @@ const WCHAR* MeasureWebParser::GetStringValue()
 void MeasureWebParser::FetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
 	auto measure = (MeasureWebParser*)requestor;
-	auto iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
-	if (iter != g_Measures.end())
+	if (measure->m_FetchTask == fetchTask)
 	{
-		if (measure->m_FetchTask == fetchTask)
-		{
-			measure->HandleFetchResult(data, dataSize, errorCode);
-			measure->m_FetchTask = nullptr;
-		}
+		measure->HandleFetchResult(data, dataSize, errorCode);
+		measure->m_FetchTask = nullptr;
 	}
 }
 
@@ -657,17 +628,14 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 
 					const WCHAR* match = data + ovector[2 * m_StringIndex];
 					int matchLen = ovector[2 * m_StringIndex + 1] - ovector[2 * m_StringIndex];
-					EnterCriticalSection(&g_CriticalSection);
 					m_ResultString.assign(match, matchLen);
 					CharacterEntityReference::Decode(m_ResultString, m_DecodeCharacterReference, m_DecodeCodePoints);
-					LeaveCriticalSection(&g_CriticalSection);
 				}
 				else
 				{
 					if (m_LogSubstringErrors) LogWarningF(this, L"Not enough substrings");
 
 					// Clear the old result
-					EnterCriticalSection(&g_CriticalSection);
 					m_ResultString.clear();
 					if (m_Download)
 					{
@@ -681,7 +649,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 						}
 						m_DownloadedFile.clear();
 					}
-					LeaveCriticalSection(&g_CriticalSection);
 				}
 
 				// Update the references
@@ -708,9 +675,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 							}
 							else
 							{
-								// Set the result
-								EnterCriticalSection(&g_CriticalSection);
-
 								// Substitude the [measure] with result
 								(*i)->m_ResultString = (*i)->m_Url;
 								(*i)->m_ResultString.replace(
@@ -721,16 +685,8 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 								// Start download threads for the references
 								if ((*i)->m_Download)
 								{
-									// Start the download thread
-									unsigned int id = 0U;
-									HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, (*i), 0U, &id);
-									if (threadHandle)
-									{
-										(*i)->m_DlThreadHandle = threadHandle;
-									}
+									(*i)->StartDownloadTask();
 								}
-
-								LeaveCriticalSection(&g_CriticalSection);
 							}
 						}
 						else
@@ -738,7 +694,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 							if (m_LogSubstringErrors) LogWarningF(*i, L"Not enough substrings");
 
 							// Clear the old result
-							EnterCriticalSection(&g_CriticalSection);
 							(*i)->m_ResultString.clear();
 							if ((*i)->m_Download)
 							{
@@ -752,7 +707,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 								}
 								(*i)->m_DownloadedFile.clear();
 							}
-							LeaveCriticalSection(&g_CriticalSection);
 						}
 					}
 				}
@@ -764,7 +718,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			LogErrorF(this, L"RegExp matching error (%d)", rc);
 			doErrorAction = true;
 
-			EnterCriticalSection(&g_CriticalSection);
 			m_ResultString = m_ErrorString;
 
 			// Update the references
@@ -780,7 +733,6 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 					(*i)->m_ResultString = (*i)->m_ErrorString;
 				}
 			}
-			LeaveCriticalSection(&g_CriticalSection);
 		}
 
 		// Release memory used for the compiled pattern
@@ -795,13 +747,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 
 	if (m_Download)
 	{
-		// Start the download thread
-		unsigned int id = 0U;
-		HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0U, NetworkDownloadThreadProc, this, 0U, &id);
-		if (threadHandle)
-		{
-			m_DlThreadHandle = threadHandle;
-		}
+		StartDownloadTask();
 	}
 
 	if (doErrorAction && !m_OnRegExpErrAction.empty())
@@ -814,27 +760,23 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 	}
 }
 
-// Downloads file from the net
-unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
+void MeasureWebParser::StartDownloadTask()
 {
-	auto* measure = (MeasureWebParser*)pParam;
-	const bool download = !measure->m_DownloadFile.empty();
+	const bool download = !m_DownloadFile.empty();
 	bool ready = false;
 
 	std::wstring url;
 
-	if (measure->m_RegExp.empty() && measure->m_ResultString.empty())
+	if (m_RegExp.empty() && m_ResultString.empty())
 	{
-		if (!measure->m_Url.empty() && measure->m_Url[0] != L'[')
+		if (!m_Url.empty() && m_Url[0] != L'[')
 		{
-			url = measure->m_Url;
+			url = m_Url;
 		}
 	}
 	else
 	{
-		EnterCriticalSection(&g_CriticalSection);
-		url = measure->m_ResultString;
-		LeaveCriticalSection(&g_CriticalSection);
+		url = m_ResultString;
 
 		std::wstring::size_type pos = url.find(L':');
 		if (pos == std::wstring::npos && !url.empty())	// No protocol
@@ -843,10 +785,10 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 			if (url[0] == L'/')
 			{
 				// Absolute path
-				pos = measure->m_Url.find(L'/', 7ULL);	// Assume "http://" (=7)
+				pos = m_Url.find(L'/', 7ULL);	// Assume "http://" (=7)
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(measure->m_Url.substr(0ULL, pos));
+					std::wstring path(m_Url.substr(0ULL, pos));
 					url = path + url;
 				}
 			}
@@ -854,10 +796,10 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 			{
 				// Relative path
 
-				pos = measure->m_Url.rfind(L'/');
+				pos = m_Url.rfind(L'/');
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(measure->m_Url.substr(0ULL, pos + 1ULL));
+					std::wstring path(m_Url.substr(0ULL, pos + 1ULL));
 					url = path + url;
 				}
 			}
@@ -872,7 +814,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 
 		if (download)  // download mode
 		{
-			PathCanonicalize(buffer, measure->m_DownloadFile.c_str());
+			PathCanonicalize(buffer, m_DownloadFile.c_str());
 
 			std::wstring path = buffer;
 			std::wstring::size_type pos = path.find_first_not_of(L'\\');
@@ -881,7 +823,7 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 				path.erase(0UL, pos);
 			}
 
-			PathCanonicalize(buffer, measure->m_DownloadFolder.c_str());
+			PathCanonicalize(buffer, m_DownloadFolder.c_str());
 			CreateDirectory(buffer, nullptr);	// Make sure that the folder exists
 
 			wcscat(buffer, path.c_str());
@@ -961,8 +903,6 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 		}
 		else  // cache mode
 		{
-			EnterCriticalSection(&g_CriticalSection);
-
 			if (PathFileExists(fullpath.c_str()))
 			{
 				std::wstring::size_type pos = fullpath.find_last_of(L'.');
@@ -996,8 +936,6 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 			// Create empty file
 			HANDLE hFile = CreateFile(fullpath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
-
-			LeaveCriticalSection(&g_CriticalSection);
 		}
 
 		if (ready)
@@ -1045,74 +983,15 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 				LogDebugF(measure, L"Downloading url '%s' to: %s", url.c_str(), fullpath.c_str());
 			}
 
-			HRESULT resultCoInitialize = CoInitialize(nullptr);  // requires before calling URLDownloadToFile function
-
-			// Download the file
-			HRESULT result = URLDownloadToFile(nullptr, url.c_str(), fullpath.c_str(), 0, nullptr);
-			if (result == S_OK)
-			{
-				EnterCriticalSection(&g_CriticalSection);
-
-				if (!download)  // cache mode
-				{
-					if (!measure->m_DownloadedFile.empty())
-					{
-						// Delete old downloaded file
-						DeleteFile(measure->m_DownloadedFile.c_str());
-					}
-				}
-
-				// Convert LFN to 8.3 filename if the path contains blank character
-				if (fullpath.find_first_of(L' ') != std::wstring::npos)
-				{
-					DWORD size = GetShortPathName(fullpath.c_str(), buffer, _countof(buffer));
-					if (size > 0UL && size <= _countof(buffer))
-					{
-						fullpath = buffer;
-					}
-				}
-				measure->m_DownloadedFile = fullpath;
-
-				LeaveCriticalSection(&g_CriticalSection);
-
-				if (!measure->m_FinishAction.empty())
-				{
-					GetRainmeter().DelayedExecuteCommand(measure->m_FinishAction.c_str(), measure->GetSkin());
-				}
-			}
-			else
-			{
-				ready = false;
-
-				if (!download)  // cache mode
-				{
-					// Delete empty file
-					DeleteFile(fullpath.c_str());
-				}
-
-				LogErrorF(
-					measure,
-					L"Download failed (res=0x%08X, COM=0x%08X): %s",
-					result, resultCoInitialize, url.c_str());
-
-				if (!measure->m_OnDownloadErrAction.empty())
-				{
-					GetRainmeter().DelayedExecuteCommand(measure->m_OnDownloadErrAction.c_str(), measure->GetSkin());
-				}
-			}
-
-			if (SUCCEEDED(resultCoInitialize))
-			{
-				CoUninitialize();
-			}
+			m_DownloadTask = Net::DownloadTask::Create((void*)this, std::move(url), std::move(fullpath), DownloadResultCallback);
 		}
 		else
 		{
 			LogErrorF(measure, L"Download failed: %s", url.c_str());
 
-			if (!measure->m_OnDownloadErrAction.empty())
+			if (!m_OnDownloadErrAction.empty())
 			{
-				GetRainmeter().DelayedExecuteCommand(measure->m_OnDownloadErrAction.c_str(), measure->GetSkin());
+				GetRainmeter().ExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
 			}
 		}
 	}
@@ -1123,29 +1002,97 @@ unsigned __stdcall MeasureWebParser::NetworkDownloadThreadProc(void* pParam)
 
 	if (!ready) // download failed
 	{
-		EnterCriticalSection(&g_CriticalSection);
-
 		if (!download) // cache mode
 		{
-			if (!measure->m_DownloadedFile.empty())
+			if (!m_DownloadedFile.empty())
 			{
 				// Delete old downloaded file
-				DeleteFile(measure->m_DownloadedFile.c_str());
+				DeleteFile(m_DownloadedFile.c_str());
 			}
 		}
 
 		// Clear old downloaded filename
-		measure->m_DownloadedFile.clear();
-
-		LeaveCriticalSection(&g_CriticalSection);
+		m_DownloadedFile.clear();
 	}
+}
 
-	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(measure->m_DlThreadHandle);
-	measure->m_DlThreadHandle = 0;
-	LeaveCriticalSection(&g_CriticalSection);
 
-	return 0U;   // thread completed successfully
+void MeasureWebParser::DownloadResultCallback(const Net::Task* downloadTask, void* requestor, const std::wstring& path, HRESULT result)
+{
+	auto measure = (MeasureWebParser*)requestor;
+	if (measure->m_DownloadTask == downloadTask)
+	{
+		measure->HandleDownloadResult(path, result);
+		measure->m_DownloadTask = nullptr;
+	}
+}
+
+void MeasureWebParser::HandleDownloadResult(const std::wstring& path, HRESULT result)
+{
+	const bool download = !m_DownloadFile.empty();
+
+	if (result == S_OK)
+	{
+		if (!download)  // cache mode
+		{
+			if (!m_DownloadedFile.empty())
+			{
+				// Delete old downloaded file
+				DeleteFile(m_DownloadedFile.c_str());
+			}
+		}
+
+		// Convert LFN to 8.3 filename if the path contains blank character
+		if (path.find_first_of(L' ') != std::wstring::npos)
+		{
+			WCHAR buffer[MAX_PATH];
+			DWORD size = GetShortPathName(path.c_str(), buffer, _countof(buffer));
+			if (size > 0UL && size <= _countof(buffer))
+			{
+				m_DownloadedFile = buffer;
+			}
+			else
+			{
+				m_DownloadedFile = path;
+			}
+		}
+		else
+		{
+			m_DownloadedFile = path;
+		}
+
+		if (!m_FinishAction.empty())
+		{
+			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), GetSkin());
+		}
+	}
+	else
+	{
+		if (!download)  // cache mode
+		{
+			// Delete empty file
+			DeleteFile(path.c_str());
+
+			if (!m_DownloadedFile.empty())
+			{
+				// Delete old downloaded file
+				DeleteFile(m_DownloadedFile.c_str());
+			}
+
+			// Clear old downloaded filename
+			m_DownloadedFile.clear();
+		}
+
+		LogErrorF(this, L"Download failed (res=0x%08X)", result);
+
+		if (!m_OnDownloadErrAction.empty())
+		{
+			GetRainmeter().ExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
+		}
+	}
+		if (!download) // cache mode
+		{
+		}
 }
 
 void LogWininetError(MeasureWebParser* measure, DWORD errorCode, WCHAR* description)
@@ -1201,15 +1148,10 @@ void MeasureWebParser::Command(const std::wstring& command)
 			m_FetchTask = nullptr;
 		}
 
-		if (m_DlThreadHandle)
+		if (m_DownloadTask)
 		{
-			// Thread is killed inside critical section so that itself is not inside one when it is terminated
-			EnterCriticalSection(&g_CriticalSection);
-
-			TerminateThread(m_DlThreadHandle, 0UL);
-			m_DlThreadHandle = nullptr;
-
-			LeaveCriticalSection(&g_CriticalSection);
+			m_DownloadTask->AbortWhenPossible();
+			m_DownloadTask = nullptr;
 		}
 
 		m_UpdateCounter = 0U;
@@ -1218,8 +1160,6 @@ void MeasureWebParser::Command(const std::wstring& command)
 	{
 		m_ResultString.clear();
 		m_DownloadedFile.clear();
-
-		EnterCriticalSection(&g_CriticalSection);
 
 		// Update the references
 		auto i = g_Measures.begin();
@@ -1235,6 +1175,5 @@ void MeasureWebParser::Command(const std::wstring& command)
 				(*i)->m_DownloadedFile.clear();
 			}
 		}
-		LeaveCriticalSection(&g_CriticalSection);
 	}
 }

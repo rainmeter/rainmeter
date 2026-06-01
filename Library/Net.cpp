@@ -44,6 +44,51 @@ void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
 	task = nullptr;
 }
 
+
+//
+// DownloadTask
+//
+
+DownloadTask* DownloadTask::Create(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback)
+{
+	auto* task = new DownloadTask(requestor, std::move(url), std::move(path), resultCallback);
+	if (!QueueUserWorkItem(Task::ThreadProc, task, 0))
+	{
+		delete task;
+		return nullptr;
+	}
+
+	return task;
+}
+
+DownloadTask::DownloadTask(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback) : Task(requestor),
+	m_Url(std::move(url)),
+	m_Path(std::move(path)),
+	m_ResultCallback(resultCallback)
+{
+}
+
+void DownloadTask::StartWorkOnWorkerThread()
+{
+	if (SUCCEEDED(CoInitialize(nullptr)))
+	{
+		m_Result = URLDownloadToFile(nullptr, m_Url.c_str(), m_Path.c_str(), 0UL, nullptr);
+		CoUninitialize();
+	}
+}
+
+void DownloadTask::FinishWorkOnMainThread()
+{
+	if (m_AbortRequested && SUCCEEDED(m_Result))
+	{
+		DeleteFile(m_Path.c_str());
+	}
+	else if (m_ResultCallback)
+	{
+		m_ResultCallback(this, m_Requestor, m_Path, m_Result);
+	}
+}
+
 //
 // FetchTask
 //
