@@ -470,7 +470,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
-	LogNoticeF(L"Build hash: %s", m_BuildHash.c_str());
+	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());
 
 	LogNoticeF(L"OS: %s - %s (%hu)",
 		GetPlatform().GetFriendlyName().c_str(),

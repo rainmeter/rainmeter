@@ -1763,11 +1763,11 @@ void DialogAbout::TabVersion::Initialize()
 	std::wstring hash = GetRainmeter().GetBuildHash();
 	if (hash.length() == 7ULL)  // Short hash is exactly 7 chars
 	{
-		_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: <a>%s</a>", hash.c_str());
+		_snwprintf_s(tmpSz, _TRUNCATE, L"Build commit: <a>%s</a>", hash.c_str());
 	}
 	else
 	{
-		_snwprintf_s(tmpSz, _TRUNCATE, L"Build hash: %s", hash.c_str());  // Local build
+		_snwprintf_s(tmpSz, _TRUNCATE, L"Build commit: %s", hash.c_str());  // Local build
 	}
 	item = GetControl(Id_HashLink);
 	SetWindowText(item, tmpSz);
@@ -1835,7 +1835,7 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len =_snwprintf_s(
 				tmpSz,
 				_TRUNCATE,
-				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\nBuild hash: %s\n",
+				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\nBuild commit: %s\n",
 				APPVERSION,
 				revision_number,
 				APPBITS,
