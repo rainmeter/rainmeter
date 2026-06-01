@@ -25,8 +25,8 @@ protected:
 	Task(void* requestor);
 	virtual ~Task() {}
 
-	virtual void RunOnWorkerThread() = 0;
-	virtual void RunOnMainThread() = 0;
+	virtual void StartWorkOnWorkerThread() = 0;
+	virtual void FinishWorkOnMainThread() = 0;
 
 	static DWORD WINAPI ThreadProc(void* param);
 
@@ -48,8 +48,8 @@ private:
 	FetchTask(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
 	virtual ~FetchTask();
 
-	void RunOnWorkerThread() override;
-	void RunOnMainThread() override;
+	void StartWorkOnWorkerThread() override;
+	void FinishWorkOnMainThread() override;
 
 	BYTE* FetchData();
 
