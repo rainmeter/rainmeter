@@ -13,17 +13,45 @@
 
 namespace Net {
 
-Task* Task::CreateFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback)
+Task::Task(void* requestor) :
+	m_Requestor(requestor),
+	m_AbortRequested(false)
 {
-	auto* task = new Task();
-	task->m_Requestor = requestor;
-	task->m_Url = std::move(url);
-	task->m_Headers = std::move(headers);
-	task->m_InternetHandle = internetHandle;
-	task->m_InternetFlags = internetFlags;
-	task->m_ResultCallback = resultCallback;
+}
 
-	if (!QueueUserWorkItem(Task::FetchThreadProc, task, 0))
+void Task::AbortWhenPossible()
+{
+	m_AbortRequested = true;
+}
+
+DWORD WINAPI Task::ThreadProc(void* param)
+{
+	auto task = (Task*)param;
+	task->RunOnWorkerThread();
+
+	// At this point, we need to switch over to the main thread. Lets achieve that using a window message.
+	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_NET_TASK_RESULT, (WPARAM)task, 0);
+
+	return 0;
+}
+
+void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
+{
+	auto task = (Task*)wParam;
+	task->RunOnMainThread();
+
+	delete task;
+	task = nullptr;
+}
+
+//
+// FetchTask
+//
+
+FetchTask* FetchTask::Create(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback)
+{
+	auto* task = new FetchTask(requestor, std::move(url), std::move(headers), internetHandle, internetFlags, resultCallback);
+	if (!QueueUserWorkItem(Task::ThreadProc, task, 0))
 	{
 		delete task;
 		return nullptr;
@@ -32,11 +60,16 @@ Task* Task::CreateFetch(void* requestor, std::wstring url, std::wstring headers,
 	return task;
 }
 
-Task::Task()
+FetchTask::FetchTask(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) : Task(requestor),
+	m_Url(std::move(url)),
+	m_Headers(std::move(headers)),
+	m_InternetHandle(internetHandle),
+	m_InternetFlags(internetFlags),
+	m_ResultCallback(resultCallback)
 {
 }
 
-Task::~Task()
+FetchTask::~FetchTask()
 {
 	if (m_Data)
 	{
@@ -45,35 +78,21 @@ Task::~Task()
 	}
 }
 
-void Task::AbortWhenPossible()
+void FetchTask::RunOnWorkerThread()
 {
-	m_AbortRequested = true;
+	m_Data = FetchData();
+	m_ErrorCode = m_Data ? ERROR_SUCCESS : GetLastError();
 }
 
-DWORD WINAPI Task::FetchThreadProc(void* param)
+void FetchTask::RunOnMainThread()
 {
-	auto task = (Task*)param;
-	task->m_Data = task->FetchData();
-	task->m_ErrorCode = task->m_Data ? ERROR_SUCCESS : GetLastError();
-
-	// Continue processing the request on the main thread in Task::HandleResultMessage.
-	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_NET_FETCH_RESULT, (WPARAM)task, 0);
-
-	return 0;
-}
-
-void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
-{
-	auto task = (Task*)wParam;
-	if (task && task->m_ResultCallback)
+	if (m_ResultCallback)
 	{
-		task->m_ResultCallback(task, task->m_Requestor, task->m_Data, task->m_DataSize, task->m_ErrorCode);
+		m_ResultCallback(this, m_Requestor, m_Data, m_DataSize, m_ErrorCode)
 	}
-
-	delete task;
 }
 
-BYTE* Task::FetchData()
+BYTE* FetchTask::FetchData()
 {
 	m_DataSize = 0UL;
 

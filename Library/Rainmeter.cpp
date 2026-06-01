@@ -770,7 +770,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		break;
 
-	case WM_RAINMETER_HANDLE_NET_FETCH_RESULT:
+	case WM_RAINMETER_HANDLE_NET_TASK_RESULT:
 		Net::Task::HandleResultMessage(wParam, lParam);
 		break;
 
