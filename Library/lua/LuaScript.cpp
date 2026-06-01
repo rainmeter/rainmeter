@@ -175,6 +175,7 @@ void LuaScript::RunFunction(const char* funcName)
 			LuaHelper::ReportErrors();
 		}
 
+		// Pop the table
 		lua_pop(L, 1);
 	}
 }
@@ -198,7 +199,9 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 		if (lua_pcall(L, 0, 2, 0))
 		{
 			LuaHelper::ReportErrors();
-			lua_pop(L, 2);
+
+			// Pop the table
+			lua_pop(L, 1);
 		}
 		else
 		{
@@ -234,13 +237,16 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 						}
 						break;
 				}
-				lua_pop(L, 1);  // Remove the returned value from the stack
+
+				// Pop the value
+				lua_pop(L, 1);
 			};
 
 			getReturnedValue();  // Get first returned value
 			getReturnedValue();  // Get second returned value
 
-			lua_settop(L, 0);  // Remove any remaining items from the stack
+			// Pop the table
+			lua_pop(L, 1);
 
 			if (hasStringResult) return LUA_TSTRING;
 			if (hasNumberResult) return LUA_TNUMBER;
