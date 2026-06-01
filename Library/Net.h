@@ -37,7 +37,7 @@ protected:
 };
 
 // Async task to fetch an URL from the web.
-class __declspec(novtable) FetchTask : public Task
+class FetchTask : public Task
 {
 public:
 	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
