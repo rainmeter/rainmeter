@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Internet.h"
 #include "Lyrics.h"
+#include "../../Common/CharacterEntityReference.h"
 
 /*
 ** Download lyrics from various serivces.
@@ -50,7 +51,7 @@ bool Lyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title
 			pos -= 9ULL;
 			data.resize(pos);
 
-			Internet::DecodeReferences(data);
+			CharacterEntityReference::Decode(data, 2, false);
 
 			while ((pos = data.find(L"<br/>"), pos) != std::wstring::npos)
 			{

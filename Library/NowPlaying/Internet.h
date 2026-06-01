@@ -16,7 +16,6 @@ public:
 
 	static std::wstring DownloadUrl(const std::wstring& url, int codepage);
 	static std::wstring EncodeUrl(const std::wstring& url);
-	static void DecodeReferences(std::wstring& str);
 	static std::wstring ConvertToWide(LPCSTR str, int codepage);
 
 private:
