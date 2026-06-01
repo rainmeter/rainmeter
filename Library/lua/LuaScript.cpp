@@ -106,13 +106,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaHelper::ReportErrors();
+			LuaHelper::LogAndPopError();
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaHelper::ReportErrors();
+		LuaHelper::LogAndPopError();
 	}
 
 	return false;
@@ -172,7 +172,7 @@ void LuaScript::RunFunction(const char* funcName)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaHelper::ReportErrors();
+			LuaHelper::LogAndPopError();
 		}
 
 		// Pop the table
@@ -198,7 +198,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		if (lua_pcall(L, 0, 2, 0))
 		{
-			LuaHelper::ReportErrors();
+			LuaHelper::LogAndPopError();
 
 			// Pop the table
 			lua_pop(L, 1);
@@ -272,7 +272,7 @@ void LuaScript::RunString(const std::wstring& str)
 		// Load the string as a Lua chunk
 		if (luaL_loadstring(L, narrowStr.c_str()))
 		{
-			LuaHelper::ReportErrors();
+			LuaHelper::LogAndPopError();
 		}
 
 		// Push our table onto the stack
@@ -283,7 +283,7 @@ void LuaScript::RunString(const std::wstring& str)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaHelper::ReportErrors();
+			LuaHelper::LogAndPopError();
 		}
 	}
 }
@@ -374,7 +374,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 
 	if (lua_pcall(L, numArgs, 1, 0))
 	{
-		LuaHelper::ReportErrors();
+		LuaHelper::LogAndPopError();
 		strValue.clear();
 		result = false;
 	}

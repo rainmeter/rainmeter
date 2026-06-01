@@ -98,7 +98,7 @@ static int Dofile(lua_State* L)
 	}
 	else
 	{
-		LuaHelper::ReportErrors();
+		LuaHelper::LogAndPopError();
 	}
 
 	return 0;
