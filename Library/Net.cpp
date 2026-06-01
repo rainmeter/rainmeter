@@ -88,7 +88,7 @@ void FetchTask::RunOnMainThread()
 {
 	if (m_ResultCallback)
 	{
-		m_ResultCallback(this, m_Requestor, m_Data, m_DataSize, m_ErrorCode)
+		m_ResultCallback(this, m_Requestor, m_Data, m_DataSize, m_ErrorCode);
 	}
 }
 
