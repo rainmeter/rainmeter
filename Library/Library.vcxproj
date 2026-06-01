@@ -86,8 +86,6 @@
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
-    <ClCompile Include="NowPlaying\Internet.cpp" />
-    <ClCompile Include="NowPlaying\Lyrics.cpp" />
     <ClCompile Include="NowPlaying\Player.cpp" />
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp" />
     <ClCompile Include="NowPlaying\PlayerCAD.cpp" />
@@ -181,8 +179,6 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Net.h" />
     <ClInclude Include="NowPlaying\Cover.h" />
-    <ClInclude Include="NowPlaying\Internet.h" />
-    <ClInclude Include="NowPlaying\Lyrics.h" />
     <ClInclude Include="NowPlaying\Player.h" />
     <ClInclude Include="NowPlaying\PlayerAIMP.h" />
     <ClInclude Include="NowPlaying\PlayerCAD.h" />

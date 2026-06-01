@@ -86,7 +86,7 @@ void FetchTask::StartWorkOnWorkerThread()
 
 void FetchTask::FinishWorkOnMainThread()
 {
-	if (m_ResultCallback)
+	if (!m_AbortRequested && m_ResultCallback)
 	{
 		m_ResultCallback(this, m_Requestor, m_Data, m_DataSize, m_ErrorCode);
 	}
