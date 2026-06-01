@@ -27,7 +27,7 @@ void Task::AbortWhenPossible()
 DWORD WINAPI Task::ThreadProc(void* param)
 {
 	auto task = (Task*)param;
-	task->RunOnWorkerThread();
+	task->StartWorkOnWorkerThread();
 
 	// At this point, we need to switch over to the main thread. Lets achieve that using a window message.
 	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_NET_TASK_RESULT, (WPARAM)task, 0);
@@ -38,7 +38,7 @@ DWORD WINAPI Task::ThreadProc(void* param)
 void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
 {
 	auto task = (Task*)wParam;
-	task->RunOnMainThread();
+	task->FinishWorkOnMainThread();
 
 	delete task;
 	task = nullptr;
@@ -78,13 +78,13 @@ FetchTask::~FetchTask()
 	}
 }
 
-void FetchTask::RunOnWorkerThread()
+void FetchTask::StartWorkOnWorkerThread()
 {
 	m_Data = FetchData();
 	m_ErrorCode = m_Data ? ERROR_SUCCESS : GetLastError();
 }
 
-void FetchTask::RunOnMainThread()
+void FetchTask::FinishWorkOnMainThread()
 {
 	if (m_ResultCallback)
 	{
