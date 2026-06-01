@@ -14,26 +14,44 @@
 
 namespace Net {
 
-class Task
+class __declspec(novtable) Task
 {
 public:
-	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
-
-	static Task* CreateFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
+	static void HandleResultMessage(WPARAM wParam, LPARAM lParam);
 
 	void AbortWhenPossible();
 
-	static void HandleResultMessage(WPARAM wParam, LPARAM lParam);
+protected:
+	Task(void* requestor);
+	virtual ~Task() {}
 
-private:
-	Task();
-	~Task();
+	virtual void RunOnWorkerThread() = 0;
+	virtual void RunOnMainThread() = 0;
 
-	static DWORD WINAPI FetchThreadProc(void* param);
+	static DWORD WINAPI ThreadProc(void* param);
 
 	BYTE* FetchData();
 
 	void* m_Requestor;
+	std::atomic<bool> m_AbortRequested;
+};
+
+// Async task to fetch an URL from the web.
+class __declspec(novtable) FetchTask : public Task
+{
+public:
+	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
+
+	static FetchTask* Create(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
+
+private:
+	FetchTask(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
+	virtual ~FetchTask();
+
+	void RunOnWorkerThread() override;
+	void RunOnMainThread() override;
+
+	BYTE* FetchData();
 
 	// Request
 	std::wstring m_Url;
@@ -41,9 +59,8 @@ private:
 	HINTERNET m_InternetHandle = nullptr;
 	DWORD m_InternetFlags = 0;
 	ResultCallback m_ResultCallback = nullptr;
-	std::atomic<bool> m_AbortRequested = false;
 
-	// Response
+	// Result
 	BYTE* m_Data = nullptr;
 	DWORD m_DataSize = 0;
 	DWORD m_ErrorCode = 0;
