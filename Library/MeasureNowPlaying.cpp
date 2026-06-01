@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeasureNowPlaying.h"
 #include "Rainmeter.h"
-#include "NowPlaying/Internet.h"
 #include "NowPlaying/PlayerAIMP.h"
 #include "NowPlaying/PlayerCAD.h"
 #include "NowPlaying/PlayerITunes.h"
@@ -37,18 +36,12 @@ struct ParentMeasure
 };
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
-bool g_Initialized = false;
 HINSTANCE g_Instance = nullptr;
 
 MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MEASURE_NONE),
 	m_Parent()
 {
-	if (!g_Initialized)
-	{
-		Internet::Initialize();
-		g_Initialized = true;
-	}
 }
 
 MeasureNowPlaying::~MeasureNowPlaying()
@@ -65,12 +58,6 @@ MeasureNowPlaying::~MeasureNowPlaying()
 
 			delete m_Parent;
 			m_Parent = nullptr;
-
-			if (g_ParentMeasures.empty())
-			{
-				Internet::Finalize();
-				g_Initialized = false;
-			}
 		}
 	}
 }

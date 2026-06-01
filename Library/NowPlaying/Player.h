@@ -11,8 +11,7 @@
 #include "taglib\fileref.h"
 #include "taglib\tag.h"
 #include "Cover.h"
-#include "Internet.h"
-#include "Lyrics.h"
+#include "..\Net.h"
 
 enum StateType
 {
@@ -124,9 +123,10 @@ protected:
 	bool m_Repeat;
 
 private:
-	static unsigned __stdcall LyricsThreadProc(void* pParam);
+	static void LyricsFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	void HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
 
-	HANDLE m_InternetThread;
+	Net::Task* m_FetchLyricsTask;
 };
 
 #endif
