@@ -36,6 +36,31 @@ protected:
 	std::atomic<bool> m_AbortRequested;
 };
 
+// Async task to download an URL to a file.
+class DownloadTask : public Task
+{
+public:
+	typedef void (* ResultCallback)(const Task*, void*, HRESULT result, HRESULT coInitializeResult);
+
+	static DownloadTask* Create(void* requestor, std::wstring url, std::wstring file, ResultCallback resultCallback);
+
+private:
+	DownloadTask(void* requestor, std::wstring url, std::wstring file, ResultCallback resultCallback);
+	virtual ~DownloadTask() {}
+
+	void StartWorkOnWorkerThread() override;
+	void FinishWorkOnMainThread() override;
+
+	// Request
+	std::wstring m_Url;
+	std::wstring m_File;
+	ResultCallback m_ResultCallback = nullptr;
+
+	// Result
+	HRESULT m_Result = E_FAIL;
+	HRESULT m_CoInitializeResult = E_FAIL;
+};
+
 // Async task to fetch an URL from the web.
 class FetchTask : public Task
 {

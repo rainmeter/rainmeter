@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "Net.h"
 #include "Rainmeter.h"
+#include <Urlmon.h>
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
@@ -42,6 +43,54 @@ void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
 
 	delete task;
 	task = nullptr;
+}
+
+
+//
+// DownloadTask
+//
+
+DownloadTask* DownloadTask::Create(void* requestor, std::wstring url, std::wstring file, ResultCallback resultCallback)
+{
+	auto* task = new DownloadTask(requestor, std::move(url), std::move(file), resultCallback);
+	if (!QueueUserWorkItem(Task::ThreadProc, task, 0))
+	{
+		delete task;
+		return nullptr;
+	}
+
+	return task;
+}
+
+DownloadTask::DownloadTask(void* requestor, std::wstring url, std::wstring file, ResultCallback resultCallback) : Task(requestor),
+	m_Url(std::move(url)),
+	m_File(std::move(file)),
+	m_ResultCallback(resultCallback)
+{
+}
+
+void DownloadTask::StartWorkOnWorkerThread()
+{
+	if (m_AbortRequested)
+	{
+		m_Result = E_ABORT;
+		return;
+	}
+
+	m_CoInitializeResult = CoInitialize(nullptr);  // requires before calling URLDownloadToFile function
+	m_Result = URLDownloadToFile(nullptr, m_Url.c_str(), m_File.c_str(), 0UL, nullptr);
+	if (SUCCEEDED(m_CoInitializeResult))
+	{
+		CoUninitialize();
+	}
+}
+
+void DownloadTask::FinishWorkOnMainThread()
+{
+	if (!m_AbortRequested && m_ResultCallback)
+	{
+		m_ResultCallback(this, m_Requestor, m_Result, m_CoInitializeResult);
+	}
 }
 
 //
