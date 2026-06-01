@@ -11,18 +11,28 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-namespace Web {
+namespace Net {
 
-Task::Task(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) :
-	m_Requestor(requestor),
-	m_Url(std::move(url)),
-	m_Headers(std::move(headers)),
-	m_InternetHandle(internetHandle),
-	m_InternetFlags(internetFlags),
-	m_ResultCallback(resultCallback),
-	m_Data(nullptr),
-	m_DataSize(0),
-	m_ErrorCode(0)
+Task* Task::CreateFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback)
+{
+	auto* task = new Task();
+	task->m_Requestor = requestor;
+	task->m_Url = std::move(url);
+	task->m_Headers = std::move(headers);
+	task->m_InternetHandle = internetHandle;
+	task->m_InternetFlags = internetFlags;
+	task->m_ResultCallback = resultCallback;
+
+	if (!QueueUserWorkItem(Task::FetchThreadProc, task, 0))
+	{
+		delete task;
+		return nullptr;
+	}
+
+	return task;
+}
+
+Task::Task()
 {
 }
 
@@ -35,17 +45,12 @@ Task::~Task()
 	}
 }
 
-bool Task::Start()
-{
-	return QueueUserWorkItem(Task::ThreadProc, this, 0);
-}
-
 void Task::AbortWhenPossible()
 {
 	m_AbortRequested = true;
 }
 
-DWORD WINAPI Task::ThreadProc(void* param)
+DWORD WINAPI Task::FetchThreadProc(void* param)
 {
 	auto task = (Task*)param;
 	task->m_Data = task->FetchData();

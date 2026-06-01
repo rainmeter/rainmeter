@@ -19,16 +19,17 @@ class Task
 public:
 	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
 
-	Task(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
-	~Task();
+	static Task* CreateFetch(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
 
-	bool Start();
 	void AbortWhenPossible();
 
 	static void HandleResultMessage(WPARAM wParam, LPARAM lParam);
 
 private:
-	static DWORD WINAPI ThreadProc(void* param);
+	Task();
+	~Task();
+
+	static DWORD WINAPI FetchThreadProc(void* param);
 
 	BYTE* FetchData();
 
@@ -37,15 +38,15 @@ private:
 	// Request
 	std::wstring m_Url;
 	std::wstring m_Headers;
-	HINTERNET m_InternetHandle;
-	DWORD m_InternetFlags;
-	ResultCallback m_ResultCallback;
-	std::atomic<bool> m_AbortRequested;
+	HINTERNET m_InternetHandle = nullptr;
+	DWORD m_InternetFlags = 0;
+	ResultCallback m_ResultCallback = nullptr;
+	std::atomic<bool> m_AbortRequested = false;
 
 	// Response
-	BYTE* m_Data;
-	DWORD m_DataSize;
-	DWORD m_ErrorCode;
+	BYTE* m_Data = nullptr;
+	DWORD m_DataSize = 0;
+	DWORD m_ErrorCode = 0;
 };
 
 }  // namespace Net

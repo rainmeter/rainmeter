@@ -521,12 +521,7 @@ void MeasureWebParser::UpdateValue()
 				{
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
-					m_FetchTask = new Net::Task((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, MeasureWebParser::FetchResultCallback);
-					if (!m_FetchTask->Start())
-					{
-						delete m_FetchTask;
-						m_FetchTask = nullptr;
-					}
+					m_FetchTask = Net::Task::CreateFetch((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, FetchResultCallback);
 				}
 
 				++m_UpdateCounter;
