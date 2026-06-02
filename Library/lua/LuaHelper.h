@@ -22,21 +22,19 @@ class LuaStateScope
 public:
 	static LuaStateScope* GetCurrent() { return c_ScopeStack.back(); }
 
-	LuaStateScope(lua_State* state, bool unicode, int ref, std::wstring path);
+	LuaStateScope(lua_State* state, bool unicode, int ref);
 	~LuaStateScope();
 
 	operator lua_State*() { return m_State; }
 	lua_State* GetState() { return m_State; }
 
-	bool IsUnicode() { return m_Unicode; }
 	int GetRef() { return m_Ref; }
-	std::wstring GetSourceFile() { return m_File; }
+	bool IsUnicode() { return m_Unicode; }
 
 private:
 	lua_State* m_State;
-	bool m_Unicode;
 	int m_Ref;
-	std::wstring m_File;
+	bool m_Unicode;
 
 	static std::vector<LuaStateScope*> c_ScopeStack;
 };

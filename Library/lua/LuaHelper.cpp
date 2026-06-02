@@ -13,11 +13,10 @@
 
 std::vector<LuaStateScope*> LuaStateScope::c_ScopeStack;
 
-LuaStateScope::LuaStateScope(lua_State* state, bool unicode, int ref, std::wstring path) :
+LuaStateScope::LuaStateScope(lua_State* state, bool unicode, int ref) :
 	m_State(state),
 	m_Unicode(unicode),
-	m_Ref(ref),
-	m_File(path)
+	m_Ref(ref)
 {
 	c_ScopeStack.push_back(this);
 }
