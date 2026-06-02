@@ -45,7 +45,7 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	LogDebug(LuaHelper::GetCurrentScript()->IsUnicode() ?
+	LogDebug(LuaStateScope::GetCurrent()->IsUnicode() ?
 		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 
 	return 0;
@@ -54,7 +54,7 @@ static int Print(lua_State* L)
 static int Dofile(lua_State* L)
 {
 	//Modified version of luaB_dofile()
-	auto curScript = LuaHelper::GetCurrentScript();
+	auto curScript = LuaStateScope::GetCurrent();
 	const char* fname = luaL_optstring(L, 1, NULL);
 	std::wstring path = curScript->IsUnicode() ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
 
@@ -89,7 +89,7 @@ static int Dofile(lua_State* L)
 
 	if (scriptLoaded)
 	{
-		auto script = LuaHelper::GetState(L, unicode, curScript->GetRef(), path);
+		LuaStateScope script(L, unicode, curScript->GetRef(), path);
 		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
 		lua_setfenv(L, -2);
 
