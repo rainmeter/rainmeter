@@ -313,7 +313,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 	lua_getfield(L, -1, nFuncName.c_str());
 
-	// Add args
+	// Stack: [table, function]
 	int numArgs = 0;
 	if (args.size() > 0ULL)
 	{
@@ -372,16 +372,18 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 		}
 	}
 
+	// Stack: [table, function, args...]
 	bool result = true;
-
 	if (lua_pcall(L, numArgs, 1, 0))
 	{
+		// Stack: [table, error]
 		LuaHelper::LogAndPopError();
 		strValue.clear();
 		result = false;
 	}
 	else
 	{
+		// Stack: [table, returnValue]
 		int type = lua_type(L, -1);
 		if (type == LUA_TNUMBER)
 		{
@@ -420,9 +422,14 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 			strValue += L")";
 			result = false;
 		}
+
+		// Stack: [table, returnValue]
+		lua_pop(L, 1);
 	}
 
-	lua_settop(L, 0);
+	// Stack: [table]
+	lua_pop(L, 1);
+
 	return result;
 }
 
@@ -437,12 +444,10 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 	const std::string nVarName = m_Unicode ?
 		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
 
-	// Push our table onto the stack
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-	// Push the variable onto the stack
 	lua_getfield(L, -1, nVarName.c_str());
 
+	// Stack: [table, variable]
 	int type = lua_type(L, -1);
 	if (type == LUA_TNUMBER)
 	{
@@ -480,6 +485,8 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 		result = false;
 	}
 
-	lua_settop(L, 0);
+	// Stack: [table, variable]
+	lua_pop(L, 2);
+
 	return result;
 }
