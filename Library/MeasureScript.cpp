@@ -196,6 +196,8 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureScript::Command(const std::wstring& command)
 {
+	if (!m_LuaScript.IsInitialized()) return;
+
 	auto run = m_LuaScript.RunString(command);
 	if (run.DidFail())
 	{
