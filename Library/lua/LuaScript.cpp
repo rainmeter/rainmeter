@@ -134,22 +134,21 @@ void LuaScript::Uninitialize()
 */
 bool LuaScript::IsFunction(const char* funcName)
 {
+	if (!IsInitialized()) return false;
+
 	auto L = GetState();
 	bool bExists = false;
 
-	if (IsInitialized())
-	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
-		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
+	// Push the function onto the stack
+	lua_getfield(L, -1, funcName);
 
-		bExists = lua_isfunction(L, -1);
+	bExists = lua_isfunction(L, -1);
 
-		// Pop the function off the stack.
-		lua_pop(L, 2);
-	}
+	// Pop the function off the stack.
+	lua_pop(L, 2);
 
 	return bExists;
 }
@@ -160,24 +159,23 @@ bool LuaScript::IsFunction(const char* funcName)
 */
 void LuaScript::RunFunction(const char* funcName)
 {
+	if (!IsInitialized()) return;
+
 	auto L = GetState();
 
-	if (IsInitialized())
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Push the function onto the stack
+	lua_getfield(L, -1, funcName);
+
+	if (lua_pcall(L, 0, 0, 0))
 	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
-
-		if (lua_pcall(L, 0, 0, 0))
-		{
-			LuaHelper::LogAndPopError();
-		}
-
-		// Pop the table
-		lua_pop(L, 1);
+		LuaHelper::LogAndPopError();
 	}
+
+	// Pop the table
+	lua_pop(L, 1);
 }
 
 /*
@@ -186,71 +184,69 @@ void LuaScript::RunFunction(const char* funcName)
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
+	if (!IsInitialized()) return LUA_TNIL;
+
 	auto L = GetState();
 
-	if (IsInitialized())
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Push the function onto the stack
+	lua_getfield(L, -1, funcName);
+
+	if (lua_pcall(L, 0, 2, 0))
 	{
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+		LuaHelper::LogAndPopError();
 
-		// Push the function onto the stack
-		lua_getfield(L, -1, funcName);
+		// Pop the table
+		lua_pop(L, 1);
+	}
+	else
+	{
+		bool hasNumberResult = false;
+		bool hasStringResult = false;
 
-		if (lua_pcall(L, 0, 2, 0))
+		auto getReturnedValue = [&]() -> void
 		{
-			LuaHelper::LogAndPopError();
-
-			// Pop the table
-			lua_pop(L, 1);
-		}
-		else
-		{
-			bool hasNumberResult = false;
-			bool hasStringResult = false;
-
-			auto getReturnedValue = [&]() -> void
+			int type = lua_type(L, -1);
+			switch (type)
 			{
-				int type = lua_type(L, -1);
-				switch (type)
-				{
-					case LUA_TNUMBER:
-						numValue = lua_tonumber(L, -1);
-						hasNumberResult = true;
-						break;
+				case LUA_TNUMBER:
+					numValue = lua_tonumber(L, -1);
+					hasNumberResult = true;
+					break;
 
-					case LUA_TSTRING:
-						if (!hasStringResult)
+				case LUA_TSTRING:
+					if (!hasStringResult)
+					{
+						size_t strLen = 0;
+						const char* str = lua_tolstring(L, -1, &strLen);
+						strValue = m_Unicode ?
+							StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+
+						hasStringResult = true;
+						if (!hasNumberResult)
 						{
-							size_t strLen = 0;
-							const char* str = lua_tolstring(L, -1, &strLen);
-							strValue = m_Unicode ?
-								StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
-
-							hasStringResult = true;
-							if (!hasNumberResult)
-							{
-								// Only convert the string value to number if number value has not been set
-								numValue = strtod(str, nullptr);
-								hasNumberResult = true;
-							}
-
+							// Only convert the string value to number if number value has not been set
+							numValue = strtod(str, nullptr);
+							hasNumberResult = true;
 						}
-						break;
-				}
+					}
+					break;
+			}
 
-				// Pop the value
-				lua_pop(L, 1);
-			};
-
-			getReturnedValue();  // Get first returned value
-			getReturnedValue();  // Get second returned value
-
-			// Pop the table
+			// Pop the value
 			lua_pop(L, 1);
+		};
 
-			if (hasStringResult) return LUA_TSTRING;
-			if (hasNumberResult) return LUA_TNUMBER;
-		}
+		getReturnedValue();  // Get first returned value
+		getReturnedValue();  // Get second returned value
+
+		// Pop the table
+		lua_pop(L, 1);
+
+		if (hasStringResult) return LUA_TSTRING;
+		if (hasNumberResult) return LUA_TNUMBER;
 	}
 
 	return LUA_TNIL;
@@ -262,29 +258,28 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 */
 void LuaScript::RunString(const std::wstring& str)
 {
+	if (!IsInitialized()) return;
+
 	auto L = GetState();
 
-	if (IsInitialized())
+	const std::string narrowStr = m_Unicode ?
+		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
+
+	// Load the string as a Lua chunk
+	if (luaL_loadstring(L, narrowStr.c_str()))
 	{
-		const std::string narrowStr = m_Unicode ?
-			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
+		LuaHelper::LogAndPopError();
+	}
 
-		// Load the string as a Lua chunk
-		if (luaL_loadstring(L, narrowStr.c_str()))
-		{
-			LuaHelper::LogAndPopError();
-		}
+	// Push our table onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
-		// Push our table onto the stack
-		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+	// Pop table and set the environment of the loaded chunk to it
+	lua_setfenv(L, -2);
 
-		// Pop table and set the environment of the loaded chunk to it
-		lua_setfenv(L, -2);
-
-		if (lua_pcall(L, 0, 0, 0))
-		{
-			LuaHelper::LogAndPopError();
-		}
+	if (lua_pcall(L, 0, 0, 0))
+	{
+		LuaHelper::LogAndPopError();
 	}
 }
 
