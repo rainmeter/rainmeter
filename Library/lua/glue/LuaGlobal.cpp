@@ -89,7 +89,7 @@ static int Dofile(lua_State* L)
 
 	if (scriptLoaded)
 	{
-		LuaStateScope script(L, unicode, curScript->GetRef(), path);
+		LuaStateScope script(L, unicode, curScript->GetRef());
 		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
 		lua_setfenv(L, -2);
 

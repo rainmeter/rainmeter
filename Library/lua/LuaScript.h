@@ -43,7 +43,7 @@ public:
 	int GetRef() { return m_Ref; }
 	bool IsUnicode() const { return m_Unicode; }
 
-	LuaStateScope GetState() { return LuaStateScope(m_State, m_Unicode, m_Ref, m_File); }
+	LuaStateScope GetState() { return LuaStateScope(m_State, m_Unicode, m_Ref); }
 
 	bool IsFunction(const char* funcName);
 	LuaResult RunFunction(const char* funcName);
