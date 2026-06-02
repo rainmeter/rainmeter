@@ -304,10 +304,13 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 		return false;
 	}
 
-	// Push our table onto the stack
-	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+	if (lua_checkstack(L, (int)args.size() + 2) == FALSE)
+	{
+		strValue = L"Lua: Could not increase the stack size";
+		return false;
+	}
 
-	// Push the function onto the stack
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 	lua_getfield(L, -1, nFuncName.c_str());
 
 	// Add args
@@ -316,12 +319,6 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 	{
 		for (auto iter : args)
 		{
-			if (lua_checkstack(L, 1) == FALSE)
-			{
-				strValue = L"Lua: Could not increase the stack size";
-				return false;
-			}
-
 			size_t argSize = iter.size();
 			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1ULL)
 			{
@@ -358,6 +355,9 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 						strValue += L" in parameter: \"";
 						strValue += iter;
 						strValue += L'"';
+
+						// Stack: [table, function, args...]
+						lua_pop(L, 2 + numArgs);
 						return false;
 					}
 				}
