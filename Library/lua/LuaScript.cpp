@@ -59,6 +59,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	std::string file = m_Unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
 	file.insert(0, "@");
 
+	// Stack: []
 	bool scriptLoaded = false;
 	if (m_Unicode)
 	{
@@ -73,45 +74,57 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 	if (scriptLoaded)
 	{
+		// Stack: [script]
 		// Create the table this script will reside in
 		lua_newtable(L);
 
+		// Stack: [script, table]
 		// Create the metatable that will store the global table
 		lua_createtable(L, 0, 1);
 
-		// Push the global teble
+		// Stack: [script, table, metatable]
+		// Push the global table
 		lua_pushvalue(L, LUA_GLOBALSINDEX);
 
+		// Stack: [script, table, metatable, globalTable]
 		// Set the __index of the table to be the global table
 		lua_setfield(L, -2, "__index");
 
+		// Stack: [script, table, metatable]
 		// Set the metatable for the script's table
 		lua_setmetatable(L, -2);
 
+		// Stack: [script, table]
 		// Put the table into the global table
 		m_Ref = luaL_ref(L, LUA_GLOBALSINDEX);
 
+		// Stack: [script]
 		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
+		// Stack: [script, table]
 		// Set the environment for the function to be run in to be the table that
-		// has been created for the script/
+		// has been created for the script
 		lua_setfenv(L, -2);
 
+		// Stack: [script]
 		// Execute the Lua script
 		int result = lua_pcall(L, 0, 0, 0);
 		if (result == 0)
 		{
+			// Stack: []
 			m_File = scriptFile;
 			return true;
 		}
 		else
 		{
+			// Stack: [error]
 			LuaHelper::LogAndPopError();
 			Uninitialize();
 		}
 	}
 	else
 	{
+		// Stack: [error]
 		LuaHelper::LogAndPopError();
 	}
 
@@ -137,11 +150,15 @@ bool LuaScript::IsFunction(const char* funcName)
 	if (!IsInitialized()) return false;
 
 	auto L = GetState();
+
+	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
 	lua_getfield(L, -1, funcName);
-	const bool result = lua_isfunction(L, -1);
 
 	// Stack: [table, function]
+	const bool result = lua_isfunction(L, -1);
 	lua_pop(L, 2);
 
 	return result;
@@ -156,7 +173,11 @@ LuaResult LuaScript::RunFunction(const char* funcName)
 	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
 
 	auto L = GetState();
+
+	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
 	lua_getfield(L, -1, funcName);
 
 	// Stack: [table, function]
@@ -186,7 +207,11 @@ LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType,
 	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
 
 	auto L = GetState();
+
+	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
 	lua_getfield(L, -1, funcName);
 
 	// Stack: [table, function]
@@ -310,7 +335,10 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 		return false;
 	}
 
+	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
 	lua_getfield(L, -1, nFuncName.c_str());
 
 	// Stack: [table, function]
@@ -444,7 +472,10 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 	const std::string nVarName = m_Unicode ?
 		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
 
+	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
 	lua_getfield(L, -1, nVarName.c_str());
 
 	// Stack: [table, variable]
