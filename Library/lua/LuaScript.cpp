@@ -265,18 +265,22 @@ void LuaScript::RunString(const std::wstring& str)
 	// Load the string as a Lua chunk
 	if (luaL_loadstring(L, narrowStr.c_str()))
 	{
+		// Stack: [error]
 		LuaHelper::LogAndPopError();
 		return;
 	}
 
-	// Push our table onto the stack
+	// Stack: [chunk]
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
 
-	// Pop table and set the environment of the loaded chunk to it
+	// Stack: [chunk, table]
+	// Set the environment of the chunk to our table.
 	lua_setfenv(L, -2);
 
+	// Stack: [chunk]
 	if (lua_pcall(L, 0, 0, 0))
 	{
+		// Stack: [error]
 		LuaHelper::LogAndPopError();
 	}
 }
