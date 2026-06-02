@@ -48,7 +48,7 @@ public:
 	bool IsFunction(const char* funcName);
 	LuaResult RunFunction(const char* funcName);
 	LuaResult RunFunctionWithReturn(const char* funcName, int& valueType, double& numValue, std::wstring& strValue);
-	void RunString(const std::wstring& str);
+	LuaResult RunString(const std::wstring& str);
 	bool RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue);
 	bool GetLuaVariable(const std::wstring& varName, std::wstring& strValue);
 

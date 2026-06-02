@@ -253,9 +253,9 @@ LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType,
 ** Runs given string in the context of the script file.
 **
 */
-void LuaScript::RunString(const std::wstring& str)
+LuaResult LuaScript::RunString(const std::wstring& str)
 {
-	if (!IsInitialized()) return;
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
 
 	auto L = GetState();
 
@@ -266,8 +266,9 @@ void LuaScript::RunString(const std::wstring& str)
 	if (luaL_loadstring(L, narrowStr.c_str()))
 	{
 		// Stack: [error]
-		LuaHelper::LogAndPopError();
-		return;
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 1);
+		return LuaResult::Fail(std::move(error));
 	}
 
 	// Stack: [chunk]
@@ -281,8 +282,12 @@ void LuaScript::RunString(const std::wstring& str)
 	if (lua_pcall(L, 0, 0, 0))
 	{
 		// Stack: [error]
-		LuaHelper::LogAndPopError();
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 1);
+		return LuaResult::Fail(std::move(error));
 	}
+
+	return LuaResult::Success();
 }
 
 bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue)

@@ -196,7 +196,11 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureScript::Command(const std::wstring& command)
 {
-	m_LuaScript.RunString(command);
+	auto run = m_LuaScript.RunString(command);
+	if (run.DidFail())
+	{
+		LogErrorF(this, L"!CommandMeasure failed: %s", run.GetError());
+	}
 }
 
 bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
