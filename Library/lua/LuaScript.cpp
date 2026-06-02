@@ -266,6 +266,7 @@ void LuaScript::RunString(const std::wstring& str)
 	if (luaL_loadstring(L, narrowStr.c_str()))
 	{
 		LuaHelper::LogAndPopError();
+		return;
 	}
 
 	// Push our table onto the stack
