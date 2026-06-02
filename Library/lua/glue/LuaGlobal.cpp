@@ -51,12 +51,12 @@ static int Print(lua_State* L)
 	return 0;
 }
 
+// Modified version of luaB_dofile()
 static int Dofile(lua_State* L)
 {
-	//Modified version of luaB_dofile()
-	auto curScript = LuaStateScope::GetCurrent();
+	const auto currentRef = LuaStateScope::GetCurrent()->GetRef();
 	const char* fname = luaL_optstring(L, 1, NULL);
-	std::wstring path = curScript->IsUnicode() ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
+	std::wstring path = LuaStateScope::GetCurrent()->IsUnicode() ? StringUtil::WidenUTF8(fname) : StringUtil::Widen(fname);
 
 	int n = lua_gettop(L);
 
@@ -89,7 +89,7 @@ static int Dofile(lua_State* L)
 
 	if (scriptLoaded)
 	{
-		LuaStateScope script(L, unicode, curScript->GetRef());
+		LuaStateScope script(L, unicode, currentRef);
 		lua_rawgeti(L, LUA_GLOBALSINDEX, script.GetRef());
 		lua_setfenv(L, -2);
 
