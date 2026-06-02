@@ -137,20 +137,14 @@ bool LuaScript::IsFunction(const char* funcName)
 	if (!IsInitialized()) return false;
 
 	auto L = GetState();
-	bool bExists = false;
-
-	// Push our table onto the stack
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-	// Push the function onto the stack
 	lua_getfield(L, -1, funcName);
+	const bool result = lua_isfunction(L, -1);
 
-	bExists = lua_isfunction(L, -1);
-
-	// Pop the function off the stack.
+	// Stack: [table, function]
 	lua_pop(L, 2);
 
-	return bExists;
+	return result;
 }
 
 /*
