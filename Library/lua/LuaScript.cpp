@@ -157,49 +157,51 @@ bool LuaScript::IsFunction(const char* funcName)
 ** Runs given function in script file.
 **
 */
-void LuaScript::RunFunction(const char* funcName)
+LuaResult LuaScript::RunFunction(const char* funcName)
 {
-	if (!IsInitialized()) return;
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
 
 	auto L = GetState();
-
-	// Push our table onto the stack
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-	// Push the function onto the stack
 	lua_getfield(L, -1, funcName);
 
+	// Stack: [table, function]
 	if (lua_pcall(L, 0, 0, 0))
 	{
-		LuaHelper::LogAndPopError();
+		// Stack: [table, error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 2);
+		return LuaResult::Fail(std::move(error));
 	}
-
-	// Pop the table
-	lua_pop(L, 1);
+	else
+	{
+		// Stack: [table]
+		lua_pop(L, 1);
+		return LuaResult::Success();
+	}
 }
 
 /*
 ** Runs given function in script file and stores the returned number or string.
 **
 */
-int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
+LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType, double& numValue, std::wstring& strValue)
 {
-	if (!IsInitialized()) return LUA_TNIL;
+	valueType = LUA_TNIL;
+
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
 
 	auto L = GetState();
-
-	// Push our table onto the stack
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
-
-	// Push the function onto the stack
 	lua_getfield(L, -1, funcName);
 
+	// Stack: [table, function]
 	if (lua_pcall(L, 0, 2, 0))
 	{
-		LuaHelper::LogAndPopError();
-
-		// Pop the table
-		lua_pop(L, 1);
+		// Stack: [table, error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 2);
+		return LuaResult::Fail(std::move(error));
 	}
 	else
 	{
@@ -235,21 +237,22 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 					break;
 			}
 
-			// Pop the value
 			lua_pop(L, 1);
 		};
 
-		getReturnedValue();  // Get first returned value
-		getReturnedValue();  // Get second returned value
+		// Stack: [table, returnValue1, returnValue2]
+		getReturnedValue();
+		getReturnedValue();
 
-		// Pop the table
+		// Stack: [table]
 		lua_pop(L, 1);
 
-		if (hasStringResult) return LUA_TSTRING;
-		if (hasNumberResult) return LUA_TNUMBER;
+		valueType =
+			hasStringResult ? LUA_TSTRING :
+			hasNumberResult ? LUA_TNUMBER :
+			LUA_TNIL;
+		return LuaResult::Success();
 	}
-
-	return LUA_TNIL;
 }
 
 /*
