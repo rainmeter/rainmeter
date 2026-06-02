@@ -41,7 +41,11 @@ void MeasureScript::Initialize()
 
 	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
 	{
-		m_LuaScript.RunFunction(g_InitializeFunctionName);
+		auto run = m_LuaScript.RunFunction(g_InitializeFunctionName);
+		if (run.DidFail())
+		{
+			LogErrorF(this, L"Script Initialize() failed: %s", run.GetError());
+		}
 	}
 }
 
@@ -53,12 +57,20 @@ void MeasureScript::UpdateValue()
 {
 	if (m_HasUpdateFunction)
 	{
-		m_ValueType = m_LuaScript.RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
+		auto updateRun = m_LuaScript.RunFunctionWithReturn(g_UpdateFunctionName, m_ValueType, m_Value, m_StringValue);
+		if (updateRun.DidFail())
+		{
+			LogErrorF(this, L"Script Update() failed: %s", updateRun.GetError());
+		}
 
 		if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
 		{
 			// For backwards compatbility
-			m_ValueType = m_LuaScript.RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
+			auto getStringRun = m_LuaScript.RunFunctionWithReturn(g_GetStringFunctionName, m_ValueType, m_Value, m_StringValue);
+			if (getStringRun.DidFail())
+			{
+				LogErrorF(this, L"Script GetStringValue() failed: %s", getStringRun.GetError());
+			}
 		}
 	}
 }
