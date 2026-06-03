@@ -47,6 +47,7 @@ InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
 ShowInstDetails nevershow
 AllowSkipFiles off
 XPStyle on
+ManifestDPIAware true
 OutFile "..\${OUTFILE}"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
@@ -330,7 +331,7 @@ Function PageWelcome
 
 	${NSD_CreateBitmap} 0u 0u 109u 193u ""
 	Pop $0
-	${NSD_SetImage} $0 "$PLUGINSDIR\modern-wizard.bmp" $R0
+	${NSD_SetStretchedImage} $0 "$PLUGINSDIR\modern-wizard.bmp" $R0
 
 	${NSD_CreateLabel} 120u 10u 195u 38u "$(MUI_TEXT_WELCOME_INFO_TITLE)"
 	Pop $0
