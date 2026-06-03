@@ -302,6 +302,15 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				MENU_ITEM(IDM_SKIN_FROMBOTTOM, ID_STR_FROMBOTTOM),
 				MENU_ITEM(IDM_SKIN_XPERCENTAGE, ID_STR_XASPERCENTAGE),
 				MENU_ITEM(IDM_SKIN_YPERCENTAGE, ID_STR_YASPERCENTAGE)),
+			MENU_SUBMENU(ID_STR_ZOOM,
+				MENU_ITEM(IDM_SKIN_ZOOM_80, ID_STR_80PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_90, ID_STR_90PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_100, ID_STR_100PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_110, ID_STR_110PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_120, ID_STR_120PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_130, ID_STR_130PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_140, ID_STR_140PERCENT),
+				MENU_ITEM(IDM_SKIN_ZOOM_150, ID_STR_150PERCENT)),
 			MENU_SEPARATOR(),
 			MENU_SUBMENU(ID_STR_TRANSPARENCY,
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, ID_STR_0PERCENT),
@@ -314,7 +323,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, ID_STR_70PERCENT),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, ID_STR_80PERCENT),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, ID_STR_90PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, ID_STR_100PERCENT)),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, ID_STR_A100PERCENT)),
 			MENU_SUBMENU(ID_STR_ONHOVER,
 				MENU_ITEM(IDM_SKIN_HIDEONMOUSE_NONE, ID_STR_DONOTHING),
 				MENU_ITEM(IDM_SKIN_HIDEONMOUSE, ID_STR_HIDE),
@@ -360,8 +369,67 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			}
 		}
 
+		// Tick the zoom
+		HMENU zoomMenu = GetSubMenu(settingsMenu, 1);
+		if (zoomMenu)
+		{
+			const float zoom = skin->GetZoom();
+			const int zoomPercent = (int)(zoom * 100.0f + 0.5f);
+			UINT checkId = 0;
+
+			struct ZoomItem
+			{
+				float zoom;
+				UINT command;
+			};
+			static const ZoomItem c_ZoomItems[] =
+			{
+				{ 0.8f, IDM_SKIN_ZOOM_80 },
+				{ 0.9f, IDM_SKIN_ZOOM_90 },
+				{ 1.0f, IDM_SKIN_ZOOM_100 },
+				{ 1.1f, IDM_SKIN_ZOOM_110 },
+				{ 1.2f, IDM_SKIN_ZOOM_120 },
+				{ 1.3f, IDM_SKIN_ZOOM_130 },
+				{ 1.4f, IDM_SKIN_ZOOM_140 },
+				{ 1.5f, IDM_SKIN_ZOOM_150 }
+			};
+
+			for (const auto& item : c_ZoomItems)
+			{
+				if (fabsf(zoom - item.zoom) <= 0.0001f)
+				{
+					checkId = item.command;
+					break;
+				}
+			}
+
+			if (checkId == 0)
+			{
+				WCHAR buffer[32];
+				_snwprintf_s(buffer, _TRUNCATE, L"%i%%", zoomPercent);
+
+				UINT position = _countof(c_ZoomItems);
+				for (UINT i = 0; i < _countof(c_ZoomItems); ++i)
+				{
+					const int itemPercent = (int)(c_ZoomItems[i].zoom * 100.0f + 0.5f);
+					if (zoomPercent < itemPercent)
+					{
+						position = i;
+						break;
+					}
+				}
+
+				InsertMenu(zoomMenu, position, MF_BYPOSITION | MF_STRING, IDM_SKIN_ZOOM_CUSTOM, buffer);
+				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_CUSTOM, IDM_SKIN_ZOOM_CUSTOM, MF_BYCOMMAND);
+			}
+			else
+			{
+				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_150, checkId, MF_BYCOMMAND);
+			}
+		}
+
 		// Tick the transparency
-		HMENU alphaMenu = GetSubMenu(settingsMenu, 2);
+		HMENU alphaMenu = GetSubMenu(settingsMenu, 3);
 		if (alphaMenu)
 		{
 			int alpha = skin->GetAlphaValue();
@@ -379,7 +447,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		}
 
 		// Tick the mouse over options (On hover)
-		HMENU hoverMenu = GetSubMenu(settingsMenu, 3);
+		HMENU hoverMenu = GetSubMenu(settingsMenu, 4);
 		if (hoverMenu)
 		{
 			int mode = skin->GetWindowHide();

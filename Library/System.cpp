@@ -298,19 +298,19 @@ UINT System::GetDpiForRect(const RECT& rect)
 	return System::GetDpiForMonitor(MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST));
 }
 
-double System::GetDpiScaleForMonitor(HMONITOR monitor)
+float System::GetDpiScaleForMonitor(HMONITOR monitor)
 {
-	return (double)System::GetDpiForMonitor(monitor) / (double)DPI_DEFAULT;
+	return (float)System::GetDpiForMonitor(monitor) / (float)DPI_DEFAULT;
 }
 
-double System::GetDpiScaleForWindow(HWND window)
+float System::GetDpiScaleForWindow(HWND window)
 {
-	return (double)System::GetDpiForWindow(window) / (double)DPI_DEFAULT;
+	return (float)System::GetDpiForWindow(window) / (float)DPI_DEFAULT;
 }
 
-double System::GetDpiScaleForRect(const RECT& rect)
+float System::GetDpiScaleForRect(const RECT& rect)
 {
-	return (double)GetDpiForRect(rect) / (double)DPI_DEFAULT;
+	return (float)GetDpiForRect(rect) / (float)DPI_DEFAULT;
 }
 
 /*

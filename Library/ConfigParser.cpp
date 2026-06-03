@@ -1166,11 +1166,15 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 
 	POINT pt = { 0 };
 	GetCursorPos(&pt);
+	if (m_Skin)
+	{
+		pt = m_Skin->ScreenToLogical(pt);
+	}
 
 	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
 	{
 		var += 6;
-		int xOffset = m_Skin->GetX() + (meter ? meter->GetX() : 0);
+		int xOffset = meter ? meter->GetX() : 0;
 		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
 		{
 			double width = (meter ? meter->GetW() : m_Skin->GetW());
@@ -1187,7 +1191,7 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
 	{
 		var += 6;
-		int yOffset = m_Skin->GetY() + (meter ? meter->GetY() : 0);
+		int yOffset = meter ? meter->GetY() : 0;
 		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
 		{
 			double width = (meter ? meter->GetH() : m_Skin->GetH());

@@ -16,7 +16,7 @@ struct MonitorInfo
 {
 	bool active;
 	HMONITOR handle;
-	double dpiScale;
+	float dpiScale;
 	RECT screen;
 	RECT work;
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
@@ -47,9 +47,9 @@ public:
 	static UINT GetDpiForMonitor(HMONITOR monitor);
 	static UINT GetDpiForWindow(HWND window);
 	static UINT GetDpiForRect(const RECT& rect);
-	static double GetDpiScaleForMonitor(HMONITOR monitor);
-	static double GetDpiScaleForWindow(HWND window);
-	static double GetDpiScaleForRect(const RECT& rect);
+	static float GetDpiScaleForMonitor(HMONITOR monitor);
+	static float GetDpiScaleForWindow(HWND window);
+	static float GetDpiScaleForRect(const RECT& rect);
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 

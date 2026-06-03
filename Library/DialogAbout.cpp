@@ -22,6 +22,15 @@
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = { 0 };
 DialogAbout* DialogAbout::c_Dialog = nullptr;
 
+namespace {
+
+int ScaleColumnWidth(HWND window, int width)
+{
+	return MulDiv(width, (int)System::GetDpiForWindow(window), 96);
+}
+
+}  // namespace
+
 DialogAbout::DialogAbout() : Dialog()
 {
 }
@@ -398,19 +407,19 @@ void DialogAbout::TabLog::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
-	lvc.cx = 75;
+	lvc.cx = ScaleColumnWidth(item, 75);
 	lvc.pszText = GetString(ID_STR_TYPE);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = 85;
+	lvc.cx = ScaleColumnWidth(item, 85);
 	lvc.pszText = GetString(ID_STR_TIME);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 225;
+	lvc.cx = ScaleColumnWidth(item, 225);
 	lvc.pszText = GetString(ID_STR_SOURCE);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
-	lvc.cx = 180;  // Resized later
+	lvc.cx = ScaleColumnWidth(item, 180);  // Resized later
 	lvc.pszText = GetString(ID_STR_MESSAGE);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -785,19 +794,19 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = 120;
+	lvc.cx = ScaleColumnWidth(item, 120);
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = 80;
+	lvc.cx = ScaleColumnWidth(item, 80);
 	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 90;
+	lvc.cx = ScaleColumnWidth(item, 90);
 	lvc.pszText = GetString(ID_STR_NUMBER);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
-	lvc.cx = 110;  // Resized later
+	lvc.cx = ScaleColumnWidth(item, 110);  // Resized later
 	lvc.pszText = GetString(ID_STR_STRING);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -1386,15 +1395,15 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
-	lvc.cx = 140;
+	lvc.cx = ScaleColumnWidth(item, 140);
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = 80;
+	lvc.cx = ScaleColumnWidth(item, 80);
 	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 250;  // Resized later
+	lvc.cx = ScaleColumnWidth(item, 250);  // Resized later
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
