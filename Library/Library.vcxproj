@@ -51,6 +51,7 @@
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureInputText.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureInputText.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
