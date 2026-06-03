@@ -454,6 +454,7 @@ private:
 	bool m_ZoomDragging;
 	int m_ZoomDragHitTest;
 	RECT m_ZoomDragStartRect;
+	POINT m_ZoomDragStartPoint;
 	float m_ZoomDragStartZoom;
 	bool m_ZoomDragMoved;
 	bool m_ZoomDragPositionChanged;

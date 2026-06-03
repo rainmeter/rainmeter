@@ -191,6 +191,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_ZoomDragging(false),
 	m_ZoomDragHitTest(HTCLIENT),
 	m_ZoomDragStartRect(),
+	m_ZoomDragStartPoint(),
 	m_ZoomDragStartZoom(1.0f),
 	m_ZoomDragMoved(false),
 	m_ZoomDragPositionChanged(false),
@@ -4033,6 +4034,11 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_ZoomDragging)
 	{
 		UpdateZoomDrag(System::GetCursorPosition());
+		HCURSOR cursor = GetZoomDragCursor(m_ZoomDragHitTest);
+		if (cursor)
+		{
+			SetCursor(cursor);
+		}
 		return 0;
 	}
 
@@ -4687,6 +4693,7 @@ void Skin::StartZoomDrag(int hitTest, POINT screenPos)
 	m_ZoomDragStartRect.top = m_ScreenY;
 	m_ZoomDragStartRect.right = m_ScreenX + scaledWindowSize.cx;
 	m_ZoomDragStartRect.bottom = m_ScreenY + scaledWindowSize.cy;
+	m_ZoomDragStartPoint = screenPos;
 	m_ZoomDragStartZoom = m_Zoom;
 	m_ZoomDragMoved = false;
 	m_ZoomDragPositionChanged = false;
@@ -4716,23 +4723,25 @@ void Skin::UpdateZoomDrag(POINT screenPos)
 
 	int draggedW = startW;
 	int draggedH = startH;
+	const int dx = screenPos.x - m_ZoomDragStartPoint.x;
+	const int dy = screenPos.y - m_ZoomDragStartPoint.y;
 
 	if (IsLeftZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		draggedW = m_ZoomDragStartRect.right - screenPos.x;
+		draggedW = startW - dx;
 	}
 	else if (IsRightZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		draggedW = screenPos.x - m_ZoomDragStartRect.left;
+		draggedW = startW + dx;
 	}
 
 	if (IsTopZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		draggedH = m_ZoomDragStartRect.bottom - screenPos.y;
+		draggedH = startH - dy;
 	}
 	else if (IsBottomZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		draggedH = screenPos.y - m_ZoomDragStartRect.top;
+		draggedH = startH + dy;
 	}
 
 	draggedW = max(1, draggedW);
