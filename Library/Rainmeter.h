@@ -160,6 +160,9 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
+	int GetSkinScale() { return m_SkinScale; }
+	void SetSkinScale(int scale);
+
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
 
 	void SetDebug(bool debug);
@@ -275,6 +278,8 @@ private:
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
+
+	int m_SkinScale;
 
 	std::wstring m_SkinEditor;
 

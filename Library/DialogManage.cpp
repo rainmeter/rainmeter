@@ -2360,7 +2360,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-0, ID_STR_GENERAL,
-			0, 0, 478, 144,
+			0, 0, 478, 165,
 			WS_VISIBLE, 0),
 		CT_LABEL(-0, ID_STR_LANGUAGESC,
 			6, 15, 107, 14,
@@ -2371,52 +2371,59 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_LINKLABEL(Id_LanguageUpdateLink, 0,
 			361, 15, 114, 14,
 			0, 0),
-		CT_LABEL(-0, ID_STR_EDITORSC,
+		CT_LABEL(Id_SkinScaleLabel, 0,
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
-		CT_EDIT(Id_EditorEdit, 0,
+		CT_COMBOBOX(Id_SkinScaleDropDownList, 0,
 			107, 34, 250, 14,
+			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, 0),
+		CT_LABEL(-0, ID_STR_EDITORSC,
+			6, 57, 107, 14,
+			WS_VISIBLE, 0),
+		CT_EDIT(Id_EditorEdit, 0,
+			107, 55, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_EditorBrowseButton, ID_STR_ELLIPSIS,
-			361, 34, 25, 14,
+			361, 55, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_CheckForUpdatesCheckBox, ID_STR_CHECKFORUPDATES,
-			6, 55, 200, 14,
+			6, 76, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_AutoInstallCheckBox, ID_STR_AUTOMATICUPDATE,
-			6, 68, 200, 14,
+			6, 89, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_LockSkinsCheckBox, ID_STR_DISABLEDRAGGING,
-			6, 81, 200, 14,
+			6, 102, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
-			6, 94, 200, 14,
+			6, 115, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
-			6, 107, 200, 14,
+			6, 128, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 123, buttonWidth + 20, 14,
+			6, 144, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-0, ID_STR_LOGGING,
-			0, 151, 478, 66,
+			0, 172, 478, 66,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_VerboseLoggingCheckBox, ID_STR_DEBUGMODE,
-			6, 167, 200, 14,
+			6, 188, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
-			6, 180, 200, 14,
+			6, 201, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 196, buttonWidth + 20, 14,
+			6, 217, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 196, buttonWidth + 20, 14,
+			buttonWidth + 30, 217, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	SetWindowText(GetControl(Id_SkinScaleLabel), L"Scale skin size:");
 }
 
 void DialogManage::TabSettings::Initialize()
@@ -2463,6 +2470,39 @@ void DialogManage::TabSettings::Initialize()
 		while (FindNextFile(hSearch, &fd));
 
 		FindClose(hSearch);
+	}
+
+	item = GetControl(Id_SkinScaleDropDownList);
+	ComboBox_ResetContent(item);
+
+	const struct
+	{
+		LPCWSTR text;
+		int value;
+	} skinScales[] =
+	{
+		{ L"Use default Windows scaling", 0 },
+		{ L"100%", 100 },
+		{ L"125%", 125 },
+		{ L"150%", 150 },
+		{ L"175%", 175 },
+		{ L"200%", 200 }
+	};
+
+	const int skinScale = GetRainmeter().GetSkinScale();
+	for (const auto& scale : skinScales)
+	{
+		const int index = ComboBox_AddString(item, scale.text);
+		ComboBox_SetItemData(item, index, scale.value);
+		if (scale.value == skinScale)
+		{
+			ComboBox_SetCurSel(item, index);
+		}
+	}
+
+	if (ComboBox_GetCurSel(item) == CB_ERR)
+	{
+		ComboBox_SetCurSel(item, 0);
 	}
 
 	BOOL check = !GetRainmeter().GetDisableVersionCheck();
@@ -2577,6 +2617,18 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 				SendMessage(c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
 				GetRainmeter().DelayedExecuteCommand(L"!Manage Settings");
+			}
+		}
+		break;
+
+	case Id_SkinScaleDropDownList:
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			const int sel = ComboBox_GetCurSel((HWND)lParam);
+			if (sel != CB_ERR)
+			{
+				const int scale = (int)ComboBox_GetItemData((HWND)lParam, sel);
+				GetRainmeter().SetSkinScale(scale);
 			}
 		}
 		break;

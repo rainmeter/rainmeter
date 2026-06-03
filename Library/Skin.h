@@ -230,6 +230,7 @@ public:
 	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class DialogManage;
+	friend class Rainmeter;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -339,6 +340,7 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void ApplyDpiScale();
 	void ApplyZoom(float zoom, bool writeOptions);
 	void SetZoom(float zoom);
 	void UpdateFadeDuration();

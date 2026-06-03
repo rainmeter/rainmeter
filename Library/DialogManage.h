@@ -201,6 +201,8 @@ private:
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,
+			Id_SkinScaleLabel,
+			Id_SkinScaleDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
 			Id_ShowTrayIconCheckBox,
