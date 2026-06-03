@@ -10,6 +10,18 @@
 Unicode true
 
 !addplugindir ".\"
+
+!include "nsDialogs.nsh"
+!include "nsDialogs_setImageOle.nsh"
+
+; Define a custom NSD_SetStretchedImage that always uses our JPG image in order to override it
+; in the MUI Finish page. This must be done before MUI2.nsh is included.
+!macro __SetCustomStretchedImage CONTROL IMAGE HANDLE
+	${NSD_SetStretchedImageOLE} ${CONTROL} "$PLUGINSDIR\Wizard.jpg" ${HANDLE}
+!macroend
+!undef NSD_SetStretchedImage
+!define NSD_SetStretchedImage `!insertmacro __SetCustomStretchedImage`
+
 !include "MUI2.nsh"
 !include "x64.nsh"
 !include "FileFunc.nsh"
@@ -59,7 +71,8 @@ ReserveFile ".\UAC.dll"
 
 !define MUI_ICON ".\Icon.ico"
 !define MUI_UNICON ".\Icon.ico"
-!define MUI_WELCOMEFINISHPAGE_BITMAP ".\Wizard.bmp"
+!define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
+!define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
 !define MUI_WELCOMEPAGE ; For language strings
@@ -304,6 +317,11 @@ Function ExchangeSettings
 	HideWindow
 FunctionEnd
 
+Function InitWizardImage
+	InitPluginsDir
+	File /oname=$PLUGINSDIR\Wizard.jpg ".\Wizard.jpg"
+FunctionEnd
+
 Function .onInstSuccess
 	${If} ${Silent}
 	${AndIf} $RestartAfterInstall = 1
@@ -331,7 +349,8 @@ Function PageWelcome
 
 	${NSD_CreateBitmap} 0u 0u 109u 193u ""
 	Pop $0
-	${NSD_SetStretchedImage} $0 "$PLUGINSDIR\modern-wizard.bmp" $R0
+	; See NSD_SetStretchedImage definition above.
+	${NSD_SetStretchedImage} $0 "" $R0
 
 	${NSD_CreateLabel} 120u 10u 195u 38u "$(MUI_TEXT_WELCOME_INFO_TITLE)"
 	Pop $0
