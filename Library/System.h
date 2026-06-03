@@ -16,6 +16,7 @@ struct MonitorInfo
 {
 	bool active;
 	HMONITOR handle;
+	double dpiScale;
 	RECT screen;
 	RECT work;
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
@@ -43,6 +44,12 @@ public:
 
 	static const MultiMonitorInfo& GetMultiMonitorInfo() { return c_Monitors; }
 	static size_t GetMonitorCount();
+	static UINT GetDpiForMonitor(HMONITOR monitor);
+	static UINT GetDpiForWindow(HWND window);
+	static UINT GetDpiForRect(const RECT& rect);
+	static double GetDpiScaleForMonitor(HMONITOR monitor);
+	static double GetDpiScaleForWindow(HWND window);
+	static double GetDpiScaleForRect(const RECT& rect);
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
