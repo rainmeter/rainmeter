@@ -730,7 +730,9 @@ void Skin::UpdateEffectiveScale()
 bool Skin::UpdateDpiScale(UINT dpi)
 {
 	const float oldDpiScale = m_DpiScale;
-	m_DpiScale = (dpi > 0) ? (float)dpi / 96.0f : GetMonitorDpiScale();
+	const int skinScale = GetRainmeter().GetSkinScale();
+	m_DpiScale = (skinScale > 0) ? (float)skinScale / 100.0f :
+		(dpi > 0) ? (float)dpi / 96.0f : GetMonitorDpiScale();
 	if (m_DpiScale <= 0.0f)
 	{
 		m_DpiScale = 1.0f;
@@ -4494,6 +4496,30 @@ void Skin::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteOptions(OPTION_SNAPEDGES);
+}
+
+void Skin::ApplyDpiScale()
+{
+	if (!UpdateDpiScale())
+	{
+		return;
+	}
+
+	const SIZE scaledWindowSize = GetScaledWindowSize();
+	if (m_KeepOnScreen)
+	{
+		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy);
+	}
+
+	SetWindowPos(
+		m_Window,
+		nullptr,
+		m_ScreenX,
+		m_ScreenY,
+		scaledWindowSize.cx,
+		scaledWindowSize.cy,
+		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	Redraw();
 }
 
 void Skin::ApplyZoom(float zoom, bool writeOptions)
