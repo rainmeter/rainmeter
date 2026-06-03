@@ -263,6 +263,7 @@ protected:
 	LRESULT OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -316,6 +317,7 @@ private:
 	float GetMonitorDpiScale() const;
 	void UpdateEffectiveScale();
 	bool UpdateDpiScale(UINT dpi = 0);
+	SIZE GetScaledWindowSize(float zoom) const;
 	void WindowToScreen();
 	void ScreenToWindow();
 	void PostUpdate(bool bActiveTransition);
@@ -337,10 +339,15 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void ApplyZoom(float zoom, bool writeOptions);
 	void SetZoom(float zoom);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
+	int GetZoomDragHitTest(POINT screenPos);
+	void StartZoomDrag(int hitTest, POINT screenPos);
+	void UpdateZoomDrag(POINT screenPos);
+	void EndZoomDrag(bool commit);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -444,6 +451,12 @@ private:
 	bool m_AutoSelectScreen;
 	bool m_Dragging;
 	bool m_Dragged;
+	bool m_ZoomDragging;
+	int m_ZoomDragHitTest;
+	RECT m_ZoomDragStartRect;
+	float m_ZoomDragStartZoom;
+	bool m_ZoomDragMoved;
+	bool m_ZoomDragPositionChanged;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;
