@@ -30,8 +30,6 @@
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Util/D2DEffectStream.h"
 
-#define SNAPDISTANCE 10
-
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
 enum TIMER
@@ -57,6 +55,74 @@ int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
 FPRSRN Skin::c_RegisterSuspendResumeNotification = nullptr;
 FPUSRN Skin::c_UnregisterSuspendResumeNotification = nullptr;
+
+const int g_SnapDistance = 10;
+const int g_ZoomDragMinPercent = 10;
+const int g_ZoomDragMaxPercent = 500;
+const int g_ZoomDragEdgeSize = 10;
+const int g_ZoomDragCornerSize = 20;
+
+static bool IsZoomDragHitTest(int hitTest)
+{
+	switch (hitTest)
+	{
+	case HTLEFT:
+	case HTRIGHT:
+	case HTTOP:
+	case HTBOTTOM:
+	case HTTOPLEFT:
+	case HTTOPRIGHT:
+	case HTBOTTOMLEFT:
+	case HTBOTTOMRIGHT:
+		return true;
+	}
+
+	return false;
+}
+
+static bool IsLeftZoomDragHitTest(int hitTest)
+{
+	return hitTest == HTLEFT || hitTest == HTTOPLEFT || hitTest == HTBOTTOMLEFT;
+}
+
+static bool IsRightZoomDragHitTest(int hitTest)
+{
+	return hitTest == HTRIGHT || hitTest == HTTOPRIGHT || hitTest == HTBOTTOMRIGHT;
+}
+
+static bool IsTopZoomDragHitTest(int hitTest)
+{
+	return hitTest == HTTOP || hitTest == HTTOPLEFT || hitTest == HTTOPRIGHT;
+}
+
+static bool IsBottomZoomDragHitTest(int hitTest)
+{
+	return hitTest == HTBOTTOM || hitTest == HTBOTTOMLEFT || hitTest == HTBOTTOMRIGHT;
+}
+
+static HCURSOR GetZoomDragCursor(int hitTest)
+{
+	switch (hitTest)
+	{
+	case HTLEFT:
+	case HTRIGHT:
+		return LoadCursor(nullptr, IDC_SIZEWE);
+
+	case HTTOP:
+	case HTBOTTOM:
+		return LoadCursor(nullptr, IDC_SIZENS);
+
+	case HTTOPLEFT:
+	case HTBOTTOMRIGHT:
+		return LoadCursor(nullptr, IDC_SIZENWSE);
+
+	case HTTOPRIGHT:
+	case HTBOTTOMLEFT:
+		return LoadCursor(nullptr, IDC_SIZENESW);
+	}
+
+	return nullptr;
+}
 
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings) :
 	m_FolderPath(folderPath),
@@ -122,6 +188,12 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_AutoSelectScreen(false),
 	m_Dragging(false),
 	m_Dragged(false),
+	m_ZoomDragging(false),
+	m_ZoomDragHitTest(HTCLIENT),
+	m_ZoomDragStartRect(),
+	m_ZoomDragStartZoom(1.0f),
+	m_ZoomDragMoved(false),
+	m_ZoomDragPositionChanged(false),
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
 	m_SolidBevel(BEVELTYPE_NONE),
@@ -562,9 +634,14 @@ RECT Skin::ScaleRectToDevicePixels(const RECT& rect) const
 
 SIZE Skin::GetScaledWindowSize() const
 {
+	return GetScaledWindowSize(m_Zoom);
+}
+
+SIZE Skin::GetScaledWindowSize(float zoom) const
+{
 	return {
-		(m_WindowW > 0) ? max(1, (int)ceilf((float)m_WindowW * m_Scale)) : 0,
-		(m_WindowH > 0) ? max(1, (int)ceilf((float)m_WindowH * m_Scale)) : 0
+		(m_WindowW > 0) ? max(1, (int)ceilf((float)m_WindowW * zoom * m_DpiScale)) : 0,
+		(m_WindowH > 0) ? max(1, (int)ceilf((float)m_WindowH * zoom * m_DpiScale)) : 0
 	};
 }
 
@@ -3919,7 +3996,19 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 
 LRESULT Skin::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// Do nothing.
+	int hitTest = LOWORD(lParam);
+	if (m_ZoomDragging)
+	{
+		hitTest = m_ZoomDragHitTest;
+	}
+
+	HCURSOR cursor = GetZoomDragCursor(hitTest);
+	if (cursor)
+	{
+		SetCursor(cursor);
+		return TRUE;
+	}
+
 	return 0;
 }
 
@@ -3941,6 +4030,12 @@ LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (m_ZoomDragging)
+	{
+		UpdateZoomDrag(System::GetCursorPosition());
+		return 0;
+	}
+
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
 	if (!keyDown)
@@ -3993,6 +4088,13 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
+
+		const int zoomDragHitTest = GetZoomDragHitTest(System::GetCursorPosition());
+		HCURSOR cursor = GetZoomDragCursor(zoomDragHitTest);
+		if (cursor)
+		{
+			SetCursor(cursor);
+		}
 	}
 
 	return 0;
@@ -4388,7 +4490,7 @@ void Skin::SetSnapEdges(bool b)
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
-void Skin::SetZoom(float zoom)
+void Skin::ApplyZoom(float zoom, bool writeOptions)
 {
 	if (zoom <= 0.0f)
 	{
@@ -4397,11 +4499,16 @@ void Skin::SetZoom(float zoom)
 
 	if (fabsf(m_Zoom - zoom) <= 0.0001f)
 	{
-		return;
+		if (writeOptions)
+		{
+			return;
+		}
 	}
-
-	m_Zoom = zoom;
-	UpdateEffectiveScale();
+	else
+	{
+		m_Zoom = zoom;
+		UpdateEffectiveScale();
+	}
 
 	const SIZE scaledWindowSize = GetScaledWindowSize();
 	if (m_KeepOnScreen)
@@ -4418,7 +4525,293 @@ void Skin::SetZoom(float zoom)
 		scaledWindowSize.cy,
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 	Redraw();
-	WriteOptions(OPTION_ZOOM);
+
+	if (writeOptions)
+	{
+		WriteOptions(OPTION_ZOOM);
+	}
+}
+
+void Skin::SetZoom(float zoom)
+{
+	if (zoom <= 0.0f)
+	{
+		zoom = 1.0f;
+	}
+
+	if (fabsf(m_Zoom - zoom) <= 0.0001f)
+	{
+		return;
+	}
+
+	ApplyZoom(zoom, true);
+}
+
+int Skin::GetZoomDragHitTest(POINT screenPos)
+{
+	if (!IsCtrlKeyDown() ||
+		IsAltKeyDown() ||
+		m_Selected ||
+		!m_WindowDraggable ||
+		GetRainmeter().GetDisableDragging())
+	{
+		return HTCLIENT;
+	}
+
+	const SIZE scaledWindowSize = GetScaledWindowSize();
+	RECT rect = {
+		m_ScreenX,
+		m_ScreenY,
+		m_ScreenX + scaledWindowSize.cx,
+		m_ScreenY + scaledWindowSize.cy
+	};
+
+	if (scaledWindowSize.cx <= 0 ||
+		scaledWindowSize.cy <= 0 ||
+		screenPos.x < rect.left ||
+		screenPos.x >= rect.right ||
+		screenPos.y < rect.top ||
+		screenPos.y >= rect.bottom)
+	{
+		return HTCLIENT;
+	}
+
+	const int edgeX = min(g_ZoomDragEdgeSize, max(1, scaledWindowSize.cx / 2));
+	const int edgeY = min(g_ZoomDragEdgeSize, max(1, scaledWindowSize.cy / 2));
+	const int cornerX = min(g_ZoomDragCornerSize, max(1, scaledWindowSize.cx / 2));
+	const int cornerY = min(g_ZoomDragCornerSize, max(1, scaledWindowSize.cy / 2));
+	const int leftDistance = screenPos.x - rect.left;
+	const int rightDistance = rect.right - screenPos.x - 1;
+	const int topDistance = screenPos.y - rect.top;
+	const int bottomDistance = rect.bottom - screenPos.y - 1;
+
+	bool left = leftDistance < edgeX;
+	bool right = rightDistance < edgeX;
+	bool top = topDistance < edgeY;
+	bool bottom = bottomDistance < edgeY;
+
+	if (left && right)
+	{
+		if (leftDistance <= rightDistance)
+		{
+			right = false;
+		}
+		else
+		{
+			left = false;
+		}
+	}
+
+	if (top && bottom)
+	{
+		if (topDistance <= bottomDistance)
+		{
+			bottom = false;
+		}
+		else
+		{
+			top = false;
+		}
+	}
+
+	const bool nearLeftCorner = leftDistance < cornerX;
+	const bool nearRightCorner = rightDistance < cornerX;
+	const bool nearTopCorner = topDistance < cornerY;
+	const bool nearBottomCorner = bottomDistance < cornerY;
+
+	if ((left || top) &&
+		nearLeftCorner &&
+		nearTopCorner &&
+		leftDistance <= rightDistance &&
+		topDistance <= bottomDistance)
+	{
+		return HTTOPLEFT;
+	}
+	else if ((right || top) &&
+		nearRightCorner &&
+		nearTopCorner &&
+		rightDistance < leftDistance &&
+		topDistance <= bottomDistance)
+	{
+		return HTTOPRIGHT;
+	}
+	else if ((left || bottom) &&
+		nearLeftCorner &&
+		nearBottomCorner &&
+		leftDistance <= rightDistance &&
+		bottomDistance < topDistance)
+	{
+		return HTBOTTOMLEFT;
+	}
+	else if ((right || bottom) &&
+		nearRightCorner &&
+		nearBottomCorner &&
+		rightDistance < leftDistance &&
+		bottomDistance < topDistance)
+	{
+		return HTBOTTOMRIGHT;
+	}
+
+	if (left)
+	{
+		return HTLEFT;
+	}
+	else if (right)
+	{
+		return HTRIGHT;
+	}
+	else if (top)
+	{
+		return HTTOP;
+	}
+	else if (bottom)
+	{
+		return HTBOTTOM;
+	}
+
+	return HTCLIENT;
+}
+
+void Skin::StartZoomDrag(int hitTest, POINT screenPos)
+{
+	if (!IsZoomDragHitTest(hitTest))
+	{
+		return;
+	}
+
+	const SIZE scaledWindowSize = GetScaledWindowSize();
+
+	m_ZoomDragging = true;
+	m_ZoomDragHitTest = hitTest;
+	m_ZoomDragStartRect.left = m_ScreenX;
+	m_ZoomDragStartRect.top = m_ScreenY;
+	m_ZoomDragStartRect.right = m_ScreenX + scaledWindowSize.cx;
+	m_ZoomDragStartRect.bottom = m_ScreenY + scaledWindowSize.cy;
+	m_ZoomDragStartZoom = m_Zoom;
+	m_ZoomDragMoved = false;
+	m_ZoomDragPositionChanged = false;
+
+	SetCapture(m_Window);
+
+	HCURSOR cursor = GetZoomDragCursor(m_ZoomDragHitTest);
+	if (cursor)
+	{
+		SetCursor(cursor);
+	}
+
+	UpdateZoomDrag(screenPos);
+}
+
+void Skin::UpdateZoomDrag(POINT screenPos)
+{
+	if (!m_ZoomDragging)
+	{
+		return;
+	}
+
+	const int startW = max(1, m_ZoomDragStartRect.right - m_ZoomDragStartRect.left);
+	const int startH = max(1, m_ZoomDragStartRect.bottom - m_ZoomDragStartRect.top);
+	const bool horizontal = IsLeftZoomDragHitTest(m_ZoomDragHitTest) || IsRightZoomDragHitTest(m_ZoomDragHitTest);
+	const bool vertical = IsTopZoomDragHitTest(m_ZoomDragHitTest) || IsBottomZoomDragHitTest(m_ZoomDragHitTest);
+
+	int draggedW = startW;
+	int draggedH = startH;
+
+	if (IsLeftZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		draggedW = m_ZoomDragStartRect.right - screenPos.x;
+	}
+	else if (IsRightZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		draggedW = screenPos.x - m_ZoomDragStartRect.left;
+	}
+
+	if (IsTopZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		draggedH = m_ZoomDragStartRect.bottom - screenPos.y;
+	}
+	else if (IsBottomZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		draggedH = screenPos.y - m_ZoomDragStartRect.top;
+	}
+
+	draggedW = max(1, draggedW);
+	draggedH = max(1, draggedH);
+
+	float zoom = m_ZoomDragStartZoom;
+	if (horizontal && vertical)
+	{
+		const float widthRatio = (float)draggedW / (float)startW;
+		const float heightRatio = (float)draggedH / (float)startH;
+		zoom *= (fabsf(widthRatio - 1.0f) >= fabsf(heightRatio - 1.0f)) ? widthRatio : heightRatio;
+	}
+	else if (horizontal)
+	{
+		zoom *= (float)draggedW / (float)startW;
+	}
+	else if (vertical)
+	{
+		zoom *= (float)draggedH / (float)startH;
+	}
+
+	zoom = max((float)g_ZoomDragMinPercent / 100.0f, min((float)g_ZoomDragMaxPercent / 100.0f, zoom));
+	zoom = floorf(zoom * 100.0f + 0.5f) / 100.0f;
+
+	const SIZE scaledWindowSize = GetScaledWindowSize(zoom);
+	int x = m_ZoomDragStartRect.left;
+	int y = m_ZoomDragStartRect.top;
+
+	if (IsLeftZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		x = m_ZoomDragStartRect.right - scaledWindowSize.cx;
+	}
+	if (IsTopZoomDragHitTest(m_ZoomDragHitTest))
+	{
+		y = m_ZoomDragStartRect.bottom - scaledWindowSize.cy;
+	}
+
+	if (fabsf(m_Zoom - zoom) <= 0.0001f && m_ScreenX == x && m_ScreenY == y)
+	{
+		return;
+	}
+
+	m_ScreenX = x;
+	m_ScreenY = y;
+	ApplyZoom(zoom, false);
+
+	m_ZoomDragMoved = true;
+	m_ZoomDragPositionChanged =
+		m_ZoomDragPositionChanged ||
+		m_ScreenX != m_ZoomDragStartRect.left ||
+		m_ScreenY != m_ZoomDragStartRect.top;
+}
+
+void Skin::EndZoomDrag(bool commit)
+{
+	if (!m_ZoomDragging)
+	{
+		return;
+	}
+
+	m_ZoomDragging = false;
+
+	if (GetCapture() == m_Window)
+	{
+		ReleaseCapture();
+	}
+
+	if (commit && m_ZoomDragMoved)
+	{
+		WriteOptions(OPTION_ZOOM);
+		if (m_ZoomDragPositionChanged)
+		{
+			SavePositionIfAppropriate();
+		}
+	}
+
+	m_ZoomDragHitTest = HTCLIENT;
+	m_ZoomDragMoved = false;
+	m_ZoomDragPositionChanged = false;
 }
 
 void Skin::UpdateFadeDuration()
@@ -4541,9 +4934,16 @@ LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	POINT screenPos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+	const int zoomDragHitTest = GetZoomDragHitTest(screenPos);
+	if (IsZoomDragHitTest(zoomDragHitTest))
+	{
+		return zoomDragHitTest;
+	}
+
 	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
-		POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+		POINT pos = screenPos;
 		MapWindowPoints(nullptr, m_Window, &pos, 1);
 		pos = DeviceToLogical(pos);
 
@@ -4638,10 +5038,10 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					int w = workArea->right - scaledWindowSize.cx;
 					int h = workArea->bottom - scaledWindowSize.cy;
 
-					if ((wp->x < SNAPDISTANCE + workArea->left) && (wp->x > workArea->left - SNAPDISTANCE)) wp->x = workArea->left;
-					if ((wp->y < SNAPDISTANCE + workArea->top) && (wp->y > workArea->top - SNAPDISTANCE)) wp->y = workArea->top;
-					if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
-					if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
+					if ((wp->x < g_SnapDistance + workArea->left) && (wp->x > workArea->left - g_SnapDistance)) wp->x = workArea->left;
+					if ((wp->y < g_SnapDistance + workArea->top) && (wp->y > workArea->top - g_SnapDistance)) wp->y = workArea->top;
+					if ((wp->x < g_SnapDistance + w) && (wp->x > -g_SnapDistance + w)) wp->x = w;
+					if ((wp->y < g_SnapDistance + h) && (wp->y > -g_SnapDistance + h)) wp->y = h;
 				}
 			}
 		}
@@ -4667,20 +5067,20 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 
 	if (wp->y < y + h && wp->y + scaledWindowSize.cy > y)
 	{
-		if ((wp->x < SNAPDISTANCE + x) && (wp->x > x - SNAPDISTANCE)) wp->x = x;
-		if ((wp->x < SNAPDISTANCE + x + w) && (wp->x > x + w - SNAPDISTANCE)) wp->x = x + w;
+		if ((wp->x < g_SnapDistance + x) && (wp->x > x - g_SnapDistance)) wp->x = x;
+		if ((wp->x < g_SnapDistance + x + w) && (wp->x > x + w - g_SnapDistance)) wp->x = x + w;
 
-		if ((wp->x + scaledWindowSize.cx < SNAPDISTANCE + x) && (wp->x + scaledWindowSize.cx > x - SNAPDISTANCE)) wp->x = x - scaledWindowSize.cx;
-		if ((wp->x + scaledWindowSize.cx < SNAPDISTANCE + x + w) && (wp->x + scaledWindowSize.cx > x + w - SNAPDISTANCE)) wp->x = x + w - scaledWindowSize.cx;
+		if ((wp->x + scaledWindowSize.cx < g_SnapDistance + x) && (wp->x + scaledWindowSize.cx > x - g_SnapDistance)) wp->x = x - scaledWindowSize.cx;
+		if ((wp->x + scaledWindowSize.cx < g_SnapDistance + x + w) && (wp->x + scaledWindowSize.cx > x + w - g_SnapDistance)) wp->x = x + w - scaledWindowSize.cx;
 	}
 
 	if (wp->x < x + w && wp->x + scaledWindowSize.cx > x)
 	{
-		if ((wp->y < SNAPDISTANCE + y) && (wp->y > y - SNAPDISTANCE)) wp->y = y;
-		if ((wp->y < SNAPDISTANCE + y + h) && (wp->y > y + h - SNAPDISTANCE)) wp->y = y + h;
+		if ((wp->y < g_SnapDistance + y) && (wp->y > y - g_SnapDistance)) wp->y = y;
+		if ((wp->y < g_SnapDistance + y + h) && (wp->y > y + h - g_SnapDistance)) wp->y = y + h;
 
-		if ((wp->y + scaledWindowSize.cy < SNAPDISTANCE + y) && (wp->y + scaledWindowSize.cy > y - SNAPDISTANCE)) wp->y = y - scaledWindowSize.cy;
-		if ((wp->y + scaledWindowSize.cy < SNAPDISTANCE + y + h) && (wp->y + scaledWindowSize.cy > y + h - SNAPDISTANCE)) wp->y = y + h - scaledWindowSize.cy;
+		if ((wp->y + scaledWindowSize.cy < g_SnapDistance + y) && (wp->y + scaledWindowSize.cy > y - g_SnapDistance)) wp->y = y - scaledWindowSize.cy;
+		if ((wp->y + scaledWindowSize.cy < g_SnapDistance + y + h) && (wp->y + scaledWindowSize.cy > y + h - g_SnapDistance)) wp->y = y + h - scaledWindowSize.cy;
 	}
 }
 
@@ -4805,6 +5205,27 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// but run the DefWindowProc so that dragging works.
 	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
+	if (IsCtrlKeyDown() && !IsAltKeyDown())
+	{
+		POINT screenPos = System::GetCursorPosition();
+		int zoomDragHitTest = HTCLIENT;
+		if (uMsg == WM_NCLBUTTONDOWN && IsZoomDragHitTest((int)wParam))
+		{
+			zoomDragHitTest = (int)wParam;
+		}
+		else
+		{
+			zoomDragHitTest = GetZoomDragHitTest(screenPos);
+		}
+
+		if (IsZoomDragHitTest(zoomDragHitTest))
+		{
+			SetMouseLeaveEvent(true);
+			StartZoomDrag(zoomDragHitTest, screenPos);
+			return 0;
+		}
+	}
+
 	POINT pos = GetMouseMessagePos(uMsg, lParam);
 
 	// Handle buttons
@@ -4825,6 +5246,12 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (m_ZoomDragging)
+	{
+		EndZoomDrag(true);
+		return 0;
+	}
+
 	// Select/Deselect the skin if CTRL+ALT is pressed when the
 	// left mouse button is depressed. (Draws an overlay over the skin.)
 	if (IsCtrlKeyDown() && IsAltKeyDown())
@@ -5051,6 +5478,16 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
+	}
+
+	return 0;
+}
+
+LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (m_ZoomDragging && (HWND)lParam != m_Window)
+	{
+		EndZoomDrag(true);
 	}
 
 	return 0;
@@ -5437,7 +5874,7 @@ LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		int newX = 0;
 		int newY = 0;
-		int delta = IsCtrlKeyDown() ? SNAPDISTANCE : 1;
+		int delta = IsCtrlKeyDown() ? g_SnapDistance : 1;
 
 		switch (wParam)
 		{
@@ -5522,6 +5959,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnXButtonUp, WM_NCXBUTTONUP)
 	MESSAGE(OnXButtonDoubleClick, WM_XBUTTONDBLCLK)
 	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK)
+	MESSAGE(OnCaptureChanged, WM_CAPTURECHANGED)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
