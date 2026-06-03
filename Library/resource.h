@@ -129,7 +129,7 @@
 #define ID_STR_70PERCENT                             2044
 #define ID_STR_80PERCENT                             2045
 #define ID_STR_90PERCENT                             2046
-#define ID_STR_100PERCENT                            2047
+#define ID_STR_A100PERCENT                           2047
 #define ID_STR_FADEIN                                2048
 #define ID_STR_FADEOUT                               2049
 #define ID_STR_HIDEONMOUSEOVER                       2050
@@ -245,6 +245,13 @@
 #define ID_STR_INSTALL_NEW_VERSION                   2161
 #define ID_STR_CLICK_TO_INSTALL                      2162
 #define ID_STR_ONHOVER                               2163
+#define ID_STR_ZOOM                                  2164
+#define ID_STR_100PERCENT                            2165
+#define ID_STR_110PERCENT                            2166
+#define ID_STR_120PERCENT                            2167
+#define ID_STR_130PERCENT                            2168
+#define ID_STR_140PERCENT                            2169
+#define ID_STR_150PERCENT                            2170
 
 #define ID_STR_GAMEMODE                              2800
 #define ID_STR_GAMEMODE_START                        2801
@@ -362,6 +369,15 @@
 #define IDM_GAMEMODE_PROCESSLIST                     4079
 #define IDM_INSTALL_NEW_VERSION                      4080
 #define IDM_SKIN_HIDEONMOUSE_NONE                    4081
+#define IDM_SKIN_ZOOM_80                             4082
+#define IDM_SKIN_ZOOM_90                             4083
+#define IDM_SKIN_ZOOM_100                            4084
+#define IDM_SKIN_ZOOM_110                            4085
+#define IDM_SKIN_ZOOM_120                            4086
+#define IDM_SKIN_ZOOM_130                            4087
+#define IDM_SKIN_ZOOM_140                            4088
+#define IDM_SKIN_ZOOM_150                            4089
+#define IDM_SKIN_ZOOM_CUSTOM                         4090
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

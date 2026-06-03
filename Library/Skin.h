@@ -190,6 +190,12 @@ public:
 	int GetH() { return m_WindowH; }
 	int GetX() { return m_ScreenX; }
 	int GetY() { return m_ScreenY; }
+	float GetScale() const { return m_Scale; }
+	float GetZoom() const { return m_Zoom; }
+	int ScaleToDevicePixels(int value) const;
+	RECT ScaleRectToDevicePixels(const RECT& rect) const;
+	SIZE GetScaledWindowSize() const;
+	POINT ScreenToLogical(POINT point) const;
 
 	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
 	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
@@ -264,6 +270,7 @@ protected:
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -293,14 +300,22 @@ private:
 		OPTION_AUTOSELECTSCREEN = 0x00000200,
 		OPTION_ALWAYSONTOP      = 0x00000400,
 		OPTION_ANCHOR           = 0x00000800,
+		OPTION_ZOOM             = 0x00001000,
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
 
 	bool HitTest(int x, int y);
+	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
+	POINT DeviceToLogical(POINT point) const;
+	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
+	D2D1_MATRIX_3X2_F GetScaleMatrix() const;
+	float GetMonitorDpiScale() const;
+	void UpdateEffectiveScale();
+	bool UpdateDpiScale(UINT dpi = 0);
 	void WindowToScreen();
 	void ScreenToWindow();
 	void PostUpdate(bool bActiveTransition);
@@ -322,6 +337,7 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void SetZoom(float zoom);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
@@ -398,6 +414,9 @@ private:
 	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
+	float m_Zoom;
+	float m_DpiScale;
+	float m_Scale;
 	bool m_AnchorXFromRight;
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;
