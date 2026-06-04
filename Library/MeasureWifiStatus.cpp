@@ -14,6 +14,8 @@ UINT MeasureWifiStatus::s_Instances = 0U;
 HANDLE MeasureWifiStatus::s_Client = nullptr;
 PWLAN_INTERFACE_INFO MeasureWifiStatus::s_Interface = nullptr;
 PWLAN_INTERFACE_INFO_LIST MeasureWifiStatus::s_InterfaceList = nullptr;
+PWLAN_CONNECTION_ATTRIBUTES MeasureWifiStatus::s_ConnectionAttributes = nullptr;
+bool MeasureWifiStatus::s_NotificationsRegistered = false;
 
 MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MeasureType::UNINITIALIZED),
@@ -49,6 +51,19 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 					L"WifiStatus: Unable to open WLAN API Handle. Error code (%u): %s",
 					dwErr, GetErrorString(dwErr));
 				return;
+			}
+
+			dwErr = WlanRegisterNotification(s_Client, WLAN_NOTIFICATION_SOURCE_ACM, TRUE,
+				WlanNotificationCallback, nullptr, nullptr, nullptr);
+			if (dwErr != ERROR_SUCCESS)
+			{
+				LogDebugF(this,
+					L"WifiStatus: Unable to register WLAN notifications. Error code (%u): %s",
+					dwErr, GetErrorString(dwErr));
+			}
+			else
+			{
+				s_NotificationsRegistered = true;
 			}
 		}
 
@@ -95,13 +110,23 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	bool changed = false;
 
+	WLAN_INTERFACE_INFO* newInterface = nullptr;
 	int value = parser.ReadInt(section, L"WifiIntfID", 0);
 	if (value >= (int)s_InterfaceList->dwNumberOfItems)
 	{
 		LogErrorF(this, L"WifiStatus: WifiIntfID=%i is not valid", value);
 		value = 0;
 	}
-	s_Interface = &s_InterfaceList->InterfaceInfo[value];
+	else
+	{
+		newInterface = &s_InterfaceList->InterfaceInfo[value];
+	}
+
+	if (newInterface != s_Interface)
+	{
+		s_Interface = newInterface;
+		RefreshConnectionAttributes();
+	}
 
 	value = parser.ReadInt(section, L"WifiListStyle", 0);
 	if (value < 0 || value > 7)
@@ -259,12 +284,16 @@ void MeasureWifiStatus::UpdateValue()
 	}
 	else
 	{
-		ULONG outsize = 0UL;
-		PWLAN_CONNECTION_ATTRIBUTES wlan_cattr = nullptr;
-		DWORD dwErr = WlanQueryInterface(s_Client,
-			&s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection, nullptr, &outsize, (PVOID*)&wlan_cattr, nullptr);
+		if (m_Type == MeasureType::PHY || m_Type == MeasureType::QUALITY || m_Type == MeasureType::TXRATE || m_Type == MeasureType::RXRATE)
+		{
+			// E.g. SSID changes will trigger the change notification. For other types, refresh the
+			// data with a delay in order to minimize the impact on the CapabilityAccessManager.db-wal
+			// database in Windows 11. See:
+			// https://learn.microsoft.com/en-au/answers/questions/5856859/why-is-capability-access-manager-growing-1-9gb-day
+			RefreshConnectionAttributes(false);
+		}
 
-		if (ERROR_SUCCESS != dwErr)
+		if (!s_ConnectionAttributes)
 		{
 			switch (m_Type)
 			{
@@ -274,6 +303,7 @@ void MeasureWifiStatus::UpdateValue()
 			case MeasureType::AUTH:
 				m_StatusString = L"-1";
 				break;
+
 			case MeasureType::QUALITY:
 			case MeasureType::TXRATE:
 			case MeasureType::RXRATE:
@@ -286,45 +316,42 @@ void MeasureWifiStatus::UpdateValue()
 			switch (m_Type)
 			{
 			case MeasureType::SSID:
-				// Need to convert ucSSID to wchar from uchar
 				m_StatusString = StringUtil::Widen(
-					(LPCSTR)wlan_cattr->wlanAssociationAttributes.dot11Ssid.ucSSID,
-					(int)wlan_cattr->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
+					(LPCSTR)s_ConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID,
+					(int)s_ConnectionAttributes->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
 
 				// If not connected yet add current status
-				m_StatusString += GetInterfaceStateString(wlan_cattr->isState);
+				m_StatusString += GetInterfaceStateString(s_ConnectionAttributes->isState);
 				break;
 
 			case MeasureType::PHY:
-				m_StatusString = GetPHYString(wlan_cattr->wlanAssociationAttributes.dot11PhyType);
+				m_StatusString = GetPHYString(s_ConnectionAttributes->wlanAssociationAttributes.dot11PhyType);
 				break;
 
 			case MeasureType::ENCRYPTION:
-				m_StatusString = GetCipherAlgorithmString(wlan_cattr->wlanSecurityAttributes.dot11CipherAlgorithm);
+				m_StatusString = GetCipherAlgorithmString(s_ConnectionAttributes->wlanSecurityAttributes.dot11CipherAlgorithm);
 				break;
 
 			case MeasureType::AUTH:
-				m_StatusString = GetAuthAlgorithmString(wlan_cattr->wlanSecurityAttributes.dot11AuthAlgorithm);
+				m_StatusString = GetAuthAlgorithmString(s_ConnectionAttributes->wlanSecurityAttributes.dot11AuthAlgorithm);
 				break;
 
 			case MeasureType::QUALITY:
-				m_Value = (double)wlan_cattr->wlanAssociationAttributes.wlanSignalQuality;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality;
 				break;
 
 			case MeasureType::TXRATE:
-				m_Value = wlan_cattr->wlanAssociationAttributes.ulTxRate * 1000.0;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.ulTxRate * 1000.0;
 				break;
 
 			case MeasureType::RXRATE:
-				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.ulRxRate * 1000.0;
 				break;
 
 			default:  // Invalid type
 				m_StatusString.clear();
 				break;
 			}
-
-			WlanFreeMemory(wlan_cattr);
 		}
 	}
 }
@@ -349,7 +376,16 @@ const WCHAR* MeasureWifiStatus::GetStringValue()
 
 void MeasureWifiStatus::FinalizeHandle()
 {
+	if (s_Client && s_NotificationsRegistered)
+	{
+		WlanRegisterNotification(s_Client, WLAN_NOTIFICATION_SOURCE_NONE, FALSE,
+			nullptr, nullptr, nullptr, nullptr);
+		s_NotificationsRegistered = false;
+	}
+
 	s_Interface = nullptr;
+
+	FreeConnectionAttributes();
 
 	if (s_InterfaceList)
 	{
@@ -361,6 +397,58 @@ void MeasureWifiStatus::FinalizeHandle()
 	{
 		WlanCloseHandle(s_Client, nullptr);
 		s_Client = nullptr;
+	}
+}
+
+void CALLBACK MeasureWifiStatus::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA data, PVOID context)
+{
+	if (!data || data->NotificationSource != WLAN_NOTIFICATION_SOURCE_ACM) return;
+
+	if (
+		data->NotificationCode != wlan_notification_acm_connection_complete &&
+		data->NotificationCode != wlan_notification_acm_connection_attempt_fail &&
+		data->NotificationCode != wlan_notification_acm_disconnected)
+	{
+		return;
+	}
+
+	if (!s_Interface || !IsEqualGUID(data->InterfaceGuid, s_Interface->InterfaceGuid)) return;
+
+	RefreshConnectionAttributes();
+}
+
+void MeasureWifiStatus::RefreshConnectionAttributes(bool forceUpdate)
+{
+	if (!s_Client || !s_Interface)
+	{
+		FreeConnectionAttributes();
+		return;
+	}
+
+	static ULONGLONG s_LastUpdateTickCount = 0ULL;
+	const ULONGLONG updateInterval = 10000ULL; // ms
+	const ULONGLONG tickCount = GetTickCount64();
+	if (forceUpdate || tickCount >= (s_LastUpdateTickCount + updateInterval))
+	{
+		s_LastUpdateTickCount = tickCount;
+
+		FreeConnectionAttributes();
+		ULONG outSize = 0UL;
+		DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection,
+			nullptr, &outSize, (void**)&s_ConnectionAttributes, nullptr);
+		if (result != ERROR_SUCCESS)
+		{
+			FreeConnectionAttributes();
+		}
+	}
+}
+
+void MeasureWifiStatus::FreeConnectionAttributes()
+{
+	if (s_ConnectionAttributes)
+	{
+		WlanFreeMemory(s_ConnectionAttributes);
+		s_ConnectionAttributes = nullptr;
 	}
 }
 
