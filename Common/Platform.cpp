@@ -11,7 +11,7 @@
 namespace
 {
 
-std::wstring& GetBuildNumberFromRegistry()
+const std::wstring& GetBuildNumberFromRegistry()
 {
 	static std::wstring s_BuildNumber = []() -> std::wstring
 	{
@@ -40,24 +40,10 @@ std::wstring& GetBuildNumberFromRegistry()
 
 };  // namespace
 
-inline bool IsWindows11OrGreater()
+bool IsWindows11OrGreater()
 {
-	static bool s_IsWindows11OrGreater = []() -> bool
-	{
-		if (!IsWindows10OrGreater()) return false;
-
-		// |GetTempPath2W| doesn't exist in Windows version prior to Windows 11 (as of yet)
-		typedef void* (__stdcall* TempPath2)();
-		HMODULE hmod = GetModuleHandle(L"kernel32");
-		if (!hmod) return false;
-
-		TempPath2 tmpPath2 = (TempPath2)GetProcAddress(hmod, "GetTempPath2W");
-
-		int buildNumber = _wtoi(GetBuildNumberFromRegistry().c_str());
-		return tmpPath2 && (buildNumber >= 22000);
-	} ();
-
-	return s_IsWindows11OrGreater;
+	static bool s_Result = IsWindows10OrGreater() && _wtoi(GetBuildNumberFromRegistry().c_str()) >= 22000;
+	return s_Result;
 }
 
 Platform::Platform()
@@ -91,8 +77,7 @@ void Platform::Initialize()
 		return false;
 	} ();
 
-	// Retrieve build number
-	m_BuildNumber = GetBuildNumberFromRegistry();
+	const auto& buildNumber = GetBuildNumberFromRegistry();
 
 	// Retrieve information from registry
 	std::wstring ubrStr;
@@ -147,7 +132,7 @@ void Platform::Initialize()
 					m_RawVersion += L'.';
 					m_RawVersion += std::to_wstring(minor);
 					m_RawVersion += L'.';
-					m_RawVersion += m_BuildNumber;
+					m_RawVersion += buildNumber;
 				}
 			}
 		}
@@ -158,7 +143,7 @@ void Platform::Initialize()
 			{
 				m_RawVersion = buffer;
 				m_RawVersion += L'.';
-				m_RawVersion += m_BuildNumber;
+				m_RawVersion += buildNumber;
 			}
 		}
 
@@ -204,10 +189,10 @@ void Platform::Initialize()
 		m_FriendlyName += L' ';
 		m_FriendlyName += m_DisplayVersion;
 	}
-	if (!m_BuildNumber.empty())
+	if (!buildNumber.empty())
 	{
 		m_FriendlyName += L" (build ";
-		m_FriendlyName += m_BuildNumber;
+		m_FriendlyName += buildNumber;
 		m_FriendlyName += ubrStr;
 
 		if (!servicePack.empty())

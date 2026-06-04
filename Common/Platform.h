@@ -10,8 +10,6 @@
 
 #include <string>
 
-inline bool IsWindows11OrGreater();
-
 class Platform
 {
 public:
@@ -22,7 +20,6 @@ public:
 	std::wstring GetName() { return m_Name; }
 	std::wstring GetFriendlyName() { return m_FriendlyName; }
 	std::wstring GetReleaseID() { return m_DisplayVersion; }  // Can be empty
-	std::wstring GetBuildNumber() { return m_BuildNumber; }
 	std::wstring GetRawVersion() { return m_RawVersion; }  // ex. 10.0.10240
 	std::wstring GetProductName() { return m_ProductName; }
 	std::wstring GetUserLanguage() { return m_UserLanguage; }
@@ -41,7 +38,6 @@ private:
 	std::wstring m_Name;
 	std::wstring m_FriendlyName;
 	std::wstring m_DisplayVersion;
-	std::wstring m_BuildNumber;
 	std::wstring m_RawVersion;
 	std::wstring m_ProductName;
 	std::wstring m_UserLanguage;
@@ -49,17 +45,5 @@ private:
 
 // Convenience function.
 inline Platform& GetPlatform() { return Platform::GetInstance(); }
-
-/*
-namespace Platform {
-
-LPCWSTR GetPlatformName();
-std::wstring GetPlatformReleaseID();
-std::wstring GetPlatformFriendlyName();
-std::wstring GetPlatformUserLanguage();
-bool Is64BitWindows();
-
-}  // namespace Platform
-*/
 
 #endif
