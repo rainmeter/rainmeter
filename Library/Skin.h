@@ -315,9 +315,8 @@ private:
 	POINT DeviceToLogical(POINT point) const;
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
 	D2D1_MATRIX_3X2_F GetScaleMatrix() const;
-	float GetMonitorDpiScale() const;
 	void UpdateEffectiveScale();
-	bool UpdateDpiScale(UINT dpi = 0);
+	bool UpdateDpiScale();
 	SIZE GetScaledWindowSize(float zoom) const;
 	void WindowToScreen();
 	void ScreenToWindow();

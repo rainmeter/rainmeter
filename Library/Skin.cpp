@@ -692,54 +692,23 @@ D2D1_MATRIX_3X2_F Skin::GetScaleMatrix() const
 	return D2D1::Matrix3x2F::Scale(m_Scale, m_Scale);
 }
 
-float Skin::GetMonitorDpiScale() const
-{
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	RECT rect = {
-		m_ScreenX,
-		m_ScreenY,
-		m_ScreenX + max(1, scaledWindowSize.cx),
-		m_ScreenY + max(1, scaledWindowSize.cy)
-	};
-
-	const float rectDpiScale = System::GetDpiScaleForRect(rect);
-	if (rectDpiScale > 0.0f)
-	{
-		return rectDpiScale;
-	}
-
-	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
-	if (m_WindowXScreen > 0 && m_WindowXScreen <= (int)monitors.size())
-	{
-		const MonitorInfo& monitor = monitors[m_WindowXScreen - 1];
-		if (monitor.active && monitor.dpiScale > 0.0f)
-		{
-			return monitor.dpiScale;
-		}
-	}
-
-	return 1.0f;
-}
-
 void Skin::UpdateEffectiveScale()
 {
 	m_Scale = m_Zoom * m_DpiScale;
 }
 
-bool Skin::UpdateDpiScale(UINT dpi)
+bool Skin::UpdateDpiScale()
 {
 	const float oldDpiScale = m_DpiScale;
 	const int skinScale = GetRainmeter().GetSkinScale();
-	m_DpiScale = (skinScale > 0) ? (float)skinScale / 100.0f :
-		(dpi > 0) ? (float)dpi / 96.0f : GetMonitorDpiScale();
+	m_DpiScale = (skinScale > 0) ? (float)skinScale / 100.0f : System::GetDpiScaleForWindow(m_Window);
 	if (m_DpiScale <= 0.0f)
 	{
 		m_DpiScale = 1.0f;
 	}
 
 	UpdateEffectiveScale();
-	return fabsf(oldDpiScale - m_DpiScale) > 0.0001f;
+	return fabsf(oldDpiScale - m_DpiScale) > 0.1f;
 }
 
 void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
@@ -4097,7 +4066,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
 
-		const int zoomDragHitTest = GetZoomDragHitTest(System::GetCursorPosition());
+		const int zoomDragHitTest = GetZoomDragHitTest(pos);
 		HCURSOR cursor = GetZoomDragCursor(zoomDragHitTest);
 		if (cursor)
 		{
@@ -5206,8 +5175,7 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const UINT dpi = LOWORD(wParam) ? LOWORD(wParam) : HIWORD(wParam);
-	if (UpdateDpiScale(dpi))
+	if (UpdateDpiScale())
 	{
 		m_Parser.ResetMonitorVariables(this);
 	}
@@ -5836,22 +5804,6 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 
-	if (m_State == STATE_RUNNING && UpdateDpiScale())
-	{
-		m_Parser.ResetMonitorVariables(this);
-
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		SetWindowPos(
-			m_Window,
-			nullptr,
-			0,
-			0,
-			scaledWindowSize.cx,
-			scaledWindowSize.cy,
-			SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-		Redraw();
-	}
-
 	if (m_Dragging)
 	{
 		ScreenToWindow();
@@ -6046,16 +5998,10 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	m_Parser.ResetMonitorVariables(this);
-	const bool dpiChanged = UpdateDpiScale();
 
 	// Move the window temporarily
 	ResizeWindow(false);
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy, SWP_NOZORDER | SWP_NOACTIVATE);
-	if (dpiChanged)
-	{
-		Redraw();
-	}
+	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	return 0;
 }
