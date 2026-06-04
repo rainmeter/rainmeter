@@ -286,11 +286,7 @@ void MeasureWifiStatus::UpdateValue()
 	{
 		if (m_Type == MeasureType::PHY || m_Type == MeasureType::QUALITY || m_Type == MeasureType::TXRATE || m_Type == MeasureType::RXRATE)
 		{
-			// E.g. SSID changes will trigger the change notification. For other types, refresh the
-			// data with a delay in order to minimize the impact on the CapabilityAccessManager.db-wal
-			// database in Windows 11. See:
-			// https://learn.microsoft.com/en-au/answers/questions/5856859/why-is-capability-access-manager-growing-1-9gb-day
-			RefreshConnectionAttributes(false);
+			RefreshConnectionQualityAttributes();
 		}
 
 		if (!s_ConnectionAttributes)
@@ -417,29 +413,53 @@ void CALLBACK MeasureWifiStatus::WlanNotificationCallback(PWLAN_NOTIFICATION_DAT
 	RefreshConnectionAttributes();
 }
 
-void MeasureWifiStatus::RefreshConnectionAttributes(bool forceUpdate)
+void MeasureWifiStatus::RefreshConnectionAttributes()
 {
-	if (!s_Client || !s_Interface)
+	FreeConnectionAttributes();
+
+	if (!s_Client || !s_Interface) return;
+
+	ULONG outSize = 0UL;
+	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection,
+		nullptr, &outSize, (void**)&s_ConnectionAttributes, nullptr);
+	if (result != ERROR_SUCCESS)
 	{
 		FreeConnectionAttributes();
-		return;
 	}
+}
 
-	static ULONGLONG s_LastUpdateTickCount = 0ULL;
-	const ULONGLONG updateInterval = 10000ULL; // ms
+void MeasureWifiStatus::RefreshConnectionQualityAttributes()
+{
+	if (!s_Client || !s_Interface) return;
+
+	static ULONGLONG s_LastRefreshTickCount = 0ULL;
 	const ULONGLONG tickCount = GetTickCount64();
-	if (forceUpdate || tickCount >= (s_LastUpdateTickCount + updateInterval))
-	{
-		s_LastUpdateTickCount = tickCount;
+	const ULONGLONG refreshInterval = 1000ULL; // ms
+	if (tickCount < (s_LastRefreshTickCount + refreshInterval)) return;
+	s_LastRefreshTickCount = tickCount;
 
-		FreeConnectionAttributes();
-		ULONG outSize = 0UL;
-		DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection,
-			nullptr, &outSize, (void**)&s_ConnectionAttributes, nullptr);
-		if (result != ERROR_SUCCESS)
-		{
-			FreeConnectionAttributes();
-		}
+	// On Windows 11 24H2+, using wlan_intf_opcode_current_connection triggers an entry in
+	// the CapabilityAccessManager.db-wal database. See:
+	// https://learn.microsoft.com/en-au/answers/questions/5856859/why-is-capability-access-manager-growing-1-9gb-day
+	//
+	// We try to use wlan_intf_opcode_realtime_connection_quality first in order to avoid
+	// that issue.
+	ULONG outSize = 0UL;
+	WLAN_REALTIME_CONNECTION_QUALITY* connectionQuality = nullptr;
+	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_realtime_connection_quality,
+		nullptr, &outSize, (void**)&connectionQuality, nullptr);
+	if (result == ERROR_SUCCESS && s_ConnectionAttributes)
+	{
+		s_ConnectionAttributes->wlanAssociationAttributes.dot11PhyType = connectionQuality->dot11PhyType;
+		s_ConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality = connectionQuality->ulLinkQuality;
+		s_ConnectionAttributes->wlanAssociationAttributes.ulTxRate = connectionQuality->ulTxRate;
+		s_ConnectionAttributes->wlanAssociationAttributes.ulRxRate = connectionQuality->ulRxRate;
+		WlanFreeMemory(connectionQuality);
+		connectionQuality = nullptr;
+	}
+	else
+	{
+		RefreshConnectionAttributes();
 	}
 }
 

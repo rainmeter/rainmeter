@@ -47,7 +47,8 @@ private:
 
 	void FinalizeHandle();
 	static void CALLBACK WlanNotificationCallback(PWLAN_NOTIFICATION_DATA data, PVOID context);
-	static void RefreshConnectionAttributes(bool forceUpdate = true);
+	static void RefreshConnectionAttributes();
+	static void RefreshConnectionQualityAttributes();
 	static void FreeConnectionAttributes();
 
 	const WCHAR* GetCipherAlgorithmString(DOT11_CIPHER_ALGORITHM value);
