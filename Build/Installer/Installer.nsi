@@ -382,6 +382,10 @@ Function PageWelcome
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
+	${NSD_CreateLabel} 120u 181u 195u 12u "v${VERSION_FULL}"
+	Pop $0
+	SetCtlColors $0 "888888" "${MUI_BGCOLOR}"
+
 	${If} $InstallPortable = 1
 		${NSD_Check} $R2
 	${Else}
