@@ -188,6 +188,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_AutoSelectScreen(false),
 	m_Dragging(false),
 	m_Dragged(false),
+	m_DragStartValid(false),
+	m_DragStartCursor(),
+	m_DragStartWindowPos(),
 	m_ZoomDragging(false),
 	m_ZoomDragHitTest(HTCLIENT),
 	m_ZoomDragStartRect(),
@@ -4858,6 +4861,13 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Prepare the dragging flags
 	m_Dragging = true;
 	m_Dragged = false;
+	m_DragStartValid = (wParam & 0x000F) == 2;  // triggered by mouse
+	if (m_DragStartValid)
+	{
+		m_DragStartCursor = System::GetCursorPosition();
+		m_DragStartWindowPos.x = m_ScreenX;
+		m_DragStartWindowPos.y = m_ScreenY;
+	}
 
 	// If the 'Show window contents while dragging' system option is
 	// not checked, temporarily enable it while dragging the skin.
@@ -4894,6 +4904,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Clear the dragging flags
 	m_Dragging = false;
 	m_Dragged = false;
+	m_DragStartValid = false;
 
 	// Disable the 'Show window contents while dragging' system option if
 	// it was already disabled before dragging.
@@ -4997,6 +5008,13 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if ((wp->flags & SWP_NOMOVE) == 0)
 	{
+		if (m_DragStartValid)
+		{
+			const POINT cursor = System::GetCursorPosition();
+			wp->x = m_DragStartWindowPos.x + (cursor.x - m_DragStartCursor.x);
+			wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
+		}
+
 		if (m_SnapEdges && !(IsCtrlKeyDown() || IsShiftKeyDown()))
 		{
 			// only process movement (ignore anything without winpos values)

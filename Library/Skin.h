@@ -452,6 +452,9 @@ private:
 	bool m_AutoSelectScreen;
 	bool m_Dragging;
 	bool m_Dragged;
+	bool m_DragStartValid;
+	POINT m_DragStartCursor;
+	POINT m_DragStartWindowPos;
 	bool m_ZoomDragging;
 	int m_ZoomDragHitTest;
 	RECT m_ZoomDragStartRect;
