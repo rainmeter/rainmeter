@@ -16,6 +16,14 @@
 
 static std::wstring g_Buffer;
 
+const DWORD g_MainThreadId = GetCurrentThreadId();
+const WCHAR* g_NonMainThreadError = "ERROR: This function can only be called on the main thread";
+
+bool IsMainThread()
+{
+	return GetCurrentThreadId() == g_MainThreadId;
+}
+
 bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
 {
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
@@ -30,6 +38,8 @@ bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCW
 
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(option);
 	NULLCHECK(defValue);
 
@@ -40,6 +50,8 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 	NULLCHECK(defValue);
@@ -56,6 +68,8 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 {
+	if (!IsMainThread()) return 0.0;
+
 	NULLCHECK(option);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
@@ -65,6 +79,8 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 
 double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
 {
+	if (!IsMainThread()) return 0.0;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 
@@ -80,6 +96,8 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(str);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
@@ -92,6 +110,8 @@ LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 
 LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(relativePath);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
@@ -102,8 +122,9 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 
 void* __stdcall RmGet(void* rm, int type)
 {
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	if (!IsMainThread()) return nullptr;
 
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	switch (type)
 	{
 	case RMG_MEASURENAME:
@@ -193,6 +214,8 @@ void RmLogF(void* rm, int level, LPCWSTR format, ...)
 // Deprecated!
 LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 	NULLCHECK(defValue);
@@ -209,6 +232,8 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 // Deprecated!
 LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	if (command == nullptr || *command == L'\0')
 	{
 		return L"noop";
