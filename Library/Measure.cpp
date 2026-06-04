@@ -11,6 +11,7 @@
 #include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
 #include "MeasurePhysicalMemory.h"
+#include "MeasurePower.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
@@ -785,6 +786,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
 		return new MeasurePhysicalMemory(skin, name);
+	}
+	else if (_wcsicmp(L"Power", measure) == 0)
+	{
+		return new MeasurePower(skin, name);
 	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
