@@ -4069,7 +4069,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
 
-		const int zoomDragHitTest = GetZoomDragHitTest(pos);
+		const int zoomDragHitTest = GetZoomDragHitTest(System::GetCursorPosition());
 		HCURSOR cursor = GetZoomDragCursor(zoomDragHitTest);
 		if (cursor)
 		{
