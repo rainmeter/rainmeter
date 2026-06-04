@@ -17,7 +17,7 @@
 static std::wstring g_Buffer;
 
 const DWORD g_MainThreadId = GetCurrentThreadId();
-const WCHAR* g_NonMainThreadError = "ERROR: This function can only be called on the main thread";
+const WCHAR* g_NonMainThreadError = L"ERROR: This function can only be called on the main thread";
 
 bool IsMainThread()
 {
