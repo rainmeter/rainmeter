@@ -188,6 +188,13 @@ void* __stdcall RmGet(void* rm, int type)
 			if (!window) break;
 			return (void*)window->GetWindow();
 		}
+
+	case RMG_SKINSCALE:
+		{
+			static float scale = 1.0f;
+			scale = measure->GetSkin()->GetScale();
+			return (void*)&scale;
+		}
 	}
 
 	return nullptr;
