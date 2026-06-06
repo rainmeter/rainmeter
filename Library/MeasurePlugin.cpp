@@ -11,8 +11,6 @@
 #include "Export.h"
 #include "System.h"
 
-std::unordered_map<std::wstring, UINT> MeasurePlugin::s_PluginReferences;
-
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_DpiAware(false),
@@ -40,36 +38,6 @@ MeasurePlugin::~MeasurePlugin()
 			else
 			{
 				((FINALIZE)finalizeFunc)(m_Plugin, m_ID);
-			}
-		}
-
-		// Debug mode
-		if (GetRainmeter().GetDebug())
-		{
-			WCHAR pluginPath[MAX_PATH] = { 0 };
-			if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
-			{
-				// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-				// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
-				if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
-				{
-					std::wstring tmpStr = pluginPath;
-					StringUtil::ToLowerCase(tmpStr);
-
-					auto iter = s_PluginReferences.find(tmpStr);
-					if (iter != s_PluginReferences.end())
-					{
-						--iter->second;
-						if (iter->second == 0)
-						{
-							if (GetRainmeter().GetDebug())
-							{
-								LogDebugF(L"Plugin unloaded: %s", pluginPath);
-							}
-							s_PluginReferences.erase(tmpStr);
-						}
-					}
-				}
 			}
 		}
 
@@ -140,14 +108,13 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		pluginName = plugin;
 	}
 
-	// Append ".dll" if it doesn't exist (for debug mode)
-	if (GetRainmeter().GetDebug())
+	// Append ".dll" if it doesn't exist 
+	if (!*PathFindExtension(plugin.c_str()))
 	{
-		if (_wcsicmp(PathFindExtension(plugin.c_str()), L"") == 0)
-		{
-			pluginName.append(L".dll");
-		}
+		pluginName.append(L".dll");
 	}
+
+	const bool logInitialLoad = GetRainmeter().GetDebug() && !GetModuleHandle(pluginName.c_str());
 
 	// First try from program path
 	std::wstring pluginFile = GetRainmeter().GetPluginPath();
@@ -171,34 +138,10 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	// Log plugin references (debug mode)
-	if (GetRainmeter().GetDebug())
+	WCHAR pluginPath[MAX_PATH] = { 0 };
+	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
 	{
-		WCHAR pluginPath[MAX_PATH] = { 0 };
-		if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
-		{
-			// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-			// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
-			if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
-			{
-				std::wstring tmpStr = pluginPath;
-				StringUtil::ToLowerCase(tmpStr);
-
-				auto iter = s_PluginReferences.find(tmpStr);
-				if (iter == s_PluginReferences.end())
-				{
-					s_PluginReferences.emplace(tmpStr, 1U);
-					if (GetRainmeter().GetDebug())
-					{
-						LogDebugF(L"Plugin loaded: %s", pluginPath);
-					}
-				}
-				else
-				{
-					++iter->second;
-				}
-			}
-		}
+		LogDebugF(L"Plugin loaded: %s", pluginPath);
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");

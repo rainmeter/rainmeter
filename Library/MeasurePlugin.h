@@ -74,8 +74,6 @@ private:
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
-
-	static std::unordered_map<std::wstring, UINT> s_PluginReferences;
 };
 
 #endif
