@@ -107,9 +107,11 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		if (FAILED(hr)) return false;
 
 		D2D1_FACTORY_OPTIONS fo = {};
-#ifdef _DEBUG
-		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-#endif
+		const bool debug = false;
+		if (debug)
+		{
+			fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+		}
 
 		hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
