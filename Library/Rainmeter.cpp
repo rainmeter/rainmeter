@@ -11,6 +11,7 @@
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "Rainmeter.h"
+#include "Export.h"
 #include "Net.h"
 #include "TrayIcon.h"
 #include "System.h"
@@ -773,6 +774,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	case WM_RAINMETER_HANDLE_NET_TASK_RESULT:
 		Net::Task::HandleResultMessage(wParam, lParam);
+		break;
+
+	case WM_RAINMETER_HANDLE_EXPORT_SYNC:
+		HandleExportSyncMessage(wParam, lParam);
 		break;
 
 	default:
