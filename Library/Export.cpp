@@ -123,7 +123,7 @@ bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
 {
 	if (plugin->IsDpiAware()) return false;
 
-	const WCHAR* sizeOptions[] = { L"X", L"Y", L"W", L"Z", L"FontSize" };
+	const WCHAR* sizeOptions[] = { L"X", L"Y", L"W", L"H", L"FontSize" };
 	for (auto* sizeOption : sizeOptions)
 	{
 		if (_wcsicmp(sizeOption, option) == 0) return true;
