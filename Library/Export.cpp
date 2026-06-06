@@ -146,7 +146,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 		buffer[0] = L'\0';
 
 		const auto defValueInt = ConfigParser::ParseInt(defValue, 0);
-		const auto result = ReadPluginSize(measure, parser, option, defValueNumber);
+		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
 		_itow_s(result, buffer, 10);
 		return buffer;
 	}
