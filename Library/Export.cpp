@@ -36,6 +36,23 @@ bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCW
 	return false;
 }
 
+// Previously, a skin with W=100 was actually 100 pixels on the screen. After we implemented
+// support for high DPI, the actual width on the screen will be larger when using a non-100%
+// scaling factor. Old plugins such as InputTextX, BlurInput, and WebView2 are unaware of this
+// change and are still expecting the options to be in screen pixels. Lets give them what they
+// are expecting in such cases in order to avoid breaking backwards compatibility.
+bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
+{
+	if (plugin->IsDpiAware()) return false;
+	return _wcsicmp(option, L"X") == 0 || _wcsicmp(option, L"Y") == 0 || _wcsicmp(option, L"W") == 0 || _wcsicmp(option, L"H") == 0;
+}
+
+int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR option, int defValue)
+{
+	const int value = parser.ReadInt(measure->GetName(), option, defValue);
+	return measure->GetSkin()->ScaleToDevicePixels(value);
+}
+
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
 	if (!IsMainThread()) return g_NonMainThreadError;
@@ -45,6 +62,16 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	if (ShouldScalePluginCoordinateOption(measure, option))
+	{
+		WCHAR buffer[32] = { 0 };
+		const auto defValueInt = ConfigParser::ParseInt(defValue, 0);
+		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
+		_itow_s(, buffer, 10);
+		g_Buffer = buffer;
+		return g_Buffer.c_str();
+	}
+
 	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
 }
 
@@ -74,6 +101,12 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+
+	if (ShouldScalePluginCoordinateOption(measure, option))
+	{
+		return ReadScaledPluginCoordinateOption(measure, parser, option, (int)defValue);
+	}
+
 	return parser.ReadFloat(measure->GetName(), option, defValue);
 }
 

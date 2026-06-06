@@ -41,6 +41,8 @@ public:
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
+	bool IsDpiAware() const { return m_DpiAware; }
+
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
 protected:
@@ -48,11 +50,11 @@ protected:
 	virtual void UpdateValue();
 
 private:
-	bool IsNewApi() { return m_ReloadFunc != nullptr; }
+	bool IsNewApi() const { return m_ReloadFunc != nullptr; }
 
 	HMODULE m_Plugin;
 
-	void* m_ReloadFunc;
+	bool m_DpiAware;
 
 	union
 	{
@@ -68,6 +70,7 @@ private:
 		};
 	};
 
+	void* m_ReloadFunc;
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
