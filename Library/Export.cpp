@@ -122,7 +122,14 @@ bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCW
 bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
 {
 	if (plugin->IsDpiAware()) return false;
-	return _wcsicmp(option, L"X") == 0 || _wcsicmp(option, L"Y") == 0 || _wcsicmp(option, L"W") == 0 || _wcsicmp(option, L"H") == 0;
+
+	const WCHAR* sizeOptions[] = { L"X", L"Y", L"W", L"Z", L"FontSize" };
+	for (auto* sizeOption : sizeOptions)
+	{
+		if (_wcsicmp(sizeOption, option) == 0) return true;
+	}
+
+	return false;
 }
 
 int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR option, int defValue)
