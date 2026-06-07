@@ -2613,7 +2613,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 				}
 
-				GetUpdater().GetLanguageStatus();
+				GetUpdater().CheckLanguageObsoleteStatus();
 
 				SendMessage(c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
 				GetRainmeter().DelayedExecuteCommand(L"!Manage Settings");
