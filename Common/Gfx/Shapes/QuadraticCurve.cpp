@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "QuadraticCurve.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -36,12 +35,9 @@ QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx,
 			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
-			hr = path.CopyTo(m_Shape.GetAddressOf());
-			if (SUCCEEDED(hr)) return;
+			path.CopyTo(m_Shape.GetAddressOf());
 		}
 	}
-
-	LogErrorF(L"Could not create quadratic curve object. X1=%i, Y1=%i, X2=%i, Y2=%i", (int)x1, (int)y1, (int)x2, (int)y2);
 }
 
 QuadraticCurve::~QuadraticCurve()

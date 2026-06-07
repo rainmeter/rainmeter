@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Rectangle.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -21,23 +20,8 @@ Rectangle::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, bool isCloned)
 	// Cloned shapes do not need to re-create any resources
 	if (isCloned) return;
 
-	HRESULT hr = E_FAIL;
 	const D2D1_RECT_F rect = { m_X, m_Y, m_Width, m_Height };
-
-	Microsoft::WRL::ComPtr<ID2D1RectangleGeometry> rectangle;
-	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, rectangle.GetAddressOf());
-	if (FAILED(hr))
-	{
-		LogErrorF(
-			L"Could not create rectangle object. X=%i, Y=%i, W=%i, H=%i",
-			(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height);
-		return;
-	}
-
-	hr = rectangle.CopyTo(m_Shape.GetAddressOf());
-	if (FAILED(hr)) LogErrorF(
-		L"Could not copy rectangle object to shape object. X=%i, Y=%i, W=%i, H=%i",
-		(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height);
+	Canvas::c_D2DFactory->CreateRectangleGeometry(rect, (ID2D1RectangleGeometry**)m_Shape.GetAddressOf());
 }
 
 Rectangle::~Rectangle()

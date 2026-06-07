@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Arc.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -39,13 +38,9 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
-			hr = path.CopyTo(m_Shape.GetAddressOf());
-			if (SUCCEEDED(hr)) return;
+			path.CopyTo(m_Shape.GetAddressOf());
 		}
 	}
-
-	LogErrorF(L"Could not create arc object. X1=%i, Y1=%i, X2=%i, Y2=%i, XRadius=%i, YRadius=%i, Angle=%i",
-		(int)x1, (int)y1, (int)x2, (int)y2, (int)xRadius, (int)yRadius, (int)angle);
 }
 
 Arc::~Arc()
