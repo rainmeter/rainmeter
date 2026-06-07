@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "ריינמטר ${VER} אינו תומך בחלונות 2000. כדי להשתמש בריינמטר בחלונות 2000, הורד את הגירסא הישנה ריינמטר 2.0."
-${LangFileString} WINXPS2ERROR            "לריינמטר ${VER} נדרשת גירסאת חלונות XP SP2 או גירסא חדשה יותר. אנא שדרג לגירסאת חבילת השירות החדשה ביותר ונסה שוב."
-${LangFileString} WIN2003SP1ERROR         "לריינמטר ${VER} נדרשת גירסאת חלונות 2003 SP1 או גירסא חדשה יותר. אנא שדרג לגירסאת חבילת השירות החדשה ביותר ונסה שוב."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "ריינמטר ${VERSION_SHORT} אינו תומך בחלונות 7/8. כדי להשתמש בריינמטר בחלונות 7/8, הורד את הגירסא הישנה ריינמטר 4.8."
 ${LangFileString} ADMINERROR              "נדרשות הרשאות ניהוליות."
 ${LangFileString} LOGONERROR              "שירות החיבור אינו מופעל."
 ${LangFileString} UACERROR                "אינו מצליח לעלות."

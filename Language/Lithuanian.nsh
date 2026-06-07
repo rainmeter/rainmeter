@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "'Rainmeter' ${VER} nepalaiko 'Windows 2000'. Norėdami naudoti 'Rainmeter' 'Windows 2000' systemoje, atsisiųskite senesnę ''Rainmeter'' 2.0 versija."
-${LangFileString} WINXPS2ERROR            "'Rainmeter' ${VER} reikia 'Windows XP SP2' arba naujesnės. Prašome įdiegti naujausią pakeitimų paketą ir bandyti dar kartą."
-${LangFileString} WIN2003SP1ERROR         "'Rainmeter' ${VER} reikia 'Windows 2003 SP1' arba naujesnės. Prašome įdiegti naujausią pakeitimų paketą ir bandyti dar kartą."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "'Rainmeter' ${VERSION_SHORT} nepalaiko 'Windows 7/8'. Norėdami naudoti 'Rainmeter' 'Windows 7/8' systemoje, atsisiųskite senesnę ''Rainmeter'' 4.8 versija."
 ${LangFileString} ADMINERROR              "Turite turėti administratoriaus teises."
 ${LangFileString} LOGONERROR              "Registravimosi tarnyba neveikia."
 ${LangFileString} UACERROR                "Nepavyko sukelti teisių."

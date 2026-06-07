@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ei toeta operatsioonisüsteemi Windows 2000. Palun lae alla vanem Rainmeter 2.0 versioon."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} vajab Windows XP SP2 või uuemat süsteemi. Palun uuenda viimasele teenusepakile ja proovi uuesti."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} vajab Windows 2003 SP1 või uuemat süsteemi. Palun uuenda viimasele teenusepakile ja proovi uuesti."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ei toeta operatsioonisüsteemi Windows 7/8. Palun lae alla vanem Rainmeter 4.8 versioon."
 ${LangFileString} ADMINERROR              "Vaja on administraatoriõiguseid."
 ${LangFileString} LOGONERROR              "Sisselogimisteenus ei tööta."
 ${LangFileString} UACERROR                "Kasutajakonto kontroll ebaõnnestus."

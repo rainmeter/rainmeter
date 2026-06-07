@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Το Rainmeter ${VER} δεν υποστηρίζει Windows 2000. Για να χρησιμοποιήσετε το Rainmeter στα Windows 2000, κατεβάστε την έκδοση 2.0 του Rainmeter."
-${LangFileString} WINXPS2ERROR            "Το Rainmeter ${VER} απαιτεί Windows XP SP2 ή υψηλότερο. Παρακαλώ αναβαθμίστε στην τελευταία έκδοση του service pack των Windows και δοκιμάστε ξανά."
-${LangFileString} WIN2003SP1ERROR         "Το Rainmeter ${VER} απαιτεί Windows 2003 SP1 ή υψηλότερο. Παρακαλώ αναβαθμίστε στην τελευταία έκδοση του service pack των Windows και δοκιμάστε ξανά."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Το Rainmeter ${VERSION_SHORT} δεν υποστηρίζει Windows 7/8. Για να χρησιμοποιήσετε το Rainmeter στα Windows 7/8, κατεβάστε την έκδοση 4.8 του Rainmeter."
 ${LangFileString} ADMINERROR              "Χρειάζονται δικαιώματα διαχειριστή."
 ${LangFileString} LOGONERROR              "Η υπηρεσία Logon δεν λειτουργεί."
 ${LangFileString} UACERROR                "Λάθος UAC. Αδύνατον να συνεχίσει."

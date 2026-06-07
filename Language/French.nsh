@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ne supporte pas Windows 2000. Veuillez télécharger une version antérieure à Rainmeter 2.0."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} requiert Windows XP SP2 ou ultérieur. Veuillez installer le dernier service pack et réessayer."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requiert Windows 2003 SP1 ou ultérieur. Veuillez installer le dernier service pack et réessayer."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ne supporte pas Windows 7/8. Veuillez télécharger une version antérieure à Rainmeter 4.8."
 ${LangFileString} ADMINERROR              "Droits administrateur requis."
 ${LangFileString} LOGONERROR              "Le service Logon n'est pas démarré."
 ${LangFileString} UACERROR                "Impossible d'élever les privilèges."

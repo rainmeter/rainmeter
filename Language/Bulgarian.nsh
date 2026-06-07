@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} не поддържа Windows 2000. За да използвате Rainmeter под Windows 2000, свалете по-старата Rainmeter 2.0 версия."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} изисква Windows XP SP2 или по-висока версия. Моля, обновете до най-новия сервизен пакет и опитайте отново."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} изисква Windows 2003 SP1 или по-висока версия. Моля, обновете до най-новия сервизен пакет и опитайте отново."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} не поддържа Windows 7/8. За да използвате Rainmeter под Windows 7/8, свалете по-старата Rainmeter 4.8 версия."
 ${LangFileString} ADMINERROR              "Нужни са административни права."
 ${LangFileString} LOGONERROR              "Услугата Logon service не е стартирана."
 ${LangFileString} UACERROR                "Нямате административни права."

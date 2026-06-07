@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ไม่รองรับ Windows 2000 หากต้องการใช้ Rainmeter บน Windows 2000 ให้ดาวน์โหลด Rainmeter 2.0 เวอร์ชันเก่า"
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} ไม่รองรับ Windows XP SP2 หรือสูงกว่า. โปรดอัปเกรดเป็นเซอร์วิสแพ็คล่าสุดแล้วลองอีกครั้ง"
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} ไม่รองรับ Windows 2003 SP1 หรือสูงกว่า. โปรดอัปเกรดเป็นเซอร์วิสแพ็คล่าสุดแล้วลองอีกครั้ง"
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ไม่รองรับ Windows 7/8 หากต้องการใช้ Rainmeter บน Windows 7/8 ให้ดาวน์โหลด Rainmeter 4.8 เวอร์ชันเก่า"
 ${LangFileString} ADMINERROR              "สิทธิ์ของผู้ดูแลระบบที่จำเป็น"
 ${LangFileString} LOGONERROR              "บริการเข้าสู่ระบบไม่ทำงาน"
 ${LangFileString} UACERROR                "ไม่สามารถยกระดับได้"

@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER}은 Windows 2000을 지원하지 않습니다. Windows 2000에서 Rainmeter를 사용하려면 Rainmeter 2.0 이전 버전을 다운로드 하세요."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER}은 Windows XP SP2 이상이 필요합니다. 최신 서비스팩으로 업그레이드 후 다시 시도해 주세요."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER}은 Windows 2003 SP1 이상이 필요합니다. 최신 서비스팩으로 업그레이드 후 다시 시도해 주세요."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT}은 Windows 7/8을 지원하지 않습니다. Windows 7/8에서 Rainmeter를 사용하려면 Rainmeter 4.8 이전 버전을 다운로드 하세요."
 ${LangFileString} ADMINERROR              "관리자 권한이 필요합니다."
 ${LangFileString} LOGONERROR              "로그온 서비스가 실행 중이 아닙니다."
 ${LangFileString} UACERROR                "권한 상승 실패."

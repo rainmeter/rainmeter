@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "هذه النسخة ${VER} لا تدعم ويندوز 2000 لتشغيل البرنامج على ويندوز 2000 قم بتنزيل الإصدار رقم 2.0 من البرنامج."
-${LangFileString} WINXPS2ERROR            "هذه النسخة ${VER} تتطلب الحزمة الخدمية الثانية لويندوز إكس بي أو أعلى. الرجاء تحديثها."
-${LangFileString} WIN2003SP1ERROR         "هذه النسخة ${VER} تتطلب الحزمة الخدمية الثانية لويندوز 2003 أو أعلى. الرجاء تحديثها."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "هذه النسخة ${VERSION_SHORT} لا تدعم ويندوز 7/8 لتشغيل البرنامج على ويندوز 7/8 قم بتنزيل الإصدار رقم 4.8 من البرنامج."
 ${LangFileString} ADMINERROR              "صلاحيات إدارية مطلوبة."
 ${LangFileString} LOGONERROR              "خدمة تسجيل الدخول لا تعمل."
 ${LangFileString} UACERROR                "غير قادر على التنشيط."

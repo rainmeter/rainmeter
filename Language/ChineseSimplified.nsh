@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} 不支持Windows 2000。 如果要在Windows 2000上运行Rainmeter,请下载Rainmeter 2.0或更早版本。"
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} 支持Windows XP SP2或更高版本。 请升级到最新的服务包，然后再试一次。"
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} 支持Windows 2003 SP1或更高版本。 请升级到最新的服务包，然后再试一次。"
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} 不支持Windows 7/8。 如果要在Windows 7/8上运行Rainmeter,请下载Rainmeter 4.8或更早版本。"
 ${LangFileString} ADMINERROR              "需要管理员权限。"
 ${LangFileString} LOGONERROR              "Logon 服务未运行。"
 ${LangFileString} UACERROR                "无法创建。"

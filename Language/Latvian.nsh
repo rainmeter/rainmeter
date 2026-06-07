@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter programa ${VER} neatbalsta Windows 2000. Lai izmantotu Rainmeter uz Windows 2000 platformas, lejuplādējiet vecāku Rainmeter 2.0 programas versiju."
-${LangFileString} WINXPS2ERROR            "Rainmeter programai ${VER} nepieciešams Windows XP Servisa paka 2 (SP2) vai augstāks. Lūdzu uzlabojiet uz jaunāku servisa paku un mēģiniet vēlreiz."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter programai ${VER} nepieciešams Windows 2003 Servisa paka 1 (SP1) vai augstāks. Lūdzu uzlabojiet uz jaunāku servisa paku un mēģiniet vēlreiz."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter programa ${VERSION_SHORT} neatbalsta Windows 7/8. Lai izmantotu Rainmeter uz Windows 7/8 platformas, lejuplādējiet vecāku Rainmeter 4.8 programas versiju."
 ${LangFileString} ADMINERROR              "Nepieciešamas administratora tiesības."
 ${LangFileString} LOGONERROR              "'Logon service' nav ieslēgts."
 ${LangFileString} UACERROR                "Nevar paaugstināt."

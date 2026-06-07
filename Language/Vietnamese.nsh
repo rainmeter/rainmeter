@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} không hỗ trợ Windows 2000. Để sử dụng Rainmeter trên Windows 2000, tải bản cũ hơn phiên bản Rainmeter 2.0."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} yêu cầu Windows XP SP2 hoặc hơn. Vui lòng nâng cấp lên gói mới nhất và thử lại."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} yêu cầu Windows 2003 SP1 hoặc hơn. Vui lòng nâng cấp lên gói mới nhất và thử lại."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} không hỗ trợ Windows 7/8. Để sử dụng Rainmeter trên Windows 7/8, tải bản cũ hơn phiên bản Rainmeter 4.8."
 ${LangFileString} ADMINERROR              "Yêu cầu quyền Admin."
 ${LangFileString} LOGONERROR              "Truy cập hệ thống không hoạt động."
 ${LangFileString} UACERROR                "Không thể nâng cấp."

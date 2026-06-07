@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} tidak menyokong Windows 2000. Untuk guna Rainmeter dalam Windows 2000, muat turun Rainmeter versi lama (2.0)."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} memerlukan Windows XP SP2 ke atas. Sila naik taraf kepada pek khidmat terbaru dan cuba sekali lagi."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} memerlukan Windows 2003 SP1 ke atas. Sila naik taraf kepada pek khidmat terbaru dan cuba sekali lagi."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} tidak menyokong Windows 7/8. Untuk guna Rainmeter dalam Windows 7/8, muat turun Rainmeter versi lama (4.8)."
 ${LangFileString} ADMINERROR              "Hak pentadbiran diperlukan."
 ${LangFileString} LOGONERROR              "Perkhidmatan log masuk tidak berjalan."
 ${LangFileString} UACERROR                "Tidak diluluskan UAC."

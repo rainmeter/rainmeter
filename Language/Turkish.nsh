@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} Windows 2000 üzerinde çalışmaz. Rainmeter'i  Windows 2000 üzerinde kullanmak için, Rainmeter 2.0 sürümünü indirin."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} Windows XP SP2 veya daha sonraki sürümlerini gerektirir. Lütfen son sürüme güncelleyip tekrar deneyin."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} Windows 2003 SP1 veya daha sonraki sürümlerini gerektirir. Lütfen son sürüme güncelleyip tekrar deneyin."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} Windows 7/8 üzerinde çalışmaz. Rainmeter'i  Windows 7/8 üzerinde kullanmak için, Rainmeter 4.8 sürümünü indirin."
 ${LangFileString} ADMINERROR              "Yönetici hakları gerektirir."
 ${LangFileString} LOGONERROR              "Giriş servisi çalışmıyor."
 ${LangFileString} UACERROR                "Yükseltilemiyor."

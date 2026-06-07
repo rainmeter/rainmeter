@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} fungerar inte på Windows 2000. För att använda Rainmeter på Windows 2000, ladda ner den äldre versionen 2.0 av Rainmeter."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} kräver Windows XP SP2 eller senare. Uppgradera till senaste Service Pack och försök igen."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} kräver Windows 2003 SP1 eller senare. Uppgradera till senaste Service Pack och försök igen."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} fungerar inte på Windows 7/8. För att använda Rainmeter på Windows 7/8, ladda ner den äldre versionen 4.8 av Rainmeter."
 ${LangFileString} ADMINERROR              "Administrativa rättigheter krävs."
 ${LangFileString} LOGONERROR              "Tjänsten Logon körs ej."
 ${LangFileString} UACERROR                "Kan inte höja UAC-nivån."

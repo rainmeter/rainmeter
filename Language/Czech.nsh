@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} nepodporuje Windows 2000. Pro použití Rainmeteru ve Windows 2000 stáhněte starší verzi Rainmeter 2.0."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} vyžaduje Windows XP SP2 nebo vyšší. Prosím upgradujte na nejnovější verzi service packu a zkuste to znovu."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} vyžaduje Windows 2003 SP1 nebo vyšší. Prosím upgradujte na nejnovější verzi service packu a zkuste to znovu."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} nepodporuje Windows 7/8. Pro použití Rainmeteru ve Windows 7/8 stáhněte starší verzi Rainmeter 4.8."
 ${LangFileString} ADMINERROR              "Požadována administrátorská práva."
 ${LangFileString} LOGONERROR              "Služba přihlášení není spuštěna."
 ${LangFileString} UACERROR                "Nelze upgradovat."
