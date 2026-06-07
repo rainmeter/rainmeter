@@ -10,6 +10,7 @@
 
 #pragma warning(disable: 4503)
 
+#include "../Common/ParseUtil.h"
 #include <windows.h>
 #include <string>
 #include <vector>
@@ -23,17 +24,6 @@ class Skin;
 class Section;
 class Measure;
 class Meter;
-
-enum class PairedPunctuation : BYTE
-{
-	SingleQuote,
-	DoubleQuote,
-	BothQuotes,
-	Parentheses,
-	Brackets,
-	Braces,
-	Guillemet
-};
 
 class ConfigParser
 {
@@ -104,7 +94,7 @@ public:
 	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
 	static double ParseDouble(LPCTSTR str, double defValue);
 	static int ParseInt(LPCTSTR str, int defValue);

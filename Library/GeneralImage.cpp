@@ -73,7 +73,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			const auto tokens = ConfigParser::Tokenize2(crop, L',', PairedPunctuation::Parentheses);
+			const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(crop, L',', PairedPunctuation::Parentheses);
 			const size_t tokSize = tokens.size();
 			if (tokSize > 3ULL)
 			{

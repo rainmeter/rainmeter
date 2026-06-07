@@ -25,10 +25,7 @@
 #include "TextInlineFormat/TextInlineFormatTypography.h"
 #include "TextInlineFormat/TextInlineFormatUnderline.h"
 #include "TextInlineFormat/TextInlineFormatWeight.h"
-#include "../StringUtil.h"
-#include "../../Library/ConfigParser.h"
-#include "../../Library/pcre/config.h"
-#include "../../Library/pcre/pcre.h"
+#include "../ParseUtil.h"
 
 namespace {
 
@@ -471,124 +468,63 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 	}
 }
 
-void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section)
+void TextFormatD2D::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
-	const std::wstring delimiter(1, L'|');
-	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
-	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
-	if (pattern.empty()) pattern = L".*";
-
-	size_t i = 1;
-	if (!option.empty())
+	size_t i = 0;
+	for (; i < options.size(); ++i)
 	{
-		do
-		{
-			std::vector<std::wstring> args = ConfigParser::Tokenize(option, delimiter);
-			if (!CreateInlineOption(i - 1, pattern, args)) break;
-
-			// Check for InlineSetting2/InlinePattern2 ... etc.
-			const std::wstring num = std::to_wstring(++i);
-
-			std::wstring key = L"InlinePattern" + num;
-			pattern = parser.ReadString(section, key.c_str(), L".*");
-			if (pattern.empty()) pattern = L".*";
-
-			key = L"InlineSetting" + num;
-			option = parser.ReadString(section, key.c_str(), L"");
-		} while (!option.empty());
+		std::wstring pattern = options[i].pattern.empty() ? L".*" : options[i].pattern;
+		if (!CreateInlineOption(i, pattern, options[i].settings)) break;
 	}
 
 	// Remove any previous options that do not exist anymore
-	if (i <= m_TextInlineFormat.size())
+	if (i < m_TextInlineFormat.size())
 	{
 		m_HasInlineOptionsChanged = true;
-		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + (i - 1), m_TextInlineFormat.end());
+		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + i, m_TextInlineFormat.end());
 	}
 }
 
-void TextFormatD2D::FindInlineRanges(const std::wstring& str)
+std::vector<std::wstring> TextFormatD2D::GetInlinePatterns()
 {
+	std::vector<std::wstring> patterns;
+	patterns.reserve(m_TextInlineFormat.size());
 	for (auto& fmt : m_TextInlineFormat)
 	{
-		std::vector<DWRITE_TEXT_RANGE> ranges;
+		patterns.push_back(fmt->GetPattern());
+	}
 
-		int ovector[300];
-		const char* error;
-		int errorOffset = 0;
-		int offset = 0;
-		pcre16* re = pcre16_compile(
-			(PCRE_SPTR16)fmt->GetPattern().c_str(),
-			PCRE_UTF16,
-			&error,
-			&errorOffset,
-			nullptr);  // Use default character tables.
-		if (!re)
+	return patterns;
+}
+
+void TextFormatD2D::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
+{
+	const size_t count = min(m_TextInlineFormat.size(), ranges.size());
+	for (size_t i = 0; i < count; ++i)
+	{
+		std::vector<DWRITE_TEXT_RANGE> dwriteRanges;
+		dwriteRanges.reserve(ranges[i].size());
+		for (const auto& range : ranges[i])
 		{
-			//LogNoticeF(this, L"InlinePattern%i error at offset %d: %S", errorOffset, error);
+			DWRITE_TEXT_RANGE dwriteRange = { range.start, range.length };
+			dwriteRanges.push_back(dwriteRange);
+		}
+
+		// Gradients are set up differently then other options because they require 'inner ranges'
+		// when text is split between multiple lines - otherwise set the range.
+		if (m_TextInlineFormat[i]->GetType() == InlineType::GradientColor)
+		{
+			auto linearGradient = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[i].get());
+			size_t index = 0;
+			for (const auto& range : dwriteRanges)
+			{
+				linearGradient->UpdateSubOptions(index, range);
+				++index;
+			}
 		}
 		else
 		{
-			do
-			{
-				const int rc = pcre16_exec(
-					re,
-					nullptr,
-					(PCRE_SPTR16)str.c_str(),
-					(int)str.length(),
-					offset,
-					PCRE_NOTEMPTY,          // Empty string is not a valid match
-					ovector,
-					(int)_countof(ovector));
-				if (rc <= 0)
-				{
-					break;
-				}
-
-				const UINT32 start = ovector[0];
-				const UINT32 length = ovector[1] - ovector[0];
-
-				// No captures found, but the rest of the text is still 'found'.
-				if (rc == 1)
-				{
-					DWRITE_TEXT_RANGE range = { start, length };
-					ranges.push_back(range);
-				}
-				else if (rc > 1)	// Captures found.
-				{
-					for (int j = rc - 1; j > 0; --j)
-					{
-						const UINT32 newStart = ovector[2 * j];
-						const UINT32 inLength = ovector[2 * j + 1] - ovector[2 * j];
-
-						if (newStart < 0) break;	// Match was not found, so skip to the next item
-
-						DWRITE_TEXT_RANGE range = { newStart, inLength };
-						ranges.push_back(range);
-					}
-				}
-
-				offset = start + length;
-
-			} while (true);
-
-			pcre16_free(re);
-
-			// Gradients are set up differently then other options because they require 'inner ranges'
-			// when text is split between multiple lines - otherwise set the range.
-			if (fmt->GetType() == InlineType::GradientColor)
-			{
-				auto linearGradient = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-				size_t index = 0;
-				for (const auto& range : ranges)
-				{
-					linearGradient->UpdateSubOptions(index, range);
-					++index;
-				}
-			}
-			else
-			{
-				fmt->SetRanges(ranges);
-			}
+			m_TextInlineFormat[i]->SetRanges(dwriteRanges);
 		}
 	}
 }
@@ -630,7 +566,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			auto parseOptional = [](const WCHAR* value) -> FLOAT
 			{
 				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
-				return (FLOAT)ConfigParser::ParseDouble(value, FLT_MAX);
+				return (FLOAT)ParseUtil::ParseDouble(value, FLT_MAX);
 			};
 
 			FLOAT leading = parseOptional(options[1].c_str());
@@ -644,7 +580,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 
 			if (optSize > 3)
 			{
-				advanceWidth = (FLOAT)ConfigParser::ParseDouble(options[3].c_str(), -1.0f);
+				advanceWidth = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), -1.0f);
 			}
 
 			UpdateInlineCharacterSpacing(index, pattern, leading, trailing, advanceWidth);
@@ -655,7 +591,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			D2D1_COLOR_F newColor = ConfigParser::ParseColor(options[1].c_str());
+			D2D1_COLOR_F newColor = ParseUtil::ParseColor(options[1].c_str());
 			UpdateInlineColor(index, pattern, newColor);
 			return true;
 		}
@@ -672,7 +608,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize >= 3)
 		{
-			bool altGamma = ConfigParser::ParseInt(option + 13, 0) != 0;
+			bool altGamma = ParseUtil::ParseInt(option + 13, 0) != 0;
 			options.erase(options.begin());
 			UpdateInlineGradientColor(index, pattern, options, altGamma);
 			return true;
@@ -693,11 +629,11 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		if (optSize >= 5)
 		{
 			D2D1_POINT_2F offset = {
-				(FLOAT)ConfigParser::ParseDouble(options[1].c_str(), 1.0),
-				(FLOAT)ConfigParser::ParseDouble(options[2].c_str(), 1.0) };
+				(FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 1.0),
+				(FLOAT)ParseUtil::ParseDouble(options[2].c_str(), 1.0) };
 
-			FLOAT blur = (FLOAT)ConfigParser::ParseDouble(options[3].c_str(), 3.0);
-			D2D1_COLOR_F color = ConfigParser::ParseColor(options[4].c_str());
+			FLOAT blur = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), 3.0);
+			D2D1_COLOR_F color = ParseUtil::ParseColor(options[4].c_str());
 			UpdateInlineShadow(index, pattern, blur, offset, color);
 			return true;
 		}
@@ -706,7 +642,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			FLOAT size = (FLOAT)ConfigParser::ParseDouble(options[1].c_str(), 10.0);
+			FLOAT size = (FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 10.0);
 			UpdateInlineSize(index, pattern, size);
 			return true;
 		}
@@ -717,7 +653,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		{
 			// DirectWrite supports 9 different stretch properties.
 			DWRITE_FONT_STRETCH stretch = (DWRITE_FONT_STRETCH)
-				Clamp(ConfigParser::ParseInt(options[1].c_str(), -1),
+				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1),
 				(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
 				(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED);
 			UpdateInlineStretch(index, pattern, stretch);
@@ -740,7 +676,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 
 			if (optSize > 2)
 			{
-				parameter = ConfigParser::ParseUInt(options[2].c_str(), 1u);
+				parameter = ParseUtil::ParseUInt(options[2].c_str(), 1u);
 			}
 
 			UpdateInlineTypography(index, pattern, tag, parameter);
@@ -758,7 +694,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		{
 			// DirectWrite supports weight from 1 to 999.
 			DWRITE_FONT_WEIGHT weight = (DWRITE_FONT_WEIGHT)
-				Clamp(ConfigParser::ParseInt(options[1].c_str(), -1), 1, 999);
+				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1), 1, 999);
 			UpdateInlineWeight(index, pattern, weight);
 			return true;
 		}
@@ -868,17 +804,17 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 	const std::vector<std::wstring> args, const bool altGamma)
 {
-	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ConfigParser::ParseDouble(args[0].c_str(), 0.0), 360.0)), 360.0);
+	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0), 360.0)), 360.0);
 
 	std::vector<std::wstring> tokens;
 	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
 	for (size_t i = 1; i < args.size(); ++i)
 	{
-		tokens = ConfigParser::Tokenize2(args[i], L';', PairedPunctuation::Parentheses);
+		tokens = ParseUtil::TokenizeWithPairedPunctuation(args[i], L';', PairedPunctuation::Parentheses);
 		if (tokens.size() == 2)
 		{
-			stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
-			stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+			stops[i - 1].color = ParseUtil::ParseColor(tokens[0].c_str());
+			stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(tokens[1].c_str(), 0.0);
 		}
 	}
 

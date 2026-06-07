@@ -108,7 +108,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		pluginName = plugin;
 	}
 
-	// Append ".dll" if it doesn't exist 
+	// Append ".dll" if it doesn't exist
 	if (!*PathFindExtension(plugin.c_str()))
 	{
 		pluginName.append(L".dll");
@@ -315,7 +315,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 
 		// Parse arguments
-		auto _args = ConfigParser::Tokenize2(
+		auto _args = ConfigParser::TokenizeWithPairedPunctuation(
 			command.substr(sPos + 1, ePos - sPos - 1),
 			L',',
 			PairedPunctuation::BothQuotes);
