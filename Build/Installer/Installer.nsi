@@ -349,11 +349,11 @@ Function PageWelcome
 	${NSD_AddStyle} $R2 ${WS_TABSTOP}
 	SendMessage $R2 ${WM_SETFONT} $mui.Header.Text.Font 0
 
-	${NSD_CreateLabel} 132u 118u 185u 52u "$(PORTABLEINSTDESC)"
+	${NSD_CreateLabel} 132u 118u 185u 39u "$(PORTABLEINSTDESC)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateLabel} 120u 181u 195u 12u "v${VERSION_FULL}"
+	${NSD_CreateLabel} 120u 170u 195u 12u "v${VERSION_FULL}"
 	Pop $0
 	SetCtlColors $0 "888888" "${MUI_BGCOLOR}"
 
