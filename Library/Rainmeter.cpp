@@ -244,6 +244,14 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		// Instance already running with same .ini file
 		clearBuffer();
+
+#ifdef _DEBUG
+		if (IsDebuggerPresent())
+		{
+			MessageBox(nullptr, L"Started under debugger, but another instance of Rainmeter is already running.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		}
+#endif
+
 		return 1;
 	}
 
