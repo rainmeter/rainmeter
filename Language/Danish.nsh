@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Adminstrative rettigheder påkrævet.
 ${LangFileString} LOGONERROR              "Logon service kører ikke."
 ${LangFileString} UACERROR                "Kunne ikke elevere rettigheder."
 ${LangFileString} WRITEERROR              "Portabel Rainmeter skal installeres til en placering med fulde læse/skriverettigheder (som normal bruger).$\nHvis du ønsker at installere Rainmeter i '$0', gå tilbage og vælg 'Standard installation'.$\n$\nEller vælg en anden placering med fulde læse/skriverettigheder."
-${LangFileString} VCINSTERROR             "Visual C++ $instArc installation slog fejl med fejlkode $0.$\n$\nDu kan prøve at hente og installere Visual C++ $instArc gendistribueringspakken manuelt fra http://rainmeter.net/redist$\n$\nTryk OK for at afslutte."
-${LangFileString} DOTNETINSTERROR         ".NET $instArc installation slog fejl med fejlkode $0.$\n$\nDu kan prøve at hente og installere .NET $instArc gendistribueringspakken manuelt fra http://rainmeter.net/redist$\n$\nTryk OK for at afslutte."
 ${LangFileString} RAINMETERCLOSEERROR     "Kunne ikke lukke Rainmeter.$\n$\nLuk venligst Rainmeter manuelt og prøv igen."
 ${LangFileString} SETTINGSFILEERROR       "Indstillings-filen (Rainmeter.ini) ligger i installationsmappen. At have den der kan give problemer hvis programmet bruges af flere brugere eller af brugere med begrænsede brugerrettigheder.$\n$\nØnsker du at flytte filen til programdatamappen?"
 ${LangFileString} SETTINGSMOVEERROR       "Kunne ikke flytte filen '$INSTDIR\Rainmeter.ini' til '$APPDATA\Rainmeter\Rainmeter.ini'."

@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Turite turėti administratoriaus teis
 ${LangFileString} LOGONERROR              "Registravimosi tarnyba neveikia."
 ${LangFileString} UACERROR                "Nepavyko sukelti teisių."
 ${LangFileString} WRITEERROR              "Kilnojamas 'Rainmeter' privalo būti įdiegtas į vietą su pilna skaitymo ir rašymo prieiga (normaliam vartotojui).$\nJei norite įdiegti 'Rainmeter' į '$0', grįžkite ir pasirinkite 'Standartinis įdiegimas'.$\n$\nPriešingu atveju, paieškokite kitą vietą su pilna skaitymo ir rašymo prieiga."
-${LangFileString} VCINSTERROR             "'Visual C++' $instArc diegimas buvo nesėkmingas, klaidos kodas $0.$\n$\nGalbūt norėsite atsisiųsti Visual C++ $instArc platinimo paketą rankiniu būdu šiuo adresu http://rainmeter.net/redist$\n$\nPaspauskite Gerai, kad išeitumėte."
-${LangFileString} DOTNETINSTERROR         "'.NET' $instArc diegimas buvo nesėkmingas, klaidos kodas $0.$\n$\nGalbūt norėsite atsisiųsti '.NET' $instArc platinimo paketą rankiniu būdu šiuo adresu http://rainmeter.net/redist$\n$\nPaspauskite Gerai, kad išeitumėte."
 ${LangFileString} RAINMETERCLOSEERROR     "Nepavyko uždaryti 'Rainmeter'.$\n$\nPrašome rankiniu būdu uždaryti 'Rainmeter' ir bandyti dar kartą įdiegti."
 ${LangFileString} SETTINGSFILEERROR       "Parametrų failas ('Rainmeter'.ini) yra diegimo aplanke. Palikus jį ten, gali kelti problemų, jei programa yra naudojasi keleta vartotojų arba nors vienas vartotojas su apribotomis teisėmis.$\n$\nAr norite perkelti failą į Programų duomenų aplanką?"
 ${LangFileString} SETTINGSMOVEERROR       "Nepavyko perkelti failą iš '$INSTDIR\Rainmeter.ini' į '$APPDATA\Rainmeter\Rainmeter.ini'."

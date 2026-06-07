@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Nepieciešamas administratora tiesīb
 ${LangFileString} LOGONERROR              "'Logon service' nav ieslēgts."
 ${LangFileString} UACERROR                "Nevar paaugstināt."
 ${LangFileString} WRITEERROR              "Mobīlai Rainmeter programai jābūt instalētai mapē ar pilnīgu piekļuvi (kā parastam lietotājam).$\nJa jūs vēlaties instalēt Rainmeter programu mapē '$0', tad ejat atpakaļ un izvēlaties  'Standarta instalāciju'.$\n$\nVai arī, definējiet citu mapi ar pilnīgu piekļuvi."
-${LangFileString} VCINSTERROR             "Visual C++ $instArc instalēšana neizdevās anr kļūdas kodu $0.$\n$\nJums vajag lejuplādēt Visual C++ $instArc redistributable package manuāli no http://rainmeter.net/redist$\n$\nNospiediet OK lai izietu."
-${LangFileString} DOTNETINSTERROR         ".NET $instArc instalēšana neizdevās ar kļūdas kodu $0.$\n$\nJums vajag lejuplādēt .NET $instArc redistributable package manuāli no http://rainmeter.net/redist$\n$\nNospiediet OK lai izietu."
 ${LangFileString} RAINMETERCLOSEERROR     "Neizdevās aizvērt Rainmeter.$\n$\nLūdzu aizveriet Rainmeter programu manuāli un mēģiniet vēlreiz."
 ${LangFileString} SETTINGSFILEERROR       "Uzstādījumu fails (Rainmeter.ini) atrodas instalācijas mapē. Faila atstāšana tur, var radīt problēmas, ja programu izmanto vairāki lietotāji vai jebkurš ar ierobežotām lietotāja privilēģijām.$\n$\nVai jūs vēlaties pārvietot failu uz programas datu mapi?"
 ${LangFileString} SETTINGSMOVEERROR       "Nevar pārvietot failu '$INSTDIR\Rainmeter.ini' uz '$APPDATA\Rainmeter\Rainmeter.ini'."

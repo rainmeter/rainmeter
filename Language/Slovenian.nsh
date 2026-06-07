@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Potrebne so Administratorske pravice.
 ${LangFileString} LOGONERROR              "Prijavna storitev ne deluje."
 ${LangFileString} UACERROR                "Ni bilo mogoče dobiti povišanih pravic."
 ${LangFileString} WRITEERROR              "Prenosni Rainmeter mora biti nameščen v lokacijo z omogočenim branjem in pisanjem (kot normalni uporabnik).$\nČe želite naložiti Rainmeter v '$0', pojdite nazaj in izberite 'Standardna namestitev'.$\n$\nDrugače pa prebrskajte za drugo lokacijo z omogočenim branjem in pisanjem."
-${LangFileString} VCINSTERROR             "Visual C++ $instArc napaka namestitve koda $0.$\n$\nMorda bi poskusili naložiti Visual C++ $instArc redistributable package ročno iz http://rainmeter.net/redist$\n$\nPritisnite OK za izhod."
-${LangFileString} DOTNETINSTERROR         ".NET $instArc napaka namestitve koda $0.$\n$\nMorda bi poskusili prenesti .NET $instArc redistributable package ročno iz http://rainmeter.net/redist$\n$\nPritisnite OK za izhod."
 ${LangFileString} RAINMETERCLOSEERROR     "Ni mogoče zapreti Rainmetra.$\n$\nProsim zaprite Rainmeter ročno in poskusite ponovno."
 ${LangFileString} SETTINGSFILEERROR       "Nastavitvena datoteka (Rainmeter.ini) se nahaja v namestitveni mapi. Če ga imate tam lahko povzroči težave, če se prijavlja več uporabnikov ali kdorkoli z omejenimi pravicami uporabnikov.$\n$\nŽelite premakniti datoteko v programsko mapo?"
 ${LangFileString} SETTINGSMOVEERROR       "Nemogoče premakniti datoteke '$INSTDIR\Rainmeter.ini' v '$APPDATA\Rainmeter\Rainmeter.ini'."

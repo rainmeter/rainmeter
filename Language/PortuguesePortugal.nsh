@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Direitos de administração necessár
 ${LangFileString} LOGONERROR              "O serviço de inicio de sessão não está a ser executado."
 ${LangFileString} UACERROR                "Erro ao obter direitos de instalação."
 ${LangFileString} WRITEERROR              "A versão portátil do Rainmeter tem de ser instalada num local com direitos completos de escrita e leitura sem necessidade de direitos de administrador.$\nSe instalou o Rainmeter em '$0', retroceda e selecione 'Instalação Normal'.$\n$\nCaso contrário, escolha outro local que respeite o direitos requeridos."
-${LangFileString} VCINSTERROR             "A instalação do Visual C++ $instArc falhou com o código de erro $0.$\n$\nÉ melhor fazer download manualmente do Visual C++ $instArc em http://rainmeter.net/redist$\n$\nPressiona ok para sair."
-${LangFileString} DOTNETINSTERROR         "A instalação do .NET $instArc falhou com o código de erro $0.$\n$\nDescarregue manualmente do .NET $instArc em http://rainmeter.net/redist$\n$\nPressione ok para sair."
 ${LangFileString} RAINMETERCLOSEERROR     "Não foi possível fechar o Rainmeter.$\n$\nPor favor, feche o Rainmeter manualmente e tente novamente."
 ${LangFileString} SETTINGSFILEERROR       "O ficheiro de configurações (Rainmeter.ini) está localizado no local de instalação. Mantê-lo lá pode causar problemas se a aplicação for usada por múltiplos utilizadores ou por alguém com privilégios de utilizador restritos.$\n$\nDeseja mover o ficheiro para a pasta application data?"
 ${LangFileString} SETTINGSMOVEERROR       "Não foi possível mover o ficheiro '$INSTDIR\Rainmeter.ini' para '$APPDATA\Rainmeter\Rainmeter.ini'."
