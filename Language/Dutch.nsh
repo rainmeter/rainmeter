@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ondersteunt Windows 2000 niet. Download Rainmeter versie 2.0 om Rainmeter te gebruiken op Windows 2000."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} vereist Windows XP SP2 of hoger. Upgrade naar de meest recente service pack en probeer het opnieuw."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} vereist Windows 2003 SP1 of hoger. Upgrade naar de meest recente service pack en probeer het opnieuw."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ondersteunt Windows 7/8 niet. Download Rainmeter versie 4.8 om Rainmeter te gebruiken op Windows 7/8."
 ${LangFileString} ADMINERROR              "Beheerdersrechten vereist."
 ${LangFileString} LOGONERROR              "Logon-service wordt niet uitgevoerd."
 ${LangFileString} UACERROR                "Kan bevoegdheden niet aanvragen."

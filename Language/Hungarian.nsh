@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "A Rainmeter ${VER} nem támogatja a Windows 2000 operációs rendszert. A program használatához töltsd le a korábbi Rainmeter 2.0 verziót."
-${LangFileString} WINXPS2ERROR            "A Rainmeter ${VER} telepítéséhez Windows XP SP2 vagy újabb operációs rendszer szükséges. Kérlek frissítsd a legújabb szervíz csomagra és próbáld újra."
-${LangFileString} WIN2003SP1ERROR         "A Rainmeter ${VER} telepítéséhez Windows 2003 SP1 vagy újabb operációs rendszer szükséges. Kérlek frissítsd a legújabb szervíz csomagra és próbáld újra."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "A Rainmeter ${VERSION_SHORT} nem támogatja a Windows 7/8 operációs rendszert. A program használatához töltsd le a korábbi Rainmeter 4.8 verziót."
 ${LangFileString} ADMINERROR              "Rendszergazdai engedély szükséges"
 ${LangFileString} LOGONERROR              "A bejelentkezési szolgáltatás nem fut."
 ${LangFileString} UACERROR                "Jogosultságemelés nem lehetséges"

@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} støtter ikke Windows 2000. For å benytte Rainmeter på Windows 2000, last ned den eldre versjonen, Rainmeter 2.0."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} krever Windows XP SP2 eller nyere. Vennligst oppdater til siste service pakke og prøv igjen."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} krever Windows 2003 SP1 eller nyere. Vennligst oppdater til siste service pakke og prøv igjen."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} støtter ikke Windows 7/8. For å benytte Rainmeter på Windows 7/8, last ned den eldre versjonen, Rainmeter 4.8."
 ${LangFileString} ADMINERROR              "Administratortilgang kreves."
 ${LangFileString} LOGONERROR              "Påloggingstjenesten kjører ikke."
 ${LangFileString} UACERROR                "Kunne ikke heve."

@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} は Windows 2000 に対応していません。Rainmeter を Windows 2000 で使用するには、バージョン 2.0 以前の Rainmeter をダウンロードしてください。"
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} を動作させるには、Windows XP SP2 以降である必要があります。最新の ServicePack を適用後にもう一度お試しください。"
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} を動作させるには、Windows 2003 SP1 以降である必要があります。最新の ServicePack を適用後にもう一度お試しください。"
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} は Windows 7/8 に対応していません。Rainmeter を Windows 7/8 で使用するには、バージョン 2.0 以前の Rainmeter をダウンロードしてください。"
 ${LangFileString} ADMINERROR              "管理者権限が必要です。"
 ${LangFileString} LOGONERROR              "ログオンサービスが起動していません。"
 ${LangFileString} UACERROR                "権限の昇格に失敗しました。"

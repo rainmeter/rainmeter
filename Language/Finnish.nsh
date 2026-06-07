@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ei enää tue Windows 2000:tta. Ole hyvä ja lataa vanhempi Rainmeter 2.0 versio."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} tarvitsee Windows XP SP2:n tai uudemman. Ole hyvä ja päivitä Windows uusimpaan Service Pack -päivityspakettiin ja yritä sen jälkeen uudelleen."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} tarvitsee Windows 2003 SP1:n tai uudemman. Ole hyvä ja päivitä Windows uusimpaan Service Pack -päivityspakettiin ja yritä sen jälkeen uudelleen."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ei enää tue Windows 7/8 versioita. Ole hyvä ja lataa vanhempi Rainmeter 4.8 versio."
 ${LangFileString} ADMINERROR              "Tarvitaan järjestelmänvalvojan oikeudet."
 ${LangFileString} LOGONERROR              "Kirjautumispalvelu ei ole käynnissä."
 ${LangFileString} UACERROR                "UAC korottaminen epäonnistui."

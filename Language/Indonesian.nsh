@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} tidak mendukung Windows 2000. Untuk menggunakan Rainmeter di Windows 2000, unduh versi lama Rainmeter 2.0."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} membutuhkan Windows XP SP2 atau lebih tinggi. Mohon tingkatkan ke service pack terbaru dan coba lagi."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} membutuhkan Windows 2003 SP1 atau lebih tinggi. Mohon tingkatkan ke service pack terbaru dan coba lagi."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} tidak mendukung Windows 7/8. Untuk menggunakan Rainmeter di Windows 7/8, unduh versi lama Rainmeter 4.8."
 ${LangFileString} ADMINERROR              "Hak administratif dibutuhkan."
 ${LangFileString} LOGONERROR              "Layanan logon tidak tersedia."
 ${LangFileString} UACERROR                "Tidak dapat ditingkatkan."

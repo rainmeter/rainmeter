@@ -1,6 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} ne podpira Windows 2000. Za uporabo Rainmetra na Windows 2000, prenesite starejšo Rainmeter 2.0 različico."
-${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} potrebuje Windows XP SP2 ali novejše. Prosim posodobite na novejši servisni paket in poskusite ponovno."
-${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} potrebuje Windows 2003 SP1 ali novejše. Prosim posodobite na novejši servisni paket in poskusite ponovno."
+﻿${LangFileString} UNSUPPORTEDWINERROR     "Rainmeter ${VERSION_SHORT} ne podpira Windows 7/8. Za uporabo Rainmetra na Windows 7/8, prenesite starejšo Rainmeter 4.8 različico."
 ${LangFileString} ADMINERROR              "Potrebne so Administratorske pravice."
 ${LangFileString} LOGONERROR              "Prijavna storitev ne deluje."
 ${LangFileString} UACERROR                "Ni bilo mogoče dobiti povišanih pravic."
