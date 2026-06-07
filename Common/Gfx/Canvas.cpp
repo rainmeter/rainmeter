@@ -329,15 +329,20 @@ HDC Canvas::GetDC()
 	}
 
 	HDC hdc;
-	HRESULT hr = m_BackBuffer->GetDC(FALSE, &hdc);
-	if (FAILED(hr)) return nullptr;
+	if (m_BackBuffer && SUCCEEDED(m_BackBuffer->GetDC(FALSE, &hdc)))
+	{
+		return hdc;
+	}
 
-	return hdc;
+	return nullptr;
 }
 
 void Canvas::ReleaseDC()
 {
-	m_BackBuffer->ReleaseDC(nullptr);
+	if (m_BackBuffer)
+	{
+		m_BackBuffer->ReleaseDC(nullptr);
+	}
 
 	if (m_EnableDrawAfterGdi)
 	{
