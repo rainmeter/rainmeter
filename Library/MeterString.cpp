@@ -10,9 +10,93 @@
 #include "Rainmeter.h"
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/ParseUtil.h"
+#include "pcre/config.h"
+#include "pcre/pcre.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
+
+namespace {
+
+std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
+	const std::wstring& str, const std::vector<std::wstring>& patterns)
+{
+	std::vector<std::vector<Gfx::TextInlineRange>> inlineRanges;
+	inlineRanges.reserve(patterns.size());
+
+	for (const auto& pattern : patterns)
+	{
+		std::vector<Gfx::TextInlineRange> ranges;
+
+		int ovector[300];
+		const char* error;
+		int errorOffset = 0;
+		int offset = 0;
+		pcre16* re = pcre16_compile(
+			(PCRE_SPTR16)pattern.c_str(),
+			PCRE_UTF16,
+			&error,
+			&errorOffset,
+			nullptr);  // Use default character tables.
+		if (!re)
+		{
+			//LogNoticeF(this, L"InlinePattern%i error at offset %d: %S", errorOffset, error);
+		}
+		else
+		{
+			do
+			{
+				const int rc = pcre16_exec(
+					re,
+					nullptr,
+					(PCRE_SPTR16)str.c_str(),
+					(int)str.length(),
+					offset,
+					PCRE_NOTEMPTY,          // Empty string is not a valid match
+					ovector,
+					(int)_countof(ovector));
+				if (rc <= 0)
+				{
+					break;
+				}
+
+				const UINT32 start = ovector[0];
+				const UINT32 length = ovector[1] - ovector[0];
+
+				// No captures found, but the rest of the text is still 'found'.
+				if (rc == 1)
+				{
+					Gfx::TextInlineRange range = { start, length };
+					ranges.push_back(range);
+				}
+				else if (rc > 1)	// Captures found.
+				{
+					for (int j = rc - 1; j > 0; --j)
+					{
+						const int newStart = ovector[2 * j];
+						const int newEnd = ovector[2 * j + 1];
+						if (newStart < 0 || newEnd < 0) break;	// Match was not found, so skip to the next item
+
+						Gfx::TextInlineRange range = { (UINT32)newStart, (UINT32)(newEnd - newStart) };
+						ranges.push_back(range);
+					}
+				}
+
+				offset = start + length;
+
+			} while (true);
+
+			pcre16_free(re);
+		}
+
+		inlineRanges.push_back(ranges);
+	}
+
+	return inlineRanges;
+}
+
+}  // namespace
 
 MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Color(D2D1::ColorF(D2D1::ColorF::White)),
@@ -301,7 +385,32 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_TrailingSpaces = parser.ReadBool(section, L"TrailingSpaces", false);
 
-	m_TextFormat->ReadInlineOptions(parser, section);
+	std::vector<Gfx::TextInlineOption> inlineOptions;
+	const std::wstring delimiter(1, L'|');
+	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
+	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
+	if (pattern.empty()) pattern = L".*";
+
+	size_t i = 1;
+	while (!option.empty())
+	{
+		Gfx::TextInlineOption inlineOption;
+		inlineOption.pattern = pattern;
+		inlineOption.settings = ParseUtil::Tokenize(option, delimiter);
+		inlineOptions.push_back(inlineOption);
+
+		// Check for InlineSetting2/InlinePattern2 ... etc.
+		const std::wstring num = std::to_wstring(++i);
+
+		std::wstring key = L"InlinePattern" + num;
+		pattern = parser.ReadString(section, key.c_str(), L".*");
+		if (pattern.empty()) pattern = L".*";
+
+		key = L"InlineSetting" + num;
+		option = parser.ReadString(section, key.c_str(), L"");
+	}
+
+	m_TextFormat->SetInlineOptions(inlineOptions);
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
@@ -386,7 +495,7 @@ bool MeterString::Update()
 		}
 
 		m_TextFormat->SetFontWeight(m_FontWeight);
-		m_TextFormat->FindInlineRanges(m_String);
+		m_TextFormat->SetInlineRanges(FindInlineRanges(m_String, m_TextFormat->GetInlinePatterns()));
 
 		if (!m_WDefined || !m_HDefined)
 		{

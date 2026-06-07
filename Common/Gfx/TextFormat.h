@@ -8,12 +8,25 @@
 #ifndef RM_GFX_TEXTFORMAT_H_
 #define RM_GFX_TEXTFORMAT_H_
 
-#include "../../Library/ConfigParser.h"
 #include <Windows.h>
+#include <string>
+#include <vector>
 
 namespace Gfx {
 
 class FontCollection;
+
+struct TextInlineOption
+{
+	std::wstring pattern;
+	std::vector<std::wstring> settings;
+};
+
+struct TextInlineRange
+{
+	UINT32 start;
+	UINT32 length;
+};
 
 enum class HorizontalAlignment : BYTE
 {
@@ -60,9 +73,10 @@ public:
 	virtual void SetVerticalAlignment(VerticalAlignment alignment);
 	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
-	// Reads any inline options for the string meter. This is only available with D2D.
-	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) = 0;
-	virtual void FindInlineRanges(const std::wstring& str) = 0;
+	// Sets any inline options for the string meter. This is only available with D2D.
+	virtual void SetInlineOptions(const std::vector<TextInlineOption>& options) = 0;
+	virtual std::vector<std::wstring> GetInlinePatterns() = 0;
+	virtual void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges) = 0;
 
 protected:
 	TextFormat();

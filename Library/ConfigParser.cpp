@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MathParser.h"
+#include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
 #include "ConfigParser.h"
 #include "Util.h"
@@ -21,22 +22,10 @@
 
 namespace {
 
-struct PairInfo
+void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 {
-	const WCHAR begin;
-	const WCHAR end;
-};
-
-const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
-{
-	{ PairedPunctuation::SingleQuote, { L'\'', L'\'' } },
-	{ PairedPunctuation::DoubleQuote, { L'"', L'"' } },
-	{ PairedPunctuation::BothQuotes,  { L'"', L'\'' } },
-	{ PairedPunctuation::Parentheses, { L'(', L')' } },
-	{ PairedPunctuation::Brackets,    { L'[', L']' } },
-	{ PairedPunctuation::Braces,      { L'{', L'}' } },
-	{ PairedPunctuation::Guillemet,   { L'<', L'>' } }
-};
+	LogErrorF(L"Formula: %s: %s", error, formula);
+}
 
 }  // namespace
 
@@ -1548,377 +1537,49 @@ RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 	return r;
 }
 
-/*
-** Splits the string from the delimiters.
-** Now trims empty element in vector and white-space in each string.
-**
-** Modified from http://www.digitalpeer.com/id/simple
-*/
 std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
-	std::vector<std::wstring> tokens;
-
-	size_t lastPos = 0ULL, pos = 0ULL;
-	do
-	{
-		lastPos = str.find_first_not_of(delimiters, pos);
-		if (lastPos == std::wstring::npos) break;
-
-		pos = str.find_first_of(delimiters, lastPos + 1);
-		std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
-
-		size_t pos2 = token.find_first_not_of(L" \t\r\n");
-		if (pos2 != std::wstring::npos)
-		{
-			size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
-			if (pos2 != 0 || lastPos2 != (token.size() - 1))
-			{
-				// Trim white-space
-				token.assign(token, pos2, lastPos2 - pos2 + 1);
-			}
-			tokens.push_back(token);
-		}
-
-		if (pos == std::wstring::npos) break;
-		++pos;
-	}
-	while (true);
-
-	return tokens;
+	return ParseUtil::Tokenize(str, delimiters);
 }
 
-/*
-** Splits the string from a delimiter, but skips delimiters inside of the defined paired punctuation
-**
-*/
-std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
+std::vector<std::wstring> ConfigParser::TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
 {
-	std::vector<std::wstring> tokens;
-	size_t start = 0ULL;
-	size_t end = 0ULL;
-
-	auto getToken = [&]() -> void
-	{
-		start = str.find_first_not_of(L" \t\r\n", start); // skip any leading whitespace
-		if (start <= end)
-		{
-			std::wstring temp = str.substr(start, end - start);
-			temp.erase(temp.find_last_not_of(L" \t\r\n") + 1); // remove any trailing whitespace
-			tokens.push_back(temp);
-		}
-	};
-
-	if (punct == PairedPunctuation::SingleQuote ||
-		punct == PairedPunctuation::DoubleQuote)
-	{
-		bool found = false;
-		for (auto& iter : str)
-		{
-			if (iter == s_PairedPunct.at(punct).begin) found = !found;
-			else if (iter == delimiter && !found)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-	else if (punct == PairedPunctuation::BothQuotes)
-	{
-		// Skip delimiters if inside either a pair of single quotes, or a pair of double quotes
-		bool found = false;
-		WCHAR current = L'\0';
-		for (auto& iter : str)
-		{
-			if (!current &&
-				(iter == s_PairedPunct.at(punct).begin ||	// single quote
-				 iter == s_PairedPunct.at(punct).end))		// double quote
-			{
-				current = iter;
-				found = true;
-			}
-			else if (iter == current)
-			{
-				current = L'\0';
-				found = false;
-			}
-			else if (iter == delimiter && !found)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-	else
-	{
-		int pairs = 0;
-		for (auto& iter : str)
-		{
-			if (iter == s_PairedPunct.at(punct).begin) ++pairs;
-			else if (iter == s_PairedPunct.at(punct).end) --pairs;
-			else if (iter == delimiter && pairs == 0)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-
-	// Get last token
-	getToken();
-
-	return tokens;
+	return ParseUtil::TokenizeWithPairedPunctuation(str, delimiter, punct);
 }
 
-/*
-** Helper method that parses the floating-point value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 double ConfigParser::ParseDouble(LPCTSTR str, double defValue)
 {
-	assert(str);
-
-	double value = 0.0;
-	if (*str == L'(')
-	{
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
-		if (!errMsg)
-		{
-			return value;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		double value = wcstod(str, nullptr);
-		if (errno != ERANGE)
-		{
-			return value;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseDouble(str, defValue, LogFormulaError);
 }
 
-/*
-** Helper method that parses the integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 int ConfigParser::ParseInt(LPCTSTR str, int defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (int)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		int intValue = wcstol(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return intValue;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseInt(str, defValue, LogFormulaError);
 }
 
-/*
-** Helper method that parses the unsigned integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 uint32_t ConfigParser::ParseUInt(LPCTSTR str, uint32_t defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (uint32_t)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		uint32_t uintValue = wcstoul(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return uintValue;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseUInt(str, defValue, LogFormulaError);
 }
 
-/*
-** Helper method that parses the 64bit unsigned integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 uint64_t ConfigParser::ParseUInt64(LPCTSTR str, uint64_t defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (uint64_t)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		uint64_t uint64Value = _wcstoui64(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return uint64Value;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseUInt64(str, defValue, LogFormulaError);
 }
 
-/*
-** Helper template that parses four comma separated values from the given string.
-**
-*/
-template <typename T>
-bool ParseInt4(LPCTSTR s, T& v1, T& v2, T& v3, T& v4)
-{
-	if (wcschr(s, L','))
-	{
-		std::wstring str = s;
-		std::vector<T> tokens;
-		size_t start = 0ULL;
-		size_t end = 0ULL;
-		int parens = 0;
-
-		auto getToken = [&]() -> void
-		{
-			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
-			if (start <= end)
-			{
-				tokens.push_back((T)ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
-			}
-		};
-
-		for (auto& iter : str)
-		{
-			switch (iter)
-			{
-			case '(': ++parens; break;
-			case ')': --parens; break;
-			case ',':
-				{
-					if (parens == 0)
-					{
-						getToken();
-						start = end + 1ULL; // skip comma
-						break;
-					}
-					//else multi arg function ?
-				}
-				break;
-			}
-			++end;
-		}
-
-		// read last token
-		getToken();
-
-		size_t size = tokens.size();
-		if (size > 0ULL) v1 = tokens[0];
-		if (size > 1ULL) v2 = tokens[1];
-		if (size > 2ULL) v3 = tokens[2];
-		if (size > 3ULL) v4 = tokens[3];
-
-		return true;
-	}
-
-	return false;
-}
-
-/*
-** Helper method that parses the color values from the given string.
-** The color can be supplied as three/four comma separated values or as one
-** hex-value.
-**
-*/
 D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR str)
 {
-	int R = 255, G = 255, B = 255, A = 255;
-
-	if (!ParseInt4(str, R, G, B, A))
-	{
-		if (wcsncmp(str, L"0x", 2ULL) == 0)
-		{
-			str += 2;  // skip prefix
-		}
-
-		size_t len = wcslen(str);
-		if (len >= 8 && !iswspace(str[6]))
-		{
-			swscanf_s(str, L"%02x%02x%02x%02x", &R, &G, &B, &A);
-		}
-		else if (len >= 6ULL)
-		{
-			swscanf_s(str, L"%02x%02x%02x", &R, &G, &B);
-		}
-	}
-
-	return D2D1::ColorF(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
+	return ParseUtil::ParseColor(str, LogFormulaError);
 }
 
-/*
-** Helper method that parses the D2D1::RectF values from the given string.
-** The rect can be supplied as four comma separated values (X/Y/Width/Height).
-**
-*/
 D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR str)
 {
-	D2D1_RECT_F r = D2D1::RectF();
-	ParseInt4(str, r.left, r.top, r.right, r.bottom);
-	r.right += r.left;
-	r.bottom += r.top;
-	return r;
+	return ParseUtil::ParseRect(str, LogFormulaError);
 }
 
-/*
-** Helper method that parses the RECT values from the given string.
-** The rect can be supplied as four comma separated values (left/top/right/bottom).
-**
-*/
 RECT ConfigParser::ParseRECT(LPCTSTR str)
 {
-	RECT r = { 0 };
-	ParseInt4(str, r.left, r.top, r.right, r.bottom);
-	return r;
+	return ParseUtil::ParseRECT(str, LogFormulaError);
 }
 
 /*

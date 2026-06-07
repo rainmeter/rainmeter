@@ -251,7 +251,7 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		}
 
 		std::wstring funcName = command.substr(0, sPos);
-		auto args = ConfigParser::Tokenize2(
+		auto args = ConfigParser::TokenizeWithPairedPunctuation(
 			command.substr(sPos + 1, ePos - sPos - 1),
 			L',',
 			PairedPunctuation::BothQuotes);

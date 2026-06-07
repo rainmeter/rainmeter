@@ -70,6 +70,7 @@
     <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
+    <ClCompile Include="ParseUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -124,6 +125,7 @@
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
+    <ClInclude Include="ParseUtil.h" />
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
