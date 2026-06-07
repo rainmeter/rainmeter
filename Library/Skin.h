@@ -316,7 +316,7 @@ private:
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
 	D2D1_MATRIX_3X2_F GetScaleMatrix() const;
 	void UpdateEffectiveScale();
-	bool UpdateDpiScale();
+	bool UpdateDpiScale(HMONITOR monitor = nullptr);
 	SIZE GetScaledWindowSize(float zoom) const;
 	void WindowToScreen();
 	void ScreenToWindow();
@@ -422,15 +422,16 @@ private:
 	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
-	float m_Zoom;
-	float m_DpiScale;
-	float m_Scale;
 	bool m_AnchorXFromRight;
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;
 	bool m_AnchorYPercentage;
 	int m_AnchorScreenX;
 	int m_AnchorScreenY;
+	float m_Zoom;
+	float m_DpiScale;
+	float m_Scale;
+	bool m_CalculatedInitialScale;
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;
