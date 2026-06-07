@@ -194,7 +194,22 @@ BYTE* FetchTask::FetchData()
 	// invalid (e.g. when incorrectly using the UTF-16LE codepage for the data).
 	const DWORD CHUNK_SIZE = 8192UL;
 	DWORD bufferSize = CHUNK_SIZE;
+
+	DWORD contentLength = 0UL;
+	DWORD contentLengthSize = sizeof(contentLength);
+	if (HttpQueryInfo(hUrlDump, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &contentLength, &contentLengthSize, nullptr) &&
+		contentLength > 0UL)
+	{
+		bufferSize = contentLength;
+	}
+
 	BYTE* buffer = (BYTE*)malloc(bufferSize + 3UL);
+	if (!buffer)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		InternetCloseHandle(hUrlDump);
+		return nullptr;
+	}
 
 	// Read the data.
 	do
@@ -220,8 +235,9 @@ BYTE* FetchTask::FetchData()
 		BYTE* oldBuffer = buffer;
 		if ((buffer = (BYTE*)realloc(buffer, bufferSize + 3UL)) == nullptr)
 		{
-			free(oldBuffer);  // In case realloc fails
+			free(oldBuffer);
 			oldBuffer = nullptr;
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			InternetCloseHandle(hUrlDump);
 			return nullptr;
 		}
@@ -239,4 +255,3 @@ BYTE* FetchTask::FetchData()
 }
 
 }  // namespace Net
-
