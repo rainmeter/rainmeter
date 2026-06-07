@@ -58,9 +58,6 @@
     <ClCompile Include="NowPlaying\Cover.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
-    <ClCompile Include="NowPlaying\Internet.cpp">
-      <Filter>NowPlaying</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\Lyrics.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -121,6 +118,7 @@
     <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="Net.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="Skin.cpp" />
@@ -168,9 +166,6 @@
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\Cover.h">
-      <Filter>NowPlaying</Filter>
-    </ClInclude>
-    <ClInclude Include="NowPlaying\Internet.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\Lyrics.h">
@@ -226,6 +221,7 @@
     <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="Net.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
