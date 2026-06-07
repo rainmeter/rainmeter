@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Derechos de administrador son requeri
 ${LangFileString} LOGONERROR              "El servicio de inicio de sesión no se está ejecutando."
 ${LangFileString} UACERROR                "No se puede elevar los privilegios."
 ${LangFileString} WRITEERROR              "Rainmeter portáble debe instalarse en un lugar con completo acceso de lectura y escritura (como usuario normal).$\nSi desea instalar Rainmeter en '$0', volver atrás y seleccionar 'instalación estándar'.$\n$\nDe lo contrario, busque otra ubicación con completo acceso de lectura y escritura."
-${LangFileString} VCINSTERROR             "Visual C++ $instalación de instArc con el código de error $0.$\n$\nUsted puede intentar descargando el Visual C++ $paquete redistribuible de instArc manualmente desde http://rainmeter.net/redist$\n$\nPulse OK para salir."
-${LangFileString} DOTNETINSTERROR         ".NET $instalación de instArc con el código de error $0.$\n$\nUsted puede intentar descargar el .NET $paquete redistribuible de instArc manualmente desde http://rainmeter.net/redist$\n$\nPulse OK para salir."
 ${LangFileString} RAINMETERCLOSEERROR     "Error al cerrar Rainmeter.$\n$\nCierre Rainmeter manualmente y vuelva a intentarlo."
 ${LangFileString} SETTINGSFILEERROR       "El archivo de configuración (Rainmeter.ini) se encuentra en la carpeta de instalación. Mantenerlo allí puede causar problemas si la aplicación es utilizada por varios usuarios o por cualquier persona con privilegios de usuario restringido.$\n$\nDesea mover el archivo a la carpeta de datos de la aplicación?"
 ${LangFileString} SETTINGSMOVEERROR       "No se puede mover el archivo '$INSTDIR\Rainmeter.ini' a '$APPDATA\Rainmeter\Rainmeter.ini'."

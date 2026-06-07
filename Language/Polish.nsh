@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Do instalacji potrzebne są uprawnien
 ${LangFileString} LOGONERROR              "Usługa logowania nie uruchomiona."
 ${LangFileString} UACERROR                "Nie można podnieść uprawnień."
 ${LangFileString} WRITEERROR              "Przenośny Rainmeter musi być zainstalowany w lokalizacji z pełnymi uprawnieniami do odczytu i zapisu (jako zwykły użytkownik).$\nJeżeli chcesz zapisać Rainmeter w '$0', wróć i wybierz 'Instalacja standardowa'.$\n$\nW przeciwnym wypadku, wybierz inną lokalizację z pełnymi uprawnieniami do odczytu i zapisu."
-${LangFileString} VCINSTERROR             "Instalacja Visual C++ $instArc nieudana. Kod błędu $0.$\n$\nMożesz spróbować pobrać pakiet Visual C++ $instArc ręcznie z http://rainmeter.net/redist$\n$\nNaciśnij OK żeby wyjść."
-${LangFileString} DOTNETINSTERROR         "Instalacja .NET $instArc nieudana. Kod błędu $0.$\n$\nMożesz spróbować pobrać pakiet .NET $instArc ręcznie z http://rainmeter.net/redist$\n$\nNaciśnij OK żeby wyjść."
 ${LangFileString} RAINMETERCLOSEERROR     "Nie udało się zamknąć Rainmeter.$\n$\nZamknij Rainmeter ręcznie i spróbuj ponownie."
 ${LangFileString} SETTINGSFILEERROR       "Plik konfiguracyjny (Rainmeter.ini) jest umieszczony w folderze instalacyjnym. Trzymanie go w tej lokalizacji może powodować problemy jeżeli z aplikacji korzysta wielu użytkowników lub, gdy któryś z nich ma ograniczone uprawnienia.$\n$\nCzy chcesz przenieść plik do folderu danych aplikacji?"
 ${LangFileString} SETTINGSMOVEERROR       "Nie można przenieść pliku '$INSTDIR\Rainmeter.ini' do '$APPDATA\Rainmeter\Rainmeter.ini'."

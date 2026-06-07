@@ -3,8 +3,6 @@ ${LangFileString} ADMINERROR              "Se solicită drepturi de administrato
 ${LangFileString} LOGONERROR              "Serviciul logon nu este pornit."
 ${LangFileString} UACERROR                "Imposibilă ridicarea."
 ${LangFileString} WRITEERROR              "Versiunea portabilă a Rainmeter trebuie instalată (ca utilizator normal) într-o locaţie cu acces de citire şi scriere.$\nDacă doriţi instalarea Rainmeter în '$0', selectaţi 'Instalare standard'.$\n$\nAltfel selectaţi o locaţie la care aveţi acces pentru citire şi scriere."
-${LangFileString} VCINSTERROR             "Instalarea Visual C++ $instArc a eşuat din cauza erorii $0.$\n$\nPuteţi încerca descărcarea manuală a pachetului Visual C++ $instArc de la adresa http://rainmeter.net/redist$\n$\nApăsaţi OK pentru ieşire."
-${LangFileString} DOTNETINSTERROR         "Instalarea .NET $instArc a eşuat din cauza erorii $0.$\n$\nPuteţi încerca descărcarea manuală a pachetului .NET $instArc de la adresa http://rainmeter.net/redist$\n$\nApăsaţi OK pentru ieşire."
 ${LangFileString} RAINMETERCLOSEERROR     "Eroare la închiderea Rainmeter.$\n$\nVă rugăm închideţi programul manual, apoi încercaţi din nou."
 ${LangFileString} SETTINGSFILEERROR       "Fişierul de setări (Rainmeter.ini) se găseşte în folderul de instalare. Păstrându-l acolo, există posibilitatea unor erori dacă programul este folosit de mai mulţi utilizatori sau de către un utilizator standard.$\n$\nDoriţi mutarea fişierului în folderul application data?"
 ${LangFileString} SETTINGSMOVEERROR       "Imposibilă mutarea fişierului '$INSTDIR\Rainmeter.ini' la '$APPDATA\Rainmeter\Rainmeter.ini'."
