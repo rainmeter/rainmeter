@@ -65,12 +65,14 @@ ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
 ReserveFile ".\UAC.dll"
+ReserveFile ".\Wizard.jpg"
+ReserveFile ".\WizardEmpty.bmp"
 
 ; Additional Windows definitions
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 
-!define MUI_ICON ".\Icon.ico"
-!define MUI_UNICON ".\Icon.ico"
+!define MUI_ICON ".\Installer.ico"
+!define MUI_UNICON ".\Installer.ico"
 !define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
@@ -353,7 +355,7 @@ Function PageWelcome
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateLabel} 120u 175u 195u 12u "v${VERSION_FULL}"
+	${NSD_CreateLabel} 120u 176u 195u 12u "v${VERSION_FULL}"
 	Pop $0
 	SetCtlColors $0 "AAAAAA" "${MUI_BGCOLOR}"
 
