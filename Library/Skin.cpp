@@ -158,15 +158,16 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_ScreenY(),
 	m_SkinW(),
 	m_SkinH(),
-	m_Zoom(1.0f),
-	m_DpiScale(1.0f),
-	m_Scale(1.0f),
 	m_AnchorXFromRight(false),
 	m_AnchorYFromBottom(false),
 	m_AnchorXPercentage(false),
 	m_AnchorYPercentage(false),
 	m_AnchorScreenX(),
 	m_AnchorScreenY(),
+	m_Zoom(1.0f),
+	m_DpiScale(1.0f),
+	m_Scale(1.0f),
+	m_CalculatedInitialScale(false),
 	m_WindowDraggable(true),
 	m_WindowUpdate(INTERVAL_METER),
 	m_TransitionUpdate(INTERVAL_TRANSITION),
@@ -700,11 +701,14 @@ void Skin::UpdateEffectiveScale()
 	m_Scale = m_Zoom * m_DpiScale;
 }
 
-bool Skin::UpdateDpiScale()
+bool Skin::UpdateDpiScale(HMONITOR monitor)
 {
 	const float oldDpiScale = m_DpiScale;
 	const int skinScale = GetRainmeter().GetSkinScale();
-	m_DpiScale = (skinScale > 0) ? (float)skinScale / 100.0f : System::GetDpiScaleForWindow(m_Window);
+	m_DpiScale =
+		(skinScale > 0) ?
+		(float)skinScale / 100.0f :
+		(monitor ? System::GetDpiScaleForMonitor(monitor) : System::GetDpiScaleForWindow(m_Window));
 	if (m_DpiScale <= 0.0f)
 	{
 		m_DpiScale = 1.0f;
@@ -2002,6 +2006,17 @@ void Skin::WindowToScreen()
 	m_AnchorXFromRight = m_AnchorYFromBottom = false;
 	m_AnchorXPercentage = m_AnchorYPercentage = false;
 
+	// If this is the first call WindowToScreen(), lets use the unscaled window size to figure out
+	// which monitor DPI to use for scaling the window. UpdateDpiScale() normally uses the window
+	// DPI, but that won't necessarily be correct because the window hasn't been placed on the
+	// screen yet.
+	if (!m_CalculatedInitialScale)
+	{
+		const RECT unscaledRect = { m_ScreenX, m_ScreenY, m_ScreenX + max(m_WindowW, 1), m_ScreenY + max(m_WindowH, 1)};
+		UpdateDpiScale(MonitorFromRect(&unscaledRect, MONITOR_DEFAULTTONEAREST));
+		m_CalculatedInitialScale = true;
+	}
+
 	{	// --- Calculate AnchorScreenX ---
 
 		index = m_AnchorX.find_first_not_of(L"0123456789.");
@@ -2616,7 +2631,6 @@ bool Skin::ReadSkin()
 	}
 
 	m_Canvas.SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
-	UpdateDpiScale();
 
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
@@ -3047,7 +3061,6 @@ bool Skin::ResizeWindow(bool reset)
 			// Get the size form the background bitmap
 			m_WindowW = w;
 			m_WindowH = h;
-
 			WindowToScreen();
 		}
 	}
