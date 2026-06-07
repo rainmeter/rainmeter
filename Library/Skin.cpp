@@ -5215,7 +5215,14 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		scaledWindowSize.cx,
 		scaledWindowSize.cy,
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-	Redraw();
+
+	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
+	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
+	// prevent D2D from erorring out.
+	if (m_State == STATE_RUNNING)
+	{
+		Redraw();
+	}
 
 	return 0;
 }
