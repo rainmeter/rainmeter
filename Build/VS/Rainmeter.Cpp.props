@@ -50,6 +50,8 @@
     <ClCompile>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
 
+      <LanguageStandard>stdcpp17</LanguageStandard>
+
       <!-- Ignore C4996 to get rid of "'xxx': was declared deprecated" warnings in: DialogInstall.cpp, iTunesPlugin.cpp -->
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 
