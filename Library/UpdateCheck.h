@@ -8,11 +8,8 @@
 #ifndef __UPDATE_CHECK_H__
 #define __UPDATE_CHECK_H__
 
-#define JSON_NOEXCEPTION
-
-#include "json/json.hpp"
-
-using nlohmann::json;
+#include "Net.h"
+#include "inipp/inipp.h"
 
 class Updater
 {
@@ -20,9 +17,9 @@ public:
 	static Updater& GetInstance();
 
 	void CheckForUpdates(bool download);
-	void GetLanguageStatus();
+	void CheckLanguageObsoleteStatus();
 
-	static bool VerifyInstaller(const std::wstring& path, const std::wstring& filename,
+	static bool VerifyInstaller(const std::wstring& path, const std::wstring& fileName,
 		const std::wstring& sha256, bool writeToDataFile);
 
 private:
@@ -34,23 +31,21 @@ private:
 
 	static void GetStatus(void* pParam);
 	static bool DownloadStatusFile(std::string& data);
-	static void CheckVersion(json& status, bool downloadNewVersion);
-	static bool DownloadNewVersion(json& status);
+	static void CheckVersion(const inipp::Ini<char>& status, bool downloadNewVersion);
 
+	static void StatusFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	static void InstallerFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+
+	static bool VerifyInstallerHash(const BYTE* buffer, size_t size, const std::wstring& sha256);
 	static bool VerifySignedInstaller(const std::wstring& file);
 
-	static void ShowInternetError(WCHAR* description);
-	static void ShowWinTrustError(WCHAR* description);
-	static void ShowError(WCHAR* description, DWORD dwErr, HMODULE module);
-
-	// Log helper methods (checks debugging mode first)
-	static void LogIfInDebugMode(LPCWSTR message);
-	static void LogIfInDebugModeF(LPCWSTR format, ...);
-
-	json m_Status;
+	Net::Task* m_FetchStatusTask;
+	Net::Task* m_FetchInstallerTask;
+	std::wstring m_InstallerPath;
+	std::wstring m_InstallerFile;
+	std::wstring m_InstallerHash;
+	std::string m_ObsoleteLanguages;
 	bool m_DownloadInstaller;
-
-	static bool s_IsInDebugMode;
 
 	static LPCWSTR s_UpdateURL;
 	static LPCWSTR s_DownloadServer1;
