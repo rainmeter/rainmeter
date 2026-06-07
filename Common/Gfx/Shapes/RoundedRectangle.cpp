@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "RoundedRectangle.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -24,23 +23,8 @@ RoundedRectangle::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
 	// Cloned shapes do not need to re-create any resources
 	if (isCloned) return;
 
-	HRESULT hr = E_FAIL;
 	const D2D1_ROUNDED_RECT rect = { m_X, m_Y, m_Width, m_Height, m_XRadius, m_YRadius };
-
-	Microsoft::WRL::ComPtr<ID2D1RoundedRectangleGeometry> rectangle;
-	hr = Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(rect, rectangle.GetAddressOf());
-	if (FAILED(hr))
-	{
-		LogErrorF(
-			L"Could not create rounded rectangle object. X=%i, Y=%i, W=%i, H=%i, XRadius=%i, YRadius=%i",
-			(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height, (int)m_XRadius, (int)m_YRadius);
-		return;
-	}
-
-	hr = rectangle.CopyTo(m_Shape.GetAddressOf());
-	if (FAILED(hr)) LogErrorF(
-		L"Could not copy rounded rectangle object to shape object. X=%i, Y=%i, W=%i, H=%i, XRadius=%i, YRadius=%i",
-		(int)m_X, (int)m_Y, (int)m_Width, (int)m_Height, (int)m_XRadius, (int)m_YRadius);
+	Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(rect, (ID2D1RoundedRectangleGeometry**)m_Shape.GetAddressOf());
 }
 
 RoundedRectangle::~RoundedRectangle()

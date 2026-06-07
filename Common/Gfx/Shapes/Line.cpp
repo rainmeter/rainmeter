@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Line.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -32,12 +31,9 @@ Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, bool isCloned) : Shape(ShapeT
 			sink->EndFigure(D2D1_FIGURE_END_OPEN);
 			sink->Close();
 
-			hr = path.CopyTo(m_Shape.GetAddressOf());
-			if (SUCCEEDED(hr)) return;
+			path.CopyTo(m_Shape.GetAddressOf());
 		}
 	}
-
-	LogErrorF(L"Could not create line object. X1=%i, Y1=%i, X2=%i, Y2=%i", (int)x1, (int)y1, (int)x2, (int)y2);
 }
 
 Line::~Line()
