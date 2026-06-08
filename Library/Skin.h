@@ -312,11 +312,13 @@ private:
 	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void MapCoordsToScreen(int& x, int& y, int w, int h);
+	void MapCoordsToScreen(int& x, int& y, int w, int h, HMONITOR specificMonitor = nullptr);
 	POINT DeviceToLogical(POINT point) const;
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
 	void UpdateEffectiveScale();
+	void ApplyEffectiveScale();
 	bool UpdateDpiScale(HMONITOR monitor = nullptr);
+	void ApplyDpiScale(HMONITOR monitor = nullptr);
 	SIZE GetScaledWindowSize(float zoom) const;
 	void WindowToScreen();
 	void ScreenToWindow();
@@ -339,7 +341,6 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
-	void ApplyDpiScale();
 	void ApplyZoom(float zoom, bool writeOptions);
 	void SetZoom(float zoom);
 	void UpdateFadeDuration();
