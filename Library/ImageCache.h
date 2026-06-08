@@ -76,20 +76,23 @@ struct ImageCache
 
 struct ImageCacheHandle
 {
+private:
+	struct ConstructorToken {};
+
+public:
 	Gfx::D2DBitmap* GetBitmap() const { return m_Cache->m_Bitmap; }
 	ImageOptions& GetKey() const { return m_Cache->m_Key; }
 
-	ImageCacheHandle(ImageCacheHandle&) = delete;
-	ImageCacheHandle& operator=(ImageCacheHandle other) = delete;
+	ImageCacheHandle(const ImageCacheHandle&) = delete;
+	ImageCacheHandle& operator=(const ImageCacheHandle&) = delete;
+	ImageCacheHandle(ConstructorToken, ImageCache* cache) : m_Cache(cache)
+	{
+		++cache->m_Instances;
+	}
 	~ImageCacheHandle();
 
 private:
 	friend class ImageCachePool;
-
-	ImageCacheHandle(ImageCache* cache) : m_Cache(cache)
-	{
-		++cache->m_Instances;
-	}
 
 	ImageCache* m_Cache;
 };
@@ -99,7 +102,7 @@ class ImageCachePool
 public:
 	static ImageCachePool& GetInstance();
 
-	ImageCacheHandle* Get(const ImageOptions& key);
+	std::unique_ptr<ImageCacheHandle> Get(const ImageOptions& key);
 	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
 
 private:

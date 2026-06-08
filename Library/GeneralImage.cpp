@@ -47,17 +47,8 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::DisposeImage()
 {
-	if (m_Bitmap)
-	{
-		delete m_Bitmap;
-		m_Bitmap = nullptr;
-	}
-
-	if (m_BitmapProcessed)
-	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
-	}
+	m_Bitmap.reset();
+	m_BitmapProcessed.reset();
 }
 
 bool GeneralImage::IsLoaded()
@@ -252,7 +243,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		return false;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(info);
+	auto handle = GetImageCache().Get(info);
 	if (!handle)
 	{
 		auto bitmap = new Gfx::D2DBitmap(filename);
@@ -275,7 +266,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	if (handle)
 	{
-		m_Bitmap = handle;
+		m_Bitmap = std::move(handle);
 
 		m_Options.m_Path = info.m_Path;
 		m_Options.m_FileSize = info.m_FileSize;
@@ -360,24 +351,15 @@ void GeneralImage::ApplyTransforms()
 	auto* bitmap = m_Bitmap->GetBitmap();
 	if (!HasActiveTransforms(bitmap))
 	{
-		if (m_BitmapProcessed)
-		{
-			delete m_BitmapProcessed;
-			m_BitmapProcessed = nullptr;
-		}
-
+		m_BitmapProcessed.reset();
 		return;
 	}
 
 	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
 
-	if (m_BitmapProcessed)
-	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
-	}
+	m_BitmapProcessed.reset();
 
-	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
+	auto handle = GetImageCache().Get(m_Options);
 	if (!handle)
 	{
 		auto& canvas = m_Skin->GetCanvas();
@@ -435,7 +417,7 @@ void GeneralImage::ApplyTransforms()
 
 	if (handle)
 	{
-		m_BitmapProcessed = handle;
+		m_BitmapProcessed = std::move(handle);
 	}
 }
 
