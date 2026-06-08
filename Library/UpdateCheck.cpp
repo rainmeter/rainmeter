@@ -8,9 +8,7 @@
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
 #include "../Common/ParseUtil.h"
-#include "../Common/Platform.h"
 #include "../Common/StringUtil.h"
-#include "../Common/Version.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -22,7 +20,6 @@
 
 #include <SoftPub.h>
 #include <bcrypt.h>
-#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0L)
 
 namespace {
 
@@ -73,7 +70,6 @@ void Updater::CheckForUpdates(bool download)
 
 	if (!m_FetchStatusTask && !m_FetchInstallerTask)
 	{
-		LogDebug(L"Checking for updates...");
 		m_FetchStatusTask = Net::FetchTask::Create((void*)this, s_UpdateURL, {}, GetInternetHandle(), INTERNET_FLAG_RESYNCHRONIZE, StatusFetchResultCallback);
 	}
 }
@@ -122,7 +118,7 @@ void Updater::StatusFetchResultCallback(const Net::Task* fetchTask, void* reques
 			!inipp::get_value(section, "Hash", downloadHash) ||
 			!inipp::get_value(section, "ObsoleteLanguages", updater->m_ObsoleteLanguages))
 	{
-		LogErrorF(L"Update status file missing fields");
+		LogErrorF(L"Invalid update .ini");
 		return;
 	}
 
@@ -130,13 +126,28 @@ void Updater::StatusFetchResultCallback(const Net::Task* fetchTask, void* reques
 	if (wcsncmp(url.c_str(), s_DownloadServer1, wcslen(s_DownloadServer1)) != 0 &&
 			wcsncmp(url.c_str(), s_DownloadServer2, wcslen(s_DownloadServer2)) != 0)
 	{
-		LogErrorF(L"Update status file has invalid downloaded server");
+		LogErrorF(L"Invalid update .ini");
 		return;
 	}
 
-	updater->CheckLanguageObsoleteStatus();
+	updater->m_AvailableVersion.Set(StringUtil::Widen(version));
+	if (!updater->m_AvailableVersion.IsValid())
+	{
+		LogErrorF(L"Invalid update .ini");
+		return;
+	}
 
-	const std::wstring fileHash = StringUtil::Widen(downloadHash);
+	VersionHelper::Version rainmeterVersion(APPVERSION);
+	if (!rainmeterVersion.IsValid() || updater->m_AvailableVersion <= rainmeterVersion)
+	{
+		return;
+	}
+
+	const bool isDevBuild = !LOCAL_STATUS_FILE.empty() || RAINMETER_VERSION == 0;
+	if (isDevBuild) return;
+
+	LogNoticeF(L"New Rainmeter version %s available", updater->m_AvailableVersion.Get().c_str());
+	GetRainmeter().SetNewVersion();
 
 	std::wstring::size_type pos = url.rfind(L'/');
 	if (pos == std::wstring::npos) return;
@@ -145,6 +156,8 @@ void Updater::StatusFetchResultCallback(const Net::Task* fetchTask, void* reques
 
 	const std::wstring path = GetRainmeter().GetSettingsPath() + L"Updates\\";
 	const std::wstring fullPath = path + fileName;
+
+	const std::wstring fileHash = StringUtil::Widen(downloadHash);
 
 	if (PathFileExists(fullPath.c_str()))
 	{
@@ -181,6 +194,8 @@ void Updater::InstallerFetchResultCallback(const Net::Task* fetchTask, void* req
 
 	auto cleanup = [&]()
 	{
+		GetRainmeter().GetTrayIcon()->ShowUpdateNotification(updater->m_AvailableVersion.Get().c_str());
+
 		DeleteFile(fullPath.c_str());
 		System::RemoveFolder(path);
 	};
@@ -229,6 +244,20 @@ void Updater::InstallerFetchResultCallback(const Net::Task* fetchTask, void* req
 	WritePrivateProfileString(L"Rainmeter", L"InstallerName", fileName.c_str(), dataFile);
 	WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", fileHash.c_str(), dataFile);
 
+	// Show tray notification only once per new version
+	WCHAR buffer[32] = { 0 };
+	GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", buffer, _countof(buffer), dataFile);
+	VersionHelper::Version lastVersion(buffer);
+	if (!lastVersion.IsValid()) lastVersion.Set(L"0");
+
+	if (updater->m_AvailableVersion > lastVersion)
+	{
+		const auto* availableVersionString = updater->m_AvailableVersion.Get().c_str();
+		WritePrivateProfileString(L"Rainmeter", L"LastCheck", availableVersionString, dataFile);
+		GetRainmeter().GetTrayIcon()->ShowInstallUpdateNotification(availableVersionString);
+	}
+
+	updater->CheckLanguageObsoleteStatus();
 	GetRainmeter().SetDownloadedNewVersion();
 }
 
@@ -251,10 +280,10 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 	};
 
 	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(L"OpenProvider", false);
+	if (status != 0) return cleanup(L"OpenProvider", false);
 
 	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(L"GetProperty", false);
+	if (status != 0) return cleanup(L"GetProperty", false);
 
 	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0UL, hashLength);
 	if (!hash)
@@ -264,13 +293,13 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 	}
 
 	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0UL, nullptr, 0UL, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(L"CreateHash", false);
+	if (status != 0) return cleanup(L"CreateHash", false);
 
 	status = BCryptHashData(hashHandle, (PUCHAR)buffer, (ULONG)size, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(L"HashData", false);
+	if (status != 0) return cleanup(L"HashData", false);
 
 	status = BCryptFinishHash(hashHandle, hash, hashLength, 0UL);
-	if (!NT_SUCCESS(status)) return cleanup(L"FinishHash", false);
+	if (status != 0) return cleanup(L"FinishHash", false);
 
 	std::wstring hashStr;
 	WCHAR hashChar[3] = { 0 };  // 2 chars + null terminator

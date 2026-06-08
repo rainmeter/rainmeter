@@ -9,7 +9,7 @@
 #define __UPDATE_CHECK_H__
 
 #include "Net.h"
-#include "inipp/inipp.h"
+#include "../Common/Version.h"
 
 class Updater
 {
@@ -29,10 +29,6 @@ private:
 	Updater(const Updater& other) = delete;
 	Updater& operator=(Updater other) = delete;
 
-	static void GetStatus(void* pParam);
-	static bool DownloadStatusFile(std::string& data);
-	static void CheckVersion(const inipp::Ini<char>& status, bool downloadNewVersion);
-
 	static void StatusFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 	static void InstallerFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 
@@ -41,10 +37,13 @@ private:
 
 	Net::Task* m_FetchStatusTask;
 	Net::Task* m_FetchInstallerTask;
+
 	std::wstring m_InstallerPath;
 	std::wstring m_InstallerFile;
 	std::wstring m_InstallerHash;
 	std::string m_ObsoleteLanguages;
+	VersionHelper::Version m_AvailableVersion;
+
 	bool m_DownloadInstaller;
 
 	static LPCWSTR s_UpdateURL;
