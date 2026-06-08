@@ -22,6 +22,7 @@ D3D_FEATURE_LEVEL Canvas::c_FeatureLevel;
 Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
 Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
+Microsoft::WRL::ComPtr<ID2D1DeviceContext> Canvas::c_EffectTarget;
 Microsoft::WRL::ComPtr<IDXGIDevice1> Canvas::c_DxgiDevice;
 Microsoft::WRL::ComPtr<ID2D1Factory1> Canvas::c_D2DFactory;
 Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
@@ -125,6 +126,9 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 			c_D2DDevice.GetAddressOf());
 		if (FAILED(hr)) return false;
 
+		hr = CreateDeviceContext(c_EffectTarget);
+		if (FAILED(hr)) return false;
+
 		hr = CoCreateInstance(
 			CLSID_WICImagingFactory,
 			nullptr,
@@ -190,6 +194,7 @@ void Canvas::Finalize()
 
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
+		c_EffectTarget.Reset();
 		c_D2DDevice.Reset();
 		c_DxgiDevice.Reset();
 		c_D2DFactory.Reset();
@@ -805,23 +810,33 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	m_Target->SetTransform(worldTransform);
 }
 
-HRESULT Canvas::CreateRenderTarget()
+HRESULT Canvas::CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target)
 {
 	HRESULT hr = E_FAIL;
 	if (c_D2DDevice)
 	{
-		c_D2DDevice->ClearResources();
-
 		hr = c_D2DDevice->CreateDeviceContext(
 			D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
-			m_Target.ReleaseAndGetAddressOf());
+			target.ReleaseAndGetAddressOf());
 		if (FAILED(hr))
 		{
 			hr = c_D2DDevice->CreateDeviceContext(
 				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-				m_Target.ReleaseAndGetAddressOf());
+				target.ReleaseAndGetAddressOf());
 		}
 	}
+
+	return hr;
+}
+
+HRESULT Canvas::CreateRenderTarget()
+{
+	if (c_D2DDevice)
+	{
+		c_D2DDevice->ClearResources();
+	}
+
+	HRESULT hr = CreateDeviceContext(m_Target);
 
 	// Hardware accelerated targets have a hard limit to the size of bitmaps they can support.
 	// The size will depend on the D3D feature level of the driver used. The WARP software
