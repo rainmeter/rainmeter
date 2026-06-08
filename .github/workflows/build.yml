@@ -17,8 +17,11 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: cd Build && Build.bat rainmeter-${{ matrix.arch }} %date:~-4%.%date:~4,2%.%date:~7,2%.%GITHUB_RUN_NUMBER%
-        shell: cmd
+        run: |
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          cd Build
+          .\Build.bat rainmeter-${{ matrix.arch }} $buildVersion
+        shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
@@ -45,8 +48,11 @@ jobs:
         run: choco install nsis --version=3.12.0 --no-progress
 
       - name: Build installer
-        run: cd Build && Build.bat installer %date:~-4%.%date:~4,2%.%date:~7,2%.%GITHUB_RUN_NUMBER%
-        shell: cmd
+        run: |
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          cd Build
+          .\Build.bat installer $buildVersion
+        shell: pwsh
 
       - name: Upload installer
         uses: actions/upload-artifact@v7
