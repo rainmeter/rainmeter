@@ -12,6 +12,7 @@ namespace Gfx {
 namespace Util {
 
 const FLOAT PI = 3.14159265f;
+const FLOAT DEFAULT_DPI = 96.0f;
 constexpr FLOAT ToRadians(FLOAT deg) { return deg * (PI / 180.0f); }
 
 void D2DEffectStream::Crop(const Canvas& canvas, const D2D1_RECT_F& crop)
@@ -122,13 +123,19 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	if (!changed) return m_BaseImage;
 
 	const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
-		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
+		DEFAULT_DPI,
+		DEFAULT_DPI);
 
 	Microsoft::WRL::ComPtr<ID2D1Image> target;
 	canvas.m_Target->GetTarget(target.GetAddressOf());
 
 	D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Identity();
 	canvas.m_Target->GetTransform(&transform);
+
+	FLOAT dpiX = DEFAULT_DPI;
+	FLOAT dpiY = DEFAULT_DPI;
+	canvas.m_Target->GetDpi(&dpiX, &dpiY);
 
 	const UINT maxBitmapSize = (UINT)canvas.m_MaxBitmapSize;
 	const auto size = (imageSize) ? *imageSize : GetSize(canvas);
@@ -157,6 +164,27 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 		canvas.BeginDraw();
 	}
 
+	auto finishDraw = [&canvas, didDraw]() -> void
+	{
+		if (didDraw)
+		{
+			canvas.m_Target->Flush();
+		}
+		else
+		{
+			canvas.EndDraw();
+		}
+	};
+
+	auto restoreTarget = [&canvas, &target, &transform, dpiX, dpiY]() -> void
+	{
+		canvas.m_Target->SetTarget(target.Get());
+		canvas.m_Target->SetTransform(transform);
+		canvas.m_Target->SetDpi(dpiX, dpiY);
+	};
+
+	canvas.m_Target->SetDpi(DEFAULT_DPI, DEFAULT_DPI);
+
 	for (UINT y = 0U, H = height / maxBitmapSize; y <= H; ++y)
 	{
 		for (UINT x = 0U, W = width / maxBitmapSize; x <= W; ++x)
@@ -176,14 +204,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				bitmap.GetAddressOf());
 			if (FAILED(hr))
 			{
-				canvas.EndDraw();
-				canvas.m_Target->SetTarget(target.Get());
-				canvas.m_Target->SetTransform(transform);
+				finishDraw();
+				restoreTarget();
 				deleteImage();
 				return nullptr;
 			}
 
 			canvas.m_Target->SetTarget(bitmap.Get());
+			canvas.m_Target->SetDpi(DEFAULT_DPI, DEFAULT_DPI);
 			canvas.m_Target->Clear();
 
 			FLOAT x2 = -(FLOAT)rect.left;
@@ -201,6 +229,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
 				if (FAILED(hr))
 				{
+					finishDraw();
+					restoreTarget();
 					deleteImage();
 					return nullptr;
 				}
@@ -221,17 +251,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 		}
 	}
 
-	if (didDraw)
-	{
-		canvas.m_Target->Flush();
-	}
-	else
-	{
-		canvas.EndDraw();
-	}
-
-	canvas.m_Target->SetTarget(target.Get());
-	canvas.m_Target->SetTransform(transform);
+	finishDraw();
+	restoreTarget();
 	return d2dbitmap;
 }
 
@@ -239,11 +260,25 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 {
 	D2D1_SIZE_F size = D2D1::SizeF(0.0f, 0.0f);
 
+	FLOAT dpiX = DEFAULT_DPI;
+	FLOAT dpiY = DEFAULT_DPI;
+	canvas.m_Target->GetDpi(&dpiX, &dpiY);
+	canvas.m_Target->SetDpi(DEFAULT_DPI, DEFAULT_DPI);
+
+	auto restoreDpi = [&canvas, dpiX, dpiY]() -> void
+	{
+		canvas.m_Target->SetDpi(dpiX, dpiY);
+	};
+
 	UINT prevY = 0u;
 	for (size_t i = 0; i < m_Effects.size(); ++i)
 	{
 		const auto& effect = m_Effects[i];
-		if (!effect) return size;
+		if (!effect)
+		{
+			restoreDpi();
+			return size;
+		}
 
 		auto& segment = m_BaseImage->m_Segments[i];
 
@@ -252,7 +287,11 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 
 		D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 		HRESULT hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
-		if (FAILED(hr)) return size;
+		if (FAILED(hr))
+		{
+			restoreDpi();
+			return size;
+		}
 
 		if (i == 0)
 		{
@@ -273,6 +312,7 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 		}
 	}
 
+	restoreDpi();
 	return size;
 }
 
