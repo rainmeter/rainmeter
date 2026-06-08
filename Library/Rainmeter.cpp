@@ -112,7 +112,8 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
-	m_SkinScale(0),
+	m_ForceScale(0),
+	m_SkinScaleDefined(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -1653,10 +1654,25 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
-	m_SkinScale = parser.ReadInt(L"Rainmeter", L"SkinScale", 0);
-	if (m_SkinScale < 0 || m_SkinScale > 200)
+	const int forceScale = parser.ReadInt(L"Rainmeter", L"ForceScale", 0);
+	const bool forceScaleDefined = !parser.GetLastDefaultUsed();
+	const int skinScale = parser.ReadInt(L"Rainmeter", L"SkinScale", 0);
+	const bool m_SkinScaleDefined = !parser.GetLastDefaultUsed();
+
+	m_ForceScale = forceScaleDefined ? forceScale : skinScale;
+	if (m_ForceScale < 0 || m_ForceScale > 200)
 	{
-		m_SkinScale = 0;
+		m_ForceScale = 0;
+	}
+	if (m_SkinScaleDefined)
+	{
+		if (!forceScaleDefined)
+		{
+			WCHAR buffer[16];
+			_itow_s(m_ForceScale, buffer, 10);
+			WritePrivateProfileString(L"Rainmeter", L"ForceScale", buffer, iniFile.c_str());
+		}
+		WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
 	}
 
 	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::Red, 90.0f / 255.0f));  // RGBA: 255,0,0,90
@@ -1879,7 +1895,17 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"SelectedColor");
 		PreserveSetting(backup, L"HardwareAcceleration");
-		PreserveSetting(backup, L"SkinScale");
+		PreserveSetting(backup, L"ForceScale");
+		WCHAR buffer[MAX_LINE_LENGTH];
+		if (GetPrivateProfileString(L"Rainmeter", L"ForceScale", L"", buffer, 4, m_IniFile.c_str()) == 0)
+		{
+			if (GetPrivateProfileString(L"Rainmeter", L"SkinScale", L"", buffer, _countof(buffer), m_IniFile.c_str()) > 0 ||
+				GetPrivateProfileString(L"Rainmeter", L"SkinScale", L"", buffer, _countof(buffer), backup.c_str()) > 0)
+			{
+				WritePrivateProfileString(L"Rainmeter", L"ForceScale", buffer, m_IniFile.c_str());
+			}
+		}
+		WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, m_IniFile.c_str());
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
@@ -2188,18 +2214,19 @@ void Rainmeter::SetDisableDragging(bool dragging)
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void Rainmeter::SetSkinScale(int scale)
+void Rainmeter::SetForceScale(int scale)
 {
-	if (m_SkinScale == scale)
+	if (m_ForceScale == scale)
 	{
 		return;
 	}
 
-	m_SkinScale = scale;
+	m_ForceScale = scale;
 
 	WCHAR buffer[16];
 	_itow_s(scale, buffer, 10);
-	WritePrivateProfileString(L"Rainmeter", L"SkinScale", buffer, m_IniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"ForceScale", buffer, m_IniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, m_IniFile.c_str());
 
 	for (auto& iter : m_Skins)
 	{
