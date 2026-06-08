@@ -62,6 +62,143 @@ const int g_ZoomDragMaxPercent = 500;
 const int g_ZoomDragEdgeSize = 10;
 const int g_ZoomDragCornerSize = 20;
 
+static int ScalePositionCoordinateToDevicePixels(double value, float scale)
+{
+	const double scaled = value * (double)scale;
+	return (int)((value >= 0.0) ? ceilf((float)scaled) : floorf((float)scaled));
+}
+
+static void FormatPositionCoordinate(double value, WCHAR* buffer, size_t bufferSize)
+{
+	int bufferLen = _snwprintf_s(buffer, bufferSize, _TRUNCATE, L"%.5f", value);
+	Measure::RemoveTrailingZero(buffer, bufferLen);
+}
+
+static bool IsPositionModifierSuffix(const std::wstring& suffix)
+{
+	size_t pos = 0ULL;
+
+	if (pos < suffix.size() && (suffix[pos] == L'R' || suffix[pos] == L'B'))
+	{
+		++pos;
+	}
+
+	if (pos < suffix.size() && suffix[pos] == L'@')
+	{
+		++pos;
+		if (pos == suffix.size())
+		{
+			return false;
+		}
+
+		for (; pos < suffix.size(); ++pos)
+		{
+			if (!iswdigit(suffix[pos]))
+			{
+				return false;
+			}
+		}
+	}
+
+	return pos == suffix.size();
+}
+
+static std::wstring ScalePositionOption(const std::wstring& option, float scale, bool toDevicePixels)
+{
+	if (scale <= 0.0f || fabsf(scale - 1.0f) <= 0.0001f || option.empty() ||
+		option.find(L'%') != std::wstring::npos || option.find(L'(') != std::wstring::npos)
+	{
+		return option;
+	}
+
+	WCHAR* end = nullptr;
+	errno = 0;
+	const double value = wcstod(option.c_str(), &end);
+	if (end == option.c_str() || errno == ERANGE)
+	{
+		return option;
+	}
+
+	const size_t suffixPos = end - option.c_str();
+	const std::wstring suffix = option.substr(suffixPos);
+	if (!IsPositionModifierSuffix(suffix))
+	{
+		return option;
+	}
+
+	WCHAR buffer[64] = { 0 };
+	if (toDevicePixels)
+	{
+		_itow_s(ScalePositionCoordinateToDevicePixels(value, scale), buffer, 10);
+	}
+	else
+	{
+		FormatPositionCoordinate(value / (double)scale, buffer, _countof(buffer));
+	}
+
+	std::wstring result = buffer;
+	result += suffix;
+	return result;
+}
+
+static int GetPositionOptionScreen(const std::wstring& option)
+{
+	const size_t pos = option.find_last_of(L'@');
+	if (pos == std::wstring::npos)
+	{
+		return -1;
+	}
+
+	const WCHAR* screen = option.c_str() + pos + 1;
+	if (*screen == 0)
+	{
+		return -1;
+	}
+
+	for (const WCHAR* ch = screen; *ch; ++ch)
+	{
+		if (!iswdigit(*ch))
+		{
+			return -1;
+		}
+	}
+
+	return _wtoi(screen);
+}
+
+static float GetPositionOptionScale(const std::wstring& option, const std::wstring& otherOption, float zoom)
+{
+	float dpiScale = 1.0f;
+	const int forceScale = GetRainmeter().GetForceScale();
+	if (forceScale > 0)
+	{
+		dpiScale = (float)forceScale / 100.0f;
+	}
+	else
+	{
+		int screenIndex = GetPositionOptionScreen(option);
+		if (screenIndex < 0)
+		{
+			screenIndex = GetPositionOptionScreen(otherOption);
+		}
+
+		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+		if (screenIndex <= 0)
+		{
+			screenIndex = monitorsInfo.primary;
+		}
+
+		const int monitorIndex = screenIndex - 1;
+		if (monitorIndex >= 0 && monitorIndex < (int)monitors.size() && monitors[monitorIndex].active)
+		{
+			dpiScale = monitors[monitorIndex].dpiScale;
+		}
+	}
+
+	return zoom * dpiScale;
+}
+
 static bool IsZoomDragHitTest(int hitTest)
 {
 	switch (hitTest)
@@ -699,10 +836,10 @@ void Skin::UpdateEffectiveScale()
 bool Skin::UpdateDpiScale(HMONITOR monitor)
 {
 	const float oldDpiScale = m_DpiScale;
-	const int skinScale = GetRainmeter().GetSkinScale();
+	const int forceScale = GetRainmeter().GetForceScale();
 	m_DpiScale =
-		(skinScale > 0) ?
-		(float)skinScale / 100.0f :
+		(forceScale > 0) ?
+		(float)forceScale / 100.0f :
 		(monitor ? System::GetDpiScaleForMonitor(monitor) : System::GetDpiScaleForWindow(m_Window));
 	if (m_DpiScale <= 0.0f)
 	{
@@ -2001,17 +2138,6 @@ void Skin::WindowToScreen()
 	m_AnchorXFromRight = m_AnchorYFromBottom = false;
 	m_AnchorXPercentage = m_AnchorYPercentage = false;
 
-	// If this is the first call WindowToScreen(), lets use the unscaled window size to figure out
-	// which monitor DPI to use for scaling the window. UpdateDpiScale() normally uses the window
-	// DPI, but that won't necessarily be correct because the window hasn't been placed on the
-	// screen yet.
-	if (!m_CalculatedInitialScale)
-	{
-		const RECT unscaledRect = { m_ScreenX, m_ScreenY, m_ScreenX + max(m_WindowW, 1), m_ScreenY + max(m_WindowH, 1)};
-		UpdateDpiScale(MonitorFromRect(&unscaledRect, MONITOR_DEFAULTTONEAREST));
-		m_CalculatedInitialScale = true;
-	}
-
 	{	// --- Calculate AnchorScreenX ---
 
 		index = m_AnchorX.find_first_not_of(L"0123456789.");
@@ -2143,6 +2269,33 @@ void Skin::WindowToScreen()
 				}
 			}
 		}
+
+		// If this is the first call WindowToScreen(), lets use the unscaled window size to figure out
+		// which monitor DPI to use for scaling the window. UpdateDpiScale() normally uses the window
+		// DPI, but that won't necessarily be correct because the window hasn't been placed on the
+		// screen yet.
+		if (!m_CalculatedInitialScale)
+		{
+			HMONITOR monitor = nullptr;
+			if (m_WindowXScreenDefined && m_WindowXScreen > 0)
+			{
+				monitor = monitors[m_WindowXScreen - 1].handle;
+			}
+			else if (m_WindowYScreenDefined && m_WindowYScreen > 0)
+			{
+				monitor = monitors[m_WindowYScreen - 1].handle;
+			}
+
+			if (monitor == nullptr)
+			{
+				const RECT unscaledRect = { m_ScreenX, m_ScreenY, m_ScreenX + max(m_WindowW, 1), m_ScreenY + max(m_WindowH, 1)};
+				monitor = MonitorFromRect(&unscaledRect, MONITOR_DEFAULTTONEAREST);
+			}
+
+			UpdateDpiScale(monitor);
+			m_CalculatedInitialScale = true;
+		}
+
 		if (m_WindowYScreen == 0)
 		{
 			screenY = monitorsInfo.vsT;
@@ -2387,14 +2540,37 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		}
 	};
 
+	if (!isDefault)
+	{
+		const float zoom = (float)parser.ReadFloat(section, L"Zoom", 100.0f);
+		if (zoom <= 0.0f)
+		{
+			LogWarningF(this, L"Zoom must be greater than 0. Using Zoom=100.");
+			m_Zoom = 1.0f;
+		}
+		else
+		{
+			m_Zoom = zoom / 100.0f;
+		}
+	}
+
 	// Check if the window position should be read as a formula
 	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
 
 	m_WindowY = parser.ReadString(section, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", m_WindowY.c_str()) : addWriteFlag(OPTION_POSITION);
+
+	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
 	m_WindowY = parser.ParseFormulaWithModifiers(m_WindowY);
+
+	if (!GetRainmeter().GetSkinScaleDefined())
+	{
+		const float xScale = GetPositionOptionScale(m_WindowX, m_WindowY, m_Zoom);
+		const float yScale = GetPositionOptionScale(m_WindowY, m_WindowX, m_Zoom);
+		m_WindowX = ScalePositionOption(m_WindowX, xScale, true);
+		m_WindowY = ScalePositionOption(m_WindowY, yScale, true);
+	}
 
 	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
@@ -2437,20 +2613,6 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 	m_AutoSelectScreen = parser.ReadBool(section, makeKey(L"AutoSelectScreen"), false);
 	if (isDefault) writeDefaultString(L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0");
-
-	if (!isDefault)
-	{
-		const float zoom = (float)parser.ReadFloat(section, L"Zoom", 100.0f);
-		if (zoom <= 0.0f)
-		{
-			LogWarningF(this, L"Zoom must be greater than 0. Using Zoom=100.");
-			m_Zoom = 1.0f;
-		}
-		else
-		{
-			m_Zoom = zoom / 100.0f;
-		}
-	}
 
 	m_AlphaValue = parser.ReadInt(section, makeKey(L"AlphaValue"), 255);
 	m_AlphaValue = max(m_AlphaValue, 0);
@@ -2515,8 +2677,10 @@ void Skin::WriteOptions(INT setting)
 			// If position needs to be save, do so.
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
+				const std::wstring windowX = ScalePositionOption(m_WindowX, m_Scale, false);
+				const std::wstring windowY = ScalePositionOption(m_WindowY, m_Scale, false);
+				WritePrivateProfileString(section, L"WindowX", windowX.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", windowY.c_str(), iniFile);
 			}
 
 			if (setting == OPTION_POSITION) return;
