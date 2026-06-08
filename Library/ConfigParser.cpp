@@ -240,6 +240,7 @@ ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
+	m_MonitorVariableMode(MonitorVariableMode::DEFAULT_LOGICAL),
 	m_CurrentSection(),
 	m_Skin()
 {
@@ -271,6 +272,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
+	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
 	m_CurrentSection = nullptr;
 	m_SectionInsertPos = m_Sections.end();
@@ -685,6 +687,10 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 	if (!ParseMonitorVariable(strVariable.c_str(), physical, area, component, primary, monitorNumber))
 	{
 		return false;
+	}
+	if (m_MonitorVariableMode == MonitorVariableMode::FORCE_PHYSICAL)
+	{
+		physical = true;
 	}
 
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
