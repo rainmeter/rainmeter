@@ -179,6 +179,7 @@ public:
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
+	void UpdateMouseMeasureCapture();
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	bool GetXPercentage() { return m_WindowXPercentage; }
@@ -348,6 +349,9 @@ private:
 	void StartZoomDrag(int hitTest, POINT screenPos);
 	void UpdateZoomDrag(POINT screenPos);
 	void EndZoomDrag(bool commit);
+	void ClearMouseMeasureCapture();
+	void DoMouseMeasureAction(POINT pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
+	void DoMouseMeasureMoveActions(POINT pos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -462,6 +466,7 @@ private:
 	float m_ZoomDragStartZoom;
 	bool m_ZoomDragMoved;
 	bool m_ZoomDragPositionChanged;
+	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;

@@ -1979,6 +1979,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 	static const std::vector<LPCWSTR> s_OldPlugins =
 	{
 		L"MediaKey",
+		L"Mouse",
 		L"NowPlaying",
 		L"Process",
 		L"RecycleManager",

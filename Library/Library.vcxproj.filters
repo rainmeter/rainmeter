@@ -88,6 +88,7 @@
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
+    <ClCompile Include="MeasureMouse.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />
     <ClCompile Include="MeasureNetOut.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
+    <ClInclude Include="MeasureMouse.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
     <ClInclude Include="MeasureNetOut.h" />

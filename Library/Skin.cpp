@@ -17,6 +17,7 @@
 #include "resource.h"
 #include "Util.h"
 #include "MeasureCalc.h"
+#include "MeasureMouse.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
 #include "MeasureProcess.h"
@@ -336,6 +337,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_ZoomDragStartZoom(1.0f),
 	m_ZoomDragMoved(false),
 	m_ZoomDragPositionChanged(false),
+	m_MouseMeasureCapture(false),
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
 	m_SolidBevel(BEVELTYPE_NONE),
@@ -4228,11 +4230,12 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process any mouse 'move' actions
 	if (m_Selected) return 0;
 
-	if (!m_ClickThrough || keyDown)
+	if (!m_ClickThrough || keyDown || m_MouseMeasureCapture)
 	{
 		POINT pos = GetMouseMessagePos(uMsg, lParam);
 
 		++m_MouseMoveCounter;
+		DoMouseMeasureMoveActions(pos);
 
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
@@ -4295,7 +4298,9 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-	DoAction(pos.x, pos.y, (delta < 0) ? MOUSE_MW_DOWN : MOUSE_MW_UP, false);
+	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_DOWN : MOUSE_MW_UP;
+	DoMouseMeasureAction(pos, action);
+	DoAction(pos.x, pos.y, action, false);
 
 	return 0;
 }
@@ -4314,7 +4319,9 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-	DoAction(pos.x, pos.y, (delta < 0) ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT, false);
+	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT;
+	DoMouseMeasureAction(pos, action);
+	DoAction(pos.x, pos.y, action, false);
 
 	return 0;
 }
@@ -5443,6 +5450,7 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_DOWN);
+	DoMouseMeasureAction(pos, MOUSE_LMB_DOWN);
 
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
 		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
@@ -5503,6 +5511,7 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_UP);
 
+	DoMouseMeasureAction(pos, MOUSE_LMB_UP);
 	DoAction(pos.x, pos.y, MOUSE_LMB_UP, false);
 
 	return 0;
@@ -5518,6 +5527,7 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_DOWN);
 
+	DoMouseMeasureAction(pos, MOUSE_LMB_DBLCLK, MOUSE_LMB_DOWN);
 	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false);
@@ -5536,6 +5546,7 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_RMB_DOWN);
 	DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
 
 	return 0;
@@ -5552,6 +5563,7 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_RMB_UP);
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
 		!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
@@ -5572,6 +5584,7 @@ LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_RMB_DBLCLK, MOUSE_RMB_DOWN);
 	if (!DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
@@ -5590,6 +5603,7 @@ LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_MMB_DOWN);
 	DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
 
 	return 0;
@@ -5605,6 +5619,7 @@ LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_MMB_UP);
 	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
 
 	return 0;
@@ -5620,6 +5635,7 @@ LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
+	DoMouseMeasureAction(pos, MOUSE_MMB_DBLCLK, MOUSE_MMB_DOWN);
 	if (!DoAction(pos.x, pos.y, MOUSE_MMB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
@@ -5640,10 +5656,12 @@ LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 	{
+		DoMouseMeasureAction(pos, MOUSE_X1MB_DOWN);
 		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
 	}
 	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
 	{
+		DoMouseMeasureAction(pos, MOUSE_X2MB_DOWN);
 		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
 	}
 
@@ -5662,10 +5680,12 @@ LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 	{
+		DoMouseMeasureAction(pos, MOUSE_X1MB_UP);
 		DoAction(pos.x, pos.y, MOUSE_X1MB_UP, false);
 	}
 	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
 	{
+		DoMouseMeasureAction(pos, MOUSE_X2MB_UP);
 		DoAction(pos.x, pos.y, MOUSE_X2MB_UP, false);
 	}
 
@@ -5682,15 +5702,21 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1 &&
-		!DoAction(pos.x, pos.y, MOUSE_X1MB_DBLCLK, false))
+	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 	{
-		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
+		DoMouseMeasureAction(pos, MOUSE_X1MB_DBLCLK, MOUSE_X1MB_DOWN);
+		if (!DoAction(pos.x, pos.y, MOUSE_X1MB_DBLCLK, false))
+		{
+			DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
+		}
 	}
-	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2 &&
-		!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
+	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
 	{
-		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
+		DoMouseMeasureAction(pos, MOUSE_X2MB_DBLCLK, MOUSE_X2MB_DOWN);
+		if (!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
+		{
+			DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
+		}
 	}
 
 	return 0;
@@ -5701,6 +5727,11 @@ LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_ZoomDragging && (HWND)lParam != m_Window)
 	{
 		EndZoomDrag(true);
+	}
+
+	if (m_MouseMeasureCapture && (HWND)lParam != m_Window)
+	{
+		ClearMouseMeasureCapture();
 	}
 
 	return 0;
@@ -5818,6 +5849,76 @@ bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 	}
 
 	return false;
+}
+
+void Skin::UpdateMouseMeasureCapture()
+{
+	bool wantsCapture = false;
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasureMouse>() &&
+			((MeasureMouse*)measure)->WantsCapture())
+		{
+			wantsCapture = true;
+			break;
+		}
+	}
+
+	if (wantsCapture)
+	{
+		if (!m_MouseMeasureCapture)
+		{
+			SetCapture(m_Window);
+			m_MouseMeasureCapture = true;
+		}
+	}
+	else if (m_MouseMeasureCapture)
+	{
+		m_MouseMeasureCapture = false;
+		if (GetCapture() == m_Window)
+		{
+			ReleaseCapture();
+		}
+	}
+}
+
+void Skin::ClearMouseMeasureCapture()
+{
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasureMouse>())
+		{
+			((MeasureMouse*)measure)->ClearCapture();
+		}
+	}
+
+	m_MouseMeasureCapture = false;
+}
+
+void Skin::DoMouseMeasureAction(POINT pos, MOUSEACTION action, MOUSEACTION fallback)
+{
+	const POINT screenPos = System::GetCursorPosition();
+
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasureMouse>())
+		{
+			((MeasureMouse*)measure)->ExecuteAction(action, pos, screenPos, fallback);
+		}
+	}
+}
+
+void Skin::DoMouseMeasureMoveActions(POINT pos)
+{
+	const POINT screenPos = System::GetCursorPosition();
+
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasureMouse>())
+		{
+			((MeasureMouse*)measure)->ExecuteMoveActions(pos, screenPos);
+		}
+	}
 }
 
 /*
