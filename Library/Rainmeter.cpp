@@ -29,11 +29,14 @@ using namespace Gdiplus;
 
 enum TIMER
 {
-	TIMER_NETSTATS    = 1
+	TIMER_NETSTATS    = 1,
+	TIMER_UPDATECHECK = 2
 };
 enum INTERVAL
 {
-	INTERVAL_NETSTATS = 120000
+	INTERVAL_NETSTATS = 120000,
+	INTERVAL_UPDATECHECK_INITIAL = 5 * 60 * 1000,
+	INTERVAL_UPDATECHECK_DAILY = 24 * 60 * 60 * 1000
 };
 
 /*
@@ -573,7 +576,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		GetUpdater().CheckForUpdates(!m_DisableAutoUpdate);
+		ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
 	}
 
 	return 0;	// All is OK
@@ -582,6 +585,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
+	KillTimer(m_Window, TIMER_UPDATECHECK);
 
 	GetGameMode().ForceExit();
 
@@ -755,6 +759,17 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			MeasureNet::UpdateStats();
 			GetRainmeter().WriteStats(false);
 		}
+		else if (wParam == TIMER_UPDATECHECK)
+		{
+			Rainmeter& rainmeter = GetRainmeter();
+			KillTimer(rainmeter.m_Window, TIMER_UPDATECHECK);
+
+			if (!rainmeter.m_DisableVersionCheck)
+			{
+				GetUpdater().CheckForUpdates(!rainmeter.m_DisableAutoUpdate);
+				rainmeter.ScheduleUpdateCheck(INTERVAL_UPDATECHECK_DAILY);
+			}
+		}
 		else
 		{
 			GetGameMode().OnTimerEvent(wParam);
@@ -799,6 +814,11 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 void Rainmeter::SetNetworkStatisticsTimer()
 {
 	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, nullptr) != 0;
+}
+
+void Rainmeter::ScheduleUpdateCheck(UINT interval)
+{
+	SetTimer(m_Window, TIMER_UPDATECHECK, interval, nullptr);
 }
 
 void Rainmeter::CreateOptionsFile()
@@ -2239,6 +2259,18 @@ void Rainmeter::SetDisableVersionCheck(bool check)
 {
 	m_DisableVersionCheck = check;
 	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
+
+	if (m_Window)
+	{
+		if (check)
+		{
+			KillTimer(m_Window, TIMER_UPDATECHECK);
+		}
+		else
+		{
+			ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
+		}
+	}
 }
 
 void Rainmeter::SetDisableAutoUpdate(bool check)
