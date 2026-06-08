@@ -30,6 +30,7 @@ Microsoft::WRL::ComPtr<IWICImagingFactory> Canvas::c_WICFactory;
 Canvas::Canvas() :
 	m_W(0),
 	m_H(0),
+	m_Dpi(96.0f),
 	m_MaxBitmapSize(0U),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
@@ -383,7 +384,23 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 
 void Canvas::ResetTransform()
 {
-	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+	SetTransform(D2D1::Matrix3x2F::Identity());
+}
+
+void Canvas::SetDpiScale(float dpiScale)
+{
+	auto dpi = 96.0f * dpiScale;
+	if (dpi <= 0.0f)
+	{
+		dpi = 96.0f;
+	}
+
+	m_Dpi = dpi;
+
+	if (m_Target)
+	{
+		m_Target->SetDpi(m_Dpi, m_Dpi);
+	}
 }
 
 bool Canvas::SetTarget(RenderTexture* texture)
@@ -393,12 +410,14 @@ bool Canvas::SetTarget(RenderTexture* texture)
 
 	auto image = bitmap->m_Segments[0].GetBitmap();
 	m_Target->SetTarget(image);
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 	return true;
 }
 
 void Canvas::ResetTarget()
 {
 	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 }
 
 void Canvas::SetAntiAliasing(bool enable)
@@ -820,6 +839,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 	if (SUCCEEDED(hr))
 	{
+		m_Target->SetDpi(m_Dpi, m_Dpi);
 		m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
 	}
 
@@ -850,6 +870,7 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
 	}
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 	return true;
 }
 

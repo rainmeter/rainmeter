@@ -314,7 +314,6 @@ private:
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	POINT DeviceToLogical(POINT point) const;
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
-	D2D1_MATRIX_3X2_F GetScaleMatrix() const;
 	void UpdateEffectiveScale();
 	bool UpdateDpiScale(HMONITOR monitor = nullptr);
 	SIZE GetScaledWindowSize(float zoom) const;
