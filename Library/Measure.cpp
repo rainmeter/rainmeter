@@ -10,6 +10,7 @@
 #include "MeasureCPU.h"
 #include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
+#include "MeasureMouse.h"
 #include "MeasurePhysicalMemory.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
@@ -765,6 +766,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
 		return new MeasureMemory(skin, name);
+	}
+	else if (_wcsicmp(L"Mouse", measure) == 0)
+	{
+		return new MeasureMouse(skin, name);
 	}
 	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
