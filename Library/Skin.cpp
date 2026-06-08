@@ -699,6 +699,29 @@ void Skin::UpdateEffectiveScale()
 	m_Scale = m_Zoom * m_DpiScale;
 }
 
+void Skin::ApplyEffectiveScale()
+{
+	UpdateEffectiveScale();
+
+	const SIZE scaledWindowSize = GetScaledWindowSize();
+	SetWindowPos(
+		m_Window,
+		nullptr,
+		m_ScreenX,
+		m_ScreenY,
+		scaledWindowSize.cx,
+		scaledWindowSize.cy,
+		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
+	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
+	// prevent D2D from erorring out.
+	if (m_State == STATE_RUNNING)
+	{
+		Redraw();
+	}
+}
+
 bool Skin::UpdateDpiScale(HMONITOR monitor)
 {
 	const float oldDpiScale = m_DpiScale;
@@ -716,7 +739,20 @@ bool Skin::UpdateDpiScale(HMONITOR monitor)
 	return fabsf(oldDpiScale - m_DpiScale) > 0.1f;
 }
 
-void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
+void Skin::ApplyDpiScale(HMONITOR monitor)
+{
+	if (!UpdateDpiScale(monitor)) return;
+
+	if (m_KeepOnScreen)
+	{
+		const SIZE scaledWindowSize = GetScaledWindowSize();
+		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy, monitor);
+	}
+
+	ApplyEffectiveScale();
+}
+
+void Skin::MapCoordsToScreen(int& x, int& y, int w, int h, HMONITOR specificMonitor)
 {
 	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
@@ -752,11 +788,12 @@ void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
 			break;
 		}
 
-		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
+		for (const auto& monitor : monitors)
 		{
-			if (!(*iter).active) continue;
+			if (specificMonitor && monitor.handle != specificMonitor) continue;
+			if (!monitor.active) continue;
 
-			const RECT r = (*iter).screen;
+			const RECT& r = monitor.screen;
 			if (pt.x >= r.left && pt.x < r.right && pt.y >= r.top && pt.y < r.bottom)
 			{
 				x = min(x, r.right - w);
@@ -770,7 +807,7 @@ void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
 
 	// No monitor found for the window -> Use the default work area
 	const int index = System::GetMultiMonitorInfo().primary - 1;
-	const RECT r = monitors[index].work;
+	const RECT& r = monitors[index].work;
 	x = min(x, r.right - w);
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
@@ -4292,65 +4329,14 @@ void Skin::SetSnapEdges(bool b)
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
-void Skin::ApplyDpiScale()
-{
-	if (!UpdateDpiScale())
-	{
-		return;
-	}
-
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	if (m_KeepOnScreen)
-	{
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy);
-	}
-
-	SetWindowPos(
-		m_Window,
-		nullptr,
-		m_ScreenX,
-		m_ScreenY,
-		scaledWindowSize.cx,
-		scaledWindowSize.cy,
-		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-	Redraw();
-}
-
 void Skin::ApplyZoom(float zoom, bool writeOptions)
 {
-	if (zoom <= 0.0f)
-	{
-		zoom = 1.0f;
-	}
+	zoom = max(zoom, 0.1f);
+	if (zoom == m_Zoom && writeOptions) return;
 
-	if (fabsf(m_Zoom - zoom) <= 0.0001f)
-	{
-		if (writeOptions)
-		{
-			return;
-		}
-	}
-	else
-	{
-		m_Zoom = zoom;
-		UpdateEffectiveScale();
-	}
+	m_Zoom = zoom;
 
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	if (m_KeepOnScreen)
-	{
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy);
-	}
-
-	SetWindowPos(
-		m_Window,
-		nullptr,
-		m_ScreenX,
-		m_ScreenY,
-		scaledWindowSize.cx,
-		scaledWindowSize.cy,
-		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-	Redraw();
+	ApplyEffectiveScale();
 
 	if (writeOptions)
 	{
@@ -5015,32 +5001,11 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	UpdateDpiScale();
+	const RECT* suggested = (const RECT*)lParam;
 
-	if (lParam)
+	if (suggested)
 	{
-		const RECT* suggested = (const RECT*)lParam;
-		m_ScreenX = suggested->left;
-		m_ScreenY = suggested->top;
-		SetWindowPositionVariables(m_ScreenX, m_ScreenY);
-	}
-
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	SetWindowPos(
-		m_Window,
-		nullptr,
-		m_ScreenX,
-		m_ScreenY,
-		scaledWindowSize.cx,
-		scaledWindowSize.cy,
-		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
-	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
-	// prevent D2D from erorring out.
-	if (m_State == STATE_RUNNING)
-	{
-		Redraw();
+		ApplyDpiScale(MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST));
 	}
 
 	return 0;
