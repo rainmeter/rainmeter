@@ -230,6 +230,8 @@ private:
 	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
 
+	void ScheduleUpdateCheck(UINT interval);
+
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
