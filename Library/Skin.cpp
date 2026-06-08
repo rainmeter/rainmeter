@@ -691,11 +691,6 @@ POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 	return DeviceToLogical(pos);
 }
 
-D2D1_MATRIX_3X2_F Skin::GetScaleMatrix() const
-{
-	return D2D1::Matrix3x2F::Scale(m_Scale, m_Scale);
-}
-
 void Skin::UpdateEffectiveScale()
 {
 	m_Scale = m_Zoom * m_DpiScale;
@@ -3093,6 +3088,8 @@ void Skin::Redraw()
 {
 	//UpdateRelativeMeters();
 
+	m_Canvas.SetDpiScale(m_Scale);
+
 	if (m_ResizeWindow)
 	{
 		ResizeWindow(m_ResizeWindow == RESIZEMODE_RESET);
@@ -3124,8 +3121,6 @@ void Skin::Redraw()
 	}
 
 	m_Canvas.Clear();
-	const D2D1_MATRIX_3X2_F scaleMatrix = GetScaleMatrix();
-	m_Canvas.SetTransform(scaleMatrix);
 
 	if (m_WindowW != 0 && m_WindowH != 0)
 	{
@@ -3253,9 +3248,9 @@ void Skin::Redraw()
 
 			if (!reinterpretMatrix->IsIdentity())
 			{
-				m_Canvas.SetTransform(matrix * scaleMatrix);
+				m_Canvas.SetTransform(matrix);
 				meter->Draw(m_Canvas);
-				m_Canvas.SetTransform(scaleMatrix);
+				m_Canvas.ResetTransform();
 			}
 			else
 			{
@@ -3284,17 +3279,17 @@ bool Skin::HandleContainer(Meter* container)
 	if (containerItems.empty()) return false;
 
 	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
+	container->UpdateContainer();
 
 	auto containerContentBitmap = container->GetContainerContentTexture();
 	m_Canvas.SetTarget(containerContentBitmap);
 	m_Canvas.Clear();
 
-	const D2D1_MATRIX_3X2_F scaleMatrix = GetScaleMatrix();
 	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
 
 	for (auto item : containerItems)
 	{
-		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset * scaleMatrix);
+		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset);
 		item->Draw(m_Canvas);
 	}
 	m_Canvas.ResetTransform();
@@ -3302,12 +3297,11 @@ bool Skin::HandleContainer(Meter* container)
 	auto containerBitmap = container->GetContainerTexture();
 	m_Canvas.SetTarget(containerBitmap);
 	m_Canvas.Clear();
-	m_Canvas.SetTransform(container->GetTransformationMatrix() * offset * scaleMatrix);
+	m_Canvas.SetTransform(container->GetTransformationMatrix() * offset);
 	container->Draw(m_Canvas);
 
 	m_Canvas.ResetTransform();
 	m_Canvas.ResetTarget();
-	m_Canvas.SetTransform(scaleMatrix);
 
 	const auto meterRect = container->GetMeterRect();
 	const auto containerContentD2DBitmap = containerContentBitmap->GetBitmap();
