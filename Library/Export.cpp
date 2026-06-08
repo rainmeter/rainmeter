@@ -424,10 +424,10 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 			{
 				const std::wstring& variable = subStrings[1];
 
-				const std::wstring* value = skin->GetParser().GetVariable(variable);
-				if (value)
+				auto& threadBuffer = GetThreadLocalStringBuffer();
+				if (skin->GetParser().GetVariable(variable, threadBuffer))
 				{
-					return (*value).c_str();
+					return threadBuffer.c_str();
 				}
 			}
 		}

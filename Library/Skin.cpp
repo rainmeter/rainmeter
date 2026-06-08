@@ -2398,16 +2398,8 @@ void Skin::ScreenToWindow()
 			{
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					bool reset = (!m_WindowXScreenDefined || !m_WindowYScreenDefined ||
-						m_WindowXScreen != screenIndex || m_WindowYScreen != screenIndex);
-
 					m_WindowXScreen = m_WindowYScreen = screenIndex;
 					m_WindowXScreenDefined = m_WindowYScreenDefined = true;
-
-					if (reset)
-					{
-						m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
-					}
 					break;
 				}
 			}
@@ -4519,7 +4511,6 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				m_WindowXScreen = m_WindowYScreen = screenIndex;
 				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
 
-				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}
@@ -4604,7 +4595,6 @@ void Skin::SetKeepOnScreen(bool b)
 void Skin::SetAutoSelectScreen(bool b)
 {
 	m_AutoSelectScreen = b;
-	m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 	WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 }
 
@@ -5371,10 +5361,7 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (UpdateDpiScale())
-	{
-		m_Parser.ResetMonitorVariables(this);
-	}
+	UpdateDpiScale();
 
 	if (lParam)
 	{
@@ -6308,8 +6295,6 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_Parser.ResetMonitorVariables(this);
-
 	// Move the window temporarily
 	ResizeWindow(false);
 	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -6347,11 +6332,18 @@ LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 void Skin::SetWindowPositionVariables(int x, int y)
 {
 	WCHAR buffer[32] = { 0 };
+	const POINT physical = { x, y };
+	const POINT logical = DeviceToLogical(physical);
+
+	_itow_s(logical.x, buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
+	_itow_s(logical.y, buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
 
 	_itow_s(x, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX:PX", buffer);
 	_itow_s(y, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY:PX", buffer);
 }
 
 void Skin::SetWindowSizeVariables(int w, int h)
@@ -6362,6 +6354,11 @@ void Skin::SetWindowSizeVariables(int w, int h)
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
 	_itow_s(h, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
+
+	_itow_s(ScaleToDevicePixels(w), buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH:PX", buffer);
+	_itow_s(ScaleToDevicePixels(h), buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT:PX", buffer);
 }
 
 /*

@@ -1155,8 +1155,11 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[512] = { 0 };
 				ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
 				std::wstring var = buffer;
-				const std::wstring* variable = m_SkinWindow->GetParser().GetVariable(var);
-				System::SetClipboardText(*variable);
+				std::wstring variable;
+				if (m_SkinWindow->GetParser().GetVariable(var, variable))
+				{
+					System::SetClipboardText(variable);
+				}
 			}
 		}
 		break;
@@ -1204,8 +1207,11 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 					else if (lvi.iGroupId == 1)  // It's a Variable
 					{
-						const std::wstring* variable = m_SkinWindow->GetParser().GetVariable(temp);
-						System::SetClipboardText(*variable);
+						std::wstring variable;
+						if (m_SkinWindow->GetParser().GetVariable(temp, variable))
+						{
+							System::SetClipboardText(variable);
+						}
 					}
 				}
 			}
