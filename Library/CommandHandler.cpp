@@ -74,6 +74,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
 	{ Bang::Move, L"Move", 2 },
 	{ Bang::SetAnchor, L"SetAnchor", 2 },
+	{ Bang::Zoom, L"Zoom", 1 },
 	{ Bang::ZPos, L"ZPos", 1 },
 	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
 	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
