@@ -1358,6 +1358,13 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		MoveWindow(m_ScreenX, m_ScreenY);
 		break;
 
+	case Bang::Zoom:
+		{
+			const float zoom = (float)m_Parser.ParseDouble(args[0].c_str(), 100.0) / 100.0f;
+			SetZoom(zoom);
+		}
+		break;
+
 	case Bang::ZPos:
 		SetWindowZPosition((ZPOSITION)m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
