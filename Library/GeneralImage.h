@@ -76,8 +76,8 @@ private:
 	void ApplyTransforms();
 	bool HasActiveTransforms(Gfx::D2DBitmap* bitmap) const;
 
-	ImageCacheHandle* m_Bitmap;
-	ImageCacheHandle* m_BitmapProcessed;
+	std::unique_ptr<ImageCacheHandle> m_Bitmap;
+	std::unique_ptr<ImageCacheHandle> m_BitmapProcessed;
 	Skin* m_Skin;
 
 	const WCHAR* m_Name;
