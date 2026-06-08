@@ -1187,7 +1187,6 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_DISPLAYCHANGE:
 		LogNotice(L"System: Display settings changed");
 		ClearMultiMonitorInfo();
-		ConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
@@ -1195,7 +1194,6 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			{
 				LogNotice(L"System: Work area changed");
 				UpdateWorkareaInfo();
-				ConfigParser::UpdateWorkareaVariables();
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows

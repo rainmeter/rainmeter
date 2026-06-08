@@ -22,14 +22,218 @@
 
 namespace {
 
+enum class MonitorArea
+{
+	Screen,
+	Work,
+	VirtualScreen
+};
+
+enum class MonitorComponent
+{
+	X,
+	Y,
+	Width,
+	Height
+};
+
 void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 {
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
+bool MatchPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix)
+{
+	const size_t len = wcslen(prefix);
+	if ((size_t)(end - *str) >= len && _wcsnicmp(*str, prefix, len) == 0)
+	{
+		*str += len;
+		return true;
+	}
+
+	return false;
+}
+
+bool MatchRange(const WCHAR* start, const WCHAR* end, const WCHAR* value)
+{
+	const size_t len = wcslen(value);
+	return (size_t)(end - start) == len && _wcsnicmp(start, value, len) == 0;
+}
+
+bool ParseMonitorComponent(const WCHAR* start, const WCHAR* end, MonitorComponent& component)
+{
+	if (MatchRange(start, end, L"X"))
+	{
+		component = MonitorComponent::X;
+		return true;
+	}
+	else if (MatchRange(start, end, L"Y"))
+	{
+		component = MonitorComponent::Y;
+		return true;
+	}
+	else if (MatchRange(start, end, L"WIDTH"))
+	{
+		component = MonitorComponent::Width;
+		return true;
+	}
+	else if (MatchRange(start, end, L"HEIGHT"))
+	{
+		component = MonitorComponent::Height;
+		return true;
+	}
+
+	return false;
+}
+
+bool ParseMonitorNumber(const WCHAR* start, const WCHAR* end, int& monitorNumber)
+{
+	if (start == end) return false;
+
+	monitorNumber = 0;
+	for (const WCHAR* ch = start; ch != end; ++ch)
+	{
+		if (!iswdigit(*ch)) return false;
+		monitorNumber = monitorNumber * 10 + (*ch - L'0');
+	}
+
+	return monitorNumber > 0;
+}
+
+bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, MonitorComponent& component, bool& primary, int& monitorNumber)
+{
+	const WCHAR* start = str;
+	const WCHAR* end = str + wcslen(str);
+	physical = false;
+	primary = false;
+	monitorNumber = -1;
+
+	if (end - start >= 3 && _wcsicmp(end - 3, L":PX") == 0)
+	{
+		physical = true;
+		end -= 3;
+	}
+
+	if (MatchPrefix(&start, end, L"PWORKAREA"))
+	{
+		primary = true;
+		area = MonitorArea::Work;
+	}
+	else if (MatchPrefix(&start, end, L"PSCREENAREA"))
+	{
+		primary = true;
+		area = MonitorArea::Screen;
+	}
+	else if (MatchPrefix(&start, end, L"VSCREENAREA"))
+	{
+		area = MonitorArea::VirtualScreen;
+	}
+	else if (MatchPrefix(&start, end, L"WORKAREA"))
+	{
+		area = MonitorArea::Work;
+	}
+	else if (MatchPrefix(&start, end, L"SCREENAREA"))
+	{
+		area = MonitorArea::Screen;
+	}
+	else
+	{
+		return false;
+	}
+
+	const WCHAR* componentEnd = end;
+	for (const WCHAR* ch = start; ch != end; ++ch)
+	{
+		if (*ch == L'@')
+		{
+			if (primary || area == MonitorArea::VirtualScreen) return false;
+
+			componentEnd = ch;
+			if (!ParseMonitorNumber(ch + 1, end, monitorNumber)) return false;
+			break;
+		}
+	}
+
+	return ParseMonitorComponent(start, componentEnd, component);
+}
+
+LONG ScaleMonitorCoordinate(LONG value, float scale)
+{
+	if (scale <= 0.0f)
+	{
+		scale = 1.0f;
+	}
+
+	return (LONG)floorf((float)value / scale);
+}
+
+RECT ScaleMonitorRect(const RECT& rect, float scale)
+{
+	return {
+		ScaleMonitorCoordinate(rect.left, scale),
+		ScaleMonitorCoordinate(rect.top, scale),
+		ScaleMonitorCoordinate(rect.right, scale),
+		ScaleMonitorCoordinate(rect.bottom, scale)
+	};
+}
+
+RECT GetPhysicalVirtualScreenRect(const MultiMonitorInfo& monitorsInfo)
+{
+	return {
+		monitorsInfo.vsL,
+		monitorsInfo.vsT,
+		monitorsInfo.vsL + monitorsInfo.vsW,
+		monitorsInfo.vsT + monitorsInfo.vsH
+	};
+}
+
+bool GetLogicalVirtualScreenRect(const std::vector<MonitorInfo>& monitors, RECT& rect)
+{
+	bool found = false;
+	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
+	{
+		if (!(*iter).active) continue;
+
+		const RECT monitorRect = ScaleMonitorRect((*iter).screen, (*iter).dpiScale);
+		if (!found)
+		{
+			rect = monitorRect;
+			found = true;
+		}
+		else
+		{
+			rect.left = min(rect.left, monitorRect.left);
+			rect.top = min(rect.top, monitorRect.top);
+			rect.right = max(rect.right, monitorRect.right);
+			rect.bottom = max(rect.bottom, monitorRect.bottom);
+		}
+	}
+
+	return found;
+}
+
+int GetMonitorRectValue(const RECT& rect, MonitorComponent component)
+{
+	switch (component)
+	{
+	case MonitorComponent::X:
+		return rect.left;
+
+	case MonitorComponent::Y:
+		return rect.top;
+
+	case MonitorComponent::Width:
+		return rect.right - rect.left;
+
+	case MonitorComponent::Height:
+		return rect.bottom - rect.top;
+	}
+
+	return 0;
+}
+
 }  // namespace
 
-std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
 std::unordered_map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
 
 ConfigParser::ConfigParser() :
@@ -73,7 +277,6 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
 	SetBuiltInVariables(filename, resourcePath, skin);
-	ResetMonitorVariables(skin);
 
 	System::UpdateIniFileMappingList();
 
@@ -153,10 +356,10 @@ void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std
 }
 
 /*
-** Gets a value for the variable. Returns nullptr if not found.
+** Gets a value for the variable. Returns false if not found.
 **
 */
-const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
+bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
 	const std::wstring strTmp = StrToUpper(strVariable);
 
@@ -164,24 +367,25 @@ const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
-		return &(*iter).second;
+		strValue = (*iter).second;
+		return true;
 	}
 
 	// #2: Monitor variables
-	iter = c_MonitorVariables.find(strTmp);
-	if (iter != c_MonitorVariables.end())
+	if (GetMonitorVariable(strTmp, strValue))
 	{
-		return &(*iter).second;
+		return true;
 	}
 
 	// #3: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
 	{
-		return &(*iter).second;
+		strValue = (*iter).second;
+		return true;
 	}
 
-	return nullptr;
+	return false;
 }
 
 const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& strVariable)
@@ -471,207 +675,109 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-void ConfigParser::ResetMonitorVariables(Skin* skin)
+bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
-	// Set the SCREENAREA/WORKAREA variables
-	if (c_MonitorVariables.empty())
+	bool physical = false;
+	bool primary = false;
+	int monitorNumber = -1;
+	MonitorArea area = MonitorArea::Screen;
+	MonitorComponent component = MonitorComponent::X;
+	if (!ParseMonitorVariable(strVariable.c_str(), physical, area, component, primary, monitorNumber))
 	{
-		SetMultiMonitorVariables(true);
+		return false;
 	}
 
-	// Set the SCREENAREA/WORKAREA variables for present monitor
-	SetAutoSelectedMonitorVariables(skin);
-}
-
-/*
-** Sets new values for the SCREENAREA/WORKAREA variables.
-**
-*/
-void ConfigParser::SetMultiMonitorVariables(bool reset)
-{
-	auto setMonitorVariable = [&](const WCHAR* variable, const WCHAR* value)
-	{
-		c_MonitorVariables[variable] = value;
-	};
-
-	if (!reset && c_MonitorVariables.empty())
-	{
-		reset = true;  // Set all variables
-	}
-
-	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+	if (monitors.empty())
+	{
+		return false;
+	}
+
+	RECT rect = {};
+	if (area == MonitorArea::VirtualScreen)
+	{
+		if (physical)
+		{
+			rect = GetPhysicalVirtualScreenRect(monitorsInfo);
+		}
+		else if (!GetLogicalVirtualScreenRect(monitors, rect))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		int screenIndex = monitorsInfo.primary;
+		if (monitorNumber > 0)
+		{
+			screenIndex = monitorNumber;
+		}
+		else if (!primary && m_Skin)
+		{
+			const bool horizontal = component == MonitorComponent::X || component == MonitorComponent::Width;
+			if (horizontal && m_Skin->GetXScreenDefined())
+			{
+				const int i = m_Skin->GetXScreen();
+				const int index = i - 1;
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[index].active))
+				{
+					screenIndex = i;
+				}
+			}
+			else if (!horizontal && m_Skin->GetYScreenDefined())
+			{
+				const int i = m_Skin->GetYScreen();
+				const int index = i - 1;
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[index].active))
+				{
+					screenIndex = i;
+				}
+			}
+		}
+
+		if (screenIndex == 0)
+		{
+			if (physical)
+			{
+				rect = GetPhysicalVirtualScreenRect(monitorsInfo);
+			}
+			else if (!GetLogicalVirtualScreenRect(monitors, rect))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			int monitorIndex = screenIndex - 1;
+			const int primaryIndex = monitorsInfo.primary - 1;
+			if (monitorIndex < 0 || monitorIndex >= (int)monitors.size())
+			{
+				return false;
+			}
+
+			if (!monitors[monitorIndex].active)
+			{
+				if (primaryIndex < 0 || primaryIndex >= (int)monitors.size())
+				{
+					return false;
+				}
+
+				monitorIndex = primaryIndex;
+			}
+
+			rect = (area == MonitorArea::Work) ? monitors[monitorIndex].work : monitors[monitorIndex].screen;
+			if (!physical)
+			{
+				rect = ScaleMonitorRect(rect, monitors[monitorIndex].dpiScale);
+			}
+		}
+	}
 
 	WCHAR buffer[32] = { 0 };
-	const int monitorIndex = monitorsInfo.primary - 1;
-	const RECT workArea = monitors[monitorIndex].work;
-	const RECT scrArea = monitors[monitorIndex].screen;
-
-	_itow_s(workArea.left, buffer, 10);
-	setMonitorVariable(L"WORKAREAX", buffer);
-	setMonitorVariable(L"PWORKAREAX", buffer);
-	_itow_s(workArea.top, buffer, 10);
-	setMonitorVariable(L"WORKAREAY", buffer);
-	setMonitorVariable(L"PWORKAREAY", buffer);
-	_itow_s(workArea.right - workArea.left, buffer, 10);
-	setMonitorVariable(L"WORKAREAWIDTH", buffer);
-	setMonitorVariable(L"PWORKAREAWIDTH", buffer);
-	_itow_s(workArea.bottom - workArea.top, buffer, 10);
-	setMonitorVariable(L"WORKAREAHEIGHT", buffer);
-	setMonitorVariable(L"PWORKAREAHEIGHT", buffer);
-
-	if (reset)
-	{
-		_itow_s(scrArea.left, buffer, 10);
-		setMonitorVariable(L"SCREENAREAX", buffer);
-		setMonitorVariable(L"PSCREENAREAX", buffer);
-		_itow_s(scrArea.top, buffer, 10);
-		setMonitorVariable(L"SCREENAREAY", buffer);
-		setMonitorVariable(L"PSCREENAREAY", buffer);
-		_itow_s(scrArea.right - scrArea.left, buffer, 10);
-		setMonitorVariable(L"SCREENAREAWIDTH", buffer);
-		setMonitorVariable(L"PSCREENAREAWIDTH", buffer);
-		_itow_s(scrArea.bottom - scrArea.top, buffer, 10);
-		setMonitorVariable(L"SCREENAREAHEIGHT", buffer);
-		setMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
-
-		_itow_s(monitorsInfo.vsL, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAX", buffer);
-		_itow_s(monitorsInfo.vsT, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAY", buffer);
-		_itow_s(monitorsInfo.vsW, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAWIDTH", buffer);
-		_itow_s(monitorsInfo.vsH, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
-	}
-
-	int i = 1;
-	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
-	{
-		WCHAR buffer2[64] = { 0 };
-
-		const RECT work = ((*iter).active) ? (*iter).work : workArea;
-
-		_itow_s(work.left, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.top, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.right - work.left, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.bottom - work.top, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", i);
-		setMonitorVariable(buffer2, buffer);
-
-		if (reset)
-		{
-			const RECT screen = ((*iter).active) ? (*iter).screen : scrArea;
-
-			_itow_s(screen.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.right - screen.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.bottom - screen.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", i);
-			setMonitorVariable(buffer2, buffer);
-		}
-	}
-}
-
-/*
-** Sets new SCREENAREA/WORKAREA variables for present monitor.
-**
-*/
-void ConfigParser::SetAutoSelectedMonitorVariables(Skin* skin)
-{
-	if (skin)
-	{
-		const int numOfMonitors = (int)System::GetMonitorCount();
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
-
-		WCHAR buffer[32] = { 0 };
-		int w1 = 0, w2 = 0, s1 = 0, s2 = 0;
-		int screenIndex = 0;
-
-		// Set X / WIDTH
-		screenIndex = monitorsInfo.primary;
-		if (skin->GetXScreenDefined())
-		{
-			int i = skin->GetXScreen();
-			const int index = i - 1;
-			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[index].active))
-			{
-				screenIndex = i;
-			}
-		}
-
-		if (screenIndex == 0)
-		{
-			s1 = w1 = monitorsInfo.vsL;
-			s2 = w2 = monitorsInfo.vsW;
-		}
-		else
-		{
-			const int monitorIndex = screenIndex - 1;
-			w1 = monitors[monitorIndex].work.left;
-			w2 = monitors[monitorIndex].work.right - monitors[monitorIndex].work.left;
-			s1 = monitors[monitorIndex].screen.left;
-			s2 = monitors[monitorIndex].screen.right - monitors[monitorIndex].screen.left;
-		}
-
-		_itow_s(w1, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAX", buffer);
-		_itow_s(w2, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-		_itow_s(s1, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAX", buffer);
-		_itow_s(s2, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
-
-		// Set Y / HEIGHT
-		screenIndex = monitorsInfo.primary;
-		if (skin->GetYScreenDefined())
-		{
-			const int i = skin->GetYScreen();
-			const int index = i - 1;
-			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[index].active))
-			{
-				screenIndex = i;
-			}
-		}
-
-		if (screenIndex == 0)
-		{
-			s1 = w1 = monitorsInfo.vsL;
-			s2 = w2 = monitorsInfo.vsW;
-		}
-		else
-		{
-			const int monitorIndex = screenIndex - 1;
-			w1 = monitors[monitorIndex].work.top;
-			w2 = monitors[monitorIndex].work.bottom - monitors[monitorIndex].work.top;
-			s1 = monitors[monitorIndex].screen.top;
-			s2 = monitors[monitorIndex].screen.bottom - monitors[monitorIndex].screen.top;
-		}
-
-		_itow_s(w1, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAY", buffer);
-		_itow_s(w2, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
-		_itow_s(s1, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAY", buffer);
-		_itow_s(s2, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
-	}
+	_itow_s(GetMonitorRectValue(rect, component), buffer, 10);
+	strValue = buffer;
+	return true;
 }
 
 /*
@@ -683,11 +789,6 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	bool replaced = false;
 
 	PathUtil::ExpandEnvironmentVariables(result);
-
-	if (c_MonitorVariables.empty())
-	{
-		SetMultiMonitorVariables(true);
-	}
 
 	// Check for new-style variables ([#VAR])
 	// Note: Most new-style variables are parsed later (when section variables are parsed),
@@ -709,11 +810,11 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 			start = result.find(strVariable, start);
 			if (start != std::wstring::npos)
 			{
-				const std::wstring* value = GetVariable(L"CURRENTSECTION");
-				if (value)
+				std::wstring value;
+				if (GetVariable(L"CURRENTSECTION", value))
 				{
 					// Variable found, replace it with the value
-					result.replace(start, length, *value);
+					result.replace(start, length, value);
 					start += length;
 					replaced = true;
 				}
@@ -749,12 +850,12 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 				else
 				{
 					std::wstring strVariable = result.substr(si, end - si);
-					const std::wstring* value = GetVariable(strVariable);
-					if (value)
+					std::wstring value;
+					if (GetVariable(strVariable, value))
 					{
 						// Variable found, replace it with the value
-						result.replace(start, end - start + 1ULL, *value);
-						start += (*value).length();
+						result.replace(start, end - start + 1ULL, value);
+						start += value.length();
 						replaced = true;
 					}
 					else
@@ -1017,10 +1118,10 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 				case VariableType::Variable:
 					{
-						const std::wstring* value = GetVariable(variable);
-						if (value)
+						std::wstring value;
+						if (GetVariable(variable, value))
 						{
-							foundValue.assign(*value);
+							foundValue.assign(value);
 							found = true;
 						}
 					}

@@ -47,7 +47,7 @@ public:
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
 
-	const std::wstring* GetVariable(const std::wstring& strVariable);
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
@@ -65,8 +65,6 @@ public:
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
-
-	void ResetMonitorVariables(Skin* skin = nullptr);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -104,8 +102,6 @@ public:
 	static D2D1_RECT_F ParseRect(LPCTSTR str);
 	static RECT ParseRECT(LPCTSTR str);
 
-	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
-	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 private:
@@ -115,11 +111,9 @@ private:
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	void SetAutoSelectedMonitorVariables(Skin* skin);
-
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	static void SetMultiMonitorVariables(bool reset);
+	bool GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
@@ -148,7 +142,6 @@ private:
 
 	Skin* m_Skin;
 
-	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
 	static std::unordered_map<VariableType, WCHAR> c_VariableMap;
 };
 
