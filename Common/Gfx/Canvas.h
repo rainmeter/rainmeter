@@ -121,6 +121,8 @@ private:
 
 	bool LogComError(HRESULT hr);
 
+	static HRESULT CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target);
+
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
 
@@ -159,6 +161,9 @@ private:
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
 	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
+
+	// Always kept at the default DPI for use in temporary contexts.
+	static Microsoft::WRL::ComPtr<ID2D1DeviceContext> c_EffectTarget;
 };
 
 }  // namespace Gfx
