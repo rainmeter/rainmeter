@@ -8,6 +8,7 @@
 #ifndef __MEASUREPLUGIN_H__
 #define __MEASUREPLUGIN_H__
 
+#include "ConfigParser.h"
 #include "Measure.h"
 #include "Export.h"
 
@@ -42,6 +43,7 @@ public:
 	virtual void Command(const std::wstring& command);
 
 	bool IsDpiAware() const { return m_DpiAware; }
+	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
@@ -55,6 +57,7 @@ private:
 	HMODULE m_Plugin;
 
 	bool m_DpiAware;
+	ConfigParser::MonitorVariableMode m_MonitorVariableMode;
 
 	union
 	{

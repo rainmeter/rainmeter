@@ -153,12 +153,17 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 		buffer[0] = L'\0';
 
 		const auto defValueInt = ConfigParser::ParseInt(defValue, 0);
+		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
+		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 		_itow_s(result, buffer, 10);
 		return buffer;
 	}
 
-	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+	return result;
 }
 
 LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
@@ -188,12 +193,19 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
+	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+	double result;
 	if (ShouldScalePluginCoordinateOption(measure, option))
 	{
-		return ReadScaledPluginCoordinateOption(measure, parser, option, (int)defValue);
+		result = ReadScaledPluginCoordinateOption(measure, parser, option, (int)defValue);
 	}
+	else
+	{
+		result = parser.ReadFloat(measure->GetName(), option, defValue);
+	}
+	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 
-	return parser.ReadFloat(measure->GetName(), option, defValue);
+	return result;
 }
 
 double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)

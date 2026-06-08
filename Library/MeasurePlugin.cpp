@@ -14,6 +14,7 @@
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_DpiAware(false),
+	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
@@ -152,6 +153,13 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	auto* dpiAware = (const BYTE*)GetProcAddress(m_Plugin, "DpiAware");
 	m_DpiAware = dpiAware && *dpiAware == 1;
+
+	const WCHAR* pluginFileName = PathFindFileName(pluginName.c_str());
+
+	// Chameleon expects monitor variables such as #SCREENAREAWIDTH# to resolve to physical pixels.
+	m_MonitorVariableMode = (!m_DpiAware && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
+		ConfigParser::MonitorVariableMode::FORCE_PHYSICAL :
+		ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL;
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");

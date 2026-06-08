@@ -36,6 +36,12 @@ public:
 		CharacterReference					// Not available.                     [\8364], [\x20AC], [\X20AC], etc.
 	};
 
+	enum class MonitorVariableMode : BYTE
+	{
+		DEFAULT_LOGICAL,
+		FORCE_PHYSICAL
+	};
+
 	ConfigParser();
 	~ConfigParser();
 
@@ -53,6 +59,8 @@ public:
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
 	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
@@ -126,6 +134,7 @@ private:
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;
+	MonitorVariableMode m_MonitorVariableMode;
 
 	std::wstring* m_CurrentSection;
 
