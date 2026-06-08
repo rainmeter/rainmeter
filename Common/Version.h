@@ -24,7 +24,7 @@ public:
 	void Set(std::wstring v) { m_Version = std::move(v); Validate(); }
 	void Append(std::wstring v) { if (!m_Version.empty()) { m_Version += L'.'; } m_Version += v; Validate(); }
 
-	std::wstring Get() { return m_Version; }
+	const std::wstring& Get() { return m_Version; }
 
 	bool IsValid() const { return m_IsValid; }
 
