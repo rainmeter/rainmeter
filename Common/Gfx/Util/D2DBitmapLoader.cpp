@@ -76,6 +76,13 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	hr = source->GetSize(&width, &height);
 	if (FAILED(hr)) return cleanup(hr);
 
+	if (bitmap->GetCreateAlphaMask())
+	{
+		std::vector<BYTE> alphaMask;
+		CreateAlphaMask(source.Get(), width, height, alphaMask);
+		bitmap->SetAlphaMask(alphaMask);
+	}
+
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	if (width <= maxBitmapSize && height <= maxBitmapSize)
 	{
@@ -200,6 +207,44 @@ HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,
 	}
 
 	return E_FAIL;
+}
+
+HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask)
+{
+	alphaMask.clear();
+	if (!source || width == 0U || height == 0U || width > (UINT)INT_MAX || height > (UINT)INT_MAX || width > UINT_MAX / 4U)
+	{
+		return E_FAIL;
+	}
+
+	const UINT stride = width * 4U;
+	const UINT64 pixelCount64 = (UINT64)width * height;
+	const size_t pixelCount = (size_t)pixelCount64;
+	if ((UINT64)pixelCount != pixelCount64)
+	{
+		return E_FAIL;
+	}
+
+	alphaMask.resize(pixelCount);
+	std::vector<BYTE> row(stride);
+	for (UINT y = 0U; y < height; ++y)
+	{
+		WICRect rect = { 0, (INT)y, (INT)width, 1 };
+		HRESULT hr = source->CopyPixels(&rect, stride, stride, row.data());
+		if (FAILED(hr))
+		{
+			alphaMask.clear();
+			return hr;
+		}
+
+		const size_t dstRow = (size_t)y * width;
+		for (UINT x = 0U; x < width; ++x)
+		{
+			alphaMask[dstRow + x] = row[(size_t)x * 4U + 3U];
+		}
+	}
+
+	return S_OK;
 }
 
 HRESULT D2DBitmapLoader::ConvertToD2DFormat(

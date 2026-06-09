@@ -42,7 +42,7 @@ void MeterButton::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName);
+		m_Image.LoadImage(m_ImageName, true);
 
 		if (m_Image.IsLoaded())
 		{
@@ -205,9 +205,7 @@ bool MeterButton::HitTest2(int px, int py)
 					py -= (int)drawH * m_State;
 				}
 
-				D2D1_COLOR_F color;
-				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
-				return !valid || (color.a != 0.0f);
+				return bitmap->IsPixelOpaque(px, py);
 			}
 		}
 		else

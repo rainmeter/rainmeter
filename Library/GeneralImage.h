@@ -68,7 +68,7 @@ public:
 	Gfx::D2DBitmap* GetImage();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
-	bool LoadImage(const std::wstring& imageName);
+	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
 

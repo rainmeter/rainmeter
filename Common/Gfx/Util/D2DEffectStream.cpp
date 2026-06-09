@@ -134,7 +134,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	const UINT width = (UINT)size.width;
 	const UINT height = (UINT)size.height;
 
-	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
+	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
 	d2dbitmap->m_Width = width;
 	d2dbitmap->m_Height = height;
 
@@ -223,6 +223,10 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	}
 
 	resetTarget();
+	if (d2dbitmap->m_CreateAlphaMask && !d2dbitmap->BuildAlphaMask(canvas))
+	{
+		deleteImage();
+	}
 	return d2dbitmap;
 }
 

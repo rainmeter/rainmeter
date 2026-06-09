@@ -24,7 +24,8 @@ struct ImageOptions : Gfx::FileInfo
 		m_GreyScale(false),
 		m_Rotate(0.0f),
 		m_Flip(Gfx::Util::FlipType::None),
-		m_UseExifOrientation(false)
+		m_UseExifOrientation(false),
+		m_CreateAlphaMask(false)
 	{}
 
 	enum CROPMODE
@@ -52,6 +53,7 @@ struct ImageOptions : Gfx::FileInfo
 			m_Rotate == other.m_Rotate &&
 			m_GreyScale == other.m_GreyScale &&
 			m_UseExifOrientation == other.m_UseExifOrientation &&
+			m_CreateAlphaMask == other.m_CreateAlphaMask &&
 			m_Flip == other.m_Flip &&
 			m_CropMode == other.m_CropMode &&
 			m_Crop.left == other.m_Crop.left &&
@@ -67,6 +69,7 @@ struct ImageOptions : Gfx::FileInfo
 	FLOAT m_Rotate;
 	Gfx::Util::FlipType m_Flip;
 	bool m_UseExifOrientation;
+	bool m_CreateAlphaMask;
 };
 
 #endif
