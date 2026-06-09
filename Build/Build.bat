@@ -1,26 +1,38 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Parameters: type version
+:: Parameters: type version [options]
 ::
 :: Available build types:
 ::		full          -> build everything
 ::		rainmeter-32  -> build 32-bit Rainmeter
 ::		rainmeter-64  -> build 64-bit Rainmeter
+::		test-64       -> run 64-bit unit tests
 ::		languages     -> build language .dll files for all targets
 ::		installer     -> build installer
+::
+:: Options:
+::		include-tests -> include unit tests in the build
 
 set BUILD_TYPE=%1
 set VERSION=%2
+set EXCLUDE_TESTS=true
+
+if "%3" == "" goto TEST_MODE_OK
+if "%3" == "include-tests" set EXCLUDE_TESTS=false & goto TEST_MODE_OK
+echo Unknown test mode & exit /b 1
+:TEST_MODE_OK
 
 if "%BUILD_TYPE%" == "full" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "rainmeter-32" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "rainmeter-64" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "test-64" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "installer" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
+if "%BUILD_TYPE%" == "test-64" goto SKIP_VERSION
 if "%VERSION%" == "" echo Invalid version & exit /b 1
 
 for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
@@ -32,6 +44,7 @@ for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
 
 set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
 set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
+:SKIP_VERSION
 
 set BUILD_YEAR=%date:~-4%
 set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
@@ -48,10 +61,11 @@ set VSCMD_SKIP_SENDTELEMETRY=1
 call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
-	/p:ExcludeTests=true^
+	/p:ExcludeTests=%EXCLUDE_TESTS%^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
+if "%BUILD_TYPE%" == "test-64" goto TEST_RAINMETER_64
 if "%BUILD_TYPE%" == "languages" goto BUILD_LANGUAGES
 if "%BUILD_TYPE%" == "installer" goto BUILD_INSTALLER
 
@@ -120,6 +134,11 @@ if "%BUILD_TYPE%" == "languages" (
 
 if "%BUILD_TYPE%" == "rainmeter-32" goto DONE
 if "%BUILD_TYPE%" == "rainmeter-64" goto DONE
+
+:TEST_RAINMETER_64
+echo * Testing 64-bit projects
+vstest.console.exe "..\x64-Release\Obj\Common_Test\Common_Test.dll" "..\x64-Release\Rainmeter.dll" /Platform:x64 || (echo   ERROR %ERRORLEVEL%: Tests failed & exit /b 1)
+goto DONE
 
 :BUILD_INSTALLER
 echo * Building installer
