@@ -1197,8 +1197,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::Move:
 		{
-			int x = ScaleToDevicePixels(m_Parser.ParseInt(args[0].c_str(), 0));
-			int y = ScaleToDevicePixels(m_Parser.ParseInt(args[1].c_str(), 0));
+			int x = m_Parser.ParseInt(args[0].c_str(), 0);
+			int y = m_Parser.ParseInt(args[1].c_str(), 0);
 			MoveWindow(x, y);
 		}
 		break;
@@ -1206,8 +1206,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetWindowPosition:
 		m_WindowX = m_Parser.ParseFormulaWithModifiers(args[0]);
 		m_WindowY = m_Parser.ParseFormulaWithModifiers(args[1]);
-		m_WindowX = ScalePositionOption(m_WindowX, GetPositionOptionScale(m_WindowX, m_WindowY, m_Zoom), true);
-		m_WindowY = ScalePositionOption(m_WindowY, GetPositionOptionScale(m_WindowY, m_WindowX, m_Zoom), true);
 
 		if (args.size() == 4)
 		{
