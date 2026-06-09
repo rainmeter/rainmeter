@@ -5916,6 +5916,13 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// Move the window temporarily
 	ResizeWindow(false);
+
+	if (m_KeepOnScreen)
+	{
+		const auto size = GetScaledWindowSize();
+		MapCoordsToScreen(m_ScreenX, m_ScreenY, size.cx, size.cy);
+	}
+
 	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	return 0;
