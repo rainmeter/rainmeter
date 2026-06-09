@@ -20,11 +20,6 @@ public:
 	Common_Gfx_TextFormatD2D_Test() :
 		m_D2D(Canvas::Create(Gfx::Renderer::D2D))
 	{
-		// TODO: Handle this in CanvasD2D.
-		ULONG_PTR gdiplusToken;
-		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
-
 		m_D2D->Resize(10, 10);
 		m_D2D->SetAntiAliasing(true);
 	}

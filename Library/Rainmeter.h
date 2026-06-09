@@ -303,8 +303,6 @@ private:
 	HMODULE m_ResourceInstance;
 	LCID m_ResourceLCID;
 
-	ULONG_PTR m_GDIplusToken;
-
 	GlobalOptions m_GlobalOptions;
 
 	std::wstring m_BuildTime;

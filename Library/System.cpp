@@ -15,7 +15,7 @@
 #include <TlHelp32.h>
 #include <WtsApi32.h>
 
-using namespace Gdiplus;
+bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& target);
 
 #define DEBUG_VERBOSE  (0)  // Set 1 if you need verbose logging.
 
@@ -1370,68 +1370,62 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 			return;
 		}
 
-		Bitmap bitmap(wallpaper.c_str());
-		if (bitmap.GetLastStatus() == Ok)
+		std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
+		if (ConvertImageToBmpFile(wallpaper, file))
 		{
-			std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
-
-			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
-			if (bitmap.Save(file.c_str(), &bmpClsid) == Ok)
+			if (!style.empty())
 			{
-				if (!style.empty())
+				HKEY hKey;
+				if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
 				{
-					HKEY hKey;
-					if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
+					const WCHAR* wallStyle = nullptr;
+					const WCHAR* wallTile = L"0";
+
+					const WCHAR* option = style.c_str();
+					if (_wcsicmp(option, L"CENTER") == 0)
 					{
-						const WCHAR* wallStyle = nullptr;
-						const WCHAR* wallTile = L"0";
-
-						const WCHAR* option = style.c_str();
-						if (_wcsicmp(option, L"CENTER") == 0)
-						{
-							wallStyle = L"0";
-						}
-						else if (_wcsicmp(option, L"TILE") == 0)
-						{
-							wallStyle = L"0";
-							wallTile = L"1";
-						}
-						else if (_wcsicmp(option, L"STRETCH") == 0)
-						{
-							wallStyle = L"2";
-						}
-						if (_wcsicmp(option, L"FIT") == 0)
-						{
-							wallStyle = L"6";
-						}
-						else if (_wcsicmp(option, L"FILL") == 0)
-						{
-							wallStyle = L"10";
-						}
-						else if (IsWindows10OrGreater())
-						{
-							if (_wcsicmp(option, L"SPAN") == 0)
-							{
-								wallStyle = L"22";
-							}
-						}
-
-						if (wallStyle)
-						{
-							RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
-							RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
-						}
-						else
-						{
-							LogError(L"!SetWallpaper: Invalid style");
-						}
-
-						RegCloseKey(hKey);
+						wallStyle = L"0";
 					}
-				}
+					else if (_wcsicmp(option, L"TILE") == 0)
+					{
+						wallStyle = L"0";
+						wallTile = L"1";
+					}
+					else if (_wcsicmp(option, L"STRETCH") == 0)
+					{
+						wallStyle = L"2";
+					}
+					if (_wcsicmp(option, L"FIT") == 0)
+					{
+						wallStyle = L"6";
+					}
+					else if (_wcsicmp(option, L"FILL") == 0)
+					{
+						wallStyle = L"10";
+					}
+					else if (IsWindows10OrGreater())
+					{
+						if (_wcsicmp(option, L"SPAN") == 0)
+						{
+							wallStyle = L"22";
+						}
+					}
 
-				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
+					if (wallStyle)
+					{
+						RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
+						RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
+					}
+					else
+					{
+						LogError(L"!SetWallpaper: Invalid style");
+					}
+
+					RegCloseKey(hKey);
+				}
 			}
+
+			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
 		}
 	}
 }

@@ -25,8 +25,6 @@
 #include "UpdateCheck.h"
 #include "../Version.h"
 
-using namespace Gdiplus;
-
 enum TIMER
 {
 	TIMER_NETSTATS    = 1,
@@ -122,7 +120,6 @@ Rainmeter::Rainmeter() :
 	m_Instance(),
 	m_ResourceInstance(),
 	m_ResourceLCID(),
-	m_GDIplusToken(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor(),
 	m_HardwareAccelerated(false)
@@ -135,10 +132,6 @@ Rainmeter::Rainmeter() :
 	}
 
 	InitCommonControls();
-
-	// Initialize GDI+.
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, nullptr);
 }
 
 /*
@@ -148,8 +141,6 @@ Rainmeter::Rainmeter() :
 Rainmeter::~Rainmeter()
 {
 	CoUninitialize();
-
-	GdiplusShutdown(m_GDIplusToken);
 
 	// Close dialogs if open
 	DialogManage::CloseDialog();
