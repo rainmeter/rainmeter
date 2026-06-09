@@ -17,7 +17,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100", L"50", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(100, result.x.coordinate);
 		Assert::AreEqual(50, result.y.coordinate);
 		Assert::AreEqual(0, result.x.anchorScreen);
@@ -31,7 +30,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50%", L"50%", L"50%", L"50%", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(860, result.x.coordinate);
 		Assert::AreEqual(490, result.y.coordinate);
 		Assert::AreEqual(100, result.x.anchorScreen);
@@ -47,7 +45,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100", L"50", L"50", L"20", 200, 100, 1.5f },
 			CreateMonitors());
-
 		Assert::AreEqual(25, result.x.coordinate);
 		Assert::AreEqual(20, result.y.coordinate);
 		Assert::AreEqual(50, result.x.anchorScreen);
@@ -159,7 +156,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1080@2", L"0", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
 			CreateMonitors());
-
 		Assert::AreEqual(2900, result.x.coordinate);
 		Assert::AreEqual(0, result.y.coordinate);
 		Assert::AreEqual(200, result.x.anchorScreen);
@@ -173,7 +169,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"540@2", L"462", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
 			CreateMonitors());
-
 		Assert::AreEqual(2410, result.x.coordinate);
 		Assert::AreEqual(437, result.y.coordinate);
 		Assert::AreEqual(100, result.x.anchorScreen);
@@ -187,7 +182,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1720", L"980", L"0", L"0", 200, 100, 1.5f, 1.5f, false, false },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(1720, result.x.coordinate);
 		Assert::AreEqual(980, result.y.coordinate);
 		Assert::AreEqual(0, result.x.anchorScreen);
@@ -199,7 +193,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1720", L"980", L"0", L"0", 200, 100, 1.5f, 1.0f, true, true },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(1720, result.x.coordinate);
 		Assert::AreEqual(980, result.y.coordinate);
 		Assert::AreEqual(0, result.x.anchorScreen);
@@ -211,13 +204,14 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1920", L"1080", L"100%", L"100%", 200, 100, 1.5f, 1.0f, true, true },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(1620, result.x.coordinate);
 		Assert::AreEqual(930, result.y.coordinate);
 		Assert::AreEqual(200, result.x.anchorScreen);
 		Assert::AreEqual(100, result.y.anchorScreen);
 		Assert::IsTrue(result.x.anchorPercentage);
 		Assert::IsTrue(result.y.anchorPercentage);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
 	}
 
 	TEST_METHOD(TestAutoAnchorCanRunOnOnlyOneAxis)
@@ -225,7 +219,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1720", L"540", L"0", L"50%", 200, 100, 1.5f, 1.0f, false, true },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(1620, result.x.coordinate);
 		Assert::AreEqual(465, result.y.coordinate);
 		Assert::AreEqual(200, result.x.anchorScreen);
@@ -234,12 +227,157 @@ public:
 		Assert::IsTrue(result.y.anchorPercentage);
 	}
 
+	TEST_METHOD(TestAutoFromFarEdgeNotSetWhenWindowIsInFirstHalf)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"860", L"490", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(810, result.x.coordinate);
+		Assert::AreEqual(465, result.y.coordinate);
+		Assert::IsFalse(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetWhenWindowCenterJustPastMidpointX)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"861", L"0", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(811, result.x.coordinate);
+		Assert::AreEqual(0, result.y.coordinate);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetWhenWindowCenterJustPastMidpointY)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"0", L"491", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(0, result.x.coordinate);
+		Assert::AreEqual(466, result.y.coordinate);
+		Assert::IsFalse(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetOnXAxisWithCenterAnchor)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1000", L"200", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(950, result.x.coordinate);
+		Assert::AreEqual(200, result.y.coordinate);
+		Assert::AreEqual(100, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetOnYAxisWithCenterAnchor)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"0", L"600", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(0, result.x.coordinate);
+		Assert::AreEqual(575, result.y.coordinate);
+		Assert::AreEqual(0, result.x.anchorScreen);
+		Assert::AreEqual(50, result.y.anchorScreen);
+		Assert::IsFalse(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetOnBothAxesWithEndAnchor)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1720", L"980", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(1620, result.x.coordinate);
+		Assert::AreEqual(930, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(100, result.y.anchorScreen);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+		Assert::IsFalse(result.x.anchorFromFarEdge);
+		Assert::IsFalse(result.y.anchorFromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeNotSetWhenScaleIsUnchanged)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1400", L"600", L"0", L"0", 200, 100, 1.5f, 1.5f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(1400, result.x.coordinate);
+		Assert::AreEqual(600, result.y.coordinate);
+		Assert::IsFalse(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeSetEvenWithExplicitAnchorWhenScaleChanges)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1400", L"600", L"0", L"0", 200, 100, 1.5f, 1.0f, true, true },
+			CreateSingleMonitor());
+		Assert::AreEqual(1400, result.x.coordinate);
+		Assert::AreEqual(600, result.y.coordinate);
+		Assert::AreEqual(0, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeNotSetWithExplicitAnchorWhenScaleUnchanged)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1400", L"600", L"0", L"0", 200, 100, 1.5f, 1.5f, true, true },
+			CreateSingleMonitor());
+		Assert::AreEqual(1400, result.x.coordinate);
+		Assert::AreEqual(600, result.y.coordinate);
+		Assert::IsFalse(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeIndependentPerAxisWithMixedExplicitAnchors)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1400", L"600", L"0", L"0", 200, 100, 1.5f, 1.0f, true, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(1400, result.x.coordinate);
+		Assert::AreEqual(575, result.y.coordinate);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeOnSecondMonitorUsesMonitorMidpoint)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1080@2", L"0", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateMonitors());
+		Assert::AreEqual(2900, result.x.coordinate);
+		Assert::AreEqual(0, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsFalse(result.y.fromFarEdge);
+	}
+
+	TEST_METHOD(TestAutoFromFarEdgeScaleDecreaseBothAxes)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1620", L"930", L"0", L"0", 200, 100, 1.0f, 1.5f, false, false },
+			CreateSingleMonitor());
+		Assert::AreEqual(1720, result.x.coordinate);
+		Assert::AreEqual(980, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(100, result.y.anchorScreen);
+		Assert::IsTrue(result.x.fromFarEdge);
+		Assert::IsTrue(result.y.fromFarEdge);
+	}
+
 	TEST_METHOD(TestNegativeWindowCoordinates)
 	{
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"-25", L"-10", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(-25, result.x.coordinate);
 		Assert::AreEqual(-10, result.y.coordinate);
 		Assert::IsFalse(result.x.percentage);
@@ -251,7 +389,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"2000", L"1200", L"0", L"0", 200, 100, 1.0f },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(2000, result.x.coordinate);
 		Assert::AreEqual(1200, result.y.coordinate);
 		Assert::AreEqual(1, result.x.screen);
@@ -265,7 +402,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"125%", L"150%", L"0", L"0", 200, 100, 1.0f },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(2400, result.x.coordinate);
 		Assert::AreEqual(1620, result.y.coordinate);
 		Assert::IsTrue(result.x.percentage);
@@ -277,7 +413,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"10.9", L"-10.9", L"1.9", L"2.9", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(9, result.x.coordinate);
 		Assert::AreEqual(-12, result.y.coordinate);
 		Assert::AreEqual(1, result.x.anchorScreen);
@@ -289,7 +424,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100R", L"80B", L"20%R", L"10B", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1660, result.x.coordinate);
 		Assert::AreEqual(910, result.y.coordinate);
 		Assert::AreEqual(160, result.x.anchorScreen);
@@ -305,7 +439,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"25%R", L"10%B", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1440, result.x.coordinate);
 		Assert::AreEqual(972, result.y.coordinate);
 		Assert::IsTrue(result.x.percentage);
@@ -319,7 +452,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100", L"50", L"0R", L"0B", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(-100, result.x.coordinate);
 		Assert::AreEqual(-50, result.y.coordinate);
 		Assert::AreEqual(200, result.x.anchorScreen);
@@ -333,7 +465,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100%R", L"100%B", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(0, result.x.coordinate);
 		Assert::AreEqual(0, result.y.coordinate);
 		Assert::IsTrue(result.x.percentage);
@@ -347,7 +478,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100", L"50", L"250R", L"150B", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(150, result.x.coordinate);
 		Assert::AreEqual(100, result.y.coordinate);
 		Assert::AreEqual(-50, result.x.anchorScreen);
@@ -359,7 +489,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100", L"50", L"-10", L"-20", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(100, result.x.coordinate);
 		Assert::AreEqual(50, result.y.coordinate);
 		Assert::AreEqual(0, result.x.anchorScreen);
@@ -371,7 +500,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50", L"500@2", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1970, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -385,7 +513,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@2", L"500", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1970, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -399,7 +526,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@2", L"25@0", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1970, result.x.coordinate);
 		Assert::AreEqual(-25, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -412,11 +538,9 @@ public:
 	{
 		MultiMonitorInfo monitorsInfo = CreateMonitors();
 		monitorsInfo.primary = 2;
-
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50", L"500", L"0", L"0", 200, 100, 1.0f },
 			monitorsInfo);
-
 		Assert::AreEqual(1970, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -430,7 +554,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"1400@2", L"1100", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(3320, result.x.coordinate);
 		Assert::AreEqual(1100, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -444,7 +567,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"125%@2", L"150%", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(3520, result.x.coordinate);
 		Assert::AreEqual(1536, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -460,7 +582,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"100@0", L"50", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(0, result.x.coordinate);
 		Assert::AreEqual(0, result.y.coordinate);
 		Assert::AreEqual(0, result.x.screen);
@@ -474,7 +595,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@3", L"500", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(50, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(1, result.x.screen);
@@ -488,7 +608,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@", L"500", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(50, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(1, result.x.screen);
@@ -501,11 +620,9 @@ public:
 	{
 		MultiMonitorInfo monitorsInfo = CreateMonitors();
 		monitorsInfo.monitors.push_back(CreateMonitor(3200, 0, 4000, 600, false));
-
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@3", L"500", L"0", L"0", 200, 100, 1.0f },
 			monitorsInfo);
-
 		Assert::AreEqual(50, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(1, result.x.screen);
@@ -519,7 +636,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"50@2abc", L"500", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(1970, result.x.coordinate);
 		Assert::AreEqual(500, result.y.coordinate);
 		Assert::AreEqual(2, result.x.screen);
@@ -533,7 +649,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"#WORKAREAX@n#", L"#WORKAREAY@n#", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(0, result.x.coordinate);
 		Assert::AreEqual(0, result.y.coordinate);
 		Assert::AreEqual(1, result.x.screen);
@@ -547,7 +662,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"10%R#VAR#", L"20%B#VAR#", L"0", L"0", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(10, result.x.coordinate);
 		Assert::AreEqual(20, result.y.coordinate);
 		Assert::IsFalse(result.x.percentage);
@@ -561,7 +675,6 @@ public:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ L"", L"abc", L"abc", L"", 200, 100, 1.0f },
 			CreateMonitors());
-
 		Assert::AreEqual(0, result.x.coordinate);
 		Assert::AreEqual(0, result.y.coordinate);
 		Assert::AreEqual(0, result.x.anchorScreen);
@@ -582,7 +695,6 @@ private:
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
 			{ windowX, windowY, L"0", L"0", 200, 100, scale, oldScale, false, false },
 			CreateSingleMonitor());
-
 		Assert::AreEqual(expectedX, result.x.coordinate);
 		Assert::AreEqual(expectedY, result.y.coordinate);
 		Assert::AreEqual(expectedAnchorX, result.x.anchorScreen);
