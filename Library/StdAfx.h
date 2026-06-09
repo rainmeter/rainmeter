@@ -16,8 +16,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commdlg.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
 #include <Iphlpapi.h>
