@@ -22,6 +22,9 @@ struct Input
 	int windowW;
 	int windowH;
 	float scale;
+	float oldScale = 0.0f;
+	bool anchorXDefined = true;
+	bool anchorYDefined = true;
 };
 
 struct AxisResult

@@ -320,7 +320,7 @@ private:
 	bool UpdateDpiScale(HMONITOR monitor = nullptr);
 	void ApplyDpiScale(HMONITOR monitor = nullptr);
 	SIZE GetScaledWindowSize(float zoom) const;
-	void WindowToScreen();
+	void WindowToScreen(float oldScale = 0.0f);
 	void ScreenToWindow();
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
@@ -430,6 +430,8 @@ private:
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;
 	bool m_AnchorYPercentage;
+	bool m_AnchorXDefined;
+	bool m_AnchorYDefined;
 	int m_AnchorScreenX;
 	int m_AnchorScreenY;
 	float m_Zoom;
