@@ -114,6 +114,10 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="WindowPlacement.cpp" />
+    <ClCompile Include="WindowPlacement_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="lua\LuaScript.cpp" />
     <ClCompile Include="lua\glue\LuaMeasure.cpp" />
     <ClCompile Include="lua\glue\LuaMeter.cpp" />
@@ -202,6 +206,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="WindowPlacement.h" />
     <ClInclude Include="lua\LuaScript.h" />
   </ItemGroup>
   <ItemGroup>
