@@ -696,10 +696,6 @@ POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 void Skin::UpdateEffectiveScale()
 {
 	m_Scale = m_Zoom * m_DpiScale;
-
-	WCHAR buffer[32] = { 0 };
-	FormatPositionCoordinate(m_Scale, buffer, _countof(buffer));
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGPXRATIO", buffer);
 }
 
 bool Skin::UpdateDpiScale(HMONITOR monitor)
@@ -715,9 +711,8 @@ bool Skin::UpdateDpiScale(HMONITOR monitor)
 		m_DpiScale = 1.0f;
 	}
 
-	const auto changed = fabsf(oldDpiScale - m_DpiScale) > 0.1f;
-	if (changed) UpdateEffectiveScale();
-	return changed;
+	UpdateEffectiveScale();
+	return fabsf(oldDpiScale - m_DpiScale) > 0.1f;
 }
 
 void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
