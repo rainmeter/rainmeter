@@ -15,13 +15,12 @@ public:
 	Library_SkinRegistry_Test()
 	{
 		std::vector<std::wstring> favorites;
-		m_SkinRegistry.Populate(L"..\\..\\..\\Library\\Test\\SkinRegistry\\", favorites);
+		m_SkinRegistry.Populate(L"..\\Library\\Test\\SkinRegistry\\", favorites);
 	}
 
 	TEST_METHOD(TestContents)
 	{
 		std::vector<SkinRegistry::File> files1;
-		files1.emplace_back(L"1.ini");
 		files1.emplace_back(L"1.ini");
 
 		std::vector<SkinRegistry::File> files3;

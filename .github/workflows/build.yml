@@ -20,7 +20,14 @@ jobs:
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
           cd Build
-          .\Build.bat rainmeter-${{ matrix.arch }} $buildVersion
+          .\Build.bat rainmeter-${{ matrix.arch }} $buildVersion include-tests
+        shell: pwsh
+
+      - name: Test 64-bit Rainmeter
+        if: ${{ matrix.arch == 64 }}
+        run: |
+          cd Build
+          .\Build.bat test-64
         shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
