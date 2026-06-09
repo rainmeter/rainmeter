@@ -164,6 +164,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_AnchorYFromBottom(false),
 	m_AnchorXPercentage(false),
 	m_AnchorYPercentage(false),
+	m_AnchorXDefined(false),
+	m_AnchorYDefined(false),
 	m_AnchorScreenX(),
 	m_AnchorScreenY(),
 	m_Zoom(1.0f),
@@ -741,7 +743,10 @@ bool Skin::UpdateDpiScale(HMONITOR monitor)
 
 void Skin::ApplyDpiScale(HMONITOR monitor)
 {
+	const float oldScale = m_Scale;
 	if (!UpdateDpiScale(monitor)) return;
+
+	WindowToScreen(oldScale);
 
 	if (m_KeepOnScreen)
 	{
@@ -1244,6 +1249,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		{
 			m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[2]);
 			m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[3]);
+			m_AnchorXDefined = m_AnchorYDefined = true;
 			WriteOptions(OPTION_ANCHOR);
 		}
 
@@ -1254,6 +1260,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetAnchor:
 		m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[0]);
 		m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_AnchorXDefined = m_AnchorYDefined = true;
 		WriteOptions(OPTION_ANCHOR);
 		WindowToScreen();
 		MoveWindow(m_ScreenX, m_ScreenY);
@@ -2025,7 +2032,7 @@ void Skin::SetZPosVariable(ZPOSITION zPos)
 ** Calculates the screen coordinates from the WindowX/Y options
 **
 */
-void Skin::WindowToScreen()
+void Skin::WindowToScreen(float oldScale)
 {
 	// Use user defined width and/or height if necessary
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
@@ -2034,6 +2041,7 @@ void Skin::WindowToScreen()
 	// Ensure the monitor cache has been populated before passing it into placement calculation.
 	(void)System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+	const float previousScale = (oldScale > 0.0f) ? oldScale : m_Scale;
 
 	// If this is the first call WindowToScreen(), use the unscaled window size to figure out
 	// which monitor DPI to use for scaling the window. UpdateDpiScale() normally uses the window
@@ -2047,7 +2055,7 @@ void Skin::WindowToScreen()
 	}
 
 	const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
-		{ m_WindowX, m_WindowY, m_AnchorX, m_AnchorY, m_WindowW, m_WindowH, m_Scale },
+		{ m_WindowX, m_WindowY, m_AnchorX, m_AnchorY, m_WindowW, m_WindowH, m_Scale, previousScale, m_AnchorXDefined, m_AnchorYDefined },
 		monitorsInfo);
 
 	m_WindowXScreen = result.x.screen;
@@ -2246,10 +2254,12 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	m_WindowY = parser.ParseFormulaWithModifiers(m_WindowY);
 
 	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
+	m_AnchorXDefined = parser.GetLastKeyDefined();
 	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
 	m_AnchorX = parser.ParseFormulaWithModifiers(m_AnchorX);
 
 	m_AnchorY = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
+	m_AnchorYDefined = parser.GetLastKeyDefined();
 	if (isDefault) writeDefaultString(L"AnchorY", m_AnchorY.c_str());
 	m_AnchorY = parser.ParseFormulaWithModifiers(m_AnchorY);
 
