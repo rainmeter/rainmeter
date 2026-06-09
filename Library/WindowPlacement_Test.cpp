@@ -54,6 +54,186 @@ public:
 		Assert::AreEqual(20, result.y.anchorScreen);
 	}
 
+	TEST_METHOD(TestAutoAnchorStartStartWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"0", 0, 0, 0, 0);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterStartWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"860", L"0", 810, 0, 100, 0);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndStartWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"1720", L"0", 1620, 0, 200, 0);
+	}
+
+	TEST_METHOD(TestAutoAnchorStartCenterWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"490", 0, 465, 0, 50);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterCenterWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"860", L"490", 810, 465, 100, 50);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndCenterWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"1720", L"490", 1620, 465, 200, 50);
+	}
+
+	TEST_METHOD(TestAutoAnchorStartEndWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"980", 0, 930, 0, 100);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterEndWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"860", L"980", 810, 930, 100, 100);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndEndWhenScaleIncreases)
+	{
+		AssertAutoDpiPlacement(L"1720", L"980", 1620, 930, 200, 100);
+	}
+
+	TEST_METHOD(TestAutoAnchorFirstBoundaryUsesCenter)
+	{
+		AssertAutoDpiPlacement(L"540", L"310", 490, 285, 100, 50);
+	}
+
+	TEST_METHOD(TestAutoAnchorSecondBoundaryUsesEnd)
+	{
+		AssertAutoDpiPlacement(L"1180", L"670", 1080, 620, 200, 100);
+	}
+
+	TEST_METHOD(TestAutoAnchorStartStartWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"0", 0, 0, 0, 0, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterStartWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"810", L"0", 860, 0, 100, 0, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndStartWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"1620", L"0", 1720, 0, 200, 0, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorStartCenterWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"465", 0, 490, 0, 50, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterCenterWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"810", L"465", 860, 490, 100, 50, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndCenterWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"1620", L"465", 1720, 490, 200, 50, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorStartEndWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"0", L"930", 0, 980, 0, 100, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorCenterEndWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"810", L"930", 860, 980, 100, 100, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorEndEndWhenScaleDecreases)
+	{
+		AssertAutoDpiPlacement(L"1620", L"930", 1720, 980, 200, 100, 1.0f, 1.5f);
+	}
+
+	TEST_METHOD(TestAutoAnchorUsesSelectedMonitor)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1080@2", L"0", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateMonitors());
+
+		Assert::AreEqual(2900, result.x.coordinate);
+		Assert::AreEqual(0, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+		Assert::AreEqual(2, result.x.screen);
+		Assert::AreEqual(2, result.y.screen);
+	}
+
+	TEST_METHOD(TestAutoAnchorUsesSelectedMonitorCenter)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"540@2", L"462", L"0", L"0", 200, 100, 1.5f, 1.0f, false, false },
+			CreateMonitors());
+
+		Assert::AreEqual(2410, result.x.coordinate);
+		Assert::AreEqual(437, result.y.coordinate);
+		Assert::AreEqual(100, result.x.anchorScreen);
+		Assert::AreEqual(50, result.y.anchorScreen);
+		Assert::AreEqual(2, result.x.screen);
+		Assert::AreEqual(2, result.y.screen);
+	}
+
+	TEST_METHOD(TestAutoAnchorDoesNotRunWhenScaleIsUnchanged)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1720", L"980", L"0", L"0", 200, 100, 1.5f, 1.5f, false, false },
+			CreateSingleMonitor());
+
+		Assert::AreEqual(1720, result.x.coordinate);
+		Assert::AreEqual(980, result.y.coordinate);
+		Assert::AreEqual(0, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+	}
+
+	TEST_METHOD(TestExplicitAnchorPreventsAutoAnchor)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1720", L"980", L"0", L"0", 200, 100, 1.5f, 1.0f, true, true },
+			CreateSingleMonitor());
+
+		Assert::AreEqual(1720, result.x.coordinate);
+		Assert::AreEqual(980, result.y.coordinate);
+		Assert::AreEqual(0, result.x.anchorScreen);
+		Assert::AreEqual(0, result.y.anchorScreen);
+	}
+
+	TEST_METHOD(TestExplicitAnchorCanStillStickToEndDuringScaleChange)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1920", L"1080", L"100%", L"100%", 200, 100, 1.5f, 1.0f, true, true },
+			CreateSingleMonitor());
+
+		Assert::AreEqual(1620, result.x.coordinate);
+		Assert::AreEqual(930, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(100, result.y.anchorScreen);
+		Assert::IsTrue(result.x.anchorPercentage);
+		Assert::IsTrue(result.y.anchorPercentage);
+	}
+
+	TEST_METHOD(TestAutoAnchorCanRunOnOnlyOneAxis)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ L"1720", L"540", L"0", L"50%", 200, 100, 1.5f, 1.0f, false, true },
+			CreateSingleMonitor());
+
+		Assert::AreEqual(1620, result.x.coordinate);
+		Assert::AreEqual(465, result.y.coordinate);
+		Assert::AreEqual(200, result.x.anchorScreen);
+		Assert::AreEqual(50, result.y.anchorScreen);
+		Assert::IsFalse(result.x.anchorPercentage);
+		Assert::IsTrue(result.y.anchorPercentage);
+	}
+
 	TEST_METHOD(TestNegativeWindowCoordinates)
 	{
 		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
@@ -389,6 +569,30 @@ public:
 	}
 
 private:
+	static void AssertAutoDpiPlacement(
+		LPCWSTR windowX,
+		LPCWSTR windowY,
+		int expectedX,
+		int expectedY,
+		int expectedAnchorX,
+		int expectedAnchorY,
+		float scale = 1.5f,
+		float oldScale = 1.0f)
+	{
+		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
+			{ windowX, windowY, L"0", L"0", 200, 100, scale, oldScale, false, false },
+			CreateSingleMonitor());
+
+		Assert::AreEqual(expectedX, result.x.coordinate);
+		Assert::AreEqual(expectedY, result.y.coordinate);
+		Assert::AreEqual(expectedAnchorX, result.x.anchorScreen);
+		Assert::AreEqual(expectedAnchorY, result.y.anchorScreen);
+		Assert::IsFalse(result.x.anchorFromFarEdge);
+		Assert::IsFalse(result.y.anchorFromFarEdge);
+		Assert::IsFalse(result.x.anchorPercentage);
+		Assert::IsFalse(result.y.anchorPercentage);
+	}
+
 	static MultiMonitorInfo CreateSingleMonitor()
 	{
 		MultiMonitorInfo monitorsInfo = {};

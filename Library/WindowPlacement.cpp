@@ -18,6 +18,13 @@ enum class Axis
 	Y
 };
 
+enum class AutoAnchor
+{
+	Start,
+	Center,
+	End
+};
+
 struct ParsedWindowOption
 {
 	float amount = 0.0f;
@@ -138,6 +145,42 @@ int ResolveAnchor(const ParsedAnchorOption& option, int windowSize)
 	return option.fromFarEdge ? windowSize - distance : distance;
 }
 
+int ResolveAutoAnchor(AutoAnchor anchor, int windowSize)
+{
+	switch (anchor)
+	{
+	case AutoAnchor::Center:
+		return windowSize / 2;
+
+	case AutoAnchor::End:
+		return windowSize;
+	}
+
+	return 0;
+}
+
+AutoAnchor SelectAutoAnchor(int oldCoordinate, int oldWindowSize, const ScreenSpan& screen)
+{
+	// When DPI changes and the user did not define an anchor, split the selected screen axis
+	// into three bands. A skin in the first band sticks to the start edge, one in the middle band
+	// sticks to its center, and one in the last band sticks to the end edge.
+	const int oldWindowCenter = oldCoordinate + oldWindowSize / 2;
+	const int firstBandEnd = screen.start + screen.size / 3;
+	const int secondBandEnd = screen.start + (screen.size * 2) / 3;
+
+	if (oldWindowCenter < firstBandEnd)
+	{
+		return AutoAnchor::Start;
+	}
+
+	if (oldWindowCenter < secondBandEnd)
+	{
+		return AutoAnchor::Center;
+	}
+
+	return AutoAnchor::End;
+}
+
 ScreenSpan GetScreenSpan(int screen, Axis axis, const MultiMonitorInfo& monitorsInfo)
 {
 	if (screen == 0)
@@ -163,10 +206,13 @@ AxisResult ResolveAxis(
 	Axis axis,
 	int windowSize,
 	float scale,
+	float oldScale,
+	bool anchorDefined,
 	const MultiMonitorInfo& monitorsInfo)
 {
-	const int anchorScreen = ResolveAnchor(anchor, windowSize);
 	const ScreenSpan screen = GetScreenSpan(window.screen, axis, monitorsInfo);
+	const float previousScale = (oldScale > 0.0f) ? oldScale : scale;
+	const bool scaleChanged = fabsf(previousScale - scale) > 0.0001f;
 
 	// WindowX and WindowY describe the on-screen location of the selected anchor point, not
 	// necessarily the upper-left corner. First resolve that anchor point against the selected
@@ -175,6 +221,9 @@ AxisResult ResolveAxis(
 	const int anchorPoint = window.fromFarEdge ?
 		screen.start + (screen.size - distance) :
 		screen.start + distance;
+	const int anchorScreen = (scaleChanged && !anchorDefined) ?
+		ResolveAutoAnchor(SelectAutoAnchor(anchorPoint, ScaleToDevicePixels(windowSize, previousScale), screen), windowSize) :
+		ResolveAnchor(anchor, windowSize);
 
 	return {
 		window.screen,
@@ -182,9 +231,11 @@ AxisResult ResolveAxis(
 		window.fromFarEdge,
 		window.percentage,
 		anchorScreen,
-		anchor.fromFarEdge,
-		anchor.percentage,
-		anchorPoint - ScaleToDevicePixels(anchorScreen, scale)
+		anchorDefined && anchor.fromFarEdge,
+		anchorDefined && anchor.percentage,
+		(scaleChanged && !anchorDefined) ?
+			anchorPoint + ScaleToDevicePixels(anchorScreen, previousScale) - ScaleToDevicePixels(anchorScreen, scale) :
+			anchorPoint - ScaleToDevicePixels(anchorScreen, scale)
 	};
 }
 
@@ -225,8 +276,8 @@ Result WindowToScreen(const Input& input, const MultiMonitorInfo& monitorsInfo)
 	}
 
 	return {
-		ResolveAxis(windowX, anchorX, Axis::X, input.windowW, input.scale, monitorsInfo),
-		ResolveAxis(windowY, anchorY, Axis::Y, input.windowH, input.scale, monitorsInfo)
+		ResolveAxis(windowX, anchorX, Axis::X, input.windowW, input.scale, input.oldScale, input.anchorXDefined, monitorsInfo),
+		ResolveAxis(windowY, anchorY, Axis::Y, input.windowH, input.scale, input.oldScale, input.anchorYDefined, monitorsInfo)
 	};
 }
 
