@@ -31,6 +31,7 @@ private:
 	static HRESULT CropWICBitmapSource(WICRect& clipRect,
 		IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
 	static HRESULT ConvertToD2DFormat(IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
+	static HRESULT CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask);
 	static int GetExifOrientation(IWICBitmapFrameDecode* source);
 };
 

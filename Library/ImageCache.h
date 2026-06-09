@@ -36,6 +36,7 @@ template <> struct hash<ImageOptions>
 		res = res * 31 + std::hash<INT>()((INT)opt.m_Flip);
 		res = res * 31 + std::hash<bool>()(opt.m_GreyScale);
 		res = res * 31 + std::hash<bool>()(opt.m_UseExifOrientation);
+		res = res * 31 + std::hash<bool>()(opt.m_CreateAlphaMask);
 
 		for (int i = 0; i < 5; ++i)
 		{

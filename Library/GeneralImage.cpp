@@ -208,7 +208,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
-bool GeneralImage::LoadImage(const std::wstring& imageName)
+bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)
 {
 	if (!m_Skin || imageName.empty())
 	{
@@ -226,7 +226,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		filename += L".png";
 	}
 
-	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (m_Bitmap && m_Options.m_CreateAlphaMask == createAlphaMask && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
@@ -234,6 +234,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	ImageOptions info;
 	Gfx::D2DBitmap::GetFileInfo(filename, &info);
+	info.m_CreateAlphaMask = createAlphaMask;
 
 	if (!info.isValid())
 	{
@@ -246,7 +247,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	auto handle = GetImageCache().Get(info);
 	if (!handle)
 	{
-		auto bitmap = new Gfx::D2DBitmap(filename);
+		auto bitmap = new Gfx::D2DBitmap(filename, 0, createAlphaMask);
 
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
@@ -271,6 +272,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		m_Options.m_Path = info.m_Path;
 		m_Options.m_FileSize = info.m_FileSize;
 		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = createAlphaMask;
 
 		ApplyTransforms();
 		return true;
