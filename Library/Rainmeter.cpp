@@ -1634,8 +1634,6 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	// Force the reload of system cursors
 	SystemParametersInfo(SPI_SETCURSORS, 0U, nullptr, 0U);
 
-	WCHAR buffer[MAX_PATH];
-
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
 
@@ -1664,22 +1662,14 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
 	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
-	m_DpiOverride = parser.ReadInt(L"Rainmeter", L"DpiOverride", 0);
-	if (m_DpiOverride < 0 || m_DpiOverride > 200)
-	{
-		m_DpiOverride = 0;
-	}
-
-	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
-	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
-
 	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::Red, 90.0f / 255.0f));  // RGBA: 255,0,0,90
 
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
-		DWORD cchOut = MAX_PATH;
+		WCHAR buffer[MAX_PATH];
+		DWORD cchOut = _countof(buffer);
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
 		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
@@ -1697,6 +1687,31 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
 
+	m_DpiOverride = parser.ReadInt(L"Rainmeter", L"DpiOverride", 0);
+	if (parser.GetLastDefaultUsed())
+	{
+		// If the user has selected "Override high DPI scaling behavior" in the executable properties,
+		// we default to ignoring the per window/monitor DPI for backwards compatibility even though we
+		// are now properly DPI aware.
+		WCHAR executablePath[MAX_PATH];
+		GetModuleFileName(m_Instance, executablePath, _countof(executablePath));
+
+		WCHAR buffer[512];
+		DWORD bufferSize = _countof(buffer);
+		const auto regResult = RegGetValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers", executablePath, RRF_RT_REG_SZ, nullptr, &buffer, &bufferSize);
+		if (regResult == ERROR_SUCCESS && !!wcsstr(buffer, L"HIGHDPIAWARE"))
+		{
+			m_DpiOverride = 100;
+		}
+	}
+	else if (m_DpiOverride < 0 || m_DpiOverride > 200)
+	{
+		m_DpiOverride = 0;
+	}
+
+	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
+	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
+
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
@@ -1707,6 +1722,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	const size_t monitorCount = System::GetMonitorCount();
 	for (UINT i = 1; i <= monitorCount; ++i)
 	{
+		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", (int)i);
 		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
