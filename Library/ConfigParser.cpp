@@ -42,18 +42,6 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
-bool MatchPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix)
-{
-	const size_t len = wcslen(prefix);
-	if ((size_t)(end - *str) >= len && _wcsnicmp(*str, prefix, len) == 0)
-	{
-		*str += len;
-		return true;
-	}
-
-	return false;
-}
-
 bool MatchRange(const WCHAR* start, const WCHAR* end, const WCHAR* value)
 {
 	const size_t len = wcslen(value);
@@ -114,25 +102,25 @@ bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, M
 		end -= 3;
 	}
 
-	if (MatchPrefix(&start, end, L"PWORKAREA"))
+	if (StringUtil::MatchAndSkipPrefix(&start, end, L"PWORKAREA"))
 	{
 		primary = true;
 		area = MonitorArea::Work;
 	}
-	else if (MatchPrefix(&start, end, L"PSCREENAREA"))
+	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"PSCREENAREA"))
 	{
 		primary = true;
 		area = MonitorArea::Screen;
 	}
-	else if (MatchPrefix(&start, end, L"VSCREENAREA"))
+	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"VSCREENAREA"))
 	{
 		area = MonitorArea::VirtualScreen;
 	}
-	else if (MatchPrefix(&start, end, L"WORKAREA"))
+	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"WORKAREA"))
 	{
 		area = MonitorArea::Work;
 	}
-	else if (MatchPrefix(&start, end, L"SCREENAREA"))
+	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"SCREENAREA"))
 	{
 		area = MonitorArea::Screen;
 	}
@@ -155,61 +143,6 @@ bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, M
 	}
 
 	return ParseMonitorComponent(start, componentEnd, component);
-}
-
-LONG ScaleMonitorCoordinate(LONG value, float scale)
-{
-	if (scale <= 0.0f)
-	{
-		scale = 1.0f;
-	}
-
-	return (LONG)floorf((float)value / scale);
-}
-
-RECT ScaleMonitorRect(const RECT& rect, float scale)
-{
-	return {
-		ScaleMonitorCoordinate(rect.left, scale),
-		ScaleMonitorCoordinate(rect.top, scale),
-		ScaleMonitorCoordinate(rect.right, scale),
-		ScaleMonitorCoordinate(rect.bottom, scale)
-	};
-}
-
-RECT GetPhysicalVirtualScreenRect(const MultiMonitorInfo& monitorsInfo)
-{
-	return {
-		monitorsInfo.vsL,
-		monitorsInfo.vsT,
-		monitorsInfo.vsL + monitorsInfo.vsW,
-		monitorsInfo.vsT + monitorsInfo.vsH
-	};
-}
-
-bool GetLogicalVirtualScreenRect(const std::vector<MonitorInfo>& monitors, RECT& rect)
-{
-	bool found = false;
-	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
-	{
-		if (!(*iter).active) continue;
-
-		const RECT monitorRect = ScaleMonitorRect((*iter).screen, (*iter).dpiScale);
-		if (!found)
-		{
-			rect = monitorRect;
-			found = true;
-		}
-		else
-		{
-			rect.left = min(rect.left, monitorRect.left);
-			rect.top = min(rect.top, monitorRect.top);
-			rect.right = max(rect.right, monitorRect.right);
-			rect.bottom = max(rect.bottom, monitorRect.bottom);
-		}
-	}
-
-	return found;
 }
 
 int GetMonitorRectValue(const RECT& rect, MonitorComponent component)
@@ -703,14 +636,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 	RECT rect = {};
 	if (area == MonitorArea::VirtualScreen)
 	{
-		if (physical)
-		{
-			rect = GetPhysicalVirtualScreenRect(monitorsInfo);
-		}
-		else if (!GetLogicalVirtualScreenRect(monitors, rect))
-		{
-			return false;
-		}
+		rect = physical ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitorsInfo.GetLogicalVirtualScreenRect();
 	}
 	else
 	{
@@ -725,8 +651,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 			if (horizontal && m_Skin->GetXScreenDefined())
 			{
 				const int i = m_Skin->GetXScreen();
-				const int index = i - 1;
-				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[index].active))
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
 				}
@@ -734,8 +659,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 			else if (!horizontal && m_Skin->GetYScreenDefined())
 			{
 				const int i = m_Skin->GetYScreen();
-				const int index = i - 1;
-				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[index].active))
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
 				}
@@ -744,14 +668,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 
 		if (screenIndex == 0)
 		{
-			if (physical)
-			{
-				rect = GetPhysicalVirtualScreenRect(monitorsInfo);
-			}
-			else if (!GetLogicalVirtualScreenRect(monitors, rect))
-			{
-				return false;
-			}
+			rect = physical ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitorsInfo.GetLogicalVirtualScreenRect();
 		}
 		else
 		{
@@ -772,10 +689,11 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 				monitorIndex = primaryIndex;
 			}
 
-			rect = (area == MonitorArea::Work) ? monitors[monitorIndex].work : monitors[monitorIndex].screen;
+			const auto& monitor = monitors[monitorIndex];
+			rect = (area == MonitorArea::Work) ? monitor.work : monitor.screen;
 			if (!physical)
 			{
-				rect = ScaleMonitorRect(rect, monitors[monitorIndex].dpiScale);
+				rect = monitor.ToLogical(rect);
 			}
 		}
 	}

@@ -56,6 +56,8 @@ void EscapeRegExp(std::wstring& str);
 
 void EncodeUrl(std::wstring& str, bool doReserved = true);
 
+bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix);
+
 /*
 ** Case insensitive find function for std::string and std::wstring.
 **
