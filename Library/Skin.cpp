@@ -727,10 +727,10 @@ void Skin::ApplyEffectiveScale()
 bool Skin::UpdateDpiScale(HMONITOR monitor)
 {
 	const float oldDpiScale = m_DpiScale;
-	const int skinScale = GetRainmeter().GetSkinScale();
+	const int dpiOverride = GetRainmeter().GetDpiOverride();
 	m_DpiScale =
-		(skinScale > 0) ?
-		(float)skinScale / 100.0f :
+		(dpiOverride > 0) ?
+		(float)dpiOverride / 100.0f :
 		(monitor ? System::GetDpiScaleForMonitor(monitor) : System::GetDpiScaleForWindow(m_Window));
 	if (m_DpiScale <= 0.0f)
 	{

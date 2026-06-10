@@ -2371,10 +2371,10 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_LINKLABEL(Id_LanguageUpdateLink, 0,
 			361, 15, 114, 14,
 			0, 0),
-		CT_LABEL(Id_SkinScaleLabel, 0,
+		CT_LABEL(Id_ScalingModeLabel, 0,
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
-		CT_COMBOBOX(Id_SkinScaleDropDownList, 0,
+		CT_COMBOBOX(Id_ScalingModeDropDownList, 0,
 			107, 34, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, 0),
 		CT_LABEL(-0, ID_STR_EDITORSC,
@@ -2423,7 +2423,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
-	SetWindowText(GetControl(Id_SkinScaleLabel), L"Scale skin size:");
+	SetWindowText(GetControl(Id_ScalingModeLabel), L"Scaling mode:");
 }
 
 void DialogManage::TabSettings::Initialize()
@@ -2472,29 +2472,29 @@ void DialogManage::TabSettings::Initialize()
 		FindClose(hSearch);
 	}
 
-	item = GetControl(Id_SkinScaleDropDownList);
+	item = GetControl(Id_ScalingModeDropDownList);
 	ComboBox_ResetContent(item);
 
 	const struct
 	{
 		LPCWSTR text;
 		int value;
-	} skinScales[] =
+	} dpiOverrides[] =
 	{
-		{ L"Use default Windows scaling", 0 },
-		{ L"100%", 100 },
-		{ L"125%", 125 },
-		{ L"150%", 150 },
-		{ L"175%", 175 },
-		{ L"200%", 200 }
+		{ L"Use Windows display scaling settings", 0 },
+		{ L"Ignore Windows settings and force 100%", 100 },
+		{ L"Ignore Windows settings and force 125%", 125 },
+		{ L"Ignore Windows settings and force 150%", 150 },
+		{ L"Ignore Windows settings and force 175%", 175 },
+		{ L"Ignore Windows settings and force 200%", 200 }
 	};
 
-	const int skinScale = GetRainmeter().GetSkinScale();
-	for (const auto& scale : skinScales)
+	const int dpiOverride = GetRainmeter().GetDpiOverride();
+	for (const auto& scale : dpiOverrides)
 	{
 		const int index = ComboBox_AddString(item, scale.text);
 		ComboBox_SetItemData(item, index, scale.value);
-		if (scale.value == skinScale)
+		if (scale.value == dpiOverride)
 		{
 			ComboBox_SetCurSel(item, index);
 		}
@@ -2621,14 +2621,14 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_SkinScaleDropDownList:
+	case Id_ScalingModeDropDownList:
 		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
 			const int sel = ComboBox_GetCurSel((HWND)lParam);
 			if (sel != CB_ERR)
 			{
 				const int scale = (int)ComboBox_GetItemData((HWND)lParam, sel);
-				GetRainmeter().SetSkinScale(scale);
+				GetRainmeter().SetDpiOverride(scale);
 			}
 		}
 		break;
