@@ -348,14 +348,14 @@ void Skin::Dispose(bool refresh)
 	}
 }
 
-/*
-** Initializes the window, creates the class and the window.
-**
-*/
 void Skin::Initialize()
 {
+	// Previously we used WS_EX_TOOLWINDOW to hide our top-level window from the taskbar and Alt+Tab.
+	// This works fine on Windows 10. On Windows 11, however, something changes when running under
+	// the high DPI awareness context (per-monitor V2). To workaround this we instead use Rainmeter
+	// window as our parent.
 	m_Window = CreateWindowEx(
-		WS_EX_NOACTIVATE | WS_EX_LAYERED,
+		WS_EX_LAYERED,
 		METERWINDOW_CLASS_NAME,
 		nullptr,
 		WS_POPUP,
@@ -363,7 +363,7 @@ void Skin::Initialize()
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		nullptr,
+		GetRainmeter().GetWindow(),
 		nullptr,
 		GetRainmeter().GetModuleInstance(),
 		this);
@@ -5023,20 +5023,6 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// Previously we used WS_EX_TOOLWINDOW to achieve a top-level window that however
-	// did not show up in the taskbar or Alt+Tab. This works fine on Windows 10 and
-	// also on Windows 11, but only when high DPI support per monitor V2 is disabled.
-	// To workaround this we had to switch to WS_EX_NOACTIVATE, which, as the name
-	// implies, does not activate on click. Lets do that manually.
-	if (m_WindowZPosition == ZPOSITION_NORMAL)
-	{
-		// Set window on top of all other <= NORMAL windows
-		SetWindowPos(m_Window, System::GetBackmostTopWindow(), 0, 0, 0, 0, ZPOS_FLAGS);
-
-		// Bring window on top of other application windows
-		BringWindowToTop(m_Window);;
-	}
-
 	// If the skin is selected, do not process any 'left down' mouse actions,
 	// but run the DefWindowProc so that dragging works.
 	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
