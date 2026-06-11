@@ -32,7 +32,11 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
+	virtual void Relayout() override;
+	virtual void HandleDpiChange() override;
+
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
@@ -57,6 +61,8 @@ private:
 		void Create(HWND owner);
 		virtual void Initialize();
 
+		void HandleDpiChange();
+
 		std::wstring& GetParentFolder() { return m_ParentFolder; }
 		void SetParentFolder(const WCHAR* folder);
 
@@ -79,6 +85,7 @@ private:
 		};
 
 		void DestroyImageList();
+		void CreateImageList();
 		void UpdateParentPathLabel();
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);

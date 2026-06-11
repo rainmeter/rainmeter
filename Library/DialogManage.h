@@ -43,7 +43,11 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
+	virtual void Relayout() override;
+	virtual void HandleDpiChange() override;
+
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
@@ -93,6 +97,7 @@ private:
 		void UpdateSelected(Skin* skin);
 		void Update(Skin* skin, bool deleted);
 		void UpdateDraggableCheckBox();
+		void HandleDpiChange();
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
 
@@ -106,6 +111,7 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 		void DestroyImageList();
+		void CreateImageList();
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);

@@ -22,15 +22,6 @@
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = { 0 };
 DialogAbout* DialogAbout::c_Dialog = nullptr;
 
-namespace {
-
-int ScaleColumnWidth(HWND window, int width)
-{
-	return MulDiv(width, (int)System::GetDpiForWindow(window), 96);
-}
-
-}  // namespace
-
 DialogAbout::DialogAbout() : Dialog()
 {
 }
@@ -161,13 +152,12 @@ Dialog::Tab& DialogAbout::GetActiveTab()
 
 INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
+
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 		return OnInitDialog(wParam, lParam);
-
-	case WM_ACTIVATE:
-		return OnActivate(wParam, lParam);
 
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
@@ -178,8 +168,8 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = 800;
-			mmi->ptMinTrackSize.y = 390;
+			mmi->ptMinTrackSize.x = m_ControlTemplate.ScaleDialogUnits(800);
+			mmi->ptMinTrackSize.y = m_ControlTemplate.ScaleDialogUnits(390);
 		}
 		return FALSE;
 
@@ -187,23 +177,7 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			if (wParam != SIZE_MINIMIZED)
 			{
-				int w = LOWORD(lParam);
-				int h = HIWORD(lParam);
-				RECT r;
-
-				HWND item = GetControl(Id_Tab);
-				SetWindowPos(item, nullptr, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
-
-				item = GetControl(Id_CloseButton);
-				GetClientRect(item, &r);
-				SetWindowPos(item, nullptr, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-				w -= 48;
-				h -= 100;
-				m_TabLog.Resize(w, h);
-				m_TabSkins.Resize(w, h);
-				m_TabPlugins.Resize(w, h);
-				m_TabVersion.Resize(w, h);
+				Relayout();
 			}
 		}
 		return TRUE;
@@ -222,22 +196,24 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	}
 
-	return FALSE;
+	return baseResult;
 }
 
 INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
+		Control::Button(Id_CloseButton, ID_STR_CLOSE,
 			544, 231, 50, 14,
-			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
-		CT_TAB(Id_Tab, 0,
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0,
+			Control::ANCHOR_BOTTOM_RIGHT),
+		Control::Tab(Id_Tab, 0,
 			6, 6, 588, 221,
-			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0,
+			Control::ANCHOR_ALL)  // Last for correct tab order.
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	HWND item = GetControl(Id_Tab);
 	m_TabLog.Create(m_Window);
@@ -263,9 +239,6 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	item = m_TabVersion.GetControl(TabVersion::Id_VersionLabel);
-	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
-
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
@@ -281,6 +254,36 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
+}
+
+void DialogAbout::Relayout()
+{
+	Dialog::Relayout();
+
+	RECT rect = m_TabLog.GetLayoutRect();
+	const int width = rect.right - rect.left;
+	const int height = rect.bottom - rect.top;
+
+	Tab* tabs[] = { &m_TabLog, &m_TabSkins, &m_TabPlugins, &m_TabVersion };
+	for (auto* tab : tabs)
+	{
+		if (!tab->GetWindow()) continue;
+		rect = tab->GetLayoutRect();
+		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
+		tab->Relayout();
+	}
+
+	m_TabLog.Resize(width, height);
+	m_TabSkins.Resize(width, height);
+	m_TabPlugins.Resize(width, height);
+	m_TabVersion.Resize(width, height);
+}
+
+void DialogAbout::HandleDpiChange()
+{
+	if (m_TabLog.IsInitialized()) m_TabLog.HandleDpiChange();
+	if (m_TabSkins.IsInitialized()) m_TabSkins.HandleDpiChange();
+	if (m_TabPlugins.IsInitialized()) m_TabPlugins.HandleDpiChange();
 }
 
 INT_PTR DialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -350,29 +353,30 @@ void DialogAbout::TabLog::Create(HWND owner)
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
 
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_LogListView, 0,
+		Control::ListView(Id_LogListView, 0,
 			0, 0, 568, 175,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
-		CT_CHECKBOX(Id_ErrorCheckBox, ID_STR_ERROR,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_ALL),
+		Control::CheckBox(Id_ErrorCheckBox, ID_STR_ERROR,
 			0, 179, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_WarningCheckBox, ID_STR_WARNING,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
+		Control::CheckBox(Id_WarningCheckBox, ID_STR_WARNING,
 			80, 179, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_NoticeCheckBox, ID_STR_NOTICE,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
+		Control::CheckBox(Id_NoticeCheckBox, ID_STR_NOTICE,
 			160, 179, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_DebugCheckBox, ID_STR_DEBUG,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
+		Control::CheckBox(Id_DebugCheckBox, ID_STR_DEBUG,
 			240, 179, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_BUTTON(Id_ClearButton, ID_STR_CLEAR,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
+		Control::Button(Id_ClearButton, ID_STR_CLEAR,
 			(568 - buttonWidth), 179, buttonWidth, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_BOTTOM_RIGHT)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
 /*
@@ -385,41 +389,25 @@ void DialogAbout::TabLog::Initialize()
 	HWND item = GetControl(Id_LogListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-	// Set folder/.ini icons for tree list
-	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 3, 1);
-	HMODULE hDLL = GetModuleHandle(L"user32");
-
-	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(103), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-	ImageList_AddIcon(hImageList, hIcon);
-	DeleteObject(hIcon);
-
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(101), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-	ImageList_AddIcon(hImageList, hIcon);
-	DeleteObject(hIcon);
-
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-	ImageList_AddIcon(hImageList, hIcon);
-	DeleteObject(hIcon);
-
-	ListView_SetImageList(item, (WPARAM)hImageList, LVSIL_SMALL);
+	CreateImageList();
 
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
-	lvc.cx = ScaleColumnWidth(item, 75);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(75);
 	lvc.pszText = GetString(ID_STR_TYPE);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = ScaleColumnWidth(item, 85);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(85);
 	lvc.pszText = GetString(ID_STR_TIME);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = ScaleColumnWidth(item, 225);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(225);
 	lvc.pszText = GetString(ID_STR_SOURCE);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
-	lvc.cx = ScaleColumnWidth(item, 180);  // Resized later
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(180);  // Resized later
 	lvc.pszText = GetString(ID_STR_MESSAGE);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -446,10 +434,27 @@ void DialogAbout::TabLog::Initialize()
 	item = GetControl(Id_DebugCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	DestroyImageList();
-	m_ImageList = hImageList;
-
 	m_Initialized = true;
+}
+
+void DialogAbout::TabLog::CreateImageList()
+{
+	HWND list = GetControl(Id_LogListView);
+	const int iconSize = m_ControlTemplate.ScaleDialogUnits(16);
+	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 3, 1);
+	HMODULE user = GetModuleHandle(L"user32");
+	const UINT iconIds[] = { 103, 101, 104 };
+	for (UINT iconId : iconIds)
+	{
+		HICON icon = (HICON)LoadImage(user, MAKEINTRESOURCE(iconId), IMAGE_ICON,
+			iconSize, iconSize, LR_DEFAULTCOLOR);
+		ImageList_AddIcon(imageList, icon);
+		DestroyIcon(icon);
+	}
+
+	DestroyImageList();
+	m_ImageList = imageList;
+	ListView_SetImageList(list, m_ImageList, LVSIL_SMALL);
 }
 
 void DialogAbout::TabLog::DestroyImageList()
@@ -457,9 +462,22 @@ void DialogAbout::TabLog::DestroyImageList()
 	if (m_ImageList)
 	{
 		HWND item = GetControl(Id_LogListView);
-		ImageList_Destroy(ListView_SetImageList(item, nullptr, LVSIL_STATE));
+		ImageList_Destroy(ListView_SetImageList(item, nullptr, LVSIL_SMALL));
 		m_ImageList = nullptr;
 	}
+}
+
+void DialogAbout::TabLog::HandleDpiChange()
+{
+	HWND list = GetControl(Id_LogListView);
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(75));
+	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(85));
+	ListView_SetColumnWidth(list, 2, m_ControlTemplate.ScaleDialogUnits(225));
+	CreateImageList();
+
+	RECT rect;
+	GetClientRect(m_Window, &rect);
+	Resize(rect.right, rect.bottom);
 }
 
 /*
@@ -495,12 +513,12 @@ void DialogAbout::TabLog::Resize(int w, int h)
 	SetWindowPos(item, nullptr, r.right * 3, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_LogListView);
-	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - 10, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - m_ControlTemplate.ScaleDialogUnits(10), SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust 4th colum
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 20 -
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1) +
 		 ListView_GetColumnWidth(item, 2));
@@ -758,17 +776,17 @@ void DialogAbout::TabSkins::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_LISTBOX(Id_SkinsListBox, 0,
+		Control::ListBox(Id_SkinsListBox, 0,
 			0, 0, 120, 188,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
-		CT_LISTVIEW(Id_SkinsListView, 0,
+		Control::ListView(Id_SkinsListView, 0,
 			125, 0, 442, 188,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
 void DialogAbout::TabSkins::Initialize()
@@ -794,19 +812,19 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = ScaleColumnWidth(item, 120);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = ScaleColumnWidth(item, 80);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
 	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = ScaleColumnWidth(item, 90);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(90);
 	lvc.pszText = GetString(ID_STR_NUMBER);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
-	lvc.cx = ScaleColumnWidth(item, 110);  // Resized later
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
 	lvc.pszText = GetString(ID_STR_STRING);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -829,19 +847,33 @@ void DialogAbout::TabSkins::Resize(int w, int h)
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	HWND item = GetControl(Id_SkinsListBox);
-	SetWindowPos(item, nullptr, 0, 0, 265, h, SWP_NOMOVE | SWP_NOZORDER);
+	const int listWidth = m_ControlTemplate.ScaleDialogUnits(265);
+	const int listGap = m_ControlTemplate.ScaleDialogUnits(10);
+	SetWindowPos(item, nullptr, 0, 0, listWidth, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetControl(Id_SkinsListView);
-	SetWindowPos(item, nullptr, 275, 0, w - 275, h, SWP_NOZORDER);
+	SetWindowPos(item, nullptr, listWidth + listGap, 0, w - listWidth - listGap, h, SWP_NOZORDER);
 
 	// Adjust 4th column
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 275 - 20 -
+	lvc.cx = w - listWidth - listGap - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1) +
 		 ListView_GetColumnWidth(item, 2));
 	ListView_SetColumn(item, 3, &lvc);
+}
+
+void DialogAbout::TabSkins::HandleDpiChange()
+{
+	HWND list = GetControl(Id_SkinsListView);
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(120));
+	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(80));
+	ListView_SetColumnWidth(list, 2, m_ControlTemplate.ScaleDialogUnits(90));
+
+	RECT rect;
+	GetClientRect(m_Window, &rect);
+	Resize(rect.right, rect.bottom);
 }
 
 /*
@@ -1368,14 +1400,15 @@ void DialogAbout::TabPlugins::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_LISTVIEW(Id_PluginsListView, 0,
+		Control::ListView(Id_PluginsListView, 0,
 			0, 0, 568, 188,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_ALL)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
 void DialogAbout::TabPlugins::Initialize()
@@ -1401,15 +1434,15 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
-	lvc.cx = ScaleColumnWidth(item, 140);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
 	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = ScaleColumnWidth(item, 80);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
 	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = ScaleColumnWidth(item, 250);  // Resized later
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(250);  // Resized later
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
@@ -1590,10 +1623,21 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 	// Adjust third colum
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 20 -
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
+}
+
+void DialogAbout::TabPlugins::HandleDpiChange()
+{
+	HWND list = GetControl(Id_PluginsListView);
+	ListView_SetColumnWidth(list, 0, LVSCW_AUTOSIZE);
+	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(80));
+
+	RECT rect;
+	GetClientRect(m_Window, &rect);
+	Resize(rect.right, rect.bottom);
 }
 
 INT_PTR DialogAbout::TabPlugins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1688,62 +1732,63 @@ void DialogAbout::TabVersion::Create(HWND owner)
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
 
-	const ControlTemplate::Control s_Controls[] =
+	const Control s_Controls[] =
 	{
-		CT_ICON(Id_AppIcon, 0,
+		Control::Icon(Id_AppIcon, 0,
 			0, 12, 256, 256,
 			WS_VISIBLE, 0),
 
-		CT_LINEV(-0, 0,
+		Control::LineV(-0, 0,
 			180, 8, 5, 180,
 			WS_VISIBLE, 0),
 
-		CT_LABEL(Id_VersionLabel, 0,
+		Control::Label(Id_VersionLabel, 0,
 			190, 6, 380, 11,
-			WS_VISIBLE, 0),
-		CT_LABEL(Id_LanguageLabel, 0,
+			WS_VISIBLE, 0,
+			Control::ANCHOR_TOP_LEFT | Control::BOLD_FONT),
+		Control::Label(Id_LanguageLabel, 0,
 			190, 21, 380, 13,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_TimestampLabel, 0,
+		Control::Label(Id_TimestampLabel, 0,
 			190, 34, 380, 13,
 			WS_VISIBLE, 0),
-		CT_LINKLABEL(Id_HashLink, 0,
+		Control::LinkLabel(Id_HashLink, 0,
 			190, 47, 300, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 
-		CT_LABEL(Id_WinVerLabel, 0,
+		Control::Label(Id_WinVerLabel, 0,
 			190, 70, 380, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_PathLink, 0,
+		Control::LinkLabel(Id_PathLink, 0,
 			190, 83, 380, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_SkinPathLink, 0,
+		Control::LinkLabel(Id_SkinPathLink, 0,
 			190, 96, 380, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_SettingsPathLink, 0,
+		Control::LinkLabel(Id_SettingsPathLink, 0,
 			190, 109, 380, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_LINKLABEL(Id_IniFileLink, 0,
+		Control::LinkLabel(Id_IniFileLink, 0,
 			190, 122, 380, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
+		Control::Button(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
 			190, 135, buttonWidth + 35, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
-		CT_LINKLABEL(Id_HomeLink, ID_STR_GETLATESTVERSION,
+		Control::LinkLabel(Id_HomeLink, ID_STR_GETLATESTVERSION,
 			190, 165, 380, 13,
 			WS_VISIBLE, 0),
-		CT_LINKLABEL(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
+		Control::LinkLabel(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
 			190, 178, 380, 13,
 			WS_VISIBLE, 0)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
 void DialogAbout::TabVersion::Initialize()
 {
-	// "SysLink" (CT_LINKLABEL) controls have no "ellipsis" styles, so trim any links if necessary
+	// Control::LinkLabel() controls have no "ellipsis" styles, so trim any links if necessary
 	auto trimLink = [&](WCHAR* text) -> WCHAR*
 	{
 		if (wcsnlen_s(text, MAX_PATH) > 100)  // May need to be adjusted if the dialog's size changes
@@ -1820,6 +1865,10 @@ void DialogAbout::TabVersion::Initialize()
 void DialogAbout::TabVersion::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+
+	HWND item = GetControl(Id_AppIcon);
+	HICON icon = GetIconBySize(IDI_RAINMETER, 256);
+	Static_SetIcon(item, icon);
 }
 
 INT_PTR DialogAbout::TabVersion::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
