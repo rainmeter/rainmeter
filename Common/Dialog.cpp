@@ -141,7 +141,8 @@ INT_PTR CALLBACK BaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 // Dialog
 //
 
-Dialog::Dialog() : BaseDialog()
+Dialog::Dialog() : BaseDialog(),
+	m_TabControl()
 {
 }
 
@@ -178,12 +179,85 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DPICHANGED:
 		return HandleDpiChanged(wParam, lParam);
 
+	case WM_NOTIFY:
+		{
+			LPNMHDR nm = (LPNMHDR)lParam;
+			if (nm->hwndFrom == m_TabControl && nm->code == TCN_SELCHANGE)
+			{
+				ActivateTab();
+				return TRUE;
+			}
+		}
+		break;
+
 	case WM_ACTIVATE:
 		c_ActiveDialogWindow = wParam ? m_Window : nullptr;
 		break;
 	}
 
 	return FALSE;
+}
+
+void Dialog::AddTab(WORD controlId, Tab& tab, const WCHAR* text)
+{
+	HWND tabControl = GetControl(controlId);
+	if (!m_TabControl)
+	{
+		m_TabControl = tabControl;
+	}
+	else
+	{
+		assert(m_TabControl == tabControl);
+	}
+
+	tab.Create(m_Window);
+	m_Tabs.push_back(&tab);
+
+	TCITEM tci = { 0 };
+	tci.mask = TCIF_TEXT;
+	tci.pszText = (WCHAR*)text;
+	TabCtrl_InsertItem(m_TabControl, (int)m_Tabs.size() - 1, &tci);
+}
+
+void Dialog::SelectTab(int index)
+{
+	assert(index >= 0 && index < (int)m_Tabs.size());
+	TabCtrl_SetCurSel(m_TabControl, index);
+	ActivateTab();
+}
+
+Dialog::Tab& Dialog::GetActiveTab()
+{
+	int index = TabCtrl_GetCurSel(m_TabControl);
+	assert(index >= 0 && index < (int)m_Tabs.size());
+	return *m_Tabs[index];
+}
+
+void Dialog::ActivateTab()
+{
+	for (auto* tab : m_Tabs)
+	{
+		EnableWindow(tab->GetWindow(), FALSE);
+	}
+
+	GetActiveTab().Activate();
+}
+
+void Dialog::Relayout()
+{
+	RelayoutControls();
+
+	for (auto* tab : m_Tabs)
+	{
+		if (!tab->GetWindow()) continue;
+
+		RECT rect = tab->GetLayoutRect();
+		const int width = rect.right - rect.left;
+		const int height = rect.bottom - rect.top;
+		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
+		tab->Relayout();
+		tab->Resize(width, height);
+	}
 }
 
 INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)

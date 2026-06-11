@@ -34,10 +34,8 @@ protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	virtual void Relayout() override;
 	virtual void HandleDpiChange() override;
 
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -151,8 +149,6 @@ private:
 		bool rootFolder;
 		UINT skins;  // Not inc files
 	};
-
-	Tab& GetActiveTab();
 
 	static const std::wstring& GetTemplateFolder();
 	static void LoadTemplates();

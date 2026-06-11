@@ -48,13 +48,7 @@ void DialogAbout::Open(int tab)
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
-	// Fake WM_NOTIFY to change tab
-	NMHDR nm = { 0 };
-	nm.code = TCN_SELCHANGE;
-	nm.idFrom = Id_Tab;
-	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
-	TabCtrl_SetCurSel(nm.hwndFrom, tab);
-	c_Dialog->OnNotify(0, (LPARAM)&nm);
+	c_Dialog->SelectTab(tab);
 
 	const HWND& hwnd = c_Dialog->GetWindow();
 	GetWindowPlacement(hwnd, &c_WindowPlacement);
@@ -129,27 +123,6 @@ void DialogAbout::UpdateMeasures(Skin* skin)
 	}
 }
 
-Dialog::Tab& DialogAbout::GetActiveTab()
-{
-	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
-	if (sel == 0)
-	{
-		return m_TabLog;
-	}
-	else if (sel == 1)
-	{
-		return m_TabSkins;
-	}
-	else if (sel == 2)
-	{
-		return m_TabPlugins;
-	}
-	else // if (sel == 3)
-	{
-		return m_TabVersion;
-	}
-}
-
 INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
@@ -161,9 +134,6 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
-
-	case WM_NOTIFY:
-		return OnNotify(wParam, lParam);
 
 	case WM_GETMINMAXINFO:
 		{
@@ -215,28 +185,16 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
-	HWND item = GetControl(Id_Tab);
-	m_TabLog.Create(m_Window);
-	m_TabSkins.Create(m_Window);
-	m_TabPlugins.Create(m_Window);
-	m_TabVersion.Create(m_Window);
-
-	TCITEM tci = { 0 };
-	tci.mask = TCIF_TEXT;
-	tci.pszText = GetString(ID_STR_LOG);
-	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_SKINS);
-	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = GetString(ID_STR_PLUGINS);
-	TabCtrl_InsertItem(item, 2, &tci);
-	tci.pszText = GetString(ID_STR_VERSION);
-	TabCtrl_InsertItem(item, 3, &tci);
+	AddTab(Id_Tab, m_TabLog, GetString(ID_STR_LOG));
+	AddTab(Id_Tab, m_TabSkins, GetString(ID_STR_SKINS));
+	AddTab(Id_Tab, m_TabPlugins, GetString(ID_STR_PLUGINS));
+	AddTab(Id_Tab, m_TabVersion, GetString(ID_STR_VERSION));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
-	item = GetControl(Id_CloseButton);
+	HWND item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
@@ -254,29 +212,6 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
-}
-
-void DialogAbout::Relayout()
-{
-	Dialog::Relayout();
-
-	RECT rect = m_TabLog.GetLayoutRect();
-	const int width = rect.right - rect.left;
-	const int height = rect.bottom - rect.top;
-
-	Tab* tabs[] = { &m_TabLog, &m_TabSkins, &m_TabPlugins, &m_TabVersion };
-	for (auto* tab : tabs)
-	{
-		if (!tab->GetWindow()) continue;
-		rect = tab->GetLayoutRect();
-		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
-		tab->Relayout();
-	}
-
-	m_TabLog.Resize(width, height);
-	m_TabSkins.Resize(width, height);
-	m_TabPlugins.Resize(width, height);
-	m_TabVersion.Resize(width, height);
 }
 
 void DialogAbout::HandleDpiChange()
@@ -299,31 +234,6 @@ INT_PTR DialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
-}
-
-INT_PTR DialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->idFrom)
-	{
-	case Id_Tab:
-		if (nm->code == TCN_SELCHANGE)
-		{
-			// Disable all tab windows first
-			EnableWindow(m_TabLog.GetWindow(), FALSE);
-			EnableWindow(m_TabSkins.GetWindow(), FALSE);
-			EnableWindow(m_TabPlugins.GetWindow(), FALSE);
-			EnableWindow(m_TabVersion.GetWindow(), FALSE);
-
-			GetActiveTab().Activate();
-		}
-		break;
-
-	default:
-		return 1;
-	}
-
-	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------

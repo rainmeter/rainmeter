@@ -46,13 +46,7 @@ void DialogNewSkin::Open(int tab)
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
-	// Fake WM_NOTIFY to change tab
-	NMHDR nm = { 0 };
-	nm.code = TCN_SELCHANGE;
-	nm.idFrom = Id_Tab;
-	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
-	TabCtrl_SetCurSel(nm.hwndFrom, tab);
-	c_Dialog->OnNotify(0, (LPARAM)&nm);
+	c_Dialog->SelectTab(tab);
 
 	const HWND& hwnd = c_Dialog->GetWindow();
 	GetWindowPlacement(hwnd, &c_WindowPlacement);
@@ -103,19 +97,6 @@ void DialogNewSkin::ShowNewSkinDialog()
 	}
 }
 
-Dialog::Tab& DialogNewSkin::GetActiveTab()
-{
-	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
-	if (sel == 0)
-	{
-		return m_TabNew;
-	}
-	else // if (sel == 1)
-	{
-		return m_TabTemplate;
-	}
-}
-
 INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
@@ -127,9 +108,6 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
-
-	case WM_NOTIFY:
-		return OnNotify(wParam, lParam);
 
 	case WM_CLOSE:
 		{
@@ -248,22 +226,14 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Load template filenames
 	LoadTemplates();
 
-	HWND item = GetControl(Id_Tab);
-	m_TabNew.Create(m_Window);
-	m_TabTemplate.Create(m_Window);
-
-	TCITEM tci = { 0 };
-	tci.mask = TCIF_TEXT;
-	tci.pszText = GetString(ID_STR_NEWSKIN);
-	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_TEMPLATE);
-	TabCtrl_InsertItem(item, 1, &tci);
+	AddTab(Id_Tab, m_TabNew, GetString(ID_STR_NEWSKIN));
+	AddTab(Id_Tab, m_TabTemplate, GetString(ID_STR_TEMPLATE));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
-	item = GetControl(Id_CloseButton);
+	HWND item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
 	// Use arrows instead of plus/minus in the tree
@@ -279,20 +249,6 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
-}
-
-void DialogNewSkin::Relayout()
-{
-	Dialog::Relayout();
-
-	Tab* tabs[] = { &m_TabNew, &m_TabTemplate };
-	for (auto* tab : tabs)
-	{
-		if (!tab->GetWindow()) continue;
-		RECT rect = tab->GetLayoutRect();
-		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
-		tab->Relayout();
-	}
 }
 
 void DialogNewSkin::HandleDpiChange()
@@ -313,29 +269,6 @@ INT_PTR DialogNewSkin::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
-}
-
-INT_PTR DialogNewSkin::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->idFrom)
-	{
-	case Id_Tab:
-		if (nm->code == TCN_SELCHANGE)
-		{
-			// Disable all tab windows first
-			EnableWindow(m_TabNew.GetWindow(), FALSE);
-			EnableWindow(m_TabTemplate.GetWindow(), FALSE);
-
-			GetActiveTab().Activate();
-		}
-		break;
-
-	default:
-		return 1;
-	}
-
-	return 0;
 }
 
 const std::wstring& DialogNewSkin::GetTemplateFolder()

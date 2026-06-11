@@ -80,13 +80,7 @@ void DialogManage::Open(int tab)
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
-	// Fake WM_NOTIFY to change tab
-	NMHDR nm = { 0 };
-	nm.code = TCN_SELCHANGE;
-	nm.idFrom = Id_Tab;
-	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
-	TabCtrl_SetCurSel(nm.hwndFrom, tab);
-	c_Dialog->OnNotify(0, (LPARAM)&nm);
+	c_Dialog->SelectTab(tab);
 
 	const HWND& hwnd = c_Dialog->GetWindow();
 	GetWindowPlacement(hwnd, &c_WindowPlacement);
@@ -211,27 +205,6 @@ void DialogManage::UpdateSettings()
 	}
 }
 
-Dialog::Tab& DialogManage::GetActiveTab()
-{
-	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
-	if (sel == 0)
-	{
-		return m_TabSkins;
-	}
-	else if (sel == 1)
-	{
-		return m_TabLayouts;
-	}
-	else if (sel == 2)
-	{
-		return m_TabGameMode;
-	}
-	else // if (sel == 3)
-	{
-		return m_TabSettings;
-	}
-}
-
 INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
@@ -243,9 +216,6 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
-
-	case WM_NOTIFY:
-		return OnNotify(wParam, lParam);
 
 	case WM_CLOSE:
 		{
@@ -293,28 +263,16 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
-	HWND item = GetControl(Id_Tab);
-	m_TabSkins.Create(m_Window);
-	m_TabLayouts.Create(m_Window);
-	m_TabGameMode.Create(m_Window);
-	m_TabSettings.Create(m_Window);
-
-	TCITEM tci = { 0 };
-	tci.mask = TCIF_TEXT;
-	tci.pszText = GetString(ID_STR_SKINS);
-	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_THEMES);
-	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = GetString(ID_STR_GAMEMODE);
-	TabCtrl_InsertItem(item, 2, &tci);
-	tci.pszText = GetString(ID_STR_SETTINGS);
-	TabCtrl_InsertItem(item, 3, &tci);
+	AddTab(Id_Tab, m_TabSkins, GetString(ID_STR_SKINS));
+	AddTab(Id_Tab, m_TabLayouts, GetString(ID_STR_THEMES));
+	AddTab(Id_Tab, m_TabGameMode, GetString(ID_STR_GAMEMODE));
+	AddTab(Id_Tab, m_TabSettings, GetString(ID_STR_SETTINGS));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
-	item = GetControl(Id_CloseButton);
+	HWND item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
 	// Use arrows instead of plus/minus in the tree for Vista+
@@ -330,20 +288,6 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return FALSE;
-}
-
-void DialogManage::Relayout()
-{
-	Dialog::Relayout();
-
-	Tab* tabs[] = { &m_TabSkins, &m_TabLayouts, &m_TabGameMode, &m_TabSettings };
-	for (auto* tab : tabs)
-	{
-		if (!tab->GetWindow()) continue;
-		RECT rect = tab->GetLayoutRect();
-		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
-		tab->Relayout();
-	}
 }
 
 void DialogManage::HandleDpiChange()
@@ -403,31 +347,6 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
-}
-
-INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->idFrom)
-	{
-	case Id_Tab:
-		if (nm->code == TCN_SELCHANGE)
-		{
-			// Disable all tab windows first
-			EnableWindow(m_TabSkins.GetWindow(), FALSE);
-			EnableWindow(m_TabLayouts.GetWindow(), FALSE);
-			EnableWindow(m_TabGameMode.GetWindow(), FALSE);
-			EnableWindow(m_TabSettings.GetWindow(), FALSE);
-
-			GetActiveTab().Activate();
-		}
-		break;
-
-	default:
-		return 1;
-	}
-
-	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------

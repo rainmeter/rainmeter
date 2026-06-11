@@ -37,10 +37,8 @@ protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	virtual void Relayout() override;
 	virtual void HandleDpiChange() override;
 
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -181,8 +179,6 @@ private:
 		Id_CloseButton = IDCLOSE,
 		Id_Tab = 500
 	};
-
-	Tab& GetActiveTab();
 
 	TabLog m_TabLog;
 	TabSkins m_TabSkins;
