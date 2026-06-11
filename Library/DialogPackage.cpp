@@ -507,108 +507,137 @@ void DialogPackage::ShowHelp()
 	ShellExecute(m_Window, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
-std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
+class DialogPackage::SelectFolderDialog : public Dialog
 {
-	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTFOLDER_DIALOG);
-	std::wstring folder = existingPath;
-	if (DialogBoxParam(GetInstanceHandle(), dialog, parent, SelectFolderDlgProc, (LPARAM)&folder) != 1)
+public:
+	SelectFolderDialog(const std::wstring& existingPath) :
+		m_ExistingPath(existingPath),
+		m_Accepted(false)
 	{
-		folder.clear();
 	}
-	return folder;
-}
 
-INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
+	std::wstring ShowModal(HWND parent)
 	{
-	case WM_INITDIALOG:
+		ShowDialogWindow(
+			L"Add",
+			0, 0, 200, 100,
+			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
+			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			parent,
+			false);
+		return m_Accepted ? m_Result : std::wstring();
+	}
+
+protected:
+	INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override
+	{
+		const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
+		switch (uMsg)
 		{
-			EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-
-			std::wstring* existingPath = (std::wstring*)lParam;
-			SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
-
-			*existingPath += L'*';
-			WIN32_FIND_DATA fd = { 0 };
-			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
-			existingPath->pop_back();
-
-			if (hFind != INVALID_HANDLE_VALUE)
-			{
-				const WCHAR* folder = PathFindFileName(existingPath->c_str());
-
-				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_RADIO);
-				std::wstring text = L"Add folder from ";
-				text.append(folder, wcslen(folder) - 1);
-				text += L':';
-				SetWindowText(item, text.c_str());
-				Button_SetCheck(item, BST_CHECKED);
-
-				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
-
-				do
-				{
-					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-						!(fd.cFileName[0] == L'.' && (!fd.cFileName[1] || fd.cFileName[1] == L'.' && !fd.cFileName[2])) &&
-						wcscmp(fd.cFileName, L"Backup") != 0 &&
-						wcscmp(fd.cFileName, L"@Backup") != 0 &&
-						wcscmp(fd.cFileName, L"@Vault") != 0)
-					{
-						ComboBox_InsertString(item, -1, fd.cFileName);
-					}
-				}
-				while (FindNextFile(hFind, &fd));
-
-				ComboBox_SetCurSel(item, 0);
-
-				FindClose(hFind);
-			}
+		case WM_INITDIALOG:
+			return OnInitDialog();
+		case WM_COMMAND:
+			return OnCommand(wParam, lParam);
+		case WM_CLOSE:
+			EndDialog(m_Window, 0);
+			return TRUE;
 		}
-		break;
+		return baseResult;
+	}
 
-	case WM_COMMAND:
+private:
+	INT_PTR OnInitDialog()
+	{
+		const Control controls[] =
+		{
+			Control::RadioButton(IDC_PACKAGESELECTFOLDER_EXISTING_RADIO, 0,
+				6, 6, 188, 9,
+				WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
+			Control::ComboBox(IDC_PACKAGESELECTFOLDER_EXISTING_COMBO, 0,
+				16, 19, 177, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
+			Control::RadioButton(IDC_PACKAGESELECTFOLDER_CUSTOM_RADIO, 0,
+				6, 40, 188, 9,
+				WS_VISIBLE | WS_TABSTOP, 0),
+			Control::Edit(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT, 0,
+				16, 53, 149, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_DISABLED | ES_AUTOHSCROLL, 0),
+			Control::Button(IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON, 0,
+				170, 53, 25, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
+			Control::Button(IDOK, 0,
+				146, 82, 50, 14,
+				WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
+		};
+
+		CreateControls(controls, _countof(controls), GetString);
+		SetWindowText(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOM_RADIO), L"Add custom folder:");
+		SetWindowText(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON), L"...");
+		SetWindowText(GetControl(IDOK), L"Add");
+		Button_SetCheck(GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_RADIO), BST_CHECKED);
+		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
+
+		std::wstring searchPath = m_ExistingPath + L'*';
+		WIN32_FIND_DATA fd = { 0 };
+		HANDLE hFind = FindFirstFileEx(searchPath.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			const WCHAR* folder = PathFindFileName(m_ExistingPath.c_str());
+			std::wstring text = L"Add folder from ";
+			text.append(folder, wcslen(folder) - 1);
+			text += L':';
+			SetWindowText(GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_RADIO), text.c_str());
+
+			HWND combo = GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
+			do
+			{
+				if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
+					!(fd.cFileName[0] == L'.' && (!fd.cFileName[1] || fd.cFileName[1] == L'.' && !fd.cFileName[2])) &&
+					wcscmp(fd.cFileName, L"Backup") != 0 &&
+					wcscmp(fd.cFileName, L"@Backup") != 0 &&
+					wcscmp(fd.cFileName, L"@Vault") != 0)
+				{
+					ComboBox_InsertString(combo, -1, fd.cFileName);
+				}
+			}
+			while (FindNextFile(hFind, &fd));
+
+			ComboBox_SetCurSel(combo, 0);
+			FindClose(hFind);
+		}
+
+		return TRUE;
+	}
+
+	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam)
+	{
 		switch (LOWORD(wParam))
 		{
 		case IDC_PACKAGESELECTFOLDER_EXISTING_RADIO:
 			{
-				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
-				EnableWindow(item, TRUE);
-				int sel = ComboBox_GetCurSel(item);
-				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT);
-				EnableWindow(item, FALSE);
-				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON);
-				EnableWindow(item, FALSE);
-
-				item = GetDlgItem(hWnd, IDOK);
-				EnableWindow(item, sel != -1);
+				HWND combo = GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
+				EnableWindow(combo, TRUE);
+				EnableWindow(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT), FALSE);
+				EnableWindow(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON), FALSE);
+				EnableWindow(GetControl(IDOK), ComboBox_GetCurSel(combo) != -1);
 			}
 			break;
 
 		case IDC_PACKAGESELECTFOLDER_CUSTOM_RADIO:
-			{
-				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
-				EnableWindow(item, FALSE);
-				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT);
-				EnableWindow(item, TRUE);
-				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON);
-				EnableWindow(item, TRUE);
-
-				SendMessage(hWnd, WM_COMMAND, MAKEWPARAM(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT, EN_CHANGE), 0);
-			}
+			EnableWindow(GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_COMBO), FALSE);
+			EnableWindow(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT), TRUE);
+			EnableWindow(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON), TRUE);
+			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT, EN_CHANGE), 0);
 			break;
 
 		case IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT:
 			if (HIWORD(wParam) == EN_CHANGE)
 			{
 				WCHAR buffer[MAX_PATH] = { 0 };
-				int len = Edit_GetText((HWND)lParam, buffer, _countof(buffer));
-
-				// Disable Add button if invalid directory
+				Edit_GetText(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT), buffer, _countof(buffer));
 				DWORD attributes = GetFileAttributes(buffer);
-				BOOL state = (attributes != INVALID_FILE_ATTRIBUTES &&
-					attributes & FILE_ATTRIBUTE_DIRECTORY);
-				EnableWindow(GetDlgItem(hWnd, IDOK), state);
+				BOOL state = attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY);
+				EnableWindow(GetControl(IDOK), state);
 			}
 			break;
 
@@ -616,14 +645,16 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 			{
 				WCHAR buffer[MAX_PATH] = { 0 };
 				BROWSEINFO bi = { 0 };
-				bi.hwndOwner = hWnd;
+				bi.hwndOwner = m_Window;
 				bi.ulFlags = BIF_USENEWUI | BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS;
 
 				PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
-				if (pidl && SHGetPathFromIDList(pidl, buffer))
+				if (pidl)
 				{
-					HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT);
-					SetWindowText(item, buffer);
+					if (SHGetPathFromIDList(pidl, buffer))
+					{
+						SetWindowText(GetControl(IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT), buffer);
+					}
 					CoTaskMemFree(pidl);
 				}
 			}
@@ -632,66 +663,113 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 		case IDOK:
 			{
 				WCHAR buffer[MAX_PATH] = { 0 };
-				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_RADIO);
-				bool existing = Button_GetCheck(item) == BST_CHECKED;
-
-				item = GetDlgItem(hWnd, existing ? IDC_PACKAGESELECTFOLDER_EXISTING_COMBO : IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT);
-				GetWindowText(item, buffer, _countof(buffer));
-
-				std::wstring* result = (std::wstring*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-
-				if (existing)
-				{
-					*result += buffer;
-				}
-				else
-				{
-					*result = buffer;
-				}
-				*result += L'\\';
-
-				EndDialog(hWnd, 1);
+				const bool existing = Button_GetCheck(GetControl(IDC_PACKAGESELECTFOLDER_EXISTING_RADIO)) == BST_CHECKED;
+				GetWindowText(GetControl(existing ? IDC_PACKAGESELECTFOLDER_EXISTING_COMBO : IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT), buffer, _countof(buffer));
+				m_Result = existing ? m_ExistingPath + buffer : buffer;
+				m_Result += L'\\';
+				m_Accepted = true;
+				EndDialog(m_Window, 0);
 			}
+			break;
+
+		case IDCANCEL:
+			EndDialog(m_Window, 0);
+			break;
+
+		default:
+			return FALSE;
 		}
-		break;
 
-	case WM_CLOSE:
-		EndDialog(hWnd, 0);
-		break;
-
-	default:
-		return FALSE;
+		return TRUE;
 	}
 
-	return TRUE;
-}
+	std::wstring m_ExistingPath;
+	std::wstring m_Result;
+	bool m_Accepted;
+};
 
-std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
+class DialogPackage::SelectPluginDialog : public Dialog
 {
-	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTPLUGIN_DIALOG);
-	std::pair<std::wstring, std::wstring> plugins;
-	if (DialogBoxParam(GetInstanceHandle(), dialog, parent, SelectPluginDlgProc, (LPARAM)&plugins) != 1)
+public:
+	SelectPluginDialog() : m_Accepted(false)
 	{
-		plugins.first.clear();
-		plugins.second.clear();
 	}
-	return plugins;
-}
 
-INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
+	std::pair<std::wstring, std::wstring> ShowModal(HWND parent)
 	{
-	case WM_INITDIALOG:
+		ShowDialogWindow(
+			L"Add",
+			0, 0, 200, 100,
+			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
+			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			parent,
+			false);
+		return m_Accepted ? m_Plugins : std::pair<std::wstring, std::wstring>();
+	}
+
+protected:
+	INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override
+	{
+		const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
+		switch (uMsg)
 		{
-			EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-
-			auto plugins = (std::pair<std::wstring, std::wstring>*)lParam;
-			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)plugins);
+		case WM_INITDIALOG:
+			return OnInitDialog();
+		case WM_COMMAND:
+			return OnCommand(wParam, lParam);
+		case WM_CLOSE:
+			EndDialog(m_Window, 0);
+			return TRUE;
 		}
-		break;
+		return baseResult;
+	}
 
-	case WM_COMMAND:
+private:
+	INT_PTR OnInitDialog()
+	{
+		enum
+		{
+			Label32Bit = 1100,
+			Label64Bit
+		};
+
+		const Control controls[] =
+		{
+			Control::Label(Label32Bit, 0,
+				6, 6, 188, 9,
+				WS_VISIBLE, 0),
+			Control::Edit(IDC_PACKAGESELECTPLUGIN_32BIT_EDIT, 0,
+				16, 19, 149, 14,
+				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
+			Control::Button(IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON, 0,
+				170, 19, 25, 14,
+				WS_VISIBLE | WS_TABSTOP, 0),
+			Control::Label(Label64Bit, 0,
+				6, 40, 188, 9,
+				WS_VISIBLE, 0),
+			Control::Edit(IDC_PACKAGESELECTPLUGIN_64BIT_EDIT, 0,
+				16, 53, 149, 14,
+				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
+			Control::Button(IDC_PACKAGESELECTPLUGIN_64BITBROWSE_BUTTON, 0,
+				170, 53, 25, 14,
+				WS_VISIBLE | WS_TABSTOP, 0),
+			Control::Button(IDOK, 0,
+				146, 82, 50, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0)
+		};
+
+		CreateControls(controls, _countof(controls), GetString);
+		SetWindowText(GetControl(Label32Bit), L"32-bit DLL:");
+		SetWindowText(GetControl(IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON), L"...");
+		SetWindowText(GetControl(Label64Bit), L"64-bit DLL:");
+		SetWindowText(GetControl(IDC_PACKAGESELECTPLUGIN_64BITBROWSE_BUTTON), L"...");
+		SetWindowText(GetControl(IDOK), L"Add");
+		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
+		return TRUE;
+	}
+
+	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam)
+	{
 		switch (LOWORD(wParam))
 		{
 		case IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON:
@@ -706,61 +784,62 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 				ofn.nFilterIndex = 0UL;
 				ofn.lpstrFile = buffer;
 				ofn.nMaxFile = _countof(buffer);
-				ofn.hwndOwner = c_Dialog->GetWindow();
+				ofn.hwndOwner = m_Window;
 
-				if (!GetOpenFileName(&ofn))
+				if (!GetOpenFileName(&ofn)) break;
+
+				const bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
+				WORD machine = 0;
+				if (FileUtil::GetBinaryFileBitness(buffer, machine) &&
+					((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64)))
 				{
+					const WCHAR* otherName = PathFindFileName(x32 ? m_Plugins.second.c_str() : m_Plugins.first.c_str());
+					if (*otherName && _wcsicmp(otherName, PathFindFileName(buffer)) != 0)
+					{
+						MessageBox(m_Window, L"Plugins must have same name.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
+						break;
+					}
+
+					PathSetDlgItemPath(m_Window, x32 ? IDC_PACKAGESELECTPLUGIN_32BIT_EDIT : IDC_PACKAGESELECTPLUGIN_64BIT_EDIT, buffer);
+					(x32 ? m_Plugins.first : m_Plugins.second) = buffer;
+					EnableWindow(GetControl(IDOK), !m_Plugins.first.empty() && !m_Plugins.second.empty());
 					break;
 				}
 
-				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
-
-				WORD machine = 0;
-				if (FileUtil::GetBinaryFileBitness(buffer, machine))
-				{
-					if ((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64))
-					{
-						// Check if same name as other DLL
-						auto plugins = (std::pair<std::wstring, std::wstring>*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-						const WCHAR* otherName = PathFindFileName(x32 ? plugins->second.c_str() : plugins->first.c_str());
-						if (*otherName && _wcsicmp(otherName, PathFindFileName(buffer)) != 0)
-						{
-							MessageBox(hWnd, L"Plugins must have same name.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
-							break;
-						}
-
-						PathSetDlgItemPath(hWnd, x32 ? IDC_PACKAGESELECTPLUGIN_32BIT_EDIT : IDC_PACKAGESELECTPLUGIN_64BIT_EDIT, buffer);
-
-						(x32 ? plugins->first : plugins->second) = buffer;
-
-						if (!plugins->first.empty() && !plugins->second.empty())
-						{
-							// Enable Add button if both plugins have been selected
-							EnableWindow(GetDlgItem(hWnd, IDOK), TRUE);
-						}
-						break;
-					}
-				}
-
-				MessageBox(hWnd, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
+				MessageBox(m_Window, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
 			}
 			break;
 
 		case IDOK:
-			EndDialog(hWnd, 1);
+			m_Accepted = true;
+			EndDialog(m_Window, 0);
 			break;
+
+		case IDCANCEL:
+			EndDialog(m_Window, 0);
+			break;
+
+		default:
+			return FALSE;
 		}
-		break;
 
-	case WM_CLOSE:
-		EndDialog(hWnd, 0);
-		break;
-
-	default:
-		return FALSE;
+		return TRUE;
 	}
 
-	return TRUE;
+	std::pair<std::wstring, std::wstring> m_Plugins;
+	bool m_Accepted;
+};
+
+std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
+{
+	SelectFolderDialog dialog(existingPath);
+	return dialog.ShowModal(parent);
+}
+
+std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
+{
+	SelectPluginDialog dialog;
+	return dialog.ShowModal(parent);
 }
 
 // -----------------------------------------------------------------------------------------------

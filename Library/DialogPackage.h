@@ -72,11 +72,12 @@ private:
 
 	void ShowHelp();
 
+	class SelectFolderDialog;
+	class SelectPluginDialog;
+
 	static std::wstring SelectFolder(HWND parent, const std::wstring& existingPath);
-	static INT_PTR CALLBACK SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static std::pair<std::wstring, std::wstring> SelectPlugin(HWND parent);
-	static INT_PTR CALLBACK SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	TabInfo m_TabInfo;
 	TabOptions m_TabOptions;
