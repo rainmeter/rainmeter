@@ -519,6 +519,12 @@ Function PageOptionsBrowseOnClick
 	nsDialogs::SelectFolderDialog "$(^DirBrowseText)" $0
 	Pop $1
 	${If} $1 != error
+		${If} $1 != ""
+		${AndIf} $InstallPortable = 1
+		${AndIfNot} ${FileExists} "$1\Rainmeter.exe"
+			StrCpy $1 "$1\Rainmeter"
+		${EndIf}
+
 		${NSD_SetText} $R0 $1
 	${EndIf}
 FunctionEnd
