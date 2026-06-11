@@ -21,6 +21,7 @@ public:
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+	virtual void HandleDpiChange() override;
 
 	static DialogInstall* c_Dialog;
 
@@ -99,6 +100,7 @@ private:
 	void LaunchRainmeter();
 	void KeepVariables();
 	void ArchivePlugin(const std::wstring& folder, const std::wstring& name);
+	void UpdateHeaderBitmap();
 
 	static void CleanLayoutFile(const WCHAR* file);
 
@@ -116,6 +118,7 @@ private:
 	TabInstall m_TabInstall;
 
 	HBITMAP m_HeaderBitmap;
+	HBITMAP m_ScaledHeaderBitmap;
 
 	HANDLE m_InstallThread;
 
