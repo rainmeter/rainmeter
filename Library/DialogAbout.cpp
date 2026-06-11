@@ -1623,52 +1623,41 @@ void DialogAbout::TabVersion::Create(HWND owner)
 	const Control s_Controls[] =
 	{
 		Control::Icon(Id_AppIcon, 0,
-			0, 12, 256, 256,
-			WS_VISIBLE, 0),
-
-		Control::LineV(-0, 0,
-			180, 8, 5, 180,
+			0, 12, 64, 64,
 			WS_VISIBLE, 0),
 
 		Control::Label(Id_VersionLabel, 0,
-			190, 6, 380, 11,
+			80, 6, 470, 11,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_TOP_LEFT | Control::BOLD_FONT),
-		Control::Label(Id_LanguageLabel, 0,
-			190, 21, 380, 13,
+		Control::Label(Id_BuildLink, 0,
+			80, 21, 470, 13,
 			WS_VISIBLE, 0),
-		Control::Label(Id_TimestampLabel, 0,
-			190, 34, 380, 13,
+		Control::Label(Id_HomeLink, ID_STR_GETLATESTVERSION,
+			80, 34, 470, 13,
 			WS_VISIBLE, 0),
-		Control::LinkLabel(Id_HashLink, 0,
-			190, 47, 300, 13,
+		Control::LinkLabel(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
+			80, 47, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 
 		Control::Label(Id_WinVerLabel, 0,
-			190, 70, 380, 13,
+			80, 70, 470, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		Control::LinkLabel(Id_PathLink, 0,
-			190, 83, 380, 13,
+			80, 83, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 		Control::LinkLabel(Id_SkinPathLink, 0,
-			190, 96, 380, 13,
+			80, 96, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 		Control::LinkLabel(Id_SettingsPathLink, 0,
-			190, 109, 380, 13,
+			80, 109, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 		Control::LinkLabel(Id_IniFileLink, 0,
-			190, 122, 380, 13,
+			80, 122, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 		Control::Button(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
-			190, 135, buttonWidth + 35, 14,
+			80, 140, buttonWidth + 35, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-
-		Control::LinkLabel(Id_HomeLink, ID_STR_GETLATESTVERSION,
-			190, 165, 380, 13,
-			WS_VISIBLE, 0),
-		Control::LinkLabel(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
-			190, 178, 380, 13,
-			WS_VISIBLE, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -1688,7 +1677,7 @@ void DialogAbout::TabVersion::Initialize()
 	};
 
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, 256);
+	HICON icon = GetIconBySize(IDI_RAINMETER, 64);
 	Static_SetIcon(item, icon);
 
 	WCHAR tmpSz[MAX_PATH];
@@ -1697,27 +1686,8 @@ void DialogAbout::TabVersion::Initialize()
 	item = GetControl(Id_VersionLabel);
 	SetWindowText(item, tmpSz);
 
-	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-	LCID lcid = GetRainmeter().GetResourceLCID();
-	GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Language: %s (%lu)", lang, lcid);
-	item = GetControl(Id_LanguageLabel);
-	SetWindowText(item, tmpSz);
-
-	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s", GetRainmeter().GetBuildTime().c_str());
-	item = GetControl(Id_TimestampLabel);
-	SetWindowText(item, tmpSz);
-
-	std::wstring hash = GetRainmeter().GetBuildHash();
-	if (hash.length() == 7ULL)  // Short hash is exactly 7 chars
-	{
-		_snwprintf_s(tmpSz, _TRUNCATE, L"Build commit: <a>%s</a>", hash.c_str());
-	}
-	else
-	{
-		_snwprintf_s(tmpSz, _TRUNCATE, L"Build commit: %s", hash.c_str());  // Local build
-	}
-	item = GetControl(Id_HashLink);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Build time: %s (<a>%s</a>)", GetRainmeter().GetBuildTime().c_str(), GetRainmeter().GetBuildHash().c_str());
+	item = GetControl(Id_BuildLink);
 	SetWindowText(item, tmpSz);
 
 	_snwprintf_s(tmpSz, _TRUNCATE, L"OS: %s - %s (%hu)",
@@ -1751,7 +1721,7 @@ void DialogAbout::TabVersion::Relayout(int w, int h)
 	Tab::Relayout(w, h);
 
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, 256);
+	HICON icon = GetIconBySize(IDI_RAINMETER, 64);
 	Static_SetIcon(item, icon);
 }
 
@@ -1828,7 +1798,7 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		if (nm->idFrom == Id_HashLink)
+		if (nm->idFrom == Id_BuildLink)
 		{
 			std::wstring hashLink = L"https://github.com/rainmeter/rainmeter/commit/" + GetRainmeter().GetBuildHash();
 			CommandHandler::RunFile(hashLink.c_str());
@@ -1839,7 +1809,7 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		else if (nm->idFrom == Id_LicenseLink)
 		{
-			CommandHandler::RunFile(L"http://gnu.org/licenses");
+			CommandHandler::RunFile(L"https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html");
 		}
 		else if (nm->idFrom == Id_PathLink)
 		{
