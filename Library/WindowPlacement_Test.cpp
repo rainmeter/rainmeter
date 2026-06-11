@@ -54,26 +54,6 @@ public:
 		Assert::AreEqual(20, result.y.anchorScreen);
 	}
 
-	TEST_METHOD(TestWindowPositionUsesLogicalCoordinates)
-	{
-		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
-			{ L"100", L"50", L"0", L"0", 200, 100, 1.5f, 0.0f, true, true, 1.5f },
-			CreateMonitors());
-
-		Assert::AreEqual(150, result.x.coordinate);
-		Assert::AreEqual(75, result.y.coordinate);
-	}
-
-	TEST_METHOD(TestPercentageWindowPositionDoesNotUseLogicalScale)
-	{
-		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
-			{ L"50%", L"50%", L"0", L"0", 200, 100, 1.5f, 0.0f, true, true, 1.5f },
-			CreateMonitors());
-
-		Assert::AreEqual(960, result.x.coordinate);
-		Assert::AreEqual(540, result.y.coordinate);
-	}
-
 	TEST_METHOD(TestAutoAnchorStartStartWhenScaleIncreases)
 	{
 		AssertAutoDpiPlacement(L"0", L"0", 0, 0, 0, 0);
@@ -302,16 +282,6 @@ public:
 		Assert::AreEqual(-12, result.y.coordinate);
 		Assert::AreEqual(1, result.x.anchorScreen);
 		Assert::AreEqual(2, result.y.anchorScreen);
-	}
-
-	TEST_METHOD(TestLogicalFractionalPixelsUseDevicePixelRounding)
-	{
-		const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
-			{ L"10.9", L"-10.9", L"0", L"0", 200, 100, 1.5f, 0.0f, true, true, 1.5f },
-			CreateMonitors());
-
-		Assert::AreEqual(17, result.x.coordinate);
-		Assert::AreEqual(-17, result.y.coordinate);
 	}
 
 	TEST_METHOD(TestFarEdgeModifiers)

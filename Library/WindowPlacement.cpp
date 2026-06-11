@@ -136,21 +136,6 @@ int ResolveDistance(float amount, int size, bool percentage)
 	return percentage ? (int)((float)size * amount / 100.0f) : (int)amount;
 }
 
-int ResolveWindowDistance(float amount, int size, bool percentage, float positionScale)
-{
-	if (percentage)
-	{
-		return ResolveDistance(amount, size, true);
-	}
-	if (fabsf(positionScale - 1.0f) <= 0.0001f)
-	{
-		return (int)amount;
-	}
-
-	const float scaled = amount * positionScale;
-	return (int)((amount >= 0.0f) ? ceilf(scaled) : floorf(scaled));
-}
-
 int ResolveAnchor(const ParsedAnchorOption& option, int windowSize)
 {
 	// Anchor values remain in logical skin pixels. Skin::WindowToScreen() stores these logical
@@ -222,7 +207,6 @@ AxisResult ResolveAxis(
 	int windowSize,
 	float scale,
 	float oldScale,
-	float positionScale,
 	bool anchorDefined,
 	const MultiMonitorInfo& monitorsInfo)
 {
@@ -233,7 +217,7 @@ AxisResult ResolveAxis(
 	// WindowX and WindowY describe the on-screen location of the selected anchor point, not
 	// necessarily the upper-left corner. First resolve that anchor point against the selected
 	// screen, then subtract the scaled anchor offset to get the window's top-left screen position.
-	const int distance = ResolveWindowDistance(window.amount, screen.size, window.percentage, positionScale);
+	const int distance = ResolveDistance(window.amount, screen.size, window.percentage);
 	const int anchorPoint = window.fromFarEdge ?
 		screen.start + (screen.size - distance) :
 		screen.start + distance;
@@ -292,8 +276,8 @@ Result WindowToScreen(const Input& input, const MultiMonitorInfo& monitorsInfo)
 	}
 
 	return {
-		ResolveAxis(windowX, anchorX, Axis::X, input.windowW, input.scale, input.oldScale, input.positionScale, input.anchorXDefined, monitorsInfo),
-		ResolveAxis(windowY, anchorY, Axis::Y, input.windowH, input.scale, input.oldScale, input.positionScale, input.anchorYDefined, monitorsInfo)
+		ResolveAxis(windowX, anchorX, Axis::X, input.windowW, input.scale, input.oldScale, input.anchorXDefined, monitorsInfo),
+		ResolveAxis(windowY, anchorY, Axis::Y, input.windowH, input.scale, input.oldScale, input.anchorYDefined, monitorsInfo)
 	};
 }
 

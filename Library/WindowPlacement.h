@@ -25,7 +25,6 @@ struct Input
 	float oldScale = 0.0f;
 	bool anchorXDefined = true;
 	bool anchorYDefined = true;
-	float positionScale = 1.0f;
 };
 
 struct AxisResult
