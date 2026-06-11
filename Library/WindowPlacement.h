@@ -46,6 +46,15 @@ struct Result
 	AxisResult y;
 };
 
+struct Screens
+{
+	int x;
+	int y;
+	bool xDefined;
+	bool yDefined;
+};
+
+Screens ResolveScreens(const std::wstring& windowX, const std::wstring& windowY, const MultiMonitorInfo& monitorsInfo);
 Result WindowToScreen(const Input& input, const MultiMonitorInfo& monitorsInfo);
 
 }  // namespace WindowPlacement

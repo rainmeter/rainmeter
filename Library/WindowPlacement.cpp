@@ -131,6 +131,40 @@ ParsedWindowOption ParseWindowOption(const std::wstring& value, Axis axis, const
 	return option;
 }
 
+void ApplyScreenDefaults(
+	ParsedWindowOption& windowX,
+	ParsedWindowOption& windowY,
+	const MultiMonitorInfo& monitorsInfo)
+{
+	const bool windowXHasScreen = windowX.explicitScreen;
+	const bool windowYHasScreen = windowY.explicitScreen;
+	const int windowXScreen = windowX.screen;
+	const int windowYScreen = windowY.screen;
+
+	// Screens default to the primary monitor. If either WindowX or WindowY contains a valid @N,
+	// that screen applies to both axes; a second @N on the other axis overrides only that axis.
+	windowX.screen = windowY.screen = monitorsInfo.primary;
+	windowX.explicitScreen = windowY.explicitScreen = false;
+
+	if (windowXHasScreen)
+	{
+		windowX.screen = windowY.screen = windowXScreen;
+		windowX.explicitScreen = windowY.explicitScreen = true;
+	}
+
+	if (windowYHasScreen)
+	{
+		windowY.screen = windowYScreen;
+		windowY.explicitScreen = true;
+
+		if (!windowX.explicitScreen)
+		{
+			windowX.screen = windowYScreen;
+			windowX.explicitScreen = true;
+		}
+	}
+}
+
 int ResolveDistance(float amount, int size, bool percentage)
 {
 	return percentage ? (int)((float)size * amount / 100.0f) : (int)amount;
@@ -257,39 +291,27 @@ AxisResult ResolveAxis(
 
 }  // namespace
 
+Screens ResolveScreens(const std::wstring& windowXValue, const std::wstring& windowYValue, const MultiMonitorInfo& monitorsInfo)
+{
+	ParsedWindowOption windowX = ParseWindowOption(windowXValue, Axis::X, monitorsInfo);
+	ParsedWindowOption windowY = ParseWindowOption(windowYValue, Axis::Y, monitorsInfo);
+	ApplyScreenDefaults(windowX, windowY, monitorsInfo);
+
+	return {
+		windowX.screen,
+		windowY.screen,
+		windowX.explicitScreen,
+		windowY.explicitScreen
+	};
+}
+
 Result WindowToScreen(const Input& input, const MultiMonitorInfo& monitorsInfo)
 {
 	ParsedWindowOption windowX = ParseWindowOption(input.windowX, Axis::X, monitorsInfo);
 	ParsedWindowOption windowY = ParseWindowOption(input.windowY, Axis::Y, monitorsInfo);
 	const ParsedAnchorOption anchorX = ParseAnchorOption(input.anchorX, Axis::X);
 	const ParsedAnchorOption anchorY = ParseAnchorOption(input.anchorY, Axis::Y);
-	const bool windowXHasScreen = windowX.explicitScreen;
-	const bool windowYHasScreen = windowY.explicitScreen;
-	const int windowXScreen = windowX.screen;
-	const int windowYScreen = windowY.screen;
-
-	// Screens default to the primary monitor. If either WindowX or WindowY contains a valid @N,
-	// that screen applies to both axes; a second @N on the other axis overrides only that axis.
-	windowX.screen = windowY.screen = monitorsInfo.primary;
-	windowX.explicitScreen = windowY.explicitScreen = false;
-
-	if (windowXHasScreen)
-	{
-		windowX.screen = windowY.screen = windowXScreen;
-		windowX.explicitScreen = windowY.explicitScreen = true;
-	}
-
-	if (windowYHasScreen)
-	{
-		windowY.screen = windowYScreen;
-		windowY.explicitScreen = true;
-
-		if (!windowX.explicitScreen)
-		{
-			windowX.screen = windowYScreen;
-			windowX.explicitScreen = true;
-		}
-	}
+	ApplyScreenDefaults(windowX, windowY, monitorsInfo);
 
 	return {
 		ResolveAxis(windowX, anchorX, Axis::X, input.windowW, input.scale, input.oldScale, input.positionScale, input.anchorXDefined, monitorsInfo),
