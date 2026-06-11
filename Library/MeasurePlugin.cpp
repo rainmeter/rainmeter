@@ -132,9 +132,11 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		if (!m_Plugin)
 		{
+			const auto lastError = GetLastError();
 			LogErrorF(
-				this, L"Plugin: Unable to load \"%s\" (error %ld)",
-				pluginName.c_str(), GetLastError());
+				this, L"Plugin: Unable to %s \"%s\" (error %ld)",
+				lastError == ERROR_MOD_NOT_FOUND ? L"find DLL for" : L"load",
+				pluginName.c_str(), lastError);
 			return;
 		}
 	}
