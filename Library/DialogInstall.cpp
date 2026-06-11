@@ -38,6 +38,7 @@ inline bool IsWin32Build()
 */
 DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 	m_HeaderBitmap(),
+	m_ScaledHeaderBitmap(),
 	m_InstallThread(),
 	m_PackageUnzFile(),
 	m_PackageFileName(file),
@@ -59,6 +60,14 @@ DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 */
 DialogInstall::~DialogInstall()
 {
+	if (m_Window && IsWindow(m_Window))
+	{
+		SendMessage(GetControl(Id_HeaderBitmap), STM_SETIMAGE, IMAGE_BITMAP, 0);
+	}
+
+	if (m_ScaledHeaderBitmap) DeleteObject(m_ScaledHeaderBitmap);
+	if (m_HeaderBitmap) DeleteObject(m_HeaderBitmap);
+
 	if (m_PackageUnzFile)
 	{
 		unzClose(m_PackageUnzFile);
@@ -198,12 +207,42 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(DialogInstall::Id_HeaderBitmap);
 	if (m_HeaderBitmap)
 	{
-		SendMessage(item, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_HeaderBitmap);
+		UpdateHeaderBitmap();
 	}
 
 	m_TabInstall.Activate();
 
 	return FALSE;
+}
+
+void DialogInstall::HandleDpiChange()
+{
+	UpdateHeaderBitmap();
+}
+
+void DialogInstall::UpdateHeaderBitmap()
+{
+	if (!m_HeaderBitmap) return;
+
+	HWND item = GetControl(Id_HeaderBitmap);
+	RECT rect = { 0 };
+	if (!item || !GetClientRect(item, &rect)) return;
+
+	const int width = rect.right - rect.left;
+	const int height = rect.bottom - rect.top;
+	if (width <= 0 || height <= 0) return;
+
+	HBITMAP bitmap = (HBITMAP)CopyImage(
+		m_HeaderBitmap,
+		IMAGE_BITMAP,
+		width,
+		height,
+		LR_CREATEDIBSECTION);
+	if (!bitmap) return;
+
+	SendMessage(item, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bitmap);
+	if (m_ScaledHeaderBitmap) DeleteObject(m_ScaledHeaderBitmap);
+	m_ScaledHeaderBitmap = bitmap;
 }
 
 INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
