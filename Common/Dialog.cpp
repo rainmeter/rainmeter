@@ -148,7 +148,7 @@ Dialog::Dialog() : BaseDialog(),
 
 Dialog::~Dialog()
 {
-	if (m_Window) DestroyWindow(m_Window);
+	if (m_Window && IsWindow(m_Window)) DestroyWindow(m_Window);
 }
 
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
@@ -402,7 +402,7 @@ RECT Dialog::Tab::GetLayoutRect()
 
 Dialog::Tab::~Tab()
 {
-	DestroyWindow(m_Window);
+	if (m_Window && IsWindow(m_Window)) DestroyWindow(m_Window);
 }
 
 void Dialog::Tab::Activate()
