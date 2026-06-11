@@ -2050,32 +2050,14 @@ void Skin::WindowToScreen(float oldScale)
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const float previousScale = (oldScale > 0.0f) ? oldScale : m_Scale;
 
-	// If this is the first call WindowToScreen(), use an explicitly selected monitor or the
-	// unscaled window size to figure out which monitor DPI to use for scaling the window.
-	// UpdateDpiScale() normally uses the window DPI, but that won't necessarily be correct
-	// because the window hasn't been placed on the screen yet.
+	// If this is the first call WindowToScreen(), use the unscaled window size to figure out
+	// which monitor DPI to use for scaling the window. UpdateDpiScale() normally uses the window
+	// DPI, but that won't necessarily be correct because the window hasn't been placed on the
+	// screen yet.
 	if (!m_CalculatedInitialScale)
 	{
-		const WindowPlacement::Screens screens =
-			WindowPlacement::ResolveScreens(m_WindowX, m_WindowY, monitorsInfo);
-		HMONITOR monitor = nullptr;
-
-		if (screens.xDefined && screens.x > 0)
-		{
-			monitor = monitorsInfo.monitors[(size_t)(screens.x - 1)].handle;
-		}
-		else if (screens.yDefined && screens.y > 0)
-		{
-			monitor = monitorsInfo.monitors[(size_t)(screens.y - 1)].handle;
-		}
-
-		if (monitor == nullptr)
-		{
-			const RECT unscaledRect = { m_ScreenX, m_ScreenY, m_ScreenX + max(m_WindowW, 1), m_ScreenY + max(m_WindowH, 1) };
-			monitor = MonitorFromRect(&unscaledRect, MONITOR_DEFAULTTONEAREST);
-		}
-
-		UpdateDpiScale(monitor);
+		const RECT unscaledRect = { m_ScreenX, m_ScreenY, m_ScreenX + max(m_WindowW, 1), m_ScreenY + max(m_WindowH, 1)};
+		UpdateDpiScale(MonitorFromRect(&unscaledRect, MONITOR_DEFAULTTONEAREST));
 		m_CalculatedInitialScale = true;
 	}
 
