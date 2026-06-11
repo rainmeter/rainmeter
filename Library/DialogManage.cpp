@@ -374,6 +374,9 @@ DialogManage::TabSkins::~TabSkins()
 	item = GetControl(Id_SkinsTreeView);
 	RemoveWindowSubclass(item, &SkinsTreeViewSubclass, 1);
 
+	item = GetControl(Id_DescriptionLabel);
+	RemoveWindowSubclass(item, &DescriptionEditSubclass, 1);
+
 	DestroyImageList();
 
 	if (s_NewSkinBkBrush)
@@ -537,6 +540,9 @@ void DialogManage::TabSkins::Create(HWND owner)
 
 	item = GetControl(Id_SkinsTreeView);
 	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, (DWORD_PTR)this);
+
+	item = GetControl(Id_DescriptionLabel);
+	SetWindowSubclass(item, &DescriptionEditSubclass, 1, 0);
 }
 
 void DialogManage::TabSkins::Initialize()
@@ -1070,6 +1076,19 @@ LRESULT DialogManage::TabSkins::SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARA
 	}
 
 	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK DialogManage::TabSkins::DescriptionEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	LRESULT result = DefSubclassProc(hwnd, msg, wParam, lParam);
+
+	if (msg == WM_SETFOCUS)
+	{
+		HideCaret(hwnd);
+	}
+
+	return result;
 }
 
 std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)

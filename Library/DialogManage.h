@@ -115,6 +115,8 @@ private:
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 		static LRESULT CALLBACK SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK DescriptionEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		static std::wstring GetTreeSelectionPath(HWND tree);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index = 0);
