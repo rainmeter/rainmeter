@@ -251,11 +251,6 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-void DialogNewSkin::HandleDpiChange()
-{
-	if (m_TabNew.IsInitialized()) m_TabNew.HandleDpiChange();
-}
-
 INT_PTR DialogNewSkin::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))

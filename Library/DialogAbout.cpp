@@ -214,13 +214,6 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-void DialogAbout::HandleDpiChange()
-{
-	if (m_TabLog.IsInitialized()) m_TabLog.HandleDpiChange();
-	if (m_TabSkins.IsInitialized()) m_TabSkins.HandleDpiChange();
-	if (m_TabPlugins.IsInitialized()) m_TabPlugins.HandleDpiChange();
-}
-
 INT_PTR DialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))

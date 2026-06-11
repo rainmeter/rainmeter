@@ -148,7 +148,7 @@ Dialog::Dialog() : BaseDialog(),
 
 Dialog::~Dialog()
 {
-	if (m_Window && IsWindow(m_Window)) DestroyWindow(m_Window);
+	if (m_Window) DestroyWindow(m_Window);
 }
 
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
@@ -276,7 +276,14 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 	SetWindowPos(m_Window, nullptr, suggested->left, suggested->top, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
 
 	Relayout();
+
+	for (auto* tab : m_Pages)
+	{
+		if (tab->IsInitialized()) tab->HandleDpiChange();
+	}
+
 	HandleDpiChange();
+
 	RedrawWindow(m_Window, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 	return TRUE;
 }
@@ -402,7 +409,7 @@ RECT Dialog::Tab::GetLayoutRect()
 
 Dialog::Tab::~Tab()
 {
-	if (m_Window && IsWindow(m_Window)) DestroyWindow(m_Window);
+	if (m_Window) DestroyWindow(m_Window);
 }
 
 void Dialog::Tab::Activate()

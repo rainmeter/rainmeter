@@ -45,7 +45,6 @@ protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	virtual void HandleDpiChange() override;
 
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
@@ -91,11 +90,11 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		virtual void HandleDpiChange() override;
 
 		void UpdateSelected(Skin* skin);
 		void Update(Skin* skin, bool deleted);
 		void UpdateDraggableCheckBox();
-		void HandleDpiChange();
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
 

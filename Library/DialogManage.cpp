@@ -290,11 +290,6 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void DialogManage::HandleDpiChange()
-{
-	if (m_TabSkins.IsInitialized()) m_TabSkins.HandleDpiChange();
-}
-
 INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
@@ -603,6 +598,13 @@ void DialogManage::TabSkins::Initialize()
 	m_HandleCommands = true;
 }
 
+void DialogManage::TabSkins::HandleDpiChange()
+{
+	CreateImageList();
+	HICON icon = GetIcon(IDI_ADDFOLDER);
+	SendDlgItemMessage(m_Window, Id_NewSkinButton, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon);
+}
+
 void DialogManage::TabSkins::CreateImageList()
 {
 	HWND tree = GetControl(Id_SkinsTreeView);
@@ -618,13 +620,6 @@ void DialogManage::TabSkins::CreateImageList()
 	DestroyImageList();
 	m_ImageListHandle = imageList;
 	TreeView_SetImageList(tree, m_ImageListHandle, TVSIL_NORMAL);
-}
-
-void DialogManage::TabSkins::HandleDpiChange()
-{
-	CreateImageList();
-	HICON icon = GetIcon(IDI_ADDFOLDER);
-	SendDlgItemMessage(m_Window, Id_NewSkinButton, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon);
 }
 
 void DialogManage::TabSkins::DestroyImageList()
