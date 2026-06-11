@@ -261,8 +261,7 @@ void Dialog::Relayout()
 		const int width = rect.right - rect.left;
 		const int height = rect.bottom - rect.top;
 		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
-		tab->Relayout();
-		tab->Resize(width, height);
+		tab->Relayout(width, height);
 	}
 }
 

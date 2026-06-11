@@ -317,7 +317,7 @@ void DialogAbout::TabLog::Initialize()
 	// Start 4th column at max width
 	RECT rc;
 	GetClientRect(m_Window, &rc);
-	Resize(rc.right, rc.bottom);
+	Relayout(rc.right, rc.bottom);
 
 	// Add stored entires
 	for (const auto& entry : GetLogger().GetEntries())
@@ -380,19 +380,12 @@ void DialogAbout::TabLog::HandleDpiChange()
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
-	Resize(rect.right, rect.bottom);
+	Relayout(rect.right, rect.bottom);
 }
 
-/*
-** Resizes window and repositions controls.
-**
-*/
-void DialogAbout::TabLog::Resize(int w, int h)
+void DialogAbout::TabLog::Relayout(int w, int h)
 {
-	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
-
-	// FIXME: Temporary hack.
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	Tab::Relayout(w, h);
 
 	RECT r;
 	LONG bottom;
@@ -734,20 +727,16 @@ void DialogAbout::TabSkins::Initialize()
 	// Start 4th column at max width
 	RECT rc;
 	GetClientRect(m_Window, &rc);
-	Resize(rc.right, rc.bottom);
+	Relayout(rc.right, rc.bottom);
 
 	UpdateSkinList();
 
 	m_Initialized = true;
 }
 
-/*
-** Resizes window and repositions controls.
-**
-*/
-void DialogAbout::TabSkins::Resize(int w, int h)
+void DialogAbout::TabSkins::Relayout(int w, int h)
 {
-	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	Tab::Relayout(w, h);
 
 	HWND item = GetControl(Id_SkinsListBox);
 	const int listWidth = m_ControlTemplate.ScaleDialogUnits(265);
@@ -776,7 +765,7 @@ void DialogAbout::TabSkins::HandleDpiChange()
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
-	Resize(rect.right, rect.bottom);
+	Relayout(rect.right, rect.bottom);
 }
 
 /*
@@ -1507,18 +1496,14 @@ void DialogAbout::TabPlugins::Initialize()
 	// Start 3rd column at max width
 	RECT rc;
 	GetClientRect(m_Window, &rc);
-	Resize(rc.right, rc.bottom);
+	Relayout(rc.right, rc.bottom);
 
 	m_Initialized = true;
 }
 
-/*
-** Resizes window and repositions controls.
-**
-*/
-void DialogAbout::TabPlugins::Resize(int w, int h)
+void DialogAbout::TabPlugins::Relayout(int w, int h)
 {
-	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	Tab::Relayout(w, h);
 
 	HWND item = GetControl(Id_PluginsListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
@@ -1540,7 +1525,7 @@ void DialogAbout::TabPlugins::HandleDpiChange()
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
-	Resize(rect.right, rect.bottom);
+	Relayout(rect.right, rect.bottom);
 }
 
 INT_PTR DialogAbout::TabPlugins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1761,13 +1746,9 @@ void DialogAbout::TabVersion::Initialize()
 	m_Initialized = true;
 }
 
-/*
-** Resizes window and repositions controls.
-**
-*/
-void DialogAbout::TabVersion::Resize(int w, int h)
+void DialogAbout::TabVersion::Relayout(int w, int h)
 {
-	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	Tab::Relayout(w, h);
 
 	HWND item = GetControl(Id_AppIcon);
 	HICON icon = GetIconBySize(IDI_RAINMETER, 256);
