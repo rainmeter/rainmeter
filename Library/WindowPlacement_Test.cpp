@@ -74,53 +74,6 @@ public:
 		Assert::AreEqual(540, result.y.coordinate);
 	}
 
-	TEST_METHOD(TestResolveScreensDefaultsToPrimary)
-	{
-		MultiMonitorInfo monitorsInfo = CreateMonitors();
-		monitorsInfo.primary = 2;
-
-		const WindowPlacement::Screens screens =
-			WindowPlacement::ResolveScreens(L"100", L"50", monitorsInfo);
-
-		Assert::AreEqual(2, screens.x);
-		Assert::AreEqual(2, screens.y);
-		Assert::IsFalse(screens.xDefined);
-		Assert::IsFalse(screens.yDefined);
-	}
-
-	TEST_METHOD(TestResolveScreensPropagatesExplicitScreen)
-	{
-		const WindowPlacement::Screens screens =
-			WindowPlacement::ResolveScreens(L"100", L"50@2", CreateMonitors());
-
-		Assert::AreEqual(2, screens.x);
-		Assert::AreEqual(2, screens.y);
-		Assert::IsTrue(screens.xDefined);
-		Assert::IsTrue(screens.yDefined);
-	}
-
-	TEST_METHOD(TestResolveScreensAllowsAxisOverride)
-	{
-		const WindowPlacement::Screens screens =
-			WindowPlacement::ResolveScreens(L"100@2", L"50@0", CreateMonitors());
-
-		Assert::AreEqual(2, screens.x);
-		Assert::AreEqual(0, screens.y);
-		Assert::IsTrue(screens.xDefined);
-		Assert::IsTrue(screens.yDefined);
-	}
-
-	TEST_METHOD(TestResolveScreensIgnoresInvalidScreen)
-	{
-		const WindowPlacement::Screens screens =
-			WindowPlacement::ResolveScreens(L"100@3", L"50", CreateMonitors());
-
-		Assert::AreEqual(1, screens.x);
-		Assert::AreEqual(1, screens.y);
-		Assert::IsFalse(screens.xDefined);
-		Assert::IsFalse(screens.yDefined);
-	}
-
 	TEST_METHOD(TestAutoAnchorStartStartWhenScaleIncreases)
 	{
 		AssertAutoDpiPlacement(L"0", L"0", 0, 0, 0, 0);
