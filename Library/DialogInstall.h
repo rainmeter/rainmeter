@@ -10,22 +10,19 @@
 
 #include <string>
 #include "unzip.h"
-#include "Dialog.h"
+#include "../Common/Dialog.h"
 
-class DialogInstall : public OldDialog
+class DialogInstall : public Dialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
 
-	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	static DialogInstall* c_Dialog;
-
-protected:
-	virtual Tab& GetActiveTab();
 
 private:
 	friend class DialogPackage;
@@ -33,11 +30,11 @@ private:
 	class TabInstall : public Tab
 	{
 	public:
-		TabInstall(HWND window);
+		void Create(HWND owner) override;
 
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		static INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
@@ -65,7 +62,7 @@ private:
 		char key[7];
 	};
 
-	DialogInstall(HWND wnd, const WCHAR* file);
+	DialogInstall(const WCHAR* file);
 	virtual ~DialogInstall();
 
 	bool ReadPackage();
@@ -100,6 +97,9 @@ private:
 	HANDLE m_InstallThread;
 
 	std::wstring m_ErrorMessage;
+	std::wstring m_Name;
+	std::wstring m_Author;
+	std::wstring m_Version;
 
 	unzFile m_PackageUnzFile;
 	std::wstring m_PackageFileName;
