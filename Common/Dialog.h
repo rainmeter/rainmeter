@@ -56,9 +56,8 @@ protected:
 		RECT GetLayoutRect();
 
 		virtual void Initialize() {}
-		virtual void Resize(int w, int h) {}
+		virtual void Relayout(int w, int h) { RelayoutControls(); }
 		virtual void HandleDpiChange() {}
-		void Relayout() { RelayoutControls(); }
 
 	protected:
 		Tab();
