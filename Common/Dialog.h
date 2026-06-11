@@ -51,6 +51,7 @@ protected:
 	public:
 		HWND GetWindow() { return m_Window; }
 		bool IsInitialized() { return m_Initialized; }
+		virtual void Create(HWND owner) = 0;
 		void Activate();
 		RECT GetLayoutRect();
 
@@ -75,8 +76,12 @@ protected:
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	virtual void Relayout() { RelayoutControls(); }
+	virtual void Relayout();
 	virtual void HandleDpiChange() {}
+
+	void AddTab(WORD controlId, Tab& tab, const WCHAR* text);
+	void SelectTab(int index);
+	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
 
@@ -84,11 +89,15 @@ protected:
 
 private:
 	Dialog(const Dialog& r);
+	void ActivateTab();
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
 
 	static HWND c_ActiveDialogWindow;
+
+	HWND m_TabControl;
+	std::vector<Tab*> m_Tabs;
 };
 
 #endif
