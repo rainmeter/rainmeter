@@ -118,13 +118,12 @@ Dialog::Tab& DialogNewSkin::GetActiveTab()
 
 INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
+
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 		return OnInitDialog(wParam, lParam);
-
-	case WM_ACTIVATE:
-		return OnActivate(wParam, lParam);
 
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
@@ -229,22 +228,22 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	}
 
-	return FALSE;
+	return baseResult;
 }
 
 INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
+		Control::Button(Id_CloseButton, ID_STR_CLOSE,
 			243, 231, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
-		CT_TAB(Id_Tab, 0,
+		Control::Tab(Id_Tab, 0,
 			6, 6, 288, 221,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	// Load template filenames
 	LoadTemplates();
@@ -280,6 +279,25 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
+}
+
+void DialogNewSkin::Relayout()
+{
+	Dialog::Relayout();
+
+	Tab* tabs[] = { &m_TabNew, &m_TabTemplate };
+	for (auto* tab : tabs)
+	{
+		if (!tab->GetWindow()) continue;
+		RECT rect = tab->GetLayoutRect();
+		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
+		tab->Relayout();
+	}
+}
+
+void DialogNewSkin::HandleDpiChange()
+{
+	if (m_TabNew.IsInitialized()) m_TabNew.HandleDpiChange();
 }
 
 INT_PTR DialogNewSkin::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -418,29 +436,29 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 	buttonWidth += 10;
 	short column1 = (268 - buttonWidth);
 
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_LABEL(Id_ParentPathLabel, ID_STR_ELLIPSIS,
+		Control::Label(Id_ParentPathLabel, ID_STR_ELLIPSIS,
 			0, 0, 268, 14,
 			WS_VISIBLE | SS_CENTERIMAGE | SS_PATHELLIPSIS | SS_NOTIFY | WS_BORDER, 0),
-		CT_TREEVIEW(Id_ItemsTreeView, 0,
+		Control::TreeView(Id_ItemsTreeView, 0,
 			0, 19, 268 - buttonWidth - 10, 169,
 			WS_VISIBLE | WS_TABSTOP | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_VSCROLL, WS_EX_CLIENTEDGE),
-		CT_BUTTON(Id_AddFolderButton, ID_STR_ADDFOLDER,
+		Control::Button(Id_AddFolderButton, ID_STR_ADDFOLDER,
 			column1, 19, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_BUTTON(Id_AddResourcesButton, ID_STR_ADDRESOURCES,
+		Control::Button(Id_AddResourcesButton, ID_STR_ADDRESOURCES,
 			column1, 38, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		CT_BUTTON(Id_AddSkinButton, ID_STR_ADDSKIN,
+		Control::Button(Id_AddSkinButton, ID_STR_ADDSKIN,
 			column1, 57, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		CT_BUTTON(Id_TemplateDropDownList, ID_STR_TEMPLATEE,
+		Control::Button(Id_TemplateDropDownList, ID_STR_TEMPLATEE,
 			column1, 76, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	// Create the tooltip for the parent path
 	m_ParentPathTT = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
@@ -469,22 +487,26 @@ void DialogNewSkin::TabNew::Initialize()
 	HWND item = GetControl(Id_TemplateDropDownList);
 	Dialog::SetMenuButton(item);
 
-	// Load folder/.ini icons from shell32
-	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
-	HMODULE hDLL = GetModuleHandle(L"shell32");
-	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(4), IMAGE_ICON, 16, 16, LR_SHARED);
-	ImageList_AddIcon(hImageList, hIcon);
-	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED);
-	ImageList_AddIcon(hImageList, hIcon);
-
-	// Apply icons and populate tree
-	item = GetControl(Id_ItemsTreeView);
-	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
-
-	DestroyImageList();
-	m_ImageList = hImageList;
+	CreateImageList();
 
 	m_Initialized = true;
+}
+
+void DialogNewSkin::TabNew::CreateImageList()
+{
+	HWND tree = GetControl(Id_ItemsTreeView);
+	const int iconSize = MulDiv(16, (int)System::GetDpiForWindow(tree), 96);
+	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 2, 10);
+	HMODULE shell = GetModuleHandle(L"shell32");
+
+	HICON icon = (HICON)LoadImage(shell, MAKEINTRESOURCE(4), IMAGE_ICON, iconSize, iconSize, LR_SHARED);
+	ImageList_AddIcon(imageList, icon);
+	icon = (HICON)LoadImage(shell, MAKEINTRESOURCE(151), IMAGE_ICON, iconSize, iconSize, LR_SHARED);
+	ImageList_AddIcon(imageList, icon);
+
+	DestroyImageList();
+	m_ImageList = imageList;
+	TreeView_SetImageList(tree, m_ImageList, TVSIL_NORMAL);
 }
 
 void DialogNewSkin::TabNew::DestroyImageList()
@@ -492,9 +514,14 @@ void DialogNewSkin::TabNew::DestroyImageList()
 	if (m_ImageList)
 	{
 		HWND item = GetControl(Id_ItemsTreeView);
-		ImageList_Destroy(TreeView_SetImageList(item, nullptr, TVSIL_STATE));
+		ImageList_Destroy(TreeView_SetImageList(item, nullptr, TVSIL_NORMAL));
 		m_ImageList = nullptr;
 	}
+}
+
+void DialogNewSkin::TabNew::HandleDpiChange()
+{
+	CreateImageList();
 }
 
 INT_PTR DialogNewSkin::TabNew::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1677,36 +1704,36 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
 	short column1 = (268 - buttonWidth - 6);
 
-	static const ControlTemplate::Control s_Controls[] =
+	static const Control s_Controls[] =
 	{
-		CT_GROUPBOX(-0, ID_STR_SAVENEWTEMPLATE,
+		Control::GroupBox(-0, ID_STR_SAVENEWTEMPLATE,
 			0, 0, 268, 36,
 			WS_VISIBLE, 0),
-		CT_LABEL(-0, ID_STR_NAMESC,
+		Control::Label(-0, ID_STR_NAMESC,
 			6, 16, 55, 9,
 			WS_VISIBLE, 0),
-		CT_EDIT(Id_NewEdit, 0,
+		Control::Edit(Id_NewEdit, 0,
 			66, 14, column1 - 66 - 10, 14,
 			WS_VISIBLE | WS_TABSTOP, WS_EX_CLIENTEDGE),
-		CT_BUTTON(Id_SaveButton, ID_STR_SAVE,
+		Control::Button(Id_SaveButton, ID_STR_SAVE,
 			column1, 14, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		CT_GROUPBOX(-0, ID_STR_SAVEDTEMPLATES,
+		Control::GroupBox(-0, ID_STR_SAVEDTEMPLATES,
 			0, 43, 268, 143,
 			WS_VISIBLE , 0),
-		CT_LISTBOX(Id_TemplateListBox, 0,
+		Control::ListBox(Id_TemplateListBox, 0,
 			6, 59, column1 - 16, 119,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_SORT | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
-		CT_BUTTON(Id_EditButton, ID_STR_EDIT,
+		Control::Button(Id_EditButton, ID_STR_EDIT,
 			column1, 59, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		CT_BUTTON(Id_DeleteButton, ID_STR_DELETE,
+		Control::Button(Id_DeleteButton, ID_STR_DELETE,
 			column1, 78, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
 
-	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	// Add templates to listbox
 	PopulateTemplates();

@@ -9,12 +9,50 @@
 #define RM_COMMON_CONTROLTEMPLATE_H_
 
 #include <Windows.h>
+#include <vector>
 
-namespace ControlTemplate
-{
+#define CONTROL_FACTORY(method, className, defaultStyle) \
+	static Control method(WORD id, WORD textId, short x, short y, short w, short h, \
+		DWORD style, DWORD exStyle, BYTE options = ANCHOR_TOP_LEFT) \
+	{ \
+		return Item(className, id, textId, x, y, w, h, defaultStyle | style, exStyle, options); \
+	}
 
 struct Control
 {
+	enum Option : BYTE
+	{
+		ANCHOR_LEFT = 0x01,
+		ANCHOR_TOP = 0x02,
+		ANCHOR_TOP_LEFT = ANCHOR_LEFT | ANCHOR_TOP,
+		ANCHOR_RIGHT = 0x04,
+		ANCHOR_BOTTOM = 0x08,
+		ANCHOR_BOTTOM_RIGHT = ANCHOR_BOTTOM | ANCHOR_RIGHT,
+		ANCHOR_ALL = ANCHOR_TOP_LEFT | ANCHOR_BOTTOM_RIGHT,
+		BOLD_FONT = 0x10
+	};
+
+	static Control Item(const WCHAR* name, WORD id, WORD textId, short x, short y, short w, short h,
+		DWORD style, DWORD exStyle, BYTE options = ANCHOR_TOP_LEFT)
+	{
+		return { name, id, textId, x, y, w, h, WS_CHILD | style, exStyle, options };
+	}
+
+	CONTROL_FACTORY(Button, L"Button", BS_PUSHBUTTON)
+	CONTROL_FACTORY(CheckBox, L"Button", BS_AUTOCHECKBOX)
+	CONTROL_FACTORY(ComboBox, L"ComboBox", 0)
+	CONTROL_FACTORY(Edit, L"Edit", ES_LEFT)
+	CONTROL_FACTORY(GroupBox, L"Button", BS_GROUPBOX)
+	CONTROL_FACTORY(Icon, L"Static", SS_ICON)
+	CONTROL_FACTORY(Label, L"Static", SS_LEFT)
+	CONTROL_FACTORY(LineH, L"Static", SS_ETCHEDHORZ)
+	CONTROL_FACTORY(LineV, L"Static", SS_ETCHEDVERT)
+	CONTROL_FACTORY(LinkLabel, L"SysLink", 0)
+	CONTROL_FACTORY(ListBox, L"ListBox", 0)
+	CONTROL_FACTORY(ListView, L"SysListView32", 0)
+	CONTROL_FACTORY(Tab, L"SysTabControl32", TCS_TABS)
+	CONTROL_FACTORY(TreeView, L"SysTreeView32", 0)
+
 	const WCHAR* name;
 	WORD id;
 	WORD textId;
@@ -24,58 +62,43 @@ struct Control
 	short h;
 	DWORD style;
 	DWORD exStyle;
+	BYTE options;
 };
 
-typedef WCHAR* (*GetStringFunc)(UINT id);
+#undef CONTROL_FACTORY
 
-void CreateControls(const Control* cts, UINT ctCount, HWND parent, HFONT font, GetStringFunc getString);
+class ControlTemplate
+{
+public:
+	ControlTemplate();
+	~ControlTemplate();
 
-// Helpers to declare control structs.
-#define CT_ITEM(name, id, textId, x, y, w, h, style, exStyle) \
-	{ name, id, textId, x, y, w, h, WS_CHILD | style, exStyle }
+	typedef WCHAR* (*GetStringFunc)(UINT id);
+	void Initialize(const Control* cts, UINT ctCount, HWND parent, UINT dpi, GetStringFunc getString);
+	void Relayout(UINT dpi);
 
-#define CT_BUTTON(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Button", id, textId, x, y, w, h, BS_PUSHBUTTON | style, exStyle)
+	UINT ScaleDialogUnits(int value) const;
 
-#define CT_CHECKBOX(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Button", id, textId, x, y, w, h, BS_AUTOCHECKBOX | style, exStyle)
+private:
+	struct CreatedControl
+	{
+		Control control;
+		HWND window;
+		RECT initialRect;
+	};
 
-#define CT_COMBOBOX(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"ComboBox", id, textId, x, y, w, h, style, exStyle)
+	ControlTemplate(const ControlTemplate& controlTemplate) = delete;
+	ControlTemplate& operator=(const ControlTemplate& controlTemplate) = delete;
 
-#define CT_EDIT(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Edit", id, textId, x, y, w, h, ES_LEFT | style, exStyle)
+	void UpdateFonts(UINT dpi);
 
-#define CT_GROUPBOX(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Button", id, textId, x, y, w, h, BS_GROUPBOX | style, exStyle)
-
-#define CT_ICON(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_ICON | style, exStyle)
-
-#define CT_LABEL(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_LEFT | style, exStyle)
-
-#define CT_LINEH(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_ETCHEDHORZ | style, exStyle)
-
-#define CT_LINEV(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"Static", id, textId, x, y, w, h, SS_ETCHEDVERT | style, exStyle)
-
-#define CT_LINKLABEL(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"SysLink", id, textId, x, y, w, h, style, exStyle)
-
-#define CT_LISTBOX(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"ListBox", id, textId, x, y, w, h, style, exStyle)
-
-#define CT_LISTVIEW(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"SysListView32", id, textId, x, y, w, h, style, exStyle)
-
-#define CT_TAB(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"SysTabControl32", id, textId, x, y, w, h, TCS_TABS | style, exStyle)
-
-#define CT_TREEVIEW(id, textId, x, y, w, h, style, exStyle) \
-	CT_ITEM(L"SysTreeView32", id, textId, x, y, w, h, style, exStyle)
-
-}  // namespace ControlTemplate
+	HWND m_Parent;
+	SIZE m_InitialParentSize;
+	UINT m_InitialDpi;
+	UINT m_CurrentDpi;
+	HFONT m_Font;
+	HFONT m_FontBold;
+	std::vector<CreatedControl> m_Controls;
+};
 
 #endif

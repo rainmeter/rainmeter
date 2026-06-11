@@ -23,11 +23,13 @@ protected:
 
 	void Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless);
 
-	void CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString);
+	void CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString);
+	void RelayoutControls();
 
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) { return FALSE; }
 
 	HWND m_Window;
+	ControlTemplate m_ControlTemplate;
 
 private:
 	BaseDialog(const BaseDialog& r);
@@ -50,17 +52,21 @@ protected:
 		HWND GetWindow() { return m_Window; }
 		bool IsInitialized() { return m_Initialized; }
 		void Activate();
+		RECT GetLayoutRect();
 
 		virtual void Initialize() {}
 		virtual void Resize(int w, int h) {}
+		void Relayout() { RelayoutControls(); }
 
 	protected:
 		Tab();
 		virtual ~Tab();
 
-		void CreateTabWindow(short x, short y, short w, short h, HWND owner);
+		void CreateTabWindow(short x, short y, short w, short h, HWND parent);
 
 		bool m_Initialized;
+		RECT m_InitialMargin;
+		UINT m_InitialDpi;
 	};
 
 	Dialog();
@@ -68,17 +74,19 @@ protected:
 
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
-	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual void Relayout() { RelayoutControls(); }
+	virtual void HandleDpiChange() {}
 
 	static void SetMenuButton(HWND button);
 
-	HFONT m_Font;
-	HFONT m_FontBold;
+	UINT m_Dpi;
 
 private:
 	Dialog(const Dialog& r);
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
 
 	static HWND c_ActiveDialogWindow;
 };

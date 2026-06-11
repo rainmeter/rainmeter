@@ -35,7 +35,11 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
+	virtual void Relayout() override;
+	virtual void HandleDpiChange() override;
+
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
@@ -59,6 +63,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		void HandleDpiChange();
 		virtual void Resize(int w, int h);
 
 		void AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
@@ -69,6 +74,7 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
+		void CreateImageList();
 		void DestroyImageList();
 
 		bool m_Error;
@@ -93,6 +99,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		void HandleDpiChange();
 		virtual void Resize(int w, int h);
 
 		void UpdateSkinList();
@@ -123,6 +130,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		void HandleDpiChange();
 		virtual void Resize(int w, int h);
 
 	protected:
