@@ -60,7 +60,7 @@ DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 */
 DialogInstall::~DialogInstall()
 {
-	if (m_Window && IsWindow(m_Window))
+	if (m_Window)
 	{
 		SendMessage(GetControl(Id_HeaderBitmap), STM_SETIMAGE, IMAGE_BITMAP, 0);
 	}
@@ -1472,31 +1472,31 @@ void DialogInstall::TabInstall::Create(HWND owner)
 	const Control controls[] =
 	{
 		Control::Label(Id_NameLabel, 0,
-			0, 0, 35, 9,
+			0, 0, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Label(DialogInstall::TabInstall::Id_NameText, 0,
-			50, 0, 186, 9,
+			50, 0, 186, 13,
 			WS_VISIBLE | SS_NOPREFIX, 0),
 		Control::Label(Id_AuthorLabel, 0,
-			0, 13, 35, 9,
+			0, 13, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Label(DialogInstall::TabInstall::Id_AuthorText, 0,
-			50, 13, 186, 9,
+			50, 13, 186, 13,
 			WS_VISIBLE | SS_NOPREFIX, 0),
 		Control::Label(Id_VersionLabel, 0,
-			0, 26, 35, 9,
+			0, 26, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Label(DialogInstall::TabInstall::Id_VersionText, 0,
-			50, 26, 186, 9,
+			50, 26, 186, 13,
 			WS_VISIBLE | SS_NOPREFIX, 0),
 		Control::Label(Id_ComponentsLabel, 0,
-			0, 45, 80, 9,
+			0, 45, 80, 13,
 			WS_VISIBLE, 0),
 		Control::ListView(DialogInstall::TabInstall::Id_ComponentsList, 0,
 			0, 60, 234, 86,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOSORTHEADER, 0),
 		Control::CheckBox(DialogInstall::TabInstall::Id_ThemeCheckBox, 0,
-			4, 155, 220, 9,
+			0, 155, 220, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Label(DialogInstall::TabInstall::Id_InProgressText, 0,
 			0, 0, 236, 60,
