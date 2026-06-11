@@ -449,8 +449,13 @@ Function PageOptions
 
 	; Set default directory
 	${If} $InstallPortable = 1
-		${GetRoot} "$WINDIR" $0
-		${NSD_SetText} $R0 "$0\Rainmeter"
+		ReadRegStr $0 HKCU "SOFTWARE\Rainmeter" "PortableInstallPath"
+		${If} $0 == ""
+		${OrIfNot} ${FileExists} "$0\Rainmeter.exe"
+			${GetRoot} "$WINDIR" $0
+			StrCpy $0 "$0\Rainmeter"
+		${EndIf}
+		${NSD_SetText} $R0 "$0"
 
 		${If} ${RunningX64}
 			${NSD_Check} $R2
@@ -806,6 +811,8 @@ SkipIniMove:
 
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
+		WriteRegStr HKCU "SOFTWARE\Rainmeter" "PortableInstallPath" "$INSTDIR"
+
 		${IfNot} ${FileExists} "Rainmeter.ini"
 			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
