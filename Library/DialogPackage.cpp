@@ -24,10 +24,7 @@ extern OsNameVersion g_OsNameVersions[];
 
 DialogPackage* DialogPackage::c_Dialog = nullptr;
 
-DialogPackage::DialogPackage(HWND wnd) : OldDialog(wnd),
-	m_TabInfo(wnd),
-	m_TabOptions(wnd),
-	m_TabAdvanced(wnd),
+DialogPackage::DialogPackage() : Dialog(),
 	m_LoadLayout(false),
 	m_MergeSkins(false),
 	m_PackagerThread(),
@@ -42,6 +39,9 @@ DialogPackage::~DialogPackage()
 
 void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
+	(void)hInstance;
+	(void)lpCmdLine;
+
 	HANDLE hMutex;
 	if (IsRunning(L"Rainmeter Skin Packager", &hMutex))
 	{
@@ -50,74 +50,70 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 	else
 	{
-		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_PACKAGE_DIALOG), nullptr, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+		DialogPackage dialog;
+		c_Dialog = &dialog;
+		dialog.ShowDialogWindow(
+			L"Rainmeter Skin Packager",
+			0, 0, 300, 280,
+			DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
+			WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
+			nullptr,
+			false);
+		c_Dialog = nullptr;
 		ReleaseMutex(hMutex);
 	}
 }
 
-OldDialog::Tab& DialogPackage::GetActiveTab()
+INT_PTR DialogPackage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_PACKAGE_TAB));
-	if (sel == -1)
-	{
-		return m_TabInfo;
-	}
-	else if (sel == 0)
-	{
-		return m_TabOptions;
-	}
-	else // if (sel == 1)
-	{
-		return m_TabAdvanced;
-	}
-}
+	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
 
-INT_PTR CALLBACK DialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (!c_Dialog)
+	switch (uMsg)
 	{
-		if (uMsg == WM_INITDIALOG)
+	case WM_INITDIALOG:
+		return OnInitDialog(wParam, lParam);
+
+	case WM_COMMAND:
+		return OnCommand(wParam, lParam);
+
+	case WM_CLOSE:
+		if (!m_PackagerThread)
 		{
-			c_Dialog = new DialogPackage(hWnd);
-			return c_Dialog->OnInitDialog(wParam, lParam);
+			EndDialog(m_Window, 0);
 		}
-	}
-	else
-	{
-		switch (uMsg)
-		{
-		case WM_COMMAND:
-			return c_Dialog->OnCommand(wParam, lParam);
-
-		case WM_NOTIFY:
-			return c_Dialog->OnNotify(wParam, lParam);
-
-		case WM_CLOSE:
-			{
-				if (!c_Dialog->m_PackagerThread)
-				{
-					EndDialog(hWnd, 0);
-				}
-			}
-			return TRUE;
-
-		case WM_DESTROY:
-			delete c_Dialog;
-			c_Dialog = nullptr;
-			return FALSE;
-		}
+		return TRUE;
 	}
 
-	return FALSE;
+	return baseResult;
 }
 
 INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
+	const Control controls[] =
+	{
+		Control::Button(IDC_PACKAGE_NEXT_BUTTON, 0,
+			188, 261, 50, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0),
+		Control::Button(IDC_PACKAGE_CREATEPACKAGE_BUTTON, 0,
+			158, 261, 80, 14,
+			WS_TABSTOP, 0),
+		Control::Button(IDCANCEL, 0,
+			243, 261, 50, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Tab(IDC_PACKAGE_TAB, 0,
+			6, 6, 288, 251,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(IDC_PACKAGE_NEXT_BUTTON), L"Next");
+	SetWindowText(GetControl(IDC_PACKAGE_CREATEPACKAGE_BUTTON), L"Create package");
+	SetWindowText(GetControl(IDCANCEL), L"Cancel");
+	AddPage(m_TabInfo);
+
 	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
-
-	SetDialogFont();
 
 	m_TabInfo.Activate();
 
@@ -130,15 +126,10 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_PACKAGE_NEXT_BUTTON:
 		{
-			HWND item = GetDlgItem(m_Window, IDC_PACKAGE_TAB);
-			TCITEM tci = { 0 };
-			tci.mask = TCIF_TEXT;
-			tci.pszText = L"Options";
-			TabCtrl_InsertItem(item, 0, &tci);
-			tci.pszText = L"Advanced";
-			TabCtrl_InsertItem(item, 1, &tci);
+			AddTab(IDC_PACKAGE_TAB, m_TabOptions, L"Options");
+			AddTab(IDC_PACKAGE_TAB, m_TabAdvanced, L"Advanced");
 
-			item = GetDlgItem(m_Window, IDC_PACKAGE_NEXT_BUTTON);
+			HWND item = GetDlgItem(m_Window, IDC_PACKAGE_NEXT_BUTTON);
 			ShowWindow(item, SW_HIDE);
 
 			item = GetDlgItem(m_Window, IDC_PACKAGE_CREATEPACKAGE_BUTTON);
@@ -146,8 +137,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			SendMessage(m_Window, DM_SETDEFID, IDC_PACKAGE_CREATEPACKAGE_BUTTON, 0);
 
 			ShowWindow(m_TabInfo.GetWindow(), SW_HIDE);
-
-			m_TabOptions.Activate();
+			SelectTab(0);
 		}
 		break;
 
@@ -159,9 +149,8 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			item = GetDlgItem(m_Window, IDCANCEL);
 			EnableWindow(item, FALSE);
 
-			m_TabOptions.Activate();
+			SelectTab(0);
 			item = GetDlgItem(m_Window, IDC_PACKAGE_TAB);
-			TabCtrl_SetCurSel(item, 0);
 			EnableWindow(item, FALSE);
 			EnableWindow(m_TabOptions.GetWindow(), FALSE);
 			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
@@ -194,30 +183,6 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
-}
-
-INT_PTR DialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->idFrom)
-	{
-	case IDC_PACKAGE_TAB:
-		if (nm->code == TCN_SELCHANGE)
-		{
-			// Disable all tab windows first
-			EnableWindow(m_TabInfo.GetWindow(), FALSE);
-			EnableWindow(m_TabOptions.GetWindow(), FALSE);
-			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
-
-			GetActiveTab().Activate();
-		}
-		break;
-
-	default:
-		return 1;
-	}
-
-	return 0;
 }
 
 void DialogPackage::SetNextButtonState()
@@ -560,7 +525,6 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 	case WM_INITDIALOG:
 		{
 			EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-			c_Dialog->SetDialogFont(hWnd);
 
 			std::wstring* existingPath = (std::wstring*)lParam;
 			SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
@@ -721,7 +685,6 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 	case WM_INITDIALOG:
 		{
 			EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-			c_Dialog->SetDialogFont(hWnd);
 
 			auto plugins = (std::pair<std::wstring, std::wstring>*)lParam;
 			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)plugins);
@@ -806,21 +769,94 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
+void DialogPackage::TabInfo::Create(HWND owner)
 {
+	enum
+	{
+		DescriptionLabel = 1100,
+		InformationGroup,
+		NameLabel,
+		AuthorLabel,
+		VersionLabel,
+		ComponentsGroup
+	};
+
+	Tab::CreateTabWindow(15, 15, 270, 235, owner);
+
+	const Control controls[] =
+	{
+		Control::Label(DescriptionLabel, 0,
+			0, 0, 264, 19,
+			WS_VISIBLE, 0),
+		Control::GroupBox(InformationGroup, 0,
+			0, 35, 270, 70,
+			WS_VISIBLE, 0),
+		Control::Label(NameLabel, 0,
+			6, 51, 35, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEINFO_NAME_EDIT, 0,
+			56, 48, 208, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
+		Control::Label(AuthorLabel, 0,
+			6, 69, 35, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEINFO_AUTHOR_EDIT, 0,
+			56, 66, 208, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
+		Control::Label(VersionLabel, 0,
+			6, 87, 35, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEINFO_VERSION_EDIT, 0,
+			56, 83, 140, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
+		Control::GroupBox(ComponentsGroup, 0,
+			0, 110, 270, 108,
+			WS_VISIBLE, 0),
+		Control::ListView(IDC_PACKAGEINFO_COMPONENTS_LIST, 0,
+			6, 125, 182, 86,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
+		Control::Button(IDC_PACKAGEINFO_ADDSKIN_BUTTON, 0,
+			194, 125, 70, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Button(IDC_PACKAGEINFO_ADDTHEME_BUTTON, 0,
+			194, 144, 70, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Button(IDC_PACKAGEINFO_ADDPLUGIN_BUTTON, 0,
+			194, 162, 70, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Button(IDC_PACKAGEINFO_REMOVE_BUTTON, 0,
+			194, 197, 70, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
+		Control::LinkLabel(IDC_PACKAGEINFO_WHATIS_LINK, 0,
+			0, 225, 264, 9,
+			WS_VISIBLE | WS_TABSTOP, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(DescriptionLabel), L"Enter the information and select the components to use for the .rmskin package.");
+	SetWindowText(GetControl(InformationGroup), L"Information");
+	SetWindowText(GetControl(NameLabel), L"Name:");
+	SetWindowText(GetControl(AuthorLabel), L"Author:");
+	SetWindowText(GetControl(VersionLabel), L"Version:");
+	SetWindowText(GetControl(ComponentsGroup), L"Components");
+	SetWindowText(GetControl(IDC_PACKAGEINFO_ADDSKIN_BUTTON), L"Add skin...");
+	SetWindowText(GetControl(IDC_PACKAGEINFO_ADDTHEME_BUTTON), L"Add layout...");
+	SetWindowText(GetControl(IDC_PACKAGEINFO_ADDPLUGIN_BUTTON), L"Add plugin...");
+	SetWindowText(GetControl(IDC_PACKAGEINFO_REMOVE_BUTTON), L"Remove");
+	SetWindowText(GetControl(IDC_PACKAGEINFO_WHATIS_LINK), L"<A>What is a .rmskin package?</A>");
 }
 
 void DialogPackage::TabInfo::Initialize()
 {
 	m_Initialized = true;
 
-	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_NAME_TEXT);
+	HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_NAME_EDIT);
 	Edit_SetCueBannerText(item, L"...");
 
-	item = GetDlgItem(m_Window, IDC_INSTALLTAB_AUTHOR_TEXT);
+	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_AUTHOR_EDIT);
 	Edit_SetCueBannerText(item, L"...");
 
-	item = GetDlgItem(m_Window, IDC_INSTALLTAB_VERSION_TEXT);
+	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_VERSION_EDIT);
 	Edit_SetCueBannerText(item, L"...");
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
@@ -855,7 +891,7 @@ void DialogPackage::TabInfo::Initialize()
 	ListView_InsertGroup(item, -1, &lvg);
 }
 
-INT_PTR CALLBACK DialogPackage::TabInfo::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabInfo::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -1050,8 +1086,86 @@ INT_PTR DialogPackage::TabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
+void DialogPackage::TabOptions::Create(HWND owner)
 {
+	enum
+	{
+		SaveLabel = 1100,
+		AfterInstallGroup,
+		RequirementsGroup,
+		RainmeterVersionLabel,
+		WindowsVersionLabel
+	};
+
+	Tab::CreateTabWindow(15, 30, 270, 220, owner);
+
+	const Control controls[] =
+	{
+		Control::Label(SaveLabel, 0,
+			0, 0, 264, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEOPTIONS_FILE_EDIT, 0,
+			0, 17, 240, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
+		Control::Button(IDC_PACKAGEOPTIONS_FILEBROWSE_BUTTON, 0,
+			245, 17, 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::GroupBox(AfterInstallGroup, 0,
+			0, 101, 270, 58,
+			WS_VISIBLE, 0),
+		Control::RadioButton(IDC_PACKAGEOPTIONS_DONOTHING_RADIO, 0,
+			6, 116, 85, 9,
+			WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
+		Control::RadioButton(IDC_PACKAGEOPTIONS_LOADSKIN_RADIO, 0,
+			6, 129, 85, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Edit(IDC_PACKAGEOPTIONS_LOADSKIN_EDIT, 0,
+			96, 126, 138, 14,
+			WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
+		Control::Button(IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON, 0,
+			239, 126, 25, 14,
+			WS_TABSTOP, 0),
+		Control::RadioButton(IDC_PACKAGEOPTIONS_LOADTHEME_RADIO, 0,
+			6, 142, 85, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::ComboBox(IDC_PACKAGEOPTIONS_LOADTHEME_COMBO, 0,
+			96, 139, 168, 14,
+			WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
+		Control::GroupBox(RequirementsGroup, 0,
+			0, 164, 270, 53,
+			WS_VISIBLE | WS_GROUP, 0),
+		Control::Label(RainmeterVersionLabel, 0,
+			6, 180, 85, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEOPTIONS_RAINMETERVERSION_EDIT, 0,
+			96, 177, 80, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
+		Control::Label(WindowsVersionLabel, 0,
+			6, 198, 85, 9,
+			WS_VISIBLE, 0),
+		Control::ComboBox(IDC_PACKAGEOPTIONS_WINDOWSVERSION_COMBO, 0,
+			96, 195, 80, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
+		Control::Label(IDC_INSTALLTAB_CREATING_TEXT, 0,
+			0, 0, 270, 100,
+			0, 0),
+		Control::ProgressBar(IDC_INSTALLTAB_CREATING_BAR, 0,
+			0, 15, 270, 11,
+			PBS_MARQUEE | WS_BORDER, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(SaveLabel), L"Save package to:");
+	SetWindowText(GetControl(IDC_PACKAGEOPTIONS_FILEBROWSE_BUTTON), L"...");
+	SetWindowText(GetControl(AfterInstallGroup), L"After installation");
+	SetWindowText(GetControl(IDC_PACKAGEOPTIONS_DONOTHING_RADIO), L"Do nothing");
+	SetWindowText(GetControl(IDC_PACKAGEOPTIONS_LOADSKIN_RADIO), L"Load skin");
+	SetWindowText(GetControl(IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON), L"...");
+	SetWindowText(GetControl(IDC_PACKAGEOPTIONS_LOADTHEME_RADIO), L"Load layout");
+	SetWindowText(GetControl(RequirementsGroup), L"Minimum requirements");
+	SetWindowText(GetControl(RainmeterVersionLabel), L"Rainmeter version:");
+	SetWindowText(GetControl(WindowsVersionLabel), L"Windows version:");
+	SetWindowText(GetControl(IDC_INSTALLTAB_CREATING_TEXT), L"Creating...");
 }
 
 void DialogPackage::TabOptions::Initialize()
@@ -1125,7 +1239,7 @@ void DialogPackage::TabOptions::Initialize()
 	c_Dialog->m_MinimumWindows = g_OsNameVersions[0].version;
 }
 
-INT_PTR CALLBACK DialogPackage::TabOptions::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabOptions::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -1303,8 +1417,47 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
+void DialogPackage::TabAdvanced::Create(HWND owner)
 {
+	enum
+	{
+		HeaderLabel = 1100,
+		VariablesLabel
+	};
+
+	Tab::CreateTabWindow(15, 30, 270, 220, owner);
+
+	const Control controls[] =
+	{
+		Control::Label(HeaderLabel, 0,
+			0, 3, 85, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEADVANCED_HEADER_EDIT, 0,
+			90, 0, 150, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
+		Control::Button(IDC_PACKAGEADVANCED_HEADERROWSE_BUTTON, 0,
+			245, 0, 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Label(VariablesLabel, 0,
+			0, 24, 85, 9,
+			WS_VISIBLE, 0),
+		Control::Edit(IDC_PACKAGEADVANCED_VARIABLEFILES_EDIT, 0,
+			90, 21, 180, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
+		Control::CheckBox(IDC_PACKAGEADVANCED_MERGESKINS_CHECK, 0,
+			0, 42, 85, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::LinkLabel(IDC_PACKAGEADVANCED_HELP_LINK, 0,
+			0, 210, 264, 9,
+			WS_VISIBLE | WS_TABSTOP, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(HeaderLabel), L"Header image:");
+	SetWindowText(GetControl(IDC_PACKAGEADVANCED_HEADERROWSE_BUTTON), L"...");
+	SetWindowText(GetControl(VariablesLabel), L"Variables files:");
+	SetWindowText(GetControl(IDC_PACKAGEADVANCED_MERGESKINS_CHECK), L"Merge skins");
+	SetWindowText(GetControl(IDC_PACKAGEADVANCED_HELP_LINK), L"<A>Help</A>");
 }
 
 void DialogPackage::TabAdvanced::Initialize()
@@ -1312,7 +1465,7 @@ void DialogPackage::TabAdvanced::Initialize()
 	m_Initialized = true;
 }
 
-INT_PTR CALLBACK DialogPackage::TabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabAdvanced::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{

@@ -10,32 +10,28 @@
 
 #include <string>
 #include "zip.h"
-#include "Dialog.h"
+#include "../Common/Dialog.h"
 
-class DialogPackage : public OldDialog
+class DialogPackage : public Dialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
 
-	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	static DialogPackage* c_Dialog;
-
-protected:
-	virtual Tab& GetActiveTab();
 
 private:
 	class TabInfo : public Tab
 	{
 	public:
-		TabInfo(HWND window);
+		void Create(HWND owner) override;
 
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
@@ -43,27 +39,27 @@ private:
 	class TabOptions : public Tab
 	{
 	public:
-		TabOptions(HWND window);
+		void Create(HWND owner) override;
 
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 
 	class TabAdvanced : public Tab
 	{
 	public:
-		TabAdvanced(HWND window);
+		void Create(HWND owner) override;
 
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
-	DialogPackage(HWND wnd);
+	DialogPackage();
 	virtual ~DialogPackage();
 
 	void SetNextButtonState();
