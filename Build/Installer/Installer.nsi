@@ -524,8 +524,9 @@ Function PageOptionsBrowseOnClick
 	nsDialogs::SelectFolderDialog "$(^DirBrowseText)" $0
 	Pop $1
 	${If} $1 != error
+		; If the selected non-Rainmeter directory isn't empty, append \Rainmeter
 		${If} $1 != ""
-		${AndIf} $InstallPortable = 1
+		${AndIf} ${FileExists} "$1\*.*"
 		${AndIfNot} ${FileExists} "$1\Rainmeter.exe"
 			StrCpy $1 "$1\Rainmeter"
 		${EndIf}
