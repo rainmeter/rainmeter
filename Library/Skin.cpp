@@ -82,6 +82,13 @@ static bool IsZoomDragHitTest(int hitTest)
 	return false;
 }
 
+static void FormatLogicalPosition(int value, float scale, WCHAR* buffer, size_t bufferSize)
+{
+	const double logical = (scale > 0.0f) ? (double)value / (double)scale : (double)value;
+	const int length = _snwprintf_s(buffer, bufferSize, _TRUNCATE, L"%.5f", logical);
+	Measure::RemoveTrailingZero(buffer, length);
+}
+
 static bool IsLeftZoomDragHitTest(int hitTest)
 {
 	return hitTest == HTLEFT || hitTest == HTTOPLEFT || hitTest == HTBOTTOMLEFT;
@@ -1235,8 +1242,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::Move:
 		{
-			int x = m_Parser.ParseInt(args[0].c_str(), 0);
-			int y = m_Parser.ParseInt(args[1].c_str(), 0);
+			int x = ScaleToDevicePixels(m_Parser.ParseInt(args[0].c_str(), 0));
+			int y = ScaleToDevicePixels(m_Parser.ParseInt(args[1].c_str(), 0));
 			MoveWindow(x, y);
 		}
 		break;
@@ -2055,7 +2062,7 @@ void Skin::WindowToScreen(float oldScale)
 	}
 
 	const WindowPlacement::Result result = WindowPlacement::WindowToScreen(
-		{ m_WindowX, m_WindowY, m_AnchorX, m_AnchorY, m_WindowW, m_WindowH, m_Scale, previousScale, m_AnchorXDefined, m_AnchorYDefined },
+		{ m_WindowX, m_WindowY, m_AnchorX, m_AnchorY, m_WindowW, m_WindowH, m_Scale, previousScale, m_AnchorXDefined, m_AnchorYDefined, m_Scale },
 		monitorsInfo);
 
 	m_WindowXScreen = result.x.screen;
@@ -2146,7 +2153,7 @@ void Skin::ScreenToWindow()
 	}
 	else
 	{
-		_itow_s(pixel, buffer, 10);
+		FormatLogicalPosition(pixel, m_Scale, buffer, _countof(buffer));
 	}
 	if (m_WindowXFromRight)
 	{
@@ -2188,7 +2195,7 @@ void Skin::ScreenToWindow()
 	}
 	else
 	{
-		_itow_s(pixel, buffer, 10);
+		FormatLogicalPosition(pixel, m_Scale, buffer, _countof(buffer));
 	}
 	if (m_WindowYFromBottom)
 	{
