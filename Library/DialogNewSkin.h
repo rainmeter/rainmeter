@@ -34,7 +34,6 @@ protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	virtual void HandleDpiChange() override;
 
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
@@ -58,8 +57,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
-
-		void HandleDpiChange();
+		virtual void HandleDpiChange() override;
 
 		std::wstring& GetParentFolder() { return m_ParentFolder; }
 		void SetParentFolder(const WCHAR* folder);

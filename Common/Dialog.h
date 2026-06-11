@@ -57,6 +57,7 @@ protected:
 
 		virtual void Initialize() {}
 		virtual void Resize(int w, int h) {}
+		virtual void HandleDpiChange() {}
 		void Relayout() { RelayoutControls(); }
 
 	protected:
