@@ -27,9 +27,32 @@ public:
 private:
 	friend class DialogPackage;
 
+	enum Id
+	{
+		Id_Tab = 1000,
+		Id_HeaderBitmap,
+		Id_AdvancedButton,
+		Id_InstallButton
+	};
+
 	class TabInstall : public Tab
 	{
 	public:
+		enum Id
+		{
+			Id_NameText = 1000,
+			Id_AuthorText,
+			Id_VersionText,
+			Id_ComponentsList,
+			Id_ThemeCheckBox,
+			Id_InProgressText,
+			Id_Progress,
+			Id_NameLabel = 1100,
+			Id_AuthorLabel,
+			Id_VersionLabel,
+			Id_ComponentsLabel
+		};
+
 		void Create(HWND owner) override;
 
 		virtual void Initialize();

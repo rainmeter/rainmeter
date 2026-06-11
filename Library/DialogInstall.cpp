@@ -165,26 +165,26 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	const short yOffset = m_HeaderBitmap ? 0 : -37;
 	const Control controls[] =
 	{
-		Control::Bitmap(IDC_INSTALL_HEADER_BITMAP, 0,
+		Control::Bitmap(DialogInstall::Id_HeaderBitmap, 0,
 			0, 0, 266, 37,
 			m_HeaderBitmap ? WS_VISIBLE : 0, 0),
-		Control::Button(IDC_INSTALL_ADVANCED_BUTTON, 0,
+		Control::Button(DialogInstall::Id_AdvancedButton, 0,
 			6, (short)(231 + yOffset), 70, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(IDC_INSTALL_INSTALL_BUTTON, 0,
+		Control::Button(DialogInstall::Id_InstallButton, 0,
 			155, (short)(231 + yOffset), 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		Control::Button(IDCANCEL, 0,
 			210, (short)(231 + yOffset), 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Tab(IDC_INSTALL_TAB, 0,
+		Control::Tab(DialogInstall::Id_Tab, 0,
 			6, (short)(42 + yOffset), 254, 185,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(IDC_INSTALL_ADVANCED_BUTTON), L"Advanced");
-	SetWindowText(GetControl(IDC_INSTALL_INSTALL_BUTTON), L"Install");
+	SetWindowText(GetControl(DialogInstall::Id_AdvancedButton), L"Advanced");
+	SetWindowText(GetControl(DialogInstall::Id_InstallButton), L"Install");
 	SetWindowText(GetControl(IDCANCEL), L"Cancel");
 	AddPage(m_TabInstall);
 
@@ -192,10 +192,10 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
-	HWND item = GetControl(IDC_INSTALL_ADVANCED_BUTTON);
+	HWND item = GetControl(DialogInstall::Id_AdvancedButton);
 	Dialog::SetMenuButton(item);
 
-	item = GetControl(IDC_INSTALL_HEADER_BITMAP);
+	item = GetControl(DialogInstall::Id_HeaderBitmap);
 	if (m_HeaderBitmap)
 	{
 		SendMessage(item, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_HeaderBitmap);
@@ -210,7 +210,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_INSTALL_ADVANCED_BUTTON:
+	case DialogInstall::Id_AdvancedButton:
 		{
 			RECT r = { 0 };
 			GetWindowRect((HWND)lParam, &r);
@@ -251,7 +251,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDC_INSTALL_INSTALL_BUTTON:
+	case DialogInstall::Id_InstallButton:
 		BeginInstall();
 		break;
 
@@ -852,16 +852,16 @@ bool DialogInstall::InstallPackage()
 
 void DialogInstall::BeginInstall()
 {
-	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
+	HWND item = GetDlgItem(m_Window, DialogInstall::Id_AdvancedButton);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, IDC_INSTALL_INSTALL_BUTTON);
+	item = GetDlgItem(m_Window, DialogInstall::Id_InstallButton);
 	EnableWindow(item, FALSE);
 
 	item = GetDlgItem(m_Window, IDCANCEL);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_THEME_CHECKBOX);
+	item = GetDlgItem(m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_ThemeCheckBox);
 	if (Button_GetCheck(item) == BST_UNCHECKED)
 	{
 		m_LoadLayout.clear();
@@ -869,7 +869,7 @@ void DialogInstall::BeginInstall()
 	}
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_COMPONENTS_LIST);
+	item = GetDlgItem(m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_ComponentsList);
 	{
 		// Remove unchecked items from the component sets
 		LVITEM lvi = { 0 };
@@ -918,10 +918,10 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 	}
 	else
 	{
-		HWND progressText = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_INPROGRESS_TEXT);
+		HWND progressText = GetDlgItem(dialog->m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_InProgressText);
 		ShowWindow(progressText, SW_SHOWNORMAL);
 
-		HWND progressBar = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_PROGRESS);
+		HWND progressBar = GetDlgItem(dialog->m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_Progress);
 		ShowWindow(progressBar, SW_SHOWNORMAL);
 		SendMessage(progressBar, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
 
@@ -1427,69 +1427,61 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 */
 void DialogInstall::TabInstall::Create(HWND owner)
 {
-	enum
-	{
-		NameLabel = 1100,
-		AuthorLabel,
-		VersionLabel,
-		ComponentsLabel
-	};
-
 	const short y = c_Dialog->m_HeaderBitmap ? 51 : 14;
 	Tab::CreateTabWindow(15, y, 236, 168, owner);
 
 	const Control controls[] =
 	{
-		Control::Label(NameLabel, 0,
+		Control::Label(Id_NameLabel, 0,
 			0, 0, 35, 9,
 			WS_VISIBLE, 0),
-		Control::Label(IDC_INSTALLTAB_NAME_TEXT, 0,
+		Control::Label(DialogInstall::TabInstall::Id_NameText, 0,
 			50, 0, 186, 9,
 			WS_VISIBLE | SS_NOPREFIX, 0),
-		Control::Label(AuthorLabel, 0,
+		Control::Label(Id_AuthorLabel, 0,
 			0, 13, 35, 9,
 			WS_VISIBLE, 0),
-		Control::Label(IDC_INSTALLTAB_AUTHOR_TEXT, 0,
+		Control::Label(DialogInstall::TabInstall::Id_AuthorText, 0,
 			50, 13, 186, 9,
 			WS_VISIBLE | SS_NOPREFIX, 0),
-		Control::Label(VersionLabel, 0,
+		Control::Label(Id_VersionLabel, 0,
 			0, 26, 35, 9,
 			WS_VISIBLE, 0),
-		Control::Label(IDC_INSTALLTAB_VERSION_TEXT, 0,
+		Control::Label(DialogInstall::TabInstall::Id_VersionText, 0,
 			50, 26, 186, 9,
 			WS_VISIBLE | SS_NOPREFIX, 0),
-		Control::Label(ComponentsLabel, 0,
+		Control::Label(Id_ComponentsLabel, 0,
 			0, 45, 80, 9,
 			WS_VISIBLE, 0),
-		Control::ListView(IDC_INSTALLTAB_COMPONENTS_LIST, 0,
+		Control::ListView(DialogInstall::TabInstall::Id_ComponentsList, 0,
 			0, 60, 234, 86,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOSORTHEADER, 0),
-		Control::CheckBox(IDC_INSTALLTAB_THEME_CHECKBOX, 0,
+		Control::CheckBox(DialogInstall::TabInstall::Id_ThemeCheckBox, 0,
 			4, 155, 220, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Label(IDC_INSTALLTAB_INPROGRESS_TEXT, 0,
+		Control::Label(DialogInstall::TabInstall::Id_InProgressText, 0,
 			0, 0, 236, 60,
 			0, 0),
-		Control::ProgressBar(IDC_INSTALLTAB_PROGRESS, 0,
+		Control::ProgressBar(DialogInstall::TabInstall::Id_Progress, 0,
 			0, 15, 236, 11,
 			PBS_MARQUEE | WS_BORDER, 0)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(NameLabel), L"Name:");
-	SetWindowText(GetControl(IDC_INSTALLTAB_NAME_TEXT), c_Dialog->m_Name.c_str());
-	SetWindowText(GetControl(AuthorLabel), L"Author:");
-	SetWindowText(GetControl(IDC_INSTALLTAB_AUTHOR_TEXT), c_Dialog->m_Author.c_str());
-	SetWindowText(GetControl(VersionLabel), L"Version:");
-	SetWindowText(GetControl(IDC_INSTALLTAB_VERSION_TEXT), c_Dialog->m_Version.c_str());
-	SetWindowText(GetControl(ComponentsLabel), L"Included components:");
-	SetWindowText(GetControl(IDC_INSTALLTAB_THEME_CHECKBOX), L"Apply included layout");
-	SetWindowText(GetControl(IDC_INSTALLTAB_INPROGRESS_TEXT), L"Installing...");
+	SetWindowText(GetControl(Id_NameLabel), L"Name:");
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_NameText), c_Dialog->m_Name.c_str());
+	SetWindowText(GetControl(Id_AuthorLabel), L"Author:");
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_AuthorText), c_Dialog->m_Author.c_str());
+	SetWindowText(GetControl(Id_VersionLabel), L"Version:");
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_VersionText), c_Dialog->m_Version.c_str());
+	SetWindowText(GetControl(Id_ComponentsLabel), L"Included components:");
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_ThemeCheckBox), L"Apply included layout");
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_InProgressText), L"Installing...");
 }
 
 void DialogInstall::TabInstall::Initialize()
 {
-	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_COMPONENTS_LIST);
+	HWND item = GetDlgItem(m_Window, DialogInstall::TabInstall::Id_ComponentsList);
 
 	DWORD extendedFlags =
 		LVS_EX_CHECKBOXES |
@@ -1578,7 +1570,7 @@ void DialogInstall::TabInstall::Initialize()
 	addComponent(L"Addons", c_Dialog->m_PackageAddons, g_Data.settingsPath + L"Addons\\", 2);
 	addComponent(L"Plugins", c_Dialog->m_PackagePlugins, g_Data.settingsPath + L"Plugins\\", 3);
 
-	item = GetDlgItem(m_Window, IDC_INSTALLTAB_THEME_CHECKBOX);
+	item = GetDlgItem(m_Window, DialogInstall::TabInstall::Id_ThemeCheckBox);
 	if (!c_Dialog->m_LoadLayout.empty())
 	{
 		Button_SetCheck(item, BST_CHECKED);
@@ -1611,7 +1603,7 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_INSTALLTAB_COMPONENTS_LIST:
+	case DialogInstall::TabInstall::Id_ComponentsList:
 		{
 			LPNMLISTVIEW pnmlv = (LPNMLISTVIEW)lParam;
 
@@ -1626,9 +1618,9 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				HWND hwndFrom = pnmlv->hdr.hwndFrom;
 				HWND hwndDialogTab = c_Dialog->m_TabInstall.GetWindow();
-				HWND hwndListview = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_COMPONENTS_LIST);
-				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_THEME_CHECKBOX);
-				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), IDC_INSTALL_INSTALL_BUTTON);
+				HWND hwndListview = GetDlgItem(hwndDialogTab, DialogInstall::TabInstall::Id_ComponentsList);
+				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, DialogInstall::TabInstall::Id_ThemeCheckBox);
+				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), DialogInstall::Id_InstallButton);
 
 				// "Load included layout" / "Load included skins" checkbox: Remember the "last state"
 				// the user has clicked, since this will be unchecked when disabled.
