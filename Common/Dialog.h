@@ -80,6 +80,7 @@ protected:
 	virtual void HandleDpiChange() {}
 
 	void AddTab(WORD controlId, Tab& tab, const WCHAR* text);
+	void AddPage(Tab& tab);
 	void SelectTab(int index);
 	Tab& GetActiveTab();
 
@@ -97,6 +98,7 @@ private:
 	static HWND c_ActiveDialogWindow;
 
 	HWND m_TabControl;
+	std::vector<Tab*> m_Pages;
 	std::vector<Tab*> m_Tabs;
 };
 

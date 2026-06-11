@@ -210,13 +210,19 @@ void Dialog::AddTab(WORD controlId, Tab& tab, const WCHAR* text)
 		assert(m_TabControl == tabControl);
 	}
 
-	tab.Create(m_Window);
+	AddPage(tab);
 	m_Tabs.push_back(&tab);
 
 	TCITEM tci = { 0 };
 	tci.mask = TCIF_TEXT;
 	tci.pszText = (WCHAR*)text;
 	TabCtrl_InsertItem(m_TabControl, (int)m_Tabs.size() - 1, &tci);
+}
+
+void Dialog::AddPage(Tab& tab)
+{
+	tab.Create(m_Window);
+	m_Pages.push_back(&tab);
 }
 
 void Dialog::SelectTab(int index)
@@ -247,7 +253,7 @@ void Dialog::Relayout()
 {
 	RelayoutControls();
 
-	for (auto* tab : m_Tabs)
+	for (auto* tab : m_Pages)
 	{
 		if (!tab->GetWindow()) continue;
 
