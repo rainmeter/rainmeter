@@ -127,6 +127,7 @@ public:
 	void UnpauseMeasure(const std::wstring& name, bool group = false);
 	void TogglePauseMeasure(const std::wstring& name, bool group = false);
 	void UpdateMeasure(const std::wstring& name, bool group = false);
+	void CommandMeasure(const std::wstring& name, const std::wstring& command, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();

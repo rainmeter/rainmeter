@@ -96,6 +96,7 @@ enum class Bang
 	UnpauseMeasureGroup,
 	TogglePauseMeasureGroup,
 	UpdateMeasureGroup,
+	CommandMeasureGroup,
 	DeactivateConfigGroup,
 	ZPosGroup,
 	ClickThroughGroup,
