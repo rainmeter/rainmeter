@@ -1170,6 +1170,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		DialogAbout::UpdateMeasures(this);
 		break;
 
+	case Bang::CommandMeasure:
+		CommandMeasure(args[0], args[1]);
+		break;
+
 	case Bang::DisableMeasureGroup:
 		DisableMeasure(args[0], true);
 		break;
@@ -1197,6 +1201,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::UpdateMeasureGroup:
 		UpdateMeasure(args[0], true);
 		DialogAbout::UpdateMeasures(this);
+		break;
+
+	case Bang::CommandMeasureGroup:
+		CommandMeasure(args[0], args[1], true);
 		break;
 
 	case Bang::Show:
@@ -1327,21 +1335,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 			int x = m_Parser.ParseInt(args[0].c_str(), 0);
 			int y = m_Parser.ParseInt(args[1].c_str(), 0);
 			MoveMeter(args[2], x, y);
-		}
-		break;
-
-	case Bang::CommandMeasure:
-		{
-			const std::wstring& measure = args[0];
-			Measure* m = GetMeasure(measure);
-			if (m)
-			{
-				m->Command(args[1]);
-			}
-			else
-			{
-				LogWarningF(this, L"!CommandMeasure: [%s] not found", measure.c_str());
-			}
 		}
 		break;
 
@@ -1928,6 +1921,22 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 	}
 
 	if (!group) LogErrorF(this, L"!UpdateMeasure: [%s] not found", measure);
+}
+
+void Skin::CommandMeasure(const std::wstring& name, const std::wstring& command, bool group)
+{
+	const WCHAR* measure = name.c_str();
+
+	for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
+	{
+		if (CompareName((*i), measure, group))
+		{
+			(*i)->Command(command);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogWarningF(this, L"!CommandMeasure: [%s] not found", measure);
 }
 
 void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)

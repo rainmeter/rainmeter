@@ -102,6 +102,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
 	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
 	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 },
+	{ Bang::CommandMeasureGroup, L"CommandMeasureGroup", 2 },
 	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0 }
 };
 
