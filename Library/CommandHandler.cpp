@@ -141,6 +141,8 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::DeactivateConfig, L"DeactivateConfig", CommandHandler::DoDeactivateSkinBang },
 	{ Bang::ToggleConfig, L"ToggleConfig", CommandHandler::DoToggleSkinBang },
 	{ Bang::DeactivateConfigGroup, L"DeactivateConfigGroup", CommandHandler::DoDeactivateSkinGroupBang },
+	{ Bang::TransitionMeter, L"TransitionMeter", CommandHandler::DoTransitionMeterBang },
+	{ Bang::TransitionMeterGroup, L"TransitionMeterGroup", CommandHandler::DoTransitionMeterGroupBang },
 	{ Bang::WriteKeyValue, L"WriteKeyValue", CommandHandler::DoWriteKeyValueBang },
 	{ Bang::LoadLayout, L"LoadLayout", CommandHandler::DoLoadLayoutBang },
 	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
@@ -1152,6 +1154,30 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 	}
 
 	LogErrorF(skin, L"!SetWindowPosition: Invalid parameters");
+}
+
+void CommandHandler::DoTransitionMeterBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	if (skin)
+	{
+		skin->TransitionMeter(args, false);
+	}
+	else
+	{
+		LogErrorF(L"!TransitionMeter: Skin context is required");
+	}
+}
+
+void CommandHandler::DoTransitionMeterGroupBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	if (skin)
+	{
+		skin->TransitionMeter(args, true);
+	}
+	else
+	{
+		LogErrorF(L"!TransitionMeterGroup: Skin context is required");
+	}
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)

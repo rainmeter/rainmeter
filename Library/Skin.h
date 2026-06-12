@@ -15,6 +15,7 @@
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Group.h"
+#include "MeterAnimation.h"
 #include "Mouse.h"
 #include "../Common/Gfx/Canvas.h"
 
@@ -115,6 +116,7 @@ public:
 	void ShowMeter(const std::wstring& name, bool group = false);
 	void ToggleMeter(const std::wstring& name, bool group = false);
 	void MoveMeter(const std::wstring& name, int x, int y);
+	void TransitionMeter(const std::vector<std::wstring>& args, bool group);
 	void UpdateMeter(const std::wstring& name, bool group = false);
 	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
 	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
@@ -169,6 +171,9 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	ConfigParser& GetParser() { return m_Parser; }
+	MeterAnimationManager& GetMeterAnimations() { return m_MeterAnimations; }
+	const MeterAnimationManager& GetMeterAnimations() const { return m_MeterAnimations; }
+	void CancelMeterAnimation(Meter* meter, bool position, bool opacity);
 
 	const std::wstring& GetFolderPath() { return m_FolderPath; }
 	const std::wstring& GetFileName() { return m_FileName; }
@@ -374,12 +379,15 @@ private:
 
 	void Dispose(bool refresh);
 	void CreateDoubleBuffer(int cx, int cy);
+	void DrawMeter(Meter* meter, const D2D1_MATRIX_3X2_F& additionalTransform = D2D1::Matrix3x2F::Identity());
+	void StartMeterAnimationTimer();
 
 	bool IsNetworkMeasure(Measure* measure);
 
 	bool m_IsFirstRun;  // Skin has no settings in Rainmeter.ini
 
 	Gfx::Canvas m_Canvas;
+	MeterAnimationManager m_MeterAnimations;
 
 	ConfigParser m_Parser;
 
@@ -444,6 +452,7 @@ private:
 	int m_TransitionUpdate;
 	int m_DefaultUpdateDivider;
 	bool m_ActiveTransition;
+	bool m_ActiveMeterAnimation;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;
 	HIDEMODE m_WindowHide;

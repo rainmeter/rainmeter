@@ -38,6 +38,10 @@ public:
 	virtual int GetH() { return m_Hidden ? 0 : m_H; }
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
+	float GetRenderX();
+	float GetRenderY();
+	int GetTargetX();
+	int GetTargetY();
 
 	RECT GetMeterRect();
 	D2D1_RECT_F GetMeterRectPadding();
@@ -61,6 +65,9 @@ public:
 	void SetH(int h) { m_H = h; }
 	void SetX(int x);
 	void SetY(int y);
+	void SetOpacity(int opacity);
+	int GetOpacity() const { return m_Opacity; }
+	float GetRenderOpacity() const;
 
 	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
 
@@ -135,6 +142,7 @@ protected:
 	int m_Y;
 	int m_W;
 	int m_H;
+	int m_Opacity;
 	bool m_Hidden;
 	bool m_WDefined;
 	bool m_HDefined;

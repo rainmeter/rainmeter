@@ -73,6 +73,7 @@
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
     <ClCompile Include="Meter.cpp" />
+    <ClCompile Include="MeterAnimation.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
     <ClCompile Include="MeterButton.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
     <ClInclude Include="Meter.h" />
+    <ClInclude Include="MeterAnimation.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
     <ClInclude Include="MeterButton.h" />

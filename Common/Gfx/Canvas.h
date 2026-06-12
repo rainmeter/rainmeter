@@ -76,6 +76,8 @@ public:
 
 	void SetAntiAliasing(bool enable);
 	void SetTextAntiAliasing(bool enable);
+	void PushOpacity(FLOAT opacity);
+	void PopOpacity();
 
 	void Clear(const D2D1_COLOR_F& color = Util::c_Transparent_Color_F);
 

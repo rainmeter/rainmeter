@@ -31,6 +31,7 @@ enum class Bang
 	ShowMeter,
 	ToggleMeter,
 	MoveMeter,
+	TransitionMeter,
 	UpdateMeter,
 	DisableMouseAction,
 	ClearMouseAction,
@@ -80,6 +81,7 @@ enum class Bang
 	HideMeterGroup,
 	ShowMeterGroup,
 	ToggleMeterGroup,
+	TransitionMeterGroup,
 	UpdateMeterGroup,
 	DisableMouseActionGroup,
 	ClearMouseActionGroup,
@@ -154,6 +156,8 @@ public:
 	static void DoQuitBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoTransitionMeterBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoTransitionMeterGroupBang(std::vector<std::wstring>& args, Skin* skin);
 
 	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
 };

@@ -437,6 +437,22 @@ void Canvas::SetTextAntiAliasing(bool enable)
 	m_Target->SetTextAntialiasMode(enable ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
 }
 
+void Canvas::PushOpacity(FLOAT opacity)
+{
+	D2D1_LAYER_PARAMETERS1 layerParams = {};
+	layerParams.contentBounds = D2D1::InfiniteRect();
+	layerParams.maskAntialiasMode = D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+	layerParams.maskTransform = D2D1::Matrix3x2F::Identity();
+	layerParams.opacity = opacity;
+	layerParams.layerOptions = D2D1_LAYER_OPTIONS1_NONE;
+	m_Target->PushLayer(layerParams, nullptr);
+}
+
+void Canvas::PopOpacity()
+{
+	m_Target->PopLayer();
+}
+
 void Canvas::Clear(const D2D1_COLOR_F& color)
 {
 	if (!m_Target) return;

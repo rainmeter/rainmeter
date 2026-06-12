@@ -26,6 +26,7 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Y(),
 	m_W(0),
 	m_H(0),
+	m_Opacity(255),
 	m_Hidden(false),
 	m_WDefined(false),
 	m_HDefined(false),
@@ -95,25 +96,34 @@ void Meter::Initialize()
 */
 int Meter::GetX(bool abs)
 {
-	int containerOffset = 0;
+	return (int)lroundf(GetRenderX());
+}
+
+float Meter::GetRenderX()
+{
+	float x = (float)m_X;
+	float y = (float)m_Y;
+	m_Skin->GetMeterAnimations().GetPosition(this, x, y, x, y);
+
+	float containerOffset = 0.0f;
 	if (m_ContainerMeter)
 	{
-		containerOffset = m_ContainerMeter->GetX(true);
+		containerOffset = m_ContainerMeter->GetRenderX();
 	}
 
 	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeX == POSITION_RELATIVE_TL)
 		{
-			return m_RelativeMeter->GetX(true) + m_X;
+			return m_RelativeMeter->GetRenderX() + x;
 		}
 		else
 		{
-			return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
+			return m_RelativeMeter->GetRenderX() + m_RelativeMeter->GetW() + x;
 		}
 	}
 
-	return containerOffset + m_X;
+	return containerOffset + x;
 }
 
 /*
@@ -122,22 +132,61 @@ int Meter::GetX(bool abs)
 */
 int Meter::GetY(bool abs)
 {
-	int containerOffset = 0;
+	return (int)lroundf(GetRenderY());
+}
+
+float Meter::GetRenderY()
+{
+	float x = (float)m_X;
+	float y = (float)m_Y;
+	m_Skin->GetMeterAnimations().GetPosition(this, x, y, x, y);
+
+	float containerOffset = 0.0f;
 	if (m_ContainerMeter)
 	{
-		containerOffset = m_ContainerMeter->GetY(true);
+		containerOffset = m_ContainerMeter->GetRenderY();
 	}
 
 	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
 		if (m_RelativeY == POSITION_RELATIVE_TL)
 		{
-			return m_RelativeMeter->GetY(true) + m_Y;
+			return m_RelativeMeter->GetRenderY() + y;
 		}
 		else
 		{
-			return m_RelativeMeter->GetY(true) + m_RelativeMeter->GetH() + m_Y;
+			return m_RelativeMeter->GetRenderY() + m_RelativeMeter->GetH() + y;
 		}
+	}
+
+	return containerOffset + y;
+}
+
+int Meter::GetTargetX()
+{
+	int containerOffset = m_ContainerMeter ? m_ContainerMeter->GetTargetX() : 0;
+	if (m_RelativeX == POSITION_RELATIVE_TL && m_RelativeMeter)
+	{
+		return m_RelativeMeter->GetTargetX() + m_X;
+	}
+	else if (m_RelativeX == POSITION_RELATIVE_BR && m_RelativeMeter)
+	{
+		return m_RelativeMeter->GetTargetX() + m_RelativeMeter->GetW() + m_X;
+	}
+
+	return containerOffset + m_X;
+}
+
+int Meter::GetTargetY()
+{
+	int containerOffset = m_ContainerMeter ? m_ContainerMeter->GetTargetY() : 0;
+	if (m_RelativeY == POSITION_RELATIVE_TL && m_RelativeMeter)
+	{
+		return m_RelativeMeter->GetTargetY() + m_Y;
+	}
+	else if (m_RelativeY == POSITION_RELATIVE_BR && m_RelativeMeter)
+	{
+		return m_RelativeMeter->GetTargetY() + m_RelativeMeter->GetH() + m_Y;
 	}
 
 	return containerOffset + m_Y;
@@ -145,6 +194,7 @@ int Meter::GetY(bool abs)
 
 void Meter::SetX(int x)
 {
+	m_Skin->CancelMeterAnimation(this, true, false);
 	m_X = x;
 	m_RelativeX = POSITION_ABSOLUTE;
 
@@ -156,6 +206,7 @@ void Meter::SetX(int x)
 
 void Meter::SetY(int y)
 {
+	m_Skin->CancelMeterAnimation(this, true, false);
 	m_Y = y;
 	m_RelativeY = POSITION_ABSOLUTE;
 
@@ -163,6 +214,21 @@ void Meter::SetY(int y)
 	WCHAR buffer[32] = { 0 };
 	_itow_s(y, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
+}
+
+void Meter::SetOpacity(int opacity)
+{
+	m_Skin->CancelMeterAnimation(this, false, true);
+	m_Opacity = max(0, min(opacity, 255));
+
+	WCHAR buffer[32] = { 0 };
+	_itow_s(m_Opacity, buffer, 10);
+	m_Skin->GetParser().SetValue(m_Name, L"Opacity", buffer);
+}
+
+float Meter::GetRenderOpacity() const
+{
+	return m_Skin->GetMeterAnimations().GetOpacity(this, (float)m_Opacity);
 }
 
 /*
@@ -420,10 +486,21 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	bool oldHidden = m_Hidden;
 	m_Hidden = parser.ReadBool(section, L"Hidden", false);
+	const int oldOpacity = m_Opacity;
+	m_Opacity = parser.ReadInt(section, L"Opacity", 255);
+	m_Opacity = max(0, min(m_Opacity, 255));
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{
+		if (oldX != m_X || oldY != m_Y)
+		{
+			m_Skin->CancelMeterAnimation(this, true, false);
+		}
 		m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+	}
+	if (oldOpacity != m_Opacity)
+	{
+		m_Skin->CancelMeterAnimation(this, false, true);
 	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);

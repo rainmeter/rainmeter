@@ -41,16 +41,18 @@ enum TIMER
 	TIMER_FADE       = 3,
 	TIMER_TRANSITION = 4,
 	TIMER_DEACTIVATE = 5,
+	TIMER_METER_ANIMATION = 6,
 
 	// Update this when adding a new timer.
-	TIMER_MAX        = 5
+	TIMER_MAX        = 6
 };
 enum INTERVAL
 {
 	INTERVAL_METER      = 1000,
 	INTERVAL_MOUSE      = 500,
 	INTERVAL_FADE       = 10,
-	INTERVAL_TRANSITION = 100
+	INTERVAL_TRANSITION = 100,
+	INTERVAL_METER_ANIMATION = 16
 };
 
 int Skin::c_InstanceCount = 0;
@@ -177,6 +179,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_TransitionUpdate(INTERVAL_TRANSITION),
 	m_DefaultUpdateDivider(1),
 	m_ActiveTransition(false),
+	m_ActiveMeterAnimation(false),
 	m_HasNetMeasures(false),
 	m_HasButtons(false),
 	m_WindowHide(HIDEMODE_NONE),
@@ -289,6 +292,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
+	KillTimer(m_Window, TIMER_METER_ANIMATION);
 
 	m_FadeStartTime = 0ULL;
 
@@ -296,6 +300,8 @@ void Skin::Dispose(bool refresh)
 	m_HasMouseScrollAction = false;
 
 	m_ActiveTransition = false;
+	m_ActiveMeterAnimation = false;
+	m_MeterAnimations.Clear();
 
 	m_MouseOver = false;
 	SetMouseLeaveEvent(true);
@@ -1609,6 +1615,112 @@ void Skin::MoveMeter(const std::wstring& name, int x, int y)
 	LogErrorF(this, L"!MoveMeter: [%s] not found", meter);
 }
 
+void Skin::TransitionMeter(const std::vector<std::wstring>& args, bool group)
+{
+	if (args.size() < 2)
+	{
+		LogErrorF(this, group ? L"!TransitionMeterGroup: Invalid parameters" : L"!TransitionMeter: Invalid parameters");
+		return;
+	}
+
+	const bool position = _wcsicmp(args[1].c_str(), L"Position") == 0;
+	const bool opacity = _wcsicmp(args[1].c_str(), L"Opacity") == 0;
+	if ((!position && !opacity) || (position && args.size() != 5 && args.size() != 6) ||
+		(opacity && args.size() != 4 && args.size() != 5))
+	{
+		LogErrorF(this, group ? L"!TransitionMeterGroup: Invalid parameters" : L"!TransitionMeter: Invalid parameters");
+		return;
+	}
+
+	const size_t durationIndex = position ? 4ULL : 3ULL;
+	const int parsedDuration = m_Parser.ParseInt(args[durationIndex].c_str(), 0);
+	const UINT duration = (UINT)max(parsedDuration, 0);
+
+	MeterAnimationManager::Easing easing = MeterAnimationManager::Easing::Linear;
+	if (args.size() > durationIndex + 1ULL && !MeterAnimationManager::ParseEasing(args[durationIndex + 1ULL], easing))
+	{
+		LogErrorF(this, group ? L"!TransitionMeterGroup: Invalid easing" : L"!TransitionMeter: Invalid easing");
+		return;
+	}
+
+	const int targetX = position ? m_Parser.ParseInt(args[2].c_str(), 0) : 0;
+	const int targetY = position ? m_Parser.ParseInt(args[3].c_str(), 0) : 0;
+	const int targetOpacity = opacity ? max(0, min(m_Parser.ParseInt(args[2].c_str(), 255), 255)) : 255;
+	bool found = false;
+	bool animated = false;
+
+	for (auto meter : m_Meters)
+	{
+		if ((group && !meter->BelongsToGroup(args[0])) || (!group && _wcsicmp(meter->GetName(), args[0].c_str()) != 0))
+		{
+			continue;
+		}
+
+		found = true;
+		if (position)
+		{
+			float startX = meter->GetRenderX();
+			float startY = meter->GetRenderY();
+			if (meter->GetContainerMeter())
+			{
+				startX -= meter->GetContainerMeter()->GetRenderX();
+				startY -= meter->GetContainerMeter()->GetRenderY();
+			}
+
+			meter->SetX(targetX);
+			meter->SetY(targetY);
+			if (duration > 0U)
+			{
+				m_MeterAnimations.StartPosition(
+					meter, startX, startY, (float)targetX, (float)targetY, duration, easing);
+				animated = true;
+			}
+		}
+		else
+		{
+			const float startOpacity = m_MeterAnimations.GetOpacity(meter, (float)meter->GetOpacity());
+			meter->SetOpacity(targetOpacity);
+			if (duration > 0U)
+			{
+				m_MeterAnimations.StartOpacity(meter, startOpacity, (float)targetOpacity, duration, easing);
+				animated = true;
+			}
+		}
+
+		if (!group) break;
+	}
+
+	if (!found)
+	{
+		LogErrorF(this, group ? L"!TransitionMeterGroup: Group [%s] not found" : L"!TransitionMeter: [%s] not found", args[0].c_str());
+		return;
+	}
+
+	if (position)
+	{
+		SetResizeWindowMode(RESIZEMODE_CHECK);
+	}
+	if (animated)
+	{
+		StartMeterAnimationTimer();
+	}
+	Redraw();
+}
+
+void Skin::CancelMeterAnimation(Meter* meter, bool position, bool opacity)
+{
+	m_MeterAnimations.Cancel(meter, position, opacity);
+}
+
+void Skin::StartMeterAnimationTimer()
+{
+	if (!m_ActiveMeterAnimation)
+	{
+		SetTimer(m_Window, TIMER_METER_ANIMATION, INTERVAL_METER_ANIMATION, nullptr);
+		m_ActiveMeterAnimation = true;
+	}
+}
+
 void Skin::UpdateMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -2864,9 +2976,9 @@ bool Skin::ResizeWindow(bool reset)
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if ((*j)->IsContained()) continue;
-		int mr = (*j)->GetX() + (*j)->GetW();
+		int mr = max((*j)->GetX(), (*j)->GetTargetX()) + (*j)->GetW();
 		w = max(w, mr);
-		int mb = (*j)->GetY() + (*j)->GetH();
+		int mb = max((*j)->GetY(), (*j)->GetTargetY()) + (*j)->GetH();
 		h = max(h, mb);
 	}
 
@@ -2946,6 +3058,36 @@ bool Skin::ResizeWindow(bool reset)
 void Skin::CreateDoubleBuffer(int cx, int cy)
 {
 	m_Canvas.Resize(cx, cy);
+}
+
+void Skin::DrawMeter(Meter* meter, const D2D1_MATRIX_3X2_F& additionalTransform)
+{
+	const float opacity = meter->GetRenderOpacity() / 255.0f;
+	const bool useOpacity = opacity < 1.0f;
+	if (useOpacity)
+	{
+		m_Canvas.PushOpacity(opacity);
+	}
+
+	const float offsetX = meter->GetRenderX() - (float)meter->GetX();
+	const float offsetY = meter->GetRenderY() - (float)meter->GetY();
+	const D2D1_MATRIX_3X2_F matrix =
+		D2D1::Matrix3x2F::Translation(offsetX, offsetY) *
+		meter->GetTransformationMatrix() *
+		additionalTransform;
+	const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
+	if (!reinterpretMatrix->IsIdentity())
+	{
+		m_Canvas.SetTransform(matrix);
+	}
+
+	meter->Draw(m_Canvas);
+	m_Canvas.ResetTransform();
+
+	if (useOpacity)
+	{
+		m_Canvas.PopOpacity();
+	}
 }
 
 /*
@@ -3110,20 +3252,7 @@ void Skin::Redraw()
 		for (auto meter : m_Meters)
 		{
 			if (HandleContainer(meter)) continue;
-
-			const D2D1_MATRIX_3X2_F matrix = meter->GetTransformationMatrix();
-			const D2D1::Matrix3x2F* reinterpretMatrix = D2D1::Matrix3x2F::ReinterpretBaseType(&matrix);
-
-			if (!reinterpretMatrix->IsIdentity())
-			{
-				m_Canvas.SetTransform(matrix);
-				meter->Draw(m_Canvas);
-				m_Canvas.ResetTransform();
-			}
-			else
-			{
-				meter->Draw(m_Canvas);
-			}
+			DrawMeter(meter);
 		}
 
 		if (m_Selected)
@@ -3153,20 +3282,18 @@ bool Skin::HandleContainer(Meter* container)
 	m_Canvas.SetTarget(containerContentBitmap);
 	m_Canvas.Clear();
 
-	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
+	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation(-container->GetRenderX(), -container->GetRenderY());
 
 	for (auto item : containerItems)
 	{
-		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset);
-		item->Draw(m_Canvas);
+		DrawMeter(item, offset);
 	}
 	m_Canvas.ResetTransform();
 
 	auto containerBitmap = container->GetContainerTexture();
 	m_Canvas.SetTarget(containerBitmap);
 	m_Canvas.Clear();
-	m_Canvas.SetTransform(container->GetTransformationMatrix() * offset);
-	container->Draw(m_Canvas);
+	DrawMeter(container, offset);
 
 	m_Canvas.ResetTransform();
 	m_Canvas.ResetTarget();
@@ -3193,7 +3320,14 @@ bool Skin::HandleContainer(Meter* container)
 		(FLOAT)meterRect.right,
 		(FLOAT)meterRect.bottom);
 
+	const float offsetX = container->GetRenderX() - (float)container->GetX();
+	const float offsetY = container->GetRenderY() - (float)container->GetY();
+	if (offsetX != 0.0f || offsetY != 0.0f)
+	{
+		m_Canvas.SetTransform(D2D1::Matrix3x2F::Translation(offsetX, offsetY));
+	}
 	m_Canvas.DrawMaskedBitmap(containerContentD2DBitmap, containerD2DBitmap, destination, srcRect2, srcRect);
+	m_Canvas.ResetTransform();
 	return true;
 }
 
@@ -3516,6 +3650,29 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Stop the transition timer
 				KillTimer(m_Window, TIMER_TRANSITION);
 				m_ActiveTransition = false;
+			}
+		}
+		break;
+
+	case TIMER_METER_ANIMATION:
+		{
+			if (!m_ActiveMeterAnimation)
+			{
+				break;
+			}
+
+			bool positionCompleted = false;
+			const bool active = m_MeterAnimations.Update(positionCompleted);
+			if (positionCompleted)
+			{
+				SetResizeWindowMode(RESIZEMODE_CHECK);
+			}
+			Redraw();
+
+			if (!active)
+			{
+				KillTimer(m_Window, TIMER_METER_ANIMATION);
+				m_ActiveMeterAnimation = false;
 			}
 		}
 		break;
