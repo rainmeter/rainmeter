@@ -1677,7 +1677,7 @@ void DialogAbout::TabVersion::Initialize()
 	};
 
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, 64);
+	HICON icon = GetIconBySize(IDI_RAINMETER, m_ControlTemplate.ScaleDialogUnits(64));
 	Static_SetIcon(item, icon);
 
 	WCHAR tmpSz[MAX_PATH];
@@ -1721,7 +1721,7 @@ void DialogAbout::TabVersion::Relayout(int w, int h)
 	Tab::Relayout(w, h);
 
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, 64);
+	HICON icon = GetIconBySize(IDI_RAINMETER, m_ControlTemplate.ScaleDialogUnits(64));
 	Static_SetIcon(item, icon);
 }
 
