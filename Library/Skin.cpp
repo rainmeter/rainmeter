@@ -2045,222 +2045,131 @@ void Skin::WindowToScreen()
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
-	std::wstring::size_type index = 0ULL, index2 = 0ULL;
-	int pixel = 0;
-	float numX = 0.0f, numY = 0.0f;
-	int screenX = 0, screenY = 0, screenH = 0, screenW = 0;
-
 	const int numOfMonitors = (int)System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
-	// Clear position flags
 	m_WindowXScreen = m_WindowYScreen = monitorsInfo.primary; // Default to primary screen
 	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
-	m_WindowXFromRight = m_WindowYFromBottom = false; // Default to from left/top
-	m_WindowXPercentage = m_WindowYPercentage = false; // Default to pixels
-	m_AnchorXFromRight = m_AnchorYFromBottom = false;
-	m_AnchorXPercentage = m_AnchorYPercentage = false;
 
-	{	// --- Calculate AnchorScreenX ---
+	m_AnchorScreenX = ([&]() {
+		const auto numberEndPos = m_AnchorX.find_first_not_of(L"0123456789.");
+		auto number = (float)_wtof(m_AnchorX.substr(0, numberEndPos).c_str());
 
-		index = m_AnchorX.find_first_not_of(L"0123456789.");
-		numX = (float)_wtof(m_AnchorX.substr(0, index).c_str());
-		index = m_AnchorX.find_last_of(L'%');
-		if (index != std::wstring::npos) m_AnchorXPercentage = true;
-		index = m_AnchorX.find_last_of(L'R');
-		if (index != std::wstring::npos) m_AnchorXFromRight = true;
-		if (m_AnchorXPercentage) //is a percentage
-		{
-			pixel = (int)(m_WindowW * numX / 100.0f);
-		}
-		else
-		{
-			pixel = (int)numX;
-		}
-		if (m_AnchorXFromRight) //measure from right
-		{
-			pixel = m_WindowW - pixel;
-		}
-		else
-		{
-			//pixel = pixel;
-		}
-		m_AnchorScreenX = pixel;
-	}
+		m_AnchorXPercentage = m_AnchorX.find_last_of(L'%') != std::wstring::npos;
+		number = m_AnchorXPercentage ? (int)(m_WindowW * number / 100.0f) : (int)number;
 
-	{	// --- Calculate AnchorScreenY ---
+		m_AnchorXFromRight = m_AnchorX.find_last_of(L'R') != std::wstring::npos;
+		number = m_AnchorXFromRight ? m_WindowW - number : number;
 
-		index = m_AnchorY.find_first_not_of(L"0123456789.");
-		numY = (float)_wtof(m_AnchorY.substr(0, index).c_str());
-		index = m_AnchorY.find_last_of(L'%');
-		if (index != std::wstring::npos) m_AnchorYPercentage = true;
-		index = m_AnchorY.find_last_of(L'B');
-		if (index != std::wstring::npos) m_AnchorYFromBottom = true;
-		if (m_AnchorYPercentage) //is a percentage
-		{
-			pixel = (int)(m_WindowH * numY / 100.0f);
-		}
-		else
-		{
-			pixel = (int)numY;
-		}
-		if (m_AnchorYFromBottom) //measure from bottom
-		{
-			pixel = m_WindowH - pixel;
-		}
-		else
-		{
-			//pixel = pixel;
-		}
-		m_AnchorScreenY = pixel;
-	}
+		return number;
+	})();
 
-	{	// --- Calculate ScreenX (Part 1) ---
+	m_AnchorScreenY = ([&]() {
+		const auto numberEndPos = m_AnchorY.find_first_not_of(L"0123456789.");
+		auto number = (float)_wtof(m_AnchorY.substr(0, numberEndPos).c_str());
 
-		index = m_WindowX.find_first_not_of(L"-0123456789.");
-		numX = (float)_wtof(m_WindowX.substr(0, index).c_str());
-		index = m_WindowX.find_last_of(L'%');
-		index2 = m_WindowX.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAX@n#"
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			m_WindowXPercentage = true;
-		}
-		index = m_WindowX.find_last_of(L'R');
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			m_WindowXFromRight = true;
-		}
-		index = m_WindowX.find_last_of(L'@');
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			index = index + 1;
-			index2 = m_WindowX.find_first_not_of(L"0123456789", index);
+		m_AnchorYPercentage = m_AnchorY.find_last_of(L'%') != std::wstring::npos;
+		number = m_AnchorYPercentage ? (int)(m_WindowH * number / 100.0f) : (int)number;
 
-			std::wstring screenStr = m_WindowX.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
-			if (!screenStr.empty())
+		m_AnchorYFromBottom = m_AnchorY.find_last_of(L'B') != std::wstring::npos;
+		number = m_AnchorYFromBottom ? m_WindowH - number : number;
+
+		return number;
+	})();
+
+	const int unresolvedLogicalWindowX = ([&]() {
+		const auto numberEndPos = m_WindowX.find_first_not_of(L"-0123456789.");
+		const auto number = (float)_wtof(m_WindowX.substr(0, index).c_str());
+
+		// Accept modifiers only after the hash of potentially present variables.
+		const auto percentagePos = = m_WindowX.find_last_of(L'%');
+		const auto hashPos = m_WindowX.find_last_of(L'#');
+		m_WindowXPercentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
+
+		const auto rPos = m_WindowX.find_last_of(L'R');
+		m_WindowXFromRight = (rPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < rPos));
+
+		const auto atPos = m_WindowX.find_last_of(L'@');
+		if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
+		{
+			atPos = atPos + 1;
+			const auto monitorNumberEndPos = m_WindowX.find_first_not_of(L"0123456789", atPos);
+			const auto monitorNumberString = m_WindowX.substr(atPos, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos : std::wstring::npos);
+			if (!monitorNumberString.empty())
 			{
-				const int screenIndex = _wtoi(screenStr.c_str());
-				const int monitorIndex = screenIndex - 1;
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
+				const int monitorNumber = _wtoi(monitorNumberString.c_str());
+				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= numOfMonitors && monitors[monitorNumber - 1].active))
 				{
-					m_WindowXScreen = screenIndex;
+					m_WindowXScreen = monitorNumber;
 					m_WindowXScreenDefined = true;
-					m_WindowYScreen = m_WindowXScreen;  // Default to X and Y on same screen if not overridden on WindowY
+
+					// Default to X and Y on same monitor, but may be overriden by WindowY handling below.
+					m_WindowYScreen = m_WindowXScreen;
 					m_WindowYScreenDefined = true;
 				}
 			}
 		}
-		// Finish calculating the final screen X coordinate |m_ScreenX| in "Part 2" below
-	}
 
-	{	// --- Calculate ScreenY ---
+		return number;
+	})();
 
-		index = m_WindowY.find_first_not_of(L"-0123456789.");
-		numY = (float)_wtof(m_WindowY.substr(0, index).c_str());
-		index = m_WindowY.find_last_of(L'%');
-		index2 = m_WindowY.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			m_WindowYPercentage = true;
-		}
-		index = m_WindowY.find_last_of(L'B');
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			m_WindowYFromBottom = true;
-		}
-		index = m_WindowY.find_last_of(L'@');
-		if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
-		{
-			index = index + 1;
-			index2 = m_WindowY.find_first_not_of(L"0123456789", index);
+	const int unresolvedLogicalWindowY = ([&]() {
+		const auto numberEndPos = m_WindowY.find_first_not_of(L"-0123456789.");
+		const auto number = (float)_wtof(m_WindowY.substr(0, index).c_str());
 
-			std::wstring screenStr = m_WindowY.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
-			if (!screenStr.empty())
+		// Accept modifiers only after the hash of potentially present variables.
+		const auto percentagePos = = m_WindowY.find_last_of(L'%');
+		const auto hashPos = m_WindowY.find_last_of(L'#');
+		m_WindowYPercentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
+
+		const auto bPos = m_WindowY.find_last_of(L'B');
+		m_WindowYFromBottom = (bPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < bPos));
+
+		const auto atPos = m_WindowY.find_last_of(L'@');
+		if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
+		{
+			atPos = atPos + 1;
+			const auto monitorNumberEndPos = m_WindowY.find_first_not_of(L"0123456789", atPos);
+			const auto monitorNumberString = m_WindowY.substr(atPos, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos : std::wstring::npos);
+			if (!monitorNumberString.empty())
 			{
-				const int screenIndex = _wtoi(screenStr.c_str());
-				const int monitorIndex = screenIndex - 1;
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
+				const int monitorNumber = _wtoi(monitorNumberString.c_str());
+				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= numOfMonitors && monitors[monitorNumber - 1].active))
 				{
-					m_WindowYScreen = screenIndex;
+					m_WindowYScreen = monitorNumber;
 					m_WindowYScreenDefined = true;
 
 					if (!m_WindowXScreenDefined)
 					{
-						m_WindowXScreen = m_WindowYScreen;  // If the WindowX screen is not defined, default to X and Y on same screen. See "Part 2" below.
+						m_WindowXScreen = m_WindowYScreen;
 						m_WindowXScreenDefined = true;
 					}
 				}
 			}
 		}
-		if (m_WindowYScreen == 0)
-		{
-			screenY = monitorsInfo.vsT;
-			screenH = monitorsInfo.vsH;
-		}
-		else
-		{
-			const int index = m_WindowYScreen - 1;
-			screenY = monitors[index].screen.top;
-			screenH = monitors[index].screen.bottom - monitors[index].screen.top;
-		}
-		if (m_WindowYPercentage) //is a percentage
-		{
-			pixel = (int)(screenH * numY / 100.0f);
-		}
-		else
-		{
-			pixel = (int)numY;
-		}
-		if (m_WindowYFromBottom) //measure from right
-		{
-			pixel = screenY + (screenH - pixel);
-		}
-		else
-		{
-			pixel = screenY + pixel;
-		}
-		m_ScreenY = pixel - m_AnchorScreenY;
-	}
 
-	{	// --- Calculate ScreenX (Part 2) ---
+		return number;
+	})();
 
-		// Finish processing the final "X" coordinate |m_ScreenX| here in case a monitor was defined
-		// in the |WindowY| option, but not in the |WindowX| option. Example: WindowX=50 and WindowY=500@2
+	m_ScreenY = ([&]() {
+		const RECT monitorRect = m_WindowYScreen > 0 ? monitors[m_WindowYScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
+		const int monitorY = monitorRect.top;
+		const int monitorH = monitorRect.bottom - monitorRect.top;
+		auto number = m_WindowYPercentage ? (int)(monitorH * unresolvedLogicalWindowY / 100.0f) : unresolvedLogicalWindowY;
+		number = m_WindowYFromBottom ? (monitorY + (monitorH - number)) : (monitorY + number);
+		return number - m_AnchorScreenY;
+	})();
 
-		// Note: |numX| is carried over from "Part 1"
+	m_ScreenX = ([&]() {
+		const RECT monitorRect = m_WindowXScreen > 0 ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
+		const int monitorX = monitorRect.left;
+		const int monitorW = monitorRect.right - monitorRect.left;
+		auto number = m_WindowXPercentage ? (int)(monitorW * unresolvedLogicalWindowX / 100.0f) : unresolvedLogicalWindowX;
+		number = m_WindowXFromRight ? (monitorX + (monitorW - number)) : (monitorX + number);
+		return number - m_AnchorScreenX;
+	})();
 
-		if (m_WindowXScreen == 0)
-		{
-			screenX = monitorsInfo.vsL;
-			screenW = monitorsInfo.vsW;
-		}
-		else
-		{
-			const int index = m_WindowXScreen - 1;
-			screenX = monitors[index].screen.left;
-			screenW = monitors[index].screen.right - monitors[index].screen.left;
-		}
-		if (m_WindowXPercentage) // is a percentage
-		{
-			pixel = (int)(screenW * numX / 100.0f);
-		}
-		else
-		{
-			pixel = (int)numX;
-		}
-		if (m_WindowXFromRight) // measure from right
-		{
-			pixel = screenX + (screenW - pixel);
-		}
-		else
-		{
-			pixel = screenX + pixel;
-		}
-		m_ScreenX = pixel - m_AnchorScreenX;
-	}
-
-	// Update #CURRENTCONFIGX# and #CURRENTCONFIGY# variables
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 }
 
