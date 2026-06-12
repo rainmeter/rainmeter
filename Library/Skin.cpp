@@ -82,6 +82,12 @@ static bool IsZoomDragHitTest(int hitTest)
 	return false;
 }
 
+static void FormatLogicalPosition(WCHAR* buffer, size_t bufferSize, int value, float scale)
+{
+	const int logical = (scale > 0.0f) ? (int)((float)value / scale) : value;
+	const int length = _snwprintf_s(buffer, bufferSize, _TRUNCATE, L"%d", logical);
+}
+
 static bool IsLeftZoomDragHitTest(int hitTest)
 {
 	return hitTest == HTLEFT || hitTest == HTTOPLEFT || hitTest == HTBOTTOMLEFT;
@@ -1235,8 +1241,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::Move:
 		{
-			int x = m_Parser.ParseInt(args[0].c_str(), 0);
-			int y = m_Parser.ParseInt(args[1].c_str(), 0);
+			int x = ScaleToDevicePixels(m_Parser.ParseInt(args[0].c_str(), 0));
+			int y = ScaleToDevicePixels(m_Parser.ParseInt(args[1].c_str(), 0));
 			MoveWindow(x, y);
 		}
 		break;
@@ -2146,7 +2152,7 @@ void Skin::ScreenToWindow()
 	}
 	else
 	{
-		_itow_s(pixel, buffer, 10);
+		FormatLogicalPosition(buffer, _countof(buffer), pixel, m_Scale);
 	}
 	if (m_WindowXFromRight)
 	{
@@ -2188,7 +2194,7 @@ void Skin::ScreenToWindow()
 	}
 	else
 	{
-		_itow_s(pixel, buffer, 10);
+		FormatLogicalPosition(buffer, _countof(buffer), pixel, m_Scale);
 	}
 	if (m_WindowYFromBottom)
 	{
