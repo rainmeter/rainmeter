@@ -321,7 +321,7 @@ private:
 	bool UpdateDpiScale(HMONITOR monitor = nullptr);
 	void ApplyDpiScale(HMONITOR monitor = nullptr);
 	SIZE GetScaledWindowSize(float zoom) const;
-	void WindowToScreen(float oldScale = 0.0f);
+	void WindowToScreen();
 	void ScreenToWindow();
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
@@ -438,7 +438,6 @@ private:
 	float m_Zoom;
 	float m_DpiScale;
 	float m_Scale;
-	bool m_CalculatedInitialScale;
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;
