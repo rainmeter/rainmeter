@@ -755,7 +755,6 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 	const int w = GetPhysicalWindowW();
 	const int h = GetPhysicalWindowH();
 
-	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 	// Check that the window is inside the screen area
@@ -2056,7 +2055,6 @@ void Skin::SetWindowSizeVariables(int w, int h)
 */
 void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 {
-	const int numOfMonitors = (int)System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
@@ -2161,7 +2159,6 @@ void Skin::ScreenToWindow()
 	float num = 0.0f;
 	int screenX = 0, screenY = 0, screenH = 0, screenW = 0;
 
-	const size_t numOfMonitors = System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
@@ -4257,7 +4254,6 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
-			const int numOfMonitors = (int)System::GetMonitorCount();
 			const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 			const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
@@ -4275,7 +4271,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			const int monitorIndex = screenIndex - 1;
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[monitorIndex].active))
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[monitorIndex].active))
 			{
 				m_AutoSelectScreen = false;
 
@@ -4909,7 +4905,6 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				const auto windowH = GetPhysicalWindowH();
 
 				// Search display monitor that has the largest area of intersection with the window
-				const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 				const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 				const RECT windowRect = { wp->x, wp->y, wp->x + (windowW ? windowW : 1), wp->y + (windowH ? windowH : 1) };

@@ -1719,7 +1719,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	const size_t monitorCount = System::GetMonitorCount();
+	const size_t monitorCount = System::GetMultiMonitorInfo().monitors.size();
 	for (UINT i = 1; i <= monitorCount; ++i)
 	{
 		WCHAR buffer[64];
@@ -2028,16 +2028,15 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 	else
 	{
-		const size_t numOfMonitors = System::GetMonitorCount();
 		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
 		{
 			// Store old work areas for changing them back
-			for (size_t i = 0; i < numOfMonitors; ++i)
+			for (const auto& monitor : monitors)
 			{
-				m_OldDesktopWorkAreas.push_back(monitors[i].work);
+				m_OldDesktopWorkAreas.push_back(monitor.work);
 			}
 		}
 
@@ -2046,7 +2045,7 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 			LogDebugF(L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
-		for (UINT i = 0; i <= numOfMonitors; ++i)
+		for (UINT i = 0; i <= monitors.size(); ++i)
 		{
 			std::map<UINT, RECT>::const_iterator it = m_DesktopWorkAreas.find(i);
 			if (it != m_DesktopWorkAreas.end())

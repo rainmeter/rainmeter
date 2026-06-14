@@ -766,7 +766,6 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 	const int screenIndex = skin->GetXScreen();
 
 	// for the "Specified monitor" (@n)
-	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 	int i = 1;
