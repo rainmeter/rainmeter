@@ -2154,11 +2154,6 @@ void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 */
 void Skin::ScreenToWindow()
 {
-	WCHAR buffer[256] = { 0 };
-	int pixel = 0;
-	float num = 0.0f;
-	int screenX = 0, screenY = 0, screenH = 0, screenW = 0;
-
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
@@ -2183,91 +2178,48 @@ void Skin::ScreenToWindow()
 		}
 	}
 
+	const RECT monitorRect = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
 	const auto dpi = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].dpi : System::GetSystemDpi();
 
-	// --- Calculate WindowX ---
+	const auto computeWindowOption = [](int currentPosition, int currentAnchor, bool percentage, bool opposite, std::optional<int> monitorIndex, int monitorOrigin, int monitorExtent, UINT dpi) {
+		static WCHAR buffer[64] = { 0 };
+		int pixel = 0;
+		float num = 0.0f;
+		if (opposite)
+		{
+			pixel = MulDiv(monitorOrigin + monitorExtent - currentPosition, USER_DEFAULT_SCREEN_DPI, dpi);
+			pixel -= currentAnchor;
+		}
+		else
+		{
+			pixel = MulDiv(currentPosition - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
+			pixel += currentAnchor;
+		}
+		if (percentage)
+		{
+			num = 100.0f * pixel / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
+			_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
+		}
+		else
+		{
+			_itow_s(pixel, buffer, 10);
+		}
+		if (opposite)
+		{
+			wcscat_s(buffer, L"R");
+		}
+		if (monitorIndex.has_value())
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, *monitorIndex);
+		}
+		return buffer;
+	};
 
-	if (m_WindowXScreen == 0)
-	{
-		screenX = monitorsInfo.vsL;
-		screenW = monitorsInfo.vsW;
-	}
-	else
-	{
-		const int index = m_WindowXScreen - 1;
-		screenX = monitors[index].screen.left;
-		screenW = monitors[index].screen.right - monitors[index].screen.left;
-	}
-	if (m_WindowXFromRight)
-	{
-		pixel = MulDiv(screenX + screenW - m_ScreenX, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel -= m_AnchorScreenX;
-	}
-	else
-	{
-		pixel = MulDiv(m_ScreenX - screenX, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel += m_AnchorScreenX;
-	}
-	if (m_WindowXPercentage)
-	{
-		num = 100.0f * pixel / MulDiv(screenW, USER_DEFAULT_SCREEN_DPI, dpi);
-		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
-	}
-	else
-	{
-		_itow_s(pixel, buffer, 10);
-	}
-	if (m_WindowXFromRight)
-	{
-		wcscat_s(buffer, L"R");
-	}
-	if (m_WindowXScreenDefined)
-	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowXScreen);
-	}
-	m_WindowX = buffer;
+	const auto monitorIndexX = m_WindowXScreenDefined ? std::optional<int>{ m_WindowXScreen } : std::nullopt;
+	m_WindowX = computeWindowOption(m_ScreenX, m_AnchorScreenX, m_WindowXPercentage, m_WindowXFromRight, monitorIndexX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
 
-	// --- Calculate WindowY ---
-
-	if (m_WindowYScreen == 0)
-	{
-		screenY = monitorsInfo.vsT;
-		screenH = monitorsInfo.vsH;
-	}
-	else
-	{
-		const int index = m_WindowYScreen - 1;
-		screenY = monitors[index].screen.top;
-		screenH = monitors[index].screen.bottom - monitors[index].screen.top;
-	}
-	if (m_WindowYFromBottom)
-	{
-		pixel = MulDiv(screenY + screenH - m_ScreenY, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel -= m_AnchorScreenY;
-	}
-	else
-	{
-		pixel = MulDiv(m_ScreenY - screenY, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel += m_AnchorScreenY;
-	}
-	if (m_WindowYPercentage)
-	{
-		num = 100.0f * pixel / MulDiv(screenH, USER_DEFAULT_SCREEN_DPI, dpi);
-		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
-	}
-	else
-	{
-		_itow_s(pixel, buffer, 10);
-	}
-	if (m_WindowYFromBottom)
-	{
-		wcscat_s(buffer, L"B");
-	}
-	if (m_WindowYScreenDefined)
-	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowYScreen);
-	}
-	m_WindowY = buffer;
+	const auto monitorIndexY = m_WindowYScreenDefined ? std::optional<int>{ m_WindowYScreen } : std::nullopt;
+	m_WindowY = computeWindowOption(m_ScreenY, m_AnchorScreenY, m_WindowYPercentage, m_WindowYFromBottom, monitorIndexY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 }
 
 /*
