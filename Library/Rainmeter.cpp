@@ -2234,7 +2234,7 @@ void Rainmeter::SetDpiOverride(int dpi)
 
 	for (auto& iter : m_Skins)
 	{
-		iter.second->ApplyDpiScale();
+		iter.second->UpdateWindowDpi();
 	}
 }
 

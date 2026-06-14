@@ -608,7 +608,7 @@ void DialogManage::TabSkins::HandleDpiChange()
 void DialogManage::TabSkins::CreateImageList()
 {
 	HWND tree = GetControl(Id_SkinsTreeView);
-	const int iconSize = MulDiv(16, (int)System::GetDpiForWindow(tree), 96);
+	const int iconSize = MulDiv(16, (int)System::GetDpiForWindow(tree), USER_DEFAULT_SCREEN_DPI);
 	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 2, 10);
 	HMODULE shell = GetModuleHandle(L"shell32");
 
@@ -723,12 +723,12 @@ void DialogManage::TabSkins::SetControls()
 
 		item = GetControl(Id_XPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(m_SkinWindow->GetX(), buffer, 10);
+		_itow_s(m_SkinWindow->GetLogicalWindowX(), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_YPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(m_SkinWindow->GetY(), buffer, 10);
+		_itow_s(m_SkinWindow->GetLogicalWindowY(), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_DisplayMonitorButton);
@@ -1340,11 +1340,12 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 				int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetY());
+				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetLogicalWindowY());
 
-				if (x > m_SkinWindow->GetX())
+				const int newX = m_SkinWindow->GetLogicalWindowX();
+				if (x != newX)
 				{
-					_itow_s(m_SkinWindow->GetX(), buffer, 10);
+					_itow_s(newX, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
 				}
 			}
@@ -1359,11 +1360,12 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 				int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(m_SkinWindow->GetX(), y);
+				m_SkinWindow->MoveWindow(m_SkinWindow->GetLogicalWindowX(), y);
 
-				if (y > m_SkinWindow->GetY())
+				const int newY = m_SkinWindow->GetLogicalWindowY();
+				if (y != newY)
 				{
-					_itow_s(m_SkinWindow->GetY(), buffer, 10);
+					_itow_s(newY, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
 				}
 			}
