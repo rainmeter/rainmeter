@@ -167,9 +167,10 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_AnchorYDefined(false),
 	m_AnchorScreenX(),
 	m_AnchorScreenY(),
-	m_Zoom(1.0f),
+	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
-	m_Scale(1.0f),
+	m_ZoomScale(1.0f),
+	m_EffectiveScale(1.0f),
 	m_WindowDraggable(true),
 	m_WindowUpdate(INTERVAL_METER),
 	m_TransitionUpdate(INTERVAL_TRANSITION),
@@ -542,12 +543,10 @@ void Skin::Refresh(bool init, bool all)
 
 	if (m_KeepOnScreen)
 	{
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy);
+		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
 	}
 
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ScreenToWindow();
 
@@ -624,50 +623,6 @@ void Skin::SetMouseLeaveEvent(bool cancel)
 	TrackMouseEvent(&tme);
 }
 
-int Skin::ScaleToDevicePixels(int value) const
-{
-	const float scaled = (float)value * m_Scale;
-	return (int)((value >= 0) ? ceilf(scaled) : floorf(scaled));
-}
-
-RECT Skin::ScaleRectToDevicePixels(const RECT& rect) const
-{
-	return {
-		(int)floorf((float)rect.left * m_Scale),
-		(int)floorf((float)rect.top * m_Scale),
-		(int)ceilf((float)rect.right * m_Scale),
-		(int)ceilf((float)rect.bottom * m_Scale)
-	};
-}
-
-SIZE Skin::GetScaledWindowSize() const
-{
-	return GetScaledWindowSize(m_Zoom);
-}
-
-SIZE Skin::GetScaledWindowSize(float zoom) const
-{
-	return {
-		(m_WindowW > 0) ? max(1, (int)ceilf((float)m_WindowW * zoom * m_DpiScale)) : 0,
-		(m_WindowH > 0) ? max(1, (int)ceilf((float)m_WindowH * zoom * m_DpiScale)) : 0
-	};
-}
-
-POINT Skin::DeviceToLogical(POINT point) const
-{
-	return {
-		(int)floorf((float)point.x / m_Scale),
-		(int)floorf((float)point.y / m_Scale)
-	};
-}
-
-POINT Skin::ScreenToLogical(POINT point) const
-{
-	point.x -= m_ScreenX;
-	point.y -= m_ScreenY;
-	return DeviceToLogical(point);
-}
-
 POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 {
 	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -691,26 +646,79 @@ POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 		break;
 	}
 
-	return DeviceToLogical(pos);
+	return PhysicalToLogical(pos);
 }
 
-void Skin::UpdateEffectiveScale()
+int Skin::GetLogicalWindowX() const
 {
-	m_Scale = m_Zoom * m_DpiScale;
+	return MulDiv(m_ScreenX, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
 }
 
-void Skin::ApplyEffectiveScale()
+int Skin::GetLogicalWindowY() const
 {
-	UpdateEffectiveScale();
+	return MulDiv(m_ScreenY, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
+}
 
-	const SIZE scaledWindowSize = GetScaledWindowSize();
+int Skin::GetPhysicalWindowW() const
+{
+	return (int)((float)m_WindowW * m_DpiScale * m_ZoomScale);
+}
+
+int Skin::GetPhysicalWindowH() const
+{
+	return (int)((float)m_WindowH * m_DpiScale * m_ZoomScale);
+}
+
+RECT Skin::GetPhysicalWindowBounds() const
+{
+	return {
+		m_ScreenX,
+		m_ScreenY,
+		m_ScreenX + GetPhysicalWindowW(),
+		m_ScreenY + GetPhysicalWindowH()
+	};
+}
+
+int Skin::LogicalToPhysical(int value) const
+{
+	const float scaled = (float)value * m_EffectiveScale;
+	return (int)((value >= 0) ? ceilf(scaled) : floorf(scaled));
+}
+
+RECT Skin::LogicalToPhysical(const RECT& rect) const
+{
+	return {
+		(int)(rect.left * m_EffectiveScale),
+		(int)(rect.top * m_EffectiveScale),
+		(int)(rect.right * m_EffectiveScale),
+		(int)(rect.bottom * m_EffectiveScale)
+	};
+}
+
+POINT Skin::PhysicalToLogical(POINT point) const
+{
+	return {
+		(int)floorf((float)point.x / m_EffectiveScale),
+		(int)floorf((float)point.y / m_EffectiveScale)
+	};
+}
+
+POINT Skin::PhysicalToRelativeLogical(POINT point) const
+{
+	point.x -= m_ScreenX;
+	point.y -= m_ScreenY;
+	return PhysicalToLogical(point);
+}
+
+void Skin::RepositionAndResizeWindow()
+{
 	SetWindowPos(
 		m_Window,
 		nullptr,
 		m_ScreenX,
 		m_ScreenY,
-		scaledWindowSize.cx,
-		scaledWindowSize.cy,
+		GetPhysicalWindowW(),
+		GetPhysicalWindowH(),
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
@@ -722,41 +730,31 @@ void Skin::ApplyEffectiveScale()
 	}
 }
 
-bool Skin::UpdateDpiScale(HMONITOR monitor)
+bool Skin::UpdateWindowDpi(UINT dpi)
 {
-	const float oldDpiScale = m_DpiScale;
+	m_WindowDpi = dpi ? dpi : System::GetDpiForWindow(m_Window);
+
+	const float oldSkinDpiScale = m_DpiScale;
 	const int dpiOverride = GetRainmeter().GetDpiOverride();
-	m_DpiScale =
-		(dpiOverride > 0) ?
-		(float)dpiOverride / 100.0f :
-		(monitor ? System::GetDpiScaleForMonitor(monitor) : System::GetDpiScaleForWindow(m_Window));
-	if (m_DpiScale <= 0.0f)
+	if (dpiOverride)
 	{
-		m_DpiScale = 1.0f;
+		m_DpiScale = (float)dpiOverride / 100.0f;
+	}
+	else
+	{
+		m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
 	}
 
-	UpdateEffectiveScale();
-	return fabsf(oldDpiScale - m_DpiScale) > 0.1f;
+	m_EffectiveScale = m_ZoomScale * m_DpiScale;
+
+	return fabsf(oldSkinDpiScale - m_DpiScale) > 0.1f;
 }
 
-void Skin::ApplyDpiScale(HMONITOR monitor)
+void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor)
 {
-	const float oldScale = m_Scale;
-	if (!UpdateDpiScale(monitor)) return;
+	const int w = GetPhysicalWindowW();
+	const int h = GetPhysicalWindowH();
 
-	WindowToScreen();
-
-	if (m_KeepOnScreen)
-	{
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, scaledWindowSize.cx, scaledWindowSize.cy, monitor);
-	}
-
-	ApplyEffectiveScale();
-}
-
-void Skin::MapCoordsToScreen(int& x, int& y, int w, int h, HMONITOR specificMonitor)
-{
 	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
@@ -1240,11 +1238,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::Move:
-		{
-			int x = m_Parser.ParseInt(args[0].c_str(), 0);
-			int y = m_Parser.ParseInt(args[1].c_str(), 0);
-			MoveWindow(x, y);
-		}
+		m_WindowX = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_AnchorScreenX);
+		m_WindowY = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_AnchorScreenY);
+		WindowToScreen();
+		MoveWindow(m_ScreenX, m_ScreenY);
 		break;
 
 	case Bang::SetWindowPosition:
@@ -1259,7 +1256,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 			WriteOptions(OPTION_ANCHOR);
 		}
 
-		WindowToScreen();
+		WindowToScreen(false, true);
 		MoveWindow(m_ScreenX, m_ScreenY);
 		break;
 
@@ -1424,8 +1421,7 @@ void Skin::ShowBlur()
 	if (m_BlurMode == BLURMODE_FULL)
 	{
 		if (m_BlurRegion) DeleteObject(m_BlurRegion);
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		m_BlurRegion = CreateRectRgn(0, 0, scaledWindowSize.cx, scaledWindowSize.cy);
+		m_BlurRegion = CreateRectRgn(0, 0, GetPhysicalWindowW(), GetPhysicalWindowH());
 	}
 
 	BlurBehindWindow(TRUE);
@@ -1486,13 +1482,12 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 	if (w && h)
 	{
 		HRGN tempRegion = nullptr;
-		const RECT logicalRect = { x, y, w, h };
-		const RECT deviceRect = ScaleRectToDevicePixels(logicalRect);
+		const RECT rect = LogicalToPhysical({ x, y, w, h });
 
 		switch (type)
 		{
 		case 1:
-			tempRegion = CreateRectRgn(deviceRect.left, deviceRect.top, deviceRect.right, deviceRect.bottom);
+			tempRegion = CreateRectRgn(rect.left, rect.top, rect.right, rect.bottom);
 			break;
 
 		case 2:
@@ -1500,14 +1495,13 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
-				int r =  m_Parser.ParseInt(token, 0);
-				r = ScaleToDevicePixels(r);
-				tempRegion = CreateRoundRectRgn(deviceRect.left, deviceRect.top, deviceRect.right, deviceRect.bottom, r, r);
+				const int r = LogicalToPhysical(m_Parser.ParseInt(token, 0));
+				tempRegion = CreateRoundRectRgn(rect.left, rect.top, rect.right, rect.bottom, r, r);
 			}
 			break;
 
 		case 3:
-			tempRegion = CreateEllipticRgn(deviceRect.left, deviceRect.top, deviceRect.right, deviceRect.bottom);
+			tempRegion = CreateEllipticRgn(rect.left, rect.top, rect.right, rect.bottom);
 			break;
 
 		default:  // Unknown type
@@ -2035,16 +2029,33 @@ void Skin::SetZPosVariable(ZPOSITION zPos)
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGZPOS", buffer);
 }
 
+
+void Skin::SetWindowPositionVariables(int x, int y)
+{
+	WCHAR buffer[32] = { 0 };
+
+	_itow_s(MulDiv(x, USER_DEFAULT_SCREEN_DPI, m_WindowDpi), buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
+	_itow_s(MulDiv(y, USER_DEFAULT_SCREEN_DPI, m_WindowDpi), buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
+}
+
+void Skin::SetWindowSizeVariables(int w, int h)
+{
+	WCHAR buffer[32] = { 0 };
+
+	_itow_s(w, buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
+	_itow_s(h, buffer, 10);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
+}
+
 /*
 ** Calculates the screen coordinates from the WindowX/Y options
 **
 */
-void Skin::WindowToScreen()
+void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 {
-	// Use user defined width and/or height if necessary
-	if (m_SkinW > 0) m_WindowW = m_SkinW;
-	if (m_SkinH > 0) m_WindowH = m_SkinH;
-
 	const int numOfMonitors = (int)System::GetMonitorCount();
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
@@ -2052,123 +2063,89 @@ void Skin::WindowToScreen()
 	m_WindowXScreen = m_WindowYScreen = monitorsInfo.primary; // Default to primary screen
 	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
 
-	m_AnchorScreenX = ([&]() {
-		const auto numberEndPos = m_AnchorX.find_first_not_of(L"0123456789.");
-		auto number = (float)_wtof(m_AnchorX.substr(0, numberEndPos).c_str());
+	const auto parseAnchorOption = [](const std::wstring& option, int windowSize, WCHAR oppositeChar, float zoom, bool* percentage, bool* opposite) {
+		const auto numberEndPos = option.find_first_not_of(L"0123456789.");
+		auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
 
-		m_AnchorXPercentage = m_AnchorX.find_last_of(L'%') != std::wstring::npos;
-		number = m_AnchorXPercentage ? (int)(m_WindowW * number / 100.0f) : (int)number;
+		*percentage = option.find_last_of(L'%') != std::wstring::npos;
+		number = *percentage ? (windowSize * zoom) * (number / 100.0f) : (number * zoom);
 
-		m_AnchorXFromRight = m_AnchorX.find_last_of(L'R') != std::wstring::npos;
-		number = m_AnchorXFromRight ? m_WindowW - number : number;
+		*opposite = option.find_last_of(oppositeChar) != std::wstring::npos;
+		number = *opposite ? (windowSize * zoom) - number : number;
 
-		return number;
-	})();
+		return (int)number;
+	};
 
-	m_AnchorScreenY = ([&]() {
-		const auto numberEndPos = m_AnchorY.find_first_not_of(L"0123456789.");
-		auto number = (float)_wtof(m_AnchorY.substr(0, numberEndPos).c_str());
+	const auto skinW = m_SkinW > 0 ? m_SkinW : m_WindowW;
+	m_AnchorScreenX = parseAnchorOption(m_AnchorX, skinW, L'R', m_ZoomScale, &m_AnchorXPercentage, &m_AnchorXFromRight);
 
-		m_AnchorYPercentage = m_AnchorY.find_last_of(L'%') != std::wstring::npos;
-		number = m_AnchorYPercentage ? (int)(m_WindowH * number / 100.0f) : (int)number;
+	const auto skinH = m_SkinH > 0 ? m_SkinH : m_WindowH;
+	m_AnchorScreenY = parseAnchorOption(m_AnchorY, skinH, L'B', m_ZoomScale, &m_AnchorYPercentage, &m_AnchorYFromBottom);
 
-		m_AnchorYFromBottom = m_AnchorY.find_last_of(L'B') != std::wstring::npos;
-		number = m_AnchorYFromBottom ? m_WindowH - number : number;
-
-		return number;
-	})();
-
-	const int unresolvedLogicalWindowX = ([&]() {
-		const auto numberEndPos = m_WindowX.find_first_not_of(L"-0123456789.");
-		const auto number = (float)_wtof(m_WindowX.substr(0, index).c_str());
+	const auto parseWindowOption = [](const std::wstring& option, WCHAR oppositeChar, bool* percentage, bool* opposite, int* screen, bool* screenDefined, const std::vector<MonitorInfo>& monitors) {
+		const auto numberEndPos = option.find_first_not_of(L"-0123456789.");
+		const auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
 
 		// Accept modifiers only after the hash of potentially present variables.
-		const auto percentagePos = = m_WindowX.find_last_of(L'%');
-		const auto hashPos = m_WindowX.find_last_of(L'#');
-		m_WindowXPercentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
+		const auto percentagePos = option.find_last_of(L'%');
+		const auto hashPos = option.find_last_of(L'#');
+		*percentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
 
-		const auto rPos = m_WindowX.find_last_of(L'R');
-		m_WindowXFromRight = (rPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < rPos));
+		const auto rPos = option.find_last_of(oppositeChar);
+		*opposite = (rPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < rPos));
 
-		const auto atPos = m_WindowX.find_last_of(L'@');
+		const auto atPos = option.find_last_of(L'@');
 		if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
 		{
-			atPos = atPos + 1;
-			const auto monitorNumberEndPos = m_WindowX.find_first_not_of(L"0123456789", atPos);
-			const auto monitorNumberString = m_WindowX.substr(atPos, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos : std::wstring::npos);
+			const auto monitorNumberEndPos = option.find_first_not_of(L"0123456789", atPos + 1);
+			const auto monitorNumberString = option.substr(atPos + 1, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos - 1 : std::wstring::npos);
 			if (!monitorNumberString.empty())
 			{
 				const int monitorNumber = _wtoi(monitorNumberString.c_str());
-				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= numOfMonitors && monitors[monitorNumber - 1].active))
+				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= (int)monitors.size() && monitors[monitorNumber - 1].active))
 				{
-					m_WindowXScreen = monitorNumber;
-					m_WindowXScreenDefined = true;
-
-					// Default to X and Y on same monitor, but may be overriden by WindowY handling below.
-					m_WindowYScreen = m_WindowXScreen;
-					m_WindowYScreenDefined = true;
+					*screen = monitorNumber;
+					*screenDefined = true;
 				}
 			}
 		}
 
 		return number;
-	})();
+	};
 
-	const int unresolvedLogicalWindowY = ([&]() {
-		const auto numberEndPos = m_WindowY.find_first_not_of(L"-0123456789.");
-		const auto number = (float)_wtof(m_WindowY.substr(0, index).c_str());
+	const float windowX = parseWindowOption(m_WindowX, L'R', &m_WindowXPercentage, &m_WindowXFromRight, &m_WindowXScreen, &m_WindowXScreenDefined, monitors);
 
-		// Accept modifiers only after the hash of potentially present variables.
-		const auto percentagePos = = m_WindowY.find_last_of(L'%');
-		const auto hashPos = m_WindowY.find_last_of(L'#');
-		m_WindowYPercentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
+	if (m_WindowXScreenDefined)
+	{
+		// Default to X and Y on same monitor, but may be overriden by WindowY handling below.
+		m_WindowYScreen = m_WindowXScreen;
+		m_WindowYScreenDefined = true;
+	}
 
-		const auto bPos = m_WindowY.find_last_of(L'B');
-		m_WindowYFromBottom = (bPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < bPos));
+	const float windowY = parseWindowOption(m_WindowY, L'B', &m_WindowYPercentage, &m_WindowYFromBottom, &m_WindowYScreen, &m_WindowYScreenDefined, monitors);
 
-		const auto atPos = m_WindowY.find_last_of(L'@');
-		if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
-		{
-			atPos = atPos + 1;
-			const auto monitorNumberEndPos = m_WindowY.find_first_not_of(L"0123456789", atPos);
-			const auto monitorNumberString = m_WindowY.substr(atPos, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos : std::wstring::npos);
-			if (!monitorNumberString.empty())
-			{
-				const int monitorNumber = _wtoi(monitorNumberString.c_str());
-				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= numOfMonitors && monitors[monitorNumber - 1].active))
-				{
-					m_WindowYScreen = monitorNumber;
-					m_WindowYScreenDefined = true;
+	if (m_WindowYScreenDefined && !m_WindowXScreenDefined)
+	{
+		m_WindowXScreen = m_WindowYScreen;
+		m_WindowXScreenDefined = true;
+	}
 
-					if (!m_WindowXScreenDefined)
-					{
-						m_WindowXScreen = m_WindowYScreen;
-						m_WindowXScreenDefined = true;
-					}
-				}
-			}
-		}
+	const RECT monitorRect = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
+	const auto dpi = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].dpi : System::GetSystemDpi();
 
-		return number;
-	})();
+	const auto computeScreenPosition = [](float parsedValue, int parsedAnchor, bool percentage, bool opposite, int monitorOrigin, int monitorExtent, UINT dpi) {
+		const int offsetFromEdge = percentage ? (int)(monitorExtent * (parsedValue / 100.0f)) : MulDiv((int)parsedValue, dpi, USER_DEFAULT_SCREEN_DPI);
+		const int offsetFromOrigin = opposite ? monitorExtent - offsetFromEdge : offsetFromEdge;
+		return monitorOrigin + offsetFromOrigin - MulDiv(parsedAnchor, dpi, USER_DEFAULT_SCREEN_DPI);
+	};
 
-	m_ScreenY = ([&]() {
-		const RECT monitorRect = m_WindowYScreen > 0 ? monitors[m_WindowYScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-		const int monitorY = monitorRect.top;
-		const int monitorH = monitorRect.bottom - monitorRect.top;
-		auto number = m_WindowYPercentage ? (int)(monitorH * unresolvedLogicalWindowY / 100.0f) : unresolvedLogicalWindowY;
-		number = m_WindowYFromBottom ? (monitorY + (monitorH - number)) : (monitorY + number);
-		return number - m_AnchorScreenY;
-	})();
+	m_ScreenX = computeScreenPosition(windowX, m_AnchorScreenX, m_WindowXPercentage, m_WindowXFromRight, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
+	m_ScreenY = computeScreenPosition(windowY, m_AnchorScreenY, m_WindowYPercentage, m_WindowYFromBottom, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 
-	m_ScreenX = ([&]() {
-		const RECT monitorRect = m_WindowXScreen > 0 ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-		const int monitorX = monitorRect.left;
-		const int monitorW = monitorRect.right - monitorRect.left;
-		auto number = m_WindowXPercentage ? (int)(monitorW * unresolvedLogicalWindowX / 100.0f) : unresolvedLogicalWindowX;
-		number = m_WindowXFromRight ? (monitorX + (monitorW - number)) : (monitorX + number);
-		return number - m_AnchorScreenX;
-	})();
+	if (inheritMonitorDpi)
+	{
+		UpdateWindowDpi(dpi);
+	}
 
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 }
@@ -2191,8 +2168,7 @@ void Skin::ScreenToWindow()
 	// Correct to auto-selected screen
 	if (m_AutoSelectScreen)
 	{
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		RECT rect = { m_ScreenX, m_ScreenY, m_ScreenX + scaledWindowSize.cx, m_ScreenY + scaledWindowSize.cy };
+		const RECT rect = GetPhysicalWindowBounds();
 		HMONITOR hMonitor = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
 
 		if (hMonitor != nullptr)
@@ -2210,6 +2186,8 @@ void Skin::ScreenToWindow()
 		}
 	}
 
+	const auto dpi = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].dpi : System::GetSystemDpi();
+
 	// --- Calculate WindowX ---
 
 	if (m_WindowXScreen == 0)
@@ -2225,17 +2203,17 @@ void Skin::ScreenToWindow()
 	}
 	if (m_WindowXFromRight)
 	{
-		pixel = (screenX + screenW) - m_ScreenX;
-		pixel -= ScaleToDevicePixels(m_AnchorScreenX);
+		pixel = MulDiv(screenX + screenW - m_ScreenX, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel -= m_AnchorScreenX;
 	}
 	else
 	{
-		pixel = m_ScreenX - screenX;
-		pixel += ScaleToDevicePixels(m_AnchorScreenX);
+		pixel = MulDiv(m_ScreenX - screenX, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel += m_AnchorScreenX;
 	}
 	if (m_WindowXPercentage)
 	{
-		num = 100.0f * (float)pixel / (float)screenW;
+		num = 100.0f * pixel / MulDiv(screenW, USER_DEFAULT_SCREEN_DPI, dpi);
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
@@ -2267,17 +2245,17 @@ void Skin::ScreenToWindow()
 	}
 	if (m_WindowYFromBottom)
 	{
-		pixel = (screenY + screenH) - m_ScreenY;
-		pixel -= ScaleToDevicePixels(m_AnchorScreenY);
+		pixel = MulDiv(screenY + screenH - m_ScreenY, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel -= m_AnchorScreenY;
 	}
 	else
 	{
-		pixel = m_ScreenY - screenY;
-		pixel += ScaleToDevicePixels(m_AnchorScreenY);
+		pixel = MulDiv(m_ScreenY - screenY, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel += m_AnchorScreenY;
 	}
 	if (m_WindowYPercentage)
 	{
-		num = 100.0f * (float)pixel / (float)screenH;
+		num = 100.0f * pixel / MulDiv(screenH, USER_DEFAULT_SCREEN_DPI, dpi);
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
@@ -2397,11 +2375,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		if (zoom <= 0.0f)
 		{
 			LogWarningF(this, L"Zoom must be greater than 0. Using Zoom=100.");
-			m_Zoom = 1.0f;
+			m_ZoomScale = 1.0f;
 		}
 		else
 		{
-			m_Zoom = zoom / 100.0f;
+			m_ZoomScale = zoom / 100.0f;
 		}
 	}
 
@@ -2422,7 +2400,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		m_DragGroup.InitializeGroup(dragGroup);
 
 		// Set screen position variables temporarily
-		WindowToScreen();
+		WindowToScreen(true);
 
 		// Set built-in "settings" variables
 		SetZPosVariable((ZPOSITION)zPos);
@@ -2483,7 +2461,7 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ZOOM)
 		{
-			const int zoom = (int)(m_Zoom * 100.0f + 0.5f);
+			const int zoom = (int)(m_ZoomScale * 100.0f + 0.5f);
 			_itow_s(zoom, buffer, 10);
 			WritePrivateProfileString(section, L"Zoom", buffer, iniFile);
 		}
@@ -3041,7 +3019,7 @@ void Skin::Redraw()
 {
 	//UpdateRelativeMeters();
 
-	m_Canvas.SetDpiScale(m_Scale);
+	m_Canvas.SetDpiScale(m_EffectiveScale);
 
 	if (m_ResizeWindow)
 	{
@@ -3051,20 +3029,18 @@ void Skin::Redraw()
 
 	// Create or clear the doublebuffer
 	{
-		const SIZE scaledWindowSize = GetScaledWindowSize();
-		int cx = scaledWindowSize.cx;
-		int cy = scaledWindowSize.cy;
-
-		if (cx == 0 || cy == 0)
+		int w = GetPhysicalWindowW();
+		int h = GetPhysicalWindowH();
+		if (w == 0 || h == 0)
 		{
 			// Set dummy size to avoid invalid state
-			cx = 1;
-			cy = 1;
+			w = 1;
+			h = 1;
 		}
 
-		if (cx != m_Canvas.GetW() || cy != m_Canvas.GetH())
+		if (w != m_Canvas.GetW() || h != m_Canvas.GetH())
 		{
-			CreateDoubleBuffer(cx, cy);
+			CreateDoubleBuffer(w, h);
 		}
 	}
 
@@ -3845,8 +3821,8 @@ HWND Skin::GetWindowFromPoint(POINT pos)
 bool Skin::HitTest(int x, int y)
 {
 	const POINT pos = {
-		(int)floorf((float)x * m_Scale),
-		(int)floorf((float)y * m_Scale)
+		(int)floorf((float)x * m_EffectiveScale),
+		(int)floorf((float)y * m_EffectiveScale)
 	};
 	return HitTestDevice(pos.x, pos.y);
 }
@@ -4079,7 +4055,7 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
-	pos = DeviceToLogical(pos);
+	pos = PhysicalToLogical(pos);
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -4100,7 +4076,7 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
-	pos = DeviceToLogical(pos);
+	pos = PhysicalToLogical(pos);
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -4376,9 +4352,8 @@ void Skin::SetKeepOnScreen(bool b)
 	{
 		int x = m_ScreenX;
 		int y = m_ScreenY;
-		const SIZE scaledWindowSize = GetScaledWindowSize();
 
-		MapCoordsToScreen(x, y, scaledWindowSize.cx, scaledWindowSize.cy);
+		ClampPositionToPhysicalWindowBounds(x, y);
 
 		if (x != m_ScreenX || y != m_ScreenY)
 		{
@@ -4436,11 +4411,18 @@ void Skin::SetSnapEdges(bool b)
 void Skin::ApplyZoom(float zoom, bool writeOptions)
 {
 	zoom = max(zoom, 0.1f);
-	if (zoom == m_Zoom && writeOptions) return;
+	if (zoom == m_ZoomScale && writeOptions) return;
 
-	m_Zoom = zoom;
+	m_ZoomScale = zoom;
+	UpdateWindowDpi();
+	WindowToScreen();
 
-	ApplyEffectiveScale();
+	if (m_KeepOnScreen)
+	{
+		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
+	}
+
+	RepositionAndResizeWindow();
 
 	if (writeOptions)
 	{
@@ -4455,7 +4437,7 @@ void Skin::SetZoom(float zoom)
 		zoom = 1.0f;
 	}
 
-	if (fabsf(m_Zoom - zoom) <= 0.0001f)
+	if (fabsf(m_ZoomScale - zoom) <= 0.0001f)
 	{
 		return;
 	}
@@ -4474,16 +4456,11 @@ int Skin::GetZoomDragHitTest(POINT screenPos)
 		return HTCLIENT;
 	}
 
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	RECT rect = {
-		m_ScreenX,
-		m_ScreenY,
-		m_ScreenX + scaledWindowSize.cx,
-		m_ScreenY + scaledWindowSize.cy
-	};
-
-	if (scaledWindowSize.cx <= 0 ||
-		scaledWindowSize.cy <= 0 ||
+	const RECT rect = GetPhysicalWindowBounds();
+	const auto w = rect.right - rect.left;
+	const auto h = rect.bottom - rect.top;
+	if (w <= 0 ||
+		h <= 0 ||
 		screenPos.x < rect.left ||
 		screenPos.x >= rect.right ||
 		screenPos.y < rect.top ||
@@ -4492,10 +4469,10 @@ int Skin::GetZoomDragHitTest(POINT screenPos)
 		return HTCLIENT;
 	}
 
-	const int edgeX = min(g_ZoomDragEdgeSize, max(1, scaledWindowSize.cx / 2));
-	const int edgeY = min(g_ZoomDragEdgeSize, max(1, scaledWindowSize.cy / 2));
-	const int cornerX = min(g_ZoomDragCornerSize, max(1, scaledWindowSize.cx / 2));
-	const int cornerY = min(g_ZoomDragCornerSize, max(1, scaledWindowSize.cy / 2));
+	const int edgeX = min(g_ZoomDragEdgeSize, max(1, w / 2));
+	const int edgeY = min(g_ZoomDragEdgeSize, max(1, h / 2));
+	const int cornerX = min(g_ZoomDragCornerSize, max(1, w / 2));
+	const int cornerY = min(g_ZoomDragCornerSize, max(1, h / 2));
 	const int leftDistance = screenPos.x - rect.left;
 	const int rightDistance = rect.right - screenPos.x - 1;
 	const int topDistance = screenPos.y - rect.top;
@@ -4595,16 +4572,11 @@ void Skin::StartZoomDrag(int hitTest, POINT screenPos)
 		return;
 	}
 
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-
 	m_ZoomDragging = true;
 	m_ZoomDragHitTest = hitTest;
-	m_ZoomDragStartRect.left = m_ScreenX;
-	m_ZoomDragStartRect.top = m_ScreenY;
-	m_ZoomDragStartRect.right = m_ScreenX + scaledWindowSize.cx;
-	m_ZoomDragStartRect.bottom = m_ScreenY + scaledWindowSize.cy;
+	m_ZoomDragStartRect = GetPhysicalWindowBounds();
 	m_ZoomDragStartPoint = screenPos;
-	m_ZoomDragStartZoom = m_Zoom;
+	m_ZoomDragStartZoom = m_ZoomScale;
 	m_ZoomDragMoved = false;
 	m_ZoomDragPositionChanged = false;
 
@@ -4676,20 +4648,21 @@ void Skin::UpdateZoomDrag(POINT screenPos)
 	zoom = max((float)g_ZoomDragMinPercent / 100.0f, min((float)g_ZoomDragMaxPercent / 100.0f, zoom));
 	zoom = floorf(zoom * 100.0f + 0.5f) / 100.0f;
 
-	const SIZE scaledWindowSize = GetScaledWindowSize(zoom);
 	int x = m_ZoomDragStartRect.left;
 	int y = m_ZoomDragStartRect.top;
 
 	if (IsLeftZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		x = m_ZoomDragStartRect.right - scaledWindowSize.cx;
+		const int widthAtZoom = (int)((float)m_WindowW * m_DpiScale * zoom);
+		x = m_ZoomDragStartRect.right - widthAtZoom;
 	}
 	if (IsTopZoomDragHitTest(m_ZoomDragHitTest))
 	{
-		y = m_ZoomDragStartRect.bottom - scaledWindowSize.cy;
+		const int heightAtZoom = (int)((float)m_WindowW * m_DpiScale * zoom);
+		y = m_ZoomDragStartRect.bottom - heightAtZoom;
 	}
 
-	if (fabsf(m_Zoom - zoom) <= 0.0001f && m_ScreenX == x && m_ScreenY == y)
+	if (fabsf(m_ZoomScale - zoom) <= 0.0001f && m_ScreenX == x && m_ScreenY == y)
 	{
 		return;
 	}
@@ -4799,7 +4772,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		POINT pos = System::GetCursorPosition();
 		MapWindowPoints(nullptr, m_Window, &pos, 1);
-		pos = DeviceToLogical(pos);
+		pos = PhysicalToLogical(pos);
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_UP, false);  // redraw only
@@ -4872,7 +4845,7 @@ LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		POINT pos = screenPos;
 		MapWindowPoints(nullptr, m_Window, &pos, 1);
-		pos = DeviceToLogical(pos);
+		pos = PhysicalToLogical(pos);
 
 		int x1 = m_DragMargins.left;
 		if (x1 < 0) x1 += m_WindowW;
@@ -4932,13 +4905,14 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// only process movement (ignore anything without winpos values)
 			if (wp->cx != 0 && wp->cy != 0)
 			{
-				const SIZE scaledWindowSize = GetScaledWindowSize();
+				const auto windowW = GetPhysicalWindowW();
+				const auto windowH = GetPhysicalWindowH();
 
 				// Search display monitor that has the largest area of intersection with the window
 				const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 				const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
-				const RECT windowRect = { wp->x, wp->y, wp->x + (scaledWindowSize.cx ? scaledWindowSize.cx : 1), wp->y + (scaledWindowSize.cy ? scaledWindowSize.cy : 1) };
+				const RECT windowRect = { wp->x, wp->y, wp->x + (windowW ? windowW : 1), wp->y + (windowH ? windowH : 1) };
 				const RECT* workArea = nullptr;
 
 				size_t maxSize = 0ULL;
@@ -4969,8 +4943,8 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Snap to work area if window is on the appropriate screen
 				if (workArea)
 				{
-					int w = workArea->right - scaledWindowSize.cx;
-					int h = workArea->bottom - scaledWindowSize.cy;
+					int w = workArea->right - windowW;
+					int h = workArea->bottom - windowH;
 
 					if ((wp->x < g_SnapDistance + workArea->left) && (wp->x > workArea->left - g_SnapDistance)) wp->x = workArea->left;
 					if ((wp->y < g_SnapDistance + workArea->top) && (wp->y > workArea->top - g_SnapDistance)) wp->y = workArea->top;
@@ -4982,8 +4956,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (m_KeepOnScreen)
 		{
-			const SIZE scaledWindowSize = GetScaledWindowSize();
-			MapCoordsToScreen(wp->x, wp->y, scaledWindowSize.cx, scaledWindowSize.cy);
+			ClampPositionToPhysicalWindowBounds(wp->x, wp->y);
 		}
 	}
 
@@ -4992,29 +4965,29 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
-	int x = skin->m_ScreenX;
-	int y = skin->m_ScreenY;
-	const SIZE otherScaledWindowSize = skin->GetScaledWindowSize();
-	const SIZE scaledWindowSize = GetScaledWindowSize();
-	int w = otherScaledWindowSize.cx;
-	int h = otherScaledWindowSize.cy;
+	const int x = skin->m_ScreenX;
+	const int y = skin->m_ScreenY;
+	const int w = skin->GetPhysicalWindowW();
+	const int h = skin->GetPhysicalWindowH();
+	const int ourW = GetPhysicalWindowW();
+	const int ourH = GetPhysicalWindowH();
 
-	if (wp->y < y + h && wp->y + scaledWindowSize.cy > y)
+	if (wp->y < y + h && wp->y + ourH > y)
 	{
 		if ((wp->x < g_SnapDistance + x) && (wp->x > x - g_SnapDistance)) wp->x = x;
 		if ((wp->x < g_SnapDistance + x + w) && (wp->x > x + w - g_SnapDistance)) wp->x = x + w;
 
-		if ((wp->x + scaledWindowSize.cx < g_SnapDistance + x) && (wp->x + scaledWindowSize.cx > x - g_SnapDistance)) wp->x = x - scaledWindowSize.cx;
-		if ((wp->x + scaledWindowSize.cx < g_SnapDistance + x + w) && (wp->x + scaledWindowSize.cx > x + w - g_SnapDistance)) wp->x = x + w - scaledWindowSize.cx;
+		if ((wp->x + ourW < g_SnapDistance + x) && (wp->x + ourW > x - g_SnapDistance)) wp->x = x - ourW;
+		if ((wp->x + ourW < g_SnapDistance + x + w) && (wp->x + ourW > x + w - g_SnapDistance)) wp->x = x + w - ourW;
 	}
 
-	if (wp->x < x + w && wp->x + scaledWindowSize.cx > x)
+	if (wp->x < x + w && wp->x + ourW > x)
 	{
 		if ((wp->y < g_SnapDistance + y) && (wp->y > y - g_SnapDistance)) wp->y = y;
 		if ((wp->y < g_SnapDistance + y + h) && (wp->y > y + h - g_SnapDistance)) wp->y = y + h;
 
-		if ((wp->y + scaledWindowSize.cy < g_SnapDistance + y) && (wp->y + scaledWindowSize.cy > y - g_SnapDistance)) wp->y = y - scaledWindowSize.cy;
-		if ((wp->y + scaledWindowSize.cy < g_SnapDistance + y + h) && (wp->y + scaledWindowSize.cy > y + h - g_SnapDistance)) wp->y = y + h - scaledWindowSize.cy;
+		if ((wp->y + ourH < g_SnapDistance + y) && (wp->y + ourH > y - g_SnapDistance)) wp->y = y - ourH;
+		if ((wp->y + ourH < g_SnapDistance + y + h) && (wp->y + ourH > y + h - g_SnapDistance)) wp->y = y + h - ourH;
 	}
 }
 
@@ -5105,11 +5078,21 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	const UINT dpi = LOWORD(wParam);
 	const RECT* suggested = (const RECT*)lParam;
 
 	if (suggested)
 	{
-		ApplyDpiScale(MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST));
+		UpdateWindowDpi(dpi);
+		WindowToScreen();
+
+		if (m_KeepOnScreen)
+		{
+			const auto monitor = MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST);
+			ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY, monitor);
+		}
+
+		RepositionAndResizeWindow();
 	}
 
 	return 0;
@@ -5475,7 +5458,7 @@ LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// Transform the point to client rect
 		POINT posc = {pos.x - rect.left, pos.y - rect.top};
-		posc = DeviceToLogical(posc);
+		posc = PhysicalToLogical(posc);
 
 		// Handle buttons
 		HandleButtons(posc, BUTTONPROC_MOVE);
@@ -6009,8 +5992,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_KeepOnScreen)
 	{
-		const auto size = GetScaledWindowSize();
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, size.cx, size.cy);
+		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
 	}
 
 	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -6043,38 +6025,6 @@ LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return FALSE;
-}
-
-void Skin::SetWindowPositionVariables(int x, int y)
-{
-	WCHAR buffer[32] = { 0 };
-	const POINT physical = { x, y };
-	const POINT logical = DeviceToLogical(physical);
-
-	_itow_s(logical.x, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
-	_itow_s(logical.y, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
-
-	_itow_s(x, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX:PX", buffer);
-	_itow_s(y, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY:PX", buffer);
-}
-
-void Skin::SetWindowSizeVariables(int w, int h)
-{
-	WCHAR buffer[32] = { 0 };
-
-	_itow_s(w, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
-	_itow_s(h, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
-
-	_itow_s(ScaleToDevicePixels(w), buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH:PX", buffer);
-	_itow_s(ScaleToDevicePixels(h), buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT:PX", buffer);
 }
 
 /*

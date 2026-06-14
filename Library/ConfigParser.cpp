@@ -1182,7 +1182,7 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 	GetCursorPos(&pt);
 	if (m_Skin)
 	{
-		pt = m_Skin->ScreenToLogical(pt);
+		pt = m_Skin->PhysicalToRelativeLogical(pt);
 	}
 
 	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
