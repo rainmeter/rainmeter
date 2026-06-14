@@ -2001,28 +2001,11 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 void Rainmeter::UpdateDesktopWorkArea(bool reset)
 {
 	bool changed = false;
-
 	if (reset)
 	{
-		if (!m_OldDesktopWorkAreas.empty())
+		for (auto& oldWorkArea : m_OldDesktopWorkAreas)
 		{
-			int i = 1;
-			for (auto iter = m_OldDesktopWorkAreas.cbegin(); iter != m_OldDesktopWorkAreas.cend(); ++iter, ++i)
-			{
-				RECT r = (*iter);
-
-				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
-
-				if (m_Debug)
-				{
-					std::wstring format = L"Resetting WorkArea@%i: L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
-					if (!result)
-					{
-						format += L" => FAIL";
-					}
-					LogDebugF(format.c_str(), i, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
-				}
-			}
+			SystemParametersInfo(SPI_SETWORKAREA, 0, &oldWorkArea, 0);
 			changed = true;
 		}
 	}
@@ -2047,57 +2030,34 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 
 		for (UINT i = 0; i <= monitors.size(); ++i)
 		{
-			std::map<UINT, RECT>::const_iterator it = m_DesktopWorkAreas.find(i);
-			if (it != m_DesktopWorkAreas.end())
+			const auto it = m_DesktopWorkAreas.find(i);
+			if (it == m_DesktopWorkAreas.end()) continue;
+
+			RECT r = it->second;
+
+			// Move rect to correct offset
+			if (m_DesktopWorkAreaType)
 			{
-				RECT r = (*it).second;
+				const int index = ((i == 0) ? monitorsInfo.primary : i) - 1;
+				r = {
+					monitors[index].screen.left + r.left,
+					monitors[index].screen.top + r.top,
+					monitors[index].screen.right - r.right,
+					monitors[index].screen.bottom - r.bottom
+				};
+			}
+			else if (i != 0)
+			{
+				const RECT screenRect = monitors[i - 1].screen;
+				r.left += screenRect.left;
+				r.top += screenRect.top;
+				r.right += screenRect.left;
+				r.bottom += screenRect.top;
+			}
 
-				// Move rect to correct offset
-				if (m_DesktopWorkAreaType)
-				{
-					r = [&]()
-					{
-						const int index = ((i == 0) ? monitorsInfo.primary : i) - 1;
-						RECT rect = {
-							monitors[index].screen.left + r.left,
-							monitors[index].screen.top + r.top,
-							monitors[index].screen.right - r.right,
-							monitors[index].screen.bottom - r.bottom };
-						return rect;
-					}();
-				}
-				else if (i != 0)
-				{
-					const int index = i - 1;
-					const RECT screenRect = monitors[index].screen;
-					r.left += screenRect.left;
-					r.top += screenRect.top;
-					r.right += screenRect.left;
-					r.bottom += screenRect.top;
-				}
-
-				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
-				if (result)
-				{
-					changed = true;
-				}
-
-				if (m_Debug)
-				{
-					std::wstring format = L"Applying DesktopWorkArea";
-					if (i != 0)
-					{
-						WCHAR buffer[64];
-						size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i", i);
-						format.append(buffer, len);
-					}
-					format += L": L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
-					if (!result)
-					{
-						format += L" => FAIL";
-					}
-					LogDebugF(format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
-				}
+			if (SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0))
+			{
+				changed = true;
 			}
 		}
 	}
