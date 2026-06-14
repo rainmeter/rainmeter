@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
