@@ -192,17 +192,25 @@ public:
 	int GetH() { return m_WindowH; }
 	int GetX() { return m_ScreenX; }
 	int GetY() { return m_ScreenY; }
-	float GetScale() const { return m_Scale; }
-	float GetZoom() const { return m_Zoom; }
-	int ScaleToDevicePixels(int value) const;
-	RECT ScaleRectToDevicePixels(const RECT& rect) const;
-	SIZE GetScaledWindowSize() const;
-	POINT ScreenToLogical(POINT point) const;
 
 	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
 	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
 	int GetXScreen() { return m_WindowXScreen; }
 	int GetYScreen() { return m_WindowYScreen; }
+
+	int GetLogicalWindowX() const;
+	int GetLogicalWindowY() const;
+	int GetPhysicalWindowW() const;
+	int GetPhysicalWindowH() const;
+	RECT GetPhysicalWindowBounds() const;
+
+	int LogicalToPhysical(int value) const;
+	RECT LogicalToPhysical(const RECT& rect) const;
+	POINT PhysicalToLogical(POINT point) const;
+	POINT PhysicalToRelativeLogical(POINT point) const;
+
+	float GetScale() const { return m_EffectiveScale; }
+	float GetZoom() const { return m_ZoomScale; }
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -313,16 +321,13 @@ private:
 	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void MapCoordsToScreen(int& x, int& y, int w, int h, HMONITOR specificMonitor = nullptr);
-	POINT DeviceToLogical(POINT point) const;
+	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
-	void UpdateEffectiveScale();
-	void ApplyEffectiveScale();
-	bool UpdateDpiScale(HMONITOR monitor = nullptr);
-	void ApplyDpiScale(HMONITOR monitor = nullptr);
-	SIZE GetScaledWindowSize(float zoom) const;
-	void WindowToScreen();
+	void RepositionAndResizeWindow();
+	bool UpdateWindowDpi(UINT dpi = 0);
+	void WindowToScreen(bool inheritMonitorDpi = false, bool ignoreAnchors = false);
 	void ScreenToWindow();
+
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
@@ -435,9 +440,14 @@ private:
 	bool m_AnchorYDefined;
 	int m_AnchorScreenX;
 	int m_AnchorScreenY;
-	float m_Zoom;
+
+	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale also considers the
+	// OverrideDpi setting.
+	UINT m_WindowDpi;
 	float m_DpiScale;
-	float m_Scale;
+	float m_ZoomScale;
+	float m_EffectiveScale;
+
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;

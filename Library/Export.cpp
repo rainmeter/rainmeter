@@ -135,7 +135,7 @@ bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
 int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR option, int defValue)
 {
 	const int value = parser.ReadInt(measure->GetName(), option, defValue);
-	return measure->GetSkin()->ScaleToDevicePixels(value);
+	return measure->GetSkin()->LogicalToPhysical(value);
 }
 
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)

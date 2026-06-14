@@ -21,8 +21,6 @@ bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& targe
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
-static const UINT DPI_DEFAULT = 96U;
-
 enum TIMER
 {
 	TIMER_SHOWDESKTOP   = 1,
@@ -151,8 +149,7 @@ RECT MonitorInfo::ToLogical(const RECT& rect) const
 
 LONG MonitorInfo::ToLogical(LONG value) const
 {
-	const float scale = dpiScale <= 0.0f ? 1.0f : dpiScale;
-	return (LONG)floorf((float)value / scale);
+	return MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
 RECT MultiMonitorInfo::GetPhysicalVirtualScreenRect() const
@@ -209,7 +206,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 		LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-		LogDebugF(L"  DPI         : %u (Scale=%.2f)", System::GetDpiForMonitor(hMonitor), System::GetDpiScaleForMonitor(hMonitor));
+		LogDebugF(L"  DPI         : %u", System::GetDpiForMonitor(hMonitor));
 	}
 	if (m == nullptr) return TRUE;
 
@@ -222,7 +219,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 				(*iter).handle = hMonitor;
 				(*iter).screen = *lprcMonitor;
 				(*iter).work = info.rcWork;
-				(*iter).dpiScale = System::GetDpiScaleForMonitor(hMonitor);
+				(*iter).dpi = System::GetDpiForMonitor(hMonitor);
 				break;
 			}
 		}
@@ -235,7 +232,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 		monitor.handle = hMonitor;
 		monitor.screen = *lprcMonitor;
 		monitor.work = info.rcWork;
-		monitor.dpiScale = System::GetDpiScaleForMonitor(hMonitor);
+		monitor.dpi = System::GetDpiForMonitor(hMonitor);
 
 		monitor.deviceName = info.szDevice;  // E.g. "\\.\DISPLAY1"
 
@@ -276,8 +273,12 @@ size_t System::GetMonitorCount()
 	return c_Monitors.monitors.size();
 }
 
-static UINT GetSystemDpi()
+UINT System::GetSystemDpi()
 {
+	typedef UINT(WINAPI* GetDpiForSystemProc)();
+	static auto s_GetDpiForSystemProc = (GetDpiForSystemProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForSystemProc");
+	if (s_GetDpiForSystemProc) return s_GetDpiForSystemProc();
+
 	HDC dc = GetDC(nullptr);
 	if (dc)
 	{
@@ -286,12 +287,12 @@ static UINT GetSystemDpi()
 		if (dpi > 0) return (UINT)dpi;
 	}
 
-	return DPI_DEFAULT;
+	return USER_DEFAULT_SCREEN_DPI;
 }
 
 UINT System::GetDpiForMonitor(HMONITOR monitor)
 {
-	typedef HRESULT(WINAPI * GetDpiForMonitorProc)(HMONITOR, int, UINT*, UINT*);
+	typedef HRESULT(WINAPI* GetDpiForMonitorProc)(HMONITOR, int, UINT*, UINT*);
 	static auto s_GetDpiForMonitor = []() -> GetDpiForMonitorProc
 	{
 		HMODULE module = GetModuleHandle(L"Shcore");
@@ -305,20 +306,20 @@ UINT System::GetDpiForMonitor(HMONITOR monitor)
 
 	if (monitor && s_GetDpiForMonitor)
 	{
-		UINT dpiX = DPI_DEFAULT;
-		UINT dpiY = DPI_DEFAULT;
+		UINT dpiX = USER_DEFAULT_SCREEN_DPI;
+		UINT dpiY = USER_DEFAULT_SCREEN_DPI;
 		if (SUCCEEDED(s_GetDpiForMonitor(monitor, 0, &dpiX, &dpiY)) && dpiX > 0)
 		{
 			return dpiX;
 		}
 	}
 
-	return GetSystemDpi();
+	return System::GetSystemDpi();
 }
 
 UINT System::GetDpiForWindow(HWND window)
 {
-	typedef UINT(WINAPI * GetDpiForWindowProc)(HWND);
+	typedef UINT(WINAPI* GetDpiForWindowProc)(HWND);
 	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
 
 	if (window)
@@ -338,21 +339,6 @@ UINT System::GetDpiForWindow(HWND window)
 UINT System::GetDpiForRect(const RECT& rect)
 {
 	return System::GetDpiForMonitor(MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST));
-}
-
-float System::GetDpiScaleForMonitor(HMONITOR monitor)
-{
-	return (float)System::GetDpiForMonitor(monitor) / (float)DPI_DEFAULT;
-}
-
-float System::GetDpiScaleForWindow(HWND window)
-{
-	return (float)System::GetDpiForWindow(window) / (float)DPI_DEFAULT;
-}
-
-float System::GetDpiScaleForRect(const RECT& rect)
-{
-	return (float)GetDpiForRect(rect) / (float)DPI_DEFAULT;
 }
 
 /*
@@ -584,7 +570,7 @@ void System::SetMultiMonitorInfo()
 
 						monitor.screen = info.rcMonitor;
 						monitor.work = info.rcWork;
-						monitor.dpiScale = GetDpiScaleForMonitor(monitor.handle);
+						monitor.dpi = GetDpiForMonitor(monitor.handle);
 
 						if (logging)
 						{
@@ -594,7 +580,7 @@ void System::SetMultiMonitorInfo()
 							LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-							LogDebugF(L"  Dpi         : %u (Scale=%.2f)", (UINT)(monitor.dpiScale * DPI_DEFAULT), monitor.dpiScale);
+							LogDebugF(L"  Dpi         : %u", monitor.dpi);
 						}
 					}
 					else  // monitor not found
@@ -665,7 +651,7 @@ void System::SetMultiMonitorInfo()
 			}
 
 			monitor.deviceName = L"DUMMY";
-			monitor.dpiScale = GetDpiScaleForMonitor(monitor.handle);
+			monitor.dpi = GetDpiForMonitor(monitor.handle);
 
 			monitors.push_back(monitor);
 
@@ -748,7 +734,7 @@ void System::UpdateWorkareaInfo()
 			GetMonitorInfo((*iter).handle, &info);
 
 			(*iter).work = info.rcWork;
-			(*iter).dpiScale = GetDpiScaleForMonitor((*iter).handle);
+			(*iter).dpi = GetDpiForMonitor((*iter).handle);
 
 			if (GetRainmeter().GetDebug())
 			{
