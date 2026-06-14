@@ -260,17 +260,13 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	return TRUE;
 }
 
-/*
-** Returns the number of monitors.
-**
-*/
-size_t System::GetMonitorCount()
+const MultiMonitorInfo& System::GetMultiMonitorInfo()
 {
 	if (c_Monitors.monitors.empty())
 	{
 		SetMultiMonitorInfo();
 	}
-	return c_Monitors.monitors.size();
+	return c_Monitors;
 }
 
 UINT System::GetSystemDpi()

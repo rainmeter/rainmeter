@@ -45,9 +45,6 @@ MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, na
 			}
 			RegCloseKey(hKey);
 		}
-
-		// Populate monitor information if necessary
-		const size_t numOfMonitors = System::GetMonitorCount();  // Intentional
 	}
 }
 
@@ -342,14 +339,13 @@ void MeasureSysInfo::UpdateValue()
 	// Process numeric types first
 	if (m_Type >= SysInfoType::SCREEN_WIDTH && m_Type <= SysInfoType::VIRTUAL_SCREEN_HEIGHT)  // BLOCK 2500
 	{
-		const auto monitorCount = (size_t)System::GetMonitorCount();
 		const auto& monitorInfo = System::GetMultiMonitorInfo();
 
 		// Valid values are |-1| (default) or |1 to [# of monitors]|
 		const size_t index =
 			(m_Data == -1) ? (size_t)(monitorInfo.primary - 1) :
 			(m_Data > 0) ? (size_t)(m_Data - 1) : UINT_PTR_MAX;
-		if (index > monitorCount)
+		if (index > monitorInfo.monitors.size())
 		{
 			m_Value = 0.0;
 			return;
@@ -480,7 +476,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)System::GetMonitorCount();
+		m_Value = (double)System::GetMultiMonitorInfo().monitors.size();
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:
@@ -625,13 +621,12 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::SCREEN_SIZE:
 	case SysInfoType::WORK_AREA:
 		{
-			const auto monitorCount = System::GetMonitorCount();
 			const auto& monitorInfo = System::GetMultiMonitorInfo();
 			const auto primaryIndex = (size_t)(monitorInfo.primary - 1);
 
 			const RECT zeroRect = { 0, 0, 0, 0 };
 			const RECT& rect =
-				(primaryIndex >= monitorCount) ? zeroRect :
+				(primaryIndex >= monitorInfo.monitors.size()) ? zeroRect :
 				(m_Type == SysInfoType::SCREEN_SIZE) ? monitorInfo.monitors[primaryIndex].screen :
 				monitorInfo.monitors[primaryIndex].work;
 			_snwprintf_s(buffer, bufferLen, L"%i x %i", rect.right - rect.left, rect.bottom - rect.top);
