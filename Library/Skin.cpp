@@ -44,6 +44,7 @@ enum TIMER
 	// Update this when adding a new timer.
 	TIMER_MAX        = 5
 };
+
 enum INTERVAL
 {
 	INTERVAL_METER      = 1000,
@@ -141,32 +142,12 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_CurrentActionSection(nullptr),
 	m_BackgroundMargins(),
 	m_DragMargins(),
-	m_WindowX(1, L'0'),
-	m_WindowY(1, L'0'),
-	m_AnchorX(1, L'0'),
-	m_AnchorY(1, L'0'),
-	m_WindowXScreen(1),
-	m_WindowYScreen(1),
-	m_WindowXScreenDefined(false),
-	m_WindowYScreenDefined(false),
-	m_WindowXFromRight(false),
-	m_WindowYFromBottom(false),
-	m_WindowXPercentage(false),
-	m_WindowYPercentage(false),
+	m_X(),
+	m_Y(),
 	m_WindowW(),
 	m_WindowH(),
-	m_ScreenX(),
-	m_ScreenY(),
 	m_SkinW(),
 	m_SkinH(),
-	m_AnchorXFromRight(false),
-	m_AnchorYFromBottom(false),
-	m_AnchorXPercentage(false),
-	m_AnchorYPercentage(false),
-	m_AnchorXDefined(false),
-	m_AnchorYDefined(false),
-	m_AnchorScreenX(),
-	m_AnchorScreenY(),
 	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
 	m_ZoomScale(1.0f),
@@ -543,10 +524,10 @@ void Skin::Refresh(bool init, bool all)
 
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
+		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
-	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ScreenToWindow();
 
@@ -651,12 +632,12 @@ POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 
 int Skin::GetLogicalWindowX() const
 {
-	return MulDiv(m_ScreenX, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
+	return MulDiv(m_X.pos, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
 }
 
 int Skin::GetLogicalWindowY() const
 {
-	return MulDiv(m_ScreenY, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
+	return MulDiv(m_Y.pos, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
 }
 
 int Skin::GetPhysicalWindowW() const
@@ -672,10 +653,10 @@ int Skin::GetPhysicalWindowH() const
 RECT Skin::GetPhysicalWindowBounds() const
 {
 	return {
-		m_ScreenX,
-		m_ScreenY,
-		m_ScreenX + GetPhysicalWindowW(),
-		m_ScreenY + GetPhysicalWindowH()
+		m_X.pos,
+		m_Y.pos,
+		m_X.pos + GetPhysicalWindowW(),
+		m_Y.pos + GetPhysicalWindowH()
 	};
 }
 
@@ -705,8 +686,8 @@ POINT Skin::PhysicalToLogical(POINT point) const
 
 POINT Skin::PhysicalToRelativeLogical(POINT point) const
 {
-	point.x -= m_ScreenX;
-	point.y -= m_ScreenY;
+	point.x -= m_X.pos;
+	point.y -= m_Y.pos;
 	return PhysicalToLogical(point);
 }
 
@@ -715,8 +696,8 @@ void Skin::RepositionAndResizeWindow()
 	SetWindowPos(
 		m_Window,
 		nullptr,
-		m_ScreenX,
-		m_ScreenY,
+		m_X.pos,
+		m_Y.pos,
 		GetPhysicalWindowW(),
 		GetPhysicalWindowH(),
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
@@ -830,8 +811,8 @@ void Skin::MoveSelectedWindow(int dx, int dy)
 	SetWindowPos(
 		m_Window,
 		nullptr,
-		m_ScreenX + dx,
-		m_ScreenY + dy,
+		m_X.pos + dx,
+		m_Y.pos + dy,
 		0,
 		0,
 		SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -1237,35 +1218,35 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::Move:
-		m_WindowX = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_AnchorScreenX);
-		m_WindowY = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_AnchorScreenY);
+		m_X.option = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_X.anchorPos);
+		m_Y.option = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Y.anchorPos);
 		WindowToScreen();
-		MoveWindow(m_ScreenX, m_ScreenY);
+		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
 	case Bang::SetWindowPosition:
-		m_WindowX = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_WindowY = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_X.option = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_Y.option = m_Parser.ParseFormulaWithModifiers(args[1]);
 
 		if (args.size() == 4)
 		{
-			m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[2]);
-			m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[3]);
-			m_AnchorXDefined = m_AnchorYDefined = true;
+			m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[2]);
+			m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[3]);
+			m_X.anchorDefined = m_Y.anchorDefined = true;
 			WriteOptions(OPTION_ANCHOR);
 		}
 
 		WindowToScreen(false, true);
-		MoveWindow(m_ScreenX, m_ScreenY);
+		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
 	case Bang::SetAnchor:
-		m_AnchorX = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_AnchorY = m_Parser.ParseFormulaWithModifiers(args[1]);
-		m_AnchorXDefined = m_AnchorYDefined = true;
+		m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_X.anchorDefined = m_Y.anchorDefined = true;
 		WriteOptions(OPTION_ANCHOR);
 		WindowToScreen();
-		MoveWindow(m_ScreenX, m_ScreenY);
+		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
 	case Bang::Zoom:
@@ -2049,6 +2030,95 @@ void Skin::SetWindowSizeVariables(int w, int h)
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
 }
 
+void SkinPosition::ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom)
+{
+	const auto anchorNumberEndPos = anchorOption.find_first_not_of(L"0123456789.");
+	auto anchorNumber = (float)_wtof(anchorOption.substr(0, anchorNumberEndPos).c_str());
+
+	anchorPercentage = anchorOption.find_last_of(L'%') != std::wstring::npos;
+	anchorNumber = anchorPercentage ? (windowSize * zoom) * (anchorNumber / 100.0f) : (anchorNumber * zoom);
+
+	anchorFromOpposite = anchorOption.find_last_of(oppositeChar) != std::wstring::npos;
+	anchorNumber = anchorFromOpposite ? (windowSize * zoom) - anchorNumber : anchorNumber;
+	anchorPos = (int)anchorNumber;
+}
+
+float SkinPosition::ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors)
+{
+	const auto numberEndPos = option.find_first_not_of(L"-0123456789.");
+	const auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
+
+	// Accept modifiers only after the hash of potentially present variables.
+	const auto percentagePos = option.find_last_of(L'%');
+	const auto hashPos = option.find_last_of(L'#');
+	percentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
+
+	const auto oppositePos = option.find_last_of(oppositeChar);
+	fromOpposite = oppositePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < oppositePos);
+
+	const auto atPos = option.find_last_of(L'@');
+	if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
+	{
+		const auto monitorNumberEndPos = option.find_first_not_of(L"0123456789", atPos + 1);
+		const auto monitorNumberString = option.substr(atPos + 1, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos - 1 : std::wstring::npos);
+		if (!monitorNumberString.empty())
+		{
+			const int monitorNumber = _wtoi(monitorNumberString.c_str());
+			if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= (int)monitors.size() && monitors[monitorNumber - 1].active))
+			{
+				monitor = monitorNumber;
+				monitorDefined = true;
+			}
+		}
+	}
+
+	return number;
+}
+
+void SkinPosition::ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi)
+{
+	const int offsetFromEdge = percentage ? (int)(monitorExtent * (parsedValue / 100.0f)) : MulDiv((int)parsedValue, dpi, USER_DEFAULT_SCREEN_DPI);
+	const int offsetFromOrigin = fromOpposite ? monitorExtent - offsetFromEdge : offsetFromEdge;
+	pos = monitorOrigin + offsetFromOrigin - MulDiv(anchorPos, dpi, USER_DEFAULT_SCREEN_DPI);
+}
+
+void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi)
+{
+	int pixel = 0;
+	if (fromOpposite)
+	{
+		pixel = MulDiv(monitorOrigin + monitorExtent - pos, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel -= anchorPos;
+	}
+	else
+	{
+		pixel = MulDiv(pos - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
+		pixel += anchorPos;
+	}
+
+	WCHAR buffer[64] = { 0 };
+	if (percentage)
+	{
+		const float number = 100.0f * pixel / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
+		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", number);
+	}
+	else
+	{
+		_itow_s(pixel, buffer, 10);
+	}
+
+	if (fromOpposite)
+	{
+		wcscat_s(buffer, L"R");
+	}
+	if (monitorDefined)
+	{
+		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, monitor);
+	}
+
+	option = buffer;
+}
+
 /*
 ** Calculates the screen coordinates from the WindowX/Y options
 **
@@ -2058,94 +2128,41 @@ void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
-	m_WindowXScreen = m_WindowYScreen = monitorsInfo.primary; // Default to primary screen
-	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
-
-	const auto parseAnchorOption = [](const std::wstring& option, int windowSize, WCHAR oppositeChar, float zoom, bool* percentage, bool* opposite) {
-		const auto numberEndPos = option.find_first_not_of(L"0123456789.");
-		auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
-
-		*percentage = option.find_last_of(L'%') != std::wstring::npos;
-		number = *percentage ? (windowSize * zoom) * (number / 100.0f) : (number * zoom);
-
-		*opposite = option.find_last_of(oppositeChar) != std::wstring::npos;
-		number = *opposite ? (windowSize * zoom) - number : number;
-
-		return (int)number;
-	};
+	m_X.monitor = m_Y.monitor = monitorsInfo.primary; // Default to primary screen
+	m_X.monitorDefined = m_Y.monitorDefined = false;
 
 	const auto skinW = m_SkinW > 0 ? m_SkinW : m_WindowW;
-	m_AnchorScreenX = parseAnchorOption(m_AnchorX, skinW, L'R', m_ZoomScale, &m_AnchorXPercentage, &m_AnchorXFromRight);
-
 	const auto skinH = m_SkinH > 0 ? m_SkinH : m_WindowH;
-	m_AnchorScreenY = parseAnchorOption(m_AnchorY, skinH, L'B', m_ZoomScale, &m_AnchorYPercentage, &m_AnchorYFromBottom);
+	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
+	const UINT defaultDpi = System::GetSystemDpi();
 
-	const auto parseWindowOption = [](const std::wstring& option, WCHAR oppositeChar, bool* percentage, bool* opposite, int* screen, bool* screenDefined, const std::vector<MonitorInfo>& monitors) {
-		const auto numberEndPos = option.find_first_not_of(L"-0123456789.");
-		const auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
+	m_X.ParseAnchorOption(skinW, L'R', m_ZoomScale);
+	m_Y.ParseAnchorOption(skinH, L'B', m_ZoomScale);
+	const float parsedX = m_X.ParseWindowOption(L'R', monitors);
+	const float parsedY = m_Y.ParseWindowOption(L'B', monitors);
 
-		// Accept modifiers only after the hash of potentially present variables.
-		const auto percentagePos = option.find_last_of(L'%');
-		const auto hashPos = option.find_last_of(L'#');
-		*percentage = percentagePos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < percentagePos);
-
-		const auto rPos = option.find_last_of(oppositeChar);
-		*opposite = (rPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < rPos));
-
-		const auto atPos = option.find_last_of(L'@');
-		if (atPos != std::wstring::npos && (hashPos == std::wstring::npos || hashPos < atPos))
-		{
-			const auto monitorNumberEndPos = option.find_first_not_of(L"0123456789", atPos + 1);
-			const auto monitorNumberString = option.substr(atPos + 1, (monitorNumberEndPos != std::wstring::npos) ? monitorNumberEndPos - atPos - 1 : std::wstring::npos);
-			if (!monitorNumberString.empty())
-			{
-				const int monitorNumber = _wtoi(monitorNumberString.c_str());
-				if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= (int)monitors.size() && monitors[monitorNumber - 1].active))
-				{
-					*screen = monitorNumber;
-					*screenDefined = true;
-				}
-			}
-		}
-
-		return number;
-	};
-
-	const float windowX = parseWindowOption(m_WindowX, L'R', &m_WindowXPercentage, &m_WindowXFromRight, &m_WindowXScreen, &m_WindowXScreenDefined, monitors);
-
-	if (m_WindowXScreenDefined)
+	if (m_X.monitorDefined && !m_Y.monitorDefined)
 	{
-		// Default to X and Y on same monitor, but may be overriden by WindowY handling below.
-		m_WindowYScreen = m_WindowXScreen;
-		m_WindowYScreenDefined = true;
+		m_Y.monitor = m_X.monitor;
+		m_Y.monitorDefined = true;
+	}
+	else if (!m_X.monitorDefined && m_Y.monitorDefined)
+	{
+		m_X.monitor = m_Y.monitor;
+		m_X.monitorDefined = true;
 	}
 
-	const float windowY = parseWindowOption(m_WindowY, L'B', &m_WindowYPercentage, &m_WindowYFromBottom, &m_WindowYScreen, &m_WindowYScreenDefined, monitors);
-
-	if (m_WindowYScreenDefined && !m_WindowXScreenDefined)
-	{
-		m_WindowXScreen = m_WindowYScreen;
-		m_WindowXScreenDefined = true;
-	}
-
-	const RECT monitorRect = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-	const auto dpi = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].dpi : System::GetSystemDpi();
-
-	const auto computeScreenPosition = [](float parsedValue, int parsedAnchor, bool percentage, bool opposite, int monitorOrigin, int monitorExtent, UINT dpi) {
-		const int offsetFromEdge = percentage ? (int)(monitorExtent * (parsedValue / 100.0f)) : MulDiv((int)parsedValue, dpi, USER_DEFAULT_SCREEN_DPI);
-		const int offsetFromOrigin = opposite ? monitorExtent - offsetFromEdge : offsetFromEdge;
-		return monitorOrigin + offsetFromOrigin - MulDiv(parsedAnchor, dpi, USER_DEFAULT_SCREEN_DPI);
-	};
-
-	m_ScreenX = computeScreenPosition(windowX, m_AnchorScreenX, m_WindowXPercentage, m_WindowXFromRight, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
-	m_ScreenY = computeScreenPosition(windowY, m_AnchorScreenY, m_WindowYPercentage, m_WindowYFromBottom, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
+	const RECT monitorRect = m_X.monitorDefined ? monitors[m_X.monitor - 1].screen : virtualScreen;
+	const UINT dpi = m_X.monitorDefined ? monitors[m_X.monitor - 1].dpi : defaultDpi;
+	m_X.ComputePosition(parsedX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
+	m_Y.ComputePosition(parsedY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 
 	if (inheritMonitorDpi)
 	{
 		UpdateWindowDpi(dpi);
 	}
 
-	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
+	SetWindowPositionVariables(m_X.pos, m_Y.pos);
 }
 
 /*
@@ -2170,56 +2187,19 @@ void Skin::ScreenToWindow()
 			{
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					m_WindowXScreen = m_WindowYScreen = screenIndex;
-					m_WindowXScreenDefined = m_WindowYScreenDefined = true;
+					m_X.monitor = m_Y.monitor = screenIndex;
+					m_X.monitorDefined = m_Y.monitorDefined = true;
 					break;
 				}
 			}
 		}
 	}
 
-	const RECT monitorRect = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-	const auto dpi = m_WindowXScreenDefined ? monitors[m_WindowXScreen - 1].dpi : System::GetSystemDpi();
+	const RECT monitorRect = m_X.monitorDefined ? monitors[m_X.monitor - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
+	const auto dpi = m_X.monitorDefined ? monitors[m_X.monitor - 1].dpi : System::GetSystemDpi();
 
-	const auto computeWindowOption = [](int currentPosition, int currentAnchor, bool percentage, bool opposite, std::optional<int> monitorIndex, int monitorOrigin, int monitorExtent, UINT dpi) {
-		static WCHAR buffer[64] = { 0 };
-		int pixel = 0;
-		float num = 0.0f;
-		if (opposite)
-		{
-			pixel = MulDiv(monitorOrigin + monitorExtent - currentPosition, USER_DEFAULT_SCREEN_DPI, dpi);
-			pixel -= currentAnchor;
-		}
-		else
-		{
-			pixel = MulDiv(currentPosition - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
-			pixel += currentAnchor;
-		}
-		if (percentage)
-		{
-			num = 100.0f * pixel / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
-			_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
-		}
-		else
-		{
-			_itow_s(pixel, buffer, 10);
-		}
-		if (opposite)
-		{
-			wcscat_s(buffer, L"R");
-		}
-		if (monitorIndex.has_value())
-		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, *monitorIndex);
-		}
-		return buffer;
-	};
-
-	const auto monitorIndexX = m_WindowXScreenDefined ? std::optional<int>{ m_WindowXScreen } : std::nullopt;
-	m_WindowX = computeWindowOption(m_ScreenX, m_AnchorScreenX, m_WindowXPercentage, m_WindowXFromRight, monitorIndexX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
-
-	const auto monitorIndexY = m_WindowYScreenDefined ? std::optional<int>{ m_WindowYScreen } : std::nullopt;
-	m_WindowY = computeWindowOption(m_ScreenY, m_AnchorScreenY, m_WindowYPercentage, m_WindowYFromBottom, monitorIndexY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
+	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, dpi);
+	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 }
 
 /*
@@ -2266,23 +2246,23 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	m_WindowX = parser.ReadString(section, makeKey(L"WindowX"), L"0");
-	isDefault ? writeDefaultString(L"WindowX", m_WindowX.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_WindowX = parser.ParseFormulaWithModifiers(m_WindowX);
+	m_X.option = parser.ReadString(section, makeKey(L"WindowX"), L"0");
+	isDefault ? writeDefaultString(L"WindowX", m_X.option.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_X.option = parser.ParseFormulaWithModifiers(m_X.option);
 
-	m_WindowY = parser.ReadString(section, makeKey(L"WindowY"), L"0");
-	isDefault ? writeDefaultString(L"WindowY", m_WindowY.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_WindowY = parser.ParseFormulaWithModifiers(m_WindowY);
+	m_Y.option = parser.ReadString(section, makeKey(L"WindowY"), L"0");
+	isDefault ? writeDefaultString(L"WindowY", m_Y.option.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_Y.option = parser.ParseFormulaWithModifiers(m_Y.option);
 
-	m_AnchorX = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
-	m_AnchorXDefined = parser.GetLastKeyDefined();
-	if (isDefault) writeDefaultString(L"AnchorX", m_AnchorX.c_str());
-	m_AnchorX = parser.ParseFormulaWithModifiers(m_AnchorX);
+	m_X.anchorOption = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
+	m_X.anchorDefined = parser.GetLastKeyDefined();
+	if (isDefault) writeDefaultString(L"AnchorX", m_X.anchorOption.c_str());
+	m_X.anchorOption = parser.ParseFormulaWithModifiers(m_X.anchorOption);
 
-	m_AnchorY = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
-	m_AnchorYDefined = parser.GetLastKeyDefined();
-	if (isDefault) writeDefaultString(L"AnchorY", m_AnchorY.c_str());
-	m_AnchorY = parser.ParseFormulaWithModifiers(m_AnchorY);
+	m_Y.anchorOption = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
+	m_Y.anchorDefined = parser.GetLastKeyDefined();
+	if (isDefault) writeDefaultString(L"AnchorY", m_Y.anchorOption.c_str());
+	m_Y.anchorOption = parser.ParseFormulaWithModifiers(m_Y.anchorOption);
 
 	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
@@ -2384,8 +2364,8 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ANCHOR)
 		{
-			WritePrivateProfileString(section, L"AnchorX", m_AnchorX.c_str(), iniFile);
-			WritePrivateProfileString(section, L"AnchorY", m_AnchorY.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorX", m_X.anchorOption.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorY", m_Y.anchorOption.c_str(), iniFile);
 		}
 
 		if (setting & OPTION_POSITION)
@@ -2395,8 +2375,8 @@ void Skin::WriteOptions(INT setting)
 			// If position needs to be save, do so.
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowX", m_X.option.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", m_Y.option.c_str(), iniFile);
 			}
 
 			if (setting == OPTION_POSITION) return;
@@ -3419,7 +3399,7 @@ void Skin::Update(bool refresh)
 void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
 	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
-	POINT ptWindowScreenPosition = { m_ScreenX, m_ScreenY };
+	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
 	POINT ptSrc = { 0 };
 	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
 
@@ -4151,25 +4131,25 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_FROMRIGHT:
-		m_WindowXFromRight = !m_WindowXFromRight;
+		m_X.fromOpposite = !m_X.fromOpposite;
 
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_FROMBOTTOM:
-		m_WindowYFromBottom = !m_WindowYFromBottom;
+		m_Y.fromOpposite = !m_Y.fromOpposite;
 
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_XPERCENTAGE:
-		m_WindowXPercentage = !m_WindowXPercentage;
+		m_X.percentage = !m_X.percentage;
 
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_YPERCENTAGE:
-		m_WindowYPercentage = !m_WindowYPercentage;
+		m_Y.percentage = !m_Y.percentage;
 
 		SavePositionIfAppropriate();
 		break;
@@ -4227,8 +4207,8 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_AutoSelectScreen = false;
 
-				m_WindowXScreen = m_WindowYScreen = screenIndex;
-				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
+				m_X.monitor = m_Y.monitor = screenIndex;
+				m_X.monitorDefined = m_Y.monitorDefined = screenDefined;
 
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
@@ -4298,12 +4278,12 @@ void Skin::SetKeepOnScreen(bool b)
 
 	if (m_KeepOnScreen)
 	{
-		int x = m_ScreenX;
-		int y = m_ScreenY;
+		int x = m_X.pos;
+		int y = m_Y.pos;
 
 		ClampPositionToPhysicalWindowBounds(x, y);
 
-		if (x != m_ScreenX || y != m_ScreenY)
+		if (x != m_X.pos || y != m_Y.pos)
 		{
 			MoveWindow(x, y);
 		}
@@ -4367,7 +4347,7 @@ void Skin::ApplyZoom(float zoom, bool writeOptions)
 
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
+		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
 	RepositionAndResizeWindow();
@@ -4610,20 +4590,20 @@ void Skin::UpdateZoomDrag(POINT screenPos)
 		y = m_ZoomDragStartRect.bottom - heightAtZoom;
 	}
 
-	if (fabsf(m_ZoomScale - zoom) <= 0.0001f && m_ScreenX == x && m_ScreenY == y)
+	if (fabsf(m_ZoomScale - zoom) <= 0.0001f && m_X.pos == x && m_Y.pos == y)
 	{
 		return;
 	}
 
-	m_ScreenX = x;
-	m_ScreenY = y;
+	m_X.pos = x;
+	m_Y.pos = y;
 	ApplyZoom(zoom, false);
 
 	m_ZoomDragMoved = true;
 	m_ZoomDragPositionChanged =
 		m_ZoomDragPositionChanged ||
-		m_ScreenX != m_ZoomDragStartRect.left ||
-		m_ScreenY != m_ZoomDragStartRect.top;
+		m_X.pos != m_ZoomDragStartRect.left ||
+		m_Y.pos != m_ZoomDragStartRect.top;
 }
 
 void Skin::EndZoomDrag(bool commit)
@@ -4698,8 +4678,8 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_DragStartValid)
 	{
 		m_DragStartCursor = System::GetCursorPosition();
-		m_DragStartWindowPos.x = m_ScreenX;
-		m_DragStartWindowPos.y = m_ScreenY;
+		m_DragStartWindowPos.x = m_X.pos;
+		m_DragStartWindowPos.y = m_Y.pos;
 	}
 
 	// If the 'Show window contents while dragging' system option is
@@ -4912,8 +4892,8 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
-	const int x = skin->m_ScreenX;
-	const int y = skin->m_ScreenY;
+	const int x = skin->m_X.pos;
+	const int y = skin->m_Y.pos;
 	const int w = skin->GetPhysicalWindowW();
 	const int h = skin->GetPhysicalWindowH();
 	const int ourW = GetPhysicalWindowW();
@@ -5036,7 +5016,7 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_KeepOnScreen)
 		{
 			const auto monitor = MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST);
-			ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY, monitor);
+			ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos, monitor);
 		}
 
 		RepositionAndResizeWindow();
@@ -5734,12 +5714,12 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// and in parent-client coordinates for child windows.
 
 	// Store the new window position
-	int oldX = m_ScreenX;
-	int oldY = m_ScreenY;
-	m_ScreenX = GET_X_LPARAM(lParam);
-	m_ScreenY = GET_Y_LPARAM(lParam);
+	int oldX = m_X.pos;
+	int oldY = m_Y.pos;
+	m_X.pos = GET_X_LPARAM(lParam);
+	m_Y.pos = GET_Y_LPARAM(lParam);
 
-	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
+	SetWindowPositionVariables(m_X.pos, m_Y.pos);
 
 	if (m_Dragging)
 	{
@@ -5748,8 +5728,8 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!c_IsInSelectionMode && m_Selected)
 	{
-		const int newX = m_ScreenX - oldX;
-		const int newY = m_ScreenY - oldY;
+		const int newX = m_X.pos - oldX;
+		const int newY = m_Y.pos - oldY;
 
 		c_IsInSelectionMode = true;
 
@@ -5939,10 +5919,10 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_ScreenX, m_ScreenY);
+		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
-	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	return 0;
 }
