@@ -7,10 +7,10 @@ on:
 
 jobs:
   rainmeter:
+    if: "!contains(github.event.head_commit.message, 'skipci')"
     strategy:
       matrix:
         arch: [32, 64]
-
     runs-on: windows-2022
     steps:
       - name: Clone repo
