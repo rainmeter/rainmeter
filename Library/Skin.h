@@ -8,10 +8,6 @@
 #ifndef RM_LIBRARY_SKIN_H_
 #define RM_LIBRARY_SKIN_H_
 
-#include <windows.h>
-#include <dwmapi.h>
-#include <string>
-#include <list>
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Group.h"
@@ -85,6 +81,36 @@ enum RESIZEMODE
 	RESIZEMODE_NONE = 0,
 	RESIZEMODE_CHECK,
 	RESIZEMODE_RESET
+};
+
+struct MonitorInfo;
+
+struct SkinPosition
+{
+	std::wstring option = L"0";
+	std::wstring anchorOption = L"0";
+
+	// Physical pixels.
+	int pos = 0;
+
+	// 96 DPI pixels.
+	int anchorPos = 0;
+
+	int monitor = 1;
+	bool monitorDefined = false;
+	bool fromOpposite = false;
+	bool percentage = false;
+	bool anchorFromOpposite = false;
+	bool anchorPercentage = false;
+	bool anchorDefined = false;
+
+private:
+	friend class Skin;
+
+	void ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom);
+	float ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors);
+	void ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi);
+	void ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi);
 };
 
 class Rainmeter;
@@ -183,20 +209,10 @@ public:
 	void UpdateMouseMeasureCapture();
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
-	bool GetXPercentage() { return m_WindowXPercentage; }
-	bool GetYPercentage() { return m_WindowYPercentage; }
-	bool GetXFromRight() { return m_WindowXFromRight; }
-	bool GetYFromBottom() { return m_WindowYFromBottom; }
-
 	int GetW() { return m_WindowW; }
 	int GetH() { return m_WindowH; }
-	int GetX() { return m_ScreenX; }
-	int GetY() { return m_ScreenY; }
-
-	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
-	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
-	int GetXScreen() { return m_WindowXScreen; }
-	int GetYScreen() { return m_WindowYScreen; }
+	const SkinPosition& GetX() const { return m_X; }
+	const SkinPosition& GetY() const { return m_Y; }
 
 	int GetLogicalWindowX() const;
 	int GetLogicalWindowY() const;
@@ -414,32 +430,14 @@ private:
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
-	std::wstring m_WindowX;
-	std::wstring m_WindowY;
-	std::wstring m_AnchorX;
-	std::wstring m_AnchorY;
-	int m_WindowXScreen;
-	int m_WindowYScreen;
-	bool m_WindowXScreenDefined;
-	bool m_WindowYScreenDefined;
-	bool m_WindowXFromRight;
-	bool m_WindowYFromBottom;
-	bool m_WindowXPercentage;
-	bool m_WindowYPercentage;
+
+	SkinPosition m_X;
+	SkinPosition m_Y;
+
 	int m_WindowW;
 	int m_WindowH;
-	int m_ScreenX;								// X-postion on the virtual screen
-	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
-	bool m_AnchorXFromRight;
-	bool m_AnchorYFromBottom;
-	bool m_AnchorXPercentage;
-	bool m_AnchorYPercentage;
-	bool m_AnchorXDefined;
-	bool m_AnchorYDefined;
-	int m_AnchorScreenX;
-	int m_AnchorScreenY;
 
 	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale also considers the
 	// OverrideDpi setting.

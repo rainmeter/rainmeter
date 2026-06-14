@@ -357,10 +357,10 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)skin->GetWindowZPosition();
 			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
 
-			if (skin->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetX().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetY().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetX().percentage) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetY().percentage) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 
 			HMENU monitorMenu = GetSubMenu(posMenu, 0);
 			if (monitorMenu)
@@ -762,8 +762,8 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 
 void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
-	const bool screenDefined = skin->GetXScreenDefined();
-	const int screenIndex = skin->GetXScreen();
+	const bool screenDefined = skin->GetX().monitorDefined;
+	const int screenIndex = skin->GetX().monitor;
 
 	// for the "Specified monitor" (@n)
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;

@@ -180,7 +180,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetX());
+	lua_pushnumber(L, self->GetX().pos);
 
 	return 1;
 }
@@ -188,7 +188,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetY());
+	lua_pushnumber(L, self->GetY().pos);
 
 	return 1;
 }
