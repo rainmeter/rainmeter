@@ -153,6 +153,102 @@ public:
 		Assert::AreEqual(2040, position.pos);
 	}
 
+	TEST_METHOD(TestComputePositionDefaultsToPrimaryMonitor)
+	{
+		SkinPosition x;
+		SkinPosition y;
+		x.option = L"100";
+		y.option = L"50";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(96, -1600, 0, 0, 900),
+			CreateMonitor(144, 0, 0, 1920, 1080)
+		};
+		const RECT virtualScreen = { -1600, 0, 1920, 1080 };
+
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 2, virtualScreen, 96);
+
+		Assert::IsFalse(x.monitor.has_value());
+		Assert::IsFalse(y.monitor.has_value());
+		Assert::AreEqual(144U, dpi);
+		Assert::AreEqual(150, x.pos);
+		Assert::AreEqual(75, y.pos);
+	}
+
+	TEST_METHOD(TestComputePositionUsesVirtualScreenForMonitorZero)
+	{
+		SkinPosition x;
+		SkinPosition y;
+		x.option = L"100@0";
+		y.option = L"50";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(120, 0, 0, 1920, 1080),
+			CreateMonitor(96, 1920, 0, 3520, 900)
+		};
+		const RECT virtualScreen = { 0, 0, 3520, 1080 };
+
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+
+		Assert::AreEqual(0, *x.monitor);
+		Assert::AreEqual(0, *y.monitor);
+		Assert::AreEqual(96U, dpi);
+		Assert::AreEqual(100, x.pos);
+		Assert::AreEqual(50, y.pos);
+	}
+
+	TEST_METHOD(TestComputePositionInheritsYMonitor)
+	{
+		SkinPosition x;
+		SkinPosition y;
+		x.option = L"100";
+		y.option = L"50@2";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(96, 0, 0, 1920, 1080),
+			CreateMonitor(144, 1920, 0, 4320, 1440)
+		};
+		const RECT virtualScreen = { 0, 0, 4320, 1440 };
+
+		SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+
+		Assert::AreEqual(2, *x.monitor);
+		Assert::AreEqual(2, *y.monitor);
+		Assert::AreEqual(2070, x.pos);
+		Assert::AreEqual(75, y.pos);
+	}
+
+	TEST_METHOD(TestComputePositionSelectsDpiFromUnscaledPosition)
+	{
+		SkinPosition x;
+		SkinPosition y;
+		x.option = L"2000";
+		y.option = L"100";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(120, 0, 0, 1920, 1080),
+			CreateMonitor(96, 1920, 0, 3520, 900)
+		};
+		const RECT virtualScreen = { 0, 0, 3520, 1080 };
+
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		Assert::AreEqual(96U, dpi);
+		Assert::AreEqual(2000, x.pos);
+		Assert::AreEqual(100, y.pos);
+
+		x.option = L"-100R";
+		const UINT dpi2 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		Assert::AreEqual(96U, dpi2);
+		Assert::AreEqual(2020, x.pos);
+		Assert::AreEqual(100, y.pos);
+
+		x.option = L"100R";
+		const UINT dpi3 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		Assert::AreEqual(120U, dpi3);
+		Assert::AreEqual(1795, x.pos);
+		Assert::AreEqual(125, y.pos);
+	}
+
 	TEST_METHOD(TestZoomChangesAnchorPosition)
 	{
 		SkinPosition position;
