@@ -1232,7 +1232,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		{
 			m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[2]);
 			m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[3]);
-			m_X.anchorDefined = m_Y.anchorDefined = true;
 			WriteOptions(OPTION_ANCHOR);
 		}
 
@@ -1243,7 +1242,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetAnchor:
 		m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
 		m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
-		m_X.anchorDefined = m_Y.anchorDefined = true;
 		WriteOptions(OPTION_ANCHOR);
 		WindowToScreen();
 		MoveWindow(m_X.pos, m_Y.pos);
@@ -2255,12 +2253,10 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	m_Y.option = parser.ParseFormulaWithModifiers(m_Y.option);
 
 	m_X.anchorOption = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
-	m_X.anchorDefined = parser.GetLastKeyDefined();
 	if (isDefault) writeDefaultString(L"AnchorX", m_X.anchorOption.c_str());
 	m_X.anchorOption = parser.ParseFormulaWithModifiers(m_X.anchorOption);
 
 	m_Y.anchorOption = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
-	m_Y.anchorDefined = parser.GetLastKeyDefined();
 	if (isDefault) writeDefaultString(L"AnchorY", m_Y.anchorOption.c_str());
 	m_Y.anchorOption = parser.ParseFormulaWithModifiers(m_Y.anchorOption);
 
