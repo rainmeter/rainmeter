@@ -339,8 +339,8 @@ private:
 	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
 	void RepositionAndResizeWindow();
 	bool UpdateWindowDpi(UINT dpi = 0);
-	void WindowToScreen(bool inheritMonitorDpi = false, bool ignoreAnchors = false);
-	void ScreenToWindow();
+	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
+	void ComputeOptionValueFromPosition();
 
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);

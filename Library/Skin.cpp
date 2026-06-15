@@ -529,7 +529,7 @@ void Skin::Refresh(bool init, bool all)
 
 	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
-	ScreenToWindow();
+	ComputeOptionValueFromPosition();
 
 	if (init)
 	{
@@ -1220,7 +1220,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::Move:
 		m_X.option = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_X.anchorPos);
 		m_Y.option = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Y.anchorPos);
-		WindowToScreen();
+		ComputePositionFromOptions();
 		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
@@ -1235,7 +1235,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 			WriteOptions(OPTION_ANCHOR);
 		}
 
-		WindowToScreen(false, true);
+		ComputePositionFromOptions();
 		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
@@ -1243,7 +1243,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
 		m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
 		WriteOptions(OPTION_ANCHOR);
-		WindowToScreen();
+		ComputePositionFromOptions();
 		MoveWindow(m_X.pos, m_Y.pos);
 		break;
 
@@ -2122,11 +2122,7 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 	}
 }
 
-/*
-** Calculates the screen coordinates from the WindowX/Y options
-**
-*/
-void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
+void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
@@ -2163,11 +2159,7 @@ void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 	SetWindowPositionVariables(m_X.pos, m_Y.pos);
 }
 
-/*
-** Calculates the WindowX/Y cordinates from the ScreenX/Y
-**
-*/
-void Skin::ScreenToWindow()
+void Skin::ComputeOptionValueFromPosition()
 {
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
@@ -2325,7 +2317,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		m_DragGroup.InitializeGroup(dragGroup);
 
 		// Set screen position variables temporarily
-		WindowToScreen(true);
+		ComputePositionFromOptions(true);
 
 		// Set built-in "settings" variables
 		SetZPosVariable((ZPOSITION)zPos);
@@ -2366,7 +2358,7 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_POSITION)
 		{
-			ScreenToWindow();
+			ComputeOptionValueFromPosition();
 
 			// If position needs to be save, do so.
 			if (m_SavePosition)
@@ -2866,7 +2858,7 @@ bool Skin::ResizeWindow(bool reset)
 
 	if (!reset && m_WindowW == w && m_WindowH == h)
 	{
-		WindowToScreen();
+		ComputePositionFromOptions();
 		return false;		// The window is already correct size
 	}
 
@@ -2912,14 +2904,14 @@ bool Skin::ResizeWindow(bool reset)
 			// Get the size form the background bitmap
 			m_WindowW = w;
 			m_WindowH = h;
-			WindowToScreen();
+			ComputePositionFromOptions();
 		}
 	}
 	else
 	{
 		m_WindowW = w;
 		m_WindowH = h;
-		WindowToScreen();
+		ComputePositionFromOptions();
 	}
 
 	SetWindowSizeVariables(m_WindowW, m_WindowH);
@@ -4318,7 +4310,7 @@ void Skin::SavePositionIfAppropriate()
 	}
 	else
 	{
-		ScreenToWindow();
+		ComputeOptionValueFromPosition();
 		DialogManage::UpdateSkins(this);
 	}
 }
@@ -4336,7 +4328,7 @@ void Skin::ApplyZoom(float zoom, bool writeOptions)
 
 	m_ZoomScale = zoom;
 	UpdateWindowDpi();
-	WindowToScreen();
+	ComputePositionFromOptions();
 
 	if (m_KeepOnScreen)
 	{
@@ -5004,7 +4996,7 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (suggested)
 	{
 		UpdateWindowDpi(dpi);
-		WindowToScreen();
+		ComputePositionFromOptions();
 
 		if (m_KeepOnScreen)
 		{
@@ -5716,7 +5708,7 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_Dragging)
 	{
-		ScreenToWindow();
+		ComputeOptionValueFromPosition();
 	}
 
 	if (!c_IsInSelectionMode && m_Selected)
