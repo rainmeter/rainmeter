@@ -2043,6 +2043,8 @@ void SkinPosition::ParseAnchorOption(int windowSize, WCHAR oppositeChar, float z
 
 float SkinPosition::ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors)
 {
+	monitor.reset();
+
 	const auto numberEndPos = option.find_first_not_of(L"-0123456789.");
 	const auto number = (float)_wtof(option.substr(0, numberEndPos).c_str());
 
@@ -2065,7 +2067,6 @@ float SkinPosition::ParseWindowOption(WCHAR oppositeChar, const std::vector<Moni
 			if (monitorNumber >= 0 && (monitorNumber == 0 || monitorNumber <= (int)monitors.size() && monitors[monitorNumber - 1].active))
 			{
 				monitor = monitorNumber;
-				monitorDefined = true;
 			}
 		}
 	}
@@ -2112,11 +2113,11 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 		option += L'R';
 	}
 
-	if (monitorDefined)
+	if (monitor)
 	{
 		option += L'@';
 
-		_itow_s(monitor, buffer, 10);
+		_itow_s(*monitor, buffer, 10);
 		option += buffer;
 	}
 }
@@ -2130,9 +2131,6 @@ void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
-	m_X.monitor = m_Y.monitor = monitorsInfo.primary; // Default to primary screen
-	m_X.monitorDefined = m_Y.monitorDefined = false;
-
 	const auto skinW = m_SkinW > 0 ? m_SkinW : m_WindowW;
 	const auto skinH = m_SkinH > 0 ? m_SkinH : m_WindowH;
 	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
@@ -2143,19 +2141,17 @@ void Skin::WindowToScreen(bool inheritMonitorDpi, bool ignoreAnchors)
 	const float parsedX = m_X.ParseWindowOption(L'R', monitors);
 	const float parsedY = m_Y.ParseWindowOption(L'B', monitors);
 
-	if (m_X.monitorDefined && !m_Y.monitorDefined)
+	if (m_X.monitor.has_value() && !m_Y.monitor.has_value())
 	{
 		m_Y.monitor = m_X.monitor;
-		m_Y.monitorDefined = true;
 	}
-	else if (!m_X.monitorDefined && m_Y.monitorDefined)
+	else if (!m_X.monitor.has_value() && m_Y.monitor.has_value())
 	{
 		m_X.monitor = m_Y.monitor;
-		m_X.monitorDefined = true;
 	}
 
-	const RECT monitorRect = m_X.monitorDefined ? monitors[m_X.monitor - 1].screen : virtualScreen;
-	const UINT dpi = m_X.monitorDefined ? monitors[m_X.monitor - 1].dpi : defaultDpi;
+	const RECT monitorRect = m_X.monitor ? monitors[*m_X.monitor - 1].screen : virtualScreen;
+	const UINT dpi = m_X.monitor ? monitors[*m_X.monitor - 1].dpi : defaultDpi;
 	m_X.ComputePosition(parsedX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
 	m_Y.ComputePosition(parsedY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 
@@ -2190,15 +2186,15 @@ void Skin::ScreenToWindow()
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
 					m_X.monitor = m_Y.monitor = screenIndex;
-					m_X.monitorDefined = m_Y.monitorDefined = true;
 					break;
 				}
 			}
 		}
 	}
 
-	const RECT monitorRect = m_X.monitorDefined ? monitors[m_X.monitor - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-	const auto dpi = m_X.monitorDefined ? monitors[m_X.monitor - 1].dpi : System::GetSystemDpi();
+	const bool useMonitor = m_X.monitor && *m_X.monitor > 0;
+	const RECT monitorRect = useMonitor ? monitors[*m_X.monitor - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
+	const auto dpi = useMonitor ? monitors[*m_X.monitor - 1].dpi : System::GetSystemDpi();
 
 	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, dpi);
 	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
@@ -4189,27 +4185,24 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 			const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
-			int screenIndex = 0;
-			bool screenDefined = false;
+			int monitor = 0;
+			bool monitorDefined = false;
 			if (wParam == IDM_SKIN_MONITOR_PRIMARY)
 			{
-				screenIndex = monitorsInfo.primary;
-				screenDefined = false;
+				monitor = monitorsInfo.primary;
+				monitorDefined = false;
 			}
 			else
 			{
-				screenIndex = (wParam & 0x0ffff) - ID_MONITOR_FIRST;
-				screenDefined = true;
+				monitor = (wParam & 0x0ffff) - ID_MONITOR_FIRST;
+				monitorDefined = true;
 			}
 
-			const int monitorIndex = screenIndex - 1;
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[monitorIndex].active))
+			const int monitorIndex = monitor - 1;
+			if (monitor >= 0 && (monitor == 0 || monitor <= (int)monitors.size() && monitors[monitorIndex].active))
 			{
 				m_AutoSelectScreen = false;
-
-				m_X.monitor = m_Y.monitor = screenIndex;
-				m_X.monitorDefined = m_Y.monitorDefined = screenDefined;
-
+				m_X.monitor = m_Y.monitor = monitorDefined ? std::optional<int>{ monitor } : std::nullopt;
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}

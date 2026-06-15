@@ -648,17 +648,17 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 		else if (!primary && m_Skin)
 		{
 			const bool horizontal = component == MonitorComponent::X || component == MonitorComponent::Width;
-			if (horizontal && m_Skin->GetX().monitorDefined)
+			if (horizontal && m_Skin->GetX().monitor)
 			{
-				const int i = m_Skin->GetX().monitor;
+				const int i = *m_Skin->GetX().monitor;
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
 				}
 			}
-			else if (!horizontal && m_Skin->GetY().monitorDefined)
+			else if (!horizontal && m_Skin->GetY().monitor)
 			{
-				const int i = m_Skin->GetY().monitor;
+				const int i = *m_Skin->GetY().monitor;
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;

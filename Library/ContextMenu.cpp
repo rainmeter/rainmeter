@@ -762,8 +762,8 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 
 void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
-	const bool screenDefined = skin->GetX().monitorDefined;
-	const int screenIndex = skin->GetX().monitor;
+	const bool monitorDefined = skin->GetX().monitor.has_value();
+	const int monitor = skin->GetX().monitor.value_or(0);
 
 	// for the "Specified monitor" (@n)
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
@@ -788,17 +788,17 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 
 		const UINT flags =
 			MF_BYPOSITION |
-			((screenDefined && screenIndex == i) ? MF_CHECKED : MF_UNCHECKED) |
+			((monitorDefined && monitor == i) ? MF_CHECKED : MF_UNCHECKED) |
 			((*iter).active ? MF_ENABLED : MF_GRAYED);
 		InsertMenu(monitorMenu, i + 2, flags, ID_MONITOR_FIRST + i, item.c_str());
 	}
 
-	if (!screenDefined)
+	if (!monitorDefined)
 	{
 		CheckMenuItem(monitorMenu, IDM_SKIN_MONITOR_PRIMARY, MF_BYCOMMAND | MF_CHECKED);
 	}
 
-	if (screenDefined && screenIndex == 0)
+	if (monitorDefined && monitor == 0)
 	{
 		CheckMenuItem(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND | MF_CHECKED);
 	}
