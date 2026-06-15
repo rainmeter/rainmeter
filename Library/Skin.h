@@ -102,7 +102,6 @@ struct SkinPosition
 	bool percentage = false;
 	bool anchorFromOpposite = false;
 	bool anchorPercentage = false;
-	bool anchorDefined = false;
 
 private:
 	friend class Skin;
