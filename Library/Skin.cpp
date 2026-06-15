@@ -5043,14 +5043,11 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (suggested)
 	{
 		UpdateWindowDpi(dpi);
-		ComputePositionFromOptions();
 
-		if (m_KeepOnScreen)
-		{
-			const auto monitor = MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST);
-			ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos, monitor);
-		}
-
+		auto* suggested = (const RECT*)lParam;
+		m_X.pos = suggested->left;
+		m_Y.pos = suggested->top;
+		SetWindowPositionVariables(m_X.pos, m_Y.pos);
 		RepositionAndResizeWindow();
 	}
 
