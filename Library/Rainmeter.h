@@ -16,6 +16,7 @@
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "DialogManage.h"
+#include "Language.h"
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
@@ -127,8 +128,13 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
-	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
-	LCID GetResourceLCID() { return m_ResourceLCID; }
+	const WCHAR* GetLanguageString(UINT id) const { return m_Language.GetString(id); }
+	bool LoadLanguage(const std::wstring& language) { return m_Language.Load(m_Path + L"Languages\\", language); }
+	unsigned short GetLanguageButtonWidth() const { return m_Language.GetButtonWidth(); }
+	unsigned short GetLanguageLabelWidth() const { return m_Language.GetLabelWidth(); }
+	bool IsLanguageRTL() const { return m_Language.IsRTL(); }
+	const std::wstring& GetResourceLocale() { return m_Language.GetLocale(); }
+	LCID GetResourceLCID() { return m_Language.GetLCID(); }
 
 	bool GetDebug() { return m_Debug; }
 
@@ -300,8 +306,7 @@ private:
 
 	HANDLE m_Mutex;
 	HINSTANCE m_Instance;
-	HMODULE m_ResourceInstance;
-	LCID m_ResourceLCID;
+	Language m_Language;
 
 	GlobalOptions m_GlobalOptions;
 

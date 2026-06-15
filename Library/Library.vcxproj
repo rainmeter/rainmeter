@@ -44,6 +44,10 @@
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="Language.cpp" />
+    <ClCompile Include="Language_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
@@ -140,6 +144,7 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />
@@ -230,6 +235,12 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="GenerateEnglishLanguage"
+          AfterTargets="Build"
+          Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1"
+          Outputs="$(OutDir)Languages\en.rmlang">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\GenerateLanguages.ps1&quot; -Locale en -OutputDirectory &quot;$(OutDir)Languages&quot; -RuntimeOnly" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

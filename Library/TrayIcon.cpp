@@ -360,19 +360,19 @@ void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const 
 
 void TrayIcon::ShowWelcomeNotification()
 {
-	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
+	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(IDS_Welcome), GetString(IDS_ClickToManage));
 }
 
 void TrayIcon::ShowUpdateNotification(LPCWSTR newVersion)
 {
-	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
-	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
+	std::wstring text = GetFormattedString(IDS_ClickToDownload, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(IDS_UpdateAvailable), text.c_str());
 }
 
 void TrayIcon::ShowInstallUpdateNotification(LPCWSTR newVersion)
 {
-	std::wstring text = GetFormattedString(ID_STR_CLICK_TO_INSTALL, newVersion);
-	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(ID_STR_INSTALL_NEW_VERSION), text.c_str());
+	std::wstring text = GetFormattedString(IDS_ClickToInstall, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(IDS_InstallNewVersion), text.c_str());
 }
 
 void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)

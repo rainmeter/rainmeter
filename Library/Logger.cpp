@@ -54,7 +54,7 @@ void Logger::StartLogFile()
 		}
 		else
 		{
-			const std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, filePath);
+			const std::wstring text = GetFormattedString(IDS_LogFileCreateFail, filePath);
 			GetRainmeter().ShowMessage(nullptr, text.c_str(), MB_OK | MB_ICONERROR);
 			SetLogToFile(false);
 			return;
@@ -74,7 +74,7 @@ void Logger::DeleteLogFile()
 	const WCHAR* filePath = m_LogFilePath.c_str();
 	if (_waccess_s(filePath, 0) == 0)
 	{
-		const std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, filePath);
+		const std::wstring text = GetFormattedString(IDS_LogFileDelete, filePath);
 		const int res = GetRainmeter().ShowMessage(nullptr, text.c_str(), MB_YESNO | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
