@@ -2081,7 +2081,7 @@ void SkinPosition::ComputePosition(float parsedValue, int monitorOrigin, int mon
 	pos = monitorOrigin + offsetFromOrigin - MulDiv(anchorPos, dpi, USER_DEFAULT_SCREEN_DPI);
 }
 
-void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi)
+void SkinPosition::ComputeWindowOption(WCHAR oppositeChar, int monitorOrigin, int monitorExtent, UINT dpi)
 {
 	int logicalPos = 0;
 	if (fromOpposite)
@@ -2110,7 +2110,7 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 
 	if (fromOpposite)
 	{
-		option += L'R';
+		option += oppositeChar;
 	}
 
 	if (monitor)
@@ -2231,12 +2231,13 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const bool useMonitor = m_X.monitor && *m_X.monitor > 0;
-	const RECT monitorRect = useMonitor ? monitors[*m_X.monitor - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-	const auto dpi = useMonitor ? monitors[*m_X.monitor - 1].dpi : System::GetSystemDpi();
+	const int monitorIndex = m_X.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRect = monitorIndex == 0 ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitors[monitorIndex - 1].screen;
+	const auto monitorW = monitorRect.right - monitorRect.left;
+	const auto monitorH = monitorRect.bottom - monitorRect.top;
 
-	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, dpi);
-	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
+	m_X.ComputeWindowOption(L'R', monitorRect.left, monitorW, m_WindowDpi);
+	m_Y.ComputeWindowOption(L'B', monitorRect.top, monitorH, m_WindowDpi);
 }
 
 /*

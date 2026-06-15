@@ -285,7 +285,7 @@ public:
 		const int origin = monitor.screen.left;
 		const int extent = monitor.screen.right - monitor.screen.left;
 		position.ComputePosition(value, origin, extent, monitor.dpi);
-		position.ComputeWindowOption(origin, extent, monitor.dpi);
+		position.ComputeWindowOption(L'R', origin, extent, monitor.dpi);
 
 		Assert::AreEqual(L"25.00000%R@2", position.option.c_str());
 	}

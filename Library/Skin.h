@@ -121,7 +121,7 @@ private:
 	void ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom);
 	float ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors);
 	void ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi);
-	void ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi);
+	void ComputeWindowOption(WCHAR oppositeChar, int monitorOrigin, int monitorExtent, UINT dpi);
 };
 
 class Rainmeter;
