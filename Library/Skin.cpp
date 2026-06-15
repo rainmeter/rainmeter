@@ -2082,39 +2082,43 @@ void SkinPosition::ComputePosition(float parsedValue, int monitorOrigin, int mon
 
 void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi)
 {
-	int pixel = 0;
+	int logicalPos = 0;
 	if (fromOpposite)
 	{
-		pixel = MulDiv(monitorOrigin + monitorExtent - pos, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel -= anchorPos;
+		logicalPos = MulDiv(monitorOrigin + monitorExtent - pos, USER_DEFAULT_SCREEN_DPI, dpi);
+		logicalPos -= anchorPos;
 	}
 	else
 	{
-		pixel = MulDiv(pos - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
-		pixel += anchorPos;
+		logicalPos = MulDiv(pos - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
+		logicalPos += anchorPos;
 	}
 
 	WCHAR buffer[64] = { 0 };
 	if (percentage)
 	{
-		const float number = 100.0f * pixel / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
+		const float number = 100.0f * logicalPos / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", number);
 	}
 	else
 	{
-		_itow_s(pixel, buffer, 10);
-	}
-
-	if (fromOpposite)
-	{
-		wcscat_s(buffer, L"R");
-	}
-	if (monitorDefined)
-	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, monitor);
+		_itow_s(logicalPos, buffer, 10);
 	}
 
 	option = buffer;
+
+	if (fromOpposite)
+	{
+		option += L'R';
+	}
+
+	if (monitorDefined)
+	{
+		option += L'@';
+
+		_itow_s(monitor, buffer, 10);
+		option += buffer;
+	}
 }
 
 /*
