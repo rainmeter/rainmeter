@@ -19,9 +19,7 @@ UINT GetUniqueID()
 
 WCHAR* GetString(UINT id)
 {
-	LPWSTR pData = nullptr;
-	int len = LoadString(GetRainmeter().GetResourceInstance(), id, (LPWSTR)&pData, 0);
-	return len > 0 ? pData : L"";
+	return const_cast<WCHAR*>(GetRainmeter().GetLanguageString(id));
 }
 
 std::wstring GetFormattedString(UINT id, ...)

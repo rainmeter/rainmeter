@@ -42,10 +42,10 @@ void DialogAbout::Open(int tab)
 	}
 
 	c_Dialog->ShowDialogWindow(
-		GetString(ID_STR_ABOUTRAINMETER),
+		GetString(IDS_AboutRainmeter),
 		0, 0, 600, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -173,7 +173,7 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	static const Control s_Controls[] =
 	{
-		Control::Button(Id_CloseButton, ID_STR_CLOSE,
+		Control::Button(Id_CloseButton, IDS_Close,
 			544, 231, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0,
 			Control::ANCHOR_BOTTOM_RIGHT),
@@ -185,10 +185,10 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
-	AddTab(Id_Tab, m_TabLog, GetString(ID_STR_LOG));
-	AddTab(Id_Tab, m_TabSkins, GetString(ID_STR_SKINS));
-	AddTab(Id_Tab, m_TabPlugins, GetString(ID_STR_PLUGINS));
-	AddTab(Id_Tab, m_TabVersion, GetString(ID_STR_VERSION));
+	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
+	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
+	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
+	AddTab(Id_Tab, m_TabVersion, GetString(IDS_Version));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -254,7 +254,7 @@ void DialogAbout::TabLog::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 
 	static const Control s_Controls[] =
 	{
@@ -262,19 +262,19 @@ void DialogAbout::TabLog::Create(HWND owner)
 			0, 0, 568, 175,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
-		Control::CheckBox(Id_ErrorCheckBox, ID_STR_ERROR,
+		Control::CheckBox(Id_ErrorCheckBox, IDS_Error,
 			0, 179, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_WarningCheckBox, ID_STR_WARNING,
+		Control::CheckBox(Id_WarningCheckBox, IDS_Warning,
 			80, 179, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_NoticeCheckBox, ID_STR_NOTICE,
+		Control::CheckBox(Id_NoticeCheckBox, IDS_Notice,
 			160, 179, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_DebugCheckBox, ID_STR_DEBUG,
+		Control::CheckBox(Id_DebugCheckBox, IDS_Debug,
 			240, 179, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::Button(Id_ClearButton, ID_STR_CLEAR,
+		Control::Button(Id_ClearButton, IDS_Clear,
 			(568 - buttonWidth), 179, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_BOTTOM_RIGHT)
 	};
@@ -299,19 +299,19 @@ void DialogAbout::TabLog::Initialize()
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(75);
-	lvc.pszText = GetString(ID_STR_TYPE);
+	lvc.pszText = GetString(IDS_Type);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(85);
-	lvc.pszText = GetString(ID_STR_TIME);
+	lvc.pszText = GetString(IDS_Time);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(225);
-	lvc.pszText = GetString(ID_STR_SOURCE);
+	lvc.pszText = GetString(IDS_Source);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(180);  // Resized later
-	lvc.pszText = GetString(ID_STR_MESSAGE);
+	lvc.pszText = GetString(IDS_Message);
 	ListView_InsertColumn(item, 3, &lvc);
 
 	// Start 4th column at max width
@@ -626,7 +626,7 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MessageMenu[] =
 				{
-					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
 				HMENU menu = MenuTemplate::CreateMenu(s_MessageMenu, _countof(s_MessageMenu), GetString);
@@ -696,10 +696,10 @@ void DialogAbout::TabSkins::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = GetString(ID_STR_MEASURES);
+	lvg.pszHeader = GetString(IDS_Measures);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = GetString(ID_STR_VARIABLES);
+	lvg.pszHeader = GetString(IDS_Variables);
 	ListView_InsertGroup(item, 1, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
@@ -709,19 +709,19 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
-	lvc.pszText = GetString(ID_STR_NAME);
+	lvc.pszText = GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
-	lvc.pszText = GetString(ID_STR_RANGE);
+	lvc.pszText = GetString(IDS_Range);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(90);
-	lvc.pszText = GetString(ID_STR_NUMBER);
+	lvc.pszText = GetString(IDS_Number);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
-	lvc.pszText = GetString(ID_STR_STRING);
+	lvc.pszText = GetString(IDS_String);
 	ListView_InsertColumn(item, 3, &lvc);
 
 	// Start 4th column at max width
@@ -1167,7 +1167,7 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_VariableMenu[] =
 				{
-					MENU_ITEM(IDM_COPY, ID_STR_COPYTOCLIPBOARD)
+					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
 				bool isMeasure = lvi.iGroupId == 0;
@@ -1184,14 +1184,14 @@ INT_PTR DialogAbout::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						{
 							std::wstring name = GetString(id);
 							name += L": ";
-							name += GetString(ID_STR_COPYTOCLIPBOARD);
+							name += GetString(IDS_CopyToClipboard);
 							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
 						};
 
-						setMenuItem(ID_STR_MEASURE, IDM_COPYMEASURENAME);
-						setMenuItem(ID_STR_NUMBER, IDM_COPYNUMBERVALUE);
-						setMenuItem(ID_STR_STRING, IDM_COPYSTRINGVALUE);
-						setMenuItem(ID_STR_RANGE, IDM_COPYRANGE);
+						setMenuItem(IDS_Measure, IDM_COPYMEASURENAME);
+						setMenuItem(IDS_Number, IDM_COPYNUMBERVALUE);
+						setMenuItem(IDS_String, IDM_COPYSTRINGVALUE);
+						setMenuItem(IDS_Range, IDM_COPYRANGE);
 					}
 
 					POINT pt = System::GetCursorPosition();
@@ -1314,10 +1314,10 @@ void DialogAbout::TabPlugins::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = GetString(ID_STR_EXTERNALPLUGINS);
+	lvg.pszHeader = GetString(IDS_ExternalPlugins);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = GetString(ID_STR_BUILTINPLUGINS);
+	lvg.pszHeader = GetString(IDS_BuiltInPlugins);
 	ListView_InsertGroup(item, 1, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
@@ -1327,15 +1327,15 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
-	lvc.pszText = GetString(ID_STR_NAME);
+	lvc.pszText = GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
-	lvc.pszText = GetString(ID_STR_VERSION);
+	lvc.pszText = GetString(IDS_Version);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(250);  // Resized later
-	lvc.pszText = GetString(ID_STR_AUTHOR);
+	lvc.pszText = GetString(IDS_Author);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem = { 0 };
@@ -1618,7 +1618,7 @@ void DialogAbout::TabVersion::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 570, 188, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -1633,10 +1633,10 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		Control::LinkLabel(Id_BuildLink, 0,
 			80, 21, 470, 13,
 			WS_VISIBLE, 0),
-		Control::LinkLabel(Id_HomeLink, ID_STR_GETLATESTVERSION,
+		Control::LinkLabel(Id_HomeLink, IDS_GetLatestVersion,
 			80, 34, 470, 13,
 			WS_VISIBLE, 0),
-		Control::LinkLabel(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
+		Control::LinkLabel(Id_LicenseLink, IDS_CopyrightNotice,
 			80, 47, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 
@@ -1655,7 +1655,7 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		Control::LinkLabel(Id_IniFileLink, 0,
 			80, 122, 470, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
-		Control::Button(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
+		Control::Button(Id_CopyButton, IDS_CopyToClipboard,
 			80, 140, buttonWidth + 35, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 	};

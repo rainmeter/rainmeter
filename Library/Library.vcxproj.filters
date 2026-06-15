@@ -79,6 +79,8 @@
     <ClCompile Include="GameMode.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="Language.cpp" />
+    <ClCompile Include="Language_Test.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
@@ -183,6 +185,7 @@
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
+    <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureCalc.h" />

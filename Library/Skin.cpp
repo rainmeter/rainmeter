@@ -2493,7 +2493,7 @@ bool Skin::ReadSkin()
 	// Verify whether the file exists
 	if (_waccess_s(iniFile.c_str(), 0) != 0)
 	{
-		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_FolderPath.c_str(), m_FileName.c_str());
+		std::wstring message = GetFormattedString(IDS_UnableToRefreshSkin, m_FolderPath.c_str(), m_FileName.c_str());
 		GetRainmeter().ShowMessage(m_Window, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -2536,7 +2536,7 @@ bool Skin::ReadSkin()
 			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
-		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
+		std::wstring text = GetFormattedString(IDS_NewVersionRequired, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
 		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -2826,7 +2826,7 @@ bool Skin::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
+		std::wstring text = GetFormattedString(IDS_NoMetersInSkin, m_FolderPath.c_str(), m_FileName.c_str());
 		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}

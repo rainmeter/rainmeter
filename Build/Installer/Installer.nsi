@@ -31,6 +31,8 @@ Unicode true
 !include "UAC.nsh"
 !include "RmError.nsh"
 
+${Using:StrFunc} StrRep
+
 !ifndef OUTFILE
  !define OUTFILE "Rainmeter-test.exe"
  !define VERSION_FULL "0.0.0.0"
@@ -112,18 +114,18 @@ UAC_TryAgain:
 		${IfThen} $1 = 1 ${|} Quit ${|}			; This is the outer process, the inner process is done
 		${IfThen} $3 <> 0 ${|} ${Break} ${|}	; We are the admin
 		${If} $1 = 3							; RunAs completed successfully with a non-admin user
-			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(ADMINERROR)" /SD IDNO IDOK UAC_TryAgain IDNO 0
+			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(AdminError)" /SD IDNO IDOK UAC_TryAgain IDNO 0
 			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 		${EndIf}
 		; Fall-through
 	${Case} 1223
 		Quit
 	${Case} 1062
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LOGONERROR)" /SD IDOK
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LogonError)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
 		Quit
 	${Default}
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UACERROR) ($0)" /SD IDOK
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UacError) ($0)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 		Quit
 	${EndSwitch}
@@ -141,7 +143,7 @@ Function .onInit
 	${IfNot} ${UAC_IsInnerInstance}
 		${IfNot} ${AtLeastWin10}
 		${OrIfNot} ${AtLeastBuild} 15063
-			MessageBox MB_OK|MB_ICONSTOP "$(UNSUPPORTEDWINERROR)" /SD IDOK
+			MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
 			Quit
 		${EndIf}
@@ -153,8 +155,10 @@ Function .onInit
 			${If} $0 == ""
 			${OrIf} $0 <> $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
-				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
+				; New install or better match. In case the default is English, strip away English string to
+				; avoid showing it twice.
+				${StrRep} $1 "$(SelectLanguage)$\n$\n" "Please select the installer language.$\n$\n" ""
+				LangDLL::LangDialog "$(^SetupCaption)" "$1Please select the installer language." AC ${LANGDLL_PARAMS} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -308,13 +312,13 @@ Function PageWelcome
 			; Skip page
 			Abort
 		${Else}
-			MessageBox MB_OK|MB_ICONSTOP "$(ADMINERROR) (Inner)" /SD IDOK
+			MessageBox MB_OK|MB_ICONSTOP "$(AdminError) (Inner)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 			Quit
 		${EndIf}
 	${EndIf}
 
-	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(^ComponentsSubText1)"
+	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(^ComponentsSubText1)"
 	nsDialogs::Create 1044
 	Pop $0
 	nsDialogs::SetRTL $(^RTL)
@@ -335,23 +339,23 @@ Function PageWelcome
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(STANDARDINST)"
+	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(StandardInstall)"
 	Pop $R1
 	SetCtlColors $R1 "" "${MUI_BGCOLOR}"
 	${NSD_AddStyle} $R1 ${WS_GROUP}
 	SendMessage $R1 ${WM_SETFONT} $mui.Header.Text.Font 0
 
-	${NSD_CreateLabel} 132u 82u 185u 24u "$(STANDARDINSTDESC)"
+	${NSD_CreateLabel} 132u 82u 185u 24u "$(StandardInstallDescription)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PORTABLEINST)"
+	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PortableInstall)"
 	Pop $R2
 	SetCtlColors $R2 "" "${MUI_BGCOLOR}"
 	${NSD_AddStyle} $R2 ${WS_TABSTOP}
 	SendMessage $R2 ${WM_SETFONT} $mui.Header.Text.Font 0
 
-	${NSD_CreateLabel} 132u 118u 185u 39u "$(PORTABLEINSTDESC)"
+	${NSD_CreateLabel} 132u 118u 185u 39u "$(PortableInstallDescription)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
@@ -387,7 +391,7 @@ Function PageOptions
 		Abort
 	${EndIf}
 
-	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(INSTALLOPTIONSDESC)"
+	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(InstallOptionsDescription)"
 	nsDialogs::Create 1018
 	nsDialogs::SetRTL $(^RTL)
 
@@ -408,7 +412,7 @@ Function PageOptions
 		${If} $InstallPortable = 1
 		${OrIf} $INSTDIR == ""
 		${OrIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
-			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
+			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(Install64Bit)"
 			Pop $R2
 			StrCpy $1 30u
 		${EndIf}
@@ -423,7 +427,7 @@ Function PageOptions
 			StrCpy $1 42u
 		${EndIf}
 
-		${NSD_CreateCheckbox} 6u $0 285u 12u "$(AUTOSTARTUP)"
+		${NSD_CreateCheckbox} 6u $0 285u 12u "$(AutoStartup)"
 		Pop $R3
 
 		${If} $INSTDIR == ""
@@ -444,7 +448,7 @@ Function PageOptions
 	${EndIf}
 
 	${If} $1 <> 0
-		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
+		${NSD_CreateGroupBox} 0 42u -1u $1 "$(AdditionalOptions)"
 	${EndIf}
 
 	; Set default directory
@@ -597,7 +601,7 @@ Section
 
 	${If} ${Errors}
 		RMDir "$INSTDIR"
-		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)" /SD IDOK
+		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WriteError)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
 		Quit
 	${EndIf}
@@ -632,7 +636,7 @@ Section
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RainmeterCloseError)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}
@@ -648,14 +652,14 @@ Retry:
 			${If} $Install64Bit = 1
 			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
 			${OrIf} "$INSTDIR" == "$PROGRAMFILES\Rainmeter"
-				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SETTINGSFILEERROR)" /SD IDNO IDNO SkipIniMove
+				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SettingsFileError)" /SD IDNO IDNO SkipIniMove
 				StrCpy $0 1
 				!insertmacro UAC_AsUser_Call Function CopyIniToAppData ${UAC_SYNCREGISTERS}
 				${If} $0 = 1
 					; Copy succeeded
 					Delete "$INSTDIR\Rainmeter.ini"
 				${Else}
-					MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)" /SD IDOK
+					MessageBox MB_OK|MB_ICONSTOP "$(SettingsMoveError)" /SD IDOK
 				${EndIf}
 SkipIniMove:
 			${EndIf}
@@ -715,7 +719,7 @@ SkipIniMove:
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\x32-Release\Languages\*.*"
+	File "..\..\x32-Release\Languages\*.rmlang"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"
@@ -909,19 +913,19 @@ Function un.onInit
 FunctionEnd
 
 Function un.PageOptions
-	!insertmacro MUI_HEADER_TEXT "$(UNSTALLOPTIONS)" "$(UNSTALLOPTIONSDESC)"
+	!insertmacro MUI_HEADER_TEXT "$(UninstallOptions)" "$(UninstallOptionsDescription)"
 	nsDialogs::Create 1018
 	nsDialogs::SetRTL $(^RTL)
 
-	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UNSTALLRAINMETER)"
+	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UninstallRainmeter)"
 	Pop $0
 	EnableWindow $0 0
 	${NSD_Check} $0
 
-	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UNSTALLSETTINGS)"
+	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UninstallSettings)"
 	Pop $R0
 
-	${NSD_CreateLabel} 16 26u 95% 12u "$(UNSTALLSETTINGSDESC)"
+	${NSD_CreateLabel} 16 26u 95% 12u "$(UninstallSettingsDescription)"
 
 	nsDialogs::Show
 FunctionEnd
@@ -944,7 +948,7 @@ Section Uninstall
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RainmeterCloseError)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}

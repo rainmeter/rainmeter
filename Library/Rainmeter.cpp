@@ -118,8 +118,7 @@ Rainmeter::Rainmeter() :
 	m_Window(),
 	m_Mutex(),
 	m_Instance(),
-	m_ResourceInstance(),
-	m_ResourceLCID(),
+	m_Language(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor(),
 	m_HardwareAccelerated(false)
@@ -377,7 +376,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 
 	// Determine the language resource to load
-	std::wstring resource = m_Path + L"Languages\\";
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
 	{
 		// Use whatever the user selected for the installer
@@ -397,22 +395,14 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (buffer[0] != L'\0')
 	{
 		// Try selected language
-		m_ResourceLCID = wcstoul(buffer, nullptr, 10);
-		resource += buffer;
-		resource += L".dll";
-
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		LoadLanguage(buffer);
 	}
-	if (!m_ResourceInstance)
+	if (!m_Language.IsLoaded())
 	{
 		// Try English
-		resource = m_Path;
-		resource += L"Languages\\1033.dll";
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		m_ResourceLCID = 1033;
-		if (!m_ResourceInstance)
+		if (!LoadLanguage(L"en"))
 		{
-			MessageBox(nullptr, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			clearBuffer();
 			return 1;
 		}
@@ -470,9 +460,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 #endif // COMMIT_HASH
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
+	GetLocaleInfo(GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
-	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
+	LogNoticeF(L"Language: %s (%lu)", lang, GetResourceLCID());
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());
 
@@ -512,7 +502,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	if (m_SkinRegistry.IsEmpty())
 	{
-		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
+		std::wstring error = GetFormattedString(IDS_NoAvailableSkins, m_SkinPath.c_str());
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 
@@ -523,8 +513,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		int result = MessageBox(
 			nullptr,
-			GetString(ID_STR_SAFESTART_MESSAGE),
-			GetString(ID_STR_SAFESTART_TITLE),
+			GetString(IDS_SafeStartMessage),
+			GetString(IDS_SafeStartTitle),
 			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
 		if (result == IDYES)
 		{
@@ -602,12 +592,6 @@ void Rainmeter::Finalize()
 	if (m_DesktopWorkAreaChanged)
 	{
 		UpdateDesktopWorkArea(true);
-	}
-
-	if (m_ResourceInstance)
-	{
-		FreeLibrary(m_ResourceInstance);
-		m_ResourceInstance = nullptr;
 	}
 
 	if (m_Mutex)
@@ -1179,7 +1163,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 
 		if (_waccess_s(skinIniPath.c_str(), 0) != 0)
 		{
-			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
+			std::wstring message = GetFormattedString(IDS_UnableToActivateSkin, folderPath.c_str(), fileSz);
 			ShowMessage(nullptr, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return;
 		}
@@ -1832,7 +1816,7 @@ void Rainmeter::RefreshAll()
 				if (!found)
 				{
 					const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
-					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, skinIniFile);
+					std::wstring error = GetFormattedString(IDS_UnableToRefreshSkin, skinFolderPath, skinIniFile);
 
 					DeactivateSkin(skin, index);
 
@@ -1843,7 +1827,7 @@ void Rainmeter::RefreshAll()
 			else
 			{
 				const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
-				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, L"");
+				std::wstring error = GetFormattedString(IDS_UnableToRefreshSkin, skinFolderPath, L"");
 
 				DeactivateSkin(skin, -2);  // -2 = Force deactivate
 
@@ -2148,7 +2132,7 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
 
-	if (*GetString(ID_STR_ISRTL) == L'1')
+	if (IsLanguageRTL())
 	{
 		type |= MB_RTLREADING;
 	}
@@ -2226,18 +2210,18 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	const WCHAR* iniFile = m_IniFile.c_str();
 	if (!System::IsFileWritable(iniFile))
 	{
-		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
+		std::wstring error = GetString(IDS_SettingsNotWritable);
 
 		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			PathUtil::ExpandEnvironmentVariables(strTarget);
 
-			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, iniFile, strTarget.c_str());
+			error += GetFormattedString(IDS_SettingsMoveFile, iniFile, strTarget.c_str());
 		}
 		else
 		{
-			error += GetFormattedString(ID_STR_SETTINGSREADONLY, iniFile);
+			error += GetFormattedString(IDS_SettingsReadOnly, iniFile);
 		}
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);

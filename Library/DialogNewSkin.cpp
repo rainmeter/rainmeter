@@ -40,10 +40,10 @@ void DialogNewSkin::Open(int tab)
 	}
 
 	c_Dialog->ShowDialogWindow(
-		GetString(ID_STR_CREATENEWSKIN),
+		GetString(IDS_CreateNewSkin),
 		0, 0, 300, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -136,7 +136,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						// Template file doesn't exist, so ask user if they would like a default template instead.
 						templateExists = false;
 
-						const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, selectedTemplate.c_str());
+						const std::wstring text = GetFormattedString(IDS_TemplateDoesNotExist, selectedTemplate.c_str());
 						if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 						{
 							// Cancel
@@ -148,7 +148,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						if (templateFile.empty())
 						{
 							// Could not create the skin using the default template
-							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+							const std::wstring text = GetFormattedString(IDS_CreateFileFail, file.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							break;
 						}
@@ -160,7 +160,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						if (!System::CopyFiles(templateFile, folder))
 						{
 							// Could not create the skin using the selected template
-							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+							const std::wstring text = GetFormattedString(IDS_CreateFileFail, file.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							break;
 						}
@@ -173,7 +173,7 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (folder.empty())
 					{
 						// Could not create the skin
-						const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, file.c_str());
+						const std::wstring text = GetFormattedString(IDS_CreateFileFail, file.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 						break;
 					}
@@ -213,7 +213,7 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	static const Control s_Controls[] =
 	{
-		Control::Button(Id_CloseButton, ID_STR_CLOSE,
+		Control::Button(Id_CloseButton, IDS_Close,
 			243, 231, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		Control::Tab(Id_Tab, 0,
@@ -226,8 +226,8 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Load template filenames
 	LoadTemplates();
 
-	AddTab(Id_Tab, m_TabNew, GetString(ID_STR_NEWSKIN));
-	AddTab(Id_Tab, m_TabTemplate, GetString(ID_STR_TEMPLATE));
+	AddTab(Id_Tab, m_TabNew, GetString(IDS_NewSkin));
+	AddTab(Id_Tab, m_TabTemplate, GetString(IDS_Template));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -360,28 +360,28 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 	buttonWidth += 10;
 	short column1 = (268 - buttonWidth);
 
 	static const Control s_Controls[] =
 	{
-		Control::Label(Id_ParentPathLabel, ID_STR_ELLIPSIS,
+		Control::Label(Id_ParentPathLabel, IDS_Ellipsis,
 			0, 0, 268, 14,
 			WS_VISIBLE | SS_CENTERIMAGE | SS_PATHELLIPSIS | SS_NOTIFY | WS_BORDER, 0),
 		Control::TreeView(Id_ItemsTreeView, 0,
 			0, 19, 268 - buttonWidth - 10, 169,
 			WS_VISIBLE | WS_TABSTOP | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_VSCROLL, WS_EX_CLIENTEDGE),
-		Control::Button(Id_AddFolderButton, ID_STR_ADDFOLDER,
+		Control::Button(Id_AddFolderButton, IDS_AddFolder,
 			column1, 19, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_AddResourcesButton, ID_STR_ADDRESOURCES,
+		Control::Button(Id_AddResourcesButton, IDS_AddResources,
 			column1, 38, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_AddSkinButton, ID_STR_ADDSKIN,
+		Control::Button(Id_AddSkinButton, IDS_AddSkin,
 			column1, 57, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_TemplateDropDownList, ID_STR_TEMPLATEE,
+		Control::Button(Id_TemplateDropDownList, IDS_TemplateEllipsis,
 			column1, 76, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
@@ -502,7 +502,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			BOOL exists = CreateDirectory(resources.c_str(), NULL);
 			if (!exists && GetLastError() == ERROR_PATH_NOT_FOUND)
 			{
-				const std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, L"@Resources");
+				const std::wstring text = GetFormattedString(IDS_CreateFolderFail, L"@Resources");
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				TreeView_DeleteItem(tree, tvi.item.hItem);
 				return 0;
@@ -517,7 +517,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			static const MenuTemplate s_Menu[] =
 			{
-				MENU_ITEM(IDM_DEFAULT_TEMPLATE, ID_STR_USEDEFAULTTEMPLATE)
+				MENU_ITEM(IDM_DEFAULT_TEMPLATE, IDS_UseDefaultTemplate)
 			};
 
 			HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -532,7 +532,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
+					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -583,7 +583,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring folder = m_ParentFolder + GetTreeSelectionPath(tree, false);
 			PathUtil::AppendBackslashIfMissing(folder);
 
-			std::wstring text = GetFormattedString(ID_STR_FOLDERDELETE, folder.c_str());
+			std::wstring text = GetFormattedString(IDS_FolderDelete, folder.c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
@@ -592,7 +592,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (!System::RemoveFolder(folder))
 			{
-				text = GetFormattedString(ID_STR_FOLDERDELETEFAIL, folder.c_str());
+				text = GetFormattedString(IDS_FolderDeleteFail, folder.c_str());
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				return 0;
 			}
@@ -635,7 +635,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND tree = GetControl(Id_ItemsTreeView);
 			std::wstring file = m_ParentFolder + GetTreeSelectionPath(tree, true);
 
-			std::wstring text = GetFormattedString(ID_STR_FILEDELETE, file.c_str());
+			std::wstring text = GetFormattedString(IDS_FileDelete, file.c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
@@ -644,7 +644,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (!System::RemoveFile(file))
 			{
-				text = GetFormattedString(ID_STR_FOLDERDELETEFAIL, file.c_str());
+				text = GetFormattedString(IDS_FolderDeleteFail, file.c_str());
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				return 0;
 			}
@@ -766,8 +766,8 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Folder menu.
 						static const MenuTemplate s_Menu[] =
 						{
-							MENU_ITEM(IDM_NEWSKINMENU_EXPAND, ID_STR_EXPAND),
-							MENU_ITEM(IDM_NEWSKINMENU_OPENFOLDER, ID_STR_OPENFOLDER)
+							MENU_ITEM(IDM_NEWSKINMENU_EXPAND, IDS_Expand),
+							MENU_ITEM(IDM_NEWSKINMENU_OPENFOLDER, IDS_OpenFolder)
 						};
 
 						MENUITEMINFO mii = { 0 };
@@ -789,16 +789,16 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							folder = folder.substr(GetRainmeter().GetSkinPath().size());
 							if (!GetRainmeter().m_SkinRegistry.FindFolder(folder))
 							{
-								std::wstring text = GetString(ID_STR_RENAME);
+								std::wstring text = GetString(IDS_Rename);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFOLDERNAME, text.c_str());
-								text = GetString(ID_STR_DELETE);
+								text = GetString(IDS_Delete);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_DELETEFOLDER, text.c_str());
 							}
 						}
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = GetString(ID_STR_COLLAPSE);
+							mii.dwTypeData = GetString(IDS_Collapse);
 							SetMenuItemInfo(menu, IDM_NEWSKINMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 
@@ -813,7 +813,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Skin menu.
 						static const MenuTemplate s_Menu[] =
 						{
-							MENU_ITEM(IDM_NEWSKINMENU_EDITSKIN, ID_STR_EDITSKIN)
+							MENU_ITEM(IDM_NEWSKINMENU_EDITSKIN, IDS_EditSkin)
 						};
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -833,9 +833,9 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 								GetRainmeter().m_SkinRegistry.FindIndexes(folder, file);
 							if (!indexes.IsValid())
 							{
-								std::wstring text = GetString(ID_STR_RENAME);
+								std::wstring text = GetString(IDS_Rename);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_EDITFILENAME, text.c_str());
-								text = GetString(ID_STR_DELETE);
+								text = GetString(IDS_Delete);
 								AppendMenu(menu, MF_BYPOSITION, IDM_NEWSKINMENU_DELETEFILE, text.c_str());
 							}
 						}
@@ -926,7 +926,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 			// Find out if item already exists in tree
 			if (DoesNodeExist(info->item.hItem, info->item.pszText, isFolder))
 			{
-				const UINT msg = isFolder ? ID_STR_FOLDEREXISTS : ID_STR_FILEEXISTS;
+				const UINT msg = isFolder ? IDS_FolderExists : IDS_FileExists;
 				const std::wstring text = GetFormattedString(msg, name.c_str());
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 				enterEditMode(tree, info->item.hItem);
@@ -954,7 +954,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Invalid path
 						m_InRenameMode = false;
 						const std::wstring error = std::to_wstring(GetLastError());
-						const std::wstring text = GetFormattedString(ID_STR_RENAMEFOLDERFAIL, name.c_str(), error.c_str());
+						const std::wstring text = GetFormattedString(IDS_RenameFolderFail, name.c_str(), error.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 						return FALSE;
 					}
@@ -974,7 +974,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					if (_waccess_s(newItem.c_str(), 0) == 0 &&
 						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
-						const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
+						const std::wstring text = GetFormattedString(IDS_FolderExists, name.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 						enterEditMode(tree, info->item.hItem);
 						return TRUE;
@@ -986,7 +986,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					if (!success)
 					{
 						const std::wstring error = std::to_wstring(GetLastError());
-						const std::wstring text = GetFormattedString(ID_STR_RENAMEFOLDERFAIL, name.c_str(), error.c_str());
+						const std::wstring text = GetFormattedString(IDS_RenameFolderFail, name.c_str(), error.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 						return FALSE;
 					}
@@ -1011,14 +1011,14 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						DWORD error = GetLastError();
 						if (error == ERROR_ALREADY_EXISTS)
 						{
-							const std::wstring text = GetFormattedString(ID_STR_FOLDEREXISTS, name.c_str());
+							const std::wstring text = GetFormattedString(IDS_FolderExists, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 							enterEditMode(tree, info->item.hItem);
 							return TRUE;
 						}
 						else
 						{
-							const std::wstring text = GetFormattedString(ID_STR_CREATEFOLDERFAIL, name.c_str());
+							const std::wstring text = GetFormattedString(IDS_CreateFolderFail, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							TreeView_DeleteItem(tree, info->item.hItem);
 							return FALSE;
@@ -1062,7 +1062,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Invalid path
 						m_InRenameMode = false;
 						const std::wstring error = std::to_wstring(GetLastError());
-						const std::wstring text = GetFormattedString(ID_STR_RENAMEFILEFAIL, name.c_str(), error.c_str());
+						const std::wstring text = GetFormattedString(IDS_RenameFileFail, name.c_str(), error.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 						return FALSE;
 					}
@@ -1082,7 +1082,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						_wcsicmp(oldItem.c_str(), newItem.c_str()) != 0)
 					{
 						// File exists, enter edit mode
-						const std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
+						const std::wstring text = GetFormattedString(IDS_FileExists, name.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 						enterEditMode(tree, info->item.hItem);
 						return TRUE;
@@ -1095,7 +1095,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						// Could not rename file
 						const std::wstring error = std::to_wstring(GetLastError());
-						const std::wstring text = GetFormattedString(ID_STR_RENAMEFILEFAIL, name.c_str(), error.c_str());
+						const std::wstring text = GetFormattedString(IDS_RenameFileFail, name.c_str(), error.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 						return FALSE;
 					}
@@ -1110,7 +1110,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					if (PathFileExists(newItem.c_str()) == TRUE)
 					{
 						// The skin file already exists
-						const std::wstring text = GetFormattedString(ID_STR_FILEEXISTS, name.c_str());
+						const std::wstring text = GetFormattedString(IDS_FileExists, name.c_str());
 						GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 						enterEditMode(tree, info->item.hItem);
 						return TRUE;
@@ -1126,7 +1126,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						if (newFile.empty())
 						{
 							// Could not create default template file
-							const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+							const std::wstring text = GetFormattedString(IDS_CreateFileFail, name.c_str());
 							GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 							TreeView_DeleteItem(tree, info->item.hItem);
 							return FALSE;
@@ -1144,7 +1144,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							// Template file doesn't exist, so ask user if they would like a default template instead.
 							templateExists = false;
 
-							std::wstring text = GetFormattedString(ID_STR_TEMPLATEDOESNOTEXIST, m_SelectedTemplate.c_str());
+							std::wstring text = GetFormattedString(IDS_TemplateDoesNotExist, m_SelectedTemplate.c_str());
 							if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 							{
 								// 'No' button was pushed
@@ -1157,7 +1157,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							if (templateFile.empty())
 							{
 								// Could not create skin using the default template
-								text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+								text = GetFormattedString(IDS_CreateFileFail, name.c_str());
 								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 								TreeView_DeleteItem(tree, info->item.hItem);
 								return FALSE;
@@ -1170,7 +1170,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 							if (!System::CopyFiles(templateFile, newItem))
 							{
 								// Could not create the skin using the selected template
-								const std::wstring text = GetFormattedString(ID_STR_CREATEFILEFAIL, name.c_str());
+								const std::wstring text = GetFormattedString(IDS_CreateFileFail, name.c_str());
 								GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 								TreeView_DeleteItem(tree, info->item.hItem);
 								return FALSE;
@@ -1629,34 +1629,34 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 	short column1 = (268 - buttonWidth - 6);
 
 	static const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, ID_STR_SAVENEWTEMPLATE,
+		Control::GroupBox(-0, IDS_SaveNewTemplate,
 			0, 0, 268, 36,
 			WS_VISIBLE, 0),
-		Control::Label(-0, ID_STR_NAMESC,
+		Control::Label(-0, IDS_NameColon,
 			6, 16, 55, 9,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_NewEdit, 0,
 			66, 14, column1 - 66 - 10, 14,
 			WS_VISIBLE | WS_TABSTOP, WS_EX_CLIENTEDGE),
-		Control::Button(Id_SaveButton, ID_STR_SAVE,
+		Control::Button(Id_SaveButton, IDS_Save,
 			column1, 14, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::GroupBox(-0, ID_STR_SAVEDTEMPLATES,
+		Control::GroupBox(-0, IDS_SavedTemplates,
 			0, 43, 268, 143,
 			WS_VISIBLE , 0),
 		Control::ListBox(Id_TemplateListBox, 0,
 			6, 59, column1 - 16, 119,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_SORT | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
-		Control::Button(Id_EditButton, ID_STR_EDIT,
+		Control::Button(Id_EditButton, IDS_Edit,
 			column1, 59, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_DeleteButton, ID_STR_DELETE,
+		Control::Button(Id_DeleteButton, IDS_Delete,
 			column1, 78, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
@@ -1710,7 +1710,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess_s(templateFile.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
-				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEEXISTS, buffer);
+				const std::wstring text = GetFormattedString(IDS_TemplateExists, buffer);
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_OK);
 				break;
 			}
@@ -1719,7 +1719,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 			BOOL exists = CreateDirectory(templateFolder.c_str(), NULL);
 			if (!exists && GetLastError() == ERROR_PATH_NOT_FOUND)
 			{
-				const std::wstring text = GetString(ID_STR_TEMPLATEFOLDERFAIL);
+				const std::wstring text = GetString(IDS_TemplateFolderFail);
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				break;
 			}
@@ -1728,7 +1728,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (templateFile.empty())  // Could not create template file
 			{
-				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEFILEFAIL, buffer);
+				const std::wstring text = GetFormattedString(IDS_TemplateFileFail, buffer);
 				GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONERROR | MB_OK);
 				break;
 			}
@@ -1789,7 +1789,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 			const int selected = ListBox_GetCurSel(item);
 			if (ListBox_GetText(item, selected, buffer) > 0)
 			{
-				const std::wstring text = GetFormattedString(ID_STR_TEMPLATEDELETE, buffer);
+				const std::wstring text = GetFormattedString(IDS_TemplateDelete, buffer);
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 				{
 					// Cancel

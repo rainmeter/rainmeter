@@ -74,10 +74,10 @@ void DialogManage::Open(int tab)
 	}
 
 	c_Dialog->ShowDialogWindow(
-		GetString(ID_STR_MANAGERAINMETER),
+		GetString(IDS_ManageRainmeter),
 		0, 0, 510, 322,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -237,23 +237,23 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 
 	const Control s_Controls[] =
 	{
-		Control::Button(Id_RefreshAllButton, ID_STR_REFRESHALL,
+		Control::Button(Id_RefreshAllButton, IDS_RefreshAll,
 			5, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_EditSettingsButton, ID_STR_EDITSETTINGS,
+		Control::Button(Id_EditSettingsButton, IDS_EditSettings,
 			buttonWidth + 9, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_OpenLogButton, ID_STR_OPENLOG,
+		Control::Button(Id_OpenLogButton, IDS_OpenLog,
 			buttonWidth + buttonWidth + 13, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_HelpButton, ID_STR_HELP,
+		Control::Button(Id_HelpButton, IDS_Help,
 			397, 303, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_CloseButton, ID_STR_CLOSE,
+		Control::Button(Id_CloseButton, IDS_Close,
 			453, 303, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		Control::Tab(Id_Tab, 0,
@@ -263,10 +263,10 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
-	AddTab(Id_Tab, m_TabSkins, GetString(ID_STR_SKINS));
-	AddTab(Id_Tab, m_TabLayouts, GetString(ID_STR_THEMES));
-	AddTab(Id_Tab, m_TabGameMode, GetString(ID_STR_GAMEMODE));
-	AddTab(Id_Tab, m_TabSettings, GetString(ID_STR_SETTINGS));
+	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
+	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Themes));
+	AddTab(Id_Tab, m_TabGameMode, GetString(IDS_GameMode));
+	AddTab(Id_Tab, m_TabSettings, GetString(IDS_Settings));
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -386,11 +386,11 @@ void DialogManage::TabSkins::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)_wtoi(GetString(ID_STR_NUM_LABELWIDTH));
+	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
 
 	const Control s_Controls[] =
 	{
-		Control::Button(Id_ActiveSkinsButton, ID_STR_ACTIVESKINS,
+		Control::Button(Id_ActiveSkinsButton, IDS_ActiveSkins,
 			0, 0, 134, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Icon(Id_NewSkinButton, 0,
@@ -399,52 +399,52 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::TreeView(Id_SkinsTreeView, 0,
 			0, 18, 155, 221,
 			WS_VISIBLE | WS_TABSTOP | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_VSCROLL, WS_EX_CLIENTEDGE),
-		Control::Button(Id_CreateSkinPackageButton, ID_STR_CREATERMSKINPACKAGE,
+		Control::Button(Id_CreateSkinPackageButton, IDS_CreateRmskin,
 			0, 244, 156, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
-		Control::Label(Id_FileLabel, ID_STR_ELLIPSIS,
+		Control::Label(Id_FileLabel, IDS_Ellipsis,
 			175, 0, 130, 14,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0,
 			Control::ANCHOR_TOP_LEFT | Control::BOLD_FONT),
 		Control::Label(Id_ConfigLabel, 0,
 			175, 15, 130, 14,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		Control::Button(Id_LoadButton, ID_STR_LOAD,
+		Control::Button(Id_LoadButton, IDS_Load,
 			320, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_RefreshButton, ID_STR_REFRESH,
+		Control::Button(Id_RefreshButton, IDS_Refresh,
 			374, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_EditButton, ID_STR_EDIT,
+		Control::Button(Id_EditButton, IDS_Edit,
 			428, 0, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::Label(-0, ID_STR_AUTHORSC,
+		Control::Label(-0, IDS_AuthorColon,
 			175, 30, 80, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		Control::Label(Id_AuthorLabel, 0,
 			240, 30, 245, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		Control::Label(-0, ID_STR_VERSIONSC,
+		Control::Label(-0, IDS_VersionColon,
 			175, 43, 80, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		Control::Label(Id_VersionLabel, 0,
 			240, 43, 245, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		Control::Label(-0, ID_STR_LICENSESC,
+		Control::Label(-0, IDS_LicenseColon,
 			175, 56, 80, 13,
 			WS_VISIBLE | WS_TABSTOP | SS_NOPREFIX, 0),
 		Control::Label(Id_LicenseLabel, 0,
 			240, 56, 245, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		Control::Label(-0, ID_STR_INFORMATIONSC,
+		Control::Label(-0, IDS_InformationColon,
 			175, 69, 80, 13,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		Control::Edit(Id_DescriptionLabel, 0,
 			238, 69, 238, 78,
 			WS_VISIBLE | ES_MULTILINE | ES_READONLY, 0),
-		Control::LinkLabel(Id_AddMetadataLink, ID_STR_ADDMETADATA,
+		Control::LinkLabel(Id_AddMetadataLink, IDS_AddMetadata,
 			175, 95, 150, 13,
 			0, 0),
 
@@ -452,7 +452,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 			175, 153, 304, 1,
 			WS_VISIBLE, 0),
 
-		Control::Label(-0, ID_STR_COORDINATESSC,
+		Control::Label(-0, IDS_CoordinatesColon,
 			175, 163, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_XPositionEdit, 0,
@@ -461,50 +461,50 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::Edit(Id_YPositionEdit, 0,
 			175 + labelWidth + 42, 162, 38, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
-		Control::Label(-0, ID_STR_POSITIONSC,
+		Control::Label(-0, IDS_PositionColon,
 			175, 184, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::ComboBox(Id_ZPositionDropDownList, 0,
 			175 + labelWidth, 182, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, ID_STR_LOADORDERSC,
+		Control::Label(-0, IDS_LoadOrderColon,
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_LoadOrderEdit, 0,
 			175 + labelWidth, 202, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
-		Control::Label(-0, ID_STR_TRANSPARENCYSC,
+		Control::Label(-0, IDS_TransparencyColon,
 			175, 224, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::ComboBox(Id_TransparencyDropDownList, 0,
 			175 + labelWidth, 221, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, ID_STR_ONHOVERSC,
+		Control::Label(-0, IDS_OnHoverColon,
 			175, 243, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::ComboBox(Id_OnHoverDropDownList, 0,
 			175 + labelWidth, 241, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
 
-		Control::Button(Id_DisplayMonitorButton, ID_STR_DISPLAYMONITOR,
+		Control::Button(Id_DisplayMonitorButton, IDS_DisplayMonitor,
 			359, 162, 119, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_ClickThroughCheckBox, ID_STR_CLICKTHROUGH,
+		Control::CheckBox(Id_ClickThroughCheckBox, IDS_ClickThrough,
 			360, 182, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_DraggableCheckBox, ID_STR_DRAGGABLE,
+		Control::CheckBox(Id_DraggableCheckBox, IDS_Draggable,
 			360, 195, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_KeepOnScreenCheckBox, ID_STR_KEEPONSCREEN,
+		Control::CheckBox(Id_KeepOnScreenCheckBox, IDS_KeepOnScreen,
 			360, 208, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_SavePositionCheckBox, ID_STR_SAVEPOSITION,
+		Control::CheckBox(Id_SavePositionCheckBox, IDS_SavePosition,
 			360, 221, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_SnapToEdgesCheckBox, ID_STR_SNAPTOEDGES,
+		Control::CheckBox(Id_SnapToEdgesCheckBox, IDS_SnapToEdges,
 			360, 234, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::CheckBox(Id_FavoriteCheckBox, ID_STR_FAVORITE,
+		Control::CheckBox(Id_FavoriteCheckBox, IDS_Favorite,
 			360, 247, 118, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
@@ -528,7 +528,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	toolInfo.hwnd = m_Window;
 	toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 	toolInfo.uId = (UINT_PTR)item;
-	toolInfo.lpszText = GetString(ID_STR_CREATENEWSKIN);
+	toolInfo.lpszText = GetString(IDS_CreateNewSkin);
 	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
@@ -582,17 +582,17 @@ void DialogManage::TabSkins::Initialize()
 	ComboBox_AddString(item, L"~100%");
 
 	item = GetControl(Id_ZPositionDropDownList);
-	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP));
-	ComboBox_AddString(item, GetString(ID_STR_BOTTOM));
-	ComboBox_AddString(item, GetString(ID_STR_NORMAL));
-	ComboBox_AddString(item, GetString(ID_STR_TOPMOST));
-	ComboBox_AddString(item, GetString(ID_STR_STAYTOPMOST));
+	ComboBox_AddString(item, GetString(IDS_OnDesktop));
+	ComboBox_AddString(item, GetString(IDS_Bottom));
+	ComboBox_AddString(item, GetString(IDS_Normal));
+	ComboBox_AddString(item, GetString(IDS_Topmost));
+	ComboBox_AddString(item, GetString(IDS_StayTopmost));
 
 	item = GetControl(Id_OnHoverDropDownList);
-	ComboBox_AddString(item, GetString(ID_STR_DONOTHING));
-	ComboBox_AddString(item, GetString(ID_STR_HIDE));
-	ComboBox_AddString(item, GetString(ID_STR_FADEIN));
-	ComboBox_AddString(item, GetString(ID_STR_FADEOUT));
+	ComboBox_AddString(item, GetString(IDS_DoNothing));
+	ComboBox_AddString(item, GetString(IDS_Hide));
+	ComboBox_AddString(item, GetString(IDS_FadeIn));
+	ComboBox_AddString(item, GetString(IDS_FadeOut));
 
 	m_Initialized = true;
 	m_HandleCommands = true;
@@ -716,7 +716,7 @@ void DialogManage::TabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		SetWindowText(item, GetString(ID_STR_UNLOAD));
+		SetWindowText(item, GetString(IDS_Unload));
 
 		item = GetControl(Id_RefreshButton);
 		EnableWindow(item, TRUE);
@@ -786,7 +786,7 @@ void DialogManage::TabSkins::SetControls()
 	}
 	else
 	{
-		SetWindowText(item, GetString(ID_STR_LOAD));
+		SetWindowText(item, GetString(IDS_Load));
 	}
 }
 
@@ -811,7 +811,7 @@ void DialogManage::TabSkins::UpdateDraggableCheckBox()
 void DialogManage::TabSkins::DisableControls(bool clear)
 {
 	HWND item = GetControl(Id_LoadButton);
-	SetWindowText(item, GetString(ID_STR_LOAD));
+	SetWindowText(item, GetString(IDS_Load));
 
 	if (clear)
 	{
@@ -821,7 +821,7 @@ void DialogManage::TabSkins::DisableControls(bool clear)
 		EnableWindow(item, FALSE);
 
 		item = GetControl(Id_FileLabel);
-		SetWindowText(item, GetString(ID_STR_ELLIPSIS));
+		SetWindowText(item, GetString(IDS_Ellipsis));
 
 		item = GetControl(Id_ConfigLabel);
 		SetWindowText(item, L"");
@@ -1269,7 +1269,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
+					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1432,11 +1432,11 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			static const MenuTemplate s_Menu[] =
 			{
-				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, ID_STR_USEDEFAULTMONITOR),
-				MENU_ITEM(ID_MONITOR_FIRST, ID_STR_VIRTUALSCREEN),
+				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
+				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
 				MENU_SEPARATOR(),
 				MENU_SEPARATOR(),
-				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, ID_STR_AUTOSELECTMONITOR)
+				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)
 			};
 
 			HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -1451,7 +1451,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
+					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1650,9 +1650,9 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Folder menu.
 						static const MenuTemplate s_Menu[] =
 						{
-							MENU_ITEM(IDM_MANAGESKINSMENU_EXPAND, ID_STR_EXPAND),
-							MENU_ITEM(IDM_MANAGESKINSMENU_OPENFOLDER, ID_STR_OPENFOLDER),
-							MENU_ITEM(IDM_CREATENEWSKIN, ID_STR_CREATENEWSKIN)
+							MENU_ITEM(IDM_MANAGESKINSMENU_EXPAND, IDS_Expand),
+							MENU_ITEM(IDM_MANAGESKINSMENU_OPENFOLDER, IDS_OpenFolder),
+							MENU_ITEM(IDM_CREATENEWSKIN, IDS_CreateNewSkin)
 						};
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -1660,7 +1660,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = GetString(ID_STR_COLLAPSE);
+							mii.dwTypeData = GetString(IDS_Collapse);
 							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
@@ -1669,9 +1669,9 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Skin menu.
 						static const MenuTemplate s_Menu[] =
 						{
-							MENU_ITEM(IDM_MANAGESKINSMENU_LOAD, ID_STR_LOAD),
-							MENU_ITEM(IDM_MANAGESKINSMENU_REFRESH, ID_STR_REFRESH),
-							MENU_ITEM(IDM_MANAGESKINSMENU_EDIT, ID_STR_EDIT),
+							MENU_ITEM(IDM_MANAGESKINSMENU_LOAD, IDS_Load),
+							MENU_ITEM(IDM_MANAGESKINSMENU_REFRESH, IDS_Refresh),
+							MENU_ITEM(IDM_MANAGESKINSMENU_EDIT, IDS_Edit),
 						};
 
 						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -1679,7 +1679,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (m_SkinWindow)
 						{
-							mii.dwTypeData = GetString(ID_STR_UNLOAD);
+							mii.dwTypeData = GetString(IDS_Unload);
 							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else
@@ -1776,44 +1776,44 @@ void DialogManage::TabLayouts::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, ID_STR_SAVEDTHEMES,
+		Control::GroupBox(-0, IDS_SavedThemes,
 			0, 0, 235, 260,
 			WS_VISIBLE, 0),
 		Control::ListBox(Id_List, 0,
 			6, 16, 165, 235,
 			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE),
-		Control::Button(Id_LoadButton, ID_STR_LOAD,
+		Control::Button(Id_LoadButton, IDS_Load,
 			177, 16, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_EditButton, ID_STR_EDIT,
+		Control::Button(Id_EditButton, IDS_Edit,
 			177, 34, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_DeleteButton, ID_STR_DELETE,
+		Control::Button(Id_DeleteButton, IDS_Delete,
 			177, 52, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::GroupBox(-0, ID_STR_SAVENEWTHEME,
+		Control::GroupBox(-0, IDS_SaveNewTheme,
 			243, 0, 235, 150,
 			WS_VISIBLE, 0),
-		Control::Label(-0, ID_STR_THEMEDESCRIPTION,
+		Control::Label(-0, IDS_ThemeDescription,
 			249, 16, 210, 44,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_SaveEmptyThemeCheckBox, ID_STR_SAVEASEMPTYTHEME,
+		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyTheme,
 			249, 70, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_ExcludeUnusedSkinsCheckBox, ID_STR_EXCLUDEUNUSEDSKINS,
+		Control::CheckBox(Id_ExcludeUnusedSkinsCheckBox, IDS_ExcludeUnusedSkins,
 			249, 83, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_IncludeWallpaperCheckBox, ID_STR_INCLUDEWALLPAPER,
+		Control::CheckBox(Id_IncludeWallpaperCheckBox, IDS_IncludeWallpaper,
 			249, 96, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Label(-0, ID_STR_NAMESC,
+		Control::Label(-0, IDS_NameColon,
 			249, 115, 105, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_NameLabel, 0,
 			249, 128, 167, 14,
 			WS_VISIBLE | WS_TABSTOP, WS_EX_CLIENTEDGE),
-		Control::Button(Id_SaveButton, ID_STR_SAVE,
+		Control::Button(Id_SaveButton, IDS_Save,
 			420, 128, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0)
 	};
@@ -1925,7 +1925,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess_s(path.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, layout.c_str());
+				std::wstring text = GetFormattedString(IDS_ThemeAlreadyExists, layout.c_str());
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1945,7 +1945,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (!System::CopyFiles(GetRainmeter().GetIniFile(), path))
 				{
-					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
+					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1987,7 +1987,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (file == INVALID_HANDLE_VALUE)
 				{
-					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
+					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -2033,7 +2033,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(GetRainmeter().GetAllLayouts());
 
-			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, layouts[sel].c_str());
+			std::wstring text = GetFormattedString(IDS_ThemeDelete, layouts[sel].c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
@@ -2090,34 +2090,34 @@ void DialogManage::TabGameMode::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)_wtoi(GetString(ID_STR_NUM_LABELWIDTH));
+	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
 
 	const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, ID_STR_SETTINGS,
+		Control::GroupBox(-0, IDS_Settings,
 			0, 0, 478, 190,
 			WS_VISIBLE, 0),
 
-		Control::CheckBox(Id_FullScreenCheckBox, ID_STR_GAMEMODE_FULLSCREEN,
+		Control::CheckBox(Id_FullScreenCheckBox, IDS_GameModeFullScreen,
 			6, 15, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_ProcessListCheckBox, ID_STR_GAMEMODE_PROCESSLISTSC,
+		Control::CheckBox(Id_ProcessListCheckBox, IDS_GameModeProcessListColon,
 			6, 28, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Edit(Id_ProcessListEdit, 0,
 			6, 44, 200, 90,
 			WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL, WS_EX_CLIENTEDGE),
-		Control::Label(-0, ID_STR_GAMEMODE_SETTINGS_DESC,
+		Control::Label(-0, IDS_GameModeSettingsDescription,
 			230, 44, 242, 90,
 			WS_VISIBLE, 0),
 
-		Control::Button(Id_OnStartButton, ID_STR_GAMEMODE_ACTIONS_ONSTART,
+		Control::Button(Id_OnStartButton, IDS_GameModeActionsOnStart,
 			6, 148, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_OnStopButton, ID_STR_GAMEMODE_ACTIONS_ONSTOP,
+		Control::Button(Id_OnStopButton, IDS_GameModeActionsOnStop,
 			6, 170, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Label(-0, ID_STR_GAMEMODE_ACTIONS_DESC,
+		Control::Label(-0, IDS_GameModeActionsDescription,
 			230, 148, 242, 38,
 			WS_VISIBLE, 0)
 	};
@@ -2203,7 +2203,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
+					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -2319,14 +2319,14 @@ void DialogManage::TabSettings::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
 
 	const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, ID_STR_GENERAL,
+		Control::GroupBox(-0, IDS_General,
 			0, 0, 478, 165,
 			WS_VISIBLE, 0),
-		Control::Label(-0, ID_STR_LANGUAGESC,
+		Control::Label(-0, IDS_LanguageColon,
 			6, 15, 107, 14,
 			WS_VISIBLE, 0),
 		Control::ComboBox(Id_LanguageDropDownList, 0,
@@ -2341,47 +2341,47 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::ComboBox(Id_ScalingModeDropDownList, 0,
 			107, 34, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, 0),
-		Control::Label(-0, ID_STR_EDITORSC,
+		Control::Label(-0, IDS_EditorColon,
 			6, 57, 107, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_EditorEdit, 0,
 			107, 55, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
-		Control::Button(Id_EditorBrowseButton, ID_STR_ELLIPSIS,
+		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
 			361, 55, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_CheckForUpdatesCheckBox, ID_STR_CHECKFORUPDATES,
+		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
 			6, 76, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_AutoInstallCheckBox, ID_STR_AUTOMATICUPDATE,
+		Control::CheckBox(Id_AutoInstallCheckBox, IDS_AutomaticUpdate,
 			6, 89, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_LockSkinsCheckBox, ID_STR_DISABLEDRAGGING,
+		Control::CheckBox(Id_LockSkinsCheckBox, IDS_DisableDragging,
 			6, 102, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
+		Control::CheckBox(Id_ShowTrayIconCheckBox, IDS_ShowNotificationAreaIcon,
 			6, 115, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_UseHardwareAccelerationCheckBox, ID_STR_HARDWAREACCELERATED,
+		Control::CheckBox(Id_UseHardwareAccelerationCheckBox, IDS_HardwareAccelerated,
 			6, 128, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
+		Control::Button(Id_ResetStatisticsButton, IDS_ResetStatistics,
 			6, 144, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
-		Control::GroupBox(-0, ID_STR_LOGGING,
+		Control::GroupBox(-0, IDS_Logging,
 			0, 172, 478, 66,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_VerboseLoggingCheckBox, ID_STR_DEBUGMODE,
+		Control::CheckBox(Id_VerboseLoggingCheckBox, IDS_DebugMode,
 			6, 188, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+		Control::CheckBox(Id_LogToFileCheckBox, IDS_LogToFile,
 			6, 201, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
+		Control::Button(Id_ShowLogFileButton, IDS_ShowLogFile,
 			6, 217, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
+		Control::Button(Id_DeleteLogFileButton, IDS_DeleteLogFile,
 			buttonWidth + 30, 217, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
@@ -2399,41 +2399,15 @@ void DialogManage::TabSettings::Initialize()
 
 	ComboBox_ResetContent(item);
 
-	std::wstring files = GetRainmeter().GetPath() + L"Languages\\*.dll";
-	WIN32_FIND_DATA fd;
-	HANDLE hSearch = FindFirstFile(files.c_str(), &fd);
-	if (hSearch != INVALID_HANDLE_VALUE)
+	for (const auto& language : Language::GetAvailable(GetRainmeter().GetPath() + L"Languages\\"))
 	{
-		do
+		std::wstring text = language.englishName + L" - " + language.nativeName;
+		int index = ComboBox_AddString(item, text.c_str());
+		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
+		if (_wcsicmp(language.locale.c_str(), GetRainmeter().GetResourceLocale().c_str()) == 0)
 		{
-			WCHAR* pos = wcschr(fd.cFileName, L'.');
-			if (pos)
-			{
-				LCID lcid = (LCID)wcstoul(fd.cFileName, &pos, 10);
-				if (pos != fd.cFileName &&
-					_wcsicmp(pos, L".dll") == 0 &&
-					GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
-				{
-					// Strip brackets in language name
-					std::wstring text = fd.cFileName;
-					text += L" - ";
-
-					GetLocaleInfo(lcid, LOCALE_SNATIVEDISPLAYNAME, fd.cFileName, MAX_PATH);
-					text += fd.cFileName;
-
-					int index = ComboBox_AddString(item, text.c_str());
-					ComboBox_SetItemData(item, index, (LPARAM)lcid);
-
-					if (lcid == GetRainmeter().GetResourceLCID())
-					{
-						ComboBox_SetCurSel(item, index);
-					}
-				}
-			}
+			ComboBox_SetCurSel(item, index);
 		}
-		while (FindNextFile(hSearch, &fd));
-
-		FindClose(hSearch);
 	}
 
 	item = GetControl(Id_ScalingModeDropDownList);
@@ -2496,7 +2470,7 @@ void DialogManage::TabSettings::Initialize()
 void DialogManage::TabSettings::UpdateLanguageStatus()
 {
 	std::wstring lang = L"<a>";
-	lang += GetString(ID_STR_LANGUAGEOBSOLETE);
+	lang += GetString(IDS_LanguageObsolete);
 	lang += L"</a>";
 
 	HWND item = GetControl(Id_LanguageUpdateLink);
@@ -2542,18 +2516,12 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
-			if (lcid != GetRainmeter().m_ResourceLCID)
+			if (lcid != GetRainmeter().GetResourceLCID())
 			{
 				WCHAR buffer[16];
 				_ultow(lcid, buffer, 10);
+				if (!GetRainmeter().LoadLanguage(buffer)) break;
 				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
-
-				std::wstring resource = GetRainmeter().GetPath() + L"Languages\\";
-				resource += buffer;
-				resource += L".dll";
-				FreeLibrary(GetRainmeter().m_ResourceInstance);
-				GetRainmeter().m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-				GetRainmeter().m_ResourceLCID = lcid;
 
 				if (DialogAbout::GetDialog())
 				{
@@ -2710,8 +2678,8 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			int result = MessageBox(
 				m_Window,
-				GetString(ID_STR_RESTART_CONFIRM),
-				GetString(ID_STR_MANAGERAINMETER),
+				GetString(IDS_RestartConfirm),
+				GetString(IDS_ManageRainmeter),
 				MB_ICONQUESTION | MB_OKCANCEL | MB_DEFBUTTON1 | MB_TOPMOST);
 			if (result == IDOK)
 			{

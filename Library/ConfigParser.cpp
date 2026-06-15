@@ -1615,7 +1615,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		GetRainmeter().ShowMessage(nullptr, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
+		GetRainmeter().ShowMessage(nullptr, GetString(IDS_IncludeInfiniteLoop), MB_OK | MB_ICONERROR);
 		return;
 	}
 
