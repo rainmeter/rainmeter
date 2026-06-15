@@ -138,8 +138,8 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = m_ControlTemplate.ScaleDialogUnits(800);
-			mmi->ptMinTrackSize.y = m_ControlTemplate.ScaleDialogUnits(390);
+			mmi->ptMinTrackSize.x = MulDiv(800, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
+			mmi->ptMinTrackSize.y = MulDiv(390, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
 		}
 		return FALSE;
 
