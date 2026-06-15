@@ -133,7 +133,6 @@ public:
 	unsigned short GetLanguageButtonWidth() const { return m_Language.GetButtonWidth(); }
 	unsigned short GetLanguageLabelWidth() const { return m_Language.GetLabelWidth(); }
 	bool IsLanguageRTL() const { return m_Language.IsRTL(); }
-	const std::wstring& GetResourceLocale() { return m_Language.GetLocale(); }
 	LCID GetResourceLCID() { return m_Language.GetLCID(); }
 
 	bool GetDebug() { return m_Debug; }
