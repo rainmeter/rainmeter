@@ -18,7 +18,6 @@ class Language
 public:
 	struct Info
 	{
-		std::wstring locale;
 		std::wstring englishName;
 		std::wstring nativeName;
 		LCID lcid;
@@ -31,29 +30,27 @@ public:
 	Language& operator=(const Language&) = delete;
 
 	bool Load(const std::wstring& directory, const std::wstring& language);
-	static std::vector<Info> GetAvailable(const std::wstring& directory);
 	bool IsLoaded() const { return m_Data != nullptr; }
+
+	LCID GetLCID() const { return m_LCID; }
 
 	const WCHAR* GetString(UINT id) const;
 	unsigned short GetButtonWidth() const { return m_ButtonWidth; }
 	unsigned short GetLabelWidth() const { return m_LabelWidth; }
 	bool IsRTL() const { return m_IsRTL; }
 
-	const std::wstring& GetLocale() const { return m_Locale; }
-	LCID GetLCID() const { return m_LCID; }
+	static std::vector<Info> GetAvailable(const std::wstring& directory);
 
 private:
 	void Unload();
 
+	LCID m_LCID;
 	HANDLE m_FileMapping;
 	const BYTE* m_Data;
 	std::unordered_map<UINT, const WCHAR*> m_Strings;
 	unsigned short m_ButtonWidth;
 	unsigned short m_LabelWidth;
 	bool m_IsRTL;
-
-	std::wstring m_Locale;
-	LCID m_LCID;
 };
 
 #endif

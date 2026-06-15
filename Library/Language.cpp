@@ -9,12 +9,12 @@
 #include "Language.h"
 
 Language::Language() :
+	m_LCID(),
 	m_FileMapping(),
 	m_Data(),
 	m_ButtonWidth(0),
 	m_LabelWidth(0),
-	m_IsRTL(false),
-	m_LCID()
+	m_IsRTL(false)
 {
 }
 
@@ -140,7 +140,6 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 	m_ButtonWidth = readUInt16(8);
 	m_LabelWidth = readUInt16(10);
 	m_IsRTL = data[7] == 1;
-	m_Locale = language;
 	m_LCID = requestedLCID;
 
 	return true;
