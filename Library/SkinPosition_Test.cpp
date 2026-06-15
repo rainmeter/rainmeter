@@ -15,10 +15,10 @@ TEST_CLASS(Library_SkinPosition_Test)
 public:
 	TEST_METHOD(TestOppositeEdgeOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"10R";
 
-		const float value = position.ParseWindowOption(L'R', {});
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 100, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.fromOpposite);
@@ -27,10 +27,10 @@ public:
 
 	TEST_METHOD(TestPercentageOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"25%";
 
-		const float value = position.ParseWindowOption(L'R', {});
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 100, 800, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.percentage);
@@ -39,10 +39,10 @@ public:
 
 	TEST_METHOD(TestBottomEdgeOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'B');
 		position.option = L"10B";
 
-		const float value = position.ParseWindowOption(L'B', {});
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 50, 600, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.fromOpposite);
@@ -51,10 +51,10 @@ public:
 
 	TEST_METHOD(TestNegativeOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"-100";
 
-		const float value = position.ParseWindowOption(L'R', {});
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 10, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::AreEqual(-90, position.pos);
@@ -62,10 +62,10 @@ public:
 
 	TEST_METHOD(TestNegativeOptionFromRight)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"-100R";
 
-		const float value = position.ParseWindowOption(L'R', {});
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 50, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.fromOpposite);
@@ -74,12 +74,12 @@ public:
 
 	TEST_METHOD(TestAnchorOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100";
 		position.anchorOption = L"10";
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', {});
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::AreEqual(10, position.anchorPos);
@@ -88,12 +88,12 @@ public:
 
 	TEST_METHOD(TestOppositeAnchorOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100";
 		position.anchorOption = L"10R";
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', {});
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.anchorFromOpposite);
@@ -103,12 +103,12 @@ public:
 
 	TEST_METHOD(TestPercentageAnchorOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100";
 		position.anchorOption = L"25%";
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', {});
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.anchorPercentage);
@@ -118,12 +118,12 @@ public:
 
 	TEST_METHOD(TestOppositePercentageAnchorOption)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100";
 		position.anchorOption = L"25%R";
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', {});
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::IsTrue(position.anchorPercentage);
@@ -134,7 +134,7 @@ public:
 
 	TEST_METHOD(TestMixedDpiMonitor)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100@2";
 		position.anchorOption = L"20";
 
@@ -143,8 +143,8 @@ public:
 			CreateMonitor(144, 1920, 0, 4320, 1440)
 		};
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', monitors);
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption(monitors);
 		Assert::IsTrue(position.monitor.has_value());
 		const MonitorInfo& monitor = monitors[*position.monitor - 1];
 		position.ComputePosition(value, monitor.screen.left, monitor.screen.right - monitor.screen.left, monitor.dpi);
@@ -155,8 +155,8 @@ public:
 
 	TEST_METHOD(TestComputePositionDefaultsToPrimaryMonitor)
 	{
-		SkinPosition x;
-		SkinPosition y;
+		SkinPosition x(L'R');
+		SkinPosition y(L'B');
 		x.option = L"100";
 		y.option = L"50";
 
@@ -177,8 +177,8 @@ public:
 
 	TEST_METHOD(TestComputePositionUsesVirtualScreenForMonitorZero)
 	{
-		SkinPosition x;
-		SkinPosition y;
+		SkinPosition x(L'R');
+		SkinPosition y(L'B');
 		x.option = L"100@0";
 		y.option = L"50";
 
@@ -199,8 +199,8 @@ public:
 
 	TEST_METHOD(TestComputePositionInheritsYMonitor)
 	{
-		SkinPosition x;
-		SkinPosition y;
+		SkinPosition x(L'R');
+		SkinPosition y(L'B');
 		x.option = L"100";
 		y.option = L"50@2";
 
@@ -220,8 +220,8 @@ public:
 
 	TEST_METHOD(TestComputePositionSelectsDpiFromUnscaledPosition)
 	{
-		SkinPosition x;
-		SkinPosition y;
+		SkinPosition x(L'R');
+		SkinPosition y(L'B');
 		x.option = L"2000";
 		y.option = L"100";
 
@@ -251,15 +251,15 @@ public:
 
 	TEST_METHOD(TestZoomChangesAnchorPosition)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"100";
 		position.anchorOption = L"10";
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
+		position.ParseAnchorOption(200, 1.0f);
 		Assert::AreEqual(10, position.anchorPos);
 
-		position.ParseAnchorOption(200, L'R', 2.0f);
-		const float value = position.ParseWindowOption(L'R', {});
+		position.ParseAnchorOption(200, 2.0f);
+		const float value = position.ParseWindowOption({});
 		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
 
 		Assert::AreEqual(20, position.anchorPos);
@@ -268,7 +268,7 @@ public:
 
 	TEST_METHOD(TestComputeWindowOptionRoundTrip)
 	{
-		SkinPosition position;
+		SkinPosition position(L'R');
 		position.option = L"25.00000%R@2";
 		position.anchorOption = L"10R";
 
@@ -277,8 +277,8 @@ public:
 			CreateMonitor(144, 1920, 0, 4320, 1440)
 		};
 
-		position.ParseAnchorOption(200, L'R', 1.0f);
-		const float value = position.ParseWindowOption(L'R', monitors);
+		position.ParseAnchorOption(200, 1.0f);
+		const float value = position.ParseWindowOption(monitors);
 		Assert::IsTrue(position.monitor.has_value());
 
 		const MonitorInfo& monitor = monitors[*position.monitor - 1];
@@ -286,7 +286,6 @@ public:
 		const int extent = monitor.screen.right - monitor.screen.left;
 		position.ComputePosition(value, origin, extent, monitor.dpi);
 		position.ComputeWindowOption(origin, extent, monitor.dpi);
-
 		Assert::AreEqual(L"25.00000%R@2", position.option.c_str());
 	}
 
