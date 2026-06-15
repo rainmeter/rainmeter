@@ -98,6 +98,7 @@ struct SkinPosition
 		const RECT& virtualScreen,
 		UINT defaultDpi);
 
+	// Logical.
 	std::wstring option = L"0";
 	std::wstring anchorOption = L"0";
 

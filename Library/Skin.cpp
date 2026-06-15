@@ -2151,7 +2151,25 @@ UINT SkinPosition::ComputePositionFromOptions(
 	const RECT monitorRect = monitorIndex == 0 ? virtualScreen : monitors[monitorIndex - 1].screen;
 	const auto monitorW = monitorRect.right - monitorRect.left;
 	const auto monitorH = monitorRect.bottom - monitorRect.top;
-	const UINT dpi = monitorIndex == 0 ? defaultDpi : monitors[monitorIndex - 1].dpi;
+
+	// Pick the DPI based on which monitor contains the logical position. Monitor DPI does not
+	// affect the physical origin of another monitor, so the logical position alone can be used
+	// to identify the monitor and therefore the DPI that should be used to compute the physical
+	// position.
+	UINT dpi = monitorIndex == 0 ? defaultDpi : monitors[monitorIndex - 1].dpi;
+	if (monitorIndex != 0 && !x.percentage && !y.percentage)
+	{
+		const int unscaledX = x.fromOpposite ? monitorRect.right - (int)parsedX : monitorRect.left + (int)parsedX;
+		const int unscaledY = y.fromOpposite ? monitorRect.bottom - (int)parsedY : monitorRect.top + (int)parsedY;
+		for (const auto& monitor : monitors)
+		{
+			if (PtInRect(&monitor.screen, { unscaledX, unscaledY }))
+			{
+				dpi = monitor.dpi;
+				break;
+			}
+		}
+	}
 
 	x.ComputePosition(parsedX, monitorRect.left, monitorW, dpi);
 	y.ComputePosition(parsedY, monitorRect.top, monitorH, dpi);
