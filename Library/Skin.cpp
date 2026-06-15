@@ -142,8 +142,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_CurrentActionSection(nullptr),
 	m_BackgroundMargins(),
 	m_DragMargins(),
-	m_X(),
-	m_Y(),
+	m_X(L'R'),
+	m_Y(L'B'),
 	m_WindowW(),
 	m_WindowH(),
 	m_SkinW(),
@@ -2028,7 +2028,7 @@ void Skin::SetWindowSizeVariables(int w, int h)
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
 }
 
-void SkinPosition::ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom)
+void SkinPosition::ParseAnchorOption(int windowSize, float zoom)
 {
 	const auto anchorNumberEndPos = anchorOption.find_first_not_of(L"0123456789.");
 	auto anchorNumber = (float)_wtof(anchorOption.substr(0, anchorNumberEndPos).c_str());
@@ -2041,7 +2041,7 @@ void SkinPosition::ParseAnchorOption(int windowSize, WCHAR oppositeChar, float z
 	anchorPos = (int)anchorNumber;
 }
 
-float SkinPosition::ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors)
+float SkinPosition::ParseWindowOption(const std::vector<MonitorInfo>& monitors)
 {
 	monitor.reset();
 
@@ -2110,7 +2110,7 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 
 	if (fromOpposite)
 	{
-		option += L'R';
+		option += oppositeChar;
 	}
 
 	if (monitor)
@@ -2133,10 +2133,10 @@ UINT SkinPosition::ComputePositionFromOptions(
 	const RECT& virtualScreen,
 	UINT defaultDpi)
 {
-	x.ParseAnchorOption(windowWidth, L'R', zoom);
-	y.ParseAnchorOption(windowHeight, L'B', zoom);
-	const float parsedX = x.ParseWindowOption(L'R', monitors);
-	const float parsedY = y.ParseWindowOption(L'B', monitors);
+	x.ParseAnchorOption(windowWidth, zoom);
+	y.ParseAnchorOption(windowHeight, zoom);
+	const float parsedX = x.ParseWindowOption(monitors);
+	const float parsedY = y.ParseWindowOption(monitors);
 
 	if (x.monitor.has_value() && !y.monitor.has_value())
 	{

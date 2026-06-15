@@ -87,6 +87,8 @@ struct MonitorInfo;
 
 struct SkinPosition
 {
+	explicit SkinPosition(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
+
 	static UINT ComputePositionFromOptions(
 		SkinPosition& x,
 		SkinPosition& y,
@@ -118,10 +120,12 @@ private:
 	friend class Skin;
 	friend class Library_SkinPosition_Test;
 
-	void ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom);
-	float ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors);
+	void ParseAnchorOption(int windowSize, float zoom);
+	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
 	void ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi);
 	void ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi);
+
+	const WCHAR oppositeChar;
 };
 
 class Rainmeter;
