@@ -2181,17 +2181,19 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
-
-	const auto skinW = m_SkinW > 0 ? m_SkinW : m_WindowW;
-	const auto skinH = m_SkinH > 0 ? m_SkinH : m_WindowH;
 	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
 	const UINT defaultDpi = System::GetSystemDpi();
+
+	// NOTE(poiru): This is being done here for historical reasons. Probably should set these
+	// somewhere else.
+	if (m_SkinW > 0) m_WindowW = m_SkinW;
+	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
 	const UINT dpi = SkinPosition::ComputePositionFromOptions(
 		m_X,
 		m_Y,
-		skinW,
-		skinH,
+		m_WindowW,
+		m_WindowH,
 		m_ZoomScale,
 		monitors,
 		monitorsInfo.primary,
