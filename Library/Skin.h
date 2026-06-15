@@ -96,8 +96,7 @@ struct SkinPosition
 	// 96 DPI pixels.
 	int anchorPos = 0;
 
-	int monitor = 1;
-	bool monitorDefined = false;
+	std::optional<int> monitor;
 	bool fromOpposite = false;
 	bool percentage = false;
 	bool anchorFromOpposite = false;
