@@ -238,7 +238,7 @@
   <Target Name="GenerateEnglishLanguage"
           AfterTargets="Build"
           Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1"
-          Outputs="$(OutDir)Languages\en.rmlang">
+          Outputs="$(OutDir)Languages\1033.rmlang">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\GenerateLanguages.ps1&quot; -Locale en -OutputDirectory &quot;$(OutDir)Languages&quot; -RuntimeOnly" />
   </Target>
   <ImportGroup Label="ExtensionTargets">
