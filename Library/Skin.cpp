@@ -2231,12 +2231,10 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const bool useMonitor = m_X.monitor && *m_X.monitor > 0;
-	const RECT monitorRect = useMonitor ? monitors[*m_X.monitor - 1].screen : monitorsInfo.GetPhysicalVirtualScreenRect();
-	const auto dpi = useMonitor ? monitors[*m_X.monitor - 1].dpi : System::GetSystemDpi();
-
-	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, dpi);
-	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
+	const int monitorIndex = m_X.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRect = monitorIndex == 0 ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitors[monitorIndex - 1].screen;
+	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, m_WindowDpi);
+	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, m_WindowDpi);
 }
 
 /*
