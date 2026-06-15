@@ -2122,6 +2122,43 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 	}
 }
 
+UINT SkinPosition::ComputePositionFromOptions(
+	SkinPosition& x,
+	SkinPosition& y,
+	int windowWidth,
+	int windowHeight,
+	float zoom,
+	const std::vector<MonitorInfo>& monitors,
+	int primaryMonitor,
+	const RECT& virtualScreen,
+	UINT defaultDpi)
+{
+	x.ParseAnchorOption(windowWidth, L'R', zoom);
+	y.ParseAnchorOption(windowHeight, L'B', zoom);
+	const float parsedX = x.ParseWindowOption(L'R', monitors);
+	const float parsedY = y.ParseWindowOption(L'B', monitors);
+
+	if (x.monitor.has_value() && !y.monitor.has_value())
+	{
+		y.monitor = x.monitor;
+	}
+	else if (!x.monitor.has_value() && y.monitor.has_value())
+	{
+		x.monitor = y.monitor;
+	}
+
+	const int monitorIndex = x.monitor.value_or(primaryMonitor);
+	const RECT monitorRect = monitorIndex == 0 ? virtualScreen : monitors[monitorIndex - 1].screen;
+	const auto monitorW = monitorRect.right - monitorRect.left;
+	const auto monitorH = monitorRect.bottom - monitorRect.top;
+	const UINT dpi = monitorIndex == 0 ? defaultDpi : monitors[monitorIndex - 1].dpi;
+
+	x.ComputePosition(parsedX, monitorRect.left, monitorW, dpi);
+	y.ComputePosition(parsedY, monitorRect.top, monitorH, dpi);
+
+	return dpi;
+}
+
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
@@ -2132,25 +2169,16 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
 	const UINT defaultDpi = System::GetSystemDpi();
 
-	m_X.ParseAnchorOption(skinW, L'R', m_ZoomScale);
-	m_Y.ParseAnchorOption(skinH, L'B', m_ZoomScale);
-	const float parsedX = m_X.ParseWindowOption(L'R', monitors);
-	const float parsedY = m_Y.ParseWindowOption(L'B', monitors);
-
-	if (m_X.monitor.has_value() && !m_Y.monitor.has_value())
-	{
-		m_Y.monitor = m_X.monitor;
-	}
-	else if (!m_X.monitor.has_value() && m_Y.monitor.has_value())
-	{
-		m_X.monitor = m_Y.monitor;
-	}
-
-	const int monitor = m_X.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRect = monitor == 0 ? virtualScreen : monitors[monitor - 1].screen;
-	const UINT dpi = monitor == 0 ? defaultDpi : monitors[monitor - 1].dpi;
-	m_X.ComputePosition(parsedX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
-	m_Y.ComputePosition(parsedY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
+	const UINT dpi = SkinPosition::ComputePositionFromOptions(
+		m_X,
+		m_Y,
+		skinW,
+		skinH,
+		m_ZoomScale,
+		monitors,
+		monitorsInfo.primary,
+		virtualScreen,
+		defaultDpi);
 
 	if (inheritMonitorDpi)
 	{

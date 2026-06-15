@@ -87,6 +87,17 @@ struct MonitorInfo;
 
 struct SkinPosition
 {
+	static UINT ComputePositionFromOptions(
+		SkinPosition& x,
+		SkinPosition& y,
+		int windowWidth,
+		int windowHeight,
+		float zoom,
+		const std::vector<MonitorInfo>& monitors,
+		int primaryMonitor,
+		const RECT& virtualScreen,
+		UINT defaultDpi);
+
 	std::wstring option = L"0";
 	std::wstring anchorOption = L"0";
 
