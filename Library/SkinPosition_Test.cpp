@@ -1,0 +1,206 @@
+/* Copyright (C) 2026 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+
+#include "StdAfx.h"
+#include "Skin.h"
+#include "System.h"
+#include "../Common/UnitTest.h"
+
+TEST_CLASS(Library_SkinPosition_Test)
+{
+public:
+	TEST_METHOD(TestOppositeEdgeOption)
+	{
+		SkinPosition position;
+		position.option = L"10R";
+
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 100, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.fromOpposite);
+		Assert::AreEqual(1090, position.pos);
+	}
+
+	TEST_METHOD(TestPercentageOption)
+	{
+		SkinPosition position;
+		position.option = L"25%";
+
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 100, 800, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.percentage);
+		Assert::AreEqual(300, position.pos);
+	}
+
+	TEST_METHOD(TestBottomEdgeOption)
+	{
+		SkinPosition position;
+		position.option = L"10B";
+
+		const float value = position.ParseWindowOption(L'B', {});
+		position.ComputePosition(value, 50, 600, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.fromOpposite);
+		Assert::AreEqual(640, position.pos);
+	}
+
+	TEST_METHOD(TestNegativeOption)
+	{
+		SkinPosition position;
+		position.option = L"-100";
+
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 10, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::AreEqual(-90, position.pos);
+	}
+
+	TEST_METHOD(TestNegativeOptionFromRight)
+	{
+		SkinPosition position;
+		position.option = L"-100R";
+
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 50, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.fromOpposite);
+		Assert::AreEqual(1150, position.pos);
+	}
+
+	TEST_METHOD(TestAnchorOption)
+	{
+		SkinPosition position;
+		position.option = L"100";
+		position.anchorOption = L"10";
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::AreEqual(10, position.anchorPos);
+		Assert::AreEqual(90, position.pos);
+	}
+
+	TEST_METHOD(TestOppositeAnchorOption)
+	{
+		SkinPosition position;
+		position.option = L"100";
+		position.anchorOption = L"10R";
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.anchorFromOpposite);
+		Assert::AreEqual(190, position.anchorPos);
+		Assert::AreEqual(-90, position.pos);
+	}
+
+	TEST_METHOD(TestPercentageAnchorOption)
+	{
+		SkinPosition position;
+		position.option = L"100";
+		position.anchorOption = L"25%";
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.anchorPercentage);
+		Assert::AreEqual(50, position.anchorPos);
+		Assert::AreEqual(50, position.pos);
+	}
+
+	TEST_METHOD(TestOppositePercentageAnchorOption)
+	{
+		SkinPosition position;
+		position.option = L"100";
+		position.anchorOption = L"25%R";
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::IsTrue(position.anchorPercentage);
+		Assert::IsTrue(position.anchorFromOpposite);
+		Assert::AreEqual(150, position.anchorPos);
+		Assert::AreEqual(-50, position.pos);
+	}
+
+	TEST_METHOD(TestMixedDpiMonitor)
+	{
+		SkinPosition position;
+		position.option = L"100@2";
+		position.anchorOption = L"20";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(96, 0, 0, 1920, 1080),
+			CreateMonitor(144, 1920, 0, 4320, 1440)
+		};
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', monitors);
+		Assert::IsTrue(position.monitor.has_value());
+		const MonitorInfo& monitor = monitors[*position.monitor - 1];
+		position.ComputePosition(value, monitor.screen.left, monitor.screen.right - monitor.screen.left, monitor.dpi);
+
+		Assert::AreEqual(2, *position.monitor);
+		Assert::AreEqual(2040, position.pos);
+	}
+
+	TEST_METHOD(TestZoomChangesAnchorPosition)
+	{
+		SkinPosition position;
+		position.option = L"100";
+		position.anchorOption = L"10";
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		Assert::AreEqual(10, position.anchorPos);
+
+		position.ParseAnchorOption(200, L'R', 2.0f);
+		const float value = position.ParseWindowOption(L'R', {});
+		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+
+		Assert::AreEqual(20, position.anchorPos);
+		Assert::AreEqual(80, position.pos);
+	}
+
+	TEST_METHOD(TestComputeWindowOptionRoundTrip)
+	{
+		SkinPosition position;
+		position.option = L"25.00000%R@2";
+		position.anchorOption = L"10R";
+
+		const std::vector<MonitorInfo> monitors = {
+			CreateMonitor(96, 0, 0, 1920, 1080),
+			CreateMonitor(144, 1920, 0, 4320, 1440)
+		};
+
+		position.ParseAnchorOption(200, L'R', 1.0f);
+		const float value = position.ParseWindowOption(L'R', monitors);
+		Assert::IsTrue(position.monitor.has_value());
+
+		const MonitorInfo& monitor = monitors[*position.monitor - 1];
+		const int origin = monitor.screen.left;
+		const int extent = monitor.screen.right - monitor.screen.left;
+		position.ComputePosition(value, origin, extent, monitor.dpi);
+		position.ComputeWindowOption(origin, extent, monitor.dpi);
+
+		Assert::AreEqual(L"25.00000%R@2", position.option.c_str());
+	}
+
+private:
+	static MonitorInfo CreateMonitor(UINT dpi, LONG left, LONG top, LONG right, LONG bottom)
+	{
+		MonitorInfo monitor = {};
+		monitor.active = true;
+		monitor.dpi = dpi;
+		monitor.screen = { left, top, right, bottom };
+		return monitor;
+	}
+};
