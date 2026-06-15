@@ -2146,8 +2146,9 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 		m_X.monitor = m_Y.monitor;
 	}
 
-	const RECT monitorRect = m_X.monitor ? monitors[*m_X.monitor - 1].screen : virtualScreen;
-	const UINT dpi = m_X.monitor ? monitors[*m_X.monitor - 1].dpi : defaultDpi;
+	const int monitor = m_X.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRect = monitor == 0 ? virtualScreen : monitors[monitor - 1].screen;
+	const UINT dpi = monitor == 0 ? defaultDpi : monitors[monitor - 1].dpi;
 	m_X.ComputePosition(parsedX, monitorRect.left, monitorRect.right - monitorRect.left, dpi);
 	m_Y.ComputePosition(parsedY, monitorRect.top, monitorRect.bottom - monitorRect.top, dpi);
 
