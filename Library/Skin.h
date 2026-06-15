@@ -104,6 +104,7 @@ struct SkinPosition
 
 private:
 	friend class Skin;
+	friend class Library_SkinPosition_Test;
 
 	void ParseAnchorOption(int windowSize, WCHAR oppositeChar, float zoom);
 	float ParseWindowOption(WCHAR oppositeChar, const std::vector<MonitorInfo>& monitors);

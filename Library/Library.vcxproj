@@ -99,6 +99,9 @@
     </ClCompile>
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinPosition_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />

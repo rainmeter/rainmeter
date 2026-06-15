@@ -122,6 +122,7 @@
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinPosition_Test.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />
     <ClCompile Include="SkinRegistry_Test.cpp" />
