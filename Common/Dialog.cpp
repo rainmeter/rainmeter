@@ -35,7 +35,8 @@ HWND Dialog::c_ActiveDialogWindow = nullptr;
 //
 
 BaseDialog::BaseDialog() :
-	m_Window()
+	m_Window(),
+	m_Dpi(USER_DEFAULT_SCREEN_DPI)
 {
 }
 
@@ -109,12 +110,12 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 
 void BaseDialog::CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString)
 {
-	m_ControlTemplate.Initialize(cts, ctCount, m_Window, GetWindowDpi(m_Window), getString);
+	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_Dpi, getString);
 }
 
 void BaseDialog::RelayoutControls()
 {
-	m_ControlTemplate.Relayout(GetWindowDpi(m_Window));
+	m_ControlTemplate.Relayout(m_Dpi);
 }
 
 INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -257,7 +258,9 @@ void Dialog::Relayout()
 	{
 		if (!tab->GetWindow()) continue;
 
-		RECT rect = tab->GetLayoutRect();
+		tab->UpdateDpi(m_Dpi);
+
+		RECT rect = tab->GetLayoutRect(m_Dpi);
 		const int width = rect.right - rect.left;
 		const int height = rect.bottom - rect.top;
 		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
@@ -387,16 +390,14 @@ void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND paren
 	m_InitialMargin.top = rect.top;
 	m_InitialMargin.right = parentRect.right - rect.right;
 	m_InitialMargin.bottom = parentRect.bottom - rect.bottom;
-	m_InitialDpi = GetWindowDpi(parent);
+	m_Dpi = m_InitialDpi = GetWindowDpi(parent);
 
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }
 
-RECT Dialog::Tab::GetLayoutRect()
+RECT Dialog::Tab::GetLayoutRect(UINT dpi)
 {
 	HWND parent = GetParent(m_Window);
-	const UINT dpi = GetWindowDpi(parent);
-
 	RECT rect;
 	GetClientRect(parent, &rect);
 	rect.left = MulDiv(m_InitialMargin.left, (int)dpi, (int)m_InitialDpi);

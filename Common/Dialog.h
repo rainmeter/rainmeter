@@ -29,6 +29,7 @@ protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) { return FALSE; }
 
 	HWND m_Window;
+	UINT m_Dpi;
 	ControlTemplate m_ControlTemplate;
 
 private:
@@ -53,7 +54,8 @@ protected:
 		bool IsInitialized() { return m_Initialized; }
 		virtual void Create(HWND owner) = 0;
 		void Activate();
-		RECT GetLayoutRect();
+		void UpdateDpi(UINT dpi) { m_Dpi = dpi; }
+		RECT GetLayoutRect(UINT dpi);
 
 		virtual void Initialize() {}
 		virtual void Relayout(int w, int h) { RelayoutControls(); }
@@ -85,8 +87,6 @@ protected:
 	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
-
-	UINT m_Dpi;
 
 private:
 	Dialog(const Dialog& r);
