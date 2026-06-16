@@ -9,6 +9,7 @@
 #include "MeasureSysInfo.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "../Common/NetworkUtil.h"
 #include "../Common/Platform.h"
 
@@ -339,7 +340,7 @@ void MeasureSysInfo::UpdateValue()
 	// Process numeric types first
 	if (m_Type >= SysInfoType::SCREEN_WIDTH && m_Type <= SysInfoType::VIRTUAL_SCREEN_HEIGHT)  // BLOCK 2500
 	{
-		const auto& monitorInfo = System::GetMultiMonitorInfo();
+		const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
 
 		// Valid values are |-1| (default) or |1 to [# of monitors]|
 		const size_t index =
@@ -476,7 +477,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)System::GetMultiMonitorInfo().monitors.size();
+		m_Value = (double)MonitorUtil::GetMultiMonitorInfo().monitors.size();
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:
@@ -621,7 +622,7 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::SCREEN_SIZE:
 	case SysInfoType::WORK_AREA:
 		{
-			const auto& monitorInfo = System::GetMultiMonitorInfo();
+			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
 			const auto primaryIndex = (size_t)(monitorInfo.primary - 1);
 
 			const RECT zeroRect = { 0, 0, 0, 0 };

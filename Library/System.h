@@ -11,7 +11,6 @@
 #include <windows.h>
 #include <queue>
 #include <vector>
-#include "MonitorUtil.h"
 
 class System
 {
@@ -22,7 +21,6 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static const MultiMonitorInfo& GetMultiMonitorInfo();
 	static UINT GetDpiForMonitor(HMONITOR monitor);
 	static UINT GetDpiForWindow(HWND window);
 	static UINT GetDpiForRect(const RECT& rect);
@@ -61,10 +59,6 @@ private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	static void SetMultiMonitorInfo();
-	static void ClearMultiMonitorInfo() { c_Monitors.Clear(); }
-	static void UpdateWorkareaInfo();
-
 	static HWND GetDefaultShellWindow();
 	static HWND GetDesktopIconsHostWindow();
 	static void ChangeZPosInOrder();
@@ -76,8 +70,6 @@ private:
 	static HWND c_HelperWindow;
 
 	static HWINEVENTHOOK c_WinEventHook;
-
-	static MultiMonitorInfo c_Monitors;
 
 	static bool c_ShowDesktop;
 

@@ -15,6 +15,7 @@
 #include "Util.h"
 #include "Skin.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "TrayIcon.h"
 #include "resource.h"
 
@@ -794,7 +795,7 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 	const int monitor = skin->GetX().monitor.value_or(0);
 
 	// for the "Specified monitor" (@n)
-	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
+	const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;
 
 	int i = 1;
 	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)

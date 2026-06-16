@@ -63,4 +63,13 @@ private:
 	std::vector<Span> verticalSpans;
 };
 
+namespace MonitorUtil {
+
+void InitializeMultiMonitorInfo();
+const MultiMonitorInfo& GetMultiMonitorInfo();
+void ClearMultiMonitorInfo();
+void UpdateWorkareaInfo();
+
+}  // namespace MonitorUtil
+
 #endif

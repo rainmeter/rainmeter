@@ -10,6 +10,7 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "Meter.h"
 #include "Measure.h"
 #include "DialogAbout.h"
@@ -736,7 +737,7 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 	const int w = GetPhysicalWindowW();
 	const int h = GetPhysicalWindowH();
 
-	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
+	const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;
 
 	// Check that the window is inside the screen area
 	POINT pt = { x + w / 2, y + h / 2 };
@@ -787,7 +788,7 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 	}
 
 	// No monitor found for the window -> Use the default work area
-	const int index = System::GetMultiMonitorInfo().primary - 1;
+	const int index = MonitorUtil::GetMultiMonitorInfo().primary - 1;
 	const RECT& r = monitors[index].work;
 	x = min(x, r.right - w);
 	x = max(x, r.left);
@@ -2179,7 +2180,7 @@ UINT SkinPosition::ComputePositionFromOptions(
 
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
-	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
 	const UINT defaultDpi = System::GetSystemDpi();
@@ -2210,7 +2211,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 
 void Skin::ComputeOptionValueFromPosition()
 {
-	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 	// Correct to auto-selected screen
@@ -4221,7 +4222,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
-			const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+			const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 			const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 			int monitor = 0;
@@ -4869,7 +4870,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				const auto windowH = GetPhysicalWindowH();
 
 				// Search display monitor that has the largest area of intersection with the window
-				const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
+				const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;
 
 				const RECT windowRect = { wp->x, wp->y, wp->x + (windowW ? windowW : 1), wp->y + (windowH ? windowH : 1) };
 				const RECT* workArea = nullptr;

@@ -13,6 +13,7 @@
 #include "Util.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "Measure.h"
 #include "MeasurePlugin.h"
 #include "MeasureScript.h"
@@ -626,8 +627,8 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 		physical = true;
 	}
 
-	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const auto& monitors = monitorsInfo.monitors;
 	if (monitors.empty())
 	{
 		return false;
