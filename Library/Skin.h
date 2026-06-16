@@ -12,6 +12,7 @@
 #include "ConfigParser.h"
 #include "Group.h"
 #include "Mouse.h"
+#include "SkinPosition.h"
 #include "../Common/Gfx/Canvas.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
@@ -81,43 +82,6 @@ enum RESIZEMODE
 	RESIZEMODE_NONE = 0,
 	RESIZEMODE_CHECK,
 	RESIZEMODE_RESET
-};
-
-struct MonitorInfo;
-struct MultiMonitorInfo;
-
-struct SkinPosition
-{
-	explicit SkinPosition(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
-
-	static UINT ComputePositionFromOptions(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
-
-	// Logical.
-	std::wstring option = L"0";
-	std::wstring anchorOption = L"0";
-
-	// Physical pixels.
-	int pos = 0;
-
-	// 96 DPI pixels.
-	int anchorPos = 0;
-
-	std::optional<int> monitor;
-	bool fromOpposite = false;
-	bool percentage = false;
-	bool anchorFromOpposite = false;
-	bool anchorPercentage = false;
-
-private:
-	friend class Skin;
-	friend class Library_SkinPosition_Test;
-
-	void ParseAnchorOption(int windowSize, float zoom);
-	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
-	int ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent);
-	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
-
-	const WCHAR oppositeChar;
 };
 
 class Rainmeter;
