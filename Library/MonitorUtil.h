@@ -18,6 +18,7 @@ struct MonitorInfo
 	HMONITOR handle;
 	UINT dpi;
 	RECT screen;
+	RECT logicalScreen;
 	RECT work;
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
 	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
@@ -35,8 +36,31 @@ struct MultiMonitorInfo
 	int primary;							// Index of the primary monitor
 	std::vector<MonitorInfo> monitors;
 
+	void Clear();
+
 	RECT GetPhysicalVirtualScreenRect() const;
 	RECT GetLogicalVirtualScreenRect() const;
+
+	void UpdateLogicalMonitorInfo();
+	POINT PhysicalToLogical(POINT point) const;
+	POINT LogicalToPhysical(POINT point) const;
+
+private:
+	struct Span
+	{
+		LONG physicalStart;
+		LONG physicalEnd;
+		LONG logicalStart;
+		LONG logicalEnd;
+		UINT dpi;
+	};
+
+	static LONG ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans);
+	static LONG ConvertLogicalToPhysical(LONG value, const std::vector<Span>& spans);
+	static std::vector<Span> CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal);
+
+	std::vector<Span> horizontalSpans;
+	std::vector<Span> verticalSpans;
 };
 
 #endif

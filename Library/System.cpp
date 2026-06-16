@@ -622,6 +622,8 @@ void System::SetMultiMonitorInfo()
 		}
 	}
 
+	c_Monitors.UpdateLogicalMonitorInfo();
+
 	if (logging)
 	{
 		LogDebug(L"------------------------------");
@@ -701,6 +703,8 @@ void System::UpdateWorkareaInfo()
 			}
 		}
 	}
+
+	c_Monitors.UpdateLogicalMonitorInfo();
 }
 
 /*
