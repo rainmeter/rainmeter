@@ -2038,7 +2038,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
-	const UINT dpi = SkinPosition::ComputePositionFromOptions(m_X, m_Y, m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
+	const UINT dpi = SkinPosition::ResolvePhysicalPosition(m_X, m_Y, m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
 	if (inheritMonitorDpi)
 	{
 		UpdateWindowDpi(dpi);

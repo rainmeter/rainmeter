@@ -102,7 +102,7 @@ int SkinPosition::ComputePosition(float parsedValue, int referenceOrigin, int re
 	return referenceOrigin + offsetFromOrigin - anchorPos;
 }
 
-UINT SkinPosition::ComputePositionFromOptions(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
+UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
 {
 	const auto& monitors = monitorsInfo.monitors;
 

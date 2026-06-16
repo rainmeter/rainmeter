@@ -154,7 +154,7 @@ public:
 		Assert::AreEqual(2000, position.pos);
 	}
 
-	TEST_METHOD(TestComputePositionDefaultsToPrimaryMonitor)
+	TEST_METHOD(TestResolvePhysicalPositionDefaultsToPrimaryMonitor)
 	{
 		SkinPosition x(L'R');
 		SkinPosition y(L'B');
@@ -166,7 +166,7 @@ public:
 			CreateMonitor(144, 0, 0, 1920, 1080)
 		}, 2);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		const UINT dpi = SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::IsFalse(x.monitor.has_value());
 		Assert::IsFalse(y.monitor.has_value());
@@ -175,7 +175,7 @@ public:
 		Assert::AreEqual(75, y.pos);
 	}
 
-	TEST_METHOD(TestComputePositionUsesVirtualScreenForMonitorZero)
+	TEST_METHOD(TestResolvePhysicalPositionUsesVirtualScreenForMonitorZero)
 	{
 		SkinPosition x(L'R');
 		SkinPosition y(L'B');
@@ -187,7 +187,7 @@ public:
 			CreateMonitor(96, 1920, 0, 3520, 900)
 		}, 1);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		const UINT dpi = SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::AreEqual(0, *x.monitor);
 		Assert::AreEqual(0, *y.monitor);
@@ -196,7 +196,7 @@ public:
 		Assert::AreEqual(63, y.pos);
 	}
 
-	TEST_METHOD(TestComputePositionInheritsYMonitor)
+	TEST_METHOD(TestResolvePhysicalPositionInheritsYMonitor)
 	{
 		SkinPosition x(L'R');
 		SkinPosition y(L'B');
@@ -208,7 +208,7 @@ public:
 			CreateMonitor(144, 1920, 0, 4320, 1440)
 		}, 1);
 
-		SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::AreEqual(2, *x.monitor);
 		Assert::AreEqual(2, *y.monitor);
@@ -216,7 +216,7 @@ public:
 		Assert::AreEqual(75, y.pos);
 	}
 
-	TEST_METHOD(TestComputePositionSelectsDpiFromConvertedPosition)
+	TEST_METHOD(TestResolvePhysicalPositionSelectsDpiFromConvertedPosition)
 	{
 		SkinPosition x(L'R');
 		SkinPosition y(L'B');
@@ -228,19 +228,19 @@ public:
 			CreateMonitor(96, 1920, 0, 3520, 900)
 		}, 1);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		const UINT dpi = SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(96U, dpi);
 		Assert::AreEqual(2384, x.pos);
 		Assert::AreEqual(100, y.pos);
 
 		x.option = L"-100R";
-		const UINT dpi2 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		const UINT dpi2 = SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(96U, dpi2);
 		Assert::AreEqual(2020, x.pos);
 		Assert::AreEqual(100, y.pos);
 
 		x.option = L"100R";
-		const UINT dpi3 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
+		const UINT dpi3 = SkinPosition::ResolvePhysicalPosition(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(120U, dpi3);
 		Assert::AreEqual(1795, x.pos);
 		Assert::AreEqual(125, y.pos);
