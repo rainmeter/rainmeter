@@ -120,6 +120,7 @@
     <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="MonitorUtil.cpp" />
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="MonitorUtil.h" />
     <ClInclude Include="Net.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
