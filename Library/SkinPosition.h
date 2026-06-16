@@ -8,8 +8,6 @@
 #ifndef RM_LIBRARY_SKINPOSITION_H_
 #define RM_LIBRARY_SKINPOSITION_H_
 
-#include <optional>
-#include <string>
 #include "MonitorUtil.h"
 
 struct SkinPosition
@@ -40,8 +38,8 @@ private:
 
 	void ParseAnchorOption(int windowSize, float zoom);
 	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
-	int ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent);
 	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
+	int ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent);
 
 	const WCHAR oppositeChar;
 };

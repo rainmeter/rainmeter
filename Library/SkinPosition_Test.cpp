@@ -6,8 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "Skin.h"
-#include "System.h"
+#include "SkinPosition.h"
 #include "MonitorUtil.h"
 #include "../Common/UnitTest.h"
 

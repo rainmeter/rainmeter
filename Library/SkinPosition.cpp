@@ -55,13 +55,6 @@ float SkinPosition::ParseWindowOption(const std::vector<MonitorInfo>& monitors)
 	return number;
 }
 
-int SkinPosition::ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent)
-{
-	const int offsetFromEdge = percentage ? (int)(referenceExtent * (parsedValue / 100.0f)) : (int)parsedValue;
-	const int offsetFromOrigin = fromOpposite ? referenceExtent - offsetFromEdge : offsetFromEdge;
-	return referenceOrigin + offsetFromOrigin - anchorPos;
-}
-
 void SkinPosition::UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent)
 {
 	if (fromOpposite)
@@ -100,6 +93,13 @@ void SkinPosition::UpdateOptionValue(int logicalPos, int referenceOrigin, int re
 		_itow_s(*monitor, buffer, 10);
 		option += buffer;
 	}
+}
+
+int SkinPosition::ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent)
+{
+	const int offsetFromEdge = percentage ? (int)(referenceExtent * (parsedValue / 100.0f)) : (int)parsedValue;
+	const int offsetFromOrigin = fromOpposite ? referenceExtent - offsetFromEdge : offsetFromEdge;
+	return referenceOrigin + offsetFromOrigin - anchorPos;
 }
 
 UINT SkinPosition::ComputePositionFromOptions(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
