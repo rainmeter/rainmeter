@@ -11,33 +11,7 @@
 #include <windows.h>
 #include <queue>
 #include <vector>
-
-struct MonitorInfo
-{
-	bool active;
-	HMONITOR handle;
-	UINT dpi;
-	RECT screen;
-	RECT work;
-	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
-	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
-
-	LONG ToLogical(LONG value) const;
-	RECT ToLogical(const RECT& rect) const;
-};
-
-struct MultiMonitorInfo
-{
-	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;		// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							// Index of the primary monitor
-	std::vector<MonitorInfo> monitors;
-
-	RECT GetPhysicalVirtualScreenRect() const;
-	RECT GetLogicalVirtualScreenRect() const;
-};
+#include "MonitorUtil.h"
 
 class System
 {
