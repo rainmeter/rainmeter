@@ -510,10 +510,10 @@ void System::SetMultiMonitorInfo()
 								switch (dm.dmDisplayOrientation)
 								{
 									default:
-									case DMDO_DEFAULT: buildMessage(L"Orientation", L"0°"); break;
-									case DMDO_90:      buildMessage(L"Orientation", L"90° (clockwise)"); break;
-									case DMDO_180:     buildMessage(L"Orientation", L"180° (clockwise)"); break;
-									case DMDO_270:     buildMessage(L"Orientation", L"270° (clockwise)"); break;
+									case DMDO_DEFAULT: buildMessage(L"Orientation", L"0"); break;
+									case DMDO_90:      buildMessage(L"Orientation", L"90 (clockwise)"); break;
+									case DMDO_180:     buildMessage(L"Orientation", L"180 (clockwise)"); break;
+									case DMDO_270:     buildMessage(L"Orientation", L"270 (clockwise)"); break;
 								}
 							}
 							if (dm.dmFields & DM_DISPLAYFREQUENCY)
