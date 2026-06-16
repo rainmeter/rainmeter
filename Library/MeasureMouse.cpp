@@ -110,12 +110,7 @@ void MeasureMouse::Command(const std::wstring& command)
 
 bool MeasureMouse::IsActive()
 {
-	if (IsDisabled() || IsPaused())
-	{
-		return false;
-	}
-
-	return !m_RequireDragging || m_Capturing;
+	return (m_RequireDragging && m_Capturing) || (!IsDisabled() && !IsPaused());
 }
 
 bool MeasureMouse::ShouldRunMoveAction()
