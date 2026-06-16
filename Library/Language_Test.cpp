@@ -26,9 +26,8 @@ public:
 		languageDirectory += L"Languages\\";
 
 		Language language;
-		Assert::IsTrue(language.Load(languageDirectory, L"en"));
+		Assert::IsTrue(language.Load(languageDirectory, L"1033"));
 		Assert::IsTrue(language.IsLoaded());
-		Assert::AreEqual(L"en", language.GetLocale().c_str());
 		Assert::AreEqual((LCID)1033, language.GetLCID());
 		Assert::AreEqual((unsigned short)60, language.GetButtonWidth());
 		Assert::AreEqual((unsigned short)65, language.GetLabelWidth());

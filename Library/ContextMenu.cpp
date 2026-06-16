@@ -274,6 +274,23 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 	if (skin) for (const auto& meter : skin->GetMeters()) meter->ResetToolTip();
 }
 
+// TODO: Get rid of this after adding these labels to the language files.
+WCHAR* GetStringTemp(UINT id)
+{
+	switch (id)
+	{
+		case IDS_Zoom: return L"Zoom";
+		case IDS_100Percent: return L"100%";
+		case IDS_110Percent: return L"110%";
+		case IDS_120Percent: return L"120%";
+		case IDS_130Percent: return L"130%";
+		case IDS_140Percent: return L"140%";
+		case IDS_150Percent: return L"150%";
+	}
+
+	return GetString(id);
+}
+
 HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 {
 	static const MenuTemplate s_Menu[] =
@@ -344,7 +361,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		MENU_ITEM(IDM_CLOSESKIN, IDS_UnloadSkin)
 	};
 
-	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
 	if (!skinMenu) return nullptr;
 
 	// Tick the position

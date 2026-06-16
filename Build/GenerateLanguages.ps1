@@ -7,49 +7,45 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# NSIS uses its own language names, while Codepage contains the Windows LCID
-# persisted by the installer. English must be first because it's the default
-# language.
-$languageCodepages = [ordered]@{
-	'en'      = @{ NsisLanguage = 'English'; Codepage = 1033 }
-	'ar'      = @{ NsisLanguage = 'Arabic'; Codepage = 1025 }
-	'bg'      = @{ NsisLanguage = 'Bulgarian'; Codepage = 1026 }
-	'zh-CN'   = @{ NsisLanguage = 'SimpChinese'; Codepage = 2052 }
-	'zh-TW'   = @{ NsisLanguage = 'TradChinese'; Codepage = 1028 }
-	'hr'      = @{ NsisLanguage = 'Croatian'; Codepage = $null }
-	'cs'      = @{ NsisLanguage = 'Czech'; Codepage = 1029 }
-	'da'      = @{ NsisLanguage = 'Danish'; Codepage = 1030 }
-	'nl'      = @{ NsisLanguage = 'Dutch'; Codepage = 1043 }
-	'et'      = @{ NsisLanguage = 'Estonian'; Codepage = 1061 }
-	'fi'      = @{ NsisLanguage = 'Finnish'; Codepage = 1035 }
-	'fr'      = @{ NsisLanguage = 'French'; Codepage = 1036 }
-	'de'      = @{ NsisLanguage = 'German'; Codepage = 1031 }
-	'el'      = @{ NsisLanguage = 'Greek'; Codepage = 1032 }
-	'he'      = @{ NsisLanguage = 'Hebrew'; Codepage = 1037 }
-	'hu'      = @{ NsisLanguage = 'Hungarian'; Codepage = 1038 }
-	'id'      = @{ NsisLanguage = 'Indonesian'; Codepage = 1057 }
-	'it'      = @{ NsisLanguage = 'Italian'; Codepage = 1040 }
-	'ja'      = @{ NsisLanguage = 'Japanese'; Codepage = 1041 }
-	'ko'      = @{ NsisLanguage = 'Korean'; Codepage = 1042 }
-	'lv'      = @{ NsisLanguage = 'Latvian'; Codepage = $null }
-	'lt'      = @{ NsisLanguage = 'Lithuanian'; Codepage = $null }
-	'ms'      = @{ NsisLanguage = 'Malay'; Codepage = 1086 }
-	'nb'      = @{ NsisLanguage = 'Norwegian'; Codepage = 1044 }
-	'pl'      = @{ NsisLanguage = 'Polish'; Codepage = 1045 }
-	'pt-BR'   = @{ NsisLanguage = 'PortugueseBR'; Codepage = 1046 }
-	'pt-PT'   = @{ NsisLanguage = 'Portuguese'; Codepage = 2070 }
-	'ro'      = @{ NsisLanguage = 'Romanian'; Codepage = 1048 }
-	'ru'      = @{ NsisLanguage = 'Russian'; Codepage = 1049 }
-	'sr-Cyrl' = @{ NsisLanguage = 'Serbian'; Codepage = 3098 }
-	'sr-Latn' = @{ NsisLanguage = 'SerbianLatin'; Codepage = 2074 }
-	'sk'      = @{ NsisLanguage = 'Slovak'; Codepage = 1051 }
-	'sl'      = @{ NsisLanguage = 'Slovenian'; Codepage = 1060 }
-	'es'      = @{ NsisLanguage = 'SpanishInternational'; Codepage = 3082 }
-	'sv'      = @{ NsisLanguage = 'Swedish'; Codepage = 1053 }
-	'th'      = @{ NsisLanguage = 'Thai'; Codepage = 1054 }
-	'tr'      = @{ NsisLanguage = 'Turkish'; Codepage = 1055 }
-	'uk'      = @{ NsisLanguage = 'Ukrainian'; Codepage = 1058 }
-	'vi'      = @{ NsisLanguage = 'Vietnamese'; Codepage = 1066 }
+# NSIS uses its own language names, while Rainmeter uses LCID. Note that English must be first
+# because it's the default language.
+$languages = [ordered]@{
+	'en'      = @{ nsis = 'English'; lcid = 1033 }
+	'ar'      = @{ nsis = 'Arabic'; lcid = 1025 }
+	'bg'      = @{ nsis = 'Bulgarian'; lcid = 1026 }
+	'zh-CN'   = @{ nsis = 'SimpChinese'; lcid = 2052 }
+	'zh-TW'   = @{ nsis = 'TradChinese'; lcid = 1028 }
+	'cs'      = @{ nsis = 'Czech'; lcid = 1029 }
+	'da'      = @{ nsis = 'Danish'; lcid = 1030 }
+	'nl'      = @{ nsis = 'Dutch'; lcid = 1043 }
+	'et'      = @{ nsis = 'Estonian'; lcid = 1061 }
+	'fi'      = @{ nsis = 'Finnish'; lcid = 1035 }
+	'fr'      = @{ nsis = 'French'; lcid = 1036 }
+	'de'      = @{ nsis = 'German'; lcid = 1031 }
+	'el'      = @{ nsis = 'Greek'; lcid = 1032 }
+	'he'      = @{ nsis = 'Hebrew'; lcid = 1037 }
+	'hu'      = @{ nsis = 'Hungarian'; lcid = 1038 }
+	'id'      = @{ nsis = 'Indonesian'; lcid = 1057 }
+	'it'      = @{ nsis = 'Italian'; lcid = 1040 }
+	'ja'      = @{ nsis = 'Japanese'; lcid = 1041 }
+	'ko'      = @{ nsis = 'Korean'; lcid = 1042 }
+	'ms'      = @{ nsis = 'Malay'; lcid = 1086 }
+	'nb'      = @{ nsis = 'Norwegian'; lcid = 1044 }
+	'pl'      = @{ nsis = 'Polish'; lcid = 1045 }
+	'pt-BR'   = @{ nsis = 'PortugueseBR'; lcid = 1046 }
+	'pt-PT'   = @{ nsis = 'Portuguese'; lcid = 2070 }
+	'ro'      = @{ nsis = 'Romanian'; lcid = 1048 }
+	'ru'      = @{ nsis = 'Russian'; lcid = 1049 }
+	'sr-Cyrl' = @{ nsis = 'Serbian'; lcid = 3098 }
+	'sr-Latn' = @{ nsis = 'SerbianLatin'; lcid = 2074 }
+	'sk'      = @{ nsis = 'Slovak'; lcid = 1051 }
+	'sl'      = @{ nsis = 'Slovenian'; lcid = 1060 }
+	'es'      = @{ nsis = 'SpanishInternational'; lcid = 3082 }
+	'sv'      = @{ nsis = 'Swedish'; lcid = 1053 }
+	'th'      = @{ nsis = 'Thai'; lcid = 1054 }
+	'tr'      = @{ nsis = 'Turkish'; lcid = 1055 }
+	'uk'      = @{ nsis = 'Ukrainian'; lcid = 1058 }
+	'vi'      = @{ nsis = 'Vietnamese'; lcid = 1066 }
 }
 
 $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
@@ -178,11 +174,18 @@ function Write-InstallerLanguageFile {
 function Write-RuntimeLanguageFile {
 	param(
 		[string]$Locale,
+		[uint32]$Lcid,
 		[object]$Language,
 		[string[]]$OutputDirectories
 	)
 
-	$binaryPath = Join-Path $OutputDirectories[0] ($Locale + '.rmlang')
+	$fileName = $Lcid.ToString() + '.rmlang'
+	foreach ($directory in $OutputDirectories) {
+		$legacyPath = Join-Path $directory ($Locale + '.rmlang')
+		[System.IO.File]::Delete($legacyPath)
+	}
+
+	$binaryPath = Join-Path $OutputDirectories[0] $fileName
 	$stream = [System.IO.File]::Open($binaryPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
 	$writer = New-Object System.IO.BinaryWriter($stream)
 	try {
@@ -190,11 +193,11 @@ function Write-RuntimeLanguageFile {
 		# String lengths exclude the null terminator, matching the runtime reader.
 		$writer.Write([System.Text.Encoding]::ASCII.GetBytes('RMLANG'))
 		$writer.Write([byte]1)
-		$writer.Write($Language.Rtl)
+		$writer.Write([byte]$Language.Rtl)
 		$writer.Write([uint16]$Language.ButtonWidth)
 		$writer.Write([uint16]$Language.LabelWidth)
 		foreach ($string in $Language.RuntimeStrings) {
-			$writer.Write($string.Id)
+			$writer.Write([uint32]$string.Id)
 			$writer.Write([uint32]$string.Value.Length)
 			$writer.Write([System.Text.Encoding]::Unicode.GetBytes($string.Value + [char]0))
 		}
@@ -205,7 +208,7 @@ function Write-RuntimeLanguageFile {
 	# Each build configuration runs from its own output directory.
 	if ($OutputDirectories.Length -gt 1) {
 		foreach ($directory in $OutputDirectories[1..($OutputDirectories.Length - 1)]) {
-			$copyPath = Join-Path $directory ($Locale + '.rmlang')
+			$copyPath = Join-Path $directory $fileName
 			[System.IO.File]::Copy($binaryPath, $copyPath, $true)
 		}
 	}
@@ -224,15 +227,11 @@ function Write-InstallerLanguagesFile {
 	[void]$output.Add('')
 
 	foreach ($language in $Languages.GetEnumerator()) {
-		if ($null -eq $language.Value.Codepage) {
-			continue
-		}
-
 		$locale = $language.Key
-		$nsisLanguage = $language.Value.NsisLanguage
+		$nsisLanguage = $language.Value.nsis
 		[void]$output.Add(('${{IncludeLanguage}} "{0}" "{1}"' -f $nsisLanguage, $locale))
 		$langDllParams += "'$locale -  `${LANGFILE_${nsisLanguage}_NAME}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
-		$languageIds += "$($language.Value.Codepage),"
+		$languageIds += "$($language.Value.lcid),"
 	}
 
 	[void]$output.Add(('!define LANGDLL_PARAMS "{0}"' -f $langDllParams))
@@ -241,7 +240,7 @@ function Write-InstallerLanguagesFile {
 	[System.IO.File]::WriteAllText($Path, $content, $Encoding)
 }
 
-$locales = if ($Locale) { $Locale } else { @($languageCodepages.Keys) }
+$locales = if ($Locale) { $Locale } else { @($languages.Keys) }
 $resourceIds = Get-ResourceIds -Path $resourceHeaderPath
 foreach ($directory in $languageOutputDirectories) {
 	[System.IO.Directory]::CreateDirectory($directory) | Out-Null
@@ -250,7 +249,7 @@ foreach ($directory in $languageOutputDirectories) {
 Write-Host "Generating language files..."
 
 foreach ($localeName in $locales) {
-	if (-not $languageCodepages.Contains($localeName)) {
+	if (-not $languages.Contains($localeName)) {
 		throw "Unknown language locale: $localeName"
 	}
 
@@ -260,10 +259,10 @@ foreach ($localeName in $locales) {
 		$nshPath = Join-Path $scriptDirectory ($localeName + '.nsh')
 		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
 	}
-	Write-RuntimeLanguageFile -Locale $localeName -Language $definition -OutputDirectories $languageOutputDirectories
+	Write-RuntimeLanguageFile -Locale $localeName -Lcid $languages[$localeName].lcid -Language $definition -OutputDirectories $languageOutputDirectories
 }
 
 if (-not $RuntimeOnly) {
 	$installerLanguagesPath = Join-Path $PSScriptRoot 'Installer\Languages.nsh'
-	Write-InstallerLanguagesFile -Path $installerLanguagesPath -Languages $languageCodepages -Encoding $utf8WithBom
+	Write-InstallerLanguagesFile -Path $installerLanguagesPath -Languages $languages -Encoding $utf8WithBom
 }

@@ -376,6 +376,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 
 	// Determine the language resource to load
+	buffer[0] = L'\0';
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
 	{
 		// Use whatever the user selected for the installer
@@ -400,7 +401,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (!m_Language.IsLoaded())
 	{
 		// Try English
-		if (!LoadLanguage(L"en"))
+		if (!LoadLanguage(L"1033"))
 		{
 			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			clearBuffer();

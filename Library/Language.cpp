@@ -9,12 +9,12 @@
 #include "Language.h"
 
 Language::Language() :
+	m_LCID(),
 	m_FileMapping(),
 	m_Data(),
 	m_ButtonWidth(0),
 	m_LabelWidth(0),
-	m_IsRTL(false),
-	m_LCID()
+	m_IsRTL(false)
 {
 }
 
@@ -26,6 +26,7 @@ Language::~Language()
 std::vector<Language::Info> Language::GetAvailable(const std::wstring& directory)
 {
 	std::vector<Info> languages;
+
 	WIN32_FIND_DATA fd;
 	HANDLE search = FindFirstFile((directory + L"*.rmlang").c_str(), &fd);
 	if (search == INVALID_HANDLE_VALUE) return languages;
@@ -36,17 +37,19 @@ std::vector<Language::Info> Language::GetAvailable(const std::wstring& directory
 		if (!extension || _wcsicmp(extension, L".rmlang") != 0) continue;
 
 		Info info;
-		info.locale.assign(fd.cFileName, extension);
-		WCHAR resolved[LOCALE_NAME_MAX_LENGTH];
-		const WCHAR* localeName = ResolveLocaleName(info.locale.c_str(), resolved, _countof(resolved)) > 0 ? resolved : info.locale.c_str();
-		info.lcid = LocaleNameToLCID(localeName, LOCALE_ALLOW_NEUTRAL_NAMES);
+		info.lcid = wcstoul(fd.cFileName, nullptr, 10);
 		if (info.lcid == 0) continue;
+
+		WCHAR localeName[LOCALE_NAME_MAX_LENGTH];
+		if (LCIDToLocaleName(info.lcid, localeName, _countof(localeName), 0) == 0) continue;
 
 		WCHAR name[MAX_PATH];
 		if (GetLocaleInfoEx(localeName, LOCALE_SENGLISHLANGUAGENAME, name, _countof(name)) == 0) continue;
 		info.englishName = name;
+
 		if (GetLocaleInfoEx(localeName, LOCALE_SNATIVEDISPLAYNAME, name, _countof(name)) == 0) continue;
 		info.nativeName = name;
+
 		languages.push_back(info);
 	}
 	while (FindNextFile(search, &fd));
@@ -63,29 +66,10 @@ const WCHAR* Language::GetString(UINT id) const
 
 bool Language::Load(const std::wstring& directory, const std::wstring& language)
 {
-	std::wstring locale = language;
-	WCHAR* end = nullptr;
-	const LCID requestedLCID = wcstoul(language.c_str(), &end, 10);
-	const bool numericLanguage = !language.empty() && *end == L'\0';
+	const LCID requestedLCID = wcstoul(language.c_str(), nullptr, 10);
+	if (requestedLCID == 0) return false;
 
-	if (numericLanguage)
-	{
-		WCHAR requestedLocale[LOCALE_NAME_MAX_LENGTH] = { 0 };
-		LCIDToLocaleName(requestedLCID, requestedLocale, _countof(requestedLocale), 0);
-		for (const auto& available : GetAvailable(directory))
-		{
-			const size_t localeLength = available.locale.length();
-			if (available.lcid == requestedLCID ||
-				(localeLength < _countof(requestedLocale) && _wcsnicmp(requestedLocale, available.locale.c_str(), localeLength) == 0 &&
-				(requestedLocale[localeLength] == L'\0' || requestedLocale[localeLength] == L'-')))
-			{
-				locale = available.locale;
-				break;
-			}
-		}
-	}
-
-	HANDLE file = CreateFile((directory + locale + L".rmlang").c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	HANDLE file = CreateFile((directory + language + L".rmlang").c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (file == INVALID_HANDLE_VALUE) return false;
 
 	LARGE_INTEGER fileSize;
@@ -148,11 +132,6 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 		offset += (size_t)byteLength;
 	}
 
-	WCHAR resolved[LOCALE_NAME_MAX_LENGTH];
-	const WCHAR* localeName = ResolveLocaleName(locale.c_str(), resolved, _countof(resolved)) > 0 ? resolved : locale.c_str();
-	const LCID lcid = requestedLCID != 0 ? requestedLCID : LocaleNameToLCID(localeName, LOCALE_ALLOW_NEUTRAL_NAMES);
-	if (lcid == 0) return fail();
-
 	Unload();
 
 	m_FileMapping = fileMapping;
@@ -161,8 +140,7 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 	m_ButtonWidth = readUInt16(8);
 	m_LabelWidth = readUInt16(10);
 	m_IsRTL = data[7] == 1;
-	m_Locale = locale;
-	m_LCID = lcid;
+	m_LCID = requestedLCID;
 
 	return true;
 }

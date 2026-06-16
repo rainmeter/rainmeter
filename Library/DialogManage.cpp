@@ -2404,7 +2404,7 @@ void DialogManage::TabSettings::Initialize()
 		std::wstring text = language.englishName + L" - " + language.nativeName;
 		int index = ComboBox_AddString(item, text.c_str());
 		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
-		if (_wcsicmp(language.locale.c_str(), GetRainmeter().GetResourceLocale().c_str()) == 0)
+		if (language.lcid == GetRainmeter().GetResourceLCID())
 		{
 			ComboBox_SetCurSel(item, index);
 		}
