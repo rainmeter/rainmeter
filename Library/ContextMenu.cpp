@@ -280,6 +280,17 @@ WCHAR* GetStringTemp(UINT id)
 	switch (id)
 	{
 		case IDS_Zoom: return L"Zoom";
+		case IDS_0Percent: return L"0%";
+		case IDS_10Percent: return L"10%";
+		case IDS_20Percent: return L"20%";
+		case IDS_30Percent: return L"30%";
+		case IDS_40Percent: return L"40%";
+		case IDS_50Percent: return L"50%";
+		case IDS_60Percent: return L"60%";
+		case IDS_70Percent: return L"70%";
+		case IDS_80Percent: return L"80%";
+		case IDS_90Percent: return L"90%";
+		case IDS_Approx100Percent: return L"~100%";
 		case IDS_100Percent: return L"100%";
 		case IDS_110Percent: return L"110%";
 		case IDS_120Percent: return L"120%";
