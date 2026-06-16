@@ -43,7 +43,7 @@ struct MultiMonitorInfo
 
 	void UpdateLogicalMonitorInfo();
 	POINT PhysicalToLogical(POINT point) const;
-	POINT LogicalToPhysical(POINT point) const;
+	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
 
 private:
 	struct Span

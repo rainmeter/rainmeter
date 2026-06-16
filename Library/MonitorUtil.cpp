@@ -548,19 +548,23 @@ POINT MultiMonitorInfo::PhysicalToLogical(POINT point) const
 	};
 }
 
-POINT MultiMonitorInfo::LogicalToPhysical(POINT point) const
+POINT MultiMonitorInfo::LogicalToPhysical(POINT point, UINT* dpi) const
 {
 	for (size_t i = 0; i < monitors.size(); ++i)
 	{
 		const auto& monitor = monitors[i];
 		if (monitor.active && Contains(monitor.logicalScreen, point))
 		{
+			if (dpi) *dpi = monitor.dpi;
+
 			return {
 				monitor.screen.left + MulDiv(point.x - monitor.logicalScreen.left, monitor.dpi, USER_DEFAULT_SCREEN_DPI),
 				monitor.screen.top + MulDiv(point.y - monitor.logicalScreen.top, monitor.dpi, USER_DEFAULT_SCREEN_DPI)
 			};
 		}
 	}
+
+	if (dpi) *dpi = 0;
 
 	return {
 		ConvertLogicalToPhysical(point.x, horizontalSpans),

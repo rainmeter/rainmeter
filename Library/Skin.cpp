@@ -2075,31 +2075,30 @@ float SkinPosition::ParseWindowOption(const std::vector<MonitorInfo>& monitors)
 	return number;
 }
 
-void SkinPosition::ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi)
+int SkinPosition::ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent)
 {
-	const int offsetFromEdge = percentage ? (int)(monitorExtent * (parsedValue / 100.0f)) : MulDiv((int)parsedValue, dpi, USER_DEFAULT_SCREEN_DPI);
-	const int offsetFromOrigin = fromOpposite ? monitorExtent - offsetFromEdge : offsetFromEdge;
-	pos = monitorOrigin + offsetFromOrigin - MulDiv(anchorPos, dpi, USER_DEFAULT_SCREEN_DPI);
+	const int offsetFromEdge = percentage ? (int)(referenceExtent * (parsedValue / 100.0f)) : (int)parsedValue;
+	const int offsetFromOrigin = fromOpposite ? referenceExtent - offsetFromEdge : offsetFromEdge;
+	return referenceOrigin + offsetFromOrigin - anchorPos;
 }
 
-void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi)
+void SkinPosition::UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent)
 {
-	int logicalPos = 0;
 	if (fromOpposite)
 	{
-		logicalPos = MulDiv(monitorOrigin + monitorExtent - pos, USER_DEFAULT_SCREEN_DPI, dpi);
+		logicalPos = referenceOrigin + referenceExtent - logicalPos;
 		logicalPos -= anchorPos;
 	}
 	else
 	{
-		logicalPos = MulDiv(pos - monitorOrigin, USER_DEFAULT_SCREEN_DPI, dpi);
+		logicalPos = logicalPos - referenceOrigin;
 		logicalPos += anchorPos;
 	}
 
 	WCHAR buffer[64] = { 0 };
 	if (percentage)
 	{
-		const float number = 100.0f * logicalPos / MulDiv(monitorExtent, USER_DEFAULT_SCREEN_DPI, dpi);
+		const float number = 100.0f * logicalPos / referenceExtent;
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", number);
 	}
 	else
@@ -2123,19 +2122,12 @@ void SkinPosition::ComputeWindowOption(int monitorOrigin, int monitorExtent, UIN
 	}
 }
 
-UINT SkinPosition::ComputePositionFromOptions(
-	SkinPosition& x,
-	SkinPosition& y,
-	int windowWidth,
-	int windowHeight,
-	float zoom,
-	const std::vector<MonitorInfo>& monitors,
-	int primaryMonitor,
-	const RECT& virtualScreen,
-	UINT defaultDpi)
+UINT SkinPosition::ComputePositionFromOptions(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
 {
-	x.ParseAnchorOption(windowWidth, zoom);
-	y.ParseAnchorOption(windowHeight, zoom);
+	const auto& monitors = monitorsInfo.monitors;
+
+	x.ParseAnchorOption(w, zoom);
+	y.ParseAnchorOption(h, zoom);
 	const float parsedX = x.ParseWindowOption(monitors);
 	const float parsedY = y.ParseWindowOption(monitors);
 
@@ -2148,59 +2140,32 @@ UINT SkinPosition::ComputePositionFromOptions(
 		x.monitor = y.monitor;
 	}
 
-	const int monitorIndex = x.monitor.value_or(primaryMonitor);
-	const RECT monitorRect = monitorIndex == 0 ? virtualScreen : monitors[monitorIndex - 1].screen;
-	const auto monitorW = monitorRect.right - monitorRect.left;
-	const auto monitorH = monitorRect.bottom - monitorRect.top;
+	const int monitorX = x.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRectX = monitorX == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorX - 1].logicalScreen;
+	const int logicalX = x.ComputePosition(parsedX, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
-	// Pick the DPI based on which monitor contains the logical position. Monitor DPI does not
-	// affect the physical origin of another monitor, so the logical position alone can be used
-	// to identify the monitor and therefore the DPI that should be used to compute the physical
-	// position.
-	UINT dpi = monitorIndex == 0 ? defaultDpi : monitors[monitorIndex - 1].dpi;
-	if (monitorIndex != 0 && !x.percentage && !y.percentage)
-	{
-		const int unscaledX = x.fromOpposite ? monitorRect.right - (int)parsedX : monitorRect.left + (int)parsedX;
-		const int unscaledY = y.fromOpposite ? monitorRect.bottom - (int)parsedY : monitorRect.top + (int)parsedY;
-		for (const auto& monitor : monitors)
-		{
-			if (PtInRect(&monitor.screen, { unscaledX, unscaledY }))
-			{
-				dpi = monitor.dpi;
-				break;
-			}
-		}
-	}
+	const int monitorY = y.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRectY = monitorY == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorY - 1].logicalScreen;
+	const int logicalY = y.ComputePosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
-	x.ComputePosition(parsedX, monitorRect.left, monitorW, dpi);
-	y.ComputePosition(parsedY, monitorRect.top, monitorH, dpi);
+	UINT dpi = 0;
+	const auto physicalPos = monitorsInfo.LogicalToPhysical({ logicalX, logicalY }, &dpi);
+	x.pos = physicalPos.x;
+	y.pos = physicalPos.y;
 
-	return dpi;
+	return dpi > 0 ? dpi : System::GetSystemDpi();
 }
 
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
-	const RECT virtualScreen = monitorsInfo.GetPhysicalVirtualScreenRect();
-	const UINT defaultDpi = System::GetSystemDpi();
 
 	// NOTE(poiru): This is being done here for historical reasons. Probably should set these
 	// somewhere else.
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
-	const UINT dpi = SkinPosition::ComputePositionFromOptions(
-		m_X,
-		m_Y,
-		m_WindowW,
-		m_WindowH,
-		m_ZoomScale,
-		monitors,
-		monitorsInfo.primary,
-		virtualScreen,
-		defaultDpi);
-
+	const UINT dpi = SkinPosition::ComputePositionFromOptions(m_X, m_Y, m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
 	if (inheritMonitorDpi)
 	{
 		UpdateWindowDpi(dpi);
@@ -2234,10 +2199,15 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const int monitorIndex = m_X.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRect = monitorIndex == 0 ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitors[monitorIndex - 1].screen;
-	m_X.ComputeWindowOption(monitorRect.left, monitorRect.right - monitorRect.left, m_WindowDpi);
-	m_Y.ComputeWindowOption(monitorRect.top, monitorRect.bottom - monitorRect.top, m_WindowDpi);
+	const POINT logicalPos = monitorsInfo.PhysicalToLogical({ m_X.pos, m_Y.pos });
+
+	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRectX = monitorX == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorX - 1].logicalScreen;
+	m_X.UpdateOptionValue(logicalPos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
+
+	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
+	const RECT monitorRectY = monitorY == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorY - 1].logicalScreen;
+	m_Y.UpdateOptionValue(logicalPos.y, monitorRect.top, monitorRect.bottom - monitorRect.top);
 }
 
 /*

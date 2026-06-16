@@ -26,9 +26,11 @@ public:
 		Assert::AreEqual(2000L, logical.x);
 		Assert::AreEqual(200L, logical.y);
 
-		const POINT physical = monitorInfo.LogicalToPhysical(logical);
+		UINT dpi = 0;
+		const POINT physical = monitorInfo.LogicalToPhysical(logical, &dpi);
 		Assert::AreEqual(2040L, physical.x);
 		Assert::AreEqual(300L, physical.y);
+		Assert::AreEqual(144U, dpi);
 
 		const RECT logicalVirtualScreen = monitorInfo.GetLogicalVirtualScreenRect();
 		Assert::AreEqual(0L, logicalVirtualScreen.left);
@@ -55,9 +57,11 @@ public:
 		Assert::AreEqual(-800L, logical.x);
 		Assert::AreEqual(200L, logical.y);
 
-		const POINT physical = monitorInfo.LogicalToPhysical(logical);
+		UINT dpi = 0;
+		const POINT physical = monitorInfo.LogicalToPhysical(logical, &dpi);
 		Assert::AreEqual(-1200L, physical.x);
 		Assert::AreEqual(300L, physical.y);
+		Assert::AreEqual(144U, dpi);
 	}
 
 	TEST_METHOD(TestMultiMonitorInfoConvertsPointAcross150And300DpiSpans)
@@ -75,9 +79,11 @@ public:
 		Assert::AreEqual(2200L, logical.x);
 		Assert::AreEqual(200L, logical.y);
 
-		const POINT physical = monitorInfo.LogicalToPhysical(logical);
+		UINT dpi = 0;
+		const POINT physical = monitorInfo.LogicalToPhysical(logical, &dpi);
 		Assert::AreEqual(3100L, physical.x);
 		Assert::AreEqual(600L, physical.y);
+		Assert::AreEqual(288U, dpi);
 	}
 
 private:
