@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "Skin.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "../Common/UnitTest.h"
 
 TEST_CLASS(Library_SkinPosition_Test)

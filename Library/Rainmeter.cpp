@@ -15,6 +15,7 @@
 #include "Net.h"
 #include "TrayIcon.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
@@ -1704,7 +1705,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	const size_t monitorCount = System::GetMultiMonitorInfo().monitors.size();
+	const size_t monitorCount = MonitorUtil::GetMultiMonitorInfo().monitors.size();
 	for (UINT i = 1; i <= monitorCount; ++i)
 	{
 		WCHAR buffer[64];
@@ -1996,7 +1997,7 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 	else
 	{
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+		const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
@@ -2049,7 +2050,7 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 
 	if (changed && System::GetWindow())
 	{
-		// Update System::MultiMonitorInfo for for work area variables
+		// Update MonitorUtil monitor info for work area variables
 		SendMessageTimeout(System::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, nullptr);
 	}
 }
