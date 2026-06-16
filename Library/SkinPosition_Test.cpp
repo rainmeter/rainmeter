@@ -20,7 +20,7 @@ public:
 		position.option = L"10R";
 
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 100, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 100, 1000);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(1090, position.pos);
@@ -32,7 +32,7 @@ public:
 		position.option = L"25%";
 
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 100, 800, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 100, 800);
 
 		Assert::IsTrue(position.percentage);
 		Assert::AreEqual(300, position.pos);
@@ -44,7 +44,7 @@ public:
 		position.option = L"10B";
 
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 50, 600, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 50, 600);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(640, position.pos);
@@ -56,7 +56,7 @@ public:
 		position.option = L"-100";
 
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 10, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 10, 1000);
 
 		Assert::AreEqual(-90, position.pos);
 	}
@@ -67,7 +67,7 @@ public:
 		position.option = L"-100R";
 
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 50, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 50, 1000);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(1150, position.pos);
@@ -81,7 +81,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 0, 1000);
 
 		Assert::AreEqual(10, position.anchorPos);
 		Assert::AreEqual(90, position.pos);
@@ -95,7 +95,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorFromOpposite);
 		Assert::AreEqual(190, position.anchorPos);
@@ -110,7 +110,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorPercentage);
 		Assert::AreEqual(50, position.anchorPos);
@@ -125,7 +125,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorPercentage);
 		Assert::IsTrue(position.anchorFromOpposite);
@@ -147,11 +147,12 @@ public:
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption(monitors);
 		Assert::IsTrue(position.monitor.has_value());
-		const MonitorInfo& monitor = monitors[*position.monitor - 1];
-		position.ComputePosition(value, monitor.screen.left, monitor.screen.right - monitor.screen.left, monitor.dpi);
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo(monitors, 1);
+		const MonitorInfo& monitor = monitorInfo.monitors[*position.monitor - 1];
+		position.pos = position.ComputePosition(value, monitor.logicalScreen.left, monitor.logicalScreen.right - monitor.logicalScreen.left);
 
 		Assert::AreEqual(2, *position.monitor);
-		Assert::AreEqual(2040, position.pos);
+		Assert::AreEqual(2000, position.pos);
 	}
 
 	TEST_METHOD(TestComputePositionDefaultsToPrimaryMonitor)
@@ -161,13 +162,12 @@ public:
 		x.option = L"100";
 		y.option = L"50";
 
-		const std::vector<MonitorInfo> monitors = {
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo({
 			CreateMonitor(96, -1600, 0, 0, 900),
 			CreateMonitor(144, 0, 0, 1920, 1080)
-		};
-		const RECT virtualScreen = { -1600, 0, 1920, 1080 };
+		}, 2);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 2, virtualScreen, 96);
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::IsFalse(x.monitor.has_value());
 		Assert::IsFalse(y.monitor.has_value());
@@ -183,19 +183,18 @@ public:
 		x.option = L"100@0";
 		y.option = L"50";
 
-		const std::vector<MonitorInfo> monitors = {
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo({
 			CreateMonitor(120, 0, 0, 1920, 1080),
 			CreateMonitor(96, 1920, 0, 3520, 900)
-		};
-		const RECT virtualScreen = { 0, 0, 3520, 1080 };
+		}, 1);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::AreEqual(0, *x.monitor);
 		Assert::AreEqual(0, *y.monitor);
-		Assert::AreEqual(96U, dpi);
-		Assert::AreEqual(100, x.pos);
-		Assert::AreEqual(50, y.pos);
+		Assert::AreEqual(120U, dpi);
+		Assert::AreEqual(125, x.pos);
+		Assert::AreEqual(63, y.pos);
 	}
 
 	TEST_METHOD(TestComputePositionInheritsYMonitor)
@@ -205,13 +204,12 @@ public:
 		x.option = L"100";
 		y.option = L"50@2";
 
-		const std::vector<MonitorInfo> monitors = {
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo({
 			CreateMonitor(96, 0, 0, 1920, 1080),
 			CreateMonitor(144, 1920, 0, 4320, 1440)
-		};
-		const RECT virtualScreen = { 0, 0, 4320, 1440 };
+		}, 1);
 
-		SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 
 		Assert::AreEqual(2, *x.monitor);
 		Assert::AreEqual(2, *y.monitor);
@@ -219,32 +217,31 @@ public:
 		Assert::AreEqual(75, y.pos);
 	}
 
-	TEST_METHOD(TestComputePositionSelectsDpiFromUnscaledPosition)
+	TEST_METHOD(TestComputePositionSelectsDpiFromConvertedPosition)
 	{
 		SkinPosition x(L'R');
 		SkinPosition y(L'B');
 		x.option = L"2000";
 		y.option = L"100";
 
-		const std::vector<MonitorInfo> monitors = {
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo({
 			CreateMonitor(120, 0, 0, 1920, 1080),
 			CreateMonitor(96, 1920, 0, 3520, 900)
-		};
-		const RECT virtualScreen = { 0, 0, 3520, 1080 };
+		}, 1);
 
-		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		const UINT dpi = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(96U, dpi);
-		Assert::AreEqual(2000, x.pos);
+		Assert::AreEqual(2384, x.pos);
 		Assert::AreEqual(100, y.pos);
 
 		x.option = L"-100R";
-		const UINT dpi2 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		const UINT dpi2 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(96U, dpi2);
 		Assert::AreEqual(2020, x.pos);
 		Assert::AreEqual(100, y.pos);
 
 		x.option = L"100R";
-		const UINT dpi3 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitors, 1, virtualScreen, 96);
+		const UINT dpi3 = SkinPosition::ComputePositionFromOptions(x, y, 200, 100, 1.0f, monitorInfo);
 		Assert::AreEqual(120U, dpi3);
 		Assert::AreEqual(1795, x.pos);
 		Assert::AreEqual(125, y.pos);
@@ -261,13 +258,13 @@ public:
 
 		position.ParseAnchorOption(200, 2.0f);
 		const float value = position.ParseWindowOption({});
-		position.ComputePosition(value, 0, 1000, USER_DEFAULT_SCREEN_DPI);
+		position.pos = position.ComputePosition(value, 0, 1000);
 
 		Assert::AreEqual(20, position.anchorPos);
 		Assert::AreEqual(80, position.pos);
 	}
 
-	TEST_METHOD(TestComputeWindowOptionRoundTrip)
+	TEST_METHOD(TestUpdateOptionValueRoundTrip)
 	{
 		SkinPosition position(L'R');
 		position.option = L"25.00000%R@2";
@@ -282,15 +279,25 @@ public:
 		const float value = position.ParseWindowOption(monitors);
 		Assert::IsTrue(position.monitor.has_value());
 
-		const MonitorInfo& monitor = monitors[*position.monitor - 1];
-		const int origin = monitor.screen.left;
-		const int extent = monitor.screen.right - monitor.screen.left;
-		position.ComputePosition(value, origin, extent, monitor.dpi);
-		position.ComputeWindowOption(origin, extent, monitor.dpi);
+		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo(monitors, 1);
+		const MonitorInfo& monitor = monitorInfo.monitors[*position.monitor - 1];
+		const int referenceOrigin = monitor.logicalScreen.left;
+		const int referenceExtent = monitor.logicalScreen.right - monitor.logicalScreen.left;
+		const int logicalPos = position.ComputePosition(value, referenceOrigin, referenceExtent);
+		position.UpdateOptionValue(logicalPos, referenceOrigin, referenceExtent);
 		Assert::AreEqual(L"25.00000%R@2", position.option.c_str());
 	}
 
 private:
+	static MultiMonitorInfo CreateMultiMonitorInfo(std::vector<MonitorInfo> monitors, int primary)
+	{
+		MultiMonitorInfo monitorInfo = {};
+		monitorInfo.primary = primary;
+		monitorInfo.monitors = std::move(monitors);
+		monitorInfo.UpdateLogicalMonitorInfo();
+		return monitorInfo;
+	}
+
 	static MonitorInfo CreateMonitor(UINT dpi, LONG left, LONG top, LONG right, LONG bottom)
 	{
 		MonitorInfo monitor = {};

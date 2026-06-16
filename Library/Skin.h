@@ -84,21 +84,13 @@ enum RESIZEMODE
 };
 
 struct MonitorInfo;
+struct MultiMonitorInfo;
 
 struct SkinPosition
 {
 	explicit SkinPosition(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
 
-	static UINT ComputePositionFromOptions(
-		SkinPosition& x,
-		SkinPosition& y,
-		int windowWidth,
-		int windowHeight,
-		float zoom,
-		const std::vector<MonitorInfo>& monitors,
-		int primaryMonitor,
-		const RECT& virtualScreen,
-		UINT defaultDpi);
+	static UINT ComputePositionFromOptions(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
 
 	// Logical.
 	std::wstring option = L"0";
@@ -122,8 +114,8 @@ private:
 
 	void ParseAnchorOption(int windowSize, float zoom);
 	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
-	void ComputePosition(float parsedValue, int monitorOrigin, int monitorExtent, UINT dpi);
-	void ComputeWindowOption(int monitorOrigin, int monitorExtent, UINT dpi);
+	int ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent);
+	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
 
 	const WCHAR oppositeChar;
 };
