@@ -348,6 +348,9 @@ void Skin::Initialize()
 		GetRainmeter().GetModuleInstance(),
 		this);
 
+	// ... and then get rid of the parent so that we are otherwise treated like a top-level window.
+	SetParent(m_Window, nullptr);
+
 	setlocale(LC_NUMERIC, "C");
 
 	std::wstring title = GetRainmeter().GetSkinPath();
@@ -894,6 +897,15 @@ void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 	HWND winPos = HWND_NOTOPMOST;
 	m_WindowZPosition = zPos;
 
+	if (zPos == ZPOSITION_ONBOTTOM || zPos == ZPOSITION_ONDESKTOP)
+	{
+		AddWindowExStyle(WS_EX_NOACTIVATE);
+	}
+	else
+	{
+		RemoveWindowExStyle(WS_EX_NOACTIVATE);
+	}
+
 	switch (zPos)
 	{
 	case ZPOSITION_ONTOPMOST:
@@ -976,6 +988,8 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
 	{
 		m_WindowZPosition = zPos;
+
+		RemoveWindowExStyle(WS_EX_NOACTIVATE);
 
 		// Set window on top of all other ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
 		SetWindowPos(m_Window, System::GetBackmostTopWindow(), 0, 0, 0, 0, ZPOS_FLAGS);
