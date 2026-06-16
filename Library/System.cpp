@@ -155,19 +155,6 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
-	if (GetRainmeter().GetDebug())
-	{
-		LogDebug(info.szDevice);
-		LogDebugF(L"  Flags       : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-		LogDebugF(L"  Handle      : 0x%p", hMonitor);
-		LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
-			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-		LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-		LogDebugF(L"  DPI         : %u", System::GetDpiForMonitor(hMonitor));
-	}
 	if (m == nullptr) return TRUE;
 
 	if (m->useEnumDisplayDevices)
@@ -304,7 +291,6 @@ UINT System::GetDpiForRect(const RECT& rect)
 void System::SetMultiMonitorInfo()
 {
 	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
-	bool logging = GetRainmeter().GetDebug();
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -316,12 +302,6 @@ void System::SetMultiMonitorInfo()
 	c_Monitors.useEnumDisplayDevices = true;
 	c_Monitors.useEnumDisplayMonitors = false;
 
-	if (logging)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* EnumDisplayDevices / EnumDisplaySettings API");
-	}
-
 	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
 
 	if (EnumDisplayDevices(nullptr, 0, &dd, 0))
@@ -330,241 +310,66 @@ void System::SetMultiMonitorInfo()
 
 		do
 		{
-			std::wstring msg;
+			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) != 0) continue;
 
 			std::wstring deviceName(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
-			std::wstring deviceString;
 
-			if (logging)
+			MonitorInfo monitor = { 0 };
+			monitor.handle = nullptr;
+			monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
+
+			// Get the monitor name (E.g. "Generic Non-PnP Monitor")
+			DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
+			DWORD dwMon = 0;
+			while (EnumDisplayDevices(deviceName.c_str(), dwMon++, &ddm, 0))
 			{
-				deviceString.assign(dd.DeviceString, wcsnlen(dd.DeviceString, _countof(dd.DeviceString)));
-
-				LogDebug(deviceName.c_str());
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+				if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
 				{
-					msg += L"ACTIVE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
-				{
-					msg += L"MULTI ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					msg += L"PRIMARY ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
-				{
-					msg += L"MIRROR ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
-				{
-					msg += L"VGA ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
-				{
-					msg += L"REMOVABLE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
-				{
-					msg += L"PRUNED ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
-				{
-					msg += L"REMOTE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
-				{
-					msg += L"DISCONNECT ";
+					monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
+					break;
 				}
 			}
 
-			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
+			if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
 			{
-				MonitorInfo monitor = { 0 };
+				monitor.active = true;
 
-				monitor.handle = nullptr;
-				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
+				DEVMODE dm = { 0 };
+				dm.dmSize = sizeof(DEVMODE);
 
-				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-				DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
-				DWORD dwMon = 0;
-				while (EnumDisplayDevices(deviceName.c_str(), dwMon++, &ddm, 0))
+				if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
 				{
-					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-					{
-						monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
-
-						if (logging)
-						{
-							LogDebugF(L"  Name        : %s", monitor.monitorName.c_str());
-
-							if (*dd.DeviceID && *dd.DeviceKey)
-							{
-								LogDebugF(L"  DeviceID    : %s", dd.DeviceID);
-								LogDebugF(L"  DeviceKey   : %s", dd.DeviceKey);
-							}
-						}
-						break;
-					}
+					POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
+					monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
 				}
 
-				if (logging)
+				if (monitor.handle != nullptr)
 				{
-					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
+					MONITORINFO info = {sizeof(MONITORINFO)};
+					GetMonitorInfo(monitor.handle, &info);
 
-					if (*ddm.DeviceID && *ddm.DeviceKey)
-					{
-						LogDebugF(L"  AdapterID   : %s", ddm.DeviceID);
-						LogDebugF(L"  AdapterKey  : %s", ddm.DeviceKey);
-					}
-
-					LogDebugF(L"  DeviceFlags : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+					monitor.screen = info.rcMonitor;
+					monitor.work = info.rcWork;
+					monitor.dpi = GetDpiForMonitor(monitor.handle);
 				}
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+				else  // monitor not found
 				{
-					monitor.active = true;
-
-					DEVMODE dm = { 0 };
-					dm.dmSize = sizeof(DEVMODE);
-
-					if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
-					{
-						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
-						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
-
-						if (logging)
-						{
-							msg.clear();
-							auto buildMessage = [&](LPCWSTR key, LPCWSTR value) -> void
-							{
-								if (!msg.empty()) msg += L", ";
-								msg += key;
-								msg += L'=';
-								msg += value;
-							};
-
-							LogDebugF(L"  Handle      : 0x%p", monitor.handle);
-
-							// Pixel Info
-							if (dm.dmLogPixels > 0)          buildMessage(L"LogicalPixels", std::to_wstring(dm.dmLogPixels).c_str());
-							if (dm.dmFields & DM_BITSPERPEL) buildMessage(L"BitsPerPixel", std::to_wstring(dm.dmBitsPerPel).c_str());
-							if (dm.dmFields & DM_PELSWIDTH && dm.dmFields & DM_PELSHEIGHT)
-							{
-								std::wstring visibleResolution = std::to_wstring(dm.dmPelsWidth);
-								visibleResolution += L'x';
-								visibleResolution += std::to_wstring(dm.dmPelsHeight);
-
-								buildMessage(L"VisibleResolution", visibleResolution.c_str());
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  PixelInfo   : %s", msg.c_str());
-								msg.clear();
-							}
-
-								// Display Info
-								if (dm.dmFields & DM_DISPLAYORIENTATION)
-								{
-								switch (dm.dmDisplayOrientation)
-								{
-									default:
-									case DMDO_DEFAULT: buildMessage(L"Orientation", L"0"); break;
-									case DMDO_90:      buildMessage(L"Orientation", L"90 (clockwise)"); break;
-									case DMDO_180:     buildMessage(L"Orientation", L"180 (clockwise)"); break;
-									case DMDO_270:     buildMessage(L"Orientation", L"270 (clockwise)"); break;
-								}
-							}
-							if (dm.dmFields & DM_DISPLAYFREQUENCY)
-							{
-								buildMessage(L"Frequency", std::to_wstring(dm.dmDisplayFrequency).c_str());
-								msg += L"Hz";
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  DisplayInfo : %s", msg.c_str());
-								msg.clear();
-							}
-
-							// Display Flags
-							if (dm.dmFields & DM_DISPLAYFLAGS)
-							{
-								std::wstring mode = L"Non-Interlaced";
-								if (dm.dmDisplayFlags & DM_INTERLACED)
-								{
-									mode = L"Interlaced";
-								}
-								if (dm.dmFields & DMDISPLAYFLAGS_TEXTMODE) mode += L"|TextMode";
-								if (dm.dmDisplayFlags & 0x00000001)        mode += L"|Grayscale";  //DM_GRAYSCALE, no longer valid?
-
-								buildMessage(L"Mode", mode.c_str());
-							}
-							if (dm.dmFields & DM_DISPLAYFIXEDOUTPUT)
-							{
-								std::wstring output = L"Default";
-								switch (dm.dmDisplayFixedOutput)
-								{
-									default:
-									case DMDFO_DEFAULT: buildMessage(L"FixedOutput", L"Default"); break;
-									case DMDFO_CENTER:  buildMessage(L"FixedOutput", L"Center"); break;
-									case DMDFO_STRETCH: buildMessage(L"FixedOutput", L"Stretch"); break;
-								}
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  DisplayFlags: %s", msg.c_str());
-								msg.clear();
-							}
-						}
-					}
-
-					if (monitor.handle != nullptr)
-					{
-						MONITORINFO info = {sizeof(MONITORINFO)};
-						GetMonitorInfo(monitor.handle, &info);
-
-						monitor.screen = info.rcMonitor;
-						monitor.work = info.rcWork;
-						monitor.dpi = GetDpiForMonitor(monitor.handle);
-
-						if (logging)
-						{
-							LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
-								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-							LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-							LogDebugF(L"  Dpi         : %u", monitor.dpi);
-						}
-					}
-					else  // monitor not found
-					{
-						c_Monitors.useEnumDisplayMonitors = true;
-					}
-				}
-				else
-				{
-					monitor.active = false;
-				}
-
-				monitors.push_back(monitor);
-
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					// It's primary monitor!
-					c_Monitors.primary = (int)monitors.size();
+					c_Monitors.useEnumDisplayMonitors = true;
 				}
 			}
 			else
 			{
-				if (logging)
-				{
-					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
-					LogDebugF(L"  Flags       : %s(0x%08X)", msg.c_str(), dd.StateFlags);
-				}
+				monitor.active = false;
 			}
+
+			monitors.push_back(monitor);
+
+			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+			{
+				// It's primary monitor!
+				c_Monitors.primary = (int)monitors.size();
+			}
+
 			++dwDevice;
 		}
 		while (EnumDisplayDevices(nullptr, dwDevice, &dd, 0));
@@ -575,12 +380,6 @@ void System::SetMultiMonitorInfo()
 		LogWarning(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
 		c_Monitors.useEnumDisplayDevices = false;
 		c_Monitors.useEnumDisplayMonitors = true;
-	}
-
-	if (logging)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* EnumDisplayMonitors API");
 	}
 
 	if (c_Monitors.useEnumDisplayMonitors)
@@ -614,17 +413,10 @@ void System::SetMultiMonitorInfo()
 			c_Monitors.primary = 1;
 		}
 	}
-	else
-	{
-		if (logging)
-		{
-			EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)nullptr);  // Only logging
-		}
-	}
 
 	c_Monitors.UpdateLogicalMonitorInfo();
 
-	if (logging)
+	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(L"------------------------------");
 
@@ -655,6 +447,10 @@ void System::SetMultiMonitorInfo()
 				LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					(*iter).screen.left, (*iter).screen.top, (*iter).screen.right, (*iter).screen.bottom,
 					(*iter).screen.right - (*iter).screen.left, (*iter).screen.bottom - (*iter).screen.top);
+				LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+					(*iter).work.left, (*iter).work.top, (*iter).work.right, (*iter).work.bottom,
+					(*iter).work.right - (*iter).work.left, (*iter).work.bottom - (*iter).work.top);
+				LogDebugF(L"  Dpi         : %u", (*iter).dpi);
 			}
 			else if ((*iter).monitorName.empty())
 			{
