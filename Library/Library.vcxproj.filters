@@ -121,6 +121,7 @@
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="MonitorUtil.cpp" />
+    <ClCompile Include="MonitorUtil_Test.cpp" />
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />

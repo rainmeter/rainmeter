@@ -89,6 +89,9 @@
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="MonitorUtil.cpp" />
+    <ClCompile Include="MonitorUtil_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
     <ClCompile Include="NowPlaying\Player.cpp" />

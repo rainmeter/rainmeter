@@ -62,7 +62,7 @@ private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static void SetMultiMonitorInfo();
-	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
+	static void ClearMultiMonitorInfo() { c_Monitors.Clear(); }
 	static void UpdateWorkareaInfo();
 
 	static HWND GetDefaultShellWindow();
