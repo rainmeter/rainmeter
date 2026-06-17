@@ -3795,7 +3795,13 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// If the skin is selected, do not process any mouse 'move' actions
-	if (m_Selected) return 0;
+	if (m_Selected)
+	{
+		const int zoomDragHitTest = GetZoomDragHitTest(System::GetCursorPosition());
+		HCURSOR cursor = GetZoomDragCursor(zoomDragHitTest);
+		SetCursor(cursor ? cursor : LoadCursor(nullptr, IDC_ARROW));
+		return 0;
+	}
 
 	if (!m_ClickThrough || keyDown || m_MouseMeasureCapture)
 	{
@@ -3809,13 +3815,6 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
-
-		const int zoomDragHitTest = GetZoomDragHitTest(System::GetCursorPosition());
-		HCURSOR cursor = GetZoomDragCursor(zoomDragHitTest);
-		if (cursor)
-		{
-			SetCursor(cursor);
-		}
 	}
 
 	return 0;
@@ -4247,9 +4246,7 @@ void Skin::SetZoom(float zoom)
 
 int Skin::GetZoomDragHitTest(POINT screenPos)
 {
-	if (!IsCtrlKeyDown() ||
-		IsAltKeyDown() ||
-		m_Selected ||
+	if (!m_Selected ||
 		!m_WindowDraggable ||
 		GetRainmeter().GetDisableDragging())
 	{
@@ -4467,9 +4464,18 @@ void Skin::UpdateZoomDrag(POINT screenPos)
 		return;
 	}
 
-	m_X.pos = x;
-	m_Y.pos = y;
-	ApplyZoom(zoom, false);
+	const auto deltaX = m_ZoomDragStartRect.left - x;
+	const auto deltaY = m_ZoomDragStartRect.top - y;
+	for (const auto& skins : GetRainmeter().GetAllSkins())
+	{
+		Skin* skin = skins.second;
+		if (skin->IsSelected())
+		{
+			skin->m_X.pos += deltaX;
+			skin->m_Y.pos += deltaY;
+			skin->ApplyZoom(zoom, false);
+		}
+	}
 
 	m_ZoomDragMoved = true;
 	m_ZoomDragPositionChanged =
@@ -4896,11 +4902,7 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process any 'left down' mouse actions,
-	// but run the DefWindowProc so that dragging works.
-	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
-
-	if (IsCtrlKeyDown() && !IsAltKeyDown())
+	if (m_Selected)
 	{
 		POINT screenPos = System::GetCursorPosition();
 		int zoomDragHitTest = HTCLIENT;
@@ -4917,8 +4919,11 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			SetMouseLeaveEvent(true);
 			StartZoomDrag(zoomDragHitTest, screenPos);
-			return 0;
 		}
+
+		// If the skin is selected, return here so that dragging works without processing any
+		// 'left down' mouse actions.
+		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
 	POINT pos = GetMouseMessagePos(uMsg, lParam);
