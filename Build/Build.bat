@@ -50,8 +50,8 @@ set BUILD_YEAR=%date:~-4%
 set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
-:: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
-set VCVARSALL=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
+:: directly to the default location of "vcvarsall.bat"
+set VCVARSALL=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat
 if not exist "%VCVARSALL%" set VCVARSALL=%VCVARSALL:Community\=Enterprise\%
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
 

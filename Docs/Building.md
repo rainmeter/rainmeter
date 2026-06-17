@@ -11,13 +11,17 @@ Alternatively, download the repository contents as a [ZIP archive](https://githu
 
 ### Building with Visual Studio
 
-Rainmeter can be built using any version of Visual Studio 2022. If you don't already have VS2022, you can download [Visual Studio Community 2022](https://www.visualstudio.com/downloads/) for free.
+Install the required tools:
+
+- [Visual Studio Community 2026](https://www.visualstudio.com/downloads/) (select "Desktop development with C++" in the installer)
+- [.NET Framework 4.7.1 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net471-developer-pack-offline-installer)
+- [NSIS 3](http://nsis.sourceforge.net)
+
+Then open `Rainmeter.sln` to build and run Rainmeter.
 
 
-### Building the installer manually
+### Building the installer
 
-First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
-
-Then, in the Build directory, run e.g. `Build.bat full 1.2.3.4` to build all components with the version 1.2.3.4.
+In the Build directory, run e.g. `Build.bat full 1.2.3.4` to build all components with the version 1.2.3.4.
 
 If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
