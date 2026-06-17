@@ -58,9 +58,6 @@
     <ClCompile Include="NowPlaying\Cover.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
-    <ClCompile Include="NowPlaying\Lyrics.cpp">
-      <Filter>NowPlaying</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\Player.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -172,9 +169,6 @@
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\Cover.h">
-      <Filter>NowPlaying</Filter>
-    </ClInclude>
-    <ClInclude Include="NowPlaying\Lyrics.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="CommandHandler.h" />
