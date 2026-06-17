@@ -66,6 +66,7 @@ private:
 namespace MonitorUtil {
 
 void InitializeMultiMonitorInfo();
+void EnableDpiAppCompatMode();
 const MultiMonitorInfo& GetMultiMonitorInfo();
 void ClearMultiMonitorInfo();
 void UpdateWorkareaInfo();

@@ -157,55 +157,18 @@ UINT System::GetSystemDpi()
 	return USER_DEFAULT_SCREEN_DPI;
 }
 
-UINT System::GetDpiForMonitor(HMONITOR monitor)
-{
-	typedef HRESULT(WINAPI* GetDpiForMonitorProc)(HMONITOR, int, UINT*, UINT*);
-	static auto s_GetDpiForMonitor = []() -> GetDpiForMonitorProc
-	{
-		HMODULE module = GetModuleHandle(L"Shcore");
-		if (!module)
-		{
-			module = LoadLibrary(L"Shcore.dll");
-		}
-
-		return module ? (GetDpiForMonitorProc)GetProcAddress(module, "GetDpiForMonitor") : nullptr;
-	}();
-
-	if (monitor && s_GetDpiForMonitor)
-	{
-		UINT dpiX = USER_DEFAULT_SCREEN_DPI;
-		UINT dpiY = USER_DEFAULT_SCREEN_DPI;
-		if (SUCCEEDED(s_GetDpiForMonitor(monitor, 0, &dpiX, &dpiY)) && dpiX > 0)
-		{
-			return dpiX;
-		}
-	}
-
-	return System::GetSystemDpi();
-}
-
 UINT System::GetDpiForWindow(HWND window)
 {
 	typedef UINT(WINAPI* GetDpiForWindowProc)(HWND);
 	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
 
-	if (window)
+	if (window && s_GetDpiForWindow)
 	{
-		if (s_GetDpiForWindow)
-		{
-			const UINT dpi = s_GetDpiForWindow(window);
-			if (dpi > 0) return dpi;
-		}
-
-		return System::GetDpiForMonitor(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST));
+		const UINT dpi = s_GetDpiForWindow(window);
+		if (dpi > 0) return dpi;
 	}
 
 	return GetSystemDpi();
-}
-
-UINT System::GetDpiForRect(const RECT& rect)
-{
-	return System::GetDpiForMonitor(MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST));
 }
 
 /*
