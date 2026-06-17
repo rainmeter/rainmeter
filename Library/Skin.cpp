@@ -631,14 +631,9 @@ POINT Skin::GetMouseMessagePos(UINT uMsg, LPARAM lParam) const
 	return PhysicalToLogical(pos);
 }
 
-int Skin::GetLogicalWindowX() const
+POINT Skin::GetLogicalWindowPosition() const
 {
-	return MulDiv(m_X.pos, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
-}
-
-int Skin::GetLogicalWindowY() const
-{
-	return MulDiv(m_Y.pos, USER_DEFAULT_SCREEN_DPI, m_WindowDpi);
+	return MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical({ m_X.pos, m_Y.pos });
 }
 
 int Skin::GetPhysicalWindowW() const
@@ -2009,13 +2004,14 @@ void Skin::SetZPosVariable(ZPOSITION zPos)
 }
 
 
-void Skin::SetWindowPositionVariables(int x, int y)
+void Skin::SetWindowPositionVariables()
 {
 	WCHAR buffer[32] = { 0 };
 
-	_itow_s(MulDiv(x, USER_DEFAULT_SCREEN_DPI, m_WindowDpi), buffer, 10);
+	const auto logicalPos = GetLogicalWindowPosition();
+	_itow_s(logicalPos.x, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
-	_itow_s(MulDiv(y, USER_DEFAULT_SCREEN_DPI, m_WindowDpi), buffer, 10);
+	_itow_s(logicalPos.y, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
 }
 
@@ -2044,7 +2040,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 		UpdateWindowDpi(dpi);
 	}
 
-	SetWindowPositionVariables(m_X.pos, m_Y.pos);
+	SetWindowPositionVariables();
 }
 
 void Skin::ComputeOptionValueFromPosition()
@@ -4891,7 +4887,7 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		auto* suggested = (const RECT*)lParam;
 		m_X.pos = suggested->left;
 		m_Y.pos = suggested->top;
-		SetWindowPositionVariables(m_X.pos, m_Y.pos);
+		SetWindowPositionVariables();
 		RepositionAndResizeWindow();
 	}
 
@@ -5592,7 +5588,7 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_X.pos = GET_X_LPARAM(lParam);
 	m_Y.pos = GET_Y_LPARAM(lParam);
 
-	SetWindowPositionVariables(m_X.pos, m_Y.pos);
+	SetWindowPositionVariables();
 
 	if (m_Dragging)
 	{

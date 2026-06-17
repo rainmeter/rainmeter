@@ -185,8 +185,7 @@ public:
 	const SkinPosition& GetX() const { return m_X; }
 	const SkinPosition& GetY() const { return m_Y; }
 
-	int GetLogicalWindowX() const;
-	int GetLogicalWindowY() const;
+	POINT GetLogicalWindowPosition() const;
 	int GetPhysicalWindowW() const;
 	int GetPhysicalWindowH() const;
 	RECT GetPhysicalWindowBounds() const;
@@ -355,7 +354,7 @@ private:
 	void AddWindowExStyle(LONG_PTR flag);
 	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
-	void SetWindowPositionVariables(int x, int y);
+	void SetWindowPositionVariables();
 	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
