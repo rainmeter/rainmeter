@@ -14,6 +14,7 @@
     <!-- This is overridden by Build.bat during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)x64-ARM-$(Configuration)\</RmOutDirRoot>
 
     <OutDir>$(RmOutDirRoot)</OutDir>
     <IntDir>$(OutDir)Obj\$(ProjectName)\</IntDir>
@@ -33,6 +34,7 @@
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
     <DelayLoadTestDLL>Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(Platform)'=='x64'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.x64.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL Condition="'$(Platform)'=='ARM64'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.arm64.dll</DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(ConfigurationType)'=='StaticLibrary'"></DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(ExcludeTests)'=='true'"></DelayLoadTestDLL>
   </PropertyGroup>
@@ -83,7 +85,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -127,6 +129,15 @@
     </ResourceCompile>
     <Link>
       <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64'">
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <TargetMachine>MachineARM64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
 </Project>
