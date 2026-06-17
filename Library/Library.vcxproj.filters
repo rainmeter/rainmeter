@@ -124,6 +124,7 @@
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="Skin.cpp" />
     <ClCompile Include="SkinPosition.cpp" />
+    <ClCompile Include="SkinZoomDrag.cpp" />
     <ClCompile Include="SkinPosition_Test.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="Section.h" />
     <ClInclude Include="Skin.h" />
     <ClInclude Include="SkinPosition.h" />
+    <ClInclude Include="SkinZoomDrag.h" />
     <ClInclude Include="SkinInstaller.h" />
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />

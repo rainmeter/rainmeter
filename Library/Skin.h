@@ -13,6 +13,7 @@
 #include "Group.h"
 #include "Mouse.h"
 #include "SkinPosition.h"
+#include "SkinZoomDrag.h"
 #include "../Common/Gfx/Canvas.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
@@ -337,13 +338,13 @@ private:
 	void SetSnapEdges(bool b);
 	void ApplyZoom(float zoom, bool writeOptions);
 	void SetZoom(float zoom);
+	int HitTestZoomDrag(POINT screenPos) const;
+	bool SetZoomDragCursor(int hit);
+	void ApplyZoomDrag();
+	void CommitZoomDrag();
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
-	int GetZoomDragHitTest(POINT screenPos);
-	void StartZoomDrag(int hitTest, POINT screenPos);
-	void UpdateZoomDrag(POINT screenPos);
-	void EndZoomDrag(bool commit);
 	void ClearMouseMeasureCapture();
 	void DoMouseMeasureAction(POINT pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
 	void DoMouseMeasureMoveActions(POINT pos);
@@ -442,13 +443,7 @@ private:
 	bool m_DragStartValid;
 	POINT m_DragStartCursor;
 	POINT m_DragStartWindowPos;
-	bool m_ZoomDragging;
-	int m_ZoomDragHitTest;
-	RECT m_ZoomDragStartRect;
-	POINT m_ZoomDragStartPoint;
-	float m_ZoomDragStartZoom;
-	bool m_ZoomDragMoved;
-	bool m_ZoomDragPositionChanged;
+	std::unique_ptr<SkinZoomDrag> m_ZoomDrag;
 	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
