@@ -331,12 +331,8 @@ void Skin::Dispose(bool refresh)
 
 void Skin::Initialize()
 {
-	// Previously we used WS_EX_TOOLWINDOW to hide our top-level window from the taskbar and Alt+Tab.
-	// This works fine on Windows 10. On Windows 11, however, something changes when running under
-	// the high DPI awareness context (per-monitor V2). To workaround this we instead use Rainmeter
-	// window as our parent.
 	m_Window = CreateWindowEx(
-		WS_EX_LAYERED,
+		WS_EX_LAYERED | WS_EX_TOOLWINDOW,
 		METERWINDOW_CLASS_NAME,
 		nullptr,
 		WS_POPUP,
@@ -344,7 +340,7 @@ void Skin::Initialize()
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		GetRainmeter().GetWindow(),
+		nullptr,
 		nullptr,
 		GetRainmeter().GetModuleInstance(),
 		this);
