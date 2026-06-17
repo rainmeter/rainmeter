@@ -3,6 +3,7 @@
     <!-- This is overridden by Build.bat during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'x86' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)x64-ARM-$(Configuration)\</RmOutDirRoot>
 
     <OutputPath>$(RmOutDirRoot)Plugins\</OutputPath>
   </PropertyGroup>
