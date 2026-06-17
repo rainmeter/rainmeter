@@ -42,7 +42,7 @@ private:
 	void ParseAnchorOption(int windowSize, float zoom);
 	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
 	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
-	int ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent);
+	int ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent);
 
 	const WCHAR oppositeChar;
 };
