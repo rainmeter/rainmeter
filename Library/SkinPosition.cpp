@@ -95,7 +95,7 @@ void SkinPosition::UpdateOptionValue(int logicalPos, int referenceOrigin, int re
 	}
 }
 
-int SkinPosition::ComputePosition(float parsedValue, int referenceOrigin, int referenceExtent)
+int SkinPosition::ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent)
 {
 	const int offsetFromEdge = percentage ? (int)(referenceExtent * (parsedValue / 100.0f)) : (int)parsedValue;
 	const int offsetFromOrigin = fromOpposite ? referenceExtent - offsetFromEdge : offsetFromEdge;
@@ -122,11 +122,11 @@ UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int
 
 	const int monitorX = x.monitor.value_or(monitorsInfo.primary);
 	const RECT monitorRectX = monitorX == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorX - 1].logicalScreen;
-	const int logicalX = x.ComputePosition(parsedX, monitorRectX.left, monitorRectX.right - monitorRectX.left);
+	const int logicalX = x.ResolveLogicalPosition(parsedX, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
 	const int monitorY = y.monitor.value_or(monitorsInfo.primary);
 	const RECT monitorRectY = monitorY == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorY - 1].logicalScreen;
-	const int logicalY = y.ComputePosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+	const int logicalY = y.ResolveLogicalPosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
 	UINT dpi = 0;
 	const auto physicalPos = monitorsInfo.LogicalToPhysical({ logicalX, logicalY }, &dpi);

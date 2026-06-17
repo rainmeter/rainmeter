@@ -19,7 +19,7 @@ public:
 		position.option = L"10R";
 
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 100, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 100, 1000);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(1090, position.pos);
@@ -31,7 +31,7 @@ public:
 		position.option = L"25%";
 
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 100, 800);
+		position.pos = position.ResolveLogicalPosition(value, 100, 800);
 
 		Assert::IsTrue(position.percentage);
 		Assert::AreEqual(300, position.pos);
@@ -43,7 +43,7 @@ public:
 		position.option = L"10B";
 
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 50, 600);
+		position.pos = position.ResolveLogicalPosition(value, 50, 600);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(640, position.pos);
@@ -55,7 +55,7 @@ public:
 		position.option = L"-100";
 
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 10, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 10, 1000);
 
 		Assert::AreEqual(-90, position.pos);
 	}
@@ -66,7 +66,7 @@ public:
 		position.option = L"-100R";
 
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 50, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 50, 1000);
 
 		Assert::IsTrue(position.fromOpposite);
 		Assert::AreEqual(1150, position.pos);
@@ -80,7 +80,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 0, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 0, 1000);
 
 		Assert::AreEqual(10, position.anchorPos);
 		Assert::AreEqual(90, position.pos);
@@ -94,7 +94,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 0, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorFromOpposite);
 		Assert::AreEqual(190, position.anchorPos);
@@ -109,7 +109,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 0, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorPercentage);
 		Assert::AreEqual(50, position.anchorPos);
@@ -124,7 +124,7 @@ public:
 
 		position.ParseAnchorOption(200, 1.0f);
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 0, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 0, 1000);
 
 		Assert::IsTrue(position.anchorPercentage);
 		Assert::IsTrue(position.anchorFromOpposite);
@@ -148,7 +148,7 @@ public:
 		Assert::IsTrue(position.monitor.has_value());
 		MultiMonitorInfo monitorInfo = CreateMultiMonitorInfo(monitors, 1);
 		const MonitorInfo& monitor = monitorInfo.monitors[*position.monitor - 1];
-		position.pos = position.ComputePosition(value, monitor.logicalScreen.left, monitor.logicalScreen.right - monitor.logicalScreen.left);
+		position.pos = position.ResolveLogicalPosition(value, monitor.logicalScreen.left, monitor.logicalScreen.right - monitor.logicalScreen.left);
 
 		Assert::AreEqual(2, *position.monitor);
 		Assert::AreEqual(2000, position.pos);
@@ -257,7 +257,7 @@ public:
 
 		position.ParseAnchorOption(200, 2.0f);
 		const float value = position.ParseWindowOption({});
-		position.pos = position.ComputePosition(value, 0, 1000);
+		position.pos = position.ResolveLogicalPosition(value, 0, 1000);
 
 		Assert::AreEqual(20, position.anchorPos);
 		Assert::AreEqual(80, position.pos);
@@ -282,7 +282,7 @@ public:
 		const MonitorInfo& monitor = monitorInfo.monitors[*position.monitor - 1];
 		const int referenceOrigin = monitor.logicalScreen.left;
 		const int referenceExtent = monitor.logicalScreen.right - monitor.logicalScreen.left;
-		const int logicalPos = position.ComputePosition(value, referenceOrigin, referenceExtent);
+		const int logicalPos = position.ResolveLogicalPosition(value, referenceOrigin, referenceExtent);
 		position.UpdateOptionValue(logicalPos, referenceOrigin, referenceExtent);
 		Assert::AreEqual(L"25.00000%R@2", position.option.c_str());
 	}
