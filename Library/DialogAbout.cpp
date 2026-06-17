@@ -430,7 +430,6 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 	WCHAR buffer[32] = { 0 };
 	LVITEM vitem = { 0 };
 	vitem.mask = LVIF_IMAGE | LVIF_TEXT;
-	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 	vitem.pszText = buffer;
 	HWND item = nullptr;
@@ -476,13 +475,18 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 
 	GetWindowText(item, buffer, 32);
 	item = GetControl(Id_LogListView);
-	ListView_InsertItem(item, &vitem);
-	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
-	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)source);
-	ListView_SetItemText(item, vitem.iItem, 3, (WCHAR*)msg.c_str());
-	if (!ListView_IsItemVisible(item, 0))
+	vitem.iItem = ListView_GetItemCount(item);
+	const bool scrollToBottom = (vitem.iItem == 0 || ListView_IsItemVisible(item, vitem.iItem - 1));
+	const int index = ListView_InsertItem(item, &vitem);
+	if (index != -1)
 	{
-		ListView_Scroll(item, 0, 16);
+		ListView_SetItemText(item, index, 1, (WCHAR*)time);
+		ListView_SetItemText(item, index, 2, (WCHAR*)source);
+		ListView_SetItemText(item, index, 3, (WCHAR*)msg.c_str());
+		if (scrollToBottom)
+		{
+			ListView_EnsureVisible(item, index, FALSE);
+		}
 	}
 }
 
