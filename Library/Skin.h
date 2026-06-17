@@ -24,7 +24,7 @@
 #define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
 #define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
 
-#define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+#define METERWINDOW_CLASS_NAME L"RainmeterMeterWindow"
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
 
@@ -382,6 +382,7 @@ private:
 	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
+	HWND m_HostWindow;
 	HWND m_Window;
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
