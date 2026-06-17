@@ -716,6 +716,8 @@ void DialogManage::TabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
+		const auto logicalPos = m_SkinWindow->GetLogicalWindowPosition();
+
 		SetWindowText(item, GetString(IDS_Unload));
 
 		item = GetControl(Id_RefreshButton);
@@ -723,12 +725,12 @@ void DialogManage::TabSkins::SetControls()
 
 		item = GetControl(Id_XPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(m_SkinWindow->GetLogicalWindowX(), buffer, 10);
+		_itow_s(logicalPos.x, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_YPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(m_SkinWindow->GetLogicalWindowY(), buffer, 10);
+		_itow_s(logicalPos.y, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_DisplayMonitorButton);
@@ -1340,9 +1342,9 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 				int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetLogicalWindowY());
+				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetLogicalWindowPosition().y);
 
-				const int newX = m_SkinWindow->GetLogicalWindowX();
+				const int newX = m_SkinWindow->GetLogicalWindowPosition().x;
 				if (x != newX)
 				{
 					_itow_s(newX, buffer, 10);
@@ -1360,9 +1362,9 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 				int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(m_SkinWindow->GetLogicalWindowX(), y);
+				m_SkinWindow->MoveWindow(m_SkinWindow->GetLogicalWindowPosition().x, y);
 
-				const int newY = m_SkinWindow->GetLogicalWindowY();
+				const int newY = m_SkinWindow->GetLogicalWindowPosition().y;
 				if (y != newY)
 				{
 					_itow_s(newY, buffer, 10);

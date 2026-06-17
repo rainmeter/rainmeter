@@ -180,7 +180,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetLogicalWindowX());
+	lua_pushnumber(L, self->GetLogicalWindowPosition().x);
 
 	return 1;
 }
@@ -188,7 +188,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetLogicalWindowY());
+	lua_pushnumber(L, self->GetLogicalWindowPosition().y);
 
 	return 1;
 }
