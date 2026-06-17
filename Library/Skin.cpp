@@ -3801,7 +3801,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!m_ClickThrough || keyDown || m_MouseMeasureCapture)
 	{
-		POINT pos = GetMouseMessagePos(uMsg, lParam);
+		const auto pos = GetMouseMessagePos(uMsg, lParam);
 
 		++m_MouseMoveCounter;
 		DoMouseMeasureMoveActions(pos);
@@ -3809,7 +3809,6 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
-		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
 	}
 
@@ -3830,7 +3829,6 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		POINT pos = { SHRT_MIN, SHRT_MIN };
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
 
-		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE);
 	}
 
@@ -3856,7 +3854,6 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
 	pos = PhysicalToLogical(pos);
 
-	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
@@ -3877,7 +3874,6 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	MapWindowPoints(nullptr, m_Window, &pos, 1);
 	pos = PhysicalToLogical(pos);
 
-	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
@@ -4576,7 +4572,6 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		MapWindowPoints(nullptr, m_Window, &pos, 1);
 		pos = PhysicalToLogical(pos);
 
-		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_UP, false);  // redraw only
 	}
 	else  // not dragged
@@ -4917,14 +4912,11 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			StartZoomDrag(zoomDragHitTest, screenPos);
 		}
 
-		// If the skin is selected, return here so that dragging works without processing any
-		// 'left down' mouse actions.
+		// Allow dragging to work without handling actions below
 		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
+	const auto pos = GetMouseMessagePos(uMsg, lParam);
 	HandleButtons(pos, BUTTONPROC_DOWN);
 	DoMouseMeasureAction(pos, MOUSE_LMB_DOWN);
 
@@ -4934,7 +4926,7 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Cancel the mouse event beforehand
 		SetMouseLeaveEvent(true);
 
-		// Run the DefWindowProc so the dragging works
+		// Allow dragging to work
 		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
@@ -4979,71 +4971,57 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 
-	// If the skin is selected, do not process 'left up' mouse actions.
-	if (m_Selected) return 0;  // Make sure selection/deselection code is above this!
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_UP);
-
-	DoMouseMeasureAction(pos, MOUSE_LMB_UP);
-	DoAction(pos.x, pos.y, MOUSE_LMB_UP, false);
-
+	HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_UP, MOUSE_LMB_UP);
 	return 0;
+}
+
+void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action)
+{
+	if (m_Selected) return;
+
+	const auto pos = GetMouseMessagePos(uMsg, lParam);
+	HandleButtons(pos, buttonProc);
+	DoMouseMeasureAction(pos, action);
+	DoAction(pos.x, pos.y, action, false);
+}
+
+void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback)
+{
+	if (m_Selected) return;
+
+	const auto pos = GetMouseMessagePos(uMsg, lParam);
+	HandleButtons(pos, buttonProc);
+	DoMouseMeasureAction(pos, action, fallback);
+	if (!DoAction(pos.x, pos.y, action, false))
+	{
+		DoAction(pos.x, pos.y, fallback, false);
+	}
 }
 
 LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'left double click' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_DOWN);
-
-	DoMouseMeasureAction(pos, MOUSE_LMB_DBLCLK, MOUSE_LMB_DOWN);
-	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
-	{
-		DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false);
-	}
-
+	HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_DOWN, MOUSE_LMB_DBLCLK, MOUSE_LMB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'right down' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	DoMouseMeasureAction(pos, MOUSE_RMB_DOWN);
-	DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
-
+	HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_RMB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'right up' mouse actions,
-	// but run the DefWindowProc so the context menu works
+	// For selected skins, we don't want to process any actions and only allow the context menu.
 	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
+	const auto pos = GetMouseMessagePos(uMsg, lParam);
 	HandleButtons(pos, BUTTONPROC_MOVE);
-
 	DoMouseMeasureAction(pos, MOUSE_RMB_UP);
-	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
-		!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
+
+	if (IsCtrlKeyDown() || !DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
-		// Run the DefWindowProc so the context menu works
+		// Allow the context menu to open.
 		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
 	}
 
@@ -5052,149 +5030,49 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'right double click' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	DoMouseMeasureAction(pos, MOUSE_RMB_DBLCLK, MOUSE_RMB_DOWN);
-	if (!DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, false))
-	{
-		DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
-	}
-
+	HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_RMB_DBLCLK, MOUSE_RMB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'middle down' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	DoMouseMeasureAction(pos, MOUSE_MMB_DOWN);
-	DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
-
+	HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_MMB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'middle up' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	DoMouseMeasureAction(pos, MOUSE_MMB_UP);
-	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
-
+	HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_MMB_UP);
 	return 0;
 }
 
 LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'middle double click' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	DoMouseMeasureAction(pos, MOUSE_MMB_DBLCLK, MOUSE_MMB_DOWN);
-	if (!DoAction(pos.x, pos.y, MOUSE_MMB_DBLCLK, false))
-	{
-		DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
-	}
-
+	HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_MMB_DBLCLK, MOUSE_MMB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'x button down' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X1MB_DOWN);
-		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
-	}
-	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X2MB_DOWN);
-		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
-	}
-
+	const WORD button = GET_XBUTTON_WPARAM(wParam);
+	if (button == XBUTTON1) HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X1MB_DOWN);
+	if (button == XBUTTON2) HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X2MB_DOWN);
 	return 0;
 }
 
 LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'x button up' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X1MB_UP);
-		DoAction(pos.x, pos.y, MOUSE_X1MB_UP, false);
-	}
-	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X2MB_UP);
-		DoAction(pos.x, pos.y, MOUSE_X2MB_UP, false);
-	}
-
+	const WORD button = GET_XBUTTON_WPARAM(wParam);
+	if (button == XBUTTON1) HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X1MB_UP);
+	if (button == XBUTTON2) HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X2MB_UP);
 	return 0;
 }
 
 LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// If the skin is selected, do not process 'x button double click' mouse actions
-	if (m_Selected) return 0;
-
-	POINT pos = GetMouseMessagePos(uMsg, lParam);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE);
-
-	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X1MB_DBLCLK, MOUSE_X1MB_DOWN);
-		if (!DoAction(pos.x, pos.y, MOUSE_X1MB_DBLCLK, false))
-		{
-			DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
-		}
-	}
-	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
-	{
-		DoMouseMeasureAction(pos, MOUSE_X2MB_DBLCLK, MOUSE_X2MB_DOWN);
-		if (!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
-		{
-			DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
-		}
-	}
-
+	const WORD button = GET_XBUTTON_WPARAM(wParam);
+	if (button == XBUTTON1) HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X1MB_DBLCLK, MOUSE_X1MB_DOWN);
+	if (button == XBUTTON2) HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_MOVE, MOUSE_X2MB_DBLCLK, MOUSE_X2MB_DOWN);
 	return 0;
 }
 
@@ -5257,7 +5135,6 @@ LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		POINT posc = {pos.x - rect.left, pos.y - rect.top};
 		posc = PhysicalToLogical(posc);
 
-		// Handle buttons
 		HandleButtons(posc, BUTTONPROC_MOVE);
 
 		// If RMB up or RMB down or double-click cause actions, do not show the menu!

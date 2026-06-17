@@ -326,6 +326,8 @@ private:
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
+	void HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action);
+	void HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
 	void SetAutoSelectScreen(bool b);
