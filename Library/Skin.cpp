@@ -561,12 +561,12 @@ POINT Skin::GetLogicalWindowPosition() const
 
 int Skin::GetPhysicalWindowW() const
 {
-	return (int)((float)m_WindowW * m_DpiScale * m_ZoomScale);
+	return (int)roundf((float)m_WindowW * m_DpiScale * m_ZoomScale);
 }
 
 int Skin::GetPhysicalWindowH() const
 {
-	return (int)((float)m_WindowH * m_DpiScale * m_ZoomScale);
+	return (int)roundf((float)m_WindowH * m_DpiScale * m_ZoomScale);
 }
 
 RECT Skin::GetPhysicalWindowBounds() const
