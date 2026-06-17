@@ -21,9 +21,7 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static UINT GetDpiForMonitor(HMONITOR monitor);
 	static UINT GetDpiForWindow(HWND window);
-	static UINT GetDpiForRect(const RECT& rect);
 	static UINT GetSystemDpi();
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }

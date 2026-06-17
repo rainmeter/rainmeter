@@ -1680,13 +1680,15 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		// we default to ignoring the per window/monitor DPI for backwards compatibility even though we
 		// are now properly DPI aware.
 		WCHAR executablePath[MAX_PATH];
-		GetModuleFileName(m_Instance, executablePath, _countof(executablePath));
+		GetModuleFileName(GetModuleHandle(nullptr), executablePath, _countof(executablePath));
 
 		WCHAR buffer[512];
 		DWORD bufferSize = _countof(buffer);
 		const auto regResult = RegGetValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers", executablePath, RRF_RT_REG_SZ, nullptr, &buffer, &bufferSize);
 		if (regResult == ERROR_SUCCESS && !!wcsstr(buffer, L"HIGHDPIAWARE"))
 		{
+			LogWarning(L"High DPI scaling has been disabled due the the override in the Rainmeter.exe 'Compatibility' properties");
+			MonitorUtil::EnableDpiAppCompatMode();
 			m_DpiOverride = 100;
 		}
 	}
