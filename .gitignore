@@ -8,7 +8,7 @@
 bin
 obj
 
-/Installer/Languages.nsh
+/Build/Installer/Languages.nsh
 /Language/*.nsh
 /Version.cs
 /Version.h
