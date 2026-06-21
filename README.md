@@ -1,12 +1,11 @@
 *Rainmeter* is a desktop customization tool for Windows. For more information and downloads, visit [rainmeter.net](http://rainmeter.net/).
 
-For build instructions, see [this](https://github.com/rainmeter/rainmeter/blob/master/Docs/Building.md).
+* [Build instructions](https://github.com/rainmeter/rainmeter/blob/master/Docs/Building.md)
+* [Weblate localization project](https://hosted.weblate.org/projects/rainmeter/rainmeter/)
 
 ### Code signing policy
 
-Our official releases are signed with a valid code signing certificate under the name of [SignPath Foundation].
-
-We appreciate the free code signing provided by [SignPath.io] and the free certificate provided by [SignPath Foundation] 🙏
+Our official releases are signed with a code signing certificate graciously provided by the [SignPath Foundation]. We appreciate [SignPath.io] and the [SignPath Foundation] for providing free code signing services to open source projects.
 
 ### Privacy policy
 
