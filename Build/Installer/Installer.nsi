@@ -846,7 +846,8 @@ Function RenameToRainmeterIni
 FunctionEnd
 
 Function HandlePlugins
-	${If} $R7 == "FolderInfo.dll"
+	${If} $R7 == "ActionTimer.dll"
+	${OrIf} $R7 == "FolderInfo.dll"
 	${OrIf} $R7 == "iTunesPlugin.dll"
 	${OrIf} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
@@ -863,8 +864,7 @@ Function HandlePlugins
 	${OrIf} $R7 == "Win7AudioPlugin.dll"
 	${OrIf} $R7 == "WindowMessagePlugin.dll"
 		Delete "$R9"
-	${ElseIf} $R7 != "ActionTimer.dll"
-	${AndIf} $R7 != "AdvancedCPU.dll"
+	${ElseIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "AudioLevel.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"

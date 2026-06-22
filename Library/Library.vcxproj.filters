@@ -81,6 +81,7 @@
     <ClCompile Include="Language_Test.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
+    <ClCompile Include="MeasureActionTimer.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
+    <ClInclude Include="MeasureActionTimer.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
