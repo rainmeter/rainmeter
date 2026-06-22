@@ -954,7 +954,7 @@ void DialogPackage::TabInfo::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = 252;
-	lvc.pszText = L"Name";
+	lvc.pszText = (WCHAR*)L"Name";
 	ListView_InsertColumn(item, 0, &lvc);
 
 	// Add groups
@@ -963,13 +963,13 @@ void DialogPackage::TabInfo::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = L"Skin";
+	lvg.pszHeader = (WCHAR*)L"Skin";
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = L"Layouts";
+	lvg.pszHeader = (WCHAR*)L"Layouts";
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 2;
-	lvg.pszHeader = L"Plugins";
+	lvg.pszHeader = (WCHAR*)L"Plugins";
 	ListView_InsertGroup(item, -1, &lvg);
 }
 

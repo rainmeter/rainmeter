@@ -83,7 +83,7 @@ struct Operation
 
 struct Function
 {
-	WCHAR* name;
+	const WCHAR* name;
 	SingleArgFunction proc;
 	BYTE length;
 };

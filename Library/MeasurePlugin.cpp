@@ -18,11 +18,11 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
-	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
 	m_ExecuteBangFunc()
 {
+	m_PluginData = nullptr;
 }
 
 MeasurePlugin::~MeasurePlugin()
@@ -170,11 +170,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (IsNewApi())
 	{
-		{
-			// Suppress C4312: 'type cast': conversion from 'UINT' to 'void*' of greater size
-			#pragma warning(suppress: 4312)
-			m_PluginData = (void*)id;
-		}
+		m_PluginData = (void*)(UINT_PTR)id;
 
 		if (initializeFunc)
 		{

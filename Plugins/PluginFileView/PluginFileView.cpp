@@ -1127,7 +1127,7 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 			int iconIndex = 0;
 
 			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, _countof(buffer), filePath.c_str());
-			if (buffer != L"-1")
+			if (wcscmp(buffer, L"-1") != 0)
 			{
 				iconIndex = _wtoi(buffer);
 			}

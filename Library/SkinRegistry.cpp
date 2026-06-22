@@ -294,12 +294,12 @@ std::vector<std::wstring> SkinRegistry::ValidateFavorites()
 	std::wstring favorite;
 	Indexes indexes;
 
-	auto& folder = m_Folders.rbegin();
+	auto folder = m_Folders.rbegin();
 	for (; folder != m_Folders.rend(); ++folder)
 	{
 		(*folder).hasFavorite = false;
 
-		auto& file = (*folder).files.rbegin();
+		auto file = (*folder).files.rbegin();
 		for (; file != (*folder).files.rend(); ++file)
 		{
 			if ((*file).isFavorite)

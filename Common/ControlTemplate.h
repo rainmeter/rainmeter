@@ -76,7 +76,7 @@ public:
 	ControlTemplate();
 	~ControlTemplate();
 
-	typedef WCHAR* (*GetStringFunc)(UINT id);
+	typedef const WCHAR* (*GetStringFunc)(UINT id);
 	void Initialize(const Control* cts, UINT ctCount, HWND parent, UINT dpi, GetStringFunc getString);
 	void Relayout(UINT dpi);
 

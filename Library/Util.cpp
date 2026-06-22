@@ -17,9 +17,9 @@ UINT GetUniqueID()
 	return id++;
 }
 
-WCHAR* GetString(UINT id)
+const WCHAR* GetString(UINT id)
 {
-	return const_cast<WCHAR*>(GetRainmeter().GetLanguageString(id));
+	return GetRainmeter().GetLanguageString(id);
 }
 
 std::wstring GetFormattedString(UINT id, ...)

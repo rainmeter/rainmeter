@@ -25,14 +25,14 @@ typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, Skin* skin);
 struct BangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	uint8_t argCount;
 };
 
 struct CustomBangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	BangHandlerFunc handlerFunc;
 };
 

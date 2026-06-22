@@ -14,7 +14,7 @@ namespace {
 
 struct Entity
 {
-	WCHAR* name;
+	const WCHAR* name;
 	WCHAR ch;
 };
 

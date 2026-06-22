@@ -207,7 +207,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		if (newVersion || downloadedNewVersion)
 		{
 			UINT_PTR idm = downloadedNewVersion ? IDM_INSTALL_NEW_VERSION : IDM_NEW_VERSION;
-			WCHAR* str = GetString(downloadedNewVersion ? IDS_InstallNewVersion : IDS_UpdateAvailable);
+			const WCHAR* str = GetString(downloadedNewVersion ? IDS_InstallNewVersion : IDS_UpdateAvailable);
 			InsertMenu(menu, 0, MF_BYPOSITION, idm, str);
 			++sepPos;
 		}
@@ -276,7 +276,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 }
 
 // TODO: Get rid of this after adding these labels to the language files.
-WCHAR* GetStringTemp(UINT id)
+const WCHAR* GetStringTemp(UINT id)
 {
 	switch (id)
 	{

@@ -15,7 +15,7 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
-void LogWininetError(MeasureWebParser* measure, DWORD errorCode, WCHAR* description);
+void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* description);
 
 class ProxyCachePool
 {
@@ -1088,7 +1088,7 @@ void MeasureWebParser::HandleDownloadResult(const std::wstring& path, HRESULT re
 	}
 }
 
-void LogWininetError(MeasureWebParser* measure, DWORD errorCode, WCHAR* description)
+void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* description)
 {
 	if (errorCode == ERROR_INTERNET_EXTENDED_ERROR)
 	{
