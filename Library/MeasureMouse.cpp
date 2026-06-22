@@ -125,7 +125,7 @@ bool MeasureMouse::ShouldRunMoveAction()
 	return true;
 }
 
-bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalPos, POINT screenPos, MOUSEACTION fallback)
+bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalSkinPos, POINT logicalScreenPos, MOUSEACTION fallback)
 {
 	if (!IsActive())
 	{
@@ -140,7 +140,7 @@ bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalPos, POINT scr
 
 	if (!command.empty())
 	{
-		ReplaceMouseVariables(command, logicalPos, screenPos);
+		ReplaceMouseVariables(command, logicalSkinPos, logicalScreenPos);
 		GetRainmeter().ExecuteActionCommand(command.c_str(), this);
 		return true;
 	}
@@ -148,7 +148,7 @@ bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalPos, POINT scr
 	return false;
 }
 
-void MeasureMouse::ExecuteMoveActions(POINT logicalPos, POINT screenPos)
+void MeasureMouse::ExecuteMoveActions(POINT logicalSkinPos, POINT logicalScreenPos)
 {
 	if (!IsActive() || !ShouldRunMoveAction())
 	{
@@ -160,7 +160,7 @@ void MeasureMouse::ExecuteMoveActions(POINT logicalPos, POINT screenPos)
 		if (!action.empty())
 		{
 			std::wstring command = action;
-			ReplaceMouseVariables(command, logicalPos, screenPos);
+			ReplaceMouseVariables(command, logicalSkinPos, logicalScreenPos);
 			GetRainmeter().ExecuteActionCommand(command.c_str(), this);
 		}
 	};
@@ -189,14 +189,15 @@ void MeasureMouse::ExecuteMoveActions(POINT logicalPos, POINT screenPos)
 	}
 }
 
-void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT logicalPos, POINT screenPos) const
+void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT logicalSkinPos, POINT logicalScreenPos) const
 {
-	const auto& pos = m_RelativeToSkin ? logicalPos : screenPos;
-
 	WCHAR mouseX[32] = { 0 };
 	WCHAR mouseY[32] = { 0 };
+
+	const auto& pos = m_RelativeToSkin ? logicalSkinPos : logicalScreenPos;
 	_itow_s(pos.x, mouseX, 10);
 	_itow_s(pos.y, mouseY, 10);
+
 	const size_t mouseXLength = wcslen(mouseX);
 	const size_t mouseYLength = wcslen(mouseY);
 

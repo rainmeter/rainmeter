@@ -309,7 +309,15 @@ private:
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
 	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
-	POINT GetMouseMessagePos(UINT uMsg, LPARAM lParam) const;
+
+	struct MouseMessagePositions
+	{
+		POINT screen;
+		POINT client;
+		POINT skin;
+	};
+
+	MouseMessagePositions GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const;
 	void RepositionAndResizeWindow();
 	bool UpdateWindowDpi(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
@@ -346,8 +354,8 @@ private:
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
 	void ClearMouseMeasureCapture();
-	void DoMouseMeasureAction(POINT pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
-	void DoMouseMeasureMoveActions(POINT pos);
+	void DoMouseMeasureAction(const MouseMessagePositions& pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
+	void DoMouseMeasureMoveActions(const MouseMessagePositions& pos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
