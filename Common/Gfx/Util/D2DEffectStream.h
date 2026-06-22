@@ -13,7 +13,7 @@
 namespace Gfx {
 namespace Util {
 
-enum class FlipType : UINT
+enum class FlipType : uint8_t
 {
 	None,
 	Vertical,
