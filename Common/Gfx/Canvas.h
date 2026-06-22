@@ -81,7 +81,9 @@ public:
 	int GetH() const { return m_H; }
 
 	void SetAccurateText(bool option) { m_AccurateText = option; }
+
 	void SetDpiScale(float dpiScale);
+	FLOAT SnapToPixel(FLOAT value) const;
 
 	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
 	// called and has not yet been matched by a correspoding call to EndDraw.

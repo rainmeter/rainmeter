@@ -409,6 +409,12 @@ void Canvas::SetDpiScale(float dpiScale)
 	}
 }
 
+FLOAT Canvas::SnapToPixel(FLOAT value) const
+{
+	const FLOAT scale = m_Dpi / 96.0f;
+	return roundf(value * scale) / scale;
+}
+
 bool Canvas::SetTarget(RenderTexture* texture)
 {
 	auto bitmap = texture->GetBitmap();
