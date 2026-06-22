@@ -66,6 +66,7 @@
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
     <ClCompile Include="MeasurePower.cpp" />
     <ClCompile Include="MeasureProcess.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
     <ClInclude Include="MeasurePower.h" />
     <ClInclude Include="MeasureProcess.h" />

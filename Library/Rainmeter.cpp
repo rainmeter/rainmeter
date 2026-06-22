@@ -1975,6 +1975,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"MediaKey",
 		L"Mouse",
 		L"NowPlaying",
+		L"PingPlugin",
 		L"PowerPlugin",
 		L"Process",
 		L"QuotePlugin",
