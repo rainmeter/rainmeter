@@ -852,6 +852,7 @@ Function HandlePlugins
 	${OrIf} $R7 == "Process.dll"
 	${OrIf} $R7 == "QuotePlugin.dll"
 	${OrIf} $R7 == "RecycleManager.dll"
+	${OrIf} $R7 == "ResMon.dll"
 	${OrIf} $R7 == "SysInfo.dll"
 	${OrIf} $R7 == "WebParser.dll"
 	${OrIf} $R7 == "WifiStatus.dll"

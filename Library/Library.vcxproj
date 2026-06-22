@@ -70,6 +70,7 @@
     <ClCompile Include="MeasureQuote.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
+    <ClCompile Include="MeasureResMon.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
     <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureSysInfo.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="MeasureQuote.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
+    <ClInclude Include="MeasureResMon.h" />
     <ClInclude Include="MeasureScript.h" />
     <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureSysInfo.h" />
