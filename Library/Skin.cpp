@@ -2588,6 +2588,15 @@ bool Skin::ReadSkin()
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
 						{
 							measureName = plugin;
+
+							// Strip away the Plugin postfix.
+							const WCHAR postfix[] = L"Plugin";
+							const size_t postfixLength = _countof(postfix) - 1;
+							if (measureName.length() > postfixLength && _wcsicmp(measureName.c_str() + measureName.length() - postfixLength, postfix) == 0)
+							{
+								measureName.resize(measureName.length() - postfixLength);
+							}
+
 							break;
 						}
 					}
