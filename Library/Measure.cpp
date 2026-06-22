@@ -21,6 +21,7 @@
 #include "MeasureFolderInfo.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
+#include "MeasurePower.h"
 #include "MeasureProcess.h"
 #include "MeasureQuote.h"
 #include "MeasureRecycleManager.h"
@@ -818,6 +819,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Plugin", measure) == 0)
 	{
 		return new MeasurePlugin(skin, name);
+	}
+	else if (_wcsicmp(L"Power", measure) == 0)
+	{
+		return new MeasurePower(skin, name);
 	}
 	else if (_wcsicmp(L"Process", measure) == 0)
 	{
