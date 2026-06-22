@@ -101,7 +101,7 @@ void Updater::CheckLanguageObsoleteStatus()
 	GetRainmeter().SetLanguageStatus(obsolete);
 }
 
-void Updater::StatusFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
+void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
 	auto updater = (Updater*)requestor;
 	if (updater->m_FetchStatusTask != fetchTask) return;
@@ -181,7 +181,7 @@ void Updater::StatusFetchResultCallback(const Net::Task* fetchTask, void* reques
 	}
 }
 
-void Updater::InstallerFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
+void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
 	auto updater = (Updater*)requestor;
 	if (updater->m_FetchInstallerTask != fetchTask) return;

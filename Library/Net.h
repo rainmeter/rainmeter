@@ -9,38 +9,16 @@
 #define RM_LIBRARY_NET_H_
 
 #include <Windows.h>
-#include <atomic>
 #include <string>
+#include "AsyncTask.h"
 
 namespace Net {
 
-class __declspec(novtable) Task
-{
-public:
-	static void HandleResultMessage(WPARAM wParam, LPARAM lParam);
-
-	void AbortWhenPossible();
-
-protected:
-	Task(void* requestor);
-	virtual ~Task() {}
-
-	virtual void StartWorkOnWorkerThread() = 0;
-	virtual void FinishWorkOnMainThread() = 0;
-
-	static DWORD WINAPI ThreadProc(void* param);
-
-	BYTE* FetchData();
-
-	void* m_Requestor;
-	std::atomic<bool> m_AbortRequested;
-};
-
 // Async task to download an URL to a file.
-class DownloadTask : public Task
+class DownloadTask : public AsyncTask
 {
 public:
-	typedef void (* ResultCallback)(const Task*, void*, const std::wstring&, HRESULT result);
+	typedef void (* ResultCallback)(const DownloadTask*, void*, const std::wstring&, HRESULT result);
 
 	static DownloadTask* Create(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback);
 
@@ -61,10 +39,10 @@ private:
 };
 
 // Async task to fetch an URL from the web.
-class FetchTask : public Task
+class FetchTask : public AsyncTask
 {
 public:
-	typedef void (* ResultCallback)(const Task*, void*, BYTE*, DWORD, DWORD);
+	typedef void (* ResultCallback)(const FetchTask*, void*, BYTE*, DWORD, DWORD);
 
 	static FetchTask* Create(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback);
 
