@@ -25,6 +25,7 @@
 #include "MeasureQuote.h"
 #include "MeasureRecycleManager.h"
 #include "MeasureRegistry.h"
+#include "MeasureResMon.h"
 #include "MeasureString.h"
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
@@ -833,6 +834,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
 		return new MeasureRegistry(skin, name);
+	}
+	else if (_wcsicmp(L"ResMon", measure) == 0)
+	{
+		return new MeasureResMon(skin, name);
 	}
 	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
