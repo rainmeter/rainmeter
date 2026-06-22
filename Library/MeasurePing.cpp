@@ -11,124 +11,212 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
-#include "System.h"
+#include "AsyncTask.h"
 #include <Icmpapi.h>
 
 namespace {
 
 std::wstring LookupPingErrorCode(DWORD errorCode);
 std::wstring LookupErrorCode(DWORD errorCode);
-DWORD WINAPI NetworkThreadProc(void* pParam);
-
-class PingCriticalSection
-{
-public:
-	PingCriticalSection()
-	{
-		System::InitializeCriticalSection(&m_CriticalSection);
-	}
-
-	~PingCriticalSection()
-	{
-		DeleteCriticalSection(&m_CriticalSection);
-	}
-
-	void Enter()
-	{
-		EnterCriticalSection(&m_CriticalSection);
-	}
-
-	void Leave()
-	{
-		LeaveCriticalSection(&m_CriticalSection);
-	}
-
-private:
-	CRITICAL_SECTION m_CriticalSection;
-};
-
-PingCriticalSection g_CriticalSection;
-
-struct CriticalSectionLock
-{
-	CriticalSectionLock()
-	{
-		g_CriticalSection.Enter();
-	}
-
-	~CriticalSectionLock()
-	{
-		g_CriticalSection.Leave();
-	}
-};
 
 }  // namespace
 
-struct PingData
+class PingTask : public AsyncTask
 {
-	PingData(MeasurePing* measure, Skin* skin) :
-		measure(measure),
-		skin(skin),
-		value(0.0),
-		destAddrInfo(nullptr),
-		timeout(30000UL),
-		timeoutValue(30000.0),
-		updateRate(32UL),
-		updateCounter(0UL),
-		threadActive(false),
-		finishAction()
-	{
-	}
+public:
+	typedef void (* ResultCallback)(const PingTask*, void*, double, bool);
 
-	~PingData()
+	static PingTask* Create(void* requestor, std::wstring destination, DWORD timeout, double timeoutValue, ResultCallback resultCallback)
 	{
-		Dispose();
-	}
-
-	PingData(const PingData&) = delete;
-	PingData& operator=(const PingData&) = delete;
-
-	void Dispose()
-	{
-		if (destAddrInfo)
+		auto* task = new PingTask(requestor, std::move(destination), timeout, timeoutValue, resultCallback);
+		if (!task->Start())
 		{
-			FreeAddrInfo(destAddrInfo);
-			destAddrInfo = nullptr;
+			delete task;
+			return nullptr;
+		}
+
+		return task;
+	}
+
+private:
+	PingTask(void* requestor, std::wstring destination, DWORD timeout, double timeoutValue, ResultCallback resultCallback) :
+		AsyncTask(requestor),
+		m_Destination(std::move(destination)),
+		m_Timeout(timeout),
+		m_Value(timeoutValue),
+		m_ResultCallback(resultCallback)
+	{
+	}
+
+	void StartWorkOnWorkerThread() override;
+	void FinishWorkOnMainThread() override;
+
+	std::wstring m_Destination;
+	DWORD m_Timeout;
+	double m_Value;
+	ResultCallback m_ResultCallback;
+	bool m_DoFinishAction = false;
+};
+
+void PingTask::StartWorkOnWorkerThread()
+{
+	if (m_Destination.empty() || m_AbortRequested)
+	{
+		return;
+	}
+
+	WSADATA wsaData;
+	int wsaStartupError = WSAStartup(0x0101, &wsaData);
+	if (wsaStartupError != 0)
+	{
+		LogErrorF(L"Ping: Unable to start WSA (Error %d: %s)", wsaStartupError, LookupErrorCode(wsaStartupError).c_str());
+		return;
+	}
+
+	PADDRINFOW destAddrInfo = nullptr;
+
+	if (GetAddrInfo(m_Destination.c_str(), nullptr, nullptr, &destAddrInfo) != 0)
+	{
+		DWORD errorCode = WSAGetLastError();
+		LogErrorF(L"Ping: WSA failed for: %s (Error %d: %s)", m_Destination.c_str(), errorCode, LookupErrorCode(errorCode).c_str());
+		WSACleanup();
+		return;
+	}
+
+	bool foundAnAddress = false;
+	int i = 0;
+	for (PADDRINFOW thisAddrInfo = destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
+	{
+		if (thisAddrInfo->ai_family == AF_INET)
+		{
+			foundAnAddress = true;
+		}
+		else if (thisAddrInfo->ai_family == AF_INET6)
+		{
+			foundAnAddress = true;
 		}
 	}
 
-	MeasurePing* measure;
-	Skin* skin;
-	double value;
-	PADDRINFOW destAddrInfo;
-	DWORD timeout;
-	double timeoutValue;
-	DWORD updateRate;
-	DWORD updateCounter;
-	bool threadActive;
-	std::wstring finishAction;
-};
+	if (!foundAnAddress)
+	{
+		LogErrorF(L"Ping: Could not find any IPv4 or IPv6 address for: %s", m_Destination.c_str());
+		FreeAddrInfo(destAddrInfo);
+		WSACleanup();
+		return;
+	}
+
+	bool useIPv6 = false;
+	struct sockaddr* destAddr = nullptr;
+	for (PADDRINFOW thisAddrInfo = destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
+	{
+		if (thisAddrInfo->ai_family == AF_INET || thisAddrInfo->ai_family == AF_INET6)
+		{
+			destAddr = thisAddrInfo->ai_addr;
+			useIPv6 = (thisAddrInfo->ai_family == AF_INET6);
+			break;
+		}
+	}
+
+	if (destAddr && !m_AbortRequested)
+	{
+		DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32UL;
+		BYTE* buffer = new BYTE[bufferSize]();
+
+		HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
+		if (hIcmpFile != INVALID_HANDLE_VALUE)
+		{
+			DWORD result = 0UL;
+			if (useIPv6)
+			{
+				struct sockaddr_in6 sourceAddr = { 0 };
+				sourceAddr.sin6_family = AF_INET6;
+				sourceAddr.sin6_port = (USHORT)0;
+				sourceAddr.sin6_flowinfo = 0UL;
+				sourceAddr.sin6_addr = in6addr_any;
+
+				result = Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
+					(struct sockaddr_in6*)destAddr, nullptr, 0, nullptr, buffer, bufferSize, m_Timeout);
+			}
+			else
+			{
+				result = IcmpSendEcho2(hIcmpFile, nullptr, nullptr, nullptr, ((struct sockaddr_in*)destAddr)->sin_addr.s_addr,
+					nullptr, 0, nullptr, buffer, bufferSize, m_Timeout);
+			}
+
+			if (result != 0UL)
+			{
+				if (useIPv6)
+				{
+					ICMPV6_ECHO_REPLY* reply = (ICMPV6_ECHO_REPLY*)buffer;
+					result = reply->Status;
+					if (result == IP_SUCCESS)
+					{
+						m_Value = (double)reply->RoundTripTime;
+					}
+				}
+				else
+				{
+					ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
+					result = reply->Status;
+					if (result == IP_SUCCESS)
+					{
+						m_Value = (double)reply->RoundTripTime;
+					}
+				}
+			}
+			else
+			{
+				result = GetLastError();
+			}
+
+			if (result != IP_SUCCESS && result != IP_REQ_TIMED_OUT)
+			{
+				LogDebugF(L"Ping: Ping failed (Error %d: %s)", result, LookupPingErrorCode(result).c_str());
+			}
+
+			IcmpCloseHandle(hIcmpFile);
+
+			m_DoFinishAction = true;
+		}
+
+		delete [] buffer;
+		buffer = nullptr;
+	}
+
+	FreeAddrInfo(destAddrInfo);
+	WSACleanup();
+}
+
+void PingTask::FinishWorkOnMainThread()
+{
+	if (m_AbortRequested)
+	{
+		return;
+	}
+
+	if (m_ResultCallback)
+	{
+		m_ResultCallback(this, m_Requestor, m_Value, m_DoFinishAction);
+	}
+}
 
 MeasurePing::MeasurePing(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_Data(new PingData(this, skin))
+	m_Destination(),
+	m_Timeout(30000UL),
+	m_TimeoutValue(30000.0),
+	m_UpdateRate(32UL),
+	m_UpdateCounter(0UL),
+	m_FinishAction(),
+	m_Task(nullptr)
 {
 }
 
 MeasurePing::~MeasurePing()
 {
-	if (m_Data)
+	if (m_Task)
 	{
-		CriticalSectionLock lock;
-		if (m_Data->threadActive)
-		{
-			m_Data->measure = nullptr;
-			m_Data = nullptr;
-		}
-		else
-		{
-			delete m_Data;
-			m_Data = nullptr;
-		}
+		m_Task->AbortWhenPossible();
+		m_Task = nullptr;
 	}
 }
 
@@ -136,209 +224,45 @@ void MeasurePing::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const std::wstring destination = parser.ReadString(section, L"DestAddress", L"");
-	if (!destination.empty())
-	{
-		WSADATA wsaData;
-		int wsaStartupError = WSAStartup(0x0101, &wsaData);
-		if (wsaStartupError == 0)
-		{
-			m_Data->Dispose();
-
-			// Error codes: https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-			if (GetAddrInfo(destination.c_str(), nullptr, nullptr, &m_Data->destAddrInfo) != 0)
-			{
-				DWORD errorCode = WSAGetLastError();
-				LogWarningF(this, L"Ping: WSA failed for: %s (Error %d: %s)", destination.c_str(), errorCode, LookupErrorCode(errorCode).c_str());
-				m_Data->Dispose();
-			}
-			else
-			{
-				bool foundAnAddress = false;
-				int i = 0;
-				for (PADDRINFOW thisAddrInfo = m_Data->destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
-				{
-					LogDebugF(this, L"Ping: Evaluating: %s (Index: %d)", destination.c_str(), i++);
-					if (thisAddrInfo->ai_family == AF_INET)
-					{
-						foundAnAddress = true;
-						LogDebugF(this, L"Ping: Found IPv4 address for: %s", destination.c_str());
-					}
-					else if (thisAddrInfo->ai_family == AF_INET6)
-					{
-						foundAnAddress = true;
-						LogDebugF(this, L"Ping: Found IPv6 address for: %s", destination.c_str());
-					}
-				}
-
-				if (!foundAnAddress)
-				{
-					LogWarningF(this, L"Ping: Could not find any IPv4 or IPv6 address for: %s", destination.c_str());
-					m_Data->Dispose();
-				}
-			}
-
-			WSACleanup();
-		}
-		else
-		{
-			LogWarningF(this, L"Ping: Unable to start WSA (Error %d: %s)", wsaStartupError, LookupErrorCode(wsaStartupError).c_str());
-		}
-	}
-
-	m_Data->updateRate = parser.ReadUInt(section, L"UpdateRate", 32U);
-	m_Data->timeout = parser.ReadUInt(section, L"Timeout", 30000U);
-	m_Data->timeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
-	m_Data->finishAction = parser.ReadString(section, L"FinishAction", L"", false);
+	m_Destination = parser.ReadString(section, L"DestAddress", L"");
+	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32U);
+	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000U);
+	m_TimeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
+	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 }
 
 void MeasurePing::UpdateValue()
 {
-	CriticalSectionLock lock;
-	if (!m_Data->threadActive)
-	{
-		if (m_Data->updateCounter == 0UL)
-		{
-			DWORD id = 0UL;
-			HANDLE thread = CreateThread(nullptr, 0ULL, NetworkThreadProc, m_Data, 0UL, &id);
-			if (thread)
-			{
-				CloseHandle(thread);
-				m_Data->threadActive = true;
-			}
-		}
+	if (m_Task) return;
 
-		++m_Data->updateCounter;
-		if (m_Data->updateCounter >= m_Data->updateRate)
-		{
-			m_Data->updateCounter = 0UL;
-		}
+	if (m_UpdateCounter == 0UL)
+	{
+		m_Task = PingTask::Create(
+			this, m_Destination, m_Timeout, m_TimeoutValue,
+			[](const PingTask* task, void* requestor, double value, bool doFinishAction)
+			{
+				auto measure = (MeasurePing*)requestor;
+				if (measure->m_Task == task)
+				{
+					measure->m_Task = nullptr;
+					measure->m_Value = value;
+
+					if (doFinishAction && !measure->m_FinishAction.empty())
+					{
+						GetRainmeter().ExecuteCommand(measure->m_FinishAction.c_str(), measure->GetSkin());
+					}
+				}
+			});
 	}
 
-	m_Value = m_Data->value;
+	++m_UpdateCounter;
+	if (m_UpdateCounter >= m_UpdateRate)
+	{
+		m_UpdateCounter = 0UL;
+	}
 }
 
 namespace {
-
-DWORD WINAPI NetworkThreadProc(void* pParam)
-{
-	PingData* data = (PingData*)pParam;
-	double value = data->timeoutValue;
-	DWORD pingResult = IP_SUCCESS;
-
-	bool doFinishAction = false;
-
-	if (data->destAddrInfo)
-	{
-		bool useIPv6 = false;
-		struct sockaddr* destAddr = nullptr;
-		for (PADDRINFOW thisAddrInfo = data->destAddrInfo; thisAddrInfo != nullptr; thisAddrInfo = thisAddrInfo->ai_next)
-		{
-			if (thisAddrInfo->ai_family == AF_INET || thisAddrInfo->ai_family == AF_INET6)
-			{
-				destAddr = thisAddrInfo->ai_addr;
-				useIPv6 = (thisAddrInfo->ai_family == AF_INET6);
-				break;
-			}
-		}
-
-		if (destAddr)
-		{
-			DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32UL;
-			BYTE* buffer = new BYTE[bufferSize]();
-
-			HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
-			if (hIcmpFile != INVALID_HANDLE_VALUE)
-			{
-				DWORD result = 0UL;
-				if (useIPv6)
-				{
-					struct sockaddr_in6 sourceAddr = { 0 };
-					sourceAddr.sin6_family = AF_INET6;
-					sourceAddr.sin6_port = (USHORT)0;
-					sourceAddr.sin6_flowinfo = 0UL;
-					sourceAddr.sin6_addr = in6addr_any;
-
-					result = Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
-						(struct sockaddr_in6*)destAddr, nullptr, 0, nullptr, buffer, bufferSize, data->timeout);
-				}
-				else
-				{
-					result = IcmpSendEcho2(hIcmpFile, nullptr, nullptr, nullptr, ((struct sockaddr_in*)destAddr)->sin_addr.s_addr,
-						nullptr, 0, nullptr, buffer, bufferSize, data->timeout);
-				}
-
-				if (result != 0UL)
-				{
-					if (useIPv6)
-					{
-						ICMPV6_ECHO_REPLY* reply = (ICMPV6_ECHO_REPLY*)buffer;
-						result = reply->Status;
-						if (result == IP_SUCCESS)
-						{
-							value = (double)reply->RoundTripTime;
-						}
-					}
-					else
-					{
-						ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
-						result = reply->Status;
-						if (result == IP_SUCCESS)
-						{
-							value = (double)reply->RoundTripTime;
-						}
-					}
-				}
-				else
-				{
-					result = GetLastError();
-				}
-
-				pingResult = result;
-				IcmpCloseHandle(hIcmpFile);
-
-				doFinishAction = true;
-			}
-
-			delete [] buffer;
-			buffer = nullptr;
-		}
-	}
-
-	std::wstring finishAction;
-	Skin* skin = nullptr;
-
-	{
-		CriticalSectionLock lock;
-		if (data->measure)
-		{
-			if (pingResult != IP_SUCCESS && pingResult != IP_REQ_TIMED_OUT)
-			{
-				LogDebugF(data->measure, L"Ping: Ping failed (Error %d: %s)", pingResult, LookupPingErrorCode(pingResult).c_str());
-			}
-
-			data->value = value;
-			data->threadActive = false;
-			if (doFinishAction && !data->finishAction.empty())
-			{
-				finishAction = data->finishAction;
-				skin = data->skin;
-			}
-		}
-		else
-		{
-			delete data;
-			data = nullptr;
-		}
-	}
-
-	if (skin && !finishAction.empty())
-	{
-		GetRainmeter().ExecuteCommand(finishAction.c_str(), skin);
-	}
-
-	return 0;
-}
 
 std::wstring LookupErrorCode(DWORD errorCode)
 {

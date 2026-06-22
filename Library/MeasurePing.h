@@ -9,8 +9,9 @@
 #define RM_LIBRARY_MEASUREPING_H_
 
 #include "Measure.h"
+#include <string>
 
-struct PingData;
+class PingTask;
 
 class MeasurePing : public Measure
 {
@@ -28,7 +29,13 @@ protected:
 	void UpdateValue() override;
 
 private:
-	PingData* m_Data;
+	std::wstring m_Destination;
+	DWORD m_Timeout;
+	double m_TimeoutValue;
+	DWORD m_UpdateRate;
+	DWORD m_UpdateCounter;
+	std::wstring m_FinishAction;
+	PingTask* m_Task;
 };
 
 #endif
