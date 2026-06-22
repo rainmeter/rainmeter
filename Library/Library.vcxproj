@@ -73,6 +73,7 @@
     <ClCompile Include="MeasureRegistry.cpp" />
     <ClCompile Include="MeasureResMon.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
+    <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureResMon.h" />
     <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />

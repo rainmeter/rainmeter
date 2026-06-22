@@ -31,6 +31,7 @@
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
+#include "MeasureSpeedFan.h"
 #include "MeasureSysInfo.h"
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
@@ -855,6 +856,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"String", measure) == 0)
 	{
 		return new MeasureString(skin, name);
+	}
+	else if (_wcsicmp(L"SpeedFan", measure) == 0)
+	{
+		return new MeasureSpeedFan(skin, name);
 	}
 	else if (_wcsicmp(L"SysInfo", measure) == 0)
 	{
