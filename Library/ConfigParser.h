@@ -14,8 +14,6 @@
 #include <windows.h>
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <cstdint>
 #include <d2d1.h>
 
@@ -58,7 +56,7 @@ public:
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
-	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	const ankerl::unordered_dense::map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
@@ -127,7 +125,7 @@ private:
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	std::unordered_map<std::wstring, Measure*> m_Measures;
+	ankerl::unordered_dense::map<std::wstring, Measure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;
 
@@ -139,19 +137,19 @@ private:
 	std::wstring* m_CurrentSection;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
-	std::unordered_map<std::wstring, std::wstring> m_Values;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Values;
 
-	std::unordered_set<std::wstring> m_FoundSections;
+	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionInsertPos;
 
-	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
-	std::unordered_map<std::wstring, std::wstring> m_Variables;
-	std::unordered_map<std::wstring, std::wstring> m_OriginalVariableNames;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_BuiltInVariables;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Variables;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
 
-	static std::unordered_map<VariableType, WCHAR> c_VariableMap;
+	static ankerl::unordered_dense::map<VariableType, WCHAR> c_VariableMap;
 };
 
 #endif

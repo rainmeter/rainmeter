@@ -168,7 +168,7 @@ int GetMonitorRectValue(const RECT& rect, MonitorComponent component)
 
 }  // namespace
 
-std::unordered_map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
+ankerl::unordered_dense::map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
 
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
@@ -300,7 +300,7 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 	const std::wstring strTmp = StrToUpper(strVariable);
 
 	// #1: Built-in variables
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
+	auto iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
 		strValue = (*iter).second;
@@ -329,7 +329,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	const std::wstring strTmp = StrToUpper(strVariable);
 
 	// User-defined variables
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_OriginalVariableNames.find(strTmp);
+	auto iter = m_OriginalVariableNames.find(strTmp);
 	if (iter != m_OriginalVariableNames.end())
 	{
 		return &(*iter).second;
@@ -1325,7 +1325,7 @@ void ConfigParser::AddMeasure(Measure* pMeasure)
 
 Measure* ConfigParser::GetMeasure(const std::wstring& name)
 {
-	std::unordered_map<std::wstring, Measure*>::const_iterator iter = m_Measures.find(StrToUpper(name));
+	auto iter = m_Measures.find(StrToUpper(name));
 	if (iter != m_Measures.end())
 	{
 		return (*iter).second;
@@ -1643,7 +1643,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
-	std::unordered_set<std::wstring> unique;
+	ankerl::unordered_dense::set<std::wstring> unique;
 	std::wstring key, value;  // buffer
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
@@ -1877,7 +1877,7 @@ void ConfigParser::DeleteValue(const std::wstring& strSection, const std::wstrin
 	strTmp += L'~';
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
+	auto iter = m_Values.find(StrToUpperC(strTmp));
 	if (iter != m_Values.end())
 	{
 		m_Values.erase(iter);
@@ -1896,6 +1896,6 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const
 	strTmp += L'~';
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
+	auto iter = m_Values.find(StrToUpperC(strTmp));
 	return (iter != m_Values.end()) ? (*iter).second : strDefault;
 }

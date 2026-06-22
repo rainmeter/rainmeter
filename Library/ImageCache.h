@@ -8,8 +8,6 @@
 #ifndef __IMAGECACHE_H__
 #define __IMAGECACHE_H__
 
-#include <unordered_map>
-#include <map>
 #include <string>
 #include <../Common/Gfx/D2DBitmap.h>
 #include "ImageOptions.h"
@@ -116,7 +114,7 @@ private:
 
 	void Remove(const ImageOptions& item);
 
-	std::unordered_map<ImageOptions, ImageCache*> m_CachePool;
+	ankerl::unordered_dense::map<ImageOptions, ImageCache*> m_CachePool;
 };
 
 // Convenience function.

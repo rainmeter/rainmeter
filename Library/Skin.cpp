@@ -772,7 +772,7 @@ void Skin::MoveSelectedWindow(int dx, int dy)
 	SavePositionIfAppropriate();
 }
 
-void Skin::SelectSkinsGroup(std::unordered_set<std::wstring> groups)
+void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups)
 {
 	for (const auto& group : groups)
 	{
@@ -3022,7 +3022,7 @@ void Skin::UpdateRelativeMeters()
 {
 	if (!m_ResetRelativeMeters) return;
 
-	std::unordered_map<Meter*, Meter*> containers;
+	ankerl::unordered_dense::map<Meter*, Meter*> containers;
 	Meter* previousMeter = nullptr;
 
 	for (auto* meter : m_Meters)

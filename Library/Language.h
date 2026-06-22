@@ -10,7 +10,6 @@
 
 #include <windows.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class Language
@@ -47,7 +46,7 @@ private:
 	LCID m_LCID;
 	HANDLE m_FileMapping;
 	const BYTE* m_Data;
-	std::unordered_map<UINT, const WCHAR*> m_Strings;
+	ankerl::unordered_dense::map<UINT, const WCHAR*> m_Strings;
 	unsigned short m_ButtonWidth;
 	unsigned short m_LabelWidth;
 	bool m_IsRTL;
