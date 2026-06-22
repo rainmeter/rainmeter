@@ -9,6 +9,7 @@
 #include "Measure.h"
 #include "MeasureActionTimer.h"
 #include "MeasureCPU.h"
+#include "MeasureCoreTemp.h"
 #include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
 #include "MeasureMouse.h"
@@ -768,6 +769,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	if (_wcsicmp(L"CPU", measure) == 0)
 	{
 		return new MeasureCPU(skin, name);
+	}
+	else if (_wcsicmp(L"CoreTemp", measure) == 0)
+	{
+		return new MeasureCoreTemp(skin, name);
 	}
 	else if (_wcsicmp(L"ActionTimer", measure) == 0)
 	{

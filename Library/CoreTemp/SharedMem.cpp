@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "StdAfx.h"
 #include "SharedMem.h"
 
 CSharedMemClient::CSharedMemClient(void)

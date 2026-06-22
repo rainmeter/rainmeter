@@ -847,6 +847,7 @@ FunctionEnd
 
 Function HandlePlugins
 	${If} $R7 == "ActionTimer.dll"
+	${OrIf} $R7 == "CoreTemp.dll"
 	${OrIf} $R7 == "FolderInfo.dll"
 	${OrIf} $R7 == "iTunesPlugin.dll"
 	${OrIf} $R7 == "MediaKey.dll"
@@ -866,7 +867,6 @@ Function HandlePlugins
 		Delete "$R9"
 	${ElseIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "AudioLevel.dll"
-	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "PerfMon.dll"
