@@ -847,6 +847,7 @@ FunctionEnd
 
 Function HandlePlugins
 	${If} $R7 == "FolderInfo.dll"
+	${OrIf} $R7 == "iTunesPlugin.dll"
 	${OrIf} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
 	${OrIf} $R7 == "PowerPlugin.dll"
@@ -867,7 +868,6 @@ Function HandlePlugins
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "InputText.dll"
-	${AndIf} $R7 != "iTunesPlugin.dll"
 	${AndIf} $R7 != "PerfMon.dll"
 	${AndIf} $R7 != "PingPlugin.dll"
 	${AndIf} $R7 != "QuotePlugin.dll"

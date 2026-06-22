@@ -84,6 +84,7 @@
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />

@@ -55,7 +55,7 @@
 
       <LanguageStandard>stdcpp20</LanguageStandard>
 
-      <!-- Ignore C4996 to get rid of "'xxx': was declared deprecated" warnings in: DialogInstall.cpp, iTunesPlugin.cpp -->
+      <!-- Ignore C4996 to get rid of "'xxx': was declared deprecated" warnings in: DialogInstall.cpp -->
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 
       <ExceptionHandling>false</ExceptionHandling>
