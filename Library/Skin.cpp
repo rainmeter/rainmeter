@@ -2837,64 +2837,40 @@ void Skin::Redraw()
 			{
 				const RECT m = m_BackgroundMargins;
 
+				const FLOAT dstX0 = m_Canvas.SnapToPixel(0.0f);
+				const FLOAT dstX1 = m_Canvas.SnapToPixel((FLOAT)m.left);
+				const FLOAT dstX2 = m_Canvas.SnapToPixel((FLOAT)(m_WindowW - m.right));
+				const FLOAT dstX3 = m_Canvas.SnapToPixel((FLOAT)m_WindowW);
+				const FLOAT dstY0 = m_Canvas.SnapToPixel(0.0f);
+				const FLOAT dstY1 = m_Canvas.SnapToPixel((FLOAT)m.top);
+				const FLOAT dstY2 = m_Canvas.SnapToPixel((FLOAT)(m_WindowH - m.bottom));
+				const FLOAT dstY3 = m_Canvas.SnapToPixel((FLOAT)m_WindowH);
+
+				const FLOAT srcX0 = 0.0f;
+				const FLOAT srcX1 = (FLOAT)m.left;
+				const FLOAT srcX2 = (FLOAT)(m_BackgroundSize.cx - m.right);
+				const FLOAT srcX3 = (FLOAT)m_BackgroundSize.cx;
+				const FLOAT srcY0 = 0.0f;
+				const FLOAT srcY1 = (FLOAT)m.top;
+				const FLOAT srcY2 = (FLOAT)(m_BackgroundSize.cy - m.bottom);
+				const FLOAT srcY3 = (FLOAT)m_BackgroundSize.cy;
+
 				if (m.top > 0L)
 				{
-					if (m.left > 0L)
-					{
-						// Top-Left
-						D2D1_RECT_F r = D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top);
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0.0f, 0.0f, (FLOAT)m.left, (FLOAT)m.top));
-					}
-
-					// Top
-					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_WindowW - m.right), (FLOAT)m.top);
-					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, 0.0f, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top));
-
-					if (m.right > 0L)
-					{
-						// Top-Right
-						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), 0.0f,(FLOAT)m_WindowW, (FLOAT)m.top);
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), 0.0f, (FLOAT)m_BackgroundSize.cx, (FLOAT)m.top));
-					}
+					if (m.left > 0L) m_Canvas.DrawBitmap(bitmap, { dstX0, dstY0, dstX1, dstY1 }, { srcX0, srcY0, srcX1, srcY1 });
+					m_Canvas.DrawBitmap(bitmap, { dstX1, dstY0, dstX2, dstY1 }, { srcX1, srcY0, srcX2, srcY1 });
+					if (m.right > 0L) m_Canvas.DrawBitmap(bitmap, { dstX2, dstY0, dstX3, dstY1 }, { srcX2, srcY0, srcX3, srcY1 });
 				}
 
-				if (m.left > 0L)
-				{
-					// Left
-					D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom));
-					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0, (FLOAT)m.top, (FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
-				}
-
-				// Center
-				D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom));
-				m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)m.top, (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom)));
-
-				if (m.right > 0L)
-				{
-					// Right
-					D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)m.top, (FLOAT)m_WindowW, (FLOAT)(m_WindowH - m.bottom));
-					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m.top, (FLOAT)m_BackgroundSize.cx, (FLOAT)(m_BackgroundSize.cy - m.bottom)));
-				}
+				if (m.left > 0L) m_Canvas.DrawBitmap(bitmap, { dstX0, dstY1, dstX1, dstY2 }, { srcX0, srcY1, srcX1, srcY2 });
+				m_Canvas.DrawBitmap(bitmap, { dstX1, dstY1, dstX2, dstY2 }, { srcX1, srcY1, srcX2, srcY2 });
+				if (m.right > 0L) m_Canvas.DrawBitmap(bitmap, { dstX2, dstY1, dstX3, dstY2 }, { srcX2, srcY1, srcX3, srcY2 });
 
 				if (m.bottom > 0L)
 				{
-					if (m.left > 0L)
-					{
-						// Bottom-Left
-						D2D1_RECT_F r = D2D1::RectF(0.0f, (FLOAT)(m_WindowH - m.bottom), (FLOAT)m.left, (FLOAT)m_WindowH);
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF(0.0f, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m.left, (FLOAT)m_BackgroundSize.cy));
-					}
-
-					// Bottom
-					D2D1_RECT_F r = D2D1::RectF((FLOAT)m.left, (FLOAT)(m_WindowH - m.bottom), (FLOAT)(m_WindowW - m.right), (FLOAT)m_WindowH);
-					m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)m.left, (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)m_BackgroundSize.cy));
-
-					if (m.right > 0L)
-					{
-						// Bottom-Right
-						D2D1_RECT_F r = D2D1::RectF((FLOAT)(m_WindowW - m.right), (FLOAT)(m_WindowH - m.bottom), (FLOAT)m_WindowW, (FLOAT)m_WindowH);
-						m_Canvas.DrawBitmap(bitmap, r, D2D1::RectF((FLOAT)(m_BackgroundSize.cx - m.right), (FLOAT)(m_BackgroundSize.cy - m.bottom), (FLOAT)m_BackgroundSize.cx, (FLOAT)m_BackgroundSize.cy));
-					}
+					if (m.left > 0L) m_Canvas.DrawBitmap(bitmap, { dstX0, dstY2, dstX1, dstY3 }, { srcX0, srcY2, srcX1, srcY3 });
+					m_Canvas.DrawBitmap(bitmap, { dstX1, dstY2, dstX2, dstY3 }, { srcX1, srcY2, srcX2, srcY3 });
+					if (m.right > 0L) m_Canvas.DrawBitmap(bitmap, { dstX2, dstY2, dstX3, dstY3 }, { srcX2, srcY2, srcX3, srcY3 });
 				}
 			}
 			else if (m_BackgroundMode == BGMODE_TILED_IMAGE)
