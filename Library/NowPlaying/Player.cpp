@@ -163,7 +163,7 @@ void Player::FindLyrics()
 	m_FetchLyricsTask = Net::FetchTask::Create((void*)this, std::move(url), {}, s_InternetHandle, INTERNET_FLAG_RESYNCHRONIZE, LyricsFetchResultCallback);
 }
 
-void Player::LyricsFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
+void Player::LyricsFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
 	auto player = (Player*)requestor;
 	if (player->m_FetchLyricsTask == fetchTask)

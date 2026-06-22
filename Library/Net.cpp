@@ -13,38 +13,6 @@
 
 namespace Net {
 
-Task::Task(void* requestor) :
-	m_Requestor(requestor),
-	m_AbortRequested(false)
-{
-}
-
-void Task::AbortWhenPossible()
-{
-	m_AbortRequested = true;
-}
-
-DWORD WINAPI Task::ThreadProc(void* param)
-{
-	auto task = (Task*)param;
-	task->StartWorkOnWorkerThread();
-
-	// At this point, we need to switch over to the main thread. Lets achieve that using a window message.
-	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_NET_TASK_RESULT, (WPARAM)task, 0);
-
-	return 0;
-}
-
-void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
-{
-	auto task = (Task*)wParam;
-	task->FinishWorkOnMainThread();
-
-	delete task;
-	task = nullptr;
-}
-
-
 //
 // DownloadTask
 //
@@ -52,7 +20,7 @@ void Task::HandleResultMessage(WPARAM wParam, LPARAM lParam)
 DownloadTask* DownloadTask::Create(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback)
 {
 	auto* task = new DownloadTask(requestor, std::move(url), std::move(path), resultCallback);
-	if (!QueueUserWorkItem(Task::ThreadProc, task, 0))
+	if (!task->Start())
 	{
 		delete task;
 		return nullptr;
@@ -61,7 +29,8 @@ DownloadTask* DownloadTask::Create(void* requestor, std::wstring url, std::wstri
 	return task;
 }
 
-DownloadTask::DownloadTask(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback) : Task(requestor),
+DownloadTask::DownloadTask(void* requestor, std::wstring url, std::wstring path, ResultCallback resultCallback) :
+	AsyncTask(requestor),
 	m_Url(std::move(url)),
 	m_Path(std::move(path)),
 	m_ResultCallback(resultCallback)
@@ -96,7 +65,7 @@ void DownloadTask::FinishWorkOnMainThread()
 FetchTask* FetchTask::Create(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback)
 {
 	auto* task = new FetchTask(requestor, std::move(url), std::move(headers), internetHandle, internetFlags, resultCallback);
-	if (!QueueUserWorkItem(Task::ThreadProc, task, 0))
+	if (!task->Start())
 	{
 		delete task;
 		return nullptr;
@@ -105,7 +74,8 @@ FetchTask* FetchTask::Create(void* requestor, std::wstring url, std::wstring hea
 	return task;
 }
 
-FetchTask::FetchTask(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) : Task(requestor),
+FetchTask::FetchTask(void* requestor, std::wstring url, std::wstring headers, HINTERNET internetHandle, DWORD internetFlags, ResultCallback resultCallback) :
+	AsyncTask(requestor),
 	m_Url(std::move(url)),
 	m_Headers(std::move(headers)),
 	m_InternetHandle(internetHandle),

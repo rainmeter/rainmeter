@@ -29,14 +29,14 @@ private:
 	Updater(const Updater& other) = delete;
 	Updater& operator=(Updater other) = delete;
 
-	static void StatusFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
-	static void InstallerFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	static void StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	static void InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 
 	static bool VerifyInstallerHash(const BYTE* buffer, size_t size, const std::wstring& sha256);
 	static bool VerifySignedInstaller(const std::wstring& file);
 
-	Net::Task* m_FetchStatusTask;
-	Net::Task* m_FetchInstallerTask;
+	Net::FetchTask* m_FetchStatusTask;
+	Net::FetchTask* m_FetchInstallerTask;
 
 	std::wstring m_InstallerPath;
 	std::wstring m_InstallerFile;

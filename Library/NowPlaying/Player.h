@@ -123,10 +123,10 @@ protected:
 	bool m_Repeat;
 
 private:
-	static void LyricsFetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
+	static void LyricsFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode);
 	void HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
 
-	Net::Task* m_FetchLyricsTask;
+	Net::FetchTask* m_FetchLyricsTask;
 };
 
 #endif

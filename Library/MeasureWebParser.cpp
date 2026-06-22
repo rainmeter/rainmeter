@@ -494,7 +494,17 @@ void MeasureWebParser::UpdateValue()
 				{
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
-					m_FetchTask = Net::FetchTask::Create((void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags, FetchResultCallback);
+					m_FetchTask = Net::FetchTask::Create(
+						(void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags,
+						[](const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
+						{
+							auto measure = (MeasureWebParser*)requestor;
+							if (measure->m_FetchTask == fetchTask)
+							{
+								measure->HandleFetchResult(data, dataSize, errorCode);
+								measure->m_FetchTask = nullptr;
+							}
+						});
 				}
 
 				++m_UpdateCounter;
@@ -521,16 +531,6 @@ const WCHAR* MeasureWebParser::GetStringValue()
 	}
 
 	return CheckSubstitute(s_ResultString.c_str());
-}
-
-void MeasureWebParser::FetchResultCallback(const Net::Task* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
-{
-	auto measure = (MeasureWebParser*)requestor;
-	if (measure->m_FetchTask == fetchTask)
-	{
-		measure->HandleFetchResult(data, dataSize, errorCode);
-		measure->m_FetchTask = nullptr;
-	}
 }
 
 void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode)
@@ -979,7 +979,17 @@ void MeasureWebParser::StartDownloadTask()
 				LogDebugF(this, L"Downloading url '%s' to: %s", url.c_str(), fullpath.c_str());
 			}
 
-			m_DownloadTask = Net::DownloadTask::Create((void*)this, std::move(url), std::move(fullpath), DownloadResultCallback);
+			m_DownloadTask = Net::DownloadTask::Create(
+				(void*)this, std::move(url), std::move(fullpath),
+				[](const Net::DownloadTask* downloadTask, void* requestor, const std::wstring& path, HRESULT result)
+				{
+					auto measure = (MeasureWebParser*)requestor;
+					if (measure->m_DownloadTask == downloadTask)
+					{
+						measure->HandleDownloadResult(path, result);
+						measure->m_DownloadTask = nullptr;
+					}
+				});
 		}
 		else
 		{
@@ -1009,17 +1019,6 @@ void MeasureWebParser::StartDownloadTask()
 
 		// Clear old downloaded filename
 		m_DownloadedFile.clear();
-	}
-}
-
-
-void MeasureWebParser::DownloadResultCallback(const Net::Task* downloadTask, void* requestor, const std::wstring& path, HRESULT result)
-{
-	auto measure = (MeasureWebParser*)requestor;
-	if (measure->m_DownloadTask == downloadTask)
-	{
-		measure->HandleDownloadResult(path, result);
-		measure->m_DownloadTask = nullptr;
 	}
 }
 
