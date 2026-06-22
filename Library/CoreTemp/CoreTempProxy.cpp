@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "StdAfx.h"
 #include "CoreTempProxy.h"
 
 CoreTempProxy::CoreTempProxy(void)

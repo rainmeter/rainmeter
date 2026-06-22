@@ -69,6 +69,8 @@
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="CoreTemp\CoreTempProxy.cpp" />
+    <ClCompile Include="CoreTemp\SharedMem.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
@@ -83,6 +85,7 @@
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
+    <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
@@ -187,6 +190,8 @@
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="CoreTemp\CoreTempProxy.h" />
+    <ClInclude Include="CoreTemp\SharedMem.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogManage.h" />
@@ -200,6 +205,7 @@
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureActionTimer.h" />
     <ClInclude Include="MeasureCalc.h" />
+    <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
