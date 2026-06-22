@@ -36,6 +36,7 @@
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "MeasureWifiStatus.h"
+#include "MeasureWin7Audio.h"
 #include "MeasureWindowMessage.h"
 #include "Rainmeter.h"
 #include "Util.h"
@@ -876,6 +877,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"WifiStatus", measure) == 0)
 	{
 		return new MeasureWifiStatus(skin, name);
+	}
+	else if (_wcsicmp(L"Win7Audio", measure) == 0)
+	{
+		return new MeasureWin7Audio(skin, name);
 	}
 	else if (_wcsicmp(L"WindowMessage", measure) == 0)
 	{
