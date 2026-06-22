@@ -679,18 +679,15 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				{
 					// Forward the message to correct window
 					int index = (int)(wParam >> 16);
-					const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
-
+					const auto& windows = GetRainmeter().GetAllSkins();
 					if (index < (int)windows.size())
 					{
-						std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
-						for ( ; iter != windows.end(); ++iter)
+						for (const auto& iter : windows)
 						{
 							--index;
 							if (index < 0)
 							{
-								Skin* skin = (*iter).second;
-								SendMessage(skin->GetWindow(), WM_COMMAND, mID, 0);
+								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, 0);
 								break;
 							}
 						}

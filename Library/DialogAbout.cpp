@@ -780,12 +780,10 @@ void DialogAbout::TabSkins::UpdateSkinList()
 
 	// Add entries for each skin
 	std::wstring::size_type maxLength = 0;
-	const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
-	std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
 	bool found = false;
-	for ( ; iter != windows.end(); ++iter)
+	for (const auto& iter : GetRainmeter().GetAllSkins())
 	{
-		const std::wstring& skinName = (*iter).first;
+		const std::wstring& skinName = iter.first;
 		std::wstring::size_type curLength = skinName.length();
 		if (curLength > maxLength)
 		{
@@ -794,10 +792,10 @@ void DialogAbout::TabSkins::UpdateSkinList()
 
 		const WCHAR* name = skinName.c_str();
 		int index = ListBox_AddString(item, name);
-		if (!found && m_SkinWindow == (*iter).second)
+		if (!found && m_SkinWindow == iter.second)
 		{
 			found = true;
-			m_SkinWindow = (*iter).second;
+			m_SkinWindow = iter.second;
 			ListBox_SetCurSel(item, index);
 		}
 	}
@@ -806,7 +804,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 
 	if (!found)
 	{
-		if (windows.empty())
+		if (GetRainmeter().GetAllSkins().empty())
 		{
 			m_SkinWindow = nullptr;
 			item = GetControl(Id_SkinsListView);
@@ -815,7 +813,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 		else
 		{
 			// Default to first skin
-			m_SkinWindow = (*windows.begin()).second;
+			m_SkinWindow = GetRainmeter().GetAllSkins().begin()->second;
 			ListBox_SetCurSel(item, 0);
 			UpdateMeasureList(m_SkinWindow);
 		}
@@ -834,9 +832,9 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 		HWND item = GetControl(Id_SkinsListBox);
 		int selected = (int)SendMessage(item, LB_GETCURSEL, 0, 0);
 
-		const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
-		std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
-		while (selected && iter != windows.end())
+		const auto& windows = GetRainmeter().GetAllSkins();
+		auto iter = windows.cbegin();
+		while (selected && iter != windows.cend())
 		{
 			++iter;
 			--selected;

@@ -184,7 +184,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	{
 		// Create a menu for all active skins
 		int index = 0;
-		std::map<std::wstring, Skin*>::const_iterator iter = rainmeter.m_Skins.begin();
+		auto iter = rainmeter.m_Skins.cbegin();
 		for (; iter != rainmeter.m_Skins.end(); ++iter)
 		{
 			if (index == 0)
