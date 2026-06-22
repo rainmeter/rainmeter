@@ -19,6 +19,7 @@
 #include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
 #include "MeasureFolderInfo.h"
+#include "MeasureiTunes.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
 #include "MeasurePower.h"
@@ -809,6 +810,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"FolderInfo", measure) == 0)
 	{
 		return new MeasureFolderInfo(skin, name);
+	}
+	else if (_wcsicmp(L"iTunes", measure) == 0)
+	{
+		return new MeasureiTunes(skin, name);
 	}
 	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
