@@ -674,7 +674,6 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 		if (m_Effect != EFFECT_NONE)
 		{
-			const D2D1_COLOR_F solidBrush = m_EffectColor;
 			D2D1_RECT_F rcEffect = rcDest;
 
 			auto offsetEffect = [&](FLOAT x, FLOAT y)
@@ -688,18 +687,18 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 			if (m_Effect == EFFECT_SHADOW)
 			{
 				offsetEffect(1.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
 				offsetEffect(0.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(1.0f, -1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(-1.0f, -1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(-1.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 			}
 		}
 
