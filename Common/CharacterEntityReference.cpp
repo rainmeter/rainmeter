@@ -285,9 +285,9 @@ static Entity kEntities[] =
 
 WCHAR GetEntityChar(const std::wstring& entity)
 {
-	static std::unordered_map<std::wstring, WCHAR> s_Map = []()
+	static ankerl::unordered_dense::map<std::wstring, WCHAR> s_Map = []()
 	{
-		std::unordered_map<std::wstring, WCHAR> map;
+		ankerl::unordered_dense::map<std::wstring, WCHAR> map;
 		const size_t entityCount = _countof(kEntities);
 		map.rehash(entityCount);
 		for (size_t i = 0; i < entityCount; ++i)
