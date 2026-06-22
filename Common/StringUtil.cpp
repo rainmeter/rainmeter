@@ -187,4 +187,24 @@ bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix
 	return false;
 }
 
+struct IsEqual
+{
+	IsEqual(const std::locale& loc) : locale(loc) {}
+	bool operator()(wchar_t ch1, wchar_t ch2) { return std::toupper(ch1, locale) == std::toupper(ch2, locale); }
+
+private:
+	const std::locale& locale;
+};
+
+std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2, const std::locale& loc)
+{
+	const auto iter = std::search(str1.begin(), str1.end(), str2.begin(), str2.end(), IsEqual(loc));
+	if (iter != str1.end())
+	{
+		return (iter - str1.begin());
+	}
+
+	return -1; // not found
+}
+
 }  // namespace StringUtil

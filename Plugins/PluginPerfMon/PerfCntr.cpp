@@ -54,7 +54,7 @@ CPerfCounter::Format( PTSTR pszBuffer, DWORD nSize, BOOL fHex )
 {
 	// Do better formatting!!!  Check length!!!
 
-	PTSTR pszPrefix = TEXT("");
+	const WCHAR* pszPrefix = L"";
 	TCHAR szTemp[512] = { 0 };
 
 	// First, ascertain the basic type (number, counter, text, or zero)
@@ -90,7 +90,7 @@ CPerfCounter::Format( PTSTR pszBuffer, DWORD nSize, BOOL fHex )
 		}
 	}
 
-	PTSTR pszFmt = fHex ? TEXT("%s%Xh") : TEXT("%s%u");
+	const WCHAR* pszFmt = fHex ? L"%s%Xh" : L"%s%u";
 
 	switch ( m_cbData )
 	{

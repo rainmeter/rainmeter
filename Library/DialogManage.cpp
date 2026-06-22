@@ -528,7 +528,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	toolInfo.hwnd = m_Window;
 	toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 	toolInfo.uId = (UINT_PTR)item;
-	toolInfo.lpszText = GetString(IDS_CreateNewSkin);
+	toolInfo.lpszText = (WCHAR*)GetString(IDS_CreateNewSkin);
 	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
@@ -1662,7 +1662,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = GetString(IDS_Collapse);
+							mii.dwTypeData = (WCHAR*)GetString(IDS_Collapse);
 							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
@@ -1681,7 +1681,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (m_SkinWindow)
 						{
-							mii.dwTypeData = GetString(IDS_Unload);
+							mii.dwTypeData = (WCHAR*)GetString(IDS_Unload);
 							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else

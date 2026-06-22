@@ -23,7 +23,8 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 	m_pszRawStrings = 0;
 
 	// Determine the appropriate strings to pass to RegOpenKeyEx
-	PTSTR psz009RegValue, pszLastIndexRegValue;
+	const WCHAR* psz009RegValue;
+	const WCHAR* pszLastIndexRegValue;
 	if ( PERF_TITLE_COUNTER == titleType )
 	{
 		psz009RegValue = TEXT("Counter 009");

@@ -96,7 +96,7 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 	for (UINT i = 0; i < ctCount; ++i)
 	{
 		const Control& ct = cts[i];
-		WCHAR* text = ct.textId ? getString(ct.textId) : nullptr;
+		const WCHAR* text = ct.textId ? getString(ct.textId) : nullptr;
 
 		RECT r = { ct.x, ct.y, ct.w, ct.h };
 		MapDialogRect(parent, &r);

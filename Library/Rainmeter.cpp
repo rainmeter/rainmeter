@@ -339,7 +339,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (runInstaller)
 		{
 			const std::wstring isPortable = _wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) == 0 ? L"1" : L"0";
-			const std::wstring is64Bit = APPBITS == L"64-bit" ? L"64" : L"32";
+			const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
 			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION=" + is64Bit + L" /D=" + m_Path.c_str();
 			CommandHandler::RunFile(fullPath.c_str(), args.c_str());
 			clearBuffer();

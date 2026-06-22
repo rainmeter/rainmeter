@@ -299,19 +299,19 @@ void DialogAbout::TabLog::Initialize()
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(75);
-	lvc.pszText = GetString(IDS_Type);
+	lvc.pszText = (WCHAR*)GetString(IDS_Type);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(85);
-	lvc.pszText = GetString(IDS_Time);
+	lvc.pszText = (WCHAR*)GetString(IDS_Time);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(225);
-	lvc.pszText = GetString(IDS_Source);
+	lvc.pszText = (WCHAR*)GetString(IDS_Source);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(180);  // Resized later
-	lvc.pszText = GetString(IDS_Message);
+	lvc.pszText = (WCHAR*)GetString(IDS_Message);
 	ListView_InsertColumn(item, 3, &lvc);
 
 	// Start 4th column at max width
@@ -696,10 +696,10 @@ void DialogAbout::TabSkins::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = GetString(IDS_Measures);
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Measures);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = GetString(IDS_Variables);
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Variables);
 	ListView_InsertGroup(item, 1, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
@@ -709,19 +709,19 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
-	lvc.pszText = GetString(IDS_Name);
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
-	lvc.pszText = GetString(IDS_Range);
+	lvc.pszText = (WCHAR*)GetString(IDS_Range);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(90);
-	lvc.pszText = GetString(IDS_Number);
+	lvc.pszText = (WCHAR*)GetString(IDS_Number);
 	ListView_InsertColumn(item, 2, &lvc);
 	lvc.iSubItem = 3;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
-	lvc.pszText = GetString(IDS_String);
+	lvc.pszText = (WCHAR*)GetString(IDS_String);
 	ListView_InsertColumn(item, 3, &lvc);
 
 	// Start 4th column at max width
@@ -938,8 +938,8 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
-		ListView_SetItemText(item, lvi.iItem, 1, L"");
-		ListView_SetItemText(item, lvi.iItem, 2, L"");
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
 		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
 	}
@@ -1314,10 +1314,10 @@ void DialogAbout::TabPlugins::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = GetString(IDS_ExternalPlugins);
+	lvg.pszHeader = (WCHAR*)GetString(IDS_ExternalPlugins);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = GetString(IDS_BuiltInPlugins);
+	lvg.pszHeader = (WCHAR*)GetString(IDS_BuiltInPlugins);
 	ListView_InsertGroup(item, 1, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
@@ -1327,15 +1327,15 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
-	lvc.pszText = GetString(IDS_Name);
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
-	lvc.pszText = GetString(IDS_Version);
+	lvc.pszText = (WCHAR*)GetString(IDS_Version);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(250);  // Resized later
-	lvc.pszText = GetString(IDS_Author);
+	lvc.pszText = (WCHAR*)GetString(IDS_Author);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem = { 0 };
@@ -1456,7 +1456,7 @@ void DialogAbout::TabPlugins::Initialize()
 					LPCTSTR author = GetAuthorFunc();
 					if (author && *author)
 					{
-						ListView_SetItemText(item, vitem.iItem, 2, (LPWSTR)author);
+						ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)author);
 					}
 				}
 
@@ -1480,7 +1480,7 @@ void DialogAbout::TabPlugins::Initialize()
 		vitem.iItem = index;
 		vitem.pszText = (LPWSTR)oldDefaultPlugin;
 		ListView_InsertItem(item, &vitem);
-		ListView_SetItemText(item, vitem.iItem, 2, L"*As an internal measure");
+		ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)L"*As an internal measure");
 		++index;
 	}
 

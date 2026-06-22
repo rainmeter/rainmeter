@@ -16,7 +16,7 @@ struct MenuTemplate
 	WORD id;
 	WORD idText;
 
-	typedef WCHAR* (*GetStringFunc)(UINT id);
+	typedef const WCHAR* (*GetStringFunc)(UINT id);
 
 	static HMENU CreateMenu(const MenuTemplate* items, UINT itemCount, GetStringFunc getString);
 

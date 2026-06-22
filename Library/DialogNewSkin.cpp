@@ -268,7 +268,7 @@ INT_PTR DialogNewSkin::OnCommand(WPARAM wParam, LPARAM lParam)
 
 const std::wstring& DialogNewSkin::GetTemplateFolder()
 {
-	static std::wstring& folder = GetRainmeter().GetSettingsPath() + L"Templates\\";
+	static std::wstring folder = GetRainmeter().GetSettingsPath() + L"Templates\\";
 	return folder;
 }
 
@@ -485,7 +485,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			tvi.hInsertAfter = TVI_FIRST;
 			tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE | TVIF_PARAM;
 			tvi.item.iImage = tvi.item.iSelectedImage = 0;
-			tvi.item.pszText = L"@Resources";
+			tvi.item.pszText = (WCHAR*)L"@Resources";
 			tvi.item.state = tvi.item.stateMask = TVIS_BOLD;
 			tvi.hParent = TreeView_GetRoot(tree);
 
@@ -798,7 +798,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = GetString(IDS_Collapse);
+							mii.dwTypeData = (WCHAR*)GetString(IDS_Collapse);
 							SetMenuItemInfo(menu, IDM_NEWSKINMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 
@@ -1545,7 +1545,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 				s_SortInfo.emplace_back(true, L"@Resources");
 				tvi.item.lParam = (LPARAM)(size_t)(s_SortInfo.size() - 1);
 
-				tvi.item.pszText = L"@Resources";
+				tvi.item.pszText = (LPWSTR)L"@Resources";
 				TreeView_InsertItem(tree, &tvi);
 			}
 			else
