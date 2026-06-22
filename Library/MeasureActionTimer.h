@@ -27,13 +27,17 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	struct Action;
+	class ActionTimerTask;
 
-	void StopAction(Action* action);
-	void StopAllActions();
-	static void ExecuteAction(Action* action);
+	struct Action
+	{
+		std::vector<std::wstring> commands;
+		ActionTimerTask* task = nullptr;
+	};
 
-	std::vector<Action*> m_Actions;
+	void StopAction(Action& action);
+
+	std::vector<Action> m_Actions;
 	bool m_IgnoreWarnings;
 };
 
