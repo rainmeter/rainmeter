@@ -51,6 +51,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 
       <LanguageStandard>stdcpp20</LanguageStandard>
 

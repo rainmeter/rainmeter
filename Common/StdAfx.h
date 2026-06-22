@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 #include <string>
-#include <unordered_map>
+
+#include "ankerl/unordered_dense.h"
 
 #endif
