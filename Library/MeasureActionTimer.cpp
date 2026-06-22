@@ -7,33 +7,72 @@
 
 #include "StdAfx.h"
 #include "MeasureActionTimer.h"
+#include "AsyncTask.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
 
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-
-struct MeasureActionTimer::Action
+class MeasureActionTimer::ActionTimerTask : public AsyncTask
 {
-	std::vector<std::wstring> actions;
-	Skin* skin;
-	std::mutex mutex;
-	std::condition_variable signal;
-	std::condition_variable cleanUp;
-	std::atomic<bool> interrupt;
-	std::atomic<bool> isRunning;
+public:
+	static ActionTimerTask* Create(MeasureActionTimer* measure, size_t index)
+	{
+		auto* task = new ActionTimerTask(measure, index);
+		if (!task->Start())
+		{
+			delete task;
+			return nullptr;
+		}
 
-	Action(Skin* skin) :
-		actions(),
-		skin(skin),
-		interrupt(false),
-		isRunning(false)
+		return task;
+	}
+
+private:
+	ActionTimerTask(MeasureActionTimer* measure, size_t index) :
+		AsyncTask(measure),
+		m_ActionIndex(index),
+		m_Commands(measure->m_Actions[index].commands),
+		m_Skin(measure->GetSkin())
 	{
 	}
+
+	void StartWorkOnWorkerThread() override;
+	void FinishWorkOnMainThread() override;
+
+	size_t m_ActionIndex;
+	std::vector<std::wstring> m_Commands;
+	Skin* m_Skin;
 };
+
+void MeasureActionTimer::ActionTimerTask::StartWorkOnWorkerThread()
+{
+	for (const auto& command : m_Commands)
+	{
+		if (m_AbortRequested) break;
+
+		if (_wcsnicmp(command.c_str(), L"WAIT ", 5) == 0)
+		{
+			__int64 timeout = _wtoi64(command.substr(5).c_str());
+			if (timeout > 0)
+			{
+				Sleep(timeout > MAXDWORD ? MAXDWORD : (DWORD)timeout);
+			}
+		}
+		else
+		{
+			GetRainmeter().DelayedExecuteCommand(command.c_str(), m_Skin);
+		}
+	}
+}
+
+void MeasureActionTimer::ActionTimerTask::FinishWorkOnMainThread()
+{
+	auto measure = (MeasureActionTimer*)m_Requestor;
+	if (!m_AbortRequested && m_ActionIndex < measure->m_Actions.size() && measure->m_Actions[m_ActionIndex].task == this)
+	{
+		measure->m_Actions[m_ActionIndex].task = nullptr;
+	}
+}
 
 MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Actions(),
@@ -43,11 +82,9 @@ MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(
 
 MeasureActionTimer::~MeasureActionTimer()
 {
-	StopAllActions();
-
-	for (auto action : m_Actions)
+	for (auto& action : m_Actions)
 	{
-		delete action;
+		StopAction(action);
 	}
 }
 
@@ -94,15 +131,11 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		if (index <= m_Actions.size())
 		{
-			std::lock_guard<std::mutex> lock(m_Actions[index - 1]->mutex);
-			m_Actions[index - 1]->actions = tokens;
+			m_Actions[index - 1].commands = std::move(tokens);
 		}
 		else
 		{
-			Action* newAction = new Action(GetSkin());
-			std::lock_guard<std::mutex> lock(newAction->mutex);
-			newAction->actions = tokens;
-			m_Actions.push_back(newAction);
+			m_Actions.emplace_back(Action{ std::move(tokens) });
 		}
 
 		WCHAR buffer[64];
@@ -129,10 +162,9 @@ void MeasureActionTimer::Command(const std::wstring& command)
 		size_t number = 0;
 		if (parseAndValidateIndex(number, 7))
 		{
-			if (!m_Actions[number]->isRunning.exchange(true))
+			if (!m_Actions[number].task)
 			{
-				std::thread thread(ExecuteAction, m_Actions[number]);
-				thread.detach();
+				m_Actions[number].task = ActionTimerTask::Create(this, number);
 			}
 			else if (!m_IgnoreWarnings)
 			{
@@ -162,58 +194,11 @@ void MeasureActionTimer::Command(const std::wstring& command)
 	}
 }
 
-void MeasureActionTimer::StopAction(Action* action)
+void MeasureActionTimer::StopAction(Action& action)
 {
-	action->interrupt = true;
-	action->signal.notify_all();
-
+	if (action.task)
 	{
-		std::unique_lock<std::mutex> lock(action->mutex);
-		action->cleanUp.wait(lock, [&](){ return action->isRunning == false; });
+		action.task->AbortWhenPossible();
+		action.task = nullptr;
 	}
-
-	action->interrupt = false;
-}
-
-void MeasureActionTimer::StopAllActions()
-{
-	for (auto action : m_Actions)
-	{
-		StopAction(action);
-	}
-}
-
-void MeasureActionTimer::ExecuteAction(Action* action)
-{
-	std::vector<std::wstring> actions;
-	{
-		std::lock_guard<std::mutex> lock(action->mutex);
-		actions = action->actions;
-	}
-
-	for (const auto& actionCommand : actions)
-	{
-		if (_wcsnicmp(actionCommand.c_str(), L"WAIT ", 5) == 0)
-		{
-			__int64 timeout = _wtoi64(actionCommand.substr(5).c_str());
-			if (timeout > 0)
-			{
-				std::unique_lock<std::mutex> lock(action->mutex);
-				if (action->signal.wait_for(lock, std::chrono::milliseconds(timeout), [&](){ return action->interrupt == true; }))
-				{
-					action->isRunning = false;
-					lock.unlock();
-					action->cleanUp.notify_all();
-					return;
-				}
-
-				continue;
-			}
-		}
-
-		GetRainmeter().DelayedExecuteCommand(actionCommand.c_str(), action->skin);
-	}
-
-	action->isRunning = false;
-	action->cleanUp.notify_all();
 }
