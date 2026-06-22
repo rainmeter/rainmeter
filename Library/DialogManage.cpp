@@ -1252,12 +1252,11 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			HMENU menu = CreatePopupMenu();
 
 			// Add active skins to menu
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
 			int index = 0;
-			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
+			for (const auto& iter : GetRainmeter().GetAllSkins())
 			{
-				std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
-				name += ((*iter).second)->GetFileName();
+				std::wstring name = iter.second->GetFolderPath() + L'\\';
+				name += iter.second->GetFileName();
 				InsertMenu(menu, index, MF_BYPOSITION, ID_CONFIG_FIRST + index, name.c_str());
 				++index;
 			}
@@ -1548,15 +1547,14 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	default:
 		if (wParam >= ID_CONFIG_FIRST && wParam <= ID_CONFIG_LAST)
 		{
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
 			int index = (int)wParam - ID_CONFIG_FIRST;
 			int i = 0;
-			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
+			for (const auto& iter : GetRainmeter().GetAllSkins())
 			{
 				if (i == index)
 				{
-					std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
-					name += ((*iter).second)->GetFileName();
+					std::wstring name = iter.second->GetFolderPath() + L'\\';
+					name += iter.second->GetFileName();
 
 					HWND item = GetControl(Id_SkinsTreeView);
 					SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());

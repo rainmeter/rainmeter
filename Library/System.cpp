@@ -626,7 +626,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			KillTimer(hWnd, TIMER_RESUME);
 			if (GetRainmeter().IsRedrawable())
 			{
-				std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+				auto iter = GetRainmeter().GetAllSkins().begin();
 				for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 				{
 					(*iter).second->RedrawWindow();
@@ -649,7 +649,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+			auto iter = GetRainmeter().GetAllSkins().begin();
 			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
@@ -674,7 +674,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		LogDebugF(L"System: User session change detected! Session ID: 0x%08X Type: 0x%08X", lParam, wParam);
 		if (GetRainmeter().IsRedrawable())
 		{
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+			auto iter = GetRainmeter().GetAllSkins().begin();
 			for (; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				(*iter).second->RedrawWindow();

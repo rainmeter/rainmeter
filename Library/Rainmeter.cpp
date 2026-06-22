@@ -1143,7 +1143,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		std::wstring folderPath = m_SkinRegistry.GetFolderPath(folderIndex);
 
 		// Verify that the skin is not already active
-		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.find(folderPath);
+		auto iter = m_Skins.find(folderPath);
 		if (iter != m_Skins.end())
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
@@ -1393,7 +1393,7 @@ Skin* Rainmeter::GetSkin(std::wstring folderPath)
 	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
 
 	const WCHAR* folderSz = folderPath.c_str();
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		if (_wcsicmp((*iter).first.c_str(), folderSz) == 0)
@@ -1411,7 +1411,7 @@ Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 	{
 		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
 
-		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+		auto iter = m_Skins.begin();
 		for (; iter != m_Skins.end(); ++iter)
 		{
 			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
@@ -1429,7 +1429,7 @@ Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 
 Skin* Rainmeter::GetSkin(HWND hwnd)
 {
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		if ((*iter).second->GetWindow() == hwnd)
@@ -1443,7 +1443,7 @@ Skin* Rainmeter::GetSkin(HWND hwnd)
 
 void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group)
 {
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		Skin* skin = (*iter).second;
