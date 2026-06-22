@@ -12,6 +12,7 @@
 #include "MeasureMemory.h"
 #include "MeasureMouse.h"
 #include "MeasurePhysicalMemory.h"
+#include "MeasurePing.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
@@ -798,6 +799,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
 		return new MeasurePhysicalMemory(skin, name);
+	}
+	else if (_wcsicmp(L"Ping", measure) == 0)
+	{
+		return new MeasurePing(skin, name);
 	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
