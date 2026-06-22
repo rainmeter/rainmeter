@@ -849,6 +849,7 @@ Function HandlePlugins
 	${If} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
 	${OrIf} $R7 == "Process.dll"
+	${OrIf} $R7 == "QuotePlugin.dll"
 	${OrIf} $R7 == "RecycleManager.dll"
 	${OrIf} $R7 == "SysInfo.dll"
 	${OrIf} $R7 == "WebParser.dll"
