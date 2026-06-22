@@ -319,6 +319,7 @@ void Canvas::EndDraw()
 	HRESULT hr = m_Target->EndDraw();
 	if (FAILED(hr))
 	{
+		m_SolidColorBrushCache.clear();
 		m_Target.Reset();
 	}
 
@@ -447,9 +448,8 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
 	const D2D1_COLOR_F& color, bool applyInlineFormatting)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (FAILED(hr)) return;
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
 
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 
@@ -727,12 +727,10 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 
 void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr))
-	{
-		m_Target->FillRectangle(rect, solidBrush.Get());
-	}
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
+
+	m_Target->FillRectangle(rect, solidBrush.Get());
 }
 
 void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle)
@@ -775,9 +773,8 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 void Canvas::DrawLine(const D2D1_COLOR_F& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (FAILED(hr)) return;
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
 
 	m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);
 }
@@ -831,6 +828,8 @@ HRESULT Canvas::CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& 
 
 HRESULT Canvas::CreateRenderTarget()
 {
+	m_SolidColorBrushCache.clear();
+
 	if (c_D2DDevice)
 	{
 		c_D2DDevice->ClearResources();
@@ -887,6 +886,24 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
 	m_Target->SetTarget(m_TargetBitmap.Get());
 	m_Target->SetDpi(m_Dpi, m_Dpi);
 	return true;
+}
+
+Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(const D2D1_COLOR_F& color)
+{
+	auto iter = m_SolidColorBrushCache.find(color);
+	if (iter != m_SolidColorBrushCache.end()) return iter->second;
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> brush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(color, brush.GetAddressOf());
+	if (FAILED(hr)) return nullptr;
+
+	const size_t maxCacheSize = 64U;
+	if (m_SolidColorBrushCache.size() <= maxCacheSize)
+	{
+		m_SolidColorBrushCache.emplace(color, brush);
+	}
+
+	return brush;
 }
 
 }  // namespace Gfx
