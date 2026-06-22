@@ -147,7 +147,7 @@ public:
 	void MoveWindow(int x, int y);
 	void MoveSelectedWindow(int dx, int dy);
 	bool IsSelected() { return m_Selected; }
-	void SelectSkinsGroup(std::unordered_set<std::wstring> groups);
+	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
 	void Select();
 	void Deselect();
 
@@ -480,7 +480,7 @@ private:
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;
 
-	std::unordered_map<UINT_PTR, std::wstring> m_DelayedCommands;
+	ankerl::unordered_dense::map<UINT_PTR, std::wstring> m_DelayedCommands;
 
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;

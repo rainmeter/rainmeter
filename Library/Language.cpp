@@ -113,7 +113,7 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 		return value;
 	};
 
-	std::unordered_map<UINT, const WCHAR*> strings;
+	ankerl::unordered_dense::map<UINT, const WCHAR*> strings;
 	size_t offset = 12;
 	while (offset < dataSize)
 	{

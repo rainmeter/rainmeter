@@ -32,8 +32,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <list>
 #include <algorithm>
 #include <atomic>
@@ -50,6 +48,8 @@
 
 // RUNTIME
 #include <process.h>
+
+#include "ankerl/unordered_dense.h"
 
 // ADDITIONAL MACRO
 #define IsCtrlKeyDown()     (GetKeyState(VK_CONTROL) < 0)

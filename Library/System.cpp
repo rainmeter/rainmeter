@@ -1156,7 +1156,7 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 
 bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
 {
-	static std::unordered_set<std::wstring> s_Processes;
+	static ankerl::unordered_dense::set<std::wstring> s_Processes;
 	static ULONGLONG s_LastUpdateTickCount = 0ULL;
 	const ULONGLONG updateInterval = 250ULL; // ms
 

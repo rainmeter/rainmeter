@@ -9,7 +9,6 @@
 #define __GROUP_H__
 
 #include <string>
-#include <unordered_set>
 
 class __declspec(novtable) Group
 {
@@ -22,7 +21,7 @@ public:
 
 	void InitializeGroup(const std::wstring& groups);
 
-	const std::unordered_set<std::wstring>& GetGroups() const { return m_Groups; }
+	const ankerl::unordered_dense::set<std::wstring>& GetGroups() const { return m_Groups; }
 
 	bool AddToGroup(const std::wstring& group);
 	bool BelongsToGroup(const std::wstring& group) const;
@@ -31,7 +30,7 @@ private:
 	std::wstring& CreateGroup(std::wstring& str) const;
 	std::wstring VerifyGroup(const std::wstring& str) const;
 
-	std::unordered_set<std::wstring> m_Groups;
+	ankerl::unordered_dense::set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;
 
 };
