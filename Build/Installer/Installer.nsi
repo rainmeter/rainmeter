@@ -101,6 +101,7 @@ Var NonDefaultLanguage
 Var AutoStartup
 Var Install64Bit
 Var InstallPortable
+Var ExistingRainmeterInstallation
 Var RestartAfterInstall
 Var un.DeleteAll
 
@@ -618,6 +619,11 @@ Section
 
 	SetOutPath "$INSTDIR"
 
+	StrCpy $ExistingRainmeterInstallation 0
+	${If} ${FileExists} "$INSTDIR\Rainmeter.exe"
+		StrCpy $ExistingRainmeterInstallation 1
+	${EndIf}
+
 	; Close Rainmeter (and wait up to five seconds)
 	${ForEach} $0 10 0 - 1
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
@@ -819,10 +825,13 @@ SkipIniMove:
 		WriteRegStr HKCU "SOFTWARE\Rainmeter" "PortableInstallPath" "$INSTDIR"
 
 		${IfNot} ${FileExists} "Rainmeter.ini"
+		${AndIf} $ExistingRainmeterInstallation <> 1
 			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
 
-		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
+		${If} ${FileExists} "$INSTDIR\Rainmeter.ini"
+			WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
+		${EndIf}
 	${EndIf}
 SectionEnd
 
