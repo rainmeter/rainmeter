@@ -485,6 +485,7 @@ void Skin::Refresh(bool init, bool all)
 	}
 
 	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(m_HostWindow, nullptr, m_X.pos, m_Y.pos, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ComputeOptionValueFromPosition();
 
@@ -662,6 +663,15 @@ void Skin::RepositionAndResizeWindow()
 		GetPhysicalWindowW(),
 		GetPhysicalWindowH(),
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+	SetWindowPos(
+		m_HostWindow,
+		nullptr,
+		m_X.pos,
+		m_Y.pos,
+		0,
+		0,
+		SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
 	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
@@ -4484,6 +4494,19 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT Skin::OnWindowPosChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	// Keep the host window position in sync with the skin window position because some plugins
+	// rely on the DPI of the host window being correct.
+	auto wp = (WINDOWPOS*)lParam;
+	if (m_HostWindow && !(wp->flags & SWP_NOMOVE))
+	{
+		SetWindowPos(m_HostWindow, nullptr, wp->x, wp->y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+	}
+
+	return DefWindowProc(m_Window, uMsg, wParam, lParam);
+}
+
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
 	const int x = skin->m_X.pos;
@@ -5329,6 +5352,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK)
 	MESSAGE(OnCaptureChanged, WM_CAPTURECHANGED)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
+	MESSAGE(OnWindowPosChanged, WM_WINDOWPOSCHANGED)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_METERWINDOW_DELAYED_MOVE)

@@ -242,6 +242,7 @@ protected:
 	LRESULT OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnWindowPosChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
