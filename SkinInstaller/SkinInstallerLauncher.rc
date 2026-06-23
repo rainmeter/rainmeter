@@ -51,4 +51,4 @@ VS_VERSION_INFO VERSIONINFO
 // Icon
 //
 
-IDI_SKININSTALLER           ICON    DISCARDABLE     "res/Rainstaller.ico"
+IDI_SKININSTALLER           ICON    DISCARDABLE     "SkinInstaller.ico"

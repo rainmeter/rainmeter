@@ -10,26 +10,36 @@
 #include "MeasureCPU.h"
 #include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
+#include "MeasureMouse.h"
 #include "MeasurePhysicalMemory.h"
+#include "MeasurePing.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
 #include "MeasureNetTotal.h"
 #include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
+#include "MeasureFolderInfo.h"
+#include "MeasureiTunes.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
+#include "MeasurePower.h"
 #include "MeasureProcess.h"
+#include "MeasureQuote.h"
 #include "MeasureRecycleManager.h"
 #include "MeasureRegistry.h"
+#include "MeasureResMon.h"
 #include "MeasureString.h"
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
+#include "MeasureSpeedFan.h"
 #include "MeasureSysInfo.h"
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "MeasureWifiStatus.h"
+#include "MeasureWin7Audio.h"
+#include "MeasureWindowMessage.h"
 #include "Rainmeter.h"
 #include "Util.h"
 #include "pcre/config.h"
@@ -766,6 +776,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasureMemory(skin, name);
 	}
+	else if (_wcsicmp(L"Mouse", measure) == 0)
+	{
+		return new MeasureMouse(skin, name);
+	}
 	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
 		return new MeasureNetIn(skin, name);
@@ -786,6 +800,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasurePhysicalMemory(skin, name);
 	}
+	else if (_wcsicmp(L"Ping", measure) == 0)
+	{
+		return new MeasurePing(skin, name);
+	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
 		return new MeasureVirtualMemory(skin, name);
@@ -793,6 +811,14 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
 		return new MeasureDiskSpace(skin, name);
+	}
+	else if (_wcsicmp(L"FolderInfo", measure) == 0)
+	{
+		return new MeasureFolderInfo(skin, name);
+	}
+	else if (_wcsicmp(L"iTunes", measure) == 0)
+	{
+		return new MeasureiTunes(skin, name);
 	}
 	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
@@ -806,9 +832,17 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasurePlugin(skin, name);
 	}
+	else if (_wcsicmp(L"Power", measure) == 0)
+	{
+		return new MeasurePower(skin, name);
+	}
 	else if (_wcsicmp(L"Process", measure) == 0)
 	{
 		return new MeasureProcess(skin, name);
+	}
+	else if (_wcsicmp(L"Quote", measure) == 0)
+	{
+		return new MeasureQuote(skin, name);
 	}
 	else if (_wcsicmp(L"RecycleManager", measure) == 0)
 	{
@@ -817,6 +851,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
 		return new MeasureRegistry(skin, name);
+	}
+	else if (_wcsicmp(L"ResMon", measure) == 0)
+	{
+		return new MeasureResMon(skin, name);
 	}
 	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
@@ -829,6 +867,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"String", measure) == 0)
 	{
 		return new MeasureString(skin, name);
+	}
+	else if (_wcsicmp(L"SpeedFan", measure) == 0)
+	{
+		return new MeasureSpeedFan(skin, name);
 	}
 	else if (_wcsicmp(L"SysInfo", measure) == 0)
 	{
@@ -845,6 +887,14 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"WifiStatus", measure) == 0)
 	{
 		return new MeasureWifiStatus(skin, name);
+	}
+	else if (_wcsicmp(L"Win7Audio", measure) == 0)
+	{
+		return new MeasureWin7Audio(skin, name);
+	}
+	else if (_wcsicmp(L"WindowMessage", measure) == 0)
+	{
+		return new MeasureWindowMessage(skin, name);
 	}
 
 	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);

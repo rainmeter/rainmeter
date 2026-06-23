@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
 #include "Skin.h"
@@ -15,7 +16,7 @@
 #include <TlHelp32.h>
 #include <WtsApi32.h>
 
-using namespace Gdiplus;
+bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& target);
 
 #define DEBUG_VERBOSE  (0)  // Set 1 if you need verbose logging.
 
@@ -32,8 +33,6 @@ enum INTERVAL
 	INTERVAL_RESTOREWINDOWS = 100,
 	INTERVAL_RESUME         = 1000
 };
-
-MultiMonitorInfo System::c_Monitors = { 0 };
 
 HWND System::c_Window = nullptr;
 HWND System::c_HelperWindow = nullptr;
@@ -94,8 +93,7 @@ void System::Initialize(HINSTANCE instance)
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
-	c_Monitors.monitors.reserve(4);
-	SetMultiMonitorInfo();
+	MonitorUtil::InitializeMultiMonitorInfo();
 
 	WCHAR directory[MAX_PATH];
 	DWORD len = GetCurrentDirectory(MAX_PATH, directory);
@@ -142,493 +140,35 @@ void System::Finalize()
 	}
 }
 
-/*
-** Retrieves the multi-monitor information.
-**
-*/
-BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+UINT System::GetSystemDpi()
 {
-	MultiMonitorInfo* m = (MultiMonitorInfo*)dwData;
+	typedef UINT(WINAPI* GetDpiForSystemProc)();
+	static auto s_GetDpiForSystemProc = (GetDpiForSystemProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForSystem");
+	if (s_GetDpiForSystemProc) return s_GetDpiForSystemProc();
 
-	MONITORINFOEX info = {};
-	info.cbSize = sizeof(MONITORINFOEX);
-	GetMonitorInfo(hMonitor, &info);
-
-	if (GetRainmeter().GetDebug())
+	HDC dc = GetDC(nullptr);
+	if (dc)
 	{
-		LogDebug(info.szDevice);
-		LogDebugF(L"  Flags       : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-		LogDebugF(L"  Handle      : 0x%p", hMonitor);
-		LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
-			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-		LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-	}
-	if (m == nullptr) return TRUE;
-
-	if (m->useEnumDisplayDevices)
-	{
-		for (auto iter = m->monitors.begin(); iter != m->monitors.end(); ++iter)
-		{
-			if ((*iter).handle == nullptr && _wcsicmp(info.szDevice, (*iter).deviceName.c_str()) == 0)
-			{
-				(*iter).handle = hMonitor;
-				(*iter).screen = *lprcMonitor;
-				(*iter).work = info.rcWork;
-				break;
-			}
-		}
-	}
-	else  // use only EnumDisplayMonitors
-	{
-		MonitorInfo monitor;
-		monitor.active = true;
-
-		monitor.handle = hMonitor;
-		monitor.screen = *lprcMonitor;
-		monitor.work = info.rcWork;
-
-		monitor.deviceName = info.szDevice;  // E.g. "\\.\DISPLAY1"
-
-		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-		DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
-		DWORD dwMon = 0;
-		while (EnumDisplayDevices(info.szDevice, dwMon++, &ddm, 0))
-		{
-			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-			{
-				monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
-				break;
-			}
-		}
-
-		m->monitors.push_back(monitor);
-
-		if (info.dwFlags & MONITORINFOF_PRIMARY)
-		{
-			// It's primary monitor!
-			m->primary = (int)m->monitors.size();
-		}
+		const int dpi = GetDeviceCaps(dc, LOGPIXELSX);
+		ReleaseDC(nullptr, dc);
+		if (dpi > 0) return (UINT)dpi;
 	}
 
-	return TRUE;
+	return USER_DEFAULT_SCREEN_DPI;
 }
 
-/*
-** Returns the number of monitors.
-**
-*/
-size_t System::GetMonitorCount()
+UINT System::GetDpiForWindow(HWND window)
 {
-	if (c_Monitors.monitors.empty())
+	typedef UINT(WINAPI* GetDpiForWindowProc)(HWND);
+	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
+
+	if (window && s_GetDpiForWindow)
 	{
-		SetMultiMonitorInfo();
-	}
-	return c_Monitors.monitors.size();
-}
-
-/*
-** Sets the multi-monitor information.
-**
-*/
-void System::SetMultiMonitorInfo()
-{
-	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
-	bool logging = GetRainmeter().GetDebug();
-
-	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
-	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
-	c_Monitors.vsH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	c_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-
-	c_Monitors.primary = 1;  // If primary screen is not found, 1st screen is assumed as primary screen.
-
-	c_Monitors.useEnumDisplayDevices = true;
-	c_Monitors.useEnumDisplayMonitors = false;
-
-	if (logging)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* EnumDisplayDevices / EnumDisplaySettings API");
+		const UINT dpi = s_GetDpiForWindow(window);
+		if (dpi > 0) return dpi;
 	}
 
-	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
-
-	if (EnumDisplayDevices(nullptr, 0, &dd, 0))
-	{
-		DWORD dwDevice = 0;
-
-		do
-		{
-			std::wstring msg;
-
-			std::wstring deviceName(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
-			std::wstring deviceString;
-
-			if (logging)
-			{
-				deviceString.assign(dd.DeviceString, wcsnlen(dd.DeviceString, _countof(dd.DeviceString)));
-
-				LogDebug(deviceName.c_str());
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
-				{
-					msg += L"ACTIVE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
-				{
-					msg += L"MULTI ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					msg += L"PRIMARY ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
-				{
-					msg += L"MIRROR ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
-				{
-					msg += L"VGA ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
-				{
-					msg += L"REMOVABLE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
-				{
-					msg += L"PRUNED ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
-				{
-					msg += L"REMOTE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
-				{
-					msg += L"DISCONNECT ";
-				}
-			}
-
-			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
-			{
-				MonitorInfo monitor = { 0 };
-
-				monitor.handle = nullptr;
-				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
-
-				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-				DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
-				DWORD dwMon = 0;
-				while (EnumDisplayDevices(deviceName.c_str(), dwMon++, &ddm, 0))
-				{
-					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-					{
-						monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
-
-						if (logging)
-						{
-							LogDebugF(L"  Name        : %s", monitor.monitorName.c_str());
-
-							if (*dd.DeviceID && *dd.DeviceKey)
-							{
-								LogDebugF(L"  DeviceID    : %s", dd.DeviceID);
-								LogDebugF(L"  DeviceKey   : %s", dd.DeviceKey);
-							}
-						}
-						break;
-					}
-				}
-
-				if (logging)
-				{
-					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
-
-					if (*ddm.DeviceID && *ddm.DeviceKey)
-					{
-						LogDebugF(L"  AdapterID   : %s", ddm.DeviceID);
-						LogDebugF(L"  AdapterKey  : %s", ddm.DeviceKey);
-					}
-
-					LogDebugF(L"  DeviceFlags : %s(0x%08X)", msg.c_str(), dd.StateFlags);
-				}
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
-				{
-					monitor.active = true;
-
-					DEVMODE dm = { 0 };
-					dm.dmSize = sizeof(DEVMODE);
-
-					if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
-					{
-						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
-						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
-
-						if (logging)
-						{
-							msg.clear();
-							auto buildMessage = [&](LPCWSTR key, LPCWSTR value) -> void
-							{
-								if (!msg.empty()) msg += L", ";
-								msg += key;
-								msg += L'=';
-								msg += value;
-							};
-
-							LogDebugF(L"  Handle      : 0x%p", monitor.handle);
-
-							// Pixel Info
-							if (dm.dmLogPixels > 0)          buildMessage(L"LogicalPixels", std::to_wstring(dm.dmLogPixels).c_str());
-							if (dm.dmFields & DM_BITSPERPEL) buildMessage(L"BitsPerPixel", std::to_wstring(dm.dmBitsPerPel).c_str());
-							if (dm.dmFields & DM_PELSWIDTH && dm.dmFields & DM_PELSHEIGHT)
-							{
-								std::wstring visibleResolution = std::to_wstring(dm.dmPelsWidth);
-								visibleResolution += L'x';
-								visibleResolution += std::to_wstring(dm.dmPelsHeight);
-
-								buildMessage(L"VisibleResolution", visibleResolution.c_str());
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  PixelInfo   : %s", msg.c_str());
-								msg.clear();
-							}
-
-								// Display Info
-								if (dm.dmFields & DM_DISPLAYORIENTATION)
-								{
-								switch (dm.dmDisplayOrientation)
-								{
-									default:
-									case DMDO_DEFAULT: buildMessage(L"Orientation", L"0°"); break;
-									case DMDO_90:      buildMessage(L"Orientation", L"90° (clockwise)"); break;
-									case DMDO_180:     buildMessage(L"Orientation", L"180° (clockwise)"); break;
-									case DMDO_270:     buildMessage(L"Orientation", L"270° (clockwise)"); break;
-								}
-							}
-							if (dm.dmFields & DM_DISPLAYFREQUENCY)
-							{
-								buildMessage(L"Frequency", std::to_wstring(dm.dmDisplayFrequency).c_str());
-								msg += L"Hz";
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  DisplayInfo : %s", msg.c_str());
-								msg.clear();
-							}
-
-							// Display Flags
-							if (dm.dmFields & DM_DISPLAYFLAGS)
-							{
-								std::wstring mode = L"Non-Interlaced";
-								if (dm.dmDisplayFlags & DM_INTERLACED)
-								{
-									mode = L"Interlaced";
-								}
-								if (dm.dmFields & DMDISPLAYFLAGS_TEXTMODE) mode += L"|TextMode";
-								if (dm.dmDisplayFlags & 0x00000001)        mode += L"|Grayscale";  //DM_GRAYSCALE, no longer valid?
-
-								buildMessage(L"Mode", mode.c_str());
-							}
-							if (dm.dmFields & DM_DISPLAYFIXEDOUTPUT)
-							{
-								std::wstring output = L"Default";
-								switch (dm.dmDisplayFixedOutput)
-								{
-									default:
-									case DMDFO_DEFAULT: buildMessage(L"FixedOutput", L"Default"); break;
-									case DMDFO_CENTER:  buildMessage(L"FixedOutput", L"Center"); break;
-									case DMDFO_STRETCH: buildMessage(L"FixedOutput", L"Stretch"); break;
-								}
-							}
-							if (!msg.empty())
-							{
-								LogDebugF(L"  DisplayFlags: %s", msg.c_str());
-								msg.clear();
-							}
-						}
-					}
-
-					if (monitor.handle != nullptr)
-					{
-						MONITORINFO info = {sizeof(MONITORINFO)};
-						GetMonitorInfo(monitor.handle, &info);
-
-						monitor.screen = info.rcMonitor;
-						monitor.work = info.rcWork;
-
-						if (logging)
-						{
-							LogDebugF(L"  ScreenArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
-								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-							LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-						}
-					}
-					else  // monitor not found
-					{
-						c_Monitors.useEnumDisplayMonitors = true;
-					}
-				}
-				else
-				{
-					monitor.active = false;
-				}
-
-				monitors.push_back(monitor);
-
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					// It's primary monitor!
-					c_Monitors.primary = (int)monitors.size();
-				}
-			}
-			else
-			{
-				if (logging)
-				{
-					LogDebugF(L"  Adapter     : %s", deviceString.c_str());
-					LogDebugF(L"  Flags       : %s(0x%08X)", msg.c_str(), dd.StateFlags);
-				}
-			}
-			++dwDevice;
-		}
-		while (EnumDisplayDevices(nullptr, dwDevice, &dd, 0));
-	}
-
-	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
-	{
-		LogWarning(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
-		c_Monitors.useEnumDisplayDevices = false;
-		c_Monitors.useEnumDisplayMonitors = true;
-	}
-
-	if (logging)
-	{
-		LogDebug(L"------------------------------");
-		LogDebug(L"* EnumDisplayMonitors API");
-	}
-
-	if (c_Monitors.useEnumDisplayMonitors)
-	{
-		EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)(&c_Monitors));
-
-		if (monitors.empty())  // Failed to enumerate the monitors
-		{
-			LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
-			c_Monitors.useEnumDisplayMonitors = false;
-
-			MonitorInfo monitor;
-			monitor.active = true;
-
-			POINT pos = {0, 0};
-			monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTOPRIMARY);
-			monitor.screen.left = 0;
-			monitor.screen.top = 0;
-			monitor.screen.right = GetSystemMetrics(SM_CXSCREEN);
-			monitor.screen.bottom = GetSystemMetrics(SM_CYSCREEN);
-			if (SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0) == 0)  // failed
-			{
-				monitor.work = monitor.screen;
-			}
-
-			monitor.deviceName = L"DUMMY";
-
-			monitors.push_back(monitor);
-
-			c_Monitors.primary = 1;
-		}
-	}
-	else
-	{
-		if (logging)
-		{
-			EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)nullptr);  // Only logging
-		}
-	}
-
-	if (logging)
-	{
-		LogDebug(L"------------------------------");
-
-		std::wstring method = L"* METHOD: ";
-		if (c_Monitors.useEnumDisplayDevices)
-		{
-			method += L"EnumDisplayDevices + ";
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
-		}
-		else
-		{
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
-		}
-		LogDebug(method.c_str());
-
-		LogDebugF(L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
-		LogDebug(L"@0: Virtual screen");
-		LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
-			c_Monitors.vsW, c_Monitors.vsH);
-
-		int i = 1;
-		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
-		{
-			if ((*iter).active)
-			{
-				LogDebugF(L"@%i: %s (active), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
-				LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					(*iter).screen.left, (*iter).screen.top, (*iter).screen.right, (*iter).screen.bottom,
-					(*iter).screen.right - (*iter).screen.left, (*iter).screen.bottom - (*iter).screen.top);
-			}
-			else if ((*iter).monitorName.empty())
-			{
-				LogDebugF(L"@%i: %s (inactive)", i, (*iter).deviceName.c_str());
-			}
-			else
-			{
-				LogDebugF(L"@%i: %s (inactive), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
-			}
-		}
-		LogDebug(L"------------------------------");
-	}
-}
-
-/*
-** Updates the workarea information.
-**
-*/
-void System::UpdateWorkareaInfo()
-{
-	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
-
-	if (monitors.empty())
-	{
-		SetMultiMonitorInfo();
-		return;
-	}
-
-	int i = 1;
-	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
-	{
-		if ((*iter).active && (*iter).handle != nullptr)
-		{
-			MONITORINFO info = {sizeof(MONITORINFO)};
-			GetMonitorInfo((*iter).handle, &info);
-
-			(*iter).work = info.rcWork;
-
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugF(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					i,
-					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-			}
-		}
-	}
+	return GetSystemDpi();
 }
 
 /*
@@ -1086,7 +626,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			KillTimer(hWnd, TIMER_RESUME);
 			if (GetRainmeter().IsRedrawable())
 			{
-				std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+				auto iter = GetRainmeter().GetAllSkins().begin();
 				for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 				{
 					(*iter).second->RedrawWindow();
@@ -1098,20 +638,18 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_DISPLAYCHANGE:
 		LogNotice(L"System: Display settings changed");
-		ClearMultiMonitorInfo();
-		ConfigParser::ClearMultiMonitorVariables();
+		MonitorUtil::ClearMultiMonitorInfo();
 	case WM_SETTINGCHANGE:
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
 			{
 				LogNotice(L"System: Work area changed");
-				UpdateWorkareaInfo();
-				ConfigParser::UpdateWorkareaVariables();
+				MonitorUtil::UpdateWorkareaInfo();
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+			auto iter = GetRainmeter().GetAllSkins().begin();
 			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
@@ -1136,7 +674,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		LogDebugF(L"System: User session change detected! Session ID: 0x%08X Type: 0x%08X", lParam, wParam);
 		if (GetRainmeter().IsRedrawable())
 		{
-			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+			auto iter = GetRainmeter().GetAllSkins().begin();
 			for (; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				(*iter).second->RedrawWindow();
@@ -1284,68 +822,62 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 			return;
 		}
 
-		Bitmap bitmap(wallpaper.c_str());
-		if (bitmap.GetLastStatus() == Ok)
+		std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
+		if (ConvertImageToBmpFile(wallpaper, file))
 		{
-			std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
-
-			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
-			if (bitmap.Save(file.c_str(), &bmpClsid) == Ok)
+			if (!style.empty())
 			{
-				if (!style.empty())
+				HKEY hKey;
+				if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
 				{
-					HKEY hKey;
-					if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
+					const WCHAR* wallStyle = nullptr;
+					const WCHAR* wallTile = L"0";
+
+					const WCHAR* option = style.c_str();
+					if (_wcsicmp(option, L"CENTER") == 0)
 					{
-						const WCHAR* wallStyle = nullptr;
-						const WCHAR* wallTile = L"0";
-
-						const WCHAR* option = style.c_str();
-						if (_wcsicmp(option, L"CENTER") == 0)
-						{
-							wallStyle = L"0";
-						}
-						else if (_wcsicmp(option, L"TILE") == 0)
-						{
-							wallStyle = L"0";
-							wallTile = L"1";
-						}
-						else if (_wcsicmp(option, L"STRETCH") == 0)
-						{
-							wallStyle = L"2";
-						}
-						if (_wcsicmp(option, L"FIT") == 0)
-						{
-							wallStyle = L"6";
-						}
-						else if (_wcsicmp(option, L"FILL") == 0)
-						{
-							wallStyle = L"10";
-						}
-						else if (IsWindows10OrGreater())
-						{
-							if (_wcsicmp(option, L"SPAN") == 0)
-							{
-								wallStyle = L"22";
-							}
-						}
-
-						if (wallStyle)
-						{
-							RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
-							RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
-						}
-						else
-						{
-							LogError(L"!SetWallpaper: Invalid style");
-						}
-
-						RegCloseKey(hKey);
+						wallStyle = L"0";
 					}
-				}
+					else if (_wcsicmp(option, L"TILE") == 0)
+					{
+						wallStyle = L"0";
+						wallTile = L"1";
+					}
+					else if (_wcsicmp(option, L"STRETCH") == 0)
+					{
+						wallStyle = L"2";
+					}
+					if (_wcsicmp(option, L"FIT") == 0)
+					{
+						wallStyle = L"6";
+					}
+					else if (_wcsicmp(option, L"FILL") == 0)
+					{
+						wallStyle = L"10";
+					}
+					else if (IsWindows10OrGreater())
+					{
+						if (_wcsicmp(option, L"SPAN") == 0)
+						{
+							wallStyle = L"22";
+						}
+					}
 
-				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
+					if (wallStyle)
+					{
+						RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
+						RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
+					}
+					else
+					{
+						LogError(L"!SetWallpaper: Invalid style");
+					}
+
+					RegCloseKey(hKey);
+				}
 			}
+
+			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
 		}
 	}
 }
@@ -1624,7 +1156,7 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 
 bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
 {
-	static std::unordered_set<std::wstring> s_Processes;
+	static ankerl::unordered_dense::set<std::wstring> s_Processes;
 	static ULONGLONG s_LastUpdateTickCount = 0ULL;
 	const ULONGLONG updateInterval = 250ULL; // ms
 

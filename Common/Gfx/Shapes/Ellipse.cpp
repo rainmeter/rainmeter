@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Ellipse.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -21,23 +20,8 @@ Ellipse::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius,
 	// Cloned shapes do not need to re-create any resources
 	if (isCloned) return;
 
-	HRESULT hr = E_FAIL;
 	const D2D1_ELLIPSE ellipse = D2D1::Ellipse(m_CenterPoint, m_RadiusX, m_RadiusY);
-
-	Microsoft::WRL::ComPtr<ID2D1EllipseGeometry> geometry;
-	hr = Canvas::c_D2DFactory->CreateEllipseGeometry(ellipse, geometry.GetAddressOf());
-	if (FAILED(hr))
-	{
-		LogErrorF(
-			L"Could not create ellipse object. X=%i, Y=%i, RadiusX=%i, RadiusY=%i",
-			(int)x, (int)y, (int)xRadius, (int)yRadius);
-		return;
-	}
-
-	hr = geometry.CopyTo(m_Shape.GetAddressOf());
-	if (FAILED(hr)) LogErrorF(
-		L"Could not copy ellipse object to shape object. X=%i, Y=%i, RadiusX=%i, RadiusY=%i",
-		(int)x, (int)y, (int)xRadius, (int)yRadius);
+	Canvas::c_D2DFactory->CreateEllipseGeometry(ellipse, (ID2D1EllipseGeometry**)m_Shape.GetAddressOf());
 }
 
 Ellipse::~Ellipse()

@@ -43,11 +43,11 @@ ImageCachePool& ImageCachePool::GetInstance()
 	return s_CachePool;
 }
 
-ImageCacheHandle* ImageCachePool::Get(const ImageOptions& key)
+std::unique_ptr<ImageCacheHandle> ImageCachePool::Get(const ImageOptions& key)
 {
 	const auto find = m_CachePool.find(key);
 	if (find == m_CachePool.end()) return nullptr;
-	return new ImageCacheHandle(find->second);
+	return std::make_unique<ImageCacheHandle>(ImageCacheHandle::ConstructorToken{}, find->second);
 }
 
 void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)

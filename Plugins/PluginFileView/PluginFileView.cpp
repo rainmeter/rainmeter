@@ -560,6 +560,11 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	{
 		if ((int)parent->files.size() > parent->count)
 		{
+			const WCHAR* cmdIndexUp = L"INDEXUP";
+			const size_t lenIndexUp = wcslen(cmdIndexUp);
+			const WCHAR* cmdIndexDown = L"INDEXDOWN";
+			const size_t lenIndexDown = wcslen(cmdIndexDown);
+
 			if (_wcsicmp(args, L"PAGEUP") == 0)
 			{
 				if ((parent->indexOffset - parent->count) >= 0)
@@ -586,31 +591,18 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 					parent->needsIcons = true;
 				}
 			}
-			else if (_wcsicmp(args, L"INDEXUP") ==0)
+			else if (_wcsnicmp(args, cmdIndexUp,lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
 			{
-				if ((parent->indexOffset - 1) >= 0)
-				{
-					--parent->indexOffset;
-					parent->needsIcons = true;
-				}
-				else
-				{
-					parent->indexOffset = 0;
-					parent->needsIcons = true;
-				}
+				const int shift = (args[lenIndexUp] == L'\0') ? 1 : max(_wtoi(args + lenIndexUp + 1), 1);
+				parent->indexOffset = max(parent->indexOffset - shift, 0);
+				parent->needsIcons = true;
 			}
-			else if (_wcsicmp(args, L"INDEXDOWN") == 0)
+			else if (_wcsnicmp(args, cmdIndexDown, lenIndexDown) == 0 && (args[lenIndexDown] == L' ' || args[lenIndexDown] == L'\0'))
 			{
-				if ((parent->indexOffset + parent->count) < (int)parent->files.size())
-				{
-					++parent->indexOffset;
-					parent->needsIcons = true;
-				}
-				else
-				{
-					parent->indexOffset = (int)parent->files.size() - parent->count;
-					parent->needsIcons = true;
-				}
+				const int shift = (args[lenIndexDown] == L'\0') ? 1 : max(_wtoi(args + lenIndexDown + 1), 1);
+				const int maxOffset = max((int)parent->files.size() - parent->count, 0);
+				parent->indexOffset = min(parent->indexOffset + shift, maxOffset);
+				parent->needsIcons = true;
 			}
 		}
 
@@ -1135,7 +1127,7 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 			int iconIndex = 0;
 
 			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, _countof(buffer), filePath.c_str());
-			if (buffer != L"-1")
+			if (wcscmp(buffer, L"-1") != 0)
 			{
 				iconIndex = _wtoi(buffer);
 			}

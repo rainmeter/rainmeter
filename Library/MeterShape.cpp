@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "MeterShape.h"
 #include "Logger.h"
-#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 #include "../Common/Gfx/Shape.h"
 #include "../Common/Gfx/Shapes/Rectangle.h"
@@ -21,6 +20,19 @@
 #include "../Common//Gfx/Shapes/Path.h"
 
 namespace {
+
+bool CompareAndStrip(std::wstring& str, const WCHAR* prefix)
+{
+	const size_t len = wcslen(prefix);
+	if (_wcsnicmp(str.c_str(), prefix, len) == 0)
+	{
+		str.erase(0, len);
+		str.erase(0, str.find_first_not_of(L" \t\r\n"));
+		return true;
+	}
+
+	return false;
+}
 
 // Helpers to allow default values to be used instead of needing to be defined
 auto ParseNumber = [](auto var, const WCHAR* value, auto defValue, auto* func) -> decltype(var)
@@ -73,7 +85,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	size_t i = 1;
 	while (!shape.empty())
 	{
-		auto args = ConfigParser::Tokenize2(shape, delimiter, PairedPunctuation::Parentheses);
+		auto args = ConfigParser::TokenizeWithPairedPunctuation(shape, delimiter, PairedPunctuation::Parentheses);
 
 		bool isCombined = false;
 		if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
@@ -99,7 +111,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Process combined shapes
 	for (const auto& shape : combinedShapes)
 	{
-		auto args = ConfigParser::Tokenize2(shape.second, delimiter, PairedPunctuation::Parentheses);
+		auto args = ConfigParser::TokenizeWithPairedPunctuation(shape.second, delimiter, PairedPunctuation::Parentheses);
 		if (!CreateCombinedShape(shape.first, args)) break;
 	}
 
@@ -206,9 +218,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 	const size_t argSize = args.size();
 	std::wstring shapeName = args[0];
-	if (StringUtil::CaseInsensitiveCompareN(shapeName, L"RECTANGLE"))
+	if (CompareAndStrip(shapeName, L"RECTANGLE"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
 		auto tokSize = tokens.size();
 
 		if (tokSize == 4)
@@ -249,9 +261,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return false;
 		}
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ELLIPSE"))
+	else if (CompareAndStrip(shapeName, L"ELLIPSE"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
 		auto tokSize = tokens.size();
 
 		if (tokSize > 2)
@@ -274,9 +286,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return false;
 		}
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"LINE"))
+	else if (CompareAndStrip(shapeName, L"LINE"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
 		auto tokSize = tokens.size();
 
 		if (tokSize > 3)
@@ -299,9 +311,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return false;
 		}
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ARC"))
+	else if (CompareAndStrip(shapeName, L"ARC"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
 		auto tokSize = tokens.size();
 
 		if (tokSize > 3)
@@ -346,9 +358,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return false;
 		}
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"CURVE"))
+	else if (CompareAndStrip(shapeName, L"CURVE"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
+		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
 		auto tokSize = tokens.size();
 
 		if (tokSize > 5)
@@ -392,7 +404,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			return true;
 		}
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH1"))
+	else if (CompareAndStrip(shapeName, L"PATH1"))
 	{
 		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
 		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_WINDING))
@@ -403,7 +415,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH"))
+	else if (CompareAndStrip(shapeName, L"PATH"))
 	{
 		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
 		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_ALTERNATE))
@@ -414,7 +426,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
+	else if (CompareAndStrip(shapeName, L"COMBINE"))
 	{
 		// Because combined shapes need to be processed after the rest of the shapes
 		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
@@ -462,7 +474,7 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 	}
 
 	std::wstring parentName = args[0].substr(8);  // Remove 'Combine '
-	if (StringUtil::CaseInsensitiveCompareN(parentName, L"SHAPE"))
+	if (CompareAndStrip(parentName, L"SHAPE"))
 	{
 		parentId = getShapeId(parentName.c_str());
 		if (parentId == shapeId)
@@ -513,10 +525,10 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 	for (auto& option : args)
 	{
 		D2D1_COMBINE_MODE mode = D2D1_COMBINE_MODE_FORCE_DWORD;
-		if (StringUtil::CaseInsensitiveCompareN(option, L"UNION")) mode = D2D1_COMBINE_MODE_UNION;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"INTERSECT")) mode = D2D1_COMBINE_MODE_INTERSECT;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXCLUDE")) mode = D2D1_COMBINE_MODE_EXCLUDE;
+		if (CompareAndStrip(option, L"UNION")) mode = D2D1_COMBINE_MODE_UNION;
+		else if (CompareAndStrip(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
+		else if (CompareAndStrip(option, L"INTERSECT")) mode = D2D1_COMBINE_MODE_INTERSECT;
+		else if (CompareAndStrip(option, L"EXCLUDE")) mode = D2D1_COMBINE_MODE_EXCLUDE;
 		else if (ParseTransformModifers(m_Shapes[shapeId], option)) continue;
 		else
 		{
@@ -558,10 +570,10 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 {
 	auto parseCap = [this](std::wstring& cap) -> D2D1_CAP_STYLE
 	{
-		if (StringUtil::CaseInsensitiveCompareN(cap, L"FLAT")) return D2D1_CAP_STYLE_FLAT;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"SQUARE")) return D2D1_CAP_STYLE_SQUARE;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"ROUND")) return D2D1_CAP_STYLE_ROUND;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"TRIANGLE")) return D2D1_CAP_STYLE_TRIANGLE;
+		if (CompareAndStrip(cap, L"FLAT")) return D2D1_CAP_STYLE_FLAT;
+		else if (CompareAndStrip(cap, L"SQUARE")) return D2D1_CAP_STYLE_SQUARE;
+		else if (CompareAndStrip(cap, L"ROUND")) return D2D1_CAP_STYLE_ROUND;
+		else if (CompareAndStrip(cap, L"TRIANGLE")) return D2D1_CAP_STYLE_TRIANGLE;
 		else
 		{
 			if (!cap.empty()) LogErrorF(this, L"Invalid cap style: %s", cap.c_str());
@@ -573,14 +585,14 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 	for (auto& option : args)
 	{
-		if (StringUtil::CaseInsensitiveCompareN(option, L"FILL"))
+		if (CompareAndStrip(option, L"FILL"))
 		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			if (CompareAndStrip(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
 				shape->SetFill(color);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
@@ -588,7 +600,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
@@ -596,7 +608,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
@@ -604,7 +616,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
@@ -617,7 +629,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				LogErrorF(this, L"Fill has invalid parameters: %s", option.c_str());
 			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
+		else if (CompareAndStrip(option, L"STROKEWIDTH"))
 		{
 			FLOAT width = (FLOAT)ConfigParser::ParseDouble(option.c_str(), 0.0);
 			if (width < 0.0f)
@@ -628,21 +640,21 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 			shape->SetStrokeWidth(width);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKESTARTCAP"))
+		else if (CompareAndStrip(option, L"STROKESTARTCAP"))
 		{
 			shape->SetStrokeStartCap(parseCap(option));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEENDCAP"))
+		else if (CompareAndStrip(option, L"STROKEENDCAP"))
 		{
 			shape->SetStrokeEndCap(parseCap(option));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHCAP"))
+		else if (CompareAndStrip(option, L"STROKEDASHCAP"))
 		{
 			shape->SetStrokeDashCap(parseCap(option));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKELINEJOIN"))
+		else if (CompareAndStrip(option, L"STROKELINEJOIN"))
 		{
-			auto style = ConfigParser::Tokenize2(option, L',', PairedPunctuation::Parentheses);
+			auto style = ConfigParser::TokenizeWithPairedPunctuation(option, L',', PairedPunctuation::Parentheses);
 			size_t size = style.size();
 
 			if (size > 0)
@@ -677,10 +689,10 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				LogWarningF(this, L"StrokeLineJoin has too few parameters");
 			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHES"))
+		else if (CompareAndStrip(option, L"STROKEDASHES"))
 		{
 			std::vector<FLOAT> dashes;
-			auto definedDashes = ConfigParser::Tokenize2(option, L',', PairedPunctuation::Parentheses);
+			auto definedDashes = ConfigParser::TokenizeWithPairedPunctuation(option, L',', PairedPunctuation::Parentheses);
 			for (const auto& dash : definedDashes)
 			{
 				FLOAT value = (FLOAT)ConfigParser::ParseDouble(dash.c_str(), 0.0);
@@ -689,7 +701,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 			shape->SetStrokeDashes(dashes);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHOFFSET"))
+		else if (CompareAndStrip(option, L"STROKEDASHOFFSET"))
 		{
 			const WCHAR* modifier = option.c_str();
 			FLOAT dashOffset = (FLOAT)ConfigParser::ParseDouble(modifier, 0.0);
@@ -701,14 +713,14 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 			shape->SetStrokeDashOffset(dashOffset);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKE"))
+		else if (CompareAndStrip(option, L"STROKE"))
 		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			if (CompareAndStrip(option, L"COLOR"))
 			{
 				auto color = ConfigParser::ParseColor(option.c_str());
 				shape->SetStrokeFill(color);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
@@ -716,7 +728,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
@@ -724,7 +736,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
@@ -732,7 +744,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
 				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
@@ -745,7 +757,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				LogErrorF(this, L"Stroke has invalid parameters: %s", option.c_str());
 			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXTEND"))
+		else if (CompareAndStrip(option, L"EXTEND"))
 		{
 			if (!recursive)
 			{
@@ -755,7 +767,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					std::wstring key = parser.ReadString(section, extend.c_str(), L"");
 					if (!key.empty())
 					{
-						auto newArgs = ConfigParser::Tokenize2(key, L'|', PairedPunctuation::Parentheses);
+						auto newArgs = ConfigParser::TokenizeWithPairedPunctuation(key, L'|', PairedPunctuation::Parentheses);
 						ParseModifiers(newArgs, parser, section, true);
 					}
 				}
@@ -780,9 +792,9 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform)
 {
-	if (StringUtil::CaseInsensitiveCompareN(transform, L"OFFSET"))
+	if (CompareAndStrip(transform, L"OFFSET"))
 	{
-		auto offset = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		auto offset = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
 		if (offset.size() >= 2)
 		{
 			FLOAT x = (FLOAT)ConfigParser::ParseDouble(offset[0].c_str(), 0.0);
@@ -796,9 +808,9 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"ROTATE"))
+	else if (CompareAndStrip(transform, L"ROTATE"))
 	{
-		auto rotate = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		auto rotate = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
 		size_t size = rotate.size();
 		if (size > 0)
 		{
@@ -822,9 +834,9 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"SCALE"))
+	else if (CompareAndStrip(transform, L"SCALE"))
 	{
-		auto scale = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		auto scale = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
 		size_t size = scale.size();
 		if (size > 1)
 		{
@@ -851,9 +863,9 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"SKEW"))
+	else if (CompareAndStrip(transform, L"SKEW"))
 	{
-		auto skew = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
+		auto skew = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
 		size_t size = skew.size();
 		if (size > 1)
 		{
@@ -880,7 +892,7 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"TRANSFORMORDER"))
+	else if (CompareAndStrip(transform, L"TRANSFORMORDER"))
 	{
 		auto order = ConfigParser::Tokenize(transform, L",");
 		if (order.size() > 0)
@@ -889,10 +901,10 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 			Gfx::TransformType type = Gfx::TransformType::Invalid;
 			for (auto& t : order)
 			{
-				if (StringUtil::CaseInsensitiveCompareN(t, L"ROTATE")) type = Gfx::TransformType::Rotate;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"SCALE")) type = Gfx::TransformType::Scale;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"SKEW")) type = Gfx::TransformType::Skew;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"OFFSET")) type = Gfx::TransformType::Offset;
+				if (CompareAndStrip(t, L"ROTATE")) type = Gfx::TransformType::Rotate;
+				else if (CompareAndStrip(t, L"SCALE")) type = Gfx::TransformType::Scale;
+				else if (CompareAndStrip(t, L"SKEW")) type = Gfx::TransformType::Skew;
+				else if (CompareAndStrip(t, L"OFFSET")) type = Gfx::TransformType::Offset;
 
 				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t.c_str());
 				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
@@ -913,7 +925,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 {
 	auto& shape = m_Shapes.back();
 
-	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
+	auto params = ConfigParser::TokenizeWithPairedPunctuation(options, L'|', PairedPunctuation::Parentheses);
 	size_t paramSize = params.size();
 	if (paramSize < 2) return false;
 
@@ -923,7 +935,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 		std::vector<std::wstring> tokens;
 		for (size_t i = 1; i < paramSize; ++i)
 		{
-			tokens = ConfigParser::Tokenize2(params[i], L';', PairedPunctuation::Parentheses);
+			tokens = ConfigParser::TokenizeWithPairedPunctuation(params[i], L';', PairedPunctuation::Parentheses);
 			if (tokens.size() == 2)
 			{
 				stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
@@ -959,7 +971,7 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 
 	case Gfx::BrushType::RadialGradient:
 		{
-			auto radial = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
+			auto radial = ConfigParser::TokenizeWithPairedPunctuation(params[0], L',', PairedPunctuation::Parentheses);
 			size_t size = radial.size();
 
 			if (size > 1)
@@ -1022,12 +1034,12 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 		return flags;
 	};
 
-	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
+	auto params = ConfigParser::TokenizeWithPairedPunctuation(options, L'|', PairedPunctuation::Parentheses);
 	auto paramSize = params.size();
 	if (paramSize < 2) return false;  // Must have a starting point and at least 1 segment
 
 	// Parse starting point of shape
-	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
+	auto stPoint = ConfigParser::TokenizeWithPairedPunctuation(params[0], L',', PairedPunctuation::Parentheses);
 	if (stPoint.size() < 2) return false;  // Starting point must have a x and y
 
 	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
@@ -1044,9 +1056,9 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 	for (size_t i = 1; i < paramSize; ++i)
 	{
 		auto& type = params[i];
-		if (StringUtil::CaseInsensitiveCompareN(type, L"LINETO"))
+		if (CompareAndStrip(type, L"LINETO"))
 		{
-			auto lineTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			auto lineTo = ConfigParser::TokenizeWithPairedPunctuation(type, L',', PairedPunctuation::Parentheses);
 			if (lineTo.size() < 2) { error = true; break; }
 
 			FLOAT x = (FLOAT)ConfigParser::ParseDouble(lineTo[0].c_str(), 0.0);
@@ -1056,9 +1068,9 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"ARCTO"))
+		else if (CompareAndStrip(type, L"ARCTO"))
 		{
-			auto arcTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			auto arcTo = ConfigParser::TokenizeWithPairedPunctuation(type, L',', PairedPunctuation::Parentheses);
 			auto arcSize = arcTo.size();
 			if (arcSize < 2) { error = true; break; }
 
@@ -1085,9 +1097,9 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"CURVETO"))
+		else if (CompareAndStrip(type, L"CURVETO"))
 		{
-			auto curveTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
+			auto curveTo = ConfigParser::TokenizeWithPairedPunctuation(type, L',', PairedPunctuation::Parentheses);
 			auto curveSize = curveTo.size();
 			if (curveSize < 4) { error = true; break; }
 
@@ -1110,17 +1122,17 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETNOSTROKE"))
+		else if (CompareAndStrip(type, L"SETNOSTROKE"))
 		{
 			setNoStroke = ConfigParser::ParseInt(type.c_str(), 0) != 0;
 			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETROUNDJOIN"))
+		else if (CompareAndStrip(type, L"SETROUNDJOIN"))
 		{
 			setRoundJoin = ConfigParser::ParseInt(type.c_str(), 0) != 0;
 			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSEPATH"))
+		else if (CompareAndStrip(type, L"CLOSEPATH"))
 		{
 			open = ConfigParser::ParseInt(type.c_str(), 0) == 0;
 		}

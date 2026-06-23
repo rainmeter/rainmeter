@@ -93,6 +93,12 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		hr = target->CreateCompatibleRenderTarget(drawSize, m_BitmapTarget.GetAddressOf());
 		if (FAILED(hr)) return;
 	}
+	else
+	{
+		FLOAT dpiX = 0.0f, dpiY = 0.0f;
+		target->GetDpi(&dpiX, &dpiY);
+		m_BitmapTarget->SetDpi(dpiX, dpiY);
+	}
 
 	// Draw onto memory bitmap target
 	// Note: Hardware acceleration seems to keep the bitmap render target in memory

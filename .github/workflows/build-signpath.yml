@@ -14,7 +14,7 @@ jobs:
       matrix:
         arch: [32, 64]
 
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
         uses: actions/checkout@v5
@@ -37,7 +37,7 @@ jobs:
       name: signpath
       deployment: false
     needs: rainmeter
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
         uses: actions/checkout@v5

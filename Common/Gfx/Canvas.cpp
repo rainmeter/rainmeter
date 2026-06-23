@@ -22,6 +22,7 @@ D3D_FEATURE_LEVEL Canvas::c_FeatureLevel;
 Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
 Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
+Microsoft::WRL::ComPtr<ID2D1DeviceContext> Canvas::c_EffectTarget;
 Microsoft::WRL::ComPtr<IDXGIDevice1> Canvas::c_DxgiDevice;
 Microsoft::WRL::ComPtr<ID2D1Factory1> Canvas::c_D2DFactory;
 Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
@@ -30,6 +31,7 @@ Microsoft::WRL::ComPtr<IWICImagingFactory> Canvas::c_WICFactory;
 Canvas::Canvas() :
 	m_W(0),
 	m_H(0),
+	m_Dpi(96.0f),
 	m_MaxBitmapSize(0U),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
@@ -107,9 +109,11 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		if (FAILED(hr)) return false;
 
 		D2D1_FACTORY_OPTIONS fo = {};
-#ifdef _DEBUG
-		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-#endif
+		const bool debug = false;
+		if (debug)
+		{
+			fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+		}
 
 		hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -120,6 +124,9 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		hr = c_D2DFactory->CreateDevice(
 			c_DxgiDevice.Get(),
 			c_D2DDevice.GetAddressOf());
+		if (FAILED(hr)) return false;
+
+		hr = CreateDeviceContext(c_EffectTarget);
 		if (FAILED(hr)) return false;
 
 		hr = CoCreateInstance(
@@ -187,6 +194,7 @@ void Canvas::Finalize()
 
 		c_D3DDevice.Reset();
 		c_D3DContext.Reset();
+		c_EffectTarget.Reset();
 		c_D2DDevice.Reset();
 		c_DxgiDevice.Reset();
 		c_D2DFactory.Reset();
@@ -311,6 +319,7 @@ void Canvas::EndDraw()
 	HRESULT hr = m_Target->EndDraw();
 	if (FAILED(hr))
 	{
+		m_SolidColorBrushCache.clear();
 		m_Target.Reset();
 	}
 
@@ -327,15 +336,20 @@ HDC Canvas::GetDC()
 	}
 
 	HDC hdc;
-	HRESULT hr = m_BackBuffer->GetDC(FALSE, &hdc);
-	if (FAILED(hr)) return nullptr;
+	if (m_BackBuffer && SUCCEEDED(m_BackBuffer->GetDC(FALSE, &hdc)))
+	{
+		return hdc;
+	}
 
-	return hdc;
+	return nullptr;
 }
 
 void Canvas::ReleaseDC()
 {
-	m_BackBuffer->ReleaseDC(nullptr);
+	if (m_BackBuffer)
+	{
+		m_BackBuffer->ReleaseDC(nullptr);
+	}
 
 	if (m_EnableDrawAfterGdi)
 	{
@@ -376,7 +390,29 @@ void Canvas::SetTransform(const D2D1_MATRIX_3X2_F& matrix)
 
 void Canvas::ResetTransform()
 {
-	m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+	SetTransform(D2D1::Matrix3x2F::Identity());
+}
+
+void Canvas::SetDpiScale(float dpiScale)
+{
+	auto dpi = 96.0f * dpiScale;
+	if (dpi <= 0.0f)
+	{
+		dpi = 96.0f;
+	}
+
+	m_Dpi = dpi;
+
+	if (m_Target)
+	{
+		m_Target->SetDpi(m_Dpi, m_Dpi);
+	}
+}
+
+FLOAT Canvas::SnapToPixel(FLOAT value) const
+{
+	const FLOAT scale = m_Dpi / 96.0f;
+	return roundf(value * scale) / scale;
 }
 
 bool Canvas::SetTarget(RenderTexture* texture)
@@ -386,12 +422,14 @@ bool Canvas::SetTarget(RenderTexture* texture)
 
 	auto image = bitmap->m_Segments[0].GetBitmap();
 	m_Target->SetTarget(image);
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 	return true;
 }
 
 void Canvas::ResetTarget()
 {
 	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 }
 
 void Canvas::SetAntiAliasing(bool enable)
@@ -416,9 +454,8 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
 	const D2D1_COLOR_F& color, bool applyInlineFormatting)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (FAILED(hr)) return;
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
 
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 
@@ -696,12 +733,10 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 
 void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr))
-	{
-		m_Target->FillRectangle(rect, solidBrush.Get());
-	}
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
+
+	m_Target->FillRectangle(rect, solidBrush.Get());
 }
 
 void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle)
@@ -744,9 +779,8 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 void Canvas::DrawLine(const D2D1_COLOR_F& color, FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT strokeWidth)
 {
-	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(color, solidBrush.GetAddressOf());
-	if (FAILED(hr)) return;
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
 
 	m_Target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solidBrush.Get(), strokeWidth);
 }
@@ -779,23 +813,35 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	m_Target->SetTransform(worldTransform);
 }
 
-HRESULT Canvas::CreateRenderTarget()
+HRESULT Canvas::CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target)
 {
 	HRESULT hr = E_FAIL;
 	if (c_D2DDevice)
 	{
-		c_D2DDevice->ClearResources();
-
 		hr = c_D2DDevice->CreateDeviceContext(
 			D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
-			m_Target.ReleaseAndGetAddressOf());
+			target.ReleaseAndGetAddressOf());
 		if (FAILED(hr))
 		{
 			hr = c_D2DDevice->CreateDeviceContext(
 				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-				m_Target.ReleaseAndGetAddressOf());
+				target.ReleaseAndGetAddressOf());
 		}
 	}
+
+	return hr;
+}
+
+HRESULT Canvas::CreateRenderTarget()
+{
+	m_SolidColorBrushCache.clear();
+
+	if (c_D2DDevice)
+	{
+		c_D2DDevice->ClearResources();
+	}
+
+	HRESULT hr = CreateDeviceContext(m_Target);
 
 	// Hardware accelerated targets have a hard limit to the size of bitmaps they can support.
 	// The size will depend on the D3D feature level of the driver used. The WARP software
@@ -813,6 +859,7 @@ HRESULT Canvas::CreateRenderTarget()
 
 	if (SUCCEEDED(hr))
 	{
+		m_Target->SetDpi(m_Dpi, m_Dpi);
 		m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
 	}
 
@@ -843,7 +890,26 @@ bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
 	}
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 	return true;
+}
+
+Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(const D2D1_COLOR_F& color)
+{
+	auto iter = m_SolidColorBrushCache.find(color);
+	if (iter != m_SolidColorBrushCache.end()) return iter->second;
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> brush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(color, brush.GetAddressOf());
+	if (FAILED(hr)) return nullptr;
+
+	const size_t maxCacheSize = 64U;
+	if (m_SolidColorBrushCache.size() <= maxCacheSize)
+	{
+		m_SolidColorBrushCache.emplace(color, brush);
+	}
+
+	return brush;
 }
 
 }  // namespace Gfx

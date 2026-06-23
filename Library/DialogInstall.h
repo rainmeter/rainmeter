@@ -10,34 +10,55 @@
 
 #include <string>
 #include "unzip.h"
-#include "Dialog.h"
+#include "../Common/Dialog.h"
 
-class DialogInstall : public OldDialog
+class DialogInstall : public Dialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
 
-	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+	virtual void HandleDpiChange() override;
 
 	static DialogInstall* c_Dialog;
-
-protected:
-	virtual Tab& GetActiveTab();
 
 private:
 	friend class DialogPackage;
 
+	enum Id
+	{
+		Id_Tab = 1000,
+		Id_HeaderBitmap,
+		Id_AdvancedButton,
+		Id_InstallButton
+	};
+
 	class TabInstall : public Tab
 	{
 	public:
-		TabInstall(HWND window);
+		enum Id
+		{
+			Id_NameText = 1000,
+			Id_AuthorText,
+			Id_VersionText,
+			Id_ComponentsList,
+			Id_ThemeCheckBox,
+			Id_InProgressText,
+			Id_Progress,
+			Id_NameLabel = 1100,
+			Id_AuthorLabel,
+			Id_VersionLabel,
+			Id_ComponentsLabel
+		};
+
+		void Create(HWND owner) override;
 
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		static INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
@@ -65,7 +86,7 @@ private:
 		char key[7];
 	};
 
-	DialogInstall(HWND wnd, const WCHAR* file);
+	DialogInstall(const WCHAR* file);
 	virtual ~DialogInstall();
 
 	bool ReadPackage();
@@ -79,6 +100,7 @@ private:
 	void LaunchRainmeter();
 	void KeepVariables();
 	void ArchivePlugin(const std::wstring& folder, const std::wstring& name);
+	void UpdateHeaderBitmap();
 
 	static void CleanLayoutFile(const WCHAR* file);
 
@@ -96,10 +118,14 @@ private:
 	TabInstall m_TabInstall;
 
 	HBITMAP m_HeaderBitmap;
+	HBITMAP m_ScaledHeaderBitmap;
 
 	HANDLE m_InstallThread;
 
 	std::wstring m_ErrorMessage;
+	std::wstring m_Name;
+	std::wstring m_Author;
+	std::wstring m_Version;
 
 	unzFile m_PackageUnzFile;
 	std::wstring m_PackageFileName;

@@ -80,7 +80,8 @@ namespace Rainmeter
             Skin = 1,
             SettingsFile = 2,
             SkinName = 3,
-            SkinWindowHandle = 4
+            SkinWindowHandle = 4,
+            SkinScale = 5
         }
 
         public enum LogType
@@ -425,6 +426,16 @@ namespace Rainmeter
         public IntPtr GetSkinWindow()
         {
             return RmGet(m_Rm, RmGetType.SkinWindowHandle);
+        }
+
+        /// <summary>
+        /// Retrieves the effective scale factor of the skin
+        /// </summary>
+        /// <returns>Returns the current skin scale factor</returns>
+        public float GetSkinScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
         }
 
         /// <summary>

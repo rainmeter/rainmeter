@@ -46,6 +46,10 @@ private:
 	};
 
 	void FinalizeHandle();
+	static void CALLBACK WlanNotificationCallback(PWLAN_NOTIFICATION_DATA data, PVOID context);
+	static void RefreshConnectionAttributes();
+	static void RefreshConnectionQualityAttributes();
+	static void FreeConnectionAttributes();
 
 	const WCHAR* GetCipherAlgorithmString(DOT11_CIPHER_ALGORITHM value);
 	const WCHAR* GetAuthAlgorithmString(DOT11_AUTH_ALGORITHM value);
@@ -63,6 +67,8 @@ private:
 	static HANDLE s_Client;
 	static PWLAN_INTERFACE_INFO s_Interface;
 	static PWLAN_INTERFACE_INFO_LIST s_InterfaceList;
+	static PWLAN_CONNECTION_ATTRIBUTES s_ConnectionAttributes;
+	static bool s_NotificationsRegistered;
 };
 
 #endif

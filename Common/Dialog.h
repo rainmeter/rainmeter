@@ -23,11 +23,14 @@ protected:
 
 	void Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless);
 
-	void CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString);
+	void CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString);
+	void RelayoutControls();
 
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) { return FALSE; }
 
 	HWND m_Window;
+	UINT m_Dpi;
+	ControlTemplate m_ControlTemplate;
 
 private:
 	BaseDialog(const BaseDialog& r);
@@ -49,18 +52,24 @@ protected:
 	public:
 		HWND GetWindow() { return m_Window; }
 		bool IsInitialized() { return m_Initialized; }
+		virtual void Create(HWND owner) = 0;
 		void Activate();
+		void UpdateDpi(UINT dpi) { m_Dpi = dpi; }
+		RECT GetLayoutRect(UINT dpi);
 
 		virtual void Initialize() {}
-		virtual void Resize(int w, int h) {}
+		virtual void Relayout(int w, int h) { RelayoutControls(); }
+		virtual void HandleDpiChange() {}
 
 	protected:
 		Tab();
 		virtual ~Tab();
 
-		void CreateTabWindow(short x, short y, short w, short h, HWND owner);
+		void CreateTabWindow(short x, short y, short w, short h, HWND parent);
 
 		bool m_Initialized;
+		RECT m_InitialMargin;
+		UINT m_InitialDpi;
 	};
 
 	Dialog();
@@ -68,19 +77,29 @@ protected:
 
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
-	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual void Relayout();
+	virtual void HandleDpiChange() {}
+
+	void AddTab(WORD controlId, Tab& tab, const WCHAR* text);
+	void AddPage(Tab& tab);
+	void SelectTab(int index);
+	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
 
-	HFONT m_Font;
-	HFONT m_FontBold;
-
 private:
 	Dialog(const Dialog& r);
+	void ActivateTab();
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
 
 	static HWND c_ActiveDialogWindow;
+
+	HWND m_TabControl;
+	std::vector<Tab*> m_Pages;
+	std::vector<Tab*> m_Tabs;
 };
 
 #endif

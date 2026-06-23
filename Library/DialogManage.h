@@ -43,8 +43,9 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -89,6 +90,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		virtual void HandleDpiChange() override;
 
 		void UpdateSelected(Skin* skin);
 		void Update(Skin* skin, bool deleted);
@@ -106,10 +108,13 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 		void DestroyImageList();
+		void CreateImageList();
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 		static LRESULT CALLBACK SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK DescriptionEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		static std::wstring GetTreeSelectionPath(HWND tree);
@@ -201,6 +206,8 @@ private:
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,
+			Id_ScalingModeLabel,
+			Id_ScalingModeDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
 			Id_ShowTrayIconCheckBox,
@@ -231,8 +238,6 @@ private:
 		Id_OpenLogButton,
 		Id_HelpButton
 	};
-
-	Tab& GetActiveTab();
 
 	TabSkins m_TabSkins;
 	TabLayouts m_TabLayouts;

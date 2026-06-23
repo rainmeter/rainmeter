@@ -124,11 +124,8 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 
-	Microsoft::WRL::ComPtr<ID2D1Image> target;
-	canvas.m_Target->GetTarget(target.GetAddressOf());
-
-	D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Identity();
-	canvas.m_Target->GetTransform(&transform);
+	auto target = Canvas::c_EffectTarget.Get();
+	if (!target) return nullptr;
 
 	const UINT maxBitmapSize = (UINT)canvas.m_MaxBitmapSize;
 	const auto size = (imageSize) ? *imageSize : GetSize(canvas);
@@ -137,7 +134,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	const UINT width = (UINT)size.width;
 	const UINT height = (UINT)size.height;
 
-	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation);
+	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
 	d2dbitmap->m_Width = width;
 	d2dbitmap->m_Height = height;
 
@@ -147,15 +144,11 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 		d2dbitmap = nullptr;
 	};
 
-	auto didDraw = canvas.IsDrawing();
-	if (didDraw)
+	auto resetTarget = [target]() -> void
 	{
-		canvas.m_Target->Flush();
-	}
-	else
-	{
-		canvas.BeginDraw();
-	}
+		target->SetTarget(nullptr);
+		target->SetTransform(D2D1::Matrix3x2F::Identity());
+	};
 
 	for (UINT y = 0U, H = height / maxBitmapSize; y <= H; ++y)
 	{
@@ -168,7 +161,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				(y == H ? (height - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
-			HRESULT hr = canvas.m_Target->CreateBitmap(
+			HRESULT hr = target->CreateBitmap(
 				D2D1::SizeU(rect.right, rect.bottom),
 				nullptr,
 				0U,
@@ -176,15 +169,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				bitmap.GetAddressOf());
 			if (FAILED(hr))
 			{
-				canvas.EndDraw();
-				canvas.m_Target->SetTarget(target.Get());
-				canvas.m_Target->SetTransform(transform);
+				resetTarget();
 				deleteImage();
 				return nullptr;
 			}
 
-			canvas.m_Target->SetTarget(bitmap.Get());
-			canvas.m_Target->Clear();
+			target->SetTarget(bitmap.Get());
+			target->BeginDraw();
+			target->Clear();
 
 			FLOAT x2 = -(FLOAT)rect.left;
 			FLOAT y2 = -(FLOAT)rect.top;
@@ -198,15 +190,17 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				effect->GetOutput(image.GetAddressOf());
 
 				D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
-				hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
+				hr = target->GetImageLocalBounds(image.Get(), &rect);
 				if (FAILED(hr))
 				{
+					target->EndDraw();
+					resetTarget();
 					deleteImage();
 					return nullptr;
 				}
 
-				canvas.m_Target->SetTransform(D2D1::Matrix3x2F::Translation(x2, y2));
-				canvas.m_Target->DrawImage(effect.Get(), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR); // We don't do any scaling with this image, so use the simplest interpolation
+				target->SetTransform(D2D1::Matrix3x2F::Translation(x2, y2));
+				target->DrawImage(effect.Get(), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR); // We don't do any scaling with this image, so use the simplest interpolation
 
 				x2 += rect.right;
 				if (m_BaseImage->GetWidth() >= (it.GetX() + it.GetY())) // only increment y if end of row
@@ -216,34 +210,41 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				}
 			}
 
-			canvas.m_Target->Flush();
+			hr = target->EndDraw();
+			resetTarget();
+			if (FAILED(hr))
+			{
+				deleteImage();
+				return nullptr;
+			}
+
 			d2dbitmap->AddSegment(bitmap, rect);
 		}
 	}
 
-	if (didDraw)
+	resetTarget();
+	if (d2dbitmap->m_CreateAlphaMask && !d2dbitmap->BuildAlphaMask(canvas))
 	{
-		canvas.m_Target->Flush();
+		deleteImage();
 	}
-	else
-	{
-		canvas.EndDraw();
-	}
-
-	canvas.m_Target->SetTarget(target.Get());
-	canvas.m_Target->SetTransform(transform);
 	return d2dbitmap;
 }
 
-D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
+D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas&)
 {
 	D2D1_SIZE_F size = D2D1::SizeF(0.0f, 0.0f);
+
+	auto target = Canvas::c_EffectTarget.Get();
+	if (!target) return size;
 
 	UINT prevY = 0u;
 	for (size_t i = 0; i < m_Effects.size(); ++i)
 	{
 		const auto& effect = m_Effects[i];
-		if (!effect) return size;
+		if (!effect)
+		{
+			return size;
+		}
 
 		auto& segment = m_BaseImage->m_Segments[i];
 
@@ -251,8 +252,11 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas& canvas)
 		effect->GetOutput(image.GetAddressOf());
 
 		D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
-		HRESULT hr = canvas.m_Target->GetImageLocalBounds(image.Get(), &rect);
-		if (FAILED(hr)) return size;
+		HRESULT hr = target->GetImageLocalBounds(image.Get(), &rect);
+		if (FAILED(hr))
+		{
+			return size;
+		}
 
 		if (i == 0)
 		{
@@ -282,13 +286,15 @@ D2DEffectStream::D2DEffectStream(D2DBitmap* base)
 	m_BaseImage = base;
 }
 
-void D2DEffectStream::AddEffect(const Canvas& canvas, const IID& effectId)
+void D2DEffectStream::AddEffect(const Canvas&, const IID& effectId)
 {
+	if (!Canvas::c_EffectTarget) return;
+
 	for (size_t i = 0; i < m_BaseImage->m_Segments.size(); ++i)
 	{
 		auto& segment = m_BaseImage->m_Segments[i];
 		Microsoft::WRL::ComPtr<ID2D1Effect> effect;
-		canvas.m_Target->CreateEffect(effectId, effect.GetAddressOf());
+		Canvas::c_EffectTarget->CreateEffect(effectId, effect.GetAddressOf());
 
 		if (!m_Effects[i])
 		{

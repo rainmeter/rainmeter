@@ -20,7 +20,6 @@ namespace InputText
 {
     public class SkinWindow : System.Windows.Forms.IWin32Window
     {
-        private string _SkinName;
         private IntPtr _Handle;
 
         private int _X = 0;
@@ -30,8 +29,9 @@ namespace InputText
 
         private bool _IsTopmost = false;
 
-        public SkinWindow(Rainmeter.API rm)
+        public SkinWindow(Rainmeter.API rm, IntPtr WindowHandle)
         {
+            this._Handle = WindowHandle;
             UpdateStatus(rm);
         }
 
@@ -67,14 +67,8 @@ namespace InputText
             get { return this._IsTopmost; }
         }
 
-        public void UpdateStatus(Rainmeter.API rm = null)
+        public void UpdateStatus(Rainmeter.API rm)
         {
-            if (rm != null)
-            {
-                this._SkinName = rm.GetSkinName();
-                this._Handle = rm.GetSkinWindow();
-            }
-
             RECT rct;
             if (GetWindowRect(this._Handle, out rct))
             {
@@ -86,7 +80,7 @@ namespace InputText
             else
             {
                 rm.Log(API.LogType.Error,
-                    "Rainmeter told us the HWND for window '" + this._SkinName + "' is " + this._Handle.ToInt32().ToString() + "L, but couldn't receive a proper RECT from it");
+                    "Rainmeter told us the HWND is " + this._Handle.ToInt32().ToString() + "L, but couldn't receive a proper RECT from it");
             }
 
             this._IsTopmost = ((GetWindowLong(this._Handle, GWL_EXSTYLE) & WS_EX_TOPMOST) > 0);

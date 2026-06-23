@@ -12,26 +12,6 @@
 #include <queue>
 #include <vector>
 
-struct MonitorInfo
-{
-	bool active;
-	HMONITOR handle;
-	RECT screen;
-	RECT work;
-	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
-	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
-};
-
-struct MultiMonitorInfo
-{
-	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;					// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							// Index of the primary monitor
-	std::vector<MonitorInfo> monitors;
-};
-
 class System
 {
 public:
@@ -41,8 +21,8 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static const MultiMonitorInfo& GetMultiMonitorInfo() { return c_Monitors; }
-	static size_t GetMonitorCount();
+	static UINT GetDpiForWindow(HWND window);
+	static UINT GetSystemDpi();
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
@@ -77,10 +57,6 @@ private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	static void SetMultiMonitorInfo();
-	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
-	static void UpdateWorkareaInfo();
-
 	static HWND GetDefaultShellWindow();
 	static HWND GetDesktopIconsHostWindow();
 	static void ChangeZPosInOrder();
@@ -92,8 +68,6 @@ private:
 	static HWND c_HelperWindow;
 
 	static HWINEVENTHOOK c_WinEventHook;
-
-	static MultiMonitorInfo c_Monitors;
 
 	static bool c_ShowDesktop;
 

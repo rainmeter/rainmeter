@@ -11,6 +11,7 @@
 #include "FontCollectionD2D.h"
 #include "Shape.h"
 #include "TextFormatD2D.h"
+#include <bit>
 #include <string>
 #include <d2d1_1.h>
 #include <dwrite_1.h>
@@ -18,6 +19,38 @@
 #include <wrl/client.h>
 #include <d3d11.h>
 #include <DXGI1_2.h>
+
+template <>
+struct ankerl::unordered_dense::hash<D2D1_COLOR_F>
+{
+	using is_avalanching = void;
+
+	[[nodiscard]] auto operator()(const D2D1_COLOR_F& color) const noexcept -> uint64_t
+	{
+		const auto normalizeFloatBits = [](FLOAT value) -> uint32_t
+		{
+			// Handle positive and negative floating point zeros.
+			return value == 0.0f ? 0U : std::bit_cast<uint32_t>(value);
+		};
+
+		const auto combineFloat = [&](FLOAT first, FLOAT second) -> uint64_t
+		{
+			return static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32U);
+		};
+
+		uint64_t hash = ankerl::unordered_dense::detail::wyhash::hash(combineFloat(color.r, color.g));
+		hash = ankerl::unordered_dense::detail::wyhash::mix(hash, combineFloat(color.b, color.a));
+		return hash;
+	}
+};
+
+struct D2D1ColorEqual
+{
+	bool operator()(const D2D1_COLOR_F& lhs, const D2D1_COLOR_F& rhs) const noexcept
+	{
+		return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+	}
+};
 
 namespace Gfx {
 
@@ -48,6 +81,9 @@ public:
 	int GetH() const { return m_H; }
 
 	void SetAccurateText(bool option) { m_AccurateText = option; }
+
+	void SetDpiScale(float dpiScale);
+	FLOAT SnapToPixel(FLOAT value) const;
 
 	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
 	// called and has not yet been matched by a correspoding call to EndDraw.
@@ -120,8 +156,12 @@ private:
 
 	bool LogComError(HRESULT hr);
 
+	static HRESULT CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target);
+
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
@@ -130,6 +170,7 @@ private:
 
 	int m_W;
 	int m_H;
+	FLOAT m_Dpi;
 	UINT32 m_MaxBitmapSize;
 
 	bool m_IsDrawing;
@@ -148,6 +189,8 @@ private:
 	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
 	bool m_CanUseAxisAlignClip;
 
+	ankerl::unordered_dense::map<D2D1_COLOR_F, Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>, ankerl::unordered_dense::hash<D2D1_COLOR_F>, D2D1ColorEqual> m_SolidColorBrushCache;
+
 	static UINT c_Instances;
 	static D3D_FEATURE_LEVEL c_FeatureLevel;
 	static Microsoft::WRL::ComPtr<ID3D11Device> c_D3DDevice;
@@ -157,6 +200,9 @@ private:
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
 	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
+
+	// Always kept at the default DPI for use in temporary contexts.
+	static Microsoft::WRL::ComPtr<ID2D1DeviceContext> c_EffectTarget;
 };
 
 }  // namespace Gfx

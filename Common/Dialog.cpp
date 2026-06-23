@@ -8,6 +8,26 @@
 #include "StdAfx.h"
 #include "Dialog.h"
 
+namespace {
+
+UINT GetWindowDpi(HWND window)
+{
+	typedef UINT (WINAPI* GetDpiForWindowProc)(HWND);
+	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
+	if (s_GetDpiForWindow)
+	{
+		const UINT dpi = s_GetDpiForWindow(window);
+		if (dpi) return dpi;
+	}
+
+	HDC dc = GetDC(window);
+	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96U;
+	if (dc) ReleaseDC(window, dc);
+	return dpi ? dpi : 96U;
+}
+
+}  // namespace
+
 HWND Dialog::c_ActiveDialogWindow = nullptr;
 
 //
@@ -15,7 +35,8 @@ HWND Dialog::c_ActiveDialogWindow = nullptr;
 //
 
 BaseDialog::BaseDialog() :
-	m_Window()
+	m_Window(),
+	m_Dpi(USER_DEFAULT_SCREEN_DPI)
 {
 }
 
@@ -87,9 +108,14 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 	dt = nullptr;
 }
 
-void BaseDialog::CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString)
+void BaseDialog::CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString)
 {
-	ControlTemplate::CreateControls(cts, ctCount, m_Window, font, getString);
+	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_Dpi, getString);
+}
+
+void BaseDialog::RelayoutControls()
+{
+	m_ControlTemplate.Relayout(m_Dpi);
 }
 
 INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -117,23 +143,13 @@ INT_PTR CALLBACK BaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 //
 
 Dialog::Dialog() : BaseDialog(),
-	m_Font(),
-	m_FontBold()
+	m_TabControl()
 {
-	NONCLIENTMETRICS ncm;
-	ncm.cbSize = sizeof(NONCLIENTMETRICS) - sizeof(ncm.iPaddedBorderWidth);
-	SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
-	m_Font = CreateFontIndirect(&ncm.lfMenuFont);
-	ncm.lfMenuFont.lfWeight = FW_BOLD;
-	ncm.lfMenuFont.lfHeight -= 2;
-	m_FontBold = CreateFontIndirect(&ncm.lfMenuFont);
 }
 
 Dialog::~Dialog()
 {
-	DestroyWindow(m_Window);
-	DeleteObject(m_Font);
-	DeleteObject(m_FontBold);
+	if (m_Window) DestroyWindow(m_Window);
 }
 
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
@@ -141,10 +157,137 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 	Show(title, x, y, w, h, style, exStyle, parent, modeless);
 }
 
-INT_PTR Dialog::OnActivate(WPARAM wParam, LPARAM lParam)
+INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	c_ActiveDialogWindow = wParam ? m_Window : nullptr;
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		{
+			// Automatic dialog scaling on Windows 10 Creators Update and later does not work for us
+			// because it only works with dialogs that have immediate children. We have tabs so it will
+			// not work for us.
+			typedef BOOL (WINAPI* SetDialogDpiChangeBehaviorProc)(HWND, DIALOG_DPI_CHANGE_BEHAVIORS, DIALOG_DPI_CHANGE_BEHAVIORS);
+			static auto s_SetDialogDpiChangeBehavior = (SetDialogDpiChangeBehaviorProc)GetProcAddress(GetModuleHandle(L"user32"), "SetDialogDpiChangeBehavior");
+			if (s_SetDialogDpiChangeBehavior)
+			{
+				s_SetDialogDpiChangeBehavior(m_Window, DDC_DISABLE_ALL, DDC_DISABLE_ALL);
+			}
+
+			m_Dpi = GetWindowDpi(m_Window);
+		}
+		break;
+
+	case WM_DPICHANGED:
+		return HandleDpiChanged(wParam, lParam);
+
+	case WM_NOTIFY:
+		{
+			LPNMHDR nm = (LPNMHDR)lParam;
+			if (nm->hwndFrom == m_TabControl && nm->code == TCN_SELCHANGE)
+			{
+				ActivateTab();
+				return TRUE;
+			}
+		}
+		break;
+
+	case WM_ACTIVATE:
+		c_ActiveDialogWindow = wParam ? m_Window : nullptr;
+		break;
+	}
+
 	return FALSE;
+}
+
+void Dialog::AddTab(WORD controlId, Tab& tab, const WCHAR* text)
+{
+	HWND tabControl = GetControl(controlId);
+	if (!m_TabControl)
+	{
+		m_TabControl = tabControl;
+	}
+	else
+	{
+		assert(m_TabControl == tabControl);
+	}
+
+	AddPage(tab);
+	m_Tabs.push_back(&tab);
+
+	TCITEM tci = { 0 };
+	tci.mask = TCIF_TEXT;
+	tci.pszText = (WCHAR*)text;
+	TabCtrl_InsertItem(m_TabControl, (int)m_Tabs.size() - 1, &tci);
+}
+
+void Dialog::AddPage(Tab& tab)
+{
+	tab.Create(m_Window);
+	m_Pages.push_back(&tab);
+}
+
+void Dialog::SelectTab(int index)
+{
+	assert(index >= 0 && index < (int)m_Tabs.size());
+	TabCtrl_SetCurSel(m_TabControl, index);
+	ActivateTab();
+}
+
+Dialog::Tab& Dialog::GetActiveTab()
+{
+	int index = TabCtrl_GetCurSel(m_TabControl);
+	assert(index >= 0 && index < (int)m_Tabs.size());
+	return *m_Tabs[index];
+}
+
+void Dialog::ActivateTab()
+{
+	for (auto* tab : m_Tabs)
+	{
+		EnableWindow(tab->GetWindow(), FALSE);
+	}
+
+	GetActiveTab().Activate();
+}
+
+void Dialog::Relayout()
+{
+	RelayoutControls();
+
+	for (auto* tab : m_Pages)
+	{
+		if (!tab->GetWindow()) continue;
+
+		tab->UpdateDpi(m_Dpi);
+
+		RECT rect = tab->GetLayoutRect(m_Dpi);
+		const int width = rect.right - rect.left;
+		const int height = rect.bottom - rect.top;
+		SetWindowPos(tab->GetWindow(), nullptr, rect.left, rect.top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
+		tab->Relayout(width, height);
+	}
+}
+
+INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
+{
+	m_Dpi = LOWORD(wParam);
+
+	const RECT* suggested = (const RECT*)lParam;
+	auto w = suggested->right - suggested->left;
+	auto h = suggested->bottom - suggested->top;
+	SetWindowPos(m_Window, nullptr, suggested->left, suggested->top, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+
+	Relayout();
+
+	for (auto* tab : m_Pages)
+	{
+		if (tab->IsInitialized()) tab->HandleDpiChange();
+	}
+
+	HandleDpiChange();
+
+	RedrawWindow(m_Window, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+	return TRUE;
 }
 
 bool Dialog::HandleMessage(MSG& msg)
@@ -180,9 +323,13 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			// Draw arrow on top of the button
 			RECT buttonRect;
 			GetClientRect(hWnd, &buttonRect);
-			int arrowX = buttonRect.right - 18;
-			int arrowY = buttonRect.top + 4;
-			RECT arrowRect = { arrowX, arrowY, arrowX + 14, arrowY + 14 };
+			const UINT dpi = GetWindowDpi(hWnd);
+			const int arrowOffset = MulDiv(18, (int)dpi, 96);
+			const int arrowTop = MulDiv(4, (int)dpi, 96);
+			const int arrowSize = MulDiv(14, (int)dpi, 96);
+			int arrowX = buttonRect.right - arrowOffset;
+			int arrowY = buttonRect.top + arrowTop;
+			RECT arrowRect = { arrowX, arrowY, arrowX + arrowSize, arrowY + arrowSize };
 
 			HDC dc = GetDC(hWnd);
 			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented
@@ -220,22 +367,49 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 //
 
 Dialog::Tab::Tab() : BaseDialog(),
-	m_Initialized(false)
+	m_Initialized(false),
+	m_InitialMargin(),
+	m_InitialDpi()
 {
 }
 
-void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND owner)
+void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND parent)
 {
 	const DWORD style = DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
 	const DWORD exStyle = WS_EX_CONTROLPARENT;
-	Show(L"", x, y, w, h, style, exStyle, owner, true);
+	Show(L"", x, y, w, h, style, exStyle, parent, true);
+
+	RECT rect;
+	GetWindowRect(m_Window, &rect);
+	MapWindowPoints(nullptr, parent, (POINT*)&rect, 2);
+
+	RECT parentRect;
+	GetClientRect(parent, &parentRect);
+
+	m_InitialMargin.left = rect.left;
+	m_InitialMargin.top = rect.top;
+	m_InitialMargin.right = parentRect.right - rect.right;
+	m_InitialMargin.bottom = parentRect.bottom - rect.bottom;
+	m_Dpi = m_InitialDpi = GetWindowDpi(parent);
 
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }
 
+RECT Dialog::Tab::GetLayoutRect(UINT dpi)
+{
+	HWND parent = GetParent(m_Window);
+	RECT rect;
+	GetClientRect(parent, &rect);
+	rect.left = MulDiv(m_InitialMargin.left, (int)dpi, (int)m_InitialDpi);
+	rect.top = MulDiv(m_InitialMargin.top, (int)dpi, (int)m_InitialDpi);
+	rect.right -= MulDiv(m_InitialMargin.right, (int)dpi, (int)m_InitialDpi);
+	rect.bottom -= MulDiv(m_InitialMargin.bottom, (int)dpi, (int)m_InitialDpi);
+	return rect;
+}
+
 Dialog::Tab::~Tab()
 {
-	DestroyWindow(m_Window);
+	if (m_Window) DestroyWindow(m_Window);
 }
 
 void Dialog::Tab::Activate()

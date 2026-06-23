@@ -10,9 +10,13 @@
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
+#include "AsyncTask.h"
 #include "Rainmeter.h"
+#include "Export.h"
+#include "Net.h"
 #include "TrayIcon.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
@@ -23,15 +27,16 @@
 #include "UpdateCheck.h"
 #include "../Version.h"
 
-using namespace Gdiplus;
-
 enum TIMER
 {
-	TIMER_NETSTATS    = 1
+	TIMER_NETSTATS    = 1,
+	TIMER_UPDATECHECK = 2
 };
 enum INTERVAL
 {
-	INTERVAL_NETSTATS = 120000
+	INTERVAL_NETSTATS = 120000,
+	INTERVAL_UPDATECHECK_INITIAL = 5 * 60 * 1000,
+	INTERVAL_UPDATECHECK_DAILY = 24 * 60 * 60 * 1000
 };
 
 /*
@@ -110,13 +115,12 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
+	m_DpiOverride(0),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
 	m_Instance(),
-	m_ResourceInstance(),
-	m_ResourceLCID(),
-	m_GDIplusToken(),
+	m_Language(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor(),
 	m_HardwareAccelerated(false)
@@ -129,10 +133,6 @@ Rainmeter::Rainmeter() :
 	}
 
 	InitCommonControls();
-
-	// Initialize GDI+.
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, nullptr);
 }
 
 /*
@@ -142,8 +142,6 @@ Rainmeter::Rainmeter() :
 Rainmeter::~Rainmeter()
 {
 	CoUninitialize();
-
-	GdiplusShutdown(m_GDIplusToken);
 
 	// Close dialogs if open
 	DialogManage::CloseDialog();
@@ -241,6 +239,14 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		// Instance already running with same .ini file
 		clearBuffer();
+
+#ifdef _DEBUG
+		if (IsDebuggerPresent())
+		{
+			MessageBox(nullptr, L"Started under debugger, but another instance of Rainmeter is already running.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		}
+#endif
+
 		return 1;
 	}
 
@@ -334,7 +340,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 		if (runInstaller)
 		{
 			const std::wstring isPortable = _wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) == 0 ? L"1" : L"0";
-			const std::wstring is64Bit = APPBITS == L"64-bit" ? L"64" : L"32";
+			const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
 			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION=" + is64Bit + L" /D=" + m_Path.c_str();
 			CommandHandler::RunFile(fullPath.c_str(), args.c_str());
 			clearBuffer();
@@ -372,7 +378,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 
 	// Determine the language resource to load
-	std::wstring resource = m_Path + L"Languages\\";
+	buffer[0] = L'\0';
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
 	{
 		// Use whatever the user selected for the installer
@@ -392,22 +398,14 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (buffer[0] != L'\0')
 	{
 		// Try selected language
-		m_ResourceLCID = wcstoul(buffer, nullptr, 10);
-		resource += buffer;
-		resource += L".dll";
-
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		LoadLanguage(buffer);
 	}
-	if (!m_ResourceInstance)
+	if (!m_Language.IsLoaded())
 	{
 		// Try English
-		resource = m_Path;
-		resource += L"Languages\\1033.dll";
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		m_ResourceLCID = 1033;
-		if (!m_ResourceInstance)
+		if (!LoadLanguage(L"1033"))
 		{
-			MessageBox(nullptr, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			clearBuffer();
 			return 1;
 		}
@@ -465,11 +463,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 #endif // COMMIT_HASH
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-	GetLocaleInfo(m_ResourceLCID, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
+	GetLocaleInfo(GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
-	LogNoticeF(L"Language: %s (%lu)", lang, m_ResourceLCID);
+	LogNoticeF(L"Language: %s (%lu)", lang, GetResourceLCID());
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
-	LogNoticeF(L"Build hash: %s", m_BuildHash.c_str());
+	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());
 
 	LogNoticeF(L"OS: %s - %s (%hu)",
 		GetPlatform().GetFriendlyName().c_str(),
@@ -507,7 +505,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	if (m_SkinRegistry.IsEmpty())
 	{
-		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
+		std::wstring error = GetFormattedString(IDS_NoAvailableSkins, m_SkinPath.c_str());
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 
@@ -518,8 +516,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	{
 		int result = MessageBox(
 			nullptr,
-			GetString(ID_STR_SAFESTART_MESSAGE),
-			GetString(ID_STR_SAFESTART_TITLE),
+			GetString(IDS_SafeStartMessage),
+			GetString(IDS_SafeStartTitle),
 			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
 		if (result == IDYES)
 		{
@@ -561,7 +559,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	}
 	else if (!m_DisableVersionCheck)
 	{
-		GetUpdater().CheckForUpdates(!m_DisableAutoUpdate);
+		ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
 	}
 
 	return 0;	// All is OK
@@ -570,6 +568,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
+	KillTimer(m_Window, TIMER_UPDATECHECK);
 
 	GetGameMode().ForceExit();
 
@@ -596,12 +595,6 @@ void Rainmeter::Finalize()
 	if (m_DesktopWorkAreaChanged)
 	{
 		UpdateDesktopWorkArea(true);
-	}
-
-	if (m_ResourceInstance)
-	{
-		FreeLibrary(m_ResourceInstance);
-		m_ResourceInstance = nullptr;
 	}
 
 	if (m_Mutex)
@@ -743,6 +736,17 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			MeasureNet::UpdateStats();
 			GetRainmeter().WriteStats(false);
 		}
+		else if (wParam == TIMER_UPDATECHECK)
+		{
+			Rainmeter& rainmeter = GetRainmeter();
+			KillTimer(rainmeter.m_Window, TIMER_UPDATECHECK);
+
+			if (!rainmeter.m_DisableVersionCheck)
+			{
+				GetUpdater().CheckForUpdates(!rainmeter.m_DisableAutoUpdate);
+				rainmeter.ScheduleUpdateCheck(INTERVAL_UPDATECHECK_DAILY);
+			}
+		}
 		else
 		{
 			GetGameMode().OnTimerEvent(wParam);
@@ -769,6 +773,14 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		break;
 
+	case WM_RAINMETER_HANDLE_ASYNC_TASK_RESULT:
+		AsyncTask::HandleResultMessage(wParam, lParam);
+		break;
+
+	case WM_RAINMETER_HANDLE_EXPORT_SYNC:
+		HandleExportSyncMessage(wParam, lParam);
+		break;
+
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
@@ -779,6 +791,11 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 void Rainmeter::SetNetworkStatisticsTimer()
 {
 	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, nullptr) != 0;
+}
+
+void Rainmeter::ScheduleUpdateCheck(UINT interval)
+{
+	SetTimer(m_Window, TIMER_UPDATECHECK, interval, nullptr);
 }
 
 void Rainmeter::CreateOptionsFile()
@@ -1127,7 +1144,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		std::wstring folderPath = m_SkinRegistry.GetFolderPath(folderIndex);
 
 		// Verify that the skin is not already active
-		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.find(folderPath);
+		auto iter = m_Skins.find(folderPath);
 		if (iter != m_Skins.end())
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
@@ -1149,7 +1166,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 
 		if (_waccess_s(skinIniPath.c_str(), 0) != 0)
 		{
-			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
+			std::wstring message = GetFormattedString(IDS_UnableToActivateSkin, folderPath.c_str(), fileSz);
 			ShowMessage(nullptr, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return;
 		}
@@ -1377,7 +1394,7 @@ Skin* Rainmeter::GetSkin(std::wstring folderPath)
 	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
 
 	const WCHAR* folderSz = folderPath.c_str();
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		if (_wcsicmp((*iter).first.c_str(), folderSz) == 0)
@@ -1395,7 +1412,7 @@ Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 	{
 		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
 
-		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+		auto iter = m_Skins.begin();
 		for (; iter != m_Skins.end(); ++iter)
 		{
 			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
@@ -1413,7 +1430,7 @@ Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 
 Skin* Rainmeter::GetSkin(HWND hwnd)
 {
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		if ((*iter).second->GetWindow() == hwnd)
@@ -1427,7 +1444,7 @@ Skin* Rainmeter::GetSkin(HWND hwnd)
 
 void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group)
 {
-	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
 		Skin* skin = (*iter).second;
@@ -1604,8 +1621,6 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	// Force the reload of system cursors
 	SystemParametersInfo(SPI_SETCURSORS, 0U, nullptr, 0U);
 
-	WCHAR buffer[MAX_PATH];
-
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
 
@@ -1640,7 +1655,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
-		DWORD cchOut = MAX_PATH;
+		WCHAR buffer[MAX_PATH];
+		DWORD cchOut = _countof(buffer);
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
 		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
@@ -1658,6 +1674,33 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
 
+	m_DpiOverride = parser.ReadInt(L"Rainmeter", L"DpiOverride", 0);
+	if (parser.GetLastDefaultUsed())
+	{
+		// If the user has selected "Override high DPI scaling behavior" in the executable properties,
+		// we default to ignoring the per window/monitor DPI for backwards compatibility even though we
+		// are now properly DPI aware.
+		WCHAR executablePath[MAX_PATH];
+		GetModuleFileName(GetModuleHandle(nullptr), executablePath, _countof(executablePath));
+
+		WCHAR buffer[512];
+		DWORD bufferSize = _countof(buffer);
+		const auto regResult = RegGetValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers", executablePath, RRF_RT_REG_SZ, nullptr, &buffer, &bufferSize);
+		if (regResult == ERROR_SUCCESS && !!wcsstr(buffer, L"HIGHDPIAWARE"))
+		{
+			LogWarning(L"High DPI scaling has been disabled due the the override in the Rainmeter.exe 'Compatibility' properties");
+			MonitorUtil::EnableDpiAppCompatMode();
+			m_DpiOverride = 100;
+		}
+	}
+	else if (m_DpiOverride < 0 || m_DpiOverride > 200)
+	{
+		m_DpiOverride = 0;
+	}
+
+	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
+	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
+
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
@@ -1665,9 +1708,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	const size_t monitorCount = System::GetMonitorCount();
+	const size_t monitorCount = MonitorUtil::GetMultiMonitorInfo().monitors.size();
 	for (UINT i = 1; i <= monitorCount; ++i)
 	{
+		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", (int)i);
 		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
@@ -1777,7 +1821,7 @@ void Rainmeter::RefreshAll()
 				if (!found)
 				{
 					const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
-					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, skinIniFile);
+					std::wstring error = GetFormattedString(IDS_UnableToRefreshSkin, skinFolderPath, skinIniFile);
 
 					DeactivateSkin(skin, index);
 
@@ -1788,7 +1832,7 @@ void Rainmeter::RefreshAll()
 			else
 			{
 				const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
-				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, L"");
+				std::wstring error = GetFormattedString(IDS_UnableToRefreshSkin, skinFolderPath, L"");
 
 				DeactivateSkin(skin, -2);  // -2 = Force deactivate
 
@@ -1854,6 +1898,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"SelectedColor");
 		PreserveSetting(backup, L"HardwareAcceleration");
+		PreserveSetting(backup, L"DpiOverride");
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
@@ -1926,13 +1971,25 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 {
 	static const std::vector<LPCWSTR> s_OldPlugins =
 	{
+		L"FolderInfo",
+		L"iTunesPlugin",
 		L"MediaKey",
+		L"Mouse",
 		L"NowPlaying",
+		L"PingPlugin",
+		L"PowerPlugin",
 		L"Process",
+		L"QuotePlugin",
 		L"RecycleManager",
+		L"ResMon",
+		L"SpeedFanPlugin",
 		L"SysInfo",
 		L"WebParser",
-		L"WifiStatus"
+		L"WifiStatus",
+		L"Win7AudioPlugin",
+		L"WindowMessage",
+		L"WindowMessagePlugin"
+
 	};
 	return s_OldPlugins;
 }
@@ -1944,43 +2001,25 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 void Rainmeter::UpdateDesktopWorkArea(bool reset)
 {
 	bool changed = false;
-
 	if (reset)
 	{
-		if (!m_OldDesktopWorkAreas.empty())
+		for (auto& oldWorkArea : m_OldDesktopWorkAreas)
 		{
-			int i = 1;
-			for (auto iter = m_OldDesktopWorkAreas.cbegin(); iter != m_OldDesktopWorkAreas.cend(); ++iter, ++i)
-			{
-				RECT r = (*iter);
-
-				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
-
-				if (m_Debug)
-				{
-					std::wstring format = L"Resetting WorkArea@%i: L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
-					if (!result)
-					{
-						format += L" => FAIL";
-					}
-					LogDebugF(format.c_str(), i, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
-				}
-			}
+			SystemParametersInfo(SPI_SETWORKAREA, 0, &oldWorkArea, 0);
 			changed = true;
 		}
 	}
 	else
 	{
-		const size_t numOfMonitors = System::GetMonitorCount();
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
+		const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
 		{
 			// Store old work areas for changing them back
-			for (size_t i = 0; i < numOfMonitors; ++i)
+			for (const auto& monitor : monitors)
 			{
-				m_OldDesktopWorkAreas.push_back(monitors[i].work);
+				m_OldDesktopWorkAreas.push_back(monitor.work);
 			}
 		}
 
@@ -1989,66 +2028,43 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 			LogDebugF(L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
-		for (UINT i = 0; i <= numOfMonitors; ++i)
+		for (UINT i = 0; i <= monitors.size(); ++i)
 		{
-			std::map<UINT, RECT>::const_iterator it = m_DesktopWorkAreas.find(i);
-			if (it != m_DesktopWorkAreas.end())
+			const auto it = m_DesktopWorkAreas.find(i);
+			if (it == m_DesktopWorkAreas.end()) continue;
+
+			RECT r = it->second;
+
+			// Move rect to correct offset
+			if (m_DesktopWorkAreaType)
 			{
-				RECT r = (*it).second;
+				const int index = ((i == 0) ? monitorsInfo.primary : i) - 1;
+				r = {
+					monitors[index].screen.left + r.left,
+					monitors[index].screen.top + r.top,
+					monitors[index].screen.right - r.right,
+					monitors[index].screen.bottom - r.bottom
+				};
+			}
+			else if (i != 0)
+			{
+				const RECT screenRect = monitors[i - 1].screen;
+				r.left += screenRect.left;
+				r.top += screenRect.top;
+				r.right += screenRect.left;
+				r.bottom += screenRect.top;
+			}
 
-				// Move rect to correct offset
-				if (m_DesktopWorkAreaType)
-				{
-					r = [&]()
-					{
-						const int index = ((i == 0) ? monitorsInfo.primary : i) - 1;
-						RECT rect = {
-							monitors[index].screen.left + r.left,
-							monitors[index].screen.top + r.top,
-							monitors[index].screen.right - r.right,
-							monitors[index].screen.bottom - r.bottom };
-						return rect;
-					}();
-				}
-				else if (i != 0)
-				{
-					const int index = i - 1;
-					const RECT screenRect = monitors[index].screen;
-					r.left += screenRect.left;
-					r.top += screenRect.top;
-					r.right += screenRect.left;
-					r.bottom += screenRect.top;
-				}
-
-				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
-				if (result)
-				{
-					changed = true;
-				}
-
-				if (m_Debug)
-				{
-					std::wstring format = L"Applying DesktopWorkArea";
-					if (i != 0)
-					{
-						WCHAR buffer[64];
-						size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i", i);
-						format.append(buffer, len);
-					}
-					format += L": L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
-					if (!result)
-					{
-						format += L" => FAIL";
-					}
-					LogDebugF(format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
-				}
+			if (SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0))
+			{
+				changed = true;
 			}
 		}
 	}
 
 	if (changed && System::GetWindow())
 	{
-		// Update System::MultiMonitorInfo for for work area variables
+		// Update MonitorUtil monitor info for work area variables
 		SendMessageTimeout(System::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, nullptr);
 	}
 }
@@ -2132,7 +2148,7 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
 
-	if (*GetString(ID_STR_ISRTL) == L'1')
+	if (IsLanguageRTL())
 	{
 		type |= MB_RTLREADING;
 	}
@@ -2162,10 +2178,41 @@ void Rainmeter::SetDisableDragging(bool dragging)
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
+void Rainmeter::SetDpiOverride(int dpi)
+{
+	if (m_DpiOverride == dpi)
+	{
+		return;
+	}
+
+	m_DpiOverride = dpi;
+
+	WCHAR buffer[16];
+	_itow_s(dpi, buffer, 10);
+	WritePrivateProfileString(L"Rainmeter", L"DpiOverride", buffer, m_IniFile.c_str());
+
+	for (auto& iter : m_Skins)
+	{
+		iter.second->UpdateWindowDpi();
+	}
+}
+
 void Rainmeter::SetDisableVersionCheck(bool check)
 {
 	m_DisableVersionCheck = check;
 	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
+
+	if (m_Window)
+	{
+		if (check)
+		{
+			KillTimer(m_Window, TIMER_UPDATECHECK);
+		}
+		else
+		{
+			ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
+		}
+	}
 }
 
 void Rainmeter::SetDisableAutoUpdate(bool check)
@@ -2179,18 +2226,18 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	const WCHAR* iniFile = m_IniFile.c_str();
 	if (!System::IsFileWritable(iniFile))
 	{
-		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
+		std::wstring error = GetString(IDS_SettingsNotWritable);
 
 		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			PathUtil::ExpandEnvironmentVariables(strTarget);
 
-			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, iniFile, strTarget.c_str());
+			error += GetFormattedString(IDS_SettingsMoveFile, iniFile, strTarget.c_str());
 		}
 		else
 		{
-			error += GetFormattedString(ID_STR_SETTINGSREADONLY, iniFile);
+			error += GetFormattedString(IDS_SettingsReadOnly, iniFile);
 		}
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);

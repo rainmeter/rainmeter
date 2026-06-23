@@ -24,6 +24,8 @@ public:
 
 	UINT GetX() { return m_X; }
 	UINT GetY() { return m_Y; }
+	UINT GetWidth() { return m_Width; }
+	UINT GetHeight() { return m_Height; }
 
 	D2D1_RECT_F GetRect() { return D2D1::RectF((FLOAT)m_X, (FLOAT)m_Y, (FLOAT)m_Width, (FLOAT)m_Height); }
 
@@ -55,7 +57,7 @@ struct FileInfo
 class D2DBitmap
 {
 public:
-	D2DBitmap(const std::wstring& path, int exifOrientation = 0);
+	D2DBitmap(const std::wstring& path, int exifOrientation = 0, bool createAlphaMask = false);
 	~D2DBitmap();
 
 	UINT GetWidth() const{ return m_Width; }
@@ -84,17 +86,22 @@ public:
 
 	Util::D2DEffectStream* CreateEffectStream();
 	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
+	bool IsPixelOpaque(int px, int py) const;
 
 	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 
 private:
 	friend class Canvas;
+	friend class Util::D2DBitmapLoader;
 	friend class Util::D2DEffectStream;
 	friend class Gfx::RenderTexture;
 
 	D2DBitmap();
 	D2DBitmap(const D2DBitmap& other) = delete;
 	D2DBitmap& operator=(D2DBitmap other) = delete;
+	bool GetCreateAlphaMask() const { return m_CreateAlphaMask; }
+	void SetAlphaMask(std::vector<BYTE>& alphaMask) { m_AlphaMask.swap(alphaMask); }
+	bool BuildAlphaMask(Canvas& canvas);
 
 	UINT m_Width;
 	UINT m_Height;
@@ -106,6 +113,8 @@ private:
 	ULONGLONG m_FileTime;
 
 	std::vector<BitmapSegment> m_Segments;
+	std::vector<BYTE> m_AlphaMask;
+	bool m_CreateAlphaMask;
 };
 
 }  // namespace Gfx

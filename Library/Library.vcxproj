@@ -23,18 +23,18 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Bcrypt.lib;Wintrust.lib;comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;ws2_32.lib;PowrProf.lib;netapi32.lib;Ntdll.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;Rpcrt4.lib;wlanapi.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;wlanapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;wlanapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AsyncTask.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
@@ -45,26 +45,38 @@
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="Language.cpp" />
+    <ClCompile Include="Language_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
+    <ClCompile Include="MeasureMouse.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
+    <ClCompile Include="MeasurePower.cpp" />
     <ClCompile Include="MeasureProcess.cpp" />
+    <ClCompile Include="MeasureQuote.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
+    <ClCompile Include="MeasureResMon.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
+    <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
@@ -72,6 +84,8 @@
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
+    <ClCompile Include="MeasureWin7Audio.cpp" />
+    <ClCompile Include="MeasureWindowMessage.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
@@ -84,9 +98,12 @@
     <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="MonitorUtil.cpp" />
+    <ClCompile Include="MonitorUtil_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Net.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
-    <ClCompile Include="NowPlaying\Internet.cpp" />
-    <ClCompile Include="NowPlaying\Lyrics.cpp" />
     <ClCompile Include="NowPlaying\Player.cpp" />
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp" />
     <ClCompile Include="NowPlaying\PlayerCAD.cpp" />
@@ -100,6 +117,11 @@
     </ClCompile>
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinPosition.cpp" />
+    <ClCompile Include="SkinZoomDrag.cpp" />
+    <ClCompile Include="SkinPosition_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
@@ -124,10 +146,10 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
-    <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
@@ -139,26 +161,35 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
+    <ClInclude Include="MeasureMouse.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
+    <ClInclude Include="MeasurePower.h" />
     <ClInclude Include="MeasureProcess.h" />
+    <ClInclude Include="MeasureQuote.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
+    <ClInclude Include="MeasureResMon.h" />
     <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
@@ -166,6 +197,8 @@
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
+    <ClInclude Include="MeasureWin7Audio.h" />
+    <ClInclude Include="MeasureWindowMessage.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
@@ -178,9 +211,9 @@
     <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="MonitorUtil.h" />
+    <ClInclude Include="Net.h" />
     <ClInclude Include="NowPlaying\Cover.h" />
-    <ClInclude Include="NowPlaying\Internet.h" />
-    <ClInclude Include="NowPlaying\Lyrics.h" />
     <ClInclude Include="NowPlaying\Player.h" />
     <ClInclude Include="NowPlaying\PlayerAIMP.h" />
     <ClInclude Include="NowPlaying\PlayerCAD.h" />
@@ -191,6 +224,8 @@
     <ClInclude Include="NowPlaying\PlayerWMP.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinPosition.h" />
+    <ClInclude Include="SkinZoomDrag.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
@@ -229,6 +264,12 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="GenerateEnglishLanguage"
+          AfterTargets="Build"
+          Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1"
+          Outputs="$(OutDir)Languages\1033.rmlang">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\GenerateLanguages.ps1&quot; -Locale en -OutputDirectory &quot;$(OutDir)Languages&quot; -RuntimeOnly" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

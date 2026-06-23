@@ -15,6 +15,7 @@
 #include "Util.h"
 #include "Skin.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "TrayIcon.h"
 #include "resource.h"
 
@@ -30,42 +31,42 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 {
 	static const MenuTemplate s_Menu[] =
 	{
-		MENU_ITEM(IDM_MANAGE, ID_STR_MANAGE),
-		MENU_ITEM(IDM_ABOUT, ID_STR_ABOUT),
-		MENU_ITEM(IDM_SHOW_HELP, ID_STR_HELP),
+		MENU_ITEM(IDM_MANAGE, IDS_Manage),
+		MENU_ITEM(IDM_ABOUT, IDS_About),
+		MENU_ITEM(IDM_SHOW_HELP, IDS_Help),
 		MENU_SEPARATOR(),
-		MENU_SUBMENU(ID_STR_SKINS,
-			MENU_ITEM(IDM_OPENSKINSFOLDER, ID_STR_OPENFOLDER),
-			MENU_ITEM(IDM_DISABLEDRAG, ID_STR_DISABLEDRAGGING),
+		MENU_SUBMENU(IDS_Skins,
+			MENU_ITEM(IDM_OPENSKINSFOLDER, IDS_OpenFolder),
+			MENU_ITEM(IDM_DISABLEDRAG, IDS_DisableDragging),
 			MENU_SEPARATOR(),
-			MENU_ITEM_GRAYED(0, ID_STR_NOSKINS)),
-		MENU_SUBMENU(ID_STR_FAVORITES,
-			MENU_ITEM_GRAYED(0, ID_STR_NOFAVORITES)),
-		MENU_SUBMENU(ID_STR_THEMES,
-			MENU_ITEM_GRAYED(0, ID_STR_NOTHEMES)),
+			MENU_ITEM_GRAYED(0, IDS_NoSkins)),
+		MENU_SUBMENU(IDS_Favorites,
+			MENU_ITEM_GRAYED(0, IDS_NoFavorites)),
+		MENU_SUBMENU(IDS_Themes,
+			MENU_ITEM_GRAYED(0, IDS_NoThemes)),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_EDITCONFIG, ID_STR_EDITSETTINGS),
-		MENU_ITEM(IDM_REFRESH, ID_STR_REFRESHALL),
+		MENU_ITEM(IDM_EDITCONFIG, IDS_EditSettings),
+		MENU_ITEM(IDM_REFRESH, IDS_RefreshAll),
 		MENU_SEPARATOR(),
-		MENU_SUBMENU(ID_STR_LOGGING,
-			MENU_ITEM(IDM_SHOWLOGFILE, ID_STR_SHOWLOGFILE),
+		MENU_SUBMENU(IDS_Logging,
+			MENU_ITEM(IDM_SHOWLOGFILE, IDS_ShowLogFile),
 			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_STARTLOG, ID_STR_STARTLOGGING),
-			MENU_ITEM(IDM_STOPLOG, ID_STR_STOPLOGGING),
+			MENU_ITEM(IDM_STARTLOG, IDS_StartLogging),
+			MENU_ITEM(IDM_STOPLOG, IDS_StopLogging),
 			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_DELETELOGFILE, ID_STR_DELETELOGFILE),
-			MENU_ITEM(IDM_DEBUGLOG, ID_STR_DEBUGMODE)),
+			MENU_ITEM(IDM_DELETELOGFILE, IDS_DeleteLogFile),
+			MENU_ITEM(IDM_DEBUGLOG, IDS_DebugMode)),
 		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE),
+		MENU_ITEM_GRAYED(0, IDS_GameMode),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
+		MENU_ITEM(IDM_QUIT, IDS_Exit)
 	};
 
 	static const MenuTemplate s_GameModeMenu[] =
 	{
-		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE),
+		MENU_ITEM_GRAYED(0, IDS_GameMode),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
+		MENU_ITEM(IDM_QUIT, IDS_Exit)
 	};
 
 	if (m_MenuActive || (skin && skin->IsClosing())) return;
@@ -105,7 +106,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	if (gameMenu)
 	{
 		DeleteMenu(menu, gamePos, MF_BYPOSITION);
-		InsertMenu(menu, gamePos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)gameMenu, GetString(ID_STR_GAMEMODE));
+		InsertMenu(menu, gamePos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)gameMenu, GetString(IDS_GameMode));
 	}
 
 	if (GetGameMode().IsEnabled())
@@ -183,7 +184,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	{
 		// Create a menu for all active skins
 		int index = 0;
-		std::map<std::wstring, Skin*>::const_iterator iter = rainmeter.m_Skins.begin();
+		auto iter = rainmeter.m_Skins.cbegin();
 		for (; iter != rainmeter.m_Skins.end(); ++iter)
 		{
 			if (index == 0)
@@ -206,7 +207,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		if (newVersion || downloadedNewVersion)
 		{
 			UINT_PTR idm = downloadedNewVersion ? IDM_INSTALL_NEW_VERSION : IDM_NEW_VERSION;
-			WCHAR* str = GetString(downloadedNewVersion ? ID_STR_INSTALL_NEW_VERSION : ID_STR_UPDATEAVAILABLE);
+			const WCHAR* str = GetString(downloadedNewVersion ? IDS_InstallNewVersion : IDS_UpdateAvailable);
 			InsertMenu(menu, 0, MF_BYPOSITION, idm, str);
 			++sepPos;
 		}
@@ -214,7 +215,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		// Add language status if obsolete
 		if (obsoleteLanguage)
 		{
-			InsertMenu(menu, !newVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(ID_STR_LANGUAGEOBSOLETE));
+			InsertMenu(menu, !newVersion ? 0 : 1, MF_BYPOSITION, IDM_LANGUAGEOBSOLETE, GetString(IDS_LanguageObsolete));
 			++sepPos;
 		}
 
@@ -263,7 +264,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 	// Show context menu
 	TrackPopupMenu(
 		menu,
-		TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
+		TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetRainmeter().IsLanguageRTL() ? TPM_LAYOUTRTL : 0),
 		pos.x,
 		pos.y,
 		0,
@@ -274,68 +275,105 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 	if (skin) for (const auto& meter : skin->GetMeters()) meter->ResetToolTip();
 }
 
+// TODO: Get rid of this after adding these labels to the language files.
+const WCHAR* GetStringTemp(UINT id)
+{
+	switch (id)
+	{
+		case IDS_Zoom: return L"Zoom";
+		case IDS_0Percent: return L"0%";
+		case IDS_10Percent: return L"10%";
+		case IDS_20Percent: return L"20%";
+		case IDS_30Percent: return L"30%";
+		case IDS_40Percent: return L"40%";
+		case IDS_50Percent: return L"50%";
+		case IDS_60Percent: return L"60%";
+		case IDS_70Percent: return L"70%";
+		case IDS_80Percent: return L"80%";
+		case IDS_90Percent: return L"90%";
+		case IDS_Approx100Percent: return L"~100%";
+		case IDS_100Percent: return L"100%";
+		case IDS_110Percent: return L"110%";
+		case IDS_120Percent: return L"120%";
+		case IDS_130Percent: return L"130%";
+		case IDS_140Percent: return L"140%";
+		case IDS_150Percent: return L"150%";
+	}
+
+	return GetString(id);
+}
+
 HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 {
 	static const MenuTemplate s_Menu[] =
 	{
 		MENU_ITEM(IDM_SKIN_OPENSKINSFOLDER, 0),
 		MENU_SEPARATOR(),
-		MENU_SUBMENU(ID_STR_VARIANTS,
+		MENU_SUBMENU(IDS_Variants,
 			MENU_SEPARATOR()),
 		MENU_SEPARATOR(),
-		MENU_SUBMENU(ID_STR_SETTINGS,
-			MENU_SUBMENU(ID_STR_POSITION,
-				MENU_SUBMENU(ID_STR_DISPLAYMONITOR,
-					MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, ID_STR_USEDEFAULTMONITOR),
-					MENU_ITEM(ID_MONITOR_FIRST, ID_STR_VIRTUALSCREEN),
+		MENU_SUBMENU(IDS_Settings,
+			MENU_SUBMENU(IDS_Position,
+				MENU_SUBMENU(IDS_DisplayMonitor,
+					MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
+					MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
 					MENU_SEPARATOR(),
 					MENU_SEPARATOR(),
-					MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, ID_STR_AUTOSELECTMONITOR)),
+					MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)),
 				MENU_SEPARATOR(),
-				MENU_ITEM(IDM_SKIN_VERYTOPMOST, ID_STR_STAYTOPMOST),
-				MENU_ITEM(IDM_SKIN_TOPMOST, ID_STR_TOPMOST),
-				MENU_ITEM(IDM_SKIN_NORMAL, ID_STR_NORMAL),
-				MENU_ITEM(IDM_SKIN_BOTTOM, ID_STR_BOTTOM),
-				MENU_ITEM(IDM_SKIN_ONDESKTOP, ID_STR_ONDESKTOP),
+				MENU_ITEM(IDM_SKIN_VERYTOPMOST, IDS_StayTopmost),
+				MENU_ITEM(IDM_SKIN_TOPMOST, IDS_Topmost),
+				MENU_ITEM(IDM_SKIN_NORMAL, IDS_Normal),
+				MENU_ITEM(IDM_SKIN_BOTTOM, IDS_Bottom),
+				MENU_ITEM(IDM_SKIN_ONDESKTOP, IDS_OnDesktop),
 				MENU_SEPARATOR(),
-				MENU_ITEM(IDM_SKIN_FROMRIGHT, ID_STR_FROMRIGHT),
-				MENU_ITEM(IDM_SKIN_FROMBOTTOM, ID_STR_FROMBOTTOM),
-				MENU_ITEM(IDM_SKIN_XPERCENTAGE, ID_STR_XASPERCENTAGE),
-				MENU_ITEM(IDM_SKIN_YPERCENTAGE, ID_STR_YASPERCENTAGE)),
+				MENU_ITEM(IDM_SKIN_FROMRIGHT, IDS_FromRight),
+				MENU_ITEM(IDM_SKIN_FROMBOTTOM, IDS_FromBottom),
+				MENU_ITEM(IDM_SKIN_XPERCENTAGE, IDS_XAsPercentage),
+				MENU_ITEM(IDM_SKIN_YPERCENTAGE, IDS_YAsPercentage)),
+			MENU_SUBMENU(IDS_Zoom,
+				MENU_ITEM(IDM_SKIN_ZOOM_80, IDS_80Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_90, IDS_90Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_100, IDS_100Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_110, IDS_110Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_120, IDS_120Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_130, IDS_130Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_140, IDS_140Percent),
+				MENU_ITEM(IDM_SKIN_ZOOM_150, IDS_150Percent)),
 			MENU_SEPARATOR(),
-			MENU_SUBMENU(ID_STR_TRANSPARENCY,
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, ID_STR_0PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, ID_STR_10PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_20, ID_STR_20PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_30, ID_STR_30PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_40, ID_STR_40PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_50, ID_STR_50PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_60, ID_STR_60PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, ID_STR_70PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, ID_STR_80PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, ID_STR_90PERCENT),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, ID_STR_100PERCENT)),
-			MENU_SUBMENU(ID_STR_ONHOVER,
-				MENU_ITEM(IDM_SKIN_HIDEONMOUSE_NONE, ID_STR_DONOTHING),
-				MENU_ITEM(IDM_SKIN_HIDEONMOUSE, ID_STR_HIDE),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, ID_STR_FADEIN),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, ID_STR_FADEOUT)),
+			MENU_SUBMENU(IDS_Transparency,
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, IDS_0Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, IDS_10Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_20, IDS_20Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_30, IDS_30Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_40, IDS_40Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_50, IDS_50Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_60, IDS_60Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, IDS_70Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, IDS_80Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, IDS_90Percent),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, IDS_Approx100Percent)),
+			MENU_SUBMENU(IDS_OnHover,
+				MENU_ITEM(IDM_SKIN_HIDEONMOUSE_NONE, IDS_DoNothing),
+				MENU_ITEM(IDM_SKIN_HIDEONMOUSE, IDS_Hide),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, IDS_FadeIn),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, IDS_FadeOut)),
 			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, ID_STR_CLICKTHROUGH),
-			MENU_ITEM(IDM_SKIN_DRAGGABLE, ID_STR_DRAGGABLE),
-			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN),
-			MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, ID_STR_SAVEPOSITION),
-			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, ID_STR_SNAPTOEDGES),
-			MENU_ITEM(IDM_SKIN_FAVORITE, ID_STR_FAVORITE)),
+			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, IDS_ClickThrough),
+			MENU_ITEM(IDM_SKIN_DRAGGABLE, IDS_Draggable),
+			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, IDS_KeepOnScreen),
+			MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, IDS_SavePosition),
+			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, IDS_SnapToEdges),
+			MENU_ITEM(IDM_SKIN_FAVORITE, IDS_Favorite)),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_SKIN_MANAGESKIN, ID_STR_MANAGESKIN),
-		MENU_ITEM(IDM_SKIN_EDITSKIN, ID_STR_EDITSKIN),
-		MENU_ITEM(IDM_SKIN_REFRESH, ID_STR_REFRESHSKIN),
+		MENU_ITEM(IDM_SKIN_MANAGESKIN, IDS_ManageSkin),
+		MENU_ITEM(IDM_SKIN_EDITSKIN, IDS_EditSkin),
+		MENU_ITEM(IDM_SKIN_REFRESH, IDS_RefreshSkin),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_CLOSESKIN, ID_STR_UNLOADSKIN)
+		MENU_ITEM(IDM_CLOSESKIN, IDS_UnloadSkin)
 	};
 
-	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
 	if (!skinMenu) return nullptr;
 
 	// Tick the position
@@ -348,10 +386,10 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)skin->GetWindowZPosition();
 			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
 
-			if (skin->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetX().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetY().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetX().percentage) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetY().percentage) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 
 			HMENU monitorMenu = GetSubMenu(posMenu, 0);
 			if (monitorMenu)
@@ -360,8 +398,67 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			}
 		}
 
+		// Tick the zoom
+		HMENU zoomMenu = GetSubMenu(settingsMenu, 1);
+		if (zoomMenu)
+		{
+			const float zoom = skin->GetZoom();
+			const int zoomPercent = (int)(zoom * 100.0f + 0.5f);
+			UINT checkId = 0;
+
+			struct ZoomItem
+			{
+				float zoom;
+				UINT command;
+			};
+			static const ZoomItem c_ZoomItems[] =
+			{
+				{ 0.8f, IDM_SKIN_ZOOM_80 },
+				{ 0.9f, IDM_SKIN_ZOOM_90 },
+				{ 1.0f, IDM_SKIN_ZOOM_100 },
+				{ 1.1f, IDM_SKIN_ZOOM_110 },
+				{ 1.2f, IDM_SKIN_ZOOM_120 },
+				{ 1.3f, IDM_SKIN_ZOOM_130 },
+				{ 1.4f, IDM_SKIN_ZOOM_140 },
+				{ 1.5f, IDM_SKIN_ZOOM_150 }
+			};
+
+			for (const auto& item : c_ZoomItems)
+			{
+				if (fabsf(zoom - item.zoom) <= 0.0001f)
+				{
+					checkId = item.command;
+					break;
+				}
+			}
+
+			if (checkId == 0)
+			{
+				WCHAR buffer[32];
+				_snwprintf_s(buffer, _TRUNCATE, L"%i%%", zoomPercent);
+
+				UINT position = _countof(c_ZoomItems);
+				for (UINT i = 0; i < _countof(c_ZoomItems); ++i)
+				{
+					const int itemPercent = (int)(c_ZoomItems[i].zoom * 100.0f + 0.5f);
+					if (zoomPercent < itemPercent)
+					{
+						position = i;
+						break;
+					}
+				}
+
+				InsertMenu(zoomMenu, position, MF_BYPOSITION | MF_STRING, IDM_SKIN_ZOOM_CUSTOM, buffer);
+				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_CUSTOM, IDM_SKIN_ZOOM_CUSTOM, MF_BYCOMMAND);
+			}
+			else
+			{
+				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_150, checkId, MF_BYCOMMAND);
+			}
+		}
+
 		// Tick the transparency
-		HMENU alphaMenu = GetSubMenu(settingsMenu, 2);
+		HMENU alphaMenu = GetSubMenu(settingsMenu, 3);
 		if (alphaMenu)
 		{
 			int alpha = skin->GetAlphaValue();
@@ -379,7 +476,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		}
 
 		// Tick the mouse over options (On hover)
-		HMENU hoverMenu = GetSubMenu(settingsMenu, 3);
+		HMENU hoverMenu = GetSubMenu(settingsMenu, 4);
 		if (hoverMenu)
 		{
 			int mode = skin->GetWindowHide();
@@ -574,14 +671,14 @@ void ContextMenu::AppendSkinCustomMenu(
 
 		if (position != 0 && !standaloneMenu)
 		{
-			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, GetString(ID_STR_CUSTOMSKINACTIONS));
+			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, GetString(IDS_CustomSkinActions));
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
 	else
 	{
 		HMENU customMenu = CreatePopupMenu();
-		InsertMenu(menu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, GetString(ID_STR_CUSTOMSKINACTIONS));
+		InsertMenu(menu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, GetString(IDS_CustomSkinActions));
 
 		for (size_t i = 0; i < titleSize; ++i)
 		{
@@ -694,12 +791,11 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 
 void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
-	const bool screenDefined = skin->GetXScreenDefined();
-	const int screenIndex = skin->GetXScreen();
+	const bool monitorDefined = skin->GetX().monitor.has_value();
+	const int monitor = skin->GetX().monitor.value_or(0);
 
 	// for the "Specified monitor" (@n)
-	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
-	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
+	const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;
 
 	int i = 1;
 	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
@@ -721,17 +817,17 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 
 		const UINT flags =
 			MF_BYPOSITION |
-			((screenDefined && screenIndex == i) ? MF_CHECKED : MF_UNCHECKED) |
+			((monitorDefined && monitor == i) ? MF_CHECKED : MF_UNCHECKED) |
 			((*iter).active ? MF_ENABLED : MF_GRAYED);
 		InsertMenu(monitorMenu, i + 2, flags, ID_MONITOR_FIRST + i, item.c_str());
 	}
 
-	if (!screenDefined)
+	if (!monitorDefined)
 	{
 		CheckMenuItem(monitorMenu, IDM_SKIN_MONITOR_PRIMARY, MF_BYCOMMAND | MF_CHECKED);
 	}
 
-	if (screenDefined && screenIndex == 0)
+	if (monitorDefined && monitor == 0)
 	{
 		CheckMenuItem(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND | MF_CHECKED);
 	}
@@ -774,7 +870,7 @@ HMENU ContextMenu::CreateGameModeOnStartMenu()
 {
 	static const MenuTemplate s_Menu[] =
 	{
-		MENU_ITEM(ID_GAMEMODE_ONSTART_FIRST, ID_STR_GAMEMODE_ACTIONS_UNLOADALL)
+		MENU_ITEM(ID_GAMEMODE_ONSTART_FIRST, IDS_GameModeActionsUnloadAll)
 	};
 
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -813,7 +909,7 @@ HMENU ContextMenu::CreateGameModeOnStopMenu()
 {
 	static const MenuTemplate s_Menu[] =
 	{
-		MENU_ITEM(ID_GAMEMODE_ONSTOP_FIRST, ID_STR_GAMEMODE_ACTIONS_CURRENT)
+		MENU_ITEM(ID_GAMEMODE_ONSTOP_FIRST, IDS_GameModeActionsCurrent)
 	};
 
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -852,13 +948,13 @@ HMENU ContextMenu::CreateGameModeMenu()
 {
 	static const MenuTemplate s_Menu[] =
 	{
-		MENU_ITEM(IDM_GAMEMODE_START, ID_STR_GAMEMODE_START),
+		MENU_ITEM(IDM_GAMEMODE_START, IDS_GameModeStart),
 		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(IDM_GAMEMODE_FULLSCREEN, ID_STR_GAMEMODE_FULLSCREEN),
-		MENU_ITEM_GRAYED(IDM_GAMEMODE_PROCESSLIST, ID_STR_GAMEMODE_PROCESSLIST),
+		MENU_ITEM_GRAYED(IDM_GAMEMODE_FULLSCREEN, IDS_GameModeFullScreen),
+		MENU_ITEM_GRAYED(IDM_GAMEMODE_PROCESSLIST, IDS_GameModeProcessList),
 		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE_ACTIONS_ONSTART),
-		MENU_ITEM_GRAYED(0, ID_STR_GAMEMODE_ACTIONS_ONSTOP)
+		MENU_ITEM_GRAYED(0, IDS_GameModeActionsOnStart),
+		MENU_ITEM_GRAYED(0, IDS_GameModeActionsOnStop)
 	};
 
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -871,7 +967,7 @@ HMENU ContextMenu::CreateGameModeMenu()
 	if (!game.IsDisabled())
 	{
 		DeleteMenu(menu, 0, MF_BYPOSITION);
-		InsertMenu(menu, 0, MF_BYPOSITION, IDM_GAMEMODE_STOP, GetString(ID_STR_GAMEMODE_STOP));
+		InsertMenu(menu, 0, MF_BYPOSITION, IDM_GAMEMODE_STOP, GetString(IDS_GameModeStop));
 	}
 
 	// Tick the settings
@@ -895,14 +991,14 @@ HMENU ContextMenu::CreateGameModeMenu()
 		if (onStartMenu)
 		{
 			DeleteMenu(menu, 5, MF_BYPOSITION);
-			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStartMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTART));
+			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStartMenu, GetString(IDS_GameModeActionsOnStart));
 		}
 
 		HMENU onStopMenu = CreateGameModeOnStopMenu();
 		if (onStopMenu)
 		{
 			DeleteMenu(menu, 6, MF_BYPOSITION);
-			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStopMenu, GetString(ID_STR_GAMEMODE_ACTIONS_ONSTOP));
+			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStopMenu, GetString(IDS_GameModeActionsOnStop));
 		}
 	}
 

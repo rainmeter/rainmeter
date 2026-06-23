@@ -25,14 +25,14 @@ typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, Skin* skin);
 struct BangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	uint8_t argCount;
 };
 
 struct CustomBangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	BangHandlerFunc handlerFunc;
 };
 
@@ -74,6 +74,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
 	{ Bang::Move, L"Move", 2 },
 	{ Bang::SetAnchor, L"SetAnchor", 2 },
+	{ Bang::Zoom, L"Zoom", 1 },
 	{ Bang::ZPos, L"ZPos", 1 },
 	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
 	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
@@ -101,6 +102,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
 	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
 	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 },
+	{ Bang::CommandMeasureGroup, L"CommandMeasureGroup", 2 },
 	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0 }
 };
 

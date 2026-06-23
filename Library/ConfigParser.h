@@ -10,11 +10,10 @@
 
 #pragma warning(disable: 4503)
 
+#include "../Common/ParseUtil.h"
 #include <windows.h>
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <cstdint>
 #include <d2d1.h>
 
@@ -23,17 +22,6 @@ class Skin;
 class Section;
 class Measure;
 class Meter;
-
-enum class PairedPunctuation : BYTE
-{
-	SingleQuote,
-	DoubleQuote,
-	BothQuotes,
-	Parentheses,
-	Brackets,
-	Braces,
-	Guillemet
-};
 
 class ConfigParser
 {
@@ -44,6 +32,12 @@ public:
 		Variable,							// #Variable#                         [#Variable]
 		Mouse,								// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
 		CharacterReference					// Not available.                     [\8364], [\x20AC], [\X20AC], etc.
+	};
+
+	enum class MonitorVariableMode : BYTE
+	{
+		DEFAULT_LOGICAL,
+		FORCE_PHYSICAL
 	};
 
 	ConfigParser();
@@ -57,12 +51,14 @@ public:
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
 
-	const std::wstring* GetVariable(const std::wstring& strVariable);
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
-	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	const ankerl::unordered_dense::map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
@@ -75,8 +71,6 @@ public:
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
-
-	void ResetMonitorVariables(Skin* skin = nullptr);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -104,7 +98,7 @@ public:
 	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
 	static double ParseDouble(LPCTSTR str, double defValue);
 	static int ParseInt(LPCTSTR str, int defValue);
@@ -114,8 +108,6 @@ public:
 	static D2D1_RECT_F ParseRect(LPCTSTR str);
 	static RECT ParseRECT(LPCTSTR str);
 
-	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
-	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 private:
@@ -125,41 +117,39 @@ private:
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	void SetAutoSelectedMonitorVariables(Skin* skin);
-
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	static void SetMultiMonitorVariables(bool reset);
+	bool GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	std::unordered_map<std::wstring, Measure*> m_Measures;
+	ankerl::unordered_dense::map<std::wstring, Measure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;
 
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;
+	MonitorVariableMode m_MonitorVariableMode;
 
 	std::wstring* m_CurrentSection;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
-	std::unordered_map<std::wstring, std::wstring> m_Values;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Values;
 
-	std::unordered_set<std::wstring> m_FoundSections;
+	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionInsertPos;
 
-	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
-	std::unordered_map<std::wstring, std::wstring> m_Variables;
-	std::unordered_map<std::wstring, std::wstring> m_OriginalVariableNames;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_BuiltInVariables;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Variables;
+	ankerl::unordered_dense::map<std::wstring, std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
 
-	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
-	static std::unordered_map<VariableType, WCHAR> c_VariableMap;
+	static ankerl::unordered_dense::map<VariableType, WCHAR> c_VariableMap;
 };
 
 #endif

@@ -7,18 +7,28 @@ on:
 
 jobs:
   rainmeter:
+    if: "!contains(github.event.head_commit.message, 'skipci')"
     strategy:
       matrix:
         arch: [32, 64]
-
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
         uses: actions/checkout@v5
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: cd Build && Build.bat rainmeter-${{ matrix.arch }} 0.0.0.0
-        shell: cmd
+        run: |
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          cd Build
+          .\Build.bat rainmeter-${{ matrix.arch }} $buildVersion include-tests
+        shell: pwsh
+
+      - name: Test 64-bit Rainmeter
+        if: ${{ matrix.arch == 64 }}
+        run: |
+          cd Build
+          .\Build.bat test-64
+        shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
@@ -31,7 +41,7 @@ jobs:
 
   installer:
     needs: rainmeter
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
         uses: actions/checkout@v5
@@ -45,8 +55,11 @@ jobs:
         run: choco install nsis --version=3.12.0 --no-progress
 
       - name: Build installer
-        run: cd Build && Build.bat installer 0.0.0.0
-        shell: cmd
+        run: |
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          cd Build
+          .\Build.bat installer $buildVersion
+        shell: pwsh
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

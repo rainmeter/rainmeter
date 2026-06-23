@@ -19,6 +19,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AsyncTask.cpp" />
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
@@ -58,12 +59,6 @@
     <ClCompile Include="NowPlaying\Cover.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
-    <ClCompile Include="NowPlaying\Internet.cpp">
-      <Filter>NowPlaying</Filter>
-    </ClCompile>
-    <ClCompile Include="NowPlaying\Lyrics.cpp">
-      <Filter>NowPlaying</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\Player.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -74,7 +69,6 @@
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
@@ -83,25 +77,35 @@
     <ClCompile Include="GameMode.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="Language.cpp" />
+    <ClCompile Include="Language_Test.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
+    <ClCompile Include="MeasureMouse.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
+    <ClCompile Include="MeasurePower.cpp" />
     <ClCompile Include="MeasureProcess.cpp" />
+    <ClCompile Include="MeasureQuote.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
+    <ClCompile Include="MeasureResMon.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
+    <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
@@ -109,6 +113,8 @@
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
+    <ClCompile Include="MeasureWin7Audio.cpp" />
+    <ClCompile Include="MeasureWindowMessage.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
@@ -121,9 +127,15 @@
     <ClCompile Include="MeterShape.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="MonitorUtil.cpp" />
+    <ClCompile Include="MonitorUtil_Test.cpp" />
+    <ClCompile Include="Net.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinPosition.cpp" />
+    <ClCompile Include="SkinZoomDrag.cpp" />
+    <ClCompile Include="SkinPosition_Test.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />
     <ClCompile Include="SkinRegistry_Test.cpp" />
@@ -170,16 +182,10 @@
     <ClInclude Include="NowPlaying\Cover.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
-    <ClInclude Include="NowPlaying\Internet.h">
-      <Filter>NowPlaying</Filter>
-    </ClInclude>
-    <ClInclude Include="NowPlaying\Lyrics.h">
-      <Filter>NowPlaying</Filter>
-    </ClInclude>
+    <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
-    <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogManage.h" />
@@ -188,25 +194,34 @@
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
+    <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
+    <ClInclude Include="MeasureMouse.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
+    <ClInclude Include="MeasurePower.h" />
     <ClInclude Include="MeasureProcess.h" />
+    <ClInclude Include="MeasureQuote.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
+    <ClInclude Include="MeasureResMon.h" />
     <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
@@ -214,6 +229,8 @@
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
+    <ClInclude Include="MeasureWin7Audio.h" />
+    <ClInclude Include="MeasureWindowMessage.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
@@ -226,11 +243,15 @@
     <ClInclude Include="MeterShape.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="MonitorUtil.h" />
+    <ClInclude Include="Net.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
     <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinPosition.h" />
+    <ClInclude Include="SkinZoomDrag.h" />
     <ClInclude Include="SkinInstaller.h" />
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />

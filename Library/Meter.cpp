@@ -232,8 +232,8 @@ void Meter::AddContainerItem(Meter* item)
 
 	if (m_ContainerItems.size() == 1)
 	{
-		UINT width = (UINT)GetW();
-		UINT height = (UINT)GetH();
+		const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
+		const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
 
 		delete m_ContainerTexture;
 		m_ContainerTexture = nullptr;
@@ -268,8 +268,8 @@ void Meter::RemoveContainerItem(Meter* item)
 
 void Meter::UpdateContainer()
 {
-	UINT width = (UINT)GetW();
-	UINT height = (UINT)GetH();
+	const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
+	const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
 
 	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
 
@@ -710,6 +710,7 @@ void Meter::CreateToolTip(Skin* skin)
 
 		RECT rc = { 0 };
 		GetMeterVisibleRect(rc);
+		rc = m_Skin->LogicalToPhysical(rc);
 
 		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0ULL, rc, hInstance };
 
@@ -788,6 +789,7 @@ void Meter::UpdateToolTip()
 	ti.lpszText = (LPTSTR)text.c_str();
 
 	const bool isVisible = GetMeterVisibleRect(ti.rect);
+	ti.rect = m_Skin->LogicalToPhysical(ti.rect);
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);

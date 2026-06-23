@@ -9,8 +9,7 @@
 #define RM_LIBRARY_TRAYICON_H_
 
 #include <windows.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <gdiplus.h>
+#include <memory>
 #include <vector>
 
 #define WM_TRAY_NOTIFYICON WM_USER + 101
@@ -50,6 +49,8 @@ protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	struct ImageData;
+
 	enum TRAY_NOTIFICATION
 	{
 		TRAY_NOTIFICATION_NONE,
@@ -73,9 +74,7 @@ private:
 	Measure* m_Measure;
 
 	TRAY_METER_TYPE m_MeterType;
-	Gdiplus::Color m_Color1;
-	Gdiplus::Color m_Color2;
-	Gdiplus::Bitmap* m_Bitmap;
+	std::unique_ptr<ImageData> m_ImageData;
 
 	std::vector<HICON> m_Icons;
 

@@ -47,17 +47,20 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::DisposeImage()
 {
-	if (m_Bitmap)
-	{
-		delete m_Bitmap;
-		m_Bitmap = nullptr;
-	}
+	m_Bitmap.reset();
+	m_BitmapProcessed.reset();
+}
 
-	if (m_BitmapProcessed)
-	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
-	}
+bool GeneralImage::IsLoaded()
+{
+	return GetImage() != nullptr;
+}
+
+Gfx::D2DBitmap* GeneralImage::GetImage()
+{
+	if (m_BitmapProcessed) return m_BitmapProcessed->GetBitmap();
+	if (!m_Bitmap) return nullptr;
+	return m_Bitmap->GetBitmap();
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -73,7 +76,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			const auto tokens = ConfigParser::Tokenize2(crop, L',', PairedPunctuation::Parentheses);
+			const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(crop, L',', PairedPunctuation::Parentheses);
 			const size_t tokSize = tokens.size();
 			if (tokSize > 3ULL)
 			{
@@ -205,7 +208,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
-bool GeneralImage::LoadImage(const std::wstring& imageName)
+bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)
 {
 	if (!m_Skin || imageName.empty())
 	{
@@ -223,7 +226,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		filename += L".png";
 	}
 
-	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (m_Bitmap && m_Options.m_CreateAlphaMask == createAlphaMask && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
@@ -231,6 +234,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	ImageOptions info;
 	Gfx::D2DBitmap::GetFileInfo(filename, &info);
+	info.m_CreateAlphaMask = createAlphaMask;
 
 	if (!info.isValid())
 	{
@@ -240,10 +244,10 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		return false;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(info);
+	auto handle = GetImageCache().Get(info);
 	if (!handle)
 	{
-		auto bitmap = new Gfx::D2DBitmap(filename);
+		auto bitmap = new Gfx::D2DBitmap(filename, 0, createAlphaMask);
 
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
@@ -263,11 +267,12 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	if (handle)
 	{
-		m_Bitmap = handle;
+		m_Bitmap = std::move(handle);
 
 		m_Options.m_Path = info.m_Path;
 		m_Options.m_FileSize = info.m_FileSize;
 		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = createAlphaMask;
 
 		ApplyTransforms();
 		return true;
@@ -343,18 +348,22 @@ D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2D
 
 void GeneralImage::ApplyTransforms()
 {
-	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+	if (!m_Bitmap) return;
 
-	if (m_BitmapProcessed)
+	auto* bitmap = m_Bitmap->GetBitmap();
+	if (!HasActiveTransforms(bitmap))
 	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
+		m_BitmapProcessed.reset();
+		return;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
+	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+
+	m_BitmapProcessed.reset();
+
+	auto handle = GetImageCache().Get(m_Options);
 	if (!handle)
 	{
-		auto* bitmap = m_Bitmap->GetBitmap();
 		auto& canvas = m_Skin->GetCanvas();
 		auto* stream = bitmap->CreateEffectStream();
 
@@ -410,8 +419,32 @@ void GeneralImage::ApplyTransforms()
 
 	if (handle)
 	{
-		m_BitmapProcessed = handle;
+		m_BitmapProcessed = std::move(handle);
 	}
+}
+
+bool GeneralImage::HasActiveTransforms(Gfx::D2DBitmap* bitmap) const
+{
+	if (m_Options.m_UseExifOrientation)
+	{
+		const int orientation = bitmap->GetOrientation();
+		if (orientation >= 2 && orientation <= 8)
+		{
+			return true;
+		}
+	}
+
+	const auto& crop = m_Options.m_Crop;
+	if ((crop.right != -1.0f || crop.left != -1.0f || crop.top != -1.0f || crop.bottom != -1.0f) &&
+		crop.right - crop.left >= 0.0f && crop.bottom - crop.top >= 0.0f)
+	{
+		return true;
+	}
+
+	return m_Options.m_GreyScale ||
+		!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix) ||
+		m_Options.m_Flip != Gfx::Util::FlipType::None ||
+		m_Options.m_Rotate != 0.0f;
 }
 
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)

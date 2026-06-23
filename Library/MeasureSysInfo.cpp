@@ -9,6 +9,7 @@
 #include "MeasureSysInfo.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "../Common/NetworkUtil.h"
 #include "../Common/Platform.h"
 
@@ -45,9 +46,6 @@ MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, na
 			}
 			RegCloseKey(hKey);
 		}
-
-		// Populate monitor information if necessary
-		const size_t numOfMonitors = System::GetMonitorCount();  // Intentional
 	}
 }
 
@@ -342,73 +340,61 @@ void MeasureSysInfo::UpdateValue()
 	// Process numeric types first
 	if (m_Type >= SysInfoType::SCREEN_WIDTH && m_Type <= SysInfoType::VIRTUAL_SCREEN_HEIGHT)  // BLOCK 2500
 	{
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+		const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
 
 		// Valid values are |-1| (default) or |1 to [# of monitors]|
-		const size_t index = (m_Data > 0) ? (size_t)(m_Data - 1) : 0ULL;
-		if (m_Data < -1 || m_Data == 0 || index > System::GetMonitorCount())
+		const size_t index =
+			(m_Data == -1) ? (size_t)(monitorInfo.primary - 1) :
+			(m_Data > 0) ? (size_t)(m_Data - 1) : UINT_PTR_MAX;
+		if (index > monitorInfo.monitors.size())
 		{
 			m_Value = 0.0;
 			return;
 		}
 
+		const auto& monitor = monitorInfo.monitors[index];
 		switch (m_Type)
 		{
 		case SysInfoType::SCREEN_WIDTH:
-			m_Value = (m_Data > 0)
-				? (monitors[index].screen.right - monitors[index].screen.left)
-				: (double)GetSystemMetrics(SM_CXSCREEN);
+			m_Value = monitor.ToLogical(monitor.screen.right - monitor.screen.left);
 			break;
 
 		case SysInfoType::SCREEN_HEIGHT:
-			m_Value = (m_Data > 0)
-				? (monitors[index].screen.bottom - monitors[index].screen.top)
-				: (double)GetSystemMetrics(SM_CYSCREEN);
+			m_Value = monitor.ToLogical(monitor.screen.bottom - monitor.screen.top);
 			break;
 
 		case SysInfoType::WORK_AREA_LEFT:
-			m_Value = (m_Data > 0)
-				? monitors[index].work.left
-				: (double)monitors[0].work.left;
+			m_Value = monitor.ToLogical(monitor.work.left);
 			break;
 
 		case SysInfoType::WORK_AREA_TOP:
-			m_Value = (m_Data > 0)
-				? monitors[index].work.top
-				: (double)monitors[0].work.top;
+			m_Value = monitor.ToLogical(monitor.work.top);
 			break;
 
 		case SysInfoType::WORK_AREA_WIDTH:
-			m_Value = (m_Data > 0)
-				? (monitors[index].work.right - monitors[index].work.left)
-				: (double)GetSystemMetrics(SM_CXFULLSCREEN);
+			m_Value = monitor.ToLogical(monitor.work.right - monitor.work.left);
 			break;
 
 		case SysInfoType::WORK_AREA_HEIGHT:
-			m_Value = (m_Data > 0)
-				? (monitors[index].work.bottom - monitors[index].work.top)
-				: (double)GetSystemMetrics(SM_CYFULLSCREEN);
+			m_Value = monitor.ToLogical(monitor.work.bottom - monitor.work.top);
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_LEFT:
-			m_Value = (m_Data > 0)
-				? monitors[index].screen.left
-				: (double)GetSystemMetrics(SM_XVIRTUALSCREEN);
+			// NOTE(poiru): Checking SysInfoData here doesn't make any sense, but left it as-is for
+			// backwards compatibility.
+			m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.left) : monitorInfo.vsL;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_TOP:
-			 m_Value = (m_Data > 0)
-				? monitors[index].screen.top
-				: (double)GetSystemMetrics(SM_YVIRTUALSCREEN);
+			 m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.top) : monitorInfo.vsT;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_WIDTH:
-			m_Value = (double)GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			m_Value = monitorInfo.vsW;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_HEIGHT:
-			m_Value = (double)GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			m_Value = monitorInfo.vsH;
 			break;
 		}
 		return;
@@ -491,7 +477,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)GetSystemMetrics(SM_CMONITORS);
+		m_Value = (double)MonitorUtil::GetMultiMonitorInfo().monitors.size();
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:
@@ -634,11 +620,20 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::SCREEN_SIZE:
-		_snwprintf_s(buffer, bufferLen, L"%i x %i",
-			GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+	case SysInfoType::WORK_AREA:
+		{
+			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
+			const auto primaryIndex = (size_t)(monitorInfo.primary - 1);
+
+			const RECT zeroRect = { 0, 0, 0, 0 };
+			const RECT& rect =
+				(primaryIndex >= monitorInfo.monitors.size()) ? zeroRect :
+				(m_Type == SysInfoType::SCREEN_SIZE) ? monitorInfo.monitors[primaryIndex].screen :
+				monitorInfo.monitors[primaryIndex].work;
+			_snwprintf_s(buffer, bufferLen, L"%i x %i", rect.right - rect.left, rect.bottom - rect.top);
+		}
 		break;
 
-	case SysInfoType::WORK_AREA:
 		_snwprintf_s(buffer, bufferLen, L"%i x %i",
 			GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
 		break;

@@ -8,14 +8,12 @@
 #ifndef RM_LIBRARY_SKIN_H_
 #define RM_LIBRARY_SKIN_H_
 
-#include <windows.h>
-#include <dwmapi.h>
-#include <string>
-#include <list>
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Group.h"
 #include "Mouse.h"
+#include "SkinPosition.h"
+#include "SkinZoomDrag.h"
 #include "../Common/Gfx/Canvas.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
@@ -26,7 +24,7 @@
 #define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
 #define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
 
-#define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+#define METERWINDOW_CLASS_NAME L"RainmeterMeterWindow"
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
 
@@ -127,6 +125,7 @@ public:
 	void UnpauseMeasure(const std::wstring& name, bool group = false);
 	void TogglePauseMeasure(const std::wstring& name, bool group = false);
 	void UpdateMeasure(const std::wstring& name, bool group = false);
+	void CommandMeasure(const std::wstring& name, const std::wstring& command, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
@@ -148,7 +147,7 @@ public:
 	void MoveWindow(int x, int y);
 	void MoveSelectedWindow(int dx, int dy);
 	bool IsSelected() { return m_Selected; }
-	void SelectSkinsGroup(std::unordered_set<std::wstring> groups);
+	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
 	void Select();
 	void Deselect();
 
@@ -179,22 +178,26 @@ public:
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
+	void UpdateMouseMeasureCapture();
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
-	bool GetXPercentage() { return m_WindowXPercentage; }
-	bool GetYPercentage() { return m_WindowYPercentage; }
-	bool GetXFromRight() { return m_WindowXFromRight; }
-	bool GetYFromBottom() { return m_WindowYFromBottom; }
-
 	int GetW() { return m_WindowW; }
 	int GetH() { return m_WindowH; }
-	int GetX() { return m_ScreenX; }
-	int GetY() { return m_ScreenY; }
+	const SkinPosition& GetX() const { return m_X; }
+	const SkinPosition& GetY() const { return m_Y; }
 
-	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
-	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
-	int GetXScreen() { return m_WindowXScreen; }
-	int GetYScreen() { return m_WindowYScreen; }
+	POINT GetLogicalWindowPosition() const;
+	int GetPhysicalWindowW() const;
+	int GetPhysicalWindowH() const;
+	RECT GetPhysicalWindowBounds() const;
+
+	int LogicalToPhysical(int value) const;
+	RECT LogicalToPhysical(const RECT& rect) const;
+	POINT PhysicalToLogical(POINT point) const;
+	POINT PhysicalToRelativeLogical(POINT point) const;
+
+	float GetScale() const { return m_EffectiveScale; }
+	float GetZoom() const { return m_ZoomScale; }
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -224,6 +227,7 @@ public:
 	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class DialogManage;
+	friend class Rainmeter;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -257,6 +261,7 @@ protected:
 	LRESULT OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -264,6 +269,7 @@ protected:
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -293,16 +299,30 @@ private:
 		OPTION_AUTOSELECTSCREEN = 0x00000200,
 		OPTION_ALWAYSONTOP      = 0x00000400,
 		OPTION_ANCHOR           = 0x00000800,
+		OPTION_ZOOM             = 0x00001000,
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
 
 	bool HitTest(int x, int y);
+	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void MapCoordsToScreen(int& x, int& y, int w, int h);
-	void WindowToScreen();
-	void ScreenToWindow();
+	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
+
+	struct MouseMessagePositions
+	{
+		POINT screen;
+		POINT client;
+		POINT skin;
+	};
+
+	MouseMessagePositions GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const;
+	void RepositionAndResizeWindow();
+	bool UpdateWindowDpi(UINT dpi = 0);
+	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
+	void ComputeOptionValueFromPosition();
+
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
@@ -315,6 +335,8 @@ private:
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
+	void HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action);
+	void HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
 	void SetAutoSelectScreen(bool b);
@@ -322,9 +344,18 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void ApplyZoom(float zoom, bool writeOptions);
+	void SetZoom(float zoom);
+	int HitTestZoomDrag(POINT screenPos) const;
+	bool SetZoomDragCursor(int hit);
+	void ApplyZoomDrag();
+	void CommitZoomDrag();
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
+	void ClearMouseMeasureCapture();
+	void DoMouseMeasureAction(const MouseMessagePositions& pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
+	void DoMouseMeasureMoveActions(const MouseMessagePositions& pos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -334,7 +365,7 @@ private:
 	void AddWindowExStyle(LONG_PTR flag);
 	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
-	void SetWindowPositionVariables(int x, int y);
+	void SetWindowPositionVariables();
 	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
@@ -359,6 +390,7 @@ private:
 	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
+	HWND m_HostWindow;
 	HWND m_Window;
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
@@ -380,30 +412,22 @@ private:
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
-	std::wstring m_WindowX;
-	std::wstring m_WindowY;
-	std::wstring m_AnchorX;
-	std::wstring m_AnchorY;
-	int m_WindowXScreen;
-	int m_WindowYScreen;
-	bool m_WindowXScreenDefined;
-	bool m_WindowYScreenDefined;
-	bool m_WindowXFromRight;
-	bool m_WindowYFromBottom;
-	bool m_WindowXPercentage;
-	bool m_WindowYPercentage;
+
+	SkinPosition m_X;
+	SkinPosition m_Y;
+
 	int m_WindowW;
 	int m_WindowH;
-	int m_ScreenX;								// X-postion on the virtual screen
-	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
-	bool m_AnchorXFromRight;
-	bool m_AnchorYFromBottom;
-	bool m_AnchorXPercentage;
-	bool m_AnchorYPercentage;
-	int m_AnchorScreenX;
-	int m_AnchorScreenY;
+
+	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale also considers the
+	// OverrideDpi setting.
+	UINT m_WindowDpi;
+	float m_DpiScale;
+	float m_ZoomScale;
+	float m_EffectiveScale;
+
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;
@@ -425,6 +449,11 @@ private:
 	bool m_AutoSelectScreen;
 	bool m_Dragging;
 	bool m_Dragged;
+	bool m_DragStartValid;
+	POINT m_DragStartCursor;
+	POINT m_DragStartWindowPos;
+	std::unique_ptr<SkinZoomDrag> m_ZoomDrag;
+	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;
@@ -459,7 +488,7 @@ private:
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;
 
-	std::unordered_map<UINT_PTR, std::wstring> m_DelayedCommands;
+	ankerl::unordered_dense::map<UINT_PTR, std::wstring> m_DelayedCommands;
 
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;

@@ -32,8 +32,9 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -56,6 +57,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		virtual void HandleDpiChange() override;
 
 		std::wstring& GetParentFolder() { return m_ParentFolder; }
 		void SetParentFolder(const WCHAR* folder);
@@ -79,6 +81,7 @@ private:
 		};
 
 		void DestroyImageList();
+		void CreateImageList();
 		void UpdateParentPathLabel();
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);
@@ -144,8 +147,6 @@ private:
 		bool rootFolder;
 		UINT skins;  // Not inc files
 	};
-
-	Tab& GetActiveTab();
 
 	static const std::wstring& GetTemplateFolder();
 	static void LoadTemplates();

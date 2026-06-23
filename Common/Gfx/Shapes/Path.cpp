@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Path.h"
 #include "Gfx/Canvas.h"
-#include "../Library/Logger.h"
 
 namespace Gfx {
 
@@ -27,11 +26,8 @@ Path::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode, bool isCloned) : Shape(Sha
 		{
 			m_Sink->SetFillMode(m_FillMode);
 			m_Sink->BeginFigure(m_StartPoint, D2D1_FIGURE_BEGIN_FILLED);
-			return;
 		}
 	}
-
-	LogErrorF(L"Could not create path object. X1=%i, Y1=%i", (int)x, (int)y);
 }
 
 Path::~Path()

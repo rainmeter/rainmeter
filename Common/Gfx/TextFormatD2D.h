@@ -42,8 +42,9 @@ public:
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
 	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
 
-	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) override;
-	virtual void FindInlineRanges(const std::wstring& str) override;
+	virtual void SetInlineOptions(const std::vector<TextInlineOption>& options) override;
+	virtual std::vector<std::wstring> GetInlinePatterns() override;
+	virtual void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges) override;
 
 private:
 	friend class Canvas;

@@ -175,20 +175,36 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 	str = WidenUTF8(utf8);
 }
 
-/*
-** Case insensitive comparison of strings. If equal, strip str2 from str1 and any leading whitespace.
-*/
-bool CaseInsensitiveCompareN(std::wstring& str1, const std::wstring& str2)
+bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix)
 {
-	size_t pos = str2.length();
-	if (_wcsnicmp(str1.c_str(), str2.c_str(), pos) == 0)
+	const size_t len = wcslen(prefix);
+	if ((size_t)(end - *str) >= len && _wcsnicmp(*str, prefix, len) == 0)
 	{
-		str1 = str1.substr(pos);  // remove str2 from str1
-		str1.erase(0, str1.find_first_not_of(L" \t\r\n"));  // remove any leading whitespace
+		*str += len;
 		return true;
 	}
 
 	return false;
+}
+
+struct IsEqual
+{
+	IsEqual(const std::locale& loc) : locale(loc) {}
+	bool operator()(wchar_t ch1, wchar_t ch2) { return std::toupper(ch1, locale) == std::toupper(ch2, locale); }
+
+private:
+	const std::locale& locale;
+};
+
+std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2, const std::locale& loc)
+{
+	const auto iter = std::search(str1.begin(), str1.end(), str2.begin(), str2.end(), IsEqual(loc));
+	if (iter != str1.end())
+	{
+		return (iter - str1.begin());
+	}
+
+	return -1; // not found
 }
 
 }  // namespace StringUtil

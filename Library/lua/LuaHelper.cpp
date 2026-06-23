@@ -11,72 +11,71 @@
 #include "LuaScript.h"
 #include "../Logger.h"
 
-std::vector<LuaHelper::UnicodeScript*> LuaHelper::c_ScriptStack;
+std::vector<LuaStateScope*> LuaStateScope::c_ScopeStack;
 
-LuaHelper::UnicodeScript::UnicodeScript(lua_State* state, bool unicode, int ref, std::wstring path) :
+LuaStateScope::LuaStateScope(lua_State* state, bool unicode, int ref) :
 	m_State(state),
 	m_Unicode(unicode),
-	m_Ref(ref),
-	m_File(path)
+	m_Ref(ref)
 {
-	LuaHelper::c_ScriptStack.push_back(this);
+	c_ScopeStack.push_back(this);
 }
 
-LuaHelper::UnicodeScript::~UnicodeScript()
+LuaStateScope::~LuaStateScope()
 {
-	LuaHelper::c_ScriptStack.pop_back();
+	c_ScopeStack.pop_back();
 }
 
-void LuaHelper::ReportErrors()
+void LuaHelper::LogAndPopError()
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
 	const char* error = lua_tostring(L, -1);
 	lua_pop(L, 1);
 
-	std::wstring str = script->IsUnicode() ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
+	std::wstring str = currentScope->IsUnicode() ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
 	LogErrorF(L"Script: %s", str.c_str());
 }
 
 void LuaHelper::PushWide(const WCHAR* str)
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
-	const std::string narrowStr = script->IsUnicode() ?
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
+	const std::string narrowStr = currentScope->IsUnicode() ?
 		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
 
 void LuaHelper::PushWide(const std::wstring& str)
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
-	const std::string narrowStr = script->IsUnicode() ?
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
+	const std::string narrowStr = currentScope->IsUnicode() ?
 		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
 
 std::wstring LuaHelper::ToWide(int narg)
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
 	size_t strLen = 0;
 	const char* str = lua_tolstring(L, narg, &strLen);
-	return script->IsUnicode() ?
+	return currentScope->IsUnicode() ?
 		StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 }
 
 bool LuaHelper::ToBool(int narg)
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
 	return lua_toboolean(L, narg);
 }
 
 void LuaHelper::StackDump()
 {
-	auto script = GetCurrentScript();
-	lua_State* L = script->GetState();
+	auto currentScope = LuaStateScope::GetCurrent();
+	lua_State* L = currentScope->GetState();
 
 	LogDebug(L"--------------- Lua Stack Dump Start ------------------");
 	for (int i = lua_gettop(L); i > 0; --i)
@@ -85,7 +84,7 @@ void LuaHelper::StackDump()
 		switch (t)
 		{
 		case LUA_TSTRING:
-			LogDebugF(L"%d:'%s'", i, script->IsUnicode() ?
+			LogDebugF(L"%d:'%s'", i, currentScope->IsUnicode() ?
 				StringUtil::WidenUTF8(lua_tostring(L, i)).c_str() :
 				StringUtil::Widen(lua_tostring(L, i)).c_str());
 			break;
@@ -99,7 +98,7 @@ void LuaHelper::StackDump()
 			break;
 
 		default:
-			LogDebugF(L"%d: %s", i, script->IsUnicode() ?
+			LogDebugF(L"%d: %s", i, currentScope->IsUnicode() ?
 				StringUtil::WidenUTF8(lua_typename(L, t)).c_str() :
 				StringUtil::Widen(lua_typename(L, t)).c_str());
 			break;

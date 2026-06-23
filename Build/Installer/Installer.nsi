@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2012 Rainmeter Project Developers
+/* Copyright (C) 2012 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
@@ -10,6 +10,18 @@
 Unicode true
 
 !addplugindir ".\"
+
+!include "nsDialogs.nsh"
+!include "nsDialogs_setImageOle.nsh"
+
+; Define a custom NSD_SetStretchedImage that always uses our JPG image in order to override it
+; in the MUI Finish page. This must be done before MUI2.nsh is included.
+!macro __SetCustomStretchedImage CONTROL IMAGE HANDLE
+	${NSD_SetStretchedImageOLE} ${CONTROL} "$PLUGINSDIR\Wizard.jpg" ${HANDLE}
+!macroend
+!undef NSD_SetStretchedImage
+!define NSD_SetStretchedImage `!insertmacro __SetCustomStretchedImage`
+
 !include "MUI2.nsh"
 !include "x64.nsh"
 !include "FileFunc.nsh"
@@ -18,6 +30,8 @@ Unicode true
 !include "WinVer.nsh"
 !include "UAC.nsh"
 !include "RmError.nsh"
+
+${Using:StrFunc} StrRep
 
 !ifndef OUTFILE
  !define OUTFILE "Rainmeter-test.exe"
@@ -47,18 +61,22 @@ InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
 ShowInstDetails nevershow
 AllowSkipFiles off
 XPStyle on
+ManifestDPIAware true
 OutFile "..\${OUTFILE}"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
 ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
 ReserveFile ".\UAC.dll"
+ReserveFile ".\Wizard.jpg"
+ReserveFile ".\WizardEmpty.bmp"
 
 ; Additional Windows definitions
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 
-!define MUI_ICON ".\Icon.ico"
-!define MUI_UNICON ".\Icon.ico"
-!define MUI_WELCOMEFINISHPAGE_BITMAP ".\Wizard.bmp"
+!define MUI_ICON ".\Installer.ico"
+!define MUI_UNICON ".\Installer.ico"
+!define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
+!define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
 !define MUI_WELCOMEPAGE ; For language strings
@@ -96,18 +114,18 @@ UAC_TryAgain:
 		${IfThen} $1 = 1 ${|} Quit ${|}			; This is the outer process, the inner process is done
 		${IfThen} $3 <> 0 ${|} ${Break} ${|}	; We are the admin
 		${If} $1 = 3							; RunAs completed successfully with a non-admin user
-			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(ADMINERROR)" /SD IDNO IDOK UAC_TryAgain IDNO 0
+			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(AdminError)" /SD IDNO IDOK UAC_TryAgain IDNO 0
 			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 		${EndIf}
 		; Fall-through
 	${Case} 1223
 		Quit
 	${Case} 1062
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LOGONERROR)" /SD IDOK
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LogonError)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
 		Quit
 	${Default}
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UACERROR) ($0)" /SD IDOK
+		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UacError) ($0)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 		Quit
 	${EndSwitch}
@@ -123,38 +141,9 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${UAC_IsInnerInstance}
-		${If} ${IsWin7}
-		${OrIf} ${IsWin2008R2}
-			${IfNot} ${AtLeastServicePack} 1
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with Service Pack 1." /SD IDOK
-				!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
-				Quit
-			${EndIf}
-
-			; Try instantiating a ID2D1Factory1 to check for presense of D2D 1.1.
-			!define D2D1_FACTORY_TYPE_SINGLE_THREADED 0
-			!define IID_ID2D1Factory1 {bb12d362-daee-4b9a-aa1d-14ba401cfa1f}
-			System::Call "d2d1::D2D1CreateFactory( \
-				i ${D2D1_FACTORY_TYPE_SINGLE_THREADED}, \
-				g '${IID_ID2D1Factory1}', \
-				p 0, \
-				*p .r0) i.r1"
-			${If} $1 <> 0
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with the Platform Update installed." /SD IDOK
-				!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
-				Quit
-			${Endif}
-			; Call Release
-			System::Call "$0->2()"
-		${ElseIfNot} ${AtLeastWin8}
-			MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with Service Pack 1." /SD IDOK
-			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
-			Quit
-		${EndIf}
-
-		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.r0'
-		${If} $0 = 0
-			MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires a Pentium 4 or later processor." /SD IDOK
+		${IfNot} ${AtLeastWin10}
+		${OrIfNot} ${AtLeastBuild} 15063
+			MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
 			Quit
 		${EndIf}
@@ -166,8 +155,10 @@ Function .onInit
 			${If} $0 == ""
 			${OrIf} $0 <> $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
-				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
+				; New install or better match. In case the default is English, strip away English string to
+				; avoid showing it twice.
+				${StrRep} $1 "$(SelectLanguage)$\n$\n" "Please select the installer language.$\n$\n" ""
+				LangDLL::LangDialog "$(^SetupCaption)" "$1Please select the installer language." AC ${LANGDLL_PARAMS} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -303,6 +294,11 @@ Function ExchangeSettings
 	HideWindow
 FunctionEnd
 
+Function InitWizardImage
+	InitPluginsDir
+	File /oname=$PLUGINSDIR\Wizard.jpg ".\Wizard.jpg"
+FunctionEnd
+
 Function .onInstSuccess
 	${If} ${Silent}
 	${AndIf} $RestartAfterInstall = 1
@@ -316,13 +312,13 @@ Function PageWelcome
 			; Skip page
 			Abort
 		${Else}
-			MessageBox MB_OK|MB_ICONSTOP "$(ADMINERROR) (Inner)" /SD IDOK
+			MessageBox MB_OK|MB_ICONSTOP "$(AdminError) (Inner)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
 			Quit
 		${EndIf}
 	${EndIf}
 
-	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(^ComponentsSubText1)"
+	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(^ComponentsSubText1)"
 	nsDialogs::Create 1044
 	Pop $0
 	nsDialogs::SetRTL $(^RTL)
@@ -330,7 +326,8 @@ Function PageWelcome
 
 	${NSD_CreateBitmap} 0u 0u 109u 193u ""
 	Pop $0
-	${NSD_SetImage} $0 "$PLUGINSDIR\modern-wizard.bmp" $R0
+	; See NSD_SetStretchedImage definition above.
+	${NSD_SetStretchedImage} $0 "" $R0
 
 	${NSD_CreateLabel} 120u 10u 195u 38u "$(MUI_TEXT_WELCOME_INFO_TITLE)"
 	Pop $0
@@ -342,25 +339,29 @@ Function PageWelcome
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(STANDARDINST)"
+	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(StandardInstall)"
 	Pop $R1
 	SetCtlColors $R1 "" "${MUI_BGCOLOR}"
 	${NSD_AddStyle} $R1 ${WS_GROUP}
 	SendMessage $R1 ${WM_SETFONT} $mui.Header.Text.Font 0
 
-	${NSD_CreateLabel} 132u 82u 185u 24u "$(STANDARDINSTDESC)"
+	${NSD_CreateLabel} 132u 82u 185u 24u "$(StandardInstallDescription)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PORTABLEINST)"
+	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PortableInstall)"
 	Pop $R2
 	SetCtlColors $R2 "" "${MUI_BGCOLOR}"
 	${NSD_AddStyle} $R2 ${WS_TABSTOP}
 	SendMessage $R2 ${WM_SETFONT} $mui.Header.Text.Font 0
 
-	${NSD_CreateLabel} 132u 118u 185u 52u "$(PORTABLEINSTDESC)"
+	${NSD_CreateLabel} 132u 118u 185u 39u "$(PortableInstallDescription)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+
+	${NSD_CreateLabel} 120u 176u 195u 12u "v${VERSION_FULL}"
+	Pop $0
+	SetCtlColors $0 "AAAAAA" "${MUI_BGCOLOR}"
 
 	${If} $InstallPortable = 1
 		${NSD_Check} $R2
@@ -390,7 +391,7 @@ Function PageOptions
 		Abort
 	${EndIf}
 
-	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(INSTALLOPTIONSDESC)"
+	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(InstallOptionsDescription)"
 	nsDialogs::Create 1018
 	nsDialogs::SetRTL $(^RTL)
 
@@ -411,7 +412,7 @@ Function PageOptions
 		${If} $InstallPortable = 1
 		${OrIf} $INSTDIR == ""
 		${OrIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
-			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
+			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(Install64Bit)"
 			Pop $R2
 			StrCpy $1 30u
 		${EndIf}
@@ -426,7 +427,7 @@ Function PageOptions
 			StrCpy $1 42u
 		${EndIf}
 
-		${NSD_CreateCheckbox} 6u $0 285u 12u "$(AUTOSTARTUP)"
+		${NSD_CreateCheckbox} 6u $0 285u 12u "$(AutoStartup)"
 		Pop $R3
 
 		${If} $INSTDIR == ""
@@ -447,13 +448,18 @@ Function PageOptions
 	${EndIf}
 
 	${If} $1 <> 0
-		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
+		${NSD_CreateGroupBox} 0 42u -1u $1 "$(AdditionalOptions)"
 	${EndIf}
 
 	; Set default directory
 	${If} $InstallPortable = 1
-		${GetRoot} "$WINDIR" $0
-		${NSD_SetText} $R0 "$0\Rainmeter"
+		ReadRegStr $0 HKCU "SOFTWARE\Rainmeter" "PortableInstallPath"
+		${If} $0 == ""
+		${OrIfNot} ${FileExists} "$0\Rainmeter.exe"
+			${GetRoot} "$WINDIR" $0
+			StrCpy $0 "$0\Rainmeter"
+		${EndIf}
+		${NSD_SetText} $R0 "$0"
 
 		${If} ${RunningX64}
 			${NSD_Check} $R2
@@ -522,6 +528,13 @@ Function PageOptionsBrowseOnClick
 	nsDialogs::SelectFolderDialog "$(^DirBrowseText)" $0
 	Pop $1
 	${If} $1 != error
+		; If the selected non-Rainmeter directory isn't empty, append \Rainmeter
+		${If} $1 != ""
+		${AndIf} ${FileExists} "$1\*.*"
+		${AndIfNot} ${FileExists} "$1\Rainmeter.exe"
+			StrCpy $1 "$1\Rainmeter"
+		${EndIf}
+
 		${NSD_SetText} $R0 $1
 	${EndIf}
 FunctionEnd
@@ -588,7 +601,7 @@ Section
 
 	${If} ${Errors}
 		RMDir "$INSTDIR"
-		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)" /SD IDOK
+		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WriteError)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
 		Quit
 	${EndIf}
@@ -623,7 +636,7 @@ Section
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RainmeterCloseError)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}
@@ -639,14 +652,14 @@ Retry:
 			${If} $Install64Bit = 1
 			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
 			${OrIf} "$INSTDIR" == "$PROGRAMFILES\Rainmeter"
-				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SETTINGSFILEERROR)" /SD IDNO IDNO SkipIniMove
+				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SettingsFileError)" /SD IDNO IDNO SkipIniMove
 				StrCpy $0 1
 				!insertmacro UAC_AsUser_Call Function CopyIniToAppData ${UAC_SYNCREGISTERS}
 				${If} $0 = 1
 					; Copy succeeded
 					Delete "$INSTDIR\Rainmeter.ini"
 				${Else}
-					MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)" /SD IDOK
+					MessageBox MB_OK|MB_ICONSTOP "$(SettingsMoveError)" /SD IDOK
 				${EndIf}
 SkipIniMove:
 			${EndIf}
@@ -706,7 +719,7 @@ SkipIniMove:
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\x32-Release\Languages\*.*"
+	File "..\..\x32-Release\Languages\*.rmlang"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"
@@ -803,6 +816,8 @@ SkipIniMove:
 
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
+		WriteRegStr HKCU "SOFTWARE\Rainmeter" "PortableInstallPath" "$INSTDIR"
+
 		${IfNot} ${FileExists} "Rainmeter.ini"
 			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
@@ -831,34 +846,36 @@ Function RenameToRainmeterIni
 FunctionEnd
 
 Function HandlePlugins
-	${If} $R7 == "MediaKey.dll"
+	${If} $R7 == "FolderInfo.dll"
+	${OrIf} $R7 == "iTunesPlugin.dll"
+	${OrIf} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
+	${OrIf} $R7 == "PingPlugin.dll"
+	${OrIf} $R7 == "PowerPlugin.dll"
 	${OrIf} $R7 == "Process.dll"
+	${OrIf} $R7 == "QuotePlugin.dll"
 	${OrIf} $R7 == "RecycleManager.dll"
+	${OrIf} $R7 == "ResMon.dll"
+	${OrIf} $R7 == "SpeedFanPlugin.dll"
 	${OrIf} $R7 == "SysInfo.dll"
 	${OrIf} $R7 == "WebParser.dll"
 	${OrIf} $R7 == "WifiStatus.dll"
+	${OrIf} $R7 == "Win7AudioPlugin.dll"
+	${OrIf} $R7 == "WindowMessagePlugin.dll"
 		Delete "$R9"
 	${ElseIf} $R7 != "ActionTimer.dll"
 	${AndIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "AudioLevel.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
-	${AndIf} $R7 != "FolderInfo.dll"
 	${AndIf} $R7 != "InputText.dll"
-	${AndIf} $R7 != "iTunesPlugin.dll"
 	${AndIf} $R7 != "PerfMon.dll"
-	${AndIf} $R7 != "PingPlugin.dll"
-	${AndIf} $R7 != "PowerPlugin.dll"
 	${AndIf} $R7 != "QuotePlugin.dll"
 	${AndIf} $R7 != "RecycleManager.dll"
 	${AndIf} $R7 != "ResMon.dll"
 	${AndIf} $R7 != "RunCommand.dll"
-	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "UsageMonitor.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
-	${AndIf} $R7 != "Win7AudioPlugin.dll"
-	${AndIf} $R7 != "WindowMessagePlugin.dll"
 		CreateDirectory "$INSTDIR\Defaults\Plugins"
 		Delete "$INSTDIR\Defaults\Plugins\$R7"
 		Rename "$R9" "$INSTDIR\Defaults\Plugins\$R7"
@@ -898,19 +915,19 @@ Function un.onInit
 FunctionEnd
 
 Function un.PageOptions
-	!insertmacro MUI_HEADER_TEXT "$(UNSTALLOPTIONS)" "$(UNSTALLOPTIONSDESC)"
+	!insertmacro MUI_HEADER_TEXT "$(UninstallOptions)" "$(UninstallOptionsDescription)"
 	nsDialogs::Create 1018
 	nsDialogs::SetRTL $(^RTL)
 
-	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UNSTALLRAINMETER)"
+	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UninstallRainmeter)"
 	Pop $0
 	EnableWindow $0 0
 	${NSD_Check} $0
 
-	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UNSTALLSETTINGS)"
+	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UninstallSettings)"
 	Pop $R0
 
-	${NSD_CreateLabel} 16 26u 95% 12u "$(UNSTALLSETTINGSDESC)"
+	${NSD_CreateLabel} 16 26u 95% 12u "$(UninstallSettingsDescription)"
 
 	nsDialogs::Show
 FunctionEnd
@@ -933,7 +950,7 @@ Section Uninstall
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" /SD IDRETRY IDRETRY Retry
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RainmeterCloseError)" /SD IDRETRY IDRETRY Retry
 			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
 			Quit
 		${EndIf}

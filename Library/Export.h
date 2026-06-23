@@ -14,4 +14,8 @@
 
 /* DEPRECATED */ LIBRARY_EXPORT __declspec(deprecated) LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data);
 
+#ifdef LIBRARY_EXPORTS
+void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam);
+#endif
+
 #endif

@@ -8,6 +8,7 @@
 #ifndef __MEASUREPLUGIN_H__
 #define __MEASUREPLUGIN_H__
 
+#include "ConfigParser.h"
 #include "Measure.h"
 #include "Export.h"
 
@@ -41,6 +42,9 @@ public:
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
+	bool IsDpiAware() const { return m_DpiAware; }
+	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
 protected:
@@ -48,11 +52,12 @@ protected:
 	virtual void UpdateValue();
 
 private:
-	bool IsNewApi() { return m_ReloadFunc != nullptr; }
+	bool IsNewApi() const { return m_ReloadFunc != nullptr; }
 
 	HMODULE m_Plugin;
 
-	void* m_ReloadFunc;
+	bool m_DpiAware;
+	ConfigParser::MonitorVariableMode m_MonitorVariableMode;
 
 	union
 	{
@@ -68,11 +73,10 @@ private:
 		};
 	};
 
+	void* m_ReloadFunc;
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
-
-	static std::unordered_map<std::wstring, UINT> s_PluginReferences;
 };
 
 #endif

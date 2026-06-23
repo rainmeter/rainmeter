@@ -36,7 +36,6 @@ public:
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -59,7 +58,8 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
-		virtual void Resize(int w, int h);
+		virtual void Relayout(int w, int h) override;
+		virtual void HandleDpiChange() override;
 
 		void AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
 
@@ -69,6 +69,7 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
+		void CreateImageList();
 		void DestroyImageList();
 
 		bool m_Error;
@@ -93,7 +94,8 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
-		virtual void Resize(int w, int h);
+		virtual void Relayout(int w, int h) override;
+		virtual void HandleDpiChange() override;
 
 		void UpdateSkinList();
 		void UpdateMeasureList(Skin* skin);
@@ -123,7 +125,8 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
-		virtual void Resize(int w, int h);
+		virtual void Relayout(int w, int h) override;
+		virtual void HandleDpiChange() override;
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -143,9 +146,7 @@ private:
 		{
 			Id_AppIcon = 400,
 			Id_VersionLabel,
-			Id_LanguageLabel,
-			Id_TimestampLabel,
-			Id_HashLink,
+			Id_BuildLink,
 			Id_HomeLink,
 			Id_LicenseLink,
 			Id_WinVerLabel,
@@ -160,7 +161,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
-		virtual void Resize(int w, int h);
+		virtual void Relayout(int w, int h) override;
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -173,8 +174,6 @@ private:
 		Id_CloseButton = IDCLOSE,
 		Id_Tab = 500
 	};
-
-	Tab& GetActiveTab();
 
 	TabLog m_TabLog;
 	TabSkins m_TabSkins;

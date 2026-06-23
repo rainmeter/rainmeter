@@ -64,19 +64,20 @@ public:
 
 	void DisposeImage();
 
-	bool IsLoaded() { return m_BitmapProcessed != nullptr; }
-	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : nullptr; }
+	bool IsLoaded();
+	Gfx::D2DBitmap* GetImage();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
-	bool LoadImage(const std::wstring& imageName);
+	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
 
 	D2D1_SIZE_F ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const;
 	void ApplyTransforms();
+	bool HasActiveTransforms(Gfx::D2DBitmap* bitmap) const;
 
-	ImageCacheHandle* m_Bitmap;
-	ImageCacheHandle* m_BitmapProcessed;
+	std::unique_ptr<ImageCacheHandle> m_Bitmap;
+	std::unique_ptr<ImageCacheHandle> m_BitmapProcessed;
 	Skin* m_Skin;
 
 	const WCHAR* m_Name;

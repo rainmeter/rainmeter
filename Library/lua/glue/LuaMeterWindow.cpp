@@ -96,10 +96,10 @@ static int GetVariable(lua_State* L)
 	DECLARE_SELF(L)
 
 	const std::wstring name = LuaHelper::ToWide(2);
-	const std::wstring* value = self->GetParser().GetVariable(name);
-	if (value)
+	std::wstring value;
+	if (self->GetParser().GetVariable(name, value))
 	{
-		LuaHelper::PushWide(*value);
+		LuaHelper::PushWide(value);
 	}
 	else if (lua_gettop(L) >= 3)
 	{
@@ -180,7 +180,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetX());
+	lua_pushnumber(L, self->GetLogicalWindowPosition().x);
 
 	return 1;
 }
@@ -188,7 +188,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetY());
+	lua_pushnumber(L, self->GetLogicalWindowPosition().y);
 
 	return 1;
 }

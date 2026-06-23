@@ -16,8 +16,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commdlg.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
 #include <Iphlpapi.h>
@@ -34,11 +32,11 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <list>
 #include <algorithm>
+#include <atomic>
 #include <memory>
+#include <optional>
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
@@ -50,6 +48,8 @@
 
 // RUNTIME
 #include <process.h>
+
+#include "ankerl/unordered_dense.h"
 
 // ADDITIONAL MACRO
 #define IsCtrlKeyDown()     (GetKeyState(VK_CONTROL) < 0)

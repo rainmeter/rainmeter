@@ -20,14 +20,15 @@ struct ImageOptions : Gfx::FileInfo
 			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
 			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f)),
 		m_Crop(D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f)),
-		m_CropMode(CROPMODE_TL),
-		m_GreyScale(false),
 		m_Rotate(0.0f),
 		m_Flip(Gfx::Util::FlipType::None),
-		m_UseExifOrientation(false)
+		m_CropMode(CROPMODE_TL),
+		m_GreyScale(false),
+		m_UseExifOrientation(false),
+		m_CreateAlphaMask(false)
 	{}
 
-	enum CROPMODE
+	enum CROPMODE : uint8_t
 	{
 		CROPMODE_TL = 1,
 		CROPMODE_TR,
@@ -52,6 +53,7 @@ struct ImageOptions : Gfx::FileInfo
 			m_Rotate == other.m_Rotate &&
 			m_GreyScale == other.m_GreyScale &&
 			m_UseExifOrientation == other.m_UseExifOrientation &&
+			m_CreateAlphaMask == other.m_CreateAlphaMask &&
 			m_Flip == other.m_Flip &&
 			m_CropMode == other.m_CropMode &&
 			m_Crop.left == other.m_Crop.left &&
@@ -62,11 +64,12 @@ struct ImageOptions : Gfx::FileInfo
 
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
 	D2D1_RECT_F m_Crop;
-	CROPMODE m_CropMode;
-	bool m_GreyScale;
 	FLOAT m_Rotate;
 	Gfx::Util::FlipType m_Flip;
+	CROPMODE m_CropMode;
+	bool m_GreyScale;
 	bool m_UseExifOrientation;
+	bool m_CreateAlphaMask;
 };
 
 #endif

@@ -1,26 +1,38 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Parameters: type version
+:: Parameters: type version [options]
 ::
 :: Available build types:
 ::		full          -> build everything
 ::		rainmeter-32  -> build 32-bit Rainmeter
 ::		rainmeter-64  -> build 64-bit Rainmeter
+::		test-64       -> run 64-bit unit tests
 ::		languages     -> build language .dll files for all targets
 ::		installer     -> build installer
+::
+:: Options:
+::		include-tests -> include unit tests in the build
 
 set BUILD_TYPE=%1
 set VERSION=%2
+set EXCLUDE_TESTS=true
+
+if "%3" == "" goto TEST_MODE_OK
+if "%3" == "include-tests" set EXCLUDE_TESTS=false & goto TEST_MODE_OK
+echo Unknown test mode & exit /b 1
+:TEST_MODE_OK
 
 if "%BUILD_TYPE%" == "full" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "rainmeter-32" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "rainmeter-64" goto BUILD_TYPE_OK
+if "%BUILD_TYPE%" == "test-64" goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "languages" set VERSION=0.0.0.0 & goto BUILD_TYPE_OK
 if "%BUILD_TYPE%" == "installer" goto BUILD_TYPE_OK
 echo Unknown build type & exit /b 1
 :BUILD_TYPE_OK
 
+if "%BUILD_TYPE%" == "test-64" goto SKIP_VERSION
 if "%VERSION%" == "" echo Invalid version & exit /b 1
 
 for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
@@ -32,13 +44,14 @@ for /F "tokens=1-4 delims=:.-" %%a in ("%VERSION%") do (
 
 set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%
 set VERSION_FULL=%VERSION_SHORT%.%VERSION_REVISION%
+:SKIP_VERSION
 
 set BUILD_YEAR=%date:~-4%
 set BUILD_TIME=%BUILD_YEAR%-%date:~4,2%-%date:~7,2% %time:~0,2%:%time:~3,2%:%time:~6,2%
 
 :: Visual Studio no longer creates the |%VSxxxCOMNTOOLS%| environment variable during install, so link
-:: directly to the default location of "vcvarsall.bat" (Visual Studio 2022 Community)
-set VCVARSALL=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
+:: directly to the default location of "vcvarsall.bat"
+set VCVARSALL=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat
 if not exist "%VCVARSALL%" set VCVARSALL=%VCVARSALL:Community\=Enterprise\%
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & exit /b 1
 
@@ -48,12 +61,13 @@ set VSCMD_SKIP_SENDTELEMETRY=1
 call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
-	/p:ExcludeTests=true^
+	/p:ExcludeTests=%EXCLUDE_TESTS%^
 	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
+if "%BUILD_TYPE%" == "test-64" goto TEST_RAINMETER_64
 if "%BUILD_TYPE%" == "languages" goto BUILD_LANGUAGES
-if "%BUILD_TYPE%" == "installer" goto BUILD_INSTALLER
+if "%BUILD_TYPE%" == "installer" goto BUILD_LANGUAGES
 
 echo * Starting %BUILD_TYPE% build for %VERSION_FULL%
 
@@ -91,35 +105,23 @@ if "%BUILD_TYPE%" == "rainmeter-64" goto BUILD_RAINMETER_64
 
 :BUILD_RAINMETER_32
 echo * Building 32-bit projects
-%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
-
-if "%BUILD_TYPE%" == "rainmeter-32" goto BUILD_LANGUAGES
+%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln || (echo   ERROR !ERRORLEVEL!: Build failed & exit /b 1)
+if "%BUILD_TYPE%" == "rainmeter-32" goto DONE
 
 :BUILD_RAINMETER_64
 echo * Building 64-bit projects
-%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR %ERRORLEVEL%: Build failed & exit /b 1)
+%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln || (echo   ERROR !ERRORLEVEL!: Build failed & exit /b 1)
+if "%BUILD_TYPE%" == "rainmeter-64" goto DONE
+
+:TEST_RAINMETER_64
+echo * Testing 64-bit projects
+vstest.console.exe "..\x64-Release\Obj\Common_Test\Common_Test.dll" "..\x64-Release\Rainmeter.dll" /Platform:x64 || (echo   ERROR !ERRORLEVEL!: Tests failed & exit /b 1)
+if "%BUILD_TYPE%" == "test-64" goto DONE
 
 :BUILD_LANGUAGES
 echo * Building languages
-
-for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
-	> "..\Language\Language.rc" echo #include "%%a.h"
-	>>"..\Language\Language.rc" echo #include "Resource.rc"
-	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln || (echo   ERROR: Building language %%a failed & exit /b 1)
-)
-
-:: Restore English
-echo #include "English.h"> "..\Language\Language.rc"
-echo #include "Resource.rc">> "..\Language\Language.rc"
-if "%BUILD_TYPE%" == "languages" (
-	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Release\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
-	goto DONE
-)
-
-if "%BUILD_TYPE%" == "rainmeter-32" goto DONE
-if "%BUILD_TYPE%" == "rainmeter-64" goto DONE
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\GenerateLanguages.ps1" || (echo   ERROR !ERRORLEVEL!: Generating language files failed & exit /b 1)
+if "%BUILD_TYPE%" == "languages" goto DONE
 
 :BUILD_INSTALLER
 echo * Building installer
@@ -139,16 +141,7 @@ set INSTALLER_DEFINES=^
 	/DVERSION_MINOR="%VERSION_MINOR%"^
 	/DBUILD_YEAR="%BUILD_YEAR%"
 
->".\Installer\Languages.nsh" echo.
-for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
-	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
-	set "LANGDLL_PARAMS=!LANGDLL_PARAMS!'%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' "
-	set "LANGUAGE_IDS=!LANGUAGE_IDS!${LANG_%%b},"
-)
->>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
->>".\Installer\Languages.nsh" echo ^^!define LANGUAGE_IDS "%LANGUAGE_IDS%"
-
-"%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR %ERRORLEVEL%: Building installer failed & exit /b 1)
+"%MAKENSIS%" %INSTALLER_DEFINES% /WX .\Installer\Installer.nsi || (echo   ERROR !ERRORLEVEL!: Building installer failed & exit /b 1)
 
 :DONE
 echo.

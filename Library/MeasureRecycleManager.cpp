@@ -9,18 +9,15 @@
 #include "MeasureRecycleManager.h"
 #include "ConfigParser.h"
 #include "Logger.h"
-#include "System.h"
 
 namespace {
 
-bool g_Thread = false;
-
-double g_BinCount = 0.0;
-double g_BinSize = 0.0;
+std::atomic<bool> g_Thread = false;
+std::atomic<double> g_BinCount = 0.0;
+std::atomic<double> g_BinSize = 0.0;
 
 int g_UpdateCount = 0;
 int g_InstanceCount = 0;
-CRITICAL_SECTION g_CriticalSection;
 
 DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 {
@@ -29,9 +26,9 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	SHQUERYRBINFO rbi = { 0 };
 	rbi.cbSize = sizeof(SHQUERYRBINFO);
 	SHQueryRecycleBin(nullptr, &rbi);
+
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
-
 	g_Thread = false;
 
 	return 0UL;
@@ -130,22 +127,12 @@ enum class MeasureRecycleManager::Type
 MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(Type::None)
 {
-	if (g_InstanceCount <= 0)
-	{
-		System::InitializeCriticalSection(&g_CriticalSection);
-	}
-
 	++g_InstanceCount;
 }
 
 MeasureRecycleManager::~MeasureRecycleManager()
 {
 	--g_InstanceCount;
-
-	if (g_InstanceCount <= 0)
-	{
-		DeleteCriticalSection(&g_CriticalSection);
-	}
 }
 
 void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
@@ -170,34 +157,26 @@ void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* secti
 
 void MeasureRecycleManager::UpdateValue()
 {
-	if (TryEnterCriticalSection(&g_CriticalSection))
+	if (!g_Thread)
 	{
-		if (!g_Thread)
+		++g_UpdateCount;
+		if (g_UpdateCount > g_InstanceCount)
 		{
-			++g_UpdateCount;
-			if (g_UpdateCount > g_InstanceCount)
+			if (HasRecycleBinChanged())
 			{
-				if (HasRecycleBinChanged())
-				{
-					// Delay next check.
-					g_UpdateCount = g_InstanceCount * -2;
+				// Delay next check.
+				g_UpdateCount = g_InstanceCount * -2;
 
-					DWORD id = 0UL;
-					HANDLE thread = CreateThread(nullptr, 0ULL, QueryRecycleBinThreadProc, nullptr, 0UL, &id);
-					if (thread)
-					{
-						CloseHandle(thread);
-						g_Thread = true;
-					}
-				}
-				else
+				if (QueueUserWorkItem(QueryRecycleBinThreadProc, nullptr, 0))
 				{
-					g_UpdateCount = 0;
+					g_Thread = true;
 				}
 			}
+			else
+			{
+				g_UpdateCount = 0;
+			}
 		}
-
-		LeaveCriticalSection(&g_CriticalSection);
 	}
 
 	switch (m_Type)
