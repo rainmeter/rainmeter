@@ -7,12 +7,12 @@
 
 #include <windows.h>
 #include <vector>
-#include "../PluginPerfMon/Titledb.h"
-#include "../PluginPerfMon/PerfSnap.h"
-#include "../PluginPerfMon/PerfObj.h"
-#include "../PluginPerfMon/PerfCntr.h"
-#include "../PluginPerfMon/ObjList.h"
-#include "../PluginPerfMon/ObjInst.h"
+#include "../../ThirdParty/PerfCounter/Titledb.h"
+#include "../../ThirdParty/PerfCounter/PerfSnap.h"
+#include "../../ThirdParty/PerfCounter/PerfObj.h"
+#include "../../ThirdParty/PerfCounter/PerfCntr.h"
+#include "../../ThirdParty/PerfCounter/ObjList.h"
+#include "../../ThirdParty/PerfCounter/ObjInst.h"
 #include "../API/RainmeterAPI.h"
 #include "../../Common/RawString.h"
 
