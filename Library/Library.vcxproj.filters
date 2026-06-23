@@ -84,6 +84,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
+    <ClCompile Include="MeasureAudioLevel.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
@@ -154,6 +155,8 @@
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -204,6 +207,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureActionTimer.h" />
+    <ClInclude Include="MeasureAudioLevel.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />

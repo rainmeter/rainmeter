@@ -55,6 +55,7 @@
     <ClCompile Include="lua\LuaHelper.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
+    <ClCompile Include="MeasureAudioLevel.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
@@ -145,6 +146,12 @@
     <ClCompile Include="lua\glue\LuaMeter.cpp" />
     <ClCompile Include="lua\glue\LuaMeterWindow.cpp" />
     <ClCompile Include="lua\glue\LuaGlobal.cpp" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc" />
@@ -172,6 +179,7 @@
     <ClInclude Include="lua\LuaHelper.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureActionTimer.h" />
+    <ClInclude Include="MeasureAudioLevel.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />
