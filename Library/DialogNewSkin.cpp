@@ -47,14 +47,6 @@ void DialogNewSkin::Open(int tab)
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
-
-	const HWND& hwnd = c_Dialog->GetWindow();
-	GetWindowPlacement(hwnd, &c_WindowPlacement);
-	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-	{
-		ShowWindow(hwnd, SW_RESTORE);
-	}
-	SetForegroundWindow(hwnd);
 }
 
 void DialogNewSkin::Open(const WCHAR* tabName, const WCHAR* parent)
@@ -194,11 +186,8 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Reset any close action
 			c_CloseAction = { false, 0 };
 
+			c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
 			GetWindowPlacement(m_Window, &c_WindowPlacement);
-			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-			{
-				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-			}
 
 			delete c_Dialog;
 			c_Dialog = nullptr;
@@ -240,13 +229,11 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabNew.GetControl(TabNew::Id_ItemsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
 
-	if (c_WindowPlacement.length == 0)
+	if (c_WindowPlacement.length != 0)
 	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
+		const auto& pos = c_WindowPlacement.rcNormalPosition;
+		SetWindowPos(m_Window, nullptr, pos.left, pos.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
 }
