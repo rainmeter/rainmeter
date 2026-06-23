@@ -74,7 +74,7 @@ jobs:
           output-artifact-directory: .
 
       - name: Install NSIS
-        run: choco install nsis --version=3.12.0 --no-progress
+        uses: ./.github/actions/install-nsis
 
       - name: Build installer
         run: cd Build && Build.bat installer %BUILD_VERSION:~1%
