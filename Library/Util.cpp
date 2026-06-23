@@ -19,6 +19,12 @@ UINT GetUniqueID()
 
 const WCHAR* GetString(UINT id)
 {
+	switch (id)
+	{
+		case IDS_Ellipsis: L"...";
+		case IDS_AddResources: return L"@Resources";
+	}
+
 	return GetRainmeter().GetLanguageString(id);
 }
 
