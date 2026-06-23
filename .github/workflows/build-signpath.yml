@@ -28,10 +28,10 @@ jobs:
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
-          name: x${{ matrix.arch }}-Release
+          name: Release${{ matrix.arch }}
           path: |
-            x${{ matrix.arch }}-Release
-            !x${{ matrix.arch }}-Release/Obj
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
           if-no-files-found: error
 
   installer:
@@ -47,7 +47,8 @@ jobs:
       - name: Download 32-bit & 64-bit builds
         uses: actions/download-artifact@v8
         with:
-          pattern: x*-Release
+          pattern: Release*
+          path: BuildOut
 
       - name: Upload combined build
         uses: actions/upload-artifact@v7
@@ -55,12 +56,12 @@ jobs:
         with:
           name: RainmeterBuild-${{ github.ref_name }}
           path: |
-            x32-Release
-            x64-Release
+            BuildOut/Release32
+            BuildOut/Release64
           if-no-files-found: error
 
       - name: Remove build directories
-        run: rm -rf {x32,x64}-Release
+        run: rm -rf BuildOut
         shell: bash
 
       - name: Sign Rainmeter

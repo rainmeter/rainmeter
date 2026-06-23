@@ -92,10 +92,10 @@ UninstPage custom un.PageOptions un.GetOptions
 ; Include languages
 !macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
 	!insertmacro MUI_LANGUAGE ${LANGUAGE}
-	!insertmacro LANGFILE_INCLUDE "..\..\Language\${CUSTOMLANGUAGE}.nsh"
+	!insertmacro LANGFILE_INCLUDE "..\..\BuildOut\Installer\${CUSTOMLANGUAGE}.nsh"
 !macroend
 !define IncludeLanguage "!insertmacro IncludeLanguage"
-!include "Languages.nsh"
+!include "..\..\BuildOut\Installer\Languages.nsh"
 
 Var NonDefaultLanguage
 Var AutoStartup
@@ -556,15 +556,15 @@ Function PageOptionsOnLeave
 	${EndIf}
 FunctionEnd
 
-!macro InstallFiles DIR ARCH
+!macro InstallFiles OUTDIR ARCH
 	SetOutPath "$INSTDIR"
-	File "..\..\${DIR}-Release\Rainmeter.exe"
-	File "..\..\${DIR}-Release\Rainmeter.dll"
-	File "..\..\${DIR}-Release\RestartRainmeter.exe"
-	File "..\..\${DIR}-Release\SkinInstaller.exe"
+	File "..\..\${OUTDIR}\Rainmeter.exe"
+	File "..\..\${OUTDIR}\Rainmeter.dll"
+	File "..\..\${OUTDIR}\RestartRainmeter.exe"
+	File "..\..\${OUTDIR}\SkinInstaller.exe"
 
 	SetOutPath "$INSTDIR\Plugins"
-	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
+	File /x *Example*.dll "..\..\${OUTDIR}\Plugins\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -718,14 +718,14 @@ SkipIniMove:
 	File "..\VisualElements\Rainmeter_176.png"
 
 	${If} $instArc == "x86"
-		!insertmacro InstallFiles "x32" "x86"
+		!insertmacro InstallFiles "BuildOut\Release32" "x86"
 	${Else}
-		!insertmacro InstallFiles "x64" "x64"
+		!insertmacro InstallFiles "BuildOut\Release64" "x64"
 	${EndIf}
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\x32-Release\Languages\*.rmlang"
+	File "..\..\BuildOut\Release32\Languages\*.rmlang"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"

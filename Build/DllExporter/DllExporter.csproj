@@ -27,8 +27,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <OutputPath Condition=" '$(Platform)' == 'x86' ">$(SolutionDir)x32-$(Configuration)\Tools\</OutputPath>
-    <OutputPath Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\Tools\</OutputPath>
+    <OutputPath Condition=" '$(Platform)' == 'x86' ">$(SolutionDir)BuildOut\$(Configuration)32\Tools\</OutputPath>
+    <OutputPath Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)BuildOut\$(Configuration)64\Tools\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>

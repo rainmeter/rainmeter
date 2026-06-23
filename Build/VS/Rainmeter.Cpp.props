@@ -12,9 +12,9 @@
 
   <PropertyGroup>
     <!-- This is overridden by Build.ps1 during full build. -->
-    <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
-    <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
-    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)x64-ARM-$(Configuration)\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)BuildOut\$(Configuration)32\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)BuildOut\$(Configuration)64\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)BuildOut\$(Configuration)ARM\</RmOutDirRoot>
 
     <OutDir>$(RmOutDirRoot)</OutDir>
     <IntDir>$(OutDir)Obj\$(ProjectName)\</IntDir>
