@@ -30,51 +30,69 @@ public:
 private:
 	ActionTimerTask(MeasureActionTimer* measure, size_t index) :
 		AsyncTask(measure),
-		m_ActionIndex(index),
-		m_Commands(measure->m_Actions[index].commands),
-		m_Skin(measure->GetSkin())
+		m_MeasureCriticalSection(measure->m_ActionsCriticalSection),
+		m_ActionIndex(index)
 	{
 	}
 
 	void StartWorkOnWorkerThread() override;
 	void FinishWorkOnMainThread() override;
 
+	std::shared_ptr<CriticalSection> m_MeasureCriticalSection;
 	size_t m_ActionIndex;
-	std::vector<std::wstring> m_Commands;
-	Skin* m_Skin;
 };
 
 void MeasureActionTimer::ActionTimerTask::StartWorkOnWorkerThread()
 {
-	for (const auto& command : m_Commands)
+	size_t commandIndex = 0;
+	while (!m_AbortRequested)
 	{
-		if (m_AbortRequested) break;
+		DWORD sleepTimeout = 0;
 
-		if (_wcsnicmp(command.c_str(), L"WAIT ", 5) == 0)
 		{
-			__int64 timeout = _wtoi64(command.substr(5).c_str());
-			if (timeout > 0)
+			CriticalSectionLock lock(*m_MeasureCriticalSection);
+			if (m_AbortRequested) break;
+
+			auto measure = (MeasureActionTimer*)m_Requestor;
+			if (m_ActionIndex >= measure->m_Actions.size()) break;
+
+			const auto& commands = measure->m_Actions[m_ActionIndex].commands;
+			if (commandIndex >= commands.size()) break;
+
+			const auto& command = commands[commandIndex].c_str();
+			if (_wcsnicmp(command, L"WAIT ", 5) == 0)
 			{
-				Sleep(timeout > MAXDWORD ? MAXDWORD : (DWORD)timeout);
+				sleepTimeout = wcstoul(command + 5, nullptr, 10);
+			}
+			else
+			{
+				GetRainmeter().DelayedExecuteCommand(command, measure->GetSkin());
 			}
 		}
-		else
+
+		if (sleepTimeout > 0)
 		{
-			GetRainmeter().DelayedExecuteCommand(command.c_str(), m_Skin);
+			Sleep(sleepTimeout);
 		}
+
+		++commandIndex;
 	}
 }
 
 void MeasureActionTimer::ActionTimerTask::FinishWorkOnMainThread()
 {
-	auto measure = (MeasureActionTimer*)m_Requestor;
-	if (!m_AbortRequested && m_ActionIndex < measure->m_Actions.size() && measure->m_Actions[m_ActionIndex].task == this)
+	if (!m_AbortRequested)
 	{
-		measure->m_Actions[m_ActionIndex].task = nullptr;
+		auto measure = (MeasureActionTimer*)m_Requestor;
+		if (m_ActionIndex < measure->m_Actions.size() && measure->m_Actions[m_ActionIndex].task == this)
+		{
+			measure->m_Actions[m_ActionIndex].task = nullptr;
+		}
 	}
 }
 
 MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_ActionsCriticalSection(std::make_shared<CriticalSection>()),
 	m_Actions(),
 	m_IgnoreWarnings(false)
 {
@@ -82,9 +100,17 @@ MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(
 
 MeasureActionTimer::~MeasureActionTimer()
 {
+	// m_Actions will be destroyed outside the scope of the lock, but since we set the abort flag
+	// within the lock, we can know that the worker won't have a live reference to m_Actions.
+	CriticalSectionLock lock(*m_ActionsCriticalSection);
+
 	for (auto& action : m_Actions)
 	{
-		StopAction(action);
+		if (action.task)
+		{
+			action.task->AbortWhenPossible();
+			action.task = nullptr;
+		}
 	}
 }
 
@@ -106,6 +132,9 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				{
 					tokens.erase(tokens.begin() + i);
 
+					parser.ReplaceMeasures(repeat[1]);
+					parser.ReplaceMeasures(repeat[2]);
+
 					const std::wstring repeatedAction = parser.ReadString(section, repeat[0].c_str(), L"[]", false);
 					const std::wstring wait = L"Wait " + repeat[1];
 					const int size = (_wtoi(repeat[2].c_str()) * 2) - 1;
@@ -123,19 +152,26 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 					i += j - 1;
 				}
 			}
-			else if (_wcsnicmp(tokens[i].c_str(), L"WAIT ", 5) != 0)
+			else if (_wcsnicmp(tokens[i].c_str(), L"WAIT ", 5) == 0)
+			{
+				parser.ReplaceMeasures(tokens[i]);
+			}
+			else
 			{
 				tokens[i] = parser.ReadString(section, tokens[i].c_str(), L"[]", false);
 			}
 		}
 
-		if (index <= m_Actions.size())
 		{
-			m_Actions[index - 1].commands = std::move(tokens);
-		}
-		else
-		{
-			m_Actions.emplace_back(Action{ std::move(tokens) });
+			CriticalSectionLock lock(*m_ActionsCriticalSection);
+			if (index <= m_Actions.size())
+			{
+				m_Actions[index - 1].commands = std::move(tokens);
+			}
+			else
+			{
+				m_Actions.emplace_back(Action{ std::move(tokens) });
+			}
 		}
 
 		WCHAR buffer[64];
@@ -181,7 +217,12 @@ void MeasureActionTimer::Command(const std::wstring& command)
 		size_t number = 0;
 		if (parseAndValidateIndex(number, 4))
 		{
-			StopAction(m_Actions[number]);
+			if (m_Actions[number].task)
+			{
+				// Lock not needed because the task checks the abort flag before executing each command.
+				m_Actions[number].task->AbortWhenPossible();
+				m_Actions[number].task = nullptr;
+			}
 		}
 		else if (!m_IgnoreWarnings)
 		{
@@ -191,14 +232,5 @@ void MeasureActionTimer::Command(const std::wstring& command)
 	else
 	{
 		LogErrorF(this, L"Unknown command: %s", args);
-	}
-}
-
-void MeasureActionTimer::StopAction(Action& action)
-{
-	if (action.task)
-	{
-		action.task->AbortWhenPossible();
-		action.task = nullptr;
 	}
 }
