@@ -48,8 +48,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 {
 	if (m_Window)
 	{
-		// Show existing window.
-		ShowWindow(m_Window, SW_SHOW);
+		ShowWindow(m_Window, SW_SHOWNORMAL);
 		SetForegroundWindow(m_Window);
 		return;
 	}

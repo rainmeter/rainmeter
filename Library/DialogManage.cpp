@@ -81,14 +81,6 @@ void DialogManage::Open(int tab)
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
-
-	const HWND& hwnd = c_Dialog->GetWindow();
-	GetWindowPlacement(hwnd, &c_WindowPlacement);
-	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-	{
-		ShowWindow(hwnd, SW_RESTORE);
-	}
-	SetForegroundWindow(hwnd);
 }
 
 /*
@@ -219,11 +211,8 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
+			c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
 			GetWindowPlacement(m_Window, &c_WindowPlacement);
-			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-			{
-				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-			}
 
 			delete c_Dialog;
 			c_Dialog = nullptr;
@@ -279,13 +268,11 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
 
-	if (c_WindowPlacement.length == 0)
+	if (c_WindowPlacement.length != 0)
 	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
+		const auto& pos = c_WindowPlacement.rcNormalPosition;
+		SetWindowPos(m_Window, nullptr, pos.left, pos.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return FALSE;
 }
