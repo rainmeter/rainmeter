@@ -133,6 +133,13 @@ Rainmeter::Rainmeter() :
 	}
 
 	InitCommonControls();
+
+	typedef int (WINAPI* SetPreferredAppModeProc)(int);
+	if (auto setPreferredAppModeProc = (SetPreferredAppModeProc)GetProcAddress(GetModuleHandle(L"uxtheme"), MAKEINTRESOURCEA(135)))
+	{
+		const int AppModeAllowDark = 1;
+		setPreferredAppModeProc(AppModeAllowDark);
+	}
 }
 
 /*

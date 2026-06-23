@@ -26,6 +26,13 @@ UINT GetWindowDpi(HWND window)
 	return dpi ? dpi : 96U;
 }
 
+bool AllowDarkModeForWindowWithParentFallback(HWND window, bool autoThemeChange)
+{
+	typedef bool (WINAPI* AllowDarkModeForWindowWithParentFallbackProc)(HWND, bool);
+	static auto s_Proc = (AllowDarkModeForWindowWithParentFallbackProc)GetProcAddress(GetModuleHandle(L"uxtheme"), MAKEINTRESOURCEA(133));
+	return s_Proc(window, autoThemeChange);
+}
+
 }  // namespace
 
 HWND Dialog::c_ActiveDialogWindow = nullptr;
@@ -111,11 +118,15 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 void BaseDialog::CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString)
 {
 	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_Dpi, getString);
+	AllowDarkModeForWindowWithParentFallback(m_Window, true);
+	SetWindowTheme(m_Window, L"DarkMode_Explorer", nullptr);
 }
 
 void BaseDialog::RelayoutControls()
 {
 	m_ControlTemplate.Relayout(m_Dpi);
+	AllowDarkModeForWindowWithParentFallback(m_Window, true);
+	SetWindowTheme(m_Window, L"DarkMode_Explorer", nullptr);
 }
 
 INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -173,6 +184,8 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				s_SetDialogDpiChangeBehavior(m_Window, DDC_DISABLE_ALL, DDC_DISABLE_ALL);
 			}
 
+			AllowDarkModeForWindowWithParentFallback(m_Window, true);
+			SetWindowTheme(m_Window, L"DarkMode_Explorer", nullptr);
 			m_Dpi = GetWindowDpi(m_Window);
 		}
 		break;
