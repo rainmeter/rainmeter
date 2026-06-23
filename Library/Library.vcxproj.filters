@@ -17,6 +17,15 @@
     <Filter Include="taglib">
       <UniqueIdentifier>{fe354ece-06ea-4af8-9129-f0fcb7e31d0c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{90a21e5f-7ab9-45d6-842c-d780a9e14c6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\kiss_fft130">
+      <UniqueIdentifier>{d1bf569e-05e7-4d77-8408-c39c1f31df2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\PerfCounter">
+      <UniqueIdentifier>{ebfa0cf5-2371-4459-a25d-e16109dd2142}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
@@ -100,6 +109,7 @@
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
+    <ClCompile Include="MeasurePerfMon.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
     <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
@@ -155,8 +165,30 @@
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+      <Filter>ThirdParty\kiss_fft130</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+      <Filter>ThirdParty\kiss_fft130</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
@@ -223,6 +255,7 @@
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
+    <ClInclude Include="MeasurePerfMon.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
     <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
@@ -278,6 +311,27 @@
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

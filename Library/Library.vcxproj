@@ -71,6 +71,7 @@
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
+    <ClCompile Include="MeasurePerfMon.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
     <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
@@ -152,6 +153,24 @@
     <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc" />
@@ -195,6 +214,7 @@
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
+    <ClInclude Include="MeasurePerfMon.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
     <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
@@ -254,6 +274,13 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="lua\LuaScript.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
