@@ -93,6 +93,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
+    <ClCompile Include="MeasureAdvancedCPU.cpp" />
     <ClCompile Include="MeasureAudioLevel.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
     <ClCompile Include="MeasureCoreTemp.cpp" />
@@ -239,6 +240,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureActionTimer.h" />
+    <ClInclude Include="MeasureAdvancedCPU.h" />
     <ClInclude Include="MeasureAudioLevel.h" />
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCoreTemp.h" />
