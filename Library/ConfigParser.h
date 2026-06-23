@@ -134,7 +134,7 @@ private:
 	bool m_LastValueDefined;
 	MonitorVariableMode m_MonitorVariableMode;
 
-	std::wstring* m_CurrentSection;
+	std::wstring m_CurrentSection;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
 	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Values;

@@ -697,7 +697,7 @@ void Skin::UpdateWindowDpi(UINT dpi)
 		Measure::RemoveTrailingZero(buffer, len);
 		m_Parser.SetBuiltInVariable(L"CURRENTCONFIGSCALE", buffer);
 
-		for (const auto* measure : m_Measures)
+		for (auto* measure : m_Measures)
 		{
 			if (measure->GetTypeID() == TypeID<MeasurePlugin>())
 			{
