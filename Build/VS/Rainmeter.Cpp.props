@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- This is overridden by Build.bat during full build. -->
+    <!-- This is overridden by Build.ps1 during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)x64-ARM-$(Configuration)\</RmOutDirRoot>
@@ -27,7 +27,7 @@
 
   <!-- Macros for unit testing. -->
   <PropertyGroup Label="UserMacros">
-    <!-- This is set to true by Build.bat when building full builds. -->
+    <!-- This is set to true by Build.ps1 when building full builds. -->
     <ExcludeTests>false</ExcludeTests>
 
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"

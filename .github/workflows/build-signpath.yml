@@ -20,8 +20,10 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: cd Build && Build.bat rainmeter-${{ matrix.arch }} %BUILD_VERSION:~1%
-        shell: cmd
+        run: |
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion
+        shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
@@ -77,8 +79,10 @@ jobs:
         uses: ./.github/actions/install-nsis
 
       - name: Build installer
-        run: cd Build && Build.bat installer %BUILD_VERSION:~1%
-        shell: cmd
+        run: |
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 installer $buildVersion
+        shell: pwsh
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

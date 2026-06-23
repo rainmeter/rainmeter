@@ -441,7 +441,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	clearBuffer();
 
 #ifdef BUILD_TIME
-	// Build.bat will write to the BUILD_TIME macro when the installer is created
+	// Build.ps1 will write to the BUILD_TIME macro when the installer is created
 	m_BuildTime = BUILD_TIME;
 #else
 	// For local builds, just use the current date/time

@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <!-- This is overridden by Build.bat during full build. -->
+    <!-- This is overridden by Build.ps1 during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'x86' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)x64-ARM-$(Configuration)\</RmOutDirRoot>
