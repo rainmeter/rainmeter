@@ -1972,6 +1972,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 	static const std::vector<LPCWSTR> s_OldPlugins =
 	{
 		L"ActionTimer",
+		L"AdvancedCPU",
 		L"AudioLevel",
 		L"CoreTemp",
 		L"FolderInfo",
