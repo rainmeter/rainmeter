@@ -311,7 +311,7 @@ void Shape::SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT
 	m_HasStrokeBrushChanged = true;
 }
 
-Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1DeviceContext* target)
+Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1RenderTarget* target)
 {
 	// If the brush hasn't changed, return current fill brush
 	if (!m_HasFillBrushChanged) return m_FillBrush;
@@ -348,7 +348,7 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1DeviceContext* targe
 	return m_FillBrush;
 }
 
-Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetStrokeFillBrush(ID2D1DeviceContext* target)
+Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetStrokeFillBrush(ID2D1RenderTarget* target)
 {
 	// If the brush hasn't changed, return current stroke brush
 	if (!m_HasStrokeBrushChanged) return m_StrokeBrush;
@@ -385,7 +385,7 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetStrokeFillBrush(ID2D1DeviceContext*
 	return m_StrokeBrush;
 }
 
-ID2D1GradientStopCollection* Shape::CreateGradientStopCollection(ID2D1DeviceContext* target,
+ID2D1GradientStopCollection* Shape::CreateGradientStopCollection(ID2D1RenderTarget* target,
 	std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma)
 {
 	if (stops.empty()) return nullptr;
@@ -402,7 +402,7 @@ ID2D1GradientStopCollection* Shape::CreateGradientStopCollection(ID2D1DeviceCont
 	return collection;
 }
 
-void Shape::CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush,
+void Shape::CreateSolidBrush(ID2D1RenderTarget* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush,
 	const D2D1_COLOR_F& color)
 {
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solid;
@@ -411,7 +411,7 @@ void Shape::CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<
 	if (SUCCEEDED(hr)) solid.CopyTo(brush.ReleaseAndGetAddressOf());
 }
 
-void Shape::CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
+void Shape::CreateLinearGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
 	Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const FLOAT angle)
 {
 	auto bounds = GetBounds(false);
@@ -429,7 +429,7 @@ void Shape::CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 	if (SUCCEEDED(hr)) linear.CopyTo(brush.ReleaseAndGetAddressOf());
 }
 
-void Shape::CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
+void Shape::CreateRadialGradient(ID2D1RenderTarget* target, ID2D1GradientStopCollection* collection,
 	Microsoft::WRL::ComPtr<ID2D1Brush>& brush, bool isStroke)
 {
 	auto swapIfNotDefined = [](D2D1_POINT_2F& pt1, const D2D1_POINT_2F pt2) -> void

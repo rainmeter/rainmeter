@@ -84,7 +84,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	}
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
-	if (width <= maxBitmapSize && height <= maxBitmapSize)
+	if (width <= maxBitmapSize && height <= maxBitmapSize && canvas.m_Target)
 	{
 		Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
 		hr = canvas.m_Target->CreateBitmapFromWicBitmap(
@@ -99,32 +99,6 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		return cleanup(S_OK);
 	}
 
-	for (UINT y = 0U, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
-	{
-		for (UINT x = 0U, W = (UINT)floor(width / maxBitmapSize); x <= W; ++x)
-		{
-			WICRect rcClip = {
-				(INT)(x * maxBitmapSize),
-				(INT)(y * maxBitmapSize),
-				(INT)(x == W ? (width - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
-				(INT)(y == H ? (height - maxBitmapSize * y) : maxBitmapSize) };		// If last y coordinate, find cutoff
-
-			Microsoft::WRL::ComPtr<IWICBitmapSource> bitmapSegment;
-			hr = CropWICBitmapSource(rcClip, source.Get(), bitmapSegment);
-			if (FAILED(hr)) return cleanup(hr);
-
-			Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
-			hr = canvas.m_Target->CreateBitmapFromWicBitmap(
-				bitmapSegment.Get(),
-				nullptr,
-				d2dbitmap.GetAddressOf());
-			if (FAILED(hr)) return cleanup(hr);
-
-			bitmap->AddSegment(d2dbitmap, rcClip);
-		}
-	}
-
-	bitmap->SetSize(width, height);
 	return cleanup(S_OK);
 }
 

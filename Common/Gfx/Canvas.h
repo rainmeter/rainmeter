@@ -160,6 +160,10 @@ private:
 
 	HRESULT CreateRenderTarget();
 	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
+	ID2D1RenderTarget* GetRenderTarget() const;
+	void DestroyDIBSection();
+	bool CreateDIBSection();
+	bool CopyTargetBitmapToDIB();
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
@@ -167,6 +171,13 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
+	Microsoft::WRL::ComPtr<IWICBitmap> m_WICBitmap;
+	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_WICTarget;
+
+	HDC m_DIBDC;
+	HBITMAP m_DIBSection;
+	HGDIOBJ m_DIBOldObject;
+	void* m_DIBData;
 
 	int m_W;
 	int m_H;
