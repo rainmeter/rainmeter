@@ -1,0 +1,31 @@
+name: Install NSIS
+description: Download and silently install NSIS without winget/chocolatey overhead
+
+runs:
+  using: composite
+  steps:
+    - name: Install NSIS
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+
+        $installer = Join-Path $env:RUNNER_TEMP 'nsis-3.12-setup.exe'
+        Invoke-WebRequest `
+          -Uri 'https://github.com/rainmeter/build-tools/releases/download/v1/nsis-3.12-setup.exe' `
+          -OutFile $installer
+
+        Start-Process -FilePath $installer -ArgumentList '/S' -Wait -NoNewWindow
+
+        $installDirs = @(
+          "${env:ProgramFiles(x86)}\NSIS",
+          "$env:ProgramFiles\NSIS"
+        )
+        $nsisDir = $installDirs |
+          Where-Object { Test-Path (Join-Path $_ 'makensis.exe') } |
+          Select-Object -First 1
+
+        if (-not $nsisDir) {
+          throw 'NSIS installation completed, but makensis.exe was not found.'
+        }
+
+        Add-Content -Path $env:GITHUB_PATH -Value $nsisDir
