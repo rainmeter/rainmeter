@@ -9,7 +9,7 @@ All unit test files should have the `<ExcludedFromBuild>$(ExcludeTests)</Exclude
           <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
         </ClCompile>
 
-When building within Visual Studio, the macro `$(ExcludeTests)` evaluates to `false` (i.e. the test files are **not** excluded). When building using Build.bat, it evaluates to `true`, and, consequently, the test files are excluded from the build. This is done in order to both reduce the actual build size and remove any kind of dependency on *Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll* (see below).
+When building within Visual Studio, the macro `$(ExcludeTests)` evaluates to `false` (i.e. the test files are **not** excluded). When building using Build.ps1, it evaluates to `true`, and, consequently, the test files are excluded from the build. This is done in order to both reduce the actual build size and remove any kind of dependency on *Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll* (see below).
 
 
 ### Project type specific notes

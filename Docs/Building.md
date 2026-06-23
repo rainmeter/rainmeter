@@ -22,6 +22,8 @@ Then open `Rainmeter.sln` to build and run Rainmeter.
 
 ### Building the installer
 
-In the Build directory, run e.g. `Build.bat full 1.2.3.4` to build all components with the version 1.2.3.4.
+From the repository root, run e.g. `.\Build\Build.ps1 full 1.2.3.4` to build all components with the version 1.2.3.4.
 
-If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment.
+Run `Get-Help .\Build\Build.ps1 -Detailed` to see the available parameters.
+
+If you see any "not found" errors, check that the tool paths near the top of the script match your environment.
