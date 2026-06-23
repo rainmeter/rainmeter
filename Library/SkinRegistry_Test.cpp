@@ -9,13 +9,96 @@
 #include "SkinRegistry.h"
 #include "../Common/UnitTest.h"
 
+namespace {
+
+void CreateTestDirectory(const std::wstring& path)
+{
+	CreateDirectory(path.c_str(), nullptr);
+}
+
+void CreateTestFile(const std::wstring& path)
+{
+	const HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+	CloseHandle(file);
+}
+
+std::wstring CreateTestRoot()
+{
+	WCHAR tempPath[MAX_PATH] = {};
+	Assert::IsTrue(GetTempPath(_countof(tempPath), tempPath) != 0);
+
+	WCHAR rootPath[MAX_PATH] = {};
+	Assert::IsTrue(GetTempFileName(tempPath, L"RMS", 0, rootPath) != 0);
+	Assert::IsTrue(DeleteFile(rootPath) != 0);
+	Assert::IsTrue(CreateDirectory(rootPath, nullptr) != 0);
+
+	std::wstring root = rootPath;
+	root += L'\\';
+	return root;
+}
+
+void CreateTestSkins(const std::wstring& root)
+{
+	CreateTestDirectory(root + L"@Backup");
+	CreateTestFile(root + L"@Backup\\1.ini");
+
+	CreateTestDirectory(root + L"A1");
+	CreateTestDirectory(root + L"A1\\B1");
+	CreateTestFile(root + L"A1\\B1\\1.ini");
+	CreateTestDirectory(root + L"A1\\B2");
+	CreateTestFile(root + L"A1\\B2\\1.ini");
+	CreateTestDirectory(root + L"A1\\B2\\C1");
+	CreateTestFile(root + L"A1\\B2\\C1\\1.ini");
+	CreateTestDirectory(root + L"A1\\B3");
+	CreateTestFile(root + L"A1\\B3\\.gitkeep");
+
+	CreateTestDirectory(root + L"A2");
+	CreateTestFile(root + L"A2\\1.ini");
+	CreateTestFile(root + L"A2\\2.ini");
+	CreateTestFile(root + L"A2\\3.ini");
+	CreateTestDirectory(root + L"A2\\@Resources");
+	CreateTestFile(root + L"A2\\@Resources\\1.ini");
+	CreateTestDirectory(root + L"A2\\B1");
+	CreateTestFile(root + L"A2\\B1\\.gitkeep");
+}
+
+void DeleteTestRoot(const std::wstring& path)
+{
+	if (path.empty())
+	{
+		return;
+	}
+
+	std::wstring from = path;
+	if (from.back() == L'\\')
+	{
+		from.pop_back();
+	}
+	from += L'\0';
+
+	SHFILEOPSTRUCT fileOp = {};
+	fileOp.wFunc = FO_DELETE;
+	fileOp.pFrom = from.c_str();
+	fileOp.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+
+	SHFileOperation(&fileOp);
+}
+}
+
 TEST_CLASS(Library_SkinRegistry_Test)
 {
 public:
 	Library_SkinRegistry_Test()
 	{
 		std::vector<std::wstring> favorites;
-		m_SkinRegistry.Populate(L"..\\Library\\Test\\SkinRegistry\\", favorites);
+		m_TestRoot = CreateTestRoot();
+		CreateTestSkins(m_TestRoot);
+		m_SkinRegistry.Populate(m_TestRoot, favorites);
+	}
+
+	~Library_SkinRegistry_Test()
+	{
+		DeleteTestRoot(m_TestRoot);
 	}
 
 	TEST_METHOD(TestContents)
@@ -90,5 +173,6 @@ public:
 	}
 
 private:
+	std::wstring m_TestRoot;
 	SkinRegistry m_SkinRegistry;
 };
