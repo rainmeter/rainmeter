@@ -8,6 +8,7 @@
 #ifndef RM_LIBRARY_MEASUREACTIONTIMER_H_
 #define RM_LIBRARY_MEASUREACTIONTIMER_H_
 
+#include "../Common/CriticalSection.h"
 #include "Measure.h"
 
 class MeasureActionTimer : public Measure
@@ -35,9 +36,9 @@ private:
 		ActionTimerTask* task = nullptr;
 	};
 
-	void StopAction(Action& action);
-
 	std::vector<Action> m_Actions;
+	std::shared_ptr<CriticalSection> m_ActionsCriticalSection;
+
 	bool m_IgnoreWarnings;
 };
 
