@@ -1,16 +1,18 @@
+*.aps
 *.exe
 *.patch
 *.txt
 *.user
-*.aps
-/.vs
+.vs
 /ipch
 bin
 obj
 
-/Build/Installer/Languages.nsh
-/Language/*.nsh
+/BuildOut
 /Version.cs
 /Version.h
+
+/Build/Installer/Languages.nsh
+/Language/*.nsh
 x32*
 x64*

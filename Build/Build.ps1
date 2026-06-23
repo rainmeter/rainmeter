@@ -198,7 +198,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {
 	Write-Host '* Testing 64-bit projects'
-	Invoke-NativeCommand 'vstest.console.exe' @('..\x64-Release\Obj\Common_Test\Common_Test.dll', '..\x64-Release\Rainmeter.dll', '/Platform:x64')
+	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64')
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {

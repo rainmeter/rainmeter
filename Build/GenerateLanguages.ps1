@@ -51,11 +51,12 @@ $languages = [ordered]@{
 $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 $scriptDirectory = Join-Path $PSScriptRoot '..\Language'
 $resourceHeaderPath = Join-Path $PSScriptRoot '..\Library\resource.h'
+$installerOutputDirectory = Join-Path $PSScriptRoot '..\BuildOut\Installer'
 $languageOutputDirectories = @(
-	(Join-Path $PSScriptRoot '..\x32-Release\Languages'),
-	(Join-Path $PSScriptRoot '..\x64-Release\Languages'),
-	(Join-Path $PSScriptRoot '..\x32-Debug\Languages'),
-	(Join-Path $PSScriptRoot '..\x64-Debug\Languages')
+	(Join-Path $PSScriptRoot '..\BuildOut\Release32\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Release64\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Debug32\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Debug64\Languages')
 )
 if ($OutputDirectory) {
 	$languageOutputDirectories = $OutputDirectory
@@ -251,6 +252,9 @@ $resourceIds = Get-ResourceIds -Path $resourceHeaderPath
 foreach ($directory in $languageOutputDirectories) {
 	[System.IO.Directory]::CreateDirectory($directory) | Out-Null
 }
+if (-not $RuntimeOnly) {
+	[System.IO.Directory]::CreateDirectory($installerOutputDirectory) | Out-Null
+}
 
 Write-Host "Generating language files..."
 
@@ -262,13 +266,13 @@ foreach ($localeName in $locales) {
 	$iniPath = Join-Path $scriptDirectory ($localeName + '.ini')
 	$definition = Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath
 	if (-not $RuntimeOnly) {
-		$nshPath = Join-Path $scriptDirectory ($localeName + '.nsh')
+		$nshPath = Join-Path $installerOutputDirectory ($localeName + '.nsh')
 		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
 	}
 	Write-RuntimeLanguageFile -Locale $localeName -Lcid $languages[$localeName].lcid -Language $definition -OutputDirectories $languageOutputDirectories
 }
 
 if (-not $RuntimeOnly) {
-	$installerLanguagesPath = Join-Path $PSScriptRoot 'Installer\Languages.nsh'
+	$installerLanguagesPath = Join-Path $installerOutputDirectory 'Languages.nsh'
 	Write-InstallerLanguagesFile -Path $installerLanguagesPath -Languages $languages -Encoding $utf8WithBom
 }

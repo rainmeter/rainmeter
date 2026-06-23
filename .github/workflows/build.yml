@@ -30,10 +30,10 @@ jobs:
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
-          name: x${{ matrix.arch }}-Release
+          name: Release${{ matrix.arch }}
           path: |
-            x${{ matrix.arch }}-Release
-            !x${{ matrix.arch }}-Release/Obj
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
           if-no-files-found: error
 
   installer:
@@ -46,7 +46,8 @@ jobs:
       - name: Download 32-bit & 64-bit builds
         uses: actions/download-artifact@v8
         with:
-          pattern: x*-Release
+          pattern: Release*
+          path: BuildOut
 
       - name: Install NSIS
         uses: ./.github/actions/install-nsis
