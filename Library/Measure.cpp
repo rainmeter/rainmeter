@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "Measure.h"
 #include "MeasureActionTimer.h"
+#include "MeasureAudioLevel.h"
 #include "MeasureCPU.h"
 #include "MeasureCoreTemp.h"
 #include "MeasureMediaKey.h"
@@ -777,6 +778,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"ActionTimer", measure) == 0)
 	{
 		return new MeasureActionTimer(skin, name);
+	}
+	else if (_wcsicmp(L"AudioLevel", measure) == 0)
+	{
+		return new MeasureAudioLevel(skin, name);
 	}
 	else if (_wcsicmp(L"MediaKey", measure) == 0)
 	{
