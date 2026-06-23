@@ -24,22 +24,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="MakePtr.h" />
-    <ClInclude Include="ObjInst.h" />
-    <ClInclude Include="ObjList.h" />
-    <ClInclude Include="PerfCntr.h" />
-    <ClInclude Include="PerfObj.h" />
-    <ClInclude Include="PerfSnap.h" />
-    <ClInclude Include="Titledb.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\MakePtr.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\ObjInst.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\ObjList.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\PerfCntr.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\PerfObj.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\PerfSnap.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\Titledb.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ObjInst.cpp" />
-    <ClCompile Include="ObjList.cpp" />
-    <ClCompile Include="PerfCntr.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\ObjInst.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\ObjList.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfCntr.cpp" />
     <ClCompile Include="PerfData.cpp" />
-    <ClCompile Include="PerfObj.cpp" />
-    <ClCompile Include="PerfSnap.cpp" />
-    <ClCompile Include="Titledb.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfObj.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfSnap.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\Titledb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginPerfMon.rc" />

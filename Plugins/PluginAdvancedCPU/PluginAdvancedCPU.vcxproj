@@ -25,15 +25,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AdvancedCPU.cpp" />
-    <ClCompile Include="..\PluginPerfMon\ObjInst.cpp" />
-    <ClCompile Include="..\PluginPerfMon\ObjList.cpp" />
-    <ClCompile Include="..\PluginPerfMon\PerfCntr.cpp" />
-    <ClCompile Include="..\PluginPerfMon\PerfObj.cpp" />
-    <ClCompile Include="..\PluginPerfMon\PerfSnap.cpp" />
-    <ClCompile Include="..\PluginPerfMon\Titledb.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\ObjInst.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\ObjList.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfCntr.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfObj.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\PerfSnap.cpp" />
+    <ClCompile Include="..\..\ThirdParty\PerfCounter\Titledb.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\PluginPerfMon\MakePtr.h" />
+    <ClInclude Include="..\..\ThirdParty\PerfCounter\MakePtr.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginAdvancedCPU.rc" />
