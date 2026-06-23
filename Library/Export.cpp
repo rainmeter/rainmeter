@@ -293,15 +293,6 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SKINWINDOWHANDLE:
 			return (void*)measure->GetSkin()->GetWindow();
-
-	case RMG_SKINSCALE:
-		{
-			auto& threadBuffer = GetThreadLocalStringBuffer();
-			threadBuffer.resize(sizeof(float) / sizeof(WCHAR));
-			auto* floatBuffer = (float*)&threadBuffer[0];
-			*floatBuffer = measure->GetSkin()->GetScale();
-			return (void*)floatBuffer;
-		}
 	}
 
 	return nullptr;

@@ -13,14 +13,14 @@
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
-	m_DpiAware(false),
 	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_HandleScaleChangeFunc()
 {
 	m_PluginData = nullptr;
 }
@@ -152,14 +152,12 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
-
-	auto* dpiAware = (const BYTE*)GetProcAddress(m_Plugin, "DpiAware");
-	m_DpiAware = dpiAware && *dpiAware == 1;
+	m_HandleScaleChangeFunc = (HandleScaleChangeFunc)GetProcAddress(m_Plugin, "HandleScaleChange");;
 
 	const WCHAR* pluginFileName = PathFindFileName(pluginName.c_str());
 
 	// Chameleon expects monitor variables such as #SCREENAREAWIDTH# to resolve to physical pixels.
-	m_MonitorVariableMode = (!m_DpiAware && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
+	m_MonitorVariableMode = (!IsDpiAware() && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
 		ConfigParser::MonitorVariableMode::FORCE_PHYSICAL :
 		ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL;
 
@@ -355,4 +353,12 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 	}
 
 	return false;
+}
+
+void MeasurePlugin::HandleScaleChange()
+{
+	if (m_HandleScaleChangeFunc)
+	{
+		m_HandleScaleChangeFunc(m_PluginData);
+	}
 }
