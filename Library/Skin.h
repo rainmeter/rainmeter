@@ -319,7 +319,7 @@ private:
 
 	MouseMessagePositions GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const;
 	void RepositionAndResizeWindow();
-	bool UpdateWindowDpi(UINT dpi = 0);
+	void UpdateWindowDpi(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
 	void ComputeOptionValueFromPosition();
 

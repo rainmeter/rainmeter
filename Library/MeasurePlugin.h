@@ -42,8 +42,9 @@ public:
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
-	bool IsDpiAware() const { return m_DpiAware; }
+	bool IsDpiAware() const { return m_HandleScaleChangeFunc != nullptr; }
 	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+	void HandleScaleChange();
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
@@ -56,7 +57,6 @@ private:
 
 	HMODULE m_Plugin;
 
-	bool m_DpiAware;
 	ConfigParser::MonitorVariableMode m_MonitorVariableMode;
 
 	union
@@ -77,6 +77,9 @@ private:
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
+
+	typedef void (*HandleScaleChangeFunc)(void*);
+	HandleScaleChangeFunc m_HandleScaleChangeFunc;
 };
 
 #endif
