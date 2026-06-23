@@ -88,7 +88,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
 	m_ZoomScale(1.0f),
-	m_EffectiveScale(1.0f),
+	m_EffectiveScale(0.00001f),
 	m_WindowDraggable(true),
 	m_WindowUpdate(INTERVAL_METER),
 	m_TransitionUpdate(INTERVAL_TRANSITION),
@@ -672,7 +672,7 @@ void Skin::RepositionAndResizeWindow()
 	}
 }
 
-bool Skin::UpdateWindowDpi(UINT dpi)
+void Skin::UpdateWindowDpi(UINT dpi)
 {
 	m_WindowDpi = dpi ? dpi : System::GetDpiForWindow(m_Window);
 
@@ -687,9 +687,25 @@ bool Skin::UpdateWindowDpi(UINT dpi)
 		m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
 	}
 
+	const auto oldEffectiveScale = m_EffectiveScale;
 	m_EffectiveScale = m_ZoomScale * m_DpiScale;
 
-	return fabsf(oldSkinDpiScale - m_DpiScale) > 0.1f;
+	if (fabsf(oldEffectiveScale - m_EffectiveScale) > 0.01f)
+	{
+		WCHAR buffer[32];
+		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", m_EffectiveScale);
+		Measure::RemoveTrailingZero(buffer, len);
+		m_Parser.SetBuiltInVariable(L"CURRENTCONFIGSCALE", buffer);
+
+		for (const auto* measure : m_Measures)
+		{
+			if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+			{
+				MeasurePlugin* plugin = (MeasurePlugin*)measure;
+				plugin->HandleScaleChange();
+			}
+		}
+	}
 }
 
 void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor)

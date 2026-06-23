@@ -245,8 +245,7 @@ enum RmGetType
 	RMG_SKIN             = 1,
 	RMG_SETTINGSFILE     = 2,
 	RMG_SKINNAME         = 3,
-	RMG_SKINWINDOWHANDLE = 4,
-	RMG_SKINSCALE        = 5
+	RMG_SKINWINDOWHANDLE = 4
 };
 
 /// <summary>
@@ -456,17 +455,6 @@ __inline LPCWSTR RmGetSkinName(void* rm)
 __inline HWND RmGetSkinWindow(void* rm)
 {
 	return (HWND)RmGet(rm, RMG_SKINWINDOWHANDLE);
-}
-
-/// <summary>
-/// Retrieves the effective scale factor of the skin
-/// </summary>
-/// <param name="rm">Pointer to the plugin measure</param>
-/// <returns>Returns the current skin scale factor</returns>
-__inline float RmGetSkinScale(void* rm)
-{
-	const float* scale = (const float*)RmGet(rm, RMG_SKINSCALE);
-	return scale ? *scale : 1.0f;
 }
 
 /// <summary>
