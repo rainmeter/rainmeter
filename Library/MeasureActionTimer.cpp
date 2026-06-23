@@ -30,6 +30,7 @@ public:
 private:
 	ActionTimerTask(MeasureActionTimer* measure, size_t index) :
 		AsyncTask(measure),
+		m_MeasureCriticalSection(measure->m_ActionsCriticalSection),
 		m_ActionIndex(index)
 	{
 	}
