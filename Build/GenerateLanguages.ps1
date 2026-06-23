@@ -228,9 +228,15 @@ function Write-InstallerLanguagesFile {
 
 	foreach ($language in $Languages.GetEnumerator()) {
 		$locale = $language.Key
+		$localeInfo = [System.Globalization.CultureInfo]::GetCultureInfo($locale)
+		$displayName = $localeInfo.NativeName
+		if ($locale -ne 'en') {
+			$displayName += " - $($localeInfo.EnglishName.split(' ')[0])"
+		}
+
 		$nsisLanguage = $language.Value.nsis
 		[void]$output.Add(('${{IncludeLanguage}} "{0}" "{1}"' -f $nsisLanguage, $locale))
-		$langDllParams += "'$locale -  `${LANGFILE_${nsisLanguage}_NAME}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
+		$langDllParams += "'${displayName}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
 		$languageIds += "$($language.Value.lcid),"
 	}
 
