@@ -211,8 +211,11 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
-			c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-			GetWindowPlacement(m_Window, &c_WindowPlacement);
+			{
+				MonitorUtil::DpiUnawareScope dpiUnawareScope;
+				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
+				GetWindowPlacement(m_Window, &c_WindowPlacement);
+			}
 
 			delete c_Dialog;
 			c_Dialog = nullptr;
@@ -270,8 +273,13 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	if (c_WindowPlacement.length != 0)
 	{
-		const auto& pos = c_WindowPlacement.rcNormalPosition;
-		SetWindowPos(m_Window, nullptr, pos.left, pos.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
+		}
+
+		MonitorUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
 
 	return FALSE;

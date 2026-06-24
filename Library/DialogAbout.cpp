@@ -49,14 +49,6 @@ void DialogAbout::Open(int tab)
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
-
-	const HWND& hwnd = c_Dialog->GetWindow();
-	GetWindowPlacement(hwnd, &c_WindowPlacement);
-	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-	{
-		ShowWindow(hwnd, SW_RESTORE);
-	}
-	SetForegroundWindow(hwnd);
 }
 
 /*
@@ -154,11 +146,12 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
-			GetWindowPlacement(m_Window, &c_WindowPlacement);
-			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
 			{
-				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
+				MonitorUtil::DpiUnawareScope dpiUnawareScope;
+				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
+				GetWindowPlacement(m_Window, &c_WindowPlacement);
 			}
+
 
 			delete c_Dialog;
 			c_Dialog = nullptr;
@@ -204,12 +197,16 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 
-	if (c_WindowPlacement.length == 0)
+	if (c_WindowPlacement.length != 0)
 	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
+		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
+		}
+
+		MonitorUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
 }
