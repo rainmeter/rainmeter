@@ -197,6 +197,7 @@ public:
 	POINT PhysicalToRelativeLogical(POINT point) const;
 
 	float GetScale() const { return m_EffectiveScale; }
+	float GetDpiScale() const { return m_DpiScale; }
 	float GetZoom() const { return m_ZoomScale; }
 
 	bool GetClickThrough() { return m_ClickThrough; }
@@ -322,8 +323,6 @@ private:
 	void UpdateWindowDpi(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
 	void ComputeOptionValueFromPosition();
-
-	void NotifyPluginsForSkinSettingChange(int setting);
 
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);

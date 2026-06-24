@@ -308,6 +308,20 @@ void* __stdcall RmGet(void* rm, int type)
 			return buffer;
 		}
 
+	case RMG_SKINDPISCALE:
+		{
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetDpiScale();
+			return buffer;
+		}
+
+	case RMG_SKINZOOMSCALE:
+		{
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetZoom();
+			return buffer;
+		}
+
 	case RMG_SKINTRANSPARENCY:
 		return (void*)(INT_PTR)(measure->GetSkin()->GetAlphaValue());
 

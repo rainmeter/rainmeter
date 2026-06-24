@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "Export.h"
 #include "System.h"
 
@@ -355,7 +356,19 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 	return false;
 }
 
-void MeasurePlugin::HandleSkinSettingChange(RmGetType setting)
+void MeasurePlugin::HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting)
+{
+	for (auto* measure : skin->GetMeasures())
+	{
+		if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+			plugin->HandleSkinSettingChange(setting);
+		}
+	}
+}
+
+void MeasurePlugin::HandleSkinSettingChange(RmSkinSettingChange setting)
 {
 	if (m_HandleSkinSettingChangeFunc)
 	{
