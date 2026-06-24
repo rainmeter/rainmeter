@@ -642,7 +642,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 	RECT rect = {};
 	if (area == MonitorArea::VirtualScreen)
 	{
-		rect = physical ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitorsInfo.GetLogicalVirtualScreenRect();
+		rect = physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen;
 	}
 	else
 	{
@@ -674,7 +674,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 
 		if (screenIndex == 0)
 		{
-			rect = physical ? monitorsInfo.GetPhysicalVirtualScreenRect() : monitorsInfo.GetLogicalVirtualScreenRect();
+			rect = physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen;
 		}
 		else
 		{
@@ -696,11 +696,10 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 			}
 
 			const auto& monitor = monitors[monitorIndex];
-			rect = (area == MonitorArea::Work) ? monitor.work : monitor.screen;
-			if (!physical)
-			{
-				rect = monitor.ToLogical(rect);
-			}
+			rect =
+				physical ?
+				((area == MonitorArea::Work) ? monitor.work : monitor.screen) :
+				((area == MonitorArea::Work) ? monitor.logicalWork : monitor.logicalScreen);
 		}
 	}
 

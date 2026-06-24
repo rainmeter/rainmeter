@@ -49,16 +49,17 @@ UINT GetDpiForMonitor(HMONITOR monitor)
 	return System::GetSystemDpi();
 }
 
+RECT GetVirtualScreenRect()
+{
+	RECT rect;
+	rect.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	rect.right = rect.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+
+	rect.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	rect.bottom = rect.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	return rect;
 }
 
-RECT MonitorInfo::ToLogical(const RECT& rect) const
-{
-	return { ToLogical(rect.left), ToLogical(rect.top), ToLogical(rect.right), ToLogical(rect.bottom) };
-}
-
-LONG MonitorInfo::ToLogical(LONG value) const
-{
-	return MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
 static bool Contains(const RECT& rect, POINT point)
@@ -74,66 +75,6 @@ void MultiMonitorInfo::Clear()
 	monitors.clear();
 	horizontalSpans.clear();
 	verticalSpans.clear();
-}
-
-BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
-{
-	MultiMonitorInfo* m = (MultiMonitorInfo*)dwData;
-
-	MONITORINFOEX info = {};
-	info.cbSize = sizeof(MONITORINFOEX);
-	GetMonitorInfo(hMonitor, &info);
-
-	if (m == nullptr) return TRUE;
-
-	if (m->useEnumDisplayDevices)
-	{
-		for (auto iter = m->monitors.begin(); iter != m->monitors.end(); ++iter)
-		{
-			if ((*iter).handle == nullptr && _wcsicmp(info.szDevice, (*iter).deviceName.c_str()) == 0)
-			{
-				(*iter).handle = hMonitor;
-				(*iter).screen = *lprcMonitor;
-				(*iter).work = info.rcWork;
-				(*iter).dpi = MonitorUtil::GetDpiForMonitor(hMonitor);
-				break;
-			}
-		}
-	}
-	else  // use only EnumDisplayMonitors
-	{
-		MonitorInfo monitor;
-		monitor.active = true;
-
-		monitor.handle = hMonitor;
-		monitor.screen = *lprcMonitor;
-		monitor.work = info.rcWork;
-		monitor.dpi = MonitorUtil::GetDpiForMonitor(hMonitor);
-
-		monitor.deviceName = info.szDevice;  // E.g. "\\.\DISPLAY1"
-
-		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-		DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
-		DWORD dwMon = 0;
-		while (EnumDisplayDevices(info.szDevice, dwMon++, &ddm, 0))
-		{
-			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-			{
-				monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
-				break;
-			}
-		}
-
-		m->monitors.push_back(monitor);
-
-		if (info.dwFlags & MONITORINFOF_PRIMARY)
-		{
-			// It's primary monitor!
-			m->primary = (int)m->monitors.size();
-		}
-	}
-
-	return TRUE;
 }
 
 void MonitorUtil::InitializeMultiMonitorInfo()
@@ -167,15 +108,14 @@ void MonitorUtil::SetMultiMonitorInfo()
 {
 	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
 
-	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
-	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
-	c_Monitors.vsH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	c_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	c_Monitors.virtualScreen = GetVirtualScreenRect();
+
+	{
+		DpiUnawareScope dpiUnaware;
+		c_Monitors.logicalVirtualScreen = GetVirtualScreenRect();
+	}
 
 	c_Monitors.primary = 1;  // If primary screen is not found, 1st screen is assumed as primary screen.
-
-	c_Monitors.useEnumDisplayDevices = true;
-	c_Monitors.useEnumDisplayMonitors = false;
 
 	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
 
@@ -212,24 +152,27 @@ void MonitorUtil::SetMultiMonitorInfo()
 				DEVMODE dm = { 0 };
 				dm.dmSize = sizeof(DEVMODE);
 
+				POINT pos = { 0, 0 };
 				if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
 				{
-					POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
-					monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
+					pos.x = dm.dmPosition.x;
+					pos.y = dm.dmPosition.y;
 				}
 
-				if (monitor.handle != nullptr)
+				monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONEAREST);
+
+				MONITORINFO info = {sizeof(MONITORINFO)};
+				GetMonitorInfo(monitor.handle, &info);
+
+				monitor.screen = info.rcMonitor;
+				monitor.work = info.rcWork;
+				monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
+
 				{
-					MONITORINFO info = {sizeof(MONITORINFO)};
+					DpiUnawareScope dpiUnaware;
 					GetMonitorInfo(monitor.handle, &info);
-
-					monitor.screen = info.rcMonitor;
-					monitor.work = info.rcWork;
-					monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
-				}
-				else  // monitor not found
-				{
-					c_Monitors.useEnumDisplayMonitors = true;
+					monitor.logicalScreen = info.rcMonitor;
+					monitor.logicalWork = info.rcWork;
 				}
 			}
 			else
@@ -241,7 +184,6 @@ void MonitorUtil::SetMultiMonitorInfo()
 
 			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
 			{
-				// It's primary monitor!
 				c_Monitors.primary = (int)monitors.size();
 			}
 
@@ -250,68 +192,35 @@ void MonitorUtil::SetMultiMonitorInfo()
 		while (EnumDisplayDevices(nullptr, dwDevice, &dd, 0));
 	}
 
-	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
+	// Can this really happen...?
+	if (monitors.empty())
 	{
-		LogWarning(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
-		c_Monitors.useEnumDisplayDevices = false;
-		c_Monitors.useEnumDisplayMonitors = true;
+		LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
+
+		MonitorInfo monitor;
+		monitor.active = true;
+
+		monitor.handle = MonitorFromPoint({ 0, 0 }, MONITOR_DEFAULTTOPRIMARY);
+		monitor.screen = monitor.work = c_Monitors.virtualScreen;
+		monitor.logicalScreen = monitor.logicalWork = c_Monitors.logicalVirtualScreen;
+		monitor.deviceName = L"DUMMY";
+		monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
+
+		monitors.push_back(monitor);
+
+		c_Monitors.primary = 1;
 	}
 
-	if (c_Monitors.useEnumDisplayMonitors)
-	{
-		EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)(&c_Monitors));
-
-		if (monitors.empty())  // Failed to enumerate the monitors
-		{
-			LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
-			c_Monitors.useEnumDisplayMonitors = false;
-
-			MonitorInfo monitor;
-			monitor.active = true;
-
-			POINT pos = {0, 0};
-			monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTOPRIMARY);
-			monitor.screen.left = 0;
-			monitor.screen.top = 0;
-			monitor.screen.right = GetSystemMetrics(SM_CXSCREEN);
-			monitor.screen.bottom = GetSystemMetrics(SM_CYSCREEN);
-			if (SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0) == 0)  // failed
-			{
-				monitor.work = monitor.screen;
-			}
-
-			monitor.deviceName = L"DUMMY";
-			monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
-
-			monitors.push_back(monitor);
-
-			c_Monitors.primary = 1;
-		}
-	}
-
-	c_Monitors.UpdateLogicalMonitorInfo();
+	c_Monitors.UpdateSpans();
 
 	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(L"------------------------------");
-
-		std::wstring method = L"* METHOD: ";
-		if (c_Monitors.useEnumDisplayDevices)
-		{
-			method += L"EnumDisplayDevices + ";
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
-		}
-		else
-		{
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
-		}
-		LogDebug(method.c_str());
-
 		LogDebugF(L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
 		LogDebug(L"@0: Virtual screen");
-		LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
-			c_Monitors.vsW, c_Monitors.vsH);
+
+		const auto& vs = c_Monitors.virtualScreen;
+		LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)", vs.left, vs.top, vs.right, vs.bottom, vs.right - vs.left, vs.bottom - vs.top);
 
 		int i = 1;
 		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
@@ -371,53 +280,18 @@ void MonitorUtil::UpdateWorkareaInfo()
 		}
 	}
 
-	c_Monitors.UpdateLogicalMonitorInfo();
+	c_Monitors.UpdateSpans();
 }
 
-RECT MultiMonitorInfo::GetPhysicalVirtualScreenRect() const
-{
-	return { vsL, vsT, vsL + vsW, vsT + vsH };
-}
-
-RECT MultiMonitorInfo::GetLogicalVirtualScreenRect() const
-{
-	RECT rect = {};
-	bool first = true;
-	for (size_t i = 0; i < monitors.size(); ++i)
-	{
-		const auto& monitor = monitors[i];
-		if (!monitor.active) continue;
-
-		const RECT monitorRect = monitor.logicalScreen;
-		if (first)
-		{
-			rect = monitorRect;
-			first = false;
-		}
-		else
-		{
-			rect.left = min(rect.left, monitorRect.left);
-			rect.top = min(rect.top, monitorRect.top);
-			rect.right = max(rect.right, monitorRect.right);
-			rect.bottom = max(rect.bottom, monitorRect.bottom);
-		}
-	}
-
-	return rect;
-}
-
-void MultiMonitorInfo::UpdateLogicalMonitorInfo()
+void MultiMonitorInfo::UpdateSpans()
 {
 	horizontalSpans = CreateLogicalSpans(monitors, primary, true);
 	verticalSpans = CreateLogicalSpans(monitors, primary, false);
 
 	for (auto& monitor : monitors)
 	{
-		if (!monitor.active)
-		{
-			monitor.logicalScreen = {};
-			continue;
-		}
+		if (!monitor.active) continue;
+		if (monitor.logicalScreen.left != monitor.logicalScreen.right) continue;
 
 		const LONG left = ConvertPhysicalToLogical(monitor.screen.left, horizontalSpans);
 		const LONG top = ConvertPhysicalToLogical(monitor.screen.top, verticalSpans);

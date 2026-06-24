@@ -121,11 +121,11 @@ UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int
 	}
 
 	const int monitorX = x.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRectX = monitorX == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorX - 1].logicalScreen;
+	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
 	const int logicalX = x.ResolveLogicalPosition(parsedX, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
 	const int monitorY = y.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRectY = monitorY == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorY - 1].logicalScreen;
+	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
 	const int logicalY = y.ResolveLogicalPosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
 	UINT dpi = 0;

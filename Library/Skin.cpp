@@ -2045,11 +2045,11 @@ void Skin::ComputeOptionValueFromPosition()
 	const POINT logicalPos = monitorsInfo.PhysicalToLogical({ m_X.pos, m_Y.pos });
 
 	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRectX = monitorX == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorX - 1].logicalScreen;
+	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
 	m_X.UpdateOptionValue(logicalPos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
 	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
-	const RECT monitorRectY = monitorY == 0 ? monitorsInfo.GetLogicalVirtualScreenRect() : monitors[monitorY - 1].logicalScreen;
+	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
 	m_Y.UpdateOptionValue(logicalPos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 }
 
