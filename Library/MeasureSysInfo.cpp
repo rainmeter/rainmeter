@@ -356,45 +356,45 @@ void MeasureSysInfo::UpdateValue()
 		switch (m_Type)
 		{
 		case SysInfoType::SCREEN_WIDTH:
-			m_Value = monitor.ToLogical(monitor.screen.right - monitor.screen.left);
+			m_Value = monitor.logicalScreen.right - monitor.logicalScreen.left;
 			break;
 
 		case SysInfoType::SCREEN_HEIGHT:
-			m_Value = monitor.ToLogical(monitor.screen.bottom - monitor.screen.top);
+			m_Value = monitor.logicalScreen.bottom - monitor.logicalScreen.top;
 			break;
 
 		case SysInfoType::WORK_AREA_LEFT:
-			m_Value = monitor.ToLogical(monitor.work.left);
+			m_Value = monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_TOP:
-			m_Value = monitor.ToLogical(monitor.work.top);
+			m_Value = monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::WORK_AREA_WIDTH:
-			m_Value = monitor.ToLogical(monitor.work.right - monitor.work.left);
+			m_Value = monitor.logicalWork.right - monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_HEIGHT:
-			m_Value = monitor.ToLogical(monitor.work.bottom - monitor.work.top);
+			m_Value = monitor.logicalWork.bottom - monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_LEFT:
 			// NOTE(poiru): Checking SysInfoData here doesn't make any sense, but left it as-is for
 			// backwards compatibility.
-			m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.left) : monitorInfo.vsL;
+			m_Value = (m_Data > 0) ? monitor.logicalScreen.left : monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_TOP:
-			 m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.top) : monitorInfo.vsT;
+			 m_Value = (m_Data > 0) ? monitor.logicalScreen.top : monitorInfo.logicalVirtualScreen.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_WIDTH:
-			m_Value = monitorInfo.vsW;
+			m_Value = monitorInfo.logicalVirtualScreen.right - monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_HEIGHT:
-			m_Value = monitorInfo.vsH;
+			m_Value = monitorInfo.logicalVirtualScreen.bottom - monitorInfo.logicalVirtualScreen.top;
 			break;
 		}
 		return;

@@ -20,28 +20,22 @@ struct MonitorInfo
 	RECT screen;
 	RECT logicalScreen;
 	RECT work;
+	RECT logicalWork;
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
 	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
-
-	LONG ToLogical(LONG value) const;
-	RECT ToLogical(const RECT& rect) const;
 };
 
 struct MultiMonitorInfo
 {
-	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;		// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
 	int primary;							// Index of the primary monitor
 	std::vector<MonitorInfo> monitors;
 
+	RECT virtualScreen;
+	RECT logicalVirtualScreen;
+
 	void Clear();
 
-	RECT GetPhysicalVirtualScreenRect() const;
-	RECT GetLogicalVirtualScreenRect() const;
-
-	void UpdateLogicalMonitorInfo();
+	void UpdateSpans();
 	POINT PhysicalToLogical(POINT point) const;
 	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
 

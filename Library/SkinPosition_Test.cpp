@@ -293,7 +293,7 @@ private:
 		MultiMonitorInfo monitorInfo = {};
 		monitorInfo.primary = primary;
 		monitorInfo.monitors = std::move(monitors);
-		monitorInfo.UpdateLogicalMonitorInfo();
+		monitorInfo.UpdateSpans();
 		return monitorInfo;
 	}
 
