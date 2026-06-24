@@ -186,8 +186,11 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Reset any close action
 			c_CloseAction = { false, 0 };
 
-			c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-			GetWindowPlacement(m_Window, &c_WindowPlacement);
+			{
+				MonitorUtil::DpiUnawareScope dpiUnawareScope;
+				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
+				GetWindowPlacement(m_Window, &c_WindowPlacement);
+			}
 
 			delete c_Dialog;
 			c_Dialog = nullptr;
@@ -231,8 +234,13 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	if (c_WindowPlacement.length != 0)
 	{
-		const auto& pos = c_WindowPlacement.rcNormalPosition;
-		SetWindowPos(m_Window, nullptr, pos.left, pos.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
+		}
+
+		MonitorUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
 
 	return TRUE;
