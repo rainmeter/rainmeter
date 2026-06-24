@@ -55,8 +55,7 @@ jobs:
       - name: Build installer
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          cd Build
-          .\Build.ps1 installer $buildVersion
+          .\Build\Build.ps1 installer $buildVersion
         shell: pwsh
 
       - name: Upload installer
