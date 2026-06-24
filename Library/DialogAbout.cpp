@@ -152,7 +152,6 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				GetWindowPlacement(m_Window, &c_WindowPlacement);
 			}
 
-
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
