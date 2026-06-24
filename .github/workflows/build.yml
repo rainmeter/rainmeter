@@ -30,10 +30,10 @@ jobs:
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
-          name: BuildOut-${{ matrix.arch }}
+          name: BuildOut-Release${{ matrix.arch }}
           path: |
-            BuildOut
-            !BuildOut/*/Obj
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
           if-no-files-found: error
 
   installer:
@@ -43,11 +43,17 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Download 32-bit & 64-bit builds
+      - name: Download 32-bit build
         uses: actions/download-artifact@v8
         with:
-          pattern: BuildOut-*
-          path: BuildOut
+          name: BuildOut-Release32
+          path: BuildOut/Release32
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release64
+          path: BuildOut/Release64
 
       - name: Install NSIS
         uses: ./.github/actions/install-nsis
@@ -55,8 +61,7 @@ jobs:
       - name: Build installer
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          cd Build
-          .\Build.ps1 installer $buildVersion
+          .\Build\Build.ps1 installer $buildVersion
         shell: pwsh
 
       - name: Upload installer
