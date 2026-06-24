@@ -245,7 +245,14 @@ enum RmGetType
 	RMG_SKIN             = 1,
 	RMG_SETTINGSFILE     = 2,
 	RMG_SKINNAME         = 3,
-	RMG_SKINWINDOWHANDLE = 4
+	RMG_SKINWINDOWHANDLE = 4,
+
+	// Available in API version 2.
+	RMG_SKINSCALE        = 5,
+	RMG_APIVERSION       = 6,
+	RMG_SKINTRANSPARENCY = 7,
+	RMG_SKINCLICKTHROUGH = 8,
+	RMG_SKINDRAGGABLE    = 9,
 };
 
 /// <summary>
@@ -455,6 +462,52 @@ __inline LPCWSTR RmGetSkinName(void* rm)
 __inline HWND RmGetSkinWindow(void* rm)
 {
 	return (HWND)RmGet(rm, RMG_SKINWINDOWHANDLE);
+}
+
+/// <summary>
+/// Get the skin effective scale (window DPI + zoom). Skin units (e.g. width) should be multiplied by the scale to get the pixel size on the screen.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINSCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the Rainmeter plugin API version.
+/// </summary>
+__inline int RmApiVersion()
+{
+	static INT_PTR result = (INT_PTR)RmGet(NULL, RMG_APIVERSION);
+	return result ? (int)result : 1;
+}
+
+/// <summary>
+/// Get the skin transparency setting. See !SetTransparency bang docs for info.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 255.</remarks>
+__inline int RmGetSkinTransparency(void* rm)
+{
+	return RmApiVersion() >= 2 ? (int)(INT_PTR)RmGet(rm, RMG_SKINTRANSPARENCY) : 255;
+}
+
+/// <summary>
+/// Get the skin click through setting.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns false.</remarks>
+__inline bool RmGetSkinClickThrough(void* rm)
+{
+	return !!(INT_PTR)RmGet(rm, RMG_SKINCLICKTHROUGH);
+}
+
+/// <summary>
+/// Get the skin draggable setting.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns true.</remarks>
+__inline bool RmGetSkinDraggable(void* rm)
+{
+	return RmApiVersion() >= 2 ? !!(INT_PTR)RmGet(rm, RMG_SKINDRAGGABLE) : true;
 }
 
 /// <summary>

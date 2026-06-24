@@ -20,7 +20,7 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_UpdateFunc(),
 	m_GetStringFunc(),
 	m_ExecuteBangFunc(),
-	m_HandleScaleChangeFunc()
+	m_HandleSkinSettingChangeFunc()
 {
 	m_PluginData = nullptr;
 }
@@ -152,7 +152,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
-	m_HandleScaleChangeFunc = (HandleScaleChangeFunc)GetProcAddress(m_Plugin, "HandleScaleChange");;
+	m_HandleSkinSettingChangeFunc = (HandleSkinSettingChangeFunc)GetProcAddress(m_Plugin, "HandleSkinSettingChange");;
 
 	const WCHAR* pluginFileName = PathFindFileName(pluginName.c_str());
 
@@ -355,10 +355,10 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 	return false;
 }
 
-void MeasurePlugin::HandleScaleChange()
+void MeasurePlugin::HandleSkinSettingChange(RmGetType setting)
 {
-	if (m_HandleScaleChangeFunc)
+	if (m_HandleSkinSettingChangeFunc)
 	{
-		m_HandleScaleChangeFunc(m_PluginData);
+		m_HandleSkinSettingChangeFunc(m_PluginData, this, setting);
 	}
 }

@@ -323,6 +323,8 @@ private:
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
 	void ComputeOptionValueFromPosition();
 
+	void NotifyPluginsForSkinSettingChange(int setting);
+
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);

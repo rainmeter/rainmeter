@@ -26,7 +26,7 @@ bool IsMainThread()
 	return GetCurrentThreadId() == g_MainThreadId;
 }
 
-std::wstring& GetThreadLocalStringBuffer()
+std::wstring& GetThreadLocalBufferAsString()
 {
 	const auto threadId = GetCurrentThreadId();
 	if (threadId == g_MainThreadId)
@@ -42,6 +42,13 @@ std::wstring& GetThreadLocalStringBuffer()
 	}
 
 	return *threadBuffer;
+}
+
+float* GetThreadLocalBufferAsFloat()
+{
+	auto& threadBuffer = GetThreadLocalBufferAsString();
+	threadBuffer.resize(sizeof(float) / sizeof(WCHAR));
+	return (float*)&threadBuffer[0];
 }
 
 enum RmExportType
@@ -229,7 +236,7 @@ LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 {
 	if (!IsMainThread())
 	{
-		RmReplaceVariablesMessageParams params = { rm, str, &GetThreadLocalStringBuffer() };
+		RmReplaceVariablesMessageParams params = { rm, str, &GetThreadLocalBufferAsString() };
 		SendExportSyncMessage(EXPORT_REPLACE_VARIABLES, &params);
 		return params.resultBuffer->c_str();
 	}
@@ -238,7 +245,7 @@ LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
-	auto& threadBuffer = GetThreadLocalStringBuffer();
+	auto& threadBuffer = GetThreadLocalBufferAsString();
 	threadBuffer = str;
 	parser.ReplaceVariables(threadBuffer);
 	parser.ReplaceMeasures(threadBuffer);
@@ -249,7 +256,7 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
 	if (!IsMainThread())
 	{
-		RmPathToAbsoluteMessageParams params = { rm, relativePath, &GetThreadLocalStringBuffer() };
+		RmPathToAbsoluteMessageParams params = { rm, relativePath, &GetThreadLocalBufferAsString() };
 		SendExportSyncMessage(EXPORT_PATH_TO_ABSOLUTE, &params);
 		return params.resultBuffer->c_str();
 	}
@@ -257,7 +264,7 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 	NULLCHECK(relativePath);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	auto& threadBuffer = GetThreadLocalStringBuffer();
+	auto& threadBuffer = GetThreadLocalBufferAsString();
 	threadBuffer = relativePath;
 	measure->GetSkin()->MakePathAbsolute(threadBuffer);
 	return threadBuffer.c_str();
@@ -293,6 +300,25 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SKINWINDOWHANDLE:
 			return (void*)measure->GetSkin()->GetWindow();
+
+	case RMG_SKINSCALE:
+		{
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetScale();
+			return buffer;
+		}
+
+	case RMG_SKINTRANSPARENCY:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetAlphaValue());
+
+	case RMG_SKINCLICKTHROUGH:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetClickThrough() ? 1 : 0);
+
+	case RMG_SKINDRAGGABLE:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetWindowDraggable() ? 1 : 0);
+
+	case RMG_APIVERSION:
+		return (void*)(INT_PTR)2;
 	}
 
 	return nullptr;
@@ -379,7 +405,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	NULLCHECK(data);
 
-	auto& threadBuffer = GetThreadLocalStringBuffer();
+	auto& threadBuffer = GetThreadLocalBufferAsString();
 
 	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
@@ -405,7 +431,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 			Skin* skin = GetRainmeter().GetSkin(config);
 			if (skin)
 			{
-				auto& threadBuffer = GetThreadLocalStringBuffer();
+				auto& threadBuffer = GetThreadLocalBufferAsString();
 				WCHAR buf1[64] = { 0 };
 				_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(skin->GetWindow()));
 				threadBuffer = buf1;
@@ -427,7 +453,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 			{
 				const std::wstring& variable = subStrings[1];
 
-				auto& threadBuffer = GetThreadLocalStringBuffer();
+				auto& threadBuffer = GetThreadLocalBufferAsString();
 				if (skin->GetParser().GetVariable(variable, threadBuffer))
 				{
 					return threadBuffer.c_str();
