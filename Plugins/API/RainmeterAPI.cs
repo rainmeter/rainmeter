@@ -85,10 +85,12 @@ namespace Rainmeter
 
             // Available in API version 2.
             SkinScale = 5,
-            ApiVersion = 6,
-            SkinTransparency = 7,
-            SkinClickThrough = 8,
-            SkinDraggable = 9
+            SkinDpiScale = 6,
+            SkinZoomScale = 7,
+            ApiVersion = 8,
+            SkinTransparency = 9,
+            SkinClickThrough = 10,
+            SkinDraggable = 11
         }
 
         public enum LogType
@@ -442,6 +444,26 @@ namespace Rainmeter
         public float GetSkinScale()
         {
             IntPtr scale = RmGet(m_Rm, RmGetType.SkinScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin window DPI scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinDpiScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinDpiScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin zoom scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinZoomScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinZoomScale);
             return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
         }
 

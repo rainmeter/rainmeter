@@ -45,7 +45,8 @@ public:
 	bool IsDpiAware() const { return m_HandleSkinSettingChangeFunc != nullptr; }
 	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 
-	void HandleSkinSettingChange(RmGetType setting);
+	static void HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting);
+	void HandleSkinSettingChange(RmSkinSettingChange setting);
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
@@ -79,7 +80,7 @@ private:
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
 
-	typedef void (*HandleSkinSettingChangeFunc)(void*, void*, RmGetType);
+	typedef void (*HandleSkinSettingChangeFunc)(void*, void*, RmSkinSettingChange);
 	HandleSkinSettingChangeFunc m_HandleSkinSettingChangeFunc;
 };
 

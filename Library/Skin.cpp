@@ -697,7 +697,7 @@ void Skin::UpdateWindowDpi(UINT dpi)
 		Measure::RemoveTrailingZero(buffer, len);
 		m_Parser.SetBuiltInVariable(L"CURRENTCONFIGSCALE", buffer);
 
-		NotifyPluginsForSkinSettingChange(RMG_SKINSCALE);
+		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Scale);
 	}
 }
 
@@ -763,18 +763,6 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
 	y = max(y, r.top);
-}
-
-void Skin::NotifyPluginsForSkinSettingChange(int setting)
-{
-	for (auto* measure : m_Measures)
-	{
-		if (measure->GetTypeID() == TypeID<MeasurePlugin>())
-		{
-			MeasurePlugin* plugin = (MeasurePlugin*)measure;
-			plugin->HandleSkinSettingChange((RmGetType)setting);
-		}
-	}
 }
 
 /*
@@ -3280,7 +3268,7 @@ void Skin::UpdateWindowTransparency(int alpha)
 
 	if (changed)
 	{
-		NotifyPluginsForSkinSettingChange(RMG_SKINTRANSPARENCY);
+		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Transparency);
 	}
 }
 
@@ -4097,7 +4085,7 @@ void Skin::SetClickThrough(bool b)
 
 	if (changed)
 	{
-		NotifyPluginsForSkinSettingChange(RMG_SKINCLICKTHROUGH);
+		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::ClickThrough);
 	}
 }
 
@@ -4143,7 +4131,7 @@ void Skin::SetWindowDraggable(bool b)
 
 	if (changed)
 	{
-		NotifyPluginsForSkinSettingChange(RMG_SKINDRAGGABLE);
+		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Draggable);
 	}
 }
 

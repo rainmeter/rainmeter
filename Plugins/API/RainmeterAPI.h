@@ -8,6 +8,8 @@
 #ifndef __RAINMETERAPI_H__
 #define __RAINMETERAPI_H__
 
+#include <stdint.h>
+
 #ifdef LIBRARY_EXPORTS
 #define LIBRARY_EXPORT EXTERN_C
 #else
@@ -249,10 +251,20 @@ enum RmGetType
 
 	// Available in API version 2.
 	RMG_SKINSCALE        = 5,
-	RMG_APIVERSION       = 6,
-	RMG_SKINTRANSPARENCY = 7,
-	RMG_SKINCLICKTHROUGH = 8,
-	RMG_SKINDRAGGABLE    = 9,
+	RMG_SKINDPISCALE     = 6,
+	RMG_SKINZOOMSCALE    = 7,
+	RMG_APIVERSION       = 8,
+	RMG_SKINTRANSPARENCY = 9,
+	RMG_SKINCLICKTHROUGH = 10,
+	RMG_SKINDRAGGABLE    = 11,
+};
+
+enum class RmSkinSettingChange : uint8_t
+{
+	Scale = 0,
+	Transparency = 1,
+	ClickThrough = 2,
+	Draggable = 3,
 };
 
 /// <summary>
@@ -471,6 +483,26 @@ __inline HWND RmGetSkinWindow(void* rm)
 __inline float RmGetSkinScale(void* rm)
 {
 	float* result = (float*)RmGet(rm, RMG_SKINSCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the skin window DPI scale.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinDpiScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINDPISCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the skin zoom scale.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinZoomScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINZOOMSCALE);
 	return result ? *result : 1.0f;
 }
 
