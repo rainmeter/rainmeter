@@ -42,9 +42,10 @@ public:
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
-	bool IsDpiAware() const { return m_HandleScaleChangeFunc != nullptr; }
+	bool IsDpiAware() const { return m_HandleSkinSettingChangeFunc != nullptr; }
 	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
-	void HandleScaleChange();
+
+	void HandleSkinSettingChange(RmGetType setting);
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
@@ -78,8 +79,8 @@ private:
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
 
-	typedef void (*HandleScaleChangeFunc)(void*);
-	HandleScaleChangeFunc m_HandleScaleChangeFunc;
+	typedef void (*HandleSkinSettingChangeFunc)(void*, void*, RmGetType);
+	HandleSkinSettingChangeFunc m_HandleSkinSettingChangeFunc;
 };
 
 #endif

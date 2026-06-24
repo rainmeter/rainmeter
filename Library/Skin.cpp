@@ -697,14 +697,7 @@ void Skin::UpdateWindowDpi(UINT dpi)
 		Measure::RemoveTrailingZero(buffer, len);
 		m_Parser.SetBuiltInVariable(L"CURRENTCONFIGSCALE", buffer);
 
-		for (auto* measure : m_Measures)
-		{
-			if (measure->GetTypeID() == TypeID<MeasurePlugin>())
-			{
-				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				plugin->HandleScaleChange();
-			}
-		}
+		NotifyPluginsForSkinSettingChange(RMG_SKINSCALE);
 	}
 }
 
@@ -770,6 +763,18 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
 	y = max(y, r.top);
+}
+
+void Skin::NotifyPluginsForSkinSettingChange(int setting)
+{
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+			plugin->HandleSkinSettingChange((RmGetType)setting);
+		}
+	}
 }
 
 /*
@@ -3267,9 +3272,16 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 */
 void Skin::UpdateWindowTransparency(int alpha)
 {
+	const bool changed = m_TransparencyValue != alpha;
+	m_TransparencyValue = alpha;
+
 	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
-	m_TransparencyValue = alpha;
+
+	if (changed)
+	{
+		NotifyPluginsForSkinSettingChange(RMG_SKINTRANSPARENCY);
+	}
 }
 
 /*
@@ -4067,6 +4079,8 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SetClickThrough(bool b)
 {
+	const bool changed = m_ClickThrough != b;
+
 	m_ClickThrough = b;
 	WriteOptions(OPTION_CLICKTHROUGH);
 
@@ -4079,6 +4093,11 @@ void Skin::SetClickThrough(bool b)
 	if (m_MouseOver)
 	{
 		SetMouseLeaveEvent(m_ClickThrough);
+	}
+
+	if (changed)
+	{
+		NotifyPluginsForSkinSettingChange(RMG_SKINCLICKTHROUGH);
 	}
 }
 
@@ -4118,8 +4137,14 @@ void Skin::SetFavorite(bool b)
 
 void Skin::SetWindowDraggable(bool b)
 {
+	const bool changed = m_WindowDraggable != b;
 	m_WindowDraggable = b;
 	WriteOptions(OPTION_DRAGGABLE);
+
+	if (changed)
+	{
+		NotifyPluginsForSkinSettingChange(RMG_SKINDRAGGABLE);
+	}
 }
 
 void Skin::SetSavePosition(bool b)
