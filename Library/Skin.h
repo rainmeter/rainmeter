@@ -145,7 +145,7 @@ public:
 	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
 
 	void MoveWindow(int x, int y);
-	void MoveSelectedWindow(int dx, int dy);
+	void MoveSelectedWindow(int dx, int dy, bool savePosition = true);
 	bool IsSelected() const { return m_SelectionOverlay != nullptr; }
 	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
 	void Select();

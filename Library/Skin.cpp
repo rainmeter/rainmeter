@@ -42,9 +42,10 @@ enum TIMER
 	TIMER_FADE       = 3,
 	TIMER_TRANSITION = 4,
 	TIMER_DEACTIVATE = 5,
+	TIMER_NUDGE_SAVE = 6,
 
 	// Update this when adding a new timer.
-	TIMER_MAX        = 5
+	TIMER_MAX        = 6
 };
 
 enum INTERVAL
@@ -52,7 +53,8 @@ enum INTERVAL
 	INTERVAL_METER      = 1000,
 	INTERVAL_MOUSE      = 500,
 	INTERVAL_FADE       = 10,
-	INTERVAL_TRANSITION = 100
+	INTERVAL_TRANSITION = 100,
+	INTERVAL_NUDGE_SAVE = 250
 };
 
 int Skin::c_InstanceCount = 0;
@@ -207,6 +209,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
+	KillTimer(m_Window, TIMER_NUDGE_SAVE);
 
 	m_FadeStartTime = 0ULL;
 
@@ -780,9 +783,13 @@ void Skin::MoveWindow(int x, int y)
 	SavePositionIfAppropriate();
 }
 
-void Skin::MoveSelectedWindow(int dx, int dy)
+void Skin::MoveSelectedWindow(int dx, int dy, bool savePosition)
 {
-	MoveWindow(m_X.pos + dx, m_Y.pos + dy);
+	SetWindowPos(m_Window, nullptr, m_X.pos + dx, m_Y.pos + dy, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	if (savePosition)
+	{
+		SavePositionIfAppropriate();
+	}
 }
 
 void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups)
@@ -3414,6 +3421,11 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case TIMER_NUDGE_SAVE:
+		KillTimer(m_Window, TIMER_NUDGE_SAVE);
+		SavePositionIfAppropriate();
+		break;
+
 	default:
 		{
 			auto it = m_DelayedCommands.find(wParam);
@@ -5204,7 +5216,8 @@ LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Skin* skin = skins.second;
 			if (skin->IsSelected())
 			{
-				skin->MoveSelectedWindow(newX, newY);
+				skin->MoveSelectedWindow(newX, newY, false);
+				SetTimer(skin->m_Window, TIMER_NUDGE_SAVE, INTERVAL_NUDGE_SAVE, nullptr);
 			}
 		}
 
