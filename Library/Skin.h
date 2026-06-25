@@ -13,13 +13,12 @@
 #include "Group.h"
 #include "Mouse.h"
 #include "SkinPosition.h"
-#include "SkinZoomDrag.h"
 #include "../Common/Gfx/Canvas.h"
 
-#define BEGIN_MESSAGEPROC switch (uMsg) {
-#define MESSAGE(handler, msg) case msg: return skin->handler(uMsg, wParam, lParam);
+#define BEGIN_MESSAGEPROC if (instance) { switch (uMsg) {
+#define MESSAGE(handler, msg) case msg: return instance->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
-#define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define END_MESSAGEPROC } } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
 #define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
@@ -89,6 +88,7 @@ class Rainmeter;
 class Measure;
 class Meter;
 class GeneralImage;
+class SkinSelectionOverlay;
 
 namespace Gfx {
 class FontCollection;
@@ -146,7 +146,7 @@ public:
 
 	void MoveWindow(int x, int y);
 	void MoveSelectedWindow(int dx, int dy);
-	bool IsSelected() { return m_Selected; }
+	bool IsSelected() const { return m_SelectionOverlay != nullptr; }
 	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
 	void Select();
 	void Deselect();
@@ -229,6 +229,7 @@ public:
 
 	friend class DialogManage;
 	friend class Rainmeter;
+	friend class SkinSelectionOverlay;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -347,10 +348,6 @@ private:
 	void SetSnapEdges(bool b);
 	void ApplyZoom(float zoom, bool writeOptions);
 	void SetZoom(float zoom);
-	int HitTestZoomDrag(POINT screenPos) const;
-	bool SetZoomDragCursor(int hit);
-	void ApplyZoomDrag();
-	void CommitZoomDrag();
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
@@ -393,6 +390,7 @@ private:
 
 	HWND m_HostWindow;
 	HWND m_Window;
+	std::unique_ptr<SkinSelectionOverlay> m_SelectionOverlay;
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
 	Mouse m_Mouse;
@@ -453,7 +451,6 @@ private:
 	bool m_DragStartValid;
 	POINT m_DragStartCursor;
 	POINT m_DragStartWindowPos;
-	std::unique_ptr<SkinZoomDrag> m_ZoomDrag;
 	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
@@ -468,7 +465,6 @@ private:
 	bool m_OldKeepOnScreen;
 	bool m_OldClickThrough;
 
-	bool m_Selected;
 	D2D1_COLOR_F m_SelectedColor;
 
 	Group m_DragGroup;
