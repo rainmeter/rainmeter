@@ -9,7 +9,6 @@
 #define RM_LIBRARY_SKINSELECTIONOVERLAY_H_
 
 class Skin;
-class SkinZoomDrag;
 
 class SkinSelectionOverlay
 {
@@ -37,6 +36,28 @@ private:
 	void ApplyZoomDrag();
 	void CommitZoomDrag();
 
+	struct ZoomDragResult
+	{
+		float zoom = 1.0f;
+		float zoomDelta = 0.0f;
+		int deltaX = 0;
+		int deltaY = 0;
+		bool changed = false;
+		bool positionChanged = false;
+	};
+
+	ZoomDragResult UpdateZoomDrag(POINT screenPos, int windowW, int windowH, float dpiScale, float currentZoom, POINT currentPos);
+
+	struct ZoomDragState
+	{
+		int initialHit = HTCLIENT;
+		RECT startRect = {};
+		POINT startPoint = {};
+		float startZoom = 1.0f;
+		bool moved = false;
+		bool positionChanged = false;
+	};
+
 	struct ZoomDragStartState
 	{
 		Skin* skin = nullptr;
@@ -46,7 +67,7 @@ private:
 
 	Skin* m_Skin;
 	HWND m_Window;
-	std::unique_ptr<SkinZoomDrag> m_ZoomDrag;
+	std::optional<ZoomDragState> m_ZoomDrag;
 	std::vector<ZoomDragStartState> m_ZoomDragStartStates;
 };
 

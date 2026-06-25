@@ -8,15 +8,123 @@
 #include "StdAfx.h"
 #include "Skin.h"
 #include "SkinSelectionOverlay.h"
-#include "SkinZoomDrag.h"
 #include "Rainmeter.h"
 #include "System.h"
 
 const WCHAR* g_ClassName = L"RainmeterSkinSelectionOverlay";
 
 const int g_DashLength = 6;
-const int g_DashGap = 4;
 const int g_DashThickness = 2;
+const int g_ZoomDragMinPercent = 10;
+const int g_ZoomDragMaxPercent = 500;
+const int g_ZoomDragEdgeSize = 10;
+const int g_ZoomDragCornerSize = 20;
+
+static bool IsLeftHit(int hit)
+{
+	return hit == HTLEFT || hit == HTTOPLEFT || hit == HTBOTTOMLEFT;
+}
+
+static bool IsRightHit(int hit)
+{
+	return hit == HTRIGHT || hit == HTTOPRIGHT || hit == HTBOTTOMRIGHT;
+}
+
+static bool IsTopHit(int hit)
+{
+	return hit == HTTOP || hit == HTTOPLEFT || hit == HTTOPRIGHT;
+}
+
+static bool IsBottomHit(int hit)
+{
+	return hit == HTBOTTOM || hit == HTBOTTOMLEFT || hit == HTBOTTOMRIGHT;
+}
+
+static HCURSOR GetZoomDragCursorForHit(int hit)
+{
+	switch (hit)
+	{
+	case HTLEFT:
+	case HTRIGHT:
+		return LoadCursor(nullptr, IDC_SIZEWE);
+
+	case HTTOP:
+	case HTBOTTOM:
+		return LoadCursor(nullptr, IDC_SIZENS);
+
+	case HTTOPLEFT:
+	case HTBOTTOMRIGHT:
+		return LoadCursor(nullptr, IDC_SIZENWSE);
+
+	case HTTOPRIGHT:
+	case HTBOTTOMLEFT:
+		return LoadCursor(nullptr, IDC_SIZENESW);
+	}
+
+	return nullptr;
+}
+
+static int HitTestZoomDragRect(const RECT& rect, POINT screenPos)
+{
+	if (!PtInRect(&rect, screenPos)) return HTCLIENT;
+
+	const auto w = rect.right - rect.left;
+	const auto h = rect.bottom - rect.top;
+	const int edgeX = min(g_ZoomDragEdgeSize, max(1, w / 2));
+	const int edgeY = min(g_ZoomDragEdgeSize, max(1, h / 2));
+	const int cornerX = min(g_ZoomDragCornerSize, max(1, w / 2));
+	const int cornerY = min(g_ZoomDragCornerSize, max(1, h / 2));
+	const int leftDistance = screenPos.x - rect.left;
+	const int rightDistance = rect.right - screenPos.x - 1;
+	const int topDistance = screenPos.y - rect.top;
+	const int bottomDistance = rect.bottom - screenPos.y - 1;
+
+	bool left = leftDistance < edgeX;
+	bool right = rightDistance < edgeX;
+	bool top = topDistance < edgeY;
+	bool bottom = bottomDistance < edgeY;
+
+	if (left && right)
+	{
+		if (leftDistance <= rightDistance)
+		{
+			right = false;
+		}
+		else
+		{
+			left = false;
+		}
+	}
+
+	if (top && bottom)
+	{
+		if (topDistance <= bottomDistance)
+		{
+			bottom = false;
+		}
+		else
+		{
+			top = false;
+		}
+	}
+
+	const bool nearLeftCorner = leftDistance < cornerX;
+	const bool nearRightCorner = rightDistance < cornerX;
+	const bool nearTopCorner = topDistance < cornerY;
+	const bool nearBottomCorner = bottomDistance < cornerY;
+
+	if ((left || top) && nearLeftCorner && nearTopCorner && leftDistance <= rightDistance && topDistance <= bottomDistance) return HTTOPLEFT;
+	if ((right || top) && nearRightCorner && nearTopCorner && rightDistance < leftDistance && topDistance <= bottomDistance) return HTTOPRIGHT;
+	if ((left || bottom) && nearLeftCorner && nearBottomCorner && leftDistance <= rightDistance && bottomDistance < topDistance) return HTBOTTOMLEFT;
+	if ((right || bottom) && nearRightCorner && nearBottomCorner && rightDistance < leftDistance && bottomDistance < topDistance) return HTBOTTOMRIGHT;
+
+	if (left) return HTLEFT;
+	if (right) return HTRIGHT;
+	if (top) return HTTOP;
+	if (bottom) return HTBOTTOM;
+
+	return HTCLIENT;
+}
 
 static BYTE ColorToByte(float value)
 {
@@ -187,12 +295,12 @@ int SkinSelectionOverlay::HitTestZoomDrag(POINT screenPos) const
 		return HTCLIENT;
 	}
 
-	return SkinZoomDrag::HitTest(m_Skin->GetPhysicalWindowBounds(), screenPos);
+	return HitTestZoomDragRect(m_Skin->GetPhysicalWindowBounds(), screenPos);
 }
 
 bool SkinSelectionOverlay::SetZoomDragCursor(int hit)
 {
-	HCURSOR cursor = SkinZoomDrag::GetCursorForHit(hit);
+	HCURSOR cursor = GetZoomDragCursorForHit(hit);
 	if (!cursor) return false;
 
 	SetCursor(cursor);
@@ -201,7 +309,7 @@ bool SkinSelectionOverlay::SetZoomDragCursor(int hit)
 
 void SkinSelectionOverlay::BeginZoomDrag(int hit, POINT screenPos)
 {
-	m_ZoomDrag = std::make_unique<SkinZoomDrag>(hit, m_Skin->GetPhysicalWindowBounds(), screenPos, m_Skin->m_ZoomScale);
+	m_ZoomDrag = ZoomDragState{ hit, m_Skin->GetPhysicalWindowBounds(), screenPos, m_Skin->m_ZoomScale };
 	m_ZoomDragStartStates.clear();
 
 	for (const auto& skins : GetRainmeter().GetAllSkins())
@@ -214,12 +322,95 @@ void SkinSelectionOverlay::BeginZoomDrag(int hit, POINT screenPos)
 	}
 }
 
+SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT screenPos, int windowW, int windowH, float dpiScale, float currentZoom, POINT currentPos)
+{
+	const int startW = max(1, m_ZoomDrag->startRect.right - m_ZoomDrag->startRect.left);
+	const int startH = max(1, m_ZoomDrag->startRect.bottom - m_ZoomDrag->startRect.top);
+	const bool horizontal = IsLeftHit(m_ZoomDrag->initialHit) || IsRightHit(m_ZoomDrag->initialHit);
+	const bool vertical = IsTopHit(m_ZoomDrag->initialHit) || IsBottomHit(m_ZoomDrag->initialHit);
+
+	int draggedW = startW;
+	int draggedH = startH;
+	const int dx = screenPos.x - m_ZoomDrag->startPoint.x;
+	const int dy = screenPos.y - m_ZoomDrag->startPoint.y;
+
+	if (IsLeftHit(m_ZoomDrag->initialHit))
+	{
+		draggedW = startW - dx;
+	}
+	else if (IsRightHit(m_ZoomDrag->initialHit))
+	{
+		draggedW = startW + dx;
+	}
+
+	if (IsTopHit(m_ZoomDrag->initialHit))
+	{
+		draggedH = startH - dy;
+	}
+	else if (IsBottomHit(m_ZoomDrag->initialHit))
+	{
+		draggedH = startH + dy;
+	}
+
+	draggedW = max(1, draggedW);
+	draggedH = max(1, draggedH);
+
+	float zoom = m_ZoomDrag->startZoom;
+	if (horizontal && vertical)
+	{
+		const float widthRatio = (float)draggedW / (float)startW;
+		const float heightRatio = (float)draggedH / (float)startH;
+		zoom *= (fabsf(widthRatio - 1.0f) >= fabsf(heightRatio - 1.0f)) ? widthRatio : heightRatio;
+	}
+	else if (horizontal)
+	{
+		zoom *= (float)draggedW / (float)startW;
+	}
+	else if (vertical)
+	{
+		zoom *= (float)draggedH / (float)startH;
+	}
+
+	zoom = max((float)g_ZoomDragMinPercent / 100.0f, min((float)g_ZoomDragMaxPercent / 100.0f, zoom));
+	zoom = floorf(zoom * 100.0f + 0.5f) / 100.0f;
+
+	int x = m_ZoomDrag->startRect.left;
+	int y = m_ZoomDrag->startRect.top;
+
+	if (IsLeftHit(m_ZoomDrag->initialHit))
+	{
+		const int widthAtZoom = (int)((float)windowW * dpiScale * zoom);
+		x = m_ZoomDrag->startRect.right - widthAtZoom;
+	}
+	if (IsTopHit(m_ZoomDrag->initialHit))
+	{
+		const int heightAtZoom = (int)((float)windowH * dpiScale * zoom);
+		y = m_ZoomDrag->startRect.bottom - heightAtZoom;
+	}
+
+	ZoomDragResult result;
+	result.zoom = zoom;
+	result.zoomDelta = zoom - m_ZoomDrag->startZoom;
+	result.deltaX = m_ZoomDrag->startRect.left - x;
+	result.deltaY = m_ZoomDrag->startRect.top - y;
+	result.positionChanged = (currentPos.x + result.deltaX) != m_ZoomDrag->startRect.left || (currentPos.y + result.deltaY) != m_ZoomDrag->startRect.top;
+	result.changed = fabsf(currentZoom - zoom) > 0.0001f || currentPos.x != x || currentPos.y != y;
+
+	if (result.changed)
+	{
+		m_ZoomDrag->moved = true;
+		m_ZoomDrag->positionChanged = m_ZoomDrag->positionChanged || result.positionChanged;
+	}
+
+	return result;
+}
+
 void SkinSelectionOverlay::ApplyZoomDrag()
 {
 	if (!m_ZoomDrag) return;
 
 	POINT pos = { m_Skin->m_X.pos, m_Skin->m_Y.pos };
-	const auto& result = m_ZoomDrag->Update(System::GetCursorPosition(), m_Skin->m_WindowW, m_Skin->m_WindowH, m_Skin->m_DpiScale, m_Skin->m_ZoomScale, pos);
+	const auto& result = UpdateZoomDrag(System::GetCursorPosition(), m_Skin->m_WindowW, m_Skin->m_WindowH, m_Skin->m_DpiScale, m_Skin->m_ZoomScale, pos);
 	if (!result.changed) return;
 
 	for (const auto& state : m_ZoomDragStartStates)
@@ -234,13 +425,13 @@ void SkinSelectionOverlay::CommitZoomDrag()
 {
 	if (!m_ZoomDrag) return;
 
-	if (m_ZoomDrag->HasMoved())
+	if (m_ZoomDrag->moved)
 	{
 		for (const auto& state : m_ZoomDragStartStates)
 		{
 			state.skin->WriteOptions(Skin::OPTION_ZOOM);
 
-			if (m_ZoomDrag->HasPositionChanged())
+			if (m_ZoomDrag->positionChanged)
 			{
 				state.skin->SavePositionIfAppropriate();
 			}
@@ -283,12 +474,12 @@ LRESULT SkinSelectionOverlay::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lPara
 	if (m_ZoomDrag)
 	{
 		ApplyZoomDrag();
-		SetZoomDragCursor(m_ZoomDrag->GetInitialHit());
+		SetZoomDragCursor(m_ZoomDrag->initialHit);
 	}
 	else
 	{
 		const int hit =
-			(uMsg == WM_NCMOUSEMOVE && SkinZoomDrag::GetCursorForHit((int)wParam)) ?
+			(uMsg == WM_NCMOUSEMOVE && GetZoomDragCursorForHit((int)wParam)) ?
 			(int)wParam :
 			HitTestZoomDrag(System::GetCursorPosition());
 		if (!SetZoomDragCursor(hit))
@@ -303,7 +494,7 @@ LRESULT SkinSelectionOverlay::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM 
 {
 	POINT screenPos = System::GetCursorPosition();
 	const int zoomDragHitTest =
-		(uMsg == WM_NCLBUTTONDOWN && SkinZoomDrag::GetCursorForHit((int)wParam)) ?
+		(uMsg == WM_NCLBUTTONDOWN && GetZoomDragCursorForHit((int)wParam)) ?
 		(int)wParam :
 		HitTestZoomDrag(screenPos);
 	if (zoomDragHitTest != HTCLIENT)
