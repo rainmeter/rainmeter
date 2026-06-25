@@ -78,7 +78,7 @@ jobs:
           artifact-configuration-slug: 'zip'
           github-artifact-id: '${{ steps.upload-build.outputs.artifact-id }}'
           wait-for-completion: true
-          output-artifact-directory: .
+          output-artifact-directory: BuildOut
 
       - name: Install NSIS
         uses: ./.github/actions/install-nsis
