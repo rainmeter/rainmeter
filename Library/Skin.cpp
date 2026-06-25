@@ -2201,6 +2201,11 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 */
 void Skin::WriteOptions(INT setting)
 {
+	if (setting & OPTION_POSITION)
+	{
+		ComputeOptionValueFromPosition();
+	}
+
 	if (IsSelected())
 	{
 		m_PendingWriteOptions |= setting;
@@ -2234,9 +2239,6 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_POSITION)
 		{
-			ComputeOptionValueFromPosition();
-
-			// If position needs to be save, do so.
 			if (m_SavePosition)
 			{
 				WritePrivateProfileString(section, L"WindowX", m_X.option.c_str(), iniFile);
