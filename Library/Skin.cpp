@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "Skin.h"
+#include "SkinSelectionOverlay.h"
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
@@ -71,6 +72,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_BackgroundSize(),
 	m_HostWindow(),
 	m_Window(),
+	m_SelectionOverlay(),
 	m_SuspendResumeNotification(nullptr),
 	m_Mouse(this),
 	m_MouseOver(false),
@@ -122,7 +124,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_OldWindowDraggable(false),
 	m_OldKeepOnScreen(false),
 	m_OldClickThrough(false),
-	m_Selected(false),
 	m_SelectedColor(GetRainmeter().GetDefaultSelectionColor()),
 	m_DragGroup(),
 	m_Blur(false),
@@ -251,6 +252,8 @@ void Skin::Dispose(bool refresh)
 
 	if (!refresh)
 	{
+		m_SelectionOverlay.reset();
+
 		if (m_Window) DestroyWindow(m_Window);
 		m_Window = nullptr;
 
@@ -663,6 +666,8 @@ void Skin::RepositionAndResizeWindow()
 		GetPhysicalWindowH(),
 		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
+	if (m_SelectionOverlay) m_SelectionOverlay->Update();
+
 	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
 	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
 	// prevent D2D from erorring out.
@@ -772,22 +777,12 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 void Skin::MoveWindow(int x, int y)
 {
 	SetWindowPos(m_Window, nullptr, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-
 	SavePositionIfAppropriate();
 }
 
 void Skin::MoveSelectedWindow(int dx, int dy)
 {
-	SetWindowPos(
-		m_Window,
-		nullptr,
-		m_X.pos + dx,
-		m_Y.pos + dy,
-		0,
-		0,
-		SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-
-	SavePositionIfAppropriate();
+	MoveWindow(m_X.pos + dx, m_Y.pos + dy);
 }
 
 void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups)
@@ -804,7 +799,9 @@ void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& gr
 
 void Skin::Select()
 {
-	m_Selected = true;
+	if (IsSelected()) return;
+
+	m_SelectionOverlay = std::make_unique<SkinSelectionOverlay>(this);
 
 	// When a skin is selected, it is implied that the purpose is to
 	// move a skin(s) around the desktop, so temporarily set the following
@@ -825,7 +822,9 @@ void Skin::Select()
 
 void Skin::Deselect()
 {
-	m_Selected = false;
+	if (!IsSelected()) return;
+
+	m_SelectionOverlay.reset();
 
 	// Reset the following options to their original state
 	SetWindowDraggable(m_OldWindowDraggable);
@@ -2949,12 +2948,6 @@ void Skin::Redraw()
 				meter->Draw(m_Canvas);
 			}
 		}
-
-		if (m_Selected)
-		{
-			D2D1_RECT_F rect = D2D1::RectF(0.0f, 0.0f, (FLOAT)m_WindowW, (FLOAT)m_WindowH);
-			m_Canvas.FillRectangle(rect, m_SelectedColor);
-		}
 	}
 
 	m_Canvas.ResetTransform();
@@ -3677,11 +3670,7 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 
 LRESULT Skin::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_ZoomDrag && SetZoomDragCursor(m_ZoomDrag->GetInitialHit()))
-	{
-		return TRUE;
-	}
-
+	// Do nothing without calling DefWindowProc.
 	return 0;
 }
 
@@ -3703,13 +3692,6 @@ LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_ZoomDrag)
-	{
-		ApplyZoomDrag();
-		SetZoomDragCursor(m_ZoomDrag->GetInitialHit());
-		return 0;
-	}
-
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
 	if (!keyDown)
@@ -3749,14 +3731,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// If the skin is selected, do not process any mouse 'move' actions
-	if (m_Selected)
-	{
-		if (!SetZoomDragCursor(HitTestZoomDrag(System::GetCursorPosition())))
-		{
-			SetCursor(LoadCursor(nullptr, IDC_ARROW));
-		}
-		return 0;
-	}
+	if (IsSelected()) return 0;
 
 	if (!m_ClickThrough || keyDown || m_MouseMeasureCapture)
 	{
@@ -3777,7 +3752,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// If the skin is selected, do not process any mouse 'leave' actions
-	if (m_Selected) return 0;
+	if (IsSelected()) return 0;
 
 	POINT pos = System::GetCursorPosition();
 	HWND hWnd = WindowFromPoint(pos);
@@ -3797,7 +3772,7 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// If the skin is selected, do not process mouse 'scroll' actions
-	if (m_Selected) return 0;
+	if (IsSelected()) return 0;
 
 	const auto forwardedFromInputMessage = uMsg == WM_INPUT;
 	uMsg = WM_MOUSEWHEEL;
@@ -3819,7 +3794,7 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// If the skin is selected, do not process mouse 'horizontal scroll' actions
-	if (m_Selected) return 0;
+	if (IsSelected()) return 0;
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, BUTTONPROC_MOVE);
@@ -3877,7 +3852,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_KEEPONSCREEN:
-		if (!m_Selected)
+		if (!IsSelected())
 		{
 			SetKeepOnScreen(!m_KeepOnScreen);
 		}
@@ -3888,14 +3863,14 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_CLICKTHROUGH:
-		if (!m_Selected)
+		if (!IsSelected())
 		{
 			SetClickThrough(!m_ClickThrough);
 		}
 		break;
 
 	case IDM_SKIN_DRAGGABLE:
-		if (!m_Selected)
+		if (!IsSelected())
 		{
 			SetWindowDraggable(!m_WindowDraggable);
 		}
@@ -4197,67 +4172,6 @@ void Skin::SetZoom(float zoom)
 	ApplyZoom(zoom, true);
 }
 
-int Skin::HitTestZoomDrag(POINT screenPos) const
-{
-	if (!m_Selected || !m_WindowDraggable || GetRainmeter().GetDisableDragging())
-	{
-		return HTCLIENT;
-	}
-
-	return SkinZoomDrag::HitTest(GetPhysicalWindowBounds(), screenPos);
-}
-
-bool Skin::SetZoomDragCursor(int hit)
-{
-	HCURSOR cursor = SkinZoomDrag::GetCursorForHit(hit);
-	if (!cursor) return false;
-
-	SetCursor(cursor);
-	return true;
-}
-
-void Skin::ApplyZoomDrag()
-{
-	if (!m_ZoomDrag) return;
-
-	POINT pos = { m_X.pos, m_Y.pos };
-	const auto& result = m_ZoomDrag->Update(System::GetCursorPosition(), m_WindowW, m_WindowH, m_DpiScale, m_ZoomScale, pos);
-	if (!result.changed) return;
-
-	for (const auto& skins : GetRainmeter().GetAllSkins())
-	{
-		Skin* skin = skins.second;
-		if (skin->IsSelected())
-		{
-			skin->m_X.pos += result.deltaX;
-			skin->m_Y.pos += result.deltaY;
-			skin->ApplyZoom(result.zoom, false);
-		}
-	}
-}
-
-void Skin::CommitZoomDrag()
-{
-	if (!m_ZoomDrag) return;
-
-	if (m_ZoomDrag->HasMoved())
-	{
-		WriteOptions(OPTION_ZOOM);
-
-		if (m_ZoomDrag->HasPositionChanged())
-		{
-			SavePositionIfAppropriate();
-		}
-	}
-
-	m_ZoomDrag.reset();
-
-	if (GetCapture() == m_Window)
-	{
-		ReleaseCapture();
-	}
-}
-
 void Skin::UpdateFadeDuration()
 {
 	if (m_NewFadeDuration >= 0)
@@ -4386,12 +4300,6 @@ LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT screenPos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-	const int zoomDragHitTest = HitTestZoomDrag(screenPos);
-	if (zoomDragHitTest != HTCLIENT)
-	{
-		return zoomDragHitTest;
-	}
-
 	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
 		POINT pos = screenPos;
@@ -4647,24 +4555,9 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_Selected)
+	if (IsSelected())
 	{
-		POINT screenPos = System::GetCursorPosition();
-		const int zoomDragHitTest =
-			(uMsg == WM_NCLBUTTONDOWN && SkinZoomDrag::GetCursorForHit((int)wParam)) ?
-			(int)wParam :
-			HitTestZoomDrag(screenPos);
-		if (zoomDragHitTest != HTCLIENT)
-		{
-			SetMouseLeaveEvent(true);
-			m_ZoomDrag = std::make_unique<SkinZoomDrag>(zoomDragHitTest, GetPhysicalWindowBounds(), screenPos, m_ZoomScale);
-			ApplyZoomDrag();
-
-			SetCapture(m_Window);
-			SetZoomDragCursor(zoomDragHitTest);
-		}
-
-		// Allow dragging to work without handling actions below
+		// The selection overlay owns selected-skin mouse handling.
 		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
@@ -4687,17 +4580,11 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_ZoomDrag)
-	{
-		CommitZoomDrag();
-		return 0;
-	}
-
 	// Select/Deselect the skin if CTRL+ALT is pressed when the
 	// left mouse button is depressed. (Draws an overlay over the skin.)
 	if (IsCtrlKeyDown() && IsAltKeyDown())
 	{
-		if (!m_Selected)
+		if (!IsSelected())
 		{
 			Select();  // Select |this| skin
 
@@ -4729,7 +4616,7 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action)
 {
-	if (m_Selected) return;
+	if (IsSelected()) return;
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, buttonProc);
@@ -4739,7 +4626,7 @@ void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonP
 
 void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback)
 {
-	if (m_Selected) return;
+	if (IsSelected()) return;
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, buttonProc);
@@ -4765,7 +4652,7 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// For selected skins, we don't want to process any actions and only allow the context menu.
-	if (m_Selected) return DefWindowProc(m_Window, uMsg, wParam, lParam);
+	if (IsSelected()) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, BUTTONPROC_MOVE);
@@ -4832,7 +4719,6 @@ LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if ((HWND)lParam != m_Window)
 	{
-		if (m_ZoomDrag) CommitZoomDrag();
 		if (m_MouseMeasureCapture) ClearMouseMeasureCapture();
 	}
 
@@ -5219,7 +5105,7 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ComputeOptionValueFromPosition();
 	}
 
-	if (!c_IsInSelectionMode && m_Selected)
+	if (!c_IsInSelectionMode && IsSelected())
 	{
 		const int newX = m_X.pos - oldX;
 		const int newY = m_Y.pos - oldY;
@@ -5267,7 +5153,7 @@ LRESULT Skin::OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_Selected)
+	if (IsSelected())
 	{
 		int newX = 0;
 		int newY = 0;
@@ -5312,7 +5198,7 @@ LRESULT Skin::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	Skin* skin = (Skin*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	Skin* instance = (Skin*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnMouseInput, WM_INPUT)

@@ -125,6 +125,7 @@
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
     <ClCompile Include="SkinPosition.cpp" />
+    <ClCompile Include="SkinSelectionOverlay.cpp" />
     <ClCompile Include="SkinZoomDrag.cpp" />
     <ClCompile Include="SkinPosition_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
@@ -263,6 +264,7 @@
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
     <ClInclude Include="SkinPosition.h" />
+    <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="SkinZoomDrag.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
