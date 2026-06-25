@@ -14,6 +14,52 @@
 
 const WCHAR* g_ClassName = L"RainmeterSkinSelectionOverlay";
 
+const int g_DashLength = 6;
+const int g_DashGap = 4;
+const int g_DashThickness = 2;
+
+static BYTE ColorToByte(float value)
+{
+	return (BYTE)max(0, min(255, (int)roundf(value * 255.0f)));
+}
+
+static DWORD MakePixel(const D2D1_COLOR_F& color, BYTE alpha)
+{
+	const float alphaScale = (float)alpha / 255.0f;
+	const BYTE r = ColorToByte(color.r * alphaScale);
+	const BYTE g = ColorToByte(color.g * alphaScale);
+	const BYTE b = ColorToByte(color.b * alphaScale);
+	return ((DWORD)alpha << 24) | ((DWORD)r << 16) | ((DWORD)g << 8) | b;
+}
+
+static void DrawHorizontalDash(DWORD* pixels, int width, int height, int y, DWORD color)
+{
+	for (int x = 0; x < width; x += g_DashLength + g_DashGap)
+	{
+		for (int dashX = x; dashX < min(width, x + g_DashLength); ++dashX)
+		{
+			for (int offset = 0; offset < min(g_DashThickness, height); ++offset)
+			{
+				pixels[(y + offset) * width + dashX] = color;
+			}
+		}
+	}
+}
+
+static void DrawVerticalDash(DWORD* pixels, int width, int height, int x, DWORD color)
+{
+	for (int y = 0; y < height; y += g_DashLength + g_DashGap)
+	{
+		for (int dashY = y; dashY < min(height, y + g_DashLength); ++dashY)
+		{
+			for (int offset = 0; offset < min(g_DashThickness, width); ++offset)
+			{
+				pixels[dashY * width + x + offset] = color;
+			}
+		}
+	}
+}
+
 SkinSelectionOverlay::SkinSelectionOverlay(Skin* skin) :
 	m_Skin(skin),
 	m_Window(),
@@ -35,7 +81,6 @@ SkinSelectionOverlay::SkinSelectionOverlay(Skin* skin) :
 
 		BEGIN_MESSAGEPROC
 		MESSAGE(OnNcHitTest, WM_NCHITTEST)
-		MESSAGE(OnPaint, WM_PAINT)
 		MESSAGE(OnSetCursor, WM_SETCURSOR)
 		MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
 		MESSAGE(OnMouseMove, WM_MOUSEMOVE)
@@ -81,15 +126,54 @@ void SkinSelectionOverlay::Update()
 {
 	if (!m_Window) return;
 
-	const BYTE alpha = (BYTE)max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.a * 255.0f)));
-	const COLORREF color = RGB(
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.r * 255.0f))),
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.g * 255.0f))),
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.b * 255.0f))));
+	const int width = m_Skin->GetPhysicalWindowW();
+	const int height = m_Skin->GetPhysicalWindowH();
+	if (width <= 0 || height <= 0) return;
 
-	SetLayeredWindowAttributes(m_Window, color, alpha, LWA_ALPHA);
-	SetWindowPos(m_Window, HWND_TOP, 0, 0, m_Skin->GetPhysicalWindowW(), m_Skin->GetPhysicalWindowH(), SWP_NOACTIVATE | SWP_SHOWWINDOW);
-	InvalidateRect(m_Window, nullptr, TRUE);
+	SetWindowPos(m_Window, HWND_TOP, 0, 0, width, height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+	BITMAPINFO bmi = { 0 };
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = width;
+	bmi.bmiHeader.biHeight = -height;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biCompression = BI_RGB;
+
+	void* bits = nullptr;
+	HDC screenDC = GetDC(nullptr);
+	HDC memoryDC = CreateCompatibleDC(screenDC);
+	HBITMAP bitmap = CreateDIBSection(screenDC, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+	if (!memoryDC || !bitmap || !bits)
+	{
+		if (bitmap) DeleteObject(bitmap);
+		if (memoryDC) DeleteDC(memoryDC);
+		if (screenDC) ReleaseDC(nullptr, screenDC);
+		return;
+	}
+
+	HGDIOBJ oldBitmap = SelectObject(memoryDC, bitmap);
+
+	DWORD* pixels = (DWORD*)bits;
+	const DWORD fillColor = MakePixel(m_Skin->m_SelectedColor, ColorToByte(m_Skin->m_SelectedColor.a));
+	std::fill(pixels, pixels + (width * height), fillColor);
+
+	const DWORD dashColor = MakePixel(D2D1::ColorF(D2D1::ColorF::DarkSlateGray), 255);
+	DrawHorizontalDash(pixels, width, height, 0, dashColor);
+	DrawHorizontalDash(pixels, width, height, max(0, height - g_DashThickness), dashColor);
+	DrawVerticalDash(pixels, width, height, 0, dashColor);
+	DrawVerticalDash(pixels, width, height, max(0, width - g_DashThickness), dashColor);
+
+	POINT dst = { 0 };
+	POINT src = { 0 };
+	SIZE size = { width, height };
+	BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+	UpdateLayeredWindow(m_Window, screenDC, &dst, &size, memoryDC, &src, 0, &blend, ULW_ALPHA);
+
+	SelectObject(memoryDC, oldBitmap);
+	DeleteObject(bitmap);
+	DeleteDC(memoryDC);
+	ReleaseDC(nullptr, screenDC);
 }
 
 int SkinSelectionOverlay::HitTestZoomDrag(POINT screenPos) const
@@ -161,23 +245,6 @@ void SkinSelectionOverlay::CommitZoomDrag()
 LRESULT SkinSelectionOverlay::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return HitTestZoomDrag({ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) });
-}
-
-LRESULT SkinSelectionOverlay::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	PAINTSTRUCT ps;
-	HDC hdc = BeginPaint(m_Window, &ps);
-	RECT rc;
-	GetClientRect(m_Window, &rc);
-	const COLORREF color = RGB(
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.r * 255.0f))),
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.g * 255.0f))),
-		max(0, min(255, (int)roundf(m_Skin->m_SelectedColor.b * 255.0f))));
-	HBRUSH brush = CreateSolidBrush(color);
-	FillRect(hdc, &rc, brush);
-	DeleteObject(brush);
-	EndPaint(m_Window, &ps);
-	return 0;
 }
 
 LRESULT SkinSelectionOverlay::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
