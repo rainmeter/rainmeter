@@ -154,7 +154,7 @@ bool TrayIcon::AddTrayIcon()
 	tnid.hIcon = m_Icon;
 	wcsncpy_s(tnid.szTip, APPNAME, _TRUNCATE);
 
-	return (Shell_NotifyIcon(NIM_ADD, &tnid) || GetLastError() != ERROR_TIMEOUT);
+	return Shell_NotifyIcon(NIM_ADD, &tnid);
 }
 
 bool TrayIcon::IsTrayIconReady()
