@@ -19,9 +19,45 @@
 #include "TrayIcon.h"
 #include "resource.h"
 
-ContextMenu::ContextMenu() :
-	m_ActiveMenu(nullptr)
+namespace {
+
+HBITMAP GetPartialMatchMenuBitmap()
 {
+	static HBITMAP s_Bitmap = []() -> HBITMAP
+	{
+		const int width = GetSystemMetrics(SM_CXMENUCHECK);
+		const int height = GetSystemMetrics(SM_CYMENUCHECK);
+
+		HDC screen = GetDC(nullptr);
+		HDC dc = CreateCompatibleDC(screen);
+		HBITMAP bitmap = CreateCompatibleBitmap(screen, width, height);
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(dc, bitmap);
+
+		RECT rect = { 0, 0, width, height };
+		HBRUSH background = CreateSolidBrush(GetSysColor(COLOR_MENU));
+		FillRect(dc, &rect, background);
+		DeleteObject(background);
+
+		HBRUSH foreground = CreateSolidBrush(GetSysColor(COLOR_MENUTEXT));
+		const int dashWidth = max(6, width / 2);
+		const int dashHeight = max(2, height / 8);
+		RECT dashRect = {
+			(width - dashWidth) / 2,
+			(height - dashHeight) / 2,
+			(width + dashWidth) / 2,
+			(height + dashHeight) / 2
+		};
+		FillRect(dc, &dashRect, foreground);
+		DeleteObject(foreground);
+
+		SelectObject(dc, oldBitmap);
+		DeleteDC(dc);
+		ReleaseDC(nullptr, screen);
+
+		return bitmap;
+	}();
+
+	return s_Bitmap;
 }
 
 template<typename Getter>
@@ -44,10 +80,22 @@ auto GetMatchingSkinValue(const std::vector<Skin*>& skins, Getter getter) -> std
 template<typename Getter>
 void CheckMenuItemIfMatch(HMENU menu, UINT id, const std::vector<Skin*>& skins, Getter getter)
 {
-	const auto value = GetMatchingSkinValue(skins, getter);
-	if (value && *value)
+	bool anySet = false;
+	bool allSet = !skins.empty();
+	for (Skin* skin : skins)
+	{
+		const bool value = getter(skin);
+		anySet |= value;
+		allSet &= value;
+	}
+
+	if (allSet)
 	{
 		CheckMenuItem(menu, id, MF_BYCOMMAND | MF_CHECKED);
+	}
+	else if (anySet)
+	{
+		SetMenuItemBitmaps(menu, id, MF_BYCOMMAND, GetPartialMatchMenuBitmap(), nullptr);
 	}
 }
 
@@ -80,9 +128,13 @@ bool IsMenuCommandChecked(HMENU menu, UINT command)
 	return false;
 }
 
-/*
-** Opens the context menu in given coordinates.
-*/
+}  // namespace
+
+ContextMenu::ContextMenu() :
+	m_ActiveMenu(nullptr)
+{
+}
+
 void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 {
 	static const MenuTemplate s_Menu[] =
