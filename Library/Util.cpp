@@ -21,7 +21,7 @@ const WCHAR* GetString(UINT id)
 {
 	switch (id)
 	{
-		case IDS_Ellipsis: L"...";
+		case IDS_Ellipsis: return L"...";
 		case IDS_AddResources: return L"@Resources";
 	}
 
