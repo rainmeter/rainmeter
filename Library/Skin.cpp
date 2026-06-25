@@ -3245,8 +3245,7 @@ void Skin::Update(bool refresh)
 */
 void Skin::UpdateWindow(bool canvasBeginDrawCalled)
 {
-	const auto alpha = (BYTE)(m_SelectionOverlay ? 240 : m_TransparencyValue);
-	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
 	POINT ptSrc = { 0 };
 	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
@@ -3275,7 +3274,7 @@ void Skin::UpdateWindowTransparency(int alpha)
 	const bool changed = m_TransparencyValue != alpha;
 	m_TransparencyValue = alpha;
 
-	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA };
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 
 	if (changed)
@@ -3826,12 +3825,11 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Handle the menu commands.
-**
-*/
 LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// If the menu item was previously checked, lParam will be 1.
+	const bool enable = lParam == 0;
+
 	switch (wParam)
 	{
 	case IDM_SKIN_EDITSKIN:
@@ -3871,27 +3869,40 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_KEEPONSCREEN:
-		if (!IsSelected())
+		if (IsSelected())
 		{
-			SetKeepOnScreen(!m_KeepOnScreen);
+			m_OldKeepOnScreen = enable;
 		}
+		else
+		{
+			SetKeepOnScreen(enable);
+		}
+		SetKeepOnScreen(enable);
 		break;
 
 	case IDM_SKIN_FAVORITE:
-		SetFavorite(!m_Favorite);
+		SetFavorite(enable);
 		break;
 
 	case IDM_SKIN_CLICKTHROUGH:
-		if (!IsSelected())
+		if (IsSelected())
 		{
-			SetClickThrough(!m_ClickThrough);
+			m_OldClickThrough = enable;
+		}
+		else
+		{
+			SetClickThrough(enable);
 		}
 		break;
 
 	case IDM_SKIN_DRAGGABLE:
-		if (!IsSelected())
+		if (IsSelected())
 		{
-			SetWindowDraggable(!m_WindowDraggable);
+			m_OldWindowDraggable = enable;
+		}
+		else
+		{
+			SetWindowDraggable(enable);
 		}
 		break;
 
@@ -3924,11 +3935,11 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_REMEMBERPOSITION:
-		SetSavePosition(!m_SavePosition);
+		SetSavePosition(enable);
 		break;
 
 	case IDM_SKIN_SNAPTOEDGES:
-		SetSnapEdges(!m_SnapEdges);
+		SetSnapEdges(enable);
 		break;
 
 	case IDM_CLOSESKIN:
@@ -3938,34 +3949,32 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDM_SKIN_FROMRIGHT:
-		m_X.fromOpposite = !m_X.fromOpposite;
+	case IDM_SKIN_SELECT:
+		Select();
+		break;
 
+	case IDM_SKIN_FROMRIGHT:
+		m_X.fromOpposite = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_FROMBOTTOM:
-		m_Y.fromOpposite = !m_Y.fromOpposite;
-
+		m_Y.fromOpposite = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_XPERCENTAGE:
-		m_X.percentage = !m_X.percentage;
-
+		m_X.percentage = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_YPERCENTAGE:
-		m_Y.percentage = !m_Y.percentage;
-
+		m_Y.percentage = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_MONITOR_AUTOSELECT:
-		m_AutoSelectScreen = !m_AutoSelectScreen;
-
-		WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
+		SetAutoSelectScreen(enable);
 		break;
 
 	default:

@@ -687,7 +687,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 							--index;
 							if (index < 0)
 							{
-								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, 0);
+								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, lParam);
 								break;
 							}
 						}

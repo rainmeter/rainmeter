@@ -21,11 +21,12 @@ public:
 
 private:
 	LRESULT OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT ForwardMessageToSkin(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void Create();
