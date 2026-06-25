@@ -32,29 +32,31 @@ static DWORD MakePixel(const D2D1_COLOR_F& color, BYTE alpha)
 	return ((DWORD)alpha << 24) | ((DWORD)r << 16) | ((DWORD)g << 8) | b;
 }
 
-static void DrawHorizontalDash(DWORD* pixels, int width, int height, int y, DWORD color)
+static void DrawHorizontalDash(DWORD* pixels, int width, int height, int y, DWORD color, DWORD alternateColor)
 {
-	for (int x = 0; x < width; x += g_DashLength + g_DashGap)
+	for (int x = 0, dash = 0; x < width; x += g_DashLength, ++dash)
 	{
+		const DWORD dashColor = (dash % 2 == 0) ? color : alternateColor;
 		for (int dashX = x; dashX < min(width, x + g_DashLength); ++dashX)
 		{
 			for (int offset = 0; offset < min(g_DashThickness, height); ++offset)
 			{
-				pixels[(y + offset) * width + dashX] = color;
+				pixels[(y + offset) * width + dashX] = dashColor;
 			}
 		}
 	}
 }
 
-static void DrawVerticalDash(DWORD* pixels, int width, int height, int x, DWORD color)
+static void DrawVerticalDash(DWORD* pixels, int width, int height, int x, DWORD color, DWORD alternateColor)
 {
-	for (int y = 0; y < height; y += g_DashLength + g_DashGap)
+	for (int y = 0, dash = 0; y < height; y += g_DashLength, ++dash)
 	{
+		const DWORD dashColor = (dash % 2 == 0) ? color : alternateColor;
 		for (int dashY = y; dashY < min(height, y + g_DashLength); ++dashY)
 		{
 			for (int offset = 0; offset < min(g_DashThickness, width); ++offset)
 			{
-				pixels[dashY * width + x + offset] = color;
+				pixels[dashY * width + x + offset] = dashColor;
 			}
 		}
 	}
@@ -155,14 +157,15 @@ void SkinSelectionOverlay::Update()
 	HGDIOBJ oldBitmap = SelectObject(memoryDC, bitmap);
 
 	DWORD* pixels = (DWORD*)bits;
-	const DWORD fillColor = MakePixel(m_Skin->m_SelectedColor, ColorToByte(m_Skin->m_SelectedColor.a));
+	const DWORD fillColor = MakePixel(m_Skin->m_SelectedColor, 80);
 	std::fill(pixels, pixels + (width * height), fillColor);
 
-	const DWORD dashColor = MakePixel(D2D1::ColorF(D2D1::ColorF::DarkSlateGray), 255);
-	DrawHorizontalDash(pixels, width, height, 0, dashColor);
-	DrawHorizontalDash(pixels, width, height, max(0, height - g_DashThickness), dashColor);
-	DrawVerticalDash(pixels, width, height, 0, dashColor);
-	DrawVerticalDash(pixels, width, height, max(0, width - g_DashThickness), dashColor);
+	const DWORD dashColor = MakePixel(m_Skin->m_SelectedColor, 240);
+	const DWORD alternateDashColor = MakePixel(D2D1::ColorF(D2D1::ColorF::Black), 240);
+	DrawHorizontalDash(pixels, width, height, 0, dashColor, alternateDashColor);
+	DrawHorizontalDash(pixels, width, height, max(0, height - g_DashThickness), dashColor, alternateDashColor);
+	DrawVerticalDash(pixels, width, height, 0, dashColor, alternateDashColor);
+	DrawVerticalDash(pixels, width, height, max(0, width - g_DashThickness), dashColor, alternateDashColor);
 
 	POINT dst = { 0 };
 	POINT src = { 0 };
