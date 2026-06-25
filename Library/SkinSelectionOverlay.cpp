@@ -19,7 +19,7 @@ const int g_ZoomDragMinPercent = 10;
 const int g_ZoomDragMaxPercent = 500;
 const int g_ZoomDragEdgeSize = 10;
 const int g_ZoomDragCornerSize = 20;
-const int g_ZoomDragThreshold = 4;
+const int g_ZoomDragThreshold = 2;
 
 static bool IsLeftHit(int hit)
 {
