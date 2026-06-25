@@ -19,9 +19,48 @@
 #include "TrayIcon.h"
 #include "resource.h"
 
-ContextMenu::ContextMenu() :
-	m_ActiveMenu(nullptr)
+namespace {
+
+HBITMAP GetPartialMatchMenuBitmap()
 {
+	static HBITMAP s_Bitmap = []() -> HBITMAP
+	{
+		const int width = GetSystemMetrics(SM_CXMENUCHECK);
+		const int height = GetSystemMetrics(SM_CYMENUCHECK);
+		const int dashWidth = max(6, width / 2);
+		const int dashHeight = max(2, height / 8);
+		const int dashLeft = (width - dashWidth) / 2;
+		const int dashTop = (height - dashHeight) / 2;
+
+		BITMAPINFO bmi = { 0 };
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = width;
+		bmi.bmiHeader.biHeight = -height;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+
+		DWORD* pixels = nullptr;
+		HBITMAP bitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, (void**)&pixels, nullptr, 0);
+		if (!bitmap || !pixels) return bitmap;
+
+		const COLORREF textColor = RGB(150, 150, 150);
+		const DWORD dashColor =
+			0xFF000000 |
+			(GetRValue(textColor) << 16) |
+			(GetGValue(textColor) << 8) |
+			GetBValue(textColor);
+		for (int y = dashTop; y < dashTop + dashHeight; ++y)
+		{
+			for (int x = dashLeft; x < dashLeft + dashWidth; ++x)
+			{
+				pixels[y * width + x] = dashColor;
+			}
+		}
+		return bitmap;
+	}();
+
+	return s_Bitmap;
 }
 
 template<typename Getter>
@@ -44,10 +83,22 @@ auto GetMatchingSkinValue(const std::vector<Skin*>& skins, Getter getter) -> std
 template<typename Getter>
 void CheckMenuItemIfMatch(HMENU menu, UINT id, const std::vector<Skin*>& skins, Getter getter)
 {
-	const auto value = GetMatchingSkinValue(skins, getter);
-	if (value && *value)
+	bool anySet = false;
+	bool allSet = !skins.empty();
+	for (Skin* skin : skins)
+	{
+		const bool value = getter(skin);
+		anySet |= value;
+		allSet &= value;
+	}
+
+	if (allSet)
 	{
 		CheckMenuItem(menu, id, MF_BYCOMMAND | MF_CHECKED);
+	}
+	else if (anySet)
+	{
+		SetMenuItemBitmaps(menu, id, MF_BYCOMMAND, GetPartialMatchMenuBitmap(), nullptr);
 	}
 }
 
@@ -80,9 +131,13 @@ bool IsMenuCommandChecked(HMENU menu, UINT command)
 	return false;
 }
 
-/*
-** Opens the context menu in given coordinates.
-*/
+}  // namespace
+
+ContextMenu::ContextMenu() :
+	m_ActiveMenu(nullptr)
+{
+}
+
 void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 {
 	static const MenuTemplate s_Menu[] =
