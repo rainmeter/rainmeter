@@ -9,6 +9,7 @@
 #include "Skin.h"
 #include "SkinSelectionOverlay.h"
 #include "SkinZoomDrag.h"
+#include "MonitorUtil.h"
 #include "Rainmeter.h"
 #include "System.h"
 
@@ -89,8 +90,8 @@ SkinSelectionOverlay::SkinSelectionOverlay(Skin* skin) :
 		MESSAGE(OnLeftButtonDown, WM_LBUTTONDOWN)
 		MESSAGE(OnLeftButtonUp, WM_LBUTTONUP)
 		MESSAGE(OnLeftButtonUp, WM_CAPTURECHANGED)
-		MESSAGE(ForwardMessageToSkin, WM_CONTEXTMENU)
-		MESSAGE(ForwardMessageToSkin, WM_RBUTTONUP)
+		MESSAGE(OnContextMenu, WM_CONTEXTMENU)
+		MESSAGE(OnCommand, WM_COMMAND)
 		END_MESSAGEPROC
 	};
 	static auto s_ClassAtom = RegisterClass(&wc);
@@ -317,6 +318,229 @@ LRESULT SkinSelectionOverlay::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	if (m_ZoomDrag) CommitZoomDrag();
 	return 0;
+}
+
+LRESULT SkinSelectionOverlay::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos = { 0 };
+	if ((lParam & 0xFFFFFFFF) == 0xFFFFFFFF)
+	{
+		RECT rect = { 0 };
+		GetWindowRect(m_Window, &rect);
+		pos.x = rect.left;
+		pos.y = rect.top;
+	}
+	else
+	{
+		pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+	}
+
+	GetRainmeter().ShowSkinSelectionContextMenu(pos, m_Skin, m_Window);
+	return 0;
+}
+
+LRESULT SkinSelectionOverlay::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	ApplyCommandToSelection(LOWORD(wParam));
+	return 0;
+}
+
+void SkinSelectionOverlay::ApplyCommandToSelection(UINT_PTR command)
+{
+	if (command == IDM_SKIN_SELECTALL)
+	{
+		for (const auto& skins : GetRainmeter().GetAllSkins())
+		{
+			skins.second->Select();
+		}
+		return;
+	}
+
+	std::vector<Skin*> selectedSkins;
+	for (const auto& skins : GetRainmeter().GetAllSkins())
+	{
+		Skin* skin = skins.second;
+		if (skin->IsSelected())
+		{
+			selectedSkins.push_back(skin);
+		}
+	}
+
+	if (selectedSkins.empty()) return;
+
+	auto allMatch = [&](auto getter)
+	{
+		const auto value = getter(selectedSkins[0]);
+		for (size_t i = 1; i < selectedSkins.size(); ++i)
+		{
+			if (getter(selectedSkins[i]) != value)
+			{
+				return false;
+			}
+		}
+		return true;
+	};
+
+	const bool boolValue =
+		command == IDM_SKIN_FROMRIGHT ? !(allMatch([](Skin* skin) { return skin->m_X.fromOpposite; }) && selectedSkins[0]->m_X.fromOpposite) :
+		command == IDM_SKIN_FROMBOTTOM ? !(allMatch([](Skin* skin) { return skin->m_Y.fromOpposite; }) && selectedSkins[0]->m_Y.fromOpposite) :
+		command == IDM_SKIN_XPERCENTAGE ? !(allMatch([](Skin* skin) { return skin->m_X.percentage; }) && selectedSkins[0]->m_X.percentage) :
+		command == IDM_SKIN_YPERCENTAGE ? !(allMatch([](Skin* skin) { return skin->m_Y.percentage; }) && selectedSkins[0]->m_Y.percentage) :
+		command == IDM_SKIN_MONITOR_AUTOSELECT ? !(allMatch([](Skin* skin) { return skin->m_AutoSelectScreen; }) && selectedSkins[0]->m_AutoSelectScreen) :
+		command == IDM_SKIN_CLICKTHROUGH ? !(allMatch([](Skin* skin) { return skin->m_OldClickThrough; }) && selectedSkins[0]->m_OldClickThrough) :
+		command == IDM_SKIN_DRAGGABLE ? !(allMatch([](Skin* skin) { return skin->m_OldWindowDraggable; }) && selectedSkins[0]->m_OldWindowDraggable) :
+		command == IDM_SKIN_KEEPONSCREEN ? !(allMatch([](Skin* skin) { return skin->m_OldKeepOnScreen; }) && selectedSkins[0]->m_OldKeepOnScreen) :
+		command == IDM_SKIN_REMEMBERPOSITION ? !(allMatch([](Skin* skin) { return skin->m_SavePosition; }) && selectedSkins[0]->m_SavePosition) :
+		command == IDM_SKIN_SNAPTOEDGES ? !(allMatch([](Skin* skin) { return skin->m_SnapEdges; }) && selectedSkins[0]->m_SnapEdges) :
+		command == IDM_SKIN_FAVORITE ? !(allMatch([](Skin* skin) { return skin->m_Favorite; }) && selectedSkins[0]->m_Favorite) :
+		false;
+
+	for (Skin* skin : selectedSkins)
+	{
+		switch (command)
+		{
+		case IDM_SKIN_REFRESH:
+			skin->Refresh(false);
+			break;
+
+		case IDM_CLOSESKIN:
+			if (skin->m_State != Skin::STATE_CLOSING)
+			{
+				GetRainmeter().DeactivateSkin(skin, -1);
+			}
+			break;
+
+		case IDM_SKIN_VERYTOPMOST:
+			skin->SetWindowZPosition(ZPOSITION_ONTOPMOST);
+			break;
+
+		case IDM_SKIN_TOPMOST:
+			skin->SetWindowZPosition(ZPOSITION_ONTOP);
+			break;
+
+		case IDM_SKIN_NORMAL:
+			skin->SetWindowZPosition(ZPOSITION_NORMAL);
+			break;
+
+		case IDM_SKIN_BOTTOM:
+			skin->SetWindowZPosition(ZPOSITION_ONBOTTOM);
+			break;
+
+		case IDM_SKIN_ONDESKTOP:
+			skin->SetWindowZPosition(ZPOSITION_ONDESKTOP);
+			break;
+
+		case IDM_SKIN_FROMRIGHT:
+			skin->m_X.fromOpposite = boolValue;
+			skin->SavePositionIfAppropriate();
+			break;
+
+		case IDM_SKIN_FROMBOTTOM:
+			skin->m_Y.fromOpposite = boolValue;
+			skin->SavePositionIfAppropriate();
+			break;
+
+		case IDM_SKIN_XPERCENTAGE:
+			skin->m_X.percentage = boolValue;
+			skin->SavePositionIfAppropriate();
+			break;
+
+		case IDM_SKIN_YPERCENTAGE:
+			skin->m_Y.percentage = boolValue;
+			skin->SavePositionIfAppropriate();
+			break;
+
+		case IDM_SKIN_MONITOR_AUTOSELECT:
+			skin->m_AutoSelectScreen = boolValue;
+			skin->WriteOptions(Skin::OPTION_POSITION | Skin::OPTION_AUTOSELECTSCREEN);
+			break;
+
+		case IDM_SKIN_CLICKTHROUGH:
+			skin->SetClickThrough(boolValue);
+			skin->m_OldClickThrough = boolValue;
+			break;
+
+		case IDM_SKIN_DRAGGABLE:
+			skin->SetWindowDraggable(boolValue);
+			skin->m_OldWindowDraggable = boolValue;
+			break;
+
+		case IDM_SKIN_KEEPONSCREEN:
+			skin->SetKeepOnScreen(boolValue);
+			skin->m_OldKeepOnScreen = boolValue;
+			break;
+
+		case IDM_SKIN_REMEMBERPOSITION:
+			skin->SetSavePosition(boolValue);
+			break;
+
+		case IDM_SKIN_SNAPTOEDGES:
+			skin->SetSnapEdges(boolValue);
+			break;
+
+		case IDM_SKIN_FAVORITE:
+			skin->SetFavorite(boolValue);
+			break;
+
+		case IDM_SKIN_HIDEONMOUSE_NONE:
+			skin->SetWindowHide(HIDEMODE_NONE);
+			break;
+
+		case IDM_SKIN_HIDEONMOUSE:
+			skin->SetWindowHide(HIDEMODE_HIDE);
+			break;
+
+		case IDM_SKIN_TRANSPARENCY_FADEIN:
+			skin->SetWindowHide(HIDEMODE_FADEIN);
+			break;
+
+		case IDM_SKIN_TRANSPARENCY_FADEOUT:
+			skin->SetWindowHide(HIDEMODE_FADEOUT);
+			break;
+
+		default:
+			if (command >= IDM_SKIN_TRANSPARENCY_0 && command <= IDM_SKIN_TRANSPARENCY_100)
+			{
+				skin->m_AlphaValue = command == IDM_SKIN_TRANSPARENCY_100 ?
+					1 :
+					(int)(255.0 - (command - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
+
+				skin->UpdateWindowTransparency(skin->m_AlphaValue);
+				skin->WriteOptions(Skin::OPTION_ALPHAVALUE);
+			}
+			else if (command >= IDM_SKIN_ZOOM_80 && command <= IDM_SKIN_ZOOM_150)
+			{
+				static const float c_Zooms[] = { 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f };
+				skin->SetZoom(c_Zooms[command - IDM_SKIN_ZOOM_80]);
+			}
+			else if (command == IDM_SKIN_MONITOR_PRIMARY || command >= ID_MONITOR_FIRST && command <= ID_MONITOR_LAST)
+			{
+				const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+				const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+
+				int monitor = 0;
+				bool monitorDefined = false;
+				if (command == IDM_SKIN_MONITOR_PRIMARY)
+				{
+					monitor = monitorsInfo.primary;
+				}
+				else
+				{
+					monitor = (command & 0x0ffff) - ID_MONITOR_FIRST;
+					monitorDefined = true;
+				}
+
+				const int monitorIndex = monitor - 1;
+				if (monitor >= 0 && (monitor == 0 || monitor <= (int)monitors.size() && monitors[monitorIndex].active))
+				{
+					skin->m_AutoSelectScreen = false;
+					skin->m_X.monitor = skin->m_Y.monitor = monitorDefined ? std::optional<int>{ monitor } : std::nullopt;
+					skin->WriteOptions(Skin::OPTION_POSITION | Skin::OPTION_AUTOSELECTSCREEN);
+				}
+			}
+			break;
+		}
+	}
 }
 
 LRESULT SkinSelectionOverlay::ForwardMessageToSkin(UINT uMsg, WPARAM wParam, LPARAM lParam)

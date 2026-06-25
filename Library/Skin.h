@@ -229,6 +229,7 @@ public:
 
 	friend class DialogManage;
 	friend class Rainmeter;
+	friend class ContextMenu;
 	friend class SkinSelectionOverlay;
 
 protected:

@@ -24,6 +24,48 @@ ContextMenu::ContextMenu() :
 {
 }
 
+std::vector<Skin*> GetSelectedSkins()
+{
+	std::vector<Skin*> selectedSkins;
+	for (const auto& skins : GetRainmeter().GetAllSkins())
+	{
+		Skin* skin = skins.second;
+		if (skin->IsSelected())
+		{
+			selectedSkins.push_back(skin);
+		}
+	}
+
+	return selectedSkins;
+}
+
+template<typename Getter>
+auto GetMatchingSkinValue(const std::vector<Skin*>& skins, Getter getter) -> std::optional<decltype(getter(skins[0]))>
+{
+	if (skins.empty()) return std::nullopt;
+
+	auto value = getter(skins[0]);
+	for (size_t i = 1; i < skins.size(); ++i)
+	{
+		if (getter(skins[i]) != value)
+		{
+			return std::nullopt;
+		}
+	}
+
+	return value;
+}
+
+template<typename Getter>
+void CheckMenuItemIfMatch(HMENU menu, UINT id, const std::vector<Skin*>& skins, Getter getter)
+{
+	const auto value = GetMatchingSkinValue(skins, getter);
+	if (value && *value)
+	{
+		CheckMenuItem(menu, id, MF_BYCOMMAND | MF_CHECKED);
+	}
+}
+
 /*
 ** Opens the context menu in given coordinates.
 */
@@ -244,6 +286,25 @@ void ContextMenu::ShowSkinCustomMenu(POINT pos, Skin* skin)
 	m_MenuActive = false;
 }
 
+void ContextMenu::ShowSkinSelectionMenu(POINT pos, Skin* skin, HWND parentWindow)
+{
+	if (m_MenuActive || skin->IsClosing()) return;
+
+	m_MenuActive = true;
+
+	HMENU menu = CreateSkinSelectionMenu();
+	if (!menu)
+	{
+		m_MenuActive = false;
+		return;
+	}
+
+	DisplayMenu(pos, menu, parentWindow);
+	DestroyMenu(menu);
+
+	m_MenuActive = false;
+}
+
 void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 {
 	// Set the window to foreground
@@ -303,131 +364,120 @@ const WCHAR* GetStringTemp(UINT id)
 	return GetString(id);
 }
 
-HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
+HMENU ContextMenu::CreateSkinSettingsMenu()
 {
 	static const MenuTemplate s_Menu[] =
 	{
-		MENU_ITEM(IDM_SKIN_OPENSKINSFOLDER, 0),
-		MENU_SEPARATOR(),
-		MENU_SUBMENU(IDS_Variants,
-			MENU_SEPARATOR()),
-		MENU_SEPARATOR(),
-		MENU_SUBMENU(IDS_Settings,
-			MENU_SUBMENU(IDS_Position,
-				MENU_SUBMENU(IDS_DisplayMonitor,
-					MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
-					MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
-					MENU_SEPARATOR(),
-					MENU_SEPARATOR(),
-					MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)),
+		MENU_SUBMENU(IDS_Position,
+			MENU_SUBMENU(IDS_DisplayMonitor,
+				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
+				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
 				MENU_SEPARATOR(),
-				MENU_ITEM(IDM_SKIN_VERYTOPMOST, IDS_StayTopmost),
-				MENU_ITEM(IDM_SKIN_TOPMOST, IDS_Topmost),
-				MENU_ITEM(IDM_SKIN_NORMAL, IDS_Normal),
-				MENU_ITEM(IDM_SKIN_BOTTOM, IDS_Bottom),
-				MENU_ITEM(IDM_SKIN_ONDESKTOP, IDS_OnDesktop),
 				MENU_SEPARATOR(),
-				MENU_ITEM(IDM_SKIN_FROMRIGHT, IDS_FromRight),
-				MENU_ITEM(IDM_SKIN_FROMBOTTOM, IDS_FromBottom),
-				MENU_ITEM(IDM_SKIN_XPERCENTAGE, IDS_XAsPercentage),
-				MENU_ITEM(IDM_SKIN_YPERCENTAGE, IDS_YAsPercentage)),
-			MENU_SUBMENU(IDS_Zoom,
-				MENU_ITEM(IDM_SKIN_ZOOM_80, IDS_80Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_90, IDS_90Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_100, IDS_100Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_110, IDS_110Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_120, IDS_120Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_130, IDS_130Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_140, IDS_140Percent),
-				MENU_ITEM(IDM_SKIN_ZOOM_150, IDS_150Percent)),
+				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)),
 			MENU_SEPARATOR(),
-			MENU_SUBMENU(IDS_Transparency,
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, IDS_0Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, IDS_10Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_20, IDS_20Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_30, IDS_30Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_40, IDS_40Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_50, IDS_50Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_60, IDS_60Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, IDS_70Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, IDS_80Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, IDS_90Percent),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, IDS_Approx100Percent)),
-			MENU_SUBMENU(IDS_OnHover,
-				MENU_ITEM(IDM_SKIN_HIDEONMOUSE_NONE, IDS_DoNothing),
-				MENU_ITEM(IDM_SKIN_HIDEONMOUSE, IDS_Hide),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, IDS_FadeIn),
-				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, IDS_FadeOut)),
+			MENU_ITEM(IDM_SKIN_VERYTOPMOST, IDS_StayTopmost),
+			MENU_ITEM(IDM_SKIN_TOPMOST, IDS_Topmost),
+			MENU_ITEM(IDM_SKIN_NORMAL, IDS_Normal),
+			MENU_ITEM(IDM_SKIN_BOTTOM, IDS_Bottom),
+			MENU_ITEM(IDM_SKIN_ONDESKTOP, IDS_OnDesktop),
 			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, IDS_ClickThrough),
-			MENU_ITEM(IDM_SKIN_DRAGGABLE, IDS_Draggable),
-			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, IDS_KeepOnScreen),
-			MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, IDS_SavePosition),
-			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, IDS_SnapToEdges),
-			MENU_ITEM(IDM_SKIN_FAVORITE, IDS_Favorite)),
+			MENU_ITEM(IDM_SKIN_FROMRIGHT, IDS_FromRight),
+			MENU_ITEM(IDM_SKIN_FROMBOTTOM, IDS_FromBottom),
+			MENU_ITEM(IDM_SKIN_XPERCENTAGE, IDS_XAsPercentage),
+			MENU_ITEM(IDM_SKIN_YPERCENTAGE, IDS_YAsPercentage)),
+		MENU_SUBMENU(IDS_Zoom,
+			MENU_ITEM(IDM_SKIN_ZOOM_80, IDS_80Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_90, IDS_90Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_100, IDS_100Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_110, IDS_110Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_120, IDS_120Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_130, IDS_130Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_140, IDS_140Percent),
+			MENU_ITEM(IDM_SKIN_ZOOM_150, IDS_150Percent)),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_SKIN_MANAGESKIN, IDS_ManageSkin),
-		MENU_ITEM(IDM_SKIN_EDITSKIN, IDS_EditSkin),
-		MENU_ITEM(IDM_SKIN_REFRESH, IDS_RefreshSkin),
+		MENU_SUBMENU(IDS_Transparency,
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, IDS_0Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, IDS_10Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_20, IDS_20Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_30, IDS_30Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_40, IDS_40Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_50, IDS_50Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_60, IDS_60Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, IDS_70Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, IDS_80Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, IDS_90Percent),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, IDS_Approx100Percent)),
+		MENU_SUBMENU(IDS_OnHover,
+			MENU_ITEM(IDM_SKIN_HIDEONMOUSE_NONE, IDS_DoNothing),
+			MENU_ITEM(IDM_SKIN_HIDEONMOUSE, IDS_Hide),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, IDS_FadeIn),
+			MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, IDS_FadeOut)),
 		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_CLOSESKIN, IDS_UnloadSkin)
+		MENU_ITEM(IDM_SKIN_CLICKTHROUGH, IDS_ClickThrough),
+		MENU_ITEM(IDM_SKIN_DRAGGABLE, IDS_Draggable),
+		MENU_ITEM(IDM_SKIN_KEEPONSCREEN, IDS_KeepOnScreen),
+		MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, IDS_SavePosition),
+		MENU_ITEM(IDM_SKIN_SNAPTOEDGES, IDS_SnapToEdges),
+		MENU_ITEM(IDM_SKIN_FAVORITE, IDS_Favorite)
 	};
 
-	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
-	if (!skinMenu) return nullptr;
+	return MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
+}
 
-	// Tick the position
-	HMENU settingsMenu = GetSubMenu(skinMenu, 4);
-	if (settingsMenu)
+void ContextMenu::CheckSkinSettingsMenu(HMENU settingsMenu, const std::vector<Skin*>& skins, int offset, bool selectionMenu)
+{
+	if (!settingsMenu || skins.empty()) return;
+
+	HMENU posMenu = GetSubMenu(settingsMenu, offset);
+	if (posMenu)
 	{
-		HMENU posMenu = GetSubMenu(settingsMenu, 0);
-		if (posMenu)
+		if (const auto zPos = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetWindowZPosition(); }))
 		{
-			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)skin->GetWindowZPosition();
+			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)*zPos;
 			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
-
-			if (skin->GetX().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetY().fromOpposite) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetX().percentage) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-			if (skin->GetY().percentage) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-
-			HMENU monitorMenu = GetSubMenu(posMenu, 0);
-			if (monitorMenu)
-			{
-				CreateMonitorMenu(monitorMenu, skin);
-			}
 		}
 
-		// Tick the zoom
-		HMENU zoomMenu = GetSubMenu(settingsMenu, 1);
-		if (zoomMenu)
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMRIGHT, skins, [](Skin* skin) { return skin->GetX().fromOpposite; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMBOTTOM, skins, [](Skin* skin) { return skin->GetY().fromOpposite; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_XPERCENTAGE, skins, [](Skin* skin) { return skin->GetX().percentage; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_YPERCENTAGE, skins, [](Skin* skin) { return skin->GetY().percentage; });
+
+		HMENU monitorMenu = GetSubMenu(posMenu, 0);
+		if (monitorMenu)
 		{
-			const float zoom = skin->GetZoom();
+			CreateMonitorMenu(monitorMenu, skins[0]);
+			if (!GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetX().monitor; }))
+			{
+				for (int i = 0, count = GetMenuItemCount(monitorMenu); i < count; ++i)
+				{
+					CheckMenuItem(monitorMenu, i, MF_BYPOSITION | MF_UNCHECKED);
+				}
+			}
+
+			const auto autoSelectScreen = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetAutoSelectScreen(); });
+			if (!autoSelectScreen || !*autoSelectScreen)
+			{
+				CheckMenuItem(monitorMenu, IDM_SKIN_MONITOR_AUTOSELECT, MF_BYCOMMAND | MF_UNCHECKED);
+			}
+		}
+	}
+
+	HMENU zoomMenu = GetSubMenu(settingsMenu, offset + 1);
+	if (zoomMenu)
+	{
+		const auto sharedZoom = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetZoom(); });
+		if (sharedZoom)
+		{
+			const float zoom = *sharedZoom;
 			const int zoomPercent = (int)(zoom * 100.0f + 0.5f);
 			UINT checkId = 0;
-
-			struct ZoomItem
+			static const float c_Zooms[] = { 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f };
+			for (UINT i = 0; i < _countof(c_Zooms); ++i)
 			{
-				float zoom;
-				UINT command;
-			};
-			static const ZoomItem c_ZoomItems[] =
-			{
-				{ 0.8f, IDM_SKIN_ZOOM_80 },
-				{ 0.9f, IDM_SKIN_ZOOM_90 },
-				{ 1.0f, IDM_SKIN_ZOOM_100 },
-				{ 1.1f, IDM_SKIN_ZOOM_110 },
-				{ 1.2f, IDM_SKIN_ZOOM_120 },
-				{ 1.3f, IDM_SKIN_ZOOM_130 },
-				{ 1.4f, IDM_SKIN_ZOOM_140 },
-				{ 1.5f, IDM_SKIN_ZOOM_150 }
-			};
-
-			for (const auto& item : c_ZoomItems)
-			{
-				if (fabsf(zoom - item.zoom) <= 0.0001f)
+				if (fabsf(zoom - c_Zooms[i]) <= 0.0001f)
 				{
-					checkId = item.command;
+					checkId = IDM_SKIN_ZOOM_80 + i;
 					break;
 				}
 			}
@@ -437,10 +487,10 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				WCHAR buffer[32];
 				_snwprintf_s(buffer, _TRUNCATE, L"%i%%", zoomPercent);
 
-				UINT position = _countof(c_ZoomItems);
-				for (UINT i = 0; i < _countof(c_ZoomItems); ++i)
+				UINT position = _countof(c_Zooms);
+				for (UINT i = 0; i < _countof(c_Zooms); ++i)
 				{
-					const int itemPercent = (int)(c_ZoomItems[i].zoom * 100.0f + 0.5f);
+					const int itemPercent = (int)(c_Zooms[i] * 100.0f + 0.5f);
 					if (zoomPercent < itemPercent)
 					{
 						position = i;
@@ -456,69 +506,110 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_150, checkId, MF_BYCOMMAND);
 			}
 		}
+	}
 
-		// Tick the transparency
-		HMENU alphaMenu = GetSubMenu(settingsMenu, 3);
-		if (alphaMenu)
+	HMENU alphaMenu = GetSubMenu(settingsMenu, offset + 3);
+	if (alphaMenu)
+	{
+		if (const auto alpha = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetAlphaValue(); }))
 		{
-			int alpha = skin->GetAlphaValue();
-			if (alpha <= 1)	// ~100%
-			{
-				CheckMenuRadioItem(alphaMenu, 10, 10, 10, MF_BYPOSITION);
-			}
-			else
-			{
-				UINT checkPos = (UINT)(10 - alpha / 25.5);
-				checkPos = min(9, checkPos);
-				checkPos = max(0, checkPos);
-				CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
-			}
+			UINT checkPos = *alpha <= 1 ? 10 : (UINT)max(0, min(9, (int)(10 - *alpha / 25.5)));
+			CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 		}
+	}
 
-		// Tick the mouse over options (On hover)
-		HMENU hoverMenu = GetSubMenu(settingsMenu, 4);
-		if (hoverMenu)
+	HMENU hoverMenu = GetSubMenu(settingsMenu, offset + 4);
+	if (hoverMenu)
+	{
+		if (auto mode = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetWindowHide(); }))
 		{
-			int mode = skin->GetWindowHide();
-			mode = min(3, mode);
-			mode = max(0, mode);
-			CheckMenuRadioItem(hoverMenu, mode, mode, mode, MF_BYPOSITION);
+			*mode = min(3, max(0, *mode));
+			CheckMenuRadioItem(hoverMenu, *mode, *mode, *mode, MF_BYPOSITION);
 		}
+	}
 
-		// Tick the settings
-		if (skin->GetSnapEdges())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_SNAPTOEDGES, skins, [](Skin* skin) {
+		return skin->GetSnapEdges();
+	});
 
-		if (skin->GetSavePosition())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_REMEMBERPOSITION, skins, [](Skin* skin) {
+		return skin->GetSavePosition();
+	});
 
-		if (GetRainmeter().m_DisableDragging)
-		{
-			EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
-		}
-		else if (skin->GetWindowDraggable())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_DRAGGABLE, skins, [&](Skin* skin) {
+		return selectionMenu ? skin->m_OldWindowDraggable : skin->GetWindowDraggable();
+	});
 
-		if (skin->GetClickThrough())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_CLICKTHROUGH, skins, [&](Skin* skin) {
+		return selectionMenu ? skin->m_OldClickThrough : skin->GetClickThrough();
+	});
 
-		if (skin->GetKeepOnScreen())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_KEEPONSCREEN, skins, [&](Skin* skin) {
+		return selectionMenu ? skin->m_OldKeepOnScreen : skin->GetKeepOnScreen();
+	});
 
-		if (skin->GetFavorite())
-		{
-			CheckMenuItem(settingsMenu, IDM_SKIN_FAVORITE, MF_BYCOMMAND | MF_CHECKED);
-		}
+	CheckMenuItemIfMatch(settingsMenu, IDM_SKIN_FAVORITE, skins, [](Skin* skin) {
+		return skin->GetFavorite();
+	});
+
+	if (GetRainmeter().m_DisableDragging)
+	{
+		EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
+	}
+}
+
+HMENU ContextMenu::CreateSkinSelectionMenu()
+{
+	HMENU menu = CreateSkinSettingsMenu();
+	if (!menu) return nullptr;
+
+	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING, IDM_SKIN_SELECTALL, L"Select all skins");
+	InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+	AppendMenu(menu, MF_SEPARATOR, 0, nullptr);
+	AppendMenu(menu, MF_STRING, IDM_SKIN_REFRESH, L"Refresh selection");
+	AppendMenu(menu, MF_STRING, IDM_CLOSESKIN, L"Unload selection");
+
+	const auto selectedSkins = GetSelectedSkins();
+	if (selectedSkins.empty()) return menu;
+
+	CheckSkinSettingsMenu(menu, selectedSkins, 2, true);
+
+	return menu;
+}
+
+HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
+{
+	static const MenuTemplate s_Menu[] =
+	{
+		MENU_ITEM(IDM_SKIN_OPENSKINSFOLDER, 0),
+		MENU_SEPARATOR(),
+		MENU_SUBMENU(IDS_Variants,
+			MENU_SEPARATOR()),
+		MENU_SEPARATOR(),
+		MENU_ITEM_GRAYED(0, IDS_Settings),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_SKIN_MANAGESKIN, IDS_ManageSkin),
+		MENU_ITEM(IDM_SKIN_EDITSKIN, IDS_EditSkin),
+		MENU_ITEM(IDM_SKIN_REFRESH, IDS_RefreshSkin),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_CLOSESKIN, IDS_UnloadSkin)
+	};
+
+	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
+	if (!skinMenu) return nullptr;
+
+	HMENU settingsMenu = CreateSkinSettingsMenu();
+	if (settingsMenu)
+	{
+		DeleteMenu(skinMenu, 4, MF_BYPOSITION);
+		InsertMenu(skinMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)settingsMenu, GetString(IDS_Settings));
+	}
+
+	// Tick the position
+	settingsMenu = GetSubMenu(skinMenu, 4);
+	if (settingsMenu)
+	{
+		CheckSkinSettingsMenu(settingsMenu, { skin }, 0, false);
 
 		// Disable options if skin is selected
 		if (skin->IsSelected())

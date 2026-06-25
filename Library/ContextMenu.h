@@ -8,6 +8,7 @@
 #ifndef RM_LIBRARY_CONTEXTMENU_H
 #define RM_LIBRARY_CONTEXTMENU_H
 
+#include <vector>
 #include <Windows.h>
 
 class Skin;
@@ -25,6 +26,7 @@ public:
 
 	void ShowMenu(POINT pos, Skin* skin);
 	void ShowSkinCustomMenu(POINT pos, Skin* skin);
+	void ShowSkinSelectionMenu(POINT pos, Skin* skin, HWND parentWindow);
 
 	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
@@ -35,6 +37,10 @@ private:
 	static void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
 
 	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
+	static HMENU CreateSkinSettingsMenu();
+	static HMENU CreateSkinSelectionMenu();
+	static void CheckSkinSettingsMenu(
+		HMENU settingsMenu, const std::vector<Skin*>& skins, int offset, bool selectionMenu);
 	static void AppendSkinCustomMenu(
 		Skin* skin, int index, HMENU menu, bool standaloneMenu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
