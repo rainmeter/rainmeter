@@ -393,6 +393,9 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		for (const auto& meter : skin->GetMeters()) meter->ResetToolTip();
 	}
 
+	// The command may open another menu so reset this already.
+	m_ActiveMenu = nullptr;
+
 	if (command)
 	{
 		// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
@@ -400,7 +403,6 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		SendMessage(parentWindow, WM_COMMAND, command, checked);
 	}
 
-	m_ActiveMenu = nullptr;
 	DestroyMenu(menu);
 }
 
