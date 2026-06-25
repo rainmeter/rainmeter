@@ -14,6 +14,7 @@ public:
 	struct UpdateResult
 	{
 		float zoom = 1.0f;
+		float zoomDelta = 0.0f;
 		int deltaX = 0;
 		int deltaY = 0;
 		bool changed = false;

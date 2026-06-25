@@ -37,9 +37,17 @@ private:
 	void ApplyZoomDrag();
 	void CommitZoomDrag();
 
+	struct ZoomDragStartState
+	{
+		Skin* skin = nullptr;
+		POINT pos = {};
+		float zoom = 1.0f;
+	};
+
 	Skin* m_Skin;
 	HWND m_Window;
 	std::unique_ptr<SkinZoomDrag> m_ZoomDrag;
+	std::vector<ZoomDragStartState> m_ZoomDragStartStates;
 };
 
 #endif

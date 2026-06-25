@@ -195,6 +195,7 @@ SkinZoomDrag::UpdateResult SkinZoomDrag::Update(POINT screenPos, int windowW, in
 
 	UpdateResult result;
 	result.zoom = zoom;
+	result.zoomDelta = zoom - m_StartZoom;
 	result.deltaX = m_StartRect.left - x;
 	result.deltaY = m_StartRect.top - y;
 	result.positionChanged = (currentPos.x + result.deltaX) != m_StartRect.left || (currentPos.y + result.deltaY) != m_StartRect.top;

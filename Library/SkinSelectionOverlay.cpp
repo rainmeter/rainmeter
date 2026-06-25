@@ -65,7 +65,8 @@ static void DrawVerticalDash(DWORD* pixels, int width, int height, int x, DWORD 
 SkinSelectionOverlay::SkinSelectionOverlay(Skin* skin) :
 	m_Skin(skin),
 	m_Window(),
-	m_ZoomDrag()
+	m_ZoomDrag(),
+	m_ZoomDragStartStates()
 {
 	WNDCLASS wc = { 0 };
 	wc.hInstance = GetRainmeter().GetModuleInstance();
@@ -201,6 +202,16 @@ bool SkinSelectionOverlay::SetZoomDragCursor(int hit)
 void SkinSelectionOverlay::BeginZoomDrag(int hit, POINT screenPos)
 {
 	m_ZoomDrag = std::make_unique<SkinZoomDrag>(hit, m_Skin->GetPhysicalWindowBounds(), screenPos, m_Skin->m_ZoomScale);
+	m_ZoomDragStartStates.clear();
+
+	for (const auto& skins : GetRainmeter().GetAllSkins())
+	{
+		Skin* skin = skins.second;
+		if (skin->IsSelected())
+		{
+			m_ZoomDragStartStates.push_back({ skin, { skin->m_X.pos, skin->m_Y.pos }, skin->m_ZoomScale });
+		}
+	}
 }
 
 void SkinSelectionOverlay::ApplyZoomDrag()
@@ -211,15 +222,11 @@ void SkinSelectionOverlay::ApplyZoomDrag()
 	const auto& result = m_ZoomDrag->Update(System::GetCursorPosition(), m_Skin->m_WindowW, m_Skin->m_WindowH, m_Skin->m_DpiScale, m_Skin->m_ZoomScale, pos);
 	if (!result.changed) return;
 
-	for (const auto& skins : GetRainmeter().GetAllSkins())
+	for (const auto& state : m_ZoomDragStartStates)
 	{
-		Skin* skin = skins.second;
-		if (skin->IsSelected())
-		{
-			skin->m_X.pos += result.deltaX;
-			skin->m_Y.pos += result.deltaY;
-			skin->ApplyZoom(result.zoom, false);
-		}
+		state.skin->m_X.pos = state.pos.x + result.deltaX;
+		state.skin->m_Y.pos = state.pos.y + result.deltaY;
+		state.skin->ApplyZoom(state.zoom + result.zoomDelta, false);
 	}
 }
 
@@ -229,15 +236,19 @@ void SkinSelectionOverlay::CommitZoomDrag()
 
 	if (m_ZoomDrag->HasMoved())
 	{
-		m_Skin->WriteOptions(Skin::OPTION_ZOOM);
-
-		if (m_ZoomDrag->HasPositionChanged())
+		for (const auto& state : m_ZoomDragStartStates)
 		{
-			m_Skin->SavePositionIfAppropriate();
+			state.skin->WriteOptions(Skin::OPTION_ZOOM);
+
+			if (m_ZoomDrag->HasPositionChanged())
+			{
+				state.skin->SavePositionIfAppropriate();
+			}
 		}
 	}
 
 	m_ZoomDrag.reset();
+	m_ZoomDragStartStates.clear();
 
 	if (GetCapture() == m_Window)
 	{
