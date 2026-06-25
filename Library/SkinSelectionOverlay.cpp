@@ -19,6 +19,7 @@ const int g_ZoomDragMinPercent = 10;
 const int g_ZoomDragMaxPercent = 500;
 const int g_ZoomDragEdgeSize = 10;
 const int g_ZoomDragCornerSize = 20;
+const int g_ZoomDragThreshold = 4;
 
 static bool IsLeftHit(int hit)
 {
@@ -333,6 +334,16 @@ SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT 
 	int draggedH = startH;
 	const int dx = screenPos.x - m_ZoomDrag->startPoint.x;
 	const int dy = screenPos.y - m_ZoomDrag->startPoint.y;
+
+	if (!m_ZoomDrag->thresholdReached)
+	{
+		if (abs(dx) < g_ZoomDragThreshold && abs(dy) < g_ZoomDragThreshold)
+		{
+			return {};
+		}
+
+		m_ZoomDrag->thresholdReached = true;
+	}
 
 	if (IsLeftHit(m_ZoomDrag->initialHit))
 	{

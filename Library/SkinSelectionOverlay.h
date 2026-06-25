@@ -54,6 +54,7 @@ private:
 		RECT startRect = {};
 		POINT startPoint = {};
 		float startZoom = 1.0f;
+		bool thresholdReached = false;
 		bool moved = false;
 		bool positionChanged = false;
 	};
