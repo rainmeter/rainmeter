@@ -641,7 +641,8 @@ HMENU ContextMenu::CreateSkinSelectionMenu()
 
 	WCHAR buffer[32] = { 0 };
 	_snwprintf_s(buffer, _TRUNCATE, L"%d %s selected", (int)selectedSkins.size(), selectedSkins.size() == 1 ? L"skin" : L"skins");
-	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING | MF_GRAYED, IDM_SKIN_SELECT, buffer);
+	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING, 0, buffer);
+	SetMenuDefaultItem(menu, 0, MF_BYPOSITION);
 
 	InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 	InsertMenu(menu, 2, MF_BYPOSITION | MF_STRING, IDM_SKIN_SELECT, L"Select all skins");
