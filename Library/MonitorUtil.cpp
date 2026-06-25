@@ -106,109 +106,134 @@ void MonitorUtil::ClearMultiMonitorInfo()
 
 void MonitorUtil::SetMultiMonitorInfo()
 {
-	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
+	auto& monitors = c_Monitors.monitors;
 
 	c_Monitors.virtualScreen = GetVirtualScreenRect();
+	c_Monitors.primary = 0;
+
+	// Populate with EnumDisplayDevices first because we also want inactive displays. This will keep
+	// the monitor index consistent e.g. when monitors are plugged in/out.
+	for (DWORD dwDevice = 0; ; ++dwDevice)
+	{
+		DISPLAY_DEVICE dd = { sizeof(DISPLAY_DEVICE) };
+		if (!EnumDisplayDevices(nullptr, dwDevice, &dd, 0)) break;
+
+		if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) != 0) continue;
+
+		MonitorInfo monitor = { 0 };
+		monitor.handle = nullptr;
+		monitor.active = (dd.StateFlags & DISPLAY_DEVICE_ACTIVE);
+		monitor.deviceName.assign(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
+
+		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
+		for (DWORD dwMon = 0; ; ++dwMon)
+		{
+			DISPLAY_DEVICE ddm = { sizeof(DISPLAY_DEVICE) };
+			if (!EnumDisplayDevices(monitor.deviceName.c_str(), dwMon, &ddm, 0)) break;
+
+			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
+			{
+				monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
+				break;
+			}
+		}
+
+		monitors.push_back(monitor);
+
+		if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+		{
+			c_Monitors.primary = (int)monitors.size();
+		}
+	}
+
+	// Now use EnumDisplayMonitors and link it up with the previous enumeration.
+	EnumDisplayMonitors(nullptr, nullptr,
+		[](HMONITOR hMonitor, HDC, RECT* monitorRect, LPARAM) -> BOOL
+		{
+			auto& monitors = c_Monitors.monitors;
+
+			MONITORINFOEX info = { sizeof(MONITORINFOEX) };
+			if (!GetMonitorInfo(hMonitor, &info)) return TRUE;
+
+			auto monitor = std::find_if(monitors.begin(), monitors.end(),
+				[&](const MonitorInfo& monitor)
+				{
+					return monitor.handle == nullptr && _wcsicmp(info.szDevice, monitor.deviceName.c_str()) == 0;
+				});
+
+			// This should never happen, but keeping this here to match older code.
+			if (monitor == monitors.end())
+			{
+				monitors.emplace_back();
+				monitor = monitors.end() - 1;
+				monitor->active = true;
+				monitor->deviceName = info.szDevice;
+			}
+
+			monitor->handle = hMonitor;
+			monitor->screen = *monitorRect;
+			monitor->work = info.rcWork;
+			monitor->dpi = MonitorUtil::GetDpiForMonitor(hMonitor);
+
+			return TRUE;
+		}, 0);
+
+	int firstActive = 0;
+	bool primaryActive = false;
+	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter)
+	{
+		MonitorInfo& monitor = *iter;
+		if (monitor.active && monitor.handle == nullptr)
+		{
+			LogWarningF(L"Failed to get monitor info for: %s", monitor.deviceName.c_str());
+			monitor.active = false;
+		}
+
+		if (monitor.active)
+		{
+			const int index = (int)(iter - monitors.begin()) + 1;
+			if (firstActive == 0) firstActive = index;
+			if (c_Monitors.primary == index) primaryActive = true;
+		}
+	}
+
+	if (firstActive == 0)
+	{
+		monitors.clear();
+	}
+	else if (!primaryActive)
+	{
+		c_Monitors.primary = firstActive;
+	}
+
+	// Can this really happen...? Leaving it here because the old code had it.
+	if (monitors.empty())
+	{
+		LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
+		MonitorInfo monitor;
+		monitor.active = true;
+		monitor.handle = MonitorFromPoint({ 0, 0 }, MONITOR_DEFAULTTOPRIMARY);
+		monitor.screen = monitor.work = c_Monitors.virtualScreen;
+		monitor.deviceName = L"DUMMY";
+		monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
+		monitors.push_back(monitor);
+		c_Monitors.primary = 1;
+	}
 
 	{
 		DpiUnawareScope dpiUnaware;
 		c_Monitors.logicalVirtualScreen = GetVirtualScreenRect();
-	}
 
-	c_Monitors.primary = 1;  // If primary screen is not found, 1st screen is assumed as primary screen.
-
-	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
-
-	if (EnumDisplayDevices(nullptr, 0, &dd, 0))
-	{
-		DWORD dwDevice = 0;
-
-		do
+		for (auto& monitor : monitors)
 		{
-			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) != 0) continue;
-
-			std::wstring deviceName(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
-
-			MonitorInfo monitor = { 0 };
-			monitor.handle = nullptr;
-			monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
-
-			// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-			DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
-			DWORD dwMon = 0;
-			while (EnumDisplayDevices(deviceName.c_str(), dwMon++, &ddm, 0))
+			if (monitor.active && monitor.handle != nullptr)
 			{
-				if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-				{
-					monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
-					break;
-				}
-			}
-
-			if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
-			{
-				monitor.active = true;
-
-				DEVMODE dm = { 0 };
-				dm.dmSize = sizeof(DEVMODE);
-
-				POINT pos = { 0, 0 };
-				if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
-				{
-					pos.x = dm.dmPosition.x;
-					pos.y = dm.dmPosition.y;
-				}
-
-				monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONEAREST);
-
-				MONITORINFO info = {sizeof(MONITORINFO)};
+				MONITORINFO info = { sizeof(MONITORINFO) };
 				GetMonitorInfo(monitor.handle, &info);
-
-				monitor.screen = info.rcMonitor;
-				monitor.work = info.rcWork;
-				monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
-
-				{
-					DpiUnawareScope dpiUnaware;
-					GetMonitorInfo(monitor.handle, &info);
-					monitor.logicalScreen = info.rcMonitor;
-					monitor.logicalWork = info.rcWork;
-				}
+				monitor.logicalScreen = info.rcMonitor;
+				monitor.logicalWork = info.rcWork;
 			}
-			else
-			{
-				monitor.active = false;
-			}
-
-			monitors.push_back(monitor);
-
-			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-			{
-				c_Monitors.primary = (int)monitors.size();
-			}
-
-			++dwDevice;
 		}
-		while (EnumDisplayDevices(nullptr, dwDevice, &dd, 0));
-	}
-
-	// Can this really happen...?
-	if (monitors.empty())
-	{
-		LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
-
-		MonitorInfo monitor;
-		monitor.active = true;
-
-		monitor.handle = MonitorFromPoint({ 0, 0 }, MONITOR_DEFAULTTOPRIMARY);
-		monitor.screen = monitor.work = c_Monitors.virtualScreen;
-		monitor.logicalScreen = monitor.logicalWork = c_Monitors.logicalVirtualScreen;
-		monitor.deviceName = L"DUMMY";
-		monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
-
-		monitors.push_back(monitor);
-
-		c_Monitors.primary = 1;
 	}
 
 	c_Monitors.UpdateSpans();
@@ -219,30 +244,29 @@ void MonitorUtil::SetMultiMonitorInfo()
 		LogDebugF(L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
 		LogDebug(L"@0: Virtual screen");
 
-		const auto& vs = c_Monitors.virtualScreen;
-		LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)", vs.left, vs.top, vs.right, vs.bottom, vs.right - vs.left, vs.bottom - vs.top);
+		RECT r = c_Monitors.virtualScreen;
+		LogDebugF(L"    L=%i, T=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
 
 		int i = 1;
 		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
 		{
-			if ((*iter).active)
+			if (iter->active)
 			{
-				LogDebugF(L"@%i: %s (active), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
-				LogDebugF(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					(*iter).screen.left, (*iter).screen.top, (*iter).screen.right, (*iter).screen.bottom,
-					(*iter).screen.right - (*iter).screen.left, (*iter).screen.bottom - (*iter).screen.top);
-				LogDebugF(L"  WorkArea    : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					(*iter).work.left, (*iter).work.top, (*iter).work.right, (*iter).work.bottom,
-					(*iter).work.right - (*iter).work.left, (*iter).work.bottom - (*iter).work.top);
-				LogDebugF(L"  Dpi         : %u", (*iter).dpi);
+				LogDebugF(L"@%i: %s (active) - %s", i, iter->deviceName.c_str(), iter->monitorName.c_str());
+
+				r = iter->screen;
+				LogDebugF(L"    ScreenArea: X=%i, Y=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
+				r = iter->work;
+				LogDebugF(L"    WorkArea:   X=%i, Y=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
+				LogDebugF(L"    Dpi:        %u", iter->dpi);
 			}
-			else if ((*iter).monitorName.empty())
+			else if (iter->monitorName.empty())
 			{
-				LogDebugF(L"@%i: %s (inactive)", i, (*iter).deviceName.c_str());
+				LogDebugF(L"@%i: %s (inactive)", i, iter->deviceName.c_str());
 			}
 			else
 			{
-				LogDebugF(L"@%i: %s (inactive), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
+				LogDebugF(L"@%i: %s (inactive) - %s", i, iter->deviceName.c_str(), iter->monitorName.c_str());
 			}
 		}
 		LogDebug(L"------------------------------");
@@ -262,20 +286,18 @@ void MonitorUtil::UpdateWorkareaInfo()
 	int i = 1;
 	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
 	{
-		if ((*iter).active && (*iter).handle != nullptr)
+		if (iter->active && iter->handle != nullptr)
 		{
-			MONITORINFO info = {sizeof(MONITORINFO)};
-			GetMonitorInfo((*iter).handle, &info);
+			MONITORINFO info = { sizeof(MONITORINFO) };
+			GetMonitorInfo(iter->handle, &info);
 
-			(*iter).work = info.rcWork;
-			(*iter).dpi = MonitorUtil::GetDpiForMonitor((*iter).handle);
+			iter->work = info.rcWork;
+			iter->dpi = MonitorUtil::GetDpiForMonitor((*iter).handle);
 
 			if (GetRainmeter().GetDebug())
 			{
-				LogDebugF(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					i,
-					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+				RECT r = info.rcWork;
+				LogDebugF(L"WorkArea@%i: L=%i, T=%i, W=%i, H=%i", i, r.left, r.top, r.right - r.left, r.bottom - r.top);
 			}
 		}
 	}
