@@ -105,6 +105,8 @@ public:
 	void GetTransform(D2D1_MATRIX_3X2_F* matrix);
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
+	void PushOpacityLayer(FLOAT opacity);
+	void PopLayer();
 
 	bool SetTarget(Gfx::RenderTexture* texture);
 	void ResetTarget();

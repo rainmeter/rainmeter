@@ -393,6 +393,27 @@ void Canvas::ResetTransform()
 	SetTransform(D2D1::Matrix3x2F::Identity());
 }
 
+void Canvas::PushOpacityLayer(FLOAT opacity)
+{
+	if (!m_Target) return;
+
+	m_Target->PushLayer(
+		D2D1::LayerParameters(
+			D2D1::InfiniteRect(),
+			nullptr,
+			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+			D2D1::Matrix3x2F::Identity(),
+			opacity),
+		nullptr);
+}
+
+void Canvas::PopLayer()
+{
+	if (!m_Target) return;
+
+	m_Target->PopLayer();
+}
+
 void Canvas::SetDpiScale(float dpiScale)
 {
 	auto dpi = 96.0f * dpiScale;
