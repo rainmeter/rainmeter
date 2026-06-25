@@ -73,6 +73,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_HostWindow(),
 	m_Window(),
 	m_SelectionOverlay(),
+	m_PendingWriteOptions(0),
 	m_SuspendResumeNotification(nullptr),
 	m_Mouse(this),
 	m_MouseOver(false),
@@ -824,15 +825,20 @@ void Skin::Deselect()
 {
 	if (!IsSelected()) return;
 
-	m_SelectionOverlay.reset();
-
 	// Reset the following options to their original state
 	SetWindowDraggable(m_OldWindowDraggable);
 	SetKeepOnScreen(m_OldKeepOnScreen);
 	SetClickThrough(m_OldClickThrough);
 	DialogManage::UpdateSelectedSkinOptions(this);
 
-	// Reset each meter's tooltip
+	m_SelectionOverlay.reset();
+
+	if (m_PendingWriteOptions != 0)
+	{
+		WriteOptions(m_PendingWriteOptions);
+		m_PendingWriteOptions = 0;
+	}
+
 	for (const auto& meter : m_Meters) meter->ResetToolTip();
 
 	Redraw();
@@ -2195,6 +2201,16 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 */
 void Skin::WriteOptions(INT setting)
 {
+	if (IsSelected())
+	{
+		m_PendingWriteOptions |= setting;
+		if (setting != OPTION_ALL)
+		{
+			DialogManage::UpdateSkins(this);
+		}
+		return;
+	}
+
 	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
 
 	if (*iniFile)

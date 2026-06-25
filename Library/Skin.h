@@ -392,6 +392,9 @@ private:
 	HWND m_HostWindow;
 	HWND m_Window;
 	std::unique_ptr<SkinSelectionOverlay> m_SelectionOverlay;
+
+	int m_PendingWriteOptions;
+
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
 	Mouse m_Mouse;
