@@ -1559,9 +1559,15 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				++i;
 			}
 		}
-		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT ||
-			wParam == IDM_SKIN_MONITOR_PRIMARY ||
-			wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
+		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
+		{
+			if (m_SkinWindow)
+			{
+				m_SkinWindow->SetAutoSelectScreen(!m_SkinWindow->GetAutoSelectScreen());
+			}
+			break;
+		}
+		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
 			if (m_SkinWindow)
 			{

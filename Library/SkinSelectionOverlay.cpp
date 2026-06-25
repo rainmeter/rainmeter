@@ -88,8 +88,8 @@ SkinSelectionOverlay::SkinSelectionOverlay(Skin* skin) :
 		MESSAGE(OnLeftButtonDown, WM_LBUTTONDOWN)
 		MESSAGE(OnLeftButtonUp, WM_LBUTTONUP)
 		MESSAGE(OnLeftButtonUp, WM_CAPTURECHANGED)
-		MESSAGE(ForwardMessageToSkin, WM_CONTEXTMENU)
-		MESSAGE(ForwardMessageToSkin, WM_RBUTTONUP)
+		MESSAGE(OnContextMenu, WM_CONTEXTMENU)
+		MESSAGE(OnCommand, WM_COMMAND)
 		END_MESSAGEPROC
 	};
 	static auto s_ClassAtom = RegisterClass(&wc);
@@ -307,6 +307,38 @@ LRESULT SkinSelectionOverlay::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM 
 LRESULT SkinSelectionOverlay::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_ZoomDrag) CommitZoomDrag();
+	return 0;
+}
+
+LRESULT SkinSelectionOverlay::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos = { 0 };
+	if ((lParam & 0xFFFFFFFF) == 0xFFFFFFFF)
+	{
+		RECT rect = { 0 };
+		GetWindowRect(m_Window, &rect);
+		pos.x = rect.left;
+		pos.y = rect.top;
+	}
+	else
+	{
+		pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+	}
+
+	GetRainmeter().ShowSkinSelectionContextMenu(pos, m_Skin, m_Window);
+	return 0;
+}
+
+LRESULT SkinSelectionOverlay::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	for (const auto& [path, skin] : GetRainmeter().GetAllSkins())
+	{
+		if (wParam == IDM_SKIN_SELECT || skin->IsSelected())
+		{
+			SendMessage(skin->GetWindow(), WM_COMMAND, wParam, lParam);
+		}
+	}
+
 	return 0;
 }
 

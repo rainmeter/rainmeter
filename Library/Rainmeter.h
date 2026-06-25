@@ -180,6 +180,7 @@ public:
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
 	void ShowContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowMenu(pos, skin); }
 	void ShowSkinCustomContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowSkinCustomMenu(pos, skin); }
+	void ShowSkinSelectionContextMenu(POINT pos, Skin* skin, HWND parentWindow) { return m_ContextMenu.ShowSkinSelectionMenu(pos, skin, parentWindow); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
