@@ -2835,14 +2835,29 @@ void Skin::Redraw()
 		return;
 	}
 
-	m_Canvas.Clear();
+
+	const bool selectionOverlayVisible = m_SelectionOverlay != nullptr;
+	if (selectionOverlayVisible)
+	{
+		m_Canvas.Clear(D2D1::ColorF(D2D1::ColorF::Black, 0.1f));
+		m_Canvas.PushOpacityLayer(0.9f);
+	}
+	else
+	{
+		m_Canvas.Clear();
+	}
 
 	if (m_WindowW != 0 && m_WindowH != 0)
 	{
 		if (m_Background)
 		{
 			const auto bitmap = m_Background->GetImage();
-			if (bitmap == nullptr) return;
+			if (bitmap == nullptr)
+			{
+				if (selectionOverlayVisible) m_Canvas.PopLayer();
+				m_Canvas.EndDraw();
+				return;
+			}
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
@@ -2951,6 +2966,11 @@ void Skin::Redraw()
 	}
 
 	m_Canvas.ResetTransform();
+	if (selectionOverlayVisible)
+	{
+		m_Canvas.PopLayer();
+	}
+
 	UpdateWindow(true);
 
 	m_Canvas.EndDraw();
