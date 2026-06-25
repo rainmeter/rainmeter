@@ -158,8 +158,9 @@ Function .onInit
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match. In case the default is English, strip away English string to
 				; avoid showing it twice.
-				${StrRep} $1 "$(SelectLanguage)$\n$\n" "Please select the installer language.$\n$\n" ""
-				LangDLL::LangDialog "$(^SetupCaption)" "$1Please select the installer language." AC ${LANGDLL_PARAMS} ""
+				StrCpy $1 "Please select the setup language."
+				${StrRep} $2 "$(SelectLanguage)" "$1" ""
+				LangDLL::LangDialog "$(^SetupCaption)" "$1$\n$2" AC ${LANGDLL_PARAMS} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
