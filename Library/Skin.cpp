@@ -695,7 +695,7 @@ void Skin::UpdateWindowDpi(UINT dpi)
 	const auto oldEffectiveScale = m_EffectiveScale;
 	m_EffectiveScale = m_ZoomScale * m_DpiScale;
 
-	if (fabsf(oldEffectiveScale - m_EffectiveScale) > 0.01f)
+	if (oldEffectiveScale != m_EffectiveScale)
 	{
 		WCHAR buffer[32];
 		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", m_EffectiveScale);
