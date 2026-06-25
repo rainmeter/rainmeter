@@ -2951,7 +2951,7 @@ void Skin::Redraw()
 	}
 
 	m_Canvas.ResetTransform();
-	UpdateWindow(m_TransparencyValue, true);
+	UpdateWindow(true);
 
 	m_Canvas.EndDraw();
 }
@@ -3223,9 +3223,10 @@ void Skin::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
+void Skin::UpdateWindow(bool canvasBeginDrawCalled)
 {
-	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA };
+	const auto alpha = (BYTE)(m_SelectionOverlay ? 240 : m_TransparencyValue);
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
 	POINT ptSrc = { 0 };
 	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
@@ -3243,8 +3244,6 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 	m_Canvas.ReleaseDC();
 
 	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
-
-	m_TransparencyValue = alpha;
 }
 
 /*
