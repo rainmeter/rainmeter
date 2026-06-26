@@ -8,6 +8,7 @@
 !verbose 2
 
 Unicode true
+SetCompressor /SOLID lzma
 
 !addplugindir ".\"
 
@@ -28,6 +29,8 @@ Unicode true
 !include "StrFunc.nsh"
 !include "WordFunc.nsh"
 !include "WinVer.nsh"
+
+!include "ShellExecuteAsExplorer.nsh"
 !include "UAC.nsh"
 !include "RmError.nsh"
 
@@ -55,7 +58,6 @@ VIAddVersionKey "OriginalFilename" "${OUTFILE}"
 VIAddVersionKey "LegalCopyright" "© ${BUILD_YEAR} Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
-SetCompressor /SOLID lzma
 RequestExecutionLevel user
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
 ShowInstDetails nevershow
@@ -909,7 +911,10 @@ Function RemoveUserStartupShortcut
 FunctionEnd
 
 Function FinishRun
-	!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\Rainmeter.exe" "" "" ""
+	${ShellExecuteAsExplorer} $0 "open" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR" ${SEAE_SW_SHOWNORMAL}
+	${If} $0 <> 0
+		!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\Rainmeter.exe" "" "" ""
+	${EndIf}
 FunctionEnd
 
 
