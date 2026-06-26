@@ -451,6 +451,12 @@ void Skin::Refresh(bool init, bool all)
 
 	LogNoticeF(this, L"Refreshing skin");
 
+	if (m_PendingWriteOptions != 0)
+	{
+		WriteOptions(m_PendingWriteOptions);
+		m_PendingWriteOptions = 0;
+	}
+
 	SetResizeWindowMode(RESIZEMODE_RESET);
 
 	if (!init)
@@ -489,6 +495,8 @@ void Skin::Refresh(bool init, bool all)
 	}
 
 	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+	if (m_SelectionOverlay) m_SelectionOverlay->Update();
 
 	ComputeOptionValueFromPosition();
 
