@@ -3,7 +3,7 @@
     <!-- This is overridden by Build.ps1 during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'x86' ">$(SolutionDir)BuildOut\$(Configuration)32\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)BuildOut\$(Configuration)64\</RmOutDirRoot>
-    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)BuildOut\$(Configuration)ARM\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64EC' ">$(SolutionDir)BuildOut\$(Configuration)ARM\</RmOutDirRoot>
 
     <OutputPath>$(RmOutDirRoot)Plugins\</OutputPath>
   </PropertyGroup>

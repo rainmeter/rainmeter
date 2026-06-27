@@ -75,7 +75,7 @@
 #    endif
 #endif
 
-#if defined(_MSC_VER) && defined(_M_X64)
+#if defined(_MSC_VER) && defined(_M_X64) && !defined(_M_ARM64EC)
 #    include <intrin.h>
 #    pragma intrinsic(_umul128)
 #endif

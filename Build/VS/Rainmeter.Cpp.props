@@ -14,7 +14,7 @@
     <!-- This is overridden by Build.ps1 during full build. -->
     <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)BuildOut\$(Configuration)32\</RmOutDirRoot>
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)BuildOut\$(Configuration)64\</RmOutDirRoot>
-    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64' ">$(SolutionDir)BuildOut\$(Configuration)ARM\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'ARM64EC' ">$(SolutionDir)BuildOut\$(Configuration)ARM\</RmOutDirRoot>
 
     <OutDir>$(RmOutDirRoot)</OutDir>
     <IntDir>$(OutDir)Obj\$(ProjectName)\</IntDir>
@@ -33,8 +33,7 @@
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
     <DelayLoadTestDLL>Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
-    <DelayLoadTestDLL Condition="'$(Platform)'=='x64'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.x64.dll</DelayLoadTestDLL>
-    <DelayLoadTestDLL Condition="'$(Platform)'=='ARM64'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.arm64.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL Condition="'$(Platform)'!='Win32'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.x64.dll</DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(ConfigurationType)'=='StaticLibrary'"></DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(ExcludeTests)'=='true'"></DelayLoadTestDLL>
   </PropertyGroup>
@@ -119,26 +118,20 @@
     <ClCompile>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
-    <Link>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <Link>
-      <TargetMachine>MachineX64</TargetMachine>
-    </Link>
   </ItemDefinitionGroup>
 
-  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64'">
+  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64EC'">
     <ResourceCompile>
       <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <Link>
-      <TargetMachine>MachineARM64</TargetMachine>
-    </Link>
   </ItemDefinitionGroup>
 </Project>

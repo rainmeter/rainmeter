@@ -15,9 +15,9 @@
       <AdditionalDependencies>$(SolutionDir)Plugins\API\x64\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64'">
+  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64EC'">
     <Link>
-      <AdditionalDependencies>$(SolutionDir)Plugins\API\ARM64\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)Plugins\API\x64\Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>

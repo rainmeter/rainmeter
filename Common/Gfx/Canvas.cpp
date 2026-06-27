@@ -54,7 +54,7 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 		// Required for Direct2D interopability.
 		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && !defined(_M_ARM64EC)
 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
