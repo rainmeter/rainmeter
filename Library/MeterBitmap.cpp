@@ -87,6 +87,12 @@ void MeterBitmap::Initialize()
 	}
 }
 
+void MeterBitmap::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 /*
 ** Checks if the given point is inside the meter.
 **

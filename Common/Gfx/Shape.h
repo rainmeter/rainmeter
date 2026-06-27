@@ -56,6 +56,8 @@ public:
 	Shape(ShapeType type);
 	~Shape();
 
+	void InvalidateDeviceResources();
+
 	ShapeType GetShapeType() { return m_ShapeType; }
 
 	bool DoesShapeExist() { return m_Shape != nullptr; }

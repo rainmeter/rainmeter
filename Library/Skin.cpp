@@ -320,19 +320,13 @@ void Skin::Initialize()
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
 
-	LONG errCode = 0L;
-	if (!m_Canvas.InitializeRenderTarget(m_Window, &errCode))
+	const auto hr = m_Canvas.InitializeDeviceContextForWindow(m_Window);
+	if (FAILED(hr))
 	{
-		LogErrorF(this, L"Initialize: Could not initialize the render target.");
+		LogErrorF(this, L"Render target initialization failed, error: %s (0x%08x)", _com_error(hr).ErrorMessage(), hr);
 
-		//Unload skin to prevent crashes
+		// Unload skin to prevent crashes
 		Deactivate();
-	}
-
-	if (errCode != 0L)
-	{
-		_com_error err(errCode);
-		LogErrorF(this, L"Initialize: Com Error: %s (0x%08x)", err.ErrorMessage(), errCode);
 	}
 
 	Refresh(true, true);
@@ -353,6 +347,34 @@ void Skin::Initialize()
 	if (m_Window && IsWindows8OrGreater() && c_RegisterSuspendResumeNotification)
 	{
 		m_SuspendResumeNotification = c_RegisterSuspendResumeNotification(m_Window, DEVICE_NOTIFY_WINDOW_HANDLE);
+	}
+}
+
+bool Skin::ReinitializeCanvasDeviceContext()
+{
+	if (FAILED(m_Canvas.InitializeDeviceContextForWindow(m_Window)))
+	{
+		return false;
+	}
+
+	for (auto meter : m_Meters)
+	{
+		meter->ResizeContainerTextures();
+	}
+
+	return true;
+}
+
+void Skin::InvalidateDeviceResources()
+{
+	if (m_Background)
+	{
+		m_Background->InvalidateDeviceResources();
+	}
+
+	for (auto meter : m_Meters)
+	{
+		meter->InvalidateDeviceResources();
 	}
 }
 
@@ -2362,7 +2384,7 @@ bool Skin::ReadSkin()
 	m_Canvas.SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
 	// Gotta have some kind of buffer during initialization
-	CreateDoubleBuffer(1, 1);
+	m_Canvas.Resize(1, 1);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
@@ -2814,23 +2836,8 @@ bool Skin::ResizeWindow(bool reset)
 	return true;
 }
 
-/*
-** Creates the back buffer bitmap.
-**
-*/
-void Skin::CreateDoubleBuffer(int cx, int cy)
-{
-	m_Canvas.Resize(cx, cy);
-}
-
-/*
-** Redraws the meters and paints the window
-**
-*/
 void Skin::Redraw()
 {
-	//UpdateRelativeMeters();
-
 	m_Canvas.SetDpiScale(m_EffectiveScale);
 
 	if (m_ResizeWindow)
@@ -2852,7 +2859,7 @@ void Skin::Redraw()
 
 		if (w != m_Canvas.GetW() || h != m_Canvas.GetH())
 		{
-			CreateDoubleBuffer(w, h);
+			m_Canvas.Resize(w, h);
 		}
 	}
 
@@ -2860,7 +2867,6 @@ void Skin::Redraw()
 	{
 		return;
 	}
-
 
 	const bool selectionOverlayVisible = m_SelectionOverlay != nullptr;
 	if (selectionOverlayVisible)
@@ -2997,9 +3003,43 @@ void Skin::Redraw()
 		m_Canvas.PopLayer();
 	}
 
-	UpdateWindow(true);
-
+	UpdateWindowContents();
 	m_Canvas.EndDraw();
+}
+
+void Skin::UpdateWindowContents()
+{
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA };
+	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
+	POINT ptSrc = { 0 };
+	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
+
+	HDC dcMemory = m_Canvas.GetDC();
+	if (!dcMemory) return;
+
+	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
+	{
+		// Retry after resetting WS_EX_LAYERED flag.
+		RemoveWindowExStyle(WS_EX_LAYERED);
+		AddWindowExStyle(WS_EX_LAYERED);
+		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+	}
+
+	m_Canvas.ReleaseDC();
+}
+
+void Skin::UpdateWindowTransparency(int alpha)
+{
+	const bool changed = m_TransparencyValue != alpha;
+	m_TransparencyValue = alpha;
+
+	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA };
+	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
+
+	if (changed)
+	{
+		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Transparency);
+	}
 }
 
 bool Skin::HandleContainer(Meter* container)
@@ -3010,7 +3050,7 @@ bool Skin::HandleContainer(Meter* container)
 	if (containerItems.empty()) return false;
 
 	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
-	container->UpdateContainer();
+	container->ResizeContainerTextures();
 
 	auto containerContentBitmap = container->GetContainerContentTexture();
 	m_Canvas.SetTarget(containerContentBitmap);
@@ -3181,7 +3221,7 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		meter->UpdateToolTip();
 	}
 
-	meter->UpdateContainer();
+	meter->ResizeContainerTextures();
 
 	// Check for transitions
 	if (!bActiveTransition && meter->HasActiveTransition())
@@ -3262,50 +3302,6 @@ void Skin::Update(bool refresh)
 	if (!m_OnUpdateAction.empty())
 	{
 		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), this);
-	}
-}
-
-/*
-** Updates the window contents
-**
-*/
-void Skin::UpdateWindow(bool canvasBeginDrawCalled)
-{
-	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA};
-	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
-	POINT ptSrc = { 0 };
-	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
-
-	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
-
-	HDC dcMemory = m_Canvas.GetDC();
-	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
-	{
-		// Retry after resetting WS_EX_LAYERED flag.
-		RemoveWindowExStyle(WS_EX_LAYERED);
-		AddWindowExStyle(WS_EX_LAYERED);
-		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-	}
-	m_Canvas.ReleaseDC();
-
-	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
-}
-
-/*
-** Updates the window transparency (using existing contents).
-**
-*/
-void Skin::UpdateWindowTransparency(int alpha)
-{
-	const bool changed = m_TransparencyValue != alpha;
-	m_TransparencyValue = alpha;
-
-	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA };
-	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
-
-	if (changed)
-	{
-		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Transparency);
 	}
 }
 
@@ -4343,7 +4339,7 @@ LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	RedrawWindow();
+	UpdateWindowContents();
 	return 0;
 }
 

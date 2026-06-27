@@ -129,7 +129,8 @@ public:
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
-	void RedrawWindow() { UpdateWindow(m_TransparencyValue); }
+	void UpdateWindowContents();
+
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 	bool HandleContainer(Meter* container);
@@ -307,6 +308,9 @@ private:
 		OPTION_ALL              = 0xFFFFFFFF
 	};
 
+	void InvalidateDeviceResources();
+	bool ReinitializeCanvasDeviceContext();
+
 	bool HitTest(int x, int y);
 	bool HitTestDevice(int x, int y);
 
@@ -330,7 +334,6 @@ private:
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
-	void UpdateWindow(bool canvasBeginDrawCalled = false);
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
@@ -374,7 +377,6 @@ private:
 	void HideBlur();
 
 	void Dispose(bool refresh);
-	void CreateDoubleBuffer(int cx, int cy);
 
 	bool IsNetworkMeasure(Measure* measure);
 

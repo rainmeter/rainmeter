@@ -88,6 +88,9 @@ public:
 	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
 	bool IsPixelOpaque(int px, int py) const;
 
+	bool HasDeviceResources() const { return !m_Segments.empty(); }
+	void InvalidateDeviceResources() { m_Segments.clear(); }
+
 	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 
 private:

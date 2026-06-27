@@ -53,6 +53,8 @@ public:
 	// Returns true if this TextFormat object is valid for use in draw operations.
 	virtual bool IsInitialized() const = 0;
 
+	virtual void InvalidateDeviceResources() {}
+
 	// Sets the logical properties of the font to use. If the font is not found in the system font
 	// collection, the given |fontCollection| is also searched. |fontCollection| may be nullptr.
 	virtual void SetProperties(

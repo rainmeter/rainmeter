@@ -127,6 +127,15 @@ MeterString::~MeterString()
 	m_TextFormat = nullptr;
 }
 
+void MeterString::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	if (m_TextFormat)
+	{
+		m_TextFormat->InvalidateDeviceResources();
+	}
+}
+
 /*
 ** Returns the X-coordinate of the meter
 **

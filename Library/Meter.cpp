@@ -89,6 +89,12 @@ void Meter::Initialize()
 	m_Initialized = true;
 }
 
+void Meter::InvalidateDeviceResources()
+{
+	if (m_ContainerTexture) m_ContainerTexture->InvalidateDeviceResources();
+	if (m_ContainerContentTexture) m_ContainerContentTexture->InvalidateDeviceResources();
+}
+
 /*
 ** Returns the X-position of the meter.
 **
@@ -266,13 +272,11 @@ void Meter::RemoveContainerItem(Meter* item)
 	}
 }
 
-void Meter::UpdateContainer()
+void Meter::ResizeContainerTextures()
 {
 	const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
 	const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
-
 	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
-
 	if (m_ContainerContentTexture) m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), width, height);
 }
 

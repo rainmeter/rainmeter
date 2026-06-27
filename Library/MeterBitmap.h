@@ -25,6 +25,7 @@ public:
 	virtual bool HitTest(int x, int y);
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition();

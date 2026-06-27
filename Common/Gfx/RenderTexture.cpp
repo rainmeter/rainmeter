@@ -15,32 +15,32 @@ RenderTexture::RenderTexture(Canvas& canvas, UINT width, UINT height) : m_Bitmap
 {
 	m_Bitmap.m_Width = width;
 	m_Bitmap.m_Height = height;
-
-	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
-		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-
-	Microsoft::WRL::ComPtr<ID2D1Bitmap1> segment;
-	canvas.m_Target->CreateBitmap(D2D1::SizeU(width, height), nullptr, 0, bProps, segment.GetAddressOf());
-
-	m_Bitmap.AddSegment(segment, 0U, 0U, width, height);
+	CreateBitmap(canvas, m_Bitmap, width, height);
 }
 
 void RenderTexture::Resize(Canvas& canvas, UINT width, UINT height)
 {
-	if (width == m_Bitmap.m_Width && height == m_Bitmap.m_Height) return;
+	if (width == m_Bitmap.m_Width && height == m_Bitmap.m_Height && m_Bitmap.HasDeviceResources()) return;
 
 	m_Bitmap.m_Segments.clear();
 
 	m_Bitmap.m_Width = width;
 	m_Bitmap.m_Height = height;
+	CreateBitmap(canvas, m_Bitmap, width, height);
+}
 
-	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
+void RenderTexture::InvalidateDeviceResources()
+{
+	m_Bitmap.InvalidateDeviceResources();
+}
+
+void RenderTexture::CreateBitmap(Canvas& canvas, D2DBitmap& bitmap, UINT width, UINT height)
+{
+	const auto props = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> segment;
-	canvas.m_Target->CreateBitmap(D2D1::SizeU(width, height), nullptr, 0, bProps, segment.GetAddressOf());
-
-	m_Bitmap.AddSegment(segment, 0U, 0U, width, height);
+	canvas.m_Target->CreateBitmap(D2D1::SizeU(width, height), nullptr, 0, props, segment.GetAddressOf());
+	bitmap.AddSegment(segment, 0U, 0U, width, height);
 }
 
 } // namespace Gfx

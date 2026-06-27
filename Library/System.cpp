@@ -629,7 +629,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				auto iter = GetRainmeter().GetAllSkins().begin();
 				for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 				{
-					(*iter).second->RedrawWindow();
+					(*iter).second->UpdateWindowContents();
 				}
 			}
 			break;
@@ -677,7 +677,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			auto iter = GetRainmeter().GetAllSkins().begin();
 			for (; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
-				(*iter).second->RedrawWindow();
+				(*iter).second->UpdateWindowContents();
 			}
 		}
 		break;

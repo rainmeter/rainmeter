@@ -17,8 +17,23 @@
 
 namespace Gfx {
 
-UINT Canvas::c_Instances = 0;
-D3D_FEATURE_LEVEL Canvas::c_FeatureLevel;
+const DXGI_SWAP_CHAIN_DESC1 g_SwapChainDesc =
+{
+	.Width = 1U,
+	.Height = 1U,
+	.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+	.Stereo = false,
+	.SampleDesc = { .Count = 1U, .Quality = 0U },
+	.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+	.BufferCount = 2U,
+	.Scaling = DXGI_SCALING_STRETCH,
+	.SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
+	.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+	.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE,
+};
+
+bool Canvas::c_HardwareAccelerated = true;
+Canvas::DeviceLostCallback Canvas::c_DeviceLostCallback = nullptr;
 Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
 Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
@@ -33,34 +48,63 @@ Canvas::Canvas() :
 	m_H(0),
 	m_Dpi(96.0f),
 	m_MaxBitmapSize(0U),
+	m_ValidDeviceContext(false),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
 	m_CanUseAxisAlignClip(true)
 {
-	Initialize(true);
 }
 
 Canvas::~Canvas()
 {
-	Finalize();
 }
 
-bool Canvas::Initialize(bool hardwareAccelerated)
+bool Canvas::Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostCallback)
 {
-	++c_Instances;
-	if (c_Instances == 1U)
+	c_HardwareAccelerated = hardwareAccelerated;
+	c_DeviceLostCallback = deviceLostCallback;
+
+	D2D1_FACTORY_OPTIONS fo = {};
+	const bool debug = false;
+	if (debug)
 	{
-		// Required for Direct2D interopability.
-		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+	}
+
+	HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, fo, c_D2DFactory.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(c_DWFactory), (IUnknown**)c_DWFactory.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	if (FAILED(hr)) return false;
+
+	hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(c_WICFactory.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	return AttachDevice();
+}
+
+bool Canvas::AttachDevice()
+{
+	c_EffectTarget.Reset();
+	c_D2DDevice.Reset();
+	c_DxgiDevice.Reset();
+	c_D3DContext.Reset();
+	c_D3DDevice.Reset();
+
+	// Required for Direct2D interopability.
+	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #if defined(_DEBUG) && !defined(_M_ARM64EC)
-		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-		auto tryCreateContext = [&](D3D_DRIVER_TYPE driverType,
-			const D3D_FEATURE_LEVEL* levels, UINT numLevels)
+	auto tryCreateDevice = [&](D3D_DRIVER_TYPE driverType, const D3D_FEATURE_LEVEL* levels, UINT numLevels)
 		{
+			D3D_FEATURE_LEVEL deviceFeatureLevel;
 			return D3D11CreateDevice(
 				nullptr,
 				driverType,
@@ -69,91 +113,106 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 				levels,
 				numLevels,
 				D3D11_SDK_VERSION,
-				c_D3DDevice.GetAddressOf(),
-				&c_FeatureLevel,
-				c_D3DContext.GetAddressOf());
+				c_D3DDevice.ReleaseAndGetAddressOf(),
+				&deviceFeatureLevel,
+				c_D3DContext.ReleaseAndGetAddressOf());
 		};
 
-		// D3D selects the best feature level automatically and sets it
-		// to |c_FeatureLevel|. First, we try to use the hardware driver
-		// and if that fails, we try the WARP rasterizer for cases
-		// where there is no graphics card or other failures.
-		const D3D_FEATURE_LEVEL levels[] =
-		{
-			D3D_FEATURE_LEVEL_11_1,
-			D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,
-			D3D_FEATURE_LEVEL_10_0,
-			D3D_FEATURE_LEVEL_9_3,
-			D3D_FEATURE_LEVEL_9_2,
-			D3D_FEATURE_LEVEL_9_1
-		};
+	const D3D_FEATURE_LEVEL levels[] =
+	{
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
 
-		HRESULT hr = E_FAIL;
-		if (hardwareAccelerated)
+	HRESULT hr = E_FAIL;
+	if (c_HardwareAccelerated)
+	{
+		hr = tryCreateDevice(D3D_DRIVER_TYPE_HARDWARE, levels, _countof(levels));
+		if (hr == E_INVALIDARG)
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, levels, _countof(levels));
-			if (hr == E_INVALIDARG)
-			{
-				hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, &levels[1], _countof(levels) - 1);
-			}
+			hr = tryCreateDevice(D3D_DRIVER_TYPE_HARDWARE, &levels[1], _countof(levels) - 1);
 		}
+	}
 
-		if (FAILED(hr))
-		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
-			if (FAILED(hr)) return false;
-		}
-
-		hr = c_D3DDevice.As(&c_DxgiDevice);
-		if (FAILED(hr)) return false;
-
-		D2D1_FACTORY_OPTIONS fo = {};
-		const bool debug = false;
-		if (debug)
-		{
-			fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-		}
-
-		hr = D2D1CreateFactory(
-			D2D1_FACTORY_TYPE_SINGLE_THREADED,
-			fo,
-			c_D2DFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = c_D2DFactory->CreateDevice(
-			c_DxgiDevice.Get(),
-			c_D2DDevice.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = CreateDeviceContext(c_EffectTarget);
-		if (FAILED(hr)) return false;
-
-		hr = CoCreateInstance(
-			CLSID_WICImagingFactory,
-			nullptr,
-			CLSCTX_INPROC_SERVER,
-			IID_IWICImagingFactory,
-			(LPVOID*)c_WICFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = DWriteCreateFactory(
-			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(c_DWFactory),
-			(IUnknown**)c_DWFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	if (FAILED(hr))
+	{
+		// Fallback to software renderer if hardware acceleration is not available.
+		hr = tryCreateDevice(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
 		if (FAILED(hr)) return false;
 	}
+
+	hr = c_D3DDevice.As(&c_DxgiDevice);
+	if (FAILED(hr)) return false;
+
+	hr = c_D2DFactory->CreateDevice(c_DxgiDevice.Get(), c_D2DDevice.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	c_EffectTarget = CreateDeviceContext();
+	if (!c_EffectTarget) return false;
 
 	return true;
 }
 
-bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring & families)
+ComPtr<ID2D1DeviceContext> Canvas::CreateDeviceContext()
+{
+	if (!c_D2DDevice) return nullptr;
+
+	ComPtr<ID2D1DeviceContext> deviceContext;
+	auto hr = c_D2DDevice->CreateDeviceContext(
+		D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+		deviceContext.GetAddressOf());
+	if (SUCCEEDED(hr)) return deviceContext;
+
+	c_D2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, deviceContext.GetAddressOf());
+	return deviceContext;
+}
+
+void Canvas::Finalize()
+{
+// Dump extra dxgi debugging information (if needed)
+// On the following line, change |FALSE| to |TRUE|
+#if defined(_DEBUG) && FALSE
+	// More info: https://docs.microsoft.com/en-us/windows/win32/api/dxgidebug/nf-dxgidebug-dxgigetdebuginterface
+	typedef HRESULT(__stdcall* fDebugInterface)(const IID&, void**);
+	HMODULE hDll = GetModuleHandle(L"Dxgidebug.dll");
+	if (hDll)
+	{
+		fDebugInterface DXGIGetDebugInterface = (fDebugInterface)GetProcAddress(hDll, "DXGIGetDebugInterface");
+		IDXGIDebug* pDxgiDebug = nullptr;
+		HRESULT hr = DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDxgiDebug);
+		if (SUCCEEDED(hr))
+		{
+			pDxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);  // Use |DXGI_DEBUG_RLO_SUMMARY| if needed
+			pDxgiDebug->Release();
+		}
+	}
+#endif
+
+	if (c_DWFactory)
+	{
+		c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	}
+
+	c_EffectTarget.Reset();
+	c_D2DDevice.Reset();
+	c_DxgiDevice.Reset();
+	c_D3DContext.Reset();
+	c_D3DDevice.Reset();
+
+	c_D2DFactory.Reset();
+	c_DWFactory.Reset();
+	c_WICFactory.Reset();
+}
+
+bool Canvas::EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families)
 {
 	bool success = false;
-	FontCollectionD2D * collection = new FontCollectionD2D();
+	FontCollectionD2D* collection = new FontCollectionD2D();
 	collection->InitializeCollection();
 
 	success = collection->GetSystemFontFamilies(familyCount, families);
@@ -167,146 +226,76 @@ bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring &
 	return success;
 }
 
-void Canvas::Finalize()
+HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 {
-	--c_Instances;
-	if (c_Instances == 0U)
-	{
+	ComPtr<ID2D1DeviceContext> target = CreateDeviceContext();
+	if (!target) return E_FAIL;
 
-// Dump extra dxgi debugging information (if needed)
-// On the following line, change |FALSE| to |TRUE|
-#if defined(_DEBUG) && FALSE
-		// More info: https://docs.microsoft.com/en-us/windows/win32/api/dxgidebug/nf-dxgidebug-dxgigetdebuginterface
-		typedef HRESULT(__stdcall* fDebugInterface)(const IID&, void**);
-		HMODULE hDll = GetModuleHandle(L"Dxgidebug.dll");
-		if (hDll)
-		{
-			fDebugInterface DXGIGetDebugInterface = (fDebugInterface)GetProcAddress(hDll, "DXGIGetDebugInterface");
-			IDXGIDebug* pDxgiDebug = nullptr;
-			HRESULT hr = DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDxgiDebug);
-			if (SUCCEEDED(hr))
-			{
-				pDxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);  // Use |DXGI_DEBUG_RLO_SUMMARY| if needed
-				pDxgiDebug->Release();
-			}
-		}
-#endif
-
-		c_D3DDevice.Reset();
-		c_D3DContext.Reset();
-		c_EffectTarget.Reset();
-		c_D2DDevice.Reset();
-		c_DxgiDevice.Reset();
-		c_D2DFactory.Reset();
-		c_WICFactory.Reset();
-
-		if (c_DWFactory)
-		{
-			c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
-			c_DWFactory.Reset();
-		}
-	}
-}
-
-bool Canvas::InitializeRenderTarget(HWND hwnd, LONG* errCode)
-{
-	HRESULT hr = E_FAIL;
-
-	auto cleanUp = [&]() -> bool
-	{
-		*errCode = hr;
-		return false;
-	};
-
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-	swapChainDesc.Width = 1U;
-	swapChainDesc.Height = 1U;
-	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	swapChainDesc.Stereo = false;
-	swapChainDesc.SampleDesc.Count = 1U;
-	swapChainDesc.SampleDesc.Quality = 0U;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2U;
-	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-
-	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
-	hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
-	if (FAILED(hr)) return cleanUp();
+	ComPtr<IDXGIAdapter> dxgiAdapter;
+	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+	if (FAILED(hr)) return hr;
 
 	// Ensure that DXGI does not queue more than one frame at a time.
 	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
-	if (FAILED(hr)) return cleanUp();
+	if (FAILED(hr)) return hr;
 
-	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
+	ComPtr<IDXGIFactory2> dxgiFactory;
 	hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
-	if (FAILED(hr)) return cleanUp();
+	if (FAILED(hr)) return hr;
 
-	hr = dxgiFactory->CreateSwapChainForHwnd(
-		c_DxgiDevice.Get(),
-		hwnd,
-		&swapChainDesc,
-		nullptr,
-		nullptr,
-		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return cleanUp();
+	decltype(m_SwapChain) swapChain;
+	hr = dxgiFactory->CreateSwapChainForHwnd(c_DxgiDevice.Get(), window, &g_SwapChainDesc, nullptr, nullptr, swapChain.GetAddressOf());
+	if (FAILED(hr)) return hr;
 
 	// Prevent DXGI from monitoring window changes through "alt + enter" (full screen mode)
-	hr = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-	if (FAILED(hr))
-	{
-		*errCode = hr;  // Non-fatal error
-	}
+	dxgiFactory->MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER);
 
-	hr = CreateRenderTarget();
-	if (FAILED(hr)) return cleanUp();
+	m_Target = std::move(target);
+	m_SwapChain = std::move(swapChain);
+	Resize(m_W, m_H);
 
-	return CreateTargetBitmap(0U, 0U, errCode);
+	m_SolidColorBrushCache.clear();
+	m_ValidDeviceContext = true;
+	return hr;
 }
 
-void Canvas::Resize(int w, int h)
+bool Canvas::Resize(int w, int h)
 {
+	if (!m_SwapChain || !m_Target) return false;
+
 	// Truncate the size of the skin if it's too big.
-	if (w > (int)m_MaxBitmapSize) w = (int)m_MaxBitmapSize;
-	if (h > (int)m_MaxBitmapSize) h = (int)m_MaxBitmapSize;
+	m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
+	m_W = min(w, (int)m_MaxBitmapSize);
+	m_H = min(h, (int)m_MaxBitmapSize);
 
-	m_W = w;
-	m_H = h;
-
-	// Check if target, targetbitmap, backbuffer, swap chain are valid?
-
-	// Unmap all resources tied to the swap chain.
 	m_Target->SetTarget(nullptr);
 	m_TargetBitmap.Reset();
 	m_BackBuffer.Reset();
 
-	// Resize swap chain.
-	HRESULT hr = m_SwapChain->ResizeBuffers(
-		0U,
-		(UINT)w,
-		(UINT)h,
-		DXGI_FORMAT_B8G8R8A8_UNORM,
-		DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
-	if (FAILED(hr)) return;
+	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+	HRESULT hr = m_SwapChain->ResizeBuffers(0U, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
+	if (FAILED(hr)) return false;
 
-	CreateTargetBitmap((UINT32)w, (UINT32)h);
+	hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	const auto props = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		D2D1::PixelFormat(dxgiFormat, D2D1_ALPHA_MODE_PREMULTIPLIED));
+	hr = m_Target->CreateBitmapFromDxgiSurface(m_BackBuffer.Get(), &props, m_TargetBitmap.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
+	return true;
 }
 
 bool Canvas::BeginDraw()
 {
-	if (!m_Target)
+	if (!m_ValidDeviceContext || !m_TargetBitmap)
 	{
-		HRESULT hr = CreateRenderTarget();
-		if (FAILED(hr))
-		{
-			m_IsDrawing = false;
-			return false;
-		}
-
-		// Recreate target bitmap
-		Resize(m_W, m_H);
+		m_IsDrawing = false;
+		return false;
 	}
 
 	m_Target->BeginDraw();
@@ -316,11 +305,15 @@ bool Canvas::BeginDraw()
 
 void Canvas::EndDraw()
 {
-	HRESULT hr = m_Target->EndDraw();
-	if (FAILED(hr))
+	const auto hr = m_Target->EndDraw();
+	if (hr == D2DERR_RECREATE_TARGET)
 	{
-		m_SolidColorBrushCache.clear();
-		m_Target.Reset();
+		if (m_ValidDeviceContext && c_DeviceLostCallback)
+		{
+			c_DeviceLostCallback();
+		}
+
+		m_ValidDeviceContext = false;
 	}
 
 	m_IsDrawing = false;
@@ -363,10 +356,15 @@ bool Canvas::IsTransparentPixel(int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < m_W && y < m_H)) return false;
 
-	auto pixel = GetPixel(GetDC(), x, y);
-	ReleaseDC();
+	auto hdc = GetDC();
+	if (hdc)
+	{
+		const auto pixel = GetPixel(hdc, x, y);
+		ReleaseDC();
+		return (pixel & 0xFF000000) == 0;
+	}
 
-	return (pixel & 0xFF000000) == 0;
+	return false;
 }
 
 void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
@@ -374,6 +372,10 @@ void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
 	if (m_Target)
 	{
 		m_Target->GetTransform(matrix);
+	}
+	else
+	{
+		*matrix = D2D1::Matrix3x2F::Identity();
 	}
 }
 
@@ -423,11 +425,7 @@ void Canvas::SetDpiScale(float dpiScale)
 	}
 
 	m_Dpi = dpi;
-
-	if (m_Target)
-	{
-		m_Target->SetDpi(m_Dpi, m_Dpi);
-	}
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 }
 
 FLOAT Canvas::SnapToPixel(FLOAT value) const
@@ -832,87 +830,6 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	}
 
 	m_Target->SetTransform(worldTransform);
-}
-
-HRESULT Canvas::CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target)
-{
-	HRESULT hr = E_FAIL;
-	if (c_D2DDevice)
-	{
-		hr = c_D2DDevice->CreateDeviceContext(
-			D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
-			target.ReleaseAndGetAddressOf());
-		if (FAILED(hr))
-		{
-			hr = c_D2DDevice->CreateDeviceContext(
-				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-				target.ReleaseAndGetAddressOf());
-		}
-	}
-
-	return hr;
-}
-
-HRESULT Canvas::CreateRenderTarget()
-{
-	m_SolidColorBrushCache.clear();
-
-	if (c_D2DDevice)
-	{
-		c_D2DDevice->ClearResources();
-	}
-
-	HRESULT hr = CreateDeviceContext(m_Target);
-
-	// Hardware accelerated targets have a hard limit to the size of bitmaps they can support.
-	// The size will depend on the D3D feature level of the driver used. The WARP software
-	// renderer has a limit of 16MP (16*1024*1024 = 16777216).
-
-	// https://docs.microsoft.com/en-us/windows/desktop/direct3d11/overviews-direct3d-11-devices-downlevel-intro#overview-for-each-feature-level
-	// Max Texture Dimension
-	// D3D_FEATURE_LEVEL_11_1 = 16348
-	// D3D_FEATURE_LEVEL_11_0 = 16348
-	// D3D_FEATURE_LEVEL_10_1 = 8192
-	// D3D_FEATURE_LEVEL_10_0 = 8192
-	// D3D_FEATURE_LEVEL_9_3  = 4096
-	// D3D_FEATURE_LEVEL_9_2  = 2048
-	// D3D_FEATURE_LEVEL_9_1  = 2048
-
-	if (SUCCEEDED(hr))
-	{
-		m_Target->SetDpi(m_Dpi, m_Dpi);
-		m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
-	}
-
-	return hr;
-}
-
-bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
-{
-	HRESULT hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr))
-	{
-		if (errCode) *errCode = hr;
-		return false;
-	}
-
-	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
-		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-
-	hr = m_Target->CreateBitmapFromDxgiSurface(
-		m_BackBuffer.Get(),
-		&bProps,
-		m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr))
-	{
-		if (errCode) *errCode = hr;
-		return false;
-	}
-
-	m_Target->SetTarget(m_TargetBitmap.Get());
-	m_Target->SetDpi(m_Dpi, m_Dpi);
-	return true;
 }
 
 Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(const D2D1_COLOR_F& color)

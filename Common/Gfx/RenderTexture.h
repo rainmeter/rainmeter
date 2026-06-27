@@ -19,9 +19,13 @@ public:
 	RenderTexture(Canvas& canvas, UINT width, UINT height);
 
 	void Resize(Canvas& canvas, UINT width, UINT height);
+	void InvalidateDeviceResources();
+
 	D2DBitmap* GetBitmap() { return &m_Bitmap; }
 
 private:
+	void CreateBitmap(Canvas& canvas, D2DBitmap& bitmap, UINT width, UINT height);
+
 	D2DBitmap m_Bitmap;
 };
 

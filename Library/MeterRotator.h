@@ -23,6 +23,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeterRotator>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 

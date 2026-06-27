@@ -40,6 +40,7 @@ class __declspec(novtable) TextInlineFormat
 public:
 	virtual ~TextInlineFormat();
 	virtual InlineType GetType() = 0;
+	virtual void InvalidateDeviceResources() {}
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) = 0;
 

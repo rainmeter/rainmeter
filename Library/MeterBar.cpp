@@ -54,6 +54,12 @@ void MeterBar::Initialize()
 	}
 }
 
+void MeterBar::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 /*
 ** Read the options specified in the ini file.
 **

@@ -24,6 +24,7 @@ public:
 
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
+	virtual void InvalidateDeviceResources() override;
 
 	bool HitTest(int x, int y);
 
