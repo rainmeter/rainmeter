@@ -70,6 +70,16 @@ void MeterShape::Dispose()
 	m_Shapes.clear();
 }
 
+void MeterShape::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+
+	for (auto& shape : m_Shapes)
+	{
+		shape->InvalidateDeviceResources();
+	}
+}
+
 void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);

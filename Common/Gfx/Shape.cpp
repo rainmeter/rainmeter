@@ -52,6 +52,14 @@ Shape::~Shape()
 {
 }
 
+void Shape::InvalidateDeviceResources()
+{
+	m_FillBrush.Reset();
+	m_StrokeBrush.Reset();
+	m_HasFillBrushChanged = true;
+	m_HasStrokeBrushChanged = true;
+}
+
 D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 {
 	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();

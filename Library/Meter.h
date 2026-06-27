@@ -30,6 +30,7 @@ public:
 	void ReadContainerOptions(ConfigParser& parser) { ReadContainerOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }
@@ -54,7 +55,7 @@ public:
 	bool IsContained() { return m_ContainerMeter != nullptr; }
 	bool IsContainer() { return m_ContainerItems.size() > 0; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
-	void UpdateContainer();
+	void ResizeContainerTextures();
 	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
 
 	void SetW(int w) { m_W = w; }

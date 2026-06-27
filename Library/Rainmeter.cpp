@@ -21,6 +21,7 @@
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
 #include "GameMode.h"
+#include "ImageCache.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
@@ -30,7 +31,8 @@
 enum TIMER
 {
 	TIMER_NETSTATS    = 1,
-	TIMER_UPDATECHECK = 2
+	TIMER_UPDATECHECK = 2,
+	TIMER_REATTACHGFXDEVICE = 3
 };
 enum INTERVAL
 {
@@ -110,6 +112,8 @@ Rainmeter::Rainmeter() :
 	m_DisableAutoUpdate(false),
 	m_DownloadedNewVersion(false),
 	m_LanguageObsolete(false),
+	m_HardwareAccelerated(false),
+	m_ReattachGfxDeviceScheduled(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
 	m_NormalStayDesktop(true),
@@ -122,8 +126,7 @@ Rainmeter::Rainmeter() :
 	m_Instance(),
 	m_Language(),
 	m_GlobalOptions(),
-	m_DefaultSelectedColor(),
-	m_HardwareAccelerated(false)
+	m_DefaultSelectedColor()
 {
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr))
@@ -224,10 +227,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 
 	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
 
-	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+	const auto deviceLostCallback = []() { GetRainmeter().ScheduleReattachGfxDevice(); };
+	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
 	{
 		SetHardwareAccelerated(false);
-		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated))
+		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
 		{
 			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			clearBuffer();
@@ -572,6 +576,7 @@ void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
 	KillTimer(m_Window, TIMER_UPDATECHECK);
+	KillTimer(m_Window, TIMER_REATTACHGFXDEVICE);
 
 	GetGameMode().ForceExit();
 
@@ -750,6 +755,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 				rainmeter.ScheduleUpdateCheck(INTERVAL_UPDATECHECK_DAILY);
 			}
 		}
+		else if (wParam == TIMER_REATTACHGFXDEVICE)
+		{
+			GetRainmeter().ReattachGfxDevice();
+		}
 		else
 		{
 			GetGameMode().OnTimerEvent(wParam);
@@ -789,6 +798,55 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	}
 
 	return 0;
+}
+
+void Rainmeter::ScheduleReattachGfxDevice()
+{
+	if (m_ReattachGfxDeviceScheduled) return;
+
+	LogWarning(L"Lost D2D rendering device, trying to attach again in 5 seconds");
+
+	if (SetTimer(m_Window, TIMER_REATTACHGFXDEVICE, 5 * 1000, nullptr) != 0)
+	{
+		m_ReattachGfxDeviceScheduled = true;
+	}
+}
+
+void Rainmeter::ReattachGfxDevice()
+{
+	if (!Gfx::Canvas::AttachDevice())
+	{
+		// New D3D device is not is not ready yet, perhaps...?
+		return;
+	}
+
+	GetImageCache().InvalidateDeviceResources();
+
+	for (const auto& skins : m_Skins)
+	{
+		skins.second->InvalidateDeviceResources();
+	}
+
+	for (const auto& skins : m_Skins)
+	{
+		if (!skins.second->ReinitializeCanvasDeviceContext())
+		{
+			return;
+		}
+	}
+
+	for (const auto& skins : m_Skins)
+	{
+		skins.second->Redraw();
+	}
+
+	LogDebug(L"Reattached D2D rendering device");
+
+	if (m_ReattachGfxDeviceScheduled)
+	{
+		KillTimer(m_Window, TIMER_REATTACHGFXDEVICE);
+		m_ReattachGfxDeviceScheduled = false;
+	}
 }
 
 void Rainmeter::SetNetworkStatisticsTimer()

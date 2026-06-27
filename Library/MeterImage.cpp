@@ -51,6 +51,13 @@ void MeterImage::Initialize()
 	}
 }
 
+void MeterImage::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+	m_MaskImage.InvalidateDeviceResources();
+}
+
 /*
 ** Loads the image from disk
 **

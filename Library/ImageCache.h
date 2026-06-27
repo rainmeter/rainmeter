@@ -121,6 +121,8 @@ public:
 	std::unique_ptr<ImageCacheHandle> Get(const ImageOptions& key);
 	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
 
+	void InvalidateDeviceResources();
+
 private:
 	friend struct ImageCacheHandle;
 

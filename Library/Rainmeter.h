@@ -222,6 +222,9 @@ private:
 
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	void ScheduleReattachGfxDevice();
+	void ReattachGfxDevice();
+
 	void ActivateActiveSkins();
 	void CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings);
 	void DeleteAllSkins();
@@ -278,6 +281,7 @@ private:
 	bool m_LanguageObsolete;
 
 	bool m_HardwareAccelerated;
+	bool m_ReattachGfxDeviceScheduled;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;

@@ -164,6 +164,14 @@ void MeterHistogram::Initialize()
 	}
 }
 
+void MeterHistogram::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_PrimaryImage.InvalidateDeviceResources();
+	m_SecondaryImage.InvalidateDeviceResources();
+	m_OverlapImage.InvalidateDeviceResources();
+}
+
 /*
 ** Read the options specified in the ini file.
 **

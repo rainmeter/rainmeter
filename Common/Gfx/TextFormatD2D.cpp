@@ -69,6 +69,18 @@ void TextFormatD2D::Dispose()
 	m_LineGap = 0.0f;
 }
 
+void TextFormatD2D::InvalidateDeviceResources()
+{
+	m_TextLayout.Reset();
+	m_LastString.clear();
+	m_HasInlineOptionsChanged = true;
+
+	for (const auto& fmt : m_TextInlineFormat)
+	{
+		fmt->InvalidateDeviceResources();
+	}
+}
+
 bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
 {
 	UINT32 strLen = (UINT32)srcStr.length();

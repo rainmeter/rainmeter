@@ -46,6 +46,8 @@ public:
 	virtual std::vector<std::wstring> GetInlinePatterns() override;
 	virtual void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges) override;
 
+	virtual void InvalidateDeviceResources() override;
+
 private:
 	friend class Canvas;
 

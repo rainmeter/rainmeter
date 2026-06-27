@@ -86,6 +86,12 @@ void MeterButton::Initialize()
 	}
 }
 
+void MeterButton::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 /*
 ** Read the options specified in the ini file.
 **

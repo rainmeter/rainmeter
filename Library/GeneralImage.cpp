@@ -51,6 +51,19 @@ void GeneralImage::DisposeImage()
 	m_BitmapProcessed.reset();
 }
 
+void GeneralImage::InvalidateDeviceResources()
+{
+	if (m_Bitmap && m_Bitmap->GetBitmap())
+	{
+		m_Bitmap->GetBitmap()->InvalidateDeviceResources();
+	}
+
+	if (m_BitmapProcessed && m_BitmapProcessed->GetBitmap())
+	{
+		m_BitmapProcessed->GetBitmap()->InvalidateDeviceResources();
+	}
+}
+
 bool GeneralImage::IsLoaded()
 {
 	return GetImage() != nullptr;
@@ -58,9 +71,17 @@ bool GeneralImage::IsLoaded()
 
 Gfx::D2DBitmap* GeneralImage::GetImage()
 {
-	if (m_BitmapProcessed) return m_BitmapProcessed->GetBitmap();
-	if (!m_Bitmap) return nullptr;
-	return m_Bitmap->GetBitmap();
+	Gfx::D2DBitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+	if (bitmap && bitmap->HasDeviceResources()) return bitmap;
+
+	if (m_ImageName.empty() || !LoadImage(m_ImageName, m_Options.m_CreateAlphaMask))
+	{
+		return nullptr;
+	}
+
+	return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -216,6 +237,8 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		return false;
 	}
 
+	m_ImageName = imageName;
+
 	std::wstring filename = m_Path + imageName;
 	m_Skin->MakePathAbsolute(filename);
 
@@ -226,7 +249,9 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		filename += L".png";
 	}
 
-	if (m_Bitmap && m_Options.m_CreateAlphaMask == createAlphaMask && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
+		m_Options.m_CreateAlphaMask == createAlphaMask &&
+		!m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
@@ -245,7 +270,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 	}
 
 	auto handle = GetImageCache().Get(info);
-	if (!handle)
+	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
 		auto bitmap = new Gfx::D2DBitmap(filename, 0, createAlphaMask);
 
@@ -357,12 +382,13 @@ void GeneralImage::ApplyTransforms()
 		return;
 	}
 
-	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options &&
+		m_BitmapProcessed->GetBitmap()->HasDeviceResources()) return;
 
 	m_BitmapProcessed.reset();
 
 	auto handle = GetImageCache().Get(m_Options);
-	if (!handle)
+	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
 		auto& canvas = m_Skin->GetCanvas();
 		auto* stream = bitmap->CreateEffectStream();

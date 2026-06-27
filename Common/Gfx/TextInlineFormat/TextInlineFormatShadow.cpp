@@ -26,10 +26,11 @@ TextInlineFormat_Shadow::TextInlineFormat_Shadow(const std::wstring& pattern, co
 {
 }
 
-TextInlineFormat_Shadow::~TextInlineFormat_Shadow()
+void TextInlineFormat_Shadow::InvalidateDeviceResources()
 {
-	if (m_Bitmap) m_Bitmap.Reset();
-	if (m_BitmapTarget) m_BitmapTarget.Reset();
+	m_Bitmap.Reset();
+	m_BitmapTarget.Reset();
+	m_PreviousPosition = D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f);
 }
 
 void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout,

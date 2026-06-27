@@ -63,6 +63,7 @@ public:
 	~GeneralImage();
 
 	void DisposeImage();
+	void InvalidateDeviceResources();
 
 	bool IsLoaded();
 	Gfx::D2DBitmap* GetImage();
@@ -87,6 +88,7 @@ private:
 	ImageOptions m_Options;
 
 	std::wstring m_Path;
+	std::wstring m_ImageName;
 
 	static bool CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b);
 

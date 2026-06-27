@@ -25,6 +25,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeterButton>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 

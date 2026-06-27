@@ -54,6 +54,9 @@ struct D2D1ColorEqual
 
 namespace Gfx {
 
+template<typename T>
+using ComPtr = Microsoft::WRL::ComPtr<T>;
+
 // Forward declaration
 class D2DBitmap;
 
@@ -71,11 +74,14 @@ public:
 	Canvas();
 	~Canvas();
 
-	static bool Initialize(bool hardwareAccelerated);
-	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
+	using DeviceLostCallback = void (*)();
+	static bool Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostCallback = nullptr);
 	static void Finalize();
+	static bool AttachDevice();
 
-	bool InitializeRenderTarget(HWND hwnd, LONG* errCode);
+	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
+
+	HRESULT InitializeDeviceContextForWindow(HWND window);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -87,7 +93,7 @@ public:
 
 	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
 	// called and has not yet been matched by a correspoding call to EndDraw.
-	void Resize(int w, int h);
+	bool Resize(int w, int h);
 
 	bool BeginDraw();
 	void EndDraw();
@@ -156,12 +162,7 @@ private:
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
 
-	bool LogComError(HRESULT hr);
-
-	static HRESULT CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target);
-
-	HRESULT CreateRenderTarget();
-	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
+	static ComPtr<ID2D1DeviceContext> CreateDeviceContext();
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
@@ -175,6 +176,7 @@ private:
 	FLOAT m_Dpi;
 	UINT32 m_MaxBitmapSize;
 
+	bool m_ValidDeviceContext;
 	bool m_IsDrawing;
 	bool m_EnableDrawAfterGdi;
 
@@ -193,12 +195,16 @@ private:
 
 	ankerl::unordered_dense::map<D2D1_COLOR_F, Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>, ankerl::unordered_dense::hash<D2D1_COLOR_F>, D2D1ColorEqual> m_SolidColorBrushCache;
 
-	static UINT c_Instances;
-	static D3D_FEATURE_LEVEL c_FeatureLevel;
+	static bool c_HardwareAccelerated;
+	static DeviceLostCallback c_DeviceLostCallback;
+
+	// Device-dependent.
 	static Microsoft::WRL::ComPtr<ID3D11Device> c_D3DDevice;
 	static Microsoft::WRL::ComPtr<ID3D11DeviceContext> c_D3DContext;
 	static Microsoft::WRL::ComPtr<ID2D1Device> c_D2DDevice;
 	static Microsoft::WRL::ComPtr<IDXGIDevice1> c_DxgiDevice;
+
+	// Device-independent.
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
 	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;

@@ -50,6 +50,17 @@ std::unique_ptr<ImageCacheHandle> ImageCachePool::Get(const ImageOptions& key)
 	return std::make_unique<ImageCacheHandle>(ImageCacheHandle::ConstructorToken{}, find->second);
 }
 
+void ImageCachePool::InvalidateDeviceResources()
+{
+	for (auto& [_, cache] : m_CachePool)
+	{
+		if (cache && cache->m_Bitmap)
+		{
+			cache->m_Bitmap->InvalidateDeviceResources();
+		}
+	}
+}
+
 void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
 {
 	if (m_CachePool.find(key) == m_CachePool.end())
