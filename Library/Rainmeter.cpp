@@ -438,6 +438,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	// Create user skins, layouts, addons, and plugins folders if needed
 	CreateComponentFolders(bDefaultIniLocation);
 
+	// Ensure that the Skins directory is kept available locally in case it's in e.g. OneDrive.
+	FileUtil::SetFilePinnedAttribute(m_SkinPath.c_str());
+
 	clearBuffer();
 
 #ifdef BUILD_TIME

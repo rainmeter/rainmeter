@@ -99,4 +99,14 @@ bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness)
 	return cleanUp(true);
 }
 
+void SetFilePinnedAttribute(const WCHAR* path)
+{
+	DWORD attrs = GetFileAttributes(path);
+	if (attrs == INVALID_FILE_ATTRIBUTES) return;
+
+	attrs |= FILE_ATTRIBUTE_PINNED;
+	attrs &= ~FILE_ATTRIBUTE_UNPINNED;
+	SetFileAttributes(path, attrs);
+}
+
 } // namespace FileUtil
