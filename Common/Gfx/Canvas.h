@@ -99,7 +99,7 @@ public:
 	void EndDraw();
 
 	HDC GetDC();
-	void ReleaseDC();
+	void ReleaseDC(const RECT& dirtyRect);
 
 	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
 	TextFormat* CreateTextFormat() { return new TextFormatD2D(); }

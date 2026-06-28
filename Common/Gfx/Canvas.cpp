@@ -27,7 +27,7 @@ const DXGI_SWAP_CHAIN_DESC1 g_SwapChainDesc =
 	.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 	.BufferCount = 2U,
 	.Scaling = DXGI_SCALING_STRETCH,
-	.SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
+	.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
 	.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
 	.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE,
 };
@@ -337,11 +337,11 @@ HDC Canvas::GetDC()
 	return nullptr;
 }
 
-void Canvas::ReleaseDC()
+void Canvas::ReleaseDC(const RECT& dirtyRect)
 {
 	if (m_BackBuffer)
 	{
-		m_BackBuffer->ReleaseDC(nullptr);
+		m_BackBuffer->ReleaseDC(&dirtyRect);
 	}
 
 	if (m_EnableDrawAfterGdi)
@@ -360,7 +360,7 @@ bool Canvas::IsTransparentPixel(int x, int y)
 	if (hdc)
 	{
 		const auto pixel = GetPixel(hdc, x, y);
-		ReleaseDC();
+		ReleaseDC({});
 		return (pixel & 0xFF000000) == 0;
 	}
 

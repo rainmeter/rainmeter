@@ -3025,7 +3025,8 @@ void Skin::UpdateWindowContents()
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 
-	m_Canvas.ReleaseDC();
+	const RECT dirtyRect = { 0, 0, 0, 0 };
+	m_Canvas.ReleaseDC(dirtyRect);
 }
 
 void Skin::UpdateWindowTransparency(int alpha)
