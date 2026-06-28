@@ -341,7 +341,8 @@ void Canvas::ReleaseDC()
 {
 	if (m_BackBuffer)
 	{
-		m_BackBuffer->ReleaseDC(nullptr);
+		RECT dirtyRect = { 0, 0, 0, 0 };
+		m_BackBuffer->ReleaseDC(&dirtyRect);
 	}
 
 	if (m_EnableDrawAfterGdi)
