@@ -25,7 +25,7 @@ const DXGI_SWAP_CHAIN_DESC1 g_SwapChainDesc =
 	.Stereo = false,
 	.SampleDesc = { .Count = 1U, .Quality = 0U },
 	.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-	.BufferCount = 2U,
+	.BufferCount = 1U,
 	.Scaling = DXGI_SCALING_STRETCH,
 	.SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
 	.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
