@@ -22,7 +22,7 @@
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = { 0 };
 DialogAbout* DialogAbout::c_Dialog = nullptr;
 
-DialogAbout::DialogAbout() : Dialog()
+DialogAbout::DialogAbout() : Dialog(&c_WindowPlacement)
 {
 }
 
@@ -146,12 +146,6 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
-			{
-				MonitorUtil::DpiUnawareScope dpiUnawareScope;
-				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-				GetWindowPlacement(m_Window, &c_WindowPlacement);
-			}
-
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
@@ -195,17 +189,6 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-
-	if (c_WindowPlacement.length != 0)
-	{
-		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-		{
-			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-		}
-
-		MonitorUtil::DpiUnawareScope dpiUnaware;
-		SetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
 
 	return TRUE;
 }

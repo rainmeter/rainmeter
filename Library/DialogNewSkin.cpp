@@ -20,7 +20,7 @@ std::vector<std::wstring> DialogNewSkin::c_Templates;
 WINDOWPLACEMENT DialogNewSkin::c_WindowPlacement = { 0 };
 DialogNewSkin* DialogNewSkin::c_Dialog = nullptr;
 
-DialogNewSkin::DialogNewSkin() : Dialog()
+DialogNewSkin::DialogNewSkin() : Dialog(&c_WindowPlacement)
 {
 }
 
@@ -186,12 +186,6 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Reset any close action
 			c_CloseAction = { false, 0 };
 
-			{
-				MonitorUtil::DpiUnawareScope dpiUnawareScope;
-				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-				GetWindowPlacement(m_Window, &c_WindowPlacement);
-			}
-
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
@@ -231,17 +225,6 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Use arrows instead of plus/minus in the tree
 	item = m_TabNew.GetControl(TabNew::Id_ItemsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
-
-	if (c_WindowPlacement.length != 0)
-	{
-		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-		{
-			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-		}
-
-		MonitorUtil::DpiUnawareScope dpiUnaware;
-		SetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
 
 	return TRUE;
 }
