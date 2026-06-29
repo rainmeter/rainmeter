@@ -677,4 +677,15 @@ namespace Rainmeter
 
         }
     }
+
+    /// <summary>
+    /// Describes why HandleSkinSettingChange was called.
+    /// </summary>
+    public enum SkinSettingChange : byte
+    {
+        Scale = 0,
+        Transparency = 1,
+        ClickThrough = 2,
+        Draggable = 3
+    }
 }

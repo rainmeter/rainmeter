@@ -45,6 +45,14 @@ namespace InputText
             }
         }
 
+        internal void HandleSkinSettingChange(Rainmeter.SkinSettingChange setting)
+        {
+            if (this._InputBox != null)
+            {
+                this._InputBox.Abort();
+            }
+        }
+
         internal void ExecuteBang(string args)
         {
             bool go = false;
@@ -185,6 +193,13 @@ namespace InputText
             }
 
             return StringBuffer;
+        }
+
+        [DllExport]
+        public static void HandleSkinSettingChange(IntPtr data, IntPtr rm, Rainmeter.SkinSettingChange setting)
+        {
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.HandleSkinSettingChange(setting);
         }
 
         [DllExport]

@@ -259,14 +259,6 @@ enum RmGetType
 	RMG_SKINDRAGGABLE    = 11,
 };
 
-enum class RmSkinSettingChange : uint8_t
-{
-	Scale = 0,
-	Transparency = 1,
-	ClickThrough = 2,
-	Draggable = 3,
-};
-
 /// <summary>
 /// Sends a message to the Rainmeter log with source
 /// </summary>
@@ -304,11 +296,23 @@ LIBRARY_EXPORT void __cdecl RmLogF(void* rm, int level, LPCWSTR format, ...);
 /// </summary>
 LIBRARY_EXPORT BOOL __cdecl LSLog(int level, LPCWSTR unused, LPCWSTR message);
 
+/// <summary>
+/// Describes why HandleSkinSettingChange was called.
+/// </summary>
+enum class RmSkinSettingChange : uint8_t
+{
+	Scale = 0,
+	Transparency = 1,
+	ClickThrough = 2,
+	Draggable = 3,
+};
+
 //
 // Wrapper functions
 //
 
 #ifndef LIBRARY_EXPORTS
+
 /// <summary>
 /// Retrieves the option defined in the skin file and converts a relative path to a absolute path
 /// </summary>
@@ -557,6 +561,7 @@ enum LOGLEVEL
 	LOG_NOTICE  = 3,
 	LOG_DEBUG   = 4
 };
+
 #endif // LIBRARY_EXPORTS
 
 #endif

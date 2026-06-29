@@ -392,8 +392,8 @@ namespace InputText
             string value = rm.ReadString(optionName, "");
             if (!string.IsNullOrEmpty(value))
             {
-                if (formula && value[0] == '(')
-                    Options.Add(optionName, rm.ReadInt(optionName, 0).ToString());
+                if (formula)
+                    Options.Add(optionName, ScaleCoordinateOption(rm.ReadInt(optionName, 0)).ToString());
                 else
                     Options.Add(optionName, value);
             }
@@ -505,14 +505,21 @@ namespace InputText
                 // API.Log(API.LogType.Debug, "InputText: Overriding " + sTagName + " with " + sTagData);
 
                 string data = (sTagData.StartsWith("\"")) ? sTagData.Substring(1, sTagData.Length - 2) : sTagData;
+                bool scaled = false;
                 if (!string.IsNullOrEmpty(data))
                 {
                     int index;
                     if (formula && data[0] == '(')
-                        data = ParseInlineOption(data, true);
+                    {
+                        data = ScaleCoordinateOption(ParseInlineOption(data, true)).ToString();
+                        scaled = true;
+                    }
                     else if ((index = data.IndexOf('[')) >= 0 && data.IndexOf(']', index) > 0)
                         data = ParseInlineOption(data, false);
                 }
+
+                if (formula && !scaled)
+                    data = ScaleCoordinateOption(data);
 
                 Overrides.Add(sTagName, data);
 
@@ -522,6 +529,18 @@ namespace InputText
             return sLine;
         }
         #endregion
+
+        private int ScaleCoordinateOption(int value)
+        {
+            double scaled = value * rm.GetSkinScale();
+            return (int)((value >= 0) ? Math.Ceiling(scaled) : Math.Floor(scaled));
+        }
+
+        private string ScaleCoordinateOption(string value)
+        {
+            int intValue;
+            return int.TryParse(value, out intValue) ? ScaleCoordinateOption(intValue).ToString() : value;
+        }
 
         #endregion
     }
