@@ -640,7 +640,7 @@ const WCHAR* MeasureiTunes::GetStringValue()
 	if (!g_CoInitialized)
 	{
 		m_StringValue = L"Fail to initialize";
-		return m_StringValue.c_str();
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	if (!g_InstanceCreated)
@@ -649,14 +649,14 @@ const WCHAR* MeasureiTunes::GetStringValue()
 		{
 			m_StringValue = m_BaseDir + m_DefaultTrackArtworkPath;
 		}
-		return m_StringValue.c_str();
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	if (m_Command >= COMMAND_GETCURRENTTRACK_ALBUM && m_Command <= COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
 		if (!UpdateCurrentTrack(m_BaseDir, m_DefaultTrackArtworkPath, m_CurrentTrackArtworkPath))
 		{
-			return m_StringValue.c_str();
+			return CheckSubstitute(m_StringValue.c_str());
 		}
 
 		BSTR bstrValue = nullptr;
@@ -784,7 +784,7 @@ const WCHAR* MeasureiTunes::GetStringValue()
 	}
 
 	m_StringValue = L"Type Incorrect";
-	return m_StringValue.c_str();
+	return CheckSubstitute(m_StringValue.c_str());
 }
 
 void MeasureiTunes::Command(const std::wstring& command)

@@ -197,7 +197,7 @@ const WCHAR* MeasurePower::GetStringValue()
 		DWORD value = m_CachedBatteryLifeTime;
 		if (value == -1)
 		{
-			return L"Unknown";
+			return CheckSubstitute(L"Unknown");
 		}
 
 		tm time = { 0 };
@@ -217,7 +217,7 @@ const WCHAR* MeasurePower::GetStringValue()
 
 		_set_thread_local_invalid_parameter_handler(oldHandler);
 
-		return m_StringValue;
+		return CheckSubstitute(m_StringValue);
 	}
 
 	return nullptr;

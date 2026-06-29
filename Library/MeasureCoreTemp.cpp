@@ -110,11 +110,11 @@ const WCHAR* MeasureCoreTemp::GetStringValue()
 	{
 	case Type::Vid:
 		_snwprintf_s(m_StringValue, _TRUNCATE, L"%.4f", proxy.GetVID());
-		return m_StringValue;
+		return CheckSubstitute(m_StringValue);
 
 	case Type::CpuName:
 		_snwprintf_s(m_StringValue, _TRUNCATE, L"%S", proxy.GetCPUName());
-		return m_StringValue;
+		return CheckSubstitute(m_StringValue);
 	}
 
 	return nullptr;
