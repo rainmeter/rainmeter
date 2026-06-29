@@ -44,10 +44,14 @@ private:
 
 void MeasureActionTimer::ActionTimerTask::StartWorkOnWorkerThread()
 {
+	auto rainmeterWindow = GetRainmeter().GetWindow();
+
 	size_t commandIndex = 0;
 	while (!m_AbortRequested)
 	{
 		DWORD sleepTimeout = 0;
+		WPARAM wParam = 0;
+		LPARAM lParam = 0;
 
 		{
 			CriticalSectionLock lock(*m_MeasureCriticalSection);
@@ -66,13 +70,18 @@ void MeasureActionTimer::ActionTimerTask::StartWorkOnWorkerThread()
 			}
 			else
 			{
-				GetRainmeter().DelayedExecuteCommand(command, measure->GetSkin());
+				wParam = (WPARAM)measure->GetSkin();
+				lParam = (LPARAM)_wcsdup(command);
 			}
 		}
 
 		if (sleepTimeout > 0)
 		{
 			Sleep(sleepTimeout);
+		}
+		else if (wParam && lParam)
+		{
+			SendMessage(rainmeterWindow, WM_RAINMETER_DELAYED_EXECUTE, wParam, lParam);
 		}
 
 		++commandIndex;
