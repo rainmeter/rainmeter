@@ -8,6 +8,9 @@
 #include "StdAfx.h"
 #include "StringUtil.h"
 
+#include <algorithm>
+#include <cwctype>
+
 namespace {
 
 // Is the character a end of sentence punctuation character?
@@ -187,18 +190,15 @@ bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix
 	return false;
 }
 
-struct IsEqual
+struct IsEqualCaseInsensitive
 {
-	IsEqual(const std::locale& loc) : locale(loc) {}
-	bool operator()(wchar_t ch1, wchar_t ch2) { return std::toupper(ch1, locale) == std::toupper(ch2, locale); }
-
-private:
-	const std::locale& locale;
+	IsEqualCaseInsensitive() {}
+	bool operator()(wchar_t ch1, wchar_t ch2) { return std::toupper(ch1) == std::toupper(ch2); }
 };
 
-std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2, const std::locale& loc)
+std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2)
 {
-	const auto iter = std::search(str1.begin(), str1.end(), str2.begin(), str2.end(), IsEqual(loc));
+	const auto iter = std::search(str1.begin(), str1.end(), str2.begin(), str2.end(), IsEqualCaseInsensitive());
 	if (iter != str1.end())
 	{
 		return (iter - str1.begin());

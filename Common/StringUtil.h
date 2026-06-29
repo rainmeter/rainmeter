@@ -9,9 +9,6 @@
 #define RM_COMMON_STRINGUTIL_H_
 
 #include <Windows.h>
-#include <algorithm>
-#include <cwctype>
-#include <locale>
 #include <string>
 
 namespace StringUtil {
@@ -50,7 +47,7 @@ bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix
 **
 ** Modified from http://stackoverflow.com/questions/3152241/case-insensitive-stdstring-find#3152296
 */
-std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2, const std::locale& loc = std::locale());
+std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2);
 
 }  // namespace StringUtil
 
