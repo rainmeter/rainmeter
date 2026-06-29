@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "Skin.h"
+#include "SkinDropTarget.h"
 #include "SkinSelectionOverlay.h"
 #include "Rainmeter.h"
 #include "TrayIcon.h"
@@ -253,6 +254,8 @@ void Skin::Dispose(bool refresh)
 
 	if (!refresh)
 	{
+		m_DropTarget = nullptr;
+
 		m_SelectionOverlay.reset();
 
 		if (m_Window) DestroyWindow(m_Window);
@@ -420,6 +423,28 @@ void Skin::UnregisterMouseInput()
 		RegisterRawInputDevices(&rid, 1, sizeof(rid));
 		m_MouseInputRegistered = false;
 	}
+}
+
+Microsoft::WRL::ComPtr<SkinDropTarget> Skin::GetDropTarget()
+{
+	if (!m_DropTarget && m_Window)
+	{
+		Microsoft::WRL::ComPtr<SkinDropTarget> dropTarget;
+		dropTarget.Attach(new SkinDropTarget(this));
+
+		// Only store a raw pointer. When the last SkinDropTarget reference goes away, its
+		// destructor will clear m_DropTarget.
+		m_DropTarget = dropTarget.Get();
+
+		return dropTarget;
+	}
+
+	return Microsoft::WRL::ComPtr<SkinDropTarget>(m_DropTarget);
+}
+
+void Skin::ClearDropTarget()
+{
+	m_DropTarget = nullptr;
 }
 
 void Skin::AddWindowExStyle(LONG_PTR flag)
@@ -2638,6 +2663,11 @@ bool Skin::ReadSkin()
 				{
 					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
+
+					if (_wcsicmp(plugin, L"Drag&Drop") == 0)
+					{
+						measureName = L"DragDrop";
+					}
 
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 					{
