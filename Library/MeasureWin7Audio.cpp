@@ -163,7 +163,7 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 	if (!InitializeCom(this, &comInitialized))
 	{
 		m_StringValue = L"ERROR - Initializing COM";
-		return m_StringValue.c_str();
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	IMMDeviceEnumerator* enumerator = nullptr;
@@ -171,7 +171,7 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 	{
 		UninitializeCom(comInitialized);
 		m_StringValue = L"ERROR - Initializing COM";
-		return m_StringValue.c_str();
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	IMMDevice* endpoint = nullptr;
@@ -207,7 +207,7 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 	SafeRelease(endpoint);
 	SafeRelease(enumerator);
 	UninitializeCom(comInitialized);
-	return m_StringValue.c_str();
+	return CheckSubstitute(m_StringValue.c_str());
 }
 
 void MeasureWin7Audio::Command(const std::wstring& command)

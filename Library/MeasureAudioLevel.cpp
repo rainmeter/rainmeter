@@ -780,7 +780,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 
 	case MeasureAudioLevel::TYPE_DEV_NAME:
-		return parent->m_DevName;
+		return CheckSubstitute(parent->m_DevName);
 
 	case MeasureAudioLevel::TYPE_DEV_ID:
 		if (parent->m_Dev)
@@ -841,7 +841,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 	}
 
-	return m_StringValue.c_str();
+	return CheckSubstitute(m_StringValue.c_str());
 }
 
 
