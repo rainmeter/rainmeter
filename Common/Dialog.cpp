@@ -177,6 +177,8 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 			DpiUtil::DpiUnawareScope dpiUnaware;
 			SetWindowPlacement(m_Window, m_WindowPlacement);
 		}
+
+		SetForegroundWindow(m_Window);
 	}
 }
 
