@@ -18,6 +18,7 @@
 #include <commdlg.h>
 #include <dwmapi.h>
 #include <comdef.h>
+#include <oleidl.h>
 #include <Iphlpapi.h>
 #include <Imagehlp.h>
 #include <Mmsystem.h>
@@ -26,6 +27,7 @@
 #include <shlwapi.h>
 #include <Wininet.h>
 #include <VersionHelpers.h>
+#include <wrl/client.h>
 
 // STL
 #include <map>

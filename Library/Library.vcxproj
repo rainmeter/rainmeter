@@ -61,6 +61,7 @@
     <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureDragDrop.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
     <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
@@ -124,6 +125,7 @@
     </ClCompile>
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinDropTarget.cpp" />
     <ClCompile Include="SkinPosition.cpp" />
     <ClCompile Include="SkinSelectionOverlay.cpp" />
     <ClCompile Include="SkinPosition_Test.cpp">
@@ -205,6 +207,7 @@
     <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureDragDrop.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
     <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
@@ -262,6 +265,7 @@
     <ClInclude Include="NowPlaying\PlayerWMP.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinDropTarget.h" />
     <ClInclude Include="SkinPosition.h" />
     <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="Export.h" />

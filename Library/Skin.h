@@ -89,6 +89,7 @@ class Measure;
 class Meter;
 class GeneralImage;
 class SkinSelectionOverlay;
+class SkinDropTarget;
 
 namespace Gfx {
 class FontCollection;
@@ -225,12 +226,16 @@ public:
 
 	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
+	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
+	void ClearDropTarget();
+
 	Meter* GetMeter(const std::wstring& meterName);
 	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class DialogManage;
 	friend class Rainmeter;
 	friend class ContextMenu;
+	friend class SkinDropTarget;
 	friend class SkinSelectionOverlay;
 
 protected:
@@ -393,7 +398,9 @@ private:
 
 	HWND m_HostWindow;
 	HWND m_Window;
+
 	std::unique_ptr<SkinSelectionOverlay> m_SelectionOverlay;
+	SkinDropTarget* m_DropTarget;
 
 	int m_PendingWriteOptions;
 

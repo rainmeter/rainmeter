@@ -24,6 +24,7 @@
 #include "MeasureNetTotal.h"
 #include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
+#include "MeasureDragDrop.h"
 #include "MeasureFolderInfo.h"
 #include "MeasureiTunes.h"
 #include "MeasureUptime.h"
@@ -920,6 +921,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"WindowMessage", measure) == 0)
 	{
 		return new MeasureWindowMessage(skin, name);
+	}
+	else if (_wcsicmp(L"DragDrop", measure) == 0)
+	{
+		return new MeasureDragDrop(skin, name);
 	}
 
 	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);
