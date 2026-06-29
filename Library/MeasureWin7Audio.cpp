@@ -46,25 +46,6 @@ void SafeRelease(T*& object)
 	}
 }
 
-bool InitializeCom(MeasureWin7Audio* measure, bool* initialized)
-{
-	*initialized = SUCCEEDED(CoInitialize(nullptr));
-	if (!*initialized)
-	{
-		LogErrorF(measure, L"Win7Audio: COM initialization failed");
-	}
-
-	return *initialized;
-}
-
-void UninitializeCom(bool initialized)
-{
-	if (initialized)
-	{
-		CoUninitialize();
-	}
-}
-
 bool CreateEnumerator(MeasureWin7Audio* measure, IMMDeviceEnumerator** enumerator)
 {
 	HRESULT hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)enumerator);
@@ -159,17 +140,9 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 {
 	m_StringValue = L"ERROR";
 
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		m_StringValue = L"ERROR - Initializing COM";
-		return CheckSubstitute(m_StringValue.c_str());
-	}
-
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (!CreateEnumerator(this, &enumerator))
 	{
-		UninitializeCom(comInitialized);
 		m_StringValue = L"ERROR - Initializing COM";
 		return CheckSubstitute(m_StringValue.c_str());
 	}
@@ -206,7 +179,6 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 
 	SafeRelease(endpoint);
 	SafeRelease(enumerator);
-	UninitializeCom(comInitialized);
 	return CheckSubstitute(m_StringValue.c_str());
 }
 
@@ -333,16 +305,9 @@ void MeasureWin7Audio::EnumerateEndpoints()
 {
 	m_EndpointIDs.clear();
 
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		return;
-	}
-
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (!CreateEnumerator(this, &enumerator))
 	{
-		UninitializeCom(comInitialized);
 		return;
 	}
 
@@ -351,7 +316,6 @@ void MeasureWin7Audio::EnumerateEndpoints()
 	{
 		LogWarningF(this, L"Win7Audio: Could not enumerate AudioEndpoints");
 		SafeRelease(enumerator);
-		UninitializeCom(comInitialized);
 		return;
 	}
 
@@ -377,17 +341,10 @@ void MeasureWin7Audio::EnumerateEndpoints()
 
 	SafeRelease(collection);
 	SafeRelease(enumerator);
-	UninitializeCom(comInitialized);
 }
 
 bool MeasureWin7Audio::GetAudioState(VolumeAction action)
 {
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		return false;
-	}
-
 	bool success = false;
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (CreateEnumerator(this, &enumerator))
@@ -416,18 +373,11 @@ bool MeasureWin7Audio::GetAudioState(VolumeAction action)
 	}
 
 	SafeRelease(enumerator);
-	UninitializeCom(comInitialized);
 	return success;
 }
 
 bool MeasureWin7Audio::SetVolume(UINT volume, int offset)
 {
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		return false;
-	}
-
 	bool success = false;
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (CreateEnumerator(this, &enumerator))
@@ -467,18 +417,11 @@ bool MeasureWin7Audio::SetVolume(UINT volume, int offset)
 	}
 
 	SafeRelease(enumerator);
-	UninitializeCom(comInitialized);
 	return success;
 }
 
 UINT MeasureWin7Audio::GetDefaultEndpointIndex()
 {
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		return 0U;
-	}
-
 	UINT index = 0U;
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (CreateEnumerator(this, &enumerator))
@@ -495,18 +438,11 @@ UINT MeasureWin7Audio::GetDefaultEndpointIndex()
 	}
 
 	SafeRelease(enumerator);
-	UninitializeCom(comInitialized);
 	return index;
 }
 
 HRESULT MeasureWin7Audio::RegisterDevice(const WCHAR* deviceID)
 {
-	bool comInitialized = false;
-	if (!InitializeCom(this, &comInitialized))
-	{
-		return E_FAIL;
-	}
-
 	HRESULT hr = S_FALSE;
 	IPolicyConfig* policyConfig = nullptr;
 	hr = CoCreateInstance(__uuidof(CPolicyConfigClient), nullptr, CLSCTX_ALL, __uuidof(IPolicyConfig), (void**)&policyConfig);
@@ -520,6 +456,5 @@ HRESULT MeasureWin7Audio::RegisterDevice(const WCHAR* deviceID)
 	}
 
 	SafeRelease(policyConfig);
-	UninitializeCom(comInitialized);
 	return hr;
 }
