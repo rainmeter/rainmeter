@@ -49,7 +49,6 @@ private:
 
 	Type m_Type;
 	int m_Index;
-	WCHAR m_StringValue[128];
 };
 
 #endif

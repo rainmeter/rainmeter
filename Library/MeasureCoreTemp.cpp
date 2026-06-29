@@ -21,8 +21,7 @@ CoreTempProxy& GetCoreTempProxy()
 
 MeasureCoreTemp::MeasureCoreTemp(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(Type::Temperature),
-	m_Index(0),
-	m_StringValue()
+	m_Index(0)
 {
 }
 
@@ -105,16 +104,19 @@ void MeasureCoreTemp::UpdateValue()
 
 const WCHAR* MeasureCoreTemp::GetStringValue()
 {
+	static WCHAR s_Buffer[32];
+	s_Buffer[0] = L'\0';
+
 	auto& proxy = GetCoreTempProxy();
 	switch (m_Type)
 	{
 	case Type::Vid:
-		_snwprintf_s(m_StringValue, _TRUNCATE, L"%.4f", proxy.GetVID());
-		return CheckSubstitute(m_StringValue);
+		_snwprintf_s(s_Buffer, _TRUNCATE, L"%.4f", proxy.GetVID());
+		return CheckSubstitute(s_Buffer);
 
 	case Type::CpuName:
-		_snwprintf_s(m_StringValue, _TRUNCATE, L"%S", proxy.GetCPUName());
-		return CheckSubstitute(m_StringValue);
+		_snwprintf_s(s_Buffer, _TRUNCATE, L"%S", proxy.GetCPUName());
+		return CheckSubstitute(s_Buffer);
 	}
 
 	return nullptr;

@@ -135,7 +135,6 @@ private:
 	int m_FFTBufP;
 	float* m_BandFreq;
 	float* m_BandOut[MAX_CHANNELS];
-	std::wstring m_StringValue;
 };
 
 #endif

@@ -31,8 +31,7 @@ MeasurePower::MeasurePower(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_State(PowerState::UNKNOWN),
 	m_SuppressError(false),
 	m_HasBeenUpdated(false),
-	m_CachedBatteryLifeTime(0UL),
-	m_StringValue()
+	m_CachedBatteryLifeTime(0UL)
 {
 	if (!c_NumOfProcessors)
 	{
@@ -208,16 +207,17 @@ const WCHAR* MeasurePower::GetStringValue()
 		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
+		static WCHAR s_Buffer[128];
 		errno = 0;
-		wcsftime(m_StringValue, _countof(m_StringValue), m_Format.c_str(), &time);
+		wcsftime(s_Buffer, _countof(s_Buffer), m_Format.c_str(), &time);
 		if (errno == EINVAL)
 		{
-			m_StringValue[0] = L'\0';
+			s_Buffer[0] = L'\0';
 		}
 
 		_set_thread_local_invalid_parameter_handler(oldHandler);
 
-		return CheckSubstitute(m_StringValue);
+		return CheckSubstitute(s_Buffer);
 	}
 
 	return nullptr;
