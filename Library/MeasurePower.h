@@ -49,7 +49,6 @@ private:
 	bool m_SuppressError;
 	bool m_HasBeenUpdated;
 	DWORD m_CachedBatteryLifeTime;
-	WCHAR m_StringValue[128];
 };
 
 #endif

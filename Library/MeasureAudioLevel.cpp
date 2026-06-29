@@ -752,6 +752,9 @@ double MeasureAudioLevel::UpdateAudioValue()
 
 const WCHAR* MeasureAudioLevel::GetStringValue()
 {
+	static WCHAR s_Buffer[1024];
+	s_Buffer[0] = L'\0';
+
 	MeasureAudioLevel* parent = m_Parent ? m_Parent : this;
 
 	const WCHAR* s_fmtName[MeasureAudioLevel::NUM_FORMATS] =
@@ -760,8 +763,6 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		L"PCM 16b",		// FMT_PCM_S16
 		L"PCM 32b",		// FMT_PCM_F32
 	};
-
-	m_StringValue.clear();
 
 	switch (m_Type)
 	{
@@ -772,15 +773,13 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 	case MeasureAudioLevel::TYPE_FORMAT:
 		if (parent->m_Wfx)
 		{
-			WCHAR buffer[128];
-			_snwprintf_s(buffer, _TRUNCATE, L"%dHz %s %dch", parent->m_Wfx->nSamplesPerSec,
-				s_fmtName[parent->m_Format], parent->m_Wfx->nChannels);
-			m_StringValue = buffer;
+			_snwprintf_s(s_Buffer, _TRUNCATE, L"%dHz %s %dch", parent->m_Wfx->nSamplesPerSec, s_fmtName[parent->m_Format], parent->m_Wfx->nChannels);
 		}
 		break;
 
 	case MeasureAudioLevel::TYPE_DEV_NAME:
-		return CheckSubstitute(parent->m_DevName);
+		wcscpy_s(s_Buffer, parent->m_DevName);
+		break;
 
 	case MeasureAudioLevel::TYPE_DEV_ID:
 		if (parent->m_Dev)
@@ -788,7 +787,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 			LPWSTR pwszID = nullptr;
 			if (parent->m_Dev->GetId(&pwszID) == S_OK)
 			{
-				m_StringValue = pwszID;
+				wcscpy_s(s_Buffer, pwszID);
 				CoTaskMemFree(pwszID);
 			}
 		}
@@ -833,7 +832,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 					SAFE_RELEASE(device);
 				}
 
-				m_StringValue = strDevices;
+				wcscpy_s(s_Buffer, strDevices.c_str());
 			}
 
 			SAFE_RELEASE(collection);
@@ -841,7 +840,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 	}
 
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(s_Buffer);
 }
 
 
