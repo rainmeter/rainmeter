@@ -169,13 +169,27 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 	{
 		if (m_WindowPlacement && m_WindowPlacement->length > 0)
 		{
-			if (m_WindowPlacement->showCmd == SW_SHOWMINIMIZED)
+			DpiUtil::DpiUnawareScope dpiUnaware;
+
+			auto& wp = *m_WindowPlacement;
+			if (wp.showCmd == SW_SHOWMINIMIZED)
 			{
-				m_WindowPlacement->showCmd = SW_SHOWNORMAL;
+				wp.showCmd = SW_SHOWNORMAL;
 			}
 
-			DpiUtil::DpiUnawareScope dpiUnaware;
-			SetWindowPlacement(m_Window, m_WindowPlacement);
+			// If the window can't be maximized, only restore the position and keep the existing size.
+			if ((style & WS_MAXIMIZEBOX) == 0)
+			{
+				RECT windowRect;
+				GetWindowRect(m_Window, &windowRect);
+
+				const int windowW = windowRect.right - windowRect.left;
+				const int windowH = windowRect.bottom - windowRect.top;
+				wp.rcNormalPosition.right = wp.rcNormalPosition.left + windowW;
+				wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + windowH;
+			}
+
+			SetWindowPlacement(m_Window, &wp);
 		}
 
 		SetForegroundWindow(m_Window);
