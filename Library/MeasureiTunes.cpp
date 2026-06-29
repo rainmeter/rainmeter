@@ -180,7 +180,6 @@ namespace {
 
 IiTunesPtr g_iTunes;
 IITTrackPtr g_CurrentTrack;
-bool g_CoInitialized = false;
 bool g_InstanceCreated = false;
 bool g_iTunesAboutToPromptUserToQuit = false;
 int g_MeasureCount = 0;
@@ -285,20 +284,6 @@ void InitEventHandler()
 	connectionPointContainer->Release();
 }
 
-bool EnsureCOM(MeasureiTunes* measure)
-{
-	if (!g_CoInitialized)
-	{
-		g_CoInitialized = SUCCEEDED(CoInitialize(nullptr));
-		if (!g_CoInitialized)
-		{
-			LogErrorF(measure, L"iTunes: Unable to initialize COM");
-		}
-	}
-
-	return g_CoInitialized;
-}
-
 bool CreateITunesInstance(MeasureiTunes* measure, bool logError)
 {
 	if (g_InstanceCreated)
@@ -323,11 +308,6 @@ bool CreateITunesInstance(MeasureiTunes* measure, bool logError)
 
 bool EnsureITunes(MeasureiTunes* measure)
 {
-	if (!EnsureCOM(measure))
-	{
-		return false;
-	}
-
 	if (g_InstanceCreated)
 	{
 		return true;
@@ -560,11 +540,6 @@ MeasureiTunes::~MeasureiTunes()
 			g_iTunes.Release();
 			g_InstanceCreated = false;
 		}
-		if (g_CoInitialized)
-		{
-			CoUninitialize();
-			g_CoInitialized = false;
-		}
 	}
 }
 
@@ -584,7 +559,7 @@ void MeasureiTunes::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_CurrentTrackArtworkPath = m_BaseDir + m_DefaultTrackArtworkPath;
 	}
 
-	if (EnsureCOM(this) && !g_InstanceCreated && IsITunesRunning())
+	if (!g_InstanceCreated && IsITunesRunning())
 	{
 		CreateITunesInstance(this, true);
 	}
@@ -637,12 +612,6 @@ void MeasureiTunes::UpdateValue()
 const WCHAR* MeasureiTunes::GetStringValue()
 {
 	m_StringValue.clear();
-	if (!g_CoInitialized)
-	{
-		m_StringValue = L"Fail to initialize";
-		return CheckSubstitute(m_StringValue.c_str());
-	}
-
 	if (!g_InstanceCreated)
 	{
 		if (m_Command == COMMAND_GETCURRENTTRACK_ARTWORK)
@@ -789,11 +758,6 @@ const WCHAR* MeasureiTunes::GetStringValue()
 
 void MeasureiTunes::Command(const std::wstring& command)
 {
-	if (!EnsureCOM(this))
-	{
-		return;
-	}
-
 	COMMAND_TYPE type = command.empty() ? m_Command : ParseBang(command.c_str());
 	if (type == COMMAND_COUNT)
 	{
