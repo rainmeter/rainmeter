@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "DpiUtil.h"
 #include "Dialog.h"
 
 namespace {
@@ -142,6 +143,13 @@ INT_PTR CALLBACK BaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 //
 
 Dialog::Dialog() : BaseDialog(),
+	m_WindowPlacement(nullptr),
+	m_TabControl()
+{
+}
+
+Dialog::Dialog(WINDOWPLACEMENT* placement) : BaseDialog(),
+	m_WindowPlacement(placement),
 	m_TabControl()
 {
 }
@@ -153,7 +161,23 @@ Dialog::~Dialog()
 
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
+	const bool existingWindow = m_Window != nullptr;
+
 	Show(title, x, y, w, h, style, exStyle, parent, modeless);
+
+	if (!existingWindow && modeless && m_Window)
+	{
+		if (m_WindowPlacement && m_WindowPlacement->length > 0)
+		{
+			if (m_WindowPlacement->showCmd == SW_SHOWMINIMIZED)
+			{
+				m_WindowPlacement->showCmd = SW_SHOWNORMAL;
+			}
+
+			DpiUtil::DpiUnawareScope dpiUnaware;
+			SetWindowPlacement(m_Window, m_WindowPlacement);
+		}
+	}
 }
 
 INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -192,6 +216,15 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_ACTIVATE:
 		c_ActiveDialogWindow = wParam ? m_Window : nullptr;
+		break;
+
+	case WM_CLOSE:
+		if (m_WindowPlacement)
+		{
+			DpiUtil::DpiUnawareScope dpiUnaware;
+			m_WindowPlacement->length = sizeof(WINDOWPLACEMENT);
+			GetWindowPlacement(m_Window, m_WindowPlacement);
+		}
 		break;
 	}
 

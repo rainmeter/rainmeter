@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../Common/DpiUtil.h"
 #include "MonitorUtil.h"
 #include "System.h"
 #include "Rainmeter.h"
@@ -221,7 +222,7 @@ void MonitorUtil::SetMultiMonitorInfo()
 	}
 
 	{
-		DpiUnawareScope dpiUnaware;
+		DpiUtil::DpiUnawareScope dpiUnaware;
 		c_Monitors.logicalVirtualScreen = GetVirtualScreenRect();
 
 		for (auto& monitor : monitors)

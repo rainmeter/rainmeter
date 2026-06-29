@@ -26,7 +26,7 @@
 WINDOWPLACEMENT DialogManage::c_WindowPlacement = { 0 };
 DialogManage* DialogManage::c_Dialog = nullptr;
 
-DialogManage::DialogManage() : Dialog()
+DialogManage::DialogManage() : Dialog(&c_WindowPlacement)
 {
 }
 
@@ -211,12 +211,6 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
-			{
-				MonitorUtil::DpiUnawareScope dpiUnawareScope;
-				c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-				GetWindowPlacement(m_Window, &c_WindowPlacement);
-			}
-
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
@@ -270,17 +264,6 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Use arrows instead of plus/minus in the tree for Vista+
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
-
-	if (c_WindowPlacement.length != 0)
-	{
-		if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-		{
-			c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-		}
-
-		MonitorUtil::DpiUnawareScope dpiUnaware;
-		SetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
 
 	return FALSE;
 }

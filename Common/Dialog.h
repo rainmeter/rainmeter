@@ -73,6 +73,7 @@ protected:
 	};
 
 	Dialog();
+	Dialog(WINDOWPLACEMENT* placement);
 	virtual ~Dialog();
 
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
@@ -97,6 +98,7 @@ private:
 
 	static HWND c_ActiveDialogWindow;
 
+	WINDOWPLACEMENT* m_WindowPlacement;
 	HWND m_TabControl;
 	std::vector<Tab*> m_Pages;
 	std::vector<Tab*> m_Tabs;
