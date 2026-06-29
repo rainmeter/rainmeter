@@ -89,12 +89,25 @@ bool ParseMonitorNumber(const WCHAR* start, const WCHAR* end, int& monitorNumber
 	return monitorNumber > 0;
 }
 
-bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, MonitorComponent& component, bool& primary, int& monitorNumber)
+bool ParseMonitorSelector(const WCHAR* start, const WCHAR* end, bool& autoSelect, int& monitorNumber)
+{
+	if (MatchRange(start, end, L"AUTO"))
+	{
+		autoSelect = true;
+		monitorNumber = -1;
+		return true;
+	}
+
+	return ParseMonitorNumber(start, end, monitorNumber);
+}
+
+bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, MonitorComponent& component, bool& primary, bool& autoSelect, int& monitorNumber)
 {
 	const WCHAR* start = str;
 	const WCHAR* end = str + wcslen(str);
 	physical = false;
 	primary = false;
+	autoSelect = false;
 	monitorNumber = -1;
 
 	if (end - start >= 3 && _wcsicmp(end - 3, L":PX") == 0)
@@ -138,7 +151,7 @@ bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, M
 			if (primary || area == MonitorArea::VirtualScreen) return false;
 
 			componentEnd = ch;
-			if (!ParseMonitorNumber(ch + 1, end, monitorNumber)) return false;
+			if (!ParseMonitorSelector(ch + 1, end, autoSelect, monitorNumber)) return false;
 			break;
 		}
 	}
@@ -620,10 +633,11 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 {
 	bool physical = false;
 	bool primary = false;
+	bool autoSelect = false;
 	int monitorNumber = -1;
 	MonitorArea area = MonitorArea::Screen;
 	MonitorComponent component = MonitorComponent::X;
-	if (!ParseMonitorVariable(strVariable.c_str(), physical, area, component, primary, monitorNumber))
+	if (!ParseMonitorVariable(strVariable.c_str(), physical, area, component, primary, autoSelect, monitorNumber))
 	{
 		return false;
 	}
@@ -650,6 +664,11 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 		if (monitorNumber > 0)
 		{
 			screenIndex = monitorNumber;
+		}
+		else if (autoSelect)
+		{
+			if (!m_Skin) return false;
+			screenIndex = monitorsInfo.MonitorIndexForWindow(m_Skin->GetWindow());
 		}
 		else if (!primary && m_Skin)
 		{

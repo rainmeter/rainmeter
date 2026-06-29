@@ -36,6 +36,7 @@ struct MultiMonitorInfo
 	void Clear();
 
 	void UpdateSpans();
+	int MonitorIndexForWindow(HWND window) const;
 	POINT PhysicalToLogical(POINT point) const;
 	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
 

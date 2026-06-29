@@ -327,6 +327,24 @@ void MultiMonitorInfo::UpdateSpans()
 	}
 }
 
+int MultiMonitorInfo::MonitorIndexForWindow(HWND window) const
+{
+	const auto windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+
+	int index = 1;
+	for (const auto& monitor : monitors)
+	{
+		if (monitor.active && monitor.handle == windowMonitor)
+		{
+			return index;
+		}
+
+		++index;
+	}
+
+	return primary;
+}
+
 auto MultiMonitorInfo::CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal) -> std::vector<Span>
 {
 	const auto& getAxisStart = [&](const MonitorInfo& monitor) -> LONG
