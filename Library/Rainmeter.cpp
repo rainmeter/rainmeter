@@ -27,6 +27,7 @@
 #include "MeterString.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
+#include <bcrypt.h>
 
 enum TIMER
 {
@@ -630,46 +631,29 @@ void Rainmeter::RestartRainmeter()
 
 bool Rainmeter::IsAlreadyRunning()
 {
-	typedef struct
-	{
-		ULONG i[2];
-		ULONG buf[4];
-		unsigned char in[64];
-		unsigned char digest[16];
-	} MD5_CTX;
-
-	typedef void (WINAPI * FPMD5INIT)(MD5_CTX* context);
-	typedef void (WINAPI * FPMD5UPDATE)(MD5_CTX* context, const unsigned char* input, unsigned int inlen);
-	typedef void (WINAPI * FPMD5FINAL)(MD5_CTX* context);
-
 	bool alreadyRunning = false;
 
 	// Create MD5 digest from command line
-	HMODULE cryptDll = System::RmLoadLibrary(L"cryptdll.dll");
-	if (cryptDll)
+	BCRYPT_ALG_HANDLE algorithm = nullptr;
+	BCRYPT_HASH_HANDLE hash = nullptr;
+	UCHAR digest[16] = { 0 };
+	if (BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_MD5_ALGORITHM, nullptr, 0) == 0 &&
+		BCryptCreateHash(algorithm, &hash, nullptr, 0, nullptr, 0, 0) == 0)
 	{
-		FPMD5INIT MD5Init = (FPMD5INIT)GetProcAddress(cryptDll, "MD5Init");
-		FPMD5UPDATE MD5Update = (FPMD5UPDATE)GetProcAddress(cryptDll, "MD5Update");
-		FPMD5FINAL MD5Final = (FPMD5FINAL)GetProcAddress(cryptDll, "MD5Final");
-		if (MD5Init && MD5Update && MD5Final)
+		std::wstring data = m_IniFile;
+		_wcsupr(&data[0]);
+
+		if (BCryptHashData(hash, (PUCHAR)&data[0], (ULONG)(data.length() * sizeof(WCHAR)), 0) == 0 &&
+			BCryptFinishHash(hash, digest, (ULONG)sizeof(digest), 0) == 0)
 		{
-			std::wstring data = m_IniFile;
-			_wcsupr(&data[0]);
-
-			MD5_CTX ctx = { 0 };
-			MD5Init(&ctx);
-			MD5Update(&ctx, (LPBYTE)&data[0], (UINT)data.length() * sizeof(WCHAR));
-			MD5Final(&ctx);
-			FreeLibrary(cryptDll);
-
 			// Convert MD5 digest to mutex string (e.g. "Rainmeter0123456789abcdef0123456789abcdef")
 			const WCHAR hexChars[] = L"0123456789abcdef";
 			WCHAR mutexName[64] = L"Rainmeter";
 			WCHAR* pos = mutexName + (_countof(L"Rainmeter") - 1);
 			for (size_t i = 0; i < 16; ++i)
 			{
-				*(pos++) = hexChars[ctx.digest[i] >> 4];
-				*(pos++) = hexChars[ctx.digest[i] & 0xF];
+				*(pos++) = hexChars[digest[i] >> 4];
+				*(pos++) = hexChars[digest[i] & 0xF];
 			}
 			*pos = L'\0';
 
@@ -680,9 +664,10 @@ bool Rainmeter::IsAlreadyRunning()
 				m_Mutex = nullptr;
 			}
 		}
-
-		FreeLibrary(cryptDll);
 	}
+
+	if (hash) BCryptDestroyHash(hash);
+	if (algorithm) BCryptCloseAlgorithmProvider(algorithm, 0);
 
 	return alreadyRunning;
 }
