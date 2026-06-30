@@ -3809,7 +3809,6 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		++m_MouseMoveCounter;
 
 		const auto pos = GetMouseMessagePositions(uMsg, lParam);
-		DoMouseMeasureMoveActions(pos);
 
 		while (DoMoveAction(pos.skin.x, pos.skin.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.skin.x, pos.skin.y, MOUSE_OVER)) ;
@@ -3856,7 +3855,6 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_DOWN : MOUSE_MW_UP;
-	DoMouseMeasureAction(pos, action);
 	DoAction(pos.skin.x, pos.skin.y, action, false);
 
 	return 0;
@@ -3872,7 +3870,6 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT;
-	DoMouseMeasureAction(pos, action);
 	DoAction(pos.skin.x, pos.skin.y, action, false);
 
 	return 0;
@@ -4636,7 +4633,6 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, BUTTONPROC_DOWN);
-	DoMouseMeasureAction(pos, MOUSE_LMB_DOWN);
 
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
 		(!DoAction(pos.skin.x, pos.skin.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
@@ -4693,7 +4689,6 @@ void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonP
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, buttonProc);
-	DoMouseMeasureAction(pos, action);
 	DoAction(pos.skin.x, pos.skin.y, action, false);
 }
 
@@ -4703,7 +4698,6 @@ void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC b
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, buttonProc);
-	DoMouseMeasureAction(pos, action, fallback);
 	if (!DoAction(pos.skin.x, pos.skin.y, action, false))
 	{
 		DoAction(pos.skin.x, pos.skin.y, fallback, false);
@@ -4729,7 +4723,6 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	const auto pos = GetMouseMessagePositions(uMsg, lParam);
 	HandleButtons(pos.skin, BUTTONPROC_MOVE);
-	DoMouseMeasureAction(pos, MOUSE_RMB_UP);
 
 	if (IsCtrlKeyDown() || !DoAction(pos.skin.x, pos.skin.y, MOUSE_RMB_UP, false))
 	{
@@ -4953,30 +4946,6 @@ void Skin::ClearMouseMeasureCapture()
 	}
 
 	m_MouseMeasureCapture = false;
-}
-
-void Skin::DoMouseMeasureAction(const MouseMessagePositions& pos, MOUSEACTION action, MOUSEACTION fallback)
-{
-	for (auto* measure : m_Measures)
-	{
-		if (measure->GetTypeID() == TypeID<MeasureMouse>())
-		{
-			const auto logicalScreenPos = MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(pos.screen);
-			((MeasureMouse*)measure)->ExecuteAction(action, pos.skin, logicalScreenPos, fallback);
-		}
-	}
-}
-
-void Skin::DoMouseMeasureMoveActions(const MouseMessagePositions& pos)
-{
-	for (auto* measure : m_Measures)
-	{
-		if (measure->GetTypeID() == TypeID<MeasureMouse>())
-		{
-			const auto logicalScreenPos = MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(pos.screen);
-			((MeasureMouse*)measure)->ExecuteMoveActions(pos.skin, logicalScreenPos);
-		}
-	}
 }
 
 /*

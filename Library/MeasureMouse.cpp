@@ -9,8 +9,191 @@
 #include "MeasureMouse.h"
 #include "ConfigParser.h"
 #include "Logger.h"
+#include "MonitorUtil.h"
 #include "Rainmeter.h"
 #include "Skin.h"
+
+namespace {
+
+HHOOK g_MouseHook = nullptr;
+std::vector<MeasureMouse*> g_Measures;
+
+POINT GetLogicalScreenPos(POINT screenPos)
+{
+	return MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(screenPos);
+}
+
+POINT GetLogicalSkinPos(Skin* skin, POINT screenPos)
+{
+	POINT clientPos = screenPos;
+	ScreenToClient(skin->GetWindow(), &clientPos);
+	return skin->PhysicalToLogical(clientPos);
+}
+
+template<typename Func>
+void ForEachMeasure(HWND window, Func&& func)
+{
+	const auto measuresCopy = g_Measures;
+	for (auto* measure : measuresCopy)
+	{
+		if (std::find(g_Measures.begin(), g_Measures.end(), measure) == g_Measures.end())
+		{
+			continue;
+		}
+
+		Skin* skin = measure->GetSkin();
+		if (skin->GetWindow() == window)
+		{
+			func(measure, skin);
+		}
+	}
+}
+
+void ExecuteRegularAction(HWND window, POINT screenPos, MOUSEACTION action)
+{
+	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
+	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
+	{
+		measure->ExecuteAction(action, GetLogicalSkinPos(skin, screenPos), logicalScreenPos);
+	});
+}
+
+void ExecuteDoubleClickAction(HWND window, POINT screenPos, MOUSEACTION action, MOUSEACTION fallback)
+{
+	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
+	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
+	{
+		measure->ExecuteAction(action, GetLogicalSkinPos(skin, screenPos), logicalScreenPos, fallback);
+	});
+}
+
+void ExecuteMoveActions(HWND window, POINT screenPos)
+{
+	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
+	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
+	{
+		measure->ExecuteMoveActions(GetLogicalSkinPos(skin, screenPos), logicalScreenPos);
+	});
+}
+
+void ExecuteXButtonAction(HWND window, POINT screenPos, DWORD mouseData, MOUSEACTION x1Action, MOUSEACTION x2Action)
+{
+	const WORD button = HIWORD(mouseData);
+	if (button == XBUTTON1)
+	{
+		ExecuteRegularAction(window, screenPos, x1Action);
+	}
+	else if (button == XBUTTON2)
+	{
+		ExecuteRegularAction(window, screenPos, x2Action);
+	}
+}
+
+void ExecuteXButtonDoubleClickAction(HWND window, POINT screenPos, DWORD mouseData)
+{
+	const WORD button = HIWORD(mouseData);
+	if (button == XBUTTON1)
+	{
+		ExecuteDoubleClickAction(window, screenPos, MOUSE_X1MB_DBLCLK, MOUSE_X1MB_DOWN);
+	}
+	else if (button == XBUTTON2)
+	{
+		ExecuteDoubleClickAction(window, screenPos, MOUSE_X2MB_DBLCLK, MOUSE_X2MB_DOWN);
+	}
+}
+
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode < 0)
+	{
+		return CallNextHookEx(g_MouseHook, nCode, wParam, lParam);
+	}
+
+	const auto* data = (const MOUSEHOOKSTRUCTEX*)lParam;
+	const UINT msg = (UINT)wParam;
+	const HWND window = data->hwnd;
+	const POINT screenPos = data->pt;
+
+	switch (msg)
+	{
+	case WM_NCMOUSEMOVE:
+	case WM_MOUSEMOVE:
+		ExecuteMoveActions(window, screenPos);
+		break;
+
+	case WM_MOUSEWHEEL:
+		ExecuteRegularAction(window, screenPos, GET_WHEEL_DELTA_WPARAM(data->mouseData) < 0 ? MOUSE_MW_DOWN : MOUSE_MW_UP);
+		break;
+
+	case WM_MOUSEHWHEEL:
+		ExecuteRegularAction(window, screenPos, GET_WHEEL_DELTA_WPARAM(data->mouseData) < 0 ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT);
+		break;
+
+	case WM_NCLBUTTONDOWN:
+	case WM_LBUTTONDOWN:
+		ExecuteRegularAction(window, screenPos, MOUSE_LMB_DOWN);
+		break;
+
+	case WM_NCLBUTTONUP:
+	case WM_LBUTTONUP:
+		ExecuteRegularAction(window, screenPos, MOUSE_LMB_UP);
+		break;
+
+	case WM_NCLBUTTONDBLCLK:
+	case WM_LBUTTONDBLCLK:
+		ExecuteDoubleClickAction(window, screenPos, MOUSE_LMB_DBLCLK, MOUSE_LMB_DOWN);
+		break;
+
+	case WM_NCMBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+		ExecuteRegularAction(window, screenPos, MOUSE_MMB_DOWN);
+		break;
+
+	case WM_NCMBUTTONUP:
+	case WM_MBUTTONUP:
+		ExecuteRegularAction(window, screenPos, MOUSE_MMB_UP);
+		break;
+
+	case WM_NCMBUTTONDBLCLK:
+	case WM_MBUTTONDBLCLK:
+		ExecuteDoubleClickAction(window, screenPos, MOUSE_MMB_DBLCLK, MOUSE_MMB_DOWN);
+		break;
+
+	case WM_NCRBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		ExecuteRegularAction(window, screenPos, MOUSE_RMB_DOWN);
+		break;
+
+	case WM_NCRBUTTONUP:
+	case WM_RBUTTONUP:
+		ExecuteRegularAction(window, screenPos, MOUSE_RMB_UP);
+		break;
+
+	case WM_NCRBUTTONDBLCLK:
+	case WM_RBUTTONDBLCLK:
+		ExecuteDoubleClickAction(window, screenPos, MOUSE_RMB_DBLCLK, MOUSE_RMB_DOWN);
+		break;
+
+	case WM_NCXBUTTONDOWN:
+	case WM_XBUTTONDOWN:
+		ExecuteXButtonAction(window, screenPos, data->mouseData, MOUSE_X1MB_DOWN, MOUSE_X2MB_DOWN);
+		break;
+
+	case WM_NCXBUTTONUP:
+	case WM_XBUTTONUP:
+		ExecuteXButtonAction(window, screenPos, data->mouseData, MOUSE_X1MB_UP, MOUSE_X2MB_UP);
+		break;
+
+	case WM_NCXBUTTONDBLCLK:
+	case WM_XBUTTONDBLCLK:
+		ExecuteXButtonDoubleClickAction(window, screenPos, data->mouseData);
+		break;
+	}
+
+	return CallNextHookEx(g_MouseHook, nCode, wParam, lParam);
+}
+
+}  // namespace
 
 MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_RelativeToSkin(true),
@@ -19,6 +202,12 @@ MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Delay(16),
 	m_LastMoveActionTime()
 {
+	g_Measures.push_back(this);
+
+	if (!g_MouseHook)
+	{
+		g_MouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, nullptr, GetCurrentThreadId());
+	}
 }
 
 MeasureMouse::~MeasureMouse()
@@ -27,6 +216,18 @@ MeasureMouse::~MeasureMouse()
 	{
 		m_Capturing = false;
 		GetSkin()->UpdateMouseMeasureCapture();
+	}
+
+	auto iter = std::find(g_Measures.begin(), g_Measures.end(), this);
+	if (iter != g_Measures.end())
+	{
+		g_Measures.erase(iter);
+	}
+
+	if (g_Measures.empty() && g_MouseHook)
+	{
+		UnhookWindowsHookEx(g_MouseHook);
+		g_MouseHook = nullptr;
 	}
 }
 
