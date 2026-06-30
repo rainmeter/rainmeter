@@ -752,6 +752,17 @@ void Skin::UpdateWindowDpi(UINT dpi)
 	}
 }
 
+void Skin::UpdateWindowDpiAndBounds(UINT dpi)
+{
+	UpdateWindowDpi(dpi);
+	ComputePositionFromOptions();
+	if (m_KeepOnScreen)
+	{
+		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
+	}
+	RepositionAndResizeWindow();
+}
+
 void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor)
 {
 	const int w = GetPhysicalWindowW();
@@ -4211,15 +4222,7 @@ void Skin::ApplyZoom(float zoom, bool writeOptions)
 	if (zoom == m_ZoomScale && writeOptions) return;
 
 	m_ZoomScale = zoom;
-	UpdateWindowDpi();
-	ComputePositionFromOptions();
-
-	if (m_KeepOnScreen)
-	{
-		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
-	}
-
-	RepositionAndResizeWindow();
+	UpdateWindowDpiAndBounds();
 
 	if (writeOptions)
 	{
