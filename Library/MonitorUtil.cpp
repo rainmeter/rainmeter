@@ -448,7 +448,7 @@ auto MultiMonitorInfo::CreateLogicalSpans(const std::vector<MonitorInfo>& monito
 	return spans;
 }
 
-LONG MultiMonitorInfo::ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans)
+LONG MultiMonitorInfo::ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans, UINT dpiOverride)
 {
 	if (spans.empty()) return value;
 
@@ -456,12 +456,14 @@ LONG MultiMonitorInfo::ConvertPhysicalToLogical(LONG value, const std::vector<Sp
 	{
 		if (value >= span.physicalStart && value <= span.physicalEnd)
 		{
-			return span.logicalStart + MulDiv(value - span.physicalStart, USER_DEFAULT_SCREEN_DPI, span.dpi);
+			const auto dpi = dpiOverride > 0 ? dpiOverride : span.dpi;
+			return span.logicalStart + MulDiv(value - span.physicalStart, USER_DEFAULT_SCREEN_DPI, dpi);
 		}
 	}
 
 	const auto& span = value < spans.front().physicalStart ? spans.front() : spans.back();
-	return span.logicalStart + MulDiv(value - span.physicalStart, USER_DEFAULT_SCREEN_DPI, span.dpi);
+	const auto dpi = dpiOverride > 0 ? dpiOverride : span.dpi;
+	return span.logicalStart + MulDiv(value - span.physicalStart, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
 LONG MultiMonitorInfo::ConvertLogicalToPhysical(LONG value, const std::vector<Span>& spans)
@@ -480,16 +482,17 @@ LONG MultiMonitorInfo::ConvertLogicalToPhysical(LONG value, const std::vector<Sp
 	return span.physicalStart + MulDiv(value - span.logicalStart, span.dpi, USER_DEFAULT_SCREEN_DPI);
 }
 
-POINT MultiMonitorInfo::PhysicalToLogical(POINT point) const
+POINT MultiMonitorInfo::PhysicalToLogical(POINT point, UINT dpiOverride) const
 {
 	for (size_t i = 0; i < monitors.size(); ++i)
 	{
 		const auto& monitor = monitors[i];
 		if (monitor.active && Contains(monitor.screen, point))
 		{
+			const auto dpi = dpiOverride > 0 ? dpiOverride : monitor.dpi;
 			return {
-				monitor.logicalScreen.left + MulDiv(point.x - monitor.screen.left, USER_DEFAULT_SCREEN_DPI, monitor.dpi),
-				monitor.logicalScreen.top + MulDiv(point.y - monitor.screen.top, USER_DEFAULT_SCREEN_DPI, monitor.dpi)
+				monitor.logicalScreen.left + MulDiv(point.x - monitor.screen.left, USER_DEFAULT_SCREEN_DPI, dpi),
+				monitor.logicalScreen.top + MulDiv(point.y - monitor.screen.top, USER_DEFAULT_SCREEN_DPI, dpi)
 			};
 		}
 	}
@@ -497,8 +500,8 @@ POINT MultiMonitorInfo::PhysicalToLogical(POINT point) const
 	// Points outside any monitor still convert against the nearest edge span so off-screen
 	// positions remain stable when skins are dragged past a boundary.
 	return {
-		ConvertPhysicalToLogical(point.x, horizontalSpans),
-		ConvertPhysicalToLogical(point.y, verticalSpans)
+		ConvertPhysicalToLogical(point.x, horizontalSpans, dpiOverride),
+		ConvertPhysicalToLogical(point.y, verticalSpans, dpiOverride)
 	};
 }
 

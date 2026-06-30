@@ -37,7 +37,7 @@ struct MultiMonitorInfo
 
 	void UpdateSpans();
 	int MonitorIndexForWindow(HWND window) const;
-	POINT PhysicalToLogical(POINT point) const;
+	POINT PhysicalToLogical(POINT point, UINT dpiOverride = 0) const;
 	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
 
 private:
@@ -50,7 +50,7 @@ private:
 		UINT dpi;
 	};
 
-	static LONG ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans);
+	static LONG ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans, UINT dpiOverride = 0);
 	static LONG ConvertLogicalToPhysical(LONG value, const std::vector<Span>& spans);
 	static std::vector<Span> CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal);
 
