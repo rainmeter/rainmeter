@@ -11,38 +11,29 @@
 namespace
 {
 
-const std::wstring& GetBuildNumberFromRegistry()
+const OSVERSIONINFOEX& GetVersionInfo()
 {
-	static std::wstring s_BuildNumber = []() -> std::wstring
+	static OSVERSIONINFOEX s_Version = []() -> OSVERSIONINFOEX
 	{
-		std::wstring buildNumber = L"0";
-
-		HKEY hkey = nullptr;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
+		OSVERSIONINFOEX version = { sizeof(OSVERSIONINFOEX) };
+		using RtlGetVersionFunc = LONG (WINAPI*)(OSVERSIONINFOW*);
+		auto rtlGetVersion = (RtlGetVersionFunc)GetProcAddress(GetModuleHandle(L"ntdll"), "RtlGetVersion");
+		if (rtlGetVersion)
 		{
-			WCHAR buffer[10] = { 0 };
-			DWORD size = _countof(buffer);
-
-			if (RegQueryValueEx(hkey, L"CurrentBuildNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS ||
-				RegQueryValueEx(hkey, L"CurrentBuild", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
-			{
-				buildNumber = buffer;
-			}
-			RegCloseKey(hkey);
-			hkey = nullptr;
+			rtlGetVersion((OSVERSIONINFOW*)&version);
 		}
 
-		return buildNumber;
+		return version;
 	} ();
 
-	return s_BuildNumber;
+	return s_Version;
 }
 
 };  // namespace
 
 bool IsWindows11OrGreater()
 {
-	static bool s_Result = IsWindows10OrGreater() && _wtoi(GetBuildNumberFromRegistry().c_str()) >= 22000;
+	static bool s_Result = IsWindows10OrGreater() && GetVersionInfo().dwBuildNumber >= 22000UL;
 	return s_Result;
 }
 
@@ -77,7 +68,7 @@ void Platform::Initialize()
 		return false;
 	} ();
 
-	const auto& buildNumber = GetBuildNumberFromRegistry();
+	const auto buildNumber = std::to_wstring(GetVersionInfo().dwBuildNumber);
 
 	// Retrieve information from registry
 	std::wstring ubrStr;
