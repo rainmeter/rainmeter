@@ -359,8 +359,6 @@ private:
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
 	void ClearMouseMeasureCapture();
-	void DoMouseMeasureAction(const MouseMessagePositions& pos, MOUSEACTION action, MOUSEACTION fallback = MOUSEACTION_COUNT);
-	void DoMouseMeasureMoveActions(const MouseMessagePositions& pos);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
