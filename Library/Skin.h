@@ -319,14 +319,7 @@ private:
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
 	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
 
-	struct MouseMessagePositions
-	{
-		POINT screen;
-		POINT client;
-		POINT skin;
-	};
-
-	MouseMessagePositions GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const;
+	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
 	void RepositionAndResizeWindow();
 	void UpdateWindowDpi(UINT dpi = 0);
 	void UpdateWindowDpiAndBounds(UINT dpi = 0);
