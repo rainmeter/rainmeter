@@ -18,18 +18,6 @@ namespace {
 HHOOK g_MouseHook = nullptr;
 std::vector<MeasureMouse*> g_Measures;
 
-POINT GetLogicalScreenPos(POINT screenPos)
-{
-	return MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(screenPos);
-}
-
-POINT GetLogicalSkinPos(Skin* skin, POINT screenPos)
-{
-	POINT clientPos = screenPos;
-	ScreenToClient(skin->GetWindow(), &clientPos);
-	return skin->PhysicalToLogical(clientPos);
-}
-
 template<typename Func>
 void ForEachMeasure(HWND window, Func&& func)
 {
@@ -51,28 +39,25 @@ void ForEachMeasure(HWND window, Func&& func)
 
 void ExecuteRegularAction(HWND window, POINT screenPos, MOUSEACTION action)
 {
-	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
 	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
 	{
-		measure->ExecuteAction(action, GetLogicalSkinPos(skin, screenPos), logicalScreenPos);
+		measure->ExecuteAction(action, screenPos);
 	});
 }
 
 void ExecuteDoubleClickAction(HWND window, POINT screenPos, MOUSEACTION action, MOUSEACTION fallback)
 {
-	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
 	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
 	{
-		measure->ExecuteAction(action, GetLogicalSkinPos(skin, screenPos), logicalScreenPos, fallback);
+		measure->ExecuteAction(action, screenPos, fallback);
 	});
 }
 
 void ExecuteMoveActions(HWND window, POINT screenPos)
 {
-	const POINT logicalScreenPos = GetLogicalScreenPos(screenPos);
 	ForEachMeasure(window, [&](MeasureMouse* measure, Skin* skin)
 	{
-		measure->ExecuteMoveActions(GetLogicalSkinPos(skin, screenPos), logicalScreenPos);
+		measure->ExecuteMoveActions(screenPos);
 	});
 }
 
@@ -326,7 +311,7 @@ bool MeasureMouse::ShouldRunMoveAction()
 	return true;
 }
 
-bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalSkinPos, POINT logicalScreenPos, MOUSEACTION fallback)
+bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT screenPos, MOUSEACTION fallback)
 {
 	if (!IsActive())
 	{
@@ -341,7 +326,7 @@ bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalSkinPos, POINT
 
 	if (!command.empty())
 	{
-		ReplaceMouseVariables(command, logicalSkinPos, logicalScreenPos);
+		ReplaceMouseVariables(command, screenPos);
 		GetRainmeter().ExecuteActionCommand(command.c_str(), this);
 		return true;
 	}
@@ -349,7 +334,7 @@ bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT logicalSkinPos, POINT
 	return false;
 }
 
-void MeasureMouse::ExecuteMoveActions(POINT logicalSkinPos, POINT logicalScreenPos)
+void MeasureMouse::ExecuteMoveActions(POINT screenPos)
 {
 	if (!IsActive() || !ShouldRunMoveAction())
 	{
@@ -361,7 +346,7 @@ void MeasureMouse::ExecuteMoveActions(POINT logicalSkinPos, POINT logicalScreenP
 		if (!action.empty())
 		{
 			std::wstring command = action;
-			ReplaceMouseVariables(command, logicalSkinPos, logicalScreenPos);
+			ReplaceMouseVariables(command, screenPos);
 			GetRainmeter().ExecuteActionCommand(command.c_str(), this);
 		}
 	};
@@ -390,12 +375,15 @@ void MeasureMouse::ExecuteMoveActions(POINT logicalSkinPos, POINT logicalScreenP
 	}
 }
 
-void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT logicalSkinPos, POINT logicalScreenPos) const
+void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) const
 {
 	WCHAR mouseX[32] = { 0 };
 	WCHAR mouseY[32] = { 0 };
 
-	const auto& pos = m_RelativeToSkin ? logicalSkinPos : logicalScreenPos;
+	const auto pos =
+		m_RelativeToSkin ?
+		m_Skin->PhysicalToRelativeLogical(screenPos) :
+		MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(screenPos, (UINT)(m_Skin->GetDpiScale() * USER_DEFAULT_SCREEN_DPI));
 	_itow_s(pos.x, mouseX, 10);
 	_itow_s(pos.y, mouseY, 10);
 
