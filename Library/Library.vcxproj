@@ -22,8 +22,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;Wintrust.lib;comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;ws2_32.lib;PowrProf.lib;netapi32.lib;Ntdll.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;Rpcrt4.lib;wlanapi.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;wlanapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Imagehlp.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Imagehlp.dll;Iphlpapi.dll;netapi32.dll;Ntdll.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
