@@ -255,8 +255,7 @@ void Skin::Dispose(bool refresh)
 		if (m_HostWindow) DestroyWindow(m_HostWindow);
 		m_HostWindow = nullptr;
 
-		// Unregister the SuspendResumeNotification for some devices. See: Skin::Initialize
-		if (IsWindows8OrGreater() && m_SuspendResumeNotification)
+		if (m_SuspendResumeNotification)
 		{
 			UnregisterSuspendResumeNotification(m_SuspendResumeNotification);
 		}
@@ -338,7 +337,7 @@ void Skin::Initialize()
 
 	// Register to receive "PBT_APMRESUMEAUTOMATIC" power messages for some devices (ex. Microsoft Surface) that
 	// utilize Connected Standby (InstantGo). Reference: OnWakeAction, OnPowerBroadcast
-	if (m_Window && IsWindows8OrGreater())
+	if (m_Window)
 	{
 		m_SuspendResumeNotification = RegisterSuspendResumeNotification(m_Window, DEVICE_NOTIFY_WINDOW_HANDLE);
 	}
