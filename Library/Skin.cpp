@@ -642,6 +642,16 @@ POINT Skin::GetLogicalWindowPosition() const
 	return MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical({ m_X.pos, m_Y.pos });
 }
 
+int Skin::GetZoomedWindowW() const
+{
+	return (int)roundf((float)GetCurrentConfigW() * m_ZoomScale);
+}
+
+int Skin::GetZoomedWindowH() const
+{
+	return (int)roundf((float)GetCurrentConfigH() * m_ZoomScale);
+}
+
 int Skin::GetPhysicalWindowW() const
 {
 	return (int)roundf((float)m_WindowW * m_DpiScale * m_ZoomScale);

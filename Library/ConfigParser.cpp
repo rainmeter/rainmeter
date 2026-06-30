@@ -650,8 +650,15 @@ bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std
 		return false;
 	}
 
+	const bool zoomed = StringUtil::MatchAndSkipPrefix(&componentStart, end, L"ZOOMED");
+
 	MonitorComponent component = MonitorComponent::X;
 	if (!ParseMonitorComponent(componentStart, end, component))
+	{
+		return false;
+	}
+
+	if (zoomed && component != MonitorComponent::Width && component != MonitorComponent::Height)
 	{
 		return false;
 	}
@@ -668,11 +675,11 @@ bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std
 		break;
 
 	case MonitorComponent::Width:
-		value = m_Skin->GetCurrentConfigW();
+		value = zoomed ? m_Skin->GetZoomedWindowW() : m_Skin->GetCurrentConfigW();
 		break;
 
 	case MonitorComponent::Height:
-		value = m_Skin->GetCurrentConfigH();
+		value = zoomed ? m_Skin->GetZoomedWindowH() : m_Skin->GetCurrentConfigH();
 		break;
 	}
 
