@@ -16,6 +16,7 @@
 #include "DialogAbout.h"
 #include "../Version.h"
 #include "../Common/FileUtil.h"
+#include "../Common/MathParser.h"
 #include "../Common/Platform.h"
 #include "../Common/StringUtil.h"
 
@@ -643,7 +644,8 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 DialogAbout::TabSkins::TabSkins() : Tab(),
-	m_SkinWindow()
+	m_SkinWindow(),
+	m_EvaluateAsNumber(false)
 {
 }
 
@@ -655,10 +657,32 @@ void DialogAbout::TabSkins::Create(HWND owner)
 	{
 		Control::ListBox(Id_SkinsListBox, 0,
 			0, 0, 120, 188,
-			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
+			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE,
+			Control::ANCHOR_LEFT | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
 		Control::ListView(Id_SkinsListView, 0,
-			125, 0, 442, 188,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
+			125, 0, 442, 92,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_ALL),
+		Control::GroupBox(Id_EvaluateGroup, 0,
+			125, 100, 442, 88,
+			WS_VISIBLE, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::Edit(Id_EvaluateEdit, 0,
+			131, 115, 430, 30,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::Edit(Id_EvaluateResult, 0,
+			131, 150, 340, 30,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE | ES_READONLY, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::RadioButton(Id_EvaluateStringRadio, 0,
+			479, 148, 72, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::RadioButton(Id_EvaluateNumberRadio, 0,
+			479, 162, 72, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -707,6 +731,10 @@ void DialogAbout::TabSkins::Initialize()
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
+	SetWindowText(GetControl(Id_EvaluateGroup), L"Evaluate");
+	SetWindowText(GetControl(Id_EvaluateStringRadio), L"String");
+	Button_SetCheck(GetControl(Id_EvaluateStringRadio), BST_CHECKED);
+	SetWindowText(GetControl(Id_EvaluateNumberRadio), L"Number");
 
 	UpdateSkinList();
 
@@ -717,15 +745,10 @@ void DialogAbout::TabSkins::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
 
-	HWND item = GetControl(Id_SkinsListBox);
+	// Adjust 4th column
 	const int listWidth = m_ControlTemplate.ScaleDialogUnits(265);
 	const int listGap = m_ControlTemplate.ScaleDialogUnits(10);
-	SetWindowPos(item, nullptr, 0, 0, listWidth, h, SWP_NOMOVE | SWP_NOZORDER);
-
-	item = GetControl(Id_SkinsListView);
-	SetWindowPos(item, nullptr, listWidth + listGap, 0, w - listWidth - listGap, h, SWP_NOZORDER);
-
-	// Adjust 4th column
+	HWND item = GetControl(Id_SkinsListView);
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - listWidth - listGap - m_ControlTemplate.ScaleDialogUnits(20) -
@@ -938,6 +961,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 	ListView_SetItemState(item, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
 
 	SendMessage(item, WM_SETREDRAW, TRUE, 0);
+	UpdateEvaluationResult();
 }
 
 int CALLBACK DialogAbout::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -949,6 +973,46 @@ int CALLBACK DialogAbout::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2,
 
 	// Variables
 	return wcscmp((const WCHAR*)lParam1, (const WCHAR*)lParam2);
+}
+
+void DialogAbout::TabSkins::UpdateEvaluationResult()
+{
+	HWND item = GetControl(Id_EvaluateEdit);
+	if (!item) return;
+
+	const int length = GetWindowTextLength(item);
+	std::wstring text(length + 1, L'\0');
+	GetWindowText(item, &text[0], length + 1);
+	text.resize(length);
+
+	if (m_SkinWindow && !text.empty())
+	{
+		ConfigParser& parser = m_SkinWindow->GetParser();
+		parser.ReplaceVariables(text, true);
+		parser.ReplaceMeasures(text);
+
+		if (m_EvaluateAsNumber)
+		{
+			double value = 0.0;
+			const WCHAR* str = text.c_str();
+			if (*str == L'(')
+			{
+				MathParser::CheckedParse(str, &value);
+			}
+			else if (*str)
+			{
+				errno = 0;
+				value = wcstod(str, nullptr);
+			}
+
+			WCHAR buffer[128] = { 0 };
+			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
+			Measure::RemoveTrailingZero(buffer, bufferLen);
+			text = buffer;
+		}
+	}
+
+	SetWindowText(GetControl(Id_EvaluateResult), text.c_str());
 }
 
 INT_PTR DialogAbout::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -992,6 +1056,29 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
 			UpdateMeasureList(nullptr);
+		}
+		break;
+
+	case Id_EvaluateEdit:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			UpdateEvaluationResult();
+		}
+		break;
+
+	case Id_EvaluateStringRadio:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			m_EvaluateAsNumber = false;
+			UpdateEvaluationResult();
+		}
+		break;
+
+	case Id_EvaluateNumberRadio:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			m_EvaluateAsNumber = true;
+			UpdateEvaluationResult();
 		}
 		break;
 

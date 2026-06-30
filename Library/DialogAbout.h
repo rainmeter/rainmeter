@@ -87,7 +87,12 @@ private:
 		enum Id
 		{
 			Id_SkinsListBox = 200,
-			Id_SkinsListView
+			Id_SkinsListView,
+			Id_EvaluateGroup,
+			Id_EvaluateStringRadio,
+			Id_EvaluateNumberRadio,
+			Id_EvaluateEdit,
+			Id_EvaluateResult
 		};
 
 		TabSkins();
@@ -108,8 +113,10 @@ private:
 
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+		void UpdateEvaluationResult();
 
 		Skin* m_SkinWindow;
+		bool m_EvaluateAsNumber;
 	};
 
 	// Plugins tab
