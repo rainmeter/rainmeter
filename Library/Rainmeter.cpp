@@ -92,7 +92,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
 
 	auto& rainmeter = GetRainmeter();
-	int ret = rainmeter.Initialize(iniFile, layout, IsCtrlKeyDown());
+	int ret = rainmeter.Initialize(iniFile, layout);
 	if (ret == 0)
 	{
 		ret = rainmeter.MessagePump();
@@ -165,7 +165,7 @@ Rainmeter& Rainmeter::GetInstance()
 ** The main initialization function for the module.
 **
 */
-int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
+int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
 	if (!IsWindows7SP1OrGreater())
 	{
@@ -517,23 +517,27 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	// Rainmeter safe start
 	// Note: This copies the default illustro skins and layout (if needed) without overwriting any
 	//  changes the user has made to the skins or layout.
-	if (!iniFileCreated && (safeStart || IsCtrlKeyDown()))
+	if (!iniFileCreated && IsCtrlKeyDown() && IsShiftKeyDown())
 	{
-		int result = MessageBox(
-			nullptr,
-			GetString(IDS_SafeStartMessage),
-			GetString(IDS_SafeStartTitle),
-			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
-		if (result == IDYES)
+		Sleep(1000);
+		if (IsCtrlKeyDown() && IsShiftKeyDown())
 		{
-			// Copy the default illustro layout if needed
-			if (System::CopyFilesWithNoCollisions(GetDefaultLayoutPath(), GetLayoutPath()))
+			int result = MessageBox(
+				nullptr,
+				GetString(IDS_SafeStartMessage),
+				GetString(IDS_SafeStartTitle),
+				MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1 | MB_TOPMOST);
+			if (result == IDYES)
 			{
-				layout = L"\"illustro default\"";
-			}
+				// Copy the default illustro layout if needed
+				if (System::CopyFilesWithNoCollisions(GetDefaultLayoutPath(), GetLayoutPath()))
+				{
+					layout = L"\"illustro default\"";
+				}
 
-			// Copy any default illustro skins if needed
-			System::CopyFilesWithNoCollisions(GetDefaultSkinPath(), GetSkinPath());
+				// Copy any default illustro skins if needed
+				System::CopyFilesWithNoCollisions(GetDefaultSkinPath(), GetSkinPath());
+			}
 		}
 	}
 
