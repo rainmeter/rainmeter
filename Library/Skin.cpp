@@ -2025,32 +2025,11 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 
 void Skin::SetZPosVariable(ZPOSITION zPos)
 {
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 	_itow_s(zPos, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGZPOS", buffer);
 }
 
-
-void Skin::SetWindowPositionVariables()
-{
-	WCHAR buffer[32] = { 0 };
-
-	const auto logicalPos = GetLogicalWindowPosition();
-	_itow_s(logicalPos.x, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
-	_itow_s(logicalPos.y, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
-}
-
-void Skin::SetWindowSizeVariables(int w, int h)
-{
-	WCHAR buffer[32] = { 0 };
-
-	_itow_s(w, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
-	_itow_s(h, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
-}
 
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
@@ -2066,8 +2045,6 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	{
 		UpdateWindowDpi(dpi);
 	}
-
-	SetWindowPositionVariables();
 }
 
 void Skin::ComputeOptionValueFromPosition()
@@ -2426,9 +2403,6 @@ bool Skin::ReadSkin()
 	m_SkinW = m_Parser.ReadInt(L"Rainmeter", L"SkinWidth", 0);
 	m_SkinH = m_Parser.ReadInt(L"Rainmeter", L"SkinHeight", 0);
 
-	// Initialize window size variables
-	SetWindowSizeVariables(m_SkinW, m_SkinH);
-
 	// Global settings
 	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
 	if (!group.empty())
@@ -2760,7 +2734,7 @@ bool Skin::ReadSkin()
 		measure->Initialize();
 	}
 
-	// Set window size (and CURRENTCONFIGWIDTH/HEIGHT) temporarily
+	// Set window size temporarily
 	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
 		bool bActiveTransition = true;  // Do not track the change of ActiveTransition
@@ -2853,8 +2827,6 @@ bool Skin::ResizeWindow(bool reset)
 		m_WindowH = h;
 		ComputePositionFromOptions();
 	}
-
-	SetWindowSizeVariables(m_WindowW, m_WindowH);
 
 	return true;
 }
@@ -4608,7 +4580,6 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		auto* suggested = (const RECT*)lParam;
 		m_X.pos = suggested->left;
 		m_Y.pos = suggested->top;
-		SetWindowPositionVariables();
 		RepositionAndResizeWindow();
 	}
 
@@ -5131,8 +5102,6 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	int oldY = m_Y.pos;
 	m_X.pos = GET_X_LPARAM(lParam);
 	m_Y.pos = GET_Y_LPARAM(lParam);
-
-	SetWindowPositionVariables();
 
 	if (m_Dragging)
 	{

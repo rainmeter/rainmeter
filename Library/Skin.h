@@ -182,6 +182,8 @@ public:
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	int GetW() { return m_WindowW; }
 	int GetH() { return m_WindowH; }
+	int GetCurrentConfigW() { return m_WindowW > 0 ? m_WindowW : m_SkinW; }
+	int GetCurrentConfigH() { return m_WindowH > 0 ? m_WindowH : m_SkinH; }
 	const SkinPosition& GetX() const { return m_X; }
 	const SkinPosition& GetY() const { return m_Y; }
 
@@ -361,8 +363,6 @@ private:
 	void AddWindowExStyle(LONG_PTR flag);
 	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
-	void SetWindowPositionVariables();
-	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
 	void UpdateRelativeMeters();
