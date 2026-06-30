@@ -38,7 +38,7 @@ void DialogDebug::Open(int tab)
 
 	c_Dialog->ShowDialogWindow(
 		GetString(IDS_Debug),
-		0, 0, 600, 250,
+		0, 0, 600, 400,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
@@ -147,11 +147,11 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	static const Control s_Controls[] =
 	{
 		Control::Button(Id_CloseButton, IDS_Close,
-			544, 231, 50, 14,
+			544, 381, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0,
 			Control::ANCHOR_BOTTOM_RIGHT),
 		Control::Tab(Id_Tab, 0,
-			6, 6, 588, 221,
+			6, 6, 588, 371,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0,
 			Control::ANCHOR_ALL)  // Last for correct tab order.
 	};
@@ -215,7 +215,7 @@ DialogDebug::TabLog::~TabLog()
 
 void DialogDebug::TabLog::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 570, 188, owner);
+	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
@@ -223,23 +223,23 @@ void DialogDebug::TabLog::Create(HWND owner)
 	static const Control s_Controls[] =
 	{
 		Control::ListView(Id_LogListView, 0,
-			0, 0, 568, 175,
+			0, 0, 568, 325,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::CheckBox(Id_ErrorCheckBox, IDS_Error,
-			0, 179, 80, 14,
+			0, 329, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
 		Control::CheckBox(Id_WarningCheckBox, IDS_Warning,
-			80, 179, 80, 14,
+			80, 329, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
 		Control::CheckBox(Id_NoticeCheckBox, IDS_Notice,
-			160, 179, 80, 14,
+			160, 329, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
 		Control::CheckBox(Id_DebugCheckBox, IDS_Debug,
-			240, 179, 80, 14,
+			240, 329, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
 		Control::Button(Id_ClearButton, IDS_Clear,
-			(568 - buttonWidth), 179, buttonWidth, 14,
+			(568 - buttonWidth), 329, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_BOTTOM_RIGHT)
 	};
 
@@ -635,36 +635,36 @@ DialogDebug::TabSkins::TabSkins() : Tab(),
 
 void DialogDebug::TabSkins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 570, 188, owner);
+	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
 	static const Control s_Controls[] =
 	{
 		Control::ListBox(Id_SkinsListBox, 0,
-			0, 0, 120, 188,
+			0, 0, 120, 338,
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
 		Control::ListView(Id_SkinsListView, 0,
-			125, 0, 442, 92,
+			125, 0, 442, 242,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::GroupBox(Id_EvaluateGroup, 0,
-			125, 100, 442, 88,
+			125, 250, 442, 88,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateEdit, 0,
-			131, 115, 430, 30,
+			131, 265, 430, 30,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateResult, 0,
-			131, 150, 340, 30,
+			131, 300, 340, 30,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE | ES_READONLY, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateStringRadio, 0,
-			479, 148, 72, 14,
+			479, 298, 72, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateNumberRadio, 0,
-			479, 162, 72, 14,
+			479, 312, 72, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
 	};
@@ -1338,12 +1338,12 @@ DialogDebug::TabPlugins::TabPlugins() : Tab()
 
 void DialogDebug::TabPlugins::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 570, 188, owner);
+	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
 	static const Control s_Controls[] =
 	{
 		Control::ListView(Id_PluginsListView, 0,
-			0, 0, 568, 188,
+			0, 0, 568, 338,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
