@@ -137,7 +137,7 @@ void MeasureCalc::FormulaReplace()
 			{
 				int randNumber = GetRandom();
 
-				WCHAR buffer[32] = { 0 };
+				WCHAR buffer[16] = { 0 };
 				_itow_s(randNumber, buffer, 10);
 				size_t len = wcslen(buffer);
 
