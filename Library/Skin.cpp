@@ -58,8 +58,6 @@ enum INTERVAL
 
 int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
-FPRSRN Skin::c_RegisterSuspendResumeNotification = nullptr;
-FPUSRN Skin::c_UnregisterSuspendResumeNotification = nullptr;
 
 const WCHAR* g_SkinHostClassName = L"RainmeterSkinHost";
 const int g_SnapDistance = 10;
@@ -163,13 +161,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 		wcHost.hInstance = GetRainmeter().GetModuleInstance();
 		wcHost.lpszClassName = g_SkinHostClassName;
 		RegisterClass(&wcHost);
-
-		HMODULE hmod = GetModuleHandle(L"user32");
-		if (hmod)
-		{
-			c_RegisterSuspendResumeNotification = (FPRSRN)GetProcAddress(hmod, "RegisterSuspendResumeNotification");
-			c_UnregisterSuspendResumeNotification = (FPUSRN)GetProcAddress(hmod, "UnregisterSuspendResumeNotification");
-		}
 	}
 
 	++c_InstanceCount;
@@ -265,9 +256,9 @@ void Skin::Dispose(bool refresh)
 		m_HostWindow = nullptr;
 
 		// Unregister the SuspendResumeNotification for some devices. See: Skin::Initialize
-		if (IsWindows8OrGreater() && c_UnregisterSuspendResumeNotification && m_SuspendResumeNotification)
+		if (IsWindows8OrGreater() && m_SuspendResumeNotification)
 		{
-			c_UnregisterSuspendResumeNotification(m_SuspendResumeNotification);
+			UnregisterSuspendResumeNotification(m_SuspendResumeNotification);
 		}
 	}
 }
@@ -347,9 +338,9 @@ void Skin::Initialize()
 
 	// Register to receive "PBT_APMRESUMEAUTOMATIC" power messages for some devices (ex. Microsoft Surface) that
 	// utilize Connected Standby (InstantGo). Reference: OnWakeAction, OnPowerBroadcast
-	if (m_Window && IsWindows8OrGreater() && c_RegisterSuspendResumeNotification)
+	if (m_Window && IsWindows8OrGreater())
 	{
-		m_SuspendResumeNotification = c_RegisterSuspendResumeNotification(m_Window, DEVICE_NOTIFY_WINDOW_HANDLE);
+		m_SuspendResumeNotification = RegisterSuspendResumeNotification(m_Window, DEVICE_NOTIFY_WINDOW_HANDLE);
 	}
 }
 
