@@ -392,7 +392,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Meter* meter = m_Skin->GetMeter(strVariable);
 		if (meter)
 		{
-			WCHAR buffer[32] = { 0 };
+			WCHAR buffer[16] = { 0 };
 			if (_wcsicmp(selectorSz, L"X") == 0)
 			{
 				_itow_s(meter->GetX(), buffer, 10);
@@ -775,7 +775,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 		}
 	}
 
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 	_itow_s(GetMonitorRectValue(rect, component), buffer, 10);
 	strValue = buffer;
 	return true;
@@ -1253,7 +1253,7 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 {
 	std::wstring result;
 	LPCWSTR var = variable.c_str();
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 
 	POINT pt = { 0 };
 	GetCursorPos(&pt);

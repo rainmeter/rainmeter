@@ -1318,7 +1318,7 @@ void Rainmeter::SetHardwareAccelerated(bool hardwareAccelerated)
 
 void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 	_itow_s(fileIndex + 1, buffer, 10);
 
 	DoesSkinHaveSettings(folderPath);
