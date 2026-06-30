@@ -5373,6 +5373,21 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Re-read the saved positions instead of any values clamped by the old topology.
+	ConfigParser parser;
+	parser.Initialize(GetRainmeter().GetIniFile(), nullptr, m_FolderPath.c_str());
+
+	auto readPositionOption = [&](LPCWSTR key, std::wstring& option)
+	{
+		const std::wstring value = parser.ReadString(m_FolderPath.c_str(), key, option.c_str());
+		option = parser.ParseFormulaWithModifiers(value);
+	};
+
+	readPositionOption(L"WindowX", m_X.option);
+	readPositionOption(L"WindowY", m_Y.option);
+	readPositionOption(L"AnchorX", m_X.anchorOption);
+	readPositionOption(L"AnchorY", m_Y.anchorOption);
+
 	// Move the window temporarily
 	ResizeWindow(false);
 
