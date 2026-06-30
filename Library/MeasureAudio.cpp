@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "MeasureWin7Audio.h"
+#include "MeasureAudio.h"
 #include "Logger.h"
 
 #include <Endpointvolume.h>
@@ -46,7 +46,7 @@ void SafeRelease(T*& object)
 	}
 }
 
-bool CreateEnumerator(MeasureWin7Audio* measure, IMMDeviceEnumerator** enumerator)
+bool CreateEnumerator(MeasureAudio* measure, IMMDeviceEnumerator** enumerator)
 {
 	HRESULT hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)enumerator);
 	if (hr == S_OK && *enumerator)
@@ -56,19 +56,19 @@ bool CreateEnumerator(MeasureWin7Audio* measure, IMMDeviceEnumerator** enumerato
 
 	if (hr == REGDB_E_CLASSNOTREG)
 	{
-		LogErrorF(measure, L"Win7Audio: COM creation failed REGDB_E_CLASSNOTREG");
+		LogErrorF(measure, L"Audio: COM creation failed REGDB_E_CLASSNOTREG");
 	}
 	else if (hr == CLASS_E_NOAGGREGATION)
 	{
-		LogErrorF(measure, L"Win7Audio: COM creation failed CLASS_E_NOAGGREGATION");
+		LogErrorF(measure, L"Audio: COM creation failed CLASS_E_NOAGGREGATION");
 	}
 	else if (hr == E_NOINTERFACE)
 	{
-		LogErrorF(measure, L"Win7Audio: COM creation failed E_NOINTERFACE");
+		LogErrorF(measure, L"Audio: COM creation failed E_NOINTERFACE");
 	}
 	else
 	{
-		LogErrorF(measure, L"Win7Audio: COM creation failed %li", (long)hr);
+		LogErrorF(measure, L"Audio: COM creation failed %li", (long)hr);
 	}
 
 	return false;
@@ -107,18 +107,18 @@ bool ReadCommandArgument(const std::wstring& command, std::wstring* bang, std::w
 
 }  // namespace
 
-MeasureWin7Audio::MeasureWin7Audio(Skin* skin, const WCHAR* name) : Measure(skin, name),
+MeasureAudio::MeasureAudio(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_IsMute(FALSE),
 	m_MasterVolume(0.5f)
 {
 	m_MaxValue = 100.0;
 }
 
-MeasureWin7Audio::~MeasureWin7Audio()
+MeasureAudio::~MeasureAudio()
 {
 }
 
-void MeasureWin7Audio::Initialize()
+void MeasureAudio::Initialize()
 {
 	Measure::Initialize();
 
@@ -126,7 +126,7 @@ void MeasureWin7Audio::Initialize()
 	GetAudioState(VolumeAction::Initialize);
 }
 
-void MeasureWin7Audio::UpdateValue()
+void MeasureAudio::UpdateValue()
 {
 	GetAudioState(VolumeAction::GetVolume);
 	m_Value = m_IsMute ? -1.0 : floor(m_MasterVolume * 100.0 + 0.5);
@@ -136,7 +136,7 @@ void MeasureWin7Audio::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureWin7Audio::GetStringValue()
+const WCHAR* MeasureAudio::GetStringValue()
 {
 	m_StringValue = L"ERROR";
 
@@ -182,7 +182,7 @@ const WCHAR* MeasureWin7Audio::GetStringValue()
 	return CheckSubstitute(m_StringValue.c_str());
 }
 
-void MeasureWin7Audio::Command(const std::wstring& command)
+void MeasureAudio::Command(const std::wstring& command)
 {
 	std::wstring bang;
 	std::wstring argument;
@@ -196,7 +196,7 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 				EnumerateEndpoints();
 				if (m_EndpointIDs.empty())
 				{
-					LogWarningF(this, L"Win7Audio: No device found");
+					LogWarningF(this, L"Audio: No device found");
 					return;
 				}
 
@@ -213,7 +213,7 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 			}
 			else
 			{
-				LogWarningF(this, L"Win7Audio: Incorrect number of arguments for bang");
+				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"SetVolume") == 0)
@@ -223,12 +223,12 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 			{
 				if (!SetVolume(volume < 0 ? 0 : (volume > 100 ? 100 : (UINT)volume)))
 				{
-					LogErrorF(this, L"Win7Audio: Error setting volume");
+					LogErrorF(this, L"Audio: Error setting volume");
 				}
 			}
 			else
 			{
-				LogWarningF(this, L"Win7Audio: Incorrect number of arguments for bang");
+				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"ChangeVolume") == 0)
@@ -238,17 +238,17 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 			{
 				if (!SetVolume(0, offset))
 				{
-					LogErrorF(this, L"Win7Audio: Error changing volume");
+					LogErrorF(this, L"Audio: Error changing volume");
 				}
 			}
 			else
 			{
-				LogWarningF(this, L"Win7Audio: Incorrect number of arguments for bang");
+				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
 			}
 		}
 		else
 		{
-			LogWarningF(this, L"Win7Audio: Unknown bang");
+			LogWarningF(this, L"Audio: Unknown bang");
 		}
 	}
 	else if (_wcsicmp(command.c_str(), L"ToggleNext") == 0)
@@ -261,7 +261,7 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 		}
 		else
 		{
-			LogErrorF(this, L"Win7Audio: Update error");
+			LogErrorF(this, L"Audio: Update error");
 		}
 	}
 	else if (_wcsicmp(command.c_str(), L"TogglePrevious") == 0)
@@ -274,7 +274,7 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 		}
 		else
 		{
-			LogErrorF(this, L"Win7Audio: Update error");
+			LogErrorF(this, L"Audio: Update error");
 		}
 	}
 	else if (_wcsicmp(command.c_str(), L"ToggleMute") == 0)
@@ -297,11 +297,11 @@ void MeasureWin7Audio::Command(const std::wstring& command)
 	}
 	else
 	{
-		LogWarningF(this, L"Win7Audio: Unknown bang");
+		LogWarningF(this, L"Audio: Unknown bang");
 	}
 }
 
-void MeasureWin7Audio::EnumerateEndpoints()
+void MeasureAudio::EnumerateEndpoints()
 {
 	m_EndpointIDs.clear();
 
@@ -314,7 +314,7 @@ void MeasureWin7Audio::EnumerateEndpoints()
 	IMMDeviceCollection* collection = nullptr;
 	if (enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection) != S_OK || !collection)
 	{
-		LogWarningF(this, L"Win7Audio: Could not enumerate AudioEndpoints");
+		LogWarningF(this, L"Audio: Could not enumerate AudioEndpoints");
 		SafeRelease(enumerator);
 		return;
 	}
@@ -343,7 +343,7 @@ void MeasureWin7Audio::EnumerateEndpoints()
 	SafeRelease(enumerator);
 }
 
-bool MeasureWin7Audio::GetAudioState(VolumeAction action)
+bool MeasureAudio::GetAudioState(VolumeAction action)
 {
 	bool success = false;
 	IMMDeviceEnumerator* enumerator = nullptr;
@@ -376,7 +376,7 @@ bool MeasureWin7Audio::GetAudioState(VolumeAction action)
 	return success;
 }
 
-bool MeasureWin7Audio::SetVolume(UINT volume, int offset)
+bool MeasureAudio::SetVolume(UINT volume, int offset)
 {
 	bool success = false;
 	IMMDeviceEnumerator* enumerator = nullptr;
@@ -420,7 +420,7 @@ bool MeasureWin7Audio::SetVolume(UINT volume, int offset)
 	return success;
 }
 
-UINT MeasureWin7Audio::GetDefaultEndpointIndex()
+UINT MeasureAudio::GetDefaultEndpointIndex()
 {
 	UINT index = 0U;
 	IMMDeviceEnumerator* enumerator = nullptr;
@@ -441,7 +441,7 @@ UINT MeasureWin7Audio::GetDefaultEndpointIndex()
 	return index;
 }
 
-HRESULT MeasureWin7Audio::RegisterDevice(const WCHAR* deviceID)
+HRESULT MeasureAudio::RegisterDevice(const WCHAR* deviceID)
 {
 	HRESULT hr = S_FALSE;
 	IPolicyConfig* policyConfig = nullptr;

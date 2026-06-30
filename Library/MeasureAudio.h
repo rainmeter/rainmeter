@@ -5,21 +5,21 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_MEASUREWIN7AUDIO_H_
-#define RM_LIBRARY_MEASUREWIN7AUDIO_H_
+#ifndef RM_LIBRARY_MEASUREAUDIO_H_
+#define RM_LIBRARY_MEASUREAUDIO_H_
 
 #include "Measure.h"
 
-class MeasureWin7Audio : public Measure
+class MeasureAudio : public Measure
 {
 public:
-	MeasureWin7Audio(Skin* skin, const WCHAR* name);
-	virtual ~MeasureWin7Audio();
+	MeasureAudio(Skin* skin, const WCHAR* name);
+	virtual ~MeasureAudio();
 
-	MeasureWin7Audio(const MeasureWin7Audio& other) = delete;
-	MeasureWin7Audio& operator=(MeasureWin7Audio other) = delete;
+	MeasureAudio(const MeasureAudio& other) = delete;
+	MeasureAudio& operator=(MeasureAudio other) = delete;
 
-	UINT GetTypeID() override { return TypeID<MeasureWin7Audio>(); }
+	UINT GetTypeID() override { return TypeID<MeasureAudio>(); }
 
 	void Initialize() override;
 	const WCHAR* GetStringValue() override;

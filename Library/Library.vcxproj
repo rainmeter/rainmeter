@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
@@ -93,7 +93,7 @@
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
-    <ClCompile Include="MeasureWin7Audio.cpp" />
+    <ClCompile Include="MeasureAudio.cpp" />
     <ClCompile Include="MeasureWindowMessage.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
@@ -240,7 +240,7 @@
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
-    <ClInclude Include="MeasureWin7Audio.h" />
+    <ClInclude Include="MeasureAudio.h" />
     <ClInclude Include="MeasureWindowMessage.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
