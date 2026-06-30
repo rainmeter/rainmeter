@@ -909,7 +909,9 @@ Function RemoveUserStartupShortcut
 FunctionEnd
 
 Function FinishRun
+	Sleep 5000
 	!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\Rainmeter.exe" "" "" ""
+	Sleep 5000
 FunctionEnd
 
 
