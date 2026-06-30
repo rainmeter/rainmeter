@@ -304,6 +304,7 @@
 #define IDM_SKIN_ZOOM_150                            4089
 #define IDM_SKIN_ZOOM_CUSTOM                         4090
 #define IDM_SKIN_SELECT                              4091
+#define IDM_DEBUG                                    4092
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024

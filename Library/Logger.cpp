@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "Logger.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "Util.h"
 #include "Rainmeter.h"
 #include "Section.h"
@@ -114,7 +114,7 @@ void Logger::LogInternal(Level level, std::chrono::system_clock::time_point time
 		m_Entries.pop_front();
 	}
 
-	DialogAbout::AddLogItem(level, timestampSz, source, msg);
+	DialogDebug::AddLogItem(level, timestampSz, source, msg);
 	WriteToLogFile(entry);
 }
 

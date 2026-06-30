@@ -81,6 +81,7 @@
     <ClCompile Include="CoreTemp\CoreTempProxy.cpp" />
     <ClCompile Include="CoreTemp\SharedMem.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogDebug.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
@@ -231,6 +232,7 @@
     <ClInclude Include="CoreTemp\CoreTempProxy.h" />
     <ClInclude Include="CoreTemp\SharedMem.h" />
     <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogDebug.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />

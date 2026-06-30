@@ -18,6 +18,7 @@
 #include "System.h"
 #include "MonitorUtil.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
 #include "GameMode.h"
@@ -148,8 +149,9 @@ Rainmeter::~Rainmeter()
 	CoUninitialize();
 
 	// Close dialogs if open
-	DialogManage::CloseDialog();
 	DialogAbout::CloseDialog();
+	DialogManage::CloseDialog();
+	DialogDebug::CloseDialog();
 	DialogNewSkin::CloseDialog();
 }
 
@@ -1335,7 +1337,7 @@ void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& f
 
 	skin->Initialize();
 
-	DialogAbout::UpdateSkins();
+	DialogDebug::UpdateSkins();
 	DialogManage::UpdateSkins(skin);
 }
 
@@ -1356,7 +1358,7 @@ void Rainmeter::DeleteAllSkins()
 	}
 
 	m_Skins.clear();
-	DialogAbout::UpdateSkins();
+	DialogDebug::UpdateSkins();
 }
 
 void Rainmeter::DeleteAllUnmanagedSkins()
@@ -1381,7 +1383,7 @@ void Rainmeter::RemoveSkin(Skin* skin)
 		{
 			m_Skins.erase(it);
 			DialogManage::UpdateSkins(skin, true);
-			DialogAbout::UpdateSkins();
+			DialogDebug::UpdateSkins();
 			break;
 		}
 	}
@@ -1885,7 +1887,7 @@ void Rainmeter::RefreshAll()
 		}
 	}
 
-	DialogAbout::UpdateSkins();
+	DialogDebug::UpdateSkins();
 	DialogManage::UpdateSkins(nullptr);
 }
 

@@ -38,6 +38,7 @@
     <ClCompile Include="CoreTemp\CoreTempProxy.cpp" />
     <ClCompile Include="CoreTemp\SharedMem.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogDebug.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="CoreTemp\CoreTempProxy.h" />
     <ClInclude Include="CoreTemp\SharedMem.h" />
     <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogDebug.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
@@ -313,10 +315,7 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Target Name="GenerateEnglishLanguage"
-          AfterTargets="Build"
-          Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1"
-          Outputs="$(OutDir)Languages\1033.rmlang">
+  <Target Name="GenerateEnglishLanguage" AfterTargets="Build" Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1" Outputs="$(OutDir)Languages\1033.rmlang">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\GenerateLanguages.ps1&quot; -Locale en -OutputDirectory &quot;$(OutDir)Languages&quot; -RuntimeOnly" />
   </Target>
   <ImportGroup Label="ExtensionTargets">

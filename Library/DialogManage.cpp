@@ -14,7 +14,7 @@
 #include "Measure.h"
 #include "resource.h"
 #include "DialogManage.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogNewSkin.h"
 #include "GameMode.h"
 #include "UpdateCheck.h"
@@ -281,7 +281,7 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_OpenLogButton:
-		DialogAbout::Open();
+		DialogDebug::Open();
 		break;
 
 	case Id_CloseButton:
@@ -2507,10 +2507,10 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (!GetRainmeter().LoadLanguage(buffer)) break;
 				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
 
-				if (DialogAbout::GetDialog())
+				if (DialogDebug::GetDialog())
 				{
-					int sel = TabCtrl_GetCurSel(DialogAbout::GetDialog()->GetControl(DialogManage::Id_Tab));
-					SendMessage(DialogAbout::GetDialog()->GetWindow(), WM_CLOSE, 0, 0);
+					int sel = TabCtrl_GetCurSel(DialogDebug::GetDialog()->GetControl(DialogManage::Id_Tab));
+					SendMessage(DialogDebug::GetDialog()->GetWindow(), WM_CLOSE, 0, 0);
 					if (sel == 0)
 					{
 						GetRainmeter().DelayedExecuteCommand(L"!About");
