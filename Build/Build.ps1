@@ -11,6 +11,9 @@ The release version in major.minor.subminor.revision format. Required for all bu
 .PARAMETER TestMode
 Optional test file handling mode. Use include-tests to include unit tests in project builds; omitted by default.
 
+.PARAMETER MSBuildTarget
+Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild.
+
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4
 
@@ -30,7 +33,10 @@ param(
 	[string]$Version,
 
 	[Parameter(Position = 2)]
-	[string]$TestMode
+	[string]$TestMode,
+
+	[ValidateSet('build', 'rebuild')]
+	[string]$MSBuildTarget = 'rebuild'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -188,12 +194,12 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
 	Write-Host '* Building 32-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln'))
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln'))
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
 	Write-Host '* Building 64-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln'))
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln'))
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {

@@ -16,16 +16,32 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
+      - name: Restore BuildOut cache
+        id: buildout-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: BuildOut
+          key: BuildOut-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            BuildOut-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}-
+            BuildOut-${{ runner.os }}-${{ matrix.arch }}-
+
       - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion include-tests
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion include-tests -MSBuildTarget build
         shell: pwsh
 
       - name: Test 64-bit Rainmeter
         if: ${{ matrix.arch == 64 }}
         run: .\Build\Build.ps1 test-64
         shell: pwsh
+
+      - name: Save BuildOut cache
+        uses: actions/cache/save@v5
+        with:
+          path: BuildOut
+          key: BuildOut-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
