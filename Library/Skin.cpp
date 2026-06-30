@@ -610,12 +610,9 @@ void Skin::SetMouseLeaveEvent(bool cancel)
 	TrackMouseEvent(&tme);
 }
 
-auto Skin::GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const -> MouseMessagePositions
+POINT Skin::GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const
 {
-	MouseMessagePositions pos;
-	pos.screen = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-	pos.client = pos.screen;
-
+	POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 	switch (uMsg)
 	{
 	case WM_NCMOUSEMOVE:
@@ -633,16 +630,11 @@ auto Skin::GetMouseMessagePositions(UINT uMsg, LPARAM lParam) const -> MouseMess
 	case WM_NCXBUTTONDBLCLK:
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
-		ScreenToClient(m_Window, &pos.client);
-		break;
-
-	default:
-		ClientToScreen(m_Window, &pos.screen);
+		ScreenToClient(m_Window, &pos);
 		break;
 	}
 
-	pos.skin = PhysicalToLogical(pos.client);
-	return pos;
+	return PhysicalToLogical(pos);
 }
 
 POINT Skin::GetLogicalWindowPosition() const
@@ -3808,12 +3800,12 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		++m_MouseMoveCounter;
 
-		const auto pos = GetMouseMessagePositions(uMsg, lParam);
+		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
 
-		while (DoMoveAction(pos.skin.x, pos.skin.y, MOUSE_LEAVE)) ;
-		while (DoMoveAction(pos.skin.x, pos.skin.y, MOUSE_OVER)) ;
+		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
+		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
-		HandleButtons(pos.skin, BUTTONPROC_MOVE);
+		HandleButtons(pos, BUTTONPROC_MOVE);
 	}
 
 	return 0;
@@ -3850,12 +3842,12 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Fix for Notepad++, which sends WM_MOUSEWHEEL to unfocused windows.
 	if (!forwardedFromInputMessage && m_Window != GetFocus()) return 0;
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, BUTTONPROC_MOVE);
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_DOWN : MOUSE_MW_UP;
-	DoAction(pos.skin.x, pos.skin.y, action, false);
+	DoAction(pos.x, pos.y, action, false);
 
 	return 0;
 }
@@ -3865,12 +3857,12 @@ LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// If the skin is selected, do not process mouse 'horizontal scroll' actions
 	if (IsSelected()) return 0;
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, BUTTONPROC_MOVE);
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, BUTTONPROC_MOVE);
 
 	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 	const MOUSEACTION action = (delta < 0) ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT;
-	DoAction(pos.skin.x, pos.skin.y, action, false);
+	DoAction(pos.x, pos.y, action, false);
 
 	return 0;
 }
@@ -4631,11 +4623,11 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, BUTTONPROC_DOWN);
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, BUTTONPROC_DOWN);
 
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
-		(!DoAction(pos.skin.x, pos.skin.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
+		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
 	{
 		// Cancel the mouse event beforehand
 		SetMouseLeaveEvent(true);
@@ -4687,20 +4679,20 @@ void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonP
 {
 	if (IsSelected()) return;
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, buttonProc);
-	DoAction(pos.skin.x, pos.skin.y, action, false);
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, buttonProc);
+	DoAction(pos.x, pos.y, action, false);
 }
 
 void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback)
 {
 	if (IsSelected()) return;
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, buttonProc);
-	if (!DoAction(pos.skin.x, pos.skin.y, action, false))
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, buttonProc);
+	if (!DoAction(pos.x, pos.y, action, false))
 	{
-		DoAction(pos.skin.x, pos.skin.y, fallback, false);
+		DoAction(pos.x, pos.y, fallback, false);
 	}
 }
 
@@ -4721,10 +4713,10 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// For selected skins, we don't want to process any actions and only allow the context menu.
 	if (IsSelected()) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
-	const auto pos = GetMouseMessagePositions(uMsg, lParam);
-	HandleButtons(pos.skin, BUTTONPROC_MOVE);
+	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (IsCtrlKeyDown() || !DoAction(pos.skin.x, pos.skin.y, MOUSE_RMB_UP, false))
+	if (IsCtrlKeyDown() || !DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
 		// Allow the context menu to open.
 		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
