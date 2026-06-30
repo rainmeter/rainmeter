@@ -244,7 +244,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		CheckMenuItem(menu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
 	}
 
-	HMENU allSkinsMenu = GetSubMenu(menu, 4);
+	HMENU allSkinsMenu = GetSubMenu(menu, 5);
 	if (allSkinsMenu)
 	{
 		if (!rainmeter.m_SkinRegistry.IsEmpty())
@@ -260,7 +260,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 	}
 
-	HMENU favoritesMenu = GetSubMenu(menu, 5);
+	HMENU favoritesMenu = GetSubMenu(menu, 6);
 	if (favoritesMenu)
 	{
 		if (!rainmeter.m_Favorites.empty())
@@ -270,7 +270,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 	}
 
-	HMENU layoutMenu = GetSubMenu(menu, 6);
+	HMENU layoutMenu = GetSubMenu(menu, 7);
 	if (layoutMenu)
 	{
 		if (!rainmeter.m_Layouts.empty())
@@ -297,12 +297,12 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		{
 			if (index == 0)
 			{
-				InsertMenu(menu, 13, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+				InsertMenu(menu, 14, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 			}
 
 			Skin* skin = ((*iter).second);
 			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
-			InsertMenu(menu, 13, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
+			InsertMenu(menu, 14, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
 			++index;
 		}
 
