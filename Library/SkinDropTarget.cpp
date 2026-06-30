@@ -67,7 +67,7 @@ ULONG STDMETHODCALLTYPE SkinDropTarget::Release()
 HRESULT STDMETHODCALLTYPE SkinDropTarget::DragEnter(IDataObject* dataObject, DWORD keyState, POINTL point, DWORD* effect)
 {
 	POINT pt = { point.x, point.y };
-	if (m_DropHelper && ShouldCallDropHelperForEnterAndOver())
+	if (m_DropHelper)
 	{
 		m_DropHelper->DragEnter(m_Skin->GetWindow(), dataObject, &pt, *effect);
 	}
@@ -96,7 +96,7 @@ HRESULT STDMETHODCALLTYPE SkinDropTarget::DragEnter(IDataObject* dataObject, DWO
 HRESULT STDMETHODCALLTYPE SkinDropTarget::DragOver(DWORD keyState, POINTL point, DWORD* effect)
 {
 	POINT pt = { point.x, point.y };
-	if (m_DropHelper && ShouldCallDropHelperForEnterAndOver())
+	if (m_DropHelper)
 	{
 		m_DropHelper->DragOver(&pt, *effect);
 	}
@@ -195,20 +195,6 @@ std::vector<std::wstring> SkinDropTarget::GetDroppedFiles(IDataObject* dataObjec
 
 	ReleaseStgMedium(&medium);
 	return files;
-}
-
-bool SkinDropTarget::ShouldCallDropHelperForEnterAndOver() const
-{
-	bool result = true;
-	ForEachDragDropMeasure([&](MeasureDragDrop* measure)
-	{
-		if (!measure->GetFancyRenderer())
-		{
-			result = false;
-		}
-	});
-
-	return result;
 }
 
 DWORD SkinDropTarget::GetEffectForPoint(const POINTL& point) const

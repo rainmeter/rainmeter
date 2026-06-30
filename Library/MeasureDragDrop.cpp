@@ -59,7 +59,6 @@ MeasureDragDrop::MeasureDragDrop(Skin* skin, const WCHAR* name) : Measure(skin, 
 	m_ProcessAllFiles(false),
 	m_OverrideExisting(false),
 	m_Silent(false),
-	m_FancyRenderer(true),
 	m_UsingFixedBounds(false)
 {
 }
@@ -89,7 +88,6 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ProcessAllFiles = parser.ReadBool(section, L"ProcessAllFiles", false);
 	m_OverrideExisting = parser.ReadBool(section, L"OverrideExisting", false);
 	m_Silent = parser.ReadBool(section, L"Silent", false);
-	m_FancyRenderer = parser.ReadBool(section, L"FancyRenderer", true);
 
 	m_Action = DropAction::None;
 	const auto* action = parser.ReadString(section, L"Action", L"").c_str();
