@@ -35,7 +35,7 @@ static int Print(lua_State* L)
 
 		if (i > 1)
 		{
-			// About dialog List View doesn't like tabs, just use 4 spaces instead
+			// Debug dialog List View doesn't like tabs, just use 4 spaces instead
 			message += "    ";
 		}
 

@@ -9,6 +9,7 @@
 #include "GameMode.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
 #include "Logger.h"
@@ -403,6 +404,7 @@ void GameMode::EnterGameMode()
 		// Close dialogs if open
 		DialogManage::CloseDialog();
 		DialogAbout::CloseDialog();
+		DialogDebug::CloseDialog();
 		DialogNewSkin::CloseDialog();
 
 		Rainmeter& rainmeter = GetRainmeter();

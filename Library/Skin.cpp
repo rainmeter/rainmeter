@@ -15,7 +15,7 @@
 #include "MonitorUtil.h"
 #include "Meter.h"
 #include "Measure.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "resource.h"
 #include "Util.h"
@@ -1176,7 +1176,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::UpdateMeasure:
 		UpdateMeasure(args[0]);
-		DialogAbout::UpdateMeasures(this);
+		DialogDebug::UpdateMeasures(this);
 		break;
 
 	case Bang::CommandMeasure:
@@ -1209,7 +1209,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::UpdateMeasureGroup:
 		UpdateMeasure(args[0], true);
-		DialogAbout::UpdateMeasures(this);
+		DialogDebug::UpdateMeasures(this);
 		break;
 
 	case Bang::CommandMeasureGroup:
@@ -3265,7 +3265,7 @@ void Skin::Update(bool refresh)
 		}
 	}
 
-	DialogAbout::UpdateMeasures(this);
+	DialogDebug::UpdateMeasures(this);
 
 	// Update all meters
 	bool bActiveTransition = false;

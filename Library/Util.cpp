@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "Util.h"
 #include "Rainmeter.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "System.h"
 
 UINT GetUniqueID()

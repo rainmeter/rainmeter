@@ -12,6 +12,7 @@
 #include "Util.h"
 #include "Rainmeter.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "GameMode.h"
 #include "System.h"
@@ -569,6 +570,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 		case IDM_MANAGE:
 			DialogManage::Open();
+			break;
+
+		case IDM_DEBUG:
+			DialogDebug::Open();
 			break;
 
 		case IDM_ABOUT:

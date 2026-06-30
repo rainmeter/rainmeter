@@ -10,6 +10,7 @@
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "Measure.h"
 #include "Logger.h"
@@ -829,7 +830,21 @@ void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* s
 
 void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	DialogAbout::Open(args.empty() ? L"" : args[0].c_str());
+	if (!args.empty())
+	{
+		if (_wcsicmp(args[0].c_str(), L"Version") == 0)
+		{
+			DialogAbout::Open();
+		}
+		else
+		{
+			DialogDebug::Open(args[0].c_str());
+		}
+	}
+	else
+	{
+		DialogDebug::Open();
+	}
 }
 
 void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)

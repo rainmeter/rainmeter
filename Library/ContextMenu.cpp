@@ -143,6 +143,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	static const MenuTemplate s_Menu[] =
 	{
 		MENU_ITEM(IDM_MANAGE, IDS_Manage),
+		MENU_ITEM(IDM_DEBUG, IDS_Debug),
 		MENU_ITEM(IDM_ABOUT, IDS_About),
 		MENU_ITEM(IDM_SHOW_HELP, IDS_Help),
 		MENU_SEPARATOR(),
