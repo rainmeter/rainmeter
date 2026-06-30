@@ -12,6 +12,7 @@
 #include "ConfigParser.h"
 #include "Util.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "System.h"
 #include "MonitorUtil.h"
 #include "Measure.h"
@@ -43,9 +44,10 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
-bool MatchRange(const WCHAR* start, const WCHAR* end, const WCHAR* value)
+template<size_t N>
+bool MatchRange(const WCHAR* start, const WCHAR* end, const WCHAR (&value)[N])
 {
-	const size_t len = wcslen(value);
+	constexpr size_t len = N - 1;
 	return (size_t)(end - start) == len && _wcsnicmp(start, value, len) == 0;
 }
 
@@ -325,13 +327,19 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
-	// #2: Monitor variables
+	// #2: Current config variables
+	if (GetCurrentConfigVariable(strTmp, strValue))
+	{
+		return true;
+	}
+
+	// #3: Monitor variables
 	if (GetMonitorVariable(strTmp, strValue))
 	{
 		return true;
 	}
 
-	// #3: User-defined variables
+	// #4: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
 	{
@@ -627,6 +635,51 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	}
 
 	return false;
+}
+
+bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std::wstring& strValue)
+{
+	if (!m_Skin) return false;
+
+	constexpr WCHAR currentConfig[] = L"CURRENTCONFIG";
+	const WCHAR* start = strVariable.c_str();
+	const WCHAR* end = start + strVariable.length();
+	const WCHAR* componentStart = start + (_countof(currentConfig) - 1);
+	if (end < componentStart || !MatchRange(start, componentStart, currentConfig))
+	{
+		return false;
+	}
+
+	MonitorComponent component = MonitorComponent::X;
+	if (!ParseMonitorComponent(componentStart, end, component))
+	{
+		return false;
+	}
+
+	int value = 0;
+	switch (component)
+	{
+	case MonitorComponent::X:
+		value = m_Skin->GetLogicalWindowPosition().x;
+		break;
+
+	case MonitorComponent::Y:
+		value = m_Skin->GetLogicalWindowPosition().y;
+		break;
+
+	case MonitorComponent::Width:
+		value = m_Skin->GetCurrentConfigW();
+		break;
+
+	case MonitorComponent::Height:
+		value = m_Skin->GetCurrentConfigH();
+		break;
+	}
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(value, buffer, 10);
+	strValue = buffer;
+	return true;
 }
 
 bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)

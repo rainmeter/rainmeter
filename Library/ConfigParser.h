@@ -119,6 +119,7 @@ private:
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
+	bool GetCurrentConfigVariable(const std::wstring& strVariable, std::wstring& strValue);
 	bool GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
