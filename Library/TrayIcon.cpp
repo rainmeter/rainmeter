@@ -757,7 +757,14 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 			case WM_LBUTTONUP:
 			case WM_LBUTTONDBLCLK:
-				DialogManage::Open();
+				if (IsCtrlKeyDown())
+				{
+					DialogDebug::Open();
+				}
+				else
+				{
+					DialogManage::Open();
+				}
 				break;
 
 			case NIN_BALLOONUSERCLICK:
