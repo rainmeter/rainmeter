@@ -2022,6 +2022,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"AdvancedCPU",
 		L"AudioLevel",
 		L"CoreTemp",
+		L"Drag&Drop",
 		L"FolderInfo",
 		L"iTunesPlugin",
 		L"MediaKey",
@@ -2039,7 +2040,6 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"WebParser",
 		L"WifiStatus",
 		L"Win7AudioPlugin",
-		L"WindowMessage",
 		L"WindowMessagePlugin"
 
 	};
