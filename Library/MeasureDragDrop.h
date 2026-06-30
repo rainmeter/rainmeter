@@ -27,7 +27,6 @@ public:
 
 	bool ContainsPoint(const POINTL& screenPoint) const;
 	DWORD GetDropEffect() const;
-	bool GetFancyRenderer() const { return m_FancyRenderer; }
 
 	void HandleDragEnter(const std::vector<std::wstring>& files, const POINTL& screenPoint);
 	void HandleDragOver(const std::vector<std::wstring>& files, const POINTL& screenPoint);
@@ -70,7 +69,6 @@ private:
 	bool m_ProcessAllFiles;
 	bool m_OverrideExisting;
 	bool m_Silent;
-	bool m_FancyRenderer;
 	bool m_UsingFixedBounds;
 
 	Microsoft::WRL::ComPtr<SkinDropTarget> m_DropTarget;
