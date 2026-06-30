@@ -193,22 +193,12 @@ bool IsITunesRunning()
 class CiTunesEventHandler : public _IiTunesEvents
 {
 public:
-	CiTunesEventHandler() : m_RefCount(0), m_TypeInfo(nullptr)
+	CiTunesEventHandler() : m_RefCount(0)
 	{
-		ITypeLib* typeLib = nullptr;
-		if (SUCCEEDED(::LoadRegTypeLib(LIBID_iTunesLib, 1, 5, 0x00, &typeLib)) && typeLib)
-		{
-			typeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &m_TypeInfo);
-			typeLib->Release();
-		}
 	}
 
 	~CiTunesEventHandler()
 	{
-		if (m_TypeInfo)
-		{
-			m_TypeInfo->Release();
-		}
 	}
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object)
@@ -261,7 +251,6 @@ public:
 
 private:
 	long m_RefCount;
-	ITypeInfo* m_TypeInfo;
 };
 
 void InitEventHandler()
