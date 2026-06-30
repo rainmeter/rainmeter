@@ -547,7 +547,8 @@ LRESULT SkinSelectionOverlay::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lPa
 
 LRESULT SkinSelectionOverlay::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	for (const auto& [path, skin] : GetRainmeter().GetAllSkins())
+	const auto skinsCopy = GetRainmeter().GetAllSkins();
+	for (const auto& [path, skin] : skinsCopy)
 	{
 		if (wParam == IDM_SKIN_SELECT || skin->IsSelected())
 		{
