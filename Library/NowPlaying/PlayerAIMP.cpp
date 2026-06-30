@@ -307,36 +307,24 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 		{
 			bool success = false;
 
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
+			WCHAR data[512];
+			DWORD size = sizeof(data);
 			DWORD type = 0UL;
-			HKEY hKey = nullptr;
 
 			std::wstring key = registry_key;
 			key += version;
 
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE, key.c_str(), 0UL, KEY_QUERY_VALUE, &hKey);
-
-			if (RegQueryValueEx(hKey, L"DisplayIcon", nullptr, (LPDWORD)&type,
-				(LPBYTE)data, (LPDWORD)&size) == ERROR_SUCCESS)
+			if (RegGetValue(HKEY_LOCAL_MACHINE, key.c_str(), L"DisplayIcon", RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
+				success = true;
+				path = data;
+				if (appendExe)
 				{
-					success = true;
-					path = data;
-					if (appendExe)
-					{
-						path.resize(path.find_last_of(L'\\') + 1);
-						path += version;
-						path += L".exe";
-					}
+					path.resize(path.find_last_of(L'\\') + 1);
+					path += version;
+					path += L".exe";
 				}
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 
 			return success;
 		};

@@ -946,18 +946,11 @@ void MeasureWebParser::StartDownloadTask()
 				//   Never                                   0
 				// http://support.microsoft.com/kb/263070/en
 
-				HKEY hKey = nullptr;
 				LONG ret = 0L;
 				DWORD mode = 0UL;
+				DWORD size = sizeof(mode);
 
-				ret = RegOpenKeyEx(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", 0, KEY_QUERY_VALUE, &hKey);
-				if (ret == ERROR_SUCCESS)
-				{
-					DWORD size = sizeof(mode);
-					ret = RegQueryValueEx(hKey, L"SyncMode5", nullptr, nullptr, (LPBYTE)&mode, &size);
-					RegCloseKey(hKey);
-					hKey = nullptr;
-				}
+				ret = RegGetValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", L"SyncMode5", RRF_RT_DWORD, nullptr, &mode, &size);
 
 				if (ret != ERROR_SUCCESS || mode != 3)
 				{

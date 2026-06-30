@@ -387,17 +387,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart)
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
 	{
 		// Use whatever the user selected for the installer
-		DWORD size = MAX_LINE_LENGTH;
-		HKEY hKey;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
+		DWORD bufferSize = sizeof(buffer);
+		DWORD type = 0;
+		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) != ERROR_SUCCESS ||
+			type != REG_SZ)
 		{
-			DWORD type = 0;
-			if (RegQueryValueEx(hKey, L"Language", nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) != ERROR_SUCCESS ||
-				type != REG_SZ)
-			{
-				buffer[0] = L'\0';
-			}
-			RegCloseKey(hKey);
+			buffer[0] = L'\0';
 		}
 	}
 	if (buffer[0] != L'\0')
