@@ -206,6 +206,28 @@ ConfigParser::~ConfigParser()
 {
 }
 
+bool ConfigParser::ReadInheritOption(LPCTSTR section, bool allowMeterStyle)
+{
+	const std::wstring& inherit = ReadString(section, L"@Inherit", L"");
+	if (!inherit.empty())
+	{
+		SetInheritChain(inherit);
+		return true;
+	}
+
+	if (allowMeterStyle)
+	{
+		const std::wstring& meterStyle = ReadString(section, L"MeterStyle", L"");
+		if (!meterStyle.empty())
+		{
+			SetInheritChain(meterStyle);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection, const std::wstring* resourcePath)
 {
 	m_Skin = skin;
@@ -217,7 +239,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_Variables.clear();
 	m_OriginalVariableNames.clear();
 
-	m_StyleTemplate.clear();
+	m_InheritChain.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
@@ -479,10 +501,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
-			// Lua (and possibly plugins) can reset the style template when
-			// reading values, so save the style template here and reset it
+			// Lua (and possibly plugins) can reset the inherit chain when
+			// reading values, so save the inherit chain here and reset it
 			// back after the lua/plugin has returned.
-			std::vector<std::wstring> meterStyle = m_StyleTemplate;
+			std::vector<std::wstring> inheritChain = m_InheritChain;
 
 			bool retValue = false;
 			const auto type = measure->GetTypeID();
@@ -499,7 +521,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 
-			m_StyleTemplate = meterStyle;
+			m_InheritChain = std::move(inheritChain);
 			return retValue;
 		}
 
@@ -1323,26 +1345,19 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
 	if (&strValue == &strDefault)
 	{
-		bool foundStyleValue = false;
-
-		// If the template is defined read the value from there.
-		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
-		for ( ; iter != m_StyleTemplate.rend(); ++iter)
+		bool foundInheritValue = false;
+		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
-
-			//LogDebugF(L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
-			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
-
-			if (&strStyleValue != &strDefault)
+			const std::wstring& strInheritValue = GetValue(*iter, strKey, strDefault);
+			if (&strInheritValue != &strDefault)
 			{
-				result = strStyleValue;
-				foundStyleValue = true;
+				result = strInheritValue;
+				foundInheritValue = true;
 				break;
 			}
 		}
 
-		if (!foundStyleValue)
+		if (!foundInheritValue)
 		{
 			result = strDefault;
 			m_LastDefaultUsed = true;

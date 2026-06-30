@@ -49,9 +49,8 @@ public:
 
 	Measure(const Measure& other) = delete;
 
-	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); }
-
 	virtual void Initialize();
+	void ReadOptions(ConfigParser& parser);
 	bool Update(bool rereadOptions = false);
 
 	void Disable();

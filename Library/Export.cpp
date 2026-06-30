@@ -109,13 +109,16 @@ void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
+bool ReadInheritOptionIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
 {
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty() && measure->GetSkin()->GetMeter(section))
+	if (parser.ReadInheritOption(section))
 	{
-		parser.SetStyleTemplate(style);
 		return true;
+	}
+
+	if (measure->GetSkin()->GetMeter(section))
+	{
+		return parser.ReadInheritOption(section, true);
 	}
 
 	return false;
@@ -184,9 +187,9 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	SetStyleTemplateIfNeeded(measure, parser, section);
+	ReadInheritOptionIfNeeded(measure, parser, section);
 	LPCWSTR result = parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
-	parser.ClearStyleTemplate();
+	parser.ClearInheritChain();
 
 	return result;
 }
@@ -225,9 +228,9 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	SetStyleTemplateIfNeeded(measure, parser, section);
+	ReadInheritOptionIfNeeded(measure, parser, section);
 	const double result = parser.ReadFloat(section, option, defValue);
-	parser.ClearStyleTemplate();
+	parser.ClearInheritChain();
 
 	return result;
 }

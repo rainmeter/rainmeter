@@ -139,6 +139,8 @@ void Measure::Initialize()
 */
 void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
+	parser.ReadInheritOption(section);
+
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
 	Section::ReadOptions(parser, section);
@@ -195,6 +197,12 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		DoChangeAction(false);
 	}
+}
+
+void Measure::ReadOptions(ConfigParser& parser)
+{
+	ReadOptions(parser, GetName());
+	parser.ClearInheritChain();
 }
 
 void Measure::Disable()

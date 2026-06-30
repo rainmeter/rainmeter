@@ -2620,7 +2620,6 @@ bool Skin::ReadSkin()
 	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
-
 		if (_wcsicmp(L"Rainmeter", section) != 0 &&
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
