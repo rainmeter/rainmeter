@@ -44,7 +44,7 @@
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "MeasureWifiStatus.h"
-#include "MeasureWin7Audio.h"
+#include "MeasureAudio.h"
 #include "MeasureWindowMessage.h"
 #include "Rainmeter.h"
 #include "Util.h"
@@ -794,6 +794,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasureAdvancedCPU(skin, name);
 	}
+	else if (_wcsicmp(L"Audio", measure) == 0)
+	{
+		return new MeasureAudio(skin, name);
+	}
 	else if (_wcsicmp(L"AudioLevel", measure) == 0)
 	{
 		return new MeasureAudioLevel(skin, name);
@@ -921,10 +925,6 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"WifiStatus", measure) == 0)
 	{
 		return new MeasureWifiStatus(skin, name);
-	}
-	else if (_wcsicmp(L"Win7Audio", measure) == 0)
-	{
-		return new MeasureWin7Audio(skin, name);
 	}
 	else if (_wcsicmp(L"WindowMessage", measure) == 0)
 	{
