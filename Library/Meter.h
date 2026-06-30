@@ -26,11 +26,10 @@ public:
 
 	Meter(const Meter& other) = delete;
 
-	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-	void ReadContainerOptions(ConfigParser& parser) { ReadContainerOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources();
+	void ReadOptions(ConfigParser& parser);
+	void ReadContainerOptions(ConfigParser& parser);
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }

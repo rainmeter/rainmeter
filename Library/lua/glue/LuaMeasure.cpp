@@ -29,7 +29,6 @@ static int GetOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
@@ -40,9 +39,12 @@ static int GetOption(lua_State* L)
 		bReplaceMeasures = LuaHelper::ToBool(4);
 	}
 
-	const std::wstring& value =
-		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
+	parser.ReadInheritOption(section);
+	const auto& value = parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
+	parser.ClearInheritChain();
+
 	LuaHelper::PushWide(value);
+
 	return 1;
 }
 
@@ -51,10 +53,12 @@ static int GetNumberOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
+
+	parser.ReadInheritOption(section);
 	double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));
+	parser.ClearInheritChain();
 
 	lua_pushnumber(L, value);
 	return 1;

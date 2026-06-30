@@ -64,8 +64,9 @@ public:
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
 
-	void SetStyleTemplate(const std::wstring& strStyle) { static const std::wstring delim(1, L'|'); Tokenize(strStyle, delim).swap(m_StyleTemplate); }
-	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
+	bool ReadInheritOption(LPCTSTR section, bool allowMeterStyle = false);
+	void SetInheritChain(const std::wstring& strInherit) { static const std::wstring delim(1, L'|'); Tokenize(strInherit, delim).swap(m_InheritChain); }
+	void ClearInheritChain() { m_InheritChain.clear(); }
 
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
@@ -128,7 +129,7 @@ private:
 
 	ankerl::unordered_dense::map<std::wstring, Measure*> m_Measures;
 
-	std::vector<std::wstring> m_StyleTemplate;
+	std::vector<std::wstring> m_InheritChain;
 
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;

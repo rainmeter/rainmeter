@@ -29,7 +29,6 @@ static int GetOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
@@ -40,17 +39,11 @@ static int GetOption(lua_State* L)
 		bReplaceMeasures = LuaHelper::ToBool(4);
 	}
 
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
+	parser.ReadInheritOption(section, true);
+	const auto& value = parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
+	parser.ClearInheritChain();
 
-	const std::wstring& value =
-		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
 	LuaHelper::PushWide(value);
-
-	parser.ClearStyleTemplate();
 
 	return 1;
 }

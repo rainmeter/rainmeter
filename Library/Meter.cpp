@@ -324,12 +324,7 @@ void Meter::Hide()
 */
 void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
+	parser.ReadInheritOption(section, true);
 
 	Section::ReadOptions(parser, section);
 
@@ -465,11 +460,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 {
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
+	parser.ReadInheritOption(section, true);
 
 	const std::wstring& container = parser.ReadString(section, L"Container", L"");
 	if (_wcsicmp(section, container.c_str()) == 0)
@@ -508,6 +499,18 @@ void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 			m_RelativeX = m_RelativeY = POSITION_RELATIVE_TL;
 		}
 	}
+}
+
+void Meter::ReadOptions(ConfigParser& parser)
+{
+	ReadOptions(parser, GetName());
+	parser.ClearInheritChain();
+}
+
+void Meter::ReadContainerOptions(ConfigParser& parser)
+{
+	ReadContainerOptions(parser, GetName());
+	parser.ClearInheritChain();
 }
 
 /*
