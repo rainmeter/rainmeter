@@ -63,6 +63,7 @@ public:
 	void SetY(int y);
 
 	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
+	Meter* GetRelativeMeter() { return m_RelativeMeter; }
 
 	const Mouse& GetMouse() { return m_Mouse; }
 	bool HasMouseAction() { return m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction(); }
