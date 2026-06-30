@@ -97,22 +97,14 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	else
 	{
 		// Stub prodecure. If icon resources have been removed, try to launch the actual Rainmeter.exe.
-		HKEY hKey = nullptr;
-		const REGSAM desiredSam = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, desiredSam, &hKey) == ERROR_SUCCESS)
+		WCHAR buffer[MAX_PATH];
+		DWORD bufferSize = sizeof(buffer);
+		DWORD type = 0UL;
+		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", nullptr, RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) == ERROR_SUCCESS)
 		{
-			const DWORD size = MAX_PATH;
-			WCHAR buffer[size];
-			DWORD type = 0UL;
-			if (RegQueryValueEx(hKey, nullptr , nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
-				type == REG_SZ)
-			{
-				SetCurrentDirectory(buffer);
-				lstrcat(buffer, L"\\Rainmeter.exe");
-				ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
-			}
-			RegCloseKey(hKey);
-			hKey = nullptr;
+			SetCurrentDirectory(buffer);
+			lstrcat(buffer, L"\\Rainmeter.exe");
+			ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
 		}
 
 		return 0;

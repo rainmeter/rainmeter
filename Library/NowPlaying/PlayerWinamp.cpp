@@ -461,35 +461,15 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
-			HKEY hKey = nullptr;
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-						 L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command",
-						 0,
-						 KEY_QUERY_VALUE,
-						 &hKey);
-
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
+			const WCHAR* key = L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command";
+			WCHAR data[512];
+			DWORD size = sizeof(data);
 			DWORD type = 0UL;
-
-			if (RegQueryValueEx(hKey,
-								nullptr,
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
+			if (RegGetValue(HKEY_LOCAL_MACHINE, key, nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
-				{
-					ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
-					path = data;
-				}
+				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
+				path = data;
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 		}
 		else
 		{

@@ -210,37 +210,17 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
-			HKEY hKey;
-			RegOpenKeyEx(HKEY_CLASSES_ROOT,
-						 L"spotify\\DefaultIcon",
-						 0,
-						 KEY_QUERY_VALUE,
-						 &hKey);
-
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
+			WCHAR data[512];
+			DWORD size = sizeof(data);
 			DWORD type = 0UL;
 
-			if (RegQueryValueEx(hKey,
-								nullptr,
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
+			if (RegGetValue(HKEY_CLASSES_ROOT, L"spotify\\DefaultIcon", nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
-				{
-					path = data;
-					path.erase(0, 1);				// Get rid of the leading quote
-					path.resize(path.length() - 3);	// And the ",0 at the end
-					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
-				}
+				path = data;
+				path.erase(0, 1);				// Get rid of the leading quote
+				path.resize(path.length() - 3);	// And the ",0 at the end
+				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 		}
 		else
 		{
