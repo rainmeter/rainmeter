@@ -2640,25 +2640,21 @@ bool Skin::ReadSkin()
 					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
-					if (_wcsicmp(plugin, L"Drag&Drop") == 0)
-					{
-						measureName = L"DragDrop";
-					}
-
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 					{
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
 						{
-							measureName = plugin;
-
-							// Strip away the Plugin postfix.
-							const WCHAR postfix[] = L"Plugin";
-							const size_t postfixLength = _countof(postfix) - 1;
-							if (measureName.length() > postfixLength && _wcsicmp(measureName.c_str() + measureName.length() - postfixLength, postfix) == 0)
-							{
-								measureName.resize(measureName.length() - postfixLength);
-							}
-
+							// Equality comparison is OK since oldDefaultPlugin from a string literal as well.
+							measureName =
+								oldDefaultPlugin == L"Drag&Drop" ? L"DragDrop" :
+								oldDefaultPlugin == L"iTunesPlugin" ? L"iTunes" :
+								oldDefaultPlugin == L"PingPlugin" ? L"Ping" :
+								oldDefaultPlugin == L"PowerPlugin" ? L"Power" :
+								oldDefaultPlugin == L"QuotePlugin" ? L"Quote" :
+								oldDefaultPlugin == L"SpeedFanPlugin" ? L"SpeedFan" :
+								oldDefaultPlugin == L"Win7AudioPlugin" ? L"Audio" :
+								oldDefaultPlugin == L"WindowMessagePlugin" ? L"WindowMessage" :
+								plugin;
 							break;
 						}
 					}

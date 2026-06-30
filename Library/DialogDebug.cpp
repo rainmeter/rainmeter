@@ -1528,7 +1528,6 @@ void DialogDebug::TabPlugins::Initialize()
 		vitem.iItem = index;
 		vitem.pszText = (LPWSTR)oldDefaultPlugin;
 		ListView_InsertItem(item, &vitem);
-		ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)L"*As an internal measure");
 		++index;
 	}
 
