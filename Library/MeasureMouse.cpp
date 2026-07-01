@@ -30,7 +30,7 @@ void ForEachMeasure(HWND window, Func&& func)
 		}
 
 		Skin* skin = measure->GetSkin();
-		if (skin->GetWindow() == window)
+		if (skin->GetWindow() == window && !skin->IsSelected())
 		{
 			func(measure, skin);
 		}
