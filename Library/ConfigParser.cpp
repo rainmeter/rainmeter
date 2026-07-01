@@ -740,6 +740,10 @@ bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std:
 	{
 		value = m_Skin->GetZoomedWindowH();
 	}
+	else if (MatchRange(componentStart, end, L"ZPos"))
+	{
+		value = m_Skin->GetWindowZPosition();
+	}
 	else if (MatchRange(componentStart, end, L"ZoomScale"))
 	{
 		WCHAR buffer[32] = { 0 };
