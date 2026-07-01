@@ -330,7 +330,7 @@ void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std
 ** Gets a value for the variable. Returns false if not found.
 **
 */
-bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
+bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue, bool isNewStyle)
 {
 	const std::wstring strTmp = StrToUpper(strVariable);
 
@@ -349,19 +349,25 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
-	// #2: Current config variables
+	// #2: New-style skin variables
+	if (isNewStyle && GetNewStyleSkinVariable(strVariable, strValue))
+	{
+		return true;
+	}
+
+	// #3: Current config variables
 	if (GetCurrentConfigVariable(strTmp, strValue))
 	{
 		return true;
 	}
 
-	// #3: Monitor variables
+	// #4: Monitor variables
 	if (GetMonitorVariable(strTmp, strValue))
 	{
 		return true;
 	}
 
-	// #4: User-defined variables
+	// #5: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
 	{
@@ -672,15 +678,8 @@ bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std
 		return false;
 	}
 
-	const bool zoomed = StringUtil::MatchAndSkipPrefix(&componentStart, end, L"ZOOMED");
-
 	MonitorComponent component = MonitorComponent::X;
 	if (!ParseMonitorComponent(componentStart, end, component))
-	{
-		return false;
-	}
-
-	if (zoomed && component != MonitorComponent::Width && component != MonitorComponent::Height)
 	{
 		return false;
 	}
@@ -697,12 +696,61 @@ bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std
 		break;
 
 	case MonitorComponent::Width:
-		value = zoomed ? m_Skin->GetZoomedWindowW() : m_Skin->GetCurrentConfigW();
+		value = m_Skin->GetCurrentConfigW();
 		break;
 
 	case MonitorComponent::Height:
-		value = zoomed ? m_Skin->GetZoomedWindowH() : m_Skin->GetCurrentConfigH();
+		value = m_Skin->GetCurrentConfigH();
 		break;
+	}
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(value, buffer, 10);
+	strValue = buffer;
+	return true;
+}
+
+bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std::wstring& strValue)
+{
+	if (!m_Skin) return false;
+
+	constexpr WCHAR skinVariable[] = L"SKIN:";
+	const WCHAR* start = strVariable.c_str();
+	const WCHAR* end = start + strVariable.length();
+	const WCHAR* componentStart = start + (_countof(skinVariable) - 1);
+	if (end < componentStart || wcsncmp(start, skinVariable, _countof(skinVariable) - 1) != 0)
+	{
+		return false;
+	}
+
+	int value = 0;
+	if (MatchRange(componentStart, end, L"X"))
+	{
+		value = m_Skin->GetLogicalWindowPosition().x;
+	}
+	else if (MatchRange(componentStart, end, L"Y"))
+	{
+		value = m_Skin->GetLogicalWindowPosition().y;
+	}
+	else if (MatchRange(componentStart, end, L"W"))
+	{
+		value = m_Skin->GetCurrentConfigW();
+	}
+	else if (MatchRange(componentStart, end, L"H"))
+	{
+		value = m_Skin->GetCurrentConfigH();
+	}
+	else if (MatchRange(componentStart, end, L"ZOOMEDW"))
+	{
+		value = m_Skin->GetZoomedWindowW();
+	}
+	else if (MatchRange(componentStart, end, L"ZOOMEDH"))
+	{
+		value = m_Skin->GetZoomedWindowH();
+	}
+	else
+	{
+		return false;
 	}
 
 	WCHAR buffer[16] = { 0 };
@@ -841,7 +889,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 			if (start != std::wstring::npos)
 			{
 				std::wstring value;
-				if (GetVariable(L"CURRENTSECTION", value))
+				if (GetVariable(L"CURRENTSECTION", value, true))
 				{
 					// Variable found, replace it with the value
 					result.replace(start, length, value);
@@ -1149,7 +1197,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				case VariableType::Variable:
 					{
 						std::wstring value;
-						if (GetVariable(variable, value))
+						if (GetVariable(variable, value, true))
 						{
 							foundValue.assign(value);
 							found = true;
