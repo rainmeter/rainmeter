@@ -862,6 +862,9 @@ bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, s
 		parameterStart += 4;
 	}
 
+	static MonitorInfo s_EmptyMonitor = {};
+	const auto& monitor = (index >= 1 && index <= (int)monitors.size() && monitors[index - 1].active) ? monitors[index - 1] : s_EmptyMonitor;
+
 	LONG value = 0;
 	const auto& rect =
 		work ?
@@ -883,7 +886,7 @@ bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, s
 	{
 		value = rect.bottom - rect.top;
 	}
-	else if (!physical && MatchRange(parameterStart, parameterEnd, L"DpiScale"))
+	else if (!physical && !work && MatchRange(parameterStart, parameterEnd, L"DpiScale"))
 	{
 		WCHAR buffer[32] = { 0 };
 		const double dpiScale = (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI;
