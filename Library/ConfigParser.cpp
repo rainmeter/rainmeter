@@ -782,42 +782,40 @@ bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, s
 		return false;
 	}
 
-	const WCHAR* separator = wcschr(prefixEnd, L':');
-	if (!separator || separator + 1 >= end)
-	{
-		return false;
-	}
-
-	std::wstring indexValue;
+	const WCHAR* indexStart = nullptr;
+	const WCHAR* parameterStart = nullptr;
 	if (*prefixEnd == L'@')
 	{
-		const WCHAR* indexStart = prefixEnd + 1;
-		if (separator == indexStart)
+		indexStart = prefixEnd + 1;
+		if (indexStart >= end)
 		{
 			return false;
 		}
-
-		indexValue.assign(indexStart, separator - indexStart);
 	}
-	else if (*prefixEnd != L':')
+	else if (*prefixEnd == L':')
+	{
+		parameterStart = prefixEnd + 1;
+	}
+	else
 	{
 		return false;
 	}
 
-	const WCHAR* parameterStart = separator + 1;
 	const WCHAR* parameterEnd = end;
 
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
 	if (monitors.empty()) return false;
 
-	int index = monitorsInfo.MonitorIndexForWindow(m_Skin->GetWindow());
-	if (indexValue.empty())
+	int index = 0;
+	if (!indexStart)
 	{
-		if (MatchRange(parameterStart, parameterEnd, L"N"))
+		if (parameterStart >= parameterEnd) return false;
+
+		WCHAR buffer[16] = { 0 };
+		if (MatchRange(parameterStart, parameterEnd, L"MaxN"))
 		{
-			WCHAR buffer[16] = { 0 };
-			_itow_s(index, buffer, 10);
+			_itow_s((int)monitors.size(), buffer, 10);
 			strValue = buffer;
 			return true;
 		}
@@ -825,28 +823,29 @@ bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, s
 		if (MatchRange(parameterStart, parameterEnd, L"OptionN"))
 		{
 			const int optionIndex = m_Skin->GetX().monitor ? *m_Skin->GetX().monitor : 1;
-			WCHAR buffer[16] = { 0 };
 			_itow_s(optionIndex, buffer, 10);
+			strValue = buffer;
+			return true;
+		}
+
+		index = monitorsInfo.MonitorIndexForWindow(m_Skin->GetWindow());
+		if (MatchRange(parameterStart, parameterEnd, L"N"))
+		{
+			_itow_s(index, buffer, 10);
 			strValue = buffer;
 			return true;
 		}
 	}
 	else
 	{
-		WCHAR* end = nullptr;
-		index = wcstol(indexValue.c_str(), &end, 10);
-		if (!end || *end != L':') return false;
-	}
+		WCHAR* parseEnd = nullptr;
+		errno = 0;
+		const long parsedIndex = wcstol(indexStart, &parseEnd, 10);
+		if (parseEnd == nullptr || parseEnd >= end || *parseEnd != L':' || errno == ERANGE) return false;
 
-	if (index <= 0 || index > (int)monitors.size())
-	{
-		return false;
-	}
-
-	const auto& monitor = monitors[index - 1];
-	if (!monitor.active)
-	{
-		return false;
+		index = (int)parsedIndex;
+		parameterStart = parseEnd + 1;
+		if (parameterStart >= parameterEnd) return false;
 	}
 
 	bool physical = false;
