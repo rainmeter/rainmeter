@@ -355,6 +355,11 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
+	if (isNewStyle && GetNewStyleMonitorVariable(strVariable, strValue))
+	{
+		return true;
+	}
+
 	// #3: Current config variables
 	if (GetCurrentConfigVariable(strTmp, strValue))
 	{
@@ -747,6 +752,140 @@ bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std:
 	else if (MatchRange(componentStart, end, L"ZOOMEDH"))
 	{
 		value = m_Skin->GetZoomedWindowH();
+	}
+	else
+	{
+		return false;
+	}
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(value, buffer, 10);
+	strValue = buffer;
+	return true;
+}
+
+bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)
+{
+	if (!m_Skin) return false;
+
+	constexpr WCHAR monitorVariable[] = L"MONITOR";
+	const WCHAR* start = strVariable.c_str();
+	const WCHAR* end = start + strVariable.length();
+	const WCHAR* prefixEnd = start + (_countof(monitorVariable) - 1);
+	if (end <= prefixEnd || wcsncmp(start, monitorVariable, _countof(monitorVariable) - 1) != 0)
+	{
+		return false;
+	}
+
+	const WCHAR* separator = wcschr(prefixEnd, L':');
+	if (!separator || separator + 1 >= end)
+	{
+		return false;
+	}
+
+	std::wstring indexValue;
+	if (*prefixEnd == L'@')
+	{
+		const WCHAR* indexStart = prefixEnd + 1;
+		if (separator == indexStart)
+		{
+			return false;
+		}
+
+		indexValue.assign(indexStart, separator - indexStart);
+	}
+	else if (*prefixEnd != L':')
+	{
+		return false;
+	}
+
+	const WCHAR* parameterStart = separator + 1;
+	const WCHAR* parameterEnd = end;
+
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const auto& monitors = monitorsInfo.monitors;
+	if (monitors.empty()) return false;
+
+	int index = monitorsInfo.MonitorIndexForWindow(m_Skin->GetWindow());
+	if (indexValue.empty())
+	{
+		if (MatchRange(parameterStart, parameterEnd, L"N"))
+		{
+			WCHAR buffer[16] = { 0 };
+			_itow_s(index, buffer, 10);
+			strValue = buffer;
+			return true;
+		}
+
+		if (MatchRange(parameterStart, parameterEnd, L"OptionN"))
+		{
+			const int optionIndex = m_Skin->GetX().monitor ? *m_Skin->GetX().monitor : 1;
+			WCHAR buffer[16] = { 0 };
+			_itow_s(optionIndex, buffer, 10);
+			strValue = buffer;
+			return true;
+		}
+	}
+	else
+	{
+		WCHAR* end = nullptr;
+		index = wcstol(indexValue.c_str(), &end, 10);
+		if (!end || *end != L':') return false;
+	}
+
+	if (index <= 0 || index > (int)monitors.size())
+	{
+		return false;
+	}
+
+	const auto& monitor = monitors[index - 1];
+	if (!monitor.active)
+	{
+		return false;
+	}
+
+	bool physical = false;
+	if (parameterEnd - parameterStart >= 8 && MatchRange(parameterStart, parameterStart + 8, L"Physical"))
+	{
+		physical = true;
+		parameterStart += 8;
+	}
+
+	bool work = false;
+	if (parameterEnd - parameterStart >= 4 && MatchRange(parameterStart, parameterStart + 4, L"Work"))
+	{
+		work = true;
+		parameterStart += 4;
+	}
+
+	LONG value = 0;
+	const auto& rect =
+		work ?
+		(physical ? monitor.work : monitor.logicalWork) :
+		(physical ? monitor.screen : monitor.logicalScreen);
+	if (MatchRange(parameterStart, parameterEnd, L"X"))
+	{
+		value = rect.left;
+	}
+	else if (MatchRange(parameterStart, parameterEnd, L"Y"))
+	{
+		value = rect.top;
+	}
+	else if (MatchRange(parameterStart, parameterEnd, L"W"))
+	{
+		value = rect.right - rect.left;
+	}
+	else if (MatchRange(parameterStart, parameterEnd, L"H"))
+	{
+		value = rect.bottom - rect.top;
+	}
+	else if (!physical && MatchRange(parameterStart, parameterEnd, L"DpiScale"))
+	{
+		WCHAR buffer[32] = { 0 };
+		const double dpiScale = (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI;
+		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", dpiScale);
+		strValue.assign(buffer, len);
+		return true;
 	}
 	else
 	{
