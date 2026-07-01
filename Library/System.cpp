@@ -648,11 +648,15 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				MonitorUtil::UpdateWorkareaInfo();
 			}
 
-			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			auto iter = GetRainmeter().GetAllSkins().begin();
-			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
+			for (const auto& [_, skin] : GetRainmeter().GetAllSkins())
 			{
-				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
+				// Inform skin about the change if it doesn't already have a pending message.
+				const auto skinMessage = WM_METERWINDOW_DELAYED_MOVE;
+				MSG msg;
+				if (!PeekMessage(&msg, skin->GetWindow(), skinMessage, skinMessage, PM_NOREMOVE))
+				{
+					PostMessage(skin->GetWindow(), skinMessage, (WPARAM)uMsg, (LPARAM)0);
+				}
 			}
 		}
 		break;

@@ -408,6 +408,7 @@ private:
 	std::wstring m_OnUnfocusAction;
 	std::wstring m_OnUpdateAction;
 	std::wstring m_OnWakeAction;
+	std::wstring m_OnSystemMonitorChangeAction;
 
 	Section* m_CurrentActionSection;
 
