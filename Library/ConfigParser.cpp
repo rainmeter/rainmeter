@@ -732,13 +732,27 @@ bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std:
 	{
 		value = m_Skin->GetCurrentConfigH();
 	}
-	else if (MatchRange(componentStart, end, L"ZOOMEDW"))
+	else if (MatchRange(componentStart, end, L"ZoomedW"))
 	{
 		value = m_Skin->GetZoomedWindowW();
 	}
-	else if (MatchRange(componentStart, end, L"ZOOMEDH"))
+	else if (MatchRange(componentStart, end, L"ZoomedH"))
 	{
 		value = m_Skin->GetZoomedWindowH();
+	}
+	else if (MatchRange(componentStart, end, L"ZoomScale"))
+	{
+		WCHAR buffer[32] = { 0 };
+		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", m_Skin->GetZoom());
+		strValue.assign(buffer, len);
+		return true;
+	}
+	else if (MatchRange(componentStart, end, L"DpiScale"))
+	{
+		WCHAR buffer[32] = { 0 };
+		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", m_Skin->GetDpiScale());
+		strValue.assign(buffer, len);
+		return true;
 	}
 	else
 	{
