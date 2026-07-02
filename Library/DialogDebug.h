@@ -92,7 +92,8 @@ private:
 			Id_EvaluateStringRadio,
 			Id_EvaluateNumberRadio,
 			Id_EvaluateEdit,
-			Id_EvaluateResult
+			Id_EvaluateResult,
+			Id_EvaluateExecuteButton
 		};
 
 		TabSkins();

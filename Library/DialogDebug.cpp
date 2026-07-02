@@ -643,28 +643,32 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
 		Control::ListView(Id_SkinsListView, 0,
-			125, 0, 442, 242,
+			125, 0, 442, 250,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::GroupBox(Id_EvaluateGroup, 0,
-			125, 250, 442, 88,
+			125, 262, 442, 75,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateEdit, 0,
-			131, 265, 430, 30,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE, 0,
+			132, 279, 340, 22,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateResult, 0,
-			131, 300, 340, 30,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE | ES_READONLY, 0,
+			132, 307, 340, 22,
+			WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateStringRadio, 0,
-			479, 298, 72, 14,
+			480, 279, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateNumberRadio, 0,
-			479, 312, 72, 14,
+			480, 292, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::Button(Id_EvaluateExecuteButton, 0,
+			480, 314, 80, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
 	};
 
@@ -718,6 +722,7 @@ void DialogDebug::TabSkins::Initialize()
 	SetWindowText(GetControl(Id_EvaluateStringRadio), L"String");
 	Button_SetCheck(GetControl(Id_EvaluateStringRadio), BST_CHECKED);
 	SetWindowText(GetControl(Id_EvaluateNumberRadio), L"Number");
+	SetWindowText(GetControl(Id_EvaluateExecuteButton), L"Execute");
 
 	UpdateSkinList();
 
@@ -997,6 +1002,7 @@ void DialogDebug::TabSkins::UpdateEvaluationResult()
 	}
 
 	SetWindowText(GetControl(Id_EvaluateResult), text.c_str());
+	EnableWindow(GetControl(Id_EvaluateExecuteButton), text.starts_with(L"[!"));
 }
 
 INT_PTR DialogDebug::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1055,6 +1061,24 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			UpdateEvaluationResult();
+		}
+		break;
+
+	case Id_EvaluateExecuteButton:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			HWND result = GetControl(Id_EvaluateResult);
+			const int length = GetWindowTextLength(result);
+			if (length > 0)
+			{
+				std::wstring command(length + 1, L'\0');
+				GetWindowText(result, &command[0], length + 1);
+				command.resize(length);
+				if (command.starts_with(L"[!"))
+				{
+					GetRainmeter().ExecuteCommand(command.c_str(), m_SkinWindow);
+				}
+			}
 		}
 		break;
 
