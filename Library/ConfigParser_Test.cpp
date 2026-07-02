@@ -76,7 +76,6 @@ public:
 		parser.SetVariable(L"BB", L"def");
 		parser.SetVariable(L"CCC", L"#A#");
 		parser.SetVariable(L"Var", L"Normal");
-		parser.SetBuiltInVariable(L"Var", L"BuiltIn");
 
 		std::wstring string1 = L"A";
 		Assert::IsFalse(parser.ReplaceVariables(string1));

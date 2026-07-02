@@ -170,7 +170,7 @@ public:
 	std::wstring GetFilePath();
 	std::wstring GetRootName();
 	std::wstring GetRootPath();
-	std::wstring GetResourcesPath();
+	const std::wstring& GetResourcesPath() const { return m_ResourcesPath; }
 	std::wstring GetSkinPath();
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
@@ -411,6 +411,7 @@ private:
 	Section* m_CurrentActionSection;
 
 	std::wstring m_SkinGroup;
+	std::wstring m_ResourcesPath;
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;

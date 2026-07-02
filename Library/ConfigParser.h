@@ -46,7 +46,7 @@ public:
 	ConfigParser(const ConfigParser& other) = delete;
 	ConfigParser& operator=(ConfigParser other) = delete;
 
-	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
+	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
@@ -54,8 +54,6 @@ public:
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
-	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
-
 	const ankerl::unordered_dense::map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
@@ -112,14 +110,13 @@ public:
 	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 private:
-	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);
-
 	void ReadVariables();
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
+	std::optional<std::wstring> GetBuiltInVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring& variableStr);
@@ -139,6 +136,7 @@ private:
 	MonitorVariableMode m_MonitorVariableMode;
 
 	std::wstring m_CurrentSection;
+	std::wstring m_CurrentPath;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
 	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Values;
@@ -147,7 +145,6 @@ private:
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionInsertPos;
 
-	ankerl::unordered_dense::map<std::wstring, std::wstring> m_BuiltInVariables;
 	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Variables;
 	ankerl::unordered_dense::map<std::wstring, std::wstring> m_OriginalVariableNames;
 

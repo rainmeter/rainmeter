@@ -42,11 +42,20 @@ public:
 		return ConsumeRest(str, N - 1, option);
 	}
 
+	template <size_t N>
+	bool ConsumeSuffix(const WCHAR (&str)[N])
+	{
+		static_assert(N > 0, "String buffer must include a null terminator.");
+		return ConsumeSuffix(str, N - 1);
+	}
+
 	bool Consume(const WCHAR* str, size_t length, Option option = None);
 	bool ConsumeRest(const WCHAR* str, size_t length, Option option = None);
+	bool ConsumeSuffix(const WCHAR* str, size_t length);
 
 	bool Consume(const std::wstring& str, Option option = None) { return Consume(str.c_str(), str.length(), option); }
 	bool ConsumeRest(const std::wstring& str, Option option = None) { return ConsumeRest(str.c_str(), str.length(), option); }
+	bool ConsumeSuffix(const std::wstring& str) { return ConsumeSuffix(str.c_str(), str.length()); }
 
 	bool Consume(WCHAR ch);
 	bool ConsumeRest(WCHAR ch);

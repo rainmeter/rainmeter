@@ -115,6 +115,20 @@ bool StringParser::ConsumeRest(const WCHAR* str, size_t length, Option option)
 	return true;
 }
 
+bool StringParser::ConsumeSuffix(const WCHAR* str, size_t length)
+{
+	assert(str);
+
+	const size_t remaining = (size_t)(m_End - m_Current);
+	if (length > remaining || _wcsnicmp(m_End - length, str, length) != 0)
+	{
+		return false;
+	}
+
+	m_End -= length;
+	return true;
+}
+
 bool StringParser::Consume(WCHAR ch)
 {
 	if (m_Current >= m_End || towlower(*m_Current) != towlower(ch)) return false;
