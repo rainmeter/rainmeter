@@ -345,7 +345,7 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 
 	if (isNewStyle)
 	{
-		auto sectionMonitorResult = GetSectionMonitorVariable(strVariable);
+		auto sectionMonitorResult = GetSectionDisplayVariable(strVariable);
 		if (sectionMonitorResult)
 		{
 			strValue.swap(*sectionMonitorResult);
@@ -775,38 +775,39 @@ bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std:
 	return true;
 }
 
-// Examples: [#Monitor:X], [#Monitor:PhysicalWorkH], [#Monitor@1:DpiScale]
-std::optional<std::wstring> ConfigParser::GetSectionMonitorVariable(const std::wstring& variableStr)
+// Examples: [#Display:Name], [#Display:X], [#Display:PWH], [#DisplayDevice1:DpiScale]
+std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring& variableStr)
 {
-	if (!m_Skin) return std::nullopt;
-
-	auto strParser = StringParser(variableStr);
-	if (!strParser.Consume(L"Monitor")) return std::nullopt;
-
-	auto index = strParser.Consume(L'@') ? strParser.ConsumeInt() : std::nullopt;
-	if (!strParser.Consume(L':')) return std::nullopt;
-
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
-	if (monitors.empty()) return std::nullopt;
+	if (!m_Skin || monitors.empty()) return std::nullopt;
 
-	if (!index)
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"Display")) return std::nullopt;
+
+	const bool device = strParser.Consume(L"Device");
+	auto index = strParser.ConsumeInt();
+	if (!strParser.Consume(L':')) return std::nullopt;
+
+	if (!index && strParser.ConsumeRest(L"Count"))
 	{
-		if (strParser.ConsumeRest(L"MaxN")) return fmt::to_wstring((int)monitors.size());
-		if (strParser.ConsumeRest(L"OptionN")) return fmt::to_wstring(m_Skin->GetX().monitor.value_or(monitorsInfo.primary));
-
-		index = monitorsInfo.GetForWindow(m_Skin->GetWindow())->deviceNumber;
-		if (strParser.ConsumeRest(L"N")) return fmt::to_wstring(*index);
+		return fmt::to_wstring(device ? monitorsInfo.GetDeviceCount() : monitorsInfo.GetDisplayCount());
 	}
 
 	static MonitorInfo s_EmptyMonitor = {};
-	const auto* monitor = monitorsInfo.GetByDeviceNumber(*index);
+	const auto* monitor =
+		index ? (device ? monitorsInfo.GetByDeviceNumber(*index) : monitorsInfo.GetByDisplayNumber(*index)) :
+		monitorsInfo.GetForWindow(m_Skin->GetWindow());
 	if (!monitor) monitor = &s_EmptyMonitor;
 
+	if (strParser.ConsumeRest(L"DeviceName")) return monitor->deviceName;
+	if (strParser.ConsumeRest(L"DeviceNumber")) return fmt::to_wstring(monitor->deviceNumber);
+	if (strParser.ConsumeRest(L"DisplayName")) return monitor->monitorName;
+	if (strParser.ConsumeRest(L"DisplayNumber")) return fmt::to_wstring(monitor->displayNumber);
 	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
 
-	const bool physical = strParser.Consume(L"Physical");
-	const bool work = strParser.Consume(L"Work");
+	const bool physical = strParser.Consume(L'P');
+	const bool work = strParser.Consume(L'W');
 	const auto& rect =
 		work ?
 		(physical ? monitor->work : monitor->logicalWork) :
