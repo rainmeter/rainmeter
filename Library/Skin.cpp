@@ -745,11 +745,6 @@ void Skin::UpdateWindowDpi(UINT dpi)
 
 	if (oldEffectiveScale != m_EffectiveScale)
 	{
-		WCHAR buffer[32];
-		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", m_EffectiveScale);
-		Measure::RemoveTrailingZero(buffer, len);
-		m_Parser.SetBuiltInVariable(L"CURRENTCONFIGSCALE", buffer);
-
 		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Scale);
 	}
 }
