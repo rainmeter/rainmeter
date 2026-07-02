@@ -116,7 +116,6 @@ private:
 		void UpdateEvaluationResult();
 
 		Skin* m_SkinWindow;
-		bool m_EvaluateAsNumber;
 	};
 
 	// Plugins tab

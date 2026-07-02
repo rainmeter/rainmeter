@@ -628,8 +628,7 @@ INT_PTR DialogDebug::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 DialogDebug::TabSkins::TabSkins() : Tab(),
-	m_SkinWindow(),
-	m_EvaluateAsNumber(false)
+	m_SkinWindow()
 {
 }
 
@@ -945,6 +944,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	ListView_SetItemState(item, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
 
 	SendMessage(item, WM_SETREDRAW, TRUE, 0);
+
 	UpdateEvaluationResult();
 }
 
@@ -975,7 +975,7 @@ void DialogDebug::TabSkins::UpdateEvaluationResult()
 		parser.ReplaceVariables(text, true);
 		parser.ReplaceMeasures(text);
 
-		if (m_EvaluateAsNumber)
+		if (Button_GetCheck(GetControl(Id_EvaluateNumberRadio)) == BST_CHECKED)
 		{
 			double value = 0.0;
 			const WCHAR* str = text.c_str();
@@ -1051,17 +1051,9 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_EvaluateStringRadio:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			m_EvaluateAsNumber = false;
-			UpdateEvaluationResult();
-		}
-		break;
-
 	case Id_EvaluateNumberRadio:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			m_EvaluateAsNumber = true;
 			UpdateEvaluationResult();
 		}
 		break;
