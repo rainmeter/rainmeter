@@ -561,6 +561,7 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::ws
 	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().y);
 	if (strParser.ConsumeRest(L"WIDTH")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
 	if (strParser.ConsumeRest(L"HEIGHT")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
+	if (strParser.ConsumeRest(L"ZPOS")) return fmt::to_wstring(m_Skin->GetWindowZPosition());
 
 	return std::nullopt;
 }

@@ -2028,14 +2028,6 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 	}
 }
 
-void Skin::SetZPosVariable(ZPOSITION zPos)
-{
-	WCHAR buffer[16] = { 0 };
-	_itow_s(zPos, buffer, 10);
-	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGZPOS", buffer);
-}
-
-
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
@@ -2214,9 +2206,6 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 		// Set screen position variables temporarily
 		ComputePositionFromOptions(true);
-
-		// Set built-in "settings" variables
-		SetZPosVariable((ZPOSITION)zPos);
 
 		if (writeFlags != 0)
 		{
@@ -4226,7 +4215,6 @@ void Skin::SetWindowHide(HIDEMODE hide)
 
 void Skin::SetWindowZPosition(ZPOSITION zPos)
 {
-	SetZPosVariable(zPos);
 	ChangeSingleZPos(zPos);
 	WriteOptions(OPTION_ALWAYSONTOP);
 }
