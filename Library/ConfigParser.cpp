@@ -156,16 +156,12 @@ void ConfigParser::ReadVariables()
 	}
 }
 
-void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
+void ConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
-	std::wstring original = strVariable;
-
-	StrToUpperC(strVariable);
-	m_Variables[strVariable] = strValue;
-
-	if (m_OriginalVariableNames.find(strVariable) == m_OriginalVariableNames.end())
+	const auto& [iter, inserted] = m_Variables.insert_or_assign(StrToUpper(strVariable), strValue);
+	if (inserted)
 	{
-		m_OriginalVariableNames[strVariable] = original;
+		m_OriginalVariableNames[iter->first] = strVariable;
 	}
 }
 
