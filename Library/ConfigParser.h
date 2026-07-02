@@ -135,7 +135,7 @@ private:
 	bool m_LastValueDefined;
 	MonitorVariableMode m_MonitorVariableMode;
 
-	std::wstring m_CurrentSection;
+	const std::wstring* m_CurrentSection;
 	std::wstring m_CurrentPath;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
