@@ -2350,10 +2350,10 @@ bool Skin::ReadSkin()
 		return false;
 	}
 
-	std::wstring resourcePath = GetResourcesPath();
-	bool hasResourcesFolder = (_waccess_s(resourcePath.c_str(), 0) == 0);
+	m_ResourcesPath = GetRootPath() + L"@Resources\\";
+	const bool hasResourcesFolder = (_waccess_s(m_ResourcesPath.c_str(), 0) == 0);
 
-	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
+	m_Parser.Initialize(iniFile, this, nullptr);
 
 	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
 	if (m_IsFirstRun)
@@ -2490,7 +2490,7 @@ bool Skin::ReadSkin()
 	if (hasResourcesFolder)
 	{
 		WIN32_FIND_DATA fd = { 0 };
-		std::wstring resourceFontPath = resourcePath + L"Fonts\\*";
+		std::wstring resourceFontPath = m_ResourcesPath + L"Fonts\\*";
 
 		HANDLE find = FindFirstFileEx(
 			resourceFontPath.c_str(),
@@ -2569,7 +2569,7 @@ bool Skin::ReadSkin()
 		auto fontCollectionD2D = (Gfx::FontCollectionD2D*)m_FontCollection;
 		if (fontCollectionD2D && fontCollectionD2D->InitializeCollection())
 		{
-			std::wstring fontResourcePath = resourcePath + L"Fonts\\";
+			std::wstring fontResourcePath = m_ResourcesPath + L"Fonts\\";
 			std::wstring fontSource = L"Source: ";
 			if (hasLocalFonts) fontSource += L"LocalFont";
 			if (hasResourceFonts)
@@ -5386,13 +5386,6 @@ std::wstring Skin::GetRootPath()
 		path += L'\\';
 	}
 
-	return path;
-}
-
-std::wstring Skin::GetResourcesPath()
-{
-	std::wstring path = GetRootPath();
-	path += L"@Resources\\";
 	return path;
 }
 
