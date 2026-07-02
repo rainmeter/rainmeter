@@ -337,21 +337,20 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
-	// #2: New-style section variables
+	std::optional<std::wstring> result;
 	if (isNewStyle)
 	{
-		auto result = GetSectionSkinVariable(strVariable);
+		// #2: New-style section variables
+		if (!result) result = GetSectionSkinVariable(strVariable);
 		if (!result) result = GetSectionDisplayVariable(strVariable);
-		if (result)
-		{
-			strValue.swap(*result);
-			return true;
-		}
 	}
 
 	// #3: Current config variables
-	if (GetCurrentConfigVariable(strTmp, strValue))
+	if (!result) result = GetCurrentConfigVariable(strVariable);
+
+	if (result)
 	{
+		strValue.swap(*result);
 		return true;
 	}
 
@@ -659,49 +658,18 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std::wstring& strValue)
+std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::wstring& variableStr)
 {
-	if (!m_Skin) return false;
+	if (!m_Skin) return std::nullopt;
 
-	constexpr WCHAR currentConfig[] = L"CURRENTCONFIG";
-	const WCHAR* start = strVariable.c_str();
-	const WCHAR* end = start + strVariable.length();
-	const WCHAR* componentStart = start + (_countof(currentConfig) - 1);
-	if (end < componentStart || !MatchRange(start, componentStart, currentConfig))
-	{
-		return false;
-	}
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"CURRENTCONFIG")) return std::nullopt;
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().y);
+	if (strParser.ConsumeRest(L"WIDTH")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
+	if (strParser.ConsumeRest(L"HEIGHT")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
 
-	MonitorComponent component = MonitorComponent::X;
-	if (!ParseMonitorComponent(componentStart, end, component))
-	{
-		return false;
-	}
-
-	int value = 0;
-	switch (component)
-	{
-	case MonitorComponent::X:
-		value = m_Skin->GetLogicalWindowPosition().x;
-		break;
-
-	case MonitorComponent::Y:
-		value = m_Skin->GetLogicalWindowPosition().y;
-		break;
-
-	case MonitorComponent::Width:
-		value = m_Skin->GetCurrentConfigW();
-		break;
-
-	case MonitorComponent::Height:
-		value = m_Skin->GetCurrentConfigH();
-		break;
-	}
-
-	WCHAR buffer[16] = { 0 };
-	_itow_s(value, buffer, 10);
-	strValue = buffer;
-	return true;
+	return std::nullopt;
 }
 
 // Examples: [#Skin:X], [#Skin:DpiScale]
