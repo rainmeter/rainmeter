@@ -16,6 +16,8 @@ struct MonitorInfo
 {
 	bool active;
 	HMONITOR handle;
+	uint8_t deviceNumber;
+	uint8_t displayNumber;
 	UINT dpi;
 	RECT screen;
 	RECT logicalScreen;
@@ -27,7 +29,9 @@ struct MonitorInfo
 
 struct MultiMonitorInfo
 {
-	int primary;							// Index of the primary monitor
+	int primary;
+	int deviceCount;
+	int displayCount;
 	std::vector<MonitorInfo> monitors;
 
 	RECT virtualScreen;
@@ -35,8 +39,14 @@ struct MultiMonitorInfo
 
 	void Clear();
 
+	int GetDeviceCount() const { return deviceCount; }
+	int GetDisplayCount() const { return displayCount; }
+	const MonitorInfo* GetByDeviceNumber(int deviceNumber) const;
+	const MonitorInfo* GetByDisplayNumber(int activeNumber) const;
+	const MonitorInfo* GetForWindow(HWND window) const;
+
 	void UpdateSpans();
-	int MonitorIndexForWindow(HWND window) const;
+
 	POINT PhysicalToLogical(POINT point, UINT dpiOverride = 0) const;
 	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
 

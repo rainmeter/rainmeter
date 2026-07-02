@@ -828,7 +828,7 @@ bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, s
 			return true;
 		}
 
-		index = monitorsInfo.MonitorIndexForWindow(m_Skin->GetWindow());
+		index = monitorsInfo.GetForWindow(m_Skin->GetWindow())->deviceNumber;
 		if (MatchRange(parameterStart, parameterEnd, L"N"))
 		{
 			_itow_s(index, buffer, 10);
