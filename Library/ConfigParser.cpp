@@ -128,7 +128,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_LastValueDefined = false;
 	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
-	m_CurrentSection.clear();
+	m_CurrentSection = nullptr;
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
 	m_SectionInsertPos = m_Sections.end();
 
@@ -224,7 +224,7 @@ std::optional<std::wstring> ConfigParser::GetBuiltInVariable(const std::wstring&
 
 	if (strParser.Consume(L"Current"))
 	{
-		if (strParser.ConsumeRest(L"Section")) return m_CurrentSection;
+		if (strParser.ConsumeRest(L"Section")) return m_CurrentSection ? *m_CurrentSection : std::wstring();
 		if (strParser.ConsumeRest(L"File") && m_Skin) return m_Skin->GetFileName();
 		if (strParser.ConsumeRest(L"Config") && m_Skin) return m_Skin->GetFolderPath();
 		return std::nullopt;
@@ -949,12 +949,12 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
-	if (m_Skin && (m_CurrentSection.empty() || meter))
+	if (m_Skin && (!m_CurrentSection || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
 		{
-			m_CurrentSection.assign(meter ? meter->GetName() : section->GetName());
+			m_CurrentSection = meter ? &meter->GetOriginalName() : &section->GetOriginalName();
 			hasCurrentAction = true;
 		}
 	}
@@ -985,11 +985,12 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		// Restrict the number of variable replacements to a reseasonable amount
 		if (++counter >= maxReplacements)
 		{
-			LogErrorSF(m_Skin, m_CurrentSection.c_str(),
+			const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+			LogErrorSF(m_Skin, section,
 				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
 			if (GetRainmeter().GetDebug())
 			{
-				LogDebugSF(m_Skin, m_CurrentSection.c_str(), L"Parsing Error: Result: %s", result.c_str());
+				LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
 			}
 			break;
 		}
@@ -1030,7 +1031,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// Avoid self references
 			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
 			{
-				LogErrorSF(m_Skin, m_CurrentSection.c_str(),
+				LogErrorSF(m_Skin, m_CurrentSection ? m_CurrentSection->c_str() : L"",
 					L"Cannot replace variable with itself: \"%s\"", original.c_str());
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
@@ -1039,7 +1040,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			previousStart = start;
 
 			// Separate "key" character from variable
-			const WCHAR key = result.substr(si, 1ULL).c_str()[0];
+			const WCHAR key = result[0];
 			std::wstring variable = result.substr(si + 1ULL, end - si - 1ULL);
 			if (variable.empty())
 			{
@@ -1199,18 +1200,19 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	// Log the self reference warning(s)
 	if (!selfReferencedVariable.empty())
 	{
-		LogWarningSF(m_Skin, m_CurrentSection.c_str(), L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
+		const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+		LogWarningSF(m_Skin, section, L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
 		if (GetRainmeter().GetDebug())
 		{
-			LogDebugSF(m_Skin, m_CurrentSection.c_str(), L"Original string: %s", str.c_str());
-			LogDebugSF(m_Skin, m_CurrentSection.c_str(), L"Replaced string: %s", result.c_str());
+			LogDebugSF(m_Skin, section, L"Original string: %s", str.c_str());
+			LogDebugSF(m_Skin, section, L"Replaced string: %s", result.c_str());
 		}
 	}
 
 	// Reset the current section
 	if (hasCurrentAction)
 	{
-		m_CurrentSection.clear();
+		m_CurrentSection = nullptr;
 	}
 
 	str = result;
@@ -1325,7 +1327,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 
 	if (!result.empty())
 	{
-		m_CurrentSection.assign(strSection);  // Set temporarily
+		m_CurrentSection = &strSection;  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1349,7 +1351,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 				m_LastReplaced = true;
 			}
 		}
-		m_CurrentSection.clear();  // Reset
+		m_CurrentSection = nullptr;  // Reset
 	}
 
 	return result;
