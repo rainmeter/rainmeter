@@ -53,6 +53,9 @@
 
 #include "ankerl/unordered_dense.h"
 
+#include "fmt/base.h"
+#include "fmt/xchar.h"
+
 // ADDITIONAL MACRO
 #define IsCtrlKeyDown()     (GetKeyState(VK_CONTROL) < 0)
 #define IsShiftKeyDown()    (GetKeyState(VK_SHIFT) < 0)
