@@ -178,18 +178,6 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 	str = WidenUTF8(utf8);
 }
 
-bool MatchAndSkipPrefix(const WCHAR** str, const WCHAR* end, const WCHAR* prefix)
-{
-	const size_t len = wcslen(prefix);
-	if ((size_t)(end - *str) >= len && _wcsnicmp(*str, prefix, len) == 0)
-	{
-		*str += len;
-		return true;
-	}
-
-	return false;
-}
-
 struct IsEqualCaseInsensitive
 {
 	IsEqualCaseInsensitive() {}

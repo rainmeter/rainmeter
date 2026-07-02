@@ -123,7 +123,7 @@ private:
 	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring& variableStr);
-	bool GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue);
+	std::optional<std::wstring> GetMonitorVariable(const std::wstring& variableStr);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }

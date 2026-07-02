@@ -45,110 +45,6 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
-template<size_t N>
-bool MatchRange(const WCHAR* start, const WCHAR* end, const WCHAR (&value)[N])
-{
-	constexpr size_t len = N - 1;
-	return (size_t)(end - start) == len && _wcsnicmp(start, value, len) == 0;
-}
-
-bool ParseMonitorComponent(const WCHAR* start, const WCHAR* end, MonitorComponent& component)
-{
-	if (MatchRange(start, end, L"X"))
-	{
-		component = MonitorComponent::X;
-		return true;
-	}
-	else if (MatchRange(start, end, L"Y"))
-	{
-		component = MonitorComponent::Y;
-		return true;
-	}
-	else if (MatchRange(start, end, L"WIDTH"))
-	{
-		component = MonitorComponent::Width;
-		return true;
-	}
-	else if (MatchRange(start, end, L"HEIGHT"))
-	{
-		component = MonitorComponent::Height;
-		return true;
-	}
-
-	return false;
-}
-
-bool ParseMonitorNumber(const WCHAR* start, const WCHAR* end, int& monitorNumber)
-{
-	if (start == end) return false;
-
-	monitorNumber = 0;
-	for (const WCHAR* ch = start; ch != end; ++ch)
-	{
-		if (!iswdigit(*ch)) return false;
-		monitorNumber = monitorNumber * 10 + (*ch - L'0');
-	}
-
-	return monitorNumber > 0;
-}
-
-bool ParseMonitorVariable(const WCHAR* str, bool& physical, MonitorArea& area, MonitorComponent& component, bool& primary, int& monitorNumber)
-{
-	const WCHAR* start = str;
-	const WCHAR* end = str + wcslen(str);
-	physical = false;
-	primary = false;
-	monitorNumber = -1;
-
-	if (end - start >= 3 && _wcsicmp(end - 3, L":PX") == 0)
-	{
-		physical = true;
-		end -= 3;
-	}
-
-	if (StringUtil::MatchAndSkipPrefix(&start, end, L"PWORKAREA"))
-	{
-		primary = true;
-		area = MonitorArea::Work;
-	}
-	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"PSCREENAREA"))
-	{
-		primary = true;
-		area = MonitorArea::Screen;
-	}
-	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"VSCREENAREA"))
-	{
-		area = MonitorArea::VirtualScreen;
-	}
-	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"WORKAREA"))
-	{
-		area = MonitorArea::Work;
-	}
-	else if (StringUtil::MatchAndSkipPrefix(&start, end, L"SCREENAREA"))
-	{
-		area = MonitorArea::Screen;
-	}
-	else
-	{
-		return false;
-	}
-
-	const WCHAR* componentEnd = end;
-	for (const WCHAR* ch = start; ch != end; ++ch)
-	{
-		if (*ch == L'@')
-		{
-			if (primary || area == MonitorArea::VirtualScreen) return false;
-
-			componentEnd = ch;
-			if (!ParseMonitorNumber(ch + 1, end, monitorNumber)) return false;
-			break;
-		}
-	}
-
-	return ParseMonitorComponent(start, componentEnd, component);
-}
-
 int GetMonitorRectValue(const RECT& rect, MonitorComponent component)
 {
 	switch (component)
@@ -348,15 +244,12 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 	// #3: Current config variables
 	if (!result) result = GetCurrentConfigVariable(strVariable);
 
+	// #4: Monitor variables
+	if (!result) result = GetMonitorVariable(strTmp);
+
 	if (result)
 	{
 		strValue.swap(*result);
-		return true;
-	}
-
-	// #4: Monitor variables
-	if (GetMonitorVariable(strTmp, strValue))
-	{
 		return true;
 	}
 
@@ -738,17 +631,82 @@ std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::w
 	return std::nullopt;
 }
 
-bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)
+std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring& variableStr)
 {
+	auto strParser = StringParser(variableStr);
 	bool physical = false;
 	bool primary = false;
 	int monitorNumber = -1;
 	MonitorArea area = MonitorArea::Screen;
 	MonitorComponent component = MonitorComponent::X;
-	if (!ParseMonitorVariable(strVariable.c_str(), physical, area, component, primary, monitorNumber))
+
+	if (strParser.Consume(L'P'))
 	{
-		return false;
+		if (strParser.Consume(L"WORKAREA"))
+		{
+			primary = true;
+			area = MonitorArea::Work;
+		}
+		else if (strParser.Consume(L"SCREENAREA"))
+		{
+			primary = true;
+			area = MonitorArea::Screen;
+		}
+		else
+		{
+			return std::nullopt;
+		}
 	}
+	else if (strParser.Consume(L"VSCREENAREA"))
+	{
+		area = MonitorArea::VirtualScreen;
+	}
+	else if (strParser.Consume(L"WORKAREA"))
+	{
+		area = MonitorArea::Work;
+	}
+	else if (strParser.Consume(L"SCREENAREA"))
+	{
+		area = MonitorArea::Screen;
+	}
+	else
+	{
+		return std::nullopt;
+	}
+
+	if (strParser.Consume(L"X"))
+	{
+		component = MonitorComponent::X;
+	}
+	else if (strParser.Consume(L"Y"))
+	{
+		component = MonitorComponent::Y;
+	}
+	else if (strParser.Consume(L"WIDTH"))
+	{
+		component = MonitorComponent::Width;
+	}
+	else if (strParser.Consume(L"HEIGHT"))
+	{
+		component = MonitorComponent::Height;
+	}
+	else
+	{
+		return std::nullopt;
+	}
+
+	if (strParser.Consume(L'@'))
+	{
+		if (primary || area == MonitorArea::VirtualScreen) return std::nullopt;
+
+		const auto parsedMonitorNumber = strParser.ConsumeInt();
+		if (!parsedMonitorNumber || *parsedMonitorNumber <= 0) return std::nullopt;
+
+		monitorNumber = *parsedMonitorNumber;
+	}
+
+	if (!strParser.IsConsumed()) return std::nullopt;
+
 	if (m_MonitorVariableMode == MonitorVariableMode::FORCE_PHYSICAL)
 	{
 		physical = true;
@@ -758,7 +716,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 	const auto& monitors = monitorsInfo.monitors;
 	if (monitors.empty())
 	{
-		return false;
+		return std::nullopt;
 	}
 
 	RECT rect = {};
@@ -804,14 +762,14 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 			const int primaryIndex = monitorsInfo.primary - 1;
 			if (monitorIndex < 0 || monitorIndex >= (int)monitors.size())
 			{
-				return false;
+				return std::nullopt;
 			}
 
 			if (!monitors[monitorIndex].active)
 			{
 				if (primaryIndex < 0 || primaryIndex >= (int)monitors.size())
 				{
-					return false;
+					return std::nullopt;
 				}
 
 				monitorIndex = primaryIndex;
@@ -825,10 +783,7 @@ bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstr
 		}
 	}
 
-	WCHAR buffer[16] = { 0 };
-	_itow_s(GetMonitorRectValue(rect, component), buffer, 10);
-	strValue = buffer;
-	return true;
+	return fmt::to_wstring(GetMonitorRectValue(rect, component));
 }
 
 /*
