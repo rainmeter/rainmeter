@@ -73,6 +73,8 @@ static bool Contains(const RECT& rect, POINT point)
 
 void MultiMonitorInfo::Clear()
 {
+	deviceCount = 0;
+	displayCount = 0;
 	monitors.clear();
 	horizontalSpans.clear();
 	verticalSpans.clear();
@@ -111,9 +113,12 @@ void MonitorUtil::SetMultiMonitorInfo()
 
 	c_Monitors.virtualScreen = GetVirtualScreenRect();
 	c_Monitors.primary = 0;
+	c_Monitors.deviceCount = 0;
+	c_Monitors.displayCount = 0;
 
 	// Populate with EnumDisplayDevices first because we also want inactive displays. This will keep
 	// the monitor index consistent e.g. when monitors are plugged in/out.
+	uint8_t deviceNumber = 0;
 	for (DWORD dwDevice = 0; ; ++dwDevice)
 	{
 		DISPLAY_DEVICE dd = { sizeof(DISPLAY_DEVICE) };
@@ -123,8 +128,8 @@ void MonitorUtil::SetMultiMonitorInfo()
 
 		MonitorInfo monitor = { 0 };
 		monitor.handle = nullptr;
-		monitor.active = (dd.StateFlags & DISPLAY_DEVICE_ACTIVE);
 		monitor.deviceName.assign(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
+		monitor.deviceNumber = ++c_Monitors.deviceCount;
 
 		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
 		for (DWORD dwMon = 0; ; ++dwMon)
@@ -140,11 +145,6 @@ void MonitorUtil::SetMultiMonitorInfo()
 		}
 
 		monitors.push_back(monitor);
-
-		if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-		{
-			c_Monitors.primary = (int)monitors.size();
-		}
 	}
 
 	// Now use EnumDisplayMonitors and link it up with the previous enumeration.
@@ -162,62 +162,39 @@ void MonitorUtil::SetMultiMonitorInfo()
 					return monitor.handle == nullptr && _wcsicmp(info.szDevice, monitor.deviceName.c_str()) == 0;
 				});
 
-			// This should never happen, but keeping this here to match older code.
-			if (monitor == monitors.end())
-			{
-				monitors.emplace_back();
-				monitor = monitors.end() - 1;
-				monitor->active = true;
-				monitor->deviceName = info.szDevice;
-			}
+			if (monitor == monitors.end()) return TRUE;
 
+			monitor->active = true;
 			monitor->handle = hMonitor;
+			monitor->displayNumber = ++c_Monitors.displayCount;
 			monitor->screen = *monitorRect;
 			monitor->work = info.rcWork;
 			monitor->dpi = MonitorUtil::GetDpiForMonitor(hMonitor);
 
+			if (info.dwFlags & MONITORINFOF_PRIMARY)
+			{
+				c_Monitors.primary = monitor->deviceNumber;
+			}
+
 			return TRUE;
 		}, 0);
-
-	int firstActive = 0;
-	bool primaryActive = false;
-	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter)
-	{
-		MonitorInfo& monitor = *iter;
-		if (monitor.active && monitor.handle == nullptr)
-		{
-			LogWarningF(L"Failed to get monitor info for: %s", monitor.deviceName.c_str());
-			monitor.active = false;
-		}
-
-		if (monitor.active)
-		{
-			const int index = (int)(iter - monitors.begin()) + 1;
-			if (firstActive == 0) firstActive = index;
-			if (c_Monitors.primary == index) primaryActive = true;
-		}
-	}
-
-	if (firstActive == 0)
-	{
-		monitors.clear();
-	}
-	else if (!primaryActive)
-	{
-		c_Monitors.primary = firstActive;
-	}
 
 	// Can this really happen...? Leaving it here because the old code had it.
 	if (monitors.empty())
 	{
 		LogWarning(L"Failed to enumerate monitors. Using dummy monitor info.");
 		MonitorInfo monitor;
-		monitor.active = true;
+		monitor.deviceNumber = 1;
+		monitor.displayNumber = 1;
 		monitor.handle = MonitorFromPoint({ 0, 0 }, MONITOR_DEFAULTTOPRIMARY);
 		monitor.screen = monitor.work = c_Monitors.virtualScreen;
 		monitor.deviceName = L"DUMMY";
 		monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
 		monitors.push_back(monitor);
+	}
+
+	if (c_Monitors.primary == 0)
+	{
 		c_Monitors.primary = 1;
 	}
 
@@ -227,7 +204,7 @@ void MonitorUtil::SetMultiMonitorInfo()
 
 		for (auto& monitor : monitors)
 		{
-			if (monitor.active && monitor.handle != nullptr)
+			if (monitor.handle != nullptr)
 			{
 				MONITORINFO info = { sizeof(MONITORINFO) };
 				GetMonitorInfo(monitor.handle, &info);
@@ -251,7 +228,7 @@ void MonitorUtil::SetMultiMonitorInfo()
 		int i = 1;
 		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
 		{
-			if (iter->active)
+			if (iter->handle)
 			{
 				LogDebugF(L"@%i: %s (active) - %s", i, iter->deviceName.c_str(), iter->monitorName.c_str());
 
@@ -287,7 +264,7 @@ void MonitorUtil::UpdateWorkareaInfo()
 	int i = 1;
 	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
 	{
-		if (iter->active && iter->handle != nullptr)
+		if (iter->handle != nullptr)
 		{
 			MONITORINFO info = { sizeof(MONITORINFO) };
 			GetMonitorInfo(iter->handle, &info);
@@ -327,22 +304,30 @@ void MultiMonitorInfo::UpdateSpans()
 	}
 }
 
-int MultiMonitorInfo::MonitorIndexForWindow(HWND window) const
+const MonitorInfo* MultiMonitorInfo::GetForWindow(HWND window) const
 {
-	const auto windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-
-	int index = 1;
+	const auto handle = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
 	for (const auto& monitor : monitors)
 	{
-		if (monitor.active && monitor.handle == windowMonitor)
-		{
-			return index;
-		}
-
-		++index;
+		if (monitor.handle == handle) return &monitor;
 	}
 
-	return primary;
+	return nullptr;
+}
+
+const MonitorInfo* MultiMonitorInfo::GetByDeviceNumber(int deviceNumber) const
+{
+	return (deviceNumber > 0 && deviceNumber <= deviceCount) ? &monitors[deviceNumber - 1] : nullptr;
+}
+
+const MonitorInfo* MultiMonitorInfo::GetByDisplayNumber(int screenNumber) const
+{
+	for (const auto& monitor : monitors)
+	{
+		if (monitor.displayNumber == screenNumber) return &monitor;
+	}
+
+	return nullptr;
 }
 
 auto MultiMonitorInfo::CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal) -> std::vector<Span>
