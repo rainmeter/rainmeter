@@ -9,6 +9,7 @@
 #include "../Common/MathParser.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringParser.h"
 #include "ConfigParser.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -342,9 +343,14 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
-	if (isNewStyle && GetNewStyleMonitorVariable(strVariable, strValue))
+	if (isNewStyle)
 	{
-		return true;
+		auto sectionMonitorResult = GetSectionMonitorVariable(strVariable);
+		if (sectionMonitorResult)
+		{
+			strValue.swap(*sectionMonitorResult);
+			return true;
+		}
 	}
 
 	// #3: Current config variables
@@ -769,140 +775,49 @@ bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std:
 	return true;
 }
 
-bool ConfigParser::GetNewStyleMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)
+// Examples: [#Monitor:X], [#Monitor:PhysicalWorkH], [#Monitor@1:DpiScale]
+std::optional<std::wstring> ConfigParser::GetSectionMonitorVariable(const std::wstring& variableStr)
 {
-	if (!m_Skin) return false;
+	if (!m_Skin) return std::nullopt;
 
-	constexpr WCHAR monitorVariable[] = L"MONITOR";
-	const WCHAR* start = strVariable.c_str();
-	const WCHAR* end = start + strVariable.length();
-	const WCHAR* prefixEnd = start + (_countof(monitorVariable) - 1);
-	if (end <= prefixEnd || wcsncmp(start, monitorVariable, _countof(monitorVariable) - 1) != 0)
-	{
-		return false;
-	}
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"Monitor")) return std::nullopt;
 
-	const WCHAR* indexStart = nullptr;
-	const WCHAR* parameterStart = nullptr;
-	if (*prefixEnd == L'@')
-	{
-		indexStart = prefixEnd + 1;
-		if (indexStart >= end)
-		{
-			return false;
-		}
-	}
-	else if (*prefixEnd == L':')
-	{
-		parameterStart = prefixEnd + 1;
-	}
-	else
-	{
-		return false;
-	}
-
-	const WCHAR* parameterEnd = end;
+	auto index = strParser.Consume(L'@') ? strParser.ConsumeInt() : std::nullopt;
+	if (!strParser.Consume(L':')) return std::nullopt;
 
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
-	if (monitors.empty()) return false;
+	if (monitors.empty()) return std::nullopt;
 
-	int index = 0;
-	if (!indexStart)
+	if (!index)
 	{
-		if (parameterStart >= parameterEnd) return false;
-
-		WCHAR buffer[16] = { 0 };
-		if (MatchRange(parameterStart, parameterEnd, L"MaxN"))
-		{
-			_itow_s((int)monitors.size(), buffer, 10);
-			strValue = buffer;
-			return true;
-		}
-
-		if (MatchRange(parameterStart, parameterEnd, L"OptionN"))
-		{
-			const int optionIndex = m_Skin->GetX().monitor ? *m_Skin->GetX().monitor : 1;
-			_itow_s(optionIndex, buffer, 10);
-			strValue = buffer;
-			return true;
-		}
+		if (strParser.ConsumeRest(L"MaxN")) return fmt::to_wstring((int)monitors.size());
+		if (strParser.ConsumeRest(L"OptionN")) return fmt::to_wstring(m_Skin->GetX().monitor.value_or(monitorsInfo.primary));
 
 		index = monitorsInfo.GetForWindow(m_Skin->GetWindow())->deviceNumber;
-		if (MatchRange(parameterStart, parameterEnd, L"N"))
-		{
-			_itow_s(index, buffer, 10);
-			strValue = buffer;
-			return true;
-		}
-	}
-	else
-	{
-		WCHAR* parseEnd = nullptr;
-		errno = 0;
-		const long parsedIndex = wcstol(indexStart, &parseEnd, 10);
-		if (parseEnd == nullptr || parseEnd >= end || *parseEnd != L':' || errno == ERANGE) return false;
-
-		index = (int)parsedIndex;
-		parameterStart = parseEnd + 1;
-		if (parameterStart >= parameterEnd) return false;
-	}
-
-	bool physical = false;
-	if (parameterEnd - parameterStart >= 8 && MatchRange(parameterStart, parameterStart + 8, L"Physical"))
-	{
-		physical = true;
-		parameterStart += 8;
-	}
-
-	bool work = false;
-	if (parameterEnd - parameterStart >= 4 && MatchRange(parameterStart, parameterStart + 4, L"Work"))
-	{
-		work = true;
-		parameterStart += 4;
+		if (strParser.ConsumeRest(L"N")) return fmt::to_wstring(*index);
 	}
 
 	static MonitorInfo s_EmptyMonitor = {};
-	const auto& monitor = (index >= 1 && index <= (int)monitors.size() && monitors[index - 1].active) ? monitors[index - 1] : s_EmptyMonitor;
+	const auto* monitor = monitorsInfo.GetByDeviceNumber(*index);
+	if (!monitor) monitor = &s_EmptyMonitor;
 
-	LONG value = 0;
+	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
+
+	const bool physical = strParser.Consume(L"Physical");
+	const bool work = strParser.Consume(L"Work");
 	const auto& rect =
 		work ?
-		(physical ? monitor.work : monitor.logicalWork) :
-		(physical ? monitor.screen : monitor.logicalScreen);
-	if (MatchRange(parameterStart, parameterEnd, L"X"))
-	{
-		value = rect.left;
-	}
-	else if (MatchRange(parameterStart, parameterEnd, L"Y"))
-	{
-		value = rect.top;
-	}
-	else if (MatchRange(parameterStart, parameterEnd, L"W"))
-	{
-		value = rect.right - rect.left;
-	}
-	else if (MatchRange(parameterStart, parameterEnd, L"H"))
-	{
-		value = rect.bottom - rect.top;
-	}
-	else if (!physical && !work && MatchRange(parameterStart, parameterEnd, L"DpiScale"))
-	{
-		WCHAR buffer[32] = { 0 };
-		const double dpiScale = (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI;
-		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", dpiScale);
-		strValue.assign(buffer, len);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+		(physical ? monitor->work : monitor->logicalWork) :
+		(physical ? monitor->screen : monitor->logicalScreen);
 
-	WCHAR buffer[16] = { 0 };
-	_itow_s(value, buffer, 10);
-	strValue = buffer;
-	return true;
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(rect.left);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(rect.top);
+	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(rect.right - rect.left);
+	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(rect.bottom - rect.top);
+
+	return std::nullopt;
 }
 
 bool ConfigParser::GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue)
