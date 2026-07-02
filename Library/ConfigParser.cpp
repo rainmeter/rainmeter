@@ -169,7 +169,7 @@ void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& str
 	}
 }
 
-bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue, bool isNewStyle)
+bool ConfigParser::GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle)
 {
 	// #1: Built-in variables
 	auto result = GetBuiltInVariable(strVariable);
@@ -204,7 +204,7 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 	return false;
 }
 
-std::optional<std::wstring> ConfigParser::GetBuiltInVariable(const std::wstring& variableStr)
+std::optional<std::wstring> ConfigParser::GetBuiltInVariable(const std::wstring_view& variableStr)
 {
 	auto strParser = StringParser(variableStr);
 
@@ -525,7 +525,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::wstring& variableStr)
+std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::wstring_view& variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -541,7 +541,7 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::ws
 }
 
 // Examples: [#Skin:X], [#Skin:DpiScale]
-std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstring& variableStr)
+std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstring_view& variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -563,7 +563,7 @@ std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstr
 }
 
 // Examples: [#Display:DisplayName], [#Display:X], [#Display:WorkAreaPhysicalH], [#DisplayDevice1:DpiScale]
-std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring& variableStr)
+std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring_view& variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
@@ -608,7 +608,7 @@ std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::w
 	return std::nullopt;
 }
 
-std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring& variableStr)
+std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring_view& variableStr)
 {
 	auto strParser = StringParser(variableStr);
 	bool physical = false;
@@ -832,9 +832,8 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 				}
 				else
 				{
-					std::wstring strVariable = result.substr(si, end - si);
 					std::wstring value;
-					if (GetVariable(strVariable, value))
+					if (GetVariable(std::wstring_view(&result[si], end - si), value))
 					{
 						// Variable found, replace it with the value
 						result.replace(start, end - start + 1ULL, value);

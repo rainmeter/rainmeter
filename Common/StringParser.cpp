@@ -63,9 +63,8 @@ std::optional<T> ConsumeRestNumber(const WCHAR*& current, const WCHAR* end, Pars
 
 }  // namespace
 
-StringParser::StringParser(const std::wstring& str) :
-	m_Current(str.c_str()),
-	m_End(m_Current + str.length())
+StringParser::StringParser(const std::wstring_view& str) :
+	StringParser(str.data(), (int)str.length())
 {
 }
 
