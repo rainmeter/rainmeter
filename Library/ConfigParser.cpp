@@ -337,18 +337,14 @@ bool ConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& st
 		return true;
 	}
 
-	// #2: New-style skin variables
-	if (isNewStyle && GetNewStyleSkinVariable(strVariable, strValue))
-	{
-		return true;
-	}
-
+	// #2: New-style section variables
 	if (isNewStyle)
 	{
-		auto sectionMonitorResult = GetSectionDisplayVariable(strVariable);
-		if (sectionMonitorResult)
+		auto result = GetSectionSkinVariable(strVariable);
+		if (!result) result = GetSectionDisplayVariable(strVariable);
+		if (result)
 		{
-			strValue.swap(*sectionMonitorResult);
+			strValue.swap(*result);
 			return true;
 		}
 	}
@@ -708,71 +704,24 @@ bool ConfigParser::GetCurrentConfigVariable(const std::wstring& strVariable, std
 	return true;
 }
 
-bool ConfigParser::GetNewStyleSkinVariable(const std::wstring& strVariable, std::wstring& strValue)
+// Examples: [#Skin:X], [#Skin:DpiScale]
+std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstring& variableStr)
 {
-	if (!m_Skin) return false;
+	if (!m_Skin) return std::nullopt;
 
-	constexpr WCHAR skinVariable[] = L"SKIN:";
-	const WCHAR* start = strVariable.c_str();
-	const WCHAR* end = start + strVariable.length();
-	const WCHAR* componentStart = start + (_countof(skinVariable) - 1);
-	if (end < componentStart || wcsncmp(start, skinVariable, _countof(skinVariable) - 1) != 0)
-	{
-		return false;
-	}
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"Skin:")) return std::nullopt;
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().y);
+	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
+	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
+	if (strParser.ConsumeRest(L"ZoomedW")) return fmt::to_wstring(m_Skin->GetZoomedWindowW());
+	if (strParser.ConsumeRest(L"ZoomedH")) return fmt::to_wstring(m_Skin->GetZoomedWindowH());
+	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring(m_Skin->GetWindowZPosition());
+	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
+	if (strParser.ConsumeRest(L"ZoomScale")) return fmt::format(L"{0:.5g}", m_Skin->GetZoom());
 
-	int value = 0;
-	if (MatchRange(componentStart, end, L"X"))
-	{
-		value = m_Skin->GetLogicalWindowPosition().x;
-	}
-	else if (MatchRange(componentStart, end, L"Y"))
-	{
-		value = m_Skin->GetLogicalWindowPosition().y;
-	}
-	else if (MatchRange(componentStart, end, L"W"))
-	{
-		value = m_Skin->GetCurrentConfigW();
-	}
-	else if (MatchRange(componentStart, end, L"H"))
-	{
-		value = m_Skin->GetCurrentConfigH();
-	}
-	else if (MatchRange(componentStart, end, L"ZoomedW"))
-	{
-		value = m_Skin->GetZoomedWindowW();
-	}
-	else if (MatchRange(componentStart, end, L"ZoomedH"))
-	{
-		value = m_Skin->GetZoomedWindowH();
-	}
-	else if (MatchRange(componentStart, end, L"ZPos"))
-	{
-		value = m_Skin->GetWindowZPosition();
-	}
-	else if (MatchRange(componentStart, end, L"ZoomScale"))
-	{
-		WCHAR buffer[32] = { 0 };
-		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", m_Skin->GetZoom());
-		strValue.assign(buffer, len);
-		return true;
-	}
-	else if (MatchRange(componentStart, end, L"DpiScale"))
-	{
-		WCHAR buffer[32] = { 0 };
-		const int len = _snwprintf_s(buffer, _TRUNCATE, L"%g", m_Skin->GetDpiScale());
-		strValue.assign(buffer, len);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-
-	WCHAR buffer[16] = { 0 };
-	_itow_s(value, buffer, 10);
-	strValue = buffer;
-	return true;
+	return std::nullopt;
 }
 
 // Examples: [#Display:Name], [#Display:X], [#Display:PWH], [#DisplayDevice1:DpiScale]
