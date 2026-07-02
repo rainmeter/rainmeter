@@ -120,7 +120,7 @@ private:
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	bool GetCurrentConfigVariable(const std::wstring& strVariable, std::wstring& strValue);
+	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring& variableStr);
 	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring& variableStr);
 	bool GetMonitorVariable(const std::wstring& strVariable, std::wstring& strValue);
