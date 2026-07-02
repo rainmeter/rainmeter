@@ -134,8 +134,6 @@ public:
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 
-	void SetZPosVariable(ZPOSITION zPos);
-
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
