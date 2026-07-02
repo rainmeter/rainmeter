@@ -895,11 +895,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			}
 			else
 			{
-				std::wstring var = result.substr(si, end - si);
-
-				Measure* measure = GetMeasure(var);
-				if (measure)
+				std::wstring section = result.substr(si, end - si);
+				StrToUpperC(section);
+				auto iter = m_Measures.find(section);
+				if (iter != m_Measures.end())
 				{
+					Measure* measure = (*iter).second;
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 					size_t valueLen = wcslen(value);
 
@@ -915,7 +916,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 					std::wstring str = result;
 
 					std::wstring value;
-					if (GetSectionVariable(var, value))
+					if (GetSectionVariable(section, value))
 					{
 						// Replace section variable with the value.
 						str.replace(start, end - start + 1, value);
