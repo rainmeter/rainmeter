@@ -551,6 +551,8 @@ std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstr
 	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().y);
 	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
 	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
+	if (strParser.ConsumeRest(L"PhysicalW")) return fmt::to_wstring(m_Skin->GetPhysicalWindowW());
+	if (strParser.ConsumeRest(L"PhysicalH")) return fmt::to_wstring(m_Skin->GetPhysicalWindowH());
 	if (strParser.ConsumeRest(L"ZoomedW")) return fmt::to_wstring(m_Skin->GetZoomedWindowW());
 	if (strParser.ConsumeRest(L"ZoomedH")) return fmt::to_wstring(m_Skin->GetZoomedWindowH());
 	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
