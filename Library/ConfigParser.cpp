@@ -562,7 +562,7 @@ std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstr
 	return std::nullopt;
 }
 
-// Examples: [#Display:Name], [#Display:X], [#Display:PWH], [#DisplayDevice1:DpiScale]
+// Examples: [#Display:DisplayName], [#Display:X], [#Display:PhysicalWorkH], [#DisplayDevice1:DpiScale]
 std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring& variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
@@ -593,8 +593,8 @@ std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::w
 	if (strParser.ConsumeRest(L"DisplayNumber")) return fmt::to_wstring(monitor->displayNumber);
 	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
 
-	const bool physical = strParser.Consume(L'P');
-	const bool work = strParser.Consume(L'W');
+	const bool physical = strParser.Consume(L"Physical");
+	const bool work = strParser.Consume(L"Work");
 	const auto& rect =
 		work ?
 		(physical ? monitor->work : monitor->logicalWork) :
