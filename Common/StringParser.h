@@ -25,7 +25,7 @@ public:
 		AllowWhitespace = 1
 	};
 
-	explicit StringParser(const std::wstring& str);
+	explicit StringParser(const std::wstring_view& str);
 	explicit StringParser(const WCHAR* str, int length = -1);
 
 	template <size_t N>

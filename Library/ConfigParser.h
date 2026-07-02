@@ -51,9 +51,9 @@ public:
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
 
-	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue, bool isNewStyle = false);
+	bool GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
-	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
+	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 	const ankerl::unordered_dense::map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
@@ -116,14 +116,13 @@ private:
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	std::optional<std::wstring> GetBuiltInVariable(const std::wstring& variableStr);
-	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring& variableStr);
-	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring& variableStr);
-	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring& variableStr);
-	std::optional<std::wstring> GetMonitorVariable(const std::wstring& variableStr);
+	std::optional<std::wstring> GetBuiltInVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetMonitorVariable(const std::wstring_view& variableStr);
 
-	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
-	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
+	static std::wstring StrToUpper(const std::wstring_view& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
 	ankerl::unordered_dense::map<std::wstring, Measure*> m_Measures;
