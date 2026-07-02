@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
@@ -17,6 +17,9 @@
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="PathUtil_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="StringParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="StringUtil_Test.cpp">

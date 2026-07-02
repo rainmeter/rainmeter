@@ -33,6 +33,7 @@
       <Filter>Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="StringParser.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
@@ -166,6 +167,7 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="StringParser.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h">
       <Filter>Gfx</Filter>
     </ClInclude>
