@@ -2448,7 +2448,7 @@ bool Skin::ReadSkin()
 	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", false);
 	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", false);
 	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", false);
-	m_OnSystemMonitorChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnSystemMonitorChange", L"", false);
+	m_OnDisplayMetricsChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnDisplayMetricsChange", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
@@ -5295,9 +5295,9 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
-	if (!m_OnSystemMonitorChangeAction.empty())
+	if (!m_OnDisplayMetricsChangeAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_OnSystemMonitorChangeAction.c_str(), this);
+		GetRainmeter().ExecuteCommand(m_OnDisplayMetricsChangeAction.c_str(), this);
 	}
 
 	return 0;
