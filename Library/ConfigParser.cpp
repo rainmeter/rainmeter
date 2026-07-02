@@ -777,33 +777,18 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	{
 		replaced = ParseVariables(result, VariableType::Variable);
 	}
-	else
+	else if (m_CurrentSection)
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
 		size_t start = 0ULL;
-		bool loop = true;
 		const std::wstring strVariable = L"[#CURRENTSECTION]";
 		const size_t length = strVariable.length();
-		do
+		while ((start = result.find(strVariable, start)) != std::wstring::npos)
 		{
-			start = result.find(strVariable, start);
-			if (start != std::wstring::npos)
-			{
-				std::wstring value;
-				if (GetVariable(L"CURRENTSECTION", value, true))
-				{
-					// Variable found, replace it with the value
-					result.replace(start, length, value);
-					start += length;
-					replaced = true;
-				}
-			}
-			else
-			{
-				loop = false;
-			}
+			result.replace(start, length, *m_CurrentSection);
+			start += m_CurrentSection->length();
+			replaced = true;
 		}
-		while (loop);
 	}
 
 	// Check for old-style variables (#VAR#)
