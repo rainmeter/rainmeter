@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "DialogInstall.h"
+#include "../Common/Map.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Platform.h"
 #include "SkinInstaller.h"
@@ -990,7 +991,7 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 void DialogInstall::KeepVariables()
 {
-	auto getPairs = [](WCHAR* section, ankerl::unordered_dense::map<std::wstring, std::wstring>& var) -> void
+	auto getPairs = [](WCHAR* section, StringMap<std::wstring>& var) -> void
 	{
 		std::wstring str, key, value;
 		for (LPCWSTR ptr = section; *ptr; ptr += str.length() + 1)
@@ -1015,8 +1016,8 @@ void DialogInstall::KeepVariables()
 		fromPath.append(file);
 		std::wstring toPath = g_Data.skinsPath + file;
 
-		ankerl::unordered_dense::map<std::wstring, std::wstring> fromVariables;
-		ankerl::unordered_dense::map<std::wstring, std::wstring> toVariables;
+		StringMap<std::wstring> fromVariables;
+		StringMap<std::wstring> toVariables;
 
 		if (_waccess_s(fromPath.c_str(), 0) != 0 || _waccess_s(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
