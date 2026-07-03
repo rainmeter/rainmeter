@@ -25,44 +25,9 @@
 
 namespace {
 
-enum class MonitorArea
-{
-	Screen,
-	Work,
-	VirtualScreen
-};
-
-enum class MonitorComponent
-{
-	X,
-	Y,
-	Width,
-	Height
-};
-
 void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 {
 	LogErrorF(L"Formula: %s: %s", error, formula);
-}
-
-int GetMonitorRectValue(const RECT& rect, MonitorComponent component)
-{
-	switch (component)
-	{
-	case MonitorComponent::X:
-		return rect.left;
-
-	case MonitorComponent::Y:
-		return rect.top;
-
-	case MonitorComponent::Width:
-		return rect.right - rect.left;
-
-	case MonitorComponent::Height:
-		return rect.bottom - rect.top;
-	}
-
-	return 0;
 }
 
 }  // namespace
@@ -606,6 +571,21 @@ std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::w
 
 std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring_view& variableStr)
 {
+	enum class MonitorArea
+	{
+		Screen,
+		Work,
+		VirtualScreen
+	};
+
+	enum class MonitorComponent
+	{
+		X,
+		Y,
+		Width,
+		Height
+	};
+
 	auto strParser = StringParser(variableStr);
 	bool physical = false;
 	bool primary = false;
@@ -756,7 +736,15 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring_
 		}
 	}
 
-	return fmt::to_wstring(GetMonitorRectValue(rect, component));
+	switch (component)
+	{
+	case MonitorComponent::X: return fmt::to_wstring(rect.left);
+	case MonitorComponent::Y: return fmt::to_wstring(rect.top);
+	case MonitorComponent::Width: return fmt::to_wstring(rect.right - rect.left);
+	case MonitorComponent::Height: return fmt::to_wstring(rect.bottom - rect.top);
+	}
+
+	return std::nullopt;
 }
 
 /*
