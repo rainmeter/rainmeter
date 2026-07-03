@@ -95,7 +95,7 @@ public:
 
 	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
 	bool ContainsNewStyleVariable(const std::wstring& str);
-	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
+	std::wstring GetMouseVariable(const std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);

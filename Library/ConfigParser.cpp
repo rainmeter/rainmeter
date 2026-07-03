@@ -1179,12 +1179,13 @@ bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
 	return false;
 }
 
-std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter* meter)
+std::wstring ConfigParser::GetMouseVariable(const std::wstring_view variable, Meter* meter)
 {
 	std::wstring result;
-	LPCWSTR var = variable.c_str();
-	WCHAR buffer[16] = { 0 };
+	StringParser strParser(variable);
+	if (!strParser.Consume(L"Mouse")) return result;
 
+	WCHAR buffer[16] = { 0 };
 	POINT pt = { 0 };
 	GetCursorPos(&pt);
 	if (m_Skin)
@@ -1192,35 +1193,33 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 		pt = m_Skin->PhysicalToRelativeLogical(pt);
 	}
 
-	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
+	if (strParser.Consume(L"X"))
 	{
-		var += 6;
 		int xOffset = meter ? meter->GetX() : 0;
-		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
+		if (strParser.ConsumeRest(L":%"))
 		{
 			double width = (meter ? meter->GetW() : m_Skin->GetW());
 			xOffset = (int)(((pt.x - xOffset + 1) / width) * 100.0);
 			_itow_s(xOffset, buffer, 10);
 			result = buffer;
 		}
-		else if (*var == L'\0')  // $MOUSEX$ or [$MOUSEX]
+		else if (strParser.IsConsumed())
 		{
 			_itow_s(pt.x - xOffset, buffer, 10);
 			result = buffer;
 		}
 	}
-	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
+	else if (strParser.Consume(L"Y"))
 	{
-		var += 6;
 		int yOffset = meter ? meter->GetY() : 0;
-		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
+		if (strParser.ConsumeRest(L":%"))
 		{
 			double width = (meter ? meter->GetH() : m_Skin->GetH());
 			yOffset = (int)(((pt.y - yOffset + 1) / width) * 100.0);
 			_itow_s(yOffset, buffer, 10);
 			result = buffer;
 		}
-		else if (*var == L'\0')  // $MOUSEY$ or [$MOUSEY]
+		else if (strParser.IsConsumed())
 		{
 			_itow_s(pt.y - yOffset, buffer, 10);
 			result = buffer;
