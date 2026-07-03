@@ -228,8 +228,8 @@ public:
 	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
 	void ClearDropTarget();
 
-	Meter* GetMeter(const std::wstring& meterName);
-	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
+	Meter* GetMeter(const std::wstring_view meterName);
+	Measure* GetMeasure(const std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class DialogManage;
 	friend class Rainmeter;

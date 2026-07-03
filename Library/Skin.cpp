@@ -5402,15 +5402,14 @@ std::wstring Skin::GetSkinPath()
 	return path;
 }
 
-Meter* Skin::GetMeter(const std::wstring& meterName)
+Meter* Skin::GetMeter(const std::wstring_view meterName)
 {
-	const WCHAR* name = meterName.c_str();
-	std::vector<Meter*>::const_iterator j = m_Meters.begin();
-	for ( ; j != m_Meters.end(); ++j)
+	for (auto* meter : m_Meters)
 	{
-		if (_wcsicmp((*j)->GetName(), name) == 0)
+		if (meter->GetOriginalName().length() == meterName.length() &&
+			_wcsicmp(meter->GetName(), meterName.data()) == 0)
 		{
-			return (*j);
+			return meter;
 		}
 	}
 	return nullptr;

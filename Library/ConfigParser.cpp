@@ -1300,7 +1300,7 @@ void ConfigParser::AddMeasure(Measure* pMeasure)
 	}
 }
 
-Measure* ConfigParser::GetMeasure(const std::wstring& name)
+Measure* ConfigParser::GetMeasure(const std::wstring_view name)
 {
 	auto iter = m_Measures.find(StrToUpper(name));
 	if (iter != m_Measures.end())

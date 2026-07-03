@@ -50,7 +50,7 @@ public:
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
-	Measure* GetMeasure(const std::wstring& name);
+	Measure* GetMeasure(const std::wstring_view name);
 
 	bool GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
