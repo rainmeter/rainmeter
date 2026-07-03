@@ -1020,7 +1020,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			previousStart = start;
 
 			// Separate "key" character from variable
-			const WCHAR key = result[0];
+			const WCHAR key = result[si];
 			std::wstring variable = result.substr(si + 1ULL, end - si - 1ULL);
 			if (variable.empty())
 			{
