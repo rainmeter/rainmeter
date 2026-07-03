@@ -125,6 +125,7 @@
     <ClInclude Include="Gfx\Util\DWriteHelpers.h" />
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
+    <ClInclude Include="Map.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="ParseUtil.h" />

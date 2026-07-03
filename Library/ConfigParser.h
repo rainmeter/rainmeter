@@ -10,6 +10,7 @@
 
 #pragma warning(disable: 4503)
 
+#include "../Common/Map.h"
 #include "../Common/ParseUtil.h"
 #include <windows.h>
 #include <string>
@@ -54,7 +55,7 @@ public:
 	bool GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
-	const ankerl::unordered_dense::map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	const StringMap<std::wstring>& GetVariables() { return m_Variables; }
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
@@ -125,7 +126,7 @@ private:
 	static std::wstring StrToUpper(const std::wstring_view& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	ankerl::unordered_dense::map<std::wstring, Measure*> m_Measures;
+	StringMap<Measure*> m_Measures;
 
 	std::vector<std::wstring> m_InheritChain;
 
@@ -138,14 +139,14 @@ private:
 	std::wstring m_CurrentPath;
 
 	std::list<std::wstring> m_Sections;		// Ordered section
-	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Values;
+	StringMap<std::wstring> m_Values;
 
 	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionInsertPos;
 
-	ankerl::unordered_dense::map<std::wstring, std::wstring> m_Variables;
-	ankerl::unordered_dense::map<std::wstring, std::wstring> m_OriginalVariableNames;
+	StringMap<std::wstring> m_Variables;
+	StringMap<std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
 
