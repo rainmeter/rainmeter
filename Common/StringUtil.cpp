@@ -100,6 +100,19 @@ size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
 	return str.size();
 }
 
+bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)
+{
+	if (dstCount <= str.length()) return false;
+	for (size_t i = 0; i < str.length(); ++i)
+	{
+		WCHAR ch = str[i];
+		if (ch >= L'a' && ch <= L'z') ch = (WCHAR)(ch - 0x20);
+		dstBuffer[i] = ch;
+	}
+	dstBuffer[str.length()] = L'\0';
+	return true;
+}
+
 void ToLowerCase(std::wstring& str)
 {
 	WCHAR* srcAndDest = &str[0];
