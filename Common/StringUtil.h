@@ -10,6 +10,7 @@
 
 #include <Windows.h>
 #include <string>
+#include <string_view>
 
 namespace StringUtil {
 
@@ -31,6 +32,7 @@ void Trim(std::wstring& str);
 
 size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single = false);
 
+bool ToUpperCase(const std::wstring_view str, WCHAR* dstBuffer, size_t dstCount);
 void ToLowerCase(std::wstring& str);
 void ToUpperCase(std::wstring& str);
 void ToProperCase(std::wstring& str);

@@ -1800,7 +1800,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
 							{
 								value.assign(sep, clen);
-								SetValue((*it), key, value);
+								SetValue(*it, key, value);
 
 								if (isVariables)
 								{
@@ -1825,54 +1825,52 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	if (temporary) System::RemoveFile(iniRead);
 }
 
-/*
-** Sets the value for the key under the given section.
-**
-*/
-void ConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
+size_t BuildValuesMapKey(const std::wstring& section, const std::wstring& option, WCHAR* buffer, size_t bufferCount)
 {
-	// LogDebugF(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
+	auto bufferPos = buffer;
 
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1 + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
+	const auto keyLength = section.size() + 1ULL + option.size();
+	if (keyLength >= bufferCount) return false;
 
-	m_Values[StrToUpperC(strTmp)] = strValue;
+	StringUtil::ToUpperCase(section, bufferPos, bufferCount);
+	bufferPos += section.length();
+
+	*bufferPos = L'~';
+	bufferPos += 1;
+
+	StringUtil::ToUpperCase(option, bufferPos, bufferCount - (bufferPos - buffer));
+	return keyLength;
 }
 
-/*
-** Deletes the value for the key under the given section.
-**
-*/
-void ConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
+const std::wstring& ConfigParser::GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue)
 {
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1ULL + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
-
-	auto iter = m_Values.find(StrToUpperC(strTmp));
-	if (iter != m_Values.end())
+	WCHAR keyBuffer[512];
+	if (auto keyLength = BuildValuesMapKey(section, option, keyBuffer, _countof(keyBuffer)))
 	{
-		m_Values.erase(iter);
+		auto iter = m_Values.find(std::wstring_view(keyBuffer, keyLength));
+		if (iter != m_Values.end()) return iter->second;
+	}
+	return defaultValue;
+}
+
+void ConfigParser::SetValue(const std::wstring& section, const std::wstring& option, std::wstring value)
+{
+	WCHAR keyBuffer[512];
+	if (auto keyLength = BuildValuesMapKey(section, option, keyBuffer, _countof(keyBuffer)))
+	{
+		m_Values[std::wstring_view(keyBuffer, keyLength)] = std::move(value);
 	}
 }
 
-/*
-** Returns the value for the key under the given section.
-**
-*/
-const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
+void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& key)
 {
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1ULL + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
-
-	auto iter = m_Values.find(StrToUpperC(strTmp));
-	return (iter != m_Values.end()) ? (*iter).second : strDefault;
+	WCHAR keyBuffer[512];
+	if (auto keyLength = BuildValuesMapKey(section, key, keyBuffer, _countof(keyBuffer)))
+	{
+		auto iter = m_Values.find(std::wstring_view(keyBuffer, keyLength));
+		if (iter != m_Values.end())
+		{
+			m_Values.erase(iter);
+		}
+	}
 }

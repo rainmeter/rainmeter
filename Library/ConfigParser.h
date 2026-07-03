@@ -59,9 +59,9 @@ public:
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
-	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
-	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
-	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
+	const std::wstring& GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue);
+	void SetValue(const std::wstring& section, const std::wstring& option, std::wstring value);
+	void DeleteValue(const std::wstring& section, const std::wstring& option);
 
 	bool ReadInheritOption(LPCTSTR section, bool allowMeterStyle = false);
 	void SetInheritChain(const std::wstring& strInherit) { static const std::wstring delim(1, L'|'); Tokenize(strInherit, delim).swap(m_InheritChain); }
