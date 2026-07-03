@@ -1620,7 +1620,6 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
-	ankerl::unordered_dense::set<std::wstring> unique;
 	std::wstring key, value;  // buffer
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
@@ -1656,6 +1655,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		while (true);
 
 		// Read the sections
+		ankerl::unordered_dense::set<std::wstring> currentFileFoundSections;
 		pos = items;
 		while (pos < epos)
 		{
@@ -1663,7 +1663,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			{
 				value = pos;  // section name
 				StrToUpperC(key.assign(value));
-				if (unique.insert(key).second)
+				if (currentFileFoundSections.insert(key).second)
 				{
 					if (m_FoundSections.insert(key).second)
 					{
@@ -1696,9 +1696,10 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	}
 
 	// Read the keys and values
+	ankerl::unordered_dense::set<std::wstring> currentSectionIncludeOptions;
 	for (auto it = sections.cbegin(); it != sections.cend(); ++it)
 	{
-		unique.clear();
+		currentSectionIncludeOptions.clear();
 
 		const WCHAR* sectionName = it->c_str();
 		const auto sectionNameLength = it->length();
@@ -1742,81 +1743,79 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 					key.assign(pos, clen);
 					std::wstring original = key;
 					StrToUpperC(key);
-					if (unique.insert(key).second)
+
+					++sep;
+					clen = len - (clen + 1);  // value's length
+
+					// Trim surrounded quotes from value
+					if (clen >= 2 && (sep[0] == L'"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
 					{
+						clen -= 2;
 						++sep;
-						clen = len - (clen + 1);  // value's length
+					}
 
-						// Trim surrounded quotes from value
-						if (clen >= 2 && (sep[0] == L'"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
+					if (wcsncmp(key.c_str(), L"@INCLUDE", 8) == 0)
+					{
+						if (currentSectionIncludeOptions.insert(std::move(key)).second && clen > 0)
 						{
-							clen -= 2;
-							++sep;
-						}
-
-						if (wcsncmp(key.c_str(), L"@INCLUDE", 8) == 0)
-						{
-							if (clen > 0)
+							value.assign(sep, clen);
+							ReadVariables();
+							ReplaceVariables(value, true);
+							if (!PathUtil::IsAbsolute(value))
 							{
-								value.assign(sep, clen);
-								ReadVariables();
-								ReplaceVariables(value, true);
-								if (!PathUtil::IsAbsolute(value))
-								{
-									// Relative to the ini folder
-									value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
-								}
+								// Relative to the ini folder
+								value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
+							}
 
-								if (resetInsertPos)
+							if (resetInsertPos)
+							{
+								std::list<std::wstring>::const_iterator jt = it;
+								if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 								{
-									std::list<std::wstring>::const_iterator jt = it;
-									if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
+									// Set the insertion place to the last
+									m_SectionInsertPos = m_Sections.end();
+									resetInsertPos = false;
+								}
+								else
+								{
+									// Find the appropriate insertion place
+									for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
 									{
-										// Set the insertion place to the last
-										m_SectionInsertPos = m_Sections.end();
-										resetInsertPos = false;
-									}
-									else
-									{
-										// Find the appropriate insertion place
-										for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
+										if (_wcsicmp((*jt).c_str(), sectionName) == 0)
 										{
-											if (_wcsicmp((*jt).c_str(), sectionName) == 0)
-											{
-												m_SectionInsertPos = ++jt;
-												resetInsertPos = false;
-												break;
-											}
+											m_SectionInsertPos = ++jt;
+											resetInsertPos = false;
+											break;
 										}
 									}
 								}
-
-								// Save the section insertion position in case the included file also uses an @Include
-								std::list<std::wstring>::const_iterator prevInsertPos = m_SectionInsertPos;
-
-								ReadIniFile(value, skinSection, depth + 1);
-
-								// Reset the section insertion position to previous position
-								m_SectionInsertPos = prevInsertPos;
 							}
+
+							// Save the section insertion position in case the included file also uses an @Include
+							auto prevInsertPos = m_SectionInsertPos;
+
+							ReadIniFile(value, skinSection, depth + 1);
+
+							// Reset the section insertion position to previous position
+							m_SectionInsertPos = prevInsertPos;
 						}
-						else if (!isMetadata)
+					}
+					else if (!isMetadata)
+					{
+						// Construct the map key manually instead of using SetValue() in order to:
+						// - move the key into the map without copying
+						// - ensure that duplicate option values aren't inserted
+						// - avoid uppercasing the same strings multiple times
+						std::wstring mapKey;
+						mapKey.reserve(sectionNameLength + 1ULL + key.length());
+						mapKey.append(sectionNameUpperCase, sectionNameLength);
+						mapKey += L'~';
+						mapKey += key;
+						auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(sep, clen));
+						if (inserted && isVariables)
 						{
-							// Construct the map key manually instead of using SetValue() in order to:
-							// - move the key into the map without copying
-							// - ensure that duplicate option values aren't inserted
-							// - avoid uppercasing the same strings multiple times
-							std::wstring mapKey;
-							mapKey.reserve(sectionNameLength + 1ULL + key.length());
-							mapKey.append(sectionNameUpperCase, sectionNameLength);
-							mapKey += L'~';
-							mapKey += key;
-							auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(sep, clen));
-							if (inserted && isVariables)
-							{
-								m_ListVariables.push_back(key);
-								m_OriginalVariableNames[key] = original;
-							}
+							m_ListVariables.push_back(key);
+							m_OriginalVariableNames[key] = original;
 						}
 					}
 				}
