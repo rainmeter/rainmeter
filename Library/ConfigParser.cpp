@@ -970,6 +970,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				{
 					LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
 				}
+
+				result.clear();
 				break;
 			}
 
