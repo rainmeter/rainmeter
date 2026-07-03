@@ -1700,9 +1700,14 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	{
 		unique.clear();
 
-		const WCHAR* sectionName = (*it).c_str();
-		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
-		bool isMetadata = (skinSection == nullptr && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
+		const WCHAR* sectionName = it->c_str();
+		const auto sectionNameLength = it->length();
+
+		WCHAR sectionNameUpperCase[512];
+		if (!StringUtil::ToUpperCase(*it, sectionNameUpperCase, _countof(sectionNameUpperCase))) continue;
+
+		bool isVariables = (wcscmp(sectionNameUpperCase, L"VARIABLES") == 0);
+		bool isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionNameUpperCase, L"METADATA") == 0);
 		bool resetInsertPos = true;
 
 		// Read all "key=value" from the section
@@ -1795,18 +1800,22 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 								m_SectionInsertPos = prevInsertPos;
 							}
 						}
-						else
+						else if (!isMetadata)
 						{
-							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
+							// Construct the map key manually instead of using SetValue() in order to:
+							// - move the key into the map without copying
+							// - ensure that duplicate option values aren't inserted
+							// - avoid uppercasing the same strings multiple times
+							std::wstring mapKey;
+							mapKey.reserve(sectionNameLength + 1ULL + key.length());
+							mapKey.append(sectionNameUpperCase, sectionNameLength);
+							mapKey += L'~';
+							mapKey += key;
+							auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(sep, clen));
+							if (inserted && isVariables)
 							{
-								value.assign(sep, clen);
-								SetValue(*it, key, value);
-
-								if (isVariables)
-								{
-									m_ListVariables.push_back(key);
-									m_OriginalVariableNames[key] = original;
-								}
+								m_ListVariables.push_back(key);
+								m_OriginalVariableNames[key] = original;
 							}
 						}
 					}
