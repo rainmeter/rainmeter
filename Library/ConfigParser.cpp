@@ -1740,8 +1740,8 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 				{
 					size_t clen = sep - pos;  // key's length
 
+					std::wstring_view optionOriginalCase(pos, clen);
 					key.assign(pos, clen);
-					std::wstring original = key;
 					StrToUpperC(key);
 
 					++sep;
@@ -1814,8 +1814,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(sep, clen));
 						if (inserted && isVariables)
 						{
-							m_ListVariables.push_back(key);
-							m_OriginalVariableNames[key] = original;
+							m_ListVariables.emplace_back(optionOriginalCase);
 						}
 					}
 				}
