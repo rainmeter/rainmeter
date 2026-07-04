@@ -119,19 +119,19 @@ void PingTask::StartWorkOnWorkerThread()
 
 	if (destAddr && !m_AbortRequested)
 	{
-		DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32UL;
+		DWORD bufferSize = (useIPv6 ? sizeof(ICMPV6_ECHO_REPLY) : sizeof(ICMP_ECHO_REPLY)) + 32;
 		BYTE* buffer = new BYTE[bufferSize]();
 
 		HANDLE hIcmpFile = (useIPv6 ? Icmp6CreateFile() : IcmpCreateFile());
 		if (hIcmpFile != INVALID_HANDLE_VALUE)
 		{
-			DWORD result = 0UL;
+			DWORD result = 0;
 			if (useIPv6)
 			{
 				struct sockaddr_in6 sourceAddr = { 0 };
 				sourceAddr.sin6_family = AF_INET6;
 				sourceAddr.sin6_port = (USHORT)0;
-				sourceAddr.sin6_flowinfo = 0UL;
+				sourceAddr.sin6_flowinfo = 0;
 				sourceAddr.sin6_addr = in6addr_any;
 
 				result = Icmp6SendEcho2(hIcmpFile, nullptr, nullptr, nullptr, &sourceAddr,
@@ -143,7 +143,7 @@ void PingTask::StartWorkOnWorkerThread()
 					nullptr, 0, nullptr, buffer, bufferSize, m_Timeout);
 			}
 
-			if (result != 0UL)
+			if (result != 0)
 			{
 				if (useIPv6)
 				{
@@ -202,10 +202,10 @@ void PingTask::FinishWorkOnMainThread()
 
 MeasurePing::MeasurePing(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Destination(),
-	m_Timeout(30000UL),
+	m_Timeout(30000),
 	m_TimeoutValue(30000.0),
-	m_UpdateRate(32UL),
-	m_UpdateCounter(0UL),
+	m_UpdateRate(32),
+	m_UpdateCounter(0),
 	m_FinishAction(),
 	m_Task(nullptr)
 {
@@ -225,8 +225,8 @@ void MeasurePing::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 
 	m_Destination = parser.ReadString(section, L"DestAddress", L"");
-	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32U);
-	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000U);
+	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32);
+	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000);
 	m_TimeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 }
@@ -235,7 +235,7 @@ void MeasurePing::UpdateValue()
 {
 	if (m_Task) return;
 
-	if (m_UpdateCounter == 0UL)
+	if (m_UpdateCounter == 0)
 	{
 		m_Task = PingTask::Create(
 			this, m_Destination, m_Timeout, m_TimeoutValue,
@@ -258,7 +258,7 @@ void MeasurePing::UpdateValue()
 	++m_UpdateCounter;
 	if (m_UpdateCounter >= m_UpdateRate)
 	{
-		m_UpdateCounter = 0UL;
+		m_UpdateCounter = 0;
 	}
 }
 
@@ -289,8 +289,8 @@ std::wstring LookupErrorCode(DWORD errorCode)
 
 std::wstring LookupPingErrorCode(DWORD errorCode)
 {
-	DWORD bufferSize = 1023UL;
-	WCHAR* buffer = new WCHAR[bufferSize + 1UL]();
+	DWORD bufferSize = 1023;
+	WCHAR* buffer = new WCHAR[bufferSize + 1]();
 
 	if (GetIpErrorString(errorCode, buffer, &bufferSize) != NO_ERROR)
 	{

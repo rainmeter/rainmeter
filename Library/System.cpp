@@ -765,14 +765,14 @@ void System::ResetWorkingDirectory()
 */
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	if (InitializeCriticalSectionEx(lpCriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
+	if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
 	{
 		return;
 	}
 
 	// The following should "always succeed" according to:
 	// https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializecriticalsectionandspincount
-	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0UL) == TRUE)
+	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0) == TRUE)
 	{
 		return;
 	}
@@ -789,7 +789,7 @@ void System::SetClipboardText(const std::wstring& text)
 	if (OpenClipboard(nullptr))
 	{
 		// Include terminating null char
-		size_t len = text.length() + 1ULL;
+		size_t len = text.length() + 1;
 
 		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(WCHAR));
 		if (hMem)
@@ -1037,14 +1037,14 @@ bool System::RemoveFolder(std::wstring folder)
 */
 void System::UpdateIniFileMappingList()
 {
-	static ULONGLONG s_LastWriteTime = 0ULL;
+	static ULONGLONG s_LastWriteTime = 0;
 
 	HKEY hKey = nullptr;
 	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
 	if (ret == ERROR_SUCCESS)
 	{
-		DWORD numSubKeys = 0UL;
-		ULONGLONG ftLastWriteTime = 0ULL;
+		DWORD numSubKeys = 0;
+		ULONGLONG ftLastWriteTime = 0;
 		bool changed = false;
 
 		ret = RegQueryInfoKey(hKey, nullptr, nullptr, nullptr, &numSubKeys, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (LPFILETIME)&ftLastWriteTime);
@@ -1158,8 +1158,8 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
 {
 	static ankerl::unordered_dense::set<std::wstring> s_Processes;
-	static ULONGLONG s_LastUpdateTickCount = 0ULL;
-	const ULONGLONG updateInterval = 250ULL; // ms
+	static ULONGLONG s_LastUpdateTickCount = 0;
+	const ULONGLONG updateInterval = 250; // ms
 
 	ULONGLONG tickCount = GetTickCount64();
 	if (tickCount >= (s_LastUpdateTickCount + updateInterval))

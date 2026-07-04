@@ -17,9 +17,9 @@ extern HINSTANCE g_Instance;
 */
 PlayerITunes::CEventHandler::CEventHandler(PlayerITunes* player) :
 	m_Player(player),
-	m_RefCount(0UL),
+	m_RefCount(0),
 	m_ConnectionPoint(nullptr),
-	m_ConnectionCookie(0UL)
+	m_ConnectionCookie(0)
 {
 	IConnectionPointContainer* icpc = nullptr;
 	m_Player->m_iTunes->QueryInterface(IID_IConnectionPointContainer, (void**)&icpc);
@@ -70,7 +70,7 @@ ULONG STDMETHODCALLTYPE PlayerITunes::CEventHandler::Release()
 PlayerITunes::PlayerITunes() : Player(),
 	m_TrackID(0L),
 	m_CallbackWindow(nullptr),
-	m_LastCheckTime(0UL),
+	m_LastCheckTime(0),
 	m_iTunesActive(false),
 	m_iTunes(nullptr),
 	m_iTunesEvent(nullptr)
@@ -228,7 +228,7 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 bool PlayerITunes::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
-	if (time - m_LastCheckTime > 500ULL)
+	if (time - m_LastCheckTime > 500)
 	{
 		m_LastCheckTime = time;
 
@@ -578,7 +578,7 @@ void PlayerITunes::ClosePlayer()
 	m_iTunes->Quit();
 	m_iTunesActive = false;
 	Uninitialize();
-	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500U, nullptr);
+	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
 }
 
 /*

@@ -15,7 +15,7 @@ bool WriteCoverToFile(const TagLib::ByteVector& data, const std::wstring& target
 	FILE* f = _wfopen(target.c_str(), L"wb");
 	if (f)
 	{
-		const bool written = fwrite(data.data(), 1ULL, data.size(), f) == data.size();
+		const bool written = fwrite(data.data(), 1, data.size(), f) == data.size();
 		fclose(f);
 		return written;
 	}
@@ -210,7 +210,7 @@ std::wstring CCover::GetFileFolder(const std::wstring& file)
 	std::wstring::size_type pos = file.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		return file.substr(0ULL, ++pos);
+		return file.substr(0, ++pos);
 	}
 
 	return file;

@@ -49,7 +49,7 @@ public:
 
 		bool hasFavorite;
 
-		Folder() : baseID(0U), active(0), level(0), hasFavorite(false) {}
+		Folder() : baseID(0), active(0), level(0), hasFavorite(false) {}
 		~Folder() {}
 
 		Folder(Folder&& r) noexcept :

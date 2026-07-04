@@ -343,12 +343,12 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 
 	// Stack: [table, function]
 	int numArgs = 0;
-	if (args.size() > 0ULL)
+	if (args.size() > 0)
 	{
 		for (auto iter : args)
 		{
 			size_t argSize = iter.size();
-			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1ULL)
+			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1)
 			{
 				argSize = StringUtil::StripLeadingAndTrailingQuotes(iter, true);
 

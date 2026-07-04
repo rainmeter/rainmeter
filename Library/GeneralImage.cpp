@@ -99,14 +99,14 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		{
 			const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(crop, L',', PairedPunctuation::Parentheses);
 			const size_t tokSize = tokens.size();
-			if (tokSize > 3ULL)
+			if (tokSize > 3)
 			{
 				m_Options.m_Crop.left   = (FLOAT)parser.ParseInt(tokens[0].c_str(), 0);
 				m_Options.m_Crop.top    = (FLOAT)parser.ParseInt(tokens[1].c_str(), 0);
 				m_Options.m_Crop.right  = (FLOAT)parser.ParseInt(tokens[2].c_str(), 0) + m_Options.m_Crop.left;
 				m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(tokens[3].c_str(), 0) + m_Options.m_Crop.top;
 
-				if (tokSize > 4ULL)
+				if (tokSize > 4)
 				{
 					m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(tokens[4].c_str(), 0);
 				}

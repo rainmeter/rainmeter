@@ -47,8 +47,8 @@ bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorC
 	{
 		std::wstring string = str;
 		std::vector<T> tokens;
-		size_t start = 0ULL;
-		size_t end = 0ULL;
+		size_t start = 0;
+		size_t end = 0;
 		int parens = 0;
 
 		auto getToken = [&]() -> void
@@ -73,7 +73,7 @@ bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorC
 					if (parens == 0)
 					{
 						getToken();
-						start = end + 1ULL; // skip comma
+						start = end + 1; // skip comma
 						break;
 					}
 					//else multi arg function ?
@@ -87,10 +87,10 @@ bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorC
 		getToken();
 
 		size_t size = tokens.size();
-		if (size > 0ULL) v1 = tokens[0];
-		if (size > 1ULL) v2 = tokens[1];
-		if (size > 2ULL) v3 = tokens[2];
-		if (size > 3ULL) v4 = tokens[3];
+		if (size > 0) v1 = tokens[0];
+		if (size > 1) v2 = tokens[1];
+		if (size > 2) v3 = tokens[2];
+		if (size > 3) v4 = tokens[3];
 
 		return true;
 	}
@@ -220,7 +220,7 @@ D2D1_COLOR_F ParseColor(LPCTSTR str, FormulaErrorCallback errorCallback)
 
 	if (!ParseInt4(str, R, G, B, A, errorCallback))
 	{
-		if (wcsncmp(str, L"0x", 2ULL) == 0)
+		if (wcsncmp(str, L"0x", 2) == 0)
 		{
 			str += 2;  // skip prefix
 		}
@@ -230,7 +230,7 @@ D2D1_COLOR_F ParseColor(LPCTSTR str, FormulaErrorCallback errorCallback)
 		{
 			swscanf_s(str, L"%02x%02x%02x%02x", &R, &G, &B, &A);
 		}
-		else if (len >= 6ULL)
+		else if (len >= 6)
 		{
 			swscanf_s(str, L"%02x%02x%02x", &R, &G, &B);
 		}
@@ -260,7 +260,7 @@ std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& 
 {
 	std::vector<std::wstring> tokens;
 
-	size_t lastPos = 0ULL, pos = 0ULL;
+	size_t lastPos = 0, pos = 0;
 	do
 	{
 		lastPos = str.find_first_not_of(delimiters, pos);
@@ -293,8 +293,8 @@ std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str,
 {
 	std::vector<std::wstring> tokens;
 	const PairInfo pair = GetPairInfo(punct);
-	size_t start = 0ULL;
-	size_t end = 0ULL;
+	size_t start = 0;
+	size_t end = 0;
 
 	auto getToken = [&]() -> void
 	{

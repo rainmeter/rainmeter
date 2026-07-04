@@ -77,7 +77,7 @@ void MeasureSpeedFan::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"SpeedFan: SpeedFanType=%s is not valid", type.c_str());
 	}
 
-	m_Number = parser.ReadUInt(section, L"SpeedFanNumber", 0U);
+	m_Number = parser.ReadUInt(section, L"SpeedFanNumber", 0);
 }
 
 void MeasureSpeedFan::UpdateValue()

@@ -57,7 +57,7 @@ HMODULE InitializeAtlLibrary()
 
 PlayerWMP::CRemoteHost::CRemoteHost() :
 	m_Player(),
-	m_RefCount(0UL)
+	m_RefCount(0)
 {
 }
 
@@ -74,10 +74,10 @@ ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::AddRef()
 ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::Release()
 {
 	--m_RefCount;
-	if (m_RefCount == 0UL)
+	if (m_RefCount == 0)
 	{
 		delete this;
-		return 0UL;
+		return 0;
 	}
 	return m_RefCount;
 }
@@ -203,8 +203,8 @@ void PlayerWMP::CRemoteHost::SwitchedToControl()
 PlayerWMP::PlayerWMP() : Player(),
 	m_TrackChanged(false),
 	m_Window(nullptr),
-	m_LastCheckTime(0ULL),
-	m_ConnectionCookie(0UL)
+	m_LastCheckTime(0),
+	m_ConnectionCookie(0)
 {
 }
 
@@ -432,19 +432,19 @@ void PlayerWMP::UpdateData()
 
 				if (rating > 75)
 				{
-					m_Rating = 5U;
+					m_Rating = 5;
 				}
 				else if (rating > 50)
 				{
-					m_Rating = 4U;
+					m_Rating = 4;
 				}
 				else if (rating > 25)
 				{
-					m_Rating = 3U;
+					m_Rating = 3;
 				}
 				else if (rating > 1)
 				{
-					m_Rating = 2U;
+					m_Rating = 2;
 				}
 				else
 				{
@@ -503,7 +503,7 @@ void PlayerWMP::UpdateData()
 		ULONGLONG time = GetTickCount64();
 
 		// Try to find WMP window every 5 seconds
-		if (m_LastCheckTime = 0ULL || time - m_LastCheckTime > 5000ULL)
+		if (m_LastCheckTime = 0 || time - m_LastCheckTime > 5000)
 		{
 			m_LastCheckTime = time;
 

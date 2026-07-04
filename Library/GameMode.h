@@ -51,10 +51,10 @@ public:
 private:
 	enum class State : UINT
 	{
-		Disabled = 0U,
+		Disabled = 0,
 		Enabled,
 		LayoutEnabled,
-		ForcedExit = 999U
+		ForcedExit = 999
 	};
 
 	GameMode();

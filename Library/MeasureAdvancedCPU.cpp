@@ -70,20 +70,20 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeasureAdvancedCPU::UpdateValue()
 {
 	static std::vector<ProcessValues> s_Processes;
-	static ULONGLONG s_OldTime = 0ULL;
+	static ULONGLONG s_OldTime = 0;
 
 	const ULONGLONG time = GetTickCount64();
-	if (s_OldTime == 0ULL || time - s_OldTime > 500ULL)
+	if (s_OldTime == 0 || time - s_OldTime > 500)
 	{
 		UpdateProcesses(s_Processes);
 		s_OldTime = time;
 	}
 
-	LONGLONG newValue = 0LL;
+	LONGLONG newValue = 0;
 
 	for (const auto& process : s_Processes)
 	{
-		if (CheckProcess(process.name.c_str()) && process.oldValue != 0LL)
+		if (CheckProcess(process.name.c_str()) && process.oldValue != 0)
 		{
 			const LONGLONG value = process.newValue - process.oldValue;
 
@@ -111,13 +111,13 @@ void MeasureAdvancedCPU::ReadProcessList(const std::wstring& value, std::vector<
 {
 	processList.clear();
 
-	size_t start = 0U;
+	size_t start = 0;
 	while (start < value.length())
 	{
 		const size_t end = value.find(L';', start);
 		const size_t length = (end == std::wstring::npos) ? std::wstring::npos : end - start;
 
-		if (length != 0U)
+		if (length != 0)
 		{
 			processList.emplace_back(value.substr(start, length));
 		}
@@ -127,7 +127,7 @@ void MeasureAdvancedCPU::ReadProcessList(const std::wstring& value, std::vector<
 			break;
 		}
 
-		start = end + 1U;
+		start = end + 1;
 	}
 }
 
@@ -197,7 +197,7 @@ static void UpdateProcesses(std::vector<ProcessValues>& processes)
 						{
 							ProcessValues values;
 							values.name = name;
-							values.oldValue = 0LL;
+							values.oldValue = 0;
 							values.newValue = *(ULONGLONG*)data;
 							values.found = false;
 

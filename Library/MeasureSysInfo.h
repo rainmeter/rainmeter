@@ -13,10 +13,10 @@
 
 enum class SysInfoType : UINT
 {
-	UNKNOWN = 0U,
+	UNKNOWN = 0,
 
 	// General system
-	COMPUTER_NAME = 1000U,
+	COMPUTER_NAME = 1000,
 	USER_NAME,
 	USER_SID,
 	OS_VERSION,
@@ -25,11 +25,11 @@ enum class SysInfoType : UINT
 	OS_BITS,
 
 	// Monitor and screen values
-	NUM_MONITORS = 2000U,
+	NUM_MONITORS = 2000,
 	SCREEN_SIZE,
 	WORK_AREA,
 
-	SCREEN_WIDTH = 2500U,        // BLOCK 2500: Do not change the //
+	SCREEN_WIDTH = 2500,        // BLOCK 2500: Do not change the //
 	SCREEN_HEIGHT,               // order of these types. They    //
 	WORK_AREA_LEFT,              // used to gather monitor size   //
 	WORK_AREA_TOP,               // information.                  //
@@ -41,19 +41,19 @@ enum class SysInfoType : UINT
 	VIRTUAL_SCREEN_HEIGHT,
 
 	// Network values
-	HOST_NAME = 3000U,
+	HOST_NAME = 3000,
 	DOMAIN_NAME,
 	DNS_SERVER,
 	DOMAIN_WORKGROUP,
 
-	INTERNET_CONNECTIVITY = 3250U, // BLOCK 3250: Do not change   //
+	INTERNET_CONNECTIVITY = 3250, // BLOCK 3250: Do not change   //
 	INTERNET_CONNECTIVITY_V4,      // the order of these types.   //
 	INTERNET_CONNECTIVITY_V6,
 	LAN_CONNECTIVITY,
 	LAN_CONNECTIVITY_V4,
 	LAN_CONNECTIVITY_V6,
 
-	ADAPTER_DESCRIPTION = 3500U,   // BLOCK 3500: Do not change   //
+	ADAPTER_DESCRIPTION = 3500,   // BLOCK 3500: Do not change   //
 	ADAPTER_ALIAS,                 // the order of these types.   //
 	ADAPTER_GUID,                  // They are used with specific //
 	ADAPTER_TYPE,                  // interface names or with the //
@@ -69,7 +69,7 @@ enum class SysInfoType : UINT
 	GATEWAY_ADDRESS_V6,
 
 	// Timezone values
-	TIMEZONE_ISDST = 4000U,
+	TIMEZONE_ISDST = 4000,
 	TIMEZONE_BIAS,
 	TIMEZONE_STANDARD_BIAS,
 	TIMEZONE_DAYLIGHT_BIAS,
@@ -77,7 +77,7 @@ enum class SysInfoType : UINT
 	TIMEZONE_DAYLIGHT_NAME,
 
 	// Time values
-	IDLE_TIME = 5000U,
+	IDLE_TIME = 5000,
 	USER_LOGON_TIME,
 	LAST_SLEEP_TIME,
 	LAST_WAKE_TIME

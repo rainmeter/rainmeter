@@ -35,7 +35,7 @@ MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_CntrlLineLength(false),
 	m_LineStartShift(0.0),
 	m_LineLengthShift(0.0),
-	m_ValueRemainder(0U),
+	m_ValueRemainder(0),
 	m_LineColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_Value(0.0)
 {
@@ -58,7 +58,7 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
-	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
+	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", D2D1::ColorF(D2D1::ColorF::Black));
 	m_Solid = parser.ReadBool(section, L"Solid", false);
@@ -84,7 +84,7 @@ bool MeterRoundLine::Update()
 		}
 
 		Measure* measure = m_Measures[0];
-		if (m_ValueRemainder > 0U)
+		if (m_ValueRemainder > 0)
 		{
 			LONGLONG time = (LONGLONG)measure->GetValue();
 			m_Value = (double)(time % m_ValueRemainder);

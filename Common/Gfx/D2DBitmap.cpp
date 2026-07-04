@@ -41,24 +41,24 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRe
 }
 
 D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation, bool createAlphaMask) :
-	m_Width(0U),
-	m_Height(0U),
+	m_Width(0),
+	m_Height(0),
 	m_ExifOrientation(exifOrientation),
 	m_Path(path),
-	m_FileSize(0UL),
-	m_FileTime(0ULL),
+	m_FileSize(0),
+	m_FileTime(0),
 	m_AlphaMask(),
 	m_CreateAlphaMask(createAlphaMask)
 {
 }
 
 D2DBitmap::D2DBitmap() :
-	m_Width(0U),
-	m_Height(0U),
+	m_Width(0),
+	m_Height(0),
 	m_ExifOrientation(0),
 	m_Path(L""),
-	m_FileSize(0UL),
-	m_FileTime(0ULL),
+	m_FileSize(0),
+	m_FileTime(0),
 	m_AlphaMask(),
 	m_CreateAlphaMask(false)
 {
@@ -108,9 +108,9 @@ bool D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 		D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 	HRESULT hr = canvas.m_Target->CreateBitmap(
-		D2D1::SizeU(1U, 1U),
+		D2D1::SizeU(1, 1),
 		nullptr,
-		0U,
+		0,
 		bProps,
 		bitmap.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) return false;
@@ -122,7 +122,7 @@ bool D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 		const auto rect = it.GetRect();
 		if (rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)
 		{
-			const auto point = D2D1::Point2U(0U, 0U);
+			const auto point = D2D1::Point2U(0, 0);
 			const auto srcRect = D2D1::RectU(
 				(UINT32)(px - rect.left),
 				(UINT32)(py - rect.top),
@@ -180,7 +180,7 @@ bool D2DBitmap::BuildAlphaMask(Canvas& canvas)
 	{
 		const UINT segmentW = segment.GetWidth();
 		const UINT segmentH = segment.GetHeight();
-		if (segmentW == 0U || segmentH == 0U)
+		if (segmentW == 0 || segmentH == 0)
 		{
 			continue;
 		}
@@ -197,12 +197,12 @@ bool D2DBitmap::BuildAlphaMask(Canvas& canvas)
 		HRESULT hr = canvas.m_Target->CreateBitmap(
 			D2D1::SizeU(segmentW, segmentH),
 			nullptr,
-			0U,
+			0,
 			bProps,
 			bitmap.ReleaseAndGetAddressOf());
 		if (FAILED(hr)) return false;
 
-		const auto point = D2D1::Point2U(0U, 0U);
+		const auto point = D2D1::Point2U(0, 0);
 		hr = bitmap->CopyFromBitmap(&point, segment.GetBitmap(), nullptr);
 		if (FAILED(hr)) return false;
 
@@ -210,13 +210,13 @@ bool D2DBitmap::BuildAlphaMask(Canvas& canvas)
 		hr = bitmap->Map(D2D1_MAP_OPTIONS_READ, &data);
 		if (FAILED(hr)) return false;
 
-		for (UINT y = 0U; y < segmentH; ++y)
+		for (UINT y = 0; y < segmentH; ++y)
 		{
 			const size_t dstRow = (size_t)(segment.GetY() + y) * m_Width + segment.GetX();
 			const size_t srcRow = (size_t)y * data.pitch;
-			for (UINT x = 0U; x < segmentW; ++x)
+			for (UINT x = 0; x < segmentW; ++x)
 			{
-				alphaMask[dstRow + x] = data.bits[srcRow + (size_t)x * 4U + 3U];
+				alphaMask[dstRow + x] = data.bits[srcRow + (size_t)x * 4 + 3];
 			}
 		}
 

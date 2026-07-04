@@ -20,14 +20,14 @@
 #include <TlHelp32.h>
 #include <string>
 
-constexpr UINT_PTR g_ResponseEventID  = 1000ULL;
-constexpr UINT     g_ResponseInterval = 2000U;   // milliseconds
-constexpr UINT_PTR g_AppCloseEventID  = 2000ULL;
-constexpr UINT     g_AppCloseInterval = 500U;    // milliseconds
-constexpr UINT     g_MaxNumberOfTries = 10U;
+constexpr UINT_PTR g_ResponseEventID  = 1000;
+constexpr UINT     g_ResponseInterval = 2000;   // milliseconds
+constexpr UINT_PTR g_AppCloseEventID  = 2000;
+constexpr UINT     g_AppCloseInterval = 500;    // milliseconds
+constexpr UINT     g_MaxNumberOfTries = 10;
 
 std::wstring       g_RainmeterPath    = L"";
-UINT               g_NumberOfTries    = 0U;
+UINT               g_NumberOfTries    = 0;
 
 bool IsRainmeterRunning();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

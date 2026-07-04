@@ -198,7 +198,7 @@ bool CloseRainmeterIfActive()
 	HWND hwnd = FindWindow(L"DummyRainWClass", L"Rainmeter control window");
 	if (hwnd)
 	{
-		DWORD pID = 0UL, exitCode = 0UL;
+		DWORD pID = 0, exitCode = 0;
 		GetWindowThreadProcessId(hwnd, &pID);
 		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, FALSE, pID);
 		PostMessage(hwnd, WM_DESTROY, 0, 0);

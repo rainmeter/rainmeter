@@ -19,13 +19,13 @@ namespace Gfx {
 
 const DXGI_SWAP_CHAIN_DESC1 g_SwapChainDesc =
 {
-	.Width = 1U,
-	.Height = 1U,
+	.Width = 1,
+	.Height = 1,
 	.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
 	.Stereo = false,
-	.SampleDesc = { .Count = 1U, .Quality = 0U },
+	.SampleDesc = { .Count = 1, .Quality = 0 },
 	.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-	.BufferCount = 1U,
+	.BufferCount = 1,
 	.Scaling = DXGI_SCALING_STRETCH,
 	.SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
 	.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
@@ -47,7 +47,7 @@ Canvas::Canvas() :
 	m_W(0),
 	m_H(0),
 	m_Dpi(96.0f),
-	m_MaxBitmapSize(0U),
+	m_MaxBitmapSize(0),
 	m_ValidDeviceContext(false),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
@@ -142,7 +142,7 @@ bool Canvas::AttachDevice()
 	if (FAILED(hr))
 	{
 		// Fallback to software renderer if hardware acceleration is not available.
-		hr = tryCreateDevice(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
+		hr = tryCreateDevice(D3D_DRIVER_TYPE_WARP, nullptr, 0);
 		if (FAILED(hr)) return false;
 	}
 
@@ -236,7 +236,7 @@ HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 	if (FAILED(hr)) return hr;
 
 	// Ensure that DXGI does not queue more than one frame at a time.
-	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
+	hr = c_DxgiDevice->SetMaximumFrameLatency(1);
 	if (FAILED(hr)) return hr;
 
 	ComPtr<IDXGIFactory2> dxgiFactory;
@@ -273,10 +273,10 @@ bool Canvas::Resize(int w, int h)
 	m_BackBuffer.Reset();
 
 	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
-	HRESULT hr = m_SwapChain->ResizeBuffers(0U, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
+	HRESULT hr = m_SwapChain->ResizeBuffers(0, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
 	if (FAILED(hr)) return false;
 
-	hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return false;
 
 	const auto props = D2D1::BitmapProperties1(
@@ -610,7 +610,7 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	else
 	{
 		// GDI+ compatibility: Zero height text has no visible lines.
-		lines = 0U;
+		lines = 0;
 	}
 	return true;
 }
@@ -781,7 +781,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 	HRESULT hr = m_Target->CreateGradientStopCollection(
 		gradientStops,
-		2U,
+		2,
 		D2D1_GAMMA_2_2,
 		D2D1_EXTEND_MODE_CLAMP,
 		pGradientStops.GetAddressOf());
@@ -842,7 +842,7 @@ Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(co
 	HRESULT hr = m_Target->CreateSolidColorBrush(color, brush.GetAddressOf());
 	if (FAILED(hr)) return nullptr;
 
-	const size_t maxCacheSize = 64U;
+	const size_t maxCacheSize = 64;
 	if (m_SolidColorBrushCache.size() <= maxCacheSize)
 	{
 		m_SolidColorBrushCache.emplace(color, brush);

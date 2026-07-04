@@ -118,7 +118,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	if (FAILED(hr)) return;
 
 	// Load shadow options to effect
-	shadow->SetInput(0U, m_Bitmap.Get());
+	shadow->SetInput(0, m_Bitmap.Get());
 	shadow->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, m_Blur);
 	shadow->SetValue(D2D1_SHADOW_PROP_COLOR, ToVector4F(m_Color));
 	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);

@@ -368,7 +368,7 @@ bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 	do
 	{
 		BYTE buffer[16384] = { 0 };
-		DWORD written = 0UL;
+		DWORD written = 0;
 		read = unzReadCurrentFile(m_PackageUnzFile, buffer, _countof(buffer));
 		if (read < 0 || !WriteFile(hFile, (LPCVOID)buffer, read, &written, nullptr) || read != written)
 		{
@@ -1021,10 +1021,10 @@ void DialogInstall::KeepVariables()
 
 		if (_waccess_s(fromPath.c_str(), 0) != 0 || _waccess_s(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1U) continue;	// No variables in existing file
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1) continue;	// No variables in existing file
 		getPairs(section, fromVariables);
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1U) continue;	// No variables in the file from rmskin
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1) continue;	// No variables in the file from rmskin
 		getPairs(section, toVariables);
 
 		for (const auto& var : fromVariables)
@@ -1136,7 +1136,7 @@ void DialogInstall::LaunchRainmeter()
 
 	if (!m_LoadSkins.empty())
 	{
-		size_t pos = 0ULL;
+		size_t pos = 0;
 		std::wstring bang;
 
 		for (size_t i = 0, isize = m_LoadSkins.size(); i < isize; ++i)
@@ -1349,7 +1349,7 @@ std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 	DWORD bufSize = GetFileVersionInfoSize(fileName, 0);
 	void* versionInfo = new WCHAR[bufSize];
 	void* fileVersion = nullptr;
-	UINT valueSize = 0U;
+	UINT valueSize = 0;
 	std::wstring result;
 
 	if (GetFileVersionInfo(fileName, 0, bufSize, versionInfo))

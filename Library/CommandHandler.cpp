@@ -265,10 +265,10 @@ void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWST
 	std::wstring folderPath;
 	std::wstring file;
 	const size_t argCount = args.size();
-	if (argCount > 0ULL)
+	if (argCount > 0)
 	{
 		folderPath = args[0];
-		if (argCount == 1ULL)
+		if (argCount == 1)
 		{
 			if (GetRainmeter().ActivateSkin(folderPath)) return;
 		}

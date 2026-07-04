@@ -42,7 +42,7 @@ void MeasureRegistry::UpdateValue()
 
 	if (!m_RegKey)
 	{
-		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
+		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 	}
 
 	if (m_RegKey)
@@ -67,16 +67,16 @@ void MeasureRegistry::UpdateValue()
 				}
 			};
 
-			DWORD numSubKeys = 0UL;
-			DWORD numValues = 0UL;
+			DWORD numSubKeys = 0;
+			DWORD numValues = 0;
 			if (ERROR_SUCCESS == RegQueryInfoKey(m_RegKey, nullptr, nullptr, nullptr, &numSubKeys,
 				nullptr, nullptr, &numValues, nullptr, nullptr, nullptr, nullptr))
 			{
-				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0UL)
+				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0)
 				{
 					getList(numSubKeys, RegEnumKeyEx);
 				}
-				else if (m_OutputType == OutputType::ValueList && numValues > 0UL)
+				else if (m_OutputType == OutputType::ValueList && numValues > 0)
 				{
 					getList(numValues, RegEnumValue);
 				}
@@ -86,7 +86,7 @@ void MeasureRegistry::UpdateValue()
 		{
 			DWORD dataSize = 128;
 			BYTE* data = new BYTE[dataSize];
-			DWORD type = 0UL;
+			DWORD type = 0;
 
 			DWORD resultSize = dataSize;
 			DWORD result = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr, &type, data, &resultSize);
@@ -170,7 +170,7 @@ void MeasureRegistry::UpdateValue()
 					break;
 
 				case REG_BINARY:
-					for (DWORD i = 0UL; i < resultSize; ++i)
+					for (DWORD i = 0; i < resultSize; ++i)
 					{
 						WCHAR buffer[3];
 						_snwprintf_s(buffer, 3, L"%02X", data[i]);
@@ -261,7 +261,7 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Try to open the key
 	Dispose();
-	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
+	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 }
 
 /*

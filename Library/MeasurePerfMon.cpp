@@ -66,7 +66,7 @@ void MeasurePerfMon::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (changed)
 	{
-		m_OldValue = 0ULL;
+		m_OldValue = 0;
 		m_FirstTime = true;
 	}
 }
@@ -96,7 +96,7 @@ ULONGLONG MeasurePerfMon::GetPerfData(const WCHAR* objectName, const WCHAR* inst
 
 	BYTE data[256];
 	WCHAR name[256];
-	ULONGLONG value = 0ULL;
+	ULONGLONG value = 0;
 
 	CPerfSnapshot snapshot(&s_TitleCounter);
 	CPerfObjectList objList(&snapshot, &s_TitleCounter);

@@ -943,7 +943,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 	ListView_SortItems(item, ListSortProc, 0);
 
-	UINT state = selIndex == -1 ? 0U : LVIS_FOCUSED | LVIS_SELECTED;
+	UINT state = selIndex == -1 ? 0 : LVIS_FOCUSED | LVIS_SELECTED;
 
 	// Re-select previously selected item (or deselect group header)
 	ListView_SetItemState(item, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
@@ -1426,7 +1426,7 @@ void DialogDebug::TabPlugins::Initialize()
 			std::wstring tmpSz = pluginPath + fd.cFileName;
 			const WCHAR* path = tmpSz.c_str();
 
-			WORD imageBitness = 0U;
+			WORD imageBitness = 0;
 			if (!FileUtil::GetBinaryFileBitness(path, imageBitness))
 			{
 				LogErrorF(L"Debug Dialog - Unable to load plugin: %s", fd.cFileName);
@@ -1449,7 +1449,7 @@ void DialogDebug::TabPlugins::Initialize()
 			vitem.pszText = fd.cFileName;
 
 			// Try to get version and author from file resources first
-			DWORD handle = 0UL;
+			DWORD handle = 0;
 			DWORD versionSize = GetFileVersionInfoSize(path, &handle);
 			if (versionSize)
 			{
@@ -1457,7 +1457,7 @@ void DialogDebug::TabPlugins::Initialize()
 				void* data = new BYTE[versionSize];
 				if (GetFileVersionInfo(path, 0, versionSize, data))
 				{
-					UINT len = 0U;
+					UINT len = 0;
 					struct LANGCODEPAGE
 					{
 						WORD wLanguage;

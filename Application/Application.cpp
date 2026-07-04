@@ -58,7 +58,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	WCHAR path[MAX_PATH];
 	path[0] = L'\0';
 	DWORD num = GetModuleFileName(nullptr, path, _countof(path));
-	if (num > 0UL && *path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	if (num > 0 && *path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		WCHAR* file = PathFindFileName(path);
 		if (file && lstrcmpi(file, L"Rainmeter.exe") != 0)
@@ -71,7 +71,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	}
 
 	// Prevent system error message boxes.
-	UINT oldMode = SetErrorMode(0U);
+	UINT oldMode = SetErrorMode(0);
 	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
 
 	HINSTANCE instance = (HINSTANCE)&__ImageBase;
@@ -99,7 +99,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 		// Stub prodecure. If icon resources have been removed, try to launch the actual Rainmeter.exe.
 		WCHAR buffer[MAX_PATH];
 		DWORD bufferSize = sizeof(buffer);
-		DWORD type = 0UL;
+		DWORD type = 0;
 		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", nullptr, RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) == ERROR_SUCCESS)
 		{
 			SetCurrentDirectory(buffer);

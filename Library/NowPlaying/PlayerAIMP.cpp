@@ -19,7 +19,7 @@ Player* PlayerAIMP::c_Player = nullptr;
 PlayerAIMP::PlayerAIMP() : Player(),
 	m_Window(),
 	m_WinampWindow(),
-	m_LastCheckTime(0ULL),
+	m_LastCheckTime(0),
 	m_LastFileSize(0),
 	m_LastTitleSize(0),
 	m_FileMap(),
@@ -61,7 +61,7 @@ bool PlayerAIMP::CheckWindow()
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find AIMP every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 		m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
@@ -295,8 +295,8 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 	{
 		const auto registry_key = [&]() -> std::wstring
 		{
-			UINT retVal = GetSystemWow64Directory(nullptr, 0U);
-			if (retVal == 0U || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+			UINT retVal = GetSystemWow64Directory(nullptr, 0);
+			if (retVal == 0 || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
 			{
 				return L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
 			}
@@ -309,7 +309,7 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 
 			WCHAR data[512];
 			DWORD size = sizeof(data);
-			DWORD type = 0UL;
+			DWORD type = 0;
 
 			std::wstring key = registry_key;
 			key += version;

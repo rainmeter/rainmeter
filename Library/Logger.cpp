@@ -220,9 +220,9 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 	{
 		errno = 0;
 		size_t size = _vscwprintf(format, args);
-		if (errno != 0 || size <= 0ULL)
+		if (errno != 0 || size <= 0)
 		{
-			return 1024ULL;
+			return 1024;
 		}
 		 return ++size;  // +1 for null termination
 	};

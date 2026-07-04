@@ -41,7 +41,7 @@ void DownloadTask::StartWorkOnWorkerThread()
 {
 	if (SUCCEEDED(CoInitialize(nullptr)))
 	{
-		m_Result = URLDownloadToFile(nullptr, m_Url.c_str(), m_Path.c_str(), 0UL, nullptr);
+		m_Result = URLDownloadToFile(nullptr, m_Url.c_str(), m_Path.c_str(), 0, nullptr);
 		CoUninitialize();
 	}
 }
@@ -109,14 +109,14 @@ void FetchTask::FinishWorkOnMainThread()
 
 BYTE* FetchTask::FetchData()
 {
-	m_DataSize = 0UL;
+	m_DataSize = 0;
 
 	if (m_AbortRequested)
 	{
 		return nullptr;
 	}
 
-	if (_wcsnicmp(m_Url.c_str(), L"file://", 7ULL) == 0)  // Local file
+	if (_wcsnicmp(m_Url.c_str(), L"file://", 7) == 0)  // Local file
 	{
 		WCHAR path[MAX_PATH] = { 0 };
 		DWORD pathLength = _countof(path);
@@ -126,7 +126,7 @@ BYTE* FetchTask::FetchData()
 			return nullptr;
 		}
 
-		size_t fileSize = 0ULL;
+		size_t fileSize = 0;
 		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
 		m_DataSize = (DWORD)fileSize;
 
@@ -139,7 +139,7 @@ BYTE* FetchTask::FetchData()
 		components.dwExtraInfoLength = ULONG_MAX;
 		if (InternetCrackUrl(m_Url.c_str(), static_cast<DWORD>(m_Url.size()), 0, &components))
 		{
-			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0ULL)
+			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0)
 			{
 				size_t position = m_Url.find(components.lpszExtraInfo);  // Only percent encode characters in the query or fragment part of the URL
 				if (position != std::wstring::npos)
@@ -162,18 +162,18 @@ BYTE* FetchTask::FetchData()
 
 	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
 	// invalid (e.g. when incorrectly using the UTF-16LE codepage for the data).
-	const DWORD CHUNK_SIZE = 8192UL;
+	const DWORD CHUNK_SIZE = 8192;
 	DWORD bufferSize = CHUNK_SIZE;
 
-	DWORD contentLength = 0UL;
+	DWORD contentLength = 0;
 	DWORD contentLengthSize = sizeof(contentLength);
 	if (HttpQueryInfo(hUrlDump, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &contentLength, &contentLengthSize, nullptr) &&
-		contentLength > 0UL)
+		contentLength > 0)
 	{
 		bufferSize = contentLength;
 	}
 
-	BYTE* buffer = (BYTE*)malloc(bufferSize + 3UL);
+	BYTE* buffer = (BYTE*)malloc(bufferSize + 3);
 	if (!buffer)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -184,7 +184,7 @@ BYTE* FetchTask::FetchData()
 	// Read the data.
 	do
 	{
-		DWORD readSize = 0UL;
+		DWORD readSize = 0;
 		if (m_AbortRequested || !InternetReadFile(hUrlDump, buffer + m_DataSize, bufferSize - m_DataSize, &readSize))
 		{
 			free(buffer);
@@ -192,7 +192,7 @@ BYTE* FetchTask::FetchData()
 			InternetCloseHandle(hUrlDump);
 			return nullptr;
 		}
-		else if (readSize == 0UL)
+		else if (readSize == 0)
 		{
 			// All data read.
 			break;
@@ -203,7 +203,7 @@ BYTE* FetchTask::FetchData()
 		bufferSize += CHUNK_SIZE;
 
 		BYTE* oldBuffer = buffer;
-		if ((buffer = (BYTE*)realloc(buffer, bufferSize + 3UL)) == nullptr)
+		if ((buffer = (BYTE*)realloc(buffer, bufferSize + 3)) == nullptr)
 		{
 			free(oldBuffer);
 			oldBuffer = nullptr;

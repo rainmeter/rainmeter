@@ -387,9 +387,9 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 		{
 			do
 			{
-				const DWORD bufferSize = 16UL * 1024UL;
+				const DWORD bufferSize = 16 * 1024;
 				BYTE buffer[bufferSize] = { 0 };
-				DWORD readSize = 0UL;
+				DWORD readSize = 0;
 				if (!ReadFile(file, buffer, bufferSize, &readSize, nullptr))
 				{
 					result = false;
@@ -794,7 +794,7 @@ private:
 				ofn.lpstrFilter = L"Plugins (.dll)\0*.dll";
 				ofn.lpstrTitle = L"Select plugin file";
 				ofn.lpstrDefExt = L"dll";
-				ofn.nFilterIndex = 0UL;
+				ofn.nFilterIndex = 0;
 				ofn.lpstrFile = buffer;
 				ofn.nMaxFile = _countof(buffer);
 				ofn.hwndOwner = m_Window;

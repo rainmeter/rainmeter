@@ -520,7 +520,7 @@ void MeasureTime::UpdateDelta()
 	}
 	else
 	{
-		time_t now = 0LL;
+		time_t now = 0;
 		time(&now);
 		tm* today = localtime(&now);
 		if (m_DaylightSavingTime && today->tm_isdst)

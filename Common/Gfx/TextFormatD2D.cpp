@@ -88,7 +88,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 
 	bool strChanged = false;
 	if (strLen != m_LastString.length() ||
-		memcmp(str, m_LastString.c_str(), ((size_t)strLen + 1ULL) * sizeof(WCHAR)) != 0)
+		memcmp(str, m_LastString.c_str(), ((size_t)strLen + 1) * sizeof(WCHAR)) != 0)
 	{
 		strChanged = true;
 		m_LastString.assign(str, strLen);
@@ -386,7 +386,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 			textLayout.As(&textLayout1);
 
 			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0U, strLen};
+			const DWRITE_TEXT_RANGE range = {0, strLen};
 			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 

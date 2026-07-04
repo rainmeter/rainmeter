@@ -40,25 +40,25 @@ std::wstring EncodeUrl(const std::wstring& url)
 */
 Player::Player() :
 	m_Initialized(false),
-	m_InstanceCount(0U),
-	m_UpdateCount(0U),
-	m_TrackCount(0U),
+	m_InstanceCount(0),
+	m_UpdateCount(0),
+	m_TrackCount(0),
 	m_Measures(0),
 	m_State(),
-	m_Number(0U),
-	m_Year(0U),
+	m_Number(0),
+	m_Year(0),
 	m_Shuffle(false),
 	m_Repeat(false),
-	m_Duration(0U),
-	m_Position(0U),
-	m_Rating(0U),
-	m_Volume(0U),
+	m_Duration(0),
+	m_Position(0),
+	m_Rating(0),
+	m_Volume(0),
 	m_FetchLyricsTask(nullptr)
 {
 	// Get temporary file for cover art
 	WCHAR buffer[MAX_PATH] = { 0 };
 	GetTempPath(_countof(buffer), buffer);
-	GetTempFileName(buffer, L"jpg", 0U, buffer);
+	GetTempFileName(buffer, L"jpg", 0, buffer);
 	m_TempCoverPath = buffer;
 }
 
@@ -92,7 +92,7 @@ void Player::AddInstance()
 */
 void Player::RemoveInstance()
 {
-	if (--m_InstanceCount == 0U)
+	if (--m_InstanceCount == 0)
 	{
 		delete this;
 	}
@@ -116,7 +116,7 @@ void Player::UpdateMeasure()
 	if (++m_UpdateCount >= m_InstanceCount)
 	{
 		UpdateData();
-		m_UpdateCount = 0U;
+		m_UpdateCount = 0;
 	}
 }
 
@@ -184,23 +184,23 @@ void Player::HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode
 	pos = body.find(L"<p>", pos);
 	if (pos == std::wstring::npos) return;
 
-	pos += 6ULL;
-	body.erase(0ULL, pos);
+	pos += 6;
+	body.erase(0, pos);
 
 	pos = body.find(L"</div>");
-	pos -= 9ULL;
+	pos -= 9;
 	body.resize(pos);
 
 	CharacterEntityReference::Decode(body, 2, false);
 
 	while ((pos = body.find(L"<br/>"), pos) != std::wstring::npos)
 	{
-		body.replace(pos, 5ULL, L"\n");
+		body.replace(pos, 5, L"\n");
 	}
 
 	while ((pos = body.find(L"</p><p>"), pos) != std::wstring::npos)
 	{
-		body.replace(pos, 7ULL, L"\n\n");
+		body.replace(pos, 7, L"\n\n");
 	}
 
 	m_Lyrics = body;
@@ -220,15 +220,15 @@ void Player::ClearData(bool all)
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
-	m_Duration = 0U;
-	m_Position = 0U;
-	m_Rating = 0U;
-	m_Number = 0U;
-	m_Year = 0U;
+	m_Duration = 0;
+	m_Position = 0;
+	m_Rating = 0;
+	m_Number = 0;
+	m_Year = 0;
 
 	if (all)
 	{
-		m_Volume = 0U;
+		m_Volume = 0;
 		m_Shuffle = false;
 		m_Repeat = false;
 	}

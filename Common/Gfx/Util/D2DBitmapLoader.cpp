@@ -42,7 +42,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	}
 	bitmap->SetFileSize(fileSize);
 
-	ULONGLONG fileTime = 0ULL;
+	ULONGLONG fileTime = 0;
 	if (GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime) == FALSE)
 	{
 		return cleanup(E_FAIL);
@@ -60,7 +60,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 		decoder.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		hr = decoder->GetFrame(0U, decoderFrame.GetAddressOf());
+		hr = decoder->GetFrame(0, decoderFrame.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
 			hr = ConvertToD2DFormat(decoderFrame.Get(), source);
@@ -71,8 +71,8 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	const int orientation = GetExifOrientation(decoderFrame.Get());
 	bitmap->SetOrientation(orientation);
 
-	UINT width = 0U;
-	UINT height = 0U;
+	UINT width = 0;
+	UINT height = 0;
 	hr = source->GetSize(&width, &height);
 	if (FAILED(hr)) return cleanup(hr);
 
@@ -93,15 +93,15 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 			d2dbitmap.GetAddressOf());
 		if (FAILED(hr)) return cleanup(hr);
 
-		bitmap->AddSegment(d2dbitmap, 0U, 0U, width, height);
+		bitmap->AddSegment(d2dbitmap, 0, 0, width, height);
 
 		bitmap->SetSize(width, height);
 		return cleanup(S_OK);
 	}
 
-	for (UINT y = 0U, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
+	for (UINT y = 0, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
 	{
-		for (UINT x = 0U, W = (UINT)floor(width / maxBitmapSize); x <= W; ++x)
+		for (UINT x = 0, W = (UINT)floor(width / maxBitmapSize); x <= W; ++x)
 		{
 			WICRect rcClip = {
 				(INT)(x * maxBitmapSize),
@@ -148,7 +148,7 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file
 		return true;
 	}
 
-	ULONGLONG fileTime = 0ULL;
+	ULONGLONG fileTime = 0;
 	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
 	CloseHandle(fileHandle);
 
@@ -175,7 +175,7 @@ HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInf
 		return E_FAIL;
 	}
 
-	ULONGLONG fileTime = 0ULL;
+	ULONGLONG fileTime = 0;
 	BOOL lastWrite = GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
 	CloseHandle(fileHandle);
 
@@ -212,12 +212,12 @@ HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,
 HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask)
 {
 	alphaMask.clear();
-	if (!source || width == 0U || height == 0U || width > (UINT)INT_MAX || height > (UINT)INT_MAX || width > UINT_MAX / 4U)
+	if (!source || width == 0 || height == 0 || width > (UINT)INT_MAX || height > (UINT)INT_MAX || width > UINT_MAX / 4)
 	{
 		return E_FAIL;
 	}
 
-	const UINT stride = width * 4U;
+	const UINT stride = width * 4;
 	const UINT64 pixelCount64 = (UINT64)width * height;
 	const size_t pixelCount = (size_t)pixelCount64;
 	if ((UINT64)pixelCount != pixelCount64)
@@ -227,7 +227,7 @@ HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, U
 
 	alphaMask.resize(pixelCount);
 	std::vector<BYTE> row(stride);
-	for (UINT y = 0U; y < height; ++y)
+	for (UINT y = 0; y < height; ++y)
 	{
 		WICRect rect = { 0, (INT)y, (INT)width, 1 };
 		HRESULT hr = source->CopyPixels(&rect, stride, stride, row.data());
@@ -238,9 +238,9 @@ HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, U
 		}
 
 		const size_t dstRow = (size_t)y * width;
-		for (UINT x = 0U; x < width; ++x)
+		for (UINT x = 0; x < width; ++x)
 		{
-			alphaMask[dstRow + x] = row[(size_t)x * 4U + 3U];
+			alphaMask[dstRow + x] = row[(size_t)x * 4 + 3];
 		}
 	}
 

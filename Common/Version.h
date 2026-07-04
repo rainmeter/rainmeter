@@ -44,7 +44,7 @@ private:
 	int Compare(const std::wstring& version2) const
 	{
 		const size_t size1 = m_Version.size(), size2 = version2.size();
-		size_t i = 0ULL, j = 0ULL;
+		size_t i = 0, j = 0;
 
 		while (i < size1 || j < size2)
 		{

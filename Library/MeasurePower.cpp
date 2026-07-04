@@ -25,13 +25,13 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 
 constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 
-UINT MeasurePower::c_NumOfProcessors = 0U;
+UINT MeasurePower::c_NumOfProcessors = 0;
 
 MeasurePower::MeasurePower(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_State(PowerState::UNKNOWN),
 	m_SuppressError(false),
 	m_HasBeenUpdated(false),
-	m_CachedBatteryLifeTime(0UL)
+	m_CachedBatteryLifeTime(0)
 {
 	if (!c_NumOfProcessors)
 	{
@@ -112,7 +112,7 @@ void MeasurePower::UpdateValue()
 	{
 	case PowerState::HZ:
 	case PowerState::MHZ:
-		if (c_NumOfProcessors > 0U)
+		if (c_NumOfProcessors > 0)
 		{
 			std::vector<PROCESSOR_POWER_INFORMATION> ppi(c_NumOfProcessors);
 			LONG status = CallNtPowerInformation(
