@@ -1834,7 +1834,7 @@ size_t BuildValuesMapKey(const std::wstring& section, const std::wstring& option
 {
 	auto bufferPos = buffer;
 
-	const auto keyLength = section.size() + 1ULL + option.size();
+	const auto keyLength = section.size() + 1 + option.size();
 	if (keyLength >= bufferCount) return false;
 
 	StringUtil::ToUpperCase(section, bufferPos, bufferCount);
