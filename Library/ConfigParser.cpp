@@ -1620,12 +1620,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
-	std::wstring key, value;  // buffer
+	std::wstring optionUpperCase, value;  // buffer
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
 	WCHAR* items = new WCHAR[itemsSize];
 	WCHAR* pos = nullptr;
-	WCHAR* epos = nullptr;
+	WCHAR* endPos = nullptr;
 
 	if (skinSection == nullptr)
 	{
@@ -1643,7 +1643,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			}
 			if (res < itemsSize - 2)		// Fits in the buffer
 			{
-				epos = items + res;
+				endPos = items + res;
 				break;
 			}
 
@@ -1657,15 +1657,15 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		// Read the sections
 		ankerl::unordered_dense::set<std::wstring> currentFileFoundSections;
 		pos = items;
-		while (pos < epos)
+		while (pos < endPos)
 		{
 			if (*pos)
 			{
 				value = pos;  // section name
-				StrToUpperC(key.assign(value));
-				if (currentFileFoundSections.insert(key).second)
+				StrToUpperC(optionUpperCase.assign(value));
+				if (currentFileFoundSections.insert(optionUpperCase).second)
 				{
-					if (m_FoundSections.insert(key).second)
+					if (m_FoundSections.insert(optionUpperCase).second)
 					{
 						m_Sections.insert(m_SectionInsertPos, value);
 					}
@@ -1701,24 +1701,24 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	{
 		currentSectionIncludeOptions.clear();
 
-		const WCHAR* sectionName = it->c_str();
-		const auto sectionNameLength = it->length();
+		const WCHAR* sectionOriginalCase = it->c_str();
+		const auto sectionLength = it->length();
 
-		WCHAR sectionNameUpperCase[512];
-		if (!StringUtil::ToUpperCase(*it, sectionNameUpperCase, _countof(sectionNameUpperCase))) continue;
+		WCHAR sectionUpperCase[512];
+		if (!StringUtil::ToUpperCase(*it, sectionUpperCase, _countof(sectionUpperCase))) continue;
 
-		bool isVariables = (wcscmp(sectionNameUpperCase, L"VARIABLES") == 0);
-		bool isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionNameUpperCase, L"METADATA") == 0);
+		bool isVariables = (wcscmp(sectionUpperCase, L"VARIABLES") == 0);
+		bool isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionUpperCase, L"METADATA") == 0);
 		bool resetInsertPos = true;
 
 		// Read all "key=value" from the section
 		do
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileSection(sectionName, items, itemsSize, iniRead.c_str());
+			DWORD res = GetPrivateProfileSection(sectionOriginalCase, items, itemsSize, iniRead.c_str());
 			if (res < itemsSize - 2UL)		// Fits in the buffer
 			{
-				epos = items + res;
+				endPos = items + res;
 				break;
 			}
 
@@ -1730,35 +1730,35 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		while (true);
 
 		pos = items;
-		while (pos < epos)
+		while (pos < endPos)
 		{
 			if (*pos)
 			{
-				size_t len = wcslen(pos);
-				WCHAR* sep = wmemchr(pos, L'=', len);
-				if (sep != nullptr && sep != pos)
+				size_t lineLength = wcslen(pos);
+				WCHAR* valuePos = wmemchr(pos, L'=', lineLength);
+				if (valuePos != nullptr && valuePos != pos)
 				{
-					size_t clen = sep - pos;  // key's length
+					size_t optionLength = valuePos - pos;
 
-					std::wstring_view optionOriginalCase(pos, clen);
-					key.assign(pos, clen);
-					StrToUpperC(key);
+					std::wstring_view optionOriginalCase(pos, optionLength);
+					optionUpperCase.assign(pos, optionLength);
+					StrToUpperC(optionUpperCase);
 
-					++sep;
-					clen = len - (clen + 1);  // value's length
+					++valuePos;
+					auto valueLength = lineLength - (optionLength + 1);  // value's length
 
 					// Trim surrounded quotes from value
-					if (clen >= 2 && (sep[0] == L'"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
+					if (valueLength >= 2 && (valuePos[0] == L'"' || valuePos[0] == L'\'') && valuePos[valueLength - 1] == valuePos[0])
 					{
-						clen -= 2;
-						++sep;
+						valueLength -= 2;
+						++valuePos;
 					}
 
-					if (wcsncmp(key.c_str(), L"@INCLUDE", 8) == 0)
+					if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
 					{
-						if (currentSectionIncludeOptions.insert(std::move(key)).second && clen > 0)
+						if (currentSectionIncludeOptions.insert(std::move(optionUpperCase)).second && valueLength > 0)
 						{
-							value.assign(sep, clen);
+							value.assign(valuePos, valueLength);
 							ReadVariables();
 							ReplaceVariables(value, true);
 							if (!PathUtil::IsAbsolute(value))
@@ -1781,7 +1781,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 									// Find the appropriate insertion place
 									for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
 									{
-										if (_wcsicmp((*jt).c_str(), sectionName) == 0)
+										if (_wcsicmp((*jt).c_str(), sectionOriginalCase) == 0)
 										{
 											m_SectionInsertPos = ++jt;
 											resetInsertPos = false;
@@ -1807,18 +1807,18 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						// - ensure that duplicate option values aren't inserted
 						// - avoid uppercasing the same strings multiple times
 						std::wstring mapKey;
-						mapKey.reserve(sectionNameLength + 1ULL + key.length());
-						mapKey.append(sectionNameUpperCase, sectionNameLength);
+						mapKey.reserve(sectionLength + 1ULL + optionUpperCase.length());
+						mapKey.append(sectionUpperCase, sectionLength);
 						mapKey += L'~';
-						mapKey += key;
-						auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(sep, clen));
+						mapKey += optionUpperCase;
+						auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(valuePos, valueLength));
 						if (inserted && isVariables)
 						{
 							m_ListVariables.emplace_back(optionOriginalCase);
 						}
 					}
 				}
-				pos += len + 1ULL;
+				pos += lineLength + 1ULL;
 			}
 			else  // Empty string
 			{
