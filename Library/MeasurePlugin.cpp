@@ -143,7 +143,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	WCHAR pluginPath[MAX_PATH] = { 0 };
-	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
+	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0)
 	{
 		LogDebugF(L"Plugin loaded: %s", pluginPath);
 	}

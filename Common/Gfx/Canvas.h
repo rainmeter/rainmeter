@@ -30,12 +30,12 @@ struct ankerl::unordered_dense::hash<D2D1_COLOR_F>
 		const auto normalizeFloatBits = [](FLOAT value) -> uint32_t
 		{
 			// Handle positive and negative floating point zeros.
-			return value == 0.0f ? 0U : std::bit_cast<uint32_t>(value);
+			return value == 0.0f ? 0 : std::bit_cast<uint32_t>(value);
 		};
 
 		const auto combineFloat = [&](FLOAT first, FLOAT second) -> uint64_t
 		{
-			return static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32U);
+			return static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32);
 		};
 
 		uint64_t hash = ankerl::unordered_dense::detail::wyhash::hash(combineFloat(color.r, color.g));

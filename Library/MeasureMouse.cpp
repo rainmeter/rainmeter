@@ -252,7 +252,7 @@ void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_RelativeToSkin = parser.ReadBool(section, L"RelativeToSkin", true);
 	m_RequireDragging = parser.ReadBool(section, L"RequireDragging", false);
-	m_Delay = parser.ReadUInt(section, L"Delay", 16U);
+	m_Delay = parser.ReadUInt(section, L"Delay", 16);
 
 	if (!m_RequireDragging)
 	{

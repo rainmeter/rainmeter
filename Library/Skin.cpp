@@ -201,7 +201,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
 
-	m_FadeStartTime = 0ULL;
+	m_FadeStartTime = 0;
 
 	UnregisterMouseInput();
 	m_HasMouseScrollAction = false;
@@ -1410,7 +1410,7 @@ void Skin::ShowBlur()
 	SetBlur(true);
 
 	// Check that Aero and transparency is enabled
-	DWORD color = 0UL;
+	DWORD color = 0;
 	BOOL opaque = FALSE;
 	BOOL enabled = FALSE;
 
@@ -2376,7 +2376,7 @@ bool Skin::ReadSkin()
 	m_Canvas.Resize(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
+	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
 	{
 		if (appVersion % 1000 != 0)
@@ -2579,10 +2579,10 @@ bool Skin::ReadSkin()
 				fontSource += fontResourcePath;
 			}
 
-			UINT32 familyCount = 0U;
+			UINT32 familyCount = 0;
 			std::wstring families;
 			bool success = fontCollectionD2D->GetFontFamilies(familyCount, families);
-			if (familyCount > 0U && !families.empty())
+			if (familyCount > 0 && !families.empty())
 			{
 				LogDebugF(this, L"Local Font families: Count=%i %s", familyCount, fontSource.c_str());
 				if (success)
@@ -3379,7 +3379,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			ULONGLONG ticks = GetTickCount64();
-			if (m_FadeStartTime == 0ULL)
+			if (m_FadeStartTime == 0)
 			{
 				m_FadeStartTime = ticks;
 			}
@@ -3388,7 +3388,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_ActiveFade = false;
 				KillTimer(m_Window, TIMER_FADE);
-				m_FadeStartTime = 0ULL;
+				m_FadeStartTime = 0;
 				if (m_FadeEndValue == 0)
 				{
 					ShowWindow(m_Window, SW_HIDE);
@@ -3413,7 +3413,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TIMER_DEACTIVATE:
-		if (m_FadeStartTime == 0ULL)
+		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
 			GetRainmeter().RemoveUnmanagedSkin(this);
@@ -4396,7 +4396,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				const RECT windowRect = { wp->x, wp->y, wp->x + (windowW ? windowW : 1), wp->y + (windowH ? windowH : 1) };
 				const RECT* workArea = nullptr;
 
-				size_t maxSize = 0ULL;
+				size_t maxSize = 0;
 				for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
 				{
 					RECT r = { 0 };
@@ -4480,7 +4480,7 @@ LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur())
 	{
-		DWORD color = 0UL;
+		DWORD color = 0;
 		BOOL opaque = FALSE;
 		if (DwmGetColorizationColor(&color, &opaque) != S_OK)
 		{

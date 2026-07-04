@@ -40,7 +40,7 @@ void RenderTexture::CreateBitmap(Canvas& canvas, D2DBitmap& bitmap, UINT width, 
 		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> segment;
 	canvas.m_Target->CreateBitmap(D2D1::SizeU(width, height), nullptr, 0, props, segment.GetAddressOf());
-	bitmap.AddSegment(segment, 0U, 0U, width, height);
+	bitmap.AddSegment(segment, 0, 0, width, height);
 }
 
 } // namespace Gfx

@@ -17,7 +17,7 @@ Player* PlayerSpotify::c_Player = nullptr;
 */
 PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(nullptr),
-	m_LastCheckTime(0ULL)
+	m_LastCheckTime(0)
 {
 }
 
@@ -48,7 +48,7 @@ std::wstring GetExe(HWND hwnd)
 {
 	WCHAR procPath[400] = { 0 };
 
-	DWORD procID = 0UL;
+	DWORD procID = 0;
 	GetWindowThreadProcessId(hwnd, &procID);
 
 	HANDLE checkProc = OpenProcess(PROCESS_ALL_ACCESS, false, procID);
@@ -74,7 +74,7 @@ bool PlayerSpotify::CheckWindow()
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 
@@ -115,7 +115,7 @@ void PlayerSpotify::UpdateData()
 			if (pos != std::wstring::npos)
 			{
 				std::wstring artist(title, 0, pos);
-				pos += 3ULL;  // Skip " - "
+				pos += 3;  // Skip " - "
 				std::wstring track(title, pos);
 				m_State = STATE_PLAYING;
 
@@ -189,12 +189,12 @@ void PlayerSpotify::Previous()
 void PlayerSpotify::ClosePlayer()
 {
 	// A little harsh...
-	DWORD pID = 0UL;
+	DWORD pID = 0;
 	GetWindowThreadProcessId(m_Window, &pID);
 	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pID);
 	if (hProcess)
 	{
-		TerminateProcess(hProcess, 0U);
+		TerminateProcess(hProcess, 0);
 		CloseHandle(hProcess);
 	}
 }
@@ -212,7 +212,7 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 			// Gotta figure out where Winamp is located at
 			WCHAR data[512];
 			DWORD size = sizeof(data);
-			DWORD type = 0UL;
+			DWORD type = 0;
 
 			if (RegGetValue(HKEY_CLASSES_ROOT, L"spotify\\DefaultIcon", nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{

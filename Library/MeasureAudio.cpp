@@ -319,7 +319,7 @@ void MeasureAudio::EnumerateEndpoints()
 		return;
 	}
 
-	UINT count = 0U;
+	UINT count = 0;
 	if (collection->GetCount(&count) == S_OK)
 	{
 		m_EndpointIDs.resize(count);
@@ -422,7 +422,7 @@ bool MeasureAudio::SetVolume(UINT volume, int offset)
 
 UINT MeasureAudio::GetDefaultEndpointIndex()
 {
-	UINT index = 0U;
+	UINT index = 0;
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (CreateEnumerator(this, &enumerator))
 	{

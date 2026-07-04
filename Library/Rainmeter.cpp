@@ -1063,7 +1063,7 @@ void Rainmeter::OpenSkinFolder(const std::wstring& name)
 bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 {
 	WCHAR* buffer = new WCHAR[SHRT_MAX];
-	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0UL);
+	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0);
 	delete [] buffer;
 	buffer = nullptr;
 
@@ -1077,17 +1077,17 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			LARGE_INTEGER fileSize = { 0 };
-			if (GetFileSizeEx(hFile, &fileSize) != FALSE && fileSize.QuadPart > 4LL)
+			if (GetFileSizeEx(hFile, &fileSize) != FALSE && fileSize.QuadPart > 4)
 			{
 				LARGE_INTEGER newSize = { 0 };
-				newSize.QuadPart = -4LL;
+				newSize.QuadPart = -4;
 
 				LARGE_INTEGER newPtr = { 0 };
 				while (SetFilePointerEx(hFile, newSize, &newPtr, FILE_END) == TRUE)
 				{
 					WCHAR lastTwoChars[2] = { 0 };
-					DWORD bytesRead = 0UL;
-					if (ReadFile(hFile, lastTwoChars, 4UL, &bytesRead, nullptr) == FALSE)
+					DWORD bytesRead = 0;
+					if (ReadFile(hFile, lastTwoChars, 4, &bytesRead, nullptr) == FALSE)
 					{
 						break;
 					}
@@ -1097,7 +1097,7 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 						break;  // Found the last non newline character sequence "\r\n"
 					}
 
-					fileSize.QuadPart -= 4LL;
+					fileSize.QuadPart -= 4;
 
 					if (SetFilePointerEx(hFile, fileSize, &newPtr, FILE_BEGIN) == FALSE)
 					{
@@ -1117,8 +1117,8 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 
 				// If the following WriteFile fails, there will be no space between sections, however,
 				// WritePrivateProfileSection will automatically create the section at the end of the file
-				DWORD bytesWritten = 0UL;
-				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2UL), &bytesWritten, nullptr);
+				DWORD bytesWritten = 0;
+				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2), &bytesWritten, nullptr);
 			}
 			CloseHandle(hFile);
 		}
@@ -1660,7 +1660,7 @@ void Rainmeter::DelayedExecuteCommand(const WCHAR* command, Skin* skin)
 void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
 	// Force the reload of system cursors
-	SystemParametersInfo(SPI_SETCURSORS, 0U, nullptr, 0U);
+	SystemParametersInfo(SPI_SETCURSORS, 0, nullptr, 0);
 
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
@@ -2296,7 +2296,7 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 */
 void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log)
 {
-	size_t size = 0ULL;
+	size_t size = 0;
 	auto raw = FileUtil::ReadFullFile(iniFile, &size);
 	if (!raw) return;
 

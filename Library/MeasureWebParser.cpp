@@ -184,7 +184,7 @@ private:
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
-UINT g_InstanceCount = 0U;
+UINT g_InstanceCount = 0;
 
 static std::vector<MeasureWebParser*> g_Measures;
 
@@ -321,7 +321,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Url = url;
 
 	m_Headers.clear();
-	size_t hNum = 1ULL;
+	size_t hNum = 1;
 	std::wstring hOption = L"Header";
 	std::wstring hValue = parser.ReadString(section, hOption.c_str(), L"");
 	while (!hValue.empty())
@@ -466,7 +466,7 @@ void MeasureWebParser::UpdateValue()
 	{
 		if (!m_DownloadTask)
 		{
-			if (m_UpdateCounter == 0U)
+			if (m_UpdateCounter == 0)
 			{
 				StartDownloadTask();
 			}
@@ -474,7 +474,7 @@ void MeasureWebParser::UpdateValue()
 			++m_UpdateCounter;
 			if (m_UpdateCounter >= m_UpdateRate)
 			{
-				m_UpdateCounter = 0U;
+				m_UpdateCounter = 0;
 			}
 		}
 	}
@@ -485,12 +485,12 @@ void MeasureWebParser::UpdateValue()
 			m_Value = wcstod(m_ResultString.c_str(), nullptr);
 		}
 
-		if (m_Url.size() > 0ULL && m_Url.find(L'[') == std::wstring::npos)
+		if (m_Url.size() > 0 && m_Url.find(L'[') == std::wstring::npos)
 		{
 			// This is not a reference; need to update.
 			if (!m_FetchTask && !m_DownloadTask)
 			{
-				if (m_UpdateCounter == 0U)
+				if (m_UpdateCounter == 0)
 				{
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
@@ -510,7 +510,7 @@ void MeasureWebParser::UpdateValue()
 				++m_UpdateCounter;
 				if (m_UpdateCounter >= m_UpdateRate)
 				{
-					m_UpdateCounter = 0U;
+					m_UpdateCounter = 0;
 				}
 			}
 		}
@@ -781,10 +781,10 @@ void MeasureWebParser::StartDownloadTask()
 			if (url[0] == L'/')
 			{
 				// Absolute path
-				pos = m_Url.find(L'/', 7ULL);	// Assume "http://" (=7)
+				pos = m_Url.find(L'/', 7);	// Assume "http://" (=7)
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(m_Url.substr(0ULL, pos));
+					std::wstring path(m_Url.substr(0, pos));
 					url = path + url;
 				}
 			}
@@ -795,7 +795,7 @@ void MeasureWebParser::StartDownloadTask()
 				pos = m_Url.rfind(L'/');
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(m_Url.substr(0ULL, pos + 1ULL));
+					std::wstring path(m_Url.substr(0, pos + 1));
 					url = path + url;
 				}
 			}
@@ -816,7 +816,7 @@ void MeasureWebParser::StartDownloadTask()
 			std::wstring::size_type pos = path.find_first_not_of(L'\\');
 			if (pos != std::wstring::npos)
 			{
-				path.erase(0UL, pos);
+				path.erase(0, pos);
 			}
 
 			PathCanonicalize(buffer, m_DownloadFolder.c_str());
@@ -824,7 +824,7 @@ void MeasureWebParser::StartDownloadTask()
 
 			wcscat(buffer, path.c_str());
 
-			if (buffer[wcslen(buffer) - 1ULL] != L'\\')  // path is a file
+			if (buffer[wcslen(buffer) - 1] != L'\\')  // path is a file
 			{
 				fullpath = buffer;
 				PathRemoveFileSpec(buffer);
@@ -845,7 +845,7 @@ void MeasureWebParser::StartDownloadTask()
 
 			std::wstring::size_type pos2 = url.find_first_of(L"?#");
 			std::wstring::size_type pos1 = url.find_last_of(L'/', pos2);
-			pos1 = (pos1 != std::wstring::npos) ? pos1 + 1ULL : 0ULL;
+			pos1 = (pos1 != std::wstring::npos) ? pos1 + 1 : 0;
 
 			std::wstring name;
 			if (pos2 != std::wstring::npos)
@@ -860,7 +860,7 @@ void MeasureWebParser::StartDownloadTask()
 			if (!name.empty())
 			{
 				// Replace reserved characters to "_"
-				pos1 = 0ULL;
+				pos1 = 0;
 				while ((pos1 = name.find_first_of(L"\\/:*?\"<>|", pos1)) != std::wstring::npos)
 				{
 					name[pos1] = L'_';
@@ -947,7 +947,7 @@ void MeasureWebParser::StartDownloadTask()
 				// http://support.microsoft.com/kb/263070/en
 
 				LONG ret = 0L;
-				DWORD mode = 0UL;
+				DWORD mode = 0;
 				DWORD size = sizeof(mode);
 
 				ret = RegGetValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", L"SyncMode5", RRF_RT_DWORD, nullptr, &mode, &size);
@@ -1035,7 +1035,7 @@ void MeasureWebParser::HandleDownloadResult(const std::wstring& path, HRESULT re
 		{
 			WCHAR buffer[MAX_PATH];
 			DWORD size = GetShortPathName(path.c_str(), buffer, _countof(buffer));
-			if (size > 0UL && size <= _countof(buffer))
+			if (size > 0 && size <= _countof(buffer))
 			{
 				m_DownloadedFile = buffer;
 			}
@@ -1139,7 +1139,7 @@ void MeasureWebParser::Command(const std::wstring& command)
 			m_DownloadTask = nullptr;
 		}
 
-		m_UpdateCounter = 0U;
+		m_UpdateCounter = 0;
 	}
 	else if (_wcsicmp(args, L"RESET") == 0)
 	{

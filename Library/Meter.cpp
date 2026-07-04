@@ -719,7 +719,7 @@ void Meter::CreateToolTip(Skin* skin)
 		GetMeterVisibleRect(rc);
 		rc = m_Skin->LogicalToPhysical(rc);
 
-		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0ULL, rc, hInstance };
+		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0, rc, hInstance };
 
 		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 

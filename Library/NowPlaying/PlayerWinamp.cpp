@@ -21,7 +21,7 @@ Player* PlayerWinamp::c_Player = nullptr;
 */
 PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_Window(nullptr),
-	m_LastCheckTime(0ULL),
+	m_LastCheckTime(0),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
@@ -66,14 +66,14 @@ bool PlayerWinamp::CheckWindow()
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find Winamp window every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 
 		m_Window = FindWindow(L"Winamp v1.x", nullptr);
 		if (m_Window)
 		{
-			DWORD pID = 0UL;
+			DWORD pID = 0;
 			GetWindowThreadProcessId(m_Window, &pID);
 			m_WinampHandle = OpenProcess(PROCESS_VM_READ, FALSE, pID);
 
@@ -257,17 +257,17 @@ void PlayerWinamp::UpdateData()
 			}
 			else
 			{
-				m_Rating = 0U;
-				m_Duration = 0U;
+				m_Rating = 0;
+				m_Duration = 0;
 				m_CoverPath.clear();
 			}
 		}
 		else if (!m_PlayingStream)
 		{
-			if (m_Duration == 0U)
+			if (m_Duration == 0)
 			{
 				const int duration = (int)SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
-				m_Duration = (duration != -1) ? (UINT)duration : 0U;
+				m_Duration = (duration != -1) ? (UINT)duration : 0;
 			}
 
 			return;
@@ -291,8 +291,8 @@ void PlayerWinamp::UpdateData()
 		std::wstring::size_type pos = title.find(L" - ");
 		if (pos != std::wstring::npos)
 		{
-			m_Artist.assign(title, 0ULL, pos);
-			pos += 3ULL;  // Skip " - "
+			m_Artist.assign(title, 0, pos);
+			pos += 3;  // Skip " - "
 			m_Title.assign(title, pos, title.length() - pos);
 			m_Album.clear();
 
@@ -464,7 +464,7 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 			const WCHAR* key = L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command";
 			WCHAR data[512];
 			DWORD size = sizeof(data);
-			DWORD type = 0UL;
+			DWORD type = 0;
 			if (RegGetValue(HKEY_LOCAL_MACHINE, key, nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
 				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);

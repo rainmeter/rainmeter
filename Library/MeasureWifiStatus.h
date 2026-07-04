@@ -31,18 +31,18 @@ protected:
 private:
 	enum class MeasureType : UINT
 	{
-		UNINITIALIZED = 0U,
-		SSID = 100U,
+		UNINITIALIZED = 0,
+		SSID = 100,
 		ENCRYPTION,
 		AUTH,
 		LIST,
 		PHY,
 
-		QUALITY = 200U,
+		QUALITY = 200,
 		TXRATE,
 		RXRATE,
 
-		UNKNOWN = 9999U
+		UNKNOWN = 9999
 	};
 
 	void FinalizeHandle();

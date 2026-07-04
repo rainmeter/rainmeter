@@ -642,9 +642,9 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 				if (updateSize)
 				{
-					UINT32 lines = 0U;
+					UINT32 lines = 0;
 					D2D1_SIZE_F size = D2D1::SizeF(w, h);
-					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0U)
+					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0)
 					{
 						rect->right = rect->left + w;
 						rect->bottom = rect->top + size.height;
@@ -740,7 +740,7 @@ void MeterString::InitializeStatic()
 	{
 		LogDebug(L"------------------------------");
 
-		UINT32 familyCount = 0U;
+		UINT32 familyCount = 0;
 		std::wstring families;
 		bool success = Gfx::Canvas::EnumerateInstalledFontFamilies(familyCount, families);
 		LogDebugF(L"* Font families: Count=%i", familyCount);

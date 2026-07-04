@@ -109,7 +109,7 @@ void MeasureCPU::UpdateValue()
 
 		do
 		{
-			ULONG size = 0UL;
+			ULONG size = 0;
 
 			status = c_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
 			if (status == STATUS_INFO_LENGTH_MISMATCH)

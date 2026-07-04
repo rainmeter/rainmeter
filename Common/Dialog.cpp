@@ -22,9 +22,9 @@ UINT GetWindowDpi(HWND window)
 	}
 
 	HDC dc = GetDC(window);
-	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96U;
+	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96;
 	if (dc) ReleaseDC(window, dc);
-	return dpi ? dpi : 96U;
+	return dpi ? dpi : 96;
 }
 
 }  // namespace

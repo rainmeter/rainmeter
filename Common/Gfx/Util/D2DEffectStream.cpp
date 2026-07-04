@@ -150,9 +150,9 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 		target->SetTransform(D2D1::Matrix3x2F::Identity());
 	};
 
-	for (UINT y = 0U, H = height / maxBitmapSize; y <= H; ++y)
+	for (UINT y = 0, H = height / maxBitmapSize; y <= H; ++y)
 	{
-		for (UINT x = 0U, W = width / maxBitmapSize; x <= W; ++x)
+		for (UINT x = 0, W = width / maxBitmapSize; x <= W; ++x)
 		{
 			D2D1_RECT_U rect = D2D1::RectU(
 				(x * maxBitmapSize),
@@ -164,7 +164,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 			HRESULT hr = target->CreateBitmap(
 				D2D1::SizeU(rect.right, rect.bottom),
 				nullptr,
-				0U,
+				0,
 				props,
 				bitmap.GetAddressOf());
 			if (FAILED(hr))
@@ -298,11 +298,11 @@ void D2DEffectStream::AddEffect(const Canvas&, const IID& effectId)
 
 		if (!m_Effects[i])
 		{
-			effect->SetInput(0U, segment.GetBitmap());
+			effect->SetInput(0, segment.GetBitmap());
 		}
 		else
 		{
-			effect->SetInputEffect(0U, m_Effects[i].Get());
+			effect->SetInputEffect(0, m_Effects[i].Get());
 		}
 
 		m_Effects[i] = effect;

@@ -14,7 +14,7 @@
 #include "pcre/config.h"
 #include "pcre/pcre.h"
 
-#define UPDATE_TIME_MIN_MS (10000ULL)
+#define UPDATE_TIME_MIN_MS (10000)
 
 namespace {
 
@@ -56,11 +56,11 @@ FolderInfo::FolderInfo() :
 	m_IncludeSubFolders(false),
 	m_IncludeHiddenFiles(false),
 	m_IncludeSystemFiles(false),
-	m_Size(0ULL),
-	m_FileCount(0U),
-	m_FolderCount(0U),
+	m_Size(0),
+	m_FileCount(0),
+	m_FolderCount(0),
 	m_RegExpFilter(nullptr),
-	m_LastUpdateTime(0ULL)
+	m_LastUpdateTime(0)
 {
 }
 
@@ -71,9 +71,9 @@ FolderInfo::~FolderInfo()
 
 void FolderInfo::Clear()
 {
-	m_Size = 0ULL;
-	m_FileCount = 0U;
-	m_FolderCount = 0U;
+	m_Size = 0;
+	m_FileCount = 0;
+	m_FolderCount = 0;
 }
 
 void FolderInfo::FreePcre()
@@ -179,7 +179,7 @@ void FolderInfo::SetPath(const WCHAR* path)
 	if (wcscmp(m_Path.c_str(), path) != 0)
 	{
 		m_Path = path;
-		m_LastUpdateTime = 0ULL;
+		m_LastUpdateTime = 0;
 	}
 }
 
@@ -203,7 +203,7 @@ struct FolderInfoParentMeasure
 	FolderInfoParentMeasure(MeasureFolderInfo* measure) :
 		folder(),
 		owner(measure),
-		measureCount(1U)
+		measureCount(1)
 	{
 	}
 
@@ -231,7 +231,7 @@ MeasureFolderInfo::~MeasureFolderInfo()
 {
 	if (m_Parent)
 	{
-		if (--m_Parent->measureCount == 0U)
+		if (--m_Parent->measureCount == 0)
 		{
 			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
 			g_ParentMeasures.erase(iter);

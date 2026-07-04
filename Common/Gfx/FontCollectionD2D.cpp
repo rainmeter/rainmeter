@@ -89,17 +89,17 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 {
 	// Reset values
 	families.clear();
-	familyCount = 0U;
+	familyCount = 0;
 
 	if (collection)
 	{
-		const UINT32 nameSize = 256U;
+		const UINT32 nameSize = 256;
 		std::vector<std::wstring> familyList;
 
-		UINT32 lockedEntries = 0U;
+		UINT32 lockedEntries = 0;
 
 		UINT32 count = collection->GetFontFamilyCount();
-		if (count == 0U)
+		if (count == 0)
 		{
 			families = isSystemCollection ?
 				L"Font Enumeration: No installed fonts found" :
@@ -107,7 +107,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 			return false;
 		}
 
-		for (UINT32 i = 0U; i < count; ++i)
+		for (UINT32 i = 0; i < count; ++i)
 		{
 			Microsoft::WRL::ComPtr<IDWriteFontFamily> family;
 			HRESULT hr = collection->GetFontFamily(i, &family);
@@ -125,7 +125,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 				return false;
 			}
 
-			UINT32 index = 0U;
+			UINT32 index = 0;
 			BOOL exists = FALSE;
 			std::wstring familyName;
 
@@ -158,7 +158,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 			{
 				// Since there is neither an English name entry, nor an entry
 				// in the users locale, just return the first entry's name
-				index = 0U;
+				index = 0;
 				familyName = L"**";
 			}
 
@@ -175,7 +175,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 
 			// Find each font in the family
 			UINT32 fontCount = family->GetFontCount();
-			for (UINT32 j = 0U; j < fontCount; ++j)
+			for (UINT32 j = 0; j < fontCount; ++j)
 			{
 				Microsoft::WRL::ComPtr<IDWriteFont> font;
 				hr = family->GetFont(j, &font);
@@ -198,7 +198,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 				hr = font->GetFaceNames(&faceNames);
 				if (FAILED(hr)) continue;
 
-				UINT32 faceIndex = 0U;
+				UINT32 faceIndex = 0;
 				BOOL faceExists = FALSE;
 				std::wstring faceName;
 
@@ -223,7 +223,7 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 				{
 					// Since there is neither an English name entry, nor an entry
 					// in the users locale, just return the first entry's name
-					faceIndex = 0U;
+					faceIndex = 0;
 					faceName = L"**";
 				}
 
@@ -250,10 +250,10 @@ bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* col
 		familyCount = (UINT32)familyList.size() - lockedEntries;
 
 		// Convert list to a string to be logged
-		for (size_t i = 0ULL, size = familyList.size(); i < size; ++i)
+		for (size_t i = 0, size = familyList.size(); i < size; ++i)
 		{
 			families += familyList[i];
-			if (i < (size - 1ULL)) families += L", ";
+			if (i < (size - 1)) families += L", ";
 		}
 
 		return true;

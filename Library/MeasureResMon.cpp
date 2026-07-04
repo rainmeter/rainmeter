@@ -54,7 +54,7 @@ void MeasureResMon::UpdateValue()
 {
 	if (m_Type == Type::WINDOW)
 	{
-		UINT windowCount = 0U;
+		UINT windowCount = 0;
 		EnumChildWindows(nullptr, [](HWND, LPARAM lParam) -> BOOL
 		{
 			UINT* count = (UINT*)lParam;
@@ -69,10 +69,10 @@ void MeasureResMon::UpdateValue()
 	const bool hasProcessName = !m_ProcessName.empty();
 
 	DWORD processes[1024] = { 0 };
-	DWORD bytesNeeded = 0UL;
+	DWORD bytesNeeded = 0;
 	WCHAR buffer[1024] = { 0 };
 	HMODULE module[1024] = { 0 };
-	DWORD moduleBytesNeeded = 0UL;
+	DWORD moduleBytesNeeded = 0;
 
 	if (!EnumProcesses(processes, sizeof(processes), &bytesNeeded))
 	{
@@ -86,8 +86,8 @@ void MeasureResMon::UpdateValue()
 		flags |= PROCESS_VM_READ;
 	}
 
-	UINT resourceCount = 0U;
-	for (UINT i = 0U, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
+	UINT resourceCount = 0;
+	for (UINT i = 0, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
 	{
 		HANDLE process = OpenProcess(flags, TRUE, processes[i]);
 		if (!process)
@@ -116,7 +116,7 @@ void MeasureResMon::UpdateValue()
 		}
 		else if (m_Type == Type::HANDLE)
 		{
-			DWORD handleCount = 0UL;
+			DWORD handleCount = 0;
 			GetProcessHandleCount(process, &handleCount);
 			resourceCount += handleCount;
 		}

@@ -1004,7 +1004,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// Change parent if folder is at root level
-					if (count == 1U)
+					if (count == 1)
 					{
 						m_ParentFolder = newItem;
 						UpdateParentPathLabel();
@@ -1400,7 +1400,7 @@ UINT DialogNewSkin::TabNew::GetChildSkinCount(HWND tree, HTREEITEM item)
 {
 	if (item == nullptr) return 0;
 
-	UINT count = 0U;
+	UINT count = 0;
 	WCHAR buffer[MAX_PATH] = { 0 };
 	TVITEM tvi = { 0 };
 	tvi.hItem = item;
@@ -1545,7 +1545,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
 			s_SortInfo.emplace_back(false, skinFolder.files[i].filename);
-			tvi.item.lParam = (LPARAM)(s_SortInfo.size() - 1ULL);
+			tvi.item.lParam = (LPARAM)(s_SortInfo.size() - 1);
 
 			tvi.item.pszText = (WCHAR*)skinFolder.files[i].filename.c_str();
 			TreeView_InsertItem(tree, &tvi);

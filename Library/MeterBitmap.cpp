@@ -314,10 +314,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
-		value = max(0LL, value);		// Only positive integers are supported
+		value = max(0, value);		// Only positive integers are supported
 
 		__int64 transitionValue = (__int64)m_TransitionStartValue;
-		transitionValue = max(0LL, transitionValue);		// Only positive integers are supported
+		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
 		int numOfNums = 0;
@@ -335,14 +335,14 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				++numOfNums;
 				if (m_FrameCount == 1)
 				{
-					tmpValue /= 2LL;
+					tmpValue /= 2;
 				}
 				else
 				{
 					tmpValue /= m_FrameCount;
 				}
 			}
-			while (tmpValue > 0LL);
+			while (tmpValue > 0);
 		}
 
 		// Blit the images
@@ -390,7 +390,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-			//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
+			//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -414,8 +414,8 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 			if (m_FrameCount == 1)
 			{
-				value /= 2LL;
-				transitionValue /= 2LL;
+				value /= 2;
+				transitionValue /= 2;
 			}
 			else
 			{
@@ -467,7 +467,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			}
 		}
 
-		//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
+		//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{

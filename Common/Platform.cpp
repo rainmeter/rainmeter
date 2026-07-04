@@ -33,7 +33,7 @@ const OSVERSIONINFOEX& GetVersionInfo()
 
 bool IsWindows11OrGreater()
 {
-	static bool s_Result = IsWindows10OrGreater() && GetVersionInfo().dwBuildNumber >= 22000UL;
+	static bool s_Result = IsWindows10OrGreater() && GetVersionInfo().dwBuildNumber >= 22000;
 	return s_Result;
 }
 
@@ -75,7 +75,7 @@ void Platform::Initialize()
 	std::wstring servicePack;
 
 	HKEY hkey = nullptr;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
 	{
 		WCHAR buffer[256] = { 0 };
 		DWORD size = _countof(buffer);
@@ -95,20 +95,20 @@ void Platform::Initialize()
 			if (IsWindows11OrGreater() && !m_DisplayVersion.empty())
 			{
 				size_t pos = m_ProductName.find(L"Windows 10");
-				if (_wcsnicmp(L"Windows 10", m_ProductName.c_str(), 10ULL) == 0)
+				if (_wcsnicmp(L"Windows 10", m_ProductName.c_str(), 10) == 0)
 				{
-					m_ProductName.replace(pos, 10ULL, L"Windows 11");
+					m_ProductName.replace(pos, 10, L"Windows 11");
 				}
 			}
 		}
 
-		DWORD major = 0UL;
+		DWORD major = 0;
 		size = sizeof(DWORD);
-		if (RegQueryValueEx(hkey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS && major >= 10UL)
+		if (RegQueryValueEx(hkey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS && major >= 10)
 		{
-			DWORD minor = 0UL;
+			DWORD minor = 0;
 			size = sizeof(DWORD);
-			if (RegQueryValueEx(hkey, L"CurrentMinorVersionNumber", nullptr, nullptr, (LPBYTE)&minor, (LPDWORD)&size) == ERROR_SUCCESS && minor >= 0UL)
+			if (RegQueryValueEx(hkey, L"CurrentMinorVersionNumber", nullptr, nullptr, (LPBYTE)&minor, (LPDWORD)&size) == ERROR_SUCCESS && minor >= 0)
 			{
 				m_RawVersion = std::to_wstring(major);
 				m_RawVersion += L'.';
@@ -118,9 +118,9 @@ void Platform::Initialize()
 			}
 		}
 
-		DWORD ubr = 0UL;
+		DWORD ubr = 0;
 		size = sizeof(DWORD);
-		if (RegQueryValueEx(hkey, L"UBR", nullptr, nullptr, (LPBYTE)&ubr, &size) == ERROR_SUCCESS && ubr > 0UL)
+		if (RegQueryValueEx(hkey, L"UBR", nullptr, nullptr, (LPBYTE)&ubr, &size) == ERROR_SUCCESS && ubr > 0)
 		{
 			ubrStr = L'.';
 			ubrStr += std::to_wstring(ubr);

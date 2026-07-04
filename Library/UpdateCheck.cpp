@@ -223,7 +223,7 @@ void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void
 		return;
 	}
 
-	DWORD bytesWritten = 0UL;
+	DWORD bytesWritten = 0;
 	const BOOL writeSucceeded = WriteFile(file, data, dataSize, &bytesWritten, nullptr);
 	CloseHandle(file);
 
@@ -267,43 +267,43 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 	BCRYPT_ALG_HANDLE provider = nullptr;
 	BCRYPT_HASH_HANDLE hashHandle = nullptr;
 	PBYTE hash = nullptr;
-	DWORD hashLength = 0UL;
-	DWORD resultLength = 0UL;
+	DWORD hashLength = 0;
+	DWORD resultLength = 0;
 
 	auto cleanup = [&](LPCWSTR func, bool ret) -> bool
 	{
 		if (!ret && func) LogErrorF(L"Verify installer error (%s): 0x%08x (%lu)", func, status, status);
-		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
+		if (hash) HeapFree(GetProcessHeap(), 0, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);
-		if (provider) BCryptCloseAlgorithmProvider(provider, 0UL);
+		if (provider) BCryptCloseAlgorithmProvider(provider, 0);
 		return ret;
 	};
 
-	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
+	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
 	if (status != 0) return cleanup(L"OpenProvider", false);
 
-	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
+	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0);
 	if (status != 0) return cleanup(L"GetProperty", false);
 
-	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0UL, hashLength);
+	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0, hashLength);
 	if (!hash)
 	{
 		status = STATUS_NO_MEMORY;
 		return cleanup(L"No Memory", false);
 	}
 
-	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0UL, nullptr, 0UL, 0UL);
+	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0, nullptr, 0, 0);
 	if (status != 0) return cleanup(L"CreateHash", false);
 
-	status = BCryptHashData(hashHandle, (PUCHAR)buffer, (ULONG)size, 0UL);
+	status = BCryptHashData(hashHandle, (PUCHAR)buffer, (ULONG)size, 0);
 	if (status != 0) return cleanup(L"HashData", false);
 
-	status = BCryptFinishHash(hashHandle, hash, hashLength, 0UL);
+	status = BCryptFinishHash(hashHandle, hash, hashLength, 0);
 	if (status != 0) return cleanup(L"FinishHash", false);
 
 	std::wstring hashStr;
 	WCHAR hashChar[3] = { 0 };  // 2 chars + null terminator
-	for (DWORD i = 0UL; i < hashLength; ++i)
+	for (DWORD i = 0; i < hashLength; ++i)
 	{
 		_snwprintf_s(hashChar, _countof(hashChar), L"%02hhX", hash[i]);
 		hashStr += hashChar;
@@ -321,7 +321,7 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& fileName, const std::wstring& sha256, bool writeToDataFile)
 {
 	const std::wstring fullPath = path + fileName;
-	size_t fileSize = 0ULL;
+	size_t fileSize = 0;
 	std::unique_ptr<BYTE[]> buffer = FileUtil::ReadFullFile(fullPath, &fileSize);
 	if (!buffer) return false;
 

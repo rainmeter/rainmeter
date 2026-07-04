@@ -634,7 +634,7 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 	const size_t skinCount = GetRainmeter().GetAllSkins().size();
 
 	HWND item = GetControl(Id_ActiveSkinsButton);
-	Button_Enable(item, skinCount != 0ULL);
+	Button_Enable(item, skinCount != 0);
 
 	if (skin)
 	{
@@ -948,15 +948,15 @@ void DialogManage::TabSkins::ReadSkin()
 		}
 
 		// Replace | with newline
-		std::wstring::size_type pos = 0ULL;
+		std::wstring::size_type pos = 0;
 		while ((pos = text.find_first_of(L'|')) != std::wstring::npos)
 		{
-			size_t next = pos + 1UL;
-			size_t count = (next < text.length() && text[next] == L' ') ? 2ULL : 1ULL;
-			if (text[pos - 1ULL] == L' ')
+			size_t next = pos + 1;
+			size_t count = (next < text.length() && text[next] == L' ') ? 2 : 1;
+			if (text[pos - 1] == L' ')
 			{
 				--pos;
-				count += 1ULL;
+				count += 1;
 			}
 			text.replace(pos, count, L"\r\n");
 		}

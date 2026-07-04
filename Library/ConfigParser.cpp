@@ -361,7 +361,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			do
 			{
-				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1ULL;
+				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1;
 
 				if (_wcsicmp(keySelectorSz, L"MaxValue") == 0)
 				{
@@ -403,7 +403,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		else if (measure->GetTypeID() == TypeID<MeasureTime>() && valueType == ValueType::TimeStamp)
 		{
 			MeasureTime* time = (MeasureTime*)measure;
-			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000LL);
+			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 			return true;
 		}
 
@@ -768,7 +768,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	else if (m_CurrentSection)
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
-		size_t start = 0ULL;
+		size_t start = 0;
 		const std::wstring strVariable = L"[#CURRENTSECTION]";
 		const size_t length = strVariable.length();
 		while ((start = result.find(strVariable, start)) != std::wstring::npos)
@@ -780,7 +780,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	}
 
 	// Check for old-style variables (#VAR#)
-	size_t start = 0ULL, end = 0ULL;
+	size_t start = 0, end = 0;
 	bool loop = true;
 
 	do
@@ -788,15 +788,15 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 		start = result.find(L'#', start);
 		if (start != std::wstring::npos)
 		{
-			size_t si = start + 1ULL;
+			size_t si = start + 1;
 			end = result.find(L'#', si);
 			if (end != std::wstring::npos)
 			{
-				size_t ei = end - 1ULL;
+				size_t ei = end - 1;
 				if (si != ei && result[si] == L'*' && result[ei] == L'*')
 				{
-					result.erase(ei, 1ULL);
-					result.erase(si, 1ULL);
+					result.erase(ei, 1);
+					result.erase(si, 1);
 					start = ei;
 				}
 				else
@@ -805,7 +805,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 					if (GetVariable(std::wstring_view(&result[si], end - si), value))
 					{
 						// Variable found, replace it with the value
-						result.replace(start, end - start + 1ULL, value);
+						result.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
 					}
@@ -841,10 +841,10 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	bool replaced = ParseVariables(result, VariableType::Section);
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
-	size_t start = 0ULL;
+	size_t start = 0;
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
-		size_t si = start + 1ULL;
+		size_t si = start + 1;
 		size_t end = result.find(L']', si);
 		if (end == std::wstring::npos)
 		{
@@ -854,11 +854,11 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 		size_t next = result.find(L'[', si);
 		if (next == std::wstring::npos || end < next)
 		{
-			size_t ei = end - 1ULL;
+			size_t ei = end - 1;
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
-				result.erase(ei, 1ULL);
-				result.erase(si, 1ULL);
+				result.erase(ei, 1);
+				result.erase(si, 1);
 				start = ei;
 			}
 			else
@@ -932,23 +932,23 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	std::wstring result = str;
 	bool replaced = false;
 
-	size_t previousStart = 0ULL;
+	size_t previousStart = 0;
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
 	// Find the innermost section variable(s) first, then move outward (working left to right)
-	size_t end = 0ULL;
-	size_t counter = 0ULL;
+	size_t end = 0;
+	size_t counter = 0;
 	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
 		bool found = false;
 
-		const size_t ei = end - 1ULL;
+		const size_t ei = end - 1;
 		size_t start = ei;
 
 		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
 		{
 			// Restrict the number of variable replacements to a reseasonable amount
-			constexpr size_t maxReplacements = 1000ULL;
+			constexpr size_t maxReplacements = 1000;
 			if (++counter >= maxReplacements)
 			{
 				const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
@@ -964,7 +964,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			}
 
 			found = false;
-			size_t si = start + 2ULL;  // Start index where escaped variable "should" be: [ *   *]
+			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
 
 			// Check for escaped variables first, if found, skip to the next variable
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
@@ -974,8 +974,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
 				if (type != VariableType::Mouse)
 				{
-					result.erase(ei, 1ULL);
-					result.erase(si, 1ULL);
+					result.erase(ei, 1);
+					result.erase(si, 1);
 				}
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
@@ -993,7 +993,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			// Separate "key" character from variable
 			const WCHAR key = result[si];
-			std::wstring variable = result.substr(si + 1ULL, end - si - 1ULL);
+			std::wstring variable = result.substr(si + 1, end - si - 1);
 			if (variable.empty())
 			{
 				break; // Break out of inner "start" loop and continue to the next nested variable
@@ -1015,7 +1015,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
 			if (!isValid)
 			{
-				if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
+				if (start == 0) break;	// Already at beginning of string, try next ending bracket
 
 				--start;		// Check for any "starting" brackets in string prior to the current starting position
 				continue;		// This is not a valid nested variable, check the next starting bracket
@@ -1078,7 +1078,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 						if (variable[0] == L'x' || variable[0] == L'X')
 						{
 							base = 16;
-							variable.erase(0ULL, 1ULL);  // remove 'x' or 'X'
+							variable.erase(0, 1);  // remove 'x' or 'X'
 
 							if (variable.empty())
 							{
@@ -1094,7 +1094,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 							break;  // Invalid character
 						}
 
-						foundValue.assign(1ULL, (WCHAR)ch);
+						foundValue.assign(1, (WCHAR)ch);
 						found = true;
 					}
 					break;
@@ -1103,16 +1103,16 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (found)
 			{
-				result.replace(start, end - start + 1ULL, foundValue);
+				result.replace(start, end - start + 1, foundValue);
 				replaced = true;
 
-				end = start - 1ULL;
+				end = start - 1;
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
 			// No variable found
 
-			if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
+			if (start == 0) break;	// Already at beginning of string, try next ending bracket
 
 			--start;		// Check for any "starting" brackets in string prior to the current starting position
 		}
@@ -1319,13 +1319,13 @@ std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 	{
 		// Tokenize and parse the floats
 		const WCHAR delimiter = L';';
-		size_t lastPos = 0ULL, pos = 0ULL;
+		size_t lastPos = 0, pos = 0;
 		do
 		{
 			lastPos = str.find_first_not_of(delimiter, pos);
 			if (lastPos == std::wstring::npos) break;
 
-			pos = str.find_first_of(delimiter, lastPos + 1ULL);
+			pos = str.find_first_of(delimiter, lastPos + 1);
 
 			result.push_back((FLOAT)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
 			if (pos == std::wstring::npos) break;
@@ -1469,7 +1469,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
-	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1ULL] == L')')
+	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
 	{
 		const WCHAR* str = formula.c_str();
 		const WCHAR* errMsg = MathParser::CheckedParse(str, resultValue);
@@ -1496,7 +1496,7 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	if (pos != std::wstring::npos)
 	{
 		modifiers = formula.substr(pos + 1);  // can be empty!
-		const std::wstring newFormula(formula, 0, pos + 1ULL);
+		const std::wstring newFormula(formula, 0, pos + 1);
 		if (ParseFormula(newFormula, &value))
 		{
 			WCHAR buffer[128] = { 0 };
@@ -1648,7 +1648,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 			delete [] items;
 			items = nullptr;
-			itemsSize *= 2UL;
+			itemsSize *= 2;
 			items = new WCHAR[itemsSize];
 		}
 		while (true);
@@ -1713,7 +1713,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		{
 			items[0] = 0;
 			DWORD res = GetPrivateProfileSection(sectionUpperCase.c_str(), items, itemsSize, iniRead.c_str());
-			if (res < itemsSize - 2UL)		// Fits in the buffer
+			if (res < itemsSize - 2)		// Fits in the buffer
 			{
 				endPos = items + res;
 				break;
@@ -1721,7 +1721,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 			delete [] items;
 			items = nullptr;
-			itemsSize *= 2UL;
+			itemsSize *= 2;
 			items = new WCHAR[itemsSize];
 		}
 		while (true);
@@ -1816,7 +1816,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						}
 					}
 				}
-				pos += lineLength + 1ULL;
+				pos += lineLength + 1;
 			}
 			else  // Empty string
 			{
