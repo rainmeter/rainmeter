@@ -477,7 +477,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)MonitorUtil::GetMultiMonitorInfo().monitors.size();
+		m_Value = (double)GetSystemMetrics(SM_CMONITORS);
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:
