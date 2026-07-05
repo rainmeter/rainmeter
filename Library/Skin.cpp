@@ -4820,19 +4820,21 @@ bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 		if ((*j)->IsHidden()) continue;
 
 		const Mouse& mouse = (*j)->GetMouse();
-		if (mouse.HasActionCommand(action) && (*j)->HitTest(x, y))
+		std::wstring mouseActionCommand;
+		if (mouse.GetActionCommand(action, mouseActionCommand) && (*j)->HitTest(x, y))
 		{
 			meter = (*j);
-			command = mouse.GetActionCommand(action);
+			command = std::move(mouseActionCommand);
 			break;
 		}
 	}
 
 	if (command.empty())
 	{
-		if (m_Mouse.HasActionCommand(action) && HitTest(x, y))
+		std::wstring mouseActionCommand;
+		if (m_Mouse.GetActionCommand(action, mouseActionCommand) && HitTest(x, y))
 		{
-			command = m_Mouse.GetActionCommand(action);
+			command = std::move(mouseActionCommand);
 		}
 	}
 

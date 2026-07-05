@@ -8,34 +8,35 @@
 #ifndef __MOUSE_H__
 #define __MOUSE_H__
 
-enum MOUSEACTION
+enum MOUSEACTION : uint32_t
 {
-	MOUSE_LMB_UP = 0,
-	MOUSE_LMB_DOWN,
-	MOUSE_LMB_DBLCLK,
-	MOUSE_MMB_UP,
-	MOUSE_MMB_DOWN,
-	MOUSE_MMB_DBLCLK,
-	MOUSE_RMB_UP,
-	MOUSE_RMB_DOWN,
-	MOUSE_RMB_DBLCLK,
-	MOUSE_X1MB_UP,
-	MOUSE_X1MB_DOWN,
-	MOUSE_X1MB_DBLCLK,
-	MOUSE_X2MB_UP,
-	MOUSE_X2MB_DOWN,
-	MOUSE_X2MB_DBLCLK,
+	MOUSE_LMB_UP = 1 << 0,
+	MOUSE_LMB_DOWN = 1 << 1,
+	MOUSE_LMB_DBLCLK = 1 << 2,
+	MOUSE_MMB_UP = 1 << 3,
+	MOUSE_MMB_DOWN = 1 << 4,
+	MOUSE_MMB_DBLCLK = 1 << 5,
+	MOUSE_RMB_UP = 1 << 6,
+	MOUSE_RMB_DOWN = 1 << 7,
+	MOUSE_RMB_DBLCLK = 1 << 8,
+	MOUSE_X1MB_UP = 1 << 9,
+	MOUSE_X1MB_DOWN = 1 << 10,
+	MOUSE_X1MB_DBLCLK = 1 << 11,
+	MOUSE_X2MB_UP = 1 << 12,
+	MOUSE_X2MB_DOWN = 1 << 13,
+	MOUSE_X2MB_DBLCLK = 1 << 14,
 
-	MOUSE_MW_UP,
-	MOUSE_MW_DOWN,
-	MOUSE_MW_LEFT,
-	MOUSE_MW_RIGHT,
+	MOUSE_MW_UP = 1 << 15,
+	MOUSE_MW_DOWN = 1 << 16,
+	MOUSE_MW_LEFT = 1 << 17,
+	MOUSE_MW_RIGHT = 1 << 18,
 
-	MOUSE_OVER,
-	MOUSE_LEAVE,
+	MOUSE_OVER = 1 << 19,
+	MOUSE_LEAVE = 1 << 20,
 
-	MOUSEACTION_COUNT,
-	MOUSEACTION_NONE = -1
+	MOUSEACTION_ALL = ~(-1 << 21),
+	MOUSEACTION_BUTTON = ~(-1 << 15),
+	MOUSEACTION_NONE = 0
 };
 
 enum MOUSEACTIONSTATE
@@ -67,6 +68,7 @@ enum MOUSECURSOR
 
 struct MouseAction
 {
+	MOUSEACTION type;
 	std::wstring action;
 	MOUSEACTIONSTATE state;
 	MOUSEACTIONSTATE previousState;
@@ -96,8 +98,7 @@ public:
 	void EnableMouseAction(const std::wstring& options);
 	void ToggleMouseAction(const std::wstring& options);
 
-	bool HasActionCommand(MOUSEACTION action) const { return !GetAction(action).empty(); }
-	std::wstring GetActionCommand(MOUSEACTION action) const;
+	bool GetActionCommand(MOUSEACTION type, std::wstring& command) const;
 	const std::wstring& GetAction(MOUSEACTION action) const;
 
 	bool HasButtonAction() const
@@ -157,9 +158,11 @@ public:
 
 private:
 	void ReplaceMouseVariables(std::wstring& result) const;
-	std::vector<MOUSEACTION> Translate(const std::wstring& options) const;
+	const MouseAction* GetMouseActionForType(MOUSEACTION type) const;
+	MOUSEACTION OptionStringToMouseActions(const std::wstring& options) const;
 
-	MouseAction m_MouseActions[MOUSEACTION_COUNT];
+	std::vector<MouseAction> m_MouseActions;
+	uint32_t m_MouseActionTypes;
 
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;
