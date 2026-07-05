@@ -181,6 +181,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 }  // namespace
 
 MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_Mouse(skin),
 	m_RelativeToSkin(true),
 	m_RequireDragging(false),
 	m_Capturing(false),
@@ -222,26 +223,7 @@ void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Measure::ReadOptions(parser, section);
 
-	m_Actions[MOUSE_LMB_UP] = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
-	m_Actions[MOUSE_LMB_DOWN] = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
-	m_Actions[MOUSE_LMB_DBLCLK] = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
-	m_Actions[MOUSE_MMB_UP] = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
-	m_Actions[MOUSE_MMB_DOWN] = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
-	m_Actions[MOUSE_MMB_DBLCLK] = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
-	m_Actions[MOUSE_RMB_UP] = parser.ReadString(section, L"RightMouseUpAction", L"", false);
-	m_Actions[MOUSE_RMB_DOWN] = parser.ReadString(section, L"RightMouseDownAction", L"", false);
-	m_Actions[MOUSE_RMB_DBLCLK] = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
-	m_Actions[MOUSE_X1MB_UP] = parser.ReadString(section, L"X1MouseUpAction", L"", false);
-	m_Actions[MOUSE_X1MB_DOWN] = parser.ReadString(section, L"X1MouseDownAction", L"", false);
-	m_Actions[MOUSE_X1MB_DBLCLK] = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);
-	m_Actions[MOUSE_X2MB_UP] = parser.ReadString(section, L"X2MouseUpAction", L"", false);
-	m_Actions[MOUSE_X2MB_DOWN] = parser.ReadString(section, L"X2MouseDownAction", L"", false);
-	m_Actions[MOUSE_X2MB_DBLCLK] = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
-
-	m_Actions[MOUSE_MW_UP] = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
-	m_Actions[MOUSE_MW_DOWN] = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
-	m_Actions[MOUSE_MW_LEFT] = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
-	m_Actions[MOUSE_MW_RIGHT] = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
+	m_Mouse.ReadOptions(parser, section);
 
 	m_MouseMoveAction = parser.ReadString(section, L"MouseMoveAction", L"", false);
 	m_LeftDragAction = parser.ReadString(section, L"LeftMouseDragAction", L"", false);
@@ -264,10 +246,7 @@ void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		GetSkin()->UpdateMouseMeasureCapture();
 	}
 
-	if (!m_Actions[MOUSE_MW_UP].empty() ||
-		!m_Actions[MOUSE_MW_DOWN].empty() ||
-		!m_Actions[MOUSE_MW_LEFT].empty() ||
-		!m_Actions[MOUSE_MW_RIGHT].empty())
+	if (m_Mouse.HasScrollAction())
 	{
 		GetSkin()->SetHasMouseScrollAction();
 	}
@@ -318,10 +297,10 @@ bool MeasureMouse::ExecuteAction(MOUSEACTION action, POINT screenPos, MOUSEACTIO
 		return false;
 	}
 
-	std::wstring command = m_Actions[action];
-	if (command.empty() && fallback != MOUSEACTION_COUNT)
+	std::wstring command = m_Mouse.GetAction(action);
+	if (command.empty() && fallback != MOUSEACTION_NONE)
 	{
-		command = m_Actions[fallback];
+		command = m_Mouse.GetAction(fallback);
 	}
 
 	if (!command.empty())
