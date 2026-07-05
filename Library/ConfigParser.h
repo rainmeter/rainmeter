@@ -95,6 +95,7 @@ public:
 
 	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
 	bool ContainsNewStyleVariable(const std::wstring& str);
+	static std::optional<VariableType> VariableTypeForKey(WCHAR key);
 	std::wstring GetMouseVariable(const std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
@@ -107,8 +108,6 @@ public:
 	static D2D1_COLOR_F ParseColor(LPCTSTR str);
 	static D2D1_RECT_F ParseRect(LPCTSTR str);
 	static RECT ParseRECT(LPCTSTR str);
-
-	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
 
 private:
 	void ReadVariables();
@@ -149,8 +148,6 @@ private:
 	StringMap<std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
-
-	static ankerl::unordered_dense::map<VariableType, WCHAR> c_VariableMap;
 };
 
 #endif

@@ -32,8 +32,6 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 
 }  // namespace
 
-ankerl::unordered_dense::map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
-
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
@@ -42,13 +40,6 @@ ConfigParser::ConfigParser() :
 	m_CurrentSection(),
 	m_Skin()
 {
-	if (c_VariableMap.empty())
-	{
-		c_VariableMap.emplace(VariableType::Section, L'&');
-		c_VariableMap.emplace(VariableType::Variable, L'#');
-		c_VariableMap.emplace(VariableType::Mouse, L'$');
-		c_VariableMap.emplace(VariableType::CharacterReference, L'\\');
-	}
 }
 
 ConfigParser::~ConfigParser()
@@ -999,21 +990,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				break; // Break out of inner "start" loop and continue to the next nested variable
 			}
 
-			// Find "type" of key
-			bool isValid = false;
-			VariableType kType = VariableType::Section;
-			for (const auto& t : c_VariableMap)
-			{
-				if (t.second == key)
-				{
-					kType = t.first;
-					isValid = true;
-					break;
-				}
-			}
-
-			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
-			if (!isValid)
+			const auto keyType = VariableTypeForKey(key);
+			if (!keyType)
 			{
 				if (start == 0) break;	// Already at beginning of string, try next ending bracket
 
@@ -1033,11 +1011,11 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			std::wstring foundValue;
 
-			if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
-				(kType == VariableType::CharacterReference) ||										// Special case 3
-				(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
+			if (keyType == type ||  // Special cases 1, 2
+				(keyType == VariableType::CharacterReference) ||  // Special case 3
+				(keyType == VariableType::Variable && type == VariableType::Section))  // Most cases
 			{
-				switch (kType)
+				switch (*keyType)
 				{
 				case VariableType::Section:
 					{
@@ -1145,17 +1123,25 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
 {
-	if (str.find(L'[') == std::wstring::npos) return false;
-
-	for (const auto& key : c_VariableMap)
+	size_t pos = 0;
+	while ((pos = str.find(L'[', pos)) != std::wstring::npos)
 	{
-		std::wstring var = L"[";
-		var += key.second;
+		++pos;
+		if (pos >= str.length()) break;
 
-		if (str.find(var) != std::wstring::npos) return true;
+		if (VariableTypeForKey(str[pos]).has_value()) return true;
 	}
 
 	return false;
+}
+
+std::optional<ConfigParser::VariableType> ConfigParser::VariableTypeForKey(WCHAR key)
+{
+	if (key == L'&') return VariableType::Section;
+	if (key == L'#') return VariableType::Variable;
+	if (key == L'$') return VariableType::Mouse;
+	if (key == L'\\') return VariableType::CharacterReference;
+	return std::nullopt;
 }
 
 std::wstring ConfigParser::GetMouseVariable(const std::wstring_view variable, Meter* meter)

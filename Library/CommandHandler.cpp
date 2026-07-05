@@ -372,7 +372,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					if (skin)
 					{
 						std::wstring currentBang = bangs.substr(start, i - start + 1);
-						if (ConfigParser::IsVariableKey(currentBang[1]) &&
+						if (ConfigParser::VariableTypeForKey(currentBang[1]).has_value() &&
 							skin->GetParser().ReplaceMeasures(currentBang))
 						{
 							// Surround the replacement bang with brackets (if needed) since
@@ -481,7 +481,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			// This allows for section variables to completely replace a bang sequence.
 			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
 			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
-			bool isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
+			bool isVar = (ConfigParser::VariableTypeForKey(tmpSz[0]).has_value() || skin->GetMeasure(tmpSz));
 			if (isVar)
 			{
 				tmpSz.insert(0, L"[");
