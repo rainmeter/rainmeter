@@ -34,7 +34,8 @@ enum MOUSEACTION
 	MOUSE_OVER,
 	MOUSE_LEAVE,
 
-	MOUSEACTION_COUNT
+	MOUSEACTION_COUNT,
+	MOUSEACTION_NONE = -1
 };
 
 enum MOUSEACTIONSTATE
@@ -97,6 +98,7 @@ public:
 
 	bool HasActionCommand(MOUSEACTION action) const { return !GetAction(action).empty(); }
 	std::wstring GetActionCommand(MOUSEACTION action) const;
+	const std::wstring& GetAction(MOUSEACTION action) const;
 
 	bool HasButtonAction() const
 	{
@@ -155,7 +157,6 @@ public:
 
 private:
 	void ReplaceMouseVariables(std::wstring& result) const;
-	const std::wstring& GetAction(MOUSEACTION action) const;
 	std::vector<MOUSEACTION> Translate(const std::wstring& options) const;
 
 	MouseAction m_MouseActions[MOUSEACTION_COUNT];
