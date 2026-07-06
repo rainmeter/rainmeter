@@ -927,12 +927,32 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	std::wstring previousVariable;
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
+	// Because each nested variable needs to be re-parsed from the beginning of the replaced string,
+	// self-references can be detected multiple times during the variable replacement process.
+	// In these cases, provide a warning to the user before returning.
+	std::wstring selfReferencedVariable;
+
+	// Max number of variable replacements for |str|
+	static const size_t maxReplacements = 1000;
 
 	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0;
 	size_t counter = 0;
 	while ((end = result.find(L']', end)) != std::wstring::npos)
 	{
+		// Restrict the number of variable replacements to a reseasonable amount
+		if (++counter >= maxReplacements)
+		{
+			const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+			LogErrorSF(m_Skin, section,
+				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
+			if (GetRainmeter().GetDebug())
+			{
+				LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
+			}
+			break;
+		}
+
 		bool found = false;
 
 		const size_t ei = end - 1;
@@ -940,20 +960,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
 		{
-			// Restrict the number of variable replacements to a reseasonable amount
-			constexpr size_t maxReplacements = 1000;
-			if (++counter >= maxReplacements)
-			{
-				const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-				const auto variable = result.substr(start, end - start + 1);
-				LogErrorSF(m_Skin, section, L"Expanding variable %s failed due to maximum variable replacement limit for string: %s", variable.c_str(), str.c_str());
-				if (GetRainmeter().GetDebug())
-				{
-					LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
-				}
-				break;
-			}
-
 			found = false;
 			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
 
@@ -1089,6 +1095,23 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (found)
 			{
+				// Look for any potential self-references in the "found" value
+				auto findVariable = [&](WCHAR postfix) -> void
+				{
+					// Only check for self-references if none have been found
+					if (selfReferencedVariable.empty())
+					{
+						const std::wstring var = L"[" + original + postfix;
+						if (StringUtil::CaseInsensitiveFind(foundValue, var) != -1)
+						{
+							selfReferencedVariable = original;  // Reports only the first self-reference
+						}
+					}
+				};
+
+				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
+				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
+
 				result.replace(start, end - start + 1, foundValue);
 				replaced = true;
 
@@ -1117,6 +1140,18 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	if (!delayedLogEntry.message.empty())
 	{
 		GetLogger().Log(&delayedLogEntry);
+	}
+
+	// Log the self reference warning(s)
+	if (!selfReferencedVariable.empty())
+	{
+		const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+		LogWarningSF(m_Skin, section, L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugSF(m_Skin, section, L"Original string: %s", str.c_str());
+			LogDebugSF(m_Skin, section, L"Replaced string: %s", result.c_str());
+		}
 	}
 
 	// Reset the current section
@@ -1801,7 +1836,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						// - ensure that duplicate option values aren't inserted
 						// - avoid uppercasing the same strings multiple times
 						std::wstring mapKey;
-						mapKey.reserve(sectionLength + 1ULL + optionUpperCase.length());
+						mapKey.reserve(sectionLength + 1 + optionUpperCase.length());
 						mapKey.append(sectionUpperCase, sectionLength);
 						mapKey += L'~';
 						mapKey += optionUpperCase;
