@@ -924,7 +924,9 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	bool replaced = false;
 
 	size_t previousStart = 0;
+	std::wstring previousVariable;
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
+
 
 	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0;
@@ -949,8 +951,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				{
 					LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
 				}
-
-				result.clear();
 				break;
 			}
 
@@ -980,6 +980,15 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
+			// Avoid self references
+			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
+			{
+				LogErrorSF(m_Skin, m_CurrentSection ? m_CurrentSection->c_str() : L"",
+					L"Cannot replace variable with itself: \"%s\"", original.c_str());
+				break;		// Break out of inner "start" loop and continue to the next nested variable
+			}
+
+			previousVariable = original;
 			previousStart = start;
 
 			// Separate "key" character from variable
@@ -1027,7 +1036,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 							found = true;
 							break;
 						}
-
 						found = GetSectionVariable(variable, foundValue, &delayedLogEntry);
 					}
 					break;
