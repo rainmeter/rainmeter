@@ -93,7 +93,7 @@ public:
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
 
-	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
+	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr, int depth = 0);
 	bool ContainsNewStyleVariable(const std::wstring& str);
 	static std::optional<VariableType> VariableTypeForKey(WCHAR key);
 	std::wstring GetMouseVariable(const std::wstring_view variable, Meter* meter);
