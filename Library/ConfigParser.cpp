@@ -128,17 +128,10 @@ bool ConfigParser::GetVariable(const std::wstring_view& strVariable, std::wstrin
 	// #1: Built-in variables
 	auto result = GetBuiltInVariable(strVariable);
 
-	if (isNewStyle)
-	{
-		// #2: New-style section variables
-		if (!result) result = GetSectionSkinVariable(strVariable);
-		if (!result) result = GetSectionDisplayVariable(strVariable);
-	}
-
-	// #3: Current config variables
+	// #2: Current config variables
 	if (!result) result = GetCurrentConfigVariable(strVariable);
 
-	// #4: Monitor variables
+	// #3: Monitor variables
 	if (!result) result = GetMonitorVariable(strVariable);
 
 	if (result)
@@ -147,7 +140,7 @@ bool ConfigParser::GetVariable(const std::wstring_view& strVariable, std::wstrin
 		return true;
 	}
 
-	// #5: User-defined variables
+	// #4: User-defined variables
 	auto iter = m_Variables.find(StrToUpper(strVariable));
 	if (iter != m_Variables.end())
 	{
@@ -494,7 +487,7 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::ws
 	return std::nullopt;
 }
 
-// Examples: [#Skin:X], [#Skin:DpiScale]
+// Examples: [$Skin:X], [$Skin:DpiScale]
 std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstring_view& variableStr)
 {
 	if (!m_Skin) return std::nullopt;
@@ -516,7 +509,7 @@ std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstr
 	return std::nullopt;
 }
 
-// Examples: [#Display:DisplayName], [#Display:X], [#Display:WorkAreaPhysicalH], [#DisplayDevice1:DpiScale]
+// Examples: [$Display:DisplayName], [$Display:X], [$Display:WorkAreaPhysicalH], [$DisplayDevice1:DpiScale]
 std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring_view& variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
@@ -982,7 +975,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (keyType == type ||  // Special cases 1, 2
 				(keyType == VariableType::CharacterReference) ||  // Special case 3
-				(keyType == VariableType::Variable && type == VariableType::Section))  // Most cases
+				((keyType == VariableType::Variable || keyType == VariableType::Mouse) && type == VariableType::Section))  // Most cases
 			{
 				switch (*keyType)
 				{
@@ -1014,8 +1007,24 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 				case VariableType::Mouse:
 					{
-						foundValue = GetMouseVariable(variable, meter);
-						found = !foundValue.empty();
+						if (type == VariableType::Mouse)
+						{
+							foundValue = GetMouseVariable(variable, meter);
+							found = !foundValue.empty();
+						}
+						else if (type == VariableType::Section)
+						{
+							if (const auto result = GetSectionSkinVariable(variable); result)
+							{
+								foundValue.assign(*result);
+								found = true;
+							}
+							else if (const auto result = GetSectionDisplayVariable(variable); result)
+							{
+								foundValue.assign(*result);
+								found = true;
+							}
+						}
 					}
 					break;
 
