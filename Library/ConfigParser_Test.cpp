@@ -7,8 +7,20 @@
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
+#include "MeasureString.h"
 #include "../Common/UnitTest.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
+
+class TestMeasureString : public MeasureString
+{
+public:
+	TestMeasureString(const WCHAR* name) : MeasureString(nullptr, name) {}
+
+	void Read(ConfigParser& parser)
+	{
+		ReadOptions(parser, GetName());
+	}
+};
 
 TEST_CLASS(Library_ConfigParser_Test)
 {
@@ -70,7 +82,7 @@ public:
 	TEST_METHOD(TestVariables)
 	{
 		ConfigParser parser;
-		parser.Initialize(L"");  // TODO: Better way to initialize without file.
+		parser.Initialize(L"");
 
 		parser.SetVariable(L"A", L"abc");
 		parser.SetVariable(L"BB", L"def");
@@ -101,5 +113,175 @@ public:
 
 		parser.SetValue(L"A", L"String", L"#Var#");
 		Assert::AreNotEqual(parser.ReadString(L"A", L"String", L"").c_str(), L"BuiltIn");
+	}
+
+	TEST_METHOD(TestNestedVariables)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		parser.SetVariable(L"Index", L"2");
+		parser.SetVariable(L"Var2", L"Second");
+		parser.SetVariable(L"Name", L"Var[#Index]");
+		parser.SetVariable(L"Command", L"return '[#Var[#Index]]'");
+
+		std::wstring string1 = L"[#Var[#Index]]";
+		Assert::IsTrue(parser.ReplaceVariables(string1, true));
+		Assert::AreEqual(string1.c_str(), L"Second");
+
+		std::wstring string2 = L"[#[#Name]]";
+		Assert::IsTrue(parser.ReplaceVariables(string2, true));
+		Assert::AreEqual(string2.c_str(), L"Second");
+
+		std::wstring string3 = L"[#Command]";
+		Assert::IsTrue(parser.ReplaceVariables(string3, true));
+		Assert::AreEqual(string3.c_str(), L"return 'Second'");
+
+		std::wstring string4 = L"[#*Var[#Index]*]";
+		Assert::IsTrue(parser.ReplaceVariables(string4, true));
+		Assert::AreEqual(string4.c_str(), L"[#Var2]");
+	}
+
+	TEST_METHOD(TestNestedVariablesWithMeasures)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		parser.SetVariable(L"Index", L"2");
+		parser.SetVariable(L"Var2", L"Second");
+
+		TestMeasureString measureString2(L"MeasureString2");
+		parser.SetValue(L"MeasureString2", L"String", L"Second");
+		measureString2.Read(parser);
+		parser.AddMeasure(&measureString2);
+
+		TestMeasureString measureIndex(L"MeasureIndex");
+		parser.SetValue(L"MeasureIndex", L"String", L"2");
+		measureIndex.Read(parser);
+		parser.AddMeasure(&measureIndex);
+
+		std::wstring string1 = L"[#Var[&MeasureIndex]]";
+		Assert::IsTrue(parser.ReplaceMeasures(string1));
+		Assert::AreEqual(string1.c_str(), L"Second");
+
+		std::wstring string2 = L"[&MeasureString[#Index]]";
+		Assert::IsTrue(parser.ReplaceMeasures(string2));
+		Assert::AreEqual(string2.c_str(), L"Second");
+
+		std::wstring string3 = L"[&MeasureString[&MeasureIndex]]";
+		Assert::IsTrue(parser.ReplaceMeasures(string3));
+		Assert::AreEqual(string3.c_str(), L"Second");
+
+		std::wstring string4 = L"[&MeasureScript:GetWelcome('[&MeasureString[#Index]]')]";
+		Assert::IsTrue(parser.ReplaceMeasures(string4));
+		Assert::AreEqual(string4.c_str(), L"[&MeasureScript:GetWelcome('Second')]");
+
+		std::wstring string5 = L"[MeasureString2] [&MeasureString2] [#Var2]";
+		Assert::IsTrue(parser.ReplaceMeasures(string5));
+		Assert::AreEqual(string5.c_str(), L"Second Second Second");
+
+		std::wstring string6 = L"[*MeasureString2*] [&MeasureString2]";
+		Assert::IsTrue(parser.ReplaceMeasures(string6));
+		Assert::AreEqual(string6.c_str(), L"[MeasureString2] Second");
+
+		std::wstring string7 = L"[MeasureString[#Index]]";
+		Assert::IsTrue(parser.ReplaceMeasures(string7));
+		Assert::AreEqual(string7.c_str(), L"Second");
+
+		std::wstring string8 = L"[MeasureString[MeasureIndex]]";
+		Assert::IsTrue(parser.ReplaceMeasures(string8));
+		Assert::AreEqual(string8.c_str(), L"[MeasureString2]");
+	}
+
+	TEST_METHOD(TestSingleLetterSectionVariables)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		TestMeasureString measure(L"M");
+		parser.SetValue(L"M", L"String", L"Single");
+		measure.Read(parser);
+		parser.AddMeasure(&measure);
+
+		std::wstring string1 = L"[M]";
+		Assert::IsTrue(parser.ReplaceMeasures(string1));
+		Assert::AreEqual(string1.c_str(), L"Single");
+
+		std::wstring string2 = L"[#]";
+		Assert::IsFalse(parser.ReplaceVariables(string2, true));
+		Assert::AreEqual(string2.c_str(), L"[#]");
+	}
+
+	TEST_METHOD(TestNestedVariableChain)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		parser.SetVariable(L"Chain1", L"[#Chain2]");
+		parser.SetVariable(L"Chain2", L"[#Chain3]");
+		parser.SetVariable(L"Chain3", L"Final");
+		std::wstring string1 = L"[#Chain1]";
+		Assert::IsTrue(parser.ReplaceVariables(string1, true));
+		Assert::AreEqual(string1.c_str(), L"Final");
+	}
+
+	TEST_METHOD(TestSelfReferencingNestedVariable)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		parser.SetVariable(L"SelfRef", L"[#SelfRef]");
+		std::wstring string1 = L"[#SelfRef]";
+		Assert::IsTrue(parser.ReplaceVariables(string1, true));
+		Assert::AreEqual(string1.c_str(), L"[#SelfRef]");
+	}
+
+	TEST_METHOD(TestCharacterReferences)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		std::wstring string1 = L"[\\65][\\x42][\\X43]";
+		Assert::IsTrue(parser.ReplaceVariables(string1, true));
+		Assert::AreEqual(string1.c_str(), L"ABC");
+
+		std::wstring string2 = L"[&MeasureScript:Escape('[\\39]quoted[\\39]')]";
+		Assert::IsTrue(parser.ReplaceMeasures(string2));
+		Assert::AreEqual(string2.c_str(), L"[&MeasureScript:Escape(''quoted'')]");
+
+		std::wstring string3 = L"[\\0][\\x][\\x110000][\\NotANumber]";
+		Assert::IsFalse(parser.ReplaceVariables(string3, true));
+		Assert::AreEqual(string3.c_str(), L"[\\0][\\x][\\x110000][\\NotANumber]");
+
+		std::wstring string4 = L"[\\*65*]";
+		Assert::IsFalse(parser.ReplaceVariables(string4, true));
+		Assert::AreEqual(string4.c_str(), L"[\\65]");
+	}
+
+	TEST_METHOD(TestBracketHeavyNonVariableStrings)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+
+		auto makeRegExp = [](size_t count) -> std::wstring
+		{
+			std::wstring result;
+			result.reserve(count * 10);
+			for (size_t i = 0; i < count; ++i)
+			{
+				result += L"(?:[A-Z])";
+			}
+			return result;
+		};
+
+		std::wstring string1 = makeRegExp(999);
+		const std::wstring expected1 = string1;
+		Assert::IsFalse(parser.ReplaceMeasures(string1));
+		Assert::AreEqual(string1.c_str(), expected1.c_str());
+
+		std::wstring string2 = makeRegExp(1000);
+		const std::wstring expected2 = string2;
+		Assert::IsFalse(parser.ReplaceMeasures(string2));
+		Assert::AreEqual(string2.c_str(), expected2.c_str());
 	}
 };
