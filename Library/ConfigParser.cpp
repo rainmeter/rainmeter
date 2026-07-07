@@ -1807,12 +1807,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	if (temporary) System::RemoveFile(iniRead);
 }
 
-size_t BuildValuesMapKey(const std::wstring& section, const std::wstring& option, WCHAR* buffer, size_t bufferCount)
+std::wstring_view BuildValuesMapKey(const std::wstring& section, const std::wstring& option, WCHAR* buffer, size_t bufferCount)
 {
 	auto bufferPos = buffer;
 
 	const auto keyLength = section.size() + 1 + option.size();
-	if (keyLength >= bufferCount) return false;
+	if (keyLength >= bufferCount) return {};
 
 	StringUtil::ToUpperCase(section, bufferPos, bufferCount);
 	bufferPos += section.length();
@@ -1821,15 +1821,16 @@ size_t BuildValuesMapKey(const std::wstring& section, const std::wstring& option
 	bufferPos += 1;
 
 	StringUtil::ToUpperCase(option, bufferPos, bufferCount - (bufferPos - buffer));
-	return keyLength;
+	return std::wstring_view(buffer, keyLength);
 }
 
 const std::wstring& ConfigParser::GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue)
 {
 	WCHAR buffer[256];
-	if (auto keyLength = BuildValuesMapKey(section, option, buffer, _countof(buffer)))
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
 	{
-		auto iter = m_Values.find(std::wstring_view(buffer, keyLength));
+		auto iter = m_Values.find(key);
 		if (iter != m_Values.end()) return iter->second;
 	}
 	return defaultValue;
@@ -1838,18 +1839,20 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& section, const st
 void ConfigParser::SetValue(const std::wstring& section, const std::wstring& option, std::wstring value)
 {
 	WCHAR buffer[256];
-	if (auto keyLength = BuildValuesMapKey(section, option, buffer, _countof(buffer)))
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
 	{
-		m_Values[std::wstring_view(buffer, keyLength)] = std::move(value);
+		m_Values[key] = std::move(value);
 	}
 }
 
-void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& key)
+void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& option)
 {
 	WCHAR buffer[256];
-	if (auto keyLength = BuildValuesMapKey(section, key, buffer, _countof(buffer)))
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
 	{
-		auto iter = m_Values.find(std::wstring_view(buffer, keyLength));
+		auto iter = m_Values.find(key);
 		if (iter != m_Values.end())
 		{
 			m_Values.erase(iter);
