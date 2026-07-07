@@ -33,6 +33,11 @@ void DialogDebug::Open(int tab)
 {
 	if (!c_Dialog)
 	{
+		if (c_WindowPlacement.length == 0)
+		{
+			GetRainmeter().ReadDialogWindowPlacement(L"DebugDialogBounds", c_WindowPlacement);
+		}
+
 		c_Dialog = new DialogDebug();
 	}
 
@@ -133,6 +138,7 @@ INT_PTR DialogDebug::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
+			GetRainmeter().SaveDialogWindowPlacement(L"DebugDialogBounds", c_WindowPlacement);
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}

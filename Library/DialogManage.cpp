@@ -70,6 +70,11 @@ void DialogManage::Open(int tab)
 {
 	if (!c_Dialog)
 	{
+		if (c_WindowPlacement.length == 0)
+		{
+			GetRainmeter().ReadDialogWindowPlacement(L"ManageDialogBounds", c_WindowPlacement);
+		}
+
 		c_Dialog = new DialogManage();
 	}
 
@@ -211,6 +216,7 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CLOSE:
 		{
+			GetRainmeter().SaveDialogWindowPlacement(L"ManageDialogBounds", c_WindowPlacement);
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}

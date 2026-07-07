@@ -2186,6 +2186,63 @@ void Rainmeter::ResetStats()
 	MeasureNet::ResetStats();
 }
 
+bool Rainmeter::ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement)
+{
+	if (m_DataFile.empty()) return false;
+
+	WCHAR buffer[64];
+	if (GetPrivateProfileString(L"Rainmeter", key, L"", buffer, _countof(buffer), m_DataFile.c_str()) == 0)
+	{
+		return false;
+	}
+
+	int x = 0;
+	int y = 0;
+	int w = 0;
+	int h = 0;
+	int maximized = 0;
+	if (swscanf(buffer, L"%d,%d,%d,%d,%d", &x, &y, &w, &h, &maximized) != 5)
+	{
+		return false;
+	}
+
+	placement = { 0 };
+	placement.length = sizeof(WINDOWPLACEMENT);
+	placement.showCmd = maximized != 0 ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+	placement.rcNormalPosition.left = x;
+	placement.rcNormalPosition.top = y;
+	placement.rcNormalPosition.right = x + w;
+	placement.rcNormalPosition.bottom = y + h;
+
+	if (placement.rcNormalPosition.right <= placement.rcNormalPosition.left ||
+		placement.rcNormalPosition.bottom <= placement.rcNormalPosition.top)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void Rainmeter::SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& placement)
+{
+	if (m_DataFile.empty() || placement.length == 0) return;
+
+	if (placement.rcNormalPosition.right <= placement.rcNormalPosition.left ||
+		placement.rcNormalPosition.bottom <= placement.rcNormalPosition.top)
+	{
+		return;
+	}
+
+	const int x = placement.rcNormalPosition.left;
+	const int y = placement.rcNormalPosition.top;
+	const int w = placement.rcNormalPosition.right - placement.rcNormalPosition.left;
+	const int h = placement.rcNormalPosition.bottom - placement.rcNormalPosition.top;
+	const bool maximized = placement.showCmd == SW_SHOWMAXIMIZED || (placement.flags & WPF_RESTORETOMAXIMIZED) != 0;
+	WCHAR buffer[64];
+	_snwprintf_s(buffer, _TRUNCATE, L"%d,%d,%d,%d,%d", x, y, w, h, maximized ? 1 : 0);
+	WritePrivateProfileString(L"Rainmeter", key, buffer, m_DataFile.c_str());
+}
+
 /*
 ** Wraps MessageBox(). Sets RTL flag if necessary.
 **

@@ -66,7 +66,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 		fontSize; // Font array.
 
 	DLGTEMPLATE* dt = (DLGTEMPLATE*)new BYTE[dataSize];
-	dt->style = style | DS_SHELLFONT | WS_VISIBLE;
+	dt->style = style | DS_SHELLFONT | (modeless ? 0 : WS_VISIBLE);
 	dt->dwExtendedStyle = exStyle;
 	dt->cdit = 0;
 	dt->x = x;
@@ -167,6 +167,7 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 
 	if (!existingWindow && modeless && m_Window)
 	{
+		int showCmd = SW_SHOWNORMAL;
 		if (m_WindowPlacement && m_WindowPlacement->length > 0)
 		{
 			DpiUtil::DpiUnawareScope dpiUnaware;
@@ -190,8 +191,10 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 			}
 
 			SetWindowPlacement(m_Window, &wp);
+			showCmd = wp.showCmd;
 		}
 
+		ShowWindow(m_Window, showCmd);
 		SetForegroundWindow(m_Window);
 	}
 }

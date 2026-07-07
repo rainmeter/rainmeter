@@ -148,6 +148,8 @@ public:
 	void ReadStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
+	bool ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement);
+	void SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& placement);
 
 	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
 	void SetDisableVersionCheck(bool check);
