@@ -83,10 +83,7 @@ static void AssertSectionVariableSelector(ConfigParser& parser, const WCHAR* sec
 	}
 }
 
-static void AssertInvalidSectionVariableSelector(
-	ConfigParser& parser,
-	const WCHAR* section,
-	const WCHAR* selector)
+static void AssertInvalidSectionVariableSelector(ConfigParser& parser, const WCHAR* section, const WCHAR* selector)
 {
 	for (const WCHAR* prefix : { L"", L"&" })
 	{
@@ -309,7 +306,7 @@ public:
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MaxValue", L"34");
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MinValue", L"12");
 		AssertSectionVariableSelector(parser, L"MeasureString", L"EncodeUrl", L"%20%21%2A%27%28%29%3B%3A%40test%26%3D%2B%24%2C%2F%3F%23%5Bing%5D");
-		AssertSectionVariableSelector(parser, L"MeasureString", L"EscapeRegExp", L" !\\*'\\(\\);:@test&=\\+\\$,/\\?#\\[ing\\]");
+		AssertSectionVariableSelector(parser, L"MeasureString", L"EscapeRegExp", L" !\\*'\\(\\);:@test&=\\+\\$,/\\?#\\[ing]");
 	}
 
 	TEST_METHOD(TestMeasureSectionVariableValueSelectors)
