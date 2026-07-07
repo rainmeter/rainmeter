@@ -1842,10 +1842,10 @@ size_t BuildValuesMapKey(const std::wstring& section, const std::wstring& option
 
 const std::wstring& ConfigParser::GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue)
 {
-	WCHAR keyBuffer[512];
-	if (auto keyLength = BuildValuesMapKey(section, option, keyBuffer, _countof(keyBuffer)))
+	WCHAR buffer[256];
+	if (auto keyLength = BuildValuesMapKey(section, option, buffer, _countof(buffer)))
 	{
-		auto iter = m_Values.find(std::wstring_view(keyBuffer, keyLength));
+		auto iter = m_Values.find(std::wstring_view(buffer, keyLength));
 		if (iter != m_Values.end()) return iter->second;
 	}
 	return defaultValue;
@@ -1853,19 +1853,19 @@ const std::wstring& ConfigParser::GetValue(const std::wstring& section, const st
 
 void ConfigParser::SetValue(const std::wstring& section, const std::wstring& option, std::wstring value)
 {
-	WCHAR keyBuffer[512];
-	if (auto keyLength = BuildValuesMapKey(section, option, keyBuffer, _countof(keyBuffer)))
+	WCHAR buffer[256];
+	if (auto keyLength = BuildValuesMapKey(section, option, buffer, _countof(buffer)))
 	{
-		m_Values[std::wstring_view(keyBuffer, keyLength)] = std::move(value);
+		m_Values[std::wstring_view(buffer, keyLength)] = std::move(value);
 	}
 }
 
 void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& key)
 {
-	WCHAR keyBuffer[512];
-	if (auto keyLength = BuildValuesMapKey(section, key, keyBuffer, _countof(keyBuffer)))
+	WCHAR buffer[256];
+	if (auto keyLength = BuildValuesMapKey(section, key, buffer, _countof(buffer)))
 	{
-		auto iter = m_Values.find(std::wstring_view(keyBuffer, keyLength));
+		auto iter = m_Values.find(std::wstring_view(buffer, keyLength));
 		if (iter != m_Values.end())
 		{
 			m_Values.erase(iter);
