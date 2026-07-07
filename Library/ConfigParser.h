@@ -49,9 +49,9 @@ public:
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
-	Measure* GetMeasure(const std::wstring_view name);
+	Measure* GetMeasure(std::wstring_view name);
 
-	bool GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle = false);
+	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 	const StringMap<std::wstring>& GetVariables() { return m_Variables; }
@@ -95,7 +95,7 @@ public:
 	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0);
 	bool ContainsKeyedSectionVariable(const std::wstring& str);
 	static bool IsSectionVariableKey(WCHAR key);
-	std::wstring GetDollarMouseVariable(const std::wstring_view variable, Meter* meter);
+	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
@@ -115,13 +115,13 @@ private:
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	std::optional<std::wstring> GetBuiltInVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetDollarSkinVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetDollarDisplayVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetMonitorVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetDollarSkinVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetDollarDisplayVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr);
 
-	static std::wstring StrToUpper(const std::wstring_view& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
+	static std::wstring StrToUpper(std::wstring_view str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
 	StringMap<Measure*> m_Measures;

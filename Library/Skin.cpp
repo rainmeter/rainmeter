@@ -5403,7 +5403,7 @@ std::wstring Skin::GetSkinPath()
 	return path;
 }
 
-Meter* Skin::GetMeter(const std::wstring_view meterName)
+Meter* Skin::GetMeter(std::wstring_view meterName)
 {
 	for (auto* meter : m_Meters)
 	{
