@@ -140,7 +140,7 @@ void ConfigParser::SetVariable(const std::wstring& strVariable, const std::wstri
 	}
 }
 
-bool ConfigParser::GetVariable(const std::wstring_view& strVariable, std::wstring& strValue, bool isNewStyle)
+bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle)
 {
 	// #1: Built-in variables
 	auto result = GetBuiltInVariable(strVariable);
@@ -168,7 +168,7 @@ bool ConfigParser::GetVariable(const std::wstring_view& strVariable, std::wstrin
 	return false;
 }
 
-std::optional<std::wstring> ConfigParser::GetBuiltInVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view variableStr)
 {
 	auto strParser = StringParser(variableStr);
 
@@ -489,7 +489,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(std::wstring_view variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -505,7 +505,7 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::ws
 }
 
 // Examples: [$Skin:X], [$Skin:DpiScale]
-std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_view variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -527,7 +527,7 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(const std::wstri
 }
 
 // Examples: [$Display:DisplayName], [$Display:X], [$Display:WorkAreaPhysicalH], [$DisplayDevice1:DpiScale]
-std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_view variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
@@ -572,7 +572,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(const std::ws
 	return std::nullopt;
 }
 
-std::optional<std::wstring> ConfigParser::GetMonitorVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view variableStr)
 {
 	enum class MonitorArea
 	{
@@ -1149,7 +1149,7 @@ bool ConfigParser::IsSectionVariableKey(WCHAR key)
 	return VariableTypeForKey(key).has_value();
 }
 
-std::wstring ConfigParser::GetDollarMouseVariable(const std::wstring_view variable, Meter* meter)
+std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
 {
 	std::wstring result;
 	StringParser strParser(variable);
@@ -1298,7 +1298,7 @@ void ConfigParser::AddMeasure(Measure* pMeasure)
 	}
 }
 
-Measure* ConfigParser::GetMeasure(const std::wstring_view name)
+Measure* ConfigParser::GetMeasure(std::wstring_view name)
 {
 	auto iter = m_Measures.find(StrToUpper(name));
 	if (iter != m_Measures.end())
