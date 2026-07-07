@@ -7,7 +7,9 @@
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
+#include "Meter.h"
 #include "MeasureString.h"
+#include "Skin.h"
 #include "../Common/UnitTest.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 
@@ -21,6 +23,85 @@ public:
 		ReadOptions(parser, GetName());
 	}
 };
+
+class TestMeasure : public Measure
+{
+public:
+	TestMeasure(Skin* skin, const WCHAR* name) : Measure(skin, name) {}
+
+	void Read(ConfigParser& parser)
+	{
+		ReadOptions(parser, GetName());
+	}
+
+	void SetTestValue(double value)
+	{
+		m_Value = value;
+	}
+
+	virtual UINT GetTypeID() { return TypeID<TestMeasure>(); }
+
+protected:
+	virtual void UpdateValue() {}
+};
+
+class TestMeter : public Meter
+{
+public:
+	TestMeter(Skin* skin, const WCHAR* name) : Meter(skin, name) {}
+
+	virtual UINT GetTypeID() { return TypeID<TestMeter>(); }
+
+	void SetBounds(int x, int y, int w, int h)
+	{
+		SetX(x);
+		SetY(y);
+		SetW(w);
+		SetH(h);
+	}
+};
+
+static void AddMeterToSkinForTests(Skin& skin, Meter* meter)
+{
+	auto& meters = const_cast<std::vector<Meter*>&>(skin.GetMeters());
+	meters.push_back(meter);
+}
+
+static void AssertSectionVariableSelector(ConfigParser& parser, const WCHAR* section, const WCHAR* selector, const WCHAR* expected)
+{
+	for (const WCHAR* prefix : { L"", L"&" })
+	{
+		std::wstring value = L"[";
+		value += prefix;
+		value += section;
+		value += L":";
+		value += selector;
+		value += L"]";
+
+		Assert::IsTrue(parser.ReplaceMeasures(value));
+		Assert::AreEqual(expected, value.c_str());
+	}
+}
+
+static void AssertInvalidSectionVariableSelector(
+	ConfigParser& parser,
+	const WCHAR* section,
+	const WCHAR* selector)
+{
+	for (const WCHAR* prefix : { L"", L"&" })
+	{
+		std::wstring value = L"[";
+		value += prefix;
+		value += section;
+		value += L":";
+		value += selector;
+		value += L"]";
+
+		const std::wstring expected = value;
+		Assert::IsFalse(parser.ReplaceMeasures(value));
+		Assert::AreEqual(expected.c_str(), value.c_str());
+	}
+}
 
 TEST_CLASS(Library_ConfigParser_Test)
 {
@@ -210,6 +291,65 @@ public:
 		std::wstring string2 = L"[#]";
 		Assert::IsFalse(parser.ReplaceVariables(string2, true));
 		Assert::AreEqual(string2.c_str(), L"[#]");
+	}
+
+	TEST_METHOD(TestMeasureSectionVariableSelectors)
+	{
+		Skin skin(L"", L"", false);
+		ConfigParser& parser = skin.GetParser();
+		parser.Initialize(L"", &skin, nullptr);
+
+		TestMeasureString measure(L"MeasureString");
+		parser.SetValue(L"MeasureString", L"String", L" !*'();:@test&=+$,/?#[ing]");
+		parser.SetValue(L"MeasureString", L"MinValue", L"12");
+		parser.SetValue(L"MeasureString", L"MaxValue", L"34");
+		measure.Read(parser);
+		parser.AddMeasure(&measure);
+
+		AssertSectionVariableSelector(parser, L"MeasureString", L"MaxValue", L"34");
+		AssertSectionVariableSelector(parser, L"MeasureString", L"MinValue", L"12");
+		AssertSectionVariableSelector(parser, L"MeasureString", L"EncodeUrl", L"%20%21%2A%27%28%29%3B%3A%40test%26%3D%2B%24%2C%2F%3F%23%5Bing%5D");
+		AssertSectionVariableSelector(parser, L"MeasureString", L"EscapeRegExp", L" !\\*'\\(\\);:@test&=\\+\\$,/\\?#\\[ing\\]");
+	}
+
+	TEST_METHOD(TestMeasureSectionVariableValueSelectors)
+	{
+		Skin skin(L"", L"", false);
+		ConfigParser& parser = skin.GetParser();
+		parser.Initialize(L"", &skin, nullptr);
+
+		TestMeasure measure(&skin, L"Measure");
+		parser.SetValue(L"Measure", L"MinValue", L"10");
+		parser.SetValue(L"Measure", L"MaxValue", L"50");
+		measure.Read(parser);
+		measure.SetTestValue(30.0);
+		parser.AddMeasure(&measure);
+
+		AssertSectionVariableSelector(parser, L"Measure", L"%", L"50");
+		AssertSectionVariableSelector(parser, L"Measure", L"%,1", L"50.0");
+		AssertSectionVariableSelector(parser, L"Measure", L"/5", L"6");
+		AssertSectionVariableSelector(parser, L"Measure", L"/5, 2", L"6.00");
+		AssertSectionVariableSelector(parser, L"Measure", L"MaxValue:/5", L"10");
+		AssertInvalidSectionVariableSelector(parser, L"Measure", L"MaxValue:%");
+	}
+
+	TEST_METHOD(TestMeterSectionVariableSelectors)
+	{
+		Skin skin(L"", L"", false);
+		ConfigParser& parser = skin.GetParser();
+		parser.Initialize(L"", &skin, nullptr);
+
+		auto* meter = new TestMeter(&skin, L"Meter");
+		meter->SetBounds(10, 20, 30, 40);
+		AddMeterToSkinForTests(skin, meter);
+
+		AssertSectionVariableSelector(parser, L"Meter", L"X", L"10");
+		AssertSectionVariableSelector(parser, L"Meter", L"Y", L"20");
+		AssertSectionVariableSelector(parser, L"Meter", L"W", L"30");
+		AssertSectionVariableSelector(parser, L"Meter", L"H", L"40");
+		AssertSectionVariableSelector(parser, L"Meter", L"XW", L"40");
+		AssertSectionVariableSelector(parser, L"Meter", L"YH", L"60");
+		AssertInvalidSectionVariableSelector(parser, L"Meter", L"Invalid");
 	}
 
 	TEST_METHOD(TestNestedVariableChain)

@@ -164,9 +164,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	}
 
 	++c_InstanceCount;
-
-	// Favorites stored in skin registry.
-	m_Favorite = GetRainmeter().IsSkinAFavorite(folderPath, file);
 }
 
 Skin::~Skin()
@@ -321,6 +318,8 @@ void Skin::Initialize()
 		// Unload skin to prevent crashes
 		Deactivate();
 	}
+
+	m_Favorite = GetRainmeter().IsSkinAFavorite(m_FolderPath, m_FileName);
 
 	Refresh(true, true);
 	if (!m_WindowStartHidden)
