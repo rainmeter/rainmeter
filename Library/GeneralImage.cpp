@@ -231,13 +231,13 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 
 bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)
 {
+	m_ImageName = imageName;
+
 	if (!m_Skin || imageName.empty())
 	{
 		DisposeImage();
 		return false;
 	}
-
-	m_ImageName = imageName;
 
 	std::wstring filename = m_Path + imageName;
 	m_Skin->MakePathAbsolute(filename);
