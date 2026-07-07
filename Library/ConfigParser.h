@@ -92,7 +92,7 @@ public:
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
 
-	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0);
+	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 	bool ContainsKeyedSectionVariable(const std::wstring& str);
 	static bool IsSectionVariableKey(WCHAR key);
 	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
