@@ -26,6 +26,23 @@
 
 namespace {
 
+enum class VariableType : BYTE
+{
+	Ampersand,
+	Hash,
+	Dollar,
+	Backslash
+};
+
+std::optional<VariableType> VariableTypeForKey(WCHAR key)
+{
+	if (key == L'&') return VariableType::Ampersand;
+	if (key == L'#') return VariableType::Hash;
+	if (key == L'$') return VariableType::Dollar;
+	if (key == L'\\') return VariableType::Backslash;
+	return std::nullopt;
+}
+
 void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 {
 	LogErrorF(L"Formula: %s: %s", error, formula);
@@ -488,7 +505,7 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(const std::ws
 }
 
 // Examples: [$Skin:X], [$Skin:DpiScale]
-std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(const std::wstring_view& variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -510,7 +527,7 @@ std::optional<std::wstring> ConfigParser::GetSectionSkinVariable(const std::wstr
 }
 
 // Examples: [$Display:DisplayName], [$Display:X], [$Display:WorkAreaPhysicalH], [$DisplayDevice1:DpiScale]
-std::optional<std::wstring> ConfigParser::GetSectionDisplayVariable(const std::wstring_view& variableStr)
+std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(const std::wstring_view& variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
@@ -749,7 +766,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	//   section variables).
 	if (isNewStyle)
 	{
-		replaced = ParseVariables(result, VariableType::Variable);
+		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly);
 	}
 	else if (m_CurrentSection)
 	{
@@ -824,7 +841,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
 	// Check for new-style measures (and section variables) [&Measure], [&Meter]
 	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
-	bool replaced = ParseVariables(result, VariableType::Section);
+	bool replaced = ExpandSectionVariables(result, VariableExpandMode::AllKeys);
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
 	size_t start = 0;
@@ -892,7 +909,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 ** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
-bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter, int depth)
+bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth)
 {
 	constexpr int maxRecursionDepth = 4;
 	if (depth > maxRecursionDepth) return false;
@@ -934,7 +951,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
 				// are parsed before being sent to the command handler where the rest of the variables
 				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
-				if (type != VariableType::Mouse)
+				if (expandMode != VariableExpandMode::DollarMouseOnly)
 				{
 					str.erase(ei, 1);
 					str.erase(si, 1);
@@ -961,6 +978,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				continue;		// This is not a valid nested variable, check the next starting bracket
 			}
 
+			std::wstring foundValue;
+
 			// Since regular variables are replaced just before section variables in most cases, we replace
 			// both types at the same time in case nesting of the different types occurs. The only side effect
 			// is new-style regular variables located in an action will now be "dynamic" just like section
@@ -970,16 +989,16 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			//  Special case 2: Places where regular variables need to be parsed without any section variables
 			//    parsed afterward. One example is when "@Include" is parsed.
 			//  Special case 3: Always process escaped character references.
-
-			std::wstring foundValue;
-
-			if (keyType == type ||  // Special cases 1, 2
-				(keyType == VariableType::CharacterReference) ||  // Special case 3
-				((keyType == VariableType::Variable || keyType == VariableType::Mouse) && type == VariableType::Section))  // Most cases
+			const bool allowExpansion =
+				(expandMode == VariableExpandMode::AllKeys) ||
+				(expandMode == VariableExpandMode::HashOnly && keyType == VariableType::Hash) ||
+				(expandMode == VariableExpandMode::DollarMouseOnly && keyType == VariableType::Dollar) ||
+				(keyType == VariableType::Backslash);
+			if (allowExpansion)
 			{
 				switch (*keyType)
 				{
-				case VariableType::Section:
+				case VariableType::Ampersand:
 					{
 						Measure* measure = GetMeasure(variable);
 						if (measure)
@@ -994,7 +1013,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 					}
 					break;
 
-				case VariableType::Variable:
+				case VariableType::Hash:
 					{
 						std::wstring value;
 						if (GetVariable(variable, value, true))
@@ -1005,21 +1024,21 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 					}
 					break;
 
-				case VariableType::Mouse:
+				case VariableType::Dollar:
 					{
-						if (type == VariableType::Mouse)
+						if (expandMode == VariableExpandMode::DollarMouseOnly)
 						{
-							foundValue = GetMouseVariable(variable, meter);
+							foundValue = GetDollarMouseVariable(variable, meter);
 							found = !foundValue.empty();
 						}
-						else if (type == VariableType::Section)
+						else if (expandMode == VariableExpandMode::AllKeys)
 						{
-							if (const auto result = GetSectionSkinVariable(variable); result)
+							if (const auto result = GetDollarSkinVariable(variable); result)
 							{
 								foundValue.assign(*result);
 								found = true;
 							}
-							else if (const auto result = GetSectionDisplayVariable(variable); result)
+							else if (const auto result = GetDollarDisplayVariable(variable); result)
 							{
 								foundValue.assign(*result);
 								found = true;
@@ -1028,7 +1047,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 					}
 					break;
 
-				case VariableType::CharacterReference:
+				case VariableType::Backslash:
 					{
 						int base = 10;
 						if (variable[0] == L'x' || variable[0] == L'X')
@@ -1062,9 +1081,9 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			{
 				if (depth < maxRecursionDepth)
 				{
-					ParseVariables(foundValue, type, meter, depth + 1);
+					ExpandSectionVariables(foundValue, expandMode, meter, depth + 1);
 				}
-				else if (ContainsNewStyleVariable(foundValue))
+				else if (ContainsKeyedSectionVariable(foundValue))
 				{
 					const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
 					LogErrorSF(m_Skin, section,
@@ -1111,7 +1130,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	return replaced;
 }
 
-bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
+bool ConfigParser::ContainsKeyedSectionVariable(const std::wstring& str)
 {
 	size_t pos = 0;
 	while ((pos = str.find(L'[', pos)) != std::wstring::npos)
@@ -1125,16 +1144,12 @@ bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
 	return false;
 }
 
-std::optional<ConfigParser::VariableType> ConfigParser::VariableTypeForKey(WCHAR key)
+bool ConfigParser::IsSectionVariableKey(WCHAR key)
 {
-	if (key == L'&') return VariableType::Section;
-	if (key == L'#') return VariableType::Variable;
-	if (key == L'$') return VariableType::Mouse;
-	if (key == L'\\') return VariableType::CharacterReference;
-	return std::nullopt;
+	return VariableTypeForKey(key).has_value();
 }
 
-std::wstring ConfigParser::GetMouseVariable(const std::wstring_view variable, Meter* meter)
+std::wstring ConfigParser::GetDollarMouseVariable(const std::wstring_view variable, Meter* meter)
 {
 	std::wstring result;
 	StringParser strParser(variable);
@@ -1189,8 +1204,8 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 	static size_t s_Depth = 0;
 	static std::deque<std::wstring> s_Results;
 
-	// Custom plugin/Lua functions can re-enter ReadString() while ParseVariables() is still working
-	// on an outer result, so each nested read needs its own buffer.
+	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
+	// working on an outer result, so each nested read needs its own buffer.
 	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
 	++s_Depth;
 	auto depthGuard = Scoped([&] { --s_Depth; });
