@@ -946,25 +946,18 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 					str.erase(ei, 1);
 					str.erase(si, 1);
 				}
-				break;		// Break out of inner "start" loop and continue to the next nested variable
+				break;
 			}
 
 			--si;  // Move index to the "key" character (if it exists)
 
 			// Avoid empty commands
-			std::wstring original = str.substr(si, end - si);
-			if (original.empty())
-			{
-				break;		// Break out of inner "start" loop and continue to the next nested variable
-			}
+			if (end == si) break;
 
 			// Separate "key" character from variable
 			const WCHAR key = str[si];
-			std::wstring variable = str.substr(si + 1, end - si - 1);
-			if (variable.empty())
-			{
-				break; // Break out of inner "start" loop and continue to the next nested variable
-			}
+			auto variable = std::wstring_view(str).substr(si + 1, end - si - 1);
+			if (variable.empty()) break;
 
 			const auto keyType = VariableTypeForKey(key);
 			if (!keyType)
@@ -1003,7 +996,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 							found = true;
 							break;
 						}
-						found = GetSectionVariable(variable, foundValue, &delayedLogEntry);
+						std::wstring sectionVariable(variable);
+						found = GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry);
 					}
 					break;
 
@@ -1031,7 +1025,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 						if (variable[0] == L'x' || variable[0] == L'X')
 						{
 							base = 16;
-							variable.erase(0, 1);  // remove 'x' or 'X'
+							variable.remove_prefix(1);  // remove 'x' or 'X'
 
 							if (variable.empty())
 							{
@@ -1039,9 +1033,10 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 							}
 						}
 
+						std::wstring variableStr(variable);
 						WCHAR* pch = nullptr;
 						errno = 0;
-						long ch = wcstol(variable.c_str(), &pch, base);
+						long ch = wcstol(variableStr.c_str(), &pch, base);
 						if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
 						{
 							break;  // Invalid character
