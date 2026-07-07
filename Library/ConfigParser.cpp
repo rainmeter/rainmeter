@@ -982,92 +982,76 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 			//  Special case 2: Places where regular variables need to be parsed without any section variables
 			//    parsed afterward. One example is when "@Include" is parsed.
 			//  Special case 3: Always process escaped character references.
-			const bool allowExpansion =
-				(expandMode == VariableExpandMode::AllKeys) ||
-				(expandMode == VariableExpandMode::HashOnly && keyType == VariableType::Hash) ||
-				(expandMode == VariableExpandMode::DollarMouseOnly && keyType == VariableType::Dollar) ||
-				(keyType == VariableType::Backslash);
-			if (allowExpansion)
+			if (keyType == VariableType::Ampersand && expandMode == VariableExpandMode::AllKeys)
 			{
-				switch (*keyType)
+				Measure* measure = GetMeasure(variable);
+				if (measure)
 				{
-				case VariableType::Ampersand:
+					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+					foundValue.assign(value, wcslen(value));
+					found = true;
+				}
+				else
+				{
+					std::wstring sectionVariable(variable);
+					found = GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry);
+				}
+			}
+			else if (keyType == VariableType::Hash && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
+			{
+				std::wstring value;
+				if (GetVariable(variable, value, true))
+				{
+					foundValue.assign(value);
+					found = true;
+				}
+			}
+			else if (keyType == VariableType::Dollar)
+			{
+				if (expandMode == VariableExpandMode::DollarMouseOnly)
+				{
+					foundValue = GetDollarMouseVariable(variable, meter);
+					found = !foundValue.empty();
+				}
+				else if (expandMode == VariableExpandMode::AllKeys)
+				{
+					if (const auto result = GetDollarSkinVariable(variable); result)
 					{
-						Measure* measure = GetMeasure(variable);
-						if (measure)
-						{
-							const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-							foundValue.assign(value, wcslen(value));
-							found = true;
-							break;
-						}
-						std::wstring sectionVariable(variable);
-						found = GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry);
-					}
-					break;
-
-				case VariableType::Hash:
-					{
-						std::wstring value;
-						if (GetVariable(variable, value, true))
-						{
-							foundValue.assign(value);
-							found = true;
-						}
-					}
-					break;
-
-				case VariableType::Dollar:
-					{
-						if (expandMode == VariableExpandMode::DollarMouseOnly)
-						{
-							foundValue = GetDollarMouseVariable(variable, meter);
-							found = !foundValue.empty();
-						}
-						else if (expandMode == VariableExpandMode::AllKeys)
-						{
-							if (const auto result = GetDollarSkinVariable(variable); result)
-							{
-								foundValue.assign(*result);
-								found = true;
-							}
-							else if (const auto result = GetDollarDisplayVariable(variable); result)
-							{
-								foundValue.assign(*result);
-								found = true;
-							}
-						}
-					}
-					break;
-
-				case VariableType::Backslash:
-					{
-						int base = 10;
-						if (variable[0] == L'x' || variable[0] == L'X')
-						{
-							base = 16;
-							variable.remove_prefix(1);  // remove 'x' or 'X'
-
-							if (variable.empty())
-							{
-								break;  // Invalid escape sequence [\x]
-							}
-						}
-
-						std::wstring variableStr(variable);
-						WCHAR* pch = nullptr;
-						errno = 0;
-						long ch = wcstol(variableStr.c_str(), &pch, base);
-						if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
-						{
-							break;  // Invalid character
-						}
-
-						foundValue.assign(1, (WCHAR)ch);
+						foundValue.assign(*result);
 						found = true;
 					}
-					break;
+					else if (const auto result = GetDollarDisplayVariable(variable); result)
+					{
+						foundValue.assign(*result);
+						found = true;
+					}
 				}
+			}
+			else if (keyType == VariableType::Backslash)
+			{
+				int base = 10;
+				if (variable[0] == L'x' || variable[0] == L'X')
+				{
+					base = 16;
+					variable.remove_prefix(1);  // remove 'x' or 'X'
+
+					if (variable.empty())
+					{
+						break;  // Invalid escape sequence [\x]
+					}
+				}
+
+				std::wstring variableStr(variable);
+				WCHAR* pch = nullptr;
+				errno = 0;
+				long ch = wcstol(variableStr.c_str(), &pch, base);
+				if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
+				{
+					break;  // Invalid character
+				}
+
+				foundValue.assign(1, (WCHAR)ch);
+				found = true;
 			}
 
 			if (found)
