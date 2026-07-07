@@ -33,7 +33,7 @@ std::wstring GetFolderFromFilePath(const std::wstring& filePath);
 
 std::wstring GetVolume(const std::wstring& path);
 
-void ExpandEnvironmentVariables(std::wstring& strPath);
+void ExpandEnvironmentVariables(std::wstring& strPath, std::wstring::size_type start = 0);
 
 }  // namespace PathUtil
 

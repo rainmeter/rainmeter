@@ -757,8 +757,10 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
 	bool replaced = false;
+	const size_t firstSpecialPos = result.find_first_of(L"[]%#");
+	if (firstSpecialPos == std::wstring::npos) return false;
 
-	PathUtil::ExpandEnvironmentVariables(result);
+	PathUtil::ExpandEnvironmentVariables(result, firstSpecialPos);
 
 	// Check for new-style variables ([#VAR])
 	// Note: Most new-style variables are parsed later (when section variables are parsed),
@@ -766,12 +768,12 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	//   section variables).
 	if (isNewStyle)
 	{
-		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly);
+		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
 	}
 	else if (m_CurrentSection)
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
-		size_t start = 0;
+		size_t start = firstSpecialPos;
 		const std::wstring strVariable = L"[#CURRENTSECTION]";
 		const size_t length = strVariable.length();
 		while ((start = result.find(strVariable, start)) != std::wstring::npos)
@@ -783,52 +785,36 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	}
 
 	// Check for old-style variables (#VAR#)
-	size_t start = 0, end = 0;
-	bool loop = true;
-
-	do
+	size_t start = firstSpecialPos;
+	size_t end = 0;
+	while ((start = result.find(L'#', start)) != std::wstring::npos)
 	{
-		start = result.find(L'#', start);
-		if (start != std::wstring::npos)
+		size_t si = start + 1;
+		end = result.find(L'#', si);
+		if (end == std::wstring::npos) break;
+
+		size_t ei = end - 1;
+		if (si != ei && result[si] == L'*' && result[ei] == L'*')
 		{
-			size_t si = start + 1;
-			end = result.find(L'#', si);
-			if (end != std::wstring::npos)
-			{
-				size_t ei = end - 1;
-				if (si != ei && result[si] == L'*' && result[ei] == L'*')
-				{
-					result.erase(ei, 1);
-					result.erase(si, 1);
-					start = ei;
-				}
-				else
-				{
-					std::wstring value;
-					if (GetVariable(std::wstring_view(&result[si], end - si), value))
-					{
-						// Variable found, replace it with the value
-						result.replace(start, end - start + 1, value);
-						start += value.length();
-						replaced = true;
-					}
-					else
-					{
-						start = end;
-					}
-				}
-			}
-			else
-			{
-				loop = false;
-			}
+			result.erase(ei, 1);
+			result.erase(si, 1);
+			start = ei;
 		}
 		else
 		{
-			loop = false;
+			std::wstring value;
+			if (GetVariable(std::wstring_view(&result[si], end - si), value))
+			{
+				result.replace(start, end - start + 1, value);
+				start += value.length();
+				replaced = true;
+			}
+			else
+			{
+				start = end;
+			}
 		}
 	}
-	while (loop);
 
 	return replaced;
 }
@@ -839,12 +825,19 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 */
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
+	const size_t firstBracket = result.find_first_of(L"[]");
+	if (firstBracket == std::wstring::npos) return false;
+
 	// Check for new-style measures (and section variables) [&Measure], [&Meter]
 	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
-	bool replaced = ExpandSectionVariables(result, VariableExpandMode::AllKeys);
+	bool replaced = false;
+	size_t start = result.find(L'[', firstBracket);
+	if (start != std::wstring::npos)
+	{
+		replaced = ExpandSectionVariables(result, VariableExpandMode::AllKeys, nullptr, 0, start);
+	}
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
-	size_t start = 0;
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
 		size_t si = start + 1;
@@ -909,7 +902,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 ** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
-bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth)
+bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
 	constexpr int maxRecursionDepth = 4;
 	if (depth > maxRecursionDepth) return false;
@@ -932,7 +925,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
 	// Find the innermost section variable(s) first, then move outward (working left to right)
-	size_t end = 0;
+	size_t end = start;
 	while ((end = str.find(L']', end)) != std::wstring::npos)
 	{
 		bool found = false;
