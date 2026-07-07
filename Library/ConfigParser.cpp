@@ -971,7 +971,26 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				continue;		// This is not a valid nested variable, check the next starting bracket
 			}
 
-			std::wstring foundValue;
+			auto replaceFoundValue = [&](std::wstring value)
+			{
+				if (depth < maxRecursionDepth)
+				{
+					ExpandSectionVariables(value, expandMode, meter, depth + 1);
+				}
+				else if (ContainsKeyedSectionVariable(value))
+				{
+					const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+					LogErrorSF(m_Skin, section,
+						L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
+				}
+
+				str.replace(start, end - start + 1, value);
+				found = true;
+				replaced = true;
+
+				// Resume after the inserted value. Any replacement parsing was handled above.
+				end = start + value.length() - 1;
+			};
 
 			// Since regular variables are replaced just before section variables in most cases, we replace
 			// both types at the same time in case nesting of the different types occurs. The only side effect
@@ -988,13 +1007,18 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				if (measure)
 				{
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-					foundValue.assign(value, wcslen(value));
-					found = true;
+					replaceFoundValue(value);
+					break;
 				}
 				else
 				{
+					std::wstring foundValue;
 					std::wstring sectionVariable(variable);
-					found = GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry);
+					if (GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry))
+					{
+						replaceFoundValue(std::move(foundValue));
+						break;
+					}
 				}
 			}
 			else if (keyType == VariableType::Hash && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
@@ -1002,28 +1026,32 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				std::wstring value;
 				if (GetVariable(variable, value, true))
 				{
-					foundValue.assign(value);
-					found = true;
+					replaceFoundValue(std::move(value));
+					break;
 				}
 			}
 			else if (keyType == VariableType::Dollar)
 			{
 				if (expandMode == VariableExpandMode::DollarMouseOnly)
 				{
-					foundValue = GetDollarMouseVariable(variable, meter);
-					found = !foundValue.empty();
+					std::wstring foundValue = GetDollarMouseVariable(variable, meter);
+					if (!foundValue.empty())
+					{
+						replaceFoundValue(std::move(foundValue));
+						break;
+					}
 				}
 				else if (expandMode == VariableExpandMode::AllKeys)
 				{
-					if (const auto result = GetDollarSkinVariable(variable); result)
+					if (const auto result = GetDollarSkinVariable(variable))
 					{
-						foundValue.assign(*result);
-						found = true;
+						replaceFoundValue(std::move(*result));
+						break;
 					}
-					else if (const auto result = GetDollarDisplayVariable(variable); result)
+					else if (const auto result = GetDollarDisplayVariable(variable))
 					{
-						foundValue.assign(*result);
-						found = true;
+						replaceFoundValue(std::move(*result));
+						break;
 					}
 				}
 			}
@@ -1033,12 +1061,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				if (variable[0] == L'x' || variable[0] == L'X')
 				{
 					base = 16;
-					variable.remove_prefix(1);  // remove 'x' or 'X'
-
-					if (variable.empty())
-					{
-						break;  // Invalid escape sequence [\x]
-					}
+					variable.remove_prefix(1);
+					if (variable.empty()) break;
 				}
 
 				std::wstring variableStr(variable);
@@ -1047,39 +1071,19 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				long ch = wcstol(variableStr.c_str(), &pch, base);
 				if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
 				{
-					break;  // Invalid character
+					// Invalid character
+					break;
 				}
 
-				foundValue.assign(1, (WCHAR)ch);
-				found = true;
-			}
-
-			if (found)
-			{
-				if (depth < maxRecursionDepth)
-				{
-					ExpandSectionVariables(foundValue, expandMode, meter, depth + 1);
-				}
-				else if (ContainsKeyedSectionVariable(foundValue))
-				{
-					const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-					LogErrorSF(m_Skin, section,
-						L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, foundValue.c_str());
-				}
-
-				str.replace(start, end - start + 1, foundValue);
-				replaced = true;
-
-				// Resume after the inserted value. Any replacement parsing was handled above.
-				end = start + foundValue.length() - 1;
-				break;		// Break out of inner "start" loop and continue to the next nested variable
+				replaceFoundValue(std::wstring(1, (WCHAR)ch));
+				break;
 			}
 
 			// No variable found
+			if (start == 0) break;
 
-			if (start == 0) break;	// Already at beginning of string, try next ending bracket
-
-			--start;		// Check for any "starting" brackets in string prior to the current starting position
+			// Check for any [ brackets prior to the current [ position
+			--start;
 		}
 
 		if (!delayedLogEntry.message.empty() && found)
