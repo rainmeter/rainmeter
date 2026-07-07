@@ -90,7 +90,8 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 
 	System::UpdateIniFileMappingList();
 
-	ReadIniFile(filename, skinSection);
+	if (!filename.empty()) ReadIniFile(filename, skinSection);
+
 	ReadVariables();
 
 	// Clear and minimize
