@@ -32,6 +32,7 @@
 // STL
 #include <map>
 #include <set>
+#include <deque>
 #include <string>
 #include <vector>
 #include <list>

@@ -9,6 +9,7 @@
 #include "../Common/MathParser.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
+#include "../Common/ScopedFunction.h"
 #include "../Common/StringParser.h"
 #include "ConfigParser.h"
 #include "Util.h"
@@ -871,18 +872,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 				}
 				else
 				{
-					// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
-					// Copy the result here, and replace it before returning.
-					std::wstring str = result;
-
 					std::wstring value;
 					if (GetSectionVariable(section, value))
 					{
-						// Replace section variable with the value.
-						str.replace(start, end - start + 1, value);
+						result.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
-						result = str;
 					}
 					else
 					{
@@ -919,9 +914,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		}
 	}
 
-	// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
-	// Copy the result here, and replace it before returning.
-	std::wstring result = str;
 	bool replaced = false;
 
 	size_t previousStart = 0;
@@ -939,7 +931,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0;
 	size_t counter = 0;
-	while ((end = result.find(L']', end)) != std::wstring::npos)
+	while ((end = str.find(L']', end)) != std::wstring::npos)
 	{
 		// Restrict the number of variable replacements to a reseasonable amount
 		if (++counter >= maxReplacements)
@@ -949,7 +941,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
 			if (GetRainmeter().GetDebug())
 			{
-				LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", result.c_str());
+				LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", str.c_str());
 			}
 			break;
 		}
@@ -959,21 +951,21 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		const size_t ei = end - 1;
 		size_t start = ei;
 
-		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
+		while ((start = str.rfind(L'[', start)) != std::wstring::npos)
 		{
 			found = false;
 			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
 
 			// Check for escaped variables first, if found, skip to the next variable
-			if (si != ei && result[si] == L'*' && result[ei] == L'*')
+			if (si != ei && str[si] == L'*' && str[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
 				// are parsed before being sent to the command handler where the rest of the variables
 				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
 				if (type != VariableType::Mouse)
 				{
-					result.erase(ei, 1);
-					result.erase(si, 1);
+					str.erase(ei, 1);
+					str.erase(si, 1);
 				}
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
@@ -981,7 +973,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			--si;  // Move index to the "key" character (if it exists)
 
 			// Avoid empty commands
-			std::wstring original = result.substr(si, end - si);
+			std::wstring original = str.substr(si, end - si);
 			if (original.empty())
 			{
 				break;		// Break out of inner "start" loop and continue to the next nested variable
@@ -999,8 +991,8 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			previousStart = start;
 
 			// Separate "key" character from variable
-			const WCHAR key = result[si];
-			std::wstring variable = result.substr(si + 1, end - si - 1);
+			const WCHAR key = str[si];
+			std::wstring variable = str.substr(si + 1, end - si - 1);
 			if (variable.empty())
 			{
 				break; // Break out of inner "start" loop and continue to the next nested variable
@@ -1113,7 +1105,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
 				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
 
-				result.replace(start, end - start + 1, foundValue);
+				str.replace(start, end - start + 1, foundValue);
 				replaced = true;
 
 				end = start - 1;
@@ -1148,11 +1140,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	{
 		const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
 		LogWarningSF(m_Skin, section, L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
-		if (GetRainmeter().GetDebug())
-		{
-			LogDebugSF(m_Skin, section, L"Original string: %s", str.c_str());
-			LogDebugSF(m_Skin, section, L"Replaced string: %s", result.c_str());
-		}
 	}
 
 	// Reset the current section
@@ -1161,7 +1148,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		m_CurrentSection = nullptr;
 	}
 
-	str = result;
 	return replaced;
 }
 
@@ -1240,7 +1226,14 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring_view variable, Me
 
 const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
 {
-	static std::wstring result;
+	static size_t s_Depth = 0;
+	static std::deque<std::wstring> s_Results;
+
+	// Custom plugin/Lua functions can re-enter ReadString() while ParseVariables() is still working
+	// on an outer result, so each nested read needs its own buffer.
+	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+	++s_Depth;
+	auto depthGuard = Scoped([&] { --s_Depth; });
 
 	// Clear last status
 	m_LastReplaced = false;
