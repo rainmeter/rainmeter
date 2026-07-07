@@ -899,12 +899,15 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 ** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
 **
 */
-bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
+bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter, int depth)
 {
+	constexpr int maxRecursionDepth = 4;
+	if (depth > maxRecursionDepth) return false;
+
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
-	if (m_Skin && (!m_CurrentSection || meter))
+	if (depth == 0 && m_Skin && (!m_CurrentSection || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
@@ -916,36 +919,12 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 	bool replaced = false;
 
-	size_t previousStart = 0;
-	std::wstring previousVariable;
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
-
-	// Because each nested variable needs to be re-parsed from the beginning of the replaced string,
-	// self-references can be detected multiple times during the variable replacement process.
-	// In these cases, provide a warning to the user before returning.
-	std::wstring selfReferencedVariable;
-
-	// Max number of variable replacements for |str|
-	static const size_t maxReplacements = 1000;
 
 	// Find the innermost section variable(s) first, then move outward (working left to right)
 	size_t end = 0;
-	size_t counter = 0;
 	while ((end = str.find(L']', end)) != std::wstring::npos)
 	{
-		// Restrict the number of variable replacements to a reseasonable amount
-		if (++counter >= maxReplacements)
-		{
-			const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-			LogErrorSF(m_Skin, section,
-				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugSF(m_Skin, section, L"Parsing Error: Result: %s", str.c_str());
-			}
-			break;
-		}
-
 		bool found = false;
 
 		const size_t ei = end - 1;
@@ -978,17 +957,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			{
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
-
-			// Avoid self references
-			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
-			{
-				LogErrorSF(m_Skin, m_CurrentSection ? m_CurrentSection->c_str() : L"",
-					L"Cannot replace variable with itself: \"%s\"", original.c_str());
-				break;		// Break out of inner "start" loop and continue to the next nested variable
-			}
-
-			previousVariable = original;
-			previousStart = start;
 
 			// Separate "key" character from variable
 			const WCHAR key = str[si];
@@ -1088,27 +1056,22 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 
 			if (found)
 			{
-				// Look for any potential self-references in the "found" value
-				auto findVariable = [&](WCHAR postfix) -> void
+				if (depth < maxRecursionDepth)
 				{
-					// Only check for self-references if none have been found
-					if (selfReferencedVariable.empty())
-					{
-						const std::wstring var = L"[" + original + postfix;
-						if (StringUtil::CaseInsensitiveFind(foundValue, var) != -1)
-						{
-							selfReferencedVariable = original;  // Reports only the first self-reference
-						}
-					}
-				};
-
-				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
-				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
+					ParseVariables(foundValue, type, meter, depth + 1);
+				}
+				else if (ContainsNewStyleVariable(foundValue))
+				{
+					const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+					LogErrorSF(m_Skin, section,
+						L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, foundValue.c_str());
+				}
 
 				str.replace(start, end - start + 1, foundValue);
 				replaced = true;
 
-				end = start - 1;
+				// Resume after the inserted value. Any replacement parsing was handled above.
+				end = start + foundValue.length() - 1;
 				break;		// Break out of inner "start" loop and continue to the next nested variable
 			}
 
@@ -1119,7 +1082,7 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			--start;		// Check for any "starting" brackets in string prior to the current starting position
 		}
 
-		if (!delayedLogEntry.message.empty() && found && start == previousStart)
+		if (!delayedLogEntry.message.empty() && found)
 		{
 			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
 			// the nested variable parser can produce errors when determining function names. Reset any delayed
@@ -1133,13 +1096,6 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 	if (!delayedLogEntry.message.empty())
 	{
 		GetLogger().Log(&delayedLogEntry);
-	}
-
-	// Log the self reference warning(s)
-	if (!selfReferencedVariable.empty())
-	{
-		const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-		LogWarningSF(m_Skin, section, L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
 	}
 
 	// Reset the current section

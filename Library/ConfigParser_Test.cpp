@@ -223,6 +223,18 @@ public:
 		std::wstring string1 = L"[#Chain1]";
 		Assert::IsTrue(parser.ReplaceVariables(string1, true));
 		Assert::AreEqual(string1.c_str(), L"Final");
+
+		parser.SetVariable(L"Deep1", L"[#Deep2]");
+		parser.SetVariable(L"Deep2", L"[#Deep3]");
+		parser.SetVariable(L"Deep3", L"[#Deep4]");
+		parser.SetVariable(L"Deep4", L"[#Deep5]");
+		parser.SetVariable(L"Deep5", L"[#Deep6]");
+		parser.SetVariable(L"Deep6", L"[#Deep7]");
+		parser.SetVariable(L"Deep7", L"Done");
+
+		std::wstring string2 = L"[#Deep1]";
+		Assert::IsTrue(parser.ReplaceVariables(string2, true));
+		Assert::AreEqual(string2.c_str(), L"[#Deep6]");
 	}
 
 	TEST_METHOD(TestSelfReferencingNestedVariable)
