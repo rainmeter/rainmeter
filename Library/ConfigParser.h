@@ -24,17 +24,16 @@ class Section;
 class Measure;
 class Meter;
 
+enum class VariableExpandMode : BYTE
+{
+	AllKeys,
+	HashOnly,
+	DollarMouseOnly
+};
+
 class ConfigParser
 {
 public:
-	enum class VariableType : BYTE
-	{										// Old Style:                         New Style:
-		Section,							// [MeasureName], [Meter:X], etc.     [&MeasureName], [&Meter:X], etc.
-		Variable,							// #Variable#                         [#Variable]
-		Mouse,								// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
-		CharacterReference					// Not available.                     [\8364], [\x20AC], [\X20AC], etc.
-	};
-
 	enum class MonitorVariableMode : BYTE
 	{
 		DEFAULT_LOGICAL,
@@ -93,10 +92,10 @@ public:
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
 
-	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr, int depth = 0);
-	bool ContainsNewStyleVariable(const std::wstring& str);
-	static std::optional<VariableType> VariableTypeForKey(WCHAR key);
-	std::wstring GetMouseVariable(const std::wstring_view variable, Meter* meter);
+	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0);
+	bool ContainsKeyedSectionVariable(const std::wstring& str);
+	static bool IsSectionVariableKey(WCHAR key);
+	std::wstring GetDollarMouseVariable(const std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
@@ -118,8 +117,8 @@ private:
 
 	std::optional<std::wstring> GetBuiltInVariable(const std::wstring_view& variableStr);
 	std::optional<std::wstring> GetCurrentConfigVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetSectionSkinVariable(const std::wstring_view& variableStr);
-	std::optional<std::wstring> GetSectionDisplayVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetDollarSkinVariable(const std::wstring_view& variableStr);
+	std::optional<std::wstring> GetDollarDisplayVariable(const std::wstring_view& variableStr);
 	std::optional<std::wstring> GetMonitorVariable(const std::wstring_view& variableStr);
 
 	static std::wstring StrToUpper(const std::wstring_view& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }

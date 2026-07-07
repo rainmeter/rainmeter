@@ -295,7 +295,7 @@ void Mouse::DestroyCustomCursor()
 void Mouse::ReplaceMouseVariables(std::wstring& result) const
 {
 	// Check for new-style variables: [$MOUSEX]
-	m_Skin->GetParser().ParseVariables(result, ConfigParser::VariableType::Mouse, m_Meter);
+	m_Skin->GetParser().ExpandSectionVariables(result, VariableExpandMode::DollarMouseOnly, m_Meter);
 
 	// Check for old-style variables: $MOUSEX$
 	size_t start = 0, end;
@@ -320,7 +320,7 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 				else
 				{
 					std::wstring strVariable = result.substr(si, end - si);
-					std::wstring value = m_Skin->GetParser().GetMouseVariable(strVariable, m_Meter);
+					std::wstring value = m_Skin->GetParser().GetDollarMouseVariable(strVariable, m_Meter);
 					if (!value.empty())
 					{
 						// Variable found, replace it with the value

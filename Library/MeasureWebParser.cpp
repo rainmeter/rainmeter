@@ -313,9 +313,9 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring url = parser.ReadString(section, L"Url", L"", false);
 
 	// Parse new-style variables without parsing old-style section variables
-	if (parser.ContainsNewStyleVariable(url))
+	if (parser.ContainsKeyedSectionVariable(url))
 	{
-		parser.ParseVariables(url, ConfigParser::VariableType::Section);
+		parser.ExpandSectionVariables(url, VariableExpandMode::AllKeys);
 	}
 
 	m_Url = url;
