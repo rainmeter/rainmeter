@@ -249,7 +249,6 @@
 #define IDM_SKIN_CLICKTHROUGH                        4029
 #define IDM_SKIN_EDITSKIN                            4030
 #define IDM_SHOW_HELP                                4034
-#define IDM_SHOWLOGFILE                              4035
 #define IDM_SKIN_TRANSPARENCY_FADEIN                 4037
 #define IDM_SKIN_TRANSPARENCY_FADEOUT                4038
 #define IDM_SKIN_KEEPONSCREEN                        4039
@@ -262,10 +261,6 @@
 #define IDM_SKIN_MONITOR_PRIMARY                     4046
 #define IDM_SKIN_MONITOR_AUTOSELECT                  4047
 #define IDM_NEW_VERSION                              4048
-#define IDM_STARTLOG                                 4049
-#define IDM_STOPLOG                                  4050
-#define IDM_DEBUGLOG                                 4051
-#define IDM_DELETELOGFILE                            4052
 #define IDM_SKIN_MANAGESKIN                          4053
 #define IDM_MANAGESKINSMENU_EXPAND                   4054
 #define IDM_MANAGESKINSMENU_OPENFOLDER               4055
