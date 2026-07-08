@@ -3,7 +3,7 @@
 Builds RainLexer release artifacts.
 
 .PARAMETER BuildType
-The build target to run. Valid values are full, rainlexer-32, rainlexer-64, and installer.
+The build target to run. Valid values are full, rainlexer, rainlexer-32, rainlexer-64, and installer.
 
 .PARAMETER Version
 The RainLexer version in major.minor.patch format.
@@ -21,7 +21,7 @@ Builds only the RainLexer installer using the existing signed DLL outputs.
 [CmdletBinding()]
 param(
 	[Parameter(Position = 0)]
-	[ValidateSet('full', 'rainlexer-32', 'rainlexer-64', 'installer')]
+	[ValidateSet('full', 'rainlexer', 'rainlexer-32', 'rainlexer-64', 'installer')]
 	[string]$BuildType,
 
 	[Parameter(Position = 1)]
@@ -139,12 +139,12 @@ $msBuildArgs = @(
 	'/v:q'
 )
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer-32') {
+if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer' -or $BuildType -eq 'rainlexer-32') {
 	Write-Host '* Building 32-bit RainLexer'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + '/p:Platform=Win32')
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer-64') {
+if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer' -or $BuildType -eq 'rainlexer-64') {
 	Write-Host '* Building 64-bit RainLexer'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + '/p:Platform=x64')
 }
