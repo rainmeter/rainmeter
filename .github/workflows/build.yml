@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'
+    paths-ignore:
+      - 'RainLexer/**'
 
 jobs:
   rainmeter:

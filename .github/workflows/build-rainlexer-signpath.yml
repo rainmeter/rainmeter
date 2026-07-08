@@ -1,0 +1,118 @@
+name: build-rainlexer-signpath
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: RainLexer version in major.minor.patch format
+        required: true
+        type: string
+
+env:
+  BUILD_VERSION: ${{ inputs.version }}
+
+jobs:
+  rainlexer:
+    strategy:
+      matrix:
+        arch:
+          - platform: Win32
+            build_type: rainlexer-32
+            out_dir: x32-Release
+            artifact_name: RainLexerBuild32
+          - platform: x64
+            build_type: rainlexer-64
+            out_dir: x64-Release
+            artifact_name: RainLexerBuild64
+
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Build RainLexer ${{ matrix.arch.platform }}
+        run: .\RainLexer\Build\Build.ps1 ${{ matrix.arch.build_type }} $env:BUILD_VERSION
+        shell: pwsh
+
+      - name: Upload ${{ matrix.arch.platform }} build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.arch.artifact_name }}
+          path: |
+            RainLexer/${{ matrix.arch.out_dir }}
+            !RainLexer/${{ matrix.arch.out_dir }}/Obj
+          if-no-files-found: error
+
+  installer:
+    environment:
+      name: signpath
+      deployment: false
+    needs: rainlexer
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Download 32-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: RainLexerBuild32
+          path: RainLexer/x32-Release
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: RainLexerBuild64
+          path: RainLexer/x64-Release
+
+      - name: Upload combined build
+        uses: actions/upload-artifact@v7
+        id: upload-build
+        with:
+          name: RainLexerBuild-${{ env.BUILD_VERSION }}
+          path: |
+            RainLexer/x32-Release/RainLexer.dll
+            RainLexer/x64-Release/RainLexer.dll
+          if-no-files-found: error
+
+      - name: Remove build directories
+        run: rm -rf RainLexer/x32-Release RainLexer/x64-Release
+        shell: bash
+
+      - name: Sign RainLexer DLLs
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_KEY }}'
+          organization-id: '2d37d539-98b7-4649-9469-4097b1099202'
+          project-slug: 'rainmeter'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'zip'
+          github-artifact-id: '${{ steps.upload-build.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: RainLexer
+
+      - name: Install NSIS
+        uses: ./.github/actions/install-nsis
+
+      - name: Build installer
+        run: .\RainLexer\Build\Build.ps1 installer $env:BUILD_VERSION
+        shell: pwsh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        id: upload-installer
+        with:
+          path: RainLexer/Build/RainLexer-*.exe
+          archive: false
+          if-no-files-found: error
+
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_KEY }}'
+          organization-id: '2d37d539-98b7-4649-9469-4097b1099202'
+          project-slug: 'rainmeter'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'exe'
+          github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
+          wait-for-completion: false
