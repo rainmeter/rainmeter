@@ -12,6 +12,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "MeasureNet.h"
+#include "WindowOcclusionTracker.h"
 #include "../Common/PathUtil.h"
 #include <TlHelp32.h>
 #include <WtsApi32.h>
@@ -24,8 +25,9 @@ bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& targe
 
 enum TIMER
 {
-	TIMER_SHOWDESKTOP   = 1,
-	TIMER_RESUME        = 2
+	TIMER_SHOWDESKTOP = 1,
+	TIMER_RESUME = 2,
+	TIMER_WINDOWOCCLUSION = 3
 };
 enum INTERVAL
 {
@@ -89,6 +91,7 @@ void System::Initialize(HINSTANCE instance)
 		nullptr);
 
 	WTSRegisterSessionNotification(c_Window, NOTIFY_FOR_THIS_SESSION);
+	WindowOcclusionTracker::Initialize(c_Window, TIMER_WINDOWOCCLUSION);
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
@@ -125,6 +128,8 @@ void System::Finalize()
 		UnhookWinEvent(c_WinEventHook);
 		c_WinEventHook = nullptr;
 	}
+
+	WindowOcclusionTracker::Finalize();
 
 	if (c_HelperWindow)
 	{
@@ -522,6 +527,7 @@ bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 		PrepareHelperWindow(desktopIconsHostWindow);
 
 		ChangeZPosInOrder();
+		WindowOcclusionTracker::HandleShowDesktopChange();
 
 		if (c_ShowDesktop)
 		{
@@ -633,6 +639,10 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 			}
 			break;
+
+		case TIMER_WINDOWOCCLUSION:
+			WindowOcclusionTracker::HandleTimer();
+			break;
 		}
 		break;
 
@@ -658,6 +668,8 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 					PostMessage(skin->GetWindow(), skinMessage, (WPARAM)uMsg, (LPARAM)0);
 				}
 			}
+
+			WindowOcclusionTracker::HandleDisplayChange();
 		}
 		break;
 
@@ -671,11 +683,14 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		{
 			// Deliver PBT_APMRESUMESUSPEND event to all meter windows
 			SetTimer(hWnd, TIMER_RESUME, INTERVAL_RESUME, nullptr);
+			WindowOcclusionTracker::HandlePowerResume();
 		}
 		return TRUE;
 
 	case WM_WTSSESSION_CHANGE:
 		LogDebugF(L"System: User session change detected! Session ID: 0x%08X Type: 0x%08X", lParam, wParam);
+		WindowOcclusionTracker::HandleSessionChange(wParam);
+
 		if (GetRainmeter().IsRedrawable())
 		{
 			auto iter = GetRainmeter().GetAllSkins().begin();

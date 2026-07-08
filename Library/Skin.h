@@ -81,6 +81,21 @@ enum RESIZEMODE
 	RESIZEMODE_RESET
 };
 
+enum class SkinWindowOcclusionState : BYTE
+{
+	Unknown = 0,
+	Visible,
+	Occluded,
+	Hidden
+};
+
+enum class SkinUpdateMode : BYTE
+{
+	Normal = 0,
+	SkipInvisibleRedraw,
+	SkipInvisibleUpdate
+};
+
 class Rainmeter;
 class Measure;
 class Meter;
@@ -200,6 +215,9 @@ public:
 	float GetScale() const { return m_EffectiveScale; }
 	float GetDpiScale() const { return m_DpiScale; }
 	float GetZoom() const { return m_ZoomScale; }
+	SkinWindowOcclusionState GetWindowOcclusionState() const { return m_WindowOcclusionState; }
+	void SetWindowOcclusionState(SkinWindowOcclusionState state);
+	bool IsWindowUnoccluded() const { return m_WindowOcclusionState == SkinWindowOcclusionState::Visible || m_WindowOcclusionState == SkinWindowOcclusionState::Unknown; }
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -407,6 +425,7 @@ private:
 	std::wstring m_OnUpdateAction;
 	std::wstring m_OnWakeAction;
 	std::wstring m_OnDisplayMetricsChangeAction;
+	std::wstring m_OnVisibilityChangeAction;
 
 	Section* m_CurrentActionSection;
 
@@ -487,6 +506,10 @@ private:
 	STATE m_State;
 
 	bool m_Hidden;
+	SkinWindowOcclusionState m_WindowOcclusionState;
+	SkinUpdateMode m_UpdateMode;
+	bool m_HasPendingUpdate;
+	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
 
 	ankerl::unordered_dense::map<UINT_PTR, std::wstring> m_DelayedCommands;
