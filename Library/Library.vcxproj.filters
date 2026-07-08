@@ -163,6 +163,7 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="WindowOcclusionTracker.cpp" />
     <ClCompile Include="lua\LuaHelper.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
@@ -312,6 +313,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="WindowOcclusionTracker.h" />
     <ClInclude Include="lua\LuaHelper.h">
       <Filter>Lua</Filter>
     </ClInclude>

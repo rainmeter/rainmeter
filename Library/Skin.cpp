@@ -12,6 +12,7 @@
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
+#include "WindowOcclusionTracker.h"
 #include "MonitorUtil.h"
 #include "Meter.h"
 #include "Measure.h"
@@ -136,6 +137,10 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_TransparencyValue(),
 	m_State(STATE_INITIALIZING),
 	m_Hidden(false),
+	m_WindowOcclusionState(SkinWindowOcclusionState::Unknown),
+	m_UpdateMode(SkinUpdateMode::Normal),
+	m_HasPendingUpdate(false),
+	m_HasPendingRedraw(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
@@ -246,7 +251,11 @@ void Skin::Dispose(bool refresh)
 
 		m_SelectionOverlay.reset();
 
-		if (m_Window) DestroyWindow(m_Window);
+		if (m_Window)
+		{
+			WindowOcclusionTracker::UntrackWindow(m_Window);
+			DestroyWindow(m_Window);
+		}
 		m_Window = nullptr;
 
 		if (m_HostWindow) DestroyWindow(m_HostWindow);
@@ -306,6 +315,8 @@ void Skin::Initialize()
 	title += '\\';
 	title += m_FileName;
 	SetWindowText(m_Window, title.c_str());
+
+	WindowOcclusionTracker::TrackWindow(m_Window);
 
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
@@ -2448,11 +2459,18 @@ bool Skin::ReadSkin()
 	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", false);
 	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", false);
 	m_OnDisplayMetricsChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnDisplayMetricsChange", L"", false);
+	m_OnVisibilityChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnVisibilityChange", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
+
+	const auto* updateMode = m_Parser.ReadString(L"Rainmeter", L"UpdateMode", L"", false).c_str();
+	m_UpdateMode =
+		_wcsicmp(updateMode, L"SkipInvisibleRedraw") == 0 ? SkinUpdateMode::SkipInvisibleRedraw :
+		_wcsicmp(updateMode, L"SkipInvisibleUpdate") == 0 ? SkinUpdateMode::SkipInvisibleUpdate :
+		SkinUpdateMode::Normal;
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{
@@ -2822,6 +2840,13 @@ bool Skin::ResizeWindow(bool reset)
 
 void Skin::Redraw()
 {
+	if (m_UpdateMode != SkinUpdateMode::Normal && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
+	{
+		m_HasPendingRedraw = true;
+		return;
+	}
+
+	m_HasPendingRedraw = false;
 	m_Canvas.SetDpiScale(m_EffectiveScale);
 
 	if (m_ResizeWindow)
@@ -3222,6 +3247,13 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 */
 void Skin::Update(bool refresh)
 {
+	if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
+	{
+		m_HasPendingUpdate = true;
+		return;
+	}
+
+	m_HasPendingUpdate = false;
 	++m_UpdateCounter;
 
 	if (!m_Measures.empty())
@@ -4127,6 +4159,30 @@ void Skin::SetFavorite(bool b)
 	DialogManage::UpdateSkins(this);
 
 	GetRainmeter().UpdateFavorites(m_FolderPath, m_FileName, b);
+}
+
+void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
+{
+	const SkinWindowOcclusionState previousState = m_WindowOcclusionState;
+	m_WindowOcclusionState = state;
+
+	if (previousState == SkinWindowOcclusionState::Occluded && state == SkinWindowOcclusionState::Visible && GetRainmeter().IsRedrawable())
+	{
+		if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_HasPendingUpdate)
+		{
+			Update(false);
+		}
+
+		if (m_UpdateMode != SkinUpdateMode::Normal && m_HasPendingRedraw)
+		{
+			Redraw();
+		}
+	}
+
+	if (previousState != SkinWindowOcclusionState::Unknown && state != previousState)
+	{
+		GetRainmeter().ExecuteCommand(m_OnVisibilityChangeAction.c_str(), this);
+	}
 }
 
 void Skin::SetWindowDraggable(bool b)
