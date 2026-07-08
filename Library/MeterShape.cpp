@@ -795,7 +795,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 	if (!recursive)
 	{
-		shape->CreateStrokeStyle();
+		shape->CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
 		shape->ValidateTransforms();
 	}
 }

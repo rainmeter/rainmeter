@@ -661,11 +661,11 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	else
 	{
 		D2D1_RECT_F rcDest = meterRect;
+		D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
 
 		if (m_Angle != 0.0f)
 		{
 			// Get current transform
-			D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
 			canvas.GetTransform(&matrix);
 
 			// GDI+ combatibiity.
@@ -715,7 +715,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 		if (m_Angle != 0.0f)
 		{
-			canvas.ResetTransform();
+			canvas.SetTransform(matrix);
 		}
 	}
 
