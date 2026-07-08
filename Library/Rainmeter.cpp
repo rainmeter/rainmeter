@@ -2029,6 +2029,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"QuotePlugin",
 		L"RecycleManager",
 		L"ResMon",
+		L"RunCommand",
 		L"SpeedFanPlugin",
 		L"SysInfo",
 		L"WebParser",
