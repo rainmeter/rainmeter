@@ -1,46 +1,33 @@
 name: build-rainlexer-signpath
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: RainLexer version in major.minor.patch format
-        required: true
-        type: string
+  push:
+    tags:
+      - rainlexer-v[0-9]+.[0-9]+.[0-9]+
 
 env:
-  BUILD_VERSION: ${{ inputs.version }}
+  BUILD_VERSION: ${{ github.ref_name }}
 
 jobs:
   rainlexer:
-    strategy:
-      matrix:
-        arch:
-          - platform: Win32
-            build_type: rainlexer-32
-            out_dir: x32-Release
-            artifact_name: RainLexerBuild32
-          - platform: x64
-            build_type: rainlexer-64
-            out_dir: x64-Release
-            artifact_name: RainLexerBuild64
-
     runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Build RainLexer ${{ matrix.arch.platform }}
-        run: .\RainLexer\Build\Build.ps1 ${{ matrix.arch.build_type }} $env:BUILD_VERSION
+      - name: Build RainLexer
+        run: .\RainLexer\Build\Build.ps1 full $env:BUILD_VERSION.Replace('rainlexer-v', '')
         shell: pwsh
 
-      - name: Upload ${{ matrix.arch.platform }} build
+      - name: Upload RainLexer build
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.arch.artifact_name }}
+          name: RainLexerBuild
           path: |
-            RainLexer/${{ matrix.arch.out_dir }}
-            !RainLexer/${{ matrix.arch.out_dir }}/Obj
+            RainLexer/x32-Release
+            !RainLexer/x32-Release/Obj
+            RainLexer/x64-Release
+            !RainLexer/x64-Release/Obj
           if-no-files-found: error
 
   installer:
@@ -53,23 +40,17 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Download 32-bit build
+      - name: Download RainLexer build
         uses: actions/download-artifact@v8
         with:
-          name: RainLexerBuild32
-          path: RainLexer/x32-Release
-
-      - name: Download 64-bit build
-        uses: actions/download-artifact@v8
-        with:
-          name: RainLexerBuild64
-          path: RainLexer/x64-Release
+          name: RainLexerBuild
+          path: .
 
       - name: Upload combined build
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
-          name: RainLexerBuild-${{ env.BUILD_VERSION }}
+          name: RainLexerBuild-${{ github.ref_name }}
           path: |
             RainLexer/x32-Release/RainLexer.dll
             RainLexer/x64-Release/RainLexer.dll
@@ -95,7 +76,7 @@ jobs:
         uses: ./.github/actions/install-nsis
 
       - name: Build installer
-        run: .\RainLexer\Build\Build.ps1 installer $env:BUILD_VERSION
+        run: .\RainLexer\Build\Build.ps1 installer $env:BUILD_VERSION.Replace('rainlexer-v', '')
         shell: pwsh
 
       - name: Upload installer
