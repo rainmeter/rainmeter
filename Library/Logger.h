@@ -64,9 +64,7 @@ public:
 
 private:
 	void LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg);
-
-	// Appends |entry| to the log file.
-	void WriteToLogFile(Entry& entry);
+	void WriteToLogFile(const Entry& entry);
 
 	Logger();
 	~Logger();

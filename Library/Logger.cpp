@@ -18,7 +18,7 @@
 
 namespace {
 
-const size_t MAX_LOG_ENTIRES = 20;
+const size_t MAX_LOG_ENTIRES = 50;
 
 }  // namespace
 
@@ -107,8 +107,7 @@ void Logger::LogInternal(Level level, std::chrono::system_clock::time_point time
 		milliseconds.count() % 1000);
 
 	// Store up to MAX_LOG_ENTIRES entries.
-	Entry entry = { level, std::wstring(timestampSz, len), source, msg };
-	m_Entries.push_back(entry);
+	const auto& entry = m_Entries.emplace_back(level, std::wstring(timestampSz, len), source, msg);
 	if (m_Entries.size() > MAX_LOG_ENTIRES)
 	{
 		m_Entries.pop_front();
@@ -118,7 +117,7 @@ void Logger::LogInternal(Level level, std::chrono::system_clock::time_point time
 	WriteToLogFile(entry);
 }
 
-void Logger::WriteToLogFile(Entry& entry)
+void Logger::WriteToLogFile(const Entry& entry)
 {
 #ifndef _DEBUG
 	if (!m_LogToFile) return;
