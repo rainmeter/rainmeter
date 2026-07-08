@@ -556,26 +556,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)nullptr, (LPARAM)nullptr);
 			break;
 
-		case IDM_SHOWLOGFILE:
-			GetRainmeter().ShowLogFile();
-			break;
-
-		case IDM_STARTLOG:
-			GetLogger().StartLogFile();
-			break;
-
-		case IDM_STOPLOG:
-			GetLogger().StopLogFile();
-			break;
-
-		case IDM_DELETELOGFILE:
-			GetLogger().DeleteLogFile();
-			break;
-
-		case IDM_DEBUGLOG:
-			GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
-			break;
-
 		case IDM_DISABLEDRAG:
 			GetRainmeter().SetDisableDragging(!GetRainmeter().GetDisableDragging());
 			break;

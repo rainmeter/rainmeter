@@ -160,15 +160,6 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		MENU_ITEM(IDM_EDITCONFIG, IDS_EditSettings),
 		MENU_ITEM(IDM_REFRESH, IDS_RefreshAll),
 		MENU_SEPARATOR(),
-		MENU_SUBMENU(IDS_Logging,
-			MENU_ITEM(IDM_SHOWLOGFILE, IDS_ShowLogFile),
-			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_STARTLOG, IDS_StartLogging),
-			MENU_ITEM(IDM_STOPLOG, IDS_StopLogging),
-			MENU_SEPARATOR(),
-			MENU_ITEM(IDM_DELETELOGFILE, IDS_DeleteLogFile),
-			MENU_ITEM(IDM_DEBUGLOG, IDS_DebugMode)),
-		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_QUIT, IDS_Exit)
 	};
 
@@ -196,25 +187,6 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	};
 
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
-
-	if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) != 0)
-	{
-		EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-		EnableMenuItem(menu, IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-	}
-	else
-	{
-		EnableMenuItem(
-			menu,
-			(GetLogger().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
-			MF_BYCOMMAND | MF_GRAYED);
-	}
-
-	if (rainmeter.m_Debug)
-	{
-		CheckMenuItem(menu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
-	}
 
 	HMENU allSkinsMenu = GetSubMenu(menu, 5);
 	if (allSkinsMenu)
@@ -269,12 +241,12 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		{
 			if (index == 0)
 			{
-				InsertMenu(menu, 14, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+				InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 			}
 
 			Skin* skin = ((*iter).second);
 			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
-			InsertMenu(menu, 14, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
+			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
 			++index;
 		}
 
