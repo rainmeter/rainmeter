@@ -117,6 +117,11 @@ function Write-VersionHeader {
 }
 
 function Get-MakeNsisPath {
+	$command = Get-Command 'makensis.exe' -CommandType Application -ErrorAction SilentlyContinue
+	if ($command) {
+		return $command.Source
+	}
+
 	$paths = @(
 		(Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'),
 		(Join-Path $env:ProgramFiles 'NSIS\makensis.exe')
