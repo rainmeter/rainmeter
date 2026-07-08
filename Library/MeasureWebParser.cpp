@@ -541,7 +541,7 @@ void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD error
 
 		if (!m_OnConnectErrAction.empty())
 		{
-			GetRainmeter().ExecuteCommand(m_OnConnectErrAction.c_str(), GetSkin());
+			GetRainmeter().DelayedExecuteCommand(m_OnConnectErrAction.c_str(), GetSkin());
 		}
 	}
 	else
@@ -748,11 +748,11 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 
 	if (doErrorAction && !m_OnRegExpErrAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
+		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
 	}
 	else if (!m_Download && !m_FinishAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), GetSkin());
+		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
 	}
 }
 
@@ -990,7 +990,7 @@ void MeasureWebParser::StartDownloadTask()
 
 			if (!m_OnDownloadErrAction.empty())
 			{
-				GetRainmeter().ExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
+				GetRainmeter().DelayedExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
 			}
 		}
 	}
@@ -1051,7 +1051,7 @@ void MeasureWebParser::HandleDownloadResult(const std::wstring& path, HRESULT re
 
 		if (!m_FinishAction.empty())
 		{
-			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), GetSkin());
+			GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
 		}
 	}
 	else
@@ -1075,7 +1075,7 @@ void MeasureWebParser::HandleDownloadResult(const std::wstring& path, HRESULT re
 
 		if (!m_OnDownloadErrAction.empty())
 		{
-			GetRainmeter().ExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
+			GetRainmeter().DelayedExecuteCommand(m_OnDownloadErrAction.c_str(), GetSkin());
 		}
 	}
 }
