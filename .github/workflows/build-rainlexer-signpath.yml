@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build RainLexer
-        run: .\RainLexer\Build\Build.ps1 full $env:BUILD_VERSION.Replace('rainlexer-v', '')
+        run: .\RainLexer\Build\Build.ps1 rainlexer $env:BUILD_VERSION.Replace('rainlexer-v', '')
         shell: pwsh
 
       - name: Upload RainLexer build
