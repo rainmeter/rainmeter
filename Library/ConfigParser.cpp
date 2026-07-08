@@ -968,15 +968,18 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 
 			auto replaceFoundValue = [&](std::wstring value)
 			{
-				if (depth < maxRecursionDepth)
+				if (keyType == VariableType::Ampersand || keyType == VariableType::Hash)
 				{
-					ExpandSectionVariables(value, expandMode, meter, depth + 1);
-				}
-				else if (ContainsKeyedSectionVariable(value))
-				{
-					const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-					LogErrorSF(m_Skin, section,
-						L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
+					if (depth < maxRecursionDepth)
+					{
+						ExpandSectionVariables(value, expandMode, meter, depth + 1);
+					}
+					else if (ContainsKeyedSectionVariable(value))
+					{
+						const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
+						LogErrorSF(m_Skin, section,
+							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
+					}
 				}
 
 				str.replace(start, end - start + 1, value);
