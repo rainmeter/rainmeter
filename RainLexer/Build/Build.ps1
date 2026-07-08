@@ -116,28 +116,6 @@ function Write-VersionHeader {
 	)
 }
 
-function Get-MakeNsisPath {
-	$command = Get-Command 'makensis.exe' -CommandType Application -ErrorAction SilentlyContinue
-	if ($command) {
-		return $command.Source
-	}
-
-	$paths = @(
-		(Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'),
-		(Join-Path $env:ProgramFiles 'NSIS\makensis.exe')
-	)
-
-	$makeNsis = $paths |
-		Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-		Select-Object -First 1
-	if (-not $makeNsis) {
-		Write-Error 'ERROR: MakeNSIS.exe not found'
-		exit 1
-	}
-
-	return $makeNsis
-}
-
 if ([string]::IsNullOrWhiteSpace($Version)) {
 	Write-UsageError 'Invalid version'
 }
@@ -173,7 +151,16 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer-64') {
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 	Write-Host '* Building installer'
-	$makeNsis = Get-MakeNsisPath
+
+	$makeNsis = Join-Path $env:ProgramFiles 'NSIS\MakeNSIS.exe'
+	if (-not (Test-Path -LiteralPath $makeNsis -PathType Leaf)) {
+		$makeNsis = $makeNsis.Replace('Program Files\', 'Program Files (x86)\')
+	}
+	if (-not (Test-Path -LiteralPath $makeNsis -PathType Leaf)) {
+		Write-Error 'ERROR: MakeNSIS.exe not found'
+		exit 1
+	}
+
 	Invoke-NativeCommand $makeNsis @(
 		"/DOUTFILE=RainLexer-$versionString.exe",
 		"/DVERSION=$versionString",
