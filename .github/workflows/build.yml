@@ -6,6 +6,7 @@ on:
       - '**'
     paths-ignore:
       - 'RainLexer/**'
+      - '.github/workflows/*rainlexer*'
 
 jobs:
   rainmeter:
