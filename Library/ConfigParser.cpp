@@ -931,9 +931,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 		bool found = false;
 
 		const size_t ei = end - 1;
-		size_t start = ei;
-
-		while ((start = str.rfind(L'[', start)) != std::wstring::npos)
+		size_t start = end;
+		while (start != 0 && (start = str.rfind(L'[', start - 1)) != std::wstring::npos)
 		{
 			found = false;
 			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
@@ -957,19 +956,15 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 			// Avoid empty commands
 			if (end == si) break;
 
-			// Separate "key" character from variable
 			const WCHAR key = str[si];
 			auto variable = std::wstring_view(str).substr(si + 1, end - si - 1);
 			if (variable.empty()) break;
 
 			const auto keyType = VariableTypeForKey(key);
-			if (!keyType)
-			{
-				if (start == 0) break;	// Already at beginning of string, try next ending bracket
 
-				--start;		// Check for any "starting" brackets in string prior to the current starting position
-				continue;		// This is not a valid nested variable, check the next starting bracket
-			}
+			// If we didn't find a variable key at this [, we keep searching for previous [. This is not
+			// ideal and we should figure out a way to avoid this in the future.
+			if (!keyType) continue;
 
 			auto replaceFoundValue = [&](std::wstring value)
 			{
@@ -1078,12 +1073,6 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				replaceFoundValue(std::wstring(1, (WCHAR)ch));
 				break;
 			}
-
-			// No variable found
-			if (start == 0) break;
-
-			// Check for any [ brackets prior to the current [ position
-			--start;
 		}
 
 		if (!delayedLogEntry.message.empty() && found)
