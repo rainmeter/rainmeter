@@ -169,27 +169,13 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			MENU_ITEM(IDM_DELETELOGFILE, IDS_DeleteLogFile),
 			MENU_ITEM(IDM_DEBUGLOG, IDS_DebugMode)),
 		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(0, IDS_GameMode),
-		MENU_SEPARATOR(),
-		MENU_ITEM(IDM_QUIT, IDS_Exit)
-	};
-
-	static const MenuTemplate s_GameModeMenu[] =
-	{
-		MENU_ITEM_GRAYED(0, IDS_GameMode),
-		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_QUIT, IDS_Exit)
 	};
 
 	if (m_ActiveMenu || (skin && skin->IsClosing())) return;
 
 	Rainmeter& rainmeter = GetRainmeter();
-
-	// Show context menu, if no actions were executed
-	HMENU menu = !GetGameMode().IsEnabled() ?
-		MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString) :
-		MenuTemplate::CreateMenu(s_GameModeMenu, _countof(s_GameModeMenu), GetString);
-
+	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (!menu) return;
 
 	auto displayMenu = [&]() -> void
@@ -208,20 +194,6 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		HWND parentWindow = skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow();
 		DisplayMenu(pos, menu, parentWindow);
 	};
-
-	int gamePos = GetMenuItemCount(menu) - 3;
-	HMENU gameMenu = CreateGameModeMenu();
-	if (gameMenu)
-	{
-		DeleteMenu(menu, gamePos, MF_BYPOSITION);
-		InsertMenu(menu, gamePos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)gameMenu, GetString(IDS_GameMode));
-	}
-
-	if (GetGameMode().IsEnabled())
-	{
-		displayMenu();
-		return;
-	}
 
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
@@ -1095,63 +1067,3 @@ HMENU ContextMenu::CreateGameModeOnStopMenu()
 	return menu;
 }
 
-HMENU ContextMenu::CreateGameModeMenu()
-{
-	static const MenuTemplate s_Menu[] =
-	{
-		MENU_ITEM(IDM_GAMEMODE_START, IDS_GameModeStart),
-		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(IDM_GAMEMODE_FULLSCREEN, IDS_GameModeFullScreen),
-		MENU_ITEM_GRAYED(IDM_GAMEMODE_PROCESSLIST, IDS_GameModeProcessList),
-		MENU_SEPARATOR(),
-		MENU_ITEM_GRAYED(0, IDS_GameModeActionsOnStart),
-		MENU_ITEM_GRAYED(0, IDS_GameModeActionsOnStop)
-	};
-
-	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
-	if (!menu) return nullptr;
-
-	GameMode& game = GetGameMode();
-	bool enabled = game.IsEnabled();
-
-	// If game is enabled (or in layout mode), change item 0 to "Disable"
-	if (!game.IsDisabled())
-	{
-		DeleteMenu(menu, 0, MF_BYPOSITION);
-		InsertMenu(menu, 0, MF_BYPOSITION, IDM_GAMEMODE_STOP, GetString(IDS_GameModeStop));
-	}
-
-	// Tick the settings
-	if (game.GetFullScreenMode())
-	{
-		CheckMenuItem(menu, IDM_GAMEMODE_FULLSCREEN, MF_BYCOMMAND | MF_CHECKED);
-	}
-
-	if (game.GetProcessListMode())
-	{
-		CheckMenuItem(menu, IDM_GAMEMODE_PROCESSLIST, MF_BYCOMMAND | MF_CHECKED);
-	}
-
-	// Only allow changing of settings if not enabled (layout enabled or disabled is okay)
-	if (!game.IsEnabled())
-	{
-		EnableMenuItem(menu, IDM_GAMEMODE_FULLSCREEN, MF_ENABLED);
-		EnableMenuItem(menu, IDM_GAMEMODE_PROCESSLIST, MF_ENABLED);
-
-		HMENU onStartMenu = CreateGameModeOnStartMenu();
-		if (onStartMenu)
-		{
-			DeleteMenu(menu, 5, MF_BYPOSITION);
-			InsertMenu(menu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStartMenu, GetString(IDS_GameModeActionsOnStart));
-		}
-
-		HMENU onStopMenu = CreateGameModeOnStopMenu();
-		if (onStopMenu)
-		{
-			DeleteMenu(menu, 6, MF_BYPOSITION);
-			InsertMenu(menu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)onStopMenu, GetString(IDS_GameModeActionsOnStop));
-		}
-	}
-
-	return menu;
-}

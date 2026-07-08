@@ -50,8 +50,6 @@ private:
 
 	static void CreateFavoritesMenu(HMENU favoriteMenu) { CreateSkinsMenuRecursive(favoriteMenu, 0, true); }
 
-	static HMENU CreateGameModeMenu();
-
 	HMENU m_ActiveMenu;
 };
 
