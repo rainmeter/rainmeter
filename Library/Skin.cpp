@@ -4664,7 +4664,11 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (!IsSelected())
 		{
-			Select();  // Select |this| skin
+			Select();
+
+			// In case some child window has focus, ensure that we have focus because we rely on losing
+			// focus to deselect.
+			SetFocus(m_Window);
 
 			// Select any skins that belong to any group |this| belongs to
 			const auto& groups = m_DragGroup.GetGroups();
