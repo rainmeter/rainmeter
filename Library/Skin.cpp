@@ -2835,6 +2835,8 @@ bool Skin::ResizeWindow(bool reset)
 		ComputePositionFromOptions();
 	}
 
+	if (m_SelectionOverlay) m_SelectionOverlay->Update();
+
 	return true;
 }
 
