@@ -1783,7 +1783,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						mapKey.append(sectionUpperCase, sectionLength);
 						mapKey += L'~';
 						mapKey += optionUpperCase;
-						auto [_, inserted] = m_Values.emplace(std::move(mapKey), std::wstring(valuePos, valueLength));
+						auto [_, inserted] = m_Values.insert_or_assign(std::move(mapKey), std::wstring(valuePos, valueLength));
 						if (inserted && isVariables)
 						{
 							m_ListVariables.emplace_back(optionOriginalCase);
