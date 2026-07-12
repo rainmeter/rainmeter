@@ -367,11 +367,17 @@ public:
 		parser.SetVariable(L"Deep4", L"[#Deep5]");
 		parser.SetVariable(L"Deep5", L"[#Deep6]");
 		parser.SetVariable(L"Deep6", L"[#Deep7]");
-		parser.SetVariable(L"Deep7", L"Done");
+		parser.SetVariable(L"Deep7", L"[#Deep8]");
+		parser.SetVariable(L"Deep8", L"[#Deep9]");
+		parser.SetVariable(L"Deep9", L"[#Deep10]");
+		parser.SetVariable(L"Deep10", L"[#Deep11]");
+		parser.SetVariable(L"Deep11", L"[#Deep12]");
+		parser.SetVariable(L"Deep12", L"[#Deep13]");
+		parser.SetVariable(L"Deep13", L"Done");
 
 		std::wstring string2 = L"[#Deep1]";
 		Assert::IsTrue(parser.ReplaceVariables(string2, true));
-		Assert::AreEqual(string2.c_str(), L"[#Deep6]");
+		Assert::AreEqual(string2.c_str(), L"[#Deep12]");
 	}
 
 	TEST_METHOD(TestSelfReferencingNestedVariable)

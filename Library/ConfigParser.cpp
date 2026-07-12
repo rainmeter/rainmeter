@@ -919,7 +919,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 */
 bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
-	constexpr int maxRecursionDepth = 4;
+	constexpr int maxRecursionDepth = 10;
 	if (depth > maxRecursionDepth) return false;
 
 	// Since actions are parsed when executed, get the current active
