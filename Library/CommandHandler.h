@@ -56,7 +56,7 @@ enum class Bang
 	Move,
 	SetWindowPosition,
 	SetAnchor,
-	Zoom,
+	SetZoom,
 	ZPos,
 	ChangeZPos,
 	ClickThrough,
