@@ -22,6 +22,8 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeasureActionTimer>(); }
 
+	static void HandleExecuteMessage(WPARAM wParam, LPARAM lParam);
+
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
 	void UpdateValue() override {};
@@ -34,10 +36,28 @@ private:
 	{
 		std::vector<std::wstring> commands;
 		ActionTimerTask* task = nullptr;
+		size_t generation = 0;
 	};
 
-	std::vector<Action> m_Actions;
-	std::shared_ptr<CriticalSection> m_ActionsCriticalSection;
+	struct SharedData
+	{
+		SharedData(Skin* skin) : skin(skin) {}
+
+		Skin* skin;
+		std::vector<Action> actions;
+		std::shared_ptr<CriticalSection> criticalSection = std::make_shared<CriticalSection>();
+		bool active = true;
+	};
+
+	struct ExecuteMessage
+	{
+		std::weak_ptr<SharedData> data;
+		size_t actionIndex;
+		size_t commandIndex;
+		size_t generation;
+	};
+
+	std::shared_ptr<SharedData> m_Data;
 
 	bool m_IgnoreWarnings;
 };

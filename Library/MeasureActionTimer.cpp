@@ -30,7 +30,7 @@ public:
 private:
 	ActionTimerTask(MeasureActionTimer* measure, size_t index) :
 		AsyncTask(measure),
-		m_MeasureCriticalSection(measure->m_ActionsCriticalSection),
+		m_Data(measure->m_Data),
 		m_ActionIndex(index)
 	{
 	}
@@ -38,7 +38,7 @@ private:
 	void StartWorkOnWorkerThread() override;
 	void FinishWorkOnMainThread() override;
 
-	std::shared_ptr<CriticalSection> m_MeasureCriticalSection;
+	std::shared_ptr<MeasureActionTimer::SharedData> m_Data;
 	size_t m_ActionIndex;
 };
 
@@ -50,38 +50,35 @@ void MeasureActionTimer::ActionTimerTask::StartWorkOnWorkerThread()
 	while (!m_AbortRequested)
 	{
 		DWORD sleepTimeout = 0;
-		WPARAM wParam = 0;
-		LPARAM lParam = 0;
 
 		{
-			CriticalSectionLock lock(*m_MeasureCriticalSection);
+			CriticalSectionLock lock(*m_Data->criticalSection);
 			if (m_AbortRequested) break;
+			if (!m_Data->active) break;
 
-			auto measure = (MeasureActionTimer*)m_Requestor;
-			if (m_ActionIndex >= measure->m_Actions.size()) break;
+			if (m_ActionIndex >= m_Data->actions.size()) break;
 
-			const auto& commands = measure->m_Actions[m_ActionIndex].commands;
-			if (commandIndex >= commands.size()) break;
+			const auto& action = m_Data->actions[m_ActionIndex];
+			if (commandIndex >= action.commands.size()) break;
 
-			const auto& command = commands[commandIndex].c_str();
+			const auto& command = action.commands[commandIndex].c_str();
 			if (_wcsnicmp(command, L"WAIT ", 5) == 0)
 			{
 				sleepTimeout = wcstoul(command + 5, nullptr, 10);
 			}
 			else
 			{
-				wParam = (WPARAM)measure->GetSkin();
-				lParam = (LPARAM)_wcsdup(command);
+				auto message = new ExecuteMessage{ m_Data, m_ActionIndex, commandIndex, action.generation };
+				if (!PostMessage(rainmeterWindow, WM_RAINMETER_HANDLE_ACTION_TIMER_EXECUTE, (WPARAM)message, 0))
+				{
+					delete message;
+				}
 			}
 		}
 
 		if (sleepTimeout > 0)
 		{
 			Sleep(sleepTimeout);
-		}
-		else if (wParam && lParam)
-		{
-			SendMessage(rainmeterWindow, WM_RAINMETER_DELAYED_EXECUTE, wParam, lParam);
 		}
 
 		++commandIndex;
@@ -92,28 +89,29 @@ void MeasureActionTimer::ActionTimerTask::FinishWorkOnMainThread()
 {
 	if (!m_AbortRequested)
 	{
-		auto measure = (MeasureActionTimer*)m_Requestor;
-		if (m_ActionIndex < measure->m_Actions.size() && measure->m_Actions[m_ActionIndex].task == this)
+		CriticalSectionLock lock(*m_Data->criticalSection);
+		if (m_Data->active && m_ActionIndex < m_Data->actions.size() && m_Data->actions[m_ActionIndex].task == this)
 		{
-			measure->m_Actions[m_ActionIndex].task = nullptr;
+			m_Data->actions[m_ActionIndex].task = nullptr;
 		}
 	}
 }
 
 MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_ActionsCriticalSection(std::make_shared<CriticalSection>()),
-	m_Actions(),
+	m_Data(std::make_shared<SharedData>(skin)),
 	m_IgnoreWarnings(false)
 {
 }
 
 MeasureActionTimer::~MeasureActionTimer()
 {
-	// m_Actions will be destroyed outside the scope of the lock, but since we set the abort flag
-	// within the lock, we can know that the worker won't have a live reference to m_Actions.
-	CriticalSectionLock lock(*m_ActionsCriticalSection);
+	CriticalSectionLock lock(*m_Data->criticalSection);
 
-	for (auto& action : m_Actions)
+	// The worker may keep the shared data alive so we need another flag that code can check to see
+	// whether the measure still exists.
+	m_Data->active = false;
+
+	for (auto& action : m_Data->actions)
 	{
 		if (action.task)
 		{
@@ -172,14 +170,14 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 
 		{
-			CriticalSectionLock lock(*m_ActionsCriticalSection);
-			if (index <= m_Actions.size())
+			CriticalSectionLock lock(*m_Data->criticalSection);
+			if (index <= m_Data->actions.size())
 			{
-				m_Actions[index - 1].commands = std::move(tokens);
+				m_Data->actions[index - 1].commands = std::move(tokens);
 			}
 			else
 			{
-				m_Actions.emplace_back(Action{ std::move(tokens) });
+				m_Data->actions.emplace_back(Action{ std::move(tokens) });
 			}
 		}
 
@@ -195,21 +193,23 @@ void MeasureActionTimer::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	auto parseAndValidateIndex = [&](size_t& number, size_t length) -> bool
+	auto parseIndex = [&](size_t& number, size_t length)
 	{
 		args += length;
 		number = (size_t)(_wtoi(args) - 1);
-		return number < m_Actions.size();
 	};
 
 	if (_wcsnicmp(args, L"EXECUTE", 7) == 0)
 	{
 		size_t number = 0;
-		if (parseAndValidateIndex(number, 7))
+		parseIndex(number, 7);
+
+		CriticalSectionLock lock(*m_Data->criticalSection);
+		if (number < m_Data->actions.size())
 		{
-			if (!m_Actions[number].task)
+			if (!m_Data->actions[number].task)
 			{
-				m_Actions[number].task = ActionTimerTask::Create(this, number);
+				m_Data->actions[number].task = ActionTimerTask::Create(this, number);
 			}
 			else if (!m_IgnoreWarnings)
 			{
@@ -224,14 +224,18 @@ void MeasureActionTimer::Command(const std::wstring& command)
 	else if (_wcsnicmp(args, L"STOP", 4) == 0)
 	{
 		size_t number = 0;
-		if (parseAndValidateIndex(number, 4))
+		parseIndex(number, 4);
+
+		CriticalSectionLock lock(*m_Data->criticalSection);
+		if (number < m_Data->actions.size())
 		{
-			if (m_Actions[number].task)
+			if (m_Data->actions[number].task)
 			{
-				// Lock not needed because the task checks the abort flag before executing each command.
-				m_Actions[number].task->AbortWhenPossible();
-				m_Actions[number].task = nullptr;
+				m_Data->actions[number].task->AbortWhenPossible();
+				m_Data->actions[number].task = nullptr;
 			}
+
+			++m_Data->actions[number].generation;
 		}
 		else if (!m_IgnoreWarnings)
 		{
@@ -242,4 +246,33 @@ void MeasureActionTimer::Command(const std::wstring& command)
 	{
 		LogErrorF(this, L"Unknown command: %s", args);
 	}
+}
+
+void MeasureActionTimer::HandleExecuteMessage(WPARAM wParam, LPARAM lParam)
+{
+	auto message = (ExecuteMessage*)wParam;
+	if (auto data = message->data.lock())
+	{
+		std::wstring command;
+		Skin* skin = nullptr;
+
+		{
+			CriticalSectionLock lock(*data->criticalSection);
+			if (data->active &&
+				message->actionIndex < data->actions.size() &&
+				message->commandIndex < data->actions[message->actionIndex].commands.size() &&
+				message->generation == data->actions[message->actionIndex].generation)
+			{
+				command = data->actions[message->actionIndex].commands[message->commandIndex];
+				skin = data->skin;
+			}
+		}
+
+		if (skin && GetRainmeter().HasSkin(skin))
+		{
+			GetRainmeter().ExecuteCommand(command.c_str(), skin);
+		}
+	}
+
+	delete message;
 }
