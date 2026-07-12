@@ -1682,10 +1682,10 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	}
 
 	// Read the keys and values
-	ankerl::unordered_dense::set<std::wstring> currentSectionIncludeOptions;
+	ankerl::unordered_dense::set<std::wstring> currentSectionOptions;
 	for (auto it = sections.cbegin(); it != sections.cend(); ++it)
 	{
-		currentSectionIncludeOptions.clear();
+		currentSectionOptions.clear();
 
 		const WCHAR* sectionOriginalCase = it->c_str();
 		const auto sectionLength = it->length();
@@ -1740,9 +1740,13 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 						++valuePos;
 					}
 
-					if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
+					if (!currentSectionOptions.insert(optionUpperCase).second)
 					{
-						if (currentSectionIncludeOptions.insert(std::move(optionUpperCase)).second && valueLength > 0)
+						// Ignore duplicate options.
+					}
+					else if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
+					{
+						if (valueLength > 0)
 						{
 							value.assign(valuePos, valueLength);
 							ReadVariables();
