@@ -511,14 +511,28 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 
 	auto strParser = StringParser(variableStr);
 	if (!strParser.Consume(L"Skin:")) return std::nullopt;
+
 	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().x);
 	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetLogicalWindowPosition().y);
 	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
 	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
-	if (strParser.ConsumeRest(L"PhysicalW")) return fmt::to_wstring(m_Skin->GetPhysicalWindowW());
-	if (strParser.ConsumeRest(L"PhysicalH")) return fmt::to_wstring(m_Skin->GetPhysicalWindowH());
-	if (strParser.ConsumeRest(L"ZoomedW")) return fmt::to_wstring(m_Skin->GetZoomedWindowW());
-	if (strParser.ConsumeRest(L"ZoomedH")) return fmt::to_wstring(m_Skin->GetZoomedWindowH());
+
+	if (strParser.Consume(L"Physical"))
+	{
+		if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetX().pos);
+		if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetY().pos);
+		if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetPhysicalWindowW());
+		if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetPhysicalWindowH());
+		return std::nullopt;
+	}
+
+	if (strParser.Consume(L"Zoomed"))
+	{
+		if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetZoomedWindowW());
+		if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetZoomedWindowH());
+		return std::nullopt;
+	}
+
 	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
 	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
 	if (strParser.ConsumeRest(L"ZoomScale")) return fmt::format(L"{0:.5g}", m_Skin->GetZoom());
