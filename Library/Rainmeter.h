@@ -45,6 +45,7 @@ enum
 	// Internal messages that may change at any time.
 	WM_RAINMETER_HANDLE_ASYNC_TASK_RESULT = WM_APP + 100,
 	WM_RAINMETER_HANDLE_EXPORT_SYNC = WM_APP + 101,
+	WM_RAINMETER_HANDLE_ACTION_TIMER_EXECUTE = WM_APP + 102,
 };
 
 struct GlobalOptions

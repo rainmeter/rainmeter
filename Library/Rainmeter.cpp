@@ -23,6 +23,7 @@
 #include "DialogNewSkin.h"
 #include "GameMode.h"
 #include "ImageCache.h"
+#include "MeasureActionTimer.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
 #include "MeterString.h"
@@ -777,6 +778,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	case WM_RAINMETER_HANDLE_EXPORT_SYNC:
 		HandleExportSyncMessage(wParam, lParam);
+		break;
+
+	case WM_RAINMETER_HANDLE_ACTION_TIMER_EXECUTE:
+		MeasureActionTimer::HandleExecuteMessage(wParam, lParam);
 		break;
 
 	default:
