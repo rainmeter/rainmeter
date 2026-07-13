@@ -14,28 +14,28 @@
 
 struct MonitorInfo
 {
-	bool active;
-	HMONITOR handle;
-	uint8_t deviceNumber;
-	uint8_t displayNumber;
-	UINT dpi;
-	RECT screen;
-	RECT logicalScreen;
-	RECT work;
-	RECT logicalWork;
+	bool active = false;
+	HMONITOR handle = nullptr;
+	uint8_t deviceNumber = 0;
+	uint8_t displayNumber = 0;
+	UINT dpi = 0;
+	RECT screen = {};
+	RECT logicalScreen = {};
+	RECT work = {};
+	RECT logicalWork = {};
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
 	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
 };
 
 struct MultiMonitorInfo
 {
-	int primary;
-	int deviceCount;
-	int displayCount;
+	int primary = 0;
+	int deviceCount = 0;
+	int displayCount = 0;
 	std::vector<MonitorInfo> monitors;
 
-	RECT virtualScreen;
-	RECT logicalVirtualScreen;
+	RECT virtualScreen = {};
+	RECT logicalVirtualScreen = {};
 
 	void Clear();
 
