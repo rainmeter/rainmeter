@@ -129,7 +129,7 @@ UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int
 	const int logicalY = y.ResolveLogicalPosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
 	UINT dpi = 0;
-	const auto physicalPos = monitorsInfo.LogicalToPhysical({ logicalX, logicalY }, &dpi);
+	const auto physicalPos = System::ScreenLogicalToPhysical({ logicalX, logicalY }, &dpi);
 	x.pos = physicalPos.x;
 	y.pos = physicalPos.y;
 

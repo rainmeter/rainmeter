@@ -13,6 +13,7 @@
 #include "Skin.h"
 #include "MeasureNet.h"
 #include "WindowOcclusionTracker.h"
+#include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include <TlHelp32.h>
 #include <WtsApi32.h>
@@ -174,6 +175,19 @@ UINT System::GetDpiForWindow(HWND window)
 	}
 
 	return GetSystemDpi();
+}
+
+POINT System::ScreenLogicalToPhysical(POINT point, UINT* dpi)
+{
+	{
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	}
+
+	if (dpi) *dpi = GetDpiForWindow(c_HelperWindow);
+
+	LogicalToPhysicalPointForPerMonitorDPI(c_HelperWindow, &point);
+	return point;
 }
 
 /*

@@ -647,11 +647,6 @@ POINT Skin::GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const
 	return PhysicalToLogical(pos);
 }
 
-POINT Skin::GetLogicalWindowPosition() const
-{
-	return MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical({ m_X.pos, m_Y.pos });
-}
-
 int Skin::GetZoomedWindowW() const
 {
 	return (int)roundf((float)GetCurrentConfigW() * m_ZoomScale);
@@ -711,6 +706,23 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 	point.x -= m_X.pos;
 	point.y -= m_Y.pos;
 	return PhysicalToLogical(point);
+}
+
+POINT Skin::GetScreenLogicalPosition() const
+{
+	return PhysicalToScreenLogical({ m_X.pos, m_Y.pos });
+}
+
+POINT Skin::ScreenLogicalToPhysical(POINT point) const
+{
+	LogicalToPhysicalPointForPerMonitorDPI(m_Window, &point);
+	return point;
+}
+
+POINT Skin::PhysicalToScreenLogical(POINT point) const
+{
+	PhysicalToLogicalPointForPerMonitorDPI(m_Window, &point);
+	return point;
 }
 
 void Skin::RepositionAndResizeWindow()
@@ -2079,7 +2091,7 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const POINT logicalPos = monitorsInfo.PhysicalToLogical({ m_X.pos, m_Y.pos });
+	const POINT logicalPos = GetScreenLogicalPosition();
 
 	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
