@@ -50,10 +50,18 @@ private:
 
 	struct ZoomDragState
 	{
+		enum class CornerAxis : BYTE
+		{
+			None = 0,
+			Horizontal,
+			Vertical
+		};
+
 		int initialHit = HTCLIENT;
 		RECT startRect = {};
 		POINT startPoint = {};
 		float startZoom = 1.0f;
+		CornerAxis cornerAxis = CornerAxis::None;
 		bool thresholdReached = false;
 		bool moved = false;
 		bool positionChanged = false;

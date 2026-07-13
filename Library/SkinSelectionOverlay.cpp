@@ -345,6 +345,16 @@ SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT 
 		m_ZoomDrag->thresholdReached = true;
 	}
 
+	if (horizontal && vertical && m_ZoomDrag->cornerAxis == ZoomDragState::CornerAxis::None)
+	{
+		const float widthDelta = fabsf((float)dx / (float)startW);
+		const float heightDelta = fabsf((float)dy / (float)startH);
+		m_ZoomDrag->cornerAxis =
+			(widthDelta >= heightDelta) ?
+			ZoomDragState::CornerAxis::Horizontal :
+			ZoomDragState::CornerAxis::Vertical;
+	}
+
 	if (IsLeftHit(m_ZoomDrag->initialHit))
 	{
 		draggedW = startW - dx;
@@ -369,9 +379,14 @@ SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT 
 	float zoom = m_ZoomDrag->startZoom;
 	if (horizontal && vertical)
 	{
-		const float widthRatio = (float)draggedW / (float)startW;
-		const float heightRatio = (float)draggedH / (float)startH;
-		zoom *= (fabsf(widthRatio - 1.0f) >= fabsf(heightRatio - 1.0f)) ? widthRatio : heightRatio;
+		if (m_ZoomDrag->cornerAxis == ZoomDragState::CornerAxis::Vertical)
+		{
+			zoom *= (float)draggedH / (float)startH;
+		}
+		else
+		{
+			zoom *= (float)draggedW / (float)startW;
+		}
 	}
 	else if (horizontal)
 	{
