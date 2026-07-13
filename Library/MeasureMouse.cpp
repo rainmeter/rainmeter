@@ -362,7 +362,7 @@ void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) 
 	const auto pos =
 		m_RelativeToSkin ?
 		m_Skin->PhysicalToRelativeLogical(screenPos) :
-		MonitorUtil::GetMultiMonitorInfo().PhysicalToLogical(screenPos, (UINT)(m_Skin->GetDpiScale() * USER_DEFAULT_SCREEN_DPI));
+		m_Skin->PhysicalToScreenLogical(screenPos);
 	_itow_s(pos.x, mouseX, 10);
 	_itow_s(pos.y, mouseY, 10);
 

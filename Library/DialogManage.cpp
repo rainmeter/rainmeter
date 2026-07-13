@@ -700,7 +700,7 @@ void DialogManage::TabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		const auto logicalPos = m_SkinWindow->GetLogicalWindowPosition();
+		const auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
 
 		SetWindowText(item, GetString(IDS_Unload));
 
@@ -1324,11 +1324,14 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
-				int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetLogicalWindowPosition().y);
 
-				const int newX = m_SkinWindow->GetLogicalWindowPosition().x;
-				if (x != newX)
+				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
+				logicalPos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				const auto physicalPos = m_SkinWindow->ScreenLogicalToPhysical(logicalPos);
+				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
+
+				const int newX = m_SkinWindow->GetScreenLogicalPosition().x;
+				if (logicalPos.x != newX)
 				{
 					_itow_s(newX, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
@@ -1344,11 +1347,14 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
-				int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(m_SkinWindow->GetLogicalWindowPosition().x, y);
 
-				const int newY = m_SkinWindow->GetLogicalWindowPosition().y;
-				if (y != newY)
+				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
+				logicalPos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				const auto physicalPos = m_SkinWindow->ScreenLogicalToPhysical(logicalPos);
+				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
+
+				const int newY = m_SkinWindow->GetScreenLogicalPosition().y;
+				if (logicalPos.y != newY)
 				{
 					_itow_s(newY, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);

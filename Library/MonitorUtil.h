@@ -44,28 +44,6 @@ struct MultiMonitorInfo
 	const MonitorInfo* GetByDeviceNumber(int deviceNumber) const;
 	const MonitorInfo* GetByDisplayNumber(int activeNumber) const;
 	const MonitorInfo* GetForWindow(HWND window) const;
-
-	void UpdateSpans();
-
-	POINT PhysicalToLogical(POINT point, UINT dpiOverride = 0) const;
-	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
-
-private:
-	struct Span
-	{
-		LONG physicalStart;
-		LONG physicalEnd;
-		LONG logicalStart;
-		LONG logicalEnd;
-		UINT dpi;
-	};
-
-	static LONG ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans, UINT dpiOverride = 0);
-	static LONG ConvertLogicalToPhysical(LONG value, const std::vector<Span>& spans);
-	static std::vector<Span> CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal);
-
-	std::vector<Span> horizontalSpans;
-	std::vector<Span> verticalSpans;
 };
 
 namespace MonitorUtil {

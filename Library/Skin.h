@@ -200,7 +200,6 @@ public:
 	const SkinPosition& GetX() const { return m_X; }
 	const SkinPosition& GetY() const { return m_Y; }
 
-	POINT GetLogicalWindowPosition() const;
 	int GetZoomedWindowW() const;
 	int GetZoomedWindowH() const;
 	int GetPhysicalWindowW() const;
@@ -211,6 +210,10 @@ public:
 	RECT LogicalToPhysical(const RECT& rect) const;
 	POINT PhysicalToLogical(POINT point) const;
 	POINT PhysicalToRelativeLogical(POINT point) const;
+
+	POINT GetScreenLogicalPosition() const;
+	POINT ScreenLogicalToPhysical(POINT point) const;
+	POINT PhysicalToScreenLogical(POINT point) const;
 
 	float GetScale() const { return m_EffectiveScale; }
 	float GetDpiScale() const { return m_DpiScale; }
