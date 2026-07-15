@@ -356,6 +356,7 @@ const WCHAR* GetStringTemp(UINT id)
 {
 	switch (id)
 	{
+		case IDS_Default: return L"Default";
 		case IDS_Zoom: return L"Zoom";
 		case IDS_0Percent: return L"0%";
 		case IDS_10Percent: return L"10%";
@@ -402,6 +403,8 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 			MENU_ITEM(IDM_SKIN_XPERCENTAGE, IDS_XAsPercentage),
 			MENU_ITEM(IDM_SKIN_YPERCENTAGE, IDS_YAsPercentage)),
 		MENU_SUBMENU(IDS_Zoom,
+			MENU_ITEM(IDM_SKIN_ZOOM_DEFAULT, IDS_Default),
+			MENU_SEPARATOR(),
 			MENU_ITEM(IDM_SKIN_ZOOM_80, IDS_80Percent),
 			MENU_ITEM(IDM_SKIN_ZOOM_90, IDS_90Percent),
 			MENU_ITEM(IDM_SKIN_ZOOM_100, IDS_100Percent),
@@ -477,8 +480,14 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 	HMENU zoomMenu = GetSubMenu(settingsMenu, 1);
 	if (zoomMenu)
 	{
-		const auto sharedZoom = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetZoom(); });
-		if (sharedZoom)
+		const auto sharedHasZoom = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->HasZoom(); });
+		if (sharedHasZoom && !*sharedHasZoom)
+		{
+			CheckMenuItem(zoomMenu, IDM_SKIN_ZOOM_DEFAULT, MF_BYCOMMAND | MF_CHECKED);
+		}
+
+		const auto sharedZoom = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetZoomScale(); });
+		if (sharedZoom && (!sharedHasZoom || *sharedHasZoom))
 		{
 			const float zoom = *sharedZoom;
 			const int zoomPercent = (int)(zoom * 100.0f + 0.5f);
@@ -498,23 +507,23 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 				WCHAR buffer[32];
 				_snwprintf_s(buffer, _TRUNCATE, L"%i%%", zoomPercent);
 
-				UINT position = _countof(c_Zooms);
+				UINT position = _countof(c_Zooms) + 2;
 				for (UINT i = 0; i < _countof(c_Zooms); ++i)
 				{
 					const int itemPercent = (int)(c_Zooms[i] * 100.0f + 0.5f);
 					if (zoomPercent < itemPercent)
 					{
-						position = i;
+						position = i + 2;
 						break;
 					}
 				}
 
 				InsertMenu(zoomMenu, position, MF_BYPOSITION | MF_STRING, IDM_SKIN_ZOOM_CUSTOM, buffer);
-				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_CUSTOM, IDM_SKIN_ZOOM_CUSTOM, MF_BYCOMMAND);
+				CheckMenuItem(zoomMenu, IDM_SKIN_ZOOM_CUSTOM, MF_BYCOMMAND | MF_CHECKED);
 			}
 			else
 			{
-				CheckMenuRadioItem(zoomMenu, IDM_SKIN_ZOOM_80, IDM_SKIN_ZOOM_150, checkId, MF_BYCOMMAND);
+				CheckMenuItem(zoomMenu, checkId, MF_BYCOMMAND | MF_CHECKED);
 			}
 		}
 	}

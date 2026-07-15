@@ -122,7 +122,9 @@ Rainmeter::Rainmeter() :
 	m_NormalStayDesktop(true),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
-	m_DpiOverride(0),
+	m_DefaultZoom(100),
+	m_ForceDefaultZoom(false),
+	m_HasExeDpiOverride(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -1720,12 +1722,12 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
 
-	m_DpiOverride = parser.ReadInt(L"Rainmeter", L"DpiOverride", 0);
+	m_ForceDefaultZoom = parser.ReadBool(L"Rainmeter", L"ForceDefaultZoom", false);
+	m_DefaultZoom = std::clamp(parser.ReadInt(L"Rainmeter", L"DefaultZoom", 100), 10, 500);
 	if (parser.GetLastDefaultUsed())
 	{
 		// If the user has selected "Override high DPI scaling behavior" in the executable properties,
-		// we default to ignoring the per window/monitor DPI for backwards compatibility even though we
-		// are now properly DPI aware.
+		// migrate that compatibility behavior to the global default zoom.
 		WCHAR executablePath[MAX_PATH];
 		GetModuleFileName(GetModuleHandle(nullptr), executablePath, _countof(executablePath));
 
@@ -1734,18 +1736,17 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		const auto regResult = RegGetValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers", executablePath, RRF_RT_REG_SZ, nullptr, &buffer, &bufferSize);
 		if (regResult == ERROR_SUCCESS && !!wcsstr(buffer, L"HIGHDPIAWARE"))
 		{
-			LogWarning(L"High DPI scaling has been disabled due the the override in the Rainmeter.exe 'Compatibility' properties");
-			MonitorUtil::EnableDpiAppCompatMode();
-			m_DpiOverride = 100;
+			const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+			const UINT primaryDpi = monitorsInfo.monitors[monitorsInfo.primary - 1].dpi;
+			m_DefaultZoom = (int)ceilf(USER_DEFAULT_SCREEN_DPI / (float)primaryDpi);
+			m_ForceDefaultZoom = true;
+			m_HasExeDpiOverride = true;
 		}
-	}
-	else if (m_DpiOverride < 0 || m_DpiOverride > 200)
-	{
-		m_DpiOverride = 0;
 	}
 
 	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
 	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"DpiOverride", nullptr, iniFile.c_str());
 
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
@@ -1944,7 +1945,8 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"SelectedColor");
 		PreserveSetting(backup, L"HardwareAcceleration");
-		PreserveSetting(backup, L"DpiOverride");
+		PreserveSetting(backup, L"DefaultZoom");
+		PreserveSetting(backup, L"ForceDefaultZoom");
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
@@ -2286,22 +2288,33 @@ void Rainmeter::SetDisableDragging(bool dragging)
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void Rainmeter::SetDpiOverride(int dpi)
+void Rainmeter::SetDefaultZoom(int zoom)
 {
-	if (m_DpiOverride == dpi)
-	{
-		return;
-	}
+	zoom = std::clamp(zoom, 10, 500);
+	if (m_DefaultZoom == zoom) return;
 
-	m_DpiOverride = dpi;
+	m_DefaultZoom = zoom;
 
 	WCHAR buffer[16];
-	_itow_s(dpi, buffer, 10);
-	WritePrivateProfileString(L"Rainmeter", L"DpiOverride", buffer, m_IniFile.c_str());
+	_itow_s(zoom, buffer, 10);
+	WritePrivateProfileString(L"Rainmeter", L"DefaultZoom", buffer, m_IniFile.c_str());
 
-	for (auto& iter : m_Skins)
+	for (auto& [_, skin] : m_Skins)
 	{
-		iter.second->UpdateWindowDpiAndBounds();
+		skin->UpdateZoom();
+	}
+}
+
+void Rainmeter::SetForceDefaultZoom(bool force)
+{
+	if (m_ForceDefaultZoom == force) return;
+
+	m_ForceDefaultZoom = force;
+	WritePrivateProfileString(L"Rainmeter", L"ForceDefaultZoom", force ? L"1" : L"0", m_IniFile.c_str());
+
+	for (auto& [_, skin] : m_Skins)
+	{
+		skin->UpdateZoom();
 	}
 }
 

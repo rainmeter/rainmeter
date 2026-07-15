@@ -217,7 +217,8 @@ public:
 
 	float GetScale() const { return m_EffectiveScale; }
 	float GetDpiScale() const { return m_DpiScale; }
-	float GetZoom() const { return m_ZoomScale; }
+	float GetZoomScale() const { return m_ZoomScale; }
+	bool HasZoom() const { return m_Zoom.has_value(); }
 	SkinWindowOcclusionState GetWindowOcclusionState() const { return m_WindowOcclusionState; }
 	void SetWindowOcclusionState(SkinWindowOcclusionState state);
 	bool IsWindowUnoccluded() const { return m_WindowOcclusionState == SkinWindowOcclusionState::Visible || m_WindowOcclusionState == SkinWindowOcclusionState::Unknown; }
@@ -369,8 +370,10 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
-	void ApplyZoom(float zoom, bool writeOptions);
-	void SetZoom(float zoom);
+	void SetZoom(int zoom);
+	void ClearZoom();
+	void UpdateZoom();
+	void ApplyZoomScale(float zoomScale, bool writeOptions);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
@@ -446,8 +449,10 @@ private:
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
 
-	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale also considers the
-	// OverrideDpi setting.
+	std::optional<int> m_Zoom;
+
+	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale is the current
+	// window DPI scale before the skin zoom is applied.
 	UINT m_WindowDpi;
 	float m_DpiScale;
 	float m_ZoomScale;

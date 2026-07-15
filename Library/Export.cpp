@@ -321,7 +321,7 @@ void* __stdcall RmGet(void* rm, int type)
 	case RMG_SKINZOOMSCALE:
 		{
 			auto* buffer = GetThreadLocalBufferAsFloat();
-			*buffer = measure->GetSkin()->GetZoom();
+			*buffer = measure->GetSkin()->GetZoomScale();
 			return buffer;
 		}
 

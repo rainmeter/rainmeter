@@ -750,17 +750,7 @@ void Skin::RepositionAndResizeWindow()
 void Skin::UpdateWindowDpi(UINT dpi)
 {
 	m_WindowDpi = dpi ? dpi : System::GetDpiForWindow(m_Window);
-
-	const float oldSkinDpiScale = m_DpiScale;
-	const int dpiOverride = GetRainmeter().GetDpiOverride();
-	if (dpiOverride)
-	{
-		m_DpiScale = (float)dpiOverride / 100.0f;
-	}
-	else
-	{
-		m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
-	}
+	m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
 
 	const auto oldEffectiveScale = m_EffectiveScale;
 	m_EffectiveScale = m_ZoomScale * m_DpiScale;
@@ -1298,10 +1288,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::SetZoom:
-		{
-			const float zoom = (float)m_Parser.ParseDouble(args[0].c_str(), 100.0) / 100.0f;
-			SetZoom(zoom);
-		}
+		SetZoom(m_Parser.ParseInt(args[0].c_str(), 100));
 		break;
 
 	case Bang::ZPos:
@@ -2062,7 +2049,12 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	const auto logicalPos = SkinPosition::ResolveScreenLogicalPosition(m_X, m_Y, m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
 	UINT dpi = 0;
 	POINT physicalPos;
-	if (m_State == STATE_RUNNING)
+	if (GetRainmeter().HasExeDpiOverride())
+	{
+		// For BWC because old versions of Rainmeter will have saved the physical position.
+		physicalPos = logicalPos;
+	}
+	else if (m_State == STATE_RUNNING)
 	{
 		physicalPos = ScreenLogicalToPhysical(logicalPos);
 		dpi = GetDpiForWindow(m_Window);
@@ -2111,15 +2103,15 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const POINT logicalPos = GetScreenLogicalPosition();
+	const POINT pos = GetRainmeter().HasExeDpiOverride() ? POINT { m_X.pos, m_Y.pos } : GetScreenLogicalPosition();
 
 	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
-	m_X.UpdateOptionValue(logicalPos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
+	m_X.UpdateOptionValue(pos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
 	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
-	m_Y.UpdateOptionValue(logicalPos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+	m_Y.UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 }
 
 /*
@@ -2218,16 +2210,9 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 	if (!isDefault)
 	{
-		const float zoom = (float)parser.ReadFloat(section, L"Zoom", 100.0f);
-		if (zoom <= 0.0f)
-		{
-			LogWarningF(this, L"Zoom must be greater than 0. Using Zoom=100.");
-			m_ZoomScale = 1.0f;
-		}
-		else
-		{
-			m_ZoomScale = zoom / 100.0f;
-		}
+		const int zoom = std::clamp(parser.ReadInt(section, L"Zoom", 100), 10, 500);
+		m_Zoom = parser.GetLastDefaultUsed() ? std::nullopt : std::optional<int>(zoom);
+		UpdateZoom();
 	}
 
 	m_AlphaValue = parser.ReadInt(section, makeKey(L"AlphaValue"), 255);
@@ -2317,9 +2302,15 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ZOOM)
 		{
-			const int zoom = (int)(m_ZoomScale * 100.0f + 0.5f);
-			_itow_s(zoom, buffer, 10);
-			WritePrivateProfileString(section, L"Zoom", buffer, iniFile);
+			if (!m_Zoom)
+			{
+				WritePrivateProfileString(section, L"Zoom", nullptr, iniFile);
+			}
+			else
+			{
+				_itow_s(*m_Zoom, buffer, 10);
+				WritePrivateProfileString(section, L"Zoom", buffer, iniFile);
+			}
 		}
 
 		if (setting & OPTION_FADEDURATION)
@@ -4063,8 +4054,12 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam >= IDM_SKIN_ZOOM_80 && wParam <= IDM_SKIN_ZOOM_150)
 		{
-			static const float c_Zooms[] = { 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f };
+			static const int c_Zooms[] = { 80, 90, 100, 110, 120, 130, 140, 150 };
 			SetZoom(c_Zooms[wParam - IDM_SKIN_ZOOM_80]);
+		}
+		else if (wParam == IDM_SKIN_ZOOM_DEFAULT)
+		{
+			ClearZoom();
 		}
 		else if (wParam == IDM_SKIN_ZOOM_CUSTOM)
 		{
@@ -4256,7 +4251,36 @@ void Skin::SetSnapEdges(bool b)
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
-void Skin::ApplyZoom(float zoom, bool writeOptions)
+void Skin::SetZoom(int zoom)
+{
+	zoom = std::clamp(zoom, 10, 500);
+	if (m_Zoom.has_value() && *m_Zoom == zoom) return;
+
+	m_Zoom = zoom;
+	UpdateZoom();
+	WriteOptions(OPTION_ZOOM);
+}
+
+void Skin::ClearZoom()
+{
+	if (!m_Zoom.has_value()) return;
+
+	m_Zoom.reset();
+	UpdateZoom();
+	WriteOptions(OPTION_ZOOM);
+}
+
+void Skin::UpdateZoom()
+{
+	const auto defaultZoom = GetRainmeter().GetDefaultZoom();
+	const auto zoom = GetRainmeter().GetForceDefaultZoom() ? defaultZoom : m_Zoom.value_or(defaultZoom);
+	const auto zoomScale = zoom / 100.0f;
+	if (m_ZoomScale == zoomScale) return;
+
+	ApplyZoomScale(zoomScale, false);
+}
+
+void Skin::ApplyZoomScale(float zoom, bool writeOptions)
 {
 	zoom = max(zoom, 0.1f);
 	if (zoom == m_ZoomScale && writeOptions) return;
@@ -4268,21 +4292,6 @@ void Skin::ApplyZoom(float zoom, bool writeOptions)
 	{
 		WriteOptions(OPTION_ZOOM);
 	}
-}
-
-void Skin::SetZoom(float zoom)
-{
-	if (zoom <= 0.0f)
-	{
-		zoom = 1.0f;
-	}
-
-	if (fabsf(m_ZoomScale - zoom) <= 0.0001f)
-	{
-		return;
-	}
-
-	ApplyZoom(zoom, true);
 }
 
 void Skin::UpdateFadeDuration()
