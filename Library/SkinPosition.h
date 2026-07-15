@@ -15,11 +15,9 @@ struct SkinPosition
 	explicit SkinPosition(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
 
 	// WindowX/WindowY and AnchorX/AnchorY are authored in 96 DPI logical coordinates. Compute
-	// the referenced logical x/y point first, then resolve that logical point through
-	// MultiMonitorInfo::LogicalToPhysical so mixed-DPI monitor boundaries contribute the correct
-	// physical offset for the final window position. Adjusts x.pos and y.pos and returns the
-	// DPI of the monitor for the point.
-	static UINT ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
+	// the referenced logical x/y point first so the caller can convert that screen logical point
+	// to physical coordinates using the appropriate window or system DPI context.
+	static POINT ResolveScreenLogicalPosition(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
 
 	// Logical (96 DPI)
 	std::wstring option = L"0";

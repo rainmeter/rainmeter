@@ -7,7 +7,6 @@
 
 #include "StdAfx.h"
 #include "SkinPosition.h"
-#include "System.h"
 
 void SkinPosition::ParseAnchorOption(int windowSize, float zoom)
 {
@@ -102,7 +101,7 @@ int SkinPosition::ResolveLogicalPosition(float parsedValue, int referenceOrigin,
 	return referenceOrigin + offsetFromOrigin - anchorPos;
 }
 
-UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
+POINT SkinPosition::ResolveScreenLogicalPosition(SkinPosition& x, SkinPosition& y, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
 {
 	const auto& monitors = monitorsInfo.monitors;
 
@@ -128,10 +127,5 @@ UINT SkinPosition::ResolvePhysicalPosition(SkinPosition& x, SkinPosition& y, int
 	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
 	const int logicalY = y.ResolveLogicalPosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
-	UINT dpi = 0;
-	const auto physicalPos = System::ScreenLogicalToPhysical({ logicalX, logicalY }, &dpi);
-	x.pos = physicalPos.x;
-	y.pos = physicalPos.y;
-
-	return dpi > 0 ? dpi : System::GetSystemDpi();
+	return { logicalX, logicalY };
 }
