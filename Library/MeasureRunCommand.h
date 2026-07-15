@@ -9,8 +9,7 @@
 #define RM_LIBRARY_MEASURERUNCOMMAND_H_
 
 #include "Measure.h"
-#include <mutex>
-#include <thread>
+#include <memory>
 
 enum OutputType
 {
@@ -37,9 +36,8 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	void RunCommand();
-	bool TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force);
-	static BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam);
+	class RunCommandTask;
+	struct SharedData;
 
 	// Options
 	std::wstring m_Program;
@@ -53,13 +51,8 @@ private:
 
 	// Internal values
 	std::wstring m_Result;
-	std::recursive_mutex m_Mutex;
-	bool m_ThreadActive;
-	std::thread m_Thread;
-
-	// Process info
-	HANDLE m_HProc;
-	DWORD m_DwPID;
+	std::shared_ptr<SharedData> m_Data;
+	RunCommandTask* m_Task;
 };
 
 #endif

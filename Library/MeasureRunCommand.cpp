@@ -7,12 +7,14 @@
 
 #include "StdAfx.h"
 #include "MeasureRunCommand.h"
+#include "AsyncTask.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringUtil.h"
+#include <atomic>
 #include <chrono>
 #include <optional>
 
@@ -37,7 +39,7 @@ struct PipeHandles
 
 void CloseHandleIfValid(HANDLE& handle)
 {
-	if (handle != INVALID_HANDLE_VALUE)
+	if (handle && handle != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(handle);
 		handle = INVALID_HANDLE_VALUE;
@@ -52,6 +54,9 @@ void ClosePipeHandles(PipeHandles& pipes)
 	CloseHandleIfValid(pipes.inputWrite);
 	CloseHandleIfValid(pipes.outputRead);
 }
+
+bool TerminateApp(HANDLE processHandle, DWORD processId, bool force);
+BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam);
 
 std::optional<PipeHandles> CreateProcessPipes(STARTUPINFO& startupInfo)
 {
@@ -162,7 +167,224 @@ bool SaveOutputToFile(const std::wstring& path, const std::wstring& output, Outp
 	return opened;
 }
 
+bool TerminateApp(HANDLE processHandle, DWORD processId, bool force)
+{
+	BOOL result = FALSE;
+	HANDLE openedProcess = INVALID_HANDLE_VALUE;
+
+	if (force)
+	{
+		if ((processHandle == nullptr || processHandle == INVALID_HANDLE_VALUE) && processId != 0)
+		{
+			openedProcess = OpenProcess(PROCESS_TERMINATE, FALSE, processId);
+			processHandle = openedProcess;
+		}
+
+		if (processHandle != nullptr && processHandle != INVALID_HANDLE_VALUE)
+		{
+			result = TerminateProcess(processHandle, 0);
+		}
+	}
+	else
+	{
+		result = EnumWindows((WNDENUMPROC)TerminateAppEnum, (LPARAM)processId);
+	}
+
+	if (openedProcess != nullptr && openedProcess != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(openedProcess);
+	}
+
+	return result != FALSE;
+}
+
+BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam)
+{
+	DWORD processId = 0UL;
+	GetWindowThreadProcessId(hwnd, &processId);
+
+	if (processId == (DWORD)lParam)
+	{
+		PostMessage(hwnd, WM_CLOSE, 0, 0);
+	}
+
+	return TRUE;
+}
+
 }  // namespace
+
+struct MeasureRunCommand::SharedData
+{
+	explicit SharedData(MeasureRunCommand* measure) :
+		measure(measure)
+	{
+	}
+
+	std::atomic<bool> active = true;
+	std::atomic<DWORD> processId = 0;
+	MeasureRunCommand* measure = nullptr;
+};
+
+class MeasureRunCommand::RunCommandTask : public AsyncTask
+{
+public:
+	static RunCommandTask* Create(
+		MeasureRunCommand* measure,
+		const std::shared_ptr<SharedData>& data,
+		std::wstring program,
+		std::wstring parameter,
+		std::wstring finishAction,
+		std::wstring outputFile,
+		std::wstring folder,
+		WORD state,
+		int timeout,
+		OutputType outputType)
+	{
+		auto* task = new RunCommandTask(measure);
+		task->m_Data = std::move(data);
+		task->m_Program = std::move(program);
+		task->m_Command = task->m_Program + L" " + parameter;
+		task->m_FinishAction = std::move(finishAction);
+		task->m_OutputFile = std::move(outputFile);
+		task->m_Folder = std::move(folder);
+		task->m_State = state;
+		task->m_Timeout = timeout;
+		task->m_OutputType = outputType;
+
+		if (!task->Start())
+		{
+			delete task;
+			return nullptr;
+		}
+
+		return task;
+	}
+
+private:
+	RunCommandTask(MeasureRunCommand* measure) : AsyncTask(measure) {}
+
+	void StartWorkOnWorkerThread() override;
+	void FinishWorkOnMainThread() override;
+
+	std::shared_ptr<SharedData> m_Data;
+	std::wstring m_Program;
+	std::wstring m_Command;
+	std::wstring m_FinishAction;
+	std::wstring m_OutputFile;
+	std::wstring m_Folder;
+	WORD m_State;
+	int m_Timeout;
+	OutputType m_OutputType;
+	std::wstring m_Result;
+	double m_Value = 1.0;
+};
+
+void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
+{
+	PROCESS_INFORMATION processInfo = {};
+	STARTUPINFO startupInfo = {};
+	startupInfo.cb = sizeof(startupInfo);
+	startupInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	startupInfo.wShowWindow = m_State;
+
+	auto pipes = CreateProcessPipes(startupInfo);
+	if (!pipes)
+	{
+		m_Value = 106.0;
+		LogErrorF(L"%s", err_CreatePipe);
+		return;
+	}
+
+	if (m_AbortRequested || !m_Data->active)
+	{
+		ClosePipeHandles(*pipes);
+		return;
+	}
+
+	if (!CreateProcess(nullptr, &m_Command[0], nullptr, nullptr, TRUE, CREATE_NEW_PROCESS_GROUP, nullptr, &m_Folder[0], &startupInfo, &processInfo))
+	{
+		m_Value = 103.0;
+		LogErrorF(err_Process, m_Program.c_str());
+		ClosePipeHandles(*pipes);
+		return;
+	}
+
+	m_Data->processId = processInfo.dwProcessId;
+
+	DWORD written = 0UL;
+	WriteFile(pipes->inputWrite, &m_Command[0], MAX_LINE_LENGTH, &written, nullptr);
+
+	const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+	if (m_AbortRequested || !m_Data->active)
+	{
+		TerminateApp(processInfo.hProcess, processInfo.dwProcessId, (m_State == SW_HIDE));
+	}
+	else
+	{
+		while (!m_AbortRequested)
+		{
+			DWORD exitCode = 0UL;
+
+			// Wait briefly before checking output so we do not busy-loop.
+			WaitForSingleObject(processInfo.hThread, 1);
+			ReadAvailableOutput(pipes->outputRead, m_OutputType, m_Result);
+
+			if (m_Timeout >= 0 &&
+				std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count() > m_Timeout)
+			{
+				if (!TerminateApp(processInfo.hProcess, processInfo.dwProcessId, (m_State == SW_HIDE)))
+				{
+					m_Value = 105.0;
+					LogErrorF(err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
+				}
+
+				break;
+			}
+
+			GetExitCodeProcess(processInfo.hProcess, &exitCode);
+			if (exitCode != STILL_ACTIVE)
+			{
+				break;
+			}
+		}
+	}
+
+	CloseHandle(processInfo.hThread);
+	CloseHandle(processInfo.hProcess);
+	m_Data->processId = 0;
+
+	ClosePipeHandles(*pipes);
+
+	if (m_AbortRequested || !m_Data->active) return;
+
+	// Remove any carriage returns
+	m_Result.erase(std::remove(m_Result.begin(), m_Result.end(), L'\r'), m_Result.end());
+
+	if (!m_OutputFile.empty() && !SaveOutputToFile(m_OutputFile, m_Result, m_OutputType))
+	{
+		m_Value = 104.0;
+		LogErrorF(err_SaveFile, m_OutputFile.c_str());
+	}
+}
+
+void MeasureRunCommand::RunCommandTask::FinishWorkOnMainThread()
+{
+	if (m_AbortRequested || !m_Data->active) return;
+
+	auto* measure = m_Data->measure;
+	if (measure && measure->m_Task == this)
+	{
+		measure->m_Task = nullptr;
+		measure->m_Result = m_Result;
+		measure->m_Result.shrink_to_fit();
+		measure->m_Value = m_Value;
+
+		if (!m_FinishAction.empty())
+		{
+			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), measure->GetSkin());
+		}
+	}
+}
 
 MeasureRunCommand::MeasureRunCommand(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Program(),
@@ -174,45 +396,34 @@ MeasureRunCommand::MeasureRunCommand(Skin* skin, const WCHAR* name) : Measure(sk
 	m_Timeout(-1),
 	m_OutputType(OUTPUTTYPE_UTF16),
 	m_Result(),
-	m_Mutex(),
-	m_ThreadActive(false),
-	m_Thread(),
-	m_HProc(INVALID_HANDLE_VALUE),
-	m_DwPID(0)
+	m_Data(std::make_shared<SharedData>(this)),
+	m_Task(nullptr)
 {
 	m_Value = -1.0;
 }
 
 MeasureRunCommand::~MeasureRunCommand()
 {
-	std::unique_lock<std::recursive_mutex> lock(m_Mutex);
+	m_Data->active = false;
+	m_Data->measure = nullptr;
 
-	if (m_ThreadActive)
+	if (m_Task)
 	{
-		if (m_HProc != INVALID_HANDLE_VALUE &&
-			!TerminateApp(m_HProc, m_DwPID, (m_State == SW_HIDE)))
+		const DWORD processId = m_Data->processId.load();
+		if (processId != 0 && !TerminateApp(INVALID_HANDLE_VALUE, processId, (m_State == SW_HIDE)))
 		{
 			m_Value = 105.0;
-			LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
+			LogErrorF(this, err_Terminate, m_Program.c_str());
 		}
 
-		// Tell the thread to perform any cleanup.
-		m_ThreadActive = false;
-	}
-
-	lock.unlock();
-
-	if (m_Thread.joinable())
-	{
-		m_Thread.join();
+		m_Task->AbortWhenPossible();
+		m_Task = nullptr;
 	}
 }
 
 void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
-
-	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 
 	m_Parameter = parser.ReadString(section, L"Parameter", L"");
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
@@ -268,13 +479,10 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void MeasureRunCommand::UpdateValue()
 {
-	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 }
 
 const WCHAR* MeasureRunCommand::GetStringValue()
 {
-	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
-
 	return CheckSubstitute(m_Result.c_str());
 }
 
@@ -282,219 +490,44 @@ void MeasureRunCommand::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
-
 	if (_wcsicmp(args, L"RUN") == 0)
 	{
-		if (!m_ThreadActive && !m_Program.empty())
+		if (!m_Task && !m_Program.empty())
 		{
-			if (m_Thread.joinable())
-			{
-				if (m_Thread.get_id() == std::this_thread::get_id())
-				{
-					m_Thread.detach();
-				}
-				else
-				{
-					m_Thread.join();
-				}
-			}
-
-			m_Thread = std::thread(&MeasureRunCommand::RunCommand, this);
-
 			m_Value = 0.0;
-			m_ThreadActive = true;
+			m_Task = RunCommandTask::Create(this, m_Data, m_Program, m_Parameter, m_FinishAction, m_OutputFile, m_Folder, m_State, m_Timeout, m_OutputType);
+			if (!m_Task)
+			{
+				m_Value = 103.0;
+				LogErrorF(this, err_Process, m_Program.c_str());
+			}
 		}
 		else
 		{
 			m_Value = 101.0;
-			LogNoticeF(this, err_CmdRunning, m_Program.c_str());	// Command still running
+			LogNoticeF(this, err_CmdRunning, m_Program.c_str());
 		}
 	}
 	else if (_wcsicmp(args, L"CLOSE") == 0 || _wcsicmp(args, L"KILL") == 0)
 	{
-		if (m_ThreadActive && m_HProc != INVALID_HANDLE_VALUE)
+		const DWORD processId = m_Data->processId.load();
+		if (m_Task && processId != 0)
 		{
-			if (!TerminateApp(m_HProc, m_DwPID, (_wcsicmp(args, L"KILL") == 0)))
+			if (!TerminateApp(INVALID_HANDLE_VALUE, processId, (_wcsicmp(args, L"KILL") == 0)))
 			{
 				m_Value = 105.0;
-				LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
+				LogErrorF(this, err_Terminate, m_Program.c_str());
 			}
 		}
 		else
 		{
 			m_Value = 102.0;
-			LogErrorF(this, err_NotRunning, m_Program.c_str());	// Command not running
+			LogErrorF(this, err_NotRunning, m_Program.c_str());
 		}
 	}
 	else
 	{
 		m_Value = 100.0;
-		LogNoticeF(this, err_UnknownCmd, args);	// Unknown command
+		LogNoticeF(this, err_UnknownCmd, args);
 	}
-}
-
-void MeasureRunCommand::RunCommand()
-{
-	std::unique_lock<std::recursive_mutex> lock(m_Mutex);
-
-	std::wstring command = m_Program + L" " + m_Parameter;
-	std::wstring folder = m_Folder;
-	WORD state = m_State;
-	int timeout = m_Timeout;
-	OutputType outputType = m_OutputType;
-
-	lock.unlock();
-
-	std::wstring result;
-	bool error = false;
-
-	PROCESS_INFORMATION processInfo = {};
-	STARTUPINFO startupInfo = {};
-	startupInfo.cb = sizeof(startupInfo);
-	startupInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-	startupInfo.wShowWindow = state;
-
-	auto pipes = CreateProcessPipes(startupInfo);
-	if (pipes)
-	{
-		if (CreateProcess(nullptr, &command[0], nullptr, nullptr, TRUE, CREATE_NEW_PROCESS_GROUP, nullptr, &folder[0], &startupInfo, &processInfo))
-		{
-			lock.lock();
-			m_HProc = processInfo.hProcess;
-			m_DwPID = processInfo.dwProcessId;
-			lock.unlock();
-
-			DWORD written = 0UL;
-			WriteFile(pipes->inputWrite, &command[0], MAX_LINE_LENGTH, &written, nullptr);
-
-			const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
-			while (true)
-			{
-				DWORD exitCode = 0UL;
-
-				// Wait briefly before checking output so we do not busy-loop.
-				WaitForSingleObject(processInfo.hThread, 1);
-				ReadAvailableOutput(pipes->outputRead, outputType, result);
-
-				if (timeout >= 0 &&
-					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count() > timeout)
-				{
-					if (!TerminateApp(processInfo.hProcess, processInfo.dwProcessId, (state == SW_HIDE)))
-					{
-						lock.lock();
-						m_Value = 105.0;
-						LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
-						error = true;
-						lock.unlock();
-					}
-
-					break;
-				}
-
-				GetExitCodeProcess(processInfo.hProcess, &exitCode);
-				if (exitCode != STILL_ACTIVE)
-				{
-					break;
-				}
-			}
-
-			CloseHandle(processInfo.hThread);
-			CloseHandle(processInfo.hProcess);
-
-			lock.lock();
-			m_HProc = INVALID_HANDLE_VALUE;
-			m_DwPID = 0;
-			lock.unlock();
-		}
-		else
-		{
-			lock.lock();
-			m_Value = 103.0;
-			LogErrorF(this, err_Process, m_Program.c_str());	// Cannot start process
-			error = true;
-			lock.unlock();
-		}
-	}
-	else
-	{
-		lock.lock();
-		m_Value = 106.0;
-		LogErrorF(this, L"%s", err_CreatePipe);	// Cannot create pipe
-		error = true;
-		lock.unlock();
-	}
-
-	if (pipes)
-	{
-		ClosePipeHandles(*pipes);
-	}
-
-	// Remove any carriage returns
-	result.erase(std::remove(result.begin(), result.end(), L'\r'), result.end());
-
-	lock.lock();
-
-	if (m_ThreadActive)
-	{
-		m_Result = result;
-		m_Result.shrink_to_fit();
-
-		if (!m_OutputFile.empty())
-		{
-			if (!SaveOutputToFile(m_OutputFile, result, outputType))
-			{
-				m_Value = 104.0;
-				LogErrorF(this, err_SaveFile, m_OutputFile.c_str());	// Cannot save file
-				error = true;
-			}
-		}
-
-		// If no errors from the thread,
-		// set number value of measure to 1 to indicate "Success".
-		if (!error)
-		{
-			m_Value = 1.0;
-		}
-
-		m_ThreadActive = false;
-
-		lock.unlock();
-
-		if (!m_FinishAction.empty())
-		{
-			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), m_Skin);
-		}
-
-		return;
-	}
-}
-
-bool MeasureRunCommand::TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force)
-{
-	BOOL result = FALSE;
-
-	if (force)
-	{
-		result = TerminateProcess(hProc, 0);
-	}
-	else
-	{
-		result = EnumWindows((WNDENUMPROC)TerminateAppEnum, (LPARAM) dwPID);
-	}
-
-	return result != FALSE;
-}
-
-BOOL CALLBACK MeasureRunCommand::TerminateAppEnum(HWND hwnd, LPARAM lParam)
-{
-	DWORD dwID = 0UL;
-	GetWindowThreadProcessId(hwnd, &dwID);
-
-	if (dwID == (DWORD)lParam)
-	{
-		PostMessage(hwnd, WM_CLOSE, 0, 0);
-	}
-
-	return TRUE;
 }
