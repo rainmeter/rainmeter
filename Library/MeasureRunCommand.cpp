@@ -5,9 +5,15 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#include "PluginRunCommand.h"
-
-#define MAX_LINE_LENGTH	4096
+#include "StdAfx.h"
+#include "MeasureRunCommand.h"
+#include "ConfigParser.h"
+#include "Logger.h"
+#include "Rainmeter.h"
+#include "Skin.h"
+#include "../Common/PathUtil.h"
+#include "../Common/StringUtil.h"
+#include <chrono>
 
 const WCHAR* err_UnknownCmd = L"Error 100: Unknown command: %s";
 const WCHAR* err_CmdRunning = L"Error 101: Program still running: %s";
@@ -17,192 +23,186 @@ const WCHAR* err_SaveFile   = L"Error 104: Cannot save file: %s";
 const WCHAR* err_Terminate  = L"Error 105: Cannot terminate process: %s";	// Rare!
 const WCHAR* err_CreatePipe = L"Error 106: Cannot create pipe";				// Rare!
 
-
-void RunCommand(Measure* measure);
-BOOL WINAPI TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force);
-BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam);
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+MeasureRunCommand::MeasureRunCommand(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_Program(),
+	m_Parameter(),
+	m_FinishAction(),
+	m_OutputFile(),
+	m_Folder(),
+	m_State(0),
+	m_Timeout(-1),
+	m_OutputType(OUTPUTTYPE_UTF16),
+	m_Result(),
+	m_Mutex(),
+	m_ThreadActive(false),
+	m_Thread(),
+	m_HProc(INVALID_HANDLE_VALUE),
+	m_DwPID(0)
 {
-	switch (fdwReason)
-	{
-		case DLL_PROCESS_ATTACH:
-			// Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notification calls.
-			DisableThreadLibraryCalls(hinstDLL);
-			break;
+	m_Value = -1.0;
+}
 
-		case DLL_PROCESS_DETACH:
-			break;
+MeasureRunCommand::~MeasureRunCommand()
+{
+	std::unique_lock<std::recursive_mutex> lock(m_Mutex);
+
+	if (m_ThreadActive)
+	{
+		if (m_HProc != INVALID_HANDLE_VALUE &&
+			!TerminateApp(m_HProc, m_DwPID, (m_State == SW_HIDE)))
+		{
+			m_Value = 105.0;
+			LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
+		}
+
+		// Tell the thread to perform any cleanup.
+		m_ThreadActive = false;
 	}
 
-	return TRUE;
+	lock.unlock();
+
+	if (m_Thread.joinable())
+	{
+		m_Thread.join();
+	}
 }
 
-PLUGIN_EXPORT void Initialize(void** data, void* rm)
+void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	Measure* measure = new Measure;
-	*data = measure;
+	Measure::ReadOptions(parser, section);
 
-	measure->skin = RmGetSkin(rm);
-	measure->rm = rm;
-}
+	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 
-PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
-{
-	Measure* measure = (Measure*)data;
+	m_Parameter = parser.ReadString(section, L"Parameter", L"");
+	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
+	m_OutputFile = parser.ReadString(section, L"OutputFile", L"");
+	m_Skin->MakePathAbsolute(m_OutputFile);
+	m_Folder = parser.ReadString(section, L"StartInFolder", L" ");	// Space is intentional!
+	if (m_Folder != L" ")
+	{
+		m_Skin->MakePathAbsolute(m_Folder);
+	}
+	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
 
-	std::lock_guard<std::recursive_mutex> lock(measure->mutex);
-
-	measure->parameter = RmReadString(rm, L"Parameter", L"");
-	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
-	measure->outputFile = RmReadPath(rm, L"OutputFile", L"");
-	measure->folder = RmReadPath(rm, L"StartInFolder", L" ");	// Space is intentional!
-	measure->timeout = RmReadInt(rm, L"Timeout", -1);
-
-	const WCHAR* state = RmReadString(rm, L"State", L"HIDE");
+	const WCHAR* state = parser.ReadString(section, L"State", L"HIDE").c_str();
 	if (_wcsicmp(state, L"SHOW") == 0)
 	{
-		measure->state = SW_SHOW;
+		m_State = SW_SHOW;
 	}
 	else if (_wcsicmp(state, L"MAXIMIZE") == 0)
 	{
-		measure->state = SW_MAXIMIZE;
+		m_State = SW_MAXIMIZE;
 	}
 	else if (_wcsicmp(state, L"MINIMIZE") == 0)
 	{
-		measure->state = SW_MINIMIZE;
+		m_State = SW_MINIMIZE;
 	}
 	else
 	{
-		measure->state = SW_HIDE;
+		m_State = SW_HIDE;
 	}
 
 	// Grab "%COMSPEC% environment variable
-	measure->program = RmReadString(rm, L"Program", RmReplaceVariables(rm, L"\"%COMSPEC%\" /U /C"));
-	if (measure->program.empty())
+	m_Program = parser.ReadString(section, L"Program", L"\"%COMSPEC%\" /U /C");
+	PathUtil::ExpandEnvironmentVariables(m_Program);
+	if (m_Program.empty())
 	{
 		// Assume "cmd.exe" exists!
-		measure->program = L"cmd.exe /U /C";
+		m_Program = L"cmd.exe /U /C";
 	}
 
-	const WCHAR* type = RmReadString(rm, L"OutputType", L"UTF16");
+	const WCHAR* type = parser.ReadString(section, L"OutputType", L"UTF16").c_str();
 	if (_wcsicmp(type, L"ANSI") == 0)
 	{
-		measure->outputType = OUTPUTTYPE_ANSI;
+		m_OutputType = OUTPUTTYPE_ANSI;
 	}
 	else if (_wcsicmp(type, L"UTF8") == 0)
 	{
-		measure->outputType = OUTPUTTYPE_UTF8;
+		m_OutputType = OUTPUTTYPE_UTF8;
 	}
 	else
 	{
-		measure->outputType = OUTPUTTYPE_UTF16;
+		m_OutputType = OUTPUTTYPE_UTF16;
 	}
 }
 
-PLUGIN_EXPORT double Update(void* data)
+void MeasureRunCommand::UpdateValue()
 {
-	Measure* measure = (Measure*)data;
-
-	std::lock_guard<std::recursive_mutex> lock(measure->mutex);
-
-	return measure->value;
+	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 }
 
-PLUGIN_EXPORT LPCWSTR GetString(void* data)
+const WCHAR* MeasureRunCommand::GetStringValue()
 {
-	Measure* measure = (Measure*)data;
+	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 
-	std::lock_guard<std::recursive_mutex> lock(measure->mutex);
-
-	return measure->result.c_str();
+	return CheckSubstitute(m_Result.c_str());
 }
 
-PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
+void MeasureRunCommand::Command(const std::wstring& command)
 {
-	Measure* measure = (Measure*)data;
+	const WCHAR* args = command.c_str();
 
-	std::lock_guard<std::recursive_mutex> lock(measure->mutex);
+	std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 
 	if (_wcsicmp(args, L"RUN") == 0)
 	{
-		if (!measure->threadActive && !measure->program.empty())
+		if (!m_ThreadActive && !m_Program.empty())
 		{
-			std::thread thread(RunCommand, measure);
-			thread.detach();
+			if (m_Thread.joinable())
+			{
+				if (m_Thread.get_id() == std::this_thread::get_id())
+				{
+					m_Thread.detach();
+				}
+				else
+				{
+					m_Thread.join();
+				}
+			}
 
-			measure->value = 0.0;
-			measure->threadActive = true;
+			m_Thread = std::thread(&MeasureRunCommand::RunCommand, this);
+
+			m_Value = 0.0;
+			m_ThreadActive = true;
 		}
 		else
 		{
-			measure->value = 101.0;
-			RmLogF(measure->rm, LOG_NOTICE, err_CmdRunning, measure->program.c_str());	// Command still running
+			m_Value = 101.0;
+			LogNoticeF(this, err_CmdRunning, m_Program.c_str());	// Command still running
 		}
 	}
 	else if (_wcsicmp(args, L"CLOSE") == 0 || _wcsicmp(args, L"KILL") == 0)
 	{
-		if (measure->threadActive && measure->hProc != INVALID_HANDLE_VALUE)
+		if (m_ThreadActive && m_HProc != INVALID_HANDLE_VALUE)
 		{
-			if (!TerminateApp(measure->hProc, measure->dwPID, (_wcsicmp(args, L"KILL") == 0)))
+			if (!TerminateApp(m_HProc, m_DwPID, (_wcsicmp(args, L"KILL") == 0)))
 			{
-				measure->value = 105.0;
-				RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
+				m_Value = 105.0;
+				LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
 			}
 		}
 		else
 		{
-			measure->value = 102.0;
-			RmLogF(measure->rm, LOG_ERROR, err_NotRunning, measure->program.c_str());	// Command not running
+			m_Value = 102.0;
+			LogErrorF(this, err_NotRunning, m_Program.c_str());	// Command not running
 		}
 	}
 	else
 	{
-		measure->value = 100.0;
-		RmLogF(measure->rm, LOG_NOTICE, err_UnknownCmd, args);	// Unknown command
+		m_Value = 100.0;
+		LogNoticeF(this, err_UnknownCmd, args);	// Unknown command
 	}
 }
 
-PLUGIN_EXPORT void Finalize(void* data)
+void MeasureRunCommand::RunCommand()
 {
-	Measure* measure = (Measure*)data;
+	std::unique_lock<std::recursive_mutex> lock(m_Mutex);
 
-	std::unique_lock<std::recursive_mutex> lock(measure->mutex);
-
-	if (measure->threadActive)
-	{
-		// Increment ref count of this module so that it will not be
-		// unloaded prior to thread completion.
-		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
-		HMODULE module;
-		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
-
-		if (measure->hProc != INVALID_HANDLE_VALUE &&
-			!TerminateApp(measure->hProc, measure->dwPID, (measure->state == SW_HIDE)))
-		{
-			measure->value = 105.0;
-			RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
-		}
-
-		// Tell the thread to perform any cleanup
-		measure->threadActive = false;
-		return;
-	}
-
-	lock.unlock();
-	delete measure;
-	measure = nullptr;
-}
-
-void RunCommand(Measure* measure)
-{
-	std::unique_lock<std::recursive_mutex> lock(measure->mutex);
-
-	std::wstring command = measure->program + L" " + measure->parameter;
-	std::wstring folder = measure->folder;
-	WORD state = measure->state;
-	int timeout = measure->timeout;
-	OutputType type = measure->outputType;
+	std::wstring command = m_Program + L" " + m_Parameter;
+	std::wstring folder = m_Folder;
+	WORD state = m_State;
+	int timeout = m_Timeout;
+	OutputType type = m_OutputType;
 
 	lock.unlock();
 
@@ -263,8 +263,8 @@ void RunCommand(Measure* measure)
 		{
 			// Store values inside measure for the "Close" or "Kill" command
 			lock.lock();
-				measure->hProc = pi.hProcess;
-				measure->dwPID = pi.dwProcessId;
+				m_HProc = pi.hProcess;
+				m_DwPID = pi.dwProcessId;
 			lock.unlock();
 
 			// Send command
@@ -327,15 +327,15 @@ void RunCommand(Measure* measure)
 					}
 				}
 
-				// If a timeout is defined, attempt to terminate program and detach it from the plugin
+				// If a timeout is defined, attempt to terminate program and detach it from the measure
 				if ((timeout >= 0 && std::chrono::duration_cast<std::chrono::milliseconds>
 					(std::chrono::system_clock::now() - start).count() > timeout))
 				{
 					if (!TerminateApp(pi.hProcess, pi.dwProcessId, (state == SW_HIDE)))
 					{
 						lock.lock();
-							measure->value = 105.0;
-							RmLogF(measure->rm, LOG_ERROR, err_Terminate, measure->program.c_str());	// Could not terminate process (very rare!)
+							m_Value = 105.0;
+							LogErrorF(this, err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
 							error = true;
 						lock.unlock();
 					}
@@ -353,15 +353,15 @@ void RunCommand(Measure* measure)
 
 			// Update values in case the "Close" or "Kill" command is called
 			lock.lock();
-				measure->hProc = INVALID_HANDLE_VALUE;
-				measure->dwPID = 0;
+				m_HProc = INVALID_HANDLE_VALUE;
+				m_DwPID = 0;
 			lock.unlock();
 		}
 		else
 		{
 			lock.lock();
-				measure->value = 103.0;
-				RmLogF(measure->rm, LOG_ERROR, err_Process, measure->program.c_str());	// Cannot start process
+				m_Value = 103.0;
+				LogErrorF(this, err_Process, m_Program.c_str());	// Cannot start process
 				error = true;
 			lock.unlock();
 		}
@@ -369,8 +369,8 @@ void RunCommand(Measure* measure)
 	else
 	{
 		lock.lock();
-			measure->value = 106.0;
-			RmLog(measure->rm, LOG_ERROR, err_CreatePipe);	// Cannot create pipe
+			m_Value = 106.0;
+			LogErrorF(this, L"%s", err_CreatePipe);	// Cannot create pipe
 			error = true;
 		lock.unlock();
 	}
@@ -390,16 +390,14 @@ void RunCommand(Measure* measure)
 	// Remove any carriage returns
 	result.erase(std::remove(result.begin(), result.end(), L'\r'), result.end());
 
-	HMODULE module = nullptr;
-
 	lock.lock();
 
-	if (measure->threadActive)
+	if (m_ThreadActive)
 	{
-		measure->result = result;
-		measure->result.shrink_to_fit();
+		m_Result = result;
+		m_Result.shrink_to_fit();
 
-		if (!measure->outputFile.empty())
+		if (!m_OutputFile.empty())
 		{
 			std::wstring encoding = L"w+";
 			switch (type)
@@ -409,14 +407,14 @@ void RunCommand(Measure* measure)
 			}
 
 			FILE* file = nullptr;
-			if ((_wfopen_s(&file, measure->outputFile.c_str(), encoding.c_str()) == 0) && file)
+			if ((_wfopen_s(&file, m_OutputFile.c_str(), encoding.c_str()) == 0) && file)
 			{
 				fputws(result.c_str(), file);
 			}
 			else
 			{
-				measure->value = 104.0;
-				RmLogF(measure->rm, LOG_ERROR, err_SaveFile, measure->outputFile.c_str());	// Cannot save file
+				m_Value = 104.0;
+				LogErrorF(this, err_SaveFile, m_OutputFile.c_str());	// Cannot save file
 				error = true;
 			}
 
@@ -430,36 +428,23 @@ void RunCommand(Measure* measure)
 		// set number value of measure to 1 to indicate "Success".
 		if (!error)
 		{
-			measure->value = 1.0;
+			m_Value = 1.0;
 		}
 
-		measure->threadActive = false;
+		m_ThreadActive = false;
 
 		lock.unlock();
 
-		if (!measure->finishAction.empty())
+		if (!m_FinishAction.empty())
 		{
-			RmExecute(measure->skin, measure->finishAction.c_str());
+			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), m_Skin);
 		}
 
 		return;
 	}
-
-	lock.unlock();
-	delete measure;
-	measure = nullptr;
-
-	DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
-	GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
-
-	if (module)
-	{
-		// Decrement the ref count and possibly unload the module if this is the last instance.
-		FreeLibraryAndExitThread(module, 0);
-	}
 }
 
-BOOL WINAPI TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force)
+bool MeasureRunCommand::TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force)
 {
 	BOOL result = FALSE;
 
@@ -472,10 +457,10 @@ BOOL WINAPI TerminateApp(HANDLE& hProc, DWORD& dwPID, const bool& force)
 		result = EnumWindows((WNDENUMPROC)TerminateAppEnum, (LPARAM) dwPID);
 	}
 
-	return result;
+	return result != FALSE;
 }
 
-BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam)
+BOOL CALLBACK MeasureRunCommand::TerminateAppEnum(HWND hwnd, LPARAM lParam)
 {
 	DWORD dwID = 0UL;
 	GetWindowThreadProcessId(hwnd, &dwID);

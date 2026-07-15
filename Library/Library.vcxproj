@@ -84,6 +84,7 @@
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
     <ClCompile Include="MeasureResMon.cpp" />
+    <ClCompile Include="MeasureRunCommand.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
     <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
@@ -229,6 +230,7 @@
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureResMon.h" />
+    <ClInclude Include="MeasureRunCommand.h" />
     <ClInclude Include="MeasureScript.h" />
     <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
