@@ -480,6 +480,11 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 	HMENU zoomMenu = GetSubMenu(settingsMenu, 1);
 	if (zoomMenu)
 	{
+		if (GetRainmeter().GetForceDefaultZoom())
+		{
+			EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);
+		}
+
 		const auto sharedHasZoom = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->HasZoom(); });
 		if (sharedHasZoom && !*sharedHasZoom)
 		{
