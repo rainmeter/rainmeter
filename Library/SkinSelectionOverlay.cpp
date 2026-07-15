@@ -443,7 +443,11 @@ void SkinSelectionOverlay::ApplyZoomDrag()
 	{
 		state.skin->m_X.pos = state.pos.x + result.deltaX;
 		state.skin->m_Y.pos = state.pos.y + result.deltaY;
-		state.skin->ApplyZoom(state.zoom + result.zoomDelta, false);
+
+		if (!GetRainmeter().GetForceDefaultZoom())
+		{
+			state.skin->ApplyZoomScale(state.zoom + result.zoomDelta, false);
+		}
 	}
 }
 
@@ -451,11 +455,11 @@ void SkinSelectionOverlay::CommitZoomDrag()
 {
 	if (!m_ZoomDrag) return;
 
-	if (m_ZoomDrag->moved)
+	if (m_ZoomDrag->moved && !GetRainmeter().GetForceDefaultZoom())
 	{
 		for (const auto& state : m_ZoomDragStartStates)
 		{
-			state.skin->WriteOptions(Skin::OPTION_ZOOM);
+			state.skin->SetZoom((int)roundf(state.skin->GetZoomScale() * 100.0f));
 
 			if (m_ZoomDrag->positionChanged)
 			{

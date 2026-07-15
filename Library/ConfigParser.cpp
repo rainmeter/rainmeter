@@ -535,7 +535,7 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 
 	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
 	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
-	if (strParser.ConsumeRest(L"ZoomScale")) return fmt::format(L"{0:.5g}", m_Skin->GetZoom());
+	if (strParser.ConsumeRest(L"ZoomScale")) return fmt::format(L"{0:.5g}", m_Skin->GetZoomScale());
 	if (strParser.ConsumeRest(L"Visible")) return m_Skin->IsWindowUnoccluded() ? L"1" : L"0";
 
 	return std::nullopt;

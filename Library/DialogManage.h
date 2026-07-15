@@ -206,10 +206,13 @@ private:
 			Id_DeleteLogFileButton,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,
-			Id_ScalingModeLabel,
-			Id_ScalingModeDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
+			Id_DefaultZoomLabel,
+			Id_DefaultZoomEdit,
+			Id_DefaultZoomSpinner,
+			Id_DefaultZoomPercentLabel,
+			Id_ForceDefaultZoomCheckBox,
 			Id_ShowTrayIconCheckBox,
 			Id_UseHardwareAccelerationCheckBox
 		};

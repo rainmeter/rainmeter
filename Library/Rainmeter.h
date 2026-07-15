@@ -171,8 +171,11 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
-	int GetDpiOverride() { return m_DpiOverride; }
-	void SetDpiOverride(int dpi);
+	int GetDefaultZoom() { return m_DefaultZoom; }
+	void SetDefaultZoom(int zoom);
+	bool GetForceDefaultZoom() { return m_ForceDefaultZoom; }
+	void SetForceDefaultZoom(bool force);
+	bool HasExeDpiOverride() { return m_HasExeDpiOverride; }
 
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
 
@@ -297,7 +300,9 @@ private:
 
 	bool m_DisableDragging;
 
-	int m_DpiOverride;
+	int m_DefaultZoom;
+	bool m_ForceDefaultZoom;
+	bool m_HasExeDpiOverride;
 
 	std::wstring m_SkinEditor;
 

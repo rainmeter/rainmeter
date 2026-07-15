@@ -2331,20 +2331,26 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::LinkLabel(Id_LanguageUpdateLink, 0,
 			361, 15, 114, 14,
 			0, 0),
-		Control::Label(Id_ScalingModeLabel, 0,
+		Control::Label(-0, IDS_EditorColon,
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
-		Control::ComboBox(Id_ScalingModeDropDownList, 0,
-			107, 34, 250, 14,
-			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, 0),
-		Control::Label(-0, IDS_EditorColon,
-			6, 57, 107, 14,
-			WS_VISIBLE, 0),
 		Control::Edit(Id_EditorEdit, 0,
-			107, 55, 250, 14,
+			107, 34, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
-			361, 55, 25, 14,
+			361, 34, 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Label(Id_DefaultZoomLabel, 0,
+			6, 57, 107, 14,
+			WS_VISIBLE, 0),
+		Control::Edit(Id_DefaultZoomEdit, 0,
+			107, 55, 36, 14,
+			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Label(Id_DefaultZoomPercentLabel, 0,
+			148, 57, 12, 14,
+			WS_VISIBLE, 0),
+		Control::CheckBox(Id_ForceDefaultZoomCheckBox, 0,
+			166, 55, 60, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
 			6, 76, 200, 14,
@@ -2383,7 +2389,16 @@ void DialogManage::TabSettings::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
-	SetWindowText(GetControl(Id_ScalingModeLabel), L"Scaling mode:");
+	SetWindowText(GetControl(Id_DefaultZoomLabel), L"Default zoom:");
+	SetWindowText(GetControl(Id_DefaultZoomPercentLabel), L"%");
+	SetWindowText(GetControl(Id_ForceDefaultZoomCheckBox), L"Force");
+
+	HWND edit = GetControl(Id_DefaultZoomEdit);
+	HWND spinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
+		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
+		0, 0, 0, 0, m_Window, (HMENU)Id_DefaultZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	SendMessage(spinner, UDM_SETRANGE32, 10, 500);
+	SendMessage(spinner, UDM_SETBUDDY, (WPARAM)edit, 0);
 }
 
 void DialogManage::TabSettings::Initialize()
@@ -2406,38 +2421,11 @@ void DialogManage::TabSettings::Initialize()
 		}
 	}
 
-	item = GetControl(Id_ScalingModeDropDownList);
-	ComboBox_ResetContent(item);
-
-	const struct
-	{
-		LPCWSTR text;
-		int value;
-	} dpiOverrides[] =
-	{
-		{ L"Use Windows display scaling settings", 0 },
-		{ L"Ignore Windows settings and force 100%", 100 },
-		{ L"Ignore Windows settings and force 125%", 125 },
-		{ L"Ignore Windows settings and force 150%", 150 },
-		{ L"Ignore Windows settings and force 175%", 175 },
-		{ L"Ignore Windows settings and force 200%", 200 }
-	};
-
-	const int dpiOverride = GetRainmeter().GetDpiOverride();
-	for (const auto& scale : dpiOverrides)
-	{
-		const int index = ComboBox_AddString(item, scale.text);
-		ComboBox_SetItemData(item, index, scale.value);
-		if (scale.value == dpiOverride)
-		{
-			ComboBox_SetCurSel(item, index);
-		}
-	}
-
-	if (ComboBox_GetCurSel(item) == CB_ERR)
-	{
-		ComboBox_SetCurSel(item, 0);
-	}
+	item = GetControl(Id_DefaultZoomEdit);
+	WCHAR zoomBuffer[16];
+	_itow_s(GetRainmeter().GetDefaultZoom(), zoomBuffer, 10);
+	Edit_SetText(item, zoomBuffer);
+	Button_SetCheck(GetControl(Id_ForceDefaultZoomCheckBox), GetRainmeter().GetForceDefaultZoom() ? BST_CHECKED : BST_UNCHECKED);
 
 	BOOL check = !GetRainmeter().GetDisableVersionCheck();
 	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), check);
@@ -2549,16 +2537,19 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_ScalingModeDropDownList:
-		if (HIWORD(wParam) == CBN_SELCHANGE)
+	case Id_DefaultZoomEdit:
+		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			const int sel = ComboBox_GetCurSel((HWND)lParam);
-			if (sel != CB_ERR)
+			WCHAR buffer[16];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				const int scale = (int)ComboBox_GetItemData((HWND)lParam, sel);
-				GetRainmeter().SetDpiOverride(scale);
+				GetRainmeter().SetDefaultZoom(_wtoi(buffer));
 			}
 		}
+		break;
+
+	case Id_ForceDefaultZoomCheckBox:
+		GetRainmeter().SetForceDefaultZoom(Button_GetCheck((HWND)lParam) == BST_CHECKED);
 		break;
 
 	case Id_CheckForUpdatesCheckBox:

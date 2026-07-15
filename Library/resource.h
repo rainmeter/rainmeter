@@ -180,6 +180,7 @@
 #define IDS_130Percent                              2168
 #define IDS_140Percent                              2169
 #define IDS_150Percent                              2170
+#define IDS_Default                                 2171
 #define IDS_GameMode                                2800
 #define IDS_GameModeStart                           2801
 #define IDS_GameModeStop                            2802
@@ -294,8 +295,9 @@
 #define IDM_SKIN_ZOOM_140                            4088
 #define IDM_SKIN_ZOOM_150                            4089
 #define IDM_SKIN_ZOOM_CUSTOM                         4090
-#define IDM_SKIN_SELECT                              4091
-#define IDM_DEBUG                                    4092
+#define IDM_SKIN_ZOOM_DEFAULT                        4091
+#define IDM_SKIN_SELECT                              4092
+#define IDM_DEBUG                                    4093
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
