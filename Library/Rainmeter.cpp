@@ -1738,7 +1738,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		{
 			const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 			const UINT primaryDpi = monitorsInfo.monitors[monitorsInfo.primary - 1].dpi;
-			m_DefaultZoom = (int)ceilf(USER_DEFAULT_SCREEN_DPI / (float)primaryDpi);
+			m_DefaultZoom = (int)ceilf(USER_DEFAULT_SCREEN_DPI / (float)primaryDpi * 100.f);
 			m_ForceDefaultZoom = true;
 			m_HasExeDpiOverride = true;
 		}
