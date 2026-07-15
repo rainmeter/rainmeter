@@ -799,7 +799,7 @@ void Meter::UpdateToolTip()
 	ti.rect = m_Skin->LogicalToPhysical(ti.rect);
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_Skin->LogicalToPhysical((int)m_ToolTipWidth));
 
 	if (m_ToolTipHidden || m_ToolTipDisabled || !isVisible)
 	{
