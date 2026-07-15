@@ -520,7 +520,7 @@ private:
 	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
 
-	ankerl::unordered_dense::map<UINT_PTR, std::wstring> m_DelayedCommands;
+	std::map<UINT_PTR, std::wstring> m_DelayedCommands;
 
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;
