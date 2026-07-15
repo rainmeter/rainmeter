@@ -4254,7 +4254,7 @@ void Skin::SetSnapEdges(bool b)
 void Skin::SetZoom(int zoom)
 {
 	zoom = std::clamp(zoom, 10, 500);
-	if (m_Zoom.has_value() && *m_Zoom == zoom) return;
+	if (GetRainmeter().GetForceDefaultZoom() || m_Zoom.has_value() && *m_Zoom == zoom) return;
 
 	m_Zoom = zoom;
 	UpdateZoom();
