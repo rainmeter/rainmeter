@@ -142,7 +142,7 @@ struct ParentMeasure
 	bool needsUpdating = true;
 	bool needsIcons = true;
 	int indexOffset = 0;
-	MeasureFileView::FileViewTask* task = nullptr;
+	MeasureFileView::UpdateTask* task = nullptr;
 
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
@@ -186,14 +186,14 @@ static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
 	}
 }
 
-class MeasureFileView::FileViewTask : public AsyncTask
+class MeasureFileView::UpdateTask : public AsyncTask
 {
 public:
-	static FileViewTask* Create(MeasureFileView* requestor, ParentMeasure* parent)
+	static UpdateTask* Create(MeasureFileView* requestor, ParentMeasure* parent)
 	{
 		assert(parent);
 
-		auto* task = new FileViewTask(requestor, parent);
+		auto* task = new UpdateTask(requestor, parent);
 		if (!task->Start())
 		{
 			delete task;
@@ -204,7 +204,7 @@ public:
 	}
 
 private:
-	FileViewTask(MeasureFileView* requestor, ParentMeasure* parent) : AsyncTask(requestor),
+	UpdateTask(MeasureFileView* requestor, ParentMeasure* parent) : AsyncTask(requestor),
 		m_Path(parent->path),
 		m_WildcardSearch(parent->wildcardSearch),
 		m_SortType(parent->sortType),
@@ -628,7 +628,7 @@ void MeasureFileView::UpdateValue()
 
 	if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
-		parent->task = FileViewTask::Create(this, parent);
+		parent->task = UpdateTask::Create(this, parent);
 		parent->needsUpdating = false;
 		parent->needsIcons = false;
 	}
@@ -1041,7 +1041,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 }
 
-void MeasureFileView::FileViewTask::StartWorkOnWorkerThread()
+void MeasureFileView::UpdateTask::StartWorkOnWorkerThread()
 {
 	FileInfo file;
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -1230,7 +1230,7 @@ void MeasureFileView::FileViewTask::StartWorkOnWorkerThread()
 	CoUninitialize();
 }
 
-void MeasureFileView::FileViewTask::FinishWorkOnMainThread()
+void MeasureFileView::UpdateTask::FinishWorkOnMainThread()
 {
 	if (m_AbortRequested) return;
 
@@ -1255,7 +1255,7 @@ void MeasureFileView::FileViewTask::FinishWorkOnMainThread()
 	}
 }
 
-void MeasureFileView::FileViewTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, RecursiveType rType)
+void MeasureFileView::UpdateTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, RecursiveType rType)
 {
 	std::wstring path = folder;
 	folder += (rType == RECURSIVE_NONE) ? m_WildcardSearch : L"*";
