@@ -821,34 +821,29 @@ void MeasureFileView::Command(const std::wstring& command)
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
 	{
-		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-		if (SUCCEEDED(hr))
+		std::wstring cmd = dir + fileName;
+
+		SHELLEXECUTEINFO si = { sizeof(SHELLEXECUTEINFO) };
+		si.nShow = SW_SHOWNORMAL;
+		si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
+		si.lpDirectory = dir.c_str();
+		si.lpFile = cmd.c_str();
+
+		if (isProperty)
 		{
-			std::wstring cmd = dir + fileName;
+			si.fMask |= SEE_MASK_INVOKEIDLIST;
 
-			SHELLEXECUTEINFO si = { sizeof(SHELLEXECUTEINFO) };
-			si.nShow = SW_SHOWNORMAL;
-			si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
-			si.lpDirectory = dir.c_str();
-			si.lpFile = cmd.c_str();
-
-			if (isProperty)
+			if (cmd.empty())
 			{
-				si.fMask |= SEE_MASK_INVOKEIDLIST;
-
-				if (cmd.empty())
-				{
-					si.lpFile = g_SysProperties.c_str();
-				}
-				else
-				{
-					si.lpVerb = L"properties";
-				}
+				si.lpFile = g_SysProperties.c_str();
 			}
-
-			ShellExecuteEx(&si);
-			CoUninitialize();
+			else
+			{
+				si.lpVerb = L"properties";
+			}
 		}
+
+		ShellExecuteEx(&si);
 	};
 
 	// Parent only commands
