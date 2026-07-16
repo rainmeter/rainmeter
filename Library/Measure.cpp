@@ -961,16 +961,10 @@ void Measure::Command(const std::wstring& command)
 bool Measure::GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto measure = (Measure*)context;
-	const std::vector<Measure*>& measures = measure->m_Skin->GetMeasures();
-
-	for (const auto& iter : measures)
+	if (auto* namedMeasure = measure->m_Skin->GetMeasure(std::wstring_view(str, len)))
 	{
-		if (iter->GetOriginalName().length() == len &&
-			_wcsnicmp(str, iter->GetName(), len) == 0)
-		{
-			*value = iter->GetValue();
-			return true;
-		}
+		*value = namedMeasure->GetValue();
+		return true;
 	}
 
 	return false;
