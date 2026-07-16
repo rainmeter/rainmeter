@@ -5,7 +5,10 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#include "StdAfx.h"
+#ifndef RM_LIBRARY_MEASUREFILEVIEW_H_
+#define RM_LIBRARY_MEASUREFILEVIEW_H_
+
+#include "Measure.h"
 #include <wrl/client.h>
 
 enum MeasureType
@@ -77,6 +80,27 @@ struct FileInfo
 
 struct ChildMeasure;
 
+class MeasureFileView : public Measure
+{
+public:
+	MeasureFileView(Skin* skin, const WCHAR* name);
+	virtual ~MeasureFileView();
+
+	MeasureFileView(const MeasureFileView& other) = delete;
+	MeasureFileView& operator=(MeasureFileView other) = delete;
+
+	UINT GetTypeID() override { return TypeID<MeasureFileView>(); }
+	const WCHAR* GetStringValue() override;
+	void Command(const std::wstring& command) override;
+
+protected:
+	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void UpdateValue() override;
+
+private:
+	ChildMeasure* m_Child;
+};
+
 struct ParentMeasure
 {
 	std::wstring path;
@@ -105,9 +129,8 @@ struct ParentMeasure
 	int indexOffset;
 	HANDLE thread;
 
-	void* rm;
 	HWND hwnd;
-	void* skin;
+	Skin* skin;
 	LPCWSTR name;
 	ChildMeasure* ownerChild;
 
@@ -132,7 +155,6 @@ struct ParentMeasure
 		skin(nullptr),
 		name(),
 		ownerChild(nullptr),
-		rm(),
 		hwnd(),
 		thread(nullptr),
 		fileCount(0),
@@ -154,6 +176,7 @@ struct ChildMeasure
 
 	std::wstring strValue;
 	ParentMeasure* parent;
+	MeasureFileView* measure;
 
 	ChildMeasure() :
 		type(TYPE_FOLDERPATH),
@@ -163,10 +186,11 @@ struct ChildMeasure
 		index(1),
 		ignoreCount(false),
 		strValue(),
-		parent(nullptr) { }
+		parent(nullptr),
+		measure(nullptr) { }
 };
 
-std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters)
+static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
 
@@ -183,7 +207,7 @@ std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& 
 	return tokens;
 }
 
-void GetParentFolder(std::wstring& path)
+static void GetParentFolder(std::wstring& path)
 {
 	std::vector<std::wstring> tokens = Tokenize(path, L"\\");
 	if (tokens.size() < 2)
@@ -201,7 +225,7 @@ void GetParentFolder(std::wstring& path)
 	}
 }
 
-bool ShowContextMenu(HWND hwnd, const std::wstring& path)
+static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 {
 	// Convert any relative paths
 	WCHAR buffer[MAX_PATH] = { 0 };
@@ -277,3 +301,5 @@ bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 
 	return result;
 }*/
+
+#endif

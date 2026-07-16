@@ -2024,6 +2024,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"AudioLevel",
 		L"CoreTemp",
 		L"Drag&Drop",
+		L"FileView",
 		L"FolderInfo",
 		L"iTunesPlugin",
 		L"MediaKey",

@@ -25,6 +25,7 @@
 #include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
 #include "MeasureDragDrop.h"
+#include "MeasureFileView.h"
 #include "MeasureFolderInfo.h"
 #include "MeasureiTunes.h"
 #include "MeasureUptime.h"
@@ -854,6 +855,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"FolderInfo", measure) == 0)
 	{
 		return new MeasureFolderInfo(skin, name);
+	}
+	else if (_wcsicmp(L"FileView", measure) == 0)
+	{
+		return new MeasureFileView(skin, name);
 	}
 	else if (_wcsicmp(L"iTunes", measure) == 0)
 	{
