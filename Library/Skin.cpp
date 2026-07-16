@@ -68,6 +68,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_FileName(file),
 	m_IsFirstRun(!hasSettings),
 	m_Canvas(),
+	m_MathParser(GetMathParserValue, this),
 	m_Background(),
 	m_BackgroundSize(),
 	m_HostWindow(),
@@ -5517,6 +5518,18 @@ Meter* Skin::GetMeter(std::wstring_view meterName)
 		}
 	}
 	return nullptr;
+}
+
+bool Skin::GetMathParserValue(const WCHAR* str, int len, double* value, void* context)
+{
+	auto skin = (Skin*)context;
+	if (auto* measure = skin->GetMeasure(std::wstring_view(str, len)))
+	{
+		*value = measure->GetValue();
+		return true;
+	}
+
+	return false;
 }
 
 bool Skin::IsNetworkMeasure(Measure* measure)

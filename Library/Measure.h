@@ -80,7 +80,6 @@ public:
 	void DoChangeAction(bool execute = true);
 
 	static Measure* Create(const WCHAR* measure, Skin* skin, const WCHAR* name);
-	static bool GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context);
 
 protected:
 	Measure(Skin* skin, const WCHAR* name);

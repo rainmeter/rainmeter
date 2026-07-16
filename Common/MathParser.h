@@ -17,13 +17,17 @@ class MathParser
 public:
 	typedef bool (*GetValueFunc)(const WCHAR* str, int len, double* value, void* context);
 
+	MathParser(GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
+
 	const WCHAR* Check(const WCHAR* formula) const;
 	const WCHAR* CheckedParse(const WCHAR* formula, double* result) const;
-	const WCHAR* Parse(
-		const WCHAR* formula, double* result,
-		GetValueFunc getValue = nullptr, void* getValueContext = nullptr) const;
+	const WCHAR* Parse(const WCHAR* formula, double* result) const;
 
 	bool IsDelimiter(WCHAR ch) const;
+
+private:
+	GetValueFunc m_GetValue;
+	void* m_GetValueContext;
 };
 
 #endif
