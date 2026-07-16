@@ -156,17 +156,10 @@ void MeasureCalc::FormulaReplace()
 bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto calc = (MeasureCalc*)context;
-	const std::vector<Measure*>& measures = calc->m_Skin->GetMeasures();
-
-	std::vector<Measure*>::const_iterator iter = measures.begin();
-	for ( ; iter != measures.end(); ++iter)
+	if (auto* measure = calc->m_Skin->GetMeasure(std::wstring_view(str, len)))
 	{
-		if ((*iter)->GetOriginalName().length() == len &&
-			_wcsnicmp(str, (*iter)->GetName(), len) == 0)
-		{
-			*value = (*iter)->GetValue();
-			return true;
-		}
+		*value = measure->GetValue();
+		return true;
 	}
 
 	if (_wcsnicmp(str, L"counter", len) == 0)
