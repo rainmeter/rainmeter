@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
+#include "../Common/MathParser.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/StringUtil.h"
 #include "Rainmeter.h"
@@ -80,11 +81,12 @@ void Updater::CheckLanguageObsoleteStatus()
 
 	bool obsolete = false;
 	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
+	MathParser mathParser;
 
 	auto obsoleteLanguages = ParseUtil::Tokenize(StringUtil::Widen(m_ObsoleteLanguages), L",");
 	for (const auto& idString : obsoleteLanguages)
 	{
-		if (ParseUtil::ParseUInt(idString.c_str(), UINT32_MAX) == lcid)
+		if (ParseUtil::ParseUInt(idString.c_str(), UINT32_MAX, mathParser) == lcid)
 		{
 			obsolete = true;
 			break;

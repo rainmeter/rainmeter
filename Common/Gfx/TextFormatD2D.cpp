@@ -44,7 +44,8 @@ int Clamp(int value, int _min, int _max)
 
 namespace Gfx {
 
-TextFormatD2D::TextFormatD2D() :
+TextFormatD2D::TextFormatD2D(const MathParser& mathParser) :
+	TextFormat(mathParser),
 	m_FontWeight(-1),
 	m_HasWeightChanged(false),
 	m_ExtraHeight(),
@@ -575,10 +576,11 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			auto parseOptional = [](const WCHAR* value) -> FLOAT
+			const MathParser& mathParser = m_MathParser;
+			auto parseOptional = [&mathParser](const WCHAR* value) -> FLOAT
 			{
 				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
-				return (FLOAT)ParseUtil::ParseDouble(value, FLT_MAX);
+				return (FLOAT)ParseUtil::ParseDouble(value, FLT_MAX, mathParser);
 			};
 
 			FLOAT leading = parseOptional(options[1].c_str());
@@ -592,7 +594,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 
 			if (optSize > 3)
 			{
-				advanceWidth = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), -1.0f);
+				advanceWidth = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), -1.0f, m_MathParser);
 			}
 
 			UpdateInlineCharacterSpacing(index, pattern, leading, trailing, advanceWidth);
@@ -603,7 +605,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			D2D1_COLOR_F newColor = ParseUtil::ParseColor(options[1].c_str());
+			D2D1_COLOR_F newColor = ParseUtil::ParseColor(options[1].c_str(), m_MathParser);
 			UpdateInlineColor(index, pattern, newColor);
 			return true;
 		}
@@ -620,7 +622,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize >= 3)
 		{
-			bool altGamma = ParseUtil::ParseInt(option + 13, 0) != 0;
+			bool altGamma = ParseUtil::ParseInt(option + 13, 0, m_MathParser) != 0;
 			options.erase(options.begin());
 			UpdateInlineGradientColor(index, pattern, options, altGamma);
 			return true;
@@ -641,11 +643,11 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		if (optSize >= 5)
 		{
 			D2D1_POINT_2F offset = {
-				(FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 1.0),
-				(FLOAT)ParseUtil::ParseDouble(options[2].c_str(), 1.0) };
+				(FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 1.0, m_MathParser),
+				(FLOAT)ParseUtil::ParseDouble(options[2].c_str(), 1.0, m_MathParser) };
 
-			FLOAT blur = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), 3.0);
-			D2D1_COLOR_F color = ParseUtil::ParseColor(options[4].c_str());
+			FLOAT blur = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), 3.0, m_MathParser);
+			D2D1_COLOR_F color = ParseUtil::ParseColor(options[4].c_str(), m_MathParser);
 			UpdateInlineShadow(index, pattern, blur, offset, color);
 			return true;
 		}
@@ -654,7 +656,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	{
 		if (optSize > 1)
 		{
-			FLOAT size = (FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 10.0);
+			FLOAT size = (FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 10.0, m_MathParser);
 			UpdateInlineSize(index, pattern, size);
 			return true;
 		}
@@ -665,7 +667,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		{
 			// DirectWrite supports 9 different stretch properties.
 			DWRITE_FONT_STRETCH stretch = (DWRITE_FONT_STRETCH)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1),
+				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser),
 				(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
 				(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED);
 			UpdateInlineStretch(index, pattern, stretch);
@@ -688,7 +690,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 
 			if (optSize > 2)
 			{
-				parameter = ParseUtil::ParseUInt(options[2].c_str(), 1u);
+				parameter = ParseUtil::ParseUInt(options[2].c_str(), 1u, m_MathParser);
 			}
 
 			UpdateInlineTypography(index, pattern, tag, parameter);
@@ -706,7 +708,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		{
 			// DirectWrite supports weight from 1 to 999.
 			DWRITE_FONT_WEIGHT weight = (DWRITE_FONT_WEIGHT)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1), 1, 999);
+				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser), 1, 999);
 			UpdateInlineWeight(index, pattern, weight);
 			return true;
 		}
@@ -816,7 +818,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 	const std::vector<std::wstring> args, const bool altGamma)
 {
-	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0), 360.0)), 360.0);
+	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
 
 	std::vector<std::wstring> tokens;
 	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
@@ -825,8 +827,8 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 		tokens = ParseUtil::TokenizeWithPairedPunctuation(args[i], L';', PairedPunctuation::Parentheses);
 		if (tokens.size() == 2)
 		{
-			stops[i - 1].color = ParseUtil::ParseColor(tokens[0].c_str());
-			stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(tokens[1].c_str(), 0.0);
+			stops[i - 1].color = ParseUtil::ParseColor(tokens[0].c_str(), m_MathParser);
+			stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(tokens[1].c_str(), 0.0, m_MathParser);
 		}
 	}
 

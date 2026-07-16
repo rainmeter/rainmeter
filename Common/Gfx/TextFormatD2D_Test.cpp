@@ -16,6 +16,7 @@ TEST_CLASS(Common_Gfx_TextFormatD2D_Test)
 {
 public:
 	std::unique_ptr<Canvas> m_D2D;
+	MathParser m_MathParser;
 
 	Common_Gfx_TextFormatD2D_Test() :
 		m_D2D(Canvas::Create(Gfx::Renderer::D2D))
@@ -26,7 +27,7 @@ public:
 
 	TEST_METHOD(TestInaccurateText)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat());
+		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;
@@ -42,7 +43,7 @@ public:
 
 	TEST_METHOD(TestTrailingNewlineGdipCompatibility)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat());
+		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;

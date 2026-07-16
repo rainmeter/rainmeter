@@ -10,9 +10,10 @@
 
 namespace Gfx {
 
-TextFormat::TextFormat() :
+TextFormat::TextFormat(const MathParser& mathParser) :
 	m_HorizontalAlignment(HorizontalAlignment::Left),
-	m_VerticalAlignment(VerticalAlignment::Top)
+	m_VerticalAlignment(VerticalAlignment::Top),
+	m_MathParser(mathParser)
 {
 }
 

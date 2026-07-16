@@ -23,7 +23,7 @@ enum class CaseType : BYTE;
 class TextFormatD2D : public TextFormat
 {
 public:
-	TextFormatD2D();
+	TextFormatD2D(const MathParser& mathParser);
 	virtual ~TextFormatD2D();
 
 	TextFormatD2D(const TextFormatD2D& other) = delete;

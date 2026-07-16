@@ -6,7 +6,6 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "../Common/MathParser.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
 #include <random>
@@ -40,7 +39,7 @@ MeasureCalc::~MeasureCalc()
 */
 void MeasureCalc::UpdateValue()
 {
-	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), &m_Value, GetMeasureValue, this);
+	const WCHAR* errMsg = m_MathParser.Parse(m_Formula.c_str(), &m_Value, GetMeasureValue, this);
 	if (errMsg != nullptr)
 	{
 		if (!m_ParseError)
@@ -110,7 +109,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			FormulaReplace();
 		}
 
-		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
+		const WCHAR* errMsg = m_MathParser.Check(m_Formula.c_str());
 		if (errMsg != nullptr)
 		{
 			LogErrorF(this, L"Calc: %s", errMsg);
@@ -132,8 +131,8 @@ void MeasureCalc::FormulaReplace()
 		if (pos != std::wstring::npos)
 		{
 			if (_wcsnicmp(L"random", m_Formula.c_str() + pos, 6) == 0 &&
-				(pos == 0 || MathParser::IsDelimiter((*(m_Formula.c_str() + pos - 1))) &&
-				(pos == (m_Formula.length() - 6) || MathParser::IsDelimiter((*(m_Formula.c_str() + pos + 6))))))
+				(pos == 0 || m_MathParser.IsDelimiter((*(m_Formula.c_str() + pos - 1))) &&
+				(pos == (m_Formula.length() - 6) || m_MathParser.IsDelimiter((*(m_Formula.c_str() + pos + 6))))))
 			{
 				int randNumber = GetRandom();
 

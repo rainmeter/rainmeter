@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+class MathParser;
+
 namespace Gfx {
 
 class FontCollection;
@@ -80,8 +82,12 @@ public:
 	virtual std::vector<std::wstring> GetInlinePatterns() = 0;
 	virtual void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges) = 0;
 
+	const MathParser& GetMathParser() const { return m_MathParser; }
+
 protected:
-	TextFormat();
+	TextFormat(const MathParser& mathParser);
+
+	const MathParser& m_MathParser;
 
 private:
 	HorizontalAlignment m_HorizontalAlignment;

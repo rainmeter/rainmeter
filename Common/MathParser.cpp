@@ -12,8 +12,6 @@
 
 #include <string>
 
-namespace MathParser {
-
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
@@ -245,7 +243,13 @@ const WCHAR* eUnknFunc = L"\"%s\" is unknown";
 const WCHAR* eLogicErr = L"Logical expression error";
 const WCHAR* eInvPrmCnt = L"Invalid function parameter count";
 
-const WCHAR* Check(const WCHAR* formula)
+MathParser::MathParser(GetValueFunc getValue, void* getValueContext) :
+	m_GetValue(getValue),
+	m_GetValueContext(getValueContext)
+{
+}
+
+const WCHAR* MathParser::Check(const WCHAR* formula) const
 {
 	int brackets = 0;
 
@@ -266,7 +270,7 @@ const WCHAR* Check(const WCHAR* formula)
 	return (brackets != 0) ? eBrackets : nullptr;
 }
 
-const WCHAR* CheckedParse(const WCHAR* formula, double* result)
+const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) const
 {
 	const WCHAR* error = Check(formula);
 	if (!error)
@@ -276,8 +280,8 @@ const WCHAR* CheckedParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-const WCHAR* Parse(
-	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext)
+const WCHAR* MathParser::Parse(
+	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext) const
 {
 	static WCHAR errorBuffer[128];
 
@@ -788,7 +792,7 @@ CharType GetCharType(WCHAR ch)
 	return CharType::Unknown;
 }
 
-bool IsDelimiter(WCHAR ch)
+bool MathParser::IsDelimiter(WCHAR ch) const
 {
 	CharType type = GetCharType(ch);
 	return type == CharType::MinusSymbol || type == CharType::Symbol || type == CharType::Separator;
@@ -991,4 +995,3 @@ static const WCHAR* ATan2(int paramcnt, double* args, double* result)
 	return eInvPrmCnt;
 }
 
-}  // namespace MathParser

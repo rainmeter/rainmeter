@@ -1333,7 +1333,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetTransparency:
 		{
 			const std::wstring& arg = args[0];
-			m_AlphaValue = ConfigParser::ParseInt(arg.c_str(), 255);
+			m_AlphaValue = m_Parser.ParseInt(arg.c_str(), 255);
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
 			UpdateWindowTransparency(m_AlphaValue);

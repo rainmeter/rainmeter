@@ -10,6 +10,8 @@
 
 #include "LuaHelper.h"
 
+class MathParser;
+
 struct LuaResult
 {
 	static LuaResult Success() { return {}; }
@@ -32,7 +34,7 @@ private:
 class LuaScript
 {
 public:
-	LuaScript();
+	LuaScript(const MathParser& mathParser);
 	~LuaScript();
 
 	bool Initialize(const std::wstring& scriptFile);
@@ -62,6 +64,7 @@ protected:
 	bool m_Unicode;
 	int m_Ref;
 	lua_State* m_State;
+	const MathParser& m_MathParser;
 };
 
 #endif

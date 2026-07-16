@@ -14,6 +14,7 @@
 #include "Mouse.h"
 #include "SkinPosition.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/MathParser.h"
 
 #define BEGIN_MESSAGEPROC if (instance) { switch (uMsg) {
 #define MESSAGE(handler, msg) case msg: return instance->handler(uMsg, wParam, lParam);
@@ -179,6 +180,7 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	ConfigParser& GetParser() { return m_Parser; }
+	const MathParser& GetMathParser() const { return m_MathParser; }
 
 	const std::wstring& GetFolderPath() { return m_FolderPath; }
 	const std::wstring& GetFileName() { return m_FileName; }
@@ -401,8 +403,8 @@ private:
 	bool m_IsFirstRun;  // Skin has no settings in Rainmeter.ini
 
 	Gfx::Canvas m_Canvas;
-
 	ConfigParser m_Parser;
+	MathParser m_MathParser;
 
 	bool m_ResetRelativeMeters;
 
