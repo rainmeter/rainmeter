@@ -81,7 +81,8 @@ struct Operation
 struct Function
 {
 	const WCHAR* name;
-	SingleArgFunction proc;
+	SingleArgFunction singleArgProc;
+	MultiArgFunction multiArgProc;
 	BYTE length;
 };
 
@@ -129,32 +130,32 @@ enum {
 
 static Function g_Functions[NUM_FUNCS] =
 {
-	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
-	{ L"atan", &atan, 4 },                         // FUNC_ATAN
-	{ L"cos", &cos, 3 },                           // FUNC_COS
-	{ L"sin", &sin, 3 },                           // FUNC_SIN
-	{ L"tan", &tan, 3 },                           // FUNC_TAN
-	{ L"abs", &fabs, 3 },                          // FUNC_ABS
-	{ L"exp", &exp, 3 },                           // FUNC_EXP
-	{ L"ln", &log, 2 },                            // FUNC_LN
-	{ L"log", &log10, 3 },                         // FUNC_LOG
-	{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
-	{ L"frac", &frac, 4 },                         // FUNC_FRAC
-	{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
-	{ L"floor", &floor, 5 },                       // FUNC_FLOOR
-	{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
-	{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
-	{ L"asin", &asin, 4 },                         // FUNC_ASIN
-	{ L"acos", &acos, 4 },                         // FUNC_ACOS
-	{ L"rad", &rad, 3 },                           // FUNC_RAD
-	{ L"deg", &deg, 3 },                           // FUNC_DEG
-	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
-	{ L"neg", &neg, 3 },                           // FUNC_NEG
-	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
-	{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
-	{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
-	{ L"e", nullptr, 1 },                          // FUNC_E
-	{ L"pi", nullptr, 2 }                          // FUNC_PI
+	{ L"atan2", nullptr, &ATan2, 5 },              // FUNC_ATAN2
+	{ L"atan", &atan, nullptr, 4 },                // FUNC_ATAN
+	{ L"cos", &cos, nullptr, 3 },                  // FUNC_COS
+	{ L"sin", &sin, nullptr, 3 },                  // FUNC_SIN
+	{ L"tan", &tan, nullptr, 3 },                  // FUNC_TAN
+	{ L"abs", &fabs, nullptr, 3 },                 // FUNC_ABS
+	{ L"exp", &exp, nullptr, 3 },                  // FUNC_EXP
+	{ L"ln", &log, nullptr, 2 },                   // FUNC_LN
+	{ L"log", &log10, nullptr, 3 },                // FUNC_LOG
+	{ L"sqrt", &sqrt, nullptr, 4 },                // FUNC_SQRT
+	{ L"frac", &frac, nullptr, 4 },                // FUNC_FRAC
+	{ L"trunc", &trunc, nullptr, 5 },              // FUNC_TRUNC
+	{ L"floor", &floor, nullptr, 5 },              // FUNC_FLOOR
+	{ L"ceil", &ceil, nullptr, 4 },                // FUNC_CEIL
+	{ L"round", nullptr, &round, 5 },              // FUNC_ROUND
+	{ L"asin", &asin, nullptr, 4 },                // FUNC_ASIN
+	{ L"acos", &acos, nullptr, 4 },                // FUNC_ACOS
+	{ L"rad", &rad, nullptr, 3 },                  // FUNC_RAD
+	{ L"deg", &deg, nullptr, 3 },                  // FUNC_DEG
+	{ L"sgn", &sgn, nullptr, 3 },                  // FUNC_SGN
+	{ L"neg", &neg, nullptr, 3 },                  // FUNC_NEG
+	{ L"min", nullptr, &Min, 3 },                  // FUNC_MIN
+	{ L"max", nullptr, &Max, 3 },                  // FUNC_MAX
+	{ L"clamp", nullptr, &Clamp, 5 },              // FUNC_CLAMP
+	{ L"e", nullptr, nullptr, 1 },                 // FUNC_E
+	{ L"pi", nullptr, nullptr, 2 }                 // FUNC_PI
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -469,7 +470,7 @@ static const WCHAR* Calc(Parser& parser)
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.numStack[parser.valTop + 1], &res);
+		const WCHAR* error = g_Functions[op.funcIndex].multiArgProc(paramcnt, &parser.numStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.numStack[++parser.valTop] = res;
@@ -490,7 +491,7 @@ static const WCHAR* Calc(Parser& parser)
 	}
 	else if (op.type == Operator::SingleArgFunction)
 	{
-		res = (*(SingleArgFunction)g_Functions[op.funcIndex].proc)(right);
+		res = g_Functions[op.funcIndex].singleArgProc(right);
 	}
 	else
 	{
