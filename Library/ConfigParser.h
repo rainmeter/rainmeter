@@ -91,6 +91,7 @@ public:
 
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
+	std::optional<std::wstring> GetDollarVariable(std::wstring_view variableStr);
 
 	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 	bool ContainsKeyedSectionVariable(const std::wstring& str);

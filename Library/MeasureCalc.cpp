@@ -173,6 +173,24 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 		return true;
 	}
 
+	// Skin::GetMathParserValue does this first, but we do it later here for BWC.
+	std::wstring_view variable(str, len);
+	if (!variable.empty() && variable[0] == L'$')
+	{
+		variable.remove_prefix(1);
+		if (const auto result = calc->m_Skin->GetParser().GetDollarVariable(variable))
+		{
+			errno = 0;
+			WCHAR* end = nullptr;
+			const double parsedValue = wcstod(result->c_str(), &end);
+			if (errno != ERANGE && end && *end == L'\0')
+			{
+				*value = parsedValue;
+				return true;
+			}
+		}
+	}
+
 	return false;
 }
 

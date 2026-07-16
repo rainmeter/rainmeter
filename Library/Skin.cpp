@@ -5523,6 +5523,24 @@ Meter* Skin::GetMeter(std::wstring_view meterName)
 bool Skin::GetMathParserValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto skin = (Skin*)context;
+
+	std::wstring_view variable(str, len);
+	if (!variable.empty() && variable[0] == L'$')
+	{
+		variable.remove_prefix(1);
+		if (const auto result = skin->GetParser().GetDollarVariable(variable))
+		{
+			errno = 0;
+			WCHAR* end = nullptr;
+			const double parsedValue = wcstod(result->c_str(), &end);
+			if (errno != ERANGE && end && *end == L'\0')
+			{
+				*value = parsedValue;
+				return true;
+			}
+		}
+	}
+
 	if (auto* measure = skin->GetMeasure(std::wstring_view(str, len)))
 	{
 		*value = measure->GetValue();
