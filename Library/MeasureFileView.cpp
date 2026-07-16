@@ -101,13 +101,6 @@ struct FileInfo
 };
 
 struct ParentMeasure;
-class FileViewTask;
-
-struct FileViewSharedData
-{
-	ParentMeasure* parent = nullptr;
-	bool active = true;
-};
 
 struct ChildMeasure
 {
@@ -150,7 +143,6 @@ struct ParentMeasure
 	bool needsIcons = true;
 	int indexOffset = 0;
 	MeasureFileView::FileViewTask* task = nullptr;
-	std::shared_ptr<FileViewSharedData> data;
 
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
@@ -174,12 +166,6 @@ static void RemoveChildFromParent(ParentMeasure* parent, ChildMeasure* child)
 	{
 		parent->children.erase(childIter);
 	}
-
-	auto iconIter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
-	if (iconIter != parent->iconChildren.end())
-	{
-		parent->iconChildren.erase(iconIter);
-	}
 }
 
 static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
@@ -200,12 +186,14 @@ static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
 	}
 }
 
-class FileViewTask : public AsyncTask
+class MeasureFileView::FileViewTask : public AsyncTask
 {
 public:
-	static FileViewTask* Create(const std::shared_ptr<FileViewSharedData>& data)
+	static FileViewTask* Create(MeasureFileView* requestor, ParentMeasure* parent)
 	{
-		auto* task = new FileViewTask(data);
+		assert(parent);
+
+		auto* task = new FileViewTask(requestor, parent);
 		if (!task->Start())
 		{
 			delete task;
@@ -216,17 +204,42 @@ public:
 	}
 
 private:
-	FileViewTask(const std::shared_ptr<FileViewSharedData>& data) :
-		AsyncTask(nullptr),
-		m_Data(data)
+	FileViewTask(MeasureFileView* requestor, ParentMeasure* parent) : AsyncTask(requestor),
+		m_Path(parent->path),
+		m_WildcardSearch(parent->wildcardSearch),
+		m_SortType(parent->sortType),
+		m_SortDateType(parent->sortDateType),
+		m_RecursiveType(parent->recursiveType),
+		m_SortAscending(parent->sortAscending),
+		m_ShowDotDot(parent->showDotDot),
+		m_ShowFile(parent->showFile),
+		m_ShowFolder(parent->showFolder),
+		m_ShowHidden(parent->showHidden),
+		m_ShowSystem(parent->showSystem),
+		m_Extensions(parent->extensions),
+		m_FinishAction(parent->finishAction),
+		m_NeedsUpdating(parent->needsUpdating),
+		m_NeedsIcons(parent->needsIcons)
 	{
+		if (m_NeedsIcons)
+		{
+			if (!m_NeedsUpdating) m_Files = parent->files;
+
+			for (auto* child : parent->children)
+			{
+				if (child->type == TYPE_ICON)
+				{
+					const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+					m_IconRequests.emplace_back(child->iconPath, child->iconSize, trueIndex);
+				}
+			}
+		}
 	}
 
 	void StartWorkOnWorkerThread() override;
 	void FinishWorkOnMainThread() override;
 	void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, RecursiveType rType);
 
-	std::shared_ptr<FileViewSharedData> m_Data;
 	std::wstring m_Path;
 	std::wstring m_WildcardSearch;
 	SortType m_SortType = STYPE_NAME;
@@ -240,14 +253,23 @@ private:
 	bool m_ShowSystem = false;
 	std::vector<std::wstring> m_Extensions;
 	std::wstring m_FinishAction;
-	Skin* m_Skin = nullptr;
 	std::vector<FileInfo> m_Files;
 	int m_FileCount = 0;
 	int m_FolderCount = 0;
 	UINT64 m_FolderSize = 0;
 	bool m_NeedsUpdating = false;
 	bool m_NeedsIcons = false;
-	bool m_DoFinishAction = false;
+
+	struct IconRequest
+	{
+		std::wstring path;
+		IconSize size;
+		int trueIndex;
+	};
+
+	std::vector<IconRequest> m_IconRequests;
+
+	bool m_TaskSuccessful = false;
 };
 
 static void GetParentFolder(std::wstring& path)
@@ -302,7 +324,7 @@ static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 		return false;
 
 	Microsoft::WRL::ComPtr<IContextMenu> iMenu = nullptr;
-	result = iFolder->GetUIObjectOf(hwnd, 1, (const ITEMIDLIST **)&idChild, IID_IContextMenu, nullptr, (void**)&iMenu);
+	result = iFolder->GetUIObjectOf(hwnd, 1, (const ITEMIDLIST**)&idChild, IID_IContextMenu, nullptr, (void**)&iMenu);
 	if (!SUCCEEDED(result) || !iFolder)
 		return false;
 
@@ -364,9 +386,6 @@ MeasureFileView::~MeasureFileView()
 
 	if (parent && parent->ownerChild == child)
 	{
-		parent->data->active = false;
-		parent->data->parent = nullptr;
-
 		if (parent->task)
 		{
 			parent->task->AbortWhenPossible();
@@ -424,7 +443,6 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			child->parent->name = GetName();
 			child->parent->ownerChild = child;
 			child->parent->hwnd = GetSkin()->GetWindow();
-			child->parent->data->parent = child->parent;
 			g_ParentMeasures.push_back(child->parent);
 		}
 
@@ -587,15 +605,6 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			child->iconSize = IS_EXLARGE;
 		}
-
-		ParentMeasure* parent = child->parent;
-		if (!parent) return;
-
-		auto iter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
-		if (iter == parent->iconChildren.end())
-		{
-			parent->iconChildren.push_back(child);
-		}
 	}
 	else if (_wcsicmp(type, L"FILEPATH") == 0)
 	{
@@ -610,92 +619,88 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeasureFileView::UpdateValue()
 {
 	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = nullptr;
-
+	ParentMeasure* parent = child->parent;
+	if (!parent)
 	{
-		CriticalSectionLock lock(g_CriticalSection);
-		parent = child->parent;
-		if (!parent)
-		{
-			m_Value = 0.0;
-			return;
-		}
+		m_Value = 0.0;
+		return;
+	}
 
-		if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
-		{
-			parent->task = FileViewTask::Create(parent->data);
-		}
+	if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
+	{
+		parent->task = FileViewTask::Create(this, parent);
+		parent->needsUpdating = false;
+		parent->needsIcons = false;
+	}
 
-		int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-		double value = 0;
+	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	double value = 0;
 
-		if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
-		{
-			switch (child->type)
-			{
-			case TYPE_FILESIZE:
-				value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
-				break;
-
-			case TYPE_FILEDATE:
-				{
-					FILETIME fTime = { 0 };
-					SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
-					ULARGE_INTEGER time = { 0 };
-
-					switch (child->date)
-					{
-					default:
-					case DTYPE_MODIFIED:
-						fTime = parent->files[trueIndex].modifiedTime;
-						break;
-
-					case DTYPE_CREATED:
-						fTime = parent->files[trueIndex].createdTime;
-						break;
-
-					case DTYPE_ACCESSED:
-						fTime = parent->files[trueIndex].accessedTime;
-						break;
-					}
-
-					FileTimeToSystemTime(&fTime, &stUTC);
-					SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
-					SystemTimeToFileTime(&stLOCAL, &fTime);
-
-					time.LowPart = fTime.dwLowDateTime;
-					time.HighPart = fTime.dwHighDateTime;
-
-					value = (double)(time.QuadPart / 10000000);
-				}
-				break;
-			}
-		}
-
+	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
+	{
 		switch (child->type)
 		{
-		case TYPE_FILECOUNT:
-			value = (double)parent->fileCount;
+		case TYPE_FILESIZE:
+			value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
 			break;
 
-		case TYPE_FOLDERCOUNT:
-			value = (double)parent->folderCount;
-			break;
+		case TYPE_FILEDATE:
+		{
+			FILETIME fTime = { 0 };
+			SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
+			ULARGE_INTEGER time = { 0 };
 
-		case TYPE_FOLDERSIZE:
-			value = (double)parent->folderSize;
-			break;
+			switch (child->date)
+			{
+			default:
+			case DTYPE_MODIFIED:
+				fTime = parent->files[trueIndex].modifiedTime;
+				break;
+
+			case DTYPE_CREATED:
+				fTime = parent->files[trueIndex].createdTime;
+				break;
+
+			case DTYPE_ACCESSED:
+				fTime = parent->files[trueIndex].accessedTime;
+				break;
+			}
+
+			FileTimeToSystemTime(&fTime, &stUTC);
+			SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
+			SystemTimeToFileTime(&stLOCAL, &fTime);
+
+			time.LowPart = fTime.dwLowDateTime;
+			time.HighPart = fTime.dwHighDateTime;
+
+			value = (double)(time.QuadPart / 10000000);
 		}
-
-		m_Value = value;
+		break;
+		}
 	}
+
+	switch (child->type)
+	{
+	case TYPE_FILECOUNT:
+		value = (double)parent->fileCount;
+		break;
+
+	case TYPE_FOLDERCOUNT:
+		value = (double)parent->folderCount;
+		break;
+
+	case TYPE_FOLDERSIZE:
+		value = (double)parent->folderSize;
+		break;
+	}
+
+	m_Value = value;
 }
 
 const WCHAR* MeasureFileView::GetStringValue()
 {
 	ChildMeasure* child = m_Child;
 
-	CriticalSectionLock lock(g_CriticalSection);
 	ParentMeasure* parent = child->parent;
 	if (!parent) return CheckSubstitute(L"");
 
@@ -714,67 +719,65 @@ const WCHAR* MeasureFileView::GetStringValue()
 			break;
 
 		case TYPE_FILENAME:
+		{
+			std::wstring temp = parent->files[trueIndex].fileName;
+			if (parent->hideExtension && !parent->files[trueIndex].isFolder)
 			{
-				std::wstring temp = parent->files[trueIndex].fileName;
-				if (parent->hideExtension && !parent->files[trueIndex].isFolder)
+				size_t pos = temp.find_last_of(L".");
+				if (pos != temp.npos)
 				{
-					size_t pos = temp.find_last_of(L".");
-					if (pos != temp.npos)
-					{
-						child->strValue = temp.substr(0, pos);
-					}
-				}
-				else
-				{
-					child->strValue = temp;
+					child->strValue = temp.substr(0, pos);
 				}
 			}
-			break;
+			else
+			{
+				child->strValue = temp;
+			}
+		}
+		break;
 
 		case TYPE_FILETYPE:
 			child->strValue = parent->files[trueIndex].ext;
 			break;
 
 		case TYPE_FILEDATE:
+		{
+			SYSTEMTIME stUTC, stLOCAL;
+			FILETIME fTime;
+
+			switch (child->date)
 			{
-				WCHAR* temp = new WCHAR[MAX_LINE_LENGTH];
-				SYSTEMTIME stUTC, stLOCAL;
-				FILETIME fTime;
+			default:
+			case DTYPE_MODIFIED:
+				fTime = parent->files[trueIndex].modifiedTime;
+				break;
 
-				switch (child->date)
-				{
-				default:
-				case DTYPE_MODIFIED:
-					fTime = parent->files[trueIndex].modifiedTime;
-					break;
+			case DTYPE_CREATED:
+				fTime = parent->files[trueIndex].createdTime;
+				break;
 
-				case DTYPE_CREATED:
-					fTime = parent->files[trueIndex].createdTime;
-					break;
-
-				case DTYPE_ACCESSED:
-					fTime = parent->files[trueIndex].accessedTime;
-					break;
-				}
-
-				if (fTime.dwLowDateTime != 0  && fTime.dwHighDateTime != 0)
-				{
-					FileTimeToSystemTime(&fTime, &stUTC);
-					SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
-					GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, MAX_LINE_LENGTH);
-					child->strValue = temp;
-					child->strValue += L" ";
-					GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, MAX_LINE_LENGTH);
-					child->strValue += temp;
-				}
-				else
-				{
-					child->strValue = L"";
-				}
-				delete [] temp;
-				temp = nullptr;
+			case DTYPE_ACCESSED:
+				fTime = parent->files[trueIndex].accessedTime;
+				break;
 			}
-			break;
+
+			if (fTime.dwLowDateTime != 0 && fTime.dwHighDateTime != 0)
+			{
+				WCHAR temp[512];
+				FileTimeToSystemTime(&fTime, &stUTC);
+				SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
+				GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
+				child->strValue = temp;
+				child->strValue += L" ";
+				GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
+				child->strValue += temp;
+			}
+			else
+			{
+				child->strValue = L"";
+			}
+		}
+		break;
 
 		case TYPE_ICON:
 			child->strValue = child->iconPath;
@@ -815,7 +818,6 @@ void MeasureFileView::Command(const std::wstring& command)
 	ChildMeasure* child = m_Child;
 	LPCWSTR args = command.c_str();
 
-	CriticalSectionLock lock(g_CriticalSection);
 	ParentMeasure* parent = child->parent;
 	if (!parent || parent->task) return;
 
@@ -882,7 +884,7 @@ void MeasureFileView::Command(const std::wstring& command)
 					parent->needsIcons = true;
 				}
 			}
-			else if (_wcsnicmp(args, cmdIndexUp,lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
+			else if (_wcsnicmp(args, cmdIndexUp, lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
 			{
 				const int shift = (args[lenIndexUp] == L'\0') ? 1 : max(_wtoi(args + lenIndexUp + 1), 1);
 				parent->indexOffset = max(parent->indexOffset - shift, 0);
@@ -1039,70 +1041,20 @@ void MeasureFileView::Command(const std::wstring& command)
 	LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 }
 
-void FileViewTask::StartWorkOnWorkerThread()
+void MeasureFileView::FileViewTask::StartWorkOnWorkerThread()
 {
+	FileInfo file;
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr)) return;
 
+	if (m_NeedsUpdating)
 	{
-		CriticalSectionLock lock(g_CriticalSection);
-		if (m_AbortRequested || !m_Data->active || !m_Data->parent)
-		{
-			CoUninitialize();
-			return;
-		}
-
-		ParentMeasure* parent = m_Data->parent;
-		m_Path = parent->path;
-		m_WildcardSearch = parent->wildcardSearch;
-		m_SortType = parent->sortType;
-		m_SortDateType = parent->sortDateType;
-		m_RecursiveType = parent->recursiveType;
-		m_SortAscending = parent->sortAscending;
-		m_ShowDotDot = parent->showDotDot;
-		m_ShowFile = parent->showFile;
-		m_ShowFolder = parent->showFolder;
-		m_ShowHidden = parent->showHidden;
-		m_ShowSystem = parent->showSystem;
-		m_Extensions = parent->extensions;
-		m_FinishAction = parent->finishAction;
-		m_Skin = parent->skin;
-		m_NeedsUpdating = parent->needsUpdating;
-		m_NeedsIcons = parent->needsIcons;
-		if (m_NeedsIcons && !m_NeedsUpdating)
-		{
-			m_Files = parent->files;
-		}
-		parent->needsUpdating = false;						// Set to false here in case skin is reloaded
-		parent->needsIcons = false;							// Set to false here in case skin is reloaded
-	}
-
-	FileInfo file;
-
-	if (m_NeedsUpdating && !m_AbortRequested)
-	{
-		{
-			CriticalSectionLock lock(g_CriticalSection);
-			if (m_Data->active && m_Data->parent)
-			{
-				m_Data->parent->files.clear();
-				m_Data->parent->fileCount = 0;
-				m_Data->parent->folderCount = 0;
-				m_Data->parent->folderSize = 0;
-			}
-		}
-
-		m_Files.clear();
-		m_FileCount = 0;
-		m_FolderCount = 0;
-		m_FolderSize = 0;
-
 		// If no path is specified, get all the drives instead
 		if (m_Path.empty())
 		{
 			WCHAR drive[4] = L" :\\";
 			DWORD driveMask = GetLogicalDrives();
-			for (int i = 0; i < 32 && !m_AbortRequested; ++i)
+			for (int i = 0; i < 32; ++i)
 			{
 				if ((driveMask << (31 - i) >> 31) > 0)
 				{
@@ -1149,7 +1101,7 @@ void FileViewTask::StartWorkOnWorkerThread()
 		// Sort
 		const int sortAsc = m_SortAscending ? 1 : -1;
 		const auto& begin = (!m_Path.empty() &&
-			(m_ShowDotDot && m_RecursiveType != RECURSIVE_FULL)) ? m_Files.begin() + 1: m_Files.begin();
+			(m_ShowDotDot && m_RecursiveType != RECURSIVE_FULL)) ? m_Files.begin() + 1 : m_Files.begin();
 
 		switch (m_SortType)
 		{
@@ -1255,79 +1207,55 @@ void FileViewTask::StartWorkOnWorkerThread()
 			}
 			break;
 		}
-
-		{
-			CriticalSectionLock lock(g_CriticalSection);
-			if (m_Data->active && m_Data->parent)
-			{
-				m_Data->parent->files = m_Files;
-				m_Data->parent->files.shrink_to_fit();
-				m_Data->parent->fileCount = m_FileCount;
-				m_Data->parent->folderCount = m_FolderCount;
-				m_Data->parent->folderSize = m_FolderSize;
-			}
-		}
 	}
 
-	if (m_NeedsIcons && !m_AbortRequested)
+	for (const auto& iconRequest : m_IconRequests)
 	{
-		size_t iconIndex = 0;
-		while (!m_AbortRequested)
+		if (m_AbortRequested) break;
+
+		if (iconRequest.trueIndex >= 0 && iconRequest.trueIndex < (int)m_Files.size())
 		{
-			{
-				CriticalSectionLock lock(g_CriticalSection);
-				if (!m_Data->active || !m_Data->parent)
-				{
-					break;
-				}
-
-				ParentMeasure* parent = m_Data->parent;
-				if (iconIndex >= parent->iconChildren.size())
-				{
-					break;
-				}
-
-				ChildMeasure* child = parent->iconChildren[iconIndex++];
-				int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-
-				if (child->type == TYPE_ICON && trueIndex >= 0 && trueIndex < (int)m_Files.size())
-				{
-					std::wstring filePath = m_Files[trueIndex].path;
-					filePath += (m_Files[trueIndex].fileName == L"..") ? L"" :m_Files[trueIndex].fileName;
-					GetIcon(filePath, child->iconPath, child->iconSize);
-				}
-				else if (child->type == TYPE_ICON)
-				{
-					GetIcon(INVALID_FILE, child->iconPath, child->iconSize);
-				}
-			}
+			const auto& file = m_Files[iconRequest.trueIndex];
+			std::wstring filePath = file.path;
+			filePath += (file.fileName == L"..") ? L"" : file.fileName;
+			GetIcon(filePath, iconRequest.path, iconRequest.size);
+		}
+		else
+		{
+			GetIcon(INVALID_FILE, iconRequest.path, iconRequest.size);
 		}
 	}
 
-	m_DoFinishAction = !m_AbortRequested && !m_FinishAction.empty();
-
+	m_TaskSuccessful = true;
 	CoUninitialize();
 }
 
-void FileViewTask::FinishWorkOnMainThread()
+void MeasureFileView::FileViewTask::FinishWorkOnMainThread()
 {
+	if (m_AbortRequested) return;
+
+	auto* measure = (MeasureFileView*)m_Requestor;
+	auto* parent = measure->m_Child->parent;
+	if (parent->task == this)
 	{
-		CriticalSectionLock lock(g_CriticalSection);
-		if (!m_Data->active || !m_Data->parent || m_Data->parent->task != this)
+		parent->task = nullptr;
+
+		if (m_NeedsUpdating)
 		{
-			return;
+			parent->files = m_TaskSuccessful ? std::move(m_Files) : std::vector<FileInfo>();
+			parent->fileCount = m_TaskSuccessful ? m_FileCount : 0;
+			parent->folderCount = m_TaskSuccessful ? m_FolderCount : 0;
+			parent->folderSize = m_TaskSuccessful ? m_FolderSize : 0;
 		}
 
-		m_Data->parent->task = nullptr;
-	}
-
-	if (m_DoFinishAction)
-	{
-		GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), m_Skin);
+		if (m_TaskSuccessful && !m_FinishAction.empty())
+		{
+			GetRainmeter().ExecuteCommand(m_FinishAction.c_str(), parent->skin);
+		}
 	}
 }
 
-void FileViewTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, RecursiveType rType)
+void MeasureFileView::FileViewTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, RecursiveType rType)
 {
 	std::wstring path = folder;
 	folder += (rType == RECURSIVE_NONE) ? m_WildcardSearch : L"*";
@@ -1338,11 +1266,6 @@ void FileViewTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wst
 	{
 		do
 		{
-			if (m_AbortRequested)
-			{
-				break;
-			}
-
 			FileInfo file;
 
 			file.fileName = fd.cFileName;
@@ -1429,8 +1352,7 @@ void FileViewTask::GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wst
 			{
 				m_Files.push_back(file);
 			}
-		}
-		while (FindNextFile(find, &fd));
+		} while (FindNextFile(find, &fd) && !m_AbortRequested);
 		FindClose(find);
 	}
 }
@@ -1473,7 +1395,7 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 	if (icon == nullptr)
 	{
 		SHGetFileInfo(filePath.c_str(), 0, &shFileInfo, sizeof(shFileInfo), SHGFI_SYSICONINDEX);
-		SHGetImageList(iconSize, IID_IImageList, (void**) &hImageList);
+		SHGetImageList(iconSize, IID_IImageList, (void**)&hImageList);
 		((IImageList*)hImageList)->GetIcon(shFileInfo.iIcon, ILD_TRANSPARENT, &icon);
 	}
 
