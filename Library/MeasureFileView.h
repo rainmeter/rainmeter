@@ -25,6 +25,8 @@ public:
 	const WCHAR* GetStringValue() override;
 	void Command(const std::wstring& command) override;
 
+	class UpdateTask;
+
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
 	void UpdateValue() override;
