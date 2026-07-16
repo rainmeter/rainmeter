@@ -174,6 +174,16 @@ bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strV
 	return false;
 }
 
+std::optional<std::wstring> ConfigParser::GetDollarVariable(std::wstring_view variableStr)
+{
+	if (auto result = GetDollarSkinVariable(variableStr))
+	{
+		return result;
+	}
+
+	return GetDollarDisplayVariable(variableStr);
+}
+
 std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view variableStr)
 {
 	auto strParser = StringParser(variableStr);
@@ -1060,12 +1070,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				}
 				else if (expandMode == VariableExpandMode::AllKeys)
 				{
-					if (const auto result = GetDollarSkinVariable(variable))
-					{
-						replaceFoundValue(std::move(*result));
-						break;
-					}
-					else if (const auto result = GetDollarDisplayVariable(variable))
+					if (const auto result = GetDollarVariable(variable))
 					{
 						replaceFoundValue(std::move(*result));
 						break;
