@@ -550,8 +550,8 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 	}
 
 	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
-	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
-	if (strParser.ConsumeRest(L"ZoomScale")) return fmt::format(L"{0:.5g}", m_Skin->GetZoomScale());
+	if (strParser.ConsumeRest(L"DpiFactor")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
+	if (strParser.ConsumeRest(L"ZoomFactor")) return fmt::format(L"{0:.5g}", m_Skin->GetZoomScale());
 	if (strParser.ConsumeRest(L"Visible")) return m_Skin->IsWindowUnoccluded() ? L"1" : L"0";
 
 	return std::nullopt;
@@ -584,7 +584,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 
 	if (strParser.ConsumeRest(L"Name")) return device ? monitor->deviceName : monitor->monitorName;
 	if (strParser.ConsumeRest(L"Number")) return fmt::to_wstring(device ? monitor->deviceNumber : monitor->displayNumber);
-	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
+	if (strParser.ConsumeRest(L"DpiFactor")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
 
 	const bool work = strParser.Consume(L"WorkArea");
 	const bool physical = strParser.Consume(L"Physical");
