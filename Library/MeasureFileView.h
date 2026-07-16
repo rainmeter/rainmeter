@@ -9,6 +9,7 @@
 #define RM_LIBRARY_MEASUREFILEVIEW_H_
 
 #include "Measure.h"
+#include <memory>
 
 enum MeasureType
 {
@@ -78,6 +79,14 @@ struct FileInfo
 };
 
 struct ChildMeasure;
+struct ParentMeasure;
+class FileViewTask;
+
+struct FileViewSharedData
+{
+	ParentMeasure* parent = nullptr;
+	bool active = true;
+};
 
 class MeasureFileView : public Measure
 {
@@ -126,7 +135,8 @@ struct ParentMeasure
 	bool needsUpdating;
 	bool needsIcons;
 	int indexOffset;
-	HANDLE thread;
+	FileViewTask* task;
+	std::shared_ptr<FileViewSharedData> data;
 
 	HWND hwnd;
 	Skin* skin;
@@ -155,7 +165,8 @@ struct ParentMeasure
 		name(),
 		ownerChild(nullptr),
 		hwnd(),
-		thread(nullptr),
+		task(nullptr),
+		data(std::make_shared<FileViewSharedData>()),
 		fileCount(0),
 		folderCount(0),
 		needsUpdating(true),
