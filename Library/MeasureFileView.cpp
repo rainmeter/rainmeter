@@ -709,7 +709,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 	CriticalSectionLock lock(g_CriticalSection);
 	if (!parent)
 	{
-		return L"";
+		return CheckSubstitute(L"");
 	}
 
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
@@ -820,7 +820,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 	}
 
-	return child->strValue.c_str();
+	return CheckSubstitute(child->strValue.c_str());
 }
 
 void MeasureFileView::Command(const std::wstring& command)
