@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+class MathParser;
+
 enum class PairedPunctuation : BYTE
 {
 	SingleQuote,
@@ -30,19 +32,19 @@ namespace ParseUtil {
 using FormulaErrorCallback = void (*)(const WCHAR* error, const WCHAR* formula);
 
 // If the given string is invalid format or causes overflow/underflow, returns given default value.
-double ParseDouble(LPCTSTR str, double defValue, FormulaErrorCallback errorCallback = nullptr);
-int ParseInt(LPCTSTR str, int defValue, FormulaErrorCallback errorCallback = nullptr);
-uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, FormulaErrorCallback errorCallback = nullptr);
-uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, FormulaErrorCallback errorCallback = nullptr);
+double ParseDouble(LPCTSTR str, double defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
+int ParseInt(LPCTSTR str, int defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
+uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
+uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
 
 // Expects three or four comma separated values or one hex-value.
-D2D1_COLOR_F ParseColor(LPCTSTR str, FormulaErrorCallback errorCallback = nullptr);
+D2D1_COLOR_F ParseColor(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
 
 // Expects four comma separated values (X/Y/Width/Height).
-D2D1_RECT_F ParseRect(LPCTSTR str, FormulaErrorCallback errorCallback = nullptr);
+D2D1_RECT_F ParseRect(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
 
 // Expects four comma separated values (left/top/right/bottom).
-RECT ParseRECT(LPCTSTR str, FormulaErrorCallback errorCallback = nullptr);
+RECT ParseRECT(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
 
 // Splits the string from the delimiters and trims empty elements and whitespace.
 std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);

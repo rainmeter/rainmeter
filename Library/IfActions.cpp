@@ -201,7 +201,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			double result = 0.0;
-			const WCHAR* errMsg = MathParser::Parse(
+			const WCHAR* errMsg = measure.GetSkin()->GetMathParser().Parse(
 				item.value.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
 			if (errMsg != nullptr)
 			{

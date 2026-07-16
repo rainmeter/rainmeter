@@ -100,13 +100,13 @@ public:
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
-	static double ParseDouble(LPCTSTR str, double defValue);
-	static int ParseInt(LPCTSTR str, int defValue);
-	static uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
-	static uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
-	static D2D1_COLOR_F ParseColor(LPCTSTR str);
-	static D2D1_RECT_F ParseRect(LPCTSTR str);
-	static RECT ParseRECT(LPCTSTR str);
+	double ParseDouble(LPCTSTR str, double defValue);
+	int ParseInt(LPCTSTR str, int defValue);
+	uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
+	uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
+	D2D1_COLOR_F ParseColor(LPCTSTR str);
+	D2D1_RECT_F ParseRect(LPCTSTR str);
+	RECT ParseRECT(LPCTSTR str);
 
 private:
 	void ReadVariables();

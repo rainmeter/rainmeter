@@ -162,7 +162,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 		static WCHAR buffer[32] = { 0 };
 		buffer[0] = L'\0';
 
-		const auto defValueInt = ConfigParser::ParseInt(defValue, 0);
+		const auto defValueInt = parser.ParseInt(defValue, 0);
 		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
 		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);

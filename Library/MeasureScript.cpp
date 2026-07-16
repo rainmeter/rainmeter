@@ -16,6 +16,7 @@ const char* g_UpdateFunctionName = "Update";
 const char* g_GetStringFunctionName = "GetStringValue";
 
 MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_LuaScript(skin->GetMathParser()),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)

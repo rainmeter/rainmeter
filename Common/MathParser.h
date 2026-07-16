@@ -12,17 +12,18 @@
 
 #include <Windows.h>
 
-namespace MathParser
+class MathParser
 {
+public:
 	typedef bool (*GetValueFunc)(const WCHAR* str, int len, double* value, void* context);
 
-	const WCHAR* Check(const WCHAR* formula);
-	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
+	const WCHAR* Check(const WCHAR* formula) const;
+	const WCHAR* CheckedParse(const WCHAR* formula, double* result) const;
 	const WCHAR* Parse(
 		const WCHAR* formula, double* result,
-		GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
+		GetValueFunc getValue = nullptr, void* getValueContext = nullptr) const;
 
-	bool IsDelimiter(WCHAR ch);
+	bool IsDelimiter(WCHAR ch) const;
 };
 
 #endif

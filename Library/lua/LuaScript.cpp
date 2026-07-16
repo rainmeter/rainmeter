@@ -13,7 +13,8 @@
 #include "LuaHelper.h"
 #include "Measure.h"
 
-LuaScript::LuaScript() :
+LuaScript::LuaScript(const MathParser& mathParser) :
+	m_MathParser(mathParser),
 	m_Ref(LUA_NOREF),
 	m_State(nullptr),
 	m_Unicode(false)
@@ -375,7 +376,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 				const WCHAR* str = iter.c_str();
 				if (*str == L'(')
 				{
-					const WCHAR* errMsg = MathParser::CheckedParse(str, &num);
+					const WCHAR* errMsg = m_MathParser.CheckedParse(str, &num);
 					if (errMsg)
 					{
 						strValue = L"Formula: ";

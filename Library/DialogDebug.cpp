@@ -992,7 +992,7 @@ void DialogDebug::TabSkins::UpdateEvaluationResult()
 			const WCHAR* str = text.c_str();
 			if (*str == L'(')
 			{
-				MathParser::CheckedParse(str, &value);
+				m_SkinWindow->GetMathParser().CheckedParse(str, &value);
 			}
 			else if (*str)
 			{

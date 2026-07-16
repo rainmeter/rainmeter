@@ -401,7 +401,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
 						if (args.size() == 1)
 						{
-							auto delay = ConfigParser::ParseUInt(args[0].c_str(), 0);
+							auto delay = skin->GetParser().ParseUInt(args[0].c_str(), 0);
 							skin->DoDelayedCommand(bangs.c_str() + i + 1, delay);
 							return;
 						}

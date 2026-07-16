@@ -36,12 +36,12 @@ private:
 	void Dispose();
 
 	bool CreateShape(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool& isCombined, size_t keyId);
-	bool CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args);
+	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::vector<std::wstring>& args);
 
 	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
-	bool ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform);
-	bool ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
-	bool ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode);
+	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape, std::wstring& transform);
+	bool ParseGradient(ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
+	bool ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FILL_MODE fillMode);
 
 	std::vector<Gfx::Shape*> m_Shapes;
 };

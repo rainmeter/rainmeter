@@ -48,6 +48,12 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
+const MathParser& GetMathParser(const Skin* skin)
+{
+	static MathParser s_MathParser;
+	return skin ? skin->GetMathParser() : s_MathParser;
+}
+
 }  // namespace
 
 ConfigParser::ConfigParser() :
@@ -1333,7 +1339,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (int)dblValue;
@@ -1365,7 +1371,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint32_t)dblValue;
@@ -1397,7 +1403,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint64_t)dblValue;
@@ -1429,7 +1435,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 		const WCHAR* str = result.c_str();
 		if (*str == L'(')
 		{
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &value);
 			if (!errMsg)
 			{
 				return value;
@@ -1458,7 +1464,7 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
 	{
 		const WCHAR* str = formula.c_str();
-		const WCHAR* errMsg = MathParser::CheckedParse(str, resultValue);
+		const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, resultValue);
 		if (errMsg != nullptr)
 		{
 			LogErrorF(m_Skin, L"Formula: %s: %s", errMsg, str);
@@ -1538,37 +1544,37 @@ std::vector<std::wstring> ConfigParser::TokenizeWithPairedPunctuation(const std:
 
 double ConfigParser::ParseDouble(LPCTSTR str, double defValue)
 {
-	return ParseUtil::ParseDouble(str, defValue, LogFormulaError);
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(m_Skin), LogFormulaError);
 }
 
 int ConfigParser::ParseInt(LPCTSTR str, int defValue)
 {
-	return ParseUtil::ParseInt(str, defValue, LogFormulaError);
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(m_Skin), LogFormulaError);
 }
 
 uint32_t ConfigParser::ParseUInt(LPCTSTR str, uint32_t defValue)
 {
-	return ParseUtil::ParseUInt(str, defValue, LogFormulaError);
+	return ParseUtil::ParseUInt(str, defValue, GetMathParser(m_Skin), LogFormulaError);
 }
 
 uint64_t ConfigParser::ParseUInt64(LPCTSTR str, uint64_t defValue)
 {
-	return ParseUtil::ParseUInt64(str, defValue, LogFormulaError);
+	return ParseUtil::ParseUInt64(str, defValue, GetMathParser(m_Skin), LogFormulaError);
 }
 
 D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR str)
 {
-	return ParseUtil::ParseColor(str, LogFormulaError);
+	return ParseUtil::ParseColor(str, GetMathParser(m_Skin), LogFormulaError);
 }
 
 D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR str)
 {
-	return ParseUtil::ParseRect(str, LogFormulaError);
+	return ParseUtil::ParseRect(str, GetMathParser(m_Skin), LogFormulaError);
 }
 
 RECT ConfigParser::ParseRECT(LPCTSTR str)
 {
-	return ParseUtil::ParseRECT(str, LogFormulaError);
+	return ParseUtil::ParseRECT(str, GetMathParser(m_Skin), LogFormulaError);
 }
 
 /*

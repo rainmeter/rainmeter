@@ -41,7 +41,7 @@ void ReportFormulaError(ParseUtil::FormulaErrorCallback errorCallback, const WCH
 }
 
 template <typename T>
-bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorCallback errorCallback)
+bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback)
 {
 	if (wcschr(str, L','))
 	{
@@ -58,7 +58,7 @@ bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorC
 			{
 				tokens.push_back((T)ParseUtil::ParseInt(
 					string.substr(start, end - start).c_str(), 0,
-					errorCallback));
+					mathParser, errorCallback));
 			}
 		};
 
@@ -102,14 +102,14 @@ bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, ParseUtil::FormulaErrorC
 
 namespace ParseUtil {
 
-double ParseDouble(LPCTSTR str, double defValue, FormulaErrorCallback errorCallback)
+double ParseDouble(LPCTSTR str, double defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	assert(str);
 
 	double value = 0.0;
 	if (*str == L'(')
 	{
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+		const WCHAR* errMsg = mathParser.CheckedParse(str, &value);
 		if (!errMsg)
 		{
 			return value;
@@ -130,14 +130,14 @@ double ParseDouble(LPCTSTR str, double defValue, FormulaErrorCallback errorCallb
 	return defValue;
 }
 
-int ParseInt(LPCTSTR str, int defValue, FormulaErrorCallback errorCallback)
+int ParseInt(LPCTSTR str, int defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	assert(str);
 
 	if (*str == L'(')
 	{
 		double value = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+		const WCHAR* errMsg = mathParser.CheckedParse(str, &value);
 		if (!errMsg)
 		{
 			return (int)value;
@@ -158,14 +158,14 @@ int ParseInt(LPCTSTR str, int defValue, FormulaErrorCallback errorCallback)
 	return defValue;
 }
 
-uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, FormulaErrorCallback errorCallback)
+uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	assert(str);
 
 	if (*str == L'(')
 	{
 		double value = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+		const WCHAR* errMsg = mathParser.CheckedParse(str, &value);
 		if (!errMsg)
 		{
 			return (uint32_t)value;
@@ -186,14 +186,14 @@ uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, FormulaErrorCallback errorCal
 	return defValue;
 }
 
-uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, FormulaErrorCallback errorCallback)
+uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	assert(str);
 
 	if (*str == L'(')
 	{
 		double value = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+		const WCHAR* errMsg = mathParser.CheckedParse(str, &value);
 		if (!errMsg)
 		{
 			return (uint64_t)value;
@@ -214,11 +214,11 @@ uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, FormulaErrorCallback errorC
 	return defValue;
 }
 
-D2D1_COLOR_F ParseColor(LPCTSTR str, FormulaErrorCallback errorCallback)
+D2D1_COLOR_F ParseColor(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	int R = 255, G = 255, B = 255, A = 255;
 
-	if (!ParseInt4(str, R, G, B, A, errorCallback))
+	if (!ParseInt4(str, R, G, B, A, mathParser, errorCallback))
 	{
 		if (wcsncmp(str, L"0x", 2) == 0)
 		{
@@ -239,19 +239,19 @@ D2D1_COLOR_F ParseColor(LPCTSTR str, FormulaErrorCallback errorCallback)
 	return D2D1::ColorF(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
 }
 
-D2D1_RECT_F ParseRect(LPCTSTR str, FormulaErrorCallback errorCallback)
+D2D1_RECT_F ParseRect(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	D2D1_RECT_F r = D2D1::RectF();
-	ParseInt4(str, r.left, r.top, r.right, r.bottom, errorCallback);
+	ParseInt4(str, r.left, r.top, r.right, r.bottom, mathParser, errorCallback);
 	r.right += r.left;
 	r.bottom += r.top;
 	return r;
 }
 
-RECT ParseRECT(LPCTSTR str, FormulaErrorCallback errorCallback)
+RECT ParseRECT(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
 	RECT r = { 0 };
-	ParseInt4(str, r.left, r.top, r.right, r.bottom, errorCallback);
+	ParseInt4(str, r.left, r.top, r.right, r.bottom, mathParser, errorCallback);
 	return r;
 }
 
