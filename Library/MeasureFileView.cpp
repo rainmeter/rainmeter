@@ -5,10 +5,16 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#include "PluginFileView.h"
-#include "../../Common/StringUtil.h"
+#include "StdAfx.h"
+#include "MeasureFileView.h"
+#include "ConfigParser.h"
+#include "Logger.h"
+#include "Rainmeter.h"
+#include "Skin.h"
+#include "../Common/StringUtil.h"
+#include <commoncontrols.h>
+#include <queue>
 
-#define MAX_LINE_LENGTH 4096
 #define INVALID_FILE L"/<>\\"
 
 #pragma pack(push, 2)
@@ -40,13 +46,16 @@ bool SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
+static bool g_CriticalSectionInitialized = false;
 static std::wstring g_SysProperties;
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_Child(new ChildMeasure)
 {
-	switch (fdwReason)
+	m_Child->measure = this;
+
+	if (!g_CriticalSectionInitialized)
 	{
-	case DLL_PROCESS_ATTACH:
 		// See |Library\System.cpp:InitialCriticalSection| for details
 		if (InitializeCriticalSectionEx(&g_CriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == FALSE)
 		{
@@ -56,22 +65,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			}
 		}
 
-		// Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notification calls.
-		DisableThreadLibraryCalls(hinstDLL);
-		break;
-
-	case DLL_PROCESS_DETACH:
-		DeleteCriticalSection(&g_CriticalSection);
-		break;
+		g_CriticalSectionInitialized = true;
 	}
-
-	return TRUE;
-}
-
-PLUGIN_EXPORT void Initialize(void** data, void* rm)
-{
-	ChildMeasure* child = new ChildMeasure;
-	*data = child;
 
 	if (g_SysProperties.empty())
 	{
@@ -81,26 +76,54 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		}
 		else
 		{
-			g_SysProperties = RmReplaceVariables(rm, L"%WINDIR%");
+			WCHAR buffer[MAX_PATH] = { 0 };
+			ExpandEnvironmentStrings(L"%WINDIR%", buffer, _countof(buffer));
+			g_SysProperties = buffer;
 			g_SysProperties += L"\\system32\\control.exe system";
 		}
 	}
 }
 
-PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+MeasureFileView::~MeasureFileView()
 {
-	ChildMeasure* child = (ChildMeasure*)data;
+	ChildMeasure* child = m_Child;
+	ParentMeasure* parent = child->parent;
 
-	void* skin = RmGetSkin(rm);
+	EnterCriticalSection(&g_CriticalSection);
+	if (parent && parent->ownerChild == child)
+	{
+		if (parent->thread)
+		{
+			TerminateThread(parent->thread, 0UL);
+			parent->thread = nullptr;
+		}
 
-	std::wstring path = RmReadString(rm, L"Path", L"", FALSE);
-	if (path[0] == L'[' && path[path.size() - 1] == L']')
+		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
+		g_ParentMeasures.erase(iter);
+
+		delete parent;
+		parent = nullptr;
+	}
+
+	delete child;
+	child = nullptr;
+	LeaveCriticalSection(&g_CriticalSection);
+}
+
+void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
+{
+	Measure::ReadOptions(parser, section);
+
+	ChildMeasure* child = m_Child;
+
+	std::wstring path = parser.ReadString(section, L"Path", L"", false);
+	if (!path.empty() && path[0] == L'[' && path[path.size() - 1] == L']')
 	{
 		path = path.substr(1, path.size() - 2);
 
 		for (auto iter : g_ParentMeasures)
 		{
-			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == skin)
+			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == GetSkin())
 			{
 				child->parent = iter;
 				break;
@@ -109,7 +132,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		if (!child->parent)
 		{
-			RmLogF(rm, LOG_ERROR, L"Invalid Path: \"%s\"", path.c_str());
+			LogErrorF(this, L"Invalid Path: \"%s\"", path.c_str());
 			return;
 		}
 	}
@@ -118,11 +141,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		if (!child->parent)
 		{
 			child->parent = new ParentMeasure;
-			child->parent->skin = skin;
-			child->parent->name = RmGetMeasureName(rm);
+			child->parent->skin = GetSkin();
+			child->parent->name = GetName();
 			child->parent->ownerChild = child;
-			child->parent->hwnd = RmGetSkinWindow(rm);
-			child->parent->rm = rm;
+			child->parent->hwnd = GetSkin()->GetWindow();
 			g_ParentMeasures.push_back(child->parent);
 		}
 
@@ -134,7 +156,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		child->parent->path = path;
 
-		LPCWSTR sort = RmReadString(rm, L"SortType", L"Name");
+		LPCWSTR sort = parser.ReadString(section, L"SortType", L"Name").c_str();
 		if (_wcsicmp(sort, L"NAME") == 0)
 		{
 			child->parent->sortType = STYPE_NAME;
@@ -151,7 +173,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			child->parent->sortType = STYPE_DATE;
 
-			LPCWSTR date = RmReadString(rm, L"SortDateType", L"Modified");
+			LPCWSTR date = parser.ReadString(section, L"SortDateType", L"Modified").c_str();
 			if (_wcsicmp(date, L"MODIFIED") == 0)
 			{
 				child->parent->sortDateType = DTYPE_MODIFIED;
@@ -166,14 +188,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			}
 		}
 
-		int count = RmReadInt(rm, L"Count", 1);
+		int count = parser.ReadInt(section, L"Count", 1);
 		child->parent->count = count > 0 ? count : 1;
 
-		int recursive = RmReadInt(rm, L"Recursive", 0);
+		int recursive = parser.ReadInt(section, L"Recursive", 0);
 		switch (recursive)
 		{
 		default:
-			RmLog(child->parent->rm, LOG_WARNING, L"Invalid Recursive type");
+			LogWarningF(child->parent->ownerChild->measure, L"Invalid Recursive type");
 
 		case 0:
 			child->parent->recursiveType = RECURSIVE_NONE;
@@ -188,26 +210,26 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			break;
 		}
 
-		child->parent->sortAscending = 0!=RmReadInt(rm, L"SortAscending", 1);
-		child->parent->showDotDot = 0!=RmReadInt(rm, L"ShowDotDot", 1);
-		child->parent->showFile = 0!=RmReadInt(rm, L"ShowFile", 1);
-		child->parent->showFolder = 0!=RmReadInt(rm, L"ShowFolder", 1);
-		child->parent->showHidden = 0!=RmReadInt(rm, L"ShowHidden", 1);
-		child->parent->showSystem = 0!=RmReadInt(rm, L"ShowSystem", 0);
-		child->parent->hideExtension = 0!=RmReadInt(rm, L"HideExtensions", 0);
-		child->parent->extensions = Tokenize(RmReadString(rm, L"Extensions", L""), L";");
+		child->parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
+		child->parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
+		child->parent->showFile = parser.ReadBool(section, L"ShowFile", true);
+		child->parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
+		child->parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
+		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
+		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
+		child->parent->extensions = Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
 
-		child->parent->wildcardSearch = RmReadString(rm, L"WildcardSearch", L"*");
+		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
 
-		child->parent->finishAction = RmReadString(rm, L"FinishAction", L"", false);
+		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	}
 
-	int index = RmReadInt(rm, L"Index", 1) - 1;
+	int index = parser.ReadInt(section, L"Index", 1) - 1;
 	child->index = index >= 0 ? index : 1;
 
-	child->ignoreCount = 0!=RmReadInt(rm, L"IgnoreCount", 0);
+	child->ignoreCount = parser.ReadBool(section, L"IgnoreCount", false);
 
-	LPCWSTR type = RmReadString(rm, L"Type", L"FOLDERPATH");
+	LPCWSTR type = parser.ReadString(section, L"Type", L"FOLDERPATH").c_str();
 	if (_wcsicmp(type, L"FOLDERPATH") == 0)
 	{
 		child->type = TYPE_FOLDERPATH;
@@ -240,7 +262,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		child->type = TYPE_FILEDATE;
 
-		LPCWSTR date = RmReadString(rm, L"DateType", L"Modified");
+		LPCWSTR date = parser.ReadString(section, L"DateType", L"Modified").c_str();
 		if (_wcsicmp(date, L"MODIFIED") == 0)
 		{
 			child->date = DTYPE_MODIFIED;
@@ -263,9 +285,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		_itow_s(child->index + 1, buffer, 10);
 		temp += buffer;
 		temp += L".ico";
-		child->iconPath = RmReadPath(rm, L"IconPath", temp.c_str());
+		child->iconPath = parser.ReadString(section, L"IconPath", temp.c_str());
+		GetSkin()->MakePathAbsolute(child->iconPath);
 
-		LPCWSTR size = RmReadString(rm, L"IconSize", L"MEDIUM");
+		LPCWSTR size = parser.ReadString(section, L"IconSize", L"MEDIUM").c_str();
 		if (_wcsicmp(size, L"SMALL") == 0)
 		{
 			child->iconSize = IS_SMALL;
@@ -299,14 +322,15 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 }
 
-PLUGIN_EXPORT double Update(void* data)
+void MeasureFileView::UpdateValue()
 {
-	ChildMeasure* child = (ChildMeasure*)data;
+	ChildMeasure* child = m_Child;
 	ParentMeasure* parent = child->parent;
 
 	if (!parent)
 	{
-		return 0.0;
+		m_Value = 0.0;
+		return;
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
@@ -382,12 +406,12 @@ PLUGIN_EXPORT double Update(void* data)
 	}
 	LeaveCriticalSection(&g_CriticalSection);
 
-	return value;
+	m_Value = value;
 }
 
-PLUGIN_EXPORT LPCWSTR GetString(void* data)
+const WCHAR* MeasureFileView::GetStringValue()
 {
-	ChildMeasure* child = (ChildMeasure*)data;
+	ChildMeasure* child = m_Child;
 	ParentMeasure* parent = child->parent;
 
 	EnterCriticalSection(&g_CriticalSection);
@@ -511,10 +535,11 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	return child->strValue.c_str();
 }
 
-PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
+void MeasureFileView::Command(const std::wstring& command)
 {
-	ChildMeasure* child = (ChildMeasure*)data;
+	ChildMeasure* child = m_Child;
 	ParentMeasure* parent = child->parent;
+	LPCWSTR args = command.c_str();
 
 	EnterCriticalSection(&g_CriticalSection);
 	if (!parent || parent->thread)
@@ -616,7 +641,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		{
 			if (!ShowContextMenu(parent->hwnd, parent->path))
 			{
-				RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", parent->path.c_str());
+				LogErrorF(this, L"Cannot open context menu for \"%s\"", parent->path.c_str());
 			}
 		}
 		else if (_wcsicmp(args, L"PROPERTIES") == 0)
@@ -647,7 +672,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 					{
 						if (!ShowContextMenu(parent->hwnd, arg))
 						{
-							RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", arg.c_str());
+							LogErrorF(this, L"Cannot open context menu for \"%s\"", arg.c_str());
 						}
 					}
 					else if (_wcsnicmp(args, L"PROPERTIES", 10) == 0)
@@ -656,12 +681,12 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 					}
 					else
 					{
-						RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown path: %s", arg.c_str());
+						LogWarningF(this, L"!CommandMeasure: Unknown path: %s", arg.c_str());
 					}
 				}
 				else
 				{
-					RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
+					LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 				}
 			}
 		}
@@ -694,7 +719,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 			if (!ShowContextMenu(parent->hwnd, path))
 			{
-				RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", path.c_str());
+				LogErrorF(this, L"Cannot open context menu for \"%s\"", path.c_str());
 			}
 		}
 		else if (_wcsicmp(args, L"PROPERTIES") == 0)
@@ -740,7 +765,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		}
 		else
 		{
-			RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
+			LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 		}
 
 		LeaveCriticalSection(&g_CriticalSection);
@@ -748,33 +773,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	}
 
 	LeaveCriticalSection(&g_CriticalSection);
-	RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
-}
-
-PLUGIN_EXPORT void Finalize(void* data)
-{
-	ChildMeasure* child = (ChildMeasure*)data;
-	ParentMeasure* parent = child->parent;
-
-	EnterCriticalSection(&g_CriticalSection);
-	if (parent && parent->ownerChild == child)
-	{
-		if (parent->thread)
-		{
-			TerminateThread(parent->thread, 0UL);
-			parent->thread = nullptr;
-		}
-
-		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
-		g_ParentMeasures.erase(iter);
-
-		delete parent;
-		parent = nullptr;
-	}
-
-	delete child;
-	child = nullptr;
-	LeaveCriticalSection(&g_CriticalSection);
+	LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 }
 
 unsigned __stdcall SystemThreadProc(void* pParam)
@@ -996,7 +995,8 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 	if (!tmp->finishAction.empty())
 	{
-		RmExecute(tmp->skin, tmp->finishAction.c_str());
+		// WM_RAINMETER_EXECUTE used instead of ExecuteCommand for thread-safety.
+		SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)tmp->skin, (LPARAM)tmp->finishAction.c_str());
 	}
 
 	delete tmp;
