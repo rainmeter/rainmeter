@@ -510,13 +510,13 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(std::wstring_
 	return std::nullopt;
 }
 
-// Examples: [$Skin:X], [$Skin:DpiScale]
+// Examples: [$SkinX], [$SkinDpiScale]
 std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_view variableStr)
 {
 	if (!m_Skin) return std::nullopt;
 
 	auto strParser = StringParser(variableStr);
-	if (!strParser.Consume(L"Skin:")) return std::nullopt;
+	if (!strParser.Consume(L"Skin")) return std::nullopt;
 
 	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().x);
 	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().y);
@@ -547,7 +547,7 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 	return std::nullopt;
 }
 
-// Examples: [$Display:DisplayName], [$Display:X], [$Display:WorkAreaPhysicalH], [$DisplayDevice1:DpiScale]
+// Examples: [$DisplayDisplayName], [$DisplayX], [$DisplayWorkAreaPhysicalH], [$DisplayDevice1DpiScale]
 std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_view variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
@@ -556,10 +556,10 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 
 	auto strParser = StringParser(variableStr);
 	if (!strParser.Consume(L"Display")) return std::nullopt;
-
-	const bool device = strParser.Consume(L"Device");
 	auto index = strParser.ConsumeInt();
-	if (!strParser.Consume(L':')) return std::nullopt;
+
+	const bool device = !index && strParser.Consume(L"Device");
+	if (device) index = strParser.ConsumeInt();
 
 	if (!index && strParser.ConsumeRest(L"Count"))
 	{
@@ -572,10 +572,8 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 		monitorsInfo.GetForWindow(m_Skin->GetWindow());
 	if (!monitor) monitor = &s_EmptyMonitor;
 
-	if (strParser.ConsumeRest(L"DeviceName")) return monitor->deviceName;
-	if (strParser.ConsumeRest(L"DeviceNumber")) return fmt::to_wstring(monitor->deviceNumber);
-	if (strParser.ConsumeRest(L"DisplayName")) return monitor->monitorName;
-	if (strParser.ConsumeRest(L"DisplayNumber")) return fmt::to_wstring(monitor->displayNumber);
+	if (strParser.ConsumeRest(L"Name")) return device ? monitor->deviceName : monitor->monitorName;
+	if (strParser.ConsumeRest(L"Number")) return fmt::to_wstring(device ? monitor->deviceNumber : monitor->displayNumber);
 	if (strParser.ConsumeRest(L"DpiScale")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
 
 	const bool work = strParser.Consume(L"WorkArea");
