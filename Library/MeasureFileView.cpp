@@ -162,6 +162,7 @@ struct ParentMeasure
 	std::vector<std::wstring> extensions;
 	std::wstring finishAction;
 
+	std::vector<ChildMeasure*> children;
 	std::vector<ChildMeasure*> iconChildren;
 	std::vector<FileInfo> files;
 	int fileCount;
@@ -194,6 +195,7 @@ struct ParentMeasure
 		hideExtension(false),
 		extensions(),
 		finishAction(),
+		children(),
 		iconChildren(),
 		files(),
 		skin(nullptr),
@@ -216,6 +218,41 @@ bool SaveIcon(HICON hIcon, FILE* fp);
 static std::vector<ParentMeasure*> g_ParentMeasures;
 static CriticalSection g_CriticalSection;
 static std::wstring g_SysProperties;
+
+static void RemoveChildFromParent(ParentMeasure* parent, ChildMeasure* child)
+{
+	if (!parent) return;
+
+	auto childIter = std::find(parent->children.begin(), parent->children.end(), child);
+	if (childIter != parent->children.end())
+	{
+		parent->children.erase(childIter);
+	}
+
+	auto iconIter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
+	if (iconIter != parent->iconChildren.end())
+	{
+		parent->iconChildren.erase(iconIter);
+	}
+}
+
+static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
+{
+	if (child->parent != parent)
+	{
+		RemoveChildFromParent(child->parent, child);
+		child->parent = parent;
+	}
+
+	if (parent)
+	{
+		auto iter = std::find(parent->children.begin(), parent->children.end(), child);
+		if (iter == parent->children.end())
+		{
+			parent->children.push_back(child);
+		}
+	}
+}
 
 class FileViewTask : public AsyncTask
 {
@@ -376,11 +413,7 @@ MeasureFileView::~MeasureFileView()
 	ParentMeasure* parent = child->parent;
 	if (parent)
 	{
-		auto iter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
-		if (iter != parent->iconChildren.end())
-		{
-			parent->iconChildren.erase(iter);
-		}
+		RemoveChildFromParent(parent, child);
 	}
 
 	if (parent && parent->ownerChild == child)
@@ -394,9 +427,9 @@ MeasureFileView::~MeasureFileView()
 			parent->task = nullptr;
 		}
 
-		for (auto iconChild : parent->iconChildren)
+		for (auto iter : parent->children)
 		{
-			iconChild->parent = nullptr;
+			iter->parent = nullptr;
 		}
 
 		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
@@ -425,7 +458,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == GetSkin())
 			{
-				child->parent = iter;
+				SetChildParent(child, iter);
 				break;
 			}
 		}
@@ -524,6 +557,8 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	}
+
+	SetChildParent(child, child->parent);
 
 	int index = parser.ReadInt(section, L"Index", 1) - 1;
 	child->index = index >= 0 ? index : 1;
