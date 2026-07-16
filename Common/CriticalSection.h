@@ -15,7 +15,11 @@ class CriticalSection
 public:
 	CriticalSection()
 	{
-		InitializeCriticalSection(&m_CriticalSection);
+		// See http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
+		if (InitializeCriticalSectionEx(&m_CriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO) == FALSE)
+		{
+			InitializeCriticalSectionAndSpinCount(&m_CriticalSection, 0);
+		}
 	}
 
 	~CriticalSection()
