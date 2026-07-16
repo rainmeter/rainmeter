@@ -58,6 +58,7 @@ enum class Bang
 	SetAnchor,
 	SetZoom,
 	SetZoomFactor,
+	ResetZoom,
 	ZPos,
 	ChangeZPos,
 	ClickThrough,
