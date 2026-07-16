@@ -788,28 +788,6 @@ void System::ResetWorkingDirectory()
 }
 
 /*
-** Initializes a critical section object by using InitializeCriticalSectionEx function with CRITICAL_SECTION_NO_DEBUG_INFO flag.
-** For more details: http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
-**
-*/
-void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
-{
-	if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
-	{
-		return;
-	}
-
-	// The following should "always succeed" according to:
-	// https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializecriticalsectionandspincount
-	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0) == TRUE)
-	{
-		return;
-	}
-
-	// error?
-}
-
-/*
 ** Sets clipboard text to given string.
 **
 */

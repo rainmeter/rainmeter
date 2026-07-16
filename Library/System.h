@@ -39,7 +39,6 @@ public:
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = nullptr);
 	static void ResetWorkingDirectory();
-	static void InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 	static void SetClipboardText(const std::wstring& text);
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
