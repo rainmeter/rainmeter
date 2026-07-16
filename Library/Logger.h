@@ -13,6 +13,7 @@
 #include <string>
 #include <list>
 #include <chrono>
+#include "../Common/CriticalSection.h"
 
 class Section;
 class Skin;
@@ -77,8 +78,8 @@ private:
 
 	std::list<Entry> m_Entries;
 
-	CRITICAL_SECTION m_CsLog;
-	CRITICAL_SECTION m_CsLogDelay;
+	CriticalSection m_CsLog;
+	CriticalSection m_CsLogDelay;
 };
 
 // Convenience functions.
