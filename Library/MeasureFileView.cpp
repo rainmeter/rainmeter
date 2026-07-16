@@ -93,21 +93,11 @@ struct FileInfo
 	std::wstring fileName;
 	std::wstring path;
 	std::wstring ext;
-	bool isFolder;
-	UINT64 size;
-	FILETIME createdTime;
-	FILETIME modifiedTime;
-	FILETIME accessedTime;
-
-	FileInfo() :
-		fileName(L""),
-		path(L""),
-		ext(L""),
-		isFolder(false),
-		size(0),
-		createdTime(),
-		modifiedTime(),
-		accessedTime() { }
+	bool isFolder = false;
+	UINT64 size = 0;
+	FILETIME createdTime = {};
+	FILETIME modifiedTime = {};
+	FILETIME accessedTime = {};
 };
 
 struct ParentMeasure;
@@ -121,95 +111,51 @@ struct FileViewSharedData
 
 struct ChildMeasure
 {
-	MeasureType type;
-	DateType date;
-	IconSize iconSize;
+	MeasureType type = TYPE_FOLDERPATH;
+	DateType date = DTYPE_MODIFIED;
+	IconSize iconSize = IS_LARGE;
 	std::wstring iconPath;
-	int index;
-	bool ignoreCount;
+	int index = 1;
+	bool ignoreCount = false;
 
 	std::wstring strValue;
-	ParentMeasure* parent;
-	MeasureFileView* measure;
-
-	ChildMeasure() :
-		type(TYPE_FOLDERPATH),
-		date(DTYPE_MODIFIED),
-		iconSize(IS_LARGE),
-		iconPath(),
-		index(1),
-		ignoreCount(false),
-		strValue(),
-		parent(nullptr),
-		measure(nullptr) { }
+	ParentMeasure* parent = nullptr;
+	MeasureFileView* measure = nullptr;
 };
 
 struct ParentMeasure
 {
 	std::wstring path;
 	std::wstring wildcardSearch;
-	SortType sortType;
-	DateType sortDateType;
-	int count;
-	RecursiveType recursiveType;
-	bool sortAscending;
-	bool showDotDot;
-	bool showFile;
-	bool showFolder;
-	bool showHidden;
-	bool showSystem;
-	bool hideExtension;
+	SortType sortType = STYPE_NAME;
+	DateType sortDateType = DTYPE_MODIFIED;
+	int count = 0;
+	RecursiveType recursiveType = RECURSIVE_NONE;
+	bool sortAscending = true;
+	bool showDotDot = true;
+	bool showFile = true;
+	bool showFolder = true;
+	bool showHidden = true;
+	bool showSystem = false;
+	bool hideExtension = false;
 	std::vector<std::wstring> extensions;
 	std::wstring finishAction;
 
 	std::vector<ChildMeasure*> children;
-	std::vector<ChildMeasure*> iconChildren;
 	std::vector<FileInfo> files;
-	int fileCount;
-	int folderCount;
-	UINT64 folderSize;
-	bool needsUpdating;
-	bool needsIcons;
-	int indexOffset;
-	FileViewTask* task;
+	int fileCount = 0;
+	int folderCount = 0;
+	UINT64 folderSize = 0;
+	bool needsUpdating = true;
+	bool needsIcons = true;
+	int indexOffset = 0;
+	MeasureFileView::FileViewTask* task = nullptr;
 	std::shared_ptr<FileViewSharedData> data;
 
-	HWND hwnd;
-	Skin* skin;
-	LPCWSTR name;
-	ChildMeasure* ownerChild;
-
-	ParentMeasure() :
-		path(),
-		wildcardSearch(),
-		folderSize(0),
-		sortType(STYPE_NAME),
-		sortDateType(DTYPE_MODIFIED),
-		count(0),
-		sortAscending(true),
-		showDotDot(true),
-		showFile(true),
-		showFolder(true),
-		showHidden(true),
-		showSystem(false),
-		hideExtension(false),
-		extensions(),
-		finishAction(),
-		children(),
-		iconChildren(),
-		files(),
-		skin(nullptr),
-		name(),
-		ownerChild(nullptr),
-		hwnd(),
-		task(nullptr),
-		data(std::make_shared<FileViewSharedData>()),
-		fileCount(0),
-		folderCount(0),
-		needsUpdating(true),
-		needsIcons(true),
-		indexOffset(0),
-		recursiveType(RECURSIVE_NONE) { }
+	HWND hwnd = nullptr;
+	Skin* skin = nullptr;
+	LPCWSTR name = nullptr;
+	ChildMeasure* ownerChild = nullptr;
 };
 
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
