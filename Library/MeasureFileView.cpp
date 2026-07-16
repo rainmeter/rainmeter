@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
+#include "../Common/ParseUtil.h"
 #include "../Common/StringUtil.h"
 #include <commoncontrols.h>
 #include <queue>
@@ -49,39 +50,23 @@ static CRITICAL_SECTION g_CriticalSection;
 static bool g_CriticalSectionInitialized = false;
 static std::wstring g_SysProperties;
 
-static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters)
-{
-	std::vector<std::wstring> tokens;
-
-	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);
-	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);
-
-	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
-	{
-		tokens.emplace_back(str.substr(lastPos, pos - lastPos));
-		lastPos = str.find_first_not_of(delimiters, pos);
-		pos = str.find_first_of(delimiters, lastPos);
-	}
-
-	return tokens;
-}
-
 static void GetParentFolder(std::wstring& path)
 {
-	std::vector<std::wstring> tokens = Tokenize(path, L"\\");
-	if (tokens.size() < 2)
+	size_t pos = path.find_last_not_of(L"\\");
+	if (pos == std::wstring::npos)
 	{
 		path.clear();
+		return;
 	}
-	else
+
+	pos = path.find_last_of(L"\\", pos);
+	if (pos == std::wstring::npos)
 	{
 		path.clear();
-		for (size_t i = 0; i < tokens.size() - 1; ++i)
-		{
-			path += tokens[i];
-			path += L"\\";
-		}
+		return;
 	}
+
+	path.erase(pos + 1);
 }
 
 static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
@@ -313,7 +298,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		child->parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
 		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
 		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
-		child->parent->extensions = Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
+		child->parent->extensions = ParseUtil::Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
 
 		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
 
