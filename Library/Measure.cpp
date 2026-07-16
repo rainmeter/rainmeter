@@ -954,18 +954,3 @@ void Measure::Command(const std::wstring& command)
 	LogWarningF(this, L"!CommandMeasure: Not supported");
 }
 
-/*
-** Returns the number value of a measure, used by IfCondition's.
-**
-*/
-bool Measure::GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context)
-{
-	auto measure = (Measure*)context;
-	if (auto* namedMeasure = measure->m_Skin->GetMeasure(std::wstring_view(str, len)))
-	{
-		*value = namedMeasure->GetValue();
-		return true;
-	}
-
-	return false;
-}

@@ -58,6 +58,8 @@ public:
 		ParseAssert(3.0, L"clamp(6, -2, 3)");
 
 		MathParser mathParser;
+		MathParser mathParserWithValueHelper(GetValueHelper);
+		MathParser mathParserWithContext(GetValueHelper, (void*)1);
 		double value;
 
 		Assert::IsNotNull(mathParser.Parse(L"1 ? 0 ? 4 : 5 : 3", &value));
@@ -73,16 +75,22 @@ public:
 		Assert::IsNull(mathParser.Parse(L"pi", &value));
 		Assert::AreEqual(3, (int)value);
 
-		Assert::IsNull(mathParser.Parse(L"pi", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"pi", &value));
 		Assert::AreEqual(3, (int)value);
 
-		Assert::IsNull(mathParser.Parse(L"a + 5", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"a + 5", &value));
 		Assert::AreEqual(15.0, value);
 
-		Assert::IsNull(mathParser.Parse(L"bbb", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"bbb", &value));
 		Assert::AreEqual(20.0, value);
 
-		Assert::IsNull(mathParser.Parse(L"(ccc_)", &value, GetValueHelper, (void*)1));
+		Assert::IsNull(mathParserWithContext.Parse(L"(ccc_)", &value));
+		Assert::AreEqual(30.0, value);
+
+		Assert::IsNull(mathParserWithValueHelper.CheckedParse(L"a + 5", &value));
+		Assert::AreEqual(15.0, value);
+
+		Assert::IsNull(mathParserWithContext.CheckedParse(L"(ccc_)", &value));
 		Assert::AreEqual(30.0, value);
 	}
 

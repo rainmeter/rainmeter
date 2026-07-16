@@ -278,8 +278,7 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) cons
 	return error;
 }
 
-const WCHAR* MathParser::Parse(
-	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext) const
+const WCHAR* MathParser::Parse(const WCHAR* formula, double* result) const
 {
 	static WCHAR errorBuffer[128];
 
@@ -436,7 +435,7 @@ const WCHAR* MathParser::Parse(
 				else
 				{
 					double dblval;
-					if (getValue && getValue(lexer.name, (int)lexer.nameLen, &dblval, getValueContext))
+					if (m_GetValue && m_GetValue(lexer.name, (int)lexer.nameLen, &dblval, m_GetValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;

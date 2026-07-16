@@ -21,6 +21,7 @@ std::mt19937& GetRandomEngine()
 }
 
 MeasureCalc::MeasureCalc(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_MathParser(GetMeasureValue, this),
 	m_ParseError(false),
 	m_LowBound(DEFAULT_LOWER_BOUND),
 	m_HighBound(DEFAULT_UPPER_BOUND),
@@ -39,7 +40,7 @@ MeasureCalc::~MeasureCalc()
 */
 void MeasureCalc::UpdateValue()
 {
-	const WCHAR* errMsg = m_MathParser.Parse(m_Formula.c_str(), &m_Value, GetMeasureValue, this);
+	const WCHAR* errMsg = m_MathParser.Parse(m_Formula.c_str(), &m_Value);
 	if (errMsg != nullptr)
 	{
 		if (!m_ParseError)

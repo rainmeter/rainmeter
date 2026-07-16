@@ -254,6 +254,7 @@ public:
 
 	Meter* GetMeter(std::wstring_view meterName);
 	Measure* GetMeasure(std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
+	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
 
 	friend class DialogManage;
 	friend class Rainmeter;
