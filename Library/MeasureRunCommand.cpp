@@ -218,11 +218,10 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	m_OutputFile = parser.ReadString(section, L"OutputFile", L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
+
 	m_Folder = parser.ReadString(section, L"StartInFolder", L" ");	// Space is intentional!
-	if (m_Folder != L" ")
-	{
-		m_Skin->MakePathAbsolute(m_Folder);
-	}
+	m_Skin->MakePathAbsolute(m_Folder);
+
 	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
 
 	const WCHAR* state = parser.ReadString(section, L"State", L"HIDE").c_str();
