@@ -25,14 +25,10 @@ const size_t MAX_LOG_ENTIRES = 50;
 Logger::Logger() :
 	m_LogToFile(false)
 {
-	System::InitializeCriticalSection(&m_CsLog);
-	System::InitializeCriticalSection(&m_CsLogDelay);
 }
 
 Logger::~Logger()
 {
-	DeleteCriticalSection(&m_CsLog);
-	DeleteCriticalSection(&m_CsLogDelay);
 }
 
 Logger& Logger::GetInstance()
@@ -181,35 +177,33 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 
 	std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 
-	if (TryEnterCriticalSection(&m_CsLog))
+	if (m_CsLog.TryEnter())
 	{
 		// Log queued messages first.
-		EnterCriticalSection(&m_CsLogDelay);
-
-		while (!s_DelayedEntries.empty())
 		{
-			DelayedEntry& entry = s_DelayedEntries.front();
-			LogInternal(entry.level, entry.timestamp, entry.source.c_str(), entry.message.c_str());
+			CriticalSectionLock lock(m_CsLogDelay);
 
-			s_DelayedEntries.erase(s_DelayedEntries.begin());
+			while (!s_DelayedEntries.empty())
+			{
+				DelayedEntry& entry = s_DelayedEntries.front();
+				LogInternal(entry.level, entry.timestamp, entry.source.c_str(), entry.message.c_str());
+
+				s_DelayedEntries.erase(s_DelayedEntries.begin());
+			}
 		}
-
-		LeaveCriticalSection(&m_CsLogDelay);
 
 		// Log the actual message.
 		LogInternal(level, timestamp, source, msg);
 
-		LeaveCriticalSection(&m_CsLog);
+		m_CsLog.Leave();
 	}
 	else
 	{
 		// Queue message.
-		EnterCriticalSection(&m_CsLogDelay);
+		CriticalSectionLock lock(m_CsLogDelay);
 
 		DelayedEntry entry = { level, timestamp, source, msg };
 		s_DelayedEntries.push_back(entry);
-
-		LeaveCriticalSection(&m_CsLogDelay);
 	}
 }
 

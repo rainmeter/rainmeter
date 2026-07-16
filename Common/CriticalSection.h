@@ -33,6 +33,11 @@ public:
 		LeaveCriticalSection(&m_CriticalSection);
 	}
 
+	bool TryEnter()
+	{
+		return TryEnterCriticalSection(&m_CriticalSection) != FALSE;
+	}
+
 	CriticalSection(const CriticalSection&) = delete;
 	CriticalSection& operator=(const CriticalSection&) = delete;
 
