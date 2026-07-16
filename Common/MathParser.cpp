@@ -34,7 +34,6 @@ enum class Operator : uint8_t
 	Multiplication,
 	Division,
 	Modulo,
-	UNK,
 	BitwiseXOR,
 	BitwiseNOT,
 	BitwiseAND,
@@ -180,7 +179,6 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 	4, // Operator::Multiplication
 	4, // Operator::Division
 	4, // Operator::Modulo
-	4, // Operator::UNK
 	5, // Operator::BitwiseXOR
 	5, // Operator::BitwiseNOT
 	5, // Operator::BitwiseAND
@@ -565,21 +563,6 @@ static const WCHAR* Calc(Parser& parser)
 			res = fmod(left, right);
 			break;
 
-		case Operator::UNK:
-			if (left <= 0)
-			{
-				res = 0.0;
-			}
-			else if (right == 0.0)
-			{
-				return eInfinity;
-			}
-			else
-			{
-				res = ceil(left / right);
-			}
-			break;
-
 		case Operator::BitwiseXOR:
 			res = (double)((long long)left ^ (long long)right);
 			break;
@@ -771,7 +754,6 @@ CharType GetCharType(WCHAR ch)
 	case L'<':
 	case L'>':
 	case L'%':
-	case L'$':
 	case L',':
 	case L'?':
 	case L':':
@@ -786,7 +768,7 @@ CharType GetCharType(WCHAR ch)
 
 	// Make sure this is the last character test before "Unknown".
 	// This will catch all characters with graphical representation and treat them as a "Letter".
-	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'";
+	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'$";
 	if (iswgraph(ch)) return CharType::Letter;
 
 	return CharType::Unknown;
@@ -834,9 +816,6 @@ Operator GetOperator(const WCHAR* str)
 
 	case L'%':
 		return Operator::Modulo;
-
-	case L'$':
-		return Operator::UNK;
 
 	case L'^':
 		return Operator::BitwiseXOR;
