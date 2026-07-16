@@ -54,7 +54,7 @@ class __declspec(novtable) Shape
 {
 public:
 	Shape(ShapeType type);
-	~Shape();
+	virtual ~Shape();
 
 	void InvalidateDeviceResources();
 
