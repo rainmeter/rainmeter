@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
+#include "../Common/CriticalSection.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringUtil.h"
 #include <atomic>
@@ -57,6 +58,7 @@ void ClosePipeHandles(PipeHandles& pipes)
 
 bool TerminateApp(HANDLE processHandle, DWORD processId, bool force);
 BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam);
+bool TerminateTarget(HANDLE processHandle, HANDLE jobHandle, DWORD processId, bool force);
 
 std::optional<PipeHandles> CreateProcessPipes(STARTUPINFO& startupInfo)
 {
@@ -198,6 +200,16 @@ bool TerminateApp(HANDLE processHandle, DWORD processId, bool force)
 	return result != FALSE;
 }
 
+bool TerminateTarget(HANDLE processHandle, HANDLE jobHandle, DWORD processId, bool force)
+{
+	if (force && jobHandle && jobHandle != INVALID_HANDLE_VALUE)
+	{
+		return TerminateJobObject(jobHandle, 0) != FALSE;
+	}
+
+	return TerminateApp(processHandle, processId, force);
+}
+
 BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam)
 {
 	DWORD processId = 0UL;
@@ -215,13 +227,13 @@ BOOL CALLBACK TerminateAppEnum(HWND hwnd, LPARAM lParam)
 
 struct MeasureRunCommand::SharedData
 {
-	explicit SharedData(MeasureRunCommand* measure) :
-		measure(measure)
-	{
-	}
+	explicit SharedData(MeasureRunCommand* measure) : measure(measure) {}
 
 	std::atomic<bool> active = true;
-	std::atomic<DWORD> processId = 0;
+	CriticalSection criticalSection;
+	DWORD processId = 0;
+	HANDLE m_ProcessHandle = INVALID_HANDLE_VALUE;
+	HANDLE m_JobHandle = INVALID_HANDLE_VALUE;
 	MeasureRunCommand* measure = nullptr;
 };
 
@@ -301,7 +313,8 @@ void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
 		return;
 	}
 
-	if (!CreateProcess(nullptr, &m_Command[0], nullptr, nullptr, TRUE, CREATE_NEW_PROCESS_GROUP, nullptr, &m_Folder[0], &startupInfo, &processInfo))
+	const auto createFlags = CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED;
+	if (!CreateProcess(nullptr, &m_Command[0], nullptr, nullptr, TRUE, createFlags, nullptr, &m_Folder[0], &startupInfo, &processInfo))
 	{
 		m_Value = 103.0;
 		LogErrorF(err_Process, m_Program.c_str());
@@ -309,7 +322,21 @@ void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
 		return;
 	}
 
-	m_Data->processId = processInfo.dwProcessId;
+	HANDLE jobHandle = CreateJobObject(nullptr, nullptr);
+	if (jobHandle && !AssignProcessToJobObject(jobHandle, processInfo.hProcess))
+	{
+		CloseHandle(jobHandle);
+		jobHandle = nullptr;
+	}
+
+	{
+		CriticalSectionLock lock(m_Data->criticalSection);
+		m_Data->processId = processInfo.dwProcessId;
+		m_Data->m_ProcessHandle = processInfo.hProcess;
+		m_Data->m_JobHandle = jobHandle;
+	}
+
+	ResumeThread(processInfo.hThread);
 
 	DWORD written = 0UL;
 	WriteFile(pipes->inputWrite, &m_Command[0], MAX_LINE_LENGTH, &written, nullptr);
@@ -317,7 +344,7 @@ void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
 	const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 	if (m_AbortRequested || !m_Data->active)
 	{
-		TerminateApp(processInfo.hProcess, processInfo.dwProcessId, (m_State == SW_HIDE));
+		TerminateTarget(processInfo.hProcess, jobHandle, processInfo.dwProcessId, (m_State == SW_HIDE));
 	}
 	else
 	{
@@ -332,7 +359,7 @@ void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
 			if (m_Timeout >= 0 &&
 				std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count() > m_Timeout)
 			{
-				if (!TerminateApp(processInfo.hProcess, processInfo.dwProcessId, (m_State == SW_HIDE)))
+				if (!TerminateTarget(processInfo.hProcess, jobHandle, processInfo.dwProcessId, (m_State == SW_HIDE)))
 				{
 					m_Value = 105.0;
 					LogErrorF(err_Terminate, m_Program.c_str());	// Could not terminate process (very rare!)
@@ -349,9 +376,16 @@ void MeasureRunCommand::RunCommandTask::StartWorkOnWorkerThread()
 		}
 	}
 
+	{
+		CriticalSectionLock lock(m_Data->criticalSection);
+		m_Data->processId = 0;
+		m_Data->m_ProcessHandle = INVALID_HANDLE_VALUE;
+		m_Data->m_JobHandle = INVALID_HANDLE_VALUE;
+	}
+
+	CloseHandle(jobHandle);
 	CloseHandle(processInfo.hThread);
 	CloseHandle(processInfo.hProcess);
-	m_Data->processId = 0;
 
 	ClosePipeHandles(*pipes);
 
@@ -409,8 +443,9 @@ MeasureRunCommand::~MeasureRunCommand()
 
 	if (m_Task)
 	{
-		const DWORD processId = m_Data->processId.load();
-		if (processId != 0 && !TerminateApp(INVALID_HANDLE_VALUE, processId, (m_State == SW_HIDE)))
+		CriticalSectionLock lock(m_Data->criticalSection);
+		if (m_Data->processId != 0 &&
+			!TerminateTarget(m_Data->m_ProcessHandle, m_Data->m_JobHandle, m_Data->processId, (m_State == SW_HIDE)))
 		{
 			m_Value = 105.0;
 			LogErrorF(this, err_Terminate, m_Program.c_str());
@@ -510,10 +545,11 @@ void MeasureRunCommand::Command(const std::wstring& command)
 	}
 	else if (_wcsicmp(args, L"CLOSE") == 0 || _wcsicmp(args, L"KILL") == 0)
 	{
-		const DWORD processId = m_Data->processId.load();
-		if (m_Task && processId != 0)
+		CriticalSectionLock lock(m_Data->criticalSection);
+		if (m_Task && m_Data->processId != 0)
 		{
-			if (!TerminateApp(INVALID_HANDLE_VALUE, processId, (_wcsicmp(args, L"KILL") == 0)))
+			const auto kill = _wcsicmp(args, L"KILL") == 0;
+			if (!TerminateTarget(m_Data->m_ProcessHandle, m_Data->m_JobHandle, m_Data->processId, kill))
 			{
 				m_Value = 105.0;
 				LogErrorF(this, err_Terminate, m_Program.c_str());
