@@ -174,7 +174,7 @@ public:
 	bool IsBlur() { return m_Blur; }
 	void SetBlur(bool b) { m_Blur = b; }
 
-	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
+	void SetResizeWindowMode(RESIZEMODE mode);
 
 	Gfx::Canvas& GetCanvas() { return m_Canvas; }
 	HWND GetWindow() { return m_Window; }

@@ -12,7 +12,9 @@
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
+#include "../../Library/Logger.h"
 
+#include <comdef.h>
 #include <dxgidebug.h>
 
 namespace Gfx {
@@ -261,12 +263,27 @@ HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 
 bool Canvas::Resize(int w, int h)
 {
-	if (!m_SwapChain || !m_Target) return false;
+	if (!m_SwapChain || !m_Target)
+	{
+		LogWarningF(L"Canvas::Resize: missing %s%s requested=%ix%i current=%ix%i",
+			m_SwapChain ? L"" : L"swap chain",
+			!m_SwapChain && !m_Target ? L" and render target" : (!m_Target ? L"render target" : L""),
+			w,
+			h,
+			m_W,
+			m_H);
+		return false;
+	}
 
 	// Truncate the size of the skin if it's too big.
 	m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
 	m_W = min(w, (int)m_MaxBitmapSize);
 	m_H = min(h, (int)m_MaxBitmapSize);
+	if (m_W != w || m_H != h)
+	{
+		LogWarningF(L"Canvas::Resize: requested=%ix%i clamped=%ix%i maximumBitmapSize=%u",
+			w, h, m_W, m_H, m_MaxBitmapSize);
+	}
 
 	m_Target->SetTarget(nullptr);
 	m_TargetBitmap.Reset();
@@ -274,16 +291,31 @@ bool Canvas::Resize(int w, int h)
 
 	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 	HRESULT hr = m_SwapChain->ResizeBuffers(0, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		LogWarningF(L"Canvas::Resize: ResizeBuffers failed error=%s (0x%08x) requested=%ix%i actual=%ix%i format=%u flags=0x%08x",
+			_com_error(hr).ErrorMessage(), hr, w, h, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
+		return false;
+	}
 
 	hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		LogWarningF(L"Canvas::Resize: GetBuffer failed error=%s (0x%08x) requested=%ix%i actual=%ix%i",
+			_com_error(hr).ErrorMessage(), hr, w, h, m_W, m_H);
+		return false;
+	}
 
 	const auto props = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(dxgiFormat, D2D1_ALPHA_MODE_PREMULTIPLIED));
 	hr = m_Target->CreateBitmapFromDxgiSurface(m_BackBuffer.Get(), &props, m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		LogWarningF(L"Canvas::Resize: CreateBitmapFromDxgiSurface failed error=%s (0x%08x) requested=%ix%i actual=%ix%i dxgiFormat=%u",
+			_com_error(hr).ErrorMessage(), hr, w, h, m_W, m_H, dxgiFormat);
+		return false;
+	}
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
 	m_Target->SetDpi(m_Dpi, m_Dpi);

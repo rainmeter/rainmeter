@@ -63,6 +63,23 @@ bool Skin::c_IsInSelectionMode = false;
 const WCHAR* g_SkinHostClassName = L"RainmeterSkinHost";
 const int g_SnapDistance = 10;
 
+static const WCHAR* ResizeModeToString(RESIZEMODE mode)
+{
+	switch (mode)
+	{
+	case RESIZEMODE_NONE:
+		return L"NONE";
+
+	case RESIZEMODE_CHECK:
+		return L"CHECK";
+
+	case RESIZEMODE_RESET:
+		return L"RESET";
+	}
+
+	return L"UNKNOWN";
+}
+
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings) :
 	m_FolderPath(folderPath),
 	m_FileName(file),
@@ -726,8 +743,34 @@ POINT Skin::PhysicalToScreenLogical(POINT point) const
 	return point;
 }
 
+void Skin::SetResizeWindowMode(RESIZEMODE mode)
+{
+	if (m_ResizeWindow == RESIZEMODE_RESET && mode == RESIZEMODE_CHECK)
+	{
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"SetResizeWindowMode: ignoring CHECK while RESET is pending");
+		}
+
+		return;
+	}
+
+	if (GetRainmeter().GetDebug() && m_ResizeWindow != mode)
+	{
+		LogDebugF(this, L"SetResizeWindowMode: %s -> %s", ResizeModeToString(m_ResizeWindow), ResizeModeToString(mode));
+	}
+
+	m_ResizeWindow = mode;
+}
+
 void Skin::RepositionAndResizeWindow()
 {
+	if (GetRainmeter().GetDebug())
+	{
+		LogDebugF(this, L"RepositionAndResizeWindow: position=%i,%i logicalSize=%ix%i physicalSize=%ix%i dpiScale=%.3f zoomScale=%.3f",
+			m_X.pos, m_Y.pos, m_WindowW, m_WindowH, GetPhysicalWindowW(), GetPhysicalWindowH(), m_DpiScale, m_ZoomScale);
+	}
+
 	SetWindowPos(
 		m_Window,
 		nullptr,
@@ -2457,6 +2500,10 @@ bool Skin::ReadSkin()
 	m_SolidAngle = (FLOAT)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
 	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
+	if (GetRainmeter().GetDebug())
+	{
+		LogDebugF(this, L"DynamicWindowSize: %i", m_DynamicWindowSize ? 1 : 0);
+	}
 
 	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
@@ -2781,6 +2828,10 @@ bool Skin::ReadSkin()
 */
 bool Skin::ResizeWindow(bool reset)
 {
+	const int oldWindowW = m_WindowW;
+	const int oldWindowH = m_WindowH;
+	const int oldPhysicalW = GetPhysicalWindowW();
+	const int oldPhysicalH = GetPhysicalWindowH();
 	int w = m_BackgroundMargins.left;
 	int h = m_BackgroundMargins.top;
 
@@ -2801,9 +2852,33 @@ bool Skin::ResizeWindow(bool reset)
 	w = max(w, m_BackgroundSize.cx);
 	h = max(h, m_BackgroundSize.cy);
 
+	if (GetRainmeter().GetDebug())
+	{
+		LogDebugF(this, L"ResizeWindow: reset=%i dynamic=%i computed=%ix%i oldLogical=%ix%i oldPhysical=%ix%i backgroundSize=%ldx%ld margins=%ld,%ld,%ld,%ld",
+			reset ? 1 : 0,
+			m_DynamicWindowSize ? 1 : 0,
+			w,
+			h,
+			oldWindowW,
+			oldWindowH,
+			oldPhysicalW,
+			oldPhysicalH,
+			m_BackgroundSize.cx,
+			m_BackgroundSize.cy,
+			m_BackgroundMargins.left,
+			m_BackgroundMargins.top,
+			m_BackgroundMargins.right,
+			m_BackgroundMargins.bottom);
+	}
+
 	if (!reset && m_WindowW == w && m_WindowH == h)
 	{
 		ComputePositionFromOptions();
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"ResizeWindow: unchanged, keeping logical=%ix%i physical=%ix%i",
+				m_WindowW, m_WindowH, GetPhysicalWindowW(), GetPhysicalWindowH());
+		}
 		return false;		// The window is already correct size
 	}
 
@@ -2861,6 +2936,12 @@ bool Skin::ResizeWindow(bool reset)
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
 
+	if (GetRainmeter().GetDebug())
+	{
+		LogDebugF(this, L"ResizeWindow: resized logical=%ix%i physical=%ix%i position=%i,%i",
+			m_WindowW, m_WindowH, GetPhysicalWindowW(), GetPhysicalWindowH(), m_X.pos, m_Y.pos);
+	}
+
 	return true;
 }
 
@@ -2868,6 +2949,11 @@ void Skin::Redraw()
 {
 	if (m_UpdateMode != SkinUpdateMode::Normal && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
 	{
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"Redraw: deferred because window is occluded");
+		}
+
 		m_HasPendingRedraw = true;
 		return;
 	}
@@ -2877,6 +2963,11 @@ void Skin::Redraw()
 
 	if (m_ResizeWindow)
 	{
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"Redraw: applying resize mode %s", ResizeModeToString(m_ResizeWindow));
+		}
+
 		ResizeWindow(m_ResizeWindow == RESIZEMODE_RESET);
 		SetResizeWindowMode(RESIZEMODE_NONE);
 	}
@@ -2894,12 +2985,40 @@ void Skin::Redraw()
 
 		if (w != m_Canvas.GetW() || h != m_Canvas.GetH())
 		{
-			m_Canvas.Resize(w, h);
+			if (GetRainmeter().GetDebug())
+			{
+				LogDebugF(this, L"Redraw: resizing canvas requested=%ix%i current=%ix%i",
+					w, h, m_Canvas.GetW(), m_Canvas.GetH());
+			}
+
+			if (!m_Canvas.Resize(w, h))
+			{
+				LogWarningF(this, L"Redraw: canvas resize failed requested=%ix%i current=%ix%i",
+					w, h, m_Canvas.GetW(), m_Canvas.GetH());
+			}
+			else if (GetRainmeter().GetDebug())
+			{
+				if (m_Canvas.GetW() != w || m_Canvas.GetH() != h)
+				{
+					LogWarningF(this, L"Redraw: canvas resized to %ix%i instead of requested %ix%i",
+						m_Canvas.GetW(), m_Canvas.GetH(), w, h);
+				}
+				else
+				{
+					LogDebugF(this, L"Redraw: canvas resized actual=%ix%i", m_Canvas.GetW(), m_Canvas.GetH());
+				}
+			}
 		}
 	}
 
 	if (!m_Canvas.BeginDraw())
 	{
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"Redraw: BeginDraw failed canvas=%ix%i logicalWindow=%ix%i physicalWindow=%ix%i",
+				m_Canvas.GetW(), m_Canvas.GetH(), m_WindowW, m_WindowH, GetPhysicalWindowW(), GetPhysicalWindowH());
+		}
+
 		return;
 	}
 
@@ -3324,6 +3443,16 @@ void Skin::Update(bool refresh)
 	// Redraw all meters
 	if (bUpdate || m_ResizeWindow || refresh)
 	{
+		if (GetRainmeter().GetDebug())
+		{
+			LogDebugF(this, L"Update: redraw requested bUpdate=%i resizeMode=%s refresh=%i dynamic=%i redrawable=%i",
+				bUpdate ? 1 : 0,
+				ResizeModeToString(m_ResizeWindow),
+				refresh ? 1 : 0,
+				m_DynamicWindowSize ? 1 : 0,
+				GetRainmeter().IsRedrawable() ? 1 : 0);
+		}
+
 		if (m_DynamicWindowSize)
 		{
 			// Resize the window
