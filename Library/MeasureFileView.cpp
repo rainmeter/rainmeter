@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
+#include "../Common/CriticalSection.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/StringUtil.h"
 #include <commoncontrols.h>
@@ -46,8 +47,7 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 bool SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
-static CRITICAL_SECTION g_CriticalSection;
-static bool g_CriticalSectionInitialized = false;
+static CriticalSection g_CriticalSection;
 static std::wstring g_SysProperties;
 
 static void GetParentFolder(std::wstring& path)
@@ -135,20 +135,6 @@ MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, 
 {
 	m_Child->measure = this;
 
-	if (!g_CriticalSectionInitialized)
-	{
-		// See |Library\System.cpp:InitialCriticalSection| for details
-		if (InitializeCriticalSectionEx(&g_CriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == FALSE)
-		{
-			if (InitializeCriticalSectionAndSpinCount(&g_CriticalSection, 0UL) == FALSE)
-			{
-				// This should never be reached
-			}
-		}
-
-		g_CriticalSectionInitialized = true;
-	}
-
 	if (g_SysProperties.empty())
 	{
 		if (IsWindows10OrGreater())
@@ -170,7 +156,7 @@ MeasureFileView::~MeasureFileView()
 	ChildMeasure* child = m_Child;
 	ParentMeasure* parent = child->parent;
 
-	EnterCriticalSection(&g_CriticalSection);
+	CriticalSectionLock lock(g_CriticalSection);
 	if (parent && parent->ownerChild == child)
 	{
 		if (parent->thread)
@@ -188,7 +174,6 @@ MeasureFileView::~MeasureFileView()
 
 	delete child;
 	child = nullptr;
-	LeaveCriticalSection(&g_CriticalSection);
 }
 
 void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
@@ -414,80 +399,81 @@ void MeasureFileView::UpdateValue()
 		return;
 	}
 
-	EnterCriticalSection(&g_CriticalSection);
-	if (!parent->thread && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
-		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, SystemThreadProc, parent, 0, &id);
-		if (thread)
+		CriticalSectionLock lock(g_CriticalSection);
+		if (!parent->thread && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 		{
-			parent->thread = thread;
+			unsigned int id;
+			HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, SystemThreadProc, parent, 0, &id);
+			if (thread)
+			{
+				parent->thread = thread;
+			}
 		}
-	}
 
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-	double value = 0;
+		int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+		double value = 0;
 
-	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
-	{
+		if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
+		{
+			switch (child->type)
+			{
+			case TYPE_FILESIZE:
+				value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
+				break;
+
+			case TYPE_FILEDATE:
+				{
+					FILETIME fTime = { 0 };
+					SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
+					ULARGE_INTEGER time = { 0 };
+
+					switch (child->date)
+					{
+					default:
+					case DTYPE_MODIFIED:
+						fTime = parent->files[trueIndex].modifiedTime;
+						break;
+
+					case DTYPE_CREATED:
+						fTime = parent->files[trueIndex].createdTime;
+						break;
+
+					case DTYPE_ACCESSED:
+						fTime = parent->files[trueIndex].accessedTime;
+						break;
+					}
+
+					FileTimeToSystemTime(&fTime, &stUTC);
+					SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
+					SystemTimeToFileTime(&stLOCAL, &fTime);
+
+					time.LowPart = fTime.dwLowDateTime;
+					time.HighPart = fTime.dwHighDateTime;
+
+					value = (double)(time.QuadPart / 10000000);
+				}
+				break;
+			}
+		}
+
 		switch (child->type)
 		{
-		case TYPE_FILESIZE:
-			value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
+		case TYPE_FILECOUNT:
+			value = (double)parent->fileCount;
 			break;
 
-		case TYPE_FILEDATE:
-			{
-				FILETIME fTime = { 0 };
-				SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
-				ULARGE_INTEGER time = { 0 };
+		case TYPE_FOLDERCOUNT:
+			value = (double)parent->folderCount;
+			break;
 
-				switch (child->date)
-				{
-				default:
-				case DTYPE_MODIFIED:
-					fTime = parent->files[trueIndex].modifiedTime;
-					break;
-
-				case DTYPE_CREATED:
-					fTime = parent->files[trueIndex].createdTime;
-					break;
-
-				case DTYPE_ACCESSED:
-					fTime = parent->files[trueIndex].accessedTime;
-					break;
-				}
-
-				FileTimeToSystemTime(&fTime, &stUTC);
-				SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
-				SystemTimeToFileTime(&stLOCAL, &fTime);
-
-				time.LowPart = fTime.dwLowDateTime;
-				time.HighPart = fTime.dwHighDateTime;
-
-				value = (double)(time.QuadPart / 10000000);
-			}
+		case TYPE_FOLDERSIZE:
+			value = (double)parent->folderSize;
 			break;
 		}
+
+		m_Value = value;
 	}
-
-	switch (child->type)
-	{
-	case TYPE_FILECOUNT:
-		value = (double)parent->fileCount;
-		break;
-
-	case TYPE_FOLDERCOUNT:
-		value = (double)parent->folderCount;
-		break;
-
-	case TYPE_FOLDERSIZE:
-		value = (double)parent->folderSize;
-		break;
-	}
-	LeaveCriticalSection(&g_CriticalSection);
-
-	m_Value = value;
 }
 
 const WCHAR* MeasureFileView::GetStringValue()
@@ -495,10 +481,9 @@ const WCHAR* MeasureFileView::GetStringValue()
 	ChildMeasure* child = m_Child;
 	ParentMeasure* parent = child->parent;
 
-	EnterCriticalSection(&g_CriticalSection);
+	CriticalSectionLock lock(g_CriticalSection);
 	if (!parent)
 	{
-		LeaveCriticalSection(&g_CriticalSection);
 		return L"";
 	}
 
@@ -512,7 +497,6 @@ const WCHAR* MeasureFileView::GetStringValue()
 		case TYPE_FILESIZE:
 			if (!parent->files[trueIndex].isFolder)
 			{
-				LeaveCriticalSection(&g_CriticalSection);
 				return nullptr;	// Force a numeric return (see the Update function)
 			}
 			break;
@@ -603,7 +587,6 @@ const WCHAR* MeasureFileView::GetStringValue()
 	case TYPE_FILECOUNT:
 	case TYPE_FOLDERCOUNT:
 	case TYPE_FOLDERSIZE:
-		LeaveCriticalSection(&g_CriticalSection);
 		return nullptr;	// Force numeric return (see the Update function)
 		break;
 
@@ -612,7 +595,6 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 	}
 
-	LeaveCriticalSection(&g_CriticalSection);
 	return child->strValue.c_str();
 }
 
@@ -622,10 +604,9 @@ void MeasureFileView::Command(const std::wstring& command)
 	ParentMeasure* parent = child->parent;
 	LPCWSTR args = command.c_str();
 
-	EnterCriticalSection(&g_CriticalSection);
+	CriticalSectionLock lock(g_CriticalSection);
 	if (!parent || parent->thread)
 	{
-		LeaveCriticalSection(&g_CriticalSection);
 		return;
 	}
 
@@ -772,7 +753,6 @@ void MeasureFileView::Command(const std::wstring& command)
 			}
 		}
 
-		LeaveCriticalSection(&g_CriticalSection);
 		return;
 	}
 
@@ -849,11 +829,9 @@ void MeasureFileView::Command(const std::wstring& command)
 			LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 		}
 
-		LeaveCriticalSection(&g_CriticalSection);
 		return;
 	}
 
-	LeaveCriticalSection(&g_CriticalSection);
 	LogWarningF(this, L"!CommandMeasure: Unknown command: %s", args);
 }
 
@@ -864,22 +842,25 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 	ParentMeasure* parent = (ParentMeasure*)pParam;
 
-	EnterCriticalSection(&g_CriticalSection);
-	ParentMeasure* tmp = new ParentMeasure (*parent);
-	parent->needsUpdating = false;						// Set to false here in case skin is reloaded
-	parent->needsIcons = false;							// Set to false here in case skin is reloaded
-	LeaveCriticalSection(&g_CriticalSection);
+	ParentMeasure* tmp = nullptr;
+	{
+		CriticalSectionLock lock(g_CriticalSection);
+		tmp = new ParentMeasure (*parent);
+		parent->needsUpdating = false;						// Set to false here in case skin is reloaded
+		parent->needsIcons = false;							// Set to false here in case skin is reloaded
+	}
 
 	FileInfo file;
 
 	if (tmp->needsUpdating)
 	{
-		EnterCriticalSection(&g_CriticalSection);
-		parent->files.clear();
-		parent->fileCount = 0;
-		parent->folderCount = 0;
-		parent->folderSize = 0;
-		LeaveCriticalSection(&g_CriticalSection);
+		{
+			CriticalSectionLock lock(g_CriticalSection);
+			parent->files.clear();
+			parent->fileCount = 0;
+			parent->folderCount = 0;
+			parent->folderSize = 0;
+		}
 
 		tmp->files.clear();
 		tmp->fileCount = 0;
@@ -1039,40 +1020,43 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 			break;
 		}
 
-		EnterCriticalSection(&g_CriticalSection);
-		parent->files = tmp->files;
-		parent->files.shrink_to_fit();
-		parent->fileCount = tmp->fileCount;
-		parent->folderCount = tmp->folderCount;
-		parent->folderSize = tmp->folderSize;
-		LeaveCriticalSection(&g_CriticalSection);
+		{
+			CriticalSectionLock lock(g_CriticalSection);
+			parent->files = tmp->files;
+			parent->files.shrink_to_fit();
+			parent->fileCount = tmp->fileCount;
+			parent->folderCount = tmp->folderCount;
+			parent->folderSize = tmp->folderSize;
+		}
 	}
 
 	if (tmp->needsIcons)
 	{
 		for (auto iter : tmp->iconChildren)
 		{
-			EnterCriticalSection(&g_CriticalSection);
-			int trueIndex = iter->ignoreCount ? iter->index : ((iter->index % iter->parent->count) + iter->parent->indexOffset);
+			{
+				CriticalSectionLock lock(g_CriticalSection);
+				int trueIndex = iter->ignoreCount ? iter->index : ((iter->index % iter->parent->count) + iter->parent->indexOffset);
 
-			if (iter->type == TYPE_ICON && trueIndex >= 0 && trueIndex < (int)tmp->files.size())
-			{
-				std::wstring filePath = tmp->files[trueIndex].path;
-				filePath += (tmp->files[trueIndex].fileName == L"..") ? L"" :tmp->files[trueIndex].fileName;
-				GetIcon(filePath, iter->iconPath, iter->iconSize);
+				if (iter->type == TYPE_ICON && trueIndex >= 0 && trueIndex < (int)tmp->files.size())
+				{
+					std::wstring filePath = tmp->files[trueIndex].path;
+					filePath += (tmp->files[trueIndex].fileName == L"..") ? L"" :tmp->files[trueIndex].fileName;
+					GetIcon(filePath, iter->iconPath, iter->iconSize);
+				}
+				else if (iter->type == TYPE_ICON)
+				{
+					GetIcon(INVALID_FILE, iter->iconPath, iter->iconSize);
+				}
 			}
-			else if (iter->type == TYPE_ICON)
-			{
-				GetIcon(INVALID_FILE, iter->iconPath, iter->iconSize);
-			}
-			LeaveCriticalSection(&g_CriticalSection);
 		}
 	}
 
-	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(parent->thread);
-	parent->thread = nullptr;
-	LeaveCriticalSection(&g_CriticalSection);
+	{
+		CriticalSectionLock lock(g_CriticalSection);
+		CloseHandle(parent->thread);
+		parent->thread = nullptr;
+	}
 
 	if (!tmp->finishAction.empty())
 	{
