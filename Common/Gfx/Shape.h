@@ -54,7 +54,7 @@ class __declspec(novtable) Shape
 {
 public:
 	Shape(ShapeType type);
-	~Shape();
+	virtual ~Shape();
 
 	ShapeType GetShapeType() { return m_ShapeType; }
 
