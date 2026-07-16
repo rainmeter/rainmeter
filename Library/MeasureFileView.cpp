@@ -371,9 +371,9 @@ MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, 
 MeasureFileView::~MeasureFileView()
 {
 	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = child->parent;
 
 	CriticalSectionLock lock(g_CriticalSection);
+	ParentMeasure* parent = child->parent;
 	if (parent)
 	{
 		auto iter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
@@ -392,6 +392,11 @@ MeasureFileView::~MeasureFileView()
 		{
 			parent->task->AbortWhenPossible();
 			parent->task = nullptr;
+		}
+
+		for (auto iconChild : parent->iconChildren)
+		{
+			iconChild->parent = nullptr;
 		}
 
 		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
@@ -602,10 +607,13 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			child->iconSize = IS_EXLARGE;
 		}
 
-		auto iter = std::find(child->parent->iconChildren.begin(), child->parent->iconChildren.end(), child);
-		if (iter == child->parent->iconChildren.end())
+		ParentMeasure* parent = child->parent;
+		if (!parent) return;
+
+		auto iter = std::find(parent->iconChildren.begin(), parent->iconChildren.end(), child);
+		if (iter == parent->iconChildren.end())
 		{
-			child->parent->iconChildren.push_back(child);
+			parent->iconChildren.push_back(child);
 		}
 	}
 	else if (_wcsicmp(type, L"FILEPATH") == 0)
@@ -621,16 +629,17 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeasureFileView::UpdateValue()
 {
 	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = child->parent;
-
-	if (!parent)
-	{
-		m_Value = 0.0;
-		return;
-	}
+	ParentMeasure* parent = nullptr;
 
 	{
 		CriticalSectionLock lock(g_CriticalSection);
+		parent = child->parent;
+		if (!parent)
+		{
+			m_Value = 0.0;
+			return;
+		}
+
 		if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 		{
 			parent->task = FileViewTask::Create(parent->data);
@@ -704,13 +713,10 @@ void MeasureFileView::UpdateValue()
 const WCHAR* MeasureFileView::GetStringValue()
 {
 	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = child->parent;
 
 	CriticalSectionLock lock(g_CriticalSection);
-	if (!parent)
-	{
-		return CheckSubstitute(L"");
-	}
+	ParentMeasure* parent = child->parent;
+	if (!parent) return CheckSubstitute(L"");
 
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	child->strValue = L"";
@@ -826,14 +832,11 @@ const WCHAR* MeasureFileView::GetStringValue()
 void MeasureFileView::Command(const std::wstring& command)
 {
 	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = child->parent;
 	LPCWSTR args = command.c_str();
 
 	CriticalSectionLock lock(g_CriticalSection);
-	if (!parent || parent->task)
-	{
-		return;
-	}
+	ParentMeasure* parent = child->parent;
+	if (!parent || parent->task) return;
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
 	{
