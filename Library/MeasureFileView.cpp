@@ -49,6 +49,102 @@ static CRITICAL_SECTION g_CriticalSection;
 static bool g_CriticalSectionInitialized = false;
 static std::wstring g_SysProperties;
 
+static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters)
+{
+	std::vector<std::wstring> tokens;
+
+	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);
+
+	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
+	{
+		tokens.emplace_back(str.substr(lastPos, pos - lastPos));
+		lastPos = str.find_first_not_of(delimiters, pos);
+		pos = str.find_first_of(delimiters, lastPos);
+	}
+
+	return tokens;
+}
+
+static void GetParentFolder(std::wstring& path)
+{
+	std::vector<std::wstring> tokens = Tokenize(path, L"\\");
+	if (tokens.size() < 2)
+	{
+		path.clear();
+	}
+	else
+	{
+		path.clear();
+		for (size_t i = 0; i < tokens.size() - 1; ++i)
+		{
+			path += tokens[i];
+			path += L"\\";
+		}
+	}
+}
+
+static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
+{
+	// Convert any relative paths
+	WCHAR buffer[MAX_PATH] = { 0 };
+	if (!_wfullpath(buffer, path.c_str(), MAX_PATH))
+		return false;
+
+	POINT pos = { 0 };
+	GetCursorPos(&pos);
+
+	// If the mouse is outside of the boundaries of
+	// the skin, use the upper-left corner of the skin
+	RECT rect = { 0 };
+	GetWindowRect(hwnd, &rect);
+	if (pos.x < rect.left || pos.x > rect.right ||
+		pos.y < rect.top || pos.y > rect.bottom)
+	{
+		pos.x = rect.left;
+		pos.y = rect.top;
+	}
+
+	ITEMIDLIST* id = nullptr;
+	HRESULT result = SHParseDisplayName(buffer, nullptr, &id, 0, nullptr);
+	if (!SUCCEEDED(result) || !id)
+		return false;
+
+	Microsoft::WRL::ComPtr<IShellFolder> iFolder = nullptr;
+	LPCITEMIDLIST idChild = nullptr;
+	result = SHBindToParent(id, IID_IShellFolder, (void**)&iFolder, &idChild);
+	if (!SUCCEEDED(result) || !iFolder)
+		return false;
+
+	Microsoft::WRL::ComPtr<IContextMenu> iMenu = nullptr;
+	result = iFolder->GetUIObjectOf(hwnd, 1, (const ITEMIDLIST **)&idChild, IID_IContextMenu, nullptr, (void**)&iMenu);
+	if (!SUCCEEDED(result) || !iFolder)
+		return false;
+
+	HMENU hMenu = CreatePopupMenu();
+	if (!hMenu) return false;
+
+	if (SUCCEEDED(iMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL)))
+	{
+		int iCmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD, pos.x, pos.y, hwnd, NULL);
+		if (iCmd > 0)
+		{
+			CMINVOKECOMMANDINFOEX info = { 0 };
+			info.cbSize = sizeof(info);
+			info.fMask = CMIC_MASK_UNICODE | CMIC_MASK_ASYNCOK;
+			info.hwnd = hwnd;
+			info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+			info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+			info.nShow = SW_SHOWNORMAL;
+
+			iMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+		}
+	}
+
+	DestroyMenu(hMenu);
+	return true;
+}
+
 MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Child(new ChildMeasure)
 {
