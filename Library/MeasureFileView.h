@@ -10,7 +10,7 @@
 
 #include "Measure.h"
 
-struct ChildMeasure;
+struct FileViewChildData;
 
 class MeasureFileView : public Measure
 {
@@ -32,7 +32,7 @@ protected:
 	void UpdateValue() override;
 
 private:
-	ChildMeasure* m_Child;
+	FileViewChildData* m_Child;
 };
 
 #endif

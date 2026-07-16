@@ -100,9 +100,9 @@ struct FileInfo
 	FILETIME accessedTime = {};
 };
 
-struct ParentMeasure;
+struct FileViewParentData;
 
-struct ChildMeasure
+struct FileViewChildData
 {
 	MeasureType type = TYPE_FOLDERPATH;
 	DateType date = DTYPE_MODIFIED;
@@ -112,11 +112,11 @@ struct ChildMeasure
 	bool ignoreCount = false;
 
 	std::wstring strValue;
-	ParentMeasure* parent = nullptr;
+	FileViewParentData* parent = nullptr;
 	MeasureFileView* measure = nullptr;
 };
 
-struct ParentMeasure
+struct FileViewParentData
 {
 	std::wstring path;
 	std::wstring wildcardSearch;
@@ -134,7 +134,7 @@ struct ParentMeasure
 	std::vector<std::wstring> extensions;
 	std::wstring finishAction;
 
-	std::vector<ChildMeasure*> children;
+	std::vector<FileViewChildData*> children;
 	std::vector<FileInfo> files;
 	int fileCount = 0;
 	int folderCount = 0;
@@ -147,17 +147,17 @@ struct ParentMeasure
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
 	LPCWSTR name = nullptr;
-	ChildMeasure* ownerChild = nullptr;
+	FileViewChildData* ownerChild = nullptr;
 };
 
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
 bool SaveIcon(HICON hIcon, FILE* fp);
 
-static std::vector<ParentMeasure*> g_ParentMeasures;
+static std::vector<FileViewParentData*> g_ParentMeasures;
 static CriticalSection g_CriticalSection;
 static std::wstring g_SysProperties;
 
-static void RemoveChildFromParent(ParentMeasure* parent, ChildMeasure* child)
+static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData* child)
 {
 	if (!parent) return;
 
@@ -168,7 +168,7 @@ static void RemoveChildFromParent(ParentMeasure* parent, ChildMeasure* child)
 	}
 }
 
-static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
+static void SetChildParent(FileViewChildData* child, FileViewParentData* parent)
 {
 	if (child->parent != parent)
 	{
@@ -189,7 +189,7 @@ static void SetChildParent(ChildMeasure* child, ParentMeasure* parent)
 class MeasureFileView::UpdateTask : public AsyncTask
 {
 public:
-	static UpdateTask* Create(MeasureFileView* requestor, ParentMeasure* parent)
+	static UpdateTask* Create(MeasureFileView* requestor, FileViewParentData* parent)
 	{
 		assert(parent);
 
@@ -204,7 +204,7 @@ public:
 	}
 
 private:
-	UpdateTask(MeasureFileView* requestor, ParentMeasure* parent) : AsyncTask(requestor),
+	UpdateTask(MeasureFileView* requestor, FileViewParentData* parent) : AsyncTask(requestor),
 		m_Path(parent->path),
 		m_WildcardSearch(parent->wildcardSearch),
 		m_SortType(parent->sortType),
@@ -353,7 +353,7 @@ static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 }
 
 MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_Child(new ChildMeasure)
+	m_Child(new FileViewChildData)
 {
 	m_Child->measure = this;
 
@@ -375,10 +375,10 @@ MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, 
 
 MeasureFileView::~MeasureFileView()
 {
-	ChildMeasure* child = m_Child;
+	FileViewChildData* child = m_Child;
 
 	CriticalSectionLock lock(g_CriticalSection);
-	ParentMeasure* parent = child->parent;
+	FileViewParentData* parent = child->parent;
 	if (parent)
 	{
 		RemoveChildFromParent(parent, child);
@@ -412,7 +412,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
 
-	ChildMeasure* child = m_Child;
+	FileViewChildData* child = m_Child;
 
 	std::wstring path = parser.ReadString(section, L"Path", L"", false);
 	if (!path.empty() && path[0] == L'[' && path[path.size() - 1] == L']')
@@ -438,7 +438,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		if (!child->parent)
 		{
-			child->parent = new ParentMeasure;
+			child->parent = new FileViewParentData;
 			child->parent->skin = GetSkin();
 			child->parent->name = GetName();
 			child->parent->ownerChild = child;
@@ -618,8 +618,8 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void MeasureFileView::UpdateValue()
 {
-	ChildMeasure* child = m_Child;
-	ParentMeasure* parent = child->parent;
+	FileViewChildData* child = m_Child;
+	FileViewParentData* parent = child->parent;
 	if (!parent)
 	{
 		m_Value = 0.0;
@@ -699,9 +699,9 @@ void MeasureFileView::UpdateValue()
 
 const WCHAR* MeasureFileView::GetStringValue()
 {
-	ChildMeasure* child = m_Child;
+	FileViewChildData* child = m_Child;
 
-	ParentMeasure* parent = child->parent;
+	FileViewParentData* parent = child->parent;
 	if (!parent) return CheckSubstitute(L"");
 
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
@@ -815,10 +815,10 @@ const WCHAR* MeasureFileView::GetStringValue()
 
 void MeasureFileView::Command(const std::wstring& command)
 {
-	ChildMeasure* child = m_Child;
+	FileViewChildData* child = m_Child;
 	LPCWSTR args = command.c_str();
 
-	ParentMeasure* parent = child->parent;
+	FileViewParentData* parent = child->parent;
 	if (!parent || parent->task) return;
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
