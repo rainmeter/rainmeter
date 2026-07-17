@@ -32,6 +32,7 @@
 #include "MeasureSysInfo.h"
 #include "GeneralImage.h"
 #include "../Version.h"
+#include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Util/D2DEffectStream.h"
 
@@ -711,19 +712,11 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 
 POINT Skin::GetScreenLogicalPosition() const
 {
-	return PhysicalToScreenLogical({ m_X.pos, m_Y.pos });
-}
+	DpiUtil::DpiUnawareScope dpiUnaware;
 
-POINT Skin::ScreenLogicalToPhysical(POINT point) const
-{
-	LogicalToPhysicalPointForPerMonitorDPI(m_Window, &point);
-	return point;
-}
-
-POINT Skin::PhysicalToScreenLogical(POINT point) const
-{
-	PhysicalToLogicalPointForPerMonitorDPI(m_Window, &point);
-	return point;
+	RECT r = {};
+	GetWindowRect(m_Window, &r);
+	return { r.left, r.top };
 }
 
 void Skin::RepositionAndResizeWindow()
@@ -2062,14 +2055,9 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 		// For BWC because old versions of Rainmeter will have saved the physical position.
 		physicalPos = logicalPos;
 	}
-	else if (m_State == STATE_RUNNING)
-	{
-		physicalPos = ScreenLogicalToPhysical(logicalPos);
-		dpi = GetDpiForWindow(m_Window);
-	}
 	else
 	{
-		physicalPos = System::ScreenLogicalToPhysical(logicalPos, &dpi);
+		physicalPos = System::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
 	}
 
 	m_X.pos = physicalPos.x;
