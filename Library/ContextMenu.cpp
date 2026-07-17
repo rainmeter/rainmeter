@@ -637,6 +637,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 	HMENU settingsMenu = CreateSkinSettingsMenu({ skin });
 	DeleteMenu(skinMenu, 4, MF_BYPOSITION);
 	InsertMenu(skinMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)settingsMenu, GetString(IDS_Settings));
+	InsertMenu(skinMenu, 7, MF_BYPOSITION | MF_STRING, IDM_SKIN_DEBUGSKIN, L"Debug skin");
 
 	// Add the name of the Skin to the menu
 	const std::wstring& skinName = skin->GetFolderPath();

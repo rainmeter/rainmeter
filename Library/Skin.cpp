@@ -3916,6 +3916,10 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		DialogManage::OpenSkin(this);
 		break;
 
+	case IDM_SKIN_DEBUGSKIN:
+		DialogDebug::OpenSkin(this);
+		break;
+
 	case IDM_SKIN_VERYTOPMOST:
 		SetWindowZPosition(ZPOSITION_ONTOPMOST);
 		break;

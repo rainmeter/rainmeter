@@ -25,6 +25,7 @@ public:
 
 	static void Open(int tab = 0);
 	static void Open(const WCHAR* name);
+	static void OpenSkin(Skin* skin);
 	static void ShowAboutLog();
 
 	static void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
@@ -104,6 +105,7 @@ private:
 		virtual void Relayout(int w, int h) override;
 		virtual void HandleDpiChange() override;
 
+		void SelectSkin(Skin* skin);
 		void UpdateSkinList();
 		void UpdateMeasureList(Skin* skin);
 
