@@ -87,7 +87,8 @@ private:
 		enum Id
 		{
 			Id_SkinsComboBox = 200,
-			Id_SkinsListView,
+			Id_MeasuresListView,
+			Id_VariablesListView,
 			Id_EvaluateGroup,
 			Id_EvaluateStringRadio,
 			Id_EvaluateNumberRadio,
