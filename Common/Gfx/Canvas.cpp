@@ -272,18 +272,37 @@ bool Canvas::Resize(int w, int h)
 	m_TargetBitmap.Reset();
 	m_BackBuffer.Reset();
 
+	const auto resetSwapChainResources = [&]()
+	{
+		m_SwapChain.Reset();
+		m_BackBuffer.Reset();
+		m_TargetBitmap.Reset();
+	};
+
 	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 	HRESULT hr = m_SwapChain->ResizeBuffers(0, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		resetSwapChainResources();
+		return false;
+	}
 
 	hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		resetSwapChainResources();
+		return false;
+	}
 
 	const auto props = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(dxgiFormat, D2D1_ALPHA_MODE_PREMULTIPLIED));
 	hr = m_Target->CreateBitmapFromDxgiSurface(m_BackBuffer.Get(), &props, m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		resetSwapChainResources();
+		return false;
+	}
 
 	m_Target->SetTarget(m_TargetBitmap.Get());
 	m_Target->SetDpi(m_Dpi, m_Dpi);
