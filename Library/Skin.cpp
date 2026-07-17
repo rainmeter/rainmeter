@@ -1289,11 +1289,14 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::SetZoomFactor:
-		SetZoom((int)roundf((float)m_Parser.ParseDouble(args[0].c_str(), 1.0) * 100.0f));
-		break;
-
-	case Bang::ResetZoom:
-		ClearZoom();
+		if (_wcsicmp(args[0].c_str(), L"Default") == 0)
+		{
+			ClearZoom();
+		}
+		else
+		{
+			SetZoom((int)roundf((float)m_Parser.ParseDouble(args[0].c_str(), 1.0) * 100.0f));
+		}
 		break;
 
 	case Bang::ZPos:
