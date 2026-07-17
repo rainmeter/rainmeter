@@ -1325,9 +1325,10 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 
+				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
 				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
 				logicalPos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = m_SkinWindow->ScreenLogicalToPhysical(logicalPos);
+				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
 				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
 
 				const int newX = m_SkinWindow->GetScreenLogicalPosition().x;
@@ -1348,9 +1349,10 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 
+				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
 				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
 				logicalPos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = m_SkinWindow->ScreenLogicalToPhysical(logicalPos);
+				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
 				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
 
 				const int newY = m_SkinWindow->GetScreenLogicalPosition().y;

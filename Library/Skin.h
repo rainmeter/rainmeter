@@ -214,7 +214,6 @@ public:
 	POINT PhysicalToRelativeLogical(POINT point) const;
 
 	POINT GetScreenLogicalPosition() const;
-	POINT ScreenLogicalToPhysical(POINT point) const;
 	POINT PhysicalToScreenLogical(POINT point) const;
 
 	float GetScale() const { return m_EffectiveScale; }

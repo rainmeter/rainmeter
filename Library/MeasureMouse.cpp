@@ -12,6 +12,7 @@
 #include "MonitorUtil.h"
 #include "Rainmeter.h"
 #include "Skin.h"
+#include "System.h"
 
 namespace {
 
@@ -362,7 +363,7 @@ void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) 
 	const auto pos =
 		m_RelativeToSkin ?
 		m_Skin->PhysicalToRelativeLogical(screenPos) :
-		m_Skin->PhysicalToScreenLogical(screenPos);
+		System::PhysicalToScreenLogical(screenPos);
 	_itow_s(pos.x, mouseX, 10);
 	_itow_s(pos.y, mouseY, 10);
 
