@@ -129,6 +129,7 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::FadeDuration, L"FadeDurationGroup", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
 	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
+	{ Bang::SetZoomFactor, L"SetZoomFactorGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
 	{ Bang::SetVariable, L"SetVariableGroup", 2 },
 	{ Bang::DisableMouseActionSkinGroup, L"DisableMouseActionSkinGroup", 1 },
