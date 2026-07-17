@@ -153,8 +153,28 @@ void ControlTemplate::Relayout(UINT dpi)
 		const bool top = (ct.options & Control::ANCHOR_TOP) != 0;
 		const bool right = (ct.options & Control::ANCHOR_RIGHT) != 0;
 		const bool bottom = (ct.options & Control::ANCHOR_BOTTOM) != 0;
+		const bool centerX = (ct.options & Control::ANCHOR_CENTER_X) != 0;
+		const bool centerY = (ct.options & Control::ANCHOR_CENTER_Y) != 0;
 
-		if (right)
+		if (centerX && left)
+		{
+			rect.right += (LONG)ceilf(deltaX / 2.0f);
+		}
+		else if (centerX && right)
+		{
+			rect.left += (LONG)ceilf(deltaX / 2.0f);
+			rect.right += (LONG)ceilf(deltaX / 2.0f);
+		}
+		else if (centerY && top)
+		{
+			rect.bottom += (LONG)ceilf(deltaY / 2.0f);
+		}
+		else if (centerY && bottom)
+		{
+			rect.top += (LONG)ceilf(deltaY / 2.0f);
+			rect.bottom += (LONG)ceilf(deltaY / 2.0f);
+		}
+		else if (right)
 		{
 			if (left) rect.right += deltaX;
 			else rect.left += deltaX;
