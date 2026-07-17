@@ -914,6 +914,12 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		--measureCount;
 	}
 
+	// Re-select previously selected measure
+	const auto focusedSelectedFlags = LVNI_FOCUSED | LVNI_SELECTED;
+	int selIndex = ListView_GetNextItem(measuresList, -1, focusedSelectedFlags);
+	UINT state = selIndex == -1 ? 0 : focusedSelectedFlags;
+	ListView_SetItemState(measuresList, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
+
 	lvi.mask = LVIF_TEXT | LVIF_PARAM;
 	lvi.iItem = 0;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
@@ -959,14 +965,13 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		--variableCount;
 	}
 
-	int selIndex = ListView_GetNextItem(measuresList, -1, LVNI_FOCUSED | LVNI_SELECTED);
+	selIndex = ListView_GetNextItem(variablesList, -1, LVNI_FOCUSED | LVNI_SELECTED);
 
 	ListView_SortItems(variablesList, ListSortProc, 0);
 
-	UINT state = selIndex == -1 ? 0 : LVIS_FOCUSED | LVIS_SELECTED;
-
-	// Re-select previously selected measure
-	ListView_SetItemState(measuresList, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
+	// Re-select previously selected variable
+	state = selIndex == -1 ? 0 : LVIS_FOCUSED | LVIS_SELECTED;
+	ListView_SetItemState(variablesList, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
 
 	SendMessage(measuresList, WM_SETREDRAW, TRUE, 0);
 	SendMessage(variablesList, WM_SETREDRAW, TRUE, 0);
