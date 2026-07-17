@@ -644,24 +644,24 @@ void DialogDebug::TabSkins::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::ListBox(Id_SkinsListBox, 0,
-			0, 0, 120, 338,
-			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE,
-			Control::ANCHOR_LEFT | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
+		Control::ComboBox(Id_SkinsComboBox, 0,
+			0, 0, 567, 160,
+			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::ListView(Id_SkinsListView, 0,
-			125, 0, 442, 250,
+			0, 26, 567, 224,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::GroupBox(Id_EvaluateGroup, 0,
-			125, 262, 442, 75,
+			0, 262, 567, 75,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateEdit, 0,
-			132, 279, 340, 22,
+			7, 279, 465, 22,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateResult, 0,
-			132, 307, 340, 22,
+			7, 307, 465, 22,
 			WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateStringRadio, 0,
@@ -740,12 +740,10 @@ void DialogDebug::TabSkins::Relayout(int w, int h)
 	Tab::Relayout(w, h);
 
 	// Adjust 4th column
-	const int listWidth = m_ControlTemplate.ScaleDialogUnits(265);
-	const int listGap = m_ControlTemplate.ScaleDialogUnits(10);
 	HWND item = GetControl(Id_SkinsListView);
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - listWidth - listGap - m_ControlTemplate.ScaleDialogUnits(20) -
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1) +
 		 ListView_GetColumnWidth(item, 2));
@@ -771,38 +769,31 @@ void DialogDebug::TabSkins::HandleDpiChange()
 void DialogDebug::TabSkins::UpdateSkinList()
 {
 	// Delete all entries
-	HWND item = GetControl(Id_SkinsListBox);
-	ListBox_ResetContent(item);
+	HWND item = GetControl(Id_SkinsComboBox);
+	ComboBox_ResetContent(item);
 
 	// Add entries for each skin
-	std::wstring::size_type maxLength = 0;
 	bool found = false;
 	for (const auto& iter : GetRainmeter().GetAllSkins())
 	{
 		const std::wstring& skinName = iter.first;
-		std::wstring::size_type curLength = skinName.length();
-		if (curLength > maxLength)
-		{
-			maxLength = curLength;
-		}
-
 		const WCHAR* name = skinName.c_str();
-		int index = ListBox_AddString(item, name);
+		int index = ComboBox_AddString(item, name);
+		ComboBox_SetItemData(item, index, (LPARAM)iter.second);
 		if (!found && m_SkinWindow == iter.second)
 		{
 			found = true;
 			m_SkinWindow = iter.second;
-			ListBox_SetCurSel(item, index);
+			ComboBox_SetCurSel(item, index);
 		}
 	}
-
-	ListBox_SetHorizontalExtent(item, 6 * maxLength);
 
 	if (!found)
 	{
 		if (GetRainmeter().GetAllSkins().empty())
 		{
 			m_SkinWindow = nullptr;
+			ComboBox_SetCurSel(item, -1);
 			item = GetControl(Id_SkinsListView);
 			ListView_DeleteAllItems(item);
 		}
@@ -810,7 +801,7 @@ void DialogDebug::TabSkins::UpdateSkinList()
 		{
 			// Default to first skin
 			m_SkinWindow = GetRainmeter().GetAllSkins().begin()->second;
-			ListBox_SetCurSel(item, 0);
+			ComboBox_SetCurSel(item, 0);
 			UpdateMeasureList(m_SkinWindow);
 		}
 	}
@@ -825,18 +816,19 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	if (!skin)
 	{
 		// Find selected skin
-		HWND item = GetControl(Id_SkinsListBox);
-		int selected = (int)SendMessage(item, LB_GETCURSEL, 0, 0);
-
-		const auto& windows = GetRainmeter().GetAllSkins();
-		auto iter = windows.cbegin();
-		while (selected && iter != windows.cend())
+		HWND item = GetControl(Id_SkinsComboBox);
+		int selected = ComboBox_GetCurSel(item);
+		if (selected == CB_ERR)
 		{
-			++iter;
-			--selected;
+			m_SkinWindow = nullptr;
+			return;
 		}
 
-		m_SkinWindow = (*iter).second;
+		m_SkinWindow = (Skin*)ComboBox_GetItemData(item, selected);
+		if (!m_SkinWindow)
+		{
+			return;
+		}
 	}
 	else if (skin != m_SkinWindow)
 	{
@@ -1048,8 +1040,8 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	switch (LOWORD(wParam))
 	{
-	case Id_SkinsListBox:
-		if (HIWORD(wParam) == LBN_SELCHANGE)
+	case Id_SkinsComboBox:
+		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
 			UpdateMeasureList(nullptr);
 		}
