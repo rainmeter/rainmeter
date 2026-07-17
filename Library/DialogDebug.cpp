@@ -71,6 +71,16 @@ void DialogDebug::Open(const WCHAR* name)
 	Open(tab);
 }
 
+void DialogDebug::OpenSkin(Skin* skin)
+{
+	Open(1);
+
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.SelectSkin(skin);
+	}
+}
+
 /*
 ** Shows log if dialog isn't already open.
 **
@@ -776,6 +786,13 @@ void DialogDebug::TabSkins::HandleDpiChange()
 	RECT rect;
 	GetClientRect(m_Window, &rect);
 	Relayout(rect.right, rect.bottom);
+}
+
+void DialogDebug::TabSkins::SelectSkin(Skin* skin)
+{
+	m_SkinWindow = skin;
+	UpdateSkinList();
+	UpdateMeasureList(m_SkinWindow);
 }
 
 /*
