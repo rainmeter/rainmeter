@@ -99,6 +99,11 @@ void DialogDebug::AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, 
 	{
 		c_Dialog->m_TabLog.AddItem(level, time, source, message);
 	}
+
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.AddLogItem(level, time, source, message);
+	}
 }
 
 void DialogDebug::UpdateSkins()
@@ -189,6 +194,8 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(TabSkins::Id_MeasuresListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabSkins.GetControl(TabSkins::Id_VariablesListView);
+	SetWindowTheme(item, L"explorer", nullptr);
+	item = m_TabSkins.GetControl(TabSkins::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
@@ -669,9 +676,9 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_CENTER_X | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
 
-		Control::GroupBox(Id_EvaluateGroup, 0,
+		Control::Tab(Id_LowerTab, 0,
 			0, 246, 567, 91,
-			WS_VISIBLE, 0,
+			WS_VISIBLE | WS_TABSTOP | TCS_BOTTOM | TCS_BUTTONS | TCS_FIXEDWIDTH, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateEdit, 0,
 			7, 263, 465, 30,
@@ -692,7 +699,11 @@ void DialogDebug::TabSkins::Create(HWND owner)
 		Control::Button(Id_EvaluateExecuteButton, 0,
 			480, 314, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
+			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::ListView(Id_LogListView, 0,
+			7, 263, 553, 66,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -734,11 +745,36 @@ void DialogDebug::TabSkins::Initialize()
 	lvc.pszText = (WCHAR*)GetString(IDS_String);
 	ListView_InsertColumn(item, 1, &lvc);
 
+	item = GetControl(Id_LowerTab);
+	{
+		TCITEM tci = { 0 };
+		tci.mask = TCIF_TEXT;
+		tci.pszText = L"Evaluate";
+		TabCtrl_InsertItem(item, 0, &tci);
+		tci.pszText = (WCHAR*)GetString(IDS_Log);
+		TabCtrl_InsertItem(item, 1, &tci);
+		TabCtrl_SetCurSel(item, 0);
+	}
+
+	item = GetControl(Id_LogListView);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	lvc.iSubItem = 0;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(54);
+	lvc.pszText = (WCHAR*)GetString(IDS_Type);
+	ListView_InsertColumn(item, 0, &lvc);
+	lvc.iSubItem = 1;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
+	lvc.pszText = (WCHAR*)GetString(IDS_Time);
+	ListView_InsertColumn(item, 1, &lvc);
+	lvc.iSubItem = 2;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);
+	lvc.pszText = (WCHAR*)GetString(IDS_Message);
+	ListView_InsertColumn(item, 2, &lvc);
+
 	// Start 4th column at max width
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
-	SetWindowText(GetControl(Id_EvaluateGroup), L"Evaluate");
 	SetWindowText(GetControl(Id_EvaluateStringRadio), L"String");
 	Button_SetCheck(GetControl(Id_EvaluateStringRadio), BST_CHECKED);
 	SetWindowText(GetControl(Id_EvaluateNumberRadio), L"Number");
@@ -772,6 +808,69 @@ void DialogDebug::TabSkins::Relayout(int w, int h)
 	item = GetControl(Id_VariablesListView);
 	lvc.cx = listRowWidth - ListView_GetColumnWidth(item, 0);
 	ListView_SetColumn(item, 1, &lvc);
+
+	HWND lowerTab = GetControl(Id_LowerTab);
+	RECT lowerRect;
+	GetWindowRect(lowerTab, &lowerRect);
+	MapWindowPoints(nullptr, m_Window, (LPPOINT)&lowerRect, 2);
+	TabCtrl_AdjustRect(lowerTab, FALSE, &lowerRect);
+
+	const int panelWidth = lowerRect.right - lowerRect.left;
+	const int panelHeight = lowerRect.bottom - lowerRect.top;
+	const int panelInset = m_ControlTemplate.ScaleDialogUnits(7);
+	const int panelGap = m_ControlTemplate.ScaleDialogUnits(8);
+	const int panelButtonWidth = m_ControlTemplate.ScaleDialogUnits(72);
+	const int panelTextWidth = max(panelWidth - (panelInset * 2) - panelButtonWidth - panelGap, m_ControlTemplate.ScaleDialogUnits(80));
+	const int shortLabelWidth = m_ControlTemplate.ScaleDialogUnits(80);
+	const int rowHeight = m_ControlTemplate.ScaleDialogUnits(30);
+	const int radioTop = lowerRect.top + panelInset;
+	const int resultTop = radioTop + rowHeight + m_ControlTemplate.ScaleDialogUnits(6);
+	const int buttonLeft = lowerRect.right - panelInset - panelButtonWidth;
+
+	SetWindowPos(GetControl(Id_EvaluateEdit), nullptr,
+		lowerRect.left + panelInset,
+		radioTop,
+		panelTextWidth,
+		rowHeight,
+		SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(GetControl(Id_EvaluateResult), nullptr,
+		lowerRect.left + panelInset,
+		resultTop,
+		panelTextWidth,
+		rowHeight,
+		SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(GetControl(Id_EvaluateStringRadio), nullptr,
+		buttonLeft,
+		radioTop,
+		shortLabelWidth,
+		m_ControlTemplate.ScaleDialogUnits(14),
+		SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(GetControl(Id_EvaluateNumberRadio), nullptr,
+		buttonLeft,
+		radioTop + m_ControlTemplate.ScaleDialogUnits(13),
+		shortLabelWidth,
+		m_ControlTemplate.ScaleDialogUnits(14),
+		SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(GetControl(Id_EvaluateExecuteButton), nullptr,
+		buttonLeft,
+		resultTop + m_ControlTemplate.ScaleDialogUnits(8),
+		panelButtonWidth,
+		m_ControlTemplate.ScaleDialogUnits(14),
+		SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(GetControl(Id_LogListView), nullptr,
+		lowerRect.left,
+		lowerRect.top,
+		panelWidth,
+		panelHeight,
+		SWP_NOACTIVATE | SWP_NOZORDER);
+
+	item = GetControl(Id_LogListView);
+	lvc.cx = max((panelWidth - m_ControlTemplate.ScaleDialogUnits(8)) -
+		(ListView_GetColumnWidth(item, 0) + ListView_GetColumnWidth(item, 1)),
+		m_ControlTemplate.ScaleDialogUnits(120));
+	ListView_SetColumn(item, 2, &lvc);
+
+	UpdateActivePanel();
 }
 
 void DialogDebug::TabSkins::HandleDpiChange()
@@ -782,6 +881,9 @@ void DialogDebug::TabSkins::HandleDpiChange()
 	ListView_SetColumnWidth(list, 2, m_ControlTemplate.ScaleDialogUnits(90));
 	list = GetControl(Id_VariablesListView);
 	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(120));
+	list = GetControl(Id_LogListView);
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(54));
+	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(80));
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
@@ -793,6 +895,112 @@ void DialogDebug::TabSkins::SelectSkin(Skin* skin)
 	m_SkinWindow = skin;
 	UpdateSkinList();
 	UpdateMeasureList(m_SkinWindow);
+}
+
+const WCHAR* DialogDebug::TabSkins::GetLevelText(Logger::Level level)
+{
+	switch (level)
+	{
+	case Logger::Level::Error: return GetString(IDS_Error);
+	case Logger::Level::Warning: return GetString(IDS_Warning);
+	case Logger::Level::Notice: return GetString(IDS_Notice);
+	case Logger::Level::Debug: return GetString(IDS_Debug);
+	}
+
+	return L"";
+}
+
+bool DialogDebug::TabSkins::IsSourceForCurrentSkin(LPCWSTR source) const
+{
+	if (!m_SkinWindow || !source || !*source)
+	{
+		return false;
+	}
+
+	const std::wstring& skinPath = m_SkinWindow->GetSkinPath();
+	if (_wcsicmp(source, skinPath.c_str()) == 0)
+	{
+		return true;
+	}
+
+	if (wcsncmp(source, skinPath.c_str(), skinPath.size()) == 0)
+	{
+		source += skinPath.size();
+		return wcscmp(source, L"") == 0 || wcsncmp(source, L" - ", 3) == 0;
+	}
+
+	return false;
+}
+
+void DialogDebug::TabSkins::AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
+{
+	if (!m_Initialized || !IsSourceForCurrentSkin(source))
+	{
+		return;
+	}
+
+	LVITEM lvi = { 0 };
+	lvi.mask = LVIF_TEXT;
+	lvi.iItem = 0;
+	lvi.iSubItem = 0;
+	lvi.pszText = (WCHAR*)GetLevelText(level);
+
+	HWND item = GetControl(Id_LogListView);
+	ListView_InsertItem(item, &lvi);
+	ListView_SetItemText(item, 0, 1, (WCHAR*)time);
+
+	std::wstring msg = message;
+	size_t pos = 0;
+	while ((pos = msg.find(L'\t', pos)) != std::wstring::npos)
+	{
+		msg.replace(pos, 1, L"    ");
+		pos += 4;
+	}
+
+	ListView_SetItemText(item, 0, 2, (WCHAR*)msg.c_str());
+
+	const int maxItems = (int)GetLogger().GetEntries().size();
+	while (ListView_GetItemCount(item) > maxItems)
+	{
+		ListView_DeleteItem(item, maxItems);
+	}
+
+	if (!ListView_IsItemVisible(item, 0))
+	{
+		ListView_Scroll(item, 0, 16);
+	}
+}
+
+void DialogDebug::TabSkins::UpdateActivePanel()
+{
+	const int tab = TabCtrl_GetCurSel(GetControl(Id_LowerTab));
+	const bool showEvaluate = tab != 1;
+
+	ShowWindow(GetControl(Id_EvaluateEdit), showEvaluate ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetControl(Id_EvaluateResult), showEvaluate ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetControl(Id_EvaluateStringRadio), showEvaluate ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetControl(Id_EvaluateNumberRadio), showEvaluate ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetControl(Id_EvaluateExecuteButton), showEvaluate ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetControl(Id_LogListView), showEvaluate ? SW_HIDE : SW_SHOW);
+}
+
+void DialogDebug::TabSkins::UpdateLogView()
+{
+	HWND item = GetControl(Id_LogListView);
+	ListView_DeleteAllItems(item);
+
+	if (!m_SkinWindow)
+	{
+		return;
+	}
+
+	for (const auto& entry : GetLogger().GetEntries())
+	{
+		if (IsSourceForCurrentSkin(entry.source.c_str()))
+		{
+			AddLogItem(entry.level, entry.timestamp.c_str(), entry.source.c_str(), entry.message.c_str());
+		}
+	}
 }
 
 /*
@@ -830,6 +1038,8 @@ void DialogDebug::TabSkins::UpdateSkinList()
 			item = GetControl(Id_MeasuresListView);
 			ListView_DeleteAllItems(item);
 			item = GetControl(Id_VariablesListView);
+			ListView_DeleteAllItems(item);
+			item = GetControl(Id_LogListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -994,6 +1204,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	SendMessage(variablesList, WM_SETREDRAW, TRUE, 0);
 
 	UpdateEvaluationResult();
+	UpdateLogView();
 }
 
 int CALLBACK DialogDebug::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -1172,18 +1383,32 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_COPY:
 		{
-			// Copy variable to clipboard
-			HWND hwnd = GetControl(Id_VariablesListView);
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
+			HWND hwnd = GetFocus();
+			if (hwnd == GetControl(Id_LogListView))
 			{
-				WCHAR buffer[512] = { 0 };
-				ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
-				std::wstring var = buffer;
-				std::wstring variable;
-				if (m_SkinWindow->GetParser().GetVariable(var, variable))
+				const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
 				{
-					System::SetClipboardText(variable);
+					WCHAR buffer[512] = { 0 };
+					ListView_GetItemText(hwnd, sel, 2, buffer, _countof(buffer));
+					System::SetClipboardText(buffer);
+				}
+			}
+			else
+			{
+				// Copy variable to clipboard
+				hwnd = GetControl(Id_VariablesListView);
+				const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					WCHAR buffer[512] = { 0 };
+					ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
+					std::wstring var = buffer;
+					std::wstring variable;
+					if (m_SkinWindow->GetParser().GetVariable(var, variable))
+					{
+						System::SetClipboardText(variable);
+					}
 				}
 			}
 		}
@@ -1202,6 +1427,14 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	HWND hwnd = nm->hwndFrom;
 	switch (nm->code)
 	{
+	case TCN_SELCHANGE:
+		if (nm->idFrom == Id_LowerTab)
+		{
+			UpdateActivePanel();
+			return TRUE;
+		}
+		break;
+
 	case LVN_KEYDOWN:
 		{
 			// Copy measure string value or variable to clipboard via CTRL + C
@@ -1232,13 +1465,19 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 							System::SetClipboardText(variable);
 						}
 					}
+					else if (nm->idFrom == Id_LogListView)
+					{
+						WCHAR message[512] = { 0 };
+						ListView_GetItemText(hwnd, sel, 2, message, _countof(message));
+						System::SetClipboardText(message);
+					}
 				}
 			}
 		}
 		break;
 
 	case NM_RCLICK:
-		if (nm->idFrom == Id_MeasuresListView || nm->idFrom == Id_VariablesListView)
+		if (nm->idFrom == Id_MeasuresListView || nm->idFrom == Id_VariablesListView || nm->idFrom == Id_LogListView)
 		{
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
@@ -1256,7 +1495,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
-				bool isMeasure = nm->idFrom == Id_MeasuresListView;
+				const bool isMeasure = nm->idFrom == Id_MeasuresListView;
+				const bool isLog = nm->idFrom == Id_LogListView;
 				HMENU menu = MenuTemplate::CreateMenu(
 					isMeasure ? s_MeasureMenu : s_VariableMenu,
 					isMeasure ? _countof(s_MeasureMenu) : _countof(s_VariableMenu),
@@ -1278,6 +1518,10 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						setMenuItem(IDS_Number, IDM_COPYNUMBERVALUE);
 						setMenuItem(IDS_String, IDM_COPYSTRINGVALUE);
 						setMenuItem(IDS_Range, IDM_COPYRANGE);
+					}
+					else if (isLog)
+					{
+						ModifyMenu(menu, IDM_COPY, MF_BYCOMMAND, IDM_COPY, GetString(IDS_CopyToClipboard));
 					}
 
 					POINT pt = System::GetCursorPosition();

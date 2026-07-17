@@ -90,12 +90,13 @@ private:
 			Id_SkinsComboBox = 200,
 			Id_MeasuresListView,
 			Id_VariablesListView,
-			Id_EvaluateGroup,
+			Id_LowerTab,
 			Id_EvaluateStringRadio,
 			Id_EvaluateNumberRadio,
 			Id_EvaluateEdit,
 			Id_EvaluateResult,
-			Id_EvaluateExecuteButton
+			Id_EvaluateExecuteButton,
+			Id_LogListView
 		};
 
 		TabSkins();
@@ -106,6 +107,7 @@ private:
 		virtual void HandleDpiChange() override;
 
 		void SelectSkin(Skin* skin);
+		void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
 		void UpdateSkinList();
 		void UpdateMeasureList(Skin* skin);
 
@@ -117,6 +119,10 @@ private:
 
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+		static const WCHAR* GetLevelText(Logger::Level level);
+		bool IsSourceForCurrentSkin(LPCWSTR source) const;
+		void UpdateActivePanel();
+		void UpdateLogView();
 		void UpdateEvaluationResult();
 
 		Skin* m_SkinWindow;
