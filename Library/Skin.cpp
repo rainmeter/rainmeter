@@ -75,6 +75,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_HostWindow(),
 	m_Window(),
 	m_SelectionOverlay(),
+	m_DropTarget(),
 	m_PendingWriteOptions(0),
 	m_SuspendResumeNotification(nullptr),
 	m_Mouse(this),
