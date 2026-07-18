@@ -177,33 +177,6 @@ UINT System::GetDpiForWindow(HWND window)
 	return GetSystemDpi();
 }
 
-POINT System::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
-{
-	{
-		DpiUtil::DpiUnawareScope dpiUnaware;
-		SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-	}
-
-	if (dpi) *dpi = GetDpiForWindow(c_HelperWindow);
-
-	RECT r = {};
-	GetWindowRect(c_HelperWindow, &r);
-	return { r.left, r.top };
-}
-
-POINT System::PhysicalToScreenLogical(POINT point)
-{
-	SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, 1, 1, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-	{
-		DpiUtil::DpiUnawareScope dpiUnaware;
-
-		RECT r = {};
-		GetWindowRect(c_HelperWindow, &r);
-		return { r.left, r.top };
-	}
-}
-
 /*
 ** Finds the Default Shell's window.
 **
