@@ -286,7 +286,6 @@ POINT MonitorUtil::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
 		monitorHandle = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
 	}
 
-	const auto monitorHandle = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
 	const auto* monitor = GetMultiMonitorInfo().GetByHandle(monitorHandle);
 	if (!monitor)
 	{
