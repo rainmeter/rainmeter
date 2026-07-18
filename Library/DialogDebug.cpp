@@ -639,14 +639,264 @@ INT_PTR DialogDebug::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 
 // -----------------------------------------------------------------------------------------------
 //
-//                                Measures tab
+//                                Skins tab
 //
 // -----------------------------------------------------------------------------------------------
 
+class DialogDebug::TabSkins::PanelWatch : public Dialog
+{
+public:
+	enum Id
+	{
+		Id_StringRadio = 1000,
+		Id_FormulaRadio,
+		Id_ExpressionTypeLabel,
+		Id_ExplanationLabel,
+		Id_Edit,
+		Id_Result,
+		Id_ExecuteButton,
+		Id_AddButton,
+		Id_CancelButton
+	};
+
+	PanelWatch(TabSkins& owner) : m_Owner(owner), m_EditIndex((size_t)-1) {}
+
+	void Open(HWND parent)
+	{
+		m_EditIndex = (size_t)-1;
+
+		ShowDialogWindow(
+			L"Add Watch",
+			0, 0, 400, 172,
+			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
+			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			parent);
+
+		SetWindowText(GetControl(Id_AddButton), L"Add");
+		SetWindowText(GetControl(Id_Edit), L"");
+		UpdateResult();
+	}
+
+	void Edit(HWND parent, size_t index, const std::wstring& text, bool formula)
+	{
+		m_EditIndex = index;
+
+		ShowDialogWindow(
+			L"Edit Watch",
+			0, 0, 400, 172,
+			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
+			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			parent);
+
+		Button_SetCheck(GetControl(Id_StringRadio), formula ? BST_UNCHECKED : BST_CHECKED);
+		Button_SetCheck(GetControl(Id_FormulaRadio), formula ? BST_CHECKED : BST_UNCHECKED);
+		SetWindowText(GetControl(Id_AddButton), L"Save");
+		SetWindowText(GetControl(Id_Edit), text.c_str());
+		UpdateLabel();
+		UpdateResult();
+	}
+
+	void UpdateResult()
+	{
+		HWND item = GetControl(Id_Edit);
+		if (!item) return;
+
+		const int length = GetWindowTextLength(item);
+		std::wstring text(length + 1, L'\0');
+		GetWindowText(item, &text[0], length + 1);
+		text.resize(length);
+
+		const std::wstring result = Evaluate(text, IsFormula());
+		SetWindowText(GetControl(Id_Result), result.c_str());
+		EnableWindow(GetControl(Id_ExecuteButton), m_Owner.m_SkinWindow && result.starts_with(L"[!"));
+	}
+
+	std::wstring Evaluate(std::wstring text, bool formula)
+	{
+		Skin* skin = m_Owner.m_SkinWindow;
+		if (skin && !text.empty())
+		{
+			ConfigParser& parser = skin->GetParser();
+			parser.ReplaceVariables(text, true);
+			parser.ReplaceMeasures(text);
+
+			if (formula)
+			{
+				double value = 0.0;
+				skin->GetMathParser().CheckedParse(text.c_str(), &value);
+
+				WCHAR buffer[128] = { 0 };
+				int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
+				Measure::RemoveTrailingZero(buffer, bufferLen);
+				text = buffer;
+			}
+		}
+
+		return text;
+	}
+
+protected:
+	INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override
+	{
+		const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
+		switch (uMsg)
+		{
+		case WM_INITDIALOG:
+			return OnInitDialog();
+		case WM_COMMAND:
+			return OnCommand(wParam, lParam);
+		case WM_CLOSE:
+			ShowWindow(m_Window, SW_HIDE);
+			return TRUE;
+		}
+		return baseResult;
+	}
+
+private:
+	INT_PTR OnInitDialog()
+	{
+		static const Control controls[] =
+		{
+			Control::Label(Id_ExpressionTypeLabel, 0,
+				6, 6, 78, 10,
+				WS_VISIBLE, 0),
+			Control::RadioButton(Id_StringRadio, 0,
+				88, 4, 50, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
+			Control::RadioButton(Id_FormulaRadio, 0,
+				142, 4, 58, 14,
+				WS_VISIBLE | WS_TABSTOP, 0),
+			Control::Label(Id_ExplanationLabel, 0,
+				6, 24, 388, 10,
+				WS_VISIBLE, 0),
+			Control::Edit(Id_Edit, 0,
+				6, 40, 388, 48,
+				WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0),
+			Control::Edit(Id_Result, 0,
+				6, 94, 388, 48,
+				WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0),
+			Control::Button(Id_ExecuteButton, 0,
+				157, 152, 75, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
+			Control::Button(Id_AddButton, 0,
+				238, 152, 75, 14,
+				WS_VISIBLE | WS_TABSTOP, 0),
+			Control::Button(Id_CancelButton, 0,
+				319, 152, 75, 14,
+				WS_VISIBLE | WS_TABSTOP, 0)
+		};
+
+		CreateControls(controls, _countof(controls), GetString);
+		SetWindowText(GetControl(Id_ExpressionTypeLabel), L"Expression type:");
+		SetWindowText(GetControl(Id_StringRadio), L"String");
+		Button_SetCheck(GetControl(Id_StringRadio), BST_CHECKED);
+		SetWindowText(GetControl(Id_FormulaRadio), L"Formula");
+		SetWindowText(GetControl(Id_ExecuteButton), L"Execute");
+		SetWindowText(GetControl(Id_AddButton), L"Add");
+		SetWindowText(GetControl(Id_CancelButton), L"Cancel");
+		UpdateLabel();
+		return TRUE;
+	}
+
+	void UpdateLabel()
+	{
+		const WCHAR* text = Button_GetCheck(GetControl(Id_FormulaRadio)) == BST_CHECKED ?
+			L"Enter a string to evaluate math formula:" : L"Enter a string to evaluate variables and measures:";
+		SetWindowText(GetControl(Id_ExplanationLabel), text);
+	}
+
+	bool IsFormula()
+	{
+		return Button_GetCheck(GetControl(Id_FormulaRadio)) == BST_CHECKED;
+	}
+
+	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam)
+	{
+		switch (LOWORD(wParam))
+		{
+		case Id_Edit:
+			if (HIWORD(wParam) == EN_CHANGE) UpdateResult();
+			break;
+
+		case Id_StringRadio:
+		case Id_FormulaRadio:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				UpdateLabel();
+				UpdateResult();
+			}
+			break;
+
+		case Id_ExecuteButton:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				HWND result = GetControl(Id_Result);
+				const int length = GetWindowTextLength(result);
+				if (length > 0)
+				{
+					std::wstring command(length + 1, L'\0');
+					GetWindowText(result, &command[0], length + 1);
+					command.resize(length);
+					if (command.starts_with(L"[!"))
+					{
+						GetRainmeter().ExecuteCommand(command.c_str(), m_Owner.m_SkinWindow);
+					}
+				}
+			}
+			break;
+
+		case Id_AddButton:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				HWND edit = GetControl(Id_Edit);
+				const int length = GetWindowTextLength(edit);
+				if (length > 0)
+				{
+					std::wstring text(length + 1, L'\0');
+					GetWindowText(edit, &text[0], length + 1);
+					text.resize(length);
+					if (m_EditIndex == (size_t)-1)
+					{
+						m_Owner.AddWatch(text, IsFormula());
+					}
+					else
+					{
+						m_Owner.SaveWatch(m_EditIndex, text, IsFormula());
+					}
+					m_EditIndex = (size_t)-1;
+					SetWindowText(edit, L"");
+					ShowWindow(m_Window, SW_HIDE);
+				}
+			}
+			break;
+
+		case Id_CancelButton:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				m_EditIndex = (size_t)-1;
+				SetWindowText(GetControl(Id_Edit), L"");
+				ShowWindow(m_Window, SW_HIDE);
+			}
+			break;
+
+		default:
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
+	TabSkins& m_Owner;
+	size_t m_EditIndex;
+};
+
 DialogDebug::TabSkins::TabSkins() : Tab(),
-	m_SkinWindow()
+	m_SkinWindow(),
+	m_PanelWatch(std::make_unique<PanelWatch>(*this))
 {
 }
+
+DialogDebug::TabSkins::~TabSkins() = default;
 
 void DialogDebug::TabSkins::Create(HWND owner)
 {
@@ -655,37 +905,17 @@ void DialogDebug::TabSkins::Create(HWND owner)
 	static const Control s_Controls[] =
 	{
 		Control::ComboBox(Id_SkinsComboBox, 0,
-			0, 0, 567, 160,
+			0, 0, 488, 160,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
+		Control::Button(Id_AddWatchButton, 0,
+			495, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::ListView(Id_SkinsListView, 0,
-			0, 26, 567, 224,
+			0, 26, 570, 311,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
-			Control::ANCHOR_ALL),
-		Control::GroupBox(Id_EvaluateGroup, 0,
-			0, 262, 567, 75,
-			WS_VISIBLE, 0,
-			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::Edit(Id_EvaluateEdit, 0,
-			7, 279, 465, 22,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0,
-			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::Edit(Id_EvaluateResult, 0,
-			7, 307, 465, 22,
-			WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0,
-			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::RadioButton(Id_EvaluateStringRadio, 0,
-			480, 279, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::RadioButton(Id_EvaluateNumberRadio, 0,
-			480, 292, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::Button(Id_EvaluateExecuteButton, 0,
-			480, 314, 80, 14,
-			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
+			Control::ANCHOR_ALL)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -707,6 +937,9 @@ void DialogDebug::TabSkins::Initialize()
 	lvg.iGroupId = 1;
 	lvg.pszHeader = (WCHAR*)GetString(IDS_Variables);
 	ListView_InsertGroup(item, 1, &lvg);
+	lvg.iGroupId = 2;
+	lvg.pszHeader = (WCHAR*)L"Watch";
+	ListView_InsertGroup(item, 2, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
 
@@ -734,11 +967,7 @@ void DialogDebug::TabSkins::Initialize()
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
-	SetWindowText(GetControl(Id_EvaluateGroup), L"Evaluate");
-	SetWindowText(GetControl(Id_EvaluateStringRadio), L"String");
-	Button_SetCheck(GetControl(Id_EvaluateStringRadio), BST_CHECKED);
-	SetWindowText(GetControl(Id_EvaluateNumberRadio), L"Number");
-	SetWindowText(GetControl(Id_EvaluateExecuteButton), L"Execute");
+	SetWindowText(GetControl(Id_AddWatchButton), L"Add Watch...");
 
 	UpdateSkinList();
 
@@ -825,7 +1054,97 @@ void DialogDebug::TabSkins::UpdateSkinList()
 }
 
 /*
-** Updates the list of measures and values.
+** Adds a watch to the list.
+**
+*/
+void DialogDebug::TabSkins::AddWatch(const std::wstring& text, bool formula)
+{
+	m_Watches.push_back({ text, formula });
+	UpdateMeasureList(m_SkinWindow);
+	EnsureWatchVisible(m_Watches.size() - 1);
+}
+
+void DialogDebug::TabSkins::EditWatch(size_t index)
+{
+	if (index < m_Watches.size())
+	{
+		const Watch& watch = m_Watches[index];
+		m_PanelWatch->Edit(GetParent(m_Window), index, watch.text, watch.formula);
+	}
+}
+
+void DialogDebug::TabSkins::SaveWatch(size_t index, const std::wstring& text, bool formula)
+{
+	if (index < m_Watches.size())
+	{
+		m_Watches[index] = { text, formula };
+		UpdateMeasureList(m_SkinWindow);
+		EnsureWatchVisible(index);
+	}
+}
+
+void DialogDebug::TabSkins::DeleteWatch(size_t index)
+{
+	if (index < m_Watches.size())
+	{
+		m_Watches.erase(m_Watches.begin() + index);
+		UpdateMeasureList(m_SkinWindow);
+	}
+}
+
+size_t DialogDebug::TabSkins::GetSelectedWatch()
+{
+	HWND item = GetControl(Id_SkinsListView);
+	const int selected = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
+	if (selected != -1)
+	{
+		LVITEM lvi = { 0 };
+		lvi.mask = LVIF_GROUPID | LVIF_PARAM;
+		lvi.iItem = selected;
+		if (ListView_GetItem(item, &lvi) && lvi.iGroupId == 2)
+		{
+			for (size_t i = 0; i < m_Watches.size(); ++i)
+			{
+				if ((const WCHAR*)lvi.lParam == m_Watches[i].text.c_str())
+				{
+					return i;
+				}
+			}
+		}
+	}
+
+	return (size_t)-1;
+}
+
+void DialogDebug::TabSkins::EnsureWatchVisible(size_t index)
+{
+	if (index >= m_Watches.size()) return;
+
+	HWND item = GetControl(Id_SkinsListView);
+	const WCHAR* watch = m_Watches[index].text.c_str();
+	LVITEM lvi = { 0 };
+	lvi.mask = LVIF_PARAM;
+	for (lvi.iItem = 0; lvi.iItem < ListView_GetItemCount(item); ++lvi.iItem)
+	{
+		ListView_GetItem(item, &lvi);
+		if ((const WCHAR*)lvi.lParam == watch)
+		{
+			ListView_SetItemState(item, -1, 0, LVIS_FOCUSED | LVIS_SELECTED);
+			ListView_SetItemState(item, lvi.iItem, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+			ListView_EnsureVisible(item, lvi.iItem, FALSE);
+
+			RECT rect;
+			if (ListView_GetItemRect(item, lvi.iItem, &rect, LVIR_BOUNDS))
+			{
+				ListView_Scroll(item, 0, rect.bottom - rect.top);
+			}
+			break;
+		}
+	}
+}
+
+/*
+** Updates the list of measures, variables, and watches.
 **
 */
 void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
@@ -947,6 +1266,34 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		++lvi.iItem;
 	}
 
+	lvi.iGroupId = 2;
+	for (const auto& watch : m_Watches)
+	{
+		lvi.pszText = (WCHAR*)watch.text.c_str();
+		lvi.lParam = (LPARAM)watch.text.c_str();
+
+		if (lvi.iItem < count)
+		{
+			ListView_SetItem(item, &lvi);
+		}
+		else
+		{
+			ListView_InsertItem(item, &lvi);
+		}
+
+		std::wstring result = m_PanelWatch->Evaluate(watch.text, watch.formula);
+		if (result.length() > 259)
+		{
+			result.erase(256);
+			result += L"...";
+		}
+
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)result.c_str());
+		++lvi.iItem;
+	}
+
 	// Delete unnecessary items
 	while (count > lvi.iItem)
 	{
@@ -965,7 +1312,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 	SendMessage(item, WM_SETREDRAW, TRUE, 0);
 
-	UpdateEvaluationResult();
+	m_PanelWatch->UpdateResult();
 }
 
 int CALLBACK DialogDebug::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -977,47 +1324,6 @@ int CALLBACK DialogDebug::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2,
 
 	// Variables
 	return wcscmp((const WCHAR*)lParam1, (const WCHAR*)lParam2);
-}
-
-void DialogDebug::TabSkins::UpdateEvaluationResult()
-{
-	HWND item = GetControl(Id_EvaluateEdit);
-	if (!item) return;
-
-	const int length = GetWindowTextLength(item);
-	std::wstring text(length + 1, L'\0');
-	GetWindowText(item, &text[0], length + 1);
-	text.resize(length);
-
-	if (m_SkinWindow && !text.empty())
-	{
-		ConfigParser& parser = m_SkinWindow->GetParser();
-		parser.ReplaceVariables(text, true);
-		parser.ReplaceMeasures(text);
-
-		if (Button_GetCheck(GetControl(Id_EvaluateNumberRadio)) == BST_CHECKED)
-		{
-			double value = 0.0;
-			const WCHAR* str = text.c_str();
-			if (*str == L'(')
-			{
-				m_SkinWindow->GetMathParser().CheckedParse(str, &value);
-			}
-			else if (*str)
-			{
-				errno = 0;
-				value = wcstod(str, nullptr);
-			}
-
-			WCHAR buffer[128] = { 0 };
-			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
-			Measure::RemoveTrailingZero(buffer, bufferLen);
-			text = buffer;
-		}
-	}
-
-	SetWindowText(GetControl(Id_EvaluateResult), text.c_str());
-	EnableWindow(GetControl(Id_EvaluateExecuteButton), text.starts_with(L"[!"));
 }
 
 INT_PTR DialogDebug::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1064,35 +1370,30 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_EvaluateEdit:
-		if (HIWORD(wParam) == EN_CHANGE)
+	case Id_AddWatchButton:
+		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			UpdateEvaluationResult();
+			m_PanelWatch->Open(GetParent(m_Window));
+			m_PanelWatch->UpdateResult();
 		}
 		break;
 
-	case Id_EvaluateStringRadio:
-	case Id_EvaluateNumberRadio:
-		if (HIWORD(wParam) == BN_CLICKED)
+	case IDM_EDITWATCH:
 		{
-			UpdateEvaluationResult();
-		}
-		break;
-
-	case Id_EvaluateExecuteButton:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			HWND result = GetControl(Id_EvaluateResult);
-			const int length = GetWindowTextLength(result);
-			if (length > 0)
+			const size_t index = GetSelectedWatch();
+			if (index != (size_t)-1)
 			{
-				std::wstring command(length + 1, L'\0');
-				GetWindowText(result, &command[0], length + 1);
-				command.resize(length);
-				if (command.starts_with(L"[!"))
-				{
-					GetRainmeter().ExecuteCommand(command.c_str(), m_SkinWindow);
-				}
+				EditWatch(index);
+			}
+		}
+		break;
+
+	case IDM_DELETEWATCH:
+		{
+			const size_t index = GetSelectedWatch();
+			if (index != (size_t)-1)
+			{
+				DeleteWatch(index);
 			}
 		}
 		break;
@@ -1249,10 +1550,21 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
+				static const MenuTemplate s_WatchMenu[] =
+				{
+					MENU_ITEM(IDM_EDITWATCH, IDS_Edit),
+					MENU_ITEM(IDM_DELETEWATCH, IDS_Delete)
+				};
+
 				bool isMeasure = lvi.iGroupId == 0;
+				bool isWatch = lvi.iGroupId == 2;
+				const MenuTemplate* menuTemplate = isMeasure ? s_MeasureMenu :
+					(isWatch ? s_WatchMenu : s_VariableMenu);
+				const UINT menuSize = isMeasure ? _countof(s_MeasureMenu) :
+					(isWatch ? _countof(s_WatchMenu) : _countof(s_VariableMenu));
 				HMENU menu = MenuTemplate::CreateMenu(
-					isMeasure ? s_MeasureMenu : s_VariableMenu,
-					isMeasure ? _countof(s_MeasureMenu) : _countof(s_VariableMenu),
+					menuTemplate,
+					menuSize,
 					GetString);
 
 				if (menu)
@@ -1287,6 +1599,17 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 					DestroyMenu(menu);
 				}
+			}
+		}
+		break;
+
+	case NM_DBLCLK:
+		if (nm->idFrom == Id_SkinsListView)
+		{
+			const size_t index = GetSelectedWatch();
+			if (index != (size_t)-1)
+			{
+				EditWatch(index);
 			}
 		}
 		break;
