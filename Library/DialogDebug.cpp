@@ -705,9 +705,17 @@ public:
 		std::wstring text(length + 1, L'\0');
 		GetWindowText(item, &text[0], length + 1);
 		text.resize(length);
-
 		const std::wstring result = Evaluate(text, IsFormula());
-		SetWindowText(GetControl(Id_Result), result.c_str());
+
+		HWND resultItem = GetControl(Id_Result);
+		const auto firstVisibleLine = SendMessage(resultItem, EM_GETFIRSTVISIBLELINE, 0, 0);
+		SendMessage(resultItem, WM_SETREDRAW, FALSE, 0);
+		SetWindowText(resultItem, result.c_str());
+		const auto updatedFirstVisibleLine = SendMessage(resultItem, EM_GETFIRSTVISIBLELINE, 0, 0);
+		SendMessage(resultItem, EM_LINESCROLL, 0, firstVisibleLine - updatedFirstVisibleLine);
+		SendMessage(resultItem, WM_SETREDRAW, TRUE, 0);
+		RedrawWindow(resultItem, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+
 		EnableWindow(GetControl(Id_ExecuteButton), m_Owner.m_SkinWindow && result.starts_with(L"[!"));
 	}
 
