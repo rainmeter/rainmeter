@@ -947,23 +947,19 @@ void DialogDebug::TabSkins::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(160);
 	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
-	lvc.pszText = (WCHAR*)GetString(IDS_Range);
-	ListView_InsertColumn(item, 1, &lvc);
-	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(90);
 	lvc.pszText = (WCHAR*)GetString(IDS_Number);
-	ListView_InsertColumn(item, 2, &lvc);
-	lvc.iSubItem = 3;
+	ListView_InsertColumn(item, 1, &lvc);
+	lvc.iSubItem = 2;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
 	lvc.pszText = (WCHAR*)GetString(IDS_String);
-	ListView_InsertColumn(item, 3, &lvc);
+	ListView_InsertColumn(item, 2, &lvc);
 
-	// Start 4th column at max width
+	// Start 3rd column at max width
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
@@ -978,23 +974,21 @@ void DialogDebug::TabSkins::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
 
-	// Adjust 4th column
+	// Adjust 3rd column
 	HWND item = GetControl(Id_SkinsListView);
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
-		 ListView_GetColumnWidth(item, 1) +
-		 ListView_GetColumnWidth(item, 2));
-	ListView_SetColumn(item, 3, &lvc);
+		 ListView_GetColumnWidth(item, 1));
+	ListView_SetColumn(item, 2, &lvc);
 }
 
 void DialogDebug::TabSkins::HandleDpiChange()
 {
 	HWND list = GetControl(Id_SkinsListView);
-	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(120));
-	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(80));
-	ListView_SetColumnWidth(list, 2, m_ControlTemplate.ScaleDialogUnits(90));
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(160));
+	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(90));
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
@@ -1053,10 +1047,6 @@ void DialogDebug::TabSkins::UpdateSkinList()
 	}
 }
 
-/*
-** Adds a watch to the list.
-**
-*/
 void DialogDebug::TabSkins::AddWatch(const std::wstring& text, bool formula)
 {
 	m_Watches.push_back({ text, formula });
@@ -1198,14 +1188,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
-		// Range
 		WCHAR buffer[256];
-		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMinValue(), buffer, _countof(buffer));
-		std::wstring range = buffer;
-		range += L"- ";  // GetScaledValue returns an extra space
-		Measure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
-		range += buffer;
-
 		// Number value
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
 		Measure::RemoveTrailingZero(buffer, bufferLen);
@@ -1219,9 +1202,8 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			strValue += L"...";
 		}
 
-		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)numValue.c_str());
-		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)strValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)numValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)strValue.c_str());
 		++lvi.iItem;
 	}
 
@@ -1261,8 +1243,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
-		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)valStr.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
 	}
 
@@ -1289,8 +1270,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
-		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)result.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)result.c_str());
 		++lvi.iItem;
 	}
 
@@ -1433,22 +1413,6 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDM_COPYRANGE:
-		{
-			Measure* measure = getMeasure();
-			if (measure)
-			{
-				WCHAR buffer[256];
-				Measure::GetScaledValue(AUTOSCALE_ON, 1, measure->GetMinValue(), buffer, _countof(buffer));
-				std::wstring range = buffer;
-				range += L"- ";  // GetScaledValue returns an extra space
-				Measure::GetScaledValue(AUTOSCALE_ON, 1, measure->GetMaxValue(), buffer, _countof(buffer));
-				range += buffer;
-				System::SetClipboardText(range);
-			}
-		}
-		break;
-
 	case IDM_COPY:
 		{
 			// Copy variable to clipboard
@@ -1539,10 +1503,12 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
+					MENU_ITEM_GRAYED(0, 0),
+					MENU_ITEM_GRAYED(0, 0),
+					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPYMEASURENAME, 0),
 					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
-					MENU_ITEM(IDM_COPYSTRINGVALUE, 0),
-					MENU_ITEM(IDM_COPYRANGE, 0)
+					MENU_ITEM(IDM_COPYSTRINGVALUE, 0)
 				};
 
 				static const MenuTemplate s_VariableMenu[] =
@@ -1571,6 +1537,29 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				{
 					if (isMeasure)
 					{
+						WCHAR buffer[512] = { 0 };
+						ListView_GetItemText(hwnd, item->iItem, 0, buffer, _countof(buffer));
+						Measure* measure = m_SkinWindow->GetMeasure(buffer);
+						if (measure)
+						{
+							auto getRangeValue = [](double value) -> std::wstring
+							{
+								WCHAR buffer[256];
+								Measure::GetScaledValue(AUTOSCALE_ON, 1, value, buffer, _countof(buffer));
+								std::wstring text = buffer;
+								if (!text.empty() && text.back() == L' ') text.pop_back();
+								return text;
+							};
+
+							std::wstring minValue = L"Min value: ";
+							minValue += getRangeValue(measure->GetMinValue());
+							ModifyMenu(menu, 0, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, minValue.c_str());
+
+							std::wstring maxValue = L"Max value: ";
+							maxValue += getRangeValue(measure->GetMaxValue());
+							ModifyMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, maxValue.c_str());
+						}
+
 						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
 						{
 							std::wstring name = GetString(id);
@@ -1582,7 +1571,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						setMenuItem(IDS_Measure, IDM_COPYMEASURENAME);
 						setMenuItem(IDS_Number, IDM_COPYNUMBERVALUE);
 						setMenuItem(IDS_String, IDM_COPYSTRINGVALUE);
-						setMenuItem(IDS_Range, IDM_COPYRANGE);
 					}
 
 					POINT pt = System::GetCursorPosition();
