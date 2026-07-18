@@ -660,14 +660,16 @@ int Skin::GetZoomedWindowH() const
 	return (int)roundf((float)GetCurrentConfigH() * m_ZoomScale);
 }
 
-int Skin::GetPhysicalWindowW() const
+int Skin::GetPhysicalWindowW(UINT dpi) const
 {
-	return (int)roundf((float)m_WindowW * m_DpiScale * m_ZoomScale);
+	const float dpiScale = dpi ? (float)dpi / USER_DEFAULT_SCREEN_DPI : m_DpiScale;
+	return (int)roundf((float)m_WindowW * dpiScale * m_ZoomScale);
 }
 
-int Skin::GetPhysicalWindowH() const
+int Skin::GetPhysicalWindowH(UINT dpi) const
 {
-	return (int)roundf((float)m_WindowH * m_DpiScale * m_ZoomScale);
+	const float dpiScale = dpi ? (float)dpi / USER_DEFAULT_SCREEN_DPI : m_DpiScale;
+	return (int)roundf((float)m_WindowH * dpiScale * m_ZoomScale);
 }
 
 RECT Skin::GetPhysicalWindowBounds() const
@@ -4659,21 +4661,24 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT Skin::OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	auto* size = (SIZE*)lParam;
+	const UINT dpi = (UINT)wParam;
+	size->cx = GetPhysicalWindowW(dpi);
+	size->cy = GetPhysicalWindowH(dpi);
+	return TRUE;
+}
+
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const UINT dpi = LOWORD(wParam);
-	const RECT* suggested = (const RECT*)lParam;
+	UpdateWindowDpi(dpi);
 
-	if (suggested)
-	{
-		UpdateWindowDpi(dpi);
-
-		auto* suggested = (const RECT*)lParam;
-		m_X.pos = suggested->left;
-		m_Y.pos = suggested->top;
-		RepositionAndResizeWindow();
-	}
-
+	auto* suggested = (const RECT*)lParam;
+	m_X.pos = suggested->left;
+	m_Y.pos = suggested->top;
+	RepositionAndResizeWindow();
 	return 0;
 }
 
@@ -5351,6 +5356,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnDwmCompositionChange, WM_DWMCOMPOSITIONCHANGED)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
+	MESSAGE(OnDpiScaledSize, WM_GETDPISCALEDSIZE)
 	MESSAGE(OnDpiChanged, WM_DPICHANGED)
 	MESSAGE(OnSetWindowFocus, WM_SETFOCUS)
 	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)

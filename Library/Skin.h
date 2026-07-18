@@ -204,8 +204,8 @@ public:
 
 	int GetZoomedWindowW() const;
 	int GetZoomedWindowH() const;
-	int GetPhysicalWindowW() const;
-	int GetPhysicalWindowH() const;
+	int GetPhysicalWindowW(UINT dpi = 0) const;
+	int GetPhysicalWindowH(UINT dpi = 0) const;
 	RECT GetPhysicalWindowBounds() const;
 
 	int LogicalToPhysical(int value) const;
@@ -301,6 +301,7 @@ protected:
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
