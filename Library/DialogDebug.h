@@ -87,7 +87,7 @@ private:
 	public:
 		enum Id
 		{
-			Id_SkinsComboBox = 200,
+			Id_SelectSkinButton = 200,
 			Id_SkinsListView,
 			Id_AddWatchButton
 		};
