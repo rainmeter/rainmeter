@@ -731,12 +731,19 @@ public:
 			if (formula)
 			{
 				double value = 0.0;
-				skin->GetMathParser().CheckedParse(text.c_str(), &value);
-
-				WCHAR buffer[128] = { 0 };
-				int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
-				Measure::RemoveTrailingZero(buffer, bufferLen);
-				text = buffer;
+				const WCHAR* error = skin->GetMathParser().CheckedParse(text.c_str(), &value);
+				if (error)
+				{
+					text = L"Formula failed to parse: ";
+					text += error;
+				}
+				else
+				{
+					WCHAR buffer[128] = { 0 };
+					int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
+					Measure::RemoveTrailingZero(buffer, bufferLen);
+					text = buffer;
+				}
 			}
 		}
 
