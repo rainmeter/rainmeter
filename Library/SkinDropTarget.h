@@ -41,6 +41,8 @@ private:
 	Skin* m_Skin;
 	LONG m_RefCount;
 
+	bool m_OleInitialized;
+	bool m_Registered;
 	bool m_HasDropFiles;
 
 	Microsoft::WRL::ComPtr<IDropTargetHelper> m_DropHelper;
