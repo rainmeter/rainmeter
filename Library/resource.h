@@ -284,6 +284,8 @@
 #define IDM_COPYRANGE                                4073
 #define IDM_LANGUAGEOBSOLETE                         4074
 #define IDM_COPYMEASURENAME                          4075
+#define IDM_EDITWATCH                                4076
+#define IDM_DELETEWATCH                              4077
 #define IDM_INSTALL_NEW_VERSION                      4080
 #define IDM_SKIN_HIDEONMOUSE_NONE                    4081
 #define IDM_SKIN_ZOOM_80                             4082

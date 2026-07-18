@@ -89,15 +89,11 @@ private:
 		{
 			Id_SkinsComboBox = 200,
 			Id_SkinsListView,
-			Id_EvaluateGroup,
-			Id_EvaluateStringRadio,
-			Id_EvaluateNumberRadio,
-			Id_EvaluateEdit,
-			Id_EvaluateResult,
-			Id_EvaluateExecuteButton
+			Id_AddWatchButton
 		};
 
 		TabSkins();
+		~TabSkins();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -115,10 +111,24 @@ private:
 		INT_PTR OnCustomDraw(WPARAM wParam, LPARAM lParam);
 
 	private:
+		class PanelWatch;
+		struct Watch
+		{
+			std::wstring text;
+			bool formula;
+		};
+
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-		void UpdateEvaluationResult();
+		void AddWatch(const std::wstring& text, bool formula);
+		void EditWatch(size_t index);
+		void SaveWatch(size_t index, const std::wstring& text, bool formula);
+		void DeleteWatch(size_t index);
+		size_t GetSelectedWatch();
+		void EnsureWatchVisible(size_t index);
 
 		Skin* m_SkinWindow;
+		std::unique_ptr<PanelWatch> m_PanelWatch;
+		std::vector<Watch> m_Watches;
 	};
 
 	// Plugins tab
