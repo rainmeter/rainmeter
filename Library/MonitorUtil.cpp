@@ -277,12 +277,54 @@ void MonitorUtil::UpdateWorkareaInfo()
 	}
 }
 
+POINT MonitorUtil::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
+{
+	HMONITOR monitorHandle = nullptr;
+	{
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		RECT rect = { point.x, point.y, point.x + size.cx, point.y + size.cy };
+		monitorHandle = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+	}
+
+	const auto monitorHandle = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+	const auto* monitor = GetMultiMonitorInfo().GetByHandle(monitorHandle);
+	if (!monitor)
+	{
+		if (dpi) *dpi = System::GetSystemDpi();
+		return point;
+	}
+
+	if (dpi) *dpi = monitor->dpi;
+
+	POINT result;
+	result.x = monitor->screen.left + MulDiv(point.x - monitor->logicalScreen.left, (int)monitor->dpi, USER_DEFAULT_SCREEN_DPI);
+	result.y = monitor->screen.top + MulDiv(point.y - monitor->logicalScreen.top, (int)monitor->dpi, USER_DEFAULT_SCREEN_DPI);
+	return result;
+}
+
+POINT MonitorUtil::PhysicalToScreenLogical(POINT point)
+{
+	const auto monitorHandle = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+	const auto* monitor = GetMultiMonitorInfo().GetByHandle(monitorHandle);
+	if (!monitor) return point;
+
+	POINT result;
+	result.x = monitor->logicalScreen.left + MulDiv(point.x - monitor->screen.left, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	result.y = monitor->logicalScreen.top + MulDiv(point.y - monitor->screen.top, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	return result;
+}
+
 const MonitorInfo* MultiMonitorInfo::GetForWindow(HWND window) const
 {
 	const auto handle = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+	return GetByHandle(handle);
+}
+
+const MonitorInfo* MultiMonitorInfo::GetByHandle(HMONITOR monitorHandle) const
+{
 	for (const auto& monitor : monitors)
 	{
-		if (monitor.handle == handle) return &monitor;
+		if (monitor.handle == monitorHandle) return &monitor;
 	}
 
 	return nullptr;

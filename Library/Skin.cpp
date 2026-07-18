@@ -2058,7 +2058,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	}
 	else
 	{
-		physicalPos = System::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
+		physicalPos = MonitorUtil::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
 	}
 
 	m_X.pos = physicalPos.x;

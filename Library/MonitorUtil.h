@@ -43,6 +43,7 @@ struct MultiMonitorInfo
 	int GetDisplayCount() const { return displayCount; }
 	const MonitorInfo* GetByDeviceNumber(int deviceNumber) const;
 	const MonitorInfo* GetByDisplayNumber(int activeNumber) const;
+	const MonitorInfo* GetByHandle(HMONITOR monitorHandle) const;
 	const MonitorInfo* GetForWindow(HWND window) const;
 };
 
@@ -53,6 +54,9 @@ void EnableDpiAppCompatMode();
 const MultiMonitorInfo& GetMultiMonitorInfo();
 void ClearMultiMonitorInfo();
 void UpdateWorkareaInfo();
+
+POINT ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi = nullptr);
+POINT PhysicalToScreenLogical(POINT point);
 
 }  // namespace MonitorUtil
 

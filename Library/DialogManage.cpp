@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "MonitorUtil.h"
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "System.h"
@@ -1328,7 +1329,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
 				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
 				logicalPos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
+				const auto physicalPos = MonitorUtil::ScreenLogicalToPhysical(logicalPos, logicalSize);
 				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
 
 				const int newX = m_SkinWindow->GetScreenLogicalPosition().x;
@@ -1352,7 +1353,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
 				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
 				logicalPos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
+				const auto physicalPos = MonitorUtil::ScreenLogicalToPhysical(logicalPos, logicalSize);
 				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
 
 				const int newY = m_SkinWindow->GetScreenLogicalPosition().y;
