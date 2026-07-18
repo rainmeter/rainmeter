@@ -274,7 +274,27 @@ bool Canvas::Resize(int w, int h)
 
 	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 	HRESULT hr = m_SwapChain->ResizeBuffers(0, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
-	if (FAILED(hr)) return false;
+	if (FAILED(hr))
+	{
+		HWND window = nullptr;
+		ComPtr<IDXGIAdapter> dxgiAdapter;
+		ComPtr<IDXGIFactory2> dxgiFactory;
+
+		hr = m_SwapChain->GetHwnd(&window);
+		if (FAILED(hr)) return false;
+
+		hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+		if (FAILED(hr)) return false;
+
+		hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+		if (FAILED(hr)) return false;
+
+		dxgiFactory->CreateSwapChainForHwnd(c_DxgiDevice.Get(), window, &g_SwapChainDesc, nullptr, nullptr, m_SwapChain.ReleaseAndGetAddressOf());
+
+		// Even if the swapchain was recreated, we return false here. The recreate is needed to avoid
+		// keeping a now invalid swapchain around.
+		return false;
+	}
 
 	hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return false;
