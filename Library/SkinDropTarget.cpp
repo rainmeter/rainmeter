@@ -14,21 +14,36 @@
 SkinDropTarget::SkinDropTarget(Skin* skin) :
 	m_Skin(skin),
 	m_RefCount(1),
+	m_OleInitialized(false),
+	m_Registered(false),
 	m_HasDropFiles(false)
 {
+	const HRESULT oleHr = OleInitialize(nullptr);
+	if (FAILED(oleHr))
+	{
+		LogErrorF(m_Skin, L"Unable to initialize OLE (%08x)", oleHr);
+		return;
+	}
+	m_OleInitialized = true;
+
 	CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_DropHelper));
 
 	const HRESULT hr = RegisterDragDrop(skin->GetWindow(), this);
 	if (FAILED(hr))
 	{
 		LogErrorF(m_Skin, L"Unable to register drag and drop (%08x)", hr);
+		return;
 	}
+
+	m_Registered = true;
 }
 
 SkinDropTarget::~SkinDropTarget()
 {
 	m_Skin->ClearDropTarget();
-	RevokeDragDrop(m_Skin->GetWindow());
+
+	if (m_Registered) RevokeDragDrop(m_Skin->GetWindow());
+	if (m_OleInitialized) OleUninitialize();
 }
 
 HRESULT STDMETHODCALLTYPE SkinDropTarget::QueryInterface(REFIID riid, void** ppvObject)
