@@ -2890,7 +2890,10 @@ void Skin::Redraw()
 
 		if (w != m_Canvas.GetW() || h != m_Canvas.GetH())
 		{
-			m_Canvas.Resize(w, h);
+			if (!m_Canvas.Resize(w, h))
+			{
+				LogErrorF(this, L"Canvas resize failed (W=%d H=%d)", w, h);
+			}
 		}
 	}
 
