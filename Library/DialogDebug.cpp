@@ -667,7 +667,7 @@ public:
 
 		ShowDialogWindow(
 			L"Add Watch",
-			0, 0, 400, 172,
+			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
 			parent);
@@ -683,7 +683,7 @@ public:
 
 		ShowDialogWindow(
 			L"Edit Watch",
-			0, 0, 400, 172,
+			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
 			parent);
@@ -778,19 +778,19 @@ private:
 				6, 24, 388, 10,
 				WS_VISIBLE, 0),
 			Control::Edit(Id_Edit, 0,
-				6, 40, 388, 48,
+				6, 40, 388, 50,
 				WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0),
 			Control::Edit(Id_Result, 0,
-				6, 94, 388, 48,
+				6, 96, 388, 50,
 				WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0),
 			Control::Button(Id_ExecuteButton, 0,
-				157, 152, 75, 14,
+				157, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(Id_AddButton, 0,
-				238, 152, 75, 14,
+				238, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Button(Id_CancelButton, 0,
-				319, 152, 75, 14,
+				319, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP, 0)
 		};
 
