@@ -696,6 +696,26 @@ public:
 		UpdateResult();
 	}
 
+	bool AppendExpression(const std::wstring& name, bool measure)
+	{
+		if (!m_Window || !IsWindowVisible(m_Window)) return false;
+
+		std::wstring text;
+		if (measure)
+		{
+			text = IsFormula() ? name : L"[" + name + L"]";
+		}
+		else
+		{
+			text = L"#" + name + L"#";
+		}
+
+		HWND item = GetControl(Id_Edit);
+		SendMessage(item, EM_REPLACESEL, TRUE, (LPARAM)text.c_str());
+		SetFocus(item);
+		return true;
+	}
+
 	void UpdateResult()
 	{
 		HWND item = GetControl(Id_Edit);
@@ -1670,7 +1690,24 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				OnCommand(IDM_ADD_WATCH, 0);
+				const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					WCHAR buffer[512] = { 0 };
+					ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
+
+					LVITEM lvi = { 0 };
+					lvi.mask = LVIF_GROUPID;
+					lvi.iItem = sel;
+					lvi.iGroupId = -1;
+					ListView_GetItem(hwnd, &lvi);
+
+					if ((lvi.iGroupId == 0 || lvi.iGroupId == 1) &&
+						!m_PanelWatch->AppendExpression(buffer, lvi.iGroupId == 0))
+					{
+						OnCommand(IDM_ADD_WATCH, 0);
+					}
+				}
 			}
 		}
 		break;
