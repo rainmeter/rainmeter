@@ -1391,6 +1391,33 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_ADD_WATCH:
+		{
+			HWND hwnd = GetControl(Id_SkinsListView);
+			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[512] = { 0 };
+				ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
+
+				LVITEM lvi = { 0 };
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = sel;
+				lvi.iGroupId = -1;
+				ListView_GetItem(hwnd, &lvi);
+
+				if (lvi.iGroupId == 0)
+				{
+					AddWatch(L"[" + std::wstring(buffer) + L"]", false);
+				}
+				else if (lvi.iGroupId == 1)
+				{
+					AddWatch(L"#" + std::wstring(buffer) + L"#", false);
+				}
+			}
+		}
+		break;
+
 	case IDM_COPYMEASURENAME:
 		{
 			Measure* measure = getMeasure();
@@ -1532,6 +1559,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					MENU_ITEM_GRAYED(0, 0),
 					MENU_ITEM_GRAYED(0, 0),
 					MENU_SEPARATOR(),
+					MENU_ITEM(IDM_ADD_WATCH, 0),
+					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPYMEASURENAME, 0),
 					MENU_ITEM(IDM_COPYNUMBERVALUE, 0),
 					MENU_ITEM(IDM_COPYSTRINGVALUE, 0)
@@ -1539,6 +1568,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_VariableMenu[] =
 				{
+					MENU_ITEM(IDM_ADD_WATCH, 0),
+					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
@@ -1561,6 +1592,11 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				if (menu)
 				{
+					if (!isWatch)
+					{
+						ModifyMenu(menu, IDM_ADD_WATCH, MF_BYCOMMAND, IDM_ADD_WATCH, L"Add watch");
+					}
+
 					if (isMeasure)
 					{
 						WCHAR buffer[512] = { 0 };
@@ -1624,6 +1660,10 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			if (index != (size_t)-1)
 			{
 				EditWatch(index);
+			}
+			else
+			{
+				OnCommand(IDM_ADD_WATCH, 0);
 			}
 		}
 		break;
