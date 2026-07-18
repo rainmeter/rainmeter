@@ -186,9 +186,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabSkins.GetControl(TabSkins::Id_MeasuresListView);
-	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabSkins.GetControl(TabSkins::Id_VariablesListView);
+	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
@@ -660,33 +658,28 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			0, 0, 567, 160,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
-		Control::ListView(Id_MeasuresListView, 0,
-			0, 22, 280, 214,
+		Control::ListView(Id_SkinsListView, 0,
+			0, 26, 567, 224,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
-			Control::ANCHOR_LEFT | Control::ANCHOR_CENTER_X | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
-		Control::ListView(Id_VariablesListView, 0,
-			287, 22, 280, 214,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_CENTER_X | Control::ANCHOR_TOP | Control::ANCHOR_BOTTOM),
-
+			Control::ANCHOR_ALL),
 		Control::GroupBox(Id_EvaluateGroup, 0,
-			0, 246, 567, 91,
+			0, 262, 567, 75,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateEdit, 0,
-			7, 263, 465, 30,
+			7, 279, 465, 22,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Edit(Id_EvaluateResult, 0,
-			7, 299, 465, 30,
+			7, 307, 465, 22,
 			WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateStringRadio, 0,
-			480, 263, 80, 14,
+			480, 279, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::RadioButton(Id_EvaluateNumberRadio, 0,
-			480, 276, 80, 14,
+			480, 292, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
 		Control::Button(Id_EvaluateExecuteButton, 0,
@@ -700,15 +693,29 @@ void DialogDebug::TabSkins::Create(HWND owner)
 
 void DialogDebug::TabSkins::Initialize()
 {
+	// Add columns to the list view
+	HWND item = GetControl(Id_SkinsListView);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVGROUP lvg = { 0 };
+	lvg.cbSize = sizeof(LVGROUP);
+	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+	lvg.iGroupId = 0;
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Measures);
+	ListView_InsertGroup(item, 0, &lvg);
+	lvg.iGroupId = 1;
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Variables);
+	ListView_InsertGroup(item, 1, &lvg);
+
+	ListView_EnableGroupView(item, TRUE);
+
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
-
-	HWND item = GetControl(Id_MeasuresListView);
-	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	lvc.iSubItem = 0;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
-	lvc.pszText = (WCHAR*)GetString(IDS_Measures);
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(80);
@@ -722,17 +729,6 @@ void DialogDebug::TabSkins::Initialize()
 	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
 	lvc.pszText = (WCHAR*)GetString(IDS_String);
 	ListView_InsertColumn(item, 3, &lvc);
-
-	item = GetControl(Id_VariablesListView);
-	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
-	lvc.iSubItem = 0;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(120);
-	lvc.pszText = (WCHAR*)GetString(IDS_Variables);
-	ListView_InsertColumn(item, 0, &lvc);
-	lvc.iSubItem = 1;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(110);  // Resized later
-	lvc.pszText = (WCHAR*)GetString(IDS_String);
-	ListView_InsertColumn(item, 1, &lvc);
 
 	// Start 4th column at max width
 	RECT rc;
@@ -753,35 +749,23 @@ void DialogDebug::TabSkins::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
 
-	const int paneGap = m_ControlTemplate.ScaleDialogUnits(12);
-	const int listInset = m_ControlTemplate.ScaleDialogUnits(7);
-	const int paneWidth = (w - paneGap) / 2;
-	const int listRowWidth = (paneWidth - (listInset * 2)) - m_ControlTemplate.ScaleDialogUnits(13);
-
-	// Adjust measures string column
-	HWND item = GetControl(Id_MeasuresListView);
+	// Adjust 4th column
+	HWND item = GetControl(Id_SkinsListView);
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = listRowWidth -
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) -
 		(ListView_GetColumnWidth(item, 0) +
 		 ListView_GetColumnWidth(item, 1) +
 		 ListView_GetColumnWidth(item, 2));
 	ListView_SetColumn(item, 3, &lvc);
-
-	// Adjust variables string column
-	item = GetControl(Id_VariablesListView);
-	lvc.cx = listRowWidth - ListView_GetColumnWidth(item, 0);
-	ListView_SetColumn(item, 1, &lvc);
 }
 
 void DialogDebug::TabSkins::HandleDpiChange()
 {
-	HWND list = GetControl(Id_MeasuresListView);
+	HWND list = GetControl(Id_SkinsListView);
 	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(120));
 	ListView_SetColumnWidth(list, 1, m_ControlTemplate.ScaleDialogUnits(80));
 	ListView_SetColumnWidth(list, 2, m_ControlTemplate.ScaleDialogUnits(90));
-	list = GetControl(Id_VariablesListView);
-	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(120));
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
@@ -827,9 +811,7 @@ void DialogDebug::TabSkins::UpdateSkinList()
 		{
 			m_SkinWindow = nullptr;
 			ComboBox_SetCurSel(item, -1);
-			item = GetControl(Id_MeasuresListView);
-			ListView_DeleteAllItems(item);
-			item = GetControl(Id_VariablesListView);
+			item = GetControl(Id_SkinsListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -871,31 +853,30 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		return;
 	}
 
-	HWND measuresList = GetControl(Id_MeasuresListView);
-	HWND variablesList = GetControl(Id_VariablesListView);
-	SendMessage(measuresList, WM_SETREDRAW, FALSE, 0);
-	SendMessage(variablesList, WM_SETREDRAW, FALSE, 0);
-	int measureCount = ListView_GetItemCount(measuresList);
-	int variableCount = ListView_GetItemCount(variablesList);
+	HWND item = GetControl(Id_SkinsListView);
+	SendMessage(item, WM_SETREDRAW, FALSE, 0);
+	int count = ListView_GetItemCount(item);
 
 	LVITEM lvi = { 0 };
-	lvi.mask = LVIF_TEXT;
+	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
 	lvi.iSubItem = 0;
 	lvi.iItem = 0;
+	lvi.lParam = 0;
 
+	lvi.iGroupId = 0;
 	const std::vector<Measure*>& measures = m_SkinWindow->GetMeasures();
 	std::vector<Measure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
 	{
 		lvi.pszText = (WCHAR*)(*j)->GetName();
 
-		if (lvi.iItem < measureCount)
+		if (lvi.iItem < count)
 		{
-			ListView_SetItem(measuresList, &lvi);
+			ListView_SetItem(item, &lvi);
 		}
 		else
 		{
-			ListView_InsertItem(measuresList, &lvi);
+			ListView_InsertItem(item, &lvi);
 		}
 
 		// Range
@@ -919,30 +900,19 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			strValue += L"...";
 		}
 
-		ListView_SetItemText(measuresList, lvi.iItem, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(measuresList, lvi.iItem, 2, (WCHAR*)numValue.c_str());
-		ListView_SetItemText(measuresList, lvi.iItem, 3, (WCHAR*)strValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)numValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)strValue.c_str());
 		++lvi.iItem;
 	}
 
-	while (measureCount > lvi.iItem)
-	{
-		ListView_DeleteItem(measuresList, lvi.iItem);
-		--measureCount;
-	}
-
-	// Re-select previously selected measure
-	const auto focusedSelectedFlags = LVNI_FOCUSED | LVNI_SELECTED;
-	int selIndex = ListView_GetNextItem(measuresList, -1, focusedSelectedFlags);
-	UINT state = selIndex == -1 ? 0 : focusedSelectedFlags;
-	ListView_SetItemState(measuresList, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
-
-	lvi.mask = LVIF_TEXT | LVIF_PARAM;
-	lvi.iItem = 0;
+	lvi.iGroupId = 1;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
 		const WCHAR* name = (*iter).first.c_str();
+		lvi.lParam = (LPARAM)name;
+
 		if (wcscmp(name, L"@") == 0)
 		{
 			// Ignore reserved variables
@@ -953,7 +923,6 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		if (!tmpStr) continue;  // Variable name does not exist
 
 		lvi.pszText = (WCHAR*)tmpStr->c_str();
-		lvi.lParam = (LPARAM)name;
 
 		// Truncate and add "..." if necessary
 		std::wstring valStr = (*iter).second;
@@ -963,41 +932,50 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			valStr += L"...";
 		}
 
-		if (lvi.iItem < variableCount)
+		if (lvi.iItem < count)
 		{
-			ListView_SetItem(variablesList, &lvi);
+			ListView_SetItem(item, &lvi);
 		}
 		else
 		{
-			ListView_InsertItem(variablesList, &lvi);
+			ListView_InsertItem(item, &lvi);
 		}
 
-		ListView_SetItemText(variablesList, lvi.iItem, 1, (WCHAR*)valStr.c_str());
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem, 3, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
 	}
 
-	while (variableCount > lvi.iItem)
+	// Delete unnecessary items
+	while (count > lvi.iItem)
 	{
-		ListView_DeleteItem(variablesList, lvi.iItem);
-		--variableCount;
+		ListView_DeleteItem(item, lvi.iItem);
+		--count;
 	}
 
-	selIndex = ListView_GetNextItem(variablesList, -1, LVNI_FOCUSED | LVNI_SELECTED);
+	int selIndex = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
 
-	ListView_SortItems(variablesList, ListSortProc, 0);
+	ListView_SortItems(item, ListSortProc, 0);
 
-	// Re-select previously selected variable
-	state = selIndex == -1 ? 0 : LVIS_FOCUSED | LVIS_SELECTED;
-	ListView_SetItemState(variablesList, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
+	UINT state = selIndex == -1 ? 0 : LVIS_FOCUSED | LVIS_SELECTED;
 
-	SendMessage(measuresList, WM_SETREDRAW, TRUE, 0);
-	SendMessage(variablesList, WM_SETREDRAW, TRUE, 0);
+	// Re-select previously selected item (or deselect group header)
+	ListView_SetItemState(item, selIndex, state, LVIS_FOCUSED | LVIS_SELECTED);
+
+	SendMessage(item, WM_SETREDRAW, TRUE, 0);
 
 	UpdateEvaluationResult();
 }
 
 int CALLBACK DialogDebug::TabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
+	// Measures
+	if (!lParam1 && !lParam2) return 0;
+	if (!lParam1) return -1;
+	if (!lParam2) return 1;
+
+	// Variables
 	return wcscmp((const WCHAR*)lParam1, (const WCHAR*)lParam2);
 }
 
@@ -1060,7 +1038,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	auto getMeasure = [&]() -> Measure*
 	{
-		HWND hwnd = GetControl(Id_MeasuresListView);
+		HWND hwnd = GetControl(Id_SkinsListView);
 		const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 		if (sel != -1)
 		{
@@ -1173,7 +1151,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPY:
 		{
 			// Copy variable to clipboard
-			HWND hwnd = GetControl(Id_VariablesListView);
+			HWND hwnd = GetControl(Id_SkinsListView);
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
@@ -1215,7 +1193,13 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					ListView_GetItemText(hwnd, sel, 0, buffer, _countof(buffer));
 					std::wstring temp = buffer;
 
-					if (nm->idFrom == Id_MeasuresListView)
+					LVITEM lvi = { 0 };
+					lvi.mask = LVIF_GROUPID;
+					lvi.iItem = sel;
+					lvi.iSubItem = 0;
+					lvi.iGroupId = -1;
+					ListView_GetItem(hwnd, &lvi);
+					if (lvi.iGroupId == 0)  // It's a measure
 					{
 						Measure* measure = m_SkinWindow->GetMeasure(temp);
 						if (measure)
@@ -1224,7 +1208,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 							System::SetClipboardText(strValue);
 						}
 					}
-					else if (nm->idFrom == Id_VariablesListView)
+					else if (lvi.iGroupId == 1)  // It's a Variable
 					{
 						std::wstring variable;
 						if (m_SkinWindow->GetParser().GetVariable(temp, variable))
@@ -1238,11 +1222,20 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case NM_RCLICK:
-		if (nm->idFrom == Id_MeasuresListView || nm->idFrom == Id_VariablesListView)
+		if (nm->idFrom == Id_SkinsListView)
 		{
 			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 			if (sel != -1)
 			{
+				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
+
+				LVITEM lvi = { 0 };
+				lvi.mask = LVIF_GROUPID;
+				lvi.iItem = item->iItem;
+				lvi.iSubItem = 0;
+				lvi.iGroupId = -1;
+				ListView_GetItem(hwnd, &lvi);
+
 				static const MenuTemplate s_MeasureMenu[] =
 				{
 					MENU_ITEM(IDM_COPYMEASURENAME, 0),
@@ -1256,7 +1249,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
 				};
 
-				bool isMeasure = nm->idFrom == Id_MeasuresListView;
+				bool isMeasure = lvi.iGroupId == 0;
 				HMENU menu = MenuTemplate::CreateMenu(
 					isMeasure ? s_MeasureMenu : s_VariableMenu,
 					isMeasure ? _countof(s_MeasureMenu) : _countof(s_VariableMenu),
@@ -1330,16 +1323,17 @@ INT_PTR DialogDebug::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 		{
 			// Only process 1st column
 			if (lvcd->iSubItem != 0) return FALSE;
-			if (lvcd->nmcd.hdr.idFrom != Id_MeasuresListView) return FALSE;
 
+			// Only process items in 1st group
 			WCHAR buffer[512] = { 0 };
 			LVITEM lvi = { 0 };
-			lvi.mask = LVIF_TEXT;
+			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
 			lvi.iSubItem = 0;
 			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
 			lvi.pszText = buffer;
 			lvi.cchTextMax = _countof(buffer);
 			ListView_GetItem(hwnd, &lvi);
+			if (lvi.iGroupId != 0) return FALSE;
 
 			std::wstring name = buffer;
 			Measure* measure = m_SkinWindow->GetMeasure(name);
