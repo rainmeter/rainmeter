@@ -496,11 +496,10 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			static const MenuTemplate s_LogFileMenu[] =
 			{
-				MENU_ITEM(Id_ShowLogFileMenuItem, IDS_ShowLogFile),
-				MENU_SEPARATOR(),
 				MENU_ITEM(Id_StartLoggingMenuItem, IDS_StartLogging),
 				MENU_ITEM(Id_StopLoggingMenuItem, IDS_StopLogging),
 				MENU_SEPARATOR(),
+				MENU_ITEM(Id_ShowLogFileMenuItem, IDS_ShowLogFile),
 				MENU_ITEM(Id_DeleteLogFileMenuItem, IDS_DeleteLogFile)
 			};
 
