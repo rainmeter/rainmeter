@@ -89,6 +89,7 @@ private:
 		{
 			Id_SelectSkinButton = 200,
 			Id_SkinsListView,
+			Id_SkinMenuButton,
 			Id_AddWatchButton
 		};
 
