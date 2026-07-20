@@ -467,6 +467,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
 				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
 			DestroyMenu(menu);
+			SetFocus(GetControl(Id_LogListView));
 		}
 		break;
 
@@ -522,6 +523,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
 				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
 			DestroyMenu(menu);
+			SetFocus(GetControl(Id_LogListView));
 		}
 		break;
 
