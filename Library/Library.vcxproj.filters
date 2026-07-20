@@ -301,6 +301,7 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="MonitorUtil.h" />
     <ClInclude Include="Net.h" />
+    <ClInclude Include="Pcre.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />

@@ -267,6 +267,7 @@
     <ClInclude Include="NowPlaying\PlayerWinamp.h" />
     <ClInclude Include="NowPlaying\PlayerWLM.h" />
     <ClInclude Include="NowPlaying\PlayerWMP.h" />
+    <ClInclude Include="Pcre.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
     <ClInclude Include="SkinDropTarget.h" />
