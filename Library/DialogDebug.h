@@ -49,7 +49,7 @@ private:
 		enum Id
 		{
 			Id_LogListView = 100,
-			Id_LogMenuButton,
+			Id_TypeMenuButton,
 			Id_LogFileMenuButton,
 			Id_ErrorMenuItem,
 			Id_WarningMenuItem,

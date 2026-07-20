@@ -241,12 +241,12 @@ void DialogDebug::TabLog::Create(HWND owner)
 			0, 22, 570, 315,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
-		Control::Button(Id_LogMenuButton, IDS_Type,
-			335, 0, 75, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
+		Control::Button(Id_TypeMenuButton, IDS_Type,
+			0, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_LogFileMenuButton, 0,
-			415, 0, 75, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
+			80, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_ClearButton, IDS_Clear,
 			495, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP)
@@ -261,7 +261,7 @@ void DialogDebug::TabLog::Create(HWND owner)
 */
 void DialogDebug::TabLog::Initialize()
 {
-	Dialog::SetMenuButton(GetControl(Id_LogMenuButton));
+	Dialog::SetMenuButton(GetControl(Id_TypeMenuButton));
 	Dialog::SetMenuButton(GetControl(Id_LogFileMenuButton));
 	SetWindowText(GetControl(Id_LogFileMenuButton), L"Log file");
 
@@ -441,7 +441,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case Id_LogMenuButton:
+	case Id_TypeMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			static const MenuTemplate s_LogMenu[] =
