@@ -1960,11 +1960,9 @@ void DialogDebug::TabDisplay::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
 	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(410);
 	lvc.pszText = (WCHAR*)GetString(IDS_Value);
 	ListView_InsertColumn(item, 1, &lvc);
 
@@ -2036,6 +2034,8 @@ void DialogDebug::TabDisplay::Initialize()
 	}
 
 	ListView_EnableGroupView(item, TRUE);
+	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
+	ListView_SetColumnWidth(item, 1, LVSCW_AUTOSIZE_USEHEADER);
 
 	RECT rc;
 	GetClientRect(m_Window, &rc);
@@ -2046,18 +2046,13 @@ void DialogDebug::TabDisplay::Initialize()
 void DialogDebug::TabDisplay::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
-
-	HWND item = GetControl(Id_DisplaysListView);
-	LVCOLUMN lvc = { 0 };
-	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) - ListView_GetColumnWidth(item, 0);
-	ListView_SetColumn(item, 1, &lvc);
 }
 
 void DialogDebug::TabDisplay::HandleDpiChange()
 {
 	HWND list = GetControl(Id_DisplaysListView);
-	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
+	ListView_SetColumnWidth(list, 0, LVSCW_AUTOSIZE);
+	ListView_SetColumnWidth(list, 1, LVSCW_AUTOSIZE_USEHEADER);
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
@@ -2095,11 +2090,9 @@ void DialogDebug::TabNetwork::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
 	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
-	lvc.cx = m_ControlTemplate.ScaleDialogUnits(410);
 	lvc.pszText = (WCHAR*)GetString(IDS_Value);
 	ListView_InsertColumn(item, 1, &lvc);
 
@@ -2177,6 +2170,8 @@ void DialogDebug::TabNetwork::Initialize()
 	}
 
 	ListView_EnableGroupView(item, TRUE);
+	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
+	ListView_SetColumnWidth(item, 1, LVSCW_AUTOSIZE_USEHEADER);
 
 	RECT rc;
 	GetClientRect(m_Window, &rc);
@@ -2187,18 +2182,13 @@ void DialogDebug::TabNetwork::Initialize()
 void DialogDebug::TabNetwork::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
-
-	HWND item = GetControl(Id_NetworkListView);
-	LVCOLUMN lvc = { 0 };
-	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) - ListView_GetColumnWidth(item, 0);
-	ListView_SetColumn(item, 1, &lvc);
 }
 
 void DialogDebug::TabNetwork::HandleDpiChange()
 {
 	HWND list = GetControl(Id_NetworkListView);
-	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
+	ListView_SetColumnWidth(list, 0, LVSCW_AUTOSIZE);
+	ListView_SetColumnWidth(list, 1, LVSCW_AUTOSIZE_USEHEADER);
 
 	RECT rect;
 	GetClientRect(m_Window, &rect);
