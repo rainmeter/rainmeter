@@ -5392,6 +5392,8 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	UpdateWindowDpi();
+
 	// Move the window temporarily
 	ResizeWindow(false);
 
@@ -5400,7 +5402,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
-	UpdateWindowBounds(SWP_NOSIZE);
+	UpdateWindowBounds(SWP_NOSENDCHANGING);
 
 	if (!m_OnDisplayMetricsChangeAction.empty())
 	{
