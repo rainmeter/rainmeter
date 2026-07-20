@@ -2001,8 +2001,7 @@ void DialogDebug::TabDisplay::Initialize()
 	auto formatRect = [](const RECT& rect)
 	{
 		WCHAR buffer[128];
-		_snwprintf_s(buffer, _TRUNCATE, L"X=%i, Y=%i, R=%i, B=%i (%i x %i)",
-			rect.left, rect.top, rect.right, rect.bottom, rect.right - rect.left, rect.bottom - rect.top);
+		_snwprintf_s(buffer, _TRUNCATE, L"X=%i, Y=%i, W=%i, H=%i", rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 		return std::wstring(buffer);
 	};
 
