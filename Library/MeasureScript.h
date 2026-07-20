@@ -28,6 +28,8 @@ public:
 
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
+	const std::wstring& GetScriptFile() { return m_LuaScript.GetFile(); }
+
 	void UninitializeLuaScript();
 
 protected:

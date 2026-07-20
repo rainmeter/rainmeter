@@ -12,6 +12,8 @@
 #include "Logger.h"
 #include "Skin.h"
 
+class DirectoryWatcher;
+
 class DialogDebug : public Dialog
 {
 public:
@@ -90,6 +92,7 @@ private:
 			Id_SelectSkinButton = 200,
 			Id_SkinsListView,
 			Id_SkinMenuButton,
+			Id_AutoRefreshCheckBox,
 			Id_AddWatchButton
 		};
 
@@ -126,8 +129,13 @@ private:
 		void DeleteWatch(size_t index);
 		size_t GetSelectedWatch();
 		void EnsureWatchVisible(size_t index);
+		void UpdateDirectoryWatcher();
+		static void OnDirectoryChange(const WCHAR* path, void* context);
 
 		Skin* m_SkinWindow;
+		bool m_AutoRefresh;
+		std::unique_ptr<DirectoryWatcher> m_DirectoryWatcher;
+		std::vector<std::wstring> m_AutoRefreshFiles;
 		std::unique_ptr<PanelWatch> m_PanelWatch;
 		std::vector<Watch> m_Watches;
 	};

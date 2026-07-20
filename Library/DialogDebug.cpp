@@ -12,9 +12,11 @@
 #include "System.h"
 #include "TrayIcon.h"
 #include "Measure.h"
+#include "MeasureScript.h"
 #include "resource.h"
 #include "DialogDebug.h"
 #include "../Common/FileUtil.h"
+#include "../Common/DirectoryWatcher.h"
 #include "../Common/MathParser.h"
 #include "../Common/StringUtil.h"
 
@@ -927,6 +929,8 @@ private:
 
 DialogDebug::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
+	m_AutoRefresh(false),
+	m_DirectoryWatcher(std::make_unique<DirectoryWatcher>()),
 	m_PanelWatch(std::make_unique<PanelWatch>(*this))
 {
 }
@@ -943,6 +947,10 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			0, 0, 220, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
+		Control::CheckBox(Id_AutoRefreshCheckBox, 0,
+			226, 0, 150, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::Button(Id_SkinMenuButton, 0,
 			415, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
@@ -1006,6 +1014,8 @@ void DialogDebug::TabSkins::Initialize()
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
 	SetWindowText(GetControl(Id_SelectSkinButton), L"Select Skin...");
+	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Auto refresh on edit");
+	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
 	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
 	SetWindowText(GetControl(Id_AddWatchButton), L"Add Watch...");
 
@@ -1087,6 +1097,36 @@ void DialogDebug::TabSkins::UpdateSkinList()
 	HWND button = GetControl(Id_SelectSkinButton);
 	SetWindowText(button, skinName.empty() ? L"Select Skin..." : skinName.c_str());
 	RedrawWindow(button, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+	UpdateDirectoryWatcher();
+}
+
+void DialogDebug::TabSkins::UpdateDirectoryWatcher()
+{
+	m_DirectoryWatcher->Stop();
+	if (!m_AutoRefresh || !m_SkinWindow) return;
+
+	m_AutoRefreshFiles = m_SkinWindow->GetParser().GetIniFiles();
+	for (Measure* measure : m_SkinWindow->GetMeasures())
+	{
+		if (measure->GetTypeID() == TypeID<MeasureScript>())
+		{
+			const std::wstring& file = static_cast<MeasureScript*>(measure)->GetScriptFile();
+			if (!file.empty()) m_AutoRefreshFiles.push_back(file);
+		}
+	}
+
+	m_DirectoryWatcher->Start(m_SkinWindow->GetRootPath(), true, OnDirectoryChange, this);
+}
+
+void DialogDebug::TabSkins::OnDirectoryChange(const WCHAR* path, void* context)
+{
+	TabSkins* tab = static_cast<TabSkins*>(context);
+	const auto& files = tab->m_AutoRefreshFiles;
+	if (std::find_if(files.begin(), files.end(), [&](const std::wstring& file)
+		{ return _wcsicmp(file.c_str(), path) == 0; }) != files.end())
+	{
+		PostMessage(tab->m_SkinWindow->GetWindow(), WM_METERWINDOW_DELAYED_REFRESH, 0, 0);
+	}
 }
 
 void DialogDebug::TabSkins::AddWatch(const std::wstring& text, bool formula)
@@ -1412,6 +1452,14 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
 			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow);
+		}
+		break;
+
+	case Id_AutoRefreshCheckBox:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			m_AutoRefresh = !m_AutoRefresh;
+			UpdateDirectoryWatcher();
 		}
 		break;
 
