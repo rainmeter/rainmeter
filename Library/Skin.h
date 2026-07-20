@@ -347,7 +347,7 @@ private:
 	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
 
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
-	void RepositionAndResizeWindow();
+	void UpdateWindowBounds(UINT flags);
 	void UpdateWindowDpi(UINT dpi = 0);
 	void UpdateWindowDpiAndBounds(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);

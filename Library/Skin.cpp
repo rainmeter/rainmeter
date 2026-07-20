@@ -544,10 +544,7 @@ void Skin::Refresh(bool init, bool all)
 		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
-	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, GetPhysicalWindowW(), GetPhysicalWindowH(), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-	if (m_SelectionOverlay) m_SelectionOverlay->Update();
-
+	UpdateWindowBounds(SWP_NOSENDCHANGING);
 	ComputeOptionValueFromPosition();
 
 	if (init)
@@ -722,26 +719,13 @@ POINT Skin::GetScreenLogicalPosition() const
 	return { r.left, r.top };
 }
 
-void Skin::RepositionAndResizeWindow()
+void Skin::UpdateWindowBounds(UINT flags)
 {
-	SetWindowPos(
-		m_Window,
-		nullptr,
-		m_X.pos,
-		m_Y.pos,
-		GetPhysicalWindowW(),
-		GetPhysicalWindowH(),
-		SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	const auto w = GetPhysicalWindowW();
+	const auto h = GetPhysicalWindowH();
+	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
-
-	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
-	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
-	// prevent D2D from erorring out.
-	if (m_State == STATE_RUNNING)
-	{
-		Redraw();
-	}
 }
 
 void Skin::UpdateWindowDpi(UINT dpi)
@@ -766,7 +750,7 @@ void Skin::UpdateWindowDpiAndBounds(UINT dpi)
 	{
 		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
-	RepositionAndResizeWindow();
+	UpdateWindowBounds(SWP_NOSENDCHANGING);
 }
 
 void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor)
@@ -839,7 +823,8 @@ void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specific
 */
 void Skin::MoveWindow(int x, int y)
 {
-	SetWindowPos(m_Window, nullptr, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	OnMove(WM_MOVE, 0, MAKELPARAM(x, y));
+	UpdateWindowBounds(SWP_NOSIZE);
 	SavePositionIfAppropriate();
 }
 
@@ -4678,7 +4663,15 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	auto* suggested = (const RECT*)lParam;
 	m_X.pos = suggested->left;
 	m_Y.pos = suggested->top;
-	RepositionAndResizeWindow();
+	UpdateWindowBounds(SWP_NOSENDCHANGING);
+
+	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
+	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
+	// prevent D2D from erorring out.
+	if (m_State == STATE_RUNNING)
+	{
+		Redraw();
+	}
 	return 0;
 }
 
@@ -5407,7 +5400,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
 	}
 
-	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	UpdateWindowBounds(SWP_NOSIZE);
 
 	if (!m_OnDisplayMetricsChangeAction.empty())
 	{
