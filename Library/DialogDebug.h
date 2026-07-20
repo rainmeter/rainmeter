@@ -164,13 +164,21 @@ private:
 	public:
 		enum Id
 		{
-			Id_NetworkListView = 450
+			Id_NetworkListView = 450,
+			Id_ShowVirtualInterfacesCheckBox
 		};
 
 		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Relayout(int w, int h) override;
 		virtual void HandleDpiChange() override;
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+
+	private:
+		void UpdateInterfaceList();
 	};
 
 	class TabPlugins : public Tab

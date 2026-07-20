@@ -2071,8 +2071,12 @@ void DialogDebug::TabNetwork::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
+		Control::CheckBox(Id_ShowVirtualInterfacesCheckBox, 0,
+			0, 0, 150, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::ListView(Id_NetworkListView, 0,
-			0, 0, 570, 338,
+			0, 22, 570, 315,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
@@ -2095,6 +2099,19 @@ void DialogDebug::TabNetwork::Initialize()
 	lvc.iSubItem = 1;
 	lvc.pszText = (WCHAR*)GetString(IDS_Value);
 	ListView_InsertColumn(item, 1, &lvc);
+
+	SetWindowText(GetControl(Id_ShowVirtualInterfacesCheckBox), L"Show virtual interfaces");
+	Button_SetCheck(GetControl(Id_ShowVirtualInterfacesCheckBox), BST_UNCHECKED);
+	UpdateInterfaceList();
+
+	m_Initialized = true;
+}
+
+void DialogDebug::TabNetwork::UpdateInterfaceList()
+{
+	HWND item = GetControl(Id_NetworkListView);
+	ListView_DeleteAllItems(item);
+	ListView_RemoveAllGroups(item);
 
 	int groupId = 0;
 	auto addGroup = [&](const std::wstring& name)
@@ -2128,25 +2145,34 @@ void DialogDebug::TabNetwork::Initialize()
 		return std::wstring(buffer);
 	};
 
-	auto formatNameAndNumber = [](LPCWSTR name, ULONG value)
-	{
-		WCHAR buffer[128];
-		_snwprintf_s(buffer, _TRUNCATE, L"%s (%u)", name, value);
-		return std::wstring(buffer);
-	};
-
 	NetworkUtil::UpdateInterfaceTable();
 	MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
 	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
+	const bool showVirtualInterfaces =
+		Button_GetCheck(GetControl(Id_ShowVirtualInterfacesCheckBox)) == BST_CHECKED;
+	ULONG visibleInterfaceCount = 0;
+	for (ULONG i = 0; table && i < interfaceCount; ++i)
+	{
+		if (showVirtualInterfaces || table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1)
+		{
+			++visibleInterfaceCount;
+		}
+	}
 
 	addGroup(L"Overview");
-	addRow(0, L"Interface count", formatNumber(interfaceCount));
+	addRow(0, L"Interface count", formatNumber(visibleInterfaceCount));
 
+	ULONG visibleIndex = 0;
 	for (ULONG i = 0; table && i < interfaceCount; ++i)
 	{
 		const MIB_IF_ROW2& networkInterface = table[i];
+		if (!showVirtualInterfaces && networkInterface.InterfaceAndOperStatusFlags.HardwareInterface != 1)
+		{
+			continue;
+		}
+
 		WCHAR header[512];
-		_snwprintf_s(header, _TRUNCATE, L"Interface %u: %s", i + 1, networkInterface.Description);
+		_snwprintf_s(header, _TRUNCATE, L"Interface %u: %s", ++visibleIndex, networkInterface.Description);
 		addGroup(header);
 		const int interfaceGroup = groupId - 1;
 
@@ -2168,11 +2194,6 @@ void DialogDebug::TabNetwork::Initialize()
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
 	ListView_SetColumnWidth(item, 1, LVSCW_AUTOSIZE_USEHEADER);
-
-	RECT rc;
-	GetClientRect(m_Window, &rc);
-	Relayout(rc.right, rc.bottom);
-	m_Initialized = true;
 }
 
 void DialogDebug::TabNetwork::Relayout(int w, int h)
@@ -2189,6 +2210,26 @@ void DialogDebug::TabNetwork::HandleDpiChange()
 	RECT rect;
 	GetClientRect(m_Window, &rect);
 	Relayout(rect.right, rect.bottom);
+}
+
+INT_PTR DialogDebug::TabNetwork::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_COMMAND)
+	{
+		return OnCommand(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR DialogDebug::TabNetwork::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	if (LOWORD(wParam) == Id_ShowVirtualInterfacesCheckBox && HIWORD(wParam) == BN_CLICKED)
+	{
+		UpdateInterfaceList();
+	}
+
+	return TRUE;
 }
 
 // -----------------------------------------------------------------------------------------------
