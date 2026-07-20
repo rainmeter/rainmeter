@@ -943,6 +943,10 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			0, 0, 220, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
+		Control::Button(Id_SkinMenuButton, 0,
+			415, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::Button(Id_AddWatchButton, 0,
 			495, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
@@ -959,6 +963,7 @@ void DialogDebug::TabSkins::Create(HWND owner)
 void DialogDebug::TabSkins::Initialize()
 {
 	Dialog::SetMenuButton(GetControl(Id_SelectSkinButton));
+	Dialog::SetMenuButton(GetControl(Id_SkinMenuButton));
 
 	// Add columns to the list view
 	HWND item = GetControl(Id_SkinsListView);
@@ -1001,6 +1006,7 @@ void DialogDebug::TabSkins::Initialize()
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
 	SetWindowText(GetControl(Id_SelectSkinButton), L"Select Skin...");
+	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
 	SetWindowText(GetControl(Id_AddWatchButton), L"Add Watch...");
 
 	UpdateSkinList();
@@ -1075,6 +1081,8 @@ void DialogDebug::TabSkins::UpdateSkinList()
 			UpdateMeasureList(m_SkinWindow);
 		}
 	}
+
+	Button_Enable(GetControl(Id_SkinMenuButton), m_SkinWindow != nullptr);
 
 	HWND button = GetControl(Id_SelectSkinButton);
 	SetWindowText(button, skinName.empty() ? L"Select Skin..." : skinName.c_str());
@@ -1395,6 +1403,15 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			m_PanelWatch->Open(GetParent(m_Window));
 			m_PanelWatch->UpdateResult();
+		}
+		break;
+
+	case Id_SkinMenuButton:
+		if (HIWORD(wParam) == BN_CLICKED && m_SkinWindow)
+		{
+			RECT r;
+			GetWindowRect((HWND)lParam, &r);
+			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow);
 		}
 		break;
 
