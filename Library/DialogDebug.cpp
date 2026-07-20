@@ -1415,6 +1415,13 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_SKIN_REFRESH:
+		if (m_SkinWindow)
+		{
+			SendMessage(m_SkinWindow->GetWindow(), WM_COMMAND, IDM_SKIN_REFRESH, 0);
+		}
+		break;
+
 	case IDM_EDITWATCH:
 		{
 			const size_t index = GetSelectedWatch();

@@ -6,6 +6,7 @@
 #define IDI_SKININSTALLER                            200
 #define IDB_INSTALLHEADER                            201
 #define IDR_INSTALL_MENU                             204
+#define IDR_DIALOG_ACCELERATORS                      205
 
 #define IDM_INSTALL_BACKUPSKINS                      4200
 #define IDM_INSTALL_SYSTEMFONTS                      4201
