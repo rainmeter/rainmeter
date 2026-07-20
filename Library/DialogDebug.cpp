@@ -192,7 +192,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabDisplay, L"Displays");
+	AddTab(Id_Tab, m_TabDisplay, L"Display");
 	AddTab(Id_Tab, m_TabNetwork, L"Network");
 	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
@@ -1943,7 +1943,7 @@ void DialogDebug::TabDisplay::Create(HWND owner)
 	{
 		Control::ListView(Id_DisplaysListView, 0,
 			0, 0, 570, 338,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
 
@@ -2076,7 +2076,7 @@ void DialogDebug::TabNetwork::Create(HWND owner)
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::ListView(Id_NetworkListView, 0,
 			0, 22, 570, 315,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
 
