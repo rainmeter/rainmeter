@@ -129,19 +129,7 @@ private:
 		}
 
 		HINTERNET handle = InternetOpen(userAgent, proxyType, proxyServer, nullptr, 0);
-		if (handle)
-		{
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugF(
-					L"ProxyServer=\"%s\" (type=%s, handle=0x%p)",
-					proxyName,
-					proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
-					handle);
-				LogDebugF(L"Useragent=\"%s\"", userAgent);
-			}
-		}
-		else
+		if (!handle)
 		{
 			LogWininetError(nullptr, GetLastError(), L"InternetOpen error");
 		}
@@ -563,9 +551,7 @@ void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD error
 			}
 		}
 
-		if (GetRainmeter().GetDebug()) LogDebugF(this, L"Parsing data...");
 		ParseData(data, dataSize);
-		if (GetRainmeter().GetDebug()) LogDebugF(this, L"Parsed data!");
 	}
 }
 
