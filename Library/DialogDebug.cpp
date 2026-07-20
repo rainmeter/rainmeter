@@ -19,6 +19,7 @@
 #include "../Common/FileUtil.h"
 #include "../Common/DirectoryWatcher.h"
 #include "../Common/MathParser.h"
+#include "../Common/NetworkUtil.h"
 #include "../Common/StringUtil.h"
 
 WINDOWPLACEMENT DialogDebug::c_WindowPlacement = { 0 };
@@ -69,9 +70,13 @@ void DialogDebug::Open(const WCHAR* name)
 		{
 			tab = 2;
 		}
-		else if (_wcsicmp(name, L"Plugins") == 0)
+		else if (_wcsicmp(name, L"Network") == 0)
 		{
 			tab = 3;
+		}
+		else if (_wcsicmp(name, L"Plugins") == 0)
+		{
+			tab = 4;
 		}
 	}
 
@@ -188,6 +193,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
 	AddTab(Id_Tab, m_TabDisplays, L"Displays");
+	AddTab(Id_Tab, m_TabNetwork, L"Network");
 	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -201,6 +207,8 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabDisplays.GetControl(TabDisplays::Id_DisplaysListView);
+	SetWindowTheme(item, L"explorer", nullptr);
+	item = m_TabNetwork.GetControl(TabNetwork::Id_NetworkListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
@@ -228,6 +236,10 @@ INT_PTR DialogDebug::OnCommand(WPARAM wParam, LPARAM lParam)
 			else if (&tab == &m_TabDisplays)
 			{
 				url += L"Displays";
+			}
+			else if (&tab == &m_TabNetwork)
+			{
+				url += L"Network";
 			}
 			else // if (&tab == &m_TabPlugins)
 			{
@@ -2048,6 +2060,147 @@ void DialogDebug::TabDisplays::Relayout(int w, int h)
 void DialogDebug::TabDisplays::HandleDpiChange()
 {
 	HWND list = GetControl(Id_DisplaysListView);
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
+
+	RECT rect;
+	GetClientRect(m_Window, &rect);
+	Relayout(rect.right, rect.bottom);
+}
+
+// -----------------------------------------------------------------------------------------------
+//
+//                                Network tab
+//
+// -----------------------------------------------------------------------------------------------
+
+void DialogDebug::TabNetwork::Create(HWND owner)
+{
+	Tab::CreateTabWindow(15, 30, 570, 338, owner);
+
+	static const Control s_Controls[] =
+	{
+		Control::ListView(Id_NetworkListView, 0,
+			0, 0, 570, 338,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_ALL)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
+}
+
+void DialogDebug::TabNetwork::Initialize()
+{
+	HWND item = GetControl(Id_NetworkListView);
+	ListView_SetExtendedListViewStyleEx(item, 0,
+		LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVCOLUMN lvc = { 0 };
+	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+	lvc.fmt = LVCFMT_LEFT;
+	lvc.iSubItem = 0;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
+	ListView_InsertColumn(item, 0, &lvc);
+	lvc.iSubItem = 1;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(410);
+	lvc.pszText = (WCHAR*)GetString(IDS_Value);
+	ListView_InsertColumn(item, 1, &lvc);
+
+	int groupId = 0;
+	auto addGroup = [&](const std::wstring& name)
+	{
+		LVGROUP lvg = { 0 };
+		lvg.cbSize = sizeof(LVGROUP);
+		lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+		lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+		lvg.iGroupId = groupId++;
+		lvg.pszHeader = (WCHAR*)name.c_str();
+		ListView_InsertGroup(item, -1, &lvg);
+	};
+
+	int index = 0;
+	auto addRow = [&](int group, const WCHAR* name, const std::wstring& value)
+	{
+		LVITEM vitem = { 0 };
+		vitem.mask = LVIF_TEXT | LVIF_GROUPID;
+		vitem.iItem = index++;
+		vitem.iSubItem = 0;
+		vitem.iGroupId = group;
+		vitem.pszText = (WCHAR*)name;
+		ListView_InsertItem(item, &vitem);
+		ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)value.c_str());
+	};
+
+	auto formatNumber = [](ULONG value)
+	{
+		WCHAR buffer[32];
+		_snwprintf_s(buffer, _TRUNCATE, L"%u", value);
+		return std::wstring(buffer);
+	};
+
+	auto formatNameAndNumber = [](LPCWSTR name, ULONG value)
+	{
+		WCHAR buffer[128];
+		_snwprintf_s(buffer, _TRUNCATE, L"%s (%u)", name, value);
+		return std::wstring(buffer);
+	};
+
+	NetworkUtil::UpdateInterfaceTable();
+	MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
+	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
+
+	addGroup(L"Overview");
+	addRow(0, L"Interface count", formatNumber(interfaceCount));
+
+	for (ULONG i = 0; table && i < interfaceCount; ++i)
+	{
+		const MIB_IF_ROW2& networkInterface = table[i];
+		WCHAR header[512];
+		_snwprintf_s(header, _TRUNCATE, L"Interface %u: %s", i + 1, networkInterface.Description);
+		addGroup(header);
+		const int interfaceGroup = groupId - 1;
+
+		WCHAR guid[64] = { 0 };
+		StringFromGUID2(networkInterface.InterfaceGuid, guid, _countof(guid));
+
+		addRow(interfaceGroup, L"Description", networkInterface.Description);
+		addRow(interfaceGroup, L"Alias", networkInterface.Alias);
+		addRow(interfaceGroup, L"GUID", guid);
+		addRow(interfaceGroup, L"Type", formatNameAndNumber(
+			NetworkUtil::GetInterfaceTypeString(networkInterface.Type), networkInterface.Type));
+		addRow(interfaceGroup, L"Hardware interface",
+			networkInterface.InterfaceAndOperStatusFlags.HardwareInterface == 1 ? L"Yes" : L"No");
+		addRow(interfaceGroup, L"Filter interface",
+			networkInterface.InterfaceAndOperStatusFlags.FilterInterface == 1 ? L"Yes" : L"No");
+		addRow(interfaceGroup, L"Interface index", formatNumber(networkInterface.InterfaceIndex));
+		addRow(interfaceGroup, L"Media state",
+			NetworkUtil::GetInterfaceMediaConnectionString(networkInterface.MediaConnectState));
+		addRow(interfaceGroup, L"Operational status", formatNameAndNumber(
+			NetworkUtil::GetInterfaceOperStatusString(networkInterface.OperStatus), networkInterface.OperStatus));
+	}
+
+	ListView_EnableGroupView(item, TRUE);
+
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Relayout(rc.right, rc.bottom);
+	m_Initialized = true;
+}
+
+void DialogDebug::TabNetwork::Relayout(int w, int h)
+{
+	Tab::Relayout(w, h);
+
+	HWND item = GetControl(Id_NetworkListView);
+	LVCOLUMN lvc = { 0 };
+	lvc.mask = LVCF_WIDTH;
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) - ListView_GetColumnWidth(item, 0);
+	ListView_SetColumn(item, 1, &lvc);
+}
+
+void DialogDebug::TabNetwork::HandleDpiChange()
+{
+	HWND list = GetControl(Id_NetworkListView);
 	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
 
 	RECT rect;

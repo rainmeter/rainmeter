@@ -500,7 +500,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	System::Initialize(m_Instance);
 
-	MeasureNet::InitializeStatic();
 	MeasureCPU::InitializeStatic();
 	MeterString::InitializeStatic();
 
