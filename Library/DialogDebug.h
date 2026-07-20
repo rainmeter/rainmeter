@@ -50,11 +50,16 @@ private:
 		{
 			Id_LogListView = 100,
 			Id_LogMenuButton,
+			Id_LogFileMenuButton,
 			Id_ErrorMenuItem,
 			Id_WarningMenuItem,
 			Id_NoticeMenuItem,
 			Id_DebugMenuItem,
 			Id_DebugModeMenuItem,
+			Id_ShowLogFileMenuItem,
+			Id_StartLoggingMenuItem,
+			Id_StopLoggingMenuItem,
+			Id_DeleteLogFileMenuItem,
 			Id_ClearButton
 		};
 

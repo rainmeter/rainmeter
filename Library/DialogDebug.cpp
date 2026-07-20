@@ -242,6 +242,9 @@ void DialogDebug::TabLog::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::Button(Id_LogMenuButton, IDS_Type,
+			335, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
+		Control::Button(Id_LogFileMenuButton, 0,
 			415, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::Button(Id_ClearButton, IDS_Clear,
@@ -259,6 +262,8 @@ void DialogDebug::TabLog::Create(HWND owner)
 void DialogDebug::TabLog::Initialize()
 {
 	Dialog::SetMenuButton(GetControl(Id_LogMenuButton));
+	Dialog::SetMenuButton(GetControl(Id_LogFileMenuButton));
+	SetWindowText(GetControl(Id_LogFileMenuButton), L"Log file");
 
 	// Add columns to the list view
 	HWND item = GetControl(Id_LogListView);
@@ -485,6 +490,57 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_DebugModeMenuItem:
 		GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
+		break;
+
+	case Id_LogFileMenuButton:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			static const MenuTemplate s_LogFileMenu[] =
+			{
+				MENU_ITEM(Id_ShowLogFileMenuItem, IDS_ShowLogFile),
+				MENU_SEPARATOR(),
+				MENU_ITEM(Id_StartLoggingMenuItem, IDS_StartLogging),
+				MENU_ITEM(Id_StopLoggingMenuItem, IDS_StopLogging),
+				MENU_SEPARATOR(),
+				MENU_ITEM(Id_DeleteLogFileMenuItem, IDS_DeleteLogFile)
+			};
+
+			HMENU menu = MenuTemplate::CreateMenu(s_LogFileMenu, _countof(s_LogFileMenu), GetString);
+			if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) != 0)
+			{
+				EnableMenuItem(menu, Id_ShowLogFileMenuItem, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(menu, Id_DeleteLogFileMenuItem, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(menu, Id_StopLoggingMenuItem, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				EnableMenuItem(menu,
+					GetLogger().IsLogToFile() ? Id_StartLoggingMenuItem : Id_StopLoggingMenuItem,
+					MF_BYCOMMAND | MF_GRAYED);
+			}
+
+			RECT r;
+			GetWindowRect((HWND)lParam, &r);
+			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			DestroyMenu(menu);
+		}
+		break;
+
+	case Id_ShowLogFileMenuItem:
+		GetRainmeter().ShowLogFile();
+		break;
+
+	case Id_StartLoggingMenuItem:
+		GetLogger().StartLogFile();
+		break;
+
+	case Id_StopLoggingMenuItem:
+		GetLogger().StopLogFile();
+		break;
+
+	case Id_DeleteLogFileMenuItem:
+		GetLogger().DeleteLogFile();
 		break;
 
 	case Id_ClearButton:
@@ -986,11 +1042,11 @@ void DialogDebug::TabSkins::Initialize()
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
-	SetWindowText(GetControl(Id_SelectSkinButton), L"Select Skin...");
+	SetWindowText(GetControl(Id_SelectSkinButton), L"Select skin...");
 	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Auto refresh on edit");
 	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
 	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
-	SetWindowText(GetControl(Id_AddWatchButton), L"Add Watch...");
+	SetWindowText(GetControl(Id_AddWatchButton), L"Add watch...");
 
 	UpdateSkinList();
 
