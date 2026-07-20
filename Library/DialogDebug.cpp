@@ -369,37 +369,35 @@ void DialogDebug::TabLog::Relayout(int w, int h)
 */
 void DialogDebug::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
 {
-	WCHAR buffer[32] = { 0 };
 	LVITEM vitem = { 0 };
 	vitem.mask = LVIF_IMAGE | LVIF_TEXT;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
-	vitem.pszText = buffer;
 	HWND item = nullptr;
 
 	switch (level)
 	{
 	case Logger::Level::Error:
 		if (!m_Error) return;
-		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Error));
+		vitem.pszText = (WCHAR*)GetString(IDS_Error);
 		vitem.iImage = 0;
 		break;
 
 	case Logger::Level::Warning:
 		if (!m_Warning) return;
-		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Warning));
+		vitem.pszText = (WCHAR*)GetString(IDS_Warning);
 		vitem.iImage = 1;
 		break;
 
 	case Logger::Level::Notice:
 		if (!m_Notice) return;
-		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Notice));
+		vitem.pszText = (WCHAR*)GetString(IDS_Notice);
 		vitem.iImage = 2;
 		break;
 
 	case Logger::Level::Debug:
 		if (!m_Debug) return;
-		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Debug));
+		vitem.pszText = (WCHAR*)GetString(IDS_Debug);
 		vitem.iImage = I_IMAGENONE;
 		break;
 	}
