@@ -87,6 +87,7 @@ public:
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
+	const std::vector<std::wstring>& GetIniFiles() const { return m_IniFiles; }
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
@@ -137,6 +138,7 @@ private:
 	const std::wstring* m_CurrentSection;
 	std::wstring m_CurrentPath;
 
+	std::vector<std::wstring> m_IniFiles;
 	std::list<std::wstring> m_Sections;		// Ordered section
 	StringMap<std::wstring> m_Values;
 

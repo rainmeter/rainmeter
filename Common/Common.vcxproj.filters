@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
@@ -130,6 +131,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DpiUtil.h" />
     <ClInclude Include="CriticalSection.h" />
