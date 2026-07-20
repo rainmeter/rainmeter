@@ -97,6 +97,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_Skin = skin;
 
 	m_Measures.clear();
+	m_IniFiles.clear();
 	m_Sections.clear();
 	m_Values.clear();
 	m_Variables.clear();
@@ -1597,6 +1598,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	{
 		LogErrorF(m_Skin, L"Unable to read file: %s", iniFile.c_str());
 		return;
+	}
+
+	if (std::find_if(m_IniFiles.begin(), m_IniFiles.end(), [&](const std::wstring& file)
+		{ return _wcsicmp(file.c_str(), iniFile.c_str()) == 0; }) == m_IniFiles.end())
+	{
+		m_IniFiles.push_back(iniFile);
 	}
 
 	// Avoid "IniFileMapping"
