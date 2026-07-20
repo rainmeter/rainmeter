@@ -1027,7 +1027,7 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::CheckBox(Id_AutoRefreshCheckBox, 0,
-			226, 0, 150, 14,
+			226, 0, 100, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_SkinMenuButton, 0,
@@ -1093,7 +1093,7 @@ void DialogDebug::TabSkins::Initialize()
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
 	SetWindowText(GetControl(Id_SelectSkinButton), L"Select skin...");
-	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Auto refresh on edit");
+	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Refresh on file change");
 	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
 	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
 	SetWindowText(GetControl(Id_AddWatchButton), L"Add watch...");
