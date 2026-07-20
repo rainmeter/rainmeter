@@ -2161,17 +2161,18 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
 	const bool showVirtualInterfaces =
 		Button_GetCheck(GetControl(Id_ShowVirtualInterfacesCheckBox)) == BST_CHECKED;
-	ULONG visibleInterfaceCount = 0;
+	ULONG physicalInterfaceCount = 0;
 	for (ULONG i = 0; table && i < interfaceCount; ++i)
 	{
-		if (showVirtualInterfaces || table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1)
+		if (table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1)
 		{
-			++visibleInterfaceCount;
+			++physicalInterfaceCount;
 		}
 	}
 
 	addGroup(L"Overview");
-	addRow(0, L"Interface count", formatNumber(visibleInterfaceCount));
+	addRow(0, L"Interface count", fmt::format(L"{} physical, {} virtual ({} total)",
+		physicalInterfaceCount, interfaceCount - physicalInterfaceCount, interfaceCount));
 
 	ULONG visibleIndex = 0;
 	for (ULONG i = 0; table && i < interfaceCount; ++i)
