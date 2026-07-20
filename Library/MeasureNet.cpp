@@ -28,49 +28,9 @@ MeasureNet::~MeasureNet()
 {
 }
 
-/*
-** Reads the tables for all net interfaces
-**
-*/
 void MeasureNet::UpdateIFTable()
 {
-	const ULONG oldCount = NetworkUtil::GetInterfaceCount();
-
-	if (!NetworkUtil::UpdateInterfaceTable()) return;
-
-	MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
-	const ULONG newCount = NetworkUtil::GetInterfaceCount();
-	if (table && GetRainmeter().GetDebug() && oldCount != newCount)
-	{
-		LogDebug(L"------------------------------");
-		LogDebugF(L"* NETWORK-INTERFACE: Count=%i", newCount);
-
-		for (size_t i = 0; i < newCount; ++i)
-		{
-			LPCWSTR type = NetworkUtil::GetInterfaceTypeString(table[i].Type);
-			LPCWSTR state = NetworkUtil::GetInterfaceMediaConnectionString(table[i].MediaConnectState);
-			LPCWSTR status = NetworkUtil::GetInterfaceOperStatusString(table[i].OperStatus);
-
-			LogDebugF(L"%3i: Name: %s", (int)i + 1, table[i].Description);
-			LogDebugF(L"     Alias: %s", table[i].Alias);
-
-			WCHAR guid[64] = { 0 };
-			if (StringFromGUID2(table[i].InterfaceGuid, guid, 64) > 0)
-			{
-				LogDebugF(L"     GUID: %s", guid);
-			}
-
-			LogDebugF(L"     Type=%s(%i), Hardware=%s, Filter=%s",
-				type, table[i].Type,
-				(table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
-				(table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
-			LogDebugF(L"     IfIndex=%i, State=%s, Status=%s(%i)",
-				table[i].InterfaceIndex,
-				state,
-				status, table[i].OperStatus);
-		}
-		LogDebug(L"------------------------------");
-	}
+	NetworkUtil::UpdateInterfaceTable();
 }
 
 /*
@@ -290,18 +250,6 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (!iface.empty() && !std::all_of(iface.begin(), iface.end(), iswdigit))
 	{
 		m_Interface = NetworkUtil::FindBestInterface(iface.c_str());
-		if (GetRainmeter().GetDebug())
-		{
-			MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
-			for (size_t i = 0; i < NetworkUtil::GetInterfaceCount(); ++i)
-			{
-				if (table[i].InterfaceIndex == m_Interface)
-				{
-					LogDebugF(this, L"Using network interface: %s (IfIndex=%i)", table[i].Description, m_Interface);
-					break;
-				}
-			}
-		}
 	}
 	else
 	{
@@ -477,14 +425,6 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 
 	// Write statistics
 	WritePrivateProfileSection(L"Statistics", data.c_str(), iniFile);
-}
-
-void MeasureNet::InitializeStatic()
-{
-	if (GetRainmeter().GetDebug())
-	{
-		UpdateIFTable();
-	}
 }
 
 void MeasureNet::FinalizeStatic()

@@ -159,6 +159,20 @@ private:
 		virtual void HandleDpiChange() override;
 	};
 
+	class TabNetwork : public Tab
+	{
+	public:
+		enum Id
+		{
+			Id_NetworkListView = 450
+		};
+
+		void Create(HWND owner);
+		virtual void Initialize();
+		virtual void Relayout(int w, int h) override;
+		virtual void HandleDpiChange() override;
+	};
+
 	class TabPlugins : public Tab
 	{
 	public:
@@ -194,6 +208,7 @@ private:
 	TabLog m_TabLog;
 	TabSkins m_TabSkins;
 	TabDisplays m_TabDisplays;
+	TabNetwork m_TabNetwork;
 	TabPlugins m_TabPlugins;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
