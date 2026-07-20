@@ -2003,7 +2003,7 @@ void DialogDebug::TabDisplay::Initialize()
 	auto formatRect = [](const RECT& rect)
 	{
 		WCHAR buffer[128];
-		_snwprintf_s(buffer, _TRUNCATE, L"L=%i, T=%i, R=%i, B=%i (%i x %i)",
+		_snwprintf_s(buffer, _TRUNCATE, L"X=%i, Y=%i, R=%i, B=%i (%i x %i)",
 			rect.left, rect.top, rect.right, rect.bottom, rect.right - rect.left, rect.bottom - rect.top);
 		return std::wstring(buffer);
 	};
@@ -2025,14 +2025,14 @@ void DialogDebug::TabDisplay::Initialize()
 
 		addRow(monitorGroup, L"Active", monitor.active ? L"Yes" : L"No");
 		addRow(monitorGroup, L"Device number", formatNumber(monitor.deviceNumber));
-		addRow(monitorGroup, L"Display number", formatNumber(monitor.displayNumber));
-		addRow(monitorGroup, L"DPI", formatNumber(monitor.dpi));
-		addRow(monitorGroup, L"Screen", formatRect(monitor.screen));
-		addRow(monitorGroup, L"Logical screen", formatRect(monitor.logicalScreen));
-		addRow(monitorGroup, L"Work area", formatRect(monitor.work));
-		addRow(monitorGroup, L"Logical work area", formatRect(monitor.logicalWork));
 		addRow(monitorGroup, L"Device name", monitor.deviceName);
-		addRow(monitorGroup, L"Monitor name", monitor.monitorName);
+		addRow(monitorGroup, L"Display number", formatNumber(monitor.displayNumber));
+		addRow(monitorGroup, L"Display name", monitor.monitorName);
+		addRow(monitorGroup, L"DPI factor", fmt::format(L"{0:.5g}", (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI));
+		addRow(monitorGroup, L"Screen area", formatRect(monitor.logicalScreen));
+		addRow(monitorGroup, L"Work area", formatRect(monitor.logicalWork));
+		addRow(monitorGroup, L"Physical screen area", formatRect(monitor.screen));
+		addRow(monitorGroup, L"Physical work area", formatRect(monitor.work));
 	}
 
 	ListView_EnableGroupView(item, TRUE);
