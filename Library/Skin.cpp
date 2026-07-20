@@ -4665,6 +4665,13 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Y.pos = suggested->top;
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 
+	if (m_DragStartValid)
+	{
+		m_DragStartCursor = System::GetCursorPosition();
+		m_DragStartWindowPos.x = m_X.pos;
+		m_DragStartWindowPos.y = m_Y.pos;
+	}
+
 	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
 	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
 	// prevent D2D from erorring out.
