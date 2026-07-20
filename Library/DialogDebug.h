@@ -145,7 +145,7 @@ private:
 		std::vector<Watch> m_Watches;
 	};
 
-	class TabDisplays : public Tab
+	class TabDisplay : public Tab
 	{
 	public:
 		enum Id
@@ -207,7 +207,7 @@ private:
 
 	TabLog m_TabLog;
 	TabSkins m_TabSkins;
-	TabDisplays m_TabDisplays;
+	TabDisplay m_TabDisplay;
 	TabNetwork m_TabNetwork;
 	TabPlugins m_TabPlugins;
 

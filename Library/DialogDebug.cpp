@@ -66,7 +66,7 @@ void DialogDebug::Open(const WCHAR* name)
 		{
 			tab = 1;
 		}
-		else if (_wcsicmp(name, L"Displays") == 0)
+		else if (_wcsicmp(name, L"Display") == 0)
 		{
 			tab = 2;
 		}
@@ -192,7 +192,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabDisplays, L"Displays");
+	AddTab(Id_Tab, m_TabDisplay, L"Displays");
 	AddTab(Id_Tab, m_TabNetwork, L"Network");
 	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
@@ -206,7 +206,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
-	item = m_TabDisplays.GetControl(TabDisplays::Id_DisplaysListView);
+	item = m_TabDisplay.GetControl(TabDisplay::Id_DisplaysListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabNetwork.GetControl(TabNetwork::Id_NetworkListView);
 	SetWindowTheme(item, L"explorer", nullptr);
@@ -233,7 +233,7 @@ INT_PTR DialogDebug::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				url += L"Skins";
 			}
-			else if (&tab == &m_TabDisplays)
+			else if (&tab == &m_TabDisplay)
 			{
 				url += L"Displays";
 			}
@@ -1935,7 +1935,7 @@ INT_PTR DialogDebug::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-void DialogDebug::TabDisplays::Create(HWND owner)
+void DialogDebug::TabDisplay::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
@@ -1950,7 +1950,7 @@ void DialogDebug::TabDisplays::Create(HWND owner)
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
-void DialogDebug::TabDisplays::Initialize()
+void DialogDebug::TabDisplay::Initialize()
 {
 	HWND item = GetControl(Id_DisplaysListView);
 	ListView_SetExtendedListViewStyleEx(item, 0,
@@ -2043,7 +2043,7 @@ void DialogDebug::TabDisplays::Initialize()
 	m_Initialized = true;
 }
 
-void DialogDebug::TabDisplays::Relayout(int w, int h)
+void DialogDebug::TabDisplay::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
 
@@ -2054,7 +2054,7 @@ void DialogDebug::TabDisplays::Relayout(int w, int h)
 	ListView_SetColumn(item, 1, &lvc);
 }
 
-void DialogDebug::TabDisplays::HandleDpiChange()
+void DialogDebug::TabDisplay::HandleDpiChange()
 {
 	HWND list = GetControl(Id_DisplaysListView);
 	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
