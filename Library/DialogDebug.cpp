@@ -2150,19 +2150,15 @@ void DialogDebug::TabNetwork::Initialize()
 		addGroup(header);
 		const int interfaceGroup = groupId - 1;
 
-		WCHAR guid[64] = { 0 };
-		StringFromGUID2(networkInterface.InterfaceGuid, guid, _countof(guid));
-
+		addRow(interfaceGroup, L"Interface index", formatNumber(networkInterface.InterfaceIndex));
 		addRow(interfaceGroup, L"Description", networkInterface.Description);
 		addRow(interfaceGroup, L"Alias", networkInterface.Alias);
-		addRow(interfaceGroup, L"GUID", guid);
 		addRow(interfaceGroup, L"Type", formatNameAndNumber(
 			NetworkUtil::GetInterfaceTypeString(networkInterface.Type), networkInterface.Type));
 		addRow(interfaceGroup, L"Hardware interface",
 			networkInterface.InterfaceAndOperStatusFlags.HardwareInterface == 1 ? L"Yes" : L"No");
 		addRow(interfaceGroup, L"Filter interface",
 			networkInterface.InterfaceAndOperStatusFlags.FilterInterface == 1 ? L"Yes" : L"No");
-		addRow(interfaceGroup, L"Interface index", formatNumber(networkInterface.InterfaceIndex));
 		addRow(interfaceGroup, L"Media state",
 			NetworkUtil::GetInterfaceMediaConnectionString(networkInterface.MediaConnectState));
 		addRow(interfaceGroup, L"Operational status", formatNameAndNumber(
