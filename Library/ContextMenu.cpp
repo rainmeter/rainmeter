@@ -138,7 +138,7 @@ ContextMenu::ContextMenu() :
 {
 }
 
-void ContextMenu::ShowMenu(POINT pos, Skin* skin)
+void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -182,8 +182,12 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			}
 		}
 
-		HWND parentWindow = skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow();
-		DisplayMenu(pos, menu, parentWindow);
+		if (!parentWindow)
+		{
+			parentWindow = skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow();
+		}
+
+		DisplayMenu(pos, menu, parentWindow, skin ? skin->GetWindow() : nullptr);
 	};
 
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
@@ -304,9 +308,13 @@ void ContextMenu::ShowSkinSelectionMenu(POINT pos, Skin* skin, HWND parentWindow
 	DisplayMenu(pos, menu, parentWindow);
 }
 
-void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
+void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND commandWindow)
 {
 	m_ActiveMenu = menu;
+	if (!commandWindow)
+	{
+		commandWindow = parentWindow;
+	}
 
 	// Set the window to foreground
 	HWND foregroundWindow = GetForegroundWindow();
@@ -320,7 +328,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 	}
 
 	// Disable each meter's tooltip
-	auto skin = GetRainmeter().GetSkin(parentWindow);
+	auto skin = GetRainmeter().GetSkin(commandWindow);
 	if (skin) for (const auto& meter : skin->GetMeters()) meter->DisableToolTip();
 
 	// Show context menu
@@ -345,7 +353,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 	{
 		// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
 		const LPARAM checked = IsMenuCommandChecked(menu, command) ? 1 : 0;
-		SendMessage(parentWindow, WM_COMMAND, command, checked);
+		SendMessage(commandWindow, WM_COMMAND, command, checked);
 	}
 
 	DestroyMenu(menu);

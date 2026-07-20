@@ -184,7 +184,7 @@ public:
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
-	void ShowContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowMenu(pos, skin); }
+	void ShowContextMenu(POINT pos, Skin* skin, HWND parentWindow = nullptr) { return m_ContextMenu.ShowMenu(pos, skin, parentWindow); }
 	void ShowSkinCustomContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowSkinCustomMenu(pos, skin); }
 	void ShowSkinSelectionContextMenu(POINT pos, Skin* skin, HWND parentWindow) { return m_ContextMenu.ShowSkinSelectionMenu(pos, skin, parentWindow); }
 
