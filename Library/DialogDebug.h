@@ -49,10 +49,11 @@ private:
 		enum Id
 		{
 			Id_LogListView = 100,
-			Id_ErrorCheckBox,
-			Id_WarningCheckBox,
-			Id_NoticeCheckBox,
-			Id_DebugCheckBox,
+			Id_LogMenuButton,
+			Id_ErrorMenuItem,
+			Id_WarningMenuItem,
+			Id_NoticeMenuItem,
+			Id_DebugMenuItem,
 			Id_ClearButton
 		};
 
