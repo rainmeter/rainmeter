@@ -13,6 +13,7 @@
 #include "TrayIcon.h"
 #include "Measure.h"
 #include "MeasureScript.h"
+#include "MonitorUtil.h"
 #include "resource.h"
 #include "DialogDebug.h"
 #include "../Common/FileUtil.h"
@@ -64,9 +65,13 @@ void DialogDebug::Open(const WCHAR* name)
 		{
 			tab = 1;
 		}
-		else if (_wcsicmp(name, L"Plugins") == 0)
+		else if (_wcsicmp(name, L"Displays") == 0)
 		{
 			tab = 2;
+		}
+		else if (_wcsicmp(name, L"Plugins") == 0)
+		{
+			tab = 3;
 		}
 	}
 
@@ -182,6 +187,7 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
+	AddTab(Id_Tab, m_TabDisplays, L"Displays");
 	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -193,6 +199,8 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
+	SetWindowTheme(item, L"explorer", nullptr);
+	item = m_TabDisplays.GetControl(TabDisplays::Id_DisplaysListView);
 	SetWindowTheme(item, L"explorer", nullptr);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
 	SetWindowTheme(item, L"explorer", nullptr);
@@ -216,6 +224,10 @@ INT_PTR DialogDebug::OnCommand(WPARAM wParam, LPARAM lParam)
 			else if (&tab == &m_TabSkins)
 			{
 				url += L"Skins";
+			}
+			else if (&tab == &m_TabDisplays)
+			{
+				url += L"Displays";
 			}
 			else // if (&tab == &m_TabPlugins)
 			{
@@ -1903,6 +1915,144 @@ INT_PTR DialogDebug::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 	}
 
 	return FALSE;
+}
+
+// -----------------------------------------------------------------------------------------------
+//
+//                                Displays tab
+//
+// -----------------------------------------------------------------------------------------------
+
+void DialogDebug::TabDisplays::Create(HWND owner)
+{
+	Tab::CreateTabWindow(15, 30, 570, 338, owner);
+
+	static const Control s_Controls[] =
+	{
+		Control::ListView(Id_DisplaysListView, 0,
+			0, 0, 570, 338,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			Control::ANCHOR_ALL)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), GetString);
+}
+
+void DialogDebug::TabDisplays::Initialize()
+{
+	HWND item = GetControl(Id_DisplaysListView);
+	ListView_SetExtendedListViewStyleEx(item, 0,
+		LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVCOLUMN lvc = { 0 };
+	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+	lvc.fmt = LVCFMT_LEFT;
+	lvc.iSubItem = 0;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(140);
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
+	ListView_InsertColumn(item, 0, &lvc);
+	lvc.iSubItem = 1;
+	lvc.cx = m_ControlTemplate.ScaleDialogUnits(410);
+	lvc.pszText = (WCHAR*)GetString(IDS_Value);
+	ListView_InsertColumn(item, 1, &lvc);
+
+	int groupId = 0;
+	auto addGroup = [&](const std::wstring& name)
+	{
+		LVGROUP lvg = { 0 };
+		lvg.cbSize = sizeof(LVGROUP);
+		lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+		lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+		lvg.iGroupId = groupId++;
+		lvg.pszHeader = (WCHAR*)name.c_str();
+		ListView_InsertGroup(item, -1, &lvg);
+	};
+
+	int index = 0;
+	auto addRow = [&](int group, const WCHAR* name, const std::wstring& value)
+	{
+		LVITEM vitem = { 0 };
+		vitem.mask = LVIF_TEXT | LVIF_GROUPID;
+		vitem.iItem = index++;
+		vitem.iSubItem = 0;
+		vitem.iGroupId = group;
+		vitem.pszText = (WCHAR*)name;
+		ListView_InsertItem(item, &vitem);
+		ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)value.c_str());
+	};
+
+	auto formatNumber = [](int value)
+	{
+		WCHAR buffer[32];
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", value);
+		return std::wstring(buffer);
+	};
+
+	auto formatRect = [](const RECT& rect)
+	{
+		WCHAR buffer[128];
+		_snwprintf_s(buffer, _TRUNCATE, L"L=%i, T=%i, R=%i, B=%i (%i x %i)",
+			rect.left, rect.top, rect.right, rect.bottom, rect.right - rect.left, rect.bottom - rect.top);
+		return std::wstring(buffer);
+	};
+
+	const MultiMonitorInfo& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	addGroup(L"Overview");
+	addRow(0, L"Primary device", formatNumber(monitorsInfo.primary));
+	addRow(0, L"Device count", formatNumber(monitorsInfo.deviceCount));
+	addRow(0, L"Display count", formatNumber(monitorsInfo.displayCount));
+	addRow(0, L"Virtual screen", formatRect(monitorsInfo.virtualScreen));
+	addRow(0, L"Logical virtual screen", formatRect(monitorsInfo.logicalVirtualScreen));
+
+	for (const MonitorInfo& monitor : monitorsInfo.monitors)
+	{
+		WCHAR header[128];
+		_snwprintf_s(header, _TRUNCATE, L"Device %u: %s", monitor.deviceNumber, monitor.deviceName.c_str());
+		addGroup(header);
+		const int monitorGroup = groupId - 1;
+
+		WCHAR handle[32];
+		_snwprintf_s(handle, _TRUNCATE, L"%p", monitor.handle);
+		addRow(monitorGroup, L"Active", monitor.active ? L"Yes" : L"No");
+		addRow(monitorGroup, L"Handle", handle);
+		addRow(monitorGroup, L"Device number", formatNumber(monitor.deviceNumber));
+		addRow(monitorGroup, L"Display number", formatNumber(monitor.displayNumber));
+		addRow(monitorGroup, L"DPI", formatNumber(monitor.dpi));
+		addRow(monitorGroup, L"Screen", formatRect(monitor.screen));
+		addRow(monitorGroup, L"Logical screen", formatRect(monitor.logicalScreen));
+		addRow(monitorGroup, L"Work area", formatRect(monitor.work));
+		addRow(monitorGroup, L"Logical work area", formatRect(monitor.logicalWork));
+		addRow(monitorGroup, L"Device name", monitor.deviceName);
+		addRow(monitorGroup, L"Monitor name", monitor.monitorName);
+	}
+
+	ListView_EnableGroupView(item, TRUE);
+
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Relayout(rc.right, rc.bottom);
+	m_Initialized = true;
+}
+
+void DialogDebug::TabDisplays::Relayout(int w, int h)
+{
+	Tab::Relayout(w, h);
+
+	HWND item = GetControl(Id_DisplaysListView);
+	LVCOLUMN lvc = { 0 };
+	lvc.mask = LVCF_WIDTH;
+	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(20) - ListView_GetColumnWidth(item, 0);
+	ListView_SetColumn(item, 1, &lvc);
+}
+
+void DialogDebug::TabDisplays::HandleDpiChange()
+{
+	HWND list = GetControl(Id_DisplaysListView);
+	ListView_SetColumnWidth(list, 0, m_ControlTemplate.ScaleDialogUnits(140));
+
+	RECT rect;
+	GetClientRect(m_Window, &rect);
+	Relayout(rect.right, rect.bottom);
 }
 
 // -----------------------------------------------------------------------------------------------

@@ -9,7 +9,6 @@
 #include "../Common/DpiUtil.h"
 #include "MonitorUtil.h"
 #include "System.h"
-#include "Rainmeter.h"
 #include "Logger.h"
 
 namespace MonitorUtil {
@@ -212,39 +211,6 @@ void MonitorUtil::SetMultiMonitorInfo()
 		}
 	}
 
-	if (GetRainmeter().GetDebug())
-	{
-		LogDebug(L"------------------------------");
-		LogDebugF(L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
-		LogDebug(L"@0: Virtual screen");
-
-		RECT r = c_Monitors.virtualScreen;
-		LogDebugF(L"    L=%i, T=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
-
-		int i = 1;
-		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
-		{
-			if (iter->handle)
-			{
-				LogDebugF(L"@%i: %s (active) - %s", i, iter->deviceName.c_str(), iter->monitorName.c_str());
-
-				r = iter->screen;
-				LogDebugF(L"    ScreenArea: X=%i, Y=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
-				r = iter->work;
-				LogDebugF(L"    WorkArea:   X=%i, Y=%i, W=%i, H=%i", r.left, r.top, r.right - r.left, r.bottom - r.top);
-				LogDebugF(L"    Dpi:        %u", iter->dpi);
-			}
-			else if (iter->monitorName.empty())
-			{
-				LogDebugF(L"@%i: %s (inactive)", i, iter->deviceName.c_str());
-			}
-			else
-			{
-				LogDebugF(L"@%i: %s (inactive) - %s", i, iter->deviceName.c_str(), iter->monitorName.c_str());
-			}
-		}
-		LogDebug(L"------------------------------");
-	}
 }
 
 void MonitorUtil::UpdateWorkareaInfo()
@@ -257,22 +223,15 @@ void MonitorUtil::UpdateWorkareaInfo()
 		return;
 	}
 
-	int i = 1;
-	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
+	for (auto& monitor : monitors)
 	{
-		if (iter->handle != nullptr)
+		if (monitor.handle != nullptr)
 		{
 			MONITORINFO info = { sizeof(MONITORINFO) };
-			GetMonitorInfo(iter->handle, &info);
+			GetMonitorInfo(monitor.handle, &info);
 
-			iter->work = info.rcWork;
-			iter->dpi = MonitorUtil::GetDpiForMonitor((*iter).handle);
-
-			if (GetRainmeter().GetDebug())
-			{
-				RECT r = info.rcWork;
-				LogDebugF(L"WorkArea@%i: L=%i, T=%i, W=%i, H=%i", i, r.left, r.top, r.right - r.left, r.bottom - r.top);
-			}
+			monitor.work = info.rcWork;
+			monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
 		}
 	}
 }
