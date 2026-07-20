@@ -446,7 +446,9 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 				MENU_ITEM(Id_ErrorMenuItem, IDS_Error),
 				MENU_ITEM(Id_WarningMenuItem, IDS_Warning),
 				MENU_ITEM(Id_NoticeMenuItem, IDS_Notice),
-				MENU_ITEM(Id_DebugMenuItem, IDS_Debug)
+				MENU_ITEM(Id_DebugMenuItem, IDS_Debug),
+				MENU_SEPARATOR(),
+				MENU_ITEM(Id_DebugModeMenuItem, IDS_DebugMode)
 			};
 
 			HMENU menu = MenuTemplate::CreateMenu(s_LogMenu, _countof(s_LogMenu), GetString);
@@ -454,6 +456,8 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			CheckMenuItem(menu, Id_WarningMenuItem, MF_BYCOMMAND | (m_Warning ? MF_CHECKED : MF_UNCHECKED));
 			CheckMenuItem(menu, Id_NoticeMenuItem, MF_BYCOMMAND | (m_Notice ? MF_CHECKED : MF_UNCHECKED));
 			CheckMenuItem(menu, Id_DebugMenuItem, MF_BYCOMMAND | (m_Debug ? MF_CHECKED : MF_UNCHECKED));
+			CheckMenuItem(menu, Id_DebugModeMenuItem,
+				MF_BYCOMMAND | (GetRainmeter().GetDebug() ? MF_CHECKED : MF_UNCHECKED));
 
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
@@ -477,6 +481,10 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_DebugMenuItem:
 		m_Debug = !m_Debug;
+		break;
+
+	case Id_DebugModeMenuItem:
+		GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
 		break;
 
 	case Id_ClearButton:
