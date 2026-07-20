@@ -235,30 +235,18 @@ void DialogDebug::TabLog::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
-	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
-
 	static const Control s_Controls[] =
 	{
 		Control::ListView(Id_LogListView, 0,
-			0, 0, 568, 325,
+			0, 22, 570, 315,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
-		Control::CheckBox(Id_ErrorCheckBox, IDS_Error,
-			0, 329, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_WarningCheckBox, IDS_Warning,
-			80, 329, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_NoticeCheckBox, IDS_Notice,
-			160, 329, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
-		Control::CheckBox(Id_DebugCheckBox, IDS_Debug,
-			240, 329, 80, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_BOTTOM),
+		Control::Button(Id_LogMenuButton, IDS_Type,
+			415, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::Button(Id_ClearButton, IDS_Clear,
-			(568 - buttonWidth), 329, buttonWidth, 14,
-			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_BOTTOM_RIGHT)
+			495, 0, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_RIGHT | Control::ANCHOR_TOP)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -270,6 +258,8 @@ void DialogDebug::TabLog::Create(HWND owner)
 */
 void DialogDebug::TabLog::Initialize()
 {
+	Dialog::SetMenuButton(GetControl(Id_LogMenuButton));
+
 	// Add columns to the list view
 	HWND item = GetControl(Id_LogListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
@@ -306,18 +296,6 @@ void DialogDebug::TabLog::Initialize()
 	{
 		AddItem(entry.level, entry.timestamp.c_str(), entry.source.c_str(), entry.message.c_str());
 	}
-
-	item = GetControl(Id_ErrorCheckBox);
-	Button_SetCheck(item, BST_CHECKED);
-
-	item = GetControl(Id_WarningCheckBox);
-	Button_SetCheck(item, BST_CHECKED);
-
-	item = GetControl(Id_NoticeCheckBox);
-	Button_SetCheck(item, BST_CHECKED);
-
-	item = GetControl(Id_DebugCheckBox);
-	Button_SetCheck(item, BST_CHECKED);
 
 	m_Initialized = true;
 }
@@ -369,31 +347,8 @@ void DialogDebug::TabLog::Relayout(int w, int h)
 {
 	Tab::Relayout(w, h);
 
-	RECT r;
-	LONG bottom;
-	HWND item = GetControl(Id_ClearButton);
-	GetClientRect(item, &r);
-	bottom = r.bottom;
-
-	SetWindowPos(item, nullptr, w - r.right, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetControl(Id_ErrorCheckBox);
-	GetClientRect(item, &r);
-	SetWindowPos(item, nullptr, 0, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetControl(Id_WarningCheckBox);
-	SetWindowPos(item, nullptr, r.right, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetControl(Id_NoticeCheckBox);
-	SetWindowPos(item, nullptr, r.right * 2, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetControl(Id_DebugCheckBox);
-	SetWindowPos(item, nullptr, r.right * 3, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetControl(Id_LogListView);
-	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - m_ControlTemplate.ScaleDialogUnits(10), SWP_NOMOVE | SWP_NOZORDER);
-
 	// Adjust 4th colum
+	HWND item = GetControl(Id_LogListView);
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - m_ControlTemplate.ScaleDialogUnits(30) -
@@ -421,25 +376,25 @@ void DialogDebug::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 	{
 	case Logger::Level::Error:
 		if (!m_Error) return;
-		item = GetControl(Id_ErrorCheckBox);
+		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Error));
 		vitem.iImage = 0;
 		break;
 
 	case Logger::Level::Warning:
 		if (!m_Warning) return;
-		item = GetControl(Id_WarningCheckBox);
+		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Warning));
 		vitem.iImage = 1;
 		break;
 
 	case Logger::Level::Notice:
 		if (!m_Notice) return;
-		item = GetControl(Id_NoticeCheckBox);
+		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Notice));
 		vitem.iImage = 2;
 		break;
 
 	case Logger::Level::Debug:
 		if (!m_Debug) return;
-		item = GetControl(Id_DebugCheckBox);
+		StringCchCopy(buffer, _countof(buffer), GetString(IDS_Debug));
 		vitem.iImage = I_IMAGENONE;
 		break;
 	}
@@ -454,9 +409,6 @@ void DialogDebug::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 		pos += 4;
 	}
 
-	if (!item) return;
-
-	GetWindowText(item, buffer, 32);
 	item = GetControl(Id_LogListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
@@ -486,32 +438,45 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case Id_ErrorCheckBox:
+	case Id_LogMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			m_Error = !m_Error;
+			static const MenuTemplate s_LogMenu[] =
+			{
+				MENU_ITEM(Id_ErrorMenuItem, IDS_Error),
+				MENU_ITEM(Id_WarningMenuItem, IDS_Warning),
+				MENU_ITEM(Id_NoticeMenuItem, IDS_Notice),
+				MENU_ITEM(Id_DebugMenuItem, IDS_Debug)
+			};
+
+			HMENU menu = MenuTemplate::CreateMenu(s_LogMenu, _countof(s_LogMenu), GetString);
+			CheckMenuItem(menu, Id_ErrorMenuItem, MF_BYCOMMAND | (m_Error ? MF_CHECKED : MF_UNCHECKED));
+			CheckMenuItem(menu, Id_WarningMenuItem, MF_BYCOMMAND | (m_Warning ? MF_CHECKED : MF_UNCHECKED));
+			CheckMenuItem(menu, Id_NoticeMenuItem, MF_BYCOMMAND | (m_Notice ? MF_CHECKED : MF_UNCHECKED));
+			CheckMenuItem(menu, Id_DebugMenuItem, MF_BYCOMMAND | (m_Debug ? MF_CHECKED : MF_UNCHECKED));
+
+			RECT r;
+			GetWindowRect((HWND)lParam, &r);
+			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			DestroyMenu(menu);
 		}
 		break;
 
-	case Id_WarningCheckBox:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			m_Warning = !m_Warning;
-		}
+	case Id_ErrorMenuItem:
+		m_Error = !m_Error;
 		break;
 
-	case Id_NoticeCheckBox:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			m_Notice = !m_Notice;
-		}
+	case Id_WarningMenuItem:
+		m_Warning = !m_Warning;
 		break;
 
-	case Id_DebugCheckBox:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			m_Debug = !m_Debug;
-		}
+	case Id_NoticeMenuItem:
+		m_Notice = !m_Notice;
+		break;
+
+	case Id_DebugMenuItem:
+		m_Debug = !m_Debug;
 		break;
 
 	case Id_ClearButton:
