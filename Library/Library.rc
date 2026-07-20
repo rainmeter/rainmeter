@@ -54,6 +54,7 @@ IDR_DIALOG_ACCELERATORS ACCELERATORS
 {
     "^C", IDM_COPY
     "^R", IDM_SKIN_REFRESH
+    VK_F5, IDM_SKIN_REFRESH, VIRTKEY
 }
 
 /////////////////////////////////////////////////////////////////////////////
