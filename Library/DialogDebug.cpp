@@ -2011,8 +2011,8 @@ void DialogDebug::TabDisplay::Initialize()
 	addRow(0, L"Primary device", formatNumber(monitorsInfo.primary));
 	addRow(0, L"Device count", formatNumber(monitorsInfo.deviceCount));
 	addRow(0, L"Display count", formatNumber(monitorsInfo.displayCount));
-	addRow(0, L"Virtual screen", formatRect(monitorsInfo.virtualScreen));
-	addRow(0, L"Logical virtual screen", formatRect(monitorsInfo.logicalVirtualScreen));
+	addRow(0, L"Virtual screen", formatRect(monitorsInfo.logicalVirtualScreen));
+	addRow(0, L"Physical virtual screen", formatRect(monitorsInfo.virtualScreen));
 
 	for (const MonitorInfo& monitor : monitorsInfo.monitors)
 	{
