@@ -24,7 +24,7 @@ public:
 
 	bool IsMenuActive() { return m_ActiveMenu != nullptr; }
 
-	void ShowMenu(POINT pos, Skin* skin);
+	void ShowMenu(POINT pos, Skin* skin, HWND parentWindow = nullptr);
 	void ShowSkinCustomMenu(POINT pos, Skin* skin);
 	void ShowSkinSelectionMenu(POINT pos, Skin* skin, HWND parentWindow);
 
@@ -34,7 +34,7 @@ public:
 	static HMENU CreateGameModeOnStopMenu();
 
 private:
-	void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
+	void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND commandWindow = nullptr);
 
 	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
 	static HMENU CreateSkinSettingsMenu(const std::vector<Skin*>& skins);

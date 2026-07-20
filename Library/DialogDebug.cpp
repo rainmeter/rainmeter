@@ -1530,7 +1530,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
-			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow);
+			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow, GetParent(m_Window));
 		}
 		break;
 
