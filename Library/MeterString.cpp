@@ -9,10 +9,9 @@
 #include "MeterString.h"
 #include "Rainmeter.h"
 #include "Measure.h"
+#include "Pcre.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/ParseUtil.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
@@ -31,31 +30,17 @@ std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 
 		int ovector[300];
 		const char* error;
-		int errorOffset = 0;
-		int offset = 0;
-		pcre16* re = pcre16_compile(
-			(PCRE_SPTR16)pattern.c_str(),
-			PCRE_UTF16,
-			&error,
-			&errorOffset,
-			nullptr);  // Use default character tables.
+		Pcre re(pattern.c_str(), &error);
 		if (!re)
 		{
-			//LogNoticeF(this, L"InlinePattern%i error at offset %d: %S", errorOffset, error);
+			//LogNoticeF(this, L"InlinePattern%i error at offset %d: %S", re.GetErrorOffset(), error);
 		}
 		else
 		{
 			do
 			{
-				const int rc = pcre16_exec(
-					re,
-					nullptr,
-					(PCRE_SPTR16)str.c_str(),
-					(int)str.length(),
-					offset,
-					PCRE_NOTEMPTY,          // Empty string is not a valid match
-					ovector,
-					(int)_countof(ovector));
+				// Empty string is not a valid match.
+				const int rc = re.Execute(str, PCRE_NOTEMPTY, ovector, (int)_countof(ovector));
 				if (rc <= 0)
 				{
 					break;
@@ -83,11 +68,9 @@ std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 					}
 				}
 
-				offset = start + length;
+				re.SetOffset(start + length);
 
 			} while (true);
-
-			pcre16_free(re);
 		}
 
 		inlineRanges.push_back(ranges);

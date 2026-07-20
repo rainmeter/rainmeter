@@ -7,10 +7,9 @@
 
 #include "StdAfx.h"
 #include "MeasureWebParser.h"
+#include "Pcre.h"
 #include "Rainmeter.h"
 #include "System.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
 #include "../Common/CharacterEntityReference.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
@@ -564,16 +563,13 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 	}
 
 	const char* error = nullptr;
-	int erroffset = 0;
 	int ovector[OVECCOUNT] = { 0 };
 	int rc = 0;
 	bool doErrorAction = false;
 
 	// Compile the regular expression in the first argument
-	pcre16* re = pcre16_compile(
-		(PCRE_SPTR16)m_RegExp.c_str(),
-		PCRE_UTF16, &error, &erroffset, nullptr);
-	if (re != nullptr)
+	Pcre re(m_RegExp.c_str(), &error);
+	if (re)
 	{
 		// Compilation succeeded: match the subject in the second argument
 		std::wstring buffer;
@@ -586,7 +582,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			dataLength = (DWORD)buffer.length();
 		}
 
-		rc = pcre16_exec(re, nullptr, (PCRE_SPTR16)data, dataLength, 0, 0, ovector, OVECCOUNT);
+		rc = re.Execute(std::wstring_view(data, dataLength), 0, ovector, OVECCOUNT);
 		if (rc >= 0)
 		{
 			if (rc == 0)
@@ -716,14 +712,11 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 				}
 			}
 		}
-
-		// Release memory used for the compiled pattern
-		pcre16_free(re);
 	}
 	else
 	{
 		// Compilation failed.
-		LogErrorF(this, L"RegExp error at offset %d: %S", erroffset, error);
+		LogErrorF(this, L"RegExp error at offset %d: %S", re.GetErrorOffset(), error);
 		doErrorAction = true;
 	}
 

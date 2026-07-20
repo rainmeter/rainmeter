@@ -50,8 +50,7 @@
 #include "MeasureWindowMessage.h"
 #include "Rainmeter.h"
 #include "Util.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
+#include "Pcre.h"
 
 #define OVECCOUNT 300	// Should be a multiple of 3
 
@@ -294,14 +293,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
 		{
 			const char* error;
-			int errorOffset;
-			int offset = 0;
-			pcre16* re = pcre16_compile(
-				(PCRE_SPTR16)m_Substitute[i].c_str(),
-				PCRE_UTF16,
-				&error,
-				&errorOffset,
-				nullptr);  // Use default character tables.
+			Pcre re(m_Substitute[i].c_str(), &error);
 			if (!re)
 			{
 				MakePlainSubstitute(str, i);
@@ -312,15 +304,8 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 				do
 				{
 					const int options = str.empty() ? 0 : PCRE_NOTEMPTY;
-					const int rc = pcre16_exec(
-						re,
-						nullptr,
-						(PCRE_SPTR16)str.c_str(),
-						(int)str.length(),
-						offset,
-						options,               // Empty string is not a valid match
-						ovector,
-						(int)_countof(ovector));
+					// Empty string is not a valid match.
+					const int rc = re.Execute(str, options, ovector, (int)_countof(ovector));
 					if (rc <= 0)
 					{
 						break;
@@ -357,11 +342,9 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 					const int start = ovector[0];
 					const int length = ovector[1] - ovector[0];
 					str.replace(start, length, result);
-					offset = start + (int)result.length();
+					re.SetOffset(start + (int)result.length());
 				}
 				while (true);
-
-				pcre16_free(re);
 			}
 		}
 	}
