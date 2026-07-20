@@ -1029,7 +1029,7 @@ void DialogDebug::TabSkins::Create(HWND owner)
 		Control::CheckBox(Id_AutoRefreshCheckBox, 0,
 			226, 0, 150, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
+			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_SkinMenuButton, 0,
 			415, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
