@@ -2023,10 +2023,7 @@ void DialogDebug::TabDisplays::Initialize()
 		addGroup(header);
 		const int monitorGroup = groupId - 1;
 
-		WCHAR handle[32];
-		_snwprintf_s(handle, _TRUNCATE, L"%p", monitor.handle);
 		addRow(monitorGroup, L"Active", monitor.active ? L"Yes" : L"No");
-		addRow(monitorGroup, L"Handle", handle);
 		addRow(monitorGroup, L"Device number", formatNumber(monitor.deviceNumber));
 		addRow(monitorGroup, L"Display number", formatNumber(monitor.displayNumber));
 		addRow(monitorGroup, L"DPI", formatNumber(monitor.dpi));
