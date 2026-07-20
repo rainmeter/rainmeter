@@ -44,6 +44,7 @@ class Dialog : public BaseDialog
 public:
 	HWND GetWindow() { return m_Window; }
 
+	static void Initialize(HACCEL accelerator) { c_Accelerator = accelerator; }
 	static bool HandleMessage(MSG& msg);
 
 protected:
@@ -97,6 +98,7 @@ private:
 	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
 
 	static HWND c_ActiveDialogWindow;
+	static HACCEL c_Accelerator;
 
 	WINDOWPLACEMENT* m_WindowPlacement;
 	HWND m_TabControl;

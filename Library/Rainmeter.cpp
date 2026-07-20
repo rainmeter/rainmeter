@@ -178,6 +178,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
+	Dialog::Initialize(LoadAccelerators(m_Instance, MAKEINTRESOURCE(IDR_DIALOG_ACCELERATORS)));
+
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
 

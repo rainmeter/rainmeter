@@ -30,6 +30,7 @@ UINT GetWindowDpi(HWND window)
 }  // namespace
 
 HWND Dialog::c_ActiveDialogWindow = nullptr;
+HACCEL Dialog::c_Accelerator = nullptr;
 
 //
 // BaseDialog
@@ -345,6 +346,23 @@ bool Dialog::HandleMessage(MSG& msg)
 {
 	if (c_ActiveDialogWindow)
 	{
+		if (c_Accelerator)
+		{
+			HWND acceleratorWindow = msg.hwnd;
+			while (acceleratorWindow)
+			{
+				HWND parent = GetParent(acceleratorWindow);
+				if (parent == c_ActiveDialogWindow) break;
+				acceleratorWindow = parent;
+			}
+
+			if (acceleratorWindow && IsWindowEnabled(acceleratorWindow) &&
+				TranslateAccelerator(acceleratorWindow, c_Accelerator, &msg))
+			{
+				return true;
+			}
+		}
+
 		if (IsDialogMessage(c_ActiveDialogWindow, &msg))
 		{
 			return true;
