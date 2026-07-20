@@ -164,6 +164,10 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	static const Control s_Controls[] =
 	{
+		Control::Button(Id_HelpButton, IDS_Help,
+			488, 381, 50, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_BOTTOM_RIGHT),
 		Control::Button(Id_CloseButton, IDS_Close,
 			544, 381, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0,
@@ -200,6 +204,29 @@ INT_PTR DialogDebug::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
+	case Id_HelpButton:
+		{
+			std::wstring url = L"https://docs.rainmeter.net/manual/user-interface/about/#";
+
+			Tab& tab = GetActiveTab();
+			if (&tab == &m_TabLog)
+			{
+				url += L"Log";
+			}
+			else if (&tab == &m_TabSkins)
+			{
+				url += L"Skins";
+			}
+			else // if (&tab == &m_TabPlugins)
+			{
+				url += L"Plugins";
+			}
+
+			url += L"Tab";
+			ShellExecute(m_Window, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+		}
+		break;
+
 	case Id_CloseButton:
 		PostMessage(m_Window, WM_CLOSE, 0, 0);
 		break;

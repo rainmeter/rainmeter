@@ -176,7 +176,8 @@ private:
 	enum Id
 	{
 		Id_CloseButton = IDCLOSE,
-		Id_Tab = 500
+		Id_Tab = 500,
+		Id_HelpButton
 	};
 
 	TabLog m_TabLog;
