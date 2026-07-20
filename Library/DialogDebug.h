@@ -42,7 +42,6 @@ protected:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
-	// Log tab
 	class TabLog : public Tab
 	{
 	public:
@@ -90,7 +89,6 @@ private:
 		HIMAGELIST m_ImageList;
 	};
 
-	// Skins tab
 	class TabSkins : public Tab
 	{
 	public:
@@ -147,7 +145,20 @@ private:
 		std::vector<Watch> m_Watches;
 	};
 
-	// Plugins tab
+	class TabDisplays : public Tab
+	{
+	public:
+		enum Id
+		{
+			Id_DisplaysListView = 400
+		};
+
+		void Create(HWND owner);
+		virtual void Initialize();
+		virtual void Relayout(int w, int h) override;
+		virtual void HandleDpiChange() override;
+	};
+
 	class TabPlugins : public Tab
 	{
 	public:
@@ -182,6 +193,7 @@ private:
 
 	TabLog m_TabLog;
 	TabSkins m_TabSkins;
+	TabDisplays m_TabDisplays;
 	TabPlugins m_TabPlugins;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
