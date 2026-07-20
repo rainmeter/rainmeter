@@ -2145,6 +2145,18 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 		return std::wstring(buffer);
 	};
 
+	auto formatType = [](const MIB_IF_ROW2& networkInterface)
+	{
+		std::wstring value = NetworkUtil::GetInterfaceTypeString(networkInterface.Type);
+		const bool isVirtual = networkInterface.InterfaceAndOperStatusFlags.HardwareInterface != 1;
+		const bool isFilter = networkInterface.InterfaceAndOperStatusFlags.FilterInterface == 1;
+		if (isVirtual || isFilter)
+		{
+			value += isVirtual && isFilter ? L" (virtual, filter)" : isVirtual ? L" (virtual)" : L" (filter)";
+		}
+		return value;
+	};
+
 	NetworkUtil::UpdateInterfaceTable();
 	MIB_IF_ROW2* table = NetworkUtil::GetInterfaceTable();
 	const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
@@ -2179,16 +2191,10 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 		addRow(interfaceGroup, L"Interface index", formatNumber(networkInterface.InterfaceIndex));
 		addRow(interfaceGroup, L"Description", networkInterface.Description);
 		addRow(interfaceGroup, L"Alias", networkInterface.Alias);
-		addRow(interfaceGroup, L"Type", formatNameAndNumber(
-			NetworkUtil::GetInterfaceTypeString(networkInterface.Type), networkInterface.Type));
-		addRow(interfaceGroup, L"Hardware interface",
-			networkInterface.InterfaceAndOperStatusFlags.HardwareInterface == 1 ? L"Yes" : L"No");
-		addRow(interfaceGroup, L"Filter interface",
-			networkInterface.InterfaceAndOperStatusFlags.FilterInterface == 1 ? L"Yes" : L"No");
-		addRow(interfaceGroup, L"Media state",
-			NetworkUtil::GetInterfaceMediaConnectionString(networkInterface.MediaConnectState));
-		addRow(interfaceGroup, L"Operational status", formatNameAndNumber(
-			NetworkUtil::GetInterfaceOperStatusString(networkInterface.OperStatus), networkInterface.OperStatus));
+		addRow(interfaceGroup, L"Type", formatType(networkInterface));
+		addRow(interfaceGroup, L"Status", fmt::format(L"{} / {}",
+			NetworkUtil::GetInterfaceMediaConnectionString(networkInterface.MediaConnectState),
+			NetworkUtil::GetInterfaceOperStatusString(networkInterface.OperStatus)));
 	}
 
 	ListView_EnableGroupView(item, TRUE);
