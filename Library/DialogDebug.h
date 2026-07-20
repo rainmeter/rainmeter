@@ -54,6 +54,7 @@ private:
 			Id_WarningMenuItem,
 			Id_NoticeMenuItem,
 			Id_DebugMenuItem,
+			Id_DebugModeMenuItem,
 			Id_ClearButton
 		};
 
