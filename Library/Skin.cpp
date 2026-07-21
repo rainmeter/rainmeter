@@ -4279,6 +4279,11 @@ void Skin::ApplyZoomScale(float zoom, bool writeOptions)
 	m_ZoomScale = zoom;
 	UpdateWindowDpiAndBounds();
 
+	if (m_State == STATE_RUNNING)
+	{
+		Redraw();
+	}
+
 	if (writeOptions)
 	{
 		WriteOptions(OPTION_ZOOM);
