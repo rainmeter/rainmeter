@@ -522,6 +522,15 @@ void Skin::Refresh(bool init, bool all)
 		return;
 	}
 
+	// ReadSkin() determines the final window size. Resolve the target monitor DPI again before
+	// the initial draw so that a subsequent WM_DPICHANGED does not need to redraw while refreshing.
+	ComputePositionFromOptions(true);
+	if (m_KeepOnScreen)
+	{
+		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
+	}
+	UpdateWindowBounds(SWP_NOSENDCHANGING);
+
 	// Remove transparent flag
 	RemoveWindowExStyle(WS_EX_TRANSPARENT);
 
@@ -539,12 +548,6 @@ void Skin::Refresh(bool init, bool all)
 		ShowBlur();
 	}
 
-	if (m_KeepOnScreen)
-	{
-		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
-	}
-
-	UpdateWindowBounds(SWP_NOSENDCHANGING);
 	ComputeOptionValueFromPosition();
 
 	if (init)
@@ -712,7 +715,11 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 
 POINT Skin::GetScreenLogicalPosition() const
 {
-	return MonitorUtil::PhysicalToScreenLogical({ m_X.pos, m_Y.pos });
+	DpiUtil::DpiUnawareScope dpiUnaware;
+
+	RECT rect = {};
+	GetWindowRect(m_Window, &rect);
+	return { rect.left, rect.top };
 }
 
 void Skin::UpdateWindowBounds(UINT flags)
@@ -2041,7 +2048,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	}
 	else
 	{
-		physicalPos = MonitorUtil::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
+		physicalPos = System::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
 	}
 
 	m_X.pos = physicalPos.x;

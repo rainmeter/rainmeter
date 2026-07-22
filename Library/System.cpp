@@ -77,19 +77,24 @@ void System::Initialize(HINSTANCE instance)
 		instance,
 		nullptr);
 
-	c_HelperWindow = CreateWindowEx(
-		WS_EX_TOOLWINDOW,
-		MAKEINTATOM(className),
-		L"PositioningHelper",
-		WS_POPUP | WS_DISABLED,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		nullptr,
-		nullptr,
-		instance,
-		nullptr);
+	{
+		// The helper must be created DPI-unaware to reproduce the legacy DPI-unaware SetWindowPos
+		// coordinate mapping.
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		c_HelperWindow = CreateWindowEx(
+			WS_EX_TOOLWINDOW,
+			MAKEINTATOM(className),
+			L"PositioningHelper",
+			WS_POPUP | WS_DISABLED,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			nullptr,
+			nullptr,
+			instance,
+			nullptr);
+	}
 
 	WTSRegisterSessionNotification(c_Window, NOTIFY_FOR_THIS_SESSION);
 	WindowOcclusionTracker::Initialize(c_Window, TIMER_WINDOWOCCLUSION);
@@ -175,6 +180,42 @@ UINT System::GetDpiForWindow(HWND window)
 	}
 
 	return GetSystemDpi();
+}
+
+POINT System::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
+{
+	{
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	}
+
+	RECT r = {};
+	GetWindowRect(c_HelperWindow, &r);
+
+	if (dpi)
+	{
+		// We can't use GetDpiForWindow because c_HelperWindow was created as a DPI unaware window.
+		// Instead we will determine the DPI based on the monitor of the center point.
+		const POINT center = { r.left + (r.right - r.left) / 2, r.top + (r.bottom - r.top) / 2 };
+		const auto monitorHandle = MonitorFromPoint(center, MONITOR_DEFAULTTONEAREST);
+		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(monitorHandle);
+		*dpi = monitor ? monitor->dpi : GetSystemDpi();
+	}
+
+	return { r.left, r.top };
+}
+
+POINT System::PhysicalToScreenLogical(POINT point)
+{
+	SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, 1, 1, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+	{
+		DpiUtil::DpiUnawareScope dpiUnaware;
+
+		RECT r = {};
+		GetWindowRect(c_HelperWindow, &r);
+		return { r.left, r.top };
+	}
 }
 
 /*

@@ -55,9 +55,6 @@ const MultiMonitorInfo& GetMultiMonitorInfo();
 void ClearMultiMonitorInfo();
 void UpdateWorkareaInfo();
 
-POINT ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi = nullptr);
-POINT PhysicalToScreenLogical(POINT point);
-
 }  // namespace MonitorUtil
 
 #endif
