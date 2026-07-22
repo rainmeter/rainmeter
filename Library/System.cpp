@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "System.h"
+#include "DialogDebug.h"
 #include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -699,6 +700,8 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				LogNotice(L"System: Work area changed");
 				MonitorUtil::UpdateWorkareaInfo();
 			}
+
+			DialogDebug::UpdateDisplays();
 
 			for (const auto& [_, skin] : GetRainmeter().GetAllSkins())
 			{

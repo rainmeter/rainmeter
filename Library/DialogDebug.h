@@ -33,6 +33,7 @@ public:
 	static void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
 	static void UpdateSkins();
 	static void UpdateMeasures(Skin* skin);
+	static void UpdateDisplays();
 
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
 
@@ -157,6 +158,8 @@ private:
 		virtual void Initialize();
 		virtual void Relayout(int w, int h) override;
 		virtual void HandleDpiChange() override;
+
+		void UpdateDisplayList();
 	};
 
 	class TabNetwork : public Tab
