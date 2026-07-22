@@ -1054,10 +1054,6 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_SkinMenuButton, 0,
-			415, 0, 75, 14,
-			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
-		Control::Button(Id_AddWatchButton, 0,
 			495, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
@@ -1066,9 +1062,13 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::Edit(Id_FilterEdit, 0,
-			0, 321, 570, 13,
+			0, 321, 490, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0,
-			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::Button(Id_AddWatchButton, 0,
+			495, 320, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_BOTTOM_RIGHT)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
