@@ -1062,9 +1062,13 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::ListView(Id_SkinsListView, 0,
-			0, 22, 570, 315,
+			0, 22, 570, 291,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
-			Control::ANCHOR_ALL)
+			Control::ANCHOR_ALL),
+		Control::Edit(Id_FilterEdit, 0,
+			0, 321, 570, 13,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0,
+			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -1136,6 +1140,7 @@ void DialogDebug::TabSkins::Initialize()
 	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
 	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
 	SetWindowText(GetControl(Id_AddWatchButton), L"Add watch...");
+	SendMessage(GetControl(Id_FilterEdit), EM_SETCUEBANNER, TRUE, (LPARAM)L"Filter...");
 
 	UpdateSkinList();
 
@@ -1355,6 +1360,17 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	HWND item = GetControl(Id_SkinsListView);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
+	const int filterLength = GetWindowTextLength(GetControl(Id_FilterEdit));
+	std::wstring filter(filterLength + 1, L'\0');
+	if (filterLength > 0)
+	{
+		GetWindowText(GetControl(Id_FilterEdit), &filter[0], filterLength + 1);
+	}
+	filter.resize(filterLength);
+	const auto isVisible = [&filter](const std::wstring& name)
+	{
+		return filter.empty() || StringUtil::CaseInsensitiveFind(name, filter) != std::wstring::npos;
+	};
 
 	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
@@ -1368,6 +1384,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	for ( ; j != measures.end(); ++j)
 	{
 		lvi.pszText = (WCHAR*)(*j)->GetName();
+		if (!isVisible(lvi.pszText)) continue;
 
 		if (lvi.iItem < count)
 		{
@@ -1412,6 +1429,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 		const std::wstring* tmpStr = m_SkinWindow->GetParser().GetVariableOriginalName((*iter).first);
 		if (!tmpStr) continue;  // Variable name does not exist
+		if (!isVisible(*tmpStr)) continue;
 
 		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
@@ -1440,6 +1458,8 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	lvi.iGroupId = 2;
 	for (const auto& watch : m_Watches)
 	{
+		if (!isVisible(watch.text)) continue;
+
 		lvi.pszText = (WCHAR*)watch.text.c_str();
 		lvi.lParam = (LPARAM)watch.text.c_str();
 
@@ -1533,6 +1553,13 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	switch (LOWORD(wParam))
 	{
+	case Id_FilterEdit:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			UpdateMeasureList(m_SkinWindow);
+		}
+		break;
+
 	case Id_SelectSkinButton:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
