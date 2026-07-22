@@ -287,6 +287,7 @@
 #define IDM_EDITWATCH                                4076
 #define IDM_DELETEWATCH                              4077
 #define IDM_ADD_WATCH                                4078
+#define IDM_COPYALL                                  4079
 #define IDM_INSTALL_NEW_VERSION                      4080
 #define IDM_SKIN_HIDEONMOUSE_NONE                    4081
 #define IDM_SKIN_ZOOM_80                             4082

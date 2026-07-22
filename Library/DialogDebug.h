@@ -160,6 +160,10 @@ private:
 		virtual void HandleDpiChange() override;
 
 		void UpdateDisplayList();
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
 	class TabNetwork : public Tab
@@ -179,6 +183,7 @@ private:
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
 		void UpdateInterfaceList();
