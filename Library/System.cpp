@@ -206,9 +206,9 @@ POINT System::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
 	return { r.left, r.top };
 }
 
-POINT System::PhysicalToScreenLogical(POINT point)
+POINT System::PhysicalToScreenLogical(POINT point, SIZE size)
 {
-	SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, 1, 1, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	{
 		DpiUtil::DpiUnawareScope dpiUnaware;
