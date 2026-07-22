@@ -24,7 +24,7 @@ public:
 	static UINT GetDpiForWindow(HWND window);
 	static UINT GetSystemDpi();
 	static POINT ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi = nullptr);
-	static POINT PhysicalToScreenLogical(POINT point);
+	static POINT PhysicalToScreenLogical(POINT point, SIZE size);
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
