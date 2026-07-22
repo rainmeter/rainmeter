@@ -25,6 +25,86 @@
 WINDOWPLACEMENT DialogDebug::c_WindowPlacement = { 0 };
 DialogDebug* DialogDebug::c_Dialog = nullptr;
 
+namespace {
+
+void CopyListViewRows(HWND list, bool selectedOnly)
+{
+	HWND header = ListView_GetHeader(list);
+	const int columnCount = Header_GetItemCount(header);
+	std::wstring text;
+	WCHAR buffer[MAX_LINE_LENGTH];
+	buffer[0] = L'\0';
+	bool copiedRow = false;
+	int copiedGroup = I_GROUPIDNONE;
+	const bool copyGroupHeaders = ListView_IsGroupViewEnabled(list) != FALSE &&
+		(!selectedOnly || ListView_GetSelectedCount(list) > 1);
+	const int itemCount = ListView_GetItemCount(list);
+	for (int row = 0; row < itemCount; ++row)
+	{
+		if (selectedOnly && !(ListView_GetItemState(list, row, LVIS_SELECTED) & LVIS_SELECTED)) continue;
+
+		bool copiedHeader = false;
+		if (copyGroupHeaders)
+		{
+			LVITEM item = { 0 };
+			item.mask = LVIF_GROUPID;
+			item.iItem = row;
+			if (ListView_GetItem(list, &item) && item.iGroupId != copiedGroup)
+			{
+				LVGROUP group = { 0 };
+				group.cbSize = sizeof(group);
+				group.mask = LVGF_HEADER;
+				group.pszHeader = buffer;
+				group.cchHeader = _countof(buffer);
+				if (ListView_GetGroupInfo(list, item.iGroupId, &group) != -1)
+				{
+					if (copiedRow) text += L"\r\n\r\n";
+					text += buffer;
+					text += L"\r\n";
+					copiedHeader = true;
+				}
+				copiedGroup = item.iGroupId;
+			}
+		}
+
+		if (copiedRow && !copiedHeader) text += L"\r\n";
+		for (int column = 0; column < columnCount; ++column)
+		{
+			if (column != 0) text += L" | ";
+			ListView_GetItemText(list, row, column, buffer, _countof(buffer));
+			text += buffer;
+		}
+		copiedRow = true;
+	}
+
+	if (!text.empty()) System::SetClipboardText(text);
+}
+
+void ShowListViewCopyMenu(HWND owner, HWND list)
+{
+	HMENU menu = CreatePopupMenu();
+	const bool hasSelection = ListView_GetNextItem(list, -1, LVNI_SELECTED) != -1;
+	const int itemCount = ListView_GetItemCount(list);
+	AppendMenu(menu, MF_STRING | (hasSelection ? 0 : MF_GRAYED), IDM_COPY, L"Copy");
+	AppendMenu(menu, MF_STRING | (itemCount != 0 ? 0 : MF_GRAYED), IDM_COPYALL, L"Copy all");
+
+	const POINT pt = System::GetCursorPosition();
+	const UINT command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+		pt.x, pt.y, 0, owner, nullptr);
+	DestroyMenu(menu);
+
+	if (command == IDM_COPY)
+	{
+		CopyListViewRows(list, true);
+	}
+	else if (command == IDM_COPYALL)
+	{
+		CopyListViewRows(list, false);
+	}
+}
+
+}  // namespace
+
 DialogDebug::DialogDebug() : Dialog(&c_WindowPlacement)
 {
 }
@@ -298,7 +378,7 @@ void DialogDebug::TabLog::Create(HWND owner)
 	{
 		Control::ListView(Id_LogListView, 0,
 			0, 22, 570, 315,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::Button(Id_TypeMenuButton, IDS_Type,
 			0, 0, 75, 14,
@@ -610,29 +690,11 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_COPY:
-		{
-			HWND hwnd = GetControl(Id_LogListView);
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
-			{
-				WCHAR buffer[512] = { 0 };
+		CopyListViewRows(GetControl(Id_LogListView), true);
+		break;
 
-				// Get message.
-				ListView_GetItemText(hwnd, sel, 3, buffer, 512);
-				std::wstring message = buffer;
-
-				// Get source (if any).
-				ListView_GetItemText(hwnd, sel, 2, buffer, 512);
-				if (*buffer)
-				{
-					message += L" (";
-					message += buffer;
-					message += L')';
-				}
-
-				System::SetClipboardText(message);
-			}
-		}
+	case IDM_COPYALL:
+		CopyListViewRows(GetControl(Id_LogListView), false);
 		break;
 
 	default:
@@ -653,26 +715,7 @@ INT_PTR DialogDebug::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 			if (lvkd->wVKey == 0x43 && // C key.
 				IsCtrlKeyDown())
 			{
-				const int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
-				if (sel != -1)
-				{
-					WCHAR buffer[512] = { 0 };
-
-					// Get message.
-					ListView_GetItemText(nm->hwndFrom, sel, 3, buffer, 512);
-					std::wstring message = buffer;
-
-					// Get source (if any).
-					ListView_GetItemText(nm->hwndFrom, sel, 2, buffer, 512);
-					if (*buffer)
-					{
-						message += L" (";
-						message += buffer;
-						message += L')';
-					}
-
-					System::SetClipboardText(message);
-				}
+				CopyListViewRows(nm->hwndFrom, true);
 			}
 		}
 		break;
@@ -681,41 +724,7 @@ INT_PTR DialogDebug::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 		if (nm->idFrom == Id_LogListView)
 		{
 			HWND hwnd = nm->hwndFrom;
-			const int sel = ListView_GetNextItem(hwnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-			if (sel != -1)
-			{
-				NMITEMACTIVATE* item = (NMITEMACTIVATE*)lParam;
-
-				LVITEM lvi = { 0 };
-				lvi.mask = LVIF_GROUPID;
-				lvi.iItem = item->iItem;
-				lvi.iSubItem = 0;
-				lvi.iGroupId = -1;
-				ListView_GetItem(hwnd, &lvi);
-
-				static const MenuTemplate s_MessageMenu[] =
-				{
-					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
-				};
-
-				HMENU menu = MenuTemplate::CreateMenu(s_MessageMenu, _countof(s_MessageMenu), GetString);
-				if (menu)
-				{
-					POINT pt = System::GetCursorPosition();
-
-					// Show context menu
-					TrackPopupMenu(
-						menu,
-						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-						pt.x,
-						pt.y,
-						0,
-						m_Window,
-						nullptr);
-
-					DestroyMenu(menu);
-				}
-			}
+			ShowListViewCopyMenu(m_Window, hwnd);
 		}
 		break;
 
@@ -1951,7 +1960,7 @@ void DialogDebug::TabDisplay::Create(HWND owner)
 	{
 		Control::ListView(Id_DisplaysListView, 0,
 			0, 0, 570, 338,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 0,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOCOLUMNHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
 
@@ -2075,6 +2084,38 @@ void DialogDebug::TabDisplay::HandleDpiChange()
 	Relayout(rect.right, rect.bottom);
 }
 
+INT_PTR DialogDebug::TabDisplay::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_NOTIFY)
+	{
+		return OnNotify(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR DialogDebug::TabDisplay::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	if (nm->idFrom == Id_DisplaysListView)
+	{
+		if (nm->code == LVN_KEYDOWN)
+		{
+			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
+			if (lvkd->wVKey == 'C' && IsCtrlKeyDown())
+			{
+				CopyListViewRows(nm->hwndFrom, true);
+			}
+		}
+		else if (nm->code == NM_RCLICK)
+		{
+			ShowListViewCopyMenu(m_Window, nm->hwndFrom);
+		}
+	}
+
+	return TRUE;
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                Network tab
@@ -2093,7 +2134,7 @@ void DialogDebug::TabNetwork::Create(HWND owner)
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::ListView(Id_NetworkListView, 0,
 			0, 22, 570, 315,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 0,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOCOLUMNHEADER, 0,
 			Control::ANCHOR_ALL)
 	};
 
@@ -2237,9 +2278,13 @@ void DialogDebug::TabNetwork::HandleDpiChange()
 
 INT_PTR DialogDebug::TabNetwork::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (uMsg == WM_COMMAND)
+	switch (uMsg)
 	{
+	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -2250,6 +2295,28 @@ INT_PTR DialogDebug::TabNetwork::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (LOWORD(wParam) == Id_ShowVirtualInterfacesCheckBox && HIWORD(wParam) == BN_CLICKED)
 	{
 		UpdateInterfaceList();
+	}
+
+	return TRUE;
+}
+
+INT_PTR DialogDebug::TabNetwork::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	if (nm->idFrom == Id_NetworkListView)
+	{
+		if (nm->code == LVN_KEYDOWN)
+		{
+			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
+			if (lvkd->wVKey == 'C' && IsCtrlKeyDown())
+			{
+				CopyListViewRows(nm->hwndFrom, true);
+			}
+		}
+		else if (nm->code == NM_RCLICK)
+		{
+			ShowListViewCopyMenu(m_Window, nm->hwndFrom);
+		}
 	}
 
 	return TRUE;
