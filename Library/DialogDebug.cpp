@@ -1875,6 +1875,18 @@ LRESULT CALLBACK DialogDebug::TabSkins::SkinsListViewSubclass(HWND hwnd, UINT ms
 		SendMessage(tab->m_RangeToolTip, TTM_RELAYEVENT, 0, (LPARAM)&relay);
 	}
 
+	if (msg == WM_LBUTTONDOWN && (wParam & MK_CONTROL))
+	{
+		LVHITTESTINFO hit = { 0 };
+		hit.pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+		ListView_SubItemHitTest(hwnd, &hit);
+		if (hit.iItem != -1 && (ListView_GetItemState(hwnd, hit.iItem, LVIS_SELECTED) & LVIS_SELECTED))
+		{
+			ListView_SetItemState(hwnd, hit.iItem, 0, LVIS_SELECTED);
+			return 0;
+		}
+	}
+
 	return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
