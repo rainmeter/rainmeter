@@ -99,7 +99,10 @@ private:
 			Id_SkinsListView,
 			Id_SkinMenuButton,
 			Id_AutoRefreshCheckBox,
-			Id_AddWatchButton
+			Id_AddWatchButton,
+			Id_JumpMeasures,
+			Id_JumpVariables,
+			Id_JumpWatches
 		};
 
 		TabSkins();
