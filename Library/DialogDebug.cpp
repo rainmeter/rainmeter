@@ -1026,12 +1026,18 @@ private:
 DialogDebug::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_AutoRefresh(false),
+	m_RangeToolTip(),
+	m_RangeToolTipItem(-1),
 	m_DirectoryWatcher(std::make_unique<DirectoryWatcher>()),
 	m_PanelWatch(std::make_unique<PanelWatch>(*this))
 {
 }
 
-DialogDebug::TabSkins::~TabSkins() = default;
+DialogDebug::TabSkins::~TabSkins()
+{
+	RemoveWindowSubclass(GetControl(Id_SkinsListView), SkinsListViewSubclass, 1);
+	if (m_RangeToolTip) DestroyWindow(m_RangeToolTip);
+}
 
 void DialogDebug::TabSkins::Create(HWND owner)
 {
@@ -1072,6 +1078,22 @@ void DialogDebug::TabSkins::Initialize()
 	// Add columns to the list view
 	HWND item = GetControl(Id_SkinsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	m_RangeToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		m_Window, nullptr, GetModuleHandle(nullptr), nullptr);
+	if (m_RangeToolTip)
+	{
+		TOOLINFO toolInfo = { 0 };
+		toolInfo.cbSize = sizeof(toolInfo);
+		toolInfo.hwnd = item;
+		toolInfo.uId = 1;
+		toolInfo.lpszText = (WCHAR*)L"";
+		SendMessage(m_RangeToolTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+		SendMessage(m_RangeToolTip, TTM_SETMAXTIPWIDTH, 0, m_ControlTemplate.ScaleDialogUnits(300));
+		SetWindowSubclass(item, SkinsListViewSubclass, 1, (DWORD_PTR)this);
+	}
 
 	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(LVGROUP);
@@ -1719,6 +1741,77 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+void DialogDebug::TabSkins::UpdateRangeToolTip(HWND list, POINT point)
+{
+	LVHITTESTINFO hit = { 0 };
+	hit.pt = point;
+	ListView_SubItemHitTest(list, &hit);
+
+	TOOLINFO toolInfo = { 0 };
+	toolInfo.cbSize = sizeof(toolInfo);
+	toolInfo.hwnd = list;
+	toolInfo.uId = 1;
+
+	LVITEM lvi = { 0 };
+	lvi.mask = LVIF_GROUPID;
+	lvi.iItem = hit.iItem;
+	if (hit.iItem == -1 || hit.iSubItem != 1 || !ListView_GetItem(list, &lvi) || lvi.iGroupId != 0)
+	{
+		if (m_RangeToolTipItem != -1)
+		{
+			m_RangeToolTipItem = -1;
+			SetRectEmpty(&toolInfo.rect);
+			SendMessage(m_RangeToolTip, TTM_NEWTOOLRECT, 0, (LPARAM)&toolInfo);
+			SendMessage(m_RangeToolTip, TTM_POP, 0, 0);
+		}
+		return;
+	}
+	if (hit.iItem == m_RangeToolTipItem) return;
+
+	WCHAR buffer[512] = { 0 };
+	ListView_GetItemText(list, hit.iItem, 0, buffer, _countof(buffer));
+	Measure* measure = m_SkinWindow->GetMeasure(buffer);
+	if (!measure) return;
+	m_RangeToolTipItem = hit.iItem;
+
+	auto getRangeValue = [](double value) -> std::wstring
+	{
+		WCHAR buffer[256];
+		Measure::GetScaledValue(AUTOSCALE_ON, 1, value, buffer, _countof(buffer));
+		std::wstring text = buffer;
+		if (!text.empty() && text.back() == L' ') text.pop_back();
+		return text;
+	};
+
+	m_RangeToolTipText = L"Min value: ";
+	m_RangeToolTipText += getRangeValue(measure->GetMinValue());
+	m_RangeToolTipText += L"\nMax value: ";
+	m_RangeToolTipText += getRangeValue(measure->GetMaxValue());
+	toolInfo.lpszText = (WCHAR*)m_RangeToolTipText.c_str();
+	ListView_GetSubItemRect(list, hit.iItem, 1, LVIR_BOUNDS, &toolInfo.rect);
+	SendMessage(m_RangeToolTip, TTM_NEWTOOLRECT, 0, (LPARAM)&toolInfo);
+	SendMessage(m_RangeToolTip, TTM_UPDATETIPTEXT, 0, (LPARAM)&toolInfo);
+}
+
+LRESULT CALLBACK DialogDebug::TabSkins::SkinsListViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR id, DWORD_PTR data)
+{
+	TabSkins* tab = (TabSkins*)data;
+	if (msg == WM_MOUSEMOVE)
+	{
+		tab->UpdateRangeToolTip(hwnd, { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) });
+	}
+
+	if (msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST)
+	{
+		MSG relay = { hwnd, msg, wParam, lParam, GetMessageTime() };
+		GetCursorPos(&relay.pt);
+		SendMessage(tab->m_RangeToolTip, TTM_RELAYEVENT, 0, (LPARAM)&relay);
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
@@ -1857,29 +1950,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 					if (isMeasure)
 					{
-						WCHAR buffer[512] = { 0 };
-						ListView_GetItemText(hwnd, item->iItem, 0, buffer, _countof(buffer));
-						Measure* measure = m_SkinWindow->GetMeasure(buffer);
-						if (measure)
-						{
-							auto getRangeValue = [](double value) -> std::wstring
-							{
-								WCHAR buffer[256];
-								Measure::GetScaledValue(AUTOSCALE_ON, 1, value, buffer, _countof(buffer));
-								std::wstring text = buffer;
-								if (!text.empty() && text.back() == L' ') text.pop_back();
-								return text;
-							};
-
-							std::wstring minValue = L"Min value: ";
-							minValue += getRangeValue(measure->GetMinValue());
-							ModifyMenu(menu, 0, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, minValue.c_str());
-
-							std::wstring maxValue = L"Max value: ";
-							maxValue += getRangeValue(measure->GetMaxValue());
-							ModifyMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, maxValue.c_str());
-						}
-
 						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
 						{
 							std::wstring name = GetString(id);
@@ -2033,8 +2103,7 @@ void DialogDebug::TabDisplay::Create(HWND owner)
 void DialogDebug::TabDisplay::Initialize()
 {
 	HWND item = GetControl(Id_DisplaysListView);
-	ListView_SetExtendedListViewStyleEx(item, 0,
-		LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
