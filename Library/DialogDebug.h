@@ -101,6 +101,7 @@ private:
 			Id_SkinMenuButton,
 			Id_AutoRefreshCheckBox,
 			Id_AddWatchButton,
+			Id_JumpMenuButton,
 			Id_JumpMeasures,
 			Id_JumpVariables,
 			Id_JumpWatches

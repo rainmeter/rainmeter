@@ -1062,9 +1062,13 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0,
 			Control::ANCHOR_ALL),
 		Control::Edit(Id_FilterEdit, 0,
-			0, 321, 490, 13,
+			0, 321, 410, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
+		Control::Button(Id_JumpMenuButton, 0,
+			415, 320, 75, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_BOTTOM_RIGHT),
 		Control::Button(Id_AddWatchButton, 0,
 			495, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
@@ -1078,6 +1082,7 @@ void DialogDebug::TabSkins::Initialize()
 {
 	Dialog::SetMenuButton(GetControl(Id_SelectSkinButton));
 	Dialog::SetMenuButton(GetControl(Id_SkinMenuButton));
+	Dialog::SetMenuButton(GetControl(Id_JumpMenuButton));
 
 	// Add columns to the list view
 	HWND item = GetControl(Id_SkinsListView);
@@ -1139,6 +1144,7 @@ void DialogDebug::TabSkins::Initialize()
 	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Refresh on file change");
 	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
 	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
+	SetWindowText(GetControl(Id_JumpMenuButton), L"Jump to");
 	SetWindowText(GetControl(Id_AddWatchButton), L"Add watch...");
 	SendMessage(GetControl(Id_FilterEdit), EM_SETCUEBANNER, TRUE, (LPARAM)L"Filter...");
 
@@ -1591,6 +1597,39 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case Id_JumpMenuButton:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			HMENU menu = CreatePopupMenu();
+			bool groups[3] = { false, false, false };
+			HWND list = GetControl(Id_SkinsListView);
+			LVITEM lvi = { 0 };
+			lvi.mask = LVIF_GROUPID;
+			for (lvi.iItem = 0; lvi.iItem < ListView_GetItemCount(list); ++lvi.iItem)
+			{
+				ListView_GetItem(list, &lvi);
+				if (lvi.iGroupId >= 0 && lvi.iGroupId < 3)
+				{
+					groups[lvi.iGroupId] = true;
+				}
+			}
+
+			AppendMenu(menu, MF_STRING | (groups[0] ? 0 : MF_GRAYED),
+				Id_JumpMeasures, GetString(IDS_Measures));
+			AppendMenu(menu, MF_STRING | (groups[1] ? 0 : MF_GRAYED),
+				Id_JumpVariables, GetString(IDS_Variables));
+			AppendMenu(menu, MF_STRING | (groups[2] ? 0 : MF_GRAYED),
+				Id_JumpWatches, L"Watch");
+
+			RECT r;
+			GetWindowRect((HWND)lParam, &r);
+			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+				GetRainmeter().IsLanguageRTL() ? r.right : r.left, r.bottom, 0, m_Window, nullptr);
+
+			DestroyMenu(menu);
+		}
+		break;
+
 	case Id_SkinMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED && m_SkinWindow)
 		{
@@ -1903,11 +1942,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
-					MENU_SUBMENU(0,
-						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
-						MENU_ITEM(Id_JumpVariables, IDS_Variables),
-						MENU_ITEM(Id_JumpWatches, 0)),
-					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPYMEASURENAME, 0),
@@ -1917,11 +1951,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_VariableMenu[] =
 				{
-					MENU_SUBMENU(0,
-						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
-						MENU_ITEM(Id_JumpVariables, IDS_Variables),
-						MENU_ITEM(Id_JumpWatches, 0)),
-					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
@@ -1929,11 +1958,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_WatchMenu[] =
 				{
-					MENU_SUBMENU(0,
-						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
-						MENU_ITEM(Id_JumpVariables, IDS_Variables),
-						MENU_ITEM(Id_JumpWatches, 0)),
-					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_EDITWATCH, IDS_Edit),
 					MENU_ITEM(IDM_DELETEWATCH, IDS_Delete)
 				};
@@ -1951,25 +1975,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				if (menu)
 				{
-					bool groups[3] = { false, false, false };
-					LVITEM groupItem = { 0 };
-					groupItem.mask = LVIF_GROUPID;
-					for (groupItem.iItem = 0; groupItem.iItem < ListView_GetItemCount(hwnd); ++groupItem.iItem)
-					{
-						ListView_GetItem(hwnd, &groupItem);
-						if (groupItem.iGroupId >= 0 && groupItem.iGroupId < 3)
-						{
-							groups[groupItem.iGroupId] = true;
-						}
-					}
-
-					HMENU jumpMenu = GetSubMenu(menu, 0);
-					ModifyMenu(menu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)jumpMenu, L"Jump to");
-					ModifyMenu(jumpMenu, Id_JumpWatches, MF_BYCOMMAND, Id_JumpWatches, L"Watch");
-					if (!groups[0]) DeleteMenu(jumpMenu, Id_JumpMeasures, MF_BYCOMMAND);
-					if (!groups[1]) DeleteMenu(jumpMenu, Id_JumpVariables, MF_BYCOMMAND);
-					if (!groups[2]) DeleteMenu(jumpMenu, Id_JumpWatches, MF_BYCOMMAND);
-
 					if (!isWatch)
 					{
 						ModifyMenu(menu, IDM_ADD_WATCH, MF_BYCOMMAND, IDM_ADD_WATCH, L"Add watch");
