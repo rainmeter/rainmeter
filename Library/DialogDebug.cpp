@@ -129,6 +129,14 @@ void DialogDebug::UpdateMeasures(Skin* skin)
 	}
 }
 
+void DialogDebug::UpdateDisplays()
+{
+	if (c_Dialog && c_Dialog->m_TabDisplay.IsInitialized())
+	{
+		c_Dialog->m_TabDisplay.UpdateDisplayList();
+	}
+}
+
 INT_PTR DialogDebug::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
@@ -1966,6 +1974,20 @@ void DialogDebug::TabDisplay::Initialize()
 	lvc.pszText = (WCHAR*)GetString(IDS_Value);
 	ListView_InsertColumn(item, 1, &lvc);
 
+	UpdateDisplayList();
+
+	RECT rc;
+	GetClientRect(m_Window, &rc);
+	Relayout(rc.right, rc.bottom);
+	m_Initialized = true;
+}
+
+void DialogDebug::TabDisplay::UpdateDisplayList()
+{
+	HWND item = GetControl(Id_DisplaysListView);
+	ListView_DeleteAllItems(item);
+	ListView_RemoveAllGroups(item);
+
 	int groupId = 0;
 	auto addGroup = [&](const std::wstring& name)
 	{
@@ -2035,11 +2057,6 @@ void DialogDebug::TabDisplay::Initialize()
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
 	ListView_SetColumnWidth(item, 1, LVSCW_AUTOSIZE_USEHEADER);
-
-	RECT rc;
-	GetClientRect(m_Window, &rc);
-	Relayout(rc.right, rc.bottom);
-	m_Initialized = true;
 }
 
 void DialogDebug::TabDisplay::Relayout(int w, int h)
