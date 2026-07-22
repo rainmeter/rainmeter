@@ -527,7 +527,7 @@ void Skin::Refresh(bool init, bool all)
 	ComputePositionFromOptions(true);
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
+		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
 	}
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 
@@ -747,12 +747,12 @@ void Skin::UpdateWindowDpiAndBounds(UINT dpi)
 	ComputePositionFromOptions();
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
+		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
 	}
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 }
 
-void Skin::ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor)
+void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 {
 	const int w = GetPhysicalWindowW();
 	const int h = GetPhysicalWindowH();
@@ -4156,7 +4156,7 @@ void Skin::SetKeepOnScreen(bool b)
 		int x = m_X.pos;
 		int y = m_Y.pos;
 
-		ClampPositionToPhysicalWindowBounds(x, y);
+		ClampPositionToScreenBounds(x, y);
 
 		if (x != m_X.pos || y != m_Y.pos)
 		{
@@ -4530,7 +4530,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (m_KeepOnScreen)
 		{
-			ClampPositionToPhysicalWindowBounds(wp->x, wp->y);
+			ClampPositionToScreenBounds(wp->x, wp->y);
 		}
 	}
 
@@ -5410,7 +5410,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToPhysicalWindowBounds(m_X.pos, m_Y.pos);
+		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
 	}
 
 	UpdateWindowBounds(SWP_NOSENDCHANGING);

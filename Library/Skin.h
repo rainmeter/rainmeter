@@ -344,7 +344,7 @@ private:
 	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void ClampPositionToPhysicalWindowBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
+	void ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
 
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
 	void UpdateWindowBounds(UINT flags);
