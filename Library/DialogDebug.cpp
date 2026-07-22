@@ -1804,7 +1804,7 @@ LRESULT CALLBACK DialogDebug::TabSkins::SkinsListViewSubclass(HWND hwnd, UINT ms
 
 	if (msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST)
 	{
-		MSG relay = { hwnd, msg, wParam, lParam, GetMessageTime() };
+		MSG relay = { hwnd, msg, wParam, lParam, (DWORD)GetMessageTime() };
 		GetCursorPos(&relay.pt);
 		SendMessage(tab->m_RangeToolTip, TTM_RELAYEVENT, 0, (LPARAM)&relay);
 	}
