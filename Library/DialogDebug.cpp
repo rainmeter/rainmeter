@@ -1559,6 +1559,38 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case Id_JumpMeasures:
+	case Id_JumpVariables:
+	case Id_JumpWatches:
+		{
+			const int groupId = LOWORD(wParam) - Id_JumpMeasures;
+			HWND list = GetControl(Id_SkinsListView);
+			LVITEM lvi = { 0 };
+			lvi.mask = LVIF_GROUPID;
+			for (lvi.iItem = 0; lvi.iItem < ListView_GetItemCount(list); ++lvi.iItem)
+			{
+				ListView_GetItem(list, &lvi);
+				if (lvi.iGroupId == groupId)
+				{
+					ListView_SetItemState(list, -1, 0, LVIS_FOCUSED | LVIS_SELECTED);
+					ListView_SetItemState(list, lvi.iItem, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+					ListView_EnsureVisible(list, lvi.iItem, FALSE);
+
+					RECT groupRect;
+					if (ListView_GetGroupRect(list, groupId, LVGGR_HEADER, &groupRect))
+					{
+						RECT headerRect;
+						GetWindowRect(ListView_GetHeader(list), &headerRect);
+						ListView_Scroll(list, 0, groupRect.top - (headerRect.bottom - headerRect.top));
+					}
+
+					SetFocus(list);
+					break;
+				}
+			}
+		}
+		break;
+
 	case IDM_SKIN_REFRESH:
 		if (m_SkinWindow)
 		{
@@ -1751,8 +1783,10 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
-					MENU_ITEM_GRAYED(0, 0),
-					MENU_ITEM_GRAYED(0, 0),
+					MENU_SUBMENU(0,
+						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
+						MENU_ITEM(Id_JumpVariables, IDS_Variables),
+						MENU_ITEM(Id_JumpWatches, 0)),
 					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
@@ -1763,6 +1797,11 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_VariableMenu[] =
 				{
+					MENU_SUBMENU(0,
+						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
+						MENU_ITEM(Id_JumpVariables, IDS_Variables),
+						MENU_ITEM(Id_JumpWatches, 0)),
+					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
@@ -1770,6 +1809,11 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				static const MenuTemplate s_WatchMenu[] =
 				{
+					MENU_SUBMENU(0,
+						MENU_ITEM(Id_JumpMeasures, IDS_Measures),
+						MENU_ITEM(Id_JumpVariables, IDS_Variables),
+						MENU_ITEM(Id_JumpWatches, 0)),
+					MENU_SEPARATOR(),
 					MENU_ITEM(IDM_EDITWATCH, IDS_Edit),
 					MENU_ITEM(IDM_DELETEWATCH, IDS_Delete)
 				};
@@ -1787,6 +1831,25 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				if (menu)
 				{
+					bool groups[3] = { false, false, false };
+					LVITEM groupItem = { 0 };
+					groupItem.mask = LVIF_GROUPID;
+					for (groupItem.iItem = 0; groupItem.iItem < ListView_GetItemCount(hwnd); ++groupItem.iItem)
+					{
+						ListView_GetItem(hwnd, &groupItem);
+						if (groupItem.iGroupId >= 0 && groupItem.iGroupId < 3)
+						{
+							groups[groupItem.iGroupId] = true;
+						}
+					}
+
+					HMENU jumpMenu = GetSubMenu(menu, 0);
+					ModifyMenu(menu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)jumpMenu, L"Jump to");
+					ModifyMenu(jumpMenu, Id_JumpWatches, MF_BYCOMMAND, Id_JumpWatches, L"Watch");
+					if (!groups[0]) DeleteMenu(jumpMenu, Id_JumpMeasures, MF_BYCOMMAND);
+					if (!groups[1]) DeleteMenu(jumpMenu, Id_JumpVariables, MF_BYCOMMAND);
+					if (!groups[2]) DeleteMenu(jumpMenu, Id_JumpWatches, MF_BYCOMMAND);
+
 					if (!isWatch)
 					{
 						ModifyMenu(menu, IDM_ADD_WATCH, MF_BYCOMMAND, IDM_ADD_WATCH, L"Add watch");
