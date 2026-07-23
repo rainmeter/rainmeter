@@ -359,35 +359,6 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 	DestroyMenu(menu);
 }
 
-// TODO: Get rid of this after adding these labels to the language files.
-const WCHAR* GetStringTemp(UINT id)
-{
-	switch (id)
-	{
-		case IDS_Default: return L"Default";
-		case IDS_Zoom: return L"Zoom";
-		case IDS_0Percent: return L"0%";
-		case IDS_10Percent: return L"10%";
-		case IDS_20Percent: return L"20%";
-		case IDS_30Percent: return L"30%";
-		case IDS_40Percent: return L"40%";
-		case IDS_50Percent: return L"50%";
-		case IDS_60Percent: return L"60%";
-		case IDS_70Percent: return L"70%";
-		case IDS_80Percent: return L"80%";
-		case IDS_90Percent: return L"90%";
-		case IDS_Approx100Percent: return L"~100%";
-		case IDS_100Percent: return L"100%";
-		case IDS_110Percent: return L"110%";
-		case IDS_120Percent: return L"120%";
-		case IDS_130Percent: return L"130%";
-		case IDS_140Percent: return L"140%";
-		case IDS_150Percent: return L"150%";
-	}
-
-	return GetString(id);
-}
-
 HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 {
 	static const MenuTemplate s_Menu[] =
@@ -448,7 +419,7 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 		MENU_ITEM(IDM_SKIN_FAVORITE, IDS_Favorite)
 	};
 
-	HMENU settingsMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
+	HMENU settingsMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (skins.empty()) return settingsMenu;
 
 	HMENU posMenu = GetSubMenu(settingsMenu, 0);
@@ -606,18 +577,18 @@ HMENU ContextMenu::CreateSkinSelectionMenu()
 
 	HMENU menu = CreateSkinSettingsMenu(selectedSkins);
 
-	WCHAR buffer[32] = { 0 };
-	_snwprintf_s(buffer, _TRUNCATE, L"%d %s selected", (int)selectedSkins.size(), selectedSkins.size() == 1 ? L"skin" : L"skins");
-	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING, 0, buffer);
+	const std::wstring selected = GetFormattedString(
+		selectedSkins.size() == 1 ? IDS_SkinSelected : IDS_SkinsSelected, (int)selectedSkins.size());
+	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING, 0, selected.c_str());
 	SetMenuDefaultItem(menu, 0, MF_BYPOSITION);
 
 	InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-	InsertMenu(menu, 2, MF_BYPOSITION | MF_STRING, IDM_SKIN_SELECT, L"Select all skins");
+	InsertMenu(menu, 2, MF_BYPOSITION | MF_STRING, IDM_SKIN_SELECT, GetString(IDS_SelectAllSkins));
 	InsertMenu(menu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 
 	AppendMenu(menu, MF_SEPARATOR, 0, nullptr);
-	AppendMenu(menu, MF_STRING, IDM_SKIN_REFRESH, L"Refresh selection");
-	AppendMenu(menu, MF_STRING, IDM_CLOSESKIN, L"Unload selection");
+	AppendMenu(menu, MF_STRING, IDM_SKIN_REFRESH, GetString(IDS_RefreshSelection));
+	AppendMenu(menu, MF_STRING, IDM_CLOSESKIN, GetString(IDS_UnloadSelection));
 
 	return menu;
 }
@@ -640,12 +611,12 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		MENU_ITEM(IDM_CLOSESKIN, IDS_UnloadSkin)
 	};
 
-	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetStringTemp);
+	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 
 	HMENU settingsMenu = CreateSkinSettingsMenu({ skin });
 	DeleteMenu(skinMenu, 4, MF_BYPOSITION);
 	InsertMenu(skinMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)settingsMenu, GetString(IDS_Settings));
-	InsertMenu(skinMenu, 7, MF_BYPOSITION | MF_STRING, IDM_SKIN_DEBUGSKIN, L"Debug skin");
+	InsertMenu(skinMenu, 7, MF_BYPOSITION | MF_STRING, IDM_SKIN_DEBUGSKIN, GetString(IDS_DebugSkin));
 
 	// Add the name of the Skin to the menu
 	const std::wstring& skinName = skin->GetFolderPath();
