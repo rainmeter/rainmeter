@@ -85,8 +85,8 @@ void ShowListViewCopyMenu(HWND owner, HWND list)
 	HMENU menu = CreatePopupMenu();
 	const bool hasSelection = ListView_GetNextItem(list, -1, LVNI_SELECTED) != -1;
 	const int itemCount = ListView_GetItemCount(list);
-	AppendMenu(menu, MF_STRING | (hasSelection ? 0 : MF_GRAYED), IDM_COPY, L"Copy");
-	AppendMenu(menu, MF_STRING | (itemCount != 0 ? 0 : MF_GRAYED), IDM_COPYALL, L"Copy all");
+	AppendMenu(menu, MF_STRING | (hasSelection ? 0 : MF_GRAYED), IDM_COPY, GetString(IDS_Copy));
+	AppendMenu(menu, MF_STRING | (itemCount != 0 ? 0 : MF_GRAYED), IDM_COPYALL, GetString(IDS_CopyAll));
 
 	const POINT pt = System::GetCursorPosition();
 	const UINT command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -280,8 +280,8 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	AddTab(Id_Tab, m_TabLog, GetString(IDS_Log));
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabDisplay, L"Display");
-	AddTab(Id_Tab, m_TabNetwork, L"Network");
+	AddTab(Id_Tab, m_TabDisplay, GetString(IDS_Display));
+	AddTab(Id_Tab, m_TabNetwork, GetString(IDS_Network));
 	AddTab(Id_Tab, m_TabPlugins, GetString(IDS_Plugins));
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -383,7 +383,7 @@ void DialogDebug::TabLog::Create(HWND owner)
 		Control::Button(Id_TypeMenuButton, IDS_Type,
 			0, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
-		Control::Button(Id_LogFileMenuButton, 0,
+		Control::Button(Id_LogFileMenuButton, IDS_LogFile,
 			80, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0, Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
 		Control::Button(Id_ClearButton, IDS_Clear,
@@ -402,7 +402,6 @@ void DialogDebug::TabLog::Initialize()
 {
 	Dialog::SetMenuButton(GetControl(Id_TypeMenuButton));
 	Dialog::SetMenuButton(GetControl(Id_LogFileMenuButton));
-	SetWindowText(GetControl(Id_LogFileMenuButton), L"Log file");
 
 	// Add columns to the list view
 	HWND item = GetControl(Id_LogListView);
@@ -764,13 +763,13 @@ public:
 		m_EditIndex = (size_t)-1;
 
 		ShowDialogWindow(
-			L"Add Watch",
+			GetString(IDS_AddWatchTitle),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
 			parent);
 
-		SetWindowText(GetControl(Id_AddButton), L"Add");
+		SetWindowText(GetControl(Id_AddButton), GetString(IDS_Add));
 		SetWindowText(GetControl(Id_Edit), L"");
 		UpdateResult();
 	}
@@ -780,7 +779,7 @@ public:
 		m_EditIndex = index;
 
 		ShowDialogWindow(
-			L"Edit Watch",
+			GetString(IDS_EditWatch),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
@@ -788,7 +787,7 @@ public:
 
 		Button_SetCheck(GetControl(Id_StringRadio), formula ? BST_UNCHECKED : BST_CHECKED);
 		Button_SetCheck(GetControl(Id_FormulaRadio), formula ? BST_CHECKED : BST_UNCHECKED);
-		SetWindowText(GetControl(Id_AddButton), L"Save");
+		SetWindowText(GetControl(Id_AddButton), GetString(IDS_Save));
 		SetWindowText(GetControl(Id_Edit), text.c_str());
 		UpdateLabel();
 		UpdateResult();
@@ -852,7 +851,8 @@ public:
 				const WCHAR* error = skin->GetMathParser().CheckedParse(text.c_str(), &value);
 				if (error)
 				{
-					text = L"Formula failed to parse: ";
+					text = GetString(IDS_FormulaFailedParse);
+					text += L' ';
 					text += error;
 				}
 				else
@@ -890,13 +890,13 @@ private:
 	{
 		static const Control controls[] =
 		{
-			Control::Label(Id_ExpressionTypeLabel, 0,
+			Control::Label(Id_ExpressionTypeLabel, IDS_ExpressionTypeColon,
 				6, 6, 78, 10,
 				WS_VISIBLE, 0),
-			Control::RadioButton(Id_StringRadio, 0,
+			Control::RadioButton(Id_StringRadio, IDS_String,
 				88, 4, 50, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
-			Control::RadioButton(Id_FormulaRadio, 0,
+			Control::RadioButton(Id_FormulaRadio, IDS_Formula,
 				142, 4, 58, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Label(Id_ExplanationLabel, 0,
@@ -908,25 +908,19 @@ private:
 			Control::Edit(Id_Result, 0,
 				6, 96, 388, 50,
 				WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0),
-			Control::Button(Id_ExecuteButton, 0,
+			Control::Button(Id_ExecuteButton, IDS_Execute,
 				157, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-			Control::Button(Id_AddButton, 0,
+			Control::Button(Id_AddButton, IDS_Add,
 				238, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
-			Control::Button(Id_CancelButton, 0,
+			Control::Button(Id_CancelButton, IDS_Cancel,
 				319, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP, 0)
 		};
 
 		CreateControls(controls, _countof(controls), GetString);
-		SetWindowText(GetControl(Id_ExpressionTypeLabel), L"Expression type:");
-		SetWindowText(GetControl(Id_StringRadio), L"String");
 		Button_SetCheck(GetControl(Id_StringRadio), BST_CHECKED);
-		SetWindowText(GetControl(Id_FormulaRadio), L"Formula");
-		SetWindowText(GetControl(Id_ExecuteButton), L"Execute");
-		SetWindowText(GetControl(Id_AddButton), L"Add");
-		SetWindowText(GetControl(Id_CancelButton), L"Cancel");
 		UpdateLabel();
 		return TRUE;
 	}
@@ -934,7 +928,7 @@ private:
 	void UpdateLabel()
 	{
 		const WCHAR* text = Button_GetCheck(GetControl(Id_FormulaRadio)) == BST_CHECKED ?
-			L"Enter a string to evaluate math formula:" : L"Enter a string to evaluate variables and measures:";
+			GetString(IDS_EnterFormula) : GetString(IDS_EnterVariablesMeasures);
 		SetWindowText(GetControl(Id_ExplanationLabel), text);
 	}
 
@@ -1045,15 +1039,15 @@ void DialogDebug::TabSkins::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::Button(Id_SelectSkinButton, 0,
+		Control::Button(Id_SelectSkinButton, IDS_SelectSkinEllipsis,
 			0, 0, 220, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
-		Control::CheckBox(Id_AutoRefreshCheckBox, 0,
+		Control::CheckBox(Id_AutoRefreshCheckBox, IDS_RefreshOnFileChange,
 			226, 0, 100, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
-		Control::Button(Id_SkinMenuButton, 0,
+		Control::Button(Id_SkinMenuButton, IDS_Skin,
 			495, 0, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
@@ -1065,11 +1059,11 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			0, 321, 410, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_RIGHT | Control::ANCHOR_BOTTOM),
-		Control::Button(Id_JumpMenuButton, 0,
+		Control::Button(Id_JumpMenuButton, IDS_JumpTo,
 			415, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_BOTTOM_RIGHT),
-		Control::Button(Id_AddWatchButton, 0,
+		Control::Button(Id_AddWatchButton, IDS_AddWatchEllipsis,
 			495, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_BOTTOM_RIGHT)
@@ -1115,7 +1109,7 @@ void DialogDebug::TabSkins::Initialize()
 	lvg.pszHeader = (WCHAR*)GetString(IDS_Variables);
 	ListView_InsertGroup(item, 1, &lvg);
 	lvg.iGroupId = 2;
-	lvg.pszHeader = (WCHAR*)L"Watch";
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Watch);
 	ListView_InsertGroup(item, 2, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
@@ -1140,13 +1134,8 @@ void DialogDebug::TabSkins::Initialize()
 	RECT rc;
 	GetClientRect(m_Window, &rc);
 	Relayout(rc.right, rc.bottom);
-	SetWindowText(GetControl(Id_SelectSkinButton), L"Select skin...");
-	SetWindowText(GetControl(Id_AutoRefreshCheckBox), L"Refresh on file change");
 	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), m_AutoRefresh ? BST_CHECKED : BST_UNCHECKED);
-	SetWindowText(GetControl(Id_SkinMenuButton), L"Skin");
-	SetWindowText(GetControl(Id_JumpMenuButton), L"Jump to");
-	SetWindowText(GetControl(Id_AddWatchButton), L"Add watch...");
-	SendMessage(GetControl(Id_FilterEdit), EM_SETCUEBANNER, TRUE, (LPARAM)L"Filter...");
+	SendMessage(GetControl(Id_FilterEdit), EM_SETCUEBANNER, TRUE, (LPARAM)GetString(IDS_FilterEllipsis));
 
 	UpdateSkinList();
 
@@ -1224,7 +1213,7 @@ void DialogDebug::TabSkins::UpdateSkinList()
 	Button_Enable(GetControl(Id_SkinMenuButton), m_SkinWindow != nullptr);
 
 	HWND button = GetControl(Id_SelectSkinButton);
-	SetWindowText(button, skinName.empty() ? L"Select Skin..." : skinName.c_str());
+	SetWindowText(button, skinName.empty() ? GetString(IDS_SelectSkinEllipsis) : skinName.c_str());
 	RedrawWindow(button, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	UpdateDirectoryWatcher();
 }
@@ -1619,7 +1608,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			AppendMenu(menu, MF_STRING | (groups[1] ? 0 : MF_GRAYED),
 				Id_JumpVariables, GetString(IDS_Variables));
 			AppendMenu(menu, MF_STRING | (groups[2] ? 0 : MF_GRAYED),
-				Id_JumpWatches, L"Watch");
+				Id_JumpWatches, GetString(IDS_Watch));
 
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
@@ -1849,9 +1838,12 @@ void DialogDebug::TabSkins::UpdateRangeToolTip(HWND list, POINT point)
 		return text;
 	};
 
-	m_RangeToolTipText = L"Min value: ";
+	m_RangeToolTipText = GetString(IDS_MinValueColon);
+	m_RangeToolTipText += L' ';
 	m_RangeToolTipText += getRangeValue(measure->GetMinValue());
-	m_RangeToolTipText += L"\nMax value: ";
+	m_RangeToolTipText += L'\n';
+	m_RangeToolTipText += GetString(IDS_MaxValueColon);
+	m_RangeToolTipText += L' ';
 	m_RangeToolTipText += getRangeValue(measure->GetMaxValue());
 	toolInfo.lpszText = (WCHAR*)m_RangeToolTipText.c_str();
 	ListView_GetSubItemRect(list, hit.iItem, 1, LVIR_BOUNDS, &toolInfo.rect);
@@ -1989,7 +1981,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				{
 					if (!isWatch)
 					{
-						ModifyMenu(menu, IDM_ADD_WATCH, MF_BYCOMMAND, IDM_ADD_WATCH, L"Add watch");
+						ModifyMenu(menu, IDM_ADD_WATCH, MF_BYCOMMAND, IDM_ADD_WATCH, GetString(IDS_AddWatch));
 					}
 
 					if (isMeasure)
@@ -2213,30 +2205,29 @@ void DialogDebug::TabDisplay::UpdateDisplayList()
 	};
 
 	const MultiMonitorInfo& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
-	addGroup(L"Overview");
-	addRow(0, L"Primary device", formatNumber(monitorsInfo.primary));
-	addRow(0, L"Device count", formatNumber(monitorsInfo.deviceCount));
-	addRow(0, L"Display count", formatNumber(monitorsInfo.displayCount));
-	addRow(0, L"Virtual screen", formatRect(monitorsInfo.logicalVirtualScreen));
-	addRow(0, L"Physical virtual screen", formatRect(monitorsInfo.virtualScreen));
+	addGroup(GetString(IDS_Overview));
+	addRow(0, GetString(IDS_PrimaryDevice), formatNumber(monitorsInfo.primary));
+	addRow(0, GetString(IDS_DeviceCount), formatNumber(monitorsInfo.deviceCount));
+	addRow(0, GetString(IDS_DisplayCount), formatNumber(monitorsInfo.displayCount));
+	addRow(0, GetString(IDS_VirtualScreen), formatRect(monitorsInfo.logicalVirtualScreen));
+	addRow(0, GetString(IDS_PhysicalVirtualScreen), formatRect(monitorsInfo.virtualScreen));
 
 	for (const MonitorInfo& monitor : monitorsInfo.monitors)
 	{
-		WCHAR header[128];
-		_snwprintf_s(header, _TRUNCATE, L"Device %u: %s", monitor.deviceNumber, monitor.deviceName.c_str());
-		addGroup(header);
+		addGroup(fmt::format(fmt::runtime(GetString(IDS_DeviceFormat)), monitor.deviceNumber, monitor.deviceName));
 		const int monitorGroup = groupId - 1;
 
-		addRow(monitorGroup, L"Active", monitor.active ? L"Yes" : L"No");
-		addRow(monitorGroup, L"Device number", formatNumber(monitor.deviceNumber));
-		addRow(monitorGroup, L"Device name", monitor.deviceName);
-		addRow(monitorGroup, L"Display number", formatNumber(monitor.displayNumber));
-		addRow(monitorGroup, L"Display name", monitor.monitorName);
-		addRow(monitorGroup, L"DPI factor", fmt::format(L"{0:.5g}", (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI));
-		addRow(monitorGroup, L"Screen area", formatRect(monitor.logicalScreen));
-		addRow(monitorGroup, L"Work area", formatRect(monitor.logicalWork));
-		addRow(monitorGroup, L"Physical screen area", formatRect(monitor.screen));
-		addRow(monitorGroup, L"Physical work area", formatRect(monitor.work));
+		addRow(monitorGroup, GetString(IDS_Active), GetString(monitor.active ? IDS_Yes : IDS_No));
+		addRow(monitorGroup, GetString(IDS_DeviceNumber), formatNumber(monitor.deviceNumber));
+		addRow(monitorGroup, GetString(IDS_DeviceName), monitor.deviceName);
+		addRow(monitorGroup, GetString(IDS_DisplayNumber), formatNumber(monitor.displayNumber));
+		addRow(monitorGroup, GetString(IDS_DisplayName), monitor.monitorName);
+		addRow(monitorGroup, GetString(IDS_DpiFactor),
+			fmt::format(L"{0:.5g}", (double)monitor.dpi / USER_DEFAULT_SCREEN_DPI));
+		addRow(monitorGroup, GetString(IDS_ScreenArea), formatRect(monitor.logicalScreen));
+		addRow(monitorGroup, GetString(IDS_WorkArea), formatRect(monitor.logicalWork));
+		addRow(monitorGroup, GetString(IDS_PhysicalScreenArea), formatRect(monitor.screen));
+		addRow(monitorGroup, GetString(IDS_PhysicalWorkArea), formatRect(monitor.work));
 	}
 
 	ListView_EnableGroupView(item, TRUE);
@@ -2304,7 +2295,7 @@ void DialogDebug::TabNetwork::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::CheckBox(Id_ShowVirtualInterfacesCheckBox, 0,
+		Control::CheckBox(Id_ShowVirtualInterfacesCheckBox, IDS_ShowVirtualInterfaces,
 			0, 0, 150, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
@@ -2333,7 +2324,6 @@ void DialogDebug::TabNetwork::Initialize()
 	lvc.pszText = (WCHAR*)GetString(IDS_Value);
 	ListView_InsertColumn(item, 1, &lvc);
 
-	SetWindowText(GetControl(Id_ShowVirtualInterfacesCheckBox), L"Show virtual interfaces");
 	Button_SetCheck(GetControl(Id_ShowVirtualInterfacesCheckBox), BST_UNCHECKED);
 	UpdateInterfaceList();
 
@@ -2385,7 +2375,9 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 		const bool isFilter = networkInterface.InterfaceAndOperStatusFlags.FilterInterface == 1;
 		if (isVirtual || isFilter)
 		{
-			value += isVirtual && isFilter ? L" (virtual, filter)" : isVirtual ? L" (virtual)" : L" (filter)";
+			value += L' ';
+			value += GetString(isVirtual && isFilter ? IDS_VirtualFilterSuffix :
+				isVirtual ? IDS_VirtualSuffix : IDS_FilterSuffix);
 		}
 		return value;
 	};
@@ -2404,8 +2396,8 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 		}
 	}
 
-	addGroup(L"Overview");
-	addRow(0, L"Interface count", fmt::format(L"{} physical, {} virtual ({} total)",
+	addGroup(GetString(IDS_Overview));
+	addRow(0, GetString(IDS_InterfaceCount), fmt::format(fmt::runtime(GetString(IDS_InterfaceCountFormat)),
 		physicalInterfaceCount, interfaceCount - physicalInterfaceCount, interfaceCount));
 
 	ULONG visibleIndex = 0;
@@ -2417,16 +2409,15 @@ void DialogDebug::TabNetwork::UpdateInterfaceList()
 			continue;
 		}
 
-		WCHAR header[512];
-		_snwprintf_s(header, _TRUNCATE, L"Interface %u: %s", ++visibleIndex, networkInterface.Description);
-		addGroup(header);
+		addGroup(fmt::format(fmt::runtime(GetString(IDS_InterfaceFormat)),
+			++visibleIndex, networkInterface.Description));
 		const int interfaceGroup = groupId - 1;
 
-		addRow(interfaceGroup, L"Interface index", formatNumber(networkInterface.InterfaceIndex));
-		addRow(interfaceGroup, L"Description", networkInterface.Description);
-		addRow(interfaceGroup, L"Alias", networkInterface.Alias);
-		addRow(interfaceGroup, L"Type", formatType(networkInterface));
-		addRow(interfaceGroup, L"Status", fmt::format(L"{} / {}",
+		addRow(interfaceGroup, GetString(IDS_InterfaceIndex), formatNumber(networkInterface.InterfaceIndex));
+		addRow(interfaceGroup, GetString(IDS_Description), networkInterface.Description);
+		addRow(interfaceGroup, GetString(IDS_Alias), networkInterface.Alias);
+		addRow(interfaceGroup, GetString(IDS_Type), formatType(networkInterface));
+		addRow(interfaceGroup, GetString(IDS_Status), fmt::format(L"{} / {}",
 			NetworkUtil::GetInterfaceMediaConnectionString(networkInterface.MediaConnectState),
 			NetworkUtil::GetInterfaceOperStatusString(networkInterface.OperStatus)));
 	}
