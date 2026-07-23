@@ -570,6 +570,7 @@ void Skin::Refresh(bool init, bool all)
 	GetRainmeter().SetCurrentParser(nullptr);
 
 	m_State = STATE_RUNNING;
+	LogWindowAndMonitorInfo(L"Refresh complete");
 
 	if (!m_OnRefreshAction.empty())
 	{
@@ -718,22 +719,103 @@ POINT Skin::GetScreenLogicalPosition() const
 	return System::PhysicalToScreenLogical({ m_X.pos, m_Y.pos }, { GetPhysicalWindowW(), GetPhysicalWindowH() });
 }
 
+void Skin::LogWindowAndMonitorInfo(LPCWSTR context)
+{
+	RECT actualBounds = {};
+	const BOOL gotWindowRect = GetWindowRect(m_Window, &actualBounds);
+	const POINT cursor = System::GetCursorPosition();
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const HMONITOR windowMonitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONEAREST);
+	int windowMonitorIndex = 0;
+	for (size_t i = 0; i < monitorsInfo.monitors.size(); ++i)
+	{
+		if (monitorsInfo.monitors[i].handle == windowMonitor)
+		{
+			windowMonitorIndex = (int)i + 1;
+			break;
+		}
+	}
+
+	LogDebugF(this,
+		L"DPI/position [%s]: stored=(%d,%d) expectedBounds=(%d,%d,%d,%d) actualBounds=(%d,%d,%d,%d) "
+		L"GetWindowRect=%d logicalSize=(%d,%d) physicalSize=(%d,%d) windowDpi=%u apiWindowDpi=%u "
+		L"systemDpi=%u dpiScale=%.5f zoomScale=%.5f effectiveScale=%.5f monitor=%d/0x%p cursor=(%d,%d) "
+		L"cursorOffset=(%d,%d) options=(\"%s\",\"%s\") anchors=(\"%s\",\"%s\") optionMonitors=(%d,%d) "
+		L"dragging=%d dragStartValid=%d exeDpiOverride=%d",
+		context,
+		m_X.pos, m_Y.pos,
+		m_X.pos, m_Y.pos, m_X.pos + GetPhysicalWindowW(), m_Y.pos + GetPhysicalWindowH(),
+		actualBounds.left, actualBounds.top, actualBounds.right, actualBounds.bottom,
+		gotWindowRect,
+		m_WindowW, m_WindowH, GetPhysicalWindowW(), GetPhysicalWindowH(),
+		m_WindowDpi, System::GetDpiForWindow(m_Window), System::GetSystemDpi(),
+		m_DpiScale, m_ZoomScale, m_EffectiveScale,
+		windowMonitorIndex, windowMonitor,
+		cursor.x, cursor.y, cursor.x - m_X.pos, cursor.y - m_Y.pos,
+		m_X.option.c_str(), m_Y.option.c_str(), m_X.anchorOption.c_str(), m_Y.anchorOption.c_str(),
+		m_X.monitor.value_or(-1), m_Y.monitor.value_or(-1),
+		m_Dragging, m_DragStartValid, GetRainmeter().HasExeDpiOverride());
+
+	LogDebugF(this,
+		L"Monitor layout [%s]: primary=%d devices=%d displays=%d count=%d virtual=(%d,%d,%d,%d) "
+		L"logicalVirtual=(%d,%d,%d,%d)",
+		context, monitorsInfo.primary, monitorsInfo.deviceCount, monitorsInfo.displayCount,
+		(int)monitorsInfo.monitors.size(),
+		monitorsInfo.virtualScreen.left, monitorsInfo.virtualScreen.top,
+		monitorsInfo.virtualScreen.right, monitorsInfo.virtualScreen.bottom,
+		monitorsInfo.logicalVirtualScreen.left, monitorsInfo.logicalVirtualScreen.top,
+		monitorsInfo.logicalVirtualScreen.right, monitorsInfo.logicalVirtualScreen.bottom);
+
+	for (size_t i = 0; i < monitorsInfo.monitors.size(); ++i)
+	{
+		const auto& monitor = monitorsInfo.monitors[i];
+		LogDebugF(this,
+			L"Monitor %d [%s]: active=%d primary=%d handle=0x%p device=%u display=%u dpi=%u "
+			L"screen=(%d,%d,%d,%d) logicalScreen=(%d,%d,%d,%d) work=(%d,%d,%d,%d) "
+			L"logicalWork=(%d,%d,%d,%d) deviceName=\"%s\" monitorName=\"%s\"",
+			(int)i + 1, context, monitor.active, (int)i + 1 == monitorsInfo.primary, monitor.handle,
+			(UINT)monitor.deviceNumber, (UINT)monitor.displayNumber, monitor.dpi,
+			monitor.screen.left, monitor.screen.top, monitor.screen.right, monitor.screen.bottom,
+			monitor.logicalScreen.left, monitor.logicalScreen.top, monitor.logicalScreen.right, monitor.logicalScreen.bottom,
+			monitor.work.left, monitor.work.top, monitor.work.right, monitor.work.bottom,
+			monitor.logicalWork.left, monitor.logicalWork.top, monitor.logicalWork.right, monitor.logicalWork.bottom,
+			monitor.deviceName.c_str(), monitor.monitorName.c_str());
+	}
+}
+
 void Skin::UpdateWindowBounds(UINT flags)
 {
 	const auto w = GetPhysicalWindowW();
 	const auto h = GetPhysicalWindowH();
-	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
+	const BOOL result = SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
+	const DWORD error = result ? ERROR_SUCCESS : GetLastError();
+	RECT actualBounds = {};
+	GetWindowRect(m_Window, &actualBounds);
+	LogDebugF(this,
+		L"UpdateWindowBounds: requested=(%d,%d,%d,%d) flags=0x%08X result=%d error=%lu actual=(%d,%d,%d,%d) "
+		L"windowDpi=%u dpiScale=%.5f zoomScale=%.5f effectiveScale=%.5f",
+		m_X.pos, m_Y.pos, w, h, flags, result, error,
+		actualBounds.left, actualBounds.top, actualBounds.right, actualBounds.bottom,
+		m_WindowDpi, m_DpiScale, m_ZoomScale, m_EffectiveScale);
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
 }
 
 void Skin::UpdateWindowDpi(UINT dpi)
 {
-	m_WindowDpi = dpi ? dpi : System::GetDpiForWindow(m_Window);
+	const UINT oldWindowDpi = m_WindowDpi;
+	const float oldDpiScale = m_DpiScale;
+	const float oldEffectiveScale = m_EffectiveScale;
+	const UINT apiWindowDpi = System::GetDpiForWindow(m_Window);
+	m_WindowDpi = dpi ? dpi : apiWindowDpi;
 	m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
 
-	const auto oldEffectiveScale = m_EffectiveScale;
 	m_EffectiveScale = m_ZoomScale * m_DpiScale;
+	LogDebugF(this,
+		L"UpdateWindowDpi: requestedDpi=%u apiWindowDpi=%u oldWindowDpi=%u newWindowDpi=%u "
+		L"dpiScale=%.5f->%.5f zoomScale=%.5f effectiveScale=%.5f->%.5f changed=%d",
+		dpi, apiWindowDpi, oldWindowDpi, m_WindowDpi, oldDpiScale, m_DpiScale,
+		m_ZoomScale, oldEffectiveScale, m_EffectiveScale, oldEffectiveScale != m_EffectiveScale);
 
 	if (oldEffectiveScale != m_EffectiveScale)
 	{
@@ -754,6 +836,8 @@ void Skin::UpdateWindowDpiAndBounds(UINT dpi)
 
 void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 {
+	const int originalX = x;
+	const int originalY = y;
 	const int w = GetPhysicalWindowW();
 	const int h = GetPhysicalWindowH();
 
@@ -802,6 +886,11 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 				x = max(x, r.left);
 				y = min(y, r.bottom - h);
 				y = max(y, r.top);
+				if (x != originalX || y != originalY)
+				{
+					LogDebugF(this, L"ClampPositionToScreenBounds: (%d,%d)->(%d,%d) size=(%d,%d) monitor=0x%p screen=(%d,%d,%d,%d)",
+						originalX, originalY, x, y, w, h, monitor.handle, r.left, r.top, r.right, r.bottom);
+				}
 				return;
 			}
 		}
@@ -814,6 +903,8 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
 	y = max(y, r.top);
+	LogDebugF(this, L"ClampPositionToScreenBounds: fallback (%d,%d)->(%d,%d) size=(%d,%d) primaryWork=(%d,%d,%d,%d)",
+		originalX, originalY, x, y, w, h, r.left, r.top, r.right, r.bottom);
 }
 
 /*
@@ -822,6 +913,14 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 */
 void Skin::MoveWindow(int x, int y)
 {
+	const POINT cursor = System::GetCursorPosition();
+	LogDebugF(this,
+		L"MoveWindow: current=(%d,%d) requested=(%d,%d) delta=(%d,%d) cursor=(%d,%d) "
+		L"cursorOffsetFromRequested=(%d,%d) windowDpi=%u apiWindowDpi=%u dpiScale=%.5f zoomScale=%.5f "
+		L"effectiveScale=%.5f physicalSize=(%d,%d) selected=%d",
+		m_X.pos, m_Y.pos, x, y, x - m_X.pos, y - m_Y.pos, cursor.x, cursor.y,
+		cursor.x - x, cursor.y - y, m_WindowDpi, System::GetDpiForWindow(m_Window),
+		m_DpiScale, m_ZoomScale, m_EffectiveScale, GetPhysicalWindowW(), GetPhysicalWindowH(), IsSelected());
 	OnMove(WM_MOVE, 0, MAKELPARAM(x, y));
 	UpdateWindowBounds(SWP_NOSIZE);
 	SavePositionIfAppropriate();
@@ -2028,6 +2127,9 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const int oldX = m_X.pos;
+	const int oldY = m_Y.pos;
+	const UINT oldDpi = m_WindowDpi;
 
 	// NOTE(poiru): This is being done here for historical reasons. Probably should set these
 	// somewhere else.
@@ -2059,12 +2161,25 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	{
 		UpdateWindowDpi(dpi);
 	}
+
+	LogDebugF(this,
+		L"ComputePositionFromOptions: options=(\"%s\",\"%s\") anchors=(\"%s\",\"%s\") monitors=(%d,%d) "
+		L"logical=(%d,%d) physical=(%d,%d) oldPhysical=(%d,%d) resolvedDpi=%u inherited=%d windowDpi=%u->%u "
+		L"logicalSize=(%d,%d) zoomedSize=(%d,%d) exeDpiOverride=%d",
+		m_X.option.c_str(), m_Y.option.c_str(), m_X.anchorOption.c_str(), m_Y.anchorOption.c_str(),
+		m_X.monitor.value_or(-1), m_Y.monitor.value_or(-1), logicalPos.x, logicalPos.y,
+		physicalPos.x, physicalPos.y, oldX, oldY, dpi, inheritMonitorDpi, oldDpi, m_WindowDpi,
+		m_WindowW, m_WindowH, GetZoomedWindowW(), GetZoomedWindowH(), GetRainmeter().HasExeDpiOverride());
 }
 
 void Skin::ComputeOptionValueFromPosition()
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+	const std::wstring oldXOption = m_X.option;
+	const std::wstring oldYOption = m_Y.option;
+	const int oldMonitorX = m_X.monitor.value_or(-1);
+	const int oldMonitorY = m_Y.monitor.value_or(-1);
 
 	// Correct to auto-selected screen
 	if (m_AutoSelectScreen)
@@ -2095,6 +2210,14 @@ void Skin::ComputeOptionValueFromPosition()
 	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
 	m_Y.UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+
+	LogDebugF(this,
+		L"ComputeOptionValueFromPosition: physical=(%d,%d) screenLogical=(%d,%d) options=(\"%s\",\"%s\")->(\"%s\",\"%s\") "
+		L"monitors=(%d,%d)->(%d,%d) referenceX=(%d,%d) referenceY=(%d,%d) autoSelect=%d exeDpiOverride=%d",
+		m_X.pos, m_Y.pos, pos.x, pos.y, oldXOption.c_str(), oldYOption.c_str(), m_X.option.c_str(), m_Y.option.c_str(),
+		oldMonitorX, oldMonitorY, m_X.monitor.value_or(-1), m_Y.monitor.value_or(-1),
+		monitorRectX.left, monitorRectX.right, monitorRectY.top, monitorRectY.bottom,
+		m_AutoSelectScreen, GetRainmeter().HasExeDpiOverride());
 }
 
 /*
@@ -4224,6 +4347,8 @@ void Skin::SetSavePosition(bool b)
 
 void Skin::SavePositionIfAppropriate()
 {
+	LogDebugF(this, L"SavePositionIfAppropriate: savePosition=%d physical=(%d,%d) optionsBefore=(\"%s\",\"%s\")",
+		m_SavePosition, m_X.pos, m_Y.pos, m_X.option.c_str(), m_Y.option.c_str());
 	if (m_SavePosition)
 	{
 		WriteOptions(OPTION_POSITION);
@@ -4335,6 +4460,13 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_DragStartWindowPos.x = m_X.pos;
 		m_DragStartWindowPos.y = m_Y.pos;
 	}
+	LogDebugF(this,
+		L"Drag begin: wParam=0x%08X mouseTriggered=%d cursor=(%d,%d) window=(%d,%d) cursorOffset=(%d,%d) "
+		L"windowDpi=%u apiWindowDpi=%u physicalSize=(%d,%d)",
+		(UINT)wParam, m_DragStartValid, m_DragStartCursor.x, m_DragStartCursor.y,
+		m_DragStartWindowPos.x, m_DragStartWindowPos.y,
+		m_DragStartCursor.x - m_DragStartWindowPos.x, m_DragStartCursor.y - m_DragStartWindowPos.y,
+		m_WindowDpi, System::GetDpiForWindow(m_Window), GetPhysicalWindowW(), GetPhysicalWindowH());
 
 	// If the 'Show window contents while dragging' system option is
 	// not checked, temporarily enable it while dragging the skin.
@@ -4347,6 +4479,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Run the DefWindowProc so the dragging works
 	LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
+	LogWindowAndMonitorInfo(m_Dragged ? L"Drag end (moved)" : L"Drag end (not moved)");
 
 	if (m_Dragged)
 	{
@@ -4391,6 +4524,7 @@ LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_Dragging)
 	{
 		m_Dragged = true;  // Don't post the WM_NCLBUTTONUP message!
+		LogDebugF(this, L"WM_ENTERSIZEMOVE: dragging=%d dragStartValid=%d", m_Dragging, m_DragStartValid);
 
 		// Set cursor to default
 		SetCursor(LoadCursor(nullptr, IDC_ARROW));
@@ -4405,6 +4539,7 @@ LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	LogWindowAndMonitorInfo(L"WM_EXITSIZEMOVE");
 	UpdateWindowContents();
 	return 0;
 }
@@ -4468,9 +4603,11 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if ((wp->flags & SWP_NOMOVE) == 0)
 	{
+		const int incomingX = wp->x;
+		const int incomingY = wp->y;
+		POINT cursor = System::GetCursorPosition();
 		if (m_DragStartValid)
 		{
-			const POINT cursor = System::GetCursorPosition();
 			wp->x = m_DragStartWindowPos.x + (cursor.x - m_DragStartCursor.x);
 			wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
 		}
@@ -4532,6 +4669,25 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			ClampPositionToScreenBounds(wp->x, wp->y);
 		}
+
+		const RECT proposedBounds = {
+			wp->x, wp->y, wp->x + GetPhysicalWindowW(), wp->y + GetPhysicalWindowH()
+		};
+		const HMONITOR proposedMonitor = MonitorFromRect(&proposedBounds, MONITOR_DEFAULTTONEAREST);
+		const MonitorInfo* proposedMonitorInfo = MonitorUtil::GetMultiMonitorInfo().GetByHandle(proposedMonitor);
+		const RECT proposedMonitorBounds = proposedMonitorInfo ? proposedMonitorInfo->screen : RECT {};
+		LogDebugF(this,
+			L"WM_WINDOWPOSCHANGING move: incoming=(%d,%d) outgoing=(%d,%d) size=(%d,%d) flags=0x%08X "
+			L"cursor=(%d,%d) cursorOffset=(%d,%d) dragStartCursor=(%d,%d) dragStartWindow=(%d,%d) "
+			L"dragStartValid=%d snapEdges=%d keepOnScreen=%d windowDpi=%u apiWindowDpi=%u physicalSize=(%d,%d) "
+			L"proposedMonitor=0x%p proposedMonitorDpi=%u proposedMonitorScreen=(%d,%d,%d,%d)",
+			incomingX, incomingY, wp->x, wp->y, wp->cx, wp->cy, wp->flags,
+			cursor.x, cursor.y, cursor.x - wp->x, cursor.y - wp->y,
+			m_DragStartCursor.x, m_DragStartCursor.y, m_DragStartWindowPos.x, m_DragStartWindowPos.y,
+			m_DragStartValid, m_SnapEdges, m_KeepOnScreen, m_WindowDpi, System::GetDpiForWindow(m_Window),
+			GetPhysicalWindowW(), GetPhysicalWindowH(), proposedMonitor,
+			proposedMonitorInfo ? proposedMonitorInfo->dpi : 0,
+			proposedMonitorBounds.left, proposedMonitorBounds.top, proposedMonitorBounds.right, proposedMonitorBounds.bottom);
 	}
 
 	return 0;
@@ -4654,17 +4810,36 @@ LRESULT Skin::OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	auto* size = (SIZE*)lParam;
 	const UINT dpi = (UINT)wParam;
+	const SIZE incoming = *size;
 	size->cx = GetPhysicalWindowW(dpi);
 	size->cy = GetPhysicalWindowH(dpi);
+	LogDebugF(this,
+		L"WM_GETDPISCALEDSIZE: requestedDpi=%u currentWindowDpi=%u apiWindowDpi=%u incomingSize=(%d,%d) "
+		L"outgoingSize=(%d,%d) logicalSize=(%d,%d) zoomScale=%.5f",
+		dpi, m_WindowDpi, System::GetDpiForWindow(m_Window), incoming.cx, incoming.cy,
+		size->cx, size->cy, m_WindowW, m_WindowH, m_ZoomScale);
 	return TRUE;
 }
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const UINT dpi = LOWORD(wParam);
+	const UINT dpiX = LOWORD(wParam);
+	const UINT dpiY = HIWORD(wParam);
+	const UINT oldDpi = m_WindowDpi;
+	const POINT oldPosition = { m_X.pos, m_Y.pos };
+	const POINT cursorBefore = System::GetCursorPosition();
+	const auto* suggested = (const RECT*)lParam;
+	LogDebugF(this,
+		L"WM_DPICHANGED begin: dpi=(%u,%u) oldWindowDpi=%u apiWindowDpi=%u oldPosition=(%d,%d) "
+		L"suggested=(%d,%d,%d,%d) cursor=(%d,%d) cursorOffset=(%d,%d) dragging=%d dragStartValid=%d",
+		dpiX, dpiY, oldDpi, System::GetDpiForWindow(m_Window), oldPosition.x, oldPosition.y,
+		suggested->left, suggested->top, suggested->right, suggested->bottom,
+		cursorBefore.x, cursorBefore.y, cursorBefore.x - oldPosition.x, cursorBefore.y - oldPosition.y,
+		m_Dragging, m_DragStartValid);
+
+	const UINT dpi = dpiX;
 	UpdateWindowDpi(dpi);
 
-	auto* suggested = (const RECT*)lParam;
 	m_X.pos = suggested->left;
 	m_Y.pos = suggested->top;
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
@@ -4674,7 +4849,12 @@ LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_DragStartCursor = System::GetCursorPosition();
 		m_DragStartWindowPos.x = m_X.pos;
 		m_DragStartWindowPos.y = m_Y.pos;
+		LogDebugF(this,
+			L"WM_DPICHANGED drag baseline reset: cursor=(%d,%d) window=(%d,%d) cursorOffset=(%d,%d)",
+			m_DragStartCursor.x, m_DragStartCursor.y, m_DragStartWindowPos.x, m_DragStartWindowPos.y,
+			m_DragStartCursor.x - m_DragStartWindowPos.x, m_DragStartCursor.y - m_DragStartWindowPos.y);
 	}
+	LogWindowAndMonitorInfo(L"WM_DPICHANGED complete");
 
 	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
 	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
@@ -5208,6 +5388,12 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	int oldY = m_Y.pos;
 	m_X.pos = GET_X_LPARAM(lParam);
 	m_Y.pos = GET_Y_LPARAM(lParam);
+	const POINT cursor = System::GetCursorPosition();
+	LogDebugF(this,
+		L"WM_MOVE: (%d,%d)->(%d,%d) cursor=(%d,%d) cursorOffset=(%d,%d) dragging=%d "
+		L"windowDpi=%u apiWindowDpi=%u",
+		oldX, oldY, m_X.pos, m_Y.pos, cursor.x, cursor.y, cursor.x - m_X.pos, cursor.y - m_Y.pos,
+		m_Dragging, m_WindowDpi, System::GetDpiForWindow(m_Window));
 
 	if (m_Dragging)
 	{
@@ -5403,6 +5589,7 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	LogWindowAndMonitorInfo(L"Delayed display metrics move begin");
 	UpdateWindowDpi();
 
 	// Move the window temporarily
@@ -5414,6 +5601,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
+	LogWindowAndMonitorInfo(L"Delayed display metrics move complete");
 
 	if (!m_OnDisplayMetricsChangeAction.empty())
 	{
