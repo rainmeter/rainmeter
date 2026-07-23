@@ -485,6 +485,9 @@ private:
 	bool m_DragStartValid;
 	POINT m_DragStartCursor;
 	POINT m_DragStartWindowPos;
+	POINT m_DragCursorOffset;
+	UINT m_DragCursorOffsetDpi;
+	HMONITOR m_DragPendingMonitor;
 	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;

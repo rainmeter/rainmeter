@@ -119,6 +119,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_DragStartValid(false),
 	m_DragStartCursor(),
 	m_DragStartWindowPos(),
+	m_DragCursorOffset(),
+	m_DragCursorOffsetDpi(0),
+	m_DragPendingMonitor(nullptr),
 	m_MouseMeasureCapture(false),
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
@@ -4334,7 +4337,11 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_DragStartCursor = System::GetCursorPosition();
 		m_DragStartWindowPos.x = m_X.pos;
 		m_DragStartWindowPos.y = m_Y.pos;
+		m_DragCursorOffset.x = m_DragStartCursor.x - m_DragStartWindowPos.x;
+		m_DragCursorOffset.y = m_DragStartCursor.y - m_DragStartWindowPos.y;
+		m_DragCursorOffsetDpi = m_WindowDpi;
 	}
+	m_DragPendingMonitor = nullptr;
 
 	// If the 'Show window contents while dragging' system option is
 	// not checked, temporarily enable it while dragging the skin.
@@ -4371,6 +4378,8 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = false;
 	m_Dragged = false;
 	m_DragStartValid = false;
+	m_DragCursorOffsetDpi = 0;
+	m_DragPendingMonitor = nullptr;
 
 	// Disable the 'Show window contents while dragging' system option if
 	// it was already disabled before dragging.
@@ -4468,11 +4477,40 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if ((wp->flags & SWP_NOMOVE) == 0)
 	{
+		POINT dragCursor = {};
+		int baselineX = wp->x;
+		int baselineY = wp->y;
+		bool restorePendingOffset = false;
 		if (m_DragStartValid)
 		{
-			const POINT cursor = System::GetCursorPosition();
-			wp->x = m_DragStartWindowPos.x + (cursor.x - m_DragStartCursor.x);
-			wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
+			dragCursor = System::GetCursorPosition();
+			baselineX = m_DragStartWindowPos.x + (dragCursor.x - m_DragStartCursor.x);
+			baselineY = m_DragStartWindowPos.y + (dragCursor.y - m_DragStartCursor.y);
+			wp->x = baselineX;
+			wp->y = baselineY;
+
+			if (m_DragPendingMonitor && m_DragCursorOffsetDpi != 0)
+			{
+				const int scaledOffsetX = MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
+				const int scaledOffsetY = MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi);
+				const int desiredX = dragCursor.x - scaledOffsetX;
+				const int desiredY = dragCursor.y - scaledOffsetY;
+				const RECT desiredBounds = {
+					desiredX,
+					desiredY,
+					desiredX + GetPhysicalWindowW(),
+					desiredY + GetPhysicalWindowH()
+				};
+
+				// Keep using the suggested-rectangle baseline until restoring the intended cursor
+				// offset cannot move the window back to the previous monitor and retrigger its DPI.
+				if (MonitorFromRect(&desiredBounds, MONITOR_DEFAULTTONEAREST) == m_DragPendingMonitor)
+				{
+					wp->x = desiredX;
+					wp->y = desiredY;
+					restorePendingOffset = true;
+				}
+			}
 		}
 
 		if (m_SnapEdges && !(IsCtrlKeyDown() || IsShiftKeyDown()))
@@ -4531,6 +4569,29 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_KeepOnScreen)
 		{
 			ClampPositionToScreenBounds(wp->x, wp->y);
+		}
+
+		if (restorePendingOffset)
+		{
+			const RECT finalBounds = {
+				wp->x,
+				wp->y,
+				wp->x + GetPhysicalWindowW(),
+				wp->y + GetPhysicalWindowH()
+			};
+
+			if (MonitorFromRect(&finalBounds, MONITOR_DEFAULTTONEAREST) == m_DragPendingMonitor)
+			{
+				m_DragStartCursor = dragCursor;
+				m_DragStartWindowPos.x = dragCursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
+				m_DragStartWindowPos.y = dragCursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi);
+				m_DragPendingMonitor = nullptr;
+			}
+			else
+			{
+				wp->x = baselineX;
+				wp->y = baselineY;
+			}
 		}
 	}
 
@@ -4662,11 +4723,40 @@ LRESULT Skin::OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const UINT dpi = LOWORD(wParam);
+	const UINT dpiY = HIWORD(wParam);
+	const auto* suggested = (const RECT*)lParam;
+	const HMONITOR targetMonitor = MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST);
 	UpdateWindowDpi(dpi);
 
-	auto* suggested = (const RECT*)lParam;
 	m_X.pos = suggested->left;
 	m_Y.pos = suggested->top;
+
+	if (m_DragStartValid && m_DragCursorOffsetDpi != 0)
+	{
+		const POINT cursor = System::GetCursorPosition();
+		const int desiredX = cursor.x - MulDiv(m_DragCursorOffset.x, dpi, m_DragCursorOffsetDpi);
+		const int desiredY = cursor.y - MulDiv(m_DragCursorOffset.y, dpiY, m_DragCursorOffsetDpi);
+		const RECT desiredBounds = {
+			desiredX,
+			desiredY,
+			desiredX + GetPhysicalWindowW(),
+			desiredY + GetPhysicalWindowH()
+		};
+
+		// Windows' suggested rectangle ensures that the resized window remains owned by the
+		// destination monitor. Preserve the cursor offset only when doing so keeps that same
+		// monitor selected; otherwise defer the correction until the drag moves far enough in.
+		if (MonitorFromRect(&desiredBounds, MONITOR_DEFAULTTONEAREST) == targetMonitor)
+		{
+			m_X.pos = desiredX;
+			m_Y.pos = desiredY;
+			m_DragPendingMonitor = nullptr;
+		}
+		else
+		{
+			m_DragPendingMonitor = targetMonitor;
+		}
+	}
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 
 	if (m_DragStartValid)
