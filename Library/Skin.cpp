@@ -715,7 +715,7 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 
 POINT Skin::GetScreenLogicalPosition() const
 {
-	return System::PhysicalToScreenLogical({ m_X.pos, m_Y.pos }, { GetPhysicalWindowW(), GetPhysicalWindowH() });
+	return System::PhysicalToScreenLogical({ m_X.pos, m_Y.pos });
 }
 
 void Skin::UpdateWindowBounds(UINT flags)

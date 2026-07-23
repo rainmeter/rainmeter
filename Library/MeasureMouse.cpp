@@ -363,7 +363,7 @@ void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) 
 	const auto pos =
 		m_RelativeToSkin ?
 		m_Skin->PhysicalToRelativeLogical(screenPos) :
-		System::PhysicalToScreenLogical(screenPos, { 1, 1 });
+		System::PhysicalToScreenLogical(screenPos);
 	_itow_s(pos.x, mouseX, 10);
 	_itow_s(pos.y, mouseY, 10);
 
