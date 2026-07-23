@@ -647,11 +647,21 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 	if (hWnd != c_Window)
 	{
-		if (uMsg == WM_WINDOWPOSCHANGING)
+		if (uMsg == WM_DPICHANGED)
+		{
+			const auto* suggested = (const RECT*)lParam;
+			const int width = suggested->right - suggested->left;
+			const int height = suggested->bottom - suggested->top;
+			SetWindowPos(hWnd, nullptr, suggested->left, suggested->top, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
+			LogNotice(L"System: WM_DPICHANGED");
+			return 0;
+		}
+		else if (uMsg == WM_WINDOWPOSCHANGING)
 		{
 			((LPWINDOWPOS)lParam)->flags |= SWP_NOZORDER;
 			return 0;
 		}
+
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
