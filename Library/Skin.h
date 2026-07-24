@@ -415,7 +415,6 @@ private:
 	GeneralImage* m_Background;
 	SIZE m_BackgroundSize;
 
-	HWND m_HostWindow;
 	HWND m_Window;
 
 	std::unique_ptr<SkinSelectionOverlay> m_SelectionOverlay;

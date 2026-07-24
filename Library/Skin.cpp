@@ -61,7 +61,6 @@ enum INTERVAL
 int Skin::c_InstanceCount = 0;
 bool Skin::c_IsInSelectionMode = false;
 
-const WCHAR* g_SkinHostClassName = L"RainmeterSkinHost";
 const int g_SnapDistance = 10;
 
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool hasSettings) :
@@ -72,7 +71,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_MathParser(GetMathParserValue, this),
 	m_Background(),
 	m_BackgroundSize(),
-	m_HostWindow(),
 	m_Window(),
 	m_SelectionOverlay(),
 	m_DropTarget(),
@@ -170,12 +168,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 		wc.hCursor = nullptr;  // The cursor should be controlled by using SetCursor() when needed.
 		wc.lpszClassName = METERWINDOW_CLASS_NAME;
 		RegisterClassEx(&wc);
-
-		WNDCLASS wcHost = { 0 };
-		wcHost.lpfnWndProc = (WNDPROC)DefWindowProc;
-		wcHost.hInstance = GetRainmeter().GetModuleInstance();
-		wcHost.lpszClassName = g_SkinHostClassName;
-		RegisterClass(&wcHost);
 	}
 
 	++c_InstanceCount;
@@ -196,7 +188,6 @@ Skin::~Skin()
 
 	if (c_InstanceCount == 0)
 	{
-		UnregisterClass(g_SkinHostClassName, GetRainmeter().GetModuleInstance());
 		UnregisterClass(METERWINDOW_CLASS_NAME, GetRainmeter().GetModuleInstance());
 	}
 }
@@ -263,10 +254,6 @@ void Skin::Dispose(bool refresh)
 			DestroyWindow(m_Window);
 		}
 		m_Window = nullptr;
-
-		if (m_HostWindow) DestroyWindow(m_HostWindow);
-		m_HostWindow = nullptr;
-
 		if (m_SuspendResumeNotification)
 		{
 			UnregisterSuspendResumeNotification(m_SuspendResumeNotification);
@@ -276,32 +263,8 @@ void Skin::Dispose(bool refresh)
 
 void Skin::Initialize()
 {
-	// Previously we used WS_EX_TOOLWINDOW to hide the skin window from the taskbar and Alt+Tab.
-	// This still works fine on Windows 10. But something has changed on Windows 11 when running
-	// under the high DPI awareness context (per-monitor V2). For some odd reason, the window no
-	// longer receives WM_DPICHANGED until the window is manually moved. To workaround this, we
-	// create a dummy host window to use as our owner. Having an owner seems to prevent the skin
-	// window from showing up in the taskbar etc., but still lets us properly react to DPI changes.
-	//
-	// Note that we need to create a separate host window for each skin in order to avoid issues
-	// with z-ordering. If all skin windows shared the same host window, they e.g. might react as a
-	// group to clicks/activations.
-	m_HostWindow = CreateWindowEx(
-		WS_EX_TOOLWINDOW,
-		g_SkinHostClassName,
-		nullptr,
-		WS_POPUP | WS_DISABLED,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		nullptr,
-		nullptr,
-		GetRainmeter().GetModuleInstance(),
-		nullptr);
-
 	m_Window = CreateWindowEx(
-		WS_EX_LAYERED,
+		WS_EX_LAYERED | WS_EX_TOOLWINDOW,
 		METERWINDOW_CLASS_NAME,
 		nullptr,
 		WS_POPUP,
@@ -309,7 +272,7 @@ void Skin::Initialize()
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		m_HostWindow,
+		nullptr,
 		nullptr,
 		GetRainmeter().GetModuleInstance(),
 		this);
