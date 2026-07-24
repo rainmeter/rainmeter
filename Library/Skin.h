@@ -350,6 +350,7 @@ private:
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
 	void UpdateWindowBounds(UINT flags);
 	bool UpdateWindowMonitor(std::optional<POINT> center = std::nullopt);
+	void NudgeWindowCenterFromMonitorBoundary();
 	void UpdateWindowDpi(UINT dpi = 0);
 	void UpdateWindowDpiAndBounds(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
