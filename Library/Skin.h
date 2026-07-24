@@ -348,6 +348,7 @@ private:
 
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
 	void UpdateWindowBounds(UINT flags);
+	bool UpdateWindowMonitor(std::optional<POINT> center = std::nullopt);
 	void UpdateWindowDpi(UINT dpi = 0);
 	void UpdateWindowDpiAndBounds(UINT dpi = 0);
 	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
@@ -454,8 +455,11 @@ private:
 
 	std::optional<int> m_Zoom;
 
-	// Note that m_WindowDpi tracks the actual window DPI while m_DpiScale is the current
-	// window DPI scale before the skin zoom is applied.
+	// The monitor is selected from the window center. Keep a copy of its metrics so display
+	// changes can be handled without relying on WM_DPICHANGED.
+	HMONITOR m_WindowMonitor;
+	RECT m_WindowMonitorScreenBounds;
+	RECT m_WindowMonitorWorkBounds;
 	UINT m_WindowDpi;
 	float m_DpiScale;
 	float m_ZoomScale;
@@ -485,6 +489,9 @@ private:
 	bool m_DragStartValid;
 	POINT m_DragStartCursor;
 	POINT m_DragStartWindowPos;
+	SIZE m_DragStartWindowSize;
+	POINT m_DragCursorOffset;
+	UINT m_DragCursorOffsetDpi;
 	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;

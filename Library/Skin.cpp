@@ -91,6 +91,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_WindowH(),
 	m_SkinW(),
 	m_SkinH(),
+	m_WindowMonitor(nullptr),
+	m_WindowMonitorScreenBounds(),
+	m_WindowMonitorWorkBounds(),
 	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
 	m_ZoomScale(1.0f),
@@ -119,6 +122,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_DragStartValid(false),
 	m_DragStartCursor(),
 	m_DragStartWindowPos(),
+	m_DragStartWindowSize(),
+	m_DragCursorOffset(),
+	m_DragCursorOffsetDpi(0),
 	m_MouseMeasureCapture(false),
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
@@ -502,13 +508,14 @@ void Skin::Refresh(bool init, bool all)
 		return;
 	}
 
-	// ReadSkin() determines the final window size. Resolve the target monitor DPI again before
-	// the initial draw so that a subsequent WM_DPICHANGED does not need to redraw while refreshing.
+	// ReadSkin() determines the final window size. Resolve the target monitor DPI again and cache
+	// the monitor metrics before the initial draw.
 	ComputePositionFromOptions(true);
 	if (m_KeepOnScreen)
 	{
 		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
 	}
+	UpdateWindowMonitor();
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 
 	// Remove transparent flag
@@ -707,9 +714,33 @@ void Skin::UpdateWindowBounds(UINT flags)
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
 }
 
+bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
+{
+	if (!center)
+	{
+		center = POINT { m_X.pos + GetPhysicalWindowW() / 2, m_Y.pos + GetPhysicalWindowH() / 2 };
+	}
+
+	const HMONITOR handle = MonitorFromPoint(*center, MONITOR_DEFAULTTONEAREST);
+	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(handle);
+	if (!monitor) return false;
+
+	const bool changed =
+		m_WindowMonitor != handle ||
+		!EqualRect(&m_WindowMonitorScreenBounds, &monitor->screen) ||
+		!EqualRect(&m_WindowMonitorWorkBounds, &monitor->work) ||
+		m_WindowDpi != monitor->dpi;
+
+	m_WindowMonitor = handle;
+	m_WindowMonitorScreenBounds = monitor->screen;
+	m_WindowMonitorWorkBounds = monitor->work;
+	UpdateWindowDpi(monitor->dpi);
+	return changed;
+}
+
 void Skin::UpdateWindowDpi(UINT dpi)
 {
-	m_WindowDpi = dpi ? dpi : System::GetDpiForWindow(m_Window);
+	if (dpi) m_WindowDpi = dpi;
 	m_DpiScale = (float)m_WindowDpi / USER_DEFAULT_SCREEN_DPI;
 
 	const auto oldEffectiveScale = m_EffectiveScale;
@@ -4239,6 +4270,11 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_DragStartCursor = System::GetCursorPosition();
 		m_DragStartWindowPos.x = m_X.pos;
 		m_DragStartWindowPos.y = m_Y.pos;
+		m_DragStartWindowSize.cx = GetPhysicalWindowW();
+		m_DragStartWindowSize.cy = GetPhysicalWindowH();
+		m_DragCursorOffset.x = m_DragStartCursor.x - m_DragStartWindowPos.x;
+		m_DragCursorOffset.y = m_DragStartCursor.y - m_DragStartWindowPos.y;
+		m_DragCursorOffsetDpi = m_WindowDpi;
 	}
 
 	// If the 'Show window contents while dragging' system option is
@@ -4276,6 +4312,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_Dragging = false;
 	m_Dragged = false;
 	m_DragStartValid = false;
+	m_DragCursorOffsetDpi = 0;
 
 	// Disable the 'Show window contents while dragging' system option if
 	// it was already disabled before dragging.
@@ -4533,37 +4570,22 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// WM_DPICHANGED has proven to be unreliable across Windows versions so we instead track DPI
+	// changes ourselves. On Windows 11, however, WM_DPICHANGED will automatically call
+	// SetWindowPos if window wasn't repositioned/resized in the handler. This would of course
+	// break our custom handling so we prevent that from happening by passing the existing size
+	// here. See also: https://stackoverflow.com/questions/78690029
 	auto* size = (SIZE*)lParam;
-	const UINT dpi = (UINT)wParam;
-	size->cx = GetPhysicalWindowW(dpi);
-	size->cy = GetPhysicalWindowH(dpi);
+	RECT bounds = {};
+	GetWindowRect(m_Window, &bounds);
+	size->cx = bounds.right - bounds.left;
+	size->cy = bounds.bottom - bounds.top;
 	return TRUE;
 }
 
 LRESULT Skin::OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const UINT dpi = LOWORD(wParam);
-	UpdateWindowDpi(dpi);
-
-	auto* suggested = (const RECT*)lParam;
-	m_X.pos = suggested->left;
-	m_Y.pos = suggested->top;
-	UpdateWindowBounds(SWP_NOSENDCHANGING);
-
-	if (m_DragStartValid)
-	{
-		m_DragStartCursor = System::GetCursorPosition();
-		m_DragStartWindowPos.x = m_X.pos;
-		m_DragStartWindowPos.y = m_Y.pos;
-	}
-
-	// In some situations (e.g. if using WS_EX_TOOLWINDOW), Windows seems to send
-	// WM_DPICHANGED on window creation. Avoid triggering a redraw in that case to
-	// prevent D2D from erorring out.
-	if (m_State == STATE_RUNNING)
-	{
-		Redraw();
-	}
+	// See above.
 	return 0;
 }
 
@@ -5067,20 +5089,50 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Stores the new place of the window, in screen coordinates.
-**
-*/
 LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	// The lParam's x/y parameters are given in screen coordinates for overlapped and pop-up windows
-	// and in parent-client coordinates for child windows.
-
-	// Store the new window position
 	int oldX = m_X.pos;
 	int oldY = m_Y.pos;
 	m_X.pos = GET_X_LPARAM(lParam);
 	m_Y.pos = GET_Y_LPARAM(lParam);
+
+	if (m_State == STATE_RUNNING)
+	{
+		std::optional<POINT> center;
+
+		if (m_DragStartValid)
+		{
+			// Use the original window's center translated with the cursor so DPI-driven resizing
+			// cannot change the monitor transition point while dragging.
+			center = System::GetCursorPosition();
+			center->x -= m_DragCursorOffset.x - m_DragStartWindowSize.cx / 2;
+			center->y -= m_DragCursorOffset.y - m_DragStartWindowSize.cy / 2;
+		}
+
+		const UINT oldDpi = m_WindowDpi;
+		if (UpdateWindowMonitor(center) && m_WindowDpi != oldDpi)
+		{
+			if (m_DragStartValid && m_DragCursorOffsetDpi != 0)
+			{
+				const POINT cursor = System::GetCursorPosition();
+				m_X.pos = cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
+				m_Y.pos = cursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi);
+
+				// Re-anchor the system drag at the scaled grab point. The separately tracked
+				// original-window center remains unchanged for monitor selection.
+				m_DragStartCursor = cursor;
+				m_DragStartWindowPos.x = m_X.pos;
+				m_DragStartWindowPos.y = m_Y.pos;
+				UpdateWindowBounds(SWP_NOSENDCHANGING);
+			}
+			else
+			{
+				UpdateWindowBounds(SWP_NOMOVE | SWP_NOSENDCHANGING);
+			}
+
+			Redraw();
+		}
+	}
 
 	if (m_Dragging)
 	{
@@ -5268,17 +5320,25 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	UpdateWindowDpi();
-
-	// Move the window temporarily
-	ResizeWindow(false);
-
-	if (m_KeepOnScreen)
+	if (UpdateWindowMonitor())
 	{
-		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
-	}
+		// Resolve the configured logical position against the new monitor metrics, then resize
+		// and reposition the window ourselves.
+		ComputePositionFromOptions(true);
+		ResizeWindow(false);
 
-	UpdateWindowBounds(SWP_NOSENDCHANGING);
+		if (m_KeepOnScreen)
+		{
+			ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
+		}
+
+		UpdateWindowBounds(SWP_NOSENDCHANGING);
+
+		if (m_State == STATE_RUNNING)
+		{
+			Redraw();
+		}
+	}
 
 	if (!m_OnDisplayMetricsChangeAction.empty())
 	{
