@@ -94,6 +94,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_WindowMonitor(nullptr),
 	m_WindowMonitorScreenBounds(),
 	m_WindowMonitorWorkBounds(),
+	m_PreventWindowMove(false),
 	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
 	m_ZoomScale(1.0f),
@@ -4379,6 +4380,11 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
 
+	if (m_PreventWindowMove)
+	{
+		wp->flags |= SWP_NOMOVE;
+	}
+
 	if (m_State != STATE_REFRESHING)
 	{
 		if (m_WindowZPosition == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && System::GetShowDesktop())
@@ -4558,13 +4564,13 @@ LRESULT Skin::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** During setting changes do nothing.
-** (OnDelayedMove function is used instead.)
-**
-*/
 LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// When some display metrics change, Windows tries to be helpful and may initiate a window move
+	// by itself. When this happens, the window first receives WM_SETTINGSCHANGE, then later
+	// WM_WINDOWPOSCHANGING, and later yet our own WM_METERWINDOW_DELAYED_MOVE. Lets prevent moves
+	// between WM_SETTINGSCHANGE and WM_METERWINDOW_DELAYED_MOVE to avoid this issue.
+	m_PreventWindowMove = true;
 	return 0;
 }
 
@@ -5320,6 +5326,8 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	m_PreventWindowMove = false;
+
 	if (UpdateWindowMonitor())
 	{
 		// Resolve the configured logical position against the new monitor metrics, then resize

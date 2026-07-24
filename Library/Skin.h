@@ -461,6 +461,8 @@ private:
 	HMONITOR m_WindowMonitor;
 	RECT m_WindowMonitorScreenBounds;
 	RECT m_WindowMonitorWorkBounds;
+	bool m_PreventWindowMove;
+
 	UINT m_WindowDpi;
 	float m_DpiScale;
 	float m_ZoomScale;
