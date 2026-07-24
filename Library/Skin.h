@@ -216,6 +216,7 @@ public:
 	POINT GetScreenLogicalPosition() const;
 	POINT PhysicalToScreenLogical(POINT point) const;
 
+	HMONITOR GetWindowMonitor() const { return m_WindowMonitor; }
 	float GetScale() const { return m_EffectiveScale; }
 	float GetDpiScale() const { return m_DpiScale; }
 	float GetZoomScale() const { return m_ZoomScale; }
