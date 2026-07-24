@@ -206,17 +206,15 @@ POINT System::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
 	return { r.left, r.top };
 }
 
-POINT System::PhysicalToScreenLogical(POINT point, SIZE size)
+POINT System::PhysicalToScreenLogical(POINT point, HMONITOR monitorHandle)
 {
-	SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(monitorHandle);
+	if (!monitor) return point;
 
-	{
-		DpiUtil::DpiUnawareScope dpiUnaware;
-
-		RECT r = {};
-		GetWindowRect(c_HelperWindow, &r);
-		return { r.left, r.top };
-	}
+	POINT result;
+	result.x = monitor->logicalScreen.left + MulDiv(point.x - monitor->screen.left, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	result.y = monitor->logicalScreen.top + MulDiv(point.y - monitor->screen.top, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	return result;
 }
 
 /*
