@@ -33,11 +33,8 @@ void MeasureNet::UpdateIFTable()
 	NetworkUtil::UpdateInterfaceTable();
 }
 
-/*
-** Reads the amount of octets. This is the same for in, out and total.
-** the net-parameter informs which inherited class called this method.
-**
-*/
+// Reads the amount of octets. This is the same for in, out and total.
+// the net-parameter informs which inherited class called this method.
 ULONG64 MeasureNet::GetNetOctets(NET net)
 {
 	ULONG64 value = 0;

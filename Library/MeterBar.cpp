@@ -26,11 +26,8 @@ MeterBar::~MeterBar()
 {
 }
 
-/*
-** Load the image or create the brush. If image is used get the dimensions
-** of the meter from it.
-**
-*/
+// Load the image or create the brush. If image is used get the dimensions
+// of the meter from it.
 void MeterBar::Initialize()
 {
 	Meter::Initialize();

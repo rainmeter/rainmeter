@@ -1132,10 +1132,8 @@ void Rainmeter::ActivateActiveSkins()
 	}
 }
 
-/*
-** Activates the skin, or, if it is already active, the next variant of the skin. Returns true
-** if the skin was activated (or was already active).
-*/
+// Activates the skin, or, if it is already active, the next variant of the skin. Returns true
+// if the skin was activated (or was already active).
 bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 {
 	const int index = m_SkinRegistry.FindFolderIndex(folderPath);
@@ -1155,10 +1153,8 @@ bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 	return false;
 }
 
-/*
-** Activates the skin, or, if it is already active, the next variant of the skin. Returns true
-** if the skin was activated (or was already active).
-*/
+// Activates the skin, or, if it is already active, the next variant of the skin. Returns true
+// if the skin was activated (or was already active).
 bool Rainmeter::ActivateSkin(const std::wstring& folderPath, const std::wstring& file)
 {
 	const SkinRegistry::Indexes indexes = m_SkinRegistry.FindIndexes(folderPath, file);
@@ -1375,10 +1371,8 @@ void Rainmeter::RemoveSkin(Skin* skin)
 	}
 }
 
-/*
-** Adds the skin to m_UnmanagedSkins. The skin should remove itself by calling RemoveUnmanagedSkin().
-**
-*/
+// Adds the skin to m_UnmanagedSkins. The skin should remove itself by calling
+// RemoveUnmanagedSkin().
 void Rainmeter::AddUnmanagedSkin(Skin* skin)
 {
 	for (auto it = m_UnmanagedSkins.cbegin(); it != m_UnmanagedSkins.cend(); ++it)
@@ -1771,11 +1765,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	DialogManage::UpdateSettings();
 }
 
-/*
-** Refreshes all active meter windows.
-** Note: This function calls Skin::Refresh() directly for synchronization. Be careful about crash.
-**
-*/
+// Refreshes all active meter windows.
+// Note: This function calls Skin::Refresh() directly for synchronization. Be careful about crash.
 void Rainmeter::RefreshAll()
 {
 	// Read skins and settings

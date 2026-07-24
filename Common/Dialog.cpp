@@ -368,10 +368,7 @@ bool Dialog::HandleMessage(MSG& msg)
 	return false;
 }
 
-/*
-** Subclass button control to draw arrow on the right.
-**
-*/
+// Subclass button control to draw arrow on the right.
 void Dialog::SetMenuButton(HWND button)
 {
 	SetWindowSubclass(button, MenuButtonProc, 0, 0);

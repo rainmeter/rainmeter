@@ -72,11 +72,8 @@ void MeterHistogram::CreateBuffer()
 	}
 }
 
-/*
-** Load the images and calculate the dimensions of the meter from them.
-** Or create the brushes if solid color histogram is used.
-**
-*/
+// Load the images and calculate the dimensions of the meter from them.
+// Or create the brushes if solid color histogram is used.
 void MeterHistogram::Initialize()
 {
 	Meter::Initialize();

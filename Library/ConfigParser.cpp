@@ -229,11 +229,8 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	return nullptr;
 }
 
-/*
-** Gets the value of a section variable. Returns true if strValue is set.
-** The selector is stripped from strVariable.
-**
-*/
+// Gets the value of a section variable. Returns true if strValue is set.
+// The selector is stripped from strVariable.
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
 {
 	if (!m_Skin) return false;

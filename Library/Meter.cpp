@@ -79,11 +79,8 @@ Meter::~Meter()
 	m_ContainerItems.clear();
 }
 
-/*
-** Initializes the meter. Usually this method is overwritten by the inherited
-** classes, which load bitmaps and such things during initialization.
-**
-*/
+// Initializes the meter. Usually this method is overwritten by the inherited
+// classes, which load bitmaps and such things during initialization.
 void Meter::Initialize()
 {
 	m_Initialized = true;
@@ -195,11 +192,8 @@ bool Meter::GetMeterVisibleRect(RECT& rect)
 	return false;
 }
 
-/*
-** Checks if the given point is inside the meter.
-** This function doesn't check Hidden state, so check it before calling this function if needed.
-**
-*/
+// Checks if the given point is inside the meter.
+// This function doesn't check Hidden state, so check it before calling this function if needed.
 bool Meter::HitTest(int x, int y)
 {
 	if (!HitTestContainer(x, y))
@@ -289,11 +283,8 @@ void Meter::Hide()
 	}
 }
 
-/*
-** Read the common options specified in the ini file. The inherited classes must
-** call this base implementation if they overwrite this method.
-**
-*/
+// Read the common options specified in the ini file. The inherited classes must
+// call this base implementation if they overwrite this method.
 void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	parser.ReadInheritOption(section, true);
@@ -485,21 +476,15 @@ void Meter::ReadContainerOptions(ConfigParser& parser)
 	parser.ClearInheritChain();
 }
 
-/*
-** Binds this meter to the given measure. The same measure can be bound to
-** several meters but one meter and only be bound to one measure.
-**
-*/
+// Binds this meter to the given measure. The same measure can be bound to
+// several meters but one meter and only be bound to one measure.
 void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, false);
 }
 
-/*
-** Creates the given meter. This is the factory method for the meters.
-** If new meters are implemented this method needs to be updated.
-**
-*/
+// Creates the given meter. This is the factory method for the meters.
+// If new meters are implemented this method needs to be updated.
 Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 {
 	if (_wcsicmp(L"STRING", meter) == 0)
@@ -548,21 +533,16 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	return nullptr;
 }
 
-/*
-** Updates the value(s) from the measures. Derived classes should
-** only update if this returns true;
-*/
+// Updates the value(s) from the measures. Derived classes should
+// only update if this returns true;
 bool Meter::Update()
 {
 	// Only update the meter's value when the divider is equal to the counter
 	return UpdateCounter();
 }
 
-/*
-** Reads and binds the primary MeasureName. This must always be called in overridden
-** BindMeasures() implementations.
-**
-*/
+// Reads and binds the primary MeasureName. This must always be called in overridden
+// BindMeasures() implementations.
 bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional)
 {
 	m_Measures.clear();
@@ -583,10 +563,7 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool 
 	return false;
 }
 
-/*
-** Reads and binds secondary measures (MeasureName2 - MeasureNameN).
-**
-*/
+// Reads and binds secondary measures (MeasureName2 - MeasureNameN).
 void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (!m_Measures.empty())
@@ -618,10 +595,7 @@ void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Replaces %1, %2, ... with the corresponding measure value.
-**
-*/
+// Replaces %1, %2, ... with the corresponding measure value.
 bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	bool replaced = false;

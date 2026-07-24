@@ -129,11 +129,8 @@ void Measure::Initialize()
 	}
 }
 
-/*
-** Read the common options specified in the ini file. The inherited classes must
-** call this base implementation if they overwrite this method.
-**
-*/
+// Read the common options specified in the ini file. The inherited classes must
+// call this base implementation if they overwrite this method.
 void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	parser.ReadInheritOption(section);
@@ -234,9 +231,7 @@ void Measure::Unpause()
 	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"0");
 }
 
-/*
-** Substitues text using a straight find and replace method
-*/
+// Substitues text using a straight find and replace method
 bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 {
 	size_t start = 0, pos;
@@ -255,9 +250,7 @@ bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 	return true;
 }
 
-/*
-** Substitutes part of the text
-*/
+// Substitutes part of the text
 const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 {
 	static std::wstring str;
@@ -348,10 +341,8 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 	return str.c_str();
 }
 
-/*
-** Reads the buffer for "Name":"Value"-pairs separated with comma and
-** fills the map with the parsed data.
-*/
+// Reads the buffer for "Name":"Value"-pairs separated with comma and
+// fills the map with the parsed data.
 bool Measure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;
@@ -382,11 +373,9 @@ bool Measure::ParseSubstitute(std::wstring buffer)
 	return true;
 }
 
-/*
-** Returns the first word from the buffer. The word can be inside quotes.
-** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
-** and buffer _will_ be modified.
-*/
+// Returns the first word from the buffer. The word can be inside quotes.
+// If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
+// and buffer _will_ be modified.
 std::wstring Measure::ExtractWord(std::wstring& buffer)
 {
 	std::wstring::size_type end, len = buffer.size();
@@ -574,11 +563,8 @@ double Measure::GetValueRange()
 	return m_MaxValue - m_MinValue;
 }
 
-/*
-** Base implementation. Derivied classes can provide an alternative implementation if they have a
-** string value that is not based on m_Value.
-**
-*/
+// Base implementation. Derivied classes can provide an alternative implementation if they have a
+// string value that is not based on m_Value.
 const WCHAR* Measure::GetStringValue()
 {
 	return nullptr;
@@ -590,15 +576,13 @@ const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scal
 	return stringValue ? stringValue : GetFormattedValue(autoScale, scale, decimals, percentual);
 }
 
-/*
-** This method returns the value as text string. The actual value is
-** get with GetValue() so we don't have to worry about m_Invert.
-**
-** autoScale  If true, scale the value automatically to some sensible range.
-** scale      The scale to use if autoScale is false.
-** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
-** percentual Return the value as % from the maximum value.
-*/
+// This method returns the value as text string. The actual value is retrieved with GetValue() so
+// we don't have to worry about m_Invert here.
+//
+// autoScale  If true, scale the value automatically to some sensible range.
+// scale      The scale to use if autoScale is false.
+// decimals   Number of decimals used in the value. If -1, removes ".00000" for dynamic variables.
+// percentual Return the value as % from the maximum value.
 const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
@@ -700,11 +684,8 @@ void Measure::RemoveTrailingZero(WCHAR* str, int strLen)
 	}
 }
 
-/*
-** Executes OnChangeAction if action is set.
-** If execute parameter is set to false, only updates old value with current value.
-**
-*/
+// Executes OnChangeAction if action is set.
+// If execute parameter is set to false, only updates old value with current value.
 void Measure::DoChangeAction(bool execute)
 {
 	if (!m_OnChangeAction.empty() && m_ValueAssigned)
@@ -734,11 +715,8 @@ void Measure::DoChangeAction(bool execute)
 	}
 }
 
-/*
-** Creates the given measure. This is the factory method for the measures.
-** If new measures are implemented this method needs to be updated.
-**
-*/
+// Creates the given measure. This is the factory method for the measures.
+// If new measures are implemented this method needs to be updated.
 Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 {
 	// Comparison is caseinsensitive

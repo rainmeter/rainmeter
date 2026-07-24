@@ -46,10 +46,7 @@ WCHAR* GetCommandLineArguments()
 	return args;
 }
 
-/*
-** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
-**
-*/
+// Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);

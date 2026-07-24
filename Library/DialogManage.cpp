@@ -615,10 +615,7 @@ void DialogManage::TabSkins::UpdateSelected(Skin* skin)
 	}
 }
 
-/*
-** Updates metadata and settings when changed.
-**
-*/
+// Updates metadata and settings when changed.
 void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 {
 	const size_t skinCount = GetRainmeter().GetAllSkins().size();

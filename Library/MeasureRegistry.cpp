@@ -256,11 +256,8 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 }
 
-/*
-** If the measured registry value is a string display it. Otherwise convert the
-** value to string as normal.
-**
-*/
+// If the measured registry value is a string display it. Otherwise convert the
+// value to string as normal.
 const WCHAR* MeasureRegistry::GetStringValue()
 {
 	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : nullptr;

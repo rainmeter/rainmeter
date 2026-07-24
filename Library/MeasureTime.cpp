@@ -95,11 +95,8 @@ void MeasureTime::FreeLocale()
 	}
 }
 
-/*
-** Converts given time to string.
-** This function is a wrapper function for _wcsftime_l.
-**
-*/
+// Converts given time to string.
+// This function is a wrapper function for _wcsftime_l.
 void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
 {
 	if (bufLen > 0)

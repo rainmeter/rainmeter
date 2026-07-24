@@ -1272,9 +1272,7 @@ std::vector<std::wstring> DialogInstall::Tokenize(const std::wstring& str, const
 	return tokens;
 }
 
-/*
-** Compares two version strings. Returns 0 if equal, 1 if A > B and -1 if A < B.
-*/
+// Compares two version strings. Returns 0 if equal, 1 if A > B and -1 if A < B.
 int DialogInstall::CompareVersions(const std::wstring& strA, const std::wstring& strB)
 {
 	if (strA.empty() && strB.empty()) return 0;

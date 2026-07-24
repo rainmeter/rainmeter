@@ -320,11 +320,8 @@ HWND System::GetDesktopIconsHostWindow()
 	return workerW;
 }
 
-/*
-** Returns the first window whose position is not ZPOSITION_ONDESKTOP,
-** ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
-**
-*/
+// Returns the first window whose position is not ZPOSITION_ONDESKTOP,
+// ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
 HWND System::GetBackmostTopWindow()
 {
 	HWND winPos = c_HelperWindow;
@@ -355,10 +352,7 @@ bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 	return (procAId == procBId);
 }
 
-/*
-** Retrieves the Rainmeter's meter windows in Z-order.
-**
-*/
+// Retrieves the Rainmeter's meter windows in Z-order.
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -406,10 +400,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-/*
-** Arranges the meter window in Z-order.
-**
-*/
+// Arranges the meter window in Z-order.
 void System::ChangeZPosInOrder()
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -454,10 +445,7 @@ void System::ChangeZPosInOrder()
 	}
 }
 
-/*
-** Moves the helper window to the reference position.
-**
-*/
+// Moves the helper window to the reference position.
 void System::PrepareHelperWindow(HWND desktopIconsHostWindow)
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -723,10 +711,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return 0;
 }
 
-/*
-** Gets the cursor position in last message retrieved by GetMessage().
-**
-*/
+// Gets the cursor position in last message retrieved by GetMessage().
 POINT System::GetCursorPosition()
 {
 	DWORD pos = GetMessagePos();
@@ -746,12 +731,8 @@ bool System::IsFileWritable(LPCWSTR file)
 	return true;
 }
 
-/*
-** This function is a wrapper function for LoadLibrary().
-**
-** Avoids loading a DLL from current directory.
-**
-*/
+// This function is a wrapper function for LoadLibrary().
+// Avoids loading a DLL from current directory.
 HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 {
 	// Remove current directory from DLL search path
@@ -1069,12 +1050,9 @@ void System::UpdateIniFileMappingList()
 	}
 }
 
-/*
-** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
-** If iniFile is not included, returns a empty string. If error occurred, returns "?".
-** Note that a temporary file must be deleted by caller.
-**
-*/
+// Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
+// If iniFile is not included, returns a empty string. If error occurred, returns "?".
+// Note that a temporary file must be deleted by caller.
 std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 {
 	std::wstring temporary;

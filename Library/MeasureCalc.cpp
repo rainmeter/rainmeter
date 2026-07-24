@@ -111,10 +111,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** This replaces the word Random in the formula with a random number
-**
-*/
+// This replaces the word Random in the formula with a random number
 void MeasureCalc::FormulaReplace()
 {
 	size_t start = 0, pos;
