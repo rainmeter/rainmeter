@@ -40,14 +40,15 @@
 
 enum TIMER
 {
-	TIMER_METER      = 1,
-	TIMER_MOUSE      = 2,
-	TIMER_FADE       = 3,
+	TIMER_METER = 1,
+	TIMER_MOUSE = 2,
+	TIMER_FADE = 3,
 	TIMER_TRANSITION = 4,
 	TIMER_DEACTIVATE = 5,
+	TIMER_PREVENT_MOVE = 6,
 
 	// Update this when adding a new timer.
-	TIMER_MAX        = 5
+	TIMER_MAX = 6
 };
 
 enum INTERVAL
@@ -199,6 +200,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
+	KillTimer(m_Window, TIMER_PREVENT_MOVE);
 
 	m_FadeStartTime = 0;
 
@@ -4552,7 +4554,17 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// by itself. When this happens, the window first receives WM_SETTINGSCHANGE, then later
 	// WM_WINDOWPOSCHANGING, and later yet our own WM_METERWINDOW_DELAYED_MOVE. Lets prevent moves
 	// between WM_SETTINGSCHANGE and WM_METERWINDOW_DELAYED_MOVE to avoid this issue.
-	m_PreventWindowMove = true;
+	if (wParam == SPI_SETLOGICALDPIOVERRIDE)
+	{
+		m_PreventWindowMove = true;
+
+		SetTimer(m_Window, TIMER_PREVENT_MOVE, 2000, [](HWND window, UINT, UINT_PTR timerId, DWORD)
+			{
+				KillTimer(window, timerId);
+				auto* skin = (Skin*)GetWindowLongPtr(window, GWLP_USERDATA);
+				if (skin) skin->m_PreventWindowMove = false;
+			});
+	}
 	return 0;
 }
 
@@ -5303,6 +5315,7 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // resolution/workarea change.
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	KillTimer(m_Window, TIMER_PREVENT_MOVE);
 	m_PreventWindowMove = false;
 
 	if (UpdateWindowMonitor())
