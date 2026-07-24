@@ -578,7 +578,7 @@ HMENU ContextMenu::CreateSkinSelectionMenu()
 	HMENU menu = CreateSkinSettingsMenu(selectedSkins);
 
 	const std::wstring selected = GetFormattedString(
-		selectedSkins.size() == 1 ? IDS_SkinSelected : IDS_SkinsSelected, (int)selectedSkins.size());
+		selectedSkins.size() == 1 ? IDS_SkinSelected : IDS_SkinsSelected, std::to_wstring((int)selectedSkins.size()).c_str());
 	InsertMenu(menu, 0, MF_BYPOSITION | MF_STRING, 0, selected.c_str());
 	SetMenuDefaultItem(menu, 0, MF_BYPOSITION);
 
