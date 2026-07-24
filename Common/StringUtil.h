@@ -42,11 +42,8 @@ void EscapeRegExp(std::wstring& str);
 
 void EncodeUrl(std::wstring& str, bool doReserved = true);
 
-/*
-** Case insensitive find function for std::string and std::wstring.
-**
-** Modified from http://stackoverflow.com/questions/3152241/case-insensitive-stdstring-find#3152296
-*/
+// Case insensitive find function for std::string and std::wstring.
+// Modified from http://stackoverflow.com/questions/3152241/case-insensitive-stdstring-find#3152296
 std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2);
 
 }  // namespace StringUtil

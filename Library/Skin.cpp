@@ -1014,10 +1014,8 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 	}
 }
 
-/*
-** Runs the bang command with the given arguments.
-** Correct number of arguments must be passed (or use Rainmeter::ExecuteBang).
-*/
+// Runs the bang command with the given arguments.
+// Correct number of arguments must be passed (or use Rainmeter::ExecuteBang).
 void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 {
 	switch (bang)
@@ -3297,11 +3295,8 @@ void Skin::Update(bool refresh)
 	}
 }
 
-/*
-** Handles the timers. The METERTIMER updates all the measures
-** MOUSETIMER is used to hide/show the window.
-**
-*/
+// Handles the timers. The METERTIMER updates all the measures
+// MOUSETIMER is used to hide/show the window.
 LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
@@ -4554,11 +4549,8 @@ void Skin::BlurBehindWindow(BOOL fEnable)
 	}
 }
 
-/*
-** During resolution changes do nothing.
-** (OnDelayedMove function is used instead.)
-**
-*/
+// During resolution changes do nothing.
+// (OnDelayedMove function is used instead.)
 LRESULT Skin::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
@@ -4826,11 +4818,8 @@ LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Executes the action if such are defined. Returns true, if action was executed.
-** If the test is true, the action is not executed.
-**
-*/
+// Executes the action if such are defined. Returns true, if action was executed.
+// If the test is true, the action is not executed.
 bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
 	Meter* meter = nullptr;
@@ -5319,11 +5308,9 @@ LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Handles delayed move.
-** Do not save the position in this handler for the sake of preventing move by temporal resolution/workarea change.
-**
-*/
+// Handles delayed move.
+// Do not save the position in this handler for the sake of preventing move by temporal
+// resolution/workarea change.
 LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	m_PreventWindowMove = false;
