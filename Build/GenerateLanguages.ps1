@@ -83,7 +83,8 @@ function Read-LanguageFile {
 	param(
 		[string]$Path,
 		[hashtable]$ResourceIds,
-		[string]$ResourceHeaderPath
+		[string]$ResourceHeaderPath,
+		[hashtable]$FallbackStrings
 	)
 
 	if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
@@ -115,6 +116,13 @@ function Read-LanguageFile {
 
 		$key = $Matches[1].Trim()
 		$value = $Matches[2]
+		if ($value.Length -eq 0) {
+			$fallbackKey = $currentSection + [char]0 + $key
+			if (-not $FallbackStrings.ContainsKey($fallbackKey)) {
+				throw "English fallback string not found for [$currentSection] $key in $Path"
+			}
+			$value = $FallbackStrings[$fallbackKey]
+		}
 		if ($currentSection -eq 'Installer') {
 			[void]$installerStrings.Add([pscustomobject]@{ Key = $key; Value = $value })
 			continue
@@ -154,6 +162,28 @@ function Read-LanguageFile {
 		LabelWidth = $labelWidth
 		Rtl = $rtl
 	}
+}
+
+function Get-FallbackStrings {
+	param([string]$Path)
+
+	$strings = @{}
+	$currentSection = ''
+	foreach ($line in [System.IO.File]::ReadAllLines($Path)) {
+		if ($line -match '^\s*\[([^]]+)\]\s*$') {
+			$currentSection = $Matches[1]
+			continue
+		}
+		if ([string]::IsNullOrWhiteSpace($line) -or $line.TrimStart().StartsWith(';')) {
+			continue
+		}
+		if ($line -match '^([^=]+)=(.*)$') {
+			$key = $Matches[1].Trim()
+			$strings[$currentSection + [char]0 + $key] = $Matches[2]
+		}
+	}
+
+	return $strings
 }
 
 function Write-InstallerLanguageFile {
@@ -249,6 +279,7 @@ function Write-InstallerLanguagesFile {
 
 $locales = if ($Locale) { $Locale } else { @($languages.Keys) }
 $resourceIds = Get-ResourceIds -Path $resourceHeaderPath
+$fallbackStrings = Get-FallbackStrings -Path (Join-Path $scriptDirectory 'en.ini')
 foreach ($directory in $languageOutputDirectories) {
 	[System.IO.Directory]::CreateDirectory($directory) | Out-Null
 }
@@ -264,7 +295,7 @@ foreach ($localeName in $locales) {
 	}
 
 	$iniPath = Join-Path $scriptDirectory ($localeName + '.ini')
-	$definition = Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath
+	$definition = Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -FallbackStrings $fallbackStrings
 	if (-not $RuntimeOnly) {
 		$nshPath = Join-Path $installerOutputDirectory ($localeName + '.nsh')
 		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
