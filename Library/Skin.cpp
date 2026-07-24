@@ -4287,6 +4287,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_Dragged)
 	{
+		NudgeWindowCenterFromMonitorBoundary();
 		SavePositionIfAppropriate();
 
 		POINT pos = System::GetCursorPosition();
@@ -4318,6 +4319,32 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return result;
+}
+
+// Keep the center away from monitor boundaries so DPI-unaware coordinate virtualization cannot
+// interpret the dropped window as belonging to the wrong monitor.
+void Skin::NudgeWindowCenterFromMonitorBoundary()
+{
+	const auto* current = MonitorUtil::GetMultiMonitorInfo().GetByHandle(m_WindowMonitor);
+	if (!current) return;
+
+	const RECT& bounds = m_WindowMonitorScreenBounds;
+	const int centerX = m_X.pos + GetPhysicalWindowW() / 2;
+	const int centerY = m_Y.pos + GetPhysicalWindowH() / 2;
+	int dx = 0;
+	int dy = 0;
+
+	if (centerX - bounds.left < 2) dx = 2 - (centerX - bounds.left);
+	if (bounds.right - centerX < 2) dx = -(2 - (bounds.right - centerX));
+	if (centerY - bounds.top < 2) dy = 2 - (centerY - bounds.top);
+	if (bounds.bottom - centerY < 2) dy = -(2 - (bounds.bottom - centerY));
+
+	if (dx != 0 || dy != 0)
+	{
+		m_X.pos += dx;
+		m_Y.pos += dy;
+		UpdateWindowBounds(SWP_NOSENDCHANGING);
+	}
 }
 
 LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
