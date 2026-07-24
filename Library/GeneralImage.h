@@ -15,10 +15,7 @@
 #include "ImageCache.h"
 #include "ImageOptions.h"
 
-/*
-** Helper macro to define an array of option names. A prefix must be given.
-**
-*/
+// Helper macro to define an array of option names. A prefix must be given.
 #define GeneralImageHelper_DefineOptionArray(name, prefix) \
 	const WCHAR* (name)[GeneralImage::OptionCount] = { \
 		prefix  L"ImageCrop", \
