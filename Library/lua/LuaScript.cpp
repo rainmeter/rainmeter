@@ -142,10 +142,6 @@ void LuaScript::Uninitialize()
 	}
 }
 
-/*
-** Checks if given function is defined in the script file.
-**
-*/
 bool LuaScript::IsFunction(const char* funcName)
 {
 	if (!IsInitialized()) return false;
@@ -165,10 +161,6 @@ bool LuaScript::IsFunction(const char* funcName)
 	return result;
 }
 
-/*
-** Runs given function in script file.
-**
-*/
 LuaResult LuaScript::RunFunction(const char* funcName)
 {
 	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
@@ -197,10 +189,6 @@ LuaResult LuaScript::RunFunction(const char* funcName)
 	}
 }
 
-/*
-** Runs given function in script file and stores the returned number or string.
-**
-*/
 LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType, double& numValue, std::wstring& strValue)
 {
 	valueType = LUA_TNIL;
@@ -275,10 +263,6 @@ LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType,
 	}
 }
 
-/*
-** Runs given string in the context of the script file.
-**
-*/
 LuaResult LuaScript::RunString(const std::wstring& str)
 {
 	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
