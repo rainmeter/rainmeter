@@ -11,29 +11,17 @@
 
 Player* PlayerSpotify::c_Player = nullptr;
 
-/*
-** Constructor.
-**
-*/
 PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(nullptr),
 	m_LastCheckTime(0)
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerSpotify::~PlayerSpotify()
 {
 	c_Player = nullptr;
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerSpotify::Create()
 {
 	if (!c_Player)
@@ -65,10 +53,6 @@ std::wstring GetExe(HWND hwnd)
 	return L"";
 }
 
-/*
-** Try to find Spotify periodically.
-**
-*/
 bool PlayerSpotify::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
@@ -94,10 +78,6 @@ bool PlayerSpotify::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerSpotify::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
@@ -145,47 +125,27 @@ void PlayerSpotify::UpdateData()
 	}
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerSpotify::Play()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PLAYPAUSE);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerSpotify::Stop()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerSpotify::Next()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerSpotify::Previous()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
 }
 
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerSpotify::ClosePlayer()
 {
 	// A little harsh...
@@ -199,10 +159,6 @@ void PlayerSpotify::ClosePlayer()
 	}
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerSpotify::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)

@@ -222,10 +222,6 @@ void MeasureTime::FillCurrentTime()
 	}
 }
 
-/*
-** Updates the current time
-**
-*/
 void MeasureTime::UpdateValue()
 {
 	FillCurrentTime();
@@ -281,10 +277,6 @@ void MeasureTime::UpdateValue()
 }
 
 
-/*
-** Returns the time as string.
-**
-*/
 const WCHAR* MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
@@ -334,10 +326,6 @@ const WCHAR* MeasureTime::GetStringValue()
 	return CheckSubstitute(tmpSz);
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void

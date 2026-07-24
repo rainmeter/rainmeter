@@ -147,19 +147,11 @@ HRESULT PlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
 	return E_POINTER;
 }
 
-/*
-** Called when playing track changes.
-**
-*/
 void PlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
 {
 	m_Player->m_TrackChanged = true;
 }
 
-/*
-** Called when play state changes.
-**
-*/
 void PlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 {
 	switch (NewState)
@@ -186,10 +178,6 @@ void PlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 	}
 }
 
-/*
-** Called when WMP quits.
-**
-*/
 void PlayerWMP::CRemoteHost::SwitchedToControl()
 {
 	m_Player->ClearData();
@@ -214,10 +202,6 @@ PlayerWMP::~PlayerWMP()
 	Uninitialize();
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerWMP::Create()
 {
 	if (!c_Player)
@@ -228,10 +212,6 @@ Player* PlayerWMP::Create()
 	return c_Player;
 }
 
-/*
-** Set up the COM interface with WMP.
-**
-*/
 void PlayerWMP::Initialize()
 {
 	HMODULE atl = InitializeAtlLibrary();
@@ -358,10 +338,6 @@ void PlayerWMP::Initialize()
 	}
 }
 
-/*
-** Close the interface with WMP.
-**
-*/
 void PlayerWMP::Uninitialize()
 {
 	if (m_Initialized)
@@ -384,10 +360,6 @@ void PlayerWMP::Uninitialize()
 	}
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerWMP::UpdateData()
 {
 	if (m_Initialized)
@@ -515,28 +487,16 @@ void PlayerWMP::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerWMP::Pause()
 {
 	m_IControls->pause();
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerWMP::Play()
 {
 	m_IControls->play();
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerWMP::Stop()
 {
 	m_IControls->stop();
@@ -544,37 +504,21 @@ void PlayerWMP::Stop()
 	m_State = STATE_STOPPED;
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerWMP::Next()
 {
 	m_IControls->next();
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerWMP::Previous()
 {
 	m_IControls->previous();
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerWMP::SetPosition(int position)
 {
 	m_IControls->put_currentPosition((double)position);
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerWMP::SetRating(int rating)
 {
 	if (m_State != STATE_STOPPED)
@@ -618,19 +562,11 @@ void PlayerWMP::SetRating(int rating)
 	}
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerWMP::SetVolume(int volume)
 {
 	m_ISettings->put_volume(volume);
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerWMP::ClosePlayer()
 {
 	HWND wnd = FindWindow(L"WMPlayerApp", nullptr);
@@ -641,10 +577,6 @@ void PlayerWMP::ClosePlayer()
 	}
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerWMP::OpenPlayer(std::wstring& path)
 {
 	ShellExecute(nullptr, L"open", path.empty() ? L"wmplayer.exe" : path.c_str(), nullptr, nullptr, SW_SHOW);

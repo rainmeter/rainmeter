@@ -48,10 +48,6 @@ MeasurePlugin::~MeasurePlugin()
 	}
 }
 
-/*
-** Gets the current value from the plugin
-**
-*/
 void MeasurePlugin::UpdateValue()
 {
 	if (m_UpdateFunc)
@@ -77,10 +73,6 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-/*
-** Reads the options and loads the plugin
-**
-*/
 void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	static UINT id = 0;
@@ -217,10 +209,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	++id;
 }
 
-/*
-** Gets the string value from the plugin.
-**
-*/
 const WCHAR* MeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
@@ -241,10 +229,6 @@ const WCHAR* MeasurePlugin::GetStringValue()
 	return nullptr;
 }
 
-/*
-** Sends a bang to the plugin
-**
-*/
 void MeasurePlugin::Command(const std::wstring& command)
 {
 	if (m_ExecuteBangFunc)

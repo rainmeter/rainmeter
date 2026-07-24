@@ -45,10 +45,6 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
@@ -69,10 +65,6 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterRoundLine::Update()
 {
 	if (Meter::Update())
@@ -101,10 +93,6 @@ bool MeterRoundLine::Update()
 }
 
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -190,10 +178,6 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The roundline meters need not to be bound on anything
-**
-*/
 void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);

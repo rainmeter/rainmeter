@@ -50,10 +50,6 @@ void MeasureScript::Initialize()
 	}
 }
 
-/*
-** Runs the function "Update()" in the script.
-**
-*/
 void MeasureScript::UpdateValue()
 {
 	if (m_HasUpdateFunction)
@@ -76,19 +72,11 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-/*
-** Returns the value as a string.
-**
-*/
 const WCHAR* MeasureScript::GetStringValue()
 {
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
@@ -191,10 +179,6 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	UninitializeLuaScript();
 }
 
-/*
-** Executes a custom bang.
-**
-*/
 void MeasureScript::Command(const std::wstring& command)
 {
 	if (!m_LuaScript.IsInitialized()) return;

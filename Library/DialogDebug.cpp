@@ -173,10 +173,6 @@ void DialogDebug::OpenSkin(Skin* skin)
 	}
 }
 
-/*
-** Shows log if dialog isn't already open.
-**
-*/
 void DialogDebug::ShowAboutLog()
 {
 	if (!c_Dialog)
@@ -394,10 +390,6 @@ void DialogDebug::TabLog::Create(HWND owner)
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 }
 
-/*
-** Called when tab is displayed.
-**
-*/
 void DialogDebug::TabLog::Initialize()
 {
 	Dialog::SetMenuButton(GetControl(Id_TypeMenuButton));
@@ -501,10 +493,6 @@ void DialogDebug::TabLog::Relayout(int w, int h)
 	ListView_SetColumn(item, 3, &lvc);
 }
 
-/*
-** Adds item to log.
-**
-*/
 void DialogDebug::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
 {
 	LVITEM vitem = { 0 };
@@ -1174,10 +1162,6 @@ void DialogDebug::TabSkins::SelectSkin(Skin* skin)
 	UpdateMeasureList(m_SkinWindow);
 }
 
-/*
-** Updates the list of skins.
-**
-*/
 void DialogDebug::TabSkins::UpdateSkinList()
 {
 	Button_Enable(GetControl(Id_SelectSkinButton), !GetRainmeter().GetAllSkins().empty());
@@ -1333,10 +1317,6 @@ void DialogDebug::TabSkins::EnsureWatchVisible(size_t index)
 	}
 }
 
-/*
-** Updates the list of measures, variables, and watches.
-**
-*/
 void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 {
 	if (!skin)

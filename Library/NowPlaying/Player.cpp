@@ -34,10 +34,6 @@ std::wstring EncodeUrl(const std::wstring& url)
 	return ret;
 }
 
-/*
-** Constructor.
-**
-*/
 Player::Player() :
 	m_Initialized(false),
 	m_InstanceCount(0),
@@ -62,10 +58,6 @@ Player::Player() :
 	m_TempCoverPath = buffer;
 }
 
-/*
-** Destructor.
-**
-*/
 Player::~Player()
 {
 	DeleteFile(m_TempCoverPath.c_str());
@@ -77,19 +69,11 @@ Player::~Player()
 	}
 }
 
-/*
-** Called during initialization of main measure.
-**
-*/
 void Player::AddInstance()
 {
 	++m_InstanceCount;
 }
 
-/*
-** Called during destruction of main measure.
-**
-*/
 void Player::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
@@ -98,19 +82,11 @@ void Player::RemoveInstance()
 	}
 }
 
-/*
-** Called during initialization of any measure.
-**
-*/
 void Player::AddMeasure(INT type)
 {
 	m_Measures |= type;
 }
 
-/*
-** Called during update of main measure.
-**
-*/
 void Player::UpdateMeasure()
 {
 	if (++m_UpdateCount >= m_InstanceCount)
@@ -120,10 +96,6 @@ void Player::UpdateMeasure()
 	}
 }
 
-/*
-** Default implementation for getting cover.
-**
-*/
 void Player::FindCover()
 {
 	TagLib::FileRef fr(m_FilePath.c_str(), false);
@@ -144,10 +116,6 @@ void Player::FindCover()
 	}
 }
 
-/*
-** Default implementation for getting lyrics.
-**
-*/
 void Player::FindLyrics()
 {
 	// This will be leaked on quit, but that's not a problem.
@@ -206,10 +174,6 @@ void Player::HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode
 	m_Lyrics = body;
 }
 
-/*
-** Clear track information.
-**
-*/
 void Player::ClearData(bool all)
 {
 	m_State = STATE_STOPPED;

@@ -155,9 +155,6 @@ void ToSentenceCase(std::wstring& str)
 	}
 }
 
-/*
-** Escapes reserved PCRE regex metacharacters.
-*/
 void EscapeRegExp(std::wstring& str)
 {
 	size_t start = 0;
@@ -168,9 +165,6 @@ void EscapeRegExp(std::wstring& str)
 	}
 }
 
-/*
-** Escapes reserved URL characters.
-*/
 void EncodeUrl(std::wstring& str, bool doReserved)
 {
 	static const std::string unreserved = "0123456789-.ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcedefghijklmnopqrstuvwxyz~";

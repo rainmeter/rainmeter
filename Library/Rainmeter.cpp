@@ -44,10 +44,6 @@ enum INTERVAL
 	INTERVAL_UPDATECHECK_DAILY = 24 * 60 * 60 * 1000
 };
 
-/*
-** Initializes Rainmeter.
-**
-*/
 int RainmeterMain(LPWSTR cmdLine)
 {
 	// Avoid loading a dll from current directory
@@ -103,10 +99,6 @@ int RainmeterMain(LPWSTR cmdLine)
 	return ret;
 }
 
-/*
-** Constructor
-**
-*/
 Rainmeter::Rainmeter() :
 	m_TrayIcon(),
 	m_Debug(false),
@@ -143,10 +135,6 @@ Rainmeter::Rainmeter() :
 	InitCommonControls();
 }
 
-/*
-** Destructor
-**
-*/
 Rainmeter::~Rainmeter()
 {
 	CoUninitialize();
@@ -164,10 +152,6 @@ Rainmeter& Rainmeter::GetInstance()
 	return s_Rainmeter;
 }
 
-/*
-** The main initialization function for the module.
-**
-*/
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
 	if (!IsWindows7SP1OrGreater())
@@ -1377,10 +1361,6 @@ void Rainmeter::DeleteAllUnmanagedSkins()
 	m_UnmanagedSkins.clear();
 }
 
-/*
-** Removes the skin from m_Skins. The skin should delete itself.
-**
-*/
 void Rainmeter::RemoveSkin(Skin* skin)
 {
 	for (auto it = m_Skins.cbegin(); it != m_Skins.cend(); ++it)
@@ -1545,18 +1525,12 @@ int Rainmeter::GetLoadOrder(const std::wstring& folderPath)
 	return 0;
 }
 
-/*
-** Scans all the subfolders and locates the ini-files.
-*/
 void Rainmeter::ScanForSkins()
 {
 	m_SkinRegistry.Populate(m_SkinPath, m_Favorites);
 	m_SkinOrders.clear();
 }
 
-/*
-** Scans the given folder for layouts
-*/
 void Rainmeter::ScanForLayouts()
 {
 	m_Layouts.clear();
@@ -1624,19 +1598,11 @@ void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, 
 	m_CommandHandler.ExecuteBang(bang, args, skin);
 }
 
-/*
-** Runs the given command or bang
-**
-*/
 void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
 	m_CommandHandler.ExecuteCommand(command, skin, multi);
 }
 
-/*
-** Runs the given command or bang (sent from an Action)
-**
-*/
 void Rainmeter::ExecuteActionCommand(const WCHAR* command, Section* section)
 {
 	Skin* skin = nullptr;
@@ -1651,20 +1617,12 @@ void Rainmeter::ExecuteActionCommand(const WCHAR* command, Section* section)
 	m_CommandHandler.ExecuteCommand(command, skin);
 }
 
-/*
-** Executes command when current processing is done.
-**
-*/
 void Rainmeter::DelayedExecuteCommand(const WCHAR* command, Skin* skin)
 {
 	WCHAR* bang = _wcsdup(command);
 	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)skin, (LPARAM)bang);
 }
 
-/*
-** Reads the general settings from the Rainmeter.ini file
-**
-*/
 void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
 	// Force the reload of system cursors
@@ -2050,10 +2008,6 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 	return s_OldPlugins;
 }
 
-/*
-** Applies given DesktopWorkArea and DesktopWorkArea@n.
-**
-*/
 void Rainmeter::UpdateDesktopWorkArea(bool reset)
 {
 	bool changed = false;
@@ -2125,10 +2079,6 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 }
 
-/*
-** Reads the statistics from the ini-file
-**
-*/
 void Rainmeter::ReadStats()
 {
 	const WCHAR* statsFile = m_StatsFile.c_str();
@@ -2157,10 +2107,6 @@ void Rainmeter::ReadStats()
 	MeasureNet::ReadStats(m_StatsFile, m_StatsDate);
 }
 
-/*
-** Writes the statistics to the ini-file. If bForce is false the stats are written only once per an appropriate interval.
-**
-*/
 void Rainmeter::WriteStats(bool bForce)
 {
 	static ULONGLONG lastWrite = 0;
@@ -2179,10 +2125,6 @@ void Rainmeter::WriteStats(bool bForce)
 	}
 }
 
-/*
-** Clears the statistics
-**
-*/
 void Rainmeter::ResetStats()
 {
 	// Set the stats-date string
@@ -2253,10 +2195,6 @@ void Rainmeter::SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& pl
 	WritePrivateProfileString(L"Rainmeter", key, buffer, m_DataFile.c_str());
 }
 
-/*
-** Wraps MessageBox(). Sets RTL flag if necessary.
-**
-*/
 int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
@@ -2368,10 +2306,6 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 }
 
-/*
-** Checks and converts (if necessary) the encoding of a settings file (Rainmeter.ini).
-**
-*/
 void Rainmeter::CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log)
 {
 	size_t size = 0;

@@ -32,10 +32,6 @@ UINT               g_NumberOfTries    = 0;
 bool IsRainmeterRunning();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-/*
-** Entry point.
-**
-*/
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdLine, int cmdShow)
 {
 	// Prevent system error message boxes.

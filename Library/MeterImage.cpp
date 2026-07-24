@@ -27,10 +27,6 @@ MeterImage::~MeterImage()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterImage::Initialize()
 {
 	Meter::Initialize();
@@ -58,10 +54,6 @@ void MeterImage::InvalidateDeviceResources()
 	m_MaskImage.InvalidateDeviceResources();
 }
 
-/*
-** Loads the image from disk
-**
-*/
 void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
 	m_Image.LoadImage(imageName);
@@ -107,10 +99,6 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
@@ -160,10 +148,6 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterImage::Update()
 {
 	if (Meter::Update())
@@ -207,10 +191,6 @@ bool MeterImage::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterImage::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -366,10 +346,6 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The Image meters need not to be bound on anything
-**
-*/
 void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, true))

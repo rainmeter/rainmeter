@@ -31,10 +31,6 @@ MeterButton::~MeterButton()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterButton::Initialize()
 {
 	Meter::Initialize();
@@ -92,10 +88,6 @@ void MeterButton::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -117,19 +109,11 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterButton::Update()
 {
 	return Meter::Update();
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -152,19 +136,11 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The meters need not to be bound on anything
-**
-*/
 void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }
 
-/*
-** Checks if the given point is inside the button.
-**
-*/
 bool MeterButton::HitTest2(int px, int py)
 {
 	if (!Meter::HitTestContainer(px, py))

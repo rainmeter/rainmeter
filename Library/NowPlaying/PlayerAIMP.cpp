@@ -12,10 +12,6 @@
 
 Player* PlayerAIMP::c_Player = nullptr;
 
-/*
-** Constructor.
-**
-*/
 PlayerAIMP::PlayerAIMP() : Player(),
 	m_Window(),
 	m_WinampWindow(),
@@ -27,10 +23,6 @@ PlayerAIMP::PlayerAIMP() : Player(),
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerAIMP::~PlayerAIMP()
 {
 	c_Player = nullptr;
@@ -38,10 +30,6 @@ PlayerAIMP::~PlayerAIMP()
 	if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerAIMP::Create()
 {
 	if (!c_Player)
@@ -52,10 +40,6 @@ Player* PlayerAIMP::Create()
 	return c_Player;
 }
 
-/*
-** Try to find AIMP periodically.
-**
-*/
 bool PlayerAIMP::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
@@ -85,10 +69,6 @@ bool PlayerAIMP::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerAIMP::UpdateData()
 {
 	if (!m_Initialized)
@@ -179,64 +159,36 @@ void PlayerAIMP::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerAIMP::Pause()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerAIMP::Play()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PLAY);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerAIMP::Stop()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerAIMP::Next()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerAIMP::Previous()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PREV);
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerAIMP::SetPosition(int position)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(position, AIMP_STS_POS));
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerAIMP::SetRating(int rating)
 {
 	// Set rating through the AIMP Winamp API
@@ -247,48 +199,28 @@ void PlayerAIMP::SetRating(int rating)
 	}
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerAIMP::SetVolume(int volume)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerAIMP::SetShuffle(bool state)
 {
 	m_Shuffle = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Shuffle, AIMP_STS_SHUFFLE));
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerAIMP::SetRepeat(bool state)
 {
 	m_Repeat = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Repeat, AIMP_STS_REPEAT));
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerAIMP::ClosePlayer()
 {
 	SendMessage(m_Window, WM_CLOSE, 0, 0);
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerAIMP::OpenPlayer(std::wstring& path)
 {
 	if (path.empty())
