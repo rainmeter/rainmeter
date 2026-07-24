@@ -73,8 +73,10 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 
 	const D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
 	const D2D1_SIZE_F drawSize = D2D1::SizeF(drawRect.right, drawRect.bottom);
+	FLOAT dpiX = 0.0f, dpiY = 0.0f;
+	target->GetDpi(&dpiX, &dpiY);
 
-	// Reset the shadow bitmap if the drawing position or size of target has changed.
+	// Reset the shadow bitmap if the drawing position, size, or DPI of target has changed.
 	if (m_BitmapTarget && (
 		drawRect.left != m_PreviousPosition.left ||
 		drawRect.top != m_PreviousPosition.top ||
@@ -82,7 +84,15 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		drawRect.bottom != m_PreviousPosition.bottom))
 	{
 		m_BitmapTarget.Reset();
-		m_PreviousPosition = drawRect;
+	}
+	else if (m_BitmapTarget)
+	{
+		FLOAT bitmapDpiX = 0.0f, bitmapDpiY = 0.0f;
+		m_BitmapTarget->GetDpi(&bitmapDpiX, &bitmapDpiY);
+		if (dpiX != bitmapDpiX || dpiY != bitmapDpiY)
+		{
+			m_BitmapTarget.Reset();
+		}
 	}
 
 	m_Bitmap.Reset();
@@ -93,12 +103,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 
 		hr = target->CreateCompatibleRenderTarget(drawSize, m_BitmapTarget.GetAddressOf());
 		if (FAILED(hr)) return;
-	}
-	else
-	{
-		FLOAT dpiX = 0.0f, dpiY = 0.0f;
-		target->GetDpi(&dpiX, &dpiY);
-		m_BitmapTarget->SetDpi(dpiX, dpiY);
+		m_PreviousPosition = drawRect;
 	}
 
 	// Draw onto memory bitmap target
