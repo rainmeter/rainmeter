@@ -95,10 +95,6 @@ void Meter::InvalidateDeviceResources()
 	if (m_ContainerContentTexture) m_ContainerContentTexture->InvalidateDeviceResources();
 }
 
-/*
-** Returns the X-position of the meter.
-**
-*/
 int Meter::GetX(bool abs)
 {
 	int containerOffset = 0;
@@ -122,10 +118,6 @@ int Meter::GetX(bool abs)
 	return containerOffset + m_X;
 }
 
-/*
-** Returns the Y-position of the meter.
-**
-*/
 int Meter::GetY(bool abs)
 {
 	int containerOffset = 0;
@@ -171,10 +163,6 @@ void Meter::SetY(int y)
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
 }
 
-/*
-** Returns a RECT containing the dimensions of the meter within the Skin
-**
-*/
 RECT Meter::GetMeterRect()
 {
 	int x = GetX();
@@ -182,10 +170,6 @@ RECT Meter::GetMeterRect()
 	return { x, y, x + m_W, y + m_H };
 }
 
-/*
-** Returns a Rect containing the adjusted meter location with "Padding" option
-**
-*/
 D2D1_RECT_F Meter::GetMeterRectPadding()
 {
 	RECT rect = GetMeterRect();
@@ -196,10 +180,6 @@ D2D1_RECT_F Meter::GetMeterRectPadding()
 		rect.bottom + m_Padding.top - m_Padding.bottom);
 }
 
-/*
-** Returns the visible portion of the meter or the meter's bounds
-**
-*/
 bool Meter::GetMeterVisibleRect(RECT& rect)
 {
 	rect = GetMeterRect();
@@ -280,10 +260,6 @@ void Meter::ResizeContainerTextures()
 	if (m_ContainerContentTexture) m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), width, height);
 }
 
-/*
-** Shows the meter and tooltip.
-**
-*/
 void Meter::Show()
 {
 	m_Hidden = false;
@@ -300,10 +276,6 @@ void Meter::Show()
 	}
 }
 
-/*
-** Hides the meter and tooltip.
-**
-*/
 void Meter::Hide()
 {
 	m_Hidden = true;
@@ -684,9 +656,6 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 	return replaced;
 }
 
-/*
-** Does the initial construction of the ToolTip for the meter
-*/
 void Meter::CreateToolTip(Skin* skin)
 {
 	HWND hSkin = m_Skin->GetWindow();
@@ -728,9 +697,6 @@ void Meter::CreateToolTip(Skin* skin)
 	}
 }
 
-/*
-** Updates the ToolTip to match new values
-*/
 void Meter::UpdateToolTip()
 {
 	HWND hwndTT = m_ToolTipHandle;
@@ -811,9 +777,6 @@ void Meter::UpdateToolTip()
 	}
 }
 
-/*
-** Draws the solid background & bevel if such are defined
-*/
 bool Meter::Draw(Gfx::Canvas& canvas)
 {
 	if (IsHidden()) return false;
@@ -862,9 +825,6 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Draws a bevel inside the given area
-*/
 void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode)
 {
 	// Simulate GDI+ "PixelOffsetModeHalf" offset mode

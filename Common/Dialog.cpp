@@ -42,10 +42,6 @@ BaseDialog::BaseDialog() :
 {
 }
 
-/*
-** Create (if not already) and show the dialog.
-**
-*/
 void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	if (m_Window)

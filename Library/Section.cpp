@@ -44,10 +44,6 @@ void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	InitializeGroup(group);
 }
 
-/*
-** Updates the counter value
-**
-*/
 bool Section::UpdateCounter()
 {
 	++m_UpdateCounter;
@@ -57,10 +53,6 @@ bool Section::UpdateCounter()
 	return true;
 }
 
-/*
-** Execute OnUpdateAction if action is set
-**
-*/
 void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())

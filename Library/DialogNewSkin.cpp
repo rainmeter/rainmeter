@@ -28,10 +28,6 @@ DialogNewSkin::~DialogNewSkin()
 {
 }
 
-/*
-** Opens by tab index
-**
-*/
 void DialogNewSkin::Open(int tab)
 {
 	if (!c_Dialog)

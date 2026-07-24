@@ -299,10 +299,6 @@ void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWST
 
 }  // namespace
 
-/*
-** Parses and executes the given command.
-**
-*/
 void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
 	// Remove any leading whitespace
@@ -500,10 +496,6 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 	}
 }
 
-/*
-** Runs the given bang.
-**
-*/
 void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, Skin* skin)
 {
 	for (const auto& bangInfo : s_Bangs)
@@ -536,10 +528,6 @@ void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& a
 	LogErrorF(skin, L"Invalid bang: !%s", name);
 }
 
-/*
-** Parses and runs the given command.
-**
-*/
 void CommandHandler::RunCommand(std::wstring command)
 {
 	std::wstring args;
@@ -577,10 +565,6 @@ void CommandHandler::RunCommand(std::wstring command)
 	}
 }
 
-/*
-** Runs a file with the given arguments.
-**
-*/
 void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 {
 	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
@@ -603,10 +587,6 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	}
 }
 
-/*
-** Splits strings into parts.
-**
-*/
 std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;

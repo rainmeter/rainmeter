@@ -31,10 +31,6 @@ MeterBitmap::~MeterBitmap()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterBitmap::Initialize()
 {
 	Meter::Initialize();
@@ -93,10 +89,6 @@ void MeterBitmap::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-/*
-** Checks if the given point is inside the meter.
-**
-*/
 bool MeterBitmap::HitTest(int x, int y)
 {
 	if (m_Extend)
@@ -168,10 +160,6 @@ bool MeterBitmap::HitTest(int x, int y)
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -219,10 +207,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterBitmap::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -252,10 +236,6 @@ bool MeterBitmap::Update()
 	return false;
 }
 
-/*
-** Returns true if the meter has active transition animation.
-**
-*/
 bool MeterBitmap::HasActiveTransition()
 {
 	if (m_TransitionStartTicks > 0)
@@ -266,10 +246,6 @@ bool MeterBitmap::HasActiveTransition()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;

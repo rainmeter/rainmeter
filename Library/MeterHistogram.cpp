@@ -43,10 +43,6 @@ MeterHistogram::~MeterHistogram()
 	DisposeBuffer();
 }
 
-/*
-** Disposes the buffers.
-**
-*/
 void MeterHistogram::DisposeBuffer()
 {
 	// Reset current position
@@ -60,10 +56,6 @@ void MeterHistogram::DisposeBuffer()
 	m_SecondaryValues = nullptr;
 }
 
-/*
-** Creates the buffers.
-**
-*/
 void MeterHistogram::CreateBuffer()
 {
 	DisposeBuffer();
@@ -172,10 +164,6 @@ void MeterHistogram::InvalidateDeviceResources()
 	m_OverlapImage.InvalidateDeviceResources();
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -271,10 +259,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterHistogram::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -359,10 +343,6 @@ bool MeterHistogram::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas) ||
@@ -564,10 +544,6 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the secondary measure binding.
-**
-*/
 void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))

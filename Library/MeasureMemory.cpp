@@ -22,10 +22,6 @@ MeasureMemory::~MeasureMemory()
 {
 }
 
-/*
-** Updates the current total memory value.
-**
-*/
 void MeasureMemory::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
@@ -43,10 +39,6 @@ void MeasureMemory::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;

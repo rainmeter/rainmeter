@@ -34,10 +34,6 @@ DialogManage::~DialogManage()
 {
 }
 
-/*
-** Opens the Manage dialog by tab name.
-**
-*/
 void DialogManage::Open(const WCHAR* name)
 {
 	int tab = 0;
@@ -62,10 +58,6 @@ void DialogManage::Open(const WCHAR* name)
 	Open(tab);
 }
 
-/*
-** Opens the Manage dialog.
-**
-*/
 void DialogManage::Open(int tab)
 {
 	if (!c_Dialog)
@@ -88,10 +80,6 @@ void DialogManage::Open(int tab)
 	c_Dialog->SelectTab(tab);
 }
 
-/*
-** Opens the Manage dialog Skins tab with skin selected.
-**
-*/
 void DialogManage::OpenSkin(Skin* skin)
 {
 	Open();
@@ -106,10 +94,6 @@ void DialogManage::OpenSkin(Skin* skin)
 	}
 }
 
-/*
-** Opens the Manage dialog tab with parameters
-**
-*/
 void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
 {
 	Open(tabName);
@@ -1095,10 +1079,6 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	return path;
 }
 
-/*
-** Populates the treeview with folders and skins.
-**
-*/
 int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index)
 {
 	int initialLevel = GetRainmeter().m_SkinRegistry.GetFolder(index).level;
@@ -1142,10 +1122,6 @@ int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int ind
 	return index;
 }
 
-/*
-** Selects an item in the treeview.
-**
-*/
 void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name)
 {
 	WCHAR buffer[MAX_PATH] = { 0 };

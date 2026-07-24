@@ -103,10 +103,6 @@ Measure::~Measure()
 	m_OldValue = nullptr;
 }
 
-/*
-** Initializes the measure.
-**
-*/
 void Measure::Initialize()
 {
 	m_Initialized = true;
@@ -543,10 +539,6 @@ bool Measure::Update(bool rereadOptions)
 	}
 }
 
-/*
-** Returns the value of the measure.
-**
-*/
 double Measure::GetValue()
 {
 	// Invert if so requested
@@ -558,10 +550,6 @@ double Measure::GetValue()
 	return m_Value;
 }
 
-/*
-** Returns the relative value of the measure (0.0 - 1.0).
-**
-*/
 double Measure::GetRelativeValue()
 {
 	double range = GetValueRange();
@@ -581,10 +569,6 @@ double Measure::GetRelativeValue()
 	return 1.0;
 }
 
-/*
-** Returns the value range.
-**
-*/
 double Measure::GetValueRange()
 {
 	return m_MaxValue - m_MinValue;
@@ -600,10 +584,6 @@ const WCHAR* Measure::GetStringValue()
 	return nullptr;
 }
 
-/*
-** Returns the unformatted string value if the measure has one or a formatted value otherwise.
-**
-*/
 const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	const WCHAR* stringValue = GetStringValue();
@@ -933,10 +913,6 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	return nullptr;
 }
 
-/*
-** Executes a custom bang.
-**
-*/
 void Measure::Command(const std::wstring& command)
 {
 	LogWarningF(this, L"!CommandMeasure: Not supported");

@@ -14,10 +14,6 @@ extern HINSTANCE g_Instance;
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
 // supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
 
-/*
-** Constructor.
-**
-*/
 PlayerWLM::PlayerWLM() : Player(),
 	m_Window(nullptr)
 {
@@ -44,10 +40,6 @@ PlayerWLM::PlayerWLM() : Player(),
 	m_Initialized = true;
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerWLM::~PlayerWLM()
 {
 	c_Player = nullptr;
@@ -56,10 +48,6 @@ PlayerWLM::~PlayerWLM()
 	UnregisterClass(L"MsnMsgrUIManager", g_Instance);
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerWLM::Create()
 {
 	if (!c_Player)
@@ -152,45 +140,25 @@ void PlayerWLM::SendKeyInput(WORD key)
 	SendInput(1, &input, sizeof(INPUT));
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerWLM::UpdateData()
 {
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerWLM::Play()
 {
 	SendKeyInput(VK_MEDIA_PLAY_PAUSE);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerWLM::Stop()
 {
 	SendKeyInput(VK_MEDIA_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerWLM::Next()
 {
 	SendKeyInput(VK_MEDIA_NEXT_TRACK);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerWLM::Previous()
 {
 	SendKeyInput(VK_MEDIA_PREV_TRACK);

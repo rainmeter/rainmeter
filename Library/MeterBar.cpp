@@ -60,10 +60,6 @@ void MeterBar::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -104,10 +100,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterBar::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -118,10 +110,6 @@ bool MeterBar::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterBar::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;

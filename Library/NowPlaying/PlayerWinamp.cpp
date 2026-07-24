@@ -15,10 +15,6 @@ Player* PlayerWinamp::c_Player = nullptr;
 
 // This player retrieves data through the Winamp IPC interface.
 
-/*
-** Constructor.
-**
-*/
 PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_Window(nullptr),
 	m_LastCheckTime(0),
@@ -29,10 +25,6 @@ PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerWinamp::~PlayerWinamp()
 {
 	c_Player = nullptr;
@@ -43,10 +35,6 @@ PlayerWinamp::~PlayerWinamp()
 	}
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerWinamp::Create(WINAMPTYPE type)
 {
 	if (!c_Player)
@@ -57,10 +45,6 @@ Player* PlayerWinamp::Create(WINAMPTYPE type)
 	return c_Player;
 }
 
-/*
-** Try to find Winamp periodically.
-**
-*/
 bool PlayerWinamp::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
@@ -88,10 +72,6 @@ bool PlayerWinamp::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerWinamp::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
@@ -315,65 +295,37 @@ void PlayerWinamp::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerWinamp::Pause()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerWinamp::Play()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PLAY, 0);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerWinamp::Stop()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_STOP, 0);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerWinamp::Next()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerWinamp::Previous()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerWinamp::SetPosition(int position)
 {
 	position *= 1000; // To milliseconds
 	SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerWinamp::SetRating(int rating)
 {
 	if (rating < 0)
@@ -389,10 +341,6 @@ void PlayerWinamp::SetRating(int rating)
 	m_Rating = rating;
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerWinamp::SetVolume(int volume)
 {
 	// Winamp accepts volume in 0 - 255 range
@@ -400,10 +348,6 @@ void PlayerWinamp::SetVolume(int volume)
 	SendMessage(m_Window, WM_WA_IPC, (WPARAM)ceil(fVolume), IPC_SETVOLUME);
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerWinamp::SetShuffle(bool state)
 {
 	if (!m_PlayingStream)
@@ -413,10 +357,6 @@ void PlayerWinamp::SetShuffle(bool state)
 	}
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerWinamp::SetRepeat(bool state)
 {
 	if (!m_PlayingStream)
@@ -426,10 +366,6 @@ void PlayerWinamp::SetRepeat(bool state)
 	}
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerWinamp::ClosePlayer()
 {
 	if (m_WinampType == WA_WINAMP)
@@ -446,10 +382,6 @@ void PlayerWinamp::ClosePlayer()
 	}
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerWinamp::OpenPlayer(std::wstring& path)
 {
 	if (m_WinampType == WA_WINAMP)

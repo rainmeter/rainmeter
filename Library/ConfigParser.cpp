@@ -125,10 +125,6 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_SectionInsertPos = m_Sections.end();
 }
 
-/*
-** Sets all user-defined variables.
-**
-*/
 void ConfigParser::ReadVariables()
 {
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
@@ -780,10 +776,6 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 	return std::nullopt;
 }
 
-/*
-** Replaces environment and internal variables in the given string.
-**
-*/
 bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
 	bool replaced = false;
@@ -849,10 +841,6 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	return replaced;
 }
 
-/*
-** Replaces measures in the given string.
-**
-*/
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
 	const size_t firstBracket = result.find_first_of(L"[]");
@@ -928,10 +916,6 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	return replaced;
 }
 
-/*
-** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
-**
-*/
 bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
 	constexpr int maxRecursionDepth = 10;
@@ -1581,10 +1565,6 @@ RECT ConfigParser::ParseRECT(LPCTSTR str)
 	return ParseUtil::ParseRECT(str, GetMathParser(m_Skin), LogFormulaError);
 }
 
-/*
-** Reads the given ini file and fills the m_Values and m_Keys maps.
-**
-*/
 void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?

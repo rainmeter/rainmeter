@@ -33,10 +33,6 @@ inline bool IsWin32Build()
 #endif
 }
 
-/*
-** Constructor.
-**
-*/
 DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 	m_HeaderBitmap(),
 	m_ScaledHeaderBitmap(),
@@ -55,10 +51,6 @@ DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 1, settingsFile.c_str()) != 0;
 }
 
-/*
-** Destructor.
-**
-*/
 DialogInstall::~DialogInstall()
 {
 	if (m_Window)
@@ -75,10 +67,6 @@ DialogInstall::~DialogInstall()
 	}
 }
 
-/*
-** Creates the dialog.
-**
-*/
 void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
 	(void)hInstance;
@@ -1252,9 +1240,6 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 	return IsIgnoredName(name, s_Plugins, _countof(s_Plugins));
 }
 
-/*
-** Splits the string from the delimiters and trims whitespace.
-*/
 std::vector<std::wstring> DialogInstall::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	// Modified from http://www.digitalpeer.com/id/simple
@@ -1461,10 +1446,6 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 void DialogInstall::TabInstall::Create(HWND owner)
 {
 	const short y = c_Dialog->m_HeaderBitmap ? 51 : 14;

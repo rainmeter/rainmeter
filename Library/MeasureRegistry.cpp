@@ -31,10 +31,6 @@ void MeasureRegistry::Dispose()
 	}
 }
 
-/*
-** Gets the current value from the registry
-**
-*/
 void MeasureRegistry::UpdateValue()
 {
 	m_Value = 0.0;
@@ -191,10 +187,6 @@ void MeasureRegistry::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);

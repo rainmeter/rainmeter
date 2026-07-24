@@ -119,10 +119,6 @@ void MeterString::InvalidateDeviceResources()
 	}
 }
 
-/*
-** Returns the X-coordinate of the meter
-**
-*/
 int MeterString::GetX(bool abs)
 {
 	int x = Meter::GetX();
@@ -144,10 +140,6 @@ int MeterString::GetX(bool abs)
 	return x;
 }
 
-/*
-** Returns the Y-coordinate of the meter
-**
-*/
 int MeterString::GetY(bool abs)
 {
 	int y = Meter::GetY();
@@ -169,10 +161,6 @@ int MeterString::GetY(bool abs)
 	return y;
 }
 
-/*
-** Create the font that is used to draw the text.
-**
-*/
 void MeterString::Initialize()
 {
 	Meter::Initialize();
@@ -185,10 +173,6 @@ void MeterString::Initialize()
 		m_Skin->GetFontCollection());
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
@@ -415,10 +399,6 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterString::Update()
 {
 	if (Meter::Update())
@@ -512,10 +492,6 @@ bool MeterString::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterString::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -523,10 +499,6 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	return DrawString(canvas, nullptr);
 }
 
-/*
-** Draws the string or calculates it's size
-**
-*/
 bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 {
 	if (!m_TextFormat->IsInitialized()) return false;
@@ -705,10 +677,6 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	return true;
 }
 
-/*
-** Overridden method. The string meters need not to be bound on anything
-**
-*/
 void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, true))

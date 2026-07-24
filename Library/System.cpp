@@ -49,10 +49,6 @@ std::wstring System::c_WorkingDirectory;
 
 std::vector<std::wstring> System::c_IniFileMappings;
 
-/*
-** Creates a helper window to detect changes in the system.
-**
-*/
 void System::Initialize(HINSTANCE instance)
 {
 	// Update the CRT timezone variables.
@@ -121,10 +117,6 @@ void System::Initialize(HINSTANCE instance)
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
 }
 
-/*
-** Destroys a window.
-**
-*/
 void System::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
@@ -219,10 +211,6 @@ POINT System::PhysicalToScreenLogical(POINT point, SIZE size)
 	}
 }
 
-/*
-** Finds the Default Shell's window.
-**
-*/
 HWND System::GetDefaultShellWindow()
 {
 	static HWND c_ShellW = nullptr;  // cache
@@ -359,10 +347,6 @@ HWND System::GetBackmostTopWindow()
 	return winPos;
 }
 
-/*
-** Checks whether the given windows belong to the same process.
-**
-*/
 bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 {
 	DWORD procAId = 0, procBId = 0;
@@ -542,10 +526,6 @@ void System::PrepareHelperWindow(HWND desktopIconsHostWindow)
 	}
 }
 
-/*
-** Changes the "Show Desktop" state.
-**
-*/
 bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 {
 	HWND hwnd = nullptr;
@@ -585,10 +565,6 @@ bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 	return stateChanged;
 }
 
-/*
-** The event hook procedure
-**
-*/
 void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	if (event == EVENT_SYSTEM_FOREGROUND)
@@ -639,10 +615,6 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	}
 }
 
-/*
-** The window procedure
-**
-*/
 LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (hWnd != c_Window)
@@ -764,10 +736,6 @@ POINT System::GetCursorPosition()
 	return pt;
 }
 
-/*
-** Checks if file is writable.
-**
-*/
 bool System::IsFileWritable(LPCWSTR file)
 {
 	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -802,10 +770,6 @@ HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 	return hLib;
 }
 
-/*
-** Resets working directory to default.
-**
-*/
 void System::ResetWorkingDirectory()
 {
 	WCHAR directory[MAX_PATH] = { 0 };
@@ -818,10 +782,6 @@ void System::ResetWorkingDirectory()
 	}
 }
 
-/*
-** Sets clipboard text to given string.
-**
-*/
 void System::SetClipboardText(const std::wstring& text)
 {
 	if (OpenClipboard(nullptr))
@@ -850,10 +810,6 @@ void System::SetClipboardText(const std::wstring& text)
 	}
 }
 
-/*
-** Sets the system wallpapar.
-**
-*/
 void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
 {
 	if (!wallpaper.empty())
@@ -921,10 +877,6 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 	}
 }
 
-/*
-** Copies files and folders from one location to another.
-**
-*/
 bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
 	// If given "from" path ends with path separator, remove it (Workaround for XP: error code 1026)
@@ -956,10 +908,6 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 	return true;
 }
 
-/*
-** Copies files and folders from one location to another ONLY if the destination does not exist.
-**
-*/
 bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to)
 {
 	auto checkDir = [](LPCWSTR str) -> bool
@@ -1026,10 +974,6 @@ bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to
 	return true;
 }
 
-/*
-** Removes a file even if a file is read-only.
-**
-*/
 bool System::RemoveFile(const std::wstring& file)
 {
 	DWORD attr = GetFileAttributes(file.c_str());
@@ -1042,10 +986,6 @@ bool System::RemoveFile(const std::wstring& file)
 	return (DeleteFile(file.c_str()) != 0);
 }
 
-/*
-** Recursively removes folder.
-**
-*/
 bool System::RemoveFolder(std::wstring folder)
 {
 	// The strings must end with double nul
@@ -1069,10 +1009,6 @@ bool System::RemoveFolder(std::wstring folder)
 	return true;
 }
 
-/*
-** Retrieves the "IniFileMapping" entries from Registry.
-**
-*/
 void System::UpdateIniFileMappingList()
 {
 	static ULONGLONG s_LastWriteTime = 0;

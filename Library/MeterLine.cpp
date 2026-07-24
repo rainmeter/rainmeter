@@ -30,10 +30,6 @@ MeterLine::~MeterLine()
 {
 }
 
-/*
-** create the buffer for the lines
-**
-*/
 void MeterLine::Initialize()
 {
 	Meter::Initialize();
@@ -78,10 +74,6 @@ void MeterLine::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	WCHAR tmpName[64] = { 0 };
@@ -182,10 +174,6 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterLine::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -208,10 +196,6 @@ bool MeterLine::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
@@ -467,10 +451,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the other measure bindings.
-**
-*/
 void MeterLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))

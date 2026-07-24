@@ -18,10 +18,6 @@ extern HINSTANCE g_Instance;
 // This player emulates the CD Art Display IPC interface, which is supported by
 // MusicBee, VLC (with libcad plugin), and possibly others.
 
-/*
-** Constructor.
-**
-*/
 PlayerCAD::PlayerCAD() : Player(),
 	m_Window(nullptr),
 	m_PlayerWindow(nullptr),
@@ -31,20 +27,12 @@ PlayerCAD::PlayerCAD() : Player(),
 	Initialize();
 }
 
-/*
-** Constructor.
-**
-*/
 PlayerCAD::~PlayerCAD()
 {
 	c_Player = nullptr;
 	Uninitialize();
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerCAD::Create()
 {
 	if (!c_Player)
@@ -55,10 +43,6 @@ Player* PlayerCAD::Create()
 	return c_Player;
 }
 
-/*
-** Create receiver window.
-**
-*/
 void PlayerCAD::Initialize()
 {
 	// Create windows class
@@ -170,10 +154,6 @@ void PlayerCAD::Initialize()
 	}
 }
 
-/*
-** Destroy reciever window.
-**
-*/
 void PlayerCAD::Uninitialize()
 {
 	DestroyWindow(m_Window);
@@ -181,10 +161,6 @@ void PlayerCAD::Uninitialize()
 	UnregisterClass(L"NowPlayingCADClass", g_Instance);
 }
 
-/*
-** Window procedure for the reciever window.
-**
-*/
 LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static PlayerCAD* player;
@@ -405,10 +381,6 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	}
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerCAD::UpdateData()
 {
 	if (m_State != STATE_STOPPED)
@@ -419,64 +391,36 @@ void PlayerCAD::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerCAD::Pause()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PAUSE : IPC_PLAYPAUSE);
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerCAD::Play()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PLAY : IPC_PLAYPAUSE);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerCAD::Stop()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerCAD::Next()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_NEXT);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerCAD::Previous()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PREVIOUS);
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerCAD::SetPosition(int position)
 {
 	SendMessage(m_PlayerWindow, WM_USER, position, IPC_SET_POSITION);
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerCAD::SetRating(int rating)
 {
 	m_Rating = (UINT)rating;
@@ -484,39 +428,23 @@ void PlayerCAD::SetRating(int rating)
 	SendMessage(m_PlayerWindow, WM_USER, rating, IPC_SET_RATING);
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerCAD::SetVolume(int volume)
 {
 	SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerCAD::SetShuffle(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_SHUFFLE);
 	m_Shuffle = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE) != 0;
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerCAD::SetRepeat(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_REPEAT);
 	m_Repeat = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT) != 0;
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerCAD::ClosePlayer()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE);
@@ -525,10 +453,6 @@ void PlayerCAD::ClosePlayer()
 	ClearData();
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerCAD::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)

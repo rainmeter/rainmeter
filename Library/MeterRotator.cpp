@@ -30,10 +30,6 @@ MeterRotator::~MeterRotator()
 {
 }
 
-/*
-** Load the image.
-**
-*/
 void MeterRotator::Initialize()
 {
 	Meter::Initialize();
@@ -55,10 +51,6 @@ void MeterRotator::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -87,10 +79,6 @@ void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterRotator::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -112,10 +100,6 @@ bool MeterRotator::Update()
 }
 
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterRotator::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;

@@ -34,10 +34,6 @@ MeasureCalc::~MeasureCalc()
 {
 }
 
-/*
-** Updates the calculation
-**
-*/
 void MeasureCalc::UpdateValue()
 {
 	const WCHAR* errMsg = m_MathParser.Parse(m_Formula.c_str(), &m_Value);
@@ -55,10 +51,6 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);

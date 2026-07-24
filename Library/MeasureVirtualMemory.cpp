@@ -22,10 +22,6 @@ MeasureVirtualMemory::~MeasureVirtualMemory()
 {
 }
 
-/*
-** Updates the current virtual memory value.
-**
-*/
 void MeasureVirtualMemory::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
@@ -43,10 +39,6 @@ void MeasureVirtualMemory::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureVirtualMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;

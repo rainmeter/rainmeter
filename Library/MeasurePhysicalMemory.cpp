@@ -22,10 +22,6 @@ MeasurePhysicalMemory::~MeasurePhysicalMemory()
 {
 }
 
-/*
-** Updates the current physical memory value.
-**
-*/
 void MeasurePhysicalMemory::UpdateValue()
 {
 	if (!m_Total)
@@ -38,10 +34,6 @@ void MeasurePhysicalMemory::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasurePhysicalMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;

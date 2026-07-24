@@ -194,10 +194,6 @@ Skin::~Skin()
 	}
 }
 
-/*
-** Kills timers/hooks and disposes buffers
-**
-*/
 void Skin::Dispose(bool refresh)
 {
 	// Kill the timer/hook
@@ -384,20 +380,12 @@ void Skin::InvalidateDeviceResources()
 	}
 }
 
-/*
-** Excludes this window from the Aero Peek.
-**
-*/
 void Skin::IgnoreAeroPeek()
 {
 	BOOL bValue = TRUE;
 	DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
 }
 
-/*
-** Registers to receive WM_INPUT for the mouse events.
-**
-*/
 void Skin::RegisterMouseInput()
 {
 	if (!m_MouseInputRegistered && m_HasMouseScrollAction)
@@ -468,10 +456,6 @@ void Skin::RemoveWindowExStyle(LONG_PTR flag)
 	}
 }
 
-/*
-** Unloads the skin with delay to avoid crash (and for fade to complete).
-**
-*/
 void Skin::Deactivate()
 {
 	LogNoticeF(this, L"Deactivating skin");
@@ -488,10 +472,6 @@ void Skin::Deactivate()
 	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, nullptr);
 }
 
-/*
-** Rebuilds the skin.
-**
-*/
 void Skin::Refresh(bool init, bool all)
 {
 	if (m_State == STATE_CLOSING) return;
@@ -816,10 +796,6 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 	y = max(y, r.top);
 }
 
-/*
-** Moves the window to a new place (on the virtual screen)
-**
-*/
 void Skin::MoveWindow(int x, int y)
 {
 	OnMove(WM_MOVE, 0, MAKELPARAM(x, y));
@@ -988,10 +964,6 @@ void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
-/*
-** Sets the window's z-position in proper order.
-**
-*/
 void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 {
 	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
@@ -1437,10 +1409,6 @@ void Skin::HideBlur()
 	BlurBehindWindow(FALSE);
 }
 
-/*
-** Adds to or removes from blur region
-**
-*/
 void Skin::ResizeBlur(const std::wstring& arg, int mode)
 {
 	WCHAR* parseSz = _wcsdup(arg.c_str());
@@ -1952,10 +1920,6 @@ void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 	}
 }
 
-/*
-** Changes the property of a meter or measure.
-**
-*/
 void Skin::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
 {
 	auto setValue = [&](Section* section, const std::wstring& option, const std::wstring& value)
@@ -2097,10 +2061,6 @@ void Skin::ComputeOptionValueFromPosition()
 	m_Y.UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 }
 
-/*
-** Reads the skin options from Rainmeter.ini
-**
-*/
 void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 {
 	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
@@ -2224,10 +2184,6 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	}
 }
 
-/*
-** Writes the specified options to Rainmeter.ini
-**
-*/
 void Skin::WriteOptions(INT setting)
 {
 	if (setting & OPTION_POSITION)
@@ -2349,10 +2305,6 @@ void Skin::WriteOptions(INT setting)
 	}
 }
 
-/*
-** Reads the skin file and creates the meters and measures.
-**
-*/
 bool Skin::ReadSkin()
 {
 	WCHAR buffer[128] = { 0 };
@@ -2758,9 +2710,6 @@ bool Skin::ReadSkin()
 	return true;
 }
 
-/*
-** Changes the size of the window and re-adjusts the background
-*/
 bool Skin::ResizeWindow(bool reset)
 {
 	int w = m_BackgroundMargins.left;
@@ -3161,10 +3110,6 @@ void Skin::UpdateRelativeMeters()
 	m_ResetRelativeMeters = false;
 }
 
-/*
-** Updates the transition state
-**
-*/
 void Skin::PostUpdate(bool bActiveTransition)
 {
 	// Start/stop the transition timer if necessary
@@ -3180,10 +3125,6 @@ void Skin::PostUpdate(bool bActiveTransition)
 	}
 }
 
-/*
-** Updates the given measure
-**
-*/
 bool Skin::UpdateMeasure(Measure* measure, bool force)
 {
 	bool bUpdate = false;
@@ -3203,10 +3144,6 @@ bool Skin::UpdateMeasure(Measure* measure, bool force)
 	return bUpdate;
 }
 
-/*
-** Updates the given meter
-**
-*/
 bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 {
 	bool bUpdate = false;
@@ -3252,10 +3189,6 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 	return bUpdate;
 }
 
-/*
-** Updates all the measures and redraws the meters
-**
-*/
 void Skin::Update(bool refresh)
 {
 	if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
@@ -3539,10 +3472,6 @@ void Skin::ShowFade()
 	}
 }
 
-/*
-** Show the window if it is temporarily hidden.
-**
-*/
 void Skin::ShowWindowIfAppropriate()
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
@@ -3610,10 +3539,6 @@ void Skin::ShowWindowIfAppropriate()
 	}
 }
 
-/*
-** Retrieves a handle to the window that contains the specified point.
-**
-*/
 HWND Skin::GetWindowFromPoint(POINT pos)
 {
 	HWND hwndPos = WindowFromPoint(pos);
@@ -3644,10 +3569,6 @@ HWND Skin::GetWindowFromPoint(POINT pos)
 	return hwndPos;
 }
 
-/*
-** Checks if the given point is inside the window.
-**
-*/
 bool Skin::HitTest(int x, int y)
 {
 	const POINT pos = {
@@ -3662,10 +3583,6 @@ bool Skin::HitTestDevice(int x, int y)
 	return m_Canvas.IsTransparentPixel(x, y);
 }
 
-/*
-** Handles all buttons and cursor.
-**
-*/
 void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 {
 	bool redraw = false;
@@ -3741,10 +3658,6 @@ LRESULT Skin::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Enters context menu loop.
-**
-*/
 LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// Set cursor to default
@@ -3753,10 +3666,6 @@ LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** When we get WM_MOUSEMOVE messages, hide the window as the mouse is over it.
-**
-*/
 LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
@@ -4312,10 +4221,6 @@ void Skin::SetWindowZPosition(ZPOSITION zPos)
 	WriteOptions(OPTION_ALWAYSONTOP);
 }
 
-/*
-** Handle dragging the window
-**
-*/
 LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if ((wParam & 0xFFF0) != SC_MOVE)
@@ -4382,10 +4287,6 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-/*
-** Starts dragging
-**
-*/
 LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_Dragging)
@@ -4399,20 +4300,12 @@ LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Ends dragging
-**
-*/
 LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	UpdateWindowContents();
 	return 0;
 }
 
-/*
-** This is overwritten so that the window can be dragged
-**
-*/
 LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT screenPos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -4565,10 +4458,6 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 	}
 }
 
-/*
-** Disables blur when Aero transparency is disabled
-**
-*/
 LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur())
@@ -4586,10 +4475,6 @@ LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Disables blur when desktop composition is disabled
-**
-*/
 LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur())
@@ -4606,10 +4491,6 @@ LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Adds the blur region to the window
-**
-*/
 void Skin::BlurBehindWindow(BOOL fEnable)
 {
 	DWM_BLURBEHIND bb = { 0 };
@@ -5017,10 +4898,6 @@ void Skin::ClearMouseMeasureCapture()
 	m_MouseMeasureCapture = false;
 }
 
-/*
-** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
-**
-*/
 bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
 {
 	bool buttonFound = false;
@@ -5160,10 +5037,6 @@ bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
 	return false;
 }
 
-/*
-** Sends mouse wheel messages to the window if the window does not have focus.
-**
-*/
 LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const POINT pos = System::GetCursorPosition();
@@ -5301,10 +5174,6 @@ LRESULT Skin::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return MA_ACTIVATE;
 }
 
-/*
-** The main window procedure for the meter window.
-**
-*/
 LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Skin* instance = (Skin*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -5371,10 +5240,6 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	END_MESSAGEPROC
 }
 
-/*
-** The initial window procedure for the meter window. Passes control to WndProc after initial setup.
-**
-*/
 LRESULT CALLBACK Skin::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_NCCREATE)
@@ -5423,10 +5288,6 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Handles bangs from the exe
-**
-*/
 LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*)lParam;
@@ -5450,10 +5311,6 @@ LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-/*
-** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
-**
-*/
 void Skin::MakePathAbsolute(std::wstring& path)
 {
 	if (path.empty() || PathUtil::IsAbsolute(path))

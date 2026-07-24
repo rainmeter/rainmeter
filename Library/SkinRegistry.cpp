@@ -10,9 +10,6 @@
 #include "SkinRegistry.h"
 #include "resource.h"
 
-/*
-** Returns the skin folder path relative to the skin folder (e.g. illustro\Clock).
-*/
 std::wstring SkinRegistry::GetFolderPath(int folderIndex) const
 {
 	// Traverse |m_Folders| backwards until level 1 is reached.
@@ -31,9 +28,6 @@ std::wstring SkinRegistry::GetFolderPath(int folderIndex) const
 	return path;
 }
 
-/*
-** Finds the skin index for the specified skin folder path.
-*/
 int SkinRegistry::FindFolderIndex(std::wstring folderPath) const
 {
 	// Remove any leading and trailing slashes
@@ -122,9 +116,6 @@ SkinRegistry::Indexes SkinRegistry::FindIndexesForID(UINT id)
 	return Indexes::Invalid();  // Not found.
 }
 
-/*
-** Re-scans all the subfolders of |path| for .ini files and populates |m_Folders|.
-*/
 void SkinRegistry::Populate(const std::wstring& path, std::vector<std::wstring>& favorites)
 {
 	m_Folders.clear();

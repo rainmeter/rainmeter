@@ -38,10 +38,6 @@ MeasureDiskSpace::~MeasureDiskSpace()
 {
 }
 
-/*
-** Updates the current disk free space value.
-**
-*/
 void MeasureDiskSpace::UpdateValue()
 {
 	if (!m_Drive.empty())
@@ -142,19 +138,11 @@ void MeasureDiskSpace::UpdateValue()
 	}
 }
 
-/*
-** Returns the time as string.
-**
-*/
 const WCHAR* MeasureDiskSpace::GetStringValue()
 {
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;

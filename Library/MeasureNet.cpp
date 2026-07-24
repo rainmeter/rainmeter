@@ -97,10 +97,6 @@ ULONG64 MeasureNet::GetNetOctets(NET net)
 	return value;
 }
 
-/*
-** Returns the stats value of the interface
-**
-*/
 ULONG64 MeasureNet::GetNetStatsValue(NET net)
 {
 	ULONG64 value = 0;
