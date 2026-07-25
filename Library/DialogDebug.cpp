@@ -754,7 +754,7 @@ public:
 			GetString(IDS_AddWatchTitle),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
-			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent);
 
 		SetWindowText(GetControl(Id_AddButton), GetString(IDS_Add));
@@ -770,7 +770,7 @@ public:
 			GetString(IDS_EditWatch),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
-			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent);
 
 		Button_SetCheck(GetControl(Id_StringRadio), formula ? BST_UNCHECKED : BST_CHECKED);
