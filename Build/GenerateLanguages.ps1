@@ -84,15 +84,15 @@ function Read-LanguageFile {
 		[string]$Path,
 		[hashtable]$ResourceIds,
 		[string]$ResourceHeaderPath,
-		[hashtable]$FallbackStrings
+		[object]$BaseLanguage
 	)
 
 	if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
 		throw "Language file not found: $Path"
 	}
 
-	$installerStrings = New-Object System.Collections.Generic.List[object]
-	$runtimeStrings = New-Object System.Collections.Generic.List[object]
+	$installerStrings = [ordered]@{}
+	$runtimeStrings = [ordered]@{}
 	$buttonWidth = $null
 	$labelWidth = $null
 	$rtl = $null
@@ -116,15 +116,8 @@ function Read-LanguageFile {
 
 		$key = $Matches[1].Trim()
 		$value = $Matches[2]
-		if ($value.Length -eq 0) {
-			$fallbackKey = $currentSection + [char]0 + $key
-			if (-not $FallbackStrings.ContainsKey($fallbackKey)) {
-				throw "English fallback string not found for [$currentSection] $key in $Path"
-			}
-			$value = $FallbackStrings[$fallbackKey]
-		}
 		if ($currentSection -eq 'Installer') {
-			[void]$installerStrings.Add([pscustomobject]@{ Key = $key; Value = $value })
+			$installerStrings[$key] = $value
 			continue
 		}
 		if ($currentSection -eq 'LanguageSettings') {
@@ -142,7 +135,7 @@ function Read-LanguageFile {
 
 		# Convert the escaping used by the INI source before UTF-16 serialization.
 		$value = $value.Replace('\n', "`n").Replace('\\', '\')
-		[void]$runtimeStrings.Add([pscustomobject]@{ Id = [uint32]$ResourceIds[$key]; Value = $value })
+		$runtimeStrings[$key] = [pscustomobject]@{ Id = [uint32]$ResourceIds[$key]; Value = $value }
 	}
 
 	if ($installerSectionCount -ne 1 -or $installerStrings.Count -eq 0) {
@@ -155,35 +148,43 @@ function Read-LanguageFile {
 		throw "RTL must be 0 or 1 in $Path"
 	}
 
+	if ($BaseLanguage) {
+		$mergedInstallerStrings = New-Object System.Collections.Generic.List[object]
+		foreach ($string in $BaseLanguage.InstallerStrings) {
+			$value = if ($installerStrings.Contains($string.Key) -and $installerStrings[$string.Key].Length -gt 0) { $installerStrings[$string.Key] } else { $string.Value }
+			[void]$mergedInstallerStrings.Add([pscustomobject]@{ Key = $string.Key; Value = $value })
+			$installerStrings.Remove($string.Key)
+		}
+		if ($installerStrings.Count -gt 0) {
+			throw "Installer string not found in English language file: $($installerStrings.Keys -join ', ')"
+		}
+
+		$mergedRuntimeStrings = New-Object System.Collections.Generic.List[object]
+		foreach ($string in $BaseLanguage.RuntimeStrings) {
+			$value = if ($runtimeStrings.Contains($string.Key) -and $runtimeStrings[$string.Key].Value.Length -gt 0) { $runtimeStrings[$string.Key].Value } else { $string.Value }
+			[void]$mergedRuntimeStrings.Add([pscustomobject]@{ Key = $string.Key; Id = $string.Id; Value = $value })
+			$runtimeStrings.Remove($string.Key)
+		}
+		if ($runtimeStrings.Count -gt 0) {
+			throw "Runtime string not found in English language file: $($runtimeStrings.Keys -join ', ')"
+		}
+
+		return [pscustomobject]@{
+			InstallerStrings = $mergedInstallerStrings
+			RuntimeStrings = $mergedRuntimeStrings
+			ButtonWidth = $buttonWidth
+			LabelWidth = $labelWidth
+			Rtl = $rtl
+		}
+	}
+
 	return [pscustomobject]@{
-		InstallerStrings = $installerStrings
-		RuntimeStrings = $runtimeStrings
+		InstallerStrings = @($installerStrings.GetEnumerator() | ForEach-Object { [pscustomobject]@{ Key = $_.Key; Value = $_.Value } })
+		RuntimeStrings = @($runtimeStrings.GetEnumerator() | ForEach-Object { [pscustomobject]@{ Key = $_.Key; Id = $_.Value.Id; Value = $_.Value.Value } })
 		ButtonWidth = $buttonWidth
 		LabelWidth = $labelWidth
 		Rtl = $rtl
 	}
-}
-
-function Get-FallbackStrings {
-	param([string]$Path)
-
-	$strings = @{}
-	$currentSection = ''
-	foreach ($line in [System.IO.File]::ReadAllLines($Path)) {
-		if ($line -match '^\s*\[([^]]+)\]\s*$') {
-			$currentSection = $Matches[1]
-			continue
-		}
-		if ([string]::IsNullOrWhiteSpace($line) -or $line.TrimStart().StartsWith(';')) {
-			continue
-		}
-		if ($line -match '^([^=]+)=(.*)$') {
-			$key = $Matches[1].Trim()
-			$strings[$currentSection + [char]0 + $key] = $Matches[2]
-		}
-	}
-
-	return $strings
 }
 
 function Write-InstallerLanguageFile {
@@ -279,7 +280,8 @@ function Write-InstallerLanguagesFile {
 
 $locales = if ($Locale) { $Locale } else { @($languages.Keys) }
 $resourceIds = Get-ResourceIds -Path $resourceHeaderPath
-$fallbackStrings = Get-FallbackStrings -Path (Join-Path $scriptDirectory 'en.ini')
+$englishIniPath = Join-Path $scriptDirectory 'en.ini'
+$englishDefinition = Read-LanguageFile -Path $englishIniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -BaseLanguage $null
 foreach ($directory in $languageOutputDirectories) {
 	[System.IO.Directory]::CreateDirectory($directory) | Out-Null
 }
@@ -295,7 +297,11 @@ foreach ($localeName in $locales) {
 	}
 
 	$iniPath = Join-Path $scriptDirectory ($localeName + '.ini')
-	$definition = Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -FallbackStrings $fallbackStrings
+	$definition = if ($localeName -eq 'en') {
+		$englishDefinition
+	} else {
+		Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -BaseLanguage $englishDefinition
+	}
 	if (-not $RuntimeOnly) {
 		$nshPath = Join-Path $installerOutputDirectory ($localeName + '.nsh')
 		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
