@@ -2315,7 +2315,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
 			361, 34, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Label(Id_DefaultZoomLabel, 0,
+		Control::Label(Id_DefaultZoomLabel, IDS_DefaultZoomColon,
 			6, 57, 107, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_DefaultZoomEdit, 0,
@@ -2324,7 +2324,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::Label(Id_DefaultZoomPercentLabel, 0,
 			148, 57, 12, 14,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_ForceDefaultZoomCheckBox, 0,
+		Control::CheckBox(Id_ForceDefaultZoomCheckBox, IDS_Force,
 			166, 55, 60, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
@@ -2364,9 +2364,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
-	SetWindowText(GetControl(Id_DefaultZoomLabel), L"Default zoom:");
 	SetWindowText(GetControl(Id_DefaultZoomPercentLabel), L"%");
-	SetWindowText(GetControl(Id_ForceDefaultZoomCheckBox), L"Force");
 
 	HWND edit = GetControl(Id_DefaultZoomEdit);
 	HWND spinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
