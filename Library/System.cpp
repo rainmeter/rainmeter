@@ -190,8 +190,7 @@ POINT System::ScreenLogicalToPhysical(POINT point, SIZE size, UINT* dpi)
 		// We can't use GetDpiForWindow because c_HelperWindow was created as a DPI unaware window.
 		// Instead we will determine the DPI based on the monitor of the center point.
 		const POINT center = { r.left + (r.right - r.left) / 2, r.top + (r.bottom - r.top) / 2 };
-		const auto monitorHandle = MonitorFromPoint(center, MONITOR_DEFAULTTONEAREST);
-		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(monitorHandle);
+		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(center);
 		*dpi = monitor ? monitor->dpi : GetSystemDpi();
 	}
 

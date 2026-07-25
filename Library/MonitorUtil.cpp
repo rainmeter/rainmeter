@@ -242,6 +242,12 @@ const MonitorInfo* MultiMonitorInfo::GetForWindow(HWND window) const
 	return GetByHandle(handle);
 }
 
+const MonitorInfo* MultiMonitorInfo::GetFromPoint(POINT point) const
+{
+	const auto handle = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+	return GetByHandle(handle);
+}
+
 const MonitorInfo* MultiMonitorInfo::GetByHandle(HMONITOR monitorHandle) const
 {
 	for (const auto& monitor : monitors)

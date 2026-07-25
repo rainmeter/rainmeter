@@ -687,17 +687,16 @@ bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
 		center = POINT { m_X.pos + GetPhysicalWindowW() / 2, m_Y.pos + GetPhysicalWindowH() / 2 };
 	}
 
-	const HMONITOR handle = MonitorFromPoint(*center, MONITOR_DEFAULTTONEAREST);
-	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(handle);
+	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(*center);
 	if (!monitor) return false;
 
 	const bool changed =
-		m_WindowMonitor != handle ||
+		m_WindowMonitor != monitor->handle ||
 		!EqualRect(&m_WindowMonitorScreenBounds, &monitor->screen) ||
 		!EqualRect(&m_WindowMonitorWorkBounds, &monitor->work) ||
 		m_WindowDpi != monitor->dpi;
 
-	m_WindowMonitor = handle;
+	m_WindowMonitor = monitor->handle;
 	m_WindowMonitorScreenBounds = monitor->screen;
 	m_WindowMonitorWorkBounds = monitor->work;
 	UpdateWindowDpi(monitor->dpi);
