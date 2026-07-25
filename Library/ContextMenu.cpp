@@ -366,7 +366,7 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 		MENU_SUBMENU(IDS_Position,
 			MENU_SUBMENU(IDS_DisplayMonitor,
 				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
-				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
+				MENU_ITEM(ID_MONITOR_FIRST, 0),
 				MENU_SEPARATOR(),
 				MENU_SEPARATOR(),
 				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)),
@@ -880,6 +880,8 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 
 void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
+	ModifyMenu(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND, ID_MONITOR_FIRST, fmt::format(L"@0: {}", GetString(IDS_VirtualScreen)).c_str());
+
 	const bool monitorDefined = skin->GetX().monitor.has_value();
 	const int monitor = skin->GetX().monitor.value_or(0);
 
