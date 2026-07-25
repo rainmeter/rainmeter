@@ -5095,20 +5095,36 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_State == STATE_RUNNING)
 	{
 		std::optional<POINT> center;
+		bool updateMonitor = true;
 
 		if (m_DragStartValid)
 		{
-			// Use the original window's center translated with the cursor so DPI-driven resizing
-			// cannot change the monitor transition point while dragging.
-			center = System::GetCursorPosition();
+			const POINT cursor = System::GetCursorPosition();
+			center = cursor;
 			center->x -= m_DragCursorOffset.x - m_DragStartWindowSize.cx / 2;
 			center->y -= m_DragCursorOffset.y - m_DragStartWindowSize.cy / 2;
+
+			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
+			const auto* target = monitorInfo.GetFromPoint(*center);
+			if (target && target->handle != m_WindowMonitor)
+			{
+				// Only switch DPI once the center of the window resized for the target monitor has crossed
+				// onto that monitor too.
+				center->x = cursor.x - MulDiv(m_DragCursorOffset.x, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowW(target->dpi) / 2;
+				center->y = cursor.y - MulDiv(m_DragCursorOffset.y, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowH(target->dpi) / 2;
+
+				const auto* resizedTarget = monitorInfo.GetFromPoint(*center);
+				if (!resizedTarget || resizedTarget->handle != target->handle)
+				{
+					updateMonitor = false;
+				}
+			}
 		}
 
 		const UINT oldDpi = m_WindowDpi;
-		if (UpdateWindowMonitor(center) && m_WindowDpi != oldDpi)
+		if (updateMonitor && UpdateWindowMonitor(center) && m_WindowDpi != oldDpi)
 		{
-			if (m_DragStartValid && m_DragCursorOffsetDpi != 0)
+			if (m_DragStartValid)
 			{
 				const POINT cursor = System::GetCursorPosition();
 				m_X.pos = cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
