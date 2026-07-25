@@ -1399,7 +1399,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			static const MenuTemplate s_Menu[] =
 			{
 				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
-				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
+				MENU_ITEM(ID_MONITOR_FIRST, 0),
 				MENU_SEPARATOR(),
 				MENU_SEPARATOR(),
 				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)
