@@ -45,6 +45,7 @@ struct MultiMonitorInfo
 	const MonitorInfo* GetByDisplayNumber(int activeNumber) const;
 	const MonitorInfo* GetByHandle(HMONITOR monitorHandle) const;
 	const MonitorInfo* GetForWindow(HWND window) const;
+	const MonitorInfo* GetFromPoint(POINT point) const;
 };
 
 namespace MonitorUtil {
