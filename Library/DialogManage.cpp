@@ -1399,7 +1399,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			static const MenuTemplate s_Menu[] =
 			{
 				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
-				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
+				MENU_ITEM(ID_MONITOR_FIRST, 0),
 				MENU_SEPARATOR(),
 				MENU_SEPARATOR(),
 				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)
@@ -1408,6 +1408,8 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 			if (menu)
 			{
+				ModifyMenu(menu, ID_MONITOR_FIRST, MF_BYCOMMAND, ID_MONITOR_FIRST, fmt::to_wstring(L"@0: {}", IDS_VirtualScreen).c_str());
+
 				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
 
 				RECT r;
