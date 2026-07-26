@@ -27,6 +27,8 @@ DialogDebug* DialogDebug::c_Dialog = nullptr;
 
 namespace {
 
+constexpr UINT WM_AUTOREFRESH_CHANGE = WM_APP + 100;
+
 void CopyListViewRows(HWND list, bool selectedOnly)
 {
 	HWND header = ListView_GetHeader(list);
@@ -1008,6 +1010,8 @@ private:
 DialogDebug::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_AutoRefresh(false),
+	m_AutoRefreshStartTime(0),
+	m_AutoRefreshCount(0),
 	m_RangeToolTip(),
 	m_RangeToolTipItem(-1),
 	m_DirectoryWatcher(std::make_unique<DirectoryWatcher>()),
@@ -1205,6 +1209,8 @@ void DialogDebug::TabSkins::UpdateSkinList()
 void DialogDebug::TabSkins::UpdateDirectoryWatcher()
 {
 	m_DirectoryWatcher->Stop();
+	m_AutoRefreshStartTime = 0;
+	m_AutoRefreshCount = 0;
 	if (!m_AutoRefresh || !m_SkinWindow) return;
 
 	m_AutoRefreshFiles = m_SkinWindow->GetParser().GetIniFiles();
@@ -1220,6 +1226,33 @@ void DialogDebug::TabSkins::UpdateDirectoryWatcher()
 	m_DirectoryWatcher->Start(m_SkinWindow->GetRootPath(), true, OnDirectoryChange, this);
 }
 
+void DialogDebug::TabSkins::DisableAutoRefresh()
+{
+	m_AutoRefresh = false;
+	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), BST_UNCHECKED);
+	UpdateDirectoryWatcher();
+}
+
+void DialogDebug::TabSkins::HandleAutoRefreshChange()
+{
+	if (!m_AutoRefresh || !m_SkinWindow) return;
+
+	const ULONGLONG now = GetTickCount64();
+	if (now - m_AutoRefreshStartTime > 1000)
+	{
+		m_AutoRefreshStartTime = now;
+		m_AutoRefreshCount = 0;
+	}
+
+	if (++m_AutoRefreshCount > 4)
+	{
+		DisableAutoRefresh();
+		return;
+	}
+
+	PostMessage(m_SkinWindow->GetWindow(), WM_METERWINDOW_DELAYED_REFRESH, 0, 0);
+}
+
 void DialogDebug::TabSkins::OnDirectoryChange(const WCHAR* path, void* context)
 {
 	TabSkins* tab = static_cast<TabSkins*>(context);
@@ -1227,7 +1260,7 @@ void DialogDebug::TabSkins::OnDirectoryChange(const WCHAR* path, void* context)
 	if (std::find_if(files.begin(), files.end(), [&](const std::wstring& file)
 		{ return _wcsicmp(file.c_str(), path) == 0; }) != files.end())
 	{
-		PostMessage(tab->m_SkinWindow->GetWindow(), WM_METERWINDOW_DELAYED_REFRESH, 0, 0);
+		PostMessage(tab->m_Window, WM_AUTOREFRESH_CHANGE, 0, 0);
 	}
 }
 
@@ -1500,6 +1533,10 @@ INT_PTR DialogDebug::TabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lP
 
 	case WM_NOTIFY:
 		return OnNotify(wParam, lParam);
+
+	case WM_AUTOREFRESH_CHANGE:
+		HandleAutoRefreshChange();
+		return TRUE;
 	}
 
 	return FALSE;
