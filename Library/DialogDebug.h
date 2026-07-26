@@ -142,12 +142,16 @@ private:
 		void EnsureWatchVisible(size_t index);
 		void UpdateRangeToolTip(HWND list, POINT point);
 		void UpdateDirectoryWatcher();
+		void DisableAutoRefresh();
+		void HandleAutoRefreshChange();
 		static void OnDirectoryChange(const WCHAR* path, void* context);
 		static LRESULT CALLBACK SkinsListViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR id, DWORD_PTR data);
 
 		Skin* m_SkinWindow;
 		bool m_AutoRefresh;
+		ULONGLONG m_AutoRefreshStartTime;
+		UINT m_AutoRefreshCount;
 		HWND m_RangeToolTip;
 		int m_RangeToolTipItem;
 		std::wstring m_RangeToolTipText;
