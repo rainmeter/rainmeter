@@ -33,6 +33,7 @@ public:
 	static void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
 	static void UpdateSkins();
 	static void UpdateMeasures(Skin* skin);
+	static void OnSkinRefresh(Skin* skin);
 	static void UpdateDisplays();
 
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
@@ -118,6 +119,7 @@ private:
 		void SelectSkin(Skin* skin);
 		void UpdateSkinList();
 		void UpdateMeasureList(Skin* skin);
+		void OnSkinRefresh(Skin* skin);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -142,7 +144,6 @@ private:
 		void EnsureWatchVisible(size_t index);
 		void UpdateRangeToolTip(HWND list, POINT point);
 		void UpdateDirectoryWatcher();
-		void DisableAutoRefresh();
 		void HandleAutoRefreshChange();
 		static void OnDirectoryChange(const WCHAR* path, void* context);
 		static LRESULT CALLBACK SkinsListViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
@@ -150,8 +151,7 @@ private:
 
 		Skin* m_SkinWindow;
 		bool m_AutoRefresh;
-		ULONGLONG m_AutoRefreshStartTime;
-		UINT m_AutoRefreshCount;
+		DWORD m_LastSkinRefreshTime;
 		HWND m_RangeToolTip;
 		int m_RangeToolTipItem;
 		std::wstring m_RangeToolTipText;
