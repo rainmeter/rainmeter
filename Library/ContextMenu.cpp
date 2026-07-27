@@ -431,16 +431,16 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
 		}
 
-		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMRIGHT, skins, [](Skin* skin) { return skin->GetX().fromOpposite; });
-		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMBOTTOM, skins, [](Skin* skin) { return skin->GetY().fromOpposite; });
-		CheckMenuItemIfMatch(posMenu, IDM_SKIN_XPERCENTAGE, skins, [](Skin* skin) { return skin->GetX().percentage; });
-		CheckMenuItemIfMatch(posMenu, IDM_SKIN_YPERCENTAGE, skins, [](Skin* skin) { return skin->GetY().percentage; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMRIGHT, skins, [](Skin* skin) { return skin->GetPosition().GetX().fromOpposite; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_FROMBOTTOM, skins, [](Skin* skin) { return skin->GetPosition().GetY().fromOpposite; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_XPERCENTAGE, skins, [](Skin* skin) { return skin->GetPosition().GetX().percentage; });
+		CheckMenuItemIfMatch(posMenu, IDM_SKIN_YPERCENTAGE, skins, [](Skin* skin) { return skin->GetPosition().GetY().percentage; });
 
 		HMENU monitorMenu = GetSubMenu(posMenu, 0);
 		if (monitorMenu)
 		{
 			CreateMonitorMenu(monitorMenu, skins[0]);
-			if (!GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetX().monitor; }))
+			if (!GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetPosition().GetX().monitor; }))
 			{
 				for (int i = 0, count = GetMenuItemCount(monitorMenu); i < count; ++i)
 				{
@@ -882,8 +882,8 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
 	ModifyMenu(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND, ID_MONITOR_FIRST, fmt::format(L"@0: {}", GetString(IDS_VirtualScreen)).c_str());
 
-	const bool monitorDefined = skin->GetX().monitor.has_value();
-	const int monitor = skin->GetX().monitor.value_or(0);
+	const bool monitorDefined = skin->GetPosition().GetX().monitor.has_value();
+	const int monitor = skin->GetPosition().GetX().monitor.value_or(0);
 
 	// for the "Specified monitor" (@n)
 	const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;

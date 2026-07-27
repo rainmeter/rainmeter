@@ -505,8 +505,8 @@ std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(std::wstring_
 
 	auto strParser = StringParser(variableStr);
 	if (!strParser.Consume(L"CURRENTCONFIG")) return std::nullopt;
-	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().x);
-	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().y);
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().y);
 	if (strParser.ConsumeRest(L"WIDTH")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
 	if (strParser.ConsumeRest(L"HEIGHT")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
 	if (strParser.ConsumeRest(L"ZPOS")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
@@ -522,15 +522,15 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 	auto strParser = StringParser(variableStr);
 	if (!strParser.Consume(L"Skin")) return std::nullopt;
 
-	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().x);
-	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetScreenLogicalPosition().y);
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().y);
 	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
 	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
 
 	if (strParser.Consume(L"Physical"))
 	{
-		if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetX().pos);
-		if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetY().pos);
+		if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsPhysical().x);
+		if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsPhysical().y);
 		if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetPhysicalWindowW());
 		if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetPhysicalWindowH());
 		return std::nullopt;
@@ -713,17 +713,17 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 		else if (!primary && m_Skin)
 		{
 			const bool horizontal = component == MonitorComponent::X || component == MonitorComponent::Width;
-			if (horizontal && m_Skin->GetX().monitor)
+			if (horizontal && m_Skin->GetPosition().GetX().monitor)
 			{
-				const int i = *m_Skin->GetX().monitor;
+				const int i = *m_Skin->GetPosition().GetX().monitor;
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
 				}
 			}
-			else if (!horizontal && m_Skin->GetY().monitor)
+			else if (!horizontal && m_Skin->GetPosition().GetY().monitor)
 			{
-				const int i = *m_Skin->GetY().monitor;
+				const int i = *m_Skin->GetPosition().GetY().monitor;
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
