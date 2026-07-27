@@ -146,7 +146,7 @@ static int MoveWindow(lua_State* L)
 	DECLARE_SELF(L)
 	int x = (int)lua_tonumber(L, 2);
 	int y = (int)lua_tonumber(L, 3);
-	self->MoveWindow(x, y);
+	self->MoveWindow(x, y, SkinPositionSpace::Virtualized);
 
 	return 0;
 }
@@ -180,7 +180,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetScreenLogicalPosition().x);
+	lua_pushnumber(L, self->GetPositionAsVirtualized().x);
 
 	return 1;
 }
@@ -188,7 +188,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetScreenLogicalPosition().y);
+	lua_pushnumber(L, self->GetPositionAsVirtualized().y);
 
 	return 1;
 }

@@ -157,7 +157,7 @@ public:
 	void SetCurrentActionSection(Section* section) { m_CurrentActionSection = section; }
 	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
 
-	void MoveWindow(int x, int y);
+	void MoveWindow(int x, int y, SkinPositionSpace posSpace);
 	void MoveSelectedWindow(int dx, int dy);
 	bool IsSelected() const { return m_SelectionOverlay != nullptr; }
 	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
@@ -199,22 +199,20 @@ public:
 	int GetH() { return m_WindowH; }
 	int GetCurrentConfigW() const { return m_WindowW > 0 ? m_WindowW : m_SkinW; }
 	int GetCurrentConfigH() const { return m_WindowH > 0 ? m_WindowH : m_SkinH; }
-	const SkinPosition& GetX() const { return m_X; }
-	const SkinPosition& GetY() const { return m_Y; }
+	SkinPosition& GetPosition() { return m_Position; }
+	const SkinPosition& GetPosition() const { return m_Position; }
+	POINT GetPositionAsPhysical() const;
+	POINT GetPositionAsVirtualized() const;
 
 	int GetZoomedWindowW() const;
 	int GetZoomedWindowH() const;
 	int GetPhysicalWindowW(UINT dpi = 0) const;
 	int GetPhysicalWindowH(UINT dpi = 0) const;
 	RECT GetPhysicalWindowBounds() const;
-
 	int LogicalToPhysical(int value) const;
 	RECT LogicalToPhysical(const RECT& rect) const;
 	POINT PhysicalToLogical(POINT point) const;
 	POINT PhysicalToRelativeLogical(POINT point) const;
-
-	POINT GetScreenLogicalPosition() const;
-	POINT PhysicalToScreenLogical(POINT point) const;
 
 	HMONITOR GetWindowMonitor() const { return m_WindowMonitor; }
 	float GetScale() const { return m_EffectiveScale; }
@@ -345,7 +343,8 @@ private:
 	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor = nullptr);
+	void ClampPositionToScreenBounds(int& x, int& y, SkinPositionSpace posSpace, HMONITOR specificMonitor = nullptr);
+	POINT ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR specificMonitor = nullptr);
 
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
 	void UpdateWindowBounds(UINT flags);
@@ -446,8 +445,7 @@ private:
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
 
-	SkinPosition m_X;
-	SkinPosition m_Y;
+	SkinPosition m_Position;
 
 	int m_WindowW;
 	int m_WindowH;

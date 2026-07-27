@@ -681,7 +681,7 @@ void DialogManage::TabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		const auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
+		const auto pos = m_SkinWindow->GetPositionAsVirtualized();
 
 		SetWindowText(item, GetString(IDS_Unload));
 
@@ -690,12 +690,12 @@ void DialogManage::TabSkins::SetControls()
 
 		item = GetControl(Id_XPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(logicalPos.x, buffer, 10);
+		_itow_s(pos.x, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_YPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(logicalPos.y, buffer, 10);
+		_itow_s(pos.y, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_DisplayMonitorButton);
@@ -1298,14 +1298,12 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 
-				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
-				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
-				logicalPos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
-				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
+				auto pos = m_SkinWindow->GetPositionAsVirtualized();
+				pos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(pos.x, pos.y, SkinPositionSpace::Virtualized);
 
-				const int newX = m_SkinWindow->GetScreenLogicalPosition().x;
-				if (logicalPos.x != newX)
+				const int newX = m_SkinWindow->GetPositionAsVirtualized().x;
+				if (pos.x != newX)
 				{
 					_itow_s(newX, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
@@ -1322,14 +1320,12 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
 
-				const SIZE logicalSize = { m_SkinWindow->GetZoomedWindowW(), m_SkinWindow->GetZoomedWindowH() };
-				auto logicalPos = m_SkinWindow->GetScreenLogicalPosition();
-				logicalPos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				const auto physicalPos = System::ScreenLogicalToPhysical(logicalPos, logicalSize);
-				m_SkinWindow->MoveWindow(physicalPos.x, physicalPos.y);
+				auto pos = m_SkinWindow->GetPositionAsVirtualized();
+				pos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(pos.x, pos.y, SkinPositionSpace::Virtualized);
 
-				const int newY = m_SkinWindow->GetScreenLogicalPosition().y;
-				if (logicalPos.y != newY)
+				const int newY = m_SkinWindow->GetPositionAsVirtualized().y;
+				if (pos.y != newY)
 				{
 					_itow_s(newY, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);

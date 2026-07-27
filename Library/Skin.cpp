@@ -84,8 +84,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_CurrentActionSection(nullptr),
 	m_BackgroundMargins(),
 	m_DragMargins(),
-	m_X(L'R'),
-	m_Y(L'B'),
+	m_Position(),
 	m_WindowW(),
 	m_WindowH(),
 	m_SkinW(),
@@ -479,7 +478,7 @@ void Skin::Refresh(bool init, bool all)
 	ComputePositionFromOptions(true);
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
+		ClampPositionToScreenBounds(m_Position.GetSpace());
 	}
 	UpdateWindowMonitor();
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
@@ -628,12 +627,23 @@ int Skin::GetPhysicalWindowH(UINT dpi) const
 
 RECT Skin::GetPhysicalWindowBounds() const
 {
+	const POINT pos = GetPositionAsPhysical();
 	return {
-		m_X.pos,
-		m_Y.pos,
-		m_X.pos + GetPhysicalWindowW(),
-		m_Y.pos + GetPhysicalWindowH()
+		pos.x,
+		pos.y,
+		pos.x + GetPhysicalWindowW(),
+		pos.y + GetPhysicalWindowH()
 	};
+}
+
+POINT Skin::GetPositionAsPhysical() const
+{
+	return m_Position.AsPhysical({ GetZoomedWindowW(), GetZoomedWindowH() });
+}
+
+POINT Skin::GetPositionAsVirtualized() const
+{
+	return m_Position.AsVirtualized(m_WindowMonitor);
 }
 
 int Skin::LogicalToPhysical(int value) const
@@ -662,21 +672,31 @@ POINT Skin::PhysicalToLogical(POINT point) const
 
 POINT Skin::PhysicalToRelativeLogical(POINT point) const
 {
-	point.x -= m_X.pos;
-	point.y -= m_Y.pos;
+	const POINT windowPos = GetPositionAsPhysical();
+	point.x -= windowPos.x;
+	point.y -= windowPos.y;
 	return PhysicalToLogical(point);
-}
-
-POINT Skin::GetScreenLogicalPosition() const
-{
-	return System::PhysicalToScreenLogical({ m_X.pos, m_Y.pos }, m_WindowMonitor);
 }
 
 void Skin::UpdateWindowBounds(UINT flags)
 {
+	const POINT pos = GetPositionAsPhysical();
 	const auto w = GetPhysicalWindowW();
 	const auto h = GetPhysicalWindowH();
-	SetWindowPos(m_Window, nullptr, m_X.pos, m_Y.pos, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
+
+	// SetWindowPos synchronously sends WM_MOVE. Preserve a virtualized position while applying it;
+	// native moves and drags will still replace it with the physical point received by OnMove.
+	const bool restoreVirtualized = m_Position.IsVirtualized();
+	POINT restorePos = {};
+	if (restoreVirtualized)
+	{
+		restorePos = GetPositionAsVirtualized();
+	}
+	SetWindowPos(m_Window, nullptr, pos.x, pos.y, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
+	if (restoreVirtualized)
+	{
+		m_Position.SetVirtualized(restorePos);
+	}
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
 }
@@ -685,7 +705,8 @@ bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
 {
 	if (!center)
 	{
-		center = POINT { m_X.pos + GetPhysicalWindowW() / 2, m_Y.pos + GetPhysicalWindowH() / 2 };
+		const POINT pos = GetPositionAsPhysical();
+		center = POINT { pos.x + GetPhysicalWindowW() / 2, pos.y + GetPhysicalWindowH() / 2 };
 	}
 
 	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(*center);
@@ -724,15 +745,16 @@ void Skin::UpdateWindowDpiAndBounds(UINT dpi)
 	ComputePositionFromOptions();
 	if (m_KeepOnScreen)
 	{
-		ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
+		ClampPositionToScreenBounds(m_Position.GetSpace());
 	}
 	UpdateWindowBounds(SWP_NOSENDCHANGING);
 }
 
-void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
+void Skin::ClampPositionToScreenBounds(int& x, int& y, SkinPositionSpace posSpace, HMONITOR specificMonitor)
 {
-	const int w = GetPhysicalWindowW();
-	const int h = GetPhysicalWindowH();
+	const bool physical = posSpace == SkinPositionSpace::Physical;
+	const int w = physical ? GetPhysicalWindowW() : GetZoomedWindowW();
+	const int h = physical ? GetPhysicalWindowH() : GetZoomedWindowH();
 
 	const auto& monitors = MonitorUtil::GetMultiMonitorInfo().monitors;
 
@@ -772,7 +794,7 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 			if (specificMonitor && monitor.handle != specificMonitor) continue;
 			if (!monitor.active) continue;
 
-			const RECT& r = monitor.screen;
+			const RECT& r = physical ? monitor.screen : monitor.logicalScreen;
 			if (pt.x >= r.left && pt.x < r.right && pt.y >= r.top && pt.y < r.bottom)
 			{
 				x = min(x, r.right - w);
@@ -786,23 +808,53 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, HMONITOR specificMonitor)
 
 	// No monitor found for the window -> Use the default work area
 	const int index = MonitorUtil::GetMultiMonitorInfo().primary - 1;
-	const RECT& r = monitors[index].work;
+	const RECT& r = physical ? monitors[index].work : monitors[index].logicalWork;
 	x = min(x, r.right - w);
 	x = max(x, r.left);
 	y = min(y, r.bottom - h);
 	y = max(y, r.top);
 }
 
-void Skin::MoveWindow(int x, int y)
+POINT Skin::ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR specificMonitor)
 {
-	OnMove(WM_MOVE, 0, MAKELPARAM(x, y));
+	const bool physical = posSpace == SkinPositionSpace::Physical;
+	const POINT position = physical ? GetPositionAsPhysical() : GetPositionAsVirtualized();
+	int x = position.x;
+	int y = position.y;
+	ClampPositionToScreenBounds(x, y, posSpace, specificMonitor);
+	const POINT clampedPosition = { x, y };
+	if (clampedPosition.x != position.x || clampedPosition.y != position.y)
+	{
+		if (physical)
+		{
+			m_Position.SetPhysical(clampedPosition);
+		}
+		else
+		{
+			m_Position.SetVirtualized(clampedPosition);
+		}
+	}
+	return clampedPosition;
+}
+
+void Skin::MoveWindow(int x, int y, SkinPositionSpace posSpace)
+{
+	if (posSpace == SkinPositionSpace::Physical)
+	{
+		m_Position.SetPhysical({ x, y });
+	}
+	else
+	{
+		m_Position.SetVirtualized({ x, y });
+	}
 	UpdateWindowBounds(SWP_NOSIZE);
 	SavePositionIfAppropriate();
 }
 
 void Skin::MoveSelectedWindow(int dx, int dy)
 {
-	MoveWindow(m_X.pos + dx, m_Y.pos + dy);
+	const POINT pos = GetPositionAsPhysical();
+	MoveWindow(pos.x + dx, pos.y + dy, SkinPositionSpace::Physical);
 }
 
 void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups)
@@ -1206,33 +1258,36 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::Move:
-		m_X.option = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_X.anchorPos);
-		m_Y.option = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Y.anchorPos);
+		m_Position.GetX().windowOption = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_Position.GetX().anchorPos);
+		m_Position.GetY().windowOption = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Position.GetY().anchorPos);
 		ComputePositionFromOptions();
-		MoveWindow(m_X.pos, m_Y.pos);
+		UpdateWindowBounds(SWP_NOSIZE);
+		SavePositionIfAppropriate();
 		break;
 
 	case Bang::SetWindowPosition:
-		m_X.option = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_Y.option = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_Position.GetX().windowOption = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_Position.GetY().windowOption = m_Parser.ParseFormulaWithModifiers(args[1]);
 
 		if (args.size() == 4)
 		{
-			m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[2]);
-			m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[3]);
+			m_Position.GetX().anchorOption = m_Parser.ParseFormulaWithModifiers(args[2]);
+			m_Position.GetY().anchorOption = m_Parser.ParseFormulaWithModifiers(args[3]);
 			WriteOptions(OPTION_ANCHOR);
 		}
 
 		ComputePositionFromOptions();
-		MoveWindow(m_X.pos, m_Y.pos);
+		UpdateWindowBounds(SWP_NOSIZE);
+		SavePositionIfAppropriate();
 		break;
 
 	case Bang::SetAnchor:
-		m_X.anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_Y.anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_Position.GetX().anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
+		m_Position.GetY().anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
 		WriteOptions(OPTION_ANCHOR);
 		ComputePositionFromOptions();
-		MoveWindow(m_X.pos, m_Y.pos);
+		UpdateWindowBounds(SWP_NOSIZE);
+		SavePositionIfAppropriate();
 		break;
 
 	case Bang::SetZoomFactor:
@@ -1993,29 +2048,16 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
-	const auto logicalPos = SkinPosition::ResolveScreenLogicalPosition(m_X, m_Y, m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
-	UINT dpi = 0;
-	POINT physicalPos;
-	if (GetRainmeter().HasExeDpiOverride())
-	{
-		// For BWC because old versions of Rainmeter will have saved the physical position.
-		physicalPos = logicalPos;
-	}
-	else
-	{
-		physicalPos = System::ScreenLogicalToPhysical(logicalPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
-	}
-
-	m_X.pos = physicalPos.x;
-	m_Y.pos = physicalPos.y;
-
-	if (dpi == 0)
-	{
-		dpi = System::GetSystemDpi();
-	}
+	const auto virtualizedPos = m_Position.ResolveVirtualizedPosition(m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
+	m_Position.SetVirtualized(virtualizedPos);
 
 	if (inheritMonitorDpi)
 	{
+		UINT dpi = System::GetSystemDpi();
+		if (!GetRainmeter().HasExeDpiOverride())
+		{
+			System::ConvertFromVirtualizedToPhysicalPosition(virtualizedPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
+		}
 		UpdateWindowDpi(dpi);
 	}
 }
@@ -2038,22 +2080,22 @@ void Skin::ComputeOptionValueFromPosition()
 			{
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					m_X.monitor = m_Y.monitor = screenIndex;
+					m_Position.GetX().monitor = m_Position.GetY().monitor = screenIndex;
 					break;
 				}
 			}
 		}
 	}
 
-	const POINT pos = GetRainmeter().HasExeDpiOverride() ? POINT { m_X.pos, m_Y.pos } : GetScreenLogicalPosition();
+	const POINT pos = GetPositionAsVirtualized();
 
-	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
+	const int monitorX = m_Position.GetX().monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
-	m_X.UpdateOptionValue(pos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
+	m_Position.GetX().UpdateOptionValue(pos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
-	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
+	const int monitorY = m_Position.GetY().monitor.value_or(monitorsInfo.primary);
 	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
-	m_Y.UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+	m_Position.GetY().UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 }
 
 void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
@@ -2096,21 +2138,21 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	m_X.option = parser.ReadString(section, makeKey(L"WindowX"), L"0");
-	isDefault ? writeDefaultString(L"WindowX", m_X.option.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_X.option = parser.ParseFormulaWithModifiers(m_X.option);
+	m_Position.GetX().windowOption = parser.ReadString(section, makeKey(L"WindowX"), L"0");
+	isDefault ? writeDefaultString(L"WindowX", m_Position.GetX().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_Position.GetX().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetX().windowOption);
 
-	m_Y.option = parser.ReadString(section, makeKey(L"WindowY"), L"0");
-	isDefault ? writeDefaultString(L"WindowY", m_Y.option.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_Y.option = parser.ParseFormulaWithModifiers(m_Y.option);
+	m_Position.GetY().windowOption = parser.ReadString(section, makeKey(L"WindowY"), L"0");
+	isDefault ? writeDefaultString(L"WindowY", m_Position.GetY().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_Position.GetY().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetY().windowOption);
 
-	m_X.anchorOption = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
-	if (isDefault) writeDefaultString(L"AnchorX", m_X.anchorOption.c_str());
-	m_X.anchorOption = parser.ParseFormulaWithModifiers(m_X.anchorOption);
+	m_Position.GetX().anchorOption = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorX", m_Position.GetX().anchorOption.c_str());
+	m_Position.GetX().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetX().anchorOption);
 
-	m_Y.anchorOption = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
-	if (isDefault) writeDefaultString(L"AnchorY", m_Y.anchorOption.c_str());
-	m_Y.anchorOption = parser.ParseFormulaWithModifiers(m_Y.anchorOption);
+	m_Position.GetY().anchorOption = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorY", m_Position.GetY().anchorOption.c_str());
+	m_Position.GetY().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetY().anchorOption);
 
 	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
@@ -2213,16 +2255,16 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ANCHOR)
 		{
-			WritePrivateProfileString(section, L"AnchorX", m_X.anchorOption.c_str(), iniFile);
-			WritePrivateProfileString(section, L"AnchorY", m_Y.anchorOption.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorX", m_Position.GetX().anchorOption.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorY", m_Position.GetY().anchorOption.c_str(), iniFile);
 		}
 
 		if (setting & OPTION_POSITION)
 		{
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_X.option.c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_Y.option.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().windowOption.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().windowOption.c_str(), iniFile);
 			}
 
 			if (setting == OPTION_POSITION) return;
@@ -2974,7 +3016,7 @@ void Skin::Redraw()
 void Skin::UpdateWindowContents()
 {
 	BLENDFUNCTION blendPixelFunction = { AC_SRC_OVER, 0, (BYTE)m_TransparencyValue, AC_SRC_ALPHA };
-	POINT ptWindowScreenPosition = { m_X.pos, m_Y.pos };
+	POINT ptWindowScreenPosition = GetPositionAsPhysical();
 	POINT ptSrc = { 0 };
 	SIZE szWindow = { m_Canvas.GetW(), m_Canvas.GetH() };
 
@@ -3905,22 +3947,22 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_FROMRIGHT:
-		m_X.fromOpposite = enable;
+		m_Position.GetX().fromOpposite = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_FROMBOTTOM:
-		m_Y.fromOpposite = enable;
+		m_Position.GetY().fromOpposite = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_XPERCENTAGE:
-		m_X.percentage = enable;
+		m_Position.GetX().percentage = enable;
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_YPERCENTAGE:
-		m_Y.percentage = enable;
+		m_Position.GetY().percentage = enable;
 		SavePositionIfAppropriate();
 		break;
 
@@ -3978,7 +4020,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (monitor >= 0 && (monitor == 0 || monitor <= (int)monitors.size() && monitors[monitorIndex].active))
 			{
 				m_AutoSelectScreen = false;
-				m_X.monitor = m_Y.monitor = monitorDefined ? std::optional<int>{ monitor } : std::nullopt;
+				m_Position.GetX().monitor = m_Position.GetY().monitor = monitorDefined ? std::optional<int>{ monitor } : std::nullopt;
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}
@@ -4054,14 +4096,13 @@ void Skin::SetKeepOnScreen(bool b)
 
 	if (m_KeepOnScreen)
 	{
-		int x = m_X.pos;
-		int y = m_Y.pos;
+		const POINT oldPos = GetPositionAsPhysical();
+		ClampPositionToScreenBounds(m_Position.GetSpace());
+		const POINT pos = GetPositionAsPhysical();
 
-		ClampPositionToScreenBounds(x, y);
-
-		if (x != m_X.pos || y != m_Y.pos)
+		if (pos.x != oldPos.x || pos.y != oldPos.y)
 		{
-			MoveWindow(x, y);
+			MoveWindow(pos.x, pos.y, SkinPositionSpace::Physical);
 		}
 	}
 }
@@ -4229,8 +4270,7 @@ LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_DragStartValid)
 	{
 		m_DragStartCursor = System::GetCursorPosition();
-		m_DragStartWindowPos.x = m_X.pos;
-		m_DragStartWindowPos.y = m_Y.pos;
+		m_DragStartWindowPos = GetPositionAsPhysical();
 		m_DragStartWindowSize.cx = GetPhysicalWindowW();
 		m_DragStartWindowSize.cy = GetPhysicalWindowH();
 		m_DragCursorOffset.x = m_DragStartCursor.x - m_DragStartWindowPos.x;
@@ -4294,8 +4334,9 @@ void Skin::NudgeWindowCenterFromMonitorBoundary()
 	if (!current) return;
 
 	const RECT& bounds = m_WindowMonitorScreenBounds;
-	const int centerX = m_X.pos + GetPhysicalWindowW() / 2;
-	const int centerY = m_Y.pos + GetPhysicalWindowH() / 2;
+	POINT pos = GetPositionAsPhysical();
+	const int centerX = pos.x + GetPhysicalWindowW() / 2;
+	const int centerY = pos.y + GetPhysicalWindowH() / 2;
 	int dx = 0;
 	int dy = 0;
 
@@ -4306,8 +4347,9 @@ void Skin::NudgeWindowCenterFromMonitorBoundary()
 
 	if (dx != 0 || dy != 0)
 	{
-		m_X.pos += dx;
-		m_Y.pos += dy;
+		pos.x += dx;
+		pos.y += dy;
+		m_Position.SetPhysical(pos);
 		UpdateWindowBounds(SWP_NOSENDCHANGING);
 	}
 }
@@ -4453,7 +4495,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (m_KeepOnScreen)
 		{
-			ClampPositionToScreenBounds(wp->x, wp->y);
+			ClampPositionToScreenBounds(wp->x, wp->y, SkinPositionSpace::Physical);
 		}
 	}
 
@@ -4462,8 +4504,9 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
-	const int x = skin->m_X.pos;
-	const int y = skin->m_Y.pos;
+	const POINT pos = skin->GetPositionAsPhysical();
+	const int x = pos.x;
+	const int y = pos.y;
 	const int w = skin->GetPhysicalWindowW();
 	const int h = skin->GetPhysicalWindowH();
 	const int ourW = GetPhysicalWindowW();
@@ -5088,10 +5131,8 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int oldX = m_X.pos;
-	int oldY = m_Y.pos;
-	m_X.pos = GET_X_LPARAM(lParam);
-	m_Y.pos = GET_Y_LPARAM(lParam);
+	const POINT oldPos = GetPositionAsPhysical();
+	m_Position.SetPhysical({ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) });
 
 	if (m_State == STATE_RUNNING)
 	{
@@ -5128,14 +5169,14 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (m_DragStartValid)
 			{
 				const POINT cursor = System::GetCursorPosition();
-				m_X.pos = cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
-				m_Y.pos = cursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi);
+				m_Position.SetPhysical({
+					cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi),
+					cursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi) });
 
 				// Re-anchor the system drag at the scaled grab point. The separately tracked
 				// original-window center remains unchanged for monitor selection.
 				m_DragStartCursor = cursor;
-				m_DragStartWindowPos.x = m_X.pos;
-				m_DragStartWindowPos.y = m_Y.pos;
+				m_DragStartWindowPos = GetPositionAsPhysical();
 				UpdateWindowBounds(SWP_NOSENDCHANGING);
 			}
 			else
@@ -5154,8 +5195,9 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!c_IsInSelectionMode && IsSelected())
 	{
-		const int newX = m_X.pos - oldX;
-		const int newY = m_Y.pos - oldY;
+		const POINT pos = GetPositionAsPhysical();
+		const int newX = pos.x - oldPos.x;
+		const int newY = pos.y - oldPos.y;
 
 		c_IsInSelectionMode = true;
 
@@ -5333,6 +5375,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	KillTimer(m_Window, TIMER_PREVENT_MOVE);
 	m_PreventWindowMove = false;
+	m_Position.ResetCache();
 
 	if (UpdateWindowMonitor())
 	{
@@ -5343,7 +5386,7 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (m_KeepOnScreen)
 		{
-			ClampPositionToScreenBounds(m_X.pos, m_Y.pos);
+			ClampPositionToScreenBounds(m_Position.GetSpace());
 		}
 
 		UpdateWindowBounds(SWP_NOSENDCHANGING);

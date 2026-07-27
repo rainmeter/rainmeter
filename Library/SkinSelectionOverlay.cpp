@@ -318,7 +318,7 @@ void SkinSelectionOverlay::BeginZoomDrag(int hit, POINT screenPos)
 		Skin* skin = skins.second;
 		if (skin->IsSelected())
 		{
-			m_ZoomDragStartStates.push_back({ skin, { skin->m_X.pos, skin->m_Y.pos }, skin->m_ZoomScale });
+			m_ZoomDragStartStates.push_back({ skin, skin->GetPositionAsPhysical(), skin->m_ZoomScale });
 		}
 	}
 }
@@ -435,14 +435,13 @@ void SkinSelectionOverlay::ApplyZoomDrag()
 {
 	if (!m_ZoomDrag) return;
 
-	POINT pos = { m_Skin->m_X.pos, m_Skin->m_Y.pos };
+	POINT pos = m_Skin->GetPositionAsPhysical();
 	const auto& result = UpdateZoomDrag(System::GetCursorPosition(), m_Skin->m_WindowW, m_Skin->m_WindowH, m_Skin->m_DpiScale, m_Skin->m_ZoomScale, pos);
 	if (!result.changed) return;
 
 	for (const auto& state : m_ZoomDragStartStates)
 	{
-		state.skin->m_X.pos = state.pos.x + result.deltaX;
-		state.skin->m_Y.pos = state.pos.y + result.deltaY;
+		state.skin->GetPosition().SetPhysical({ state.pos.x + result.deltaX, state.pos.y + result.deltaY });
 
 		if (!GetRainmeter().GetForceDefaultZoom())
 		{
