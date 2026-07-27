@@ -28,6 +28,7 @@ DialogDebug* DialogDebug::c_Dialog = nullptr;
 namespace {
 
 constexpr UINT WM_AUTOREFRESH_CHANGE = WM_APP + 100;
+constexpr DWORD AUTOREFRESH_IGNORE_DURATION = 100;
 
 void CopyListViewRows(HWND list, bool selectedOnly)
 {
@@ -204,6 +205,14 @@ void DialogDebug::UpdateMeasures(Skin* skin)
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
 		c_Dialog->m_TabSkins.UpdateMeasureList(skin);
+	}
+}
+
+void DialogDebug::OnSkinRefresh(Skin* skin)
+{
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
+	{
+		c_Dialog->m_TabSkins.OnSkinRefresh(skin);
 	}
 }
 
@@ -1010,8 +1019,7 @@ private:
 DialogDebug::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_AutoRefresh(false),
-	m_AutoRefreshStartTime(0),
-	m_AutoRefreshCount(0),
+	m_LastSkinRefreshTime(0),
 	m_RangeToolTip(),
 	m_RangeToolTipItem(-1),
 	m_DirectoryWatcher(std::make_unique<DirectoryWatcher>()),
@@ -1161,6 +1169,7 @@ void DialogDebug::TabSkins::HandleDpiChange()
 
 void DialogDebug::TabSkins::SelectSkin(Skin* skin)
 {
+	m_LastSkinRefreshTime = 0;
 	m_SkinWindow = skin;
 	UpdateSkinList();
 	UpdateMeasureList(m_SkinWindow);
@@ -1183,6 +1192,7 @@ void DialogDebug::TabSkins::UpdateSkinList()
 
 	if (!found)
 	{
+		m_LastSkinRefreshTime = 0;
 		if (GetRainmeter().GetAllSkins().empty())
 		{
 			m_SkinWindow = nullptr;
@@ -1209,8 +1219,6 @@ void DialogDebug::TabSkins::UpdateSkinList()
 void DialogDebug::TabSkins::UpdateDirectoryWatcher()
 {
 	m_DirectoryWatcher->Stop();
-	m_AutoRefreshStartTime = 0;
-	m_AutoRefreshCount = 0;
 	if (!m_AutoRefresh || !m_SkinWindow) return;
 
 	m_AutoRefreshFiles = m_SkinWindow->GetParser().GetIniFiles();
@@ -1226,27 +1234,21 @@ void DialogDebug::TabSkins::UpdateDirectoryWatcher()
 	m_DirectoryWatcher->Start(m_SkinWindow->GetRootPath(), true, OnDirectoryChange, this);
 }
 
-void DialogDebug::TabSkins::DisableAutoRefresh()
+void DialogDebug::TabSkins::OnSkinRefresh(Skin* skin)
 {
-	m_AutoRefresh = false;
-	Button_SetCheck(GetControl(Id_AutoRefreshCheckBox), BST_UNCHECKED);
-	UpdateDirectoryWatcher();
+	if (skin == m_SkinWindow)
+	{
+		m_LastSkinRefreshTime = GetTickCount();
+	}
 }
 
 void DialogDebug::TabSkins::HandleAutoRefreshChange()
 {
 	if (!m_AutoRefresh || !m_SkinWindow) return;
 
-	const ULONGLONG now = GetTickCount64();
-	if (now - m_AutoRefreshStartTime > 1000)
+	if (m_LastSkinRefreshTime != 0 &&
+		GetTickCount() - m_LastSkinRefreshTime < AUTOREFRESH_IGNORE_DURATION)
 	{
-		m_AutoRefreshStartTime = now;
-		m_AutoRefreshCount = 0;
-	}
-
-	if (++m_AutoRefreshCount > 4)
-	{
-		DisableAutoRefresh();
 		return;
 	}
 

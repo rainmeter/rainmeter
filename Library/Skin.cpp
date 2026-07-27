@@ -523,6 +523,7 @@ void Skin::Refresh(bool init, bool all)
 	GetRainmeter().SetCurrentParser(nullptr);
 
 	m_State = STATE_RUNNING;
+	DialogDebug::OnSkinRefresh(this);
 
 	if (!m_OnRefreshAction.empty())
 	{
