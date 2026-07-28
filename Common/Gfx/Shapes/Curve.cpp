@@ -36,7 +36,7 @@ Curve::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT
 			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
-			path.CopyTo(m_Shape.GetAddressOf());
+			m_Shape = std::move(path);
 		}
 	}
 }

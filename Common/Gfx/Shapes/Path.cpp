@@ -102,7 +102,7 @@ void Path::Close(D2D1_FIGURE_END ending)
 	m_Sink->EndFigure(ending);
 	m_Sink->Close();
 
-	m_Path.CopyTo(m_Shape.GetAddressOf());
+	m_Shape = std::move(m_Path);
 	Dispose();
 }
 

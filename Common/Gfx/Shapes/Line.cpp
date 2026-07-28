@@ -31,7 +31,7 @@ Line::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, bool isCloned) : Shape(ShapeT
 			sink->EndFigure(D2D1_FIGURE_END_OPEN);
 			sink->Close();
 
-			path.CopyTo(m_Shape.GetAddressOf());
+			m_Shape = std::move(path);
 		}
 	}
 }

@@ -38,7 +38,7 @@ Arc::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, F
 			sink->EndFigure(m_ShapeEnding);
 			sink->Close();
 
-			path.CopyTo(m_Shape.GetAddressOf());
+			m_Shape = std::move(path);
 		}
 	}
 }

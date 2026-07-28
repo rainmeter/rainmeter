@@ -84,7 +84,7 @@ public:
 	void SetStrokeEndCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.endCap = cap; }
 	void SetStrokeDashCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.dashCap = cap; }
 	void SetStrokeLineJoin(D2D1_LINE_JOIN join, FLOAT limit) { m_StrokeProperties.lineJoin = join; m_StrokeProperties.miterLimit = limit; }
-	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = dashes; }
+	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = std::move(dashes); }
 	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
 	void CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED);
 

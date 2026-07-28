@@ -180,8 +180,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 		sink->Close();
 
-		hr = path.CopyTo(m_Shape.ReleaseAndGetAddressOf());
-		if (FAILED(hr)) return false;
+		m_Shape = std::move(path);
 
 		return true;
 	}
@@ -197,8 +196,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 	if (FAILED(hr)) return false;
 
-	hr = path.CopyTo(m_Shape.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return false;
+	m_Shape = std::move(path);
 
 	m_Rotation = 0.0f;
 	m_RotationAnchor = D2D1::Point2F();
@@ -276,7 +274,7 @@ void Shape::SetFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool alt
 {
 	m_FillBrushType = BrushType::LinearGradient;
 	m_FillLinearGradientAngle = angle;
-	m_FillGradientStops = stops;
+	m_FillGradientStops = std::move(stops);
 	m_FillGradientAltGamma = altGamma;
 	m_HasFillBrushChanged = true;
 }
@@ -287,7 +285,7 @@ void Shape::SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F ra
 	m_FillRadialGradientOffset = offset;
 	m_FillRadialGradientCenter = center;
 	m_FillRadialGradientRadius = radius;
-	m_FillGradientStops = stops;
+	m_FillGradientStops = std::move(stops);
 	m_FillGradientAltGamma = altGamma;
 	m_HasFillBrushChanged = true;
 }
@@ -303,7 +301,7 @@ void Shape::SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bo
 {
 	m_StrokeBrushType = BrushType::LinearGradient;
 	m_StrokeLinearGradientAngle = angle;
-	m_StrokeGradientStops = stops;
+	m_StrokeGradientStops = std::move(stops);
 	m_StrokeGradientAltGamma = altGamma;
 	m_HasStrokeBrushChanged = true;
 }
@@ -314,7 +312,7 @@ void Shape::SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT
 	m_StrokeRadialGradientOffset = offset;
 	m_StrokeRadialGradientCenter = center;
 	m_StrokeRadialGradientRadius = radius;
-	m_StrokeGradientStops = stops;
+	m_StrokeGradientStops = std::move(stops);
 	m_StrokeGradientAltGamma = altGamma;
 	m_HasStrokeBrushChanged = true;
 }
@@ -416,7 +414,7 @@ void Shape::CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solid;
 	HRESULT hr = target->CreateSolidColorBrush(color, solid.GetAddressOf());
 
-	if (SUCCEEDED(hr)) solid.CopyTo(brush.ReleaseAndGetAddressOf());
+	if (SUCCEEDED(hr)) brush = std::move(solid);
 }
 
 void Shape::CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
@@ -434,7 +432,7 @@ void Shape::CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 		collection,
 		linear.GetAddressOf());
 
-	if (SUCCEEDED(hr)) linear.CopyTo(brush.ReleaseAndGetAddressOf());
+	if (SUCCEEDED(hr)) brush = std::move(linear);
 }
 
 void Shape::CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
@@ -468,7 +466,7 @@ void Shape::CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 		collection,
 		radial.GetAddressOf());
 
-	if (SUCCEEDED(hr)) radial.CopyTo(brush.ReleaseAndGetAddressOf());
+	if (SUCCEEDED(hr)) brush = std::move(radial);
 }
 
 bool Shape::AddToTransformOrder(TransformType type)
