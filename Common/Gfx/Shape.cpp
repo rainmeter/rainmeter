@@ -16,13 +16,18 @@ void Shape::BrushData::CopyFrom(const BrushData& other)
 {
 	type = other.type;
 	color = other.color;
-	linearGradientAngle = other.linearGradientAngle;
-	radialGradientOffset = other.radialGradientOffset;
-	radialGradientCenter = other.radialGradientCenter;
-	radialGradientRadius = other.radialGradientRadius;
-	gradientStops = other.gradientStops;
-	gradientAltGamma = other.gradientAltGamma;
+	gradient.reset(other.gradient ? new GradientData(*other.gradient) : nullptr);
 	Invalidate();
+}
+
+Shape::GradientData& Shape::BrushData::GetGradientData()
+{
+	if (!gradient)
+	{
+		gradient.reset(new GradientData());
+	}
+
+	return *gradient;
 }
 
 void Shape::BrushData::Invalidate()
@@ -321,27 +326,30 @@ void Shape::BrushData::Set(const D2D1_COLOR_F& color)
 {
 	type = BrushType::Solid;
 	this->color = color;
+	gradient.reset();
 	changed = true;
 }
 
 void Shape::BrushData::Set(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
+	auto& gradient = GetGradientData();
 	type = BrushType::LinearGradient;
-	linearGradientAngle = angle;
-	gradientStops = std::move(stops);
-	gradientAltGamma = altGamma;
+	gradient.linearAngle = angle;
+	gradient.stops = std::move(stops);
+	gradient.altGamma = altGamma;
 	changed = true;
 }
 
 void Shape::BrushData::Set(D2D1_POINT_2F offset, D2D1_POINT_2F center,
 	D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
+	auto& gradient = GetGradientData();
 	type = BrushType::RadialGradient;
-	radialGradientOffset = offset;
-	radialGradientCenter = center;
-	radialGradientRadius = radius;
-	gradientStops = std::move(stops);
-	gradientAltGamma = altGamma;
+	gradient.radialOffset = offset;
+	gradient.radialCenter = center;
+	gradient.radialRadius = radius;
+	gradient.stops = std::move(stops);
+	gradient.altGamma = altGamma;
 	changed = true;
 }
 
@@ -359,15 +367,17 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetBrush(ID2D1DeviceContext* target, B
 
 	case BrushType::LinearGradient:
 		{
-			auto collection = CreateGradientStopCollection(target, data.gradientStops, data.gradientAltGamma);
-			CreateLinearGradient(target, collection, data.brush, data.linearGradientAngle);
+			auto& gradient = *data.gradient;
+			auto collection = CreateGradientStopCollection(target, gradient.stops, gradient.altGamma);
+			CreateLinearGradient(target, collection, data.brush, gradient.linearAngle);
 			if (collection) collection->Release();
 		}
 		break;
 
 	case BrushType::RadialGradient:
 		{
-			auto collection = CreateGradientStopCollection(target, data.gradientStops, data.gradientAltGamma);
+			auto& gradient = *data.gradient;
+			auto collection = CreateGradientStopCollection(target, gradient.stops, gradient.altGamma);
 			CreateRadialGradient(target, collection, data);
 			if (collection) collection->Release();
 		}
@@ -428,6 +438,7 @@ void Shape::CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 void Shape::CreateRadialGradient(
 	ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection, BrushData& data)
 {
+	const auto& gradient = *data.gradient;
 	auto swapIfNotDefined = [](D2D1_POINT_2F& pt1, const D2D1_POINT_2F pt2) -> void
 	{
 		if (pt2.x != FLT_MAX) pt1.x = pt2.x;
@@ -440,11 +451,11 @@ void Shape::CreateRadialGradient(
 	D2D1_POINT_2F radius = D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
 
 	// Offset from actual center of shape
-	center = Util::AddPoint2F(center, data.radialGradientCenter);
+	center = Util::AddPoint2F(center, gradient.radialCenter);
 
 	// Check if offset and radii are defined
-	swapIfNotDefined(offset, data.radialGradientOffset);
-	swapIfNotDefined(radius, data.radialGradientRadius);
+	swapIfNotDefined(offset, gradient.radialOffset);
+	swapIfNotDefined(radius, gradient.radialRadius);
 
 	Microsoft::WRL::ComPtr<ID2D1RadialGradientBrush> radial;
 	HRESULT hr = target->CreateRadialGradientBrush(
