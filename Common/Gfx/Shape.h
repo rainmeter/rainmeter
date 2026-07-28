@@ -9,6 +9,7 @@
 #define RM_GFX_SHAPE_H_
 
 #include "Util/D2DUtil.h"
+#include <array>
 #include <d2d1_1.h>
 #include <memory>
 #include <wrl/client.h>
@@ -123,7 +124,7 @@ private:
 	{
 		TransformModifiers();
 
-		std::vector<TransformType> order;
+		std::array<TransformType, (size_t)TransformType::MAX - 1> order;
 		D2D1_SIZE_F offset;
 
 		FLOAT rotation;
