@@ -76,10 +76,6 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_Wfx(nullptr),
 	m_ClAudio(nullptr),
 	m_ClCapture(nullptr),
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	m_ClBugAudio(nullptr),
-	m_ClBugRender(nullptr),
-#endif
 	m_FFTKWdw(nullptr),
 	m_FFTTmpIn(nullptr),
 	m_FFTTmpOut(nullptr),
@@ -891,15 +887,6 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 
 	SAFE_RELEASE(props);
 
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	// get an extra audio client for the dummy silent channel
-	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClBugAudio);
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to create audio client for Windows bug workaround.");
-	}
-#endif
-
 	// get the main audio client
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClAudio);
 	if (hr != S_OK)
@@ -981,40 +968,6 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 		}
 	}
 
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	// ---------------------------------------------------------------------------------------
-	// Windows bug workaround: create a silent render client before initializing loopback mode
-	// see: http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
-	if (m_Port == PORT_OUTPUT)
-	{
-		hr = m_ClBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_Wfx, NULL);
-		EXIT_ON_ERROR(hr);
-
-		// get the frame count
-		UINT32 nFrames;
-		hr = m_ClBugAudio->GetBufferSize(&nFrames);
-		EXIT_ON_ERROR(hr);
-
-		// create a render client
-		hr = m_ClBugAudio->GetService(IID_IAudioRenderClient, (void**)&m_ClBugRender);
-		EXIT_ON_ERROR(hr);
-
-		// get the buffer
-		BYTE* buffer;
-		hr = m_ClBugRender->GetBuffer(nFrames, &buffer);
-		EXIT_ON_ERROR(hr);
-
-		// release it
-		hr = m_ClBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-		EXIT_ON_ERROR(hr);
-
-		// start the stream
-		hr = m_ClBugAudio->Start();
-		EXIT_ON_ERROR(hr);
-	}
-	// ---------------------------------------------------------------------------------------
-#endif
-
 	// initialize the audio client
 	hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
 		hnsRequestedDuration, 0, m_Wfx, NULL);
@@ -1071,16 +1024,6 @@ Exit:
  */
 void MeasureAudioLevel::DeviceRelease()
 {
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	if (m_ClBugAudio)
-	{
-		if (!m_Parent) LogDebugF(this, L"Releasing dummy stream audio device.");
-		m_ClBugAudio->Stop();
-	}
-	SAFE_RELEASE(m_ClBugRender);
-	SAFE_RELEASE(m_ClBugAudio);
-#endif
-
 	if (m_ClAudio)
 	{
 		if (!m_Parent) LogDebugF(this, L"Releasing audio device.");
