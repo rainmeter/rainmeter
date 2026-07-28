@@ -112,13 +112,37 @@ protected:
 private:
 	friend class Canvas;
 
+	struct BrushData
+	{
+		BrushData(const D2D1_COLOR_F& defaultColor) : color(defaultColor) {}
+		void CopyFrom(const BrushData& other);
+		void Invalidate();
+		void Set(const D2D1_COLOR_F& color);
+		void Set(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+		void Set(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius,
+			std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+
+		BrushType type = BrushType::Solid;
+		D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::White);
+		FLOAT linearGradientAngle = 0.0f;
+		D2D1_POINT_2F radialGradientOffset = D2D1::Point2F(0.0f, 0.0f);
+		D2D1_POINT_2F radialGradientCenter = D2D1::Point2F(0.0f, 0.0f);
+		D2D1_POINT_2F radialGradientRadius = D2D1::Point2F(0.0f, 0.0f);
+		std::vector<D2D1_GRADIENT_STOP> gradientStops;
+		bool gradientAltGamma = false;
+		Microsoft::WRL::ComPtr<ID2D1Brush> brush;
+		bool changed = true;
+	};
+
+	Microsoft::WRL::ComPtr<ID2D1Brush> GetBrush(ID2D1DeviceContext* target, BrushData& data);
+
 	void CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const D2D1_COLOR_F& color);
 	ID2D1GradientStopCollection* CreateGradientStopCollection(
 		ID2D1DeviceContext* target, std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
 	void CreateLinearGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
 		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const FLOAT angle);
-	void CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
-		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, bool isStroke);
+	void CreateRadialGradient(
+		ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection, BrushData& data);
 
 	struct TransformModifiers
 	{
@@ -152,29 +176,8 @@ private:
 	D2D1_STROKE_STYLE_PROPERTIES1 m_StrokeProperties;
 	Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> m_StrokeStyle;
 
-	// Fill options
-	BrushType m_FillBrushType;
-	D2D1_COLOR_F m_FillColor;
-	FLOAT m_FillLinearGradientAngle;
-	D2D1_POINT_2F m_FillRadialGradientOffset;
-	D2D1_POINT_2F m_FillRadialGradientCenter;
-	D2D1_POINT_2F m_FillRadialGradientRadius;
-	std::vector<D2D1_GRADIENT_STOP> m_FillGradientStops;
-	bool m_FillGradientAltGamma;
-	Microsoft::WRL::ComPtr<ID2D1Brush> m_FillBrush;
-	bool m_HasFillBrushChanged;
-
-	// Stroke fill options
-	BrushType m_StrokeBrushType;
-	D2D1_COLOR_F m_StrokeColor;
-	FLOAT m_StrokeLinearGradientAngle;
-	D2D1_POINT_2F m_StrokeRadialGradientOffset;
-	D2D1_POINT_2F m_StrokeRadialGradientCenter;
-	D2D1_POINT_2F m_StrokeRadialGradientRadius;
-	std::vector<D2D1_GRADIENT_STOP> m_StrokeGradientStops;
-	bool m_StrokeGradientAltGamma;
-	Microsoft::WRL::ComPtr<ID2D1Brush> m_StrokeBrush;
-	bool m_HasStrokeBrushChanged;
+	BrushData m_Fill;
+	BrushData m_StrokeFill;
 };
 
 } // Gfx
