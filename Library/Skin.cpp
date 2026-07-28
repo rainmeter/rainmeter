@@ -603,6 +603,11 @@ POINT Skin::GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const
 	return PhysicalToLogical(pos);
 }
 
+SIZE Skin::GetZoomedWindowSize() const
+{
+	return { GetZoomedWindowW(), GetZoomedWindowH() };
+}
+
 int Skin::GetZoomedWindowW() const
 {
 	return (int)roundf((float)GetCurrentConfigW() * m_ZoomScale);
@@ -638,7 +643,7 @@ RECT Skin::GetPhysicalWindowBounds() const
 
 POINT Skin::GetPositionAsPhysical() const
 {
-	return m_Position.AsPhysical({ GetZoomedWindowW(), GetZoomedWindowH() });
+	return m_Position.AsPhysical(GetZoomedWindowSize());
 }
 
 POINT Skin::GetPositionAsVirtualized() const
@@ -680,25 +685,46 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 
 void Skin::UpdateWindowBounds(UINT flags)
 {
-	const POINT pos = GetPositionAsPhysical();
-	const auto w = GetPhysicalWindowW();
-	const auto h = GetPhysicalWindowH();
+	POINT pos;
 
 	// SetWindowPos synchronously sends WM_MOVE. Preserve a virtualized position while applying it;
 	// native moves and drags will still replace it with the physical point received by OnMove.
 	const bool restoreVirtualized = m_Position.IsVirtualized();
 	POINT restorePos = {};
+	bool dpiChanged = false;
 	if (restoreVirtualized)
 	{
 		restorePos = GetPositionAsVirtualized();
+		if (GetRainmeter().HasExeDpiOverride())
+		{
+			pos = restorePos;
+		}
+		else
+		{
+			UINT dpi = 0;
+			pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
+
+			// The conversion uses a DPI-unaware helper window and therefore selects the same
+			// target DPI as legacy Rainmeter. Apply it before moving the actual window so its
+			// center is evaluated using the target physical size in OnMove.
+			dpiChanged = dpi != 0 && dpi != m_WindowDpi;
+			if (dpiChanged) UpdateWindowDpi(dpi);
+		}
 	}
-	SetWindowPos(m_Window, nullptr, pos.x, pos.y, w, h, flags | SWP_NOZORDER | SWP_NOACTIVATE);
+	else
+	{
+		pos = GetPositionAsPhysical();
+	}
+	SetWindowPos(
+		m_Window, nullptr, pos.x, pos.y, GetPhysicalWindowW(), GetPhysicalWindowH(),
+		flags | SWP_NOZORDER | SWP_NOACTIVATE);
 	if (restoreVirtualized)
 	{
 		m_Position.SetVirtualized(restorePos);
 	}
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
+	if (dpiChanged && m_State == STATE_RUNNING) Redraw();
 }
 
 bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
@@ -2056,7 +2082,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 		UINT dpi = System::GetSystemDpi();
 		if (!GetRainmeter().HasExeDpiOverride())
 		{
-			System::ConvertFromVirtualizedToPhysicalPosition(virtualizedPos, { GetZoomedWindowW(), GetZoomedWindowH() }, &dpi);
+			System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi);
 		}
 		UpdateWindowDpi(dpi);
 	}

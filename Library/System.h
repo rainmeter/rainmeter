@@ -23,8 +23,8 @@ public:
 
 	static UINT GetDpiForWindow(HWND window);
 	static UINT GetSystemDpi();
-	static POINT ConvertFromVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi = nullptr);
-	static POINT ConvertFromPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle);
+	static POINT ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi = nullptr);
+	static POINT ConvertPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle);
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
