@@ -840,14 +840,24 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 		m_Target->FillGeometry(shape.m_Shape.Get(), fill.Get());
 	}
 
-	auto stroke = shape.GetStrokeFillBrush(m_Target.Get());
+	Microsoft::WRL::ComPtr<ID2D1Brush> stroke;
+	switch (shape.m_StrokeType)
+	{
+	case Shape::StrokeType::Default:
+		stroke = GetCachedSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black));
+		break;
+
+	case Shape::StrokeType::Custom:
+		stroke = shape.GetStrokeFillBrush(m_Target.Get());
+		break;
+
+	case Shape::StrokeType::Disabled:
+		break;
+	}
+
 	if (stroke)
 	{
-		m_Target->DrawGeometry(
-			shape.m_Shape.Get(),
-			stroke.Get(),
-			shape.m_StrokeWidth,
-			shape.m_StrokeStyle.Get());
+		m_Target->DrawGeometry(shape.m_Shape.Get(), stroke.Get(), shape.GetStrokeWidth(), shape.GetStrokeStyle());
 	}
 
 	m_Target->SetTransform(worldTransform);

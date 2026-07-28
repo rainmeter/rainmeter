@@ -76,18 +76,14 @@ public:
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
 	void SetOffset(FLOAT x, FLOAT y) { GetTransformModifiers().offset = D2D1::SizeF(x, y); }
-	void SetStrokeWidth(FLOAT strokeWidth) { m_StrokeWidth = strokeWidth; }
+	void SetStrokeWidth(FLOAT strokeWidth);
 
 	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 	void SetScale(FLOAT scaleX, FLOAT scaleY, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 	void SetSkew(FLOAT skewX, FLOAT skewY, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
 
-	void SetStrokeStartCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.startCap = cap; }
-	void SetStrokeEndCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.endCap = cap; }
-	void SetStrokeDashCap(D2D1_CAP_STYLE cap) { m_StrokeProperties.dashCap = cap; }
-	void SetStrokeLineJoin(D2D1_LINE_JOIN join, FLOAT limit) { m_StrokeProperties.lineJoin = join; m_StrokeProperties.miterLimit = limit; }
-	void SetStrokeDashes(std::vector<FLOAT> dashes) { m_StrokeCustomDashes = std::move(dashes); }
-	void SetStrokeDashOffset(FLOAT offset) { m_StrokeProperties.dashOffset = offset; }
+	D2D1_STROKE_STYLE_PROPERTIES1& GetStrokeProperties() { return GetStrokeData().properties; }
+	void SetStrokeDashes(std::vector<FLOAT> dashes) { GetStrokeData().customDashes = std::move(dashes); }
 	void CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType = D2D1_STROKE_TRANSFORM_TYPE_FIXED);
 
 	void SetFill(const D2D1_COLOR_F& color);
@@ -112,6 +108,13 @@ protected:
 private:
 	friend class Canvas;
 
+	enum class StrokeType : BYTE
+	{
+		Default = 0,
+		Custom,
+		Disabled
+	};
+
 	struct BrushData
 	{
 		BrushData(const D2D1_COLOR_F& defaultColor) : color(defaultColor) {}
@@ -132,6 +135,17 @@ private:
 		bool gradientAltGamma = false;
 		Microsoft::WRL::ComPtr<ID2D1Brush> brush;
 		bool changed = true;
+	};
+
+	struct StrokeData
+	{
+		void CopyFrom(const StrokeData& other);
+
+		BrushData fill{ D2D1::ColorF(D2D1::ColorF::Black) };
+		Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> style;
+		std::vector<FLOAT> customDashes;
+		D2D1_STROKE_STYLE_PROPERTIES1 properties = D2D1::StrokeStyleProperties1();
+		FLOAT width = 1.0f;
 	};
 
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetBrush(ID2D1DeviceContext* target, BrushData& data);
@@ -165,19 +179,18 @@ private:
 	};
 
 	TransformModifiers& GetTransformModifiers();
+	StrokeData& GetStrokeData();
+	FLOAT GetStrokeWidth() const;
+	ID2D1StrokeStyle1* GetStrokeStyle() const;
 
 	ShapeType m_ShapeType;
 	bool m_IsCombined;
+	StrokeType m_StrokeType;
 
 	std::unique_ptr<TransformModifiers> m_TransformModifiers;
-
-	FLOAT m_StrokeWidth;
-	std::vector<FLOAT> m_StrokeCustomDashes;
-	D2D1_STROKE_STYLE_PROPERTIES1 m_StrokeProperties;
-	Microsoft::WRL::ComPtr<ID2D1StrokeStyle1> m_StrokeStyle;
+	std::unique_ptr<StrokeData> m_StrokeData;
 
 	BrushData m_Fill;
-	BrushData m_StrokeFill;
 };
 
 } // Gfx

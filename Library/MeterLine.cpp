@@ -296,7 +296,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		path.SetFill(Gfx::Util::c_Transparent_Color_F);
 		path.SetStrokeFill(m_Colors[counter]);
 		path.SetStrokeWidth((FLOAT)m_LineWidth);
-		path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 10.0f);
+		auto& strokeProperties = path.GetStrokeProperties();
+		strokeProperties.lineJoin = D2D1_LINE_JOIN_BEVEL;
+		strokeProperties.miterLimit = 10.0f;
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
