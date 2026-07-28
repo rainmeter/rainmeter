@@ -115,10 +115,21 @@ private:
 		Disabled
 	};
 
+	struct GradientData
+	{
+		FLOAT linearAngle = 0.0f;
+		D2D1_POINT_2F radialOffset = D2D1::Point2F(0.0f, 0.0f);
+		D2D1_POINT_2F radialCenter = D2D1::Point2F(0.0f, 0.0f);
+		D2D1_POINT_2F radialRadius = D2D1::Point2F(0.0f, 0.0f);
+		std::vector<D2D1_GRADIENT_STOP> stops;
+		bool altGamma = false;
+	};
+
 	struct BrushData
 	{
 		BrushData(const D2D1_COLOR_F& defaultColor) : color(defaultColor) {}
 		void CopyFrom(const BrushData& other);
+		GradientData& GetGradientData();
 		void Invalidate();
 		void Set(const D2D1_COLOR_F& color);
 		void Set(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
@@ -127,12 +138,7 @@ private:
 
 		BrushType type = BrushType::Solid;
 		D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::White);
-		FLOAT linearGradientAngle = 0.0f;
-		D2D1_POINT_2F radialGradientOffset = D2D1::Point2F(0.0f, 0.0f);
-		D2D1_POINT_2F radialGradientCenter = D2D1::Point2F(0.0f, 0.0f);
-		D2D1_POINT_2F radialGradientRadius = D2D1::Point2F(0.0f, 0.0f);
-		std::vector<D2D1_GRADIENT_STOP> gradientStops;
-		bool gradientAltGamma = false;
+		std::unique_ptr<GradientData> gradient{};
 		Microsoft::WRL::ComPtr<ID2D1Brush> brush;
 		bool changed = true;
 	};
