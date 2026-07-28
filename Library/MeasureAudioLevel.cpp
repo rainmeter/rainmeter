@@ -621,6 +621,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 
 		case AUDCLNT_E_BUFFER_ERROR:
 		case AUDCLNT_E_DEVICE_INVALIDATED:
+		case AUDCLNT_E_RESOURCES_INVALIDATED:
 		case AUDCLNT_E_SERVICE_NOT_RUNNING:
 			m->DeviceRelease();
 			break;
