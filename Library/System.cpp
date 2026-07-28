@@ -175,7 +175,7 @@ UINT System::GetDpiForWindow(HWND window)
 	return GetSystemDpi();
 }
 
-POINT System::ConvertFromVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi)
+POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi)
 {
 	{
 		DpiUtil::DpiUnawareScope dpiUnaware;
@@ -197,7 +197,7 @@ POINT System::ConvertFromVirtualizedToPhysicalPosition(POINT point, SIZE size, U
 	return { r.left, r.top };
 }
 
-POINT System::ConvertFromPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle)
+POINT System::ConvertPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle)
 {
 	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(monitorHandle);
 	if (!monitor) return point;

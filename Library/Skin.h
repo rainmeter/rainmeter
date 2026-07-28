@@ -204,6 +204,7 @@ public:
 	POINT GetPositionAsPhysical() const;
 	POINT GetPositionAsVirtualized() const;
 
+	SIZE GetZoomedWindowSize() const;
 	int GetZoomedWindowW() const;
 	int GetZoomedWindowH() const;
 	int GetPhysicalWindowW(UINT dpi = 0) const;
