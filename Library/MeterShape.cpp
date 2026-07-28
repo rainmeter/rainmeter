@@ -206,20 +206,16 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 {
 	auto createShape = [&](Gfx::Shape* shape) -> bool
 	{
-		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
-		bool exists = shape->DoesShapeExist();
-		if (exists)
+		if (shape->DoesShapeExist())
 		{
 			m_Shapes.push_back(shape);
-		}
-		else
-		{
-			LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
-			delete shape;
-			shape = nullptr;
+			return true;
 		}
 
-		return exists;
+		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
+		LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
+		delete shape;
+		return false;
 	};
 
 	const size_t argSize = args.size();
