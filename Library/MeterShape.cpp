@@ -87,14 +87,16 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Clear any shapes
 	Dispose();
 
-	std::map<size_t, std::wstring> combinedShapes;
+	std::map<size_t, std::vector<std::wstring>> combinedShapes;
 
 	const WCHAR delimiter = L'|';
-	std::wstring shape = parser.ReadString(section, L"Shape", L"");
-
-	size_t i = 1;
-	while (!shape.empty())
+	WCHAR key[32] = L"Shape";
+	for (size_t i = 1; ; ++i)
 	{
+		if (i > 1) _snwprintf_s(key, _TRUNCATE, L"Shape%zu", i);
+		const std::wstring& shape = parser.ReadString(section, key, L"");
+		if (shape.empty()) break;
+
 		auto args = ConfigParser::TokenizeWithPairedPunctuation(shape, delimiter, PairedPunctuation::Parentheses);
 
 		bool isCombined = false;
@@ -104,25 +106,19 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// process later. Otherwise, parse any modifiers for the shape.
 		if (isCombined)
 		{
-			combinedShapes.emplace(i - 1, shape);
+			combinedShapes.emplace(i - 1, std::move(args));
 		}
 		else
 		{
 			args.erase(args.begin());
 			ParseModifiers(args, parser, section);
 		}
-
-		// Check for Shape2 ... etc.
-		const std::wstring num = std::to_wstring(++i);
-		std::wstring key = L"Shape" + num;
-		shape = parser.ReadString(section, key.c_str(), L"");
 	}
 
 	// Process combined shapes
-	for (const auto& shape : combinedShapes)
+	for (auto& shape : combinedShapes)
 	{
-		auto args = ConfigParser::TokenizeWithPairedPunctuation(shape.second, delimiter, PairedPunctuation::Parentheses);
-		if (!CreateCombinedShape(parser, shape.first, args)) break;
+		if (!CreateCombinedShape(parser, shape.first, shape.second)) break;
 	}
 
 	// Adjust width/height if necessary
