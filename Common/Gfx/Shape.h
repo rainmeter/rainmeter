@@ -160,22 +160,20 @@ private:
 
 	struct TransformModifiers
 	{
-		TransformModifiers();
+		std::array<TransformType, (size_t)TransformType::MAX - 1> order{};
+		D2D1_SIZE_F offset = D2D1::SizeF(0.0f, 0.0f);
 
-		std::array<TransformType, (size_t)TransformType::MAX - 1> order;
-		D2D1_SIZE_F offset;
+		FLOAT rotation = 0.0f;
+		D2D1_POINT_2F rotationAnchor = D2D1::Point2F(0.0f, 0.0f);
+		bool rotationAnchorDefined = false;
 
-		FLOAT rotation;
-		D2D1_POINT_2F rotationAnchor;
-		bool rotationAnchorDefined;
+		D2D1_POINT_2F skew = D2D1::Point2F(0.0f, 0.0f);
+		D2D1_POINT_2F skewAnchor = D2D1::Point2F(0.0f, 0.0f);
+		bool skewAnchorDefined = false;
 
-		D2D1_POINT_2F skew;
-		D2D1_POINT_2F skewAnchor;
-		bool skewAnchorDefined;
-
-		D2D1_SIZE_F scale;
-		D2D1_POINT_2F scaleAnchor;
-		bool scaleAnchorDefined;
+		D2D1_SIZE_F scale = D2D1::SizeF(1.0f, 1.0f);
+		D2D1_POINT_2F scaleAnchor = D2D1::Point2F(0.0f, 0.0f);
+		bool scaleAnchorDefined = false;
 	};
 
 	TransformModifiers& GetTransformModifiers();
@@ -184,13 +182,13 @@ private:
 	ID2D1StrokeStyle1* GetStrokeStyle() const;
 
 	ShapeType m_ShapeType;
-	bool m_IsCombined;
-	StrokeType m_StrokeType;
+	bool m_IsCombined = false;
+	StrokeType m_StrokeType = StrokeType::Default;
 
-	std::unique_ptr<TransformModifiers> m_TransformModifiers;
-	std::unique_ptr<StrokeData> m_StrokeData;
+	std::unique_ptr<TransformModifiers> m_TransformModifiers{};
+	std::unique_ptr<StrokeData> m_StrokeData{};
 
-	BrushData m_Fill;
+	BrushData m_Fill{ D2D1::ColorF(D2D1::ColorF::White) };
 };
 
 } // Gfx

@@ -40,28 +40,8 @@ void Shape::StrokeData::CopyFrom(const StrokeData& other)
 	width = other.width;
 }
 
-Shape::TransformModifiers::TransformModifiers() :
-	order(),
-	offset(D2D1::SizeF(0.0f, 0.0f)),
-	rotation(0.0f),
-	rotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	rotationAnchorDefined(false),
-	skew(D2D1::Point2F(0.0f, 0.0f)),
-	skewAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	skewAnchorDefined(false),
-	scale(D2D1::SizeF(1.0f, 1.0f)),
-	scaleAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	scaleAnchorDefined(false)
-{
-}
-
 Shape::Shape(ShapeType type) :
-	m_ShapeType(type),
-	m_IsCombined(false),
-	m_StrokeType(StrokeType::Default),
-	m_TransformModifiers(),
-	m_StrokeData(),
-	m_Fill(D2D1::ColorF(D2D1::ColorF::White))
+	m_ShapeType(type)
 {
 }
 
