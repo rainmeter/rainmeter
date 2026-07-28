@@ -10,6 +10,7 @@
 
 #include "Util/D2DUtil.h"
 #include <d2d1_1.h>
+#include <memory>
 #include <wrl/client.h>
 #include <vector>
 
@@ -73,7 +74,7 @@ public:
 	void SetCombined() { m_IsCombined = true; }
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
-	void SetOffset(FLOAT x, FLOAT y) { m_Offset = D2D1::SizeF(x, y); }
+	void SetOffset(FLOAT x, FLOAT y) { GetTransformModifiers().offset = D2D1::SizeF(x, y); }
 	void SetStrokeWidth(FLOAT strokeWidth) { m_StrokeWidth = strokeWidth; }
 
 	void SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined);
@@ -98,7 +99,7 @@ public:
 	void SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetStrokeFillBrush(ID2D1DeviceContext* target);
 
-	void ResetTransformOrder() { m_TransformOrder.clear(); }
+	void ResetTransformOrder();
 	bool AddToTransformOrder(TransformType type);
 	void ValidateTransforms();
 
@@ -118,25 +119,32 @@ private:
 	void CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCollection* collection,
 		Microsoft::WRL::ComPtr<ID2D1Brush>& brush, bool isStroke);
 
+	struct TransformModifiers
+	{
+		TransformModifiers();
+
+		std::vector<TransformType> order;
+		D2D1_SIZE_F offset;
+
+		FLOAT rotation;
+		D2D1_POINT_2F rotationAnchor;
+		bool rotationAnchorDefined;
+
+		D2D1_POINT_2F skew;
+		D2D1_POINT_2F skewAnchor;
+		bool skewAnchorDefined;
+
+		D2D1_SIZE_F scale;
+		D2D1_POINT_2F scaleAnchor;
+		bool scaleAnchorDefined;
+	};
+
+	TransformModifiers& GetTransformModifiers();
+
 	ShapeType m_ShapeType;
 	bool m_IsCombined;
 
-	std::vector<TransformType> m_TransformOrder;
-
-	// Modifiers
-	D2D1_SIZE_F m_Offset;
-
-	FLOAT m_Rotation;
-	D2D1_POINT_2F m_RotationAnchor;
-	bool m_RotationAnchorDefined;
-
-	D2D1_POINT_2F m_Skew;
-	D2D1_POINT_2F m_SkewAnchor;
-	bool m_SkewAnchorDefined;
-
-	D2D1_SIZE_F m_Scale;
-	D2D1_POINT_2F m_ScaleAnchor;
-	bool m_ScaleAnchorDefined;
+	std::unique_ptr<TransformModifiers> m_TransformModifiers;
 
 	FLOAT m_StrokeWidth;
 	std::vector<FLOAT> m_StrokeCustomDashes;

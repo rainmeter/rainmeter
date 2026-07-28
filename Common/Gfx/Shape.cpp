@@ -12,20 +12,25 @@
 
 namespace Gfx {
 
+Shape::TransformModifiers::TransformModifiers() :
+	order(),
+	offset(D2D1::SizeF(0.0f, 0.0f)),
+	rotation(0.0f),
+	rotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
+	rotationAnchorDefined(false),
+	skew(D2D1::Point2F(0.0f, 0.0f)),
+	skewAnchor(D2D1::Point2F(0.0f, 0.0f)),
+	skewAnchorDefined(false),
+	scale(D2D1::SizeF(1.0f, 1.0f)),
+	scaleAnchor(D2D1::Point2F(0.0f, 0.0f)),
+	scaleAnchorDefined(false)
+{
+}
+
 Shape::Shape(ShapeType type) :
 	m_ShapeType(type),
-	m_TransformOrder(),
 	m_IsCombined(false),
-	m_Offset(D2D1::SizeF(0.0f, 0.0f)),
-	m_Rotation(0.0f),
-	m_RotationAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	m_RotationAnchorDefined(false),
-	m_Scale(D2D1::SizeF(1.0f, 1.0f)),
-	m_ScaleAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	m_ScaleAnchorDefined(false),
-	m_Skew(D2D1::Point2F(0.0f, 0.0f)),
-	m_SkewAnchor(D2D1::Point2F(0.0f, 0.0f)),
-	m_SkewAnchorDefined(false),
+	m_TransformModifiers(),
 	m_StrokeWidth(1.0f),
 	m_StrokeCustomDashes(),
 	m_StrokeProperties(D2D1::StrokeStyleProperties1()),
@@ -63,6 +68,9 @@ void Shape::InvalidateDeviceResources()
 D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 {
 	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
+	if (!m_TransformModifiers) return matrix;
+
+	const auto& modifiers = *m_TransformModifiers;
 
 	D2D1_RECT_F bounds;
 	HRESULT hr = m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
@@ -73,33 +81,33 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	// Use the center of the shape as the default anchor point for all transforms
 	D2D1_POINT_2F center = D2D1::Point2F((bounds.right - bounds.left) / 2.0f, (bounds.bottom - bounds.top) / 2.0f);
 
-	D2D1_POINT_2F rotationPoint = m_RotationAnchorDefined ? m_RotationAnchor : center;
+	D2D1_POINT_2F rotationPoint = modifiers.rotationAnchorDefined ? modifiers.rotationAnchor : center;
 	rotationPoint = Util::AddPoint2F(point, rotationPoint);
 
-	D2D1_POINT_2F scalePoint = m_ScaleAnchorDefined ? m_ScaleAnchor : center;
+	D2D1_POINT_2F scalePoint = modifiers.scaleAnchorDefined ? modifiers.scaleAnchor : center;
 	scalePoint = Util::AddPoint2F(point, scalePoint);
 
-	D2D1_POINT_2F skewPoint = m_SkewAnchorDefined ? m_SkewAnchor : center;
+	D2D1_POINT_2F skewPoint = modifiers.skewAnchorDefined ? modifiers.skewAnchor : center;
 	skewPoint = Util::AddPoint2F(point, skewPoint);
 
-	for (const auto& type : m_TransformOrder)
+	for (const auto& type : modifiers.order)
 	{
 		switch (type)
 		{
 		case TransformType::Rotate:
-			matrix = matrix * D2D1::Matrix3x2F::Rotation(m_Rotation, rotationPoint);
+			matrix = matrix * D2D1::Matrix3x2F::Rotation(modifiers.rotation, rotationPoint);
 			break;
 
 		case TransformType::Scale:
-			matrix = matrix * D2D1::Matrix3x2F::Scale(m_Scale, scalePoint);
+			matrix = matrix * D2D1::Matrix3x2F::Scale(modifiers.scale, scalePoint);
 			break;
 
 		case TransformType::Skew:
-			matrix = matrix * D2D1::Matrix3x2F::Skew(m_Skew.x, m_Skew.y, skewPoint);
+			matrix = matrix * D2D1::Matrix3x2F::Skew(modifiers.skew.x, modifiers.skew.y, skewPoint);
 			break;
 
 		case TransformType::Offset:
-			matrix = matrix * D2D1::Matrix3x2F::Translation(m_Offset);
+			matrix = matrix * D2D1::Matrix3x2F::Translation(modifiers.offset);
 			break;
 		}
 	}
@@ -198,47 +206,41 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 	m_Shape = std::move(path);
 
-	m_Rotation = 0.0f;
-	m_RotationAnchor = D2D1::Point2F();
-	m_RotationAnchorDefined = false;
-	m_Scale = D2D1::SizeF(1.0f, 1.0f);
-	m_ScaleAnchor = D2D1::Point2F();
-	m_ScaleAnchorDefined = false;
-	m_Skew = D2D1::Point2F();
-	m_SkewAnchor = D2D1::Point2F();
-	m_SkewAnchorDefined = false;
-	m_Offset = D2D1::SizeF(0.0f, 0.0f);
+	m_TransformModifiers.reset();
 
 	return true;
 }
 
 void Shape::SetRotation(FLOAT rotation, FLOAT anchorX, FLOAT anchorY, bool anchorDefined)
 {
-	m_Rotation = rotation;
+	auto& modifiers = GetTransformModifiers();
+	modifiers.rotation = rotation;
 
-	m_RotationAnchor.x = anchorX;
-	m_RotationAnchor.y = anchorY;
-	m_RotationAnchorDefined = anchorDefined;
+	modifiers.rotationAnchor.x = anchorX;
+	modifiers.rotationAnchor.y = anchorY;
+	modifiers.rotationAnchorDefined = anchorDefined;
 }
 
 void Shape::SetScale(FLOAT scaleX, FLOAT scaleY, FLOAT anchorX, FLOAT anchorY, bool anchorDefined)
 {
-	m_Scale.width = scaleX;
-	m_Scale.height = scaleY;
+	auto& modifiers = GetTransformModifiers();
+	modifiers.scale.width = scaleX;
+	modifiers.scale.height = scaleY;
 
-	m_ScaleAnchor.x = anchorX;
-	m_ScaleAnchor.y = anchorY;
-	m_ScaleAnchorDefined = anchorDefined;
+	modifiers.scaleAnchor.x = anchorX;
+	modifiers.scaleAnchor.y = anchorY;
+	modifiers.scaleAnchorDefined = anchorDefined;
 }
 
 void Shape::SetSkew(FLOAT skewX, FLOAT skewY, FLOAT anchorX, FLOAT anchorY, bool anchorDefined)
 {
-	m_Skew.x = skewX;
-	m_Skew.y = skewY;
+	auto& modifiers = GetTransformModifiers();
+	modifiers.skew.x = skewX;
+	modifiers.skew.y = skewY;
 
-	m_SkewAnchor.x = anchorX;
-	m_SkewAnchor.y = anchorY;
-	m_SkewAnchorDefined = anchorDefined;
+	modifiers.skewAnchor.x = anchorX;
+	modifiers.skewAnchor.y = anchorY;
+	modifiers.skewAnchorDefined = anchorDefined;
 }
 
 void Shape::CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType)
@@ -469,20 +471,31 @@ void Shape::CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 	if (SUCCEEDED(hr)) brush = std::move(radial);
 }
 
+void Shape::ResetTransformOrder()
+{
+	if (m_TransformModifiers) m_TransformModifiers->order.clear();
+}
+
 bool Shape::AddToTransformOrder(TransformType type)
 {
 	// Don't add if 'type' is a duplicate
-	for (const auto& t : m_TransformOrder) if (t == type) return false;
+	if (m_TransformModifiers)
+	{
+		for (const auto& t : m_TransformModifiers->order) if (t == type) return false;
+	}
 
-	m_TransformOrder.emplace_back(type);
+	GetTransformModifiers().order.emplace_back(type);
 	return true;
 }
 
 void Shape::ValidateTransforms()
 {
+	if (!m_TransformModifiers) return;
+
 	// There should be no duplicates, but make sure the order is not larger
 	// than the defined amount of transforms
-	while (m_TransformOrder.size() >= (size_t)TransformType::MAX) m_TransformOrder.pop_back();
+	auto& order = m_TransformModifiers->order;
+	while (order.size() >= (size_t)TransformType::MAX) order.pop_back();
 
 	// Add any missing transforms
 	AddToTransformOrder(TransformType::Rotate);
@@ -493,20 +506,11 @@ void Shape::ValidateTransforms()
 
 void Shape::CloneModifiers(Shape* otherShape)
 {
-	otherShape->m_Offset = m_Offset;
 	otherShape->m_StrokeWidth = m_StrokeWidth;
-	otherShape->m_Rotation = m_Rotation;
-	otherShape->m_RotationAnchor = m_RotationAnchor;
-	otherShape->m_RotationAnchorDefined = m_RotationAnchorDefined;
-	otherShape->m_Scale = m_Scale;
-	otherShape->m_ScaleAnchor = m_ScaleAnchor;
-	otherShape->m_ScaleAnchorDefined = m_ScaleAnchorDefined;
-	otherShape->m_Skew = m_Skew;
-	otherShape->m_SkewAnchor = m_SkewAnchor;
-	otherShape->m_SkewAnchorDefined = m_SkewAnchorDefined;
 	otherShape->m_StrokeProperties = m_StrokeProperties;
 	otherShape->m_StrokeCustomDashes = m_StrokeCustomDashes;
-	otherShape->m_TransformOrder = m_TransformOrder;
+	otherShape->m_TransformModifiers.reset(
+		m_TransformModifiers ? new TransformModifiers(*m_TransformModifiers) : nullptr);
 
 	otherShape->CreateStrokeStyle();
 
@@ -531,6 +535,16 @@ void Shape::CloneModifiers(Shape* otherShape)
 	// Re-create brushes on next draw
 	otherShape->m_HasFillBrushChanged = true;
 	otherShape->m_HasStrokeBrushChanged = true;
+}
+
+Shape::TransformModifiers& Shape::GetTransformModifiers()
+{
+	if (!m_TransformModifiers)
+	{
+		m_TransformModifiers.reset(new TransformModifiers());
+	}
+
+	return *m_TransformModifiers;
 }
 
 }  // namespace Gfx
