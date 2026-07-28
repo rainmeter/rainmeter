@@ -473,29 +473,30 @@ void Shape::CreateRadialGradient(ID2D1DeviceContext* target, ID2D1GradientStopCo
 
 void Shape::ResetTransformOrder()
 {
-	if (m_TransformModifiers) m_TransformModifiers->order.clear();
+	if (m_TransformModifiers) m_TransformModifiers->order.fill(TransformType::Invalid);
 }
 
 bool Shape::AddToTransformOrder(TransformType type)
 {
 	// Don't add if 'type' is a duplicate
-	if (m_TransformModifiers)
+	auto& order = GetTransformModifiers().order;
+	for (const auto& t : order) if (t == type) return false;
+
+	for (auto& t : order)
 	{
-		for (const auto& t : m_TransformModifiers->order) if (t == type) return false;
+		if (t == TransformType::Invalid)
+		{
+			t = type;
+			return true;
+		}
 	}
 
-	GetTransformModifiers().order.emplace_back(type);
-	return true;
+	return false;
 }
 
 void Shape::ValidateTransforms()
 {
 	if (!m_TransformModifiers) return;
-
-	// There should be no duplicates, but make sure the order is not larger
-	// than the defined amount of transforms
-	auto& order = m_TransformModifiers->order;
-	while (order.size() >= (size_t)TransformType::MAX) order.pop_back();
 
 	// Add any missing transforms
 	AddToTransformOrder(TransformType::Rotate);
