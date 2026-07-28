@@ -652,15 +652,15 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		}
 		else if (CompareAndStrip(option, L"STROKESTARTCAP"))
 		{
-			shape->SetStrokeStartCap(parseCap(option));
+			shape->GetStrokeProperties().startCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKEENDCAP"))
 		{
-			shape->SetStrokeEndCap(parseCap(option));
+			shape->GetStrokeProperties().endCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKEDASHCAP"))
 		{
-			shape->SetStrokeDashCap(parseCap(option));
+			shape->GetStrokeProperties().dashCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKELINEJOIN"))
 		{
@@ -692,7 +692,9 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					}
 				}
 
-				shape->SetStrokeLineJoin(join, limit);
+				auto& properties = shape->GetStrokeProperties();
+				properties.lineJoin = join;
+				properties.miterLimit = limit;
 			}
 			else
 			{
@@ -721,7 +723,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				dashOffset = 0.0f;
 			}
 
-			shape->SetStrokeDashOffset(dashOffset);
+			shape->GetStrokeProperties().dashOffset = dashOffset;
 		}
 		else if (CompareAndStrip(option, L"STROKE"))
 		{

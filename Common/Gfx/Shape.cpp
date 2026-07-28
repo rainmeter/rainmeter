@@ -31,6 +31,15 @@ void Shape::BrushData::Invalidate()
 	changed = true;
 }
 
+void Shape::StrokeData::CopyFrom(const StrokeData& other)
+{
+	fill.CopyFrom(other.fill);
+	style.Reset();
+	customDashes = other.customDashes;
+	properties = other.properties;
+	width = other.width;
+}
+
 Shape::TransformModifiers::TransformModifiers() :
 	order(),
 	offset(D2D1::SizeF(0.0f, 0.0f)),
@@ -49,12 +58,10 @@ Shape::TransformModifiers::TransformModifiers() :
 Shape::Shape(ShapeType type) :
 	m_ShapeType(type),
 	m_IsCombined(false),
+	m_StrokeType(StrokeType::Default),
 	m_TransformModifiers(),
-	m_StrokeWidth(1.0f),
-	m_StrokeCustomDashes(),
-	m_StrokeProperties(D2D1::StrokeStyleProperties1()),
-	m_Fill(D2D1::ColorF(D2D1::ColorF::White)),
-	m_StrokeFill(D2D1::ColorF(D2D1::ColorF::Black))
+	m_StrokeData(),
+	m_Fill(D2D1::ColorF(D2D1::ColorF::White))
 {
 }
 
@@ -65,7 +72,7 @@ Shape::~Shape()
 void Shape::InvalidateDeviceResources()
 {
 	m_Fill.Invalidate();
-	m_StrokeFill.Invalidate();
+	if (m_StrokeData) m_StrokeData->fill.Invalidate();
 }
 
 D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
@@ -76,7 +83,7 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	const auto& modifiers = *m_TransformModifiers;
 
 	D2D1_RECT_F bounds;
-	HRESULT hr = m_Shape->GetWidenedBounds(m_StrokeWidth, nullptr, nullptr, &bounds);
+	HRESULT hr = m_Shape->GetWidenedBounds(GetStrokeWidth(), nullptr, nullptr, &bounds);
 	if (FAILED(hr)) return matrix;
 
 	D2D1_POINT_2F point = D2D1::Point2F(bounds.left, bounds.top);
@@ -125,8 +132,8 @@ D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
 
 	HRESULT hr = m_Shape->GetWidenedBounds(
-		m_StrokeWidth,
-		m_StrokeStyle.Get(),
+		GetStrokeWidth(),
+		GetStrokeStyle(),
 		matrix,
 		&strokedBounds);
 	if (FAILED(hr)) return D2D1::RectF();
@@ -158,8 +165,8 @@ bool Shape::ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transfor
 	BOOL contains = FALSE;
 	HRESULT hr = m_Shape->StrokeContainsPoint(
 		point,
-		m_StrokeWidth,
-		m_StrokeStyle.Get(),
+		GetStrokeWidth(),
+		GetStrokeStyle(),
 		matrix,
 		&contains);
 	if (SUCCEEDED(hr) && contains) return true;
@@ -246,26 +253,47 @@ void Shape::SetSkew(FLOAT skewX, FLOAT skewY, FLOAT anchorX, FLOAT anchorY, bool
 	modifiers.skewAnchorDefined = anchorDefined;
 }
 
-void Shape::CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType)
+void Shape::SetStrokeWidth(FLOAT strokeWidth)
 {
-	const FLOAT* dashes = nullptr;
-	if (!m_StrokeCustomDashes.empty())
+	if (strokeWidth == 0.0f)
 	{
-		m_StrokeProperties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
-		dashes = m_StrokeCustomDashes.data();
+		m_StrokeData.reset();
+		m_StrokeType = StrokeType::Disabled;
+		return;
 	}
 
-	m_StrokeProperties.transformType = transformType;
+	GetStrokeData().width = strokeWidth;
+}
 
-	UINT32 dashCount = (UINT32)m_StrokeCustomDashes.size();
+void Shape::CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType)
+{
+	if (m_StrokeType == StrokeType::Disabled) return;
+
+	if (!m_StrokeData)
+	{
+		if (transformType == D2D1_STROKE_TRANSFORM_TYPE_FIXED) return;
+		GetStrokeData();
+	}
+
+	auto& stroke = *m_StrokeData;
+	const FLOAT* dashes = nullptr;
+	if (!stroke.customDashes.empty())
+	{
+		stroke.properties.dashStyle = D2D1_DASH_STYLE_CUSTOM;
+		dashes = stroke.customDashes.data();
+	}
+
+	stroke.properties.transformType = transformType;
+
+	UINT32 dashCount = (UINT32)stroke.customDashes.size();
 	HRESULT hr = Canvas::c_D2DFactory->CreateStrokeStyle(
-		m_StrokeProperties,
+		stroke.properties,
 		dashes,
 		dashCount,
-		m_StrokeStyle.ReleaseAndGetAddressOf());
+		stroke.style.ReleaseAndGetAddressOf());
 
 	// If failed, make sure stroke is null
-	if (FAILED(hr)) m_StrokeStyle = nullptr;
+	if (FAILED(hr)) stroke.style = nullptr;
 }
 
 void Shape::SetFill(const D2D1_COLOR_F& color)
@@ -285,17 +313,17 @@ void Shape::SetFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F ra
 
 void Shape::SetStrokeFill(const D2D1_COLOR_F& color)
 {
-	m_StrokeFill.Set(color);
+	GetStrokeData().fill.Set(color);
 }
 
 void Shape::SetStrokeFill(FLOAT angle, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
-	m_StrokeFill.Set(angle, std::move(stops), altGamma);
+	GetStrokeData().fill.Set(angle, std::move(stops), altGamma);
 }
 
 void Shape::SetStrokeFill(D2D1_POINT_2F offset, D2D1_POINT_2F center, D2D1_POINT_2F radius, std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
-	m_StrokeFill.Set(offset, center, radius, std::move(stops), altGamma);
+	GetStrokeData().fill.Set(offset, center, radius, std::move(stops), altGamma);
 }
 
 Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1DeviceContext* target)
@@ -305,7 +333,8 @@ Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetFillBrush(ID2D1DeviceContext* targe
 
 Microsoft::WRL::ComPtr<ID2D1Brush> Shape::GetStrokeFillBrush(ID2D1DeviceContext* target)
 {
-	return GetBrush(target, m_StrokeFill);
+	if (m_StrokeType == StrokeType::Disabled) return nullptr;
+	return GetBrush(target, GetStrokeData().fill);
 }
 
 void Shape::BrushData::Set(const D2D1_COLOR_F& color)
@@ -486,16 +515,22 @@ void Shape::ValidateTransforms()
 
 void Shape::CloneModifiers(Shape* otherShape)
 {
-	otherShape->m_StrokeWidth = m_StrokeWidth;
-	otherShape->m_StrokeProperties = m_StrokeProperties;
-	otherShape->m_StrokeCustomDashes = m_StrokeCustomDashes;
+	otherShape->m_StrokeType = m_StrokeType;
 	otherShape->m_TransformModifiers.reset(
 		m_TransformModifiers ? new TransformModifiers(*m_TransformModifiers) : nullptr);
 
-	otherShape->CreateStrokeStyle();
+	if (m_StrokeData)
+	{
+		otherShape->m_StrokeData.reset(new StrokeData());
+		otherShape->m_StrokeData->CopyFrom(*m_StrokeData);
+		otherShape->CreateStrokeStyle();
+	}
+	else
+	{
+		otherShape->m_StrokeData.reset();
+	}
 
 	otherShape->m_Fill.CopyFrom(m_Fill);
-	otherShape->m_StrokeFill.CopyFrom(m_StrokeFill);
 }
 
 Shape::TransformModifiers& Shape::GetTransformModifiers()
@@ -506,6 +541,33 @@ Shape::TransformModifiers& Shape::GetTransformModifiers()
 	}
 
 	return *m_TransformModifiers;
+}
+
+Shape::StrokeData& Shape::GetStrokeData()
+{
+	m_StrokeType = StrokeType::Custom;
+
+	if (!m_StrokeData)
+	{
+		m_StrokeData.reset(new StrokeData());
+	}
+
+	return *m_StrokeData;
+}
+
+FLOAT Shape::GetStrokeWidth() const
+{
+	switch (m_StrokeType)
+	{
+	case StrokeType::Disabled: return 0.0f;
+	case StrokeType::Custom: return m_StrokeData->width;
+	default: return 1.0f;
+	}
+}
+
+ID2D1StrokeStyle1* Shape::GetStrokeStyle() const
+{
+	return m_StrokeType == StrokeType::Custom ? m_StrokeData->style.Get() : nullptr;
 }
 
 }  // namespace Gfx
