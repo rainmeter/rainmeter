@@ -10,7 +10,6 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Rectangle.h"
 
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");

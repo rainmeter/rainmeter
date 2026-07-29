@@ -90,32 +90,8 @@
     <ClCompile Include="Gfx\Util\D2DUtil.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Rectangle.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\RoundedRectangle.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\Shape.cpp">
       <Filter>Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Ellipse.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Line.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Arc.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Curve.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\QuadraticCurve.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Path.cpp">
-      <Filter>Gfx\Shapes</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp">
       <Filter>Gfx\Util</Filter>
@@ -227,32 +203,8 @@
     <ClInclude Include="Gfx\Util\D2DUtil.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Rectangle.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\RoundedRectangle.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\Shape.h">
       <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Ellipse.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Line.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Arc.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Curve.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\QuadraticCurve.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Path.h">
-      <Filter>Gfx\Shapes</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\D2DBitmapLoader.h">
       <Filter>Gfx\Util</Filter>
@@ -276,9 +228,6 @@
     </Filter>
     <Filter Include="Gfx\TextInlineFormat">
       <UniqueIdentifier>{7914a5da-66c9-4775-8666-d25595e6e58e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Gfx\Shapes">
-      <UniqueIdentifier>{b408511c-a54f-43e1-96bb-ac25be548071}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

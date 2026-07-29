@@ -10,8 +10,7 @@
 #include "Measure.h"
 #include "Logger.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Path.h"
-#include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shape.h"
 
 MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Autoscale(false),
@@ -278,7 +277,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
 			Y = meterRect.bottom - Y - 0.5f;
 
-			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
+			Gfx::Shape line = Gfx::Shape::Line(meterRect.left, Y, meterRect.right - 1.0f, Y);
 			line.SetStrokeFill(m_HorizontalColor);
 			line.CreateStrokeStyle(m_StrokeType);
 
@@ -290,9 +289,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	FLOAT offset = 0.55f;
 
 	// Draw all the lines
-	auto draw = [&](Gfx::Path& path, int& counter) -> void
+	auto draw = [&](Gfx::Shape& path, int& counter) -> void
 	{
-		path.Close(D2D1_FIGURE_END_OPEN);
+		path.ClosePath(D2D1_FIGURE_END_OPEN);
 		path.SetFill(Gfx::Util::c_Transparent_Color_F);
 		path.SetStrokeFill(m_Colors[counter]);
 		path.SetStrokeWidth((FLOAT)m_LineWidth);
@@ -335,10 +334,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldX = 0.0f;
 			calcX(oldX);
 
-			Gfx::Path path(
-				oldX,
-				!m_Flip ? meterRect.top : meterRect.bottom,
-				D2D1_FILL_MODE_WINDING);
+			Gfx::Shape path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
 			path.CreateStrokeStyle(m_StrokeType);
 
 			if (!m_Flip)
@@ -350,8 +346,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j);
+					path.AddPathLine(oldX, j - 1.0f);
+					path.AddPathLine(X, j);
 
 					oldX = X;
 				}
@@ -365,8 +361,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j - 2.0f);
+					path.AddPathLine(oldX, j - 1.0f);
+					path.AddPathLine(X, j - 2.0f);
 
 					oldX = X;
 				}
@@ -408,10 +404,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldY = 0.0f;
 			calcY(oldY);
 
-			Gfx::Path path(
-				!m_GraphStartLeft ? meterRect.left : meterRect.right,
-				oldY,
-				D2D1_FILL_MODE_WINDING);
+			Gfx::Shape path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
 			path.CreateStrokeStyle(m_StrokeType);
 
 			if (!m_GraphStartLeft)
@@ -423,8 +416,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j, Y);
+					path.AddPathLine(j - 1.0f, oldY);
+					path.AddPathLine(j, Y);
 
 					oldY = Y;
 				}
@@ -438,8 +431,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j - 2.0f, Y);
+					path.AddPathLine(j - 1.0f, oldY);
+					path.AddPathLine(j - 2.0f, Y);
 
 					oldY = Y;
 				}
