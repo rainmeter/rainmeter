@@ -26,8 +26,22 @@ std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 
 	for (const auto& pattern : patterns)
 	{
-		std::vector<Gfx::TextInlineRange> ranges;
+		if (pattern == L".*")
+		{
+			// Empty string is not a valid match.
+			if (str.empty())
+			{
+				inlineRanges.emplace_back();
+			}
+			else
+			{
+				inlineRanges.push_back({ { 0, (UINT32)str.length() } });
+			}
 
+			continue;
+		}
+
+		std::vector<Gfx::TextInlineRange> ranges;
 		int ovector[300];
 		const char* error;
 		Pcre re(pattern.c_str(), &error);
