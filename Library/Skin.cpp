@@ -93,6 +93,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_WindowMonitorScreenBounds(),
 	m_WindowMonitorWorkBounds(),
 	m_PreventWindowMove(false),
+	m_PendingDpiRedraw(false),
 	m_WindowDpi(USER_DEFAULT_SCREEN_DPI),
 	m_DpiScale(1.0f),
 	m_ZoomScale(1.0f),
@@ -686,45 +687,53 @@ POINT Skin::PhysicalToRelativeLogical(POINT point) const
 void Skin::UpdateWindowBounds(UINT flags)
 {
 	POINT pos;
+	const UINT oldDpi = m_WindowDpi;
 
 	// SetWindowPos synchronously sends WM_MOVE. Preserve a virtualized position while applying it;
 	// native moves and drags will still replace it with the physical point received by OnMove.
 	const bool restoreVirtualized = m_Position.IsVirtualized();
-	POINT restorePos = {};
-	bool dpiChanged = false;
+	POINT virtualizedPos = {};
 	if (restoreVirtualized)
 	{
-		restorePos = GetPositionAsVirtualized();
+		virtualizedPos = GetPositionAsVirtualized();
 		if (GetRainmeter().HasExeDpiOverride())
 		{
-			pos = restorePos;
+			pos = virtualizedPos;
 		}
 		else
 		{
 			UINT dpi = 0;
-			pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
+			pos = System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi);
 
 			// The conversion uses a DPI-unaware helper window and therefore selects the same
 			// target DPI as legacy Rainmeter. Apply it before moving the actual window so its
-			// center is evaluated using the target physical size in OnMove.
-			dpiChanged = dpi != 0 && dpi != m_WindowDpi;
-			if (dpiChanged) UpdateWindowDpi(dpi);
+			// target physical size is applied in the same window-position transaction.
+			if (dpi != 0 && dpi != m_WindowDpi) UpdateWindowDpi(dpi);
 		}
 	}
 	else
 	{
 		pos = GetPositionAsPhysical();
 	}
-	SetWindowPos(
-		m_Window, nullptr, pos.x, pos.y, GetPhysicalWindowW(), GetPhysicalWindowH(),
-		flags | SWP_NOZORDER | SWP_NOACTIVATE);
+
+	// SWP_NOSENDCHANGING bypasses OnWindowPosChanging, so resolve the destination monitor here.
+	// Internal moves retain the flag to avoid snapping and other position adjustments.
+	if (flags & SWP_NOSENDCHANGING)
+	{
+		const POINT center = { pos.x + GetPhysicalWindowW() / 2, pos.y + GetPhysicalWindowH() / 2 };
+		UpdateWindowMonitor(center);
+	}
+
+	flags |= SWP_NOZORDER | SWP_NOACTIVATE;
+	SetWindowPos(m_Window, nullptr, pos.x, pos.y, GetPhysicalWindowW(), GetPhysicalWindowH(), flags);
+
 	if (restoreVirtualized)
 	{
-		m_Position.SetVirtualized(restorePos);
+		m_Position.SetVirtualized(virtualizedPos);
 	}
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
-	if (dpiChanged && m_State == STATE_RUNNING) Redraw();
+	if (m_WindowDpi != oldDpi && m_State == STATE_RUNNING) Redraw();
 }
 
 bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
@@ -4457,15 +4466,70 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	if ((wp->flags & SWP_NOMOVE) == 0)
+	const bool windowMoving = (wp->flags & SWP_NOMOVE) == 0;
+	const bool windowSizing = (wp->flags & SWP_NOSIZE) == 0;
+	if (windowMoving && m_DragStartValid)
 	{
-		if (m_DragStartValid)
+		const POINT cursor = System::GetCursorPosition();
+		wp->x = m_DragStartWindowPos.x + (cursor.x - m_DragStartCursor.x);
+		wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
+	}
+
+	if (m_State == STATE_RUNNING && (windowMoving || windowSizing))
+	{
+		const POINT windowPos = windowMoving ? POINT { wp->x, wp->y } : GetPositionAsPhysical();
+		const int windowW = (wp->flags & SWP_NOSIZE) ? GetPhysicalWindowW() : wp->cx;
+		const int windowH = (wp->flags & SWP_NOSIZE) ? GetPhysicalWindowH() : wp->cy;
+		POINT center = { windowPos.x + windowW / 2, windowPos.y + windowH / 2 };
+		bool updateMonitor = true;
+
+		if (windowMoving && m_DragStartValid)
 		{
 			const POINT cursor = System::GetCursorPosition();
-			wp->x = m_DragStartWindowPos.x + (cursor.x - m_DragStartCursor.x);
-			wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
+			center.x = cursor.x - m_DragCursorOffset.x + m_DragStartWindowSize.cx / 2;
+			center.y = cursor.y - m_DragCursorOffset.y + m_DragStartWindowSize.cy / 2;
+
+			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
+			const auto* target = monitorInfo.GetFromPoint(center);
+			if (target && target->handle != m_WindowMonitor)
+			{
+				// Only switch DPI once the center of the window resized for the target monitor has crossed
+				// onto that monitor too.
+				center.x = cursor.x - MulDiv(m_DragCursorOffset.x, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowW(target->dpi) / 2;
+				center.y = cursor.y - MulDiv(m_DragCursorOffset.y, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowH(target->dpi) / 2;
+
+				const auto* resizedTarget = monitorInfo.GetFromPoint(center);
+				if (!resizedTarget || resizedTarget->handle != target->handle)
+				{
+					updateMonitor = false;
+				}
+			}
 		}
 
+		const UINT oldDpi = m_WindowDpi;
+		if (updateMonitor && UpdateWindowMonitor(center) && m_WindowDpi != oldDpi)
+		{
+			if (windowMoving && m_DragStartValid)
+			{
+				const POINT cursor = System::GetCursorPosition();
+				wp->x = cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi);
+				wp->y = cursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi);
+
+				// Re-anchor the system drag at the scaled grab point. The separately tracked
+				// original-window center remains unchanged for monitor selection.
+				m_DragStartCursor = cursor;
+				m_DragStartWindowPos = { wp->x, wp->y };
+			}
+
+			wp->cx = GetPhysicalWindowW();
+			wp->cy = GetPhysicalWindowH();
+			wp->flags &= ~SWP_NOSIZE;
+			m_PendingDpiRedraw = true;
+		}
+	}
+
+	if (windowMoving)
+	{
 		if (m_SnapEdges && !(IsCtrlKeyDown() || IsShiftKeyDown()))
 		{
 			// only process movement (ignore anything without winpos values)
@@ -4526,6 +4590,17 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+LRESULT Skin::OnWindowPosChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	const LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
+	if (m_PendingDpiRedraw)
+	{
+		m_PendingDpiRedraw = false;
+		Redraw();
+	}
+	return result;
 }
 
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
@@ -5160,60 +5235,6 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	const POINT oldPos = GetPositionAsPhysical();
 	m_Position.SetPhysical({ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) });
 
-	if (m_State == STATE_RUNNING)
-	{
-		std::optional<POINT> center;
-		bool updateMonitor = true;
-
-		if (m_DragStartValid)
-		{
-			const POINT cursor = System::GetCursorPosition();
-			center = cursor;
-			center->x -= m_DragCursorOffset.x - m_DragStartWindowSize.cx / 2;
-			center->y -= m_DragCursorOffset.y - m_DragStartWindowSize.cy / 2;
-
-			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
-			const auto* target = monitorInfo.GetFromPoint(*center);
-			if (target && target->handle != m_WindowMonitor)
-			{
-				// Only switch DPI once the center of the window resized for the target monitor has crossed
-				// onto that monitor too.
-				center->x = cursor.x - MulDiv(m_DragCursorOffset.x, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowW(target->dpi) / 2;
-				center->y = cursor.y - MulDiv(m_DragCursorOffset.y, target->dpi, m_DragCursorOffsetDpi) + GetPhysicalWindowH(target->dpi) / 2;
-
-				const auto* resizedTarget = monitorInfo.GetFromPoint(*center);
-				if (!resizedTarget || resizedTarget->handle != target->handle)
-				{
-					updateMonitor = false;
-				}
-			}
-		}
-
-		const UINT oldDpi = m_WindowDpi;
-		if (updateMonitor && UpdateWindowMonitor(center) && m_WindowDpi != oldDpi)
-		{
-			if (m_DragStartValid)
-			{
-				const POINT cursor = System::GetCursorPosition();
-				m_Position.SetPhysical({
-					cursor.x - MulDiv(m_DragCursorOffset.x, m_WindowDpi, m_DragCursorOffsetDpi),
-					cursor.y - MulDiv(m_DragCursorOffset.y, m_WindowDpi, m_DragCursorOffsetDpi) });
-
-				// Re-anchor the system drag at the scaled grab point. The separately tracked
-				// original-window center remains unchanged for monitor selection.
-				m_DragStartCursor = cursor;
-				m_DragStartWindowPos = GetPositionAsPhysical();
-				UpdateWindowBounds(SWP_NOSENDCHANGING);
-			}
-			else
-			{
-				UpdateWindowBounds(SWP_NOMOVE | SWP_NOSENDCHANGING);
-			}
-
-			Redraw();
-		}
-	}
-
 	if (m_Dragging)
 	{
 		ComputeOptionValueFromPosition();
@@ -5355,6 +5376,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK)
 	MESSAGE(OnCaptureChanged, WM_CAPTURECHANGED)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
+	MESSAGE(OnWindowPosChanged, WM_WINDOWPOSCHANGED)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_METERWINDOW_DELAYED_MOVE)

@@ -274,6 +274,7 @@ protected:
 	LRESULT OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnWindowPosChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -461,6 +462,7 @@ private:
 	RECT m_WindowMonitorScreenBounds;
 	RECT m_WindowMonitorWorkBounds;
 	bool m_PreventWindowMove;
+	bool m_PendingDpiRedraw;
 
 	UINT m_WindowDpi;
 	float m_DpiScale;
