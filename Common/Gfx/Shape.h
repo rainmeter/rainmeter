@@ -58,6 +58,7 @@ class Shape
 public:
 	Shape(const Shape& other);
 	Shape(Shape&& other) = default;
+	Shape& operator=(Shape&& other) = default;
 	~Shape();
 
 	static std::optional<Shape> Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
@@ -73,12 +74,12 @@ public:
 
 	ShapeType GetShapeType() { return m_ShapeType; }
 
-	D2D1_MATRIX_3X2_F GetShapeMatrix();
-	D2D1_RECT_F GetBounds(bool useMatrix = true);
+	D2D1_MATRIX_3X2_F GetShapeMatrix() const;
+	D2D1_RECT_F GetBounds(bool useMatrix = true) const;
 	bool IsShapeDefined();
 	bool ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transformationMatrix = D2D1::Matrix3x2F::Identity());
 
-	bool IsCombined() { return m_IsCombined; }
+	bool IsCombined() const { return m_IsCombined; }
 	void SetCombined(bool combined = true) { m_IsCombined = combined; }
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
@@ -120,7 +121,6 @@ private:
 
 	Shape(ShapeType type);
 	Shape& operator=(const Shape& other) = delete;
-	Shape& operator=(Shape&& other) = delete;
 
 	enum class StrokeType : BYTE
 	{
