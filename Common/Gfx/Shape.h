@@ -20,19 +20,6 @@ namespace Gfx {
 
 class Canvas;
 
-enum class ShapeType : BYTE
-{
-	None = 0,
-	Rectangle = 100,
-	RoundedRectangle,
-	Ellipse,
-	Line,
-	Arc,
-	Curve,
-	QuadraticCurve,
-	Path
-};
-
 enum class TransformType : BYTE
 {
 	Invalid = 0,
@@ -72,8 +59,6 @@ public:
 	static std::optional<Shape> Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode);
 
 	void InvalidateDeviceResources();
-
-	ShapeType GetShapeType() { return m_ShapeType; }
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix() const;
 	D2D1_RECT_F GetBounds(bool useMatrix = true) const;
@@ -120,7 +105,7 @@ public:
 private:
 	friend class Canvas;
 
-	Shape(ShapeType type);
+	Shape() = default;
 	Shape& operator=(const Shape& other) = delete;
 
 	enum class StrokeType : BYTE
@@ -209,7 +194,6 @@ private:
 	FLOAT GetStrokeWidth() const;
 	ID2D1StrokeStyle1* GetStrokeStyle() const;
 
-	ShapeType m_ShapeType;
 	bool m_IsCombined = false;
 	StrokeType m_StrokeType = StrokeType::Default;
 

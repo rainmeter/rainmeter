@@ -45,13 +45,7 @@ void Shape::StrokeData::CopyFrom(const StrokeData& other)
 	width = other.width;
 }
 
-Shape::Shape(ShapeType type) :
-	m_ShapeType(type)
-{
-}
-
 Shape::Shape(const Shape& other) :
-	m_ShapeType(other.m_ShapeType),
 	m_IsCombined(other.m_IsCombined),
 	m_StrokeType(other.m_StrokeType),
 	m_TransformModifiers(other.m_TransformModifiers ? new TransformModifiers(*other.m_TransformModifiers) : nullptr),
@@ -73,12 +67,12 @@ Shape::~Shape()
 
 Shape Shape::None()
 {
-	return Shape(ShapeType::None);
+	return Shape();
 }
 
 std::optional<Shape> Shape::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height)
 {
-	Shape shape(ShapeType::Rectangle);
+	Shape shape;
 	const D2D1_RECT_F rect = D2D1::RectF(x, y, x + width, y + height);
 	HRESULT hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, (ID2D1RectangleGeometry**)shape.m_Geometry.GetAddressOf());
 	if (FAILED(hr)) return std::nullopt;
@@ -87,7 +81,7 @@ std::optional<Shape> Shape::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT heigh
 
 std::optional<Shape> Shape::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius)
 {
-	Shape shape(ShapeType::RoundedRectangle);
+	Shape shape;
 	const D2D1_ROUNDED_RECT rect = { D2D1::RectF(x, y, x + width, y + height), xRadius, yRadius };
 	HRESULT hr = Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(
 		rect, (ID2D1RoundedRectangleGeometry**)shape.m_Geometry.GetAddressOf());
@@ -97,7 +91,7 @@ std::optional<Shape> Shape::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOA
 
 std::optional<Shape> Shape::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius)
 {
-	Shape shape(ShapeType::Ellipse);
+	Shape shape;
 	const D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F(x, y), xRadius, yRadius);
 	HRESULT hr = Canvas::c_D2DFactory->CreateEllipseGeometry(ellipse, (ID2D1EllipseGeometry**)shape.m_Geometry.GetAddressOf());
 	if (FAILED(hr)) return std::nullopt;
@@ -108,7 +102,6 @@ std::optional<Shape> Shape::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2)
 {
 	auto shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
 	if (!shape) return std::nullopt;
-	shape->m_ShapeType = ShapeType::Line;
 	shape->AddPathLine(x2, y2);
 	shape->ClosePath(D2D1_FIGURE_END_OPEN);
 	return shape;
@@ -118,7 +111,6 @@ std::optional<Shape> Shape::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xR
 {
 	auto shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
 	if (!shape) return std::nullopt;
-	shape->m_ShapeType = ShapeType::Arc;
 	shape->AddPathArc(x2, y2, xRadius, yRadius, angle, sweep, size);
 	shape->ClosePath(ending);
 	return shape;
@@ -128,7 +120,6 @@ std::optional<Shape> Shape::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT 
 {
 	auto shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
 	if (!shape) return std::nullopt;
-	shape->m_ShapeType = ShapeType::Curve;
 	shape->AddPathCubicCurve(x2, y2, cx1, cy1, cx2, cy2);
 	shape->ClosePath(ending);
 	return shape;
@@ -138,7 +129,6 @@ std::optional<Shape> Shape::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y
 {
 	auto shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
 	if (!shape) return std::nullopt;
-	shape->m_ShapeType = ShapeType::QuadraticCurve;
 	shape->AddPathQuadraticCurve(x2, y2, cx, cy);
 	shape->ClosePath(ending);
 	return shape;
@@ -146,7 +136,7 @@ std::optional<Shape> Shape::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y
 
 std::optional<Shape> Shape::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode)
 {
-	Shape shape(ShapeType::Path);
+	Shape shape;
 	auto& data = shape.GetPathData();
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(data.path.GetAddressOf());
 	if (FAILED(hr)) return std::nullopt;
