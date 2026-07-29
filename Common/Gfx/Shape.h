@@ -61,6 +61,7 @@ public:
 	Shape& operator=(Shape&& other) = default;
 	~Shape();
 
+	static Shape None();
 	static std::optional<Shape> Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
 	static std::optional<Shape> RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
 	static std::optional<Shape> Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius);
