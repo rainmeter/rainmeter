@@ -53,12 +53,6 @@ MeterShape::~MeterShape()
 
 void MeterShape::Dispose()
 {
-	for (auto& shape : m_Shapes)
-	{
-		delete shape;
-		shape = nullptr;
-	}
-
 	m_Shapes.clear();
 }
 
@@ -68,7 +62,7 @@ void MeterShape::InvalidateDeviceResources()
 
 	for (auto& shape : m_Shapes)
 	{
-		shape->InvalidateDeviceResources();
+		shape.InvalidateDeviceResources();
 	}
 }
 
@@ -121,9 +115,9 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		for (const auto& shape : m_Shapes)
 		{
-			if (shape->IsCombined()) continue;
+			if (shape.IsCombined()) continue;
 
-			D2D1_RECT_F bounds = shape->GetBounds();
+			D2D1_RECT_F bounds = shape.GetBounds();
 			int shapeW = (int)ceil(bounds.right);  // Account for 'half-pixels'
 			int shapeH = (int)ceil(bounds.bottom);
 			if (newW < shapeW) newW = shapeW;
@@ -153,11 +147,11 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 	canvas.SetAntiAliasing(true);  // Temporary
 
-	for (const auto& shape : m_Shapes)
+	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined())
+		if (!shape.IsCombined())
 		{
-			canvas.DrawGeometry(*shape, (int)padding.left, (int)padding.top);
+			canvas.DrawGeometry(shape, (int)padding.left, (int)padding.top);
 		}
 	}
 
@@ -176,7 +170,7 @@ bool MeterShape::HitTest(int x, int y)
 	D2D1_POINT_2F point = D2D1::Point2F((FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()));
 	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
+		if (!shape.IsCombined() && shape.ContainsPoint(point, matrix))
 		{
 			return true;
 		}
@@ -200,7 +194,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	{
 		if (shape)
 		{
-			m_Shapes.push_back(new Gfx::Shape(std::move(*shape)));
+			m_Shapes.emplace_back(std::move(*shape));
 			return true;
 		}
 
@@ -342,7 +336,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
+			if (open) m_Shapes.back().SetFill(Gfx::Util::c_Transparent_Color_F);
 			return true;
 		}
 		else
@@ -390,7 +384,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
+			if (open) m_Shapes.back().SetFill(Gfx::Util::c_Transparent_Color_F);
 
 			return true;
 		}
@@ -430,7 +424,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		// Set the 'combined' flag on this dummy shape so it isn't drawn in cases
 		// where the combined shape is not valid (see CreateCombinedShapes)
-		m_Shapes.back()->SetCombined();
+		m_Shapes.back().SetCombined();
 		isCombined = true;
 		return true;
 	}
@@ -477,19 +471,13 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 		if (parentId < m_Shapes.size())
 		{
-			Gfx::Shape* copiedShape = new Gfx::Shape(*m_Shapes[parentId]);
-			copiedShape->SetCombined(false);
+			m_Shapes[shapeId] = Gfx::Shape(m_Shapes[parentId]);
+			m_Shapes[shapeId].SetCombined(false);
 
-			// Delete and remove the shape from |m_Shapes|, then insert the
-			// copied shape into the position of the deleted shape.
-			delete m_Shapes[shapeId];
-			auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
-			m_Shapes.insert(iter, copiedShape);
+			m_Shapes[parentId].SetCombined();
 
-			m_Shapes[parentId]->SetCombined();
-
-			// Combine with empty shape
-			m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
+			// Bake the parent shape's transform into the copied geometry.
+			m_Shapes[shapeId].CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
 		}
 		else
 		{
@@ -530,9 +518,9 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 		if (id < m_Shapes.size())
 		{
-			m_Shapes[id]->SetCombined();
+			m_Shapes[id].SetCombined();
 
-			if (!m_Shapes[shapeId]->CombineWith(m_Shapes[id], mode))
+			if (!m_Shapes[shapeId].CombineWith(&m_Shapes[id], mode))
 			{
 				showError(L"could not combine with: Shape", option.c_str());
 				return false;
@@ -545,7 +533,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 		}
 	}
 
-	m_Shapes[shapeId]->ValidateTransforms();
+	m_Shapes[shapeId].ValidateTransforms();
 	return true;
 }
 
@@ -573,7 +561,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			if (CompareAndStrip(option, L"COLOR"))
 			{
 				auto color = parser.ParseColor(option.c_str());
-				shape->SetFill(color);
+				shape.SetFill(color);
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
@@ -621,19 +609,19 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				width = 0.0f;
 			}
 
-			shape->SetStrokeWidth(width);
+			shape.SetStrokeWidth(width);
 		}
 		else if (CompareAndStrip(option, L"STROKESTARTCAP"))
 		{
-			shape->GetStrokeProperties().startCap = parseCap(option);
+			shape.GetStrokeProperties().startCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKEENDCAP"))
 		{
-			shape->GetStrokeProperties().endCap = parseCap(option);
+			shape.GetStrokeProperties().endCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKEDASHCAP"))
 		{
-			shape->GetStrokeProperties().dashCap = parseCap(option);
+			shape.GetStrokeProperties().dashCap = parseCap(option);
 		}
 		else if (CompareAndStrip(option, L"STROKELINEJOIN"))
 		{
@@ -665,7 +653,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					}
 				}
 
-				auto& properties = shape->GetStrokeProperties();
+				auto& properties = shape.GetStrokeProperties();
 				properties.lineJoin = join;
 				properties.miterLimit = limit;
 			}
@@ -684,7 +672,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				dashes.emplace_back(value);
 			}
 
-			shape->SetStrokeDashes(dashes);
+			shape.SetStrokeDashes(dashes);
 		}
 		else if (CompareAndStrip(option, L"STROKEDASHOFFSET"))
 		{
@@ -696,14 +684,14 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 				dashOffset = 0.0f;
 			}
 
-			shape->GetStrokeProperties().dashOffset = dashOffset;
+			shape.GetStrokeProperties().dashOffset = dashOffset;
 		}
 		else if (CompareAndStrip(option, L"STROKE"))
 		{
 			if (CompareAndStrip(option, L"COLOR"))
 			{
 				auto color = parser.ParseColor(option.c_str());
-				shape->SetStrokeFill(color);
+				shape.SetStrokeFill(color);
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
@@ -770,12 +758,12 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 
 	if (!recursive)
 	{
-		shape->CreateStrokeStyle();
-		shape->ValidateTransforms();
+		shape.CreateStrokeStyle();
+		shape.ValidateTransforms();
 	}
 }
 
-bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape, std::wstring& transform)
+bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform)
 {
 	if (CompareAndStrip(transform, L"OFFSET"))
 	{
@@ -784,7 +772,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 		{
 			FLOAT x = (FLOAT)parser.ParseDouble(offset[0].c_str(), 0.0);
 			FLOAT y = (FLOAT)parser.ParseDouble(offset[1].c_str(), 0.0);
-			shape->SetOffset(x, y);
+			shape.SetOffset(x, y);
 		}
 		else
 		{
@@ -810,7 +798,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 				anchorDefined = true;
 			}
 
-			shape->SetRotation(rotation, anchorX, anchorY, anchorDefined);
+			shape.SetRotation(rotation, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -839,7 +827,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 				anchorDefined = true;
 			}
 
-			shape->SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
+			shape.SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -868,7 +856,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 				anchorDefined = true;
 			}
 
-			shape->SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
+			shape.SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -882,7 +870,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 		auto order = ConfigParser::Tokenize(transform, L",");
 		if (order.size() > 0)
 		{
-			shape->ResetTransformOrder();
+			shape.ResetTransformOrder();
 			Gfx::TransformType type = Gfx::TransformType::Invalid;
 			for (auto& t : order)
 			{
@@ -892,7 +880,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape* shape,
 				else if (CompareAndStrip(t, L"OFFSET")) type = Gfx::TransformType::Offset;
 
 				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t.c_str());
-				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
+				else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
 			}
 		}
 		else
@@ -946,11 +934,11 @@ bool MeterShape::ParseGradient(ConfigParser& parser, Gfx::BrushType type, const 
 
 			if (isStroke)
 			{
-				shape->SetStrokeFill(angle, stops, altGamma);
+				shape.SetStrokeFill(angle, stops, altGamma);
 				return true;
 			}
 
-			shape->SetFill(angle, stops, altGamma);
+			shape.SetFill(angle, stops, altGamma);
 			return true;
 		}
 
@@ -984,7 +972,7 @@ bool MeterShape::ParseGradient(ConfigParser& parser, Gfx::BrushType type, const 
 
 				if (isStroke)
 				{
-					shape->SetStrokeFill(
+					shape.SetStrokeFill(
 						D2D1::Point2F(offsetX, offsetY),
 						D2D1::Point2F(centerX, centerY),
 						D2D1::Point2F(radiusX, radiusY),
@@ -994,7 +982,7 @@ bool MeterShape::ParseGradient(ConfigParser& parser, Gfx::BrushType type, const 
 					return true;
 				}
 
-				shape->SetFill(
+				shape.SetFill(
 					D2D1::Point2F(offsetX, offsetY),
 					D2D1::Point2F(centerX, centerY),
 					D2D1::Point2F(radiusX, radiusY),
@@ -1138,7 +1126,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 	// This can be overridden if an actual 'Fill Color' is defined.
 	if (open) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
 
-	m_Shapes.push_back(new Gfx::Shape(std::move(*shape)));
+	m_Shapes.emplace_back(std::move(*shape));
 
 	return true;
 }

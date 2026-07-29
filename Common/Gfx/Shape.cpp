@@ -209,7 +209,7 @@ void Shape::InvalidateDeviceResources()
 	if (m_StrokeData) m_StrokeData->fill.Invalidate();
 }
 
-D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
+D2D1_MATRIX_3X2_F Shape::GetShapeMatrix() const
 {
 	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
 	if (!m_TransformModifiers) return matrix;
@@ -259,7 +259,7 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	return matrix;
 }
 
-D2D1_RECT_F Shape::GetBounds(bool useMatrix)
+D2D1_RECT_F Shape::GetBounds(bool useMatrix) const
 {
 	D2D1_RECT_F strokedBounds;
 	D2D1_RECT_F fillBounds;
