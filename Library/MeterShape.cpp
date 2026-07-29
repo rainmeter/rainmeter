@@ -97,7 +97,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		else
 		{
 			args.erase(args.begin());
-			ParseModifiers(args, parser, section);
+			ParseModifiers(m_Shapes[i - 1], args, parser, section);
 		}
 	}
 
@@ -190,7 +190,7 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
 	const WCHAR* section, bool& isCombined, size_t keyId)
 {
-	auto createShape = [&](std::optional<Gfx::Shape> shape) -> bool
+	auto addShape = [&](std::optional<Gfx::Shape> shape) -> bool
 	{
 		if (shape)
 		{
@@ -217,12 +217,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT w = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT h = (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0);
 
-			if (!createShape(Gfx::Shape::Rectangle(x, y, w, h)))
-			{
-				return false;
-			}
-
-			return true;
+			return addShape(Gfx::Shape::Rectangle(x, y, w, h));
 		}
 		else if (tokSize > 4)
 		{
@@ -235,12 +230,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 				(FLOAT)parser.ParseDouble(tokens[5].c_str(), 0.0) :
 				xRadius;
 
-			if (!createShape(Gfx::Shape::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
-			{
-				return false;
-			}
-
-			return true;
+			return addShape(Gfx::Shape::RoundedRectangle(x, y, w, h, xRadius, yRadius));
 		}
 		else
 		{
@@ -260,12 +250,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT xRadius = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT yRadius = (tokSize > 3) ? (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0) : xRadius;
 
-			if (!createShape(Gfx::Shape::Ellipse(x, y, xRadius, yRadius)))
-			{
-				return false;
-			}
-
-			return true;
+			return addShape(Gfx::Shape::Ellipse(x, y, xRadius, yRadius));
 		}
 		else
 		{
@@ -285,12 +270,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT x2 = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT y2 = (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0);
 
-			if (!createShape(Gfx::Shape::Line(x1, y1, x2, y2)))
-			{
-				return false;
-			}
-
-			return true;
+			return addShape(Gfx::Shape::Line(x1, y1, x2, y2));
 		}
 		else
 		{
@@ -329,15 +309,13 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			const auto sweepDirection = sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE;
 			const auto arcSize = size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
 			const auto figureEnd = open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED;
-			if (!createShape(Gfx::Shape::Arc(x1, y1, x2, y2, xRadius, yRadius, angle, sweepDirection, arcSize, figureEnd)))
-			{
-				return false;
-			}
+			auto shape = Gfx::Shape::Arc(x1, y1, x2, y2, xRadius, yRadius, angle, sweepDirection, arcSize, figureEnd);
 
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back().SetFill(Gfx::Util::c_Transparent_Color_F);
-			return true;
+			if (open && shape) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
+
+			return addShape(std::move(shape));
 		}
 		else
 		{
@@ -364,10 +342,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			{
 				if (tokSize == 7) open = parser.ParseInt(tokens[6].c_str(), 0) == 0;
 
-				if (!createShape(Gfx::Shape::QuadraticCurve(x1, y1, x2, y2, cx1, cy1, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
-				{
-					return false;
-				}
+				auto shape = Gfx::Shape::QuadraticCurve(x1, y1, x2, y2, cx1, cy1, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+				if (open && shape) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
+
+				return addShape(std::move(shape));
 			}
 			else if (tokSize > 7)
 			{
@@ -376,17 +354,11 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 				if (tokSize > 8) open = parser.ParseInt(tokens[8].c_str(), 0) == 0;
 
-				if (!createShape(Gfx::Shape::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
-				{
-					return false;
-				}
+				auto shape = Gfx::Shape::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+				if (open && shape) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
+
+				return addShape(std::move(shape));
 			}
-
-			// Set the 'Fill Color' to transparent for open shapes.
-			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back().SetFill(Gfx::Util::c_Transparent_Color_F);
-
-			return true;
 		}
 	}
 	else if (CompareAndStrip(shapeName, L"PATH1"))
@@ -417,16 +389,12 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
 		// the order in which the shapes are defined.
 
-		if (!createShape(Gfx::Shape::Rectangle(0.0f, 0.0f, 0.0f, 0.0f)))
-		{
-			return false;
-		}
+		auto shape = Gfx::Shape::Rectangle(0.0f, 0.0f, 0.0f, 0.0f);
+		// Keep the dummy hidden if the combined shape cannot be created.
+		if (shape) shape->SetCombined();
 
-		// Set the 'combined' flag on this dummy shape so it isn't drawn in cases
-		// where the combined shape is not valid (see CreateCombinedShapes)
-		m_Shapes.back().SetCombined();
 		isCombined = true;
-		return true;
+		return addShape(std::move(shape));
 	}
 
 	LogErrorF(this, L"Invalid shape: %s", shapeName.c_str());
@@ -537,7 +505,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 	return true;
 }
 
-void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
 {
 	auto parseCap = [this](std::wstring& cap) -> D2D1_CAP_STYLE
 	{
@@ -552,8 +520,6 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 		}
 	};
 
-	auto& shape = m_Shapes.back();
-
 	for (auto& option : args)
 	{
 		if (CompareAndStrip(option, L"FILL"))
@@ -566,7 +532,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -574,7 +540,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -582,7 +548,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -590,7 +556,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -696,7 +662,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -704,7 +670,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -712,7 +678,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
 				}
@@ -720,7 +686,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
 				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
+				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
 				}
@@ -741,7 +707,7 @@ void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& p
 					if (!key.empty())
 					{
 						auto newArgs = ConfigParser::TokenizeWithPairedPunctuation(key, L'|', PairedPunctuation::Parentheses);
-						ParseModifiers(newArgs, parser, section, true);
+						ParseModifiers(shape, newArgs, parser, section, true);
 					}
 				}
 			}
@@ -894,10 +860,8 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 	return false;
 }
 
-bool MeterShape::ParseGradient(ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke)
+bool MeterShape::ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke)
 {
-	auto& shape = m_Shapes.back();
-
 	auto params = ConfigParser::TokenizeWithPairedPunctuation(options, L'|', PairedPunctuation::Parentheses);
 	size_t paramSize = params.size();
 	if (paramSize < 2) return false;
