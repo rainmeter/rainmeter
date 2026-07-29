@@ -12,6 +12,8 @@
 #include <optional>
 #include <string>
 
+class MathParser;
+
 // Bounded parser for incrementally consuming strings and numbers from a range.
 //
 // Consume advances on a match. ConsumeRest additionally requires the match to reach the end of
@@ -62,12 +64,18 @@ public:
 
 	std::optional<double> ConsumeDouble(Option option = None);
 	std::optional<double> ConsumeRestDouble(Option option = None);
+	std::optional<double> ConsumeDoubleOrFormula(const MathParser& mathParser, Option option = None);
+	std::optional<double> ConsumeRestDoubleOrFormula(const MathParser& mathParser, Option option = None);
 
 	std::optional<int> ConsumeInt(Option option = None);
 	std::optional<int> ConsumeRestInt(Option option = None);
+	std::optional<int> ConsumeIntOrFormula(const MathParser& mathParser, Option option = None);
+	std::optional<int> ConsumeRestIntOrFormula(const MathParser& mathParser, Option option = None);
 
 	std::optional<UINT> ConsumeUInt(Option option = None);
 	std::optional<UINT> ConsumeRestUInt(Option option = None);
+	std::optional<UINT> ConsumeUIntOrFormula(const MathParser& mathParser, Option option = None);
+	std::optional<UINT> ConsumeRestUIntOrFormula(const MathParser& mathParser, Option option = None);
 
 	void SkipWhitespace();
 	bool IsWhitespace() const;

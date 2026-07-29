@@ -21,7 +21,16 @@ public:
 
 	const WCHAR* Check(const WCHAR* formula) const;
 	const WCHAR* CheckedParse(const WCHAR* formula, double* result) const;
-	const WCHAR* Parse(const WCHAR* formula, double* result) const;
+
+	enum class ParseMode
+	{
+		EntireString,
+
+		// Parse a parenthesized formula and stop immediately after its outer closing bracket.
+		MatchingClosingBracket
+	};
+
+	const WCHAR* Parse(const WCHAR* formula, double* result, ParseMode mode = ParseMode::EntireString, const WCHAR** parseEnd = nullptr) const;
 
 	bool IsDelimiter(WCHAR ch) const;
 
