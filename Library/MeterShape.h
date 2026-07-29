@@ -8,6 +8,7 @@
 #ifndef __METERSHAPE_H__
 #define __METERSHAPE_H__
 
+#include "../Common/Map.h"
 #include "../Common/Gfx/Shape.h"
 #include "Meter.h"
 
@@ -42,8 +43,10 @@ private:
 	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform);
 	bool ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
 	bool ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FILL_MODE fillMode);
+	std::wstring ReadShapeOption(ConfigParser& parser, const WCHAR* section, std::wstring key);
 
 	std::vector<Gfx::Shape> m_Shapes;
+	StringMap<std::wstring> m_ShapeOptions;
 };
 
 #endif
