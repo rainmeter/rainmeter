@@ -279,9 +279,16 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) cons
 	return error;
 }
 
-const WCHAR* MathParser::Parse(const WCHAR* formula, double* result) const
+const WCHAR* MathParser::Parse(const WCHAR* formula, double* result, ParseMode mode, const WCHAR** parseEnd) const
 {
 	static WCHAR errorBuffer[128];
+	if (parseEnd) *parseEnd = formula;
+	if (mode == ParseMode::MatchingClosingBracket)
+	{
+		const WCHAR* current = formula;
+		while (*current == L' ' || *current == L'\t' || *current == L'\n') ++current;
+		if (*current != L'(') return eSyntax;
+	}
 
 	if (!*formula)
 	{
@@ -308,7 +315,12 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, double* result) const
 		case Token::Error:
 			return eSyntax;
 
-		case Token::Final:
+	case Token::Final:
+			if (mode == ParseMode::MatchingClosingBracket)
+			{
+				return eBrackets;
+			}
+
 			if ((error = CalcToObr(parser)) != nullptr)
 			{
 				return error;
@@ -321,6 +333,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, double* result) const
 			{
 				// Done!
 				*result = parser.numStack[0];
+				if (parseEnd) *parseEnd = lexer.string;
 				return nullptr;
 			}
 			break;
@@ -342,6 +355,16 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, double* result) const
 			case Operator::ClosingBracket:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
+
+					if (mode == ParseMode::MatchingClosingBracket && parser.opTop == 0)
+					{
+						if ((error = CalcToObr(parser)) != nullptr) return error;
+						if (parser.opTop != -1 || parser.valTop != 0) return eInternal;
+
+						*result = parser.numStack[0];
+						if (parseEnd) *parseEnd = lexer.string;
+						return nullptr;
+					}
 				}
 				break;
 

@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StringParser.h"
+#include "MathParser.h"
 #include "UnitTest.h"
 
 TEST_CLASS(Common_StringParser_Test)
@@ -110,5 +111,36 @@ public:
 
 		Assert::IsFalse(parser.ConsumeRestInt().has_value());
 		Assert::IsTrue(parser.ConsumeRest(L"42tail"));
+	}
+
+	TEST_METHOD(TestConsumeIntOrFormula)
+	{
+		MathParser mathParser;
+		StringParser parser(L"(1 + min(2, 3))tail");
+
+		const auto value = parser.ConsumeIntOrFormula(mathParser);
+		Assert::IsTrue(value.has_value());
+		Assert::AreEqual(3, *value);
+		Assert::IsTrue(parser.ConsumeRest(L"tail"));
+	}
+
+	TEST_METHOD(TestConsumeRestDoubleOrFormulaAllowWhitespace)
+	{
+		MathParser mathParser;
+		StringParser parser(L" \t(5 / 2)\r\n");
+
+		const auto value = parser.ConsumeRestDoubleOrFormula(mathParser, StringParser::AllowWhitespace);
+		Assert::IsTrue(value.has_value());
+		Assert::AreEqual(2.5, *value, 0.0001);
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeRestFormulaRollback)
+	{
+		MathParser mathParser;
+		StringParser parser(L"(1 + 2)tail");
+
+		Assert::IsFalse(parser.ConsumeRestIntOrFormula(mathParser).has_value());
+		Assert::IsTrue(parser.ConsumeRest(L"(1 + 2)tail"));
 	}
 };

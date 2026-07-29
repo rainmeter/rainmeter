@@ -94,6 +94,19 @@ public:
 		Assert::AreEqual(30.0, value);
 	}
 
+	TEST_METHOD(TestParseToMatchingClosingBracket)
+	{
+		MathParser mathParser;
+		double value = 0.0;
+		const WCHAR* parseEnd = nullptr;
+		const WCHAR* formula = L"(1 + min(2, 3))tail";
+
+		Assert::IsNull(mathParser.Parse(
+			formula, &value, MathParser::ParseMode::MatchingClosingBracket, &parseEnd));
+		Assert::AreEqual(3.0, value);
+		Assert::AreEqual(L"tail", parseEnd);
+	}
+
 	static bool GetValueHelper(const WCHAR* str, int len, double* value, void* context)
 	{
 		if (wcsncmp(str, L"a", len) == 0)
