@@ -50,8 +50,150 @@ Shape::Shape(ShapeType type) :
 {
 }
 
+Shape::Shape(const Shape& other) :
+	m_ShapeType(other.m_ShapeType),
+	m_IsCombined(other.m_IsCombined),
+	m_StrokeType(other.m_StrokeType),
+	m_TransformModifiers(other.m_TransformModifiers ? new TransformModifiers(*other.m_TransformModifiers) : nullptr),
+	m_StrokeData(other.m_StrokeData ? new StrokeData() : nullptr),
+	m_PathData(other.m_PathData ? new PathData(*other.m_PathData) : nullptr),
+	m_Geometry(other.m_Geometry)
+{
+	m_Fill.CopyFrom(other.m_Fill);
+	if (m_StrokeData)
+	{
+		m_StrokeData->CopyFrom(*other.m_StrokeData);
+		CreateStrokeStyle();
+	}
+}
+
 Shape::~Shape()
 {
+}
+
+Shape Shape::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height)
+{
+	Shape shape(ShapeType::Rectangle);
+	const D2D1_RECT_F rect = D2D1::RectF(x, y, x + width, y + height);
+	Canvas::c_D2DFactory->CreateRectangleGeometry(rect, (ID2D1RectangleGeometry**)shape.m_Geometry.GetAddressOf());
+	return shape;
+}
+
+Shape Shape::RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius)
+{
+	Shape shape(ShapeType::RoundedRectangle);
+	const D2D1_ROUNDED_RECT rect = { D2D1::RectF(x, y, x + width, y + height), xRadius, yRadius };
+	Canvas::c_D2DFactory->CreateRoundedRectangleGeometry(
+		rect, (ID2D1RoundedRectangleGeometry**)shape.m_Geometry.GetAddressOf());
+	return shape;
+}
+
+Shape Shape::Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius)
+{
+	Shape shape(ShapeType::Ellipse);
+	const D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F(x, y), xRadius, yRadius);
+	Canvas::c_D2DFactory->CreateEllipseGeometry(ellipse, (ID2D1EllipseGeometry**)shape.m_Geometry.GetAddressOf());
+	return shape;
+}
+
+Shape Shape::Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2)
+{
+	Shape shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
+	shape.m_ShapeType = ShapeType::Line;
+	shape.AddPathLine(x2, y2);
+	shape.ClosePath(D2D1_FIGURE_END_OPEN);
+	return shape;
+}
+
+Shape Shape::Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending)
+{
+	Shape shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
+	shape.m_ShapeType = ShapeType::Arc;
+	shape.AddPathArc(x2, y2, xRadius, yRadius, angle, sweep, size);
+	shape.ClosePath(ending);
+	return shape;
+}
+
+Shape Shape::Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending)
+{
+	Shape shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
+	shape.m_ShapeType = ShapeType::Curve;
+	shape.AddPathCubicCurve(x2, y2, cx1, cy1, cx2, cy2);
+	shape.ClosePath(ending);
+	return shape;
+}
+
+Shape Shape::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending)
+{
+	Shape shape = Path(x1, y1, D2D1_FILL_MODE_ALTERNATE);
+	shape.m_ShapeType = ShapeType::QuadraticCurve;
+	shape.AddPathQuadraticCurve(x2, y2, cx, cy);
+	shape.ClosePath(ending);
+	return shape;
+}
+
+Shape Shape::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode)
+{
+	Shape shape(ShapeType::Path);
+	auto& data = shape.GetPathData();
+	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(data.path.GetAddressOf());
+	if (FAILED(hr)) return shape;
+
+	hr = data.path->Open(data.sink.GetAddressOf());
+	if (FAILED(hr)) return shape;
+
+	data.sink->SetFillMode(fillMode);
+	data.sink->BeginFigure(D2D1::Point2F(x, y), D2D1_FIGURE_BEGIN_FILLED);
+
+	return shape;
+}
+
+void Shape::AddPathLine(FLOAT x, FLOAT y)
+{
+	if (m_PathData && m_PathData->path && m_PathData->sink) m_PathData->sink->AddLine(D2D1::Point2F(x, y));
+}
+
+void Shape::AddPathArc(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION direction, D2D1_ARC_SIZE arcSize)
+{
+	xRadius = xRadius < 0.0f ? 0.0f : xRadius;
+	yRadius = yRadius < 0.0f ? 0.0f : yRadius;
+	if (m_PathData && m_PathData->path && m_PathData->sink)
+	{
+		m_PathData->sink->AddArc(D2D1::ArcSegment(
+			D2D1::Point2F(x, y), D2D1::SizeF(xRadius, yRadius), angle, direction, arcSize));
+	}
+}
+
+void Shape::AddPathQuadraticCurve(FLOAT x, FLOAT y, FLOAT cx, FLOAT cy)
+{
+	if (m_PathData && m_PathData->path && m_PathData->sink)
+	{
+		m_PathData->sink->AddQuadraticBezier(
+			D2D1::QuadraticBezierSegment(D2D1::Point2F(cx, cy), D2D1::Point2F(x, y)));
+	}
+}
+
+void Shape::AddPathCubicCurve(FLOAT x, FLOAT y, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2)
+{
+	if (m_PathData && m_PathData->path && m_PathData->sink)
+	{
+		m_PathData->sink->AddBezier(D2D1::BezierSegment(
+			D2D1::Point2F(cx1, cy1), D2D1::Point2F(cx2, cy2), D2D1::Point2F(x, y)));
+	}
+}
+
+void Shape::SetPathSegmentFlags(D2D1_PATH_SEGMENT flags)
+{
+	if (m_PathData && m_PathData->path && m_PathData->sink) m_PathData->sink->SetSegmentFlags(flags);
+}
+
+void Shape::ClosePath(D2D1_FIGURE_END ending)
+{
+	if (!m_PathData || !m_PathData->path || !m_PathData->sink) return;
+	m_PathData->sink->EndFigure(ending);
+	m_PathData->sink->Close();
+	m_Geometry = std::move(m_PathData->path);
+	m_PathData.reset();
 }
 
 void Shape::InvalidateDeviceResources()
@@ -68,7 +210,7 @@ D2D1_MATRIX_3X2_F Shape::GetShapeMatrix()
 	const auto& modifiers = *m_TransformModifiers;
 
 	D2D1_RECT_F bounds;
-	HRESULT hr = m_Shape->GetWidenedBounds(GetStrokeWidth(), nullptr, nullptr, &bounds);
+	HRESULT hr = m_Geometry->GetWidenedBounds(GetStrokeWidth(), nullptr, nullptr, &bounds);
 	if (FAILED(hr)) return matrix;
 
 	D2D1_POINT_2F point = D2D1::Point2F(bounds.left, bounds.top);
@@ -116,14 +258,14 @@ D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 	D2D1_RECT_F fillBounds;
 	D2D1_MATRIX_3X2_F matrix = useMatrix ? GetShapeMatrix() : D2D1::Matrix3x2F::Identity();
 
-	HRESULT hr = m_Shape->GetWidenedBounds(
+	HRESULT hr = m_Geometry->GetWidenedBounds(
 		GetStrokeWidth(),
 		GetStrokeStyle(),
 		matrix,
 		&strokedBounds);
 	if (FAILED(hr)) return D2D1::RectF();
 
-	hr = m_Shape->GetBounds(matrix, &fillBounds);
+	hr = m_Geometry->GetBounds(matrix, &fillBounds);
 	if (FAILED(hr)) return D2D1::RectF();
 
 	// The 'Path' shape can have un-stroked segments, so we need to also
@@ -138,7 +280,7 @@ D2D1_RECT_F Shape::GetBounds(bool useMatrix)
 
 bool Shape::IsShapeDefined()
 {
-	return m_Shape;
+	return m_Geometry;
 }
 
 bool Shape::ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transformationMatrix)
@@ -148,7 +290,7 @@ bool Shape::ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transfor
 	matrix = matrix * GetShapeMatrix();
 
 	BOOL contains = FALSE;
-	HRESULT hr = m_Shape->StrokeContainsPoint(
+	HRESULT hr = m_Geometry->StrokeContainsPoint(
 		point,
 		GetStrokeWidth(),
 		GetStrokeStyle(),
@@ -156,7 +298,7 @@ bool Shape::ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transfor
 		&contains);
 	if (SUCCEEDED(hr) && contains) return true;
 
-	hr = m_Shape->FillContainsPoint(point, matrix, &contains);
+	hr = m_Geometry->FillContainsPoint(point, matrix, &contains);
 	if (SUCCEEDED(hr) && contains) return true;
 
 	return false;
@@ -174,8 +316,8 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 	if (otherShape)
 	{
-		hr = m_Shape->CombineWithGeometry(
-			otherShape->m_Shape.Get(),
+		hr = m_Geometry->CombineWithGeometry(
+			otherShape->m_Geometry.Get(),
 			mode,
 			otherShape->GetShapeMatrix(),
 			sink.Get());
@@ -183,7 +325,7 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 
 		sink->Close();
 
-		m_Shape = std::move(path);
+		m_Geometry = std::move(path);
 
 		return true;
 	}
@@ -193,13 +335,13 @@ bool Shape::CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode)
 	hr = Canvas::c_D2DFactory->CreateRectangleGeometry(rect, emptyShape.GetAddressOf());
 	if (FAILED(hr)) return false;
 
-	hr = emptyShape->CombineWithGeometry(m_Shape.Get(), mode, GetShapeMatrix(), sink.Get());
+	hr = emptyShape->CombineWithGeometry(m_Geometry.Get(), mode, GetShapeMatrix(), sink.Get());
 
 	sink->Close();
 
 	if (FAILED(hr)) return false;
 
-	m_Shape = std::move(path);
+	m_Geometry = std::move(path);
 
 	m_TransformModifiers.reset();
 
@@ -506,26 +648,6 @@ void Shape::ValidateTransforms()
 	AddToTransformOrder(TransformType::Offset);
 }
 
-void Shape::CloneModifiers(Shape* otherShape)
-{
-	otherShape->m_StrokeType = m_StrokeType;
-	otherShape->m_TransformModifiers.reset(
-		m_TransformModifiers ? new TransformModifiers(*m_TransformModifiers) : nullptr);
-
-	if (m_StrokeData)
-	{
-		otherShape->m_StrokeData.reset(new StrokeData());
-		otherShape->m_StrokeData->CopyFrom(*m_StrokeData);
-		otherShape->CreateStrokeStyle();
-	}
-	else
-	{
-		otherShape->m_StrokeData.reset();
-	}
-
-	otherShape->m_Fill.CopyFrom(m_Fill);
-}
-
 Shape::TransformModifiers& Shape::GetTransformModifiers()
 {
 	if (!m_TransformModifiers)
@@ -549,6 +671,16 @@ Shape::StrokeData& Shape::GetStrokeData()
 	}
 
 	return *m_StrokeData;
+}
+
+Shape::PathData& Shape::GetPathData()
+{
+	if (!m_PathData)
+	{
+		m_PathData.reset(new PathData());
+	}
+
+	return *m_PathData;
 }
 
 FLOAT Shape::GetStrokeWidth() const

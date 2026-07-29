@@ -148,14 +148,6 @@ private:
 	friend class TextInlineFormat_Face;
 	friend class TextInlineFormat_Typography;
 	friend class Shape;
-	friend class Rectangle;
-	friend class RoundedRectangle;
-	friend class Ellipse;
-	friend class Line;
-	friend class Arc;
-	friend class Curve;
-	friend class QuadraticCurve;
-	friend class Path;
 	friend class Util::D2DBitmapLoader;
 	friend class Util::D2DEffectStream;
 

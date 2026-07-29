@@ -52,19 +52,27 @@ enum class BrushType : BYTE
 	//Image
 };
 
-class __declspec(novtable) Shape
+class Shape
 {
 public:
-	Shape(ShapeType type);
-	virtual ~Shape();
+	Shape(const Shape& other);
+	Shape(Shape&& other) = default;
+	~Shape();
+
+	static Shape Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
+	static Shape RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
+	static Shape Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius);
+	static Shape Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2);
+	static Shape Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending);
+	static Shape Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending);
+	static Shape QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending);
+	static Shape Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode);
 
 	void InvalidateDeviceResources();
 
 	ShapeType GetShapeType() { return m_ShapeType; }
 
-	bool DoesShapeExist() { return m_Shape != nullptr; }
-
-	virtual Shape* Clone() = 0;
+	bool DoesShapeExist() { return m_Geometry != nullptr; }
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
 	D2D1_RECT_F GetBounds(bool useMatrix = true);
@@ -72,7 +80,7 @@ public:
 	bool ContainsPoint(D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F& transformationMatrix = D2D1::Matrix3x2F::Identity());
 
 	bool IsCombined() { return m_IsCombined; }
-	void SetCombined() { m_IsCombined = true; }
+	void SetCombined(bool combined = true) { m_IsCombined = combined; }
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
 
 	void SetOffset(FLOAT x, FLOAT y) { GetTransformModifiers().offset = D2D1::SizeF(x, y); }
@@ -100,13 +108,20 @@ public:
 	bool AddToTransformOrder(TransformType type);
 	void ValidateTransforms();
 
-protected:
-	void CloneModifiers(Shape* otherShape);
-
-	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
+	// Only valid for path shapes:
+	void AddPathLine(FLOAT x, FLOAT y);
+	void AddPathArc(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION direction, D2D1_ARC_SIZE arcSize);
+	void AddPathQuadraticCurve(FLOAT x, FLOAT y, FLOAT cx, FLOAT cy);
+	void AddPathCubicCurve(FLOAT x, FLOAT y, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2);
+	void SetPathSegmentFlags(D2D1_PATH_SEGMENT flags);
+	void ClosePath(D2D1_FIGURE_END ending);
 
 private:
 	friend class Canvas;
+
+	Shape(ShapeType type);
+	Shape& operator=(const Shape& other) = delete;
+	Shape& operator=(Shape&& other) = delete;
 
 	enum class StrokeType : BYTE
 	{
@@ -154,6 +169,12 @@ private:
 		FLOAT width = 1.0f;
 	};
 
+	struct PathData
+	{
+		Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
+		Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
+	};
+
 	Microsoft::WRL::ComPtr<ID2D1Brush> GetBrush(ID2D1DeviceContext* target, BrushData& data);
 
 	void CreateSolidBrush(ID2D1DeviceContext* target, Microsoft::WRL::ComPtr<ID2D1Brush>& brush, const D2D1_COLOR_F& color);
@@ -184,6 +205,7 @@ private:
 
 	TransformModifiers& GetTransformModifiers();
 	StrokeData& GetStrokeData();
+	PathData& GetPathData();
 	FLOAT GetStrokeWidth() const;
 	ID2D1StrokeStyle1* GetStrokeStyle() const;
 
@@ -193,8 +215,10 @@ private:
 
 	std::unique_ptr<TransformModifiers> m_TransformModifiers{};
 	std::unique_ptr<StrokeData> m_StrokeData{};
+	std::unique_ptr<PathData> m_PathData{};
 
 	BrushData m_Fill{ D2D1::ColorF(D2D1::ColorF::White) };
+	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Geometry;
 };
 
 } // Gfx

@@ -10,14 +10,6 @@
 #include "Logger.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 #include "../Common/Gfx/Shape.h"
-#include "../Common/Gfx/Shapes/Rectangle.h"
-#include "../Common/Gfx/Shapes/RoundedRectangle.h"
-#include "../Common/Gfx/Shapes/Ellipse.h"
-#include "../Common/Gfx/Shapes/Line.h"
-#include "../Common/Gfx/Shapes/Arc.h"
-#include "../Common/Gfx/Shapes/Curve.h"
-#include "../Common/Gfx/Shapes/QuadraticCurve.h"
-#include "../Common//Gfx/Shapes/Path.h"
 
 namespace {
 
@@ -204,17 +196,16 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
 	const WCHAR* section, bool& isCombined, size_t keyId)
 {
-	auto createShape = [&](Gfx::Shape* shape) -> bool
+	auto createShape = [&](Gfx::Shape shape) -> bool
 	{
-		if (shape->DoesShapeExist())
+		if (shape.DoesShapeExist())
 		{
-			m_Shapes.push_back(shape);
+			m_Shapes.push_back(new Gfx::Shape(std::move(shape)));
 			return true;
 		}
 
 		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
 		LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
-		delete shape;
 		return false;
 	};
 
@@ -232,7 +223,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT w = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT h = (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0);
 
-			if (!createShape(new Gfx::Rectangle(x, y, w, h)))
+			if (!createShape(Gfx::Shape::Rectangle(x, y, w, h)))
 			{
 				return false;
 			}
@@ -250,7 +241,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 				(FLOAT)parser.ParseDouble(tokens[5].c_str(), 0.0) :
 				xRadius;
 
-			if (!createShape(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
+			if (!createShape(Gfx::Shape::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
 			{
 				return false;
 			}
@@ -275,7 +266,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT xRadius = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT yRadius = (tokSize > 3) ? (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0) : xRadius;
 
-			if (!createShape(new Gfx::Ellipse(x, y, xRadius, yRadius)))
+			if (!createShape(Gfx::Shape::Ellipse(x, y, xRadius, yRadius)))
 			{
 				return false;
 			}
@@ -300,7 +291,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			FLOAT x2 = (FLOAT)parser.ParseDouble(tokens[2].c_str(), 0.0);
 			FLOAT y2 = (FLOAT)parser.ParseDouble(tokens[3].c_str(), 0.0);
 
-			if (!createShape(new Gfx::Line(x1, y1, x2, y2)))
+			if (!createShape(Gfx::Shape::Line(x1, y1, x2, y2)))
 			{
 				return false;
 			}
@@ -341,10 +332,10 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			if (tokSize > 8) ParseBool(parser, size, tokens[8].c_str());
 			if (tokSize > 9) ParseBool(parser, open, tokens[9].c_str());
 
-			if (!createShape(new Gfx::Arc(x1, y1, x2, y2, xRadius, yRadius, angle,
-				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE,
-				open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+			const auto sweepDirection = sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE;
+			const auto arcSize = size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
+			const auto figureEnd = open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED;
+			if (!createShape(Gfx::Shape::Arc(x1, y1, x2, y2, xRadius, yRadius, angle, sweepDirection, arcSize, figureEnd)))
 			{
 				return false;
 			}
@@ -379,8 +370,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 			{
 				if (tokSize == 7) open = parser.ParseInt(tokens[6].c_str(), 0) == 0;
 
-				if (!createShape(new Gfx::QuadraticCurve(x1, y1, x2, y2, cx1, cy1,
-					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+				if (!createShape(Gfx::Shape::QuadraticCurve(x1, y1, x2, y2, cx1, cy1, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
 				{
 					return false;
 				}
@@ -392,8 +382,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 				if (tokSize > 8) open = parser.ParseInt(tokens[8].c_str(), 0) == 0;
 
-				if (!createShape(new Gfx::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2,
-					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
+				if (!createShape(Gfx::Shape::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2, open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
 				{
 					return false;
 				}
@@ -434,7 +423,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
 		// the order in which the shapes are defined.
 
-		if (!createShape(new Gfx::Rectangle(0.0f, 0.0f, 0.0f, 0.0f)))
+		if (!createShape(Gfx::Shape::Rectangle(0.0f, 0.0f, 0.0f, 0.0f)))
 		{
 			return false;
 		}
@@ -488,27 +477,19 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 		if (parentId < m_Shapes.size())
 		{
-			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
-			if (clonedShape)
-			{
-				// Delete and remove the shape from |m_Shapes|, then
-				// insert the cloned shape into the position of the
-				// deleted shape.
+			Gfx::Shape* copiedShape = new Gfx::Shape(*m_Shapes[parentId]);
+			copiedShape->SetCombined(false);
 
-				delete m_Shapes[shapeId];
-				auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
-				m_Shapes.insert(iter, clonedShape);
+			// Delete and remove the shape from |m_Shapes|, then insert the
+			// copied shape into the position of the deleted shape.
+			delete m_Shapes[shapeId];
+			auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
+			m_Shapes.insert(iter, copiedShape);
 
-				m_Shapes[parentId]->SetCombined();
+			m_Shapes[parentId]->SetCombined();
 
-				// Combine with empty shape
-				m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
-			}
-			else
-			{
-				// Shape could not be cloned
-				return false;
-			}
+			// Combine with empty shape
+			m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
 		}
 		else
 		{
@@ -1049,7 +1030,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 	FLOAT startX = (FLOAT)parser.ParseDouble(stPoint[0].c_str(), 0.0);
 	FLOAT startY = (FLOAT)parser.ParseDouble(stPoint[1].c_str(), 0.0);
 
-	Gfx::Path* shape = new Gfx::Path(startX, startY, fillMode);
+	Gfx::Shape shape = Gfx::Shape::Path(startX, startY, fillMode);
 
 	bool error = false;
 	bool open = true;
@@ -1068,7 +1049,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 			FLOAT x = (FLOAT)parser.ParseDouble(lineTo[0].c_str(), 0.0);
 			FLOAT y = (FLOAT)parser.ParseDouble(lineTo[1].c_str(), 0.0);
 
-			shape->AddLine(x, y);
+			shape.AddPathLine(x, y);
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
@@ -1095,7 +1076,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 			if (arcSize > 5) ParseBool(parser, sweep, arcTo[5].c_str());
 			if (arcSize > 6) ParseBool(parser, size, arcTo[6].c_str());
 
-			shape->AddArc(x, y, xRadius, yRadius, angle,
+			shape.AddPathArc(x, y, xRadius, yRadius, angle,
 				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
 				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
 
@@ -1114,14 +1095,14 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 
 			if (curveSize < 6)
 			{
-				shape->AddQuadraticCurve(x, y, cx1, cy1);
+				shape.AddPathQuadraticCurve(x, y, cx1, cy1);
 			}
 			else
 			{
 				FLOAT cx2 = (FLOAT)parser.ParseDouble(curveTo[4].c_str(), 0.0);
 				FLOAT cy2 = (FLOAT)parser.ParseDouble(curveTo[5].c_str(), 0.0);
 
-				shape->AddCubicCurve(x, y, cx1, cy1, cx2, cy2);
+				shape.AddPathCubicCurve(x, y, cx1, cy1, cx2, cy2);
 			}
 
 			currentPoint = D2D1::Point2F(x, y);
@@ -1129,12 +1110,12 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 		else if (CompareAndStrip(type, L"SETNOSTROKE"))
 		{
 			setNoStroke = parser.ParseInt(type.c_str(), 0) != 0;
-			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			shape.SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
 		else if (CompareAndStrip(type, L"SETROUNDJOIN"))
 		{
 			setRoundJoin = parser.ParseInt(type.c_str(), 0) != 0;
-			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			shape.SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
 		else if (CompareAndStrip(type, L"CLOSEPATH"))
 		{
@@ -1148,20 +1129,15 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 		}
 	}
 
-	if (error)
-	{
-		delete shape;
-		shape = nullptr;
-		return false;
-	}
+	if (error) return false;
 
-	shape->Close(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+	shape.ClosePath(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
+	if (open) shape.SetFill(Gfx::Util::c_Transparent_Color_F);
 
-	m_Shapes.push_back(shape);
+	m_Shapes.push_back(new Gfx::Shape(std::move(shape)));
 
 	return true;
 }

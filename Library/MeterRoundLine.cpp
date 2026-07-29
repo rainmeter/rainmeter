@@ -9,9 +9,7 @@
 #include "MeterRoundLine.h"
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Path.h"
-#include "../Common/Gfx/Shapes/Ellipse.h"
-#include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shape.h"
 
 namespace {
 
@@ -143,17 +141,17 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const FLOAT ox = lineLength * s_cos + cx;
 		const FLOAT oy = lineLength * s_sin + cy;
 
-		Gfx::Path path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
+		Gfx::Shape path = Gfx::Shape::Path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
 		path.SetFill(m_LineColor);
 		path.SetStrokeWidth(0.0f);
 		path.CreateStrokeStyle();
 
-		path.AddLine(ox, oy);
-		path.AddArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
-		path.AddLine(sx, sy);
-		path.AddArc(ix, iy, lineStart, lineStart, sweepAngle, sweepInnerDir, arcSize);
+		path.AddPathLine(ox, oy);
+		path.AddPathArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
+		path.AddPathLine(sx, sy);
+		path.AddPathArc(ix, iy, lineStart, lineStart, sweepAngle, sweepInnerDir, arcSize);
 
-		path.Close(D2D1_FIGURE_END_CLOSED);
+		path.ClosePath(D2D1_FIGURE_END_CLOSED);
 		canvas.DrawGeometry(path, 0, 0);
 	}
 	else
@@ -168,7 +166,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const FLOAT ex = e_cos * lineLength + cx;
 		const FLOAT ey = e_sin * lineLength + cy;
 
-		Gfx::Line line(sx, sy, ex, ey);
+		Gfx::Shape line = Gfx::Shape::Line(sx, sy, ex, ey);
 		line.SetStrokeFill(m_LineColor);
 		line.SetStrokeWidth((FLOAT)m_LineWidth);
 		line.CreateStrokeStyle();

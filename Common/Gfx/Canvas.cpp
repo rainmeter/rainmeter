@@ -837,7 +837,7 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	auto fill = shape.GetFillBrush(m_Target.Get());
 	if (fill)
 	{
-		m_Target->FillGeometry(shape.m_Shape.Get(), fill.Get());
+		m_Target->FillGeometry(shape.m_Geometry.Get(), fill.Get());
 	}
 
 	Microsoft::WRL::ComPtr<ID2D1Brush> stroke;
@@ -857,7 +857,7 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 
 	if (stroke)
 	{
-		m_Target->DrawGeometry(shape.m_Shape.Get(), stroke.Get(), shape.GetStrokeWidth(), shape.GetStrokeStyle());
+		m_Target->DrawGeometry(shape.m_Geometry.Get(), stroke.Get(), shape.GetStrokeWidth(), shape.GetStrokeStyle());
 	}
 
 	m_Target->SetTransform(worldTransform);
