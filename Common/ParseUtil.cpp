@@ -11,27 +11,6 @@
 
 namespace {
 
-struct PairInfo
-{
-	const WCHAR begin;
-	const WCHAR end;
-};
-
-PairInfo GetPairInfo(PairedPunctuation punct)
-{
-	switch (punct)
-	{
-	case PairedPunctuation::SingleQuote: return { L'\'', L'\'' };
-	case PairedPunctuation::DoubleQuote: return { L'"', L'"' };
-	case PairedPunctuation::BothQuotes:  return { L'"', L'\'' };
-	case PairedPunctuation::Parentheses: return { L'(', L')' };
-	case PairedPunctuation::Brackets:    return { L'[', L']' };
-	case PairedPunctuation::Braces:      return { L'{', L'}' };
-	case PairedPunctuation::Guillemet:   return { L'<', L'>' };
-	default:                             return { L'\0', L'\0' };
-	}
-}
-
 void ReportFormulaError(ParseUtil::FormulaErrorCallback errorCallback, const WCHAR* error, const WCHAR* formula)
 {
 	if (errorCallback)
@@ -292,7 +271,6 @@ std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& 
 std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
 {
 	std::vector<std::wstring> tokens;
-	const PairInfo pair = GetPairInfo(punct);
 	size_t start = 0;
 	size_t end = 0;
 
@@ -307,28 +285,14 @@ std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str,
 		}
 	};
 
-	if (punct == PairedPunctuation::SingleQuote || punct == PairedPunctuation::DoubleQuote)
-	{
-		bool found = false;
-		for (auto& iter : str)
-		{
-			if (iter == pair.begin) found = !found;
-			else if (iter == delimiter && !found)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-	else if (punct == PairedPunctuation::BothQuotes)
+	if (punct == PairedPunctuation::BothQuotes)
 	{
 		// Skip delimiters if inside either a pair of single quotes, or a pair of double quotes
 		bool found = false;
 		WCHAR current = L'\0';
 		for (auto& iter : str)
 		{
-			if (!current && (iter == pair.begin || iter == pair.end))
+			if (!current && (iter == L'"' || iter == L'\''))
 			{
 				current = iter;
 				found = true;
@@ -351,8 +315,8 @@ std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str,
 		int pairs = 0;
 		for (auto& iter : str)
 		{
-			if (iter == pair.begin) ++pairs;
-			else if (iter == pair.end) --pairs;
+			if (iter == L'(') ++pairs;
+			else if (iter == L')') --pairs;
 			else if (iter == delimiter && pairs == 0)
 			{
 				getToken();
