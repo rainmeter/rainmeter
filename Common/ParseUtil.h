@@ -18,13 +18,8 @@ class MathParser;
 
 enum class PairedPunctuation : BYTE
 {
-	SingleQuote,
-	DoubleQuote,
 	BothQuotes,
-	Parentheses,
-	Brackets,
-	Braces,
-	Guillemet
+	Parentheses
 };
 
 namespace ParseUtil {
