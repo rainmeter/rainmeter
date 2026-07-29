@@ -247,7 +247,9 @@ void Shape::SetStrokeWidth(FLOAT strokeWidth)
 		return;
 	}
 
-	GetStrokeData().width = strokeWidth;
+	auto& stroke = GetStrokeData();
+	stroke.width = strokeWidth;
+	m_StrokeType = StrokeType::Custom;
 }
 
 void Shape::CreateStrokeStyle(D2D1_STROKE_TRANSFORM_TYPE transformType)
@@ -536,7 +538,10 @@ Shape::TransformModifiers& Shape::GetTransformModifiers()
 
 Shape::StrokeData& Shape::GetStrokeData()
 {
-	m_StrokeType = StrokeType::Custom;
+	if (m_StrokeType == StrokeType::Default)
+	{
+		m_StrokeType = StrokeType::Custom;
+	}
 
 	if (!m_StrokeData)
 	{
