@@ -71,6 +71,11 @@ Shape::~Shape()
 {
 }
 
+Shape Shape::None()
+{
+	return Shape(ShapeType::None);
+}
+
 std::optional<Shape> Shape::Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height)
 {
 	Shape shape(ShapeType::Rectangle);

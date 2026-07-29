@@ -385,14 +385,9 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	}
 	else if (CompareAndStrip(shapeName, L"COMBINE"))
 	{
-		// Because combined shapes need to be processed after the rest of the shapes
-		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
-		// the order in which the shapes are defined.
-
-		auto shape = Gfx::Shape::Rectangle(0.0f, 0.0f, 0.0f, 0.0f);
-		// Keep the dummy hidden if the combined shape cannot be created.
-		if (shape) shape->SetCombined();
-
+		// Reserve this position until combined shapes are processed.
+		auto shape = Gfx::Shape::None();
+		shape.SetCombined();
 		isCombined = true;
 		return addShape(std::move(shape));
 	}
