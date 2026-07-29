@@ -196,11 +196,11 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
 	const WCHAR* section, bool& isCombined, size_t keyId)
 {
-	auto createShape = [&](Gfx::Shape shape) -> bool
+	auto createShape = [&](std::optional<Gfx::Shape> shape) -> bool
 	{
-		if (shape.DoesShapeExist())
+		if (shape)
 		{
-			m_Shapes.push_back(new Gfx::Shape(std::move(shape)));
+			m_Shapes.push_back(new Gfx::Shape(std::move(*shape)));
 			return true;
 		}
 
@@ -1030,7 +1030,8 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 	FLOAT startX = (FLOAT)parser.ParseDouble(stPoint[0].c_str(), 0.0);
 	FLOAT startY = (FLOAT)parser.ParseDouble(stPoint[1].c_str(), 0.0);
 
-	Gfx::Shape shape = Gfx::Shape::Path(startX, startY, fillMode);
+	auto shape = Gfx::Shape::Path(startX, startY, fillMode);
+	if (!shape) return false;
 
 	bool error = false;
 	bool open = true;
@@ -1049,7 +1050,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 			FLOAT x = (FLOAT)parser.ParseDouble(lineTo[0].c_str(), 0.0);
 			FLOAT y = (FLOAT)parser.ParseDouble(lineTo[1].c_str(), 0.0);
 
-			shape.AddPathLine(x, y);
+			shape->AddPathLine(x, y);
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
@@ -1076,7 +1077,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 			if (arcSize > 5) ParseBool(parser, sweep, arcTo[5].c_str());
 			if (arcSize > 6) ParseBool(parser, size, arcTo[6].c_str());
 
-			shape.AddPathArc(x, y, xRadius, yRadius, angle,
+			shape->AddPathArc(x, y, xRadius, yRadius, angle,
 				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
 				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
 
@@ -1095,14 +1096,14 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 
 			if (curveSize < 6)
 			{
-				shape.AddPathQuadraticCurve(x, y, cx1, cy1);
+				shape->AddPathQuadraticCurve(x, y, cx1, cy1);
 			}
 			else
 			{
 				FLOAT cx2 = (FLOAT)parser.ParseDouble(curveTo[4].c_str(), 0.0);
 				FLOAT cy2 = (FLOAT)parser.ParseDouble(curveTo[5].c_str(), 0.0);
 
-				shape.AddPathCubicCurve(x, y, cx1, cy1, cx2, cy2);
+				shape->AddPathCubicCurve(x, y, cx1, cy1, cx2, cy2);
 			}
 
 			currentPoint = D2D1::Point2F(x, y);
@@ -1110,12 +1111,12 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 		else if (CompareAndStrip(type, L"SETNOSTROKE"))
 		{
 			setNoStroke = parser.ParseInt(type.c_str(), 0) != 0;
-			shape.SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			shape->SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
 		else if (CompareAndStrip(type, L"SETROUNDJOIN"))
 		{
 			setRoundJoin = parser.ParseInt(type.c_str(), 0) != 0;
-			shape.SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			shape->SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
 		else if (CompareAndStrip(type, L"CLOSEPATH"))
 		{
@@ -1131,13 +1132,13 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FIL
 
 	if (error) return false;
 
-	shape.ClosePath(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+	shape->ClosePath(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
-	if (open) shape.SetFill(Gfx::Util::c_Transparent_Color_F);
+	if (open) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
 
-	m_Shapes.push_back(new Gfx::Shape(std::move(shape)));
+	m_Shapes.push_back(new Gfx::Shape(std::move(*shape)));
 
 	return true;
 }
