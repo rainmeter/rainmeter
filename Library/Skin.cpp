@@ -1081,6 +1081,15 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		}
 		break;
 
+	case Bang::SetUpdate:
+		KillTimer(m_Window, TIMER_METER);
+		m_WindowUpdate = max(m_Parser.ParseInt(args[0].c_str(), INTERVAL_METER), -1);
+		if (m_WindowUpdate >= 0)
+		{
+			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
+		}
+		break;
+
 	case Bang::ShowBlur:
 		ShowBlur();
 		break;

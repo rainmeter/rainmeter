@@ -21,6 +21,7 @@ enum class Bang
 	RefreshApp,
 	Redraw,
 	Update,
+	SetUpdate,
 	Hide,
 	Show,
 	Toggle,
