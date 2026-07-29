@@ -277,11 +277,12 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
 			Y = meterRect.bottom - Y - 0.5f;
 
-			Gfx::Shape line = Gfx::Shape::Line(meterRect.left, Y, meterRect.right - 1.0f, Y);
-			line.SetStrokeFill(m_HorizontalColor);
-			line.CreateStrokeStyle(m_StrokeType);
+			auto line = Gfx::Shape::Line(meterRect.left, Y, meterRect.right - 1.0f, Y);
+			if (!line) return false;
+			line->SetStrokeFill(m_HorizontalColor);
+			line->CreateStrokeStyle(m_StrokeType);
 
-			canvas.DrawGeometry(line, 0, 0);
+			canvas.DrawGeometry(*line, 0, 0);
 		}
 	}
 
@@ -334,8 +335,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldX = 0.0f;
 			calcX(oldX);
 
-			Gfx::Shape path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
+			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_Flip)
 			{
@@ -346,8 +348,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddPathLine(oldX, j - 1.0f);
-					path.AddPathLine(X, j);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j);
 
 					oldX = X;
 				}
@@ -361,14 +363,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddPathLine(oldX, j - 1.0f);
-					path.AddPathLine(X, j - 2.0f);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j - 2.0f);
 
 					oldX = X;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}
@@ -404,8 +406,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldY = 0.0f;
 			calcY(oldY);
 
-			Gfx::Shape path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
+			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_GraphStartLeft)
 			{
@@ -416,8 +419,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddPathLine(j - 1.0f, oldY);
-					path.AddPathLine(j, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j, Y);
 
 					oldY = Y;
 				}
@@ -431,14 +434,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddPathLine(j - 1.0f, oldY);
-					path.AddPathLine(j - 2.0f, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j - 2.0f, Y);
 
 					oldY = Y;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}

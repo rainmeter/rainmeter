@@ -12,6 +12,7 @@
 #include <array>
 #include <d2d1_1.h>
 #include <memory>
+#include <optional>
 #include <wrl/client.h>
 #include <vector>
 
@@ -59,20 +60,18 @@ public:
 	Shape(Shape&& other) = default;
 	~Shape();
 
-	static Shape Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
-	static Shape RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
-	static Shape Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius);
-	static Shape Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2);
-	static Shape Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending);
-	static Shape Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending);
-	static Shape QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending);
-	static Shape Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode);
+	static std::optional<Shape> Rectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height);
+	static std::optional<Shape> RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height, FLOAT xRadius, FLOAT yRadius);
+	static std::optional<Shape> Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius);
+	static std::optional<Shape> Line(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2);
+	static std::optional<Shape> Arc(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT xRadius, FLOAT yRadius, FLOAT angle, D2D1_SWEEP_DIRECTION sweep, D2D1_ARC_SIZE size, D2D1_FIGURE_END ending);
+	static std::optional<Shape> Curve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2, D2D1_FIGURE_END ending);
+	static std::optional<Shape> QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx, FLOAT cy, D2D1_FIGURE_END ending);
+	static std::optional<Shape> Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode);
 
 	void InvalidateDeviceResources();
 
 	ShapeType GetShapeType() { return m_ShapeType; }
-
-	bool DoesShapeExist() { return m_Geometry != nullptr; }
 
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
 	D2D1_RECT_F GetBounds(bool useMatrix = true);
