@@ -43,6 +43,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::Refresh, L"Refresh", 0 },
 	{ Bang::Redraw, L"Redraw", 0 },
 	{ Bang::Update, L"Update", 0 },
+	{ Bang::SetUpdate, L"SetUpdate", 1 },
 	{ Bang::Hide, L"Hide", 0 },
 	{ Bang::Show, L"Show", 0 },
 	{ Bang::Toggle, L"Toggle", 0 },
