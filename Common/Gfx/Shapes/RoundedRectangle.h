@@ -16,10 +16,8 @@ class RoundedRectangle final : public Shape
 {
 public:
 	RoundedRectangle(FLOAT x, FLOAT y, FLOAT width, FLOAT height,
-		FLOAT xRadius, FLOAT yRadius, bool isCloned = false);
+		FLOAT xRadius, FLOAT yRadius);
 	~RoundedRectangle();
-
-	virtual Shape* Clone() override;
 
 private:
 	RoundedRectangle(const RoundedRectangle& other) = delete;

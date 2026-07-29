@@ -11,13 +11,10 @@
 
 namespace Gfx {
 
-Path::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode, bool isCloned) : Shape(ShapeType::Path),
+Path::Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode) : Shape(ShapeType::Path),
 	m_StartPoint(D2D1::Point2F(x, y)),
 	m_FillMode(fillMode)
 {
-	// Cloned shapes do not need to re-create any resources
-	if (isCloned) return;
-
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(m_Path.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
@@ -40,13 +37,6 @@ void Path::Dispose()
 	if (m_Sink) m_Sink.Reset();
 }
 
-Shape* Path::Clone()
-{
-	Path* newShape = new Path(m_StartPoint.x, m_StartPoint.y, m_FillMode, true);
-	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
-	CloneModifiers(newShape);
-	return newShape;
-}
 
 void Path::AddLine(FLOAT x, FLOAT y)
 {

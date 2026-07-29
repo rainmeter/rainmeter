@@ -506,24 +506,22 @@ void Shape::ValidateTransforms()
 	AddToTransformOrder(TransformType::Offset);
 }
 
-void Shape::CloneModifiers(Shape* otherShape)
+void Shape::CopyStyle(const Shape& otherShape)
 {
-	otherShape->m_StrokeType = m_StrokeType;
-	otherShape->m_TransformModifiers.reset(
-		m_TransformModifiers ? new TransformModifiers(*m_TransformModifiers) : nullptr);
+	m_StrokeType = otherShape.m_StrokeType;
 
-	if (m_StrokeData)
+	if (otherShape.m_StrokeData)
 	{
-		otherShape->m_StrokeData.reset(new StrokeData());
-		otherShape->m_StrokeData->CopyFrom(*m_StrokeData);
-		otherShape->CreateStrokeStyle();
+		m_StrokeData.reset(new StrokeData());
+		m_StrokeData->CopyFrom(*otherShape.m_StrokeData);
+		CreateStrokeStyle();
 	}
 	else
 	{
-		otherShape->m_StrokeData.reset();
+		m_StrokeData.reset();
 	}
 
-	otherShape->m_Fill.CopyFrom(m_Fill);
+	m_Fill.CopyFrom(otherShape.m_Fill);
 }
 
 Shape::TransformModifiers& Shape::GetTransformModifiers()

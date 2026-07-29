@@ -15,11 +15,8 @@ namespace Gfx {
 class Ellipse final : public Shape
 {
 public:
-	Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius,
-		bool isCloned = false);
+	Ellipse(FLOAT x, FLOAT y, FLOAT xRadius, FLOAT yRadius);
 	~Ellipse ();
-
-	virtual Shape* Clone() override;
 
 private:
 	Ellipse(const Ellipse& other) = delete;

@@ -15,7 +15,7 @@ namespace Gfx {
 class Path final : public Shape
 {
 public:
-	Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode, bool isCloned = false);
+	Path(FLOAT x, FLOAT y, D2D1_FILL_MODE fillMode);
 	~Path();
 
 	void AddLine(FLOAT x, FLOAT y);
@@ -25,8 +25,6 @@ public:
 	void AddCubicCurve(FLOAT x, FLOAT y, FLOAT cx1, FLOAT cy1, FLOAT cx2, FLOAT cy2);
 	void SetSegmentFlags(D2D1_PATH_SEGMENT flags);
 	void Close(D2D1_FIGURE_END ending);
-
-	virtual Shape* Clone() override;
 
 private:
 	Path(const Path& other) = delete;

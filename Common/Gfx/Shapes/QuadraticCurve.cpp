@@ -12,16 +12,13 @@
 namespace Gfx {
 
 QuadraticCurve::QuadraticCurve(FLOAT x1, FLOAT y1, FLOAT x2, FLOAT y2, FLOAT cx, FLOAT cy,
-	D2D1_FIGURE_END ending, bool isCloned) : Shape(ShapeType::QuadraticCurve),
+	D2D1_FIGURE_END ending) : Shape(ShapeType::QuadraticCurve),
 	m_StartPoint(D2D1::Point2F(x1, y1)),
 	m_QuadraticBezierSegment(D2D1::QuadraticBezierSegment(
 		D2D1::Point2F(cx, cy),
 		D2D1::Point2F(x2, y2))),
 	m_ShapeEnding(ending)
 {
-	// Cloned shapes do not need to re-create any resources
-	if (isCloned) return;
-
 	Microsoft::WRL::ComPtr<ID2D1GeometrySink> sink;
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> path;
 	HRESULT hr = Canvas::c_D2DFactory->CreatePathGeometry(path.GetAddressOf());
@@ -44,20 +41,5 @@ QuadraticCurve::~QuadraticCurve()
 {
 }
 
-Shape* QuadraticCurve::Clone()
-{
-	QuadraticCurve* newShape = new QuadraticCurve(
-		m_StartPoint.x,
-		m_StartPoint.y,
-		m_QuadraticBezierSegment.point2.x,
-		m_QuadraticBezierSegment.point2.y,
-		m_QuadraticBezierSegment.point1.x,
-		m_QuadraticBezierSegment.point1.y,
-		m_ShapeEnding,
-		true);
-	m_Shape.CopyTo(newShape->m_Shape.GetAddressOf());
-	CloneModifiers(newShape);
-	return newShape;
-}
 
 }  // namespace Gfx

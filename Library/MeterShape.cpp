@@ -488,25 +488,15 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 		if (parentId < m_Shapes.size())
 		{
-			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
-			if (clonedShape)
+			Gfx::Shape* parentShape = m_Shapes[parentId];
+			m_Shapes[shapeId]->CopyStyle(*parentShape);
+			if (m_Shapes[shapeId]->CombineWith(parentShape, D2D1_COMBINE_MODE_UNION))
 			{
-				// Delete and remove the shape from |m_Shapes|, then
-				// insert the cloned shape into the position of the
-				// deleted shape.
-
-				delete m_Shapes[shapeId];
-				auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
-				m_Shapes.insert(iter, clonedShape);
-
-				m_Shapes[parentId]->SetCombined();
-
-				// Combine with empty shape
-				m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
+				parentShape->SetCombined();
 			}
 			else
 			{
-				// Shape could not be cloned
+				showError(L"could not combine with: Shape", parentName.c_str());
 				return false;
 			}
 		}

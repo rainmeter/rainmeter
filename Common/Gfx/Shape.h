@@ -64,8 +64,6 @@ public:
 
 	bool DoesShapeExist() { return m_Shape != nullptr; }
 
-	virtual Shape* Clone() = 0;
-
 	D2D1_MATRIX_3X2_F GetShapeMatrix();
 	D2D1_RECT_F GetBounds(bool useMatrix = true);
 	bool IsShapeDefined();
@@ -74,6 +72,7 @@ public:
 	bool IsCombined() { return m_IsCombined; }
 	void SetCombined() { m_IsCombined = true; }
 	bool CombineWith(Shape* otherShape, D2D1_COMBINE_MODE mode);
+	void CopyStyle(const Shape& otherShape);
 
 	void SetOffset(FLOAT x, FLOAT y) { GetTransformModifiers().offset = D2D1::SizeF(x, y); }
 	void SetStrokeWidth(FLOAT strokeWidth);
@@ -101,8 +100,6 @@ public:
 	void ValidateTransforms();
 
 protected:
-	void CloneModifiers(Shape* otherShape);
-
 	Microsoft::WRL::ComPtr<ID2D1Geometry> m_Shape;
 
 private:
