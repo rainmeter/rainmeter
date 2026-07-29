@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "MeterShape.h"
 #include "Logger.h"
+#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 #include "../Common/Gfx/Shape.h"
 
@@ -41,7 +42,8 @@ auto ParseBool = [](ConfigParser& parser, auto& var, const WCHAR* value)
 }  // namespace
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Shapes()
+	m_Shapes(),
+	m_ShapeOptions()
 {
 	Meter::Initialize();
 }
@@ -70,41 +72,49 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
 
-	// Clear any shapes
-	Dispose();
-
-	std::map<size_t, std::vector<std::wstring>> combinedShapes;
-
-	const WCHAR delimiter = L'|';
-	WCHAR key[32] = L"Shape";
-	for (size_t i = 1; ; ++i)
+	bool shapeOptionsChanged = m_ShapeOptions.empty();
+	for (auto& option : m_ShapeOptions)
 	{
-		if (i > 1) _snwprintf_s(key, _TRUNCATE, L"Shape%zu", i);
-		const std::wstring& shape = parser.ReadString(section, key, L"");
-		if (shape.empty()) break;
-
-		auto args = ConfigParser::TokenizeWithPairedPunctuation(shape, delimiter, PairedPunctuation::Parentheses);
-
-		bool isCombined = false;
-		if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
-
-		// If the shape is combined with another, save the shape definition and
-		// process later. Otherwise, parse any modifiers for the shape.
-		if (isCombined)
-		{
-			combinedShapes.emplace(i - 1, std::move(args));
-		}
-		else
-		{
-			args.erase(args.begin());
-			ParseModifiers(m_Shapes[i - 1], args, parser, section);
-		}
+		const auto& value = parser.ReadString(section, option.first.c_str(), L"");
+		if (value != option.second) shapeOptionsChanged = true;
+		option.second = value;
 	}
 
-	// Process combined shapes
-	for (auto& shape : combinedShapes)
+	if (shapeOptionsChanged)
 	{
-		if (!CreateCombinedShape(parser, shape.first, shape.second)) break;
+		Dispose();
+
+		std::map<size_t, std::vector<std::wstring>> combinedShapes;
+
+		WCHAR key[32] = L"Shape";
+		for (size_t i = 1; ; ++i)
+		{
+			if (i > 1) _snwprintf_s(key, _TRUNCATE, L"Shape%zu", i);
+			// Cache the first empty ShapeN option so newly added shapes are detected.
+			auto shape = ReadShapeOption(parser, section, key);
+			if (shape.empty()) break;
+
+			auto args = ConfigParser::TokenizeWithPairedPunctuation(shape, L'|', PairedPunctuation::Parentheses);
+
+			bool isCombined = false;
+			if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
+
+			// If the shape is combined with another, process later once all shapes have been read.
+			if (isCombined)
+			{
+				combinedShapes.emplace(i - 1, std::move(args));
+			}
+			else
+			{
+				args.erase(args.begin());
+				ParseModifiers(m_Shapes[i - 1], args, parser, section);
+			}
+		}
+
+		for (auto& shape : combinedShapes)
+		{
+			if (!CreateCombinedShape(parser, shape.first, shape.second)) break;
+		}
 	}
 
 	// Adjust width/height if necessary
@@ -127,6 +137,18 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_W = newW + GetWidthPadding();
 		m_H = newH + GetHeightPadding();
 	}
+}
+
+std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, const WCHAR* section, std::wstring key)
+{
+	StringUtil::ToUpperCase(key);
+
+	auto iter = m_ShapeOptions.find(key);
+	if (iter != m_ShapeOptions.end()) return iter->second;
+
+	const auto& value = parser.ReadString(section, key.c_str(), L"");
+	m_ShapeOptions.emplace(std::move(key), value);
+	return value;
 }
 
 bool MeterShape::Update()
@@ -363,7 +385,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	}
 	else if (CompareAndStrip(shapeName, L"PATH1"))
 	{
-		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
+		auto opt = ReadShapeOption(parser, section, std::move(shapeName));
 		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_WINDING))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
@@ -374,7 +396,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	}
 	else if (CompareAndStrip(shapeName, L"PATH"))
 	{
-		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
+		auto opt = ReadShapeOption(parser, section, std::move(shapeName));
 		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_ALTERNATE))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
@@ -526,7 +548,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
@@ -534,7 +556,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
@@ -542,7 +564,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
@@ -550,7 +572,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
@@ -656,7 +678,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
@@ -664,7 +686,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
@@ -672,7 +694,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
 				{
 					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
@@ -680,7 +702,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 			}
 			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
+				auto opt = ReadShapeOption(parser, section, std::move(option));
 				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
 				{
 					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
@@ -698,7 +720,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 				std::vector<std::wstring> extendParameters = ConfigParser::Tokenize(option, L",");
 				for (auto& extend : extendParameters)
 				{
-					std::wstring key = parser.ReadString(section, extend.c_str(), L"");
+					std::wstring key = ReadShapeOption(parser, section, std::move(extend));
 					if (!key.empty())
 					{
 						auto newArgs = ConfigParser::TokenizeWithPairedPunctuation(key, L'|', PairedPunctuation::Parentheses);
