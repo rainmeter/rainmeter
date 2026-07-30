@@ -233,15 +233,26 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (IsAlreadyRunning())
 	{
-		// Instance already running with same .ini file
 		clearBuffer();
 
 #ifdef _DEBUG
 		if (IsDebuggerPresent())
 		{
 			MessageBox(nullptr, L"Started under debugger, but another instance of Rainmeter is already running.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			return 1;
 		}
 #endif
+
+		HWND window = FindWindow(RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME);
+		if (window)
+		{
+			const WCHAR command[] = L"!Manage";
+			COPYDATASTRUCT cds = { 0 };
+			cds.dwData = 1;
+			cds.cbData = (DWORD)sizeof(command);
+			cds.lpData = (PVOID)command;
+			SendMessage(window, WM_COPYDATA, 0, (LPARAM)&cds);
+		}
 
 		return 1;
 	}
