@@ -18,6 +18,7 @@ interface IAudioClient;
 interface IAudioRenderClient;
 interface IMMDevice;
 interface IMMDeviceEnumerator;
+class AudioLevelDeviceNotificationClient;
 
 class MeasureAudioLevel : public Measure
 {
@@ -107,6 +108,7 @@ private:
 	double m_Sensitivity;
 	MeasureAudioLevel* m_Parent;
 	IMMDeviceEnumerator* m_Enum;
+	AudioLevelDeviceNotificationClient* m_NotificationClient;
 	IMMDevice* m_Dev;
 	WAVEFORMATEX* m_Wfx;
 	IAudioClient* m_ClAudio;
