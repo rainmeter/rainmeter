@@ -10,14 +10,12 @@
 
 #include "Measure.h"
 #include "../ThirdParty/kiss_fft130/kiss_fftr.h"
-#include <wrl/client.h>
 
 interface IAudioCaptureClient;
 interface IAudioClient;
 interface IAudioRenderClient;
 interface IMMDevice;
 interface IMMDeviceEnumerator;
-class AudioSessionMonitor;
 
 class MeasureAudioLevel : public Measure
 {
@@ -105,10 +103,7 @@ private:
 	double m_FreqMin;
 	double m_FreqMax;
 	double m_Sensitivity;
-	std::wstring m_AudioPlayingAction;
-	std::wstring m_AudioStoppedAction;
 	MeasureAudioLevel* m_Parent;
-	Microsoft::WRL::ComPtr<AudioSessionMonitor> m_SessionMonitor;
 	IMMDeviceEnumerator* m_Enum;
 	IMMDevice* m_Dev;
 	WAVEFORMATEX* m_Wfx;
