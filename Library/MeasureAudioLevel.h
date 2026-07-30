@@ -11,6 +11,8 @@
 #include "Measure.h"
 #include "../ThirdParty/kiss_fft130/kiss_fftr.h"
 
+#define MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND 1
+
 interface IAudioCaptureClient;
 interface IAudioClient;
 interface IAudioRenderClient;
@@ -109,6 +111,10 @@ private:
 	WAVEFORMATEX* m_Wfx;
 	IAudioClient* m_ClAudio;
 	IAudioCaptureClient* m_ClCapture;
+#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
+	IAudioClient* m_ClBugAudio;
+	IAudioRenderClient* m_ClBugRender;
+#endif
 	WCHAR m_ReqID[64];
 	WCHAR m_DevName[64];
 	float m_KRMS[2];
