@@ -55,6 +55,60 @@ const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
+class AudioLevelDeviceNotificationClient final : public IMMNotificationClient
+{
+public:
+	AudioLevelDeviceNotificationClient(EDataFlow flow) : m_Flow(flow) {}
+
+	bool GetDefaultDeviceChanged()
+	{
+		return m_DefaultDeviceChanged.exchange(false);
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** object) override
+	{
+		if (!object) return E_POINTER;
+
+		if (riid == __uuidof(IUnknown) || riid == __uuidof(IMMNotificationClient))
+		{
+			*object = static_cast<IMMNotificationClient*>(this);
+			AddRef();
+			return S_OK;
+		}
+
+		*object = nullptr;
+		return E_NOINTERFACE;
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef() override
+	{
+		return ++m_RefCount;
+	}
+
+	ULONG STDMETHODCALLTYPE Release() override
+	{
+		const ULONG refCount = --m_RefCount;
+		if (refCount == 0) delete this;
+		return refCount;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR) override
+	{
+		if (flow == m_Flow && role == eConsole) m_DefaultDeviceChanged = true;
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR, DWORD) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY) override { return S_OK; }
+
+private:
+	std::atomic<ULONG> m_RefCount = 1;
+	EDataFlow m_Flow;
+	std::atomic<bool> m_DefaultDeviceChanged = false;
+};
+
 MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Port(PORT_OUTPUT),
 	m_Channel(CHANNEL_SUM),
@@ -72,6 +126,7 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_Sensitivity(35.0),
 	m_Parent(nullptr),
 	m_Enum(nullptr),
+	m_NotificationClient(nullptr),
 	m_Dev(nullptr),
 	m_Wfx(nullptr),
 	m_ClAudio(nullptr),
@@ -119,6 +174,16 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 
 MeasureAudioLevel::~MeasureAudioLevel()
 {
+	if (m_NotificationClient)
+	{
+		if (m_Enum)
+		{
+			m_Enum->UnregisterEndpointNotificationCallback(m_NotificationClient);
+		}
+		m_NotificationClient->Release();
+		m_NotificationClient = nullptr;
+	}
+
 	DeviceRelease();
 	SAFE_RELEASE(m_Enum);
 }
@@ -134,6 +199,16 @@ void MeasureAudioLevel::Initialize()
 
 	if (CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&m_Enum) == S_OK)
 	{
+		if (!*m_ReqID)
+		{
+			m_NotificationClient = new AudioLevelDeviceNotificationClient(m_Port == PORT_OUTPUT ? eRender : eCapture);
+			if (m_Enum->RegisterEndpointNotificationCallback(m_NotificationClient) != S_OK)
+			{
+				m_NotificationClient->Release();
+				m_NotificationClient = nullptr;
+			}
+		}
+
 		// Init the device. It is OK if it fails; UpdateValue() keeps checking.
 		DeviceInit();
 		return;
@@ -386,6 +461,13 @@ double MeasureAudioLevel::UpdateAudioValue()
 	MeasureAudioLevel* parent = m_Parent ? m_Parent : this;
 	LARGE_INTEGER pcCur;
 	QueryPerformanceCounter(&pcCur);
+
+	if (!m->m_Parent && m->m_NotificationClient && m->m_NotificationClient->GetDefaultDeviceChanged())
+	{
+		m->DeviceRelease();
+		m->DeviceInit();
+		m->m_PcPoll = pcCur;
+	}
 
 	// query the buffer
 	if (m->m_ClCapture && (pcCur.QuadPart - m->m_PcPoll.QuadPart) * m->m_PcMult >= QUERY_TIMEOUT)
