@@ -10,6 +10,7 @@
 
 #include "Meter.h"
 #include "GeneralImage.h"
+#include "AspectRatioMode.h"
 
 class MeterImage : public Meter
 {
@@ -34,14 +35,6 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 
 private:
-	enum DRAWMODE
-	{
-		DRAWMODE_NONE = 0,
-		DRAWMODE_TILE,
-		DRAWMODE_KEEPRATIO,
-		DRAWMODE_KEEPRATIOANDCROP
-	};
-
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	GeneralImage m_Image;
@@ -52,7 +45,8 @@ private:
 	std::wstring m_MaskImageName;
 
 	bool m_NeedsRedraw;
-	DRAWMODE m_DrawMode;
+	bool m_Tile;
+	AspectRatioMode m_AspectRatioMode;
 
 	RECT m_ScaleMargins;
 

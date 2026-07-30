@@ -103,6 +103,7 @@
     <ClCompile Include="MeterButton.cpp" />
     <ClCompile Include="MeterHistogram.cpp" />
     <ClCompile Include="MeterImage.cpp" />
+    <ClCompile Include="MeterSvg.cpp" />
     <ClCompile Include="MeterLine.cpp" />
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
@@ -180,6 +181,7 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AspectRatioMode.h" />
     <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
@@ -250,6 +252,7 @@
     <ClInclude Include="MeterButton.h" />
     <ClInclude Include="MeterHistogram.h" />
     <ClInclude Include="MeterImage.h" />
+    <ClInclude Include="MeterSvg.h" />
     <ClInclude Include="MeterLine.h" />
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
