@@ -84,7 +84,15 @@ bool MeterSvg::LoadSvg()
 	HRESULT hr = m_Svg->Load(m_Skin->GetCanvas());
 	if (FAILED(hr))
 	{
-		LogErrorF(this, L"Unable to load SVG source, error: %s (0x%08x)", _com_error(hr).ErrorMessage(), hr);
+		if (Gfx::D2DSvg::IsInlineData(m_Svg->GetSource()))
+		{
+			LogErrorF(this, L"Unable to load inline SVG data, error: %s (0x%08x)", _com_error(hr).ErrorMessage(), hr);
+		}
+		else
+		{
+			LogErrorF(this, L"Unable to load SVG file: %s, error: %s (0x%08x)",
+				m_Svg->GetSource().c_str(), _com_error(hr).ErrorMessage(), hr);
+		}
 		UpdateSize();
 		return false;
 	}
