@@ -28,6 +28,7 @@ private:
 	{
 		Id_Tab = 1000,
 		Id_NextButton,
+		Id_BackButton,
 		Id_CreatePackageButton
 	};
 
@@ -163,6 +164,7 @@ private:
 	std::wstring m_VariableFiles;
 	bool m_MergeSkins;
 
+	bool m_OptionsCreated;
 	HANDLE m_PackagerThread;
 	zipFile m_ZipFile;
 	bool m_AllowNonAsciiFilenames;

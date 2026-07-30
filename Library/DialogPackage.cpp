@@ -27,6 +27,7 @@ DialogPackage* DialogPackage::c_Dialog = nullptr;
 DialogPackage::DialogPackage() : Dialog(),
 	m_LoadLayout(false),
 	m_MergeSkins(false),
+	m_OptionsCreated(false),
 	m_PackagerThread(),
 	m_ZipFile(),
 	m_AllowNonAsciiFilenames(false)
@@ -91,6 +92,9 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	const Control controls[] =
 	{
+		Control::Button(DialogPackage::Id_BackButton, 0,
+			103, 264, 50, 14,
+			WS_TABSTOP, 0),
 		Control::Button(DialogPackage::Id_NextButton, 0,
 			188, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0),
@@ -106,6 +110,7 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(DialogPackage::Id_BackButton), L"Back");
 	SetWindowText(GetControl(DialogPackage::Id_NextButton), L"Next");
 	SetWindowText(GetControl(DialogPackage::Id_CreatePackageButton), L"Create package");
 	SetWindowText(GetControl(IDCANCEL), L"Cancel");
@@ -126,24 +131,55 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case DialogPackage::Id_NextButton:
 		{
-			AddTab(DialogPackage::Id_Tab, m_TabOptions, L"Options");
-			AddTab(DialogPackage::Id_Tab, m_TabAdvanced, L"Advanced");
+			if (!m_OptionsCreated)
+			{
+				AddTab(DialogPackage::Id_Tab, m_TabOptions, L"Options");
+				AddTab(DialogPackage::Id_Tab, m_TabAdvanced, L"Advanced");
+				m_OptionsCreated = true;
+			}
 
 			HWND item = GetDlgItem(m_Window, DialogPackage::Id_NextButton);
 			ShowWindow(item, SW_HIDE);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_BackButton);
+			ShowWindow(item, SW_SHOWNORMAL);
 
 			item = GetDlgItem(m_Window, DialogPackage::Id_CreatePackageButton);
 			ShowWindow(item, SW_SHOWNORMAL);
 			SendMessage(m_Window, DM_SETDEFID, DialogPackage::Id_CreatePackageButton, 0);
 
+			EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_Tab), TRUE);
 			ShowWindow(m_TabInfo.GetWindow(), SW_HIDE);
 			SelectTab(0);
+		}
+		break;
+
+	case DialogPackage::Id_BackButton:
+		{
+			HWND item = GetDlgItem(m_Window, DialogPackage::Id_BackButton);
+			ShowWindow(item, SW_HIDE);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_CreatePackageButton);
+			ShowWindow(item, SW_HIDE);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_NextButton);
+			ShowWindow(item, SW_SHOWNORMAL);
+			SendMessage(m_Window, DM_SETDEFID, DialogPackage::Id_NextButton, 0);
+
+			EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_Tab), FALSE);
+			EnableWindow(m_TabOptions.GetWindow(), FALSE);
+			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
+			ShowWindow(m_TabInfo.GetWindow(), SW_SHOWNORMAL);
+			m_TabInfo.Activate();
 		}
 		break;
 
 	case DialogPackage::Id_CreatePackageButton:
 		{
 			HWND item = GetDlgItem(m_Window, DialogPackage::Id_CreatePackageButton);
+			EnableWindow(item, FALSE);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_BackButton);
 			EnableWindow(item, FALSE);
 
 			item = GetDlgItem(m_Window, IDCANCEL);
