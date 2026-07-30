@@ -88,6 +88,12 @@ enum RecursiveType
 	RECURSIVE_FULL
 };
 
+enum class ExtensionsFilter : BYTE
+{
+	Include,
+	Exclude
+};
+
 struct FileInfo
 {
 	std::wstring fileName;
@@ -132,6 +138,7 @@ struct FileViewParentData
 	bool showSystem = false;
 	bool hideExtension = false;
 	std::vector<std::wstring> extensions;
+	ExtensionsFilter extensionsFilter = ExtensionsFilter::Include;
 	std::wstring finishAction;
 
 	std::vector<FileViewChildData*> children;
@@ -217,6 +224,7 @@ private:
 		m_ShowHidden(parent->showHidden),
 		m_ShowSystem(parent->showSystem),
 		m_Extensions(parent->extensions),
+		m_ExtensionsFilter(parent->extensionsFilter),
 		m_FinishAction(parent->finishAction),
 		m_NeedsUpdating(parent->needsUpdating),
 		m_NeedsIcons(parent->needsIcons)
@@ -252,6 +260,7 @@ private:
 	bool m_ShowHidden = true;
 	bool m_ShowSystem = false;
 	std::vector<std::wstring> m_Extensions;
+	ExtensionsFilter m_ExtensionsFilter = ExtensionsFilter::Include;
 	std::wstring m_FinishAction;
 	std::vector<FileInfo> m_Files;
 	int m_FileCount = 0;
@@ -516,6 +525,21 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
 		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
 		child->parent->extensions = ParseUtil::Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
+
+		LPCWSTR extensionsFilter = parser.ReadString(section, L"ExtensionsFilter", L"Include").c_str();
+		if (_wcsicmp(extensionsFilter, L"INCLUDE") == 0)
+		{
+			child->parent->extensionsFilter = ExtensionsFilter::Include;
+		}
+		else if (_wcsicmp(extensionsFilter, L"EXCLUDE") == 0)
+		{
+			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
+		}
+		else
+		{
+			LogWarningF(child->parent->ownerChild->measure, L"Invalid ExtensionsFilter: %s", extensionsFilter);
+			child->parent->extensionsFilter = ExtensionsFilter::Include;
+		}
 
 		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
 
@@ -1297,29 +1321,24 @@ void MeasureFileView::UpdateTask::GetFolderInfo(std::queue<std::wstring>& folder
 			if (rType != RECURSIVE_PARTIAL && !file.isFolder)
 			{
 				size_t pos = file.fileName.find_last_of(L".");
+				bool found = false;
 				if (pos != std::wstring::npos)
 				{
 					file.ext = file.fileName.substr(pos + 1);
 
-					if (m_Extensions.size() > 0)
+					for (const auto& iter : m_Extensions)
 					{
-						bool found = false;
-						for (const auto& iter : m_Extensions)
+						if (_wcsicmp(iter.c_str(), file.ext.c_str()) == 0)
 						{
-							if (_wcsicmp(iter.c_str(), file.ext.c_str()) == 0)
-							{
-								found = true;
-								break;
-							}
-						}
-
-						if (!found)
-						{
-							continue;
+							found = true;
+							break;
 						}
 					}
 				}
-				else if (m_Extensions.size() > 0)
+
+				if (!m_Extensions.empty() &&
+					((m_ExtensionsFilter == ExtensionsFilter::Include && !found) ||
+					(m_ExtensionsFilter == ExtensionsFilter::Exclude && found)))
 				{
 					continue;
 				}
