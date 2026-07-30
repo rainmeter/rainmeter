@@ -342,21 +342,14 @@ void TextFormatD2D::SetFontWeight(int weight)
 	m_HasWeightChanged = true;
 }
 
-void TextFormatD2D::SetFontVariation(const std::vector<FontAxis>& variations)
+void TextFormatD2D::SetFontVariation(const std::vector<DWRITE_FONT_AXIS_VALUE>& variations)
 {
 	if (!m_TextFormat || variations.empty()) return;
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat3> textFormat3;
 	if (FAILED(m_TextFormat.As(&textFormat3))) return;
 
-	std::vector<DWRITE_FONT_AXIS_VALUE> axisValues;
-	axisValues.reserve(variations.size());
-	for (const auto& variation : variations)
-	{
-		axisValues.push_back({ (DWRITE_FONT_AXIS_TAG)variation.tag, variation.value });
-	}
-
-	textFormat3->SetFontAxisValues(axisValues.data(), (UINT32)axisValues.size());
+	textFormat3->SetFontAxisValues(variations.data(), (UINT32)variations.size());
 }
 
 DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)

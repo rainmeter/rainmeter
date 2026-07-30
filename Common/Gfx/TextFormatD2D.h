@@ -36,7 +36,7 @@ public:
 		const FontCollection* fontCollection) override;
 
 	virtual void SetFontWeight(int weight) override;
-	virtual void SetFontVariation(const std::vector<FontAxis>& variations) override;
+	virtual void SetFontVariation(const std::vector<DWRITE_FONT_AXIS_VALUE>& variations) override;
 
 	virtual void SetTrimming(bool trim) override;
 
