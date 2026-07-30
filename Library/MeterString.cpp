@@ -27,7 +27,7 @@ UINT32 MakeFontAxisTag(std::wstring_view tag)
 		((UINT32)tag[3] << 24);
 }
 
-bool ParseFontVariation(const std::wstring& str, const MathParser& mathParser, std::vector<Gfx::FontAxis>& variations)
+bool ParseFontVariation(const std::wstring& str, const MathParser& mathParser, std::vector<DWRITE_FONT_AXIS_VALUE>& variations)
 {
 	variations.clear();
 	StringParser parser(str);
@@ -48,10 +48,19 @@ bool ParseFontVariation(const std::wstring& str, const MathParser& mathParser, s
 		parser.SkipWhitespace();
 		if (!parser.IsConsumed() && !parser.Consume(L'|')) return false;
 
-		variations.push_back({ MakeFontAxisTag(*tag), (FLOAT)*value });
+		variations.push_back({ (DWRITE_FONT_AXIS_TAG)MakeFontAxisTag(*tag), (FLOAT)*value });
 	}
 
 	return true;
+}
+
+bool FontVariationsEqual(const std::vector<DWRITE_FONT_AXIS_VALUE>& left, const std::vector<DWRITE_FONT_AXIS_VALUE>& right)
+{
+	return std::equal(left.cbegin(), left.cend(), right.cbegin(), right.cend(),
+		[](const DWRITE_FONT_AXIS_VALUE& left, const DWRITE_FONT_AXIS_VALUE& right)
+		{
+			return left.axisTag == right.axisTag && left.value == right.value;
+		});
 }
 
 std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
@@ -228,7 +237,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
-	std::vector<Gfx::FontAxis> oldFontVariation = m_FontVariation;
+	std::vector<DWRITE_FONT_AXIS_VALUE> oldFontVariation = m_FontVariation;
 	FLOAT oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
 	Gfx::HorizontalAlignment oldHAlign = m_TextFormat->GetHorizontalAlignment();
@@ -448,7 +457,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
-		oldFontVariation != m_FontVariation ||
+		!FontVariationsEqual(oldFontVariation, m_FontVariation) ||
 		oldFontSize != m_FontSize ||
 		oldStyle != m_Style ||
 		oldHAlign != m_TextFormat->GetHorizontalAlignment() ||

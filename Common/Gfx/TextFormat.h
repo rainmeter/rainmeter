@@ -9,6 +9,7 @@
 #define RM_GFX_TEXTFORMAT_H_
 
 #include <Windows.h>
+#include <dwrite_3.h>
 #include <string>
 #include <vector>
 
@@ -28,14 +29,6 @@ struct TextInlineRange
 {
 	UINT32 start;
 	UINT32 length;
-};
-
-struct FontAxis
-{
-	UINT32 tag;
-	FLOAT value;
-
-	bool operator==(const FontAxis&) const = default;
 };
 
 enum class HorizontalAlignment : BYTE
@@ -76,7 +69,7 @@ public:
 
 	// Sets the OpenType variation axes of the font used. Unsupported axes are ignored by
 	// DirectWrite. This has no effect on versions of DirectWrite without variable font support.
-	virtual void SetFontVariation(const std::vector<FontAxis>& variations) = 0;
+	virtual void SetFontVariation(const std::vector<DWRITE_FONT_AXIS_VALUE>& variations) = 0;
 
 	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
 	// TextFormat object will produce clipped text with an ellipsis if the text overflows the
