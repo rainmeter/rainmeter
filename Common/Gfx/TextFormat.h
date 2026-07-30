@@ -30,6 +30,14 @@ struct TextInlineRange
 	UINT32 length;
 };
 
+struct FontAxis
+{
+	UINT32 tag;
+	FLOAT value;
+
+	bool operator==(const FontAxis&) const = default;
+};
+
 enum class HorizontalAlignment : BYTE
 {
 	Left,
@@ -65,6 +73,10 @@ public:
 
 	// Sets the font weight of the font used. |weight| should be between 1-999.
 	virtual void SetFontWeight(int weight) = 0;
+
+	// Sets the OpenType variation axes of the font used. Unsupported axes are ignored by
+	// DirectWrite. This has no effect on versions of DirectWrite without variable font support.
+	virtual void SetFontVariation(const std::vector<FontAxis>& variations) = 0;
 
 	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
 	// TextFormat object will produce clipped text with an ellipsis if the text overflows the

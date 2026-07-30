@@ -11,6 +11,7 @@
 #include <Windows.h>
 #include <optional>
 #include <string>
+#include <string_view>
 
 class MathParser;
 
@@ -61,6 +62,7 @@ public:
 
 	bool Consume(WCHAR ch);
 	bool ConsumeRest(WCHAR ch);
+	std::optional<std::wstring_view> ConsumeCharacters(size_t length);
 
 	std::optional<double> ConsumeDouble(Option option = None);
 	std::optional<double> ConsumeRestDouble(Option option = None);

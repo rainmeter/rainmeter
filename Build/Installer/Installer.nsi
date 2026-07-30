@@ -143,7 +143,7 @@ Function .onInit
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${IfNot} ${AtLeastWin10}
-		${OrIfNot} ${AtLeastBuild} 15063
+		${OrIfNot} ${AtLeastBuild} 16299
 			MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
 			Quit
