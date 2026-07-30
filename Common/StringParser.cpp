@@ -224,15 +224,6 @@ bool StringParser::ConsumeRest(WCHAR ch)
 	return true;
 }
 
-std::optional<std::wstring_view> StringParser::ConsumeCharacters(size_t length)
-{
-	if (length > (size_t)(m_End - m_Current)) return std::nullopt;
-
-	const std::wstring_view result(m_Current, length);
-	m_Current += length;
-	return result;
-}
-
 std::optional<double> StringParser::ConsumeDouble(Option option)
 {
 	return ConsumeNumber<double>(m_Current, m_End, [](const WCHAR* current, WCHAR** parseEnd, int)

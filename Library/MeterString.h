@@ -10,7 +10,6 @@
 
 #include "Meter.h"
 #include "Measure.h"
-#include "../Common/Gfx/TextFormat.h"
 
 class MeterString : public Meter
 {
@@ -81,7 +80,6 @@ private:
 	std::wstring m_Prefix;
 	std::wstring m_Text;
 	std::wstring m_FontFace;
-	std::vector<DWRITE_FONT_AXIS_VALUE> m_FontVariation;
 	AUTOSCALE m_AutoScale;
 	TEXTSTYLE m_Style;
 	TEXTEFFECT m_Effect;

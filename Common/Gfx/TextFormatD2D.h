@@ -12,7 +12,7 @@
 #include "TextFormat.h"
 #include <memory>
 #include <string>
-#include <dwrite_3.h>
+#include <dwrite_1.h>
 #include <wrl/client.h>
 
 namespace Gfx {
@@ -36,7 +36,6 @@ public:
 		const FontCollection* fontCollection) override;
 
 	virtual void SetFontWeight(int weight) override;
-	virtual void SetFontVariation(const std::vector<DWRITE_FONT_AXIS_VALUE>& variations) override;
 
 	virtual void SetTrimming(bool trim) override;
 
