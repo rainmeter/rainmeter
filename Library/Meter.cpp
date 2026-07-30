@@ -12,6 +12,7 @@
 #include "MeterHistogram.h"
 #include "MeterString.h"
 #include "MeterImage.h"
+#include "MeterSvg.h"
 #include "MeterLine.h"
 #include "MeterRoundLine.h"
 #include "MeterRotator.h"
@@ -494,6 +495,10 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
 		return new MeterImage(skin, name);
+	}
+	else if (_wcsicmp(L"SVG", meter) == 0)
+	{
+		return new MeterSvg(skin, name);
 	}
 	else if (_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{

@@ -13,7 +13,7 @@
 #include "TextFormatD2D.h"
 #include <bit>
 #include <string>
-#include <d2d1_1.h>
+#include <d2d1_3.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
@@ -59,6 +59,7 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Forward declaration
 class D2DBitmap;
+class D2DSvg;
 
 class RenderTexture;
 
@@ -131,6 +132,7 @@ public:
 	void DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
 	void DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 		const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2);
+	bool DrawSvg(D2DSvg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect = nullptr);
 
 	void FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color);
 	void FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle);
@@ -142,6 +144,7 @@ public:
 private:
 	friend class Canvas;
 	friend class D2DBitmap;
+	friend class D2DSvg;
 	friend class RenderTexture;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
@@ -154,11 +157,11 @@ private:
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
 
-	static ComPtr<ID2D1DeviceContext> CreateDeviceContext();
+	static ComPtr<ID2D1DeviceContext5> CreateDeviceContext();
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
-	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
+	Microsoft::WRL::ComPtr<ID2D1DeviceContext5> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
@@ -202,7 +205,7 @@ private:
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
 
 	// Always kept at the default DPI for use in temporary contexts.
-	static Microsoft::WRL::ComPtr<ID2D1DeviceContext> c_EffectTarget;
+	static Microsoft::WRL::ComPtr<ID2D1DeviceContext5> c_EffectTarget;
 };
 
 }  // namespace Gfx

@@ -99,6 +99,9 @@
     <ClCompile Include="Gfx\D2DBitmap.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\D2DSvg.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
     <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
@@ -210,6 +213,9 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\D2DBitmap.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\D2DSvg.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\D2DEffectStream.h">

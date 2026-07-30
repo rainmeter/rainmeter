@@ -9,6 +9,7 @@
 #include "Canvas.h"
 #include "TextFormatD2D.h"
 #include "D2DBitmap.h"
+#include "D2DSvg.h"
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
@@ -37,7 +38,7 @@ Canvas::DeviceLostCallback Canvas::c_DeviceLostCallback = nullptr;
 Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
 Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
-Microsoft::WRL::ComPtr<ID2D1DeviceContext> Canvas::c_EffectTarget;
+Microsoft::WRL::ComPtr<ID2D1DeviceContext5> Canvas::c_EffectTarget;
 Microsoft::WRL::ComPtr<IDXGIDevice1> Canvas::c_DxgiDevice;
 Microsoft::WRL::ComPtr<ID2D1Factory1> Canvas::c_D2DFactory;
 Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
@@ -158,7 +159,7 @@ bool Canvas::AttachDevice()
 	return true;
 }
 
-ComPtr<ID2D1DeviceContext> Canvas::CreateDeviceContext()
+ComPtr<ID2D1DeviceContext5> Canvas::CreateDeviceContext()
 {
 	if (!c_D2DDevice) return nullptr;
 
@@ -166,10 +167,15 @@ ComPtr<ID2D1DeviceContext> Canvas::CreateDeviceContext()
 	auto hr = c_D2DDevice->CreateDeviceContext(
 		D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
 		deviceContext.GetAddressOf());
-	if (SUCCEEDED(hr)) return deviceContext;
+	if (FAILED(hr))
+	{
+		hr = c_D2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, deviceContext.GetAddressOf());
+	}
+	if (FAILED(hr)) return nullptr;
 
-	c_D2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, deviceContext.GetAddressOf());
-	return deviceContext;
+	ComPtr<ID2D1DeviceContext5> deviceContext5;
+	deviceContext.As(&deviceContext5);
+	return deviceContext5;
 }
 
 void Canvas::Finalize()
@@ -228,7 +234,7 @@ bool Canvas::EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& f
 
 HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 {
-	ComPtr<ID2D1DeviceContext> target = CreateDeviceContext();
+	ComPtr<ID2D1DeviceContext5> target = CreateDeviceContext();
 	if (!target) return E_FAIL;
 
 	ComPtr<IDXGIAdapter> dxgiAdapter;
@@ -769,6 +775,52 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 
 		m_Target->SetAntialiasMode(aaMode);
 	}
+}
+
+bool Canvas::DrawSvg(D2DSvg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect)
+{
+	if (!svg || !svg->m_Document || svg->m_Size.width <= 0.0f || svg->m_Size.height <= 0.0f) return false;
+
+	D2D1_MATRIX_3X2_F oldTransform;
+	m_Target->GetTransform(&oldTransform);
+
+	if (clipRect)
+	{
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PushAxisAlignedClip(*clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}
+		else
+		{
+			const D2D1_LAYER_PARAMETERS1 layerParams =
+				D2D1::LayerParameters1(*clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+			m_Target->PushLayer(layerParams, nullptr);
+		}
+	}
+
+	const D2D1_MATRIX_3X2_F transform =
+		D2D1::Matrix3x2F::Scale(
+			(dstRect.right - dstRect.left) / svg->m_Size.width,
+			(dstRect.bottom - dstRect.top) / svg->m_Size.height) *
+		D2D1::Matrix3x2F::Translation(dstRect.left, dstRect.top) *
+		oldTransform;
+	m_Target->SetTransform(transform);
+	m_Target->DrawSvgDocument(svg->m_Document.Get());
+	m_Target->SetTransform(oldTransform);
+
+	if (clipRect)
+	{
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PopAxisAlignedClip();
+		}
+		else
+		{
+			m_Target->PopLayer();
+		}
+	}
+
+	return true;
 }
 
 void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
