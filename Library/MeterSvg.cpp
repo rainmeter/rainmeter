@@ -60,6 +60,11 @@ void MeterSvg::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (m_Initialized) m_NeedsRedraw = true;
 }
 
+void MeterSvg::BindMeasures(ConfigParser& parser, const WCHAR* section)
+{
+	BindPrimaryMeasure(parser, section, true);
+}
+
 bool MeterSvg::LoadSvg()
 {
 	if (m_LoadAttempted) return m_Svg && m_Svg->HasDeviceResources();
