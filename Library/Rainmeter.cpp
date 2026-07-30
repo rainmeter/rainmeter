@@ -294,6 +294,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		logger.SetLogFilePath(logFile);
 	}
 
+	if (_wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) != 0)
+	{
+		EnsureSkinInstallerAssociation();
+	}
+
 	// Create a default Rainmeter.ini file if needed
 	bool iniFileCreated = false;
 	if (_waccess_s(iniFile, 0) != 0)
@@ -560,6 +565,35 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	return 0;	// All is OK
+}
+
+void Rainmeter::EnsureSkinInstallerAssociation()
+{
+	WCHAR buffer[MAX_PATH];
+	DWORD bufferSize = _countof(buffer);
+	if (SUCCEEDED(AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".rmskin", L"open", buffer, &bufferSize)) &&
+		_wcsicmp(PathFindFileName(buffer), L"SkinInstaller.exe") == 0)
+	{
+		return;
+	}
+
+	const std::wstring executable = m_Path + L"SkinInstaller.exe";
+	const std::wstring icon = executable + L",0";
+	const std::wstring command = L'"' + executable + L"\" \"%1\"";
+
+	auto setValue = [](LPCWSTR key, const std::wstring& value)
+	{
+		RegSetKeyValue(HKEY_CURRENT_USER, key, nullptr, REG_SZ, value.c_str(), (DWORD)((value.length() + 1) * sizeof(WCHAR)));
+	};
+
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller", L"Rainmeter Skin Installer");
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller\\shell", L"open");
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller\\DefaultIcon", icon);
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller\\shell\\open\\command", command);
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller\\shell\\edit", L"Install Rainmeter skin");
+	setValue(L"Software\\Classes\\Rainmeter.SkinInstaller\\shell\\edit\\command", command);
+	setValue(L"Software\\Classes\\.rmskin", L"Rainmeter.SkinInstaller");
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
 }
 
 void Rainmeter::Finalize()

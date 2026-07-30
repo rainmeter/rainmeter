@@ -249,6 +249,7 @@ private:
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
+	void EnsureSkinInstallerAssociation();
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
