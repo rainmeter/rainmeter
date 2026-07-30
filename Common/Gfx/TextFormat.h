@@ -9,7 +9,6 @@
 #define RM_GFX_TEXTFORMAT_H_
 
 #include <Windows.h>
-#include <dwrite_3.h>
 #include <string>
 #include <vector>
 
@@ -66,10 +65,6 @@ public:
 
 	// Sets the font weight of the font used. |weight| should be between 1-999.
 	virtual void SetFontWeight(int weight) = 0;
-
-	// Sets the OpenType variation axes of the font used. Unsupported axes are ignored by
-	// DirectWrite. This has no effect on versions of DirectWrite without variable font support.
-	virtual void SetFontVariation(const std::vector<DWRITE_FONT_AXIS_VALUE>& variations) = 0;
 
 	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
 	// TextFormat object will produce clipped text with an ellipsis if the text overflows the

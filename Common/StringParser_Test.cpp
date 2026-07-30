@@ -40,16 +40,6 @@ public:
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
-	TEST_METHOD(TestConsumeCharacters)
-	{
-		StringParser parser(L"axisValue");
-
-		const auto value = parser.ConsumeCharacters(4);
-		Assert::IsTrue(value.has_value());
-		Assert::IsTrue(*value == L"axis");
-		Assert::IsTrue(parser.ConsumeRest(L"Value"));
-	}
-
 	TEST_METHOD(TestSkipWhitespace)
 	{
 		StringParser parser(L" \t\r\nValue");
