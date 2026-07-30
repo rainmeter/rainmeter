@@ -12,11 +12,47 @@
 #include "Pcre.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
 namespace {
+
+UINT32 MakeFontAxisTag(std::wstring_view tag)
+{
+	return (UINT32)tag[0] |
+		((UINT32)tag[1] << 8) |
+		((UINT32)tag[2] << 16) |
+		((UINT32)tag[3] << 24);
+}
+
+bool ParseFontVariation(const std::wstring& str, const MathParser& mathParser, std::vector<Gfx::FontAxis>& variations)
+{
+	variations.clear();
+	StringParser parser(str);
+	while (!parser.IsConsumed())
+	{
+		parser.SkipWhitespace();
+		if (parser.IsConsumed()) break;
+
+		const auto tag = parser.ConsumeCharacters(4);
+		const auto value = tag && parser.IsWhitespace() ?
+			parser.ConsumeDoubleOrFormula(mathParser, StringParser::AllowWhitespace) : std::nullopt;
+		if (!tag || !value ||
+			!std::all_of(tag->cbegin(), tag->cend(), [](WCHAR ch) { return ch >= L'!' && ch <= L'~'; }))
+		{
+			return false;
+		}
+
+		parser.SkipWhitespace();
+		if (!parser.IsConsumed() && !parser.Consume(L'|')) return false;
+
+		variations.push_back({ MakeFontAxisTag(*tag), (FLOAT)*value });
+	}
+
+	return true;
+}
 
 std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 	const std::wstring& str, const std::vector<std::wstring>& patterns)
@@ -185,12 +221,14 @@ void MeterString::Initialize()
 		(m_Style & BOLD) != 0,
 		(m_Style & ITALIC) != 0,
 		m_Skin->GetFontCollection());
+	m_TextFormat->SetFontVariation(m_FontVariation);
 }
 
 void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
+	std::vector<Gfx::FontAxis> oldFontVariation = m_FontVariation;
 	FLOAT oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
 	Gfx::HorizontalAlignment oldHAlign = m_TextFormat->GetHorizontalAlignment();
@@ -233,6 +271,12 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (m_FontFace.empty())
 	{
 		m_FontFace = L"Arial";
+	}
+
+	const std::wstring& fontVariation = parser.ReadString(section, L"FontVariation", L"");
+	if (!ParseFontVariation(fontVariation, m_Skin->GetMathParser(), m_FontVariation))
+	{
+		LogErrorF(this, L"Invalid FontVariation: %s", fontVariation.c_str());
 	}
 
 	m_FontSize = (FLOAT)parser.ReadFloat(section, L"FontSize", 10.0);
@@ -404,6 +448,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
+		oldFontVariation != m_FontVariation ||
 		oldFontSize != m_FontSize ||
 		oldStyle != m_Style ||
 		oldHAlign != m_TextFormat->GetHorizontalAlignment() ||
