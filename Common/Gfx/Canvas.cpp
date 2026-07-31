@@ -497,13 +497,11 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 	m_Target->Clear(color);
 }
 
-void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
+void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, const D2D1_RECT_F& rect,
 	const D2D1_COLOR_F& color, bool applyInlineFormatting)
 {
 	auto solidBrush = GetCachedSolidColorBrush(color);
 	if (!solidBrush) return;
-
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 
 	static std::wstring str;
 	str = srcStr;
@@ -599,10 +597,8 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 	}
 }
 
-bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size)
+bool Canvas::MeasureTextW(const std::wstring& str, TextFormatD2D& formatD2D, D2D1_SIZE_F& size)
 {
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-
 	static std::wstring formatStr;
 	formatStr = str;
 	formatD2D.ApplyInlineCase(formatStr);
@@ -613,9 +609,8 @@ bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, D2D
 	return true;
 }
 
-bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines)
+bool Canvas::MeasureTextLinesW(const std::wstring& str, TextFormatD2D& formatD2D, D2D1_SIZE_F& size, UINT32& lines)
 {
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
 	static std::wstring formatStr;

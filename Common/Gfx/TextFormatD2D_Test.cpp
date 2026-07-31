@@ -27,7 +27,7 @@ public:
 
 	TEST_METHOD(TestInaccurateText)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat(m_MathParser));
+		std::unique_ptr<TextFormatD2D> textFormat(m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;
@@ -43,7 +43,7 @@ public:
 
 	TEST_METHOD(TestTrailingNewlineGdipCompatibility)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat(m_MathParser));
+		std::unique_ptr<TextFormatD2D> textFormat(m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;

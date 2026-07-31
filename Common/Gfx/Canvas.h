@@ -103,7 +103,7 @@ public:
 	void ReleaseDC();
 
 	FontCollection* CreateFontCollection() { return new FontCollection(); }
-	TextFormat* CreateTextFormat(const MathParser& mathParser) { return new TextFormatD2D(mathParser); }
+	TextFormatD2D* CreateTextFormat(const MathParser& mathParser) { return new TextFormatD2D(mathParser); }
 
 	bool IsTransparentPixel(int x, int y);
 
@@ -123,10 +123,10 @@ public:
 
 	void Clear(const D2D1_COLOR_F& color = Util::c_Transparent_Color_F);
 
-	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
+	void DrawTextW(const std::wstring& srcStr, TextFormatD2D& format, const D2D1_RECT_F& rect,
 		const D2D1_COLOR_F& color, bool applyInlineFormatting = false);
-	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size);
-	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
+	bool MeasureTextW(const std::wstring& srcStr, TextFormatD2D& format, D2D1_SIZE_F& size);
+	bool MeasureTextLinesW(const std::wstring& srcStr, TextFormatD2D& format, D2D1_SIZE_F& size, UINT32& lines);
 
 	void DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
 	void DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
