@@ -164,14 +164,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	Dialog::Initialize(LoadAccelerators(m_Instance, MAKEINTRESOURCE(IDR_DIALOG_ACCELERATORS)));
 
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+	WCHAR buffer[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
-
-	auto clearBuffer = [&buffer]() -> void
-	{
-		delete [] buffer;
-		buffer = nullptr;
-	};
 
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
@@ -226,15 +220,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
 		{
 			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-			clearBuffer();
 			return 1;
 		}
 	}
 
 	if (IsAlreadyRunning())
 	{
-		clearBuffer();
-
 #ifdef _DEBUG
 		if (IsDebuggerPresent())
 		{
@@ -279,7 +270,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (!m_Window)
 	{
-		clearBuffer();
 		return 1;
 	}
 
@@ -355,7 +345,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
 			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION=" + is64Bit + L" /D=" + m_Path.c_str();
 			CommandHandler::RunFile(fullPath.c_str(), args.c_str());
-			clearBuffer();
 			return -1;
 		}
 	}
@@ -413,7 +402,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		if (!LoadLanguage(L"1033"))
 		{
 			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-			clearBuffer();
 			return 1;
 		}
 	}
@@ -447,8 +435,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Ensure that the Skins directory is kept available locally in case it's in e.g. OneDrive.
 	FileUtil::SetFilePinnedAttribute(m_SkinPath.c_str());
-
-	clearBuffer();
 
 #ifdef BUILD_TIME
 	// Build.ps1 will write to the BUILD_TIME macro when the installer is created
