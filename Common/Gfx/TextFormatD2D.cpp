@@ -202,7 +202,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 
 void TextFormatD2D::SetProperties(
 	const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-	FontCollectionD2D* fontCollectionD2D)
+	FontCollection* fontCollection)
 {
 	Dispose();
 
@@ -238,12 +238,12 @@ void TextFormatD2D::SetProperties(
 		IDWriteFontCollection* dwriteFontCollection = nullptr;
 
 		// If |fontFamily| is not in the system collection, use the font collection from
-		// |fontCollectionD2D| if possible.
+		// |fontCollection| if possible.
 		if (!Util::IsFamilyInSystemFontCollection(Canvas::c_DWFactory.Get(), fontFamily) &&
-			(fontCollectionD2D && fontCollectionD2D->InitializeCollection()))
+			(fontCollection && fontCollection->InitializeCollection()))
 		{
 			IDWriteFont* dwriteFont = Util::FindDWriteFontInFontCollectionByGDIFamilyName(
-				fontCollectionD2D->m_Collection, fontFamily);
+				fontCollection->m_Collection, fontFamily);
 			if (dwriteFont)
 			{
 				hr = Util::GetFamilyNameFromDWriteFont(
@@ -259,7 +259,7 @@ void TextFormatD2D::SetProperties(
 				dwriteFont->Release();
 			}
 
-			dwriteFontCollection = fontCollectionD2D->m_Collection;
+			dwriteFontCollection = fontCollection->m_Collection;
 		}
 
 		// Fallback in case above fails.
@@ -320,7 +320,7 @@ void TextFormatD2D::SetProperties(
 			if (fmt->GetType() == Gfx::InlineType::Face)
 			{
 				auto face = dynamic_cast<TextInlineFormat_Face*>(fmt.get());
-				face->SetFontCollection(fontCollectionD2D);
+				face->SetFontCollection(fontCollection);
 			}
 		}
 	}

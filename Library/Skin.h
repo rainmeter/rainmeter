@@ -105,7 +105,7 @@ class SkinSelectionOverlay;
 class SkinDropTarget;
 
 namespace Gfx {
-class FontCollectionD2D;
+class FontCollection;
 class TextFormat;
 }
 
@@ -246,7 +246,7 @@ public:
 
 	void MakePathAbsolute(std::wstring& path);
 
-	Gfx::FontCollectionD2D* GetFontCollection() { return m_FontCollection; }
+	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
 	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
 	void ClearDropTarget();
@@ -543,7 +543,7 @@ private:
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;
 
-	Gfx::FontCollectionD2D* m_FontCollection;
+	Gfx::FontCollection* m_FontCollection;
 
 	bool m_ToolTipHidden;
 

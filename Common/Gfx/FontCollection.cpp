@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "FontCollectionD2D.h"
+#include "FontCollection.h"
 #include "Canvas.h"
 #include "Util/DWriteFontCollectionLoader.h"
 
@@ -14,19 +14,19 @@
 
 namespace Gfx {
 
-Microsoft::WRL::ComPtr<IDWriteFontCollection> FontCollectionD2D::c_SystemCollection;
+Microsoft::WRL::ComPtr<IDWriteFontCollection> FontCollection::c_SystemCollection;
 
-FontCollectionD2D::FontCollectionD2D() :
+FontCollection::FontCollection() :
 	m_Collection()
 {
 }
 
-FontCollectionD2D::~FontCollectionD2D()
+FontCollection::~FontCollection()
 {
 	Dispose();
 }
 
-void FontCollectionD2D::Dispose()
+void FontCollection::Dispose()
 {
 	for (IDWriteFontFile* fileReference : m_FileReferences)
 	{
@@ -35,7 +35,7 @@ void FontCollectionD2D::Dispose()
 	m_FileReferences.clear();
 }
 
-bool FontCollectionD2D::InitializeCollection()
+bool FontCollection::InitializeCollection()
 {
 	if (!c_SystemCollection)
 	{
@@ -52,7 +52,7 @@ bool FontCollectionD2D::InitializeCollection()
 	return m_Collection != nullptr;
 }
 
-bool FontCollectionD2D::AddFile(const WCHAR* file)
+bool FontCollection::AddFile(const WCHAR* file)
 {
 	// If DirectWrite font collection already exists, we need to destroy it as fonts cannot be added to
 	// an existing collection. The collection will be recreated on the next call to
@@ -74,17 +74,17 @@ bool FontCollectionD2D::AddFile(const WCHAR* file)
 	return false;
 }
 
-bool FontCollectionD2D::GetSystemFontFamilies(UINT32& familyCount, std::wstring& families)
+bool FontCollection::GetSystemFontFamilies(UINT32& familyCount, std::wstring& families)
 {
 	return GetFontFamiliesFromCollection(c_SystemCollection.Get(), familyCount, families, true);
 }
 
-bool FontCollectionD2D::GetFontFamilies(UINT32& familyCount, std::wstring& families)
+bool FontCollection::GetFontFamilies(UINT32& familyCount, std::wstring& families)
 {
 	return GetFontFamiliesFromCollection(m_Collection, familyCount, families, false);
 }
 
-bool FontCollectionD2D::GetFontFamiliesFromCollection(IDWriteFontCollection* collection,
+bool FontCollection::GetFontFamiliesFromCollection(IDWriteFontCollection* collection,
 	UINT32& familyCount, std::wstring& families, bool isSystemCollection)
 {
 	// Reset values

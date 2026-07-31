@@ -8,7 +8,7 @@
 #ifndef RM_GFX_TEXTINLINEFORMAT_FACE_H_
 #define RM_GFX_TEXTINLINEFORMAT_FACE_H_
 
-#include "../FontCollectionD2D.h"
+#include "../FontCollection.h"
 #include "../TextInlineFormat.h"
 #include <Windows.h>
 
@@ -24,7 +24,7 @@ public:
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	void SetFontCollection(FontCollectionD2D* fontCollection) { m_FontCollection = fontCollection; }
+	void SetFontCollection(FontCollection* fontCollection) { m_FontCollection = fontCollection; }
 
 	bool CompareAndUpdateProperties(const std::wstring& pattern, const std::wstring& face);
 
@@ -34,7 +34,7 @@ private:
 
 	std::wstring m_Face;
 
-	FontCollectionD2D* m_FontCollection;
+	FontCollection* m_FontCollection;
 };
 
 }  // namespace Gfx
