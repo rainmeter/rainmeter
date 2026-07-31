@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "Canvas.h"
-#include "TextFormatD2D.h"
+#include "TextFormat.h"
 #include "Bitmap.h"
 #include "Svg.h"
 #include "RenderTexture.h"
@@ -497,7 +497,7 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 	m_Target->Clear(color);
 }
 
-void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, const D2D1_RECT_F& rect,
+void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
 	const D2D1_COLOR_F& color, bool applyInlineFormatting)
 {
 	auto solidBrush = GetCachedSolidColorBrush(color);
@@ -505,9 +505,9 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 
 	static std::wstring str;
 	str = srcStr;
-	formatD2D.ApplyInlineCase(str);
+	format.ApplyInlineCase(str);
 
-	if (!formatD2D.CreateLayout(
+	if (!format.CreateLayout(
 		m_Target.Get(),
 		str,
 		rect.right - rect.left,
@@ -519,8 +519,8 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 	{
 		if (!m_AccurateText)
 		{
-			const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
-			switch (formatD2D.GetHorizontalAlignment())
+			const float xOffset = format.m_TextFormat->GetFontSize() / 6.0f;
+			switch (format.GetHorizontalAlignment())
 			{
 			case HorizontalAlignment::Left: return rect.left + xOffset;
 			case HorizontalAlignment::Right: return rect.left - xOffset;
@@ -533,11 +533,11 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 	drawPosition.y = [&]()
 	{
 		// GDI+ compatibility.
-		float yPos = rect.top - formatD2D.m_LineGap;
-		switch (formatD2D.GetVerticalAlignment())
+		float yPos = rect.top - format.m_LineGap;
+		switch (format.GetVerticalAlignment())
 		{
-		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
-		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2.0f; break;
+		case VerticalAlignment::Bottom: yPos -= format.m_ExtraHeight; break;
+		case VerticalAlignment::Center: yPos -= format.m_ExtraHeight / 2.0f; break;
 		}
 
 		return yPos;
@@ -547,18 +547,18 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 	// remove the previous inline coloring, then reapply them (if needed) - instead
 	// of destroying/recreating the text layout.
 	UINT32 strLen = (UINT32)str.length();
-	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
+	format.ResetInlineColoring(solidBrush.Get(), strLen);
 	if (applyInlineFormatting)
 	{
-		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
+		format.ApplyInlineColoring(m_Target.Get(), &drawPosition);
 
 		// Draw any 'shadow' effects
 		const D2D1_RECT_F drawRect = D2D1::RectF(
 			drawPosition.x, drawPosition.y, rect.right - rect.left, rect.bottom - rect.top);
-		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
+		format.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
 	}
 
-	if (formatD2D.m_Trimming)
+	if (format.m_Trimming)
 	{
 		D2D1_RECT_F clipRect = rect;
 
@@ -574,9 +574,9 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 		}
 	}
 
-	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
+	m_Target->DrawTextLayout(drawPosition, format.m_TextLayout.Get(), solidBrush.Get());
 
-	if (formatD2D.m_Trimming)
+	if (format.m_Trimming)
 	{
 		if (m_CanUseAxisAlignClip)
 		{
@@ -593,31 +593,31 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormatD2D& formatD2D, con
 		// Inline gradients require the drawing position, so in case that position
 		// changes, we need a way to reset it after drawing time so on the next
 		// iteration it will know the correct position.
-		formatD2D.ResetGradientPosition(&drawPosition);
+		format.ResetGradientPosition(&drawPosition);
 	}
 }
 
-bool Canvas::MeasureTextW(const std::wstring& str, TextFormatD2D& formatD2D, D2D1_SIZE_F& size)
+bool Canvas::MeasureTextW(const std::wstring& str, TextFormat& format, D2D1_SIZE_F& size)
 {
 	static std::wstring formatStr;
 	formatStr = str;
-	formatD2D.ApplyInlineCase(formatStr);
+	format.ApplyInlineCase(formatStr);
 
-	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText);
+	const DWRITE_TEXT_METRICS metrics = format.GetMetrics(formatStr, !m_AccurateText);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	return true;
 }
 
-bool Canvas::MeasureTextLinesW(const std::wstring& str, TextFormatD2D& formatD2D, D2D1_SIZE_F& size, UINT32& lines)
+bool Canvas::MeasureTextLinesW(const std::wstring& str, TextFormat& format, D2D1_SIZE_F& size, UINT32& lines)
 {
-	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+	format.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
 	static std::wstring formatStr;
 	formatStr = str;
-	formatD2D.ApplyInlineCase(formatStr);
+	format.ApplyInlineCase(formatStr);
 
-	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText, size.width);
+	const DWRITE_TEXT_METRICS metrics = format.GetMetrics(formatStr, !m_AccurateText, size.width);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	lines = metrics.lineCount;

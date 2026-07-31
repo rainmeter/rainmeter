@@ -18,9 +18,6 @@
     <ClCompile Include="Gfx\TextFormat.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\TextFormatD2D.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
@@ -128,9 +125,6 @@
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextFormat.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\TextFormatD2D.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\DWriteHelpers.h">

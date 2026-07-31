@@ -6,19 +6,19 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "Canvas.h"
-#include "TextFormatD2D.h"
+#include "TextFormat.h"
 #include "../UnitTest.h"
 #include <memory>
 
 namespace Gfx {
 
-TEST_CLASS(Common_Gfx_TextFormatD2D_Test)
+TEST_CLASS(Common_Gfx_TextFormat_Test)
 {
 public:
 	std::unique_ptr<Canvas> m_D2D;
 	MathParser m_MathParser;
 
-	Common_Gfx_TextFormatD2D_Test() :
+	Common_Gfx_TextFormat_Test() :
 		m_D2D(Canvas::Create(Gfx::Renderer::D2D))
 	{
 		m_D2D->Resize(10, 10);
@@ -27,7 +27,7 @@ public:
 
 	TEST_METHOD(TestInaccurateText)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat(m_D2D->CreateTextFormat(m_MathParser));
+		std::unique_ptr<TextFormat> textFormat(m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;
@@ -43,7 +43,7 @@ public:
 
 	TEST_METHOD(TestTrailingNewlineGdipCompatibility)
 	{
-		std::unique_ptr<TextFormatD2D> textFormat(m_D2D->CreateTextFormat(m_MathParser));
+		std::unique_ptr<TextFormat> textFormat(m_D2D->CreateTextFormat(m_MathParser));
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
 		DWRITE_TEXT_METRICS metrics;
