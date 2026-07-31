@@ -106,7 +106,7 @@ bool MeterRotator::Draw(Gfx::Canvas& canvas)
 
 	if (m_Image.IsLoaded())
 	{
-		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+		Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 		const FLOAT width = (FLOAT)drawBitmap->GetWidth();
 		const FLOAT height = (FLOAT)drawBitmap->GetHeight();
 

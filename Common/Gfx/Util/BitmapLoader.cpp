@@ -7,13 +7,13 @@
 
 #include "StdAfx.h"
 #include "Gfx/Canvas.h"
-#include "Gfx/Util/D2DBitmapLoader.h"
-#include "Gfx/D2DBitmap.h"
+#include "Gfx/Util/BitmapLoader.h"
+#include "Gfx/Bitmap.h"
 
 namespace Gfx {
 namespace Util {
 
-HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bitmap)
+HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 {
 	if (!bitmap) return E_FAIL;
 
@@ -128,7 +128,7 @@ HRESULT D2DBitmapLoader::LoadBitmapFromFile(const Canvas& canvas, D2DBitmap* bit
 	return cleanup(S_OK);
 }
 
-bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file)
+bool BitmapLoader::HasFileChanged(Bitmap* bitmap, const std::wstring& file)
 {
 	if (file.empty() || file != bitmap->GetPath()) return true;
 
@@ -155,7 +155,7 @@ bool D2DBitmapLoader::HasFileChanged(D2DBitmap* bitmap, const std::wstring& file
 	return lastWrite ? (fileTime != bitmap->GetFileTime()) : true;
 }
 
-HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
+HRESULT BitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
 {
 	if (path.empty()) return E_FAIL;
 
@@ -190,7 +190,7 @@ HRESULT D2DBitmapLoader::GetFileInfo(const std::wstring& path, FileInfo* fileInf
 	return E_FAIL;
 }
 
-HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,
+HRESULT BitmapLoader::CropWICBitmapSource(WICRect& clipRect,
 	IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
 {
 	if (clipRect.Width > 0 && clipRect.Height > 0)
@@ -209,7 +209,7 @@ HRESULT D2DBitmapLoader::CropWICBitmapSource(WICRect& clipRect,
 	return E_FAIL;
 }
 
-HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask)
+HRESULT BitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask)
 {
 	alphaMask.clear();
 	if (!source || width == 0 || height == 0 || width > (UINT)INT_MAX || height > (UINT)INT_MAX || width > UINT_MAX / 4)
@@ -247,7 +247,7 @@ HRESULT D2DBitmapLoader::CreateAlphaMask(IWICBitmapSource* source, UINT width, U
 	return S_OK;
 }
 
-HRESULT D2DBitmapLoader::ConvertToD2DFormat(
+HRESULT BitmapLoader::ConvertToD2DFormat(
 	IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest)
 {
 	// Convert the image format to 32bppPBGRA
@@ -272,7 +272,7 @@ HRESULT D2DBitmapLoader::ConvertToD2DFormat(
 	return hr;
 }
 
-int D2DBitmapLoader::GetExifOrientation(IWICBitmapFrameDecode* source)
+int BitmapLoader::GetExifOrientation(IWICBitmapFrameDecode* source)
 {
 	Microsoft::WRL::ComPtr<IWICMetadataQueryReader> reader;
 	HRESULT hr = source->GetMetadataQueryReader(reader.GetAddressOf());

@@ -5,8 +5,8 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_UTIL_D2DBITMAP_H_
-#define RM_GFX_UTIL_D2DBITMAP_H_
+#ifndef RM_GFX_BITMAP_H_
+#define RM_GFX_BITMAP_H_
 
 #include "Canvas.h"
 
@@ -54,11 +54,11 @@ struct FileInfo
 	bool isValid() { return !m_Path.empty() && m_FileSize != 0 && m_FileTime != 0; }
 };
 
-class D2DBitmap
+class Bitmap
 {
 public:
-	D2DBitmap(const std::wstring& path, int exifOrientation = 0, bool createAlphaMask = false);
-	~D2DBitmap();
+	Bitmap(const std::wstring& path, int exifOrientation = 0, bool createAlphaMask = false);
+	~Bitmap();
 
 	UINT GetWidth() const{ return m_Width; }
 	UINT GetHeight() const{ return m_Height; }
@@ -84,7 +84,7 @@ public:
 
 	HRESULT Load(const Canvas& canvas);
 
-	Util::D2DEffectStream* CreateEffectStream();
+	Util::EffectStream* CreateEffectStream();
 	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
 	bool IsPixelOpaque(int px, int py) const;
 
@@ -95,13 +95,13 @@ public:
 
 private:
 	friend class Canvas;
-	friend class Util::D2DBitmapLoader;
-	friend class Util::D2DEffectStream;
+	friend class Util::BitmapLoader;
+	friend class Util::EffectStream;
 	friend class Gfx::RenderTexture;
 
-	D2DBitmap();
-	D2DBitmap(const D2DBitmap& other) = delete;
-	D2DBitmap& operator=(D2DBitmap other) = delete;
+	Bitmap();
+	Bitmap(const Bitmap& other) = delete;
+	Bitmap& operator=(Bitmap other) = delete;
 	bool GetCreateAlphaMask() const { return m_CreateAlphaMask; }
 	void SetAlphaMask(std::vector<BYTE>& alphaMask) { m_AlphaMask.swap(alphaMask); }
 	bool BuildAlphaMask(Canvas& canvas);

@@ -8,8 +8,8 @@
 #ifndef __GENERALIMAGE_H__
 #define __GENERALIMAGE_H__
 
-#include "../Common/Gfx/D2DBitmap.h"
-#include "../Common/Gfx/Util/D2DEffectStream.h"
+#include "../Common/Gfx/Bitmap.h"
+#include "../Common/Gfx/Util/EffectStream.h"
 #include <string>
 #include "Skin.h"
 #include "ImageCache.h"
@@ -63,16 +63,16 @@ public:
 	void InvalidateDeviceResources();
 
 	bool IsLoaded();
-	Gfx::D2DBitmap* GetImage();
+	Gfx::Bitmap* GetImage();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
 
-	D2D1_SIZE_F ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const;
+	D2D1_SIZE_F ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const;
 	void ApplyTransforms();
-	bool HasActiveTransforms(Gfx::D2DBitmap* bitmap) const;
+	bool HasActiveTransforms(Gfx::Bitmap* bitmap) const;
 
 	std::unique_ptr<ImageCacheHandle> m_Bitmap;
 	std::unique_ptr<ImageCacheHandle> m_BitmapProcessed;

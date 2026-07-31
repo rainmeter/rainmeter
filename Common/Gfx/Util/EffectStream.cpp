@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "D2DEffectStream.h"
+#include "EffectStream.h"
 
 namespace Gfx {
 namespace Util {
@@ -14,7 +14,7 @@ namespace Util {
 const FLOAT PI = 3.14159265f;
 constexpr FLOAT ToRadians(FLOAT deg) { return deg * (PI / 180.0f); }
 
-void D2DEffectStream::Crop(const Canvas& canvas, const D2D1_RECT_F& crop)
+void EffectStream::Crop(const Canvas& canvas, const D2D1_RECT_F& crop)
 {
 	AddEffect(canvas, CLSID_D2D1Crop);
 	for (auto& effect : m_Effects)
@@ -30,7 +30,7 @@ void D2DEffectStream::Crop(const Canvas& canvas, const D2D1_RECT_F& crop)
 	}
 }
 
-void D2DEffectStream::Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix)
+void EffectStream::Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix)
 {
 	AddEffect(canvas, CLSID_D2D1ColorMatrix);
 	for (auto& effect : m_Effects)
@@ -39,7 +39,7 @@ void D2DEffectStream::Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix
 	}
 }
 
-void D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
+void EffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 {
 	AddEffect(canvas, CLSID_D2D12DAffineTransform);
 	const auto size = GetSize(canvas);
@@ -71,7 +71,7 @@ void D2DEffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 	}
 }
 
-void D2DEffectStream::Flip(const Canvas& canvas, const FlipType& flipType)
+void EffectStream::Flip(const Canvas& canvas, const FlipType& flipType)
 {
 	AddEffect(canvas, CLSID_D2D12DAffineTransform);
 	const auto size = GetSize(canvas);
@@ -98,7 +98,7 @@ void D2DEffectStream::Flip(const Canvas& canvas, const FlipType& flipType)
 	}
 }
 
-void D2DEffectStream::ApplyExifOrientation(const Canvas& canvas)
+void EffectStream::ApplyExifOrientation(const Canvas& canvas)
 {
 	switch (m_BaseImage->GetOrientation())
 	{
@@ -112,7 +112,7 @@ void D2DEffectStream::ApplyExifOrientation(const Canvas& canvas)
 	}
 }
 
-D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
+Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 {
 	bool changed = false;
 	for (const auto& effect : m_Effects)
@@ -134,14 +134,14 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 	const UINT width = (UINT)size.width;
 	const UINT height = (UINT)size.height;
 
-	D2DBitmap* d2dbitmap = new D2DBitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
-	d2dbitmap->m_Width = width;
-	d2dbitmap->m_Height = height;
+	Bitmap* bitmap = new Bitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
+	bitmap->m_Width = width;
+	bitmap->m_Height = height;
 
-	auto deleteImage = [&d2dbitmap]() -> void
+	auto deleteImage = [&bitmap]() -> void
 	{
-		delete d2dbitmap;
-		d2dbitmap = nullptr;
+		delete bitmap;
+		bitmap = nullptr;
 	};
 
 	auto resetTarget = [target]() -> void
@@ -160,13 +160,13 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				(x == W ? (width - maxBitmapSize * x) : maxBitmapSize),		// If last x coordinate, find cutoff
 				(y == H ? (height - maxBitmapSize * y) : maxBitmapSize));	// If last y coordinate, find cutoff
 
-			Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
+			Microsoft::WRL::ComPtr<ID2D1Bitmap1> segment;
 			HRESULT hr = target->CreateBitmap(
 				D2D1::SizeU(rect.right, rect.bottom),
 				nullptr,
 				0,
 				props,
-				bitmap.GetAddressOf());
+				segment.GetAddressOf());
 			if (FAILED(hr))
 			{
 				resetTarget();
@@ -174,7 +174,7 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				return nullptr;
 			}
 
-			target->SetTarget(bitmap.Get());
+			target->SetTarget(segment.Get());
 			target->BeginDraw();
 			target->Clear();
 
@@ -218,19 +218,19 @@ D2DBitmap* D2DEffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSiz
 				return nullptr;
 			}
 
-			d2dbitmap->AddSegment(bitmap, rect);
+			bitmap->AddSegment(segment, rect);
 		}
 	}
 
 	resetTarget();
-	if (d2dbitmap->m_CreateAlphaMask && !d2dbitmap->BuildAlphaMask(canvas))
+	if (bitmap->m_CreateAlphaMask && !bitmap->BuildAlphaMask(canvas))
 	{
 		deleteImage();
 	}
-	return d2dbitmap;
+	return bitmap;
 }
 
-D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas&)
+D2D1_SIZE_F EffectStream::GetSize(const Canvas&)
 {
 	D2D1_SIZE_F size = D2D1::SizeF(0.0f, 0.0f);
 
@@ -280,13 +280,13 @@ D2D1_SIZE_F D2DEffectStream::GetSize(const Canvas&)
 	return size;
 }
 
-D2DEffectStream::D2DEffectStream(D2DBitmap* base)
+EffectStream::EffectStream(Bitmap* base)
 {
 	m_Effects.resize(base->m_Segments.size());
 	m_BaseImage = base;
 }
 
-void D2DEffectStream::AddEffect(const Canvas&, const IID& effectId)
+void EffectStream::AddEffect(const Canvas&, const IID& effectId)
 {
 	if (!Canvas::c_EffectTarget) return;
 

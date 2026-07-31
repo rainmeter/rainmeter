@@ -31,8 +31,8 @@
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
-    <ClCompile Include="Gfx\D2DBitmap.cpp" />
-    <ClCompile Include="Gfx\D2DSvg.cpp" />
+    <ClCompile Include="Gfx\Bitmap.cpp" />
+    <ClCompile Include="Gfx\Svg.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\RenderTexture.cpp" />
@@ -55,8 +55,8 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatTypography.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp" />
-    <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp" />
-    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp" />
+    <ClCompile Include="Gfx\Util\BitmapLoader.cpp" />
+    <ClCompile Include="Gfx\Util\EffectStream.cpp" />
     <ClCompile Include="Gfx\Util\D2DUtil.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp" />
@@ -81,8 +81,8 @@
     <ClInclude Include="DpiUtil.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
-    <ClInclude Include="Gfx\D2DBitmap.h" />
-    <ClInclude Include="Gfx\D2DSvg.h" />
+    <ClInclude Include="Gfx\Bitmap.h" />
+    <ClInclude Include="Gfx\Svg.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\RenderTexture.h" />
@@ -105,8 +105,8 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatTypography.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h" />
-    <ClInclude Include="Gfx\Util\D2DBitmapLoader.h" />
-    <ClInclude Include="Gfx\Util\D2DEffectStream.h" />
+    <ClInclude Include="Gfx\Util\BitmapLoader.h" />
+    <ClInclude Include="Gfx\Util\EffectStream.h" />
     <ClInclude Include="Gfx\Util\D2DUtil.h" />
     <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h" />
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h" />

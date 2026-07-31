@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "ImageCache.h"
 
-void ImageCache::Update(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCache::Update(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_Bitmap)
 	{
@@ -61,7 +61,7 @@ void ImageCachePool::InvalidateDeviceResources()
 	}
 }
 
-void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCachePool::Put(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_CachePool.find(key) == m_CachePool.end())
 	{

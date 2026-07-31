@@ -93,16 +93,16 @@
     <ClCompile Include="Gfx\Shape.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp">
+    <ClCompile Include="Gfx\Util\BitmapLoader.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\D2DBitmap.cpp">
+    <ClCompile Include="Gfx\Bitmap.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\D2DSvg.cpp">
+    <ClCompile Include="Gfx\Svg.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
+    <ClCompile Include="Gfx\Util\EffectStream.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\RenderTexture.cpp">
@@ -209,16 +209,16 @@
     <ClInclude Include="Gfx\Shape.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DBitmapLoader.h">
+    <ClInclude Include="Gfx\Util\BitmapLoader.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\D2DBitmap.h">
+    <ClInclude Include="Gfx\Bitmap.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\D2DSvg.h">
+    <ClInclude Include="Gfx\Svg.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DEffectStream.h">
+    <ClInclude Include="Gfx\Util\EffectStream.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\RenderTexture.h">

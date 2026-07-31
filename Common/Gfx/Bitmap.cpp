@@ -6,9 +6,9 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "D2DBitmap.h"
-#include "Util/D2DBitmapLoader.h"
-#include "Util/D2DEffectStream.h"
+#include "Bitmap.h"
+#include "Util/BitmapLoader.h"
+#include "Util/EffectStream.h"
 
 namespace Gfx {
 
@@ -40,7 +40,7 @@ BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRe
 {
 }
 
-D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation, bool createAlphaMask) :
+Bitmap::Bitmap(const std::wstring& path, int exifOrientation, bool createAlphaMask) :
 	m_Width(0),
 	m_Height(0),
 	m_ExifOrientation(exifOrientation),
@@ -52,7 +52,7 @@ D2DBitmap::D2DBitmap(const std::wstring& path, int exifOrientation, bool createA
 {
 }
 
-D2DBitmap::D2DBitmap() :
+Bitmap::Bitmap() :
 	m_Width(0),
 	m_Height(0),
 	m_ExifOrientation(0),
@@ -64,41 +64,41 @@ D2DBitmap::D2DBitmap() :
 {
 }
 
-D2DBitmap::~D2DBitmap()
+Bitmap::~Bitmap()
 {
 }
 
-void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height)
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height)
 {
 	m_Segments.emplace_back(bitmap, x, y, width, height);
 }
 
-void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect)
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect)
 {
 	m_Segments.emplace_back(bitmap, rect);
 }
 
-void D2DBitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect)
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect)
 {
 	m_Segments.emplace_back(bitmap, rect);
 }
 
-bool D2DBitmap::HasFileChanged(const std::wstring& file)
+bool Bitmap::HasFileChanged(const std::wstring& file)
 {
-	return Util::D2DBitmapLoader::HasFileChanged(this, file);
+	return Util::BitmapLoader::HasFileChanged(this, file);
 }
 
-HRESULT D2DBitmap::Load(const Canvas& canvas)
+HRESULT Bitmap::Load(const Canvas& canvas)
 {
-	return Util::D2DBitmapLoader::LoadBitmapFromFile(canvas, this);
+	return Util::BitmapLoader::LoadBitmapFromFile(canvas, this);
 }
 
-Util::D2DEffectStream* D2DBitmap::CreateEffectStream()
+Util::EffectStream* Bitmap::CreateEffectStream()
 {
-	return new Util::D2DEffectStream(this);
+	return new Util::EffectStream(this);
 }
 
-bool D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
+bool Bitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 {
 	// TODO: Create a duplicate bitmap for every one with CPU_READ instead of creating a small 1 px bitmap?
 	// Maybe have a 1px bitmap in Canvas since we won't ever check two different bitmaps at once and use that to fetch the pixel data?
@@ -149,7 +149,7 @@ bool D2DBitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
 	return SUCCEEDED(hr);
 }
 
-bool D2DBitmap::IsPixelOpaque(int px, int py) const
+bool Bitmap::IsPixelOpaque(int px, int py) const
 {
 	if (px < 0 || py < 0 || px >= (int)m_Width || py >= (int)m_Height)
 	{
@@ -166,7 +166,7 @@ bool D2DBitmap::IsPixelOpaque(int px, int py) const
 	return m_AlphaMask[index] != 0;
 }
 
-bool D2DBitmap::BuildAlphaMask(Canvas& canvas)
+bool Bitmap::BuildAlphaMask(Canvas& canvas)
 {
 	const UINT64 pixelCount64 = (UINT64)m_Width * m_Height;
 	const size_t pixelCount = (size_t)pixelCount64;
@@ -228,8 +228,8 @@ bool D2DBitmap::BuildAlphaMask(Canvas& canvas)
 	return true;
 }
 
-HRESULT D2DBitmap::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
+HRESULT Bitmap::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
 {
-	return Util::D2DBitmapLoader::GetFileInfo(path, fileInfo);
+	return Util::BitmapLoader::GetFileInfo(path, fileInfo);
 }
 }  // namespace Gfx
