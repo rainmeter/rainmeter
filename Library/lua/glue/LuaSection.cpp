@@ -38,13 +38,15 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 
 int SetOption(lua_State* L, Section* section)
 {
-	Skin* skin = section->GetSkin();
-	const WCHAR* sectionName = section->GetName();
+	return SetOption(L, section->GetSkin(), section->GetName(), 2);
+}
 
-	if (lua_istable(L, 2))
+int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIndex)
+{
+	if (lua_istable(L, optionIndex))
 	{
 		lua_pushnil(L);
-		while (lua_next(L, 2) != 0)
+		while (lua_next(L, optionIndex) != 0)
 		{
 			if (lua_type(L, -2) == LUA_TSTRING && lua_isstring(L, -1))
 			{
@@ -56,10 +58,10 @@ int SetOption(lua_State* L, Section* section)
 			lua_pop(L, 1);
 		}
 	}
-	else if (lua_isstring(L, 2) && lua_isstring(L, 3))
+	else if (lua_isstring(L, optionIndex) && lua_isstring(L, optionIndex + 1))
 	{
-		const std::wstring option = LuaHelper::ToWide(2);
-		const std::wstring value = LuaHelper::ToWide(3);
+		const std::wstring option = LuaHelper::ToWide(optionIndex);
+		const std::wstring value = LuaHelper::ToWide(optionIndex + 1);
 		skin->SetOption(sectionName, option, value, false);
 	}
 
