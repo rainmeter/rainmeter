@@ -45,9 +45,16 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 {
 	if (lua_istable(L, optionIndex))
 	{
-		lua_pushnil(L);
-		while (lua_next(L, optionIndex) != 0)
+		const int top = lua_gettop(L);
+		for (int i = optionIndex; i <= top; ++i)
 		{
+			if (!lua_istable(L, i))
+			{
+				continue;
+			}
+
+			lua_rawgeti(L, i, 1);
+			lua_rawgeti(L, i, 2);
 			if (lua_type(L, -2) == LUA_TSTRING && lua_isstring(L, -1))
 			{
 				const std::wstring value = LuaHelper::ToWide(-1);
@@ -55,7 +62,7 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 				skin->SetOption(sectionName, option, value, group);
 			}
 
-			lua_pop(L, 1);
+			lua_pop(L, 2);
 		}
 	}
 	else if (lua_isstring(L, optionIndex) && lua_isstring(L, optionIndex + 1))
