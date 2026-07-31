@@ -152,6 +152,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
+	m_OptionsPerformance(),
+	m_UpdatePerformance(),
+	m_RedrawPerformance(),
 	m_FontCollection(),
 	m_ToolTipHidden(false),
 	m_Favorite(false),
@@ -2909,6 +2912,7 @@ void Skin::Redraw()
 	{
 		return;
 	}
+	m_Canvas.StartGpuTimer();
 
 	const bool selectionOverlayVisible = m_SelectionOverlay != nullptr;
 	if (selectionOverlayVisible)
@@ -2930,6 +2934,7 @@ void Skin::Redraw()
 			{
 				if (selectionOverlayVisible) m_Canvas.PopLayer();
 				m_Canvas.EndDraw();
+				m_Canvas.EndGpuTimer();
 				return;
 			}
 
@@ -3047,6 +3052,7 @@ void Skin::Redraw()
 
 	UpdateWindowContents();
 	m_Canvas.EndDraw();
+	m_Canvas.EndGpuTimer();
 }
 
 void Skin::UpdateWindowContents()
@@ -3183,6 +3189,42 @@ void Skin::UpdateRelativeMeters()
 	m_ResetRelativeMeters = false;
 }
 
+void Skin::RecordPerformance(LONGLONG optionsTicks, UINT optionsCount, LONGLONG updateTicks,
+	UINT updateCount, LONGLONG redrawTicks, UINT redrawCount)
+{
+	static const double ticksToMilliseconds = []()
+	{
+		LARGE_INTEGER frequency;
+		QueryPerformanceFrequency(&frequency);
+		return 1000.0 / (double)frequency.QuadPart;
+	} ();
+
+	const auto addSample = [](PerformanceData& data, LONGLONG ticks, UINT count)
+	{
+		if (data.historySize == PERFORMANCE_HISTORY_COUNT)
+		{
+			data.timeTotal -= data.timeHistory[data.historyIndex];
+			data.countTotal -= data.countHistory[data.historyIndex];
+		}
+		else
+		{
+			++data.historySize;
+		}
+
+		const double time = ticks * ticksToMilliseconds;
+		data.timeHistory[data.historyIndex] = time;
+		data.countHistory[data.historyIndex] = count;
+		data.timeTotal += time;
+		data.countTotal += count;
+		data.historyIndex = (data.historyIndex + 1) % PERFORMANCE_HISTORY_COUNT;
+		data.averageCpuTime = data.countTotal ? data.timeTotal / (double)data.countTotal : 0.0;
+	};
+
+	addSample(m_OptionsPerformance, optionsTicks, optionsCount);
+	addSample(m_UpdatePerformance, updateTicks, updateCount);
+	addSample(m_RedrawPerformance, redrawTicks, redrawCount);
+}
+
 void Skin::PostUpdate(bool bActiveTransition)
 {
 	// Start/stop the transition timer if necessary
@@ -3198,7 +3240,8 @@ void Skin::PostUpdate(bool bActiveTransition)
 	}
 }
 
-bool Skin::UpdateMeasure(Measure* measure, bool force)
+bool Skin::UpdateMeasure(Measure* measure, bool force, LONGLONG* optionsTicks,
+	UINT* optionsCount, LONGLONG* updateTicks, UINT* updateCount)
 {
 	bool bUpdate = false;
 
@@ -3211,13 +3254,37 @@ bool Skin::UpdateMeasure(Measure* measure, bool force)
 	if (updateDivider >= 0 || force)
 	{
 		const bool rereadOptions = measure->HasDynamicVariables() && (measure->GetUpdateCounter() + 1) >= updateDivider;
-		bUpdate = measure->Update(rereadOptions);
+		if (rereadOptions)
+		{
+			LARGE_INTEGER start;
+			if (optionsTicks) QueryPerformanceCounter(&start);
+			measure->ReadOptions(m_Parser);
+			if (optionsTicks)
+			{
+				LARGE_INTEGER end;
+				QueryPerformanceCounter(&end);
+				*optionsTicks += end.QuadPart - start.QuadPart;
+				++(*optionsCount);
+			}
+		}
+
+		LARGE_INTEGER start;
+		if (updateTicks) QueryPerformanceCounter(&start);
+		bUpdate = measure->Update(false);
+		if (updateTicks)
+		{
+			LARGE_INTEGER end;
+			QueryPerformanceCounter(&end);
+			*updateTicks += end.QuadPart - start.QuadPart;
+			++(*updateCount);
+		}
 	}
 
 	return bUpdate;
 }
 
-bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
+bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force, LONGLONG* optionsTicks,
+	UINT* optionsCount, LONGLONG* updateTicks, UINT* updateCount)
 {
 	bool bUpdate = false;
 
@@ -3232,10 +3299,28 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		if (meter->HasDynamicVariables() &&
 			(meter->GetUpdateCounter() + 1) >= updateDivider)
 		{
+			LARGE_INTEGER start;
+			if (optionsTicks) QueryPerformanceCounter(&start);
 			meter->ReadOptions(m_Parser);
+			if (optionsTicks)
+			{
+				LARGE_INTEGER end;
+				QueryPerformanceCounter(&end);
+				*optionsTicks += end.QuadPart - start.QuadPart;
+				++(*optionsCount);
+			}
 		}
 
+		LARGE_INTEGER start;
+		if (updateTicks) QueryPerformanceCounter(&start);
 		bUpdate = meter->Update();
+		if (updateTicks)
+		{
+			LARGE_INTEGER end;
+			QueryPerformanceCounter(&end);
+			*updateTicks += end.QuadPart - start.QuadPart;
+			++(*updateCount);
+		}
 	}
 
 	// Update tooltips
@@ -3271,6 +3356,12 @@ void Skin::Update(bool refresh)
 	}
 
 	m_HasPendingUpdate = false;
+	LONGLONG optionsTime = 0;
+	UINT optionsCount = 0;
+	LONGLONG updateTime = 0;
+	UINT updateCount = 0;
+	LONGLONG redrawTime = 0;
+	UINT redrawCount = 0;
 	++m_UpdateCounter;
 
 	if (!m_Measures.empty())
@@ -3286,7 +3377,7 @@ void Skin::Update(bool refresh)
 		std::vector<Measure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
-			if (UpdateMeasure((*i), refresh))
+			if (UpdateMeasure((*i), refresh, &optionsTime, &optionsCount, &updateTime, &updateCount))
 			{
 				(*i)->DoUpdateAction();
 				(*i)->DoChangeAction();
@@ -3302,7 +3393,7 @@ void Skin::Update(bool refresh)
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (UpdateMeter((*j), bActiveTransition, refresh))
+		if (UpdateMeter((*j), bActiveTransition, refresh, &optionsTime, &optionsCount, &updateTime, &updateCount))
 		{
 			bUpdate = true;
 
@@ -3325,9 +3416,17 @@ void Skin::Update(bool refresh)
 		// Only redraw if we are not in a remote session
 		if (GetRainmeter().IsRedrawable())
 		{
+			LARGE_INTEGER start;
+			QueryPerformanceCounter(&start);
 			Redraw();
+			LARGE_INTEGER end;
+			QueryPerformanceCounter(&end);
+			redrawTime = end.QuadPart - start.QuadPart;
+			redrawCount = 1;
 		}
 	}
+
+	RecordPerformance(optionsTime, optionsCount, updateTime, updateCount, redrawTime, redrawCount);
 
 	// Post-updates
 	PostUpdate(bActiveTransition);

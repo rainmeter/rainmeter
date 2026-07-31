@@ -1103,15 +1103,18 @@ void DialogDebug::TabSkins::Initialize()
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
-	lvg.iGroupId = 0;
+	lvg.iGroupId = Group_Statistics;
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Statistics);
+	ListView_InsertGroup(item, Group_Statistics, &lvg);
+	lvg.iGroupId = Group_Measures;
 	lvg.pszHeader = (WCHAR*)GetString(IDS_Measures);
-	ListView_InsertGroup(item, 0, &lvg);
-	lvg.iGroupId = 1;
+	ListView_InsertGroup(item, Group_Measures, &lvg);
+	lvg.iGroupId = Group_Variables;
 	lvg.pszHeader = (WCHAR*)GetString(IDS_Variables);
-	ListView_InsertGroup(item, 1, &lvg);
-	lvg.iGroupId = 2;
+	ListView_InsertGroup(item, Group_Variables, &lvg);
+	lvg.iGroupId = Group_Watches;
 	lvg.pszHeader = (WCHAR*)GetString(IDS_Watch);
-	ListView_InsertGroup(item, 2, &lvg);
+	ListView_InsertGroup(item, Group_Watches, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);
 
@@ -1311,7 +1314,7 @@ size_t DialogDebug::TabSkins::GetSelectedWatch()
 		LVITEM lvi = { 0 };
 		lvi.mask = LVIF_GROUPID | LVIF_PARAM;
 		lvi.iItem = selected;
-		if (ListView_GetItem(item, &lvi) && lvi.iGroupId == 2)
+		if (ListView_GetItem(item, &lvi) && lvi.iGroupId == Group_Watches)
 		{
 			for (size_t i = 0; i < m_Watches.size(); ++i)
 			{
@@ -1389,7 +1392,39 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 	lvi.iItem = 0;
 	lvi.lParam = 0;
 
-	lvi.iGroupId = 0;
+	lvi.iGroupId = Group_Statistics;
+	const auto addStatistic = [&](const WCHAR* name, double value) -> bool
+	{
+		if (!isVisible(name)) return false;
+
+		lvi.pszText = (WCHAR*)name;
+		if (lvi.iItem < count)
+		{
+			ListView_SetItem(item, &lvi);
+		}
+		else
+		{
+			ListView_InsertItem(item, &lvi);
+		}
+
+		std::wstring valueText = fmt::format(L"{:.2f} ms", value);
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)valueText.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)L"");
+		++lvi.iItem;
+		return true;
+	};
+
+	addStatistic(GetString(IDS_Options), m_SkinWindow->GetAverageOptionsCpuTime());
+	addStatistic(GetString(IDS_Update), m_SkinWindow->GetAverageUpdateCpuTime());
+	if (addStatistic(GetString(IDS_Redraw), 0.0))
+	{
+		std::wstring valueText = fmt::format(fmt::runtime(GetString(IDS_CpuGpuTimeFormat)),
+			m_SkinWindow->GetAverageRedrawCpuTime(), m_SkinWindow->GetAverageRedrawGpuTime());
+		ListView_SetItemText(item, lvi.iItem - 1, 1, (WCHAR*)L"");
+		ListView_SetItemText(item, lvi.iItem - 1, 2, (WCHAR*)valueText.c_str());
+	}
+
+	lvi.iGroupId = Group_Measures;
 	const std::vector<Measure*>& measures = m_SkinWindow->GetMeasures();
 	std::vector<Measure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
@@ -1425,7 +1460,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		++lvi.iItem;
 	}
 
-	lvi.iGroupId = 1;
+	lvi.iGroupId = Group_Variables;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
@@ -1466,7 +1501,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		++lvi.iItem;
 	}
 
-	lvi.iGroupId = 2;
+	lvi.iGroupId = Group_Watches;
 	for (const auto& watch : m_Watches)
 	{
 		if (!isVisible(watch.text)) continue;
@@ -1617,9 +1652,9 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			for (lvi.iItem = 0; lvi.iItem < ListView_GetItemCount(list); ++lvi.iItem)
 			{
 				ListView_GetItem(list, &lvi);
-				if (lvi.iGroupId >= 0 && lvi.iGroupId < 3)
+				if (lvi.iGroupId >= Group_Measures && lvi.iGroupId <= Group_Watches)
 				{
-					groups[lvi.iGroupId] = true;
+					groups[lvi.iGroupId - Group_Measures] = true;
 				}
 			}
 
@@ -1660,7 +1695,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_JumpVariables:
 	case Id_JumpWatches:
 		{
-			const int groupId = LOWORD(wParam) - Id_JumpMeasures;
+			const int groupId = Group_Measures + LOWORD(wParam) - Id_JumpMeasures;
 			HWND list = GetControl(Id_SkinsListView);
 			LVITEM lvi = { 0 };
 			lvi.mask = LVIF_GROUPID;
@@ -1730,11 +1765,11 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
 
-				if (lvi.iGroupId == 0)
+				if (lvi.iGroupId == Group_Measures)
 				{
 					AddWatch(L"[" + std::wstring(buffer) + L"]", false);
 				}
-				else if (lvi.iGroupId == 1)
+				else if (lvi.iGroupId == Group_Variables)
 				{
 					AddWatch(L"#" + std::wstring(buffer) + L"#", false);
 				}
@@ -1830,7 +1865,7 @@ void DialogDebug::TabSkins::UpdateRangeToolTip(HWND list, POINT point)
 	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_GROUPID;
 	lvi.iItem = hit.iItem;
-	if (hit.iItem == -1 || hit.iSubItem != 1 || !ListView_GetItem(list, &lvi) || lvi.iGroupId != 0)
+	if (hit.iItem == -1 || hit.iSubItem != 1 || !ListView_GetItem(list, &lvi) || lvi.iGroupId != Group_Measures)
 	{
 		if (m_RangeToolTipItem != -1)
 		{
@@ -1927,7 +1962,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					lvi.iSubItem = 0;
 					lvi.iGroupId = -1;
 					ListView_GetItem(hwnd, &lvi);
-					if (lvi.iGroupId == 0)  // It's a measure
+					if (lvi.iGroupId == Group_Measures)
 					{
 						Measure* measure = m_SkinWindow->GetMeasure(temp);
 						if (measure)
@@ -1936,7 +1971,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 							System::SetClipboardText(strValue);
 						}
 					}
-					else if (lvi.iGroupId == 1)  // It's a Variable
+					else if (lvi.iGroupId == Group_Variables)
 					{
 						std::wstring variable;
 						if (m_SkinWindow->GetParser().GetVariable(temp, variable))
@@ -1963,6 +1998,11 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				lvi.iSubItem = 0;
 				lvi.iGroupId = -1;
 				ListView_GetItem(hwnd, &lvi);
+				if (lvi.iGroupId == Group_Statistics)
+				{
+					ShowListViewCopyMenu(m_Window, hwnd);
+					break;
+				}
 
 				static const MenuTemplate s_MeasureMenu[] =
 				{
@@ -1986,8 +2026,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					MENU_ITEM(IDM_DELETEWATCH, IDS_Delete)
 				};
 
-				bool isMeasure = lvi.iGroupId == 0;
-				bool isWatch = lvi.iGroupId == 2;
+				bool isMeasure = lvi.iGroupId == Group_Measures;
+				bool isWatch = lvi.iGroupId == Group_Watches;
 				const MenuTemplate* menuTemplate = isMeasure ? s_MeasureMenu :
 					(isWatch ? s_WatchMenu : s_VariableMenu);
 				const UINT menuSize = isMeasure ? _countof(s_MeasureMenu) :
@@ -2059,8 +2099,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					lvi.iGroupId = -1;
 					ListView_GetItem(hwnd, &lvi);
 
-					if ((lvi.iGroupId == 0 || lvi.iGroupId == 1) &&
-						!m_PanelWatch->AppendExpression(buffer, lvi.iGroupId == 0))
+					if ((lvi.iGroupId == Group_Measures || lvi.iGroupId == Group_Variables) &&
+						!m_PanelWatch->AppendExpression(buffer, lvi.iGroupId == Group_Measures))
 					{
 						OnCommand(IDM_ADD_WATCH, 0);
 					}
@@ -2111,7 +2151,7 @@ INT_PTR DialogDebug::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 			lvi.pszText = buffer;
 			lvi.cchTextMax = _countof(buffer);
 			ListView_GetItem(hwnd, &lvi);
-			if (lvi.iGroupId != 0) return FALSE;
+			if (lvi.iGroupId != Group_Measures) return FALSE;
 
 			std::wstring name = buffer;
 			Measure* measure = m_SkinWindow->GetMeasure(name);

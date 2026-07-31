@@ -129,6 +129,14 @@ private:
 
 	private:
 		class PanelWatch;
+		enum Group
+		{
+			Group_Statistics,
+			Group_Measures,
+			Group_Variables,
+			Group_Watches
+		};
+
 		struct Watch
 		{
 			std::wstring text;

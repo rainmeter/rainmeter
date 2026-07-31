@@ -244,6 +244,11 @@
 #define IDS_AddWatchTitle                           2231
 #define IDS_DefaultZoomColon                        2232
 #define IDS_Force                                   2233
+#define IDS_Statistics                              2234
+#define IDS_Options                                 2235
+#define IDS_Update                                  2236
+#define IDS_Redraw                                  2237
+#define IDS_CpuGpuTimeFormat                        2238
 #define IDS_GameMode                                2800
 #define IDS_GameModeStart                           2801
 #define IDS_GameModeStop                            2802

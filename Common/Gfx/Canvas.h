@@ -99,6 +99,9 @@ public:
 
 	bool BeginDraw();
 	void EndDraw();
+	void StartGpuTimer();
+	void EndGpuTimer();
+	double GetAverageGpuFrameTime() const { return m_AverageGpuFrameTime; }
 
 	HDC GetDC();
 	void ReleaseDC();
@@ -160,6 +163,7 @@ private:
 	Canvas& operator=(Canvas other) = delete;
 
 	static ComPtr<ID2D1DeviceContext5> CreateDeviceContext();
+	void InitializeGpuTimer();
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
@@ -189,6 +193,20 @@ private:
 
 	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
 	bool m_CanUseAxisAlignClip;
+
+	static constexpr UINT GPU_QUERY_COUNT = 5;
+	static constexpr UINT GPU_TIME_HISTORY_COUNT = 64;
+	Microsoft::WRL::ComPtr<ID3D11Query> m_GpuStartQuery[GPU_QUERY_COUNT];
+	Microsoft::WRL::ComPtr<ID3D11Query> m_GpuEndQuery[GPU_QUERY_COUNT];
+	Microsoft::WRL::ComPtr<ID3D11Query> m_GpuDisjointQuery[GPU_QUERY_COUNT];
+	UINT m_CurrentGpuQuery;
+	UINT m_GpuFrameCount;
+	bool m_GpuTimerActive;
+	UINT m_GpuTimeHistoryIndex;
+	UINT m_GpuTimeHistorySize;
+	double m_GpuTimeHistory[GPU_TIME_HISTORY_COUNT];
+	double m_GpuTimeTotal;
+	double m_AverageGpuFrameTime;
 
 	ankerl::unordered_dense::map<D2D1_COLOR_F, Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>, ankerl::unordered_dense::hash<D2D1_COLOR_F>, D2D1ColorEqual> m_SolidColorBrushCache;
 

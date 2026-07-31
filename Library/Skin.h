@@ -234,6 +234,10 @@ public:
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetTransitionUpdate() { return m_TransitionUpdate; }
 	int GetDefaultUpdateDivider() { return m_DefaultUpdateDivider; }
+	double GetAverageOptionsCpuTime() const { return m_OptionsPerformance.averageCpuTime; }
+	double GetAverageUpdateCpuTime() const { return m_UpdatePerformance.averageCpuTime; }
+	double GetAverageRedrawCpuTime() const { return m_RedrawPerformance.averageCpuTime; }
+	double GetAverageRedrawGpuTime() const { return m_Canvas.GetAverageGpuFrameTime(); }
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 
@@ -356,8 +360,10 @@ private:
 	void ComputeOptionValueFromPosition();
 
 	void PostUpdate(bool bActiveTransition);
-	bool UpdateMeasure(Measure* measure, bool force);
-	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
+	bool UpdateMeasure(Measure* measure, bool force, LONGLONG* optionsTicks = nullptr,
+		UINT* optionsCount = nullptr, LONGLONG* updateTicks = nullptr, UINT* updateCount = nullptr);
+	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force, LONGLONG* optionsTicks = nullptr,
+		UINT* optionsCount = nullptr, LONGLONG* updateTicks = nullptr, UINT* updateCount = nullptr);
 	void Update(bool refresh);
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
@@ -395,6 +401,8 @@ private:
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
 	void UpdateRelativeMeters();
+	void RecordPerformance(LONGLONG optionsTicks, UINT optionsCount, LONGLONG updateTicks,
+		UINT updateCount, LONGLONG redrawTicks, UINT redrawCount);
 
 	void ShowBlur();
 	void HideBlur();
@@ -541,6 +549,22 @@ private:
 
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;
+
+	static constexpr size_t PERFORMANCE_HISTORY_COUNT = 64;
+	struct PerformanceData
+	{
+		size_t historyIndex = 0;
+		size_t historySize = 0;
+		double timeHistory[PERFORMANCE_HISTORY_COUNT] = {};
+		UINT countHistory[PERFORMANCE_HISTORY_COUNT] = {};
+		double timeTotal = 0.0;
+		UINT countTotal = 0;
+		double averageCpuTime = 0.0;
+	};
+
+	PerformanceData m_OptionsPerformance;
+	PerformanceData m_UpdatePerformance;
+	PerformanceData m_RedrawPerformance;
 
 	Gfx::FontCollection* m_FontCollection;
 

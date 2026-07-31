@@ -53,7 +53,15 @@ Canvas::Canvas() :
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
-	m_CanUseAxisAlignClip(true)
+	m_CanUseAxisAlignClip(true),
+	m_CurrentGpuQuery(),
+	m_GpuFrameCount(),
+	m_GpuTimerActive(false),
+	m_GpuTimeHistoryIndex(),
+	m_GpuTimeHistorySize(),
+	m_GpuTimeHistory(),
+	m_GpuTimeTotal(),
+	m_AverageGpuFrameTime()
 {
 }
 
@@ -262,7 +270,44 @@ HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 
 	m_SolidColorBrushCache.clear();
 	m_ValidDeviceContext = true;
+	InitializeGpuTimer();
 	return hr;
+}
+
+void Canvas::InitializeGpuTimer()
+{
+	for (UINT i = 0; i < GPU_QUERY_COUNT; ++i)
+	{
+		m_GpuStartQuery[i].Reset();
+		m_GpuEndQuery[i].Reset();
+		m_GpuDisjointQuery[i].Reset();
+	}
+
+	m_CurrentGpuQuery = 0;
+	m_GpuFrameCount = 0;
+	m_GpuTimerActive = false;
+	m_GpuTimeHistoryIndex = 0;
+	m_GpuTimeHistorySize = 0;
+	m_GpuTimeTotal = 0.0;
+	m_AverageGpuFrameTime = 0.0;
+
+	const D3D11_QUERY_DESC timestampQuery = { D3D11_QUERY_TIMESTAMP, 0 };
+	const D3D11_QUERY_DESC disjointQuery = { D3D11_QUERY_TIMESTAMP_DISJOINT, 0 };
+	for (UINT i = 0; i < GPU_QUERY_COUNT; ++i)
+	{
+		if (FAILED(c_D3DDevice->CreateQuery(&timestampQuery, m_GpuStartQuery[i].GetAddressOf())) ||
+			FAILED(c_D3DDevice->CreateQuery(&timestampQuery, m_GpuEndQuery[i].GetAddressOf())) ||
+			FAILED(c_D3DDevice->CreateQuery(&disjointQuery, m_GpuDisjointQuery[i].GetAddressOf())))
+		{
+			for (UINT j = 0; j < GPU_QUERY_COUNT; ++j)
+			{
+				m_GpuStartQuery[j].Reset();
+				m_GpuEndQuery[j].Reset();
+				m_GpuDisjointQuery[j].Reset();
+			}
+			return;
+		}
+	}
 }
 
 bool Canvas::Resize(int w, int h)
@@ -343,6 +388,57 @@ void Canvas::EndDraw()
 	}
 
 	m_IsDrawing = false;
+}
+
+void Canvas::StartGpuTimer()
+{
+	if (!m_GpuDisjointQuery[0]) return;
+
+	m_CurrentGpuQuery = (m_CurrentGpuQuery + 1) % GPU_QUERY_COUNT;
+	const UINT readQuery = (m_CurrentGpuQuery + 1) % GPU_QUERY_COUNT;
+	if (m_GpuFrameCount >= GPU_QUERY_COUNT)
+	{
+		D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjointData = {};
+		UINT64 start = 0;
+		UINT64 end = 0;
+		if (c_D3DContext->GetData(m_GpuDisjointQuery[readQuery].Get(), &disjointData,
+			sizeof(disjointData), D3D11_ASYNC_GETDATA_DONOTFLUSH) == S_OK &&
+			!disjointData.Disjoint && disjointData.Frequency != 0 &&
+			c_D3DContext->GetData(m_GpuStartQuery[readQuery].Get(), &start,
+				sizeof(start), D3D11_ASYNC_GETDATA_DONOTFLUSH) == S_OK &&
+			c_D3DContext->GetData(m_GpuEndQuery[readQuery].Get(), &end,
+				sizeof(end), D3D11_ASYNC_GETDATA_DONOTFLUSH) == S_OK)
+		{
+			if (m_GpuTimeHistorySize == GPU_TIME_HISTORY_COUNT)
+			{
+				m_GpuTimeTotal -= m_GpuTimeHistory[m_GpuTimeHistoryIndex];
+			}
+			else
+			{
+				++m_GpuTimeHistorySize;
+			}
+
+			const double time = (end - start) * 1000.0 / (double)disjointData.Frequency;
+			m_GpuTimeHistory[m_GpuTimeHistoryIndex] = time;
+			m_GpuTimeTotal += time;
+			m_GpuTimeHistoryIndex = (m_GpuTimeHistoryIndex + 1) % GPU_TIME_HISTORY_COUNT;
+			m_AverageGpuFrameTime = m_GpuTimeTotal / (double)m_GpuTimeHistorySize;
+		}
+	}
+
+	++m_GpuFrameCount;
+	c_D3DContext->Begin(m_GpuDisjointQuery[m_CurrentGpuQuery].Get());
+	c_D3DContext->End(m_GpuStartQuery[m_CurrentGpuQuery].Get());
+	m_GpuTimerActive = true;
+}
+
+void Canvas::EndGpuTimer()
+{
+	if (!m_GpuTimerActive) return;
+
+	c_D3DContext->End(m_GpuEndQuery[m_CurrentGpuQuery].Get());
+	c_D3DContext->End(m_GpuDisjointQuery[m_CurrentGpuQuery].Get());
+	m_GpuTimerActive = false;
 }
 
 HDC Canvas::GetDC()
