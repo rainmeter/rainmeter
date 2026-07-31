@@ -16,7 +16,7 @@ namespace Gfx {
 
 Microsoft::WRL::ComPtr<IDWriteFontCollection> FontCollectionD2D::c_SystemCollection;
 
-FontCollectionD2D::FontCollectionD2D() : FontCollection(),
+FontCollectionD2D::FontCollectionD2D() :
 	m_Collection()
 {
 }

@@ -33,7 +33,7 @@ public:
 
 	virtual void SetProperties(
 		const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
+		FontCollectionD2D* fontCollection) override;
 
 	virtual void SetFontWeight(int weight) override;
 

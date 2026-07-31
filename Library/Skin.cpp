@@ -2613,7 +2613,7 @@ bool Skin::ReadSkin()
 	// Log available non-installed fonts
 	if ((hasResourceFonts || hasLocalFonts) && GetRainmeter().GetDebug())
 	{
-		auto fontCollectionD2D = (Gfx::FontCollectionD2D*)m_FontCollection;
+		auto fontCollectionD2D = m_FontCollection;
 		if (fontCollectionD2D && fontCollectionD2D->InitializeCollection())
 		{
 			std::wstring fontResourcePath = m_ResourcesPath + L"Fonts\\";
