@@ -148,6 +148,7 @@
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="WindowOcclusionTracker.cpp" />
     <ClCompile Include="lua\LuaScript.cpp" />
+    <ClCompile Include="lua\glue\LuaSection.cpp" />
     <ClCompile Include="lua\glue\LuaMeasure.cpp" />
     <ClCompile Include="lua\glue\LuaMeter.cpp" />
     <ClCompile Include="lua\glue\LuaMeterWindow.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="Util.h" />
     <ClInclude Include="WindowOcclusionTracker.h" />
     <ClInclude Include="lua\LuaScript.h" />
+    <ClInclude Include="lua\glue\LuaSection.h" />
     <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h" />
     <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h" />
     <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h" />

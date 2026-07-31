@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "LuaSection.h"
 #include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Measure.h"
@@ -46,6 +47,12 @@ static int GetOption(lua_State* L)
 	LuaHelper::PushWide(value);
 
 	return 1;
+}
+
+static int SetOption(lua_State* L)
+{
+	DECLARE_SELF(L)
+	return LuaSection::SetOption(L, self);
 }
 
 static int GetNumberOption(lua_State* L)
@@ -142,6 +149,7 @@ void LuaScript::RegisterMeasure(lua_State* L)
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },
+		{ "SetOption", SetOption },
 		{ "GetNumberOption", GetNumberOption },
 		{ "Disable", Disable },
 		{ "Enable", Enable },
