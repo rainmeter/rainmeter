@@ -8,7 +8,7 @@
 #ifndef RM_GFX_FONTCOLLECTIOND2D_H_
 #define RM_GFX_FONTCOLLECTIOND2D_H_
 
-#include "FontCollection.h"
+#include <Windows.h>
 #include <vector>
 #include <dwrite_1.h>
 #include <wrl/client.h>
@@ -16,15 +16,15 @@
 namespace Gfx {
 
 // Wraps the DirectWrite IDWriteFontCollection for use with CanvasD2D.
-class FontCollectionD2D final : public FontCollection
+class FontCollectionD2D final
 {
 public:
-	virtual ~FontCollectionD2D();
+	~FontCollectionD2D();
 
 	FontCollectionD2D(const FontCollectionD2D& other) = delete;
 	FontCollectionD2D& operator=(FontCollectionD2D other) = delete;
 
-	virtual bool AddFile(const WCHAR* file) override;
+	bool AddFile(const WCHAR* file);
 
 	bool InitializeCollection();
 

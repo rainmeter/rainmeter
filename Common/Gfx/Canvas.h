@@ -102,7 +102,7 @@ public:
 	HDC GetDC();
 	void ReleaseDC();
 
-	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
+	FontCollectionD2D* CreateFontCollection() { return new FontCollectionD2D(); }
 	TextFormat* CreateTextFormat(const MathParser& mathParser) { return new TextFormatD2D(mathParser); }
 
 	bool IsTransparentPixel(int x, int y);

@@ -202,10 +202,8 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 
 void TextFormatD2D::SetProperties(
 	const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-	const FontCollection* fontCollection)
+	FontCollectionD2D* fontCollectionD2D)
 {
-	auto fontCollectionD2D = (FontCollectionD2D*)fontCollection;
-
 	Dispose();
 
 	WCHAR dwriteFamilyName[LF_FACESIZE];
