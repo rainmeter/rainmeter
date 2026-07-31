@@ -30,6 +30,7 @@
 #include <wrl/client.h>
 
 // STL
+#include <array>
 #include <map>
 #include <set>
 #include <deque>
