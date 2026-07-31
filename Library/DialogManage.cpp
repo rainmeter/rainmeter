@@ -657,8 +657,8 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 	}
 	else
 	{
-		// Populate tree
 		item = GetControl(Id_SkinsTreeView);
+		const auto selectedPath = GetTreeSelectionPath(item);
 		TreeView_DeleteAllItems(item);
 
 		TVINSERTSTRUCT tvi = { 0 };
@@ -669,6 +669,8 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 		if (!GetRainmeter().m_SkinRegistry.IsEmpty())
 		{
 			PopulateTree(item, tvi);
+
+			if (!selectedPath.empty()) SelectTreeItem(item, TreeView_GetRoot(item), selectedPath.c_str());
 		}
 	}
 }
