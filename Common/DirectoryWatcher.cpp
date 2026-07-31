@@ -14,6 +14,7 @@ DirectoryWatcher::DirectoryWatcher() :
 	m_Thread(nullptr),
 	m_StopEvent(CreateEvent(nullptr, TRUE, FALSE, nullptr)),
 	m_Recursive(false),
+	m_NotifyFilter(0),
 	m_Callback(nullptr),
 	m_Context(nullptr)
 {
@@ -25,7 +26,7 @@ DirectoryWatcher::~DirectoryWatcher()
 	CloseHandle(m_StopEvent);
 }
 
-bool DirectoryWatcher::Start(const std::wstring& directory, bool recursive, ChangeCallback callback, void* context)
+bool DirectoryWatcher::Start(const std::wstring& directory, bool recursive, ChangeCallback callback, void* context, DWORD notifyFilter)
 {
 	Stop();
 
@@ -38,6 +39,7 @@ bool DirectoryWatcher::Start(const std::wstring& directory, bool recursive, Chan
 	m_Path = directory;
 	if (!m_Path.empty() && m_Path.back() != L'\\') m_Path += L'\\';
 	m_Recursive = recursive;
+	m_NotifyFilter = notifyFilter;
 	m_Callback = callback;
 	m_Context = context;
 	ResetEvent(m_StopEvent);
@@ -95,11 +97,9 @@ void DirectoryWatcher::Run()
 	{
 		ResetEvent(overlapped.hEvent);
 
-		const auto flags = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE;
-		if (!ReadDirectoryChangesW(m_Directory, buffer, sizeof(buffer), m_Recursive, flags, nullptr, &overlapped, nullptr) &&
-				GetLastError() != ERROR_IO_PENDING)
+		if (!ReadDirectoryChangesExW(m_Directory, buffer, sizeof(buffer), m_Recursive, m_NotifyFilter, nullptr, &overlapped, nullptr, ReadDirectoryNotifyExtendedInformation))
 		{
-			break;
+			if (GetLastError() != ERROR_IO_PENDING) break;
 		}
 
 		const DWORD result = WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE);
@@ -113,18 +113,18 @@ void DirectoryWatcher::Run()
 
 		DWORD bytesReturned;
 		if (!GetOverlappedResult(m_Directory, &overlapped, &bytesReturned, FALSE) || !bytesReturned) continue;
-		FILE_NOTIFY_INFORMATION* info = (FILE_NOTIFY_INFORMATION*)buffer;
+		auto* info = (FILE_NOTIFY_EXTENDED_INFORMATION*)buffer;
 		do
 		{
 			if (m_Callback)
 			{
 				std::wstring path = m_Path;
 				path.append(info->FileName, info->FileNameLength / sizeof(WCHAR));
-				m_Callback(path.c_str(), m_Context);
+				m_Callback(path.c_str(), info->Action, info->FileAttributes, m_Context);
 			}
 
 			if (!info->NextEntryOffset) break;
-			info = (FILE_NOTIFY_INFORMATION*)((BYTE*)info + info->NextEntryOffset);
+			info = (FILE_NOTIFY_EXTENDED_INFORMATION*)((BYTE*)info + info->NextEntryOffset);
 		}
 		while (true);
 	}

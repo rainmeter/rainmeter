@@ -145,7 +145,7 @@ private:
 		void UpdateRangeToolTip(HWND list, POINT point);
 		void UpdateDirectoryWatcher();
 		void HandleAutoRefreshChange();
-		static void OnDirectoryChange(const WCHAR* path, void* context);
+		static void OnDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes, void* context);
 		static LRESULT CALLBACK SkinsListViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR id, DWORD_PTR data);
 

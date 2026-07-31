@@ -1255,7 +1255,7 @@ void DialogDebug::TabSkins::HandleAutoRefreshChange()
 	PostMessage(m_SkinWindow->GetWindow(), WM_METERWINDOW_DELAYED_REFRESH, 0, 0);
 }
 
-void DialogDebug::TabSkins::OnDirectoryChange(const WCHAR* path, void* context)
+void DialogDebug::TabSkins::OnDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes, void* context)
 {
 	TabSkins* tab = static_cast<TabSkins*>(context);
 	const auto& files = tab->m_AutoRefreshFiles;
