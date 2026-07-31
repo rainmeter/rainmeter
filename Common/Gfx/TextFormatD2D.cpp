@@ -45,7 +45,9 @@ int Clamp(int value, int _min, int _max)
 namespace Gfx {
 
 TextFormatD2D::TextFormatD2D(const MathParser& mathParser) :
-	TextFormat(mathParser),
+	m_MathParser(mathParser),
+	m_HorizontalAlignment(HorizontalAlignment::Left),
+	m_VerticalAlignment(VerticalAlignment::Top),
 	m_FontWeight(-1),
 	m_HasWeightChanged(false),
 	m_ExtraHeight(),
@@ -455,7 +457,7 @@ void TextFormatD2D::SetTrimming(bool trim)
 
 void TextFormatD2D::SetHorizontalAlignment(HorizontalAlignment alignment)
 {
-	__super::SetHorizontalAlignment(alignment);
+	m_HorizontalAlignment = alignment;
 
 	if (m_TextFormat)
 	{
@@ -468,7 +470,7 @@ void TextFormatD2D::SetHorizontalAlignment(HorizontalAlignment alignment)
 
 void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 {
-	__super::SetVerticalAlignment(alignment);
+	m_VerticalAlignment = alignment;
 
 	if (m_TextFormat)
 	{

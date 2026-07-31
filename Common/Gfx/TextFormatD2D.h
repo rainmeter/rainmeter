@@ -9,44 +9,78 @@
 #define RM_GFX_TEXTFORMATD2D_H_
 
 #include "TextInlineFormat.h"
-#include "TextFormat.h"
+#include <Windows.h>
 #include <memory>
 #include <string>
+#include <vector>
 #include <dwrite_1.h>
 #include <wrl/client.h>
+
+class MathParser;
 
 namespace Gfx {
 
 enum class CaseType : BYTE;
+class FontCollection;
+
+struct TextInlineOption
+{
+	std::wstring pattern;
+	std::vector<std::wstring> settings;
+};
+
+struct TextInlineRange
+{
+	UINT32 start;
+	UINT32 length;
+};
+
+enum class HorizontalAlignment : BYTE
+{
+	Left,
+	Center,
+	Right
+};
+
+enum class VerticalAlignment : BYTE
+{
+	Top,
+	Center,
+	Bottom
+};
 
 // Provides a Direct2D/DirectWrite implementation of TextFormat for use with CanvasD2D.
-class TextFormatD2D : public TextFormat
+class TextFormatD2D final
 {
 public:
 	TextFormatD2D(const MathParser& mathParser);
-	virtual ~TextFormatD2D();
+	~TextFormatD2D();
 
 	TextFormatD2D(const TextFormatD2D& other) = delete;
 	TextFormatD2D& operator=(TextFormatD2D other) = delete;
 
-	virtual bool IsInitialized() const override { return m_TextFormat != nullptr; }
+	bool IsInitialized() const { return m_TextFormat != nullptr; }
+	void InvalidateDeviceResources();
 
-	virtual void SetProperties(
+	void SetProperties(
 		const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-		FontCollection* fontCollection) override;
+		FontCollection* fontCollection);
 
-	virtual void SetFontWeight(int weight) override;
+	void SetFontWeight(int weight);
 
-	virtual void SetTrimming(bool trim) override;
+	void SetTrimming(bool trim);
 
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
+	void SetHorizontalAlignment(HorizontalAlignment alignment);
+	HorizontalAlignment GetHorizontalAlignment() const { return m_HorizontalAlignment; }
 
-	virtual void SetInlineOptions(const std::vector<TextInlineOption>& options) override;
-	virtual std::vector<std::wstring> GetInlinePatterns() override;
-	virtual void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges) override;
+	void SetVerticalAlignment(VerticalAlignment alignment);
+	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
-	virtual void InvalidateDeviceResources() override;
+	void SetInlineOptions(const std::vector<TextInlineOption>& options);
+	std::vector<std::wstring> GetInlinePatterns();
+	void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges);
+
+	const MathParser& GetMathParser() const { return m_MathParser; }
 
 private:
 	friend class Canvas;
@@ -90,6 +124,10 @@ private:
 		const UINT32 strLen, const D2D1_RECT_F& drawRect);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
+
+	const MathParser& m_MathParser;
+	HorizontalAlignment m_HorizontalAlignment;
+	VerticalAlignment m_VerticalAlignment;
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;
