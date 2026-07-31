@@ -1530,6 +1530,13 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
+	case UDN_DELTAPOS:
+		if (nm->idFrom == Id_ZoomSpinner && GetKeyState(VK_CONTROL) < 0)
+		{
+			((LPNMUPDOWN)lParam)->iDelta *= 10;
+		}
+		break;
+
 	case NM_CLICK:
 		if (nm->idFrom == Id_AddMetadataLink)
 		{
@@ -2641,6 +2648,13 @@ INT_PTR DialogManage::TabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
+	case UDN_DELTAPOS:
+		if (nm->idFrom == Id_DefaultZoomSpinner && GetKeyState(VK_CONTROL) < 0)
+		{
+			((LPNMUPDOWN)lParam)->iDelta *= 10;
+		}
+		return FALSE;
+
 	case NM_CLICK:
 		if (nm->idFrom == Id_LanguageUpdateLink)
 		{
