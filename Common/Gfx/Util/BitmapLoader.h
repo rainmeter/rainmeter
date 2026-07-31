@@ -11,6 +11,7 @@
 #include "../Bitmap.h"
 
 namespace Gfx {
+class GifImage;
 namespace Util {
 
 class BitmapLoader
@@ -22,6 +23,7 @@ public:
 
 private:
 	friend class Gfx::Canvas;
+	friend class Gfx::GifImage;
 
 	BitmapLoader() = delete;
 	~BitmapLoader() = delete;
@@ -32,6 +34,7 @@ private:
 		IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
 	static HRESULT ConvertToD2DFormat(IWICBitmapSource* source, Microsoft::WRL::ComPtr<IWICBitmapSource>& dest);
 	static HRESULT CreateAlphaMask(IWICBitmapSource* source, UINT width, UINT height, std::vector<BYTE>& alphaMask);
+	static HRESULT LoadBitmapFromWicSource(const Canvas& canvas, Bitmap* bitmap, IWICBitmapSource* source);
 	static int GetExifOrientation(IWICBitmapFrameDecode* source);
 };
 

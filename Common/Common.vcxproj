@@ -32,6 +32,7 @@
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\Bitmap.cpp" />
+    <ClCompile Include="Gfx\GifImage.cpp" />
     <ClCompile Include="Gfx\Svg.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\RenderTexture.cpp" />
@@ -80,6 +81,7 @@
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\Bitmap.h" />
+    <ClInclude Include="Gfx\GifImage.h" />
     <ClInclude Include="Gfx\Svg.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\RenderTexture.h" />

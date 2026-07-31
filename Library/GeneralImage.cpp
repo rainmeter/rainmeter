@@ -32,6 +32,9 @@ GeneralImageHelper_DefineOptionArray(GeneralImage::c_DefaultOptionArray, L"");
 GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, Skin* skin) :
 	m_Bitmap(nullptr),
 	m_BitmapProcessed(nullptr),
+	m_GifImage(nullptr),
+	m_GifBitmapProcessed(nullptr),
+	m_GifProcessedOptions(),
 	m_Skin(skin),
 	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
@@ -49,6 +52,8 @@ void GeneralImage::DisposeImage()
 {
 	m_Bitmap.reset();
 	m_BitmapProcessed.reset();
+	m_GifImage.reset();
+	m_GifBitmapProcessed.reset();
 }
 
 void GeneralImage::InvalidateDeviceResources()
@@ -62,6 +67,9 @@ void GeneralImage::InvalidateDeviceResources()
 	{
 		m_BitmapProcessed->GetBitmap()->InvalidateDeviceResources();
 	}
+
+	if (m_GifImage) m_GifImage->InvalidateDeviceResources();
+	if (m_GifBitmapProcessed) m_GifBitmapProcessed->InvalidateDeviceResources();
 }
 
 bool GeneralImage::IsLoaded()
@@ -71,8 +79,10 @@ bool GeneralImage::IsLoaded()
 
 Gfx::Bitmap* GeneralImage::GetImage()
 {
-	Gfx::Bitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
-		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+	if (m_GifImage && FAILED(m_GifImage->EnsureDeviceResources(m_Skin->GetCanvas()))) return nullptr;
+
+	Gfx::Bitmap* bitmap = m_GifBitmapProcessed ? m_GifBitmapProcessed.get() :
+		(m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : GetSourceBitmap());
 	if (bitmap && bitmap->HasDeviceResources()) return bitmap;
 
 	if (m_ImageName.empty() || !LoadImage(m_ImageName, m_Options.m_CreateAlphaMask))
@@ -80,8 +90,17 @@ Gfx::Bitmap* GeneralImage::GetImage()
 		return nullptr;
 	}
 
-	return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
-		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+	return m_GifBitmapProcessed ? m_GifBitmapProcessed.get() :
+		(m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : GetSourceBitmap());
+}
+
+bool GeneralImage::AdvanceAnimation(ULONGLONG currentTime)
+{
+	if (!m_GifImage || !m_GifImage->Advance(m_Skin->GetCanvas(), currentTime)) return false;
+
+	m_GifBitmapProcessed.reset();
+	ApplyTransforms();
+	return true;
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -249,6 +268,13 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		filename += L".png";
 	}
 
+	if (m_GifImage && m_Options.m_CreateAlphaMask == createAlphaMask &&
+		!m_GifImage->HasFileChanged(filename))
+	{
+		ApplyTransforms();
+		return true;
+	}
+
 	if (m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
 		m_Options.m_CreateAlphaMask == createAlphaMask &&
 		!m_Bitmap->GetBitmap()->HasFileChanged(filename))
@@ -269,6 +295,19 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		return false;
 	}
 
+	auto gifImage = std::make_unique<Gfx::GifImage>();
+	const HRESULT gifResult = gifImage->Load(m_Skin->GetCanvas(), filename, createAlphaMask);
+	if (gifResult == S_OK)
+	{
+		DisposeImage();
+		m_GifImage = std::move(gifImage);
+		m_Options.m_Path = info.m_Path;
+		m_Options.m_FileSize = info.m_FileSize;
+		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = createAlphaMask;
+		ApplyTransforms();
+		return true;
+	}
 	auto handle = GetImageCache().Get(info);
 	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
@@ -373,12 +412,24 @@ D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap
 
 void GeneralImage::ApplyTransforms()
 {
-	if (!m_Bitmap) return;
+	auto* bitmap = GetSourceBitmap();
+	if (!bitmap) return;
 
-	auto* bitmap = m_Bitmap->GetBitmap();
 	if (!HasActiveTransforms(bitmap))
 	{
 		m_BitmapProcessed.reset();
+		m_GifBitmapProcessed.reset();
+		return;
+	}
+
+	if (m_GifImage)
+	{
+		if (m_GifBitmapProcessed && m_GifProcessedOptions == m_Options &&
+			m_GifBitmapProcessed->HasDeviceResources()) return;
+
+		m_BitmapProcessed.reset();
+		m_GifBitmapProcessed.reset(CreateTransformedBitmap(bitmap));
+		m_GifProcessedOptions = m_Options;
 		return;
 	}
 
@@ -447,6 +498,48 @@ void GeneralImage::ApplyTransforms()
 	{
 		m_BitmapProcessed = std::move(handle);
 	}
+}
+
+Gfx::Bitmap* GeneralImage::GetSourceBitmap() const
+{
+	return m_GifImage ? m_GifImage->GetBitmap() : (m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+}
+
+Gfx::Bitmap* GeneralImage::CreateTransformedBitmap(Gfx::Bitmap* bitmap)
+{
+	auto& canvas = m_Skin->GetCanvas();
+	auto* stream = bitmap->CreateEffectStream();
+
+	if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
+
+	const auto crop = ApplyCrop(stream, bitmap);
+	auto* croppedBitmap = stream->ToBitmap(canvas, &crop);
+	if (!croppedBitmap)
+	{
+		delete stream;
+		return nullptr;
+	}
+
+	if (croppedBitmap != bitmap)
+	{
+		delete stream;
+		stream = croppedBitmap->CreateEffectStream();
+	}
+
+	if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
+	if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
+	stream->Flip(canvas, m_Options.m_Flip);
+	if (m_Options.m_Rotate != 0.0f) stream->Rotate(canvas, m_Options.m_Rotate);
+
+	auto* transformedBitmap = stream->ToBitmap(canvas, nullptr);
+	delete stream;
+
+	if (croppedBitmap != bitmap && croppedBitmap != transformedBitmap)
+	{
+		delete croppedBitmap;
+	}
+
+	return transformedBitmap == bitmap ? nullptr : transformedBitmap;
 }
 
 bool GeneralImage::HasActiveTransforms(Gfx::Bitmap* bitmap) const

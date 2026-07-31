@@ -35,7 +35,7 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 
 private:
-	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
+	void LoadImage(const std::wstring& imageName);
 
 	GeneralImage m_Image;
 	std::wstring m_ImageName;

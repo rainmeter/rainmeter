@@ -59,6 +59,7 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Forward declaration
 class Bitmap;
+class GifImage;
 class Svg;
 
 class RenderTexture;
@@ -144,6 +145,7 @@ public:
 private:
 	friend class Canvas;
 	friend class Bitmap;
+	friend class GifImage;
 	friend class Svg;
 	friend class RenderTexture;
 	friend class FontCollection;

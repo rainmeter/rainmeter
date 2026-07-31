@@ -9,6 +9,7 @@
 #define __GENERALIMAGE_H__
 
 #include "../Common/Gfx/Bitmap.h"
+#include "../Common/Gfx/GifImage.h"
 #include "../Common/Gfx/Util/EffectStream.h"
 #include <string>
 #include "Skin.h"
@@ -64,6 +65,7 @@ public:
 
 	bool IsLoaded();
 	Gfx::Bitmap* GetImage();
+	bool AdvanceAnimation(ULONGLONG currentTime);
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
@@ -73,9 +75,14 @@ private:
 	D2D1_SIZE_F ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const;
 	void ApplyTransforms();
 	bool HasActiveTransforms(Gfx::Bitmap* bitmap) const;
+	Gfx::Bitmap* GetSourceBitmap() const;
+	Gfx::Bitmap* CreateTransformedBitmap(Gfx::Bitmap* bitmap);
 
 	std::unique_ptr<ImageCacheHandle> m_Bitmap;
 	std::unique_ptr<ImageCacheHandle> m_BitmapProcessed;
+	std::unique_ptr<Gfx::GifImage> m_GifImage;
+	std::unique_ptr<Gfx::Bitmap> m_GifBitmapProcessed;
+	ImageOptions m_GifProcessedOptions;
 	Skin* m_Skin;
 
 	const WCHAR* m_Name;

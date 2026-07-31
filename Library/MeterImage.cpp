@@ -35,7 +35,7 @@ void MeterImage::Initialize()
 	if (m_Measures.empty() && !m_DynamicVariables && !m_ImageName.empty())
 	{
 		m_ImageNameResult = m_ImageName;
-		LoadImage(m_ImageName, true);
+		LoadImage(m_ImageName);
 	}
 	else if (m_Image.IsLoaded())
 	{
@@ -55,7 +55,7 @@ void MeterImage::InvalidateDeviceResources()
 	m_MaskImage.InvalidateDeviceResources();
 }
 
-void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
+void MeterImage::LoadImage(const std::wstring& imageName)
 {
 	m_Image.LoadImage(imageName);
 
@@ -134,13 +134,12 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 bool MeterImage::Update()
 {
+	const bool animationChanged = m_Image.AdvanceAnimation(GetTickCount64());
+
 	if (Meter::Update())
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
-			// Store the current values so we know if the image needs to be updated
-			std::wstring oldResult = m_ImageNameResult;
-
 			if (!m_Measures.empty())  // read from the measures
 			{
 				if (m_ImageName.empty())
@@ -162,7 +161,7 @@ bool MeterImage::Update()
 				m_ImageNameResult = m_ImageName;
 			}
 
-			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
+			LoadImage(m_ImageNameResult);
 
 			return true;
 		}
@@ -172,7 +171,7 @@ bool MeterImage::Update()
 			return true;
 		}
 	}
-	return false;
+	return animationChanged;
 }
 
 bool MeterImage::Draw(Gfx::Canvas& canvas)

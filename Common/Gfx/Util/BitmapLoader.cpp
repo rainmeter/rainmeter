@@ -70,33 +70,42 @@ HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 
 	const int orientation = GetExifOrientation(decoderFrame.Get());
 	bitmap->SetOrientation(orientation);
+	hr = LoadBitmapFromWicSource(canvas, bitmap, source.Get());
+	return cleanup(hr);
+}
+
+HRESULT BitmapLoader::LoadBitmapFromWicSource(const Canvas& canvas, Bitmap* bitmap, IWICBitmapSource* source)
+{
+	if (!bitmap || !source) return E_INVALIDARG;
 
 	UINT width = 0;
 	UINT height = 0;
-	hr = source->GetSize(&width, &height);
-	if (FAILED(hr)) return cleanup(hr);
+	HRESULT hr = source->GetSize(&width, &height);
+	if (FAILED(hr)) return hr;
+
+	bitmap->InvalidateDeviceResources();
+	std::vector<BYTE> alphaMask;
 
 	if (bitmap->GetCreateAlphaMask())
 	{
-		std::vector<BYTE> alphaMask;
-		CreateAlphaMask(source.Get(), width, height, alphaMask);
-		bitmap->SetAlphaMask(alphaMask);
+		CreateAlphaMask(source, width, height, alphaMask);
 	}
+	bitmap->SetAlphaMask(alphaMask);
 
 	const auto maxBitmapSize = canvas.m_MaxBitmapSize;
 	if (width <= maxBitmapSize && height <= maxBitmapSize)
 	{
 		Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
 		hr = canvas.m_Target->CreateBitmapFromWicBitmap(
-			source.Get(),
+			source,
 			nullptr,
 			d2dbitmap.GetAddressOf());
-		if (FAILED(hr)) return cleanup(hr);
+		if (FAILED(hr)) return hr;
 
 		bitmap->AddSegment(d2dbitmap, 0, 0, width, height);
 
 		bitmap->SetSize(width, height);
-		return cleanup(S_OK);
+		return S_OK;
 	}
 
 	for (UINT y = 0, H = (UINT)floor(height / maxBitmapSize); y <= H; ++y)
@@ -110,22 +119,22 @@ HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 				(INT)(y == H ? (height - maxBitmapSize * y) : maxBitmapSize) };		// If last y coordinate, find cutoff
 
 			Microsoft::WRL::ComPtr<IWICBitmapSource> bitmapSegment;
-			hr = CropWICBitmapSource(rcClip, source.Get(), bitmapSegment);
-			if (FAILED(hr)) return cleanup(hr);
+			hr = CropWICBitmapSource(rcClip, source, bitmapSegment);
+			if (FAILED(hr)) return hr;
 
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
 			hr = canvas.m_Target->CreateBitmapFromWicBitmap(
 				bitmapSegment.Get(),
 				nullptr,
 				d2dbitmap.GetAddressOf());
-			if (FAILED(hr)) return cleanup(hr);
+			if (FAILED(hr)) return hr;
 
 			bitmap->AddSegment(d2dbitmap, rcClip);
 		}
 	}
 
 	bitmap->SetSize(width, height);
-	return cleanup(S_OK);
+	return S_OK;
 }
 
 bool BitmapLoader::HasFileChanged(Bitmap* bitmap, const std::wstring& file)
