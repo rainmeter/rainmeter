@@ -8,7 +8,7 @@
 #ifndef RM_GFX_CANVAS_H_
 #define RM_GFX_CANVAS_H_
 
-#include "FontCollectionD2D.h"
+#include "FontCollection.h"
 #include "Shape.h"
 #include "TextFormatD2D.h"
 #include <bit>
@@ -102,7 +102,7 @@ public:
 	HDC GetDC();
 	void ReleaseDC();
 
-	FontCollectionD2D* CreateFontCollection() { return new FontCollectionD2D(); }
+	FontCollection* CreateFontCollection() { return new FontCollection(); }
 	TextFormat* CreateTextFormat(const MathParser& mathParser) { return new TextFormatD2D(mathParser); }
 
 	bool IsTransparentPixel(int x, int y);
@@ -146,7 +146,7 @@ private:
 	friend class Bitmap;
 	friend class Svg;
 	friend class RenderTexture;
-	friend class FontCollectionD2D;
+	friend class FontCollection;
 	friend class TextFormatD2D;
 	friend class TextInlineFormat_Face;
 	friend class TextInlineFormat_Typography;

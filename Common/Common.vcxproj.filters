@@ -12,7 +12,7 @@
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="ParseUtil.cpp" />
-    <ClCompile Include="Gfx\FontCollectionD2D.cpp">
+    <ClCompile Include="Gfx\FontCollection.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\TextFormat.cpp">
@@ -124,7 +124,7 @@
     <ClInclude Include="UnitTest.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Version.h" />
-    <ClInclude Include="Gfx\FontCollectionD2D.h">
+    <ClInclude Include="Gfx\FontCollection.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextFormat.h">

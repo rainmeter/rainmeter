@@ -2613,8 +2613,8 @@ bool Skin::ReadSkin()
 	// Log available non-installed fonts
 	if ((hasResourceFonts || hasLocalFonts) && GetRainmeter().GetDebug())
 	{
-		auto fontCollectionD2D = m_FontCollection;
-		if (fontCollectionD2D && fontCollectionD2D->InitializeCollection())
+		auto fontCollection = m_FontCollection;
+		if (fontCollection && fontCollection->InitializeCollection())
 		{
 			std::wstring fontResourcePath = m_ResourcesPath + L"Fonts\\";
 			std::wstring fontSource = L"Source: ";
@@ -2628,7 +2628,7 @@ bool Skin::ReadSkin()
 
 			UINT32 familyCount = 0;
 			std::wstring families;
-			bool success = fontCollectionD2D->GetFontFamilies(familyCount, families);
+			bool success = fontCollection->GetFontFamilies(familyCount, families);
 			if (familyCount > 0 && !families.empty())
 			{
 				LogDebugF(this, L"Local Font families: Count=%i %s", familyCount, fontSource.c_str());

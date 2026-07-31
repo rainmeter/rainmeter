@@ -218,7 +218,7 @@ void Canvas::Finalize()
 bool Canvas::EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families)
 {
 	bool success = false;
-	FontCollectionD2D* collection = new FontCollectionD2D();
+	FontCollection* collection = new FontCollection();
 	collection->InitializeCollection();
 
 	success = collection->GetSystemFontFamilies(familyCount, families);

@@ -33,7 +33,7 @@
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\Bitmap.cpp" />
     <ClCompile Include="Gfx\Svg.cpp" />
-    <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
+    <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\RenderTexture.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
@@ -82,7 +82,7 @@
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\Bitmap.h" />
     <ClInclude Include="Gfx\Svg.h" />
-    <ClInclude Include="Gfx\FontCollectionD2D.h" />
+    <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\RenderTexture.h" />
     <ClInclude Include="Gfx\Shape.h" />
     <ClInclude Include="Gfx\TextFormat.h" />

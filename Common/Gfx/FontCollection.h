@@ -5,8 +5,8 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_FONTCOLLECTIOND2D_H_
-#define RM_GFX_FONTCOLLECTIOND2D_H_
+#ifndef RM_GFX_FONTCOLLECTION_H_
+#define RM_GFX_FONTCOLLECTION_H_
 
 #include <Windows.h>
 #include <vector>
@@ -15,14 +15,14 @@
 
 namespace Gfx {
 
-// Wraps the DirectWrite IDWriteFontCollection for use with CanvasD2D.
-class FontCollectionD2D final
+// Wraps the DirectWrite IDWriteFontCollection for use with Canvas.
+class FontCollection final
 {
 public:
-	~FontCollectionD2D();
+	~FontCollection();
 
-	FontCollectionD2D(const FontCollectionD2D& other) = delete;
-	FontCollectionD2D& operator=(FontCollectionD2D other) = delete;
+	FontCollection(const FontCollection& other) = delete;
+	FontCollection& operator=(FontCollection other) = delete;
 
 	bool AddFile(const WCHAR* file);
 
@@ -32,7 +32,7 @@ public:
 	bool GetFontFamilies(UINT32& familyCount, std::wstring& families);
 
 protected:
-	FontCollectionD2D();
+	FontCollection();
 
 private:
 	friend class Canvas;

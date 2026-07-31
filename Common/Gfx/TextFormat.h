@@ -16,7 +16,7 @@ class MathParser;
 
 namespace Gfx {
 
-class FontCollectionD2D;
+class FontCollection;
 
 struct TextInlineOption
 {
@@ -61,7 +61,7 @@ public:
 	// collection, the given |fontCollection| is also searched. |fontCollection| may be nullptr.
 	virtual void SetProperties(
 		const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-		FontCollectionD2D* fontCollection) = 0;
+		FontCollection* fontCollection) = 0;
 
 	// Sets the font weight of the font used. |weight| should be between 1-999.
 	virtual void SetFontWeight(int weight) = 0;
