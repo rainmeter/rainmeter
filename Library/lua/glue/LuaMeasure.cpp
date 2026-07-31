@@ -28,25 +28,7 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	Skin* skin = self->GetSkin();
-	ConfigParser& parser = skin->GetParser();
-	const WCHAR* section = self->GetName();
-	const std::wstring key = LuaHelper::ToWide(2);
-	const std::wstring defValue = LuaHelper::ToWide(3);
-
-	bool bReplaceMeasures = true;
-	if (lua_gettop(L) > 3)
-	{
-		bReplaceMeasures = LuaHelper::ToBool(4);
-	}
-
-	parser.ReadInheritOption(section);
-	const auto& value = parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
-	parser.ClearInheritChain();
-
-	LuaHelper::PushWide(value);
-
-	return 1;
+	return LuaSection::GetOption(L, self);
 }
 
 static int SetOption(lua_State* L)

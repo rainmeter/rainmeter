@@ -13,6 +13,29 @@
 
 namespace LuaSection {
 
+int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
+{
+	Skin* skin = section->GetSkin();
+	ConfigParser& parser = skin->GetParser();
+	const WCHAR* sectionName = section->GetName();
+	const std::wstring key = LuaHelper::ToWide(2);
+	const std::wstring defValue = LuaHelper::ToWide(3);
+
+	bool replaceMeasures = true;
+	if (lua_gettop(L) > 3)
+	{
+		replaceMeasures = LuaHelper::ToBool(4);
+	}
+
+	parser.ReadInheritOption(sectionName, allowMeterStyle);
+	const auto& value = parser.ReadString(sectionName, key.c_str(), defValue.c_str(), replaceMeasures);
+	parser.ClearInheritChain();
+
+	LuaHelper::PushWide(value);
+
+	return 1;
+}
+
 int SetOption(lua_State* L, Section* section)
 {
 	Skin* skin = section->GetSkin();
