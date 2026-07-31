@@ -144,7 +144,8 @@ void DialogDebug::Open(const WCHAR* name)
 
 	if (name)
 	{
-		if (_wcsicmp(name, L"Skins") == 0 ||
+		if (_wcsicmp(name, L"Skin") == 0 ||
+			_wcsicmp(name, L"Skins") == 0 ||
 			_wcsicmp(name, L"Measures") == 0)	// For backwards compatibility
 		{
 			tab = 1;

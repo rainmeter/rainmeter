@@ -149,6 +149,7 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
 	{ Bang::SetWallpaper, L"SetWallpaper", CommandHandler::DoSetWallpaperBang },
 	{ Bang::About, L"About", CommandHandler::DoAboutBang },
+	{ Bang::Debug, L"Debug", CommandHandler::DoDebugBang },
 	{ Bang::Manage, L"Manage", CommandHandler::DoManageBang },
 	{ Bang::SkinMenu, L"SkinMenu", CommandHandler::DoSkinMenuBang },
 	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang },
@@ -826,6 +827,33 @@ void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, Skin* skin)
 	else
 	{
 		DialogDebug::Open();
+	}
+}
+
+void CommandHandler::DoDebugBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	if (args.empty())
+	{
+		DialogDebug::Open();
+	}
+	else if (args.size() == 1)
+	{
+		DialogDebug::Open(args[0].c_str());
+	}
+	else if (args.size() == 2 && _wcsicmp(args[0].c_str(), L"Skin") == 0)
+	{
+		if (auto* selectedSkin = GetRainmeter().GetSkin(args[1]))
+		{
+			DialogDebug::OpenSkin(selectedSkin);
+		}
+		else
+		{
+			LogErrorF(skin, L"!Debug: Config not active: %s", args[1].c_str());
+		}
+	}
+	else
+	{
+		LogErrorF(skin, L"!Debug: Invalid parameters");
 	}
 }
 
