@@ -689,7 +689,6 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 
 void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	if (!args.empty()) GetRainmeter().RescanSkinsIfNeeded(args[0]);
 	Internal_DoActivateBang(args, skin, L"ActivateConfig");
 }
 

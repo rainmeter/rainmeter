@@ -1169,6 +1169,7 @@ void Rainmeter::ActivateActiveSkins()
 // if the skin was activated (or was already active).
 bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 {
+	RescanSkinsIfNeeded(folderPath);
 	const int index = m_SkinRegistry.FindFolderIndex(folderPath);
 	if (index != -1)
 	{
@@ -1190,6 +1191,7 @@ bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 // if the skin was activated (or was already active).
 bool Rainmeter::ActivateSkin(const std::wstring& folderPath, const std::wstring& file)
 {
+	RescanSkinsIfNeeded(folderPath);
 	const SkinRegistry::Indexes indexes = m_SkinRegistry.FindIndexes(folderPath, file);
 	if (indexes.IsValid())
 	{
