@@ -134,15 +134,9 @@ Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 	const UINT width = (UINT)size.width;
 	const UINT height = (UINT)size.height;
 
-	Bitmap* bitmap = new Bitmap(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
+	auto bitmap = std::make_unique<Bitmap>(m_BaseImage->m_Path, m_BaseImage->m_ExifOrientation, m_BaseImage->m_CreateAlphaMask);
 	bitmap->m_Width = width;
 	bitmap->m_Height = height;
-
-	auto deleteImage = [&bitmap]() -> void
-	{
-		delete bitmap;
-		bitmap = nullptr;
-	};
 
 	auto resetTarget = [target]() -> void
 	{
@@ -170,7 +164,6 @@ Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 			if (FAILED(hr))
 			{
 				resetTarget();
-				deleteImage();
 				return nullptr;
 			}
 
@@ -195,7 +188,6 @@ Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 				{
 					target->EndDraw();
 					resetTarget();
-					deleteImage();
 					return nullptr;
 				}
 
@@ -214,7 +206,6 @@ Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 			resetTarget();
 			if (FAILED(hr))
 			{
-				deleteImage();
 				return nullptr;
 			}
 
@@ -225,9 +216,9 @@ Bitmap* EffectStream::ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize)
 	resetTarget();
 	if (bitmap->m_CreateAlphaMask && !bitmap->BuildAlphaMask(canvas))
 	{
-		deleteImage();
+		return nullptr;
 	}
-	return bitmap;
+	return bitmap.release();
 }
 
 D2D1_SIZE_F EffectStream::GetSize(const Canvas&)
