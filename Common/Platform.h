@@ -8,6 +8,7 @@
 #ifndef RM_COMMON_PLATFORM_H_
 #define RM_COMMON_PLATFORM_H_
 
+#include <cstdint>
 #include <string>
 
 class Platform
@@ -21,6 +22,7 @@ public:
 	std::wstring GetFriendlyName() { return m_FriendlyName; }
 	std::wstring GetReleaseID() { return m_DisplayVersion; }  // Can be empty
 	std::wstring GetRawVersion() { return m_RawVersion; }  // ex. 10.0.10240
+	uint32_t GetBuildNumber();
 	std::wstring GetProductName() { return m_ProductName; }
 	std::wstring GetUserLanguage() { return m_UserLanguage; }
 
