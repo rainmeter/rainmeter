@@ -439,12 +439,15 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::ComboBox(Id_ZPositionDropDownList, 0,
 			175 + labelWidth, 182, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, IDS_LoadOrderColon,
+		Control::Label(-0, IDS_Zoom,
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
-		Control::Edit(Id_LoadOrderEdit, 0,
-			175 + labelWidth, 202, 80, 14,
-			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
+		Control::Edit(Id_ZoomEdit, 0,
+			175 + labelWidth, 202, 38, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Label(Id_ZoomPercentLabel, 0,
+			175 + labelWidth + 42, 204, 12, 14,
+			WS_VISIBLE, 0),
 		Control::Label(-0, IDS_TransparencyColon,
 			175, 224, labelWidth, 14,
 			WS_VISIBLE, 0),
@@ -482,6 +485,14 @@ void DialogManage::TabSkins::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
+	SetWindowText(GetControl(Id_ZoomPercentLabel), L"%");
+
+	HWND zoomEdit = GetControl(Id_ZoomEdit);
+	HWND zoomSpinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
+		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
+		0, 0, 0, 0, m_Window, (HMENU)Id_ZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	SendMessage(zoomSpinner, UDM_SETRANGE32, 10, 500);
+	SendMessage(zoomSpinner, UDM_SETBUDDY, (WPARAM)zoomEdit, 0);
 
 	// Create tooltips for 'New Skin' button
 	HWND item = GetControl(Id_NewSkinButton);
@@ -748,9 +759,11 @@ void DialogManage::TabSkins::SetControls()
 		EnableWindow(item, TRUE);
 		ComboBox_SetCurSel(item, m_SkinWindow->GetWindowZPosition() + 2);
 
-		item = GetControl(Id_LoadOrderEdit);
-		EnableWindow(item, TRUE);
-		_itow_s(GetRainmeter().GetLoadOrder(m_SkinFolderPath), buffer, 10);
+		item = GetControl(Id_ZoomEdit);
+		const BOOL zoomEnabled = GetRainmeter().GetForceDefaultZoom() ? FALSE : TRUE;
+		EnableWindow(item, zoomEnabled);
+		EnableWindow(GetControl(Id_ZoomSpinner), zoomEnabled);
+		_itow_s((int)roundf(m_SkinWindow->GetZoomScale() * 100.0f), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_OnHoverDropDownList);
@@ -866,9 +879,10 @@ void DialogManage::TabSkins::DisableControls(bool clear)
 	EnableWindow(item, FALSE);
 	ComboBox_SetCurSel(item, -1);
 
-	item = GetControl(Id_LoadOrderEdit);
+	item = GetControl(Id_ZoomEdit);
 	SetWindowText(item, L"");
 	EnableWindow(item, FALSE);
+	EnableWindow(GetControl(Id_ZoomSpinner), FALSE);
 
 	item = GetControl(Id_OnHoverDropDownList);
 	EnableWindow(item, FALSE);
@@ -1340,59 +1354,16 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_LoadOrderEdit:
-		if (HIWORD(wParam) == EN_CHANGE)
+	case Id_ZoomEdit:
+		if (HIWORD(wParam) == EN_CHANGE && m_SkinWindow)
 		{
-			if (m_IgnoreUpdate)
+			WCHAR buffer[32];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) == 0)
 			{
-				// To avoid infinite loop after setting value below
-				m_IgnoreUpdate = false;
+				break;
 			}
-			else
-			{
-				// Convert text to number and set it to get rid of extra chars
-				WCHAR buffer[32];
-				int len = GetWindowText((HWND)lParam, buffer, 32);
-				if ((len == 0) || (len == 1 && buffer[0] == L'-'))
-				{
-					// Ignore if empty or if - is only char
-					break;
-				}
-
-				// Get selection
-				DWORD sel = Edit_GetSel((HWND)lParam);
-
-				// Reset value (to get rid of invalid chars)
-				m_IgnoreUpdate = true;
-				int value = _wtoi(buffer);
-
-				_itow_s(value, buffer, 10);
-				SetWindowText((HWND)lParam, buffer);
-
-				// Reset selection
-				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
-
-				WritePrivateProfileString(m_SkinFolderPath.c_str(), L"LoadOrder", buffer, GetRainmeter().GetIniFile().c_str());
-				const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(
-					m_SkinWindow->GetFolderPath(), m_SkinWindow->GetFileName());
-				if (indexes.IsValid())
-				{
-					GetRainmeter().SetLoadOrder(indexes.folder, value);
-
-					std::multimap<int, Skin*> windows;
-					GetRainmeter().GetSkinsByLoadOrder(windows);
-
-					System::PrepareHelperWindow();
-
-					// Reorder window z-position to reflect load order
-					std::multimap<int, Skin*>::const_iterator iter = windows.begin();
-					for ( ; iter != windows.end(); ++iter)
-					{
-						Skin* skin = (*iter).second;
-						skin->ChangeZPos(skin->GetWindowZPosition(), true);
-					}
-				}
-			}
+			m_IgnoreUpdate = true;
+			m_SkinWindow->SetZoom(_wtoi(buffer));
 		}
 		break;
 
