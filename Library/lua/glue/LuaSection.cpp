@@ -41,7 +41,7 @@ int SetOption(lua_State* L, Section* section)
 	return SetOption(L, section->GetSkin(), section->GetName(), 2);
 }
 
-int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIndex)
+int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIndex, bool group)
 {
 	if (lua_istable(L, optionIndex))
 	{
@@ -52,7 +52,7 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 			{
 				const std::wstring value = LuaHelper::ToWide(-1);
 				const std::wstring option = LuaHelper::ToWide(-2);
-				skin->SetOption(sectionName, option, value, false);
+				skin->SetOption(sectionName, option, value, group);
 			}
 
 			lua_pop(L, 1);
@@ -62,7 +62,7 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 	{
 		const std::wstring option = LuaHelper::ToWide(optionIndex);
 		const std::wstring value = LuaHelper::ToWide(optionIndex + 1);
-		skin->SetOption(sectionName, option, value, false);
+		skin->SetOption(sectionName, option, value, group);
 	}
 
 	return 0;
