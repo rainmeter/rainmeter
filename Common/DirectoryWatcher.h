@@ -23,6 +23,7 @@ public:
 
 	bool Start(const std::wstring& directory, bool recursive, ChangeCallback callback, void* context, DWORD notifyFilter = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
 	void Stop();
+	const std::wstring& GetPath() const { return m_Path; }
 
 private:
 	void Run();

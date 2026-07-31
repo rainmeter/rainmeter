@@ -6,9 +6,20 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../Common/DirectoryWatcher.h"
 #include "../Common/PathUtil.h"
 #include "SkinRegistry.h"
 #include "resource.h"
+
+static bool IsIgnoredRootFolder(const WCHAR* folder)
+{
+	static constexpr std::array<LPCWSTR, 3> ignoredFolders = { L"@Backup", L"Backup", L"@Vault" };
+	return std::find_if(ignoredFolders.begin(), ignoredFolders.end(), [folder](LPCWSTR ignoredFolder) { return _wcsicmp(folder, ignoredFolder) == 0; }) != ignoredFolders.end();
+}
+
+SkinRegistry::SkinRegistry() = default;
+
+SkinRegistry::~SkinRegistry() = default;
 
 std::wstring SkinRegistry::GetFolderPath(int folderIndex) const
 {
@@ -118,8 +129,89 @@ SkinRegistry::Indexes SkinRegistry::FindIndexesForID(UINT id)
 
 void SkinRegistry::Populate(const std::wstring& path, std::vector<std::wstring>& favorites)
 {
+	{
+		CriticalSectionLock lock(m_ChangesLock);
+		m_ChangedRootFolders.clear();
+	}
+
 	m_Folders.clear();
 	PopulateRecursive(path, favorites, L"", 0, 0);
+}
+
+void SkinRegistry::PopulateChanged(const std::wstring& path, std::vector<std::wstring>& favorites)
+{
+	ankerl::unordered_dense::set<std::wstring> directories;
+	{
+		CriticalSectionLock lock(m_ChangesLock);
+		directories.swap(m_ChangedRootFolders);
+	}
+
+	for (const auto& directory : directories)
+	{
+		auto first = std::find_if(m_Folders.begin(), m_Folders.end(), [&](const Folder& folder) { return folder.level == 1 && _wcsicmp(folder.name.c_str(), directory.c_str()) == 0; });
+		if (first != m_Folders.end())
+		{
+			auto last = std::find_if(first + 1, m_Folders.end(), [](const Folder& folder) { return folder.level == 1; });
+			m_Folders.erase(first, last);
+		}
+
+		SkinRegistry registry;
+		registry.PopulateRecursive(path, favorites, directory, 0, 1);
+		if (registry.m_Folders.empty()) continue;
+
+		// Insert the rebuilt subtree in root folder order.
+		auto position = std::find_if(m_Folders.begin(), m_Folders.end(), [&](const Folder& folder) { return folder.level == 1 && _wcsicmp(folder.name.c_str(), directory.c_str()) > 0; });
+		m_Folders.insert(position, std::make_move_iterator(registry.m_Folders.begin()), std::make_move_iterator(registry.m_Folders.end()));
+	}
+
+	UpdateBaseIDs();
+}
+
+void SkinRegistry::HandleDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes)
+{
+	if (action == FILE_ACTION_MODIFIED) return;
+
+	const WCHAR* relativePath = path + m_ChangeWatcher->GetPath().length();
+	const WCHAR* ext = wcsrchr(relativePath, L'.');
+	const bool iniChanged = ext && _wcsicmp(ext, L".ini") == 0;
+	const bool directoryChanged = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	if (!iniChanged && !directoryChanged) return;
+
+	const WCHAR* separator = wcschr(relativePath, L'\\');
+	const std::wstring directory(relativePath, separator ? separator - relativePath : wcslen(relativePath));
+	if (directory.empty() || (!separator && !directoryChanged) || IsIgnoredRootFolder(directory.c_str())) return;
+
+	CriticalSectionLock lock(m_ChangesLock);
+	m_ChangedRootFolders.emplace(directory);
+}
+
+bool SkinRegistry::HasChanges()
+{
+	CriticalSectionLock lock(m_ChangesLock);
+	return !m_ChangedRootFolders.empty();
+}
+
+void SkinRegistry::StartWatching(const std::wstring& path)
+{
+	if (!m_ChangeWatcher) m_ChangeWatcher = std::make_unique<DirectoryWatcher>();
+
+	auto callback = [](const WCHAR* path, DWORD action, DWORD attributes, void* context)
+	{
+		auto* registry = (SkinRegistry*)context;
+		registry->HandleDirectoryChange(path, action, attributes);
+	};
+	const DWORD flags = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME;
+	m_ChangeWatcher->Start(path, true, callback, this, flags);
+}
+
+void SkinRegistry::UpdateBaseIDs()
+{
+	UINT id = ID_CONFIG_FIRST;
+	for (auto& folder : m_Folders)
+	{
+		folder.baseID = id;
+		id += (UINT)folder.files.size();
+	}
 }
 
 int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level)
@@ -156,9 +248,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::w
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 				if (!PathUtil::IsDotOrDotDot(fileData.cFileName) &&
-					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
-					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
-					!(level == 0 && wcscmp(L"@Vault", fileData.cFileName) == 0) &&
+					!(level == 0 && IsIgnoredRootFolder(fileData.cFileName)) &&
 					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
 				{
 					subfolders.push_back(filename);

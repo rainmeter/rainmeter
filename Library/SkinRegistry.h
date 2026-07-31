@@ -11,14 +11,20 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <memory>
 #include <cstdint>
+#include "../Common/CriticalSection.h"
+#include "ankerl/unordered_dense.h"
+
+class DirectoryWatcher;
 
 // Reprsents a hierarchy of skin folders (reprsented by the Folder struct) and the names of their
 // respective files.
 class SkinRegistry
 {
 public:
-	SkinRegistry() = default;
+	SkinRegistry();
+	~SkinRegistry();
 	SkinRegistry(const SkinRegistry& other) = delete;
 	SkinRegistry& operator=(SkinRegistry other) = delete;
 
@@ -99,11 +105,17 @@ public:
 	bool IsEmpty() const { return m_Folders.empty(); }
 
 	void Populate(const std::wstring& path, std::vector<std::wstring>& favorites);
+	void PopulateChanged(const std::wstring& path, std::vector<std::wstring>& favorites);
+
+	bool HasChanges();
+	void StartWatching(const std::wstring& path);
 
 	std::vector<std::wstring> UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite);
 
 private:
 	int PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level);
+	void UpdateBaseIDs();
+	void HandleDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes);
 
 	std::vector<std::wstring> ValidateFavorites();
 
@@ -113,6 +125,10 @@ private:
 	//       C     (index: 2, level: 3)
 	//     D       (index: 3, level: 2)
 	std::vector<Folder> m_Folders;
+
+	CriticalSection m_ChangesLock;
+	ankerl::unordered_dense::set<std::wstring> m_ChangedRootFolders;
+	std::unique_ptr<DirectoryWatcher> m_ChangeWatcher;
 };
 
 #endif
