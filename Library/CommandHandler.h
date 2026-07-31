@@ -114,6 +114,7 @@ enum class Bang
 	SetClip,
 	SetWallpaper,
 	About,
+	Debug,
 	Manage,
 	SkinMenu,
 	SkinCustomMenu,
@@ -145,6 +146,7 @@ public:
 	static void DoSetClipBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoAboutBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoDebugBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoManageBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoTrayMenuBang(std::vector<std::wstring>& args, Skin* skin);
