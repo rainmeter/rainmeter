@@ -187,10 +187,7 @@ POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT*
 
 	if (dpi)
 	{
-		// We can't use GetDpiForWindow because c_HelperWindow was created as a DPI unaware window.
-		// Instead we will determine the DPI based on the monitor of the center point.
-		const POINT center = { r.left + (r.right - r.left) / 2, r.top + (r.bottom - r.top) / 2 };
-		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(center);
+		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetForWindow(c_HelperWindow);
 		*dpi = monitor ? monitor->dpi : GetSystemDpi();
 	}
 
