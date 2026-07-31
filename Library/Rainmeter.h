@@ -237,7 +237,7 @@ private:
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
-	void RescanSkinsIfNeeded();
+	void RescanSkinsIfNeeded(const std::wstring& folderPath = L"");
 	void ScanForLayouts();
 	void ReadFavorites();
 	void ReadGeneralSettings(const std::wstring& iniFile);

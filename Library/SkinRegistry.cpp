@@ -185,10 +185,15 @@ void SkinRegistry::HandleDirectoryChange(const WCHAR* path, DWORD action, DWORD 
 	m_ChangedRootFolders.emplace(directory);
 }
 
-bool SkinRegistry::HasChanges()
+bool SkinRegistry::HasChanges(std::wstring folderPath)
 {
 	CriticalSectionLock lock(m_ChangesLock);
-	return !m_ChangedRootFolders.empty();
+	if (folderPath.empty()) return !m_ChangedRootFolders.empty();
+
+	PathUtil::RemoveLeadingAndTrailingBackslash(folderPath);
+	const size_t separator = folderPath.find(L'\\');
+	if (separator != std::wstring::npos) folderPath.resize(separator);
+	return std::find_if(m_ChangedRootFolders.begin(), m_ChangedRootFolders.end(), [&](const std::wstring& folder) { return _wcsicmp(folder.c_str(), folderPath.c_str()) == 0; }) != m_ChangedRootFolders.end();
 }
 
 void SkinRegistry::StartWatching(const std::wstring& path)
