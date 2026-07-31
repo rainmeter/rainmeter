@@ -32,6 +32,9 @@
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
+    <ClCompile Include="lua\glue\LuaSection.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
     <ClCompile Include="lua\glue\LuaMeasure.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
@@ -200,6 +203,9 @@
   <ItemGroup>
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\LuaSection.h">
+      <Filter>Lua\glue</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\Player.h">
       <Filter>NowPlaying</Filter>
