@@ -175,8 +175,23 @@ UINT System::GetDpiForWindow(HWND window)
 	return GetSystemDpi();
 }
 
-POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi)
+POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi, HMONITOR sourceMonitor)
 {
+	const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
+	const auto* source = sourceMonitor ?
+		monitorInfo.GetByHandle(sourceMonitor) :
+		monitorInfo.GetByDeviceNumber(monitorInfo.primary);
+	if (source)
+	{
+		// A DPI-unaware window retains monitor context while it moves. Seed the shared helper onto
+		// this skin's current monitor so conversions through empty logical gaps do not depend on
+		// where another conversion left the helper.
+		const int w = max(MulDiv(size.cx, source->dpi, USER_DEFAULT_SCREEN_DPI), 1);
+		const int h = max(MulDiv(size.cy, source->dpi, USER_DEFAULT_SCREEN_DPI), 1);
+		SetWindowPos(c_HelperWindow, nullptr, source->screen.left, source->screen.top, w, h,
+			SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	}
+
 	{
 		DpiUtil::DpiUnawareScope dpiUnaware;
 		SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);

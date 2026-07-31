@@ -643,7 +643,7 @@ RECT Skin::GetPhysicalWindowBounds() const
 
 POINT Skin::GetPositionAsPhysical() const
 {
-	return m_Position.AsPhysical(GetZoomedWindowSize());
+	return m_Position.AsPhysical(GetZoomedWindowSize(), m_WindowMonitor);
 }
 
 POINT Skin::GetPositionAsVirtualized() const
@@ -702,7 +702,7 @@ void Skin::UpdateWindowBounds(UINT flags)
 		else
 		{
 			UINT dpi = 0;
-			pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
+			pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi, m_WindowMonitor);
 
 			// The conversion uses a DPI-unaware helper window and therefore selects the same
 			// target DPI as legacy Rainmeter. Apply it before moving the actual window so its
@@ -747,6 +747,7 @@ bool Skin::UpdateWindowMonitor(std::optional<POINT> center)
 	m_WindowMonitor = monitor->handle;
 	m_WindowMonitorScreenBounds = monitor->screen;
 	m_WindowMonitorWorkBounds = monitor->work;
+	if (changed) m_Position.ResetCache();
 	UpdateWindowDpi(monitor->dpi);
 	return changed;
 }
@@ -2091,7 +2092,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 		UINT dpi = System::GetSystemDpi();
 		if (!GetRainmeter().HasExeDpiOverride())
 		{
-			System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi);
+			System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi, m_WindowMonitor);
 		}
 		UpdateWindowDpi(dpi);
 	}

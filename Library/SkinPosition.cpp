@@ -138,12 +138,12 @@ SkinPosition::SkinPosition() :
 {
 }
 
-POINT SkinPosition::AsPhysical(SIZE windowSize) const
+POINT SkinPosition::AsPhysical(SIZE windowSize, HMONITOR sourceMonitor) const
 {
 	if (m_Space == SkinPositionSpace::Physical || GetRainmeter().HasExeDpiOverride()) return m_Pos;
 	if (!m_ConvertedPos)
 	{
-		m_ConvertedPos = System::ConvertVirtualizedToPhysicalPosition(m_Pos, windowSize);
+		m_ConvertedPos = System::ConvertVirtualizedToPhysicalPosition(m_Pos, windowSize, nullptr, sourceMonitor);
 	}
 	return *m_ConvertedPos;
 }

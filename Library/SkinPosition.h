@@ -63,7 +63,7 @@ class SkinPosition
 public:
 	SkinPosition();
 
-	POINT AsPhysical(SIZE windowSize) const;
+	POINT AsPhysical(SIZE windowSize, HMONITOR sourceMonitor) const;
 	POINT AsVirtualized(HMONITOR monitor) const;
 	void SetPhysical(POINT position);
 	void SetVirtualized(POINT position);
