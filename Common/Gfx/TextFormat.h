@@ -5,8 +5,8 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_TEXTFORMATD2D_H_
-#define RM_GFX_TEXTFORMATD2D_H_
+#ifndef RM_GFX_TEXTFORMAT_H_
+#define RM_GFX_TEXTFORMAT_H_
 
 #include "TextInlineFormat.h"
 #include <Windows.h>
@@ -49,15 +49,15 @@ enum class VerticalAlignment : BYTE
 	Bottom
 };
 
-// Provides a Direct2D/DirectWrite implementation of TextFormat for use with CanvasD2D.
-class TextFormatD2D final
+// Provides text formatting through DirectWrite.
+class TextFormat final
 {
 public:
-	TextFormatD2D(const MathParser& mathParser);
-	~TextFormatD2D();
+	TextFormat(const MathParser& mathParser);
+	~TextFormat();
 
-	TextFormatD2D(const TextFormatD2D& other) = delete;
-	TextFormatD2D& operator=(TextFormatD2D other) = delete;
+	TextFormat(const TextFormat& other) = delete;
+	TextFormat& operator=(TextFormat other) = delete;
 
 	bool IsInitialized() const { return m_TextFormat != nullptr; }
 	void InvalidateDeviceResources();
@@ -85,7 +85,7 @@ public:
 private:
 	friend class Canvas;
 
-	friend class Common_Gfx_TextFormatD2D_Test;
+	friend class Common_Gfx_TextFormat_Test;
 
 	void Dispose();
 

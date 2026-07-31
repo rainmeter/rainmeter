@@ -106,7 +106,6 @@ class SkinDropTarget;
 
 namespace Gfx {
 class FontCollection;
-class TextFormat;
 }
 
 class Skin : public Group

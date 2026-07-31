@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "TextFormatD2D.h"
+#include "TextFormat.h"
 #include "Canvas.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteHelpers.h"
@@ -44,7 +44,7 @@ int Clamp(int value, int _min, int _max)
 
 namespace Gfx {
 
-TextFormatD2D::TextFormatD2D(const MathParser& mathParser) :
+TextFormat::TextFormat(const MathParser& mathParser) :
 	m_MathParser(mathParser),
 	m_HorizontalAlignment(HorizontalAlignment::Left),
 	m_VerticalAlignment(VerticalAlignment::Top),
@@ -57,12 +57,12 @@ TextFormatD2D::TextFormatD2D(const MathParser& mathParser) :
 {
 }
 
-TextFormatD2D::~TextFormatD2D()
+TextFormat::~TextFormat()
 {
 	m_TextInlineFormat.clear();
 }
 
-void TextFormatD2D::Dispose()
+void TextFormat::Dispose()
 {
 	m_TextFormat.Reset();
 	m_TextLayout.Reset();
@@ -72,7 +72,7 @@ void TextFormatD2D::Dispose()
 	m_LineGap = 0.0f;
 }
 
-void TextFormatD2D::InvalidateDeviceResources()
+void TextFormat::InvalidateDeviceResources()
 {
 	m_TextLayout.Reset();
 	m_LastString.clear();
@@ -84,7 +84,7 @@ void TextFormatD2D::InvalidateDeviceResources()
 	}
 }
 
-bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
+bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
 {
 	UINT32 strLen = (UINT32)srcStr.length();
 	const WCHAR* str = srcStr.c_str();
@@ -202,7 +202,7 @@ bool TextFormatD2D::CreateLayout(ID2D1DeviceContext* target, const std::wstring&
 	return true;
 }
 
-void TextFormatD2D::SetProperties(
+void TextFormat::SetProperties(
 	const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
 	FontCollection* fontCollection)
 {
@@ -332,7 +332,7 @@ void TextFormatD2D::SetProperties(
 	}
 }
 
-void TextFormatD2D::SetFontWeight(int weight)
+void TextFormat::SetFontWeight(int weight)
 {
 	if (weight < 1 || weight > 999 || weight == m_FontWeight) return;
 
@@ -342,7 +342,7 @@ void TextFormatD2D::SetFontWeight(int weight)
 	m_HasWeightChanged = true;
 }
 
-DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
+DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
 {
 	UINT32 strLen = (UINT32)srcStr.length();
 	const WCHAR* str = srcStr.c_str();
@@ -432,7 +432,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool g
 	return metrics;
 }
 
-void TextFormatD2D::SetTrimming(bool trim)
+void TextFormat::SetTrimming(bool trim)
 {
 	m_Trimming = trim;
 	IDWriteInlineObject* inlineObject = nullptr;
@@ -455,7 +455,7 @@ void TextFormatD2D::SetTrimming(bool trim)
 	m_TextFormat->SetWordWrapping(wordWrapping);
 }
 
-void TextFormatD2D::SetHorizontalAlignment(HorizontalAlignment alignment)
+void TextFormat::SetHorizontalAlignment(HorizontalAlignment alignment)
 {
 	m_HorizontalAlignment = alignment;
 
@@ -468,7 +468,7 @@ void TextFormatD2D::SetHorizontalAlignment(HorizontalAlignment alignment)
 	}
 }
 
-void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
+void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
 {
 	m_VerticalAlignment = alignment;
 
@@ -481,7 +481,7 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 	}
 }
 
-void TextFormatD2D::SetInlineOptions(const std::vector<TextInlineOption>& options)
+void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
 	size_t i = 0;
 	for (; i < options.size(); ++i)
@@ -498,7 +498,7 @@ void TextFormatD2D::SetInlineOptions(const std::vector<TextInlineOption>& option
 	}
 }
 
-std::vector<std::wstring> TextFormatD2D::GetInlinePatterns()
+std::vector<std::wstring> TextFormat::GetInlinePatterns()
 {
 	std::vector<std::wstring> patterns;
 	patterns.reserve(m_TextInlineFormat.size());
@@ -510,7 +510,7 @@ std::vector<std::wstring> TextFormatD2D::GetInlinePatterns()
 	return patterns;
 }
 
-void TextFormatD2D::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
+void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
 {
 	const size_t count = min(m_TextInlineFormat.size(), ranges.size());
 	for (size_t i = 0; i < count; ++i)
@@ -542,7 +542,7 @@ void TextFormatD2D::SetInlineRanges(const std::vector<std::vector<TextInlineRang
 	}
 }
 
-bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pattern, std::vector<std::wstring> options)
+bool TextFormat::CreateInlineOption(const size_t index, const std::wstring pattern, std::vector<std::wstring> options)
 {
 	if (options.empty()) return false;
 
@@ -717,7 +717,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	return false;
 }
 
-void TextFormatD2D::UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type)
+void TextFormat::UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -739,7 +739,7 @@ void TextFormatD2D::UpdateInlineCase(const size_t& index, const std::wstring pat
 	}
 }
 
-void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern,
+void TextFormat::UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern,
 	const FLOAT leading, const FLOAT trailing, const FLOAT advanceWidth)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -771,7 +771,7 @@ void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std:
 	}
 }
 
-void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color)
+void TextFormat::UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -793,7 +793,7 @@ void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pa
 	}
 }
 
-void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pattern, const WCHAR* face)
+void TextFormat::UpdateInlineFace(const size_t& index, const std::wstring pattern, const WCHAR* face)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -815,7 +815,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 	}
 }
 
-void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
+void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 	const std::vector<std::wstring> args, const bool altGamma)
 {
 	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
@@ -865,7 +865,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	}
 }
 
-void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring pattern)
+void TextFormat::UpdateInlineItalic(const size_t& index, const std::wstring pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -887,7 +887,7 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	}
 }
 
-void TextFormatD2D::UpdateInlineNone(const size_t & index, const std::wstring pattern)
+void TextFormat::UpdateInlineNone(const size_t & index, const std::wstring pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -909,7 +909,7 @@ void TextFormatD2D::UpdateInlineNone(const size_t & index, const std::wstring pa
 	}
 }
 
-void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring pattern)
+void TextFormat::UpdateInlineOblique(const size_t& index, const std::wstring pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -931,7 +931,7 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 	}
 }
 
-void TextFormatD2D::UpdateInlineShadow(const size_t& index, const std::wstring pattern,
+void TextFormat::UpdateInlineShadow(const size_t& index, const std::wstring pattern,
 	const FLOAT blur, const D2D1_POINT_2F offset, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -954,7 +954,7 @@ void TextFormatD2D::UpdateInlineShadow(const size_t& index, const std::wstring p
 	}
 }
 
-void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size)
+void TextFormat::UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -976,7 +976,7 @@ void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pat
 	}
 }
 
-void TextFormatD2D::UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch)
+void TextFormat::UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -998,7 +998,7 @@ void TextFormatD2D::UpdateInlineStretch(const size_t& index, const std::wstring 
 	}
 }
 
-void TextFormatD2D::UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern)
+void TextFormat::UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1020,7 +1020,7 @@ void TextFormatD2D::UpdateInlineStrikethrough(const size_t& index, const std::ws
 	}
 }
 
-void TextFormatD2D::UpdateInlineTypography(const size_t& index, const std::wstring pattern,
+void TextFormat::UpdateInlineTypography(const size_t& index, const std::wstring pattern,
 	const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -1043,7 +1043,7 @@ void TextFormatD2D::UpdateInlineTypography(const size_t& index, const std::wstri
 	}
 }
 
-void TextFormatD2D::UpdateInlineUnderline(const size_t& index, const std::wstring pattern)
+void TextFormat::UpdateInlineUnderline(const size_t& index, const std::wstring pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1065,7 +1065,7 @@ void TextFormatD2D::UpdateInlineUnderline(const size_t& index, const std::wstrin
 	}
 }
 
-void TextFormatD2D::UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight)
+void TextFormat::UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1087,7 +1087,7 @@ void TextFormatD2D::UpdateInlineWeight(const size_t& index, const std::wstring p
 	}
 }
 
-void TextFormatD2D::ApplyInlineFormatting(IDWriteTextLayout* layout)
+void TextFormat::ApplyInlineFormatting(IDWriteTextLayout* layout)
 {
 	for (const auto& fmt : m_TextInlineFormat)
 	{
@@ -1102,7 +1102,7 @@ void TextFormatD2D::ApplyInlineFormatting(IDWriteTextLayout* layout)
 	}
 }
 
-void TextFormatD2D::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point)
+void TextFormat::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point)
 {
 	// Color option
 	for (const auto& fmt : m_TextInlineFormat)
@@ -1125,7 +1125,7 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_P
 	m_HasInlineOptionsChanged = false;
 }
 
-void TextFormatD2D::ApplyInlineCase(std::wstring& str)
+void TextFormat::ApplyInlineCase(std::wstring& str)
 {
 	for (const auto& fmt : m_TextInlineFormat)
 	{
@@ -1137,7 +1137,7 @@ void TextFormatD2D::ApplyInlineCase(std::wstring& str)
 	}
 }
 
-void TextFormatD2D::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
+void TextFormat::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
 	const UINT32 strLen, const D2D1_RECT_F& drawRect)
 {
 	for (const auto& fmt : m_TextInlineFormat)
@@ -1158,7 +1158,7 @@ void TextFormatD2D::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColo
 	}
 }
 
-void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)
+void TextFormat::ResetGradientPosition(const D2D1_POINT_2F* point)
 {
 	for (const auto& fmt : m_TextInlineFormat)
 	{
@@ -1170,7 +1170,7 @@ void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)
 	}
 }
 
-void TextFormatD2D::ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen)
+void TextFormat::ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen)
 {
 	DWRITE_TEXT_RANGE range = { 0, strLen };
 	m_TextLayout->SetDrawingEffect(solidColor, range);
