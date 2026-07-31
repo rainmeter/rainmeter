@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../Common/DirectoryWatcher.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
@@ -117,6 +118,8 @@ Rainmeter::Rainmeter() :
 	m_DefaultZoom(100),
 	m_ForceDefaultZoom(false),
 	m_HasExeDpiOverride(false),
+	m_SkinDirectoryWatcher(std::make_unique<DirectoryWatcher>()),
+	m_SkinRegistryOutdated(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -551,6 +554,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	{
 		ActivateActiveSkins();
 	}
+
+	m_SkinDirectoryWatcher->Start(m_SkinPath, true, OnSkinDirectoryChange, this, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME);
 
 	if (dataFileCreated)
 	{
@@ -1554,6 +1559,62 @@ void Rainmeter::ScanForSkins()
 {
 	m_SkinRegistry.Populate(m_SkinPath, m_Favorites);
 	m_SkinOrders.clear();
+	m_SkinRegistryOutdated = false;
+}
+
+void Rainmeter::RescanSkinsIfNeeded()
+{
+	if (!m_SkinRegistryOutdated) return;
+	m_SkinRegistryOutdated = false;
+
+	std::vector<std::pair<std::wstring, int>> skinOrders;
+	for (const auto& [order, folderIndex] : m_SkinOrders)
+	{
+		skinOrders.emplace_back(m_SkinRegistry.GetFolderPath(folderIndex), order);
+	}
+
+	m_SkinRegistry.Populate(m_SkinPath, m_Favorites);
+	m_SkinOrders.clear();
+
+	for (const auto& [folderPath, order] : skinOrders)
+	{
+		const int folderIndex = m_SkinRegistry.FindFolderIndex(folderPath);
+		if (folderIndex != -1)
+		{
+			m_SkinOrders.emplace(order, folderIndex);
+		}
+	}
+
+	for (const auto& [folderPath, skin] : m_Skins)
+	{
+		const auto indexes = m_SkinRegistry.FindIndexes(folderPath, skin->GetFileName());
+		if (indexes.IsValid())
+		{
+			m_SkinRegistry.GetFolder(indexes.folder).active = indexes.file + 1;
+			WriteActive(folderPath, indexes.file);
+		}
+		else
+		{
+			WriteActive(folderPath, -1);
+		}
+	}
+
+	DialogManage::UpdateSkins(nullptr);
+}
+
+void Rainmeter::OnSkinDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes, void* context)
+{
+	if (action == FILE_ACTION_MODIFIED) return;
+
+	auto* rainmeter = (Rainmeter*)context;
+
+	const WCHAR* separator = wcsrchr(path, L'\\');
+	if (!separator) return;
+
+	const WCHAR* ext = wcsrchr(separator, L'.');
+	const bool iniChanged = ext && _wcsicmp(ext, L".ini") == 0;
+	const bool directoryChanged = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	if (iniChanged || directoryChanged) rainmeter->m_SkinRegistryOutdated = true;
 }
 
 void Rainmeter::ScanForLayouts()

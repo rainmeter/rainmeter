@@ -9,6 +9,7 @@
 #define __RAINMETER_H__
 
 #include <windows.h>
+#include <atomic>
 #include <map>
 #include <vector>
 #include <list>
@@ -35,6 +36,8 @@
 
 #define RAINMETER_CLASS_NAME	L"DummyRainWClass"
 #define RAINMETER_WINDOW_NAME	L"Rainmeter control window"
+
+class DirectoryWatcher;
 
 enum
 {
@@ -237,6 +240,8 @@ private:
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
+	void RescanSkinsIfNeeded();
+	static void OnSkinDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes, void* context);
 	void ScanForLayouts();
 	void ReadFavorites();
 	void ReadGeneralSettings(const std::wstring& iniFile);
@@ -311,7 +316,10 @@ private:
 
 	CommandHandler m_CommandHandler;
 	ContextMenu m_ContextMenu;
+
 	SkinRegistry m_SkinRegistry;
+	std::unique_ptr<DirectoryWatcher> m_SkinDirectoryWatcher;
+	std::atomic<bool> m_SkinRegistryOutdated;
 
 	ConfigParser* m_CurrentParser;
 

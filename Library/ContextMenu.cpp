@@ -166,6 +166,8 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 	if (m_ActiveMenu || (skin && skin->IsClosing())) return;
 
 	Rainmeter& rainmeter = GetRainmeter();
+	rainmeter.RescanSkinsIfNeeded();
+
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (!menu) return;
 
@@ -636,16 +638,19 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 	// Add the variants menu
 	if (variantsMenu)
 	{
-		const SkinRegistry::Folder& skinFolder = *GetRainmeter().m_SkinRegistry.FindFolder(skinName);
-		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
+		const auto* skinFolder = GetRainmeter().m_SkinRegistry.FindFolder(skinName);
+		if (skinFolder)
 		{
-			InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].filename.c_str());
-		}
+			for (int i = 0, isize = (int)skinFolder->files.size(); i < isize; ++i)
+			{
+				InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder->baseID + i, skinFolder->files[i].filename.c_str());
+			}
 
-		if (skinFolder.active)
-		{
-			UINT checkPos = skinFolder.active - 1;
-			CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+			if (skinFolder->active)
+			{
+				UINT checkPos = skinFolder->active - 1;
+				CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+			}
 		}
 	}
 
