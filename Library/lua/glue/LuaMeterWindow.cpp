@@ -99,6 +99,13 @@ static int SetOption(lua_State* L)
 	return LuaSection::SetOption(L, self, section.c_str(), 3);
 }
 
+static int SetOptionGroup(lua_State* L)
+{
+	DECLARE_SELF(L)
+	const std::wstring group = LuaHelper::ToWide(2);
+	return LuaSection::SetOption(L, self, group.c_str(), 3, true);
+}
+
 static int GetVariable(lua_State* L)
 {
 	DECLARE_SELF(L)
@@ -219,6 +226,7 @@ void LuaScript::RegisterSkin(lua_State* L)
 		{ "GetMeter", GetMeter },
 		{ "GetMeasure", GetMeasure },
 		{ "SetOption", SetOption },
+		{ "SetOptionGroup", SetOptionGroup },
 		{ "GetVariable", GetVariable },
 		{ "ReplaceVariables", ReplaceVariables },
 		{ "ParseFormula", ParseFormula },
