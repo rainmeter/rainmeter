@@ -8,8 +8,8 @@
 #ifndef __IMAGEOPTIONS_H__
 #define __IMAGEOPTIONS_H__
 
-#include "../Common/Gfx/D2DBitmap.h"
-#include "../Common/Gfx/Util/D2DEffectStream.h"
+#include "../Common/Gfx/Bitmap.h"
+#include "../Common/Gfx/Util/EffectStream.h"
 
 struct ImageOptions : Gfx::FileInfo
 {

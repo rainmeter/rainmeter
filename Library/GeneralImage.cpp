@@ -69,9 +69,9 @@ bool GeneralImage::IsLoaded()
 	return GetImage() != nullptr;
 }
 
-Gfx::D2DBitmap* GeneralImage::GetImage()
+Gfx::Bitmap* GeneralImage::GetImage()
 {
-	Gfx::D2DBitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+	Gfx::Bitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
 		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
 	if (bitmap && bitmap->HasDeviceResources()) return bitmap;
 
@@ -258,7 +258,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 	}
 
 	ImageOptions info;
-	Gfx::D2DBitmap::GetFileInfo(filename, &info);
+	Gfx::Bitmap::GetFileInfo(filename, &info);
 	info.m_CreateAlphaMask = createAlphaMask;
 
 	if (!info.isValid())
@@ -272,7 +272,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 	auto handle = GetImageCache().Get(info);
 	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
-		auto bitmap = new Gfx::D2DBitmap(filename, 0, createAlphaMask);
+		auto bitmap = new Gfx::Bitmap(filename, 0, createAlphaMask);
 
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
@@ -306,7 +306,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 	return false;
 }
 
-D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const
+D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const
 {
 	const FLOAT imageW = (FLOAT)bitmap->GetWidth();
 	const FLOAT imageH = (FLOAT)bitmap->GetHeight();
@@ -449,7 +449,7 @@ void GeneralImage::ApplyTransforms()
 	}
 }
 
-bool GeneralImage::HasActiveTransforms(Gfx::D2DBitmap* bitmap) const
+bool GeneralImage::HasActiveTransforms(Gfx::Bitmap* bitmap) const
 {
 	if (m_Options.m_UseExifOrientation)
 	{

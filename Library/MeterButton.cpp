@@ -42,7 +42,7 @@ void MeterButton::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			int bitmapW = bitmap->GetWidth();
 			int bitmapH = bitmap->GetHeight();

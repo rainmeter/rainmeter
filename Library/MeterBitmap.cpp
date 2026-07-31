@@ -42,7 +42,7 @@ void MeterBitmap::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
@@ -255,7 +255,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
-	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+	Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	FLOAT drawW = meterRect.right - meterRect.left;

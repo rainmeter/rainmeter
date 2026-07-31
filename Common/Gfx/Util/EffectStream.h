@@ -5,10 +5,10 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_UTIL_D2DEFFECTSTREAM_H_
-#define RM_GFX_UTIL_D2DEFFECTSTREAM_H_
+#ifndef RM_GFX_UTIL_EFFECTSTREAM_H_
+#define RM_GFX_UTIL_EFFECTSTREAM_H_
 
-#include "../D2DBitmap.h"
+#include "../Bitmap.h"
 
 namespace Gfx {
 namespace Util {
@@ -21,7 +21,7 @@ enum class FlipType : uint8_t
 	Both
 };
 
-class D2DEffectStream
+class EffectStream
 {
 public:
 	void Crop(const Canvas& canvas, const D2D1_RECT_F& crop);
@@ -29,19 +29,19 @@ public:
 	void Rotate(const Canvas& canvas, const FLOAT& angle);
 	void Flip(const Canvas& canvas, const FlipType& flipType);
 	void ApplyExifOrientation(const Canvas& canvas);
-	D2DBitmap* ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize);
+	Bitmap* ToBitmap(Canvas& canvas, const D2D1_SIZE_F* imageSize);
 	D2D1_SIZE_F GetSize(const Canvas& canvas);
 
 private:
 	friend class Canvas;
-	friend class D2DBitmap;
+	friend class Bitmap;
 
-	D2DEffectStream(Gfx::D2DBitmap* base);
+	EffectStream(Gfx::Bitmap* base);
 
 	void AddEffect(const Canvas& canvas, const IID& effectId);
 
 	std::vector<Microsoft::WRL::ComPtr<ID2D1Effect>> m_Effects;
-	Gfx::D2DBitmap* m_BaseImage;
+	Gfx::Bitmap* m_BaseImage;
 };
 
 }  // namespace Util

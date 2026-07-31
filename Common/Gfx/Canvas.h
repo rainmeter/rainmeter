@@ -58,14 +58,14 @@ template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Forward declaration
-class D2DBitmap;
-class D2DSvg;
+class Bitmap;
+class Svg;
 
 class RenderTexture;
 
 namespace Util {
-	class D2DBitmapLoader;
-	class D2DEffectStream;
+	class BitmapLoader;
+	class EffectStream;
 }
 
 // Wraps Direct2D/DirectWrite.
@@ -128,11 +128,11 @@ public:
 	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size);
 	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
 
-	void DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
-	void DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
-	void DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+	void DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawMaskedBitmap(Bitmap* bitmap, Bitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 		const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2);
-	bool DrawSvg(D2DSvg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect = nullptr);
+	bool DrawSvg(Svg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect = nullptr);
 
 	void FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color);
 	void FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle);
@@ -143,16 +143,16 @@ public:
 
 private:
 	friend class Canvas;
-	friend class D2DBitmap;
-	friend class D2DSvg;
+	friend class Bitmap;
+	friend class Svg;
 	friend class RenderTexture;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
 	friend class TextInlineFormat_Face;
 	friend class TextInlineFormat_Typography;
 	friend class Shape;
-	friend class Util::D2DBitmapLoader;
-	friend class Util::D2DEffectStream;
+	friend class Util::BitmapLoader;
+	friend class Util::EffectStream;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;

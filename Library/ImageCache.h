@@ -10,7 +10,7 @@
 
 #include <bit>
 #include <string>
-#include <../Common/Gfx/D2DBitmap.h>
+#include <../Common/Gfx/Bitmap.h>
 #include "ImageOptions.h"
 
 class ImageCachePool;
@@ -69,7 +69,7 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 
 struct ImageCache
 {
-	ImageCache(const ImageOptions& key, Gfx::D2DBitmap* bitmap, ImageCachePool* pool) :
+	ImageCache(const ImageOptions& key, Gfx::Bitmap* bitmap, ImageCachePool* pool) :
 		m_Key(key),
 		m_Bitmap(bitmap),
 		m_Pool(pool),
@@ -82,10 +82,10 @@ struct ImageCache
 		m_Bitmap = nullptr;
 	}
 
-	void Update(const ImageOptions& key, Gfx::D2DBitmap* item);
+	void Update(const ImageOptions& key, Gfx::Bitmap* item);
 
 	ImageOptions m_Key;
-	Gfx::D2DBitmap* m_Bitmap;
+	Gfx::Bitmap* m_Bitmap;
 	ImageCachePool* m_Pool;
 	UINT m_Instances;
 };
@@ -96,7 +96,7 @@ private:
 	struct ConstructorToken {};
 
 public:
-	Gfx::D2DBitmap* GetBitmap() const { return m_Cache->m_Bitmap; }
+	Gfx::Bitmap* GetBitmap() const { return m_Cache->m_Bitmap; }
 	ImageOptions& GetKey() const { return m_Cache->m_Key; }
 
 	ImageCacheHandle(const ImageCacheHandle&) = delete;
@@ -119,7 +119,7 @@ public:
 	static ImageCachePool& GetInstance();
 
 	std::unique_ptr<ImageCacheHandle> Get(const ImageOptions& key);
-	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
+	void Put(const ImageOptions& key, Gfx::Bitmap* item);
 
 	void InvalidateDeviceResources();
 

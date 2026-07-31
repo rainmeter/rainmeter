@@ -99,7 +99,7 @@ void MeterHistogram::Initialize()
 			{
 				int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-				Gfx::D2DBitmap* bitmap = m_PrimaryImage.GetImage();
+				Gfx::Bitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
@@ -347,9 +347,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
-	Gfx::D2DBitmap* primaryBitmap = m_PrimaryImage.GetImage();
-	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
-	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
+	Gfx::Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
+	Gfx::Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
+	Gfx::Bitmap* bothBitmap = m_OverlapImage.GetImage();
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	int displayW = (int)(meterRect.right - meterRect.left);
@@ -389,7 +389,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	auto draw = [&](Gfx::D2DBitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
+	auto draw = [&](Gfx::Bitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
 	{
 		if (!bitmap)
 		{

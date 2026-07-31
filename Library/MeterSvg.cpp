@@ -11,7 +11,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/D2DSvg.h"
+#include "../Common/Gfx/Svg.h"
 
 MeterSvg::MeterSvg(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_AspectRatioMode(AspectRatioMode::Stretch),
@@ -73,11 +73,11 @@ bool MeterSvg::LoadSvg()
 	if (!m_Svg && !m_SvgImage.empty())
 	{
 		std::wstring source = m_SvgImage;
-		if (!Gfx::D2DSvg::IsInlineData(source))
+		if (!Gfx::Svg::IsInlineData(source))
 		{
 			m_Skin->MakePathAbsolute(source);
 		}
-		m_Svg = std::make_unique<Gfx::D2DSvg>(source);
+		m_Svg = std::make_unique<Gfx::Svg>(source);
 	}
 
 	if (!m_Svg)
@@ -89,7 +89,7 @@ bool MeterSvg::LoadSvg()
 	HRESULT hr = m_Svg->Load(m_Skin->GetCanvas());
 	if (FAILED(hr))
 	{
-		if (Gfx::D2DSvg::IsInlineData(m_Svg->GetSource()))
+		if (Gfx::Svg::IsInlineData(m_Svg->GetSource()))
 		{
 			LogErrorF(this, L"Unable to load inline SVG data, error: %s (0x%08x)", _com_error(hr).ErrorMessage(), hr);
 		}

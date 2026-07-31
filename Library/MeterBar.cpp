@@ -39,7 +39,7 @@ void MeterBar::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth() + GetWidthPadding();
 			m_H = bitmap->GetHeight() + GetHeightPadding();
@@ -116,7 +116,7 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 	const FLOAT height = rect.bottom - rect.top;
 	const FLOAT border = (FLOAT)m_Border;
 
-	Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+	Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 
 	if (m_Orientation == VERTICAL)
 	{

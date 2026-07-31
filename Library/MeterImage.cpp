@@ -66,7 +66,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
-		Gfx::D2DBitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
+		Gfx::Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
 
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
@@ -182,7 +182,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	if (m_Image.IsLoaded())
 	{
 		// Copy the image over the doublebuffer
-		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+		Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
@@ -196,7 +196,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		if (m_MaskImage.IsLoaded())
 		{
-			Gfx::D2DBitmap* maskBitmap = m_MaskImage.GetImage();
+			Gfx::Bitmap* maskBitmap = m_MaskImage.GetImage();
 
 			imageW = maskBitmap->GetWidth();
 			imageH = maskBitmap->GetHeight();

@@ -6,7 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "D2DSvg.h"
+#include "Svg.h"
 #include "Canvas.h"
 #include "StringUtil.h"
 
@@ -14,18 +14,18 @@
 
 namespace Gfx {
 
-D2DSvg::D2DSvg(const std::wstring& source) :
+Svg::Svg(const std::wstring& source) :
 	m_Source(source),
 	m_InlineData(IsInlineData(source)),
 	m_Size(D2D1::SizeF(0.0f, 0.0f))
 {
 }
 
-D2DSvg::~D2DSvg()
+Svg::~Svg()
 {
 }
 
-HRESULT D2DSvg::Load(const Canvas& canvas)
+HRESULT Svg::Load(const Canvas& canvas)
 {
 	m_Document.Reset();
 	m_Size = D2D1::SizeF(0.0f, 0.0f);
@@ -60,7 +60,7 @@ HRESULT D2DSvg::Load(const Canvas& canvas)
 	return hr;
 }
 
-D2D1_SIZE_F D2DSvg::GetIntrinsicSize() const
+D2D1_SIZE_F Svg::GetIntrinsicSize() const
 {
 	D2D1_SIZE_F size = D2D1::SizeF(300.0f, 150.0f);
 	Microsoft::WRL::ComPtr<ID2D1SvgElement> root;

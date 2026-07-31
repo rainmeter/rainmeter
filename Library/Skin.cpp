@@ -34,7 +34,7 @@
 #include "../Version.h"
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
-#include "../Common/Gfx/Util/D2DEffectStream.h"
+#include "../Common/Gfx/Util/EffectStream.h"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
@@ -3116,20 +3116,20 @@ bool Skin::HandleContainer(Meter* container)
 	m_Canvas.ResetTarget();
 
 	const auto meterRect = container->GetMeterRect();
-	const auto containerContentD2DBitmap = containerContentBitmap->GetBitmap();
-	const auto containerD2DBitmap = containerBitmap->GetBitmap();
+	const auto containerContentImage = containerContentBitmap->GetBitmap();
+	const auto containerImage = containerBitmap->GetBitmap();
 
 	const D2D1_RECT_F srcRect = D2D1::RectF(
 		0.0f,
 		0.0f,
-		(FLOAT)containerContentD2DBitmap->GetWidth(),
-		(FLOAT)containerContentD2DBitmap->GetHeight());
+		(FLOAT)containerContentImage->GetWidth(),
+		(FLOAT)containerContentImage->GetHeight());
 
 	const D2D1_RECT_F srcRect2 = D2D1::RectF(
 		0.0f,
 		0.0f,
-		(FLOAT)containerD2DBitmap->GetWidth(),
-		(FLOAT)containerD2DBitmap->GetHeight());
+		(FLOAT)containerImage->GetWidth(),
+		(FLOAT)containerImage->GetHeight());
 
 	const D2D1_RECT_F destination = D2D1::RectF(
 		(FLOAT)meterRect.left,
@@ -3137,7 +3137,7 @@ bool Skin::HandleContainer(Meter* container)
 		(FLOAT)meterRect.right,
 		(FLOAT)meterRect.bottom);
 
-	m_Canvas.DrawMaskedBitmap(containerContentD2DBitmap, containerD2DBitmap, destination, srcRect2, srcRect);
+	m_Canvas.DrawMaskedBitmap(containerContentImage, containerImage, destination, srcRect2, srcRect);
 	return true;
 }
 

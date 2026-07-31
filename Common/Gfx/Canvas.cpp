@@ -8,8 +8,8 @@
 #include "StdAfx.h"
 #include "Canvas.h"
 #include "TextFormatD2D.h"
-#include "D2DBitmap.h"
-#include "D2DSvg.h"
+#include "Bitmap.h"
+#include "Svg.h"
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
@@ -641,7 +641,7 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	return true;
 }
 
-void Canvas::DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	for (auto& segment : bitmap->m_Segments)
 	{
@@ -677,7 +677,7 @@ void Canvas::DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D
 	}
 }
 
-void Canvas::DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
@@ -703,7 +703,7 @@ void Canvas::DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, cons
 	}
 }
 
-void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+void Canvas::DrawMaskedBitmap(Bitmap* bitmap, Bitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 	const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2)
 {
 	if (!bitmap || !maskBitmap) return;
@@ -777,7 +777,7 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 	}
 }
 
-bool Canvas::DrawSvg(D2DSvg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect)
+bool Canvas::DrawSvg(Svg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect)
 {
 	if (!svg || !svg->m_Document || svg->m_Size.width <= 0.0f || svg->m_Size.height <= 0.0f) return false;
 

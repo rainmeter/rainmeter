@@ -12,7 +12,7 @@
 #include <memory>
 
 namespace Gfx {
-class D2DSvg;
+class Svg;
 }
 
 class MeterSvg : public Meter
@@ -44,7 +44,7 @@ private:
 	void UpdateSize();
 
 	std::wstring m_SvgImage;
-	std::unique_ptr<Gfx::D2DSvg> m_Svg;
+	std::unique_ptr<Gfx::Svg> m_Svg;
 	AspectRatioMode m_AspectRatioMode;
 	bool m_LoadAttempted;
 	bool m_NeedsRedraw;

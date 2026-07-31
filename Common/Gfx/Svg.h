@@ -16,14 +16,14 @@ namespace Gfx {
 
 class Canvas;
 
-class D2DSvg
+class Svg
 {
 public:
-	D2DSvg(const std::wstring& source);
-	~D2DSvg();
+	Svg(const std::wstring& source);
+	~Svg();
 
-	D2DSvg(const D2DSvg& other) = delete;
-	D2DSvg& operator=(D2DSvg other) = delete;
+	Svg(const Svg& other) = delete;
+	Svg& operator=(Svg other) = delete;
 
 	FLOAT GetWidth() const { return m_Size.width; }
 	FLOAT GetHeight() const { return m_Size.height; }
