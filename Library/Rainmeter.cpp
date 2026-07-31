@@ -1558,9 +1558,9 @@ void Rainmeter::ScanForSkins()
 	m_SkinOrders.clear();
 }
 
-void Rainmeter::RescanSkinsIfNeeded()
+void Rainmeter::RescanSkinsIfNeeded(const std::wstring& folderPath)
 {
-	if (!m_SkinRegistry.HasChanges()) return;
+	if (!m_SkinRegistry.HasChanges(folderPath)) return;
 
 	std::vector<std::pair<std::wstring, int>> skinOrders;
 	for (const auto& [order, folderIndex] : m_SkinOrders)

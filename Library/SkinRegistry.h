@@ -107,7 +107,7 @@ public:
 	void Populate(const std::wstring& path, std::vector<std::wstring>& favorites);
 	void PopulateChanged(const std::wstring& path, std::vector<std::wstring>& favorites);
 
-	bool HasChanges();
+	bool HasChanges(std::wstring folderPath = L"");
 	void StartWatching(const std::wstring& path);
 
 	std::vector<std::wstring> UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite);
