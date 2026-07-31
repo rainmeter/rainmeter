@@ -52,7 +52,7 @@ Var LogFile
 			FileWriteUTF16LE $9 "Error (${ERROR})   : "
 			${Switch} ${ERROR}
 			${Case} ${ERROR_UNSUPPORTED}
-				FileWriteUTF16LE $9 "Rainmeter requires at least Windows 7 (SP1) with the Platform Update installed."
+				FileWriteUTF16LE $9 "Rainmeter requires Windows 10 version 1709 or later."
 				${Break}
 			${Case} ${ERROR_NOTADMIN}
 				FileWriteUTF16LE $9 "Adminstrative rights required."

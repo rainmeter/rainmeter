@@ -154,9 +154,9 @@ Rainmeter& Rainmeter::GetInstance()
 
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
-	if (!IsWindows7SP1OrGreater())
+	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 16299)
 	{
-		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(nullptr, L"Rainmeter requires Windows 10 version 1709 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
@@ -219,7 +219,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		SetHardwareAccelerated(false);
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
 		{
-			MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			MessageBox(nullptr, L"Rainmeter failed to initialize the graphics subsystem.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			return 1;
 		}
 	}

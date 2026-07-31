@@ -37,6 +37,11 @@ bool IsWindows11OrGreater()
 	return s_Result;
 }
 
+uint32_t Platform::GetBuildNumber()
+{
+	return GetVersionInfo().dwBuildNumber;
+}
+
 Platform::Platform()
 {
 	Initialize();
