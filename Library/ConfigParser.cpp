@@ -874,9 +874,9 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			}
 			else
 			{
-				std::wstring section = result.substr(si, end - si);
-				StrToUpperC(section);
-				auto iter = m_Measures.find(section);
+				const std::wstring section = result.substr(si, end - si);
+				const std::wstring sectionUpper = StrToUpper(section);
+				auto iter = m_Measures.find(sectionUpper);
 				if (iter != m_Measures.end())
 				{
 					Measure* measure = (*iter).second;
