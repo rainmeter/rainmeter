@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
@@ -28,23 +28,15 @@
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
-    <ClCompile Include="Gfx\D2DBitmap.cpp" />
+    <ClCompile Include="Gfx\Bitmap.cpp" />
+    <ClCompile Include="Gfx\Svg.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
-    <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\RenderTexture.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
-    <ClCompile Include="Gfx\Shapes\Arc.cpp" />
-    <ClCompile Include="Gfx\Shapes\Curve.cpp" />
-    <ClCompile Include="Gfx\Shapes\Ellipse.cpp" />
-    <ClCompile Include="Gfx\Shapes\Line.cpp" />
-    <ClCompile Include="Gfx\Shapes\Path.cpp" />
-    <ClCompile Include="Gfx\Shapes\QuadraticCurve.cpp" />
-    <ClCompile Include="Gfx\Shapes\Rectangle.cpp" />
-    <ClCompile Include="Gfx\Shapes\RoundedRectangle.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
-    <ClCompile Include="Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.cpp" />
@@ -61,8 +53,8 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatTypography.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp" />
-    <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp" />
-    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp" />
+    <ClCompile Include="Gfx\Util\BitmapLoader.cpp" />
+    <ClCompile Include="Gfx\Util\EffectStream.cpp" />
     <ClCompile Include="Gfx\Util\D2DUtil.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp" />
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp" />
@@ -70,33 +62,29 @@
     <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
+    <ClCompile Include="ParseUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StringParser.cpp" />
     <ClCompile Include="StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CriticalSection.h" />
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
+    <ClInclude Include="DirectoryWatcher.h" />
+    <ClInclude Include="DpiUtil.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
-    <ClInclude Include="Gfx\D2DBitmap.h" />
+    <ClInclude Include="Gfx\Bitmap.h" />
+    <ClInclude Include="Gfx\Svg.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
-    <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\RenderTexture.h" />
     <ClInclude Include="Gfx\Shape.h" />
-    <ClInclude Include="Gfx\Shapes\Arc.h" />
-    <ClInclude Include="Gfx\Shapes\Curve.h" />
-    <ClInclude Include="Gfx\Shapes\Ellipse.h" />
-    <ClInclude Include="Gfx\Shapes\Line.h" />
-    <ClInclude Include="Gfx\Shapes\Path.h" />
-    <ClInclude Include="Gfx\Shapes\QuadraticCurve.h" />
-    <ClInclude Include="Gfx\Shapes\Rectangle.h" />
-    <ClInclude Include="Gfx\Shapes\RoundedRectangle.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
-    <ClInclude Include="Gfx\TextFormatD2D.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.h" />
@@ -113,20 +101,23 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatTypography.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h" />
-    <ClInclude Include="Gfx\Util\D2DBitmapLoader.h" />
-    <ClInclude Include="Gfx\Util\D2DEffectStream.h" />
+    <ClInclude Include="Gfx\Util\BitmapLoader.h" />
+    <ClInclude Include="Gfx\Util\EffectStream.h" />
     <ClInclude Include="Gfx\Util\D2DUtil.h" />
     <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h" />
     <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h" />
     <ClInclude Include="Gfx\Util\DWriteHelpers.h" />
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
+    <ClInclude Include="Map.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
+    <ClInclude Include="ParseUtil.h" />
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="StringParser.h" />
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />

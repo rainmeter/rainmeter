@@ -33,7 +33,7 @@ void SendKey(WORD key)
 	SendInput(1, &input, sizeof(INPUT));
 }
 
-void MeasureMediaKey::Command(const std::wstring& command)	
+void MeasureMediaKey::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 	if (_wcsicmp(args, L"NextTrack") == 0)

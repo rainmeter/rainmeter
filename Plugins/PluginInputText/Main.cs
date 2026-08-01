@@ -45,6 +45,14 @@ namespace InputText
             }
         }
 
+        internal void HandleSkinSettingChange(Rainmeter.SkinSettingChange setting)
+        {
+            if (this._InputBox != null)
+            {
+                this._InputBox.Abort();
+            }
+        }
+
         internal void ExecuteBang(string args)
         {
             bool go = false;
@@ -99,6 +107,7 @@ namespace InputText
                 SetVariable,
                 ExecuteBatch
             };
+            internal IntPtr SkinWindowHandle;
             internal Dictionary<string, string> Options;
             internal List<Dictionary<string, string>> OverrideOptions;
             internal List<string> Commands;
@@ -108,6 +117,7 @@ namespace InputText
 
             internal ExecuteBangParam(string args)
             {
+                this.SkinWindowHandle = IntPtr.Zero;
                 this.Options = new Dictionary<string, string>();
                 this.OverrideOptions = new List<Dictionary<string, string>>();
                 this.Commands = new List<string>();
@@ -183,6 +193,13 @@ namespace InputText
             }
 
             return StringBuffer;
+        }
+
+        [DllExport]
+        public static void HandleSkinSettingChange(IntPtr data, IntPtr rm, Rainmeter.SkinSettingChange setting)
+        {
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.HandleSkinSettingChange(setting);
         }
 
         [DllExport]

@@ -9,6 +9,7 @@
 #include "MeasureSysInfo.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "../Common/NetworkUtil.h"
 #include "../Common/Platform.h"
 
@@ -19,7 +20,7 @@
 
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 
-LONGLONG MeasureSysInfo::s_LogonTime = 0LL;
+LONGLONG MeasureSysInfo::s_LogonTime = 0;
 
 MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(SysInfoType::UNKNOWN),
@@ -27,7 +28,7 @@ MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, na
 	m_SuppressError(false),
 	m_HasBeenUpdated(false)
 {
-	if (s_LogonTime == 0LL)
+	if (s_LogonTime == 0)
 	{
 		HKEY hKey;
 		if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
@@ -45,9 +46,6 @@ MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, na
 			}
 			RegCloseKey(hKey);
 		}
-
-		// Populate monitor information if necessary
-		const size_t numOfMonitors = System::GetMonitorCount();  // Intentional
 	}
 }
 
@@ -342,73 +340,61 @@ void MeasureSysInfo::UpdateValue()
 	// Process numeric types first
 	if (m_Type >= SysInfoType::SCREEN_WIDTH && m_Type <= SysInfoType::VIRTUAL_SCREEN_HEIGHT)  // BLOCK 2500
 	{
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+		const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
 
 		// Valid values are |-1| (default) or |1 to [# of monitors]|
-		const size_t index = (m_Data > 0) ? (size_t)(m_Data - 1) : 0ULL;
-		if (m_Data < -1 || m_Data == 0 || index > System::GetMonitorCount())
+		const size_t index =
+			(m_Data == -1) ? (size_t)(monitorInfo.primary - 1) :
+			(m_Data > 0) ? (size_t)(m_Data - 1) : UINT_PTR_MAX;
+		if (index > monitorInfo.monitors.size())
 		{
 			m_Value = 0.0;
 			return;
 		}
 
+		const auto& monitor = monitorInfo.monitors[index];
 		switch (m_Type)
 		{
 		case SysInfoType::SCREEN_WIDTH:
-			m_Value = (m_Data > 0)
-				? (monitors[index].screen.right - monitors[index].screen.left)
-				: (double)GetSystemMetrics(SM_CXSCREEN);
+			m_Value = monitor.logicalScreen.right - monitor.logicalScreen.left;
 			break;
 
 		case SysInfoType::SCREEN_HEIGHT:
-			m_Value = (m_Data > 0)
-				? (monitors[index].screen.bottom - monitors[index].screen.top)
-				: (double)GetSystemMetrics(SM_CYSCREEN);
+			m_Value = monitor.logicalScreen.bottom - monitor.logicalScreen.top;
 			break;
 
 		case SysInfoType::WORK_AREA_LEFT:
-			m_Value = (m_Data > 0)
-				? monitors[index].work.left
-				: (double)monitors[0].work.left;
+			m_Value = monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_TOP:
-			m_Value = (m_Data > 0)
-				? monitors[index].work.top
-				: (double)monitors[0].work.top;
+			m_Value = monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::WORK_AREA_WIDTH:
-			m_Value = (m_Data > 0)
-				? (monitors[index].work.right - monitors[index].work.left)
-				: (double)GetSystemMetrics(SM_CXFULLSCREEN);
+			m_Value = monitor.logicalWork.right - monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_HEIGHT:
-			m_Value = (m_Data > 0)
-				? (monitors[index].work.bottom - monitors[index].work.top)
-				: (double)GetSystemMetrics(SM_CYFULLSCREEN);
+			m_Value = monitor.logicalWork.bottom - monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_LEFT:
-			m_Value = (m_Data > 0)
-				? monitors[index].screen.left
-				: (double)GetSystemMetrics(SM_XVIRTUALSCREEN);
+			// NOTE(poiru): Checking SysInfoData here doesn't make any sense, but left it as-is for
+			// backwards compatibility.
+			m_Value = (m_Data > 0) ? monitor.logicalScreen.left : monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_TOP:
-			 m_Value = (m_Data > 0)
-				? monitors[index].screen.top
-				: (double)GetSystemMetrics(SM_YVIRTUALSCREEN);
+			 m_Value = (m_Data > 0) ? monitor.logicalScreen.top : monitorInfo.logicalVirtualScreen.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_WIDTH:
-			m_Value = (double)GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			m_Value = monitorInfo.logicalVirtualScreen.right - monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_HEIGHT:
-			m_Value = (double)GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			m_Value = monitorInfo.logicalVirtualScreen.bottom - monitorInfo.logicalVirtualScreen.top;
 			break;
 		}
 		return;
@@ -504,7 +490,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0ULL; i < interfaceCount; ++i)
+			for (size_t i = 0; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -565,9 +551,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::LAST_WAKE_TIME:
 		{
 			const bool isWake = m_Type == SysInfoType::LAST_WAKE_TIME;
-			ULONGLONG nano = 0ULL;
+			ULONGLONG nano = 0;
 			const LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime,
-				nullptr, 0UL, &nano, sizeof(ULONGLONG));
+				nullptr, 0, &nano, sizeof(ULONGLONG));
 			if (status == STATUS_SUCCESS)
 			{
 				m_Value = (s_LogonTime + (LONGLONG)nano) / 10000000.0;
@@ -603,10 +589,10 @@ void MeasureSysInfo::UpdateValue()
 			if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken) == TRUE)
 			{
 				std::vector<BYTE> tokenBuffer;
-				DWORD tokenBufferLen = 0UL;
-				if ((GetTokenInformation(hToken, TokenUser, nullptr, 0UL, &tokenBufferLen) == FALSE) &&
+				DWORD tokenBufferLen = 0;
+				if ((GetTokenInformation(hToken, TokenUser, nullptr, 0, &tokenBufferLen) == FALSE) &&
 					(GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
-					(tokenBufferLen > 0UL))
+					(tokenBufferLen > 0))
 				{
 					tokenBuffer.resize(tokenBufferLen);
 					PTOKEN_USER token = reinterpret_cast<PTOKEN_USER>(&tokenBuffer[0]);
@@ -634,11 +620,20 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::SCREEN_SIZE:
-		_snwprintf_s(buffer, bufferLen, L"%i x %i",
-			GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+	case SysInfoType::WORK_AREA:
+		{
+			const auto& monitorInfo = MonitorUtil::GetMultiMonitorInfo();
+			const auto primaryIndex = (size_t)(monitorInfo.primary - 1);
+
+			const RECT zeroRect = { 0, 0, 0, 0 };
+			const RECT& rect =
+				(primaryIndex >= monitorInfo.monitors.size()) ? zeroRect :
+				(m_Type == SysInfoType::SCREEN_SIZE) ? monitorInfo.monitors[primaryIndex].screen :
+				monitorInfo.monitors[primaryIndex].work;
+			_snwprintf_s(buffer, bufferLen, L"%i x %i", rect.right - rect.left, rect.bottom - rect.top);
+		}
 		break;
 
-	case SysInfoType::WORK_AREA:
 		_snwprintf_s(buffer, bufferLen, L"%i x %i",
 			GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
 		break;
@@ -647,9 +642,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::DOMAIN_NAME:
 	case SysInfoType::DNS_SERVER:
 		{
-			ULONG paramSize = 0UL;
+			ULONG paramSize = 0;
 			GetNetworkParams(nullptr, &paramSize);
-			if (paramSize <= 0UL) break;
+			if (paramSize <= 0) break;
 
 			auto tmp = std::make_unique<BYTE[]>(paramSize);
 			if (GetNetworkParams((PFIXED_INFO)tmp.get(), &paramSize) != ERROR_SUCCESS) break;
@@ -689,7 +684,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0ULL; i < interfaceCount; ++i)
+			for (size_t i = 0; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -726,9 +721,9 @@ void MeasureSysInfo::UpdateValue()
 					break;
 
 				case SysInfoType::MAC_ADDRESS:
-					for (ULONG j = 0UL; j < table[i].PhysicalAddressLength; ++j)
+					for (ULONG j = 0; j < table[i].PhysicalAddressLength; ++j)
 					{
-						if (j > 0UL) m_StringValue += L"-";
+						if (j > 0) m_StringValue += L"-";
 						_snwprintf_s(buffer, bufferLen, L"%02X", table[i].PhysicalAddress[j]);
 						m_StringValue += buffer;
 					}
@@ -743,16 +738,16 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::IP_ADDRESS:
 		{
 			const bool isIpAddress = m_Type == SysInfoType::IP_ADDRESS;
-			ULONG tableSize = 0UL;
+			ULONG tableSize = 0;
 			GetIpAddrTable(nullptr, &tableSize, TRUE);
-			if (tableSize <= 0UL) break;
+			if (tableSize <= 0) break;
 
 			auto tmp = std::make_unique<BYTE[]>(tableSize);
 			if (GetIpAddrTable((PMIB_IPADDRTABLE)tmp.get(),
 				&tableSize, TRUE) != NO_ERROR) break;
 
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmp.get();
-			for (ULONG i = 0UL; i < ipTable->dwNumEntries; ++i)
+			for (ULONG i = 0; i < ipTable->dwNumEntries; ++i)
 			{
 				if (ipTable->table[i].dwIndex != m_Data) continue;
 
@@ -769,9 +764,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::GATEWAY_ADDRESS_V6:
 		{
 			ULONG family = m_Type == SysInfoType::GATEWAY_ADDRESS_V6 ? AF_INET6 : AF_INET;
-			ULONG adapterSize = 0UL;
-			GetAdaptersAddresses(family, 0UL, nullptr, nullptr, &adapterSize);
-			if (adapterSize <= 0UL) break;
+			ULONG adapterSize = 0;
+			GetAdaptersAddresses(family, 0, nullptr, nullptr, &adapterSize);
+			if (adapterSize <= 0) break;
 
 			ULONG flags = GAA_FLAG_INCLUDE_GATEWAYS;
 			auto tmp = std::make_unique<BYTE[]>(adapterSize);

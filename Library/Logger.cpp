@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "Logger.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "Util.h"
 #include "Rainmeter.h"
 #include "Section.h"
@@ -18,21 +18,17 @@
 
 namespace {
 
-const size_t MAX_LOG_ENTIRES = 20;
+const size_t MAX_LOG_ENTIRES = 50;
 
 }  // namespace
 
 Logger::Logger() :
 	m_LogToFile(false)
 {
-	System::InitializeCriticalSection(&m_CsLog);
-	System::InitializeCriticalSection(&m_CsLogDelay);
 }
 
 Logger::~Logger()
 {
-	DeleteCriticalSection(&m_CsLog);
-	DeleteCriticalSection(&m_CsLogDelay);
 }
 
 Logger& Logger::GetInstance()
@@ -54,7 +50,7 @@ void Logger::StartLogFile()
 		}
 		else
 		{
-			const std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, filePath);
+			const std::wstring text = GetFormattedString(IDS_LogFileCreateFail, filePath);
 			GetRainmeter().ShowMessage(nullptr, text.c_str(), MB_OK | MB_ICONERROR);
 			SetLogToFile(false);
 			return;
@@ -74,7 +70,7 @@ void Logger::DeleteLogFile()
 	const WCHAR* filePath = m_LogFilePath.c_str();
 	if (_waccess_s(filePath, 0) == 0)
 	{
-		const std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, filePath);
+		const std::wstring text = GetFormattedString(IDS_LogFileDelete, filePath);
 		const int res = GetRainmeter().ShowMessage(nullptr, text.c_str(), MB_YESNO | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
@@ -107,18 +103,17 @@ void Logger::LogInternal(Level level, std::chrono::system_clock::time_point time
 		milliseconds.count() % 1000);
 
 	// Store up to MAX_LOG_ENTIRES entries.
-	Entry entry = { level, std::wstring(timestampSz, len), source, msg };
-	m_Entries.push_back(entry);
+	const auto& entry = m_Entries.emplace_back(level, std::wstring(timestampSz, len), source, msg);
 	if (m_Entries.size() > MAX_LOG_ENTIRES)
 	{
 		m_Entries.pop_front();
 	}
 
-	DialogAbout::AddLogItem(level, timestampSz, source, msg);
+	DialogDebug::AddLogItem(level, timestampSz, source, msg);
 	WriteToLogFile(entry);
 }
 
-void Logger::WriteToLogFile(Entry& entry)
+void Logger::WriteToLogFile(const Entry& entry)
 {
 #ifndef _DEBUG
 	if (!m_LogToFile) return;
@@ -182,35 +177,33 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 
 	std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 
-	if (TryEnterCriticalSection(&m_CsLog))
+	if (m_CsLog.TryEnter())
 	{
 		// Log queued messages first.
-		EnterCriticalSection(&m_CsLogDelay);
-
-		while (!s_DelayedEntries.empty())
 		{
-			DelayedEntry& entry = s_DelayedEntries.front();
-			LogInternal(entry.level, entry.timestamp, entry.source.c_str(), entry.message.c_str());
+			CriticalSectionLock lock(m_CsLogDelay);
 
-			s_DelayedEntries.erase(s_DelayedEntries.begin());
+			while (!s_DelayedEntries.empty())
+			{
+				DelayedEntry& entry = s_DelayedEntries.front();
+				LogInternal(entry.level, entry.timestamp, entry.source.c_str(), entry.message.c_str());
+
+				s_DelayedEntries.erase(s_DelayedEntries.begin());
+			}
 		}
-
-		LeaveCriticalSection(&m_CsLogDelay);
 
 		// Log the actual message.
 		LogInternal(level, timestamp, source, msg);
 
-		LeaveCriticalSection(&m_CsLog);
+		m_CsLog.Leave();
 	}
 	else
 	{
 		// Queue message.
-		EnterCriticalSection(&m_CsLogDelay);
+		CriticalSectionLock lock(m_CsLogDelay);
 
 		DelayedEntry entry = { level, timestamp, source, msg };
 		s_DelayedEntries.push_back(entry);
-
-		LeaveCriticalSection(&m_CsLogDelay);
 	}
 }
 
@@ -220,9 +213,9 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 	{
 		errno = 0;
 		size_t size = _vscwprintf(format, args);
-		if (errno != 0 || size <= 0ULL)
+		if (errno != 0 || size <= 0)
 		{
-			return 1024ULL;
+			return 1024;
 		}
 		 return ++size;  // +1 for null termination
 	};

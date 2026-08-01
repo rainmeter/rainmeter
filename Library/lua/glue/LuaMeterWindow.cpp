@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "LuaSection.h"
 #include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Rainmeter.h"
@@ -91,15 +92,29 @@ static int GetMeasure(lua_State* L)
 	return 1;
 }
 
+static int SetOption(lua_State* L)
+{
+	DECLARE_SELF(L)
+	const std::wstring section = LuaHelper::ToWide(2);
+	return LuaSection::SetOption(L, self, section.c_str(), 3);
+}
+
+static int SetOptionGroup(lua_State* L)
+{
+	DECLARE_SELF(L)
+	const std::wstring group = LuaHelper::ToWide(2);
+	return LuaSection::SetOption(L, self, group.c_str(), 3, true);
+}
+
 static int GetVariable(lua_State* L)
 {
 	DECLARE_SELF(L)
 
 	const std::wstring name = LuaHelper::ToWide(2);
-	const std::wstring* value = self->GetParser().GetVariable(name);
-	if (value)
+	std::wstring value;
+	if (self->GetParser().GetVariable(name, value))
 	{
-		LuaHelper::PushWide(*value);
+		LuaHelper::PushWide(value);
 	}
 	else if (lua_gettop(L) >= 3)
 	{
@@ -111,6 +126,41 @@ static int GetVariable(lua_State* L)
 	}
 
 	return 1;
+}
+
+static int SetVariable(lua_State* L)
+{
+	DECLARE_SELF(L)
+	if (lua_istable(L, 2))
+	{
+		const int top = lua_gettop(L);
+		for (int i = 2; i <= top; ++i)
+		{
+			if (!lua_istable(L, i))
+			{
+				continue;
+			}
+
+			lua_rawgeti(L, i, 1);
+			lua_rawgeti(L, i, 2);
+			if (lua_type(L, -2) == LUA_TSTRING && lua_isstring(L, -1))
+			{
+				const std::wstring value = LuaHelper::ToWide(-1);
+				const std::wstring name = LuaHelper::ToWide(-2);
+				self->SetVariable(name, value);
+			}
+
+			lua_pop(L, 2);
+		}
+	}
+	else if (lua_isstring(L, 2) && lua_isstring(L, 3))
+	{
+		const std::wstring name = LuaHelper::ToWide(2);
+		const std::wstring value = LuaHelper::ToWide(3);
+		self->SetVariable(name, value);
+	}
+
+	return 0;
 }
 
 static int ReplaceVariables(lua_State* L)
@@ -146,7 +196,7 @@ static int MoveWindow(lua_State* L)
 	DECLARE_SELF(L)
 	int x = (int)lua_tonumber(L, 2);
 	int y = (int)lua_tonumber(L, 3);
-	self->MoveWindow(x, y);
+	self->MoveWindow(x, y, SkinPositionSpace::Virtualized);
 
 	return 0;
 }
@@ -180,7 +230,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetX());
+	lua_pushnumber(L, self->GetPositionAsVirtualized().x);
 
 	return 1;
 }
@@ -188,7 +238,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	lua_pushnumber(L, self->GetY());
+	lua_pushnumber(L, self->GetPositionAsVirtualized().y);
 
 	return 1;
 }
@@ -210,7 +260,10 @@ void LuaScript::RegisterSkin(lua_State* L)
 		{ "Bang", Bang },
 		{ "GetMeter", GetMeter },
 		{ "GetMeasure", GetMeasure },
+		{ "SetOption", SetOption },
+		{ "SetOptionGroup", SetOptionGroup },
 		{ "GetVariable", GetVariable },
+		{ "SetVariable", SetVariable },
 		{ "ReplaceVariables", ReplaceVariables },
 		{ "ParseFormula", ParseFormula },
 		{ "MoveWindow", MoveWindow },

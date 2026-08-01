@@ -63,6 +63,23 @@ namespace TagLib {
     };
 
     /*!
+     * Specify which tags to strip either explicitly, or on save.
+     */
+    enum StripTags {
+      StripNone,  //<! Don't strip any tags
+      StripOthers //<! Strip all tags not explicitly referenced in method call
+    };
+
+    /*!
+     * Used to specify if when saving files, if values between different tag
+     * types should be synchronized.
+     */
+    enum DuplicateTags {
+      Duplicate,     //<! Synchronize values between different tag types
+      DoNotDuplicate //<! Do not synchronize values between different tag types
+    };
+
+    /*!
      * Destroys this File instance.
      */
     virtual ~File();
@@ -83,10 +100,10 @@ namespace TagLib {
      * names (uppercase Strings) to StringLists of tag values. Calls the according
      * specialization in the File subclasses.
      * For each metadata object of the file that could not be parsed into the PropertyMap
-     * format, the returend map's unsupportedData() list will contain one entry identifying
+     * format, the returned map's unsupportedData() list will contain one entry identifying
      * that object (e.g. the frame type for ID3v2 tags). Use removeUnsupportedProperties()
      * to remove (a subset of) them.
-     * For files that contain more than one tag (e.g. an MP3 with both an ID3v2 and an ID3v2
+     * For files that contain more than one tag (e.g. an MP3 with both an ID3v1 and an ID3v2
      * tag) only the most "modern" one will be exported (ID3v2 in this case).
      * BIC: Will be made virtual in future releases.
      */
@@ -106,7 +123,7 @@ namespace TagLib {
      * into the format-specific details.
      * If some value(s) could not be written imported to the specific metadata format,
      * the returned PropertyMap will contain those value(s). Otherwise it will be empty,
-     * indicating that no problems occured.
+     * indicating that no problems occurred.
      * With file types that support several tag formats (for instance, MP3 files can have
      * ID3v1, ID3v2, and APEv2 tags), this function will create the most appropriate one
      * (ID3v2 for MP3 files). Older formats will be updated as well, if they exist, but won't
@@ -115,7 +132,7 @@ namespace TagLib {
      * BIC: will become pure virtual in the future
      */
     PropertyMap setProperties(const PropertyMap &properties);
-    
+
     /*!
      * Returns a pointer to this file's audio properties.  This should be
      * reimplemented in the concrete subclasses.  If no audio properties were
@@ -138,7 +155,7 @@ namespace TagLib {
     /*!
      * Reads a block of size \a length at the current get pointer.
      */
-    ByteVector readBlock(ulong length);
+    ByteVector readBlock(unsigned long length);
 
     /*!
      * Attempts to write the block \a data at the current get pointer.  If the
@@ -155,33 +172,33 @@ namespace TagLib {
      * Returns the offset in the file that \a pattern occurs at or -1 if it can
      * not be found.  If \a before is set, the search will only continue until the
      * pattern \a before is found.  This is useful for tagging purposes to search
-     * for a tag before the synch frame.
+     * for a tag before the sync frame.
      *
      * Searching starts at \a fromOffset, which defaults to the beginning of the
      * file.
      *
-     * \note This has the practial limitation that \a pattern can not be longer
+     * \note This has the practical limitation that \a pattern can not be longer
      * than the buffer size used by readBlock().  Currently this is 1024 bytes.
      */
     long find(const ByteVector &pattern,
               long fromOffset = 0,
-              const ByteVector &before = ByteVector::null);
+              const ByteVector &before = ByteVector());
 
     /*!
      * Returns the offset in the file that \a pattern occurs at or -1 if it can
      * not be found.  If \a before is set, the search will only continue until the
      * pattern \a before is found.  This is useful for tagging purposes to search
-     * for a tag before the synch frame.
+     * for a tag before the sync frame.
      *
      * Searching starts at \a fromOffset and proceeds from the that point to the
      * beginning of the file and defaults to the end of the file.
      *
-     * \note This has the practial limitation that \a pattern can not be longer
+     * \note This has the practical limitation that \a pattern can not be longer
      * than the buffer size used by readBlock().  Currently this is 1024 bytes.
      */
     long rfind(const ByteVector &pattern,
                long fromOffset = 0,
-               const ByteVector &before = ByteVector::null);
+               const ByteVector &before = ByteVector());
 
     /*!
      * Insert \a data at position \a start in the file overwriting \a replace
@@ -190,7 +207,7 @@ namespace TagLib {
      * \note This method is slow since it requires rewriting all of the file
      * after the insertion point.
      */
-    void insert(const ByteVector &data, ulong start = 0, ulong replace = 0);
+    void insert(const ByteVector &data, unsigned long start = 0, unsigned long replace = 0);
 
     /*!
      * Removes a block of the file starting a \a start and continuing for
@@ -199,7 +216,7 @@ namespace TagLib {
      * \note This method is slow since it involves rewriting all of the file
      * after the removed portion.
      */
-    void removeBlock(ulong start = 0, ulong length = 0);
+    void removeBlock(unsigned long start = 0, unsigned long length = 0);
 
     /*!
      * Returns true if the file is read only (or if the file can not be opened).
@@ -244,16 +261,16 @@ namespace TagLib {
      * Returns true if \a file can be opened for reading.  If the file does not
      * exist, this will return false.
      *
-     * \deprecated
+     * \deprecated Use system functions, e.g. access() (_access_s() on Windows).
      */
-    static bool isReadable(const char *file);
+    TAGLIB_DEPRECATED static bool isReadable(const char *file);
 
     /*!
      * Returns true if \a file can be opened for writing.
      *
-     * \deprecated
+     * \deprecated Use system functions, e.g. access() (_access_s() on Windows).
      */
-    static bool isWritable(const char *name);
+    TAGLIB_DEPRECATED static bool isWritable(const char *name);
 
   protected:
     /*!
@@ -291,7 +308,7 @@ namespace TagLib {
     /*!
      * Returns the buffer size that is used for internal buffering.
      */
-    static uint bufferSize();
+    static unsigned int bufferSize();
 
   private:
     File(const File &);
@@ -301,6 +318,6 @@ namespace TagLib {
     FilePrivate *d;
   };
 
-}
+}  // namespace TagLib
 
 #endif

@@ -9,6 +9,7 @@
 #define __MEASURECALC_H__
 
 #include "Measure.h"
+#include "../Common/MathParser.h"
 
 class MeasureCalc : public Measure
 {
@@ -33,6 +34,7 @@ private:
 
 	std::wstring m_Formula;
 	bool m_ParseError;
+	MathParser m_MathParser;
 
 	int m_LowBound;
 	int m_HighBound;

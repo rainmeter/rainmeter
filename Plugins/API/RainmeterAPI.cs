@@ -16,6 +16,7 @@ namespace Rainmeter
     public class API
     {
         private IntPtr m_Rm;
+        private static int s_ApiVersion;
 
         public API(IntPtr rm)
         {
@@ -80,7 +81,16 @@ namespace Rainmeter
             Skin = 1,
             SettingsFile = 2,
             SkinName = 3,
-            SkinWindowHandle = 4
+            SkinWindowHandle = 4,
+
+            // Available in API version 2.
+            SkinScale = 5,
+            SkinDpiScale = 6,
+            SkinZoomScale = 7,
+            ApiVersion = 8,
+            SkinTransparency = 9,
+            SkinClickThrough = 10,
+            SkinDraggable = 11
         }
 
         public enum LogType
@@ -428,6 +438,77 @@ namespace Rainmeter
         }
 
         /// <summary>
+        /// Get the skin effective scale (window DPI + zoom). Skin units (e.g. width) should be multiplied by the scale to get the pixel size on the screen.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin window DPI scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinDpiScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinDpiScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin zoom scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinZoomScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinZoomScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin transparency setting. See !SetTransparency bang docs for info.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 255.</remarks>
+        public int GetSkinTransparency()
+        {
+            return GetApiVersion() >= 2 ? RmGet(m_Rm, RmGetType.SkinTransparency).ToInt32() : 255;
+        }
+
+        /// <summary>
+        /// Get the skin click through setting.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns false.</remarks>
+        public bool GetSkinClickThrough()
+        {
+            return RmGet(m_Rm, RmGetType.SkinClickThrough) != IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Get the skin draggable setting.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns true.</remarks>
+        public bool GetSkinDraggable()
+        {
+            return GetApiVersion() >= 2 ? RmGet(m_Rm, RmGetType.SkinDraggable) != IntPtr.Zero : true;
+        }
+
+        /// <summary>
+        /// Get the Rainmeter plugin API version.
+        /// </summary>
+        public static int GetApiVersion()
+        {
+            if (s_ApiVersion == 0)
+            {
+                IntPtr version = RmGet(IntPtr.Zero, RmGetType.ApiVersion);
+                s_ApiVersion = version != IntPtr.Zero ? version.ToInt32() : 1;
+            }
+
+            return s_ApiVersion;
+        }
+
+        /// <summary>
         /// DEPRECATED: Save your rm or api reference and use Log(rm, type, message). Sends a message to the Rainmeter log with no source.
         /// </summary>
         public static void Log(int type, string message)
@@ -471,7 +552,7 @@ namespace Rainmeter
         ///     Measure measure = (Measure)data;
         ///     string notice = "notice";
         ///     measure.api.LogF(measure.rm, API.LogType.Notice, "I am a '{0}' log message with a source", notice); // 'measure.rm' stored previously in the Initialize function
-        ///     
+        ///
         ///     return 0.0;
         /// }
         /// </code>
@@ -495,7 +576,7 @@ namespace Rainmeter
         /// {
         ///     Measure measure = (Measure)data;
         ///     measure.api.Log(api, API.LogType.Notice, "I am a 'notice' log message with a source"); // 'measure.api' stored previously in the Initialize function
-        ///     
+        ///
         ///     return 0.0;
         /// }
         /// </code>
@@ -521,7 +602,7 @@ namespace Rainmeter
         ///     Measure measure = (Measure)data;
         ///     string notice = "notice";
         ///     measure.api.LogF(API.LogType.Notice, "I am a '{0}' log message with a source", notice); // 'measure.api' stored previously in the Initialize function
-        ///     
+        ///
         ///     return 0.0;
         /// }
         /// </code>
@@ -595,5 +676,16 @@ namespace Rainmeter
         {
 
         }
+    }
+
+    /// <summary>
+    /// Describes why HandleSkinSettingChange was called.
+    /// </summary>
+    public enum SkinSettingChange : byte
+    {
+        Scale = 0,
+        Transparency = 1,
+        ClickThrough = 2,
+        Draggable = 3
     }
 }

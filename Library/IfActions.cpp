@@ -10,8 +10,7 @@
 #include "IfActions.h"
 #include "Rainmeter.h"
 #include "../Common/MathParser.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
+#include "Pcre.h"
 
 IfActions::IfActions() :
 	m_AboveValue(0.0),
@@ -201,8 +200,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			double result = 0.0;
-			const WCHAR* errMsg = MathParser::Parse(
-				item.value.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
+			const WCHAR* errMsg = measure.GetSkin()->GetMathParser().Parse(item.value.c_str(), &result);
 			if (errMsg != nullptr)
 			{
 				if (!item.parseError)
@@ -245,7 +243,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			}
 		}
 	}
-	
+
 	// IfMatch
 	i = 0;
 	for (auto& item : m_Matches)
@@ -254,15 +252,8 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			const char* error;
-			int errorOffset;
 
-			pcre16* re = pcre16_compile(
-				(PCRE_SPTR16)item.value.c_str(),
-				PCRE_UTF16,
-				&error,
-				&errorOffset,
-				nullptr);
-
+			Pcre re(item.value.c_str(), &error);
 			if (!re)
 			{
 				if (!item.parseError)
@@ -283,19 +274,10 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			{
 				item.parseError = false;
 
-				const WCHAR* str = measure.GetStringValue();
-				int strLen = str ? (int)wcslen(str) : 0;
+				const WCHAR* value = measure.GetStringValue();
+				std::wstring_view str = value ? value : L"";
 				int ovector[300];
-				int rc = pcre16_exec(
-					re,
-					nullptr,
-					(PCRE_SPTR16)str,
-					(int)strLen,
-					0,
-					0,
-					ovector,
-					(int)_countof(ovector));
-
+				int rc = re.Execute(str, 0, ovector, (int)_countof(ovector));
 				if (rc > 0)		// Match
 				{
 					item.fCommitted = false;
@@ -317,9 +299,6 @@ void IfActions::DoIfActions(Measure& measure, double value)
 					}
 				}
 			}
-
-			// Release memory used for the compiled pattern
-			pcre16_free(re);
 		}
 	}
 }

@@ -21,10 +21,6 @@ MeasureUptime::~MeasureUptime()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
@@ -50,10 +46,6 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the current uptime
-**
-*/
 void MeasureUptime::UpdateValue()
 {
 	if (!m_SecondsDefined)
@@ -67,10 +59,6 @@ void MeasureUptime::UpdateValue()
 	}
 }
 
-/*
-** Returns the uptime as string.
-**
-*/
 const WCHAR* MeasureUptime::GetStringValue()
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];

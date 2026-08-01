@@ -1,8 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
@@ -10,16 +11,11 @@
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="MathParser.cpp" />
+    <ClCompile Include="ParseUtil.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\FontCollectionD2D.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\TextFormat.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\TextFormatD2D.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp">
@@ -32,6 +28,7 @@
       <Filter>Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="StringParser.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
@@ -87,40 +84,19 @@
     <ClCompile Include="Gfx\Util\D2DUtil.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Rectangle.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\RoundedRectangle.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\Shape.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Ellipse.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Line.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Arc.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Curve.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\QuadraticCurve.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Shapes\Path.cpp">
-      <Filter>Gfx\Shapes</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DBitmapLoader.cpp">
+    <ClCompile Include="Gfx\Util\BitmapLoader.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\D2DBitmap.cpp">
+    <ClCompile Include="Gfx\Bitmap.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\Util\D2DEffectStream.cpp">
+    <ClCompile Include="Gfx\Svg.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\EffectStream.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\RenderTexture.cpp">
@@ -128,7 +104,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="Dialog.h" />
+    <ClInclude Include="DpiUtil.h" />
+    <ClInclude Include="CriticalSection.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="PathUtil.h" />
@@ -137,19 +116,15 @@
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="MathParser.h" />
+    <ClInclude Include="Map.h" />
+    <ClInclude Include="ParseUtil.h" />
     <ClInclude Include="UnitTest.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="Gfx\FontCollection.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\FontCollectionD2D.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\TextFormat.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\TextFormatD2D.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\DWriteHelpers.h">
@@ -162,6 +137,7 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="StringParser.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h">
       <Filter>Gfx</Filter>
     </ClInclude>
@@ -218,40 +194,19 @@
     <ClInclude Include="Gfx\Util\D2DUtil.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Rectangle.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\RoundedRectangle.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\Shape.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Ellipse.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Line.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Arc.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Curve.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\QuadraticCurve.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Shapes\Path.h">
-      <Filter>Gfx\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DBitmapLoader.h">
+    <ClInclude Include="Gfx\Util\BitmapLoader.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\D2DBitmap.h">
+    <ClInclude Include="Gfx\Bitmap.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\Util\D2DEffectStream.h">
+    <ClInclude Include="Gfx\Svg.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\EffectStream.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\RenderTexture.h">
@@ -267,9 +222,6 @@
     </Filter>
     <Filter Include="Gfx\TextInlineFormat">
       <UniqueIdentifier>{7914a5da-66c9-4775-8666-d25595e6e58e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Gfx\Shapes">
-      <UniqueIdentifier>{b408511c-a54f-43e1-96bb-ac25be548071}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

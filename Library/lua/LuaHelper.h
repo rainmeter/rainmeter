@@ -17,35 +17,32 @@ extern "C"
 #include "lauxlib.h"
 }
 
+class LuaStateScope
+{
+public:
+	static LuaStateScope* GetCurrent() { return c_ScopeStack.back(); }
+
+	LuaStateScope(lua_State* state, bool unicode, int ref);
+	~LuaStateScope();
+
+	operator lua_State*() { return m_State; }
+	lua_State* GetState() { return m_State; }
+
+	int GetRef() { return m_Ref; }
+	bool IsUnicode() { return m_Unicode; }
+
+private:
+	lua_State* m_State;
+	int m_Ref;
+	bool m_Unicode;
+
+	static std::vector<LuaStateScope*> c_ScopeStack;
+};
+
 class LuaHelper
 {
 public:
-	class UnicodeScript
-	{
-	public:
-		UnicodeScript(lua_State* state, bool unicode, int ref, std::wstring path);
-		~UnicodeScript();
-
-		operator lua_State*() { return m_State; }
-		lua_State* GetState() { return m_State; }
-
-		bool IsUnicode() { return m_Unicode; }
-		int GetRef() { return m_Ref; }
-		std::wstring GetSourceFile() { return m_File; }
-
-	private:
-		lua_State* m_State;
-		bool m_Unicode;
-		int m_Ref;
-		std::wstring m_File;
-	};
-
-	static UnicodeScript GetState(lua_State* state, bool unicode, int ref,
-		const std::wstring& path) { return UnicodeScript(state, unicode, ref, path); }
-
-	static UnicodeScript* GetCurrentScript() { return c_ScriptStack.back(); }
-
-	static void ReportErrors();
+	static void LogAndPopError();
 
 	static void PushWide(const WCHAR* str);
 	static void PushWide(const std::wstring& str);
@@ -53,9 +50,6 @@ public:
 	static bool ToBool(int narg);
 
 	static void StackDump();
-
-private:
-	static std::vector<UnicodeScript*> c_ScriptStack;
 };
 
 #endif

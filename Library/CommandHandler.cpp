@@ -10,6 +10,7 @@
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "Measure.h"
 #include "Logger.h"
@@ -25,14 +26,14 @@ typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, Skin* skin);
 struct BangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	uint8_t argCount;
 };
 
 struct CustomBangInfo
 {
 	Bang bang;
-	WCHAR* name;
+	const WCHAR* name;
 	BangHandlerFunc handlerFunc;
 };
 
@@ -42,6 +43,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::Refresh, L"Refresh", 0 },
 	{ Bang::Redraw, L"Redraw", 0 },
 	{ Bang::Update, L"Update", 0 },
+	{ Bang::SetUpdate, L"SetUpdate", 1 },
 	{ Bang::Hide, L"Hide", 0 },
 	{ Bang::Show, L"Show", 0 },
 	{ Bang::Toggle, L"Toggle", 0 },
@@ -74,6 +76,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
 	{ Bang::Move, L"Move", 2 },
 	{ Bang::SetAnchor, L"SetAnchor", 2 },
+	{ Bang::SetZoomFactor, L"SetZoomFactor", 1 },
 	{ Bang::ZPos, L"ZPos", 1 },
 	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
 	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
@@ -101,6 +104,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
 	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
 	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 },
+	{ Bang::CommandMeasureGroup, L"CommandMeasureGroup", 2 },
 	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0 }
 };
 
@@ -124,6 +128,7 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::FadeDuration, L"FadeDurationGroup", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
 	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
+	{ Bang::SetZoomFactor, L"SetZoomFactorGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
 	{ Bang::SetVariable, L"SetVariableGroup", 2 },
 	{ Bang::DisableMouseActionSkinGroup, L"DisableMouseActionSkinGroup", 1 },
@@ -144,6 +149,7 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
 	{ Bang::SetWallpaper, L"SetWallpaper", CommandHandler::DoSetWallpaperBang },
 	{ Bang::About, L"About", CommandHandler::DoAboutBang },
+	{ Bang::Debug, L"Debug", CommandHandler::DoDebugBang },
 	{ Bang::Manage, L"Manage", CommandHandler::DoManageBang },
 	{ Bang::SkinMenu, L"SkinMenu", CommandHandler::DoSkinMenuBang },
 	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang },
@@ -262,10 +268,10 @@ void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWST
 	std::wstring folderPath;
 	std::wstring file;
 	const size_t argCount = args.size();
-	if (argCount > 0ULL)
+	if (argCount > 0)
 	{
 		folderPath = args[0];
-		if (argCount == 1ULL)
+		if (argCount == 1)
 		{
 			if (GetRainmeter().ActivateSkin(folderPath)) return;
 		}
@@ -295,10 +301,6 @@ void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWST
 
 }  // namespace
 
-/*
-** Parses and executes the given command.
-**
-*/
 void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
 	// Remove any leading whitespace
@@ -369,7 +371,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					if (skin)
 					{
 						std::wstring currentBang = bangs.substr(start, i - start + 1);
-						if (ConfigParser::IsVariableKey(currentBang[1]) &&
+						if (ConfigParser::IsSectionVariableKey(currentBang[1]) &&
 							skin->GetParser().ReplaceMeasures(currentBang))
 						{
 							// Surround the replacement bang with brackets (if needed) since
@@ -398,7 +400,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
 						if (args.size() == 1)
 						{
-							auto delay = ConfigParser::ParseUInt(args[0].c_str(), 0);
+							auto delay = skin->GetParser().ParseUInt(args[0].c_str(), 0);
 							skin->DoDelayedCommand(bangs.c_str() + i + 1, delay);
 							return;
 						}
@@ -478,7 +480,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 			// This allows for section variables to completely replace a bang sequence.
 			// ex. LeftMouseUpAction=[SomeMeasureName]  or  LeftMouseUpAction=[#NewStyleVar]
 			// Note: This assumes the |command| does not start with a variable key (&, #, $, \)
-			bool isVar = (ConfigParser::IsVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
+			bool isVar = (ConfigParser::IsSectionVariableKey(tmpSz[0]) || skin->GetMeasure(tmpSz));
 			if (isVar)
 			{
 				tmpSz.insert(0, L"[");
@@ -496,10 +498,6 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 	}
 }
 
-/*
-** Runs the given bang.
-**
-*/
 void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, Skin* skin)
 {
 	for (const auto& bangInfo : s_Bangs)
@@ -532,10 +530,6 @@ void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& a
 	LogErrorF(skin, L"Invalid bang: !%s", name);
 }
 
-/*
-** Parses and runs the given command.
-**
-*/
 void CommandHandler::RunCommand(std::wstring command)
 {
 	std::wstring args;
@@ -573,10 +567,6 @@ void CommandHandler::RunCommand(std::wstring command)
 	}
 }
 
-/*
-** Runs a file with the given arguments.
-**
-*/
 void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 {
 	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
@@ -599,10 +589,6 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	}
 }
 
-/*
-** Splits strings into parts.
-**
-*/
 std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;
@@ -660,7 +646,7 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 				}
 				else
 				{
-					// Eat found quote and find ending quote 
+					// Eat found quote and find ending quote
 					arg.erase(0, pos + 1);
 					pos = arg.find_first_of(L'"');
 				}
@@ -827,7 +813,48 @@ void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* s
 
 void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	DialogAbout::Open(args.empty() ? L"" : args[0].c_str());
+	if (!args.empty())
+	{
+		if (_wcsicmp(args[0].c_str(), L"Version") == 0)
+		{
+			DialogAbout::Open();
+		}
+		else
+		{
+			DialogDebug::Open(args[0].c_str());
+		}
+	}
+	else
+	{
+		DialogDebug::Open();
+	}
+}
+
+void CommandHandler::DoDebugBang(std::vector<std::wstring>& args, Skin* skin)
+{
+	if (args.empty())
+	{
+		DialogDebug::Open();
+	}
+	else if (args.size() == 1)
+	{
+		DialogDebug::Open(args[0].c_str());
+	}
+	else if (args.size() == 2 && _wcsicmp(args[0].c_str(), L"Skin") == 0)
+	{
+		if (auto* selectedSkin = GetRainmeter().GetSkin(args[1]))
+		{
+			DialogDebug::OpenSkin(selectedSkin);
+		}
+		else
+		{
+			LogErrorF(skin, L"!Debug: Config not active: %s", args[1].c_str());
+		}
+	}
+	else
+	{
+		LogErrorF(skin, L"!Debug: Invalid parameters");
+	}
 }
 
 void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)
@@ -976,7 +1003,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	if (skin)
 	{
 		double value;
-		formula = skin->GetParser().ParseFormula(strValue, &value); 
+		formula = skin->GetParser().ParseFormula(strValue, &value);
 		if (formula)
 		{
 			WCHAR buffer[256];
@@ -1117,7 +1144,7 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 	// Two variations:
 	//  #1: !SetWindowPosition WindowX WindowY (config)
 	//  #2: !SetWindowPosition WindowX WindowY AnchorX AnchorY (config)
-	
+
 	Skin* other = nullptr;
 
 	size_t argCount = args.size();

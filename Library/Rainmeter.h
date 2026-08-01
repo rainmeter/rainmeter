@@ -16,6 +16,7 @@
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "DialogManage.h"
+#include "Language.h"
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
@@ -35,9 +36,17 @@
 #define RAINMETER_CLASS_NAME	L"DummyRainWClass"
 #define RAINMETER_WINDOW_NAME	L"Rainmeter control window"
 
-#define WM_RAINMETER_DELAYED_REFRESH_ALL WM_APP + 0
-#define WM_RAINMETER_DELAYED_EXECUTE     WM_APP + 1
-#define WM_RAINMETER_EXECUTE             WM_APP + 2
+enum
+{
+	WM_RAINMETER_DELAYED_REFRESH_ALL = WM_APP + 0,
+	WM_RAINMETER_DELAYED_EXECUTE = WM_APP + 1,
+	WM_RAINMETER_EXECUTE = WM_APP + 2,
+
+	// Internal messages that may change at any time.
+	WM_RAINMETER_HANDLE_ASYNC_TASK_RESULT = WM_APP + 100,
+	WM_RAINMETER_HANDLE_EXPORT_SYNC = WM_APP + 101,
+	WM_RAINMETER_HANDLE_ACTION_TIMER_EXECUTE = WM_APP + 102,
+};
 
 struct GlobalOptions
 {
@@ -53,7 +62,7 @@ class Rainmeter
 public:
 	static Rainmeter& GetInstance();
 
-	int Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart);
+	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	void Finalize();
 
 	void RestartRainmeter();
@@ -120,8 +129,12 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
-	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
-	LCID GetResourceLCID() { return m_ResourceLCID; }
+	const WCHAR* GetLanguageString(UINT id) const { return m_Language.GetString(id); }
+	bool LoadLanguage(const std::wstring& language) { return m_Language.Load(m_Path + L"Languages\\", language); }
+	unsigned short GetLanguageButtonWidth() const { return m_Language.GetButtonWidth(); }
+	unsigned short GetLanguageLabelWidth() const { return m_Language.GetLabelWidth(); }
+	bool IsLanguageRTL() const { return m_Language.IsRTL(); }
+	LCID GetResourceLCID() { return m_Language.GetLCID(); }
 
 	bool GetDebug() { return m_Debug; }
 
@@ -136,6 +149,8 @@ public:
 	void ReadStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
+	bool ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement);
+	void SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& placement);
 
 	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
 	void SetDisableVersionCheck(bool check);
@@ -156,6 +171,12 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
+	int GetDefaultZoom() { return m_DefaultZoom; }
+	void SetDefaultZoom(int zoom);
+	bool GetForceDefaultZoom() { return m_ForceDefaultZoom; }
+	void SetForceDefaultZoom(bool force);
+	bool HasExeDpiOverride() { return m_HasExeDpiOverride; }
+
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
 
 	void SetDebug(bool debug);
@@ -163,8 +184,9 @@ public:
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
-	void ShowContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowMenu(pos, skin); }
+	void ShowContextMenu(POINT pos, Skin* skin, HWND parentWindow = nullptr) { return m_ContextMenu.ShowMenu(pos, skin, parentWindow); }
 	void ShowSkinCustomContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowSkinCustomMenu(pos, skin); }
+	void ShowSkinSelectionContextMenu(POINT pos, Skin* skin, HWND parentWindow) { return m_ContextMenu.ShowSkinSelectionMenu(pos, skin, parentWindow); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
@@ -187,6 +209,7 @@ public:
 	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
 	const std::wstring& GetBuildTime() { return m_BuildTime; }
+	const std::wstring& GetBuildHash() { return m_BuildHash; }
 
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
@@ -205,12 +228,16 @@ private:
 
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	void ScheduleReattachGfxDevice();
+	void ReattachGfxDevice();
+
 	void ActivateActiveSkins();
 	void CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings);
 	void DeleteAllSkins();
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
+	void RescanSkinsIfNeeded(const std::wstring& folderPath = L"");
 	void ScanForLayouts();
 	void ReadFavorites();
 	void ReadGeneralSettings(const std::wstring& iniFile);
@@ -218,9 +245,12 @@ private:
 	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
 
+	void ScheduleUpdateCheck(UINT interval);
+
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
+	void EnsureSkinInstallerAssociation();
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
@@ -259,6 +289,7 @@ private:
 	bool m_LanguageObsolete;
 
 	bool m_HardwareAccelerated;
+	bool m_ReattachGfxDeviceScheduled;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
@@ -270,6 +301,10 @@ private:
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
+
+	int m_DefaultZoom;
+	bool m_ForceDefaultZoom;
+	bool m_HasExeDpiOverride;
 
 	std::wstring m_SkinEditor;
 
@@ -285,14 +320,12 @@ private:
 
 	HANDLE m_Mutex;
 	HINSTANCE m_Instance;
-	HMODULE m_ResourceInstance;
-	LCID m_ResourceLCID;
-
-	ULONG_PTR m_GDIplusToken;
+	Language m_Language;
 
 	GlobalOptions m_GlobalOptions;
 
 	std::wstring m_BuildTime;
+	std::wstring m_BuildHash;
 };
 
 // Convenience function.

@@ -8,6 +8,8 @@
 #ifndef __RAINMETERAPI_H__
 #define __RAINMETERAPI_H__
 
+#include <stdint.h>
+
 #ifdef LIBRARY_EXPORTS
 #define LIBRARY_EXPORT EXTERN_C
 #else
@@ -245,7 +247,16 @@ enum RmGetType
 	RMG_SKIN             = 1,
 	RMG_SETTINGSFILE     = 2,
 	RMG_SKINNAME         = 3,
-	RMG_SKINWINDOWHANDLE = 4
+	RMG_SKINWINDOWHANDLE = 4,
+
+	// Available in API version 2.
+	RMG_SKINSCALE        = 5,
+	RMG_SKINDPISCALE     = 6,
+	RMG_SKINZOOMSCALE    = 7,
+	RMG_APIVERSION       = 8,
+	RMG_SKINTRANSPARENCY = 9,
+	RMG_SKINCLICKTHROUGH = 10,
+	RMG_SKINDRAGGABLE    = 11,
 };
 
 /// <summary>
@@ -285,11 +296,23 @@ LIBRARY_EXPORT void __cdecl RmLogF(void* rm, int level, LPCWSTR format, ...);
 /// </summary>
 LIBRARY_EXPORT BOOL __cdecl LSLog(int level, LPCWSTR unused, LPCWSTR message);
 
+/// <summary>
+/// Describes why HandleSkinSettingChange was called.
+/// </summary>
+enum class RmSkinSettingChange : uint8_t
+{
+	Scale = 0,
+	Transparency = 1,
+	ClickThrough = 2,
+	Draggable = 3,
+};
+
 //
 // Wrapper functions
 //
 
 #ifndef LIBRARY_EXPORTS
+
 /// <summary>
 /// Retrieves the option defined in the skin file and converts a relative path to a absolute path
 /// </summary>
@@ -458,6 +481,72 @@ __inline HWND RmGetSkinWindow(void* rm)
 }
 
 /// <summary>
+/// Get the skin effective scale (window DPI + zoom). Skin units (e.g. width) should be multiplied by the scale to get the pixel size on the screen.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINSCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the skin window DPI scale.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinDpiScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINDPISCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the skin zoom scale.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+__inline float RmGetSkinZoomScale(void* rm)
+{
+	float* result = (float*)RmGet(rm, RMG_SKINZOOMSCALE);
+	return result ? *result : 1.0f;
+}
+
+/// <summary>
+/// Get the Rainmeter plugin API version.
+/// </summary>
+__inline int RmApiVersion()
+{
+	static INT_PTR result = (INT_PTR)RmGet(NULL, RMG_APIVERSION);
+	return result ? (int)result : 1;
+}
+
+/// <summary>
+/// Get the skin transparency setting. See !SetTransparency bang docs for info.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns 255.</remarks>
+__inline int RmGetSkinTransparency(void* rm)
+{
+	return RmApiVersion() >= 2 ? (int)(INT_PTR)RmGet(rm, RMG_SKINTRANSPARENCY) : 255;
+}
+
+/// <summary>
+/// Get the skin click through setting.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns false.</remarks>
+__inline bool RmGetSkinClickThrough(void* rm)
+{
+	return !!(INT_PTR)RmGet(rm, RMG_SKINCLICKTHROUGH);
+}
+
+/// <summary>
+/// Get the skin draggable setting.
+/// </summary>
+/// <remarks>Supported on API version 2. On earlier versions, always returns true.</remarks>
+__inline bool RmGetSkinDraggable(void* rm)
+{
+	return RmApiVersion() >= 2 ? !!(INT_PTR)RmGet(rm, RMG_SKINDRAGGABLE) : true;
+}
+
+/// <summary>
 /// DEPRECATED: Use RmLog(rm, type, message). Sends a message to the Rainmeter log.
 /// </summary>
 __inline void RmLog(int level, LPCWSTR message)
@@ -472,6 +561,7 @@ enum LOGLEVEL
 	LOG_NOTICE  = 3,
 	LOG_DEBUG   = 4
 };
+
 #endif // LIBRARY_EXPORTS
 
 #endif

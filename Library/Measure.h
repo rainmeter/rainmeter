@@ -49,9 +49,8 @@ public:
 
 	Measure(const Measure& other) = delete;
 
-	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); }
-
 	virtual void Initialize();
+	void ReadOptions(ConfigParser& parser);
 	bool Update(bool rereadOptions = false);
 
 	void Disable();
@@ -81,7 +80,6 @@ public:
 	void DoChangeAction(bool execute = true);
 
 	static Measure* Create(const WCHAR* measure, Skin* skin, const WCHAR* name);
-	static bool GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context);
 
 protected:
 	Measure(Skin* skin, const WCHAR* name);
@@ -97,7 +95,7 @@ protected:
 	double m_Value;
 
 	bool m_Invert;
-	
+
 	bool m_LogMaxValue;
 	double m_MinValue;
 	double m_MaxValue;

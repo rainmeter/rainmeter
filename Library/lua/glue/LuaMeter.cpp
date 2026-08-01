@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "LuaSection.h"
 #include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Meter.h"
@@ -27,32 +28,13 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	Skin* skin = self->GetSkin();
-	ConfigParser& parser = skin->GetParser();
+	return LuaSection::GetOption(L, self, true);
+}
 
-	const WCHAR* section = self->GetName();
-	const std::wstring key = LuaHelper::ToWide(2);
-	const std::wstring defValue = LuaHelper::ToWide(3);
-	
-	bool bReplaceMeasures = true;
-	if (lua_gettop(L) > 3)
-	{
-		bReplaceMeasures = LuaHelper::ToBool(4);
-	}
-
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
-
-	const std::wstring& value =
-		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
-	LuaHelper::PushWide(value);
-
-	parser.ClearStyleTemplate();
-
-	return 1;
+static int SetOption(lua_State* L)
+{
+	DECLARE_SELF(L)
+	return LuaSection::SetOption(L, self);
 }
 
 static int GetW(lua_State* L)
@@ -160,6 +142,7 @@ void LuaScript::RegisterMeter(lua_State* L)
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },
+		{ "SetOption", SetOption },
 		{ "GetW", GetW },
 		{ "GetH", GetH },
 		{ "GetX", GetX },

@@ -9,6 +9,7 @@
 #define RM_LIBRARY_MEASUREWEBPARSER_H_
 
 #include "Measure.h"
+#include "Net.h"
 
 struct ProxySetting
 {
@@ -38,8 +39,11 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	static unsigned __stdcall NetworkThreadProc(void* pParam);
-	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
+	void HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
+
+	void StartDownloadTask();
+	void HandleDownloadResult(const std::wstring&, HRESULT result);
+
 	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
 
 	std::wstring m_Url;
@@ -56,8 +60,6 @@ private:
 	std::wstring m_DebugFileLocation;
 	std::wstring m_Headers;
 	ProxySetting m_Proxy;
-	HANDLE m_ThreadHandle;
-	HANDLE m_DlThreadHandle;
 	int m_Codepage;
 	int m_StringIndex;
 	int m_StringIndex2;
@@ -70,6 +72,8 @@ private:
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
 	DWORD m_InternetOpenUrlFlags;
+	Net::FetchTask* m_FetchTask;
+	Net::DownloadTask* m_DownloadTask;
 };
 
 #endif

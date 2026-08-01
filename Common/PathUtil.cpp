@@ -72,13 +72,11 @@ std::wstring GetFolderFromFilePath(const std::wstring& filePath)
 	return L".\\";
 }
 
-/*
-** Extracts volume path from program path.
-** E.g.:
-**   "C:\path\" to "C:"
-**   "\\server\share\" to "\\server\share"
-**   "\\server\C:\path\" to "\\server\C:"
-*/
+// Extracts volume path from program path.
+// E.g.:
+//   "C:\path\" to "C:"
+//   "\\server\share\" to "\\server\share"
+//   "\\server\C:\path\" to "\\server\C:"
 std::wstring GetVolume(const std::wstring& path)
 {
 	std::wstring::size_type pos;
@@ -104,10 +102,10 @@ std::wstring GetVolume(const std::wstring& path)
 	return std::wstring();
 }
 
-void ExpandEnvironmentVariables(std::wstring& path)
+void ExpandEnvironmentVariables(std::wstring& path, std::wstring::size_type start)
 {
 	std::wstring::size_type pos;
-	if ((pos = path.find(L'%')) != std::wstring::npos &&
+	if ((pos = path.find(L'%', start)) != std::wstring::npos &&
 		path.find(L'%', pos + 2) != std::wstring::npos)
 	{
 		DWORD bufSize = 4096;
@@ -129,7 +127,7 @@ void ExpandEnvironmentVariables(std::wstring& path)
 			}
 		}
 
-		if ((pos = path.find(L'%')) != std::wstring::npos &&
+		if ((pos = path.find(L'%', start)) != std::wstring::npos &&
 			path.find(L'%', pos + 2) != std::wstring::npos)
 		{
 			// Expand the environment variables.

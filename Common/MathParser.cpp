@@ -12,8 +12,6 @@
 
 #include <string>
 
-namespace MathParser {
-
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
@@ -36,7 +34,6 @@ enum class Operator : uint8_t
 	Multiplication,
 	Division,
 	Modulo,
-	UNK,
 	BitwiseXOR,
 	BitwiseNOT,
 	BitwiseAND,
@@ -83,8 +80,9 @@ struct Operation
 
 struct Function
 {
-	WCHAR* name;
-	SingleArgFunction proc;
+	const WCHAR* name;
+	SingleArgFunction singleArgProc;
+	MultiArgFunction multiArgProc;
 	BYTE length;
 };
 
@@ -132,32 +130,32 @@ enum {
 
 static Function g_Functions[NUM_FUNCS] =
 {
-	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
-	{ L"atan", &atan, 4 },                         // FUNC_ATAN
-	{ L"cos", &cos, 3 },                           // FUNC_COS
-	{ L"sin", &sin, 3 },                           // FUNC_SIN
-	{ L"tan", &tan, 3 },                           // FUNC_TAN
-	{ L"abs", &fabs, 3 },                          // FUNC_ABS
-	{ L"exp", &exp, 3 },                           // FUNC_EXP
-	{ L"ln", &log, 2 },                            // FUNC_LN
-	{ L"log", &log10, 3 },                         // FUNC_LOG
-	{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
-	{ L"frac", &frac, 4 },                         // FUNC_FRAC
-	{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
-	{ L"floor", &floor, 5 },                       // FUNC_FLOOR
-	{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
-	{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
-	{ L"asin", &asin, 4 },                         // FUNC_ASIN
-	{ L"acos", &acos, 4 },                         // FUNC_ACOS
-	{ L"rad", &rad, 3 },                           // FUNC_RAD
-	{ L"deg", &deg, 3 },                           // FUNC_DEG
-	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
-	{ L"neg", &neg, 3 },                           // FUNC_NEG
-	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
-	{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
-	{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
-	{ L"e", nullptr, 1 },                          // FUNC_E
-	{ L"pi", nullptr, 2 }                          // FUNC_PI
+	{ L"atan2", nullptr, &ATan2, 5 },              // FUNC_ATAN2
+	{ L"atan", &atan, nullptr, 4 },                // FUNC_ATAN
+	{ L"cos", &cos, nullptr, 3 },                  // FUNC_COS
+	{ L"sin", &sin, nullptr, 3 },                  // FUNC_SIN
+	{ L"tan", &tan, nullptr, 3 },                  // FUNC_TAN
+	{ L"abs", &fabs, nullptr, 3 },                 // FUNC_ABS
+	{ L"exp", &exp, nullptr, 3 },                  // FUNC_EXP
+	{ L"ln", &log, nullptr, 2 },                   // FUNC_LN
+	{ L"log", &log10, nullptr, 3 },                // FUNC_LOG
+	{ L"sqrt", &sqrt, nullptr, 4 },                // FUNC_SQRT
+	{ L"frac", &frac, nullptr, 4 },                // FUNC_FRAC
+	{ L"trunc", &trunc, nullptr, 5 },              // FUNC_TRUNC
+	{ L"floor", &floor, nullptr, 5 },              // FUNC_FLOOR
+	{ L"ceil", &ceil, nullptr, 4 },                // FUNC_CEIL
+	{ L"round", nullptr, &round, 5 },              // FUNC_ROUND
+	{ L"asin", &asin, nullptr, 4 },                // FUNC_ASIN
+	{ L"acos", &acos, nullptr, 4 },                // FUNC_ACOS
+	{ L"rad", &rad, nullptr, 3 },                  // FUNC_RAD
+	{ L"deg", &deg, nullptr, 3 },                  // FUNC_DEG
+	{ L"sgn", &sgn, nullptr, 3 },                  // FUNC_SGN
+	{ L"neg", &neg, nullptr, 3 },                  // FUNC_NEG
+	{ L"min", nullptr, &Min, 3 },                  // FUNC_MIN
+	{ L"max", nullptr, &Max, 3 },                  // FUNC_MAX
+	{ L"clamp", nullptr, &Clamp, 5 },              // FUNC_CLAMP
+	{ L"e", nullptr, nullptr, 1 },                 // FUNC_E
+	{ L"pi", nullptr, nullptr, 2 }                 // FUNC_PI
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -182,7 +180,6 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 	4, // Operator::Multiplication
 	4, // Operator::Division
 	4, // Operator::Modulo
-	4, // Operator::UNK
 	5, // Operator::BitwiseXOR
 	5, // Operator::BitwiseNOT
 	5, // Operator::BitwiseAND
@@ -245,7 +242,13 @@ const WCHAR* eUnknFunc = L"\"%s\" is unknown";
 const WCHAR* eLogicErr = L"Logical expression error";
 const WCHAR* eInvPrmCnt = L"Invalid function parameter count";
 
-const WCHAR* Check(const WCHAR* formula)
+MathParser::MathParser(GetValueFunc getValue, void* getValueContext) :
+	m_GetValue(getValue),
+	m_GetValueContext(getValueContext)
+{
+}
+
+const WCHAR* MathParser::Check(const WCHAR* formula) const
 {
 	int brackets = 0;
 
@@ -266,7 +269,7 @@ const WCHAR* Check(const WCHAR* formula)
 	return (brackets != 0) ? eBrackets : nullptr;
 }
 
-const WCHAR* CheckedParse(const WCHAR* formula, double* result)
+const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) const
 {
 	const WCHAR* error = Check(formula);
 	if (!error)
@@ -276,10 +279,16 @@ const WCHAR* CheckedParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-const WCHAR* Parse(
-	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext)
+const WCHAR* MathParser::Parse(const WCHAR* formula, double* result, ParseMode mode, const WCHAR** parseEnd) const
 {
 	static WCHAR errorBuffer[128];
+	if (parseEnd) *parseEnd = formula;
+	if (mode == ParseMode::MatchingClosingBracket)
+	{
+		const WCHAR* current = formula;
+		while (*current == L' ' || *current == L'\t' || *current == L'\n') ++current;
+		if (*current != L'(') return eSyntax;
+	}
 
 	if (!*formula)
 	{
@@ -306,7 +315,12 @@ const WCHAR* Parse(
 		case Token::Error:
 			return eSyntax;
 
-		case Token::Final:
+	case Token::Final:
+			if (mode == ParseMode::MatchingClosingBracket)
+			{
+				return eBrackets;
+			}
+
 			if ((error = CalcToObr(parser)) != nullptr)
 			{
 				return error;
@@ -319,6 +333,7 @@ const WCHAR* Parse(
 			{
 				// Done!
 				*result = parser.numStack[0];
+				if (parseEnd) *parseEnd = lexer.string;
 				return nullptr;
 			}
 			break;
@@ -340,13 +355,23 @@ const WCHAR* Parse(
 			case Operator::ClosingBracket:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
+
+					if (mode == ParseMode::MatchingClosingBracket && parser.opTop == 0)
+					{
+						if ((error = CalcToObr(parser)) != nullptr) return error;
+						if (parser.opTop != -1 || parser.valTop != 0) return eInternal;
+
+						*result = parser.numStack[0];
+						if (parseEnd) *parseEnd = lexer.string;
+						return nullptr;
+					}
 				}
 				break;
 
 			case Operator::Comma:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
-						
+
 					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
 					{
 						parser.opStack[++parser.opTop] = g_BrOp;
@@ -434,7 +459,7 @@ const WCHAR* Parse(
 				else
 				{
 					double dblval;
-					if (getValue && getValue(lexer.name, (int)lexer.nameLen, &dblval, getValueContext))
+					if (m_GetValue && m_GetValue(lexer.name, (int)lexer.nameLen, &dblval, m_GetValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;
@@ -461,14 +486,14 @@ static const WCHAR* Calc(Parser& parser)
 	// Multi-argument function
 	if (op.type == Operator::Conditional)
 	{
-		return nullptr; 
+		return nullptr;
 	}
 	else if (op.type == Operator::MultiArgFunction)
 	{
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.numStack[parser.valTop + 1], &res);
+		const WCHAR* error = g_Functions[op.funcIndex].multiArgProc(paramcnt, &parser.numStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.numStack[++parser.valTop] = res;
@@ -489,7 +514,7 @@ static const WCHAR* Calc(Parser& parser)
 	}
 	else if (op.type == Operator::SingleArgFunction)
 	{
-		res = (*(SingleArgFunction)g_Functions[op.funcIndex].proc)(right);
+		res = g_Functions[op.funcIndex].singleArgProc(right);
 	}
 	else
 	{
@@ -559,21 +584,6 @@ static const WCHAR* Calc(Parser& parser)
 
 		case Operator::Modulo:
 			res = fmod(left, right);
-			break;
-
-		case Operator::UNK:
-			if (left <= 0)
-			{
-				res = 0.0;
-			}
-			else if (right == 0.0)
-			{
-				return eInfinity;
-			}
-			else
-			{
-				res = ceil(left / right);
-			}
 			break;
 
 		case Operator::BitwiseXOR:
@@ -767,7 +777,6 @@ CharType GetCharType(WCHAR ch)
 	case L'<':
 	case L'>':
 	case L'%':
-	case L'$':
 	case L',':
 	case L'?':
 	case L':':
@@ -782,13 +791,13 @@ CharType GetCharType(WCHAR ch)
 
 	// Make sure this is the last character test before "Unknown".
 	// This will catch all characters with graphical representation and treat them as a "Letter".
-	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'";
+	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'$";
 	if (iswgraph(ch)) return CharType::Letter;
 
 	return CharType::Unknown;
 }
 
-bool IsDelimiter(WCHAR ch)
+bool MathParser::IsDelimiter(WCHAR ch) const
 {
 	CharType type = GetCharType(ch);
 	return type == CharType::MinusSymbol || type == CharType::Symbol || type == CharType::Separator;
@@ -830,9 +839,6 @@ Operator GetOperator(const WCHAR* str)
 
 	case L'%':
 		return Operator::Modulo;
-
-	case L'$':
-		return Operator::UNK;
 
 	case L'^':
 		return Operator::BitwiseXOR;
@@ -991,4 +997,3 @@ static const WCHAR* ATan2(int paramcnt, double* args, double* result)
 	return eInvPrmCnt;
 }
 
-}  // namespace MathParser

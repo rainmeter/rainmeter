@@ -9,6 +9,7 @@
 #include "GameMode.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
 #include "DialogNewSkin.h"
 #include "Logger.h"
@@ -22,13 +23,13 @@ struct GameHash
 {
 	std::size_t operator()(std::wstring const& str) const noexcept
 	{
-		return 17ULL * 31ULL + std::hash<std::wstring>()(str);
+		return 17 * 31 + std::hash<std::wstring>()(str);
 	}
 };
 }
 
-const UINT GameMode::s_TimerInterval = 500U;
-const UINT_PTR GameMode::s_TimerEventID = 1000ULL;
+const UINT GameMode::s_TimerInterval = 500;
+const UINT_PTR GameMode::s_TimerEventID = 1000;
 
 GameMode::GameMode() :
 	m_State(State::Disabled),
@@ -112,9 +113,9 @@ void GameMode::SetOnStartAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0U && layouts.size() > 0ULL)
+	if (index > 0 && layouts.size() > 0)
 	{
-		action = layouts[(size_t)index - 1ULL];
+		action = layouts[(size_t)index - 1];
 	}
 	SetOnStartAction(action);  // Can be empty (Unload all skins)
 }
@@ -128,9 +129,9 @@ void GameMode::SetOnStopAction(UINT index)
 {
 	std::wstring action;
 	const auto& layouts = GetRainmeter().m_Layouts;
-	if (index > 0U && layouts.size() > 0ULL)
+	if (index > 0 && layouts.size() > 0)
 	{
-		action = layouts[(size_t)index - 1ULL];
+		action = layouts[(size_t)index - 1];
 	}
 	SetOnStopAction(action);  // Can be empty (Load current layout or @Backup)
 }
@@ -403,6 +404,7 @@ void GameMode::EnterGameMode()
 		// Close dialogs if open
 		DialogManage::CloseDialog();
 		DialogAbout::CloseDialog();
+		DialogDebug::CloseDialog();
 		DialogNewSkin::CloseDialog();
 
 		Rainmeter& rainmeter = GetRainmeter();

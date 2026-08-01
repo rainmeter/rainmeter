@@ -7,96 +7,95 @@
 
 #include "StdAfx.h"
 #include "Player.h"
+#include "../../Common/CharacterEntityReference.h"
+#include "../../Common/StringUtil.h"
 
-/*
-** Constructor.
-**
-*/
+std::wstring EncodeUrl(const std::wstring& url)
+{
+	// Based on http://www.zedwood.com/article/111/cpp-urlencode-function
+	const WCHAR* urlChars = L" !*'();:@&=+$,/?#[]";
+	std::wstring ret;
+
+	for (size_t i = 0, max = url.length(); i < max; ++i)
+	{
+		if (wcschr(urlChars, url[i]))
+		{
+			// If reserved character
+			ret.append(L"%");
+			WCHAR buffer[3] = { 0 };
+			_snwprintf_s(buffer, 3, L"%.2X", url[i]);
+			ret.append(buffer);
+		}
+		else
+		{
+			ret.push_back(url[i]);
+		}
+	}
+	return ret;
+}
+
 Player::Player() :
 	m_Initialized(false),
-	m_InstanceCount(0U),
-	m_UpdateCount(0U),
-	m_TrackCount(0U),
+	m_InstanceCount(0),
+	m_UpdateCount(0),
+	m_TrackCount(0),
 	m_Measures(0),
 	m_State(),
-	m_Number(0U),
-	m_Year(0U),
+	m_Number(0),
+	m_Year(0),
 	m_Shuffle(false),
 	m_Repeat(false),
-	m_Duration(0U),
-	m_Position(0U),
-	m_Rating(0U),
-	m_Volume(0U),
-	m_InternetThread(nullptr)
+	m_Duration(0),
+	m_Position(0),
+	m_Rating(0),
+	m_Volume(0),
+	m_FetchLyricsTask(nullptr)
 {
 	// Get temporary file for cover art
 	WCHAR buffer[MAX_PATH] = { 0 };
 	GetTempPath(_countof(buffer), buffer);
-	GetTempFileName(buffer, L"jpg", 0U, buffer);
+	GetTempFileName(buffer, L"jpg", 0, buffer);
 	m_TempCoverPath = buffer;
 }
 
-/*
-** Destructor.
-**
-*/
 Player::~Player()
 {
 	DeleteFile(m_TempCoverPath.c_str());
 
-	if (m_InternetThread)
+	if (m_FetchLyricsTask)
 	{
-		TerminateThread(m_InternetThread, 0UL);
+		m_FetchLyricsTask->AbortWhenPossible();
+		m_FetchLyricsTask = nullptr;
 	}
 }
 
-/*
-** Called during initialization of main measure.
-**
-*/
 void Player::AddInstance()
 {
 	++m_InstanceCount;
 }
 
-/*
-** Called during destruction of main measure.
-**
-*/
 void Player::RemoveInstance()
 {
-	if (--m_InstanceCount == 0U)
+	if (--m_InstanceCount == 0)
 	{
 		delete this;
 	}
 }
 
-/*
-** Called during initialization of any measure.
-**
-*/
 void Player::AddMeasure(INT type)
 {
 	m_Measures |= type;
 }
 
-/*
-** Called during update of main measure.
-**
-*/
 void Player::UpdateMeasure()
 {
 	if (++m_UpdateCount >= m_InstanceCount)
 	{
 		UpdateData();
-		m_UpdateCount = 0U;
+		m_UpdateCount = 0;
 	}
 }
 
-/*
-** Default implementation for getting cover.
-**
-*/
 void Player::FindCover()
 {
 	TagLib::FileRef fr(m_FilePath.c_str(), false);
@@ -117,66 +116,64 @@ void Player::FindCover()
 	}
 }
 
-/*
-** Default implementation for getting lyrics.
-**
-*/
 void Player::FindLyrics()
 {
-	if (!m_InternetThread)
-	{
-		m_Lyrics.clear();
+	// This will be leaked on quit, but that's not a problem.
+	static HINTERNET s_InternetHandle = InternetOpen(L"Rainmeter NowPlaying.dll", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 
-		unsigned int id = 0U;
-		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0U, LyricsThreadProc, this, 0U, &id);
-		if (thread)
-		{
-			m_InternetThread = thread;
-		}
-	}
+	m_Lyrics.clear();
+
+	std::wstring url = L"https://www.letras.mus.br/winamp.php?musica=";
+	url += EncodeUrl(m_Title);
+	url += L"&artista=";
+	url += EncodeUrl(m_Artist);
+
+	m_FetchLyricsTask = Net::FetchTask::Create((void*)this, std::move(url), {}, s_InternetHandle, INTERNET_FLAG_RESYNCHRONIZE, LyricsFetchResultCallback);
 }
 
-/*
-** Thread to download lyrics.
-**
-*/
-unsigned __stdcall Player::LyricsThreadProc(void* pParam)
+void Player::LyricsFetchResultCallback(const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 {
-	Player* player = (Player*)pParam;
-
-	std::wstring lyrics;
-	bool found = false;
-
-	while (true)
+	auto player = (Player*)requestor;
+	if (player->m_FetchLyricsTask == fetchTask)
 	{
-		UINT beforeCount = player->GetTrackCount();
-		found = Lyrics::GetFromInternet(player->m_Artist, player->m_Title, lyrics);
-		UINT afterCount = player->GetTrackCount();
-
-		if (beforeCount == afterCount)
-		{
-			// We're on the same track
-			break;
-		}
-
-		// Track changed, try again
+		player->HandleLyricsFetchResult(data, dataSize, errorCode);
+		player->m_FetchLyricsTask = nullptr;
 	}
-
-	if (found)
-	{
-		player->m_Lyrics = lyrics;
-	}
-
-	CloseHandle(player->m_InternetThread);
-	player->m_InternetThread = nullptr;
-
-	return 0U;
 }
 
-/*
-** Clear track information.
-**
-*/
+void Player::HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode)
+{
+	if (!data || dataSize < 100) return;
+
+	std::wstring body = StringUtil::WidenUTF8((const char*)data, (int)dataSize);
+	if (body.empty()) return;
+
+	std::wstring::size_type pos = body.find(L"\"letra-cnt\"");
+	pos = body.find(L"<p>", pos);
+	if (pos == std::wstring::npos) return;
+
+	pos += 6;
+	body.erase(0, pos);
+
+	pos = body.find(L"</div>");
+	pos -= 9;
+	body.resize(pos);
+
+	CharacterEntityReference::Decode(body, 2, false);
+
+	while ((pos = body.find(L"<br/>"), pos) != std::wstring::npos)
+	{
+		body.replace(pos, 5, L"\n");
+	}
+
+	while ((pos = body.find(L"</p><p>"), pos) != std::wstring::npos)
+	{
+		body.replace(pos, 7, L"\n\n");
+	}
+
+	m_Lyrics = body;
+}
+
 void Player::ClearData(bool all)
 {
 	m_State = STATE_STOPPED;
@@ -187,15 +184,15 @@ void Player::ClearData(bool all)
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
-	m_Duration = 0U;
-	m_Position = 0U;
-	m_Rating = 0U;
-	m_Number = 0U;
-	m_Year = 0U;
+	m_Duration = 0;
+	m_Position = 0;
+	m_Rating = 0;
+	m_Number = 0;
+	m_Year = 0;
 
 	if (all)
 	{
-		m_Volume = 0U;
+		m_Volume = 0;
 		m_Shuffle = false;
 		m_Repeat = false;
 	}

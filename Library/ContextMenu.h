@@ -8,6 +8,7 @@
 #ifndef RM_LIBRARY_CONTEXTMENU_H
 #define RM_LIBRARY_CONTEXTMENU_H
 
+#include <vector>
 #include <Windows.h>
 
 class Skin;
@@ -21,10 +22,11 @@ public:
 	ContextMenu(const ContextMenu& other) = delete;
 	ContextMenu& operator=(ContextMenu other) = delete;
 
-	bool IsMenuActive() { return m_MenuActive; }
+	bool IsMenuActive() { return m_ActiveMenu != nullptr; }
 
-	void ShowMenu(POINT pos, Skin* skin);
+	void ShowMenu(POINT pos, Skin* skin, HWND parentWindow = nullptr);
 	void ShowSkinCustomMenu(POINT pos, Skin* skin);
+	void ShowSkinSelectionMenu(POINT pos, Skin* skin, HWND parentWindow);
 
 	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
@@ -32,13 +34,15 @@ public:
 	static HMENU CreateGameModeOnStopMenu();
 
 private:
-	static void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
+	void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND commandWindow = nullptr);
 
 	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
+	static HMENU CreateSkinSettingsMenu(const std::vector<Skin*>& skins);
+	static HMENU CreateSkinSelectionMenu();
 	static void AppendSkinCustomMenu(
 		Skin* skin, int index, HMENU menu, bool standaloneMenu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
-	
+
 	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateSkinsMenuRecursive(skinMenu, 0, false); }
 	static int CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavoriteMenu);
 
@@ -46,9 +50,7 @@ private:
 
 	static void CreateFavoritesMenu(HMENU favoriteMenu) { CreateSkinsMenuRecursive(favoriteMenu, 0, true); }
 
-	static HMENU CreateGameModeMenu();
-
-	bool m_MenuActive;
+	HMENU m_ActiveMenu;
 };
 
 #endif

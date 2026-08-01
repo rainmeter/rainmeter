@@ -19,8 +19,6 @@
 #include <d2d1_1.h>
 #include <d2d1helper.h>
 #include <dwrite_1.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 #include <Shlobj.h>
 #include <Uxtheme.h>
 #include <wincodec.h>
@@ -32,6 +30,7 @@
 #include <stdint.h>
 
 #include <string>
-#include <unordered_map>
+
+#include "ankerl/unordered_dense.h"
 
 #endif

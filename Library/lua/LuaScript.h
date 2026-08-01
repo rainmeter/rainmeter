@@ -10,10 +10,31 @@
 
 #include "LuaHelper.h"
 
+class MathParser;
+
+struct LuaResult
+{
+	static LuaResult Success() { return {}; }
+
+	static LuaResult Fail(std::wstring error)
+	{
+		LuaResult result;
+		result.error = std::make_unique<std::wstring>(std::move(error));
+		return std::move(result);
+	}
+
+	const bool DidSucceed() { return !error; }
+	const bool DidFail() { return !!error; }
+	const wchar_t* GetError() { return error ? error->c_str() : L""; }
+
+private:
+	std::unique_ptr<std::wstring> error;
+};
+
 class LuaScript
 {
 public:
-	LuaScript();
+	LuaScript(const MathParser& mathParser);
 	~LuaScript();
 
 	bool Initialize(const std::wstring& scriptFile);
@@ -24,12 +45,12 @@ public:
 	int GetRef() { return m_Ref; }
 	bool IsUnicode() const { return m_Unicode; }
 
-	LuaHelper::UnicodeScript GetState() { return LuaHelper::GetState(m_State, m_Unicode, m_Ref, m_File); }
+	LuaStateScope GetState() { return LuaStateScope(m_State, m_Unicode, m_Ref); }
 
 	bool IsFunction(const char* funcName);
-	void RunFunction(const char* funcName);
-	int RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
-	void RunString(const std::wstring& str);
+	LuaResult RunFunction(const char* funcName);
+	LuaResult RunFunctionWithReturn(const char* funcName, int& valueType, double& numValue, std::wstring& strValue);
+	LuaResult RunString(const std::wstring& str);
 	bool RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue);
 	bool GetLuaVariable(const std::wstring& varName, std::wstring& strValue);
 
@@ -43,6 +64,7 @@ protected:
 	bool m_Unicode;
 	int m_Ref;
 	lua_State* m_State;
+	const MathParser& m_MathParser;
 };
 
 #endif

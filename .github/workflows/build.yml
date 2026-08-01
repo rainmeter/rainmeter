@@ -1,28 +1,76 @@
 name: build
 
-on: push
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - 'RainLexer/**'
+      - '.github/workflows/*rainlexer*'
 
 jobs:
-  build:
-    runs-on: windows-2025
+  rainmeter:
+    if: "!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip')"
+    strategy:
+      matrix:
+        arch: [32, 64]
+    runs-on: windows-2025-vs2026
     steps:
-      - name: Install NSIS
-        run: choco install nsis --version=3.10.0 --no-progress
-
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Run Build.bat
+      - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: |
-          cd Build
-          Build.bat pre 0.0.0.0
-        shell: cmd
-        env:
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion include-tests -MSBuildTarget build
+        shell: pwsh
+
+      - name: Test 64-bit Rainmeter
+        if: ${{ matrix.arch == 64 }}
+        run: .\Build\Build.ps1 test-64
+        shell: pwsh
+
+      - name: Upload ${{ matrix.arch }}-bit build
+        uses: actions/upload-artifact@v7
+        with:
+          name: BuildOut-Release${{ matrix.arch }}
+          path: |
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
+          if-no-files-found: error
+
+  installer:
+    needs: rainmeter
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Download 32-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release32
+          path: BuildOut/Release32
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release64
+          path: BuildOut/Release64
+
+      - name: Install NSIS
+        uses: ./.github/actions/install-nsis
+
+      - name: Build installer
+        run: |
+          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+          .\Build\Build.ps1 installer $buildVersion
+        shell: pwsh
 
       - name: Upload installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
+        id: upload-installer
         with:
-          name: Rainmeter
           path: Build/Rainmeter-*.exe
+          archive: false
           if-no-files-found: error

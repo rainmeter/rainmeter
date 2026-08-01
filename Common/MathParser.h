@@ -12,17 +12,31 @@
 
 #include <Windows.h>
 
-namespace MathParser
+class MathParser
 {
+public:
 	typedef bool (*GetValueFunc)(const WCHAR* str, int len, double* value, void* context);
 
-	const WCHAR* Check(const WCHAR* formula);
-	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
-	const WCHAR* Parse(
-		const WCHAR* formula, double* result,
-		GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
+	MathParser(GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
 
-	bool IsDelimiter(WCHAR ch);
+	const WCHAR* Check(const WCHAR* formula) const;
+	const WCHAR* CheckedParse(const WCHAR* formula, double* result) const;
+
+	enum class ParseMode
+	{
+		EntireString,
+
+		// Parse a parenthesized formula and stop immediately after its outer closing bracket.
+		MatchingClosingBracket
+	};
+
+	const WCHAR* Parse(const WCHAR* formula, double* result, ParseMode mode = ParseMode::EntireString, const WCHAR** parseEnd = nullptr) const;
+
+	bool IsDelimiter(WCHAR ch) const;
+
+private:
+	GetValueFunc m_GetValue;
+	void* m_GetValueContext;
 };
 
 #endif

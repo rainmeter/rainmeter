@@ -33,7 +33,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_Bitmap(nullptr),
 	m_BitmapProcessed(nullptr),
 	m_Skin(skin),
-	m_Name(name ? name : L"ImageName"), 
+	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_DisableTransform(disableTransform),
 	m_Options()
@@ -47,17 +47,41 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::DisposeImage()
 {
-	if (m_Bitmap)
+	m_Bitmap.reset();
+	m_BitmapProcessed.reset();
+}
+
+void GeneralImage::InvalidateDeviceResources()
+{
+	if (m_Bitmap && m_Bitmap->GetBitmap())
 	{
-		delete m_Bitmap;
-		m_Bitmap = nullptr;
+		m_Bitmap->GetBitmap()->InvalidateDeviceResources();
 	}
 
-	if (m_BitmapProcessed)
+	if (m_BitmapProcessed && m_BitmapProcessed->GetBitmap())
 	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
+		m_BitmapProcessed->GetBitmap()->InvalidateDeviceResources();
 	}
+}
+
+bool GeneralImage::IsLoaded()
+{
+	return GetImage() != nullptr;
+}
+
+Gfx::Bitmap* GeneralImage::GetImage()
+{
+	Gfx::Bitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+	if (bitmap && bitmap->HasDeviceResources()) return bitmap;
+
+	if (m_ImageName.empty() || !LoadImage(m_ImageName, m_Options.m_CreateAlphaMask))
+	{
+		return nullptr;
+	}
+
+	return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
 }
 
 void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
@@ -73,16 +97,16 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			const auto tokens = ConfigParser::Tokenize2(crop, L',', PairedPunctuation::Parentheses);
+			const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(crop, L',', PairedPunctuation::Parentheses);
 			const size_t tokSize = tokens.size();
-			if (tokSize > 3ULL)
+			if (tokSize > 3)
 			{
 				m_Options.m_Crop.left   = (FLOAT)parser.ParseInt(tokens[0].c_str(), 0);
 				m_Options.m_Crop.top    = (FLOAT)parser.ParseInt(tokens[1].c_str(), 0);
 				m_Options.m_Crop.right  = (FLOAT)parser.ParseInt(tokens[2].c_str(), 0) + m_Options.m_Crop.left;
 				m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(tokens[3].c_str(), 0) + m_Options.m_Crop.top;
 
-				if (tokSize > 4ULL)
+				if (tokSize > 4)
 				{
 					m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(tokens[4].c_str(), 0);
 				}
@@ -205,8 +229,10 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
-bool GeneralImage::LoadImage(const std::wstring& imageName)
+bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)
 {
+	m_ImageName = imageName;
+
 	if (!m_Skin || imageName.empty())
 	{
 		DisposeImage();
@@ -223,14 +249,17 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		filename += L".png";
 	}
 
-	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
+		m_Options.m_CreateAlphaMask == createAlphaMask &&
+		!m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
 	}
 
 	ImageOptions info;
-	Gfx::D2DBitmap::GetFileInfo(filename, &info);
+	Gfx::Bitmap::GetFileInfo(filename, &info);
+	info.m_CreateAlphaMask = createAlphaMask;
 
 	if (!info.isValid())
 	{
@@ -240,10 +269,10 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		return false;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(info);
-	if (!handle)
+	auto handle = GetImageCache().Get(info);
+	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
-		auto bitmap = new Gfx::D2DBitmap(filename);
+		auto bitmap = new Gfx::Bitmap(filename, 0, createAlphaMask);
 
 		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
 		if (SUCCEEDED(hr))
@@ -263,11 +292,12 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 
 	if (handle)
 	{
-		m_Bitmap = handle;
+		m_Bitmap = std::move(handle);
 
 		m_Options.m_Path = info.m_Path;
 		m_Options.m_FileSize = info.m_FileSize;
 		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = createAlphaMask;
 
 		ApplyTransforms();
 		return true;
@@ -276,7 +306,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 	return false;
 }
 
-D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const
+D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const
 {
 	const FLOAT imageW = (FLOAT)bitmap->GetWidth();
 	const FLOAT imageH = (FLOAT)bitmap->GetHeight();
@@ -343,18 +373,23 @@ D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2D
 
 void GeneralImage::ApplyTransforms()
 {
-	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+	if (!m_Bitmap) return;
 
-	if (m_BitmapProcessed)
+	auto* bitmap = m_Bitmap->GetBitmap();
+	if (!HasActiveTransforms(bitmap))
 	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
+		m_BitmapProcessed.reset();
+		return;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
-	if (!handle)
+	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options &&
+		m_BitmapProcessed->GetBitmap()->HasDeviceResources()) return;
+
+	m_BitmapProcessed.reset();
+
+	auto handle = GetImageCache().Get(m_Options);
+	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
-		auto* bitmap = m_Bitmap->GetBitmap();
 		auto& canvas = m_Skin->GetCanvas();
 		auto* stream = bitmap->CreateEffectStream();
 
@@ -410,8 +445,32 @@ void GeneralImage::ApplyTransforms()
 
 	if (handle)
 	{
-		m_BitmapProcessed = handle;
+		m_BitmapProcessed = std::move(handle);
 	}
+}
+
+bool GeneralImage::HasActiveTransforms(Gfx::Bitmap* bitmap) const
+{
+	if (m_Options.m_UseExifOrientation)
+	{
+		const int orientation = bitmap->GetOrientation();
+		if (orientation >= 2 && orientation <= 8)
+		{
+			return true;
+		}
+	}
+
+	const auto& crop = m_Options.m_Crop;
+	if ((crop.right != -1.0f || crop.left != -1.0f || crop.top != -1.0f || crop.bottom != -1.0f) &&
+		crop.right - crop.left >= 0.0f && crop.bottom - crop.top >= 0.0f)
+	{
+		return true;
+	}
+
+	return m_Options.m_GreyScale ||
+		!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix) ||
+		m_Options.m_Flip != Gfx::Util::FlipType::None ||
+		m_Options.m_Rotate != 0.0f;
 }
 
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)

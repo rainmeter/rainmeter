@@ -8,7 +8,7 @@
 #ifndef RM_GFX_RENDERTEXTURE_H__
 #define RM_GFX_RENDERTEXTURE_H__
 
-#include "D2DBitmap.h"
+#include "Bitmap.h"
 #include "Canvas.h"
 
 namespace Gfx {
@@ -19,10 +19,14 @@ public:
 	RenderTexture(Canvas& canvas, UINT width, UINT height);
 
 	void Resize(Canvas& canvas, UINT width, UINT height);
-	D2DBitmap* GetBitmap() { return &m_Bitmap; }
+	void InvalidateDeviceResources();
+
+	Bitmap* GetBitmap() { return &m_Bitmap; }
 
 private:
-	D2DBitmap m_Bitmap;
+	void CreateBitmap(Canvas& canvas, Bitmap& bitmap, UINT width, UINT height);
+
+	Bitmap m_Bitmap;
 };
 
 } // namespace Gfx

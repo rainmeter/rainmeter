@@ -59,10 +59,6 @@ MeasureCPU::~MeasureCPU()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
@@ -82,10 +78,6 @@ void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the current CPU utilization value.
-**
-*/
 void MeasureCPU::UpdateValue()
 {
 	if (m_Processor == 0)
@@ -109,7 +101,7 @@ void MeasureCPU::UpdateValue()
 
 		do
 		{
-			ULONG size = 0UL;
+			ULONG size = 0;
 
 			status = c_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
 			if (status == STATUS_INFO_LENGTH_MISMATCH)
@@ -172,10 +164,6 @@ void MeasureCPU::UpdateValue()
 	}
 }
 
-/*
-** Calculates the current CPU utilization value.
-**
-*/
 void MeasureCPU::CalcUsage(double idleTime, double systemTime)
 {
 	// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)

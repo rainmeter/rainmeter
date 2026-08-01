@@ -29,6 +29,7 @@ protected:
 
 private:
 	std::wstring m_String;
+	std::wstring m_StringValue;
 };
 
 #endif

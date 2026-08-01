@@ -9,22 +9,45 @@
 #define RM_GFX_FONTCOLLECTION_H_
 
 #include <Windows.h>
+#include <vector>
+#include <dwrite_1.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
-// Interface for a collection of fonts that may or may not be installed on the system.
-class __declspec(novtable) FontCollection
+// Wraps the DirectWrite IDWriteFontCollection for use with Canvas.
+class FontCollection final
 {
 public:
-	virtual ~FontCollection();
+	~FontCollection();
 
 	FontCollection(const FontCollection& other) = delete;
+	FontCollection& operator=(FontCollection other) = delete;
 
-	// Adds a file to the collection. Returns true if the file was successfully added.
-	virtual bool AddFile(const WCHAR* file) = 0;
+	bool AddFile(const WCHAR* file);
+
+	bool InitializeCollection();
+
+	bool GetSystemFontFamilies(UINT32& familyCount, std::wstring& families);
+	bool GetFontFamilies(UINT32& familyCount, std::wstring& families);
 
 protected:
 	FontCollection();
+
+private:
+	friend class Canvas;
+	friend class TextFormat;
+	friend class TextInlineFormat_Face;
+
+	void Dispose();
+
+	bool GetFontFamiliesFromCollection(IDWriteFontCollection* collection, UINT32& familyCount,
+		std::wstring & families, bool isSystemCollection);
+
+	std::vector<IDWriteFontFile*> m_FileReferences;
+	IDWriteFontCollection* m_Collection;
+
+	static Microsoft::WRL::ComPtr<IDWriteFontCollection> c_SystemCollection;
 };
 
 }  // namespace Gfx

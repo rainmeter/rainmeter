@@ -26,9 +26,11 @@ public:
 	virtual int GetY(bool abs = false);
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
-	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gfx::Canvas& canvas);
+
+	void SetText(const WCHAR* text) { m_Text = text; }
 
 	static void InitializeStatic();
 	static void FinalizeStatic();

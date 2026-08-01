@@ -43,10 +43,6 @@ WCHAR* GetCommandLineArguments()
 	return args;
 }
 
-/*
-** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
-**
-*/
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
 	// Prevent system error message boxes.

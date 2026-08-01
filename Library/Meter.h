@@ -26,10 +26,10 @@ public:
 
 	Meter(const Meter& other) = delete;
 
-	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-	void ReadContainerOptions(ConfigParser& parser) { ReadContainerOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources();
+	void ReadOptions(ConfigParser& parser);
+	void ReadContainerOptions(ConfigParser& parser);
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }
@@ -54,7 +54,7 @@ public:
 	bool IsContained() { return m_ContainerMeter != nullptr; }
 	bool IsContainer() { return m_ContainerItems.size() > 0; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
-	void UpdateContainer();
+	void ResizeContainerTextures();
 	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
 
 	void SetW(int w) { m_W = w; }
@@ -91,7 +91,7 @@ public:
 	bool IsMouseOver() { return m_MouseOver; }
 
 	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
-	
+
 	static void DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode);
 
 protected:
@@ -108,7 +108,7 @@ protected:
 		ALIGN_RIGHTCENTER,
 		ALIGN_CENTERCENTER
 	};
-	
+
 	enum METER_POSITION
 	{
 		POSITION_ABSOLUTE,

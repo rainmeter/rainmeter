@@ -26,11 +26,8 @@ MeterBar::~MeterBar()
 {
 }
 
-/*
-** Load the image or create the brush. If image is used get the dimensions
-** of the meter from it.
-**
-*/
+// Load the image or create the brush. If image is used get the dimensions
+// of the meter from it.
 void MeterBar::Initialize()
 {
 	Meter::Initialize();
@@ -42,7 +39,7 @@ void MeterBar::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth() + GetWidthPadding();
 			m_H = bitmap->GetHeight() + GetHeightPadding();
@@ -54,10 +51,12 @@ void MeterBar::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
+void MeterBar::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -98,10 +97,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterBar::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -112,10 +107,6 @@ bool MeterBar::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterBar::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -125,7 +116,7 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 	const FLOAT height = rect.bottom - rect.top;
 	const FLOAT border = (FLOAT)m_Border;
 
-	Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+	Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 
 	if (m_Orientation == VERTICAL)
 	{

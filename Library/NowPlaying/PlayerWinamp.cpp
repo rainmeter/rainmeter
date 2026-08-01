@@ -15,13 +15,9 @@ Player* PlayerWinamp::c_Player = nullptr;
 
 // This player retrieves data through the Winamp IPC interface.
 
-/*
-** Constructor.
-**
-*/
 PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_Window(nullptr),
-	m_LastCheckTime(0ULL),
+	m_LastCheckTime(0),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
@@ -29,10 +25,6 @@ PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerWinamp::~PlayerWinamp()
 {
 	c_Player = nullptr;
@@ -43,10 +35,6 @@ PlayerWinamp::~PlayerWinamp()
 	}
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerWinamp::Create(WINAMPTYPE type)
 {
 	if (!c_Player)
@@ -57,23 +45,19 @@ Player* PlayerWinamp::Create(WINAMPTYPE type)
 	return c_Player;
 }
 
-/*
-** Try to find Winamp periodically.
-**
-*/
 bool PlayerWinamp::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find Winamp window every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 
 		m_Window = FindWindow(L"Winamp v1.x", nullptr);
 		if (m_Window)
 		{
-			DWORD pID = 0UL;
+			DWORD pID = 0;
 			GetWindowThreadProcessId(m_Window, &pID);
 			m_WinampHandle = OpenProcess(PROCESS_VM_READ, FALSE, pID);
 
@@ -88,10 +72,6 @@ bool PlayerWinamp::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerWinamp::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
@@ -257,17 +237,17 @@ void PlayerWinamp::UpdateData()
 			}
 			else
 			{
-				m_Rating = 0U;
-				m_Duration = 0U;
+				m_Rating = 0;
+				m_Duration = 0;
 				m_CoverPath.clear();
 			}
 		}
 		else if (!m_PlayingStream)
 		{
-			if (m_Duration == 0U)
+			if (m_Duration == 0)
 			{
 				const int duration = (int)SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
-				m_Duration = (duration != -1) ? (UINT)duration : 0U;
+				m_Duration = (duration != -1) ? (UINT)duration : 0;
 			}
 
 			return;
@@ -291,8 +271,8 @@ void PlayerWinamp::UpdateData()
 		std::wstring::size_type pos = title.find(L" - ");
 		if (pos != std::wstring::npos)
 		{
-			m_Artist.assign(title, 0ULL, pos);
-			pos += 3ULL;  // Skip " - "
+			m_Artist.assign(title, 0, pos);
+			pos += 3;  // Skip " - "
 			m_Title.assign(title, pos, title.length() - pos);
 			m_Album.clear();
 
@@ -315,65 +295,37 @@ void PlayerWinamp::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerWinamp::Pause()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerWinamp::Play()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PLAY, 0);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerWinamp::Stop()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_STOP, 0);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
-void PlayerWinamp::Next() 
+void PlayerWinamp::Next()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerWinamp::Previous()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerWinamp::SetPosition(int position)
 {
 	position *= 1000; // To milliseconds
 	SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerWinamp::SetRating(int rating)
 {
 	if (rating < 0)
@@ -389,10 +341,6 @@ void PlayerWinamp::SetRating(int rating)
 	m_Rating = rating;
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerWinamp::SetVolume(int volume)
 {
 	// Winamp accepts volume in 0 - 255 range
@@ -400,10 +348,6 @@ void PlayerWinamp::SetVolume(int volume)
 	SendMessage(m_Window, WM_WA_IPC, (WPARAM)ceil(fVolume), IPC_SETVOLUME);
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerWinamp::SetShuffle(bool state)
 {
 	if (!m_PlayingStream)
@@ -413,10 +357,6 @@ void PlayerWinamp::SetShuffle(bool state)
 	}
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerWinamp::SetRepeat(bool state)
 {
 	if (!m_PlayingStream)
@@ -426,10 +366,6 @@ void PlayerWinamp::SetRepeat(bool state)
 	}
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerWinamp::ClosePlayer()
 {
 	if (m_WinampType == WA_WINAMP)
@@ -446,10 +382,6 @@ void PlayerWinamp::ClosePlayer()
 	}
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerWinamp::OpenPlayer(std::wstring& path)
 {
 	if (m_WinampType == WA_WINAMP)
@@ -461,35 +393,15 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
-			HKEY hKey = nullptr;
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-						 L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command",
-						 0,
-						 KEY_QUERY_VALUE,
-						 &hKey);
-
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
-			DWORD type = 0UL;
-
-			if (RegQueryValueEx(hKey,
-								nullptr,
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
+			const WCHAR* key = L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command";
+			WCHAR data[512];
+			DWORD size = sizeof(data);
+			DWORD type = 0;
+			if (RegGetValue(HKEY_LOCAL_MACHINE, key, nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
-				{
-					ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
-					path = data;
-				}
+				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
+				path = data;
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 		}
 		else
 		{

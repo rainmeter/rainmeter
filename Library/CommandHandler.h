@@ -21,6 +21,7 @@ enum class Bang
 	RefreshApp,
 	Redraw,
 	Update,
+	SetUpdate,
 	Hide,
 	Show,
 	Toggle,
@@ -56,6 +57,7 @@ enum class Bang
 	Move,
 	SetWindowPosition,
 	SetAnchor,
+	SetZoomFactor,
 	ZPos,
 	ChangeZPos,
 	ClickThrough,
@@ -95,6 +97,7 @@ enum class Bang
 	UnpauseMeasureGroup,
 	TogglePauseMeasureGroup,
 	UpdateMeasureGroup,
+	CommandMeasureGroup,
 	DeactivateConfigGroup,
 	ZPosGroup,
 	ClickThroughGroup,
@@ -111,6 +114,7 @@ enum class Bang
 	SetClip,
 	SetWallpaper,
 	About,
+	Debug,
 	Manage,
 	SkinMenu,
 	SkinCustomMenu,
@@ -142,6 +146,7 @@ public:
 	static void DoSetClipBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoAboutBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoDebugBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoManageBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin);
 	static void DoTrayMenuBang(std::vector<std::wstring>& args, Skin* skin);

@@ -16,6 +16,8 @@ namespace InputText
     {
         private bool ReadOptions(ExecuteBangParam param)
         {
+            param.SkinWindowHandle = rm.GetSkinWindow();
+
             // Get default options
             ReadOption("DefaultValue", param.Options);
             ReadOption("X", param.Options, true);
@@ -175,7 +177,7 @@ namespace InputText
                         // Assume that the parameter is the name of the variable
 
                         // Ask for input
-                        string sInput = GetUserInput(param.Options);
+                        string sInput = GetUserInput(param.SkinWindowHandle, param.Options);
 
                         // If the user cancelled out of the inputbox (ESC key, etc.), then abort
                         if (sInput == null)
@@ -200,7 +202,7 @@ namespace InputText
                         {
                             // Execute the line, but if there's a problem (error or they cancel the
                             // input textbox), then abort
-                            if (!ExecuteLine(param.Commands[i], param.Options, param.OverrideOptions[i]))
+                            if (!ExecuteLine(param.SkinWindowHandle, param.Commands[i], param.Options, param.OverrideOptions[i]))
                             {
                                 // Execute OnDismissAction if defined
                                 if (!String.IsNullOrEmpty(param.DismissAction))
@@ -218,7 +220,7 @@ namespace InputText
         #region This is all code custom to this plugin
 
         #region Parse the current command line
-        private bool ExecuteLine(string sLine, Dictionary<string, string> Options, Dictionary<string, string> Overrides)
+        private bool ExecuteLine(IntPtr SkinWindowHandle, string sLine, Dictionary<string, string> Options, Dictionary<string, string> Overrides)
         {
             // If this line contains a $UserInput$ token, then we need to do some extra
             // parsing
@@ -227,7 +229,7 @@ namespace InputText
                 try
                 {
                     // Get user input
-                    string sInput = GetUserInput(Options, Overrides);
+                    string sInput = GetUserInput(SkinWindowHandle, Options, Overrides);
                     if (sInput == null)
                     {
                         // API.Log(API.LogType.Debug, "InputText: Aborted, user cancelled text box");
@@ -260,12 +262,12 @@ namespace InputText
         private InputBox _InputBox = null;
         private object _InputBoxLocker = new object();
 
-        private string GetUserInput(Dictionary<string, string> Options)
+        private string GetUserInput(IntPtr WindowHandle, Dictionary<string, string> Options)
         {
             // No INI overrides provided, so create an empty list
-            return GetUserInput(Options, new Dictionary<string, string>());
+            return GetUserInput(WindowHandle, Options, new Dictionary<string, string>());
         }
-        private string GetUserInput(Dictionary<string, string> Options, Dictionary<string, string> Overrides)
+        private string GetUserInput(IntPtr WindowHandle, Dictionary<string, string> Options, Dictionary<string, string> Overrides)
         {
             InputBox input = null;
 
@@ -274,7 +276,7 @@ namespace InputText
                 if (this._IsFinalizing)
                     return null;
 
-                SkinWindow skin = new SkinWindow(rm);
+                SkinWindow skin = new SkinWindow(rm, WindowHandle);
 
                 // Create the form.  'InputBox' is a .NET form with a textbox and two button controls on it.
                 this._InputBox = new InputBox(skin);
@@ -390,8 +392,8 @@ namespace InputText
             string value = rm.ReadString(optionName, "");
             if (!string.IsNullOrEmpty(value))
             {
-                if (formula && value[0] == '(')
-                    Options.Add(optionName, rm.ReadInt(optionName, 0).ToString());
+                if (formula)
+                    Options.Add(optionName, ScaleCoordinateOption(rm.ReadInt(optionName, 0)).ToString());
                 else
                     Options.Add(optionName, value);
             }
@@ -503,14 +505,21 @@ namespace InputText
                 // API.Log(API.LogType.Debug, "InputText: Overriding " + sTagName + " with " + sTagData);
 
                 string data = (sTagData.StartsWith("\"")) ? sTagData.Substring(1, sTagData.Length - 2) : sTagData;
+                bool scaled = false;
                 if (!string.IsNullOrEmpty(data))
                 {
                     int index;
                     if (formula && data[0] == '(')
-                        data = ParseInlineOption(data, true);
+                    {
+                        data = ScaleCoordinateOption(ParseInlineOption(data, true)).ToString();
+                        scaled = true;
+                    }
                     else if ((index = data.IndexOf('[')) >= 0 && data.IndexOf(']', index) > 0)
                         data = ParseInlineOption(data, false);
                 }
+
+                if (formula && !scaled)
+                    data = ScaleCoordinateOption(data);
 
                 Overrides.Add(sTagName, data);
 
@@ -520,6 +529,18 @@ namespace InputText
             return sLine;
         }
         #endregion
+
+        private int ScaleCoordinateOption(int value)
+        {
+            double scaled = value * rm.GetSkinScale();
+            return (int)((value >= 0) ? Math.Ceiling(scaled) : Math.Floor(scaled));
+        }
+
+        private string ScaleCoordinateOption(string value)
+        {
+            int intValue;
+            return int.TryParse(value, out intValue) ? ScaleCoordinateOption(intValue).ToString() : value;
+        }
 
         #endregion
     }

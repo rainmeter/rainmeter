@@ -36,7 +36,9 @@ public:
 	TextInlineFormat_GradientColor(const std::wstring& pattern, FLOAT angle,
 		const std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
 	virtual ~TextInlineFormat_GradientColor();
+
 	virtual InlineType GetType() override { return InlineType::GradientColor; }
+	virtual void InvalidateDeviceResources() override;
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
 	void ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool beforeDrawing = true);

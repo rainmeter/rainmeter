@@ -10,8 +10,7 @@
 #include "Measure.h"
 #include "Logger.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Path.h"
-#include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shape.h"
 
 MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Autoscale(false),
@@ -30,10 +29,6 @@ MeterLine::~MeterLine()
 {
 }
 
-/*
-** create the buffer for the lines
-**
-*/
 void MeterLine::Initialize()
 {
 	Meter::Initialize();
@@ -78,10 +73,6 @@ void MeterLine::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	WCHAR tmpName[64] = { 0 };
@@ -182,10 +173,6 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterLine::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -208,10 +195,6 @@ bool MeterLine::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
@@ -294,11 +277,12 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
 			Y = meterRect.bottom - Y - 0.5f;
 
-			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
-			line.SetStrokeFill(m_HorizontalColor);
-			line.CreateStrokeStyle(m_StrokeType);
+			auto line = Gfx::Shape::Line(meterRect.left, Y, meterRect.right - 1.0f, Y);
+			if (!line) return false;
+			line->SetStrokeFill(m_HorizontalColor);
+			line->CreateStrokeStyle(m_StrokeType);
 
-			canvas.DrawGeometry(line, 0, 0);
+			canvas.DrawGeometry(*line, 0, 0);
 		}
 	}
 
@@ -306,13 +290,15 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	FLOAT offset = 0.55f;
 
 	// Draw all the lines
-	auto draw = [&](Gfx::Path& path, int& counter) -> void
+	auto draw = [&](Gfx::Shape& path, int& counter) -> void
 	{
-		path.Close(D2D1_FIGURE_END_OPEN);
+		path.ClosePath(D2D1_FIGURE_END_OPEN);
 		path.SetFill(Gfx::Util::c_Transparent_Color_F);
 		path.SetStrokeFill(m_Colors[counter]);
 		path.SetStrokeWidth((FLOAT)m_LineWidth);
-		path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 10.0f);
+		auto& strokeProperties = path.GetStrokeProperties();
+		strokeProperties.lineJoin = D2D1_LINE_JOIN_BEVEL;
+		strokeProperties.miterLimit = 10.0f;
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
@@ -349,11 +335,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldX = 0.0f;
 			calcX(oldX);
 
-			Gfx::Path path(
-				oldX,
-				!m_Flip ? meterRect.top : meterRect.bottom,
-				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
+			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_Flip)
 			{
@@ -364,8 +348,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j);
 
 					oldX = X;
 				}
@@ -379,14 +363,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j - 2.0f);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j - 2.0f);
 
 					oldX = X;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}
@@ -422,11 +406,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldY = 0.0f;
 			calcY(oldY);
 
-			Gfx::Path path(
-				!m_GraphStartLeft ? meterRect.left : meterRect.right,
-				oldY,
-				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
+			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_GraphStartLeft)
 			{
@@ -437,8 +419,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j, Y);
 
 					oldY = Y;
 				}
@@ -452,14 +434,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j - 2.0f, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j - 2.0f, Y);
 
 					oldY = Y;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}
@@ -467,10 +449,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the other measure bindings.
-**
-*/
 void MeterLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))

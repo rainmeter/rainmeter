@@ -61,7 +61,7 @@ namespace
   };
 
   DefaultListener defaultListener;
-}
+}  // namespace
 
 namespace TagLib
 {
@@ -82,4 +82,4 @@ namespace TagLib
     else
       debugListener = &defaultListener;
   }
-}
+}  // namespace TagLib

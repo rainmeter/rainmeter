@@ -8,27 +8,64 @@
 #ifndef RM_GFX_CANVAS_H_
 #define RM_GFX_CANVAS_H_
 
-#include "FontCollectionD2D.h"
+#include "FontCollection.h"
 #include "Shape.h"
-#include "TextFormatD2D.h"
+#include "TextFormat.h"
+#include <bit>
 #include <string>
-#include <d2d1_1.h>
+#include <d2d1_3.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
 #include <d3d11.h>
 #include <DXGI1_2.h>
 
+template <>
+struct ankerl::unordered_dense::hash<D2D1_COLOR_F>
+{
+	using is_avalanching = void;
+
+	[[nodiscard]] auto operator()(const D2D1_COLOR_F& color) const noexcept -> uint64_t
+	{
+		const auto normalizeFloatBits = [](FLOAT value) -> uint32_t
+		{
+			// Handle positive and negative floating point zeros.
+			return value == 0.0f ? 0 : std::bit_cast<uint32_t>(value);
+		};
+
+		const auto combineFloat = [&](FLOAT first, FLOAT second) -> uint64_t
+		{
+			return static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32);
+		};
+
+		uint64_t hash = ankerl::unordered_dense::detail::wyhash::hash(combineFloat(color.r, color.g));
+		hash = ankerl::unordered_dense::detail::wyhash::mix(hash, combineFloat(color.b, color.a));
+		return hash;
+	}
+};
+
+struct D2D1ColorEqual
+{
+	bool operator()(const D2D1_COLOR_F& lhs, const D2D1_COLOR_F& rhs) const noexcept
+	{
+		return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+	}
+};
+
 namespace Gfx {
 
+template<typename T>
+using ComPtr = Microsoft::WRL::ComPtr<T>;
+
 // Forward declaration
-class D2DBitmap;
+class Bitmap;
+class Svg;
 
 class RenderTexture;
 
 namespace Util {
-	class D2DBitmapLoader;
-	class D2DEffectStream;
+	class BitmapLoader;
+	class EffectStream;
 }
 
 // Wraps Direct2D/DirectWrite.
@@ -38,20 +75,26 @@ public:
 	Canvas();
 	~Canvas();
 
-	static bool Initialize(bool hardwareAccelerated);
-	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
+	using DeviceLostCallback = void (*)();
+	static bool Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostCallback = nullptr);
 	static void Finalize();
+	static bool AttachDevice();
 
-	bool InitializeRenderTarget(HWND hwnd, LONG* errCode);
+	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
+
+	HRESULT InitializeDeviceContextForWindow(HWND window);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
 
 	void SetAccurateText(bool option) { m_AccurateText = option; }
 
+	void SetDpiScale(float dpiScale);
+	FLOAT SnapToPixel(FLOAT value) const;
+
 	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
 	// called and has not yet been matched by a correspoding call to EndDraw.
-	void Resize(int w, int h);
+	bool Resize(int w, int h);
 
 	bool BeginDraw();
 	void EndDraw();
@@ -59,8 +102,8 @@ public:
 	HDC GetDC();
 	void ReleaseDC();
 
-	FontCollection* CreateFontCollection() { return new FontCollectionD2D(); }
-	TextFormat* CreateTextFormat() { return new TextFormatD2D(); }
+	FontCollection* CreateFontCollection() { return new FontCollection(); }
+	TextFormat* CreateTextFormat(const MathParser& mathParser) { return new TextFormat(mathParser); }
 
 	bool IsTransparentPixel(int x, int y);
 
@@ -69,6 +112,8 @@ public:
 	void GetTransform(D2D1_MATRIX_3X2_F* matrix);
 	void SetTransform(const D2D1_MATRIX_3X2_F& matrix);
 	void ResetTransform();
+	void PushOpacityLayer(FLOAT opacity);
+	void PopLayer();
 
 	bool SetTarget(Gfx::RenderTexture* texture);
 	void ResetTarget();
@@ -78,15 +123,16 @@ public:
 
 	void Clear(const D2D1_COLOR_F& color = Util::c_Transparent_Color_F);
 
-	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
+	void DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
 		const D2D1_COLOR_F& color, bool applyInlineFormatting = false);
-	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size);
-	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
+	bool MeasureTextW(const std::wstring& srcStr, TextFormat& format, D2D1_SIZE_F& size);
+	bool MeasureTextLinesW(const std::wstring& srcStr, TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
 
-	void DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
-	void DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
-	void DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+	void DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
+	void DrawMaskedBitmap(Bitmap* bitmap, Bitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 		const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2);
+	bool DrawSvg(Svg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect = nullptr);
 
 	void FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color);
 	void FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2, const FLOAT& angle);
@@ -97,41 +143,35 @@ public:
 
 private:
 	friend class Canvas;
-	friend class D2DBitmap;
+	friend class Bitmap;
+	friend class Svg;
 	friend class RenderTexture;
-	friend class FontCollectionD2D;
-	friend class TextFormatD2D;
+	friend class FontCollection;
+	friend class TextFormat;
 	friend class TextInlineFormat_Face;
 	friend class TextInlineFormat_Typography;
 	friend class Shape;
-	friend class Rectangle;
-	friend class RoundedRectangle;
-	friend class Ellipse;
-	friend class Line;
-	friend class Arc;
-	friend class Curve;
-	friend class QuadraticCurve;
-	friend class Path;
-	friend class Util::D2DBitmapLoader;
-	friend class Util::D2DEffectStream;
+	friend class Util::BitmapLoader;
+	friend class Util::EffectStream;
 
 	Canvas(const Canvas& other) = delete;
 	Canvas& operator=(Canvas other) = delete;
 
-	bool LogComError(HRESULT hr);
+	static ComPtr<ID2D1DeviceContext5> CreateDeviceContext();
 
-	HRESULT CreateRenderTarget();
-	bool CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode = nullptr);
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
-	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_Target;
+	Microsoft::WRL::ComPtr<ID2D1DeviceContext5> m_Target;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
 	Microsoft::WRL::ComPtr<IDXGISurface1> m_BackBuffer;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_TargetBitmap;
 
 	int m_W;
 	int m_H;
+	FLOAT m_Dpi;
 	UINT32 m_MaxBitmapSize;
 
+	bool m_ValidDeviceContext;
 	bool m_IsDrawing;
 	bool m_EnableDrawAfterGdi;
 
@@ -148,15 +188,24 @@ private:
 	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
 	bool m_CanUseAxisAlignClip;
 
-	static UINT c_Instances;
-	static D3D_FEATURE_LEVEL c_FeatureLevel;
+	ankerl::unordered_dense::map<D2D1_COLOR_F, Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>, ankerl::unordered_dense::hash<D2D1_COLOR_F>, D2D1ColorEqual> m_SolidColorBrushCache;
+
+	static bool c_HardwareAccelerated;
+	static DeviceLostCallback c_DeviceLostCallback;
+
+	// Device-dependent.
 	static Microsoft::WRL::ComPtr<ID3D11Device> c_D3DDevice;
 	static Microsoft::WRL::ComPtr<ID3D11DeviceContext> c_D3DContext;
 	static Microsoft::WRL::ComPtr<ID2D1Device> c_D2DDevice;
 	static Microsoft::WRL::ComPtr<IDXGIDevice1> c_DxgiDevice;
+
+	// Device-independent.
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
 	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
+
+	// Always kept at the default DPI for use in temporary contexts.
+	static Microsoft::WRL::ComPtr<ID2D1DeviceContext5> c_EffectTarget;
 };
 
 }  // namespace Gfx

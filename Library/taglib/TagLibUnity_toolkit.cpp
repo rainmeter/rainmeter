@@ -5,18 +5,11 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-// TagLib unity build: This file includes most TagLib source files. By compiling all of them
+// TagLib unity build: This file includes several TagLib source files. By compiling all of them
 // together, the build performance is greatly increased.
 
-// The following includes have been commented out and are compiled separately due to e.g.
-// mismatching symbols.
-/*
-#include "mpeg\id3v2\id3v2tag.cpp"
-#include "toolkit\tfile.cpp"
-*/
-
 #pragma warning(push)
-#pragma warning(disable: 4244; disable: 4267)
+#pragma warning(disable: 4018; disable: 4244; disable: 4267)
 
 #include "toolkit\tbytevector.cpp"
 #include "toolkit\tbytevectorlist.cpp"
@@ -29,6 +22,6 @@
 #include "toolkit\trefcounter.cpp"
 #include "toolkit\tstring.cpp"
 #include "toolkit\tstringlist.cpp"
-#include "toolkit\unicode.cpp"
+#include "toolkit\tzlib.cpp"
 
 #pragma warning(pop)

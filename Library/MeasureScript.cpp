@@ -16,6 +16,7 @@ const char* g_UpdateFunctionName = "Update";
 const char* g_GetStringFunctionName = "GetStringValue";
 
 MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_LuaScript(skin->GetMathParser()),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -41,41 +42,41 @@ void MeasureScript::Initialize()
 
 	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
 	{
-		m_LuaScript.RunFunction(g_InitializeFunctionName);
-	}
-}
-
-/*
-** Runs the function "Update()" in the script.
-**
-*/
-void MeasureScript::UpdateValue()
-{
-	if (m_HasUpdateFunction)
-	{
-		m_ValueType = m_LuaScript.RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
-
-		if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
+		auto run = m_LuaScript.RunFunction(g_InitializeFunctionName);
+		if (run.DidFail())
 		{
-			// For backwards compatbility
-			m_ValueType = m_LuaScript.RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
+			LogErrorF(this, L"Script Initialize() failed: %s", run.GetError());
 		}
 	}
 }
 
-/*
-** Returns the value as a string.
-**
-*/
+void MeasureScript::UpdateValue()
+{
+	if (m_HasUpdateFunction)
+	{
+		auto updateRun = m_LuaScript.RunFunctionWithReturn(g_UpdateFunctionName, m_ValueType, m_Value, m_StringValue);
+		if (updateRun.DidFail())
+		{
+			LogErrorF(this, L"Script Update() failed: %s", updateRun.GetError());
+		}
+
+		if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
+		{
+			// For backwards compatbility
+			auto getStringRun = m_LuaScript.RunFunctionWithReturn(g_GetStringFunctionName, m_ValueType, m_Value, m_StringValue);
+			if (getStringRun.DidFail())
+			{
+				LogErrorF(this, L"Script GetStringValue() failed: %s", getStringRun.GetError());
+			}
+		}
+	}
+}
+
 const WCHAR* MeasureScript::GetStringValue()
 {
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
@@ -178,13 +179,15 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	UninitializeLuaScript();
 }
 
-/*
-** Executes a custom bang.
-**
-*/
 void MeasureScript::Command(const std::wstring& command)
 {
-	m_LuaScript.RunString(command);
+	if (!m_LuaScript.IsInitialized()) return;
+
+	auto run = m_LuaScript.RunString(command);
+	if (run.DidFail())
+	{
+		LogErrorF(this, L"!CommandMeasure failed: %s", run.GetError());
+	}
 }
 
 bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
@@ -233,7 +236,7 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		}
 
 		std::wstring funcName = command.substr(0, sPos);
-		auto args = ConfigParser::Tokenize2(
+		auto args = ConfigParser::TokenizeWithPairedPunctuation(
 			command.substr(sPos + 1, ePos - sPos - 1),
 			L',',
 			PairedPunctuation::BothQuotes);

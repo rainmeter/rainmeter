@@ -1,49 +1,109 @@
 name: build-signpath
 
 on:
-  workflow_dispatch:
-    inputs:
-      type:
-        description: 'Build type (release/pre)'
-        required: true
-      version:
-        description: 'Version (a.b.c.d)'
-        required: true
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+.[0-9]+
+
+env:
+  BUILD_VERSION: ${{ github.ref_name }}
 
 jobs:
-  build:
-    runs-on: windows-2025
+  rainmeter:
+    strategy:
+      matrix:
+        arch: [32, 64]
+
+    runs-on: windows-2025-vs2026
     steps:
-      - name: Install NSIS
-        run: choco install nsis --version=3.10.0 --no-progress
-
       - name: Clone repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Run Build.bat
+      - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: |
-          cd Build
-          Build.bat %RAINMETER_BUILD_TYPE% %RAINMETER_BUILD_VERSION%
-        shell: cmd
-        env:
-          RAINMETER_BUILD_TYPE: ${{ github.event.inputs.type }}
-          RAINMETER_BUILD_VERSION: ${{ github.event.inputs.version }}
-          SELF_SIGNED_CERTIFICATE_PASSWORD: ${{ secrets.SELF_SIGNED_CERTIFICATE_PASSWORD }}
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion
+        shell: pwsh
 
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        id: upload-installer
+      - name: Upload ${{ matrix.arch }}-bit build
+        uses: actions/upload-artifact@v7
         with:
-          name: Rainmeter-${{ github.event.inputs.version }}-${{ github.event.inputs.type }}
-          path: Build/Rainmeter-*.exe
+          name: BuildOut-Release${{ matrix.arch }}
+          path: |
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
           if-no-files-found: error
 
-      - name: Sign installer
-        uses: signpath/github-action-submit-signing-request@3c306158facd969ebdb385c6845dee38afc2ebf9 # v1.1
+  installer:
+    environment:
+      name: signpath
+      deployment: false
+    needs: rainmeter
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Download 32-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release32
+          path: BuildOut/Release32
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release64
+          path: BuildOut/Release64
+
+      - name: Upload combined build
+        uses: actions/upload-artifact@v7
+        id: upload-build
+        with:
+          name: RainmeterBuild-${{ github.ref_name }}
+          path: BuildOut
+          if-no-files-found: error
+
+      - name: Remove build directories
+        run: rm -rf BuildOut
+        shell: bash
+
+      - name: Sign Rainmeter
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
         with:
           api-token: '${{ secrets.SIGNPATH_API_KEY }}'
           organization-id: '2d37d539-98b7-4649-9469-4097b1099202'
           project-slug: 'rainmeter'
           signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'zip'
+          github-artifact-id: '${{ steps.upload-build.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: BuildOut
+
+      - name: Install NSIS
+        uses: ./.github/actions/install-nsis
+
+      - name: Build installer
+        run: |
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 installer $buildVersion
+        shell: pwsh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        id: upload-installer
+        with:
+          path: Build/Rainmeter-*.exe
+          archive: false
+          if-no-files-found: error
+
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_KEY }}'
+          organization-id: '2d37d539-98b7-4649-9469-4097b1099202'
+          project-slug: 'rainmeter'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'exe'
           github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
           wait-for-completion: false

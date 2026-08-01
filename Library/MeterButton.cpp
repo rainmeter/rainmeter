@@ -31,10 +31,6 @@ MeterButton::~MeterButton()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterButton::Initialize()
 {
 	Meter::Initialize();
@@ -42,11 +38,11 @@ void MeterButton::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName);
+		m_Image.LoadImage(m_ImageName, true);
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			int bitmapW = bitmap->GetWidth();
 			int bitmapH = bitmap->GetHeight();
@@ -86,10 +82,12 @@ void MeterButton::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
+void MeterButton::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -111,19 +109,11 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterButton::Update()
 {
 	return Meter::Update();
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -146,19 +136,11 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The meters need not to be bound on anything
-**
-*/
 void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }
 
-/*
-** Checks if the given point is inside the button.
-**
-*/
 bool MeterButton::HitTest2(int px, int py)
 {
 	if (!Meter::HitTestContainer(px, py))
@@ -205,9 +187,7 @@ bool MeterButton::HitTest2(int px, int py)
 					py -= (int)drawH * m_State;
 				}
 
-				D2D1_COLOR_F color;
-				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
-				return !valid || (color.a != 0.0f);
+				return bitmap->IsPixelOpaque(px, py);
 			}
 		}
 		else

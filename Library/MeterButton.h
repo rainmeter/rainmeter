@@ -25,6 +25,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeterButton>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
@@ -39,7 +40,7 @@ public:
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
-	
+
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 private:

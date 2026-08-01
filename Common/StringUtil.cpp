@@ -8,6 +8,9 @@
 #include "StdAfx.h"
 #include "StringUtil.h"
 
+#include <algorithm>
+#include <cwctype>
+
 namespace {
 
 // Is the character a end of sentence punctuation character?
@@ -83,18 +86,31 @@ void Trim(std::wstring& str)
 
 size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
 {
-	if (str.size() > 1ULL)
+	if (str.size() > 1)
 	{
 		WCHAR first = str.front();
 		WCHAR last = str.back();
 		if ((first == L'"' && last == L'"') ||				// "some string"
 			(single && first == L'\'' && last == L'\''))	// 'some string'
 		{
-			str.erase(0ULL, 1ULL);
-			str.erase(str.size() - 1ULL);
+			str.erase(0, 1);
+			str.erase(str.size() - 1);
 		}
 	}
 	return str.size();
+}
+
+bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)
+{
+	if (dstCount <= str.length()) return false;
+	for (size_t i = 0; i < str.length(); ++i)
+	{
+		WCHAR ch = str[i];
+		if (ch >= L'a' && ch <= L'z') ch = (WCHAR)(ch - 0x20);
+		dstBuffer[i] = ch;
+	}
+	dstBuffer[str.length()] = L'\0';
+	return true;
 }
 
 void ToLowerCase(std::wstring& str)
@@ -139,9 +155,6 @@ void ToSentenceCase(std::wstring& str)
 	}
 }
 
-/*
-** Escapes reserved PCRE regex metacharacters.
-*/
 void EscapeRegExp(std::wstring& str)
 {
 	size_t start = 0;
@@ -152,9 +165,6 @@ void EscapeRegExp(std::wstring& str)
 	}
 }
 
-/*
-** Escapes reserved URL characters.
-*/
 void EncodeUrl(std::wstring& str, bool doReserved)
 {
 	static const std::string unreserved = "0123456789-.ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcedefghijklmnopqrstuvwxyz~";
@@ -175,20 +185,21 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 	str = WidenUTF8(utf8);
 }
 
-/*
-** Case insensitive comparison of strings. If equal, strip str2 from str1 and any leading whitespace.
-*/
-bool CaseInsensitiveCompareN(std::wstring& str1, const std::wstring& str2)
+struct IsEqualCaseInsensitive
 {
-	size_t pos = str2.length();
-	if (_wcsnicmp(str1.c_str(), str2.c_str(), pos) == 0)
+	IsEqualCaseInsensitive() {}
+	bool operator()(wchar_t ch1, wchar_t ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+};
+
+std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2)
+{
+	const auto iter = std::search(str1.begin(), str1.end(), str2.begin(), str2.end(), IsEqualCaseInsensitive());
+	if (iter != str1.end())
 	{
-		str1 = str1.substr(pos);  // remove str2 from str1
-		str1.erase(0, str1.find_first_not_of(L" \t\r\n"));  // remove any leading whitespace
-		return true;
+		return (iter - str1.begin());
 	}
 
-	return false;
+	return -1; // not found
 }
 
 }  // namespace StringUtil

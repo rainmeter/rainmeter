@@ -46,27 +46,21 @@ WCHAR* GetCommandLineArguments()
 	return args;
 }
 
-/*
-** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
-**
-*/
+// Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
 
 	WCHAR path[MAX_PATH];
-	SecureZeroMemory(path, _countof(path));
-
+	path[0] = L'\0';
 	DWORD num = GetModuleFileName(nullptr, path, _countof(path));
-	if (num > 0UL && *path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	if (num > 0 && *path && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		WCHAR* file = PathFindFileName(path);
 		if (file && lstrcmpi(file, L"Rainmeter.exe") != 0)
 		{
 			WCHAR message[1024];
-			SecureZeroMemory(message, _countof(message));
-
 			wsprintf(message, L"Please rename \"%s\" to Rainmeter.exe", file);
 			MessageBox(nullptr, message, L"Rainmeter", MB_OK | MB_ICONERROR);
 			return 1;
@@ -74,7 +68,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	}
 
 	// Prevent system error message boxes.
-	UINT oldMode = SetErrorMode(0U);
+	UINT oldMode = SetErrorMode(0);
 	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
 
 	HINSTANCE instance = (HINSTANCE)&__ImageBase;
@@ -94,31 +88,20 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 		}
 
 		WCHAR message[1024];
-		wsprintf(
-			message,
-			L"Rainmeter.dll load error %ld.",
-			GetLastError());
+		wsprintf(message, L"Rainmeter.dll load error %ld.", GetLastError());
 		MessageBox(nullptr, message, L"Rainmeter", MB_OK | MB_ICONERROR);
 	}
 	else
 	{
 		// Stub prodecure. If icon resources have been removed, try to launch the actual Rainmeter.exe.
-		HKEY hKey = nullptr;
-		const REGSAM desiredSam = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, desiredSam, &hKey) == ERROR_SUCCESS)
+		WCHAR buffer[MAX_PATH];
+		DWORD bufferSize = sizeof(buffer);
+		DWORD type = 0;
+		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", nullptr, RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) == ERROR_SUCCESS)
 		{
-			const DWORD size = MAX_PATH;
-			WCHAR buffer[size];
-			DWORD type = 0UL;
-			if (RegQueryValueEx(hKey, nullptr , nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
-				type == REG_SZ)
-			{
-				SetCurrentDirectory(buffer);
-				lstrcat(buffer, L"\\Rainmeter.exe");
-				ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
-			}
-			RegCloseKey(hKey);
-			hKey = nullptr;
+			SetCurrentDirectory(buffer);
+			lstrcat(buffer, L"\\Rainmeter.exe");
+			ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
 		}
 
 		return 0;

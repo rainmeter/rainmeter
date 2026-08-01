@@ -1,6 +1,7 @@
 /***************************************************************************
     copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
+
     copyright            : (C) 2006 by Urs Fleisch
     email                : ufleisch@users.sourceforge.net
  ***************************************************************************/
@@ -184,6 +185,6 @@ namespace TagLib {
       UserUrlLinkFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

@@ -9,10 +9,91 @@
 #include "MeterString.h"
 #include "Rainmeter.h"
 #include "Measure.h"
+#include "Pcre.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/ParseUtil.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
+
+namespace {
+
+std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
+	const std::wstring& str, const std::vector<std::wstring>& patterns)
+{
+	std::vector<std::vector<Gfx::TextInlineRange>> inlineRanges;
+	inlineRanges.reserve(patterns.size());
+
+	for (const auto& pattern : patterns)
+	{
+		if (pattern == L".*")
+		{
+			// Empty string is not a valid match.
+			if (str.empty())
+			{
+				inlineRanges.emplace_back();
+			}
+			else
+			{
+				inlineRanges.push_back({ { 0, (UINT32)str.length() } });
+			}
+
+			continue;
+		}
+
+		std::vector<Gfx::TextInlineRange> ranges;
+		int ovector[300];
+		const char* error;
+		Pcre re(pattern.c_str(), &error);
+		if (!re)
+		{
+			//LogNoticeF(this, L"InlinePattern%i error at offset %d: %S", re.GetErrorOffset(), error);
+		}
+		else
+		{
+			do
+			{
+				// Empty string is not a valid match.
+				const int rc = re.Execute(str, PCRE_NOTEMPTY, ovector, (int)_countof(ovector));
+				if (rc <= 0)
+				{
+					break;
+				}
+
+				const UINT32 start = ovector[0];
+				const UINT32 length = ovector[1] - ovector[0];
+
+				// No captures found, but the rest of the text is still 'found'.
+				if (rc == 1)
+				{
+					Gfx::TextInlineRange range = { start, length };
+					ranges.push_back(range);
+				}
+				else if (rc > 1)	// Captures found.
+				{
+					for (int j = rc - 1; j > 0; --j)
+					{
+						const int newStart = ovector[2 * j];
+						const int newEnd = ovector[2 * j + 1];
+						if (newStart < 0 || newEnd < 0) break;	// Match was not found, so skip to the next item
+
+						Gfx::TextInlineRange range = { (UINT32)newStart, (UINT32)(newEnd - newStart) };
+						ranges.push_back(range);
+					}
+				}
+
+				re.SetOffset(start + length);
+
+			} while (true);
+		}
+
+		inlineRanges.push_back(ranges);
+	}
+
+	return inlineRanges;
+}
+
+}  // namespace
 
 MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Color(D2D1::ColorF(D2D1::ColorF::White)),
@@ -29,7 +110,7 @@ MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
-	m_TextFormat(skin->GetCanvas().CreateTextFormat()),
+	m_TextFormat(skin->GetCanvas().CreateTextFormat(skin->GetMathParser())),
 	m_NumOfDecimals(-1),
 	m_Angle(),
 	m_FontWeight(-1),
@@ -43,10 +124,15 @@ MeterString::~MeterString()
 	m_TextFormat = nullptr;
 }
 
-/*
-** Returns the X-coordinate of the meter
-**
-*/
+void MeterString::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	if (m_TextFormat)
+	{
+		m_TextFormat->InvalidateDeviceResources();
+	}
+}
+
 int MeterString::GetX(bool abs)
 {
 	int x = Meter::GetX();
@@ -68,10 +154,6 @@ int MeterString::GetX(bool abs)
 	return x;
 }
 
-/*
-** Returns the Y-coordinate of the meter
-**
-*/
 int MeterString::GetY(bool abs)
 {
 	int y = Meter::GetY();
@@ -93,10 +175,6 @@ int MeterString::GetY(bool abs)
 	return y;
 }
 
-/*
-** Create the font that is used to draw the text.
-**
-*/
 void MeterString::Initialize()
 {
 	Meter::Initialize();
@@ -109,10 +187,6 @@ void MeterString::Initialize()
 		m_Skin->GetFontCollection());
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
@@ -301,7 +375,32 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_TrailingSpaces = parser.ReadBool(section, L"TrailingSpaces", false);
 
-	m_TextFormat->ReadInlineOptions(parser, section);
+	std::vector<Gfx::TextInlineOption> inlineOptions;
+	const std::wstring delimiter(1, L'|');
+	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
+	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
+	if (pattern.empty()) pattern = L".*";
+
+	size_t i = 1;
+	while (!option.empty())
+	{
+		Gfx::TextInlineOption inlineOption;
+		inlineOption.pattern = pattern;
+		inlineOption.settings = ParseUtil::Tokenize(option, delimiter);
+		inlineOptions.push_back(inlineOption);
+
+		// Check for InlineSetting2/InlinePattern2 ... etc.
+		const std::wstring num = std::to_wstring(++i);
+
+		std::wstring key = L"InlinePattern" + num;
+		pattern = parser.ReadString(section, key.c_str(), L".*");
+		if (pattern.empty()) pattern = L".*";
+
+		key = L"InlineSetting" + num;
+		option = parser.ReadString(section, key.c_str(), L"");
+	}
+
+	m_TextFormat->SetInlineOptions(inlineOptions);
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
@@ -314,10 +413,6 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterString::Update()
 {
 	if (Meter::Update())
@@ -386,7 +481,7 @@ bool MeterString::Update()
 		}
 
 		m_TextFormat->SetFontWeight(m_FontWeight);
-		m_TextFormat->FindInlineRanges(m_String);
+		m_TextFormat->SetInlineRanges(FindInlineRanges(m_String, m_TextFormat->GetInlinePatterns()));
 
 		if (!m_WDefined || !m_HDefined)
 		{
@@ -411,10 +506,6 @@ bool MeterString::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterString::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -422,10 +513,6 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	return DrawString(canvas, nullptr);
 }
 
-/*
-** Draws the string or calculates it's size
-**
-*/
 bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 {
 	if (!m_TextFormat->IsInitialized()) return false;
@@ -524,9 +611,9 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 				if (updateSize)
 				{
-					UINT32 lines = 0U;
+					UINT32 lines = 0;
 					D2D1_SIZE_F size = D2D1::SizeF(w, h);
-					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0U)
+					if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, size, lines) && lines != 0)
 					{
 						rect->right = rect->left + w;
 						rect->bottom = rect->top + size.height;
@@ -565,7 +652,6 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 
 		if (m_Effect != EFFECT_NONE)
 		{
-			const D2D1_COLOR_F solidBrush = m_EffectColor;
 			D2D1_RECT_F rcEffect = rcDest;
 
 			auto offsetEffect = [&](FLOAT x, FLOAT y)
@@ -579,18 +665,18 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 			if (m_Effect == EFFECT_SHADOW)
 			{
 				offsetEffect(1.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
 				offsetEffect(0.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(1.0f, -1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(-1.0f, -1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 				offsetEffect(-1.0f, 1.0f);
-				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, m_EffectColor);
 			}
 		}
 
@@ -605,10 +691,6 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect)
 	return true;
 }
 
-/*
-** Overridden method. The string meters need not to be bound on anything
-**
-*/
 void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
@@ -623,7 +705,7 @@ void MeterString::InitializeStatic()
 	{
 		LogDebug(L"------------------------------");
 
-		UINT32 familyCount = 0U;
+		UINT32 familyCount = 0;
 		std::wstring families;
 		bool success = Gfx::Canvas::EnumerateInstalledFontFamilies(familyCount, families);
 		LogDebugF(L"* Font families: Count=%i", familyCount);

@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "LuaSection.h"
 #include "../LuaHelper.h"
 #include "../LuaScript.h"
 #include "../../Measure.h"
@@ -27,23 +28,13 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	Skin* skin = self->GetSkin();
-	ConfigParser& parser = skin->GetParser();
+	return LuaSection::GetOption(L, self);
+}
 
-	const WCHAR* section = self->GetName();
-	const std::wstring key = LuaHelper::ToWide(2);
-	const std::wstring defValue = LuaHelper::ToWide(3);
-
-	bool bReplaceMeasures = true;
-	if (lua_gettop(L) > 3)
-	{
-		bReplaceMeasures = LuaHelper::ToBool(4);
-	}
-
-	const std::wstring& value =
-		parser.ReadString(section, key.c_str(), defValue.c_str(), bReplaceMeasures);
-	LuaHelper::PushWide(value);
-	return 1;
+static int SetOption(lua_State* L)
+{
+	DECLARE_SELF(L)
+	return LuaSection::SetOption(L, self);
 }
 
 static int GetNumberOption(lua_State* L)
@@ -51,10 +42,12 @@ static int GetNumberOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
+
+	parser.ReadInheritOption(section);
 	double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));
+	parser.ClearInheritChain();
 
 	lua_pushnumber(L, value);
 	return 1;
@@ -138,6 +131,7 @@ void LuaScript::RegisterMeasure(lua_State* L)
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },
+		{ "SetOption", SetOption },
 		{ "GetNumberOption", GetNumberOption },
 		{ "Disable", Disable },
 		{ "Enable", Enable },

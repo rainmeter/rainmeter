@@ -10,7 +10,6 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Rectangle.h"
 
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
@@ -43,10 +42,6 @@ MeterHistogram::~MeterHistogram()
 	DisposeBuffer();
 }
 
-/*
-** Disposes the buffers.
-**
-*/
 void MeterHistogram::DisposeBuffer()
 {
 	// Reset current position
@@ -60,10 +55,6 @@ void MeterHistogram::DisposeBuffer()
 	m_SecondaryValues = nullptr;
 }
 
-/*
-** Creates the buffers.
-**
-*/
 void MeterHistogram::CreateBuffer()
 {
 	DisposeBuffer();
@@ -80,11 +71,8 @@ void MeterHistogram::CreateBuffer()
 	}
 }
 
-/*
-** Load the images and calculate the dimensions of the meter from them.
-** Or create the brushes if solid color histogram is used.
-**
-*/
+// Load the images and calculate the dimensions of the meter from them.
+// Or create the brushes if solid color histogram is used.
 void MeterHistogram::Initialize()
 {
 	Meter::Initialize();
@@ -111,7 +99,7 @@ void MeterHistogram::Initialize()
 			{
 				int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-				Gfx::D2DBitmap* bitmap = m_PrimaryImage.GetImage();
+				Gfx::Bitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
@@ -164,10 +152,14 @@ void MeterHistogram::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
+void MeterHistogram::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_PrimaryImage.InvalidateDeviceResources();
+	m_SecondaryImage.InvalidateDeviceResources();
+	m_OverlapImage.InvalidateDeviceResources();
+}
+
 void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
@@ -254,7 +246,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
 
 			Initialize();  // Reload the image
-			
+
 			if (m_SizeChanged)
 			{
 				CreateBuffer();
@@ -263,10 +255,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterHistogram::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -351,10 +339,6 @@ bool MeterHistogram::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas) ||
@@ -363,9 +347,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
-	Gfx::D2DBitmap* primaryBitmap = m_PrimaryImage.GetImage();
-	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
-	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
+	Gfx::Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
+	Gfx::Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
+	Gfx::Bitmap* bothBitmap = m_OverlapImage.GetImage();
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	int displayW = (int)(meterRect.right - meterRect.left);
@@ -405,7 +389,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	auto draw = [&](Gfx::D2DBitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
+	auto draw = [&](Gfx::Bitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
 	{
 		if (!bitmap)
 		{
@@ -556,10 +540,6 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the secondary measure binding.
-**
-*/
 void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))

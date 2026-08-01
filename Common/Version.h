@@ -24,7 +24,7 @@ public:
 	void Set(std::wstring v) { m_Version = std::move(v); Validate(); }
 	void Append(std::wstring v) { if (!m_Version.empty()) { m_Version += L'.'; } m_Version += v; Validate(); }
 
-	std::wstring Get() { return m_Version; }
+	const std::wstring& Get() { return m_Version; }
 
 	bool IsValid() const { return m_IsValid; }
 
@@ -44,7 +44,7 @@ private:
 	int Compare(const std::wstring& version2) const
 	{
 		const size_t size1 = m_Version.size(), size2 = version2.size();
-		size_t i = 0ULL, j = 0ULL;
+		size_t i = 0, j = 0;
 
 		while (i < size1 || j < size2)
 		{

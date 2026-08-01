@@ -46,10 +46,10 @@ namespace TagLib {
      *
      * Reimplementing this factory is the key to adding support for frame types
      * not directly supported by TagLib to your application.  To do so you would
-     * subclass this factory reimplement createFrame().  Then by setting your
-     * factory to be the default factory in ID3v2::Tag constructor or with
-     * MPEG::File::setID3v2FrameFactory() you can implement behavior that will
-     * allow for new ID3v2::Frame subclasses (also provided by you) to be used.
+     * subclass this factory and reimplement createFrame().  Then by setting your
+     * factory to be the default factory in ID3v2::Tag constructor you can
+     * implement behavior that will allow for new ID3v2::Frame subclasses (also
+     * provided by you) to be used.
      *
      * This implements both <i>abstract factory</i> and <i>singleton</i> patterns
      * of which more information is available on the web and in software design
@@ -74,7 +74,7 @@ namespace TagLib {
        * \deprecated Please use the method below that accepts a ID3v2::Header
        * instance in new code.
        */
-      Frame *createFrame(const ByteVector &data, bool synchSafeInts) const;
+      TAGLIB_DEPRECATED Frame *createFrame(const ByteVector &data, bool synchSafeInts) const;
 
       /*!
        * Create a frame based on \a data.  \a version should indicate the ID3v2
@@ -84,20 +84,33 @@ namespace TagLib {
        * \deprecated Please use the method below that accepts a ID3v2::Header
        * instance in new code.
        */
-      Frame *createFrame(const ByteVector &data, uint version = 4) const;
+      TAGLIB_DEPRECATED Frame *createFrame(const ByteVector &data, unsigned int version = 4) const;
 
+      /*!
+       * \deprecated Use createFrame(const ByteVector &, const Header *) const.
+       */
+      // BIC: remove
+      Frame *createFrame(const ByteVector &data, Header *tagHeader) const;
       /*!
        * Create a frame based on \a data.  \a tagHeader should be a valid
        * ID3v2::Header instance.
        */
       // BIC: make virtual
-      Frame *createFrame(const ByteVector &data, Header *tagHeader) const;
+      Frame *createFrame(const ByteVector &data, const Header *tagHeader) const;
+
+      /*!
+       * After a tag has been read, this tries to rebuild some of them
+       * information, most notably the recording date, from frames that
+       * have been deprecated and can't be upgraded directly.
+       */
+      // BIC: Make virtual
+      void rebuildAggregateFrames(ID3v2::Tag *tag) const;
 
       /*!
        * Returns the default text encoding for text frames.  If setTextEncoding()
        * has not been explicitly called this will only be used for new text
        * frames.  However, if this value has been set explicitly all frames will be
-       * converted to this type (unless it's explitly set differently for the
+       * converted to this type (unless it's explicitly set differently for the
        * individual frame) when being rendered.
        *
        * \see setDefaultTextEncoding()
@@ -144,23 +157,13 @@ namespace TagLib {
       FrameFactory(const FrameFactory &);
       FrameFactory &operator=(const FrameFactory &);
 
-      /*!
-       * This method is used internally to convert a frame from ID \a from to ID
-       * \a to.  If the frame matches the \a from pattern and converts the frame
-       * ID in the \a header or simply does nothing if the frame ID does not match.
-       */
-      void convertFrame(const char *from, const char *to,
-                        Frame::Header *header) const;
-
-      void updateGenre(TextIdentificationFrame *frame) const;
-
       static FrameFactory factory;
 
       class FrameFactoryPrivate;
       FrameFactoryPrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 
 #endif

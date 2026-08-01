@@ -8,12 +8,32 @@
 #ifndef RM_GFX_TEXTFORMAT_H_
 #define RM_GFX_TEXTFORMAT_H_
 
-#include "../../Library/ConfigParser.h"
+#include "TextInlineFormat.h"
 #include <Windows.h>
+#include <memory>
+#include <string>
+#include <vector>
+#include <dwrite_1.h>
+#include <wrl/client.h>
+
+class MathParser;
 
 namespace Gfx {
 
+enum class CaseType : BYTE;
 class FontCollection;
+
+struct TextInlineOption
+{
+	std::wstring pattern;
+	std::vector<std::wstring> settings;
+};
+
+struct TextInlineRange
+{
+	UINT32 start;
+	UINT32 length;
+};
 
 enum class HorizontalAlignment : BYTE
 {
@@ -29,47 +49,105 @@ enum class VerticalAlignment : BYTE
 	Bottom
 };
 
-// Represents the logical font properties used to format text.
-class __declspec(novtable) TextFormat
+// Provides text formatting through DirectWrite.
+class TextFormat final
 {
 public:
-	virtual ~TextFormat();
+	TextFormat(const MathParser& mathParser);
+	~TextFormat();
 
 	TextFormat(const TextFormat& other) = delete;
+	TextFormat& operator=(TextFormat other) = delete;
 
-	// Returns true if this TextFormat object is valid for use in draw operations.
-	virtual bool IsInitialized() const = 0;
+	bool IsInitialized() const { return m_TextFormat != nullptr; }
+	void InvalidateDeviceResources();
 
-	// Sets the logical properties of the font to use. If the font is not found in the system font
-	// collection, the given |fontCollection| is also searched. |fontCollection| may be nullptr.
-	virtual void SetProperties(
+	void SetProperties(
 		const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
-		const FontCollection* fontCollection) = 0;
+		FontCollection* fontCollection);
 
-	// Sets the font weight of the font used. |weight| should be between 1-999.
-	virtual void SetFontWeight(int weight) = 0;
+	void SetFontWeight(int weight);
 
-	// Sets the trimming and wrapping of the text. If |trim| is true, subsequent draws using this
-	// TextFormat object will produce clipped text with an ellipsis if the text overflows the
-	// bounding rectangle. 
-	virtual void SetTrimming(bool trim) = 0;
+	void SetTrimming(bool trim);
 
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment);
+	void SetHorizontalAlignment(HorizontalAlignment alignment);
 	HorizontalAlignment GetHorizontalAlignment() const { return m_HorizontalAlignment; }
 
-	virtual void SetVerticalAlignment(VerticalAlignment alignment);
+	void SetVerticalAlignment(VerticalAlignment alignment);
 	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
-	// Reads any inline options for the string meter. This is only available with D2D.
-	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) = 0;
-	virtual void FindInlineRanges(const std::wstring& str) = 0;
+	void SetInlineOptions(const std::vector<TextInlineOption>& options);
+	std::vector<std::wstring> GetInlinePatterns();
+	void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges);
 
-protected:
-	TextFormat();
+	const MathParser& GetMathParser() const { return m_MathParser; }
 
 private:
+	friend class Canvas;
+
+	friend class Common_Gfx_TextFormat_Test;
+
+	void Dispose();
+
+	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
+	// the layout is costly, it is more efficient to keep reusing the text layout until the text
+	// changes. Returns true if the layout is valid for use.
+	bool CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation);
+
+	DWRITE_TEXT_METRICS GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth = 10000.0f);
+
+	// These functions create/modify any inline options.
+	bool CreateInlineOption(const size_t index, const std::wstring pattern, std::vector<std::wstring> options);
+	void UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type);
+	void UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern, const FLOAT leading,
+		const FLOAT trailing, const FLOAT advanceWidth);
+	void UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color);
+	void UpdateInlineFace(const size_t& index, const std::wstring pattern, const WCHAR* face);
+	void UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
+		const std::vector<std::wstring> args, const bool altGamma);
+	void UpdateInlineItalic(const size_t& index, const std::wstring pattern);
+	void UpdateInlineNone(const size_t& index, const std::wstring pattern);
+	void UpdateInlineOblique(const size_t& index, const std::wstring pattern);
+	void UpdateInlineShadow(const size_t& index, const std::wstring pattern, const FLOAT blur,
+		const D2D1_POINT_2F offset, const D2D1_COLOR_F& color);
+	void UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size);
+	void UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
+	void UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern);
+	void UpdateInlineTypography(const size_t& index, const std::wstring pattern,
+		const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter);
+	void UpdateInlineUnderline(const size_t& index, const std::wstring pattern);
+	void UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
+	void ApplyInlineFormatting(IDWriteTextLayout* layout);
+	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
+	void ApplyInlineCase(std::wstring& str);
+	void ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
+		const UINT32 strLen, const D2D1_RECT_F& drawRect);
+	void ResetGradientPosition(const D2D1_POINT_2F* point);
+	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
+
+	const MathParser& m_MathParser;
 	HorizontalAlignment m_HorizontalAlignment;
 	VerticalAlignment m_VerticalAlignment;
+
+	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
+	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;
+	Microsoft::WRL::ComPtr<IDWriteInlineObject> m_InlineEllipsis;
+
+	std::wstring m_LastString;
+
+	int m_FontWeight;
+	bool m_HasWeightChanged;
+
+	// Used to emulate GDI+ behaviour.
+	float m_ExtraHeight;
+	float m_LineGap;
+
+	// Contains the value passed to the last call of SetTrimming().
+	bool m_Trimming;
+
+	// Contains all the inline options for the layout.
+	std::vector<std::unique_ptr<TextInlineFormat>> m_TextInlineFormat;
+	bool m_HasInlineOptionsChanged;
 };
 
 }  // namespace Gfx

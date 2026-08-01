@@ -23,6 +23,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeterHistogram>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
@@ -61,7 +62,7 @@ private:
 	double m_MinSecondaryValue;
 
 	bool m_SizeChanged;
-	
+
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 

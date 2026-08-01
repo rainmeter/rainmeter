@@ -40,7 +40,7 @@ private:
 	bool CheckWindow();
 
 	static Player* c_Player;
-	
+
 	HWND m_Window;				// AIMP window
 	HWND m_WinampWindow;		// AIMP Winamp API window
 	ULONGLONG m_LastCheckTime;

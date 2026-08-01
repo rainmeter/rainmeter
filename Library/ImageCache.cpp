@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "ImageCache.h"
 
-void ImageCache::Update(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCache::Update(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_Bitmap)
 	{
@@ -43,14 +43,25 @@ ImageCachePool& ImageCachePool::GetInstance()
 	return s_CachePool;
 }
 
-ImageCacheHandle* ImageCachePool::Get(const ImageOptions& key)
+std::unique_ptr<ImageCacheHandle> ImageCachePool::Get(const ImageOptions& key)
 {
 	const auto find = m_CachePool.find(key);
 	if (find == m_CachePool.end()) return nullptr;
-	return new ImageCacheHandle(find->second);
+	return std::make_unique<ImageCacheHandle>(ImageCacheHandle::ConstructorToken{}, find->second);
 }
 
-void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCachePool::InvalidateDeviceResources()
+{
+	for (auto& [_, cache] : m_CachePool)
+	{
+		if (cache && cache->m_Bitmap)
+		{
+			cache->m_Bitmap->InvalidateDeviceResources();
+		}
+	}
+}
+
+void ImageCachePool::Put(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_CachePool.find(key) == m_CachePool.end())
 	{

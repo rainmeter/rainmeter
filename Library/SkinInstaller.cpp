@@ -17,17 +17,10 @@ GlobalData g_Data;
 
 OsNameVersion g_OsNameVersions[] =
 {
-	{ L"XP", L"5.1" },
-	{ L"Vista", L"6.0" },
-	{ L"7", L"6.1" },
 	{ L"8", L"6.2" },
 	{ L"10", L"10.0" }
 };
 
-/*
-** Entry point
-**
-*/
 EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 {
 	// Avoid loading a dll from current directory
@@ -198,7 +191,7 @@ bool CloseRainmeterIfActive()
 	HWND hwnd = FindWindow(L"DummyRainWClass", L"Rainmeter control window");
 	if (hwnd)
 	{
-		DWORD pID = 0UL, exitCode = 0UL;
+		DWORD pID = 0, exitCode = 0;
 		GetWindowThreadProcessId(hwnd, &pID);
 		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, FALSE, pID);
 		PostMessage(hwnd, WM_DESTROY, 0, 0);

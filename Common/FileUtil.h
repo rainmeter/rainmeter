@@ -26,6 +26,8 @@ std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size = nu
 
 bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness);
 
+void SetFilePinnedAttribute(const WCHAR* path);
+
 } // namespace FileUtil
 
 #endif

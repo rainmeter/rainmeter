@@ -13,6 +13,7 @@
 #include <string>
 #include <list>
 #include <chrono>
+#include "../Common/CriticalSection.h"
 
 class Section;
 class Skin;
@@ -64,9 +65,7 @@ public:
 
 private:
 	void LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg);
-
-	// Appends |entry| to the log file.
-	void WriteToLogFile(Entry& entry);
+	void WriteToLogFile(const Entry& entry);
 
 	Logger();
 	~Logger();
@@ -79,8 +78,8 @@ private:
 
 	std::list<Entry> m_Entries;
 
-	CRITICAL_SECTION m_CsLog;
-	CRITICAL_SECTION m_CsLogDelay;
+	CriticalSection m_CsLog;
+	CriticalSection m_CsLogDelay;
 };
 
 // Convenience functions.

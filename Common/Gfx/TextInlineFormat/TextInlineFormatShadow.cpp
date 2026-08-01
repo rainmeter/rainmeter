@@ -26,10 +26,11 @@ TextInlineFormat_Shadow::TextInlineFormat_Shadow(const std::wstring& pattern, co
 {
 }
 
-TextInlineFormat_Shadow::~TextInlineFormat_Shadow()
+void TextInlineFormat_Shadow::InvalidateDeviceResources()
 {
-	if (m_Bitmap) m_Bitmap.Reset();
-	if (m_BitmapTarget) m_BitmapTarget.Reset();
+	m_Bitmap.Reset();
+	m_BitmapTarget.Reset();
+	m_PreviousPosition = D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f);
 }
 
 void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWriteTextLayout* layout,
@@ -72,8 +73,10 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 
 	const D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
 	const D2D1_SIZE_F drawSize = D2D1::SizeF(drawRect.right, drawRect.bottom);
+	FLOAT dpiX = 0.0f, dpiY = 0.0f;
+	target->GetDpi(&dpiX, &dpiY);
 
-	// Reset the shadow bitmap if the drawing position or size of target has changed.
+	// Reset the shadow bitmap if the drawing position, size, or DPI of target has changed.
 	if (m_BitmapTarget && (
 		drawRect.left != m_PreviousPosition.left ||
 		drawRect.top != m_PreviousPosition.top ||
@@ -81,7 +84,15 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 		drawRect.bottom != m_PreviousPosition.bottom))
 	{
 		m_BitmapTarget.Reset();
-		m_PreviousPosition = drawRect;
+	}
+	else if (m_BitmapTarget)
+	{
+		FLOAT bitmapDpiX = 0.0f, bitmapDpiY = 0.0f;
+		m_BitmapTarget->GetDpi(&bitmapDpiX, &bitmapDpiY);
+		if (dpiX != bitmapDpiX || dpiY != bitmapDpiY)
+		{
+			m_BitmapTarget.Reset();
+		}
 	}
 
 	m_Bitmap.Reset();
@@ -92,9 +103,8 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 
 		hr = target->CreateCompatibleRenderTarget(drawSize, m_BitmapTarget.GetAddressOf());
 		if (FAILED(hr)) return;
+		m_PreviousPosition = drawRect;
 	}
-
-	
 
 	// Draw onto memory bitmap target
 	// Note: Hardware acceleration seems to keep the bitmap render target in memory
@@ -113,7 +123,7 @@ void TextInlineFormat_Shadow::ApplyInlineFormat(ID2D1DeviceContext* target, IDWr
 	if (FAILED(hr)) return;
 
 	// Load shadow options to effect
-	shadow->SetInput(0U, m_Bitmap.Get());
+	shadow->SetInput(0, m_Bitmap.Get());
 	shadow->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, m_Blur);
 	shadow->SetValue(D2D1_SHADOW_PROP_COLOR, ToVector4F(m_Color));
 	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);

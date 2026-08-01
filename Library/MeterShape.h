@@ -8,6 +8,7 @@
 #ifndef __METERSHAPE_H__
 #define __METERSHAPE_H__
 
+#include "../Common/Map.h"
 #include "../Common/Gfx/Shape.h"
 #include "Meter.h"
 
@@ -24,6 +25,7 @@ public:
 
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
+	virtual void InvalidateDeviceResources() override;
 
 	bool HitTest(int x, int y);
 
@@ -35,14 +37,16 @@ private:
 	void Dispose();
 
 	bool CreateShape(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool& isCombined, size_t keyId);
-	bool CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args);
+	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::vector<std::wstring>& args);
 
-	void ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
-	bool ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform);
-	bool ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
-	bool ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode);
+	void ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
+	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform);
+	bool ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
+	bool ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FILL_MODE fillMode);
+	std::wstring ReadShapeOption(ConfigParser& parser, const WCHAR* section, std::wstring key);
 
-	std::vector<Gfx::Shape*> m_Shapes;
+	std::vector<Gfx::Shape> m_Shapes;
+	StringMap<std::wstring> m_ShapeOptions;
 };
 
 #endif

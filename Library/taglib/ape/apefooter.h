@@ -37,7 +37,7 @@ namespace TagLib {
 
     /*!
      * This class implements APE footers (and headers). It attempts to follow, both
-     * semantically and programatically, the structure specified in
+     * semantically and programmatically, the structure specified in
      * the APE v2.0 standard.  The API is based on the properties of APE footer and
      * headers specified there.
      */
@@ -64,7 +64,7 @@ namespace TagLib {
       /*!
        * Returns the version number.  (Note: This is the 1000 or 2000.)
        */
-      uint version() const;
+      unsigned int version() const;
 
       /*!
        * Returns true if a header is present in the tag.
@@ -89,13 +89,13 @@ namespace TagLib {
       /*!
        * Returns the number of items in the tag.
        */
-      uint itemCount() const;
+      unsigned int itemCount() const;
 
       /*!
        * Set the item count to \a s.
        * \see itemCount()
        */
-      void setItemCount(uint s);
+      void setItemCount(unsigned int s);
 
       /*!
        * Returns the tag size in bytes.  This is the size of the frame content and footer.
@@ -103,7 +103,7 @@ namespace TagLib {
        *
        * \see completeTagSize()
        */
-      uint tagSize() const;
+      unsigned int tagSize() const;
 
       /*!
        * Returns the tag size, including if present, the header
@@ -111,18 +111,18 @@ namespace TagLib {
        *
        * \see tagSize()
        */
-      uint completeTagSize() const;
+      unsigned int completeTagSize() const;
 
       /*!
        * Set the tag size to \a s.
        * \see tagSize()
        */
-      void setTagSize(uint s);
+      void setTagSize(unsigned int s);
 
       /*!
        * Returns the size of the footer.  Presently this is always 32 bytes.
        */
-      static uint size();
+      static unsigned int size();
 
       /*!
        * Returns the string used to identify an APE tag inside of a file.
@@ -167,7 +167,7 @@ namespace TagLib {
       FooterPrivate *d;
     };
 
-  }
-}
+  }  // namespace APE
+}  // namespace TagLib
 
 #endif

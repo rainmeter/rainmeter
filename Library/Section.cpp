@@ -21,11 +21,8 @@ Section::~Section()
 {
 }
 
-/*
-** Read the common options specified in the ini file. The inherited classes must
-** call this base implementation if they overwrite this method.
-**
-*/
+// Read the common options specified in the ini file. The inherited classes must
+// call this base implementation if they overwrite this method.
 void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	const int defaultUpdateDivider =
@@ -44,10 +41,6 @@ void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	InitializeGroup(group);
 }
 
-/*
-** Updates the counter value
-**
-*/
 bool Section::UpdateCounter()
 {
 	++m_UpdateCounter;
@@ -57,10 +50,6 @@ bool Section::UpdateCounter()
 	return true;
 }
 
-/*
-** Execute OnUpdateAction if action is set
-**
-*/
 void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())

@@ -18,7 +18,7 @@ UINT GetUniqueID();
 template <typename T>
 UINT TypeID() { static UINT id = GetUniqueID(); return id; }
 
-WCHAR* GetString(UINT id);
+const WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
 
 HICON GetIcon(UINT id, bool large = false);

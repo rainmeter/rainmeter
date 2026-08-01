@@ -8,17 +8,14 @@
 #ifndef __GENERALIMAGE_H__
 #define __GENERALIMAGE_H__
 
-#include "../Common/Gfx/D2DBitmap.h"
-#include "../Common/Gfx/Util/D2DEffectStream.h"
+#include "../Common/Gfx/Bitmap.h"
+#include "../Common/Gfx/Util/EffectStream.h"
 #include <string>
 #include "Skin.h"
 #include "ImageCache.h"
 #include "ImageOptions.h"
 
-/*
-** Helper macro to define an array of option names. A prefix must be given.
-**
-*/
+// Helper macro to define an array of option names. A prefix must be given.
 #define GeneralImageHelper_DefineOptionArray(name, prefix) \
 	const WCHAR* (name)[GeneralImage::OptionCount] = { \
 		prefix  L"ImageCrop", \
@@ -63,20 +60,22 @@ public:
 	~GeneralImage();
 
 	void DisposeImage();
+	void InvalidateDeviceResources();
 
-	bool IsLoaded() { return m_BitmapProcessed != nullptr; }
-	Gfx::D2DBitmap* GetImage() { return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() : nullptr; }
+	bool IsLoaded();
+	Gfx::Bitmap* GetImage();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
-	bool LoadImage(const std::wstring& imageName);
+	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
 
-	D2D1_SIZE_F ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const;
+	D2D1_SIZE_F ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const;
 	void ApplyTransforms();
+	bool HasActiveTransforms(Gfx::Bitmap* bitmap) const;
 
-	ImageCacheHandle* m_Bitmap;
-	ImageCacheHandle* m_BitmapProcessed;
+	std::unique_ptr<ImageCacheHandle> m_Bitmap;
+	std::unique_ptr<ImageCacheHandle> m_BitmapProcessed;
 	Skin* m_Skin;
 
 	const WCHAR* m_Name;
@@ -86,6 +85,7 @@ private:
 	ImageOptions m_Options;
 
 	std::wstring m_Path;
+	std::wstring m_ImageName;
 
 	static bool CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b);
 

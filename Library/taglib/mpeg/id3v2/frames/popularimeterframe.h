@@ -36,7 +36,7 @@ namespace TagLib {
     //! An implementation of ID3v2 "popularimeter"
 
     /*!
-     * This implements the ID3v2 popularimeter (POPM frame).  It concists of
+     * This implements the ID3v2 popularimeter (POPM frame).  It consists of
      * an email, a rating and an optional counter.
      */
 
@@ -100,14 +100,14 @@ namespace TagLib {
        *
        * \see setCounter()
        */
-      uint counter() const;
+      unsigned int counter() const;
 
       /*!
        * Set the counter.
        *
        * \see counter()
        */
-      void setCounter(uint counter);
+      void setCounter(unsigned int counter);
 
     protected:
       // Reimplementations.
@@ -127,6 +127,6 @@ namespace TagLib {
       PopularimeterFramePrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

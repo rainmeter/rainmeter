@@ -9,9 +9,7 @@
 #include "MeterRoundLine.h"
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Path.h"
-#include "../Common/Gfx/Shapes/Ellipse.h"
-#include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shape.h"
 
 namespace {
 
@@ -35,7 +33,7 @@ MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name
 	m_CntrlLineLength(false),
 	m_LineStartShift(0.0),
 	m_LineLengthShift(0.0),
-	m_ValueRemainder(0U),
+	m_ValueRemainder(0),
 	m_LineColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_Value(0.0)
 {
@@ -45,10 +43,6 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
@@ -58,7 +52,7 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
-	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0U);		// Typo
+	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", D2D1::ColorF(D2D1::ColorF::Black));
 	m_Solid = parser.ReadBool(section, L"Solid", false);
@@ -69,10 +63,6 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterRoundLine::Update()
 {
 	if (Meter::Update())
@@ -84,7 +74,7 @@ bool MeterRoundLine::Update()
 		}
 
 		Measure* measure = m_Measures[0];
-		if (m_ValueRemainder > 0U)
+		if (m_ValueRemainder > 0)
 		{
 			LONGLONG time = (LONGLONG)measure->GetValue();
 			m_Value = (double)(time % m_ValueRemainder);
@@ -101,10 +91,6 @@ bool MeterRoundLine::Update()
 }
 
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -155,18 +141,19 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const FLOAT ox = lineLength * s_cos + cx;
 		const FLOAT oy = lineLength * s_sin + cy;
 
-		Gfx::Path path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
-		path.SetFill(m_LineColor);
-		path.SetStrokeWidth(0.0f);
-		path.CreateStrokeStyle();
+		auto path = Gfx::Shape::Path(ix, iy, D2D1_FILL_MODE_ALTERNATE);
+		if (!path) return false;
+		path->SetFill(m_LineColor);
+		path->SetStrokeWidth(0.0f);
+		path->CreateStrokeStyle();
 
-		path.AddLine(ox, oy);
-		path.AddArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
-		path.AddLine(sx, sy);
-		path.AddArc(ix, iy, lineStart, lineStart, sweepAngle, sweepInnerDir, arcSize);
+		path->AddPathLine(ox, oy);
+		path->AddPathArc(ex, ey, lineLength, lineLength, sweepAngle, sweepOuterDir, arcSize);
+		path->AddPathLine(sx, sy);
+		path->AddPathArc(ix, iy, lineStart, lineStart, sweepAngle, sweepInnerDir, arcSize);
 
-		path.Close(D2D1_FIGURE_END_CLOSED);
-		canvas.DrawGeometry(path, 0, 0);
+		path->ClosePath(D2D1_FIGURE_END_CLOSED);
+		canvas.DrawGeometry(*path, 0, 0);
 	}
 	else
 	{
@@ -180,20 +167,17 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 		const FLOAT ex = e_cos * lineLength + cx;
 		const FLOAT ey = e_sin * lineLength + cy;
 
-		Gfx::Line line(sx, sy, ex, ey);
-		line.SetStrokeFill(m_LineColor);
-		line.SetStrokeWidth((FLOAT)m_LineWidth);
-		line.CreateStrokeStyle();
-		canvas.DrawGeometry(line, 0, 0);
+		auto line = Gfx::Shape::Line(sx, sy, ex, ey);
+		if (!line) return false;
+		line->SetStrokeFill(m_LineColor);
+		line->SetStrokeWidth((FLOAT)m_LineWidth);
+		line->CreateStrokeStyle();
+		canvas.DrawGeometry(*line, 0, 0);
 	}
 
 	return true;
 }
 
-/*
-** Overridden method. The roundline meters need not to be bound on anything
-**
-*/
 void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);

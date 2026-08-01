@@ -8,21 +8,22 @@
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "Export.h"
 #include "System.h"
 
-std::unordered_map<std::wstring, UINT> MeasurePlugin::s_PluginReferences;
-
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
+	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
-	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_HandleSkinSettingChangeFunc()
 {
+	m_PluginData = nullptr;
 }
 
 MeasurePlugin::~MeasurePlugin()
@@ -42,45 +43,11 @@ MeasurePlugin::~MeasurePlugin()
 			}
 		}
 
-		// Debug mode
-		if (GetRainmeter().GetDebug())
-		{
-			WCHAR pluginPath[MAX_PATH] = { 0 };
-			if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
-			{
-				// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-				// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
-				if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
-				{
-					std::wstring tmpStr = pluginPath;
-					StringUtil::ToLowerCase(tmpStr);
-
-					auto iter = s_PluginReferences.find(tmpStr);
-					if (iter != s_PluginReferences.end())
-					{
-						--iter->second;
-						if (iter->second == 0)
-						{
-							if (GetRainmeter().GetDebug())
-							{
-								LogDebugF(L"Plugin unloaded: %s", pluginPath);
-							}
-							s_PluginReferences.erase(tmpStr);
-						}
-					}
-				}
-			}
-		}
-
 		FreeLibrary(m_Plugin);
 		m_Plugin = nullptr;
 	}
 }
 
-/*
-** Gets the current value from the plugin
-**
-*/
 void MeasurePlugin::UpdateValue()
 {
 	if (m_UpdateFunc)
@@ -106,10 +73,6 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-/*
-** Reads the options and loads the plugin
-**
-*/
 void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	static UINT id = 0;
@@ -122,7 +85,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
 		}
-		
+
 		// DynamicVariables doesn't work with old plugins
 		return;
 	}
@@ -139,14 +102,13 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		pluginName = plugin;
 	}
 
-	// Append ".dll" if it doesn't exist (for debug mode)
-	if (GetRainmeter().GetDebug())
+	// Append ".dll" if it doesn't exist
+	if (!*PathFindExtension(plugin.c_str()))
 	{
-		if (_wcsicmp(PathFindExtension(plugin.c_str()), L"") == 0)
-		{
-			pluginName.append(L".dll");
-		}
+		pluginName.append(L".dll");
 	}
+
+	const bool logInitialLoad = GetRainmeter().GetDebug() && !GetModuleHandle(pluginName.c_str());
 
 	// First try from program path
 	std::wstring pluginFile = GetRainmeter().GetPluginPath();
@@ -163,41 +125,19 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		if (!m_Plugin)
 		{
+			const auto lastError = GetLastError();
 			LogErrorF(
-				this, L"Plugin: Unable to load \"%s\" (error %ld)",
-				pluginName.c_str(), GetLastError());
+				this, L"Plugin: Unable to %s \"%s\" (error %ld)",
+				lastError == ERROR_MOD_NOT_FOUND ? L"find DLL for" : L"load",
+				pluginName.c_str(), lastError);
 			return;
 		}
 	}
 
-	// Log plugin references (debug mode)
-	if (GetRainmeter().GetDebug())
+	WCHAR pluginPath[MAX_PATH] = { 0 };
+	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0)
 	{
-		WCHAR pluginPath[MAX_PATH] = { 0 };
-		if (GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
-		{
-			// Sometimes GetModuleFileName and/or LoadLibrary retrieves portions of the path
-			// in the wrong case (ex. ".DLL", instead of ".dll"), so get the actual file path
-			if (GetLongPathName(pluginPath, pluginPath, _countof(pluginPath)) > 0UL)
-			{
-				std::wstring tmpStr = pluginPath;
-				StringUtil::ToLowerCase(tmpStr);
-
-				auto iter = s_PluginReferences.find(tmpStr);
-				if (iter == s_PluginReferences.end())
-				{
-					s_PluginReferences.emplace(tmpStr, 1U);
-					if (GetRainmeter().GetDebug())
-					{
-						LogDebugF(L"Plugin loaded: %s", pluginPath);
-					}
-				}
-				else
-				{
-					++iter->second;
-				}
-			}
-		}
+		LogDebugF(L"Plugin loaded: %s", pluginPath);
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");
@@ -205,6 +145,14 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	m_HandleSkinSettingChangeFunc = (HandleSkinSettingChangeFunc)GetProcAddress(m_Plugin, "HandleSkinSettingChange");;
+
+	const WCHAR* pluginFileName = PathFindFileName(pluginName.c_str());
+
+	// Chameleon expects monitor variables such as #SCREENAREAWIDTH# to resolve to physical pixels.
+	m_MonitorVariableMode = (!IsDpiAware() && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
+		ConfigParser::MonitorVariableMode::FORCE_PHYSICAL :
+		ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL;
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -213,11 +161,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (IsNewApi())
 	{
-		{
-			// Suppress C4312: 'type cast': conversion from 'UINT' to 'void*' of greater size
-			#pragma warning(suppress: 4312)
-			m_PluginData = (void*)id;
-		}
+		m_PluginData = (void*)(UINT_PTR)id;
 
 		if (initializeFunc)
 		{
@@ -265,10 +209,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	++id;
 }
 
-/*
-** Gets the string value from the plugin.
-**
-*/
 const WCHAR* MeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
@@ -289,10 +229,6 @@ const WCHAR* MeasurePlugin::GetStringValue()
 	return nullptr;
 }
 
-/*
-** Sends a bang to the plugin
-**
-*/
 void MeasurePlugin::Command(const std::wstring& command)
 {
 	if (m_ExecuteBangFunc)
@@ -368,7 +304,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 
 		// Parse arguments
-		auto _args = ConfigParser::Tokenize2(
+		auto _args = ConfigParser::TokenizeWithPairedPunctuation(
 			command.substr(sPos + 1, ePos - sPos - 1),
 			L',',
 			PairedPunctuation::BothQuotes);
@@ -402,4 +338,24 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 	}
 
 	return false;
+}
+
+void MeasurePlugin::HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting)
+{
+	for (auto* measure : skin->GetMeasures())
+	{
+		if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+			plugin->HandleSkinSettingChange(setting);
+		}
+	}
+}
+
+void MeasurePlugin::HandleSkinSettingChange(RmSkinSettingChange setting)
+{
+	if (m_HandleSkinSettingChangeFunc)
+	{
+		m_HandleSkinSettingChangeFunc(m_PluginData, this, setting);
+	}
 }

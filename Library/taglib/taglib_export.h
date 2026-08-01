@@ -32,7 +32,7 @@
 #ifdef MAKE_TAGLIB_LIB
 #define TAGLIB_EXPORT __declspec(dllexport)
 #else
-#define TAGLIB_EXPORT 
+#define TAGLIB_EXPORT __declspec(dllimport)
 #endif
 #elif defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 1)
 #define TAGLIB_EXPORT __attribute__ ((visibility("default")))

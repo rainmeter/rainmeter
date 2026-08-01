@@ -10,11 +10,11 @@
 
 #pragma warning(disable: 4503)
 
+#include "../Common/Map.h"
+#include "../Common/ParseUtil.h"
 #include <windows.h>
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <cstdint>
 #include <d2d1.h>
 
@@ -24,26 +24,20 @@ class Section;
 class Measure;
 class Meter;
 
-enum class PairedPunctuation : BYTE
+enum class VariableExpandMode : BYTE
 {
-	SingleQuote,
-	DoubleQuote,
-	BothQuotes,
-	Parentheses,
-	Brackets,
-	Braces,
-	Guillemet
+	AllKeys,
+	HashOnly,
+	DollarMouseOnly
 };
 
 class ConfigParser
 {
 public:
-	enum class VariableType : BYTE
-	{										// Old Style:                         New Style:
-		Section,							// [MeasureName], [Meter:X], etc.     [&MeasureName], [&Meter:X], etc.
-		Variable,							// #Variable#                         [#Variable]
-		Mouse,								// $MouseX$, $MouseX:%$, etc.         [$MouseX], [$MouseX:%], etc.
-		CharacterReference					// Not available.                     [\8364], [\x20AC], [\X20AC], etc.
+	enum class MonitorVariableMode : BYTE
+	{
+		DEFAULT_LOGICAL,
+		FORCE_PHYSICAL
 	};
 
 	ConfigParser();
@@ -52,31 +46,30 @@ public:
 	ConfigParser(const ConfigParser& other) = delete;
 	ConfigParser& operator=(ConfigParser other) = delete;
 
-	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
+	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
-	Measure* GetMeasure(const std::wstring& name);
+	Measure* GetMeasure(std::wstring_view name);
 
-	const std::wstring* GetVariable(const std::wstring& strVariable);
+	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
-	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
-	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
+	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
+	const StringMap<std::wstring>& GetVariables() { return m_Variables; }
+	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
-	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+	const std::wstring& GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue);
+	void SetValue(const std::wstring& section, const std::wstring& option, std::wstring value);
+	void DeleteValue(const std::wstring& section, const std::wstring& option);
 
-	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
-	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
-	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
-
-	void SetStyleTemplate(const std::wstring& strStyle) { static const std::wstring delim(1, L'|'); Tokenize(strStyle, delim).swap(m_StyleTemplate); }
-	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
+	bool ReadInheritOption(LPCTSTR section, bool allowMeterStyle = false);
+	void SetInheritChain(const std::wstring& strInherit) { static const std::wstring delim(1, L'|'); Tokenize(strInherit, delim).swap(m_InheritChain); }
+	void ClearInheritChain() { m_InheritChain.clear(); }
 
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
-
-	void ResetMonitorVariables(Skin* skin = nullptr);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -94,72 +87,69 @@ public:
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
+	const std::vector<std::wstring>& GetIniFiles() const { return m_IniFiles; }
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
+	std::optional<std::wstring> GetDollarVariable(std::wstring_view variableStr);
 
-	bool ParseVariables(std::wstring& result, const VariableType type, Meter* meter = nullptr);
-	bool ContainsNewStyleVariable(const std::wstring& str);
-	std::wstring GetMouseVariable(const std::wstring& variable, Meter* meter);
+	bool ExpandSectionVariables(std::wstring& result, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
+	bool ContainsKeyedSectionVariable(const std::wstring& str);
+	static bool IsSectionVariableKey(WCHAR key);
+	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-	static std::vector<std::wstring> Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
-	static double ParseDouble(LPCTSTR str, double defValue);
-	static int ParseInt(LPCTSTR str, int defValue);
-	static uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
-	static uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
-	static D2D1_COLOR_F ParseColor(LPCTSTR str);
-	static D2D1_RECT_F ParseRect(LPCTSTR str);
-	static RECT ParseRECT(LPCTSTR str);
-
-	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
-	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
-	static bool IsVariableKey(const WCHAR ch) { for (auto& k : c_VariableMap) { if (k.second == ch) return true; } return false; }
+	double ParseDouble(LPCTSTR str, double defValue);
+	int ParseInt(LPCTSTR str, int defValue);
+	uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
+	uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
+	D2D1_COLOR_F ParseColor(LPCTSTR str);
+	D2D1_RECT_F ParseRect(LPCTSTR str);
+	RECT ParseRECT(LPCTSTR str);
 
 private:
-	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);
-
 	void ReadVariables();
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	void SetAutoSelectedMonitorVariables(Skin* skin);
-
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
 
-	static void SetMultiMonitorVariables(bool reset);
+	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetDollarSkinVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetDollarDisplayVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr);
 
-	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
-	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
+	static std::wstring StrToUpper(std::wstring_view str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	std::unordered_map<std::wstring, Measure*> m_Measures;
+	StringMap<Measure*> m_Measures;
 
-	std::vector<std::wstring> m_StyleTemplate;
+	std::vector<std::wstring> m_InheritChain;
 
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;
+	MonitorVariableMode m_MonitorVariableMode;
 
-	std::wstring* m_CurrentSection;
+	const std::wstring* m_CurrentSection;
+	std::wstring m_CurrentPath;
 
+	std::vector<std::wstring> m_IniFiles;
 	std::list<std::wstring> m_Sections;		// Ordered section
-	std::unordered_map<std::wstring, std::wstring> m_Values;
+	StringMap<std::wstring> m_Values;
 
-	std::unordered_set<std::wstring> m_FoundSections;
+	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionInsertPos;
 
-	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
-	std::unordered_map<std::wstring, std::wstring> m_Variables;
-	std::unordered_map<std::wstring, std::wstring> m_OriginalVariableNames;
+	StringMap<std::wstring> m_Variables;
+	StringMap<std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
-
-	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
-	static std::unordered_map<VariableType, WCHAR> c_VariableMap;
 };
 
 #endif
