@@ -129,7 +129,7 @@ void DialogDebug::Open(int tab)
 	}
 
 	c_Dialog->ShowDialogWindow(
-		GetString(IDS_Debug),
+		GetString(IDS_DebugRainmeter),
 		0, 0, 600, 400,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),

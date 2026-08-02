@@ -282,6 +282,7 @@
 #define IDS_TemplateFolderFail                      3022
 #define IDS_TemplateFileFail                        3023
 #define IDS_TemplateDelete                          3024
+#define IDS_DebugRainmeter                          3025
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
 #define IDM_DISABLEDRAG                              4003
