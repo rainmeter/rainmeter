@@ -82,7 +82,6 @@
 #define IDS_Time                                    2068
 #define IDS_Message                                 2069
 #define IDS_Name                                    2070
-#define IDS_Range                                   2071
 #define IDS_Value                                   2072
 #define IDS_Author                                  2073
 #define IDS_Error                                   2074
@@ -122,9 +121,6 @@
 #define IDS_Save                                    2108
 #define IDS_SavedThemes                             2109
 #define IDS_Delete                                  2110
-#define IDS_Backup                                  2111
-#define IDS_BackupDescription                       2112
-#define IDS_BackupEllipsis                          2113
 #define IDS_LanguageColon                           2114
 #define IDS_General                                 2115
 #define IDS_CheckForUpdates                         2116
@@ -161,13 +157,10 @@
 #define IDS_String                                  2148
 #define IDS_ExternalPlugins                         2149
 #define IDS_BuiltInPlugins                          2150
-#define IDS_SkinInstaller                           2151
-#define IDS_ArchivePlugins                          2152
 #define IDS_HardwareAccelerated                     2153
 #define IDS_RestartConfirm                          2154
 #define IDS_Measure                                 2155
 #define IDS_LanguageObsolete                        2156
-#define IDS_ClickLanguage                           2157
 #define IDS_SafeStartTitle                          2158
 #define IDS_SafeStartMessage                        2159
 #define IDS_AutomaticUpdate                         2160
