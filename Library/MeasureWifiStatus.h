@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_MEASUREWIFISTATUS_H_
-#define RM_LIBRARY_MEASUREWIFISTATUS_H_
+#pragma once
 
 #include "Measure.h"
 #include <wlanapi.h>
@@ -70,5 +69,3 @@ private:
 	static PWLAN_CONNECTION_ATTRIBUTES s_ConnectionAttributes;
 	static bool s_NotificationsRegistered;
 };
-
-#endif

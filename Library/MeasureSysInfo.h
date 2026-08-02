@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURESYSINFO_H__
-#define __MEASURESYSINFO_H__
+#pragma once
 
 #include "Measure.h"
 #include <Netlistmgr.h>
@@ -113,5 +112,3 @@ private:
 
 	static LONGLONG s_LogonTime;
 };
-
-#endif

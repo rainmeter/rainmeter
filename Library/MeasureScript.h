@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURESCRIPT_H__
-#define __MEASURESCRIPT_H__
+#pragma once
 
 #include "Measure.h"
 #include "lua/LuaScript.h"
@@ -47,5 +46,3 @@ private:
 
 	std::wstring m_StringValue;
 };
-
-#endif

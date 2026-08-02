@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_SKINDIRECTORY_H_
-#define RM_LIBRARY_SKINDIRECTORY_H_
+#pragma once
 
 #include <Windows.h>
 #include <string>
@@ -130,5 +129,3 @@ private:
 	ankerl::unordered_dense::set<std::wstring> m_ChangedRootFolders;
 	std::unique_ptr<DirectoryWatcher> m_ChangeWatcher;
 };
-
-#endif

@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_RENDERTEXTURE_H__
-#define RM_GFX_RENDERTEXTURE_H__
+#pragma once
 
 #include "Bitmap.h"
 #include "Canvas.h"
@@ -30,5 +29,3 @@ private:
 };
 
 } // namespace Gfx
-
-#endif

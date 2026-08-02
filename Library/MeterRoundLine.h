@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERROUNDLINE_H__
-#define __METERROUNDLINE_H__
+#pragma once
 
 #include "Meter.h"
 
@@ -44,5 +43,3 @@ private:
 	D2D1_COLOR_F m_LineColor;
 	double m_Value;
 };
-
-#endif

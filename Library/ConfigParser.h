@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __CONFIGPARSER_H__
-#define __CONFIGPARSER_H__
+#pragma once
 
 #pragma warning(disable: 4503)
 
@@ -151,5 +150,3 @@ private:
 
 	Skin* m_Skin;
 };
-
-#endif

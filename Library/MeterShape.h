@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERSHAPE_H__
-#define __METERSHAPE_H__
+#pragma once
 
 #include "../Common/Map.h"
 #include "../Common/Gfx/Shape.h"
@@ -48,5 +47,3 @@ private:
 	std::vector<Gfx::Shape> m_Shapes;
 	StringMap<std::wstring> m_ShapeOptions;
 };
-
-#endif

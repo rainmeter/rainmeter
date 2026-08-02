@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_PLATFORM_H_
-#define RM_COMMON_PLATFORM_H_
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -47,5 +46,3 @@ private:
 
 // Convenience function.
 inline Platform& GetPlatform() { return Platform::GetInstance(); }
-
-#endif

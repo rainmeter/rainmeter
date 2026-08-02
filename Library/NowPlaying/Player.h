@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __PLAYER_H__
-#define __PLAYER_H__
+#pragma once
 
 #include "taglib\fileref.h"
 #include "taglib\tag.h"
@@ -128,5 +127,3 @@ private:
 
 	Net::FetchTask* m_FetchLyricsTask;
 };
-
-#endif

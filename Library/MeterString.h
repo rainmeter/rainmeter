@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERSTRING_H__
-#define __METERSTRING_H__
+#pragma once
 
 #include "Meter.h"
 #include "Measure.h"
@@ -100,5 +99,3 @@ private:
 
 	std::wstring m_String;
 };
-
-#endif

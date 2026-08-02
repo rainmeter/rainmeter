@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MOUSE_H__
-#define __MOUSE_H__
+#pragma once
 
 enum MOUSEACTION : uint32_t
 {
@@ -171,5 +170,3 @@ private:
 	Skin* m_Skin;
 	Meter* m_Meter;
 };
-
-#endif

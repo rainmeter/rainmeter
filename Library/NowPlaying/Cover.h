@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __COVER_H__
-#define __COVER_H__
+#pragma once
 
 // TagLib
 #include "fileref.h"
@@ -35,5 +34,3 @@ public:
 	static bool GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target);
 	static std::wstring GetFileFolder(const std::wstring& file);
 };
-
-#endif

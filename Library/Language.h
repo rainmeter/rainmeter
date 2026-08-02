@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not included with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_LANGUAGE_H_
-#define RM_LIBRARY_LANGUAGE_H_
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -51,5 +50,3 @@ private:
 	unsigned short m_LabelWidth;
 	bool m_IsRTL;
 };
-
-#endif

@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASUREUPTIME_H__
-#define __MEASUREUPTIME_H__
+#pragma once
 
 #include "Measure.h"
 
@@ -33,5 +32,3 @@ private:
 	double m_Seconds;
 	bool m_SecondsDefined;
 };
-
-#endif

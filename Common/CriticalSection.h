@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_CRITICALSECTION_H_
-#define RM_COMMON_CRITICALSECTION_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -68,5 +67,3 @@ public:
 private:
 	CriticalSection& m_CriticalSection;
 };
-
-#endif

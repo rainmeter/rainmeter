@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_D2D_UTIL_H_
-#define RM_GFX_D2D_UTIL_H_
+#pragma once
 
 #include <d2d1.h>
 
@@ -26,5 +25,3 @@ bool ColorFEquals(const D2D1_COLOR_F& color1, const D2D1_COLOR_F& color2);
 
 }  // namespace Util
 }  // namespace Gfx
-
-#endif

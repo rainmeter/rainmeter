@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_STRINGUTIL_H_
-#define RM_COMMON_STRINGUTIL_H_
+#pragma once
 
 #include <Windows.h>
 #include <string>
@@ -47,5 +46,3 @@ void EncodeUrl(std::wstring& str, bool doReserved = true);
 std::size_t CaseInsensitiveFind(const std::wstring& str1, const std::wstring& str2);
 
 }  // namespace StringUtil
-
-#endif

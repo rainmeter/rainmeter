@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __UPDATE_CHECK_H__
-#define __UPDATE_CHECK_H__
+#pragma once
 
 #include "Net.h"
 #include "../Common/Version.h"
@@ -53,5 +52,3 @@ private:
 
 // Convenience function.
 inline Updater& GetUpdater() { return Updater::GetInstance(); }
-
-#endif

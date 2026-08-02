@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __RAINMETER_GAMEMODE_H__
-#define __RAINMETER_GAMEMODE_H__
+#pragma once
 
 class GameMode
 {
@@ -91,5 +90,3 @@ private:
 
 // Convenience function.
 inline GameMode& GetGameMode() { return GameMode::GetInstance(); }
-
-#endif

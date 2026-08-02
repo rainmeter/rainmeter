@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_UTIL_BITMAPLOADER_H_
-#define RM_GFX_UTIL_BITMAPLOADER_H_
+#pragma once
 
 #include "../Bitmap.h"
 
@@ -37,5 +36,3 @@ private:
 
 }  // namespace Util
 }  // namespace Gfx
-
-#endif

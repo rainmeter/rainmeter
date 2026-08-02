@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_TRAYICON_H_
-#define RM_LIBRARY_TRAYICON_H_
+#pragma once
 
 #include <windows.h>
 #include <memory>
@@ -87,5 +86,3 @@ private:
 
 	bool m_IconEnabled;
 };
-
-#endif

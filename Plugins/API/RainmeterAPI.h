@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __RAINMETERAPI_H__
-#define __RAINMETERAPI_H__
+#pragma once
 
 #include <stdint.h>
 
@@ -563,5 +562,3 @@ enum LOGLEVEL
 };
 
 #endif // LIBRARY_EXPORTS
-
-#endif

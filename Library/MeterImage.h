@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERIMAGE_H__
-#define __METERIMAGE_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -52,5 +51,3 @@ private:
 
 	static const WCHAR* c_MaskOptionArray[GeneralImage::OptionCount];
 };
-
-#endif

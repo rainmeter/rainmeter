@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METER_H__
-#define __METER_H__
+#pragma once
 
 #include <windows.h>
 #include <vector>
@@ -173,5 +172,3 @@ protected:
 	Gfx::RenderTexture* m_ContainerContentTexture;
 	Gfx::RenderTexture* m_ContainerTexture;
 };
-
-#endif

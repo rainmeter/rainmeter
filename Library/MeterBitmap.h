@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERBITMAP_H__
-#define __METERBITMAP_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -49,5 +48,3 @@ private:
 	ULONGLONG m_TransitionStartTicks;
 	double m_TransitionStartValue;
 };
-
-#endif

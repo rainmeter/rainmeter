@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __PLAYERITUNES_H__
-#define __PLAYERITUNES_H__
+#pragma once
 
 #include "Player.h"
 #include "iTunes/iTunesCOMInterface.h"
@@ -80,5 +79,3 @@ private:
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;
 };
-
-#endif

@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_MAP_H_
-#define RM_COMMON_MAP_H_
+#pragma once
 
 #include <functional>
 #include <string>
@@ -26,5 +25,3 @@ struct StringHash
 
 template <typename ValueType>
 using StringMap = ankerl::unordered_dense::map<std::wstring, ValueType, StringHash, std::equal_to<>>;
-
-#endif

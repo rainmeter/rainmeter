@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_DIALOGABOUT_H_
-#define RM_LIBRARY_DIALOGABOUT_H_
+#pragma once
 
 #include "../Common/Dialog.h"
 
@@ -51,5 +50,3 @@ private:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogAbout* c_Dialog;
 };
-
-#endif

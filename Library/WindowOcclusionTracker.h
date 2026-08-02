@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __RAINMETER_WINDOWOCCLUSIONTRACKER_H__
-#define __RAINMETER_WINDOWOCCLUSIONTRACKER_H__
+#pragma once
 
 #include <windows.h>
 
@@ -29,5 +28,3 @@ void HandlePowerResume();
 void HandleSessionChange(WPARAM sessionEvent);
 
 }  // namespace WindowOcclusionTracker
-
-#endif

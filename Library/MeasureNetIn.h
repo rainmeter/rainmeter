@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURENETIN_H__
-#define __MEASURENETIN_H__
+#pragma once
 
 #include "MeasureNet.h"
 
@@ -19,5 +18,3 @@ public:
 	MeasureNetIn(const MeasureNetIn& other) = delete;
 	MeasureNetIn& operator=(MeasureNetIn other) = delete;
 };
-
-#endif

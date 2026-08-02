@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_STRINGPARSER_H_
-#define RM_COMMON_STRINGPARSER_H_
+#pragma once
 
 #include <Windows.h>
 #include <optional>
@@ -86,5 +85,3 @@ private:
 	const WCHAR* m_Current;
 	const WCHAR* m_End;
 };
-
-#endif

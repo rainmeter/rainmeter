@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __STDAFX_H__
-#define __STDAFX_H__
+#pragma once
 
 // Common is used by projects that don't link to msvcpNNN.dll at all so this header should include
 // only C compatible headers.
@@ -32,5 +31,3 @@
 #include <string>
 
 #include "ankerl/unordered_dense.h"
-
-#endif

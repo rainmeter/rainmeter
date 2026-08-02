@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERROTATOR_H__
-#define __METERROTATOR_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -41,5 +40,3 @@ private:
 	UINT m_ValueRemainder;
 	double m_Value;
 };
-
-#endif

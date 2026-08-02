@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERBAR_H__
-#define __METERBAR_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -48,5 +47,3 @@ private:
 	int m_Border;
 	bool m_Flip;
 };
-
-#endif

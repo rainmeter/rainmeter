@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_MEASUREAUDIOLEVEL_H_
-#define RM_LIBRARY_MEASUREAUDIOLEVEL_H_
+#pragma once
 
 #include "Measure.h"
 #include "../ThirdParty/kiss_fft130/kiss_fftr.h"
@@ -138,5 +137,3 @@ private:
 	float* m_BandFreq;
 	float* m_BandOut[MAX_CHANNELS];
 };
-
-#endif

@@ -2,12 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_COMMON_H__B302F7F1_E8D6_4EF2_9D89_A634D14922BF__INCLUDED_)
-#define AFX_COMMON_H__B302F7F1_E8D6_4EF2_9D89_A634D14922BF__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 #define CORE_TEMP_MAPPING_OBJECT_EX L"CoreTempMappingObjectEx"
 #define CORE_TEMP_MUTEX_OBJECT L"CoreTempMutexObject"
@@ -109,4 +104,3 @@ public:
 	bool ReadSharedMem(LPCoreTempSharedDataEx i_SharedData);
 };
 
-#endif // !defined(AFX_COMMON_H__B302F7F1_E8D6_4EF2_9D89_A634D14922BF__INCLUDED_)

@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASUREDISKSPACE_H__
-#define __MEASUREDISKSPACE_H__
+#pragma once
 
 #include "Measure.h"
 
@@ -38,5 +37,3 @@ private:
 
 	ULONGLONG m_OldTotalBytes;
 };
-
-#endif

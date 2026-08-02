@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURE_H__
-#define __MEASURE_H__
+#pragma once
 
 #include <windows.h>
 #include <vector>
@@ -122,5 +121,3 @@ protected:
 	MeasureValueSet* m_OldValue;
 	bool m_ValueAssigned;
 };
-
-#endif

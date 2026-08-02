@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_FILEUTIL_H_
-#define RM_COMMON_FILEUTIL_H_
+#pragma once
 
 #include <string>
 #include <memory>
@@ -29,5 +28,3 @@ bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness);
 void SetFilePinnedAttribute(const WCHAR* path);
 
 } // namespace FileUtil
-
-#endif

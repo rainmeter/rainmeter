@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_SHAPE_H_
-#define RM_GFX_SHAPE_H_
+#pragma once
 
 #include "Util/D2DUtil.h"
 #include <array>
@@ -206,5 +205,3 @@ private:
 };
 
 } // Gfx
-
-#endif
