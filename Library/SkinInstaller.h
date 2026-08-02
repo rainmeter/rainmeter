@@ -23,12 +23,6 @@ struct GlobalData
 	std::wstring iniFile;
 };
 
-struct OsNameVersion
-{
-	const WCHAR* name;
-	const WCHAR* version;
-};
-
 HINSTANCE GetInstanceHandle();
 
 bool CloseRainmeterIfActive();

@@ -20,8 +20,6 @@
 #define WM_DELAYED_CLOSE WM_APP + 0
 
 extern GlobalData g_Data;
-extern OsNameVersion g_OsNameVersions[];
-
 DialogPackage* DialogPackage::c_Dialog = nullptr;
 
 DialogPackage::DialogPackage() : Dialog(),
@@ -258,7 +256,6 @@ bool DialogPackage::CreatePackage()
 	}
 
 	WritePrivateProfileString(L"rmskin", L"MinimumRainmeter", m_MinimumRainmeter.c_str(), tempFile);
-	WritePrivateProfileString(L"rmskin", L"MinimumWindows", m_MinimumWindows.c_str(), tempFile);
 
 	// Only Skin Installer in Rainmeter 3.0.1 support UTF-8 filenames.
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
@@ -1220,41 +1217,35 @@ void DialogPackage::TabOptions::Create(HWND owner)
 			245, 17, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::GroupBox(Id_AfterInstallGroup, 0,
-			0, 101, 270, 58,
+			0, 119, 270, 58,
 			WS_VISIBLE, 0),
 		Control::RadioButton(DialogPackage::TabOptions::Id_DoNothingRadio, 0,
-			6, 116, 85, 13,
+			6, 134, 85, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
 		Control::RadioButton(DialogPackage::TabOptions::Id_LoadSkinRadio, 0,
-			6, 129, 85, 13,
+			6, 147, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_LoadSkinEdit, 0,
-			96, 126, 138, 14,
+			96, 144, 138, 14,
 			WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 		Control::Button(DialogPackage::TabOptions::Id_LoadSkinBrowseButton, 0,
-			239, 126, 25, 14,
+			239, 144, 25, 14,
 			WS_TABSTOP, 0),
 		Control::RadioButton(DialogPackage::TabOptions::Id_LoadLayoutRadio, 0,
-			6, 142, 85, 13,
+			6, 160, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::ComboBox(DialogPackage::TabOptions::Id_LoadLayoutCombo, 0,
-			96, 139, 168, 14,
+			96, 157, 168, 14,
 			WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
 		Control::GroupBox(Id_RequirementsGroup, 0,
-			0, 164, 270, 53,
+			0, 182, 270, 35,
 			WS_VISIBLE | WS_GROUP, 0),
 		Control::Label(Id_RainmeterVersionLabel, 0,
-			6, 180, 85, 13,
-			WS_VISIBLE, 0),
-		Control::Edit(DialogPackage::TabOptions::Id_RainmeterVersionEdit, 0,
-			96, 177, 80, 14,
-			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::Label(Id_WindowsVersionLabel, 0,
 			6, 198, 85, 13,
 			WS_VISIBLE, 0),
-		Control::ComboBox(DialogPackage::TabOptions::Id_WindowsVersionCombo, 0,
+		Control::Edit(DialogPackage::TabOptions::Id_RainmeterVersionEdit, 0,
 			96, 195, 80, 14,
-			WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::Label(DialogPackage::TabOptions::Id_CreatingText, 0,
 			0, 0, 270, 100,
 			0, 0),
@@ -1273,7 +1264,6 @@ void DialogPackage::TabOptions::Create(HWND owner)
 	SetWindowText(GetControl(DialogPackage::TabOptions::Id_LoadLayoutRadio), L"Load layout");
 	SetWindowText(GetControl(Id_RequirementsGroup), L"Minimum requirements");
 	SetWindowText(GetControl(Id_RainmeterVersionLabel), L"Rainmeter version:");
-	SetWindowText(GetControl(Id_WindowsVersionLabel), L"Windows version:");
 	SetWindowText(GetControl(DialogPackage::TabOptions::Id_CreatingText), L"Creating...");
 }
 
@@ -1337,12 +1327,6 @@ void DialogPackage::TabOptions::Initialize()
 	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", APPVERSION, revision_number);
 	SetWindowText(item, buffer);
 	c_Dialog->m_MinimumRainmeter = buffer;
-
-	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_WindowsVersionCombo);
-	ComboBox_AddString(item, L"8");
-	ComboBox_AddString(item, L"10");
-	ComboBox_SetCurSel(item, 1);
-	c_Dialog->m_MinimumWindows = g_OsNameVersions[1].version;
 }
 
 INT_PTR DialogPackage::TabOptions::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1499,14 +1483,6 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 
 			c_Dialog->m_MinimumRainmeter = buffer;
-		}
-		break;
-
-	case DialogPackage::TabOptions::Id_WindowsVersionCombo:
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			int sel = ComboBox_GetCurSel((HWND)lParam);
-			c_Dialog->m_MinimumWindows = g_OsNameVersions[sel].version;
 		}
 		break;
 
