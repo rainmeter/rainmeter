@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASUREPLUGIN_H__
-#define __MEASUREPLUGIN_H__
+#pragma once
 
 #include "ConfigParser.h"
 #include "Measure.h"
@@ -83,5 +82,3 @@ private:
 	typedef void (*HandleSkinSettingChangeFunc)(void*, void*, RmSkinSettingChange);
 	HandleSkinSettingChangeFunc m_HandleSkinSettingChangeFunc;
 };
-
-#endif

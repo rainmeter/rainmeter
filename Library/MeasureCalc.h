@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURECALC_H__
-#define __MEASURECALC_H__
+#pragma once
 
 #include "Measure.h"
 #include "../Common/MathParser.h"
@@ -45,5 +44,3 @@ private:
 	std::vector<int> m_UniqueNumbers;
 	void UpdateUniqueNumberList();
 };
-
-#endif

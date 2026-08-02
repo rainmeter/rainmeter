@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_GFX_TEXTINLINEFORMAT_H_
-#define RM_GFX_TEXTINLINEFORMAT_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -60,5 +59,3 @@ private:
 };
 
 }  // namespace Gfx
-
-#endif

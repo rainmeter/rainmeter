@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef SKININSTALLER_DIALOGPACKAGE_H_
-#define SKININSTALLER_DIALOGPACKAGE_H_
+#pragma once
 
 #include <string>
 #include "zip.h"
@@ -166,5 +165,3 @@ private:
 	zipFile m_ZipFile;
 	bool m_AllowNonAsciiFilenames;
 };
-
-#endif

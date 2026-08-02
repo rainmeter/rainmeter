@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __PLAYERCAD_H__
-#define __PLAYERCAD_H__
+#pragma once
 
 #include "Player.h"
 
@@ -48,5 +47,3 @@ private:
 	bool m_ExtendedAPI;
 	bool m_Open;
 };
-
-#endif

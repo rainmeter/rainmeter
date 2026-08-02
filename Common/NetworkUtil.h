@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_NETWORKUTIL_H_
-#define RM_COMMON_NETWORKUTIL_H_
+#pragma once
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -42,5 +41,3 @@ private:
 	static ULONG s_InterfaceCount;
 	static MIB_IF_TABLE2* s_InterfaceTable;
 };
-
-#endif

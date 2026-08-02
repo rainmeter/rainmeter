@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __EXPORT_H__
-#define __EXPORT_H__
+#pragma once
 
 #include "../Plugins/API/RainmeterAPI.h"
 
@@ -16,6 +15,4 @@
 
 #ifdef LIBRARY_EXPORTS
 void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam);
-#endif
-
 #endif

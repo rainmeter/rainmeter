@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __STDAFX_H__
-#define __STDAFX_H__
+#pragma once
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -62,5 +61,3 @@
 #define IsCtrlKeyDown()     (GetKeyState(VK_CONTROL) < 0)
 #define IsShiftKeyDown()    (GetKeyState(VK_SHIFT) < 0)
 #define IsAltKeyDown()      (GetKeyState(VK_MENU) < 0)
-
-#endif

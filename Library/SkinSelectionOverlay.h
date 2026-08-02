@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_SKINSELECTIONOVERLAY_H_
-#define RM_LIBRARY_SKINSELECTIONOVERLAY_H_
+#pragma once
 
 class Skin;
 
@@ -79,5 +78,3 @@ private:
 	std::optional<ZoomDragState> m_ZoomDrag;
 	std::vector<ZoomDragStartState> m_ZoomDragStartStates;
 };
-
-#endif

@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURESTRING_H__
-#define __MEASURESTRING_H__
+#pragma once
 
 #include "Measure.h"
 
@@ -31,5 +30,3 @@ private:
 	std::wstring m_String;
 	std::wstring m_StringValue;
 };
-
-#endif

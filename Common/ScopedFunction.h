@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_SCOPEDFUNCTION_H_
-#define RM_COMMON_SCOPEDFUNCTION_H_
+#pragma once
 
 // Executes function T when the ScopedFunction is destructed.
 template<typename T>
@@ -35,5 +34,3 @@ ScopedFunction<T> Scoped(T t)
 {
 	return ScopedFunction<T>(std::move(t));
 }
-
-#endif

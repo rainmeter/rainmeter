@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_RAWSTRING_H_
-#define RM_COMMON_RAWSTRING_H_
+#pragma once
 
 #include <malloc.h>
 
@@ -77,5 +76,3 @@ private:
 
 	wchar_t* m_String;
 };
-
-#endif

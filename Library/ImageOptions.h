@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __IMAGEOPTIONS_H__
-#define __IMAGEOPTIONS_H__
+#pragma once
 
 #include "../Common/Gfx/Bitmap.h"
 #include "../Common/Gfx/Util/EffectStream.h"
@@ -71,5 +70,3 @@ struct ImageOptions : Gfx::FileInfo
 	bool m_UseExifOrientation;
 	bool m_CreateAlphaMask;
 };
-
-#endif

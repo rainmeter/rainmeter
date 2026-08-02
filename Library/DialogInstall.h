@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef SKININSTALLER_DIALOGINSTALL_H_
-#define SKININSTALLER_DIALOGINSTALL_H_
+#pragma once
 
 #include <string>
 #include "unzip.h"
@@ -146,5 +145,3 @@ private:
 	std::vector<std::wstring> m_LoadSkins;
 	std::wstring m_LoadLayout;
 };
-
-#endif

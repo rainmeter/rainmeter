@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_TIMER_H_
-#define RM_COMMON_TIMER_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -41,5 +40,3 @@ private:
 	LARGE_INTEGER m_Start;
 	LARGE_INTEGER m_Stop;
 };
-
-#endif

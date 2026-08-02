@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_CONTROLTEMPLATE_H_
-#define RM_COMMON_CONTROLTEMPLATE_H_
+#pragma once
 
 #include <Windows.h>
 #include <vector>
@@ -103,5 +102,3 @@ private:
 	HFONT m_FontBold;
 	std::vector<CreatedControl> m_Controls;
 };
-
-#endif

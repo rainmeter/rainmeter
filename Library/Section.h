@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __SECTION_H__
-#define __SECTION_H__
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -58,5 +57,3 @@ protected:
 
 	Skin* m_Skin;
 };
-
-#endif

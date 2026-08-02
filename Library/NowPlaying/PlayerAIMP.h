@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __PLAYERAIMP_H__
-#define __PLAYERAIMP_H__
+#pragma once
 
 #include "Player.h"
 
@@ -49,5 +48,3 @@ private:
 	LPVOID m_FileMap;
 	HANDLE m_FileMapHandle;
 };
-
-#endif

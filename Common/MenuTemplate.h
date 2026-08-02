@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_MENUTEMPLATE_H_
-#define RM_COMMON_MENUTEMPLATE_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -37,5 +36,3 @@ enum MenuTemplateItem
 #define MENU_ITEM_GRAYED(...) { MenuItem_ItemGrayed, __VA_ARGS__ }
 #define MENU_SEPARATOR() { MenuItem_Separator }
 #define MENU_SUBMENU(idText, ...) { MenuItem_SubMenuBegin, 0, idText }, __VA_ARGS__, { MenuItem_SubMenuEnd }
-
-#endif

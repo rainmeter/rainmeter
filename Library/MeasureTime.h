@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURETIME_H__
-#define __MEASURETIME_H__
+#pragma once
 
 #include "Measure.h"
 
@@ -58,5 +57,3 @@ private:
 	double m_TimeZone;
 	bool m_DaylightSavingTime;
 };
-
-#endif

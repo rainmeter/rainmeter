@@ -7,8 +7,7 @@
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
-#ifndef RM_COMMON_MATHPARSER_H_
-#define RM_COMMON_MATHPARSER_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -38,5 +37,3 @@ private:
 	GetValueFunc m_GetValue;
 	void* m_GetValueContext;
 };
-
-#endif

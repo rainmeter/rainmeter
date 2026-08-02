@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __DIALOGMANAGE_H__
-#define __DIALOGMANAGE_H__
+#pragma once
 
 #include "../Common/Dialog.h"
 #include "resource.h"
@@ -252,5 +251,3 @@ private:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogManage* c_Dialog;
 };
-
-#endif

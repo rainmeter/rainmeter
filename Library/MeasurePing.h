@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_MEASUREPING_H_
-#define RM_LIBRARY_MEASUREPING_H_
+#pragma once
 
 #include "Measure.h"
 #include <string>
@@ -37,5 +36,3 @@ private:
 	std::wstring m_FinishAction;
 	PingTask* m_Task;
 };
-
-#endif

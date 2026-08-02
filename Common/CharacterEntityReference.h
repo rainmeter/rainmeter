@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_COMMON_CHARACTERENTITYREFERENCE_H_
-#define RM_COMMON_CHARACTERENTITYREFERENCE_H_
+#pragma once
 
 #include <string>
 
@@ -15,5 +14,3 @@ namespace CharacterEntityReference {
 void Decode(std::wstring& str, int opt, bool unescape);
 
 } // namespace CharacterEntityReference
-
-#endif

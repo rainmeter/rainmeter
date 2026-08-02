@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __METERBUTTON_H__
-#define __METERBUTTON_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -53,5 +52,3 @@ private:
 	bool m_Clicked;
 	bool m_Focus;
 };
-
-#endif

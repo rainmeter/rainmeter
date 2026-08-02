@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __RAINMETER_SYSTEM_H__
-#define __RAINMETER_SYSTEM_H__
+#pragma once
 
 #include <windows.h>
 #include <queue>
@@ -76,5 +75,3 @@ private:
 
 	static std::vector<std::wstring> c_IniFileMappings;
 };
-
-#endif

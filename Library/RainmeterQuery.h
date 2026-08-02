@@ -60,8 +60,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 -----
 */
 
-#ifndef __RAINMETER_QUERY_H__
-#define __RAINMETER_QUERY_H__
+#pragma once
 
 #include <tchar.h>
 
@@ -110,5 +109,3 @@ cds.cbData = (wcslen(SkinName) + 1) * 2;
 
 HWND hWndMeter = (HWND) SendMessage(hWndRainmeter, WM_COPYDATA, (WPARAM) hWndYourWindow, (LPARAM) &cds);
 */
-
-#endif

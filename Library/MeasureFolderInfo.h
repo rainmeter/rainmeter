@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_MEASUREFOLDERINFO_H_
-#define RM_LIBRARY_MEASUREFOLDERINFO_H_
+#pragma once
 
 #include "Measure.h"
 
@@ -33,5 +32,3 @@ private:
 	FolderInfoParentMeasure* m_Parent;
 	Type m_Type;
 };
-
-#endif

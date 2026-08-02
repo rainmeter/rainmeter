@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __IFACTIONS_H__
-#define __IFACTIONS_H__
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -79,4 +78,3 @@ private:
 	std::vector<IfState> m_Matches;
 	bool m_MatchMode;
 };
-#endif

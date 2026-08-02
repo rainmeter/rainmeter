@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef RM_LIBRARY_CONTEXTMENU_H
-#define RM_LIBRARY_CONTEXTMENU_H
+#pragma once
 
 #include <vector>
 #include <Windows.h>
@@ -52,5 +51,3 @@ private:
 
 	HMENU m_ActiveMenu;
 };
-
-#endif

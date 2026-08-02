@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __MEASURENET_H__
-#define __MEASURENET_H__
+#pragma once
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -59,5 +58,3 @@ private:
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;
 };
-
-#endif

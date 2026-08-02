@@ -5,8 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#ifndef __GENERALIMAGE_H__
-#define __GENERALIMAGE_H__
+#pragma once
 
 #include "../Common/Gfx/Bitmap.h"
 #include "../Common/Gfx/Util/EffectStream.h"
@@ -93,5 +92,3 @@ private:
 	static const D2D1_MATRIX_5X4_F c_IdentityMatrix;
 	static const WCHAR* c_DefaultOptionArray[OptionCount];
 };
-
-#endif
