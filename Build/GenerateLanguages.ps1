@@ -24,6 +24,7 @@ $languages = [ordered]@{
 	'de'      = @{ nsis = 'German'; lcid = 1031 }
 	'el'      = @{ nsis = 'Greek'; lcid = 1032 }
 	'he'      = @{ nsis = 'Hebrew'; lcid = 1037 }
+	'hr'      = @{ nsis = 'Croatian'; lcid = 1050 }
 	'hu'      = @{ nsis = 'Hungarian'; lcid = 1038 }
 	'id'      = @{ nsis = 'Indonesian'; lcid = 1057 }
 	'it'      = @{ nsis = 'Italian'; lcid = 1040 }
