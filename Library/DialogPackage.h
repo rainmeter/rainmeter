@@ -77,14 +77,12 @@ private:
 			Id_LoadLayoutRadio,
 			Id_LoadLayoutCombo,
 			Id_RainmeterVersionEdit,
-			Id_WindowsVersionCombo,
 			Id_CreatingText,
 			Id_CreatingBar,
 			Id_SaveLabel = 1100,
 			Id_AfterInstallGroup,
 			Id_RequirementsGroup,
-			Id_RainmeterVersionLabel,
-			Id_WindowsVersionLabel
+			Id_RainmeterVersionLabel
 		};
 
 		void Create(HWND owner) override;
@@ -155,7 +153,6 @@ private:
 	// Options tab
 	std::wstring m_TargetFile;
 	std::wstring m_MinimumRainmeter;
-	std::wstring m_MinimumWindows;
 	bool m_LoadLayout;
 	std::wstring m_Load;
 

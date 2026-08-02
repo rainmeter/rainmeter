@@ -15,12 +15,6 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 GlobalData g_Data;
 
-OsNameVersion g_OsNameVersions[] =
-{
-	{ L"8", L"6.2" },
-	{ L"10", L"10.0" }
-};
-
 EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 {
 	// Avoid loading a dll from current directory
