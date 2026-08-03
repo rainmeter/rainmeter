@@ -187,7 +187,6 @@
 #define IDS_Network                                 2181
 #define IDS_LogFile                                 2182
 #define IDS_AddWatch                                2183
-#define IDS_AddWatchEllipsis                        2184
 #define IDS_EditWatch                               2185
 #define IDS_Watch                                   2186
 #define IDS_Add                                     2187
@@ -252,7 +251,6 @@
 #define IDS_CreateNewSkin                           2999
 #define IDS_NewSkin                                 3000
 #define IDS_Template                                3001
-#define IDS_TemplateEllipsis                        3002
 #define IDS_AddFolder                               3003
 #define IDS_AddResources                            3004
 #define IDS_AddSkin                                 3005

@@ -350,9 +350,10 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 		Control::Button(Id_AddSkinButton, IDS_AddSkin,
 			column1, 57, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_TemplateDropDownList, IDS_TemplateEllipsis,
+		Control::Button(Id_TemplateDropDownList, IDS_Template,
 			column1, 76, buttonWidth, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ELLIPSIS)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);

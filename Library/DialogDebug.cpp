@@ -1059,10 +1059,10 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			415, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_BOTTOM_RIGHT),
-		Control::Button(Id_AddWatchButton, IDS_AddWatchEllipsis,
+		Control::Button(Id_AddWatchButton, IDS_AddWatch,
 			495, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_BOTTOM_RIGHT)
+			Control::ANCHOR_BOTTOM_RIGHT | Control::ELLIPSIS)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
