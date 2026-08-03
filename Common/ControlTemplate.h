@@ -23,7 +23,8 @@ struct Control
 		ANCHOR_BOTTOM = 0x08,
 		ANCHOR_BOTTOM_RIGHT = ANCHOR_BOTTOM | ANCHOR_RIGHT,
 		ANCHOR_ALL = ANCHOR_TOP_LEFT | ANCHOR_BOTTOM_RIGHT,
-		BOLD_FONT = 0x10
+		BOLD_FONT = 0x10,
+		ELLIPSIS = 0x20
 	};
 
 	static Control Item(const WCHAR* name, WORD id, WORD textId, short x, short y, short w, short h,
