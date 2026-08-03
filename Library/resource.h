@@ -90,7 +90,6 @@
 #define IDS_Debug                                   2077
 #define IDS_GetLatestVersion                        2078
 #define IDS_CopyrightNotice                         2079
-#define IDS_CopyToClipboard                         2080
 #define IDS_ManageRainmeter                         2081
 #define IDS_ActiveSkins                             2082
 #define IDS_Expand                                  2083

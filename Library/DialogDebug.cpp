@@ -1972,7 +1972,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				{
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
-					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
+					MENU_ITEM(IDM_COPY, IDS_Copy)
 				};
 
 				static const MenuTemplate s_WatchMenu[] =
@@ -2003,9 +2003,9 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
 						{
-							std::wstring name = GetString(id);
+							std::wstring name = GetString(IDS_Copy);
 							name += L": ";
-							name += GetString(IDS_CopyToClipboard);
+							name += GetString(id);
 							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
 						};
 
