@@ -37,6 +37,13 @@ public:
 		EncodeUrl(str);
 		Assert::AreEqual(L"%20%21%2A%27%28%29%3B%3A%40test%26%3D%2B%24%2C%2F%3F%23%5Bing%5D", str.c_str());
 	}
+
+	TEST_METHOD(TestTruncateWithEllipsis)
+	{
+		Assert::AreEqual(L"test", TruncateWithEllipsis(L"test", 4).c_str());
+		Assert::AreEqual(L"tes\u2026", TruncateWithEllipsis(L"testing", 4).c_str());
+		Assert::AreEqual(L"", TruncateWithEllipsis(L"test", 0).c_str());
+	}
 };
 
 }  // namespace StringUtil

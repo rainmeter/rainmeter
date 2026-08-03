@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
 #include "GameMode.h"
@@ -717,13 +718,7 @@ void ContextMenu::AppendSkinCustomMenu(
 		(!contextAction.empty() || isTitleSeparator(contextTitle)) &&
 		(IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
 	{
-		// Trim long titles
-		if (contextTitle.size() > 30)
-		{
-			contextTitle.replace(27, contextTitle.size() - 27, L"\u2026");
-		}
-
-		cTitles.push_back(contextTitle);
+		cTitles.push_back(StringUtil::TruncateWithEllipsis(contextTitle, 30));
 
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
 		contextTitle = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
@@ -896,16 +891,7 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 		size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i);
 
 		std::wstring item(buffer, len);
-
-		if ((*iter).monitorName.size() > 32)
-		{
-			item.append((*iter).monitorName, 0, 32);
-			item += L"\u2026";
-		}
-		else
-		{
-			item += (*iter).monitorName;
-		}
+		item += StringUtil::TruncateWithEllipsis((*iter).monitorName, 32);
 
 		const UINT flags =
 			MF_BYPOSITION |
