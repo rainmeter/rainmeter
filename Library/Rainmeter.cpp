@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "Language.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
@@ -116,7 +117,6 @@ Rainmeter::Rainmeter() :
 	m_Window(),
 	m_Mutex(),
 	m_Instance(),
-	m_Language(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor()
 {
@@ -373,32 +373,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		logger.StartLogFile();
 	}
 
-	// Determine the language resource to load
-	buffer[0] = L'\0';
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
+	// Load the configured language, falling back to English.
+	if (!GetLanguage().LoadFromSettings(m_Path + L"Languages\\", iniFile))
 	{
-		// Use whatever the user selected for the installer
-		DWORD bufferSize = sizeof(buffer);
-		DWORD type = 0;
-		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) != ERROR_SUCCESS ||
-			type != REG_SZ)
-		{
-			buffer[0] = L'\0';
-		}
-	}
-	if (buffer[0] != L'\0')
-	{
-		// Try selected language
-		LoadLanguage(buffer);
-	}
-	if (!m_Language.IsLoaded())
-	{
-		// Try English
-		if (!LoadLanguage(L"1033"))
-		{
-			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-			return 1;
-		}
+		MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		return 1;
 	}
 
 	// Get skin folder path
@@ -454,9 +433,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 #endif // COMMIT_HASH
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-	GetLocaleInfo(GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
+	GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
-	LogNoticeF(L"Language: %s (%lu)", lang, GetResourceLCID());
+	LogNoticeF(L"Language: %s (%lu)", lang, GetLanguage().GetLCID());
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());
 
@@ -2259,7 +2238,7 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
 
-	if (IsLanguageRTL())
+	if (GetLanguage().IsRTL())
 	{
 		type |= MB_RTLREADING;
 	}

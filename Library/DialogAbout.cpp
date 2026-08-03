@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "resource.h"
 #include "DialogAbout.h"
@@ -32,7 +33,7 @@ void DialogAbout::Open()
 		GetString(IDS_AboutRainmeter),
 		0, 0, 416, 172,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 }
 
@@ -70,7 +71,7 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -136,7 +137,7 @@ INT_PTR DialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_CopyButton:
 		{
 			WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-			LCID lcid = GetRainmeter().GetResourceLCID();
+			LCID lcid = GetLanguage().GetLCID();
 			GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 
 			WCHAR tmpSz[MAX_PATH];

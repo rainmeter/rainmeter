@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -127,7 +128,7 @@ void DialogDebug::Open(int tab)
 		GetString(IDS_DebugRainmeter),
 		0, 0, 600, 400,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -598,7 +599,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
 			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+				GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -653,7 +654,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
 			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+				GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -1586,7 +1587,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				RECT r;
 				GetWindowRect((HWND)lParam, &r);
 				TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+					GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
 			}
 
 			DestroyMenu(menu);
@@ -1628,7 +1629,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
 			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, r.bottom, 0, m_Window, nullptr);
+				GetLanguage().IsRTL() ? r.right : r.left, r.bottom, 0, m_Window, nullptr);
 
 			DestroyMenu(menu);
 		}

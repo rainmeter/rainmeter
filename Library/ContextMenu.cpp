@@ -6,6 +6,7 @@
 #include "ContextMenu.h"
 #include "GameMode.h"
 #include "Meter.h"
+#include "Language.h"
 #include "Rainmeter.h"
 #include "Util.h"
 #include "Skin.h"
@@ -331,7 +332,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 	// Show context menu
 	UINT command = TrackPopupMenu(
 		menu,
-		TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetRainmeter().IsLanguageRTL() ? TPM_LAYOUTRTL : 0),
+		TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetLanguage().IsRTL() ? TPM_LAYOUTRTL : 0),
 		pos.x,
 		pos.y,
 		0,
@@ -996,6 +997,7 @@ HMENU ContextMenu::CreateGameModeOnStartMenu()
 	return menu;
 }
 
+
 HMENU ContextMenu::CreateGameModeOnStopMenu()
 {
 	static const MenuTemplate s_Menu[] =
@@ -1034,4 +1036,3 @@ HMENU ContextMenu::CreateGameModeOnStopMenu()
 
 	return menu;
 }
-

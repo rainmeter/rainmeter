@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
+#include "Language.h"
 #include "resource.h"
 #include "SkinInstaller.h"
 
@@ -92,6 +93,14 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 			MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 			return 1;
 		}
+	}
+
+	// Load the language before creating a dialog, since its controls use GetString().
+	const std::wstring languageDirectory = g_Data.programPath + L"Languages\\";
+	if (!GetLanguage().LoadFromSettings(languageDirectory, g_Data.iniFile))
+	{
+		MessageBox(nullptr, L"Unable to load language file", L"Rainmeter", MB_ERROR);
+		return 1;
 	}
 
 	std::wstring layoutsPath = g_Data.settingsPath + L"Layouts\\";

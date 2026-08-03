@@ -20,7 +20,7 @@ public:
 		languageDirectory.resize(languageDirectory.find_last_of(L"\\/") + 1);
 		languageDirectory += L"Languages\\";
 
-		Language language;
+		auto& language = GetLanguage();
 		Assert::IsTrue(language.Load(languageDirectory, L"1033"));
 		Assert::IsTrue(language.IsLoaded());
 		Assert::AreEqual((LCID)1033, language.GetLCID());
