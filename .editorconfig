@@ -1,0 +1,14 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[Language/**]
+end_of_line = crlf
+
+[Build/Skins/**]
+end_of_line = crlf
+
+[Build/Layouts/**]
+end_of_line = crlf
