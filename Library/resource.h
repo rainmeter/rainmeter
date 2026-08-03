@@ -233,7 +233,6 @@
 #define IDS_Description                             2228
 #define IDS_Alias                                   2229
 #define IDS_Status                                  2230
-#define IDS_AddWatchTitle                           2231
 #define IDS_DefaultZoomColon                        2232
 #define IDS_Force                                   2233
 #define IDS_GameMode                                2800
