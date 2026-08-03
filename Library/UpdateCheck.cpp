@@ -6,6 +6,7 @@
 #include "../Common/ParseUtil.h"
 #include "../Common/StringUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "TrayIcon.h"
 #include "UpdateCheck.h"
@@ -75,7 +76,7 @@ void Updater::CheckLanguageObsoleteStatus()
 	if (m_ObsoleteLanguages.empty()) return;
 
 	bool obsolete = false;
-	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
+	const auto lcid = (unsigned)GetLanguage().GetLCID();
 	MathParser mathParser;
 
 	auto obsoleteLanguages = ParseUtil::Tokenize(StringUtil::Widen(m_ObsoleteLanguages), L",");
@@ -91,7 +92,7 @@ void Updater::CheckLanguageObsoleteStatus()
 	if (GetRainmeter().GetDebug())
 	{
 		WCHAR language[LOCALE_NAME_MAX_LENGTH] = { 0 };
-		GetLocaleInfo(GetRainmeter().GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
+		GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
 		LogDebugF(L"Language status: %s (%s)", obsolete ? L"Obsolete" : L"Current", language);
 	}
 

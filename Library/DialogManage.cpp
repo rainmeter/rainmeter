@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -69,7 +70,7 @@ void DialogManage::Open(int tab)
 		GetString(IDS_ManageRainmeter),
 		0, 0, 510, 322,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -212,7 +213,7 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -353,7 +354,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -1242,7 +1243,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
+					GetLanguage().IsRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1385,7 +1386,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
+					GetLanguage().IsRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -2036,7 +2037,7 @@ void DialogManage::TabGameMode::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2149,7 +2150,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
+					GetLanguage().IsRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -2265,7 +2266,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2363,7 +2364,7 @@ void DialogManage::TabSettings::Initialize()
 		std::wstring text = language.englishName + L" - " + language.nativeName;
 		int index = ComboBox_AddString(item, text.c_str());
 		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
-		if (language.lcid == GetRainmeter().GetResourceLCID())
+		if (language.lcid == GetLanguage().GetLCID())
 		{
 			ComboBox_SetCurSel(item, index);
 		}
@@ -2448,11 +2449,11 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
-			if (lcid != GetRainmeter().GetResourceLCID())
+			if (lcid != GetLanguage().GetLCID())
 			{
 				WCHAR buffer[16];
 				_ultow(lcid, buffer, 10);
-				if (!GetRainmeter().LoadLanguage(buffer)) break;
+				if (!GetLanguage().Load(GetRainmeter().GetPath() + L"Languages\\", buffer)) break;
 				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
 
 				if (DialogDebug::GetDialog())

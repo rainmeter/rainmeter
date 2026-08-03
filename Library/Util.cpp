@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "Util.h"
+#include "Language.h"
 #include "Rainmeter.h"
 #include "DialogDebug.h"
 #include "System.h"
@@ -37,7 +38,7 @@ const WCHAR* GetString(UINT id)
 		case IDS_150Percent: return L"150%";
 	}
 
-	return GetRainmeter().GetLanguageString(id);
+	return GetLanguage().GetString(id);
 }
 
 std::wstring GetFormattedString(UINT id, ...)

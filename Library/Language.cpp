@@ -3,6 +3,12 @@
 #include "StdAfx.h"
 #include "Language.h"
 
+Language& Language::GetInstance()
+{
+	static Language instance;
+	return instance;
+}
+
 Language::Language() :
 	m_LCID(),
 	m_FileMapping(),
@@ -138,6 +144,24 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 	m_LCID = requestedLCID;
 
 	return true;
+}
+
+bool Language::LoadFromSettings(const std::wstring& directory, const std::wstring& iniFile)
+{
+	WCHAR language[MAX_PATH];
+	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", language, _countof(language), iniFile.c_str()) == 0)
+	{
+		// Fallback to installer language.
+		DWORD languageSize = sizeof(language);
+		DWORD type = 0;
+		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, language, &languageSize) != ERROR_SUCCESS ||
+			type != REG_SZ)
+		{
+			language[0] = L'\0';
+		}
+	}
+
+	return (*language && Load(directory, language)) || Load(directory, L"1033");
 }
 
 void Language::Unload()

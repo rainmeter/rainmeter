@@ -4,6 +4,7 @@
 #include "../Common/MenuTemplate.h"
 #include "../Common/PathUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "Util.h"
 #include "resource.h"
@@ -34,7 +35,7 @@ void DialogNewSkin::Open(int tab)
 		GetString(IDS_CreateNewSkin),
 		0, 0, 300, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -329,7 +330,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	buttonWidth += 10;
 	short column1 = (268 - buttonWidth);
 
@@ -502,7 +503,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
+					GetLanguage().IsRTL() ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1599,7 +1600,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	short column1 = (268 - buttonWidth - 6);
 
 	static const Control s_Controls[] =

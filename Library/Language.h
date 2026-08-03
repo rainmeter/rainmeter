@@ -9,6 +9,8 @@
 class Language
 {
 public:
+	static Language& GetInstance();
+
 	struct Info
 	{
 		std::wstring englishName;
@@ -16,13 +18,11 @@ public:
 		LCID lcid;
 	};
 
-	Language();
-	~Language();
-
 	Language(const Language&) = delete;
 	Language& operator=(const Language&) = delete;
 
 	bool Load(const std::wstring& directory, const std::wstring& language);
+	bool LoadFromSettings(const std::wstring& directory, const std::wstring& iniFile);
 	bool IsLoaded() const { return m_Data != nullptr; }
 
 	LCID GetLCID() const { return m_LCID; }
@@ -35,6 +35,9 @@ public:
 	static std::vector<Info> GetAvailable(const std::wstring& directory);
 
 private:
+	Language();
+	~Language();
+
 	void Unload();
 
 	LCID m_LCID;
@@ -45,3 +48,5 @@ private:
 	unsigned short m_LabelWidth;
 	bool m_IsRTL;
 };
+
+inline Language& GetLanguage() { return Language::GetInstance(); }
