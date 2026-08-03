@@ -39,7 +39,7 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	HANDLE hMutex;
 	if (IsRunning(L"Rainmeter Skin Packager", &hMutex))
 	{
-		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Packager");
+		HWND hwnd = FindWindow(L"#32770", GetString(IDS_RainmeterSkinPackager));
 		SetForegroundWindow(hwnd);
 	}
 	else
@@ -47,7 +47,7 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 		DialogPackage dialog;
 		c_Dialog = &dialog;
 		dialog.ShowDialogWindow(
-			L"Rainmeter Skin Packager",
+			GetString(IDS_RainmeterSkinPackager),
 			0, 0, 300, 283,
 			DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
 			WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
@@ -85,16 +85,16 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	const Control controls[] =
 	{
-		Control::Button(DialogPackage::Id_BackButton, 0,
+		Control::Button(DialogPackage::Id_BackButton, IDS_Back,
 			103, 264, 50, 14,
 			WS_TABSTOP, 0),
-		Control::Button(DialogPackage::Id_NextButton, 0,
+		Control::Button(DialogPackage::Id_NextButton, IDS_Next,
 			188, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0),
-		Control::Button(DialogPackage::Id_CreatePackageButton, 0,
+		Control::Button(DialogPackage::Id_CreatePackageButton, IDS_CreatePackage,
 			158, 264, 80, 14,
 			WS_TABSTOP, 0),
-		Control::Button(IDCANCEL, 0,
+		Control::Button(IDCANCEL, IDS_Cancel,
 			243, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Tab(DialogPackage::Id_Tab, 0,
@@ -103,10 +103,6 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(DialogPackage::Id_BackButton), L"Back");
-	SetWindowText(GetControl(DialogPackage::Id_NextButton), L"Next");
-	SetWindowText(GetControl(DialogPackage::Id_CreatePackageButton), L"Create package");
-	SetWindowText(GetControl(IDCANCEL), L"Cancel");
 	AddPage(m_TabInfo);
 
 	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
@@ -126,8 +122,8 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			if (!m_OptionsCreated)
 			{
-				AddTab(DialogPackage::Id_Tab, m_TabOptions, L"Options");
-				AddTab(DialogPackage::Id_Tab, m_TabAdvanced, L"Advanced");
+				AddTab(DialogPackage::Id_Tab, m_TabOptions, GetString(IDS_Options));
+				AddTab(DialogPackage::Id_Tab, m_TabAdvanced, GetString(IDS_Advanced));
 				m_OptionsCreated = true;
 			}
 
@@ -194,7 +190,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			m_PackagerThread = (HANDLE)_beginthreadex(nullptr, 0, PackagerThreadProc, this, 0, nullptr);
 			if (!m_PackagerThread)
 			{
-				MessageBox(m_Window, L"Unknown error.", L"Rainmeter Skin Packager", MB_ERROR);
+				MessageBox(m_Window, GetString(IDS_UnknownError), GetString(IDS_RainmeterSkinPackager), MB_ERROR);
 				EndDialog(m_Window, 0);
 			}
 		}
@@ -271,9 +267,9 @@ bool DialogPackage::CreatePackage()
 		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(c_Dialog->m_HeaderFile.c_str(), L"RMSKIN.bmp")) ||
 		!AddFileToPackage(tempFile, L"RMSKIN.ini"))
 	{
-		std::wstring error = L"Unable to create package.";
-		error += L"\n\nClick OK to close Packager.";
-		MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+		std::wstring error = GetString(IDS_UnableCreatePackage);
+		error += GetString(IDS_CloseMessage);
+		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
@@ -296,11 +292,9 @@ bool DialogPackage::CreatePackage()
 		zipPath += L"\\Rainmeter.ini";
 		if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 		{
-			std::wstring error = L"Error adding layout '";
-			error += (*iter).first;
-			error += L"'.";
-			error += L"\n\nClick OK to close Packager.";
-			MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+			std::wstring error = GetFormattedString(IDS_LayoutError, (*iter).first.c_str());
+			error += GetString(IDS_CloseMessage);
+			MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 			return cleanup();
 		}
 	}
@@ -315,11 +309,9 @@ bool DialogPackage::CreatePackage()
 			std::wstring zipPath = ((i == 0) ? L"Plugins\\32bit\\" : L"Plugins\\64bit\\") + (*iter).first;
 			if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 			{
-				std::wstring error = L"Error adding plugin '";
-				error += (*iter).first;
-				error += L"'.";
-				error += L"\n\nClick OK to close Packager.";
-				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+				std::wstring error = GetFormattedString(IDS_PluginError, (*iter).first.c_str());
+				error += GetString(IDS_CloseMessage);
+				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				return cleanup();
 			}
 		}
@@ -337,9 +329,9 @@ bool DialogPackage::CreatePackage()
 	}
 	else
 	{
-		std::wstring error = L"Unable to create package.";
-		error += L"\n\nClick OK to close Packager.";
-		MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+		std::wstring error = GetString(IDS_UnableCreatePackage);
+		error += GetString(IDS_CloseMessage);
+		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -358,9 +350,9 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 
 		FlashWindow(dialog->m_Window, TRUE);
 
-		std::wstring message = L"The skin package has been successfully created.";
-		message += L"\n\nClick OK to close Packager.";
-		MessageBox(c_Dialog->GetWindow(), message.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONINFORMATION);
+		std::wstring message = GetString(IDS_RmskinSuccessfullyCreated);
+		message += GetString(IDS_CloseMessage);
+		MessageBox(c_Dialog->GetWindow(), message.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
@@ -493,10 +485,9 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 			result = AddFileToPackage(filePath.c_str(), zipPath.c_str());
 			if (!result)
 			{
-				std::wstring error = L"Error adding file:\n";
-				error += filePath;
-				error += L"\n\nClick OK to close Packager.";
-				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+				std::wstring error = GetFormattedString(IDS_FileError, filePath.c_str());
+				error += GetString(IDS_CloseMessage);
+				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				break;
 			}
 
@@ -556,7 +547,7 @@ public:
 	std::wstring ShowModal(HWND parent)
 	{
 		ShowDialogWindow(
-			L"Add",
+			GetString(IDS_Add),
 			0, 0, 200, 100,
 			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
@@ -593,24 +584,21 @@ private:
 			Control::ComboBox(SelectFolderDialog::Id_ExistingCombo, 0,
 				17, 21, 176, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
-			Control::RadioButton(SelectFolderDialog::Id_CustomRadio, 0,
+			Control::RadioButton(SelectFolderDialog::Id_CustomRadio, IDS_AddCustomFolder,
 				6, 44, 188, 13,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Edit(SelectFolderDialog::Id_CustomEdit, 0,
 				17, 59, 146, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_DISABLED | ES_AUTOHSCROLL, 0),
-			Control::Button(SelectFolderDialog::Id_CustomBrowseButton, 0,
+			Control::Button(SelectFolderDialog::Id_CustomBrowseButton, IDS_Ellipsis,
 				168, 59, 25, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-			Control::Button(IDOK, 0,
+			Control::Button(IDOK, IDS_Add,
 				146, 82, 50, 14,
 				WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
 		};
 
 		CreateControls(controls, _countof(controls), GetString);
-		SetWindowText(GetControl(SelectFolderDialog::Id_CustomRadio), L"Add custom folder:");
-		SetWindowText(GetControl(SelectFolderDialog::Id_CustomBrowseButton), L"...");
-		SetWindowText(GetControl(IDOK), L"Add");
 		Button_SetCheck(GetControl(SelectFolderDialog::Id_ExistingRadio), BST_CHECKED);
 		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 
@@ -620,9 +608,8 @@ private:
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			const WCHAR* folder = PathFindFileName(m_ExistingPath.c_str());
-			std::wstring text = L"Add folder from ";
-			text.append(folder, wcslen(folder) - 1);
-			text += L':';
+			std::wstring folderName(folder, wcslen(folder) - 1);
+			std::wstring text = GetFormattedString(IDS_AddFolderFrom, folderName.c_str());
 			SetWindowText(GetControl(SelectFolderDialog::Id_ExistingRadio), text.c_str());
 
 			HWND combo = GetControl(SelectFolderDialog::Id_ExistingCombo);
@@ -745,7 +732,7 @@ public:
 	std::pair<std::wstring, std::wstring> ShowModal(HWND parent)
 	{
 		ShowDialogWindow(
-			L"Add",
+			GetString(IDS_Add),
 			0, 0, 200, 100,
 			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
 			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
@@ -776,35 +763,30 @@ private:
 	{
 		const Control controls[] =
 		{
-			Control::Label(Id_32BitLabel, 0,
+			Control::Label(Id_32BitLabel, IDS_Bit32Dll,
 				6, 6, 188, 13,
 				WS_VISIBLE, 0),
 			Control::Edit(SelectPluginDialog::Id_32BitEdit, 0,
 				6, 20, 157, 14,
 				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
-			Control::Button(SelectPluginDialog::Id_32BitBrowseButton, 0,
+			Control::Button(SelectPluginDialog::Id_32BitBrowseButton, IDS_Ellipsis,
 				168, 20, 25, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
-			Control::Label(Id_64BitLabel, 0,
+			Control::Label(Id_64BitLabel, IDS_Bit64Dll,
 				6, 42, 188, 13,
 				WS_VISIBLE, 0),
 			Control::Edit(SelectPluginDialog::Id_64BitEdit, 0,
 				6, 55, 157, 14,
 				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
-			Control::Button(SelectPluginDialog::Id_64BitBrowseButton, 0,
+			Control::Button(SelectPluginDialog::Id_64BitBrowseButton, IDS_Ellipsis,
 				168, 55, 25, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
-			Control::Button(IDOK, 0,
+			Control::Button(IDOK, IDS_Add,
 				146, 82, 50, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0)
 		};
 
 		CreateControls(controls, _countof(controls), GetString);
-		SetWindowText(GetControl(Id_32BitLabel), L"32-bit DLL:");
-		SetWindowText(GetControl(SelectPluginDialog::Id_32BitBrowseButton), L"...");
-		SetWindowText(GetControl(Id_64BitLabel), L"64-bit DLL:");
-		SetWindowText(GetControl(SelectPluginDialog::Id_64BitBrowseButton), L"...");
-		SetWindowText(GetControl(IDOK), L"Add");
 		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 		return TRUE;
 	}
@@ -819,8 +801,10 @@ private:
 				WCHAR buffer[MAX_PATH] = { 0 };
 				OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 				ofn.Flags = OFN_FILEMUSTEXIST;
-				ofn.lpstrFilter = L"Plugins (.dll)\0*.dll";
-				ofn.lpstrTitle = L"Select plugin file";
+				std::wstring filter = GetString(IDS_PluginsDll);
+				filter.append(L"\0*.dll", 7);
+				ofn.lpstrFilter = filter.c_str();
+				ofn.lpstrTitle = GetString(IDS_SelectPluginFile);
 				ofn.lpstrDefExt = L"dll";
 				ofn.nFilterIndex = 0;
 				ofn.lpstrFile = buffer;
@@ -837,7 +821,7 @@ private:
 					const WCHAR* otherName = PathFindFileName(x32 ? m_Plugins.second.c_str() : m_Plugins.first.c_str());
 					if (*otherName && _wcsicmp(otherName, PathFindFileName(buffer)) != 0)
 					{
-						MessageBox(m_Window, L"Plugins must have same name.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
+						MessageBox(m_Window, GetString(IDS_PluginsSameName), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
 						break;
 					}
 
@@ -847,7 +831,7 @@ private:
 					break;
 				}
 
-				MessageBox(m_Window, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
+				MessageBox(m_Window, GetString(IDS_InvalidPlugin), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
 			}
 			break;
 
@@ -895,65 +879,54 @@ void DialogPackage::TabInfo::Create(HWND owner)
 
 	const Control controls[] =
 	{
-		Control::Label(Id_DescriptionLabel, 0,
+		Control::Label(Id_DescriptionLabel, IDS_Description,
 			0, 0, 264, 26,
 			WS_VISIBLE, 0),
-		Control::GroupBox(Id_InformationGroup, 0,
+		Control::GroupBox(Id_InformationGroup, IDS_Information,
 			0, 35, 270, 73,
 			WS_VISIBLE, 0),
-		Control::Label(Id_NameLabel, 0,
+		Control::Label(Id_NameLabel, IDS_NameColon,
 			6, 51, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabInfo::Id_NameEdit, 0,
 			56, 50, 208, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::Label(Id_AuthorLabel, 0,
+		Control::Label(Id_AuthorLabel, IDS_AuthorColon,
 			6, 69, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabInfo::Id_AuthorEdit, 0,
 			56, 68, 208, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::Label(Id_VersionLabel, 0,
+		Control::Label(Id_VersionLabel, IDS_VersionColon,
 			6, 87, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabInfo::Id_VersionEdit, 0,
 			56, 86, 140, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::GroupBox(Id_ComponentsGroup, 0,
+		Control::GroupBox(Id_ComponentsGroup, IDS_Components,
 			0, 113, 270, 108,
 			WS_VISIBLE, 0),
 		Control::ListView(DialogPackage::TabInfo::Id_ComponentsList, 0,
 			6, 128, 182, 86,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
-		Control::Button(DialogPackage::TabInfo::Id_AddSkinButton, 0,
+		Control::Button(DialogPackage::TabInfo::Id_AddSkinButton, IDS_AddSkin,
 			194, 128, 70, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(DialogPackage::TabInfo::Id_AddLayoutButton, 0,
+			WS_VISIBLE | WS_TABSTOP, Control::ELLIPSIS),
+		Control::Button(DialogPackage::TabInfo::Id_AddLayoutButton, IDS_AddLayout,
 			194, 147, 70, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(DialogPackage::TabInfo::Id_AddPluginButton, 0,
+			WS_VISIBLE | WS_TABSTOP, Control::ELLIPSIS),
+		Control::Button(DialogPackage::TabInfo::Id_AddPluginButton, IDS_AddPlugin,
 			194, 165, 70, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(DialogPackage::TabInfo::Id_RemoveButton, 0,
+			WS_VISIBLE | WS_TABSTOP, Control::ELLIPSIS),
+		Control::Button(DialogPackage::TabInfo::Id_RemoveButton, IDS_Remove,
 			194, 200, 70, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::LinkLabel(DialogPackage::TabInfo::Id_WhatIsLink, 0,
+		Control::LinkLabel(DialogPackage::TabInfo::Id_WhatIsLink, IDS_WhatIsRmskinPackageLink,
 			0, 227, 264, 13,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(Id_DescriptionLabel), L"Enter the information and select the components to use for the .rmskin package.");
-	SetWindowText(GetControl(Id_InformationGroup), L"Information");
-	SetWindowText(GetControl(Id_NameLabel), L"Name:");
-	SetWindowText(GetControl(Id_AuthorLabel), L"Author:");
-	SetWindowText(GetControl(Id_VersionLabel), L"Version:");
-	SetWindowText(GetControl(Id_ComponentsGroup), L"Components");
-	SetWindowText(GetControl(DialogPackage::TabInfo::Id_AddSkinButton), L"Add skin...");
-	SetWindowText(GetControl(DialogPackage::TabInfo::Id_AddLayoutButton), L"Add layout...");
-	SetWindowText(GetControl(DialogPackage::TabInfo::Id_AddPluginButton), L"Add plugin...");
-	SetWindowText(GetControl(DialogPackage::TabInfo::Id_RemoveButton), L"Remove");
-	SetWindowText(GetControl(DialogPackage::TabInfo::Id_WhatIsLink), L"<A>What is a .rmskin package?</A>");
 }
 
 void DialogPackage::TabInfo::Initialize()
@@ -961,13 +934,13 @@ void DialogPackage::TabInfo::Initialize()
 	m_Initialized = true;
 
 	HWND item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_NameEdit);
-	Edit_SetCueBannerText(item, L"...");
+	Edit_SetCueBannerText(item, GetString(IDS_Ellipsis));
 
 	item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_AuthorEdit);
-	Edit_SetCueBannerText(item, L"...");
+	Edit_SetCueBannerText(item, GetString(IDS_Ellipsis));
 
 	item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_VersionEdit);
-	Edit_SetCueBannerText(item, L"...");
+	Edit_SetCueBannerText(item, GetString(IDS_Ellipsis));
 
 	item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
 
@@ -982,7 +955,7 @@ void DialogPackage::TabInfo::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = 252;
-	lvc.pszText = (WCHAR*)L"Name";
+	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 
 	// Add groups
@@ -991,13 +964,13 @@ void DialogPackage::TabInfo::Initialize()
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
 	lvg.state = LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
-	lvg.pszHeader = (WCHAR*)L"Skin";
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Skin);
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = (WCHAR*)L"Layouts";
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Layouts);
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 2;
-	lvg.pszHeader = (WCHAR*)L"Plugins";
+	lvg.pszHeader = (WCHAR*)GetString(IDS_Plugins);
 	ListView_InsertGroup(item, -1, &lvg);
 }
 
@@ -1202,46 +1175,46 @@ void DialogPackage::TabOptions::Create(HWND owner)
 
 	const Control controls[] =
 	{
-		Control::Label(Id_SaveLabel, 0,
+		Control::Label(Id_SaveLabel, IDS_SavePackageTo,
 			0, 0, 264, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_FileEdit, 0,
 			0, 17, 240, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
-		Control::Button(DialogPackage::TabOptions::Id_FileBrowseButton, 0,
+		Control::Button(DialogPackage::TabOptions::Id_FileBrowseButton, IDS_Ellipsis,
 			245, 17, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::GroupBox(Id_AfterInstallGroup, 0,
+		Control::GroupBox(Id_AfterInstallGroup, IDS_AfterInstallation,
 			0, 119, 270, 58,
 			WS_VISIBLE, 0),
-		Control::RadioButton(DialogPackage::TabOptions::Id_DoNothingRadio, 0,
+		Control::RadioButton(DialogPackage::TabOptions::Id_DoNothingRadio, IDS_DoNothing,
 			6, 134, 85, 13,
 			WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
-		Control::RadioButton(DialogPackage::TabOptions::Id_LoadSkinRadio, 0,
+		Control::RadioButton(DialogPackage::TabOptions::Id_LoadSkinRadio, IDS_LoadSkin,
 			6, 147, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_LoadSkinEdit, 0,
 			96, 144, 138, 14,
 			WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
-		Control::Button(DialogPackage::TabOptions::Id_LoadSkinBrowseButton, 0,
+		Control::Button(DialogPackage::TabOptions::Id_LoadSkinBrowseButton, IDS_Ellipsis,
 			239, 144, 25, 14,
 			WS_TABSTOP, 0),
-		Control::RadioButton(DialogPackage::TabOptions::Id_LoadLayoutRadio, 0,
+		Control::RadioButton(DialogPackage::TabOptions::Id_LoadLayoutRadio, IDS_LoadLayout,
 			6, 160, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::ComboBox(DialogPackage::TabOptions::Id_LoadLayoutCombo, 0,
 			96, 157, 168, 14,
 			WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
-		Control::GroupBox(Id_RequirementsGroup, 0,
+		Control::GroupBox(Id_RequirementsGroup, IDS_MinimumRequirements,
 			0, 182, 270, 35,
 			WS_VISIBLE | WS_GROUP, 0),
-		Control::Label(Id_RainmeterVersionLabel, 0,
+		Control::Label(Id_RainmeterVersionLabel, IDS_RainmeterVersion,
 			6, 198, 85, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_RainmeterVersionEdit, 0,
 			96, 195, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::Label(DialogPackage::TabOptions::Id_CreatingText, 0,
+		Control::Label(DialogPackage::TabOptions::Id_CreatingText, IDS_Creating,
 			0, 0, 270, 100,
 			0, 0),
 		Control::ProgressBar(DialogPackage::TabOptions::Id_CreatingBar, 0,
@@ -1250,16 +1223,6 @@ void DialogPackage::TabOptions::Create(HWND owner)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(Id_SaveLabel), L"Save package to:");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_FileBrowseButton), L"...");
-	SetWindowText(GetControl(Id_AfterInstallGroup), L"After installation");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_DoNothingRadio), L"Do nothing");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_LoadSkinRadio), L"Load skin");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_LoadSkinBrowseButton), L"...");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_LoadLayoutRadio), L"Load layout");
-	SetWindowText(GetControl(Id_RequirementsGroup), L"Minimum requirements");
-	SetWindowText(GetControl(Id_RainmeterVersionLabel), L"Rainmeter version:");
-	SetWindowText(GetControl(DialogPackage::TabOptions::Id_CreatingText), L"Creating...");
 }
 
 void DialogPackage::TabOptions::Initialize()
@@ -1316,7 +1279,7 @@ void DialogPackage::TabOptions::Initialize()
 	}
 
 	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinEdit);
-	Edit_SetCueBannerText(item, L"Select skin");
+	Edit_SetCueBannerText(item, GetString(IDS_SelectSkin));
 
 	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_RainmeterVersionEdit);
 	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", APPVERSION, revision_number);
@@ -1346,8 +1309,10 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			GetWindowText(item, buffer, _countof(buffer));
 
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			ofn.lpstrFilter = L"Rainmeter skin package (.rmskin)\0*.rmskin";
-			ofn.lpstrTitle = L"Select Rainmeter skin package";
+			std::wstring filter = GetString(IDS_SkinPackageRmskin);
+			filter.append(L"\0*.rmskin", 10);
+			ofn.lpstrFilter = filter.c_str();
+			ofn.lpstrTitle = GetString(IDS_SelectSkinPackage);
 			ofn.lpstrDefExt = L"dll";
 			ofn.lpstrFile = buffer;
 			ofn.nMaxFile = _countof(buffer);
@@ -1427,8 +1392,10 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.FlagsEx = OFN_EX_NOPLACESBAR;
-			ofn.lpstrFilter = L"Rainmeter skin file (.ini)\0*.ini";
-			ofn.lpstrTitle = L"Select Rainmeter skin file";
+			std::wstring filter = GetString(IDS_SkinFiles);
+			filter.append(L"\0*.ini", 7);
+			ofn.lpstrFilter = filter.c_str();
+			ofn.lpstrTitle = GetString(IDS_SelectSkinFile);
 			ofn.lpstrDefExt = L"ini";
 			ofn.lpstrFile = buffer;
 			ofn.nMaxFile = _countof(buffer);
@@ -1500,35 +1467,30 @@ void DialogPackage::TabAdvanced::Create(HWND owner)
 
 	const Control controls[] =
 	{
-		Control::Label(Id_HeaderLabel, 0,
+		Control::Label(Id_HeaderLabel, IDS_HeaderImage,
 			0, 3, 85, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabAdvanced::Id_HeaderEdit, 0,
 			90, 0, 150, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
-		Control::Button(DialogPackage::TabAdvanced::Id_HeaderBrowseButton, 0,
+		Control::Button(DialogPackage::TabAdvanced::Id_HeaderBrowseButton, IDS_Ellipsis,
 			245, 0, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Label(Id_VariablesLabel, 0,
+		Control::Label(Id_VariablesLabel, IDS_VariableFiles,
 			0, 24, 85, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabAdvanced::Id_VariableFilesEdit, 0,
 			90, 21, 180, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
-		Control::CheckBox(DialogPackage::TabAdvanced::Id_MergeSkinsCheck, 0,
+		Control::CheckBox(DialogPackage::TabAdvanced::Id_MergeSkinsCheck, IDS_MergeSkins,
 			0, 42, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::LinkLabel(DialogPackage::TabAdvanced::Id_HelpLink, 0,
+		Control::LinkLabel(DialogPackage::TabAdvanced::Id_HelpLink, IDS_HelpLink,
 			0, 210, 264, 13,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
-	SetWindowText(GetControl(Id_HeaderLabel), L"Header image:");
-	SetWindowText(GetControl(DialogPackage::TabAdvanced::Id_HeaderBrowseButton), L"...");
-	SetWindowText(GetControl(Id_VariablesLabel), L"Variables files:");
-	SetWindowText(GetControl(DialogPackage::TabAdvanced::Id_MergeSkinsCheck), L"Merge skins");
-	SetWindowText(GetControl(DialogPackage::TabAdvanced::Id_HelpLink), L"<A>Help</A>");
 }
 
 void DialogPackage::TabAdvanced::Initialize()
@@ -1562,8 +1524,10 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 			ofn.Flags = OFN_FILEMUSTEXIST;
-			ofn.lpstrFilter = L"Bitmap file (.bmp)\0*.bmp";
-			ofn.lpstrTitle = L"Select header image";
+			std::wstring filter = GetString(IDS_BitmapFiles);
+			filter.append(L"\0*.bmp", 7);
+			ofn.lpstrFilter = filter.c_str();
+			ofn.lpstrTitle = GetString(IDS_SelectHeaderImage);
 			ofn.lpstrDefExt = L"bmp";
 			ofn.lpstrFile = buffer;
 			ofn.nMaxFile = _countof(buffer);
@@ -1586,19 +1550,15 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 					else
 					{
-						error = L"Error: Invalid size\n\"";
-						error += buffer;
-						error += L"\" must be exactly 400x60.";
+						error = GetFormattedString(IDS_InvalidImageSize, buffer);
 					}
 				}
 				else
 				{
-					error = L"Error: Invalid .bmp file\n\"";
-					error += buffer;
-					error += L"\"";
+					error = GetFormattedString(IDS_InvalidBitmap, buffer);
 				}
 
-				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 			}
 		}
 		break;
