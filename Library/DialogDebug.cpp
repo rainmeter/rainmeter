@@ -758,7 +758,7 @@ public:
 		m_EditIndex = (size_t)-1;
 
 		ShowDialogWindow(
-			GetString(IDS_AddWatchTitle),
+			GetString(IDS_AddWatch),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
