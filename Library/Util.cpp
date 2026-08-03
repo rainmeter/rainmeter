@@ -17,7 +17,7 @@ const WCHAR* GetString(UINT id)
 {
 	switch (id)
 	{
-		case IDS_Ellipsis: return L"...";
+		case IDS_Ellipsis: return L"\x2026";
 		case IDS_AddResources: return L"@Resources";
 		case IDS_0Percent: return L"0%";
 		case IDS_10Percent: return L"10%";
