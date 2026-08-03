@@ -88,10 +88,16 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 	m_InitialParentSize.cy = parentRect.bottom;
 	m_Controls.reserve(ctCount);
 
+	WCHAR buffer[512];
 	for (UINT i = 0; i < ctCount; ++i)
 	{
 		const Control& ct = cts[i];
 		const WCHAR* text = ct.textId ? getString(ct.textId) : nullptr;
+		if (ct.options & Control::ELLIPSIS)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%s…", text ? text : L"");
+			text = buffer;
+		}
 
 		RECT r = { ct.x, ct.y, ct.w, ct.h };
 		MapDialogRect(parent, &r);
