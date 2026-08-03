@@ -268,6 +268,7 @@ bool DialogPackage::CreatePackage()
 		!AddFileToPackage(tempFile, L"RMSKIN.ini"))
 	{
 		std::wstring error = GetString(IDS_UnableCreatePackage);
+		error += L"\n\n";
 		error += GetString(IDS_CloseMessage);
 		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		DeleteFile(tempFile);
@@ -293,6 +294,7 @@ bool DialogPackage::CreatePackage()
 		if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 		{
 			std::wstring error = GetFormattedString(IDS_LayoutError, (*iter).first.c_str());
+			error += L"\n\n";
 			error += GetString(IDS_CloseMessage);
 			MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 			return cleanup();
@@ -310,6 +312,7 @@ bool DialogPackage::CreatePackage()
 			if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 			{
 				std::wstring error = GetFormattedString(IDS_PluginError, (*iter).first.c_str());
+				error += L"\n\n";
 				error += GetString(IDS_CloseMessage);
 				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				return cleanup();
@@ -330,6 +333,7 @@ bool DialogPackage::CreatePackage()
 	else
 	{
 		std::wstring error = GetString(IDS_UnableCreatePackage);
+		error += L"\n\n";
 		error += GetString(IDS_CloseMessage);
 		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		return false;
@@ -351,6 +355,7 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 		FlashWindow(dialog->m_Window, TRUE);
 
 		std::wstring message = GetString(IDS_RmskinSuccessfullyCreated);
+		message += L"\n\n";
 		message += GetString(IDS_CloseMessage);
 		MessageBox(c_Dialog->GetWindow(), message.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONINFORMATION);
 	}
@@ -486,6 +491,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 			if (!result)
 			{
 				std::wstring error = GetFormattedString(IDS_FileError, filePath.c_str());
+				error += L"\n\n";
 				error += GetString(IDS_CloseMessage);
 				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				break;
