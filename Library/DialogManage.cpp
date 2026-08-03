@@ -240,7 +240,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Themes));
+	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Layouts));
 	AddTab(Id_Tab, m_TabGameMode, GetString(IDS_GameMode));
 	AddTab(Id_Tab, m_TabSettings, GetString(IDS_Settings));
 
@@ -1723,7 +1723,7 @@ void DialogManage::TabLayouts::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, IDS_SavedThemes,
+		Control::GroupBox(-0, IDS_SavedLayouts,
 			0, 0, 235, 260,
 			WS_VISIBLE, 0),
 		Control::ListBox(Id_List, 0,
@@ -1739,13 +1739,13 @@ void DialogManage::TabLayouts::Create(HWND owner)
 			177, 52, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::GroupBox(-0, IDS_SaveNewTheme,
+		Control::GroupBox(-0, IDS_SaveNewLayout,
 			243, 0, 235, 150,
 			WS_VISIBLE, 0),
-		Control::Label(-0, IDS_ThemeDescription,
+		Control::Label(-0, IDS_LayoutDescription,
 			249, 16, 210, 44,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyTheme,
+		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyLayout,
 			249, 70, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_ExcludeUnusedSkinsCheckBox, IDS_ExcludeUnusedSkins,
@@ -1872,7 +1872,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess_s(path.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(IDS_ThemeAlreadyExists, layout.c_str());
+				std::wstring text = GetFormattedString(IDS_LayoutAlreadyExists, layout.c_str());
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1892,7 +1892,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (!System::CopyFiles(GetRainmeter().GetIniFile(), path))
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1934,7 +1934,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (file == INVALID_HANDLE_VALUE)
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1980,7 +1980,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(GetRainmeter().GetAllLayouts());
 
-			std::wstring text = GetFormattedString(IDS_ThemeDelete, layouts[sel].c_str());
+			std::wstring text = GetFormattedString(IDS_LayoutDelete, layouts[sel].c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
