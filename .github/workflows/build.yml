@@ -19,6 +19,17 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
+      - name: Validate language files
+        if: ${{ matrix.arch == 64 }}
+        run: |
+          ./Language/UpdateLanguageFiles.sh
+          if ! git diff --quiet -- Language; then
+            echo "::error::Language files are out of sync. Run Language/UpdateLanguageFiles.sh and commit the result."
+            git diff -- Language
+            exit 1
+          fi
+        shell: bash
+
       - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
