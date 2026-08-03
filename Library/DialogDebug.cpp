@@ -1403,21 +1403,14 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		}
 
 		WCHAR buffer[256];
-		// Number value
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
 		Measure::RemoveTrailingZero(buffer, bufferLen);
 		std::wstring numValue = buffer;
 
-		// String value
-		std::wstring strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-		if (strValue.length() > 259)
-		{
-			strValue.erase(256);
-			strValue += L"\u2026";
-		}
-
+		auto* strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+		auto truncatedValue = StringUtil::TruncateWithEllipsis(strValue, 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)numValue.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)strValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)truncatedValue.c_str());
 		++lvi.iItem;
 	}
 
@@ -1440,14 +1433,6 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
-		// Truncate and add ellipsis if necessary
-		std::wstring valStr = (*iter).second;
-		if (valStr.length() > 259)
-		{
-			valStr.erase(256);
-			valStr += L"\u2026";
-		}
-
 		if (lvi.iItem < count)
 		{
 			ListView_SetItem(item, &lvi);
@@ -1457,6 +1442,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
+		auto valStr = StringUtil::TruncateWithEllipsis((*iter).second, 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
@@ -1479,13 +1465,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
-		std::wstring result = m_PanelWatch->Evaluate(watch.text, watch.formula);
-		if (result.length() > 259)
-		{
-			result.erase(256);
-			result += L"\u2026";
-		}
-
+		auto result = StringUtil::TruncateWithEllipsis(m_PanelWatch->Evaluate(watch.text, watch.formula), 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)result.c_str());
 		++lvi.iItem;

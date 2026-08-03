@@ -180,6 +180,22 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 	str = WidenUTF8(utf8);
 }
 
+std::wstring TruncateWithEllipsis(std::wstring_view str, size_t maxLength)
+{
+	if (str.length() <= maxLength)
+	{
+		return std::wstring(str);
+	}
+
+	if (!maxLength) return {};
+
+	std::wstring truncated;
+	truncated.reserve(maxLength);
+	truncated.assign(str.substr(0, maxLength - 1));
+	truncated += L"\u2026";
+	return truncated;
+}
+
 struct IsEqualCaseInsensitive
 {
 	IsEqualCaseInsensitive() {}
