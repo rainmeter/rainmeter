@@ -95,7 +95,7 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 		const WCHAR* text = ct.textId ? getString(ct.textId) : nullptr;
 		if (ct.options & Control::ELLIPSIS)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%s…", text ? text : L"");
+			_snwprintf_s(buffer, _TRUNCATE, L"%s\u2026", text ? text : L"");
 			text = buffer;
 		}
 

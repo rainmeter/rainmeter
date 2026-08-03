@@ -1413,7 +1413,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		if (strValue.length() > 259)
 		{
 			strValue.erase(256);
-			strValue += L"...";
+			strValue += L"\u2026";
 		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)numValue.c_str());
@@ -1440,12 +1440,12 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
-		// Truncate and add "..." if necessary
+		// Truncate and add ellipsis if necessary
 		std::wstring valStr = (*iter).second;
 		if (valStr.length() > 259)
 		{
 			valStr.erase(256);
-			valStr += L"...";
+			valStr += L"\u2026";
 		}
 
 		if (lvi.iItem < count)
@@ -1483,7 +1483,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		if (result.length() > 259)
 		{
 			result.erase(256);
-			result += L"...";
+			result += L"\u2026";
 		}
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
