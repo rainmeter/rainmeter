@@ -720,7 +720,7 @@ void ContextMenu::AppendSkinCustomMenu(
 		// Trim long titles
 		if (contextTitle.size() > 30)
 		{
-			contextTitle.replace(27, contextTitle.size() - 27, L"...");
+			contextTitle.replace(27, contextTitle.size() - 27, L"\u2026");
 		}
 
 		cTitles.push_back(contextTitle);
@@ -900,7 +900,7 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 		if ((*iter).monitorName.size() > 32)
 		{
 			item.append((*iter).monitorName, 0, 32);
-			item += L"...";
+			item += L"\u2026";
 		}
 		else
 		{
