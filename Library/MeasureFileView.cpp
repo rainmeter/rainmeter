@@ -10,33 +10,7 @@
 #include "../Common/CriticalSection.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/StringUtil.h"
-#include <commoncontrols.h>
-#include <memory>
 #include <queue>
-
-#define INVALID_FILE L"/<>\\"
-
-#pragma pack(push, 2)
-typedef struct	// 16 bytes
-{
-	BYTE        bWidth;				// Width, in pixels, of the image
-	BYTE        bHeight;			// Height, in pixels, of the image
-	BYTE        bColorCount;		// Number of colors in image (0 if >=8bpp)
-	BYTE        bReserved;			// Reserved ( must be 0)
-	WORD        wPlanes;			// Color Planes
-	WORD        wBitCount;			// Bits per pixel
-	DWORD       dwBytesInRes;		// How many bytes in this resource?
-	DWORD       dwImageOffset;		// Where in the file is this image?
-} ICONDIRENTRY, *LPICONDIRENTRY;
-
-typedef struct	// 22 bytes
-{
-	WORD           idReserved;		// Reserved (must be 0)
-	WORD           idType;			// Resource Type (1 for icons)
-	WORD           idCount;			// How many images?
-	ICONDIRENTRY   idEntries[1];	// An entry for each image (idCount of 'em)
-} ICONDIR, *LPICONDIR;
-#pragma pack(pop)
 
 enum MeasureType
 {
@@ -68,14 +42,6 @@ enum SortType
 	STYPE_DATE
 };
 
-enum IconSize
-{
-	IS_SMALL = 1,	// 16x16
-	IS_MEDIUM = 0,	// 32x32
-	IS_LARGE = 2,	// 48x48
-	IS_EXLARGE = 4	// 256x256
-};
-
 enum RecursiveType
 {
 	RECURSIVE_NONE,
@@ -99,6 +65,7 @@ struct FileInfo
 	FILETIME createdTime = {};
 	FILETIME modifiedTime = {};
 	FILETIME accessedTime = {};
+	int iconIndex = -1;
 };
 
 struct FileViewParentData;
@@ -107,8 +74,7 @@ struct FileViewChildData
 {
 	MeasureType type = TYPE_FOLDERPATH;
 	DateType date = DTYPE_MODIFIED;
-	IconSize iconSize = IS_LARGE;
-	std::wstring iconPath;
+	int iconSize = SHIL_EXTRALARGE;
 	int index = 1;
 	bool ignoreCount = false;
 
@@ -151,9 +117,6 @@ struct FileViewParentData
 	LPCWSTR name = nullptr;
 	FileViewChildData* ownerChild = nullptr;
 };
-
-void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
-bool SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<FileViewParentData*> g_ParentMeasures;
 static CriticalSection g_CriticalSection;
@@ -233,7 +196,7 @@ private:
 				if (child->type == TYPE_ICON)
 				{
 					const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-					m_IconRequests.emplace_back(child->iconPath, child->iconSize, trueIndex);
+					m_IconRequests.push_back(trueIndex);
 				}
 			}
 		}
@@ -264,14 +227,7 @@ private:
 	bool m_NeedsUpdating = false;
 	bool m_NeedsIcons = false;
 
-	struct IconRequest
-	{
-		std::wstring path;
-		IconSize size;
-		int trueIndex;
-	};
-
-	std::vector<IconRequest> m_IconRequests;
+	std::vector<int> m_IconRequests;
 
 	bool m_TaskSuccessful = false;
 };
@@ -595,30 +551,22 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		child->type = TYPE_ICON;
 
-		std::wstring temp = L"icon";
-		WCHAR buffer[MAX_PATH] = { 0 };
-		_itow_s(child->index + 1, buffer, 10);
-		temp += buffer;
-		temp += L".ico";
-		child->iconPath = parser.ReadString(section, L"IconPath", temp.c_str());
-		GetSkin()->MakePathAbsolute(child->iconPath);
-
 		LPCWSTR size = parser.ReadString(section, L"IconSize", L"MEDIUM").c_str();
 		if (_wcsicmp(size, L"SMALL") == 0)
 		{
-			child->iconSize = IS_SMALL;
+			child->iconSize = SHIL_SMALL;
 		}
 		else if (_wcsicmp(size, L"MEDIUM") == 0)
 		{
-			child->iconSize = IS_MEDIUM;
+			child->iconSize = SHIL_LARGE;
 		}
 		else if (_wcsicmp(size, L"LARGE") == 0)
 		{
-			child->iconSize = IS_LARGE;
+			child->iconSize = SHIL_EXTRALARGE;
 		}
 		else if (_wcsicmp(size, L"EXTRALARGE") == 0)
 		{
-			child->iconSize = IS_EXLARGE;
+			child->iconSize = SHIL_JUMBO;
 		}
 	}
 	else if (_wcsicmp(type, L"FILEPATH") == 0)
@@ -795,7 +743,10 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 
 		case TYPE_ICON:
-			child->strValue = child->iconPath;
+			if (parent->files[trueIndex].iconIndex >= 0)
+			{
+				child->strValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, child->iconSize);
+			}
 			break;
 
 		case TYPE_FILEPATH:
@@ -1224,20 +1175,22 @@ void MeasureFileView::UpdateTask::StartWorkOnWorkerThread()
 		}
 	}
 
-	for (const auto& iconRequest : m_IconRequests)
+	for (const int trueIndex : m_IconRequests)
 	{
 		if (m_AbortRequested) break;
 
-		if (iconRequest.trueIndex >= 0 && iconRequest.trueIndex < (int)m_Files.size())
+		if (trueIndex >= 0 && trueIndex < (int)m_Files.size())
 		{
-			const auto& file = m_Files[iconRequest.trueIndex];
+			auto& file = m_Files[trueIndex];
+			file.iconIndex = -1;
 			std::wstring filePath = file.path;
 			filePath += (file.fileName == L"..") ? L"" : file.fileName;
-			GetIcon(filePath, iconRequest.path, iconRequest.size);
-		}
-		else
-		{
-			GetIcon(INVALID_FILE, iconRequest.path, iconRequest.size);
+
+			SHFILEINFO fileInfo = { 0 };
+			if (SHGetFileInfo(filePath.c_str(), 0, &fileInfo, sizeof(fileInfo), SHGFI_SYSICONINDEX))
+			{
+				file.iconIndex = fileInfo.iIcon;
+			}
 		}
 	}
 
@@ -1255,9 +1208,17 @@ void MeasureFileView::UpdateTask::FinishWorkOnMainThread()
 	{
 		parent->task = nullptr;
 
+		if (m_TaskSuccessful && (m_NeedsUpdating || m_NeedsIcons))
+		{
+			parent->files = std::move(m_Files);
+		}
+		else if (m_NeedsUpdating)
+		{
+			parent->files.clear();
+		}
+
 		if (m_NeedsUpdating)
 		{
-			parent->files = m_TaskSuccessful ? std::move(m_Files) : std::vector<FileInfo>();
 			parent->fileCount = m_TaskSuccessful ? m_FileCount : 0;
 			parent->folderCount = m_TaskSuccessful ? m_FolderCount : 0;
 			parent->folderSize = m_TaskSuccessful ? m_FolderSize : 0;
@@ -1365,149 +1326,4 @@ void MeasureFileView::UpdateTask::GetFolderInfo(std::queue<std::wstring>& folder
 		} while (FindNextFile(find, &fd) && !m_AbortRequested);
 		FindClose(find);
 	}
-}
-
-void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize)
-{
-	SHFILEINFO shFileInfo = { 0 };
-	HICON icon = nullptr;
-	HIMAGELIST* hImageList = nullptr;
-	FILE* fp = nullptr;
-
-	// Special case for .url files
-	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
-	{
-		WCHAR buffer[MAX_PATH] = { 0 };
-		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, _countof(buffer), filePath.c_str());
-		if (*buffer)
-		{
-			std::wstring file = buffer;
-			int iconIndex = 0;
-
-			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, _countof(buffer), filePath.c_str());
-			if (wcscmp(buffer, L"-1") != 0)
-			{
-				iconIndex = _wtoi(buffer);
-			}
-
-			int size = 16;
-			switch (iconSize)
-			{
-			case IS_EXLARGE: size = 256; break;
-			case IS_LARGE: size = 48; break;
-			case IS_MEDIUM: size = 32; break;
-			}
-
-			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
-		}
-	}
-
-	if (icon == nullptr)
-	{
-		SHGetFileInfo(filePath.c_str(), 0, &shFileInfo, sizeof(shFileInfo), SHGFI_SYSICONINDEX);
-		SHGetImageList(iconSize, IID_IImageList, (void**)&hImageList);
-		((IImageList*)hImageList)->GetIcon(shFileInfo.iIcon, ILD_TRANSPARENT, &icon);
-	}
-
-	const std::wstring tempPath = iconPath + L".temp";
-	const errno_t error = _wfopen_s(&fp, tempPath.c_str(), L"wb");
-	if (error == 0)
-	{
-		bool fileWritten = false;
-		if (filePath != INVALID_FILE && icon != nullptr && SaveIcon(icon, fp))
-		{
-			fp = nullptr;  // SaveIcon closes the file.
-			fileWritten = true;
-		}
-		else if (fp)
-		{
-			fileWritten = (fclose(fp) == 0);
-			fp = nullptr;
-		}
-
-		if (!fileWritten || !MoveFileEx(tempPath.c_str(), iconPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-		{
-			DeleteFile(tempPath.c_str());
-		}
-	}
-
-	DestroyIcon(icon);
-}
-
-bool SaveIcon(HICON hIcon, FILE* fp)
-{
-	ICONINFO iconInfo = { 0 };
-	BITMAP bmColor = { 0 };
-	BITMAP bmMask = { 0 };
-	if (!fp || nullptr == hIcon || !GetIconInfo(hIcon, &iconInfo) ||
-		!GetObject(iconInfo.hbmColor, sizeof(bmColor), &bmColor) ||
-		!GetObject(iconInfo.hbmMask,  sizeof(bmMask),  &bmMask))
-		return false;
-
-	// support only 16/32 bit icon now
-	if (bmColor.bmBitsPixel != 16 && bmColor.bmBitsPixel != 32)
-		return false;
-
-	HDC dc = GetDC(nullptr);
-	BYTE bmiBytes[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)] = { 0 };
-	BITMAPINFO* bmi = (BITMAPINFO*)bmiBytes;
-
-	// color bits
-	memset(bmi, 0, sizeof(BITMAPINFO));
-	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
-	int colorBytesCount = bmi->bmiHeader.biSizeImage;
-	BYTE* colorBits = new BYTE[colorBytesCount];
-	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, colorBits, bmi, DIB_RGB_COLORS);
-
-	// mask bits
-	memset(bmi, 0, sizeof(BITMAPINFO));
-	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
-	int maskBytesCount = bmi->bmiHeader.biSizeImage;
-	BYTE* maskBits = new BYTE[maskBytesCount];
-	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, maskBits, bmi, DIB_RGB_COLORS);
-
-	ReleaseDC(nullptr, dc);
-
-	// icon data
-	BITMAPINFOHEADER bmihIcon;
-	memset(&bmihIcon, 0, sizeof(bmihIcon));
-	bmihIcon.biSize      = sizeof(BITMAPINFOHEADER);
-	bmihIcon.biWidth     = bmColor.bmWidth;
-	bmihIcon.biHeight    = bmColor.bmHeight * 2;	// icXOR + icAND
-	bmihIcon.biPlanes    = bmColor.bmPlanes;
-	bmihIcon.biBitCount  = bmColor.bmBitsPixel;
-	bmihIcon.biSizeImage = colorBytesCount + maskBytesCount;
-
-	// icon header
-	ICONDIR dir = { 0 };
-	dir.idReserved = 0;		// must be 0
-	dir.idType = 1;			// 1 for icons
-	dir.idCount = 1;
-	dir.idEntries[0].bWidth        = (BYTE)bmColor.bmWidth;
-	dir.idEntries[0].bHeight       = (BYTE)bmColor.bmHeight;
-	dir.idEntries[0].bColorCount   = 0;		// 0 if >= 8bpp
-	dir.idEntries[0].bReserved     = 0;		// must be 0
-	dir.idEntries[0].wPlanes       = bmColor.bmPlanes;
-	dir.idEntries[0].wBitCount     = bmColor.bmBitsPixel;
-	dir.idEntries[0].dwBytesInRes  = sizeof(bmihIcon) + bmihIcon.biSizeImage;
-	dir.idEntries[0].dwImageOffset = sizeof(ICONDIR);
-
-	fwrite(&dir,      sizeof(dir),      1, fp);
-	fwrite(&bmihIcon, sizeof(bmihIcon), 1, fp);
-	fwrite(colorBits, colorBytesCount,  1, fp);
-	fwrite(maskBits,  maskBytesCount,   1, fp);
-
-	// Clean up
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
-	delete [] colorBits;
-	colorBits = nullptr;
-	delete [] maskBits;
-	maskBits = nullptr;
-
-	fclose(fp);
-
-	return true;
 }
