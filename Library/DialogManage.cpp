@@ -435,7 +435,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::ComboBox(Id_ZPositionDropDownList, 0,
 			175 + labelWidth, 182, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, IDS_Zoom,
+		Control::Label(Id_ZoomLabel, IDS_Zoom,
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_ZoomEdit, 0,
@@ -481,6 +481,9 @@ void DialogManage::TabSkins::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
+	std::wstring zoomLabel = GetString(IDS_Zoom);
+	zoomLabel += L':';
+	SetWindowText(GetControl(Id_ZoomLabel), zoomLabel.c_str());
 	SetWindowText(GetControl(Id_ZoomPercentLabel), L"%");
 
 	HWND zoomEdit = GetControl(Id_ZoomEdit);

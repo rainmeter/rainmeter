@@ -63,6 +63,7 @@ private:
 			Id_XPositionEdit,
 			Id_YPositionEdit,
 			Id_ZPositionDropDownList,
+			Id_ZoomLabel,
 			Id_ZoomEdit,
 			Id_ZoomSpinner,
 			Id_ZoomPercentLabel,
