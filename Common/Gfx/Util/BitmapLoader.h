@@ -11,6 +11,7 @@ class BitmapLoader
 {
 public:
 	static HRESULT LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap);
+	static HRESULT LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, HICON icon);
 	static bool HasFileChanged(Bitmap* bitmap, const std::wstring& file);
 	static HRESULT GetFileInfo(const std::wstring& path, FileInfo* fileInfo);
 

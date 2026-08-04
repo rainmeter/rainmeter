@@ -63,7 +63,6 @@ public:
 	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
-
 	D2D1_SIZE_F ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const;
 	void ApplyTransforms();
 	bool HasActiveTransforms(Gfx::Bitmap* bitmap) const;

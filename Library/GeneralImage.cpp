@@ -4,6 +4,32 @@
 #include "GeneralImage.h"
 #include "Logger.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringParser.h"
+#include <commoncontrols.h>
+
+namespace {
+
+struct SystemImage
+{
+	int index;
+	int list;
+};
+
+std::optional<SystemImage> ParseSystemImage(const std::wstring& imageName)
+{
+	StringParser parser(imageName);
+	if (!parser.Consume(L"SystemImage:")) return std::nullopt;
+
+	const auto index = parser.ConsumeInt();
+	if (!index || *index < 0 || !parser.Consume(L',')) return std::nullopt;
+
+	const auto list = parser.ConsumeRestInt();
+	if (!list || *list < SHIL_LARGE || *list > SHIL_JUMBO) return std::nullopt;
+
+	return SystemImage{ *index, *list };
+}
+
+}  // namespace
 
 // GrayScale Matrix
 const D2D1_MATRIX_5X4_F GeneralImage::c_GreyScaleMatrix = {
@@ -234,6 +260,66 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		return false;
 	}
 
+	const bool hasImage = m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
+		m_Options.m_CreateAlphaMask == createAlphaMask;
+	auto loadImageIfNeeded = [&](const ImageOptions& info, auto&& loader)
+	{
+		auto handle = GetImageCache().Get(info);
+		if (!handle || !handle->GetBitmap()->HasDeviceResources())
+		{
+			auto bitmap = std::make_unique<Gfx::Bitmap>(info.m_Path, 0, info.m_CreateAlphaMask);
+			if (SUCCEEDED(loader(bitmap.get())))
+			{
+				GetImageCache().Put(info, bitmap.release());
+				handle = GetImageCache().Get(info);
+			}
+			else
+			{
+				handle.reset();
+			}
+		}
+
+		DisposeImage();
+		if (!handle) return false;
+
+		m_Bitmap = std::move(handle);
+		m_Options.m_Path = info.m_Path;
+		m_Options.m_FileSize = info.m_FileSize;
+		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = info.m_CreateAlphaMask;
+		ApplyTransforms();
+		return true;
+	};
+
+	const auto systemImage = ParseSystemImage(imageName);
+	if (systemImage)
+	{
+		ImageOptions info;
+		info.m_Path = imageName;
+		info.m_FileSize = 1;
+		info.m_FileTime = 1;
+		info.m_CreateAlphaMask = createAlphaMask;
+
+		if (hasImage && m_Bitmap->GetKey() == info)
+		{
+			ApplyTransforms();
+			return true;
+		}
+
+		return loadImageIfNeeded(info, [&](Gfx::Bitmap* bitmap)
+		{
+			Microsoft::WRL::ComPtr<IImageList> imageList;
+			HRESULT hr = SHGetImageList(systemImage->list, IID_IImageList, (void**)imageList.GetAddressOf());
+
+			HICON icon = nullptr;
+			if (SUCCEEDED(hr)) hr = imageList->GetIcon(systemImage->index, ILD_TRANSPARENT, &icon);
+			if (SUCCEEDED(hr)) hr = bitmap->LoadFromIcon(m_Skin->GetCanvas(), icon);
+
+			if (icon) DestroyIcon(icon);
+			return hr;
+		});
+	}
+
 	std::wstring filename = m_Path + imageName;
 	m_Skin->MakePathAbsolute(filename);
 
@@ -244,9 +330,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 		filename += L".png";
 	}
 
-	if (m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
-		m_Options.m_CreateAlphaMask == createAlphaMask &&
-		!m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (hasImage && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
@@ -255,50 +339,17 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 	ImageOptions info;
 	Gfx::Bitmap::GetFileInfo(filename, &info);
 	info.m_CreateAlphaMask = createAlphaMask;
-
 	if (!info.isValid())
 	{
 		LogErrorF(m_Skin, L"%s: Unable to open: %s", m_Name, filename.c_str());
-
 		DisposeImage();
 		return false;
 	}
 
-	auto handle = GetImageCache().Get(info);
-	if (!handle || !handle->GetBitmap()->HasDeviceResources())
+	return loadImageIfNeeded(info, [&](Gfx::Bitmap* bitmap)
 	{
-		auto bitmap = new Gfx::Bitmap(filename, 0, createAlphaMask);
-
-		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
-		if (SUCCEEDED(hr))
-		{
-			GetImageCache().Put(info, bitmap);
-			handle = GetImageCache().Get(info);
-			if (!handle) return false;
-		}
-		else
-		{
-			delete bitmap;
-			bitmap = nullptr;
-		}
-	}
-
-	DisposeImage();
-
-	if (handle)
-	{
-		m_Bitmap = std::move(handle);
-
-		m_Options.m_Path = info.m_Path;
-		m_Options.m_FileSize = info.m_FileSize;
-		m_Options.m_FileTime = info.m_FileTime;
-		m_Options.m_CreateAlphaMask = createAlphaMask;
-
-		ApplyTransforms();
-		return true;
-	}
-
-	return false;
+		return bitmap->Load(m_Skin->GetCanvas());
+	});
 }
 
 D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const
