@@ -8,6 +8,8 @@
 #include "../Common/CharacterEntityReference.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
+#include <jsoncons/json.hpp>
+#include <jsoncons_ext/jsonpointer/jsonpointer.hpp>
 
 void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* description);
 
@@ -221,6 +223,7 @@ void ClearProxySetting(ProxySetting& setting)
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_ParseType(ParseType::RegExp),
 	m_Codepage(),
 	m_StringIndex(),
 	m_StringIndex2(),
@@ -318,7 +321,16 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
 	}
 
-	m_RegExp = parser.ReadString(section, L"RegExp", L"");
+	m_Expression = parser.ReadString(section, L"RegExp", L"");
+	if (!parser.GetLastDefaultUsed())
+	{
+		m_ParseType = ParseType::RegExp;
+	}
+	else
+	{
+		m_Expression = parser.ReadString(section, L"JsonPointer", L"");
+		m_ParseType = parser.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
+	}
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
 	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
@@ -444,7 +456,7 @@ void MeasureWebParser::UpdateValue()
 {
 	m_Value = 0.0;  // Default "number" value to 0
 
-	if (m_Download && m_RegExp.empty() && m_Url.find(L'[') == std::wstring::npos)
+	if (m_Download && m_ParseType == ParseType::RegExp && m_Expression.empty() && m_Url.find(L'[') == std::wstring::npos)
 	{
 		if (!m_DownloadTask)
 		{
@@ -557,27 +569,45 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		utf16Data = true;
 	}
 
+	std::wstring buffer;
+	std::wstring_view data((const WCHAR*)rawData, rawSize / sizeof(WCHAR));
+	if (!utf16Data)
+	{
+		buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
+		data = buffer;
+	}
+
+	const bool doErrorAction = m_ParseType == ParseType::JsonPointer ? ParseJsonPointer(data) : ParseRegExp(data);
+
+	if (m_Download)
+	{
+		StartDownloadTask();
+	}
+
+	if (doErrorAction && !m_OnRegExpErrAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
+	}
+	else if (!m_Download && !m_FinishAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
+	}
+}
+
+bool MeasureWebParser::ParseRegExp(std::wstring_view input)
+{
 	const char* error = nullptr;
 	int ovector[OVECCOUNT] = { 0 };
 	int rc = 0;
 	bool doErrorAction = false;
+	const WCHAR* data = input.data();
 
 	// Compile the regular expression in the first argument
-	Pcre re(m_RegExp.c_str(), &error);
+	Pcre re(m_Expression.c_str(), &error);
 	if (re)
 	{
 		// Compilation succeeded: match the subject in the second argument
-		std::wstring buffer;
-		auto data = (const WCHAR*)rawData;
-		DWORD dataLength = rawSize / 2;
-		if (!utf16Data)
-		{
-			buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
-			data = buffer.c_str();
-			dataLength = (DWORD)buffer.length();
-		}
-
-		rc = re.Execute(std::wstring_view(data, dataLength), 0, ovector, OVECCOUNT);
+		rc = re.Execute(input, 0, ovector, OVECCOUNT);
 		if (rc >= 0)
 		{
 			if (rc == 0)
@@ -638,7 +668,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 						{
 							const WCHAR* match = data + ovector[2 * (*i)->m_StringIndex];
 							int matchLen = ovector[2 * (*i)->m_StringIndex + 1] - ovector[2 * (*i)->m_StringIndex];
-							if (!(*i)->m_RegExp.empty())
+							if ((*i)->m_ParseType == ParseType::JsonPointer || !(*i)->m_Expression.empty())
 							{
 								// Change the index and parse the substring
 								int index = (*i)->m_StringIndex;
@@ -715,19 +745,80 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		doErrorAction = true;
 	}
 
-	if (m_Download)
+	return doErrorAction;
+}
+
+bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
+{
+	auto result = jsoncons::try_decode_json<jsoncons::wjson>(data);
+	std::wstring compareStr = L"[";
+	compareStr += GetOriginalName();
+	compareStr += L']';
+	bool doErrorAction = false;
+	if (result)
 	{
-		StartDownloadTask();
+		const jsoncons::wjson& json = *result;
+		auto updateResult = [&json](MeasureWebParser* measure)
+		{
+			std::error_code error;
+			const jsoncons::wjson& value = jsoncons::jsonpointer::get(json, measure->m_Expression, error);
+			if (error)
+			{
+				LogErrorF(measure, L"JsonPointer error: %S", error.message().c_str());
+				measure->m_ResultString = measure->m_ErrorString;
+				return false;
+			}
+
+			if (value.is_string())
+			{
+				const auto stringValue = value.as_string_view();
+				measure->m_ResultString.assign(stringValue.data(), stringValue.length());
+			}
+			else
+			{
+				measure->m_ResultString.clear();
+				value.dump(measure->m_ResultString, error);
+				if (error)
+				{
+					LogErrorF(measure, L"JSON value conversion error: %S", error.message().c_str());
+					measure->m_ResultString = measure->m_ErrorString;
+					return false;
+				}
+			}
+
+			return true;
+		};
+
+		doErrorAction = !updateResult(this);
+
+		for (auto measure : g_Measures)
+		{
+			if (measure != this && GetSkin() == measure->GetSkin() &&
+				StringUtil::CaseInsensitiveFind(measure->m_Url, compareStr) != std::wstring::npos &&
+				updateResult(measure) && measure->m_Download)
+			{
+				measure->StartDownloadTask();
+			}
+		}
+	}
+	else
+	{
+		const std::string error = result.error().message();
+		LogErrorF(this, L"JSON parse error: %S", error.c_str());
+		m_ResultString = m_ErrorString;
+		doErrorAction = true;
+
+		for (auto measure : g_Measures)
+		{
+			if (measure != this && GetSkin() == measure->GetSkin() &&
+				StringUtil::CaseInsensitiveFind(measure->m_Url, compareStr) != std::wstring::npos)
+			{
+				measure->m_ResultString = measure->m_ErrorString;
+			}
+		}
 	}
 
-	if (doErrorAction && !m_OnRegExpErrAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
-	}
-	else if (!m_Download && !m_FinishAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
-	}
+	return doErrorAction;
 }
 
 void MeasureWebParser::StartDownloadTask()
@@ -737,7 +828,7 @@ void MeasureWebParser::StartDownloadTask()
 
 	std::wstring url;
 
-	if (m_RegExp.empty() && m_ResultString.empty())
+	if (m_ParseType == ParseType::RegExp && m_Expression.empty() && m_ResultString.empty())
 	{
 		if (!m_Url.empty() && m_Url[0] != L'[')
 		{

@@ -33,15 +33,23 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
+	enum class ParseType : BYTE
+	{
+		RegExp,
+		JsonPointer
+	};
+
 	void HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
 
 	void StartDownloadTask();
 	void HandleDownloadResult(const std::wstring&, HRESULT result);
 
 	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
+	bool ParseRegExp(std::wstring_view data);
+	bool ParseJsonPointer(std::wstring_view data);
 
 	std::wstring m_Url;
-	std::wstring m_RegExp;
+	std::wstring m_Expression;
 	std::wstring m_ResultString;
 	std::wstring m_ErrorString;
 	std::wstring m_FinishAction;
@@ -54,6 +62,7 @@ private:
 	std::wstring m_DebugFileLocation;
 	std::wstring m_Headers;
 	ProxySetting m_Proxy;
+	ParseType m_ParseType;
 	int m_Codepage;
 	int m_StringIndex;
 	int m_StringIndex2;
