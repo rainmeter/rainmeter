@@ -170,8 +170,6 @@ CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
 UINT g_InstanceCount = 0;
 
-static std::vector<MeasureWebParser*> g_Measures;
-
 #define OVECCOUNT 300    // should be a multiple of 3
 
 void SetupGlobalProxySetting()
@@ -239,8 +237,6 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_FetchTask(),
 	m_DownloadTask()
 {
-	g_Measures.push_back(this);
-
 	if (g_InstanceCount == 0)
 	{
 		SetupGlobalProxySetting();
@@ -279,9 +275,6 @@ MeasureWebParser::~MeasureWebParser()
 	}
 
 	ClearProxySetting(m_Proxy);
-
-	auto iter = std::find(g_Measures.begin(), g_Measures.end(), this);
-	g_Measures.erase(iter);
 
 	--g_InstanceCount;
 	if (g_InstanceCount == 0)
@@ -655,61 +648,59 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 				}
 
 				// Update the references
-				auto i = g_Measures.begin();
 				std::wstring compareStr = L"[";
 				compareStr += GetOriginalName();
 				compareStr += L']';
-				for ( ; i != g_Measures.end(); ++i)
+				for (auto* baseMeasure : GetSkin()->GetMeasures())
 				{
-					if (GetSkin() == (*i)->GetSkin() &&
-						StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos)
-					{
-						if ((*i)->m_StringIndex < rc)
-						{
-							const WCHAR* match = data + ovector[2 * (*i)->m_StringIndex];
-							int matchLen = ovector[2 * (*i)->m_StringIndex + 1] - ovector[2 * (*i)->m_StringIndex];
-							if ((*i)->m_ParseType == ParseType::JsonPointer || !(*i)->m_Expression.empty())
-							{
-								// Change the index and parse the substring
-								int index = (*i)->m_StringIndex;
-								(*i)->m_StringIndex = (*i)->m_StringIndex2;
-								(*i)->ParseData((BYTE*)match, matchLen * 2, true);
-								(*i)->m_StringIndex = index;
-							}
-							else
-							{
-								// Substitude the [measure] with result
-								(*i)->m_ResultString = (*i)->m_Url;
-								(*i)->m_ResultString.replace(
-									StringUtil::CaseInsensitiveFind((*i)->m_ResultString, compareStr),
-									compareStr.size(), match, matchLen);
-								CharacterEntityReference::Decode((*i)->m_ResultString, (*i)->m_DecodeCharacterReference, (*i)->m_DecodeCodePoints);
+					auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+					if (!measure) continue;
 
-								// Start download threads for the references
-								if ((*i)->m_Download)
-								{
-									(*i)->StartDownloadTask();
-								}
-							}
+					if (measure->m_StringIndex < rc)
+					{
+						const WCHAR* match = data + ovector[2 * measure->m_StringIndex];
+						int matchLen = ovector[2 * measure->m_StringIndex + 1] - ovector[2 * measure->m_StringIndex];
+						if (measure->m_ParseType == ParseType::JsonPointer || !measure->m_Expression.empty())
+						{
+							// Change the index and parse the substring
+							int index = measure->m_StringIndex;
+							measure->m_StringIndex = measure->m_StringIndex2;
+							measure->ParseData((BYTE*)match, matchLen * 2, true);
+							measure->m_StringIndex = index;
 						}
 						else
 						{
-							if (m_LogSubstringErrors) LogWarningF(*i, L"Not enough substrings");
+							// Substitude the [measure] with result
+							measure->m_ResultString = measure->m_Url;
+							measure->m_ResultString.replace(
+								StringUtil::CaseInsensitiveFind(measure->m_ResultString, compareStr),
+								compareStr.size(), match, matchLen);
+							CharacterEntityReference::Decode(measure->m_ResultString, measure->m_DecodeCharacterReference, measure->m_DecodeCodePoints);
 
-							// Clear the old result
-							(*i)->m_ResultString.clear();
-							if ((*i)->m_Download)
+							// Start download threads for the references
+							if (measure->m_Download)
 							{
-								if ((*i)->m_DownloadFile.empty())  // cache mode
-								{
-									if (!(*i)->m_DownloadedFile.empty())
-									{
-										// Delete old downloaded file
-										DeleteFile((*i)->m_DownloadedFile.c_str());
-									}
-								}
-								(*i)->m_DownloadedFile.clear();
+								measure->StartDownloadTask();
 							}
+						}
+					}
+					else
+					{
+						if (m_LogSubstringErrors) LogWarningF(measure, L"Not enough substrings");
+
+						// Clear the old result
+						measure->m_ResultString.clear();
+						if (measure->m_Download)
+						{
+							if (measure->m_DownloadFile.empty())  // cache mode
+							{
+								if (!measure->m_DownloadedFile.empty())
+								{
+									// Delete old downloaded file
+									DeleteFile(measure->m_DownloadedFile.c_str());
+								}
+							}
+							measure->m_DownloadedFile.clear();
 						}
 					}
 				}
@@ -724,17 +715,15 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 			m_ResultString = m_ErrorString;
 
 			// Update the references
-			auto i = g_Measures.begin();
 			std::wstring compareStr = L"[";
 			compareStr += GetOriginalName();
 			compareStr += L']';
-			for ( ; i != g_Measures.end(); ++i)
+			for (auto* baseMeasure : GetSkin()->GetMeasures())
 			{
-				if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-					(GetSkin() == (*i)->GetSkin()))
-				{
-					(*i)->m_ResultString = (*i)->m_ErrorString;
-				}
+				auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+				if (!measure) continue;
+
+				measure->m_ResultString = measure->m_ErrorString;
 			}
 		}
 	}
@@ -791,11 +780,12 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 
 		doErrorAction = !updateResult(this);
 
-		for (auto measure : g_Measures)
+		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			if (measure != this && GetSkin() == measure->GetSkin() &&
-				StringUtil::CaseInsensitiveFind(measure->m_Url, compareStr) != std::wstring::npos &&
-				updateResult(measure) && measure->m_Download)
+			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			if (!measure) continue;
+
+			if (measure != this && updateResult(measure) && measure->m_Download)
 			{
 				measure->StartDownloadTask();
 			}
@@ -808,10 +798,12 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 		m_ResultString = m_ErrorString;
 		doErrorAction = true;
 
-		for (auto measure : g_Measures)
+		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			if (measure != this && GetSkin() == measure->GetSkin() &&
-				StringUtil::CaseInsensitiveFind(measure->m_Url, compareStr) != std::wstring::npos)
+			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			if (!measure) continue;
+
+			if (measure != this)
 			{
 				measure->m_ResultString = measure->m_ErrorString;
 			}
@@ -1212,18 +1204,30 @@ void MeasureWebParser::Command(const std::wstring& command)
 		m_DownloadedFile.clear();
 
 		// Update the references
-		auto i = g_Measures.begin();
 		std::wstring compareStr = L"[";
 		compareStr += GetOriginalName();
 		compareStr += L']';
-		for (; i != g_Measures.end(); ++i)
+		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-				(GetSkin() == (*i)->GetSkin()))
-			{
-				(*i)->m_ResultString.clear();
-				(*i)->m_DownloadedFile.clear();
-			}
+			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			if (!measure) continue;
+
+			measure->m_ResultString.clear();
+			measure->m_DownloadedFile.clear();
 		}
 	}
+}
+
+MeasureWebParser* MeasureWebParser::GetReferencedMeasure(Measure* measure, std::wstring_view reference)
+{
+	if (measure->GetTypeID() == TypeID<MeasureWebParser>())
+	{
+		auto* webParser = static_cast<MeasureWebParser*>(measure);
+		if (StringUtil::CaseInsensitiveFind(webParser->m_Url, reference) != std::wstring::npos)
+		{
+			return webParser;
+		}
+	}
+
+	return nullptr;
 }
