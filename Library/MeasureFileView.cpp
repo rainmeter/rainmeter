@@ -836,6 +836,7 @@ void MeasureFileView::Command(const std::wstring& command)
 					parent->indexOffset = 0;
 					parent->needsIcons = true;
 				}
+				return;
 			}
 			else if (_wcsicmp(args, L"PAGEDOWN") == 0)
 			{
@@ -849,12 +850,14 @@ void MeasureFileView::Command(const std::wstring& command)
 					parent->indexOffset = (int)parent->files.size() - parent->count;
 					parent->needsIcons = true;
 				}
+				return;
 			}
 			else if (_wcsnicmp(args, cmdIndexUp, lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
 			{
 				const int shift = (args[lenIndexUp] == L'\0') ? 1 : max(_wtoi(args + lenIndexUp + 1), 1);
 				parent->indexOffset = max(parent->indexOffset - shift, 0);
 				parent->needsIcons = true;
+				return;
 			}
 			else if (_wcsnicmp(args, cmdIndexDown, lenIndexDown) == 0 && (args[lenIndexDown] == L' ' || args[lenIndexDown] == L'\0'))
 			{
@@ -862,6 +865,7 @@ void MeasureFileView::Command(const std::wstring& command)
 				const int maxOffset = max((int)parent->files.size() - parent->count, 0);
 				parent->indexOffset = min(parent->indexOffset + shift, maxOffset);
 				parent->needsIcons = true;
+				return;
 			}
 		}
 
