@@ -25,7 +25,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_PCRE", "Library\Lib
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_Taglib", "Library\Library_Taglib.vcxproj", "{0F414430-65C7-4A35-B878-7E6350D6D976}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_Zlib", "Library\Library_Zlib.vcxproj", "{5D164F45-CEED-47A3-8A5D-B752D09B09DB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThirdParty_Zlib", "ThirdParty\ThirdParty_Zlib.vcxproj", "{5D164F45-CEED-47A3-8A5D-B752D09B09DB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RestartRainmeter", "Restart\RestartRainmeter.vcxproj", "{89A751C7-904B-486E-8C9D-85EFABD1387C}"
 EndProject
