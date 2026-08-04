@@ -371,6 +371,13 @@ void Dialog::SetMenuButton(HWND button)
 
 LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+	const auto popupMenuClassAtom = MAKEINTATOM(0x8000);
+	if (uMsg == WM_LBUTTONDOWN && FindWindowEx(nullptr, nullptr, popupMenuClassAtom, nullptr))
+	{
+		// A click on this button dismisses an open popup menu first.
+		return 0;
+	}
+
 	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
 	switch (uMsg)
