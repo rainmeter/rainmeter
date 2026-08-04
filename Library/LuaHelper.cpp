@@ -1,10 +1,10 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "../../Common/StringUtil.h"
+#include "../Common/StringUtil.h"
 #include "LuaHelper.h"
 #include "LuaScript.h"
-#include "../Logger.h"
+#include "Logger.h"
 
 std::vector<LuaStateScope*> LuaStateScope::c_ScopeStack;
 

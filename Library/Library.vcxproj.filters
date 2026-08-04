@@ -5,12 +5,6 @@
       <UniqueIdentifier>{2d6bf39d-48e1-4de3-8924-46c5666cb141}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
-    <Filter Include="Lua">
-      <UniqueIdentifier>{6570e2b7-2e40-4fba-a051-01de85760fea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\glue">
-      <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="NowPlaying">
       <UniqueIdentifier>{64424fee-4da8-4109-84de-df55a55e63c0}</UniqueIdentifier>
     </Filter>
@@ -29,24 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
-    <ClCompile Include="lua\LuaScript.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaSection.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeasure.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeter.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeterWindow.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaGlobal.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -95,6 +71,13 @@
     <ClCompile Include="Language.cpp" />
     <ClCompile Include="Language_Test.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="LuaBindingGlobal.cpp" />
+    <ClCompile Include="LuaBindingMeasure.cpp" />
+    <ClCompile Include="LuaBindingMeter.cpp" />
+    <ClCompile Include="LuaBindingMeterWindow.cpp" />
+    <ClCompile Include="LuaBindingSection.cpp" />
+    <ClCompile Include="LuaHelper.cpp" />
+    <ClCompile Include="LuaScript.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
     <ClCompile Include="MeasureAdvancedCPU.cpp" />
@@ -169,9 +152,6 @@
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="WindowOcclusionTracker.cpp" />
-    <ClCompile Include="lua\LuaHelper.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
@@ -201,12 +181,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lua\LuaScript.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\LuaSection.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
     <ClInclude Include="NowPlaying\Player.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
@@ -252,6 +226,9 @@
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="Language.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="LuaBindingSection.h" />
+    <ClInclude Include="LuaHelper.h" />
+    <ClInclude Include="LuaScript.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureActionTimer.h" />
     <ClInclude Include="MeasureAdvancedCPU.h" />
@@ -327,9 +304,6 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="WindowOcclusionTracker.h" />
-    <ClInclude Include="lua\LuaHelper.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="ImageCache.h" />

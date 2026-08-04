@@ -1,11 +1,11 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "../LuaHelper.h"
-#include "../LuaScript.h"
-#include "../../Logger.h"
-#include "../../../Common/StringUtil.h"
-#include "../../../Common/FileUtil.h"
+#include "LuaHelper.h"
+#include "LuaScript.h"
+#include "Logger.h"
+#include "../Common/StringUtil.h"
+#include "../Common/FileUtil.h"
 
 static int Print(lua_State* L)
 {

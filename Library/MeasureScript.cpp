@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "MeasureScript.h"
-#include "lua/LuaHelper.h"
+#include "LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
 

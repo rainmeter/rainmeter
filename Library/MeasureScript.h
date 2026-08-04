@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Measure.h"
-#include "lua/LuaScript.h"
+#include "LuaScript.h"
 #include "Skin.h"
 
 class MeasureScript : public Measure

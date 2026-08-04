@@ -1,10 +1,10 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "LuaSection.h"
-#include "../LuaHelper.h"
-#include "../../Section.h"
-#include "../../Skin.h"
+#include "LuaBindingSection.h"
+#include "LuaHelper.h"
+#include "Section.h"
+#include "Skin.h"
 
 namespace LuaSection {
 
