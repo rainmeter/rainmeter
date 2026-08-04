@@ -137,7 +137,9 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			ShowWindow(item, SW_SHOWNORMAL);
 			SendMessage(m_Window, DM_SETDEFID, DialogPackage::Id_CreatePackageButton, 0);
 
-			EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_Tab), TRUE);
+			HWND tab = GetDlgItem(m_Window, DialogPackage::Id_Tab);
+			EnableWindow(tab, TRUE);
+			ShowWindow(tab, SW_SHOWNORMAL);
 			ShowWindow(m_TabInfo.GetWindow(), SW_HIDE);
 			SelectTab(0);
 		}
@@ -155,7 +157,9 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			ShowWindow(item, SW_SHOWNORMAL);
 			SendMessage(m_Window, DM_SETDEFID, DialogPackage::Id_NextButton, 0);
 
-			EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_Tab), FALSE);
+			HWND tab = GetDlgItem(m_Window, DialogPackage::Id_Tab);
+			EnableWindow(tab, FALSE);
+			ShowWindow(tab, SW_HIDE);
 			EnableWindow(m_TabOptions.GetWindow(), FALSE);
 			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
 			ShowWindow(m_TabInfo.GetWindow(), SW_SHOWNORMAL);
