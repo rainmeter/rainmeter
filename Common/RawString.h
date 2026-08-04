@@ -3,7 +3,9 @@
 #pragma once
 
 #include <malloc.h>
+#include <string>
 #include <string.h>
+#include <string_view>
 
 class RawString
 {
@@ -12,6 +14,16 @@ public:
 
 	RawString(const wchar_t* str) :
 		m_String(str_alloc(str))
+	{
+	}
+
+	RawString(std::wstring_view str) :
+		m_String(str_alloc(str.data(), str.size()))
+	{
+	}
+
+	RawString(const std::wstring& str) :
+		RawString(std::wstring_view(str))
 	{
 	}
 
@@ -29,6 +41,17 @@ public:
 	{
 		assign(rhs);
 		return *this;
+	}
+
+	RawString& operator=(std::wstring_view rhs)
+	{
+		assign(rhs.data(), rhs.size());
+		return *this;
+	}
+
+	RawString& operator=(const std::wstring& rhs)
+	{
+		return operator=(std::wstring_view(rhs));
 	}
 
 	RawString& operator=(const RawString& rhs)
@@ -69,6 +92,17 @@ private:
 		return buffer;
 	}
 
+	wchar_t* str_alloc(const wchar_t* str, size_t length)
+	{
+		wchar_t* buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+		if (buffer)
+		{
+			if (length) wmemcpy(buffer, str, length);
+			buffer[length] = L'\0';
+		}
+		return buffer;
+	}
+
 	void assign(const wchar_t* str)
 	{
 		if (str == m_String) return;
@@ -85,6 +119,20 @@ private:
 		{
 			m_String = buffer;
 			wcscpy(m_String, str);
+		}
+	}
+
+	void assign(const wchar_t* str, size_t length)
+	{
+		if (m_String && str == m_String && length == wcslen(m_String)) return;
+
+		const size_t size = (length + 1) * sizeof(wchar_t);
+		wchar_t* buffer = (wchar_t*)realloc(m_String, size);
+		if (buffer)
+		{
+			m_String = buffer;
+			if (length) wmemcpy(m_String, str, length);
+			m_String[length] = L'\0';
 		}
 	}
 
