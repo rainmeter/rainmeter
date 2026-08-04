@@ -30,6 +30,7 @@ for language_file in "$script_dir"/*.ini; do
         key = trim(substr($0, 1, equals - 1))
         value = substr($0, equals + 1)
         overrides[section SUBSEP key] = value
+        override_value[key] = value
       }
       next
     }
@@ -45,7 +46,16 @@ for language_file in "$script_dir"/*.ini; do
       if (equals && $0 !~ /^[[:space:];#]/) {
         key = trim(substr($0, 1, equals - 1))
         id = section SUBSEP key
-        print key "=" (id in overrides ? overrides[id] : "")
+        # Prefer a translation in the current section. If a key has moved,
+        # retain its translation from its previous section.
+        if (id in overrides) {
+          value = overrides[id]
+        } else if (key in override_value) {
+          value = override_value[key]
+        } else {
+          value = ""
+        }
+        print key "=" value
       } else {
         print
       }
