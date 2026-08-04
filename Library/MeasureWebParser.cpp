@@ -648,12 +648,9 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 				}
 
 				// Update the references
-				std::wstring compareStr = L"[";
-				compareStr += GetOriginalName();
-				compareStr += L']';
 				for (auto* baseMeasure : GetSkin()->GetMeasures())
 				{
-					auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+					auto [measure, measurePos, measureLength] = FindMeasureUrlReference(baseMeasure);
 					if (!measure) continue;
 
 					if (measure->m_StringIndex < rc)
@@ -673,8 +670,7 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 							// Substitude the [measure] with result
 							measure->m_ResultString = measure->m_Url;
 							measure->m_ResultString.replace(
-								StringUtil::CaseInsensitiveFind(measure->m_ResultString, compareStr),
-								compareStr.size(), match, matchLen);
+								measurePos, measureLength, match, matchLen);
 							CharacterEntityReference::Decode(measure->m_ResultString, measure->m_DecodeCharacterReference, measure->m_DecodeCodePoints);
 
 							// Start download threads for the references
@@ -715,12 +711,9 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 			m_ResultString = m_ErrorString;
 
 			// Update the references
-			std::wstring compareStr = L"[";
-			compareStr += GetOriginalName();
-			compareStr += L']';
 			for (auto* baseMeasure : GetSkin()->GetMeasures())
 			{
-				auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+				auto* measure = FindMeasureUrlReference(baseMeasure).measure;
 				if (!measure) continue;
 
 				measure->m_ResultString = measure->m_ErrorString;
@@ -740,9 +733,6 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 {
 	auto result = jsoncons::try_decode_json<jsoncons::wjson>(data);
-	std::wstring compareStr = L"[";
-	compareStr += GetOriginalName();
-	compareStr += L']';
 	bool doErrorAction = false;
 	if (result)
 	{
@@ -782,10 +772,10 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 
 		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
 			if (!measure) continue;
 
-			if (measure != this && updateResult(measure) && measure->m_Download)
+			if (updateResult(measure) && measure->m_Download)
 			{
 				measure->StartDownloadTask();
 			}
@@ -800,13 +790,10 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 
 		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
 			if (!measure) continue;
 
-			if (measure != this)
-			{
-				measure->m_ResultString = measure->m_ErrorString;
-			}
+			measure->m_ResultString = measure->m_ErrorString;
 		}
 	}
 
@@ -1204,12 +1191,9 @@ void MeasureWebParser::Command(const std::wstring& command)
 		m_DownloadedFile.clear();
 
 		// Update the references
-		std::wstring compareStr = L"[";
-		compareStr += GetOriginalName();
-		compareStr += L']';
 		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
-			auto* measure = GetReferencedMeasure(baseMeasure, compareStr);
+			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
 			if (!measure) continue;
 
 			measure->m_ResultString.clear();
@@ -1218,16 +1202,25 @@ void MeasureWebParser::Command(const std::wstring& command)
 	}
 }
 
-MeasureWebParser* MeasureWebParser::GetReferencedMeasure(Measure* measure, std::wstring_view reference)
+MeasureWebParser::ReferenceMatch MeasureWebParser::FindMeasureUrlReference(Measure* measure) const
 {
-	if (measure->GetTypeID() == TypeID<MeasureWebParser>())
+	const std::wstring& measureName = GetOriginalName();
+	if (measure == this || measure->GetTypeID() != TypeID<MeasureWebParser>()) return {};
+
+	const std::wstring& url = ((MeasureWebParser*)measure)->m_Url;
+	size_t start = url.find(L'[');
+	while (start != std::wstring::npos)
 	{
-		auto* webParser = static_cast<MeasureWebParser*>(measure);
-		if (StringUtil::CaseInsensitiveFind(webParser->m_Url, reference) != std::wstring::npos)
+		const size_t end = start + measureName.size() + 1;
+		if (end < url.size() &&
+			_wcsnicmp(url.c_str() + start + 1, measureName.data(), measureName.size()) == 0 &&
+			url[end] == L']')
 		{
-			return webParser;
+			return { (MeasureWebParser*)measure, start, measureName.size() + 2 };
 		}
+
+		start = url.find(L'[', start + 1);
 	}
 
-	return nullptr;
+	return {};
 }
