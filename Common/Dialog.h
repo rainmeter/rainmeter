@@ -83,6 +83,7 @@ protected:
 	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
+	static UINT ShowMenuButtonPopupMenu(HMENU menu, HWND button);
 
 private:
 	Dialog(const Dialog& r);
@@ -93,6 +94,7 @@ private:
 
 	static HWND c_ActiveDialogWindow;
 	static HACCEL c_Accelerator;
+	static HHOOK c_PopupMenuFilterHook;
 
 	WINDOWPLACEMENT* m_WindowPlacement;
 	HWND m_TabControl;

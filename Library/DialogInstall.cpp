@@ -234,8 +234,6 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case DialogInstall::Id_AdvancedButton:
 		{
-			RECT r = { 0 };
-			GetWindowRect((HWND)lParam, &r);
 			HMENU menu = LoadMenu(GetInstanceHandle(), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
 			ModifyMenu(subMenu, IDM_INSTALL_BACKUPSKINS, MF_STRING | MF_BYCOMMAND, IDM_INSTALL_BACKUPSKINS, GetString(IDS_BackupSkins));
@@ -262,15 +260,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 			const WCHAR* formatName = GetString(m_PackageFormat == PackageFormat::New ? IDS_NewFormat : IDS_OldFormat);
 			ModifyMenu(subMenu, IDM_INSTALL_FORMAT, MF_STRING | MF_GRAYED | MF_BYCOMMAND, IDM_INSTALL_FORMAT, formatName);
 
-			TrackPopupMenu(
-				subMenu,
-				TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				r.left,
-				--r.bottom,
-				0,
-				m_Window,
-				nullptr);
-
+			Dialog::ShowMenuButtonPopupMenu(subMenu, (HWND)lParam);
 			DestroyMenu(menu);
 		}
 		break;

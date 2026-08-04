@@ -330,7 +330,6 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 	auto skin = GetRainmeter().GetSkin(commandWindow);
 	if (skin) for (const auto& meter : skin->GetMeters()) meter->DisableToolTip();
 
-	// Show context menu
 	UINT command = TrackPopupMenu(
 		menu,
 		TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetLanguage().IsRTL() ? TPM_LAYOUTRTL : 0),

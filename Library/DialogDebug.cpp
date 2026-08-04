@@ -596,10 +596,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			CheckMenuItem(menu, Id_DebugModeMenuItem,
 				MF_BYCOMMAND | (GetRainmeter().GetDebug() ? MF_CHECKED : MF_UNCHECKED));
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -651,10 +648,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 					MF_BYCOMMAND | MF_GRAYED);
 			}
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -1564,10 +1558,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-				TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetLanguage().IsRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 			}
 
 			DestroyMenu(menu);
@@ -1606,11 +1597,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			AppendMenu(menu, MF_STRING | (groups[2] ? 0 : MF_GRAYED),
 				Id_JumpWatches, GetString(IDS_Watch));
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetLanguage().IsRTL() ? r.right : r.left, r.bottom, 0, m_Window, nullptr);
-
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 			DestroyMenu(menu);
 		}
 		break;
@@ -1997,7 +1984,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 					POINT pt = System::GetCursorPosition();
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
