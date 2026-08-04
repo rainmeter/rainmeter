@@ -12,6 +12,7 @@ The patch:
 - Creates closed default streams instead of exposing stdin, stdout, and stderr.
 - Makes os.setlocale() return nil without changing the process locale.
 - Protects Windows builds from invalid CRT parameters passed through strftime.
+- Increases the maximum number of pattern captures to 256.
 
 ---
 
@@ -184,7 +185,19 @@ diff --git a/src/lib_os.c b/src/lib_os.c
 +  lua_pushnil(L);
    return 1;
  }
+
+diff --git a/src/luaconf.h b/src/luaconf.h
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -92,7 +92,7 @@
+ #define LUAI_MAXCSTACK	8000	/* Max. # of stack slots for a C func (<10K). */
+ #define LUAI_GCPAUSE	200	/* Pause GC until memory is at 200%. */
+ #define LUAI_GCMUL	200	/* Run GC at 200% of allocation speed. */
+-#define LUA_MAXCAPTURES	32	/* Max. pattern captures. */
++#define LUA_MAXCAPTURES	256	/* Max. pattern captures. */
  
+ /* Configuration for the frontend (the luajit executable). */
+ #if defined(luajit_c)
 diff --git a/src/msvcbuild.bat b/src/msvcbuild.bat
 --- a/src/msvcbuild.bat
 +++ b/src/msvcbuild.bat
