@@ -38,6 +38,8 @@ Copy-DirectoryContents (Join-Path $sourceDirectory 'dynasm') (Join-Path $buildDi
 Copy-Item -LiteralPath (Join-Path $sourceDirectory '.relver') -Destination $buildDirectory -Force
 
 # Keep Git from treating the staging directory as part of the parent worktree.
+$gitBin = Join-Path $env:ProgramFiles 'Git\bin'
+$env:Path = "$gitBin;$env:Path"
 $env:GIT_CEILING_DIRECTORIES = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 & git -C $buildDirectory apply --no-index --whitespace=nowarn (Join-Path $PSScriptRoot 'RainmeterLuaJIT.patch')
 if ($LASTEXITCODE -ne 0)
