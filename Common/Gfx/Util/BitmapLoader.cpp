@@ -123,9 +123,9 @@ HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 	return cleanup(S_OK);
 }
 
-HRESULT BitmapLoader::LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, HICON icon)
+HRESULT BitmapLoader::LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, HICON icon, float scale)
 {
-	if (!bitmap || !icon) return E_INVALIDARG;
+	if (!bitmap || !icon || scale <= 0.0f) return E_INVALIDARG;
 
 	Microsoft::WRL::ComPtr<IWICBitmap> source;
 	HRESULT hr = Canvas::c_WICFactory->CreateBitmapFromHICON(icon, source.GetAddressOf());
@@ -139,6 +139,27 @@ HRESULT BitmapLoader::LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, H
 	UINT height = 0;
 	hr = convertedSource->GetSize(&width, &height);
 	if (FAILED(hr)) return hr;
+
+	if (scale != 1.0f)
+	{
+		UINT scaledWidth = (UINT)roundf(width / scale);
+		UINT scaledHeight = (UINT)roundf(height / scale);
+		if (scaledWidth == 0) scaledWidth = 1;
+		if (scaledHeight == 0) scaledHeight = 1;
+
+		Microsoft::WRL::ComPtr<IWICBitmapScaler> scaler;
+		hr = Canvas::c_WICFactory->CreateBitmapScaler(scaler.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			const auto interpolationMode = WICBitmapInterpolationModeHighQualityCubic;
+			hr = scaler->Initialize(convertedSource.Get(), scaledWidth, scaledHeight, interpolationMode);
+		}
+		if (FAILED(hr)) return hr;
+
+		convertedSource = scaler;
+		width = scaledWidth;
+		height = scaledHeight;
+	}
 
 	if (bitmap->GetCreateAlphaMask())
 	{
