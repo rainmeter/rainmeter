@@ -13,7 +13,7 @@
 #include "Util.h"
 #include "../Version.h"
 
-#include "inipp/inipp.h"
+#include "../ThirdParty/inipp/inipp.h"
 
 #include <SoftPub.h>
 #include <bcrypt.h>
