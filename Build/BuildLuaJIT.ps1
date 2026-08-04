@@ -41,7 +41,7 @@ Copy-Item -LiteralPath (Join-Path $sourceDirectory '.relver') -Destination $buil
 $gitBin = Join-Path $env:ProgramFiles 'Git\bin'
 $env:Path = "$gitBin;$env:Path"
 $env:GIT_CEILING_DIRECTORIES = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-& git -C $buildDirectory apply --no-index --whitespace=nowarn (Join-Path $PSScriptRoot 'RainmeterLuaJIT.patch')
+& git -C $buildDirectory apply --no-index --whitespace=nowarn (Join-Path $PSScriptRoot 'CustomLuaJIT.patch')
 if ($LASTEXITCODE -ne 0)
 {
 	exit $LASTEXITCODE
@@ -49,7 +49,7 @@ if ($LASTEXITCODE -ne 0)
 
 if (-not (Select-String -LiteralPath (Join-Path $buildSourceDirectory 'msvcbuild.bat') -SimpleMatch 'LUAJIT_DISABLE_FFI' -Quiet))
 {
-	throw 'RainmeterLuaJIT.patch was not applied to the staged LuaJIT sources.'
+	throw 'CustomLuaJIT.patch was not applied to the staged LuaJIT sources.'
 }
 
 $builtLibrary = Join-Path $buildSourceDirectory 'lua51.lib'
