@@ -8,8 +8,11 @@
 #include "../Common/CharacterEntityReference.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
-#include <jsoncons/json.hpp>
-#include <jsoncons_ext/jsonpointer/jsonpointer.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
+#include <rapidjson/pointer.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* description);
 
@@ -732,37 +735,51 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 
 bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 {
-	auto result = jsoncons::try_decode_json<jsoncons::wjson>(data);
+	using JsonEncoding = rapidjson::UTF16LE<wchar_t>;
+	using JsonDocument = rapidjson::GenericDocument<JsonEncoding>;
+	using JsonValue = rapidjson::GenericValue<JsonEncoding>;
+	using JsonPointer = rapidjson::GenericPointer<JsonValue>;
+	using JsonStringBuffer = rapidjson::GenericStringBuffer<JsonEncoding>;
+	using JsonWriter = rapidjson::Writer<JsonStringBuffer, JsonEncoding, JsonEncoding>;
+
+	JsonDocument json;
+	json.Parse(data.data(), data.length());
 	bool doErrorAction = false;
-	if (result)
+	if (!json.HasParseError())
 	{
-		const jsoncons::wjson& json = *result;
 		auto updateResult = [&json](MeasureWebParser* measure)
 		{
-			std::error_code error;
-			const jsoncons::wjson& value = jsoncons::jsonpointer::get(json, measure->m_Expression, error);
-			if (error)
+			JsonPointer pointer(measure->m_Expression.data(), measure->m_Expression.length());
+			if (!pointer.IsValid())
 			{
-				LogErrorF(measure, L"JsonPointer error: %S", error.message().c_str());
+				LogErrorF(measure, L"JsonPointer error: %S", rapidjson::GetPointerParseError_En(pointer.GetParseErrorCode()));
 				measure->m_ResultString = measure->m_ErrorString;
 				return false;
 			}
 
-			if (value.is_string())
+			const JsonValue* value = pointer.Get(json);
+			if (!value)
 			{
-				const auto stringValue = value.as_string_view();
-				measure->m_ResultString.assign(stringValue.data(), stringValue.length());
+				LogErrorF(measure, L"JsonPointer error: Value not found");
+				measure->m_ResultString = measure->m_ErrorString;
+				return false;
+			}
+
+			if (value->IsString())
+			{
+				measure->m_ResultString.assign(value->GetString(), value->GetStringLength());
 			}
 			else
 			{
-				measure->m_ResultString.clear();
-				value.dump(measure->m_ResultString, error);
-				if (error)
+				JsonStringBuffer buffer;
+				JsonWriter writer(buffer);
+				if (!value->Accept(writer))
 				{
-					LogErrorF(measure, L"JSON value conversion error: %S", error.message().c_str());
+					LogErrorF(measure, L"JSON value conversion error");
 					measure->m_ResultString = measure->m_ErrorString;
 					return false;
 				}
+				measure->m_ResultString.assign(buffer.GetString(), buffer.GetLength());
 			}
 
 			return true;
@@ -783,8 +800,7 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 	}
 	else
 	{
-		const std::string error = result.error().message();
-		LogErrorF(this, L"JSON parse error: %S", error.c_str());
+		LogErrorF(this, L"JSON parse error: %S", rapidjson::GetParseError_En(json.GetParseError()));
 		m_ResultString = m_ErrorString;
 		doErrorAction = true;
 
