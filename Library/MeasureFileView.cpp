@@ -519,22 +519,18 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		child->parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
 		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
 		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
-		child->parent->extensions = ParseUtil::Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
-
-		LPCWSTR extensionsFilter = parser.ReadString(section, L"ExtensionsFilter", L"Include").c_str();
-		if (_wcsicmp(extensionsFilter, L"INCLUDE") == 0)
+		const std::wstring* extensions = &parser.ReadString(section, L"Extensions", L"");
+		if (!parser.GetLastDefaultUsed())
 		{
 			child->parent->extensionsFilter = ExtensionsFilter::Include;
-		}
-		else if (_wcsicmp(extensionsFilter, L"EXCLUDE") == 0)
-		{
-			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
 		else
 		{
-			LogWarningF(child->parent->ownerChild->measure, L"Invalid ExtensionsFilter: %s", extensionsFilter);
-			child->parent->extensionsFilter = ExtensionsFilter::Include;
+			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
+			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
+		child->parent->extensions = ParseUtil::Tokenize(*extensions, L";");
+		extensions = nullptr;
 
 		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
 
