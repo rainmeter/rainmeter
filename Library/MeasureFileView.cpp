@@ -1413,13 +1413,25 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 		((IImageList*)hImageList)->GetIcon(shFileInfo.iIcon, ILD_TRANSPARENT, &icon);
 	}
 
-	errno_t error = _wfopen_s(&fp, iconPath.c_str(), L"wb");
-	if (filePath == INVALID_FILE || icon == nullptr || (error == 0 && !SaveIcon(icon, fp)))
+	const std::wstring tempPath = iconPath + L".temp";
+	const errno_t error = _wfopen_s(&fp, tempPath.c_str(), L"wb");
+	if (error == 0)
 	{
-		if (fp)
+		bool fileWritten = false;
+		if (filePath != INVALID_FILE && icon != nullptr && SaveIcon(icon, fp))
 		{
-			fwrite(iconPath.c_str(), 1, 1, fp);		// Clears previous icon
-			fclose(fp);
+			fp = nullptr;  // SaveIcon closes the file.
+			fileWritten = true;
+		}
+		else if (fp)
+		{
+			fileWritten = (fclose(fp) == 0);
+			fp = nullptr;
+		}
+
+		if (!fileWritten || !MoveFileEx(tempPath.c_str(), iconPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+		{
+			DeleteFile(tempPath.c_str());
 		}
 	}
 
