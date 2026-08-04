@@ -19,7 +19,6 @@
     <TargetExt>.lib</TargetExt>
     <NMakeOutput>$(IntDir)$(TargetName)$(TargetExt)</NMakeOutput>
     <NMakeBuildCommandLine>powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\BuildLuaJIT.ps1&quot; -SourceDirectory &quot;$(SolutionDir)ThirdParty\luajit&quot; -BuildDirectory &quot;$(IntDir)LuaJIT&quot; -OutputLibrary &quot;$(NMakeOutput)&quot; -Configuration &quot;$(Configuration)&quot; -Platform &quot;$(Platform)&quot;</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>if exist &quot;$(NMakeOutput)&quot; del /F /Q &quot;$(NMakeOutput)&quot; &amp; if exist &quot;$(IntDir)LuaJIT&quot; rmdir /S /Q &quot;$(IntDir)LuaJIT&quot;</NMakeCleanCommandLine>
     <NMakeIncludeSearchPath>$(SolutionDir)ThirdParty\luajit\src;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <NMakePreprocessorDefinitions>WIN32;_WINDOWS;_LIB</NMakePreprocessorDefinitions>
@@ -31,7 +30,18 @@
     <ClInclude Include="luajit\src\luaconf.h" />
     <ClInclude Include="luajit\src\lua.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <LuaJITBuildInput Include="$(SolutionDir)Build\BuildLuaJIT.ps1" />
+    <LuaJITBuildInput Include="$(SolutionDir)Build\RainmeterLuaJIT.patch" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\.relver" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\src\**\*" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\dynasm\**\*" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="Build" Inputs="@(LuaJITBuildInput)" Outputs="$(NMakeOutput)">
+    <Exec Command="$(NMakeBuildCommandLine)" />
+  </Target>
+  <Target Name="Rebuild" DependsOnTargets="Clean;Build" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
