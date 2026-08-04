@@ -596,7 +596,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			CheckMenuItem(menu, Id_DebugModeMenuItem,
 				MF_BYCOMMAND | (GetRainmeter().GetDebug() ? MF_CHECKED : MF_UNCHECKED));
 
-			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -648,7 +648,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 					MF_BYCOMMAND | MF_GRAYED);
 			}
 
-			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -1558,7 +1558,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			}
 
 			DestroyMenu(menu);
@@ -1597,7 +1597,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			AppendMenu(menu, MF_STRING | (groups[2] ? 0 : MF_GRAYED),
 				Id_JumpWatches, GetString(IDS_Watch));
 
-			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 		}
 		break;

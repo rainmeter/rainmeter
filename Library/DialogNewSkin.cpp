@@ -495,7 +495,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				TabTemplate::CreateTemplateMenu(menu, m_SelectedTemplate);
-				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}

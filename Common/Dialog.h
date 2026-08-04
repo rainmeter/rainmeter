@@ -83,7 +83,7 @@ protected:
 	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
-	static UINT ShowMenuButtonPopupMenu(HMENU menu, HWND button);
+	static UINT ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window);
 
 private:
 	Dialog(const Dialog& r);

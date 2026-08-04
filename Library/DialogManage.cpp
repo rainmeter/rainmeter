@@ -1236,7 +1236,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			}
 
 			DestroyMenu(menu);
@@ -1366,7 +1366,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
-				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -2116,7 +2116,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				ContextMenu::CreateGameModeOnStopMenu();
 			if (menu)
 			{
-				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
