@@ -271,6 +271,7 @@ void LuaScript::RegisterSkin(lua_State* L)
 		{ nullptr, nullptr }
 	};
 
+	// Retaining old MeterWindow name for BWC.
 	luaL_register(L, "MeterWindow", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
