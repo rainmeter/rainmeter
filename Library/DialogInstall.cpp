@@ -260,7 +260,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 			const WCHAR* formatName = GetString(m_PackageFormat == PackageFormat::New ? IDS_NewFormat : IDS_OldFormat);
 			ModifyMenu(subMenu, IDM_INSTALL_FORMAT, MF_STRING | MF_GRAYED | MF_BYCOMMAND, IDM_INSTALL_FORMAT, formatName);
 
-			Dialog::ShowMenuButtonPopupMenu(subMenu, (HWND)lParam);
+			Dialog::ShowMenuButtonPopupMenu(subMenu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 		}
 		break;

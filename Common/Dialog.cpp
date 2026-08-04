@@ -420,16 +420,14 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return result;
 }
 
-UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button)
+UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window)
 {
 	assert(!c_PopupMenuFilterHook);
 
 	RECT rect;
 	GetWindowRect(button, &rect);
 
-	HWND owner = GetAncestor(button, GA_ROOT);
-	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN;
-	const int x = (GetWindowLongPtr(owner, GWL_EXSTYLE) & WS_EX_LAYOUTRTL) ? rect.right : rect.left;
+	const auto rtl = (GetWindowLongPtr(window, GWL_EXSTYLE) & WS_EX_LAYOUTRTL);
 
 	const auto popupMenuFilter = [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT
 	{
@@ -458,7 +456,9 @@ UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button)
 	};
 	c_PopupMenuFilterHook = SetWindowsHookEx(WH_MSGFILTER, popupMenuFilter, nullptr, GetCurrentThreadId());
 
-	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, owner, nullptr);
+	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN;
+	const int x = rtl ? rect.right : rect.left;
+	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, window, nullptr);
 	if (c_PopupMenuFilterHook)
 	{
 		UnhookWindowsHookEx(c_PopupMenuFilterHook);
