@@ -123,6 +123,39 @@ HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 	return cleanup(S_OK);
 }
 
+HRESULT BitmapLoader::LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, HICON icon)
+{
+	if (!bitmap || !icon) return E_INVALIDARG;
+
+	Microsoft::WRL::ComPtr<IWICBitmap> source;
+	HRESULT hr = Canvas::c_WICFactory->CreateBitmapFromHICON(icon, source.GetAddressOf());
+	if (FAILED(hr)) return hr;
+
+	Microsoft::WRL::ComPtr<IWICBitmapSource> convertedSource;
+	hr = ConvertToD2DFormat(source.Get(), convertedSource);
+	if (FAILED(hr)) return hr;
+
+	UINT width = 0;
+	UINT height = 0;
+	hr = convertedSource->GetSize(&width, &height);
+	if (FAILED(hr)) return hr;
+
+	if (bitmap->GetCreateAlphaMask())
+	{
+		std::vector<BYTE> alphaMask;
+		CreateAlphaMask(convertedSource.Get(), width, height, alphaMask);
+		bitmap->SetAlphaMask(alphaMask);
+	}
+
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
+	hr = canvas.m_Target->CreateBitmapFromWicBitmap(convertedSource.Get(), nullptr, d2dbitmap.GetAddressOf());
+	if (FAILED(hr)) return hr;
+
+	bitmap->AddSegment(d2dbitmap, 0, 0, width, height);
+	bitmap->SetSize(width, height);
+	return S_OK;
+}
+
 bool BitmapLoader::HasFileChanged(Bitmap* bitmap, const std::wstring& file)
 {
 	if (file.empty() || file != bitmap->GetPath()) return true;

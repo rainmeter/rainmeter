@@ -77,6 +77,7 @@ public:
 	std::wstring& GetPath() { return m_Path; }
 
 	HRESULT Load(const Canvas& canvas);
+	HRESULT LoadFromIcon(const Canvas& canvas, HICON icon);
 
 	Util::EffectStream* CreateEffectStream();
 	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);

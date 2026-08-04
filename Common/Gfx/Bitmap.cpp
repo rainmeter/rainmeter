@@ -88,6 +88,11 @@ HRESULT Bitmap::Load(const Canvas& canvas)
 	return Util::BitmapLoader::LoadBitmapFromFile(canvas, this);
 }
 
+HRESULT Bitmap::LoadFromIcon(const Canvas& canvas, HICON icon)
+{
+	return Util::BitmapLoader::LoadBitmapFromIcon(canvas, this, icon);
+}
+
 Util::EffectStream* Bitmap::CreateEffectStream()
 {
 	return new Util::EffectStream(this);
