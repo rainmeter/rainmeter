@@ -1,11 +1,11 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "LuaSection.h"
-#include "../LuaHelper.h"
-#include "../LuaScript.h"
-#include "../../Meter.h"
-#include "../../MeterString.h"
+#include "LuaBindingSection.h"
+#include "LuaHelper.h"
+#include "LuaScript.h"
+#include "Meter.h"
+#include "MeterString.h"
 
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \

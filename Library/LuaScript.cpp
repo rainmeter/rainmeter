@@ -1,9 +1,9 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "../../Common/StringUtil.h"
-#include "../../Common/FileUtil.h"
-#include "../../Common/MathParser.h"
+#include "../Common/StringUtil.h"
+#include "../Common/FileUtil.h"
+#include "../Common/MathParser.h"
 #include "LuaScript.h"
 #include "LuaHelper.h"
 #include "Measure.h"
