@@ -495,21 +495,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				TabTemplate::CreateTemplateMenu(menu, m_SelectedTemplate);
-
-				RECT r = { 0 };
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetLanguage().IsRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 				DestroyMenu(menu);
 			}
 		}
@@ -812,7 +798,6 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,

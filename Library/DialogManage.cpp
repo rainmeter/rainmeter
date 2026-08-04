@@ -1236,19 +1236,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetLanguage().IsRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 			}
 
 			DestroyMenu(menu);
@@ -1378,21 +1366,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
-
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetLanguage().IsRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 				DestroyMenu(menu);
 			}
 		}
@@ -1635,7 +1609,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -2143,20 +2116,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				ContextMenu::CreateGameModeOnStopMenu();
 			if (menu)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetLanguage().IsRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam);
 				DestroyMenu(menu);
 			}
 		}

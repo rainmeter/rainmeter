@@ -26,6 +26,7 @@ UINT GetWindowDpi(HWND window)
 
 HWND Dialog::c_ActiveDialogWindow = nullptr;
 HACCEL Dialog::c_Accelerator = nullptr;
+HHOOK Dialog::c_PopupMenuFilterHook = nullptr;
 
 //
 // BaseDialog
@@ -371,13 +372,6 @@ void Dialog::SetMenuButton(HWND button)
 
 LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	const auto popupMenuClassAtom = MAKEINTATOM(0x8000);
-	if (uMsg == WM_LBUTTONDOWN && FindWindowEx(nullptr, nullptr, popupMenuClassAtom, nullptr))
-	{
-		// A click on this button dismisses an open popup menu first.
-		return 0;
-	}
-
 	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
 	switch (uMsg)
@@ -423,6 +417,53 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 	}
 
+	return result;
+}
+
+UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button)
+{
+	assert(!c_PopupMenuFilterHook);
+
+	RECT rect;
+	GetWindowRect(button, &rect);
+
+	HWND owner = GetAncestor(button, GA_ROOT);
+	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN;
+	const int x = (GetWindowLongPtr(owner, GWL_EXSTYLE) & WS_EX_LAYOUTRTL) ? rect.right : rect.left;
+
+	const auto popupMenuFilter = [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT
+	{
+		const auto* msg = (const MSG*)lParam;
+		if (nCode == MSGF_MENU && msg->message == WM_LBUTTONDOWN)
+		{
+			const auto popupMenuClass = MAKEINTATOM(0x8000);
+			HWND menuWindow = nullptr;
+			while ((menuWindow = FindWindowEx(nullptr, menuWindow, popupMenuClass, nullptr)) != nullptr)
+			{
+				RECT rect;
+				if (GetWindowThreadProcessId(menuWindow, nullptr) == GetCurrentThreadId() &&
+					GetWindowRect(menuWindow, &rect) &&
+					PtInRect(&rect, msg->pt))
+				{
+					return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+				}
+			}
+
+			// Dismiss the popup and consume the outside click.
+			EndMenu();
+			return 1;
+		}
+
+		return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+	};
+	c_PopupMenuFilterHook = SetWindowsHookEx(WH_MSGFILTER, popupMenuFilter, nullptr, GetCurrentThreadId());
+
+	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, owner, nullptr);
+	if (c_PopupMenuFilterHook)
+	{
+		UnhookWindowsHookEx(c_PopupMenuFilterHook);
+		c_PopupMenuFilterHook = nullptr;
+	}
 	return result;
 }
 
