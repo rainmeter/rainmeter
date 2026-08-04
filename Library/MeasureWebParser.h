@@ -48,7 +48,14 @@ private:
 	bool ParseRegExp(std::wstring_view data);
 	bool ParseJsonPointer(std::wstring_view data);
 
-	static MeasureWebParser* GetReferencedMeasure(Measure* measure, std::wstring_view reference);
+	struct ReferenceMatch
+	{
+		MeasureWebParser* measure;
+		size_t position;
+		size_t length;
+	};
+
+	ReferenceMatch FindMeasureUrlReference(Measure* measure) const;
 
 	std::wstring m_Url;
 	std::wstring m_Expression;
