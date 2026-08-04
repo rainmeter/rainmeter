@@ -3,14 +3,12 @@
 #pragma once
 
 #include <malloc.h>
+#include <string.h>
 
 class RawString
 {
 public:
-	RawString() :
-		m_String()
-	{
-	}
+	RawString() {}
 
 	RawString(const wchar_t* str) :
 		m_String(str_alloc(str))
@@ -18,7 +16,7 @@ public:
 	}
 
 	RawString(const RawString& rhs) :
-		m_String(str_alloc(rhs.c_str()))
+		m_String(str_alloc(rhs.m_String))
 	{
 	}
 
@@ -29,8 +27,7 @@ public:
 
 	RawString& operator=(const wchar_t* rhs)
 	{
-		clear();
-		m_String = str_alloc(rhs);
+		assign(rhs);
 		return *this;
 	}
 
@@ -38,8 +35,7 @@ public:
 	{
 		if (&rhs != this)
 		{
-			clear();
-			m_String = str_alloc(rhs.m_String);
+			assign(rhs.m_String);
 		}
 		return *this;
 	}
@@ -66,8 +62,31 @@ public:
 private:
 	wchar_t* str_alloc(const wchar_t* str)
 	{
-		return str ? _wcsdup(str) : nullptr;
+		if (!str) return nullptr;
+
+		wchar_t* buffer = (wchar_t*)malloc((wcslen(str) + 1) * sizeof(wchar_t));
+		if (buffer) wcscpy(buffer, str);
+		return buffer;
 	}
 
-	wchar_t* m_String;
+	void assign(const wchar_t* str)
+	{
+		if (str == m_String) return;
+
+		if (!str)
+		{
+			clear();
+			return;
+		}
+
+		const size_t size = (wcslen(str) + 1) * sizeof(wchar_t);
+		wchar_t* buffer = (wchar_t*)realloc(m_String, size);
+		if (buffer)
+		{
+			m_String = buffer;
+			wcscpy(m_String, str);
+		}
+	}
+
+	wchar_t* m_String = nullptr;
 };
