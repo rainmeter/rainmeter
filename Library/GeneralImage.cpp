@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "GeneralImage.h"
 #include "Logger.h"
+#include "System.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringParser.h"
 #include <commoncontrols.h>
@@ -27,6 +28,67 @@ std::optional<SystemImage> ParseSystemImage(const std::wstring& imageName)
 	if (!list || *list < SHIL_LARGE || *list > SHIL_JUMBO) return std::nullopt;
 
 	return SystemImage{ *index, *list };
+}
+
+HRESULT LoadSystemImage(const SystemImage& systemImage, Gfx::Bitmap* bitmap, const Gfx::Canvas& canvas)
+{
+	// Windows returns SMALL, LARGE, and EXTRALARGE system image lists scaled to the system DPI.
+	// This is based on process DPI awareness, so a DPI-unaware thread context cannot disable it.
+	// Rainmeter treats an image's pixel dimensions as its logical meter size, then applies display
+	// scaling later. Using that icon directly could make the icon larger if an explicit W/H has not
+	// been set.
+	Microsoft::WRL::ComPtr<IImageList> imageList;
+	HRESULT hr = SHGetImageList(systemImage.list, IID_IImageList, (void**)imageList.GetAddressOf());
+	int targetWidth = 0;
+	int targetHeight = 0;
+	if (SUCCEEDED(hr)) hr = imageList->GetIconSize(&targetWidth, &targetHeight);
+
+	// Recover the requested list's logical size using the system DPI that the Shell used. JUMBO is
+	// always 256 pixels and must not be normalized.
+	if (SUCCEEDED(hr) && systemImage.list <= SHIL_EXTRALARGE)
+	{
+		const float dpiScale = (float)System::GetSystemDpi() / USER_DEFAULT_SCREEN_DPI;
+		targetWidth = (int)roundf(targetWidth / dpiScale);
+		targetHeight = (int)roundf(targetHeight / dpiScale);
+	}
+
+	// A different DPI-scaled system image list may already be closer to the logical target. For
+	// example, LARGE is 48 pixels at 150% DPI. Prefer that native icon and resample only the remaining
+	// difference. On a tie, prefer the larger source so the final conversion downsamples.
+	int imageWidth = targetWidth;
+	int bestDistance = INT_MAX;
+	for (int list = SHIL_LARGE; SUCCEEDED(hr) && list <= SHIL_JUMBO; ++list)
+	{
+		Microsoft::WRL::ComPtr<IImageList> candidate;
+		if (FAILED(SHGetImageList(list, IID_IImageList, (void**)candidate.GetAddressOf()))) continue;
+
+		int width = 0;
+		int height = 0;
+		if (FAILED(candidate->GetIconSize(&width, &height))) continue;
+
+		const int widthDelta = width > targetWidth ? width - targetWidth : targetWidth - width;
+		const int heightDelta = height > targetHeight ? height - targetHeight : targetHeight - height;
+		const int distance = widthDelta + heightDelta;
+		if (distance < bestDistance ||
+			(distance == bestDistance && width >= targetWidth && imageWidth < targetWidth))
+		{
+			imageList = std::move(candidate);
+			imageWidth = width;
+			bestDistance = distance;
+		}
+	}
+
+	HICON icon = nullptr;
+	if (SUCCEEDED(hr)) hr = imageList->GetIcon(systemImage.index, ILD_TRANSPARENT, &icon);
+	if (SUCCEEDED(hr))
+	{
+		// Convert the selected physical-sized icon to the requested logical size.
+		const float scale = targetWidth > 0 ? (float)imageWidth / targetWidth : 1.0f;
+		hr = bitmap->LoadFromIcon(canvas, icon, scale);
+	}
+
+	if (icon) DestroyIcon(icon);
+	return hr;
 }
 
 }  // namespace
@@ -308,15 +370,7 @@ bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask
 
 		return loadImageIfNeeded(info, [&](Gfx::Bitmap* bitmap)
 		{
-			Microsoft::WRL::ComPtr<IImageList> imageList;
-			HRESULT hr = SHGetImageList(systemImage->list, IID_IImageList, (void**)imageList.GetAddressOf());
-
-			HICON icon = nullptr;
-			if (SUCCEEDED(hr)) hr = imageList->GetIcon(systemImage->index, ILD_TRANSPARENT, &icon);
-			if (SUCCEEDED(hr)) hr = bitmap->LoadFromIcon(m_Skin->GetCanvas(), icon);
-
-			if (icon) DestroyIcon(icon);
-			return hr;
+			return LoadSystemImage(*systemImage, bitmap, m_Skin->GetCanvas());
 		});
 	}
 
