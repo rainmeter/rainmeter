@@ -58,7 +58,8 @@ public:
 
 	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
 
-	const Mouse& GetMouse() { return m_Mouse; }
+	Mouse& GetMouse() { return m_Mouse; }
+	const Mouse& GetMouse() const { return m_Mouse; }
 	bool HasMouseAction() { return m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction(); }
 	void DisableMouseAction(const std::wstring& options) { m_Mouse.DisableMouseAction(options); }
 	void ClearMouseAction(const std::wstring& options) { m_Mouse.ClearMouseAction(options); }

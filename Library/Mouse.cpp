@@ -30,6 +30,12 @@ const struct { const WCHAR* name; MOUSEACTION type; } g_MouseActionTable[] =
 	{ L"MouseScrollRightAction", MOUSE_MW_RIGHT },
 	{ L"MouseOverAction", MOUSE_OVER },
 	{ L"MouseLeaveAction", MOUSE_LEAVE },
+	{ L"MouseMoveAction", MOUSE_MOVE },
+	{ L"LeftMouseDragAction", MOUSE_LMB_DRAG },
+	{ L"MiddleMouseDragAction", MOUSE_MMB_DRAG },
+	{ L"RightMouseDragAction", MOUSE_RMB_DRAG },
+	{ L"X1MouseDragAction", MOUSE_X1MB_DRAG },
+	{ L"X2MouseDragAction", MOUSE_X2MB_DRAG },
 };
 
 const WCHAR* OptionNameForMouseActionType(MOUSEACTION type)
@@ -45,7 +51,10 @@ Mouse::Mouse(Skin* skin, Meter* meter) : m_Skin(skin), m_Meter(meter),
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
 	m_CursorState(true),
-	m_MouseActionTypes(0)
+	m_MouseActionTypes(0),
+	m_DragActionTypes(0),
+	m_MoveActionDelay(16),
+	m_LastMoveActionTime()
 {
 }
 
@@ -78,10 +87,17 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		mouseAction.action = action;
 	}
 
+	for (uint32_t type = MOUSE_LMB_DRAG; type <= MOUSE_X2MB_DRAG; type <<= 1)
+	{
+		if (!IsActionEnabled((MOUSEACTION)type)) m_DragActionTypes &= ~type;
+	}
+
 	if (HasScrollAction())
 	{
 		m_Skin->SetHasMouseScrollAction();
 	}
+
+	m_MoveActionDelay = parser.ReadUInt(section, L"MouseActionDelay", 16);
 
 	const bool defaultState = (section == L"Rainmeter") ? true : m_Skin->GetMouse().GetCursorState();
 	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
@@ -344,6 +360,7 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 void Mouse::DisableMouseAction(const std::wstring& options)
 {
 	const auto types = OptionStringToMouseActions(options);
+	m_DragActionTypes &= ~types;
 	for (auto& mouseAction : m_MouseActions)
 	{
 		if ((types & mouseAction.type) == 0) continue;
@@ -355,6 +372,7 @@ void Mouse::DisableMouseAction(const std::wstring& options)
 void Mouse::ClearMouseAction(const std::wstring& options)
 {
 	const auto types = OptionStringToMouseActions(options);
+	m_DragActionTypes &= ~types;
 	for (auto& mouseAction : m_MouseActions)
 	{
 		if ((types & mouseAction.type) == 0) continue;
@@ -381,6 +399,7 @@ void Mouse::ToggleMouseAction(const std::wstring& options)
 		if ((types & mouseAction.type) == 0) continue;
 		const bool alreadyEnabled = mouseAction.state == MOUSEACTION_ENABLED;
 		mouseAction.state = alreadyEnabled ? mouseAction.previousState : MOUSEACTION_ENABLED;
+		if (alreadyEnabled) m_DragActionTypes &= ~mouseAction.type;
 	}
 }
 
@@ -395,6 +414,97 @@ bool Mouse::GetActionCommand(MOUSEACTION type, std::wstring& command) const
 	}
 
 	return false;
+}
+
+bool Mouse::IsActionEnabled(MOUSEACTION type) const
+{
+	const auto* mouseAction = GetMouseActionForType(type);
+	return mouseAction && mouseAction->state == MOUSEACTION_ENABLED && !mouseAction->action.empty();
+}
+
+bool Mouse::BeginDrag(MOUSEACTION action)
+{
+	MOUSEACTION dragAction = MOUSEACTION_NONE;
+	switch (action)
+	{
+	case MOUSE_LMB_DOWN: dragAction = MOUSE_LMB_DRAG; break;
+	case MOUSE_MMB_DOWN: dragAction = MOUSE_MMB_DRAG; break;
+	case MOUSE_RMB_DOWN: dragAction = MOUSE_RMB_DRAG; break;
+	case MOUSE_X1MB_DOWN: dragAction = MOUSE_X1MB_DRAG; break;
+	case MOUSE_X2MB_DOWN: dragAction = MOUSE_X2MB_DRAG; break;
+	}
+
+	if (dragAction != MOUSEACTION_NONE && IsActionEnabled(dragAction))
+	{
+		m_DragActionTypes |= dragAction;
+		return true;
+	}
+
+	return false;
+}
+
+void Mouse::EndDrag(MOUSEACTION action)
+{
+	switch (action)
+	{
+	case MOUSE_LMB_UP: m_DragActionTypes &= ~MOUSE_LMB_DRAG; break;
+	case MOUSE_MMB_UP: m_DragActionTypes &= ~MOUSE_MMB_DRAG; break;
+	case MOUSE_RMB_UP: m_DragActionTypes &= ~MOUSE_RMB_DRAG; break;
+	case MOUSE_X1MB_UP: m_DragActionTypes &= ~MOUSE_X1MB_DRAG; break;
+	case MOUSE_X2MB_UP: m_DragActionTypes &= ~MOUSE_X2MB_DRAG; break;
+	}
+}
+
+bool Mouse::ShouldRunMoveAction()
+{
+	const ULONGLONG now = GetTickCount64();
+	if (m_LastMoveActionTime != 0 && now - m_LastMoveActionTime < m_MoveActionDelay)
+	{
+		return false;
+	}
+
+	m_LastMoveActionTime = now;
+	return true;
+}
+
+void Mouse::GetMoveActionCommands(std::vector<std::wstring>& commands)
+{
+	struct MoveAction
+	{
+		MOUSEACTION type;
+		int virtualKey;
+	};
+
+	static const MoveAction moveActions[] =
+	{
+		{ MOUSE_LMB_DRAG, VK_LBUTTON },
+		{ MOUSE_MMB_DRAG, VK_MBUTTON },
+		{ MOUSE_RMB_DRAG, VK_RBUTTON },
+		{ MOUSE_X1MB_DRAG, VK_XBUTTON1 },
+		{ MOUSE_X2MB_DRAG, VK_XBUTTON2 }
+	};
+
+	std::vector<MOUSEACTION> actions;
+	if (IsActionEnabled(MOUSE_MOVE)) actions.push_back(MOUSE_MOVE);
+
+	for (const auto& moveAction : moveActions)
+	{
+		if ((m_DragActionTypes & moveAction.type) == 0) continue;
+		if (GetKeyState(moveAction.virtualKey) >= 0)
+		{
+			m_DragActionTypes &= ~moveAction.type;
+			continue;
+		}
+		if (IsActionEnabled(moveAction.type)) actions.push_back(moveAction.type);
+	}
+
+	if (actions.empty() || !ShouldRunMoveAction()) return;
+
+	for (const auto action : actions)
+	{
+		std::wstring command;
+		if (GetActionCommand(action, command)) commands.push_back(std::move(command));
+	}
 }
 
 const std::wstring& Mouse::GetAction(MOUSEACTION action) const

@@ -27,9 +27,16 @@ enum MOUSEACTION : uint32_t
 
 	MOUSE_OVER = 1 << 19,
 	MOUSE_LEAVE = 1 << 20,
+	MOUSE_MOVE = 1 << 21,
+	MOUSE_LMB_DRAG = 1 << 22,
+	MOUSE_MMB_DRAG = 1 << 23,
+	MOUSE_RMB_DRAG = 1 << 24,
+	MOUSE_X1MB_DRAG = 1 << 25,
+	MOUSE_X2MB_DRAG = 1 << 26,
 
-	MOUSEACTION_ALL = ~(-1 << 21),
-	MOUSEACTION_BUTTON = ~(-1 << 15),
+	MOUSEACTION_ALL = ~(-1 << 27),
+	MOUSEACTION_BUTTON = ~(-1 << 15) | MOUSE_LMB_DRAG | MOUSE_MMB_DRAG |
+		MOUSE_RMB_DRAG | MOUSE_X1MB_DRAG | MOUSE_X2MB_DRAG,
 	MOUSEACTION_NONE = 0
 };
 
@@ -94,6 +101,10 @@ public:
 
 	bool GetActionCommand(MOUSEACTION type, std::wstring& command) const;
 	const std::wstring& GetAction(MOUSEACTION action) const;
+	bool BeginDrag(MOUSEACTION action);
+	void EndDrag(MOUSEACTION action);
+	void ClearDragging() { m_DragActionTypes = 0; }
+	void GetMoveActionCommands(std::vector<std::wstring>& commands);
 
 	bool HasButtonAction() const
 	{
@@ -112,7 +123,12 @@ public:
 			GetX1DoubleClickAction().empty() &&
 			GetX2UpAction().empty() &&
 			GetX2DownAction().empty() &&
-			GetX2DoubleClickAction().empty()
+			GetX2DoubleClickAction().empty() &&
+			GetLeftDragAction().empty() &&
+			GetMiddleDragAction().empty() &&
+			GetRightDragAction().empty() &&
+			GetX1DragAction().empty() &&
+			GetX2DragAction().empty()
 			);
 	}
 
@@ -149,14 +165,25 @@ public:
 
 	const std::wstring& GetOverAction() const              { return GetAction(MOUSE_OVER); }
 	const std::wstring& GetLeaveAction() const             { return GetAction(MOUSE_LEAVE); }
+	const std::wstring& GetMoveAction() const              { return GetAction(MOUSE_MOVE); }
+	const std::wstring& GetLeftDragAction() const          { return GetAction(MOUSE_LMB_DRAG); }
+	const std::wstring& GetMiddleDragAction() const        { return GetAction(MOUSE_MMB_DRAG); }
+	const std::wstring& GetRightDragAction() const         { return GetAction(MOUSE_RMB_DRAG); }
+	const std::wstring& GetX1DragAction() const            { return GetAction(MOUSE_X1MB_DRAG); }
+	const std::wstring& GetX2DragAction() const            { return GetAction(MOUSE_X2MB_DRAG); }
 
 private:
 	void ReplaceMouseVariables(std::wstring& result) const;
+	bool IsActionEnabled(MOUSEACTION type) const;
+	bool ShouldRunMoveAction();
 	const MouseAction* GetMouseActionForType(MOUSEACTION type) const;
 	MOUSEACTION OptionStringToMouseActions(const std::wstring& options) const;
 
 	std::vector<MouseAction> m_MouseActions;
 	uint32_t m_MouseActionTypes;
+	uint32_t m_DragActionTypes;
+	UINT m_MoveActionDelay;
+	ULONGLONG m_LastMoveActionTime;
 
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;

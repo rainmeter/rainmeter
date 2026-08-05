@@ -360,6 +360,10 @@ private:
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
+	bool BeginMouseDrag(int x, int y, MOUSEACTION action);
+	void EndMouseDrag(MOUSEACTION action);
+	void ClearMouseDragging();
+	void ExecuteMouseMoveActions(int x, int y);
 	void HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action);
 	void HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback);
 	void SetClickThrough(bool b);

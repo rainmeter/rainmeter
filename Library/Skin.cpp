@@ -3787,6 +3787,7 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
+		ExecuteMouseMoveActions(pos.x, pos.y);
 
 		HandleButtons(pos, BUTTONPROC_MOVE);
 	}
@@ -3807,6 +3808,7 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		POINT pos = { SHRT_MIN, SHRT_MIN };
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
+		ClearMouseDragging();
 
 		HandleButtons(pos, BUTTONPROC_MOVE);
 	}
@@ -4678,9 +4680,10 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
 	HandleButtons(pos, BUTTONPROC_DOWN);
+	const bool dragStarted = !IsCtrlKeyDown() && BeginMouseDrag(pos.x, pos.y, MOUSE_LMB_DOWN);
 
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
-		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
+		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && !dragStarted && m_WindowDraggable))
 	{
 		// Cancel the mouse event beforehand
 		SetMouseLeaveEvent(true);
@@ -4694,6 +4697,8 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	EndMouseDrag(MOUSE_LMB_UP);
+
 	// Select/Deselect the skin if CTRL+ALT is pressed when the
 	// left mouse button is depressed. (Draws an overlay over the skin.)
 	if (IsCtrlKeyDown() && IsAltKeyDown())
@@ -4737,6 +4742,16 @@ void Skin::HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonP
 	if (IsSelected()) return;
 
 	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	if (action == MOUSE_MMB_DOWN || action == MOUSE_RMB_DOWN ||
+		action == MOUSE_X1MB_DOWN || action == MOUSE_X2MB_DOWN)
+	{
+		BeginMouseDrag(pos.x, pos.y, action);
+	}
+	else if (action == MOUSE_MMB_UP || action == MOUSE_RMB_UP ||
+		action == MOUSE_X1MB_UP || action == MOUSE_X2MB_UP)
+	{
+		EndMouseDrag(action);
+	}
 	HandleButtons(pos, buttonProc);
 	DoAction(pos.x, pos.y, action, false);
 }
@@ -4746,6 +4761,7 @@ void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC b
 	if (IsSelected()) return;
 
 	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+	BeginMouseDrag(pos.x, pos.y, fallback);
 	HandleButtons(pos, buttonProc);
 	if (!DoAction(pos.x, pos.y, action, false))
 	{
@@ -4767,6 +4783,8 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	EndMouseDrag(MOUSE_RMB_UP);
+
 	// For selected skins, we don't want to process any actions and only allow the context menu.
 	if (IsSelected()) return DefWindowProc(m_Window, uMsg, wParam, lParam);
 
@@ -4835,6 +4853,7 @@ LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if ((HWND)lParam != m_Window)
 	{
 		if (m_MouseMeasureCapture) ClearMouseMeasureCapture();
+		ClearMouseDragging();
 	}
 
 	return 0;
@@ -4950,6 +4969,99 @@ bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 	}
 
 	return false;
+}
+
+bool Skin::BeginMouseDrag(int x, int y, MOUSEACTION action)
+{
+	bool started = false;
+
+	// Only the topmost meter with a matching drag action owns the meter drag.
+	for (auto iter = m_Meters.rbegin(); iter != m_Meters.rend(); ++iter)
+	{
+		if ((*iter)->IsHidden() || !(*iter)->HitTest(x, y)) continue;
+		if ((*iter)->GetMouse().BeginDrag(action))
+		{
+			started = true;
+			break;
+		}
+	}
+
+	// [Rainmeter] actions cover the skin independently of meter actions.
+	if (HitTest(x, y))
+	{
+		started |= m_Mouse.BeginDrag(action);
+	}
+
+	return started;
+}
+
+void Skin::EndMouseDrag(MOUSEACTION action)
+{
+	for (auto* meter : m_Meters)
+	{
+		meter->GetMouse().EndDrag(action);
+	}
+	m_Mouse.EndDrag(action);
+}
+
+void Skin::ClearMouseDragging()
+{
+	for (auto* meter : m_Meters)
+	{
+		meter->GetMouse().ClearDragging();
+	}
+	m_Mouse.ClearDragging();
+}
+
+void Skin::ExecuteMouseMoveActions(int x, int y)
+{
+	struct MeterCommands
+	{
+		std::wstring name;
+		std::vector<std::wstring> commands;
+	};
+
+	std::vector<MeterCommands> meterCommands;
+	for (auto iter = m_Meters.rbegin(); iter != m_Meters.rend(); ++iter)
+	{
+		auto* meter = *iter;
+		auto& mouse = meter->GetMouse();
+		if (meter->IsHidden() || !meter->HitTest(x, y))
+		{
+			mouse.ClearDragging();
+			continue;
+		}
+
+		MeterCommands entry = { meter->GetName(), {} };
+		mouse.GetMoveActionCommands(entry.commands);
+		if (!entry.commands.empty()) meterCommands.push_back(std::move(entry));
+	}
+
+	std::vector<std::wstring> skinCommands;
+	if (HitTest(x, y))
+	{
+		m_Mouse.GetMoveActionCommands(skinCommands);
+	}
+	else
+	{
+		m_Mouse.ClearDragging();
+	}
+
+	// Resolve each meter again because an earlier action can refresh the skin.
+	for (const auto& entry : meterCommands)
+	{
+		for (const auto& command : entry.commands)
+		{
+			auto* meter = GetMeter(entry.name);
+			if (!meter) break;
+			GetRainmeter().ExecuteActionCommand(command.c_str(), meter);
+		}
+	}
+
+	for (const auto& command : skinCommands)
+	{
+		GetRainmeter().ExecuteCommand(command.c_str(), this);
+	}
 }
 
 void Skin::UpdateMouseMeasureCapture()
