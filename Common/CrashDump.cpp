@@ -82,6 +82,7 @@ LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* exceptionPointers)
 		(UINT)localTime.wMinute,
 		(UINT)localTime.wSecond);
 
+	CreateDirectory(g_DumpPath.c_str(), nullptr);
 	HANDLE file = CreateFile(dumpFilePath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (file != INVALID_HANDLE_VALUE)
 	{
@@ -108,7 +109,6 @@ bool Initialize(const std::wstring& dumpFolderPath)
 		g_DumpPath += L'\\';
 	}
 
-	CreateDirectory(g_DumpPath.c_str(), nullptr);
 	const bool repeatedCrashesFound = DeleteOldDumps(g_DumpPath);
 
 	g_PreviousExceptionHandler = SetUnhandledExceptionFilter(HandleUnhandledException);
