@@ -2374,6 +2374,10 @@ void Skin::WriteOptions(INT setting)
 
 bool Skin::ReadSkin()
 {
+	// If this is a refresh, we need to reset auto-sized window dimensions from the previous state.
+	m_WindowW = 0;
+	m_WindowH = 0;
+
 	WCHAR buffer[128] = { 0 };
 	std::wstring iniFile = GetFilePath();
 
@@ -2428,9 +2432,11 @@ bool Skin::ReadSkin()
 		return false;
 	}
 
-	// Read user defined skin width and height
 	m_SkinW = m_Parser.ReadInt(L"Rainmeter", L"SkinWidth", 0);
 	m_SkinH = m_Parser.ReadInt(L"Rainmeter", L"SkinHeight", 0);
+
+	m_WindowW = m_SkinW;
+	m_WindowH = m_SkinH;
 
 	// Global settings
 	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
