@@ -10,6 +10,7 @@ namespace {
 
 std::wstring g_DumpPath;
 std::wstring g_DumpComment;
+bool g_RepeatedCrashesFound = false;
 LONG g_HandlingCrash = 0;
 LPTOP_LEVEL_EXCEPTION_FILTER g_PreviousExceptionHandler = nullptr;
 
@@ -113,7 +114,7 @@ LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* exceptionPointers)
 
 namespace CrashDump {
 
-bool Initialize(std::wstring dumpFolderPath, std::wstring comment)
+void Initialize(std::wstring dumpFolderPath, std::wstring comment)
 {
 	assert(!dumpFolderPath.empty());
 	g_DumpPath = std::move(dumpFolderPath);
@@ -121,10 +122,14 @@ bool Initialize(std::wstring dumpFolderPath, std::wstring comment)
 
 	g_DumpComment = std::move(comment);
 
-	const bool repeatedCrashesFound = DeleteOldDumps(g_DumpPath);
+	g_RepeatedCrashesFound = DeleteOldDumps(g_DumpPath);
 
 	g_PreviousExceptionHandler = SetUnhandledExceptionFilter(HandleUnhandledException);
-	return repeatedCrashesFound;
+}
+
+bool DidFindRepeatedCrashes()
+{
+	return g_RepeatedCrashesFound;
 }
 
 }  // namespace CrashDump

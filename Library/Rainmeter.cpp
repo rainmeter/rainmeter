@@ -216,7 +216,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	m_BuildHash = L"<local>";
 #endif
 
-	const bool repeatedCrashesFound = CrashDump::Initialize(
+	CrashDump::Initialize(
 		m_SettingsPath + L"Crashes\\",
 		fmt::format(L"v{}.{} (commit {})", APPVERSION, revision_number, m_BuildHash));
 
@@ -488,7 +488,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	//  changes the user has made to the skins or layout.
 	if (!iniFileCreated)
 	{
-		bool safeStart = repeatedCrashesFound;
+		bool safeStart = CrashDump::DidFindRepeatedCrashes();
 		if (!safeStart && IsCtrlKeyDown() && IsShiftKeyDown())
 		{
 			Sleep(1000);

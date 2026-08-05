@@ -6,6 +6,7 @@
 
 namespace CrashDump {
 
-bool Initialize(std::wstring dumpFolderPath, std::wstring comment);
+void Initialize(std::wstring dumpFolderPath, std::wstring comment);
+bool DidFindRepeatedCrashes();
 
 }  // namespace CrashDump
