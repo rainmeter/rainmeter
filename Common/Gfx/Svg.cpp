@@ -59,21 +59,48 @@ HRESULT Svg::SetAttribute(const std::wstring& selector, const std::wstring& attr
 {
 	if (!m_Document || selector.empty() || attribute.empty()) return E_INVALIDARG;
 
-	Microsoft::WRL::ComPtr<ID2D1SvgElement> element;
-	if (_wcsicmp(selector.c_str(), L"svg") == 0)
+	auto setAttribute = [&](ID2D1SvgElement* element)
 	{
-		m_Document->GetRoot(element.GetAddressOf());
+		return element->SetAttributeValue(attribute.c_str(), D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value.c_str());
+	};
+
+	HRESULT hr = S_OK;
+	Microsoft::WRL::ComPtr<ID2D1SvgElement> root;
+	m_Document->GetRoot(root.GetAddressOf());
+	if (!root) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+	if (selector == L"*")
+	{
+		Microsoft::WRL::ComPtr<ID2D1SvgElement> element;
+		root->GetFirstChild(element.GetAddressOf());
+		while (element)
+		{
+			hr = setAttribute(element.Get());
+			if (FAILED(hr)) return hr;
+
+			Microsoft::WRL::ComPtr<ID2D1SvgElement> next;
+			hr = root->GetNextChild(element.Get(), next.GetAddressOf());
+			if (FAILED(hr)) return hr;
+			element = std::move(next);
+		}
 	}
 	else
 	{
-		const HRESULT hr = m_Document->FindElementById(selector.c_str(), element.GetAddressOf());
+		Microsoft::WRL::ComPtr<ID2D1SvgElement> element;
+		if (_wcsicmp(selector.c_str(), L"svg") == 0)
+		{
+			element = root;
+		}
+		else
+		{
+			hr = m_Document->FindElementById(selector.c_str(), element.GetAddressOf());
+		}
+		if (FAILED(hr)) return hr;
+		if (!element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+		hr = setAttribute(element.Get());
 		if (FAILED(hr)) return hr;
 	}
-
-	if (!element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
-	const HRESULT hr = element->SetAttributeValue(
-		attribute.c_str(), D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value.c_str());
-	if (FAILED(hr)) return hr;
 
 	// Root width, height, and viewBox overrides can change the meter's intrinsic size.
 	m_Size = GetIntrinsicSize();
