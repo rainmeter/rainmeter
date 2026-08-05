@@ -33,7 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <LuaJITBuildInput Include="$(SolutionDir)Build\BuildLuaJIT.ps1" />
-    <LuaJITBuildInput Include="$(SolutionDir)Build\RainmeterLuaJIT.patch" />
+    <LuaJITBuildInput Include="$(SolutionDir)Build\CustomLuaJIT.patch" />
     <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\.relver" />
     <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\src\**\*" />
     <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\dynasm\**\*" />
