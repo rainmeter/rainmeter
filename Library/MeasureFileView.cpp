@@ -739,7 +739,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 			{
 				child->strValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, child->iconSize);
 			}
-			else
+			else if (!parent->task)
 			{
 				child->strValue.clear();
 			}
