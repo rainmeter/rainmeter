@@ -55,6 +55,31 @@ HRESULT Svg::Load(const Canvas& canvas)
 	return hr;
 }
 
+HRESULT Svg::SetAttribute(const std::wstring& selector, const std::wstring& attribute, const std::wstring& value)
+{
+	if (!m_Document || selector.empty() || attribute.empty()) return E_INVALIDARG;
+
+	Microsoft::WRL::ComPtr<ID2D1SvgElement> element;
+	if (_wcsicmp(selector.c_str(), L"svg") == 0)
+	{
+		m_Document->GetRoot(element.GetAddressOf());
+	}
+	else
+	{
+		const HRESULT hr = m_Document->FindElementById(selector.c_str(), element.GetAddressOf());
+		if (FAILED(hr)) return hr;
+	}
+
+	if (!element) return D2DERR_NOT_FOUND;
+	const HRESULT hr = element->SetAttributeValue(
+		attribute.c_str(), D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value.c_str());
+	if (FAILED(hr)) return hr;
+
+	// Root width, height, and viewBox overrides can change the meter's intrinsic size.
+	m_Size = GetIntrinsicSize();
+	return m_Document->SetViewportSize(m_Size);
+}
+
 D2D1_SIZE_F Svg::GetIntrinsicSize() const
 {
 	D2D1_SIZE_F size = D2D1::SizeF(300.0f, 150.0f);

@@ -26,6 +26,7 @@ public:
 	static bool IsInlineData(std::wstring_view source) { return source.starts_with(L"<svg"); }
 
 	HRESULT Load(const Canvas& canvas);
+	HRESULT SetAttribute(const std::wstring& selector, const std::wstring& attribute, const std::wstring& value);
 	bool HasDeviceResources() const { return m_Document != nullptr; }
 	void InvalidateDeviceResources() { m_Document.Reset(); }
 
