@@ -209,7 +209,16 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
 	CreateDirectory(m_SettingsPath.c_str(), nullptr);
-	const bool repeatedCrashesFound = CrashDump::Initialize(m_SettingsPath + L"Crashes\\");
+
+#ifdef COMMIT_HASH
+	m_BuildHash.assign(COMMIT_HASH, 8);
+#else
+	m_BuildHash = L"<local>";
+#endif
+
+	const bool repeatedCrashesFound = CrashDump::Initialize(
+		m_SettingsPath + L"Crashes\\",
+		fmt::format(L"v{}.{} (commit {})", APPVERSION, revision_number, m_BuildHash));
 
 	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
 
@@ -427,13 +436,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		m_BuildTime = timestamp;
 	}
 #endif // BUILD_TIME
-
-#ifdef COMMIT_HASH
-	m_BuildHash = COMMIT_HASH;
-	m_BuildHash = m_BuildHash.substr(0, 7);  // Only use the short hash
-#else
-	m_BuildHash = L"<Local build>";
-#endif // COMMIT_HASH
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));

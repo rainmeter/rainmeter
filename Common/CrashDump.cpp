@@ -4,10 +4,12 @@
 #include "CrashDump.h"
 
 #include <DbgHelp.h>
+#include <utility>
 
 namespace {
 
 std::wstring g_DumpPath;
+std::wstring g_DumpComment;
 LONG g_HandlingCrash = 0;
 LPTOP_LEVEL_EXCEPTION_FILTER g_PreviousExceptionHandler = nullptr;
 
@@ -90,7 +92,17 @@ LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* exceptionPointers)
 		exceptionInformation.ThreadId = GetCurrentThreadId();
 		exceptionInformation.ExceptionPointers = exceptionPointers;
 		exceptionInformation.ClientPointers = FALSE;
-		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, MiniDumpWithDataSegs, &exceptionInformation, nullptr, nullptr);
+
+		MINIDUMP_USER_STREAM userStream = {};
+		userStream.Type = CommentStreamW;
+		userStream.BufferSize = (ULONG)((g_DumpComment.length() + 1) * sizeof(WCHAR));
+		userStream.Buffer = (void*)g_DumpComment.c_str();
+
+		MINIDUMP_USER_STREAM_INFORMATION userStreamInformation = {};
+		userStreamInformation.UserStreamCount = 1;
+		userStreamInformation.UserStreamArray = &userStream;
+
+		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, MiniDumpWithDataSegs, &exceptionInformation, &userStreamInformation, nullptr);
 		CloseHandle(file);
 	}
 
@@ -101,13 +113,13 @@ LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* exceptionPointers)
 
 namespace CrashDump {
 
-bool Initialize(const std::wstring& dumpFolderPath)
+bool Initialize(std::wstring dumpFolderPath, std::wstring comment)
 {
-	g_DumpPath = dumpFolderPath;
-	if (!g_DumpPath.empty() && g_DumpPath.back() != L'\\')
-	{
-		g_DumpPath += L'\\';
-	}
+	assert(!dumpFolderPath.empty());
+	g_DumpPath = std::move(dumpFolderPath);
+	if (g_DumpPath.back() != L'\\') g_DumpPath += L'\\';
+
+	g_DumpComment = std::move(comment);
 
 	const bool repeatedCrashesFound = DeleteOldDumps(g_DumpPath);
 
