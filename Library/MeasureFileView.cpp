@@ -667,37 +667,29 @@ const WCHAR* MeasureFileView::GetStringValue()
 	FileViewParentData* parent = child->parent;
 	if (!parent) return CheckSubstitute(L"");
 
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-	child->strValue = L"";
-
+	const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		switch (child->type)
 		{
 		case TYPE_FILESIZE:
-			if (!parent->files[trueIndex].isFolder)
-			{
-				return nullptr;	// Force a numeric return (see the Update function)
-			}
+			child->strValue.clear();
+
+			// Force a numeric return (see the Update function)
+			if (!parent->files[trueIndex].isFolder) return nullptr;
 			break;
 
 		case TYPE_FILENAME:
-		{
-			std::wstring temp = parent->files[trueIndex].fileName;
+			child->strValue = parent->files[trueIndex].fileName;
 			if (parent->hideExtension && !parent->files[trueIndex].isFolder)
 			{
-				size_t pos = temp.find_last_of(L".");
-				if (pos != temp.npos)
+				size_t pos = child->strValue.find_last_of(L".");
+				if (pos != std::wstring::npos)
 				{
-					child->strValue = temp.substr(0, pos);
+					child->strValue.resize(pos);
 				}
 			}
-			else
-			{
-				child->strValue = temp;
-			}
-		}
-		break;
+			break;
 
 		case TYPE_FILETYPE:
 			child->strValue = parent->files[trueIndex].ext;
@@ -737,7 +729,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 			}
 			else
 			{
-				child->strValue = L"";
+				child->strValue.clear();
 			}
 		}
 		break;
@@ -746,6 +738,10 @@ const WCHAR* MeasureFileView::GetStringValue()
 			if (parent->files[trueIndex].iconIndex >= 0)
 			{
 				child->strValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, child->iconSize);
+			}
+			else
+			{
+				child->strValue.clear();
 			}
 			break;
 
@@ -761,6 +757,10 @@ const WCHAR* MeasureFileView::GetStringValue()
 				parent->files[trueIndex].path;
 			break;
 		}
+	}
+	else
+	{
+		child->strValue.clear();
 	}
 
 	switch (child->type)
