@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="CharacterEntityReference.cpp" />
+    <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
+    <ClInclude Include="CrashDump.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="Gfx\Canvas.h">

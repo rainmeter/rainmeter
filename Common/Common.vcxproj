@@ -27,6 +27,7 @@
   <ItemGroup>
     <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
+    <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="FileUtil.cpp" />
@@ -74,6 +75,7 @@
   <ItemGroup>
     <ClInclude Include="CriticalSection.h" />
     <ClInclude Include="ControlTemplate.h" />
+    <ClInclude Include="CrashDump.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DpiUtil.h" />
