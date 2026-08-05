@@ -1202,14 +1202,11 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" is already active", folderPath.c_str());
+				// Already active.
 				return;
 			}
-			else
-			{
-				// Deactivate the existing skin
-				DeactivateSkin((*iter).second, folderIndex);
-			}
+
+			DeactivateSkin((*iter).second, folderIndex);
 		}
 
 		// Verify whether the ini-file exists

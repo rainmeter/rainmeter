@@ -694,11 +694,7 @@ void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin*
 		skin = GetRainmeter().GetSkin(args[0]);
 		if (!skin)
 		{
-			if (DoesConfigExist(args[0]))
-			{
-				LogWarningF(L"!DeactivateConfig: \"%s\" is not active", args[0].c_str());
-			}
-			else
+			if (!DoesConfigExist(args[0]))
 			{
 				LogErrorF(L"!DeactivateConfig: \"%s\" does not exist", args[0].c_str());
 			}
