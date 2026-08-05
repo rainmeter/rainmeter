@@ -6,6 +6,6 @@
 
 namespace CrashDump {
 
-bool Initialize(const std::wstring& dumpFolderPath);
+bool Initialize(std::wstring dumpFolderPath, std::wstring comment);
 
 }  // namespace CrashDump
