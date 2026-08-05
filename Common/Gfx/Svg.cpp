@@ -70,7 +70,7 @@ HRESULT Svg::SetAttribute(const std::wstring& selector, const std::wstring& attr
 		if (FAILED(hr)) return hr;
 	}
 
-	if (!element) return D2DERR_NOT_FOUND;
+	if (!element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 	const HRESULT hr = element->SetAttributeValue(
 		attribute.c_str(), D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value.c_str());
 	if (FAILED(hr)) return hr;
