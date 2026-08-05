@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "Language.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/CrashDump.h"
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
@@ -206,6 +207,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		}
 	}
 
+	m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
+	CreateDirectory(m_SettingsPath.c_str(), nullptr);
+	const bool repeatedCrashesFound = CrashDump::Initialize(m_SettingsPath + L"Crashes\\");
+
 	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
 
 	const auto deviceLostCallback = []() { GetRainmeter().ScheduleReattachGfxDevice(); };
@@ -273,8 +278,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Set file locations
 	{
-		m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
-
 		size_t len = m_IniFile.length();
 		if (len > 4 && _wcsicmp(iniFile + (len - 4), L".ini") == 0)
 		{
@@ -481,10 +484,16 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	// Rainmeter safe start
 	// Note: This copies the default illustro skins and layout (if needed) without overwriting any
 	//  changes the user has made to the skins or layout.
-	if (!iniFileCreated && IsCtrlKeyDown() && IsShiftKeyDown())
+	if (!iniFileCreated)
 	{
-		Sleep(1000);
-		if (IsCtrlKeyDown() && IsShiftKeyDown())
+		bool safeStart = repeatedCrashesFound;
+		if (!safeStart && IsCtrlKeyDown() && IsShiftKeyDown())
+		{
+			Sleep(1000);
+			safeStart = IsCtrlKeyDown() && IsShiftKeyDown();
+		}
+
+		if (safeStart)
 		{
 			int result = MessageBox(
 				nullptr,
@@ -846,8 +855,6 @@ void Rainmeter::ScheduleUpdateCheck(UINT interval)
 
 void Rainmeter::CreateOptionsFile()
 {
-	CreateDirectory(m_SettingsPath.c_str(), nullptr);
-
 	std::wstring defaultIni = GetDefaultLayoutPath();
 	defaultIni += L"illustro default\\Rainmeter.ini";
 	System::CopyFiles(defaultIni, m_IniFile);
