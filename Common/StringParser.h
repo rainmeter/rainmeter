@@ -18,7 +18,7 @@ public:
 	enum Option
 	{
 		None = 0,
-		AllowWhitespace = 1
+		SkipWhitespace = 1
 	};
 
 	explicit StringParser(std::wstring_view str);
@@ -56,6 +56,9 @@ public:
 	bool Consume(WCHAR ch);
 	bool ConsumeRest(WCHAR ch);
 
+	std::wstring_view ConsumeUntil(WCHAR delimiter, Option option = None);
+	std::wstring_view ConsumeRest(Option option = None);
+
 	std::optional<double> ConsumeDouble(Option option = None);
 	std::optional<double> ConsumeRestDouble(Option option = None);
 	std::optional<double> ConsumeDoubleOrFormula(const MathParser& mathParser, Option option = None);
@@ -71,7 +74,7 @@ public:
 	std::optional<UINT> ConsumeUIntOrFormula(const MathParser& mathParser, Option option = None);
 	std::optional<UINT> ConsumeRestUIntOrFormula(const MathParser& mathParser, Option option = None);
 
-	void SkipWhitespace();
+	void ConsumeWhitespace();
 	bool IsWhitespace() const;
 
 	bool IsConsumed() const { return m_Current >= m_End; }

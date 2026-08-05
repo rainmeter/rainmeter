@@ -19,7 +19,7 @@ template <typename T, typename ParseFunc>
 std::optional<T> ConsumeNumber(const WCHAR*& current, const WCHAR* end, ParseFunc parseFunc, StringParser::Option option)
 {
 	if (current >= end) return std::nullopt;
-	if (option != StringParser::AllowWhitespace && IsWhitespace(current, end)) return std::nullopt;
+	if (option != StringParser::SkipWhitespace && IsWhitespace(current, end)) return std::nullopt;
 
 	WCHAR* parseEnd = nullptr;
 	errno = 0;
@@ -41,7 +41,7 @@ std::optional<T> ConsumeRestNumber(const WCHAR*& current, const WCHAR* end, Pars
 		return std::nullopt;
 	}
 
-	if (option == StringParser::AllowWhitespace)
+	if (option == StringParser::SkipWhitespace)
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -67,10 +67,10 @@ std::optional<T> ConsumeNumberOrFormula(
 	StringParser::Option option)
 {
 	if (current >= end) return std::nullopt;
-	if (option != StringParser::AllowWhitespace && IsWhitespace(current, end)) return std::nullopt;
+	if (option != StringParser::SkipWhitespace && IsWhitespace(current, end)) return std::nullopt;
 
 	const WCHAR* start = current;
-	if (option == StringParser::AllowWhitespace)
+	if (option == StringParser::SkipWhitespace)
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -115,7 +115,7 @@ std::optional<T> ConsumeRestNumberOrFormula(
 		return std::nullopt;
 	}
 
-	if (option == StringParser::AllowWhitespace)
+	if (option == StringParser::SkipWhitespace)
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -149,9 +149,9 @@ bool StringParser::Consume(const WCHAR* str, size_t length, Option option)
 {
 	assert(str);
 
-	if (option == AllowWhitespace)
+	if (option == SkipWhitespace)
 	{
-		SkipWhitespace();
+		ConsumeWhitespace();
 	}
 
 	const size_t remaining = (size_t)(m_End - m_Current);
@@ -171,9 +171,9 @@ bool StringParser::ConsumeRest(const WCHAR* str, size_t length, Option option)
 		return false;
 	}
 
-	if (option == AllowWhitespace)
+	if (option == SkipWhitespace)
 	{
-		SkipWhitespace();
+		ConsumeWhitespace();
 	}
 
 	if (m_Current != m_End)
@@ -217,6 +217,47 @@ bool StringParser::ConsumeRest(WCHAR ch)
 	}
 
 	return true;
+}
+
+std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
+{
+	if (option == SkipWhitespace)
+	{
+		ConsumeWhitespace();
+	}
+
+	const WCHAR* start = m_Current;
+	while (m_Current < m_End && *m_Current != delimiter)
+	{
+		++m_Current;
+	}
+	if (m_Current == m_End) return {};
+
+	const WCHAR* valueEnd = m_Current++;
+	if (option == SkipWhitespace)
+	{
+		while (valueEnd > start && iswspace(*(valueEnd - 1)))
+		{
+			--valueEnd;
+		}
+	}
+	return std::wstring_view(start, valueEnd - start);
+}
+
+std::wstring_view StringParser::ConsumeRest(Option option)
+{
+	if (option == SkipWhitespace)
+	{
+		ConsumeWhitespace();
+		while (m_End > m_Current && iswspace(*(m_End - 1)))
+		{
+			--m_End;
+		}
+	}
+
+	const std::wstring_view value(m_Current, m_End - m_Current);
+	m_Current = m_End;
+	return value;
 }
 
 std::optional<double> StringParser::ConsumeDouble(Option option)
@@ -291,7 +332,7 @@ std::optional<UINT> StringParser::ConsumeRestUIntOrFormula(const MathParser& mat
 	return ConsumeRestNumberOrFormula<UINT>(m_Current, m_End, mathParser, wcstoul, option);
 }
 
-void StringParser::SkipWhitespace()
+void StringParser::ConsumeWhitespace()
 {
 	while (IsWhitespace())
 	{

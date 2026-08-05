@@ -35,11 +35,11 @@ public:
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
-	TEST_METHOD(TestSkipWhitespace)
+	TEST_METHOD(TestConsumeWhitespace)
 	{
 		StringParser parser(L" \t\r\nValue");
 
-		parser.SkipWhitespace();
+		parser.ConsumeWhitespace();
 		Assert::IsTrue(parser.ConsumeRest(L"Value"));
 	}
 
@@ -82,21 +82,21 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L" 42"));
 	}
 
-	TEST_METHOD(TestConsumeNumbersAllowWhitespaceOption)
+	TEST_METHOD(TestConsumeNumbersSkipWhitespaceOption)
 	{
 		StringParser parser(L" \t42\r\n");
 
-		const auto value = parser.ConsumeRestInt(StringParser::AllowWhitespace);
+		const auto value = parser.ConsumeRestInt(StringParser::SkipWhitespace);
 		Assert::IsTrue(value.has_value());
 		Assert::AreEqual(42, *value);
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
-	TEST_METHOD(TestConsumeStringAllowWhitespaceOption)
+	TEST_METHOD(TestConsumeStringSkipWhitespaceOption)
 	{
 		StringParser parser(L" \tValue\r\n");
 
-		Assert::IsTrue(parser.ConsumeRest(L"Value", StringParser::AllowWhitespace));
+		Assert::IsTrue(parser.ConsumeRest(L"Value", StringParser::SkipWhitespace));
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
@@ -119,12 +119,12 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L"tail"));
 	}
 
-	TEST_METHOD(TestConsumeRestDoubleOrFormulaAllowWhitespace)
+	TEST_METHOD(TestConsumeRestDoubleOrFormulaSkipWhitespace)
 	{
 		MathParser mathParser;
 		StringParser parser(L" \t(5 / 2)\r\n");
 
-		const auto value = parser.ConsumeRestDoubleOrFormula(mathParser, StringParser::AllowWhitespace);
+		const auto value = parser.ConsumeRestDoubleOrFormula(mathParser, StringParser::SkipWhitespace);
 		Assert::IsTrue(value.has_value());
 		Assert::AreEqual(2.5, *value, 0.0001);
 		Assert::IsTrue(parser.IsConsumed());
