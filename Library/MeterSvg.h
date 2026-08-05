@@ -5,6 +5,7 @@
 #include "Meter.h"
 #include "AspectRatioMode.h"
 #include <memory>
+#include <vector>
 
 namespace Gfx {
 class Svg;
@@ -35,10 +36,21 @@ protected:
 	}
 
 private:
+	struct SvgAttribute
+	{
+		std::wstring selector;
+		std::wstring attribute;
+		std::wstring value;
+
+		bool operator==(const SvgAttribute&) const = default;
+	};
+
 	bool LoadSvg();
+	void ApplySvgAttributes();
 	void UpdateSize();
 
 	std::wstring m_SvgImage;
+	std::vector<SvgAttribute> m_SvgAttributes;
 	std::unique_ptr<Gfx::Svg> m_Svg;
 	AspectRatioMode m_AspectRatioMode;
 	bool m_LoadAttempted;
