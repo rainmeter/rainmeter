@@ -549,6 +549,15 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else if (_wcsicmp(type, L"ICON") == 0)
 	{
+		if (child->type != TYPE_ICON)
+		{
+			// Remove icons written by versions that predate SystemImage support.
+			const std::wstring defaultValue = fmt::format(L"icon{}.ico", child->index + 1);
+			std::wstring iconPath = parser.ReadString(section, L"IconPath", defaultValue.c_str());
+			GetSkin()->MakePathAbsolute(iconPath);
+			DeleteFile(iconPath.c_str());
+		}
+
 		child->type = TYPE_ICON;
 
 		LPCWSTR size = parser.ReadString(section, L"IconSize", L"MEDIUM").c_str();
