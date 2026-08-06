@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "FileUtil.h"
+#include "StringUtil.h"
 
 #include <Imagehlp.h>
 
@@ -46,6 +47,78 @@ std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size)
 	}
 
 	return buffer;
+}
+
+bool ReadTextFile(const std::wstring& path, std::wstring& text)
+{
+	// The BOM of an existing file overrides the encoding given here, so this is the encoding of a
+	// file which does not have one.
+	FILE* file;
+	if (_wfopen_s(&file, path.c_str(), L"r, ccs=UTF-8") != 0)
+	{
+		return false;
+	}
+
+	WCHAR buffer[4096];
+	while (fgetws(buffer, _countof(buffer), file))
+	{
+		text += buffer;
+	}
+
+	const bool result = ferror(file) == 0;
+	fclose(file);
+
+	return result;
+}
+
+// A text mode stream turns an LF into a CRLF, which would leave a CR of its own in front of any
+// CRLF the text already has. Reduce the line endings to LF so that each ends up as one CRLF.
+static std::wstring ToLineFeeds(const std::wstring& text)
+{
+	std::wstring result;
+	result.reserve(text.length());
+
+	for (size_t i = 0, length = text.length(); i < length; ++i)
+	{
+		if (text[i] == L'\r' && i + 1 < length && text[i + 1] == L'\n') continue;
+
+		result += text[i];
+	}
+
+	return result;
+}
+
+bool WriteTextFile(const std::wstring& path, const std::wstring& text, Encoding encoding)
+{
+	std::wstring mode = L"w";
+	switch (encoding)
+	{
+	case Encoding::UTF8:
+		mode += L", ccs=UTF-8";
+		break;
+
+	case Encoding::UTF16LE:
+		mode += L", ccs=UTF-16LE";
+		break;
+	}
+
+	FILE* file;
+	if (_wfopen_s(&file, path.c_str(), mode.c_str()) != 0)
+	{
+		return false;
+	}
+
+	const std::wstring lines = ToLineFeeds(text);
+
+	// A stream without a ccs is byte oriented, and fputws() would convert the text through the
+	// locale of the CRT rather than the active code page, which is only set for LC_NUMERIC here.
+	const bool result = (encoding == Encoding::ANSI) ?
+		fputs(StringUtil::Narrow(lines).c_str(), file) >= 0 :
+		fputws(lines.c_str(), file) >= 0;
+
+	fclose(file);
+
+	return result;
 }
 
 bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness)

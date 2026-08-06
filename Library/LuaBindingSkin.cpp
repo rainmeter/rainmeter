@@ -7,6 +7,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "MeterString.h"
+#include "../Common/FileUtil.h"
 
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
@@ -248,6 +249,64 @@ static int MakePathAbsolute(lua_State* L)
 	return 1;
 }
 
+static int ReadTextFile(lua_State* L)
+{
+	DECLARE_SELF(L)
+	std::wstring path = LuaHelper::ToWide(2);
+	self->MakePathAbsolute(path);
+
+	std::wstring text;
+	if (!FileUtil::ReadTextFile(path, text))
+	{
+		lua_pushnil(L);
+		LuaHelper::PushWide(L"Unable to read file: " + path);
+		return 2;
+	}
+
+	LuaHelper::PushWide(text);
+
+	return 1;
+}
+
+static int WriteTextFile(lua_State* L)
+{
+	DECLARE_SELF(L)
+	std::wstring path = LuaHelper::ToWide(2);
+	self->MakePathAbsolute(path);
+
+	const std::wstring text = LuaHelper::ToWide(3);
+
+	auto encoding = FileUtil::Encoding::UTF16LE;
+	if (lua_isstring(L, 4))
+	{
+		const std::wstring name = LuaHelper::ToWide(4);
+		if (_wcsicmp(name.c_str(), L"ANSI") == 0)
+		{
+			encoding = FileUtil::Encoding::ANSI;
+		}
+		else if (_wcsicmp(name.c_str(), L"UTF-8") == 0)
+		{
+			encoding = FileUtil::Encoding::UTF8;
+		}
+		else if (_wcsicmp(name.c_str(), L"UTF-16") != 0)
+		{
+			lua_pushboolean(L, 0);
+			LuaHelper::PushWide(L"Unknown encoding: " + name);
+			return 2;
+		}
+	}
+
+	if (!FileUtil::WriteTextFile(path, text, encoding))
+	{
+		lua_pushboolean(L, 0);
+		LuaHelper::PushWide(L"Unable to write file: " + path);
+		return 2;
+	}
+
+	lua_pushboolean(L, 1);
+	return 1;
+}
+
 void LuaScript::RegisterSkin(lua_State* L)
 {
 	const luaL_Reg functions[] =
@@ -268,6 +327,8 @@ void LuaScript::RegisterSkin(lua_State* L)
 		{ "GetX", GetX },
 		{ "GetY", GetY },
 		{ "MakePathAbsolute", MakePathAbsolute },
+		{ "ReadTextFile", ReadTextFile },
+		{ "WriteTextFile", WriteTextFile },
 		{ nullptr, nullptr }
 	};
 

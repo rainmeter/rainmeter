@@ -28,6 +28,17 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
 
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
+	if (!fileData)
+	{
+		return false;
+	}
+
+	// Treat the script as Unicode if it has the UTF-16 LE BOM. This is determined before the state
+	// is created so that the scope GetState() returns carries the encoding of the script.
+	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+
 	if (m_State == nullptr)
 	{
 		// Initialize Lua
@@ -42,17 +53,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		RegisterSkin(m_State);
 	}
 
-	size_t fileSize = 0;
-	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
-	if (!fileData)
-	{
-		return false;
-	}
-
 	auto L = GetState();
-
-	// Treat the script as Unicode if it has the UTF-16 LE BOM.
-	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
 
 	if (m_Unicode)
 	{
