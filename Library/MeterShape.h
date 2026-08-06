@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../Common/Map.h"
+#include "../Common/StringParser.h"
 #include "../Common/Gfx/Shape.h"
 #include "Meter.h"
 
@@ -30,10 +31,10 @@ protected:
 private:
 	void Dispose();
 
-	bool CreateShape(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool& isCombined, size_t keyId);
-	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::vector<std::wstring>& args);
+	bool CreateShape(std::wstring_view definition, ConfigParser& parser, const WCHAR* section, bool& isCombined, size_t keyId);
+	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::wstring& options);
 
-	void ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive = false);
+	void ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, const WCHAR* section, bool recursive = false);
 	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform);
 	bool ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
 	bool ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FILL_MODE fillMode);
