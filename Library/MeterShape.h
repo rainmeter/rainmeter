@@ -35,7 +35,7 @@ private:
 	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::wstring& options);
 
 	void ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, const WCHAR* section, bool recursive = false);
-	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform);
+	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform);
 	bool ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke);
 	bool ParsePath(ConfigParser& parser, std::wstring& options, D2D1_FILL_MODE fillMode);
 	std::wstring ReadShapeOption(ConfigParser& parser, const WCHAR* section, std::wstring key);

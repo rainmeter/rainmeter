@@ -37,12 +37,24 @@ std::optional<std::wstring_view> ConsumeValue(StringParser& values)
 
 // Reads the next value of a shape definition. Returns false if there is none, leaving |value|
 // unchanged.
-bool ReadValue(ConfigParser& parser, StringParser& values, FLOAT& value)
+bool ReadValue(ConfigParser& parser, StringParser& values, FLOAT& value, double defValue = 0.0)
 {
 	const auto next = ConsumeValue(values);
 	if (!next) return false;
 
-	value = (FLOAT)parser.ParseDouble(*next, 0.0);
+	value = (FLOAT)parser.ParseDouble(*next, defValue);
+	return true;
+}
+
+// Reads the two values of a transform anchor. Both are left unchanged unless both are read.
+bool ReadAnchor(ConfigParser& parser, StringParser& values, FLOAT& x, FLOAT& y)
+{
+	FLOAT anchorX = 0.0f;
+	FLOAT anchorY = 0.0f;
+	if (!ReadValue(parser, values, anchorX) || !ReadValue(parser, values, anchorY)) return false;
+
+	x = anchorX;
+	y = anchorY;
 	return true;
 }
 
@@ -524,9 +536,11 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 		else if (CompareAndStrip(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
 		else if (CompareAndStrip(option, L"INTERSECT")) mode = D2D1_COMBINE_MODE_INTERSECT;
 		else if (CompareAndStrip(option, L"EXCLUDE")) mode = D2D1_COMBINE_MODE_EXCLUDE;
-		else if (ParseTransformModifers(parser, m_Shapes[shapeId], option)) continue;
 		else
 		{
+			StringParser transform(option);
+			if (ParseTransformModifers(parser, m_Shapes[shapeId], transform)) continue;
+
 			showError(L"definition contains invalid combine: ", option.c_str());
 			return false;
 		}
@@ -563,71 +577,67 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, const WCHAR* section, bool recursive)
 {
-	auto parseCap = [this](std::wstring& cap) -> D2D1_CAP_STYLE
+	auto parseCap = [this](StringParser& cap) -> D2D1_CAP_STYLE
 	{
-		if (CompareAndStrip(cap, L"FLAT")) return D2D1_CAP_STYLE_FLAT;
-		else if (CompareAndStrip(cap, L"SQUARE")) return D2D1_CAP_STYLE_SQUARE;
-		else if (CompareAndStrip(cap, L"ROUND")) return D2D1_CAP_STYLE_ROUND;
-		else if (CompareAndStrip(cap, L"TRIANGLE")) return D2D1_CAP_STYLE_TRIANGLE;
+		if (cap.Consume(L"Flat", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_FLAT;
+		else if (cap.Consume(L"Square", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_SQUARE;
+		else if (cap.Consume(L"Round", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_ROUND;
+		else if (cap.Consume(L"Triangle", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_TRIANGLE;
 		else
 		{
-			if (!cap.empty()) LogErrorF(this, L"Invalid cap style: %s", cap.c_str());
+			const std::wstring style(cap.ConsumeRest(StringParser::SkipWhitespace));
+			if (!style.empty()) LogErrorF(this, L"Invalid cap style: %s", style.c_str());
 			return D2D1_CAP_STYLE_FLAT;
+		}
+	};
+
+	// The rest of the modifier names the option holding the gradient.
+	auto parseGradient = [&](StringParser& option, Gfx::BrushType type, const WCHAR* name, bool altGamma, bool isStroke) -> void
+	{
+		auto opt = ReadShapeOption(parser, section, std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)));
+		if (opt.empty() || !ParseGradient(shape, parser, type, opt.c_str(), altGamma, isStroke))
+		{
+			LogErrorF(this, L"%s has invalid parameters: %s", name, opt.c_str());
 		}
 	};
 
 	while (!modifiers.IsConsumed())
 	{
-		std::wstring option(ConsumeOption(modifiers));
-		if (option.empty()) continue;
+		StringParser option(ConsumeOption(modifiers));
+		if (option.IsConsumed()) continue;
 
-		if (CompareAndStrip(option, L"FILL"))
+		if (option.Consume(L"Fill"))
 		{
-			if (CompareAndStrip(option, L"COLOR"))
+			if (option.Consume(L"Color", StringParser::SkipWhitespace))
 			{
-				auto color = parser.ParseColor(option.c_str());
-				shape.SetFill(color);
+				shape.SetFill(parser.ParseColor(option.ConsumeRest(StringParser::SkipWhitespace)));
 			}
-			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
+			else if (option.Consume(L"LinearGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
-				{
-					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient1", true, false);
 			}
-			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
+			else if (option.Consume(L"LinearGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
-				{
-					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient", false, false);
 			}
-			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
+			else if (option.Consume(L"RadialGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
-				{
-					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient1", true, false);
 			}
-			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
+			else if (option.Consume(L"RadialGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
-				{
-					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient", false, false);
 			}
 			else
 			{
-				LogErrorF(this, L"Fill has invalid parameters: %s", option.c_str());
+				LogErrorF(this, L"Fill has invalid parameters: %s",
+					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
-		else if (CompareAndStrip(option, L"STROKEWIDTH"))
+		else if (option.Consume(L"StrokeWidth"))
 		{
-			FLOAT width = (FLOAT)parser.ParseDouble(option.c_str(), 0.0);
+			FLOAT width = 0.0f;
+			ReadValue(parser, option, width);
 			if (width < 0.0f)
 			{
 				LogWarningF(this, L"StrokeWidth must not be negative");
@@ -636,148 +646,124 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 
 			shape.SetStrokeWidth(width);
 		}
-		else if (CompareAndStrip(option, L"STROKESTARTCAP"))
+		else if (option.Consume(L"StrokeStartCap"))
 		{
 			shape.GetStrokeProperties().startCap = parseCap(option);
 		}
-		else if (CompareAndStrip(option, L"STROKEENDCAP"))
+		else if (option.Consume(L"StrokeEndCap"))
 		{
 			shape.GetStrokeProperties().endCap = parseCap(option);
 		}
-		else if (CompareAndStrip(option, L"STROKEDASHCAP"))
+		else if (option.Consume(L"StrokeDashCap"))
 		{
 			shape.GetStrokeProperties().dashCap = parseCap(option);
 		}
-		else if (CompareAndStrip(option, L"STROKELINEJOIN"))
+		else if (option.Consume(L"StrokeLineJoin"))
 		{
-			auto style = ConfigParser::TokenizeWithPairedPunctuation(option, L',', PairedPunctuation::Parentheses);
-			size_t size = style.size();
-
-			if (size > 0)
-			{
-				const WCHAR* option = style[0].c_str();
-				D2D1_LINE_JOIN join = D2D1_LINE_JOIN_MITER;
-				FLOAT limit = 10.0f;
-
-				if (_wcsicmp(option, L"MITER") == 0) join = D2D1_LINE_JOIN_MITER;
-				else if (_wcsicmp(option, L"BEVEL") == 0) join = D2D1_LINE_JOIN_BEVEL;
-				else if (_wcsicmp(option, L"ROUND") == 0) join = D2D1_LINE_JOIN_ROUND;
-				else if (_wcsicmp(option, L"MITERORBEVEL") == 0) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
-				else
-				{
-					LogWarningF(this, L"Invalid line join style: %s", option);
-				}
-
-				if (size > 1)
-				{
-					limit = (FLOAT)parser.ParseDouble(style[1].c_str(), 10.0);
-					if (limit < 0.0f)
-					{
-						LogWarningF(this, L"Miter limit must be positive");
-						limit = 10.0f;
-					}
-				}
-
-				auto& properties = shape.GetStrokeProperties();
-				properties.lineJoin = join;
-				properties.miterLimit = limit;
-			}
-			else
+			const auto style = ConsumeValue(option);
+			if (!style)
 			{
 				LogWarningF(this, L"StrokeLineJoin has too few parameters");
+				continue;
 			}
+
+			D2D1_LINE_JOIN join = D2D1_LINE_JOIN_MITER;
+			StringParser joinStyle(*style);
+			if (joinStyle.ConsumeRest(L"Miter")) join = D2D1_LINE_JOIN_MITER;
+			else if (joinStyle.ConsumeRest(L"Bevel")) join = D2D1_LINE_JOIN_BEVEL;
+			else if (joinStyle.ConsumeRest(L"Round")) join = D2D1_LINE_JOIN_ROUND;
+			else if (joinStyle.ConsumeRest(L"MiterOrBevel")) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
+			else
+			{
+				LogWarningF(this, L"Invalid line join style: %s", std::wstring(*style).c_str());
+			}
+
+			FLOAT limit = 10.0f;
+			ReadValue(parser, option, limit, 10.0);
+			if (limit < 0.0f)
+			{
+				LogWarningF(this, L"Miter limit must be positive");
+				limit = 10.0f;
+			}
+
+			auto& properties = shape.GetStrokeProperties();
+			properties.lineJoin = join;
+			properties.miterLimit = limit;
 		}
-		else if (CompareAndStrip(option, L"STROKEDASHES"))
+		else if (option.Consume(L"StrokeDashes"))
 		{
 			std::vector<FLOAT> dashes;
-			auto definedDashes = ConfigParser::TokenizeWithPairedPunctuation(option, L',', PairedPunctuation::Parentheses);
-			for (const auto& dash : definedDashes)
+			while (const auto dash = ConsumeValue(option))
 			{
-				FLOAT value = (FLOAT)parser.ParseDouble(dash.c_str(), 0.0);
-				dashes.emplace_back(value);
+				dashes.emplace_back((FLOAT)parser.ParseDouble(*dash, 0.0));
 			}
 
 			shape.SetStrokeDashes(dashes);
 		}
-		else if (CompareAndStrip(option, L"STROKEDASHOFFSET"))
+		else if (option.Consume(L"StrokeDashOffset"))
 		{
-			const WCHAR* modifier = option.c_str();
+			const std::wstring modifier(option.ConsumeRest(StringParser::SkipWhitespace));
 			FLOAT dashOffset = (FLOAT)parser.ParseDouble(modifier, 0.0);
 			if (dashOffset < 0.0f)
 			{
-				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier);
+				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier.c_str());
 				dashOffset = 0.0f;
 			}
 
 			shape.GetStrokeProperties().dashOffset = dashOffset;
 		}
-		else if (CompareAndStrip(option, L"STROKE"))
+		else if (option.Consume(L"Stroke"))
 		{
-			if (CompareAndStrip(option, L"COLOR"))
+			if (option.Consume(L"Color", StringParser::SkipWhitespace))
 			{
-				auto color = parser.ParseColor(option.c_str());
-				shape.SetStrokeFill(color);
+				shape.SetStrokeFill(parser.ParseColor(option.ConsumeRest(StringParser::SkipWhitespace)));
 			}
-			else if (CompareAndStrip(option, L"LINEARGRADIENT1"))
+			else if (option.Consume(L"LinearGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient1", true, true);
 			}
-			else if (CompareAndStrip(option, L"LINEARGRADIENT"))
+			else if (option.Consume(L"LinearGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient", false, true);
 			}
-			else if (CompareAndStrip(option, L"RADIALGRADIENT1"))
+			else if (option.Consume(L"RadialGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient1", true, true);
 			}
-			else if (CompareAndStrip(option, L"RADIALGRADIENT"))
+			else if (option.Consume(L"RadialGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = ReadShapeOption(parser, section, std::move(option));
-				if (opt.empty() || !ParseGradient(shape, parser, Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient", false, true);
 			}
 			else
 			{
-				LogErrorF(this, L"Stroke has invalid parameters: %s", option.c_str());
+				LogErrorF(this, L"Stroke has invalid parameters: %s",
+					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
-		else if (CompareAndStrip(option, L"EXTEND"))
+		else if (option.Consume(L"Extend"))
 		{
-			if (!recursive)
-			{
-				std::vector<std::wstring> extendParameters = ConfigParser::Tokenize(option, L",");
-				for (auto& extend : extendParameters)
-				{
-					std::wstring key = ReadShapeOption(parser, section, std::move(extend));
-					if (!key.empty())
-					{
-						StringParser extendedModifiers(key);
-						ParseModifiers(shape, extendedModifiers, parser, section, true);
-					}
-				}
-			}
-			else
+			if (recursive)
 			{
 				LogNoticeF(this, L"Extend cannot be used recursively");
+				continue;
+			}
+
+			while (const auto extend = ConsumeValue(option))
+			{
+				if (extend->empty()) continue;
+
+				std::wstring key = ReadShapeOption(parser, section, std::wstring(*extend));
+				if (!key.empty())
+				{
+					StringParser extendedModifiers(key);
+					ParseModifiers(shape, extendedModifiers, parser, section, true);
+				}
 			}
 		}
 		else if (!ParseTransformModifers(parser, shape, option))
 		{
-			LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
+			LogErrorF(this, L"Invalid shape modifier: %s",
+				std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 		}
 	}
 
@@ -788,15 +774,14 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 	}
 }
 
-bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, std::wstring& transform)
+bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform)
 {
-	if (CompareAndStrip(transform, L"OFFSET"))
+	if (transform.Consume(L"Offset"))
 	{
-		auto offset = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
-		if (offset.size() >= 2)
+		FLOAT x = 0.0f;
+		FLOAT y = 0.0f;
+		if (ReadValue(parser, transform, x) && ReadValue(parser, transform, y))
 		{
-			FLOAT x = (FLOAT)parser.ParseDouble(offset[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)parser.ParseDouble(offset[1].c_str(), 0.0);
 			shape.SetOffset(x, y);
 		}
 		else
@@ -806,22 +791,14 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 
 		return true;
 	}
-	else if (CompareAndStrip(transform, L"ROTATE"))
+	else if (transform.Consume(L"Rotate"))
 	{
-		auto rotate = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = rotate.size();
-		if (size > 0)
+		FLOAT rotation = 0.0f;
+		if (ReadValue(parser, transform, rotation))
 		{
-			bool anchorDefined = false;
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			FLOAT rotation = (FLOAT)parser.ParseDouble(rotate[0].c_str(), 0.0);
-			if (size > 2)
-			{
-				anchorX = (FLOAT)parser.ParseDouble(rotate[1].c_str(), 0.0);
-				anchorY = (FLOAT)parser.ParseDouble(rotate[2].c_str(), 0.0);
-				anchorDefined = true;
-			}
+			const bool anchorDefined = ReadAnchor(parser, transform, anchorX, anchorY);
 
 			shape.SetRotation(rotation, anchorX, anchorY, anchorDefined);
 		}
@@ -832,25 +809,15 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 
 		return true;
 	}
-	else if (CompareAndStrip(transform, L"SCALE"))
+	else if (transform.Consume(L"Scale"))
 	{
-		auto scale = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = scale.size();
-		if (size > 1)
+		FLOAT scaleX = 1.0f;
+		FLOAT scaleY = 1.0f;
+		if (ReadValue(parser, transform, scaleX, 1.0) && ReadValue(parser, transform, scaleY, 1.0))
 		{
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			bool anchorDefined = false;
-
-			FLOAT scaleX = (FLOAT)parser.ParseDouble(scale[0].c_str(), 1.0);
-			FLOAT scaleY = (FLOAT)parser.ParseDouble(scale[1].c_str(), 1.0);
-
-			if (size > 3)
-			{
-				anchorX = (FLOAT)parser.ParseDouble(scale[2].c_str(), 0.0);
-				anchorY = (FLOAT)parser.ParseDouble(scale[3].c_str(), 0.0);
-				anchorDefined = true;
-			}
+			const bool anchorDefined = ReadAnchor(parser, transform, anchorX, anchorY);
 
 			shape.SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
 		}
@@ -861,25 +828,15 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 
 		return true;
 	}
-	else if (CompareAndStrip(transform, L"SKEW"))
+	else if (transform.Consume(L"Skew"))
 	{
-		auto skew = ConfigParser::TokenizeWithPairedPunctuation(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = skew.size();
-		if (size > 1)
+		FLOAT skewX = 1.0f;
+		FLOAT skewY = 1.0f;
+		if (ReadValue(parser, transform, skewX, 1.0) && ReadValue(parser, transform, skewY, 1.0))
 		{
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			bool anchorDefined = false;
-
-			FLOAT skewX = (FLOAT)parser.ParseDouble(skew[0].c_str(), 1.0);
-			FLOAT skewY = (FLOAT)parser.ParseDouble(skew[1].c_str(), 1.0);
-
-			if (size > 3)
-			{
-				anchorX = (FLOAT)parser.ParseDouble(skew[2].c_str(), 0.0);
-				anchorY = (FLOAT)parser.ParseDouble(skew[3].c_str(), 0.0);
-				anchorDefined = true;
-			}
+			const bool anchorDefined = ReadAnchor(parser, transform, anchorX, anchorY);
 
 			shape.SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
 		}
@@ -890,28 +847,34 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 
 		return true;
 	}
-	else if (CompareAndStrip(transform, L"TRANSFORMORDER"))
+	else if (transform.Consume(L"TransformOrder"))
 	{
-		auto order = ConfigParser::Tokenize(transform, L",");
-		if (order.size() > 0)
-		{
-			shape.ResetTransformOrder();
-			Gfx::TransformType type = Gfx::TransformType::Invalid;
-			for (auto& t : order)
-			{
-				if (CompareAndStrip(t, L"ROTATE")) type = Gfx::TransformType::Rotate;
-				else if (CompareAndStrip(t, L"SCALE")) type = Gfx::TransformType::Scale;
-				else if (CompareAndStrip(t, L"SKEW")) type = Gfx::TransformType::Skew;
-				else if (CompareAndStrip(t, L"OFFSET")) type = Gfx::TransformType::Offset;
+		// Note that the type is deliberately not reset for each value, so an invalid type after a
+		// valid one repeats the previous type.
+		Gfx::TransformType type = Gfx::TransformType::Invalid;
+		bool ordered = false;
 
-				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t.c_str());
-				else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
-			}
-		}
-		else
+		while (const auto value = ConsumeValue(transform))
 		{
-			LogWarningF(this, L"TransformOrder has too few parameters");
+			if (value->empty()) continue;
+
+			if (!ordered)
+			{
+				shape.ResetTransformOrder();
+				ordered = true;
+			}
+
+			StringParser transformType(*value);
+			if (transformType.Consume(L"Rotate")) type = Gfx::TransformType::Rotate;
+			else if (transformType.Consume(L"Scale")) type = Gfx::TransformType::Scale;
+			else if (transformType.Consume(L"Skew")) type = Gfx::TransformType::Skew;
+			else if (transformType.Consume(L"Offset")) type = Gfx::TransformType::Offset;
+
+			if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", std::wstring(*value).c_str());
+			else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
 		}
+
+		if (!ordered) LogWarningF(this, L"TransformOrder has too few parameters");
 
 		return true;
 	}

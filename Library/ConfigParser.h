@@ -107,6 +107,7 @@ public:
 	uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
 	uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
 	D2D1_COLOR_F ParseColor(LPCTSTR str);
+	D2D1_COLOR_F ParseColor(std::wstring_view str);
 	D2D1_RECT_F ParseRect(LPCTSTR str);
 	RECT ParseRECT(LPCTSTR str);
 

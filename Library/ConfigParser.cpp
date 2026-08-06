@@ -1557,6 +1557,11 @@ D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR str)
 	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
 }
 
+D2D1_COLOR_F ConfigParser::ParseColor(std::wstring_view str)
+{
+	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
+}
+
 D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR str)
 {
 	return ParseUtil::ParseRect(str, GetMathParser(), LogFormulaError);
