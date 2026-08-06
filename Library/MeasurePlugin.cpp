@@ -316,7 +316,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), (WCHAR**)args.data());
+			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), reinterpret_cast<const WCHAR**>(args.data()));
 			if (result)
 			{
 				strValue = result;
