@@ -174,7 +174,11 @@ bool StringParser::Consume(const WCHAR* str, size_t length, Option option)
 
 	const size_t remaining = (size_t)(m_End - m_Current);
 	if (length > remaining) return false;
-	if (_wcsnicmp(m_Current, str, length) != 0) return false;
+
+	const int result = HasOption(option, MatchCase) ?
+		wcsncmp(m_Current, str, length) :
+		_wcsnicmp(m_Current, str, length);
+	if (result != 0) return false;
 
 	m_Current += length;
 	return true;
@@ -346,6 +350,33 @@ std::optional<int> StringParser::ConsumeIntOrFormula(const MathParser& mathParse
 std::optional<int> StringParser::ConsumeRestIntOrFormula(const MathParser& mathParser, Option option)
 {
 	return ConsumeRestNumberOrFormula<int>(m_Current, m_End, mathParser, wcstol, option);
+}
+
+std::optional<UINT> StringParser::ConsumeHexByte(Option option)
+{
+	if (HasOption(option, SkipWhitespace))
+	{
+		ConsumeWhitespace();
+	}
+
+	UINT value = 0;
+	int digits = 0;
+	while (digits < 2 && m_Current < m_End)
+	{
+		const WCHAR ch = *m_Current;
+		UINT digit = 0;
+		if (ch >= L'0' && ch <= L'9') digit = ch - L'0';
+		else if (ch >= L'a' && ch <= L'f') digit = ch - L'a' + 10;
+		else if (ch >= L'A' && ch <= L'F') digit = ch - L'A' + 10;
+		else break;
+
+		value = (value * 16) + digit;
+		++m_Current;
+		++digits;
+	}
+
+	if (digits == 0) return std::nullopt;
+	return value;
 }
 
 std::optional<UINT> StringParser::ConsumeUInt(Option option)

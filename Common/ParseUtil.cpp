@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "ParseUtil.h"
 #include "MathParser.h"
+#include "StringParser.h"
 
 namespace {
 
@@ -14,62 +15,49 @@ void ReportFormulaError(ParseUtil::FormulaErrorCallback errorCallback, const WCH
 	}
 }
 
-template <typename T>
-bool ParseInt4(LPCTSTR str, T& v1, T& v2, T& v3, T& v4, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback)
+// Equivalent to ParseInt, but does not require the value to be null terminated.
+int ParseIntValue(std::wstring_view str, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback)
 {
-	if (wcschr(str, L','))
+	StringParser parser(str);
+	parser.ConsumeWhitespace();
+
+	if (parser.Remaining().starts_with(L'('))
 	{
-		std::wstring string = str;
-		std::vector<T> tokens;
-		size_t start = 0;
-		size_t end = 0;
-		int parens = 0;
-
-		auto getToken = [&]() -> void
+		const std::wstring formula(parser.Remaining());
+		double value = 0.0;
+		const WCHAR* errMsg = mathParser.CheckedParse(formula.c_str(), &value);
+		if (!errMsg)
 		{
-			start = string.find_first_not_of(L" \t", start); // skip any leading whitespace
-			if (start <= end)
-			{
-				tokens.push_back((T)ParseUtil::ParseInt(
-					string.substr(start, end - start).c_str(), 0,
-					mathParser, errorCallback));
-			}
-		};
-
-		for (auto& iter : string)
-		{
-			switch (iter)
-			{
-			case L'(': ++parens; break;
-			case L')': --parens; break;
-			case L',':
-				{
-					if (parens == 0)
-					{
-						getToken();
-						start = end + 1; // skip comma
-						break;
-					}
-					//else multi arg function ?
-				}
-				break;
-			}
-			++end;
+			return (int)value;
 		}
 
-		// read last token
-		getToken();
-
-		size_t size = tokens.size();
-		if (size > 0) v1 = tokens[0];
-		if (size > 1) v2 = tokens[1];
-		if (size > 2) v3 = tokens[2];
-		if (size > 3) v4 = tokens[3];
-
-		return true;
+		ReportFormulaError(errorCallback, errMsg, formula.c_str());
+		return 0;
 	}
 
-	return false;
+	return parser.ConsumeInt().value_or(0);
+}
+
+template <typename T>
+bool ParseInt4(std::wstring_view str, T& v1, T& v2, T& v3, T& v4, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback)
+{
+	if (str.find(L',') == std::wstring_view::npos) return false;
+
+	T* const values[] = { &v1, &v2, &v3, &v4 };
+	size_t index = 0;
+
+	StringParser parser(str);
+	while (index < _countof(values) && !parser.IsConsumed())
+	{
+		// A trailing value consisting only of whitespace is not a value, and leaves the
+		// remaining components at their defaults.
+		if (parser.Remaining().find_first_not_of(L" \t") == std::wstring_view::npos) break;
+
+		const auto value = parser.ConsumeUntilOrRest(L',', StringParser::SkipNestedParentheses);
+		*values[index++] = (T)ParseIntValue(value, mathParser, errorCallback);
+	}
+
+	return true;
 }
 
 }  // namespace
@@ -190,23 +178,34 @@ uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, const MathParser& mathParse
 
 D2D1_COLOR_F ParseColor(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback)
 {
+	assert(str);
+	return ParseColor(std::wstring_view(str), mathParser, errorCallback);
+}
+
+D2D1_COLOR_F ParseColor(std::wstring_view str, const MathParser& mathParser, FormulaErrorCallback errorCallback)
+{
 	int R = 255, G = 255, B = 255, A = 255;
 
 	if (!ParseInt4(str, R, G, B, A, mathParser, errorCallback))
 	{
-		if (wcsncmp(str, L"0x", 2) == 0)
-		{
-			str += 2;  // skip prefix
-		}
+		StringParser parser(str);
+		parser.Consume(L"0x", StringParser::MatchCase);  // Skip the optional prefix
 
-		size_t len = wcslen(str);
-		if (len >= 8 && !iswspace(str[6]))
+		// The alpha component is only read if it is not separated from the others by whitespace.
+		const auto value = parser.Remaining();
+		const bool hasAlpha = value.length() >= 8 && !iswspace(value[6]);
+		if (hasAlpha || value.length() >= 6)
 		{
-			swscanf_s(str, L"%02x%02x%02x%02x", &R, &G, &B, &A);
-		}
-		else if (len >= 6)
-		{
-			swscanf_s(str, L"%02x%02x%02x", &R, &G, &B);
+			int* const components[] = { &R, &G, &B, &A };
+			const size_t count = hasAlpha ? 4 : 3;
+			for (size_t i = 0; i < count; ++i)
+			{
+				// Leave this and any remaining component at its default if it is not a number.
+				const auto component = parser.ConsumeHexByte(StringParser::SkipWhitespace);
+				if (!component) break;
+
+				*components[i] = (int)*component;
+			}
 		}
 	}
 

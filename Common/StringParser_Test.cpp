@@ -35,6 +35,15 @@ public:
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
+	TEST_METHOD(TestConsumeStringMatchCaseOption)
+	{
+		StringParser parser(L"Prefix");
+
+		Assert::IsFalse(parser.Consume(L"prefix", StringParser::MatchCase));
+		Assert::IsTrue(parser.Consume(L"Prefix", StringParser::MatchCase));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
 	TEST_METHOD(TestConsumeWhitespace)
 	{
 		StringParser parser(L" \t\r\nValue");
@@ -220,6 +229,32 @@ public:
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
+	TEST_METHOD(TestConsumeHexByte)
+	{
+		StringParser parser(L"0aFFz");
+
+		AssertHexByte(0x0a, parser.ConsumeHexByte());
+		AssertHexByte(0xFF, parser.ConsumeHexByte());
+		Assert::IsFalse(parser.ConsumeHexByte().has_value());
+		Assert::IsTrue(parser.ConsumeRest(L"z"));
+	}
+
+	TEST_METHOD(TestConsumeHexByteSingleDigit)
+	{
+		StringParser parser(L"7");
+
+		AssertHexByte(0x7, parser.ConsumeHexByte());
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeHexByteSkipWhitespaceOption)
+	{
+		StringParser parser(L" 1f");
+
+		Assert::IsFalse(parser.ConsumeHexByte().has_value());
+		AssertHexByte(0x1f, parser.ConsumeHexByte(StringParser::SkipWhitespace));
+	}
+
 	TEST_METHOD(TestRemaining)
 	{
 		StringParser parser(L"Prefix|Suffix");
@@ -234,5 +269,11 @@ private:
 	static void AssertValue(const WCHAR* expected, std::wstring_view actual)
 	{
 		Assert::AreEqual(expected, std::wstring(actual).c_str());
+	}
+
+	static void AssertHexByte(UINT expected, std::optional<UINT> actual)
+	{
+		Assert::IsTrue(actual.has_value());
+		Assert::AreEqual(expected, *actual);
 	}
 };

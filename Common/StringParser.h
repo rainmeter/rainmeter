@@ -23,7 +23,10 @@ public:
 		SkipWhitespace = 1 << 0,
 
 		// Ignores delimiters inside a pair of parentheses. Only used by ConsumeUntil.
-		SkipNestedParentheses = 1 << 1
+		SkipNestedParentheses = 1 << 1,
+
+		// Matches case sensitively instead of insensitively. Only used when matching a string.
+		MatchCase = 1 << 2
 	};
 
 	explicit StringParser(std::wstring_view str);
@@ -80,6 +83,9 @@ public:
 	std::optional<int> ConsumeRestInt(Option option = None);
 	std::optional<int> ConsumeIntOrFormula(const MathParser& mathParser, Option option = None);
 	std::optional<int> ConsumeRestIntOrFormula(const MathParser& mathParser, Option option = None);
+
+	// Consumes at most two hexadecimal digits, like the "%02x" scanf format.
+	std::optional<UINT> ConsumeHexByte(Option option = None);
 
 	std::optional<UINT> ConsumeUInt(Option option = None);
 	std::optional<UINT> ConsumeRestUInt(Option option = None);
