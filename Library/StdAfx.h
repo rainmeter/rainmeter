@@ -14,7 +14,6 @@
 #include <comdef.h>
 #include <oleidl.h>
 #include <Iphlpapi.h>
-#include <Imagehlp.h>
 #include <Mmsystem.h>
 #include <Shellapi.h>
 #include <shlobj.h>
