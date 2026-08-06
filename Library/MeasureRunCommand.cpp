@@ -8,6 +8,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "../Common/CriticalSection.h"
+#include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringUtil.h"
 #include <atomic>
@@ -137,31 +138,19 @@ void ReadAvailableOutput(HANDLE outputRead, OutputType type, std::wstring& resul
 
 bool SaveOutputToFile(const std::wstring& path, const std::wstring& output, OutputType type)
 {
-	std::wstring encoding = L"w+";
+	auto encoding = FileUtil::Encoding::ANSI;
 	switch (type)
 	{
 	case OUTPUTTYPE_UTF8:
-		encoding.append(L", ccs=UTF-8");
+		encoding = FileUtil::Encoding::UTF8;
 		break;
 
 	case OUTPUTTYPE_UTF16:
-		encoding.append(L", ccs=UTF-16LE");
-		break;
-
-	case OUTPUTTYPE_ANSI:
-	default:
+		encoding = FileUtil::Encoding::UTF16LE;
 		break;
 	}
 
-	FILE* file = nullptr;
-	const bool opened = (_wfopen_s(&file, path.c_str(), encoding.c_str()) == 0) && file;
-	if (opened)
-	{
-		fputws(output.c_str(), file);
-		fclose(file);
-	}
-
-	return opened;
+	return FileUtil::WriteTextFile(path, output, encoding);
 }
 
 bool TerminateApp(HANDLE processHandle, DWORD processId, bool force)
