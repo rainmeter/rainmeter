@@ -10,6 +10,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 
 namespace
@@ -272,7 +273,15 @@ void GameMode::SetSettings(const std::wstring& onStart, const std::wstring& onSt
 	}
 
 	m_ProcessList.clear();
-	m_ProcessList = ConfigParser::Tokenize(processList, L"|");
+
+	StringParser processes(processList);
+	while (!processes.IsConsumed())
+	{
+		const auto process = processes.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+		if (process.empty()) continue;
+
+		m_ProcessList.emplace_back(process);
+	}
 
 	StopTimer();
 

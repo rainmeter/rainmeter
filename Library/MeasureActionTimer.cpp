@@ -6,6 +6,7 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
+#include "../Common/StringParser.h"
 
 class MeasureActionTimer::ActionTimerTask : public AsyncTask
 {
@@ -124,22 +125,35 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring action = parser.ReadString(section, L"ActionList1", L"", false);
 	while (!action.empty())
 	{
-		std::vector<std::wstring> tokens = ConfigParser::Tokenize(action, L"|");
+		std::vector<std::wstring> tokens;
+		StringParser commands(action);
+		while (!commands.IsConsumed())
+		{
+			const auto command = commands.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+			if (command.empty()) continue;
+
+			tokens.emplace_back(command);
+		}
+
 		for (size_t i = 0; i < tokens.size(); ++i)
 		{
-			if (_wcsnicmp(tokens[i].c_str(), L"REPEAT ", 7) == 0)
+			StringParser token(tokens[i]);
+			if (token.Consume(L"REPEAT "))
 			{
-				std::vector<std::wstring> repeat = ConfigParser::Tokenize(tokens[i].substr(7), L",");
-				if (repeat.size() == 3)
+				// "REPEAT ActionName, WaitTime, Count"
+				std::wstring name(token.ConsumeUntil(L',', StringParser::SkipWhitespace));
+				std::wstring waitTime(token.ConsumeUntil(L',', StringParser::SkipWhitespace));
+				std::wstring count(token.ConsumeUntilOrRest(L',', StringParser::SkipWhitespace));
+				if (!name.empty() && !waitTime.empty() && !count.empty() && token.IsConsumed())
 				{
 					tokens.erase(tokens.begin() + i);
 
-					parser.ReplaceMeasures(repeat[1]);
-					parser.ReplaceMeasures(repeat[2]);
+					parser.ReplaceMeasures(waitTime);
+					parser.ReplaceMeasures(count);
 
-					const std::wstring repeatedAction = parser.ReadString(section, repeat[0].c_str(), L"[]", false);
-					const std::wstring wait = L"Wait " + repeat[1];
-					const int size = (_wtoi(repeat[2].c_str()) * 2) - 1;
+					const std::wstring repeatedAction = parser.ReadString(section, name.c_str(), L"[]", false);
+					const std::wstring wait = L"Wait " + waitTime;
+					const int size = (_wtoi(count.c_str()) * 2) - 1;
 					if (size <= 0)
 					{
 						continue;
@@ -154,7 +168,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 					i += j - 1;
 				}
 			}
-			else if (_wcsnicmp(tokens[i].c_str(), L"WAIT ", 5) == 0)
+			else if (token.Consume(L"WAIT "))
 			{
 				parser.ReplaceMeasures(tokens[i]);
 			}

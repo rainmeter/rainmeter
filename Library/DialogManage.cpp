@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/StringParser.h"
 #include "Rainmeter.h"
 #include "Language.h"
 #include "Skin.h"
@@ -2142,22 +2143,22 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[4096];
 			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				list = buffer;
-				std::vector<std::wstring> tokens = ConfigParser::Tokenize(list, L"\n");
-				list.clear();
-				for (auto& line : tokens)
+				StringParser lines(buffer);
+				while (!lines.IsConsumed())
 				{
-					// No self-references
-					if (_wcsicmp(line.c_str(), L"Rainmeter.exe") == 0)
-					{
-						continue;
-					}
+					const auto line = lines.ConsumeUntilOrRest(L'\n', StringParser::SkipWhitespace);
+					if (line.empty()) continue;
 
-					list += line;
-					if (line != tokens.back())
+					// No self-references
+					StringParser process(line);
+					if (process.ConsumeRest(L"Rainmeter.exe")) continue;
+
+					if (!list.empty())
 					{
 						list += L'|';
 					}
+
+					list += line;
 				}
 			}
 

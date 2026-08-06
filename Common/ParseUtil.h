@@ -7,7 +7,6 @@
 #include <d2d1.h>
 #include <string>
 #include <string_view>
-#include <vector>
 
 class MathParser;
 
@@ -35,8 +34,5 @@ D2D1_RECT_F ParseRect(LPCTSTR str, const MathParser& mathParser, FormulaErrorCal
 
 // Expects four comma separated values (left/top/right/bottom).
 RECT ParseRECT(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
-
-// Splits the string from the delimiters and trims empty elements and whitespace.
-std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 
 }  // namespace ParseUtil

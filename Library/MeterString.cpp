@@ -6,7 +6,7 @@
 #include "Measure.h"
 #include "Pcre.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
@@ -371,7 +371,6 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_TrailingSpaces = parser.ReadBool(section, L"TrailingSpaces", false);
 
 	std::vector<Gfx::TextInlineOption> inlineOptions;
-	const std::wstring delimiter(1, L'|');
 	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
 	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
 	if (pattern.empty()) pattern = L".*";
@@ -381,7 +380,16 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		Gfx::TextInlineOption inlineOption;
 		inlineOption.pattern = pattern;
-		inlineOption.settings = ParseUtil::Tokenize(option, delimiter);
+
+		StringParser settings(option);
+		while (!settings.IsConsumed())
+		{
+			const auto setting = settings.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+			if (setting.empty()) continue;
+
+			inlineOption.settings.emplace_back(setting);
+		}
+
 		inlineOptions.push_back(inlineOption);
 
 		// Check for InlineSetting2/InlinePattern2 ... etc.

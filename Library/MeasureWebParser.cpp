@@ -6,6 +6,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/CharacterEntityReference.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 #include <rapidjson/document.h>
@@ -392,65 +393,68 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (!szFlags.empty())
 		{
 			// Flags: https://docs.microsoft.com/en-us/windows/win32/api/wininet/nf-wininet-internetopenurlw#parameters
-			std::vector<std::wstring> tokens = ConfigParser::Tokenize(szFlags, L"|");
-			for (const auto& token : tokens)
+			StringParser flags(szFlags);
+			while (!flags.IsConsumed())
 			{
-				const WCHAR* flag = token.c_str();
-				if (_wcsicmp(flag, L"ForceReload") == 0)
+				const auto token = flags.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+				if (token.empty()) continue;
+
+				StringParser flag(token);
+				if (flag.ConsumeRest(L"ForceReload"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_RELOAD;
 				}
-				else if (_wcsicmp(flag, L"Resync") == 0)
+				else if (flag.ConsumeRest(L"Resync"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_RESYNCHRONIZE;
 				}
-				else if (_wcsicmp(flag, L"NoCookies") == 0)
+				else if (flag.ConsumeRest(L"NoCookies"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_COOKIES;
 				}
-				else if (_wcsicmp(flag, L"Hyperlink") == 0)
+				else if (flag.ConsumeRest(L"Hyperlink"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_HYPERLINK;
 				}
-				else if (_wcsicmp(flag, L"TempFile") == 0)
+				else if (flag.ConsumeRest(L"TempFile"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NEED_FILE;
 				}
-				else if (_wcsicmp(flag, L"NoAuth") == 0)
+				else if (flag.ConsumeRest(L"NoAuth"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_AUTH;
 				}
-				else if (_wcsicmp(flag, L"NoCacheWrite") == 0)
+				else if (flag.ConsumeRest(L"NoCacheWrite"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_CACHE_WRITE;
 				}
-				else if (_wcsicmp(flag, L"PragmaNoCache") == 0)
+				else if (flag.ConsumeRest(L"PragmaNoCache"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_PRAGMA_NOCACHE;
 				}
-				else if (_wcsicmp(flag, L"Secure") == 0)
+				else if (flag.ConsumeRest(L"Secure"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_SECURE;
 				}
-				else if (_wcsicmp(flag, L"IgnoreCertName") == 0)
+				else if (flag.ConsumeRest(L"IgnoreCertName"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_CN_INVALID;
 				}
-				else if (_wcsicmp(flag, L"IgnoreCertDate") == 0)
+				else if (flag.ConsumeRest(L"IgnoreCertDate"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_DATE_INVALID;
 				}
-				else if (_wcsicmp(flag, L"IgnoreHTTPRedirect") == 0)
+				else if (flag.ConsumeRest(L"IgnoreHTTPRedirect"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP;
 				}
-				else if (_wcsicmp(flag, L"IgnoreHTTPSRedirect") == 0)
+				else if (flag.ConsumeRest(L"IgnoreHTTPSRedirect"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS;
 				}
 				else
 				{
-					LogErrorF(this, L"Invalid flag: %s", flag);
+					LogErrorF(this, L"Invalid flag: %.*s", (int)token.length(), token.data());
 				}
 			}
 		}

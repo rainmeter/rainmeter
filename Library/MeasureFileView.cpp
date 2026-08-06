@@ -8,7 +8,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "../Common/CriticalSection.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include <queue>
 
@@ -485,7 +485,17 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
 			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
-		child->parent->extensions = ParseUtil::Tokenize(*extensions, L";");
+		child->parent->extensions.clear();
+
+		StringParser extensionList(*extensions);
+		while (!extensionList.IsConsumed())
+		{
+			const auto extension = extensionList.ConsumeUntilOrRest(L';', StringParser::SkipWhitespace);
+			if (extension.empty()) continue;
+
+			child->parent->extensions.emplace_back(extension);
+		}
+
 		extensions = nullptr;
 
 		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");

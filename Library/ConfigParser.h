@@ -58,7 +58,7 @@ public:
 	void DeleteValue(const std::wstring& section, const std::wstring& option);
 
 	bool ReadInheritOption(LPCTSTR section, bool allowMeterStyle = false);
-	void SetInheritChain(const std::wstring& strInherit) { static const std::wstring delim(1, L'|'); Tokenize(strInherit, delim).swap(m_InheritChain); }
+	void SetInheritChain(const std::wstring& strInherit);
 	void ClearInheritChain() { m_InheritChain.clear(); }
 
 	bool GetLastReplaced() { return m_LastReplaced; }
@@ -93,8 +93,6 @@ public:
 	bool ContainsKeyedSectionVariable(const std::wstring& str);
 	static bool IsSectionVariableKey(WCHAR key);
 	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
-
-	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 
 	// Returns the skin's math parser, or a skinless one if the parser is not tied to a skin.
 	const MathParser& GetMathParser() const;
