@@ -9,6 +9,20 @@
 
 namespace {
 
+// A shape option is a '|' separated list of a shape definition and its modifiers, any of which
+// may contain a formula. Returns the next non-empty option, or an empty view once consumed.
+std::wstring_view ConsumeOption(StringParser& options)
+{
+	while (!options.IsConsumed())
+	{
+		const auto option = options.ConsumeUntilOrRest(
+			L'|', StringParser::SkipWhitespace | StringParser::SkipNestedParentheses);
+		if (!option.empty()) return option;
+	}
+
+	return {};
+}
+
 bool CompareAndStrip(std::wstring& str, const WCHAR* prefix)
 {
 	const size_t len = wcslen(prefix);
@@ -79,7 +93,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		Dispose();
 
-		std::map<size_t, std::vector<std::wstring>> combinedShapes;
+		std::map<size_t, std::wstring> combinedShapes;
 
 		WCHAR key[32] = L"Shape";
 		for (size_t i = 1; ; ++i)
@@ -89,20 +103,20 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			auto shape = ReadShapeOption(parser, section, key);
 			if (shape.empty()) break;
 
-			auto args = ConfigParser::TokenizeWithPairedPunctuation(shape, L'|', PairedPunctuation::Parentheses);
+			StringParser options(shape);
+			const auto definition = ConsumeOption(options);
 
 			bool isCombined = false;
-			if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
+			if (!CreateShape(definition, parser, section, isCombined, i - 1)) break;
 
 			// If the shape is combined with another, process later once all shapes have been read.
 			if (isCombined)
 			{
-				combinedShapes.emplace(i - 1, std::move(args));
+				combinedShapes.emplace(i - 1, std::move(shape));
 			}
 			else
 			{
-				args.erase(args.begin());
-				ParseModifiers(m_Shapes[i - 1], args, parser, section);
+				ParseModifiers(m_Shapes[i - 1], options, parser, section);
 			}
 		}
 
@@ -204,7 +218,7 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
+bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 	const WCHAR* section, bool& isCombined, size_t keyId)
 {
 	auto addShape = [&](std::optional<Gfx::Shape> shape) -> bool
@@ -220,8 +234,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 		return false;
 	};
 
-	const size_t argSize = args.size();
-	std::wstring shapeName = args[0];
+	std::wstring shapeName(definition);
 	if (CompareAndStrip(shapeName, L"RECTANGLE"))
 	{
 		auto tokens = ConfigParser::TokenizeWithPairedPunctuation(shapeName, L',', PairedPunctuation::Parentheses);
@@ -413,7 +426,7 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 	return false;
 }
 
-bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::vector<std::wstring>& args)
+bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::wstring& options)
 {
 	auto showError = [&shapeId, this](const WCHAR* description, const WCHAR* error) -> void
 	{
@@ -430,7 +443,9 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 
 	size_t parentId = 0;
 
-	if (args[0].length() < 8)
+	StringParser combine(options);
+	const auto definition = ConsumeOption(combine);
+	if (definition.length() < 8)
 	{
 		std::wstring key = L"Shape";
 		key += std::to_wstring(shapeId + 1);
@@ -438,7 +453,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 		return false;
 	}
 
-	std::wstring parentName = args[0].substr(8);  // Remove 'Combine '
+	std::wstring parentName(definition.substr(8));  // Remove 'Combine '
 	if (CompareAndStrip(parentName, L"SHAPE"))
 	{
 		parentId = getShapeId(parentName.c_str());
@@ -471,10 +486,11 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 		return false;
 	}
 
-	args.erase(args.begin());  // Remove Combine definition
-
-	for (auto& option : args)
+	while (!combine.IsConsumed())
 	{
+		std::wstring option(ConsumeOption(combine));
+		if (option.empty()) continue;
+
 		D2D1_COMBINE_MODE mode = D2D1_COMBINE_MODE_FORCE_DWORD;
 		if (CompareAndStrip(option, L"UNION")) mode = D2D1_COMBINE_MODE_UNION;
 		else if (CompareAndStrip(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
@@ -517,7 +533,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 	return true;
 }
 
-void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, const WCHAR* section, bool recursive)
 {
 	auto parseCap = [this](std::wstring& cap) -> D2D1_CAP_STYLE
 	{
@@ -532,8 +548,11 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 		}
 	};
 
-	for (auto& option : args)
+	while (!modifiers.IsConsumed())
 	{
+		std::wstring option(ConsumeOption(modifiers));
+		if (option.empty()) continue;
+
 		if (CompareAndStrip(option, L"FILL"))
 		{
 			if (CompareAndStrip(option, L"COLOR"))
@@ -718,8 +737,8 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, std::vector<std::wstring>& ar
 					std::wstring key = ReadShapeOption(parser, section, std::move(extend));
 					if (!key.empty())
 					{
-						auto newArgs = ConfigParser::TokenizeWithPairedPunctuation(key, L'|', PairedPunctuation::Parentheses);
-						ParseModifiers(shape, newArgs, parser, section, true);
+						StringParser extendedModifiers(key);
+						ParseModifiers(shape, extendedModifiers, parser, section, true);
 					}
 				}
 			}
