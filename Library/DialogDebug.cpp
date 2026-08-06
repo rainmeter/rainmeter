@@ -741,6 +741,7 @@ public:
 		Id_ExplanationLabel,
 		Id_Edit,
 		Id_Result,
+		Id_CopyButton,
 		Id_ExecuteButton,
 		Id_AddButton,
 		Id_CancelButton
@@ -823,6 +824,7 @@ public:
 		SendMessage(resultItem, WM_SETREDRAW, TRUE, 0);
 		RedrawWindow(resultItem, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 
+		EnableWindow(GetControl(Id_CopyButton), !result.empty());
 		EnableWindow(GetControl(Id_ExecuteButton), m_Owner.m_SkinWindow && result.starts_with(L"[!"));
 	}
 
@@ -898,8 +900,11 @@ private:
 			Control::Edit(Id_Result, 0,
 				6, 96, 388, 50,
 				WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0),
+			Control::Button(Id_CopyButton, IDS_Copy,
+				6, 156, 75, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(Id_ExecuteButton, IDS_Execute,
-				157, 156, 75, 14,
+				87, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(Id_AddButton, IDS_Add,
 				238, 156, 75, 14,
@@ -941,6 +946,21 @@ private:
 			{
 				UpdateLabel();
 				UpdateResult();
+			}
+			break;
+
+		case Id_CopyButton:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				HWND result = GetControl(Id_Result);
+				const int length = GetWindowTextLength(result);
+				if (length > 0)
+				{
+					std::wstring text(length + 1, L'\0');
+					GetWindowText(result, &text[0], length + 1);
+					text.resize(length);
+					System::SetClipboardText(text);
+				}
 			}
 			break;
 
