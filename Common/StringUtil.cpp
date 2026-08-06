@@ -61,24 +61,6 @@ std::wstring Widen(const char* str, int strLen, int cp)
 	return wideStr;
 }
 
-void LTrim(std::wstring& str)
-{
-	str.erase(str.begin(), std::find_if(str.begin(), str.end(),
-		[](wint_t ch) { return !std::iswspace(ch); }));
-}
-
-void RTrim(std::wstring& str)
-{
-	str.erase(std::find_if(str.rbegin(), str.rend(),
-		[](wint_t ch) { return !std::iswspace(ch); }).base(), str.end());
-}
-
-void Trim(std::wstring& str)
-{
-	LTrim(str);
-	RTrim(str);
-}
-
 std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single)
 {
 	if (str.size() > 1)
