@@ -15,8 +15,8 @@ void ReportFormulaError(ParseUtil::FormulaErrorCallback errorCallback, const WCH
 	}
 }
 
-// Equivalent to ParseInt, but does not require the value to be null terminated.
-int ParseIntValue(std::wstring_view str, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback)
+template <typename T, typename ConsumeFunc>
+T ParseNumber(std::wstring_view str, T defValue, const MathParser& mathParser, ParseUtil::FormulaErrorCallback errorCallback, ConsumeFunc consumeFunc)
 {
 	StringParser parser(str);
 	parser.ConsumeWhitespace();
@@ -28,14 +28,14 @@ int ParseIntValue(std::wstring_view str, const MathParser& mathParser, ParseUtil
 		const WCHAR* errMsg = mathParser.CheckedParse(formula.c_str(), &value);
 		if (!errMsg)
 		{
-			return (int)value;
+			return (T)value;
 		}
 
 		ReportFormulaError(errorCallback, errMsg, formula.c_str());
-		return 0;
+		return defValue;
 	}
 
-	return parser.ConsumeInt().value_or(0);
+	return consumeFunc(parser).value_or(defValue);
 }
 
 template <typename T>
@@ -47,14 +47,15 @@ bool ParseInt4(std::wstring_view str, T& v1, T& v2, T& v3, T& v4, const MathPars
 	size_t index = 0;
 
 	StringParser parser(str);
-	while (index < _countof(values) && !parser.IsConsumed())
+	while (index < _countof(values))
 	{
 		// A trailing value consisting only of whitespace is not a value, and leaves the
 		// remaining components at their defaults.
-		if (parser.Remaining().find_first_not_of(L" \t") == std::wstring_view::npos) break;
+		parser.ConsumeWhitespace();
+		if (parser.IsConsumed()) break;
 
 		const auto value = parser.ConsumeUntilOrRest(L',', StringParser::SkipNestedParentheses);
-		*values[index++] = (T)ParseIntValue(value, mathParser, errorCallback);
+		*values[index++] = (T)ParseUtil::ParseInt(value, 0, mathParser, errorCallback);
 	}
 
 	return true;
@@ -118,6 +119,22 @@ int ParseInt(LPCTSTR str, int defValue, const MathParser& mathParser, FormulaErr
 	}
 
 	return defValue;
+}
+
+double ParseDouble(std::wstring_view str, double defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
+{
+	return ParseNumber<double>(str, defValue, mathParser, errorCallback, [](StringParser& parser)
+		{
+			return parser.ConsumeDouble();
+		});
+}
+
+int ParseInt(std::wstring_view str, int defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)
+{
+	return ParseNumber<int>(str, defValue, mathParser, errorCallback, [](StringParser& parser)
+		{
+			return parser.ConsumeInt();
+		});
 }
 
 uint32_t ParseUInt(LPCTSTR str, uint32_t defValue, const MathParser& mathParser, FormulaErrorCallback errorCallback)

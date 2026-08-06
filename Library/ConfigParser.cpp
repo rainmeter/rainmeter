@@ -1532,6 +1532,16 @@ int ConfigParser::ParseInt(LPCTSTR str, int defValue)
 	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
 }
 
+double ConfigParser::ParseDouble(std::wstring_view str, double defValue)
+{
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(), LogFormulaError);
+}
+
+int ConfigParser::ParseInt(std::wstring_view str, int defValue)
+{
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
+}
+
 uint32_t ConfigParser::ParseUInt(LPCTSTR str, uint32_t defValue)
 {
 	return ParseUtil::ParseUInt(str, defValue, GetMathParser(), LogFormulaError);
