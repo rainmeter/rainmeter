@@ -24,7 +24,8 @@ void LTrim(std::wstring& str);
 void RTrim(std::wstring& str);
 void Trim(std::wstring& str);
 
-size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single = false);
+// Removes a leading and trailing pair of double quotes, or of single quotes if |single| is set.
+std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single = false);
 
 bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount);
 void ToLowerCase(std::wstring& str);

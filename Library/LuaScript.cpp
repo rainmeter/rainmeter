@@ -4,6 +4,7 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 #include "../Common/MathParser.h"
+#include "../Common/StringParser.h"
 #include "LuaScript.h"
 #include "LuaHelper.h"
 #include "Measure.h"
@@ -295,7 +296,7 @@ LuaResult LuaScript::RunString(const std::wstring& str)
 	return LuaResult::Success();
 }
 
-bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring>& args, std::wstring& strValue)
+bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring_view>& args, std::wstring& strValue)
 {
 	if (!IsInitialized()) return false;
 
@@ -323,61 +324,59 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 
 	// Stack: [table, function]
 	int numArgs = 0;
-	if (args.size() > 0)
+	for (const auto& arg : args)
 	{
-		for (auto iter : args)
+		StringParser value(arg);
+		if (arg.size() > 1 && (arg.front() == L'\"' || arg.front() == L'\''))
 		{
-			size_t argSize = iter.size();
-			if ((iter[0] == L'\"' || iter[0] == L'\'') && argSize > 1)
-			{
-				argSize = StringUtil::StripLeadingAndTrailingQuotes(iter, true);
+			const auto str = StringUtil::StripLeadingAndTrailingQuotes(arg, true);
+			const std::string nArg = m_Unicode ?
+				StringUtil::NarrowUTF8(str.data(), (int)str.length()) :
+				StringUtil::Narrow(str.data(), (int)str.length());
 
-				std::string arg = m_Unicode ?
-					StringUtil::NarrowUTF8(iter) : StringUtil::Narrow(iter);
+			lua_pushlstring(L, nArg.c_str(), nArg.size());
+		}
+		else if (value.ConsumeRest(L"true"))
+		{
+			lua_pushboolean(L, 1);
+		}
+		else if (value.ConsumeRest(L"false"))
+		{
+			lua_pushboolean(L, 0);
+		}
+		else if (value.ConsumeRest(L"nil"))
+		{
+			lua_pushnil(L);
+		}
+		else
+		{
+			double num = 0.0;
+			if (!arg.empty() && arg.front() == L'(')
+			{
+				// CheckedParse needs a null terminated formula.
+				const std::wstring formula(arg);
+				const WCHAR* errMsg = m_MathParser.CheckedParse(formula.c_str(), &num);
+				if (errMsg)
+				{
+					strValue = L"Formula: ";
+					strValue += errMsg;
+					strValue += L" in parameter: \"";
+					strValue.append(arg);
+					strValue += L'"';
 
-				lua_pushlstring(L, arg.c_str(), arg.size());
-			}
-			else if (_wcsicmp(iter.c_str(), L"true") == 0)
-			{
-				lua_pushboolean(L, 1);
-			}
-			else if (_wcsicmp(iter.c_str(), L"false") == 0)
-			{
-				lua_pushboolean(L, 0);
-			}
-			else if (_wcsicmp(iter.c_str(), L"nil") == 0)
-			{
-				lua_pushnil(L);
+					// Stack: [table, function, args...]
+					lua_pop(L, 2 + numArgs);
+					return false;
+				}
 			}
 			else
 			{
-				double num = 0.0;
-				const WCHAR* str = iter.c_str();
-				if (*str == L'(')
-				{
-					const WCHAR* errMsg = m_MathParser.CheckedParse(str, &num);
-					if (errMsg)
-					{
-						strValue = L"Formula: ";
-						strValue += errMsg;
-						strValue += L" in parameter: \"";
-						strValue += iter;
-						strValue += L'"';
-
-						// Stack: [table, function, args...]
-						lua_pop(L, 2 + numArgs);
-						return false;
-					}
-				}
-				else
-				{
-					num = wcstod(str, nullptr);
-				}
-
-				lua_pushnumber(L, num);
+				num = value.ConsumeDouble().value_or(0.0);
 			}
-			++numArgs;
+
+			lua_pushnumber(L, num);
 		}
+		++numArgs;
 	}
 
 	// Stack: [table, function, args...]

@@ -79,7 +79,7 @@ void Trim(std::wstring& str)
 	RTrim(str);
 }
 
-size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
+std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single)
 {
 	if (str.size() > 1)
 	{
@@ -88,11 +88,11 @@ size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
 		if ((first == L'"' && last == L'"') ||				// "some string"
 			(single && first == L'\'' && last == L'\''))	// 'some string'
 		{
-			str.erase(0, 1);
-			str.erase(str.size() - 1);
+			str.remove_prefix(1);
+			str.remove_suffix(1);
 		}
 	}
-	return str.size();
+	return str;
 }
 
 bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)

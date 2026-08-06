@@ -297,22 +297,23 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			function == "GetPluginVersion")			// Old API
 			return false;
 
-		// Parse arguments
+		// Parse arguments. Plugins expect null terminated strings, so the arguments cannot be
+		// passed on as views into |command|.
 		std::vector<std::wstring> _args;
 		parser.ConsumeWhitespace();
 		while (!parser.IsConsumed())
 		{
-			_args.emplace_back(parser.ConsumeUntilOrRest(
-				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted));
+			const auto arg = parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted);
+			_args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
 			parser.ConsumeWhitespace();
 		}
 
 		// Convert strings in array to raw type
 		std::vector<LPCWSTR> args;
 		args.reserve(_args.size());
-		for (auto& str : _args)
+		for (const auto& str : _args)
 		{
-			StringUtil::StripLeadingAndTrailingQuotes(str, true);
 			args.emplace_back(str.c_str());
 		}
 

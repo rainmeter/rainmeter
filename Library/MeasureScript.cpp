@@ -229,7 +229,7 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 		}
 
-		std::vector<std::wstring> args;
+		std::vector<std::wstring_view> args;
 		parser.ConsumeWhitespace();
 		while (!parser.IsConsumed())
 		{
