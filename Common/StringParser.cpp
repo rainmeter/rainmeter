@@ -15,11 +15,16 @@ bool IsWhitespace(const WCHAR* current, const WCHAR* end)
 	return ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n';
 }
 
+bool HasOption(StringParser::Option option, StringParser::Option flag)
+{
+	return (option & flag) != 0;
+}
+
 template <typename T, typename ParseFunc>
 std::optional<T> ConsumeNumber(const WCHAR*& current, const WCHAR* end, ParseFunc parseFunc, StringParser::Option option)
 {
 	if (current >= end) return std::nullopt;
-	if (option != StringParser::SkipWhitespace && IsWhitespace(current, end)) return std::nullopt;
+	if (!HasOption(option, StringParser::SkipWhitespace) && IsWhitespace(current, end)) return std::nullopt;
 
 	WCHAR* parseEnd = nullptr;
 	errno = 0;
@@ -41,7 +46,7 @@ std::optional<T> ConsumeRestNumber(const WCHAR*& current, const WCHAR* end, Pars
 		return std::nullopt;
 	}
 
-	if (option == StringParser::SkipWhitespace)
+	if (HasOption(option, StringParser::SkipWhitespace))
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -67,10 +72,10 @@ std::optional<T> ConsumeNumberOrFormula(
 	StringParser::Option option)
 {
 	if (current >= end) return std::nullopt;
-	if (option != StringParser::SkipWhitespace && IsWhitespace(current, end)) return std::nullopt;
+	if (!HasOption(option, StringParser::SkipWhitespace) && IsWhitespace(current, end)) return std::nullopt;
 
 	const WCHAR* start = current;
-	if (option == StringParser::SkipWhitespace)
+	if (HasOption(option, StringParser::SkipWhitespace))
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -115,7 +120,7 @@ std::optional<T> ConsumeRestNumberOrFormula(
 		return std::nullopt;
 	}
 
-	if (option == StringParser::SkipWhitespace)
+	if (HasOption(option, StringParser::SkipWhitespace))
 	{
 		while (IsWhitespace(current, end))
 		{
@@ -149,7 +154,7 @@ bool StringParser::Consume(const WCHAR* str, size_t length, Option option)
 {
 	assert(str);
 
-	if (option == SkipWhitespace)
+	if (HasOption(option, SkipWhitespace))
 	{
 		ConsumeWhitespace();
 	}
@@ -171,7 +176,7 @@ bool StringParser::ConsumeRest(const WCHAR* str, size_t length, Option option)
 		return false;
 	}
 
-	if (option == SkipWhitespace)
+	if (HasOption(option, SkipWhitespace))
 	{
 		ConsumeWhitespace();
 	}
@@ -221,20 +226,27 @@ bool StringParser::ConsumeRest(WCHAR ch)
 
 std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
 {
-	if (option == SkipWhitespace)
+	if (HasOption(option, SkipWhitespace))
 	{
 		ConsumeWhitespace();
 	}
 
 	const WCHAR* start = m_Current;
-	while (m_Current < m_End && *m_Current != delimiter)
+	const bool skipNested = HasOption(option, SkipNestedParentheses);
+	int depth = 0;
+	while (m_Current < m_End)
 	{
+		const WCHAR ch = *m_Current;
+		if (skipNested && ch == L'(') ++depth;
+		else if (skipNested && ch == L')') --depth;
+		else if (ch == delimiter && depth == 0) break;
+
 		++m_Current;
 	}
 	if (m_Current == m_End) return {};
 
 	const WCHAR* valueEnd = m_Current++;
-	if (option == SkipWhitespace)
+	if (HasOption(option, SkipWhitespace))
 	{
 		while (valueEnd > start && iswspace(*(valueEnd - 1)))
 		{
@@ -246,7 +258,7 @@ std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
 
 std::wstring_view StringParser::ConsumeRest(Option option)
 {
-	if (option == SkipWhitespace)
+	if (HasOption(option, SkipWhitespace))
 	{
 		ConsumeWhitespace();
 		while (m_End > m_Current && iswspace(*(m_End - 1)))

@@ -18,7 +18,12 @@ public:
 	enum Option
 	{
 		None = 0,
-		SkipWhitespace = 1
+
+		// Skips leading whitespace before matching, and trailing whitespace of the match.
+		SkipWhitespace = 1 << 0,
+
+		// Ignores delimiters inside a pair of parentheses. Only used by ConsumeUntil.
+		SkipNestedParentheses = 1 << 1
 	};
 
 	explicit StringParser(std::wstring_view str);
@@ -83,3 +88,8 @@ private:
 	const WCHAR* m_Current;
 	const WCHAR* m_End;
 };
+
+inline StringParser::Option operator|(StringParser::Option lhs, StringParser::Option rhs)
+{
+	return (StringParser::Option)((int)lhs | (int)rhs);
+}

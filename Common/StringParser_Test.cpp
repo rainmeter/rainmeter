@@ -138,4 +138,53 @@ public:
 		Assert::IsFalse(parser.ConsumeRestIntOrFormula(mathParser).has_value());
 		Assert::IsTrue(parser.ConsumeRest(L"(1 + 2)tail"));
 	}
+
+	TEST_METHOD(TestConsumeUntil)
+	{
+		StringParser parser(L"first|second|third");
+
+		AssertValue(L"first", parser.ConsumeUntil(L'|'));
+		AssertValue(L"second", parser.ConsumeUntil(L'|'));
+		AssertValue(L"", parser.ConsumeUntil(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipWhitespaceOption)
+	{
+		StringParser parser(L"  first \t| second");
+
+		AssertValue(L"first", parser.ConsumeUntil(L'|', StringParser::SkipWhitespace));
+		Assert::IsTrue(parser.ConsumeRest(L"second", StringParser::SkipWhitespace));
+	}
+
+	TEST_METHOD(TestConsumeUntilIgnoresParenthesesByDefault)
+	{
+		StringParser parser(L"(1,2),3");
+
+		AssertValue(L"(1", parser.ConsumeUntil(L','));
+		Assert::IsTrue(parser.ConsumeRest(L"2),3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipNestedParenthesesOption)
+	{
+		StringParser parser(L"(min(1,2)),3");
+
+		AssertValue(L"(min(1,2))", parser.ConsumeUntil(L',', StringParser::SkipNestedParentheses));
+		Assert::IsTrue(parser.ConsumeRest(L"3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilCombinedOptions)
+	{
+		StringParser parser(L" (1 + 2) , tail");
+		const auto option = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		AssertValue(L"(1 + 2)", parser.ConsumeUntil(L',', option));
+		Assert::IsTrue(parser.ConsumeRest(L"tail", StringParser::SkipWhitespace));
+	}
+
+private:
+	static void AssertValue(const WCHAR* expected, std::wstring_view actual)
+	{
+		Assert::AreEqual(expected, std::wstring(actual).c_str());
+	}
 };
