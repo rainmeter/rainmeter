@@ -32,6 +32,12 @@ public:
 	{
 	}
 
+	RawString(RawString&& rhs) noexcept :
+		m_String(rhs.m_String)
+	{
+		rhs.m_String = nullptr;
+	}
+
 	~RawString()
 	{
 		clear();
@@ -59,6 +65,17 @@ public:
 		if (&rhs != this)
 		{
 			assign(rhs.m_String);
+		}
+		return *this;
+	}
+
+	RawString& operator=(RawString&& rhs) noexcept
+	{
+		if (&rhs != this)
+		{
+			clear();
+			m_String = rhs.m_String;
+			rhs.m_String = nullptr;
 		}
 		return *this;
 	}

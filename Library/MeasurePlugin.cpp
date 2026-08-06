@@ -6,6 +6,7 @@
 #include "Skin.h"
 #include "Export.h"
 #include "System.h"
+#include "../Common/RawString.h"
 #include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
@@ -297,30 +298,25 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			function == "GetPluginVersion")			// Old API
 			return false;
 
-		// Parse arguments. Plugins expect null terminated strings, so the arguments cannot be
-		// passed on as views into |command|.
-		std::vector<std::wstring> _args;
+		// Plugins expect an array of null terminated strings, so the arguments cannot be passed on as
+		// views into |command|. A RawString is a single pointer to such a string, which makes the
+		// vector itself the array the plugin expects.
+		static_assert(sizeof(RawString) == sizeof(WCHAR*), "RawString must be a single string pointer.");
+
+		std::vector<RawString> args;
 		parser.ConsumeWhitespace();
 		while (!parser.IsConsumed())
 		{
 			const auto arg = parser.ConsumeUntilOrRest(
 				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted);
-			_args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
+			args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
 			parser.ConsumeWhitespace();
-		}
-
-		// Convert strings in array to raw type
-		std::vector<LPCWSTR> args;
-		args.reserve(_args.size());
-		for (const auto& str : _args)
-		{
-			args.emplace_back(str.c_str());
 		}
 
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, (const int)args.size(), args.data());
+			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), (WCHAR**)args.data());
 			if (result)
 			{
 				strValue = result;
