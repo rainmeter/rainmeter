@@ -326,6 +326,15 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_Expression = parser.ReadString(section, L"JsonPointer", L"");
 		m_ParseType = parser.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
+
+		// |JsonPointer=1| enables JSON parsing without resolving a value for this measure.
+		// Only child measures will resolve values from the parsed document. Note that "1" is
+		// not a valid pointer expression (those must be empty or start with "/"), so there is
+		// no ambiguity here.
+		if (m_ParseType == ParseType::JsonPointer && m_Expression == L"1")
+		{
+			m_Expression.clear();
+		}
 	}
 	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
 	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
@@ -785,12 +794,17 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 			return true;
 		};
 
-		doErrorAction = !updateResult(this);
+		// An empty expression (|JsonPointer=1|) means the measure itself does not resolve
+		// a value from the document.
+		if (!m_Expression.empty())
+		{
+			doErrorAction = !updateResult(this);
+		}
 
 		for (auto* baseMeasure : GetSkin()->GetMeasures())
 		{
 			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
-			if (!measure) continue;
+			if (!measure || measure->m_Expression.empty()) continue;
 
 			if (updateResult(measure) && measure->m_Download)
 			{
