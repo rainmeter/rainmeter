@@ -24,13 +24,20 @@ public:
 
 	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
+	// Creates a standalone context menu for |skin|. If |allSkinsMenu| is null, the skin root
+	// submenu is omitted. The caller is responsible for destroying the returned menu and for
+	// dispatching the selected command with SendMenuCommand.
+	static HMENU CreateSkinMenu(Skin* skin, int index = 0, HMENU allSkinsMenu = nullptr);
+
+	// Sends |command| to |commandWindow| along with the checked state of the menu item.
+	static void SendMenuCommand(HMENU menu, UINT command, HWND commandWindow);
+
 	static HMENU CreateGameModeOnStartMenu();
 	static HMENU CreateGameModeOnStopMenu();
 
 private:
 	void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND commandWindow = nullptr);
 
-	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
 	static HMENU CreateSkinSettingsMenu(const std::vector<Skin*>& skins);
 	static HMENU CreateSkinSelectionMenu();
 	static void AppendSkinCustomMenu(

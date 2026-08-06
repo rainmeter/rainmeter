@@ -420,7 +420,7 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return result;
 }
 
-UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window)
+UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT extraFlags)
 {
 	assert(!c_PopupMenuFilterHook);
 
@@ -456,7 +456,7 @@ UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window)
 	};
 	c_PopupMenuFilterHook = SetWindowsHookEx(WH_MSGFILTER, popupMenuFilter, nullptr, GetCurrentThreadId());
 
-	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN;
+	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN | extraFlags;
 	const int x = rtl ? rect.right : rect.left;
 	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, window, nullptr);
 	if (c_PopupMenuFilterHook)

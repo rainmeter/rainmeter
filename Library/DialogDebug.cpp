@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
+#include "ContextMenu.h"
 #include "Language.h"
 #include "Skin.h"
 #include "System.h"
@@ -1625,9 +1626,18 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_SkinMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED && m_SkinWindow)
 		{
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow, GetParent(m_Window));
+			HMENU menu = ContextMenu::CreateSkinMenu(m_SkinWindow);
+			if (menu)
+			{
+				const UINT command = Dialog::ShowMenuButtonPopupMenu(
+					menu, (HWND)lParam, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
+				if (command)
+				{
+					ContextMenu::SendMenuCommand(menu, command, m_SkinWindow->GetWindow());
+				}
+
+				DestroyMenu(menu);
+			}
 		}
 		break;
 
