@@ -1202,7 +1202,9 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				// Already active.
+				// Already active. Bring it to the front.
+				Skin* skin = (*iter).second;
+				skin->ChangeSingleZPos(skin->GetWindowZPosition());
 				return;
 			}
 
