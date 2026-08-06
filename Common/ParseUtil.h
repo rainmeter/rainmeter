@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <d2d1.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class MathParser;
@@ -28,6 +29,7 @@ uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue, const MathParser& mathParse
 
 // Expects three or four comma separated values or one hex-value.
 D2D1_COLOR_F ParseColor(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
+D2D1_COLOR_F ParseColor(std::wstring_view str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
 
 // Expects four comma separated values (X/Y/Width/Height).
 D2D1_RECT_F ParseRect(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback errorCallback = nullptr);
