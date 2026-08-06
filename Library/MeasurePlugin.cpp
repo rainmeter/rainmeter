@@ -6,6 +6,7 @@
 #include "Skin.h"
 #include "Export.h"
 #include "System.h"
+#include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
@@ -252,16 +253,14 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
-	WCHAR errMsg[MAX_LINE_LENGTH];
-
-	size_t sPos = command.find_first_of(L'(');
-	if (sPos != std::wstring::npos)
+	// A command is a function call, "Function(Arg1, Arg2)".
+	StringParser parser(command);
+	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
+	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		size_t ePos = command.find_last_of(L')');
-		if (ePos == std::wstring::npos ||
-			sPos > ePos ||
-			command.size() < 3)
+		if (funcName.empty() || !parser.ConsumeSuffix(L")"))
 		{
+			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
 			if (delayedLogEntry)
 			{
@@ -286,7 +285,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		}
 
 		// Prevent calling known API functions
-		std::string function = StringUtil::Narrow(command.substr(0, sPos));
+		std::string function = StringUtil::Narrow(funcName.data(), (int)funcName.length());
 		if (function == "Initialize" ||
 			function == "Reload" ||
 			function == "Update" ||
@@ -299,13 +298,18 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 
 		// Parse arguments
-		auto _args = ConfigParser::TokenizeWithPairedPunctuation(
-			command.substr(sPos + 1, ePos - sPos - 1),
-			L',',
-			PairedPunctuation::BothQuotes);
+		std::vector<std::wstring> _args;
+		parser.ConsumeWhitespace();
+		while (!parser.IsConsumed())
+		{
+			_args.emplace_back(parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted));
+			parser.ConsumeWhitespace();
+		}
 
 		// Convert strings in array to raw type
 		std::vector<LPCWSTR> args;
+		args.reserve(_args.size());
 		for (auto& str : _args)
 		{
 			StringUtil::StripLeadingAndTrailingQuotes(str, true);
@@ -323,12 +327,12 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid return type in function: %s", command.substr(0, sPos).c_str());
+				LogErrorF(this, L"Invalid return type in function: %s", std::wstring(funcName).c_str());
 			}
 		}
 		else
 		{
-			LogErrorF(this, L"Cannot find function: %s", command.substr(0, sPos).c_str());
+			LogErrorF(this, L"Cannot find function: %s", std::wstring(funcName).c_str());
 		}
 	}
 

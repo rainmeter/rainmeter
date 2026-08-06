@@ -250,11 +250,15 @@ const WCHAR* StringParser::ScanToDelimiter(WCHAR delimiter, Option option)
 
 	const WCHAR* start = m_Current;
 	const bool skipNested = HasOption(option, SkipNestedParentheses);
+	const bool skipQuoted = HasOption(option, SkipQuoted);
 	int depth = 0;
+	WCHAR quote = L'\0';
 	while (m_Current < m_End)
 	{
 		const WCHAR ch = *m_Current;
-		if (skipNested && ch == L'(') ++depth;
+		if (quote) { if (ch == quote) quote = L'\0'; }
+		else if (skipQuoted && (ch == L'"' || ch == L'\'')) quote = ch;
+		else if (skipNested && ch == L'(') ++depth;
 		else if (skipNested && ch == L')') --depth;
 		else if (ch == delimiter && depth == 0) break;
 

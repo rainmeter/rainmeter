@@ -5,6 +5,7 @@
 #include "LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
+#include "../Common/StringParser.h"
 
 const char* g_InitializeFunctionName = "Initialize";
 const char* g_UpdateFunctionName = "Update";
@@ -196,17 +197,15 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
-	WCHAR errMsg[MAX_LINE_LENGTH];
-
-	size_t sPos = command.find_first_of(L'(');
-	if (sPos != std::wstring::npos)
+	// A command is either a function call, "Function(Arg1, Arg2)", or the name of a variable.
+	StringParser parser(command);
+	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
+	if (!funcName.empty() || !parser.IsConsumed())
 	{
 		// Function call
-		size_t ePos = command.find_last_of(L')');
-		if (ePos == std::wstring::npos ||
-			sPos > ePos ||
-			command.size() < 3)
+		if (funcName.empty() || !parser.ConsumeSuffix(L")"))
 		{
+			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
 			if (delayedLogEntry)
 			{
@@ -230,13 +229,16 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 		}
 
-		std::wstring funcName = command.substr(0, sPos);
-		auto args = ConfigParser::TokenizeWithPairedPunctuation(
-			command.substr(sPos + 1, ePos - sPos - 1),
-			L',',
-			PairedPunctuation::BothQuotes);
+		std::vector<std::wstring> args;
+		parser.ConsumeWhitespace();
+		while (!parser.IsConsumed())
+		{
+			args.emplace_back(parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted));
+			parser.ConsumeWhitespace();
+		}
 
-		if (!m_LuaScript.RunCustomFunction(funcName, args, strValue))
+		if (!m_LuaScript.RunCustomFunction(std::wstring(funcName), args, strValue))
 		{
 			if (!strValue.empty())
 			{

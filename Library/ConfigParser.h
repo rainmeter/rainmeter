@@ -95,7 +95,6 @@ public:
 	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
 	// Returns the skin's math parser, or a skinless one if the parser is not tied to a skin.
 	const MathParser& GetMathParser() const;

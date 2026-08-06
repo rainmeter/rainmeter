@@ -9,7 +9,7 @@
 #include "Skin.h"
 #include "SkinDropTarget.h"
 #include "../Common/PathUtil.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 
 namespace {
 
@@ -125,7 +125,16 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", false);
 	if (!bounds.empty())
 	{
-		const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(bounds, L',', PairedPunctuation::Parentheses);
+		std::vector<std::wstring_view> tokens;
+		StringParser values(bounds);
+		values.ConsumeWhitespace();
+		while (!values.IsConsumed())
+		{
+			tokens.emplace_back(values.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipNestedParentheses));
+			values.ConsumeWhitespace();
+		}
+
 		if (tokens.size() == 1)
 		{
 			m_BoundsMeter = tokens[0];
@@ -135,7 +144,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_UsingFixedBounds = true;
 			for (size_t i = 0; i < tokens.size(); ++i)
 			{
-				m_BoundsFormulas[i] = parser.ParseFormulaWithModifiers(tokens[i]);
+				m_BoundsFormulas[i] = parser.ParseFormulaWithModifiers(std::wstring(tokens[i]));
 			}
 		}
 		else

@@ -21,6 +21,7 @@
 #include "TextInlineFormat/TextInlineFormatUnderline.h"
 #include "TextInlineFormat/TextInlineFormatWeight.h"
 #include "../ParseUtil.h"
+#include "../StringParser.h"
 
 namespace {
 
@@ -815,16 +816,23 @@ void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstri
 {
 	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
 
-	std::vector<std::wstring> tokens;
 	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
 	for (size_t i = 1; i < args.size(); ++i)
 	{
-		tokens = ParseUtil::TokenizeWithPairedPunctuation(args[i], L';', PairedPunctuation::Parentheses);
-		if (tokens.size() == 2)
-		{
-			stops[i - 1].color = ParseUtil::ParseColor(tokens[0].c_str(), m_MathParser);
-			stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(tokens[1].c_str(), 0.0, m_MathParser);
-		}
+		const auto consumeOption = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		// A stop is a color and a position, "Color;Position".
+		StringParser values(args[i]);
+		const auto color = values.ConsumeUntil(L';', consumeOption);
+		values.ConsumeWhitespace();
+		if (values.IsConsumed()) continue;
+
+		const auto position = values.ConsumeUntilOrRest(L';', consumeOption);
+		values.ConsumeWhitespace();
+		if (!values.IsConsumed()) continue;
+
+		stops[i - 1].color = ParseUtil::ParseColor(color, m_MathParser);
+		stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(position, 0.0, m_MathParser);
 	}
 
 	// If gradient only has 1 stop, add a transparent stop at appropriate place

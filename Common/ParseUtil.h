@@ -11,12 +11,6 @@
 
 class MathParser;
 
-enum class PairedPunctuation : BYTE
-{
-	BothQuotes,
-	Parentheses
-};
-
 namespace ParseUtil {
 
 using FormulaErrorCallback = void (*)(const WCHAR* error, const WCHAR* formula);
@@ -44,8 +38,5 @@ RECT ParseRECT(LPCTSTR str, const MathParser& mathParser, FormulaErrorCallback e
 
 // Splits the string from the delimiters and trims empty elements and whitespace.
 std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-
-// Similar to Tokenize, but skips delimiters inside of the defined paired punctuation.
-std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
 
 }  // namespace ParseUtil
