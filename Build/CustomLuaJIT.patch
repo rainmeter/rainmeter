@@ -13,6 +13,8 @@ The patch:
 - Makes os.setlocale() return nil without changing the process locale.
 - Protects Windows builds from invalid CRT parameters passed through strftime.
 - Increases the maximum number of pattern captures to 256.
+- Restores the Lua 5.1 LUA_COMPAT_VARARG behavior, i.e. the implicit 'arg'
+  table in vararg functions which do not use '...'.
 
 ---
 
@@ -186,18 +188,176 @@ diff --git a/src/lib_os.c b/src/lib_os.c
    return 1;
  }
 
+diff --git a/src/lj_parse.c b/src/lj_parse.c
+--- a/src/lj_parse.c
++++ b/src/lj_parse.c
+@@ -147,6 +147,9 @@ typedef struct FuncState {
+   BCPos pc;			/* Next bytecode position. */
+   BCPos lasttarget;		/* Bytecode position of last jump target. */
+   BCPos jpc;			/* Pending jump list to next bytecode. */
++#if defined(LUAJIT_COMPAT_VARARG)
++  BCPos argpc;			/* Bytecode position of the 'arg' prologue. */
++#endif
+   BCReg freereg;		/* First free register. */
+   BCReg nactvar;		/* Number of active local variables. */
+   BCReg nkn, nkgc;		/* Number of lua_Number/GCobj constants */
+@@ -1755,6 +1758,9 @@ static void fs_init(LexState *ls, FuncState *fs)
+   fs->pc = 0;
+   fs->lasttarget = 0;
+   fs->jpc = NO_JMP;
++#if defined(LUAJIT_COMPAT_VARARG)
++  fs->argpc = 0;
++#endif
+   fs->freereg = 0;
+   fs->nkgc = 0;
+   fs->nkn = 0;
+@@ -1944,15 +1950,67 @@ static void expr_table(LexState *ls, ExpDesc *e)
+     if (needarr && t->asize < narr)
+       lj_tab_reasize(fs->L, t, narr-1);
+     lj_gc_check(fs->L);
++  }
++}
++
++#if defined(LUAJIT_COMPAT_VARARG)
++
++/* Number of bytecode instructions emitted by bcemit_argtab(). */
++#define ARGTAB_INS	5
++
++/* Emit prologue which fills the implicit 'arg' table of a vararg function.
++** This is the compile-time equivalent of what adjust_varargs() did at call
++** time in Lua 5.1, i.e. 'arg' becomes {..., n = <number of varargs>}. Note
++** that 'n' is derived with '#' rather than an exact count, so it differs from
++** Lua 5.1 if the varargs contain nils. That matches what unpack() and '#'
++** themselves see, which is all legacy code ever relies on.
++*/
++static void bcemit_argtab(FuncState *fs)
++{
++  BCReg reg = fs->numparams;  /* Register of the implicit 'arg' variable. */
++  ExpDesc e;
++  bcreg_reserve(fs, 1);  /* Scratch register for the vararg values. */
++  fs->argpc = fs->pc;
++  bcemit_AD(fs, BC_TNEW, reg, 3|(hsize2hbits(1)<<11));
++  bcemit_ABC(fs, BC_VARG, reg+1, 0, fs->numparams);
++  expr_init(&e, VKNUM, 0);
++  e.u.nval.u32.lo = 1;  /* First array index. */
++  e.u.nval.u32.hi = 0x43300000;  /* Biased integer to avoid denormals. */
++  bcemit_AD(fs, BC_TSETM, reg+1, const_num(fs, &e));
++  bcemit_AD(fs, BC_LEN, reg+1, reg);
++  expr_init(&e, VKSTR, 0);
++  e.u.sval = lj_parse_keepstr(fs->ls, "n", 1);
++  bcemit_ABC(fs, BC_TSETS, reg+1, reg, const_str(fs, &e));
++  lj_assertFS(fs->pc == fs->argpc + ARGTAB_INS, "bad 'arg' prologue");
++  fs->freereg--;  /* Free the scratch register again. */
++  fs->lasttarget = fs->pc;  /* Don't merge the body into the prologue. */
++}
++
++/* Replace the prologue emitted by bcemit_argtab() with 'arg = nil' plus a
++** branch around the remaining instructions. A function which uses '...' keeps
++** the 'arg' variable, but leaves it nil -- just like Lua 5.1 did by clearing
++** VARARG_NEEDSARG while retaining VARARG_HASARG. Note that the store is
++** required: unlike luaD_precall(), BC_FUNCV only nils out missing fixed
++** parameters, so the slot would otherwise hold a stale stack value.
++*/
++static void bcemit_argtab_kill(FuncState *fs)
++{
++  if (fs->argpc) {
++    BCInsLine *ilp = &fs->bcbase[fs->argpc];
++    ilp[0].ins = BCINS_AD(BC_KPRI, fs->numparams, VKNIL);
++    ilp[1].ins = BCINS_AJ(BC_JMP, fs->numparams+1, ARGTAB_INS-2);
++    fs->argpc = 0;
+   }
+ }
+ 
++#endif
++
+ /* Parse function parameters. */
+ static BCReg parse_params(LexState *ls, int needself,
+-			  LexToken before, LexToken after)
++			  LexToken before, LexToken after, int compat)
+ {
+   FuncState *fs = ls->fs;
+-  BCReg nparams = 0;
++  BCReg nparams = 0, nlocals;
+   lex_check(ls, before);
+   if (needself)
+     var_new_lit(ls, nparams++, "self");
+@@ -1969,9 +2027,19 @@ static BCReg parse_params(LexState *ls, int needself,
+       }
+     } while (lex_opt(ls, ','));
+   }
+-  var_add(ls, nparams);
+-  lj_assertFS(fs->nactvar == nparams, "bad regalloc");
+-  bcreg_reserve(fs, nparams);
++  nlocals = nparams;
++#if defined(LUAJIT_COMPAT_VARARG)
++  /* Lua 5.0 compatibility: declare the implicit 'arg' variable. It's not a
++  ** parameter, but occupies the register right after the last parameter.
++  */
++  if (compat && (fs->flags & PROTO_VARARG))
++    var_new_lit(ls, nlocals++, "arg");
++#else
++  UNUSED(compat);
++#endif
++  var_add(ls, nlocals);
++  lj_assertFS(fs->nactvar == nlocals, "bad regalloc");
++  bcreg_reserve(fs, nlocals);
+   lex_check(ls, after);
+   return nparams;
+ }
+@@ -2018,7 +2086,10 @@ static void parse_body(LexState *ls, ExpDesc *e, int n
+   FuncScope bl;
+   fs_init(ls, &fs);
+   fscope_begin(&fs, &bl, 0);
+-  proto_begin(&fs, line, parse_params(ls, needself, '(', ')'));
++  proto_begin(&fs, line, parse_params(ls, needself, '(', ')', 1));
++#if defined(LUAJIT_COMPAT_VARARG)
++  if ((fs.flags & PROTO_VARARG)) bcemit_argtab(&fs);
++#endif
+   parse_chunk(ls);
+   if (ls->tok != TK_end) lex_match(ls, TK_end, TK_function, line);
+   proto_finish(ls, e, oldbase);
+@@ -2041,7 +2112,7 @@ static void parse_shortfunc(LexState *ls, ExpDesc *e, 
+     var_add(ls, nparams);
+     bcreg_reserve(&fs, 1);
+   } else if (!lex_opt(ls, TK_or_)) {
+-    nparams = parse_params(ls, 0, '|', '|');
++    nparams = parse_params(ls, 0, '|', '|', 0);
+   }
+   lex_check(ls, TK_arrow);
+   proto_begin(&fs, line, nparams);
+@@ -2233,6 +2304,9 @@ static void expr_simple(LexState *ls, ExpDesc *v, int 
+     FuncState *fs = ls->fs;
+     BCReg base;
+     checkcond(ls, fs->flags & PROTO_VARARG, LJ_ERR_XDOTS);
++#if defined(LUAJIT_COMPAT_VARARG)
++    bcemit_argtab_kill(fs);  /* Lua 5.0 compat: '...' leaves 'arg' nil. */
++#endif
+     bcreg_reserve(fs, 1);
+     base = fs->freereg-1;
+     expr_init(v, VCALL, bcemit_ABC(fs, BC_VARG, base, 2, fs->numparams));
+
 diff --git a/src/luaconf.h b/src/luaconf.h
 --- a/src/luaconf.h
 +++ b/src/luaconf.h
-@@ -92,7 +92,7 @@
+@@ -92,8 +92,16 @@
  #define LUAI_MAXCSTACK	8000	/* Max. # of stack slots for a C func (<10K). */
  #define LUAI_GCPAUSE	200	/* Pause GC until memory is at 200%. */
  #define LUAI_GCMUL	200	/* Run GC at 200% of allocation speed. */
 -#define LUA_MAXCAPTURES	32	/* Max. pattern captures. */
 +#define LUA_MAXCAPTURES	256	/* Max. pattern captures. */
  
++/*
++** LUAJIT_COMPAT_VARARG controls compatibility with the Lua 5.0 vararg feature,
++** i.e. the implicit 'arg' table in functions declared with '...'. This mirrors
++** LUA_COMPAT_VARARG from Lua 5.1, which LuaJIT dropped. Undefine it once no
++** skin accesses varargs through 'arg' instead of '...'.
++*/
++#define LUAJIT_COMPAT_VARARG
++
  /* Configuration for the frontend (the luajit executable). */
  #if defined(luajit_c)
+ #define LUA_PROGNAME	"luajit"  /* Fallback frontend name. */
+
 diff --git a/src/msvcbuild.bat b/src/msvcbuild.bat
 --- a/src/msvcbuild.bat
 +++ b/src/msvcbuild.bat
