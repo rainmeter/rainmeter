@@ -9,6 +9,8 @@
 
 EXTERN_C int luaopen_utf8(lua_State* L);
 
+int luaopen_rm(lua_State* L);
+
 static int Print(lua_State* L)
 {
 	// Modified version of luaB_print()
@@ -110,8 +112,9 @@ struct BuiltinModule
 
 static const BuiltinModule g_BuiltinModules[] =
 {
-	// luautf8 operates on UTF-8 encoded strings, which is what the strings of a Unicode script
-	// are. In an ANSI script they are in the active code page instead.
+	// Both modules read and write UTF-8 encoded strings, which is what the strings of a Unicode
+	// script are. In an ANSI script they are in the active code page instead.
+	{ "rm", luaopen_rm, true },
 	{ "utf8", luaopen_utf8, true }
 };
 
