@@ -180,18 +180,32 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(crop, L',', PairedPunctuation::Parentheses);
-			const size_t tokSize = tokens.size();
-			if (tokSize > 3)
-			{
-				m_Options.m_Crop.left   = (FLOAT)parser.ParseInt(tokens[0].c_str(), 0);
-				m_Options.m_Crop.top    = (FLOAT)parser.ParseInt(tokens[1].c_str(), 0);
-				m_Options.m_Crop.right  = (FLOAT)parser.ParseInt(tokens[2].c_str(), 0) + m_Options.m_Crop.left;
-				m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(tokens[3].c_str(), 0) + m_Options.m_Crop.top;
+			StringParser values(crop);
 
-				if (tokSize > 4)
+			// Reads the next value of the crop, if there is one.
+			auto readValue = [&]() -> std::optional<int>
+			{
+				values.ConsumeWhitespace();
+				if (values.IsConsumed()) return std::nullopt;
+
+				return parser.ParseInt(values.ConsumeUntilOrRest(
+					L',', StringParser::SkipWhitespace | StringParser::SkipNestedParentheses), 0);
+			};
+
+			const auto x = readValue();
+			const auto y = readValue();
+			const auto width = readValue();
+			const auto height = readValue();
+			if (x && y && width && height)
+			{
+				m_Options.m_Crop.left   = (FLOAT)*x;
+				m_Options.m_Crop.top    = (FLOAT)*y;
+				m_Options.m_Crop.right  = (FLOAT)(*x + *width);
+				m_Options.m_Crop.bottom = (FLOAT)(*y + *height);
+
+				if (const auto mode = readValue())
 				{
-					m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(tokens[4].c_str(), 0);
+					m_Options.m_CropMode = (ImageOptions::CROPMODE)*mode;
 				}
 			}
 			else

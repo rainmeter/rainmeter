@@ -1511,11 +1511,6 @@ std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const 
 	return ParseUtil::Tokenize(str, delimiters);
 }
 
-std::vector<std::wstring> ConfigParser::TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
-{
-	return ParseUtil::TokenizeWithPairedPunctuation(str, delimiter, punct);
-}
-
 const MathParser& ConfigParser::GetMathParser() const
 {
 	static MathParser s_MathParser;

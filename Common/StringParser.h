@@ -26,7 +26,10 @@ public:
 		SkipNestedParentheses = 1 << 1,
 
 		// Matches case sensitively instead of insensitively. Only used when matching a string.
-		MatchCase = 1 << 2
+		MatchCase = 1 << 2,
+
+		// Ignores delimiters inside a pair of single or double quotes. Only used by ConsumeUntil.
+		SkipQuoted = 1 << 3
 	};
 
 	explicit StringParser(std::wstring_view str);

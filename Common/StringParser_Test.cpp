@@ -182,6 +182,31 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L"3"));
 	}
 
+	TEST_METHOD(TestConsumeUntilIgnoresQuotesByDefault)
+	{
+		StringParser parser(L"'1,2',3");
+
+		AssertValue(L"'1", parser.ConsumeUntil(L','));
+		Assert::IsTrue(parser.ConsumeRest(L"2',3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipQuotedOption)
+	{
+		StringParser parser(L"\"1,'2\",'3,\"4',5");
+
+		AssertValue(L"\"1,'2\"", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		AssertValue(L"'3,\"4'", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		Assert::IsTrue(parser.ConsumeRest(L"5"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipQuotedOptionUnterminatedQuote)
+	{
+		StringParser parser(L"\"1,2");
+
+		AssertValue(L"", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
 	TEST_METHOD(TestConsumeUntilCombinedOptions)
 	{
 		StringParser parser(L" (1 + 2) , tail");
