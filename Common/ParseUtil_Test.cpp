@@ -60,6 +60,7 @@ public:
 		// at all and leaves the default.
 		AssertColor(10, 0, 30, 255, L"10,,30");
 		AssertColor(10, 20, 255, 255, L"10,20, ");
+		AssertColor(10, 20, 255, 255, L"10,20,\r\n");
 		AssertColor(10, 0, 30, 255, L"10,invalid,30");
 	}
 
@@ -67,6 +68,26 @@ public:
 	{
 		// Anything past the alpha component is ignored.
 		AssertColor(10, 20, 30, 40, L"10,20,30,40,50");
+	}
+
+	TEST_METHOD(TestParseNumberFromView)
+	{
+		MathParser mathParser;
+		const std::wstring_view str = L"12.5,(1 + 2),abc";
+
+		Assert::AreEqual(12.5, ParseDouble(str.substr(0, 4), 0.0, mathParser), 0.0001);
+		Assert::AreEqual(3, ParseInt(str.substr(5, 7), 0, mathParser));
+
+		// A value that is not a number at all uses the default value.
+		Assert::AreEqual(-1.0, ParseDouble(str.substr(13), -1.0, mathParser), 0.0001);
+		Assert::AreEqual(-1.0, ParseDouble(std::wstring_view(), -1.0, mathParser), 0.0001);
+	}
+
+	TEST_METHOD(TestParseNumberFromViewIgnoresTrailingCharacters)
+	{
+		MathParser mathParser;
+
+		Assert::AreEqual(12.0, ParseDouble(std::wstring_view(L"12tail"), 0.0, mathParser), 0.0001);
 	}
 
 	TEST_METHOD(TestParseRect)

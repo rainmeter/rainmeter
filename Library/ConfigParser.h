@@ -102,6 +102,8 @@ public:
 
 	double ParseDouble(LPCTSTR str, double defValue);
 	int ParseInt(LPCTSTR str, int defValue);
+	double ParseDouble(std::wstring_view str, double defValue);
+	int ParseInt(std::wstring_view str, int defValue);
 	uint32_t ParseUInt(LPCTSTR str, uint32_t defValue);
 	uint64_t ParseUInt64(LPCTSTR str, uint64_t defValue);
 	D2D1_COLOR_F ParseColor(LPCTSTR str);
