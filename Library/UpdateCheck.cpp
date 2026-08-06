@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
 #include "../Common/MathParser.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "Rainmeter.h"
 #include "Language.h"
@@ -79,10 +79,15 @@ void Updater::CheckLanguageObsoleteStatus()
 	const auto lcid = (unsigned)GetLanguage().GetLCID();
 	MathParser mathParser;
 
-	auto obsoleteLanguages = ParseUtil::Tokenize(StringUtil::Widen(m_ObsoleteLanguages), L",");
-	for (const auto& idString : obsoleteLanguages)
+	const std::wstring obsoleteLanguages = StringUtil::Widen(m_ObsoleteLanguages);
+	StringParser languages(obsoleteLanguages);
+	while (!languages.IsConsumed())
 	{
-		if (ParseUtil::ParseUInt(idString.c_str(), UINT32_MAX, mathParser) == lcid)
+		const auto idString = languages.ConsumeUntilOrRest(L',', StringParser::SkipWhitespace);
+		if (idString.empty()) continue;
+
+		StringParser id(idString);
+		if (id.ConsumeRestUIntOrFormula(mathParser) == lcid)
 		{
 			obsolete = true;
 			break;

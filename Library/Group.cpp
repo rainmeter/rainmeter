@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "Group.h"
-#include "ConfigParser.h"
+#include "../Common/StringParser.h"
 
 void Group::InitializeGroup(const std::wstring& groups)
 {
@@ -13,10 +13,13 @@ void Group::InitializeGroup(const std::wstring& groups)
 
 		if (!groups.empty())
 		{
-			std::vector<std::wstring> vGroups = ConfigParser::Tokenize(groups, L"|");
-			for (auto iter = vGroups.begin(); iter != vGroups.end(); ++iter)
+			StringParser groupList(groups);
+			while (!groupList.IsConsumed())
 			{
-				m_Groups.insert(CreateGroup(*iter));
+				std::wstring group(groupList.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace));
+				if (group.empty()) continue;
+
+				m_Groups.insert(CreateGroup(group));
 			}
 		}
 	}
@@ -33,10 +36,13 @@ bool Group::AddToGroup(const std::wstring& group)
 
 		m_OldGroups.append(group);
 
-		std::vector<std::wstring> vGroups = ConfigParser::Tokenize(group, L"|");
-		for (auto iter = vGroups.begin(); iter != vGroups.end(); ++iter)
+		StringParser groupList(group);
+		while (!groupList.IsConsumed())
 		{
-			m_Groups.insert(m_Groups.end(), CreateGroup(*iter));
+			std::wstring newGroup(groupList.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace));
+			if (newGroup.empty()) continue;
+
+			m_Groups.insert(m_Groups.end(), CreateGroup(newGroup));
 		}
 
 		return true;

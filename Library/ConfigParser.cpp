@@ -81,6 +81,20 @@ bool ConfigParser::ReadInheritOption(LPCTSTR section, bool allowMeterStyle)
 	return false;
 }
 
+void ConfigParser::SetInheritChain(const std::wstring& strInherit)
+{
+	m_InheritChain.clear();
+
+	StringParser sections(strInherit);
+	while (!sections.IsConsumed())
+	{
+		const auto section = sections.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+		if (section.empty()) continue;
+
+		m_InheritChain.emplace_back(section);
+	}
+}
+
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
 {
 	m_Skin = skin;
@@ -1504,11 +1518,6 @@ RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 		r = ParseRECT(result.c_str());
 	}
 	return r;
-}
-
-std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
-{
-	return ParseUtil::Tokenize(str, delimiters);
 }
 
 const MathParser& ConfigParser::GetMathParser() const

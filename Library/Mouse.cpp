@@ -6,6 +6,7 @@
 #include "Meter.h"
 #include "Logger.h"
 #include "Mouse.h"
+#include "../Common/StringParser.h"
 
 const struct { const WCHAR* name; MOUSEACTION type; } g_MouseActionTable[] =
 {
@@ -427,17 +428,18 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 {
 	if (options == L"*") return MOUSEACTION_ALL;
 
-	auto tokens = ConfigParser::Tokenize(options, L"|");
-	if (tokens.empty()) return MOUSEACTION_NONE;
-
 	uint32_t result = 0;
-	for (const auto& token : tokens)
+	StringParser actions(options);
+	while (!actions.IsConsumed())
 	{
+		const auto action = actions.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+		if (action.empty()) continue;
+
 		bool found = false;
-		const WCHAR* tok = token.c_str();
+		StringParser name(action);
 		for (auto& entry : g_MouseActionTable)
 		{
-			if (_wcsicmp(tok, entry.name) == 0)
+			if (name.ConsumeRest(entry.name, wcslen(entry.name)))
 			{
 				found = true;
 				result |= entry.type;
@@ -447,7 +449,7 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 
 		if (!found)
 		{
-			LogErrorF(m_Meter, L"Invalid action: %s", tok);
+			LogErrorF(m_Meter, L"Invalid action: %.*s", (int)action.length(), action.data());
 			return MOUSEACTION_NONE;
 		}
 	}
