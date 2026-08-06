@@ -20,6 +20,19 @@ bool HasOption(StringParser::Option option, StringParser::Option flag)
 	return (option & flag) != 0;
 }
 
+std::wstring_view TrimValue(const WCHAR* start, const WCHAR* end, StringParser::Option option)
+{
+	if (HasOption(option, StringParser::SkipWhitespace))
+	{
+		while (end > start && iswspace(*(end - 1)))
+		{
+			--end;
+		}
+	}
+
+	return std::wstring_view(start, end - start);
+}
+
 template <typename T, typename ParseFunc>
 std::optional<T> ConsumeNumber(const WCHAR*& current, const WCHAR* end, ParseFunc parseFunc, StringParser::Option option)
 {
@@ -224,7 +237,7 @@ bool StringParser::ConsumeRest(WCHAR ch)
 	return true;
 }
 
-std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
+const WCHAR* StringParser::ScanToDelimiter(WCHAR delimiter, Option option)
 {
 	if (HasOption(option, SkipWhitespace))
 	{
@@ -243,17 +256,28 @@ std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
 
 		++m_Current;
 	}
+
+	return start;
+}
+
+std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
+{
+	const WCHAR* start = ScanToDelimiter(delimiter, option);
 	if (m_Current == m_End) return {};
 
-	const WCHAR* valueEnd = m_Current++;
-	if (HasOption(option, SkipWhitespace))
+	return TrimValue(start, m_Current++, option);
+}
+
+std::wstring_view StringParser::ConsumeUntilOrRest(WCHAR delimiter, Option option)
+{
+	const WCHAR* start = ScanToDelimiter(delimiter, option);
+	const WCHAR* valueEnd = m_Current;
+	if (m_Current < m_End)
 	{
-		while (valueEnd > start && iswspace(*(valueEnd - 1)))
-		{
-			--valueEnd;
-		}
+		++m_Current;  // Skip the delimiter
 	}
-	return std::wstring_view(start, valueEnd - start);
+
+	return TrimValue(start, valueEnd, option);
 }
 
 std::wstring_view StringParser::ConsumeRest(Option option)
