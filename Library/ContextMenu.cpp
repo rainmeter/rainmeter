@@ -349,12 +349,17 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 
 	if (command)
 	{
-		// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
-		const LPARAM checked = IsMenuCommandChecked(menu, command) ? 1 : 0;
-		SendMessage(commandWindow, WM_COMMAND, command, checked);
+		SendMenuCommand(menu, command, commandWindow);
 	}
 
 	DestroyMenu(menu);
+}
+
+void ContextMenu::SendMenuCommand(HMENU menu, UINT command, HWND commandWindow)
+{
+	// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
+	const LPARAM checked = IsMenuCommandChecked(menu, command) ? 1 : 0;
+	SendMessage(commandWindow, WM_COMMAND, command, checked);
 }
 
 HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
