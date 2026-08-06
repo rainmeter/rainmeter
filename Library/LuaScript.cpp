@@ -9,6 +9,8 @@
 #include "LuaHelper.h"
 #include "Measure.h"
 
+EXTERN_C int luaopen_rainmeter_string_utf8(lua_State* L);
+
 LuaScript::LuaScript(const MathParser& mathParser) :
 	m_MathParser(mathParser),
 	m_Ref(LUA_NOREF),
@@ -51,6 +53,20 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
 	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+
+	if (m_Unicode)
+	{
+		// We integrate the lua-utf8 module by adding functions directly to the standard string
+		// library under a "uc" prefix. Several functions have also been left out to minimize
+		// binary size. These are only added for a Unicode script, whose strings are UTF-8. In
+		// an ANSI script they are in the active code page instead.
+
+		// Stack: [string]
+		luaopen_rainmeter_string_utf8(L);
+
+		// Stack: []
+		lua_pop(L, 1);
+	}
 
 	std::wstring tmp = std::wstring(scriptFile, scriptFile.find_last_of(L'\\') + 1);
 	std::string file = m_Unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
