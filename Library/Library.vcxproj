@@ -159,6 +159,10 @@
     <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
