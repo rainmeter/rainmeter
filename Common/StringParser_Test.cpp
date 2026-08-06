@@ -182,6 +182,54 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L"tail", StringParser::SkipWhitespace));
 	}
 
+	TEST_METHOD(TestConsumeUntilOrRest)
+	{
+		StringParser parser(L"first|second|third");
+
+		AssertValue(L"first", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"second", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"third", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestTrailingDelimiter)
+	{
+		StringParser parser(L"value|");
+
+		AssertValue(L"value", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestEmptyValues)
+	{
+		StringParser parser(L"|first||");
+
+		AssertValue(L"", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"first", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestOptions)
+	{
+		StringParser parser(L" (min(1,2)) , tail ");
+		const auto option = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		AssertValue(L"(min(1,2))", parser.ConsumeUntilOrRest(L',', option));
+		AssertValue(L"tail", parser.ConsumeUntilOrRest(L',', option));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestRemaining)
+	{
+		StringParser parser(L"Prefix|Suffix");
+
+		AssertValue(L"Prefix|Suffix", parser.Remaining());
+		AssertValue(L"Prefix", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"Suffix", parser.Remaining());
+		Assert::IsFalse(parser.IsConsumed());
+	}
+
 private:
 	static void AssertValue(const WCHAR* expected, std::wstring_view actual)
 	{

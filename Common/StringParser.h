@@ -61,7 +61,14 @@ public:
 	bool Consume(WCHAR ch);
 	bool ConsumeRest(WCHAR ch);
 
+	// Returns the value before the delimiter, or an empty view if the range contains no delimiter.
+	// The delimiter and, when no delimiter is found, the rest of the range are consumed.
 	std::wstring_view ConsumeUntil(WCHAR delimiter, Option option = None);
+
+	// Like ConsumeUntil, but returns the rest of the range if it contains no delimiter. Intended
+	// for tokenizing a delimited list until IsConsumed.
+	std::wstring_view ConsumeUntilOrRest(WCHAR delimiter, Option option = None);
+
 	std::wstring_view ConsumeRest(Option option = None);
 
 	std::optional<double> ConsumeDouble(Option option = None);
@@ -84,7 +91,14 @@ public:
 
 	bool IsConsumed() const { return m_Current >= m_End; }
 
+	// Returns the unconsumed part of the range without consuming it.
+	std::wstring_view Remaining() const { return std::wstring_view(m_Current, m_End - m_Current); }
+
 private:
+	// Advances to the next delimiter, or to the end of the range if there is none. Returns the
+	// start of the value.
+	const WCHAR* ScanToDelimiter(WCHAR delimiter, Option option);
+
 	const WCHAR* m_Current;
 	const WCHAR* m_End;
 };
