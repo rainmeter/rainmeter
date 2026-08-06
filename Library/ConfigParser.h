@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <d2d1.h>
 
+class MathParser;
 class Rainmeter;
 class Skin;
 class Section;
@@ -95,6 +96,9 @@ public:
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static std::vector<std::wstring> TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct);
+
+	// Returns the skin's math parser, or a skinless one if the parser is not tied to a skin.
+	const MathParser& GetMathParser() const;
 
 	double ParseDouble(LPCTSTR str, double defValue);
 	int ParseInt(LPCTSTR str, int defValue);
