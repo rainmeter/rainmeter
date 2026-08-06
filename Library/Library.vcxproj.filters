@@ -17,6 +17,9 @@
     <Filter Include="ThirdParty\kiss_fft130">
       <UniqueIdentifier>{d1bf569e-05e7-4d77-8408-c39c1f31df2a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\luautf8">
+      <UniqueIdentifier>{7c0e5f2a-3d19-4c86-9b4e-5a2f0d6c1b83}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty\PerfCounter">
       <UniqueIdentifier>{ebfa0cf5-2371-4459-a25d-e16109dd2142}</UniqueIdentifier>
     </Filter>
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
       <Filter>ThirdParty\kiss_fft130</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
+      <Filter>ThirdParty\luautf8</Filter>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
       <Filter>ThirdParty\PerfCounter</Filter>

@@ -7,6 +7,8 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
+EXTERN_C int luaopen_utf8(lua_State* L);
+
 static int Print(lua_State* L)
 {
 	// Modified version of luaB_print()
@@ -99,6 +101,69 @@ static int Dofile(lua_State* L)
 	return 0;
 }
 
+struct BuiltinModule
+{
+	const char* name;
+	lua_CFunction open;
+	bool unicodeOnly;
+};
+
+static const BuiltinModule g_BuiltinModules[] =
+{
+	// luautf8 operates on UTF-8 encoded strings, which is what the strings of a Unicode script
+	// are. In an ANSI script they are in the active code page instead.
+	{ "utf8", luaopen_utf8, true }
+};
+
+// Loads one of the modules built into Rainmeter. The package library is not available, so this is
+// not the Lua loader: nothing is searched for on disk and nothing outside the table above loads.
+// The modules already loaded are kept in the table upvalue.
+static int Require(lua_State* L)
+{
+	const char* name = luaL_checkstring(L, 1);
+
+	// Stack: [module]
+	lua_getfield(L, lua_upvalueindex(1), name);
+	if (!lua_isnil(L, -1))
+	{
+		return 1;
+	}
+
+	// Stack: []
+	lua_pop(L, 1);
+
+	for (const auto& module : g_BuiltinModules)
+	{
+		if (strcmp(module.name, name) != 0) continue;
+
+		if (module.unicodeOnly && !LuaStateScope::GetCurrent()->IsUnicode())
+		{
+			return luaL_error(L, "module " LUA_QS " requires a Unicode script", name);
+		}
+
+		// Stack: [openFunction]
+		lua_pushcfunction(L, module.open);
+
+		// Stack: [module]
+		lua_call(L, 0, 1);
+
+		// The open function of a Lua 5.1 module also stores it in the global table. Remove it
+		// from there so that require() is the only way to reach it.
+		lua_pushnil(L);
+		lua_setfield(L, LUA_GLOBALSINDEX, name);
+
+		// Stack: [module, module]
+		lua_pushvalue(L, -1);
+
+		// Stack: [module]
+		lua_setfield(L, lua_upvalueindex(1), name);
+
+		return 1;
+	}
+
+	return luaL_error(L, "module " LUA_QS " not found", name);
+}
+
 static int tolua_cast(lua_State* L)
 {
 	// Simply push first argument onto stack.
@@ -110,6 +175,15 @@ void LuaScript::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
 	lua_register(L, "dofile", Dofile);
+
+	// Stack: [loadedModules]
+	lua_newtable(L);
+
+	// Stack: [require]
+	lua_pushcclosure(L, Require, 1);
+
+	// Stack: []
+	lua_setglobal(L, "require");
 
 	// Register tolua.cast() for backwards compatibility.
 	const luaL_Reg toluaFuncs[] =
