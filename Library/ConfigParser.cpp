@@ -83,16 +83,7 @@ bool ConfigParser::ReadInheritOption(LPCTSTR section, bool allowMeterStyle)
 
 void ConfigParser::SetInheritChain(const std::wstring& strInherit)
 {
-	m_InheritChain.clear();
-
-	StringParser sections(strInherit);
-	while (!sections.IsConsumed())
-	{
-		const auto section = sections.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-		if (section.empty()) continue;
-
-		m_InheritChain.emplace_back(section);
-	}
+	StringParser::Split(strInherit, L'|', m_InheritChain);
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)

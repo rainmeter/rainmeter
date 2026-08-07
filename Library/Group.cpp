@@ -13,14 +13,11 @@ void Group::InitializeGroup(const std::wstring& groups)
 
 		if (!groups.empty())
 		{
-			StringParser groupList(groups);
-			while (!groupList.IsConsumed())
+			StringParser::ForEachToken(groups, L'|', [&](std::wstring_view token)
 			{
-				std::wstring group(groupList.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace));
-				if (group.empty()) continue;
-
+				std::wstring group(token);
 				m_Groups.insert(CreateGroup(group));
-			}
+			});
 		}
 	}
 }
@@ -36,14 +33,11 @@ bool Group::AddToGroup(const std::wstring& group)
 
 		m_OldGroups.append(group);
 
-		StringParser groupList(group);
-		while (!groupList.IsConsumed())
+		StringParser::ForEachToken(group, L'|', [&](std::wstring_view token)
 		{
-			std::wstring newGroup(groupList.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace));
-			if (newGroup.empty()) continue;
-
+			std::wstring newGroup(token);
 			m_Groups.insert(m_Groups.end(), CreateGroup(newGroup));
-		}
+		});
 
 		return true;
 	}

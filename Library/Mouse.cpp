@@ -429,11 +429,10 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 	if (options == L"*") return MOUSEACTION_ALL;
 
 	uint32_t result = 0;
-	StringParser actions(options);
-	while (!actions.IsConsumed())
+	bool invalid = false;
+	StringParser::ForEachToken(options, L'|', [&](std::wstring_view action)
 	{
-		const auto action = actions.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-		if (action.empty()) continue;
+		if (invalid) return;
 
 		bool found = false;
 		StringParser name(action);
@@ -450,9 +449,9 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 		if (!found)
 		{
 			LogErrorF(m_Meter, L"Invalid action: %.*s", (int)action.length(), action.data());
-			return MOUSEACTION_NONE;
+			invalid = true;
 		}
-	}
+	});
 
-	return (MOUSEACTION)result;
+	return invalid ? MOUSEACTION_NONE : (MOUSEACTION)result;
 }

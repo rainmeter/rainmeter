@@ -380,15 +380,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		Gfx::TextInlineOption inlineOption;
 		inlineOption.pattern = pattern;
-
-		StringParser settings(option);
-		while (!settings.IsConsumed())
-		{
-			const auto setting = settings.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-			if (setting.empty()) continue;
-
-			inlineOption.settings.emplace_back(setting);
-		}
+		StringParser::Split(option, L'|', inlineOption.settings);
 
 		inlineOptions.push_back(inlineOption);
 

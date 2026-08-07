@@ -126,14 +126,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	while (!action.empty())
 	{
 		std::vector<std::wstring> tokens;
-		StringParser commands(action);
-		while (!commands.IsConsumed())
-		{
-			const auto command = commands.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-			if (command.empty()) continue;
-
-			tokens.emplace_back(command);
-		}
+		StringParser::Split(action, L'|', tokens);
 
 		for (size_t i = 0; i < tokens.size(); ++i)
 		{

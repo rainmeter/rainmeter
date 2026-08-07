@@ -163,6 +163,12 @@ StringParser::StringParser(const WCHAR* str, int length) :
 {
 }
 
+void StringParser::Split(std::wstring_view str, WCHAR delimiter, std::vector<std::wstring>& out, Option option)
+{
+	out.clear();
+	ForEachToken(str, delimiter, [&](std::wstring_view token) { out.emplace_back(token); }, option);
+}
+
 bool StringParser::Consume(const WCHAR* str, size_t length, Option option)
 {
 	assert(str);
