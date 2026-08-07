@@ -35,9 +35,10 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		return false;
 	}
 
-	// Treat the script as Unicode if it has the UTF-16 LE BOM. This is determined before the state
-	// is created so that the scope GetState() returns carries the encoding of the script.
-	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+	// Treat the script as Unicode if it has a BOM. This is determined before the state is created
+	// so that the scope GetState() returns carries the encoding of the script.
+	const auto encoding = FileUtil::GetEncoding(fileData.get(), fileSize);
+	m_Unicode = encoding != FileUtil::Encoding::ANSI;
 
 	if (m_State == nullptr)
 	{
@@ -75,15 +76,16 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 	// Stack: []
 	bool scriptLoaded = false;
-	if (m_Unicode)
+	if (encoding == FileUtil::Encoding::UTF16LE)
 	{
-		const std::string utf8Data =
-			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
+		const auto utf8Data = StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
 		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), file.c_str()) == 0;
 	}
 	else
 	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, file.c_str()) == 0;
+		// A UTF-8 script is already in the encoding Lua reads, but its BOM is not part of the chunk.
+		const size_t offset = (encoding == FileUtil::Encoding::UTF8) ? 3 : 0;
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get() + offset, fileSize - offset, file.c_str()) == 0;
 	}
 
 	if (scriptLoaded)
