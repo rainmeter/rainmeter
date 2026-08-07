@@ -98,18 +98,17 @@ std::optional<T> ConsumeNumberOrFormula(
 
 	if (current < end && *current == L'(')
 	{
-		const std::wstring formula(current, end);
 		const WCHAR* parseEnd = nullptr;
 		double value = 0.0;
 		const WCHAR* error = mathParser.Parse(
-			formula.c_str(), &value, MathParser::ParseMode::MatchingClosingBracket, &parseEnd);
+			std::wstring_view(current, end - current), &value, MathParser::ParseMode::MatchingClosingBracket, &parseEnd);
 		if (error)
 		{
 			current = start;
 			return std::nullopt;
 		}
 
-		current += parseEnd - formula.c_str();
+		current = parseEnd;
 		return (T)value;
 	}
 
