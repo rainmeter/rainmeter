@@ -80,19 +80,16 @@ void Updater::CheckLanguageObsoleteStatus()
 	MathParser mathParser;
 
 	const std::wstring obsoleteLanguages = StringUtil::Widen(m_ObsoleteLanguages);
-	StringParser languages(obsoleteLanguages);
-	while (!languages.IsConsumed())
+	StringParser::ForEachToken(obsoleteLanguages, L',', [&](std::wstring_view idString)
 	{
-		const auto idString = languages.ConsumeUntilOrRest(L',', StringParser::SkipWhitespace);
-		if (idString.empty()) continue;
+		if (obsolete) return;
 
 		StringParser id(idString);
 		if (id.ConsumeRestUIntOrFormula(mathParser) == lcid)
 		{
 			obsolete = true;
-			break;
 		}
-	}
+	});
 
 	if (GetRainmeter().GetDebug())
 	{

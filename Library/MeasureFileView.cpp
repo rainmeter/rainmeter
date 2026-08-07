@@ -485,16 +485,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
 			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
-		child->parent->extensions.clear();
-
-		StringParser extensionList(*extensions);
-		while (!extensionList.IsConsumed())
-		{
-			const auto extension = extensionList.ConsumeUntilOrRest(L';', StringParser::SkipWhitespace);
-			if (extension.empty()) continue;
-
-			child->parent->extensions.emplace_back(extension);
-		}
+		StringParser::Split(*extensions, L';', child->parent->extensions);
 
 		extensions = nullptr;
 

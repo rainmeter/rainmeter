@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <optional>
 #include <string>
+#include <vector>
 
 class MathParser;
 
@@ -34,6 +35,25 @@ public:
 
 	explicit StringParser(std::wstring_view str);
 	explicit StringParser(const WCHAR* str, int length = -1);
+
+	// Splits |str| on |delimiter| and calls |func| with a view of each non-empty token, trimmed
+	// as per |option|.
+	template <typename Func>
+	static void ForEachToken(std::wstring_view str, WCHAR delimiter, Func&& func, Option option = SkipWhitespace)
+	{
+		StringParser parser(str);
+		while (!parser.IsConsumed())
+		{
+			const auto token = parser.ConsumeUntilOrRest(delimiter, option);
+			if (token.empty()) continue;
+
+			func(token);
+		}
+	}
+
+	// Like ForEachToken, but collects the non-empty tokens into |out| instead of calling back.
+	// |out| is cleared first.
+	static void Split(std::wstring_view str, WCHAR delimiter, std::vector<std::wstring>& out, Option option = SkipWhitespace);
 
 	template <size_t N>
 	bool Consume(const WCHAR (&str)[N], Option option = None)

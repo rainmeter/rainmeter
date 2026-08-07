@@ -272,16 +272,7 @@ void GameMode::SetSettings(const std::wstring& onStart, const std::wstring& onSt
 		WriteSettings();
 	}
 
-	m_ProcessList.clear();
-
-	StringParser processes(processList);
-	while (!processes.IsConsumed())
-	{
-		const auto process = processes.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-		if (process.empty()) continue;
-
-		m_ProcessList.emplace_back(process);
-	}
+	StringParser::Split(processList, L'|', m_ProcessList);
 
 	StopTimer();
 

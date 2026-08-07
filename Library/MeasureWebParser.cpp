@@ -393,12 +393,8 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (!szFlags.empty())
 		{
 			// Flags: https://docs.microsoft.com/en-us/windows/win32/api/wininet/nf-wininet-internetopenurlw#parameters
-			StringParser flags(szFlags);
-			while (!flags.IsConsumed())
+			StringParser::ForEachToken(szFlags, L'|', [&](std::wstring_view token)
 			{
-				const auto token = flags.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-				if (token.empty()) continue;
-
 				StringParser flag(token);
 				if (flag.ConsumeRest(L"ForceReload"))
 				{
@@ -456,7 +452,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				{
 					LogErrorF(this, L"Invalid flag: %.*s", (int)token.length(), token.data());
 				}
-			}
+			});
 		}
 	}
 }

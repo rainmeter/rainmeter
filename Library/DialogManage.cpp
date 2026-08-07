@@ -2143,15 +2143,11 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[4096];
 			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				StringParser lines(buffer);
-				while (!lines.IsConsumed())
+				StringParser::ForEachToken(buffer, L'\n', [&](std::wstring_view line)
 				{
-					const auto line = lines.ConsumeUntilOrRest(L'\n', StringParser::SkipWhitespace);
-					if (line.empty()) continue;
-
 					// No self-references
 					StringParser process(line);
-					if (process.ConsumeRest(L"Rainmeter.exe")) continue;
+					if (process.ConsumeRest(L"Rainmeter.exe")) return;
 
 					if (!list.empty())
 					{
@@ -2159,7 +2155,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 
 					list += line;
-				}
+				});
 			}
 
 			if (oldList != list)
