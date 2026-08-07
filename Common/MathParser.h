@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <string_view>
 
 class MathParser
 {
@@ -13,8 +14,8 @@ public:
 
 	MathParser(GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
 
-	const WCHAR* Check(const WCHAR* formula) const;
-	const WCHAR* CheckedParse(const WCHAR* formula, double* result) const;
+	const WCHAR* Check(std::wstring_view formula) const;
+	const WCHAR* CheckedParse(std::wstring_view formula, double* result) const;
 
 	enum class ParseMode
 	{
@@ -24,7 +25,8 @@ public:
 		MatchingClosingBracket
 	};
 
-	const WCHAR* Parse(const WCHAR* formula, double* result, ParseMode mode = ParseMode::EntireString, const WCHAR** parseEnd = nullptr) const;
+	// |parseEnd|, if given, points into |formula|'s underlying buffer.
+	const WCHAR* Parse(std::wstring_view formula, double* result, ParseMode mode = ParseMode::EntireString, const WCHAR** parseEnd = nullptr) const;
 
 	bool IsDelimiter(WCHAR ch) const;
 

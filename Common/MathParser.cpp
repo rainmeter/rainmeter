@@ -5,6 +5,7 @@
 #include "StdAfx.h"
 #include "MathParser.h"
 
+#include <algorithm>
 #include <string>
 
 static const double M_E = 2.7182818284590452354;
@@ -191,8 +192,9 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 };
 
 static CharType GetCharType(WCHAR ch);
+static CharType GetCharType(const WCHAR* str, const WCHAR* end);
 static BYTE GetFunctionIndex(const WCHAR* str, BYTE len);
-static Operator GetOperator(const WCHAR* str);
+static Operator GetOperator(const WCHAR* str, const WCHAR* end);
 
 struct Parser
 {
@@ -211,19 +213,25 @@ static const WCHAR* Calc(Parser& parser);
 struct Lexer
 {
 	const WCHAR* string;
-	const WCHAR* name;
-	size_t nameLen;
+	const WCHAR* end;
+	const WCHAR* name = nullptr;
+	size_t nameLen = 0;
 
-	Token token;
+	Token token = Token::None;
 	union
 	{
 		Operator oper;  // token == Token::Operator
 		double num;  // token == Token::Number
-	} value;
+	} value = {};
 
 	CharType charType;
 
-	Lexer(const WCHAR* str) : string(str), name(), nameLen(), value(), token(Token::None), charType(GetCharType(*str)) {}
+	Lexer(std::wstring_view str) :
+		string(str.data()),
+		end(str.data() + str.size()),
+		charType(GetCharType(string, end))
+	{
+	}
 };
 
 static Token GetNextToken(Lexer& lexer);
@@ -243,28 +251,27 @@ MathParser::MathParser(GetValueFunc getValue, void* getValueContext) :
 {
 }
 
-const WCHAR* MathParser::Check(const WCHAR* formula) const
+const WCHAR* MathParser::Check(std::wstring_view formula) const
 {
 	int brackets = 0;
 
 	// Brackets Matching
-	while (*formula)
+	for (WCHAR ch : formula)
 	{
-		if (*formula == L'(')
+		if (ch == L'(')
 		{
 			++brackets;
 		}
-		else if (*formula == L')')
+		else if (ch == L')')
 		{
 			--brackets;
 		}
-		++formula;
 	}
 
 	return (brackets != 0) ? eBrackets : nullptr;
 }
 
-const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) const
+const WCHAR* MathParser::CheckedParse(std::wstring_view formula, double* result) const
 {
 	const WCHAR* error = Check(formula);
 	if (!error)
@@ -274,18 +281,19 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result) cons
 	return error;
 }
 
-const WCHAR* MathParser::Parse(const WCHAR* formula, double* result, ParseMode mode, const WCHAR** parseEnd) const
+const WCHAR* MathParser::Parse(std::wstring_view formula, double* result, ParseMode mode, const WCHAR** parseEnd) const
 {
 	static WCHAR errorBuffer[128];
-	if (parseEnd) *parseEnd = formula;
+	if (parseEnd) *parseEnd = formula.data();
 	if (mode == ParseMode::MatchingClosingBracket)
 	{
-		const WCHAR* current = formula;
-		while (*current == L' ' || *current == L'\t' || *current == L'\n') ++current;
-		if (*current != L'(') return eSyntax;
+		const WCHAR* current = formula.data();
+		const WCHAR* end = formula.data() + formula.size();
+		while (current != end && (*current == L' ' || *current == L'\t' || *current == L'\n')) ++current;
+		if (current == end || *current != L'(') return eSyntax;
 	}
 
-	if (!*formula)
+	if (formula.empty())
 	{
 		*result = 0.0;
 		return nullptr;
@@ -636,11 +644,33 @@ static const WCHAR* CalcToObr(Parser& parser)
 	return nullptr;
 }
 
+// wcstod/wcstoll happily scan past |end| if the underlying buffer isn't null-terminated
+// there, which would both read out-of-view characters and fold them into the result (e.g.
+// parsing "3.1" out of a view over "3.123456" would otherwise yield 3.123456). If that
+// happens, |start| is re-parsed from a small null-terminated copy bounded by |end| so the
+// result only reflects characters within the view.
+template <typename T, typename ParseFunc>
+static T ParseBounded(const WCHAR* start, const WCHAR* end, WCHAR** outEnd, ParseFunc parseFunc)
+{
+	T value = parseFunc(start, outEnd);
+	if (*outEnd <= end) return value;
+
+	WCHAR buffer[64];
+	size_t len = std::min<size_t>(end - start, _countof(buffer) - 1);
+	wmemcpy(buffer, start, len);
+	buffer[len] = L'\0';
+
+	WCHAR* boundedEnd = nullptr;
+	value = parseFunc(buffer, &boundedEnd);
+	*outEnd = const_cast<WCHAR*>(start) + (boundedEnd - buffer);
+	return value;
+}
+
 Token GetNextToken(Lexer& lexer)
 {
 	while (lexer.charType == CharType::Separator)
 	{
-		lexer.charType = GetCharType(*++lexer.string);
+		lexer.charType = GetCharType(++lexer.string, lexer.end);
 	}
 
 	if (lexer.charType == CharType::MinusSymbol)
@@ -669,7 +699,7 @@ Token GetNextToken(Lexer& lexer)
 			lexer.name = lexer.string;
 			do
 			{
-				lexer.charType = GetCharType(*++lexer.string);
+				lexer.charType = GetCharType(++lexer.string, lexer.end);
 			}
 			while (lexer.charType <= CharType::Digit);
 			lexer.nameLen = lexer.string - lexer.name;
@@ -678,23 +708,31 @@ Token GetNextToken(Lexer& lexer)
 
 	case CharType::Digit:
 		{
-			WCHAR* newString;
-			if (lexer.string[0] == L'0')
+			// wcstoll/wcstod scan for as many valid characters as they can find, which may run
+			// past |lexer.end| if the underlying buffer isn't null-terminated there. The result
+			// is re-parsed from a bounded copy below, so out-of-view characters can't affect
+			// the resulting value.
+			WCHAR* newString = nullptr;
+			const bool hasNextChar = (lexer.string + 1) < lexer.end;
+			if (lexer.string[0] == L'0' && hasNextChar)
 			{
 				bool valid = true;
 				long long num = 0;
 				switch (lexer.string[1])
 				{
 				case L'x':	// Hexadecimal
-					num = wcstoll(lexer.string, &newString, 16);
+					num = ParseBounded<long long>(lexer.string, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 16); });
 					break;
 
 				case L'o':	// Octal
-					num = wcstoll(lexer.string + 2, &newString, 8);
+					num = ParseBounded<long long>(lexer.string + 2, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 8); });
 					break;
 
 				case L'b':	// Binary
-					num = wcstoll(lexer.string + 2, &newString, 2);
+					num = ParseBounded<long long>(lexer.string + 2, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 2); });
 					break;
 
 				default:
@@ -709,33 +747,34 @@ Token GetNextToken(Lexer& lexer)
 						lexer.token = Token::Number;
 						lexer.value.num = (double)num;
 						lexer.string = newString;
-						lexer.charType = GetCharType(*lexer.string);
+						lexer.charType = GetCharType(lexer.string, lexer.end);
 					}
 					break;
 				}
 			}
 
 			// Decimal
-			double num = wcstod(lexer.string, &newString);
+			double num = ParseBounded<double>(lexer.string, lexer.end, &newString,
+				[](const WCHAR* s, WCHAR** e) { return wcstod(s, e); });
 			if (lexer.string != newString)
 			{
 				lexer.token = Token::Number;
 				lexer.value.num = num;
 				lexer.string = newString;
-				lexer.charType = GetCharType(*lexer.string);
+				lexer.charType = GetCharType(lexer.string, lexer.end);
 			}
 		}
 		break;
 
 	case CharType::Symbol:
 		{
-			Operator oper = GetOperator(lexer.string);
+			Operator oper = GetOperator(lexer.string, lexer.end);
 			if (oper != Operator::Invalid)
 			{
 				lexer.token = Token::Operator;
 				lexer.value.oper = oper;
 				lexer.string += ((int)oper <= (int)Operator::LogicalOR) ? 2 : 1;
-				lexer.charType = GetCharType(*lexer.string);
+				lexer.charType = GetCharType(lexer.string, lexer.end);
 			}
 		}
 		break;
@@ -792,6 +831,11 @@ CharType GetCharType(WCHAR ch)
 	return CharType::Unknown;
 }
 
+CharType GetCharType(const WCHAR* str, const WCHAR* end)
+{
+	return (str >= end) ? CharType::Final : GetCharType(*str);
+}
+
 bool MathParser::IsDelimiter(WCHAR ch) const
 {
 	CharType type = GetCharType(ch);
@@ -813,8 +857,10 @@ BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
 	return FUNC_INVALID;
 }
 
-Operator GetOperator(const WCHAR* str)
+Operator GetOperator(const WCHAR* str, const WCHAR* end)
 {
+	const bool hasNext = (str + 1) < end;
+
 	switch (str[0])
 	{
 	case L'(':
@@ -827,7 +873,7 @@ Operator GetOperator(const WCHAR* str)
 		return Operator::Subtraction;
 
 	case L'*':
-		return (str[1] == L'*') ? Operator::Power : Operator::Multiplication;
+		return (hasNext && str[1] == L'*') ? Operator::Power : Operator::Multiplication;
 
 	case L'/':
 		return Operator::Division;
@@ -842,19 +888,19 @@ Operator GetOperator(const WCHAR* str)
 		return Operator::BitwiseNOT;
 
 	case L'&':
-		return (str[1] == L'&') ? Operator::LogicalAND : Operator::BitwiseAND;
+		return (hasNext && str[1] == L'&') ? Operator::LogicalAND : Operator::BitwiseAND;
 
 	case L'|':
-		return (str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
+		return (hasNext && str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
 
 	case L'=':
 		return Operator::Equal;
 
 	case L'>':
-		return (str[1] == L'>') ? Operator::ShiftRight : (str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
+		return (hasNext && str[1] == L'>') ? Operator::ShiftRight : (hasNext && str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
 
 	case L'<':
-		return (str[1] == L'>') ? Operator::NotEqual : (str[1] == L'<') ? Operator::ShiftLeft : (str[1] == L'=') ? Operator::LessOrEqual : Operator::Less;
+		return (hasNext && str[1] == L'>') ? Operator::NotEqual : (hasNext && str[1] == L'<') ? Operator::ShiftLeft : (hasNext && str[1] == L'=') ? Operator::LessOrEqual : Operator::Less;
 
 	case L'?':
 		return Operator::Conditional;
