@@ -400,11 +400,11 @@ static void stable_sort_combining_marks (uint32_t *vector, uint32_t *scratch, si
     return;
 
   uint32_t *src = vector, *dest = scratch;
-  unsigned int runsize = 2; /* Every consecutive slice of this size is sorted */
+  size_t runsize = 2; /* Every consecutive slice of this size is sorted */
   while (runsize < size) {
-    unsigned int blocksize = runsize * 2; /* We will now sort slices of this size */
+    size_t blocksize = runsize * 2; /* We will now sort slices of this size */
     limit = size & ~(blocksize - 1);
-    for (unsigned int i = 0; i < limit; i += blocksize)
+    for (size_t i = 0; i < limit; i += blocksize)
       merge_combining_marks(&src[i], &src[i+runsize], &dest[i], runsize, runsize);
     if (size - limit > runsize) {
       merge_combining_marks(&src[limit], &src[limit+runsize], &dest[limit], runsize, size - limit - runsize);
@@ -1886,7 +1886,7 @@ static int Lutf8_isvalid(lua_State *L) {
 static int Lutf8_invalidoffset(lua_State *L) {
   const char *e, *s = check_utf8(L, 1, &e);
   const char *orig_s = s;
-  int offset = luaL_optinteger(L, 2, 0);
+  lua_Integer offset = luaL_optinteger(L, 2, 0);
   if (offset > 1) {
     offset--;
     s += offset;
