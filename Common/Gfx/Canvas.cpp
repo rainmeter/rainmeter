@@ -436,6 +436,32 @@ void Canvas::PushOpacityLayer(FLOAT opacity)
 		nullptr);
 }
 
+void Canvas::PushClip(const D2D1_RECT_F& rect)
+{
+	if (m_CanUseAxisAlignClip)
+	{
+		m_Target->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
+	}
+	else
+	{
+		const D2D1_LAYER_PARAMETERS1 layerParams =
+			D2D1::LayerParameters1(rect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+		m_Target->PushLayer(layerParams, nullptr);
+	}
+}
+
+void Canvas::PopClip()
+{
+	if (m_CanUseAxisAlignClip)
+	{
+		m_Target->PopAxisAlignedClip();
+	}
+	else
+	{
+		m_Target->PopLayer();
+	}
+}
+
 void Canvas::PopLayer()
 {
 	if (!m_Target) return;
@@ -759,32 +785,14 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D
 
 	if (format.m_Trimming)
 	{
-		D2D1_RECT_F clipRect = rect;
-
-		if (m_CanUseAxisAlignClip)
-		{
-			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
-		}
-		else
-		{
-			const D2D1_LAYER_PARAMETERS1 layerParams =
-				D2D1::LayerParameters1(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
-			m_Target->PushLayer(layerParams, nullptr);
-		}
+		PushClip(rect);
 	}
 
 	m_Target->DrawTextLayout(drawPosition, format.m_TextLayout.Get(), solidBrush.Get());
 
 	if (format.m_Trimming)
 	{
-		if (m_CanUseAxisAlignClip)
-		{
-			m_Target->PopAxisAlignedClip();
-		}
-		else
-		{
-			m_Target->PopLayer();
-		}
+		PopClip();
 	}
 
 	if (applyInlineFormatting)

@@ -111,6 +111,10 @@ public:
 	void PushOpacityLayer(FLOAT opacity);
 	void PopLayer();
 
+	// Clips drawing to |rect| until the matching PopClip().
+	void PushClip(const D2D1_RECT_F& rect);
+	void PopClip();
+
 	bool SetTarget(Gfx::RenderTexture* texture);
 	void ResetTarget();
 

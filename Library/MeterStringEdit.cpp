@@ -233,24 +233,58 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 		DrawSelection(canvas);
 	}
 
+	const bool scrolled = m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
+	if (scrolled) canvas.PushClip(GetMeterRectPadding());
+
+	bool drawn = true;
 	if (ShowingPlaceholder())
 	{
-		if (!DrawString(canvas, nullptr, &m_Placeholder, m_PlaceholderFormat.get())) return false;
+		drawn = DrawString(canvas, nullptr, &m_Placeholder, m_PlaceholderFormat.get());
 	}
-	else if (!DrawString(canvas, nullptr))
+	else
 	{
-		return false;
+		drawn = DrawString(canvas, nullptr);
 	}
 
 	// Drawn over the placeholder, and using the meter's own format rather than the placeholder's,
 	// so a smaller placeholder does not shrink the caret.
-	if (m_Focused)
+	if (drawn && m_Focused)
 	{
 		DrawCaret(canvas);
-		DrawFocusBorder(canvas);
 	}
 
-	return true;
+	if (scrolled) canvas.PopClip();
+
+	// Outside the clip, so the frame is not scrolled away with the text.
+	if (m_Focused) DrawFocusBorder(canvas);
+
+	return drawn;
+}
+
+void MeterStringEdit::EnsureCaretVisible()
+{
+	if (!m_TextFormat->IsInitialized()) return;
+
+	Gfx::Canvas& canvas = m_Skin->GetCanvas();
+	ApplyTextState(canvas);
+
+	D2D1_RECT_F caret = { 0 };
+	if (!canvas.GetCaretRect(
+		m_String, *m_TextFormat, GetTextRect(), m_CaretPos, m_CaretTrailing, 1.0f, caret)) return;
+
+	// The caret comes back in screen space, so comparing it against the unscrolled box gives the
+	// distance the text has to move for it to come into view.
+	const D2D1_RECT_F box = GetMeterRectPadding();
+
+	if (caret.right > box.right) m_TextOffset.x += caret.right - box.right;
+	else if (caret.left < box.left) m_TextOffset.x -= box.left - caret.left;
+
+	if (caret.bottom > box.bottom) m_TextOffset.y += caret.bottom - box.bottom;
+	else if (caret.top < box.top) m_TextOffset.y -= box.top - caret.top;
+
+	// Never scroll past the start; there is nothing to reveal before it.
+	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
+	m_TextOffset.y = max(m_TextOffset.y, 0.0f);
 }
 
 void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)
@@ -355,6 +389,8 @@ void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
 		m_SelectionAnchor = m_CaretPos;
 	}
 
+	EnsureCaretVisible();
+
 	// Restart the blink cycle so the caret is solid wherever it just landed.
 	m_CaretBlinkStart = GetTickCount64();
 
@@ -437,7 +473,7 @@ bool MeterStringEdit::SetCaretFromPoint(int x, int y, bool extend)
 
 	UINT32 caretPos = 0U;
 	bool trailing = false;
-	if (!canvas.HitTestTextPoint(m_String, *m_TextFormat, GetMeterRectPadding(),
+	if (!canvas.HitTestTextPoint(m_String, *m_TextFormat, GetTextRect(),
 		D2D1::Point2F((FLOAT)x, (FLOAT)y), caretPos, trailing))
 	{
 		return false;
@@ -466,7 +502,7 @@ bool MeterStringEdit::SelectLineAtCaret()
 	UINT32 lineStart = 0U;
 	UINT32 lineEnd = (UINT32)m_String.length();
 	if (!canvas.GetLineRange(
-		m_String, *m_TextFormat, GetMeterRectPadding(), m_CaretPos, lineStart, lineEnd))
+		m_String, *m_TextFormat, GetTextRect(), m_CaretPos, lineStart, lineEnd))
 	{
 		return false;
 	}
@@ -543,6 +579,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)text.length();
 	m_CaretTrailing = true;
+	EnsureCaretVisible();
 	m_CaretBlinkStart = GetTickCount64();
 
 	UpdateAutoSize();
@@ -622,7 +659,7 @@ void MeterStringEdit::DeleteSelectionOr(bool forward)
 
 		UINT32 adjacent = m_CaretPos;
 		if (!canvas.GetAdjacentCaretIndex(
-			m_String, *m_TextFormat, GetMeterRectPadding(), m_CaretPos, forward, adjacent))
+			m_String, *m_TextFormat, GetTextRect(), m_CaretPos, forward, adjacent))
 		{
 			return;
 		}
@@ -718,7 +755,7 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 
 			UINT32 adjacent = m_CaretPos;
 			if (canvas.GetAdjacentCaretIndex(
-				m_String, *m_TextFormat, GetMeterRectPadding(), m_CaretPos, forward, adjacent))
+				m_String, *m_TextFormat, GetTextRect(), m_CaretPos, forward, adjacent))
 			{
 				MoveCaretTo(adjacent, shift, forward);
 			}
@@ -730,7 +767,7 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		{
 			ApplyTextState(canvas);
 
-			const D2D1_RECT_F meterRect = GetMeterRectPadding();
+			const D2D1_RECT_F meterRect = GetTextRect();
 			D2D1_RECT_F caretRect = { 0 };
 			if (!canvas.GetCaretRect(
 				m_String, *m_TextFormat, meterRect, m_CaretPos, m_CaretTrailing, 1.0f, caretRect))
@@ -769,7 +806,7 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 			UINT32 lineStart = 0U;
 			UINT32 lineEnd = len;
 			if (canvas.GetLineRange(
-				m_String, *m_TextFormat, GetMeterRectPadding(), m_CaretPos, lineStart, lineEnd))
+				m_String, *m_TextFormat, GetTextRect(), m_CaretPos, lineStart, lineEnd))
 			{
 				MoveCaretTo(end ? lineEnd : lineStart, shift, end);
 			}
@@ -831,7 +868,7 @@ void MeterStringEdit::DrawCaret(Gfx::Canvas& canvas)
 	}
 
 	D2D1_RECT_F caretRect = { 0 };
-	if (canvas.GetCaretRect(m_String, *m_TextFormat, GetMeterRectPadding(),
+	if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
 		m_CaretPos, m_CaretTrailing, (FLOAT)caretWidth, caretRect))
 	{
 		canvas.FillRectangle(caretRect, m_CaretColor);
@@ -845,7 +882,7 @@ void MeterStringEdit::DrawSelection(Gfx::Canvas& canvas)
 	const UINT32 start = GetSelectionStart();
 
 	std::vector<D2D1_RECT_F> rects;
-	if (!canvas.GetTextRangeRects(m_String, *m_TextFormat, GetMeterRectPadding(),
+	if (!canvas.GetTextRangeRects(m_String, *m_TextFormat, GetTextRect(),
 		start, GetSelectionEnd() - start, rects))
 	{
 		return;
