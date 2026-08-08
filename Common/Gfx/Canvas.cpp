@@ -611,7 +611,17 @@ bool Canvas::GetCaretRect(const std::wstring& srcStr, TextFormat& format, const 
 	UINT32 position = min(caretIndex, strLen);
 	BOOL isTrailingHit = FALSE;
 
-	if (trailing && position > 0U)
+	// A caret just after a hard line break belongs to the start of the next line, with no affinity
+	// to decide. Asking for the trailing edge of the break itself would report the end of the
+	// previous line, leaving the caret looking as though the newline never happened.
+	const bool afterLineBreak =
+		position > 0U && (srcStr[position - 1U] == L'\n' || srcStr[position - 1U] == L'\r');
+
+	if (afterLineBreak)
+	{
+		// Leading edge at |position|, which DirectWrite places on the new line.
+	}
+	else if (trailing && position > 0U)
 	{
 		// The caret belongs to the text before it, so it goes at the trailing edge of the cluster
 		// ending at |caretIndex|. Which visual side that is depends on the direction of the run
