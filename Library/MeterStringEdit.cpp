@@ -44,6 +44,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_SelectAllOnFocus(false),
 	m_ClearOnEnter(false),
 	m_ClearOnDismiss(false),
+	m_MaxLength(0),
 	m_CaretDrawnVisible(false),
 	m_CaretColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_SelectionColor(D2D1::ColorF(D2D1::ColorF::SteelBlue, 0.5f)),
@@ -125,6 +126,7 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_SelectAllOnFocus = parser.ReadBool(section, L"SelectAllOnFocus", false);
 	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
 	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
+	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
@@ -577,16 +579,38 @@ UINT32 MeterStringEdit::FindWordBoundary(UINT32 pos, bool forward) const
 	return pos;
 }
 
+bool MeterStringEdit::IsFull() const
+{
+	return m_MaxLength > 0 && m_String.length() >= (size_t)m_MaxLength;
+}
+
 void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 {
 	const UINT32 start = GetSelectionStart();
 	const UINT32 end = GetSelectionEnd();
 
+	std::wstring insert = text;
+	if (m_MaxLength > 0 && !insert.empty())
+	{
+		// What the selection leaves behind is what the limit has to accommodate. An existing text
+		// already over the limit (from the Text option, which is not truncated) leaves no room.
+		const size_t kept = m_String.length() - (end - start);
+		const size_t room = kept < (size_t)m_MaxLength ? (size_t)m_MaxLength - kept : 0U;
+
+		if (insert.length() > room)
+		{
+			insert.resize(room);
+
+			// Truncating must not leave a high surrogate without its pair.
+			if (!insert.empty() && IS_HIGH_SURROGATE(insert.back())) insert.pop_back();
+		}
+	}
+
 	m_Text = m_String;
-	m_Text.replace(start, end - start, text);
+	m_Text.replace(start, end - start, insert);
 	m_String = m_Text;
 
-	m_SelectionAnchor = m_CaretPos = start + (UINT32)text.length();
+	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
 	m_CaretTrailing = true;
 	EnsureCaretVisible();
 	m_CaretBlinkStart = GetTickCount64();
@@ -693,6 +717,9 @@ bool MeterStringEdit::HandleChar(WCHAR ch)
 	// Control characters arrive here too (Ctrl+A as 0x01, Escape as 0x1B, and so on). They are
 	// either handled as key presses or not at all, so none of them belong in the text.
 	if (ch < L' ' || ch == 0x7F) return false;
+
+	// A full field still accepts typing that replaces a selection.
+	if (IsFull() && !HasSelection()) return false;
 
 	// Replacing a selection is a distinct step from the typing that follows it, so it does not
 	// fold into a preceding run.
