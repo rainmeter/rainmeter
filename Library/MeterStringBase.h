@@ -74,6 +74,9 @@ protected:
 	// what is on screen.
 	void ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* format = nullptr);
 
+	// |true| when ClipString trims the text to the meter, so it never overflows in the first place.
+	bool ShouldTrim() const;
+
 	// The text box shifted by m_TextOffset. Everything that draws or hit-tests the text uses this
 	// rather than GetMeterRectPadding(), so scrolled text and the positions reported for it stay
 	// in the same space.

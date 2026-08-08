@@ -334,15 +334,18 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 	return defaultStyle;
 }
 
+bool MeterStringBase::ShouldTrim() const
+{
+	return m_ClipType == CLIP_ON ||
+		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined)));
+}
+
 void MeterStringBase::ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* format)
 {
 	if (!format) format = m_TextFormat.get();
 
 	canvas.SetTextAntiAliasing(m_AntiAlias);
-
-	format->SetTrimming(
-		m_ClipType == CLIP_ON ||
-		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
+	format->SetTrimming(ShouldTrim());
 }
 
 D2D1_RECT_F MeterStringBase::GetTextRect()

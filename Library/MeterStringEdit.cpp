@@ -226,15 +226,16 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
+	// Trimming clips the text itself, but not the caret or the selection behind it.
+	const bool clip = ShouldTrim() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
+	if (clip) canvas.PushClip(GetMeterRectPadding());
+
 	// The highlight goes behind the glyphs, so it has to be drawn before the text. It builds the
 	// same layout DrawString() is about to use, so the extra call is not an extra layout.
 	if (m_Focused && HasSelection())
 	{
 		DrawSelection(canvas);
 	}
-
-	const bool scrolled = m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
-	if (scrolled) canvas.PushClip(GetMeterRectPadding());
 
 	bool drawn = true;
 	if (ShowingPlaceholder())
@@ -253,7 +254,7 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 		DrawCaret(canvas);
 	}
 
-	if (scrolled) canvas.PopClip();
+	if (clip) canvas.PopClip();
 
 	// Outside the clip, so the frame is not scrolled away with the text.
 	if (m_Focused) DrawFocusBorder(canvas);
@@ -264,6 +265,14 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 void MeterStringEdit::EnsureCaretVisible()
 {
 	if (!m_TextFormat->IsInitialized()) return;
+
+	// ClipString trims the text to the meter instead, which is the other answer to the same
+	// overflow, so a clipped field never scrolls.
+	if (ShouldTrim())
+	{
+		m_TextOffset = D2D1::Point2F();
+		return;
+	}
 
 	Gfx::Canvas& canvas = m_Skin->GetCanvas();
 	ApplyTextState(canvas);
