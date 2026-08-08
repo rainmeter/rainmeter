@@ -7,6 +7,7 @@
 #include "../Common/Map.h"
 #include "../Common/ParseUtil.h"
 #include <windows.h>
+#include <optional>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -23,7 +24,8 @@ enum class VariableExpandMode : BYTE
 {
 	AllKeys,
 	HashOnly,
-	DollarMouseOnly
+	DollarMouseOnly,
+	DollarInputOnly
 };
 
 class ConfigParser
@@ -93,6 +95,10 @@ public:
 	bool ContainsKeyedSectionVariable(const std::wstring& str);
 	static bool IsSectionVariableKey(WCHAR key);
 	std::wstring GetDollarMouseVariable(std::wstring_view variable, Meter* meter);
+
+	// Resolves [$Input] against an editable String meter. Returns a value rather than a bool so
+	// that an empty field expands to nothing instead of being left as a literal.
+	std::optional<std::wstring> GetDollarInputVariable(std::wstring_view variable, Meter* meter);
 
 	// Returns the skin's math parser, or a skinless one if the parser is not tied to a skin.
 	const MathParser& GetMathParser() const;

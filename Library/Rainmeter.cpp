@@ -23,7 +23,7 @@
 #include "MeasureActionTimer.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
-#include "MeterString.h"
+#include "MeterStringBase.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
 #include <bcrypt.h>
@@ -466,7 +466,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	System::Initialize(m_Instance);
 
 	MeasureCPU::InitializeStatic();
-	MeterString::InitializeStatic();
+	MeterStringBase::InitializeStatic();
 
 	// Tray must exist before skins are read
 	m_TrayIcon = new TrayIcon();
@@ -603,7 +603,7 @@ void Rainmeter::Finalize()
 
 	MeasureNet::FinalizeStatic();
 	MeasureCPU::FinalizeStatic();
-	MeterString::FinalizeStatic();
+	MeterStringBase::FinalizeStatic();
 
 	Gfx::Canvas::Finalize();
 

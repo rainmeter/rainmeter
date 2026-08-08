@@ -22,7 +22,7 @@
 #include "MeasureProcess.h"
 #include "MeasureTime.h"
 #include "MeterButton.h"
-#include "MeterString.h"
+#include "MeterStringEdit.h"
 #include "MeasureScript.h"
 #include "MeasureSysInfo.h"
 #include "GeneralImage.h"
@@ -41,9 +41,10 @@ enum TIMER
 	TIMER_TRANSITION = 4,
 	TIMER_DEACTIVATE = 5,
 	TIMER_PREVENT_MOVE = 6,
+	TIMER_CARET = 7,
 
 	// Update this when adding a new timer.
-	TIMER_MAX = 6
+	TIMER_MAX = 7
 };
 
 enum INTERVAL
@@ -99,6 +100,11 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_ActiveTransition(false),
 	m_HasNetMeasures(false),
 	m_HasButtons(false),
+	m_HasInputMeters(false),
+	m_InputFocusMeter(nullptr),
+	m_InputDragging(false),
+	m_InputLastDoubleClickTime(0ULL),
+	m_InputLastDoubleClickPos(),
 	m_WindowHide(HIDEMODE_NONE),
 	m_WindowStartHidden(false),
 	m_SavePosition(false),			// Must be false
@@ -195,6 +201,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
 	KillTimer(m_Window, TIMER_PREVENT_MOVE);
+	KillTimer(m_Window, TIMER_CARET);
 
 	m_FadeStartTime = 0;
 
@@ -202,6 +209,12 @@ void Skin::Dispose(bool refresh)
 	m_HasMouseScrollAction = false;
 
 	m_ActiveTransition = false;
+
+	// Cleared before the meters are destroyed so the focus pointer cannot dangle.
+	m_InputFocusMeter = nullptr;
+	m_HasInputMeters = false;
+	m_InputDragging = false;
+	m_InputLastDoubleClickTime = 0ULL;
 
 	m_MouseOver = false;
 	SetMouseLeaveEvent(true);
@@ -893,6 +906,9 @@ void Skin::SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& gr
 void Skin::Select()
 {
 	if (IsSelected()) return;
+
+	// Selection mode takes over the arrow keys to nudge the skin, so it cannot coexist with a caret.
+	ClearInputFocus();
 
 	m_SelectionOverlay = std::make_unique<SkinSelectionOverlay>(this);
 
@@ -2722,6 +2738,10 @@ bool Skin::ReadSkin()
 					{
 						m_HasButtons = true;
 					}
+					else if (meter->GetTypeID() == TypeID<MeterStringEdit>())
+					{
+						m_HasInputMeters = true;
+					}
 
 					prevMeter = meter;
 				}
@@ -3387,6 +3407,15 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case TIMER_CARET:
+		// Redraw only on the ticks where the caret actually blinked to the other phase, since a
+		// redraw repaints the whole skin.
+		if (m_InputFocusMeter && m_InputFocusMeter->NeedsCaretRedraw())
+		{
+			Redraw();
+		}
+		break;
+
 	case TIMER_TRANSITION:
 		{
 			// Redraw only if there is active transition still going
@@ -3714,6 +3743,11 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 		Redraw();
 	}
 
+	if (!cursor && GetInputMeterAt(pos.x, pos.y))
+	{
+		cursor = LoadCursor(nullptr, IDC_IBEAM);
+	}
+
 	if (!cursor)
 	{
 		cursor = LoadCursor(nullptr, IDC_ARROW);
@@ -3738,6 +3772,28 @@ LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// A selection drag owns the mouse until the button comes back up. Checked before anything else
+	// so that dragging out of the window extends the selection instead of hiding the skin. Only
+	// WM_MOUSEMOVE carries the key flags in wParam; WM_NCMOUSEMOVE puts a hit-test code there.
+	if (m_InputDragging && uMsg == WM_MOUSEMOVE)
+	{
+		if ((wParam & MK_LBUTTON) == 0)
+		{
+			// The button came up somewhere we never saw, e.g. over another window.
+			EndInputDrag();
+		}
+		else if (m_InputFocusMeter)
+		{
+			const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+			if (m_InputFocusMeter->SetCaretFromPoint(pos.x, pos.y, true))
+			{
+				Redraw();
+			}
+
+			return 0;
+		}
+	}
+
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
 	if (!keyDown)
@@ -4679,6 +4735,70 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
 	HandleButtons(pos, BUTTONPROC_DOWN);
 
+	if (!IsCtrlKeyDown())
+	{
+		// Editing claims the click before the dragging fallthrough below, otherwise placing the
+		// caret in a draggable skin would move the window instead.
+		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+		if (editMeter)
+		{
+			if (!editMeter->IsFocused())
+			{
+				// Nothing is being edited here yet, so the button belongs to the window and the
+				// skin drags as it would from any other meter. Focus is taken on the button up
+				// instead, and only if the drag never started: OnSysCommand posts a synthetic
+				// WM_NCLBUTTONUP in exactly that case and swallows it in every other.
+				if (m_WindowDraggable)
+				{
+					SetMouseLeaveEvent(true);
+					return DefWindowProc(m_Window, uMsg, wParam, lParam);
+				}
+
+				return 0;
+			}
+
+			// A third click soon after (and near) a double-click takes the whole line. Windows
+			// sends no triple-click message, so it has to be recognised here.
+			const ULONGLONG now = GetTickCount64();
+			const bool tripleClick =
+				m_InputLastDoubleClickTime != 0ULL &&
+				now - m_InputLastDoubleClickTime <= (ULONGLONG)GetDoubleClickTime() &&
+				abs(pos.x - m_InputLastDoubleClickPos.x) <= GetSystemMetrics(SM_CXDOUBLECLK) &&
+				abs(pos.y - m_InputLastDoubleClickPos.y) <= GetSystemMetrics(SM_CYDOUBLECLK);
+
+			if (tripleClick)
+			{
+				m_InputLastDoubleClickTime = 0ULL;
+				if (editMeter->SelectLineAtCaret())
+				{
+					Redraw();
+				}
+
+				// No drag is started, so the line selection survives any jitter before the button
+				// comes back up. The double-click path returns early for the same reason.
+				return 0;
+			}
+
+			// Shift-clicking extends the existing selection instead of starting a new one.
+			if (editMeter->SetCaretFromPoint(pos.x, pos.y, IsShiftKeyDown()))
+			{
+				Redraw();
+			}
+
+			// Captured so that a drag which leaves the window keeps extending the selection.
+			m_InputDragging = true;
+			SetCapture(m_Window);
+
+			return 0;
+		}
+
+		// Clicking anywhere else in the skin drops the caret.
+		if (ClearInputFocus())
+		{
+			Redraw();
+		}
+	}
+
 	if (IsCtrlKeyDown() ||  // Ctrl is pressed, so only run default action
 		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
 	{
@@ -4692,8 +4812,24 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+void Skin::EndInputDrag()
+{
+	if (!m_InputDragging) return;
+
+	m_InputDragging = false;
+	if (GetCapture() == m_Window)
+	{
+		ReleaseCapture();
+
+		// A mouse measure may have wanted the capture all along; give it back.
+		UpdateMouseMeasureCapture();
+	}
+}
+
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	EndInputDrag();
+
 	// Select/Deselect the skin if CTRL+ALT is pressed when the
 	// left mouse button is depressed. (Draws an overlay over the skin.)
 	if (IsCtrlKeyDown() && IsAltKeyDown())
@@ -4728,6 +4864,35 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 
+	if (m_HasInputMeters && !IsCtrlKeyDown())
+	{
+		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+		if (editMeter)
+		{
+			// Reaching here means the button came up without a drag having started, so this was a
+			// click: give the meter the caret. A drag that moved the skin never gets this far.
+			if (SetInputFocus(editMeter))
+			{
+				// The window has to hold keyboard focus for typing to reach it at all.
+				// WM_MOUSEACTIVATE already returns MA_ACTIVATE, but the click may have landed
+				// while another window was focused.
+				SetFocus(m_Window);
+
+				if (!editMeter->FocusOverridesCaret())
+				{
+					editMeter->SetCaretFromPoint(pos.x, pos.y);
+				}
+
+				Redraw();
+			}
+
+			// Swallowed either way, so that a click which only moves the caret does not also fire
+			// the meter's LeftMouseUpAction.
+			return 0;
+		}
+	}
+
 	HandleButtonClickMessage(uMsg, lParam, BUTTONPROC_UP, MOUSE_LMB_UP);
 	return 0;
 }
@@ -4755,6 +4920,31 @@ void Skin::HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC b
 
 LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (m_HasInputMeters && !IsCtrlKeyDown() && !IsSelected())
+	{
+		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
+		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+		if (editMeter)
+		{
+			// The caret is placed here rather than relied on from the preceding click: focus is
+			// taken on the button up, which OnSysCommand only posts, so it may not have arrived
+			// yet. Placing it makes the selected word the one under the pointer either way.
+			SetInputFocus(editMeter);
+			SetFocus(m_Window);
+			editMeter->SetCaretFromPoint(pos.x, pos.y);
+			if (editMeter->SelectWordAtCaret())
+			{
+				Redraw();
+			}
+
+			// Remembered so that a third click can widen the selection to the whole line.
+			m_InputLastDoubleClickTime = GetTickCount64();
+			m_InputLastDoubleClickPos = pos;
+
+			return 0;
+		}
+	}
+
 	HandleButtonDoubleClickMessage(uMsg, lParam, BUTTONPROC_DOWN, MOUSE_LMB_DBLCLK, MOUSE_LMB_DOWN);
 	return 0;
 }
@@ -4835,6 +5025,9 @@ LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if ((HWND)lParam != m_Window)
 	{
 		if (m_MouseMeasureCapture) ClearMouseMeasureCapture();
+
+		// Losing the capture ends the drag; the selection stays where it got to.
+		m_InputDragging = false;
 	}
 
 	return 0;
@@ -4852,6 +5045,12 @@ LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KILLFOCUS:
+		// The caret only means anything while the skin can receive keystrokes.
+		if (ClearInputFocus())
+		{
+			Redraw();
+		}
+
 		if (!m_OnUnfocusAction.empty())
 		{
 			GetRainmeter().ExecuteCommand(m_OnUnfocusAction.c_str(), this);
@@ -4981,6 +5180,64 @@ void Skin::UpdateMouseMeasureCapture()
 			ReleaseCapture();
 		}
 	}
+}
+
+// Returns the topmost StringEdit meter under the given skin-space point, if any.
+MeterStringEdit* Skin::GetInputMeterAt(int x, int y)
+{
+	if (!m_HasInputMeters) return nullptr;
+
+	for (auto j = m_Meters.rbegin(); j != m_Meters.rend(); ++j)
+	{
+		if ((*j)->IsHidden()) continue;
+		if ((*j)->GetTypeID() != TypeID<MeterStringEdit>()) continue;
+
+		MeterStringEdit* meter = (MeterStringEdit*)(*j);
+		if (meter->AcceptsInput() && meter->HitTest(x, y))
+		{
+			return meter;
+		}
+	}
+
+	return nullptr;
+}
+
+bool Skin::SetInputFocus(MeterStringEdit* meter)
+{
+	if (m_InputFocusMeter == meter) return false;
+
+	if (m_InputFocusMeter)
+	{
+		m_InputFocusMeter->SetFocus(false);
+	}
+
+	m_InputFocusMeter = meter;
+
+	if (m_InputFocusMeter)
+	{
+		// May clear or select the text, per ClearOnFocus/SelectAllOnFocus.
+		m_InputFocusMeter->SetFocus(true);
+
+		if (m_DynamicWindowSize)
+		{
+			SetResizeWindowMode(RESIZEMODE_CHECK);
+		}
+
+		// The caret is drawn by the normal redraw path, which only runs on skin updates, so it
+		// needs a timer of its own to blink. The timer is polled faster than the blink interval
+		// and only redraws on the ticks where the phase actually flipped.
+		const UINT blinkTime = GetCaretBlinkTime();
+		if (blinkTime != 0U && blinkTime != INFINITE)
+		{
+			SetTimer(m_Window, TIMER_CARET, max(blinkTime / 4U, 25U), nullptr);
+		}
+	}
+	else
+	{
+		KillTimer(m_Window, TIMER_CARET);
+	}
+
+	return true;
 }
 
 void Skin::ClearMouseMeasureCapture()
@@ -5276,8 +5533,81 @@ LRESULT Skin::OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+LRESULT Skin::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (m_InputFocusMeter && m_InputFocusMeter->HandleChar((WCHAR)wParam))
+	{
+		// The meter may have grown or shrunk with the text.
+		if (m_DynamicWindowSize)
+		{
+			SetResizeWindowMode(RESIZEMODE_CHECK);
+		}
+
+		Redraw();
+	}
+
+	return 0;
+}
+
 LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Editing takes the keys ahead of the selection-mode nudging below, which cannot be active at
+	// the same time since Select() drops the caret.
+	if (m_InputFocusMeter)
+	{
+		if (wParam == VK_ESCAPE)
+		{
+			if (ClearInputFocus())
+			{
+				Redraw();
+			}
+
+			return 0;
+		}
+
+		// The meter owns what Enter means; the skin only arbitrates focus and the redraw. A meter
+		// that does not commit on Enter declines here and types a newline through HandleKeyDown.
+		std::wstring command;
+		bool dropFocus = false;
+		if (wParam == VK_RETURN && !IsShiftKeyDown() &&
+			m_InputFocusMeter->HandleEnter(command, dropFocus))
+		{
+			MeterStringEdit* meter = m_InputFocusMeter;
+
+			if (m_DynamicWindowSize)
+			{
+				SetResizeWindowMode(RESIZEMODE_CHECK);
+			}
+
+			if (dropFocus)
+			{
+				ClearInputFocus();
+			}
+
+			Redraw();
+
+			// Run last: the action may refresh or close the skin, which destroys both the meter
+			// and this window, so nothing may be touched afterwards.
+			if (!command.empty())
+			{
+				GetRainmeter().ExecuteActionCommand(command.c_str(), meter);
+			}
+
+			return 0;
+		}
+
+		if (m_InputFocusMeter->HandleKeyDown(wParam, IsCtrlKeyDown(), IsShiftKeyDown()))
+		{
+			if (m_DynamicWindowSize)
+			{
+				SetResizeWindowMode(RESIZEMODE_CHECK);
+			}
+
+			Redraw();
+			return 0;
+		}
+	}
+
 	if (IsSelected())
 	{
 		int newX = 0;
@@ -5379,6 +5709,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnTimeChange, WM_TIMECHANGE)
 	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
 	MESSAGE(OnKeyDown, WM_KEYDOWN)
+	MESSAGE(OnChar, WM_CHAR)
 	MESSAGE(OnMouseActivate, WM_MOUSEACTIVATE)
 	END_MESSAGEPROC
 }
