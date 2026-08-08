@@ -31,6 +31,10 @@ public:
 	// typed as a newline.
 	bool HandleEnter(std::wstring& command);
 
+	// OnFocusAction, with [$Input] expanded, or empty if there is none. Read after SetFocus(true),
+	// so [$Input] carries what the field holds once ClearOnFocus has had its say.
+	std::wstring GetFocusCommand();
+
 	// The counterpart for moving away from the field without committing: applies ClearOnDismiss
 	// and fills |command| with OnDismissAction.
 	void HandleDismiss(std::wstring& command);
@@ -174,6 +178,9 @@ private:
 
 	// Having one makes the meter single-line; see CommitsOnEnter().
 	std::wstring m_OnEnterAction;
+
+	// Run when the field takes the caret.
+	std::wstring m_OnFocusAction;
 
 	// Run when the field is left without committing: Escape, a click elsewhere, or another window
 	// taking focus.

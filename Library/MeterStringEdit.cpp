@@ -131,6 +131,7 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
 	m_OnEnterAction = parser.ReadString(section, L"OnEnterAction", L"", false);
+	m_OnFocusAction = parser.ReadString(section, L"OnFocusAction", L"", false);
 	m_OnDismissAction = parser.ReadString(section, L"OnDismissAction", L"", false);
 
 	m_FocusBorderColor = parser.ReadColor(section, L"FocusBorderColor",
@@ -362,6 +363,13 @@ bool MeterStringEdit::HandleEnter(std::wstring& command)
 	if (m_ClearOnEnter) Clear();
 
 	return true;
+}
+
+std::wstring MeterStringEdit::GetFocusCommand()
+{
+	std::wstring command;
+	ExpandAction(m_OnFocusAction, command);
+	return command;
 }
 
 void MeterStringEdit::HandleDismiss(std::wstring& command)
