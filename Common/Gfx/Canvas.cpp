@@ -8,6 +8,7 @@
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
+#include "../Platform.h"
 
 #include <dxgidebug.h>
 
@@ -94,8 +95,12 @@ bool Canvas::AttachDevice()
 	// Required for Direct2D interopability.
 	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-#if defined(_DEBUG) && !defined(_M_ARM64EC)
-	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#ifdef _DEBUG
+	// The D3D11 debug layer is not available to x64 processes emulated on ARM64.
+	if (!GetPlatform().IsEmulatedOnArm64())
+	{
+		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	}
 #endif
 
 	auto tryCreateDevice = [&](D3D_DRIVER_TYPE driverType, const D3D_FEATURE_LEVEL* levels, UINT numLevels)

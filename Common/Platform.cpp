@@ -68,6 +68,18 @@ void Platform::Initialize()
 		return false;
 	} ();
 
+#if defined(_M_ARM64) || defined(_M_ARM64EC)
+	m_IsEmulatedOnArm64 = false;
+#else
+	// This is an x86/x64 binary, so an ARM64 host machine means we are being emulated.
+	// Note that |processMachine| cannot be used here: x64 processes on ARM64 are not
+	// considered WOW64 (which is 32-bit on 64-bit) and report IMAGE_FILE_MACHINE_UNKNOWN.
+	USHORT processMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	USHORT nativeMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	m_IsEmulatedOnArm64 = IsWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine) &&
+		nativeMachine == IMAGE_FILE_MACHINE_ARM64;
+#endif
+
 	const auto buildNumber = std::to_wstring(GetVersionInfo().dwBuildNumber);
 
 	// Retrieve information from registry
