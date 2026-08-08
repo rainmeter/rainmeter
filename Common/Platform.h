@@ -11,6 +11,7 @@ public:
 	static Platform& GetInstance();
 
 	bool Is64Bit() { return m_Is64Bit; }
+	bool IsEmulatedOnArm64() { return m_IsEmulatedOnArm64; }
 
 	std::wstring GetName() { return m_Name; }
 	std::wstring GetFriendlyName() { return m_FriendlyName; }
@@ -30,6 +31,7 @@ private:
 	void Initialize();
 
 	bool m_Is64Bit;
+	bool m_IsEmulatedOnArm64;
 
 	std::wstring m_Name;
 	std::wstring m_FriendlyName;
