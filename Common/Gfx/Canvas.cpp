@@ -497,23 +497,8 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 	m_Target->Clear(color);
 }
 
-void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
-	const D2D1_COLOR_F& color, bool applyInlineFormatting)
+D2D1_POINT_2F Canvas::GetTextDrawPosition(TextFormat& format, const D2D1_RECT_F& rect) const
 {
-	auto solidBrush = GetCachedSolidColorBrush(color);
-	if (!solidBrush) return;
-
-	static std::wstring str;
-	str = srcStr;
-	format.ApplyInlineCase(str);
-
-	if (!format.CreateLayout(
-		m_Target.Get(),
-		str,
-		rect.right - rect.left,
-		rect.bottom - rect.top,
-		!m_AccurateText && m_TextAntiAliasing)) return;
-
 	D2D1_POINT_2F drawPosition = D2D1::Point2F();
 	drawPosition.x = [&]()
 	{
@@ -543,10 +528,224 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D
 		return yPos;
 	} ();
 
+	return drawPosition;
+}
+
+bool Canvas::PrepareTextLayout(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, D2D1_POINT_2F& drawPosition, UINT32& strLen)
+{
+	if (!m_Target || !format.IsInitialized()) return false;
+
+	static std::wstring str;
+	str = srcStr;
+	format.ApplyInlineCase(str);
+
+	if (!format.CreateLayout(
+		m_Target.Get(),
+		str,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		!m_AccurateText && m_TextAntiAliasing)) return false;
+
+	drawPosition = GetTextDrawPosition(format, rect);
+	strLen = (UINT32)str.length();
+	return true;
+}
+
+bool Canvas::HitTestTextPoint(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, const D2D1_POINT_2F& point, UINT32& caretIndex, bool& isTrailing)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	BOOL isTrailingHit = FALSE;
+	BOOL isInside = FALSE;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestPoint(
+		point.x - drawPosition.x, point.y - drawPosition.y, &isTrailingHit, &isInside, &metrics);
+	if (FAILED(hr)) return false;
+
+	// Snapping to the far side of the hit cluster (rather than to the hit code unit) is what keeps
+	// the caret from landing inside a surrogate pair or between a base character and its
+	// combining marks.
+	caretIndex = isTrailingHit ? metrics.textPosition + metrics.length : metrics.textPosition;
+	caretIndex = min(caretIndex, strLen);
+	isTrailing = isTrailingHit != FALSE;
+	return true;
+}
+
+bool Canvas::GetCaretRect(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	UINT32 caretIndex, bool trailing, FLOAT width, D2D1_RECT_F& caretRect)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	UINT32 position = min(caretIndex, strLen);
+	BOOL isTrailingHit = FALSE;
+
+	if (trailing && position > 0U)
+	{
+		// The caret belongs to the text before it, so it goes at the trailing edge of the cluster
+		// ending at |caretIndex|. Which visual side that is depends on the direction of the run
+		// the cluster belongs to, which is what makes this differ from the leading edge below.
+		FLOAT clusterX = 0.0f;
+		FLOAT clusterY = 0.0f;
+		DWRITE_HIT_TEST_METRICS cluster = { 0 };
+		if (SUCCEEDED(format.m_TextLayout->HitTestTextPosition(
+			position - 1U, FALSE, &clusterX, &clusterY, &cluster)))
+		{
+			position = cluster.textPosition;
+			isTrailingHit = TRUE;
+		}
+	}
+	else if (position >= strLen && strLen > 0U)
+	{
+		// DirectWrite has no leading edge for a position past the end of the text, so ask for the
+		// trailing edge of the last cluster instead.
+		position = strLen - 1U;
+		isTrailingHit = TRUE;
+	}
+
+	FLOAT x = 0.0f;
+	FLOAT y = 0.0f;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestTextPosition(
+		position, isTrailingHit, &x, &y, &metrics);
+	if (FAILED(hr)) return false;
+
+	// An empty layout can report a zero-height line, which would make the caret invisible.
+	const FLOAT height = metrics.height > 0.0f ? metrics.height : format.m_TextFormat->GetFontSize();
+
+	caretRect.left = drawPosition.x + x;
+	caretRect.top = drawPosition.y + y;
+	caretRect.right = caretRect.left + width;
+	caretRect.bottom = caretRect.top + height;
+	return true;
+}
+
+bool Canvas::GetAdjacentCaretIndex(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, UINT32 caretIndex, bool forward, UINT32& adjacentIndex)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	if (forward ? caretIndex >= strLen : caretIndex == 0U)
+	{
+		adjacentIndex = caretIndex;
+		return true;
+	}
+
+	// Hit-testing a position reports the cluster containing it, so the neighbouring caret index is
+	// that cluster's far side: forward from the cluster at |caretIndex|, backward from the one
+	// holding the code unit just before it.
+	FLOAT x = 0.0f;
+	FLOAT y = 0.0f;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestTextPosition(
+		forward ? caretIndex : caretIndex - 1U, FALSE, &x, &y, &metrics);
+	if (FAILED(hr)) return false;
+
+	adjacentIndex = forward ? metrics.textPosition + metrics.length : metrics.textPosition;
+
+	// A cluster that somehow does not straddle the starting point would leave the caret stuck.
+	if (forward ? adjacentIndex <= caretIndex : adjacentIndex >= caretIndex)
+	{
+		adjacentIndex = forward ? caretIndex + 1U : caretIndex - 1U;
+	}
+
+	adjacentIndex = min(adjacentIndex, strLen);
+	return true;
+}
+
+bool Canvas::GetLineRange(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	UINT32 caretIndex, UINT32& lineStart, UINT32& lineEnd)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	// The first call reports how many lines there are; E_NOT_SUFFICIENT_BUFFER is expected here
+	// rather than a failure.
+	UINT32 lineCount = 0U;
+	format.m_TextLayout->GetLineMetrics(nullptr, 0U, &lineCount);
+	if (lineCount == 0U) return false;
+
+	std::vector<DWRITE_LINE_METRICS> lines(lineCount);
+	const HRESULT hr = format.m_TextLayout->GetLineMetrics(lines.data(), lineCount, &lineCount);
+	if (FAILED(hr)) return false;
+
+	caretIndex = min(caretIndex, strLen);
+
+	UINT32 start = 0U;
+	for (const auto& line : lines)
+	{
+		// length includes the newline; newlineLength is how much of it to exclude.
+		const UINT32 end = start + line.length;
+		if (caretIndex < end || end >= strLen)
+		{
+			lineStart = start;
+			lineEnd = end - line.newlineLength;
+			return true;
+		}
+
+		start = end;
+	}
+
+	lineStart = start;
+	lineEnd = strLen;
+	return true;
+}
+
+bool Canvas::GetTextRangeRects(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, UINT32 start, UINT32 length, std::vector<D2D1_RECT_F>& rects)
+{
+	rects.clear();
+	if (length == 0U) return true;
+
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	// The first call reports how many metrics the range needs; E_NOT_SUFFICIENT_BUFFER is the
+	// expected result rather than a failure.
+	UINT32 count = 0U;
+	format.m_TextLayout->HitTestTextRange(start, length, drawPosition.x, drawPosition.y,
+		nullptr, 0U, &count);
+	if (count == 0U) return true;
+
+	std::vector<DWRITE_HIT_TEST_METRICS> metrics(count);
+	const HRESULT hr = format.m_TextLayout->HitTestTextRange(start, length,
+		drawPosition.x, drawPosition.y, metrics.data(), count, &count);
+	if (FAILED(hr)) return false;
+
+	rects.reserve(count);
+	for (UINT32 i = 0U; i < count; ++i)
+	{
+		const auto& m = metrics[i];
+		if (m.width <= 0.0f || m.height <= 0.0f) continue;
+
+		rects.push_back(D2D1::RectF(m.left, m.top, m.left + m.width, m.top + m.height));
+	}
+
+	return true;
+}
+
+void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	const D2D1_COLOR_F& color, bool applyInlineFormatting)
+{
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
+
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return;
+
 	// When different "effects" are used with inline coloring options, we need to
 	// remove the previous inline coloring, then reapply them (if needed) - instead
 	// of destroying/recreating the text layout.
-	UINT32 strLen = (UINT32)str.length();
 	format.ResetInlineColoring(solidBrush.Get(), strLen);
 	if (applyInlineFormatting)
 	{

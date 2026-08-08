@@ -3,7 +3,9 @@
 #pragma once
 
 #include <windows.h>
+#include <optional>
 #include <queue>
+#include <string>
 #include <vector>
 
 class System
@@ -36,6 +38,7 @@ public:
 	static void ResetWorkingDirectory();
 
 	static void SetClipboardText(const std::wstring& text);
+	static std::optional<std::wstring> GetClipboardText();
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
 
 	static bool CopyFiles(std::wstring from, std::wstring to, bool bMove = false);
