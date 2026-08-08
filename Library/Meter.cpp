@@ -6,6 +6,7 @@
 #include "MeterBar.h"
 #include "MeterHistogram.h"
 #include "MeterString.h"
+#include "MeterStringEdit.h"
 #include "MeterImage.h"
 #include "MeterSvg.h"
 #include "MeterLine.h"
@@ -486,6 +487,10 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	if (_wcsicmp(L"STRING", meter) == 0)
 	{
 		return new MeterString(skin, name);
+	}
+	else if (_wcsicmp(L"STRINGEDIT", meter) == 0)
+	{
+		return new MeterStringEdit(skin, name);
 	}
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{

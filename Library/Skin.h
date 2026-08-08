@@ -94,6 +94,7 @@ enum class SkinUpdateMode : BYTE
 class Rainmeter;
 class Measure;
 class Meter;
+class MeterStringEdit;
 class GeneralImage;
 class SkinSelectionOverlay;
 class SkinDropTarget;
@@ -186,6 +187,18 @@ public:
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
 	void UpdateMouseMeasureCapture();
+
+	// At most one meter per skin holds the caret. The setters return true if the focus changed,
+	// in which case the caller needs to redraw.
+	bool SetInputFocus(MeterStringEdit* meter);
+	bool ClearInputFocus() { return SetInputFocus(nullptr); }
+
+	// Drops the caret because the user moved away from the field: applies ClearOnDismiss and runs
+	// OnDismissAction. ClearInputFocus() drops it silently, for teardown and selection mode.
+	void DismissInputFocus();
+	bool ClearInputFocus(MeterStringEdit* meter) { return m_InputFocusMeter == meter ? SetInputFocus(nullptr) : false; }
+	MeterStringEdit* GetInputFocusMeter() { return m_InputFocusMeter; }
+	void EndInputDrag();
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	int GetW() { return m_WindowW; }
@@ -300,6 +313,7 @@ protected:
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -377,6 +391,7 @@ private:
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
 	void ClearMouseMeasureCapture();
+	MeterStringEdit* GetInputMeterAt(int x, int y);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -467,6 +482,16 @@ private:
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;
+	bool m_HasInputMeters;
+	MeterStringEdit* m_InputFocusMeter;
+
+	// |true| while the left button is held after starting a selection drag in m_InputFocusMeter.
+	bool m_InputDragging;
+
+	// When and where the last double-click on a StringEdit meter landed. Windows has no
+	// triple-click message, so a third click is recognised by how soon and how near it follows.
+	ULONGLONG m_InputLastDoubleClickTime;
+	POINT m_InputLastDoubleClickPos;
 	HIDEMODE m_WindowHide;
 	bool m_WindowStartHidden;
 	bool m_SavePosition;
