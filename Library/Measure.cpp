@@ -78,8 +78,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_LogMaxValue(false),
 	m_MinValue(0.0),
 	m_MaxValue(1.0),
-	m_MinValueDefined(false),
-	m_MaxValueDefined(false),
 	m_RegExpSubstitute(false),
 	m_MedianPos(),
 	m_AveragePos(),
@@ -101,27 +99,6 @@ Measure::~Measure()
 void Measure::Initialize()
 {
 	m_Initialized = true;
-
-	if (GetRainmeter().GetDebug() && (m_MinValueDefined || m_MaxValueDefined))
-	{
-		if (m_MaxValue == m_MinValue)
-		{
-			WCHAR buffer[32] = { 0 };
-			_snwprintf_s(buffer, _TRUNCATE, L"%f", m_MaxValue);
-			RemoveTrailingZero(buffer, (int)wcslen(buffer));
-			LogWarningF(this, L"Warning: MaxValue = MinValue: %s", buffer);
-		}
-		else if (m_MaxValue < m_MinValue)
-		{
-			WCHAR maxValue[32] = { 0 };
-			WCHAR minValue[32] = { 0 };
-			_snwprintf_s(maxValue, _TRUNCATE, L"%f", m_MaxValue);
-			_snwprintf_s(minValue, _TRUNCATE, L"%f", m_MinValue);
-			RemoveTrailingZero(maxValue, (int)wcslen(maxValue));
-			RemoveTrailingZero(minValue, (int)wcslen(minValue));
-			LogWarningF(this, L"Warning: MaxValue is less than MinValue: MaxValue=%s MinValue=%s", maxValue, minValue);
-		}
-	}
 }
 
 // Read the common options specified in the ini file. The inherited classes must
@@ -146,10 +123,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Paused = parser.ReadBool(section, L"Paused", false);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
-
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
 
 	m_IfActions.ReadOptions(parser, section);
 
