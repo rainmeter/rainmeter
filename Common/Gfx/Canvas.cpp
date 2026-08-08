@@ -677,10 +677,10 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 			const auto rmSrc = getRectSubRegion(rmSeg, srcRect);
 
 			// If no overlap, don't draw
-			if ((rmDst.left < (rDst.left + rDst.right) &&
-				(rmDst.right + rmDst.left) > rDst.left &&
-				rmDst.top > (rmDst.top + rmDst.bottom) &&
-				(rmDst.top + rmDst.bottom) < rmDst.top)) continue;
+			if (!(rmDst.left < (rDst.left + rDst.right) &&
+				(rmDst.left + rmDst.right) > rDst.left &&
+				rmDst.top < (rDst.top + rDst.bottom) &&
+				(rmDst.top + rmDst.bottom) > rDst.top)) continue;
 
 			m_Target->FillOpacityMask(
 				mseg.GetBitmap(),
