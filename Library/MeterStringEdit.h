@@ -101,6 +101,10 @@ private:
 	// Frames the meter while it holds the caret, around the same box SolidColor fills.
 	void DrawFocusBorder(Gfx::Canvas& canvas);
 
+	// Scrolls the text inside a meter too small to show it all, so the caret stays visible. Does
+	// nothing while everything fits, which is always the case for an auto-sized meter.
+	void EnsureCaretVisible();
+
 	bool ShowingPlaceholder() const { return m_PlaceholderFormat && m_String.empty(); }
 
 	// A Gfx::TextFormat caches a single layout, so the placeholder needs its own or every frame

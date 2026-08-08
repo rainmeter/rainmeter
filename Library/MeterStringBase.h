@@ -74,6 +74,11 @@ protected:
 	// what is on screen.
 	void ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* format = nullptr);
 
+	// The text box shifted by m_TextOffset. Everything that draws or hit-tests the text uses this
+	// rather than GetMeterRectPadding(), so scrolled text and the positions reported for it stay
+	// in the same space.
+	D2D1_RECT_F GetTextRect();
+
 	// Call after building m_String, before measuring or drawing it.
 	void UpdateTextFormat();
 
@@ -93,6 +98,10 @@ protected:
 	int m_ClipStringH;
 	std::unique_ptr<Gfx::TextFormat> m_TextFormat;
 	int m_FontWeight;
+
+	// How far the text is scrolled inside the meter, for a field whose text outgrew it. Zero for
+	// String, which has no way to scroll.
+	D2D1_POINT_2F m_TextOffset;
 
 	// The text as drawn. String rewrites it from m_Text and its formatting options; StringEdit
 	// keeps it identical to m_Text, so a caret offset is also an offset into the edited text.

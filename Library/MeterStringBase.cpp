@@ -97,7 +97,8 @@ MeterStringBase::MeterStringBase(Skin* skin, const WCHAR* name) : Meter(skin, na
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
 	m_TextFormat(skin->GetCanvas().CreateTextFormat(skin->GetMathParser())),
-	m_FontWeight(-1)
+	m_FontWeight(-1),
+	m_TextOffset()
 {
 }
 
@@ -344,6 +345,16 @@ void MeterStringBase::ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* forma
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 }
 
+D2D1_RECT_F MeterStringBase::GetTextRect()
+{
+	D2D1_RECT_F rect = GetMeterRectPadding();
+	rect.left -= m_TextOffset.x;
+	rect.right -= m_TextOffset.x;
+	rect.top -= m_TextOffset.y;
+	rect.bottom -= m_TextOffset.y;
+	return rect;
+}
+
 void MeterStringBase::UpdateTextFormat()
 {
 	m_TextFormat->SetFontWeight(m_FontWeight);
@@ -483,7 +494,7 @@ bool MeterStringBase::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect,
 	}
 	else
 	{
-		D2D1_RECT_F rcDest = meterRect;
+		D2D1_RECT_F rcDest = GetTextRect();
 
 		if (m_Effect != EFFECT_NONE)
 		{
