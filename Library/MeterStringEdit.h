@@ -120,8 +120,12 @@ private:
 	// arrived from the left of |pos| in logical order, clear it when it arrived from the right.
 	void MoveCaretTo(UINT32 pos, bool extend, bool trailing);
 
-	// Replaces the selection, or inserts at the caret, leaving the caret after |text|.
+	// Replaces the selection, or inserts at the caret, leaving the caret after |text|. Truncates
+	// |text| to whatever MaxLength leaves room for.
 	void ReplaceSelection(const std::wstring& text);
+
+	// |true| when MaxLength leaves no room to insert without first replacing a selection.
+	bool IsFull() const;
 
 	// Deletes the selection, or one cluster to either side of the caret when there is none.
 	void DeleteSelectionOr(bool forward);
@@ -152,6 +156,11 @@ private:
 	bool m_SelectAllOnFocus;
 	bool m_ClearOnEnter;
 	bool m_ClearOnDismiss;
+
+	// Longest the text may become, in UTF-16 units, as Win32 edit controls also count it. Zero or
+	// less is unlimited. Only bounds what the user enters, not what Text starts as.
+	int m_MaxLength;
+
 	bool m_CaretDrawnVisible;
 	D2D1_COLOR_F m_CaretColor;
 	D2D1_COLOR_F m_SelectionColor;
