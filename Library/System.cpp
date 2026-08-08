@@ -783,6 +783,30 @@ void System::SetClipboardText(const std::wstring& text)
 	}
 }
 
+std::optional<std::wstring> System::GetClipboardText()
+{
+	if (!IsClipboardFormatAvailable(CF_UNICODETEXT) || !OpenClipboard(nullptr)) return std::nullopt;
+
+	std::optional<std::wstring> text;
+	HANDLE hMem = GetClipboardData(CF_UNICODETEXT);
+	if (hMem)
+	{
+		const WCHAR* data = (const WCHAR*)GlobalLock(hMem);
+		if (data)
+		{
+			// The block is not required to be null terminated within its allocated size, so the
+			// length is bounded by the block itself.
+			const size_t maxLen = GlobalSize(hMem) / sizeof(WCHAR);
+			text.emplace(data, wcsnlen(data, maxLen));
+
+			GlobalUnlock(hMem);
+		}
+	}
+
+	CloseClipboard();
+	return text;
+}
+
 void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
 {
 	if (!wallpaper.empty())

@@ -135,7 +135,9 @@
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
     <ClCompile Include="MeterShape.cpp" />
+    <ClCompile Include="MeterStringBase.cpp" />
     <ClCompile Include="MeterString.cpp" />
+    <ClCompile Include="MeterStringEdit.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="MonitorUtil.cpp" />
     <ClCompile Include="Net.cpp" />
@@ -289,7 +291,9 @@
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterShape.h" />
+    <ClInclude Include="MeterStringBase.h" />
     <ClInclude Include="MeterString.h" />
+    <ClInclude Include="MeterStringEdit.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="MonitorUtil.h" />
     <ClInclude Include="Net.h" />

@@ -6,6 +6,7 @@
 #include "LuaScript.h"
 #include "Meter.h"
 #include "MeterString.h"
+#include "MeterStringEdit.h"
 
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
@@ -121,11 +122,11 @@ static int Show(lua_State* L)
 static int SetText(lua_State* L)
 {
 	DECLARE_SELF(L)
-	if (self->GetTypeID() == TypeID<MeterString>())
+	if (self->GetTypeID() == TypeID<MeterString>() || self->GetTypeID() == TypeID<MeterStringEdit>())
 	{
-		MeterString* string = (MeterString*)self;
+		MeterStringBase* text = (MeterStringBase*)self;
 		std::wstring str = LuaHelper::ToWide(2);
-		string->SetText(str.c_str());
+		text->SetText(str.c_str());
 	}
 
 	return 0;

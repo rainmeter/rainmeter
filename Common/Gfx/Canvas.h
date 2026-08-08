@@ -7,6 +7,7 @@
 #include "TextFormat.h"
 #include <bit>
 #include <string>
+#include <vector>
 #include <d2d1_3.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
@@ -82,6 +83,7 @@ public:
 	int GetH() const { return m_H; }
 
 	void SetAccurateText(bool option) { m_AccurateText = option; }
+	bool IsAccurateText() const { return m_AccurateText; }
 
 	void SetDpiScale(float dpiScale);
 	FLOAT SnapToPixel(FLOAT value) const;
@@ -122,6 +124,39 @@ public:
 	bool MeasureTextW(const std::wstring& srcStr, TextFormat& format, D2D1_SIZE_F& size);
 	bool MeasureTextLinesW(const std::wstring& srcStr, TextFormat& format, D2D1_SIZE_F& size, UINT32& lines);
 
+	// Caret hit-testing. These reuse the text layout and the draw origin that DrawTextW() would
+	// use for the same |srcStr|, |format| and |rect|, so the results line up exactly with the
+	// rendered glyphs. Call them with the same arguments (and the same trimming/anti-aliasing
+	// state) that were used to draw the text.
+
+	// Returns the caret index nearest to |point|. The index is always a cluster boundary, so
+	// surrogate pairs and combining marks are never split. |isTrailing| reports which side of the
+	// index the hit fell on; it only matters where the two are visually apart, which is at a
+	// boundary between text of opposing direction. See GetCaretRect().
+	bool HitTestTextPoint(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+		const D2D1_POINT_2F& point, UINT32& caretIndex, bool& isTrailing);
+
+	// Returns the rect the caret occupies at |caretIndex|, widened to |width|. A single index maps
+	// to two visual positions where text of opposing direction meets, so |trailing| picks between
+	// them: it selects the position adjacent to the text before |caretIndex| rather than after it.
+	// Callers should set it from the direction the caret arrived from.
+	bool GetCaretRect(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+		UINT32 caretIndex, bool trailing, FLOAT width, D2D1_RECT_F& caretRect);
+
+	// Returns the caret index one cluster after (or before) |caretIndex|. Stepping by cluster
+	// rather than by code unit is what keeps a caret out of the middle of a surrogate pair or of a
+	// base character and its combining marks.
+	bool GetAdjacentCaretIndex(const std::wstring& srcStr, TextFormat& format,
+		const D2D1_RECT_F& rect, UINT32 caretIndex, bool forward, UINT32& adjacentIndex);
+
+	// Returns the range of the line |caretIndex| sits on, excluding its newline.
+	bool GetLineRange(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+		UINT32 caretIndex, UINT32& lineStart, UINT32& lineEnd);
+
+	// Returns the rects covering [|start|, |start| + |length|), one per line the range spans.
+	bool GetTextRangeRects(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+		UINT32 start, UINT32 length, std::vector<D2D1_RECT_F>& rects);
+
 	void DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
 	void DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect);
 	void DrawMaskedBitmap(Bitmap* bitmap, Bitmap* maskBitmap, const D2D1_RECT_F& dstRect,
@@ -152,6 +187,16 @@ private:
 	Canvas& operator=(Canvas other) = delete;
 
 	static ComPtr<ID2D1DeviceContext5> CreateDeviceContext();
+
+	// Computes the origin DrawTextW() passes to DrawTextLayout(). This is not |rect|'s top-left:
+	// it carries the GDI+ compatibility offsets, so anything positioned against the rendered
+	// glyphs (e.g. a caret) must go through here rather than recomputing them.
+	D2D1_POINT_2F GetTextDrawPosition(TextFormat& format, const D2D1_RECT_F& rect) const;
+
+	// Creates (or reuses) the text layout for |srcStr| exactly as DrawTextW() would, and reports
+	// the draw origin along with the length of the string the layout was built over.
+	bool PrepareTextLayout(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+		D2D1_POINT_2F& drawPosition, UINT32& strLen);
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> GetCachedSolidColorBrush(const D2D1_COLOR_F& color);
 
