@@ -23,19 +23,10 @@ protected:
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 private:
-	enum TEXTCASE
-	{
-		TEXTCASE_NONE,
-		TEXTCASE_UPPER,
-		TEXTCASE_LOWER,
-		TEXTCASE_PROPER
-	};
-
 	std::wstring m_Prefix;
 	std::wstring m_Postfix;
 	FLOAT m_Angle;
 	AUTOSCALE m_AutoScale;
-	TEXTCASE m_Case;
 	double m_Scale;
 	bool m_NoDecimals;
 	bool m_Percentual;

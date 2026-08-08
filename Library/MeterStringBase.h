@@ -7,7 +7,8 @@
 #include <memory>
 
 // Shared base for String, which formats a measure's value, and StringEdit, which lets the user
-// edit the text. Holds the font options common to both and the drawing built on them. Each meter
+// edit the text. Holds the font and case options common to both and the drawing built on them, but
+// leaves it to each meter to decide when the case conversion runs. Each meter
 // reads the Text option for itself, since they disagree on who owns its value.
 class __declspec(novtable) MeterStringBase : public Meter
 {
@@ -54,11 +55,25 @@ protected:
 		CLIP_AUTO
 	};
 
+	enum TEXTCASE
+	{
+		TEXTCASE_NONE,
+		TEXTCASE_UPPER,
+		TEXTCASE_LOWER,
+		TEXTCASE_PROPER
+	};
+
 	MeterStringBase(Skin* skin, const WCHAR* name);
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
+
+	// Applies StringCase to |text| in place. The conversions map each UTF-16 unit onto one unit, so
+	// offsets into the text survive them, which is what lets StringEdit convert what it edits rather
+	// than only what it draws. Left to the subclass to call: String converts the finished m_String,
+	// StringEdit the text itself.
+	void ApplyCase(std::wstring& text) const;
 
 	// Returns |defaultStyle| when the option is unset, and logs an unrecognised value.
 	TEXTSTYLE ReadStringStyle(ConfigParser& parser, const WCHAR* section, const WCHAR* option,
@@ -96,6 +111,7 @@ protected:
 	TEXTEFFECT m_Effect;
 	FLOAT m_FontSize;
 	CLIPTYPE m_ClipType;
+	TEXTCASE m_Case;
 	bool m_NeedsClipping;
 	int m_ClipStringW;
 	int m_ClipStringH;

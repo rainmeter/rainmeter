@@ -6,6 +6,7 @@
 #include "Pcre.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/StringParser.h"
+#include "../Common/StringUtil.h"
 
 namespace {
 
@@ -93,6 +94,7 @@ MeterStringBase::MeterStringBase(Skin* skin, const WCHAR* name) : Meter(skin, na
 	m_Effect(EFFECT_NONE),
 	m_FontSize(10.0f),
 	m_ClipType(CLIP_OFF),
+	m_Case(TEXTCASE_NONE),
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
@@ -250,6 +252,28 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Style = ReadStringStyle(parser, section, L"StringStyle", NORMAL);
 
+	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
+	if (_wcsicmp(stringCase, L"NONE") == 0)
+	{
+		m_Case = TEXTCASE_NONE;
+	}
+	else if (_wcsicmp(stringCase, L"UPPER") == 0)
+	{
+		m_Case = TEXTCASE_UPPER;
+	}
+	else if (_wcsicmp(stringCase, L"LOWER") == 0)
+	{
+		m_Case = TEXTCASE_LOWER;
+	}
+	else if (_wcsicmp(stringCase, L"PROPER") == 0)
+	{
+		m_Case = TEXTCASE_PROPER;
+	}
+	else
+	{
+		LogErrorF(this, L"StringCase=%s is not valid", stringCase);
+	}
+
 	int weight = parser.ReadInt(section, L"FontWeight", -1);
 	if (parser.GetLastValueDefined())
 	{
@@ -332,6 +356,24 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 
 	LogErrorF(this, L"%s=%s is not valid", option, value);
 	return defaultStyle;
+}
+
+void MeterStringBase::ApplyCase(std::wstring& text) const
+{
+	if (text.empty()) return;
+
+	switch (m_Case)
+	{
+	case TEXTCASE_UPPER:
+		StringUtil::ToUpperCase(text);
+		break;
+	case TEXTCASE_LOWER:
+		StringUtil::ToLowerCase(text);
+		break;
+	case TEXTCASE_PROPER:
+		StringUtil::ToProperCase(text);
+		break;
+	}
 }
 
 bool MeterStringBase::ShouldTrim() const

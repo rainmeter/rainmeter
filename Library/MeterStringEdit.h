@@ -6,7 +6,9 @@
 
 // A text meter the user can type into. Clicking it places a caret, after which the skin routes
 // keyboard input here. The text is rendered verbatim so that a caret offset is also an offset into
-// the text being edited, which is why none of String's formatting options exist here.
+// the text being edited, which is why none of String's formatting options exist here. StringCase is
+// the exception: it converts the text itself rather than only its rendering, so offsets still line
+// up and what the skin reads back through [$Input] is what is on screen.
 class MeterStringEdit : public MeterStringBase
 {
 public:
