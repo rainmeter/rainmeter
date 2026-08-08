@@ -55,7 +55,7 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_TopProcess = parser.ReadInt(section, L"TopProcess", 0);
 
-	if (!m_MaxValueDefined)
+	if (!parser.IsValueDefined(section, L"MaxValue"))
 	{
 		m_MaxValue = 10000000.0;
 		m_LogMaxValue = false;

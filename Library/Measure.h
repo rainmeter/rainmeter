@@ -93,8 +93,6 @@ protected:
 	bool m_LogMaxValue;
 	double m_MinValue;
 	double m_MaxValue;
-	bool m_MinValueDefined;
-	bool m_MaxValueDefined;
 
 	std::vector<std::wstring> m_Substitute;
 	bool m_RegExpSubstitute;
