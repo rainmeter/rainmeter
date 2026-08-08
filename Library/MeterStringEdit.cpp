@@ -122,6 +122,10 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	m_TextOption = text;
 
+	// Unconditional so that a StringCase arriving later - through !SetOption or a dynamic variable -
+	// also converts text that is already there, whether it came from the option or from the user.
+	ApplyCase(m_Text);
+
 	m_ClearOnFocus = parser.ReadBool(section, L"ClearOnFocus", false);
 	m_SelectAllOnFocus = parser.ReadBool(section, L"SelectAllOnFocus", false);
 	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
@@ -441,6 +445,9 @@ void MeterStringEdit::PushUndo(EditKind kind)
 void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 {
 	m_Text = snapshot.text;
+
+	// A snapshot taken under a different StringCase would otherwise bring the old case back.
+	ApplyCase(m_Text);
 	m_String = m_Text;
 
 	const UINT32 len = (UINT32)m_String.length();
@@ -616,6 +623,9 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	m_Text = m_String;
 	m_Text.replace(start, end - start, insert);
+
+	// Converted whole rather than per insert, since PROPER has to see the surrounding words.
+	ApplyCase(m_Text);
 	m_String = m_Text;
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();

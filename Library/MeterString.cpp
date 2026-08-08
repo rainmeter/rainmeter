@@ -5,7 +5,6 @@
 #include "Rainmeter.h"
 #include "Measure.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/StringUtil.h"
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
@@ -13,7 +12,6 @@
 MeterString::MeterString(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_Angle(),
 	m_AutoScale(AUTOSCALE_OFF),
-	m_Case(TEXTCASE_NONE),
 	m_Scale(1.0),
 	m_NoDecimals(true),
 	m_Percentual(true),
@@ -61,28 +59,6 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_NoDecimals = (scale.find(L'.') == std::wstring::npos);
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
-	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
-	if (_wcsicmp(stringCase, L"NONE") == 0)
-	{
-		m_Case = TEXTCASE_NONE;
-	}
-	else if (_wcsicmp(stringCase, L"UPPER") == 0)
-	{
-		m_Case = TEXTCASE_UPPER;
-	}
-	else if (_wcsicmp(stringCase, L"LOWER") == 0)
-	{
-		m_Case = TEXTCASE_LOWER;
-	}
-	else if (_wcsicmp(stringCase, L"PROPER") == 0)
-	{
-		m_Case = TEXTCASE_PROPER;
-	}
-	else
-	{
-		LogErrorF(this, L"StringCase=%s is not valid", stringCase);
-	}
-
 	m_TrailingSpaces = parser.ReadBool(section, L"TrailingSpaces", false);
 }
 
@@ -114,18 +90,7 @@ bool MeterString::Update()
 		}
 		if (!m_Postfix.empty()) m_String += m_Postfix;
 
-		switch (m_Case)
-		{
-		case TEXTCASE_UPPER:
-			StringUtil::ToUpperCase(m_String);
-			break;
-		case TEXTCASE_LOWER:
-			StringUtil::ToLowerCase(m_String);
-			break;
-		case TEXTCASE_PROPER:
-			StringUtil::ToProperCase(m_String);
-			break;
-		}
+		ApplyCase(m_String);
 
 		for (size_t i = 0; i < m_String.length(); ++i)
 		{
