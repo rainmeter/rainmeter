@@ -4872,9 +4872,12 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Moving to another field dismisses the one being left.
 			MeterStringEdit* outgoing = m_InputFocusMeter;
 			std::wstring dismissCommand;
+			std::wstring focusCommand;
 
 			if (SetInputFocus(editMeter, &dismissCommand))
 			{
+				focusCommand = editMeter->GetFocusCommand();
+
 				// The window has to hold keyboard focus for typing to reach it at all.
 				// WM_MOUSEACTIVATE already returns MA_ACTIVATE, but the click may have landed
 				// while another window was focused.
@@ -4893,11 +4896,16 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				Redraw();
 			}
 
-			// Run last: the action may refresh or close the skin, which destroys both meters and
-			// this window, so nothing may be touched afterwards.
+			// Run last, in the order the two things happened: either may refresh or close the skin,
+			// which destroys both meters and this window, so nothing may be touched afterwards.
 			if (!dismissCommand.empty())
 			{
 				GetRainmeter().ExecuteActionCommand(dismissCommand.c_str(), outgoing);
+			}
+
+			if (!focusCommand.empty())
+			{
+				GetRainmeter().ExecuteActionCommand(focusCommand.c_str(), editMeter);
 			}
 
 			// Swallowed either way, so that a click which only moves the caret does not also fire
@@ -4942,12 +4950,20 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// The caret is placed here rather than relied on from the preceding click: focus is
 			// taken on the button up, which OnSysCommand only posts, so it may not have arrived
 			// yet. Placing it makes the selected word the one under the pointer either way.
-			SetInputFocus(editMeter);
+			std::wstring focusCommand;
+			if (SetInputFocus(editMeter)) focusCommand = editMeter->GetFocusCommand();
+
 			SetFocus(m_Window);
 			editMeter->SetCaretFromPoint(pos.x, pos.y);
 			if (editMeter->SelectWordAtCaret())
 			{
 				Redraw();
+			}
+
+			// Run last: the action may refresh or close the skin.
+			if (!focusCommand.empty())
+			{
+				GetRainmeter().ExecuteActionCommand(focusCommand.c_str(), editMeter);
 			}
 
 			// Remembered so that a third click can widen the selection to the whole line.
