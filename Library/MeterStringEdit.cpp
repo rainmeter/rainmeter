@@ -364,11 +364,17 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 
 void MeterStringEdit::UpdateAutoSizeForText()
 {
-	// An empty auto-sized field would collapse to nothing and become unclickable, so it takes its
-	// size from the placeholder instead.
 	if (ShowingPlaceholder())
 	{
 		UpdateAutoSize(&m_Placeholder, m_PlaceholderFormat.get());
+	}
+	else if (m_String.empty())
+	{
+		// An empty string measures zero in both directions, so a field the user just cleared would
+		// collapse to nothing and leave nothing to click on or to put the caret in. Size it as if it
+		// held a single period instead.
+		static const std::wstring s_Period = L".";
+		UpdateAutoSize(&s_Period);
 	}
 	else
 	{
