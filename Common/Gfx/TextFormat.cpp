@@ -506,10 +506,11 @@ void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
 
 void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
+	static const std::wstring s_DefaultPattern = L".*";
+
 	size_t i = 0;
 	for (; i < options.size(); ++i)
 	{
-		const std::wstring s_DefaultPattern = L".*";
 		const auto& pattern = options[i].pattern.empty() ? s_DefaultPattern : options[i].pattern;
 		if (!CreateInlineOption(i, pattern, options[i].settings)) break;
 	}
