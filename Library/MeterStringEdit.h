@@ -39,7 +39,8 @@ public:
 	std::wstring GetFocusCommand();
 
 	// The counterpart for moving away from the field without committing: applies ClearOnDismiss
-	// and fills |command| with OnDismissAction.
+	// and fills |command| with OnDismissAction. Does neither when the text standing in the field
+	// is what a commit already submitted.
 	void HandleDismiss(std::wstring& command);
 
 	// Focus (see also Skin, which owns which meter currently holds the caret).
@@ -172,6 +173,10 @@ private:
 	bool m_SelectAllOnFocus;
 	bool m_ClearOnEnter;
 	bool m_ClearOnDismiss;
+
+	// Set by a commit and cleared by the next edit, so that leaving a field whose contents have
+	// already been submitted is not also treated as abandoning them.
+	bool m_Committed;
 
 	// Longest the text may become, in UTF-16 units, as Win32 edit controls also count it. Zero or
 	// less is unlimited. Only bounds what the user enters, not what Text starts as.

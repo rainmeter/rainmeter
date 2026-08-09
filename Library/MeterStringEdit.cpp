@@ -44,6 +44,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_SelectAllOnFocus(false),
 	m_ClearOnEnter(false),
 	m_ClearOnDismiss(false),
+	m_Committed(false),
 	m_MaxLength(0),
 	m_InputFilter(InputFilter::None),
 	m_InputCase(TEXTCASE_NONE),
@@ -393,6 +394,7 @@ void MeterStringEdit::SetFocus(bool focus)
 
 	m_Focused = focus;
 	m_CaretBlinkStart = GetTickCount64();
+	m_Committed = false;
 
 	if (!focus) return;
 
@@ -416,6 +418,9 @@ bool MeterStringEdit::HandleEnter(std::wstring& command)
 
 	if (m_ClearOnEnter) Clear();
 
+	// After Clear(), which edits the text and would otherwise reset this again.
+	m_Committed = true;
+
 	return true;
 }
 
@@ -428,6 +433,10 @@ std::wstring MeterStringEdit::GetFocusCommand()
 
 void MeterStringEdit::HandleDismiss(std::wstring& command)
 {
+	// A commit is not something to then abandon: Enter has already run its action and had its say
+	// over the text, so leaving afterwards is only a dismissal once the text has moved on from it.
+	if (m_Committed) return;
+
 	ExpandAction(m_OnDismissAction, command);
 
 	if (m_ClearOnDismiss) Clear();
@@ -505,6 +514,7 @@ void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 	m_CaretTrailing = snapshot.trailing;
 	m_SelectionAnchor = min(snapshot.anchor, len);
 	m_CaretBlinkStart = GetTickCount64();
+	m_Committed = false;
 
 	UpdateAutoSize();
 }
@@ -697,6 +707,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
 	m_CaretTrailing = true;
+	m_Committed = false;
 
 	// Before EnsureCaretVisible(), which measures the caret against the meter box: on an auto-sized
 	// meter that box is what the text just made it, so scrolling first would compare the new caret
