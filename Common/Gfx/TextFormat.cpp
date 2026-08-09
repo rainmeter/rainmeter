@@ -560,7 +560,7 @@ void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>
 		}
 		else
 		{
-			m_TextInlineFormat[i]->SetRanges(dwriteRanges);
+			m_TextInlineFormat[i]->SetRanges(std::move(dwriteRanges));
 		}
 	}
 }
