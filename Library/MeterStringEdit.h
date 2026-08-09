@@ -8,7 +8,8 @@
 // keyboard input here. The text is rendered verbatim so that a caret offset is also an offset into
 // the text being edited, which is why none of String's formatting options exist here. StringCase is
 // the exception: it converts the text itself rather than only its rendering, so offsets still line
-// up and what the skin reads back through [$Input] is what is on screen.
+// up and what the skin reads back through [$Input] is what is on screen. InputCase is the same
+// conversion narrowed to what the user types or pastes, and to the cases that work per character.
 class MeterStringEdit : public MeterStringBase
 {
 public:
@@ -166,6 +167,12 @@ private:
 	// Longest the text may become, in UTF-16 units, as Win32 edit controls also count it. Zero or
 	// less is unlimited. Only bounds what the user enters, not what Text starts as.
 	int m_MaxLength;
+
+	// Converts what the user contributes - typing, paste, drops - and nothing else, so text that
+	// arrived through the Text option keeps the case it was written in. StringCase, held by the
+	// base, converts the whole text instead, and is applied after this one. Never TEXTCASE_PROPER,
+	// which only makes sense over whole words.
+	TEXTCASE m_InputCase;
 
 	bool m_CaretDrawnVisible;
 	D2D1_COLOR_F m_CaretColor;
