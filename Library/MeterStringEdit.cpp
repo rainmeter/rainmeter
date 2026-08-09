@@ -314,6 +314,27 @@ void MeterStringEdit::EnsureCaretVisible()
 	// Never scroll past the start; there is nothing to reveal before it.
 	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
 	m_TextOffset.y = max(m_TextOffset.y, 0.0f);
+
+	// Nor past the end: deleting text, or a meter that grew, can leave more of the box scrolled
+	// past than there is text to fill it. The caret position after the last character sits at the
+	// end of the text, so it gives that edge back without measuring the string again.
+	if (m_TextOffset.x > 0.0f || m_TextOffset.y > 0.0f)
+	{
+		D2D1_RECT_F endCaret = { 0 };
+		if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
+			(UINT32)m_String.length(), true, 1.0f, endCaret))
+		{
+			if (endCaret.right < box.right)
+			{
+				m_TextOffset.x = max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
+			}
+
+			if (endCaret.bottom < box.bottom)
+			{
+				m_TextOffset.y = max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
+			}
+		}
+	}
 }
 
 void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)
@@ -648,10 +669,14 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
 	m_CaretTrailing = true;
+
+	// Before EnsureCaretVisible(), which measures the caret against the meter box: on an auto-sized
+	// meter that box is what the text just made it, so scrolling first would compare the new caret
+	// against the width of the previous text and scroll a field that in fact fits.
+	UpdateAutoSize();
+
 	EnsureCaretVisible();
 	m_CaretBlinkStart = GetTickCount64();
-
-	UpdateAutoSize();
 }
 
 bool MeterStringEdit::CopySelection(bool cut)
