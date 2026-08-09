@@ -419,10 +419,11 @@ void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* f
 }
 
 bool MeterStringBase::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect,
-	const std::wstring* str, Gfx::TextFormat* format)
+	const std::wstring* str, Gfx::TextFormat* format, const D2D1_COLOR_F* color)
 {
 	if (!str) str = &m_String;
 	if (!format) format = m_TextFormat.get();
+	if (!color) color = &m_Color;
 
 	if (!format->IsInitialized()) return false;
 
@@ -566,7 +567,7 @@ bool MeterStringBase::DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect,
 			}
 		}
 
-		canvas.DrawTextW(*str, *format, rcDest, m_Color, true);
+		canvas.DrawTextW(*str, *format, rcDest, *color, true);
 	}
 
 	return true;
