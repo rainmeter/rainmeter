@@ -5,6 +5,7 @@
 #include "Meter.h"
 #include "Measure.h"
 #include <memory>
+#include <optional>
 
 // Shared base for String, which formats a measure's value, and StringEdit, which lets the user
 // edit the text. Holds the font and case options common to both and the drawing built on them, but
@@ -84,12 +85,15 @@ protected:
 	TEXTSTYLE ReadStringStyle(ConfigParser& parser, const WCHAR* section, const WCHAR* option,
 		TEXTSTYLE defaultStyle);
 
-	// Draws m_String, or measures it into |rect| when one is given. |str|, |format| and |color|
-	// override what is drawn, so a subclass can render a second piece of text (StringEdit's
-	// placeholder) through the same layout and clipping rules.
-	bool DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect,
-		const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr,
-		const D2D1_COLOR_F* color = nullptr);
+	// The bounds m_String needs, or nothing when it cannot be measured. Also decides, for CLIP_AUTO,
+	// whether the text needs clipping. |str| and |format| override what is measured, so a subclass
+	// can size itself from a second piece of text through the same rules.
+	std::optional<D2D1_RECT_F> MeasureStringBounds(Gfx::Canvas& canvas, const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr);
+
+	// Draws m_String. |str|, |format| and |color| override what is drawn, so a subclass can render a
+	// second piece of text through the same layout and clipping rules. Measure first: what is drawn
+	// is laid out in the meter's rect, which auto-sizing takes from MeasureStringBounds().
+	bool DrawString(Gfx::Canvas& canvas, const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr, const D2D1_COLOR_F* color = nullptr);
 
 	// Anything that hit-tests the layout has to go through this too, or what it measures is not
 	// what is on screen.
