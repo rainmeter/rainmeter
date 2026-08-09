@@ -522,18 +522,6 @@ void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 	}
 }
 
-std::vector<std::wstring> TextFormat::GetInlinePatterns()
-{
-	std::vector<std::wstring> patterns;
-	patterns.reserve(m_TextInlineFormat.size());
-	for (auto& fmt : m_TextInlineFormat)
-	{
-		patterns.push_back(fmt->GetPattern());
-	}
-
-	return patterns;
-}
-
 void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
 {
 	const size_t count = min(m_TextInlineFormat.size(), ranges.size());

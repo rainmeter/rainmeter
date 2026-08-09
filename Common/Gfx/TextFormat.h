@@ -78,8 +78,10 @@ public:
 	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
 	void SetInlineOptions(const std::vector<TextInlineOption>& options);
-	std::vector<std::wstring> GetInlinePatterns();
 	void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges);
+
+	size_t GetInlineOptionCount() const { return m_TextInlineFormat.size(); }
+	const std::wstring& GetInlinePattern(const size_t index) const { return m_TextInlineFormat[index]->GetPattern(); }
 
 	const MathParser& GetMathParser() const { return m_MathParser; }
 

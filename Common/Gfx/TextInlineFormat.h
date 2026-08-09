@@ -38,7 +38,7 @@ public:
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) = 0;
 
-	const std::wstring& GetPattern() { return m_Pattern; }
+	const std::wstring& GetPattern() const { return m_Pattern; }
 	void SetRanges(std::vector<DWRITE_TEXT_RANGE> ranges) { m_TextRange = std::move(ranges); }
 
 protected:
