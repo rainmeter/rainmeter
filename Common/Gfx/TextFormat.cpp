@@ -509,7 +509,8 @@ void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 	size_t i = 0;
 	for (; i < options.size(); ++i)
 	{
-		std::wstring pattern = options[i].pattern.empty() ? L".*" : options[i].pattern;
+		const std::wstring s_DefaultPattern = L".*";
+		const auto& pattern = options[i].pattern.empty() ? s_DefaultPattern : options[i].pattern;
 		if (!CreateInlineOption(i, pattern, options[i].settings)) break;
 	}
 
@@ -565,7 +566,7 @@ void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>
 	}
 }
 
-bool TextFormat::CreateInlineOption(const size_t index, const std::wstring& pattern, std::vector<std::wstring> options)
+bool TextFormat::CreateInlineOption(const size_t index, const std::wstring& pattern, const std::vector<std::wstring>& options)
 {
 	if (options.empty()) return false;
 
@@ -646,8 +647,9 @@ bool TextFormat::CreateInlineOption(const size_t index, const std::wstring& patt
 		if (optSize >= 3)
 		{
 			bool altGamma = ParseUtil::ParseInt(option + 13, 0, m_MathParser) != 0;
-			options.erase(options.begin());
-			UpdateInlineGradientColor(index, pattern, options, altGamma);
+
+			// The first option is the 'GRADIENTCOLOR' keyword itself, the rest are the arguments.
+			UpdateInlineGradientColor(index, pattern, std::span(options).subspan(1), altGamma);
 			return true;
 		}
 	}
@@ -839,7 +841,7 @@ void TextFormat::UpdateInlineFace(const size_t index, const std::wstring& patter
 }
 
 void TextFormat::UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
-	const std::vector<std::wstring> args, const bool altGamma)
+	const std::span<const std::wstring> args, const bool altGamma)
 {
 	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
 

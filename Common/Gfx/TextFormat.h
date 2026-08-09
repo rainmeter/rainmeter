@@ -5,6 +5,7 @@
 #include "TextInlineFormat.h"
 #include <Windows.h>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 #include <dwrite_1.h>
@@ -102,14 +103,14 @@ private:
 	DWRITE_TEXT_METRICS GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth = 10000.0f);
 
 	// These functions create/modify any inline options.
-	bool CreateInlineOption(const size_t index, const std::wstring& pattern, std::vector<std::wstring> options);
+	bool CreateInlineOption(const size_t index, const std::wstring& pattern, const std::vector<std::wstring>& options);
 	void UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type);
 	void UpdateInlineCharacterSpacing(const size_t index, const std::wstring& pattern, const FLOAT leading,
 		const FLOAT trailing, const FLOAT advanceWidth);
 	void UpdateInlineColor(const size_t index, const std::wstring& pattern, const D2D1_COLOR_F& color);
 	void UpdateInlineFace(const size_t index, const std::wstring& pattern, const WCHAR* face);
 	void UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
-		const std::vector<std::wstring> args, const bool altGamma);
+		const std::span<const std::wstring> args, const bool altGamma);
 	void UpdateInlineItalic(const size_t index, const std::wstring& pattern);
 	void UpdateInlineNone(const size_t index, const std::wstring& pattern);
 	void UpdateInlineOblique(const size_t index, const std::wstring& pattern);
