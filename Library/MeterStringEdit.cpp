@@ -54,6 +54,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_CaretPos(0U),
 	m_SelectionAnchor(0U),
 	m_CaretTrailing(false),
+	m_PlaceholderColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_PlaceholderFontSize(10.0f),
 	m_PlaceholderStyle(NORMAL),
 	m_PlaceholderFormat(),
@@ -258,7 +259,8 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 	bool drawn = true;
 	if (ShowingPlaceholder())
 	{
-		drawn = DrawString(canvas, nullptr, &m_Placeholder, m_PlaceholderFormat.get());
+		drawn = DrawString(canvas, nullptr, &m_Placeholder, m_PlaceholderFormat.get(),
+			&m_PlaceholderColor);
 	}
 	else
 	{

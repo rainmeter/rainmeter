@@ -84,11 +84,12 @@ protected:
 	TEXTSTYLE ReadStringStyle(ConfigParser& parser, const WCHAR* section, const WCHAR* option,
 		TEXTSTYLE defaultStyle);
 
-	// Draws m_String, or measures it into |rect| when one is given. |str| and |format| override
-	// what is drawn, so a subclass can render a second piece of text (StringEdit's placeholder)
-	// through the same layout and clipping rules.
+	// Draws m_String, or measures it into |rect| when one is given. |str|, |format| and |color|
+	// override what is drawn, so a subclass can render a second piece of text (StringEdit's
+	// placeholder) through the same layout and clipping rules.
 	bool DrawString(Gfx::Canvas& canvas, D2D1_RECT_F* rect,
-		const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr);
+		const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr,
+		const D2D1_COLOR_F* color = nullptr);
 
 	// Anything that hit-tests the layout has to go through this too, or what it measures is not
 	// what is on screen.
