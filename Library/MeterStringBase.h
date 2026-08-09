@@ -129,6 +129,7 @@ protected:
 	D2D1_POINT_2F m_TextOffset;
 
 	// The text as drawn. String rewrites it from m_Text and its formatting options; StringEdit
-	// keeps it identical to m_Text, so a caret offset is also an offset into the edited text.
+	// keeps it the same length as m_Text - identical to it, or a mask of it - so that a caret
+	// offset is also an offset into the edited text.
 	std::wstring m_String;
 };
