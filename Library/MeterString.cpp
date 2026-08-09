@@ -130,7 +130,7 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	if (m_Angle == 0.0f) return DrawString(canvas, nullptr);
+	if (m_Angle == 0.0f) return DrawString(canvas);
 
 	D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity();
 	canvas.GetTransform(&matrix);
@@ -147,7 +147,7 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	canvas.SetTransform(
 		D2D1::Matrix3x2F::Rotation(CONVERT_TO_DEGREES(m_Angle), D2D1::Point2F(cx, rect.top)) * matrix);
 
-	const bool result = DrawString(canvas, nullptr);
+	const bool result = DrawString(canvas);
 
 	canvas.ResetTransform();
 	return result;

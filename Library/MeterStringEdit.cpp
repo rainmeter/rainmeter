@@ -339,12 +339,11 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 	bool drawn = true;
 	if (ShowingPlaceholder())
 	{
-		drawn = DrawString(canvas, nullptr, &m_Placeholder, m_PlaceholderFormat.get(),
-			&m_PlaceholderColor);
+		drawn = DrawString(canvas, &m_Placeholder, m_PlaceholderFormat.get(), &m_PlaceholderColor);
 	}
 	else
 	{
-		drawn = DrawString(canvas, nullptr);
+		drawn = DrawString(canvas);
 	}
 
 	// Drawn over the placeholder, and using the meter's own format rather than the placeholder's,
