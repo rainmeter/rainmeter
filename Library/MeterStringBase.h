@@ -69,11 +69,16 @@ protected:
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
-	// Applies StringCase to |text| in place. The conversions map each UTF-16 unit onto one unit, so
+	// Applies |textCase| to |text| in place. The conversions map each UTF-16 unit onto one unit, so
 	// offsets into the text survive them, which is what lets StringEdit convert what it edits rather
 	// than only what it draws. Left to the subclass to call: String converts the finished m_String,
 	// StringEdit the text itself.
-	void ApplyCase(std::wstring& text) const;
+	void ApplyCase(std::wstring& text, TEXTCASE textCase) const;
+	void ApplyCase(std::wstring& text) const { ApplyCase(text, m_Case); }
+
+	// Returns |defaultCase| when the option is unset, and logs an unrecognised value.
+	TEXTCASE ReadStringCase(ConfigParser& parser, const WCHAR* section, const WCHAR* option,
+		TEXTCASE defaultCase);
 
 	// Returns |defaultStyle| when the option is unset, and logs an unrecognised value.
 	TEXTSTYLE ReadStringStyle(ConfigParser& parser, const WCHAR* section, const WCHAR* option,

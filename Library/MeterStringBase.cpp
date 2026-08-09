@@ -252,27 +252,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Style = ReadStringStyle(parser, section, L"StringStyle", NORMAL);
 
-	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
-	if (_wcsicmp(stringCase, L"NONE") == 0)
-	{
-		m_Case = TEXTCASE_NONE;
-	}
-	else if (_wcsicmp(stringCase, L"UPPER") == 0)
-	{
-		m_Case = TEXTCASE_UPPER;
-	}
-	else if (_wcsicmp(stringCase, L"LOWER") == 0)
-	{
-		m_Case = TEXTCASE_LOWER;
-	}
-	else if (_wcsicmp(stringCase, L"PROPER") == 0)
-	{
-		m_Case = TEXTCASE_PROPER;
-	}
-	else
-	{
-		LogErrorF(this, L"StringCase=%s is not valid", stringCase);
-	}
+	m_Case = ReadStringCase(parser, section, L"StringCase", TEXTCASE_NONE);
 
 	int weight = parser.ReadInt(section, L"FontWeight", -1);
 	if (parser.GetLastValueDefined())
@@ -358,11 +338,26 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 	return defaultStyle;
 }
 
-void MeterStringBase::ApplyCase(std::wstring& text) const
+MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
+	ConfigParser& parser, const WCHAR* section, const WCHAR* option, TEXTCASE defaultCase)
+{
+	const WCHAR* value = parser.ReadString(section, option, L"").c_str();
+	if (!*value) return defaultCase;
+
+	if (_wcsicmp(value, L"NONE") == 0) return TEXTCASE_NONE;
+	if (_wcsicmp(value, L"UPPER") == 0) return TEXTCASE_UPPER;
+	if (_wcsicmp(value, L"LOWER") == 0) return TEXTCASE_LOWER;
+	if (_wcsicmp(value, L"PROPER") == 0) return TEXTCASE_PROPER;
+
+	LogErrorF(this, L"%s=%s is not valid", option, value);
+	return defaultCase;
+}
+
+void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const
 {
 	if (text.empty()) return;
 
-	switch (m_Case)
+	switch (textCase)
 	{
 	case TEXTCASE_UPPER:
 		StringUtil::ToUpperCase(text);

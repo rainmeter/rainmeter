@@ -45,6 +45,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_ClearOnEnter(false),
 	m_ClearOnDismiss(false),
 	m_MaxLength(0),
+	m_InputCase(TEXTCASE_NONE),
 	m_CaretDrawnVisible(false),
 	m_CaretColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_SelectionColor(D2D1::ColorF(D2D1::ColorF::SteelBlue, 0.5f)),
@@ -131,6 +132,16 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
 	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
+
+	// PROPER is not offered here: it is a property of whole words, and the text is converted a
+	// keystroke at a time, with no way to know whether more of the word is still coming. StringCase
+	// converts the whole text and does support it.
+	m_InputCase = ReadStringCase(parser, section, L"InputCase", TEXTCASE_NONE);
+	if (m_InputCase == TEXTCASE_PROPER)
+	{
+		LogErrorF(this, L"InputCase=PROPER is not valid");
+		m_InputCase = TEXTCASE_NONE;
+	}
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
@@ -605,6 +616,11 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 	const UINT32 end = GetSelectionEnd();
 
 	std::wstring insert = text;
+
+	// UPPER and LOWER convert each character on its own, so the insert can be converted before it
+	// is spliced in, leaving text the user did not type alone.
+	ApplyCase(insert, m_InputCase);
+
 	if (m_MaxLength > 0 && !insert.empty())
 	{
 		// What the selection leaves behind is what the limit has to accommodate. An existing text
