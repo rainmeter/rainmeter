@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include "IfActions.h"
+#include "Locale.h"
 #include "Util.h"
 #include "Section.h"
 
@@ -80,6 +81,10 @@ protected:
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue() = 0;
+
+	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
+	// a string into their number value.
+	Locale::NumberFormat ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

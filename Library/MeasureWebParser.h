@@ -57,6 +57,7 @@ private:
 
 	ReferenceMatch FindMeasureUrlReference(Measure* measure) const;
 
+	Locale::NumberFormat m_NumberFormat;
 	std::wstring m_Url;
 	std::wstring m_Expression;
 	std::wstring m_ResultString;

@@ -5,6 +5,7 @@
 #include "Rainmeter.h"
 
 MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(Locale::NumberFormat::Default),
 	m_String(),
 	m_StringValue()
 {
@@ -17,6 +18,8 @@ MeasureString::~MeasureString()
 void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
+
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
 	m_String = parser.ReadString(section, L"String", L"");
 
@@ -32,7 +35,7 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeasureString::UpdateValue()
 {
 	m_StringValue = m_String;
-	m_Value = _wtof(m_String.c_str());
+	m_Value = Locale::StringToNumber(m_String.c_str(), m_NumberFormat);
 }
 
 const WCHAR* MeasureString::GetStringValue()
