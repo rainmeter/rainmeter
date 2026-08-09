@@ -131,6 +131,11 @@ private:
 
 	bool ShowingPlaceholder() const { return m_PlaceholderFormat && m_String.empty(); }
 
+	// UpdateAutoSize() against whichever of the two texts is on screen. Every path that changes the
+	// text goes through this rather than the base directly, or an edit that empties the field would
+	// size it to the empty string while the placeholder is what gets drawn.
+	void UpdateAutoSizeForText();
+
 	// A Gfx::TextFormat caches a single layout, so the placeholder needs its own or every frame
 	// that alternates between the two would rebuild one. Allocated only while there is one.
 	void UpdatePlaceholderFormat();
