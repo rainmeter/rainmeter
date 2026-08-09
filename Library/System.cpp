@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "System.h"
 #include "DialogDebug.h"
-#include "Locale.h"
+#include "LocaleUtil.h"
 #include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -649,7 +649,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
 		{
 			LogNotice(L"System: Regional settings changed");
-			Locale::RefreshNumberFormat();
+			LocaleUtil::RefreshNumberFormat();
 		}
 
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))

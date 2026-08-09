@@ -31,7 +31,7 @@ private:
 
 	void Dispose();
 
-	Locale::NumberFormat m_NumberFormat;
+	LocaleUtil::NumberFormat m_NumberFormat;
 	OutputType m_OutputType;
 	std::wstring m_OutputDelimiter;
 	std::wstring m_RegKeyName;

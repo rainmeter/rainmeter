@@ -4,7 +4,7 @@
 
 #include <windows.h>
 
-namespace Locale {
+namespace LocaleUtil {
 
 enum class NumberFormat : BYTE
 {
@@ -24,4 +24,4 @@ double StringToNumber(const WCHAR* str, NumberFormat format);
 // regional settings.
 void RefreshNumberFormat();
 
-}  // namespace Locale
+}  // namespace LocaleUtil

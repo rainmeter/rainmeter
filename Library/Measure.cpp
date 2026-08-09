@@ -164,18 +164,18 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 // "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
 // skin files.
-Locale::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section)
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section)
 {
 	const std::wstring& option = parser.ReadString(section, L"NumberConversionFormat", L"");
 
-	if (_wcsicmp(option.c_str(), L"Locale") == 0) return Locale::NumberFormat::Locale;
+	if (_wcsicmp(option.c_str(), L"Locale") == 0) return LocaleUtil::NumberFormat::Locale;
 
 	if (!option.empty() && _wcsicmp(option.c_str(), L"Default") != 0)
 	{
 		LogErrorF(this, L"Measure: Invalid NumberConversionFormat=%s", option.c_str());
 	}
 
-	return Locale::NumberFormat::Default;
+	return LocaleUtil::NumberFormat::Default;
 }
 
 void Measure::ReadOptions(ConfigParser& parser)
