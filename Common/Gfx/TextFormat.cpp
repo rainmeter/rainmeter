@@ -740,7 +740,7 @@ bool TextFormat::CreateInlineOption(const size_t index, const std::wstring& patt
 	return false;
 }
 
-void TextFormat::UpdateInlineCase(const size_t& index, const std::wstring& pattern, const Gfx::CaseType type)
+void TextFormat::UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -762,7 +762,7 @@ void TextFormat::UpdateInlineCase(const size_t& index, const std::wstring& patte
 	}
 }
 
-void TextFormat::UpdateInlineCharacterSpacing(const size_t& index, const std::wstring& pattern,
+void TextFormat::UpdateInlineCharacterSpacing(const size_t index, const std::wstring& pattern,
 	const FLOAT leading, const FLOAT trailing, const FLOAT advanceWidth)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -794,7 +794,7 @@ void TextFormat::UpdateInlineCharacterSpacing(const size_t& index, const std::ws
 	}
 }
 
-void TextFormat::UpdateInlineColor(const size_t& index, const std::wstring& pattern, const D2D1_COLOR_F& color)
+void TextFormat::UpdateInlineColor(const size_t index, const std::wstring& pattern, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -816,7 +816,7 @@ void TextFormat::UpdateInlineColor(const size_t& index, const std::wstring& patt
 	}
 }
 
-void TextFormat::UpdateInlineFace(const size_t& index, const std::wstring& pattern, const WCHAR* face)
+void TextFormat::UpdateInlineFace(const size_t index, const std::wstring& pattern, const WCHAR* face)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -838,7 +838,7 @@ void TextFormat::UpdateInlineFace(const size_t& index, const std::wstring& patte
 	}
 }
 
-void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstring& pattern,
+void TextFormat::UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
 	const std::vector<std::wstring> args, const bool altGamma)
 {
 	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
@@ -895,7 +895,7 @@ void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstri
 	}
 }
 
-void TextFormat::UpdateInlineItalic(const size_t& index, const std::wstring& pattern)
+void TextFormat::UpdateInlineItalic(const size_t index, const std::wstring& pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -939,7 +939,7 @@ void TextFormat::UpdateInlineNone(const size_t & index, const std::wstring& patt
 	}
 }
 
-void TextFormat::UpdateInlineOblique(const size_t& index, const std::wstring& pattern)
+void TextFormat::UpdateInlineOblique(const size_t index, const std::wstring& pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -961,7 +961,7 @@ void TextFormat::UpdateInlineOblique(const size_t& index, const std::wstring& pa
 	}
 }
 
-void TextFormat::UpdateInlineShadow(const size_t& index, const std::wstring& pattern,
+void TextFormat::UpdateInlineShadow(const size_t index, const std::wstring& pattern,
 	const FLOAT blur, const D2D1_POINT_2F offset, const D2D1_COLOR_F& color)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -984,7 +984,7 @@ void TextFormat::UpdateInlineShadow(const size_t& index, const std::wstring& pat
 	}
 }
 
-void TextFormat::UpdateInlineSize(const size_t& index, const std::wstring& pattern, const FLOAT size)
+void TextFormat::UpdateInlineSize(const size_t index, const std::wstring& pattern, const FLOAT size)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1006,7 +1006,7 @@ void TextFormat::UpdateInlineSize(const size_t& index, const std::wstring& patte
 	}
 }
 
-void TextFormat::UpdateInlineStretch(const size_t& index, const std::wstring& pattern, const DWRITE_FONT_STRETCH stretch)
+void TextFormat::UpdateInlineStretch(const size_t index, const std::wstring& pattern, const DWRITE_FONT_STRETCH stretch)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1028,7 +1028,7 @@ void TextFormat::UpdateInlineStretch(const size_t& index, const std::wstring& pa
 	}
 }
 
-void TextFormat::UpdateInlineStrikethrough(const size_t& index, const std::wstring& pattern)
+void TextFormat::UpdateInlineStrikethrough(const size_t index, const std::wstring& pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1050,7 +1050,7 @@ void TextFormat::UpdateInlineStrikethrough(const size_t& index, const std::wstri
 	}
 }
 
-void TextFormat::UpdateInlineTypography(const size_t& index, const std::wstring& pattern,
+void TextFormat::UpdateInlineTypography(const size_t index, const std::wstring& pattern,
 	const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter)
 {
 	if (index >= m_TextInlineFormat.size())
@@ -1073,7 +1073,7 @@ void TextFormat::UpdateInlineTypography(const size_t& index, const std::wstring&
 	}
 }
 
-void TextFormat::UpdateInlineUnderline(const size_t& index, const std::wstring& pattern)
+void TextFormat::UpdateInlineUnderline(const size_t index, const std::wstring& pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
@@ -1095,7 +1095,7 @@ void TextFormat::UpdateInlineUnderline(const size_t& index, const std::wstring& 
 	}
 }
 
-void TextFormat::UpdateInlineWeight(const size_t& index, const std::wstring& pattern, const DWRITE_FONT_WEIGHT weight)
+void TextFormat::UpdateInlineWeight(const size_t index, const std::wstring& pattern, const DWRITE_FONT_WEIGHT weight)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
