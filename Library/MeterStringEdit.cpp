@@ -368,13 +368,14 @@ void MeterStringEdit::UpdateAutoSizeForText()
 	{
 		UpdateAutoSize(&m_Placeholder, m_PlaceholderFormat.get());
 	}
-	else if (m_String.empty())
+	else if (m_String.empty() || m_String.back() == L'\n')
 	{
 		// An empty string measures zero in both directions, so a field the user just cleared would
-		// collapse to nothing and leave nothing to click on or to put the caret in. Size it as if it
-		// held a single period instead.
-		static const std::wstring s_Period = L".";
-		UpdateAutoSize(&s_Period);
+		// collapse to nothing and leave nothing to click on or to put the caret in. A trailing
+		// newline is also ignored by measurement, which makes sense for drawing, but not for editing.
+		// Handle both cases with an additional period.
+		const std::wstring measured = m_String + L".";
+		UpdateAutoSize(&measured);
 	}
 	else
 	{
