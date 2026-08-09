@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include "IfActions.h"
-#include "Locale.h"
+#include "LocaleUtil.h"
 #include "Util.h"
 #include "Section.h"
 
@@ -84,7 +84,7 @@ protected:
 
 	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
 	// a string into their number value.
-	Locale::NumberFormat ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section);
+	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

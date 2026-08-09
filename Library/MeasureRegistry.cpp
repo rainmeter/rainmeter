@@ -5,7 +5,7 @@
 #include "Rainmeter.h"
 
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_NumberFormat(Locale::NumberFormat::Default),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_OutputType(OutputType::Value),
 	m_RegKey(nullptr),
 	m_HKey(HKEY_CURRENT_USER)
@@ -123,7 +123,7 @@ void MeasureRegistry::UpdateValue()
 						{
 							// Use assign with length in case the data is not null-terminated.
 							m_StringValue.assign(rawStringData, rawStringLength);
-							m_Value = Locale::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
+							m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 						}
 						else if (type == REG_MULTI_SZ)
 						{
@@ -140,7 +140,7 @@ void MeasureRegistry::UpdateValue()
 									if (!convertedToNumber)
 									{
 										// Convert the first string to a number.
-										m_Value = Locale::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
+										m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 										convertedToNumber = true;
 									}
 
@@ -151,7 +151,7 @@ void MeasureRegistry::UpdateValue()
 
 							if (!convertedToNumber)
 							{
-								m_Value = Locale::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
+								m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 							}
 						}
 					}

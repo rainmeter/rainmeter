@@ -1,9 +1,9 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "Locale.h"
+#include "LocaleUtil.h"
 
-namespace Locale {
+namespace LocaleUtil {
 
 namespace {
 
@@ -82,4 +82,4 @@ void RefreshNumberFormat()
 	g_RefreshNumberFormat = true;
 }
 
-}  // namespace Locale
+}  // namespace LocaleUtil

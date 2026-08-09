@@ -225,7 +225,7 @@ void ClearProxySetting(ProxySetting& setting)
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_NumberFormat(Locale::NumberFormat::Default),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_ParseType(ParseType::RegExp),
 	m_Codepage(),
 	m_StringIndex(),
@@ -484,7 +484,7 @@ void MeasureWebParser::UpdateValue()
 	{
 		if (!m_ResultString.empty())
 		{
-			m_Value = Locale::StringToNumber(m_ResultString.c_str(), m_NumberFormat);
+			m_Value = LocaleUtil::StringToNumber(m_ResultString.c_str(), m_NumberFormat);
 		}
 
 		if (m_Url.size() > 0 && m_Url.find(L'[') == std::wstring::npos)
