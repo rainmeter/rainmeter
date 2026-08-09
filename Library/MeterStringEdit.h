@@ -85,6 +85,12 @@ private:
 		Deleting
 	};
 
+	enum class InputFilter : BYTE
+	{
+		None,
+		Numeric  // Digits alone: no sign, no decimal point, no separators.
+	};
+
 	struct EditSnapshot
 	{
 		std::wstring text;
@@ -127,6 +133,9 @@ private:
 	// arrived from the left of |pos| in logical order, clear it when it arrived from the right.
 	void MoveCaretTo(UINT32 pos, bool extend, bool trailing);
 
+	// Drops from |text| whatever InputFilter refuses, which may empty it.
+	void FilterInput(std::wstring& text) const;
+
 	// Replaces the selection, or inserts at the caret, leaving the caret after |text|. Truncates
 	// |text| to whatever MaxLength leaves room for.
 	void ReplaceSelection(const std::wstring& text);
@@ -167,6 +176,10 @@ private:
 	// Longest the text may become, in UTF-16 units, as Win32 edit controls also count it. Zero or
 	// less is unlimited. Only bounds what the user enters, not what Text starts as.
 	int m_MaxLength;
+
+	// Bounds what the user may enter, and like MaxLength only that: text that arrived through the
+	// Text option is left as it was written, so a filter set after the fact does not rewrite it.
+	InputFilter m_InputFilter;
 
 	// Converts what the user contributes - typing, paste, drops - and nothing else, so text that
 	// arrived through the Text option keeps the case it was written in. StringCase, held by the

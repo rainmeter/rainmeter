@@ -45,6 +45,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_ClearOnEnter(false),
 	m_ClearOnDismiss(false),
 	m_MaxLength(0),
+	m_InputFilter(InputFilter::None),
 	m_InputCase(TEXTCASE_NONE),
 	m_CaretDrawnVisible(false),
 	m_CaretColor(D2D1::ColorF(D2D1::ColorF::Black)),
@@ -133,6 +134,21 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
 	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
+
+	const WCHAR* filter = parser.ReadString(section, L"InputFilter", L"NONE").c_str();
+	if (_wcsicmp(filter, L"NONE") == 0)
+	{
+		m_InputFilter = InputFilter::None;
+	}
+	else if (_wcsicmp(filter, L"NUMERIC") == 0)
+	{
+		m_InputFilter = InputFilter::Numeric;
+	}
+	else
+	{
+		LogErrorF(this, L"InputFilter=%s is not valid", filter);
+		m_InputFilter = InputFilter::None;
+	}
 
 	// PROPER is not offered here: it is a property of whole words, and the text is converted a
 	// keystroke at a time, with no way to know whether more of the word is still coming. StringCase
@@ -633,12 +649,24 @@ bool MeterStringEdit::IsFull() const
 	return m_MaxLength > 0 && m_String.length() >= (size_t)m_MaxLength;
 }
 
+void MeterStringEdit::FilterInput(std::wstring& text) const
+{
+	if (m_InputFilter == InputFilter::None || text.empty()) return;
+
+	// ASCII digits only. iswdigit() would also take the digits of other scripts, which are not what
+	// a skin reading the field back as a number can parse.
+	std::erase_if(text, [](const WCHAR ch) { return ch < L'0' || ch > L'9'; });
+}
+
 void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 {
 	const UINT32 start = GetSelectionStart();
 	const UINT32 end = GetSelectionEnd();
 
 	std::wstring insert = text;
+
+	// Before MaxLength, so that the limit counts only characters that are actually going to land.
+	FilterInput(insert);
 
 	// UPPER and LOWER convert each character on its own, so the insert can be converted before it
 	// is spliced in, leaving text the user did not type alone.
@@ -716,6 +744,10 @@ bool MeterStringEdit::Paste()
 		}
 	}
 
+	// A paste the filter empties is not an edit, and must not swallow the selection.
+	FilterInput(text);
+	if (text.empty()) return false;
+
 	PushUndo(EditKind::None);
 	ReplaceSelection(text);
 	return true;
@@ -782,10 +814,16 @@ bool MeterStringEdit::HandleChar(WCHAR ch)
 	// A full field still accepts typing that replaces a selection.
 	if (IsFull() && !HasSelection()) return false;
 
+	// A refused keystroke must leave no undo step, and must not reach ReplaceSelection() as an empty
+	// insert and delete the selection in place of the character the filter would not take.
+	std::wstring insert(1U, ch);
+	FilterInput(insert);
+	if (insert.empty()) return false;
+
 	// Replacing a selection is a distinct step from the typing that follows it, so it does not
 	// fold into a preceding run.
 	PushUndo(HasSelection() ? EditKind::None : EditKind::Typing);
-	ReplaceSelection(std::wstring(1U, ch));
+	ReplaceSelection(insert);
 	m_LastEditKind = EditKind::Typing;
 	return true;
 }
@@ -914,6 +952,10 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		// A committing meter is single-line and the skin handles the commit. Shift+Enter still
 		// adds a line.
 		if (!shift && CommitsOnEnter()) return false;
+
+		// No filter takes a newline, and one dropped inside ReplaceSelection() would delete the
+		// selection in place of the line it was meant to add.
+		if (m_InputFilter != InputFilter::None) return false;
 
 		// WM_CHAR delivers Enter as a carriage return, which the control character filter in
 		// HandleChar drops, so the newline is inserted from here instead. A line feed rather than
