@@ -169,6 +169,7 @@ public:
 	void SetBlur(bool b) { m_Blur = b; }
 
 	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
+	void RequestWindowSizeCheck() { if (m_DynamicWindowSize) SetResizeWindowMode(RESIZEMODE_CHECK); }
 
 	Gfx::Canvas& GetCanvas() { return m_Canvas; }
 	HWND GetWindow() { return m_Window; }

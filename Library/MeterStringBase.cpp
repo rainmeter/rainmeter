@@ -410,6 +410,9 @@ void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* f
 {
 	if (m_WDefined && m_HDefined) return;
 
+	const int oldW = m_W;
+	const int oldH = m_H;
+
 	const auto rect = MeasureStringBounds(m_Skin->GetCanvas(), str, format);
 	if (rect)
 	{
@@ -420,6 +423,11 @@ void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* f
 	{
 		m_W = 1;
 		m_H = 1;
+	}
+
+	if (m_W != oldW || m_H != oldH)
+	{
+		m_Skin->RequestWindowSizeCheck();
 	}
 }
 
