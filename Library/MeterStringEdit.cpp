@@ -12,6 +12,9 @@ namespace {
 // Undo steps are bounded so that a long editing session cannot grow without limit.
 const size_t c_MaxUndoSteps = 100U;
 
+// What Password draws in place of the text, as a Win32 edit control has masked with since Vista.
+const WCHAR c_PasswordChar = L'\x25CF';  // BLACK CIRCLE
+
 enum class CharClass
 {
 	Space,
@@ -47,6 +50,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_ClearOnDismiss(false),
 	m_Committed(false),
 	m_MaxLength(0),
+	m_Password(false),
 	m_RegExpError(false),
 	m_InputCase(TEXTCASE_NONE),
 	m_CaretDrawnVisible(false),
@@ -136,6 +140,16 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
 	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
+
+	const bool password = parser.ReadBool(section, L"Password", false);
+	if (password != m_Password)
+	{
+		m_Password = password;
+
+		// Not left to the next Update(), which UpdateDivider can defer: a field that has just been
+		// masked must not go on drawing its text until then.
+		if (m_Initialized) SyncDrawnString();
+	}
 
 	// Every filter is a pattern, so that a rule about the text around a character - where a sign or
 	// a decimal point may go - is expressed the same way as one about the character alone.
@@ -254,13 +268,26 @@ void MeterStringEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	// The text is the user's, so there is no measure to bind.
 }
 
+void MeterStringEdit::SyncDrawnString()
+{
+	// Rendered verbatim: any rewrite would shift the string relative to m_Text and put the caret
+	// offsets DirectWrite reports in a different index space than the edited text. A mask is the
+	// one rewrite that cannot, since it replaces each UTF-16 unit with exactly one of its own.
+	if (m_Password)
+	{
+		m_String.assign(m_Text.length(), c_PasswordChar);
+	}
+	else
+	{
+		m_String = m_Text;
+	}
+}
+
 bool MeterStringEdit::Update()
 {
 	if (Meter::Update())
 	{
-		// Rendered verbatim: any rewrite would shift the string relative to m_Text and put the
-		// caret offsets DirectWrite reports in a different index space than the edited text.
-		m_String = m_Text;
+		SyncDrawnString();
 
 		const UINT32 len = (UINT32)m_String.length();
 		m_CaretPos = min(m_CaretPos, len);
@@ -527,7 +554,7 @@ void MeterStringEdit::PushUndo(EditKind kind)
 		m_UndoStack.erase(m_UndoStack.begin());
 	}
 
-	m_UndoStack.push_back({ m_String, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
+	m_UndoStack.push_back({ m_Text, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
 	m_LastEditKind = kind;
 }
 
@@ -537,7 +564,7 @@ void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 
 	// A snapshot taken under a different StringCase would otherwise bring the old case back.
 	ApplyCase(m_Text);
-	m_String = m_Text;
+	SyncDrawnString();
 
 	const UINT32 len = (UINT32)m_String.length();
 	m_CaretPos = min(snapshot.caret, len);
@@ -553,7 +580,7 @@ bool MeterStringEdit::Undo()
 {
 	if (m_UndoStack.empty()) return false;
 
-	m_RedoStack.push_back({ m_String, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
+	m_RedoStack.push_back({ m_Text, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
 	ApplySnapshot(m_UndoStack.back());
 	m_UndoStack.pop_back();
 
@@ -565,7 +592,7 @@ bool MeterStringEdit::Redo()
 {
 	if (m_RedoStack.empty()) return false;
 
-	m_UndoStack.push_back({ m_String, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
+	m_UndoStack.push_back({ m_Text, m_CaretPos, m_SelectionAnchor, m_CaretTrailing });
 	ApplySnapshot(m_RedoStack.back());
 	m_RedoStack.pop_back();
 
@@ -658,6 +685,32 @@ bool MeterStringEdit::SelectWordAtCaret()
 	return true;
 }
 
+bool MeterStringEdit::GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adjacent)
+{
+	if (!m_Password)
+	{
+		Gfx::Canvas& canvas = m_Skin->GetCanvas();
+		ApplyTextState(canvas);
+		return canvas.GetAdjacentCaretIndex(
+			m_String, *m_TextFormat, GetTextRect(), pos, forward, adjacent);
+	}
+
+	// Every unit of masked text draws as its own mask character, so the clusters the layout would
+	// report are the mask's and not the text's. Stepping over the text instead keeps the caret out
+	// of the middle of a surrogate pair, which is the only thing here that is more than one unit.
+	const UINT32 len = (UINT32)m_Text.length();
+	if (forward ? pos >= len : pos == 0U) return false;
+
+	UINT32 next = forward ? pos + 1U : pos - 1U;
+	if (next > 0U && next < len && IS_LOW_SURROGATE(m_Text[next]))
+	{
+		next = forward ? next + 1U : next - 1U;
+	}
+
+	adjacent = next;
+	return true;
+}
+
 UINT32 MeterStringEdit::FindWordBoundary(UINT32 pos, bool forward) const
 {
 	const UINT32 len = (UINT32)m_String.length();
@@ -733,7 +786,7 @@ std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::
 	{
 		// What the selection leaves behind is what the limit has to accommodate. An existing text
 		// already over the limit (from the Text option, which is not truncated) leaves no room.
-		const size_t kept = m_String.length() - (end - start);
+		const size_t kept = m_Text.length() - (end - start);
 		const size_t room = kept < (size_t)m_MaxLength ? (size_t)m_MaxLength - kept : 0U;
 
 		if (insert.length() > room)
@@ -745,7 +798,7 @@ std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::
 		}
 	}
 
-	std::wstring result = m_String;
+	std::wstring result = m_Text;
 	result.replace(start, end - start, insert);
 
 	// Converted whole rather than per insert, since PROPER has to see the surrounding words.
@@ -790,7 +843,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	std::wstring insert;
 	m_Text = PreviewReplacement(text, insert);
-	m_String = m_Text;
+	SyncDrawnString();
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
 	m_CaretTrailing = true;
@@ -807,10 +860,14 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 bool MeterStringEdit::CopySelection(bool cut)
 {
+	// A masked field hands nothing to the clipboard, as a Win32 password edit does not - cutting
+	// included, since it would put the text there on its way out. Deleting still empties it.
+	if (m_Password) return false;
+
 	if (!HasSelection()) return false;
 
 	const UINT32 start = GetSelectionStart();
-	System::SetClipboardText(m_String.substr(start, GetSelectionEnd() - start));
+	System::SetClipboardText(m_Text.substr(start, GetSelectionEnd() - start));
 
 	if (!cut) return false;  // Copying changes nothing on screen.
 
@@ -878,15 +935,8 @@ void MeterStringEdit::DeleteSelectionOr(bool forward)
 
 		// Deleting has to take the whole cluster, otherwise backspacing over an emoji would leave
 		// half a surrogate pair behind.
-		Gfx::Canvas& canvas = m_Skin->GetCanvas();
-		ApplyTextState(canvas);
-
 		UINT32 adjacent = m_CaretPos;
-		if (!canvas.GetAdjacentCaretIndex(
-			m_String, *m_TextFormat, GetTextRect(), m_CaretPos, forward, adjacent))
-		{
-			return;
-		}
+		if (!GetAdjacentCaretIndex(m_CaretPos, forward, adjacent)) return;
 
 		// Taken after the early returns above so that a no-op keypress leaves no undo step, and
 		// before the anchor moves so that the snapshot holds the selection the user had.
@@ -984,11 +1034,8 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 				return true;
 			}
 
-			ApplyTextState(canvas);
-
 			UINT32 adjacent = m_CaretPos;
-			if (canvas.GetAdjacentCaretIndex(
-				m_String, *m_TextFormat, GetTextRect(), m_CaretPos, forward, adjacent))
+			if (GetAdjacentCaretIndex(m_CaretPos, forward, adjacent))
 			{
 				MoveCaretTo(adjacent, shift, forward);
 			}

@@ -12,6 +12,8 @@ class Pcre;
 // the exception: it converts the text itself rather than only its rendering, so offsets still line
 // up and what the skin reads back through [$Input] is what is on screen. InputCase is the same
 // conversion narrowed to what the user types or pastes, and to the cases that work per character.
+// Password is the other exception, and keeps the offsets in the same way: it draws one mask
+// character per UTF-16 unit, so the two strings stay the same length even where they differ.
 class MeterStringEdit : public MeterStringBase
 {
 public:
@@ -90,6 +92,8 @@ private:
 
 	struct EditSnapshot
 	{
+		// m_Text and not m_String, which under Password holds the mask rather than the text
+		// ApplySnapshot() restores.
 		std::wstring text;
 		UINT32 caret;
 		UINT32 anchor;
@@ -101,6 +105,16 @@ private:
 	bool CommitsOnEnter() const { return !m_OnEnterAction.empty() || m_ClearOnEnter; }
 
 	void Clear();
+
+	// Rebuilds the drawn string from the edited one. Identical to it, unless Password replaces it
+	// with a mask - one mask character per UTF-16 unit, so that every offset into one is still an
+	// offset into the other and nothing that measures or hit-tests the text has to know.
+	void SyncDrawnString();
+
+	// The caret index one step from |pos|, or |false| where there is nowhere to step. Wraps the
+	// canvas, which reports clusters in the drawn string: those are the wrong thing to step by
+	// while it is masked, where each unit draws as its own mask character.
+	bool GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adjacent);
 
 	// Fills |command| with |action|, [$Input] expanded. Leaves it empty if there is no action.
 	void ExpandAction(const std::wstring& action, std::wstring& command);
@@ -192,6 +206,10 @@ private:
 	// less is unlimited. Only bounds what the user enters, not what Text starts as.
 	int m_MaxLength;
 
+	// Draws the text as a mask, and keeps it off the clipboard. Only that: the text itself is
+	// untouched, and is still what [$Input] hands to an action and what the undo history holds.
+	bool m_Password;
+
 	// What InputFilter resolved to, empty when there is none. Bounds what the user may enter, and
 	// like MaxLength only that: text that arrived through the Text option is left as it was
 	// written, so a filter set after the fact does not rewrite it.
@@ -237,7 +255,8 @@ private:
 	// Allocated only while m_Placeholder is non-empty.
 	std::unique_ptr<Gfx::TextFormat> m_PlaceholderFormat;
 
-	// Offset into m_String, which here is identical to m_Text.
+	// Offset into m_String, and equally into m_Text: the two are the same length here, whether or
+	// not Password has replaced one with a mask.
 	UINT32 m_CaretPos;
 
 	// The end the caret is moving away from. Equal to m_CaretPos when nothing is selected.
