@@ -11,13 +11,16 @@
 namespace {
 
 std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
-	const std::wstring& str, const std::vector<std::wstring>& patterns)
+	const std::wstring& str, const Gfx::TextFormat& format)
 {
-	std::vector<std::vector<Gfx::TextInlineRange>> inlineRanges;
-	inlineRanges.reserve(patterns.size());
+	const size_t count = format.GetInlineOptionCount();
 
-	for (const auto& pattern : patterns)
+	std::vector<std::vector<Gfx::TextInlineRange>> inlineRanges;
+	inlineRanges.reserve(count);
+
+	for (size_t i = 0; i < count; ++i)
 	{
+		const std::wstring& pattern = format.GetInlinePattern(i);
 		if (pattern == L".*")
 		{
 			// Empty string is not a valid match.
@@ -79,7 +82,7 @@ std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 			} while (true);
 		}
 
-		inlineRanges.push_back(ranges);
+		inlineRanges.push_back(std::move(ranges));
 	}
 
 	return inlineRanges;
@@ -403,7 +406,7 @@ D2D1_RECT_F MeterStringBase::GetTextRect()
 void MeterStringBase::UpdateTextFormat()
 {
 	m_TextFormat->SetFontWeight(m_FontWeight);
-	m_TextFormat->SetInlineRanges(FindInlineRanges(m_String, m_TextFormat->GetInlinePatterns()));
+	m_TextFormat->SetInlineRanges(FindInlineRanges(m_String, *m_TextFormat));
 }
 
 void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* format)
