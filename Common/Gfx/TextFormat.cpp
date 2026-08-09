@@ -907,7 +907,7 @@ void TextFormat::UpdateInlineItalic(const size_t index, const std::wstring& patt
 	}
 }
 
-void TextFormat::UpdateInlineNone(const size_t & index, const std::wstring& pattern)
+void TextFormat::UpdateInlineNone(const size_t index, const std::wstring& pattern)
 {
 	if (index >= m_TextInlineFormat.size())
 	{
