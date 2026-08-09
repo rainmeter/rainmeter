@@ -294,17 +294,7 @@ bool MeterStringEdit::Update()
 		m_SelectionAnchor = min(m_SelectionAnchor, len);
 
 		UpdateTextFormat();
-
-		// An empty auto-sized field would collapse to nothing and become unclickable, so it takes
-		// its size from the placeholder instead.
-		if (ShowingPlaceholder())
-		{
-			UpdateAutoSize(&m_Placeholder, m_PlaceholderFormat.get());
-		}
-		else
-		{
-			UpdateAutoSize();
-		}
+		UpdateAutoSizeForText();
 
 		return true;
 	}
@@ -352,6 +342,20 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 	return drawn;
 }
 
+void MeterStringEdit::UpdateAutoSizeForText()
+{
+	// An empty auto-sized field would collapse to nothing and become unclickable, so it takes its
+	// size from the placeholder instead.
+	if (ShowingPlaceholder())
+	{
+		UpdateAutoSize(&m_Placeholder, m_PlaceholderFormat.get());
+	}
+	else
+	{
+		UpdateAutoSize();
+	}
+}
+
 void MeterStringEdit::EnsureCaretVisible()
 {
 	if (!m_TextFormat->IsInitialized()) return;
@@ -359,6 +363,15 @@ void MeterStringEdit::EnsureCaretVisible()
 	// ClipString trims the text to the meter instead, which is the other answer to the same
 	// overflow, so a clipped field never scrolls.
 	if (ShouldTrim())
+	{
+		m_TextOffset = D2D1::Point2F();
+		return;
+	}
+
+	// Nothing to scroll to, and the caret rect an empty string gives back is no basis for deciding
+	// otherwise. Handled here rather than being left to the clamp below so that the placeholder,
+	// which is drawn through the same offset, is not left scrolled off by the text that was there.
+	if (m_String.empty())
 	{
 		m_TextOffset = D2D1::Point2F();
 		return;
@@ -573,7 +586,7 @@ void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 	m_CaretBlinkStart = GetTickCount64();
 	m_Committed = false;
 
-	UpdateAutoSize();
+	UpdateAutoSizeForText();
 }
 
 bool MeterStringEdit::Undo()
@@ -852,7 +865,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 	// Before EnsureCaretVisible(), which measures the caret against the meter box: on an auto-sized
 	// meter that box is what the text just made it, so scrolling first would compare the new caret
 	// against the width of the previous text and scroll a field that in fact fits.
-	UpdateAutoSize();
+	UpdateAutoSizeForText();
 
 	EnsureCaretVisible();
 	m_CaretBlinkStart = GetTickCount64();
