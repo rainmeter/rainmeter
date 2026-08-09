@@ -564,9 +564,8 @@ bool Canvas::PrepareTextLayout(const std::wstring& srcStr, TextFormat& format,
 {
 	if (!m_Target || !format.IsInitialized()) return false;
 
-	static std::wstring str;
-	str = srcStr;
-	format.ApplyInlineCase(str);
+	std::wstring buffer;
+	const std::wstring& str = format.ApplyInlineCase(srcStr, buffer);
 
 	if (!format.CreateLayout(
 		m_Target.Get(),
@@ -818,11 +817,8 @@ void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D
 
 bool Canvas::MeasureTextW(const std::wstring& str, TextFormat& format, D2D1_SIZE_F& size)
 {
-	static std::wstring formatStr;
-	formatStr = str;
-	format.ApplyInlineCase(formatStr);
-
-	const DWRITE_TEXT_METRICS metrics = format.GetMetrics(formatStr, !m_AccurateText);
+	std::wstring buffer;
+	const auto metrics = format.GetMetrics(format.ApplyInlineCase(str, buffer), !m_AccurateText);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	return true;
@@ -832,11 +828,8 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, TextFormat& format, D2D1
 {
 	format.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
-	static std::wstring formatStr;
-	formatStr = str;
-	format.ApplyInlineCase(formatStr);
-
-	const DWRITE_TEXT_METRICS metrics = format.GetMetrics(formatStr, !m_AccurateText, size.width);
+	std::wstring buffer;
+	const auto metrics = format.GetMetrics(format.ApplyInlineCase(str, buffer), !m_AccurateText, size.width);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	lines = metrics.lineCount;

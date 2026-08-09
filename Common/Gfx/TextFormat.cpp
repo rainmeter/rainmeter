@@ -1155,16 +1155,28 @@ void TextFormat::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POIN
 	m_HasInlineOptionsChanged = false;
 }
 
-void TextFormat::ApplyInlineCase(std::wstring& str)
+const std::wstring& TextFormat::ApplyInlineCase(const std::wstring& srcStr, std::wstring& buffer)
 {
+	// Most strings have no case option at all, so |buffer| is only filled (and |srcStr| only
+	// copied) once one is actually found.
+	const std::wstring* str = &srcStr;
+
 	for (const auto& fmt : m_TextInlineFormat)
 	{
 		if (fmt->GetType() == Gfx::InlineType::Case)
 		{
-			auto option = dynamic_cast<TextInlineFormat_Case*>(fmt.get());
-			option->ApplyInlineFormat(str);
+			if (str != &buffer)
+			{
+				buffer.assign(srcStr);
+				str = &buffer;
+			}
+
+			auto option = (TextInlineFormat_Case*)fmt.get();
+			option->ApplyInlineFormat(buffer);
 		}
 	}
+
+	return *str;
 }
 
 void TextFormat::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
