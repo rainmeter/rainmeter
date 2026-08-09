@@ -117,7 +117,7 @@ bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& sr
 		{
 			if (fmt->GetType() == Gfx::InlineType::GradientColor)
 			{
-				auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
+				auto option = (TextInlineFormat_GradientColor*)fmt.get();
 				option->BuildGradientBrushes(target, m_TextLayout.Get());
 			}
 		}
@@ -334,7 +334,7 @@ void TextFormat::SetProperties(
 		{
 			if (fmt->GetType() == Gfx::InlineType::Face)
 			{
-				auto face = dynamic_cast<TextInlineFormat_Face*>(fmt.get());
+				auto face = (TextInlineFormat_Face*)fmt.get();
 				face->SetFontCollection(fontCollection);
 			}
 		}
@@ -550,7 +550,7 @@ void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>
 		// when text is split between multiple lines - otherwise set the range.
 		if (m_TextInlineFormat[i]->GetType() == InlineType::GradientColor)
 		{
-			auto linearGradient = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[i].get());
+			auto linearGradient = (TextInlineFormat_GradientColor*)m_TextInlineFormat[i].get();
 			size_t index = 0;
 			for (const auto& range : dwriteRanges)
 			{
@@ -749,7 +749,7 @@ void TextFormat::UpdateInlineCase(const size_t& index, const std::wstring patter
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Case)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Case*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Case*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, type))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -778,7 +778,7 @@ void TextFormat::UpdateInlineCharacterSpacing(const size_t& index, const std::ws
 		// |index| is within range, and the type of object is also a 'CharacterSpacing'
 		// object, so just update the object if needed.
 
-		auto option = dynamic_cast<TextInlineFormat_CharacterSpacing*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_CharacterSpacing*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, leading, trailing, advanceWidth))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -803,7 +803,7 @@ void TextFormat::UpdateInlineColor(const size_t& index, const std::wstring patte
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Color)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Color*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Color*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, color))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -825,7 +825,7 @@ void TextFormat::UpdateInlineFace(const size_t& index, const std::wstring patter
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Face)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Face*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Face*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, face))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -882,7 +882,7 @@ void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstri
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::GradientColor)
 	{
-		auto option = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_GradientColor*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, angle, stops, altGamma))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -904,7 +904,7 @@ void TextFormat::UpdateInlineItalic(const size_t& index, const std::wstring patt
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Italic)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Italic*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Italic*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -926,7 +926,7 @@ void TextFormat::UpdateInlineNone(const size_t & index, const std::wstring patte
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::None)
 	{
-		auto option = dynamic_cast<TextInlineFormat_None*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_None*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -948,7 +948,7 @@ void TextFormat::UpdateInlineOblique(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Oblique)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Oblique*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Oblique*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -971,7 +971,7 @@ void TextFormat::UpdateInlineShadow(const size_t& index, const std::wstring patt
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Shadow)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Shadow*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Shadow*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, blur, offset, color))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -993,7 +993,7 @@ void TextFormat::UpdateInlineSize(const size_t& index, const std::wstring patter
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Size)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Size*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Size*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, size))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1015,7 +1015,7 @@ void TextFormat::UpdateInlineStretch(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Stretch)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Stretch*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Stretch*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, stretch))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1037,7 +1037,7 @@ void TextFormat::UpdateInlineStrikethrough(const size_t& index, const std::wstri
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Strikethrough)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Strikethrough*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Strikethrough*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1060,7 +1060,7 @@ void TextFormat::UpdateInlineTypography(const size_t& index, const std::wstring 
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Typography)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Typography*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Typography*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, tag, parameter))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1082,7 +1082,7 @@ void TextFormat::UpdateInlineUnderline(const size_t& index, const std::wstring p
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Underline)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Underline*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Underline*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1104,7 +1104,7 @@ void TextFormat::UpdateInlineWeight(const size_t& index, const std::wstring patt
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Weight)
 	{
-		auto option = dynamic_cast<TextInlineFormat_Weight*>(m_TextInlineFormat[index].get());
+		auto option = (TextInlineFormat_Weight*)m_TextInlineFormat[index].get();
 		if (option->CompareAndUpdateProperties(pattern, weight))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1139,12 +1139,12 @@ void TextFormat::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POIN
 	{
 		if (fmt->GetType() == Gfx::InlineType::Color)
 		{
-			auto option = dynamic_cast<TextInlineFormat_Color*>(fmt.get());
+			auto option = (TextInlineFormat_Color*)fmt.get();
 			option->ApplyInlineFormat(target, m_TextLayout.Get());
 		}
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
-			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
+			auto option = (TextInlineFormat_GradientColor*)fmt.get();
 			option->ApplyInlineFormat(m_TextLayout.Get(), point);
 		}
 	}
@@ -1186,7 +1186,7 @@ void TextFormat::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBr
 	{
 		if (fmt->GetType() == Gfx::InlineType::Shadow)
 		{
-			auto option = dynamic_cast<TextInlineFormat_Shadow*>(fmt.get());
+			auto option = (TextInlineFormat_Shadow*)fmt.get();
 			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawRect);
 
 			// We need to reset the color options after the shadow effect because the shadow effect
@@ -1206,7 +1206,7 @@ void TextFormat::ResetGradientPosition(const D2D1_POINT_2F* point)
 	{
 		if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
-			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
+			auto option = (TextInlineFormat_GradientColor*)fmt.get();
 			option->ApplyInlineFormat(nullptr, point, false);
 		}
 	}
