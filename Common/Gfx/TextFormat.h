@@ -103,25 +103,25 @@ private:
 
 	// These functions create/modify any inline options.
 	bool CreateInlineOption(const size_t index, const std::wstring& pattern, std::vector<std::wstring> options);
-	void UpdateInlineCase(const size_t& index, const std::wstring& pattern, const Gfx::CaseType type);
-	void UpdateInlineCharacterSpacing(const size_t& index, const std::wstring& pattern, const FLOAT leading,
+	void UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type);
+	void UpdateInlineCharacterSpacing(const size_t index, const std::wstring& pattern, const FLOAT leading,
 		const FLOAT trailing, const FLOAT advanceWidth);
-	void UpdateInlineColor(const size_t& index, const std::wstring& pattern, const D2D1_COLOR_F& color);
-	void UpdateInlineFace(const size_t& index, const std::wstring& pattern, const WCHAR* face);
-	void UpdateInlineGradientColor(const size_t& index, const std::wstring& pattern,
+	void UpdateInlineColor(const size_t index, const std::wstring& pattern, const D2D1_COLOR_F& color);
+	void UpdateInlineFace(const size_t index, const std::wstring& pattern, const WCHAR* face);
+	void UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
 		const std::vector<std::wstring> args, const bool altGamma);
-	void UpdateInlineItalic(const size_t& index, const std::wstring& pattern);
-	void UpdateInlineNone(const size_t& index, const std::wstring& pattern);
-	void UpdateInlineOblique(const size_t& index, const std::wstring& pattern);
-	void UpdateInlineShadow(const size_t& index, const std::wstring& pattern, const FLOAT blur,
+	void UpdateInlineItalic(const size_t index, const std::wstring& pattern);
+	void UpdateInlineNone(const size_t index, const std::wstring& pattern);
+	void UpdateInlineOblique(const size_t index, const std::wstring& pattern);
+	void UpdateInlineShadow(const size_t index, const std::wstring& pattern, const FLOAT blur,
 		const D2D1_POINT_2F offset, const D2D1_COLOR_F& color);
-	void UpdateInlineSize(const size_t& index, const std::wstring& pattern, const FLOAT size);
-	void UpdateInlineStretch(const size_t& index, const std::wstring& pattern, const DWRITE_FONT_STRETCH stretch);
-	void UpdateInlineStrikethrough(const size_t& index, const std::wstring& pattern);
-	void UpdateInlineTypography(const size_t& index, const std::wstring& pattern,
+	void UpdateInlineSize(const size_t index, const std::wstring& pattern, const FLOAT size);
+	void UpdateInlineStretch(const size_t index, const std::wstring& pattern, const DWRITE_FONT_STRETCH stretch);
+	void UpdateInlineStrikethrough(const size_t index, const std::wstring& pattern);
+	void UpdateInlineTypography(const size_t index, const std::wstring& pattern,
 		const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter);
-	void UpdateInlineUnderline(const size_t& index, const std::wstring& pattern);
-	void UpdateInlineWeight(const size_t& index, const std::wstring& pattern, const DWRITE_FONT_WEIGHT weight);
+	void UpdateInlineUnderline(const size_t index, const std::wstring& pattern);
+	void UpdateInlineWeight(const size_t index, const std::wstring& pattern, const DWRITE_FONT_WEIGHT weight);
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
 

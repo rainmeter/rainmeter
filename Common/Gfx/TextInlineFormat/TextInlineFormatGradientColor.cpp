@@ -75,7 +75,7 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1DeviceContext* ta
 	}
 }
 
-void TextInlineFormat_GradientColor::UpdateSubOptions(const size_t& index, const DWRITE_TEXT_RANGE& range)
+void TextInlineFormat_GradientColor::UpdateSubOptions(const size_t index, const DWRITE_TEXT_RANGE& range)
 {
 	if (index >= m_SubOptions.size())
 	{
