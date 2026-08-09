@@ -124,7 +124,12 @@ private:
 	void UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
-	void ApplyInlineCase(std::wstring& str);
+
+	// Returns |srcStr| as-is unless an inline case option applies, in which case the transformed
+	// text is built in |buffer| and that is returned instead. The returned reference is only valid
+	// for as long as both |srcStr| and |buffer| are.
+	const std::wstring& ApplyInlineCase(const std::wstring& srcStr, std::wstring& buffer);
+
 	void ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
 		const UINT32 strLen, const D2D1_RECT_F& drawRect);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
