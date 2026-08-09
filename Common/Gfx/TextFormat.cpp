@@ -63,6 +63,7 @@ void TextFormat::Dispose()
 	m_TextFormat.Reset();
 	m_TextLayout.Reset();
 	m_InlineEllipsis.Reset();
+	m_Font.Reset();
 
 	m_ExtraHeight = 0.0f;
 	m_LineGap = 0.0f;
@@ -198,6 +199,40 @@ bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& sr
 	return true;
 }
 
+Microsoft::WRL::ComPtr<IDWriteFont> TextFormat::ResolveFont() const
+{
+	// There is no way from a format to the font it resolved to, so the family name it ended up
+	// with - not the one it was asked for - goes back through the collection it came from.
+	WCHAR familyName[LF_FACESIZE];
+	Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
+	Microsoft::WRL::ComPtr<IDWriteFontFamily> family;
+	Microsoft::WRL::ComPtr<IDWriteFont> font;
+	UINT32 familyIndex = 0U;
+	BOOL exists = FALSE;
+
+	if (SUCCEEDED(m_TextFormat->GetFontFamilyName(familyName, _countof(familyName))) &&
+		SUCCEEDED(m_TextFormat->GetFontCollection(collection.GetAddressOf())) &&
+		SUCCEEDED(collection->FindFamilyName(familyName, &familyIndex, &exists)) && exists &&
+		SUCCEEDED(collection->GetFontFamily(familyIndex, family.GetAddressOf())))
+	{
+		family->GetFirstMatchingFont(
+			m_TextFormat->GetFontWeight(),
+			m_TextFormat->GetFontStretch(),
+			m_TextFormat->GetFontStyle(),
+			font.GetAddressOf());
+	}
+
+	return font;
+}
+
+bool TextFormat::HasCharacter(UINT32 ch) const
+{
+	if (!m_Font) return false;
+
+	BOOL exists = FALSE;
+	return SUCCEEDED(m_Font->HasCharacter(ch, &exists)) && exists != FALSE;
+}
+
 void TextFormat::SetProperties(
 	const WCHAR* fontFamily, FLOAT size, bool bold, bool italic,
 	FontCollection* fontCollection)
@@ -277,31 +312,13 @@ void TextFormat::SetProperties(
 		SetHorizontalAlignment(GetHorizontalAlignment());
 		SetVerticalAlignment(GetVerticalAlignment());
 
-		// Get the family name to in case CreateTextFormat() fallbacked on some other family name.
-		hr = m_TextFormat->GetFontFamilyName(dwriteFamilyName, _countof(dwriteFamilyName));
-		if (FAILED(hr)) return;
-
-		Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
-		Microsoft::WRL::ComPtr<IDWriteFontFamily> fontFamily;
-		UINT32 familyNameIndex;
-		BOOL exists;
-		if (FAILED(m_TextFormat->GetFontCollection(collection.GetAddressOf())) ||
-			FAILED(collection->FindFamilyName(dwriteFamilyName, &familyNameIndex, &exists)) ||
-			FAILED(collection->GetFontFamily(familyNameIndex, fontFamily.GetAddressOf())))
-		{
-			return;
-		}
-
-		Microsoft::WRL::ComPtr<IDWriteFont> font;
-		hr = fontFamily->GetFirstMatchingFont(
-			m_TextFormat->GetFontWeight(),
-			m_TextFormat->GetFontStretch(),
-			m_TextFormat->GetFontStyle(),
-			font.GetAddressOf());
-		if (FAILED(hr)) return;
+		// Resolved from the format rather than from what was asked for, since CreateTextFormat()
+		// may have fallen back on some other family name.
+		m_Font = ResolveFont();
+		if (!m_Font) return;
 
 		DWRITE_FONT_METRICS fmetrics;
-		font->GetMetrics(&fmetrics);
+		m_Font->GetMetrics(&fmetrics);
 
 		// GDI+ compatibility: GDI+ adds extra padding below the string when |m_AccurateText| is
 		// |false|. The bottom padding seems to be based on the font metrics so we can calculate it

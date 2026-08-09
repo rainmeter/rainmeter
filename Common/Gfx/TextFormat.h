@@ -63,6 +63,11 @@ public:
 
 	void SetFontWeight(int weight);
 
+	// |true| when the font this format resolved to can draw |ch| itself. Says nothing about what
+	// DirectWrite would fall back to for it, which is the point: a caller choosing between
+	// characters it could draw wants the one that does not send the run to another font.
+	bool HasCharacter(UINT32 ch) const;
+
 	void SetTrimming(bool trim);
 
 	void SetHorizontalAlignment(HorizontalAlignment alignment);
@@ -83,6 +88,8 @@ private:
 	friend class Common_Gfx_TextFormat_Test;
 
 	void Dispose();
+
+	Microsoft::WRL::ComPtr<IDWriteFont> ResolveFont() const;
 
 	// Enables word wrapping if trimming or justified alignment requires it.
 	void UpdateWordWrapping();
@@ -128,6 +135,8 @@ private:
 	VerticalAlignment m_VerticalAlignment;
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
+	Microsoft::WRL::ComPtr<IDWriteFont> m_Font;
+
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;
 	Microsoft::WRL::ComPtr<IDWriteInlineObject> m_InlineEllipsis;
 

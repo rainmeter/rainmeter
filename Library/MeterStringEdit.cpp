@@ -12,9 +12,6 @@ namespace {
 // Undo steps are bounded so that a long editing session cannot grow without limit.
 const size_t c_MaxUndoSteps = 100U;
 
-// What Password draws in place of the text, as a Win32 edit control has masked with since Vista.
-const WCHAR c_PasswordChar = L'\x25CF';  // BLACK CIRCLE
-
 enum class CharClass
 {
 	Space,
@@ -51,6 +48,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_Committed(false),
 	m_MaxLength(0),
 	m_Password(false),
+	m_PasswordChar(),
 	m_RegExpError(false),
 	m_InputCase(TEXTCASE_NONE),
 	m_CaretDrawnVisible(false),
@@ -78,6 +76,7 @@ void MeterStringEdit::Initialize()
 {
 	MeterStringBase::Initialize();
 	UpdatePlaceholderFormat();
+	UpdatePasswordChar();
 }
 
 void MeterStringEdit::InvalidateDeviceResources()
@@ -142,14 +141,8 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 
 	const bool password = parser.ReadBool(section, L"Password", false);
-	if (password != m_Password)
-	{
-		m_Password = password;
-
-		// Not left to the next Update(), which UpdateDivider can defer: a field that has just been
-		// masked must not go on drawing its text until then.
-		if (m_Initialized) SyncDrawnString();
-	}
+	const bool passwordChanged = password != m_Password;
+	m_Password = password;
 
 	// Every filter is a pattern, so that a rule about the text around a character - where a sign or
 	// a decimal point may go - is expressed the same way as one about the character alone.
@@ -235,7 +228,15 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Done after the font options above so a changed placeholder font takes effect, and after the
 	// base has already recreated the meter's own font if that changed.
-	if (m_Initialized) UpdatePlaceholderFormat();
+	if (m_Initialized)
+	{
+		UpdatePlaceholderFormat();
+		UpdatePasswordChar();
+
+		// A field that has just been masked must not go on drawing its text until the next
+		// Update(), which UpdateDivider can defer.
+		if (passwordChanged) SyncDrawnString();
+	}
 	m_CaretColor = parser.ReadColor(section, L"CaretColor", m_Color);
 
 	// The default is the system highlight at half alpha, since the highlight is drawn behind the
@@ -268,6 +269,25 @@ void MeterStringEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	// The text is the user's, so there is no measure to bind.
 }
 
+void MeterStringEdit::UpdatePasswordChar()
+{
+	if (!m_Password) return;
+
+	const WCHAR blackCircle = L'\u25cf';
+	const WCHAR bullet = L'\u2022';
+	const WCHAR asterisk = L'*';
+
+	// A Win32 edit control masks with the black circle and nothing else, but the masked string is
+	// nothing but the mask character, so a font without it is not a run that falls back but a whole
+	// line whose metrics come from the substitute - a baseline that moves the moment the field is
+	// masked. Take the best character the font can draw itself instead, which leaves the line
+	// exactly where the text left it. The asterisk is the last resort, and is one every font has.
+	m_PasswordChar =
+		m_TextFormat->HasCharacter(blackCircle) ? blackCircle :
+		m_TextFormat->HasCharacter(bullet) ? bullet :
+		asterisk;
+}
+
 void MeterStringEdit::SyncDrawnString()
 {
 	// Rendered verbatim: any rewrite would shift the string relative to m_Text and put the caret
@@ -275,7 +295,7 @@ void MeterStringEdit::SyncDrawnString()
 	// one rewrite that cannot, since it replaces each UTF-16 unit with exactly one of its own.
 	if (m_Password)
 	{
-		m_String.assign(m_Text.length(), c_PasswordChar);
+		m_String.assign(m_Text.length(), m_PasswordChar);
 	}
 	else
 	{
