@@ -533,7 +533,9 @@ D2D1_POINT_2F Canvas::GetTextDrawPosition(TextFormat& format, const D2D1_RECT_F&
 			const float xOffset = format.m_TextFormat->GetFontSize() / 6.0f;
 			switch (format.GetHorizontalAlignment())
 			{
-			case HorizontalAlignment::Left: return rect.left + xOffset;
+			// Justified text starts at the leading edge, just like left aligned text.
+			case HorizontalAlignment::Left:
+			case HorizontalAlignment::Justify: return rect.left + xOffset;
 			case HorizontalAlignment::Right: return rect.left - xOffset;
 			}
 		}

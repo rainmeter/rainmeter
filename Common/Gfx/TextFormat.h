@@ -33,7 +33,8 @@ enum class HorizontalAlignment : BYTE
 {
 	Left,
 	Center,
-	Right
+	Right,
+	Justify
 };
 
 enum class VerticalAlignment : BYTE
@@ -82,6 +83,9 @@ private:
 	friend class Common_Gfx_TextFormat_Test;
 
 	void Dispose();
+
+	// Enables word wrapping if trimming or justified alignment requires it.
+	void UpdateWordWrapping();
 
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
 	// the layout is costly, it is more efficient to keep reusing the text layout until the text
