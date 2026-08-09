@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "MeterStringEdit.h"
+#include "Pcre.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
@@ -46,7 +47,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_ClearOnDismiss(false),
 	m_Committed(false),
 	m_MaxLength(0),
-	m_InputFilter(InputFilter::None),
+	m_RegExpError(false),
 	m_InputCase(TEXTCASE_NONE),
 	m_CaretDrawnVisible(false),
 	m_CaretColor(D2D1::ColorF(D2D1::ColorF::Black)),
@@ -136,19 +137,44 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 
-	const WCHAR* filter = parser.ReadString(section, L"InputFilter", L"NONE").c_str();
+	// Every filter is a pattern, so that a rule about the text around a character - where a sign or
+	// a decimal point may go - is expressed the same way as one about the character alone.
+	//
+	// The patterns below end in [0-9]* rather than [0-9]+ so that they also match a half-typed
+	// number: "-" and "1." as much as "-1.5". That is not what partial matching is for, because
+	// PCRE reports a partial match only when it finds no full one - given "1.", [0-9]+ would match
+	// just the "1", which AcceptsReplacement() reads as a refusal, and the digit after the point
+	// could never be typed.
+	//
+	// [0-9] and not \d, which would also take the digits of other scripts, and those are not what
+	// a skin reading the field back as a number can parse. No pattern needs ^ or $, since
+	// AcceptsReplacement() anchors both ends itself.
+	const std::wstring& filterOption = parser.ReadString(section, L"InputFilter", L"NONE");
+	const WCHAR* filter = filterOption.c_str();
 	if (_wcsicmp(filter, L"NONE") == 0)
 	{
-		m_InputFilter = InputFilter::None;
+		SetInputRegExp(L"");
 	}
 	else if (_wcsicmp(filter, L"NUMERIC") == 0)
 	{
-		m_InputFilter = InputFilter::Numeric;
+		SetInputRegExp(L"[0-9]*");
+	}
+	else if (_wcsicmp(filter, L"INTEGER") == 0)
+	{
+		SetInputRegExp(L"-?[0-9]*");
+	}
+	else if (_wcsicmp(filter, L"DECIMAL") == 0)
+	{
+		SetInputRegExp(L"-?[0-9]*\\.?[0-9]*");
+	}
+	else if (_wcsicmp(filter, L"REGEXP") == 0)
+	{
+		SetInputRegExp(parser.ReadString(section, L"InputRegExp", L".*"));
 	}
 	else
 	{
 		LogErrorF(this, L"InputFilter=%s is not valid", filter);
-		m_InputFilter = InputFilter::None;
+		SetInputRegExp(L"");
 	}
 
 	// PROPER is not offered here: it is a property of whole words, and the text is converted a
@@ -397,6 +423,10 @@ void MeterStringEdit::SetFocus(bool focus)
 	m_Committed = false;
 
 	if (!focus) return;
+
+	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
+	// is needed and the first at which a skin full of unfocused fields has not paid for one.
+	CompileInputRegExp();
 
 	// ClearOnFocus wins over SelectAllOnFocus: there is nothing left to select once it has run.
 	if (m_ClearOnFocus)
@@ -659,24 +689,41 @@ bool MeterStringEdit::IsFull() const
 	return m_MaxLength > 0 && m_String.length() >= (size_t)m_MaxLength;
 }
 
-void MeterStringEdit::FilterInput(std::wstring& text) const
+void MeterStringEdit::SetInputRegExp(const std::wstring& pattern)
 {
-	if (m_InputFilter == InputFilter::None || text.empty()) return;
+	// A dynamic InputRegExp is re-read on every update, so an unchanged pattern must keep whatever
+	// compiling it already produced: recompiling would cost the same work every update, and would
+	// report a pattern that does not compile over and over.
+	if (pattern == m_InputRegExpPattern) return;
 
-	// ASCII digits only. iswdigit() would also take the digits of other scripts, which are not what
-	// a skin reading the field back as a number can parse.
-	std::erase_if(text, [](const WCHAR ch) { return ch < L'0' || ch > L'9'; });
+	m_InputRegExpPattern = pattern;
+	m_RegExp.reset();
+	m_RegExpError = false;
 }
 
-void MeterStringEdit::ReplaceSelection(const std::wstring& text)
+void MeterStringEdit::CompileInputRegExp()
+{
+	if (m_InputRegExpPattern.empty() || m_RegExp || m_RegExpError) return;
+
+	const char* error = nullptr;
+	m_RegExp = std::make_unique<Pcre>(m_InputRegExpPattern.c_str(), &error);
+	if (*m_RegExp) return;
+
+	LogErrorF(this, L"Error: \"%S\" in InputRegExp=%s", error, m_InputRegExpPattern.c_str());
+
+	// Fail open: a pattern that does not compile cannot say what is allowed, and refusing
+	// everything would leave the field impossible to type into. No pattern is no filter, so
+	// dropping it is all that takes.
+	m_RegExp.reset();
+	m_RegExpError = true;
+}
+
+std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::wstring& insert) const
 {
 	const UINT32 start = GetSelectionStart();
 	const UINT32 end = GetSelectionEnd();
 
-	std::wstring insert = text;
-
-	// Before MaxLength, so that the limit counts only characters that are actually going to land.
-	FilterInput(insert);
+	insert = text;
 
 	// UPPER and LOWER convert each character on its own, so the insert can be converted before it
 	// is spliced in, leaving text the user did not type alone.
@@ -698,11 +745,51 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 		}
 	}
 
-	m_Text = m_String;
-	m_Text.replace(start, end - start, insert);
+	std::wstring result = m_String;
+	result.replace(start, end - start, insert);
 
 	// Converted whole rather than per insert, since PROPER has to see the surrounding words.
-	ApplyCase(m_Text);
+	ApplyCase(result);
+	return result;
+}
+
+bool MeterStringEdit::AcceptsReplacement(const std::wstring& text) const
+{
+	if (!m_RegExp) return true;
+
+	// All or nothing, and judged on the text as it would be stored: a pattern covers the whole
+	// field, so there is no meaningful part of a refused edit to keep. Salvaging the longest
+	// prefix that still matched would turn one rejected paste into a field holding half of it.
+	std::wstring insert;
+	const std::wstring result = PreviewReplacement(text, insert);
+
+	// An empty field is always reachable, whatever the pattern says, so that a filter can never
+	// leave text the user is unable to delete.
+	if (result.empty()) return true;
+
+	// PCRE_ANCHORED fixes the match at the start; the end is checked below. Between them the
+	// pattern is judged against the whole text, so a pattern that would otherwise match a fragment
+	// of it - and validate nothing - cannot.
+	int ovector[3] = { 0 };
+	const int rc = m_RegExp->Execute(result, PCRE_ANCHORED | PCRE_PARTIAL_SOFT, ovector, (int)_countof(ovector));
+
+	// A partial match is text on its way to matching: the pattern ran out of subject rather than
+	// failing against it. Accepting it is what lets a field be typed into one character at a time
+	// instead of only ever holding a complete match.
+	if (rc == PCRE_ERROR_PARTIAL) return true;
+
+	// A match that stops short leaves a tail the pattern does not cover, which is a refusal even
+	// though PCRE reports a match. Partial matching is preferred over a short match only when the
+	// pattern reaches the end of the subject, so this is the one that has to be caught here.
+	return rc >= 0 && ovector[1] == (int)result.length();
+}
+
+void MeterStringEdit::ReplaceSelection(const std::wstring& text)
+{
+	const UINT32 start = GetSelectionStart();
+
+	std::wstring insert;
+	m_Text = PreviewReplacement(text, insert);
 	m_String = m_Text;
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
@@ -755,9 +842,9 @@ bool MeterStringEdit::Paste()
 		}
 	}
 
-	// A paste the filter empties is not an edit, and must not swallow the selection.
-	FilterInput(text);
-	if (text.empty()) return false;
+	// An empty paste is not an edit, and must not swallow the selection. Neither must one the
+	// filter refuses, which it does whole rather than by dropping the characters it dislikes.
+	if (text.empty() || !AcceptsReplacement(text)) return false;
 
 	PushUndo(EditKind::None);
 	ReplaceSelection(text);
@@ -825,11 +912,11 @@ bool MeterStringEdit::HandleChar(WCHAR ch)
 	// A full field still accepts typing that replaces a selection.
 	if (IsFull() && !HasSelection()) return false;
 
-	// A refused keystroke must leave no undo step, and must not reach ReplaceSelection() as an empty
-	// insert and delete the selection in place of the character the filter would not take.
-	std::wstring insert(1U, ch);
-	FilterInput(insert);
-	if (insert.empty()) return false;
+	// Asked before the undo stack is touched: a refused keystroke is not an edit and must leave
+	// nothing behind, not even a step that undoes to itself, and it must not reach
+	// ReplaceSelection() to delete the selection in place of the character that was refused.
+	const std::wstring insert(1U, ch);
+	if (!AcceptsReplacement(insert)) return false;
 
 	// Replacing a selection is a distinct step from the typing that follows it, so it does not
 	// fold into a preceding run.
@@ -964,9 +1051,9 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		// adds a line.
 		if (!shift && CommitsOnEnter()) return false;
 
-		// No filter takes a newline, and one dropped inside ReplaceSelection() would delete the
-		// selection in place of the line it was meant to add.
-		if (m_InputFilter != InputFilter::None) return false;
+		// No filter is meant for text with lines in it, and a newline the filter went on to refuse
+		// would delete the selection in place of the line it was meant to add.
+		if (m_RegExp) return false;
 
 		// WM_CHAR delivers Enter as a carriage return, which the control character filter in
 		// HandleChar drops, so the newline is inserted from here instead. A line feed rather than

@@ -4,6 +4,8 @@
 
 #include "MeterStringBase.h"
 
+class Pcre;
+
 // A text meter the user can type into. Clicking it places a caret, after which the skin routes
 // keyboard input here. The text is rendered verbatim so that a caret offset is also an offset into
 // the text being edited, which is why none of String's formatting options exist here. StringCase is
@@ -86,12 +88,6 @@ private:
 		Deleting
 	};
 
-	enum class InputFilter : BYTE
-	{
-		None,
-		Numeric  // Digits alone: no sign, no decimal point, no separators.
-	};
-
 	struct EditSnapshot
 	{
 		std::wstring text;
@@ -134,8 +130,22 @@ private:
 	// arrived from the left of |pos| in logical order, clear it when it arrived from the right.
 	void MoveCaretTo(UINT32 pos, bool extend, bool trailing);
 
-	// Drops from |text| whatever InputFilter refuses, which may empty it.
-	void FilterInput(std::wstring& text) const;
+	// Records the pattern InputFilter resolved to, discarding what was compiled from the previous
+	// one. Does not compile it: CompileInputRegExp() does, once the field is focused.
+	void SetInputRegExp(const std::wstring& pattern);
+
+	// Compiles the recorded pattern, unless it is already compiled or already known not to. Leaves
+	// the field unfiltered when it does not compile, rather than refusing everything typed into it.
+	void CompileInputRegExp();
+
+	// The text the field would hold if |text| replaced the selection, with |insert| left holding
+	// the part of |text| that would actually land, after InputCase and MaxLength.
+	std::wstring PreviewReplacement(const std::wstring& text, std::wstring& insert) const;
+
+	// |true| when InputFilter would allow that replacement. Checked by the callers that insert,
+	// before they touch the undo stack, so that a refused edit leaves no trace of itself.
+	// Deletions bypass it: a filter that refused one could leave text impossible to erase.
+	bool AcceptsReplacement(const std::wstring& text) const;
 
 	// Replaces the selection, or inserts at the caret, leaving the caret after |text|. Truncates
 	// |text| to whatever MaxLength leaves room for.
@@ -182,9 +192,12 @@ private:
 	// less is unlimited. Only bounds what the user enters, not what Text starts as.
 	int m_MaxLength;
 
-	// Bounds what the user may enter, and like MaxLength only that: text that arrived through the
-	// Text option is left as it was written, so a filter set after the fact does not rewrite it.
-	InputFilter m_InputFilter;
+	// What InputFilter resolved to, empty when there is none. Bounds what the user may enter, and
+	// like MaxLength only that: text that arrived through the Text option is left as it was
+	// written, so a filter set after the fact does not rewrite it.
+	std::wstring m_InputRegExpPattern;
+	std::unique_ptr<Pcre> m_RegExp;
+	bool m_RegExpError;
 
 	// Converts what the user contributes - typing, paste, drops - and nothing else, so text that
 	// arrived through the Text option keeps the case it was written in. StringCase, held by the
