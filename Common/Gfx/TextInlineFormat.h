@@ -45,7 +45,7 @@ protected:
 	TextInlineFormat(std::wstring pattern);
 	TextInlineFormat(const TextInlineFormat& other) = delete;
 
-	void SetPattern(const std::wstring pattern) { m_Pattern = pattern; }
+	void SetPattern(const std::wstring& pattern) { m_Pattern = pattern; }
 	const std::vector<DWRITE_TEXT_RANGE>& GetRanges() { return m_TextRange; }
 
 private:
