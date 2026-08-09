@@ -49,6 +49,7 @@
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="ImageCache.cpp" />
     <ClCompile Include="Language.cpp" />
+    <ClCompile Include="Locale.cpp" />
     <ClCompile Include="Language_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
@@ -208,6 +209,7 @@
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
     <ClInclude Include="Language.h" />
+    <ClInclude Include="Locale.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaBindingSection.h" />
     <ClInclude Include="LuaHelper.h" />

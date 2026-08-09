@@ -22,6 +22,7 @@ protected:
 	virtual void UpdateValue();
 
 private:
+	Locale::NumberFormat m_NumberFormat;
 	std::wstring m_String;
 	std::wstring m_StringValue;
 };

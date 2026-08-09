@@ -225,6 +225,7 @@ void ClearProxySetting(ProxySetting& setting)
 }
 
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(Locale::NumberFormat::Default),
 	m_ParseType(ParseType::RegExp),
 	m_Codepage(),
 	m_StringIndex(),
@@ -291,6 +292,8 @@ MeasureWebParser::~MeasureWebParser()
 void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
+
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
 	std::wstring url = parser.ReadString(section, L"Url", L"", false);
 
@@ -481,7 +484,7 @@ void MeasureWebParser::UpdateValue()
 	{
 		if (!m_ResultString.empty())
 		{
-			m_Value = wcstod(m_ResultString.c_str(), nullptr);
+			m_Value = Locale::StringToNumber(m_ResultString.c_str(), m_NumberFormat);
 		}
 
 		if (m_Url.size() > 0 && m_Url.find(L'[') == std::wstring::npos)
