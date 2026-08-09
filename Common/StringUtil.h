@@ -24,10 +24,18 @@ inline std::wstring WidenUTF8(const std::string& str) { return Widen(str.c_str()
 std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single = false);
 
 bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount);
-void ToLowerCase(std::wstring& str);
-void ToUpperCase(std::wstring& str);
-void ToProperCase(std::wstring& str);
-void ToSentenceCase(std::wstring& str);
+
+// These convert |count| characters starting at |str| in place. The conversions never change the
+// length of the text, so they can be applied to a part of a larger string.
+void ToLowerCase(WCHAR* str, size_t count);
+void ToUpperCase(WCHAR* str, size_t count);
+void ToProperCase(WCHAR* str, size_t count);
+void ToSentenceCase(WCHAR* str, size_t count);
+
+inline void ToLowerCase(std::wstring& str) { ToLowerCase(str.data(), str.length()); }
+inline void ToUpperCase(std::wstring& str) { ToUpperCase(str.data(), str.length()); }
+inline void ToProperCase(std::wstring& str) { ToProperCase(str.data(), str.length()); }
+inline void ToSentenceCase(std::wstring& str) { ToSentenceCase(str.data(), str.length()); }
 
 void EscapeRegExp(std::wstring& str);
 

@@ -18,22 +18,23 @@ TextInlineFormat_Case::~TextInlineFormat_Case()
 
 void TextInlineFormat_Case::ApplyInlineFormat(std::wstring& str)
 {
-	std::wstring formatStr;
-
 	for (const auto& range : GetRanges())
 	{
-		if (range.length <= 0) continue;
+		// The ranges were found in the string as it was when the inline options were last updated,
+		// which is not necessarily the string being formatted here.
+		if (range.startPosition >= str.length()) continue;
 
-		formatStr = str.substr(range.startPosition, range.length);
+		const size_t count = min((size_t)range.length, str.length() - range.startPosition);
+		if (count == 0) continue;
+
+		WCHAR* text = &str[range.startPosition];
 		switch (m_Type)
 		{
-		case CaseType::Lower: StringUtil::ToLowerCase(formatStr); break;
-		case CaseType::Upper: StringUtil::ToUpperCase(formatStr); break;
-		case CaseType::Proper: StringUtil::ToProperCase(formatStr); break;
-		case CaseType::Sentence: StringUtil::ToSentenceCase(formatStr); break;
+		case CaseType::Lower: StringUtil::ToLowerCase(text, count); break;
+		case CaseType::Upper: StringUtil::ToUpperCase(text, count); break;
+		case CaseType::Proper: StringUtil::ToProperCase(text, count); break;
+		case CaseType::Sentence: StringUtil::ToSentenceCase(text, count); break;
 		}
-
-		str.replace((size_t)range.startPosition, (size_t)range.length, formatStr);
 	}
 }
 
