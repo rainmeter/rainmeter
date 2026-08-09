@@ -14,6 +14,8 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_LineWidth(1.0),
 	m_HorizontalColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeType(D2D1_STROKE_TRANSFORM_TYPE_NORMAL),
+	m_LineJoin(D2D1_LINE_JOIN_MITER),
+	m_MiterLimit(10.0f),
 	m_CurrentPos(0),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
@@ -144,6 +146,36 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else
 	{
 		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
+	}
+
+	const std::wstring& join = parser.ReadString(section, L"LineJoin", L"MITER");
+	if (_wcsicmp(join.c_str(), L"MITER") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER;
+	}
+	else if (_wcsicmp(join.c_str(), L"BEVEL") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_BEVEL;
+	}
+	else if (_wcsicmp(join.c_str(), L"ROUND") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_ROUND;
+	}
+	else if (_wcsicmp(join.c_str(), L"MITERORBEVEL") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER_OR_BEVEL;
+	}
+	else
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER;
+		LogErrorF(this, L"LineJoin=%s is not valid", join.c_str());
+	}
+
+	m_MiterLimit = (FLOAT)parser.ReadFloat(section, L"MiterLimit", 10.0);
+	if (m_MiterLimit <= 0.0f)
+	{
+		LogErrorF(this, L"MiterLimit must be positive");
+		m_MiterLimit = 10.0f;
 	}
 
 	const WCHAR* type = parser.ReadString(section, L"TransformStroke", L"NORMAL").c_str();
@@ -292,8 +324,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		path.SetStrokeFill(m_Colors[counter]);
 		path.SetStrokeWidth((FLOAT)m_LineWidth);
 		auto& strokeProperties = path.GetStrokeProperties();
-		strokeProperties.lineJoin = D2D1_LINE_JOIN_BEVEL;
-		strokeProperties.miterLimit = 10.0f;
+		strokeProperties.lineJoin = m_LineJoin;
+		strokeProperties.miterLimit = m_MiterLimit;
+		path.CreateStrokeStyle(m_StrokeType);
+
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
@@ -332,7 +366,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
 			if (!path) return false;
-			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_Flip)
 			{
@@ -403,7 +436,6 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 			auto path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
 			if (!path) return false;
-			path->CreateStrokeStyle(m_StrokeType);
 
 			if (!m_GraphStartLeft)
 			{

@@ -33,6 +33,8 @@ private:
 	double m_LineWidth;
 	D2D1_COLOR_F m_HorizontalColor;
 	D2D1_STROKE_TRANSFORM_TYPE m_StrokeType;
+	D2D1_LINE_JOIN m_LineJoin;
+	FLOAT m_MiterLimit;
 
 	std::vector<std::vector<double>> m_AllValues;
 	int m_CurrentPos;
