@@ -433,7 +433,6 @@ void TextFormat::SetTrimming(bool trim)
 	m_Trimming = trim;
 	IDWriteInlineObject* inlineObject = nullptr;
 	DWRITE_TRIMMING trimming = {};
-	DWRITE_WORD_WRAPPING wordWrapping = DWRITE_WORD_WRAPPING_NO_WRAP;
 	if (trim)
 	{
 		if (!m_InlineEllipsis)
@@ -444,11 +443,10 @@ void TextFormat::SetTrimming(bool trim)
 
 		inlineObject = m_InlineEllipsis.Get();
 		trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
-		wordWrapping = DWRITE_WORD_WRAPPING_WRAP;
 	}
 
 	m_TextFormat->SetTrimming(&trimming, inlineObject);
-	m_TextFormat->SetWordWrapping(wordWrapping);
+	UpdateWordWrapping();
 }
 
 void TextFormat::SetHorizontalAlignment(HorizontalAlignment alignment)
@@ -460,8 +458,20 @@ void TextFormat::SetHorizontalAlignment(HorizontalAlignment alignment)
 		m_TextFormat->SetTextAlignment(
 			(alignment == HorizontalAlignment::Left) ? DWRITE_TEXT_ALIGNMENT_LEADING :
 			(alignment == HorizontalAlignment::Center) ? DWRITE_TEXT_ALIGNMENT_CENTER :
+			(alignment == HorizontalAlignment::Justify) ? DWRITE_TEXT_ALIGNMENT_JUSTIFIED :
 			DWRITE_TEXT_ALIGNMENT_TRAILING);
+
+		UpdateWordWrapping();
 	}
+}
+
+void TextFormat::UpdateWordWrapping()
+{
+	if (!m_TextFormat) return;
+
+	// Justified text has nothing to stretch unless lines are allowed to wrap.
+	const bool wrap = m_Trimming || m_HorizontalAlignment == HorizontalAlignment::Justify;
+	m_TextFormat->SetWordWrapping(wrap ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
 }
 
 void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)

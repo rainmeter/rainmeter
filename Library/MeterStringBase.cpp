@@ -236,6 +236,11 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Center);
 		vAlign = hAlign + 6;
 	}
+	else if (_wcsnicmp(hAlign, L"JUSTIFY", 7) == 0)
+	{
+		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Justify);
+		vAlign = hAlign + 7;
+	}
 
 	if (!vAlign || _wcsicmp(vAlign, L"TOP") == 0)
 	{
