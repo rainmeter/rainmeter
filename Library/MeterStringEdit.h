@@ -140,6 +140,11 @@ private:
 	// that alternates between the two would rebuild one. Allocated only while there is one.
 	void UpdatePlaceholderFormat();
 
+	// Picks the mask character: the first the font can draw itself, so that masking does not send
+	// the whole line to a fallback font and move the baseline with it. Only where there is a mask
+	// to draw, and only when the font changes, since nothing else can change the answer.
+	void UpdatePasswordChar();
+
 	UINT32 GetSelectionStart() const { return min(m_CaretPos, m_SelectionAnchor); }
 	UINT32 GetSelectionEnd() const { return max(m_CaretPos, m_SelectionAnchor); }
 	bool HasSelection() const { return m_CaretPos != m_SelectionAnchor; }
@@ -214,6 +219,10 @@ private:
 	// Draws the text as a mask, and keeps it off the clipboard. Only that: the text itself is
 	// untouched, and is still what [$Input] hands to an action and what the undo history holds.
 	bool m_Password;
+
+	// Picked by UpdatePasswordChar(), which runs before anything draws. Meaningless while
+	// m_Password is false, which is also when it is never asked for.
+	WCHAR m_PasswordChar;
 
 	// What InputFilter resolved to, empty when there is none. Bounds what the user may enter, and
 	// like MaxLength only that: text that arrived through the Text option is left as it was
