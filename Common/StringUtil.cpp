@@ -90,44 +90,36 @@ bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)
 	return true;
 }
 
-void ToLowerCase(std::wstring& str)
+void ToLowerCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, str, (int)count, str, (int)count);
 }
 
-void ToUpperCase(std::wstring& str)
+void ToUpperCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, str, (int)count, str, (int)count);
 }
 
-void ToProperCase(std::wstring& str)
+void ToProperCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_TITLECASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_TITLECASE, str, (int)count, str, (int)count);
 }
 
-void ToSentenceCase(std::wstring& str)
+void ToSentenceCase(WCHAR* str, size_t count)
 {
-	if (!str.empty())
+	if (count == 0) return;
+
+	ToLowerCase(str, count);
+	bool isCapped = false;
+
+	for (size_t i = 0; i < count; ++i)
 	{
-		ToLowerCase(str);
-		bool isCapped = false;
+		if (IsEOSPunct(str[i])) isCapped = false;
 
-		for (size_t i = 0; i < str.length(); ++i)
+		if (!isCapped && iswalpha(str[i]) != 0)
 		{
-			if (IsEOSPunct(str[i])) isCapped = false;
-
-			if (!isCapped && iswalpha(str[i]) != 0)
-			{
-				WCHAR* srcAndDest = &str[i];
-				LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, 1, srcAndDest, 1);
-				isCapped = true;
-			}
+			LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &str[i], 1, &str[i], 1);
+			isCapped = true;
 		}
 	}
 }
