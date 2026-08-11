@@ -3814,7 +3814,7 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 		Redraw();
 	}
 
-	if (!cursor && GetInputMeterAt(pos.x, pos.y))
+	if (!cursor && GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_UP))
 	{
 		cursor = LoadCursor(nullptr, IDC_IBEAM);
 	}
@@ -4810,7 +4810,7 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		// Editing claims the click before the dragging fallthrough below, otherwise placing the
 		// caret in a draggable skin would move the window instead.
-		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_DOWN);
 		if (editMeter)
 		{
 			if (!editMeter->IsFocused())
@@ -4935,7 +4935,7 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_HasInputMeters && !IsCtrlKeyDown())
 	{
 		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
-		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_UP);
 		if (editMeter)
 		{
 			// Reaching here means the button came up without a drag having started, so this was a
@@ -5015,7 +5015,11 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_HasInputMeters && !IsCtrlKeyDown() && !IsSelected())
 	{
 		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
-		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y);
+
+		// Both actions, since a meter with only the down one takes the double-click as well; see
+		// HandleButtonDoubleClickMessage().
+		MeterStringEdit* editMeter =
+			GetInputMeterAt(pos.x, pos.y, (MOUSEACTION)(MOUSE_LMB_DBLCLK | MOUSE_LMB_DOWN));
 		if (editMeter)
 		{
 			// The caret is placed here rather than relied on from the preceding click: focus is
@@ -5279,21 +5283,33 @@ void Skin::UpdateMouseMeasureCapture()
 	}
 }
 
-// Returns the topmost StringEdit meter under the given skin-space point, if any.
-MeterStringEdit* Skin::GetInputMeterAt(int x, int y)
+MeterStringEdit* Skin::GetInputMeterAt(int x, int y, MOUSEACTION actions)
 {
 	if (!m_HasInputMeters) return nullptr;
 
 	for (auto j = m_Meters.rbegin(); j != m_Meters.rend(); ++j)
 	{
-		if ((*j)->IsHidden()) continue;
-		if ((*j)->GetTypeID() != TypeID<MeterStringEdit>()) continue;
+		Meter* meter = *j;
+		if (meter->IsHidden() || !meter->HitTest(x, y)) continue;
 
-		MeterStringEdit* meter = (MeterStringEdit*)(*j);
-		if (meter->AcceptsInput() && meter->HitTest(x, y))
+		if (meter->GetTypeID() == TypeID<MeterStringEdit>())
 		{
-			return meter;
+			auto* editMeter = (MeterStringEdit*)meter;
+			if (editMeter->AcceptsInput()) return editMeter;
+
+			// A field that takes no input is not in the way of one further back either.
+			continue;
 		}
+
+		if (m_HasButtons && meter->GetTypeID() == TypeID<MeterButton>())
+		{
+			// A Button meter runs ButtonCommand instead of a mouse action, and only over the
+			// opaque part of its image.
+			MeterButton* button = (MeterButton*)meter;
+			if (button->HasCommand() && button->HitTest2(x, y)) return nullptr;
+		}
+
+		if (meter->GetMouse().HasEnabledAction(actions)) return nullptr;
 	}
 
 	return nullptr;

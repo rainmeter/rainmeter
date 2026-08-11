@@ -398,6 +398,23 @@ bool Mouse::GetActionCommand(MOUSEACTION type, std::wstring& command) const
 	return false;
 }
 
+bool Mouse::HasEnabledAction(MOUSEACTION types) const
+{
+	if ((m_MouseActionTypes & types) == 0) return false;
+
+	for (const auto& mouseAction : m_MouseActions)
+	{
+		if ((types & mouseAction.type) != 0 &&
+			mouseAction.state == MOUSEACTION_ENABLED &&
+			!mouseAction.action.empty())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 const std::wstring& Mouse::GetAction(MOUSEACTION action) const
 {
 	static const std::wstring disabled = L"[]";
