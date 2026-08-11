@@ -1728,9 +1728,20 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 
 void Skin::FocusMeter(std::wstring_view name)
 {
+	// Focus changed by a bang is the skin's own doing rather than the user reaching for the field,
+	// so neither OnFocusAction nor OnDismissAction is run here.
 	if (name.empty())
 	{
-		DismissInputFocus();
+		if (ClearInputFocus())
+		{
+			if (m_DynamicWindowSize)
+			{
+				SetResizeWindowMode(RESIZEMODE_CHECK);
+			}
+
+			Redraw();
+		}
+
 		return;
 	}
 
@@ -1751,11 +1762,7 @@ void Skin::FocusMeter(std::wstring_view name)
 			return;
 		}
 
-		MeterStringEdit* outgoing = m_InputFocusMeter;
-		std::wstring dismissCommand;
-		if (!SetInputFocus(editMeter, &dismissCommand)) return;
-
-		const std::wstring focusCommand = editMeter->GetFocusCommand();
+		if (!SetInputFocus(editMeter)) return;
 
 		// The window has to hold keyboard focus for typing to reach it at all.
 		SetFocus(m_Window);
@@ -1766,19 +1773,6 @@ void Skin::FocusMeter(std::wstring_view name)
 		}
 
 		Redraw();
-
-		// Run last, in the order the two things happened: either may refresh or close the skin,
-		// which destroys both meters and this window, so nothing may be touched afterwards.
-		if (!dismissCommand.empty())
-		{
-			GetRainmeter().ExecuteActionCommand(dismissCommand.c_str(), outgoing);
-		}
-
-		if (!focusCommand.empty())
-		{
-			GetRainmeter().ExecuteActionCommand(focusCommand.c_str(), editMeter);
-		}
-
 		return;
 	}
 
