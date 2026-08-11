@@ -1139,6 +1139,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		UpdateMeter(args[0]);
 		break;
 
+	case Bang::FocusMeter:
+		FocusMeter(args[0]);
+		break;
+
 	case Bang::ToggleMeterGroup:
 		ToggleMeter(args[0], true);
 		break;
@@ -1588,6 +1592,14 @@ bool CompareName(const Section* section, const WCHAR* name, bool group)
 	return (group) ? section->BelongsToGroup(name) : (_wcsicmp(section->GetName(), name) == 0);
 }
 
+bool CompareName(const Section* section, std::wstring_view name)
+{
+	const auto& sectionName = section->GetOriginalName();
+	return
+		sectionName.length() == name.length() &&
+		_wcsnicmp(sectionName.data(), name.data(), name.length()) == 0;
+}
+
 void Skin::ShowMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -1712,6 +1724,65 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	PostUpdate(bActiveTransition);
 
 	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
+}
+
+void Skin::FocusMeter(std::wstring_view name)
+{
+	if (name.empty())
+	{
+		DismissInputFocus();
+		return;
+	}
+
+	for (auto* meter : m_Meters)
+	{
+		if (!CompareName(meter, name)) continue;
+
+		if (meter->GetTypeID() != TypeID<MeterStringEdit>())
+		{
+			LogWarningF(this, L"!FocusMeter: [%s] cannot be focused", meter->GetName());
+			return;
+		}
+
+		auto* editMeter = (MeterStringEdit*)meter;
+		if (!editMeter->AcceptsInput())
+		{
+			LogWarningF(this, L"!FocusMeter: [%s] does not accept input", meter->GetName());
+			return;
+		}
+
+		MeterStringEdit* outgoing = m_InputFocusMeter;
+		std::wstring dismissCommand;
+		if (!SetInputFocus(editMeter, &dismissCommand)) return;
+
+		const std::wstring focusCommand = editMeter->GetFocusCommand();
+
+		// The window has to hold keyboard focus for typing to reach it at all.
+		SetFocus(m_Window);
+
+		if (m_DynamicWindowSize)
+		{
+			SetResizeWindowMode(RESIZEMODE_CHECK);
+		}
+
+		Redraw();
+
+		// Run last, in the order the two things happened: either may refresh or close the skin,
+		// which destroys both meters and this window, so nothing may be touched afterwards.
+		if (!dismissCommand.empty())
+		{
+			GetRainmeter().ExecuteActionCommand(dismissCommand.c_str(), outgoing);
+		}
+
+		if (!focusCommand.empty())
+		{
+			GetRainmeter().ExecuteActionCommand(focusCommand.c_str(), editMeter);
+		}
+
+		return;
+	}
+
+	LogErrorF(this, L"!FocusMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
 void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group)

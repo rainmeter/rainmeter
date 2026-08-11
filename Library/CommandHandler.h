@@ -27,6 +27,7 @@ enum class Bang
 	ToggleMeter,
 	MoveMeter,
 	UpdateMeter,
+	FocusMeter,
 	DisableMouseAction,
 	ClearMouseAction,
 	EnableMouseAction,

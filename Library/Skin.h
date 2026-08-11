@@ -122,6 +122,7 @@ public:
 	void ToggleMeter(const std::wstring& name, bool group = false);
 	void MoveMeter(const std::wstring& name, int x, int y);
 	void UpdateMeter(const std::wstring& name, bool group = false);
+	void FocusMeter(std::wstring_view name);
 	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
 	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
 	void EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);

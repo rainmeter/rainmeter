@@ -51,6 +51,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::ToggleMeter, L"ToggleMeter", 1 },
 	{ Bang::MoveMeter, L"MoveMeter", 3 },
 	{ Bang::UpdateMeter, L"UpdateMeter", 1 },
+	{ Bang::FocusMeter, L"FocusMeter", 1 },
 	{ Bang::DisableMouseAction, L"DisableMouseAction", 2 },
 	{ Bang::ClearMouseAction, L"ClearMouseAction", 2 },
 	{ Bang::EnableMouseAction, L"EnableMouseAction", 2 },
