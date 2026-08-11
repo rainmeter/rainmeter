@@ -95,6 +95,8 @@ public:
 	bool GetActionCommand(MOUSEACTION type, std::wstring& command) const;
 	const std::wstring& GetAction(MOUSEACTION action) const;
 
+	bool HasEnabledAction(MOUSEACTION types) const;
+
 	bool HasButtonAction() const
 	{
 		return !(

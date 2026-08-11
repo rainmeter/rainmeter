@@ -31,6 +31,8 @@ public:
 
 	bool HitTest2(int px, int py);
 
+	bool HasCommand() const { return !m_Command.empty(); }
+
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);

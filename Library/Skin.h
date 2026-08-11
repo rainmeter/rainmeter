@@ -396,7 +396,7 @@ private:
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
 	void ClearMouseMeasureCapture();
-	MeterStringEdit* GetInputMeterAt(int x, int y);
+	MeterStringEdit* GetInputMeterAt(int x, int y, MOUSEACTION actions);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
