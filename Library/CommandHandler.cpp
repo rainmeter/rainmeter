@@ -173,8 +173,58 @@ bool DoesConfigExist(const std::wstring& folderPath, const std::wstring& file = 
 	return false;
 }
 
+// Returns the index of the argument that names a section for bangs whose section argument may be
+// omitted in favor of the section running the action, or -1 if the bang has no such argument.
+int GetOptionalSectionArg(Bang bang)
+{
+	switch (bang)
+	{
+	case Bang::HideMeter:
+	case Bang::ShowMeter:
+	case Bang::ToggleMeter:
+	case Bang::UpdateMeter:
+	case Bang::FocusMeter:
+	case Bang::DisableMouseAction:
+	case Bang::ClearMouseAction:
+	case Bang::EnableMouseAction:
+	case Bang::ToggleMouseAction:
+	case Bang::SetOption:
+		return 0;
+
+	case Bang::MoveMeter:
+		return 2;  // !MoveMeter takes the coordinates first.
+
+	default:
+		return -1;
+	}
+}
+
+// Inserts the section running the action into |args| if the section argument was left out. Since
+// this brings the argument count up to the exact count the bang takes, the default can only ever
+// apply to the skin the action is running in. Returns false if the argument was left out with no
+// section to fall back on.
+bool InsertCurrentSectionArgIfNeeded(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
+{
+	if (!skin || args.size() + 1 != bangInfo.argCount) return true;
+
+	const int sectionArg = GetOptionalSectionArg(bangInfo.bang);
+	if (sectionArg < 0) return true;
+
+	Section* section = skin->GetCurrentActionSection();
+	if (!section)
+	{
+		LogWarningF(skin, L"!%s: Section name required", bangInfo.name);
+		return false;
+	}
+
+	args.insert(args.begin() + sectionArg, section->GetOriginalName());
+	return true;
+}
+
 void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
+	if (!InsertCurrentSectionArgIfNeeded(bangInfo, args, skin)) return;
+
 	const size_t argsCount = args.size();
 	if (argsCount >= bangInfo.argCount)
 	{
