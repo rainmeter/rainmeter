@@ -35,12 +35,11 @@ public:
 
 	bool IsSubmitKey(WPARAM key) const;
 
-	// Runs OnSubmitAction, with [$Input] expanded. Nothing may be touched afterwards: the action may
-	// refresh or close the skin, which destroys this meter, so the caller redraws before calling.
+	// Runs OnSubmitAction. Nothing may be touched afterwards: the action may refresh or close the
+	// skin, which destroys this meter, so the caller redraws before calling.
 	void Submit();
 
-	// OnFocusAction, with [$Input] expanded, or empty if there is none.
-	std::wstring GetFocusCommand();
+	const std::wstring& GetOnFocusAction() const { return m_OnFocusAction; }
 
 	// The counterpart for moving away from the field without submitting: fills |command| with
 	// OnDismissAction. Leaves it empty when the text standing in the field is what a submit
@@ -111,9 +110,6 @@ private:
 	// canvas, which reports clusters in the drawn string: those are the wrong thing to step by
 	// while it is masked, where each unit draws as its own mask character.
 	bool GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adjacent);
-
-	// Fills |command| with |action|, [$Input] expanded. Leaves it empty if there is no action.
-	void ExpandAction(const std::wstring& action, std::wstring& command);
 
 	void DrawCaret(Gfx::Canvas& canvas);
 	void DrawSelection(Gfx::Canvas& canvas);

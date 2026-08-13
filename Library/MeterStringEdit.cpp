@@ -55,7 +55,7 @@ public:
 		SetFocus(skin->GetWindow());
 
 		m_Incoming = meter;
-		m_FocusCommand = meter->GetFocusCommand();
+		m_FocusCommand = meter->GetOnFocusAction();
 	}
 
 	// In the order the two things happened. Nothing may be touched afterwards.
@@ -626,24 +626,12 @@ bool MeterStringEdit::IsSubmitKey(WPARAM key) const
 
 void MeterStringEdit::Submit()
 {
-	// Expanded before the action runs, so [$Input] carries what was submitted whatever the action
-	// then does to the text.
-	std::wstring command;
-	ExpandAction(m_OnSubmitAction, command);
-
 	m_Submitted = true;
 
-	if (!command.empty())
+	if (!m_OnSubmitAction.empty())
 	{
-		GetRainmeter().ExecuteActionCommand(command.c_str(), this);
+		GetRainmeter().ExecuteActionCommand(m_OnSubmitAction.c_str(), this);
 	}
-}
-
-std::wstring MeterStringEdit::GetFocusCommand()
-{
-	std::wstring command;
-	ExpandAction(m_OnFocusAction, command);
-	return command;
 }
 
 void MeterStringEdit::HandleDismiss(std::wstring& command)
@@ -652,7 +640,7 @@ void MeterStringEdit::HandleDismiss(std::wstring& command)
 	// the text, so leaving afterwards is only a dismissal once the text has moved on from it.
 	if (m_Submitted) return;
 
-	ExpandAction(m_OnDismissAction, command);
+	command = m_OnDismissAction;
 }
 
 void MeterStringEdit::Clear()
@@ -692,17 +680,6 @@ void MeterStringEdit::Reset()
 
 	UpdateAutoSizeForText();
 	EnsureCaretVisible();
-}
-
-void MeterStringEdit::ExpandAction(const std::wstring& action, std::wstring& command)
-{
-	if (action.empty()) return;
-
-	command = action;
-
-	// Expanded here rather than by the command handler because [$Input] is scoped to this meter,
-	// exactly as mouse actions expand [$MOUSEX] before they are handed over.
-	m_Skin->GetParser().ExpandSectionVariables(command, VariableExpandMode::DollarInputOnly, this);
 }
 
 void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)

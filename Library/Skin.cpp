@@ -4884,7 +4884,7 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (SetInputFocus(editMeter, &dismissCommand))
 			{
-				focusCommand = editMeter->GetFocusCommand();
+				focusCommand = editMeter->GetOnFocusAction();
 
 				// The window has to hold keyboard focus for typing to reach it at all.
 				// WM_MOUSEACTIVATE already returns MA_ACTIVATE, but the click may have landed
@@ -4962,7 +4962,7 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// taken on the button up, which OnSysCommand only posts, so it may not have arrived
 			// yet. Placing it makes the selected word the one under the pointer either way.
 			std::wstring focusCommand;
-			if (SetInputFocus(editMeter)) focusCommand = editMeter->GetFocusCommand();
+			if (SetInputFocus(editMeter)) focusCommand = editMeter->GetOnFocusAction();
 
 			SetFocus(m_Window);
 			editMeter->SetCaretFromPoint(pos.x, pos.y);

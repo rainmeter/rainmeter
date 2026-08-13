@@ -24,8 +24,7 @@ enum class VariableExpandMode : BYTE
 {
 	AllKeys,
 	HashOnly,
-	DollarMouseOnly,
-	DollarInputOnly
+	DollarMouseOnly
 };
 
 class ConfigParser
@@ -98,7 +97,7 @@ public:
 
 	// Resolves [$Input] against an editable String meter. Returns a value rather than a bool so
 	// that an empty field expands to nothing instead of being left as a literal.
-	std::optional<std::wstring> GetDollarInputVariable(std::wstring_view variable, Meter* meter);
+	std::optional<std::wstring> GetDollarInputVariable(std::wstring_view variable, Section* section);
 
 	// Returns the skin's math parser, or a skinless one if the parser is not tied to a skin.
 	const MathParser& GetMathParser() const;
