@@ -33,16 +33,18 @@ public:
 	// |false| when configured in a way editing cannot support: still draws, takes no input.
 	bool AcceptsInput() const { return m_AcceptsInput; }
 
-	// Fills |command| with OnEnterAction ([$Input] already expanded, empty if there is none).
-	// Returns false when Enter is not a commit here, leaving it to be typed as a newline.
-	bool HandleEnter(std::wstring& command);
+	bool IsSubmitKey(WPARAM key) const;
+
+	// Runs OnSubmitAction, with [$Input] expanded. Nothing may be touched afterwards: the action may
+	// refresh or close the skin, which destroys this meter, so the caller redraws before calling.
+	void Submit();
 
 	// OnFocusAction, with [$Input] expanded, or empty if there is none.
 	std::wstring GetFocusCommand();
 
-	// The counterpart for moving away from the field without committing: fills |command| with
-	// OnDismissAction. Leaves it empty when the text standing in the field is what a commit
-	// already submitted.
+	// The counterpart for moving away from the field without submitting: fills |command| with
+	// OnDismissAction. Leaves it empty when the text standing in the field is what a submit
+	// already sent.
 	void HandleDismiss(std::wstring& command);
 
 	// Focus (see also Skin, which owns which meter currently holds the caret).
@@ -96,10 +98,6 @@ private:
 		UINT32 anchor;
 		bool trailing;
 	};
-
-	// |true| when Enter commits rather than inserting a newline, which is what makes the meter
-	// single-line. Having an OnEnterAction is what decides it; Shift+Enter always inserts.
-	bool CommitsOnEnter() const { return !m_OnEnterAction.empty(); }
 
 	// Rebuilds the drawn string from the edited one. Identical to it, unless Password replaces it
 	// with a mask - one mask character per UTF-16 unit, so that every offset into one is still an
@@ -199,25 +197,20 @@ private:
 	bool m_AcceptsInput;
 	bool m_Focused;
 
-	// Set by a commit and cleared by the next edit, so that leaving a field whose contents have
+	// Set by a submit and cleared by the next edit, so that leaving a field whose contents have
 	// already been submitted is not also treated as abandoning them.
-	bool m_Committed;
+	bool m_Submitted;
 
-	// Longest the text may become, in UTF-16 units, as Win32 edit controls also count it. Zero or
-	// less is unlimited. Only bounds what the user enters, not what Text starts as.
 	int m_MaxLength;
+	bool m_Multiline;
+	bool m_SubmitOnEnter;
 
-	// Draws the text as a mask, and keeps it off the clipboard. Only that: the text itself is
-	// untouched, and is still what [$Input] hands to an action and what the undo history holds.
 	bool m_Password;
-
-	// Picked by UpdatePasswordChar(), which runs before anything draws. Meaningless while
-	// m_Password is false, which is also when it is never asked for.
 	WCHAR m_PasswordChar;
 
-	// What InputFilter resolved to, empty when there is none. Bounds what the user may enter, and
-	// like MaxLength only that: text that arrived through the Text option is left as it was
-	// written, so a filter set after the fact does not rewrite it.
+	// What InputFilter resolved to, empty when there is none. Bounds what the user may enter and
+	// only that, unlike MaxLength and Multiline: text that arrived through the Text option is left
+	// as it was written, so a filter set after the fact does not rewrite it.
 	std::wstring m_InputRegExpPattern;
 	std::unique_ptr<Pcre> m_RegExp;
 	bool m_RegExpError;
@@ -239,13 +232,13 @@ private:
 	// Tells a genuine Text change apart from a re-read that would discard what the user typed.
 	std::wstring m_TextOption;
 
-	// Having one makes the meter single-line; see CommitsOnEnter().
-	std::wstring m_OnEnterAction;
+	// Run by Enter and by !TextEdit:Submit.
+	std::wstring m_OnSubmitAction;
 
 	// Run when the field takes the caret.
 	std::wstring m_OnFocusAction;
 
-	// Run when the field is left without committing: Escape, a click elsewhere, or another window
+	// Run when the field is left without submitting: Escape, a click elsewhere, or another window
 	// taking focus.
 	std::wstring m_OnDismissAction;
 
