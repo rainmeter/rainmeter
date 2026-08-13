@@ -124,6 +124,7 @@ enum class Bang
 
 using MeterBangFunc = void (*)(Meter* meter, std::vector<std::wstring>& args, Skin* skin);
 using MeasureBangFunc = void (*)(Measure* measure, std::vector<std::wstring>& args, Skin* skin);
+using SkinBangFunc = void (*)(std::vector<std::wstring>& args, Skin* skin);
 
 // Parses and executes commands and bangs.
 class CommandHandler
@@ -139,4 +140,5 @@ public:
 
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
+	static void RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc);
 };
