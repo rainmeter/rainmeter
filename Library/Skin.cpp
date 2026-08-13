@@ -5634,27 +5634,10 @@ LRESULT Skin::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 
-		// The meter owns what Enter means; the skin only arbitrates focus and the redraw. A meter
-		// that does not commit on Enter declines here and types a newline through HandleKeyDown.
-		std::wstring command;
-		if (wParam == VK_RETURN && !IsShiftKeyDown() && m_InputFocusMeter->HandleEnter(command))
+		if (!IsShiftKeyDown() && m_InputFocusMeter->IsSubmitKey(wParam))
 		{
-			MeterStringEdit* meter = m_InputFocusMeter;
-
-			if (m_DynamicWindowSize)
-			{
-				SetResizeWindowMode(RESIZEMODE_CHECK);
-			}
-
-			Redraw();
-
-			// Run last: the action may refresh or close the skin, which destroys both the meter
-			// and this window, so nothing may be touched afterwards.
-			if (!command.empty())
-			{
-				GetRainmeter().ExecuteActionCommand(command.c_str(), meter);
-			}
-
+			// Note that this may refresh or close the skin.
+			m_InputFocusMeter->Submit();
 			return 0;
 		}
 

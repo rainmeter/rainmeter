@@ -947,7 +947,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 			if (si != ei && str[si] == L'*' && str[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
-				// (and OnEnterAction) are parsed before being sent to the command handler where the
+				// (and OnSubmitAction) are parsed before being sent to the command handler where the
 				// rest of the variables are parsed. So we need to leave the escape *'s when called
 				// from those parsers.
 				if (expandMode != VariableExpandMode::DollarMouseOnly &&

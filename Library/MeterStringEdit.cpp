@@ -100,6 +100,11 @@ void DoDismissBang(std::vector<std::wstring>& args, Skin* skin)
 	skin->DismissInputFocus();
 }
 
+void DoSubmitBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterStringEdit*)meter)->Submit();
+}
+
 void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	ConfigParser& parser = skin->GetParser();
@@ -129,8 +134,10 @@ void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
 	m_Focused(false),
-	m_Committed(false),
+	m_Submitted(false),
 	m_MaxLength(0),
+	m_Multiline(false),
+	m_SubmitOnEnter(true),
 	m_Password(false),
 	m_PasswordChar(),
 	m_RegExpError(false),
@@ -155,6 +162,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 		const UINT typeId = TypeID<MeterStringEdit>();
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Focus", 0, DoFocusBang);
 		CommandHandler::RegisterSkinBang(L"TextEdit:Dismiss", 0, DoDismissBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Submit", 0, DoSubmitBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
@@ -211,6 +219,9 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	MeterStringBase::ReadOptions(parser, section);
 
+	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
+	m_Multiline = parser.ReadBool(section, L"Multiline", false);
+
 	// DynamicVariables re-reads options every update, which would discard what the user typed, so
 	// Text is adopted only when the option itself changed - that still lets !SetOption or a
 	// changed variable replace it.
@@ -224,11 +235,20 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	m_TextOption = text;
 
-	// Unconditional so that a StringCase arriving later - through !SetOption or a dynamic variable -
-	// also converts text that is already there, whether it came from the option or from the user.
-	ApplyCase(m_Text);
+	if (!m_Multiline)
+	{
+		m_Text.erase(std::remove(m_Text.begin(), m_Text.end(), L'\n'), m_Text.end());
+	}
 
-	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
+	if (m_MaxLength > 0 && m_Text.length() > (size_t)m_MaxLength)
+	{
+		m_Text.resize(m_MaxLength);
+
+		// Truncating must not leave a high surrogate without its pair.
+		if (IS_HIGH_SURROGATE(m_Text.back())) m_Text.pop_back();
+	}
+
+	ApplyCase(m_Text);
 
 	const bool password = parser.ReadBool(section, L"Password", false);
 	const bool passwordChanged = password != m_Password;
@@ -284,9 +304,11 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_InputCase = TEXTCASE_NONE;
 	}
 
+	m_SubmitOnEnter = parser.ReadBool(section, L"SubmitOnEnter", !m_Multiline);
+
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
-	m_OnEnterAction = parser.ReadString(section, L"OnEnterAction", L"", false);
+	m_OnSubmitAction = parser.ReadString(section, L"OnSubmitAction", L"", false);
 	m_OnFocusAction = parser.ReadString(section, L"OnFocusAction", L"", false);
 	m_OnDismissAction = parser.ReadString(section, L"OnDismissAction", L"", false);
 
@@ -576,7 +598,7 @@ void MeterStringEdit::SetFocus(bool focus)
 
 	m_Focused = focus;
 	m_CaretBlinkStart = GetTickCount64();
-	m_Committed = false;
+	m_Submitted = false;
 
 	if (!focus) return;
 
@@ -585,17 +607,24 @@ void MeterStringEdit::SetFocus(bool focus)
 	CompileInputRegExp();
 }
 
-bool MeterStringEdit::HandleEnter(std::wstring& command)
+bool MeterStringEdit::IsSubmitKey(WPARAM key) const
 {
-	if (!CommitsOnEnter()) return false;
+	return key == VK_RETURN && m_SubmitOnEnter;
+}
 
+void MeterStringEdit::Submit()
+{
 	// Expanded before the action runs, so [$Input] carries what was submitted whatever the action
 	// then does to the text.
-	ExpandAction(m_OnEnterAction, command);
+	std::wstring command;
+	ExpandAction(m_OnSubmitAction, command);
 
-	m_Committed = true;
+	m_Submitted = true;
 
-	return true;
+	if (!command.empty())
+	{
+		GetRainmeter().ExecuteActionCommand(command.c_str(), this);
+	}
 }
 
 std::wstring MeterStringEdit::GetFocusCommand()
@@ -607,9 +636,9 @@ std::wstring MeterStringEdit::GetFocusCommand()
 
 void MeterStringEdit::HandleDismiss(std::wstring& command)
 {
-	// A commit is not something to then abandon: Enter has already run its action and had its say
-	// over the text, so leaving afterwards is only a dismissal once the text has moved on from it.
-	if (m_Committed) return;
+	// A submit is not something to then abandon: it has already run its action and had its say over
+	// the text, so leaving afterwards is only a dismissal once the text has moved on from it.
+	if (m_Submitted) return;
 
 	ExpandAction(m_OnDismissAction, command);
 }
@@ -619,15 +648,15 @@ void MeterStringEdit::Clear()
 	if (m_String.empty()) return;
 
 	// Emptying the field is the skin's doing rather than the user's next edit, so it leaves a
-	// commit standing: an OnEnterAction that clears the field must not thereby turn leaving it
+	// submit standing: an OnSubmitAction that clears the field must not thereby turn leaving it
 	// into a dismissal.
-	const bool committed = m_Committed;
+	const bool submitted = m_Submitted;
 
 	PushUndo(EditKind::None);
 	SelectAll();
 	ReplaceSelection(std::wstring());
 
-	m_Committed = committed;
+	m_Submitted = submitted;
 }
 
 void MeterStringEdit::ExpandAction(const std::wstring& action, std::wstring& command)
@@ -693,7 +722,7 @@ void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 	m_CaretTrailing = snapshot.trailing;
 	m_SelectionAnchor = min(snapshot.anchor, len);
 	m_CaretBlinkStart = GetTickCount64();
-	m_Committed = false;
+	m_Submitted = false;
 
 	UpdateAutoSizeForText();
 }
@@ -920,8 +949,7 @@ std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::
 
 	if (m_MaxLength > 0 && !insert.empty())
 	{
-		// What the selection leaves behind is what the limit has to accommodate. An existing text
-		// already over the limit (from the Text option, which is not truncated) leaves no room.
+		// What the selection leaves behind is what the limit has to accommodate.
 		const size_t kept = m_Text.length() - (end - start);
 		const size_t room = kept < (size_t)m_MaxLength ? (size_t)m_MaxLength - kept : 0U;
 
@@ -983,7 +1011,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
 	m_CaretTrailing = true;
-	m_Committed = false;
+	m_Submitted = false;
 
 	// Before EnsureCaretVisible(), which measures the caret against the meter box: on an auto-sized
 	// meter that box is what the text just made it, so scrolling first would compare the new caret
@@ -1033,6 +1061,13 @@ bool MeterStringEdit::Paste()
 			text[pos] = L'\n';
 			++pos;
 		}
+	}
+
+	// A single-line field takes the text with its breaks dropped, as a Win32 edit control without
+	// ES_MULTILINE does, rather than refusing the paste or keeping a line it cannot show.
+	if (!m_Multiline)
+	{
+		text.erase(std::remove(text.begin(), text.end(), L'\n'), text.end());
 	}
 
 	// An empty paste is not an edit, and must not swallow the selection. Neither must one the
@@ -1230,9 +1265,11 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		return true;
 
 	case VK_RETURN:
-		// A committing meter is single-line and the skin handles the commit. Shift+Enter still
-		// adds a line.
-		if (!shift && CommitsOnEnter()) return false;
+		// The skin handles the submit. Shift+Enter still adds a line, where there may be one, as it
+		// does in a chat box that sends on Enter.
+		if (!shift && m_SubmitOnEnter) return false;
+
+		if (!m_Multiline) return false;
 
 		// No filter is meant for text with lines in it, and a newline the filter went on to refuse
 		// would delete the selection in place of the line it was meant to add.
