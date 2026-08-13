@@ -75,14 +75,13 @@ public:
 	void Clear();
 	void Reset();
 
-	// Scrolling, in pixels from the start of the text. Clamped to what there is to reveal, so a
-	// field whose text fits, or one that trims it instead, cannot be scrolled at all.
+	// Pixels from the start of the text, clamped to what there is to reveal. A field whose text
+	// fits, or one that trims it instead, does not scroll at all.
 	void ScrollTo(FLOAT x, FLOAT y);
 	void ScrollBy(FLOAT x, FLOAT y) { ScrollTo(m_TextOffset.x + x, m_TextOffset.y + y); }
 	void ScrollToCaret() { EnsureCaretVisible(); }
 
-	// What a skin needs to draw a scrollbar: where the text sits, how far it may go, and how much
-	// of it is on screen.
+	// Position, range and page, as a scrollbar needs them.
 	const D2D1_POINT_2F& GetScrollOffset() const { return m_TextOffset; }
 	const D2D1_POINT_2F& GetScrollMax() const { return m_ScrollMax; }
 	D2D1_SIZE_F GetScrollPage();
@@ -133,9 +132,11 @@ private:
 	// nothing while everything fits, which is always the case for an auto-sized meter.
 	void EnsureCaretVisible();
 
-	// Holds the offset to what there is to scroll, and records that bound in m_ScrollMax. |canvas|
-	// is the one the caller has already applied the text state to.
+	// Clamps the offset and recomputes m_ScrollMax. |canvas| must already have the text state.
 	void ClampTextOffset(Gfx::Canvas& canvas);
+
+	// The same, applying the text state first, for callers outside a draw or an edit.
+	void UpdateScrollBounds();
 
 	bool ShowingPlaceholder() const { return m_PlaceholderFormat && m_String.empty(); }
 
@@ -236,8 +237,7 @@ private:
 	// which only makes sense over whole words.
 	TEXTCASE m_InputCase;
 
-	// The far end of m_TextOffset, recomputed with every clamp of it. Zero on both axes while the
-	// text fits, which is what tells a skin there is nothing to scroll.
+	// The far end of m_TextOffset, recomputed with every clamp of it. Zero while the text fits.
 	D2D1_POINT_2F m_ScrollMax;
 
 	bool m_CaretDrawnVisible;
