@@ -947,11 +947,10 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 			if (si != ei && str[si] == L'*' && str[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
-				// (and OnSubmitAction) are parsed before being sent to the command handler where the
-				// rest of the variables are parsed. So we need to leave the escape *'s when called
-				// from those parsers.
-				if (expandMode != VariableExpandMode::DollarMouseOnly &&
-					expandMode != VariableExpandMode::DollarInputOnly)
+				// are parsed before being sent to the command handler where the rest of the
+				// variables are parsed. So we need to leave the escape *'s when called from that
+				// parser.
+				if (expandMode != VariableExpandMode::DollarMouseOnly)
 				{
 					str.erase(ei, 1);
 					str.erase(si, 1);
@@ -1047,16 +1046,18 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 						break;
 					}
 				}
-				else if (expandMode == VariableExpandMode::DollarInputOnly)
+				else if (expandMode == VariableExpandMode::AllKeys)
 				{
-					if (auto foundValue = GetDollarInputVariable(variable, meter))
+					// [$Input] has no meter name to give, so it uses the section running the action.
+					Section* section = meter;
+					if (!section && m_Skin) section = m_Skin->GetCurrentActionSection();
+
+					if (auto foundValue = GetDollarInputVariable(variable, section))
 					{
 						replaceFoundValue(std::move(*foundValue));
 						break;
 					}
-				}
-				else if (expandMode == VariableExpandMode::AllKeys)
-				{
+
 					if (const auto result = GetDollarVariable(variable))
 					{
 						replaceFoundValue(std::move(*result));
@@ -1133,18 +1134,18 @@ bool ConfigParser::IsSectionVariableKey(WCHAR key)
 	return VariableTypeForKey(key).has_value();
 }
 
-std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_view variable, Meter* meter)
+std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_view variable, Section* section)
 {
-	// Scoped to the meter running the action, the same way [$MOUSEX] is, so there is no meter name
-	// to give and it only resolves where it means something.
-	if (!meter || meter->GetTypeID() != TypeID<MeterStringEdit>()) return std::nullopt;
+	// Only resolves in an action of the meter being typed into, since that is the only place the
+	// text it stands for exists.
+	if (!section || section->GetTypeID() != TypeID<MeterStringEdit>()) return std::nullopt;
 
 	StringParser strParser(variable);
 	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
 
 	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
 	// meter is exactly what the user typed.
-	return ((MeterStringEdit*)meter)->GetText();
+	return ((MeterStringEdit*)section)->GetText();
 }
 
 std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
