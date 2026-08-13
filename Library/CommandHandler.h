@@ -8,6 +8,8 @@
 #include <vector>
 
 class ConfigParser;
+class Measure;
+class Meter;
 class Skin;
 
 enum class Bang
@@ -121,6 +123,9 @@ enum class Bang
 	LsBoxHook
 };
 
+using MeterBangFunc = void (*)(Meter* meter, std::vector<std::wstring>& args, Skin* skin);
+using MeasureBangFunc = void (*)(Measure* measure, std::vector<std::wstring>& args, Skin* skin);
+
 // Parses and executes commands and bangs.
 class CommandHandler
 {
@@ -132,4 +137,7 @@ public:
 	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
 
 	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
+
+	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
+	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
 };
