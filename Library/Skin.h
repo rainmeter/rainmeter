@@ -148,8 +148,6 @@ public:
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
 	Section* GetCurrentActionSection() { return m_CurrentActionSection; }
-	void SetCurrentActionSection(Section* section) { m_CurrentActionSection = section; }
-	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
 
 	void MoveWindow(int x, int y, SkinPositionSpace posSpace);
 	void MoveSelectedWindow(int dx, int dy);
@@ -265,6 +263,7 @@ public:
 	Measure* GetMeasure(std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
 	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
 
+	friend class CurrentActionSectionScope;
 	friend class DialogManage;
 	friend class Rainmeter;
 	friend class ContextMenu;
@@ -573,4 +572,27 @@ private:
 
 	static int c_InstanceCount;
 	static bool c_IsInSelectionMode;
+};
+
+// Sets the section running an action, and puts back the previous one when the action ends.
+// Actions can start other actions, so the outer action must keep its section for the bangs
+// that come after the inner one.
+class CurrentActionSectionScope
+{
+public:
+	CurrentActionSectionScope(Skin* skin, Section* section) :
+		m_Skin(skin),
+		m_Previous(skin->m_CurrentActionSection)
+	{
+		m_Skin->m_CurrentActionSection = section;
+	}
+
+	~CurrentActionSectionScope() { m_Skin->m_CurrentActionSection = m_Previous; }
+
+	CurrentActionSectionScope(const CurrentActionSectionScope& other) = delete;
+	CurrentActionSectionScope& operator=(CurrentActionSectionScope other) = delete;
+
+private:
+	Skin* m_Skin;
+	Section* m_Previous;
 };
