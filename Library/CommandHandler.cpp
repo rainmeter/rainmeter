@@ -69,6 +69,19 @@ bool DoesConfigExist(const std::wstring& folderPath, const std::wstring& file = 
 
 void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
+	// !SetOption may leave out the section name in favor of the section running the action.
+	if (bangInfo.bang == Bang::SetOption && skin && args.size() + 1 == bangInfo.argCount)
+	{
+		Section* section = skin->GetCurrentActionSection();
+		if (!section)
+		{
+			LogWarningF(skin, L"!%s: Section name required", bangInfo.name);
+			return;
+		}
+
+		args.insert(args.begin(), section->GetOriginalName());
+	}
+
 	const size_t argsCount = args.size();
 	if (argsCount >= bangInfo.argCount)
 	{
