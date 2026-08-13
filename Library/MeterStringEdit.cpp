@@ -36,6 +36,36 @@ CharClass ClassifyChar(WCHAR ch)
 	return CharClass::Punctuation;
 }
 
+void FocusForSelection(MeterStringEdit* meter, Skin* skin)
+{
+	if (meter->IsFocused() || !meter->AcceptsInput()) return;
+	skin->SetInputFocus(meter);
+}
+
+void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	ConfigParser& parser = skin->GetParser();
+	const int index = parser.ParseInt(args[0].c_str(), 0);
+	const int length = parser.ParseInt(args[1].c_str(), -1);
+
+	auto* editMeter = (MeterStringEdit*)meter;
+	FocusForSelection(editMeter, skin);
+	editMeter->SelectRange(index, length);
+}
+
+void DoSelectAllBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	auto* editMeter = (MeterStringEdit*)meter;
+	FocusForSelection(editMeter, skin);
+	editMeter->SelectAll();
+}
+
+void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterStringEdit*)meter)->Clear();
+	skin->RequestWindowSizeCheck();
+}
+
 }  // namespace
 
 MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
@@ -66,6 +96,14 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_CaretBlinkStart(0ULL),
 	m_LastEditKind(EditKind::None)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		const UINT typeId = TypeID<MeterStringEdit>();
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
+		return true;
+	} ();
 }
 
 MeterStringEdit::~MeterStringEdit()
@@ -672,6 +710,20 @@ void MeterStringEdit::SelectAll()
 	m_CaretTrailing = true;
 	m_CaretBlinkStart = GetTickCount64();
 	m_LastEditKind = EditKind::None;
+}
+
+void MeterStringEdit::SelectRange(int start, int length)
+{
+	const UINT32 textLength = (UINT32)m_String.length();
+	const UINT32 from = min((UINT32)max(start, 0), textLength);
+
+	m_SelectionAnchor = from;
+	m_CaretPos = length < 0 ? textLength : min(from + (UINT32)length, textLength);
+	m_CaretTrailing = true;
+	m_CaretBlinkStart = GetTickCount64();
+	m_LastEditKind = EditKind::None;
+
+	EnsureCaretVisible();
 }
 
 bool MeterStringEdit::SelectLineAtCaret()

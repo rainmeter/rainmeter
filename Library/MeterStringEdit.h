@@ -75,6 +75,9 @@ public:
 	bool SelectWordAtCaret();
 	bool SelectLineAtCaret();
 	void SelectAll();
+	void SelectRange(int start, int length = -1);
+
+	void Clear();
 
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
@@ -103,8 +106,6 @@ private:
 	// |true| when Enter commits rather than inserting a newline, which is what makes the meter
 	// single-line. Either "on enter" option implies it; Shift+Enter always inserts.
 	bool CommitsOnEnter() const { return !m_OnEnterAction.empty() || m_ClearOnEnter; }
-
-	void Clear();
 
 	// Rebuilds the drawn string from the edited one. Identical to it, unless Password replaces it
 	// with a mask - one mask character per UTF-16 unit, so that every offset into one is still an
