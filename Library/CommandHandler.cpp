@@ -32,7 +32,10 @@ struct SectionBangInfo
 	enum class Type : BYTE
 	{
 		Meter,
-		Measure
+		Measure,
+
+		// Aimed at the skin rather than at one of its sections, so |typeId| means nothing.
+		Skin
 	};
 
 	const WCHAR* name;
@@ -45,6 +48,7 @@ struct SectionBangInfo
 	{
 		MeterBangFunc meterFunc;
 		MeasureBangFunc measureFunc;
+		SkinBangFunc skinFunc;
 	};
 };
 
@@ -202,6 +206,18 @@ void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& a
 	if (!skin)
 	{
 		LogErrorF(L"!%s: Not run from a skin", bangInfo.name);
+		return;
+	}
+
+	if (bangInfo.type == SectionBangInfo::Type::Skin)
+	{
+		if (args.size() != bangInfo.argCount)
+		{
+			LogErrorF(skin, L"!%s: Incorrect number of arguments", bangInfo.name);
+			return;
+		}
+
+		bangInfo.skinFunc(args, skin);
 		return;
 	}
 
@@ -1355,5 +1371,15 @@ void CommandHandler::RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t
 		.type = SectionBangInfo::Type::Measure,
 		.typeId = typeId,
 		.measureFunc = handlerFunc
+	});
+}
+
+void CommandHandler::RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc)
+{
+	RegisterSectionBang({
+		.name = name,
+		.argCount = argCount,
+		.type = SectionBangInfo::Type::Skin,
+		.skinFunc = handlerFunc
 	});
 }
