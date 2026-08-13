@@ -27,6 +27,9 @@ public:
 
 	const WCHAR* GetStringValue() override;
 
+	void ResetCounter();
+	void ResetValue();
+
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
 	void UpdateValue() override;

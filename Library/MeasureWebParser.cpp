@@ -224,6 +224,20 @@ void ClearProxySetting(ProxySetting& setting)
 	setting.agent.clear();
 }
 
+namespace {
+
+void DoUpdateDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureWebParser*)measure)->ResetCounter();
+}
+
+void DoResetDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureWebParser*)measure)->ResetValue();
+}
+
+}  // namespace
+
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_ParseType(ParseType::RegExp),
@@ -242,6 +256,14 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_FetchTask(),
 	m_DownloadTask()
 {
+	static const bool s_BangsRegistered = []()
+	{
+		const UINT typeId = TypeID<MeasureWebParser>();
+		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:UpdateData", 0, DoUpdateDataBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:ResetData", 0, DoResetDataBang);
+		return true;
+	} ();
+
 	if (g_InstanceCount == 0)
 	{
 		SetupGlobalProxySetting();
@@ -1197,41 +1219,49 @@ void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* de
 	}
 }
 
+void MeasureWebParser::ResetCounter()
+{
+	if (m_FetchTask)
+	{
+		m_FetchTask->AbortWhenPossible();
+		m_FetchTask = nullptr;
+	}
+
+	if (m_DownloadTask)
+	{
+		m_DownloadTask->AbortWhenPossible();
+		m_DownloadTask = nullptr;
+	}
+
+	m_UpdateCounter = 0;
+}
+
+void MeasureWebParser::ResetValue()
+{
+	m_ResultString.clear();
+	m_DownloadedFile.clear();
+
+	for (auto* baseMeasure : GetSkin()->GetMeasures())
+	{
+		auto* measure = FindMeasureUrlReference(baseMeasure).measure;
+		if (!measure) continue;
+
+		measure->m_ResultString.clear();
+		measure->m_DownloadedFile.clear();
+	}
+}
+
 void MeasureWebParser::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	// Kill the threads (if any) and reset the update counter
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
-		if (m_FetchTask)
-		{
-			m_FetchTask->AbortWhenPossible();
-			m_FetchTask = nullptr;
-		}
-
-		if (m_DownloadTask)
-		{
-			m_DownloadTask->AbortWhenPossible();
-			m_DownloadTask = nullptr;
-		}
-
-		m_UpdateCounter = 0;
+		ResetCounter();
 	}
 	else if (_wcsicmp(args, L"RESET") == 0)
 	{
-		m_ResultString.clear();
-		m_DownloadedFile.clear();
-
-		// Update the references
-		for (auto* baseMeasure : GetSkin()->GetMeasures())
-		{
-			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
-			if (!measure) continue;
-
-			measure->m_ResultString.clear();
-			measure->m_DownloadedFile.clear();
-		}
+		ResetValue();
 	}
 }
 
