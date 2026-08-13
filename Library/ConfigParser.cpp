@@ -241,6 +241,13 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	const WCHAR* selectorSz = selector.c_str();
 	strVariable.resize(colonPos);
 
+	// No section name means the current one.
+	if (strVariable.empty())
+	{
+		if (!m_CurrentSection) return false;
+		strVariable = *m_CurrentSection;
+	}
+
 	bool isKeySelector = (!selector.empty() && iswalpha(selectorSz[0]));
 
 	if (isKeySelector)
