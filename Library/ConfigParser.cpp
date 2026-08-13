@@ -281,6 +281,19 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			{
 				_itow_s(meter->GetY() + meter->GetH(), buffer, 10);
 			}
+			else if (meter->GetTypeID() == TypeID<MeterStringEdit>())
+			{
+				// [StringEditMeter:Text]
+				if (_wcsicmp(selectorSz, L"Text") == 0)
+				{
+					strValue = ((MeterStringEdit*)meter)->GetText();
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 			else
 			{
 				return false;
@@ -1055,16 +1068,6 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				}
 				else if (expandMode == VariableExpandMode::AllKeys)
 				{
-					// [$Input] has no meter name to give, so it uses the section running the action.
-					Section* section = meter;
-					if (!section && m_Skin) section = m_Skin->GetCurrentActionSection();
-
-					if (auto foundValue = GetDollarInputVariable(variable, section))
-					{
-						replaceFoundValue(std::move(*foundValue));
-						break;
-					}
-
 					if (const auto result = GetDollarVariable(variable))
 					{
 						replaceFoundValue(std::move(*result));
@@ -1139,20 +1142,6 @@ bool ConfigParser::ContainsKeyedSectionVariable(const std::wstring& str)
 bool ConfigParser::IsSectionVariableKey(WCHAR key)
 {
 	return VariableTypeForKey(key).has_value();
-}
-
-std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_view variable, Section* section)
-{
-	// Only resolves in an action of the meter being typed into, since that is the only place the
-	// text it stands for exists.
-	if (!section || section->GetTypeID() != TypeID<MeterStringEdit>()) return std::nullopt;
-
-	StringParser strParser(variable);
-	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
-
-	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
-	// meter is exactly what the user typed.
-	return ((MeterStringEdit*)section)->GetText();
 }
 
 std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)

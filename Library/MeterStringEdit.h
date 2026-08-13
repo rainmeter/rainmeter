@@ -10,7 +10,7 @@ class Pcre;
 // keyboard input here. The text is rendered verbatim so that a caret offset is also an offset into
 // the text being edited, which is why none of String's formatting options exist here. StringCase is
 // the exception: it converts the text itself rather than only its rendering, so offsets still line
-// up and what the skin reads back through [$Input] is what is on screen. InputCase is the same
+// up and what the skin reads back through [Meter:Text] is what is on screen. InputCase is the same
 // conversion narrowed to what the user types or pastes, and to the cases that work per character.
 // Password is the other exception, and keeps the offsets in the same way: it draws one mask
 // character per UTF-16 unit, so the two strings stay the same length even where they differ.
@@ -242,7 +242,7 @@ private:
 	std::wstring m_OnDismissAction;
 
 	// Drawn in place of the text while nothing has been typed. Never enters m_Text, so it cannot
-	// reach [$Input] and the caret can never index into it.
+	// reach [Meter:Text] and the caret can never index into it.
 	std::wstring m_Placeholder;
 	D2D1_COLOR_F m_PlaceholderColor;
 	std::wstring m_PlaceholderFontFace;
