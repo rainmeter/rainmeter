@@ -23,11 +23,28 @@ public:
 
 	void Command(const std::wstring& command) override;
 
+	void Play();
+	void Pause();
+	void PlayPause();
+	void Stop();
+	void Next();
+	void Previous();
+	void OpenPlayer();
+	void ClosePlayer();
+	void TogglePlayer();
+	void SetPosition(const WCHAR* arg);
+	void SetRating(const WCHAR* arg);
+	void SetVolume(const WCHAR* arg);
+	void SetShuffle(const WCHAR* arg);
+	void SetRepeat(const WCHAR* arg);
+
 protected:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
 	void UpdateValue() override;
 
 private:
+	Player* GetInitializedPlayer() const;
+
 	ParentMeasure* m_Parent;
 	MeasureType m_Type;
 };
