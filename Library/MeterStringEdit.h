@@ -33,27 +33,21 @@ public:
 	// |false| when configured in a way editing cannot support: still draws, takes no input.
 	bool AcceptsInput() const { return m_AcceptsInput; }
 
-	// Applies ClearOnEnter and fills |command| with OnEnterAction ([$Input] already expanded,
-	// empty if there is none). Returns false when Enter is not a commit here, leaving it to be
-	// typed as a newline.
+	// Fills |command| with OnEnterAction ([$Input] already expanded, empty if there is none).
+	// Returns false when Enter is not a commit here, leaving it to be typed as a newline.
 	bool HandleEnter(std::wstring& command);
 
-	// OnFocusAction, with [$Input] expanded, or empty if there is none. Read after SetFocus(true),
-	// so [$Input] carries what the field holds once ClearOnFocus has had its say.
+	// OnFocusAction, with [$Input] expanded, or empty if there is none.
 	std::wstring GetFocusCommand();
 
-	// The counterpart for moving away from the field without committing: applies ClearOnDismiss
-	// and fills |command| with OnDismissAction. Does neither when the text standing in the field
-	// is what a commit already submitted.
+	// The counterpart for moving away from the field without committing: fills |command| with
+	// OnDismissAction. Leaves it empty when the text standing in the field is what a commit
+	// already submitted.
 	void HandleDismiss(std::wstring& command);
 
 	// Focus (see also Skin, which owns which meter currently holds the caret).
 	bool IsFocused() const { return m_Focused; }
 	void SetFocus(bool focus);
-
-	// |true| when taking focus decides the selection itself, so the click that focused the meter
-	// must not then place the caret and collapse it.
-	bool FocusOverridesCaret() const { return m_ClearOnFocus || m_SelectAllOnFocus; }
 
 	// Lets the caret timer skip its whole-skin redraw on ticks where the phase did not flip.
 	bool NeedsCaretRedraw() const
@@ -104,8 +98,8 @@ private:
 	};
 
 	// |true| when Enter commits rather than inserting a newline, which is what makes the meter
-	// single-line. Either "on enter" option implies it; Shift+Enter always inserts.
-	bool CommitsOnEnter() const { return !m_OnEnterAction.empty() || m_ClearOnEnter; }
+	// single-line. Having an OnEnterAction is what decides it; Shift+Enter always inserts.
+	bool CommitsOnEnter() const { return !m_OnEnterAction.empty(); }
 
 	// Rebuilds the drawn string from the edited one. Identical to it, unless Password replaces it
 	// with a mask - one mask character per UTF-16 unit, so that every offset into one is still an
@@ -204,10 +198,6 @@ private:
 
 	bool m_AcceptsInput;
 	bool m_Focused;
-	bool m_ClearOnFocus;
-	bool m_SelectAllOnFocus;
-	bool m_ClearOnEnter;
-	bool m_ClearOnDismiss;
 
 	// Set by a commit and cleared by the next edit, so that leaving a field whose contents have
 	// already been submitted is not also treated as abandoning them.

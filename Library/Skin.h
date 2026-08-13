@@ -192,14 +192,14 @@ public:
 
 	// At most one meter per skin holds the caret. The setters return true if the focus changed,
 	// in which case the caller needs to redraw.
-	// Passing |dismissCommand| marks this as the user leaving the field: the outgoing meter
-	// applies ClearOnDismiss and fills it with OnDismissAction, which the caller must run last
-	// since it may destroy the skin. Without a sink the focus is dropped silently.
+	// Passing |dismissCommand| marks this as the user leaving the field: the outgoing meter fills
+	// it with OnDismissAction, which the caller must run last since it may destroy the skin.
+	// Without a sink the focus is dropped silently.
 	bool SetInputFocus(MeterStringEdit* meter, std::wstring* dismissCommand = nullptr);
 	bool ClearInputFocus() { return SetInputFocus(nullptr); }
 
-	// Drops the caret because the user moved away from the field: applies ClearOnDismiss and runs
-	// OnDismissAction. ClearInputFocus() drops it silently, for teardown and selection mode.
+	// Drops the caret because the user moved away from the field: runs OnDismissAction.
+	// ClearInputFocus() drops it silently, for teardown and selection mode.
 	void DismissInputFocus();
 	bool ClearInputFocus(MeterStringEdit* meter) { return m_InputFocusMeter == meter ? SetInputFocus(nullptr) : false; }
 	MeterStringEdit* GetInputFocusMeter() { return m_InputFocusMeter; }
