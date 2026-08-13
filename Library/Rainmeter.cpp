@@ -1658,9 +1658,8 @@ void Rainmeter::ExecuteActionCommand(const WCHAR* command, Section* section)
 	Skin* skin = nullptr;
 	if (section && (skin = section->GetSkin()))
 	{
-		skin->SetCurrentActionSection(section);
+		CurrentActionSectionScope scope(skin, section);
 		m_CommandHandler.ExecuteCommand(command, skin);
-		skin->ResetCurrentActionSection();
 		return;
 	}
 
