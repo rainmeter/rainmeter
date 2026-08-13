@@ -74,6 +74,7 @@ public:
 	void SelectRange(int start, int length = -1);
 
 	void Clear();
+	void Reset();
 
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
@@ -98,6 +99,8 @@ private:
 		UINT32 anchor;
 		bool trailing;
 	};
+
+	void ApplyTextTransformations(std::wstring& text) const;
 
 	// Rebuilds the drawn string from the edited one. Identical to it, unless Password replaces it
 	// with a mask - one mask character per UTF-16 unit, so that every offset into one is still an
