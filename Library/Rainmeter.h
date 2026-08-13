@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <string_view>
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "DialogManage.h"
@@ -78,6 +79,7 @@ public:
 	Skin* GetSkin(HWND hwnd);
 	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group = std::wstring());
 	std::map<std::wstring, Skin*>& GetAllSkins() { return m_Skins; }
+	SkinRegistry& GetSkinRegistry() { return m_SkinRegistry; }
 
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
@@ -180,7 +182,7 @@ public:
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin);
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command, Skin* skin = nullptr);
 	void ExecuteActionCommand(const WCHAR* command, Section* section);

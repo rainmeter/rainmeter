@@ -29,10 +29,10 @@ static int Bang(lua_State* L)
 	}
 	else
 	{
-		const WCHAR* bangSz = bang.c_str();
-		if (*bangSz == L'!')
+		std::wstring_view bangSz = bang;
+		if (bangSz.starts_with(L'!'))
 		{
-			++bangSz;	// Skip "!"
+			bangSz.remove_prefix(1);
 			std::vector<std::wstring> args;
 			for (int i = 3; i <= top; ++i)
 			{
