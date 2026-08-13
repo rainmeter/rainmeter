@@ -10,6 +10,7 @@
 #include "DialogDebug.h"
 #include "DialogManage.h"
 #include "Measure.h"
+#include "Meter.h"
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "System.h"
@@ -24,6 +25,27 @@ struct BangInfo
 	const WCHAR* name;
 	uint8_t argCount;
 	void (* handlerFunc)(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin);
+};
+
+struct SectionBangInfo
+{
+	enum class Type : BYTE
+	{
+		Meter,
+		Measure
+	};
+
+	const WCHAR* name;
+	uint8_t argCount;
+
+	Type type;
+	UINT typeId;
+
+	union
+	{
+		MeterBangFunc meterFunc;
+		MeasureBangFunc measureFunc;
+	};
 };
 
 std::wstring BuildConfigPath(const std::wstring& folderPath, const std::wstring& file)
@@ -173,6 +195,59 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 	else
 	{
 		LogErrorF(skin, L"!%s: Incorrect number of arguments", bangInfo.name);
+	}
+}
+
+void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
+{
+	if (!skin)
+	{
+		LogErrorF(L"!%s: Not run from a skin", bangInfo.name);
+		return;
+	}
+
+	Section* section = nullptr;
+	if (args.size() == (size_t)bangInfo.argCount + 1U)
+	{
+		const std::wstring& name = args[0];
+		const bool isMeter = bangInfo.type == SectionBangInfo::Type::Meter;
+		section = isMeter ? (Section*)skin->GetMeter(name) : (Section*)skin->GetMeasure(name);
+		if (!section)
+		{
+			LogErrorF(skin, L"!%s: %s [%s] not found", bangInfo.name, isMeter ? L"Meter" : L"Measure", name.c_str());
+			return;
+		}
+
+		args.erase(args.begin());
+	}
+	else if (args.size() == bangInfo.argCount)
+	{
+		section = skin->GetCurrentActionSection();
+		if (!section)
+		{
+			LogWarningF(skin, L"!%s: Section name required", bangInfo.name);
+			return;
+		}
+	}
+	else
+	{
+		LogErrorF(skin, L"!%s: Incorrect number of arguments", bangInfo.name);
+		return;
+	}
+
+	if (section->GetTypeID() != bangInfo.typeId)
+	{
+		LogErrorF(skin, L"!%s: Invalid bang for [%s]", bangInfo.name, section->GetName());
+		return;
+	}
+
+	if (bangInfo.type == SectionBangInfo::Type::Meter)
+	{
+		bangInfo.meterFunc((Meter*)section, args, skin);
+	}
+	else
+	{
+		bangInfo.measureFunc((Measure*)section, args, skin);
 	}
 }
 
@@ -1210,6 +1285,32 @@ const StringMap<const BangInfo*>& GetBangMap()
 	return s_Map;
 }
 
+StringMap<SectionBangInfo>& GetSectionBangMap()
+{
+	static StringMap<SectionBangInfo> s_Map;
+	return s_Map;
+}
+
+void RegisterSectionBang(const SectionBangInfo& bangInfo)
+{
+	WCHAR buffer[64];
+	const auto key = BuildBangMapKey(bangInfo.name, buffer, _countof(buffer));
+	if (key.empty())
+	{
+		LogErrorF(L"Invalid bang name: !%s", bangInfo.name);
+		return;
+	}
+
+	// A built-in bang of the same name would be found first, leaving this one unreachable.
+	if (GetBangMap().contains(key))
+	{
+		LogErrorF(L"Bang already exists: !%s", bangInfo.name);
+		return;
+	}
+
+	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
+}
+
 }  // namespace
 
 void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin)
@@ -1219,12 +1320,42 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 
 	const auto& bangMap = GetBangMap();
 	const auto iter = bangMap.find(key);
-	if (iter == bangMap.end())
+	if (iter != bangMap.end())
 	{
-		LogErrorF(skin, L"Invalid bang: !%.*s", (int)name.length(), name.data());
+		const BangInfo& bangInfo = *iter->second;
+		bangInfo.handlerFunc(bangInfo, args, skin);
 		return;
 	}
 
-	const BangInfo& bangInfo = *iter->second;
-	bangInfo.handlerFunc(bangInfo, args, skin);
+	const auto& sectionBangMap = GetSectionBangMap();
+	const auto sectionIter = sectionBangMap.find(key);
+	if (sectionIter != sectionBangMap.end())
+	{
+		DoSectionBang(sectionIter->second, args, skin);
+		return;
+	}
+
+	LogErrorF(skin, L"Invalid bang: !%.*s", (int)name.length(), name.data());
+}
+
+void CommandHandler::RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc)
+{
+	RegisterSectionBang({
+		.name = name,
+		.argCount = argCount,
+		.type = SectionBangInfo::Type::Meter,
+		.typeId = typeId,
+		.meterFunc = handlerFunc
+	});
+}
+
+void CommandHandler::RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc)
+{
+	RegisterSectionBang({
+		.name = name,
+		.argCount = argCount,
+		.type = SectionBangInfo::Type::Measure,
+		.typeId = typeId,
+		.measureFunc = handlerFunc
+	});
 }
