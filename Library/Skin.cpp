@@ -4948,10 +4948,9 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// while another window was focused.
 				SetFocus(m_Window);
 
-				if (!editMeter->FocusOverridesCaret())
-				{
-					editMeter->SetCaretFromPoint(pos.x, pos.y);
-				}
+				// Before the focus command runs, so an OnFocusAction that selects the text has the
+				// last word over the caret this places.
+				editMeter->SetCaretFromPoint(pos.x, pos.y);
 
 				if (m_DynamicWindowSize)
 				{
@@ -5347,7 +5346,6 @@ bool Skin::SetInputFocus(MeterStringEdit* meter, std::wstring* dismissCommand)
 
 	if (m_InputFocusMeter)
 	{
-		// May clear or select the text, per ClearOnFocus/SelectAllOnFocus.
 		m_InputFocusMeter->SetFocus(true);
 
 		if (m_DynamicWindowSize)

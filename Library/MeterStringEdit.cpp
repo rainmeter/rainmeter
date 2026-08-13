@@ -71,10 +71,6 @@ void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
 	m_Focused(false),
-	m_ClearOnFocus(false),
-	m_SelectAllOnFocus(false),
-	m_ClearOnEnter(false),
-	m_ClearOnDismiss(false),
 	m_Committed(false),
 	m_MaxLength(0),
 	m_Password(false),
@@ -172,10 +168,6 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// also converts text that is already there, whether it came from the option or from the user.
 	ApplyCase(m_Text);
 
-	m_ClearOnFocus = parser.ReadBool(section, L"ClearOnFocus", false);
-	m_SelectAllOnFocus = parser.ReadBool(section, L"SelectAllOnFocus", false);
-	m_ClearOnEnter = parser.ReadBool(section, L"ClearOnEnter", false);
-	m_ClearOnDismiss = parser.ReadBool(section, L"ClearOnDismiss", false);
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 
 	const bool password = parser.ReadBool(section, L"Password", false);
@@ -531,28 +523,16 @@ void MeterStringEdit::SetFocus(bool focus)
 	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
 	// is needed and the first at which a skin full of unfocused fields has not paid for one.
 	CompileInputRegExp();
-
-	// ClearOnFocus wins over SelectAllOnFocus: there is nothing left to select once it has run.
-	if (m_ClearOnFocus)
-	{
-		Clear();
-	}
-	else if (m_SelectAllOnFocus)
-	{
-		SelectAll();
-	}
 }
 
 bool MeterStringEdit::HandleEnter(std::wstring& command)
 {
 	if (!CommitsOnEnter()) return false;
 
-	// Expanded before anything is cleared, so [$Input] still carries what was submitted.
+	// Expanded before the action runs, so [$Input] carries what was submitted whatever the action
+	// then does to the text.
 	ExpandAction(m_OnEnterAction, command);
 
-	if (m_ClearOnEnter) Clear();
-
-	// After Clear(), which edits the text and would otherwise reset this again.
 	m_Committed = true;
 
 	return true;
@@ -572,17 +552,22 @@ void MeterStringEdit::HandleDismiss(std::wstring& command)
 	if (m_Committed) return;
 
 	ExpandAction(m_OnDismissAction, command);
-
-	if (m_ClearOnDismiss) Clear();
 }
 
 void MeterStringEdit::Clear()
 {
 	if (m_String.empty()) return;
 
+	// Emptying the field is the skin's doing rather than the user's next edit, so it leaves a
+	// commit standing: an OnEnterAction that clears the field must not thereby turn leaving it
+	// into a dismissal.
+	const bool committed = m_Committed;
+
 	PushUndo(EditKind::None);
 	SelectAll();
 	ReplaceSelection(std::wstring());
+
+	m_Committed = committed;
 }
 
 void MeterStringEdit::ExpandAction(const std::wstring& action, std::wstring& command)
