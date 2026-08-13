@@ -95,10 +95,8 @@ void DoFocusBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	FocusMeterScope focus(editMeter, skin);
 }
 
-void DoDismissBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void DoDismissBang(std::vector<std::wstring>& args, Skin* skin)
 {
-	if (skin->GetInputFocusMeter() != (MeterStringEdit*)meter) return;
-
 	skin->DismissInputFocus();
 }
 
@@ -156,7 +154,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	{
 		const UINT typeId = TypeID<MeterStringEdit>();
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Focus", 0, DoFocusBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Dismiss", 0, DoDismissBang);
+		CommandHandler::RegisterSkinBang(L"TextEdit:Dismiss", 0, DoDismissBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
