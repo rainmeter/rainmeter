@@ -135,6 +135,34 @@ void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	skin->RequestWindowSizeCheck();
 }
 
+// Scrolling moves nothing but the pixels, so these redraw where the bangs that change the text
+// leave that to the update that follows them.
+void DoScrollBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	ConfigParser& parser = skin->GetParser();
+	const double x = parser.ParseDouble(args[0].c_str(), 0.0);
+	const double y = parser.ParseDouble(args[1].c_str(), 0.0);
+
+	((MeterStringEdit*)meter)->ScrollBy((FLOAT)x, (FLOAT)y);
+	skin->Redraw();
+}
+
+void DoScrollToBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	ConfigParser& parser = skin->GetParser();
+	const double x = parser.ParseDouble(args[0].c_str(), 0.0);
+	const double y = parser.ParseDouble(args[1].c_str(), 0.0);
+
+	((MeterStringEdit*)meter)->ScrollTo((FLOAT)x, (FLOAT)y);
+	skin->Redraw();
+}
+
+void DoScrollToCaretBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterStringEdit*)meter)->ScrollToCaret();
+	skin->Redraw();
+}
+
 }  // namespace
 
 MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
@@ -148,6 +176,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	m_PasswordChar(),
 	m_RegExpError(false),
 	m_InputCase(TEXTCASE_NONE),
+	m_ScrollMax(),
 	m_CaretDrawnVisible(false),
 	m_CaretColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_SelectionColor(D2D1::ColorF(D2D1::ColorF::SteelBlue, 0.5f)),
@@ -173,6 +202,9 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Scroll", 2, DoScrollBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ScrollTo", 2, DoScrollToBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ScrollToCaret", 0, DoScrollToCaretBang);
 		return true;
 	} ();
 }
@@ -511,19 +543,14 @@ void MeterStringEdit::EnsureCaretVisible()
 	if (!m_TextFormat->IsInitialized()) return;
 
 	// ClipString trims the text to the meter instead, which is the other answer to the same
-	// overflow, so a clipped field never scrolls.
-	if (ShouldTrim())
+	// overflow, so a clipped field never scrolls. An empty one has nothing to scroll to either, and
+	// the caret rect it gives back is no basis for deciding otherwise - handled here rather than
+	// being left to the clamp so that the placeholder, which is drawn through the same offset, is
+	// not left scrolled off by the text that was there.
+	if (ShouldTrim() || m_String.empty())
 	{
 		m_TextOffset = D2D1::Point2F();
-		return;
-	}
-
-	// Nothing to scroll to, and the caret rect an empty string gives back is no basis for deciding
-	// otherwise. Handled here rather than being left to the clamp below so that the placeholder,
-	// which is drawn through the same offset, is not left scrolled off by the text that was there.
-	if (m_String.empty())
-	{
-		m_TextOffset = D2D1::Point2F();
+		m_ScrollMax = D2D1::Point2F();
 		return;
 	}
 
@@ -544,30 +571,52 @@ void MeterStringEdit::EnsureCaretVisible()
 	if (caret.bottom > box.bottom) m_TextOffset.y += caret.bottom - box.bottom;
 	else if (caret.top < box.top) m_TextOffset.y -= box.top - caret.top;
 
+	ClampTextOffset(canvas);
+}
+
+void MeterStringEdit::ClampTextOffset(Gfx::Canvas& canvas)
+{
 	// Never scroll past the start; there is nothing to reveal before it.
 	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
 	m_TextOffset.y = max(m_TextOffset.y, 0.0f);
 
-	// Nor past the end: deleting text, or a meter that grew, can leave more of the box scrolled
-	// past than there is text to fill it. The caret position after the last character sits at the
-	// end of the text, so it gives that edge back without measuring the string again.
-	if (m_TextOffset.x > 0.0f || m_TextOffset.y > 0.0f)
-	{
-		D2D1_RECT_F endCaret = { 0 };
-		if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
-			(UINT32)m_String.length(), true, 1.0f, endCaret))
-		{
-			if (endCaret.right < box.right)
-			{
-				m_TextOffset.x = max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
-			}
+	// How far the end of the text is past the box is how far it may be scrolled. The caret position
+	// after the last character sits at that end, so it gives the edge back without measuring the
+	// string again - through the scrolled box, so adding the offset back puts it in the meter's own
+	// space, where it is a bound rather than a distance from wherever the text happens to sit.
+	D2D1_RECT_F endCaret = { 0 };
+	if (!canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
+		(UINT32)m_String.length(), true, 1.0f, endCaret)) return;
 
-			if (endCaret.bottom < box.bottom)
-			{
-				m_TextOffset.y = max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
-			}
-		}
-	}
+	const D2D1_RECT_F box = GetMeterRectPadding();
+	m_ScrollMax.x = max((endCaret.right + m_TextOffset.x) - box.right, 0.0f);
+	m_ScrollMax.y = max((endCaret.bottom + m_TextOffset.y) - box.bottom, 0.0f);
+
+	// Deleting text, or a meter that grew, can leave more of the box scrolled past than there is
+	// text to fill it.
+	m_TextOffset.x = min(m_TextOffset.x, m_ScrollMax.x);
+	m_TextOffset.y = min(m_TextOffset.y, m_ScrollMax.y);
+}
+
+D2D1_SIZE_F MeterStringEdit::GetScrollPage()
+{
+	// The text box rather than the meter, so that it and the offset into it are in the same space.
+	const D2D1_RECT_F box = GetMeterRectPadding();
+	return D2D1::SizeF(box.right - box.left, box.bottom - box.top);
+}
+
+void MeterStringEdit::ScrollTo(FLOAT x, FLOAT y)
+{
+	// The two cases EnsureCaretVisible() holds at zero: a trimmed field scrolls not at all, and an
+	// empty one has nothing to scroll to.
+	if (!m_TextFormat->IsInitialized() || ShouldTrim() || m_String.empty()) return;
+
+	m_TextOffset.x = x;
+	m_TextOffset.y = y;
+
+	Gfx::Canvas& canvas = m_Skin->GetCanvas();
+	ApplyTextState(canvas);
+	ClampTextOffset(canvas);
 }
 
 void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)

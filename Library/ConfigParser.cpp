@@ -283,11 +283,38 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			}
 			else if (meter->GetTypeID() == TypeID<MeterStringEdit>())
 			{
-				// [StringEditMeter:Text]
+				// [StringEditMeter:Text], and the scrolling of it: where the visible text sits, how
+				// far it may be scrolled, and how much of it is on screen. The three are in pixels,
+				// and are between them what a scrollbar is drawn from.
+				auto* editMeter = (MeterStringEdit*)meter;
 				if (_wcsicmp(selectorSz, L"Text") == 0)
 				{
-					strValue = ((MeterStringEdit*)meter)->GetText();
+					strValue = editMeter->GetText();
 					return true;
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollX") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollOffset().x, buffer, 10);
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollY") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollOffset().y, buffer, 10);
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollMaxX") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollMax().x, buffer, 10);
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollMaxY") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollMax().y, buffer, 10);
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollW") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollPage().width, buffer, 10);
+				}
+				else if (_wcsicmp(selectorSz, L"ScrollH") == 0)
+				{
+					_itow_s((int)editMeter->GetScrollPage().height, buffer, 10);
 				}
 				else
 				{
