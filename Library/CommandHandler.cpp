@@ -1,7 +1,9 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/Map.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringUtil.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
@@ -16,146 +18,12 @@
 
 namespace {
 
-typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, Skin* skin);
-
 struct BangInfo
 {
 	Bang bang;
 	const WCHAR* name;
 	uint8_t argCount;
-};
-
-struct CustomBangInfo
-{
-	Bang bang;
-	const WCHAR* name;
-	BangHandlerFunc handlerFunc;
-};
-
-// Bangs that are to be handled with DoBang().
-const BangInfo s_Bangs[] =
-{
-	{ Bang::Refresh, L"Refresh", 0 },
-	{ Bang::Redraw, L"Redraw", 0 },
-	{ Bang::Update, L"Update", 0 },
-	{ Bang::SetUpdate, L"SetUpdate", 1 },
-	{ Bang::Hide, L"Hide", 0 },
-	{ Bang::Show, L"Show", 0 },
-	{ Bang::Toggle, L"Toggle", 0 },
-	{ Bang::HideFade, L"HideFade", 0 },
-	{ Bang::ShowFade, L"ShowFade", 0 },
-	{ Bang::ToggleFade, L"ToggleFade", 0 },
-	{ Bang::FadeDuration, L"FadeDuration", 1 },
-	{ Bang::HideMeter, L"HideMeter", 1 },
-	{ Bang::ShowMeter, L"ShowMeter", 1 },
-	{ Bang::ToggleMeter, L"ToggleMeter", 1 },
-	{ Bang::MoveMeter, L"MoveMeter", 3 },
-	{ Bang::UpdateMeter, L"UpdateMeter", 1 },
-	{ Bang::FocusMeter, L"FocusMeter", 1 },
-	{ Bang::DisableMouseAction, L"DisableMouseAction", 2 },
-	{ Bang::ClearMouseAction, L"ClearMouseAction", 2 },
-	{ Bang::EnableMouseAction, L"EnableMouseAction", 2 },
-	{ Bang::ToggleMouseAction, L"ToggleMouseAction", 2 },
-	{ Bang::DisableMeasure, L"DisableMeasure", 1 },
-	{ Bang::EnableMeasure, L"EnableMeasure", 1 },
-	{ Bang::ToggleMeasure, L"ToggleMeasure", 1 },
-	{ Bang::PauseMeasure, L"PauseMeasure", 1 },
-	{ Bang::UnpauseMeasure, L"UnpauseMeasure", 1 },
-	{ Bang::TogglePauseMeasure, L"TogglePauseMeasure", 1 },
-	{ Bang::UpdateMeasure, L"UpdateMeasure", 1 },
-	{ Bang::CommandMeasure, L"CommandMeasure", 2 },
-	{ Bang::PluginBang, L"PluginBang", 1 },
-	{ Bang::ShowBlur, L"ShowBlur", 0 },
-	{ Bang::HideBlur, L"HideBlur", 0 },
-	{ Bang::ToggleBlur, L"ToggleBlur", 0 },
-	{ Bang::AddBlur, L"AddBlur", 1 },
-	{ Bang::RemoveBlur, L"RemoveBlur", 1 },
-	{ Bang::Move, L"Move", 2 },
-	{ Bang::SetAnchor, L"SetAnchor", 2 },
-	{ Bang::SetZoomFactor, L"SetZoomFactor", 1 },
-	{ Bang::ZPos, L"ZPos", 1 },
-	{ Bang::ZPos, L"ChangeZPos", 1 },  // For backwards compatibility.
-	{ Bang::ChangeZPos, L"ChangeZPos", 1 },
-	{ Bang::ClickThrough, L"ClickThrough", 1 },
-	{ Bang::Draggable, L"Draggable", 1 },
-	{ Bang::SnapEdges, L"SnapEdges", 1 },
-	{ Bang::KeepOnScreen, L"KeepOnScreen", 1 },
-	{ Bang::AutoSelectScreen, L"AutoSelectScreen", 1 },
-	{ Bang::SetTransparency, L"SetTransparency", 1 },
-	{ Bang::SetVariable, L"SetVariable", 2 },
-	{ Bang::SetOption, L"SetOption", 3 },
-	{ Bang::SetOptionGroup, L"SetOptionGroup", 3 },
-	{ Bang::HideMeterGroup, L"HideMeterGroup", 1 },
-	{ Bang::ShowMeterGroup, L"ShowMeterGroup", 1 },
-	{ Bang::ToggleMeterGroup, L"ToggleMeterGroup", 1 },
-	{ Bang::UpdateMeterGroup, L"UpdateMeterGroup", 1 },
-	{ Bang::DisableMouseActionGroup, L"DisableMouseActionGroup", 2 },
-	{ Bang::ClearMouseActionGroup, L"ClearMouseActionGroup", 2 },
-	{ Bang::EnableMouseActionGroup, L"EnableMouseActionGroup", 2 },
-	{ Bang::ToggleMouseActionGroup, L"ToggleMouseActionGroup", 2 },
-	{ Bang::DisableMeasureGroup, L"DisableMeasureGroup", 1 },
-	{ Bang::EnableMeasureGroup, L"EnableMeasureGroup", 1 },
-	{ Bang::ToggleMeasureGroup, L"ToggleMeasureGroup", 1 },
-	{ Bang::PauseMeasureGroup, L"PauseMeasureGroup", 1 },
-	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
-	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
-	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 },
-	{ Bang::CommandMeasureGroup, L"CommandMeasureGroup", 2 },
-	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0 }
-};
-
-// Bangs that are to be handled with DoGroupBang().
-// TODO: Better handling of Bang-id
-const BangInfo s_GroupBangs[] =
-{
-	{ Bang::Refresh, L"RefreshGroup", 0 },
-	{ Bang::Update, L"UpdateGroup", 0 },
-	{ Bang::Redraw, L"RedrawGroup", 0 },
-	{ Bang::Hide, L"HideGroup", 0 },
-	{ Bang::Show, L"ShowGroup", 0 },
-	{ Bang::Toggle, L"ToggleGroup", 0 },
-	{ Bang::HideFade, L"HideFadeGroup", 0 },
-	{ Bang::ShowFade, L"ShowFadeGroup", 0 },
-	{ Bang::ToggleFade, L"ToggleFadeGroup", 0 },
-	{ Bang::ZPos, L"ZPosGroup", 1 },
-	{ Bang::ClickThrough, L"ClickThroughGroup", 1 },
-	{ Bang::Draggable, L"DraggableGroup", 1 },
-	{ Bang::SnapEdges, L"SnapEdgesGroup", 1 },
-	{ Bang::FadeDuration, L"FadeDurationGroup", 1 },
-	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
-	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
-	{ Bang::SetZoomFactor, L"SetZoomFactorGroup", 1 },
-	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
-	{ Bang::SetVariable, L"SetVariableGroup", 2 },
-	{ Bang::DisableMouseActionSkinGroup, L"DisableMouseActionSkinGroup", 1 },
-	{ Bang::ClearMouseActionSkinGroup, L"ClearMouseActionSkinGroup", 1 },
-	{ Bang::EnableMouseActionSkinGroup, L"EnableMouseActionSkinGroup", 1 },
-	{ Bang::ToggleMouseActionSkinGroup, L"ToggleMouseActionSkinGroup", 1 }
-};
-
-// Bangs that are to be handled using a custom handler function.
-const CustomBangInfo s_CustomBangs[] =
-{
-	{ Bang::ActivateConfig, L"ActivateConfig", CommandHandler::DoActivateSkinBang },
-	{ Bang::DeactivateConfig, L"DeactivateConfig", CommandHandler::DoDeactivateSkinBang },
-	{ Bang::ToggleConfig, L"ToggleConfig", CommandHandler::DoToggleSkinBang },
-	{ Bang::DeactivateConfigGroup, L"DeactivateConfigGroup", CommandHandler::DoDeactivateSkinGroupBang },
-	{ Bang::WriteKeyValue, L"WriteKeyValue", CommandHandler::DoWriteKeyValueBang },
-	{ Bang::LoadLayout, L"LoadLayout", CommandHandler::DoLoadLayoutBang },
-	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
-	{ Bang::SetWallpaper, L"SetWallpaper", CommandHandler::DoSetWallpaperBang },
-	{ Bang::About, L"About", CommandHandler::DoAboutBang },
-	{ Bang::Debug, L"Debug", CommandHandler::DoDebugBang },
-	{ Bang::Manage, L"Manage", CommandHandler::DoManageBang },
-	{ Bang::SkinMenu, L"SkinMenu", CommandHandler::DoSkinMenuBang },
-	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang },
-	{ Bang::ResetStats, L"ResetStats", CommandHandler::DoResetStatsBang },
-	{ Bang::Log, L"Log", CommandHandler::DoLogBang },
-	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
-	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
-	{ Bang::EditSkin, L"EditSkin", CommandHandler::DoEditSkinBang },
-	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang },
-	{ Bang::SetWindowPosition, L"SetWindowPosition", CommandHandler::DoSetWindowPositionBang }
+	void (* handlerFunc)(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin);
 };
 
 std::wstring BuildConfigPath(const std::wstring& folderPath, const std::wstring& file)
@@ -310,7 +178,7 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 
 void Internal_DoActivateBang(std::vector<std::wstring>& args, Skin* skin, LPCWSTR bangName)
 {
-	// References: CommandHandler::DoActivateSkinBang, CommandHandler::DoToggleSkinBang
+	// References: DoActivateSkinBang, DoToggleSkinBang
 	std::wstring folderPath;
 	std::wstring file;
 	const size_t argCount = args.size();
@@ -370,14 +238,14 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 				command += 9;
 			}
 
-			std::wstring bang;
+			std::wstring_view bang;
 			std::vector<std::wstring> args;
 
 			// Find the first space
 			const WCHAR* pos = wcschr(command, L' ');
 			if (pos)
 			{
-				bang.assign(command, 0, pos - command);
+				bang = std::wstring_view(command, pos - command);
 				args = ParseString(pos + 1, skin ? &skin->GetParser() : nullptr);
 			}
 			else
@@ -385,7 +253,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 				bang = command;
 			}
 
-			ExecuteBang(bang.c_str(), args, skin);
+			ExecuteBang(bang, args, skin);
 			return;
 		}
 	}
@@ -542,38 +410,6 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 
 		RunCommand(tmpSz);
 	}
-}
-
-void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, Skin* skin)
-{
-	for (const auto& bangInfo : s_Bangs)
-	{
-		if (_wcsicmp(bangInfo.name, name) == 0)
-		{
-			DoBang(bangInfo, args, skin);
-			return;
-		}
-	}
-
-	for (const auto& bangInfo : s_GroupBangs)
-	{
-		if (_wcsicmp(bangInfo.name, name) == 0)
-		{
-			DoGroupBang(bangInfo, args, skin);
-			return;
-		}
-	}
-
-	for (const auto& bangInfo : s_CustomBangs)
-	{
-		if (_wcsicmp(bangInfo.name, name) == 0)
-		{
-			bangInfo.handlerFunc(args, skin);
-			return;
-		}
-	}
-
-	LogErrorF(skin, L"Invalid bang: !%s", name);
 }
 
 void CommandHandler::RunCommand(std::wstring command)
@@ -733,12 +569,14 @@ std::vector<std::wstring> CommandHandler::ParseString(const WCHAR* str, ConfigPa
 	return result;
 }
 
-void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
+namespace {
+
+void DoActivateSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
-	Internal_DoActivateBang(args, skin, L"ActivateConfig");
+	Internal_DoActivateBang(args, skin, bangInfo.name);
 }
 
-void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin)
+void DoDeactivateSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -763,7 +601,7 @@ void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin*
 	}
 }
 
-void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* skin)
+void DoToggleSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (args.size() >= 1)
 	{
@@ -775,7 +613,7 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* ski
 		}
 
 		// If the skin wasn't active, activate it.
-		Internal_DoActivateBang(args, other, L"ToggleConfig");
+		Internal_DoActivateBang(args, other, bangInfo.name);
 	}
 	else
 	{
@@ -783,7 +621,7 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, Skin* ski
 	}
 }
 
-void CommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, Skin* skin)
+void DoDeactivateSkinGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -800,7 +638,7 @@ void CommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, 
 	}
 }
 
-void CommandHandler::DoLoadLayoutBang(std::vector<std::wstring>& args, Skin* skin)
+void DoLoadLayoutBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (args.size() == 1)
 	{
@@ -820,7 +658,7 @@ void CommandHandler::DoLoadLayoutBang(std::vector<std::wstring>& args, Skin* ski
 	}
 }
 
-void CommandHandler::DoSetClipBang(std::vector<std::wstring>& args, Skin* skin)
+void DoSetClipBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -832,7 +670,7 @@ void CommandHandler::DoSetClipBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* skin)
+void DoSetWallpaperBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argsSize = args.size();
 	if (argsSize >= 1 && argsSize <= 2)
@@ -853,7 +691,7 @@ void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* s
 	}
 }
 
-void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, Skin* skin)
+void DoAboutBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -872,7 +710,7 @@ void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoDebugBang(std::vector<std::wstring>& args, Skin* skin)
+void DoDebugBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (args.empty())
 	{
@@ -899,7 +737,7 @@ void CommandHandler::DoDebugBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)
+void DoManageBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argsSize = args.size();
 	if (argsSize >= 2 && argsSize <= 3)
@@ -918,7 +756,7 @@ void CommandHandler::DoManageBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin)
+void DoSkinMenuBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -948,18 +786,18 @@ void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoTrayMenuBang(std::vector<std::wstring>& args, Skin* skin)
+void DoTrayMenuBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	POINT pos = System::GetCursorPosition();
 	GetRainmeter().ShowContextMenu(pos, nullptr);
 }
 
-void CommandHandler::DoResetStatsBang(std::vector<std::wstring>& args, Skin* skin)
+void DoResetStatsBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	GetRainmeter().ResetStats();
 }
 
-void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* skin)
+void DoWriteKeyValueBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (args.size() == 3 && skin)
 	{
@@ -986,8 +824,10 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 		return;
 	}
 
-	if (_wcsnicmp(iniFile, GetRainmeter().m_SkinPath.c_str(), GetRainmeter().m_SkinPath.size()) != 0 &&
-		_wcsnicmp(iniFile, GetRainmeter().m_SettingsPath.c_str(), GetRainmeter().m_SettingsPath.size()) != 0)
+	const std::wstring& skinPath = GetRainmeter().GetSkinPath();
+	const std::wstring& settingsPath = GetRainmeter().GetSettingsPath();
+	if (_wcsnicmp(iniFile, skinPath.c_str(), skinPath.size()) != 0 &&
+		_wcsnicmp(iniFile, settingsPath.c_str(), settingsPath.size()) != 0)
 	{
 		LogErrorF(skin, L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
@@ -1090,7 +930,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* 
 	}
 }
 
-void CommandHandler::DoLogBang(std::vector<std::wstring>& args, Skin* skin)
+void DoLogBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!args.empty())
 	{
@@ -1127,24 +967,24 @@ void CommandHandler::DoLogBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoRefreshApp(std::vector<std::wstring>& args, Skin* skin)
+void DoRefreshApp(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	// Refresh needs to be delayed since it crashes if done during Update().
-	PostMessage(GetRainmeter().m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, 0, 0);
+	PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, 0, 0);
 }
 
-void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, Skin* skin)
+void DoQuitBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
 	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
 }
 
-void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
+void DoEditSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argSize = args.size();
 	if (argSize > 1)
 	{
-		const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(args[0], args[1]);
+		const SkinRegistry::Indexes indexes = GetRainmeter().GetSkinRegistry().FindIndexes(args[0], args[1]);
 		if (indexes.IsValid())
 		{
 			GetRainmeter().EditSkinFile(args[0], args[1]);
@@ -1181,7 +1021,7 @@ void CommandHandler::DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin)
 	}
 }
 
-void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin)
+void DoSetWindowPositionBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	// Two variations:
 	//  #1: !SetWindowPosition WindowX WindowY (config)
@@ -1221,7 +1061,170 @@ void CommandHandler::DoSetWindowPositionBang(std::vector<std::wstring>& args, Sk
 	LogErrorF(skin, L"!SetWindowPosition: Invalid parameters");
 }
 
-void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)
+void DoLsBoxHookBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	// Deprecated.
+}
+
+const BangInfo g_Bangs[] =
+{
+	{ Bang::Refresh, L"Refresh", 0, DoBang },
+	{ Bang::Redraw, L"Redraw", 0, DoBang },
+	{ Bang::Update, L"Update", 0, DoBang },
+	{ Bang::SetUpdate, L"SetUpdate", 1, DoBang },
+	{ Bang::Hide, L"Hide", 0, DoBang },
+	{ Bang::Show, L"Show", 0, DoBang },
+	{ Bang::Toggle, L"Toggle", 0, DoBang },
+	{ Bang::HideFade, L"HideFade", 0, DoBang },
+	{ Bang::ShowFade, L"ShowFade", 0, DoBang },
+	{ Bang::ToggleFade, L"ToggleFade", 0, DoBang },
+	{ Bang::FadeDuration, L"FadeDuration", 1, DoBang },
+	{ Bang::HideMeter, L"HideMeter", 1, DoBang },
+	{ Bang::ShowMeter, L"ShowMeter", 1, DoBang },
+	{ Bang::ToggleMeter, L"ToggleMeter", 1, DoBang },
+	{ Bang::MoveMeter, L"MoveMeter", 3, DoBang },
+	{ Bang::UpdateMeter, L"UpdateMeter", 1, DoBang },
+	{ Bang::FocusMeter, L"FocusMeter", 1, DoBang },
+	{ Bang::DisableMouseAction, L"DisableMouseAction", 2, DoBang },
+	{ Bang::ClearMouseAction, L"ClearMouseAction", 2, DoBang },
+	{ Bang::EnableMouseAction, L"EnableMouseAction", 2, DoBang },
+	{ Bang::ToggleMouseAction, L"ToggleMouseAction", 2, DoBang },
+	{ Bang::DisableMeasure, L"DisableMeasure", 1, DoBang },
+	{ Bang::EnableMeasure, L"EnableMeasure", 1, DoBang },
+	{ Bang::ToggleMeasure, L"ToggleMeasure", 1, DoBang },
+	{ Bang::PauseMeasure, L"PauseMeasure", 1, DoBang },
+	{ Bang::UnpauseMeasure, L"UnpauseMeasure", 1, DoBang },
+	{ Bang::TogglePauseMeasure, L"TogglePauseMeasure", 1, DoBang },
+	{ Bang::UpdateMeasure, L"UpdateMeasure", 1, DoBang },
+	{ Bang::CommandMeasure, L"CommandMeasure", 2, DoBang },
+	{ Bang::PluginBang, L"PluginBang", 1, DoBang },
+	{ Bang::ShowBlur, L"ShowBlur", 0, DoBang },
+	{ Bang::HideBlur, L"HideBlur", 0, DoBang },
+	{ Bang::ToggleBlur, L"ToggleBlur", 0, DoBang },
+	{ Bang::AddBlur, L"AddBlur", 1, DoBang },
+	{ Bang::RemoveBlur, L"RemoveBlur", 1, DoBang },
+	{ Bang::Move, L"Move", 2, DoBang },
+	{ Bang::SetAnchor, L"SetAnchor", 2, DoBang },
+	{ Bang::SetZoomFactor, L"SetZoomFactor", 1, DoBang },
+	{ Bang::ZPos, L"ZPos", 1, DoBang },
+	{ Bang::ZPos, L"ChangeZPos", 1, DoBang },  // For backwards compatibility.
+	{ Bang::ClickThrough, L"ClickThrough", 1, DoBang },
+	{ Bang::Draggable, L"Draggable", 1, DoBang },
+	{ Bang::SnapEdges, L"SnapEdges", 1, DoBang },
+	{ Bang::KeepOnScreen, L"KeepOnScreen", 1, DoBang },
+	{ Bang::AutoSelectScreen, L"AutoSelectScreen", 1, DoBang },
+	{ Bang::SetTransparency, L"SetTransparency", 1, DoBang },
+	{ Bang::SetVariable, L"SetVariable", 2, DoBang },
+	{ Bang::SetOption, L"SetOption", 3, DoBang },
+	{ Bang::SetOptionGroup, L"SetOptionGroup", 3, DoBang },
+	{ Bang::HideMeterGroup, L"HideMeterGroup", 1, DoBang },
+	{ Bang::ShowMeterGroup, L"ShowMeterGroup", 1, DoBang },
+	{ Bang::ToggleMeterGroup, L"ToggleMeterGroup", 1, DoBang },
+	{ Bang::UpdateMeterGroup, L"UpdateMeterGroup", 1, DoBang },
+	{ Bang::DisableMouseActionGroup, L"DisableMouseActionGroup", 2, DoBang },
+	{ Bang::ClearMouseActionGroup, L"ClearMouseActionGroup", 2, DoBang },
+	{ Bang::EnableMouseActionGroup, L"EnableMouseActionGroup", 2, DoBang },
+	{ Bang::ToggleMouseActionGroup, L"ToggleMouseActionGroup", 2, DoBang },
+	{ Bang::DisableMeasureGroup, L"DisableMeasureGroup", 1, DoBang },
+	{ Bang::EnableMeasureGroup, L"EnableMeasureGroup", 1, DoBang },
+	{ Bang::ToggleMeasureGroup, L"ToggleMeasureGroup", 1, DoBang },
+	{ Bang::PauseMeasureGroup, L"PauseMeasureGroup", 1, DoBang },
+	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1, DoBang },
+	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1, DoBang },
+	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1, DoBang },
+	{ Bang::CommandMeasureGroup, L"CommandMeasureGroup", 2, DoBang },
+	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0, DoBang },
+
+	// Group bangs.
+	{ Bang::Refresh, L"RefreshGroup", 0, DoGroupBang },
+	{ Bang::Update, L"UpdateGroup", 0, DoGroupBang },
+	{ Bang::Redraw, L"RedrawGroup", 0, DoGroupBang },
+	{ Bang::Hide, L"HideGroup", 0, DoGroupBang },
+	{ Bang::Show, L"ShowGroup", 0, DoGroupBang },
+	{ Bang::Toggle, L"ToggleGroup", 0, DoGroupBang },
+	{ Bang::HideFade, L"HideFadeGroup", 0, DoGroupBang },
+	{ Bang::ShowFade, L"ShowFadeGroup", 0, DoGroupBang },
+	{ Bang::ToggleFade, L"ToggleFadeGroup", 0, DoGroupBang },
+	{ Bang::ZPos, L"ZPosGroup", 1, DoGroupBang },
+	{ Bang::ClickThrough, L"ClickThroughGroup", 1, DoGroupBang },
+	{ Bang::Draggable, L"DraggableGroup", 1, DoGroupBang },
+	{ Bang::SnapEdges, L"SnapEdgesGroup", 1, DoGroupBang },
+	{ Bang::FadeDuration, L"FadeDurationGroup", 1, DoGroupBang },
+	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1, DoGroupBang },
+	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1, DoGroupBang },
+	{ Bang::SetZoomFactor, L"SetZoomFactorGroup", 1, DoGroupBang },
+	{ Bang::SetTransparency, L"SetTransparencyGroup", 1, DoGroupBang },
+	{ Bang::SetVariable, L"SetVariableGroup", 2, DoGroupBang },
+	{ Bang::DisableMouseActionSkinGroup, L"DisableMouseActionSkinGroup", 1, DoGroupBang },
+	{ Bang::ClearMouseActionSkinGroup, L"ClearMouseActionSkinGroup", 1, DoGroupBang },
+	{ Bang::EnableMouseActionSkinGroup, L"EnableMouseActionSkinGroup", 1, DoGroupBang },
+	{ Bang::ToggleMouseActionSkinGroup, L"ToggleMouseActionSkinGroup", 1, DoGroupBang },
+
+	// Bangs handled using a custom handler function with its own argument checking.
+	{ Bang::ActivateConfig, L"ActivateConfig", 0, DoActivateSkinBang },
+	{ Bang::DeactivateConfig, L"DeactivateConfig", 0, DoDeactivateSkinBang },
+	{ Bang::ToggleConfig, L"ToggleConfig", 0, DoToggleSkinBang },
+	{ Bang::DeactivateConfigGroup, L"DeactivateConfigGroup", 0, DoDeactivateSkinGroupBang },
+	{ Bang::WriteKeyValue, L"WriteKeyValue", 0, DoWriteKeyValueBang },
+	{ Bang::LoadLayout, L"LoadLayout", 0, DoLoadLayoutBang },
+	{ Bang::SetClip, L"SetClip", 0, DoSetClipBang },
+	{ Bang::SetWallpaper, L"SetWallpaper", 0, DoSetWallpaperBang },
+	{ Bang::About, L"About", 0, DoAboutBang },
+	{ Bang::Debug, L"Debug", 0, DoDebugBang },
+	{ Bang::Manage, L"Manage", 0, DoManageBang },
+	{ Bang::SkinMenu, L"SkinMenu", 0, DoSkinMenuBang },
+	{ Bang::TrayMenu, L"TrayMenu", 0, DoTrayMenuBang },
+	{ Bang::ResetStats, L"ResetStats", 0, DoResetStatsBang },
+	{ Bang::Log, L"Log", 0, DoLogBang },
+	{ Bang::RefreshApp, L"RefreshApp", 0, DoRefreshApp },
+	{ Bang::Quit, L"Quit", 0, DoQuitBang },
+	{ Bang::EditSkin, L"EditSkin", 0, DoEditSkinBang },
+	{ Bang::LsBoxHook, L"LsBoxHook", 0, DoLsBoxHookBang },
+	{ Bang::SetWindowPosition, L"SetWindowPosition", 0, DoSetWindowPositionBang }
+};
+
+std::wstring_view BuildBangMapKey(std::wstring_view name, WCHAR* buffer, size_t bufferCount)
+{
+	if (!StringUtil::ToUpperCase(name, buffer, bufferCount)) return {};
+	return std::wstring_view(buffer, name.length());
+}
+
+// Maps uppercased bang names to their entry in |g_Bangs|.
+const StringMap<const BangInfo*>& GetBangMap()
+{
+	static const StringMap<const BangInfo*> s_Map = []()
+	{
+		StringMap<const BangInfo*> map;
+		map.rehash(_countof(g_Bangs));
+
+		for (const auto& bangInfo : g_Bangs)
+		{
+			WCHAR buffer[64];
+			const auto key = BuildBangMapKey(bangInfo.name, buffer, _countof(buffer));
+			map.emplace(std::wstring(key), &bangInfo);
+		}
+
+		return map;
+	} ();
+
+	return s_Map;
+}
+
+}  // namespace
+
+void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin)
+{
+	WCHAR buffer[64];
+	const auto key = BuildBangMapKey(name, buffer, _countof(buffer));
+
+	const auto& bangMap = GetBangMap();
+	const auto iter = bangMap.find(key);
+	if (iter == bangMap.end())
+	{
+		LogErrorF(skin, L"Invalid bang: !%.*s", (int)name.length(), name.data());
+		return;
+	}
+
+	const BangInfo& bangInfo = *iter->second;
+	bangInfo.handlerFunc(bangInfo, args, skin);
 }
