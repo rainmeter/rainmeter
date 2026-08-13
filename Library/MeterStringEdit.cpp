@@ -129,6 +129,12 @@ void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	skin->RequestWindowSizeCheck();
 }
 
+void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterStringEdit*)meter)->Reset();
+	skin->RequestWindowSizeCheck();
+}
+
 }  // namespace
 
 MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
@@ -166,6 +172,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
 		return true;
 	} ();
 }
@@ -235,20 +242,7 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	m_TextOption = text;
 
-	if (!m_Multiline)
-	{
-		m_Text.erase(std::remove(m_Text.begin(), m_Text.end(), L'\n'), m_Text.end());
-	}
-
-	if (m_MaxLength > 0 && m_Text.length() > (size_t)m_MaxLength)
-	{
-		m_Text.resize(m_MaxLength);
-
-		// Truncating must not leave a high surrogate without its pair.
-		if (IS_HIGH_SURROGATE(m_Text.back())) m_Text.pop_back();
-	}
-
-	ApplyCase(m_Text);
+	ApplyTextTransformations(m_Text);
 
 	const bool password = parser.ReadBool(section, L"Password", false);
 	const bool passwordChanged = password != m_Password;
@@ -379,6 +373,24 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeterStringEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	// The text is the user's, so there is no measure to bind.
+}
+
+void MeterStringEdit::ApplyTextTransformations(std::wstring& text) const
+{
+	if (!m_Multiline)
+	{
+		text.erase(std::remove(text.begin(), text.end(), L'\n'), text.end());
+	}
+
+	if (m_MaxLength > 0 && text.length() > (size_t)m_MaxLength)
+	{
+		text.resize(m_MaxLength);
+
+		// Truncating must not leave a high surrogate without its pair.
+		if (IS_HIGH_SURROGATE(text.back())) text.pop_back();
+	}
+
+	ApplyCase(text);
 }
 
 void MeterStringEdit::UpdatePasswordChar()
@@ -657,6 +669,29 @@ void MeterStringEdit::Clear()
 	ReplaceSelection(std::wstring());
 
 	m_Submitted = submitted;
+}
+
+void MeterStringEdit::Reset()
+{
+	std::wstring text = m_TextOption;
+	ApplyTextTransformations(text);
+
+	if (text == m_Text) return;
+
+	// Like Clear(), the skin's doing rather than the user's next edit: undoable, but leaving a
+	// submit standing so that going back to the option is not itself abandoning what was sent.
+	PushUndo(EditKind::None);
+
+	m_Text = std::move(text);
+	SyncDrawnString();
+
+	// The caret goes to the end, where typing on from the restored text is what the user is most
+	// likely to want, and where nothing has to be clamped to a text it no longer indexes into.
+	m_SelectionAnchor = m_CaretPos = (UINT32)m_String.length();
+	m_CaretTrailing = true;
+
+	UpdateAutoSizeForText();
+	EnsureCaretVisible();
 }
 
 void MeterStringEdit::ExpandAction(const std::wstring& action, std::wstring& command)
