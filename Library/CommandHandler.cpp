@@ -73,7 +73,6 @@ int GetOptionalSectionArg(Bang bang)
 	case Bang::ShowMeter:
 	case Bang::ToggleMeter:
 	case Bang::UpdateMeter:
-	case Bang::FocusMeter:
 	case Bang::DisableMouseAction:
 	case Bang::ClearMouseAction:
 	case Bang::EnableMouseAction:
@@ -1159,7 +1158,6 @@ const BangInfo g_Bangs[] =
 	{ Bang::ToggleMeter, L"ToggleMeter", 1, DoBang },
 	{ Bang::MoveMeter, L"MoveMeter", 3, DoBang },
 	{ Bang::UpdateMeter, L"UpdateMeter", 1, DoBang },
-	{ Bang::FocusMeter, L"FocusMeter", 1, DoBang },
 	{ Bang::DisableMouseAction, L"DisableMouseAction", 2, DoBang },
 	{ Bang::ClearMouseAction, L"ClearMouseAction", 2, DoBang },
 	{ Bang::EnableMouseAction, L"EnableMouseAction", 2, DoBang },

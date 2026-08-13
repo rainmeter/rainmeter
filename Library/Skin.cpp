@@ -1139,10 +1139,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		UpdateMeter(args[0]);
 		break;
 
-	case Bang::FocusMeter:
-		FocusMeter(args[0]);
-		break;
-
 	case Bang::ToggleMeterGroup:
 		ToggleMeter(args[0], true);
 		break;
@@ -1724,59 +1720,6 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	PostUpdate(bActiveTransition);
 
 	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
-}
-
-void Skin::FocusMeter(std::wstring_view name)
-{
-	// Focus changed by a bang is the skin's own doing rather than the user reaching for the field,
-	// so neither OnFocusAction nor OnDismissAction is run here.
-	if (name.empty())
-	{
-		if (ClearInputFocus())
-		{
-			if (m_DynamicWindowSize)
-			{
-				SetResizeWindowMode(RESIZEMODE_CHECK);
-			}
-
-			Redraw();
-		}
-
-		return;
-	}
-
-	for (auto* meter : m_Meters)
-	{
-		if (!CompareName(meter, name)) continue;
-
-		if (meter->GetTypeID() != TypeID<MeterStringEdit>())
-		{
-			LogWarningF(this, L"!FocusMeter: [%s] cannot be focused", meter->GetName());
-			return;
-		}
-
-		auto* editMeter = (MeterStringEdit*)meter;
-		if (!editMeter->AcceptsInput())
-		{
-			LogWarningF(this, L"!FocusMeter: [%s] does not accept input", meter->GetName());
-			return;
-		}
-
-		if (!SetInputFocus(editMeter)) return;
-
-		// The window has to hold keyboard focus for typing to reach it at all.
-		SetFocus(m_Window);
-
-		if (m_DynamicWindowSize)
-		{
-			SetResizeWindowMode(RESIZEMODE_CHECK);
-		}
-
-		Redraw();
-		return;
-	}
-
-	LogErrorF(this, L"!FocusMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
 void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group)

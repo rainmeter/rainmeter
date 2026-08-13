@@ -36,10 +36,70 @@ CharClass ClassifyChar(WCHAR ch)
 	return CharClass::Punctuation;
 }
 
-void FocusForSelection(MeterStringEdit* meter, Skin* skin)
+// Takes the caret for the length of a bang, as a click into the field would, and runs what that
+// leaves behind on the way out: the field being left has an action for being left, and the field
+// taking the caret has one of its own. They are held until the scope ends because either may
+// refresh or close the skin - destroying both meters and the window - so the bang has to have
+// finished what it came to do before they go off.
+class FocusMeterScope
 {
-	if (meter->IsFocused() || !meter->AcceptsInput()) return;
-	skin->SetInputFocus(meter);
+public:
+	FocusMeterScope(MeterStringEdit* meter, Skin* skin)
+	{
+		if (meter->IsFocused() || !meter->AcceptsInput()) return;
+
+		m_Outgoing = skin->GetInputFocusMeter();
+		if (!skin->SetInputFocus(meter, &m_DismissCommand)) return;
+
+		// The window has to hold keyboard focus for typing to reach the field at all.
+		SetFocus(skin->GetWindow());
+
+		m_Incoming = meter;
+		m_FocusCommand = meter->GetFocusCommand();
+	}
+
+	// In the order the two things happened. Nothing may be touched afterwards.
+	~FocusMeterScope()
+	{
+		if (!m_DismissCommand.empty())
+		{
+			GetRainmeter().ExecuteActionCommand(m_DismissCommand.c_str(), m_Outgoing);
+		}
+
+		if (!m_FocusCommand.empty())
+		{
+			GetRainmeter().ExecuteActionCommand(m_FocusCommand.c_str(), m_Incoming);
+		}
+	}
+
+	FocusMeterScope(const FocusMeterScope& other) = delete;
+	FocusMeterScope& operator=(FocusMeterScope other) = delete;
+
+private:
+	MeterStringEdit* m_Outgoing = nullptr;
+	std::wstring m_DismissCommand;
+
+	MeterStringEdit* m_Incoming = nullptr;
+	std::wstring m_FocusCommand;
+};
+
+void DoFocusBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	auto* editMeter = (MeterStringEdit*)meter;
+	if (!editMeter->AcceptsInput())
+	{
+		LogWarningF(skin, L"!TextEdit:Focus: [%s] does not accept input", meter->GetName());
+		return;
+	}
+
+	FocusMeterScope focus(editMeter, skin);
+}
+
+void DoDismissBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	if (skin->GetInputFocusMeter() != (MeterStringEdit*)meter) return;
+
+	skin->DismissInputFocus();
 }
 
 void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
@@ -49,14 +109,14 @@ void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	const int length = parser.ParseInt(args[1].c_str(), -1);
 
 	auto* editMeter = (MeterStringEdit*)meter;
-	FocusForSelection(editMeter, skin);
+	FocusMeterScope focus(editMeter, skin);
 	editMeter->SelectRange(index, length);
 }
 
 void DoSelectAllBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	auto* editMeter = (MeterStringEdit*)meter;
-	FocusForSelection(editMeter, skin);
+	FocusMeterScope focus(editMeter, skin);
 	editMeter->SelectAll();
 }
 
@@ -95,6 +155,8 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	static const bool s_BangsRegistered = []()
 	{
 		const UINT typeId = TypeID<MeterStringEdit>();
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Focus", 0, DoFocusBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Dismiss", 0, DoDismissBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
