@@ -206,7 +206,7 @@ void MeterStringEdit::InvalidateDeviceResources()
 
 void MeterStringEdit::UpdatePlaceholderFormat()
 {
-	if (m_Placeholder.empty())
+	if (m_PlaceholderText.empty())
 	{
 		m_PlaceholderFormat.reset();
 		return;
@@ -320,8 +320,8 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (m_FocusBorderWidth < 0.0f) m_FocusBorderWidth = 0.0f;
 	}
 
-	m_Placeholder = parser.ReadString(section, L"Placeholder", L"");
-	if (!m_Placeholder.empty())
+	m_PlaceholderText = parser.ReadString(section, L"PlaceholderText", L"");
+	if (!m_PlaceholderText.empty())
 	{
 		// Only read once there is a placeholder to draw, so a meter without one pays nothing here.
 		D2D1_COLOR_F dimmed = m_Color;
@@ -470,7 +470,7 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 	bool drawn = true;
 	if (ShowingPlaceholder())
 	{
-		drawn = DrawString(canvas, &m_Placeholder, m_PlaceholderFormat.get(), &m_PlaceholderColor);
+		drawn = DrawString(canvas, &m_PlaceholderText, m_PlaceholderFormat.get(), &m_PlaceholderColor);
 	}
 	else
 	{
@@ -496,7 +496,7 @@ void MeterStringEdit::UpdateAutoSizeForText()
 {
 	if (ShowingPlaceholder())
 	{
-		UpdateAutoSize(&m_Placeholder, m_PlaceholderFormat.get());
+		UpdateAutoSize(&m_PlaceholderText, m_PlaceholderFormat.get());
 	}
 	else if (m_String.empty() || m_String.back() == L'\n')
 	{
