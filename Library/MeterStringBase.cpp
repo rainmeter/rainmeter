@@ -550,29 +550,27 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	std::vector<Gfx::TextInlineOption> inlineOptions;
-	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
-	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
-	if (pattern.empty()) pattern = L".*";
+	inlineOptions.reserve(m_TextFormat->GetInlineOptionCount());
 
-	size_t i = 1;
-	while (!option.empty())
+	for (int i = 1; ; ++i)
 	{
-		auto setting = ParseInlineSetting(option, parser);
+		WCHAR num[8] = { 0 };
+		if (i > 1) _itow_s(i, num, 10);
 
-		// An unusable setting ends the list - the ones after it are ignored as well.
+		WCHAR settingKey[32] = L"InlineSetting";
+		wcscat_s(settingKey, num);
+		const auto& option = parser.ReadString(section, settingKey, L"");
+		if (option.empty()) break;
+
+		auto setting = ParseInlineSetting(option, parser);
 		if (!setting) break;
 
-		inlineOptions.push_back({ pattern, std::move(*setting) });
-
-		// Check for InlineSetting2/InlinePattern2 ... etc.
-		const std::wstring num = std::to_wstring(++i);
-
-		std::wstring key = L"InlinePattern" + num;
-		pattern = parser.ReadString(section, key.c_str(), L".*");
+		WCHAR patternKey[32] = L"InlinePattern";
+		wcscat_s(patternKey, num);
+		std::wstring pattern = parser.ReadString(section, patternKey, L"");
 		if (pattern.empty()) pattern = L".*";
 
-		key = L"InlineSetting" + num;
-		option = parser.ReadString(section, key.c_str(), L"");
+		inlineOptions.push_back({ std::move(pattern), std::move(*setting) });
 	}
 
 	m_TextFormat->SetInlineOptions(inlineOptions);
