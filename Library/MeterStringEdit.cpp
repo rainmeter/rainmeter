@@ -236,19 +236,18 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 	m_Multiline = parser.ReadBool(section, L"Multiline", false);
 
-	// DynamicVariables re-reads options every update, which would discard what the user typed, so
-	// Text is adopted only when the option itself changed - that still lets !SetOption or a
-	// changed variable replace it.
-	const std::wstring& text = parser.ReadString(section, L"Text", L"");
-	if (!m_Initialized || text != m_TextOption)
+	// The field owns its text from here on, so the option is what it starts at and nothing more.
+	// Reading it again on the re-reads DynamicVariables brings would discard what the user typed,
+	// and doing that only where the value changed cannot tell a skin assigning the text it already
+	// holds from an option that simply resolved the same way twice. !TextEdit:SetText is how the
+	// text is replaced afterwards, and !TextEdit:Reset is what reads this option again.
+	if (!m_Initialized)
 	{
-		m_Text = text;
-
-		// A value arriving from the config is not something the user should be able to undo past.
-		ClearUndoHistory();
+		m_Text = parser.ReadString(section, L"InitialText", L"");
 	}
-	m_TextOption = text;
 
+	// The limits are re-read above and can have moved, so they are applied to whatever the field
+	// holds - what the user typed included - rather than only to a freshly read option.
 	ApplyTextTransformations(m_Text);
 
 	const bool password = parser.ReadBool(section, L"Password", false);
@@ -692,7 +691,18 @@ void MeterStringEdit::SetText(std::wstring_view text)
 
 void MeterStringEdit::Reset()
 {
-	SetText(m_TextOption);
+	ConfigParser& parser = m_Skin->GetParser();
+
+	// Read here rather than kept from initialization, so that a skin can change what the field goes
+	// back to - !SetOption InitialText, or a variable the option is written in terms of - and have
+	// the next reset pick it up. The inherit chain is set up the way ReadOptions() has it, since an
+	// InitialText reaching the meter through a MeterStyle resolves through that and a reset arrives
+	// long after ReadOptions() tore it down.
+	parser.ReadInheritOption(GetName(), true);
+	const std::wstring text = parser.ReadString(GetName(), L"InitialText", L"");
+	parser.ClearInheritChain();
+
+	SetText(text);
 }
 
 void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)

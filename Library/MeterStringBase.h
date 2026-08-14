@@ -10,8 +10,9 @@
 
 // Shared base for String, which formats a measure's value, and StringEdit, which lets the user
 // edit the text. Holds the font and case options common to both and the drawing built on them, but
-// leaves it to each meter to decide when the case conversion runs. Each meter
-// reads the Text option for itself, since they disagree on who owns its value.
+// leaves it to each meter to decide when the case conversion runs. Neither the text nor the option
+// it comes from is read here: String rebuilds m_Text from Text on every read, while StringEdit
+// takes InitialText once and lets the user own it from there.
 class __declspec(novtable) MeterStringBase : public Meter
 {
 public:

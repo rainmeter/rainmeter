@@ -230,9 +230,6 @@ private:
 	D2D1_COLOR_F m_FocusBorderColor;
 	FLOAT m_FocusBorderWidth;
 
-	// Tells a genuine Text change apart from a re-read that would discard what the user typed.
-	std::wstring m_TextOption;
-
 	// Run by Enter and by !TextEdit:Submit.
 	std::wstring m_OnSubmitAction;
 
