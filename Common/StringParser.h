@@ -84,8 +84,8 @@ public:
 	bool ConsumeRest(const std::wstring& str, Option option = None) { return ConsumeRest(str.c_str(), str.length(), option); }
 	bool ConsumeSuffix(const std::wstring& str) { return ConsumeSuffix(str.c_str(), str.length()); }
 
-	bool Consume(WCHAR ch);
-	bool ConsumeRest(WCHAR ch);
+	bool Consume(WCHAR ch, Option option = None);
+	bool ConsumeRest(WCHAR ch, Option option = None);
 
 	// Returns the value before the delimiter, or an empty view if the range contains no delimiter.
 	// The delimiter and, when no delimiter is found, the rest of the range are consumed.

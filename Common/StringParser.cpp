@@ -226,18 +226,34 @@ bool StringParser::ConsumeSuffix(const WCHAR* str, size_t length)
 	return true;
 }
 
-bool StringParser::Consume(WCHAR ch)
+bool StringParser::Consume(WCHAR ch, Option option)
 {
+	if (HasOption(option, SkipWhitespace))
+	{
+		ConsumeWhitespace();
+	}
+
 	if (m_Current >= m_End || towlower(*m_Current) != towlower(ch)) return false;
 
 	++m_Current;
 	return true;
 }
 
-bool StringParser::ConsumeRest(WCHAR ch)
+bool StringParser::ConsumeRest(WCHAR ch, Option option)
 {
 	const WCHAR* current = m_Current;
-	if (!Consume(ch) || m_Current != m_End)
+	if (!Consume(ch, option))
+	{
+		m_Current = current;
+		return false;
+	}
+
+	if (HasOption(option, SkipWhitespace))
+	{
+		ConsumeWhitespace();
+	}
+
+	if (m_Current != m_End)
 	{
 		m_Current = current;
 		return false;

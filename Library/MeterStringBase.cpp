@@ -12,189 +12,255 @@
 
 namespace {
 
-std::optional<Gfx::TextInlineSetting> ParseInlineSetting(const std::vector<std::wstring>& settings, ConfigParser& parser)
+// Turns an InlineSetting value into the option it names. The value is a '|' separated list of the
+// option's name and the arguments that go with it. The name has to be a whole argument of its own:
+// "Size|10" is the Size option, "Sized|10" is not. An argument that is there but is not a number
+// reads as zero, while the default for what it sets is what an argument that is not there reads as.
+// Returns nothing when the option is not recognized or does not have all the arguments it needs.
+std::optional<Gfx::TextInlineSetting> ParseInlineSetting(std::wstring_view setting, ConfigParser& parser)
 {
-	if (settings.empty()) return std::nullopt;
+	const auto skipWS = StringParser::SkipWhitespace;
+	const MathParser& mathParser = parser.GetMathParser();
+	StringParser strParser(setting);
 
-	const size_t count = settings.size();
-	const WCHAR* option = settings[0].c_str();
-	if (_wcsnicmp(option, L"NONE", 4) == 0)
+	// Only ConsumeUntil() trims what it matched, so the whitespace an argument ends with is left
+	// for the separator to step over.
+	auto consumeSeparator = [&strParser, skipWS]() { return strParser.Consume(L'|', skipWS); };
+
+	// |true| while there is anything left to read.
+	auto hasNextValue = [&strParser]() { strParser.ConsumeWhitespace(); return !strParser.IsConsumed(); };
+
+	// The next argument, or an empty value when there are none left. Empty arguments are not
+	// arguments at all, so "Color||FF0000" reads the same as "Color|FF0000".
+	auto consumeNextValue = [&strParser, skipWS]()
+	{
+		while (!strParser.IsConsumed())
+		{
+			const auto value = strParser.ConsumeUntilOrRest(L'|', skipWS);
+			if (!value.empty()) return value;
+		}
+
+		return std::wstring_view();
+	};
+
+	// Numbers are read from the argument as a whole, so that what follows an unreadable one is
+	// still read as the argument it was written as. A value that is not a number reads as zero.
+	auto toDouble = [&mathParser, skipWS](std::wstring_view value)
+	{
+		StringParser valueParser(value);
+		return valueParser.ConsumeDoubleOrFormula(mathParser, skipWS).value_or(0.0);
+	};
+
+	auto toInt = [&mathParser, skipWS](std::wstring_view value)
+	{
+		StringParser valueParser(value);
+		return valueParser.ConsumeIntOrFormula(mathParser, skipWS).value_or(0);
+	};
+
+	auto toUInt = [&mathParser, skipWS](std::wstring_view value)
+	{
+		StringParser valueParser(value);
+		return valueParser.ConsumeUIntOrFormula(mathParser, skipWS).value_or(0u);
+	};
+
+	// An option that takes no arguments still has to be a whole argument of its own, while any
+	// argument written after it is ignored.
+	auto isWholeValue = [&hasNextValue, &consumeSeparator]() { return !hasNextValue() || consumeSeparator(); };
+
+	if (strParser.Consume(L"None", skipWS))
 	{
 		return Gfx::InlineSetting::None{};
 	}
-	else if (_wcsicmp(option, L"CASE") == 0)
+	else if (strParser.Consume(L"Case", skipWS))
 	{
-		if (count > 1)
-		{
-			const WCHAR* strCase = settings[1].c_str();
-			Gfx::CaseType type = Gfx::CaseType::None;
+		if (!consumeSeparator()) return std::nullopt;
 
-			if (_wcsicmp(strCase, L"LOWER") == 0) type = Gfx::CaseType::Lower;
-			else if (_wcsicmp(strCase, L"UPPER") == 0) type = Gfx::CaseType::Upper;
-			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
-			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
+		StringParser caseParser(consumeNextValue());
+		if (caseParser.ConsumeRest(L"Lower", skipWS)) return Gfx::InlineSetting::Case{ Gfx::CaseType::Lower };
+		if (caseParser.ConsumeRest(L"Upper", skipWS)) return Gfx::InlineSetting::Case{ Gfx::CaseType::Upper };
+		if (caseParser.ConsumeRest(L"Proper", skipWS)) return Gfx::InlineSetting::Case{ Gfx::CaseType::Proper };
+		if (caseParser.ConsumeRest(L"Sentence", skipWS)) return Gfx::InlineSetting::Case{ Gfx::CaseType::Sentence };
 
-			// Only allow the above options.
-			if (type == Gfx::CaseType::None) return std::nullopt;
-
-			return Gfx::InlineSetting::Case{ type };
-		}
+		// Only allow the above options.
+		return std::nullopt;
 	}
-	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
+	else if (strParser.Consume(L"CharacterSpacing", skipWS))
 	{
-		if (count > 1)
+		if (!consumeSeparator()) return std::nullopt;
+
+		// A spacing of "*" leaves that side to DirectWrite, and so does one that is not there.
+		auto toSpacing = [&toDouble](std::wstring_view value)
 		{
-			auto parseOptional = [&parser](const WCHAR* value) -> FLOAT
-			{
-				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
-				return (FLOAT)parser.ParseDouble(value, FLT_MAX);
-			};
+			if (value.empty() || value.starts_with(L'*')) return FLT_MAX;
+			return (FLOAT)toDouble(value);
+		};
 
-			Gfx::InlineSetting::CharacterSpacing spacing = { parseOptional(settings[1].c_str()), FLT_MAX, -1.0f };
+		const auto leading = consumeNextValue();
+		if (leading.empty()) return std::nullopt;
 
-			if (count > 2)
+		Gfx::InlineSetting::CharacterSpacing spacing = {};
+		spacing.leading = toSpacing(leading);
+		spacing.trailing = toSpacing(consumeNextValue());
+
+		const auto advanceWidth = consumeNextValue();
+		spacing.advanceWidth = advanceWidth.empty() ? -1.0f : (FLOAT)toDouble(advanceWidth);
+		return spacing;
+	}
+	else if (strParser.Consume(L"Color", skipWS))
+	{
+		if (!consumeSeparator()) return std::nullopt;
+
+		const auto color = consumeNextValue();
+		if (color.empty()) return std::nullopt;
+
+		return Gfx::InlineSetting::Color{ parser.ParseColor(color) };
+	}
+	else if (strParser.Consume(L"Face", skipWS))
+	{
+		if (!consumeSeparator()) return std::nullopt;
+
+		const auto face = consumeNextValue();
+		if (face.empty()) return std::nullopt;
+
+		return Gfx::InlineSetting::Face{ std::wstring(face) };
+	}
+	else if (strParser.Consume(L"GradientColor", skipWS))
+	{
+		// The name carries the gamma with it, as in "GradientColor1". ConsumeUntil() leaves nothing
+		// behind when the name is all there is, which the angle is then missing from.
+		const auto altGamma = strParser.ConsumeUntil(L'|', skipWS);
+
+		const auto angle = consumeNextValue();
+		if (angle.empty()) return std::nullopt;
+
+		Gfx::InlineSetting::GradientColor gradient = {};
+		gradient.altGamma = toInt(altGamma) != 0;
+		gradient.angle = (FLOAT)fmod((360.0 + fmod(toDouble(angle), 360.0)), 360.0);
+
+		const auto skipWSAndParens = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		while (!strParser.IsConsumed())
+		{
+			const auto value = consumeNextValue();
+			if (value.empty()) break;
+
+			// A stop that cannot be read is left zero initialized, so that the stops after it keep
+			// the position they were written in.
+			auto& stop = gradient.stops.emplace_back();
+
+			// A stop is a color and a position, "Color;Position".
+			StringParser stopParser(value);
+			const auto color = stopParser.ConsumeUntil(L';', skipWSAndParens);
+			stopParser.ConsumeWhitespace();
+			if (stopParser.IsConsumed()) continue;
+
+			const auto position = stopParser.ConsumeUntilOrRest(L';', skipWSAndParens);
+			stopParser.ConsumeWhitespace();
+			if (!stopParser.IsConsumed()) continue;
+
+			stop.color = parser.ParseColor(color);
+			stop.position = (FLOAT)toDouble(position);
+		}
+
+		if (gradient.stops.empty()) return std::nullopt;
+
+		// If gradient only has 1 stop, add a transparent stop at appropriate place
+		if (gradient.stops.size() == 1)
+		{
+			D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
+			D2D1_GRADIENT_STOP stop = { 0.0f, color };
+			if (gradient.stops[0].position < 0.5f)
 			{
-				spacing.trailing = parseOptional(settings[2].c_str());
+				stop.position = 1.0f;
 			}
 
-			if (count > 3)
-			{
-				spacing.advanceWidth = (FLOAT)parser.ParseDouble(settings[3].c_str(), -1.0f);
-			}
-
-			return spacing;
+			gradient.stops.push_back(stop);
 		}
+
+		return gradient;
 	}
-	else if (_wcsicmp(option, L"COLOR") == 0)
+	else if (strParser.Consume(L"Italic", skipWS))
 	{
-		if (count > 1)
-		{
-			return Gfx::InlineSetting::Color{ parser.ParseColor(settings[1].c_str()) };
-		}
-	}
-	else if (_wcsicmp(option, L"FACE") == 0)
-	{
-		if (count > 1)
-		{
-			return Gfx::InlineSetting::Face{ settings[1] };
-		}
-	}
-	else if (_wcsnicmp(option, L"GRADIENTCOLOR", 13) == 0)
-	{
-		if (count >= 3)
-		{
-			Gfx::InlineSetting::GradientColor gradient;
-			gradient.altGamma = parser.ParseInt(option + 13, 0) != 0;
-			gradient.angle = (FLOAT)fmod((360.0 + fmod(parser.ParseDouble(settings[1].c_str(), 0.0), 360.0)), 360.0);
+		if (!isWholeValue()) return std::nullopt;
 
-			// The first two options are the 'GRADIENTCOLOR' keyword and the angle, the rest are stops.
-			gradient.stops.resize(count - 2);
-			for (size_t i = 2; i < count; ++i)
-			{
-				const auto consumeOption = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
-
-				// A stop is a color and a position, "Color;Position".
-				StringParser values(settings[i]);
-				const auto color = values.ConsumeUntil(L';', consumeOption);
-				values.ConsumeWhitespace();
-				if (values.IsConsumed()) continue;
-
-				const auto position = values.ConsumeUntilOrRest(L';', consumeOption);
-				values.ConsumeWhitespace();
-				if (!values.IsConsumed()) continue;
-
-				gradient.stops[i - 2].color = parser.ParseColor(color);
-				gradient.stops[i - 2].position = (FLOAT)parser.ParseDouble(position, 0.0);
-			}
-
-			// If gradient only has 1 stop, add a transparent stop at appropriate place
-			if (gradient.stops.size() == 1)
-			{
-				D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
-				D2D1_GRADIENT_STOP stop = { 0.0f, color };
-				if (gradient.stops[0].position < 0.5f)
-				{
-					stop.position = 1.0f;
-				}
-
-				gradient.stops.push_back(stop);
-			}
-
-			return gradient;
-		}
-	}
-	else if (_wcsicmp(option, L"ITALIC") == 0)
-	{
 		return Gfx::InlineSetting::Italic{};
 	}
-	else if (_wcsicmp(option, L"OBLIQUE") == 0)
+	else if (strParser.Consume(L"Oblique", skipWS))
 	{
+		if (!isWholeValue()) return std::nullopt;
+
 		return Gfx::InlineSetting::Oblique{};
 	}
-	else if (_wcsicmp(option, L"SHADOW") == 0)
+	else if (strParser.Consume(L"Shadow", skipWS))
 	{
-		if (count >= 5)
-		{
-			D2D1_POINT_2F offset = {
-				(FLOAT)parser.ParseDouble(settings[1].c_str(), 1.0),
-				(FLOAT)parser.ParseDouble(settings[2].c_str(), 1.0) };
+		if (!consumeSeparator()) return std::nullopt;
 
-			return Gfx::InlineSetting::Shadow{
-				(FLOAT)parser.ParseDouble(settings[3].c_str(), 3.0),
-				offset,
-				parser.ParseColor(settings[4].c_str()) };
-		}
+		const auto x = consumeNextValue();
+		const auto y = consumeNextValue();
+		const auto blur = consumeNextValue();
+		const auto color = consumeNextValue();
+		if (x.empty() || y.empty() || blur.empty() || color.empty()) return std::nullopt;
+
+		return Gfx::InlineSetting::Shadow{
+			(FLOAT)toDouble(blur),
+			{ (FLOAT)toDouble(x), (FLOAT)toDouble(y) },
+			parser.ParseColor(color) };
 	}
-	else if (_wcsicmp(option, L"SIZE") == 0)
+	else if (strParser.Consume(L"Size", skipWS))
 	{
-		if (count > 1)
-		{
-			return Gfx::InlineSetting::Size{ (FLOAT)parser.ParseDouble(settings[1].c_str(), 10.0) };
-		}
+		if (!consumeSeparator()) return std::nullopt;
+
+		const auto size = consumeNextValue();
+		if (size.empty()) return std::nullopt;
+
+		return Gfx::InlineSetting::Size{ (FLOAT)toDouble(size) };
 	}
-	else if (_wcsicmp(option, L"STRETCH") == 0)
+	else if (strParser.Consume(L"Stretch", skipWS))
 	{
-		if (count > 1)
-		{
-			// DirectWrite supports 9 different stretch properties.
-			return Gfx::InlineSetting::Stretch{ (DWRITE_FONT_STRETCH)
-				std::clamp(parser.ParseInt(settings[1].c_str(), -1),
-					(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
-					(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED) };
-		}
+		if (!consumeSeparator()) return std::nullopt;
+
+		const auto stretch = consumeNextValue();
+		if (stretch.empty()) return std::nullopt;
+
+		// DirectWrite supports 9 different stretch properties.
+		return Gfx::InlineSetting::Stretch{ (DWRITE_FONT_STRETCH)std::clamp(toInt(stretch),
+			(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED, (int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED) };
 	}
-	else if (_wcsicmp(option, L"STRIKETHROUGH") == 0)
+	else if (strParser.Consume(L"Strikethrough", skipWS))
 	{
+		if (!isWholeValue()) return std::nullopt;
+
 		return Gfx::InlineSetting::Strikethrough{};
 	}
-	else if (_wcsicmp(option, L"TYPOGRAPHY") == 0)
+	else if (strParser.Consume(L"Typography", skipWS))
 	{
+		if (!consumeSeparator()) return std::nullopt;
+
 		// Typography 'tags' need to be extactly 4 characters.
-		if (count > 1 && settings[1].size() == 4)
-		{
-			Gfx::InlineSetting::Typography typography = { (DWRITE_FONT_FEATURE_TAG)
-				DWRITE_MAKE_OPENTYPE_TAG(settings[1][0], settings[1][1], settings[1][2], settings[1][3]), 1u };
+		const auto tag = consumeNextValue();
+		if (tag.size() != 4) return std::nullopt;
 
-			if (count > 2)
-			{
-				typography.parameter = parser.ParseUInt(settings[2].c_str(), 1u);
-			}
-
-			return typography;
-		}
+		const auto tagValue = (DWRITE_FONT_FEATURE_TAG)
+			DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]);
+		// A parameter that is not there is a parameter of 1.
+		const auto parameter = consumeNextValue();
+		return Gfx::InlineSetting::Typography{ tagValue, parameter.empty() ? 1u : toUInt(parameter) };
 	}
-	else if (_wcsicmp(option, L"UNDERLINE") == 0)
+	else if (strParser.Consume(L"Underline", skipWS))
 	{
+		if (!isWholeValue()) return std::nullopt;
+
 		return Gfx::InlineSetting::Underline{};
 	}
-	else if (_wcsicmp(option, L"WEIGHT") == 0)
+	else if (strParser.Consume(L"Weight", skipWS))
 	{
-		if (count > 1)
-		{
-			// DirectWrite supports weight from 1 to 999.
-			return Gfx::InlineSetting::Weight{ (DWRITE_FONT_WEIGHT)
-				std::clamp(parser.ParseInt(settings[1].c_str(), -1), 1, 999) };
-		}
+		if (!consumeSeparator()) return std::nullopt;
+
+		const auto weight = consumeNextValue();
+		if (weight.empty()) return std::nullopt;
+
+		// DirectWrite supports weight from 1 to 999.
+		return Gfx::InlineSetting::Weight{ (DWRITE_FONT_WEIGHT)std::clamp(toInt(weight), 1, 999) };
 	}
 
 	return std::nullopt;
@@ -491,11 +557,9 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	size_t i = 1;
 	while (!option.empty())
 	{
-		std::vector<std::wstring> settings;
-		StringParser::Split(option, L'|', settings);
+		auto setting = ParseInlineSetting(option, parser);
 
 		// An unusable setting ends the list - the ones after it are ignored as well.
-		auto setting = ParseInlineSetting(settings, parser);
 		if (!setting) break;
 
 		inlineOptions.push_back({ pattern, std::move(*setting) });
