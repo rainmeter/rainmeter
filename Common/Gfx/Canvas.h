@@ -99,7 +99,7 @@ public:
 	void ReleaseDC();
 
 	FontCollection* CreateFontCollection() { return new FontCollection(); }
-	TextFormat* CreateTextFormat(const MathParser& mathParser) { return new TextFormat(mathParser); }
+	TextFormat* CreateTextFormat() { return new TextFormat(); }
 
 	bool IsTransparentPixel(int x, int y);
 

@@ -5,24 +5,58 @@
 #include "TextInlineFormat.h"
 #include <Windows.h>
 #include <memory>
-#include <span>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 #include <dwrite_1.h>
 #include <wrl/client.h>
 
-class MathParser;
-
 namespace Gfx {
 
-enum class CaseType : BYTE;
 class FontCollection;
+
+namespace InlineSetting {
+
+struct Case { CaseType type; };
+struct CharacterSpacing { FLOAT leading; FLOAT trailing; FLOAT advanceWidth; };
+struct Color { D2D1_COLOR_F color; };
+struct Face { std::wstring face; };
+struct GradientColor { FLOAT angle; std::vector<D2D1_GRADIENT_STOP> stops; bool altGamma; };
+struct Italic {};
+struct None {};
+struct Oblique {};
+struct Shadow { FLOAT blur; D2D1_POINT_2F offset; D2D1_COLOR_F color; };
+struct Size { FLOAT size; };
+struct Stretch { DWRITE_FONT_STRETCH stretch; };
+struct Strikethrough {};
+struct Typography { DWRITE_FONT_FEATURE_TAG tag; UINT32 parameter; };
+struct Underline {};
+struct Weight { DWRITE_FONT_WEIGHT weight; };
+
+}  // namespace InlineSetting
+
+using TextInlineSetting = std::variant<
+	InlineSetting::Case,
+	InlineSetting::CharacterSpacing,
+	InlineSetting::Color,
+	InlineSetting::Face,
+	InlineSetting::GradientColor,
+	InlineSetting::Italic,
+	InlineSetting::None,
+	InlineSetting::Oblique,
+	InlineSetting::Shadow,
+	InlineSetting::Size,
+	InlineSetting::Stretch,
+	InlineSetting::Strikethrough,
+	InlineSetting::Typography,
+	InlineSetting::Underline,
+	InlineSetting::Weight>;
 
 struct TextInlineOption
 {
 	std::wstring pattern;
-	std::vector<std::wstring> settings;
+	TextInlineSetting setting;
 };
 
 struct TextInlineRange
@@ -50,7 +84,7 @@ enum class VerticalAlignment : BYTE
 class TextFormat final
 {
 public:
-	TextFormat(const MathParser& mathParser);
+	TextFormat();
 	~TextFormat();
 
 	TextFormat(const TextFormat& other) = delete;
@@ -84,8 +118,6 @@ public:
 	size_t GetInlineOptionCount() const { return m_TextInlineFormat.size(); }
 	const std::wstring& GetInlinePattern(const size_t index) const { return m_TextInlineFormat[index]->GetPattern(); }
 
-	const MathParser& GetMathParser() const { return m_MathParser; }
-
 private:
 	friend class Canvas;
 
@@ -111,14 +143,13 @@ private:
 	float GetLineGapAdjustment(std::wstring_view str) const;
 
 	// These functions create/modify any inline options.
-	bool CreateInlineOption(const size_t index, const std::wstring& pattern, const std::vector<std::wstring>& options);
 	void UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type);
 	void UpdateInlineCharacterSpacing(const size_t index, const std::wstring& pattern, const FLOAT leading,
 		const FLOAT trailing, const FLOAT advanceWidth);
 	void UpdateInlineColor(const size_t index, const std::wstring& pattern, const D2D1_COLOR_F& color);
 	void UpdateInlineFace(const size_t index, const std::wstring& pattern, const WCHAR* face);
-	void UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
-		const std::span<const std::wstring> args, const bool altGamma);
+	void UpdateInlineGradientColor(const size_t index, const std::wstring& pattern, const FLOAT angle,
+		const std::vector<D2D1_GRADIENT_STOP>& stops, const bool altGamma);
 	void UpdateInlineItalic(const size_t index, const std::wstring& pattern);
 	void UpdateInlineNone(const size_t index, const std::wstring& pattern);
 	void UpdateInlineOblique(const size_t index, const std::wstring& pattern);
@@ -144,7 +175,6 @@ private:
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT32 strLen);
 
-	const MathParser& m_MathParser;
 	HorizontalAlignment m_HorizontalAlignment;
 	VerticalAlignment m_VerticalAlignment;
 

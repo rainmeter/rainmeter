@@ -20,28 +20,17 @@
 #include "TextInlineFormat/TextInlineFormatTypography.h"
 #include "TextInlineFormat/TextInlineFormatUnderline.h"
 #include "TextInlineFormat/TextInlineFormatWeight.h"
-#include "../ParseUtil.h"
-#include "../StringParser.h"
 
 namespace {
 
-int Clamp(int value, int _min, int _max)
-{
-	if (value < _min || value > _max)
-	{
-		value = max(_min, value);
-		value = min(value, _max);
-	}
-
-	return value;
-}
+template<typename... Ts>
+struct Overloaded : Ts... { using Ts::operator()...; };
 
 }  // namespace
 
 namespace Gfx {
 
-TextFormat::TextFormat(const MathParser& mathParser) :
-	m_MathParser(mathParser),
+TextFormat::TextFormat() :
 	m_HorizontalAlignment(HorizontalAlignment::Left),
 	m_VerticalAlignment(VerticalAlignment::Top),
 	m_FontWeight(-1),
@@ -497,20 +486,33 @@ void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
 
 void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
-	static const std::wstring s_DefaultPattern = L".*";
-
-	size_t i = 0;
-	for (; i < options.size(); ++i)
+	for (size_t i = 0; i < options.size(); ++i)
 	{
-		const auto& pattern = options[i].pattern.empty() ? s_DefaultPattern : options[i].pattern;
-		if (!CreateInlineOption(i, pattern, options[i].settings)) break;
+		const std::wstring& pattern = options[i].pattern;
+		std::visit(Overloaded{
+			[&](const InlineSetting::Case& s) { UpdateInlineCase(i, pattern, s.type); },
+			[&](const InlineSetting::CharacterSpacing& s) { UpdateInlineCharacterSpacing(i, pattern, s.leading, s.trailing, s.advanceWidth); },
+			[&](const InlineSetting::Color& s) { UpdateInlineColor(i, pattern, s.color); },
+			[&](const InlineSetting::Face& s) { UpdateInlineFace(i, pattern, s.face.c_str()); },
+			[&](const InlineSetting::GradientColor& s) { UpdateInlineGradientColor(i, pattern, s.angle, s.stops, s.altGamma); },
+			[&](const InlineSetting::Italic&) { UpdateInlineItalic(i, pattern); },
+			[&](const InlineSetting::None&) { UpdateInlineNone(i, pattern); },
+			[&](const InlineSetting::Oblique&) { UpdateInlineOblique(i, pattern); },
+			[&](const InlineSetting::Shadow& s) { UpdateInlineShadow(i, pattern, s.blur, s.offset, s.color); },
+			[&](const InlineSetting::Size& s) { UpdateInlineSize(i, pattern, s.size); },
+			[&](const InlineSetting::Stretch& s) { UpdateInlineStretch(i, pattern, s.stretch); },
+			[&](const InlineSetting::Strikethrough&) { UpdateInlineStrikethrough(i, pattern); },
+			[&](const InlineSetting::Typography& s) { UpdateInlineTypography(i, pattern, s.tag, s.parameter); },
+			[&](const InlineSetting::Underline&) { UpdateInlineUnderline(i, pattern); },
+			[&](const InlineSetting::Weight& s) { UpdateInlineWeight(i, pattern, s.weight); }
+		}, options[i].setting);
 	}
 
 	// Remove any previous options that do not exist anymore
-	if (i < m_TextInlineFormat.size())
+	if (options.size() < m_TextInlineFormat.size())
 	{
 		m_HasInlineOptionsChanged = true;
-		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + i, m_TextInlineFormat.end());
+		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + options.size(), m_TextInlineFormat.end());
 	}
 }
 
@@ -544,182 +546,6 @@ void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>
 			m_TextInlineFormat[i]->SetRanges(std::move(dwriteRanges));
 		}
 	}
-}
-
-bool TextFormat::CreateInlineOption(const size_t index, const std::wstring& pattern, const std::vector<std::wstring>& options)
-{
-	if (options.empty()) return false;
-
-	const size_t optSize = options.size();
-	const WCHAR* option = options[0].c_str();
-	if (_wcsnicmp(option, L"NONE", 4) == 0)
-	{
-		UpdateInlineNone(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"CASE") == 0)
-	{
-		if (optSize > 1)
-		{
-			const WCHAR* strCase = options[1].c_str();
-			CaseType type = CaseType::None;
-
-			if (_wcsicmp(strCase, L"LOWER") == 0) type = Gfx::CaseType::Lower;
-			else if (_wcsicmp(strCase, L"UPPER") == 0) type = Gfx::CaseType::Upper;
-			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
-			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
-
-			// Only allow the above options.
-			if (type == Gfx::CaseType::None) return false;
-
-			UpdateInlineCase(index, pattern, type);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
-	{
-		if (optSize > 1)
-		{
-			const MathParser& mathParser = m_MathParser;
-			auto parseOptional = [&mathParser](const WCHAR* value) -> FLOAT
-			{
-				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
-				return (FLOAT)ParseUtil::ParseDouble(value, FLT_MAX, mathParser);
-			};
-
-			FLOAT leading = parseOptional(options[1].c_str());
-			FLOAT trailing = FLT_MAX;
-			FLOAT advanceWidth = -1.0f;
-
-			if (optSize > 2)
-			{
-				trailing = parseOptional(options[2].c_str());
-			}
-
-			if (optSize > 3)
-			{
-				advanceWidth = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), -1.0f, m_MathParser);
-			}
-
-			UpdateInlineCharacterSpacing(index, pattern, leading, trailing, advanceWidth);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"COLOR") == 0)
-	{
-		if (optSize > 1)
-		{
-			D2D1_COLOR_F newColor = ParseUtil::ParseColor(options[1].c_str(), m_MathParser);
-			UpdateInlineColor(index, pattern, newColor);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"FACE") == 0)
-	{
-		if (optSize > 1)
-		{
-			UpdateInlineFace(index, pattern, options[1].c_str());
-			return true;
-		}
-	}
-	else if (_wcsnicmp(option, L"GRADIENTCOLOR", 13) == 0)
-	{
-		if (optSize >= 3)
-		{
-			bool altGamma = ParseUtil::ParseInt(option + 13, 0, m_MathParser) != 0;
-
-			// The first option is the 'GRADIENTCOLOR' keyword itself, the rest are the arguments.
-			UpdateInlineGradientColor(index, pattern, std::span(options).subspan(1), altGamma);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"ITALIC") == 0)
-	{
-		UpdateInlineItalic(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"OBLIQUE") == 0)
-	{
-		UpdateInlineOblique(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"SHADOW") == 0)
-	{
-		if (optSize >= 5)
-		{
-			D2D1_POINT_2F offset = {
-				(FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 1.0, m_MathParser),
-				(FLOAT)ParseUtil::ParseDouble(options[2].c_str(), 1.0, m_MathParser) };
-
-			FLOAT blur = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), 3.0, m_MathParser);
-			D2D1_COLOR_F color = ParseUtil::ParseColor(options[4].c_str(), m_MathParser);
-			UpdateInlineShadow(index, pattern, blur, offset, color);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"SIZE") == 0)
-	{
-		if (optSize > 1)
-		{
-			FLOAT size = (FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 10.0, m_MathParser);
-			UpdateInlineSize(index, pattern, size);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"STRETCH") == 0)
-	{
-		if (optSize > 1)
-		{
-			// DirectWrite supports 9 different stretch properties.
-			DWRITE_FONT_STRETCH stretch = (DWRITE_FONT_STRETCH)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser),
-				(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
-				(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED);
-			UpdateInlineStretch(index, pattern, stretch);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"STRIKETHROUGH") == 0)
-	{
-		UpdateInlineStrikethrough(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"TYPOGRAPHY") == 0)
-	{
-		// Typography 'tags' need to be extactly 4 characters.
-		if (optSize > 1 && options[1].size() == 4)
-		{
-			UINT32 parameter = 1;
-			DWRITE_FONT_FEATURE_TAG tag = (DWRITE_FONT_FEATURE_TAG)
-				DWRITE_MAKE_OPENTYPE_TAG(options[1][0], options[1][1], options[1][2], options[1][3]);
-
-			if (optSize > 2)
-			{
-				parameter = ParseUtil::ParseUInt(options[2].c_str(), 1u, m_MathParser);
-			}
-
-			UpdateInlineTypography(index, pattern, tag, parameter);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"UNDERLINE") == 0)
-	{
-		UpdateInlineUnderline(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"WEIGHT") == 0)
-	{
-		if (optSize > 1)
-		{
-			// DirectWrite supports weight from 1 to 999.
-			DWRITE_FONT_WEIGHT weight = (DWRITE_FONT_WEIGHT)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser), 1, 999);
-			UpdateInlineWeight(index, pattern, weight);
-			return true;
-		}
-	}
-
-	return false;
 }
 
 void TextFormat::UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type)
@@ -821,42 +647,8 @@ void TextFormat::UpdateInlineFace(const size_t index, const std::wstring& patter
 }
 
 void TextFormat::UpdateInlineGradientColor(const size_t index, const std::wstring& pattern,
-	const std::span<const std::wstring> args, const bool altGamma)
+	const FLOAT angle, const std::vector<D2D1_GRADIENT_STOP>& stops, const bool altGamma)
 {
-	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
-
-	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
-	for (size_t i = 1; i < args.size(); ++i)
-	{
-		const auto consumeOption = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
-
-		// A stop is a color and a position, "Color;Position".
-		StringParser values(args[i]);
-		const auto color = values.ConsumeUntil(L';', consumeOption);
-		values.ConsumeWhitespace();
-		if (values.IsConsumed()) continue;
-
-		const auto position = values.ConsumeUntilOrRest(L';', consumeOption);
-		values.ConsumeWhitespace();
-		if (!values.IsConsumed()) continue;
-
-		stops[i - 1].color = ParseUtil::ParseColor(color, m_MathParser);
-		stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(position, 0.0, m_MathParser);
-	}
-
-	// If gradient only has 1 stop, add a transparent stop at appropriate place
-	if (stops.size() == 1)
-	{
-		D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		D2D1_GRADIENT_STOP stop = { 0.0f, color };
-		if (stops[0].position < 0.5f)
-		{
-			stop.position = 1.0f;
-		}
-
-		stops.push_back(stop);
-	}
-
 	if (index >= m_TextInlineFormat.size())
 	{
 		m_TextInlineFormat.emplace_back(new TextInlineFormat_GradientColor(pattern, angle, stops, altGamma));
