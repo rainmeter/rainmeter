@@ -72,6 +72,8 @@ public:
 	void SelectAll();
 	void SelectRange(int start, int length = -1);
 
+	virtual void SetText(std::wstring_view text) override;
+
 	void Clear();
 	void Reset();
 
