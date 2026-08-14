@@ -185,6 +185,7 @@ public:
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
+
 	void UpdateMouseMeasureCapture();
 
 	// At most one meter per skin holds the caret. The setters return true if the focus changed,
@@ -259,8 +260,10 @@ public:
 	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
 	void ClearDropTarget();
 
-	Meter* GetMeter(std::wstring_view meterName);
+	Section* GetSection(std::wstring_view sectionName) { return m_Parser.GetSection(sectionName); }
+	Meter* GetMeter(std::wstring_view meterName) { return m_Parser.GetMeter(meterName); }
 	Measure* GetMeasure(std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
+
 	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
 
 	friend class CurrentActionSectionScope;

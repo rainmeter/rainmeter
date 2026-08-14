@@ -20,6 +20,8 @@ public:
 
 	Meter(const Meter& other) = delete;
 
+	UINT GetBaseTypeID() override { return TypeID<Meter>(); }
+
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources();
 	void ReadOptions(ConfigParser& parser);

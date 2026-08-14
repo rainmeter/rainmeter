@@ -1882,8 +1882,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					parser.Initialize(path);
 
 					// Remove sections with Active=0
-					std::list<std::wstring>::const_iterator iter = parser.GetSections().begin();
-					for ( ; iter != parser.GetSections().end(); ++iter)
+					for (auto iter = parser.GetSectionNames().begin(); iter != parser.GetSectionNames().end(); ++iter)
 					{
 						if (parser.GetValue(*iter, L"Active", L"") == L"0")
 						{

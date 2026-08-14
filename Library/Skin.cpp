@@ -219,14 +219,14 @@ void Skin::Dispose(bool refresh)
 	m_MouseOver = false;
 	SetMouseLeaveEvent(true);
 
-	// Destroy the meters
+	m_Parser.ClearSections();
+
 	for (auto j = m_Meters.begin(); j != m_Meters.end(); ++j)
 	{
 		delete (*j);
 	}
 	m_Meters.clear();
 
-	// Destroy the measures
 	for (auto i = m_Measures.begin(); i != m_Measures.end(); ++i)
 	{
 		delete (*i);
@@ -2674,7 +2674,7 @@ bool Skin::ReadSkin()
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
 	Meter* prevMeter = nullptr;
-	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
+	for (auto iter = m_Parser.GetSectionNames().cbegin(); iter != m_Parser.GetSectionNames().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
 		if (_wcsicmp(L"Rainmeter", section) != 0 &&
@@ -2721,7 +2721,7 @@ bool Skin::ReadSkin()
 				if (measure)
 				{
 					m_Measures.push_back(measure);
-					m_Parser.AddMeasure(measure);
+					m_Parser.AddSection(measure);
 
 					if (IsNetworkMeasure(measure))
 					{
@@ -2741,6 +2741,7 @@ bool Skin::ReadSkin()
 				if (meter)
 				{
 					m_Meters.push_back(meter);
+					m_Parser.AddSection(meter);
 
 					if (meter->GetTypeID() == TypeID<MeterButton>())
 					{
@@ -5906,19 +5907,6 @@ std::wstring Skin::GetSkinPath()
 
 	path += m_FileName;
 	return path;
-}
-
-Meter* Skin::GetMeter(std::wstring_view meterName)
-{
-	for (auto* meter : m_Meters)
-	{
-		if (meter->GetOriginalName().length() == meterName.length() &&
-			_wcsicmp(meter->GetName(), meterName.data()) == 0)
-		{
-			return meter;
-		}
-	}
-	return nullptr;
 }
 
 bool Skin::GetMathParserValue(const WCHAR* str, int len, double* value, void* context)

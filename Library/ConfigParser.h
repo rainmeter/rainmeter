@@ -44,8 +44,12 @@ public:
 
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
-	void AddMeasure(Measure* pMeasure);
+	void AddSection(Section* section);
+	void ClearSections() { m_Sections.clear(); }
+
+	Section* GetSection(std::wstring_view name);
 	Measure* GetMeasure(std::wstring_view name);
+	Meter* GetMeter(std::wstring_view name);
 
 	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
@@ -84,7 +88,7 @@ public:
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
 	const std::vector<std::wstring>& GetIniFiles() const { return m_IniFiles; }
-	const std::list<std::wstring>& GetSections() { return m_Sections; }
+	const std::list<std::wstring>& GetSectionNames() { return m_SectionNames; }
 
 	bool ReplaceVariables(std::wstring& result, bool isNewStyle = false);
 	bool ReplaceMeasures(std::wstring& result);
@@ -129,7 +133,7 @@ private:
 	static std::wstring StrToUpper(std::wstring_view str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	StringMap<Measure*> m_Measures;
+	StringMap<Section*> m_Sections;
 
 	std::vector<std::wstring> m_InheritChain;
 
@@ -142,12 +146,12 @@ private:
 	std::wstring m_CurrentPath;
 
 	std::vector<std::wstring> m_IniFiles;
-	std::list<std::wstring> m_Sections;		// Ordered section
+	std::list<std::wstring> m_SectionNames;	// Ordered
 	StringMap<std::wstring> m_Values;
 
 	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
-	std::list<std::wstring>::const_iterator m_SectionInsertPos;
+	std::list<std::wstring>::const_iterator m_SectionNamesInsertPos;
 
 	StringMap<std::wstring> m_Variables;
 	StringMap<std::wstring> m_OriginalVariableNames;
