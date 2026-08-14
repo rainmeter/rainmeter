@@ -60,6 +60,7 @@ static void AddMeterToSkinForTests(Skin& skin, Meter* meter)
 {
 	auto& meters = const_cast<std::vector<Meter*>&>(skin.GetMeters());
 	meters.push_back(meter);
+	skin.GetParser().AddSection(meter);
 }
 
 static void AssertSectionVariableSelector(ConfigParser& parser, const WCHAR* section, const WCHAR* selector, const WCHAR* expected)
