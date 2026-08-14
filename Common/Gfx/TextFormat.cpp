@@ -355,29 +355,28 @@ void TextFormat::SetFontWeight(int weight)
 	m_HasWeightChanged = true;
 }
 
-DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
+float TextFormat::GetLineGapAdjustment(std::wstring_view str) const
 {
-	UINT32 strLen = (UINT32)srcStr.length();
-	const WCHAR* str = srcStr.c_str();
+	return str.find(L'\n') == std::wstring_view::npos ? m_LineGap : 0.0f;
+}
+
+DWRITE_TEXT_METRICS TextFormat::GetMetrics(std::wstring_view str, bool gdiEmulation, float maxWidth)
+{
+	const float lineGap = GetLineGapAdjustment(str);
 
 	// GDI+ compatibility: If the last character is a newline, GDI+ measurements seem to ignore it.
-	bool strippedLastNewLine = false;
-	if (strLen > 2 && str[strLen - 1] == L'\n')
+	if (str.length() > 2 && str.back() == L'\n')
 	{
-		strippedLastNewLine = true;
-		--strLen;
-
-		if (str[strLen - 1] == L'\r')
-		{
-			--strLen;
-		}
+		str.remove_suffix(1);
+		if (str.back() == L'\r') str.remove_suffix(1);
 	}
 
+	const DWRITE_TEXT_RANGE range = { 0, (UINT32)str.length() };
 	DWRITE_TEXT_METRICS metrics = { 0 };
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
 	HRESULT hr = Canvas::c_DWFactory->CreateTextLayout(
-		str,
-		strLen,
+		str.data(),
+		range.length,
 		m_TextFormat.Get(),
 		maxWidth,
 		10000.0f,
@@ -387,7 +386,6 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 		// Set the font weight if valid
 		if (m_FontWeight > 0 && m_FontWeight < 1000)
 		{
-			const DWRITE_TEXT_RANGE range = { 0, strLen };
 			textLayout->SetFontWeight((DWRITE_FONT_WEIGHT)m_FontWeight, range);
 		}
 
@@ -400,7 +398,6 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 			textLayout.As(&textLayout1);
 
 			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0, strLen};
 			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 
@@ -414,10 +411,7 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 
 				// GDI+ compatibility: If the string contains a newline (even if it is the
 				// stripped last character), GDI+ adds the line gap to the overall height.
-				if (strippedLastNewLine || wmemchr(str, L'\n', strLen) != nullptr)
-				{
-					metrics.height += m_LineGap;
-				}
+				metrics.height += m_LineGap - lineGap;
 			}
 			else
 			{
@@ -428,10 +422,7 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 
 				// GDI+ compatibility: With accurate metrics, the line gap needs to be subtracted
 				// from the overall height if the string does not contain newlines.
-				if (!strippedLastNewLine && wmemchr(str, L'\n', strLen) == nullptr)
-				{
-					metrics.height -= m_LineGap;
-				}
+				metrics.height -= lineGap;
 			}
 		}
 		else

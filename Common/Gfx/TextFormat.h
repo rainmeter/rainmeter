@@ -7,6 +7,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <dwrite_1.h>
 #include <wrl/client.h>
@@ -102,7 +103,12 @@ private:
 	// changes. Returns true if the layout is valid for use.
 	bool CreateLayout(ID2D1DeviceContext* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation);
 
-	DWRITE_TEXT_METRICS GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth = 10000.0f);
+	DWRITE_TEXT_METRICS GetMetrics(std::wstring_view str, bool gdiEmulation, float maxWidth = 10000.0f);
+
+	// DirectWrite puts the font's line gap in every line it reports, and GetMetrics() takes it back
+	// off a single-line string for GDI+ compatibility. Anything drawn to match the height of the
+	// text - the caret, or the highlight behind a selection - has to take it off as well.
+	float GetLineGapAdjustment(std::wstring_view str) const;
 
 	// These functions create/modify any inline options.
 	bool CreateInlineOption(const size_t index, const std::wstring& pattern, const std::vector<std::wstring>& options);
