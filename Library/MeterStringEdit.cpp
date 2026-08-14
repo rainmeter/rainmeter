@@ -449,8 +449,9 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	// Trimming clips the text itself, but not the caret or the selection behind it.
-	const bool clip = ShouldTrim() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
+	// A meter given a size can hold more text than fits, scrolled or not, so what does not fit is
+	// cut at the box. An auto-sized one grows to its text and has nothing to cut.
+	const bool clip = m_WDefined || m_HDefined || ShouldTrim() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
 	if (clip) canvas.PushClip(GetMeterRectPadding());
 
 	// The highlight goes behind the glyphs, so it has to be drawn before the text. It builds the
