@@ -91,9 +91,9 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 {
 	m_Skin = skin;
 
-	m_Measures.clear();
-	m_IniFiles.clear();
 	m_Sections.clear();
+	m_IniFiles.clear();
+	m_SectionNames.clear();
 	m_Values.clear();
 	m_Variables.clear();
 	m_OriginalVariableNames.clear();
@@ -106,7 +106,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 
 	m_CurrentSection = nullptr;
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
-	m_SectionInsertPos = m_Sections.end();
+	m_SectionNamesInsertPos = m_SectionNames.end();
 
 	System::UpdateIniFileMappingList();
 
@@ -117,7 +117,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	// Clear and minimize
 	m_FoundSections.clear();
 	m_ListVariables.clear();
-	m_SectionInsertPos = m_Sections.end();
+	m_SectionNamesInsertPos = m_SectionNames.end();
 }
 
 void ConfigParser::ReadVariables()
@@ -870,11 +870,9 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			else
 			{
 				std::wstring section = result.substr(si, end - si);
-				const std::wstring sectionUpper = StrToUpper(section);
-				auto iter = m_Measures.find(sectionUpper);
-				if (iter != m_Measures.end())
+				Measure* measure = GetMeasure(section);
+				if (measure)
 				{
-					Measure* measure = (*iter).second;
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 					size_t valueLen = wcslen(value);
 
@@ -1289,23 +1287,35 @@ bool ConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
 	return m_LastValueDefined;
 }
 
-void ConfigParser::AddMeasure(Measure* pMeasure)
+void ConfigParser::AddSection(Section* section)
 {
-	if (pMeasure)
+	if (section)
 	{
-		m_Measures[StrToUpper(pMeasure->GetOriginalName())] = pMeasure;
+		m_Sections[StrToUpper(section->GetOriginalName())] = section;
 	}
 }
 
-Measure* ConfigParser::GetMeasure(std::wstring_view name)
+Section* ConfigParser::GetSection(std::wstring_view name)
 {
-	auto iter = m_Measures.find(StrToUpper(name));
-	if (iter != m_Measures.end())
+	auto iter = m_Sections.find(StrToUpper(name));
+	if (iter != m_Sections.end())
 	{
 		return (*iter).second;
 	}
 
 	return nullptr;
+}
+
+Measure* ConfigParser::GetMeasure(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Measure>()) ? (Measure*)section : nullptr;
+}
+
+Meter* ConfigParser::GetMeter(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
 }
 
 std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
@@ -1677,7 +1687,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 				{
 					if (m_FoundSections.insert(optionUpperCase).second)
 					{
-						m_Sections.insert(m_SectionInsertPos, value);
+						m_SectionNames.insert(m_SectionNamesInsertPos, value);
 					}
 					sections.push_back(value);
 				}
@@ -1700,8 +1710,8 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 		if (depth == 0)  // Add once
 		{
-			m_Sections.push_back(strRainmeter);
-			m_Sections.push_back(strFolder);
+			m_SectionNames.push_back(strRainmeter);
+			m_SectionNames.push_back(strFolder);
 		}
 	}
 
@@ -1787,17 +1797,17 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 								if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 								{
 									// Set the insertion place to the last
-									m_SectionInsertPos = m_Sections.end();
+									m_SectionNamesInsertPos = m_SectionNames.end();
 									resetInsertPos = false;
 								}
 								else
 								{
 									// Find the appropriate insertion place
-									for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
+									for (jt = m_SectionNames.cbegin(); jt != m_SectionNames.cend(); ++jt)
 									{
 										if (_wcsicmp((*jt).c_str(), sectionOriginalCase) == 0)
 										{
-											m_SectionInsertPos = ++jt;
+											m_SectionNamesInsertPos = ++jt;
 											resetInsertPos = false;
 											break;
 										}
@@ -1806,12 +1816,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 							}
 
 							// Save the section insertion position in case the included file also uses an @Include
-							auto prevInsertPos = m_SectionInsertPos;
+							auto prevInsertPos = m_SectionNamesInsertPos;
 
 							ReadIniFile(value, skinSection, depth + 1);
 
 							// Reset the section insertion position to previous position
-							m_SectionInsertPos = prevInsertPos;
+							m_SectionNamesInsertPos = prevInsertPos;
 						}
 					}
 					else if (!isMetadata)

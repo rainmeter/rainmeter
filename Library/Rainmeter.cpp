@@ -1781,7 +1781,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_NormalStayDesktop = parser.ReadBool(L"Rainmeter", L"NormalStayDesktop", true);
 
 	bool hasActiveSkins = false;
-	for (auto iter = parser.GetSections().cbegin(); iter != parser.GetSections().end(); ++iter)
+	for (auto iter = parser.GetSectionNames().cbegin(); iter != parser.GetSectionNames().end(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
 

@@ -189,10 +189,10 @@ void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& a
 	if (args.size() == (size_t)bangInfo.argCount + 1U)
 	{
 		const std::wstring& name = args[0];
-		const bool isMeter = bangInfo.type == SectionBangInfo::Type::Meter;
-		section = isMeter ? (Section*)skin->GetMeter(name) : (Section*)skin->GetMeasure(name);
+		section = skin->GetSection(name);
 		if (!section)
 		{
+			const bool isMeter = bangInfo.type == SectionBangInfo::Type::Meter;
 			LogErrorF(skin, L"!%s: %s [%s] not found", bangInfo.name, isMeter ? L"Meter" : L"Measure", name.c_str());
 			return;
 		}

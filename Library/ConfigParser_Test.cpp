@@ -226,12 +226,12 @@ public:
 		TestMeasureString measureString2(L"MeasureString2");
 		parser.SetValue(L"MeasureString2", L"String", L"Second");
 		measureString2.Read(parser);
-		parser.AddMeasure(&measureString2);
+		parser.AddSection(&measureString2);
 
 		TestMeasureString measureIndex(L"MeasureIndex");
 		parser.SetValue(L"MeasureIndex", L"String", L"2");
 		measureIndex.Read(parser);
-		parser.AddMeasure(&measureIndex);
+		parser.AddSection(&measureIndex);
 
 		std::wstring string1 = L"[#Var[&MeasureIndex]]";
 		Assert::IsTrue(parser.ReplaceMeasures(string1));
@@ -274,7 +274,7 @@ public:
 		TestMeasureString measure(L"M");
 		parser.SetValue(L"M", L"String", L"Single");
 		measure.Read(parser);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		std::wstring string1 = L"[M]";
 		Assert::IsTrue(parser.ReplaceMeasures(string1));
@@ -296,7 +296,7 @@ public:
 		parser.SetValue(L"MeasureString", L"MinValue", L"12");
 		parser.SetValue(L"MeasureString", L"MaxValue", L"34");
 		measure.Read(parser);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MaxValue", L"34");
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MinValue", L"12");
@@ -315,7 +315,7 @@ public:
 		parser.SetValue(L"Measure", L"MaxValue", L"50");
 		measure.Read(parser);
 		measure.SetTestValue(30.0);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		AssertSectionVariableSelector(parser, L"Measure", L"%", L"50");
 		AssertSectionVariableSelector(parser, L"Measure", L"%,1", L"50.0");

@@ -16,7 +16,11 @@ public:
 
 	Section(const Section& other) = delete;
 
+	// Identifies the concrete type of the section (e.g. TypeID<MeterString>()).
 	virtual UINT GetTypeID() = 0;
+
+	// Identifies the base type of the section, i.e. either TypeID<Meter>() or TypeID<Measure>().
+	virtual UINT GetBaseTypeID() = 0;
 
 	const WCHAR* GetName() const { return m_Name.c_str(); }
 	const std::wstring& GetOriginalName() const { return m_Name; }

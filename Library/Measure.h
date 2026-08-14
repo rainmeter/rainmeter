@@ -44,6 +44,8 @@ public:
 
 	Measure(const Measure& other) = delete;
 
+	UINT GetBaseTypeID() override { return TypeID<Measure>(); }
+
 	virtual void Initialize();
 	void ReadOptions(ConfigParser& parser);
 	bool Update(bool rereadOptions = false);
