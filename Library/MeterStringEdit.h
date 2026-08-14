@@ -242,13 +242,13 @@ private:
 
 	// Drawn in place of the text while nothing has been typed. Never enters m_Text, so it cannot
 	// reach [$Input] and the caret can never index into it.
-	std::wstring m_Placeholder;
+	std::wstring m_PlaceholderText;
 	D2D1_COLOR_F m_PlaceholderColor;
 	std::wstring m_PlaceholderFontFace;
 	FLOAT m_PlaceholderFontSize;
 	TEXTSTYLE m_PlaceholderStyle;
 
-	// Allocated only while m_Placeholder is non-empty.
+	// Allocated only while m_PlaceholderText is non-empty.
 	std::unique_ptr<Gfx::TextFormat> m_PlaceholderFormat;
 
 	// Offset into m_String, and equally into m_Text: the two are the same length here, whether or
