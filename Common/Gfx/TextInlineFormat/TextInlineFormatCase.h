@@ -7,15 +7,6 @@
 
 namespace Gfx {
 
-enum class CaseType : BYTE
-{
-	Lower,
-	Upper,
-	Proper,
-	Sentence,
-	None
-};
-
 // Sets the case for a select range.
 class TextInlineFormat_Case final : public TextInlineFormat
 {

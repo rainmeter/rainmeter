@@ -29,6 +29,15 @@ enum class InlineType : BYTE
 	Weight
 };
 
+enum class CaseType : BYTE
+{
+	Lower,
+	Upper,
+	Proper,
+	Sentence,
+	None
+};
+
 class __declspec(novtable) TextInlineFormat
 {
 public:

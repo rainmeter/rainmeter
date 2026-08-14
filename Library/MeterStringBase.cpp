@@ -7,8 +7,198 @@
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
+#include <algorithm>
+#include <cfloat>
 
 namespace {
+
+std::optional<Gfx::TextInlineSetting> ParseInlineSetting(const std::vector<std::wstring>& settings, ConfigParser& parser)
+{
+	if (settings.empty()) return std::nullopt;
+
+	const size_t count = settings.size();
+	const WCHAR* option = settings[0].c_str();
+	if (_wcsnicmp(option, L"NONE", 4) == 0)
+	{
+		return Gfx::InlineSetting::None{};
+	}
+	else if (_wcsicmp(option, L"CASE") == 0)
+	{
+		if (count > 1)
+		{
+			const WCHAR* strCase = settings[1].c_str();
+			Gfx::CaseType type = Gfx::CaseType::None;
+
+			if (_wcsicmp(strCase, L"LOWER") == 0) type = Gfx::CaseType::Lower;
+			else if (_wcsicmp(strCase, L"UPPER") == 0) type = Gfx::CaseType::Upper;
+			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
+			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
+
+			// Only allow the above options.
+			if (type == Gfx::CaseType::None) return std::nullopt;
+
+			return Gfx::InlineSetting::Case{ type };
+		}
+	}
+	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
+	{
+		if (count > 1)
+		{
+			auto parseOptional = [&parser](const WCHAR* value) -> FLOAT
+			{
+				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
+				return (FLOAT)parser.ParseDouble(value, FLT_MAX);
+			};
+
+			Gfx::InlineSetting::CharacterSpacing spacing = { parseOptional(settings[1].c_str()), FLT_MAX, -1.0f };
+
+			if (count > 2)
+			{
+				spacing.trailing = parseOptional(settings[2].c_str());
+			}
+
+			if (count > 3)
+			{
+				spacing.advanceWidth = (FLOAT)parser.ParseDouble(settings[3].c_str(), -1.0f);
+			}
+
+			return spacing;
+		}
+	}
+	else if (_wcsicmp(option, L"COLOR") == 0)
+	{
+		if (count > 1)
+		{
+			return Gfx::InlineSetting::Color{ parser.ParseColor(settings[1].c_str()) };
+		}
+	}
+	else if (_wcsicmp(option, L"FACE") == 0)
+	{
+		if (count > 1)
+		{
+			return Gfx::InlineSetting::Face{ settings[1] };
+		}
+	}
+	else if (_wcsnicmp(option, L"GRADIENTCOLOR", 13) == 0)
+	{
+		if (count >= 3)
+		{
+			Gfx::InlineSetting::GradientColor gradient;
+			gradient.altGamma = parser.ParseInt(option + 13, 0) != 0;
+			gradient.angle = (FLOAT)fmod((360.0 + fmod(parser.ParseDouble(settings[1].c_str(), 0.0), 360.0)), 360.0);
+
+			// The first two options are the 'GRADIENTCOLOR' keyword and the angle, the rest are stops.
+			gradient.stops.resize(count - 2);
+			for (size_t i = 2; i < count; ++i)
+			{
+				const auto consumeOption = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+				// A stop is a color and a position, "Color;Position".
+				StringParser values(settings[i]);
+				const auto color = values.ConsumeUntil(L';', consumeOption);
+				values.ConsumeWhitespace();
+				if (values.IsConsumed()) continue;
+
+				const auto position = values.ConsumeUntilOrRest(L';', consumeOption);
+				values.ConsumeWhitespace();
+				if (!values.IsConsumed()) continue;
+
+				gradient.stops[i - 2].color = parser.ParseColor(color);
+				gradient.stops[i - 2].position = (FLOAT)parser.ParseDouble(position, 0.0);
+			}
+
+			// If gradient only has 1 stop, add a transparent stop at appropriate place
+			if (gradient.stops.size() == 1)
+			{
+				D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
+				D2D1_GRADIENT_STOP stop = { 0.0f, color };
+				if (gradient.stops[0].position < 0.5f)
+				{
+					stop.position = 1.0f;
+				}
+
+				gradient.stops.push_back(stop);
+			}
+
+			return gradient;
+		}
+	}
+	else if (_wcsicmp(option, L"ITALIC") == 0)
+	{
+		return Gfx::InlineSetting::Italic{};
+	}
+	else if (_wcsicmp(option, L"OBLIQUE") == 0)
+	{
+		return Gfx::InlineSetting::Oblique{};
+	}
+	else if (_wcsicmp(option, L"SHADOW") == 0)
+	{
+		if (count >= 5)
+		{
+			D2D1_POINT_2F offset = {
+				(FLOAT)parser.ParseDouble(settings[1].c_str(), 1.0),
+				(FLOAT)parser.ParseDouble(settings[2].c_str(), 1.0) };
+
+			return Gfx::InlineSetting::Shadow{
+				(FLOAT)parser.ParseDouble(settings[3].c_str(), 3.0),
+				offset,
+				parser.ParseColor(settings[4].c_str()) };
+		}
+	}
+	else if (_wcsicmp(option, L"SIZE") == 0)
+	{
+		if (count > 1)
+		{
+			return Gfx::InlineSetting::Size{ (FLOAT)parser.ParseDouble(settings[1].c_str(), 10.0) };
+		}
+	}
+	else if (_wcsicmp(option, L"STRETCH") == 0)
+	{
+		if (count > 1)
+		{
+			// DirectWrite supports 9 different stretch properties.
+			return Gfx::InlineSetting::Stretch{ (DWRITE_FONT_STRETCH)
+				std::clamp(parser.ParseInt(settings[1].c_str(), -1),
+					(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
+					(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED) };
+		}
+	}
+	else if (_wcsicmp(option, L"STRIKETHROUGH") == 0)
+	{
+		return Gfx::InlineSetting::Strikethrough{};
+	}
+	else if (_wcsicmp(option, L"TYPOGRAPHY") == 0)
+	{
+		// Typography 'tags' need to be extactly 4 characters.
+		if (count > 1 && settings[1].size() == 4)
+		{
+			Gfx::InlineSetting::Typography typography = { (DWRITE_FONT_FEATURE_TAG)
+				DWRITE_MAKE_OPENTYPE_TAG(settings[1][0], settings[1][1], settings[1][2], settings[1][3]), 1u };
+
+			if (count > 2)
+			{
+				typography.parameter = parser.ParseUInt(settings[2].c_str(), 1u);
+			}
+
+			return typography;
+		}
+	}
+	else if (_wcsicmp(option, L"UNDERLINE") == 0)
+	{
+		return Gfx::InlineSetting::Underline{};
+	}
+	else if (_wcsicmp(option, L"WEIGHT") == 0)
+	{
+		if (count > 1)
+		{
+			// DirectWrite supports weight from 1 to 999.
+			return Gfx::InlineSetting::Weight{ (DWRITE_FONT_WEIGHT)
+				std::clamp(parser.ParseInt(settings[1].c_str(), -1), 1, 999) };
+		}
+	}
+
+	return std::nullopt;
+}
 
 std::vector<std::vector<Gfx::TextInlineRange>> FindInlineRanges(
 	const std::wstring& str, const Gfx::TextFormat& format)
@@ -101,7 +291,7 @@ MeterStringBase::MeterStringBase(Skin* skin, const WCHAR* name) : Meter(skin, na
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
-	m_TextFormat(skin->GetCanvas().CreateTextFormat(skin->GetMathParser())),
+	m_TextFormat(skin->GetCanvas().CreateTextFormat()),
 	m_FontWeight(-1),
 	m_TextOffset()
 {
@@ -301,11 +491,14 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	size_t i = 1;
 	while (!option.empty())
 	{
-		Gfx::TextInlineOption inlineOption;
-		inlineOption.pattern = pattern;
-		StringParser::Split(option, L'|', inlineOption.settings);
+		std::vector<std::wstring> settings;
+		StringParser::Split(option, L'|', settings);
 
-		inlineOptions.push_back(inlineOption);
+		// An unusable setting ends the list - the ones after it are ignored as well.
+		auto setting = ParseInlineSetting(settings, parser);
+		if (!setting) break;
+
+		inlineOptions.push_back({ pattern, std::move(*setting) });
 
 		// Check for InlineSetting2/InlinePattern2 ... etc.
 		const std::wstring num = std::to_wstring(++i);

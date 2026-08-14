@@ -214,7 +214,7 @@ void MeterStringEdit::UpdatePlaceholderFormat()
 
 	if (!m_PlaceholderFormat)
 	{
-		m_PlaceholderFormat.reset(m_Skin->GetCanvas().CreateTextFormat(m_Skin->GetMathParser()));
+		m_PlaceholderFormat.reset(m_Skin->GetCanvas().CreateTextFormat());
 	}
 
 	m_PlaceholderFormat->SetProperties(
