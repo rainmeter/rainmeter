@@ -123,6 +123,12 @@ void DoSelectAllBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	editMeter->SelectAll();
 }
 
+void DoSetTextBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterStringEdit*)meter)->SetText(args[0]);
+	skin->RequestWindowSizeCheck();
+}
+
 void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	((MeterStringEdit*)meter)->Clear();
@@ -171,6 +177,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Submit", 0, DoSubmitBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SetText", 1, DoSetTextBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
 		return true;
@@ -660,27 +667,32 @@ void MeterStringEdit::Clear()
 	m_Submitted = submitted;
 }
 
-void MeterStringEdit::Reset()
+void MeterStringEdit::SetText(std::wstring_view text)
 {
-	std::wstring text = m_TextOption;
-	ApplyTextTransformations(text);
+	std::wstring newText(text);
+	ApplyTextTransformations(newText);
 
-	if (text == m_Text) return;
+	if (newText == m_Text) return;
 
 	// Like Clear(), the skin's doing rather than the user's next edit: undoable, but leaving a
-	// submit standing so that going back to the option is not itself abandoning what was sent.
+	// submit standing so that replacing what was sent is not itself abandoning it.
 	PushUndo(EditKind::None);
 
-	m_Text = std::move(text);
+	m_Text = std::move(newText);
 	SyncDrawnString();
 
-	// The caret goes to the end, where typing on from the restored text is what the user is most
-	// likely to want, and where nothing has to be clamped to a text it no longer indexes into.
+	// The caret goes to the end, where typing on from the new text is what the user is most likely
+	// to want, and where nothing has to be clamped to a text it no longer indexes into.
 	m_SelectionAnchor = m_CaretPos = (UINT32)m_String.length();
 	m_CaretTrailing = true;
 
 	UpdateAutoSizeForText();
 	EnsureCaretVisible();
+}
+
+void MeterStringEdit::Reset()
+{
+	SetText(m_TextOption);
 }
 
 void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)

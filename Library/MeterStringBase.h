@@ -6,6 +6,7 @@
 #include "Measure.h"
 #include <memory>
 #include <optional>
+#include <string_view>
 
 // Shared base for String, which formats a measure's value, and StringEdit, which lets the user
 // edit the text. Holds the font and case options common to both and the drawing built on them, but
@@ -25,10 +26,9 @@ public:
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources() override;
 
-	void SetText(const WCHAR* text) { m_Text = text; }
-
 	// The text before any of String's formatting. For StringEdit this is what the user typed.
 	const std::wstring& GetText() const { return m_Text; }
+	virtual void SetText(std::wstring_view text) { m_Text = text; }
 
 	static void InitializeStatic();
 	static void FinalizeStatic();

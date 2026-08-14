@@ -126,7 +126,7 @@ static int SetText(lua_State* L)
 	{
 		MeterStringBase* text = (MeterStringBase*)self;
 		std::wstring str = LuaHelper::ToWide(2);
-		text->SetText(str.c_str());
+		text->SetText(str);
 	}
 
 	return 0;
