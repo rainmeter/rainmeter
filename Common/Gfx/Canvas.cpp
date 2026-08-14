@@ -653,7 +653,15 @@ bool Canvas::GetCaretRect(const std::wstring& srcStr, TextFormat& format, const 
 	if (FAILED(hr)) return false;
 
 	// An empty layout can report a zero-height line, which would make the caret invisible.
-	const FLOAT height = metrics.height > 0.0f ? metrics.height : format.m_TextFormat->GetFontSize();
+	FLOAT height = format.m_TextFormat->GetFontSize();
+	if (metrics.height > 0.0f)
+	{
+		// A caret taller than the measured text does not just look wrong: an auto-sized meter is
+		// sized from that measurement, so the overhang is scrolled into view and drags the text
+		// up to make room for a caret that already fits.
+		height = metrics.height - format.GetLineGapAdjustment(srcStr);
+		if (height < 1.0f) height = 1.0f;
+	}
 
 	caretRect.left = drawPosition.x + x;
 	caretRect.top = drawPosition.y + y;
@@ -758,13 +766,17 @@ bool Canvas::GetTextRangeRects(const std::wstring& srcStr, TextFormat& format,
 		drawPosition.x, drawPosition.y, metrics.data(), count, &count);
 	if (FAILED(hr)) return false;
 
+	// Trimmed as the caret is, so the highlight and the caret inside it are the same height.
+	const FLOAT lineGap = format.GetLineGapAdjustment(srcStr);
+
 	rects.reserve(count);
 	for (UINT32 i = 0U; i < count; ++i)
 	{
 		const auto& m = metrics[i];
 		if (m.width <= 0.0f || m.height <= 0.0f) continue;
 
-		rects.push_back(D2D1::RectF(m.left, m.top, m.left + m.width, m.top + m.height));
+		const FLOAT height = m.height > lineGap ? m.height - lineGap : m.height;
+		rects.push_back(D2D1::RectF(m.left, m.top, m.left + m.width, m.top + height));
 	}
 
 	return true;
