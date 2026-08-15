@@ -4883,9 +4883,9 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring dismissCommand;
 			std::wstring focusCommand;
 
-			// Hit-tested against the layout the click landed on, which is why it comes before the
-			// meter takes the caret: a clipped field drops its ellipsis and scrolls to where its
-			// caret was left the moment it is focused, putting other text under the same point.
+			// Placed from what is on screen, which is why it comes before the meter takes the caret:
+			// a field scrolled away from its start scrolls back to wherever its caret was left the
+			// moment it is focused, and the click would then land on text that had moved under it.
 			// Also before the focus command runs, so an OnFocusAction that selects the text has the
 			// last word over the caret this places.
 			if (!editMeter->IsFocused())

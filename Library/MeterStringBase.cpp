@@ -646,9 +646,9 @@ void MeterStringBase::ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* forma
 
 	canvas.SetTextAntiAliasing(m_AntiAlias);
 
-	// The two follow ClipString together everywhere but a TextEdit: a focused one keeps the lines
-	// the trimmed layout gave it and drops only the ellipsis, so that what it scrolls to is what
-	// was there, and a single-line one keeps its one line whether or not it is trimmed.
+	// The two follow ClipString together for String. A TextEdit takes the wrapping and leaves the
+	// ellipsis, since it scrolls to the text that does not fit rather than announcing it, and a
+	// single-line one leaves the wrapping as well.
 	format->SetTrimming(ShouldTrim(), ShouldClip() && CanWrap());
 }
 
