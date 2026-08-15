@@ -113,8 +113,8 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 	testPath += L".";
 	std::wstring::size_type origLen = testPath.length();
 
-	const int extCount = 4;
-	LPCTSTR extName[extCount] = { L"jpg", L"jpeg", L"png", L"bmp" };
+	const int extCount = 6;
+	LPCTSTR extName[extCount] = { L"jpg", L"jpeg", L"png", L"bmp", L"webp", L"avif" };
 
 	for (int i = 0; i < extCount; ++i)
 	{
