@@ -89,8 +89,8 @@ public:
 
 	// |trim| replaces the text that does not fit with an ellipsis, and |wrap| breaks the lines to
 	// the layout width rather than letting them run past it. Trimmed text is always wrapped, but
-	// wrapped text need not be trimmed: an editable meter drops the ellipsis while it is focused
-	// and scrolls to the rest instead, and the lines have to stay where the trimmed layout put them.
+	// wrapped text need not be trimmed: an editable meter wraps to its box and scrolls to the text
+	// that does not fit, rather than cutting it short with an ellipsis it could not scroll past.
 	void SetTrimming(bool trim, bool wrap);
 
 	void SetHorizontalAlignment(HorizontalAlignment alignment);

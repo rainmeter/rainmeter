@@ -81,26 +81,8 @@ public:
 	void Reset();
 
 protected:
-	// One line stays one line, as it does in the Win32 edit control: ClipString reaches a single-
-	// line field as an ellipsis at the right edge, and as horizontal scrolling once it is focused,
-	// rather than as text reflowed down the box.
 	virtual bool CanWrap() const override { return m_Multiline; }
-
-	// No ellipsis in two cases:
-	//
-	// While the field is focused: what it cuts off is what the user came to reach, and scrolling is
-	// how they reach it. Only the ellipsis goes. ShouldClip() and CanWrap() do not follow the focus,
-	// so the lines stay where they were.
-	//
-	// While the field is scrolled: the ellipsis is placed where the text overflows the unscrolled
-	// box, which is not where the scrolled view ends, and it means "more text below", which says
-	// nothing about the text scrolled off above. A field left scrolled keeps its scroll and is cut
-	// plainly at the box until something scrolls it home.
-	virtual bool ShouldTrim() const override
-	{
-		return !m_Focused && m_TextOffset.x == 0.0f && m_TextOffset.y == 0.0f &&
-			MeterStringBase::ShouldTrim();
-	}
+	virtual bool ShouldTrim() const override { return false; }
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
