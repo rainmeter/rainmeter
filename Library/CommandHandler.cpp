@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/Map.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
@@ -1289,10 +1290,95 @@ void RegisterSectionBang(const SectionBangInfo& bangInfo)
 	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
 }
 
+// What a "For...::" prefix aims the rest of the bang at.
+enum class BangTarget
+{
+	None,
+	Skin,
+	SkinGroup
+};
+
+BangTarget ConsumeBangTarget(std::wstring_view& bang)
+{
+	StringParser parser(bang);
+	if (!parser.Consume(L"For")) return BangTarget::None;
+
+	BangTarget target = BangTarget::None;
+	if (parser.Consume(L"SkinGroup")) target = BangTarget::SkinGroup;
+	else if (parser.Consume(L"Skin")) target = BangTarget::Skin;
+	else return BangTarget::None;
+
+	// Section bangs use a single colon, so the double colon is unambiguous.
+	if (!parser.Consume(L"::")) return BangTarget::None;
+
+	bang = parser.Remaining();
+	return target;
+}
+
+// Runs |bang| for each target named by the first argument. The bang may carry a "For...::"
+// prefix of its own, so the prefixes can be combined.
+void DoPrefixedBang(BangTarget target, std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
+{
+	if (bang.empty())
+	{
+		LogErrorF(skin, L"!%.*s: Bang name required", (int)name.length(), name.data());
+		return;
+	}
+
+	if (args.empty())
+	{
+		LogErrorF(skin, L"!%.*s: Incorrect number of arguments", (int)name.length(), name.data());
+		return;
+	}
+
+	const std::wstring skinTarget = std::move(args[0]);
+	args.erase(args.begin());
+
+	if (target == BangTarget::Skin)
+	{
+		Skin* other = GetRainmeter().GetSkin(skinTarget);
+		if (!other)
+		{
+			if (DoesConfigExist(skinTarget))
+			{
+				LogWarningF(skin, L"!%.*s: Skin \"%s\" is not active",
+					(int)name.length(), name.data(), skinTarget.c_str());
+			}
+			else
+			{
+				LogErrorF(skin, L"!%.*s: Skin \"%s\" does not exist",
+					(int)name.length(), name.data(), skinTarget.c_str());
+			}
+			return;
+		}
+
+		GetRainmeter().ExecuteBang(bang, args, other);
+		return;
+	}
+
+	std::multimap<int, Skin*> skins;
+	GetRainmeter().GetSkinsByLoadOrder(skins, skinTarget);
+
+	for (const auto& ip : skins)
+	{
+		// The handlers may modify the arguments, so hand each skin its own copy.
+		std::vector<std::wstring> skinArgs = args;
+		GetRainmeter().ExecuteBang(bang, skinArgs, ip.second);
+	}
+}
+
 }  // namespace
 
 void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin)
 {
+	std::wstring_view bang = name;
+	const BangTarget target = ConsumeBangTarget(bang);
+	if (target != BangTarget::None)
+	{
+		DoPrefixedBang(target, name, bang, args, skin);
+		return;
+	}
+
 	WCHAR buffer[64];
 	const auto key = BuildBangMapKey(name, buffer, _countof(buffer));
 
