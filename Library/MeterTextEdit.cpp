@@ -524,19 +524,19 @@ void MeterTextEdit::EnsureCaretVisible()
 {
 	if (!m_TextFormat->IsInitialized()) return;
 
-	// A trimmed field shows an ellipsis rather than the end of its text, and always from the start
-	// of it. Only ever true here while the field is unfocused - a bang can put text into one - since
-	// focus is what drops the ellipsis.
-	if (ShouldTrim())
+	// Nothing to scroll to, and the caret rect an empty string gives back is no basis for deciding
+	// otherwise. Handled here rather than being left to the clamp below so that the placeholder,
+	// which is drawn through the same offset, is not left scrolled off by the text that was there.
+	if (m_String.empty())
 	{
 		m_TextOffset = D2D1::Point2F();
 		return;
 	}
 
-	// Nothing to scroll to, and the caret rect an empty string gives back is no basis for deciding
-	// otherwise. Handled here rather than being left to the clamp below so that the placeholder,
-	// which is drawn through the same offset, is not left scrolled off by the text that was there.
-	if (m_String.empty())
+	// The only way here without focus is a bang putting text into an idle field, where there is no
+	// caret drawn to follow and the text is new anyway, so it is read from its beginning. Leaving is
+	// not one of the ways: the scroll a field was left with is its own and is kept.
+	if (!m_Focused)
 	{
 		m_TextOffset = D2D1::Point2F();
 		return;
@@ -612,11 +612,9 @@ FLOAT MeterTextEdit::GetLineHeight()
 
 bool MeterTextEdit::ScrollByLine(int lines)
 {
+	// Focus has no say here: the scroll belongs to the field, so a skin can drive an idle one and
+	// have it stay where it was put. The first line it moves is what takes the ellipsis off it.
 	if (lines == 0 || !m_TextFormat->IsInitialized()) return false;
-
-	// An unfocused clipped field answers overflow with an ellipsis instead, and one drawn from
-	// anywhere but the start of the text would be showing a window into it with no way back.
-	if (ShouldTrim()) return false;
 
 	const FLOAT lineHeight = GetLineHeight();
 	if (lineHeight <= 0.0f) return false;
@@ -670,13 +668,9 @@ void MeterTextEdit::SetFocus(bool focus)
 	m_CaretBlinkStart = GetTickCount64();
 	m_Submitted = false;
 
-	if (!focus)
-	{
-		// The ellipsis is back, and it stands for the text after what is drawn - which it only does
-		// where what is drawn starts at the beginning.
-		if (ShouldTrim()) m_TextOffset = D2D1::Point2F();
-		return;
-	}
+	// The scroll is the field's own and outlives being left, so that a skin can put a field where it
+	// wants it and have it stay there, and so that coming back to one finds it as it was.
+	if (!focus) return;
 
 	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
 	// is needed and the first at which a skin full of unfocused fields has not paid for one.

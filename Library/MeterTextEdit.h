@@ -85,12 +85,21 @@ protected:
 	// rather than as text reflowed down the box.
 	virtual bool CanWrap() const override { return m_Multiline; }
 
-	// A clipped field cuts the text short with an ellipsis, which is no use to someone editing it:
-	// the part that was cut is exactly the part they came to reach. The ellipsis is dropped while
-	// the field is focused, leaving the text laid out as it was - neither ShouldClip() nor CanWrap()
-	// moves with the focus, so the lines do not reflow - and what falls outside the meter is reached by
-	// scrolling instead. Losing focus puts the ellipsis back, which is why SetFocus() unscrolls.
-	virtual bool ShouldTrim() const override { return !m_Focused && MeterStringBase::ShouldTrim(); }
+	// No ellipsis in two cases:
+	//
+	// While the field is focused: what it cuts off is what the user came to reach, and scrolling is
+	// how they reach it. Only the ellipsis goes. ShouldClip() and CanWrap() do not follow the focus,
+	// so the lines stay where they were.
+	//
+	// While the field is scrolled: the ellipsis is placed where the text overflows the unscrolled
+	// box, which is not where the scrolled view ends, and it means "more text below", which says
+	// nothing about the text scrolled off above. A field left scrolled keeps its scroll and is cut
+	// plainly at the box until something scrolls it home.
+	virtual bool ShouldTrim() const override
+	{
+		return !m_Focused && m_TextOffset.x == 0.0f && m_TextOffset.y == 0.0f &&
+			MeterStringBase::ShouldTrim();
+	}
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
