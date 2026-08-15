@@ -539,15 +539,6 @@ void MeterTextEdit::EnsureCaretVisible()
 		return;
 	}
 
-	// The only way here without focus is a bang putting text into an idle field, where there is no
-	// caret drawn to follow and the text is new anyway, so it is read from its beginning. Leaving is
-	// not one of the ways: the scroll a field was left with is its own and is kept.
-	if (!m_Focused)
-	{
-		m_TextOffset = D2D1::Point2F();
-		return;
-	}
-
 	Gfx::Canvas& canvas = m_Skin->GetCanvas();
 	ApplyTextState(canvas);
 
@@ -747,7 +738,11 @@ void MeterTextEdit::SetText(std::wstring_view text)
 	m_CaretTrailing = true;
 
 	UpdateAutoSizeForText();
-	EnsureCaretVisible();
+
+	// Text a skin puts into an idle field is read from its start, wherever the field happened to be
+	// scrolled to. A field being typed into follows the caret this left at the end instead, which is
+	// where typing on from the new text carries on.
+	m_Focused ? EnsureCaretVisible() : ResetScroll();
 }
 
 void MeterTextEdit::Reset()
