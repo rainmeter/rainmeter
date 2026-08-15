@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
@@ -38,22 +38,6 @@
     <ClCompile Include="Gfx\RenderTexture.cpp" />
     <ClCompile Include="Gfx\Shape.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatColor.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatFace.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatItalic.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatNone.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatOblique.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatShadow.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatSize.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStretch.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatTypography.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp" />
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp" />
     <ClCompile Include="Gfx\Util\BitmapLoader.cpp" />
     <ClCompile Include="Gfx\Util\EffectStream.cpp" />
     <ClCompile Include="Gfx\Util\D2DUtil.cpp" />
@@ -87,22 +71,7 @@
     <ClInclude Include="Gfx\RenderTexture.h" />
     <ClInclude Include="Gfx\Shape.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
-    <ClInclude Include="Gfx\TextInlineFormat.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatColor.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatFace.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatItalic.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatNone.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatOblique.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatShadow.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatSize.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStretch.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatTypography.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h" />
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h" />
+    <ClInclude Include="Gfx\TextInlineOption.h" />
     <ClInclude Include="Gfx\Util\BitmapLoader.h" />
     <ClInclude Include="Gfx\Util\EffectStream.h" />
     <ClInclude Include="Gfx\Util\D2DUtil.h" />

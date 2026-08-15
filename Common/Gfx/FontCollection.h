@@ -31,7 +31,6 @@ protected:
 private:
 	friend class Canvas;
 	friend class TextFormat;
-	friend class TextInlineFormat_Face;
 
 	void Dispose();
 

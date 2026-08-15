@@ -181,8 +181,6 @@ private:
 	friend class RenderTexture;
 	friend class FontCollection;
 	friend class TextFormat;
-	friend class TextInlineFormat_Face;
-	friend class TextInlineFormat_Typography;
 	friend class Shape;
 	friend class Util::BitmapLoader;
 	friend class Util::EffectStream;
