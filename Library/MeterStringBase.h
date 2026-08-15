@@ -105,14 +105,14 @@ protected:
 	bool ShouldClip() const;
 
 	// |true| when the lines may break to the meter's width instead of running past it. A meter that
-	// cannot wrap answers a line too long for it along the x axis: with the ellipsis below while it
-	// is idle, and by scrolling where it can. Single-line TextEdit is the only one, and matches the
-	// Win32 edit control it stands in for, which never turns one line into several.
+	// cannot wrap answers a line too long for it along the x axis instead, by being cut there and by
+	// scrolling where it can. Single-line TextEdit is the only one, and matches the Win32 edit
+	// control it stands in for, which never turns one line into several.
 	virtual bool CanWrap() const { return true; }
 
-	// |true| when the text that still does not fit is cut short with an ellipsis, which is what
-	// keeps a clipped meter from ever overflowing. The only answer String has; TextEdit drops the
-	// ellipsis while it is focused and scrolls to the rest of the text instead.
+	// |true| when the text that still does not fit is cut short with an ellipsis. String says so
+	// whenever it clips, having no other way to show that there is more text than fits. TextEdit
+	// never does: its text can be scrolled to instead.
 	virtual bool ShouldTrim() const { return ShouldClip(); }
 
 	// The text box shifted by m_TextOffset. Everything that draws or hit-tests the text uses this
