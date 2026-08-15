@@ -24,8 +24,7 @@
 class CCover
 {
 public:
-	static bool GetCached(std::wstring& path);
-	static bool GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target);
+	static std::optional<std::wstring> GetLocal(std::wstring_view filename, std::wstring_view folder);
 	static bool GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target);
 	static std::wstring GetFileFolder(const std::wstring& file);
 };
