@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "TextInlineFormat.h"
+#include "TextInlineOption.h"
 #include <Windows.h>
 #include <memory>
 #include <string>
@@ -16,53 +16,36 @@ namespace Gfx {
 
 class FontCollection;
 
-namespace InlineSetting {
-
-struct Case { CaseType type; };
-struct CharacterSpacing { FLOAT leading; FLOAT trailing; FLOAT advanceWidth; };
-struct Color { D2D1_COLOR_F color; };
-struct Face { std::wstring face; };
-struct GradientColor { FLOAT angle; std::vector<D2D1_GRADIENT_STOP> stops; bool altGamma; };
-struct Italic {};
-struct None {};
-struct Oblique {};
-struct Shadow { FLOAT blur; D2D1_POINT_2F offset; D2D1_COLOR_F color; };
-struct Size { FLOAT size; };
-struct Stretch { DWRITE_FONT_STRETCH stretch; };
-struct Strikethrough {};
-struct Typography { DWRITE_FONT_FEATURE_TAG tag; UINT32 parameter; };
-struct Underline {};
-struct Weight { DWRITE_FONT_WEIGHT weight; };
-
-}  // namespace InlineSetting
-
-using TextInlineSetting = std::variant<
-	InlineSetting::Case,
-	InlineSetting::CharacterSpacing,
-	InlineSetting::Color,
-	InlineSetting::Face,
-	InlineSetting::GradientColor,
-	InlineSetting::Italic,
-	InlineSetting::None,
-	InlineSetting::Oblique,
-	InlineSetting::Shadow,
-	InlineSetting::Size,
-	InlineSetting::Stretch,
-	InlineSetting::Strikethrough,
-	InlineSetting::Typography,
-	InlineSetting::Underline,
-	InlineSetting::Weight>;
-
-struct TextInlineOption
+// The brushes a gradient option draws with. Since a range can be spread across several lines, it is
+// split into the inner ranges the layout puts it on, each with a brush of its own.
+struct InlineGradientCache
 {
-	std::wstring pattern;
-	TextInlineSetting setting;
+	struct Sub
+	{
+		std::vector<DWRITE_TEXT_RANGE> innerRanges;
+		std::vector<Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush>> brushes;
+	};
+
+	// One entry per range the option applies to.
+	std::vector<Sub> subs;
 };
 
-struct TextInlineRange
+// The bitmap a shadow option is built from. It is kept between draws, and only recreated when the
+// position or the DPI it was drawn at changes.
+struct InlineShadowCache
 {
-	UINT32 start;
-	UINT32 length;
+	Microsoft::WRL::ComPtr<ID2D1Bitmap> bitmap;
+	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> bitmapTarget;
+	D2D1_RECT_F previousPosition = D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f);
+};
+
+// An inline option as it is used: the option itself, the ranges of the text it applies to, and the
+// device resources built from it, for the two options that have any.
+struct TextInlineOptionState
+{
+	TextInlineOption option;
+	std::vector<DWRITE_TEXT_RANGE> ranges;
+	std::variant<std::monostate, InlineGradientCache, InlineShadowCache> cache;
 };
 
 enum class HorizontalAlignment : BYTE
@@ -115,8 +98,8 @@ public:
 	void SetInlineOptions(const std::vector<TextInlineOption>& options);
 	void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges);
 
-	size_t GetInlineOptionCount() const { return m_TextInlineFormat.size(); }
-	const std::wstring& GetInlinePattern(const size_t index) const { return m_TextInlineFormat[index]->GetPattern(); }
+	size_t GetInlineOptionCount() const { return m_InlineOptions.size(); }
+	const std::wstring& GetInlinePattern(const size_t index) const { return m_InlineOptions[index].option.pattern; }
 
 private:
 	friend class Canvas;
@@ -142,27 +125,16 @@ private:
 	// text - the caret, or the highlight behind a selection - has to take it off as well.
 	float GetLineGapAdjustment(std::wstring_view str) const;
 
-	// These functions create/modify any inline options.
-	void UpdateInlineCase(const size_t index, const std::wstring& pattern, const Gfx::CaseType type);
-	void UpdateInlineCharacterSpacing(const size_t index, const std::wstring& pattern, const FLOAT leading,
-		const FLOAT trailing, const FLOAT advanceWidth);
-	void UpdateInlineColor(const size_t index, const std::wstring& pattern, const D2D1_COLOR_F& color);
-	void UpdateInlineFace(const size_t index, const std::wstring& pattern, const WCHAR* face);
-	void UpdateInlineGradientColor(const size_t index, const std::wstring& pattern, const FLOAT angle,
-		const std::vector<D2D1_GRADIENT_STOP>& stops, const bool altGamma);
-	void UpdateInlineItalic(const size_t index, const std::wstring& pattern);
-	void UpdateInlineNone(const size_t index, const std::wstring& pattern);
-	void UpdateInlineOblique(const size_t index, const std::wstring& pattern);
-	void UpdateInlineShadow(const size_t index, const std::wstring& pattern, const FLOAT blur,
-		const D2D1_POINT_2F offset, const D2D1_COLOR_F& color);
-	void UpdateInlineSize(const size_t index, const std::wstring& pattern, const FLOAT size);
-	void UpdateInlineStretch(const size_t index, const std::wstring& pattern, const DWRITE_FONT_STRETCH stretch);
-	void UpdateInlineStrikethrough(const size_t index, const std::wstring& pattern);
-	void UpdateInlineTypography(const size_t index, const std::wstring& pattern,
-		const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter);
-	void UpdateInlineUnderline(const size_t index, const std::wstring& pattern);
-	void UpdateInlineWeight(const size_t index, const std::wstring& pattern, const DWRITE_FONT_WEIGHT weight);
+	// Applies the options that are part of the layout. The rest are drawn (color, gradient and
+	// shadow) or change the text itself (case), and are applied through the functions below.
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
+
+	// These two reach for a font collection and the DirectWrite factory, which is why they are not
+	// free functions like the rest of the layout options.
+	void ApplyInlineFace(IDWriteTextLayout* layout, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+		const InlineSetting::Face& setting) const;
+	void ApplyInlineTypography(IDWriteTextLayout* layout, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+		const InlineSetting::Typography& setting) const;
 	void ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point);
 
 	// Returns |srcStr| as-is unless an inline case option applies, in which case the transformed
@@ -197,8 +169,12 @@ private:
 	bool m_Trimming;
 
 	// Contains all the inline options for the layout.
-	std::vector<std::unique_ptr<TextInlineFormat>> m_TextInlineFormat;
+	std::vector<TextInlineOptionState> m_InlineOptions;
 	bool m_HasInlineOptionsChanged;
+
+	// Only used by the 'Face' option, to look a font family up before falling back to the system
+	// collection. Owned by the skin, and set with the rest of the properties.
+	FontCollection* m_FontCollection;
 };
 
 }  // namespace Gfx
