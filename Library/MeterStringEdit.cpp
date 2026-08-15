@@ -129,6 +129,12 @@ void DoSetTextBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	skin->RequestWindowSizeCheck();
 }
 
+void DoScrollByLineBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	const int lines = skin->GetParser().ParseInt(args[0].c_str(), 0);
+	((MeterStringEdit*)meter)->ScrollByLine(lines);
+}
+
 void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	((MeterStringEdit*)meter)->Clear();
@@ -178,6 +184,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SetText", 1, DoSetTextBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ScrollByLine", 1, DoScrollByLineBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
 		return true;
@@ -551,30 +558,73 @@ void MeterStringEdit::EnsureCaretVisible()
 	if (caret.bottom > box.bottom) m_TextOffset.y += caret.bottom - box.bottom;
 	else if (caret.top < box.top) m_TextOffset.y -= box.top - caret.top;
 
+	ClampTextOffset();
+}
+
+void MeterStringEdit::ClampTextOffset()
+{
 	// Never scroll past the start; there is nothing to reveal before it.
 	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
 	m_TextOffset.y = max(m_TextOffset.y, 0.0f);
 
-	// Nor past the end: deleting text, or a meter that grew, can leave more of the box scrolled
-	// past than there is text to fill it. The caret position after the last character sits at the
-	// end of the text, so it gives that edge back without measuring the string again.
-	if (m_TextOffset.x > 0.0f || m_TextOffset.y > 0.0f)
-	{
-		D2D1_RECT_F endCaret = { 0 };
-		if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
-			(UINT32)m_String.length(), true, 1.0f, endCaret))
-		{
-			if (endCaret.right < box.right)
-			{
-				m_TextOffset.x = max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
-			}
+	if (m_TextOffset.x == 0.0f && m_TextOffset.y == 0.0f) return;
 
-			if (endCaret.bottom < box.bottom)
-			{
-				m_TextOffset.y = max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
-			}
-		}
+	Gfx::Canvas& canvas = m_Skin->GetCanvas();
+	ApplyTextState(canvas);
+
+	// The caret position after the last character sits at the end of the text, so it gives that
+	// edge back without measuring the string again.
+	D2D1_RECT_F endCaret = { 0 };
+	if (!canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(), (UINT32)m_String.length(), true, 1.0f, endCaret)) return;
+
+	const D2D1_RECT_F box = GetMeterRectPadding();
+
+	if (endCaret.right < box.right)
+	{
+		m_TextOffset.x = max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
 	}
+
+	if (endCaret.bottom < box.bottom)
+	{
+		m_TextOffset.y = max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
+	}
+}
+
+FLOAT MeterStringEdit::GetLineHeight()
+{
+	if (m_String.empty()) return 0.0f;
+
+	Gfx::Canvas& canvas = m_Skin->GetCanvas();
+	ApplyTextState(canvas);
+
+	// Taken from the caret at the start of the text rather than from the font, so that whatever the
+	// layout made of the line - a fallback font among the metrics, or a format that asked for more
+	// leading - is what a line steps by.
+	D2D1_RECT_F caret = { 0 };
+	if (!canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(), 0U, false, 1.0f, caret))
+	{
+		return 0.0f;
+	}
+
+	return max(caret.bottom - caret.top, 0.0f);
+}
+
+bool MeterStringEdit::ScrollByLine(int lines)
+{
+	if (lines == 0 || !m_TextFormat->IsInitialized()) return false;
+
+	// ClipString trims the text to the meter instead, which is the other answer to the same
+	// overflow, so a clipped field never scrolls.
+	if (ShouldTrim()) return false;
+
+	const FLOAT lineHeight = GetLineHeight();
+	if (lineHeight <= 0.0f) return false;
+
+	const FLOAT previous = m_TextOffset.y;
+	m_TextOffset.y += lineHeight * (FLOAT)lines;
+	ClampTextOffset();
+
+	return m_TextOffset.y != previous;
 }
 
 void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)
@@ -1360,8 +1410,7 @@ void MeterStringEdit::DrawCaret(Gfx::Canvas& canvas)
 	}
 
 	D2D1_RECT_F caretRect = { 0 };
-	if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(),
-		m_CaretPos, m_CaretTrailing, (FLOAT)caretWidth, caretRect))
+	if (canvas.GetCaretRect(m_String, *m_TextFormat, GetTextRect(), m_CaretPos, m_CaretTrailing, (FLOAT)caretWidth, caretRect))
 	{
 		canvas.FillRectangle(caretRect, m_CaretColor);
 	}
