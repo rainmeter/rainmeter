@@ -8,10 +8,10 @@
 #include <optional>
 #include <string_view>
 
-// Shared base for String, which formats a measure's value, and StringEdit, which lets the user
+// Shared base for String, which formats a measure's value, and TextEdit, which lets the user
 // edit the text. Holds the font and case options common to both and the drawing built on them, but
 // leaves it to each meter to decide when the case conversion runs. Neither the text nor the option
-// it comes from is read here: String rebuilds m_Text from Text on every read, while StringEdit
+// it comes from is read here: String rebuilds m_Text from Text on every read, while TextEdit
 // takes InitialText once and lets the user own it from there.
 class __declspec(novtable) MeterStringBase : public Meter
 {
@@ -27,7 +27,7 @@ public:
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources() override;
 
-	// The text before any of String's formatting. For StringEdit this is what the user typed.
+	// The text before any of String's formatting. For TextEdit this is what the user typed.
 	const std::wstring& GetText() const { return m_Text; }
 	virtual void SetText(std::wstring_view text) { m_Text = text; }
 
@@ -72,9 +72,9 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 	// Applies |textCase| to |text| in place. The conversions map each UTF-16 unit onto one unit, so
-	// offsets into the text survive them, which is what lets StringEdit convert what it edits rather
+	// offsets into the text survive them, which is what lets TextEdit convert what it edits rather
 	// than only what it draws. Left to the subclass to call: String converts the finished m_String,
-	// StringEdit the text itself.
+	// TextEdit the text itself.
 	void ApplyCase(std::wstring& text, TEXTCASE textCase) const;
 	void ApplyCase(std::wstring& text) const { ApplyCase(text, m_Case); }
 
@@ -133,7 +133,7 @@ protected:
 	// String, which has no way to scroll.
 	D2D1_POINT_2F m_TextOffset;
 
-	// The text as drawn. String rewrites it from m_Text and its formatting options; StringEdit
+	// The text as drawn. String rewrites it from m_Text and its formatting options; TextEdit
 	// keeps it the same length as m_Text - identical to it, or a mask of it - so that a caret
 	// offset is also an offset into the edited text.
 	std::wstring m_String;

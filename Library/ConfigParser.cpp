@@ -17,7 +17,7 @@
 #include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
-#include "MeterStringEdit.h"
+#include "MeterTextEdit.h"
 #include "resource.h"
 
 namespace {
@@ -1136,14 +1136,14 @@ std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_vi
 {
 	// Only resolves in an action of the meter being typed into, since that is the only place the
 	// text it stands for exists.
-	if (!section || section->GetTypeID() != TypeID<MeterStringEdit>()) return std::nullopt;
+	if (!section || section->GetTypeID() != TypeID<MeterTextEdit>()) return std::nullopt;
 
 	StringParser strParser(variable);
 	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
 
 	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
 	// meter is exactly what the user typed.
-	return ((MeterStringEdit*)section)->GetText();
+	return ((MeterTextEdit*)section)->GetText();
 }
 
 std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
