@@ -74,7 +74,8 @@ public:
 
 	virtual void SetText(std::wstring_view text) override;
 
-	bool ScrollByLine(int lines);
+	void ScrollByLine(int lines);
+	void ResetScroll();
 
 	void Clear();
 	void Reset();
