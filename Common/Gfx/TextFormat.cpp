@@ -113,7 +113,7 @@ void BuildInlineGradientBrushes(const InlineSetting::GradientColor& setting,
 }
 
 void ApplyInlineGradient(InlineGradientCache& cache, IDWriteTextLayout* layout,
-	const D2D1_POINT_2F* point, bool beforeDrawing)
+	const D2D1_POINT_2F* point, bool beforeDrawing = true)
 {
 	if (!point || (beforeDrawing && !layout)) return;
 
