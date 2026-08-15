@@ -634,7 +634,7 @@ void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const
 	}
 }
 
-bool MeterStringBase::ShouldTrim() const
+bool MeterStringBase::ShouldWrap() const
 {
 	return m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined)));
@@ -645,7 +645,10 @@ void MeterStringBase::ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* forma
 	if (!format) format = m_TextFormat.get();
 
 	canvas.SetTextAntiAliasing(m_AntiAlias);
-	format->SetTrimming(ShouldTrim());
+
+	// The two are the same everywhere but a focused TextEdit, which keeps the lines the clipped
+	// layout gave it and drops only the ellipsis, so that what it scrolls to is what was there.
+	format->SetTrimming(ShouldTrim(), ShouldWrap());
 }
 
 D2D1_RECT_F MeterStringBase::GetTextRect()

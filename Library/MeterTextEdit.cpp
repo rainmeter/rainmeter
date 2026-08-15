@@ -464,7 +464,7 @@ bool MeterTextEdit::Draw(Gfx::Canvas& canvas)
 
 	// A meter given a size can hold more text than fits, scrolled or not, so what does not fit is
 	// cut at the box. An auto-sized one grows to its text and has nothing to cut.
-	const bool clip = m_WDefined || m_HDefined || ShouldTrim() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
+	const bool clip = m_WDefined || m_HDefined || ShouldWrap() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
 	if (clip) canvas.PushClip(GetMeterRectPadding());
 
 	// The highlight goes behind the glyphs, so it has to be drawn before the text. It builds the
@@ -524,8 +524,9 @@ void MeterTextEdit::EnsureCaretVisible()
 {
 	if (!m_TextFormat->IsInitialized()) return;
 
-	// ClipString trims the text to the meter instead, which is the other answer to the same
-	// overflow, so a clipped field never scrolls.
+	// A trimmed field shows an ellipsis rather than the end of its text, and always from the start
+	// of it. Only ever true here while the field is unfocused - a bang can put text into one - since
+	// focus is what drops the ellipsis.
 	if (ShouldTrim())
 	{
 		m_TextOffset = D2D1::Point2F();
@@ -613,8 +614,8 @@ bool MeterTextEdit::ScrollByLine(int lines)
 {
 	if (lines == 0 || !m_TextFormat->IsInitialized()) return false;
 
-	// ClipString trims the text to the meter instead, which is the other answer to the same
-	// overflow, so a clipped field never scrolls.
+	// An unfocused clipped field answers overflow with an ellipsis instead, and one drawn from
+	// anywhere but the start of the text would be showing a window into it with no way back.
 	if (ShouldTrim()) return false;
 
 	const FLOAT lineHeight = GetLineHeight();
@@ -669,7 +670,13 @@ void MeterTextEdit::SetFocus(bool focus)
 	m_CaretBlinkStart = GetTickCount64();
 	m_Submitted = false;
 
-	if (!focus) return;
+	if (!focus)
+	{
+		// The ellipsis is back, and it stands for the text after what is drawn - which it only does
+		// where what is drawn starts at the beginning.
+		if (ShouldTrim()) m_TextOffset = D2D1::Point2F();
+		return;
+	}
 
 	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
 	// is needed and the first at which a skin full of unfocused fields has not paid for one.

@@ -100,8 +100,14 @@ protected:
 	// what is on screen.
 	void ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* format = nullptr);
 
-	// |true| when ClipString trims the text to the meter, so it never overflows in the first place.
-	bool ShouldTrim() const;
+	// |true| when ClipString binds the text to the meter, so its lines wrap to the meter's width
+	// rather than running past it.
+	bool ShouldWrap() const;
+
+	// |true| when the text that still does not fit is cut short with an ellipsis, which is what
+	// keeps a clipped meter from ever overflowing. The only answer String has; TextEdit drops the
+	// ellipsis while it is focused and scrolls to the rest of the text instead.
+	virtual bool ShouldTrim() const { return ShouldWrap(); }
 
 	// The text box shifted by m_TextOffset. Everything that draws or hit-tests the text uses this
 	// rather than GetMeterRectPadding(), so scrolled text and the positions reported for it stay

@@ -87,7 +87,11 @@ public:
 	// characters it could draw wants the one that does not send the run to another font.
 	bool HasCharacter(UINT32 ch) const;
 
-	void SetTrimming(bool trim);
+	// |trim| replaces the text that does not fit with an ellipsis, and |wrap| breaks the lines to
+	// the layout width rather than letting them run past it. Trimmed text is always wrapped, but
+	// wrapped text need not be trimmed: an editable meter drops the ellipsis while it is focused
+	// and scrolls to the rest instead, and the lines have to stay where the trimmed layout put them.
+	void SetTrimming(bool trim, bool wrap);
 
 	void SetHorizontalAlignment(HorizontalAlignment alignment);
 	HorizontalAlignment GetHorizontalAlignment() const { return m_HorizontalAlignment; }
@@ -110,7 +114,7 @@ private:
 
 	Microsoft::WRL::ComPtr<IDWriteFont> ResolveFont() const;
 
-	// Enables word wrapping if trimming or justified alignment requires it.
+	// Enables word wrapping if the last SetTrimming() or justified alignment requires it.
 	void UpdateWordWrapping();
 
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
@@ -165,8 +169,9 @@ private:
 	float m_ExtraHeight;
 	float m_LineGap;
 
-	// Contains the value passed to the last call of SetTrimming().
+	// Contain the values passed to the last call of SetTrimming().
 	bool m_Trimming;
+	bool m_WordWrap;
 
 	// Contains all the inline options for the layout.
 	std::vector<TextInlineOptionState> m_InlineOptions;
