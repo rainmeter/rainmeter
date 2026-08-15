@@ -135,6 +135,11 @@ void DoScrollByLineBang(Meter* meter, std::vector<std::wstring>& args, Skin* ski
 	((MeterTextEdit*)meter)->ScrollByLine(lines);
 }
 
+void DoResetScrollBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeterTextEdit*)meter)->ResetScroll();
+}
+
 void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	((MeterTextEdit*)meter)->Clear();
@@ -185,6 +190,7 @@ MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(sk
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SetText", 1, DoSetTextBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ScrollByLine", 1, DoScrollByLineBang);
+		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ResetScroll", 0, DoResetScrollBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
 		return true;
@@ -610,20 +616,22 @@ FLOAT MeterTextEdit::GetLineHeight()
 	return max(caret.bottom - caret.top, 0.0f);
 }
 
-bool MeterTextEdit::ScrollByLine(int lines)
+void MeterTextEdit::ScrollByLine(int lines)
 {
 	// Focus has no say here: the scroll belongs to the field, so a skin can drive an idle one and
-	// have it stay where it was put. The first line it moves is what takes the ellipsis off it.
-	if (lines == 0 || !m_TextFormat->IsInitialized()) return false;
+	// have it stay where it was put.
+	if (lines == 0 || !m_TextFormat->IsInitialized()) return;
 
 	const FLOAT lineHeight = GetLineHeight();
-	if (lineHeight <= 0.0f) return false;
+	if (lineHeight <= 0.0f) return;
 
-	const FLOAT previous = m_TextOffset.y;
 	m_TextOffset.y += lineHeight * (FLOAT)lines;
 	ClampTextOffset();
+}
 
-	return m_TextOffset.y != previous;
+void MeterTextEdit::ResetScroll()
+{
+	m_TextOffset = D2D1::Point2F();
 }
 
 void MeterTextEdit::DrawFocusBorder(Gfx::Canvas& canvas)
