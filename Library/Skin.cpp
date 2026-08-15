@@ -4883,6 +4883,16 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring dismissCommand;
 			std::wstring focusCommand;
 
+			// Hit-tested against the layout the click landed on, which is why it comes before the
+			// meter takes the caret: a clipped field drops its ellipsis and scrolls to where its
+			// caret was left the moment it is focused, putting other text under the same point.
+			// Also before the focus command runs, so an OnFocusAction that selects the text has the
+			// last word over the caret this places.
+			if (!editMeter->IsFocused())
+			{
+				editMeter->SetCaretFromPoint(pos.x, pos.y);
+			}
+
 			if (SetInputFocus(editMeter, &dismissCommand))
 			{
 				focusCommand = editMeter->GetOnFocusAction();
@@ -4891,10 +4901,6 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// WM_MOUSEACTIVATE already returns MA_ACTIVATE, but the click may have landed
 				// while another window was focused.
 				SetFocus(m_Window);
-
-				// Before the focus command runs, so an OnFocusAction that selects the text has the
-				// last word over the caret this places.
-				editMeter->SetCaretFromPoint(pos.x, pos.y);
 
 				if (m_DynamicWindowSize)
 				{

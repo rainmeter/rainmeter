@@ -681,6 +681,8 @@ void MeterTextEdit::SetFocus(bool focus)
 	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
 	// is needed and the first at which a skin full of unfocused fields has not paid for one.
 	CompileInputRegExp();
+
+	EnsureCaretVisible();
 }
 
 bool MeterTextEdit::IsSubmitKey(WPARAM key) const
