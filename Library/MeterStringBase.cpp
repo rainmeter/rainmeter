@@ -634,7 +634,7 @@ void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const
 	}
 }
 
-bool MeterStringBase::ShouldWrap() const
+bool MeterStringBase::ShouldClip() const
 {
 	return m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined)));
@@ -646,9 +646,10 @@ void MeterStringBase::ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* forma
 
 	canvas.SetTextAntiAliasing(m_AntiAlias);
 
-	// The two are the same everywhere but a focused TextEdit, which keeps the lines the clipped
-	// layout gave it and drops only the ellipsis, so that what it scrolls to is what was there.
-	format->SetTrimming(ShouldTrim(), ShouldWrap());
+	// The two follow ClipString together everywhere but a TextEdit: a focused one keeps the lines
+	// the trimmed layout gave it and drops only the ellipsis, so that what it scrolls to is what
+	// was there, and a single-line one keeps its one line whether or not it is trimmed.
+	format->SetTrimming(ShouldTrim(), ShouldClip() && CanWrap());
 }
 
 D2D1_RECT_F MeterStringBase::GetTextRect()
@@ -787,17 +788,27 @@ std::optional<D2D1_RECT_F> MeterStringBase::MeasureStringBounds(Gfx::Canvas& can
 
 	if (updateSize)
 	{
-		UINT32 lines = 0;
-		D2D1_SIZE_F wrapped = D2D1::SizeF(w, h);
-		if (canvas.MeasureTextLinesW(*str, *format, wrapped, lines) && lines != 0)
+		if (CanWrap())
 		{
-			rect.right = rect.left + w;
-			rect.bottom = rect.top + wrapped.height;
-
-			if (m_HDefined || (m_ClipStringH != -1 && rect.bottom - rect.top > (FLOAT)m_ClipStringH))
+			UINT32 lines = 0;
+			D2D1_SIZE_F wrapped = D2D1::SizeF(w, h);
+			if (canvas.MeasureTextLinesW(*str, *format, wrapped, lines) && lines != 0)
 			{
-				rect.bottom = rect.top + (m_HDefined ? (meterRect.bottom - meterRect.top) : (FLOAT)m_ClipStringH);
+				rect.right = rect.left + w;
+				rect.bottom = rect.top + wrapped.height;
 			}
+		}
+		else
+		{
+			// MeasureTextLinesW() reflows the text to |w| whatever the format says, so a meter that
+			// cannot wrap has to keep out of it: the height it needs is the one line MeasureTextW()
+			// already measured, and all the clipping decides for it is the width it is given.
+			rect.right = rect.left + w;
+		}
+
+		if (m_HDefined || (m_ClipStringH != -1 && rect.bottom - rect.top > (FLOAT)m_ClipStringH))
+		{
+			rect.bottom = rect.top + (m_HDefined ? (meterRect.bottom - meterRect.top) : (FLOAT)m_ClipStringH);
 		}
 	}
 

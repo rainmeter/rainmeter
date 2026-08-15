@@ -100,14 +100,20 @@ protected:
 	// what is on screen.
 	void ApplyTextState(Gfx::Canvas& canvas, Gfx::TextFormat* format = nullptr);
 
-	// |true| when ClipString binds the text to the meter, so its lines wrap to the meter's width
-	// rather than running past it.
-	bool ShouldWrap() const;
+	// |true| when the text is bound to the meter box at all, and so is measured, laid out and drawn
+	// against it rather than being allowed to size the meter to itself.
+	bool ShouldClip() const;
+
+	// |true| when the lines may break to the meter's width instead of running past it. A meter that
+	// cannot wrap answers a line too long for it along the x axis: with the ellipsis below while it
+	// is idle, and by scrolling where it can. Single-line TextEdit is the only one, and matches the
+	// Win32 edit control it stands in for, which never turns one line into several.
+	virtual bool CanWrap() const { return true; }
 
 	// |true| when the text that still does not fit is cut short with an ellipsis, which is what
 	// keeps a clipped meter from ever overflowing. The only answer String has; TextEdit drops the
 	// ellipsis while it is focused and scrolls to the rest of the text instead.
-	virtual bool ShouldTrim() const { return ShouldWrap(); }
+	virtual bool ShouldTrim() const { return ShouldClip(); }
 
 	// The text box shifted by m_TextOffset. Everything that draws or hit-tests the text uses this
 	// rather than GetMeterRectPadding(), so scrolled text and the positions reported for it stay

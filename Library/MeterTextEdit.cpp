@@ -464,7 +464,7 @@ bool MeterTextEdit::Draw(Gfx::Canvas& canvas)
 
 	// A meter given a size can hold more text than fits, scrolled or not, so what does not fit is
 	// cut at the box. An auto-sized one grows to its text and has nothing to cut.
-	const bool clip = m_WDefined || m_HDefined || ShouldWrap() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
+	const bool clip = m_WDefined || m_HDefined || ShouldClip() || m_TextOffset.x != 0.0f || m_TextOffset.y != 0.0f;
 	if (clip) canvas.PushClip(GetMeterRectPadding());
 
 	// The highlight goes behind the glyphs, so it has to be drawn before the text. It builds the
