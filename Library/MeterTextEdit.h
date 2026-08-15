@@ -80,10 +80,15 @@ public:
 	void Reset();
 
 protected:
+	// One line stays one line, as it does in the Win32 edit control: ClipString reaches a single-
+	// line field as an ellipsis at the right edge, and as horizontal scrolling once it is focused,
+	// rather than as text reflowed down the box.
+	virtual bool CanWrap() const override { return m_Multiline; }
+
 	// A clipped field cuts the text short with an ellipsis, which is no use to someone editing it:
 	// the part that was cut is exactly the part they came to reach. The ellipsis is dropped while
-	// the field is focused, leaving the text laid out as it was - ShouldWrap() does not move with
-	// the focus, so the lines do not reflow - and what falls outside the meter is reached by
+	// the field is focused, leaving the text laid out as it was - neither ShouldClip() nor CanWrap()
+	// moves with the focus, so the lines do not reflow - and what falls outside the meter is reached by
 	// scrolling instead. Losing focus puts the ellipsis back, which is why SetFocus() unscrolls.
 	virtual bool ShouldTrim() const override { return !m_Focused && MeterStringBase::ShouldTrim(); }
 
