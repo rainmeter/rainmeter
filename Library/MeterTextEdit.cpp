@@ -758,10 +758,25 @@ void MeterTextEdit::Reset()
 	// InitialText reaching the meter through a MeterStyle resolves through that and a reset arrives
 	// long after ReadOptions() tore it down.
 	parser.ReadInheritOption(GetName(), true);
-	const std::wstring text = parser.ReadString(GetName(), L"InitialText", L"");
+	std::wstring text = parser.ReadString(GetName(), L"InitialText", L"");
 	parser.ClearInheritChain();
 
-	SetText(text);
+	ApplyTextTransformations(text);
+
+	m_Text = std::move(text);
+	SyncDrawnString();
+
+	m_SelectionAnchor = m_CaretPos = 0U;
+	m_CaretTrailing = false;
+	m_CaretBlinkStart = GetTickCount64();
+	m_LastEditKind = EditKind::None;
+	m_TextOffset = D2D1::Point2F();
+	ClearUndoHistory();
+
+	// m_Submitted is left as it was, as Clear() leaves it: OnSubmitAction resetting the field is a
+	// common enough thing to write, and it must not turn leaving the field into a dismissal.
+
+	UpdateAutoSizeForText();
 }
 
 void MeterTextEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
