@@ -22,7 +22,7 @@
 #include "MeasureProcess.h"
 #include "MeasureTime.h"
 #include "MeterButton.h"
-#include "MeterStringEdit.h"
+#include "MeterTextEdit.h"
 #include "MeasureScript.h"
 #include "MeasureSysInfo.h"
 #include "GeneralImage.h"
@@ -2747,7 +2747,7 @@ bool Skin::ReadSkin()
 					{
 						m_HasButtons = true;
 					}
-					else if (meter->GetTypeID() == TypeID<MeterStringEdit>())
+					else if (meter->GetTypeID() == TypeID<MeterTextEdit>())
 					{
 						m_HasInputMeters = true;
 					}
@@ -4748,7 +4748,7 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		// Editing claims the click before the dragging fallthrough below, otherwise placing the
 		// caret in a draggable skin would move the window instead.
-		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_DOWN);
+		MeterTextEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_DOWN);
 		if (editMeter)
 		{
 			if (!editMeter->IsFocused())
@@ -4873,13 +4873,13 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_HasInputMeters && !IsCtrlKeyDown())
 	{
 		const auto pos = GetMouseMessageSkinPosition(uMsg, lParam);
-		MeterStringEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_UP);
+		MeterTextEdit* editMeter = GetInputMeterAt(pos.x, pos.y, MOUSE_LMB_UP);
 		if (editMeter)
 		{
 			// Reaching here means the button came up without a drag having started, so this was a
 			// click: give the meter the caret. A drag that moved the skin never gets this far.
 			// Moving to another field dismisses the one being left.
-			MeterStringEdit* outgoing = m_InputFocusMeter;
+			MeterTextEdit* outgoing = m_InputFocusMeter;
 			std::wstring dismissCommand;
 			std::wstring focusCommand;
 
@@ -4955,7 +4955,7 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// Both actions, since a meter with only the down one takes the double-click as well; see
 		// HandleButtonDoubleClickMessage().
-		MeterStringEdit* editMeter =
+		MeterTextEdit* editMeter =
 			GetInputMeterAt(pos.x, pos.y, (MOUSEACTION)(MOUSE_LMB_DBLCLK | MOUSE_LMB_DOWN));
 		if (editMeter)
 		{
@@ -5220,7 +5220,7 @@ void Skin::UpdateMouseMeasureCapture()
 	}
 }
 
-MeterStringEdit* Skin::GetInputMeterAt(int x, int y, MOUSEACTION actions)
+MeterTextEdit* Skin::GetInputMeterAt(int x, int y, MOUSEACTION actions)
 {
 	if (!m_HasInputMeters) return nullptr;
 
@@ -5229,9 +5229,9 @@ MeterStringEdit* Skin::GetInputMeterAt(int x, int y, MOUSEACTION actions)
 		Meter* meter = *j;
 		if (meter->IsHidden() || !meter->HitTest(x, y)) continue;
 
-		if (meter->GetTypeID() == TypeID<MeterStringEdit>())
+		if (meter->GetTypeID() == TypeID<MeterTextEdit>())
 		{
-			auto* editMeter = (MeterStringEdit*)meter;
+			auto* editMeter = (MeterTextEdit*)meter;
 			if (editMeter->AcceptsInput()) return editMeter;
 
 			// A field that takes no input is not in the way of one further back either.
@@ -5254,7 +5254,7 @@ MeterStringEdit* Skin::GetInputMeterAt(int x, int y, MOUSEACTION actions)
 
 void Skin::DismissInputFocus()
 {
-	MeterStringEdit* meter = m_InputFocusMeter;
+	MeterTextEdit* meter = m_InputFocusMeter;
 	if (!meter) return;
 
 	std::wstring command;
@@ -5275,7 +5275,7 @@ void Skin::DismissInputFocus()
 	}
 }
 
-bool Skin::SetInputFocus(MeterStringEdit* meter, std::wstring* dismissCommand)
+bool Skin::SetInputFocus(MeterTextEdit* meter, std::wstring* dismissCommand)
 {
 	if (m_InputFocusMeter == meter) return false;
 

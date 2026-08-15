@@ -14,16 +14,16 @@ class Pcre;
 // conversion narrowed to what the user types or pastes, and to the cases that work per character.
 // Password is the other exception, and keeps the offsets in the same way: it draws one mask
 // character per UTF-16 unit, so the two strings stay the same length even where they differ.
-class MeterStringEdit : public MeterStringBase
+class MeterTextEdit : public MeterStringBase
 {
 public:
-	MeterStringEdit(Skin* skin, const WCHAR* name);
-	virtual ~MeterStringEdit();
+	MeterTextEdit(Skin* skin, const WCHAR* name);
+	virtual ~MeterTextEdit();
 
-	MeterStringEdit(const MeterStringEdit& other) = delete;
-	MeterStringEdit& operator=(MeterStringEdit other) = delete;
+	MeterTextEdit(const MeterTextEdit& other) = delete;
+	MeterTextEdit& operator=(MeterTextEdit other) = delete;
 
-	virtual UINT GetTypeID() { return TypeID<MeterStringEdit>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterTextEdit>(); }
 
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources() override;

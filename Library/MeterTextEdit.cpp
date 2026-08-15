@@ -1,7 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "MeterStringEdit.h"
+#include "MeterTextEdit.h"
 #include "Pcre.h"
 #include "Rainmeter.h"
 #include "System.h"
@@ -44,7 +44,7 @@ CharClass ClassifyChar(WCHAR ch)
 class FocusMeterScope
 {
 public:
-	FocusMeterScope(MeterStringEdit* meter, Skin* skin)
+	FocusMeterScope(MeterTextEdit* meter, Skin* skin)
 	{
 		if (meter->IsFocused() || !meter->AcceptsInput()) return;
 
@@ -76,16 +76,16 @@ public:
 	FocusMeterScope& operator=(FocusMeterScope other) = delete;
 
 private:
-	MeterStringEdit* m_Outgoing = nullptr;
+	MeterTextEdit* m_Outgoing = nullptr;
 	std::wstring m_DismissCommand;
 
-	MeterStringEdit* m_Incoming = nullptr;
+	MeterTextEdit* m_Incoming = nullptr;
 	std::wstring m_FocusCommand;
 };
 
 void DoFocusBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	auto* editMeter = (MeterStringEdit*)meter;
+	auto* editMeter = (MeterTextEdit*)meter;
 	if (!editMeter->AcceptsInput())
 	{
 		LogWarningF(skin, L"!TextEdit:Focus: [%s] does not accept input", meter->GetName());
@@ -102,7 +102,7 @@ void DoDismissBang(std::vector<std::wstring>& args, Skin* skin)
 
 void DoSubmitBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	((MeterStringEdit*)meter)->Submit();
+	((MeterTextEdit*)meter)->Submit();
 }
 
 void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
@@ -111,45 +111,45 @@ void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 	const int index = parser.ParseInt(args[0].c_str(), 0);
 	const int length = parser.ParseInt(args[1].c_str(), -1);
 
-	auto* editMeter = (MeterStringEdit*)meter;
+	auto* editMeter = (MeterTextEdit*)meter;
 	FocusMeterScope focus(editMeter, skin);
 	editMeter->SelectRange(index, length);
 }
 
 void DoSelectAllBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	auto* editMeter = (MeterStringEdit*)meter;
+	auto* editMeter = (MeterTextEdit*)meter;
 	FocusMeterScope focus(editMeter, skin);
 	editMeter->SelectAll();
 }
 
 void DoSetTextBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	((MeterStringEdit*)meter)->SetText(args[0]);
+	((MeterTextEdit*)meter)->SetText(args[0]);
 	skin->RequestWindowSizeCheck();
 }
 
 void DoScrollByLineBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
 	const int lines = skin->GetParser().ParseInt(args[0].c_str(), 0);
-	((MeterStringEdit*)meter)->ScrollByLine(lines);
+	((MeterTextEdit*)meter)->ScrollByLine(lines);
 }
 
 void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	((MeterStringEdit*)meter)->Clear();
+	((MeterTextEdit*)meter)->Clear();
 	skin->RequestWindowSizeCheck();
 }
 
 void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 {
-	((MeterStringEdit*)meter)->Reset();
+	((MeterTextEdit*)meter)->Reset();
 	skin->RequestWindowSizeCheck();
 }
 
 }  // namespace
 
-MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
+MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
 	m_Focused(false),
 	m_Submitted(false),
@@ -177,7 +177,7 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 {
 	static const bool s_BangsRegistered = []()
 	{
-		const UINT typeId = TypeID<MeterStringEdit>();
+		const UINT typeId = TypeID<MeterTextEdit>();
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Focus", 0, DoFocusBang);
 		CommandHandler::RegisterSkinBang(L"TextEdit:Dismiss", 0, DoDismissBang);
 		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Submit", 0, DoSubmitBang);
@@ -191,18 +191,18 @@ MeterStringEdit::MeterStringEdit(Skin* skin, const WCHAR* name) : MeterStringBas
 	} ();
 }
 
-MeterStringEdit::~MeterStringEdit()
+MeterTextEdit::~MeterTextEdit()
 {
 }
 
-void MeterStringEdit::Initialize()
+void MeterTextEdit::Initialize()
 {
 	MeterStringBase::Initialize();
 	UpdatePlaceholderFormat();
 	UpdatePasswordChar();
 }
 
-void MeterStringEdit::InvalidateDeviceResources()
+void MeterTextEdit::InvalidateDeviceResources()
 {
 	MeterStringBase::InvalidateDeviceResources();
 	if (m_PlaceholderFormat)
@@ -211,7 +211,7 @@ void MeterStringEdit::InvalidateDeviceResources()
 	}
 }
 
-void MeterStringEdit::UpdatePlaceholderFormat()
+void MeterTextEdit::UpdatePlaceholderFormat()
 {
 	if (m_PlaceholderText.empty())
 	{
@@ -236,7 +236,7 @@ void MeterStringEdit::UpdatePlaceholderFormat()
 	m_PlaceholderFormat->SetVerticalAlignment(m_TextFormat->GetVerticalAlignment());
 }
 
-void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterTextEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	MeterStringBase::ReadOptions(parser, section);
 
@@ -373,7 +373,7 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_AcceptsInput = true;
 	if (!m_Skin->GetCanvas().IsAccurateText())
 	{
-		LogWarningF(this, L"Meter=StringEdit requires AccurateText=1");
+		LogWarningF(this, L"Meter=TextEdit requires AccurateText=1");
 		m_AcceptsInput = false;
 	}
 
@@ -383,12 +383,12 @@ void MeterStringEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void MeterStringEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterTextEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	// The text is the user's, so there is no measure to bind.
 }
 
-void MeterStringEdit::ApplyTextTransformations(std::wstring& text) const
+void MeterTextEdit::ApplyTextTransformations(std::wstring& text) const
 {
 	if (!m_Multiline)
 	{
@@ -406,7 +406,7 @@ void MeterStringEdit::ApplyTextTransformations(std::wstring& text) const
 	ApplyCase(text);
 }
 
-void MeterStringEdit::UpdatePasswordChar()
+void MeterTextEdit::UpdatePasswordChar()
 {
 	if (!m_Password) return;
 
@@ -425,7 +425,7 @@ void MeterStringEdit::UpdatePasswordChar()
 		asterisk;
 }
 
-void MeterStringEdit::SyncDrawnString()
+void MeterTextEdit::SyncDrawnString()
 {
 	// Rendered verbatim: any rewrite would shift the string relative to m_Text and put the caret
 	// offsets DirectWrite reports in a different index space than the edited text. A mask is the
@@ -440,7 +440,7 @@ void MeterStringEdit::SyncDrawnString()
 	}
 }
 
-bool MeterStringEdit::Update()
+bool MeterTextEdit::Update()
 {
 	if (Meter::Update())
 	{
@@ -458,7 +458,7 @@ bool MeterStringEdit::Update()
 	return false;
 }
 
-bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
+bool MeterTextEdit::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
@@ -499,7 +499,7 @@ bool MeterStringEdit::Draw(Gfx::Canvas& canvas)
 	return drawn;
 }
 
-void MeterStringEdit::UpdateAutoSizeForText()
+void MeterTextEdit::UpdateAutoSizeForText()
 {
 	if (ShowingPlaceholder())
 	{
@@ -520,7 +520,7 @@ void MeterStringEdit::UpdateAutoSizeForText()
 	}
 }
 
-void MeterStringEdit::EnsureCaretVisible()
+void MeterTextEdit::EnsureCaretVisible()
 {
 	if (!m_TextFormat->IsInitialized()) return;
 
@@ -561,7 +561,7 @@ void MeterStringEdit::EnsureCaretVisible()
 	ClampTextOffset();
 }
 
-void MeterStringEdit::ClampTextOffset()
+void MeterTextEdit::ClampTextOffset()
 {
 	// Never scroll past the start; there is nothing to reveal before it.
 	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
@@ -590,7 +590,7 @@ void MeterStringEdit::ClampTextOffset()
 	}
 }
 
-FLOAT MeterStringEdit::GetLineHeight()
+FLOAT MeterTextEdit::GetLineHeight()
 {
 	if (m_String.empty()) return 0.0f;
 
@@ -609,7 +609,7 @@ FLOAT MeterStringEdit::GetLineHeight()
 	return max(caret.bottom - caret.top, 0.0f);
 }
 
-bool MeterStringEdit::ScrollByLine(int lines)
+bool MeterTextEdit::ScrollByLine(int lines)
 {
 	if (lines == 0 || !m_TextFormat->IsInitialized()) return false;
 
@@ -627,7 +627,7 @@ bool MeterStringEdit::ScrollByLine(int lines)
 	return m_TextOffset.y != previous;
 }
 
-void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)
+void MeterTextEdit::DrawFocusBorder(Gfx::Canvas& canvas)
 {
 	if (m_FocusBorderColor.a <= 0.0f || m_FocusBorderWidth <= 0.0f) return;
 
@@ -650,7 +650,7 @@ void MeterStringEdit::DrawFocusBorder(Gfx::Canvas& canvas)
 	canvas.FillRectangle(D2D1::RectF(right - w, top + w, right, bottom - w), m_FocusBorderColor);
 }
 
-bool MeterStringEdit::IsCaretVisible() const
+bool MeterTextEdit::IsCaretVisible() const
 {
 	const UINT blinkTime = GetCaretBlinkTime();
 
@@ -661,7 +661,7 @@ bool MeterStringEdit::IsCaretVisible() const
 	return ((elapsed / blinkTime) % 2ULL) == 0ULL;
 }
 
-void MeterStringEdit::SetFocus(bool focus)
+void MeterTextEdit::SetFocus(bool focus)
 {
 	if (m_Focused == focus) return;
 
@@ -676,12 +676,12 @@ void MeterStringEdit::SetFocus(bool focus)
 	CompileInputRegExp();
 }
 
-bool MeterStringEdit::IsSubmitKey(WPARAM key) const
+bool MeterTextEdit::IsSubmitKey(WPARAM key) const
 {
 	return key == VK_RETURN && m_SubmitOnEnter;
 }
 
-void MeterStringEdit::Submit()
+void MeterTextEdit::Submit()
 {
 	m_Submitted = true;
 
@@ -691,7 +691,7 @@ void MeterStringEdit::Submit()
 	}
 }
 
-void MeterStringEdit::HandleDismiss(std::wstring& command)
+void MeterTextEdit::HandleDismiss(std::wstring& command)
 {
 	// A submit is not something to then abandon: it has already run its action and had its say over
 	// the text, so leaving afterwards is only a dismissal once the text has moved on from it.
@@ -700,7 +700,7 @@ void MeterStringEdit::HandleDismiss(std::wstring& command)
 	command = m_OnDismissAction;
 }
 
-void MeterStringEdit::Clear()
+void MeterTextEdit::Clear()
 {
 	if (m_String.empty()) return;
 
@@ -716,7 +716,7 @@ void MeterStringEdit::Clear()
 	m_Submitted = submitted;
 }
 
-void MeterStringEdit::SetText(std::wstring_view text)
+void MeterTextEdit::SetText(std::wstring_view text)
 {
 	std::wstring newText(text);
 	ApplyTextTransformations(newText);
@@ -739,7 +739,7 @@ void MeterStringEdit::SetText(std::wstring_view text)
 	EnsureCaretVisible();
 }
 
-void MeterStringEdit::Reset()
+void MeterTextEdit::Reset()
 {
 	ConfigParser& parser = m_Skin->GetParser();
 
@@ -755,7 +755,7 @@ void MeterStringEdit::Reset()
 	SetText(text);
 }
 
-void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
+void MeterTextEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
 {
 	m_CaretPos = min(pos, (UINT32)m_String.length());
 	m_CaretTrailing = trailing;
@@ -774,7 +774,7 @@ void MeterStringEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
 	m_LastEditKind = EditKind::None;
 }
 
-void MeterStringEdit::PushUndo(EditKind kind)
+void MeterTextEdit::PushUndo(EditKind kind)
 {
 	m_RedoStack.clear();
 
@@ -794,7 +794,7 @@ void MeterStringEdit::PushUndo(EditKind kind)
 	m_LastEditKind = kind;
 }
 
-void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
+void MeterTextEdit::ApplySnapshot(const EditSnapshot& snapshot)
 {
 	m_Text = snapshot.text;
 
@@ -812,7 +812,7 @@ void MeterStringEdit::ApplySnapshot(const EditSnapshot& snapshot)
 	UpdateAutoSizeForText();
 }
 
-bool MeterStringEdit::Undo()
+bool MeterTextEdit::Undo()
 {
 	if (m_UndoStack.empty()) return false;
 
@@ -824,7 +824,7 @@ bool MeterStringEdit::Undo()
 	return true;
 }
 
-bool MeterStringEdit::Redo()
+bool MeterTextEdit::Redo()
 {
 	if (m_RedoStack.empty()) return false;
 
@@ -836,14 +836,14 @@ bool MeterStringEdit::Redo()
 	return true;
 }
 
-void MeterStringEdit::ClearUndoHistory()
+void MeterTextEdit::ClearUndoHistory()
 {
 	m_UndoStack.clear();
 	m_RedoStack.clear();
 	m_LastEditKind = EditKind::None;
 }
 
-bool MeterStringEdit::SetCaretFromPoint(int x, int y, bool extend)
+bool MeterTextEdit::SetCaretFromPoint(int x, int y, bool extend)
 {
 	if (!m_AcceptsInput || !m_TextFormat->IsInitialized()) return false;
 
@@ -862,7 +862,7 @@ bool MeterStringEdit::SetCaretFromPoint(int x, int y, bool extend)
 	return true;
 }
 
-void MeterStringEdit::SelectAll()
+void MeterTextEdit::SelectAll()
 {
 	m_SelectionAnchor = 0U;
 	m_CaretPos = (UINT32)m_String.length();
@@ -871,7 +871,7 @@ void MeterStringEdit::SelectAll()
 	m_LastEditKind = EditKind::None;
 }
 
-void MeterStringEdit::SelectRange(int start, int length)
+void MeterTextEdit::SelectRange(int start, int length)
 {
 	const UINT32 textLength = (UINT32)m_String.length();
 	const UINT32 from = min((UINT32)max(start, 0), textLength);
@@ -885,7 +885,7 @@ void MeterStringEdit::SelectRange(int start, int length)
 	EnsureCaretVisible();
 }
 
-bool MeterStringEdit::SelectLineAtCaret()
+bool MeterTextEdit::SelectLineAtCaret()
 {
 	if (!m_AcceptsInput || !m_TextFormat->IsInitialized()) return false;
 
@@ -908,7 +908,7 @@ bool MeterStringEdit::SelectLineAtCaret()
 	return true;
 }
 
-bool MeterStringEdit::SelectWordAtCaret()
+bool MeterTextEdit::SelectWordAtCaret()
 {
 	if (!m_AcceptsInput || m_String.empty()) return false;
 
@@ -935,7 +935,7 @@ bool MeterStringEdit::SelectWordAtCaret()
 	return true;
 }
 
-bool MeterStringEdit::GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adjacent)
+bool MeterTextEdit::GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adjacent)
 {
 	if (!m_Password)
 	{
@@ -961,7 +961,7 @@ bool MeterStringEdit::GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& ad
 	return true;
 }
 
-UINT32 MeterStringEdit::FindWordBoundary(UINT32 pos, bool forward) const
+UINT32 MeterTextEdit::FindWordBoundary(UINT32 pos, bool forward) const
 {
 	const UINT32 len = (UINT32)m_String.length();
 	pos = min(pos, len);
@@ -987,12 +987,12 @@ UINT32 MeterStringEdit::FindWordBoundary(UINT32 pos, bool forward) const
 	return pos;
 }
 
-bool MeterStringEdit::IsFull() const
+bool MeterTextEdit::IsFull() const
 {
 	return m_MaxLength > 0 && m_String.length() >= (size_t)m_MaxLength;
 }
 
-void MeterStringEdit::SetInputRegExp(const std::wstring& pattern)
+void MeterTextEdit::SetInputRegExp(const std::wstring& pattern)
 {
 	// A dynamic InputRegExp is re-read on every update, so an unchanged pattern must keep whatever
 	// compiling it already produced: recompiling would cost the same work every update, and would
@@ -1004,7 +1004,7 @@ void MeterStringEdit::SetInputRegExp(const std::wstring& pattern)
 	m_RegExpError = false;
 }
 
-void MeterStringEdit::CompileInputRegExp()
+void MeterTextEdit::CompileInputRegExp()
 {
 	if (m_InputRegExpPattern.empty() || m_RegExp || m_RegExpError) return;
 
@@ -1021,7 +1021,7 @@ void MeterStringEdit::CompileInputRegExp()
 	m_RegExpError = true;
 }
 
-std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::wstring& insert) const
+std::wstring MeterTextEdit::PreviewReplacement(const std::wstring& text, std::wstring& insert) const
 {
 	const UINT32 start = GetSelectionStart();
 	const UINT32 end = GetSelectionEnd();
@@ -1055,7 +1055,7 @@ std::wstring MeterStringEdit::PreviewReplacement(const std::wstring& text, std::
 	return result;
 }
 
-bool MeterStringEdit::AcceptsReplacement(const std::wstring& text) const
+bool MeterTextEdit::AcceptsReplacement(const std::wstring& text) const
 {
 	if (!m_RegExp) return true;
 
@@ -1086,7 +1086,7 @@ bool MeterStringEdit::AcceptsReplacement(const std::wstring& text) const
 	return rc >= 0 && ovector[1] == (int)result.length();
 }
 
-void MeterStringEdit::ReplaceSelection(const std::wstring& text)
+void MeterTextEdit::ReplaceSelection(const std::wstring& text)
 {
 	const UINT32 start = GetSelectionStart();
 
@@ -1107,7 +1107,7 @@ void MeterStringEdit::ReplaceSelection(const std::wstring& text)
 	m_CaretBlinkStart = GetTickCount64();
 }
 
-bool MeterStringEdit::CopySelection(bool cut)
+bool MeterTextEdit::CopySelection(bool cut)
 {
 	// A masked field hands nothing to the clipboard, as a Win32 password edit does not - cutting
 	// included, since it would put the text there on its way out. Deleting still empties it.
@@ -1125,7 +1125,7 @@ bool MeterStringEdit::CopySelection(bool cut)
 	return true;
 }
 
-bool MeterStringEdit::Paste()
+bool MeterTextEdit::Paste()
 {
 	auto clipboard = System::GetClipboardText();
 	if (!clipboard || clipboard->empty()) return false;
@@ -1164,7 +1164,7 @@ bool MeterStringEdit::Paste()
 	return true;
 }
 
-void MeterStringEdit::DeleteWord(bool forward)
+void MeterTextEdit::DeleteWord(bool forward)
 {
 	if (!HasSelection())
 	{
@@ -1182,7 +1182,7 @@ void MeterStringEdit::DeleteWord(bool forward)
 	ReplaceSelection(std::wstring());
 }
 
-void MeterStringEdit::DeleteSelectionOr(bool forward)
+void MeterTextEdit::DeleteSelectionOr(bool forward)
 {
 	if (!HasSelection())
 	{
@@ -1207,7 +1207,7 @@ void MeterStringEdit::DeleteSelectionOr(bool forward)
 	ReplaceSelection(std::wstring());
 }
 
-bool MeterStringEdit::HandleChar(WCHAR ch)
+bool MeterTextEdit::HandleChar(WCHAR ch)
 {
 	if (!m_AcceptsInput) return false;
 
@@ -1232,7 +1232,7 @@ bool MeterStringEdit::HandleChar(WCHAR ch)
 	return true;
 }
 
-bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
+bool MeterTextEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 {
 	if (!m_AcceptsInput) return false;
 
@@ -1398,7 +1398,7 @@ bool MeterStringEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 	return false;
 }
 
-void MeterStringEdit::DrawCaret(Gfx::Canvas& canvas)
+void MeterTextEdit::DrawCaret(Gfx::Canvas& canvas)
 {
 	m_CaretDrawnVisible = IsCaretVisible();
 	if (!m_CaretDrawnVisible) return;
@@ -1416,7 +1416,7 @@ void MeterStringEdit::DrawCaret(Gfx::Canvas& canvas)
 	}
 }
 
-void MeterStringEdit::DrawSelection(Gfx::Canvas& canvas)
+void MeterTextEdit::DrawSelection(Gfx::Canvas& canvas)
 {
 	ApplyTextState(canvas);
 
