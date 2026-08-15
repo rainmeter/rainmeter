@@ -1290,7 +1290,7 @@ void RegisterSectionBang(const SectionBangInfo& bangInfo)
 	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
 }
 
-// What a "For...::" prefix aims the rest of the bang at.
+// What a "::For..." postfix aims the bang at.
 enum class BangTarget
 {
 	None,
@@ -1301,23 +1301,18 @@ enum class BangTarget
 BangTarget ConsumeBangTarget(std::wstring_view& bang)
 {
 	StringParser parser(bang);
-	if (!parser.Consume(L"For")) return BangTarget::None;
-
-	BangTarget target = BangTarget::None;
-	if (parser.Consume(L"SkinGroup")) target = BangTarget::SkinGroup;
-	else if (parser.Consume(L"Skin")) target = BangTarget::Skin;
-	else return BangTarget::None;
 
 	// Section bangs use a single colon, so the double colon is unambiguous.
-	if (!parser.Consume(L"::")) return BangTarget::None;
+	BangTarget target = BangTarget::None;
+	if (parser.ConsumeSuffix(L"::ForSkinGroup")) target = BangTarget::SkinGroup;
+	else if (parser.ConsumeSuffix(L"::ForSkin")) target = BangTarget::Skin;
+	else return BangTarget::None;
 
 	bang = parser.Remaining();
 	return target;
 }
 
-// Runs |bang| for each target named by the first argument. The bang may carry a "For...::"
-// prefix of its own, so the prefixes can be combined.
-void DoPrefixedBang(BangTarget target, std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
+void DoTargetedBang(BangTarget target, std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (bang.empty())
 	{
@@ -1375,7 +1370,7 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	const BangTarget target = ConsumeBangTarget(bang);
 	if (target != BangTarget::None)
 	{
-		DoPrefixedBang(target, name, bang, args, skin);
+		DoTargetedBang(target, name, bang, args, skin);
 		return;
 	}
 
