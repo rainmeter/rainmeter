@@ -322,6 +322,7 @@ TextFormat::TextFormat() :
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
+	m_WordWrap(),
 	m_HasInlineOptionsChanged(false),
 	m_FontCollection()
 {
@@ -704,9 +705,11 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(std::wstring_view str, bool gdiEmulat
 	return metrics;
 }
 
-void TextFormat::SetTrimming(bool trim)
+void TextFormat::SetTrimming(bool trim, bool wrap)
 {
 	m_Trimming = trim;
+	m_WordWrap = wrap;
+
 	IDWriteInlineObject* inlineObject = nullptr;
 	DWRITE_TRIMMING trimming = {};
 	if (trim)
@@ -746,7 +749,7 @@ void TextFormat::UpdateWordWrapping()
 	if (!m_TextFormat) return;
 
 	// Justified text has nothing to stretch unless lines are allowed to wrap.
-	const bool wrap = m_Trimming || m_HorizontalAlignment == HorizontalAlignment::Justify;
+	const bool wrap = m_WordWrap || m_HorizontalAlignment == HorizontalAlignment::Justify;
 	m_TextFormat->SetWordWrapping(wrap ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
 }
 
