@@ -204,8 +204,16 @@ void MeasureAudioLevel::Initialize()
 			}
 		}
 
-		// Init the device. It is OK if it fails; UpdateValue() keeps checking.
-		DeviceInit();
+		// Init the device. It is OK if it fails; UpdateValue() keeps checking. Subsequent
+		// attempts are not logged since losing the device (e.g. an unplugged microphone) is
+		// normal and would otherwise spam the log.
+		const HRESULT hr = DeviceInit();
+		if (FAILED(hr))
+		{
+			LogWarningF(this, L"Unable to initialize audio %s device '%s' (error 0x%08x).",
+				m_Port == PORT_OUTPUT ? L"output" : L"input", *m_ReqID ? m_ReqID : L"default", hr);
+		}
+
 		return;
 	}
 
@@ -922,12 +930,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 }
 
 
-/**
- * Try to initialize the default device for the specified port.
- *
- * @return		Result value, S_OK on success.
- */
-HRESULT	MeasureAudioLevel::DeviceInit()
+HRESULT MeasureAudioLevel::DeviceInit()
 {
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
@@ -940,11 +943,6 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 	if (*m_ReqID)
 	{
 		hr = m_Enum->GetDevice(m_ReqID, &m_Dev);
-		if (hr != S_OK)
-		{
-			LogWarningF(this, L"Audio %s device '%s' not found (error 0x%08x).",
-				m_Port==PORT_OUTPUT ? L"output" : L"input", m_ReqID, hr);
-		}
 	}
 	else
 	{
@@ -972,19 +970,15 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 #if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
 	// get an extra audio client for the dummy silent channel
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClBugAudio);
-	if (hr != S_OK)
+	if (m_Port == PORT_OUTPUT)
 	{
-		LogWarningF(this, L"Failed to create audio client for Windows bug workaround.");
+		// Only the loopback path below uses this client.
+		EXIT_ON_ERROR(hr);
 	}
 #endif
 
 	// get the main audio client
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClAudio);
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to create audio client.");
-	}
-
 	EXIT_ON_ERROR(hr);
 
 	// parse audio format - Note: not all formats are supported.
@@ -1109,28 +1103,15 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 
 		hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
 			hnsRequestedDuration, 0, m_Wfx, NULL);
-		if (hr != S_OK)
-		{
-			// stereo waveformat didnt work either, throw an error
-			LogWarningF(this, L"Failed to initialize audio client.");
-		}
 	}
 	EXIT_ON_ERROR(hr);
 
 	// initialize the audio capture client
 	hr = m_ClAudio->GetService(IID_IAudioCaptureClient, (void**)&m_ClCapture);
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to create audio capture client.");
-	}
 	EXIT_ON_ERROR(hr);
 
 	// start the stream
 	hr = m_ClAudio->Start();
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to start the stream.");
-	}
 	EXIT_ON_ERROR(hr);
 
 	// initialize the watchdog timer
