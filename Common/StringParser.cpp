@@ -226,6 +226,19 @@ bool StringParser::ConsumeSuffix(const WCHAR* str, size_t length)
 	return true;
 }
 
+bool StringParser::ConsumeSuffixFromLast(WCHAR ch)
+{
+	const std::wstring_view remaining = Remaining();
+	const size_t pos = remaining.find_last_of(ch);
+	if (pos == std::wstring_view::npos)
+	{
+		return false;
+	}
+
+	m_End = m_Current + pos;
+	return true;
+}
+
 bool StringParser::Consume(WCHAR ch, Option option)
 {
 	if (HasOption(option, SkipWhitespace))

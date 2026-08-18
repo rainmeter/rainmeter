@@ -202,8 +202,9 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
 	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		// Function call
-		if (funcName.empty() || !parser.ConsumeSuffix(L")"))
+		// Function call. Anything after the closing parenthesis is ignored to match the old code,
+		// which silently accepted e.g. "[ScriptMeasure:Function(),4]".
+		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
 			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());

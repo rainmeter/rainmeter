@@ -259,7 +259,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
 	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		if (funcName.empty() || !parser.ConsumeSuffix(L")"))
+		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
 			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
