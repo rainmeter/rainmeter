@@ -290,6 +290,23 @@ public:
 		Assert::IsFalse(parser.IsConsumed());
 	}
 
+	TEST_METHOD(TestConsumeSuffixFromLast)
+	{
+		StringParser parser(L"Function(Arg1, F(Arg2)),4");
+
+		AssertValue(L"Function", parser.ConsumeUntil(L'('));
+		Assert::IsTrue(parser.ConsumeSuffixFromLast(L')'));
+		AssertValue(L"Arg1, F(Arg2)", parser.Remaining());
+	}
+
+	TEST_METHOD(TestConsumeSuffixFromLastNoMatch)
+	{
+		StringParser parser(L"Value");
+
+		Assert::IsFalse(parser.ConsumeSuffixFromLast(L')'));
+		AssertValue(L"Value", parser.Remaining());
+	}
+
 private:
 	static void AssertValue(const WCHAR* expected, std::wstring_view actual)
 	{

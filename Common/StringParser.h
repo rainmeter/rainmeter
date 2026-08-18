@@ -80,6 +80,10 @@ public:
 	bool ConsumeRest(const WCHAR* str, size_t length, Option option = None);
 	bool ConsumeSuffix(const WCHAR* str, size_t length);
 
+	// Consumes the last |ch| in the range and everything after it. Returns false, without
+	// consuming anything, if the range does not contain |ch|.
+	bool ConsumeSuffixFromLast(WCHAR ch);
+
 	bool Consume(const std::wstring& str, Option option = None) { return Consume(str.c_str(), str.length(), option); }
 	bool ConsumeRest(const std::wstring& str, Option option = None) { return ConsumeRest(str.c_str(), str.length(), option); }
 	bool ConsumeSuffix(const std::wstring& str) { return ConsumeSuffix(str.c_str(), str.length()); }
