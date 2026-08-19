@@ -182,7 +182,7 @@ public:
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command, Skin* skin = nullptr);
 	void ExecuteActionCommand(const WCHAR* command, Section* section);

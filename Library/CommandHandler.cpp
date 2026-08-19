@@ -19,6 +19,8 @@
 
 namespace {
 
+constexpr std::wstring_view BANG_SKIN_PREFIX = L"Skin:";
+
 struct BangInfo
 {
 	Bang bang;
@@ -1332,17 +1334,17 @@ void RegisterSectionBang(const SectionBangInfo& bangInfo)
 	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
 }
 
-void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
+void DoSkinBang(std::wstring_view originalBang, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (bang.empty())
 	{
-		LogErrorF(skin, L"!%.*s: Bang name required", (int)name.length(), name.data());
+		LogErrorF(skin, L"!%.*s: Bang name required", (int)originalBang.length(), originalBang.data());
 		return;
 	}
 
 	if (args.empty())
 	{
-		LogErrorF(skin, L"!%.*s: Incorrect number of arguments", (int)name.length(), name.data());
+		LogErrorF(skin, L"!%.*s: Incorrect number of arguments", (int)originalBang.length(), originalBang.data());
 		return;
 	}
 
@@ -1359,7 +1361,7 @@ void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std:
 		{
 			// The handlers may modify the arguments, so hand each skin its own copy.
 			std::vector<std::wstring> skinArgs = args;
-			GetRainmeter().ExecuteBang(bang, skinArgs, ip.second);
+			GetRainmeter().ExecuteBang(bang, skinArgs, ip.second, BangTarget::Skin);
 		}
 
 		return;
@@ -1371,22 +1373,22 @@ void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std:
 		if (DoesConfigExist(target))
 		{
 			LogWarningF(skin, L"!%.*s: Skin \"%s\" is not active",
-				(int)name.length(), name.data(), target.c_str());
+				(int)originalBang.length(), originalBang.data(), target.c_str());
 		}
 		else
 		{
 			LogErrorF(skin, L"!%.*s: Skin \"%s\" does not exist",
-				(int)name.length(), name.data(), target.c_str());
+				(int)originalBang.length(), originalBang.data(), target.c_str());
 		}
 		return;
 	}
 
-	GetRainmeter().ExecuteBang(bang, args, other);
+	GetRainmeter().ExecuteBang(bang, args, other, BangTarget::Skin);
 }
 
 }  // namespace
 
-void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin)
+void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin, BangTarget target)
 {
 	WCHAR buffer[64];
 	const auto key = BuildBangMapKey(name, buffer, _countof(buffer));
@@ -1396,7 +1398,21 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	if (iter != bangMap.end())
 	{
 		const BangInfo& bangInfo = *iter->second;
+		if (target == BangTarget::Skin && bangInfo.handlerFunc != DoBang)
+		{
+			LogErrorF(skin, L"!%s: Bang does not apply to a skin", bangInfo.name);
+			return;
+		}
+
 		bangInfo.handlerFunc(bangInfo, args, skin);
+		return;
+	}
+
+	// A "Skin:" prefix aims the rest of the bang at the skin(s) named by the first argument.
+	// Bangs registered in the namespace are found above, so they take precedence.
+	if (target == BangTarget::Default && name.starts_with(BANG_SKIN_PREFIX))
+	{
+		DoSkinBang(name, name.substr(BANG_SKIN_PREFIX.length()), args, skin);
 		return;
 	}
 
@@ -1405,15 +1421,6 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	if (sectionIter != sectionBangMap.end())
 	{
 		DoSectionBang(sectionIter->second, args, skin);
-		return;
-	}
-
-	// A "Skin:" prefix aims the rest of the bang at the skin(s) named by the first argument.
-	// Bangs registered in the namespace are found above, so they take precedence.
-	constexpr std::wstring_view skinPrefix = L"Skin:";
-	if (name.starts_with(skinPrefix))
-	{
-		DoSkinBang(name, name.substr(skinPrefix.length()), args, skin);
 		return;
 	}
 
