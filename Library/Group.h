@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 class __declspec(novtable) Group
 {
@@ -18,11 +19,11 @@ public:
 	const ankerl::unordered_dense::set<std::wstring>& GetGroups() const { return m_Groups; }
 
 	bool AddToGroup(const std::wstring& group);
-	bool BelongsToGroup(const std::wstring& group) const;
+	bool BelongsToGroup(std::wstring_view group) const;
 
 private:
 	std::wstring& CreateGroup(std::wstring& str) const;
-	std::wstring VerifyGroup(const std::wstring& str) const;
+	std::wstring VerifyGroup(std::wstring_view str) const;
 
 	ankerl::unordered_dense::set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;

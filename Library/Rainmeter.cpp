@@ -1482,7 +1482,7 @@ Skin* Rainmeter::GetSkin(HWND hwnd)
 	return nullptr;
 }
 
-void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group)
+void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group)
 {
 	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
