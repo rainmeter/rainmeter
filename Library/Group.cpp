@@ -45,7 +45,7 @@ bool Group::AddToGroup(const std::wstring& group)
 	return false;
 }
 
-bool Group::BelongsToGroup(const std::wstring& group) const
+bool Group::BelongsToGroup(std::wstring_view group) const
 {
 	return (m_Groups.find(VerifyGroup(group)) != m_Groups.end());
 }
@@ -56,12 +56,12 @@ std::wstring& Group::CreateGroup(std::wstring& str) const
 	return str;
 }
 
-std::wstring Group::VerifyGroup(const std::wstring& str) const
+std::wstring Group::VerifyGroup(std::wstring_view str) const
 {
 	std::wstring strTmp;
 
-	std::wstring::size_type pos = str.find_first_not_of(L" \t\r\n");
-	if (pos != std::wstring::npos)
+	const auto pos = str.find_first_not_of(L" \t\r\n");
+	if (pos != std::wstring_view::npos)
 	{
 		// Trim white-space
 		strTmp.assign(str, pos, str.find_last_not_of(L" \t\r\n") - pos + 1);

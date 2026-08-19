@@ -3,7 +3,6 @@
 #include "StdAfx.h"
 #include "../Common/Map.h"
 #include "../Common/PathUtil.h"
-#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
@@ -1290,29 +1289,15 @@ void RegisterSectionBang(const SectionBangInfo& bangInfo)
 	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
 }
 
-// What a "::For..." postfix aims the bang at.
-enum class BangTarget
+std::optional<std::wstring_view> GetTargetGroup(std::wstring_view target)
 {
-	None,
-	Skin,
-	SkinGroup
-};
+	constexpr std::wstring_view selector = L"Group=";
+	if (!target.starts_with(selector)) return std::nullopt;
 
-BangTarget ConsumeBangTarget(std::wstring_view& bang)
-{
-	StringParser parser(bang);
-
-	// Section bangs use a single colon, so the double colon is unambiguous.
-	BangTarget target = BangTarget::None;
-	if (parser.ConsumeSuffix(L"::ForSkinGroup")) target = BangTarget::SkinGroup;
-	else if (parser.ConsumeSuffix(L"::ForSkin")) target = BangTarget::Skin;
-	else return BangTarget::None;
-
-	bang = parser.Remaining();
-	return target;
+	return target.substr(selector.length());
 }
 
-void DoTargetedBang(BangTarget target, std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
+void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (bang.empty())
 	{
@@ -1326,54 +1311,47 @@ void DoTargetedBang(BangTarget target, std::wstring_view name, std::wstring_view
 		return;
 	}
 
-	const std::wstring skinTarget = std::move(args[0]);
+	const std::wstring target = std::move(args[0]);
 	args.erase(args.begin());
 
-	if (target == BangTarget::Skin)
+	if (const auto group = GetTargetGroup(target))
 	{
-		Skin* other = GetRainmeter().GetSkin(skinTarget);
-		if (!other)
+		std::multimap<int, Skin*> skins;
+		GetRainmeter().GetSkinsByLoadOrder(skins, *group);
+
+		for (const auto& ip : skins)
 		{
-			if (DoesConfigExist(skinTarget))
-			{
-				LogWarningF(skin, L"!%.*s: Skin \"%s\" is not active",
-					(int)name.length(), name.data(), skinTarget.c_str());
-			}
-			else
-			{
-				LogErrorF(skin, L"!%.*s: Skin \"%s\" does not exist",
-					(int)name.length(), name.data(), skinTarget.c_str());
-			}
-			return;
+			// The handlers may modify the arguments, so hand each skin its own copy.
+			std::vector<std::wstring> skinArgs = args;
+			GetRainmeter().ExecuteBang(bang, skinArgs, ip.second);
 		}
 
-		GetRainmeter().ExecuteBang(bang, args, other);
 		return;
 	}
 
-	std::multimap<int, Skin*> skins;
-	GetRainmeter().GetSkinsByLoadOrder(skins, skinTarget);
-
-	for (const auto& ip : skins)
+	Skin* other = GetRainmeter().GetSkin(target);
+	if (!other)
 	{
-		// The handlers may modify the arguments, so hand each skin its own copy.
-		std::vector<std::wstring> skinArgs = args;
-		GetRainmeter().ExecuteBang(bang, skinArgs, ip.second);
+		if (DoesConfigExist(target))
+		{
+			LogWarningF(skin, L"!%.*s: Skin \"%s\" is not active",
+				(int)name.length(), name.data(), target.c_str());
+		}
+		else
+		{
+			LogErrorF(skin, L"!%.*s: Skin \"%s\" does not exist",
+				(int)name.length(), name.data(), target.c_str());
+		}
+		return;
 	}
+
+	GetRainmeter().ExecuteBang(bang, args, other);
 }
 
 }  // namespace
 
 void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin)
 {
-	std::wstring_view bang = name;
-	const BangTarget target = ConsumeBangTarget(bang);
-	if (target != BangTarget::None)
-	{
-		DoTargetedBang(target, name, bang, args, skin);
-		return;
-	}
-
 	WCHAR buffer[64];
 	const auto key = BuildBangMapKey(name, buffer, _countof(buffer));
 
@@ -1391,6 +1369,15 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	if (sectionIter != sectionBangMap.end())
 	{
 		DoSectionBang(sectionIter->second, args, skin);
+		return;
+	}
+
+	// A "Skin:" prefix aims the rest of the bang at the skin(s) named by the first argument.
+	// Bangs registered in the namespace are found above, so they take precedence.
+	constexpr std::wstring_view skinPrefix = L"Skin:";
+	if (name.starts_with(skinPrefix))
+	{
+		DoSkinBang(name, name.substr(skinPrefix.length()), args, skin);
 		return;
 	}
 
