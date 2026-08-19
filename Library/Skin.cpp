@@ -29,6 +29,7 @@
 #include "../Version.h"
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/EffectStream.h"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
@@ -1582,28 +1583,24 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 	free(parseSz);
 }
 
-// Helper function that compares the given name to section's name.
-bool CompareName(const Section* section, const WCHAR* name, bool group)
-{
-	return (group) ? section->BelongsToGroup(name) : (_wcsicmp(section->GetName(), name) == 0);
-}
-
 bool CompareName(const Section* section, std::wstring_view name)
 {
-	const auto& sectionName = section->GetOriginalName();
-	return
-		sectionName.length() == name.length() &&
-		_wcsnicmp(sectionName.data(), name.data(), name.length()) == 0;
+	return StringUtil::EqualsIgnoreCase(section->GetOriginalName(), name);
 }
 
-void Skin::ShowMeter(const std::wstring& name, bool group)
+bool CompareName(const Section* section, std::wstring_view name, bool group)
 {
-	const WCHAR* meter = name.c_str();
+	return (group) ? section->BelongsToGroup(name) : CompareName(section, name);
+}
+
+void Skin::ShowMeter(std::wstring_view name, bool group)
+{
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), meter, group))
+		if (CompareName((*j), name, group))
 		{
 			(*j)->Show();
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
@@ -1611,17 +1608,17 @@ void Skin::ShowMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!ShowMeter: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!ShowMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::HideMeter(const std::wstring& name, bool group)
+void Skin::HideMeter(std::wstring_view name, bool group)
 {
-	const WCHAR* meter = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), meter, group))
+		if (CompareName((*j), name, group))
 		{
 			(*j)->Hide();
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
@@ -1629,17 +1626,17 @@ void Skin::HideMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!HideMeter: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!HideMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::ToggleMeter(const std::wstring& name, bool group)
+void Skin::ToggleMeter(std::wstring_view name, bool group)
 {
-	const WCHAR* meter = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), meter, group))
+		if (CompareName((*j), name, group))
 		{
 			if ((*j)->IsHidden())
 			{
@@ -1654,17 +1651,15 @@ void Skin::ToggleMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!ToggleMeter: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!ToggleMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::MoveMeter(const std::wstring& name, int x, int y)
+void Skin::MoveMeter(std::wstring_view name, int x, int y)
 {
-	const WCHAR* meter = name.c_str();
-
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), meter, false))
+		if (CompareName((*j), name))
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
@@ -1673,15 +1668,15 @@ void Skin::MoveMeter(const std::wstring& name, int x, int y)
 		}
 	}
 
-	LogErrorF(this, L"!MoveMeter: [%s] not found", meter);
+	LogErrorF(this, L"!MoveMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::UpdateMeter(const std::wstring& name, bool group)
+void Skin::UpdateMeter(std::wstring_view name, bool group)
 {
-	const WCHAR* meter = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 	bool all = false;
 
-	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!UpdateMeter *]
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1691,7 +1686,7 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	bool bContinue = true;
 	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (all || (bContinue && CompareName((*j), meter, group)))
+		if (all || (bContinue && CompareName((*j), name, group)))
 		{
 			if (UpdateMeter((*j), bActiveTransition, true))
 			{
@@ -1719,21 +1714,22 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	// Post-updates
 	PostUpdate(bActiveTransition);
 
-	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
+	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+void Skin::DisableMouseAction(std::wstring_view name, const std::wstring& options, bool group)
 {
-	const WCHAR* meter = name.c_str();
 	bool all = false;
 
-	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	if (StringUtil::EqualsIgnoreCase(name, L"Rainmeter"))
 	{
 		m_Mouse.DisableMouseAction(options);
 		return;
 	}
 
-	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!DisableMouseAction * ...]
+	if (ConsumeGroupSelector(name)) group = true;
+
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1741,28 +1737,29 @@ void Skin::DisableMouseAction(const std::wstring& name, const std::wstring& opti
 
 	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (all || CompareName((*j), meter, group))
+		if (all || CompareName((*j), name, group))
 		{
 			(*j)->DisableMouseAction(options);
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!DisableMouseAction: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!DisableMouseAction: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+void Skin::ClearMouseAction(std::wstring_view name, const std::wstring& options, bool group)
 {
-	const WCHAR* meter = name.c_str();
 	bool all = false;
 
-	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	if (StringUtil::EqualsIgnoreCase(name, L"Rainmeter"))
 	{
 		m_Mouse.ClearMouseAction(options);
 		return;
 	}
 
-	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ClearMouseAction * ...]
+	if (ConsumeGroupSelector(name)) group = true;
+
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1770,28 +1767,29 @@ void Skin::ClearMouseAction(const std::wstring& name, const std::wstring& option
 
 	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (all || CompareName((*j), meter, group))
+		if (all || CompareName((*j), name, group))
 		{
 			(*j)->ClearMouseAction(options);
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!ClearMouseAction: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!ClearMouseAction: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+void Skin::EnableMouseAction(std::wstring_view name, const std::wstring& options, bool group)
 {
-	const WCHAR* meter = name.c_str();
 	bool all = false;
 
-	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	if (StringUtil::EqualsIgnoreCase(name, L"Rainmeter"))
 	{
 		m_Mouse.EnableMouseAction(options);
 		return;
 	}
 
-	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!EnableMouseAction * ...]
+	if (ConsumeGroupSelector(name)) group = true;
+
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1799,28 +1797,29 @@ void Skin::EnableMouseAction(const std::wstring& name, const std::wstring& optio
 
 	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (all || CompareName((*j), meter, group))
+		if (all || CompareName((*j), name, group))
 		{
 			(*j)->EnableMouseAction(options);
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!EnableMouseAction: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!EnableMouseAction: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group)
+void Skin::ToggleMouseAction(std::wstring_view name, const std::wstring& options, bool group)
 {
-	const WCHAR* meter = name.c_str();
 	bool all = false;
 
-	if (_wcsicmp(meter, L"Rainmeter") == 0)
+	if (StringUtil::EqualsIgnoreCase(name, L"Rainmeter"))
 	{
 		m_Mouse.ToggleMouseAction(options);
 		return;
 	}
 
-	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!ToggleMouseAction * ...]
+	if (ConsumeGroupSelector(name)) group = true;
+
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1828,58 +1827,58 @@ void Skin::ToggleMouseAction(const std::wstring& name, const std::wstring& optio
 
 	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (all || CompareName((*j), meter, group))
+		if (all || CompareName((*j), name, group))
 		{
 			(*j)->ToggleMouseAction(options);
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!ToggleMouseAction: [%s] not found", meter);
+	if (!group) LogErrorF(this, L"!ToggleMouseAction: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::EnableMeasure(const std::wstring& name, bool group)
+void Skin::EnableMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			(*i)->Enable();
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!EnableMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!EnableMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::DisableMeasure(const std::wstring& name, bool group)
+void Skin::DisableMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			(*i)->Disable();
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!DisableMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!DisableMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::ToggleMeasure(const std::wstring& name, bool group)
+void Skin::ToggleMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			if ((*i)->IsDisabled())
 			{
@@ -1893,51 +1892,51 @@ void Skin::ToggleMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!ToggleMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!ToggleMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::PauseMeasure(const std::wstring& name, bool group)
+void Skin::PauseMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			(*i)->Pause();
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!PauseMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!PauseMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::UnpauseMeasure(const std::wstring& name, bool group)
+void Skin::UnpauseMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			(*i)->Unpause();
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!UnpauseMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!UnpauseMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::TogglePauseMeasure(const std::wstring& name, bool group)
+void Skin::TogglePauseMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	std::vector<Measure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			if ((*i)->IsPaused())
 			{
@@ -1951,15 +1950,15 @@ void Skin::TogglePauseMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!TogglePauseMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!TogglePauseMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::UpdateMeasure(const std::wstring& name, bool group)
+void Skin::UpdateMeasure(std::wstring_view name, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 	bool all = false;
 
-	if (!group && measure[0] == L'*' && measure[1] == L'\0')  // Allow [!UpdateMeasure *]
+	if (!group && name == L"*")
 	{
 		all = true;
 		group = true;
@@ -1968,7 +1967,7 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 	bool bNetStats = m_HasNetMeasures;
 	for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 	{
-		if (all || CompareName((*i), measure, group))
+		if (all || CompareName((*i), name, group))
 		{
 			if (bNetStats && IsNetworkMeasure((*i)))
 			{
@@ -1987,23 +1986,23 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(this, L"!UpdateMeasure: [%s] not found", measure);
+	if (!group) LogErrorF(this, L"!UpdateMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::CommandMeasure(const std::wstring& name, const std::wstring& command, bool group)
+void Skin::CommandMeasure(std::wstring_view name, const std::wstring& command, bool group)
 {
-	const WCHAR* measure = name.c_str();
+	if (ConsumeGroupSelector(name)) group = true;
 
 	for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (CompareName((*i), name, group))
 		{
 			(*i)->Command(command);
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogWarningF(this, L"!CommandMeasure: [%s] not found", measure);
+	if (!group) LogWarningF(this, L"!CommandMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
 void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
@@ -2024,8 +2023,10 @@ void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 	}
 }
 
-void Skin::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
+void Skin::SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group)
 {
+	if (ConsumeGroupSelector(section)) group = true;
+
 	auto setValue = [&](Section* section, const std::wstring& option, const std::wstring& value)
 	{
 		// Force DynamicVariables temporarily (until next ReadOptions()).
@@ -2076,16 +2077,17 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 		}
 
 		// ContextTitle and ContextAction in [Rainmeter] are dynamic
-		if (_wcsicmp(section.c_str(), L"Rainmeter") == 0 &&
+		if (StringUtil::EqualsIgnoreCase(section, L"Rainmeter") &&
 			_wcsnicmp(option.c_str(), L"Context", 7) == 0)
 		{
+			const std::wstring sectionName(section);
 			if (value.empty())
 			{
-				m_Parser.DeleteValue(section, option);
+				m_Parser.DeleteValue(sectionName, option);
 			}
 			else
 			{
-				m_Parser.SetValue(section, option, value);
+				m_Parser.SetValue(sectionName, option, value);
 			}
 		}
 

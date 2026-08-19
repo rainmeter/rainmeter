@@ -4,6 +4,15 @@
 #include "Group.h"
 #include "../Common/StringParser.h"
 
+bool ConsumeGroupSelector(std::wstring_view& name)
+{
+	constexpr std::wstring_view groupSelector = L"Group=";
+	if (!name.starts_with(groupSelector)) return false;
+
+	name.remove_prefix(groupSelector.length());
+	return true;
+}
+
 void Group::InitializeGroup(const std::wstring& groups)
 {
 	if (wcscmp(groups.c_str(), m_OldGroups.c_str()) != 0)
