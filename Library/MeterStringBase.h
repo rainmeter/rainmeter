@@ -12,7 +12,7 @@
 // edit the text. Holds the font and case options common to both and the drawing built on them, but
 // leaves it to each meter to decide when the case conversion runs. Neither the text nor the option
 // it comes from is read here: String rebuilds m_Text from Text on every read, while TextEdit
-// takes InitialText once and lets the user own it from there.
+// follows InitialText only until the field is touched, and leaves the text to the user after.
 class __declspec(novtable) MeterStringBase : public Meter
 {
 public:

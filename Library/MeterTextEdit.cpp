@@ -157,6 +157,7 @@ void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
 	m_Focused(false),
+	m_TrackInitialText(true),
 	m_Submitted(false),
 	m_MaxLength(0),
 	m_Multiline(false),
@@ -249,14 +250,16 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 	m_Multiline = parser.ReadBool(section, L"Multiline", false);
 
-	// The field owns its text from here on, so the option is what it starts at and nothing more.
-	// Reading it again on the re-reads DynamicVariables brings would discard what the user typed,
-	// and doing that only where the value changed cannot tell a skin assigning the text it already
-	// holds from an option that simply resolved the same way twice. !TextEdit:SetText is how the
-	// text is replaced afterwards, and !TextEdit:Reset is what reads this option again.
-	if (!m_Initialized)
+	if (m_TrackInitialText)
 	{
 		m_Text = parser.ReadString(section, L"InitialText", L"");
+
+		// The caret, the scroll and the undo history all point into the text this replaced. Put
+		// back to where a new field has them, rather than clamped: nothing here is the user's.
+		m_SelectionAnchor = m_CaretPos = 0U;
+		m_CaretTrailing = false;
+		m_TextOffset = D2D1::Point2F();
+		ClearUndoHistory();
 	}
 
 	// The limits are re-read above and can have moved, so they are applied to whatever the field
@@ -358,9 +361,13 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		UpdatePlaceholderFormat();
 		UpdatePasswordChar();
 
-		// A field that has just been masked must not go on drawing its text until the next
-		// Update(), which UpdateDivider can defer.
-		if (passwordChanged) SyncDrawnString();
+		// A field that has just been masked - or that just took a new InitialText - must not go on
+		// drawing the old string until the next Update(), which UpdateDivider can defer.
+		if (passwordChanged || m_TrackInitialText)
+		{
+			SyncDrawnString();
+			UpdateAutoSizeForText();
+		}
 	}
 	m_CaretColor = parser.ReadColor(section, L"CaretColor", m_Color);
 
@@ -671,6 +678,8 @@ void MeterTextEdit::SetFocus(bool focus)
 	// wants it and have it stay there, and so that coming back to one finds it as it was.
 	if (!focus) return;
 
+	m_TrackInitialText = false;
+
 	// Nothing can be typed until the field has the caret, so this is the last moment the pattern
 	// is needed and the first at which a skin full of unfocused fields has not paid for one.
 	CompileInputRegExp();
@@ -720,6 +729,8 @@ void MeterTextEdit::Clear()
 
 void MeterTextEdit::SetText(std::wstring_view text)
 {
+	m_TrackInitialText = false;
+
 	std::wstring newText(text);
 	ApplyTextTransformations(newText);
 
@@ -748,12 +759,6 @@ void MeterTextEdit::SetText(std::wstring_view text)
 void MeterTextEdit::Reset()
 {
 	ConfigParser& parser = m_Skin->GetParser();
-
-	// Read here rather than kept from initialization, so that a skin can change what the field goes
-	// back to - !SetOption InitialText, or a variable the option is written in terms of - and have
-	// the next reset pick it up. The inherit chain is set up the way ReadOptions() has it, since an
-	// InitialText reaching the meter through a MeterStyle resolves through that and a reset arrives
-	// long after ReadOptions() tore it down.
 	parser.ReadInheritOption(GetName(), true);
 	std::wstring text = parser.ReadString(GetName(), L"InitialText", L"");
 	parser.ClearInheritChain();
@@ -761,6 +766,7 @@ void MeterTextEdit::Reset()
 	ApplyTextTransformations(text);
 
 	m_Text = std::move(text);
+	m_TrackInitialText = true;
 	SyncDrawnString();
 
 	m_SelectionAnchor = m_CaretPos = 0U;
@@ -1113,6 +1119,7 @@ void MeterTextEdit::ReplaceSelection(const std::wstring& text)
 
 	std::wstring insert;
 	m_Text = PreviewReplacement(text, insert);
+	m_TrackInitialText = false;
 	SyncDrawnString();
 
 	m_SelectionAnchor = m_CaretPos = start + (UINT32)insert.length();
