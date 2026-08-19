@@ -201,6 +201,7 @@ private:
 
 	bool m_AcceptsInput;
 	bool m_Focused;
+	bool m_TrackInitialText;
 
 	// Set by a submit and cleared by the next edit, so that leaving a field whose contents have
 	// already been submitted is not also treated as abandoning them.
