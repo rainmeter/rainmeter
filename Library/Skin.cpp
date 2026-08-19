@@ -195,7 +195,6 @@ Skin::~Skin()
 
 void Skin::Dispose(bool refresh)
 {
-	// Kill the timer/hook
 	KillTimer(m_Window, TIMER_METER);
 	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
@@ -203,6 +202,7 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_PREVENT_MOVE);
 	KillTimer(m_Window, TIMER_CARET);
 
+	m_ActiveFade = false;
 	m_FadeStartTime = 0;
 
 	UnregisterMouseInput();
@@ -3546,6 +3546,7 @@ void Skin::FadeWindow(int from, int to)
 	}
 	else
 	{
+		m_FadeStartTime = 0;
 		m_FadeStartValue = from;
 		m_FadeEndValue = to;
 		UpdateWindowTransparency(from);
