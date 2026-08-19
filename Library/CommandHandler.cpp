@@ -639,7 +639,7 @@ void DoDeactivateSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& a
 		{
 			if (!DoesConfigExist(args[0]))
 			{
-				LogErrorF(L"!DeactivateConfig: \"%s\" does not exist", args[0].c_str());
+				LogErrorF(L"!%s: \"%s\" does not exist", bangInfo.name, args[0].c_str());
 			}
 			return;
 		}
@@ -651,7 +651,7 @@ void DoDeactivateSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& a
 	}
 	else
 	{
-		LogErrorF(L"!DeactivateConfig: Invalid parameters");
+		LogErrorF(L"!%s: Invalid parameters", bangInfo.name);
 	}
 }
 
@@ -671,7 +671,7 @@ void DoToggleSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args,
 	}
 	else
 	{
-		LogErrorF(skin, L"!ToggleConfig: Invalid parameters");
+		LogErrorF(skin, L"!%s: Invalid parameters", bangInfo.name);
 	}
 }
 
@@ -1045,7 +1045,7 @@ void DoEditSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, S
 		}
 		else
 		{
-			LogErrorF(skin, L"!EditSkin: Invalid parameters");
+			LogErrorF(skin, L"!%s: Invalid parameters", bangInfo.name);
 		}
 	}
 	else if (argSize == 1)
@@ -1058,11 +1058,11 @@ void DoEditSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, S
 		}
 		else if (DoesConfigExist(config))
 		{
-			LogWarningF(skin, L"!EditSkin: \"%s\" is not active", config.c_str());
+			LogWarningF(skin, L"!%s: \"%s\" is not active", bangInfo.name, config.c_str());
 		}
 		else
 		{
-			LogErrorF(skin, L"!EditSkin: \"%s\" does not exist", config.c_str());
+			LogErrorF(skin, L"!%s: \"%s\" does not exist", bangInfo.name, config.c_str());
 		}
 	}
 	else if (argSize == 0 && skin)
@@ -1071,7 +1071,7 @@ void DoEditSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, S
 	}
 	else
 	{
-		LogErrorF(skin, L"!EditSkin: Invalid parameters");
+		LogErrorF(skin, L"!%s: Invalid parameters", bangInfo.name);
 	}
 }
 
@@ -1233,7 +1233,13 @@ const BangInfo g_Bangs[] =
 	{ Bang::Quit, L"Quit", 0, DoQuitBang },
 	{ Bang::EditSkin, L"EditSkin", 0, DoEditSkinBang },
 	{ Bang::LsBoxHook, L"LsBoxHook", 0, DoLsBoxHookBang },
-	{ Bang::SetWindowPosition, L"SetWindowPosition", 0, DoSetWindowPositionBang }
+	{ Bang::SetWindowPosition, L"SetWindowPosition", 0, DoSetWindowPositionBang },
+
+	// The same bangs in the "Skin:" namespace.
+	{ Bang::ActivateConfig, L"Skin:Load", 0, DoActivateSkinBang },
+	{ Bang::DeactivateConfig, L"Skin:Unload", 0, DoDeactivateSkinBang },
+	{ Bang::ToggleConfig, L"Skin:Toggle", 0, DoToggleSkinBang },
+	{ Bang::EditSkin, L"Skin:Edit", 0, DoEditSkinBang }
 };
 
 std::wstring_view BuildBangMapKey(std::wstring_view name, WCHAR* buffer, size_t bufferCount)
