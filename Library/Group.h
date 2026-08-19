@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+bool ConsumeGroupSelector(std::wstring_view& name);
+
 class __declspec(novtable) Group
 {
 public:
@@ -27,5 +29,4 @@ private:
 
 	ankerl::unordered_dense::set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;
-
 };

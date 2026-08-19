@@ -117,30 +117,30 @@ public:
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
 
-	void HideMeter(const std::wstring& name, bool group = false);
-	void ShowMeter(const std::wstring& name, bool group = false);
-	void ToggleMeter(const std::wstring& name, bool group = false);
-	void MoveMeter(const std::wstring& name, int x, int y);
-	void UpdateMeter(const std::wstring& name, bool group = false);
-	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void DisableMeasure(const std::wstring& name, bool group = false);
-	void EnableMeasure(const std::wstring& name, bool group = false);
-	void ToggleMeasure(const std::wstring& name, bool group = false);
-	void PauseMeasure(const std::wstring& name, bool group = false);
-	void UnpauseMeasure(const std::wstring& name, bool group = false);
-	void TogglePauseMeasure(const std::wstring& name, bool group = false);
-	void UpdateMeasure(const std::wstring& name, bool group = false);
-	void CommandMeasure(const std::wstring& name, const std::wstring& command, bool group = false);
+	void HideMeter(std::wstring_view name, bool group = false);
+	void ShowMeter(std::wstring_view name, bool group = false);
+	void ToggleMeter(std::wstring_view name, bool group = false);
+	void MoveMeter(std::wstring_view name, int x, int y);
+	void UpdateMeter(std::wstring_view name, bool group = false);
+	void DisableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ClearMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void EnableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ToggleMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void DisableMeasure(std::wstring_view name, bool group = false);
+	void EnableMeasure(std::wstring_view name, bool group = false);
+	void ToggleMeasure(std::wstring_view name, bool group = false);
+	void PauseMeasure(std::wstring_view name, bool group = false);
+	void UnpauseMeasure(std::wstring_view name, bool group = false);
+	void TogglePauseMeasure(std::wstring_view name, bool group = false);
+	void UpdateMeasure(std::wstring_view name, bool group = false);
+	void CommandMeasure(std::wstring_view name, const std::wstring& command, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 	void UpdateWindowContents();
 
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
-	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
+	void SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group);
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 

@@ -165,6 +165,36 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 	}
 }
 
+// Runs the bang for each section of |skin| in |group|.
+void DoSectionGroupBang(const SectionBangInfo& bangInfo, std::wstring_view group, std::vector<std::wstring>& args, Skin* skin)
+{
+	const bool isMeter = bangInfo.type == SectionBangInfo::Type::Meter;
+	auto handleSection = [&](Section* section)
+	{
+		if (section->GetTypeID() != bangInfo.typeId || !section->BelongsToGroup(group)) return;
+
+		// The handlers may modify the arguments, so hand each section its own copy.
+		std::vector<std::wstring> sectionArgs = args;
+		if (isMeter)
+		{
+			bangInfo.meterFunc((Meter*)section, sectionArgs, skin);
+		}
+		else
+		{
+			bangInfo.measureFunc((Measure*)section, sectionArgs, skin);
+		}
+	};
+
+	if (isMeter)
+	{
+		for (Meter* meter : skin->GetMeters()) handleSection(meter);
+	}
+	else
+	{
+		for (Measure* measure : skin->GetMeasures()) handleSection(measure);
+	}
+}
+
 void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (!skin)
@@ -188,7 +218,16 @@ void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& a
 	Section* section = nullptr;
 	if (args.size() == (size_t)bangInfo.argCount + 1U)
 	{
-		const std::wstring& name = args[0];
+		const std::wstring name = std::move(args[0]);
+		args.erase(args.begin());
+
+		std::wstring_view group = name;
+		if (ConsumeGroupSelector(group))
+		{
+			DoSectionGroupBang(bangInfo, group, args, skin);
+			return;
+		}
+
 		section = skin->GetSection(name);
 		if (!section)
 		{
@@ -196,8 +235,6 @@ void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& a
 			LogErrorF(skin, L"!%s: %s [%s] not found", bangInfo.name, isMeter ? L"Meter" : L"Measure", name.c_str());
 			return;
 		}
-
-		args.erase(args.begin());
 	}
 	else if (args.size() == bangInfo.argCount)
 	{
@@ -1295,14 +1332,6 @@ void RegisterSectionBang(const SectionBangInfo& bangInfo)
 	GetSectionBangMap().emplace(std::wstring(key), bangInfo);
 }
 
-std::optional<std::wstring_view> GetTargetGroup(std::wstring_view target)
-{
-	constexpr std::wstring_view selector = L"Group=";
-	if (!target.starts_with(selector)) return std::nullopt;
-
-	return target.substr(selector.length());
-}
-
 void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
 {
 	if (bang.empty())
@@ -1320,10 +1349,11 @@ void DoSkinBang(std::wstring_view name, std::wstring_view bang, std::vector<std:
 	const std::wstring target = std::move(args[0]);
 	args.erase(args.begin());
 
-	if (const auto group = GetTargetGroup(target))
+	std::wstring_view group = target;
+	if (ConsumeGroupSelector(group))
 	{
 		std::multimap<int, Skin*> skins;
-		GetRainmeter().GetSkinsByLoadOrder(skins, *group);
+		GetRainmeter().GetSkinsByLoadOrder(skins, group);
 
 		for (const auto& ip : skins)
 		{

@@ -20,6 +20,11 @@ inline std::wstring Widen(const std::string& str, int cp = CP_ACP) { return Wide
 inline std::wstring WidenUTF8(const char* str, int strLen = -1) { return Widen(str, strLen, CP_UTF8); }
 inline std::wstring WidenUTF8(const std::string& str) { return Widen(str.c_str(), (int)str.length(), CP_UTF8); }
 
+inline bool EqualsIgnoreCase(std::wstring_view str, std::wstring_view other)
+{
+	return str.length() == other.length() && _wcsnicmp(str.data(), other.data(), other.length()) == 0;
+}
+
 // Removes a leading and trailing pair of double quotes, or of single quotes if |single| is set.
 std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single = false);
 
