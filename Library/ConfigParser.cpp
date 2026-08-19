@@ -60,31 +60,22 @@ ConfigParser::~ConfigParser()
 {
 }
 
-bool ConfigParser::ReadInheritOption(LPCTSTR section, bool allowMeterStyle)
+ConfigParser::InheritChainScope::InheritChainScope(ConfigParser& parser, LPCTSTR section, bool allowMeterStyle) :
+	m_Parser(parser),
+	m_PreviousChain(parser.m_InheritChain)
 {
-	const std::wstring& inherit = ReadString(section, L"@Inherit", L"");
-	if (!inherit.empty())
+	std::wstring_view inherit = parser.ReadString(section, L"@Inherit", L"");
+	if (inherit.empty() && allowMeterStyle)
 	{
-		SetInheritChain(inherit);
-		return true;
+		inherit = parser.ReadString(section, L"MeterStyle", L"");
 	}
 
-	if (allowMeterStyle)
-	{
-		const std::wstring& meterStyle = ReadString(section, L"MeterStyle", L"");
-		if (!meterStyle.empty())
-		{
-			SetInheritChain(meterStyle);
-			return true;
-		}
-	}
-
-	return false;
+	StringParser::Split(inherit, L'|', parser.m_InheritChain);
 }
 
-void ConfigParser::SetInheritChain(const std::wstring& strInherit)
+ConfigParser::InheritChainScope::~InheritChainScope()
 {
-	StringParser::Split(strInherit, L'|', m_InheritChain);
+	m_Parser.m_InheritChain = std::move(m_PreviousChain);
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)

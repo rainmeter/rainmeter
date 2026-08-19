@@ -104,19 +104,11 @@ void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-bool ReadInheritOptionIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
+// A plugin can read options from any section, so MeterStyle should only be inherited when the
+// section being read is actually a meter.
+bool AllowMeterStyleInheritance(MeasurePlugin* measure, LPCWSTR section)
 {
-	if (parser.ReadInheritOption(section))
-	{
-		return true;
-	}
-
-	if (measure->GetSkin()->GetMeter(section))
-	{
-		return parser.ReadInheritOption(section, true);
-	}
-
-	return false;
+	return measure->GetSkin()->GetMeter(section) != nullptr;
 }
 
 // Previously, a skin with W=100 was actually 100 pixels on the screen. After we implemented
@@ -182,11 +174,8 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	ReadInheritOptionIfNeeded(measure, parser, section);
-	LPCWSTR result = parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
-	parser.ClearInheritChain();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
@@ -223,11 +212,8 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	ReadInheritOptionIfNeeded(measure, parser, section);
-	const double result = parser.ReadFloat(section, option, defValue);
-	parser.ClearInheritChain();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadFloat(section, option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)

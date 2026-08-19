@@ -105,8 +105,6 @@ void Measure::Initialize()
 // call this base implementation if they overwrite this method.
 void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	parser.ReadInheritOption(section);
-
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
 	Section::ReadOptions(parser, section);
@@ -180,8 +178,8 @@ LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, c
 
 void Measure::ReadOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName());
 	ReadOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 void Measure::Disable()

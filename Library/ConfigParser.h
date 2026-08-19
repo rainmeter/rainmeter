@@ -36,6 +36,23 @@ public:
 		FORCE_PHYSICAL
 	};
 
+	// Applies the inherit chain of |section| (@Inherit, or MeterStyle if |allowMeterStyle|) for the
+	// lifetime of the scope. Options missing from a section being read within the scope are looked
+	// up from the inherited sections instead. The previous chain, if any, is restored afterwards.
+	class InheritChainScope
+	{
+	public:
+		InheritChainScope(ConfigParser& parser, LPCTSTR section, bool allowMeterStyle = false);
+		~InheritChainScope();
+
+		InheritChainScope(const InheritChainScope& other) = delete;
+		InheritChainScope& operator=(InheritChainScope other) = delete;
+
+	private:
+		ConfigParser& m_Parser;
+		std::vector<std::wstring> m_PreviousChain;
+	};
+
 	ConfigParser();
 	~ConfigParser();
 
@@ -61,10 +78,6 @@ public:
 	const std::wstring& GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue);
 	void SetValue(const std::wstring& section, const std::wstring& option, std::wstring value);
 	void DeleteValue(const std::wstring& section, const std::wstring& option);
-
-	bool ReadInheritOption(LPCTSTR section, bool allowMeterStyle = false);
-	void SetInheritChain(const std::wstring& strInherit);
-	void ClearInheritChain() { m_InheritChain.clear(); }
 
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
