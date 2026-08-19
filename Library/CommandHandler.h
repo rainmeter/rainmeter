@@ -122,6 +122,12 @@ enum class Bang
 	LsBoxHook
 };
 
+enum class BangTarget : BYTE
+{
+	Default,
+	Skin
+};
+
 using MeterBangFunc = void (*)(Meter* meter, std::vector<std::wstring>& args, Skin* skin);
 using MeasureBangFunc = void (*)(Measure* measure, std::vector<std::wstring>& args, Skin* skin);
 using SkinBangFunc = void (*)(std::vector<std::wstring>& args, Skin* skin);
@@ -131,7 +137,7 @@ class CommandHandler
 {
 public:
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
-	void ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 
 	static void RunCommand(std::wstring command);
 	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);

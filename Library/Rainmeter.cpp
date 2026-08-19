@@ -1643,9 +1643,9 @@ void Rainmeter::ReadFavorites()
 	}
 }
 
-void Rainmeter::ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin)
+void Rainmeter::ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin, BangTarget target)
 {
-	m_CommandHandler.ExecuteBang(bang, args, skin);
+	m_CommandHandler.ExecuteBang(bang, args, skin, target);
 }
 
 void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
