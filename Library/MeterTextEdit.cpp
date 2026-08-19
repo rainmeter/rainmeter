@@ -759,9 +759,8 @@ void MeterTextEdit::SetText(std::wstring_view text)
 void MeterTextEdit::Reset()
 {
 	ConfigParser& parser = m_Skin->GetParser();
-	parser.ReadInheritOption(GetName(), true);
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
 	std::wstring text = parser.ReadString(GetName(), L"InitialText", L"");
-	parser.ClearInheritChain();
 
 	ApplyTextTransformations(text);
 

@@ -22,9 +22,8 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 		replaceMeasures = LuaHelper::ToBool(4);
 	}
 
-	parser.ReadInheritOption(sectionName, allowMeterStyle);
+	ConfigParser::InheritChainScope inheritChain(parser, sectionName, allowMeterStyle);
 	const auto& value = parser.ReadString(sectionName, key.c_str(), defValue.c_str(), replaceMeasures);
-	parser.ClearInheritChain();
 
 	LuaHelper::PushWide(value);
 

@@ -284,8 +284,6 @@ void Meter::Hide()
 // call this base implementation if they overwrite this method.
 void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	parser.ReadInheritOption(section, true);
-
 	Section::ReadOptions(parser, section);
 
 	BindMeasures(parser, section);
@@ -420,8 +418,6 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 {
-	parser.ReadInheritOption(section, true);
-
 	const std::wstring& container = parser.ReadString(section, L"Container", L"");
 	if (_wcsicmp(section, container.c_str()) == 0)
 	{
@@ -463,14 +459,14 @@ void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 
 void Meter::ReadOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
 	ReadOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 void Meter::ReadContainerOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
 	ReadContainerOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 // Binds this meter to the given measure. The same measure can be bound to

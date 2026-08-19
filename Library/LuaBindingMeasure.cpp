@@ -40,9 +40,8 @@ static int GetNumberOption(lua_State* L)
 	const WCHAR* section = self->GetName();
 	const std::wstring key = LuaHelper::ToWide(2);
 
-	parser.ReadInheritOption(section);
-	double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));
-	parser.ClearInheritChain();
+	ConfigParser::InheritChainScope inheritChain(parser, section);
+	const double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
 	return 1;
