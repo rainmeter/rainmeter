@@ -1187,7 +1187,7 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 	return result;
 }
 
-const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
+const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, bool bReplaceMeasures)
 {
 	static size_t s_Depth = 0;
 	static std::deque<std::wstring> s_Results;
@@ -1203,22 +1203,18 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
-	const std::wstring strSection = section;
-	const std::wstring_view strKey = key;
-	const std::wstring strDefault = defValue;
-
-	const std::wstring* value = GetValue(strSection, strKey);
+	const std::wstring* value = GetValue(section, key);
 	if (!value)
 	{
 		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			value = GetValue(*iter, strKey);
+			value = GetValue(*iter, key);
 			if (value) break;
 		}
 
 		if (!value)
 		{
-			result = strDefault;
+			result = defValue;
 			m_LastDefaultUsed = true;
 			return result;
 		}
@@ -1228,7 +1224,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 
 	if (!result.empty())
 	{
-		m_CurrentSection = strSection;  // Set temporarily
+		m_CurrentSection = section;  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1236,7 +1232,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				bool runNewStyle = strSection == L"Variables" ? true : false;
+				bool runNewStyle = section == L"Variables" ? true : false;
 				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
