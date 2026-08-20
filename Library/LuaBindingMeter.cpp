@@ -67,11 +67,22 @@ static int GetY(lua_State* L)
 	return 1;
 }
 
+// SetW/SetH were added before !SetOption was available. Since they don't trigger the meter
+// ReadOptions(), we need to manually inform the Text meters...
+static void NotifySizeChanged(Meter* self)
+{
+	if (self->GetTypeID() == TypeID<MeterString>() || self->GetTypeID() == TypeID<MeterTextEdit>())
+	{
+		((MeterStringBase*)self)->SetNeedsTextMeasurement();
+	}
+}
+
 static int SetW(lua_State* L)
 {
 	DECLARE_SELF(L)
 	int w = (int)lua_tonumber(L, 2);
 	self->SetW(w);
+	NotifySizeChanged(self);
 
 	return 0;
 }
@@ -81,6 +92,7 @@ static int SetH(lua_State* L)
 	DECLARE_SELF(L)
 	int h = (int)lua_tonumber(L, 2);
 	self->SetH(h);
+	NotifySizeChanged(self);
 
 	return 0;
 }

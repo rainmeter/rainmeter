@@ -27,6 +27,8 @@ public:
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources() override;
 
+	void SetNeedsTextMeasurement() { m_NeedsTextMeasurement = true; }
+
 	// The text before any of String's formatting. For TextEdit this is what the user typed.
 	const std::wstring& GetText() const { return m_Text; }
 	virtual void SetText(std::wstring_view text) { m_Text = text; }
@@ -123,8 +125,9 @@ protected:
 	// Call after building m_String, before measuring or drawing it.
 	void UpdateTextFormat();
 
-	// Recomputes whichever of m_W/m_H is not fixed by an option.
-	void UpdateAutoSize(const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr);
+	// Recomputes whichever of m_W/m_H is not fixed by an option. |false| when the text could not
+	// be measured.
+	bool UpdateAutoSize(const std::wstring* str = nullptr, Gfx::TextFormat* format = nullptr);
 
 	D2D1_COLOR_F m_Color;
 	D2D1_COLOR_F m_EffectColor;
@@ -135,6 +138,7 @@ protected:
 	FLOAT m_FontSize;
 	CLIPTYPE m_ClipType;
 	TEXTCASE m_Case;
+	bool m_NeedsTextMeasurement;
 	bool m_NeedsClipping;
 	int m_ClipStringW;
 	int m_ClipStringH;

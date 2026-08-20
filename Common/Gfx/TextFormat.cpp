@@ -766,7 +766,7 @@ void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
 	}
 }
 
-void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
+bool TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
 	const bool isSame = m_InlineOptions.size() == options.size() &&
 		std::equal(options.begin(), options.end(), m_InlineOptions.begin(),
@@ -775,7 +775,7 @@ void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 				return option == current.option;
 			});
 
-	if (isSame) return;
+	if (isSame) return false;
 
 	// The device resources were built from the options that are being replaced, so they go with
 	// them. They are built again when the layout the options changed is recreated.
@@ -787,6 +787,7 @@ void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 	}
 
 	m_HasInlineOptionsChanged = true;
+	return true;
 }
 
 void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)

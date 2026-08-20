@@ -32,4 +32,8 @@ private:
 	bool m_Percentual;
 	int m_NumOfDecimals;
 	bool m_TrailingSpaces;
+
+	// The text is measured only when it changes, so what it was the update before is kept to
+	// compare against.
+	std::wstring m_PreviousString;
 };
