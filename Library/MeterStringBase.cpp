@@ -478,34 +478,34 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		m_FontSize = 10.0f;
 	}
 
-	const WCHAR* hAlign = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
-	const WCHAR* vAlign = nullptr;
-	if (_wcsnicmp(hAlign, L"LEFT", 4) == 0)
+	auto alignParser = StringParser(parser.ReadString(section, L"StringAlign", L"LEFT"));
+	bool horizontalMatched = true;
+	if (alignParser.Consume(L"LEFT"))
 	{
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Left);
-		vAlign = hAlign + 4;
 	}
-	else if (_wcsnicmp(hAlign, L"RIGHT", 5) == 0)
+	else if (alignParser.Consume(L"RIGHT"))
 	{
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Right);
-		vAlign = hAlign + 5;
 	}
-	else if (_wcsnicmp(hAlign, L"CENTER", 6) == 0)
+	else if (alignParser.Consume(L"CENTER"))
 	{
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Center);
-		vAlign = hAlign + 6;
 	}
-	else if (_wcsnicmp(hAlign, L"JUSTIFY", 7) == 0)
+	else if (alignParser.Consume(L"JUSTIFY"))
 	{
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Justify);
-		vAlign = hAlign + 7;
+	}
+	else
+	{
+		horizontalMatched = false;
 	}
 
-	if (vAlign && _wcsicmp(vAlign, L"BOTTOM") == 0)
+	if (horizontalMatched && alignParser.ConsumeRest(L"BOTTOM"))
 	{
 		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Bottom);
 	}
-	else if (vAlign && _wcsicmp(vAlign, L"CENTER") == 0)
+	else if (horizontalMatched && alignParser.ConsumeRest(L"CENTER"))
 	{
 		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Center);
 	}
