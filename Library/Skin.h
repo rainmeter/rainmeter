@@ -552,7 +552,7 @@ private:
 	bool m_Hidden;
 	SkinWindowOcclusionState m_WindowOcclusionState;
 	SkinUpdateMode m_UpdateMode;
-	bool m_HasPendingUpdate;
+	UINT m_SkippedUpdateCount;
 	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
 
