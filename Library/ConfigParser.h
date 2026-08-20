@@ -89,17 +89,17 @@ public:
 	// argument may point into a value an earlier ReadString() returned, since the new read would
 	// then be writing over its own argument.
 	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, bool bReplaceMeasures = true);
-	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
-	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
-	bool ReadBool(LPCTSTR section, LPCTSTR key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }
-	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
-	uint32_t ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue);
-	uint64_t ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue);
-	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
-	D2D1_COLOR_F ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue);
-	D2D1_RECT_F ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue);
-	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
-	std::vector<FLOAT> ReadFloats(LPCTSTR section, LPCTSTR key);
+	bool IsKeyDefined(std::wstring_view section, std::wstring_view key);
+	bool IsValueDefined(std::wstring_view section, std::wstring_view key);
+	bool ReadBool(std::wstring_view section, std::wstring_view key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }
+	int ReadInt(std::wstring_view section, std::wstring_view key, int defValue);
+	uint32_t ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue);
+	uint64_t ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue);
+	double ReadFloat(std::wstring_view section, std::wstring_view key, double defValue);
+	D2D1_COLOR_F ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue);
+	D2D1_RECT_F ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue);
+	RECT ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue);
+	std::vector<FLOAT> ReadFloats(std::wstring_view section, std::wstring_view key);
 
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
