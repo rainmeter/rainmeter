@@ -19,7 +19,7 @@ MeasureLoop::~MeasureLoop()
 {
 }
 
-void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureLoop::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	int oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment, oldCount = m_LoopCount;
 	bool oldInvert = m_Invert;

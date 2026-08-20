@@ -150,7 +150,7 @@ MeasureNowPlaying::~MeasureNowPlaying()
 	}
 }
 
-void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

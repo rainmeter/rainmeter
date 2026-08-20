@@ -23,7 +23,7 @@ public:
 	void ClearCapture() { m_Capturing = false; }
 
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override {}
 	void Command(const std::wstring& command) override;
 

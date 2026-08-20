@@ -73,7 +73,7 @@ const WCHAR* MeasureScript::GetStringValue()
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureScript::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

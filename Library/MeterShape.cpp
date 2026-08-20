@@ -121,7 +121,7 @@ void MeterShape::InvalidateDeviceResources()
 	}
 }
 
-void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -192,7 +192,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, const WCHAR* section, std::wstring key)
+std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, std::wstring_view section, std::wstring key)
 {
 	StringUtil::ToUpperCase(key);
 
@@ -254,7 +254,7 @@ bool MeterShape::HitTest(int x, int y)
 	return false;
 }
 
-void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterShape::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{
@@ -263,7 +263,7 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 }
 
 bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
-	const WCHAR* section, bool& isCombined, size_t keyId)
+	std::wstring_view section, bool& isCombined, size_t keyId)
 {
 	auto addShape = [&](std::optional<Gfx::Shape> shape) -> bool
 	{
@@ -547,7 +547,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 	return true;
 }
 
-void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, const WCHAR* section, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, std::wstring_view section, bool recursive)
 {
 	auto parseCap = [this](StringParser& cap) -> D2D1_CAP_STYLE
 	{

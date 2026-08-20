@@ -32,7 +32,7 @@ MeasureSpeedFan::~MeasureSpeedFan()
 {
 }
 
-void MeasureSpeedFan::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureSpeedFan::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

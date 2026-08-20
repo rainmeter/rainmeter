@@ -38,7 +38,7 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -173,7 +173,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

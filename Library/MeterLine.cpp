@@ -70,7 +70,7 @@ void MeterLine::Initialize()
 	}
 }
 
-void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	WCHAR tmpName[64] = { 0 };
 
@@ -476,7 +476,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{

@@ -213,7 +213,7 @@ MeasureMouse::~MeasureMouse()
 	}
 }
 
-void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureMouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	const bool wasCapturing = WantsCapture();
 

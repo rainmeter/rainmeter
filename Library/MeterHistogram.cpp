@@ -155,7 +155,7 @@ void MeterHistogram::InvalidateDeviceResources()
 	m_OverlapImage.InvalidateDeviceResources();
 }
 
-void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	int oldW = m_W;
@@ -535,7 +535,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{

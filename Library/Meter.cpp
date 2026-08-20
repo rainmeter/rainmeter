@@ -17,6 +17,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/StringUtil.h"
 
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
@@ -282,7 +283,7 @@ void Meter::Hide()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Section::ReadOptions(parser, section);
 
@@ -416,10 +417,10 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	ReadContainerOptions(parser, section);
 }
 
-void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadContainerOptions(ConfigParser& parser, std::wstring_view section)
 {
 	const std::wstring& container = parser.ReadString(section, L"Container", L"");
-	if (_wcsicmp(section, container.c_str()) == 0)
+	if (StringUtil::EqualsIgnoreCase(section, container))
 	{
 		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
 		return;
@@ -471,7 +472,7 @@ void Meter::ReadContainerOptions(ConfigParser& parser)
 
 // Binds this meter to the given measure. The same measure can be bound to
 // several meters but one meter and only be bound to one measure.
-void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void Meter::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, false);
 }
@@ -544,7 +545,7 @@ bool Meter::Update()
 
 // Reads and binds the primary MeasureName. This must always be called in overridden
 // BindMeasures() implementations.
-bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional)
+bool Meter::BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional)
 {
 	m_Measures.clear();
 
@@ -565,7 +566,7 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool 
 }
 
 // Reads and binds secondary measures (MeasureName2 - MeasureNameN).
-void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
+void Meter::BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (!m_Measures.empty())
 	{

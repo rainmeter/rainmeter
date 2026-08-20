@@ -84,8 +84,8 @@ protected:
 	virtual bool CanWrap() const override { return m_Multiline; }
 	virtual bool ShouldTrim() const override { return false; }
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
 
 private:
 	// What the last edit was, so that a run of the same kind collapses into one undo step instead

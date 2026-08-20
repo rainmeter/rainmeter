@@ -83,7 +83,7 @@ void MeterButton::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterButton::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -131,7 +131,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterButton::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

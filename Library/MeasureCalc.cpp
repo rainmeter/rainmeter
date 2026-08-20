@@ -46,7 +46,7 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

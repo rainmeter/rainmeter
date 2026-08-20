@@ -54,7 +54,7 @@ MeasureCPU::~MeasureCPU()
 {
 }
 
-void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureCPU::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

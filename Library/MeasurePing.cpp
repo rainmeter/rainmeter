@@ -215,7 +215,7 @@ MeasurePing::~MeasurePing()
 	}
 }
 
-void MeasurePing::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePing::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

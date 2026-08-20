@@ -19,7 +19,7 @@ MeasureWindowMessage::~MeasureWindowMessage()
 {
 }
 
-void MeasureWindowMessage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

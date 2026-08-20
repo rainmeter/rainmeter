@@ -16,7 +16,7 @@ MeasureUptime::~MeasureUptime()
 {
 }
 
-void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureUptime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

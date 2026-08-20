@@ -46,7 +46,7 @@ void MeterRotator::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterRotator::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;

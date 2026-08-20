@@ -97,7 +97,7 @@ MeasureWifiStatus::~MeasureWifiStatus()
 	}
 }
 
-void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

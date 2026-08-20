@@ -138,7 +138,7 @@ const WCHAR* MeasureDiskSpace::GetStringValue()
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureDiskSpace::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	double oldMaxValue = m_MaxValue;
 

@@ -243,7 +243,7 @@ void MeterTextEdit::UpdatePlaceholderFormat()
 	m_PlaceholderFormat->SetVerticalAlignment(m_TextFormat->GetVerticalAlignment());
 }
 
-void MeterTextEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	MeterStringBase::ReadOptions(parser, section);
 
@@ -396,7 +396,7 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void MeterTextEdit::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterTextEdit::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	// The text is the user's, so there is no measure to bind.
 }

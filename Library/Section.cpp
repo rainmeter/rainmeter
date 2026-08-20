@@ -18,7 +18,7 @@ Section::~Section()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Section::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	const int defaultUpdateDivider =
 		m_Skin ? m_Skin->GetDefaultUpdateDivider() : 1;

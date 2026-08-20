@@ -52,7 +52,7 @@ void MeterBar::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;

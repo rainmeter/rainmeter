@@ -183,7 +183,7 @@ void MeasureRegistry::UpdateValue()
 	}
 }
 
-void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

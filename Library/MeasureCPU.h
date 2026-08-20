@@ -21,7 +21,7 @@ public:
 	static void FinalizeStatic();
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	virtual void UpdateValue();
 
 private:

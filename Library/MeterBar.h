@@ -22,7 +22,7 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return !m_Image.IsLoaded(); }
 
