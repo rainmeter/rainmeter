@@ -298,7 +298,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"YEAR", MEASURE_YEAR },
 		{ L"GENRE", MEASURE_GENRE },
 	};
-	parser.ReadEnum(m_Type, section, L"PlayerType", MEASURE_NONE, s_PlayerTypes);
+	m_Type = parser.ReadEnum(section, L"PlayerType", MEASURE_NONE, s_PlayerTypes);
 
 	if (m_Type == MEASURE_PROGRESS || m_Type == MEASURE_VOLUME)
 	{

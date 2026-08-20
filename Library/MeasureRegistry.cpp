@@ -199,7 +199,7 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"HKEY_PERFORMANCE_DATA", HKEY_PERFORMANCE_DATA },
 		{ L"HKEY_DYN_DATA", HKEY_DYN_DATA },
 	};
-	parser.ReadEnum(m_HKey, section, L"RegHKey", HKEY_CURRENT_USER, s_HKeys);
+	m_HKey = parser.ReadEnum(section, L"RegHKey", HKEY_CURRENT_USER, s_HKeys);
 
 	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
@@ -207,7 +207,7 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"SubKeyList", OutputType::SubKeyList },
 		{ L"ValueList", OutputType::ValueList },
 	};
-	parser.ReadEnum(m_OutputType, section, L"OutputType", OutputType::Value, s_OutputTypes);
+	m_OutputType = parser.ReadEnum(section, L"OutputType", OutputType::Value, s_OutputTypes);
 
 	parser.ReadString(m_OutputDelimiter, section, L"OutputDelimiter", L"\n");
 

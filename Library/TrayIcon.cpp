@@ -432,7 +432,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			{ L"HISTOGRAM", TRAY_METER_TYPE_HISTOGRAM },
 			{ L"BITMAP", TRAY_METER_TYPE_BITMAP },
 		};
-		parser.ReadEnum(m_MeterType, L"TrayMeasure", L"TrayMeter",
+		m_MeterType = parser.ReadEnum(L"TrayMeasure", L"TrayMeter",
 			m_Measure ? TRAY_METER_TYPE_HISTOGRAM : TRAY_METER_TYPE_NONE, s_MeterTypes);
 
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)

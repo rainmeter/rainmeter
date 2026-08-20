@@ -537,7 +537,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"SHADOW", EFFECT_SHADOW },
 		{ L"BORDER", EFFECT_BORDER },
 	};
-	parser.ReadEnum(m_Effect, section, L"StringEffect", EFFECT_NONE, s_Effects);
+	m_Effect = parser.ReadEnum(section, L"StringEffect", EFFECT_NONE, s_Effects);
 
 	std::vector<Gfx::TextInlineOption> inlineOptions;
 	inlineOptions.reserve(m_TextFormat->GetInlineOptionCount());
@@ -586,9 +586,7 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 		{ L"ITALIC", ITALIC },
 		{ L"BOLDITALIC", BOLDITALIC },
 	};
-	TEXTSTYLE style = defaultStyle;
-	parser.ReadEnum(style, section, option, defaultStyle, s_Styles);
-	return style;
+	return parser.ReadEnum(section, option, defaultStyle, s_Styles);
 }
 
 MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
@@ -601,9 +599,7 @@ MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
 		{ L"LOWER", TEXTCASE_LOWER },
 		{ L"PROPER", TEXTCASE_PROPER },
 	};
-	TEXTCASE textCase = defaultCase;
-	parser.ReadEnum(textCase, section, option, defaultCase, s_Cases);
-	return textCase;
+	return parser.ReadEnum(section, option, defaultCase, s_Cases);
 }
 
 void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const

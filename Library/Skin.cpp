@@ -2527,7 +2527,7 @@ bool Skin::ReadSkin()
 		{ L"SkipInvisibleRedraw", SkinUpdateMode::SkipInvisibleRedraw },
 		{ L"SkipInvisibleUpdate", SkinUpdateMode::SkipInvisibleUpdate },
 	};
-	m_Parser.ReadEnum(m_UpdateMode, L"Rainmeter", L"UpdateMode", SkinUpdateMode::Normal, s_UpdateModes);
+	m_UpdateMode = m_Parser.ReadEnum(L"Rainmeter", L"UpdateMode", SkinUpdateMode::Normal, s_UpdateModes);
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{

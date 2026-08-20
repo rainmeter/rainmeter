@@ -107,10 +107,10 @@ public:
 	};
 
 	template<typename T, size_t N>
-	void ReadEnum(T& result, std::wstring_view section, std::wstring_view key, T defValue, const EnumOption<T> (&options)[N])
+	T ReadEnum(std::wstring_view section, std::wstring_view key, T defValue, const EnumOption<T> (&options)[N])
 	{
 		const size_t index = MatchEnumOption(section, key, &options[0].name, N, sizeof(EnumOption<T>));
-		result = index < N ? options[index].value : defValue;
+		return index < N ? options[index].value : defValue;
 	}
 
 	bool ReadBool(std::wstring_view section, std::wstring_view key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }

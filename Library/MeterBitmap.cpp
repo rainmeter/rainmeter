@@ -184,7 +184,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"RIGHT", ALIGN_RIGHT },
 		{ L"CENTER", ALIGN_CENTER },
 	};
-	parser.ReadEnum(m_Align, section, L"BitmapAlign", ALIGN_LEFT, s_Aligns);
+	m_Align = parser.ReadEnum(section, L"BitmapAlign", ALIGN_LEFT, s_Aligns);
 
 	if (m_Initialized)
 	{

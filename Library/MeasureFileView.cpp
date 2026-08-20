@@ -428,11 +428,11 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"TYPE", STYPE_TYPE },
 			{ L"DATE", STYPE_DATE },
 		};
-		parser.ReadEnum(child->parent->sortType, section, L"SortType", STYPE_NAME, s_SortTypes);
+		child->parent->sortType = parser.ReadEnum(section, L"SortType", STYPE_NAME, s_SortTypes);
 
 		if (child->parent->sortType == STYPE_DATE)
 		{
-			parser.ReadEnum(child->parent->sortDateType, section, L"SortDateType", DTYPE_MODIFIED, g_DateTypes);
+			child->parent->sortDateType = parser.ReadEnum(section, L"SortDateType", DTYPE_MODIFIED, g_DateTypes);
 		}
 
 		int count = parser.ReadInt(section, L"Count", 1);
@@ -506,11 +506,11 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"PATHTOFILE", TYPE_PATHTOFILE },
 		{ L"ICON", TYPE_ICON },
 	};
-	parser.ReadEnum(child->type, section, L"Type", TYPE_FOLDERPATH, s_Types);
+	child->type = parser.ReadEnum(section, L"Type", TYPE_FOLDERPATH, s_Types);
 
 	if (child->type == TYPE_FILEDATE)
 	{
-		parser.ReadEnum(child->date, section, L"DateType", DTYPE_MODIFIED, g_DateTypes);
+		child->date = parser.ReadEnum(section, L"DateType", DTYPE_MODIFIED, g_DateTypes);
 	}
 	else if (child->type == TYPE_ICON)
 	{
@@ -530,7 +530,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"LARGE", SHIL_EXTRALARGE },
 			{ L"EXTRALARGE", SHIL_JUMBO },
 		};
-		parser.ReadEnum(child->iconSize, section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
+		child->iconSize = parser.ReadEnum(section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
 	}
 }
 

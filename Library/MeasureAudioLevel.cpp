@@ -285,7 +285,7 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 			{ L"Output", PORT_OUTPUT },
 			{ L"Input", PORT_INPUT },
 		};
-		parser.ReadEnum(m_Port, section, L"Port", PORT_OUTPUT, s_Ports);
+		m_Port = parser.ReadEnum(section, L"Port", PORT_OUTPUT, s_Ports);
 
 		// Parse requested device ID (optional).
 		parser.ReadString(m_ReqID, section, L"ID", L"");
