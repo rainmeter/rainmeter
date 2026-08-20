@@ -19,7 +19,7 @@ void MeasureProcess::ReadOptions(ConfigParser& parser, std::wstring_view section
 {
 	Measure::ReadOptions(parser, section);
 
-	m_ProcessNameLowercase = parser.ReadString(section, L"ProcessName", L"");
+	parser.ReadString(m_ProcessNameLowercase, section, L"ProcessName", L"");
 	StringUtil::ToLowerCase(m_ProcessNameLowercase);
 }
 

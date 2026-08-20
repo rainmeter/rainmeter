@@ -169,7 +169,7 @@ Gfx::Bitmap* GeneralImage::GetImage()
 
 void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, const WCHAR* imagePath)
 {
-	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
+	parser.ReadString(m_Path, section, m_OptionArray[OptionIndexImagePath], imagePath);
 	PathUtil::AppendBackslashIfMissing(m_Path);
 
 	if (!m_DisableTransform)

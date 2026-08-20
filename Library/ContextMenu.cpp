@@ -725,9 +725,9 @@ void ContextMenu::AppendSkinCustomMenu(
 		cTitles.push_back(StringUtil::TruncateWithEllipsis(contextTitle, 30));
 
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-		contextTitle = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextTitle, L"Rainmeter", buffer, L"");
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-		contextAction = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextAction, L"Rainmeter", buffer, L"");
 	}
 
 	// Build a sub-menu if more than three items

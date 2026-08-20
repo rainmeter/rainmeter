@@ -53,7 +53,7 @@ void MeterRotator::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"ImageName", L"");
+	parser.ReadString(m_ImageName, section, L"ImageName", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options

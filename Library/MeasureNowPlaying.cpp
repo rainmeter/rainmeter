@@ -273,8 +273,8 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		}
 
 		m_Parent->player->AddInstance();
-		m_Parent->playerPath = parser.ReadString(section, L"PlayerPath", L"");
-		m_Parent->trackChangeAction = parser.ReadString(section, L"TrackChangeAction", L"", { .sectionVariables = false });
+		parser.ReadString(m_Parent->playerPath, section, L"PlayerPath", L"");
+		parser.ReadString(m_Parent->trackChangeAction, section, L"TrackChangeAction", L"", { .sectionVariables = false });
 		m_Parent->disableLeadingZero = parser.ReadBool(section, L"DisableLeadingZero", false);
 
 		if (oldPlayer)

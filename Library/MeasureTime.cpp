@@ -328,7 +328,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	Measure::ReadOptions(parser, section);
 
-	m_Format = parser.ReadString(section, L"Format", L"");
+	parser.ReadString(m_Format, section, L"Format", L"");
 
 	std::wstring timeStamp = parser.ReadString(section, L"TimeStamp", L"-1");
 	if (wcsncmp(timeStamp.c_str(), L"DSTStart", 8) == 0)

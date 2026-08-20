@@ -57,7 +57,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	bool oldUniqueRandom = m_UniqueRandom;
 
 	std::wstring oldFormula = m_Formula;
-	m_Formula = parser.ReadString(section, L"Formula", L"");
+	parser.ReadString(m_Formula, section, L"Formula", L"");
 
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);

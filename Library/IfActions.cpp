@@ -30,13 +30,13 @@ IfActions::~IfActions()
 
 void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_AboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 
-	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_BelowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
 	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 
-	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_EqualAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 

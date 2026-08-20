@@ -23,8 +23,8 @@ void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view s
 {
 	Measure::ReadOptions(parser, section);
 
-	m_WindowName = parser.ReadString(section, L"WindowName", L"");
-	m_WindowClass = parser.ReadString(section, L"WindowClass", L"");
+	parser.ReadString(m_WindowName, section, L"WindowName", L"");
+	parser.ReadString(m_WindowClass, section, L"WindowClass", L"");
 
 	m_Message = 0;
 	m_WParam = 0;

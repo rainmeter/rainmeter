@@ -168,21 +168,21 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", D2D1::ColorF(D2D1::ColorF::Red));
 	m_OverlapColor = parser.ReadColor(section, L"BothColor", D2D1::ColorF(D2D1::ColorF::Yellow));
 
-	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
+	parser.ReadString(m_PrimaryImageName, section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
 	{
 		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
 
-	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
+	parser.ReadString(m_SecondaryImageName, section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
 	{
 		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
 
-	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
+	parser.ReadString(m_OverlapImageName, section, L"BothImage", L"");
 	if (!m_OverlapImageName.empty())
 	{
 		// Read tinting options

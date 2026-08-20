@@ -2193,19 +2193,19 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	m_Position.GetX().windowOption = parser.ReadString(section, makeKey(L"WindowX"), L"0");
+	parser.ReadString(m_Position.GetX().windowOption, section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", m_Position.GetX().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
 	m_Position.GetX().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetX().windowOption);
 
-	m_Position.GetY().windowOption = parser.ReadString(section, makeKey(L"WindowY"), L"0");
+	parser.ReadString(m_Position.GetY().windowOption, section, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", m_Position.GetY().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
 	m_Position.GetY().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetY().windowOption);
 
-	m_Position.GetX().anchorOption = parser.ReadString(section, makeKey(L"AnchorX"), L"0");
+	parser.ReadString(m_Position.GetX().anchorOption, section, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", m_Position.GetX().anchorOption.c_str());
 	m_Position.GetX().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetX().anchorOption);
 
-	m_Position.GetY().anchorOption = parser.ReadString(section, makeKey(L"AnchorY"), L"0");
+	parser.ReadString(m_Position.GetY().anchorOption, section, makeKey(L"AnchorY"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorY", m_Position.GetY().anchorOption.c_str());
 	m_Position.GetY().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetY().anchorOption);
 
@@ -2261,7 +2261,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 	if (!isDefault)
 	{
-		m_SkinGroup = parser.ReadString(section, L"Group", L"");  // |DefaultGroup| not supported
+		parser.ReadString(m_SkinGroup, section, L"Group", L"");  // |DefaultGroup| not supported
 
 		const std::wstring dragGroup = parser.ReadString(section, L"DragGroup", L"");  // |DefaultDragGroup| not supported
 		m_DragGroup.InitializeGroup(dragGroup);
@@ -2492,7 +2492,7 @@ bool Skin::ReadSkin()
 
 	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
-		m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
+		m_Parser.ReadString(m_BackgroundName, L"Rainmeter", L"Background", L"");
 		if (!m_BackgroundName.empty())
 		{
 			MakePathAbsolute(m_BackgroundName);
@@ -2508,14 +2508,14 @@ bool Skin::ReadSkin()
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", true);
 
-	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", { .sectionVariables = false });
-	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", { .sectionVariables = false });
-	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", { .sectionVariables = false });
-	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", { .sectionVariables = false });
-	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", { .sectionVariables = false });
-	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", { .sectionVariables = false });
-	m_OnDisplayMetricsChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnDisplayMetricsChange", L"", { .sectionVariables = false });
-	m_OnVisibilityChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnVisibilityChange", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnRefreshAction, L"Rainmeter", L"OnRefreshAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnCloseAction, L"Rainmeter", L"OnCloseAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnFocusAction, L"Rainmeter", L"OnFocusAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnUnfocusAction, L"Rainmeter", L"OnUnfocusAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnUpdateAction, L"Rainmeter", L"OnUpdateAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnWakeAction, L"Rainmeter", L"OnWakeAction", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnDisplayMetricsChangeAction, L"Rainmeter", L"OnDisplayMetricsChange", L"", { .sectionVariables = false });
+	m_Parser.ReadString(m_OnVisibilityChangeAction, L"Rainmeter", L"OnVisibilityChange", L"", { .sectionVariables = false });
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
@@ -4134,13 +4134,13 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
 			if (position == 1)
 			{
-				action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"", { .sectionVariables = false });
+				m_Parser.ReadString(action, L"Rainmeter", L"ContextAction", L"", { .sectionVariables = false });
 			}
 			else
 			{
 				WCHAR buffer[128] = { 0 };
 				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
-				action = m_Parser.ReadString(L"Rainmeter", buffer, L"", { .sectionVariables = false });
+				m_Parser.ReadString(action, L"Rainmeter", buffer, L"", { .sectionVariables = false });
 			}
 
 			if (!action.empty())

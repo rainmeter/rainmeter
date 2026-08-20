@@ -21,7 +21,7 @@ void MeasureString::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
-	m_String = parser.ReadString(section, L"String", L"");
+	parser.ReadString(m_String, section, L"String", L"");
 
 	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{

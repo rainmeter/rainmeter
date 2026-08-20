@@ -32,7 +32,7 @@ void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_PathName = parser.ReadString(section, L"PathName", L"");
+	parser.ReadString(m_PathName, section, L"PathName", L"");
 	m_Skin->MakePathAbsolute(m_PathName);
 
 	if (PathIsDirectory(m_PathName.c_str()))
@@ -63,7 +63,7 @@ void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	}
 	else
 	{
-		m_Separator = parser.ReadString(section, L"Separator", L"\n");
+		parser.ReadString(m_Separator, section, L"Separator", L"\n");
 		m_Files.clear();
 	}
 }

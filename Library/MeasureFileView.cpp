@@ -489,9 +489,9 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 		extensions = nullptr;
 
-		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
+		parser.ReadString(child->parent->wildcardSearch, section, L"WildcardSearch", L"*");
 
-		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
+		parser.ReadString(child->parent->finishAction, section, L"FinishAction", L"", { .sectionVariables = false });
 	}
 
 	SetChildParent(child, child->parent);

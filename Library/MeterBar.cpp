@@ -61,7 +61,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_Color = parser.ReadColor(section, L"BarColor", D2D1::ColorF(D2D1::ColorF::Green));
 
-	m_ImageName = parser.ReadString(section, L"BarImage", L"");
+	parser.ReadString(m_ImageName, section, L"BarImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options

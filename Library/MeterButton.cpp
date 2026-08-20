@@ -89,14 +89,14 @@ void MeterButton::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	std::wstring oldImageName = m_ImageName;
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
+	parser.ReadString(m_ImageName, section, L"ButtonImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 
-	m_Command = parser.ReadString(section, L"ButtonCommand", L"", { .sectionVariables = false });
+	parser.ReadString(m_Command, section, L"ButtonCommand", L"", { .sectionVariables = false });
 
 	if (m_Initialized)
 	{

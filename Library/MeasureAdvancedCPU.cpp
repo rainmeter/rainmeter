@@ -46,7 +46,7 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, std::wstring_view sec
 		ReadProcessList(value, m_Includes);
 	}
 
-	value = parser.ReadString(section, L"CPUExclude", L"");
+	parser.ReadString(value, section, L"CPUExclude", L"");
 	if (_wcsicmp(value.c_str(), m_ExcludesCache.c_str()) != 0)
 	{
 		m_ExcludesCache = value;

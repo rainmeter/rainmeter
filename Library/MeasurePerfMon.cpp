@@ -38,14 +38,14 @@ void MeasurePerfMon::ReadOptions(ConfigParser& parser, std::wstring_view section
 		changed = true;
 	}
 
-	value = parser.ReadString(section, L"PerfMonCounter", L"");
+	parser.ReadString(value, section, L"PerfMonCounter", L"");
 	if (_wcsicmp(value.c_str(), m_CounterName.c_str()) != 0)
 	{
 		m_CounterName = value;
 		changed = true;
 	}
 
-	value = parser.ReadString(section, L"PerfMonInstance", L"");
+	parser.ReadString(value, section, L"PerfMonInstance", L"");
 	if (_wcsicmp(value.c_str(), m_InstanceName.c_str()) != 0)
 	{
 		m_InstanceName = value;

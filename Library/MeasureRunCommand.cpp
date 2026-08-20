@@ -455,12 +455,12 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Parameter = parser.ReadString(section, L"Parameter", L"");
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
-	m_OutputFile = parser.ReadString(section, L"OutputFile", L"");
+	parser.ReadString(m_Parameter, section, L"Parameter", L"");
+	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OutputFile, section, L"OutputFile", L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 
-	m_Folder = parser.ReadString(section, L"StartInFolder", L" ");	// Space is intentional!
+	parser.ReadString(m_Folder, section, L"StartInFolder", L" ");	// Space is intentional!
 	m_Skin->MakePathAbsolute(m_Folder);
 
 	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
@@ -484,7 +484,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	}
 
 	// Grab "%COMSPEC% environment variable
-	m_Program = parser.ReadString(section, L"Program", L"\"%COMSPEC%\" /U /C");
+	parser.ReadString(m_Program, section, L"Program", L"\"%COMSPEC%\" /U /C");
 	PathUtil::ExpandEnvironmentVariables(m_Program);
 	if (m_Program.empty())
 	{

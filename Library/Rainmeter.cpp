@@ -1707,7 +1707,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::LightBlue));
 
-	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
+	parser.ReadString(m_SkinEditor, L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
@@ -1722,10 +1722,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogNoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
-	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", { .sectionVariables = false });
-	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", { .sectionVariables = false });
-	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", { .sectionVariables = false });
-	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteR, L"Rainmeter", L"TrayExecuteR", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteM, L"Rainmeter", L"TrayExecuteM", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteDR, L"Rainmeter", L"TrayExecuteDR", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteDM, L"Rainmeter", L"TrayExecuteDM", L"", { .sectionVariables = false });
 
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
