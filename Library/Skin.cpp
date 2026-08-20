@@ -2506,7 +2506,7 @@ bool Skin::ReadSkin()
 	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
 	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", selectionColor);
 
-	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
+	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", true);
 
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
