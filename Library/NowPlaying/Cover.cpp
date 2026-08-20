@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Cover.h"
@@ -15,7 +10,7 @@ bool WriteCoverToFile(const TagLib::ByteVector& data, const std::wstring& target
 	FILE* f = _wfopen(target.c_str(), L"wb");
 	if (f)
 	{
-		const bool written = fwrite(data.data(), 1ULL, data.size(), f) == data.size();
+		const bool written = fwrite(data.data(), 1, data.size(), f) == data.size();
 		fclose(f);
 		return written;
 	}
@@ -28,7 +23,7 @@ bool ExtractAPE(TagLib::APE::Tag* tag, const std::wstring& target)
 	const TagLib::APE::ItemListMap& listMap = tag->itemListMap();
 	if (listMap.contains("COVER ART (FRONT)"))
 	{
-		const TagLib::ByteVector nullStringTerminator(1, 0);
+		static const TagLib::ByteVector nullStringTerminator(1, 0);
 		TagLib::ByteVector item = listMap["COVER ART (FRONT)"].value();
 		const int pos = item.find(nullStringTerminator);	// Skip the filename.
 		if (pos != -1)
@@ -106,51 +101,30 @@ bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
 
 }  // namespace
 
-/*
-** Checks if cover art is in cache.
-**
-*/
-bool CCover::GetCached(std::wstring& path)
+std::optional<std::wstring> CCover::GetLocal(std::wstring_view filename, std::wstring_view folder)
 {
-	path += L".art";
-	return (_waccess_s(path.c_str(), 0) == 0) ? true : false;
-}
+	std::wstring testPath;
+	testPath.reserve(folder.length() + filename.length() + 5);
+	testPath += folder;
+	testPath += filename;
+	testPath += L'.';
 
-/*
-** Attemps to find local cover art in various formats.
-**
-*/
-bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target)
-{
-	std::wstring testPath = folder + filename;
-	testPath += L".";
-	std::wstring::size_type origLen = testPath.length();
-
-	const int extCount = 4;
-	LPCTSTR extName[extCount] = { L"jpg", L"jpeg", L"png", L"bmp" };
-
-	for (int i = 0; i < extCount; ++i)
+	const auto baseLen = testPath.length();
+	const WCHAR* extensions[] = { L"jpg", L"jpeg", L"png", L"webp", L"avif", L"bmp" };
+	for (const auto* extension : extensions)
 	{
-		testPath += extName[i];
+		testPath.append(extension);
 		if (_waccess_s(testPath.c_str(), 0) == 0)
 		{
-			target = testPath;
-			return true;
+			return testPath;
 		}
-		else
-		{
-			// Get rid of the added extension
-			testPath.resize(origLen);
-		}
+
+		testPath.resize(baseLen);
 	}
 
-	return false;
+	return std::nullopt;
 }
 
-/*
-** Attempts to extract cover art from audio files.
-**
-*/
 bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 {
 	bool found = false;
@@ -201,16 +175,12 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 	return found;
 }
 
-/*
-** Returns path without filename.
-**
-*/
 std::wstring CCover::GetFileFolder(const std::wstring& file)
 {
 	std::wstring::size_type pos = file.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		return file.substr(0ULL, ++pos);
+		return file.substr(0, ++pos);
 	}
 
 	return file;

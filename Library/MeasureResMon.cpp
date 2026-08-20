@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureResMon.h"
@@ -21,7 +16,7 @@ MeasureResMon::~MeasureResMon()
 {
 }
 
-void MeasureResMon::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -54,7 +49,7 @@ void MeasureResMon::UpdateValue()
 {
 	if (m_Type == Type::WINDOW)
 	{
-		UINT windowCount = 0U;
+		UINT windowCount = 0;
 		EnumChildWindows(nullptr, [](HWND, LPARAM lParam) -> BOOL
 		{
 			UINT* count = (UINT*)lParam;
@@ -69,10 +64,10 @@ void MeasureResMon::UpdateValue()
 	const bool hasProcessName = !m_ProcessName.empty();
 
 	DWORD processes[1024] = { 0 };
-	DWORD bytesNeeded = 0UL;
+	DWORD bytesNeeded = 0;
 	WCHAR buffer[1024] = { 0 };
 	HMODULE module[1024] = { 0 };
-	DWORD moduleBytesNeeded = 0UL;
+	DWORD moduleBytesNeeded = 0;
 
 	if (!EnumProcesses(processes, sizeof(processes), &bytesNeeded))
 	{
@@ -86,8 +81,8 @@ void MeasureResMon::UpdateValue()
 		flags |= PROCESS_VM_READ;
 	}
 
-	UINT resourceCount = 0U;
-	for (UINT i = 0U, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
+	UINT resourceCount = 0;
+	for (UINT i = 0, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
 	{
 		HANDLE process = OpenProcess(flags, TRUE, processes[i]);
 		if (!process)
@@ -116,7 +111,7 @@ void MeasureResMon::UpdateValue()
 		}
 		else if (m_Type == Type::HANDLE)
 		{
-			DWORD handleCount = 0UL;
+			DWORD handleCount = 0;
 			GetProcessHandleCount(process, &handleCount);
 			resourceCount += handleCount;
 		}

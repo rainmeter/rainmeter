@@ -1,14 +1,9 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "ImageCache.h"
 
-void ImageCache::Update(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCache::Update(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_Bitmap)
 	{
@@ -50,7 +45,18 @@ std::unique_ptr<ImageCacheHandle> ImageCachePool::Get(const ImageOptions& key)
 	return std::make_unique<ImageCacheHandle>(ImageCacheHandle::ConstructorToken{}, find->second);
 }
 
-void ImageCachePool::Put(const ImageOptions& key, Gfx::D2DBitmap* item)
+void ImageCachePool::InvalidateDeviceResources()
+{
+	for (auto& [_, cache] : m_CachePool)
+	{
+		if (cache && cache->m_Bitmap)
+		{
+			cache->m_Bitmap->InvalidateDeviceResources();
+		}
+	}
+}
+
+void ImageCachePool::Put(const ImageOptions& key, Gfx::Bitmap* item)
 {
 	if (m_CachePool.find(key) == m_CachePool.end())
 	{

@@ -20,16 +20,26 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: cd Build && Build.bat rainmeter-${{ matrix.arch }} %BUILD_VERSION:~1%
-        shell: cmd
+        run: |
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion
+        shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
-          name: x${{ matrix.arch }}-Release
+          name: BuildOut-Release${{ matrix.arch }}
           path: |
-            x${{ matrix.arch }}-Release
-            !x${{ matrix.arch }}-Release/Obj
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
+          if-no-files-found: error
+
+      - name: Upload 64-bit debug symbols
+        if: ${{ matrix.arch == 64 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: DebugSymbols-Release${{ matrix.arch }}
+          path: BuildOut/**/*.pdb
           if-no-files-found: error
 
   installer:
@@ -42,23 +52,28 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Download 32-bit & 64-bit builds
+      - name: Download 32-bit build
         uses: actions/download-artifact@v8
         with:
-          pattern: x*-Release
+          name: BuildOut-Release32
+          path: BuildOut/Release32
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release64
+          path: BuildOut/Release64
 
       - name: Upload combined build
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
           name: RainmeterBuild-${{ github.ref_name }}
-          path: |
-            x32-Release
-            x64-Release
+          path: BuildOut
           if-no-files-found: error
 
       - name: Remove build directories
-        run: rm -rf {x32,x64}-Release
+        run: rm -rf BuildOut
         shell: bash
 
       - name: Sign Rainmeter
@@ -71,14 +86,16 @@ jobs:
           artifact-configuration-slug: 'zip'
           github-artifact-id: '${{ steps.upload-build.outputs.artifact-id }}'
           wait-for-completion: true
-          output-artifact-directory: .
+          output-artifact-directory: BuildOut
 
       - name: Install NSIS
-        run: choco install nsis --version=3.12.0 --no-progress
+        uses: ./.github/actions/install-nsis
 
       - name: Build installer
-        run: cd Build && Build.bat installer %BUILD_VERSION:~1%
-        shell: cmd
+        run: |
+          $buildVersion = $env:BUILD_VERSION.Substring(1)
+          .\Build\Build.ps1 installer $buildVersion
+        shell: pwsh
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

@@ -1,22 +1,19 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/MathParser.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "TrayIcon.h"
 #include "UpdateCheck.h"
 #include "Util.h"
 #include "../Version.h"
 
-#include "inipp/inipp.h"
+#include "../ThirdParty/inipp/inipp.h"
 
 #include <SoftPub.h>
 #include <bcrypt.h>
@@ -79,22 +76,25 @@ void Updater::CheckLanguageObsoleteStatus()
 	if (m_ObsoleteLanguages.empty()) return;
 
 	bool obsolete = false;
-	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
+	const auto lcid = (unsigned)GetLanguage().GetLCID();
+	MathParser mathParser;
 
-	auto obsoleteLanguages = ParseUtil::Tokenize(StringUtil::Widen(m_ObsoleteLanguages), L",");
-	for (const auto& idString : obsoleteLanguages)
+	const std::wstring obsoleteLanguages = StringUtil::Widen(m_ObsoleteLanguages);
+	StringParser::ForEachToken(obsoleteLanguages, L',', [&](std::wstring_view idString)
 	{
-		if (ParseUtil::ParseUInt(idString.c_str(), UINT32_MAX) == lcid)
+		if (obsolete) return;
+
+		StringParser id(idString);
+		if (id.ConsumeRestUIntOrFormula(mathParser) == lcid)
 		{
 			obsolete = true;
-			break;
 		}
-	}
+	});
 
 	if (GetRainmeter().GetDebug())
 	{
 		WCHAR language[LOCALE_NAME_MAX_LENGTH] = { 0 };
-		GetLocaleInfo(GetRainmeter().GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
+		GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
 		LogDebugF(L"Language status: %s (%s)", obsolete ? L"Obsolete" : L"Current", language);
 	}
 
@@ -223,7 +223,7 @@ void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void
 		return;
 	}
 
-	DWORD bytesWritten = 0UL;
+	DWORD bytesWritten = 0;
 	const BOOL writeSucceeded = WriteFile(file, data, dataSize, &bytesWritten, nullptr);
 	CloseHandle(file);
 
@@ -267,43 +267,43 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 	BCRYPT_ALG_HANDLE provider = nullptr;
 	BCRYPT_HASH_HANDLE hashHandle = nullptr;
 	PBYTE hash = nullptr;
-	DWORD hashLength = 0UL;
-	DWORD resultLength = 0UL;
+	DWORD hashLength = 0;
+	DWORD resultLength = 0;
 
 	auto cleanup = [&](LPCWSTR func, bool ret) -> bool
 	{
 		if (!ret && func) LogErrorF(L"Verify installer error (%s): 0x%08x (%lu)", func, status, status);
-		if (hash) HeapFree(GetProcessHeap(), 0UL, hash);
+		if (hash) HeapFree(GetProcessHeap(), 0, hash);
 		if (hashHandle) BCryptDestroyHash(hashHandle);
-		if (provider) BCryptCloseAlgorithmProvider(provider, 0UL);
+		if (provider) BCryptCloseAlgorithmProvider(provider, 0);
 		return ret;
 	};
 
-	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0UL);
+	status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
 	if (status != 0) return cleanup(L"OpenProvider", false);
 
-	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0UL);
+	status = BCryptGetProperty(provider, BCRYPT_HASH_LENGTH, (PBYTE)&hashLength, sizeof(hashLength), &resultLength, 0);
 	if (status != 0) return cleanup(L"GetProperty", false);
 
-	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0UL, hashLength);
+	hash = (PBYTE)HeapAlloc(GetProcessHeap(), 0, hashLength);
 	if (!hash)
 	{
 		status = STATUS_NO_MEMORY;
 		return cleanup(L"No Memory", false);
 	}
 
-	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0UL, nullptr, 0UL, 0UL);
+	status = BCryptCreateHash(provider, &hashHandle, nullptr, 0, nullptr, 0, 0);
 	if (status != 0) return cleanup(L"CreateHash", false);
 
-	status = BCryptHashData(hashHandle, (PUCHAR)buffer, (ULONG)size, 0UL);
+	status = BCryptHashData(hashHandle, (PUCHAR)buffer, (ULONG)size, 0);
 	if (status != 0) return cleanup(L"HashData", false);
 
-	status = BCryptFinishHash(hashHandle, hash, hashLength, 0UL);
+	status = BCryptFinishHash(hashHandle, hash, hashLength, 0);
 	if (status != 0) return cleanup(L"FinishHash", false);
 
 	std::wstring hashStr;
 	WCHAR hashChar[3] = { 0 };  // 2 chars + null terminator
-	for (DWORD i = 0UL; i < hashLength; ++i)
+	for (DWORD i = 0; i < hashLength; ++i)
 	{
 		_snwprintf_s(hashChar, _countof(hashChar), L"%02hhX", hash[i]);
 		hashStr += hashChar;
@@ -321,7 +321,7 @@ bool Updater::VerifyInstallerHash(const BYTE* buffer, size_t size, const std::ws
 bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& fileName, const std::wstring& sha256, bool writeToDataFile)
 {
 	const std::wstring fullPath = path + fileName;
-	size_t fileSize = 0ULL;
+	size_t fileSize = 0;
 	std::unique_ptr<BYTE[]> buffer = FileUtil::ReadFullFile(fullPath, &fileSize);
 	if (!buffer) return false;
 

@@ -1,12 +1,6 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __METER_H__
-#define __METER_H__
+#pragma once
 
 #include <windows.h>
 #include <vector>
@@ -26,10 +20,12 @@ public:
 
 	Meter(const Meter& other) = delete;
 
-	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-	void ReadContainerOptions(ConfigParser& parser) { ReadContainerOptions(parser, GetName()); parser.ClearStyleTemplate(); }
+	UINT GetBaseTypeID() override { return TypeID<Meter>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources();
+	void ReadOptions(ConfigParser& parser);
+	void ReadContainerOptions(ConfigParser& parser);
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }
@@ -54,7 +50,7 @@ public:
 	bool IsContained() { return m_ContainerMeter != nullptr; }
 	bool IsContainer() { return m_ContainerItems.size() > 0; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
-	void UpdateContainer();
+	void ResizeContainerTextures();
 	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
 
 	void SetW(int w) { m_W = w; }
@@ -118,15 +114,15 @@ protected:
 
 	Meter(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	virtual void BindMeasures(ConfigParser& parser, std::wstring_view section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
 
-	void ReadContainerOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadContainerOptions(ConfigParser& parser, std::wstring_view section);
 
-	bool BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional);
-	void BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section);
+	bool BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional);
+	void BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section);
 
 	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 
@@ -173,5 +169,3 @@ protected:
 	Gfx::RenderTexture* m_ContainerContentTexture;
 	Gfx::RenderTexture* m_ContainerTexture;
 };
-
-#endif

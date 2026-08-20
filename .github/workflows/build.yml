@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - '**'
+    paths-ignore:
+      - 'RainLexer/**'
+      - '.github/workflows/*rainlexer*'
 
 jobs:
   rainmeter:
-    if: "!contains(github.event.head_commit.message, 'skipci')"
+    if: "!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip')"
     strategy:
       matrix:
         arch: [32, 64]
@@ -16,27 +19,43 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
+      - name: Validate language files
+        if: ${{ matrix.arch == 64 }}
+        run: |
+          ./Language/UpdateLanguageFiles.sh
+          if ! git diff --quiet -- Language; then
+            echo "::error::Language files are out of sync. Run Language/UpdateLanguageFiles.sh and commit the result."
+            git diff -- Language
+            exit 1
+          fi
+        shell: bash
+
       - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          cd Build
-          .\Build.bat rainmeter-${{ matrix.arch }} $buildVersion include-tests
+          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion include-tests -MSBuildTarget build
         shell: pwsh
 
       - name: Test 64-bit Rainmeter
         if: ${{ matrix.arch == 64 }}
-        run: |
-          cd Build
-          .\Build.bat test-64
+        run: .\Build\Build.ps1 test-64
         shell: pwsh
 
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
-          name: x${{ matrix.arch }}-Release
+          name: BuildOut-Release${{ matrix.arch }}
           path: |
-            x${{ matrix.arch }}-Release
-            !x${{ matrix.arch }}-Release/Obj
+            BuildOut/Release${{ matrix.arch }}
+            !BuildOut/Release${{ matrix.arch }}/Obj
+          if-no-files-found: error
+
+      - name: Upload 64-bit debug symbols
+        if: ${{ matrix.arch == 64 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: DebugSymbols-Release${{ matrix.arch }}
+          path: BuildOut/**/*.pdb
           if-no-files-found: error
 
   installer:
@@ -46,19 +65,25 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Download 32-bit & 64-bit builds
+      - name: Download 32-bit build
         uses: actions/download-artifact@v8
         with:
-          pattern: x*-Release
+          name: BuildOut-Release32
+          path: BuildOut/Release32
+
+      - name: Download 64-bit build
+        uses: actions/download-artifact@v8
+        with:
+          name: BuildOut-Release64
+          path: BuildOut/Release64
 
       - name: Install NSIS
-        run: choco install nsis --version=3.12.0 --no-progress
+        uses: ./.github/actions/install-nsis
 
       - name: Build installer
         run: |
           $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          cd Build
-          .\Build.bat installer $buildVersion
+          .\Build\Build.ps1 installer $buildVersion
         shell: pwsh
 
       - name: Upload installer

@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StringUtil.h"
 #include "UnitTest.h"
@@ -41,6 +36,13 @@ public:
 		std::wstring str = L" !*'();:@test&=+$,/?#[ing]";
 		EncodeUrl(str);
 		Assert::AreEqual(L"%20%21%2A%27%28%29%3B%3A%40test%26%3D%2B%24%2C%2F%3F%23%5Bing%5D", str.c_str());
+	}
+
+	TEST_METHOD(TestTruncateWithEllipsis)
+	{
+		Assert::AreEqual(L"test", TruncateWithEllipsis(L"test", 4).c_str());
+		Assert::AreEqual(L"tes\u2026", TruncateWithEllipsis(L"testing", 4).c_str());
+		Assert::AreEqual(L"", TruncateWithEllipsis(L"test", 0).c_str());
 	}
 };
 

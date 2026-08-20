@@ -1,12 +1,8 @@
-﻿/* Copyright (C) 2015 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "CharacterEntityReference.h"
+#include "Map.h"
 
 namespace CharacterEntityReference {
 
@@ -285,9 +281,9 @@ static Entity kEntities[] =
 
 WCHAR GetEntityChar(const std::wstring& entity)
 {
-	static ankerl::unordered_dense::map<std::wstring, WCHAR> s_Map = []()
+	static StringMap<WCHAR> s_Map = []()
 	{
-		ankerl::unordered_dense::map<std::wstring, WCHAR> map;
+		StringMap<WCHAR> map;
 		const size_t entityCount = _countof(kEntities);
 		map.rehash(entityCount);
 		for (size_t i = 0; i < entityCount; ++i)

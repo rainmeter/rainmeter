@@ -1,9 +1,4 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "TrayIcon.h"
@@ -12,8 +7,8 @@
 #include "Util.h"
 #include "Rainmeter.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
-#include "GameMode.h"
 #include "System.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
@@ -519,49 +514,6 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrayIcon* tray = GetRainmeter().GetTrayIcon();
-
-	// When in non-layout enabled "Game mode", only process
-	// the toggling of game mode and exit.
-	if (GetGameMode().IsEnabled())
-	{
-		switch (uMsg)
-		{
-		case WM_COMMAND:
-			switch (wParam)
-			{
-			case IDM_GAMEMODE_STOP:
-				GetGameMode().ChangeStateManual(true);
-				break;
-
-			case IDM_QUIT:
-				PostQuitMessage(0);
-				break;
-			}
-			break;
-
-		case WM_TRAY_NOTIFYICON:
-			{
-				UINT uMouseMsg = (UINT)lParam;
-				switch (uMouseMsg)
-				{
-				case WM_RBUTTONDOWN:
-					tray->m_TrayContextMenuEnabled = true;
-					break;
-
-				case WM_RBUTTONUP:
-					if (tray->m_TrayContextMenuEnabled)
-					{
-						POINT pos = System::GetCursorPosition();
-						GetRainmeter().ShowContextMenu(pos, nullptr);
-					}
-					break;
-				}
-			}
-			break;
-		}
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
 	switch (uMsg)
 	{
 	case WM_COMMAND:
@@ -569,6 +521,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 		case IDM_MANAGE:
 			DialogManage::Open();
+			break;
+
+		case IDM_DEBUG:
+			DialogDebug::Open();
 			break;
 
 		case IDM_ABOUT:
@@ -595,26 +551,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)nullptr, (LPARAM)nullptr);
 			break;
 
-		case IDM_SHOWLOGFILE:
-			GetRainmeter().ShowLogFile();
-			break;
-
-		case IDM_STARTLOG:
-			GetLogger().StartLogFile();
-			break;
-
-		case IDM_STOPLOG:
-			GetLogger().StopLogFile();
-			break;
-
-		case IDM_DELETELOGFILE:
-			GetLogger().DeleteLogFile();
-			break;
-
-		case IDM_DEBUGLOG:
-			GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
-			break;
-
 		case IDM_DISABLEDRAG:
 			GetRainmeter().SetDisableDragging(!GetRainmeter().GetDisableDragging());
 			break;
@@ -629,22 +565,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		case IDM_OPENSKINSFOLDER:
 			GetRainmeter().OpenSkinFolder();
-			break;
-
-		case IDM_GAMEMODE_START:
-			GetGameMode().ChangeStateManual(false);
-			break;
-
-		case IDM_GAMEMODE_STOP:
-			GetGameMode().ChangeStateManual(true);
-			break;
-
-		case IDM_GAMEMODE_FULLSCREEN:
-			GetGameMode().SetFullScreenMode(!GetGameMode().GetFullScreenMode());
-			break;
-
-		case IDM_GAMEMODE_PROCESSLIST:
-			GetGameMode().SetProcessListMode(!GetGameMode().GetProcessListMode());
 			break;
 
 		default:
@@ -665,16 +585,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				{
 					GetRainmeter().ToggleSkinWithID(mID);
 				}
-				else if (mID >= ID_GAMEMODE_ONSTART_FIRST && mID <= ID_GAMEMODE_ONSTART_LAST)
-				{
-					UINT index = mID - ID_GAMEMODE_ONSTART_FIRST;
-					GetGameMode().SetOnStartAction(index);
-				}
-				else if (mID >= ID_GAMEMODE_ONSTOP_FIRST && mID <= ID_GAMEMODE_ONSTOP_LAST)
-				{
-					UINT index = mID - ID_GAMEMODE_ONSTOP_FIRST;
-					GetGameMode().SetOnStopAction(index);
-				}
 				else
 				{
 					// Forward the message to correct window
@@ -687,7 +597,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 							--index;
 							if (index < 0)
 							{
-								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, 0);
+								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, lParam);
 								break;
 							}
 						}
@@ -752,7 +662,14 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 			case WM_LBUTTONUP:
 			case WM_LBUTTONDBLCLK:
-				DialogManage::Open();
+				if (IsCtrlKeyDown())
+				{
+					DialogDebug::Open();
+				}
+				else
+				{
+					DialogManage::Open();
+				}
 				break;
 
 			case NIN_BALLOONUSERCLICK:

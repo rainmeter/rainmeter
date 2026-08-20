@@ -1,9 +1,4 @@
-﻿/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 using System;
 using System.Runtime.InteropServices;
@@ -16,6 +11,7 @@ namespace Rainmeter
     public class API
     {
         private IntPtr m_Rm;
+        private static int s_ApiVersion;
 
         public API(IntPtr rm)
         {
@@ -81,7 +77,15 @@ namespace Rainmeter
             SettingsFile = 2,
             SkinName = 3,
             SkinWindowHandle = 4,
-            SkinScale = 5
+
+            // Available in API version 2.
+            SkinScale = 5,
+            SkinDpiScale = 6,
+            SkinZoomScale = 7,
+            ApiVersion = 8,
+            SkinTransparency = 9,
+            SkinClickThrough = 10,
+            SkinDraggable = 11
         }
 
         public enum LogType
@@ -429,13 +433,74 @@ namespace Rainmeter
         }
 
         /// <summary>
-        /// Retrieves the effective scale factor of the skin
+        /// Get the skin effective scale (window DPI + zoom). Skin units (e.g. width) should be multiplied by the scale to get the pixel size on the screen.
         /// </summary>
-        /// <returns>Returns the current skin scale factor</returns>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
         public float GetSkinScale()
         {
             IntPtr scale = RmGet(m_Rm, RmGetType.SkinScale);
             return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin window DPI scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinDpiScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinDpiScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin zoom scale.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 1.0f.</remarks>
+        public float GetSkinZoomScale()
+        {
+            IntPtr scale = RmGet(m_Rm, RmGetType.SkinZoomScale);
+            return scale != IntPtr.Zero ? (float)Marshal.PtrToStructure(scale, typeof(float)) : 1.0f;
+        }
+
+        /// <summary>
+        /// Get the skin transparency setting. See !SetTransparency bang docs for info.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns 255.</remarks>
+        public int GetSkinTransparency()
+        {
+            return GetApiVersion() >= 2 ? RmGet(m_Rm, RmGetType.SkinTransparency).ToInt32() : 255;
+        }
+
+        /// <summary>
+        /// Get the skin click through setting.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns false.</remarks>
+        public bool GetSkinClickThrough()
+        {
+            return RmGet(m_Rm, RmGetType.SkinClickThrough) != IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Get the skin draggable setting.
+        /// </summary>
+        /// <remarks>Supported on API version 2. On earlier versions, always returns true.</remarks>
+        public bool GetSkinDraggable()
+        {
+            return GetApiVersion() >= 2 ? RmGet(m_Rm, RmGetType.SkinDraggable) != IntPtr.Zero : true;
+        }
+
+        /// <summary>
+        /// Get the Rainmeter plugin API version.
+        /// </summary>
+        public static int GetApiVersion()
+        {
+            if (s_ApiVersion == 0)
+            {
+                IntPtr version = RmGet(IntPtr.Zero, RmGetType.ApiVersion);
+                s_ApiVersion = version != IntPtr.Zero ? version.ToInt32() : 1;
+            }
+
+            return s_ApiVersion;
         }
 
         /// <summary>
@@ -606,5 +671,16 @@ namespace Rainmeter
         {
 
         }
+    }
+
+    /// <summary>
+    /// Describes why HandleSkinSettingChange was called.
+    /// </summary>
+    public enum SkinSettingChange : byte
+    {
+        Scale = 0,
+        Transparency = 1,
+        ClickThrough = 2,
+        Draggable = 3
     }
 }

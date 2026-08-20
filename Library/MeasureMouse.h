@@ -1,12 +1,6 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_MEASUREMOUSE_H_
-#define RM_LIBRARY_MEASUREMOUSE_H_
+#pragma once
 
 #include "Measure.h"
 #include "Mouse.h"
@@ -22,23 +16,23 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeasureMouse>(); }
 
-	bool ExecuteAction(MOUSEACTION action, POINT logicalSkinPos, POINT logicalScreenPos, MOUSEACTION fallback = MOUSEACTION_COUNT);
-	void ExecuteMoveActions(POINT logicalSkinPos, POINT logicalScreenPos);
+	bool ExecuteAction(MOUSEACTION action, POINT screenPos, MOUSEACTION fallback = MOUSEACTION_NONE);
+	void ExecuteMoveActions(POINT screenPos);
 
 	bool WantsCapture() const { return m_RequireDragging && m_Capturing; }
 	void ClearCapture() { m_Capturing = false; }
 
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override {}
 	void Command(const std::wstring& command) override;
 
 private:
 	bool IsActive();
 	bool ShouldRunMoveAction();
-	void ReplaceMouseVariables(std::wstring& result, POINT logicalSkinPos, POINT logicalScreenPos) const;
+	void ReplaceMouseVariables(std::wstring& result, POINT screenPos) const;
 
-	std::wstring m_Actions[MOUSEACTION_COUNT];
+	Mouse m_Mouse;
 	std::wstring m_MouseMoveAction;
 	std::wstring m_LeftDragAction;
 	std::wstring m_MiddleDragAction;
@@ -52,5 +46,3 @@ private:
 	UINT m_Delay;
 	ULONGLONG m_LastMoveActionTime;
 };
-
-#endif

@@ -1,22 +1,18 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "MathParser.h"
 #include "UnitTest.h"
 
-namespace MathParser {
+#include <string_view>
 
 TEST_CLASS(Common_MathParser_Test)
 {
 public:
 	void ParseAssert(double expected, const WCHAR* formula)
 	{
+		MathParser mathParser;
 		double value = 0.0;
-		Assert::IsNull(Parse(formula, &value));
+		Assert::IsNull(mathParser.Parse(formula, &value));
 		Assert::AreEqual(expected, value);
 	}
 
@@ -58,32 +54,85 @@ public:
 		ParseAssert(3.0, L"max(3, -2)");
 		ParseAssert(3.0, L"clamp(6, -2, 3)");
 
+		MathParser mathParser;
+		MathParser mathParserWithValueHelper(GetValueHelper);
+		MathParser mathParserWithContext(GetValueHelper, (void*)1);
 		double value;
 
-		Assert::IsNotNull(Parse(L"1 ? 0 ? 4 : 5 : 3", &value));
-		Assert::IsNotNull(Parse(L"++1", &value));
-		Assert::IsNotNull(Parse(L"((1)", &value));
-		Assert::IsNotNull(Parse(L"1 / 0", &value));
-		Assert::IsNotNull(Parse(L"1 &&", &value));
-		Assert::IsNotNull(Parse(L"a", &value));
+		Assert::IsNotNull(mathParser.Parse(L"1 ? 0 ? 4 : 5 : 3", &value));
+		Assert::IsNotNull(mathParser.Parse(L"++1", &value));
+		Assert::IsNotNull(mathParser.Parse(L"((1)", &value));
+		Assert::IsNotNull(mathParser.Parse(L"1 / 0", &value));
+		Assert::IsNotNull(mathParser.Parse(L"1 &&", &value));
+		Assert::IsNotNull(mathParser.Parse(L"a", &value));
 
-		Assert::IsNull(Parse(L"e", &value));
+		Assert::IsNull(mathParser.Parse(L"e", &value));
 		Assert::AreEqual(2, (int)value);
 
-		Assert::IsNull(Parse(L"pi", &value));
+		Assert::IsNull(mathParser.Parse(L"pi", &value));
 		Assert::AreEqual(3, (int)value);
 
-		Assert::IsNull(Parse(L"pi", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"pi", &value));
 		Assert::AreEqual(3, (int)value);
 
-		Assert::IsNull(Parse(L"a + 5", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"a + 5", &value));
 		Assert::AreEqual(15.0, value);
 
-		Assert::IsNull(Parse(L"bbb", &value, GetValueHelper));
+		Assert::IsNull(mathParserWithValueHelper.Parse(L"bbb", &value));
 		Assert::AreEqual(20.0, value);
 
-		Assert::IsNull(Parse(L"(ccc_)", &value, GetValueHelper, (void*)1));
+		Assert::IsNull(mathParserWithContext.Parse(L"(ccc_)", &value));
 		Assert::AreEqual(30.0, value);
+
+		Assert::IsNull(mathParserWithValueHelper.CheckedParse(L"a + 5", &value));
+		Assert::AreEqual(15.0, value);
+
+		Assert::IsNull(mathParserWithContext.CheckedParse(L"(ccc_)", &value));
+		Assert::AreEqual(30.0, value);
+	}
+
+	TEST_METHOD(TestParseToMatchingClosingBracket)
+	{
+		MathParser mathParser;
+		double value = 0.0;
+		const WCHAR* parseEnd = nullptr;
+		const WCHAR* formula = L"(1 + min(2, 3))tail";
+
+		Assert::IsNull(mathParser.Parse(
+			formula, &value, MathParser::ParseMode::MatchingClosingBracket, &parseEnd));
+		Assert::AreEqual(3.0, value);
+		Assert::AreEqual(L"tail", parseEnd);
+	}
+
+	TEST_METHOD(TestParseWithWStringView)
+	{
+		MathParser mathParser;
+		double value = 0.0;
+
+		// The view ends mid-buffer; parsing must stop there even though the underlying
+		// buffer isn't null-terminated at that point and keeps going with more digits.
+		const std::wstring buffer(L"123456");
+		const std::wstring_view formula(buffer.data(), 3);
+		Assert::IsNull(mathParser.Parse(formula, &value));
+		Assert::AreEqual(123.0, value);
+
+		// Same, but where the boundary falls inside a decimal number: the view must be
+		// parsed as "3.1", not "3.123456", even though wcstod would read straight through
+		// the boundary if not for the bounded re-parse.
+		const std::wstring decimalBuffer(L"3.123456");
+		const std::wstring_view decimalFormula(decimalBuffer.data(), 3);
+		Assert::IsNull(mathParser.Parse(decimalFormula, &value));
+		Assert::AreEqual(3.1, value);
+
+		// A wstring_view can be parsed directly, without first copying it into a
+		// null-terminated std::wstring.
+		const std::wstring parenBuffer(L"(1 + 2)");
+		const std::wstring_view parenFormula(parenBuffer.data(), parenBuffer.size());
+		const WCHAR* parseEnd = nullptr;
+		Assert::IsNull(mathParser.Parse(
+			parenFormula, &value, MathParser::ParseMode::MatchingClosingBracket, &parseEnd));
+		Assert::AreEqual(3.0, value);
+		Assert::AreEqual(L"", parseEnd);
 	}
 
 	static bool GetValueHelper(const WCHAR* str, int len, double* value, void* context)
@@ -112,5 +161,3 @@ public:
 		return false;
 	}
 };
-
-}  // namespace StringUtil

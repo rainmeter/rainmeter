@@ -24,6 +24,7 @@ $languages = [ordered]@{
 	'de'      = @{ nsis = 'German'; lcid = 1031 }
 	'el'      = @{ nsis = 'Greek'; lcid = 1032 }
 	'he'      = @{ nsis = 'Hebrew'; lcid = 1037 }
+	'hr'      = @{ nsis = 'Croatian'; lcid = 1050 }
 	'hu'      = @{ nsis = 'Hungarian'; lcid = 1038 }
 	'id'      = @{ nsis = 'Indonesian'; lcid = 1057 }
 	'it'      = @{ nsis = 'Italian'; lcid = 1040 }
@@ -51,11 +52,12 @@ $languages = [ordered]@{
 $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 $scriptDirectory = Join-Path $PSScriptRoot '..\Language'
 $resourceHeaderPath = Join-Path $PSScriptRoot '..\Library\resource.h'
+$installerOutputDirectory = Join-Path $PSScriptRoot '..\BuildOut\Installer'
 $languageOutputDirectories = @(
-	(Join-Path $PSScriptRoot '..\x32-Release\Languages'),
-	(Join-Path $PSScriptRoot '..\x64-Release\Languages'),
-	(Join-Path $PSScriptRoot '..\x32-Debug\Languages'),
-	(Join-Path $PSScriptRoot '..\x64-Debug\Languages')
+	(Join-Path $PSScriptRoot '..\BuildOut\Release32\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Release64\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Debug32\Languages'),
+	(Join-Path $PSScriptRoot '..\BuildOut\Debug64\Languages')
 )
 if ($OutputDirectory) {
 	$languageOutputDirectories = $OutputDirectory
@@ -78,19 +80,57 @@ function Get-ResourceIds {
 	return $ids
 }
 
+# Rainmeter strings use %1 and {0} style placeholders, while the NSIS installer strings use
+# $INSTDIR and ${VERSION_SHORT} style variables.
+$placeholderRegex = [regex]'%[0-9]|\{[0-9]+\}|\$\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9_]+'
+$argumentPlaceholderRegex = [regex]'^(%[0-9]|\{[0-9]+\})$'
+
+# Returns the distinct placeholders of a string.
+function Get-Placeholder {
+	param([string]$Value)
+
+	return @($placeholderRegex.Matches($Value) | ForEach-Object { $_.Value } | Sort-Object -Unique)
+}
+
+# A translation that drops or misspells a placeholder leaves the text with an unsubstituted
+# variable, and an argument placeholder that has no matching argument crashes Rainmeter when the
+# string is formatted. Additional NSIS variables are allowed since they always expand.
+function Assert-Placeholder {
+	param(
+		[string]$Key,
+		[string]$Value,
+		[string]$BaseValue,
+		[string]$Path
+	)
+
+	$expected = Get-Placeholder -Value $BaseValue
+	$actual = Get-Placeholder -Value $Value
+
+	$missing = @($expected | Where-Object { $actual -notcontains $_ })
+	if ($missing.Count -gt 0) {
+		throw "Missing placeholder $($missing -join ', ') for $Key in $Path"
+	}
+
+	$unexpected = @($actual | Where-Object { $expected -notcontains $_ -and $argumentPlaceholderRegex.IsMatch($_) })
+	if ($unexpected.Count -gt 0) {
+		throw "Unexpected placeholder $($unexpected -join ', ') for $Key in $Path"
+	}
+}
+
 function Read-LanguageFile {
 	param(
 		[string]$Path,
 		[hashtable]$ResourceIds,
-		[string]$ResourceHeaderPath
+		[string]$ResourceHeaderPath,
+		[object]$BaseLanguage
 	)
 
 	if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
 		throw "Language file not found: $Path"
 	}
 
-	$installerStrings = New-Object System.Collections.Generic.List[object]
-	$runtimeStrings = New-Object System.Collections.Generic.List[object]
+	$installerStrings = [ordered]@{}
+	$runtimeStrings = [ordered]@{}
 	$buttonWidth = $null
 	$labelWidth = $null
 	$rtl = $null
@@ -115,7 +155,7 @@ function Read-LanguageFile {
 		$key = $Matches[1].Trim()
 		$value = $Matches[2]
 		if ($currentSection -eq 'Installer') {
-			[void]$installerStrings.Add([pscustomobject]@{ Key = $key; Value = $value })
+			$installerStrings[$key] = $value
 			continue
 		}
 		if ($currentSection -eq 'LanguageSettings') {
@@ -133,7 +173,7 @@ function Read-LanguageFile {
 
 		# Convert the escaping used by the INI source before UTF-16 serialization.
 		$value = $value.Replace('\n', "`n").Replace('\\', '\')
-		[void]$runtimeStrings.Add([pscustomobject]@{ Id = [uint32]$ResourceIds[$key]; Value = $value })
+		$runtimeStrings[$key] = [pscustomobject]@{ Id = [uint32]$ResourceIds[$key]; Value = $value }
 	}
 
 	if ($installerSectionCount -ne 1 -or $installerStrings.Count -eq 0) {
@@ -146,9 +186,41 @@ function Read-LanguageFile {
 		throw "RTL must be 0 or 1 in $Path"
 	}
 
+	if ($BaseLanguage) {
+		$mergedInstallerStrings = New-Object System.Collections.Generic.List[object]
+		foreach ($string in $BaseLanguage.InstallerStrings) {
+			$value = if ($installerStrings.Contains($string.Key) -and $installerStrings[$string.Key].Length -gt 0) { $installerStrings[$string.Key] } else { $string.Value }
+			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
+			[void]$mergedInstallerStrings.Add([pscustomobject]@{ Key = $string.Key; Value = $value })
+			$installerStrings.Remove($string.Key)
+		}
+		if ($installerStrings.Count -gt 0) {
+			throw "Installer string not found in English language file: $($installerStrings.Keys -join ', ')"
+		}
+
+		$mergedRuntimeStrings = New-Object System.Collections.Generic.List[object]
+		foreach ($string in $BaseLanguage.RuntimeStrings) {
+			$value = if ($runtimeStrings.Contains($string.Key) -and $runtimeStrings[$string.Key].Value.Length -gt 0) { $runtimeStrings[$string.Key].Value } else { $string.Value }
+			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
+			[void]$mergedRuntimeStrings.Add([pscustomobject]@{ Key = $string.Key; Id = $string.Id; Value = $value })
+			$runtimeStrings.Remove($string.Key)
+		}
+		if ($runtimeStrings.Count -gt 0) {
+			throw "Runtime string not found in English language file: $($runtimeStrings.Keys -join ', ')"
+		}
+
+		return [pscustomobject]@{
+			InstallerStrings = $mergedInstallerStrings
+			RuntimeStrings = $mergedRuntimeStrings
+			ButtonWidth = $buttonWidth
+			LabelWidth = $labelWidth
+			Rtl = $rtl
+		}
+	}
+
 	return [pscustomobject]@{
-		InstallerStrings = $installerStrings
-		RuntimeStrings = $runtimeStrings
+		InstallerStrings = @($installerStrings.GetEnumerator() | ForEach-Object { [pscustomobject]@{ Key = $_.Key; Value = $_.Value } })
+		RuntimeStrings = @($runtimeStrings.GetEnumerator() | ForEach-Object { [pscustomobject]@{ Key = $_.Key; Id = $_.Value.Id; Value = $_.Value.Value } })
 		ButtonWidth = $buttonWidth
 		LabelWidth = $labelWidth
 		Rtl = $rtl
@@ -228,9 +300,15 @@ function Write-InstallerLanguagesFile {
 
 	foreach ($language in $Languages.GetEnumerator()) {
 		$locale = $language.Key
+		$localeInfo = [System.Globalization.CultureInfo]::GetCultureInfo($locale)
+		$displayName = $localeInfo.NativeName
+		if ($locale -ne 'en') {
+			$displayName += " - $($localeInfo.EnglishName.split(' ')[0])"
+		}
+
 		$nsisLanguage = $language.Value.nsis
 		[void]$output.Add(('${{IncludeLanguage}} "{0}" "{1}"' -f $nsisLanguage, $locale))
-		$langDllParams += "'$locale -  `${LANGFILE_${nsisLanguage}_NAME}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
+		$langDllParams += "'${displayName}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
 		$languageIds += "$($language.Value.lcid),"
 	}
 
@@ -242,8 +320,13 @@ function Write-InstallerLanguagesFile {
 
 $locales = if ($Locale) { $Locale } else { @($languages.Keys) }
 $resourceIds = Get-ResourceIds -Path $resourceHeaderPath
+$englishIniPath = Join-Path $scriptDirectory 'en.ini'
+$englishDefinition = Read-LanguageFile -Path $englishIniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -BaseLanguage $null
 foreach ($directory in $languageOutputDirectories) {
 	[System.IO.Directory]::CreateDirectory($directory) | Out-Null
+}
+if (-not $RuntimeOnly) {
+	[System.IO.Directory]::CreateDirectory($installerOutputDirectory) | Out-Null
 }
 
 Write-Host "Generating language files..."
@@ -254,15 +337,19 @@ foreach ($localeName in $locales) {
 	}
 
 	$iniPath = Join-Path $scriptDirectory ($localeName + '.ini')
-	$definition = Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath
+	$definition = if ($localeName -eq 'en') {
+		$englishDefinition
+	} else {
+		Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -BaseLanguage $englishDefinition
+	}
 	if (-not $RuntimeOnly) {
-		$nshPath = Join-Path $scriptDirectory ($localeName + '.nsh')
+		$nshPath = Join-Path $installerOutputDirectory ($localeName + '.nsh')
 		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
 	}
 	Write-RuntimeLanguageFile -Locale $localeName -Lcid $languages[$localeName].lcid -Language $definition -OutputDirectories $languageOutputDirectories
 }
 
 if (-not $RuntimeOnly) {
-	$installerLanguagesPath = Join-Path $PSScriptRoot 'Installer\Languages.nsh'
+	$installerLanguagesPath = Join-Path $installerOutputDirectory 'Languages.nsh'
 	Write-InstallerLanguagesFile -Path $installerLanguagesPath -Languages $languages -Encoding $utf8WithBom
 }

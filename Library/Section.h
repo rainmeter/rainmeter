@@ -1,15 +1,10 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __SECTION_H__
-#define __SECTION_H__
+#pragma once
 
 #include <windows.h>
 #include <string>
+#include <string_view>
 #include "Group.h"
 
 class ConfigParser;
@@ -22,7 +17,11 @@ public:
 
 	Section(const Section& other) = delete;
 
+	// Identifies the concrete type of the section (e.g. TypeID<MeterString>()).
 	virtual UINT GetTypeID() = 0;
+
+	// Identifies the base type of the section, i.e. either TypeID<Meter>() or TypeID<Measure>().
+	virtual UINT GetBaseTypeID() = 0;
 
 	const WCHAR* GetName() const { return m_Name.c_str(); }
 	const std::wstring& GetOriginalName() const { return m_Name; }
@@ -42,7 +41,7 @@ public:
 protected:
 	Section(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, std::wstring_view section);
 
 	bool UpdateCounter();
 
@@ -58,5 +57,3 @@ protected:
 
 	Skin* m_Skin;
 };
-
-#endif

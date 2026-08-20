@@ -1,11 +1,7 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "DpiUtil.h"
 #include "Dialog.h"
 
 namespace {
@@ -21,14 +17,16 @@ UINT GetWindowDpi(HWND window)
 	}
 
 	HDC dc = GetDC(window);
-	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96U;
+	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96;
 	if (dc) ReleaseDC(window, dc);
-	return dpi ? dpi : 96U;
+	return dpi ? dpi : 96;
 }
 
 }  // namespace
 
 HWND Dialog::c_ActiveDialogWindow = nullptr;
+HACCEL Dialog::c_Accelerator = nullptr;
+HHOOK Dialog::c_PopupMenuFilterHook = nullptr;
 
 //
 // BaseDialog
@@ -40,16 +38,11 @@ BaseDialog::BaseDialog() :
 {
 }
 
-/*
-** Create (if not already) and show the dialog.
-**
-*/
 void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	if (m_Window)
 	{
-		// Show existing window.
-		ShowWindow(m_Window, SW_SHOW);
+		ShowWindow(m_Window, SW_SHOWNORMAL);
 		SetForegroundWindow(m_Window);
 		return;
 	}
@@ -66,7 +59,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 		fontSize; // Font array.
 
 	DLGTEMPLATE* dt = (DLGTEMPLATE*)new BYTE[dataSize];
-	dt->style = style | DS_SHELLFONT | WS_VISIBLE;
+	dt->style = style | DS_SHELLFONT | (modeless ? 0 : WS_VISIBLE);
 	dt->dwExtendedStyle = exStyle;
 	dt->cdit = 0;
 	dt->x = x;
@@ -143,6 +136,13 @@ INT_PTR CALLBACK BaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 //
 
 Dialog::Dialog() : BaseDialog(),
+	m_WindowPlacement(nullptr),
+	m_TabControl()
+{
+}
+
+Dialog::Dialog(WINDOWPLACEMENT* placement) : BaseDialog(),
+	m_WindowPlacement(placement),
 	m_TabControl()
 {
 }
@@ -154,7 +154,42 @@ Dialog::~Dialog()
 
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
+	const bool existingWindow = m_Window != nullptr;
+
 	Show(title, x, y, w, h, style, exStyle, parent, modeless);
+
+	if (!existingWindow && modeless && m_Window)
+	{
+		int showCmd = SW_SHOWNORMAL;
+		if (m_WindowPlacement && m_WindowPlacement->length > 0)
+		{
+			DpiUtil::DpiUnawareScope dpiUnaware;
+
+			auto& wp = *m_WindowPlacement;
+			if (wp.showCmd == SW_SHOWMINIMIZED)
+			{
+				wp.showCmd = SW_SHOWNORMAL;
+			}
+
+			// If the window can't be maximized, only restore the position and keep the existing size.
+			if ((style & WS_MAXIMIZEBOX) == 0)
+			{
+				RECT windowRect;
+				GetWindowRect(m_Window, &windowRect);
+
+				const int windowW = windowRect.right - windowRect.left;
+				const int windowH = windowRect.bottom - windowRect.top;
+				wp.rcNormalPosition.right = wp.rcNormalPosition.left + windowW;
+				wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + windowH;
+			}
+
+			SetWindowPlacement(m_Window, &wp);
+			showCmd = wp.showCmd;
+		}
+
+		ShowWindow(m_Window, showCmd);
+		SetForegroundWindow(m_Window);
+	}
 }
 
 INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -193,6 +228,15 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_ACTIVATE:
 		c_ActiveDialogWindow = wParam ? m_Window : nullptr;
+		break;
+
+	case WM_CLOSE:
+		if (m_WindowPlacement)
+		{
+			DpiUtil::DpiUnawareScope dpiUnaware;
+			m_WindowPlacement->length = sizeof(WINDOWPLACEMENT);
+			GetWindowPlacement(m_Window, m_WindowPlacement);
+		}
 		break;
 	}
 
@@ -294,6 +338,23 @@ bool Dialog::HandleMessage(MSG& msg)
 {
 	if (c_ActiveDialogWindow)
 	{
+		if (c_Accelerator)
+		{
+			HWND acceleratorWindow = msg.hwnd;
+			while (acceleratorWindow)
+			{
+				HWND parent = GetParent(acceleratorWindow);
+				if (parent == c_ActiveDialogWindow) break;
+				acceleratorWindow = parent;
+			}
+
+			if (acceleratorWindow && IsWindowEnabled(acceleratorWindow) &&
+				TranslateAccelerator(acceleratorWindow, c_Accelerator, &msg))
+			{
+				return true;
+			}
+		}
+
 		if (IsDialogMessage(c_ActiveDialogWindow, &msg))
 		{
 			return true;
@@ -303,10 +364,7 @@ bool Dialog::HandleMessage(MSG& msg)
 	return false;
 }
 
-/*
-** Subclass button control to draw arrow on the right.
-**
-*/
+// Subclass button control to draw arrow on the right.
 void Dialog::SetMenuButton(HWND button)
 {
 	SetWindowSubclass(button, MenuButtonProc, 0, 0);
@@ -359,6 +417,53 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 	}
 
+	return result;
+}
+
+UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT extraFlags)
+{
+	assert(!c_PopupMenuFilterHook);
+
+	RECT rect;
+	GetWindowRect(button, &rect);
+
+	const auto rtl = (GetWindowLongPtr(window, GWL_EXSTYLE) & WS_EX_LAYOUTRTL);
+
+	const auto popupMenuFilter = [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT
+	{
+		const auto* msg = (const MSG*)lParam;
+		if (nCode == MSGF_MENU && msg->message == WM_LBUTTONDOWN)
+		{
+			const auto popupMenuClass = MAKEINTATOM(0x8000);
+			HWND menuWindow = nullptr;
+			while ((menuWindow = FindWindowEx(nullptr, menuWindow, popupMenuClass, nullptr)) != nullptr)
+			{
+				RECT rect;
+				if (GetWindowThreadProcessId(menuWindow, nullptr) == GetCurrentThreadId() &&
+					GetWindowRect(menuWindow, &rect) &&
+					PtInRect(&rect, msg->pt))
+				{
+					return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+				}
+			}
+
+			// Dismiss the popup and consume the outside click.
+			EndMenu();
+			return 1;
+		}
+
+		return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+	};
+	c_PopupMenuFilterHook = SetWindowsHookEx(WH_MSGFILTER, popupMenuFilter, nullptr, GetCurrentThreadId());
+
+	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN | extraFlags;
+	const int x = rtl ? rect.right : rect.left;
+	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, window, nullptr);
+	if (c_PopupMenuFilterHook)
+	{
+		UnhookWindowsHookEx(c_PopupMenuFilterHook);
+		c_PopupMenuFilterHook = nullptr;
+	}
 	return result;
 }
 

@@ -1,24 +1,24 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_SKINDIRECTORY_H_
-#define RM_LIBRARY_SKINDIRECTORY_H_
+#pragma once
 
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <memory>
 #include <cstdint>
+#include "../Common/CriticalSection.h"
+#include "ankerl/unordered_dense.h"
+
+class DirectoryWatcher;
 
 // Reprsents a hierarchy of skin folders (reprsented by the Folder struct) and the names of their
 // respective files.
 class SkinRegistry
 {
 public:
-	SkinRegistry() = default;
+	SkinRegistry();
+	~SkinRegistry();
 	SkinRegistry(const SkinRegistry& other) = delete;
 	SkinRegistry& operator=(SkinRegistry other) = delete;
 
@@ -49,7 +49,7 @@ public:
 
 		bool hasFavorite;
 
-		Folder() : baseID(0U), active(0), level(0), hasFavorite(false) {}
+		Folder() : baseID(0), active(0), level(0), hasFavorite(false) {}
 		~Folder() {}
 
 		Folder(Folder&& r) noexcept :
@@ -99,11 +99,17 @@ public:
 	bool IsEmpty() const { return m_Folders.empty(); }
 
 	void Populate(const std::wstring& path, std::vector<std::wstring>& favorites);
+	void PopulateChanged(const std::wstring& path, std::vector<std::wstring>& favorites);
+
+	bool HasChanges(std::wstring folderPath = L"");
+	void StartWatching(const std::wstring& path);
 
 	std::vector<std::wstring> UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite);
 
 private:
 	int PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level);
+	void UpdateBaseIDs();
+	void HandleDirectoryChange(const WCHAR* path, DWORD action, DWORD attributes);
 
 	std::vector<std::wstring> ValidateFavorites();
 
@@ -113,6 +119,8 @@ private:
 	//       C     (index: 2, level: 3)
 	//     D       (index: 3, level: 2)
 	std::vector<Folder> m_Folders;
-};
 
-#endif
+	CriticalSection m_ChangesLock;
+	ankerl::unordered_dense::set<std::wstring> m_ChangedRootFolders;
+	std::unique_ptr<DirectoryWatcher> m_ChangeWatcher;
+};

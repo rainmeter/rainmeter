@@ -1,9 +1,4 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #define RESTART_RAINMETER_CLASSNAME			L"RestartRainmeterClass"
 #define RESTART_RAINMETER_TITLE				L"Restart Rainmeter"
@@ -20,22 +15,18 @@
 #include <TlHelp32.h>
 #include <string>
 
-constexpr UINT_PTR g_ResponseEventID  = 1000ULL;
-constexpr UINT     g_ResponseInterval = 2000U;   // milliseconds
-constexpr UINT_PTR g_AppCloseEventID  = 2000ULL;
-constexpr UINT     g_AppCloseInterval = 500U;    // milliseconds
-constexpr UINT     g_MaxNumberOfTries = 10U;
+constexpr UINT_PTR g_ResponseEventID  = 1000;
+constexpr UINT     g_ResponseInterval = 2000;   // milliseconds
+constexpr UINT_PTR g_AppCloseEventID  = 2000;
+constexpr UINT     g_AppCloseInterval = 500;    // milliseconds
+constexpr UINT     g_MaxNumberOfTries = 10;
 
 std::wstring       g_RainmeterPath    = L"";
-UINT               g_NumberOfTries    = 0U;
+UINT               g_NumberOfTries    = 0;
 
 bool IsRainmeterRunning();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-/*
-** Entry point.
-**
-*/
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdLine, int cmdShow)
 {
 	// Prevent system error message boxes.

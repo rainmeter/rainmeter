@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureNowPlaying.h"
@@ -38,10 +33,103 @@ struct ParentMeasure
 static std::vector<ParentMeasure*> g_ParentMeasures;
 HINSTANCE g_Instance = nullptr;
 
+namespace {
+
+void DoPlayBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Play();
+}
+
+void DoPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Pause();
+}
+
+void DoPlayPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->PlayPause();
+}
+
+void DoStopBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Stop();
+}
+
+void DoNextBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Next();
+}
+
+void DoPreviousBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Previous();
+}
+
+void DoOpenPlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->OpenPlayer();
+}
+
+void DoClosePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->ClosePlayer();
+}
+
+void DoTogglePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->TogglePlayer();
+}
+
+void DoSetPositionBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetPosition(args[0].c_str());
+}
+
+void DoSetRatingBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetRating(args[0].c_str());
+}
+
+void DoSetVolumeBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetVolume(args[0].c_str());
+}
+
+void DoSetShuffleBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetShuffle(args[0].c_str());
+}
+
+void DoSetRepeatBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetRepeat(args[0].c_str());
+}
+
+}  // namespace
+
 MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MEASURE_NONE),
 	m_Parent()
 {
+	static const bool s_BangsRegistered = []()
+	{
+		const UINT typeId = TypeID<MeasureNowPlaying>();
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Play", 0, DoPlayBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Pause", 0, DoPauseBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlay", 0, DoPlayPauseBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Stop", 0, DoStopBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Next", 0, DoNextBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Previous", 0, DoPreviousBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:OpenPlayer", 0, DoOpenPlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:ClosePlayer", 0, DoClosePlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlayer", 0, DoTogglePlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetPosition", 1, DoSetPositionBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRating", 1, DoSetRatingBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetVolume", 1, DoSetVolumeBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetShuffle", 1, DoSetShuffleBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRepeat", 1, DoSetRepeatBang);
+		return true;
+	} ();
 }
 
 MeasureNowPlaying::~MeasureNowPlaying()
@@ -62,7 +150,7 @@ MeasureNowPlaying::~MeasureNowPlaying()
 	}
 }
 
-void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -400,52 +488,186 @@ const WCHAR* MeasureNowPlaying::GetStringValue()
 	return str ? CheckSubstitute(str) : nullptr;
 }
 
+Player* MeasureNowPlaying::GetInitializedPlayer() const
+{
+	if (!m_Parent) return nullptr;
+
+	Player* player = m_Parent->player;
+	return player->IsInitialized() ? player : nullptr;
+}
+
+void MeasureNowPlaying::Play()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Play();
+}
+
+void MeasureNowPlaying::Pause()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Pause();
+}
+
+void MeasureNowPlaying::PlayPause()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) (player->GetState() != STATE_PLAYING) ? player->Play() : player->Pause();
+}
+
+void MeasureNowPlaying::Stop()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Stop();
+}
+
+void MeasureNowPlaying::Next()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Next();
+}
+
+void MeasureNowPlaying::Previous()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Previous();
+}
+
+void MeasureNowPlaying::OpenPlayer()
+{
+	if (m_Parent) m_Parent->player->OpenPlayer(m_Parent->playerPath);
+}
+
+void MeasureNowPlaying::ClosePlayer()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->ClosePlayer();
+}
+
+void MeasureNowPlaying::TogglePlayer()
+{
+	GetInitializedPlayer() ? ClosePlayer() : OpenPlayer();
+}
+
+void MeasureNowPlaying::SetPosition(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
+	if (arg[0] == L'+' || arg[0] == L'-')
+	{
+		position += player->GetPosition();
+	}
+
+	player->SetPosition(position);
+}
+
+void MeasureNowPlaying::SetRating(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int rating = _wtoi(arg);
+	if (rating >= 0 && rating <= 5)
+	{
+		player->SetRating(rating);
+	}
+}
+
+void MeasureNowPlaying::SetVolume(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int volume = _wtoi(arg);
+	if (arg[0] == L'+' || arg[0] == L'-')
+	{
+		// Relative to current volume
+		volume += player->GetVolume();
+	}
+
+	if (volume < 0)
+	{
+		volume = 0;
+	}
+	else if (volume > 100)
+	{
+		volume = 100;
+	}
+	player->SetVolume(volume);
+}
+
+void MeasureNowPlaying::SetShuffle(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int state = _wtoi(arg);
+	if (state == -1)
+	{
+		player->SetShuffle(!player->GetShuffle());
+	}
+	else if (state == 0 || state == 1)
+	{
+		player->SetShuffle(state != 0);
+	}
+}
+
+void MeasureNowPlaying::SetRepeat(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int state = _wtoi(arg);
+	if (state == -1)
+	{
+		player->SetRepeat(!player->GetRepeat());
+	}
+	else if (state == 0 || state == 1)
+	{
+		player->SetRepeat(state != 0);
+	}
+}
+
 void MeasureNowPlaying::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	if (!m_Parent) return;
-
-	Player* player = m_Parent->player;
-
-	if (!player->IsInitialized())
+	if (_wcsicmp(args, L"Pause") == 0)
 	{
-		if (_wcsicmp(args, L"OpenPlayer") == 0 || _wcsicmp(args, L"TogglePlayer") == 0)
-		{
-			player->OpenPlayer(m_Parent->playerPath);
-		}
-	}
-	else if (_wcsicmp(args, L"Pause") == 0)
-	{
-		player->Pause();
+		Pause();
 	}
 	else if (_wcsicmp(args, L"Play") == 0)
 	{
-		player->Play();
+		Play();
 	}
 	else if (_wcsicmp(args, L"PlayPause") == 0)
 	{
-		(player->GetState() != STATE_PLAYING) ? player->Play() : player->Pause();
+		PlayPause();
 	}
 	else if (_wcsicmp(args, L"Next") == 0)
 	{
-		player->Next();
+		Next();
 	}
 	else if (_wcsicmp(args, L"Previous") == 0)
 	{
-		player->Previous();
+		Previous();
 	}
 	else if (_wcsicmp(args, L"Stop") == 0)
 	{
-		player->Stop();
+		Stop();
 	}
 	else if (_wcsicmp(args, L"OpenPlayer") == 0)
 	{
-		player->OpenPlayer(m_Parent->playerPath);
+		OpenPlayer();
 	}
-	else if (_wcsicmp(args, L"ClosePlayer") == 0 || _wcsicmp(args, L"TogglePlayer") == 0)
+	else if (_wcsicmp(args, L"ClosePlayer") == 0)
 	{
-		player->ClosePlayer();
+		ClosePlayer();
+	}
+	else if (_wcsicmp(args, L"TogglePlayer") == 0)
+	{
+		TogglePlayer();
 	}
 	else
 	{
@@ -457,64 +679,23 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 
 			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
-				int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
-				if (arg[0] == L'+' || arg[0] == L'-')
-				{
-					position += player->GetPosition();
-				}
-
-				player->SetPosition(position);
+				SetPosition(arg);
 			}
 			else if (_wcsnicmp(args, L"SetRating", 9) == 0)
 			{
-				int rating = _wtoi(arg);
-				if (rating >= 0 && rating <= 5)
-				{
-					player->SetRating(rating);
-				}
+				SetRating(arg);
 			}
 			else if (_wcsnicmp(args, L"SetVolume", 9) == 0)
 			{
-				int volume = _wtoi(arg);
-				if (arg[0] == L'+' || arg[0] == L'-')
-				{
-					// Relative to current volume
-					volume += player->GetVolume();
-				}
-
-				if (volume < 0)
-				{
-					volume = 0;
-				}
-				else if (volume > 100)
-				{
-					volume = 100;
-				}
-				player->SetVolume(volume);;
+				SetVolume(arg);
 			}
 			else if (_wcsnicmp(args, L"SetShuffle", 9) == 0)
 			{
-				int state = _wtoi(arg);
-				if (state == -1)
-				{
-					player->SetShuffle(!player->GetShuffle());
-				}
-				else if (state == 0 || state == 1)
-				{
-					player->SetShuffle(state != 0);
-				}
+				SetShuffle(arg);
 			}
 			else if (_wcsnicmp(args, L"SetRepeat", 9) == 0)
 			{
-				int state = _wtoi(arg);
-				if (state == -1)
-				{
-					player->SetRepeat(!player->GetRepeat());
-				}
-				else if (state == 0 || state == 1)
-				{
-					player->SetRepeat(state != 0);
-				}
+				SetRepeat(arg);
 			}
 			else
 			{

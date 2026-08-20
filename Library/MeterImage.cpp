@@ -1,9 +1,4 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterImage.h"
@@ -18,7 +13,8 @@ MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
 	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
 	m_NeedsRedraw(false),
-	m_DrawMode(DRAWMODE_NONE),
+	m_Tile(false),
+	m_AspectRatioMode(AspectRatioMode::Stretch),
 	m_ScaleMargins()
 {
 }
@@ -27,10 +23,6 @@ MeterImage::~MeterImage()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterImage::Initialize()
 {
 	Meter::Initialize();
@@ -51,10 +43,13 @@ void MeterImage::Initialize()
 	}
 }
 
-/*
-** Loads the image from disk
-**
-*/
+void MeterImage::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+	m_MaskImage.InvalidateDeviceResources();
+}
+
 void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
 	m_Image.LoadImage(imageName);
@@ -66,7 +61,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
-		Gfx::D2DBitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
+		Gfx::Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
 
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
@@ -75,7 +70,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		{
 			if (!m_HDefined)
 			{
-				m_H = (imageW == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageH : m_W * imageH / imageW;
+				m_H = (imageW == 0) ? 0 : (m_Tile ? imageH : m_W * imageH / imageW);
 				m_H += GetHeightPadding();
 			}
 		}
@@ -83,7 +78,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		{
 			if (m_HDefined)
 			{
-				m_W = (imageH == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageW : m_H * imageW / imageH;
+				m_W = (imageH == 0) ? 0 : (m_Tile ? imageW : m_H * imageW / imageH);
 				m_W += GetWidthPadding();
 			}
 			else
@@ -100,38 +95,17 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterImage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	m_MaskImageName = parser.ReadString(section, L"MaskImageName", L"");
 
-	int mode = parser.ReadInt(section, L"Tile", 0);
-	if (mode != 0)
+	m_Tile = parser.ReadBool(section, L"Tile", false);
+	if (!m_Tile)
 	{
-		m_DrawMode = DRAWMODE_TILE;
-	}
-	else
-	{
-		mode = parser.ReadInt(section, L"PreserveAspectRatio", 0);
-		switch (mode)
-		{
-		case 0:
-			m_DrawMode = DRAWMODE_NONE;
-			break;
-		case 1:
-		default:
-			m_DrawMode = DRAWMODE_KEEPRATIO;
-			break;
-		case 2:
-			m_DrawMode = DRAWMODE_KEEPRATIOANDCROP;
-			break;
-		}
+		m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt(section, L"PreserveAspectRatio", 0));
 	}
 
 	static const RECT defMargins = { 0 };
@@ -153,10 +127,6 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterImage::Update()
 {
 	if (Meter::Update())
@@ -200,10 +170,6 @@ bool MeterImage::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterImage::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -211,7 +177,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	if (m_Image.IsLoaded())
 	{
 		// Copy the image over the doublebuffer
-		Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+		Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
@@ -225,7 +191,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		if (m_MaskImage.IsLoaded())
 		{
-			Gfx::D2DBitmap* maskBitmap = m_MaskImage.GetImage();
+			Gfx::Bitmap* maskBitmap = m_MaskImage.GetImage();
 
 			imageW = maskBitmap->GetWidth();
 			imageH = maskBitmap->GetHeight();
@@ -262,11 +228,11 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		{
 			canvas.DrawBitmap(drawBitmap, meterRect, D2D1::RectF(0.0f, 0.0f, drawW, drawH));
 		}
-		else if (m_DrawMode == DRAWMODE_TILE)
+		else if (m_Tile)
 		{
 			canvas.DrawTiledBitmap(drawBitmap, meterRect, D2D1::RectF(0.0f, 0.0f, drawW, drawH));
 		}
-		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
+		else if (m_AspectRatioMode == AspectRatioMode::Fit || m_AspectRatioMode == AspectRatioMode::Crop)
 		{
 			D2D1_RECT_F crop = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 			crop.right = (FLOAT)imageW;
@@ -279,7 +245,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 				if (imageRatio != meterRatio)
 				{
-					if (m_DrawMode == DRAWMODE_KEEPRATIO)
+					if (m_AspectRatioMode == AspectRatioMode::Fit)
 					{
 						if (imageRatio > meterRatio)
 						{
@@ -359,11 +325,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The Image meters need not to be bound on anything
-**
-*/
-void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterImage::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{

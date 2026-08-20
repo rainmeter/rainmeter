@@ -1,17 +1,16 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "System.h"
+#include "DialogDebug.h"
+#include "LocaleUtil.h"
 #include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "MeasureNet.h"
+#include "WindowOcclusionTracker.h"
+#include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include <TlHelp32.h>
 #include <WtsApi32.h>
@@ -24,8 +23,9 @@ bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& targe
 
 enum TIMER
 {
-	TIMER_SHOWDESKTOP   = 1,
-	TIMER_RESUME        = 2
+	TIMER_SHOWDESKTOP = 1,
+	TIMER_RESUME = 2,
+	TIMER_WINDOWOCCLUSION = 3
 };
 enum INTERVAL
 {
@@ -45,10 +45,6 @@ std::wstring System::c_WorkingDirectory;
 
 std::vector<std::wstring> System::c_IniFileMappings;
 
-/*
-** Creates a helper window to detect changes in the system.
-**
-*/
 void System::Initialize(HINSTANCE instance)
 {
 	// Update the CRT timezone variables.
@@ -74,21 +70,27 @@ void System::Initialize(HINSTANCE instance)
 		instance,
 		nullptr);
 
-	c_HelperWindow = CreateWindowEx(
-		WS_EX_TOOLWINDOW,
-		MAKEINTATOM(className),
-		L"PositioningHelper",
-		WS_POPUP | WS_DISABLED,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		nullptr,
-		nullptr,
-		instance,
-		nullptr);
+	{
+		// The helper must be created DPI-unaware to reproduce the legacy DPI-unaware SetWindowPos
+		// coordinate mapping.
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		c_HelperWindow = CreateWindowEx(
+			WS_EX_TOOLWINDOW,
+			MAKEINTATOM(className),
+			L"PositioningHelper",
+			WS_POPUP | WS_DISABLED,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			nullptr,
+			nullptr,
+			instance,
+			nullptr);
+	}
 
 	WTSRegisterSessionNotification(c_Window, NOTIFY_FOR_THIS_SESSION);
+	WindowOcclusionTracker::Initialize(c_Window, TIMER_WINDOWOCCLUSION);
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
@@ -111,10 +113,6 @@ void System::Initialize(HINSTANCE instance)
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
 }
 
-/*
-** Destroys a window.
-**
-*/
 void System::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
@@ -125,6 +123,8 @@ void System::Finalize()
 		UnhookWinEvent(c_WinEventHook);
 		c_WinEventHook = nullptr;
 	}
+
+	WindowOcclusionTracker::Finalize();
 
 	if (c_HelperWindow)
 	{
@@ -171,10 +171,39 @@ UINT System::GetDpiForWindow(HWND window)
 	return GetSystemDpi();
 }
 
-/*
-** Finds the Default Shell's window.
-**
-*/
+POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi)
+{
+	{
+		DpiUtil::DpiUnawareScope dpiUnaware;
+		SetWindowPos(c_HelperWindow, nullptr, point.x, point.y, size.cx, size.cy, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	}
+
+	RECT r = {};
+	GetWindowRect(c_HelperWindow, &r);
+
+	if (dpi)
+	{
+		// We can't use GetDpiForWindow because c_HelperWindow was created as a DPI unaware window.
+		// Instead we will determine the DPI based on the monitor of the center point.
+		const POINT center = { r.left + (r.right - r.left) / 2, r.top + (r.bottom - r.top) / 2 };
+		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(center);
+		*dpi = monitor ? monitor->dpi : GetSystemDpi();
+	}
+
+	return { r.left, r.top };
+}
+
+POINT System::ConvertPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle)
+{
+	const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetByHandle(monitorHandle);
+	if (!monitor) return point;
+
+	POINT result;
+	result.x = monitor->logicalScreen.left + MulDiv(point.x - monitor->screen.left, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	result.y = monitor->logicalScreen.top + MulDiv(point.y - monitor->screen.top, USER_DEFAULT_SCREEN_DPI, (int)monitor->dpi);
+	return result;
+}
+
 HWND System::GetDefaultShellWindow()
 {
 	static HWND c_ShellW = nullptr;  // cache
@@ -286,11 +315,8 @@ HWND System::GetDesktopIconsHostWindow()
 	return workerW;
 }
 
-/*
-** Returns the first window whose position is not ZPOSITION_ONDESKTOP,
-** ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
-**
-*/
+// Returns the first window whose position is not ZPOSITION_ONDESKTOP,
+// ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
 HWND System::GetBackmostTopWindow()
 {
 	HWND winPos = c_HelperWindow;
@@ -311,10 +337,6 @@ HWND System::GetBackmostTopWindow()
 	return winPos;
 }
 
-/*
-** Checks whether the given windows belong to the same process.
-**
-*/
 bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 {
 	DWORD procAId = 0, procBId = 0;
@@ -325,10 +347,7 @@ bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 	return (procAId == procBId);
 }
 
-/*
-** Retrieves the Rainmeter's meter windows in Z-order.
-**
-*/
+// Retrieves the Rainmeter's meter windows in Z-order.
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -376,10 +395,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-/*
-** Arranges the meter window in Z-order.
-**
-*/
+// Arranges the meter window in Z-order.
 void System::ChangeZPosInOrder()
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -424,10 +440,7 @@ void System::ChangeZPosInOrder()
 	}
 }
 
-/*
-** Moves the helper window to the reference position.
-**
-*/
+// Moves the helper window to the reference position.
 void System::PrepareHelperWindow(HWND desktopIconsHostWindow)
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
@@ -494,10 +507,6 @@ void System::PrepareHelperWindow(HWND desktopIconsHostWindow)
 	}
 }
 
-/*
-** Changes the "Show Desktop" state.
-**
-*/
 bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 {
 	HWND hwnd = nullptr;
@@ -522,6 +531,7 @@ bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 		PrepareHelperWindow(desktopIconsHostWindow);
 
 		ChangeZPosInOrder();
+		WindowOcclusionTracker::HandleShowDesktopChange();
 
 		if (c_ShowDesktop)
 		{
@@ -536,10 +546,6 @@ bool System::CheckDesktopState(HWND desktopIconsHostWindow)
 	return stateChanged;
 }
 
-/*
-** The event hook procedure
-**
-*/
 void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	if (event == EVENT_SYSTEM_FOREGROUND)
@@ -590,10 +596,6 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 	}
 }
 
-/*
-** The window procedure
-**
-*/
 LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (hWnd != c_Window)
@@ -629,9 +631,13 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				auto iter = GetRainmeter().GetAllSkins().begin();
 				for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 				{
-					(*iter).second->RedrawWindow();
+					(*iter).second->UpdateWindowContents();
 				}
 			}
+			break;
+
+		case TIMER_WINDOWOCCLUSION:
+			WindowOcclusionTracker::HandleTimer();
 			break;
 		}
 		break;
@@ -640,6 +646,12 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		LogNotice(L"System: Display settings changed");
 		MonitorUtil::ClearMultiMonitorInfo();
 	case WM_SETTINGCHANGE:
+		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
+		{
+			LogNotice(L"System: Regional settings changed");
+			LocaleUtil::RefreshNumberFormat();
+		}
+
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
@@ -648,12 +660,20 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				MonitorUtil::UpdateWorkareaInfo();
 			}
 
-			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			auto iter = GetRainmeter().GetAllSkins().begin();
-			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
+			DialogDebug::UpdateDisplays();
+
+			for (const auto& [_, skin] : GetRainmeter().GetAllSkins())
 			{
-				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
+				// Inform skin about the change if it doesn't already have a pending message.
+				const auto skinMessage = WM_METERWINDOW_DELAYED_MOVE;
+				MSG msg;
+				if (!PeekMessage(&msg, skin->GetWindow(), skinMessage, skinMessage, PM_NOREMOVE))
+				{
+					PostMessage(skin->GetWindow(), skinMessage, (WPARAM)uMsg, (LPARAM)0);
+				}
 			}
+
+			WindowOcclusionTracker::HandleDisplayChange();
 		}
 		break;
 
@@ -667,17 +687,20 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		{
 			// Deliver PBT_APMRESUMESUSPEND event to all meter windows
 			SetTimer(hWnd, TIMER_RESUME, INTERVAL_RESUME, nullptr);
+			WindowOcclusionTracker::HandlePowerResume();
 		}
 		return TRUE;
 
 	case WM_WTSSESSION_CHANGE:
 		LogDebugF(L"System: User session change detected! Session ID: 0x%08X Type: 0x%08X", lParam, wParam);
+		WindowOcclusionTracker::HandleSessionChange(wParam);
+
 		if (GetRainmeter().IsRedrawable())
 		{
 			auto iter = GetRainmeter().GetAllSkins().begin();
 			for (; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
-				(*iter).second->RedrawWindow();
+				(*iter).second->UpdateWindowContents();
 			}
 		}
 		break;
@@ -689,10 +712,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return 0;
 }
 
-/*
-** Gets the cursor position in last message retrieved by GetMessage().
-**
-*/
+// Gets the cursor position in last message retrieved by GetMessage().
 POINT System::GetCursorPosition()
 {
 	DWORD pos = GetMessagePos();
@@ -700,10 +720,6 @@ POINT System::GetCursorPosition()
 	return pt;
 }
 
-/*
-** Checks if file is writable.
-**
-*/
 bool System::IsFileWritable(LPCWSTR file)
 {
 	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -716,12 +732,8 @@ bool System::IsFileWritable(LPCWSTR file)
 	return true;
 }
 
-/*
-** This function is a wrapper function for LoadLibrary().
-**
-** Avoids loading a DLL from current directory.
-**
-*/
+// This function is a wrapper function for LoadLibrary().
+// Avoids loading a DLL from current directory.
 HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 {
 	// Remove current directory from DLL search path
@@ -738,10 +750,6 @@ HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 	return hLib;
 }
 
-/*
-** Resets working directory to default.
-**
-*/
 void System::ResetWorkingDirectory()
 {
 	WCHAR directory[MAX_PATH] = { 0 };
@@ -754,38 +762,12 @@ void System::ResetWorkingDirectory()
 	}
 }
 
-/*
-** Initializes a critical section object by using InitializeCriticalSectionEx function with CRITICAL_SECTION_NO_DEBUG_INFO flag.
-** For more details: http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
-**
-*/
-void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
-{
-	if (InitializeCriticalSectionEx(lpCriticalSection, 0UL, CRITICAL_SECTION_NO_DEBUG_INFO) == TRUE)
-	{
-		return;
-	}
-
-	// The following should "always succeed" according to:
-	// https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializecriticalsectionandspincount
-	if (InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0UL) == TRUE)
-	{
-		return;
-	}
-
-	// error?
-}
-
-/*
-** Sets clipboard text to given string.
-**
-*/
 void System::SetClipboardText(const std::wstring& text)
 {
 	if (OpenClipboard(nullptr))
 	{
 		// Include terminating null char
-		size_t len = text.length() + 1ULL;
+		size_t len = text.length() + 1;
 
 		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(WCHAR));
 		if (hMem)
@@ -808,10 +790,30 @@ void System::SetClipboardText(const std::wstring& text)
 	}
 }
 
-/*
-** Sets the system wallpapar.
-**
-*/
+std::optional<std::wstring> System::GetClipboardText()
+{
+	if (!IsClipboardFormatAvailable(CF_UNICODETEXT) || !OpenClipboard(nullptr)) return std::nullopt;
+
+	std::optional<std::wstring> text;
+	HANDLE hMem = GetClipboardData(CF_UNICODETEXT);
+	if (hMem)
+	{
+		const WCHAR* data = (const WCHAR*)GlobalLock(hMem);
+		if (data)
+		{
+			// The block is not required to be null terminated within its allocated size, so the
+			// length is bounded by the block itself.
+			const size_t maxLen = GlobalSize(hMem) / sizeof(WCHAR);
+			text.emplace(data, wcsnlen(data, maxLen));
+
+			GlobalUnlock(hMem);
+		}
+	}
+
+	CloseClipboard();
+	return text;
+}
+
 void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
 {
 	if (!wallpaper.empty())
@@ -855,12 +857,9 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 					{
 						wallStyle = L"10";
 					}
-					else if (IsWindows10OrGreater())
+					else if (_wcsicmp(option, L"SPAN") == 0)
 					{
-						if (_wcsicmp(option, L"SPAN") == 0)
-						{
-							wallStyle = L"22";
-						}
+						wallStyle = L"22";
 					}
 
 					if (wallStyle)
@@ -882,10 +881,6 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 	}
 }
 
-/*
-** Copies files and folders from one location to another.
-**
-*/
 bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
 	// If given "from" path ends with path separator, remove it (Workaround for XP: error code 1026)
@@ -917,10 +912,6 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 	return true;
 }
 
-/*
-** Copies files and folders from one location to another ONLY if the destination does not exist.
-**
-*/
 bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to)
 {
 	auto checkDir = [](LPCWSTR str) -> bool
@@ -987,10 +978,6 @@ bool System::CopyFilesWithNoCollisions(std::wstring from, const std::wstring& to
 	return true;
 }
 
-/*
-** Removes a file even if a file is read-only.
-**
-*/
 bool System::RemoveFile(const std::wstring& file)
 {
 	DWORD attr = GetFileAttributes(file.c_str());
@@ -1003,10 +990,6 @@ bool System::RemoveFile(const std::wstring& file)
 	return (DeleteFile(file.c_str()) != 0);
 }
 
-/*
-** Recursively removes folder.
-**
-*/
 bool System::RemoveFolder(std::wstring folder)
 {
 	// The strings must end with double nul
@@ -1030,20 +1013,16 @@ bool System::RemoveFolder(std::wstring folder)
 	return true;
 }
 
-/*
-** Retrieves the "IniFileMapping" entries from Registry.
-**
-*/
 void System::UpdateIniFileMappingList()
 {
-	static ULONGLONG s_LastWriteTime = 0ULL;
+	static ULONGLONG s_LastWriteTime = 0;
 
 	HKEY hKey = nullptr;
 	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
 	if (ret == ERROR_SUCCESS)
 	{
-		DWORD numSubKeys = 0UL;
-		ULONGLONG ftLastWriteTime = 0ULL;
+		DWORD numSubKeys = 0;
+		ULONGLONG ftLastWriteTime = 0;
 		bool changed = false;
 
 		ret = RegQueryInfoKey(hKey, nullptr, nullptr, nullptr, &numSubKeys, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (LPFILETIME)&ftLastWriteTime);
@@ -1096,12 +1075,9 @@ void System::UpdateIniFileMappingList()
 	}
 }
 
-/*
-** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
-** If iniFile is not included, returns a empty string. If error occurred, returns "?".
-** Note that a temporary file must be deleted by caller.
-**
-*/
+// Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
+// If iniFile is not included, returns a empty string. If error occurred, returns "?".
+// Note that a temporary file must be deleted by caller.
 std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 {
 	std::wstring temporary;
@@ -1157,8 +1133,8 @@ std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
 {
 	static ankerl::unordered_dense::set<std::wstring> s_Processes;
-	static ULONGLONG s_LastUpdateTickCount = 0ULL;
-	const ULONGLONG updateInterval = 250ULL; // ms
+	static ULONGLONG s_LastUpdateTickCount = 0;
+	const ULONGLONG updateInterval = 250; // ms
 
 	ULONGLONG tickCount = GetTickCount64();
 	if (tickCount >= (s_LastUpdateTickCount + updateInterval))

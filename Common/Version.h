@@ -1,12 +1,6 @@
-/* Copyright (C) 2023 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_VERSION_H_
-#define RM_COMMON_VERSION_H_
+#pragma once
 
 #include <string>
 
@@ -44,7 +38,7 @@ private:
 	int Compare(const std::wstring& version2) const
 	{
 		const size_t size1 = m_Version.size(), size2 = version2.size();
-		size_t i = 0ULL, j = 0ULL;
+		size_t i = 0, j = 0;
 
 		while (i < size1 || j < size2)
 		{
@@ -67,5 +61,3 @@ private:
 };
 
 }  // namespace VersionHelper
-
-#endif

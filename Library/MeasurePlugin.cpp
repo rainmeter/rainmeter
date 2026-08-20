@@ -1,26 +1,24 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "Export.h"
 #include "System.h"
+#include "../Common/RawString.h"
+#include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
-	m_DpiAware(false),
 	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
 	m_ReloadFunc(),
 	m_ID(),
 	m_Update2(false),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_HandleSkinSettingChangeFunc()
 {
 	m_PluginData = nullptr;
 }
@@ -47,10 +45,6 @@ MeasurePlugin::~MeasurePlugin()
 	}
 }
 
-/*
-** Gets the current value from the plugin
-**
-*/
 void MeasurePlugin::UpdateValue()
 {
 	if (m_UpdateFunc)
@@ -76,11 +70,7 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-/*
-** Reads the options and loads the plugin
-**
-*/
-void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	static UINT id = 0;
 
@@ -142,7 +132,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	WCHAR pluginPath[MAX_PATH] = { 0 };
-	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0UL)
+	if (logInitialLoad && GetModuleFileName(m_Plugin, pluginPath, _countof(pluginPath)) > 0)
 	{
 		LogDebugF(L"Plugin loaded: %s", pluginPath);
 	}
@@ -152,14 +142,12 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
-
-	auto* dpiAware = (const BYTE*)GetProcAddress(m_Plugin, "DpiAware");
-	m_DpiAware = dpiAware && *dpiAware == 1;
+	m_HandleSkinSettingChangeFunc = (HandleSkinSettingChangeFunc)GetProcAddress(m_Plugin, "HandleSkinSettingChange");;
 
 	const WCHAR* pluginFileName = PathFindFileName(pluginName.c_str());
 
 	// Chameleon expects monitor variables such as #SCREENAREAWIDTH# to resolve to physical pixels.
-	m_MonitorVariableMode = (!m_DpiAware && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
+	m_MonitorVariableMode = (!IsDpiAware() && _wcsicmp(pluginFileName, L"Chameleon.dll") == 0) ?
 		ConfigParser::MonitorVariableMode::FORCE_PHYSICAL :
 		ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL;
 
@@ -191,7 +179,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_ID);
 		}
 	}
 
@@ -218,10 +206,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	++id;
 }
 
-/*
-** Gets the string value from the plugin.
-**
-*/
 const WCHAR* MeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
@@ -242,10 +226,6 @@ const WCHAR* MeasurePlugin::GetStringValue()
 	return nullptr;
 }
 
-/*
-** Sends a bang to the plugin
-**
-*/
 void MeasurePlugin::Command(const std::wstring& command)
 {
 	if (m_ExecuteBangFunc)
@@ -274,16 +254,14 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
-	WCHAR errMsg[MAX_LINE_LENGTH];
-
-	size_t sPos = command.find_first_of(L'(');
-	if (sPos != std::wstring::npos)
+	// A command is a function call, "Function(Arg1, Arg2)".
+	StringParser parser(command);
+	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
+	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		size_t ePos = command.find_last_of(L')');
-		if (ePos == std::wstring::npos ||
-			sPos > ePos ||
-			command.size() < 3)
+		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
+			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
 			if (delayedLogEntry)
 			{
@@ -308,7 +286,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		}
 
 		// Prevent calling known API functions
-		std::string function = StringUtil::Narrow(command.substr(0, sPos));
+		std::string function = StringUtil::Narrow(funcName.data(), (int)funcName.length());
 		if (function == "Initialize" ||
 			function == "Reload" ||
 			function == "Update" ||
@@ -320,24 +298,25 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			function == "GetPluginVersion")			// Old API
 			return false;
 
-		// Parse arguments
-		auto _args = ConfigParser::TokenizeWithPairedPunctuation(
-			command.substr(sPos + 1, ePos - sPos - 1),
-			L',',
-			PairedPunctuation::BothQuotes);
+		// Plugins expect an array of null terminated strings, so the arguments cannot be passed on as
+		// views into |command|. A RawString is a single pointer to such a string, which makes the
+		// vector itself the array the plugin expects.
+		static_assert(sizeof(RawString) == sizeof(WCHAR*), "RawString must be a single string pointer.");
 
-		// Convert strings in array to raw type
-		std::vector<LPCWSTR> args;
-		for (auto& str : _args)
+		std::vector<RawString> args;
+		parser.ConsumeWhitespace();
+		while (!parser.IsConsumed())
 		{
-			StringUtil::StripLeadingAndTrailingQuotes(str, true);
-			args.emplace_back(str.c_str());
+			const auto arg = parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted);
+			args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
+			parser.ConsumeWhitespace();
 		}
 
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, (const int)args.size(), args.data());
+			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), reinterpret_cast<const WCHAR**>(args.data()));
 			if (result)
 			{
 				strValue = result;
@@ -345,14 +324,34 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid return type in function: %s", command.substr(0, sPos).c_str());
+				LogErrorF(this, L"Invalid return type in function: %s", std::wstring(funcName).c_str());
 			}
 		}
 		else
 		{
-			LogErrorF(this, L"Cannot find function: %s", command.substr(0, sPos).c_str());
+			LogErrorF(this, L"Cannot find function: %s", std::wstring(funcName).c_str());
 		}
 	}
 
 	return false;
+}
+
+void MeasurePlugin::HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting)
+{
+	for (auto* measure : skin->GetMeasures())
+	{
+		if (measure->GetTypeID() == TypeID<MeasurePlugin>())
+		{
+			MeasurePlugin* plugin = (MeasurePlugin*)measure;
+			plugin->HandleSkinSettingChange(setting);
+		}
+	}
+}
+
+void MeasurePlugin::HandleSkinSettingChange(RmSkinSettingChange setting)
+{
+	if (m_HandleSkinSettingChangeFunc)
+	{
+		m_HandleSkinSettingChangeFunc(m_PluginData, this, setting);
+	}
 }

@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureiTunes.h"
@@ -180,7 +175,6 @@ namespace {
 
 IiTunesPtr g_iTunes;
 IITTrackPtr g_CurrentTrack;
-bool g_CoInitialized = false;
 bool g_InstanceCreated = false;
 bool g_iTunesAboutToPromptUserToQuit = false;
 int g_MeasureCount = 0;
@@ -194,22 +188,12 @@ bool IsITunesRunning()
 class CiTunesEventHandler : public _IiTunesEvents
 {
 public:
-	CiTunesEventHandler() : m_RefCount(0), m_TypeInfo(nullptr)
+	CiTunesEventHandler() : m_RefCount(0)
 	{
-		ITypeLib* typeLib = nullptr;
-		if (SUCCEEDED(::LoadRegTypeLib(LIBID_iTunesLib, 1, 5, 0x00, &typeLib)) && typeLib)
-		{
-			typeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &m_TypeInfo);
-			typeLib->Release();
-		}
 	}
 
 	~CiTunesEventHandler()
 	{
-		if (m_TypeInfo)
-		{
-			m_TypeInfo->Release();
-		}
 	}
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object)
@@ -262,7 +246,6 @@ public:
 
 private:
 	long m_RefCount;
-	ITypeInfo* m_TypeInfo;
 };
 
 void InitEventHandler()
@@ -283,20 +266,6 @@ void InitEventHandler()
 	}
 
 	connectionPointContainer->Release();
-}
-
-bool EnsureCOM(MeasureiTunes* measure)
-{
-	if (!g_CoInitialized)
-	{
-		g_CoInitialized = SUCCEEDED(CoInitialize(nullptr));
-		if (!g_CoInitialized)
-		{
-			LogErrorF(measure, L"iTunes: Unable to initialize COM");
-		}
-	}
-
-	return g_CoInitialized;
 }
 
 bool CreateITunesInstance(MeasureiTunes* measure, bool logError)
@@ -323,11 +292,6 @@ bool CreateITunesInstance(MeasureiTunes* measure, bool logError)
 
 bool EnsureITunes(MeasureiTunes* measure)
 {
-	if (!EnsureCOM(measure))
-	{
-		return false;
-	}
-
 	if (g_InstanceCreated)
 	{
 		return true;
@@ -560,15 +524,10 @@ MeasureiTunes::~MeasureiTunes()
 			g_iTunes.Release();
 			g_InstanceCreated = false;
 		}
-		if (g_CoInitialized)
-		{
-			CoUninitialize();
-			g_CoInitialized = false;
-		}
 	}
 }
 
-void MeasureiTunes::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureiTunes::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -584,7 +543,7 @@ void MeasureiTunes::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_CurrentTrackArtworkPath = m_BaseDir + m_DefaultTrackArtworkPath;
 	}
 
-	if (EnsureCOM(this) && !g_InstanceCreated && IsITunesRunning())
+	if (!g_InstanceCreated && IsITunesRunning())
 	{
 		CreateITunesInstance(this, true);
 	}
@@ -637,26 +596,20 @@ void MeasureiTunes::UpdateValue()
 const WCHAR* MeasureiTunes::GetStringValue()
 {
 	m_StringValue.clear();
-	if (!g_CoInitialized)
-	{
-		m_StringValue = L"Fail to initialize";
-		return m_StringValue.c_str();
-	}
-
 	if (!g_InstanceCreated)
 	{
 		if (m_Command == COMMAND_GETCURRENTTRACK_ARTWORK)
 		{
 			m_StringValue = m_BaseDir + m_DefaultTrackArtworkPath;
 		}
-		return m_StringValue.c_str();
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	if (m_Command >= COMMAND_GETCURRENTTRACK_ALBUM && m_Command <= COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
 		if (!UpdateCurrentTrack(m_BaseDir, m_DefaultTrackArtworkPath, m_CurrentTrackArtworkPath))
 		{
-			return m_StringValue.c_str();
+			return CheckSubstitute(m_StringValue.c_str());
 		}
 
 		BSTR bstrValue = nullptr;
@@ -784,16 +737,11 @@ const WCHAR* MeasureiTunes::GetStringValue()
 	}
 
 	m_StringValue = L"Type Incorrect";
-	return m_StringValue.c_str();
+	return CheckSubstitute(m_StringValue.c_str());
 }
 
 void MeasureiTunes::Command(const std::wstring& command)
 {
-	if (!EnsureCOM(this))
-	{
-		return;
-	}
-
 	COMMAND_TYPE type = command.empty() ? m_Command : ParseBang(command.c_str());
 	if (type == COMMAND_COUNT)
 	{

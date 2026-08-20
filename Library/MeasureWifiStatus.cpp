@@ -1,16 +1,11 @@
-/* Copyright (C) 2020 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWifiStatus.h"
 #include "Rainmeter.h"
 #include "../Common/StringUtil.h"
 
-UINT MeasureWifiStatus::s_Instances = 0U;
+UINT MeasureWifiStatus::s_Instances = 0;
 HANDLE MeasureWifiStatus::s_Client = nullptr;
 PWLAN_INTERFACE_INFO MeasureWifiStatus::s_Interface = nullptr;
 PWLAN_INTERFACE_INFO_LIST MeasureWifiStatus::s_InterfaceList = nullptr;
@@ -19,13 +14,13 @@ bool MeasureWifiStatus::s_NotificationsRegistered = false;
 
 MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MeasureType::UNINITIALIZED),
-	m_ListStyle(0U),
-	m_ListMax(5U),
+	m_ListStyle(0),
+	m_ListMax(5),
 	m_StatusString()
 {
 	++s_Instances;
 
-	if (s_Instances == 1U)
+	if (s_Instances == 1)
 	{
 		// Temporarily load the "wlanapi.dll" library as a data file to test if it exists.
 		// Note: Freeing the temporary library should be okay since delay loading
@@ -42,7 +37,7 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 		// Create WINLAN API Handle
 		if (!s_Client)
 		{
-			DWORD dwNegotiatedVersion = 0UL;
+			DWORD dwNegotiatedVersion = 0;
 			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
 			if (ERROR_SUCCESS != dwErr)
 			{
@@ -78,7 +73,7 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 					L"WifiStatus: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
 				return;
 			}
-			else if (s_InterfaceList->dwNumberOfItems == 0UL)
+			else if (s_InterfaceList->dwNumberOfItems == 0)
 			{
 				FinalizeHandle();
 				LogDebugF(this,
@@ -91,18 +86,18 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 
 MeasureWifiStatus::~MeasureWifiStatus()
 {
-	if (s_Instances > 0U)
+	if (s_Instances > 0)
 	{
 		--s_Instances;
 
-		if (s_Instances == 0U)
+		if (s_Instances == 0)
 		{
 			FinalizeHandle();
 		}
 	}
 }
 
-void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -219,7 +214,7 @@ void MeasureWifiStatus::UpdateValue()
 	{
 		PWLAN_AVAILABLE_NETWORK_LIST pwnl = nullptr;
 		DWORD dwErr =
-			WlanGetAvailableNetworkList(s_Client, &s_Interface->InterfaceGuid, 0UL, nullptr, &pwnl);
+			WlanGetAvailableNetworkList(s_Client, &s_Interface->InterfaceGuid, 0, nullptr, &pwnl);
 
 		if (ERROR_SUCCESS != dwErr)
 		{
@@ -229,12 +224,12 @@ void MeasureWifiStatus::UpdateValue()
 		{
 			// Size of network name can be up to 64 chars, set to 80 to add room for delimiters
 			m_StatusString.clear();
-			m_StatusString.reserve((size_t)m_ListMax * 80ULL);
+			m_StatusString.reserve((size_t)m_ListMax * 80);
 
-			UINT printed = 0U;  // count of how many networks have been printed already
+			UINT printed = 0;  // count of how many networks have been printed already
 
 			// Check all items in WLAN NETWORK LIST
-			for (size_t i = 0ULL; i < pwnl->dwNumberOfItems ; ++i)
+			for (size_t i = 0; i < pwnl->dwNumberOfItems ; ++i)
 			{
 				if (printed == m_ListMax) break;
 
@@ -247,15 +242,15 @@ void MeasureWifiStatus::UpdateValue()
 				{
 					++printed;
 					m_StatusString += ssid;
-					if (m_ListStyle > 0U)
+					if (m_ListStyle > 0)
 					{
-						if (m_ListStyle == 1U || m_ListStyle == 3U || m_ListStyle == 5U || m_ListStyle == 7U)
+						if (m_ListStyle == 1 || m_ListStyle == 3 || m_ListStyle == 5 || m_ListStyle == 7)
 						{
 							// ADD PHY type
 							m_StatusString += L" @";
 							m_StatusString += GetPHYString(pwnl->Network[i].dot11PhyTypes[0]);
 						}
-						if (m_ListStyle == 2U || m_ListStyle == 3U || m_ListStyle == 6U || m_ListStyle == 7U)
+						if (m_ListStyle == 2 || m_ListStyle == 3 || m_ListStyle == 6 || m_ListStyle == 7)
 						{
 							// ADD cipher and authentication
 							m_StatusString += L" (";
@@ -264,7 +259,7 @@ void MeasureWifiStatus::UpdateValue()
 							m_StatusString += GetAuthAlgorithmString(pwnl->Network[i].dot11DefaultAuthAlgorithm);
 							m_StatusString += L')';
 						}
-						if (m_ListStyle == 4U || m_ListStyle == 5U || m_ListStyle == 6U || m_ListStyle == 7U)
+						if (m_ListStyle == 4 || m_ListStyle == 5 || m_ListStyle == 6 || m_ListStyle == 7)
 						{
 							// ADD signal quality
 							WCHAR buffer[32] = { 0 };
@@ -419,7 +414,7 @@ void MeasureWifiStatus::RefreshConnectionAttributes()
 
 	if (!s_Client || !s_Interface) return;
 
-	ULONG outSize = 0UL;
+	ULONG outSize = 0;
 	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection,
 		nullptr, &outSize, (void**)&s_ConnectionAttributes, nullptr);
 	if (result != ERROR_SUCCESS)
@@ -432,9 +427,9 @@ void MeasureWifiStatus::RefreshConnectionQualityAttributes()
 {
 	if (!s_Client || !s_Interface) return;
 
-	static ULONGLONG s_LastRefreshTickCount = 0ULL;
+	static ULONGLONG s_LastRefreshTickCount = 0;
 	const ULONGLONG tickCount = GetTickCount64();
-	const ULONGLONG refreshInterval = 1000ULL; // ms
+	const ULONGLONG refreshInterval = 1000; // ms
 	if (tickCount < (s_LastRefreshTickCount + refreshInterval)) return;
 	s_LastRefreshTickCount = tickCount;
 
@@ -444,7 +439,7 @@ void MeasureWifiStatus::RefreshConnectionQualityAttributes()
 	//
 	// We try to use wlan_intf_opcode_realtime_connection_quality first in order to avoid
 	// that issue.
-	ULONG outSize = 0UL;
+	ULONG outSize = 0;
 	WLAN_REALTIME_CONNECTION_QUALITY* connectionQuality = nullptr;
 	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_realtime_connection_quality,
 		nullptr, &outSize, (void**)&connectionQuality, nullptr);

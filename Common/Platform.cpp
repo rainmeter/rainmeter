@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Platform.h"
@@ -11,39 +6,35 @@
 namespace
 {
 
-const std::wstring& GetBuildNumberFromRegistry()
+const OSVERSIONINFOEX& GetVersionInfo()
 {
-	static std::wstring s_BuildNumber = []() -> std::wstring
+	static OSVERSIONINFOEX s_Version = []() -> OSVERSIONINFOEX
 	{
-		std::wstring buildNumber = L"0";
-
-		HKEY hkey = nullptr;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
+		OSVERSIONINFOEX version = { sizeof(OSVERSIONINFOEX) };
+		using RtlGetVersionFunc = LONG (WINAPI*)(OSVERSIONINFOW*);
+		auto rtlGetVersion = (RtlGetVersionFunc)GetProcAddress(GetModuleHandle(L"ntdll"), "RtlGetVersion");
+		if (rtlGetVersion)
 		{
-			WCHAR buffer[10] = { 0 };
-			DWORD size = _countof(buffer);
-
-			if (RegQueryValueEx(hkey, L"CurrentBuildNumber", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS ||
-				RegQueryValueEx(hkey, L"CurrentBuild", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
-			{
-				buildNumber = buffer;
-			}
-			RegCloseKey(hkey);
-			hkey = nullptr;
+			rtlGetVersion((OSVERSIONINFOW*)&version);
 		}
 
-		return buildNumber;
+		return version;
 	} ();
 
-	return s_BuildNumber;
+	return s_Version;
 }
 
 };  // namespace
 
 bool IsWindows11OrGreater()
 {
-	static bool s_Result = IsWindows10OrGreater() && _wtoi(GetBuildNumberFromRegistry().c_str()) >= 22000;
+	static bool s_Result = IsWindows10OrGreater() && GetVersionInfo().dwBuildNumber >= 22000;
 	return s_Result;
+}
+
+uint32_t Platform::GetBuildNumber()
+{
+	return GetVersionInfo().dwBuildNumber;
 }
 
 Platform::Platform()
@@ -77,30 +68,37 @@ void Platform::Initialize()
 		return false;
 	} ();
 
-	const auto& buildNumber = GetBuildNumberFromRegistry();
+#if defined(_M_ARM64) || defined(_M_ARM64EC)
+	m_IsEmulatedOnArm64 = false;
+#else
+	// This is an x86/x64 binary, so an ARM64 host machine means we are being emulated.
+	// Note that |processMachine| cannot be used here: x64 processes on ARM64 are not
+	// considered WOW64 (which is 32-bit on 64-bit) and report IMAGE_FILE_MACHINE_UNKNOWN.
+	USHORT processMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	USHORT nativeMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	m_IsEmulatedOnArm64 = IsWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine) &&
+		nativeMachine == IMAGE_FILE_MACHINE_ARM64;
+#endif
+
+	const auto buildNumber = std::to_wstring(GetVersionInfo().dwBuildNumber);
 
 	// Retrieve information from registry
 	std::wstring ubrStr;
 	std::wstring servicePack;
 
 	HKEY hkey = nullptr;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0UL, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
 	{
 		WCHAR buffer[256] = { 0 };
 		DWORD size = _countof(buffer);
 
-		// DisplayVersion (Windows10+)
-		if (IsWindows10OrGreater())
+		// Prefer "DisplayVersion" over "ReleaseId"
+		if ((RegQueryValueEx(hkey, L"DisplayVersion", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS) ||
+			(RegQueryValueEx(hkey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS))
 		{
-			// Prefer "DisplayVersion" over "ReleaseId"
-			if ((RegQueryValueEx(hkey, L"DisplayVersion", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS) ||
-				(RegQueryValueEx(hkey, L"ReleaseId", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS))
-			{
-				m_DisplayVersion = buffer;
-			}
+			m_DisplayVersion = buffer;
 		}
 
-		// ProductName
 		size = _countof(buffer);
 		if (RegQueryValueEx(hkey, L"ProductName", nullptr, nullptr, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS)
 		{
@@ -109,48 +107,32 @@ void Platform::Initialize()
 			if (IsWindows11OrGreater() && !m_DisplayVersion.empty())
 			{
 				size_t pos = m_ProductName.find(L"Windows 10");
-				if (_wcsnicmp(L"Windows 10", m_ProductName.c_str(), 10ULL) == 0)
+				if (_wcsnicmp(L"Windows 10", m_ProductName.c_str(), 10) == 0)
 				{
-					m_ProductName.replace(pos, 10ULL, L"Windows 11");
+					m_ProductName.replace(pos, 10, L"Windows 11");
 				}
 			}
 		}
 
-		// "Raw" version number
-		if (IsWindows10OrGreater())
+		DWORD major = 0;
+		size = sizeof(DWORD);
+		if (RegQueryValueEx(hkey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS && major >= 10)
 		{
-			// Note: "CurrentVersion" is no longer updated as of Windows 10, use Major/Minor versions instead
-			DWORD major = 0UL;
+			DWORD minor = 0;
 			size = sizeof(DWORD);
-			if (RegQueryValueEx(hkey, L"CurrentMajorVersionNumber", nullptr, nullptr, (LPBYTE)&major, (LPDWORD)&size) == ERROR_SUCCESS && major >= 10UL)
+			if (RegQueryValueEx(hkey, L"CurrentMinorVersionNumber", nullptr, nullptr, (LPBYTE)&minor, (LPDWORD)&size) == ERROR_SUCCESS && minor >= 0)
 			{
-				DWORD minor = 0UL;
-				size = sizeof(DWORD);
-				if (RegQueryValueEx(hkey, L"CurrentMinorVersionNumber", nullptr, nullptr, (LPBYTE)&minor, (LPDWORD)&size) == ERROR_SUCCESS && minor >= 0UL)
-				{
-					m_RawVersion = std::to_wstring(major);
-					m_RawVersion += L'.';
-					m_RawVersion += std::to_wstring(minor);
-					m_RawVersion += L'.';
-					m_RawVersion += buildNumber;
-				}
-			}
-		}
-		else // Windows 7, 8, 8.1
-		{
-			size = _countof(buffer);
-			if (RegQueryValueEx(hkey, L"CurrentVersion", nullptr, nullptr, (LPBYTE)&buffer, (LPDWORD)&size) == ERROR_SUCCESS)
-			{
-				m_RawVersion = buffer;
+				m_RawVersion = std::to_wstring(major);
+				m_RawVersion += L'.';
+				m_RawVersion += std::to_wstring(minor);
 				m_RawVersion += L'.';
 				m_RawVersion += buildNumber;
 			}
 		}
 
-		// UBR (used in "friendly name")
-		DWORD ubr = 0UL;
+		DWORD ubr = 0;
 		size = sizeof(DWORD);
-		if (RegQueryValueEx(hkey, L"UBR", nullptr, nullptr, (LPBYTE)&ubr, &size) == ERROR_SUCCESS && ubr > 0UL)
+		if (RegQueryValueEx(hkey, L"UBR", nullptr, nullptr, (LPBYTE)&ubr, &size) == ERROR_SUCCESS && ubr > 0)
 		{
 			ubrStr = L'.';
 			ubrStr += std::to_wstring(ubr);
@@ -166,7 +148,6 @@ void Platform::Initialize()
 		hkey = nullptr;
 	}
 
-	// Name
 	const bool isServer = IsWindowsServer();
 	m_Name = isServer ? L"Windows Server " : L"Windows ";
 	m_Name += [&]() -> LPCWSTR
@@ -176,13 +157,9 @@ void Platform::Initialize()
 			IsWindows10OrGreater() ? (isServer ?
 				(m_DisplayVersion == L"21H2" ? L"2022" :
 				(m_DisplayVersion == L"1809" ? L"2019" : L"2016")) : L"10") :
-			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
-			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
-			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
 			L"Unknown";
 	} ();
 
-	// "Friendly" name
 	m_FriendlyName = m_ProductName;
 	if (!m_DisplayVersion.empty())
 	{

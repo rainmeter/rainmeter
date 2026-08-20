@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasurePower.h"
@@ -25,14 +20,13 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 
 constexpr LONG NT_STATUS_SUCCESS = 0x00000000L;
 
-UINT MeasurePower::c_NumOfProcessors = 0U;
+UINT MeasurePower::c_NumOfProcessors = 0;
 
 MeasurePower::MeasurePower(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_State(PowerState::UNKNOWN),
 	m_SuppressError(false),
 	m_HasBeenUpdated(false),
-	m_CachedBatteryLifeTime(0UL),
-	m_StringValue()
+	m_CachedBatteryLifeTime(0)
 {
 	if (!c_NumOfProcessors)
 	{
@@ -46,7 +40,7 @@ MeasurePower::~MeasurePower()
 {
 }
 
-void MeasurePower::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePower::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -113,7 +107,7 @@ void MeasurePower::UpdateValue()
 	{
 	case PowerState::HZ:
 	case PowerState::MHZ:
-		if (c_NumOfProcessors > 0U)
+		if (c_NumOfProcessors > 0)
 		{
 			std::vector<PROCESSOR_POWER_INFORMATION> ppi(c_NumOfProcessors);
 			LONG status = CallNtPowerInformation(
@@ -197,7 +191,7 @@ const WCHAR* MeasurePower::GetStringValue()
 		DWORD value = m_CachedBatteryLifeTime;
 		if (value == -1)
 		{
-			return L"Unknown";
+			return CheckSubstitute(L"Unknown");
 		}
 
 		tm time = { 0 };
@@ -208,16 +202,17 @@ const WCHAR* MeasurePower::GetStringValue()
 		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
+		static WCHAR s_Buffer[128];
 		errno = 0;
-		wcsftime(m_StringValue, _countof(m_StringValue), m_Format.c_str(), &time);
+		wcsftime(s_Buffer, _countof(s_Buffer), m_Format.c_str(), &time);
 		if (errno == EINVAL)
 		{
-			m_StringValue[0] = L'\0';
+			s_Buffer[0] = L'\0';
 		}
 
 		_set_thread_local_invalid_parameter_handler(oldHandler);
 
-		return m_StringValue;
+		return CheckSubstitute(s_Buffer);
 	}
 
 	return nullptr;

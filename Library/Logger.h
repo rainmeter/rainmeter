@@ -1,18 +1,13 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LOGGER_H_
-#define RM_LOGGER_H_
+#pragma once
 
 #include <Windows.h>
 #include <cstdarg>
 #include <string>
 #include <list>
 #include <chrono>
+#include "../Common/CriticalSection.h"
 
 class Section;
 class Skin;
@@ -64,9 +59,7 @@ public:
 
 private:
 	void LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg);
-
-	// Appends |entry| to the log file.
-	void WriteToLogFile(Entry& entry);
+	void WriteToLogFile(const Entry& entry);
 
 	Logger();
 	~Logger();
@@ -79,8 +72,8 @@ private:
 
 	std::list<Entry> m_Entries;
 
-	CRITICAL_SECTION m_CsLog;
-	CRITICAL_SECTION m_CsLogDelay;
+	CriticalSection m_CsLog;
+	CriticalSection m_CsLogDelay;
 };
 
 // Convenience functions.
@@ -135,5 +128,3 @@ RM_LOGGER_DEFINE_LOG_FUNCTIONS(Error)
 RM_LOGGER_DEFINE_LOG_FUNCTIONS(Warning)
 RM_LOGGER_DEFINE_LOG_FUNCTIONS(Notice)
 RM_LOGGER_DEFINE_LOG_FUNCTIONS(Debug)
-
-#endif

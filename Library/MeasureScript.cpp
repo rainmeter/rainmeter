@@ -1,21 +1,18 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureScript.h"
-#include "lua/LuaHelper.h"
+#include "LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
+#include "../Common/StringParser.h"
 
 const char* g_InitializeFunctionName = "Initialize";
 const char* g_UpdateFunctionName = "Update";
 const char* g_GetStringFunctionName = "GetStringValue";
 
 MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_LuaScript(skin->GetMathParser()),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -49,10 +46,6 @@ void MeasureScript::Initialize()
 	}
 }
 
-/*
-** Runs the function "Update()" in the script.
-**
-*/
 void MeasureScript::UpdateValue()
 {
 	if (m_HasUpdateFunction)
@@ -75,20 +68,12 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-/*
-** Returns the value as a string.
-**
-*/
 const WCHAR* MeasureScript::GetStringValue()
 {
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureScript::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -190,10 +175,6 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	UninitializeLuaScript();
 }
 
-/*
-** Executes a custom bang.
-**
-*/
 void MeasureScript::Command(const std::wstring& command)
 {
 	if (!m_LuaScript.IsInitialized()) return;
@@ -216,17 +197,16 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
-	WCHAR errMsg[MAX_LINE_LENGTH];
-
-	size_t sPos = command.find_first_of(L'(');
-	if (sPos != std::wstring::npos)
+	// A command is either a function call, "Function(Arg1, Arg2)", or the name of a variable.
+	StringParser parser(command);
+	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
+	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		// Function call
-		size_t ePos = command.find_last_of(L')');
-		if (ePos == std::wstring::npos ||
-			sPos > ePos ||
-			command.size() < 3)
+		// Function call. Anything after the closing parenthesis is ignored to match the old code,
+		// which silently accepted e.g. "[ScriptMeasure:Function(),4]".
+		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
+			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
 			if (delayedLogEntry)
 			{
@@ -250,13 +230,16 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 			return false;
 		}
 
-		std::wstring funcName = command.substr(0, sPos);
-		auto args = ConfigParser::TokenizeWithPairedPunctuation(
-			command.substr(sPos + 1, ePos - sPos - 1),
-			L',',
-			PairedPunctuation::BothQuotes);
+		std::vector<std::wstring_view> args;
+		parser.ConsumeWhitespace();
+		while (!parser.IsConsumed())
+		{
+			args.emplace_back(parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted));
+			parser.ConsumeWhitespace();
+		}
 
-		if (!m_LuaScript.RunCustomFunction(funcName, args, strValue))
+		if (!m_LuaScript.RunCustomFunction(std::wstring(funcName), args, strValue))
 		{
 			if (!strValue.empty())
 			{

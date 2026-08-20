@@ -1,12 +1,6 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_CRITICALSECTION_H_
-#define RM_COMMON_CRITICALSECTION_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -15,7 +9,11 @@ class CriticalSection
 public:
 	CriticalSection()
 	{
-		InitializeCriticalSection(&m_CriticalSection);
+		// See http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
+		if (InitializeCriticalSectionEx(&m_CriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO) == FALSE)
+		{
+			InitializeCriticalSectionAndSpinCount(&m_CriticalSection, 0);
+		}
 	}
 
 	~CriticalSection()
@@ -31,6 +29,11 @@ public:
 	void Leave()
 	{
 		LeaveCriticalSection(&m_CriticalSection);
+	}
+
+	bool TryEnter()
+	{
+		return TryEnterCriticalSection(&m_CriticalSection) != FALSE;
 	}
 
 	CriticalSection(const CriticalSection&) = delete;
@@ -59,5 +62,3 @@ public:
 private:
 	CriticalSection& m_CriticalSection;
 };
-
-#endif

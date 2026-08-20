@@ -1,12 +1,6 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __RAINMETER_MONITORUTIL_H__
-#define __RAINMETER_MONITORUTIL_H__
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -14,53 +8,38 @@
 
 struct MonitorInfo
 {
-	bool active;
-	HMONITOR handle;
-	UINT dpi;
-	RECT screen;
-	RECT logicalScreen;
-	RECT work;
+	bool active = false;
+	HMONITOR handle = nullptr;
+	uint8_t deviceNumber = 0;
+	uint8_t displayNumber = 0;
+	UINT dpi = 0;
+	RECT screen = {};
+	RECT logicalScreen = {};
+	RECT work = {};
+	RECT logicalWork = {};
 	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
 	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
-
-	LONG ToLogical(LONG value) const;
-	RECT ToLogical(const RECT& rect) const;
 };
 
 struct MultiMonitorInfo
 {
-	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;		// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							// Index of the primary monitor
+	int primary = 0;
+	int deviceCount = 0;
+	int displayCount = 0;
 	std::vector<MonitorInfo> monitors;
+
+	RECT virtualScreen = {};
+	RECT logicalVirtualScreen = {};
 
 	void Clear();
 
-	RECT GetPhysicalVirtualScreenRect() const;
-	RECT GetLogicalVirtualScreenRect() const;
-
-	void UpdateLogicalMonitorInfo();
-	POINT PhysicalToLogical(POINT point) const;
-	POINT LogicalToPhysical(POINT point, UINT* dpi = nullptr) const;
-
-private:
-	struct Span
-	{
-		LONG physicalStart;
-		LONG physicalEnd;
-		LONG logicalStart;
-		LONG logicalEnd;
-		UINT dpi;
-	};
-
-	static LONG ConvertPhysicalToLogical(LONG value, const std::vector<Span>& spans);
-	static LONG ConvertLogicalToPhysical(LONG value, const std::vector<Span>& spans);
-	static std::vector<Span> CreateLogicalSpans(const std::vector<MonitorInfo>& monitors, int primary, bool horizontal);
-
-	std::vector<Span> horizontalSpans;
-	std::vector<Span> verticalSpans;
+	int GetDeviceCount() const { return deviceCount; }
+	int GetDisplayCount() const { return displayCount; }
+	const MonitorInfo* GetByDeviceNumber(int deviceNumber) const;
+	const MonitorInfo* GetByDisplayNumber(int activeNumber) const;
+	const MonitorInfo* GetByHandle(HMONITOR monitorHandle) const;
+	const MonitorInfo* GetForWindow(HWND window) const;
+	const MonitorInfo* GetFromPoint(POINT point) const;
 };
 
 namespace MonitorUtil {
@@ -72,5 +51,3 @@ void ClearMultiMonitorInfo();
 void UpdateWorkareaInfo();
 
 }  // namespace MonitorUtil
-
-#endif

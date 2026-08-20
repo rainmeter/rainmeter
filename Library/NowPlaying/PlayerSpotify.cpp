@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
@@ -11,29 +6,17 @@
 
 Player* PlayerSpotify::c_Player = nullptr;
 
-/*
-** Constructor.
-**
-*/
 PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(nullptr),
-	m_LastCheckTime(0ULL)
+	m_LastCheckTime(0)
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerSpotify::~PlayerSpotify()
 {
 	c_Player = nullptr;
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerSpotify::Create()
 {
 	if (!c_Player)
@@ -48,7 +31,7 @@ std::wstring GetExe(HWND hwnd)
 {
 	WCHAR procPath[400] = { 0 };
 
-	DWORD procID = 0UL;
+	DWORD procID = 0;
 	GetWindowThreadProcessId(hwnd, &procID);
 
 	HANDLE checkProc = OpenProcess(PROCESS_ALL_ACCESS, false, procID);
@@ -65,16 +48,12 @@ std::wstring GetExe(HWND hwnd)
 	return L"";
 }
 
-/*
-** Try to find Spotify periodically.
-**
-*/
 bool PlayerSpotify::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find Spotify window every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 
@@ -94,10 +73,6 @@ bool PlayerSpotify::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerSpotify::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
@@ -115,7 +90,7 @@ void PlayerSpotify::UpdateData()
 			if (pos != std::wstring::npos)
 			{
 				std::wstring artist(title, 0, pos);
-				pos += 3ULL;  // Skip " - "
+				pos += 3;  // Skip " - "
 				std::wstring track(title, pos);
 				m_State = STATE_PLAYING;
 
@@ -145,64 +120,40 @@ void PlayerSpotify::UpdateData()
 	}
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerSpotify::Play()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PLAYPAUSE);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerSpotify::Stop()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerSpotify::Next()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerSpotify::Previous()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
 }
 
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerSpotify::ClosePlayer()
 {
 	// A little harsh...
-	DWORD pID = 0UL;
+	DWORD pID = 0;
 	GetWindowThreadProcessId(m_Window, &pID);
 	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pID);
 	if (hProcess)
 	{
-		TerminateProcess(hProcess, 0U);
+		TerminateProcess(hProcess, 0);
 		CloseHandle(hProcess);
 	}
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerSpotify::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)
@@ -210,37 +161,17 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
-			HKEY hKey;
-			RegOpenKeyEx(HKEY_CLASSES_ROOT,
-						 L"spotify\\DefaultIcon",
-						 0,
-						 KEY_QUERY_VALUE,
-						 &hKey);
+			WCHAR data[512];
+			DWORD size = sizeof(data);
+			DWORD type = 0;
 
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
-			DWORD type = 0UL;
-
-			if (RegQueryValueEx(hKey,
-								nullptr,
-								nullptr,
-								(LPDWORD)&type,
-								(LPBYTE)data,
-								(LPDWORD)&size) == ERROR_SUCCESS)
+			if (RegGetValue(HKEY_CLASSES_ROOT, L"spotify\\DefaultIcon", nullptr, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
-				{
-					path = data;
-					path.erase(0, 1);				// Get rid of the leading quote
-					path.resize(path.length() - 3);	// And the ",0 at the end
-					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
-				}
+				path = data;
+				path.erase(0, 1);				// Get rid of the leading quote
+				path.resize(path.length() - 3);	// And the ",0 at the end
+				ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 		}
 		else
 		{

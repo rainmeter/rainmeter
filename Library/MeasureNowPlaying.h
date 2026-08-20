@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_MEASURENOWPLAYING_
-#define RM_LIBRARY_MEASURENOWPLAYING_
+#pragma once
 
 #include "Measure.h"
 
@@ -29,15 +23,30 @@ public:
 
 	void Command(const std::wstring& command) override;
 
+	void Play();
+	void Pause();
+	void PlayPause();
+	void Stop();
+	void Next();
+	void Previous();
+	void OpenPlayer();
+	void ClosePlayer();
+	void TogglePlayer();
+	void SetPosition(const WCHAR* arg);
+	void SetRating(const WCHAR* arg);
+	void SetVolume(const WCHAR* arg);
+	void SetShuffle(const WCHAR* arg);
+	void SetRepeat(const WCHAR* arg);
+
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
 
 private:
+	Player* GetInitializedPlayer() const;
+
 	ParentMeasure* m_Parent;
 	MeasureType m_Type;
 };
 
 void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer);
-
-#endif

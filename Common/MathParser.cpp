@@ -1,18 +1,12 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
 #include "StdAfx.h"
 #include "MathParser.h"
 
+#include <algorithm>
 #include <string>
-
-namespace MathParser {
 
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
@@ -36,7 +30,6 @@ enum class Operator : uint8_t
 	Multiplication,
 	Division,
 	Modulo,
-	UNK,
 	BitwiseXOR,
 	BitwiseNOT,
 	BitwiseAND,
@@ -84,7 +77,8 @@ struct Operation
 struct Function
 {
 	const WCHAR* name;
-	SingleArgFunction proc;
+	SingleArgFunction singleArgProc;
+	MultiArgFunction multiArgProc;
 	BYTE length;
 };
 
@@ -132,32 +126,32 @@ enum {
 
 static Function g_Functions[NUM_FUNCS] =
 {
-	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
-	{ L"atan", &atan, 4 },                         // FUNC_ATAN
-	{ L"cos", &cos, 3 },                           // FUNC_COS
-	{ L"sin", &sin, 3 },                           // FUNC_SIN
-	{ L"tan", &tan, 3 },                           // FUNC_TAN
-	{ L"abs", &fabs, 3 },                          // FUNC_ABS
-	{ L"exp", &exp, 3 },                           // FUNC_EXP
-	{ L"ln", &log, 2 },                            // FUNC_LN
-	{ L"log", &log10, 3 },                         // FUNC_LOG
-	{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
-	{ L"frac", &frac, 4 },                         // FUNC_FRAC
-	{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
-	{ L"floor", &floor, 5 },                       // FUNC_FLOOR
-	{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
-	{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
-	{ L"asin", &asin, 4 },                         // FUNC_ASIN
-	{ L"acos", &acos, 4 },                         // FUNC_ACOS
-	{ L"rad", &rad, 3 },                           // FUNC_RAD
-	{ L"deg", &deg, 3 },                           // FUNC_DEG
-	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
-	{ L"neg", &neg, 3 },                           // FUNC_NEG
-	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
-	{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
-	{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
-	{ L"e", nullptr, 1 },                          // FUNC_E
-	{ L"pi", nullptr, 2 }                          // FUNC_PI
+	{ L"atan2", nullptr, &ATan2, 5 },              // FUNC_ATAN2
+	{ L"atan", &atan, nullptr, 4 },                // FUNC_ATAN
+	{ L"cos", &cos, nullptr, 3 },                  // FUNC_COS
+	{ L"sin", &sin, nullptr, 3 },                  // FUNC_SIN
+	{ L"tan", &tan, nullptr, 3 },                  // FUNC_TAN
+	{ L"abs", &fabs, nullptr, 3 },                 // FUNC_ABS
+	{ L"exp", &exp, nullptr, 3 },                  // FUNC_EXP
+	{ L"ln", &log, nullptr, 2 },                   // FUNC_LN
+	{ L"log", &log10, nullptr, 3 },                // FUNC_LOG
+	{ L"sqrt", &sqrt, nullptr, 4 },                // FUNC_SQRT
+	{ L"frac", &frac, nullptr, 4 },                // FUNC_FRAC
+	{ L"trunc", &trunc, nullptr, 5 },              // FUNC_TRUNC
+	{ L"floor", &floor, nullptr, 5 },              // FUNC_FLOOR
+	{ L"ceil", &ceil, nullptr, 4 },                // FUNC_CEIL
+	{ L"round", nullptr, &round, 5 },              // FUNC_ROUND
+	{ L"asin", &asin, nullptr, 4 },                // FUNC_ASIN
+	{ L"acos", &acos, nullptr, 4 },                // FUNC_ACOS
+	{ L"rad", &rad, nullptr, 3 },                  // FUNC_RAD
+	{ L"deg", &deg, nullptr, 3 },                  // FUNC_DEG
+	{ L"sgn", &sgn, nullptr, 3 },                  // FUNC_SGN
+	{ L"neg", &neg, nullptr, 3 },                  // FUNC_NEG
+	{ L"min", nullptr, &Min, 3 },                  // FUNC_MIN
+	{ L"max", nullptr, &Max, 3 },                  // FUNC_MAX
+	{ L"clamp", nullptr, &Clamp, 5 },              // FUNC_CLAMP
+	{ L"e", nullptr, nullptr, 1 },                 // FUNC_E
+	{ L"pi", nullptr, nullptr, 2 }                 // FUNC_PI
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -182,7 +176,6 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 	4, // Operator::Multiplication
 	4, // Operator::Division
 	4, // Operator::Modulo
-	4, // Operator::UNK
 	5, // Operator::BitwiseXOR
 	5, // Operator::BitwiseNOT
 	5, // Operator::BitwiseAND
@@ -199,8 +192,9 @@ static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 };
 
 static CharType GetCharType(WCHAR ch);
+static CharType GetCharType(const WCHAR* str, const WCHAR* end);
 static BYTE GetFunctionIndex(const WCHAR* str, BYTE len);
-static Operator GetOperator(const WCHAR* str);
+static Operator GetOperator(const WCHAR* str, const WCHAR* end);
 
 struct Parser
 {
@@ -219,19 +213,25 @@ static const WCHAR* Calc(Parser& parser);
 struct Lexer
 {
 	const WCHAR* string;
-	const WCHAR* name;
-	size_t nameLen;
+	const WCHAR* end;
+	const WCHAR* name = nullptr;
+	size_t nameLen = 0;
 
-	Token token;
+	Token token = Token::None;
 	union
 	{
 		Operator oper;  // token == Token::Operator
 		double num;  // token == Token::Number
-	} value;
+	} value = {};
 
 	CharType charType;
 
-	Lexer(const WCHAR* str) : string(str), name(), nameLen(), value(), token(Token::None), charType(GetCharType(*str)) {}
+	Lexer(std::wstring_view str) :
+		string(str.data()),
+		end(str.data() + str.size()),
+		charType(GetCharType(string, end))
+	{
+	}
 };
 
 static Token GetNextToken(Lexer& lexer);
@@ -245,28 +245,33 @@ const WCHAR* eUnknFunc = L"\"%s\" is unknown";
 const WCHAR* eLogicErr = L"Logical expression error";
 const WCHAR* eInvPrmCnt = L"Invalid function parameter count";
 
-const WCHAR* Check(const WCHAR* formula)
+MathParser::MathParser(GetValueFunc getValue, void* getValueContext) :
+	m_GetValue(getValue),
+	m_GetValueContext(getValueContext)
+{
+}
+
+const WCHAR* MathParser::Check(std::wstring_view formula) const
 {
 	int brackets = 0;
 
 	// Brackets Matching
-	while (*formula)
+	for (WCHAR ch : formula)
 	{
-		if (*formula == L'(')
+		if (ch == L'(')
 		{
 			++brackets;
 		}
-		else if (*formula == L')')
+		else if (ch == L')')
 		{
 			--brackets;
 		}
-		++formula;
 	}
 
 	return (brackets != 0) ? eBrackets : nullptr;
 }
 
-const WCHAR* CheckedParse(const WCHAR* formula, double* result)
+const WCHAR* MathParser::CheckedParse(std::wstring_view formula, double* result) const
 {
 	const WCHAR* error = Check(formula);
 	if (!error)
@@ -276,12 +281,19 @@ const WCHAR* CheckedParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-const WCHAR* Parse(
-	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext)
+const WCHAR* MathParser::Parse(std::wstring_view formula, double* result, ParseMode mode, const WCHAR** parseEnd) const
 {
 	static WCHAR errorBuffer[128];
+	if (parseEnd) *parseEnd = formula.data();
+	if (mode == ParseMode::MatchingClosingBracket)
+	{
+		const WCHAR* current = formula.data();
+		const WCHAR* end = formula.data() + formula.size();
+		while (current != end && (*current == L' ' || *current == L'\t' || *current == L'\n')) ++current;
+		if (current == end || *current != L'(') return eSyntax;
+	}
 
-	if (!*formula)
+	if (formula.empty())
 	{
 		*result = 0.0;
 		return nullptr;
@@ -306,7 +318,12 @@ const WCHAR* Parse(
 		case Token::Error:
 			return eSyntax;
 
-		case Token::Final:
+	case Token::Final:
+			if (mode == ParseMode::MatchingClosingBracket)
+			{
+				return eBrackets;
+			}
+
 			if ((error = CalcToObr(parser)) != nullptr)
 			{
 				return error;
@@ -319,6 +336,7 @@ const WCHAR* Parse(
 			{
 				// Done!
 				*result = parser.numStack[0];
+				if (parseEnd) *parseEnd = lexer.string;
 				return nullptr;
 			}
 			break;
@@ -340,6 +358,16 @@ const WCHAR* Parse(
 			case Operator::ClosingBracket:
 				{
 					if ((error = CalcToObr(parser)) != nullptr) return error;
+
+					if (mode == ParseMode::MatchingClosingBracket && parser.opTop == 0)
+					{
+						if ((error = CalcToObr(parser)) != nullptr) return error;
+						if (parser.opTop != -1 || parser.valTop != 0) return eInternal;
+
+						*result = parser.numStack[0];
+						if (parseEnd) *parseEnd = lexer.string;
+						return nullptr;
+					}
 				}
 				break;
 
@@ -434,7 +462,7 @@ const WCHAR* Parse(
 				else
 				{
 					double dblval;
-					if (getValue && getValue(lexer.name, (int)lexer.nameLen, &dblval, getValueContext))
+					if (m_GetValue && m_GetValue(lexer.name, (int)lexer.nameLen, &dblval, m_GetValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;
@@ -468,7 +496,7 @@ static const WCHAR* Calc(Parser& parser)
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.numStack[parser.valTop + 1], &res);
+		const WCHAR* error = g_Functions[op.funcIndex].multiArgProc(paramcnt, &parser.numStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.numStack[++parser.valTop] = res;
@@ -489,7 +517,7 @@ static const WCHAR* Calc(Parser& parser)
 	}
 	else if (op.type == Operator::SingleArgFunction)
 	{
-		res = (*(SingleArgFunction)g_Functions[op.funcIndex].proc)(right);
+		res = g_Functions[op.funcIndex].singleArgProc(right);
 	}
 	else
 	{
@@ -561,21 +589,6 @@ static const WCHAR* Calc(Parser& parser)
 			res = fmod(left, right);
 			break;
 
-		case Operator::UNK:
-			if (left <= 0)
-			{
-				res = 0.0;
-			}
-			else if (right == 0.0)
-			{
-				return eInfinity;
-			}
-			else
-			{
-				res = ceil(left / right);
-			}
-			break;
-
 		case Operator::BitwiseXOR:
 			res = (double)((long long)left ^ (long long)right);
 			break;
@@ -631,11 +644,33 @@ static const WCHAR* CalcToObr(Parser& parser)
 	return nullptr;
 }
 
+// wcstod/wcstoll happily scan past |end| if the underlying buffer isn't null-terminated
+// there, which would both read out-of-view characters and fold them into the result (e.g.
+// parsing "3.1" out of a view over "3.123456" would otherwise yield 3.123456). If that
+// happens, |start| is re-parsed from a small null-terminated copy bounded by |end| so the
+// result only reflects characters within the view.
+template <typename T, typename ParseFunc>
+static T ParseBounded(const WCHAR* start, const WCHAR* end, WCHAR** outEnd, ParseFunc parseFunc)
+{
+	T value = parseFunc(start, outEnd);
+	if (*outEnd <= end) return value;
+
+	WCHAR buffer[64];
+	size_t len = std::min<size_t>(end - start, _countof(buffer) - 1);
+	wmemcpy(buffer, start, len);
+	buffer[len] = L'\0';
+
+	WCHAR* boundedEnd = nullptr;
+	value = parseFunc(buffer, &boundedEnd);
+	*outEnd = const_cast<WCHAR*>(start) + (boundedEnd - buffer);
+	return value;
+}
+
 Token GetNextToken(Lexer& lexer)
 {
 	while (lexer.charType == CharType::Separator)
 	{
-		lexer.charType = GetCharType(*++lexer.string);
+		lexer.charType = GetCharType(++lexer.string, lexer.end);
 	}
 
 	if (lexer.charType == CharType::MinusSymbol)
@@ -664,7 +699,7 @@ Token GetNextToken(Lexer& lexer)
 			lexer.name = lexer.string;
 			do
 			{
-				lexer.charType = GetCharType(*++lexer.string);
+				lexer.charType = GetCharType(++lexer.string, lexer.end);
 			}
 			while (lexer.charType <= CharType::Digit);
 			lexer.nameLen = lexer.string - lexer.name;
@@ -673,23 +708,31 @@ Token GetNextToken(Lexer& lexer)
 
 	case CharType::Digit:
 		{
-			WCHAR* newString;
-			if (lexer.string[0] == L'0')
+			// wcstoll/wcstod scan for as many valid characters as they can find, which may run
+			// past |lexer.end| if the underlying buffer isn't null-terminated there. The result
+			// is re-parsed from a bounded copy below, so out-of-view characters can't affect
+			// the resulting value.
+			WCHAR* newString = nullptr;
+			const bool hasNextChar = (lexer.string + 1) < lexer.end;
+			if (lexer.string[0] == L'0' && hasNextChar)
 			{
 				bool valid = true;
 				long long num = 0;
 				switch (lexer.string[1])
 				{
 				case L'x':	// Hexadecimal
-					num = wcstoll(lexer.string, &newString, 16);
+					num = ParseBounded<long long>(lexer.string, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 16); });
 					break;
 
 				case L'o':	// Octal
-					num = wcstoll(lexer.string + 2, &newString, 8);
+					num = ParseBounded<long long>(lexer.string + 2, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 8); });
 					break;
 
 				case L'b':	// Binary
-					num = wcstoll(lexer.string + 2, &newString, 2);
+					num = ParseBounded<long long>(lexer.string + 2, lexer.end, &newString,
+						[](const WCHAR* s, WCHAR** e) { return wcstoll(s, e, 2); });
 					break;
 
 				default:
@@ -704,33 +747,34 @@ Token GetNextToken(Lexer& lexer)
 						lexer.token = Token::Number;
 						lexer.value.num = (double)num;
 						lexer.string = newString;
-						lexer.charType = GetCharType(*lexer.string);
+						lexer.charType = GetCharType(lexer.string, lexer.end);
 					}
 					break;
 				}
 			}
 
 			// Decimal
-			double num = wcstod(lexer.string, &newString);
+			double num = ParseBounded<double>(lexer.string, lexer.end, &newString,
+				[](const WCHAR* s, WCHAR** e) { return wcstod(s, e); });
 			if (lexer.string != newString)
 			{
 				lexer.token = Token::Number;
 				lexer.value.num = num;
 				lexer.string = newString;
-				lexer.charType = GetCharType(*lexer.string);
+				lexer.charType = GetCharType(lexer.string, lexer.end);
 			}
 		}
 		break;
 
 	case CharType::Symbol:
 		{
-			Operator oper = GetOperator(lexer.string);
+			Operator oper = GetOperator(lexer.string, lexer.end);
 			if (oper != Operator::Invalid)
 			{
 				lexer.token = Token::Operator;
 				lexer.value.oper = oper;
 				lexer.string += ((int)oper <= (int)Operator::LogicalOR) ? 2 : 1;
-				lexer.charType = GetCharType(*lexer.string);
+				lexer.charType = GetCharType(lexer.string, lexer.end);
 			}
 		}
 		break;
@@ -767,7 +811,6 @@ CharType GetCharType(WCHAR ch)
 	case L'<':
 	case L'>':
 	case L'%':
-	case L'$':
 	case L',':
 	case L'?':
 	case L':':
@@ -782,13 +825,18 @@ CharType GetCharType(WCHAR ch)
 
 	// Make sure this is the last character test before "Unknown".
 	// This will catch all characters with graphical representation and treat them as a "Letter".
-	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'";
+	// This includes all "alpha" characters and the following characers not defined above: _\`!#@{}[]'$";
 	if (iswgraph(ch)) return CharType::Letter;
 
 	return CharType::Unknown;
 }
 
-bool IsDelimiter(WCHAR ch)
+CharType GetCharType(const WCHAR* str, const WCHAR* end)
+{
+	return (str >= end) ? CharType::Final : GetCharType(*str);
+}
+
+bool MathParser::IsDelimiter(WCHAR ch) const
 {
 	CharType type = GetCharType(ch);
 	return type == CharType::MinusSymbol || type == CharType::Symbol || type == CharType::Separator;
@@ -809,8 +857,10 @@ BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
 	return FUNC_INVALID;
 }
 
-Operator GetOperator(const WCHAR* str)
+Operator GetOperator(const WCHAR* str, const WCHAR* end)
 {
+	const bool hasNext = (str + 1) < end;
+
 	switch (str[0])
 	{
 	case L'(':
@@ -823,16 +873,13 @@ Operator GetOperator(const WCHAR* str)
 		return Operator::Subtraction;
 
 	case L'*':
-		return (str[1] == L'*') ? Operator::Power : Operator::Multiplication;
+		return (hasNext && str[1] == L'*') ? Operator::Power : Operator::Multiplication;
 
 	case L'/':
 		return Operator::Division;
 
 	case L'%':
 		return Operator::Modulo;
-
-	case L'$':
-		return Operator::UNK;
 
 	case L'^':
 		return Operator::BitwiseXOR;
@@ -841,19 +888,19 @@ Operator GetOperator(const WCHAR* str)
 		return Operator::BitwiseNOT;
 
 	case L'&':
-		return (str[1] == L'&') ? Operator::LogicalAND : Operator::BitwiseAND;
+		return (hasNext && str[1] == L'&') ? Operator::LogicalAND : Operator::BitwiseAND;
 
 	case L'|':
-		return (str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
+		return (hasNext && str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
 
 	case L'=':
 		return Operator::Equal;
 
 	case L'>':
-		return (str[1] == L'>') ? Operator::ShiftRight : (str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
+		return (hasNext && str[1] == L'>') ? Operator::ShiftRight : (hasNext && str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
 
 	case L'<':
-		return (str[1] == L'>') ? Operator::NotEqual : (str[1] == L'<') ? Operator::ShiftLeft : (str[1] == L'=') ? Operator::LessOrEqual : Operator::Less;
+		return (hasNext && str[1] == L'>') ? Operator::NotEqual : (hasNext && str[1] == L'<') ? Operator::ShiftLeft : (hasNext && str[1] == L'=') ? Operator::LessOrEqual : Operator::Less;
 
 	case L'?':
 		return Operator::Conditional;
@@ -991,4 +1038,3 @@ static const WCHAR* ATan2(int paramcnt, double* args, double* result)
 	return eInvPrmCnt;
 }
 
-}  // namespace MathParser

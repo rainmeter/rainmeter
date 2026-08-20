@@ -1,9 +1,4 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+; Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 !verbose 2
 
@@ -52,7 +47,7 @@ VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "© ${BUILD_YEAR} Rainmeter Team"
+VIAddVersionKey "LegalCopyright" "${U+00A9} ${BUILD_YEAR} Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
@@ -92,15 +87,16 @@ UninstPage custom un.PageOptions un.GetOptions
 ; Include languages
 !macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
 	!insertmacro MUI_LANGUAGE ${LANGUAGE}
-	!insertmacro LANGFILE_INCLUDE "..\..\Language\${CUSTOMLANGUAGE}.nsh"
+	!insertmacro LANGFILE_INCLUDE "..\..\BuildOut\Installer\${CUSTOMLANGUAGE}.nsh"
 !macroend
 !define IncludeLanguage "!insertmacro IncludeLanguage"
-!include "Languages.nsh"
+!include "..\..\BuildOut\Installer\Languages.nsh"
 
 Var NonDefaultLanguage
 Var AutoStartup
 Var Install64Bit
 Var InstallPortable
+Var ExistingRainmeterInstallation
 Var RestartAfterInstall
 Var un.DeleteAll
 
@@ -142,7 +138,7 @@ Function .onInit
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${IfNot} ${AtLeastWin10}
-		${OrIfNot} ${AtLeastBuild} 15063
+		${OrIfNot} ${AtLeastBuild} 16299
 			MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
 			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
 			Quit
@@ -157,8 +153,9 @@ Function .onInit
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match. In case the default is English, strip away English string to
 				; avoid showing it twice.
-				${StrRep} $1 "$(SelectLanguage)$\n$\n" "Please select the installer language.$\n$\n" ""
-				LangDLL::LangDialog "$(^SetupCaption)" "$1Please select the installer language." AC ${LANGDLL_PARAMS} ""
+				StrCpy $1 "Please select the setup language."
+				${StrRep} $2 "$(SelectLanguage)" "$1" ""
+				LangDLL::LangDialog "$(^SetupCaption)" "$1$\n$2" AC ${LANGDLL_PARAMS} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -555,15 +552,15 @@ Function PageOptionsOnLeave
 	${EndIf}
 FunctionEnd
 
-!macro InstallFiles DIR ARCH
+!macro InstallFiles OUTDIR ARCH
 	SetOutPath "$INSTDIR"
-	File "..\..\${DIR}-Release\Rainmeter.exe"
-	File "..\..\${DIR}-Release\Rainmeter.dll"
-	File "..\..\${DIR}-Release\RestartRainmeter.exe"
-	File "..\..\${DIR}-Release\SkinInstaller.exe"
+	File "..\..\${OUTDIR}\Rainmeter.exe"
+	File "..\..\${OUTDIR}\Rainmeter.dll"
+	File "..\..\${OUTDIR}\RestartRainmeter.exe"
+	File "..\..\${OUTDIR}\SkinInstaller.exe"
 
 	SetOutPath "$INSTDIR\Plugins"
-	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
+	File /x *Example*.dll "..\..\${OUTDIR}\Plugins\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -617,6 +614,11 @@ Section
 	${EndIf}
 
 	SetOutPath "$INSTDIR"
+
+	StrCpy $ExistingRainmeterInstallation 0
+	${If} ${FileExists} "$INSTDIR\Rainmeter.exe"
+		StrCpy $ExistingRainmeterInstallation 1
+	${EndIf}
 
 	; Close Rainmeter (and wait up to five seconds)
 	${ForEach} $0 10 0 - 1
@@ -712,14 +714,14 @@ SkipIniMove:
 	File "..\VisualElements\Rainmeter_176.png"
 
 	${If} $instArc == "x86"
-		!insertmacro InstallFiles "x32" "x86"
+		!insertmacro InstallFiles "BuildOut\Release32" "x86"
 	${Else}
-		!insertmacro InstallFiles "x64" "x64"
+		!insertmacro InstallFiles "BuildOut\Release64" "x64"
 	${EndIf}
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\x32-Release\Languages\*.rmlang"
+	File "..\..\BuildOut\Release32\Languages\*.rmlang"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"
@@ -819,10 +821,13 @@ SkipIniMove:
 		WriteRegStr HKCU "SOFTWARE\Rainmeter" "PortableInstallPath" "$INSTDIR"
 
 		${IfNot} ${FileExists} "Rainmeter.ini"
+		${AndIf} $ExistingRainmeterInstallation <> 1
 			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
 
-		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
+		${If} ${FileExists} "$INSTDIR\Rainmeter.ini"
+			WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
+		${EndIf}
 	${EndIf}
 SectionEnd
 
@@ -846,16 +851,23 @@ Function RenameToRainmeterIni
 FunctionEnd
 
 Function HandlePlugins
-	${If} $R7 == "FolderInfo.dll"
+	${If} $R7 == "ActionTimer.dll"
+	${OrIf} $R7 == "AdvancedCPU.dll"
+	${OrIf} $R7 == "AudioLevel.dll"
+	${OrIf} $R7 == "CoreTemp.dll"
+	${OrIf} $R7 == "FileView.dll"
+	${OrIf} $R7 == "FolderInfo.dll"
 	${OrIf} $R7 == "iTunesPlugin.dll"
 	${OrIf} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
+	${OrIf} $R7 == "PerfMon.dll"
 	${OrIf} $R7 == "PingPlugin.dll"
 	${OrIf} $R7 == "PowerPlugin.dll"
 	${OrIf} $R7 == "Process.dll"
 	${OrIf} $R7 == "QuotePlugin.dll"
 	${OrIf} $R7 == "RecycleManager.dll"
 	${OrIf} $R7 == "ResMon.dll"
+	${OrIf} $R7 == "RunCommand.dll"
 	${OrIf} $R7 == "SpeedFanPlugin.dll"
 	${OrIf} $R7 == "SysInfo.dll"
 	${OrIf} $R7 == "WebParser.dll"
@@ -863,17 +875,7 @@ Function HandlePlugins
 	${OrIf} $R7 == "Win7AudioPlugin.dll"
 	${OrIf} $R7 == "WindowMessagePlugin.dll"
 		Delete "$R9"
-	${ElseIf} $R7 != "ActionTimer.dll"
-	${AndIf} $R7 != "AdvancedCPU.dll"
-	${AndIf} $R7 != "AudioLevel.dll"
-	${AndIf} $R7 != "CoreTemp.dll"
-	${AndIf} $R7 != "FileView.dll"
-	${AndIf} $R7 != "InputText.dll"
-	${AndIf} $R7 != "PerfMon.dll"
-	${AndIf} $R7 != "QuotePlugin.dll"
-	${AndIf} $R7 != "RecycleManager.dll"
-	${AndIf} $R7 != "ResMon.dll"
-	${AndIf} $R7 != "RunCommand.dll"
+	${ElseIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "UsageMonitor.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
 		CreateDirectory "$INSTDIR\Defaults\Plugins"

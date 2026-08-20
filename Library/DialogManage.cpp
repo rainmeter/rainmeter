@@ -1,20 +1,17 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/StringParser.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
 #include "DialogManage.h"
-#include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogNewSkin.h"
 #include "GameMode.h"
 #include "UpdateCheck.h"
@@ -26,7 +23,7 @@
 WINDOWPLACEMENT DialogManage::c_WindowPlacement = { 0 };
 DialogManage* DialogManage::c_Dialog = nullptr;
 
-DialogManage::DialogManage() : Dialog()
+DialogManage::DialogManage() : Dialog(&c_WindowPlacement)
 {
 }
 
@@ -34,10 +31,6 @@ DialogManage::~DialogManage()
 {
 }
 
-/*
-** Opens the Manage dialog by tab name.
-**
-*/
 void DialogManage::Open(const WCHAR* name)
 {
 	int tab = 0;
@@ -62,14 +55,15 @@ void DialogManage::Open(const WCHAR* name)
 	Open(tab);
 }
 
-/*
-** Opens the Manage dialog.
-**
-*/
 void DialogManage::Open(int tab)
 {
 	if (!c_Dialog)
 	{
+		if (c_WindowPlacement.length == 0)
+		{
+			GetRainmeter().ReadDialogWindowPlacement(L"ManageDialogBounds", c_WindowPlacement);
+		}
+
 		c_Dialog = new DialogManage();
 	}
 
@@ -77,24 +71,12 @@ void DialogManage::Open(int tab)
 		GetString(IDS_ManageRainmeter),
 		0, 0, 510, 322,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
-
-	const HWND& hwnd = c_Dialog->GetWindow();
-	GetWindowPlacement(hwnd, &c_WindowPlacement);
-	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-	{
-		ShowWindow(hwnd, SW_RESTORE);
-	}
-	SetForegroundWindow(hwnd);
 }
 
-/*
-** Opens the Manage dialog Skins tab with skin selected.
-**
-*/
 void DialogManage::OpenSkin(Skin* skin)
 {
 	Open();
@@ -109,10 +91,6 @@ void DialogManage::OpenSkin(Skin* skin)
 	}
 }
 
-/*
-** Opens the Manage dialog tab with parameters
-**
-*/
 void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
 {
 	Open(tabName);
@@ -217,14 +195,13 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		return OnCommand(wParam, lParam);
 
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) != WA_INACTIVE) GetRainmeter().RescanSkinsIfNeeded();
+		break;
+
 	case WM_CLOSE:
 		{
-			GetWindowPlacement(m_Window, &c_WindowPlacement);
-			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-			{
-				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-			}
-
+			GetRainmeter().SaveDialogWindowPlacement(L"ManageDialogBounds", c_WindowPlacement);
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
@@ -237,7 +214,7 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -264,7 +241,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Themes));
+	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Layouts));
 	AddTab(Id_Tab, m_TabGameMode, GetString(IDS_GameMode));
 	AddTab(Id_Tab, m_TabSettings, GetString(IDS_Settings));
 
@@ -278,14 +255,6 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Use arrows instead of plus/minus in the tree for Vista+
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
-
-	if (c_WindowPlacement.length == 0)
-	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return FALSE;
 }
@@ -303,7 +272,7 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_OpenLogButton:
-		DialogAbout::Open();
+		DialogDebug::Open();
 		break;
 
 	case Id_CloseButton:
@@ -386,7 +355,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -467,12 +436,15 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::ComboBox(Id_ZPositionDropDownList, 0,
 			175 + labelWidth, 182, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, IDS_LoadOrderColon,
+		Control::Label(Id_ZoomLabel, IDS_Zoom,
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
-		Control::Edit(Id_LoadOrderEdit, 0,
-			175 + labelWidth, 202, 80, 14,
-			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, WS_EX_CLIENTEDGE),
+		Control::Edit(Id_ZoomEdit, 0,
+			175 + labelWidth, 202, 38, 14,
+			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Label(Id_ZoomPercentLabel, 0,
+			175 + labelWidth + 42, 204, 12, 14,
+			WS_VISIBLE, 0),
 		Control::Label(-0, IDS_TransparencyColon,
 			175, 224, labelWidth, 14,
 			WS_VISIBLE, 0),
@@ -510,6 +482,17 @@ void DialogManage::TabSkins::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
+	std::wstring zoomLabel = GetString(IDS_Zoom);
+	zoomLabel += L':';
+	SetWindowText(GetControl(Id_ZoomLabel), zoomLabel.c_str());
+	SetWindowText(GetControl(Id_ZoomPercentLabel), L"%");
+
+	HWND zoomEdit = GetControl(Id_ZoomEdit);
+	HWND zoomSpinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
+		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
+		0, 0, 0, 0, m_Window, (HMENU)Id_ZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	SendMessage(zoomSpinner, UDM_SETRANGE32, 10, 500);
+	SendMessage(zoomSpinner, UDM_SETBUDDY, (WPARAM)zoomEdit, 0);
 
 	// Create tooltips for 'New Skin' button
 	HWND item = GetControl(Id_NewSkinButton);
@@ -647,16 +630,13 @@ void DialogManage::TabSkins::UpdateSelected(Skin* skin)
 	}
 }
 
-/*
-** Updates metadata and settings when changed.
-**
-*/
+// Updates metadata and settings when changed.
 void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 {
 	const size_t skinCount = GetRainmeter().GetAllSkins().size();
 
 	HWND item = GetControl(Id_ActiveSkinsButton);
-	Button_Enable(item, skinCount != 0ULL);
+	Button_Enable(item, skinCount != 0);
 
 	if (skin)
 	{
@@ -688,8 +668,8 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 	}
 	else
 	{
-		// Populate tree
 		item = GetControl(Id_SkinsTreeView);
+		const auto selectedPath = GetTreeSelectionPath(item);
 		TreeView_DeleteAllItems(item);
 
 		TVINSERTSTRUCT tvi = { 0 };
@@ -700,6 +680,8 @@ void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 		if (!GetRainmeter().m_SkinRegistry.IsEmpty())
 		{
 			PopulateTree(item, tvi);
+
+			if (!selectedPath.empty()) SelectTreeItem(item, TreeView_GetRoot(item), selectedPath.c_str());
 		}
 	}
 }
@@ -716,7 +698,7 @@ void DialogManage::TabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		const auto logicalPos = m_SkinWindow->GetLogicalWindowPosition();
+		const auto pos = m_SkinWindow->GetPositionAsVirtualized();
 
 		SetWindowText(item, GetString(IDS_Unload));
 
@@ -725,12 +707,12 @@ void DialogManage::TabSkins::SetControls()
 
 		item = GetControl(Id_XPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(logicalPos.x, buffer, 10);
+		_itow_s(pos.x, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_YPositionEdit);
 		EnableWindow(item, TRUE);
-		_itow_s(logicalPos.y, buffer, 10);
+		_itow_s(pos.y, buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_DisplayMonitorButton);
@@ -777,9 +759,11 @@ void DialogManage::TabSkins::SetControls()
 		EnableWindow(item, TRUE);
 		ComboBox_SetCurSel(item, m_SkinWindow->GetWindowZPosition() + 2);
 
-		item = GetControl(Id_LoadOrderEdit);
-		EnableWindow(item, TRUE);
-		_itow_s(GetRainmeter().GetLoadOrder(m_SkinFolderPath), buffer, 10);
+		item = GetControl(Id_ZoomEdit);
+		const BOOL zoomEnabled = GetRainmeter().GetForceDefaultZoom() ? FALSE : TRUE;
+		EnableWindow(item, zoomEnabled);
+		EnableWindow(GetControl(Id_ZoomSpinner), zoomEnabled);
+		_itow_s((int)roundf(m_SkinWindow->GetZoomScale() * 100.0f), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_OnHoverDropDownList);
@@ -895,9 +879,10 @@ void DialogManage::TabSkins::DisableControls(bool clear)
 	EnableWindow(item, FALSE);
 	ComboBox_SetCurSel(item, -1);
 
-	item = GetControl(Id_LoadOrderEdit);
+	item = GetControl(Id_ZoomEdit);
 	SetWindowText(item, L"");
 	EnableWindow(item, FALSE);
+	EnableWindow(GetControl(Id_ZoomSpinner), FALSE);
 
 	item = GetControl(Id_OnHoverDropDownList);
 	EnableWindow(item, FALSE);
@@ -970,15 +955,15 @@ void DialogManage::TabSkins::ReadSkin()
 		}
 
 		// Replace | with newline
-		std::wstring::size_type pos = 0ULL;
+		std::wstring::size_type pos = 0;
 		while ((pos = text.find_first_of(L'|')) != std::wstring::npos)
 		{
-			size_t next = pos + 1UL;
-			size_t count = (next < text.length() && text[next] == L' ') ? 2ULL : 1ULL;
-			if (text[pos - 1ULL] == L' ')
+			size_t next = pos + 1;
+			size_t count = (next < text.length() && text[next] == L' ') ? 2 : 1;
+			if (text[pos - 1] == L' ')
 			{
 				--pos;
-				count += 1ULL;
+				count += 1;
 			}
 			text.replace(pos, count, L"\r\n");
 		}
@@ -1111,10 +1096,6 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	return path;
 }
 
-/*
-** Populates the treeview with folders and skins.
-**
-*/
 int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index)
 {
 	int initialLevel = GetRainmeter().m_SkinRegistry.GetFolder(index).level;
@@ -1158,10 +1139,6 @@ int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int ind
 	return index;
 }
 
-/*
-** Selects an item in the treeview.
-**
-*/
 void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name)
 {
 	WCHAR buffer[MAX_PATH] = { 0 };
@@ -1263,19 +1240,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			}
 
 			DestroyMenu(menu);
@@ -1340,11 +1305,13 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
-				int x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(x, m_SkinWindow->GetLogicalWindowPosition().y);
 
-				const int newX = m_SkinWindow->GetLogicalWindowPosition().x;
-				if (x != newX)
+				auto pos = m_SkinWindow->GetPositionAsVirtualized();
+				pos.x = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(pos.x, pos.y, SkinPositionSpace::Virtualized);
+
+				const int newX = m_SkinWindow->GetPositionAsVirtualized().x;
+				if (pos.x != newX)
 				{
 					_itow_s(newX, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
@@ -1360,11 +1327,13 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				WCHAR buffer[32];
 				m_IgnoreUpdate = true;
-				int y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
-				m_SkinWindow->MoveWindow(m_SkinWindow->GetLogicalWindowPosition().x, y);
 
-				const int newY = m_SkinWindow->GetLogicalWindowPosition().y;
-				if (y != newY)
+				auto pos = m_SkinWindow->GetPositionAsVirtualized();
+				pos.y = (GetWindowText((HWND)lParam, buffer, 32) > 0) ? _wtoi(buffer) : 0;
+				m_SkinWindow->MoveWindow(pos.x, pos.y, SkinPositionSpace::Virtualized);
+
+				const int newY = m_SkinWindow->GetPositionAsVirtualized().y;
+				if (pos.y != newY)
 				{
 					_itow_s(newY, buffer, 10);
 					Edit_SetText((HWND)lParam, buffer);
@@ -1373,59 +1342,16 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_LoadOrderEdit:
-		if (HIWORD(wParam) == EN_CHANGE)
+	case Id_ZoomEdit:
+		if (HIWORD(wParam) == EN_CHANGE && m_SkinWindow)
 		{
-			if (m_IgnoreUpdate)
+			WCHAR buffer[32];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) == 0)
 			{
-				// To avoid infinite loop after setting value below
-				m_IgnoreUpdate = false;
+				break;
 			}
-			else
-			{
-				// Convert text to number and set it to get rid of extra chars
-				WCHAR buffer[32];
-				int len = GetWindowText((HWND)lParam, buffer, 32);
-				if ((len == 0) || (len == 1 && buffer[0] == L'-'))
-				{
-					// Ignore if empty or if - is only char
-					break;
-				}
-
-				// Get selection
-				DWORD sel = Edit_GetSel((HWND)lParam);
-
-				// Reset value (to get rid of invalid chars)
-				m_IgnoreUpdate = true;
-				int value = _wtoi(buffer);
-
-				_itow_s(value, buffer, 10);
-				SetWindowText((HWND)lParam, buffer);
-
-				// Reset selection
-				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
-
-				WritePrivateProfileString(m_SkinFolderPath.c_str(), L"LoadOrder", buffer, GetRainmeter().GetIniFile().c_str());
-				const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(
-					m_SkinWindow->GetFolderPath(), m_SkinWindow->GetFileName());
-				if (indexes.IsValid())
-				{
-					GetRainmeter().SetLoadOrder(indexes.folder, value);
-
-					std::multimap<int, Skin*> windows;
-					GetRainmeter().GetSkinsByLoadOrder(windows);
-
-					System::PrepareHelperWindow();
-
-					// Reorder window z-position to reflect load order
-					std::multimap<int, Skin*>::const_iterator iter = windows.begin();
-					for ( ; iter != windows.end(); ++iter)
-					{
-						Skin* skin = (*iter).second;
-						skin->ChangeZPos(skin->GetWindowZPosition(), true);
-					}
-				}
-			}
+			m_IgnoreUpdate = true;
+			m_SkinWindow->SetZoom(_wtoi(buffer));
 		}
 		break;
 
@@ -1434,7 +1360,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			static const MenuTemplate s_Menu[] =
 			{
 				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, IDS_UseDefaultMonitor),
-				MENU_ITEM(ID_MONITOR_FIRST, IDS_VirtualScreen),
+				MENU_ITEM(ID_MONITOR_FIRST, 0),
 				MENU_SEPARATOR(),
 				MENU_SEPARATOR(),
 				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, IDS_AutoSelectMonitor)
@@ -1444,21 +1370,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
-
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -1564,9 +1476,15 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				++i;
 			}
 		}
-		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT ||
-			wParam == IDM_SKIN_MONITOR_PRIMARY ||
-			wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
+		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
+		{
+			if (m_SkinWindow)
+			{
+				m_SkinWindow->SetAutoSelectScreen(!m_SkinWindow->GetAutoSelectScreen());
+			}
+			break;
+		}
+		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
 			if (m_SkinWindow)
 			{
@@ -1586,6 +1504,13 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
+	case UDN_DELTAPOS:
+		if (nm->idFrom == Id_ZoomSpinner && GetKeyState(VK_CONTROL) < 0)
+		{
+			((LPNMUPDOWN)lParam)->iDelta *= 10;
+		}
+		break;
+
 	case NM_CLICK:
 		if (nm->idFrom == Id_AddMetadataLink)
 		{
@@ -1688,7 +1613,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -1776,7 +1700,7 @@ void DialogManage::TabLayouts::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, IDS_SavedThemes,
+		Control::GroupBox(-0, IDS_SavedLayouts,
 			0, 0, 235, 260,
 			WS_VISIBLE, 0),
 		Control::ListBox(Id_List, 0,
@@ -1792,13 +1716,13 @@ void DialogManage::TabLayouts::Create(HWND owner)
 			177, 52, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::GroupBox(-0, IDS_SaveNewTheme,
+		Control::GroupBox(-0, IDS_SaveNewLayout,
 			243, 0, 235, 150,
 			WS_VISIBLE, 0),
-		Control::Label(-0, IDS_ThemeDescription,
+		Control::Label(-0, IDS_LayoutDescription,
 			249, 16, 210, 44,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyTheme,
+		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyLayout,
 			249, 70, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_ExcludeUnusedSkinsCheckBox, IDS_ExcludeUnusedSkins,
@@ -1925,7 +1849,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess_s(path.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(IDS_ThemeAlreadyExists, layout.c_str());
+				std::wstring text = GetFormattedString(IDS_LayoutAlreadyExists, layout.c_str());
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1945,7 +1869,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (!System::CopyFiles(GetRainmeter().GetIniFile(), path))
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1958,10 +1882,10 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					parser.Initialize(path);
 
 					// Remove sections with Active=0
-					std::list<std::wstring>::const_iterator iter = parser.GetSections().begin();
-					for ( ; iter != parser.GetSections().end(); ++iter)
+					for (auto iter = parser.GetSectionNames().begin(); iter != parser.GetSectionNames().end(); ++iter)
 					{
-						if (parser.GetValue(*iter, L"Active", L"") == L"0")
+						const std::wstring* active = parser.GetValue(*iter, L"Active");
+						if (active && *active == L"0")
 						{
 							WritePrivateProfileString((*iter).c_str(), nullptr, nullptr, path.c_str());
 						}
@@ -1987,7 +1911,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (file == INVALID_HANDLE_VALUE)
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -2033,7 +1957,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(GetRainmeter().GetAllLayouts());
 
-			std::wstring text = GetFormattedString(IDS_ThemeDelete, layouts[sel].c_str());
+			std::wstring text = GetFormattedString(IDS_LayoutDelete, layouts[sel].c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
@@ -2090,7 +2014,7 @@ void DialogManage::TabGameMode::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2196,20 +2120,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				ContextMenu::CreateGameModeOnStopMenu();
 			if (menu)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -2232,23 +2143,19 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[4096];
 			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				list = buffer;
-				std::vector<std::wstring> tokens = ConfigParser::Tokenize(list, L"\n");
-				list.clear();
-				for (auto& line : tokens)
+				StringParser::ForEachToken(buffer, L'\n', [&](std::wstring_view line)
 				{
 					// No self-references
-					if (_wcsicmp(line.c_str(), L"Rainmeter.exe") == 0)
-					{
-						continue;
-					}
+					StringParser process(line);
+					if (process.ConsumeRest(L"Rainmeter.exe")) return;
 
-					list += line;
-					if (line != tokens.back())
+					if (!list.empty())
 					{
 						list += L'|';
 					}
-				}
+
+					list += line;
+				});
 			}
 
 			if (oldList != list)
@@ -2319,7 +2226,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2335,20 +2242,26 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::LinkLabel(Id_LanguageUpdateLink, 0,
 			361, 15, 114, 14,
 			0, 0),
-		Control::Label(Id_ScalingModeLabel, 0,
+		Control::Label(-0, IDS_EditorColon,
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
-		Control::ComboBox(Id_ScalingModeDropDownList, 0,
-			107, 34, 250, 14,
-			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, 0),
-		Control::Label(-0, IDS_EditorColon,
-			6, 57, 107, 14,
-			WS_VISIBLE, 0),
 		Control::Edit(Id_EditorEdit, 0,
-			107, 55, 250, 14,
+			107, 34, 250, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
-			361, 55, 25, 14,
+			361, 34, 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Label(Id_DefaultZoomLabel, IDS_DefaultZoomColon,
+			6, 57, 107, 14,
+			WS_VISIBLE, 0),
+		Control::Edit(Id_DefaultZoomEdit, 0,
+			107, 55, 36, 14,
+			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Label(Id_DefaultZoomPercentLabel, 0,
+			148, 57, 12, 14,
+			WS_VISIBLE, 0),
+		Control::CheckBox(Id_ForceDefaultZoomCheckBox, IDS_Force,
+			166, 55, 60, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
 			6, 76, 200, 14,
@@ -2387,7 +2300,14 @@ void DialogManage::TabSettings::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
-	SetWindowText(GetControl(Id_ScalingModeLabel), L"Scaling mode:");
+	SetWindowText(GetControl(Id_DefaultZoomPercentLabel), L"%");
+
+	HWND edit = GetControl(Id_DefaultZoomEdit);
+	HWND spinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
+		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
+		0, 0, 0, 0, m_Window, (HMENU)Id_DefaultZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	SendMessage(spinner, UDM_SETRANGE32, 10, 500);
+	SendMessage(spinner, UDM_SETBUDDY, (WPARAM)edit, 0);
 }
 
 void DialogManage::TabSettings::Initialize()
@@ -2404,44 +2324,17 @@ void DialogManage::TabSettings::Initialize()
 		std::wstring text = language.englishName + L" - " + language.nativeName;
 		int index = ComboBox_AddString(item, text.c_str());
 		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
-		if (language.lcid == GetRainmeter().GetResourceLCID())
+		if (language.lcid == GetLanguage().GetLCID())
 		{
 			ComboBox_SetCurSel(item, index);
 		}
 	}
 
-	item = GetControl(Id_ScalingModeDropDownList);
-	ComboBox_ResetContent(item);
-
-	const struct
-	{
-		LPCWSTR text;
-		int value;
-	} dpiOverrides[] =
-	{
-		{ L"Use Windows display scaling settings", 0 },
-		{ L"Ignore Windows settings and force 100%", 100 },
-		{ L"Ignore Windows settings and force 125%", 125 },
-		{ L"Ignore Windows settings and force 150%", 150 },
-		{ L"Ignore Windows settings and force 175%", 175 },
-		{ L"Ignore Windows settings and force 200%", 200 }
-	};
-
-	const int dpiOverride = GetRainmeter().GetDpiOverride();
-	for (const auto& scale : dpiOverrides)
-	{
-		const int index = ComboBox_AddString(item, scale.text);
-		ComboBox_SetItemData(item, index, scale.value);
-		if (scale.value == dpiOverride)
-		{
-			ComboBox_SetCurSel(item, index);
-		}
-	}
-
-	if (ComboBox_GetCurSel(item) == CB_ERR)
-	{
-		ComboBox_SetCurSel(item, 0);
-	}
+	item = GetControl(Id_DefaultZoomEdit);
+	WCHAR zoomBuffer[16];
+	_itow_s(GetRainmeter().GetDefaultZoom(), zoomBuffer, 10);
+	Edit_SetText(item, zoomBuffer);
+	Button_SetCheck(GetControl(Id_ForceDefaultZoomCheckBox), GetRainmeter().GetForceDefaultZoom() ? BST_CHECKED : BST_UNCHECKED);
 
 	BOOL check = !GetRainmeter().GetDisableVersionCheck();
 	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), check);
@@ -2516,17 +2409,17 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
-			if (lcid != GetRainmeter().GetResourceLCID())
+			if (lcid != GetLanguage().GetLCID())
 			{
 				WCHAR buffer[16];
 				_ultow(lcid, buffer, 10);
-				if (!GetRainmeter().LoadLanguage(buffer)) break;
+				if (!GetLanguage().Load(GetRainmeter().GetPath() + L"Languages\\", buffer)) break;
 				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
 
-				if (DialogAbout::GetDialog())
+				if (DialogDebug::GetDialog())
 				{
-					int sel = TabCtrl_GetCurSel(DialogAbout::GetDialog()->GetControl(DialogManage::Id_Tab));
-					SendMessage(DialogAbout::GetDialog()->GetWindow(), WM_CLOSE, 0, 0);
+					int sel = TabCtrl_GetCurSel(DialogDebug::GetDialog()->GetControl(DialogManage::Id_Tab));
+					SendMessage(DialogDebug::GetDialog()->GetWindow(), WM_CLOSE, 0, 0);
 					if (sel == 0)
 					{
 						GetRainmeter().DelayedExecuteCommand(L"!About");
@@ -2553,16 +2446,19 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case Id_ScalingModeDropDownList:
-		if (HIWORD(wParam) == CBN_SELCHANGE)
+	case Id_DefaultZoomEdit:
+		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			const int sel = ComboBox_GetCurSel((HWND)lParam);
-			if (sel != CB_ERR)
+			WCHAR buffer[16];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				const int scale = (int)ComboBox_GetItemData((HWND)lParam, sel);
-				GetRainmeter().SetDpiOverride(scale);
+				GetRainmeter().SetDefaultZoom(_wtoi(buffer));
 			}
 		}
+		break;
+
+	case Id_ForceDefaultZoomCheckBox:
+		GetRainmeter().SetForceDefaultZoom(Button_GetCheck((HWND)lParam) == BST_CHECKED);
 		break;
 
 	case Id_CheckForUpdatesCheckBox:
@@ -2708,6 +2604,13 @@ INT_PTR DialogManage::TabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
+	case UDN_DELTAPOS:
+		if (nm->idFrom == Id_DefaultZoomSpinner && GetKeyState(VK_CONTROL) < 0)
+		{
+			((LPNMUPDOWN)lParam)->iDelta *= 10;
+		}
+		return FALSE;
+
 	case NM_CLICK:
 		if (nm->idFrom == Id_LanguageUpdateLink)
 		{

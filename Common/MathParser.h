@@ -1,28 +1,36 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
-#ifndef RM_COMMON_MATHPARSER_H_
-#define RM_COMMON_MATHPARSER_H_
+#pragma once
 
 #include <Windows.h>
+#include <string_view>
 
-namespace MathParser
+class MathParser
 {
+public:
 	typedef bool (*GetValueFunc)(const WCHAR* str, int len, double* value, void* context);
 
-	const WCHAR* Check(const WCHAR* formula);
-	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
-	const WCHAR* Parse(
-		const WCHAR* formula, double* result,
-		GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
+	MathParser(GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
 
-	bool IsDelimiter(WCHAR ch);
+	const WCHAR* Check(std::wstring_view formula) const;
+	const WCHAR* CheckedParse(std::wstring_view formula, double* result) const;
+
+	enum class ParseMode
+	{
+		EntireString,
+
+		// Parse a parenthesized formula and stop immediately after its outer closing bracket.
+		MatchingClosingBracket
+	};
+
+	// |parseEnd|, if given, points into |formula|'s underlying buffer.
+	const WCHAR* Parse(std::wstring_view formula, double* result, ParseMode mode = ParseMode::EntireString, const WCHAR** parseEnd = nullptr) const;
+
+	bool IsDelimiter(WCHAR ch) const;
+
+private:
+	GetValueFunc m_GetValue;
+	void* m_GetValueContext;
 };
-
-#endif

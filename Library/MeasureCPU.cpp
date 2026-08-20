@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureCPU.h"
@@ -59,11 +54,7 @@ MeasureCPU::~MeasureCPU()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureCPU::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -82,10 +73,6 @@ void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the current CPU utilization value.
-**
-*/
 void MeasureCPU::UpdateValue()
 {
 	if (m_Processor == 0)
@@ -109,7 +96,7 @@ void MeasureCPU::UpdateValue()
 
 		do
 		{
-			ULONG size = 0UL;
+			ULONG size = 0;
 
 			status = c_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
 			if (status == STATUS_INFO_LENGTH_MISMATCH)
@@ -172,10 +159,6 @@ void MeasureCPU::UpdateValue()
 	}
 }
 
-/*
-** Calculates the current CPU utilization value.
-**
-*/
 void MeasureCPU::CalcUsage(double idleTime, double systemTime)
 {
 	// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)

@@ -1,14 +1,8 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_GFX_RENDERTEXTURE_H__
-#define RM_GFX_RENDERTEXTURE_H__
+#pragma once
 
-#include "D2DBitmap.h"
+#include "Bitmap.h"
 #include "Canvas.h"
 
 namespace Gfx {
@@ -19,12 +13,14 @@ public:
 	RenderTexture(Canvas& canvas, UINT width, UINT height);
 
 	void Resize(Canvas& canvas, UINT width, UINT height);
-	D2DBitmap* GetBitmap() { return &m_Bitmap; }
+	void InvalidateDeviceResources();
+
+	Bitmap* GetBitmap() { return &m_Bitmap; }
 
 private:
-	D2DBitmap m_Bitmap;
+	void CreateBitmap(Canvas& canvas, Bitmap& bitmap, UINT width, UINT height);
+
+	Bitmap m_Bitmap;
 };
 
 } // namespace Gfx
-
-#endif

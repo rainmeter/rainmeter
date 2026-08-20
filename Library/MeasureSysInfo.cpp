@@ -1,9 +1,4 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureSysInfo.h"
@@ -20,7 +15,7 @@
 
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 
-LONGLONG MeasureSysInfo::s_LogonTime = 0LL;
+LONGLONG MeasureSysInfo::s_LogonTime = 0;
 
 MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(SysInfoType::UNKNOWN),
@@ -28,7 +23,7 @@ MeasureSysInfo::MeasureSysInfo(Skin* skin, const WCHAR* name) : Measure(skin, na
 	m_SuppressError(false),
 	m_HasBeenUpdated(false)
 {
-	if (s_LogonTime == 0LL)
+	if (s_LogonTime == 0)
 	{
 		HKEY hKey;
 		if (RegOpenKey(HKEY_CURRENT_USER, L"Volatile Environment", &hKey) == ERROR_SUCCESS)
@@ -53,7 +48,7 @@ MeasureSysInfo::~MeasureSysInfo()
 {
 }
 
-void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureSysInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -356,45 +351,45 @@ void MeasureSysInfo::UpdateValue()
 		switch (m_Type)
 		{
 		case SysInfoType::SCREEN_WIDTH:
-			m_Value = monitor.ToLogical(monitor.screen.right - monitor.screen.left);
+			m_Value = monitor.logicalScreen.right - monitor.logicalScreen.left;
 			break;
 
 		case SysInfoType::SCREEN_HEIGHT:
-			m_Value = monitor.ToLogical(monitor.screen.bottom - monitor.screen.top);
+			m_Value = monitor.logicalScreen.bottom - monitor.logicalScreen.top;
 			break;
 
 		case SysInfoType::WORK_AREA_LEFT:
-			m_Value = monitor.ToLogical(monitor.work.left);
+			m_Value = monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_TOP:
-			m_Value = monitor.ToLogical(monitor.work.top);
+			m_Value = monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::WORK_AREA_WIDTH:
-			m_Value = monitor.ToLogical(monitor.work.right - monitor.work.left);
+			m_Value = monitor.logicalWork.right - monitor.logicalWork.left;
 			break;
 
 		case SysInfoType::WORK_AREA_HEIGHT:
-			m_Value = monitor.ToLogical(monitor.work.bottom - monitor.work.top);
+			m_Value = monitor.logicalWork.bottom - monitor.logicalWork.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_LEFT:
 			// NOTE(poiru): Checking SysInfoData here doesn't make any sense, but left it as-is for
 			// backwards compatibility.
-			m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.left) : monitorInfo.vsL;
+			m_Value = (m_Data > 0) ? monitor.logicalScreen.left : monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_TOP:
-			 m_Value = (m_Data > 0) ? monitor.ToLogical(monitor.screen.top) : monitorInfo.vsT;
+			 m_Value = (m_Data > 0) ? monitor.logicalScreen.top : monitorInfo.logicalVirtualScreen.top;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_WIDTH:
-			m_Value = monitorInfo.vsW;
+			m_Value = monitorInfo.logicalVirtualScreen.right - monitorInfo.logicalVirtualScreen.left;
 			break;
 
 		case SysInfoType::VIRTUAL_SCREEN_HEIGHT:
-			m_Value = monitorInfo.vsH;
+			m_Value = monitorInfo.logicalVirtualScreen.bottom - monitorInfo.logicalVirtualScreen.top;
 			break;
 		}
 		return;
@@ -477,7 +472,7 @@ void MeasureSysInfo::UpdateValue()
 		return;
 
 	case SysInfoType::NUM_MONITORS:
-		m_Value = (double)MonitorUtil::GetMultiMonitorInfo().monitors.size();
+		m_Value = (double)GetSystemMetrics(SM_CMONITORS);
 		return;
 
 	case SysInfoType::ADAPTER_TYPE:
@@ -490,7 +485,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0ULL; i < interfaceCount; ++i)
+			for (size_t i = 0; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -551,9 +546,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::LAST_WAKE_TIME:
 		{
 			const bool isWake = m_Type == SysInfoType::LAST_WAKE_TIME;
-			ULONGLONG nano = 0ULL;
+			ULONGLONG nano = 0;
 			const LONG status = CallNtPowerInformation(isWake ? LastWakeTime : LastSleepTime,
-				nullptr, 0UL, &nano, sizeof(ULONGLONG));
+				nullptr, 0, &nano, sizeof(ULONGLONG));
 			if (status == STATUS_SUCCESS)
 			{
 				m_Value = (s_LogonTime + (LONGLONG)nano) / 10000000.0;
@@ -589,10 +584,10 @@ void MeasureSysInfo::UpdateValue()
 			if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken) == TRUE)
 			{
 				std::vector<BYTE> tokenBuffer;
-				DWORD tokenBufferLen = 0UL;
-				if ((GetTokenInformation(hToken, TokenUser, nullptr, 0UL, &tokenBufferLen) == FALSE) &&
+				DWORD tokenBufferLen = 0;
+				if ((GetTokenInformation(hToken, TokenUser, nullptr, 0, &tokenBufferLen) == FALSE) &&
 					(GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
-					(tokenBufferLen > 0UL))
+					(tokenBufferLen > 0))
 				{
 					tokenBuffer.resize(tokenBufferLen);
 					PTOKEN_USER token = reinterpret_cast<PTOKEN_USER>(&tokenBuffer[0]);
@@ -642,9 +637,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::DOMAIN_NAME:
 	case SysInfoType::DNS_SERVER:
 		{
-			ULONG paramSize = 0UL;
+			ULONG paramSize = 0;
 			GetNetworkParams(nullptr, &paramSize);
-			if (paramSize <= 0UL) break;
+			if (paramSize <= 0) break;
 
 			auto tmp = std::make_unique<BYTE[]>(paramSize);
 			if (GetNetworkParams((PFIXED_INFO)tmp.get(), &paramSize) != ERROR_SUCCESS) break;
@@ -684,7 +679,7 @@ void MeasureSysInfo::UpdateValue()
 			if (!table) break;
 
 			const ULONG interfaceCount = NetworkUtil::GetInterfaceCount();
-			for (size_t i = 0ULL; i < interfaceCount; ++i)
+			for (size_t i = 0; i < interfaceCount; ++i)
 			{
 				if (table[i].InterfaceIndex != m_Data) continue;
 
@@ -721,9 +716,9 @@ void MeasureSysInfo::UpdateValue()
 					break;
 
 				case SysInfoType::MAC_ADDRESS:
-					for (ULONG j = 0UL; j < table[i].PhysicalAddressLength; ++j)
+					for (ULONG j = 0; j < table[i].PhysicalAddressLength; ++j)
 					{
-						if (j > 0UL) m_StringValue += L"-";
+						if (j > 0) m_StringValue += L"-";
 						_snwprintf_s(buffer, bufferLen, L"%02X", table[i].PhysicalAddress[j]);
 						m_StringValue += buffer;
 					}
@@ -738,16 +733,16 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::IP_ADDRESS:
 		{
 			const bool isIpAddress = m_Type == SysInfoType::IP_ADDRESS;
-			ULONG tableSize = 0UL;
+			ULONG tableSize = 0;
 			GetIpAddrTable(nullptr, &tableSize, TRUE);
-			if (tableSize <= 0UL) break;
+			if (tableSize <= 0) break;
 
 			auto tmp = std::make_unique<BYTE[]>(tableSize);
 			if (GetIpAddrTable((PMIB_IPADDRTABLE)tmp.get(),
 				&tableSize, TRUE) != NO_ERROR) break;
 
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmp.get();
-			for (ULONG i = 0UL; i < ipTable->dwNumEntries; ++i)
+			for (ULONG i = 0; i < ipTable->dwNumEntries; ++i)
 			{
 				if (ipTable->table[i].dwIndex != m_Data) continue;
 
@@ -764,9 +759,9 @@ void MeasureSysInfo::UpdateValue()
 	case SysInfoType::GATEWAY_ADDRESS_V6:
 		{
 			ULONG family = m_Type == SysInfoType::GATEWAY_ADDRESS_V6 ? AF_INET6 : AF_INET;
-			ULONG adapterSize = 0UL;
-			GetAdaptersAddresses(family, 0UL, nullptr, nullptr, &adapterSize);
-			if (adapterSize <= 0UL) break;
+			ULONG adapterSize = 0;
+			GetAdaptersAddresses(family, 0, nullptr, nullptr, &adapterSize);
+			if (adapterSize <= 0) break;
 
 			ULONG flags = GAA_FLAG_INCLUDE_GATEWAYS;
 			auto tmp = std::make_unique<BYTE[]>(adapterSize);

@@ -1,15 +1,11 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRegistry.h"
 #include "Rainmeter.h"
 
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_OutputType(OutputType::Value),
 	m_RegKey(nullptr),
 	m_HKey(HKEY_CURRENT_USER)
@@ -31,10 +27,6 @@ void MeasureRegistry::Dispose()
 	}
 }
 
-/*
-** Gets the current value from the registry
-**
-*/
 void MeasureRegistry::UpdateValue()
 {
 	m_Value = 0.0;
@@ -42,7 +34,7 @@ void MeasureRegistry::UpdateValue()
 
 	if (!m_RegKey)
 	{
-		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
+		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 	}
 
 	if (m_RegKey)
@@ -67,16 +59,16 @@ void MeasureRegistry::UpdateValue()
 				}
 			};
 
-			DWORD numSubKeys = 0UL;
-			DWORD numValues = 0UL;
+			DWORD numSubKeys = 0;
+			DWORD numValues = 0;
 			if (ERROR_SUCCESS == RegQueryInfoKey(m_RegKey, nullptr, nullptr, nullptr, &numSubKeys,
 				nullptr, nullptr, &numValues, nullptr, nullptr, nullptr, nullptr))
 			{
-				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0UL)
+				if (m_OutputType == OutputType::SubKeyList && numSubKeys > 0)
 				{
 					getList(numSubKeys, RegEnumKeyEx);
 				}
-				else if (m_OutputType == OutputType::ValueList && numValues > 0UL)
+				else if (m_OutputType == OutputType::ValueList && numValues > 0)
 				{
 					getList(numValues, RegEnumValue);
 				}
@@ -86,7 +78,7 @@ void MeasureRegistry::UpdateValue()
 		{
 			DWORD dataSize = 128;
 			BYTE* data = new BYTE[dataSize];
-			DWORD type = 0UL;
+			DWORD type = 0;
 
 			DWORD resultSize = dataSize;
 			DWORD result = RegQueryValueEx(m_RegKey, m_RegValueName.c_str(), nullptr, &type, data, &resultSize);
@@ -131,7 +123,7 @@ void MeasureRegistry::UpdateValue()
 						{
 							// Use assign with length in case the data is not null-terminated.
 							m_StringValue.assign(rawStringData, rawStringLength);
-							m_Value = wcstod(m_StringValue.c_str(), nullptr);
+							m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 						}
 						else if (type == REG_MULTI_SZ)
 						{
@@ -148,7 +140,7 @@ void MeasureRegistry::UpdateValue()
 									if (!convertedToNumber)
 									{
 										// Convert the first string to a number.
-										m_Value = wcstod(m_StringValue.c_str(), nullptr);
+										m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 										convertedToNumber = true;
 									}
 
@@ -159,7 +151,7 @@ void MeasureRegistry::UpdateValue()
 
 							if (!convertedToNumber)
 							{
-								m_Value = wcstod(m_StringValue.c_str(), nullptr);
+								m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 							}
 						}
 					}
@@ -170,7 +162,7 @@ void MeasureRegistry::UpdateValue()
 					break;
 
 				case REG_BINARY:
-					for (DWORD i = 0UL; i < resultSize; ++i)
+					for (DWORD i = 0; i < resultSize; ++i)
 					{
 						WCHAR buffer[3];
 						_snwprintf_s(buffer, 3, L"%02X", data[i]);
@@ -191,13 +183,11 @@ void MeasureRegistry::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
+
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
 	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
 	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
@@ -261,14 +251,11 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Try to open the key
 	Dispose();
-	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0UL, KEY_READ, &m_RegKey);
+	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 }
 
-/*
-** If the measured registry value is a string display it. Otherwise convert the
-** value to string as normal.
-**
-*/
+// If the measured registry value is a string display it. Otherwise convert the
+// value to string as normal.
 const WCHAR* MeasureRegistry::GetStringValue()
 {
 	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : nullptr;

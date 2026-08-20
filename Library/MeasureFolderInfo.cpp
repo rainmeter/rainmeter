@@ -1,20 +1,14 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureFolderInfo.h"
 #include "ConfigParser.h"
 #include "Logger.h"
+#include "Pcre.h"
 #include "Skin.h"
 #include "../Common/RawString.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
 
-#define UPDATE_TIME_MIN_MS (10000ULL)
+#define UPDATE_TIME_MIN_MS (10000)
 
 namespace {
 
@@ -22,7 +16,6 @@ class FolderInfo
 {
 public:
 	FolderInfo();
-	~FolderInfo();
 
 	void SetPath(const WCHAR* path);
 	void SetRegExpFilter(const WCHAR* filter);
@@ -38,7 +31,6 @@ public:
 
 private:
 	void Clear();
-	void FreePcre();
 	void CalculateSize();
 
 	RawString m_Path;
@@ -48,7 +40,7 @@ private:
 	UINT64 m_Size;
 	UINT m_FileCount;
 	UINT m_FolderCount;
-	pcre16* m_RegExpFilter;
+	Pcre m_RegExpFilter;
 	ULONGLONG m_LastUpdateTime;
 };
 
@@ -56,33 +48,18 @@ FolderInfo::FolderInfo() :
 	m_IncludeSubFolders(false),
 	m_IncludeHiddenFiles(false),
 	m_IncludeSystemFiles(false),
-	m_Size(0ULL),
-	m_FileCount(0U),
-	m_FolderCount(0U),
-	m_RegExpFilter(nullptr),
-	m_LastUpdateTime(0ULL)
+	m_Size(0),
+	m_FileCount(0),
+	m_FolderCount(0),
+	m_LastUpdateTime(0)
 {
-}
-
-FolderInfo::~FolderInfo()
-{
-	FreePcre();
 }
 
 void FolderInfo::Clear()
 {
-	m_Size = 0ULL;
-	m_FileCount = 0U;
-	m_FolderCount = 0U;
-}
-
-void FolderInfo::FreePcre()
-{
-	if (m_RegExpFilter)
-	{
-		pcre16_free(m_RegExpFilter);
-		m_RegExpFilter = nullptr;
-	}
+	m_Size = 0;
+	m_FileCount = 0;
+	m_FolderCount = 0;
 }
 
 void FolderInfo::Update()
@@ -142,10 +119,7 @@ void FolderInfo::CalculateSize()
 			}
 			else if (!isFolder && m_RegExpFilter)
 			{
-				if (pcre16_exec(
-						m_RegExpFilter, nullptr,
-						(PCRE_SPTR16)findData.cFileName, (int)wcslen(findData.cFileName),
-						0, 0, nullptr, 0) != 0)
+				if (m_RegExpFilter.Execute(findData.cFileName, 0, nullptr, 0) != 0)
 				{
 					continue;
 				}
@@ -179,20 +153,17 @@ void FolderInfo::SetPath(const WCHAR* path)
 	if (wcscmp(m_Path.c_str(), path) != 0)
 	{
 		m_Path = path;
-		m_LastUpdateTime = 0ULL;
+		m_LastUpdateTime = 0;
 	}
 }
 
 void FolderInfo::SetRegExpFilter(const WCHAR* filter)
 {
-	FreePcre();
-
+	m_RegExpFilter.Reset();
 	if (*filter)
 	{
 		const char* error = nullptr;
-		int erroffset = 0;
-		m_RegExpFilter = pcre16_compile(
-			(PCRE_SPTR16)filter, PCRE_UTF16, &error, &erroffset, nullptr);
+		m_RegExpFilter.Compile(filter, &error);
 	}
 }
 
@@ -203,7 +174,7 @@ struct FolderInfoParentMeasure
 	FolderInfoParentMeasure(MeasureFolderInfo* measure) :
 		folder(),
 		owner(measure),
-		measureCount(1U)
+		measureCount(1)
 	{
 	}
 
@@ -231,7 +202,7 @@ MeasureFolderInfo::~MeasureFolderInfo()
 {
 	if (m_Parent)
 	{
-		if (--m_Parent->measureCount == 0U)
+		if (--m_Parent->measureCount == 0)
 		{
 			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
 			g_ParentMeasures.erase(iter);
@@ -242,7 +213,7 @@ MeasureFolderInfo::~MeasureFolderInfo()
 	}
 }
 
-void MeasureFolderInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

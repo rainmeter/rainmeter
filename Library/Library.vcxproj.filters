@@ -1,15 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{2d6bf39d-48e1-4de3-8924-46c5666cb141}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
-    </Filter>
-    <Filter Include="Lua">
-      <UniqueIdentifier>{6570e2b7-2e40-4fba-a051-01de85760fea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\glue">
-      <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
     </Filter>
     <Filter Include="NowPlaying">
       <UniqueIdentifier>{64424fee-4da8-4109-84de-df55a55e63c0}</UniqueIdentifier>
@@ -17,24 +11,21 @@
     <Filter Include="taglib">
       <UniqueIdentifier>{fe354ece-06ea-4af8-9129-f0fcb7e31d0c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{90a21e5f-7ab9-45d6-842c-d780a9e14c6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\kiss_fft130">
+      <UniqueIdentifier>{d1bf569e-05e7-4d77-8408-c39c1f31df2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\luautf8">
+      <UniqueIdentifier>{7c0e5f2a-3d19-4c86-9b4e-5a2f0d6c1b83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\PerfCounter">
+      <UniqueIdentifier>{ebfa0cf5-2371-4459-a25d-e16109dd2142}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
-    <ClCompile Include="lua\LuaScript.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeasure.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeter.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeterWindow.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\glue\LuaGlobal.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -69,7 +60,10 @@
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="CoreTemp\CoreTempProxy.cpp" />
+    <ClCompile Include="CoreTemp\SharedMem.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogDebug.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
@@ -78,12 +72,26 @@
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="Language.cpp" />
+    <ClCompile Include="LocaleUtil.cpp" />
     <ClCompile Include="Language_Test.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="LuaBindingGlobal.cpp" />
+    <ClCompile Include="LuaBindingMeasure.cpp" />
+    <ClCompile Include="LuaBindingMeter.cpp" />
+    <ClCompile Include="LuaBindingSkin.cpp" />
+    <ClCompile Include="LuaBindingSection.cpp" />
+    <ClCompile Include="LuaHelper.cpp" />
+    <ClCompile Include="LuaScript.cpp" />
     <ClCompile Include="Measure.cpp" />
+    <ClCompile Include="MeasureActionTimer.cpp" />
+    <ClCompile Include="MeasureAdvancedCPU.cpp" />
+    <ClCompile Include="MeasureAudioLevel.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
+    <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureDragDrop.cpp" />
+    <ClCompile Include="MeasureFileView.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
     <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
@@ -95,6 +103,7 @@
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
+    <ClCompile Include="MeasurePerfMon.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
     <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
@@ -104,6 +113,7 @@
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
     <ClCompile Include="MeasureResMon.cpp" />
+    <ClCompile Include="MeasureRunCommand.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
     <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
@@ -113,7 +123,7 @@
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
-    <ClCompile Include="MeasureWin7Audio.cpp" />
+    <ClCompile Include="MeasureAudio.cpp" />
     <ClCompile Include="MeasureWindowMessage.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
@@ -121,20 +131,23 @@
     <ClCompile Include="MeterButton.cpp" />
     <ClCompile Include="MeterHistogram.cpp" />
     <ClCompile Include="MeterImage.cpp" />
+    <ClCompile Include="MeterSvg.cpp" />
     <ClCompile Include="MeterLine.cpp" />
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
     <ClCompile Include="MeterShape.cpp" />
+    <ClCompile Include="MeterStringBase.cpp" />
     <ClCompile Include="MeterString.cpp" />
+    <ClCompile Include="MeterTextEdit.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="MonitorUtil.cpp" />
-    <ClCompile Include="MonitorUtil_Test.cpp" />
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinDropTarget.cpp" />
     <ClCompile Include="SkinPosition.cpp" />
-    <ClCompile Include="SkinZoomDrag.cpp" />
+    <ClCompile Include="SkinSelectionOverlay.cpp" />
     <ClCompile Include="SkinPosition_Test.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />
@@ -144,17 +157,39 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="lua\LuaHelper.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
+    <ClCompile Include="WindowOcclusionTracker.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+      <Filter>ThirdParty\kiss_fft130</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+      <Filter>ThirdParty\kiss_fft130</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
+      <Filter>ThirdParty\luautf8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lua\LuaScript.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
     <ClInclude Include="NowPlaying\Player.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
@@ -182,11 +217,15 @@
     <ClInclude Include="NowPlaying\Cover.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
+    <ClInclude Include="AspectRatioMode.h" />
     <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="CoreTemp\CoreTempProxy.h" />
+    <ClInclude Include="CoreTemp\SharedMem.h" />
     <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogDebug.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />
@@ -195,11 +234,21 @@
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
     <ClInclude Include="Language.h" />
+    <ClInclude Include="LocaleUtil.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="LuaBindingSection.h" />
+    <ClInclude Include="LuaHelper.h" />
+    <ClInclude Include="LuaScript.h" />
     <ClInclude Include="Measure.h" />
+    <ClInclude Include="MeasureActionTimer.h" />
+    <ClInclude Include="MeasureAdvancedCPU.h" />
+    <ClInclude Include="MeasureAudioLevel.h" />
     <ClInclude Include="MeasureCalc.h" />
+    <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureDragDrop.h" />
+    <ClInclude Include="MeasureFileView.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
     <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
@@ -211,6 +260,7 @@
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
+    <ClInclude Include="MeasurePerfMon.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
     <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
@@ -220,6 +270,7 @@
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureResMon.h" />
+    <ClInclude Include="MeasureRunCommand.h" />
     <ClInclude Include="MeasureScript.h" />
     <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
@@ -229,7 +280,7 @@
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
-    <ClInclude Include="MeasureWin7Audio.h" />
+    <ClInclude Include="MeasureAudio.h" />
     <ClInclude Include="MeasureWindowMessage.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
@@ -237,21 +288,26 @@
     <ClInclude Include="MeterButton.h" />
     <ClInclude Include="MeterHistogram.h" />
     <ClInclude Include="MeterImage.h" />
+    <ClInclude Include="MeterSvg.h" />
     <ClInclude Include="MeterLine.h" />
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterShape.h" />
+    <ClInclude Include="MeterStringBase.h" />
     <ClInclude Include="MeterString.h" />
+    <ClInclude Include="MeterTextEdit.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="MonitorUtil.h" />
     <ClInclude Include="Net.h" />
+    <ClInclude Include="Pcre.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
     <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinDropTarget.h" />
     <ClInclude Include="SkinPosition.h" />
-    <ClInclude Include="SkinZoomDrag.h" />
+    <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="SkinInstaller.h" />
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
@@ -259,13 +315,32 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="lua\LuaHelper.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
+    <ClInclude Include="WindowOcclusionTracker.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h">
+      <Filter>ThirdParty\PerfCounter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">

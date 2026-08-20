@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWindowMessage.h"
@@ -16,7 +11,7 @@ MeasureWindowMessage::MeasureWindowMessage(Skin* skin, const WCHAR* name) : Meas
 	m_StringValue(),
 	m_WParam(0),
 	m_LParam(0),
-	m_Message(0U)
+	m_Message(0)
 {
 }
 
@@ -24,20 +19,20 @@ MeasureWindowMessage::~MeasureWindowMessage()
 {
 }
 
-void MeasureWindowMessage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
 	m_WindowName = parser.ReadString(section, L"WindowName", L"");
 	m_WindowClass = parser.ReadString(section, L"WindowClass", L"");
 
-	m_Message = 0U;
+	m_Message = 0;
 	m_WParam = 0;
 	m_LParam = 0;
 
-	UINT message = 0U;
-	UINT wParam = 0U;
-	UINT lParam = 0U;
+	UINT message = 0;
+	UINT wParam = 0;
+	UINT lParam = 0;
 	const std::wstring& windowMessage = parser.ReadString(section, L"WindowMessage", L"");
 	if (swscanf_s(windowMessage.c_str(), L"%u %u %u", &message, &wParam, &lParam) == 3)
 	{
@@ -54,7 +49,7 @@ void MeasureWindowMessage::UpdateValue()
 	HWND hwnd = FindTargetWindow();
 	if (hwnd)
 	{
-		if (m_Message == 0U)
+		if (m_Message == 0)
 		{
 			WCHAR buffer[256] = { 0 };
 			GetWindowText(hwnd, buffer, _countof(buffer));
@@ -65,7 +60,7 @@ void MeasureWindowMessage::UpdateValue()
 			m_Value = (double)SendMessage(hwnd, m_Message, m_WParam, m_LParam);
 		}
 	}
-	else if (m_Message == 0U)
+	else if (m_Message == 0)
 	{
 		m_StringValue.clear();
 	}
@@ -73,7 +68,7 @@ void MeasureWindowMessage::UpdateValue()
 
 const WCHAR* MeasureWindowMessage::GetStringValue()
 {
-	if (m_Message == 0U)
+	if (m_Message == 0)
 	{
 		return CheckSubstitute(m_StringValue.c_str());
 	}
@@ -92,9 +87,9 @@ void MeasureWindowMessage::Command(const std::wstring& command)
 		{
 			++pos;
 
-			UINT message = 0U;
-			UINT wParam = 0U;
-			UINT lParam = 0U;
+			UINT message = 0;
+			UINT wParam = 0;
+			UINT lParam = 0;
 			if (swscanf_s(pos, L"%u %u %u", &message, &wParam, &lParam) == 3)
 			{
 				HWND hwnd = FindTargetWindow();

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}</ProjectGuid>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <TargetName>ThirdParty_LuaJIT</TargetName>
+    <TargetExt>.lib</TargetExt>
+    <NMakeOutput>$(IntDir)$(TargetName)$(TargetExt)</NMakeOutput>
+    <NMakeBuildCommandLine>powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\BuildLuaJIT.ps1&quot; -SourceDirectory &quot;$(SolutionDir)ThirdParty\luajit&quot; -BuildDirectory &quot;$(IntDir)LuaJIT&quot; -OutputLibrary &quot;$(NMakeOutput)&quot; -Configuration &quot;$(Configuration)&quot; -Platform &quot;$(Platform)&quot;</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>if exist &quot;$(NMakeOutput)&quot; del /F /Q &quot;$(NMakeOutput)&quot; &amp; if exist &quot;$(IntDir)LuaJIT&quot; rmdir /S /Q &quot;$(IntDir)LuaJIT&quot;</NMakeCleanCommandLine>
+    <NMakeIncludeSearchPath>$(SolutionDir)ThirdParty\luajit\src;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>WIN32;_WINDOWS;_LIB</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClInclude Include="luajit\src\lua.h" />
+    <ClInclude Include="luajit\src\lauxlib.h" />
+    <ClInclude Include="luajit\src\lualib.h" />
+    <ClInclude Include="luajit\src\luaconf.h" />
+    <ClInclude Include="luajit\src\lua.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <LuaJITBuildInput Include="$(SolutionDir)Build\BuildLuaJIT.ps1" />
+    <LuaJITBuildInput Include="$(SolutionDir)Build\CustomLuaJIT.patch" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\.relver" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\src\**\*" />
+    <LuaJITBuildInput Include="$(SolutionDir)ThirdParty\luajit\dynasm\**\*" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="Build" DependsOnTargets="PrepareForNMakeBuild;ResolveReferences;GetTargetPath;$(PreNMakeBuildTarget)" Inputs="@(LuaJITBuildInput)" Outputs="$(NMakeOutput)" Returns="$(NMakeManagedOutput)">
+    <Exec Command="$(NMakeBuildCommandLine)" />
+  </Target>
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

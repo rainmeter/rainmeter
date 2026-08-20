@@ -1,12 +1,6 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __METERROUNDLINE_H__
-#define __METERROUNDLINE_H__
+#pragma once
 
 #include "Meter.h"
 
@@ -25,8 +19,8 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
 
 private:
 	bool m_Solid;
@@ -44,5 +38,3 @@ private:
 	D2D1_COLOR_F m_LineColor;
 	double m_Value;
 };
-
-#endif

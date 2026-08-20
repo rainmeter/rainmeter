@@ -1,16 +1,10 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __IMAGECACHE_H__
-#define __IMAGECACHE_H__
+#pragma once
 
 #include <bit>
 #include <string>
-#include <../Common/Gfx/D2DBitmap.h>
+#include <../Common/Gfx/Bitmap.h>
 #include "ImageOptions.h"
 
 class ImageCachePool;
@@ -25,7 +19,7 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 		const auto normalizeFloatBits = [](FLOAT value) -> uint32_t
 		{
 			// Handle positive and negative floating point zeros.
-			return value == 0.0f ? 0U : std::bit_cast<uint32_t>(value);
+			return value == 0.0f ? 0 : std::bit_cast<uint32_t>(value);
 		};
 
 		const auto mix64 = [](uint64_t state, uint64_t value) -> uint64_t
@@ -35,17 +29,17 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 
 		const auto mixFloatPair = [&](uint64_t state, FLOAT first, FLOAT second) -> uint64_t
 		{
-			return mix64(state, static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32U));
+			return mix64(state, static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32));
 		};
 
 		const auto packSmallFields = [](uint32_t rotate, uint8_t cropMode, uint8_t flip, bool greyScale, bool useExifOrientation, bool createAlphaMask) -> uint64_t
 		{
-			return (static_cast<uint64_t>(rotate) << 32U) |
+			return (static_cast<uint64_t>(rotate) << 32) |
 				static_cast<uint64_t>(cropMode) |
-				(static_cast<uint64_t>(flip) << 8U) |
-				(static_cast<uint64_t>(greyScale) << 16U) |
-				(static_cast<uint64_t>(useExifOrientation) << 17U) |
-				(static_cast<uint64_t>(createAlphaMask) << 18U);
+				(static_cast<uint64_t>(flip) << 8) |
+				(static_cast<uint64_t>(greyScale) << 16) |
+				(static_cast<uint64_t>(useExifOrientation) << 17) |
+				(static_cast<uint64_t>(createAlphaMask) << 18);
 		};
 
 		uint64_t hash = ankerl::unordered_dense::detail::wyhash::hash(opt.m_Path.data(), opt.m_Path.size() * sizeof(WCHAR));
@@ -69,11 +63,11 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 
 struct ImageCache
 {
-	ImageCache(const ImageOptions& key, Gfx::D2DBitmap* bitmap, ImageCachePool* pool) :
+	ImageCache(const ImageOptions& key, Gfx::Bitmap* bitmap, ImageCachePool* pool) :
 		m_Key(key),
 		m_Bitmap(bitmap),
 		m_Pool(pool),
-		m_Instances(0U)
+		m_Instances(0)
 	{ }
 
 	~ImageCache()
@@ -82,10 +76,10 @@ struct ImageCache
 		m_Bitmap = nullptr;
 	}
 
-	void Update(const ImageOptions& key, Gfx::D2DBitmap* item);
+	void Update(const ImageOptions& key, Gfx::Bitmap* item);
 
 	ImageOptions m_Key;
-	Gfx::D2DBitmap* m_Bitmap;
+	Gfx::Bitmap* m_Bitmap;
 	ImageCachePool* m_Pool;
 	UINT m_Instances;
 };
@@ -96,7 +90,7 @@ private:
 	struct ConstructorToken {};
 
 public:
-	Gfx::D2DBitmap* GetBitmap() const { return m_Cache->m_Bitmap; }
+	Gfx::Bitmap* GetBitmap() const { return m_Cache->m_Bitmap; }
 	ImageOptions& GetKey() const { return m_Cache->m_Key; }
 
 	ImageCacheHandle(const ImageCacheHandle&) = delete;
@@ -119,7 +113,9 @@ public:
 	static ImageCachePool& GetInstance();
 
 	std::unique_ptr<ImageCacheHandle> Get(const ImageOptions& key);
-	void Put(const ImageOptions& key, Gfx::D2DBitmap* item);
+	void Put(const ImageOptions& key, Gfx::Bitmap* item);
+
+	void InvalidateDeviceResources();
 
 private:
 	friend struct ImageCacheHandle;
@@ -136,5 +132,3 @@ private:
 
 // Convenience function.
 inline ImageCachePool& GetImageCache() { return ImageCachePool::GetInstance(); }
-
-#endif

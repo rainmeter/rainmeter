@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "PlayerITunes.h"
@@ -11,15 +6,11 @@
 Player* PlayerITunes::c_Player = nullptr;
 extern HINSTANCE g_Instance;
 
-/*
-** Constructor.
-**
-*/
 PlayerITunes::CEventHandler::CEventHandler(PlayerITunes* player) :
 	m_Player(player),
-	m_RefCount(0UL),
+	m_RefCount(0),
 	m_ConnectionPoint(nullptr),
-	m_ConnectionCookie(0UL)
+	m_ConnectionCookie(0)
 {
 	IConnectionPointContainer* icpc = nullptr;
 	m_Player->m_iTunes->QueryInterface(IID_IConnectionPointContainer, (void**)&icpc);
@@ -28,10 +19,6 @@ PlayerITunes::CEventHandler::CEventHandler(PlayerITunes* player) :
 	icpc->Release();
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerITunes::CEventHandler::~CEventHandler()
 {
 	if (m_ConnectionPoint)
@@ -63,14 +50,10 @@ ULONG STDMETHODCALLTYPE PlayerITunes::CEventHandler::Release()
 	return --m_RefCount;
 }
 
-/*
-** Constructor.
-**
-*/
 PlayerITunes::PlayerITunes() : Player(),
 	m_TrackID(0L),
 	m_CallbackWindow(nullptr),
-	m_LastCheckTime(0UL),
+	m_LastCheckTime(0),
 	m_iTunesActive(false),
 	m_iTunes(nullptr),
 	m_iTunesEvent(nullptr)
@@ -96,10 +79,6 @@ PlayerITunes::PlayerITunes() : Player(),
 									this);
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerITunes::~PlayerITunes()
 {
 	c_Player = nullptr;
@@ -111,10 +90,6 @@ PlayerITunes::~PlayerITunes()
 	Uninitialize();
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerITunes::Create()
 {
 	if (!c_Player)
@@ -125,10 +100,6 @@ Player* PlayerITunes::Create()
 	return c_Player;
 }
 
-/*
-** Initialize iTunes COM interface and event handler.
-**
-*/
 void PlayerITunes::Initialize()
 {
 	while (true)
@@ -183,10 +154,6 @@ void PlayerITunes::Initialize()
 	}
 }
 
-/*
-** Close iTunes COM interface.
-**
-*/
 void PlayerITunes::Uninitialize()
 {
 	if (m_Initialized)
@@ -202,10 +169,6 @@ void PlayerITunes::Uninitialize()
 	}
 }
 
-/*
-** Window procedure for the callback window.
-**
-*/
 LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static PlayerITunes* player;
@@ -221,14 +184,10 @@ LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-/*
-** Try to find iTunes periodically.
-**
-*/
 bool PlayerITunes::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
-	if (time - m_LastCheckTime > 500ULL)
+	if (time - m_LastCheckTime > 500)
 	{
 		m_LastCheckTime = time;
 
@@ -248,10 +207,6 @@ bool PlayerITunes::CheckWindow()
 	return m_iTunesActive;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerITunes::UpdateData()
 {
 	if (CheckWindow())
@@ -328,10 +283,6 @@ void PlayerITunes::UpdateData()
 	}
 }
 
-/*
-** Called during measure update, for data that only needs updated on song change
-**
-*/
 void PlayerITunes::UpdateCachedData()
 {
 	IITTrack* track = nullptr;
@@ -442,64 +393,36 @@ void PlayerITunes::UpdateCachedData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerITunes::Pause()
 {
 	m_iTunes->Pause();
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerITunes::Play()
 {
 	m_iTunes->Play();
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerITunes::Stop()
 {
 	m_iTunes->Stop();
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerITunes::Next()
 {
 	m_iTunes->NextTrack();
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerITunes::Previous()
 {
 	m_iTunes->PreviousTrack();
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerITunes::SetPosition(int position)
 {
 	m_iTunes->put_PlayerPosition((long)position);
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerITunes::SetRating(int rating)
 {
 	IITTrack* track = nullptr;
@@ -512,19 +435,11 @@ void PlayerITunes::SetRating(int rating)
 	}
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerITunes::SetVolume(int volume)
 {
 	m_iTunes->put_SoundVolume((long)volume);
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerITunes::SetShuffle(bool state)
 {
 	IITTrack* track = nullptr;
@@ -545,10 +460,6 @@ void PlayerITunes::SetShuffle(bool state)
 	}
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerITunes::SetRepeat(bool state)
 {
 	IITTrack* track = nullptr;
@@ -569,22 +480,14 @@ void PlayerITunes::SetRepeat(bool state)
 	}
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerITunes::ClosePlayer()
 {
 	m_iTunes->Quit();
 	m_iTunesActive = false;
 	Uninitialize();
-	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500U, nullptr);
+	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerITunes::OpenPlayer(std::wstring& path)
 {
 	ShellExecute(nullptr, L"open", path.empty() ? L"iTunes.exe" : path.c_str(), nullptr, nullptr, SW_SHOW);

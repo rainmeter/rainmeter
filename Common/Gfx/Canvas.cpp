@@ -1,28 +1,40 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Canvas.h"
-#include "TextFormatD2D.h"
-#include "D2DBitmap.h"
+#include "TextFormat.h"
+#include "Bitmap.h"
+#include "Svg.h"
 #include "RenderTexture.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteFontCollectionLoader.h"
+#include "../Platform.h"
 
 #include <dxgidebug.h>
 
 namespace Gfx {
 
-UINT Canvas::c_Instances = 0;
-D3D_FEATURE_LEVEL Canvas::c_FeatureLevel;
+const DXGI_SWAP_CHAIN_DESC1 g_SwapChainDesc =
+{
+	.Width = 1,
+	.Height = 1,
+	.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+	.Stereo = false,
+	.SampleDesc = { .Count = 1, .Quality = 0 },
+	.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+	.BufferCount = 1,
+	.Scaling = DXGI_SCALING_STRETCH,
+	.SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
+	.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+	.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE,
+};
+
+bool Canvas::c_HardwareAccelerated = true;
+Canvas::DeviceLostCallback Canvas::c_DeviceLostCallback = nullptr;
 Microsoft::WRL::ComPtr<ID3D11Device> Canvas::c_D3DDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> Canvas::c_D3DContext;
 Microsoft::WRL::ComPtr<ID2D1Device> Canvas::c_D2DDevice;
-Microsoft::WRL::ComPtr<ID2D1DeviceContext> Canvas::c_EffectTarget;
+Microsoft::WRL::ComPtr<ID2D1DeviceContext5> Canvas::c_EffectTarget;
 Microsoft::WRL::ComPtr<IDXGIDevice1> Canvas::c_DxgiDevice;
 Microsoft::WRL::ComPtr<ID2D1Factory1> Canvas::c_D2DFactory;
 Microsoft::WRL::ComPtr<IDWriteFactory1> Canvas::c_DWFactory;
@@ -32,35 +44,68 @@ Canvas::Canvas() :
 	m_W(0),
 	m_H(0),
 	m_Dpi(96.0f),
-	m_MaxBitmapSize(0U),
+	m_MaxBitmapSize(0),
+	m_ValidDeviceContext(false),
 	m_IsDrawing(false),
 	m_EnableDrawAfterGdi(false),
 	m_TextAntiAliasing(false),
 	m_CanUseAxisAlignClip(true)
 {
-	Initialize(true);
 }
 
 Canvas::~Canvas()
 {
-	Finalize();
 }
 
-bool Canvas::Initialize(bool hardwareAccelerated)
+bool Canvas::Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostCallback)
 {
-	++c_Instances;
-	if (c_Instances == 1U)
+	c_HardwareAccelerated = hardwareAccelerated;
+	c_DeviceLostCallback = deviceLostCallback;
+
+	D2D1_FACTORY_OPTIONS fo = {};
+	const bool debug = false;
+	if (debug)
 	{
-		// Required for Direct2D interopability.
-		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+	}
+
+	HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, fo, c_D2DFactory.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(c_DWFactory), (IUnknown**)c_DWFactory.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	if (FAILED(hr)) return false;
+
+	hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(c_WICFactory.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	return AttachDevice();
+}
+
+bool Canvas::AttachDevice()
+{
+	c_EffectTarget.Reset();
+	c_D2DDevice.Reset();
+	c_DxgiDevice.Reset();
+	c_D3DContext.Reset();
+	c_D3DDevice.Reset();
+
+	// Required for Direct2D interopability.
+	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #ifdef _DEBUG
+	// The D3D11 debug layer is not available to x64 processes emulated on ARM64.
+	if (!GetPlatform().IsEmulatedOnArm64())
+	{
 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	}
 #endif
 
-		auto tryCreateContext = [&](D3D_DRIVER_TYPE driverType,
-			const D3D_FEATURE_LEVEL* levels, UINT numLevels)
+	auto tryCreateDevice = [&](D3D_DRIVER_TYPE driverType, const D3D_FEATURE_LEVEL* levels, UINT numLevels)
 		{
+			D3D_FEATURE_LEVEL deviceFeatureLevel;
 			return D3D11CreateDevice(
 				nullptr,
 				driverType,
@@ -69,91 +114,111 @@ bool Canvas::Initialize(bool hardwareAccelerated)
 				levels,
 				numLevels,
 				D3D11_SDK_VERSION,
-				c_D3DDevice.GetAddressOf(),
-				&c_FeatureLevel,
-				c_D3DContext.GetAddressOf());
+				c_D3DDevice.ReleaseAndGetAddressOf(),
+				&deviceFeatureLevel,
+				c_D3DContext.ReleaseAndGetAddressOf());
 		};
 
-		// D3D selects the best feature level automatically and sets it
-		// to |c_FeatureLevel|. First, we try to use the hardware driver
-		// and if that fails, we try the WARP rasterizer for cases
-		// where there is no graphics card or other failures.
-		const D3D_FEATURE_LEVEL levels[] =
-		{
-			D3D_FEATURE_LEVEL_11_1,
-			D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,
-			D3D_FEATURE_LEVEL_10_0,
-			D3D_FEATURE_LEVEL_9_3,
-			D3D_FEATURE_LEVEL_9_2,
-			D3D_FEATURE_LEVEL_9_1
-		};
+	const D3D_FEATURE_LEVEL levels[] =
+	{
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
 
-		HRESULT hr = E_FAIL;
-		if (hardwareAccelerated)
+	HRESULT hr = E_FAIL;
+	if (c_HardwareAccelerated)
+	{
+		hr = tryCreateDevice(D3D_DRIVER_TYPE_HARDWARE, levels, _countof(levels));
+		if (hr == E_INVALIDARG)
 		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, levels, _countof(levels));
-			if (hr == E_INVALIDARG)
-			{
-				hr = tryCreateContext(D3D_DRIVER_TYPE_HARDWARE, &levels[1], _countof(levels) - 1);
-			}
+			hr = tryCreateDevice(D3D_DRIVER_TYPE_HARDWARE, &levels[1], _countof(levels) - 1);
 		}
+	}
 
-		if (FAILED(hr))
-		{
-			hr = tryCreateContext(D3D_DRIVER_TYPE_WARP, nullptr, 0U);
-			if (FAILED(hr)) return false;
-		}
-
-		hr = c_D3DDevice.As(&c_DxgiDevice);
-		if (FAILED(hr)) return false;
-
-		D2D1_FACTORY_OPTIONS fo = {};
-		const bool debug = false;
-		if (debug)
-		{
-			fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-		}
-
-		hr = D2D1CreateFactory(
-			D2D1_FACTORY_TYPE_SINGLE_THREADED,
-			fo,
-			c_D2DFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = c_D2DFactory->CreateDevice(
-			c_DxgiDevice.Get(),
-			c_D2DDevice.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = CreateDeviceContext(c_EffectTarget);
-		if (FAILED(hr)) return false;
-
-		hr = CoCreateInstance(
-			CLSID_WICImagingFactory,
-			nullptr,
-			CLSCTX_INPROC_SERVER,
-			IID_IWICImagingFactory,
-			(LPVOID*)c_WICFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = DWriteCreateFactory(
-			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(c_DWFactory),
-			(IUnknown**)c_DWFactory.GetAddressOf());
-		if (FAILED(hr)) return false;
-
-		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	if (FAILED(hr))
+	{
+		// Fallback to software renderer if hardware acceleration is not available.
+		hr = tryCreateDevice(D3D_DRIVER_TYPE_WARP, nullptr, 0);
 		if (FAILED(hr)) return false;
 	}
+
+	hr = c_D3DDevice.As(&c_DxgiDevice);
+	if (FAILED(hr)) return false;
+
+	hr = c_D2DFactory->CreateDevice(c_DxgiDevice.Get(), c_D2DDevice.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	c_EffectTarget = CreateDeviceContext();
+	if (!c_EffectTarget) return false;
 
 	return true;
 }
 
-bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring & families)
+ComPtr<ID2D1DeviceContext5> Canvas::CreateDeviceContext()
+{
+	if (!c_D2DDevice) return nullptr;
+
+	ComPtr<ID2D1DeviceContext> deviceContext;
+	auto hr = c_D2DDevice->CreateDeviceContext(
+		D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+		deviceContext.GetAddressOf());
+	if (FAILED(hr))
+	{
+		hr = c_D2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, deviceContext.GetAddressOf());
+	}
+	if (FAILED(hr)) return nullptr;
+
+	ComPtr<ID2D1DeviceContext5> deviceContext5;
+	deviceContext.As(&deviceContext5);
+	return deviceContext5;
+}
+
+void Canvas::Finalize()
+{
+// Dump extra dxgi debugging information (if needed)
+// On the following line, change |FALSE| to |TRUE|
+#if defined(_DEBUG) && FALSE
+	// More info: https://docs.microsoft.com/en-us/windows/win32/api/dxgidebug/nf-dxgidebug-dxgigetdebuginterface
+	typedef HRESULT(__stdcall* fDebugInterface)(const IID&, void**);
+	HMODULE hDll = GetModuleHandle(L"Dxgidebug.dll");
+	if (hDll)
+	{
+		fDebugInterface DXGIGetDebugInterface = (fDebugInterface)GetProcAddress(hDll, "DXGIGetDebugInterface");
+		IDXGIDebug* pDxgiDebug = nullptr;
+		HRESULT hr = DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDxgiDebug);
+		if (SUCCEEDED(hr))
+		{
+			pDxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);  // Use |DXGI_DEBUG_RLO_SUMMARY| if needed
+			pDxgiDebug->Release();
+		}
+	}
+#endif
+
+	if (c_DWFactory)
+	{
+		c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+	}
+
+	c_EffectTarget.Reset();
+	c_D2DDevice.Reset();
+	c_DxgiDevice.Reset();
+	c_D3DContext.Reset();
+	c_D3DDevice.Reset();
+
+	c_D2DFactory.Reset();
+	c_DWFactory.Reset();
+	c_WICFactory.Reset();
+}
+
+bool Canvas::EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families)
 {
 	bool success = false;
-	FontCollectionD2D * collection = new FontCollectionD2D();
+	FontCollection* collection = new FontCollection();
 	collection->InitializeCollection();
 
 	success = collection->GetSystemFontFamilies(familyCount, families);
@@ -167,146 +232,96 @@ bool Canvas::EnumerateInstalledFontFamilies(UINT32 & familyCount, std::wstring &
 	return success;
 }
 
-void Canvas::Finalize()
+HRESULT Canvas::InitializeDeviceContextForWindow(HWND window)
 {
-	--c_Instances;
-	if (c_Instances == 0U)
-	{
+	ComPtr<ID2D1DeviceContext5> target = CreateDeviceContext();
+	if (!target) return E_FAIL;
 
-// Dump extra dxgi debugging information (if needed)
-// On the following line, change |FALSE| to |TRUE|
-#if defined(_DEBUG) && FALSE
-		// More info: https://docs.microsoft.com/en-us/windows/win32/api/dxgidebug/nf-dxgidebug-dxgigetdebuginterface
-		typedef HRESULT(__stdcall* fDebugInterface)(const IID&, void**);
-		HMODULE hDll = GetModuleHandle(L"Dxgidebug.dll");
-		if (hDll)
-		{
-			fDebugInterface DXGIGetDebugInterface = (fDebugInterface)GetProcAddress(hDll, "DXGIGetDebugInterface");
-			IDXGIDebug* pDxgiDebug = nullptr;
-			HRESULT hr = DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDxgiDebug);
-			if (SUCCEEDED(hr))
-			{
-				pDxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);  // Use |DXGI_DEBUG_RLO_SUMMARY| if needed
-				pDxgiDebug->Release();
-			}
-		}
-#endif
-
-		c_D3DDevice.Reset();
-		c_D3DContext.Reset();
-		c_EffectTarget.Reset();
-		c_D2DDevice.Reset();
-		c_DxgiDevice.Reset();
-		c_D2DFactory.Reset();
-		c_WICFactory.Reset();
-
-		if (c_DWFactory)
-		{
-			c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
-			c_DWFactory.Reset();
-		}
-	}
-}
-
-bool Canvas::InitializeRenderTarget(HWND hwnd, LONG* errCode)
-{
-	HRESULT hr = E_FAIL;
-
-	auto cleanUp = [&]() -> bool
-	{
-		*errCode = hr;
-		return false;
-	};
-
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-	swapChainDesc.Width = 1U;
-	swapChainDesc.Height = 1U;
-	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	swapChainDesc.Stereo = false;
-	swapChainDesc.SampleDesc.Count = 1U;
-	swapChainDesc.SampleDesc.Quality = 0U;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2U;
-	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-
-	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
-	hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
-	if (FAILED(hr)) return cleanUp();
+	ComPtr<IDXGIAdapter> dxgiAdapter;
+	HRESULT hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+	if (FAILED(hr)) return hr;
 
 	// Ensure that DXGI does not queue more than one frame at a time.
-	hr = c_DxgiDevice->SetMaximumFrameLatency(1U);
-	if (FAILED(hr)) return cleanUp();
+	hr = c_DxgiDevice->SetMaximumFrameLatency(1);
+	if (FAILED(hr)) return hr;
 
-	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory;
+	ComPtr<IDXGIFactory2> dxgiFactory;
 	hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
-	if (FAILED(hr)) return cleanUp();
+	if (FAILED(hr)) return hr;
 
-	hr = dxgiFactory->CreateSwapChainForHwnd(
-		c_DxgiDevice.Get(),
-		hwnd,
-		&swapChainDesc,
-		nullptr,
-		nullptr,
-		m_SwapChain.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) return cleanUp();
+	decltype(m_SwapChain) swapChain;
+	hr = dxgiFactory->CreateSwapChainForHwnd(c_DxgiDevice.Get(), window, &g_SwapChainDesc, nullptr, nullptr, swapChain.GetAddressOf());
+	if (FAILED(hr)) return hr;
 
 	// Prevent DXGI from monitoring window changes through "alt + enter" (full screen mode)
-	hr = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-	if (FAILED(hr))
-	{
-		*errCode = hr;  // Non-fatal error
-	}
+	dxgiFactory->MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER);
 
-	hr = CreateRenderTarget();
-	if (FAILED(hr)) return cleanUp();
+	m_Target = std::move(target);
+	m_SwapChain = std::move(swapChain);
+	Resize(m_W, m_H);
 
-	return CreateTargetBitmap(0U, 0U, errCode);
+	m_SolidColorBrushCache.clear();
+	m_ValidDeviceContext = true;
+	return hr;
 }
 
-void Canvas::Resize(int w, int h)
+bool Canvas::Resize(int w, int h)
 {
+	if (!m_SwapChain || !m_Target) return false;
+
 	// Truncate the size of the skin if it's too big.
-	if (w > (int)m_MaxBitmapSize) w = (int)m_MaxBitmapSize;
-	if (h > (int)m_MaxBitmapSize) h = (int)m_MaxBitmapSize;
+	m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
+	m_W = min(w, (int)m_MaxBitmapSize);
+	m_H = min(h, (int)m_MaxBitmapSize);
 
-	m_W = w;
-	m_H = h;
-
-	// Check if target, targetbitmap, backbuffer, swap chain are valid?
-
-	// Unmap all resources tied to the swap chain.
 	m_Target->SetTarget(nullptr);
 	m_TargetBitmap.Reset();
 	m_BackBuffer.Reset();
 
-	// Resize swap chain.
-	HRESULT hr = m_SwapChain->ResizeBuffers(
-		0U,
-		(UINT)w,
-		(UINT)h,
-		DXGI_FORMAT_B8G8R8A8_UNORM,
-		DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
-	if (FAILED(hr)) return;
+	const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+	HRESULT hr = m_SwapChain->ResizeBuffers(0, m_W, m_H, g_SwapChainDesc.Format, g_SwapChainDesc.Flags);
+	if (FAILED(hr))
+	{
+		HWND window = nullptr;
+		ComPtr<IDXGIAdapter> dxgiAdapter;
+		ComPtr<IDXGIFactory2> dxgiFactory;
 
-	CreateTargetBitmap((UINT32)w, (UINT32)h);
+		hr = m_SwapChain->GetHwnd(&window);
+		if (FAILED(hr)) return false;
+
+		hr = c_DxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+		if (FAILED(hr)) return false;
+
+		hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+		if (FAILED(hr)) return false;
+
+		dxgiFactory->CreateSwapChainForHwnd(c_DxgiDevice.Get(), window, &g_SwapChainDesc, nullptr, nullptr, m_SwapChain.ReleaseAndGetAddressOf());
+
+		// Even if the swapchain was recreated, we return false here. The recreate is needed to avoid
+		// keeping a now invalid swapchain around.
+		return false;
+	}
+
+	hr = m_SwapChain->GetBuffer(0, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
+	if (FAILED(hr)) return false;
+
+	const auto props = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		D2D1::PixelFormat(dxgiFormat, D2D1_ALPHA_MODE_PREMULTIPLIED));
+	hr = m_Target->CreateBitmapFromDxgiSurface(m_BackBuffer.Get(), &props, m_TargetBitmap.GetAddressOf());
+	if (FAILED(hr)) return false;
+
+	m_Target->SetTarget(m_TargetBitmap.Get());
+	m_Target->SetDpi(m_Dpi, m_Dpi);
+	return true;
 }
 
 bool Canvas::BeginDraw()
 {
-	if (!m_Target)
+	if (!m_ValidDeviceContext || !m_TargetBitmap)
 	{
-		HRESULT hr = CreateRenderTarget();
-		if (FAILED(hr))
-		{
-			m_IsDrawing = false;
-			return false;
-		}
-
-		// Recreate target bitmap
-		Resize(m_W, m_H);
+		m_IsDrawing = false;
+		return false;
 	}
 
 	m_Target->BeginDraw();
@@ -316,11 +331,15 @@ bool Canvas::BeginDraw()
 
 void Canvas::EndDraw()
 {
-	HRESULT hr = m_Target->EndDraw();
-	if (FAILED(hr))
+	const auto hr = m_Target->EndDraw();
+	if (hr == D2DERR_RECREATE_TARGET)
 	{
-		m_SolidColorBrushCache.clear();
-		m_Target.Reset();
+		if (m_ValidDeviceContext && c_DeviceLostCallback)
+		{
+			c_DeviceLostCallback();
+		}
+
+		m_ValidDeviceContext = false;
 	}
 
 	m_IsDrawing = false;
@@ -348,7 +367,8 @@ void Canvas::ReleaseDC()
 {
 	if (m_BackBuffer)
 	{
-		m_BackBuffer->ReleaseDC(nullptr);
+		RECT dirtyRect = { 0, 0, 0, 0 };
+		m_BackBuffer->ReleaseDC(&dirtyRect);
 	}
 
 	if (m_EnableDrawAfterGdi)
@@ -363,10 +383,15 @@ bool Canvas::IsTransparentPixel(int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < m_W && y < m_H)) return false;
 
-	auto pixel = GetPixel(GetDC(), x, y);
-	ReleaseDC();
+	auto hdc = GetDC();
+	if (hdc)
+	{
+		const auto pixel = GetPixel(hdc, x, y);
+		ReleaseDC();
+		return (pixel & 0xFF000000) == 0;
+	}
 
-	return (pixel & 0xFF000000) == 0;
+	return false;
 }
 
 void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
@@ -374,6 +399,10 @@ void Canvas::GetTransform(D2D1_MATRIX_3X2_F* matrix)
 	if (m_Target)
 	{
 		m_Target->GetTransform(matrix);
+	}
+	else
+	{
+		*matrix = D2D1::Matrix3x2F::Identity();
 	}
 }
 
@@ -393,6 +422,53 @@ void Canvas::ResetTransform()
 	SetTransform(D2D1::Matrix3x2F::Identity());
 }
 
+void Canvas::PushOpacityLayer(FLOAT opacity)
+{
+	if (!m_Target) return;
+
+	m_Target->PushLayer(
+		D2D1::LayerParameters(
+			D2D1::InfiniteRect(),
+			nullptr,
+			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+			D2D1::Matrix3x2F::Identity(),
+			opacity),
+		nullptr);
+}
+
+void Canvas::PushClip(const D2D1_RECT_F& rect)
+{
+	if (m_CanUseAxisAlignClip)
+	{
+		m_Target->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
+	}
+	else
+	{
+		const D2D1_LAYER_PARAMETERS1 layerParams =
+			D2D1::LayerParameters1(rect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+		m_Target->PushLayer(layerParams, nullptr);
+	}
+}
+
+void Canvas::PopClip()
+{
+	if (m_CanUseAxisAlignClip)
+	{
+		m_Target->PopAxisAlignedClip();
+	}
+	else
+	{
+		m_Target->PopLayer();
+	}
+}
+
+void Canvas::PopLayer()
+{
+	if (!m_Target) return;
+
+	m_Target->PopLayer();
+}
+
 void Canvas::SetDpiScale(float dpiScale)
 {
 	auto dpi = 96.0f * dpiScale;
@@ -402,11 +478,7 @@ void Canvas::SetDpiScale(float dpiScale)
 	}
 
 	m_Dpi = dpi;
-
-	if (m_Target)
-	{
-		m_Target->SetDpi(m_Dpi, m_Dpi);
-	}
+	m_Target->SetDpi(m_Dpi, m_Dpi);
 }
 
 FLOAT Canvas::SnapToPixel(FLOAT value) const
@@ -451,34 +523,19 @@ void Canvas::Clear(const D2D1_COLOR_F& color)
 	m_Target->Clear(color);
 }
 
-void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, const D2D1_RECT_F& rect,
-	const D2D1_COLOR_F& color, bool applyInlineFormatting)
+D2D1_POINT_2F Canvas::GetTextDrawPosition(TextFormat& format, const D2D1_RECT_F& rect) const
 {
-	auto solidBrush = GetCachedSolidColorBrush(color);
-	if (!solidBrush) return;
-
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-
-	static std::wstring str;
-	str = srcStr;
-	formatD2D.ApplyInlineCase(str);
-
-	if (!formatD2D.CreateLayout(
-		m_Target.Get(),
-		str,
-		rect.right - rect.left,
-		rect.bottom - rect.top,
-		!m_AccurateText && m_TextAntiAliasing)) return;
-
 	D2D1_POINT_2F drawPosition = D2D1::Point2F();
 	drawPosition.x = [&]()
 	{
 		if (!m_AccurateText)
 		{
-			const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
-			switch (formatD2D.GetHorizontalAlignment())
+			const float xOffset = format.m_TextFormat->GetFontSize() / 6.0f;
+			switch (format.GetHorizontalAlignment())
 			{
-			case HorizontalAlignment::Left: return rect.left + xOffset;
+			// Justified text starts at the leading edge, just like left aligned text.
+			case HorizontalAlignment::Left:
+			case HorizontalAlignment::Justify: return rect.left + xOffset;
 			case HorizontalAlignment::Right: return rect.left - xOffset;
 			}
 		}
@@ -489,59 +546,276 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 	drawPosition.y = [&]()
 	{
 		// GDI+ compatibility.
-		float yPos = rect.top - formatD2D.m_LineGap;
-		switch (formatD2D.GetVerticalAlignment())
+		float yPos = rect.top - format.m_LineGap;
+		switch (format.GetVerticalAlignment())
 		{
-		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
-		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2.0f; break;
+		case VerticalAlignment::Bottom: yPos -= format.m_ExtraHeight; break;
+		case VerticalAlignment::Center: yPos -= format.m_ExtraHeight / 2.0f; break;
 		}
 
 		return yPos;
 	} ();
 
+	return drawPosition;
+}
+
+bool Canvas::PrepareTextLayout(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, D2D1_POINT_2F& drawPosition, UINT32& strLen)
+{
+	if (!m_Target || !format.IsInitialized()) return false;
+
+	std::wstring buffer;
+	const std::wstring& str = format.ApplyInlineCase(srcStr, buffer);
+
+	if (!format.CreateLayout(
+		m_Target.Get(),
+		str,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		!m_AccurateText && m_TextAntiAliasing)) return false;
+
+	drawPosition = GetTextDrawPosition(format, rect);
+	strLen = (UINT32)str.length();
+	return true;
+}
+
+bool Canvas::HitTestTextPoint(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, const D2D1_POINT_2F& point, UINT32& caretIndex, bool& isTrailing)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	BOOL isTrailingHit = FALSE;
+	BOOL isInside = FALSE;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestPoint(
+		point.x - drawPosition.x, point.y - drawPosition.y, &isTrailingHit, &isInside, &metrics);
+	if (FAILED(hr)) return false;
+
+	// Snapping to the far side of the hit cluster (rather than to the hit code unit) is what keeps
+	// the caret from landing inside a surrogate pair or between a base character and its
+	// combining marks.
+	caretIndex = isTrailingHit ? metrics.textPosition + metrics.length : metrics.textPosition;
+	caretIndex = min(caretIndex, strLen);
+	isTrailing = isTrailingHit != FALSE;
+	return true;
+}
+
+bool Canvas::GetCaretRect(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	UINT32 caretIndex, bool trailing, FLOAT width, D2D1_RECT_F& caretRect)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	UINT32 position = min(caretIndex, strLen);
+	BOOL isTrailingHit = FALSE;
+
+	// A caret just after a hard line break belongs to the start of the next line, with no affinity
+	// to decide. Asking for the trailing edge of the break itself would report the end of the
+	// previous line, leaving the caret looking as though the newline never happened.
+	const bool afterLineBreak =
+		position > 0U && (srcStr[position - 1U] == L'\n' || srcStr[position - 1U] == L'\r');
+
+	if (afterLineBreak)
+	{
+		// Leading edge at |position|, which DirectWrite places on the new line.
+	}
+	else if (trailing && position > 0U)
+	{
+		// The caret belongs to the text before it, so it goes at the trailing edge of the cluster
+		// ending at |caretIndex|. Which visual side that is depends on the direction of the run
+		// the cluster belongs to, which is what makes this differ from the leading edge below.
+		FLOAT clusterX = 0.0f;
+		FLOAT clusterY = 0.0f;
+		DWRITE_HIT_TEST_METRICS cluster = { 0 };
+		if (SUCCEEDED(format.m_TextLayout->HitTestTextPosition(
+			position - 1U, FALSE, &clusterX, &clusterY, &cluster)))
+		{
+			position = cluster.textPosition;
+			isTrailingHit = TRUE;
+		}
+	}
+	else if (position >= strLen && strLen > 0U)
+	{
+		// DirectWrite has no leading edge for a position past the end of the text, so ask for the
+		// trailing edge of the last cluster instead.
+		position = strLen - 1U;
+		isTrailingHit = TRUE;
+	}
+
+	FLOAT x = 0.0f;
+	FLOAT y = 0.0f;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestTextPosition(
+		position, isTrailingHit, &x, &y, &metrics);
+	if (FAILED(hr)) return false;
+
+	// An empty layout can report a zero-height line, which would make the caret invisible.
+	FLOAT height = format.m_TextFormat->GetFontSize();
+	if (metrics.height > 0.0f)
+	{
+		// A caret taller than the measured text does not just look wrong: an auto-sized meter is
+		// sized from that measurement, so the overhang is scrolled into view and drags the text
+		// up to make room for a caret that already fits.
+		height = metrics.height - format.GetLineGapAdjustment(srcStr);
+		if (height < 1.0f) height = 1.0f;
+	}
+
+	caretRect.left = drawPosition.x + x;
+	caretRect.top = drawPosition.y + y;
+	caretRect.right = caretRect.left + width;
+	caretRect.bottom = caretRect.top + height;
+	return true;
+}
+
+bool Canvas::GetAdjacentCaretIndex(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, UINT32 caretIndex, bool forward, UINT32& adjacentIndex)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	if (forward ? caretIndex >= strLen : caretIndex == 0U)
+	{
+		adjacentIndex = caretIndex;
+		return true;
+	}
+
+	// Hit-testing a position reports the cluster containing it, so the neighbouring caret index is
+	// that cluster's far side: forward from the cluster at |caretIndex|, backward from the one
+	// holding the code unit just before it.
+	FLOAT x = 0.0f;
+	FLOAT y = 0.0f;
+	DWRITE_HIT_TEST_METRICS metrics = { 0 };
+	const HRESULT hr = format.m_TextLayout->HitTestTextPosition(
+		forward ? caretIndex : caretIndex - 1U, FALSE, &x, &y, &metrics);
+	if (FAILED(hr)) return false;
+
+	adjacentIndex = forward ? metrics.textPosition + metrics.length : metrics.textPosition;
+
+	// A cluster that somehow does not straddle the starting point would leave the caret stuck.
+	if (forward ? adjacentIndex <= caretIndex : adjacentIndex >= caretIndex)
+	{
+		adjacentIndex = forward ? caretIndex + 1U : caretIndex - 1U;
+	}
+
+	adjacentIndex = min(adjacentIndex, strLen);
+	return true;
+}
+
+bool Canvas::GetLineRange(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	UINT32 caretIndex, UINT32& lineStart, UINT32& lineEnd)
+{
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	// The first call reports how many lines there are; E_NOT_SUFFICIENT_BUFFER is expected here
+	// rather than a failure.
+	UINT32 lineCount = 0U;
+	format.m_TextLayout->GetLineMetrics(nullptr, 0U, &lineCount);
+	if (lineCount == 0U) return false;
+
+	std::vector<DWRITE_LINE_METRICS> lines(lineCount);
+	const HRESULT hr = format.m_TextLayout->GetLineMetrics(lines.data(), lineCount, &lineCount);
+	if (FAILED(hr)) return false;
+
+	caretIndex = min(caretIndex, strLen);
+
+	UINT32 start = 0U;
+	for (const auto& line : lines)
+	{
+		// length includes the newline; newlineLength is how much of it to exclude.
+		const UINT32 end = start + line.length;
+		if (caretIndex < end || end >= strLen)
+		{
+			lineStart = start;
+			lineEnd = end - line.newlineLength;
+			return true;
+		}
+
+		start = end;
+	}
+
+	lineStart = start;
+	lineEnd = strLen;
+	return true;
+}
+
+bool Canvas::GetTextRangeRects(const std::wstring& srcStr, TextFormat& format,
+	const D2D1_RECT_F& rect, UINT32 start, UINT32 length, std::vector<D2D1_RECT_F>& rects)
+{
+	rects.clear();
+	if (length == 0U) return true;
+
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
+
+	// The first call reports how many metrics the range needs; E_NOT_SUFFICIENT_BUFFER is the
+	// expected result rather than a failure.
+	UINT32 count = 0U;
+	format.m_TextLayout->HitTestTextRange(start, length, drawPosition.x, drawPosition.y,
+		nullptr, 0U, &count);
+	if (count == 0U) return true;
+
+	std::vector<DWRITE_HIT_TEST_METRICS> metrics(count);
+	const HRESULT hr = format.m_TextLayout->HitTestTextRange(start, length,
+		drawPosition.x, drawPosition.y, metrics.data(), count, &count);
+	if (FAILED(hr)) return false;
+
+	// Trimmed as the caret is, so the highlight and the caret inside it are the same height.
+	const FLOAT lineGap = format.GetLineGapAdjustment(srcStr);
+
+	rects.reserve(count);
+	for (UINT32 i = 0U; i < count; ++i)
+	{
+		const auto& m = metrics[i];
+		if (m.width <= 0.0f || m.height <= 0.0f) continue;
+
+		const FLOAT height = m.height > lineGap ? m.height - lineGap : m.height;
+		rects.push_back(D2D1::RectF(m.left, m.top, m.left + m.width, m.top + height));
+	}
+
+	return true;
+}
+
+void Canvas::DrawTextW(const std::wstring& srcStr, TextFormat& format, const D2D1_RECT_F& rect,
+	const D2D1_COLOR_F& color, bool applyInlineFormatting)
+{
+	auto solidBrush = GetCachedSolidColorBrush(color);
+	if (!solidBrush) return;
+
+	D2D1_POINT_2F drawPosition = D2D1::Point2F();
+	UINT32 strLen = 0U;
+	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return;
+
 	// When different "effects" are used with inline coloring options, we need to
 	// remove the previous inline coloring, then reapply them (if needed) - instead
 	// of destroying/recreating the text layout.
-	UINT32 strLen = (UINT32)str.length();
-	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
+	format.ResetInlineColoring(solidBrush.Get(), strLen);
 	if (applyInlineFormatting)
 	{
-		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
+		format.ApplyInlineColoring(m_Target.Get(), &drawPosition);
 
 		// Draw any 'shadow' effects
 		const D2D1_RECT_F drawRect = D2D1::RectF(
 			drawPosition.x, drawPosition.y, rect.right - rect.left, rect.bottom - rect.top);
-		formatD2D.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
+		format.ApplyInlineShadow(m_Target.Get(), solidBrush.Get(), strLen, drawRect);
 	}
 
-	if (formatD2D.m_Trimming)
+	if (format.m_Trimming)
 	{
-		D2D1_RECT_F clipRect = rect;
-
-		if (m_CanUseAxisAlignClip)
-		{
-			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
-		}
-		else
-		{
-			const D2D1_LAYER_PARAMETERS1 layerParams =
-				D2D1::LayerParameters1(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
-			m_Target->PushLayer(layerParams, nullptr);
-		}
+		PushClip(rect);
 	}
 
-	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
+	m_Target->DrawTextLayout(drawPosition, format.m_TextLayout.Get(), solidBrush.Get());
 
-	if (formatD2D.m_Trimming)
+	if (format.m_Trimming)
 	{
-		if (m_CanUseAxisAlignClip)
-		{
-			m_Target->PopAxisAlignedClip();
-		}
-		else
-		{
-			m_Target->PopLayer();
-		}
+		PopClip();
 	}
 
 	if (applyInlineFormatting)
@@ -549,34 +823,25 @@ void Canvas::DrawTextW(const std::wstring& srcStr, const TextFormat& format, con
 		// Inline gradients require the drawing position, so in case that position
 		// changes, we need a way to reset it after drawing time so on the next
 		// iteration it will know the correct position.
-		formatD2D.ResetGradientPosition(&drawPosition);
+		format.ResetGradientPosition(&drawPosition);
 	}
 }
 
-bool Canvas::MeasureTextW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size)
+bool Canvas::MeasureTextW(const std::wstring& str, TextFormat& format, D2D1_SIZE_F& size)
 {
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-
-	static std::wstring formatStr;
-	formatStr = str;
-	formatD2D.ApplyInlineCase(formatStr);
-
-	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText);
+	std::wstring buffer;
+	const auto metrics = format.GetMetrics(format.ApplyInlineCase(str, buffer), !m_AccurateText);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	return true;
 }
 
-bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format, D2D1_SIZE_F& size, UINT32& lines)
+bool Canvas::MeasureTextLinesW(const std::wstring& str, TextFormat& format, D2D1_SIZE_F& size, UINT32& lines)
 {
-	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+	format.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
-	static std::wstring formatStr;
-	formatStr = str;
-	formatD2D.ApplyInlineCase(formatStr);
-
-	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(formatStr, !m_AccurateText, size.width);
+	std::wstring buffer;
+	const auto metrics = format.GetMetrics(format.ApplyInlineCase(str, buffer), !m_AccurateText, size.width);
 	size.width = metrics.width;
 	size.height = metrics.height;
 	lines = metrics.lineCount;
@@ -590,12 +855,12 @@ bool Canvas::MeasureTextLinesW(const std::wstring& str, const TextFormat& format
 	else
 	{
 		// GDI+ compatibility: Zero height text has no visible lines.
-		lines = 0U;
+		lines = 0;
 	}
 	return true;
 }
 
-void Canvas::DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	for (auto& segment : bitmap->m_Segments)
 	{
@@ -631,7 +896,7 @@ void Canvas::DrawBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D
 	}
 }
 
-void Canvas::DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
+void Canvas::DrawTiledBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_RECT_F& srcRect)
 {
 	const FLOAT width = (FLOAT)bitmap->m_Width;
 	const FLOAT height = (FLOAT)bitmap->m_Height;
@@ -657,7 +922,7 @@ void Canvas::DrawTiledBitmap(D2DBitmap* bitmap, const D2D1_RECT_F& dstRect, cons
 	}
 }
 
-void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2D1_RECT_F& dstRect,
+void Canvas::DrawMaskedBitmap(Bitmap* bitmap, Bitmap* maskBitmap, const D2D1_RECT_F& dstRect,
 	const D2D1_RECT_F& srcRect, const D2D1_RECT_F& srcRect2)
 {
 	if (!bitmap || !maskBitmap) return;
@@ -714,10 +979,10 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 			const auto rmSrc = getRectSubRegion(rmSeg, srcRect);
 
 			// If no overlap, don't draw
-			if ((rmDst.left < (rDst.left + rDst.right) &&
-				(rmDst.right + rmDst.left) > rDst.left &&
-				rmDst.top > (rmDst.top + rmDst.bottom) &&
-				(rmDst.top + rmDst.bottom) < rmDst.top)) continue;
+			if (!(rmDst.left < (rDst.left + rDst.right) &&
+				(rmDst.left + rmDst.right) > rDst.left &&
+				rmDst.top < (rDst.top + rDst.bottom) &&
+				(rmDst.top + rmDst.bottom) > rDst.top)) continue;
 
 			m_Target->FillOpacityMask(
 				mseg.GetBitmap(),
@@ -729,6 +994,52 @@ void Canvas::DrawMaskedBitmap(D2DBitmap* bitmap, D2DBitmap* maskBitmap, const D2
 
 		m_Target->SetAntialiasMode(aaMode);
 	}
+}
+
+bool Canvas::DrawSvg(Svg* svg, const D2D1_RECT_F& dstRect, const D2D1_RECT_F* clipRect)
+{
+	if (!svg || !svg->m_Document || svg->m_Size.width <= 0.0f || svg->m_Size.height <= 0.0f) return false;
+
+	D2D1_MATRIX_3X2_F oldTransform;
+	m_Target->GetTransform(&oldTransform);
+
+	if (clipRect)
+	{
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PushAxisAlignedClip(*clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}
+		else
+		{
+			const D2D1_LAYER_PARAMETERS1 layerParams =
+				D2D1::LayerParameters1(*clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+			m_Target->PushLayer(layerParams, nullptr);
+		}
+	}
+
+	const D2D1_MATRIX_3X2_F transform =
+		D2D1::Matrix3x2F::Scale(
+			(dstRect.right - dstRect.left) / svg->m_Size.width,
+			(dstRect.bottom - dstRect.top) / svg->m_Size.height) *
+		D2D1::Matrix3x2F::Translation(dstRect.left, dstRect.top) *
+		oldTransform;
+	m_Target->SetTransform(transform);
+	m_Target->DrawSvgDocument(svg->m_Document.Get());
+	m_Target->SetTransform(oldTransform);
+
+	if (clipRect)
+	{
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PopAxisAlignedClip();
+		}
+		else
+		{
+			m_Target->PopLayer();
+		}
+	}
+
+	return true;
 }
 
 void Canvas::FillRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& color)
@@ -746,7 +1057,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 	// the gradient touches edge of the bounding rectangle. Normally we would offset the ending
 	// point by 180, but we do this on starting point for SolidColor2. This differs from the other
 	// D2D gradient options below:
-	//  Gfx::TextInlineFormat_GradientColor::BuildGradientBrushes
+	//  Gfx::BuildInlineGradientBrushes
 	//  Gfx::Shape::CreateLinearGradient
 	D2D1_POINT_2F start = Util::FindEdgePoint(angle + 180.0f, rect.left, rect.top, rect.right, rect.bottom);
 	D2D1_POINT_2F end = Util::FindEdgePoint(angle, rect.left, rect.top, rect.right, rect.bottom);
@@ -761,7 +1072,7 @@ void Canvas::FillGradientRectangle(const D2D1_RECT_F& rect, const D2D1_COLOR_F& 
 
 	HRESULT hr = m_Target->CreateGradientStopCollection(
 		gradientStops,
-		2U,
+		2,
 		D2D1_GAMMA_2_2,
 		D2D1_EXTEND_MODE_CLAMP,
 		pGradientStops.GetAddressOf());
@@ -797,101 +1108,30 @@ void Canvas::DrawGeometry(Shape& shape, int xPos, int yPos)
 	auto fill = shape.GetFillBrush(m_Target.Get());
 	if (fill)
 	{
-		m_Target->FillGeometry(shape.m_Shape.Get(), fill.Get());
+		m_Target->FillGeometry(shape.m_Geometry.Get(), fill.Get());
 	}
 
-	auto stroke = shape.GetStrokeFillBrush(m_Target.Get());
+	Microsoft::WRL::ComPtr<ID2D1Brush> stroke;
+	switch (shape.m_StrokeType)
+	{
+	case Shape::StrokeType::Default:
+		stroke = GetCachedSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black));
+		break;
+
+	case Shape::StrokeType::Custom:
+		stroke = shape.GetStrokeFillBrush(m_Target.Get());
+		break;
+
+	case Shape::StrokeType::Disabled:
+		break;
+	}
+
 	if (stroke)
 	{
-		m_Target->DrawGeometry(
-			shape.m_Shape.Get(),
-			stroke.Get(),
-			shape.m_StrokeWidth,
-			shape.m_StrokeStyle.Get());
+		m_Target->DrawGeometry(shape.m_Geometry.Get(), stroke.Get(), shape.GetStrokeWidth(), shape.GetStrokeStyle());
 	}
 
 	m_Target->SetTransform(worldTransform);
-}
-
-HRESULT Canvas::CreateDeviceContext(Microsoft::WRL::ComPtr<ID2D1DeviceContext>& target)
-{
-	HRESULT hr = E_FAIL;
-	if (c_D2DDevice)
-	{
-		hr = c_D2DDevice->CreateDeviceContext(
-			D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
-			target.ReleaseAndGetAddressOf());
-		if (FAILED(hr))
-		{
-			hr = c_D2DDevice->CreateDeviceContext(
-				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-				target.ReleaseAndGetAddressOf());
-		}
-	}
-
-	return hr;
-}
-
-HRESULT Canvas::CreateRenderTarget()
-{
-	m_SolidColorBrushCache.clear();
-
-	if (c_D2DDevice)
-	{
-		c_D2DDevice->ClearResources();
-	}
-
-	HRESULT hr = CreateDeviceContext(m_Target);
-
-	// Hardware accelerated targets have a hard limit to the size of bitmaps they can support.
-	// The size will depend on the D3D feature level of the driver used. The WARP software
-	// renderer has a limit of 16MP (16*1024*1024 = 16777216).
-
-	// https://docs.microsoft.com/en-us/windows/desktop/direct3d11/overviews-direct3d-11-devices-downlevel-intro#overview-for-each-feature-level
-	// Max Texture Dimension
-	// D3D_FEATURE_LEVEL_11_1 = 16348
-	// D3D_FEATURE_LEVEL_11_0 = 16348
-	// D3D_FEATURE_LEVEL_10_1 = 8192
-	// D3D_FEATURE_LEVEL_10_0 = 8192
-	// D3D_FEATURE_LEVEL_9_3  = 4096
-	// D3D_FEATURE_LEVEL_9_2  = 2048
-	// D3D_FEATURE_LEVEL_9_1  = 2048
-
-	if (SUCCEEDED(hr))
-	{
-		m_Target->SetDpi(m_Dpi, m_Dpi);
-		m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
-	}
-
-	return hr;
-}
-
-bool Canvas::CreateTargetBitmap(UINT32 width, UINT32 height, LONG* errCode)
-{
-	HRESULT hr = m_SwapChain->GetBuffer(0U, IID_PPV_ARGS(m_BackBuffer.GetAddressOf()));
-	if (FAILED(hr))
-	{
-		if (errCode) *errCode = hr;
-		return false;
-	}
-
-	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
-		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-
-	hr = m_Target->CreateBitmapFromDxgiSurface(
-		m_BackBuffer.Get(),
-		&bProps,
-		m_TargetBitmap.GetAddressOf());
-	if (FAILED(hr))
-	{
-		if (errCode) *errCode = hr;
-		return false;
-	}
-
-	m_Target->SetTarget(m_TargetBitmap.Get());
-	m_Target->SetDpi(m_Dpi, m_Dpi);
-	return true;
 }
 
 Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(const D2D1_COLOR_F& color)
@@ -903,7 +1143,7 @@ Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> Canvas::GetCachedSolidColorBrush(co
 	HRESULT hr = m_Target->CreateSolidColorBrush(color, brush.GetAddressOf());
 	if (FAILED(hr)) return nullptr;
 
-	const size_t maxCacheSize = 64U;
+	const size_t maxCacheSize = 64;
 	if (m_SolidColorBrushCache.size() <= maxCacheSize)
 	{
 		m_SolidColorBrushCache.emplace(color, brush);

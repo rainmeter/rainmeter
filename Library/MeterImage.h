@@ -1,15 +1,10 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __METERIMAGE_H__
-#define __METERIMAGE_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
+#include "AspectRatioMode.h"
 
 class MeterImage : public Meter
 {
@@ -23,24 +18,17 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeterImage>(); }
 
 	virtual void Initialize();
+	virtual void InvalidateDeviceResources() override;
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 
 private:
-	enum DRAWMODE
-	{
-		DRAWMODE_NONE = 0,
-		DRAWMODE_TILE,
-		DRAWMODE_KEEPRATIO,
-		DRAWMODE_KEEPRATIOANDCROP
-	};
-
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	GeneralImage m_Image;
@@ -51,11 +39,10 @@ private:
 	std::wstring m_MaskImageName;
 
 	bool m_NeedsRedraw;
-	DRAWMODE m_DrawMode;
+	bool m_Tile;
+	AspectRatioMode m_AspectRatioMode;
 
 	RECT m_ScaleMargins;
 
 	static const WCHAR* c_MaskOptionArray[GeneralImage::OptionCount];
 };
-
-#endif

@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureUptime.h"
@@ -21,11 +16,7 @@ MeasureUptime::~MeasureUptime()
 {
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureUptime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -50,10 +41,6 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the current uptime
-**
-*/
 void MeasureUptime::UpdateValue()
 {
 	if (!m_SecondsDefined)
@@ -67,10 +54,6 @@ void MeasureUptime::UpdateValue()
 	}
 }
 
-/*
-** Returns the uptime as string.
-**
-*/
 const WCHAR* MeasureUptime::GetStringValue()
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];

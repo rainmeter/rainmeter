@@ -1,17 +1,11 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterLine.h"
 #include "Measure.h"
 #include "Logger.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Path.h"
-#include "../Common/Gfx/Shapes/Line.h"
+#include "../Common/Gfx/Shape.h"
 
 MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Autoscale(false),
@@ -20,6 +14,8 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_LineWidth(1.0),
 	m_HorizontalColor(D2D1::ColorF(D2D1::ColorF::Black)),
 	m_StrokeType(D2D1_STROKE_TRANSFORM_TYPE_NORMAL),
+	m_LineJoin(D2D1_LINE_JOIN_MITER),
+	m_MiterLimit(10.0f),
 	m_CurrentPos(0),
 	m_GraphStartLeft(false),
 	m_GraphHorizontalOrientation(false)
@@ -30,10 +26,6 @@ MeterLine::~MeterLine()
 {
 }
 
-/*
-** create the buffer for the lines
-**
-*/
 void MeterLine::Initialize()
 {
 	Meter::Initialize();
@@ -78,11 +70,7 @@ void MeterLine::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	WCHAR tmpName[64] = { 0 };
 
@@ -160,6 +148,36 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
 	}
 
+	const std::wstring& join = parser.ReadString(section, L"LineJoin", L"MITER");
+	if (_wcsicmp(join.c_str(), L"MITER") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER;
+	}
+	else if (_wcsicmp(join.c_str(), L"BEVEL") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_BEVEL;
+	}
+	else if (_wcsicmp(join.c_str(), L"ROUND") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_ROUND;
+	}
+	else if (_wcsicmp(join.c_str(), L"MITERORBEVEL") == 0)
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER_OR_BEVEL;
+	}
+	else
+	{
+		m_LineJoin = D2D1_LINE_JOIN_MITER;
+		LogErrorF(this, L"LineJoin=%s is not valid", join.c_str());
+	}
+
+	m_MiterLimit = (FLOAT)parser.ReadFloat(section, L"MiterLimit", 10.0);
+	if (m_MiterLimit <= 0.0f)
+	{
+		LogErrorF(this, L"MiterLimit must be positive");
+		m_MiterLimit = 10.0f;
+	}
+
 	const WCHAR* type = parser.ReadString(section, L"TransformStroke", L"NORMAL").c_str();
 	if (_wcsicmp(type, L"FIXED") == 0)
 	{
@@ -182,10 +200,6 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterLine::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -208,10 +222,6 @@ bool MeterLine::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
@@ -294,11 +304,12 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT Y = (FLOAT)((j + 1) * drawH / (numOfLines + 1));
 			Y = meterRect.bottom - Y - 0.5f;
 
-			Gfx::Line line(meterRect.left, Y, meterRect.right - 1.0f, Y);
-			line.SetStrokeFill(m_HorizontalColor);
-			line.CreateStrokeStyle(m_StrokeType);
+			auto line = Gfx::Shape::Line(meterRect.left, Y, meterRect.right - 1.0f, Y);
+			if (!line) return false;
+			line->SetStrokeFill(m_HorizontalColor);
+			line->CreateStrokeStyle(m_StrokeType);
 
-			canvas.DrawGeometry(line, 0, 0);
+			canvas.DrawGeometry(*line, 0, 0);
 		}
 	}
 
@@ -306,13 +317,17 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	FLOAT offset = 0.55f;
 
 	// Draw all the lines
-	auto draw = [&](Gfx::Path& path, int& counter) -> void
+	auto draw = [&](Gfx::Shape& path, int& counter) -> void
 	{
-		path.Close(D2D1_FIGURE_END_OPEN);
+		path.ClosePath(D2D1_FIGURE_END_OPEN);
 		path.SetFill(Gfx::Util::c_Transparent_Color_F);
 		path.SetStrokeFill(m_Colors[counter]);
 		path.SetStrokeWidth((FLOAT)m_LineWidth);
-		path.SetStrokeLineJoin(D2D1_LINE_JOIN_BEVEL, 10.0f);
+		auto& strokeProperties = path.GetStrokeProperties();
+		strokeProperties.lineJoin = m_LineJoin;
+		strokeProperties.miterLimit = m_MiterLimit;
+		path.CreateStrokeStyle(m_StrokeType);
+
 		canvas.DrawGeometry(path, 0, 0);
 	};
 
@@ -349,11 +364,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldX = 0.0f;
 			calcX(oldX);
 
-			Gfx::Path path(
-				oldX,
-				!m_Flip ? meterRect.top : meterRect.bottom,
-				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(oldX, !m_Flip ? meterRect.top : meterRect.bottom, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
 
 			if (!m_Flip)
 			{
@@ -364,8 +376,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j);
 
 					oldX = X;
 				}
@@ -379,14 +391,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcX(X);
 
-					path.AddLine(oldX, j - 1.0f);
-					path.AddLine(X, j - 2.0f);
+					path->AddPathLine(oldX, j - 1.0f);
+					path->AddPathLine(X, j - 2.0f);
 
 					oldX = X;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}
@@ -422,11 +434,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			FLOAT oldY = 0.0f;
 			calcY(oldY);
 
-			Gfx::Path path(
-				!m_GraphStartLeft ? meterRect.left : meterRect.right,
-				oldY,
-				D2D1_FILL_MODE_WINDING);
-			path.CreateStrokeStyle(m_StrokeType);
+			auto path = Gfx::Shape::Path(!m_GraphStartLeft ? meterRect.left : meterRect.right, oldY, D2D1_FILL_MODE_WINDING);
+			if (!path) return false;
 
 			if (!m_GraphStartLeft)
 			{
@@ -437,8 +446,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j, Y);
 
 					oldY = Y;
 				}
@@ -452,14 +461,14 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 					calcY(Y);
 
-					path.AddLine(j - 1.0f, oldY);
-					path.AddLine(j - 2.0f, Y);
+					path->AddPathLine(j - 1.0f, oldY);
+					path->AddPathLine(j - 2.0f, Y);
 
 					oldY = Y;
 				}
 			}
 
-			draw(path, counter);
+			draw(*path, counter);
 			++counter;
 		}
 	}
@@ -467,11 +476,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the other measure bindings.
-**
-*/
-void MeterLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{

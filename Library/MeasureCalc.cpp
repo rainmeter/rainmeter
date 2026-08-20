@@ -1,12 +1,6 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "../Common/MathParser.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
 #include <random>
@@ -22,6 +16,7 @@ std::mt19937& GetRandomEngine()
 }
 
 MeasureCalc::MeasureCalc(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_MathParser(GetMeasureValue, this),
 	m_ParseError(false),
 	m_LowBound(DEFAULT_LOWER_BOUND),
 	m_HighBound(DEFAULT_UPPER_BOUND),
@@ -34,13 +29,9 @@ MeasureCalc::~MeasureCalc()
 {
 }
 
-/*
-** Updates the calculation
-**
-*/
 void MeasureCalc::UpdateValue()
 {
-	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), &m_Value, GetMeasureValue, this);
+	const WCHAR* errMsg = m_MathParser.Parse(m_Formula.c_str(), &m_Value);
 	if (errMsg != nullptr)
 	{
 		if (!m_ParseError)
@@ -55,11 +46,7 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -75,7 +62,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
-	const size_t range = (m_HighBound - m_LowBound) + 1ULL;
+	const size_t range = (m_HighBound - m_LowBound) + 1;
 
 	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && parser.ReadBool(section, L"UniqueRandom", false);
 	if (!m_UniqueRandom)
@@ -110,7 +97,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			FormulaReplace();
 		}
 
-		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
+		const WCHAR* errMsg = m_MathParser.Check(m_Formula.c_str());
 		if (errMsg != nullptr)
 		{
 			LogErrorF(this, L"Calc: %s", errMsg);
@@ -119,10 +106,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** This replaces the word Random in the formula with a random number
-**
-*/
+// This replaces the word Random in the formula with a random number
 void MeasureCalc::FormulaReplace()
 {
 	size_t start = 0, pos;
@@ -132,12 +116,12 @@ void MeasureCalc::FormulaReplace()
 		if (pos != std::wstring::npos)
 		{
 			if (_wcsnicmp(L"random", m_Formula.c_str() + pos, 6) == 0 &&
-				(pos == 0 || MathParser::IsDelimiter((*(m_Formula.c_str() + pos - 1))) &&
-				(pos == (m_Formula.length() - 6) || MathParser::IsDelimiter((*(m_Formula.c_str() + pos + 6))))))
+				(pos == 0 || m_MathParser.IsDelimiter((*(m_Formula.c_str() + pos - 1))) &&
+				(pos == (m_Formula.length() - 6) || m_MathParser.IsDelimiter((*(m_Formula.c_str() + pos + 6))))))
 			{
 				int randNumber = GetRandom();
 
-				WCHAR buffer[32] = { 0 };
+				WCHAR buffer[16] = { 0 };
 				_itow_s(randNumber, buffer, 10);
 				size_t len = wcslen(buffer);
 
@@ -156,17 +140,10 @@ void MeasureCalc::FormulaReplace()
 bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto calc = (MeasureCalc*)context;
-	const std::vector<Measure*>& measures = calc->m_Skin->GetMeasures();
-
-	std::vector<Measure*>::const_iterator iter = measures.begin();
-	for ( ; iter != measures.end(); ++iter)
+	if (auto* measure = calc->m_Skin->GetMeasure(std::wstring_view(str, len)))
 	{
-		if ((*iter)->GetOriginalName().length() == len &&
-			_wcsnicmp(str, (*iter)->GetName(), len) == 0)
-		{
-			*value = (*iter)->GetValue();
-			return true;
-		}
+		*value = measure->GetValue();
+		return true;
 	}
 
 	if (_wcsnicmp(str, L"counter", len) == 0)
@@ -178,6 +155,24 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 	{
 		*value = calc->GetRandom();
 		return true;
+	}
+
+	// Skin::GetMathParserValue does this first, but we do it later here for BWC.
+	std::wstring_view variable(str, len);
+	if (!variable.empty() && variable[0] == L'$')
+	{
+		variable.remove_prefix(1);
+		if (const auto result = calc->m_Skin->GetParser().GetDollarVariable(variable))
+		{
+			errno = 0;
+			WCHAR* end = nullptr;
+			const double parsedValue = wcstod(result->c_str(), &end);
+			if (errno != ERANGE && end && *end == L'\0')
+			{
+				*value = parsedValue;
+				return true;
+			}
+		}
 	}
 
 	return false;
@@ -209,7 +204,7 @@ int MeasureCalc::GetRandom()
 
 void MeasureCalc::UpdateUniqueNumberList()
 {
-	const size_t range = (m_HighBound - m_LowBound) + 1ULL;
+	const size_t range = (m_HighBound - m_LowBound) + 1;
 	m_UniqueNumbers.resize(range);
 
 	for (int i = 0; i < (int)range; ++i)

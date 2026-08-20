@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Meter.h"
@@ -11,7 +6,9 @@
 #include "MeterBar.h"
 #include "MeterHistogram.h"
 #include "MeterString.h"
+#include "MeterTextEdit.h"
 #include "MeterImage.h"
+#include "MeterSvg.h"
 #include "MeterLine.h"
 #include "MeterRoundLine.h"
 #include "MeterRotator.h"
@@ -20,6 +17,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/StringUtil.h"
 
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
@@ -79,20 +77,19 @@ Meter::~Meter()
 	m_ContainerItems.clear();
 }
 
-/*
-** Initializes the meter. Usually this method is overwritten by the inherited
-** classes, which load bitmaps and such things during initialization.
-**
-*/
+// Initializes the meter. Usually this method is overwritten by the inherited
+// classes, which load bitmaps and such things during initialization.
 void Meter::Initialize()
 {
 	m_Initialized = true;
 }
 
-/*
-** Returns the X-position of the meter.
-**
-*/
+void Meter::InvalidateDeviceResources()
+{
+	if (m_ContainerTexture) m_ContainerTexture->InvalidateDeviceResources();
+	if (m_ContainerContentTexture) m_ContainerContentTexture->InvalidateDeviceResources();
+}
+
 int Meter::GetX(bool abs)
 {
 	int containerOffset = 0;
@@ -116,10 +113,6 @@ int Meter::GetX(bool abs)
 	return containerOffset + m_X;
 }
 
-/*
-** Returns the Y-position of the meter.
-**
-*/
 int Meter::GetY(bool abs)
 {
 	int containerOffset = 0;
@@ -149,7 +142,7 @@ void Meter::SetX(int x)
 	m_RelativeX = POSITION_ABSOLUTE;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 	_itow_s(x, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
 }
@@ -160,15 +153,11 @@ void Meter::SetY(int y)
 	m_RelativeY = POSITION_ABSOLUTE;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	WCHAR buffer[32] = { 0 };
+	WCHAR buffer[16] = { 0 };
 	_itow_s(y, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
 }
 
-/*
-** Returns a RECT containing the dimensions of the meter within the Skin
-**
-*/
 RECT Meter::GetMeterRect()
 {
 	int x = GetX();
@@ -176,10 +165,6 @@ RECT Meter::GetMeterRect()
 	return { x, y, x + m_W, y + m_H };
 }
 
-/*
-** Returns a Rect containing the adjusted meter location with "Padding" option
-**
-*/
 D2D1_RECT_F Meter::GetMeterRectPadding()
 {
 	RECT rect = GetMeterRect();
@@ -190,10 +175,6 @@ D2D1_RECT_F Meter::GetMeterRectPadding()
 		rect.bottom + m_Padding.top - m_Padding.bottom);
 }
 
-/*
-** Returns the visible portion of the meter or the meter's bounds
-**
-*/
 bool Meter::GetMeterVisibleRect(RECT& rect)
 {
 	rect = GetMeterRect();
@@ -209,11 +190,8 @@ bool Meter::GetMeterVisibleRect(RECT& rect)
 	return false;
 }
 
-/*
-** Checks if the given point is inside the meter.
-** This function doesn't check Hidden state, so check it before calling this function if needed.
-**
-*/
+// Checks if the given point is inside the meter.
+// This function doesn't check Hidden state, so check it before calling this function if needed.
 bool Meter::HitTest(int x, int y)
 {
 	if (!HitTestContainer(x, y))
@@ -266,20 +244,14 @@ void Meter::RemoveContainerItem(Meter* item)
 	}
 }
 
-void Meter::UpdateContainer()
+void Meter::ResizeContainerTextures()
 {
 	const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
 	const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
-
 	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
-
 	if (m_ContainerContentTexture) m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), width, height);
 }
 
-/*
-** Shows the meter and tooltip.
-**
-*/
 void Meter::Show()
 {
 	m_Hidden = false;
@@ -296,10 +268,6 @@ void Meter::Show()
 	}
 }
 
-/*
-** Hides the meter and tooltip.
-**
-*/
 void Meter::Hide()
 {
 	m_Hidden = true;
@@ -313,20 +281,10 @@ void Meter::Hide()
 	}
 }
 
-/*
-** Read the common options specified in the ini file. The inherited classes must
-** call this base implementation if they overwrite this method.
-**
-*/
-void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
+// Read the common options specified in the ini file. The inherited classes must
+// call this base implementation if they overwrite this method.
+void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
-
 	Section::ReadOptions(parser, section);
 
 	BindMeasures(parser, section);
@@ -459,16 +417,10 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	ReadContainerOptions(parser, section);
 }
 
-void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadContainerOptions(ConfigParser& parser, std::wstring_view section)
 {
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
-
 	const std::wstring& container = parser.ReadString(section, L"Container", L"");
-	if (_wcsicmp(section, container.c_str()) == 0)
+	if (StringUtil::EqualsIgnoreCase(section, container))
 	{
 		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
 		return;
@@ -506,30 +458,44 @@ void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Binds this meter to the given measure. The same measure can be bound to
-** several meters but one meter and only be bound to one measure.
-**
-*/
-void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadOptions(ConfigParser& parser)
+{
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
+	ReadOptions(parser, GetName());
+}
+
+void Meter::ReadContainerOptions(ConfigParser& parser)
+{
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
+	ReadContainerOptions(parser, GetName());
+}
+
+// Binds this meter to the given measure. The same measure can be bound to
+// several meters but one meter and only be bound to one measure.
+void Meter::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, false);
 }
 
-/*
-** Creates the given meter. This is the factory method for the meters.
-** If new meters are implemented this method needs to be updated.
-**
-*/
+// Creates the given meter. This is the factory method for the meters.
+// If new meters are implemented this method needs to be updated.
 Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 {
 	if (_wcsicmp(L"STRING", meter) == 0)
 	{
 		return new MeterString(skin, name);
 	}
+	else if (_wcsicmp(L"TEXTEDIT", meter) == 0)
+	{
+		return new MeterTextEdit(skin, name);
+	}
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
 		return new MeterImage(skin, name);
+	}
+	else if (_wcsicmp(L"SVG", meter) == 0)
+	{
+		return new MeterSvg(skin, name);
 	}
 	else if (_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{
@@ -569,22 +535,17 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	return nullptr;
 }
 
-/*
-** Updates the value(s) from the measures. Derived classes should
-** only update if this returns true;
-*/
+// Updates the value(s) from the measures. Derived classes should
+// only update if this returns true;
 bool Meter::Update()
 {
 	// Only update the meter's value when the divider is equal to the counter
 	return UpdateCounter();
 }
 
-/*
-** Reads and binds the primary MeasureName. This must always be called in overridden
-** BindMeasures() implementations.
-**
-*/
-bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional)
+// Reads and binds the primary MeasureName. This must always be called in overridden
+// BindMeasures() implementations.
+bool Meter::BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional)
 {
 	m_Measures.clear();
 
@@ -604,11 +565,8 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool 
 	return false;
 }
 
-/*
-** Reads and binds secondary measures (MeasureName2 - MeasureNameN).
-**
-*/
-void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
+// Reads and binds secondary measures (MeasureName2 - MeasureNameN).
+void Meter::BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (!m_Measures.empty())
 	{
@@ -639,10 +597,7 @@ void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Replaces %1, %2, ... with the corresponding measure value.
-**
-*/
+// Replaces %1, %2, ... with the corresponding measure value.
 bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	bool replaced = false;
@@ -677,9 +632,6 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 	return replaced;
 }
 
-/*
-** Does the initial construction of the ToolTip for the meter
-*/
 void Meter::CreateToolTip(Skin* skin)
 {
 	HWND hSkin = m_Skin->GetWindow();
@@ -712,7 +664,7 @@ void Meter::CreateToolTip(Skin* skin)
 		GetMeterVisibleRect(rc);
 		rc = m_Skin->LogicalToPhysical(rc);
 
-		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0ULL, rc, hInstance };
+		TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0, rc, hInstance };
 
 		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
@@ -721,9 +673,6 @@ void Meter::CreateToolTip(Skin* skin)
 	}
 }
 
-/*
-** Updates the ToolTip to match new values
-*/
 void Meter::UpdateToolTip()
 {
 	HWND hwndTT = m_ToolTipHandle;
@@ -792,7 +741,7 @@ void Meter::UpdateToolTip()
 	ti.rect = m_Skin->LogicalToPhysical(ti.rect);
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_Skin->LogicalToPhysical((int)m_ToolTipWidth));
 
 	if (m_ToolTipHidden || m_ToolTipDisabled || !isVisible)
 	{
@@ -804,9 +753,6 @@ void Meter::UpdateToolTip()
 	}
 }
 
-/*
-** Draws the solid background & bevel if such are defined
-*/
 bool Meter::Draw(Gfx::Canvas& canvas)
 {
 	if (IsHidden()) return false;
@@ -855,9 +801,6 @@ bool Meter::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Draws a bevel inside the given area
-*/
 void Meter::DrawBevel(Gfx::Canvas& canvas, const D2D1_RECT_F& rect, const D2D1_COLOR_F& light, const D2D1_COLOR_F& dark, const bool offsetMode)
 {
 	// Simulate GDI+ "PixelOffsetModeHalf" offset mode

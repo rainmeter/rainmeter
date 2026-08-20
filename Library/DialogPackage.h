@@ -1,12 +1,6 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef SKININSTALLER_DIALOGPACKAGE_H_
-#define SKININSTALLER_DIALOGPACKAGE_H_
+#pragma once
 
 #include <string>
 #include "zip.h"
@@ -28,6 +22,7 @@ private:
 	{
 		Id_Tab = 1000,
 		Id_NextButton,
+		Id_BackButton,
 		Id_CreatePackageButton
 	};
 
@@ -76,14 +71,12 @@ private:
 			Id_LoadLayoutRadio,
 			Id_LoadLayoutCombo,
 			Id_RainmeterVersionEdit,
-			Id_WindowsVersionCombo,
 			Id_CreatingText,
 			Id_CreatingBar,
 			Id_SaveLabel = 1100,
 			Id_AfterInstallGroup,
 			Id_RequirementsGroup,
-			Id_RainmeterVersionLabel,
-			Id_WindowsVersionLabel
+			Id_RainmeterVersionLabel
 		};
 
 		void Create(HWND owner) override;
@@ -154,7 +147,6 @@ private:
 	// Options tab
 	std::wstring m_TargetFile;
 	std::wstring m_MinimumRainmeter;
-	std::wstring m_MinimumWindows;
 	bool m_LoadLayout;
 	std::wstring m_Load;
 
@@ -163,9 +155,8 @@ private:
 	std::wstring m_VariableFiles;
 	bool m_MergeSkins;
 
+	bool m_OptionsCreated;
 	HANDLE m_PackagerThread;
 	zipFile m_ZipFile;
 	bool m_AllowNonAsciiFilenames;
 };
-
-#endif

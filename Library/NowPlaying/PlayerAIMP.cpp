@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "PlayerAIMP.h"
@@ -12,14 +7,10 @@
 
 Player* PlayerAIMP::c_Player = nullptr;
 
-/*
-** Constructor.
-**
-*/
 PlayerAIMP::PlayerAIMP() : Player(),
 	m_Window(),
 	m_WinampWindow(),
-	m_LastCheckTime(0ULL),
+	m_LastCheckTime(0),
 	m_LastFileSize(0),
 	m_LastTitleSize(0),
 	m_FileMap(),
@@ -27,10 +18,6 @@ PlayerAIMP::PlayerAIMP() : Player(),
 {
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerAIMP::~PlayerAIMP()
 {
 	c_Player = nullptr;
@@ -38,10 +25,6 @@ PlayerAIMP::~PlayerAIMP()
 	if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerAIMP::Create()
 {
 	if (!c_Player)
@@ -52,16 +35,12 @@ Player* PlayerAIMP::Create()
 	return c_Player;
 }
 
-/*
-** Try to find AIMP periodically.
-**
-*/
 bool PlayerAIMP::CheckWindow()
 {
 	ULONGLONG time = GetTickCount64();
 
 	// Try to find AIMP every 5 seconds
-	if (time - m_LastCheckTime > 5000ULL)
+	if (time - m_LastCheckTime > 5000)
 	{
 		m_LastCheckTime = time;
 		m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
@@ -85,10 +64,6 @@ bool PlayerAIMP::CheckWindow()
 	return m_Initialized;
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerAIMP::UpdateData()
 {
 	if (!m_Initialized)
@@ -179,64 +154,36 @@ void PlayerAIMP::UpdateData()
 	}
 }
 
-/*
-** Handles the Pause bang.
-**
-*/
 void PlayerAIMP::Pause()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerAIMP::Play()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PLAY);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
 void PlayerAIMP::Stop()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
 void PlayerAIMP::Next()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
 void PlayerAIMP::Previous()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PREV);
 }
 
-/*
-** Handles the SetPosition bang.
-**
-*/
 void PlayerAIMP::SetPosition(int position)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(position, AIMP_STS_POS));
 }
 
-/*
-** Handles the SetRating bang.
-**
-*/
 void PlayerAIMP::SetRating(int rating)
 {
 	// Set rating through the AIMP Winamp API
@@ -247,56 +194,36 @@ void PlayerAIMP::SetRating(int rating)
 	}
 }
 
-/*
-** Handles the SetVolume bang.
-**
-*/
 void PlayerAIMP::SetVolume(int volume)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
 }
 
-/*
-** Handles the SetShuffle bang.
-**
-*/
 void PlayerAIMP::SetShuffle(bool state)
 {
 	m_Shuffle = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Shuffle, AIMP_STS_SHUFFLE));
 }
 
-/*
-** Handles the SetRepeat bang.
-**
-*/
 void PlayerAIMP::SetRepeat(bool state)
 {
 	m_Repeat = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Repeat, AIMP_STS_REPEAT));
 }
 
-/*
-** Handles the ClosePlayer bang.
-**
-*/
 void PlayerAIMP::ClosePlayer()
 {
 	SendMessage(m_Window, WM_CLOSE, 0, 0);
 }
 
-/*
-** Handles the OpenPlayer bang.
-**
-*/
 void PlayerAIMP::OpenPlayer(std::wstring& path)
 {
 	if (path.empty())
 	{
 		const auto registry_key = [&]() -> std::wstring
 		{
-			UINT retVal = GetSystemWow64Directory(nullptr, 0U);
-			if (retVal == 0U || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+			UINT retVal = GetSystemWow64Directory(nullptr, 0);
+			if (retVal == 0 || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
 			{
 				return L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
 			}
@@ -307,36 +234,24 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 		{
 			bool success = false;
 
-			DWORD size = 512UL;
-			WCHAR* data = new WCHAR[size];
-			DWORD type = 0UL;
-			HKEY hKey = nullptr;
+			WCHAR data[512];
+			DWORD size = sizeof(data);
+			DWORD type = 0;
 
 			std::wstring key = registry_key;
 			key += version;
 
-			RegOpenKeyEx(HKEY_LOCAL_MACHINE, key.c_str(), 0UL, KEY_QUERY_VALUE, &hKey);
-
-			if (RegQueryValueEx(hKey, L"DisplayIcon", nullptr, (LPDWORD)&type,
-				(LPBYTE)data, (LPDWORD)&size) == ERROR_SUCCESS)
+			if (RegGetValue(HKEY_LOCAL_MACHINE, key.c_str(), L"DisplayIcon", RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
 			{
-				if (type == REG_SZ)
+				success = true;
+				path = data;
+				if (appendExe)
 				{
-					success = true;
-					path = data;
-					if (appendExe)
-					{
-						path.resize(path.find_last_of(L'\\') + 1);
-						path += version;
-						path += L".exe";
-					}
+					path.resize(path.find_last_of(L'\\') + 1);
+					path += version;
+					path += L".exe";
 				}
 			}
-
-			delete [] data;
-			data = nullptr;
-			RegCloseKey(hKey);
-			hKey = nullptr;
 
 			return success;
 		};

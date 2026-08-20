@@ -1,9 +1,4 @@
-/* Copyright (C) 2016 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRecycleManager.h"
@@ -31,13 +26,13 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	g_BinSize = (double)rbi.i64Size;
 	g_Thread = false;
 
-	return 0UL;
+	return 0;
 }
 
 bool HasRecycleBinChanged()
 {
-	static DWORD s_LastVolumeCount = 0UL;
-	static ULONGLONG s_LastWriteTime = 0ULL;
+	static DWORD s_LastVolumeCount = 0;
+	static ULONGLONG s_LastWriteTime = 0;
 
 	bool changed = false;
 
@@ -47,7 +42,7 @@ bool HasRecycleBinChanged()
 	LSTATUS ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &volumeKey);
 	if (ls == ERROR_SUCCESS)
 	{
-		DWORD volumeCount = 0UL;
+		DWORD volumeCount = 0;
 		RegQueryInfoKey(volumeKey, nullptr, nullptr, nullptr, &volumeCount, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 		if (volumeCount != s_LastVolumeCount)
 		{
@@ -57,7 +52,7 @@ bool HasRecycleBinChanged()
 
 		WCHAR buffer[64] = { 0 };
 		DWORD bufferSize = _countof(buffer);
-		DWORD index = 0UL;
+		DWORD index = 0;
 
 		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, nullptr, nullptr, nullptr, nullptr)) == ERROR_SUCCESS)
 		{
@@ -65,7 +60,7 @@ bool HasRecycleBinChanged()
 			ls = RegOpenKeyEx(volumeKey, buffer, 0, KEY_QUERY_VALUE, &volumeSubKey);
 			if (ls == ERROR_SUCCESS)
 			{
-				ULONGLONG lastWriteTime = 0ULL;
+				ULONGLONG lastWriteTime = 0;
 				ls = RegQueryInfoKey(volumeSubKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 				if (ls == ERROR_SUCCESS)
 				{
@@ -96,7 +91,7 @@ bool HasRecycleBinChanged()
 		ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE, &iconKey);
 		if (ls == ERROR_SUCCESS)
 		{
-			ULONGLONG lastWriteTime = 0ULL;
+			ULONGLONG lastWriteTime = 0;
 			ls = RegQueryInfoKey(iconKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 			if (ls == ERROR_SUCCESS)
 			{
@@ -135,7 +130,7 @@ MeasureRecycleManager::~MeasureRecycleManager()
 	--g_InstanceCount;
 }
 
-void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

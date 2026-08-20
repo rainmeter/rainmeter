@@ -1,14 +1,10 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/PathUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "Util.h"
 #include "resource.h"
@@ -20,7 +16,7 @@ std::vector<std::wstring> DialogNewSkin::c_Templates;
 WINDOWPLACEMENT DialogNewSkin::c_WindowPlacement = { 0 };
 DialogNewSkin* DialogNewSkin::c_Dialog = nullptr;
 
-DialogNewSkin::DialogNewSkin() : Dialog()
+DialogNewSkin::DialogNewSkin() : Dialog(&c_WindowPlacement)
 {
 }
 
@@ -28,10 +24,6 @@ DialogNewSkin::~DialogNewSkin()
 {
 }
 
-/*
-** Opens by tab index
-**
-*/
 void DialogNewSkin::Open(int tab)
 {
 	if (!c_Dialog)
@@ -43,18 +35,10 @@ void DialogNewSkin::Open(int tab)
 		GetString(IDS_CreateNewSkin),
 		0, 0, 300, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
-
-	const HWND& hwnd = c_Dialog->GetWindow();
-	GetWindowPlacement(hwnd, &c_WindowPlacement);
-	if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-	{
-		ShowWindow(hwnd, SW_RESTORE);
-	}
-	SetForegroundWindow(hwnd);
 }
 
 void DialogNewSkin::Open(const WCHAR* tabName, const WCHAR* parent)
@@ -194,12 +178,6 @@ INT_PTR DialogNewSkin::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Reset any close action
 			c_CloseAction = { false, 0 };
 
-			GetWindowPlacement(m_Window, &c_WindowPlacement);
-			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
-			{
-				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
-			}
-
 			delete c_Dialog;
 			c_Dialog = nullptr;
 		}
@@ -239,14 +217,6 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	// Use arrows instead of plus/minus in the tree
 	item = m_TabNew.GetControl(TabNew::Id_ItemsTreeView);
 	SetWindowTheme(item, L"explorer", nullptr);
-
-	if (c_WindowPlacement.length == 0)
-	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
 }
@@ -360,7 +330,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	buttonWidth += 10;
 	short column1 = (268 - buttonWidth);
 
@@ -381,9 +351,10 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 		Control::Button(Id_AddSkinButton, IDS_AddSkin,
 			column1, 57, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_TemplateDropDownList, IDS_TemplateEllipsis,
+		Control::Button(Id_TemplateDropDownList, IDS_Template,
 			column1, 76, buttonWidth, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ELLIPSIS)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -524,21 +495,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				TabTemplate::CreateTemplateMenu(menu, m_SelectedTemplate);
-
-				RECT r = { 0 };
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -841,7 +798,6 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -1026,7 +982,7 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 					}
 
 					// Change parent if folder is at root level
-					if (count == 1U)
+					if (count == 1)
 					{
 						m_ParentFolder = newItem;
 						UpdateParentPathLabel();
@@ -1422,7 +1378,7 @@ UINT DialogNewSkin::TabNew::GetChildSkinCount(HWND tree, HTREEITEM item)
 {
 	if (item == nullptr) return 0;
 
-	UINT count = 0U;
+	UINT count = 0;
 	WCHAR buffer[MAX_PATH] = { 0 };
 	TVITEM tvi = { 0 };
 	tvi.hItem = item;
@@ -1567,7 +1523,7 @@ int DialogNewSkin::TabNew::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int inde
 		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
 			s_SortInfo.emplace_back(false, skinFolder.files[i].filename);
-			tvi.item.lParam = (LPARAM)(s_SortInfo.size() - 1ULL);
+			tvi.item.lParam = (LPARAM)(s_SortInfo.size() - 1);
 
 			tvi.item.pszText = (WCHAR*)skinFolder.files[i].filename.c_str();
 			TreeView_InsertItem(tree, &tvi);
@@ -1629,7 +1585,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	short column1 = (268 - buttonWidth - 6);
 
 	static const Control s_Controls[] =

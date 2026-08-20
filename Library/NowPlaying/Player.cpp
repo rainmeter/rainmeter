@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Player.h"
@@ -34,38 +29,30 @@ std::wstring EncodeUrl(const std::wstring& url)
 	return ret;
 }
 
-/*
-** Constructor.
-**
-*/
 Player::Player() :
 	m_Initialized(false),
-	m_InstanceCount(0U),
-	m_UpdateCount(0U),
-	m_TrackCount(0U),
+	m_InstanceCount(0),
+	m_UpdateCount(0),
+	m_TrackCount(0),
 	m_Measures(0),
 	m_State(),
-	m_Number(0U),
-	m_Year(0U),
+	m_Number(0),
+	m_Year(0),
 	m_Shuffle(false),
 	m_Repeat(false),
-	m_Duration(0U),
-	m_Position(0U),
-	m_Rating(0U),
-	m_Volume(0U),
+	m_Duration(0),
+	m_Position(0),
+	m_Rating(0),
+	m_Volume(0),
 	m_FetchLyricsTask(nullptr)
 {
 	// Get temporary file for cover art
 	WCHAR buffer[MAX_PATH] = { 0 };
 	GetTempPath(_countof(buffer), buffer);
-	GetTempFileName(buffer, L"jpg", 0U, buffer);
+	GetTempFileName(buffer, L"jpg", 0, buffer);
 	m_TempCoverPath = buffer;
 }
 
-/*
-** Destructor.
-**
-*/
 Player::~Player()
 {
 	DeleteFile(m_TempCoverPath.c_str());
@@ -77,53 +64,33 @@ Player::~Player()
 	}
 }
 
-/*
-** Called during initialization of main measure.
-**
-*/
 void Player::AddInstance()
 {
 	++m_InstanceCount;
 }
 
-/*
-** Called during destruction of main measure.
-**
-*/
 void Player::RemoveInstance()
 {
-	if (--m_InstanceCount == 0U)
+	if (--m_InstanceCount == 0)
 	{
 		delete this;
 	}
 }
 
-/*
-** Called during initialization of any measure.
-**
-*/
 void Player::AddMeasure(INT type)
 {
 	m_Measures |= type;
 }
 
-/*
-** Called during update of main measure.
-**
-*/
 void Player::UpdateMeasure()
 {
 	if (++m_UpdateCount >= m_InstanceCount)
 	{
 		UpdateData();
-		m_UpdateCount = 0U;
+		m_UpdateCount = 0;
 	}
 }
 
-/*
-** Default implementation for getting cover.
-**
-*/
 void Player::FindCover()
 {
 	TagLib::FileRef fr(m_FilePath.c_str(), false);
@@ -135,19 +102,16 @@ void Player::FindCover()
 	{
 		std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
 
-		if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-			!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+		auto cover = CCover::GetLocal(L"cover", trackFolder);
+		if (!cover)
 		{
-			// Nothing found
-			m_CoverPath.clear();
+			cover = CCover::GetLocal(L"folder", trackFolder);
 		}
+
+		m_CoverPath = std::move(cover).value_or(std::wstring());
 	}
 }
 
-/*
-** Default implementation for getting lyrics.
-**
-*/
 void Player::FindLyrics()
 {
 	// This will be leaked on quit, but that's not a problem.
@@ -184,32 +148,28 @@ void Player::HandleLyricsFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode
 	pos = body.find(L"<p>", pos);
 	if (pos == std::wstring::npos) return;
 
-	pos += 6ULL;
-	body.erase(0ULL, pos);
+	pos += 6;
+	body.erase(0, pos);
 
 	pos = body.find(L"</div>");
-	pos -= 9ULL;
+	pos -= 9;
 	body.resize(pos);
 
 	CharacterEntityReference::Decode(body, 2, false);
 
 	while ((pos = body.find(L"<br/>"), pos) != std::wstring::npos)
 	{
-		body.replace(pos, 5ULL, L"\n");
+		body.replace(pos, 5, L"\n");
 	}
 
 	while ((pos = body.find(L"</p><p>"), pos) != std::wstring::npos)
 	{
-		body.replace(pos, 7ULL, L"\n\n");
+		body.replace(pos, 7, L"\n\n");
 	}
 
 	m_Lyrics = body;
 }
 
-/*
-** Clear track information.
-**
-*/
 void Player::ClearData(bool all)
 {
 	m_State = STATE_STOPPED;
@@ -220,15 +180,15 @@ void Player::ClearData(bool all)
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
-	m_Duration = 0U;
-	m_Position = 0U;
-	m_Rating = 0U;
-	m_Number = 0U;
-	m_Year = 0U;
+	m_Duration = 0;
+	m_Position = 0;
+	m_Rating = 0;
+	m_Number = 0;
+	m_Year = 0;
 
 	if (all)
 	{
-		m_Volume = 0U;
+		m_Volume = 0;
 		m_Shuffle = false;
 		m_Repeat = false;
 	}
