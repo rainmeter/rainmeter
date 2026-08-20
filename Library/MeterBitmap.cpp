@@ -162,7 +162,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
+	parser.ReadString(m_ImageName, section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options

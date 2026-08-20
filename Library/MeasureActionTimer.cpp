@@ -185,7 +185,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, std::wstring_view sec
 
 		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"ActionList%zu", ++index);
-		action = parser.ReadString(section, buffer, L"", { .sectionVariables = false });
+		parser.ReadString(action, section, buffer, L"", { .sectionVariables = false });
 	}
 
 	m_IgnoreWarnings = parser.ReadInt(section, L"IgnoreWarnings", 0) != 0;

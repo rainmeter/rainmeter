@@ -221,12 +221,12 @@ void MeasureMouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_Mouse.ReadOptions(parser, section);
 
-	m_MouseMoveAction = parser.ReadString(section, L"MouseMoveAction", L"", { .sectionVariables = false });
-	m_LeftDragAction = parser.ReadString(section, L"LeftMouseDragAction", L"", { .sectionVariables = false });
-	m_MiddleDragAction = parser.ReadString(section, L"MiddleMouseDragAction", L"", { .sectionVariables = false });
-	m_RightDragAction = parser.ReadString(section, L"RightMouseDragAction", L"", { .sectionVariables = false });
-	m_X1DragAction = parser.ReadString(section, L"X1MouseDragAction", L"", { .sectionVariables = false });
-	m_X2DragAction = parser.ReadString(section, L"X2MouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_MouseMoveAction, section, L"MouseMoveAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_LeftDragAction, section, L"LeftMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_MiddleDragAction, section, L"MiddleMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_RightDragAction, section, L"RightMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_X1DragAction, section, L"X1MouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_X2DragAction, section, L"X2MouseDragAction", L"", { .sectionVariables = false });
 
 	m_RelativeToSkin = parser.ReadBool(section, L"RelativeToSkin", true);
 	m_RequireDragging = parser.ReadBool(section, L"RequireDragging", false);

@@ -42,7 +42,7 @@ void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		LogErrorF(this, L"ResMon: ResCountType=%s is not valid", type);
 	}
 
-	m_ProcessName = parser.ReadString(section, L"ProcessName", L"");
+	parser.ReadString(m_ProcessName, section, L"ProcessName", L"");
 }
 
 void MeasureResMon::UpdateValue()

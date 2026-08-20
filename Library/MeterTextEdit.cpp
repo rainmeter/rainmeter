@@ -252,7 +252,7 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	if (m_TrackInitialText)
 	{
-		m_Text = parser.ReadString(section, L"InitialText", L"");
+		parser.ReadString(m_Text, section, L"InitialText", L"");
 
 		// The caret, the scroll and the undo history all point into the text this replaced. Put
 		// back to where a new field has them, rather than clamped: nothing here is the user's.
@@ -324,9 +324,9 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
-	m_OnSubmitAction = parser.ReadString(section, L"OnSubmitAction", L"", { .sectionVariables = false });
-	m_OnFocusAction = parser.ReadString(section, L"OnFocusAction", L"", { .sectionVariables = false });
-	m_OnDismissAction = parser.ReadString(section, L"OnDismissAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnSubmitAction, section, L"OnSubmitAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnFocusAction, section, L"OnFocusAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnDismissAction, section, L"OnDismissAction", L"", { .sectionVariables = false });
 
 	m_FocusBorderColor = parser.ReadColor(section, L"FocusBorderColor",
 		D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
@@ -336,7 +336,7 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		if (m_FocusBorderWidth < 0.0f) m_FocusBorderWidth = 0.0f;
 	}
 
-	m_PlaceholderText = parser.ReadString(section, L"PlaceholderText", L"");
+	parser.ReadString(m_PlaceholderText, section, L"PlaceholderText", L"");
 	if (!m_PlaceholderText.empty())
 	{
 		// Only read once there is a placeholder to draw, so a meter without one pays nothing here.

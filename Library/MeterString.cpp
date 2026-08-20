@@ -28,9 +28,9 @@ void MeterString::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	MeterStringBase::ReadOptions(parser, section);
 
-	m_Prefix = parser.ReadString(section, L"Prefix", L"");
-	m_Postfix = parser.ReadString(section, L"Postfix", L"");
-	m_Text = parser.ReadString(section, L"Text", L"");
+	parser.ReadString(m_Prefix, section, L"Prefix", L"");
+	parser.ReadString(m_Postfix, section, L"Postfix", L"");
+	parser.ReadString(m_Text, section, L"Text", L"");
 
 	m_Angle = (FLOAT)parser.ReadFloat(section, L"Angle", 0.0);
 

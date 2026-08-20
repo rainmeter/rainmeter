@@ -66,19 +66,19 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Path = parser.ReadString(section, L"Path", L"");
+	parser.ReadString(m_Path, section, L"Path", L"");
 	m_Skin->MakePathAbsolute(m_Path);
 
-	m_OnDropAction = parser.ReadString(section, L"OnDropAction", L"");
+	parser.ReadString(m_OnDropAction, section, L"OnDropAction", L"");
 	if (m_OnDropAction.empty())
 	{
 		// For backwards compatibility.
-		m_OnDropAction = parser.ReadString(section, L"OnDroppedAction", L"");
+		parser.ReadString(m_OnDropAction, section, L"OnDroppedAction", L"");
 	}
 
-	m_OnEnterAction = parser.ReadString(section, L"OnEnterAction", L"");
-	m_OnOverAction = parser.ReadString(section, L"OnOverAction", L"");
-	m_OnLeaveAction = parser.ReadString(section, L"OnLeaveAction", L"");
+	parser.ReadString(m_OnEnterAction, section, L"OnEnterAction", L"");
+	parser.ReadString(m_OnOverAction, section, L"OnOverAction", L"");
+	parser.ReadString(m_OnLeaveAction, section, L"OnLeaveAction", L"");
 
 	m_ProcessAllFiles = parser.ReadBool(section, L"ProcessAllFiles", false);
 	m_OverrideExisting = parser.ReadBool(section, L"OverrideExisting", false);

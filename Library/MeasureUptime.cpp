@@ -20,7 +20,7 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Format = parser.ReadString(section, L"Format", L"%4!i!d %3!i!:%2!02i!");
+	parser.ReadString(m_Format, section, L"Format", L"%4!i!d %3!i!:%2!02i!");
 
 	if (m_Format.find(L"%4") == std::wstring::npos)
 	{

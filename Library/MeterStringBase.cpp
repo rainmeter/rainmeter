@@ -466,7 +466,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		LogErrorF(this, L"ClipString=%i is not valid", clipping);
 	}
 
-	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
+	parser.ReadString(m_FontFace, section, L"FontFace", L"Arial");
 	if (m_FontFace.empty())
 	{
 		m_FontFace = L"Arial";

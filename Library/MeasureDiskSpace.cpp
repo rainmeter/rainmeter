@@ -144,7 +144,7 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, std::wstring_view secti
 
 	Measure::ReadOptions(parser, section);
 
-	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
+	parser.ReadString(m_Drive, section, L"Drive", L"C:\\");
 	if (m_Drive.empty())
 	{
 		LogWarningF(this, L"FreeDiskSpace: Drive= empty");

@@ -343,14 +343,14 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
 	}
 
-	m_Expression = parser.ReadString(section, L"RegExp", L"");
+	parser.ReadString(m_Expression, section, L"RegExp", L"");
 	if (!parser.GetLastDefaultUsed())
 	{
 		m_ParseType = ParseType::RegExp;
 	}
 	else
 	{
-		m_Expression = parser.ReadString(section, L"JsonPointer", L"");
+		parser.ReadString(m_Expression, section, L"JsonPointer", L"");
 		m_ParseType = parser.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
 
 		// |JsonPointer=1| enables JSON parsing without resolving a value for this measure.
@@ -362,11 +362,11 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 			m_Expression.clear();
 		}
 	}
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
-	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", { .sectionVariables = false });
-	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", { .sectionVariables = false });
-	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", { .sectionVariables = false });
-	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
+	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnRegExpErrAction, section, L"OnRegExpErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnConnectErrAction, section, L"OnConnectErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnDownloadErrAction, section, L"OnDownloadErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_ErrorString, section, L"ErrorString", L"");
 	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
 
 	int index = parser.ReadInt(section, L"StringIndex", 0);
@@ -390,7 +390,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 	{
 		m_DownloadFolder = L"DownloadFile\\";
 		GetSkin()->MakePathAbsolute(m_DownloadFolder);
-		m_DownloadFile = parser.ReadString(section, L"DownloadFile", L"");
+		parser.ReadString(m_DownloadFile, section, L"DownloadFile", L"");
 	}
 	else
 	{
@@ -401,7 +401,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 	if (m_Debug == 2)
 	{
 		std::wstring oldDebugFileLocation = m_DebugFileLocation;
-		m_DebugFileLocation = parser.ReadString(section, L"Debug2File", L"WebParserDump.txt");
+		parser.ReadString(m_DebugFileLocation, section, L"Debug2File", L"WebParserDump.txt");
 		GetSkin()->MakePathAbsolute(m_DebugFileLocation);
 
 		if (_wcsicmp(oldDebugFileLocation.c_str(), m_DebugFileLocation.c_str()) != 0)

@@ -89,10 +89,11 @@ public:
 		bool sectionVariables = true;
 	};
 
-	// The returned reference points into a buffer that the next ReadString() at the same nesting
-	// depth reuses, so copy the value if it has to outlive that next read. In particular, no
-	// argument may point into a value an earlier ReadString() returned, since the new read would
-	// then be writing over its own argument.
+	// Reads into |result|. Prefer this where the value is kept.
+	void ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options = {});
+
+	// The returned reference is good only until the next ReadString() at the same nesting depth,
+	// which reuses the buffer. Copy it to keep it; no argument may point into it.
 	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options = {});
 	bool IsKeyDefined(std::wstring_view section, std::wstring_view key);
 	bool IsValueDefined(std::wstring_view section, std::wstring_view key);

@@ -394,9 +394,9 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_Mouse.ReadOptions(parser, section);
 
-	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
-	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
-	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
+	parser.ReadString(m_ToolTipText, section, L"ToolTipText", L"");
+	parser.ReadString(m_ToolTipTitle, section, L"ToolTipTitle", L"");
+	parser.ReadString(m_ToolTipIcon, section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
 	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_Skin->GetMeterToolTipHidden());

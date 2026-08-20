@@ -67,7 +67,7 @@ void MeasurePower::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	else if (_wcsicmp(L"LIFETIME", state) == 0)
 	{
 		m_State = PowerState::LIFETIME;
-		m_Format = parser.ReadString(section, L"Format", L"%H:%M");
+		parser.ReadString(m_Format, section, L"Format", L"%H:%M");
 
 		SYSTEM_POWER_STATUS sps;
 		if (GetSystemPowerStatus(&sps))

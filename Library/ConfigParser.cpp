@@ -1192,17 +1192,8 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 	return result;
 }
 
-const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
+void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
 {
-	static size_t s_Depth = 0;
-	static std::deque<std::wstring> s_Results;
-
-	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
-	// working on an outer result, so each nested read needs its own buffer.
-	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
-	++s_Depth;
-	auto depthGuard = Scoped([&] { --s_Depth; });
-
 	// Clear last status
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
@@ -1221,7 +1212,7 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 		{
 			result = defValue;
 			m_LastDefaultUsed = true;
-			return result;
+			return;
 		}
 	}
 
@@ -1255,7 +1246,21 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 		}
 		m_CurrentSection = {};  // Reset
 	}
+}
 
+const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
+{
+	static size_t s_Depth = 0;
+	static std::deque<std::wstring> s_Results;
+
+	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
+	// working on an outer result, so each nested read needs its own buffer. A read into a caller's
+	// own string holds no buffer here, so it takes no depth.
+	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+	++s_Depth;
+	auto depthGuard = Scoped([&] { --s_Depth; });
+
+	ReadString(result, section, key, defValue, options);
 	return result;
 }
 

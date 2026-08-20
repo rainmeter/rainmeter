@@ -238,10 +238,10 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		}
 	}
 
-	m_OutputDelimiter = parser.ReadString(section, L"OutputDelimiter", L"\n");
+	parser.ReadString(m_OutputDelimiter, section, L"OutputDelimiter", L"\n");
 
-	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");
-	m_RegValueName = parser.ReadString(section, L"RegValue", L"");
+	parser.ReadString(m_RegKeyName, section, L"RegKey", L"");
+	parser.ReadString(m_RegValueName, section, L"RegValue", L"");
 
 	if (m_MaxValue == 0.0)
 	{
