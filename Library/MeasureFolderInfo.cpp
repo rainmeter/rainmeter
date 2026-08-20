@@ -226,7 +226,7 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"FileCount", Type::FileCount },
 		{ L"FileCountStr", Type::FileCount },
 	};
-	parser.ReadEnum(m_Type, section, L"InfoType", Type::FileCount, s_InfoTypes);
+	m_Type = parser.ReadEnum(section, L"InfoType", Type::FileCount, s_InfoTypes);
 
 	const std::wstring& folder = parser.ReadString(section, L"Folder", L"", { .sectionVariables = false });
 	const WCHAR* str = folder.c_str();

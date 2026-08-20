@@ -197,14 +197,14 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section
 		{ L"RIGHT", false },
 		{ L"LEFT", true },
 	};
-	parser.ReadEnum(m_GraphStartLeft, section, L"GraphStart", false, s_GraphStarts);
+	m_GraphStartLeft = parser.ReadEnum(section, L"GraphStart", false, s_GraphStarts);
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
 		{ L"VERTICAL", false },
 		{ L"HORIZONTAL", true },
 	};
-	parser.ReadEnum(m_GraphHorizontalOrientation, section, L"GraphOrientation", false, s_GraphOrientations);
+	m_GraphHorizontalOrientation = parser.ReadEnum(section, L"GraphOrientation", false, s_GraphOrientations);
 
 	if (m_Initialized)
 	{

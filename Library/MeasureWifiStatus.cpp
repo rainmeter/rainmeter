@@ -139,7 +139,6 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	}
 	m_ListMax = value;
 
-	MeasureType infoType = MeasureType::UNKNOWN;
 	static constexpr ConfigParser::EnumOption<MeasureType> s_InfoTypes[] =
 	{
 		{ L"SSID", MeasureType::SSID },
@@ -151,7 +150,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"TXRATE", MeasureType::TXRATE },
 		{ L"RXRATE", MeasureType::RXRATE },
 	};
-	parser.ReadEnum(infoType, section, L"WifiInfoType", MeasureType::UNKNOWN, s_InfoTypes);
+	const MeasureType infoType = parser.ReadEnum(section, L"WifiInfoType", MeasureType::UNKNOWN, s_InfoTypes);
 
 	if (infoType != m_Type)
 	{

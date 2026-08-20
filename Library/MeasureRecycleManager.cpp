@@ -139,7 +139,7 @@ void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view 
 		{ L"COUNT", Type::Count },
 		{ L"SIZE", Type::Size },
 	};
-	parser.ReadEnum(m_Type, section, L"RecycleType", Type::Count, s_Types);
+	m_Type = parser.ReadEnum(section, L"RecycleType", Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()

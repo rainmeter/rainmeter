@@ -472,7 +472,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"MAXIMIZE", SW_MAXIMIZE },
 		{ L"MINIMIZE", SW_MINIMIZE },
 	};
-	parser.ReadEnum(m_State, section, L"State", (WORD)SW_HIDE, s_States);
+	m_State = parser.ReadEnum(section, L"State", (WORD)SW_HIDE, s_States);
 
 	// Grab "%COMSPEC% environment variable
 	parser.ReadString(m_Program, section, L"Program", L"\"%COMSPEC%\" /U /C");
@@ -489,7 +489,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"ANSI", OUTPUTTYPE_ANSI },
 		{ L"UTF8", OUTPUTTYPE_UTF8 },
 	};
-	parser.ReadEnum(m_OutputType, section, L"OutputType", OUTPUTTYPE_UTF16, s_OutputTypes);
+	m_OutputType = parser.ReadEnum(section, L"OutputType", OUTPUTTYPE_UTF16, s_OutputTypes);
 }
 
 void MeasureRunCommand::UpdateValue()

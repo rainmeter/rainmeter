@@ -305,7 +305,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, 
 		{ L"VERTICAL", Gfx::Util::FlipType::Vertical },
 		{ L"BOTH", Gfx::Util::FlipType::Both },
 	};
-	parser.ReadEnum(m_Options.m_Flip, section, m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
+	m_Options.m_Flip = parser.ReadEnum(section, m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
 
 	if (!m_DisableTransform)
 	{

@@ -125,14 +125,14 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"RIGHT", false },
 		{ L"LEFT", true },
 	};
-	parser.ReadEnum(m_GraphStartLeft, section, L"GraphStart", false, s_GraphStarts);
+	m_GraphStartLeft = parser.ReadEnum(section, L"GraphStart", false, s_GraphStarts);
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
 		{ L"VERTICAL", false },
 		{ L"HORIZONTAL", true },
 	};
-	parser.ReadEnum(m_GraphHorizontalOrientation, section, L"GraphOrientation", false, s_GraphOrientations);
+	m_GraphHorizontalOrientation = parser.ReadEnum(section, L"GraphOrientation", false, s_GraphOrientations);
 
 	const std::wstring& join = parser.ReadString(section, L"LineJoin", L"MITER");
 	if (_wcsicmp(join.c_str(), L"MITER") == 0)
@@ -169,7 +169,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"NORMAL", D2D1_STROKE_TRANSFORM_TYPE_NORMAL },
 		{ L"FIXED", D2D1_STROKE_TRANSFORM_TYPE_FIXED },
 	};
-	parser.ReadEnum(m_StrokeType, section, L"TransformStroke", D2D1_STROKE_TRANSFORM_TYPE_NORMAL, s_StrokeTypes);
+	m_StrokeType = parser.ReadEnum(section, L"TransformStroke", D2D1_STROKE_TRANSFORM_TYPE_NORMAL, s_StrokeTypes);
 
 	if (m_Initialized)
 	{

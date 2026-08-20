@@ -77,7 +77,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"VERTICAL", VERTICAL },
 		{ L"HORIZONTAL", HORIZONTAL },
 	};
-	parser.ReadEnum(m_Orientation, section, L"BarOrientation", VERTICAL, s_Orientations);
+	m_Orientation = parser.ReadEnum(section, L"BarOrientation", VERTICAL, s_Orientations);
 
 	if (m_Initialized)
 	{

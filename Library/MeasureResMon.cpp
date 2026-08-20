@@ -27,7 +27,7 @@ void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"HANDLE", Type::HANDLE },
 		{ L"WINDOW", Type::WINDOW },
 	};
-	parser.ReadEnum(m_Type, section, L"ResCountType", Type::GDI, s_Types);
+	m_Type = parser.ReadEnum(section, L"ResCountType", Type::GDI, s_Types);
 
 	parser.ReadString(m_ProcessName, section, L"ProcessName", L"");
 }
