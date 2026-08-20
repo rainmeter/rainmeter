@@ -369,6 +369,7 @@ private:
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
+	void WriteDeferredOptions();
 	bool ReadSkin();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
@@ -428,6 +429,8 @@ private:
 	SkinDropTarget* m_DropTarget;
 
 	int m_PendingWriteOptions;
+	bool m_DeferOptionWrites;
+	bool m_WriteOptionsScheduled;
 
 	HPOWERNOTIFY m_SuspendResumeNotification;
 

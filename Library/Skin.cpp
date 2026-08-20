@@ -29,6 +29,7 @@
 #include "../Version.h"
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
+#include "../Common/ScopedFunction.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/EffectStream.h"
 
@@ -43,17 +44,19 @@ enum TIMER
 	TIMER_DEACTIVATE = 5,
 	TIMER_PREVENT_MOVE = 6,
 	TIMER_CARET = 7,
+	TIMER_WRITE_OPTIONS = 8,
 
 	// Update this when adding a new timer.
-	TIMER_MAX = 7
+	TIMER_MAX = 8
 };
 
 enum INTERVAL
 {
-	INTERVAL_METER      = 1000,
-	INTERVAL_MOUSE      = 500,
-	INTERVAL_FADE       = 10,
-	INTERVAL_TRANSITION = 100
+	INTERVAL_METER         = 1000,
+	INTERVAL_MOUSE         = 500,
+	INTERVAL_FADE          = 10,
+	INTERVAL_TRANSITION    = 100,
+	INTERVAL_WRITE_OPTIONS = 10000
 };
 
 int Skin::c_InstanceCount = 0;
@@ -73,6 +76,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_SelectionOverlay(),
 	m_DropTarget(),
 	m_PendingWriteOptions(0),
+	m_DeferOptionWrites(false),
+	m_WriteOptionsScheduled(false),
 	m_SuspendResumeNotification(nullptr),
 	m_Mouse(this),
 	m_MouseOver(false),
@@ -203,6 +208,8 @@ void Skin::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_TRANSITION);
 	KillTimer(m_Window, TIMER_PREVENT_MOVE);
 	KillTimer(m_Window, TIMER_CARET);
+
+	WriteDeferredOptions();
 
 	m_ActiveFade = false;
 	m_FadeStartTime = 0;
@@ -462,11 +469,7 @@ void Skin::Refresh(bool init, bool all)
 
 	LogNoticeF(this, L"Refreshing skin");
 
-	if (m_PendingWriteOptions != 0)
-	{
-		WriteOptions(m_PendingWriteOptions);
-		m_PendingWriteOptions = 0;
-	}
+	WriteDeferredOptions();
 
 	SetResizeWindowMode(RESIZEMODE_RESET);
 
@@ -943,11 +946,7 @@ void Skin::Deselect()
 
 	m_SelectionOverlay.reset();
 
-	if (m_PendingWriteOptions != 0)
-	{
-		WriteOptions(m_PendingWriteOptions);
-		m_PendingWriteOptions = 0;
-	}
+	WriteDeferredOptions();
 
 	for (const auto& meter : m_Meters) meter->ResetToolTip();
 
@@ -1074,6 +1073,10 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 // Correct number of arguments must be passed (or use Rainmeter::ExecuteBang).
 void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 {
+	const bool oldDeferOptionWrites = m_DeferOptionWrites;
+	m_DeferOptionWrites = true;
+	auto deferScope = Scoped([&] { m_DeferOptionWrites = oldDeferOptionWrites; });
+
 	switch (bang)
 	{
 	case Bang::Refresh:
@@ -2284,13 +2287,28 @@ void Skin::WriteOptions(INT setting)
 		ComputeOptionValueFromPosition();
 	}
 
-	if (IsSelected())
+	if (IsSelected() || m_DeferOptionWrites)
 	{
 		m_PendingWriteOptions |= setting;
 		if (setting != OPTION_ALL)
 		{
 			DialogManage::UpdateSkins(this);
 		}
+
+		if (m_DeferOptionWrites && !m_WriteOptionsScheduled)
+		{
+			m_WriteOptionsScheduled = true;
+
+			SetTimer(m_Window, TIMER_WRITE_OPTIONS, INTERVAL_WRITE_OPTIONS, [](HWND window, UINT, UINT_PTR timerId, DWORD)
+				{
+					auto* skin = (Skin*)GetWindowLongPtr(window, GWLP_USERDATA);
+					if (skin)
+					{
+						skin->WriteDeferredOptions();
+					}
+				});
+		}
+
 		return;
 	}
 
@@ -2395,6 +2413,18 @@ void Skin::WriteOptions(INT setting)
 			_itow_s(m_WindowZPosition, buffer, 10);
 			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
 		}
+	}
+}
+
+void Skin::WriteDeferredOptions()
+{
+	KillTimer(m_Window, TIMER_WRITE_OPTIONS);
+	m_WriteOptionsScheduled = false;
+
+	if (m_PendingWriteOptions != 0)
+	{
+		WriteOptions(m_PendingWriteOptions);
+		m_PendingWriteOptions = 0;
 	}
 }
 
