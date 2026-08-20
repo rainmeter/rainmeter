@@ -75,9 +75,9 @@ public:
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
-	const std::wstring& GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue);
-	void SetValue(const std::wstring& section, const std::wstring& option, std::wstring value);
-	void DeleteValue(const std::wstring& section, const std::wstring& option);
+	const std::wstring* GetValue(std::wstring_view section, std::wstring_view option);
+	void SetValue(std::wstring_view section, std::wstring_view option, std::wstring value);
+	void DeleteValue(std::wstring_view section, std::wstring_view option);
 
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }

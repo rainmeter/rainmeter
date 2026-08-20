@@ -1884,7 +1884,8 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					// Remove sections with Active=0
 					for (auto iter = parser.GetSectionNames().begin(); iter != parser.GetSectionNames().end(); ++iter)
 					{
-						if (parser.GetValue(*iter, L"Active", L"") == L"0")
+						const std::wstring* active = parser.GetValue(*iter, L"Active");
+						if (active && *active == L"0")
 						{
 							WritePrivateProfileString((*iter).c_str(), nullptr, nullptr, path.c_str());
 						}

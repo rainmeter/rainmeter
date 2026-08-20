@@ -1204,35 +1204,27 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 	m_LastValueDefined = false;
 
 	const std::wstring strSection = section;
-	const std::wstring strKey = key;
+	const std::wstring_view strKey = key;
 	const std::wstring strDefault = defValue;
 
-	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
-	if (&strValue == &strDefault)
+	const std::wstring* value = GetValue(strSection, strKey);
+	if (!value)
 	{
-		bool foundInheritValue = false;
 		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			const std::wstring& strInheritValue = GetValue(*iter, strKey, strDefault);
-			if (&strInheritValue != &strDefault)
-			{
-				result = strInheritValue;
-				foundInheritValue = true;
-				break;
-			}
+			value = GetValue(*iter, strKey);
+			if (value) break;
 		}
 
-		if (!foundInheritValue)
+		if (!value)
 		{
 			result = strDefault;
 			m_LastDefaultUsed = true;
 			return result;
 		}
 	}
-	else
-	{
-		result = strValue;
-	}
+
+	result = *value;
 
 	if (!result.empty())
 	{
@@ -1847,7 +1839,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	if (temporary) System::RemoveFile(iniRead);
 }
 
-std::wstring_view BuildValuesMapKey(const std::wstring& section, const std::wstring& option, WCHAR* buffer, size_t bufferCount)
+std::wstring_view BuildValuesMapKey(std::wstring_view section, std::wstring_view option, WCHAR* buffer, size_t bufferCount)
 {
 	auto bufferPos = buffer;
 
@@ -1864,19 +1856,19 @@ std::wstring_view BuildValuesMapKey(const std::wstring& section, const std::wstr
 	return std::wstring_view(buffer, keyLength);
 }
 
-const std::wstring& ConfigParser::GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue)
+const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
 	if (!key.empty())
 	{
 		auto iter = m_Values.find(key);
-		if (iter != m_Values.end()) return iter->second;
+		if (iter != m_Values.end()) return &iter->second;
 	}
-	return defaultValue;
+	return nullptr;
 }
 
-void ConfigParser::SetValue(const std::wstring& section, const std::wstring& option, std::wstring value)
+void ConfigParser::SetValue(std::wstring_view section, std::wstring_view option, std::wstring value)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
@@ -1886,7 +1878,7 @@ void ConfigParser::SetValue(const std::wstring& section, const std::wstring& opt
 	}
 }
 
-void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& option)
+void ConfigParser::DeleteValue(std::wstring_view section, std::wstring_view option)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
