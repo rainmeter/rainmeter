@@ -48,7 +48,7 @@ MeasureSysInfo::~MeasureSysInfo()
 {
 }
 
-void MeasureSysInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureSysInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

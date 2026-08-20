@@ -49,8 +49,8 @@ public:
 	IfActions(const IfActions& other) = delete;
 	IfActions& operator=(IfActions other) = delete;
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	void ReadConditionOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section);
+	void ReadConditionOptions(ConfigParser& parser, std::wstring_view section);
 	void DoIfActions(Measure& measure, double value);
 	void SetState(double& value);
 

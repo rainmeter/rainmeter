@@ -213,7 +213,7 @@ MeasureFolderInfo::~MeasureFolderInfo()
 	}
 }
 
-void MeasureFolderInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

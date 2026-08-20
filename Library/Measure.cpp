@@ -103,7 +103,7 @@ void Measure::Initialize()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
@@ -162,7 +162,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 // "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
 // skin files.
-LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section)
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section)
 {
 	const std::wstring& option = parser.ReadString(section, L"NumberConversionFormat", L"");
 

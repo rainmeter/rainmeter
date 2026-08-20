@@ -28,7 +28,7 @@ MeasureQuote::~MeasureQuote()
 {
 }
 
-void MeasureQuote::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

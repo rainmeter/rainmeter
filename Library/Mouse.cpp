@@ -55,7 +55,7 @@ Mouse::~Mouse()
 	DestroyCustomCursor();
 }
 
-void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	DestroyCustomCursor();
 

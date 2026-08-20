@@ -95,7 +95,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterImage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -325,7 +325,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterImage::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{

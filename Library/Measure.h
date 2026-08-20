@@ -81,12 +81,12 @@ public:
 protected:
 	Measure(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	virtual void UpdateValue() = 0;
 
 	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
 	// a string into their number value.
-	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser, const WCHAR* section);
+	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

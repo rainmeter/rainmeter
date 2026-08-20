@@ -4,6 +4,7 @@
 
 #include <windows.h>
 #include <string>
+#include <string_view>
 #include "Group.h"
 
 class ConfigParser;
@@ -40,7 +41,7 @@ public:
 protected:
 	Section(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, std::wstring_view section);
 
 	bool UpdateCounter();
 

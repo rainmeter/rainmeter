@@ -15,7 +15,7 @@ MeasureProcess::~MeasureProcess()
 {
 }
 
-void MeasureProcess::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureProcess::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

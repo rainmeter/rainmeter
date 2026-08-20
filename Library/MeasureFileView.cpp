@@ -368,7 +368,7 @@ MeasureFileView::~MeasureFileView()
 	child = nullptr;
 }
 
-void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

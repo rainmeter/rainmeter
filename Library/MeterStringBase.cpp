@@ -430,7 +430,7 @@ void MeterStringBase::Initialize()
 		m_Skin->GetFontCollection());
 }
 
-void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
@@ -587,7 +587,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, const WCHAR* section)
 }
 
 MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
-	ConfigParser& parser, const WCHAR* section, const WCHAR* option, TEXTSTYLE defaultStyle)
+	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTSTYLE defaultStyle)
 {
 	const WCHAR* value = parser.ReadString(section, option, L"").c_str();
 	if (!*value) return defaultStyle;
@@ -602,7 +602,7 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 }
 
 MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
-	ConfigParser& parser, const WCHAR* section, const WCHAR* option, TEXTCASE defaultCase)
+	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTCASE defaultCase)
 {
 	const WCHAR* value = parser.ReadString(section, option, L"").c_str();
 	if (!*value) return defaultCase;

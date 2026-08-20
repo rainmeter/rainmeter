@@ -114,15 +114,15 @@ protected:
 
 	Meter(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	virtual void BindMeasures(ConfigParser& parser, std::wstring_view section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
 
-	void ReadContainerOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadContainerOptions(ConfigParser& parser, std::wstring_view section);
 
-	bool BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional);
-	void BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section);
+	bool BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional);
+	void BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section);
 
 	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 

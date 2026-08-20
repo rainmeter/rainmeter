@@ -33,7 +33,7 @@ void MeterSvg::InvalidateDeviceResources()
 	m_LoadAttempted = false;
 }
 
-void MeterSvg::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterSvg::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -95,7 +95,7 @@ void MeterSvg::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void MeterSvg::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterSvg::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

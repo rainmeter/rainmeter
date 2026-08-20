@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <string_view>
+
 enum MOUSEACTION : uint32_t
 {
 	MOUSE_LMB_UP = 1 << 0,
@@ -79,7 +81,7 @@ public:
 	Mouse(const Mouse& other) = delete;
 	Mouse& operator=(Mouse other) = delete;
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor(bool isButton = false) const;

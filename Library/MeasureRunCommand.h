@@ -24,7 +24,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureRunCommand>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
 	const WCHAR* GetStringValue() override;
 	void Command(const std::wstring& command) override;

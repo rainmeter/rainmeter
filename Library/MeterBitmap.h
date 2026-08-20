@@ -25,7 +25,7 @@ public:
 	virtual bool HasActiveTransition();
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 
 private:
 	GeneralImage m_Image;

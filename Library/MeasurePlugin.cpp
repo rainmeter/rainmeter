@@ -70,7 +70,7 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	static UINT id = 0;
 
@@ -179,7 +179,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_ID);
 		}
 	}
 

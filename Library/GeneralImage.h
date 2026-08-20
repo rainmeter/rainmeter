@@ -59,7 +59,7 @@ public:
 	bool IsLoaded();
 	Gfx::Bitmap* GetImage();
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
+	void ReadOptions(ConfigParser& parser, std::wstring_view section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:

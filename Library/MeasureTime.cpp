@@ -318,7 +318,7 @@ const WCHAR* MeasureTime::GetStringValue()
 	return CheckSubstitute(tmpSz);
 }
 
-void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureTime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void
 	{

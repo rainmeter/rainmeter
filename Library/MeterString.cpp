@@ -24,7 +24,7 @@ MeterString::~MeterString()
 {
 }
 
-void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterString::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	MeterStringBase::ReadOptions(parser, section);
 
@@ -153,7 +153,7 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	return result;
 }
 
-void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterString::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{

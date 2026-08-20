@@ -220,7 +220,7 @@ void MeasureAudioLevel::Initialize()
 	SAFE_RELEASE(m_Enum);
 }
 
-void MeasureAudioLevel::ResolveParent(ConfigParser& parser, const WCHAR* section)
+void MeasureAudioLevel::ResolveParent(ConfigParser& parser, std::wstring_view section)
 {
 	std::wstring parentName = parser.ReadString(section, L"Parent", L"");
 	if (parentName.empty())
@@ -247,7 +247,7 @@ void MeasureAudioLevel::ResolveParent(ConfigParser& parser, const WCHAR* section
 	LogErrorF(this, L"Couldn't find Parent measure '%s'.", parentName.c_str());
 }
 
-void MeasureAudioLevel::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	static const LPCWSTR s_typeName[MeasureAudioLevel::NUM_TYPES] =
 	{

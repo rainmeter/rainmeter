@@ -451,7 +451,7 @@ MeasureRunCommand::~MeasureRunCommand()
 	}
 }
 
-void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

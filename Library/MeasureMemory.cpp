@@ -34,7 +34,7 @@ void MeasureMemory::UpdateValue()
 	}
 }
 
-void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureMemory::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	double oldMaxValue = m_MaxValue;
 	Measure::ReadOptions(parser, section);

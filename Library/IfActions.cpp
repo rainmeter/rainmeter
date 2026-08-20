@@ -28,7 +28,7 @@ IfActions::~IfActions()
 {
 }
 
-void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
@@ -40,7 +40,7 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
-void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// IfCondition options
 	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);

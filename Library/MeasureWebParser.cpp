@@ -311,7 +311,7 @@ MeasureWebParser::~MeasureWebParser()
 	}
 }
 
-void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 

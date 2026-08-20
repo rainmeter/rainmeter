@@ -130,7 +130,7 @@ MeasureRecycleManager::~MeasureRecycleManager()
 	--g_InstanceCount;
 }
 
-void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
