@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "MeasureNowPlaying.h"
 #include "Rainmeter.h"
+#include "../Common/StringUtil.h"
 #include "NowPlaying/PlayerAIMP.h"
 #include "NowPlaying/PlayerCAD.h"
 #include "NowPlaying/PlayerITunes.h"
@@ -30,7 +31,6 @@ struct ParentMeasure
 	bool disableLeadingZero;
 };
 
-static std::vector<ParentMeasure*> g_ParentMeasures;
 HINSTANCE g_Instance = nullptr;
 
 namespace {
@@ -141,9 +141,6 @@ MeasureNowPlaying::~MeasureNowPlaying()
 		{
 			player->RemoveInstance();
 
-			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
-			g_ParentMeasures.erase(iter);
-
 			delete m_Parent;
 			m_Parent = nullptr;
 		}
@@ -159,8 +156,8 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	// referenced in PlayerName=[section].
 
 	// Read settings from the ini-file
-	LPCWSTR str = parser.ReadString(section, L"PlayerName", L"", { .sectionVariables = false }).c_str();
-	if (str[0] == L'[')
+	const std::wstring_view playerName = parser.ReadString(section, L"PlayerName", L"", { .sectionVariables = false });
+	if (playerName.starts_with(L'['))
 	{
 		if (m_Parent)
 		{
@@ -168,31 +165,25 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		}
 		else
 		{
-			// PlayerName starts with [ so use referenced section
-			++str;
-			size_t len = wcslen(str);
-			if (len > 0 && str[len - 1] == L']')
+			// PlayerName starts with [ so use the ParentMeasure of the referenced section
+			if (m_Skin && playerName.length() >= 3 && playerName.back() == L']')
 			{
-				--len;
-
-				std::vector<ParentMeasure*>::iterator iter = g_ParentMeasures.begin();
-				for ( ; iter != g_ParentMeasures.end(); ++iter)
+				const std::wstring_view name = playerName.substr(1, playerName.length() - 2);
+				Measure* measure = m_Skin->GetMeasure(name);
+				if (measure && measure->GetTypeID() == TypeID<MeasureNowPlaying>())
 				{
-					if (GetSkin() == (*iter)->owner->GetSkin() &&
-						_wcsnicmp(str, (*iter)->owner->GetName(), len) == 0)
+					auto* referenced = (MeasureNowPlaying*)measure;
+					if (referenced->m_Parent && referenced->m_Parent->owner == referenced)
 					{
-						// Use same ParentMeasure as referenced section
-						m_Parent = (*iter);
+						m_Parent = referenced->m_Parent;
 						++m_Parent->measureCount;
-
-						break;
 					}
 				}
 
 				if (!m_Parent)
 				{
-					// The referenced section doesn't exist
-					LogWarningF(this, L"Invalid PlayerName=%s", str - 1);
+					// The referenced section doesn't exist, or is not a player measure
+					LogWarningF(this, L"Invalid PlayerName=%.*s", (int)playerName.length(), playerName.data());
 					return;
 				}
 			}
@@ -215,19 +206,18 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		else
 		{
 			m_Parent = new ParentMeasure;
-			g_ParentMeasures.push_back(m_Parent);
 			m_Parent->owner = this;
 		}
 
-		if (_wcsicmp(L"AIMP", str) == 0)
+		if (StringUtil::EqualsIgnoreCase(playerName, L"AIMP"))
 		{
 			m_Parent->player = PlayerAIMP::Create();
 		}
-		else if (_wcsicmp(L"CAD", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"CAD"))
 		{
 			m_Parent->player = PlayerCAD::Create();
 		}
-		else if (_wcsicmp(L"foobar2000", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"foobar2000"))
 		{
 			HWND fooWindow = FindWindow(L"foo_rainmeter_class", nullptr);
 			if (fooWindow)
@@ -241,23 +231,23 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 
 			m_Parent->player = PlayerCAD::Create();
 		}
-		else if (_wcsicmp(L"iTunes", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"iTunes"))
 		{
 			m_Parent->player = PlayerITunes::Create();
 		}
-		else if (_wcsicmp(L"MediaMonkey", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"MediaMonkey"))
 		{
 			m_Parent->player = PlayerWinamp::Create(WA_MEDIAMONKEY);
 		}
-		else if (_wcsicmp(L"Spotify", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"Spotify"))
 		{
 			m_Parent->player = PlayerSpotify::Create();
 		}
-		else if (_wcsicmp(L"WinAmp", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"WinAmp"))
 		{
 			m_Parent->player = PlayerWinamp::Create(WA_WINAMP);
 		}
-		else if (_wcsicmp(L"WMP", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"WMP"))
 		{
 			m_Parent->player = PlayerWMP::Create();
 		}
@@ -266,9 +256,9 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 			// Default to WLM
 			m_Parent->player = PlayerWLM::Create();
 
-			if (_wcsicmp(L"WLM", str) != 0)
+			if (!StringUtil::EqualsIgnoreCase(playerName, L"WLM"))
 			{
-				LogErrorF(this, L"Invalid PlayerName=%s", str);
+				LogErrorF(this, L"Invalid PlayerName=%.*s", (int)playerName.length(), playerName.data());
 			}
 		}
 
