@@ -2080,14 +2080,13 @@ void Skin::SetOption(std::wstring_view section, const std::wstring& option, cons
 		if (StringUtil::EqualsIgnoreCase(section, L"Rainmeter") &&
 			_wcsnicmp(option.c_str(), L"Context", 7) == 0)
 		{
-			const std::wstring sectionName(section);
 			if (value.empty())
 			{
-				m_Parser.DeleteValue(sectionName, option);
+				m_Parser.DeleteValue(section, option);
 			}
 			else
 			{
-				m_Parser.SetValue(sectionName, option, value);
+				m_Parser.SetValue(section, option, value);
 			}
 		}
 
