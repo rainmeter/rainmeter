@@ -121,7 +121,7 @@ void ConfigParser::ReadVariables()
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
-		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", false));
+		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", { .sectionVariables = false }));
 	}
 }
 
@@ -1192,7 +1192,7 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 	return result;
 }
 
-const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, bool bReplaceMeasures)
+const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
 {
 	static size_t s_Depth = 0;
 	static std::deque<std::wstring> s_Results;
@@ -1248,7 +1248,7 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 				PathUtil::ExpandEnvironmentVariables(result);
 			}
 
-			if (bReplaceMeasures && ReplaceMeasures(result))
+			if (options.sectionVariables && ReplaceMeasures(result))
 			{
 				m_LastReplaced = true;
 			}
@@ -1261,13 +1261,13 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 
 bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", false);
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return !m_LastDefaultUsed;
 }
 
 bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", false);
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return m_LastValueDefined;
 }
 

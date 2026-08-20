@@ -236,7 +236,7 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		LogErrorF(this, L"Invalid InfoType=%s", type);
 	}
 
-	const std::wstring& folder = parser.ReadString(section, L"Folder", L"", false);
+	const std::wstring& folder = parser.ReadString(section, L"Folder", L"", { .sectionVariables = false });
 	const WCHAR* str = folder.c_str();
 	if (str[0] == L'[')
 	{

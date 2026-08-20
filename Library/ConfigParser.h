@@ -84,11 +84,16 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
+	struct ReadOptions
+	{
+		bool sectionVariables = true;
+	};
+
 	// The returned reference points into a buffer that the next ReadString() at the same nesting
 	// depth reuses, so copy the value if it has to outlive that next read. In particular, no
 	// argument may point into a value an earlier ReadString() returned, since the new read would
 	// then be writing over its own argument.
-	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, bool bReplaceMeasures = true);
+	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options = {});
 	bool IsKeyDefined(std::wstring_view section, std::wstring_view key);
 	bool IsValueDefined(std::wstring_view section, std::wstring_view key);
 	bool ReadBool(std::wstring_view section, std::wstring_view key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }

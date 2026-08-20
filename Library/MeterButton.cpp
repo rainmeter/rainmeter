@@ -96,7 +96,7 @@ void MeterButton::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_Image.ReadOptions(parser, section);
 	}
 
-	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
+	m_Command = parser.ReadString(section, L"ButtonCommand", L"", { .sectionVariables = false });
 
 	if (m_Initialized)
 	{

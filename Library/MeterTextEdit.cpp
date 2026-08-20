@@ -324,9 +324,9 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
-	m_OnSubmitAction = parser.ReadString(section, L"OnSubmitAction", L"", false);
-	m_OnFocusAction = parser.ReadString(section, L"OnFocusAction", L"", false);
-	m_OnDismissAction = parser.ReadString(section, L"OnDismissAction", L"", false);
+	m_OnSubmitAction = parser.ReadString(section, L"OnSubmitAction", L"", { .sectionVariables = false });
+	m_OnFocusAction = parser.ReadString(section, L"OnFocusAction", L"", { .sectionVariables = false });
+	m_OnDismissAction = parser.ReadString(section, L"OnDismissAction", L"", { .sectionVariables = false });
 
 	m_FocusBorderColor = parser.ReadColor(section, L"FocusBorderColor",
 		D2D1::ColorF(D2D1::ColorF::Black, 0.0f));

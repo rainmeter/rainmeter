@@ -132,7 +132,7 @@ void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_IfActions.ReadConditionOptions(parser, section);
 	}
 
-	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
+	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", { .sectionVariables = false });
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 

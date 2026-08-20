@@ -2508,21 +2508,21 @@ bool Skin::ReadSkin()
 
 	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", true);
 
-	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
-	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
-	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", false);
-	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", false);
-	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", false);
-	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", false);
-	m_OnDisplayMetricsChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnDisplayMetricsChange", L"", false);
-	m_OnVisibilityChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnVisibilityChange", L"", false);
+	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", { .sectionVariables = false });
+	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", { .sectionVariables = false });
+	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", { .sectionVariables = false });
+	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", { .sectionVariables = false });
+	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", { .sectionVariables = false });
+	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", { .sectionVariables = false });
+	m_OnDisplayMetricsChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnDisplayMetricsChange", L"", { .sectionVariables = false });
+	m_OnVisibilityChangeAction = m_Parser.ReadString(L"Rainmeter", L"OnVisibilityChange", L"", { .sectionVariables = false });
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	const auto* updateMode = m_Parser.ReadString(L"Rainmeter", L"UpdateMode", L"", false).c_str();
+	const auto* updateMode = m_Parser.ReadString(L"Rainmeter", L"UpdateMode", L"", { .sectionVariables = false }).c_str();
 	m_UpdateMode =
 		_wcsicmp(updateMode, L"SkipInvisibleRedraw") == 0 ? SkinUpdateMode::SkipInvisibleRedraw :
 		_wcsicmp(updateMode, L"SkipInvisibleUpdate") == 0 ? SkinUpdateMode::SkipInvisibleUpdate :
@@ -2530,7 +2530,7 @@ bool Skin::ReadSkin()
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{
-		const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
+		const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", { .sectionVariables = false }).c_str();
 
 		if (*blurRegion)
 		{
@@ -2682,7 +2682,7 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
-			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", false);
+			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", { .sectionVariables = false });
 			if (!measureName.empty())
 			{
 				// In the past, Rainmeter included several default plugins. These plugins are now
@@ -2695,7 +2695,7 @@ bool Skin::ReadSkin()
 				//   Measure=Foo
 				if (_wcsicmp(measureName.c_str(), L"Plugin") == 0)
 				{
-					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
+					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", { .sectionVariables = false }).c_str());
 					PathRemoveExtension(plugin);
 
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
@@ -2734,7 +2734,7 @@ bool Skin::ReadSkin()
 				continue;
 			}
 
-			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", false);
+			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", { .sectionVariables = false });
 			if (!meterName.empty())
 			{
 				// It's a meter
@@ -4134,13 +4134,13 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
 			if (position == 1)
 			{
-				action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"", false);
+				action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"", { .sectionVariables = false });
 			}
 			else
 			{
 				WCHAR buffer[128] = { 0 };
 				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
-				action = m_Parser.ReadString(L"Rainmeter", buffer, L"", false);
+				action = m_Parser.ReadString(L"Rainmeter", buffer, L"", { .sectionVariables = false });
 			}
 
 			if (!action.empty())

@@ -374,7 +374,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 	FileViewChildData* child = m_Child;
 
-	std::wstring path = parser.ReadString(section, L"Path", L"", false);
+	std::wstring path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
 	if (!path.empty() && path[0] == L'[' && path[path.size() - 1] == L']')
 	{
 		path = path.substr(1, path.size() - 2);
@@ -491,7 +491,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
 
-		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", false);
+		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
 	}
 
 	SetChildParent(child, child->parent);

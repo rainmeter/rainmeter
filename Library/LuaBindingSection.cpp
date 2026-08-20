@@ -16,14 +16,14 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 	const std::wstring key = LuaHelper::ToWide(2);
 	const std::wstring defValue = LuaHelper::ToWide(3);
 
-	bool replaceMeasures = true;
+	ConfigParser::ReadOptions options;
 	if (lua_gettop(L) > 3)
 	{
-		replaceMeasures = LuaHelper::ToBool(4);
+		options.sectionVariables = LuaHelper::ToBool(4);
 	}
 
 	ConfigParser::InheritChainScope inheritChain(parser, sectionName, allowMeterStyle);
-	const auto& value = parser.ReadString(sectionName, key.c_str(), defValue.c_str(), replaceMeasures);
+	const auto& value = parser.ReadString(sectionName, key.c_str(), defValue.c_str(), options);
 
 	LuaHelper::PushWide(value);
 
