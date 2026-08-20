@@ -84,7 +84,11 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
-	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
+	// The returned reference points into a buffer that the next ReadString() at the same nesting
+	// depth reuses, so copy the value if it has to outlive that next read. In particular, no
+	// argument may point into a value an earlier ReadString() returned, since the new read would
+	// then be writing over its own argument.
+	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
 	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
 	bool ReadBool(LPCTSTR section, LPCTSTR key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }
