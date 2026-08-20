@@ -148,8 +148,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_State(STATE_INITIALIZING),
 	m_Hidden(false),
 	m_WindowOcclusionState(SkinWindowOcclusionState::Unknown),
-	m_UpdateMode(SkinUpdateMode::Normal),
-	m_SkippedUpdateCount(0),
+	m_InvisibleUpdate(-1),
+	m_LastUpdateTime(),
+	m_SkippedUpdateCount(),
 	m_HasPendingRedraw(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
@@ -2522,12 +2523,12 @@ bool Skin::ReadSkin()
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	static constexpr ConfigParser::EnumOption<SkinUpdateMode> s_UpdateModes[] =
+	m_InvisibleUpdate = m_Parser.ReadInt(L"Rainmeter", L"InvisibleUpdate", -1);
+
+	if (m_Parser.IsKeyDefined(L"Rainmeter", L"UpdateMode"))
 	{
-		{ L"SkipInvisibleRedraw", SkinUpdateMode::SkipInvisibleRedraw },
-		{ L"SkipInvisibleUpdate", SkinUpdateMode::SkipInvisibleUpdate },
-	};
-	m_UpdateMode = m_Parser.ReadEnum(L"Rainmeter", L"UpdateMode", SkinUpdateMode::Normal, s_UpdateModes);
+		LogWarningF(this, L"UpdateMode is no longer supported, use InvisibleUpdate instead");
+	}
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{
@@ -2901,7 +2902,7 @@ bool Skin::ResizeWindow(bool reset)
 
 void Skin::Redraw()
 {
-	if (m_UpdateMode != SkinUpdateMode::Normal && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
+	if (m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
 	{
 		m_HasPendingRedraw = true;
 		return;
@@ -3295,13 +3296,26 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 
 void Skin::Update(bool refresh)
 {
-	if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
+	// While invisible, InvisibleUpdate determines whether the skin is updated normally (negative),
+	// never updated (zero), or updated at most once every |m_InvisibleUpdate| milliseconds.
+	if (m_InvisibleUpdate >= 0 && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded &&
+		(m_InvisibleUpdate == 0 || (GetTickCount64() - m_LastUpdateTime) < (ULONGLONG)m_InvisibleUpdate))
 	{
 		++m_SkippedUpdateCount;
 		return;
 	}
 
-	m_SkippedUpdateCount = 0;
+	if (m_SkippedUpdateCount > 0)
+	{
+		// Account for the skipped updates so that sections with an update divider are
+		// updated as if the skin had been updating all along.
+		for (auto& measure : m_Measures) measure->AdvanceUpdateCounter(m_SkippedUpdateCount);
+		for (auto& meter : m_Meters) meter->AdvanceUpdateCounter(m_SkippedUpdateCount);
+		m_SkippedUpdateCount = 0;
+	}
+
+	if (m_InvisibleUpdate > 0) m_LastUpdateTime = GetTickCount64();
+
 	++m_UpdateCounter;
 
 	if (!m_Measures.empty())
@@ -4233,17 +4247,12 @@ void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
 
 	if (previousState == SkinWindowOcclusionState::Occluded && state == SkinWindowOcclusionState::Visible && GetRainmeter().IsRedrawable())
 	{
-		if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_SkippedUpdateCount > 0)
+		if (m_SkippedUpdateCount > 0)
 		{
-			// Account for the skipped updates so that sections with an update divider are
-			// updated as if the skin had been updating all along.
-			for (auto& measure : m_Measures) measure->AdvanceUpdateCounter(m_SkippedUpdateCount);
-			for (auto& meter : m_Meters) meter->AdvanceUpdateCounter(m_SkippedUpdateCount);
-
 			Update(false);
 		}
 
-		if (m_UpdateMode != SkinUpdateMode::Normal && m_HasPendingRedraw)
+		if (m_HasPendingRedraw)
 		{
 			Redraw();
 		}
