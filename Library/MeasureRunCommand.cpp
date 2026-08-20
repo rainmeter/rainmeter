@@ -465,23 +465,14 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 
 	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
 
-	const WCHAR* state = parser.ReadString(section, L"State", L"HIDE").c_str();
-	if (_wcsicmp(state, L"SHOW") == 0)
+	static constexpr ConfigParser::EnumOption<WORD> s_States[] =
 	{
-		m_State = SW_SHOW;
-	}
-	else if (_wcsicmp(state, L"MAXIMIZE") == 0)
-	{
-		m_State = SW_MAXIMIZE;
-	}
-	else if (_wcsicmp(state, L"MINIMIZE") == 0)
-	{
-		m_State = SW_MINIMIZE;
-	}
-	else
-	{
-		m_State = SW_HIDE;
-	}
+		{ L"HIDE", SW_HIDE },
+		{ L"SHOW", SW_SHOW },
+		{ L"MAXIMIZE", SW_MAXIMIZE },
+		{ L"MINIMIZE", SW_MINIMIZE },
+	};
+	parser.ReadEnum(m_State, section, L"State", (WORD)SW_HIDE, s_States);
 
 	// Grab "%COMSPEC% environment variable
 	parser.ReadString(m_Program, section, L"Program", L"\"%COMSPEC%\" /U /C");
@@ -492,19 +483,13 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		m_Program = L"cmd.exe /U /C";
 	}
 
-	const WCHAR* type = parser.ReadString(section, L"OutputType", L"UTF16").c_str();
-	if (_wcsicmp(type, L"ANSI") == 0)
+	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
-		m_OutputType = OUTPUTTYPE_ANSI;
-	}
-	else if (_wcsicmp(type, L"UTF8") == 0)
-	{
-		m_OutputType = OUTPUTTYPE_UTF8;
-	}
-	else
-	{
-		m_OutputType = OUTPUTTYPE_UTF16;
-	}
+		{ L"UTF16", OUTPUTTYPE_UTF16 },
+		{ L"ANSI", OUTPUTTYPE_ANSI },
+		{ L"UTF8", OUTPUTTYPE_UTF8 },
+	};
+	parser.ReadEnum(m_OutputType, section, L"OutputType", OUTPUTTYPE_UTF16, s_OutputTypes);
 }
 
 void MeasureRunCommand::UpdateValue()

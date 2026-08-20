@@ -6,6 +6,7 @@
 #include "../Common/PathUtil.h"
 #include "../Common/ScopedFunction.h"
 #include "../Common/StringParser.h"
+#include "../Common/StringUtil.h"
 #include "ConfigParser.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -1262,6 +1263,23 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 
 	ReadString(result, section, key, defValue, options);
 	return result;
+}
+
+size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
+{
+	const std::wstring& value = ReadString(section, key, L"");
+	if (value.empty()) return count;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		// |names| points at the first option's name, which EnumOption keeps at offset zero.
+		const WCHAR* name = *(const WCHAR* const*)((const BYTE*)names + i * stride);
+		if (_wcsicmp(value.c_str(), name) == 0) return i;
+	}
+
+	LogErrorF(GetSection(section), L"%.*s=%.*s is not valid",
+		(int)key.length(), key.data(), (int)value.length(), value.data());
+	return count;
 }
 
 bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)

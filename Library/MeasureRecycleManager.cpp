@@ -134,20 +134,12 @@ void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view 
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"RecycleType", L"COUNT").c_str();
-	if (_wcsicmp(L"COUNT", type) == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
-		m_Type = Type::Count;
-	}
-	else if (_wcsicmp(L"SIZE", type) == 0)
-	{
-		m_Type = Type::Size;
-	}
-	else
-	{
-		m_Type = Type::None;
-		LogErrorF(this, L"Invalid RecycleType=%s");
-	}
+		{ L"COUNT", Type::Count },
+		{ L"SIZE", Type::Size },
+	};
+	parser.ReadEnum(m_Type, section, L"RecycleType", Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()

@@ -287,86 +287,36 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		}
 	}
 
-	str = parser.ReadString(section, L"PlayerType", L"").c_str();
-	if (_wcsicmp(L"ARTIST", str) == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_PlayerTypes[] =
 	{
-		m_Type = MEASURE_ARTIST;
-	}
-	else if (_wcsicmp(L"TITLE", str) == 0)
+		{ L"ARTIST", MEASURE_ARTIST },
+		{ L"TITLE", MEASURE_TITLE },
+		{ L"ALBUM", MEASURE_ALBUM },
+		{ L"COVER", MEASURE_COVER },
+		{ L"DURATION", MEASURE_DURATION },
+		{ L"POSITION", MEASURE_POSITION },
+		{ L"PROGRESS", MEASURE_PROGRESS },
+		{ L"RATING", MEASURE_RATING },
+		{ L"STATE", MEASURE_STATE },
+		{ L"STATUS", MEASURE_STATUS },
+		{ L"VOLUME", MEASURE_VOLUME },
+		{ L"SHUFFLE", MEASURE_SHUFFLE },
+		{ L"REPEAT", MEASURE_REPEAT },
+		{ L"LYRICS", MEASURE_LYRICS },
+		{ L"FILE", MEASURE_FILE },
+		{ L"NUMBER", MEASURE_NUMBER },
+		{ L"YEAR", MEASURE_YEAR },
+		{ L"GENRE", MEASURE_GENRE },
+	};
+	parser.ReadEnum(m_Type, section, L"PlayerType", MEASURE_NONE, s_PlayerTypes);
+
+	if (m_Type == MEASURE_PROGRESS || m_Type == MEASURE_VOLUME)
 	{
-		m_Type = MEASURE_TITLE;
-	}
-	else if (_wcsicmp(L"ALBUM", str) == 0)
-	{
-		m_Type = MEASURE_ALBUM;
-	}
-	else if (_wcsicmp(L"COVER", str) == 0)
-	{
-		m_Type = MEASURE_COVER;
-	}
-	else if (_wcsicmp(L"DURATION", str) == 0)
-	{
-		m_Type = MEASURE_DURATION;
-	}
-	else if (_wcsicmp(L"POSITION", str) == 0)
-	{
-		m_Type = MEASURE_POSITION;
-	}
-	else if (_wcsicmp(L"PROGRESS", str) == 0)
-	{
-		m_Type = MEASURE_PROGRESS;
 		m_MaxValue = 100.0;
 	}
-	else if (_wcsicmp(L"RATING", str) == 0)
+	else if (m_Type == MEASURE_RATING)
 	{
-		m_Type = MEASURE_RATING;
 		m_MaxValue = 5.0;
-	}
-	else if (_wcsicmp(L"STATE", str) == 0)
-	{
-		m_Type = MEASURE_STATE;
-	}
-	else if (_wcsicmp(L"STATUS", str) == 0)
-	{
-		m_Type = MEASURE_STATUS;
-	}
-	else if (_wcsicmp(L"VOLUME", str) == 0)
-	{
-		m_Type = MEASURE_VOLUME;
-		m_MaxValue = 100.0;
-	}
-	else if (_wcsicmp(L"SHUFFLE", str) == 0)
-	{
-		m_Type = MEASURE_SHUFFLE;
-	}
-	else if (_wcsicmp(L"REPEAT", str) == 0)
-	{
-		m_Type = MEASURE_REPEAT;
-	}
-	else if (_wcsicmp(L"LYRICS", str) == 0)
-	{
-		//LogWarningF(this, L"Using undocumented PlayerType=LYRICS!");
-		m_Type = MEASURE_LYRICS;
-	}
-	else if (_wcsicmp(L"FILE", str) == 0)
-	{
-		m_Type = MEASURE_FILE;
-	}
-	else if (_wcsicmp(L"NUMBER", str) == 0)
-	{
-		m_Type = MEASURE_NUMBER;
-	}
-	else if (_wcsicmp(L"YEAR", str) == 0)
-	{
-		m_Type = MEASURE_YEAR;
-	}
-	else if (_wcsicmp(L"GENRE", str) == 0)
-	{
-		m_Type = MEASURE_GENRE;
-	}
-	else
-	{
-		LogErrorF(this, L"Invalid PlayerType=%s", str);
 	}
 
 	m_Parent->player->AddMeasure(m_Type);

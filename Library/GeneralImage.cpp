@@ -298,28 +298,14 @@ void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, 
 		}
 	}
 
-	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
-	if (_wcsicmp(flip, L"NONE") == 0)
+	static constexpr ConfigParser::EnumOption<Gfx::Util::FlipType> s_Flips[] =
 	{
-		m_Options.m_Flip = Gfx::Util::FlipType::None;
-	}
-	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Horizontal;
-	}
-	else if (_wcsicmp(flip, L"VERTICAL") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Vertical;
-	}
-	else if (_wcsicmp(flip, L"BOTH") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Both;
-	}
-	else
-	{
-		LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%.*s]", m_OptionArray[OptionIndexImageFlip], flip,
-				(int)section.length(), section.data());
-	}
+		{ L"NONE", Gfx::Util::FlipType::None },
+		{ L"HORIZONTAL", Gfx::Util::FlipType::Horizontal },
+		{ L"VERTICAL", Gfx::Util::FlipType::Vertical },
+		{ L"BOTH", Gfx::Util::FlipType::Both },
+	};
+	parser.ReadEnum(m_Options.m_Flip, section, m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
 
 	if (!m_DisableTransform)
 	{

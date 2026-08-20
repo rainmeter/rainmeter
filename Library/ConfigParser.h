@@ -84,6 +84,9 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
+	bool IsKeyDefined(std::wstring_view section, std::wstring_view key);
+	bool IsValueDefined(std::wstring_view section, std::wstring_view key);
+
 	struct ReadOptions
 	{
 		bool sectionVariables = true;
@@ -95,8 +98,21 @@ public:
 	// The returned reference is good only until the next ReadString() at the same nesting depth,
 	// which reuses the buffer. Copy it to keep it; no argument may point into it.
 	const std::wstring& ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options = {});
-	bool IsKeyDefined(std::wstring_view section, std::wstring_view key);
-	bool IsValueDefined(std::wstring_view section, std::wstring_view key);
+
+	template<typename T>
+	struct EnumOption
+	{
+		const WCHAR* name;
+		T value;
+	};
+
+	template<typename T, size_t N>
+	void ReadEnum(T& result, std::wstring_view section, std::wstring_view key, T defValue, const EnumOption<T> (&options)[N])
+	{
+		const size_t index = MatchEnumOption(section, key, &options[0].name, N, sizeof(EnumOption<T>));
+		result = index < N ? options[index].value : defValue;
+	}
+
 	bool ReadBool(std::wstring_view section, std::wstring_view key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }
 	int ReadInt(std::wstring_view section, std::wstring_view key, int defValue);
 	uint32_t ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue);
@@ -152,6 +168,8 @@ private:
 	std::optional<std::wstring> GetDollarSkinVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetDollarDisplayVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr);
+
+	size_t MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride);
 
 	static std::wstring StrToUpper(std::wstring_view str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
