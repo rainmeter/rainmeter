@@ -10,6 +10,7 @@
 #include <AudioPolicy.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <MMDeviceApi.h>
+#include <numbers>
 
 // Overview: Audio level measurement from the Window Core Audio API
 // See: http://msdn.microsoft.com/en-us/library/windows/desktop/dd370800%28v=vs.85%29.aspx
@@ -35,7 +36,6 @@
 
 // REFERENCE_TIME time units per second and per millisecond
 #define REFTIMES_PER_SEC		10000000
-#define TWOPI					(2 * 3.14159265358979323846)
 #define EXIT_ON_ERROR(hres)		if (FAILED(hres)) { goto Exit; }
 #define SAFE_RELEASE(p)			if ((p) != NULL) { (p)->Release(); (p) = NULL; }
 
@@ -1008,7 +1008,7 @@ HRESULT MeasureAudioLevel::DeviceInit()
 		// calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
 		for (int iBin = 0; iBin < m_FFTSize; ++iBin)
 		{
-			m_FFTKWdw[iBin]	= (float)(0.5 * (1.0 - cos(TWOPI * iBin / (m_FFTSize - 1))));
+			m_FFTKWdw[iBin]	= (float)(0.5 * (1.0 - cos(2.0 * std::numbers::pi * iBin / (m_FFTSize - 1))));
 		}
 	}
 
