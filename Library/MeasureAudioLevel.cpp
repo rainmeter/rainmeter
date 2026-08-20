@@ -38,7 +38,6 @@
 #define TWOPI					(2 * 3.14159265358979323846)
 #define EXIT_ON_ERROR(hres)		if (FAILED(hres)) { goto Exit; }
 #define SAFE_RELEASE(p)			if ((p) != NULL) { (p)->Release(); (p) = NULL; }
-#define CLAMP01(x)				max(0.0, min(1.0, (x)))
 
 #define EMPTY_TIMEOUT			0.500
 #define DEVICE_TIMEOUT			1.500
@@ -384,16 +383,12 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	}
 
 	// parse FFT index request
-	m_FFTIdx = max(0, parser.ReadInt(section, L"FFTIdx", m_FFTIdx));
-	m_FFTIdx = m_Parent ?
-		min(m_Parent->m_FFTSize / 2, m_FFTIdx) :
-		min(m_FFTSize / 2, m_FFTIdx);
+	const int fftIdxMax = (m_Parent ? m_Parent->m_FFTSize : m_FFTSize) / 2;
+	m_FFTIdx = std::clamp(parser.ReadInt(section, L"FFTIdx", m_FFTIdx), 0, fftIdxMax);
 
 	// parse band index request
-	m_BandIdx = max(0, parser.ReadInt(section, L"BandIdx", m_BandIdx));
-	m_BandIdx = m_Parent ?
-		min(m_Parent->m_NBands, m_BandIdx) :
-		min(m_NBands, m_BandIdx);
+	const int bandIdxMax = m_Parent ? m_Parent->m_NBands : m_NBands;
+	m_BandIdx = std::clamp(parser.ReadInt(section, L"BandIdx", m_BandIdx), 0, bandIdxMax);
 
 	// parse envelope values on parents only
 	if (!m_Parent)
@@ -716,22 +711,22 @@ double MeasureAudioLevel::UpdateAudioValue()
 	case MeasureAudioLevel::TYPE_RMS:
 		if (m->m_Channel == MeasureAudioLevel::CHANNEL_SUM)
 		{
-			return CLAMP01((sqrt(parent->m_RMS[0]) + sqrt(parent->m_RMS[1])) * 0.5 * parent->m_GainRMS);
+			return std::clamp((sqrt(parent->m_RMS[0]) + sqrt(parent->m_RMS[1])) * 0.5 * parent->m_GainRMS, 0.0, 1.0);
 		}
 		else
 		{
-			return CLAMP01(sqrt(parent->m_RMS[m->m_Channel]) * parent->m_GainRMS);
+			return std::clamp(sqrt(parent->m_RMS[m->m_Channel]) * parent->m_GainRMS, 0.0, 1.0);
 		}
 		break;
 
 	case MeasureAudioLevel::TYPE_PEAK:
 		if (m->m_Channel == MeasureAudioLevel::CHANNEL_SUM)
 		{
-			return CLAMP01((parent->m_Peak[0] + parent->m_Peak[1]) * 0.5 * parent->m_GainPeak);
+			return std::clamp((parent->m_Peak[0] + parent->m_Peak[1]) * 0.5 * parent->m_GainPeak, 0.0, 1.0);
 		}
 		else
 		{
-			return CLAMP01(parent->m_Peak[m->m_Channel] * parent->m_GainPeak);
+			return std::clamp(parent->m_Peak[m->m_Channel] * parent->m_GainPeak, 0.0, 1.0);
 		}
 		break;
 
@@ -756,7 +751,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 				x = parent->m_FFTOut[m->m_Channel][iFFT];
 			}
 
-			x = CLAMP01(x);
+			x = std::clamp(x, 0.0, 1.0);
 			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
@@ -783,7 +778,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 				x = parent->m_BandOut[m->m_Channel][iBand];
 			}
 
-			x = CLAMP01(x);
+			x = std::clamp(x, 0.0, 1.0);
 			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
