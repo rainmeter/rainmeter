@@ -30,10 +30,10 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }
 
-	virtual int GetW() { return m_Hidden ? 0 : m_W; }
-	virtual int GetH() { return m_Hidden ? 0 : m_H; }
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
+	virtual int GetW() { return m_Hidden ? 0 : m_W; }
+	virtual int GetH() { return m_Hidden ? 0 : m_H; }
 
 	RECT GetMeterRect();
 	D2D1_RECT_F GetMeterRectPadding();
@@ -53,10 +53,10 @@ public:
 	void ResizeContainerTextures();
 	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
 
-	void SetW(int w) { m_W = w; }
-	void SetH(int h) { m_H = h; }
 	void SetX(int x);
 	void SetY(int y);
+	void SetW(int w);
+	void SetH(int h);
 
 	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
 

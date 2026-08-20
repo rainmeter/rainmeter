@@ -141,7 +141,6 @@ void Meter::SetX(int x)
 	m_X = x;
 	m_RelativeX = POSITION_ABSOLUTE;
 
-	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[16] = { 0 };
 	_itow_s(x, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
@@ -152,7 +151,6 @@ void Meter::SetY(int y)
 	m_Y = y;
 	m_RelativeY = POSITION_ABSOLUTE;
 
-	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[16] = { 0 };
 	_itow_s(y, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
@@ -163,6 +161,30 @@ RECT Meter::GetMeterRect()
 	int x = GetX();
 	int y = GetY();
 	return { x, y, x + m_W, y + m_H };
+}
+
+void Meter::SetW(int w)
+{
+	m_W = w;
+	m_WDefined = true;
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(w - GetWidthPadding(), buffer, 10);
+	m_Skin->GetParser().SetValue(m_Name, L"W", buffer);
+
+	m_Skin->RequestWindowSizeCheck();
+}
+
+void Meter::SetH(int h)
+{
+	m_H = h;
+	m_HDefined = true;
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(h - GetHeightPadding(), buffer, 10);
+	m_Skin->GetParser().SetValue(m_Name, L"H", buffer);
+
+	m_Skin->RequestWindowSizeCheck();
 }
 
 D2D1_RECT_F Meter::GetMeterRectPadding()
