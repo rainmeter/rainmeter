@@ -149,7 +149,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_Hidden(false),
 	m_WindowOcclusionState(SkinWindowOcclusionState::Unknown),
 	m_UpdateMode(SkinUpdateMode::Normal),
-	m_HasPendingUpdate(false),
+	m_SkippedUpdateCount(0),
 	m_HasPendingRedraw(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
@@ -3297,11 +3297,11 @@ void Skin::Update(bool refresh)
 {
 	if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
 	{
-		m_HasPendingUpdate = true;
+		++m_SkippedUpdateCount;
 		return;
 	}
 
-	m_HasPendingUpdate = false;
+	m_SkippedUpdateCount = 0;
 	++m_UpdateCounter;
 
 	if (!m_Measures.empty())
@@ -4233,8 +4233,13 @@ void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
 
 	if (previousState == SkinWindowOcclusionState::Occluded && state == SkinWindowOcclusionState::Visible && GetRainmeter().IsRedrawable())
 	{
-		if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_HasPendingUpdate)
+		if (m_UpdateMode == SkinUpdateMode::SkipInvisibleUpdate && m_SkippedUpdateCount > 0)
 		{
+			// Account for the skipped updates so that sections with an update divider are
+			// updated as if the skin had been updating all along.
+			for (auto& measure : m_Measures) measure->AdvanceUpdateCounter(m_SkippedUpdateCount);
+			for (auto& meter : m_Meters) meter->AdvanceUpdateCounter(m_SkippedUpdateCount);
+
 			Update(false);
 		}
 
