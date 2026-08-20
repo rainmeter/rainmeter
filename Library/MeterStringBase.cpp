@@ -501,17 +501,17 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		vAlign = hAlign + 7;
 	}
 
-	if (!vAlign || _wcsicmp(vAlign, L"TOP") == 0)
-	{
-		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Top);
-	}
-	else if (_wcsicmp(vAlign, L"BOTTOM") == 0)
+	if (vAlign && _wcsicmp(vAlign, L"BOTTOM") == 0)
 	{
 		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Bottom);
 	}
-	else if (_wcsicmp(vAlign, L"CENTER") == 0)
+	else if (vAlign && _wcsicmp(vAlign, L"CENTER") == 0)
 	{
 		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Center);
+	}
+	else
+	{
+		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Top);
 	}
 
 	m_Style = ReadStringStyle(parser, section, L"StringStyle", NORMAL);
