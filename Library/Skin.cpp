@@ -2522,11 +2522,12 @@ bool Skin::ReadSkin()
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	const auto* updateMode = m_Parser.ReadString(L"Rainmeter", L"UpdateMode", L"", { .sectionVariables = false }).c_str();
-	m_UpdateMode =
-		_wcsicmp(updateMode, L"SkipInvisibleRedraw") == 0 ? SkinUpdateMode::SkipInvisibleRedraw :
-		_wcsicmp(updateMode, L"SkipInvisibleUpdate") == 0 ? SkinUpdateMode::SkipInvisibleUpdate :
-		SkinUpdateMode::Normal;
+	static constexpr ConfigParser::EnumOption<SkinUpdateMode> s_UpdateModes[] =
+	{
+		{ L"SkipInvisibleRedraw", SkinUpdateMode::SkipInvisibleRedraw },
+		{ L"SkipInvisibleUpdate", SkinUpdateMode::SkipInvisibleUpdate },
+	};
+	m_Parser.ReadEnum(m_UpdateMode, L"Rainmeter", L"UpdateMode", SkinUpdateMode::Normal, s_UpdateModes);
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{

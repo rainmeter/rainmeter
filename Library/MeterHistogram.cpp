@@ -192,33 +192,19 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
-	if (_wcsicmp(graph, L"RIGHT") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphStarts[] =
 	{
-		m_GraphStartLeft = false;
-	}
-	else if (_wcsicmp(graph, L"LEFT") ==  0)
-	{
-		m_GraphStartLeft = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphStart=%s is not valid", graph);
-	}
+		{ L"RIGHT", false },
+		{ L"LEFT", true },
+	};
+	parser.ReadEnum(m_GraphStartLeft, section, L"GraphStart", false, s_GraphStarts);
 
-	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(graph, L"VERTICAL") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
-		m_GraphHorizontalOrientation = false;
-	}
-	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
-	{
-		m_GraphHorizontalOrientation = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
-	}
+		{ L"VERTICAL", false },
+		{ L"HORIZONTAL", true },
+	};
+	parser.ReadEnum(m_GraphHorizontalOrientation, section, L"GraphOrientation", false, s_GraphOrientations);
 
 	if (m_Initialized)
 	{

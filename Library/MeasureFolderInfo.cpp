@@ -217,24 +217,16 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view sect
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"InfoType", L"").c_str();
-	if (_wcsicmp(type, L"FolderSize") == 0 || _wcsicmp(type, L"FolderSizeStr") == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_InfoTypes[] =
 	{
-		m_Type = Type::FolderSize;
-	}
-	else if (_wcsicmp(type, L"FolderCount") == 0 || _wcsicmp(type, L"FolderCountStr") == 0)
-	{
-		m_Type = Type::FolderCount;
-	}
-	else if (_wcsicmp(type, L"FileCount") == 0 || _wcsicmp(type, L"FileCountStr") == 0 || !*type)
-	{
-		m_Type = Type::FileCount;
-	}
-	else
-	{
-		m_Type = Type::FileCount;
-		LogErrorF(this, L"Invalid InfoType=%s", type);
-	}
+		{ L"FolderSize", Type::FolderSize },
+		{ L"FolderSizeStr", Type::FolderSize },
+		{ L"FolderCount", Type::FolderCount },
+		{ L"FolderCountStr", Type::FolderCount },
+		{ L"FileCount", Type::FileCount },
+		{ L"FileCountStr", Type::FileCount },
+	};
+	parser.ReadEnum(m_Type, section, L"InfoType", Type::FileCount, s_InfoTypes);
 
 	const std::wstring& folder = parser.ReadString(section, L"Folder", L"", { .sectionVariables = false });
 	const WCHAR* str = folder.c_str();

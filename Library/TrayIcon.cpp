@@ -426,15 +426,17 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			GetRainmeter().SetCurrentParser(oldParser);
 		}
 
-		const WCHAR* type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE").c_str();
-		if (_wcsicmp(type, L"NONE") == 0)
+		static constexpr ConfigParser::EnumOption<TRAY_METER_TYPE> s_MeterTypes[] =
 		{
-			// Use main icon
-		}
-		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
-		{
-			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
+			{ L"NONE", TRAY_METER_TYPE_NONE },  // Use main icon
+			{ L"HISTOGRAM", TRAY_METER_TYPE_HISTOGRAM },
+			{ L"BITMAP", TRAY_METER_TYPE_BITMAP },
+		};
+		parser.ReadEnum(m_MeterType, L"TrayMeasure", L"TrayMeter",
+			m_Measure ? TRAY_METER_TYPE_HISTOGRAM : TRAY_METER_TYPE_NONE, s_MeterTypes);
 
+		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
+		{
 			auto toARGB = [](const D2D1_COLOR_F& color)
 			{
 				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
@@ -443,10 +445,8 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			m_ImageData->color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
 			m_ImageData->color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
-		else if (_wcsicmp(type, L"BITMAP") == 0)
+		else if (m_MeterType == TRAY_METER_TYPE_BITMAP)
 		{
-			m_MeterType = TRAY_METER_TYPE_BITMAP;
-
 			std::wstring imageName = parser.ReadString(L"TrayMeasure", L"TrayBitmap", L"");
 
 			// Load the bitmaps if defined
@@ -492,10 +492,6 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 					}
 				}
 			}
-		}
-		else
-		{
-			LogErrorF(L"No such TrayMeter: %s", type);
 		}
 
 		TryAddTrayIcon();

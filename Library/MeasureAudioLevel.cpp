@@ -283,23 +283,12 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	{
 		ResolveParent(parser, section);
 
-		// Parse port specifier.
-		const WCHAR* port = parser.ReadString(section, L"Port", L"").c_str();
-		if (port && *port)
+		static constexpr ConfigParser::EnumOption<Port> s_Ports[] =
 		{
-			if (_wcsicmp(port, L"Output") == 0)
-			{
-				m_Port = PORT_OUTPUT;
-			}
-			else if (_wcsicmp(port, L"Input") == 0)
-			{
-				m_Port = PORT_INPUT;
-			}
-			else
-			{
-				LogErrorF(this, L"Invalid Port '%s', must be one of: Output or Input.", port);
-			}
-		}
+			{ L"Output", PORT_OUTPUT },
+			{ L"Input", PORT_INPUT },
+		};
+		parser.ReadEnum(m_Port, section, L"Port", PORT_OUTPUT, s_Ports);
 
 		// Parse requested device ID (optional).
 		const WCHAR* reqID = parser.ReadString(section, L"ID", L"").c_str();

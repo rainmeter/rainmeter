@@ -189,54 +189,25 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
-	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
-	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
+	// Not constexpr: the HKEY_* macros cast an integer to a pointer.
+	static const ConfigParser::EnumOption<HKEY> s_HKeys[] =
 	{
-		m_HKey = HKEY_CURRENT_USER;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_LOCAL_MACHINE") == 0)
-	{
-		m_HKey = HKEY_LOCAL_MACHINE;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CLASSES_ROOT") == 0)
-	{
-		m_HKey = HKEY_CLASSES_ROOT;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CURRENT_CONFIG") == 0)
-	{
-		m_HKey = HKEY_CURRENT_CONFIG;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_PERFORMANCE_DATA") == 0)
-	{
-		m_HKey = HKEY_PERFORMANCE_DATA;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_DYN_DATA") == 0)
-	{
-		m_HKey = HKEY_DYN_DATA;
-	}
-	else
-	{
-		m_HKey = HKEY_CURRENT_USER; // Default
-		LogErrorF(this, L"RegHKey=%s is not valid", keyname);
-	}
+		{ L"HKEY_CURRENT_USER", HKEY_CURRENT_USER },
+		{ L"HKEY_LOCAL_MACHINE", HKEY_LOCAL_MACHINE },
+		{ L"HKEY_CLASSES_ROOT", HKEY_CLASSES_ROOT },
+		{ L"HKEY_CURRENT_CONFIG", HKEY_CURRENT_CONFIG },
+		{ L"HKEY_PERFORMANCE_DATA", HKEY_PERFORMANCE_DATA },
+		{ L"HKEY_DYN_DATA", HKEY_DYN_DATA },
+	};
+	parser.ReadEnum(m_HKey, section, L"RegHKey", HKEY_CURRENT_USER, s_HKeys);
 
-	const WCHAR* type = parser.ReadString(section, L"OutputType", L"Value").c_str();
-	if (_wcsicmp(type, L"SubKeyList") == 0)
+	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
-		m_OutputType = OutputType::SubKeyList;
-	}
-	else if (_wcsicmp(type, L"ValueList") == 0)
-	{
-		m_OutputType = OutputType::ValueList;
-	}
-	else
-	{
-		m_OutputType = OutputType::Value;
-		if (_wcsicmp(type, L"Value") != 0)
-		{
-			LogErrorF(this, L"OutputType=%s is not valid", type);
-		}
-	}
+		{ L"Value", OutputType::Value },
+		{ L"SubKeyList", OutputType::SubKeyList },
+		{ L"ValueList", OutputType::ValueList },
+	};
+	parser.ReadEnum(m_OutputType, section, L"OutputType", OutputType::Value, s_OutputTypes);
 
 	parser.ReadString(m_OutputDelimiter, section, L"OutputDelimiter", L"\n");
 

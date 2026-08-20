@@ -72,19 +72,12 @@ void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(L"VERTICAL", orientation) == 0)
+	static constexpr ConfigParser::EnumOption<ORIENTATION> s_Orientations[] =
 	{
-		m_Orientation = VERTICAL;
-	}
-	else if (_wcsicmp(L"HORIZONTAL", orientation) == 0)
-	{
-		m_Orientation = HORIZONTAL;
-	}
-	else
-	{
-		LogErrorF(this, L"BarOrientation=%s is not valid", orientation);
-	}
+		{ L"VERTICAL", VERTICAL },
+		{ L"HORIZONTAL", HORIZONTAL },
+	};
+	parser.ReadEnum(m_Orientation, section, L"BarOrientation", VERTICAL, s_Orientations);
 
 	if (m_Initialized)
 	{

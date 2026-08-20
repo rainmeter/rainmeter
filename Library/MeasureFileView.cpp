@@ -34,6 +34,13 @@ enum DateType
 	DTYPE_ACCESSED
 };
 
+static constexpr ConfigParser::EnumOption<DateType> g_DateTypes[] =
+{
+	{ L"MODIFIED", DTYPE_MODIFIED },
+	{ L"CREATED", DTYPE_CREATED },
+	{ L"ACCESSED", DTYPE_ACCESSED },
+};
+
 enum SortType
 {
 	STYPE_NAME,
@@ -414,36 +421,18 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 		child->parent->path = path;
 
-		LPCWSTR sort = parser.ReadString(section, L"SortType", L"Name").c_str();
-		if (_wcsicmp(sort, L"NAME") == 0)
+		static constexpr ConfigParser::EnumOption<SortType> s_SortTypes[] =
 		{
-			child->parent->sortType = STYPE_NAME;
-		}
-		else if (_wcsicmp(sort, L"SIZE") == 0)
-		{
-			child->parent->sortType = STYPE_SIZE;
-		}
-		else if (_wcsicmp(sort, L"TYPE") == 0)
-		{
-			child->parent->sortType = STYPE_TYPE;
-		}
-		else if (_wcsicmp(sort, L"DATE") == 0)
-		{
-			child->parent->sortType = STYPE_DATE;
+			{ L"NAME", STYPE_NAME },
+			{ L"SIZE", STYPE_SIZE },
+			{ L"TYPE", STYPE_TYPE },
+			{ L"DATE", STYPE_DATE },
+		};
+		parser.ReadEnum(child->parent->sortType, section, L"SortType", STYPE_NAME, s_SortTypes);
 
-			LPCWSTR date = parser.ReadString(section, L"SortDateType", L"Modified").c_str();
-			if (_wcsicmp(date, L"MODIFIED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_MODIFIED;
-			}
-			else if (_wcsicmp(date, L"CREATED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_CREATED;
-			}
-			else if (_wcsicmp(date, L"ACCESSED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_ACCESSED;
-			}
+		if (child->parent->sortType == STYPE_DATE)
+		{
+			parser.ReadEnum(child->parent->sortDateType, section, L"SortDateType", DTYPE_MODIFIED, g_DateTypes);
 		}
 
 		int count = parser.ReadInt(section, L"Count", 1);
@@ -501,56 +490,31 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 	child->ignoreCount = parser.ReadBool(section, L"IgnoreCount", false);
 
-	LPCWSTR type = parser.ReadString(section, L"Type", L"FOLDERPATH").c_str();
-	if (_wcsicmp(type, L"FOLDERPATH") == 0)
-	{
-		child->type = TYPE_FOLDERPATH;
-	}
-	else if (_wcsicmp(type, L"FOLDERSIZE") == 0)
-	{
-		child->type = TYPE_FOLDERSIZE;
-	}
-	else if (_wcsicmp(type, L"FILECOUNT") == 0)
-	{
-		child->type = TYPE_FILECOUNT;
-	}
-	else if (_wcsicmp(type, L"FOLDERCOUNT") == 0)
-	{
-		child->type = TYPE_FOLDERCOUNT;
-	}
-	else if (_wcsicmp(type, L"FILENAME") == 0)
-	{
-		child->type = TYPE_FILENAME;
-	}
-	else if (_wcsicmp(type, L"FILETYPE") == 0)
-	{
-		child->type = TYPE_FILETYPE;
-	}
-	else if (_wcsicmp(type, L"FILESIZE") == 0)
-	{
-		child->type = TYPE_FILESIZE;
-	}
-	else if (_wcsicmp(type, L"FILEDATE") == 0)
-	{
-		child->type = TYPE_FILEDATE;
+	const MeasureType previousType = child->type;
 
-		LPCWSTR date = parser.ReadString(section, L"DateType", L"Modified").c_str();
-		if (_wcsicmp(date, L"MODIFIED") == 0)
-		{
-			child->date = DTYPE_MODIFIED;
-		}
-		else if (_wcsicmp(date, L"CREATED") == 0)
-		{
-			child->date = DTYPE_CREATED;
-		}
-		else if (_wcsicmp(date, L"ACCESSED") == 0)
-		{
-			child->date = DTYPE_ACCESSED;
-		}
-	}
-	else if (_wcsicmp(type, L"ICON") == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_Types[] =
 	{
-		if (child->type != TYPE_ICON)
+		{ L"FOLDERPATH", TYPE_FOLDERPATH },
+		{ L"FOLDERSIZE", TYPE_FOLDERSIZE },
+		{ L"FILECOUNT", TYPE_FILECOUNT },
+		{ L"FOLDERCOUNT", TYPE_FOLDERCOUNT },
+		{ L"FILENAME", TYPE_FILENAME },
+		{ L"FILETYPE", TYPE_FILETYPE },
+		{ L"FILESIZE", TYPE_FILESIZE },
+		{ L"FILEDATE", TYPE_FILEDATE },
+		{ L"FILEPATH", TYPE_FILEPATH },
+		{ L"PATHTOFILE", TYPE_PATHTOFILE },
+		{ L"ICON", TYPE_ICON },
+	};
+	parser.ReadEnum(child->type, section, L"Type", TYPE_FOLDERPATH, s_Types);
+
+	if (child->type == TYPE_FILEDATE)
+	{
+		parser.ReadEnum(child->date, section, L"DateType", DTYPE_MODIFIED, g_DateTypes);
+	}
+	else if (child->type == TYPE_ICON)
+	{
+		if (previousType != TYPE_ICON)
 		{
 			// Remove icons written by versions that predate SystemImage support.
 			const std::wstring defaultValue = fmt::format(L"icon{}.ico", child->index + 1);
@@ -559,33 +523,14 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			DeleteFile(iconPath.c_str());
 		}
 
-		child->type = TYPE_ICON;
-
-		LPCWSTR size = parser.ReadString(section, L"IconSize", L"MEDIUM").c_str();
-		if (_wcsicmp(size, L"SMALL") == 0)
+		static constexpr ConfigParser::EnumOption<int> s_IconSizes[] =
 		{
-			child->iconSize = SHIL_SMALL;
-		}
-		else if (_wcsicmp(size, L"MEDIUM") == 0)
-		{
-			child->iconSize = SHIL_LARGE;
-		}
-		else if (_wcsicmp(size, L"LARGE") == 0)
-		{
-			child->iconSize = SHIL_EXTRALARGE;
-		}
-		else if (_wcsicmp(size, L"EXTRALARGE") == 0)
-		{
-			child->iconSize = SHIL_JUMBO;
-		}
-	}
-	else if (_wcsicmp(type, L"FILEPATH") == 0)
-	{
-		child->type = TYPE_FILEPATH;
-	}
-	else if (_wcsicmp(type, L"PATHTOFILE") == 0)
-	{
-		child->type = TYPE_PATHTOFILE;
+			{ L"SMALL", SHIL_SMALL },
+			{ L"MEDIUM", SHIL_LARGE },
+			{ L"LARGE", SHIL_EXTRALARGE },
+			{ L"EXTRALARGE", SHIL_JUMBO },
+		};
+		parser.ReadEnum(child->iconSize, section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
 	}
 }
 

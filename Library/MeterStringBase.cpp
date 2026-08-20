@@ -531,23 +531,13 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		}
 	}
 
-	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
-	if (_wcsicmp(effect, L"NONE") == 0)
+	static constexpr ConfigParser::EnumOption<TEXTEFFECT> s_Effects[] =
 	{
-		m_Effect = EFFECT_NONE;
-	}
-	else if (_wcsicmp(effect, L"SHADOW") == 0)
-	{
-		m_Effect = EFFECT_SHADOW;
-	}
-	else if (_wcsicmp(effect, L"BORDER") == 0)
-	{
-		m_Effect = EFFECT_BORDER;
-	}
-	else
-	{
-		LogErrorF(this, L"StringEffect=%s is not valid", effect);
-	}
+		{ L"NONE", EFFECT_NONE },
+		{ L"SHADOW", EFFECT_SHADOW },
+		{ L"BORDER", EFFECT_BORDER },
+	};
+	parser.ReadEnum(m_Effect, section, L"StringEffect", EFFECT_NONE, s_Effects);
 
 	std::vector<Gfx::TextInlineOption> inlineOptions;
 	inlineOptions.reserve(m_TextFormat->GetInlineOptionCount());
@@ -589,31 +579,31 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTSTYLE defaultStyle)
 {
-	const WCHAR* value = parser.ReadString(section, option, L"").c_str();
-	if (!*value) return defaultStyle;
-
-	if (_wcsicmp(value, L"NORMAL") == 0) return NORMAL;
-	if (_wcsicmp(value, L"BOLD") == 0) return BOLD;
-	if (_wcsicmp(value, L"ITALIC") == 0) return ITALIC;
-	if (_wcsicmp(value, L"BOLDITALIC") == 0) return BOLDITALIC;
-
-	LogErrorF(this, L"%s=%s is not valid", option, value);
-	return defaultStyle;
+	static constexpr ConfigParser::EnumOption<TEXTSTYLE> s_Styles[] =
+	{
+		{ L"NORMAL", NORMAL },
+		{ L"BOLD", BOLD },
+		{ L"ITALIC", ITALIC },
+		{ L"BOLDITALIC", BOLDITALIC },
+	};
+	TEXTSTYLE style = defaultStyle;
+	parser.ReadEnum(style, section, option, defaultStyle, s_Styles);
+	return style;
 }
 
 MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
 	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTCASE defaultCase)
 {
-	const WCHAR* value = parser.ReadString(section, option, L"").c_str();
-	if (!*value) return defaultCase;
-
-	if (_wcsicmp(value, L"NONE") == 0) return TEXTCASE_NONE;
-	if (_wcsicmp(value, L"UPPER") == 0) return TEXTCASE_UPPER;
-	if (_wcsicmp(value, L"LOWER") == 0) return TEXTCASE_LOWER;
-	if (_wcsicmp(value, L"PROPER") == 0) return TEXTCASE_PROPER;
-
-	LogErrorF(this, L"%s=%s is not valid", option, value);
-	return defaultCase;
+	static constexpr ConfigParser::EnumOption<TEXTCASE> s_Cases[] =
+	{
+		{ L"NONE", TEXTCASE_NONE },
+		{ L"UPPER", TEXTCASE_UPPER },
+		{ L"LOWER", TEXTCASE_LOWER },
+		{ L"PROPER", TEXTCASE_PROPER },
+	};
+	TEXTCASE textCase = defaultCase;
+	parser.ReadEnum(textCase, section, option, defaultCase, s_Cases);
+	return textCase;
 }
 
 void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const
