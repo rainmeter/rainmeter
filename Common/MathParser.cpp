@@ -6,10 +6,8 @@
 #include "MathParser.h"
 
 #include <algorithm>
+#include <numbers>
 #include <string>
-
-static const double M_E = 2.7182818284590452354;
-static const double M_PI = 3.14159265358979323846;
 
 typedef double (*SingleArgFunction)(double arg);
 typedef const WCHAR* (*MultiArgFunction)(int paramcnt, double* args, double* result);
@@ -436,11 +434,11 @@ const WCHAR* MathParser::Parse(std::wstring_view formula, double* result, ParseM
 					switch (op.funcIndex)
 					{
 					case FUNC_E:
-						parser.numStack[++parser.valTop] = M_E;
+						parser.numStack[++parser.valTop] = std::numbers::e;
 						break;
 
 					case FUNC_PI:
-						parser.numStack[++parser.valTop] = M_PI;
+						parser.numStack[++parser.valTop] = std::numbers::pi;
 						break;
 
 					case FUNC_ATAN2:
@@ -930,12 +928,12 @@ static double frac(double x)
 
 static double rad(double deg)
 {
-	return (deg / 180.0) * M_PI;
+	return (deg / 180.0) * std::numbers::pi;
 }
 
 static double deg(double rad)
 {
-	return rad * (180.0 / M_PI);
+	return rad * (180.0 / std::numbers::pi);
 }
 
 static double sgn(double x)

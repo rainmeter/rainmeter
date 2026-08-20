@@ -3,10 +3,12 @@
 #include "StdAfx.h"
 #include "D2DUtil.h"
 
+#include <numbers>
+
 namespace Gfx {
 namespace Util {
 
-static const float M_PI = 3.14159265358979323846f;
+static constexpr float pi = std::numbers::pi_v<float>;
 
 D2D1_RECT_F ToRectF(FLOAT x, FLOAT y, FLOAT w, FLOAT h)
 {
@@ -27,7 +29,7 @@ D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top
 	base_angle = fmodf(base_angle, 360.0f);
 
 	// Convert |base_angle| from degrees to radians
-	const float base_radians = base_angle * (M_PI / 180.0f);
+	const float base_radians = base_angle * (pi / 180.0f);
 
 	// Get the shape area diagonal
 	const float width = right - left;
@@ -43,10 +45,10 @@ D2D1_POINT_2F FindEdgePoint(const float theta, const float left, const float top
 		switch (quadrant)
 		{
 		default:
-		case 1: return base_radians - M_PI * 0.0f;
-		case 2: return M_PI * 1.0f - base_radians;
-		case 3: return base_radians - M_PI * 1.0f;
-		case 4: return M_PI * 2.0f - base_radians;
+		case 1: return base_radians - pi * 0.0f;
+		case 2: return pi * 1.0f - base_radians;
+		case 3: return base_radians - pi * 1.0f;
+		case 4: return pi * 2.0f - base_radians;
 		}
 	}();
 
