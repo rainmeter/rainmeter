@@ -95,7 +95,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_LastValueDefined = false;
 	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
-	m_CurrentSection = nullptr;
+	m_CurrentSection = {};
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
 	m_SectionNamesInsertPos = m_SectionNames.end();
 
@@ -187,7 +187,7 @@ std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view v
 
 	if (strParser.Consume(L"Current"))
 	{
-		if (strParser.ConsumeRest(L"Section")) return m_CurrentSection ? *m_CurrentSection : std::wstring();
+		if (strParser.ConsumeRest(L"Section")) return std::wstring(m_CurrentSection);
 		if (strParser.ConsumeRest(L"File") && m_Skin) return m_Skin->GetFileName();
 		if (strParser.ConsumeRest(L"Config") && m_Skin) return m_Skin->GetFolderPath();
 		return std::nullopt;
@@ -775,7 +775,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	{
 		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
 	}
-	else if (m_CurrentSection)
+	else if (!m_CurrentSection.empty())
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
 		size_t start = firstSpecialPos;
@@ -783,8 +783,8 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 		const size_t length = strVariable.length();
 		while ((start = result.find(strVariable, start)) != std::wstring::npos)
 		{
-			result.replace(start, length, *m_CurrentSection);
-			start += m_CurrentSection->length();
+			result.replace(start, length, m_CurrentSection);
+			start += m_CurrentSection.length();
 			replaced = true;
 		}
 	}
@@ -905,12 +905,12 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
-	if (depth == 0 && m_Skin && (!m_CurrentSection || meter))
+	if (depth == 0 && m_Skin && (m_CurrentSection.empty() || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
 		{
-			m_CurrentSection = meter ? &meter->GetOriginalName() : &section->GetOriginalName();
+			m_CurrentSection = meter ? meter->GetOriginalName() : section->GetOriginalName();
 			hasCurrentAction = true;
 		}
 	}
@@ -972,8 +972,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 					}
 					else if (ContainsKeyedSectionVariable(value))
 					{
-						const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-						LogErrorSF(m_Skin, section,
+						const std::wstring currentSection(m_CurrentSection);
+						LogErrorSF(m_Skin, currentSection.c_str(),
 							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
 					}
 				}
@@ -1098,7 +1098,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	// Reset the current section
 	if (hasCurrentAction)
 	{
-		m_CurrentSection = nullptr;
+		m_CurrentSection = {};
 	}
 
 	return replaced;
@@ -1228,7 +1228,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 
 	if (!result.empty())
 	{
-		m_CurrentSection = &strSection;  // Set temporarily
+		m_CurrentSection = strSection;  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1252,7 +1252,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 				m_LastReplaced = true;
 			}
 		}
-		m_CurrentSection = nullptr;  // Reset
+		m_CurrentSection = {};  // Reset
 	}
 
 	return result;
