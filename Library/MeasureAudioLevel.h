@@ -111,8 +111,8 @@ private:
 	IAudioClient* m_ClBugAudio;
 	IAudioRenderClient* m_ClBugRender;
 #endif
-	WCHAR m_ReqID[64];
-	WCHAR m_DevName[64];
+	std::wstring m_ReqID;
+	std::wstring m_DevName;
 	float m_KRMS[2];
 	float m_KPeak[2];
 	float m_KFFT[2];

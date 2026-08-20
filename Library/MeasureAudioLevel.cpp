@@ -143,8 +143,6 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_EnvPeak[1] = 2500;
 	m_EnvFFT[0] = 300;
 	m_EnvFFT[1] = 300;
-	m_ReqID[0] = L'\0';
-	m_DevName[0] = L'\0';
 	m_KRMS[0] = 0.0f;
 	m_KRMS[1] = 0.0f;
 	m_KPeak[0] = 0.0f;
@@ -194,7 +192,7 @@ void MeasureAudioLevel::Initialize()
 
 	if (CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&m_Enum) == S_OK)
 	{
-		if (!*m_ReqID)
+		if (m_ReqID.empty())
 		{
 			m_NotificationClient = new AudioLevelDeviceNotificationClient(m_Port == PORT_OUTPUT ? eRender : eCapture);
 			if (m_Enum->RegisterEndpointNotificationCallback(m_NotificationClient) != S_OK)
@@ -211,7 +209,7 @@ void MeasureAudioLevel::Initialize()
 		if (FAILED(hr))
 		{
 			LogWarningF(this, L"Unable to initialize audio %s device '%s' (error 0x%08x).",
-				m_Port == PORT_OUTPUT ? L"output" : L"input", *m_ReqID ? m_ReqID : L"default", hr);
+				m_Port == PORT_OUTPUT ? L"output" : L"input", m_ReqID.empty() ? L"default" : m_ReqID.c_str(), hr);
 		}
 
 		return;
@@ -291,11 +289,7 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		parser.ReadEnum(m_Port, section, L"Port", PORT_OUTPUT, s_Ports);
 
 		// Parse requested device ID (optional).
-		const WCHAR* reqID = parser.ReadString(section, L"ID", L"").c_str();
-		if (reqID)
-		{
-			_snwprintf_s(m_ReqID, _TRUNCATE, L"%s", reqID);
-		}
+		parser.ReadString(m_ReqID, section, L"ID", L"");
 
 		// Initialize FFT data.
 		m_FFTSize = parser.ReadInt(section, L"FFTSize", m_FFTSize);
@@ -853,8 +847,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 
 	case MeasureAudioLevel::TYPE_DEV_NAME:
-		wcscpy_s(s_Buffer, parent->m_DevName);
-		break;
+		return CheckSubstitute(parent->m_DevName.c_str());
 
 	case MeasureAudioLevel::TYPE_DEV_ID:
 		if (parent->m_Dev)
@@ -929,9 +922,9 @@ HRESULT MeasureAudioLevel::DeviceInit()
 	assert(m_Enum && !m_Dev);
 
 	// if a specific ID was requested, search for that one, otherwise get the default
-	if (*m_ReqID)
+	if (!m_ReqID.empty())
 	{
-		hr = m_Enum->GetDevice(m_ReqID, &m_Dev);
+		hr = m_Enum->GetDevice(m_ReqID.c_str(), &m_Dev);
 	}
 	else
 	{
@@ -948,7 +941,7 @@ HRESULT MeasureAudioLevel::DeviceInit()
 
 		if (props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
 		{
-			_snwprintf_s(m_DevName, _TRUNCATE, L"%s", varName.pwszVal);
+			m_DevName = varName.pwszVal ? varName.pwszVal : L"";
 		}
 
 		PropVariantClear(&varName);
@@ -1181,6 +1174,6 @@ void MeasureAudioLevel::DeviceRelease()
 		kiss_fft_cleanup();
 	}
 
-	m_DevName[0] = '\0';
+	m_DevName.clear();
 	m_Format = FMT_INVALID;
 }
