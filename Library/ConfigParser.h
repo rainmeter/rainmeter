@@ -155,7 +155,7 @@ private:
 	bool m_LastValueDefined;
 	MonitorVariableMode m_MonitorVariableMode;
 
-	const std::wstring* m_CurrentSection;
+	std::wstring_view m_CurrentSection;
 	std::wstring m_CurrentPath;
 
 	std::vector<std::wstring> m_IniFiles;
