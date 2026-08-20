@@ -44,6 +44,11 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
+void LogFormulaKeyError(Skin* skin, const WCHAR* error, std::wstring_view section, std::wstring_view key)
+{
+	LogErrorF(skin, L"Formula: %s in key \"%.*s\" in [%.*s]", error, (int)key.length(), key.data(), (int)section.length(), section.data());
+}
+
 }  // namespace
 
 ConfigParser::ConfigParser() :
@@ -1254,13 +1259,13 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 	return result;
 }
 
-bool ConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)
 {
 	ReadString(section, key, L"", false);
 	return !m_LastDefaultUsed;
 }
 
-bool ConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
 	ReadString(section, key, L"", false);
 	return m_LastValueDefined;
@@ -1297,7 +1302,7 @@ Meter* ConfigParser::GetMeter(std::wstring_view name)
 	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
 }
 
-std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+std::vector<FLOAT> ConfigParser::ReadFloats(std::wstring_view section, std::wstring_view key)
 {
 	std::vector<FLOAT> result;
 	const std::wstring& str = ReadString(section, key, L"");
@@ -1323,7 +1328,7 @@ std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 	return result;
 }
 
-int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
+int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1339,7 +1344,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 				return (int)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1355,7 +1360,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return defValue;
 }
 
-uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
+uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1371,7 +1376,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 				return (uint32_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1387,7 +1392,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 	return defValue;
 }
 
-uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
+uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1403,7 +1408,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 				return (uint64_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1419,7 +1424,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 	return defValue;
 }
 
-double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
+double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1435,7 +1440,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 				return value;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1496,21 +1501,21 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	return formula;
 }
 
-D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue)
+D2D1_COLOR_F ConfigParser::ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
-D2D1_RECT_F ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue)
+D2D1_RECT_F ConfigParser::ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
 }
 
-RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
+RECT ConfigParser::ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
