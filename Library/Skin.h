@@ -84,13 +84,6 @@ enum class SkinWindowOcclusionState : BYTE
 	Hidden
 };
 
-enum class SkinUpdateMode : BYTE
-{
-	Normal = 0,
-	SkipInvisibleRedraw,
-	SkipInvisibleUpdate
-};
-
 class Rainmeter;
 class Measure;
 class Meter;
@@ -551,7 +544,8 @@ private:
 
 	bool m_Hidden;
 	SkinWindowOcclusionState m_WindowOcclusionState;
-	SkinUpdateMode m_UpdateMode;
+	int m_InvisibleUpdate;
+	ULONGLONG m_LastUpdateTime;
 	UINT m_SkippedUpdateCount;
 	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
