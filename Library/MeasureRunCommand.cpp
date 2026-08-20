@@ -456,7 +456,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	Measure::ReadOptions(parser, section);
 
 	m_Parameter = parser.ReadString(section, L"Parameter", L"");
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
+	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
 	m_OutputFile = parser.ReadString(section, L"OutputFile", L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 

@@ -63,14 +63,14 @@ void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section, bool is
 	for (auto& mouseAction : m_MouseActions)
 	{
 		m_MouseActionTypes |= mouseAction.type;
-		mouseAction.action = parser.ReadString(section, OptionNameForMouseActionType(mouseAction.type), L"", false);
+		mouseAction.action = parser.ReadString(section, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
 	}
 
 	for (auto& entry : g_MouseActionTable)
 	{
 		if (m_MouseActionTypes & entry.type) continue;
 
-		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", false);
+		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
 		if (parser.GetLastDefaultUsed()) continue;
 
 		m_MouseActionTypes |= entry.type;

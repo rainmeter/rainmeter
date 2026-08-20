@@ -1722,10 +1722,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogNoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
-	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
-	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", false);
-	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
-	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
+	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", { .sectionVariables = false });
+	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", { .sectionVariables = false });
+	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", { .sectionVariables = false });
+	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", { .sectionVariables = false });
 
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);

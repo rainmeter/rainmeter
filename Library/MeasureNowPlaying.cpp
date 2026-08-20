@@ -159,7 +159,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	// referenced in PlayerName=[section].
 
 	// Read settings from the ini-file
-	LPCWSTR str = parser.ReadString(section, L"PlayerName", L"", false).c_str();
+	LPCWSTR str = parser.ReadString(section, L"PlayerName", L"", { .sectionVariables = false }).c_str();
 	if (str[0] == L'[')
 	{
 		if (m_Parent)
@@ -274,7 +274,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 
 		m_Parent->player->AddInstance();
 		m_Parent->playerPath = parser.ReadString(section, L"PlayerPath", L"");
-		m_Parent->trackChangeAction = parser.ReadString(section, L"TrackChangeAction", L"", false);
+		m_Parent->trackChangeAction = parser.ReadString(section, L"TrackChangeAction", L"", { .sectionVariables = false });
 		m_Parent->disableLeadingZero = parser.ReadBool(section, L"DisableLeadingZero", false);
 
 		if (oldPlayer)

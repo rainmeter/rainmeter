@@ -223,7 +223,7 @@ void MeasurePing::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32);
 	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000);
 	m_TimeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
+	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
 }
 
 void MeasurePing::UpdateValue()

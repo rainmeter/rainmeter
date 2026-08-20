@@ -324,7 +324,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, L"Statistics");
 
-	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
+	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", { .sectionVariables = false });
 	if (!date.empty())
 	{
 		statsDate = date;

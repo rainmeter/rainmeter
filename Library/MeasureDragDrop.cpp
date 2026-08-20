@@ -122,7 +122,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 	m_BoundsMeter.clear();
 	m_BoundsFormulas.fill(L"");
 
-	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", false);
+	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", { .sectionVariables = false });
 	if (!bounds.empty())
 	{
 		std::vector<std::wstring_view> tokens;

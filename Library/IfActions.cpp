@@ -30,13 +30,13 @@ IfActions::~IfActions()
 
 void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
+	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", { .sectionVariables = false });
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 
-	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
+	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", { .sectionVariables = false });
 	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 
-	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
+	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", { .sectionVariables = false });
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
@@ -48,8 +48,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	if (!condition.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -72,9 +72,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 				if (condition.empty()) break;
 
 				key = L"IfTrueAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfFalseAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			}
 			while (!tAction.empty() || !fAction.empty());
 		}
@@ -94,8 +94,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
 	if (!match.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -118,9 +118,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 				if (match.empty()) break;
 
 				key = L"IfMatchAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfNotMatchAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			} while (!tAction.empty() || !fAction.empty());
 		}
 		else

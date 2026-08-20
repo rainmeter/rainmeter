@@ -158,7 +158,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 	}
 
 	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 	return result;
 }
@@ -175,7 +175,7 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
 	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
-	return parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
+	return parser.ReadString(section, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
@@ -385,7 +385,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	ConfigParser* parser = GetRainmeter().GetCurrentParser();
 	if (parser)
 	{
-		return parser->ReadString(section, option, defValue, false).c_str();
+		return parser->ReadString(section, option, defValue, { .sectionVariables = false }).c_str();
 	}
 
 	return defValue;

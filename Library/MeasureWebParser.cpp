@@ -317,7 +317,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 
 	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
-	std::wstring url = parser.ReadString(section, L"Url", L"", false);
+	std::wstring url = parser.ReadString(section, L"Url", L"", { .sectionVariables = false });
 
 	// Parse new-style variables without parsing old-style section variables
 	if (parser.ContainsKeyedSectionVariable(url))
@@ -362,10 +362,10 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view secti
 			m_Expression.clear();
 		}
 	}
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
-	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
-	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
-	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
+	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", { .sectionVariables = false });
+	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", { .sectionVariables = false });
+	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", { .sectionVariables = false });
+	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", { .sectionVariables = false });
 	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
 	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
 
