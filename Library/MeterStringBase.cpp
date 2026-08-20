@@ -354,6 +354,7 @@ MeterStringBase::MeterStringBase(Skin* skin, const WCHAR* name) : Meter(skin, na
 	m_FontSize(10.0f),
 	m_ClipType(CLIP_OFF),
 	m_Case(TEXTCASE_NONE),
+	m_NeedsTextMeasurement(true),
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
@@ -432,12 +433,24 @@ void MeterStringBase::Initialize()
 
 void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	// Store the current font values so we know if the font needs to be updated
+	// Store the current values so we know if the font needs to be updated, and whether the text
+	// has to be measured again. Everything the measurement depends on is compared here, bar what
+	// is set from outside the options, which reports itself instead.
 	std::wstring oldFontFace = m_FontFace;
 	FLOAT oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
+	int oldFontWeight = m_FontWeight;
 	Gfx::HorizontalAlignment oldHAlign = m_TextFormat->GetHorizontalAlignment();
 	Gfx::VerticalAlignment oldVAlign = m_TextFormat->GetVerticalAlignment();
+	CLIPTYPE oldClipType = m_ClipType;
+	int oldClipStringW = m_ClipStringW;
+	int oldClipStringH = m_ClipStringH;
+	D2D1_RECT_F oldPadding = m_Padding;
+	bool oldAntiAlias = m_AntiAlias;
+	int oldW = m_W;
+	int oldH = m_H;
+	bool oldWDefined = m_WDefined;
+	bool oldHDefined = m_HDefined;
 
 	Meter::ReadOptions(parser, section);
 
@@ -563,7 +576,10 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		inlineOptions.push_back({ std::move(pattern), std::move(*setting) });
 	}
 
-	m_TextFormat->SetInlineOptions(inlineOptions);
+	if (m_TextFormat->SetInlineOptions(inlineOptions))
+	{
+		m_NeedsTextMeasurement = true;
+	}
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
@@ -573,6 +589,21 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		oldVAlign != m_TextFormat->GetVerticalAlignment()))
 	{
 		Initialize();	// Recreate the font
+		m_NeedsTextMeasurement = true;
+	}
+
+	if (oldFontWeight != m_FontWeight ||
+		oldClipType != m_ClipType ||
+		oldClipStringW != m_ClipStringW ||
+		oldClipStringH != m_ClipStringH ||
+		memcmp(&oldPadding, &m_Padding, sizeof(D2D1_RECT_F)) != 0 ||
+		oldAntiAlias != m_AntiAlias ||
+		oldWDefined != m_WDefined ||
+		oldHDefined != m_HDefined ||
+		(m_WDefined && oldW != m_W) ||
+		(m_HDefined && oldH != m_H))
+	{
+		m_NeedsTextMeasurement = true;
 	}
 }
 
@@ -654,9 +685,9 @@ void MeterStringBase::UpdateTextFormat()
 	m_TextFormat->SetInlineRanges(FindInlineRanges(m_String, *m_TextFormat));
 }
 
-void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* format)
+bool MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* format)
 {
-	if (m_WDefined && m_HDefined) return;
+	if (m_WDefined && m_HDefined) return true;
 
 	const int oldW = m_W;
 	const int oldH = m_H;
@@ -677,6 +708,8 @@ void MeterStringBase::UpdateAutoSize(const std::wstring* str, Gfx::TextFormat* f
 	{
 		m_Skin->RequestWindowSizeCheck();
 	}
+
+	return rect.has_value();
 }
 
 std::optional<D2D1_RECT_F> MeterStringBase::MeasureStringBounds(Gfx::Canvas& canvas, const std::wstring* str, Gfx::TextFormat* format)

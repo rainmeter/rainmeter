@@ -273,4 +273,10 @@ private:
 	std::vector<EditSnapshot> m_UndoStack;
 	std::vector<EditSnapshot> m_RedoStack;
 	EditKind m_LastEditKind;
+
+	// What UpdateAutoSizeForText() measured the last time, so it can leave the metrics alone when
+	// nothing that goes into them changed. Which of the two texts it was counts as much as the
+	// text itself, the placeholder being measured in its own font.
+	std::wstring m_PreviousString;
+	bool m_PreviousStringIsPlaceholder;
 };

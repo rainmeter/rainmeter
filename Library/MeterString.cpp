@@ -69,7 +69,8 @@ bool MeterString::Update()
 		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || m_AutoScale == AUTOSCALE_OFF)) ? 0 : 1;
 
 		// Create the text
-		m_String = m_Prefix;
+		m_PreviousString.swap(m_String);
+		m_String.assign(m_Prefix);
 		if (!m_Measures.empty())
 		{
 			if (m_Text.empty())
@@ -118,8 +119,13 @@ bool MeterString::Update()
 			m_String += L'\u200B';
 		}
 
-		UpdateTextFormat();
-		UpdateAutoSize();
+		// Measuring the text is the expensive part of the update, so it is left alone while the
+		// text and everything it is measured against stay the same.
+		if (m_NeedsTextMeasurement || m_String != m_PreviousString)
+		{
+			UpdateTextFormat();
+			m_NeedsTextMeasurement = !UpdateAutoSize();
+		}
 
 		return true;
 	}

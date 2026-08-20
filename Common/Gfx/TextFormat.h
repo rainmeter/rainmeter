@@ -99,7 +99,8 @@ public:
 	void SetVerticalAlignment(VerticalAlignment alignment);
 	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
-	void SetInlineOptions(const std::vector<TextInlineOption>& options);
+	// Return |true| when the options have changed.
+	bool SetInlineOptions(const std::vector<TextInlineOption>& options);
 	void SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges);
 
 	size_t GetInlineOptionCount() const { return m_InlineOptions.size(); }

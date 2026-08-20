@@ -179,7 +179,8 @@ MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(sk
 	m_PlaceholderStyle(NORMAL),
 	m_PlaceholderFormat(),
 	m_CaretBlinkStart(0ULL),
-	m_LastEditKind(EditKind::None)
+	m_LastEditKind(EditKind::None),
+	m_PreviousStringIsPlaceholder(false)
 {
 	static const bool s_BangsRegistered = []()
 	{
@@ -336,6 +337,10 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		if (m_FocusBorderWidth < 0.0f) m_FocusBorderWidth = 0.0f;
 	}
 
+	const std::wstring oldPlaceholderFontFace = m_PlaceholderFontFace;
+	const FLOAT oldPlaceholderFontSize = m_PlaceholderFontSize;
+	const TEXTSTYLE oldPlaceholderStyle = m_PlaceholderStyle;
+
 	parser.ReadString(m_PlaceholderText, section, L"PlaceholderText", L"");
 	if (!m_PlaceholderText.empty())
 	{
@@ -352,6 +357,13 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 		// Unset inherits the meter's own style.
 		m_PlaceholderStyle = ReadStringStyle(parser, section, L"PlaceholderStringStyle", m_Style);
+	}
+
+	if (m_PlaceholderFontFace != oldPlaceholderFontFace ||
+		m_PlaceholderFontSize != oldPlaceholderFontSize ||
+		m_PlaceholderStyle != oldPlaceholderStyle)
+	{
+		m_NeedsTextMeasurement = true;
 	}
 
 	// Done after the font options above so a changed placeholder font takes effect, and after the
@@ -463,7 +475,6 @@ bool MeterTextEdit::Update()
 		m_CaretPos = min(m_CaretPos, len);
 		m_SelectionAnchor = min(m_SelectionAnchor, len);
 
-		UpdateTextFormat();
 		UpdateAutoSizeForText();
 
 		return true;
@@ -514,23 +525,38 @@ bool MeterTextEdit::Draw(Gfx::Canvas& canvas)
 
 void MeterTextEdit::UpdateAutoSizeForText()
 {
-	if (ShowingPlaceholder())
+	const bool placeholder = ShowingPlaceholder();
+	Gfx::TextFormat* format = placeholder ? m_PlaceholderFormat.get() : nullptr;
+
+	// An empty string measures zero in both directions, so a field the user just cleared would
+	// collapse to nothing and leave nothing to click on or to put the caret in. A trailing newline
+	// is also ignored by measurement, which makes sense for drawing, but not for editing. Handle
+	// both cases with an additional period.
+	std::wstring padded;
+	const std::wstring* str = &m_String;
+	if (placeholder)
 	{
-		UpdateAutoSize(&m_PlaceholderText, m_PlaceholderFormat.get());
+		str = &m_PlaceholderText;
 	}
 	else if (m_String.empty() || m_String.back() == L'\n')
 	{
-		// An empty string measures zero in both directions, so a field the user just cleared would
-		// collapse to nothing and leave nothing to click on or to put the caret in. A trailing
-		// newline is also ignored by measurement, which makes sense for drawing, but not for editing.
-		// Handle both cases with an additional period.
-		const std::wstring measured = m_String + L".";
-		UpdateAutoSize(&measured);
+		padded = m_String + L".";
+		str = &padded;
 	}
-	else
-	{
-		UpdateAutoSize();
-	}
+
+	// Measuring the text is the expensive part of an edit, so it is left alone while the text and
+	// everything it is measured against stay the same. Compared against the text itself rather
+	// than the padded one, which an edit could arrive at from either side.
+	const std::wstring& text = placeholder ? m_PlaceholderText : m_String;
+	if (!m_NeedsTextMeasurement &&
+		placeholder == m_PreviousStringIsPlaceholder &&
+		text == m_PreviousString) return;
+
+	m_PreviousString = text;
+	m_PreviousStringIsPlaceholder = placeholder;
+
+	UpdateTextFormat();
+	m_NeedsTextMeasurement = !UpdateAutoSize(str, format);
 }
 
 void MeterTextEdit::EnsureCaretVisible()
