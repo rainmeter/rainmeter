@@ -81,7 +81,7 @@ public:
 	Mouse(const Mouse& other) = delete;
 	Mouse& operator=(Mouse other) = delete;
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section, bool isSkinLevel = false);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor(bool isButton = false) const;

@@ -55,7 +55,7 @@ Mouse::~Mouse()
 	DestroyCustomCursor();
 }
 
-void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section, bool isSkinLevel)
 {
 	DestroyCustomCursor();
 
@@ -84,10 +84,10 @@ void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_Skin->SetHasMouseScrollAction();
 	}
 
-	const bool defaultState = (section == L"Rainmeter") ? true : m_Skin->GetMouse().GetCursorState();
+	const bool defaultState = isSkinLevel ? true : m_Skin->GetMouse().GetCursorState();
 	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
 
-	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
+	const WCHAR* defaultMouseCursor = isSkinLevel ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();
 
 	auto inheritSkinDefault = [&]()
