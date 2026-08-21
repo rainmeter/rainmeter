@@ -4,7 +4,7 @@
 
 #include "Measure.h"
 
-struct FileViewChildData;
+struct FileViewParentData;
 
 class MeasureFileView : public Measure
 {
@@ -26,5 +26,19 @@ protected:
 	void UpdateValue() override;
 
 private:
-	FileViewChildData* m_Child;
+	friend struct FileViewParentData;
+
+	enum MeasureType : BYTE;
+	enum DateType : BYTE;
+
+	void SetParent(FileViewParentData* parent);
+
+	MeasureType m_Type;
+	DateType m_DateType;
+	int m_IconSize;
+	int m_Index;
+	bool m_IgnoreCount;
+
+	std::wstring m_StrValue;
+	FileViewParentData* m_Parent;
 };

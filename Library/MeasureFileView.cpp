@@ -12,7 +12,7 @@
 #include "../Common/StringUtil.h"
 #include <queue>
 
-enum MeasureType
+enum MeasureFileView::MeasureType : BYTE
 {
 	TYPE_FOLDERPATH,
 	TYPE_FOLDERSIZE,
@@ -27,18 +27,11 @@ enum MeasureType
 	TYPE_ICON
 };
 
-enum DateType
+enum MeasureFileView::DateType : BYTE
 {
 	DTYPE_MODIFIED,
 	DTYPE_CREATED,
 	DTYPE_ACCESSED
-};
-
-static constexpr ConfigParser::EnumOption<DateType> g_DateTypes[] =
-{
-	{ L"MODIFIED", DTYPE_MODIFIED },
-	{ L"CREATED", DTYPE_CREATED },
-	{ L"ACCESSED", DTYPE_ACCESSED },
 };
 
 enum SortType
@@ -75,27 +68,12 @@ struct FileInfo
 	int iconIndex = -1;
 };
 
-struct FileViewParentData;
-
-struct FileViewChildData
-{
-	MeasureType type = TYPE_FOLDERPATH;
-	DateType date = DTYPE_MODIFIED;
-	int iconSize = SHIL_EXTRALARGE;
-	int index = 1;
-	bool ignoreCount = false;
-
-	std::wstring strValue;
-	FileViewParentData* parent = nullptr;
-	MeasureFileView* measure = nullptr;
-};
-
 struct FileViewParentData
 {
 	std::wstring path;
 	std::wstring wildcardSearch;
 	SortType sortType = STYPE_NAME;
-	DateType sortDateType = DTYPE_MODIFIED;
+	MeasureFileView::DateType sortDateType = MeasureFileView::DTYPE_MODIFIED;
 	int count = 0;
 	RecursiveType recursiveType = RECURSIVE_NONE;
 	bool sortAscending = true;
@@ -109,7 +87,7 @@ struct FileViewParentData
 	ExtensionsFilter extensionsFilter = ExtensionsFilter::Include;
 	std::wstring finishAction;
 
-	std::vector<FileViewChildData*> children;
+	std::vector<MeasureFileView*> children;
 	std::vector<FileInfo> files;
 	int fileCount = 0;
 	int folderCount = 0;
@@ -121,12 +99,12 @@ struct FileViewParentData
 
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
-	FileViewChildData* ownerChild = nullptr;
+	MeasureFileView* owner = nullptr;
 };
 
 static CriticalSection g_CriticalSection;
 
-static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData* child)
+static void RemoveChildFromParent(FileViewParentData* parent, MeasureFileView* child)
 {
 	if (!parent) return;
 
@@ -137,20 +115,20 @@ static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData*
 	}
 }
 
-static void SetChildParent(FileViewChildData* child, FileViewParentData* parent)
+void MeasureFileView::SetParent(FileViewParentData* parent)
 {
-	if (child->parent != parent)
+	if (m_Parent != parent)
 	{
-		RemoveChildFromParent(child->parent, child);
-		child->parent = parent;
+		RemoveChildFromParent(m_Parent, this);
+		m_Parent = parent;
 	}
 
 	if (parent)
 	{
-		auto iter = std::find(parent->children.begin(), parent->children.end(), child);
+		auto iter = std::find(parent->children.begin(), parent->children.end(), this);
 		if (iter == parent->children.end())
 		{
-			parent->children.push_back(child);
+			parent->children.push_back(this);
 		}
 	}
 }
@@ -197,9 +175,9 @@ private:
 
 			for (auto* child : parent->children)
 			{
-				if (child->type == TYPE_ICON)
+				if (child->m_Type == TYPE_ICON)
 				{
-					const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+					const int trueIndex = child->m_IgnoreCount ? child->m_Index : ((child->m_Index % parent->count) + parent->indexOffset);
 					m_IconRequests.push_back(trueIndex);
 				}
 			}
@@ -317,23 +295,25 @@ static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 }
 
 MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_Child(new FileViewChildData)
+	m_Type(TYPE_FOLDERPATH),
+	m_DateType(DTYPE_MODIFIED),
+	m_IconSize(SHIL_EXTRALARGE),
+	m_Index(1),
+	m_IgnoreCount(false),
+	m_Parent(nullptr)
 {
-	m_Child->measure = this;
 }
 
 MeasureFileView::~MeasureFileView()
 {
-	FileViewChildData* child = m_Child;
-
 	CriticalSectionLock lock(g_CriticalSection);
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (parent)
 	{
-		RemoveChildFromParent(parent, child);
+		RemoveChildFromParent(parent, this);
 	}
 
-	if (parent && parent->ownerChild == child)
+	if (parent && parent->owner == this)
 	{
 		if (parent->task)
 		{
@@ -341,24 +321,26 @@ MeasureFileView::~MeasureFileView()
 			parent->task = nullptr;
 		}
 
-		for (auto iter : parent->children)
+		for (auto* child : parent->children)
 		{
-			iter->parent = nullptr;
+			child->m_Parent = nullptr;
 		}
 
 		delete parent;
 		parent = nullptr;
 	}
-
-	delete child;
-	child = nullptr;
 }
 
 void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	FileViewChildData* child = m_Child;
+	static constexpr ConfigParser::EnumOption<DateType> s_DateTypes[] =
+	{
+		{ L"MODIFIED", DTYPE_MODIFIED },
+		{ L"CREATED", DTYPE_CREATED },
+		{ L"ACCESSED", DTYPE_ACCESSED },
+	};
 
 	const std::wstring_view path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
 	if (path.starts_with(L'[') && path.ends_with(L']'))
@@ -372,15 +354,15 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			if (measure && measure->GetTypeID() == TypeID<MeasureFileView>())
 			{
 				auto* referenced = (MeasureFileView*)measure;
-				FileViewParentData* parent = referenced->m_Child->parent;
-				if (parent && parent->ownerChild == referenced->m_Child)
+				FileViewParentData* parent = referenced->m_Parent;
+				if (parent && parent->owner == referenced)
 				{
-					SetChildParent(child, parent);
+					SetParent(parent);
 				}
 			}
 		}
 
-		if (!child->parent)
+		if (!m_Parent)
 		{
 			LogErrorF(this, L"Invalid Path: \"%.*s\"", (int)path.length(), path.data());
 			return;
@@ -388,19 +370,19 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 	}
 	else
 	{
-		if (!child->parent)
+		if (!m_Parent)
 		{
-			child->parent = new FileViewParentData;
-			child->parent->skin = GetSkin();
-			child->parent->ownerChild = child;
-			child->parent->hwnd = GetSkin()->GetWindow();
+			m_Parent = new FileViewParentData;
+			m_Parent->skin = GetSkin();
+			m_Parent->owner = this;
+			m_Parent->hwnd = GetSkin()->GetWindow();
 		}
 
-		child->parent->path = path;
+		m_Parent->path = path;
 
-		if (!child->parent->path.empty() && !child->parent->path.ends_with(L'\\'))
+		if (!m_Parent->path.empty() && !m_Parent->path.ends_with(L'\\'))
 		{
-			child->parent->path += L'\\';
+			m_Parent->path += L'\\';
 		}
 
 		static constexpr ConfigParser::EnumOption<SortType> s_SortTypes[] =
@@ -410,69 +392,69 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"TYPE", STYPE_TYPE },
 			{ L"DATE", STYPE_DATE },
 		};
-		child->parent->sortType = parser.ReadEnum(section, L"SortType", STYPE_NAME, s_SortTypes);
+		m_Parent->sortType = parser.ReadEnum(section, L"SortType", STYPE_NAME, s_SortTypes);
 
-		if (child->parent->sortType == STYPE_DATE)
+		if (m_Parent->sortType == STYPE_DATE)
 		{
-			child->parent->sortDateType = parser.ReadEnum(section, L"SortDateType", DTYPE_MODIFIED, g_DateTypes);
+			m_Parent->sortDateType = parser.ReadEnum(section, L"SortDateType", DTYPE_MODIFIED, s_DateTypes);
 		}
 
 		int count = parser.ReadInt(section, L"Count", 1);
-		child->parent->count = count > 0 ? count : 1;
+		m_Parent->count = count > 0 ? count : 1;
 
 		int recursive = parser.ReadInt(section, L"Recursive", 0);
 		switch (recursive)
 		{
 		default:
-			LogWarningF(child->parent->ownerChild->measure, L"Invalid Recursive type");
+			LogWarningF(m_Parent->owner, L"Invalid Recursive type");
 
 		case 0:
-			child->parent->recursiveType = RECURSIVE_NONE;
+			m_Parent->recursiveType = RECURSIVE_NONE;
 			break;
 
 		case 1:
-			child->parent->recursiveType = RECURSIVE_PARTIAL;
+			m_Parent->recursiveType = RECURSIVE_PARTIAL;
 			break;
 
 		case 2:
-			child->parent->recursiveType = RECURSIVE_FULL;
+			m_Parent->recursiveType = RECURSIVE_FULL;
 			break;
 		}
 
-		child->parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
-		child->parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
-		child->parent->showFile = parser.ReadBool(section, L"ShowFile", true);
-		child->parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
-		child->parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
-		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
-		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
+		m_Parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
+		m_Parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
+		m_Parent->showFile = parser.ReadBool(section, L"ShowFile", true);
+		m_Parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
+		m_Parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
+		m_Parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
+		m_Parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
 		const std::wstring* extensions = &parser.ReadString(section, L"Extensions", L"");
 		if (!parser.GetLastDefaultUsed())
 		{
-			child->parent->extensionsFilter = ExtensionsFilter::Include;
+			m_Parent->extensionsFilter = ExtensionsFilter::Include;
 		}
 		else
 		{
 			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
-			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
+			m_Parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
-		StringParser::Split(*extensions, L';', child->parent->extensions);
+		StringParser::Split(*extensions, L';', m_Parent->extensions);
 
 		extensions = nullptr;
 
-		parser.ReadString(child->parent->wildcardSearch, section, L"WildcardSearch", L"*");
+		parser.ReadString(m_Parent->wildcardSearch, section, L"WildcardSearch", L"*");
 
-		parser.ReadString(child->parent->finishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+		parser.ReadString(m_Parent->finishAction, section, L"FinishAction", L"", { .sectionVariables = false });
 	}
 
-	SetChildParent(child, child->parent);
+	SetParent(m_Parent);
 
 	int index = parser.ReadInt(section, L"Index", 1) - 1;
-	child->index = index >= 0 ? index : 1;
+	m_Index = index >= 0 ? index : 1;
 
-	child->ignoreCount = parser.ReadBool(section, L"IgnoreCount", false);
+	m_IgnoreCount = parser.ReadBool(section, L"IgnoreCount", false);
 
-	const MeasureType previousType = child->type;
+	const MeasureType previousType = m_Type;
 
 	static constexpr ConfigParser::EnumOption<MeasureType> s_Types[] =
 	{
@@ -488,18 +470,18 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"PATHTOFILE", TYPE_PATHTOFILE },
 		{ L"ICON", TYPE_ICON },
 	};
-	child->type = parser.ReadEnum(section, L"Type", TYPE_FOLDERPATH, s_Types);
+	m_Type = parser.ReadEnum(section, L"Type", TYPE_FOLDERPATH, s_Types);
 
-	if (child->type == TYPE_FILEDATE)
+	if (m_Type == TYPE_FILEDATE)
 	{
-		child->date = parser.ReadEnum(section, L"DateType", DTYPE_MODIFIED, g_DateTypes);
+		m_DateType = parser.ReadEnum(section, L"DateType", DTYPE_MODIFIED, s_DateTypes);
 	}
-	else if (child->type == TYPE_ICON)
+	else if (m_Type == TYPE_ICON)
 	{
 		if (previousType != TYPE_ICON)
 		{
 			// Remove icons written by versions that predate SystemImage support.
-			const std::wstring defaultValue = fmt::format(L"icon{}.ico", child->index + 1);
+			const std::wstring defaultValue = fmt::format(L"icon{}.ico", m_Index + 1);
 			std::wstring iconPath = parser.ReadString(section, L"IconPath", defaultValue.c_str());
 			GetSkin()->MakePathAbsolute(iconPath);
 			DeleteFile(iconPath.c_str());
@@ -512,33 +494,32 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"LARGE", SHIL_EXTRALARGE },
 			{ L"EXTRALARGE", SHIL_JUMBO },
 		};
-		child->iconSize = parser.ReadEnum(section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
+		m_IconSize = parser.ReadEnum(section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
 	}
 }
 
 void MeasureFileView::UpdateValue()
 {
-	FileViewChildData* child = m_Child;
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent)
 	{
 		m_Value = 0.0;
 		return;
 	}
 
-	if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
+	if (!parent->task && parent->owner == this && (parent->needsUpdating || parent->needsIcons))
 	{
 		parent->task = UpdateTask::Create(this, parent);
 		parent->needsUpdating = false;
 		parent->needsIcons = false;
 	}
 
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
 	double value = 0;
 
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
-		switch (child->type)
+		switch (m_Type)
 		{
 		case TYPE_FILESIZE:
 			value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
@@ -550,7 +531,7 @@ void MeasureFileView::UpdateValue()
 			SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
 			ULARGE_INTEGER time = { 0 };
 
-			switch (child->date)
+			switch (m_DateType)
 			{
 			default:
 			case DTYPE_MODIFIED:
@@ -579,7 +560,7 @@ void MeasureFileView::UpdateValue()
 		}
 	}
 
-	switch (child->type)
+	switch (m_Type)
 	{
 	case TYPE_FILECOUNT:
 		value = (double)parent->fileCount;
@@ -599,37 +580,35 @@ void MeasureFileView::UpdateValue()
 
 const WCHAR* MeasureFileView::GetStringValue()
 {
-	FileViewChildData* child = m_Child;
-
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent) return CheckSubstitute(L"");
 
-	const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	const int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
-		switch (child->type)
+		switch (m_Type)
 		{
 		case TYPE_FILESIZE:
-			child->strValue.clear();
+			m_StrValue.clear();
 
 			// Force a numeric return (see the Update function)
 			if (!parent->files[trueIndex].isFolder) return nullptr;
 			break;
 
 		case TYPE_FILENAME:
-			child->strValue = parent->files[trueIndex].fileName;
+			m_StrValue = parent->files[trueIndex].fileName;
 			if (parent->hideExtension && !parent->files[trueIndex].isFolder)
 			{
-				size_t pos = child->strValue.find_last_of(L".");
+				size_t pos = m_StrValue.find_last_of(L".");
 				if (pos != std::wstring::npos)
 				{
-					child->strValue.resize(pos);
+					m_StrValue.resize(pos);
 				}
 			}
 			break;
 
 		case TYPE_FILETYPE:
-			child->strValue = parent->files[trueIndex].ext;
+			m_StrValue = parent->files[trueIndex].ext;
 			break;
 
 		case TYPE_FILEDATE:
@@ -637,7 +616,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 			SYSTEMTIME stUTC, stLOCAL;
 			FILETIME fTime;
 
-			switch (child->date)
+			switch (m_DateType)
 			{
 			default:
 			case DTYPE_MODIFIED:
@@ -659,14 +638,14 @@ const WCHAR* MeasureFileView::GetStringValue()
 				FileTimeToSystemTime(&fTime, &stUTC);
 				SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
 				GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
-				child->strValue = temp;
-				child->strValue += L" ";
+				m_StrValue = temp;
+				m_StrValue += L" ";
 				GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
-				child->strValue += temp;
+				m_StrValue += temp;
 			}
 			else
 			{
-				child->strValue.clear();
+				m_StrValue.clear();
 			}
 		}
 		break;
@@ -674,22 +653,22 @@ const WCHAR* MeasureFileView::GetStringValue()
 		case TYPE_ICON:
 			if (parent->files[trueIndex].iconIndex >= 0)
 			{
-				child->strValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, child->iconSize);
+				m_StrValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, m_IconSize);
 			}
 			else if (!parent->task)
 			{
-				child->strValue.clear();
+				m_StrValue.clear();
 			}
 			break;
 
 		case TYPE_FILEPATH:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+			m_StrValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
 				parent->path :
 				parent->files[trueIndex].path + parent->files[trueIndex].fileName;
 			break;
 
 		case TYPE_PATHTOFILE:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+			m_StrValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
 				parent->path :
 				parent->files[trueIndex].path;
 			break;
@@ -697,10 +676,10 @@ const WCHAR* MeasureFileView::GetStringValue()
 	}
 	else
 	{
-		child->strValue.clear();
+		m_StrValue.clear();
 	}
 
-	switch (child->type)
+	switch (m_Type)
 	{
 	case TYPE_FILECOUNT:
 	case TYPE_FOLDERCOUNT:
@@ -709,19 +688,18 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 
 	case TYPE_FOLDERPATH:
-		child->strValue = parent->path;
+		m_StrValue = parent->path;
 		break;
 	}
 
-	return CheckSubstitute(child->strValue.c_str());
+	return CheckSubstitute(m_StrValue.c_str());
 }
 
 void MeasureFileView::Command(const std::wstring& command)
 {
-	FileViewChildData* child = m_Child;
 	LPCWSTR args = command.c_str();
 
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent || parent->task) return;
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
@@ -752,7 +730,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	};
 
 	// Parent only commands
-	if (parent->ownerChild == child)
+	if (parent->owner == this)
 	{
 		if ((int)parent->files.size() > parent->count)
 		{
@@ -870,7 +848,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	}
 
 	// Child only commands
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
@@ -1144,7 +1122,7 @@ void MeasureFileView::UpdateTask::FinishWorkOnMainThread()
 	if (m_AbortRequested) return;
 
 	auto* measure = (MeasureFileView*)m_Requestor;
-	auto* parent = measure->m_Child->parent;
+	auto* parent = measure->m_Parent;
 	if (parent->task == this)
 	{
 		parent->task = nullptr;
