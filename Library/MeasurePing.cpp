@@ -257,6 +257,17 @@ void MeasurePing::UpdateValue()
 	}
 }
 
+void MeasurePing::AdvanceUpdateCounter(UINT count)
+{
+	Measure::AdvanceUpdateCounter(count);
+
+	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
+	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
+
+	m_UpdateCounter += count;
+	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
+}
+
 namespace {
 
 std::wstring LookupErrorCode(DWORD errorCode)

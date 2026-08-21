@@ -30,7 +30,8 @@ public:
 	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
 	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
-	void AdvanceUpdateCounter(UINT count);
+	virtual void AdvanceUpdateCounter(UINT count);
+
 	int GetUpdateCounter() const { return m_UpdateCounter; }
 	int GetUpdateDivider() const { return m_UpdateDivider; }
 
