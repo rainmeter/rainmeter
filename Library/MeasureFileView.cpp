@@ -125,7 +125,6 @@ struct FileViewParentData
 };
 
 static CriticalSection g_CriticalSection;
-static std::wstring g_SysProperties;
 
 static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData* child)
 {
@@ -321,21 +320,6 @@ MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, 
 	m_Child(new FileViewChildData)
 {
 	m_Child->measure = this;
-
-	if (g_SysProperties.empty())
-	{
-		if (IsWindows10OrGreater())
-		{
-			g_SysProperties = L"ms-settings:about";
-		}
-		else
-		{
-			WCHAR buffer[MAX_PATH] = { 0 };
-			ExpandEnvironmentStrings(L"%WINDIR%", buffer, _countof(buffer));
-			g_SysProperties = buffer;
-			g_SysProperties += L"\\system32\\control.exe system";
-		}
-	}
 }
 
 MeasureFileView::~MeasureFileView()
@@ -756,7 +740,7 @@ void MeasureFileView::Command(const std::wstring& command)
 
 			if (cmd.empty())
 			{
-				si.lpFile = g_SysProperties.c_str();
+				si.lpFile = L"ms-settings:about";
 			}
 			else
 			{
