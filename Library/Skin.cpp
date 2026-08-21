@@ -5813,7 +5813,28 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_PreventWindowMove = false;
 	m_Position.ResetCache();
 
-	if (UpdateWindowMonitor())
+	const bool displayChanged = wParam == WM_DISPLAYCHANGE;
+	if (displayChanged)
+	{
+		// A startup clamp updates the in-memory options but does not save them. Reload the saved
+		// options so a skin can return when its monitor becomes available again.
+		ConfigParser parser;
+		parser.Initialize(GetRainmeter().GetIniFile(), nullptr, m_FolderPath.c_str());
+
+		auto readPositionOption = [&](LPCWSTR key, std::wstring& option)
+		{
+			const std::wstring value = parser.ReadString(m_FolderPath.c_str(), key, option.c_str());
+			option = parser.ParseFormulaWithModifiers(value);
+		};
+
+		readPositionOption(L"WindowX", m_Position.GetX().windowOption);
+		readPositionOption(L"WindowY", m_Position.GetY().windowOption);
+		readPositionOption(L"AnchorX", m_Position.GetX().anchorOption);
+		readPositionOption(L"AnchorY", m_Position.GetY().anchorOption);
+	}
+
+	const bool monitorChanged = UpdateWindowMonitor();
+	if (displayChanged || monitorChanged)
 	{
 		// Resolve the configured logical position against the new monitor metrics, then resize
 		// and reposition the window ourselves.
