@@ -121,11 +121,9 @@ struct FileViewParentData
 
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
-	LPCWSTR name = nullptr;
 	FileViewChildData* ownerChild = nullptr;
 };
 
-static std::vector<FileViewParentData*> g_ParentMeasures;
 static CriticalSection g_CriticalSection;
 static std::wstring g_SysProperties;
 
@@ -364,9 +362,6 @@ MeasureFileView::~MeasureFileView()
 			iter->parent = nullptr;
 		}
 
-		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
-		g_ParentMeasures.erase(iter);
-
 		delete parent;
 		parent = nullptr;
 	}
@@ -381,23 +376,29 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 	FileViewChildData* child = m_Child;
 
-	std::wstring path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
-	if (!path.empty() && path[0] == L'[' && path[path.size() - 1] == L']')
+	const std::wstring_view path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
+	if (path.starts_with(L'[') && path.ends_with(L']'))
 	{
-		path = path.substr(1, path.size() - 2);
-
-		for (auto iter : g_ParentMeasures)
+		// Path is a reference to another FileView measure, so share its parent data
+		Skin* skin = GetSkin();
+		if (skin && path.length() >= 3)
 		{
-			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == GetSkin())
+			const std::wstring_view name = path.substr(1, path.length() - 2);
+			Measure* measure = skin->GetMeasure(name);
+			if (measure && measure->GetTypeID() == TypeID<MeasureFileView>())
 			{
-				SetChildParent(child, iter);
-				break;
+				auto* referenced = (MeasureFileView*)measure;
+				FileViewParentData* parent = referenced->m_Child->parent;
+				if (parent && parent->ownerChild == referenced->m_Child)
+				{
+					SetChildParent(child, parent);
+				}
 			}
 		}
 
 		if (!child->parent)
 		{
-			LogErrorF(this, L"Invalid Path: \"%s\"", path.c_str());
+			LogErrorF(this, L"Invalid Path: \"%.*s\"", (int)path.length(), path.data());
 			return;
 		}
 	}
@@ -407,19 +408,16 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{
 			child->parent = new FileViewParentData;
 			child->parent->skin = GetSkin();
-			child->parent->name = GetName();
 			child->parent->ownerChild = child;
 			child->parent->hwnd = GetSkin()->GetWindow();
-			g_ParentMeasures.push_back(child->parent);
-		}
-
-		// Add trailing "\" if none exists
-		if (!path.empty() && path[path.size() - 1] != L'\\')
-		{
-			path += L'\\';
 		}
 
 		child->parent->path = path;
+
+		if (!child->parent->path.empty() && !child->parent->path.ends_with(L'\\'))
+		{
+			child->parent->path += L'\\';
+		}
 
 		static constexpr ConfigParser::EnumOption<SortType> s_SortTypes[] =
 		{
