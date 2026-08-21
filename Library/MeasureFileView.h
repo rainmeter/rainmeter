@@ -31,6 +31,8 @@ private:
 	enum MeasureType : BYTE;
 	enum DateType : BYTE;
 
+	int GetTrueIndex(const FileViewParentData* parent) const;
+
 	void SetParent(FileViewParentData* parent);
 
 	MeasureType m_Type;

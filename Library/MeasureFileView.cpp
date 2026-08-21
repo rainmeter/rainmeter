@@ -115,6 +115,11 @@ static void RemoveChildFromParent(FileViewParentData* parent, MeasureFileView* c
 	}
 }
 
+int MeasureFileView::GetTrueIndex(const FileViewParentData* parent) const
+{
+	return m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
+}
+
 void MeasureFileView::SetParent(FileViewParentData* parent)
 {
 	if (m_Parent != parent)
@@ -177,7 +182,7 @@ private:
 			{
 				if (child->m_Type == TYPE_ICON)
 				{
-					const int trueIndex = child->m_IgnoreCount ? child->m_Index : ((child->m_Index % parent->count) + parent->indexOffset);
+					const int trueIndex = child->GetTrueIndex(parent);
 					m_IconRequests.push_back(trueIndex);
 				}
 			}
@@ -514,7 +519,7 @@ void MeasureFileView::UpdateValue()
 		parent->needsIcons = false;
 	}
 
-	int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
+	const int trueIndex = GetTrueIndex(parent);
 	double value = 0;
 
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
@@ -583,7 +588,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 	FileViewParentData* parent = m_Parent;
 	if (!parent) return CheckSubstitute(L"");
 
-	const int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
+	const int trueIndex = GetTrueIndex(parent);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		switch (m_Type)
@@ -848,7 +853,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	}
 
 	// Child only commands
-	int trueIndex = m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
+	const int trueIndex = GetTrueIndex(parent);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
