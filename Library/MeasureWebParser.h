@@ -27,6 +27,8 @@ public:
 
 	const WCHAR* GetStringValue() override;
 
+	void AdvanceUpdateCounter(UINT count) override;
+
 	void ResetCounter();
 	void ResetValue();
 

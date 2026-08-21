@@ -541,6 +541,17 @@ void MeasureWebParser::UpdateValue()
 	}
 }
 
+void MeasureWebParser::AdvanceUpdateCounter(UINT count)
+{
+	Measure::AdvanceUpdateCounter(count);
+
+	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
+	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
+
+	m_UpdateCounter += count;
+	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
+}
+
 const WCHAR* MeasureWebParser::GetStringValue()
 {
 	static std::wstring s_ResultString;

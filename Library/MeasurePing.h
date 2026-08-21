@@ -18,6 +18,8 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeasurePing>(); }
 
+	void AdvanceUpdateCounter(UINT count) override;
+
 protected:
 	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
