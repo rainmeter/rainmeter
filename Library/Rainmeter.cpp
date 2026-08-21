@@ -43,6 +43,9 @@ enum INTERVAL
 
 int RainmeterMain(LPWSTR cmdLine)
 {
+	BOOL supressExceptions = FALSE;
+	SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &supressExceptions, sizeof(supressExceptions));
+
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
