@@ -367,32 +367,33 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
+	// m_W and m_H hold the size with the padding already added, so the padding that is in them is
+	// needed to get back to the base size below.
+	const int oldWidthPadding = GetWidthPadding();
+	const int oldHeightPadding = GetHeightPadding();
+
 	static const D2D1_RECT_F defPadding = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
-	const int oldW = m_W;
 	const bool oldWDefined = m_WDefined;
-	const int widthPadding = GetWidthPadding();
 
-	const int w = parser.ReadInt(section, L"W", m_W);
+	const int w = parser.ReadInt(section, L"W", m_W - oldWidthPadding);
 	m_WDefined = parser.GetLastValueDefined();
 
-	if (IsFixedSize(true)) m_W = w;
-	if (!m_Initialized || oldW != (m_W - widthPadding)) m_W += widthPadding;
+	// Meters that size themselves to their content add the padding when they do so, so only the
+	// size that comes from the option is padded here.
+	if (IsFixedSize(true)) m_W = w + GetWidthPadding();
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
 	}
 
-	const int oldH = m_H;
 	const bool oldHDefined = m_HDefined;
-	const int heightPadding = GetHeightPadding();
 
-	const int h = parser.ReadInt(section, L"H", m_H);
+	const int h = parser.ReadInt(section, L"H", m_H - oldHeightPadding);
 	m_HDefined = parser.GetLastValueDefined();
 
-	if (IsFixedSize(true)) m_H = h;
-	if (!m_Initialized || oldH != (m_H - heightPadding)) m_H += heightPadding;
+	if (IsFixedSize(true)) m_H = h + GetHeightPadding();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
