@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureNet.h"
@@ -203,7 +198,7 @@ void MeasureNet::UpdateValue()
 	}
 }
 
-void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureNet::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -329,7 +324,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, L"Statistics");
 
-	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
+	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", { .sectionVariables = false });
 	if (!date.empty())
 	{
 		statsDate = date;

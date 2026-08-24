@@ -1,9 +1,4 @@
-/* Copyright (C) 2000 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Measure.h"
@@ -83,8 +78,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_LogMaxValue(false),
 	m_MinValue(0.0),
 	m_MaxValue(1.0),
-	m_MinValueDefined(false),
-	m_MaxValueDefined(false),
 	m_RegExpSubstitute(false),
 	m_MedianPos(),
 	m_AveragePos(),
@@ -106,35 +99,12 @@ Measure::~Measure()
 void Measure::Initialize()
 {
 	m_Initialized = true;
-
-	if (GetRainmeter().GetDebug() && (m_MinValueDefined || m_MaxValueDefined))
-	{
-		if (m_MaxValue == m_MinValue)
-		{
-			WCHAR buffer[32] = { 0 };
-			_snwprintf_s(buffer, _TRUNCATE, L"%f", m_MaxValue);
-			RemoveTrailingZero(buffer, (int)wcslen(buffer));
-			LogWarningF(this, L"Warning: MaxValue = MinValue: %s", buffer);
-		}
-		else if (m_MaxValue < m_MinValue)
-		{
-			WCHAR maxValue[32] = { 0 };
-			WCHAR minValue[32] = { 0 };
-			_snwprintf_s(maxValue, _TRUNCATE, L"%f", m_MaxValue);
-			_snwprintf_s(minValue, _TRUNCATE, L"%f", m_MinValue);
-			RemoveTrailingZero(maxValue, (int)wcslen(maxValue));
-			RemoveTrailingZero(minValue, (int)wcslen(minValue));
-			LogWarningF(this, L"Warning: MaxValue is less than MinValue: MaxValue=%s MinValue=%s", maxValue, minValue);
-		}
-	}
 }
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	parser.ReadInheritOption(section);
-
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
 	Section::ReadOptions(parser, section);
@@ -151,10 +121,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Paused = parser.ReadBool(section, L"Paused", false);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
-
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
 
 	m_IfActions.ReadOptions(parser, section);
 
@@ -165,7 +132,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_IfActions.ReadConditionOptions(parser, section);
 	}
 
-	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
+	parser.ReadString(m_OnChangeAction, section, L"OnChangeAction", L"", { .sectionVariables = false });
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 
@@ -193,10 +160,26 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
+// "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
+// skin files.
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section)
+{
+	const std::wstring& option = parser.ReadString(section, L"NumberConversionFormat", L"");
+
+	if (_wcsicmp(option.c_str(), L"Locale") == 0) return LocaleUtil::NumberFormat::Locale;
+
+	if (!option.empty() && _wcsicmp(option.c_str(), L"Default") != 0)
+	{
+		LogErrorF(this, L"Measure: Invalid NumberConversionFormat=%s", option.c_str());
+	}
+
+	return LocaleUtil::NumberFormat::Default;
+}
+
 void Measure::ReadOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName());
 	ReadOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 void Measure::Disable()

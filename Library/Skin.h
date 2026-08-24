@@ -1,12 +1,6 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_SKIN_H_
-#define RM_LIBRARY_SKIN_H_
+#pragma once
 
 #include "CommandHandler.h"
 #include "ConfigParser.h"
@@ -90,16 +84,10 @@ enum class SkinWindowOcclusionState : BYTE
 	Hidden
 };
 
-enum class SkinUpdateMode : BYTE
-{
-	Normal = 0,
-	SkipInvisibleRedraw,
-	SkipInvisibleUpdate
-};
-
 class Rainmeter;
 class Measure;
 class Meter;
+class MeterTextEdit;
 class GeneralImage;
 class SkinSelectionOverlay;
 class SkinDropTarget;
@@ -122,30 +110,30 @@ public:
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
 
-	void HideMeter(const std::wstring& name, bool group = false);
-	void ShowMeter(const std::wstring& name, bool group = false);
-	void ToggleMeter(const std::wstring& name, bool group = false);
-	void MoveMeter(const std::wstring& name, int x, int y);
-	void UpdateMeter(const std::wstring& name, bool group = false);
-	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void DisableMeasure(const std::wstring& name, bool group = false);
-	void EnableMeasure(const std::wstring& name, bool group = false);
-	void ToggleMeasure(const std::wstring& name, bool group = false);
-	void PauseMeasure(const std::wstring& name, bool group = false);
-	void UnpauseMeasure(const std::wstring& name, bool group = false);
-	void TogglePauseMeasure(const std::wstring& name, bool group = false);
-	void UpdateMeasure(const std::wstring& name, bool group = false);
-	void CommandMeasure(const std::wstring& name, const std::wstring& command, bool group = false);
+	void HideMeter(std::wstring_view name, bool group = false);
+	void ShowMeter(std::wstring_view name, bool group = false);
+	void ToggleMeter(std::wstring_view name, bool group = false);
+	void MoveMeter(std::wstring_view name, int x, int y);
+	void UpdateMeter(std::wstring_view name, bool group = false);
+	void DisableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ClearMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void EnableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ToggleMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void DisableMeasure(std::wstring_view name, bool group = false);
+	void EnableMeasure(std::wstring_view name, bool group = false);
+	void ToggleMeasure(std::wstring_view name, bool group = false);
+	void PauseMeasure(std::wstring_view name, bool group = false);
+	void UnpauseMeasure(std::wstring_view name, bool group = false);
+	void TogglePauseMeasure(std::wstring_view name, bool group = false);
+	void UpdateMeasure(std::wstring_view name, bool group = false);
+	void CommandMeasure(std::wstring_view name, const std::wstring& command, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 	void UpdateWindowContents();
 
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
-	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
+	void SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group);
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 
@@ -153,8 +141,6 @@ public:
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
 	Section* GetCurrentActionSection() { return m_CurrentActionSection; }
-	void SetCurrentActionSection(Section* section) { m_CurrentActionSection = section; }
-	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
 
 	void MoveWindow(int x, int y, SkinPositionSpace posSpace);
 	void MoveSelectedWindow(int dx, int dy);
@@ -174,6 +160,7 @@ public:
 	void SetBlur(bool b) { m_Blur = b; }
 
 	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
+	void RequestWindowSizeCheck() { if (m_DynamicWindowSize) SetResizeWindowMode(RESIZEMODE_CHECK); }
 
 	Gfx::Canvas& GetCanvas() { return m_Canvas; }
 	HWND GetWindow() { return m_Window; }
@@ -191,7 +178,23 @@ public:
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
+
 	void UpdateMouseMeasureCapture();
+
+	// At most one meter per skin holds the caret. The setters return true if the focus changed,
+	// in which case the caller needs to redraw.
+	// Passing |dismissCommand| marks this as the user leaving the field: the outgoing meter fills
+	// it with OnDismissAction, which the caller must run last since it may destroy the skin.
+	// Without a sink the focus is dropped silently.
+	bool SetInputFocus(MeterTextEdit* meter, std::wstring* dismissCommand = nullptr);
+	bool ClearInputFocus() { return SetInputFocus(nullptr); }
+
+	// Drops the caret because the user moved away from the field: runs OnDismissAction.
+	// ClearInputFocus() drops it silently, for teardown and selection mode.
+	void DismissInputFocus();
+	bool ClearInputFocus(MeterTextEdit* meter) { return m_InputFocusMeter == meter ? SetInputFocus(nullptr) : false; }
+	MeterTextEdit* GetInputFocusMeter() { return m_InputFocusMeter; }
+	void EndInputDrag();
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	int GetW() { return m_WindowW; }
@@ -250,10 +253,13 @@ public:
 	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
 	void ClearDropTarget();
 
-	Meter* GetMeter(std::wstring_view meterName);
+	Section* GetSection(std::wstring_view sectionName) { return m_Parser.GetSection(sectionName); }
+	Meter* GetMeter(std::wstring_view meterName) { return m_Parser.GetMeter(meterName); }
 	Measure* GetMeasure(std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
+
 	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
 
+	friend class CurrentActionSectionScope;
 	friend class DialogManage;
 	friend class Rainmeter;
 	friend class ContextMenu;
@@ -306,6 +312,7 @@ protected:
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -362,6 +369,7 @@ private:
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
+	void WriteDeferredOptions();
 	bool ReadSkin();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
@@ -383,6 +391,7 @@ private:
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
 	void ClearMouseMeasureCapture();
+	MeterTextEdit* GetInputMeterAt(int x, int y, MOUSEACTION actions);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -420,6 +429,8 @@ private:
 	SkinDropTarget* m_DropTarget;
 
 	int m_PendingWriteOptions;
+	bool m_DeferWriteOptions;
+	bool m_WriteOptionsScheduled;
 
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
@@ -473,6 +484,16 @@ private:
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;
+	bool m_HasInputMeters;
+	MeterTextEdit* m_InputFocusMeter;
+
+	// |true| while the left button is held after starting a selection drag in m_InputFocusMeter.
+	bool m_InputDragging;
+
+	// When and where the last double-click on a TextEdit meter landed. Windows has no
+	// triple-click message, so a third click is recognised by how soon and how near it follows.
+	ULONGLONG m_InputLastDoubleClickTime;
+	POINT m_InputLastDoubleClickPos;
 	HIDEMODE m_WindowHide;
 	bool m_WindowStartHidden;
 	bool m_SavePosition;
@@ -526,8 +547,9 @@ private:
 
 	bool m_Hidden;
 	SkinWindowOcclusionState m_WindowOcclusionState;
-	SkinUpdateMode m_UpdateMode;
-	bool m_HasPendingUpdate;
+	int m_InvisibleUpdate;
+	ULONGLONG m_LastUpdateTime;
+	UINT m_SkippedUpdateCount;
 	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
 
@@ -552,4 +574,25 @@ private:
 	static bool c_IsInSelectionMode;
 };
 
-#endif
+// Sets the section running an action, and puts back the previous one when the action ends.
+// Actions can start other actions, so the outer action must keep its section for the bangs
+// that come after the inner one.
+class CurrentActionSectionScope
+{
+public:
+	CurrentActionSectionScope(Skin* skin, Section* section) :
+		m_Skin(skin),
+		m_Previous(skin->m_CurrentActionSection)
+	{
+		m_Skin->m_CurrentActionSection = section;
+	}
+
+	~CurrentActionSectionScope() { m_Skin->m_CurrentActionSection = m_Previous; }
+
+	CurrentActionSectionScope(const CurrentActionSectionScope& other) = delete;
+	CurrentActionSectionScope& operator=(CurrentActionSectionScope other) = delete;
+
+private:
+	Skin* m_Skin;
+	Section* m_Previous;
+};

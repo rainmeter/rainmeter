@@ -1,9 +1,4 @@
-﻿/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureDragDrop.h"
@@ -14,7 +9,7 @@
 #include "Skin.h"
 #include "SkinDropTarget.h"
 #include "../Common/PathUtil.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 
 namespace {
 
@@ -67,23 +62,23 @@ MeasureDragDrop::~MeasureDragDrop()
 {
 }
 
-void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureDragDrop::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Path = parser.ReadString(section, L"Path", L"");
+	parser.ReadString(m_Path, section, L"Path", L"");
 	m_Skin->MakePathAbsolute(m_Path);
 
-	m_OnDropAction = parser.ReadString(section, L"OnDropAction", L"");
+	parser.ReadString(m_OnDropAction, section, L"OnDropAction", L"");
 	if (m_OnDropAction.empty())
 	{
 		// For backwards compatibility.
-		m_OnDropAction = parser.ReadString(section, L"OnDroppedAction", L"");
+		parser.ReadString(m_OnDropAction, section, L"OnDroppedAction", L"");
 	}
 
-	m_OnEnterAction = parser.ReadString(section, L"OnEnterAction", L"");
-	m_OnOverAction = parser.ReadString(section, L"OnOverAction", L"");
-	m_OnLeaveAction = parser.ReadString(section, L"OnLeaveAction", L"");
+	parser.ReadString(m_OnEnterAction, section, L"OnEnterAction", L"");
+	parser.ReadString(m_OnOverAction, section, L"OnOverAction", L"");
+	parser.ReadString(m_OnLeaveAction, section, L"OnLeaveAction", L"");
 
 	m_ProcessAllFiles = parser.ReadBool(section, L"ProcessAllFiles", false);
 	m_OverrideExisting = parser.ReadBool(section, L"OverrideExisting", false);
@@ -127,10 +122,19 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_BoundsMeter.clear();
 	m_BoundsFormulas.fill(L"");
 
-	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", false);
+	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", { .sectionVariables = false });
 	if (!bounds.empty())
 	{
-		const auto tokens = ConfigParser::TokenizeWithPairedPunctuation(bounds, L',', PairedPunctuation::Parentheses);
+		std::vector<std::wstring_view> tokens;
+		StringParser values(bounds);
+		values.ConsumeWhitespace();
+		while (!values.IsConsumed())
+		{
+			tokens.emplace_back(values.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipNestedParentheses));
+			values.ConsumeWhitespace();
+		}
+
 		if (tokens.size() == 1)
 		{
 			m_BoundsMeter = tokens[0];
@@ -140,7 +144,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_UsingFixedBounds = true;
 			for (size_t i = 0; i < tokens.size(); ++i)
 			{
-				m_BoundsFormulas[i] = parser.ParseFormulaWithModifiers(tokens[i]);
+				m_BoundsFormulas[i] = parser.ParseFormulaWithModifiers(std::wstring(tokens[i]));
 			}
 		}
 		else

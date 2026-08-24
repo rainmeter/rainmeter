@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StringParser.h"
 #include "MathParser.h"
@@ -40,11 +35,20 @@ public:
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
-	TEST_METHOD(TestSkipWhitespace)
+	TEST_METHOD(TestConsumeStringMatchCaseOption)
+	{
+		StringParser parser(L"Prefix");
+
+		Assert::IsFalse(parser.Consume(L"prefix", StringParser::MatchCase));
+		Assert::IsTrue(parser.Consume(L"Prefix", StringParser::MatchCase));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeWhitespace)
 	{
 		StringParser parser(L" \t\r\nValue");
 
-		parser.SkipWhitespace();
+		parser.ConsumeWhitespace();
 		Assert::IsTrue(parser.ConsumeRest(L"Value"));
 	}
 
@@ -87,21 +91,21 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L" 42"));
 	}
 
-	TEST_METHOD(TestConsumeNumbersAllowWhitespaceOption)
+	TEST_METHOD(TestConsumeNumbersSkipWhitespaceOption)
 	{
 		StringParser parser(L" \t42\r\n");
 
-		const auto value = parser.ConsumeRestInt(StringParser::AllowWhitespace);
+		const auto value = parser.ConsumeRestInt(StringParser::SkipWhitespace);
 		Assert::IsTrue(value.has_value());
 		Assert::AreEqual(42, *value);
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
-	TEST_METHOD(TestConsumeStringAllowWhitespaceOption)
+	TEST_METHOD(TestConsumeStringSkipWhitespaceOption)
 	{
 		StringParser parser(L" \tValue\r\n");
 
-		Assert::IsTrue(parser.ConsumeRest(L"Value", StringParser::AllowWhitespace));
+		Assert::IsTrue(parser.ConsumeRest(L"Value", StringParser::SkipWhitespace));
 		Assert::IsTrue(parser.IsConsumed());
 	}
 
@@ -124,12 +128,12 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L"tail"));
 	}
 
-	TEST_METHOD(TestConsumeRestDoubleOrFormulaAllowWhitespace)
+	TEST_METHOD(TestConsumeRestDoubleOrFormulaSkipWhitespace)
 	{
 		MathParser mathParser;
 		StringParser parser(L" \t(5 / 2)\r\n");
 
-		const auto value = parser.ConsumeRestDoubleOrFormula(mathParser, StringParser::AllowWhitespace);
+		const auto value = parser.ConsumeRestDoubleOrFormula(mathParser, StringParser::SkipWhitespace);
 		Assert::IsTrue(value.has_value());
 		Assert::AreEqual(2.5, *value, 0.0001);
 		Assert::IsTrue(parser.IsConsumed());
@@ -142,5 +146,176 @@ public:
 
 		Assert::IsFalse(parser.ConsumeRestIntOrFormula(mathParser).has_value());
 		Assert::IsTrue(parser.ConsumeRest(L"(1 + 2)tail"));
+	}
+
+	TEST_METHOD(TestConsumeUntil)
+	{
+		StringParser parser(L"first|second|third");
+
+		AssertValue(L"first", parser.ConsumeUntil(L'|'));
+		AssertValue(L"second", parser.ConsumeUntil(L'|'));
+		AssertValue(L"", parser.ConsumeUntil(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipWhitespaceOption)
+	{
+		StringParser parser(L"  first \t| second");
+
+		AssertValue(L"first", parser.ConsumeUntil(L'|', StringParser::SkipWhitespace));
+		Assert::IsTrue(parser.ConsumeRest(L"second", StringParser::SkipWhitespace));
+	}
+
+	TEST_METHOD(TestConsumeUntilIgnoresParenthesesByDefault)
+	{
+		StringParser parser(L"(1,2),3");
+
+		AssertValue(L"(1", parser.ConsumeUntil(L','));
+		Assert::IsTrue(parser.ConsumeRest(L"2),3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipNestedParenthesesOption)
+	{
+		StringParser parser(L"(min(1,2)),3");
+
+		AssertValue(L"(min(1,2))", parser.ConsumeUntil(L',', StringParser::SkipNestedParentheses));
+		Assert::IsTrue(parser.ConsumeRest(L"3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilIgnoresQuotesByDefault)
+	{
+		StringParser parser(L"'1,2',3");
+
+		AssertValue(L"'1", parser.ConsumeUntil(L','));
+		Assert::IsTrue(parser.ConsumeRest(L"2',3"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipQuotedOption)
+	{
+		StringParser parser(L"\"1,'2\",'3,\"4',5");
+
+		AssertValue(L"\"1,'2\"", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		AssertValue(L"'3,\"4'", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		Assert::IsTrue(parser.ConsumeRest(L"5"));
+	}
+
+	TEST_METHOD(TestConsumeUntilSkipQuotedOptionUnterminatedQuote)
+	{
+		StringParser parser(L"\"1,2");
+
+		AssertValue(L"", parser.ConsumeUntil(L',', StringParser::SkipQuoted));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilCombinedOptions)
+	{
+		StringParser parser(L" (1 + 2) , tail");
+		const auto option = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		AssertValue(L"(1 + 2)", parser.ConsumeUntil(L',', option));
+		Assert::IsTrue(parser.ConsumeRest(L"tail", StringParser::SkipWhitespace));
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRest)
+	{
+		StringParser parser(L"first|second|third");
+
+		AssertValue(L"first", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"second", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"third", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestTrailingDelimiter)
+	{
+		StringParser parser(L"value|");
+
+		AssertValue(L"value", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestEmptyValues)
+	{
+		StringParser parser(L"|first||");
+
+		AssertValue(L"", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"first", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"", parser.ConsumeUntilOrRest(L'|'));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeUntilOrRestOptions)
+	{
+		StringParser parser(L" (min(1,2)) , tail ");
+		const auto option = StringParser::SkipWhitespace | StringParser::SkipNestedParentheses;
+
+		AssertValue(L"(min(1,2))", parser.ConsumeUntilOrRest(L',', option));
+		AssertValue(L"tail", parser.ConsumeUntilOrRest(L',', option));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeHexByte)
+	{
+		StringParser parser(L"0aFFz");
+
+		AssertHexByte(0x0a, parser.ConsumeHexByte());
+		AssertHexByte(0xFF, parser.ConsumeHexByte());
+		Assert::IsFalse(parser.ConsumeHexByte().has_value());
+		Assert::IsTrue(parser.ConsumeRest(L"z"));
+	}
+
+	TEST_METHOD(TestConsumeHexByteSingleDigit)
+	{
+		StringParser parser(L"7");
+
+		AssertHexByte(0x7, parser.ConsumeHexByte());
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeHexByteSkipWhitespaceOption)
+	{
+		StringParser parser(L" 1f");
+
+		Assert::IsFalse(parser.ConsumeHexByte().has_value());
+		AssertHexByte(0x1f, parser.ConsumeHexByte(StringParser::SkipWhitespace));
+	}
+
+	TEST_METHOD(TestRemaining)
+	{
+		StringParser parser(L"Prefix|Suffix");
+
+		AssertValue(L"Prefix|Suffix", parser.Remaining());
+		AssertValue(L"Prefix", parser.ConsumeUntilOrRest(L'|'));
+		AssertValue(L"Suffix", parser.Remaining());
+		Assert::IsFalse(parser.IsConsumed());
+	}
+
+	TEST_METHOD(TestConsumeSuffixFromLast)
+	{
+		StringParser parser(L"Function(Arg1, F(Arg2)),4");
+
+		AssertValue(L"Function", parser.ConsumeUntil(L'('));
+		Assert::IsTrue(parser.ConsumeSuffixFromLast(L')'));
+		AssertValue(L"Arg1, F(Arg2)", parser.Remaining());
+	}
+
+	TEST_METHOD(TestConsumeSuffixFromLastNoMatch)
+	{
+		StringParser parser(L"Value");
+
+		Assert::IsFalse(parser.ConsumeSuffixFromLast(L')'));
+		AssertValue(L"Value", parser.Remaining());
+	}
+
+private:
+	static void AssertValue(const WCHAR* expected, std::wstring_view actual)
+	{
+		Assert::AreEqual(expected, std::wstring(actual).c_str());
+	}
+
+	static void AssertHexByte(UINT expected, std::optional<UINT> actual)
+	{
+		Assert::IsTrue(actual.has_value());
+		Assert::AreEqual(expected, *actual);
 	}
 };

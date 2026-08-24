@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "StringUtil.h"
@@ -66,25 +61,7 @@ std::wstring Widen(const char* str, int strLen, int cp)
 	return wideStr;
 }
 
-void LTrim(std::wstring& str)
-{
-	str.erase(str.begin(), std::find_if(str.begin(), str.end(),
-		[](wint_t ch) { return !std::iswspace(ch); }));
-}
-
-void RTrim(std::wstring& str)
-{
-	str.erase(std::find_if(str.rbegin(), str.rend(),
-		[](wint_t ch) { return !std::iswspace(ch); }).base(), str.end());
-}
-
-void Trim(std::wstring& str)
-{
-	LTrim(str);
-	RTrim(str);
-}
-
-size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
+std::wstring_view StripLeadingAndTrailingQuotes(std::wstring_view str, bool single)
 {
 	if (str.size() > 1)
 	{
@@ -93,11 +70,11 @@ size_t StripLeadingAndTrailingQuotes(std::wstring& str, bool single)
 		if ((first == L'"' && last == L'"') ||				// "some string"
 			(single && first == L'\'' && last == L'\''))	// 'some string'
 		{
-			str.erase(0, 1);
-			str.erase(str.size() - 1);
+			str.remove_prefix(1);
+			str.remove_suffix(1);
 		}
 	}
-	return str.size();
+	return str;
 }
 
 bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)
@@ -113,44 +90,36 @@ bool ToUpperCase(std::wstring_view str, WCHAR* dstBuffer, size_t dstCount)
 	return true;
 }
 
-void ToLowerCase(std::wstring& str)
+void ToLowerCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, str, (int)count, str, (int)count);
 }
 
-void ToUpperCase(std::wstring& str)
+void ToUpperCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, str, (int)count, str, (int)count);
 }
 
-void ToProperCase(std::wstring& str)
+void ToProperCase(WCHAR* str, size_t count)
 {
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_TITLECASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_TITLECASE, str, (int)count, str, (int)count);
 }
 
-void ToSentenceCase(std::wstring& str)
+void ToSentenceCase(WCHAR* str, size_t count)
 {
-	if (!str.empty())
+	if (count == 0) return;
+
+	ToLowerCase(str, count);
+	bool isCapped = false;
+
+	for (size_t i = 0; i < count; ++i)
 	{
-		ToLowerCase(str);
-		bool isCapped = false;
+		if (IsEOSPunct(str[i])) isCapped = false;
 
-		for (size_t i = 0; i < str.length(); ++i)
+		if (!isCapped && iswalpha(str[i]) != 0)
 		{
-			if (IsEOSPunct(str[i])) isCapped = false;
-
-			if (!isCapped && iswalpha(str[i]) != 0)
-			{
-				WCHAR* srcAndDest = &str[i];
-				LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, 1, srcAndDest, 1);
-				isCapped = true;
-			}
+			LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &str[i], 1, &str[i], 1);
+			isCapped = true;
 		}
 	}
 }
@@ -183,6 +152,22 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 		}
 	}
 	str = WidenUTF8(utf8);
+}
+
+std::wstring TruncateWithEllipsis(std::wstring_view str, size_t maxLength)
+{
+	if (str.length() <= maxLength)
+	{
+		return std::wstring(str);
+	}
+
+	if (!maxLength) return {};
+
+	std::wstring truncated;
+	truncated.reserve(maxLength);
+	truncated.assign(str.substr(0, maxLength - 1));
+	truncated += L"\u2026";
+	return truncated;
 }
 
 struct IsEqualCaseInsensitive

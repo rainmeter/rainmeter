@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterBar.h"
@@ -57,7 +52,7 @@ void MeterBar::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -66,7 +61,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Color = parser.ReadColor(section, L"BarColor", D2D1::ColorF(D2D1::ColorF::Green));
 
-	m_ImageName = parser.ReadString(section, L"BarImage", L"");
+	parser.ReadString(m_ImageName, section, L"BarImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
@@ -77,19 +72,12 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(L"VERTICAL", orientation) == 0)
+	static constexpr ConfigParser::EnumOption<ORIENTATION> s_Orientations[] =
 	{
-		m_Orientation = VERTICAL;
-	}
-	else if (_wcsicmp(L"HORIZONTAL", orientation) == 0)
-	{
-		m_Orientation = HORIZONTAL;
-	}
-	else
-	{
-		LogErrorF(this, L"BarOrientation=%s is not valid", orientation);
-	}
+		{ L"VERTICAL", VERTICAL },
+		{ L"HORIZONTAL", HORIZONTAL },
+	};
+	m_Orientation = parser.ReadEnum(section, L"BarOrientation", VERTICAL, s_Orientations);
 
 	if (m_Initialized)
 	{

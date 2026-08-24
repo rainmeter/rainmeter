@@ -1,9 +1,4 @@
-/* Copyright (C) 2020 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWifiStatus.h"
@@ -102,7 +97,7 @@ MeasureWifiStatus::~MeasureWifiStatus()
 	}
 }
 
-void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -144,44 +139,18 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	m_ListMax = value;
 
-	MeasureType infoType = MeasureType::UNKNOWN;
-	LPCWSTR type = parser.ReadString(section, L"WifiInfoType", L"").c_str();
-	if (_wcsicmp(L"SSID", type) == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_InfoTypes[] =
 	{
-		infoType = MeasureType::SSID;
-	}
-	else if (_wcsicmp(L"ENCRYPTION", type) == 0)
-	{
-		infoType = MeasureType::ENCRYPTION;
-	}
-	else if (_wcsicmp(L"AUTH", type) == 0)
-	{
-		infoType = MeasureType::AUTH;
-	}
-	else if (_wcsicmp(L"LIST", type) == 0)
-	{
-		infoType = MeasureType::LIST;
-	}
-	else if (_wcsicmp(L"PHY", type) == 0)
-	{
-		infoType = MeasureType::PHY;
-	}
-	else if (_wcsicmp(L"QUALITY", type) == 0)
-	{
-		infoType = MeasureType::QUALITY;
-	}
-	else if (_wcsicmp(L"TXRATE", type) == 0)
-	{
-		infoType = MeasureType::TXRATE;
-	}
-	else if (_wcsicmp(L"RXRATE", type) == 0)
-	{
-		infoType = MeasureType::RXRATE;
-	}
-	else
-	{
-		LogErrorF(this, L"WifiStatus: WifiInfoType=%s not valid", type);
-	}
+		{ L"SSID", MeasureType::SSID },
+		{ L"ENCRYPTION", MeasureType::ENCRYPTION },
+		{ L"AUTH", MeasureType::AUTH },
+		{ L"LIST", MeasureType::LIST },
+		{ L"PHY", MeasureType::PHY },
+		{ L"QUALITY", MeasureType::QUALITY },
+		{ L"TXRATE", MeasureType::TXRATE },
+		{ L"RXRATE", MeasureType::RXRATE },
+	};
+	const MeasureType infoType = parser.ReadEnum(section, L"WifiInfoType", MeasureType::UNKNOWN, s_InfoTypes);
 
 	if (infoType != m_Type)
 	{

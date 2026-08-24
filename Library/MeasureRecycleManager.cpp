@@ -1,9 +1,4 @@
-/* Copyright (C) 2016 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRecycleManager.h"
@@ -135,24 +130,16 @@ MeasureRecycleManager::~MeasureRecycleManager()
 	--g_InstanceCount;
 }
 
-void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"RecycleType", L"COUNT").c_str();
-	if (_wcsicmp(L"COUNT", type) == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
-		m_Type = Type::Count;
-	}
-	else if (_wcsicmp(L"SIZE", type) == 0)
-	{
-		m_Type = Type::Size;
-	}
-	else
-	{
-		m_Type = Type::None;
-		LogErrorF(this, L"Invalid RecycleType=%s");
-	}
+		{ L"COUNT", Type::Count },
+		{ L"SIZE", Type::Size },
+	};
+	m_Type = parser.ReadEnum(section, L"RecycleType", Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()

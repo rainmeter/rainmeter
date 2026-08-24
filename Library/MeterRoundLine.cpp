@@ -1,9 +1,4 @@
-/* Copyright (C) 2009 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterRoundLine.h"
@@ -43,7 +38,7 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -178,7 +173,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

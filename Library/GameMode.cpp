@@ -1,9 +1,4 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "GameMode.h"
@@ -15,6 +10,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 
 namespace
@@ -276,8 +272,7 @@ void GameMode::SetSettings(const std::wstring& onStart, const std::wstring& onSt
 		WriteSettings();
 	}
 
-	m_ProcessList.clear();
-	m_ProcessList = ConfigParser::Tokenize(processList, L"|");
+	StringParser::Split(processList, L'|', m_ProcessList);
 
 	StopTimer();
 

@@ -1,9 +1,4 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MathParser.h"
@@ -11,6 +6,7 @@
 #include "../Common/PathUtil.h"
 #include "../Common/ScopedFunction.h"
 #include "../Common/StringParser.h"
+#include "../Common/StringUtil.h"
 #include "ConfigParser.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -22,6 +18,7 @@
 #include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
+#include "MeterTextEdit.h"
 #include "resource.h"
 
 namespace {
@@ -48,10 +45,9 @@ void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 	LogErrorF(L"Formula: %s: %s", error, formula);
 }
 
-const MathParser& GetMathParser(const Skin* skin)
+void LogFormulaKeyError(Skin* skin, const WCHAR* error, std::wstring_view section, std::wstring_view key)
 {
-	static MathParser s_MathParser;
-	return skin ? skin->GetMathParser() : s_MathParser;
+	LogErrorF(skin, L"Formula: %s in key \"%.*s\" in [%.*s]", error, (int)key.length(), key.data(), (int)section.length(), section.data());
 }
 
 }  // namespace
@@ -70,35 +66,31 @@ ConfigParser::~ConfigParser()
 {
 }
 
-bool ConfigParser::ReadInheritOption(LPCTSTR section, bool allowMeterStyle)
+ConfigParser::InheritChainScope::InheritChainScope(ConfigParser& parser, LPCTSTR section, bool allowMeterStyle) :
+	m_Parser(parser),
+	m_PreviousChain(parser.m_InheritChain)
 {
-	const std::wstring& inherit = ReadString(section, L"@Inherit", L"");
-	if (!inherit.empty())
+	std::wstring_view inherit = parser.ReadString(section, L"@Inherit", L"");
+	if (inherit.empty() && allowMeterStyle)
 	{
-		SetInheritChain(inherit);
-		return true;
+		inherit = parser.ReadString(section, L"MeterStyle", L"");
 	}
 
-	if (allowMeterStyle)
-	{
-		const std::wstring& meterStyle = ReadString(section, L"MeterStyle", L"");
-		if (!meterStyle.empty())
-		{
-			SetInheritChain(meterStyle);
-			return true;
-		}
-	}
+	StringParser::Split(inherit, L'|', parser.m_InheritChain);
+}
 
-	return false;
+ConfigParser::InheritChainScope::~InheritChainScope()
+{
+	m_Parser.m_InheritChain = std::move(m_PreviousChain);
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
 {
 	m_Skin = skin;
 
-	m_Measures.clear();
-	m_IniFiles.clear();
 	m_Sections.clear();
+	m_IniFiles.clear();
+	m_SectionNames.clear();
 	m_Values.clear();
 	m_Variables.clear();
 	m_OriginalVariableNames.clear();
@@ -109,9 +101,9 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_LastValueDefined = false;
 	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
-	m_CurrentSection = nullptr;
+	m_CurrentSection = {};
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
-	m_SectionInsertPos = m_Sections.end();
+	m_SectionNamesInsertPos = m_SectionNames.end();
 
 	System::UpdateIniFileMappingList();
 
@@ -122,7 +114,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	// Clear and minimize
 	m_FoundSections.clear();
 	m_ListVariables.clear();
-	m_SectionInsertPos = m_Sections.end();
+	m_SectionNamesInsertPos = m_SectionNames.end();
 }
 
 void ConfigParser::ReadVariables()
@@ -130,7 +122,7 @@ void ConfigParser::ReadVariables()
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
-		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", false));
+		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", { .sectionVariables = false }));
 	}
 }
 
@@ -201,7 +193,7 @@ std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view v
 
 	if (strParser.Consume(L"Current"))
 	{
-		if (strParser.ConsumeRest(L"Section")) return m_CurrentSection ? *m_CurrentSection : std::wstring();
+		if (strParser.ConsumeRest(L"Section")) return std::wstring(m_CurrentSection);
 		if (strParser.ConsumeRest(L"File") && m_Skin) return m_Skin->GetFileName();
 		if (strParser.ConsumeRest(L"Config") && m_Skin) return m_Skin->GetFolderPath();
 		return std::nullopt;
@@ -789,7 +781,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	{
 		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
 	}
-	else if (m_CurrentSection)
+	else if (!m_CurrentSection.empty())
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
 		size_t start = firstSpecialPos;
@@ -797,8 +789,8 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 		const size_t length = strVariable.length();
 		while ((start = result.find(strVariable, start)) != std::wstring::npos)
 		{
-			result.replace(start, length, *m_CurrentSection);
-			start += m_CurrentSection->length();
+			result.replace(start, length, m_CurrentSection);
+			start += m_CurrentSection.length();
 			replaced = true;
 		}
 	}
@@ -875,11 +867,9 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 			else
 			{
 				std::wstring section = result.substr(si, end - si);
-				const std::wstring sectionUpper = StrToUpper(section);
-				auto iter = m_Measures.find(sectionUpper);
-				if (iter != m_Measures.end())
+				Measure* measure = GetMeasure(section);
+				if (measure)
 				{
-					Measure* measure = (*iter).second;
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 					size_t valueLen = wcslen(value);
 
@@ -921,12 +911,12 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
-	if (depth == 0 && m_Skin && (!m_CurrentSection || meter))
+	if (depth == 0 && m_Skin && (m_CurrentSection.empty() || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
 		{
-			m_CurrentSection = meter ? &meter->GetOriginalName() : &section->GetOriginalName();
+			m_CurrentSection = meter ? meter->GetOriginalName() : section->GetOriginalName();
 			hasCurrentAction = true;
 		}
 	}
@@ -952,8 +942,9 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 			if (si != ei && str[si] == L'*' && str[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
-				// are parsed before being sent to the command handler where the rest of the variables
-				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
+				// are parsed before being sent to the command handler where the rest of the
+				// variables are parsed. So we need to leave the escape *'s when called from that
+				// parser.
 				if (expandMode != VariableExpandMode::DollarMouseOnly)
 				{
 					str.erase(ei, 1);
@@ -987,8 +978,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 					}
 					else if (ContainsKeyedSectionVariable(value))
 					{
-						const auto* section = m_CurrentSection ? m_CurrentSection->c_str() : L"";
-						LogErrorSF(m_Skin, section,
+						const std::wstring currentSection(m_CurrentSection);
+						LogErrorSF(m_Skin, currentSection.c_str(),
 							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
 					}
 				}
@@ -1052,6 +1043,16 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 				}
 				else if (expandMode == VariableExpandMode::AllKeys)
 				{
+					// [$Input] has no meter name to give, so it uses the section running the action.
+					Section* section = meter;
+					if (!section && m_Skin) section = m_Skin->GetCurrentActionSection();
+
+					if (auto foundValue = GetDollarInputVariable(variable, section))
+					{
+						replaceFoundValue(std::move(*foundValue));
+						break;
+					}
+
 					if (const auto result = GetDollarVariable(variable))
 					{
 						replaceFoundValue(std::move(*result));
@@ -1103,7 +1104,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	// Reset the current section
 	if (hasCurrentAction)
 	{
-		m_CurrentSection = nullptr;
+		m_CurrentSection = {};
 	}
 
 	return replaced;
@@ -1126,6 +1127,20 @@ bool ConfigParser::ContainsKeyedSectionVariable(const std::wstring& str)
 bool ConfigParser::IsSectionVariableKey(WCHAR key)
 {
 	return VariableTypeForKey(key).has_value();
+}
+
+std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_view variable, Section* section)
+{
+	// Only resolves in an action of the meter being typed into, since that is the only place the
+	// text it stands for exists.
+	if (!section || section->GetTypeID() != TypeID<MeterTextEdit>()) return std::nullopt;
+
+	StringParser strParser(variable);
+	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
+
+	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
+	// meter is exactly what the user typed.
+	return ((MeterTextEdit*)section)->GetText();
 }
 
 std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
@@ -1178,56 +1193,35 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 	return result;
 }
 
-const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
+void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
 {
-	static size_t s_Depth = 0;
-	static std::deque<std::wstring> s_Results;
-
-	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
-	// working on an outer result, so each nested read needs its own buffer.
-	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
-	++s_Depth;
-	auto depthGuard = Scoped([&] { --s_Depth; });
-
 	// Clear last status
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
-	const std::wstring strSection = section;
-	const std::wstring strKey = key;
-	const std::wstring strDefault = defValue;
-
-	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
-	if (&strValue == &strDefault)
+	const std::wstring* value = GetValue(section, key);
+	if (!value)
 	{
-		bool foundInheritValue = false;
 		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			const std::wstring& strInheritValue = GetValue(*iter, strKey, strDefault);
-			if (&strInheritValue != &strDefault)
-			{
-				result = strInheritValue;
-				foundInheritValue = true;
-				break;
-			}
+			value = GetValue(*iter, key);
+			if (value) break;
 		}
 
-		if (!foundInheritValue)
+		if (!value)
 		{
-			result = strDefault;
+			result = defValue;
 			m_LastDefaultUsed = true;
-			return result;
+			return;
 		}
 	}
-	else
-	{
-		result = strValue;
-	}
+
+	result = *value;
 
 	if (!result.empty())
 	{
-		m_CurrentSection = &strSection;  // Set temporarily
+		m_CurrentSection = section;  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1235,7 +1229,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				bool runNewStyle = strSection == L"Variables" ? true : false;
+				bool runNewStyle = section == L"Variables" ? true : false;
 				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
@@ -1246,41 +1240,72 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 				PathUtil::ExpandEnvironmentVariables(result);
 			}
 
-			if (bReplaceMeasures && ReplaceMeasures(result))
+			if (options.sectionVariables && ReplaceMeasures(result))
 			{
 				m_LastReplaced = true;
 			}
 		}
-		m_CurrentSection = nullptr;  // Reset
+		m_CurrentSection = {};  // Reset
 	}
+}
 
+const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
+{
+	static size_t s_Depth = 0;
+	static std::deque<std::wstring> s_Results;
+
+	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
+	// working on an outer result, so each nested read needs its own buffer. A read into a caller's
+	// own string holds no buffer here, so it takes no depth.
+	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+	++s_Depth;
+	auto depthGuard = Scoped([&] { --s_Depth; });
+
+	ReadString(result, section, key, defValue, options);
 	return result;
 }
 
-bool ConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
+size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
 {
-	ReadString(section, key, L"", false);
+	const std::wstring& value = ReadString(section, key, L"");
+	if (value.empty()) return count;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		// |names| points at the first option's name, which EnumOption keeps at offset zero.
+		const WCHAR* name = *(const WCHAR* const*)((const BYTE*)names + i * stride);
+		if (_wcsicmp(value.c_str(), name) == 0) return i;
+	}
+
+	LogErrorF(GetSection(section), L"%.*s=%.*s is not valid",
+		(int)key.length(), key.data(), (int)value.length(), value.data());
+	return count;
+}
+
+bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)
+{
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return !m_LastDefaultUsed;
 }
 
-bool ConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", false);
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return m_LastValueDefined;
 }
 
-void ConfigParser::AddMeasure(Measure* pMeasure)
+void ConfigParser::AddSection(Section* section)
 {
-	if (pMeasure)
+	if (section)
 	{
-		m_Measures[StrToUpper(pMeasure->GetOriginalName())] = pMeasure;
+		m_Sections[StrToUpper(section->GetOriginalName())] = section;
 	}
 }
 
-Measure* ConfigParser::GetMeasure(std::wstring_view name)
+Section* ConfigParser::GetSection(std::wstring_view name)
 {
-	auto iter = m_Measures.find(StrToUpper(name));
-	if (iter != m_Measures.end())
+	auto iter = m_Sections.find(StrToUpper(name));
+	if (iter != m_Sections.end())
 	{
 		return (*iter).second;
 	}
@@ -1288,7 +1313,19 @@ Measure* ConfigParser::GetMeasure(std::wstring_view name)
 	return nullptr;
 }
 
-std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+Measure* ConfigParser::GetMeasure(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Measure>()) ? (Measure*)section : nullptr;
+}
+
+Meter* ConfigParser::GetMeter(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
+}
+
+std::vector<FLOAT> ConfigParser::ReadFloats(std::wstring_view section, std::wstring_view key)
 {
 	std::vector<FLOAT> result;
 	const std::wstring& str = ReadString(section, key, L"");
@@ -1314,7 +1351,7 @@ std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 	return result;
 }
 
-int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
+int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1324,13 +1361,13 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (int)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1346,7 +1383,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return defValue;
 }
 
-uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
+uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1356,13 +1393,13 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint32_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1378,7 +1415,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 	return defValue;
 }
 
-uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
+uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1388,13 +1425,13 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint64_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1410,7 +1447,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 	return defValue;
 }
 
-double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
+double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1420,13 +1457,13 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 		const WCHAR* str = result.c_str();
 		if (*str == L'(')
 		{
-			const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, &value);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &value);
 			if (!errMsg)
 			{
 				return value;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1449,7 +1486,7 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
 	{
 		const WCHAR* str = formula.c_str();
-		const WCHAR* errMsg = GetMathParser(m_Skin).CheckedParse(str, resultValue);
+		const WCHAR* errMsg = GetMathParser().CheckedParse(str, resultValue);
 		if (errMsg != nullptr)
 		{
 			LogErrorF(m_Skin, L"Formula: %s: %s", errMsg, str);
@@ -1487,21 +1524,21 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	return formula;
 }
 
-D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue)
+D2D1_COLOR_F ConfigParser::ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
-D2D1_RECT_F ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue)
+D2D1_RECT_F ConfigParser::ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
 }
 
-RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
+RECT ConfigParser::ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1517,49 +1554,60 @@ RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 	return r;
 }
 
-std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
+const MathParser& ConfigParser::GetMathParser() const
 {
-	return ParseUtil::Tokenize(str, delimiters);
-}
-
-std::vector<std::wstring> ConfigParser::TokenizeWithPairedPunctuation(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
-{
-	return ParseUtil::TokenizeWithPairedPunctuation(str, delimiter, punct);
+	static MathParser s_MathParser;
+	return m_Skin ? m_Skin->GetMathParser() : s_MathParser;
 }
 
 double ConfigParser::ParseDouble(LPCTSTR str, double defValue)
 {
-	return ParseUtil::ParseDouble(str, defValue, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(), LogFormulaError);
 }
 
 int ConfigParser::ParseInt(LPCTSTR str, int defValue)
 {
-	return ParseUtil::ParseInt(str, defValue, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
+}
+
+double ConfigParser::ParseDouble(std::wstring_view str, double defValue)
+{
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(), LogFormulaError);
+}
+
+int ConfigParser::ParseInt(std::wstring_view str, int defValue)
+{
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
 }
 
 uint32_t ConfigParser::ParseUInt(LPCTSTR str, uint32_t defValue)
 {
-	return ParseUtil::ParseUInt(str, defValue, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseUInt(str, defValue, GetMathParser(), LogFormulaError);
 }
 
 uint64_t ConfigParser::ParseUInt64(LPCTSTR str, uint64_t defValue)
 {
-	return ParseUtil::ParseUInt64(str, defValue, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseUInt64(str, defValue, GetMathParser(), LogFormulaError);
 }
 
 D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR str)
 {
-	return ParseUtil::ParseColor(str, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
+}
+
+D2D1_COLOR_F ConfigParser::ParseColor(std::wstring_view str)
+{
+	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
 }
 
 D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR str)
 {
-	return ParseUtil::ParseRect(str, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseRect(str, GetMathParser(), LogFormulaError);
 }
 
 RECT ConfigParser::ParseRECT(LPCTSTR str)
 {
-	return ParseUtil::ParseRECT(str, GetMathParser(m_Skin), LogFormulaError);
+	return ParseUtil::ParseRECT(str, GetMathParser(), LogFormulaError);
 }
 
 void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
@@ -1646,7 +1694,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 				{
 					if (m_FoundSections.insert(optionUpperCase).second)
 					{
-						m_Sections.insert(m_SectionInsertPos, value);
+						m_SectionNames.insert(m_SectionNamesInsertPos, value);
 					}
 					sections.push_back(value);
 				}
@@ -1669,8 +1717,8 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 		if (depth == 0)  // Add once
 		{
-			m_Sections.push_back(strRainmeter);
-			m_Sections.push_back(strFolder);
+			m_SectionNames.push_back(strRainmeter);
+			m_SectionNames.push_back(strFolder);
 		}
 	}
 
@@ -1756,17 +1804,17 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 								if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 								{
 									// Set the insertion place to the last
-									m_SectionInsertPos = m_Sections.end();
+									m_SectionNamesInsertPos = m_SectionNames.end();
 									resetInsertPos = false;
 								}
 								else
 								{
 									// Find the appropriate insertion place
-									for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
+									for (jt = m_SectionNames.cbegin(); jt != m_SectionNames.cend(); ++jt)
 									{
 										if (_wcsicmp((*jt).c_str(), sectionOriginalCase) == 0)
 										{
-											m_SectionInsertPos = ++jt;
+											m_SectionNamesInsertPos = ++jt;
 											resetInsertPos = false;
 											break;
 										}
@@ -1775,12 +1823,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 							}
 
 							// Save the section insertion position in case the included file also uses an @Include
-							auto prevInsertPos = m_SectionInsertPos;
+							auto prevInsertPos = m_SectionNamesInsertPos;
 
 							ReadIniFile(value, skinSection, depth + 1);
 
 							// Reset the section insertion position to previous position
-							m_SectionInsertPos = prevInsertPos;
+							m_SectionNamesInsertPos = prevInsertPos;
 						}
 					}
 					else if (!isMetadata)
@@ -1815,7 +1863,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	if (temporary) System::RemoveFile(iniRead);
 }
 
-std::wstring_view BuildValuesMapKey(const std::wstring& section, const std::wstring& option, WCHAR* buffer, size_t bufferCount)
+std::wstring_view BuildValuesMapKey(std::wstring_view section, std::wstring_view option, WCHAR* buffer, size_t bufferCount)
 {
 	auto bufferPos = buffer;
 
@@ -1832,19 +1880,19 @@ std::wstring_view BuildValuesMapKey(const std::wstring& section, const std::wstr
 	return std::wstring_view(buffer, keyLength);
 }
 
-const std::wstring& ConfigParser::GetValue(const std::wstring& section, const std::wstring& option, const std::wstring& defaultValue)
+const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
 	if (!key.empty())
 	{
 		auto iter = m_Values.find(key);
-		if (iter != m_Values.end()) return iter->second;
+		if (iter != m_Values.end()) return &iter->second;
 	}
-	return defaultValue;
+	return nullptr;
 }
 
-void ConfigParser::SetValue(const std::wstring& section, const std::wstring& option, std::wstring value)
+void ConfigParser::SetValue(std::wstring_view section, std::wstring_view option, std::wstring value)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
@@ -1854,7 +1902,7 @@ void ConfigParser::SetValue(const std::wstring& section, const std::wstring& opt
 	}
 }
 
-void ConfigParser::DeleteValue(const std::wstring& section, const std::wstring& option)
+void ConfigParser::DeleteValue(std::wstring_view section, std::wstring_view option)
 {
 	WCHAR buffer[256];
 	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));

@@ -1,17 +1,12 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __MEASURE_H__
-#define __MEASURE_H__
+#pragma once
 
 #include <windows.h>
 #include <vector>
 #include <string>
 #include "IfActions.h"
+#include "LocaleUtil.h"
 #include "Util.h"
 #include "Section.h"
 
@@ -49,6 +44,8 @@ public:
 
 	Measure(const Measure& other) = delete;
 
+	UINT GetBaseTypeID() override { return TypeID<Measure>(); }
+
 	virtual void Initialize();
 	void ReadOptions(ConfigParser& parser);
 	bool Update(bool rereadOptions = false);
@@ -84,8 +81,12 @@ public:
 protected:
 	Measure(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	virtual void UpdateValue() = 0;
+
+	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
+	// a string into their number value.
+	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);
@@ -99,8 +100,6 @@ protected:
 	bool m_LogMaxValue;
 	double m_MinValue;
 	double m_MaxValue;
-	bool m_MinValueDefined;
-	bool m_MaxValueDefined;
 
 	std::vector<std::wstring> m_Substitute;
 	bool m_RegExpSubstitute;
@@ -122,5 +121,3 @@ protected:
 	MeasureValueSet* m_OldValue;
 	bool m_ValueAssigned;
 };
-
-#endif

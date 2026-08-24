@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
@@ -65,6 +60,7 @@ static void AddMeterToSkinForTests(Skin& skin, Meter* meter)
 {
 	auto& meters = const_cast<std::vector<Meter*>&>(skin.GetMeters());
 	meters.push_back(meter);
+	skin.GetParser().AddSection(meter);
 }
 
 static void AssertSectionVariableSelector(ConfigParser& parser, const WCHAR* section, const WCHAR* selector, const WCHAR* expected)
@@ -231,12 +227,12 @@ public:
 		TestMeasureString measureString2(L"MeasureString2");
 		parser.SetValue(L"MeasureString2", L"String", L"Second");
 		measureString2.Read(parser);
-		parser.AddMeasure(&measureString2);
+		parser.AddSection(&measureString2);
 
 		TestMeasureString measureIndex(L"MeasureIndex");
 		parser.SetValue(L"MeasureIndex", L"String", L"2");
 		measureIndex.Read(parser);
-		parser.AddMeasure(&measureIndex);
+		parser.AddSection(&measureIndex);
 
 		std::wstring string1 = L"[#Var[&MeasureIndex]]";
 		Assert::IsTrue(parser.ReplaceMeasures(string1));
@@ -279,7 +275,7 @@ public:
 		TestMeasureString measure(L"M");
 		parser.SetValue(L"M", L"String", L"Single");
 		measure.Read(parser);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		std::wstring string1 = L"[M]";
 		Assert::IsTrue(parser.ReplaceMeasures(string1));
@@ -301,7 +297,7 @@ public:
 		parser.SetValue(L"MeasureString", L"MinValue", L"12");
 		parser.SetValue(L"MeasureString", L"MaxValue", L"34");
 		measure.Read(parser);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MaxValue", L"34");
 		AssertSectionVariableSelector(parser, L"MeasureString", L"MinValue", L"12");
@@ -320,7 +316,7 @@ public:
 		parser.SetValue(L"Measure", L"MaxValue", L"50");
 		measure.Read(parser);
 		measure.SetTestValue(30.0);
-		parser.AddMeasure(&measure);
+		parser.AddSection(&measure);
 
 		AssertSectionVariableSelector(parser, L"Measure", L"%", L"50");
 		AssertSectionVariableSelector(parser, L"Measure", L"%,1", L"50.0");

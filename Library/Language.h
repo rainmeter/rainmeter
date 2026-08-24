@@ -1,12 +1,6 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not included with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_LANGUAGE_H_
-#define RM_LIBRARY_LANGUAGE_H_
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -15,6 +9,8 @@
 class Language
 {
 public:
+	static Language& GetInstance();
+
 	struct Info
 	{
 		std::wstring englishName;
@@ -22,13 +18,11 @@ public:
 		LCID lcid;
 	};
 
-	Language();
-	~Language();
-
 	Language(const Language&) = delete;
 	Language& operator=(const Language&) = delete;
 
 	bool Load(const std::wstring& directory, const std::wstring& language);
+	bool LoadFromSettings(const std::wstring& directory, const std::wstring& iniFile);
 	bool IsLoaded() const { return m_Data != nullptr; }
 
 	LCID GetLCID() const { return m_LCID; }
@@ -41,6 +35,9 @@ public:
 	static std::vector<Info> GetAvailable(const std::wstring& directory);
 
 private:
+	Language();
+	~Language();
+
 	void Unload();
 
 	LCID m_LCID;
@@ -52,4 +49,4 @@ private:
 	bool m_IsRTL;
 };
 
-#endif
+inline Language& GetLanguage() { return Language::GetInstance(); }

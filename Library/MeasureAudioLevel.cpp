@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureAudioLevel.h"
@@ -15,6 +10,7 @@
 #include <AudioPolicy.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <MMDeviceApi.h>
+#include <numbers>
 
 // Overview: Audio level measurement from the Window Core Audio API
 // See: http://msdn.microsoft.com/en-us/library/windows/desktop/dd370800%28v=vs.85%29.aspx
@@ -40,10 +36,8 @@
 
 // REFERENCE_TIME time units per second and per millisecond
 #define REFTIMES_PER_SEC		10000000
-#define TWOPI					(2 * 3.14159265358979323846)
 #define EXIT_ON_ERROR(hres)		if (FAILED(hres)) { goto Exit; }
 #define SAFE_RELEASE(p)			if ((p) != NULL) { (p)->Release(); (p) = NULL; }
-#define CLAMP01(x)				max(0.0, min(1.0, (x)))
 
 #define EMPTY_TIMEOUT			0.500
 #define DEVICE_TIMEOUT			1.500
@@ -148,8 +142,6 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_EnvPeak[1] = 2500;
 	m_EnvFFT[0] = 300;
 	m_EnvFFT[1] = 300;
-	m_ReqID[0] = L'\0';
-	m_DevName[0] = L'\0';
 	m_KRMS[0] = 0.0f;
 	m_KRMS[1] = 0.0f;
 	m_KPeak[0] = 0.0f;
@@ -199,7 +191,7 @@ void MeasureAudioLevel::Initialize()
 
 	if (CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&m_Enum) == S_OK)
 	{
-		if (!*m_ReqID)
+		if (m_ReqID.empty())
 		{
 			m_NotificationClient = new AudioLevelDeviceNotificationClient(m_Port == PORT_OUTPUT ? eRender : eCapture);
 			if (m_Enum->RegisterEndpointNotificationCallback(m_NotificationClient) != S_OK)
@@ -209,15 +201,23 @@ void MeasureAudioLevel::Initialize()
 			}
 		}
 
-		// Init the device. It is OK if it fails; UpdateValue() keeps checking.
-		DeviceInit();
+		// Init the device. It is OK if it fails; UpdateValue() keeps checking. Subsequent
+		// attempts are not logged since losing the device (e.g. an unplugged microphone) is
+		// normal and would otherwise spam the log.
+		const HRESULT hr = DeviceInit();
+		if (FAILED(hr))
+		{
+			LogWarningF(this, L"Unable to initialize audio %s device '%s' (error 0x%08x).",
+				m_Port == PORT_OUTPUT ? L"output" : L"input", m_ReqID.empty() ? L"default" : m_ReqID.c_str(), hr);
+		}
+
 		return;
 	}
 
 	SAFE_RELEASE(m_Enum);
 }
 
-void MeasureAudioLevel::ResolveParent(ConfigParser& parser, const WCHAR* section)
+void MeasureAudioLevel::ResolveParent(ConfigParser& parser, std::wstring_view section)
 {
 	std::wstring parentName = parser.ReadString(section, L"Parent", L"");
 	if (parentName.empty())
@@ -244,7 +244,7 @@ void MeasureAudioLevel::ResolveParent(ConfigParser& parser, const WCHAR* section
 	LogErrorF(this, L"Couldn't find Parent measure '%s'.", parentName.c_str());
 }
 
-void MeasureAudioLevel::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	static const LPCWSTR s_typeName[MeasureAudioLevel::NUM_TYPES] =
 	{
@@ -280,30 +280,15 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		ResolveParent(parser, section);
 
-		// Parse port specifier.
-		const WCHAR* port = parser.ReadString(section, L"Port", L"").c_str();
-		if (port && *port)
+		static constexpr ConfigParser::EnumOption<Port> s_Ports[] =
 		{
-			if (_wcsicmp(port, L"Output") == 0)
-			{
-				m_Port = PORT_OUTPUT;
-			}
-			else if (_wcsicmp(port, L"Input") == 0)
-			{
-				m_Port = PORT_INPUT;
-			}
-			else
-			{
-				LogErrorF(this, L"Invalid Port '%s', must be one of: Output or Input.", port);
-			}
-		}
+			{ L"Output", PORT_OUTPUT },
+			{ L"Input", PORT_INPUT },
+		};
+		m_Port = parser.ReadEnum(section, L"Port", PORT_OUTPUT, s_Ports);
 
 		// Parse requested device ID (optional).
-		const WCHAR* reqID = parser.ReadString(section, L"ID", L"").c_str();
-		if (reqID)
-		{
-			_snwprintf_s(m_ReqID, _TRUNCATE, L"%s", reqID);
-		}
+		parser.ReadString(m_ReqID, section, L"ID", L"");
 
 		// Initialize FFT data.
 		m_FFTSize = parser.ReadInt(section, L"FFTSize", m_FFTSize);
@@ -398,16 +383,12 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	// parse FFT index request
-	m_FFTIdx = max(0, parser.ReadInt(section, L"FFTIdx", m_FFTIdx));
-	m_FFTIdx = m_Parent ?
-		min(m_Parent->m_FFTSize / 2, m_FFTIdx) :
-		min(m_FFTSize / 2, m_FFTIdx);
+	const int fftIdxMax = (m_Parent ? m_Parent->m_FFTSize : m_FFTSize) / 2;
+	m_FFTIdx = std::clamp(parser.ReadInt(section, L"FFTIdx", m_FFTIdx), 0, fftIdxMax);
 
 	// parse band index request
-	m_BandIdx = max(0, parser.ReadInt(section, L"BandIdx", m_BandIdx));
-	m_BandIdx = m_Parent ?
-		min(m_Parent->m_NBands, m_BandIdx) :
-		min(m_NBands, m_BandIdx);
+	const int bandIdxMax = m_Parent ? m_Parent->m_NBands : m_NBands;
+	m_BandIdx = std::clamp(parser.ReadInt(section, L"BandIdx", m_BandIdx), 0, bandIdxMax);
 
 	// parse envelope values on parents only
 	if (!m_Parent)
@@ -730,22 +711,22 @@ double MeasureAudioLevel::UpdateAudioValue()
 	case MeasureAudioLevel::TYPE_RMS:
 		if (m->m_Channel == MeasureAudioLevel::CHANNEL_SUM)
 		{
-			return CLAMP01((sqrt(parent->m_RMS[0]) + sqrt(parent->m_RMS[1])) * 0.5 * parent->m_GainRMS);
+			return std::clamp((sqrt(parent->m_RMS[0]) + sqrt(parent->m_RMS[1])) * 0.5 * parent->m_GainRMS, 0.0, 1.0);
 		}
 		else
 		{
-			return CLAMP01(sqrt(parent->m_RMS[m->m_Channel]) * parent->m_GainRMS);
+			return std::clamp(sqrt(parent->m_RMS[m->m_Channel]) * parent->m_GainRMS, 0.0, 1.0);
 		}
 		break;
 
 	case MeasureAudioLevel::TYPE_PEAK:
 		if (m->m_Channel == MeasureAudioLevel::CHANNEL_SUM)
 		{
-			return CLAMP01((parent->m_Peak[0] + parent->m_Peak[1]) * 0.5 * parent->m_GainPeak);
+			return std::clamp((parent->m_Peak[0] + parent->m_Peak[1]) * 0.5 * parent->m_GainPeak, 0.0, 1.0);
 		}
 		else
 		{
-			return CLAMP01(parent->m_Peak[m->m_Channel] * parent->m_GainPeak);
+			return std::clamp(parent->m_Peak[m->m_Channel] * parent->m_GainPeak, 0.0, 1.0);
 		}
 		break;
 
@@ -770,7 +751,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 				x = parent->m_FFTOut[m->m_Channel][iFFT];
 			}
 
-			x = CLAMP01(x);
+			x = std::clamp(x, 0.0, 1.0);
 			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
@@ -797,7 +778,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 				x = parent->m_BandOut[m->m_Channel][iBand];
 			}
 
-			x = CLAMP01(x);
+			x = std::clamp(x, 0.0, 1.0);
 			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
@@ -861,8 +842,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 
 	case MeasureAudioLevel::TYPE_DEV_NAME:
-		wcscpy_s(s_Buffer, parent->m_DevName);
-		break;
+		return CheckSubstitute(parent->m_DevName.c_str());
 
 	case MeasureAudioLevel::TYPE_DEV_ID:
 		if (parent->m_Dev)
@@ -927,12 +907,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 }
 
 
-/**
- * Try to initialize the default device for the specified port.
- *
- * @return		Result value, S_OK on success.
- */
-HRESULT	MeasureAudioLevel::DeviceInit()
+HRESULT MeasureAudioLevel::DeviceInit()
 {
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
@@ -942,14 +917,9 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 	assert(m_Enum && !m_Dev);
 
 	// if a specific ID was requested, search for that one, otherwise get the default
-	if (*m_ReqID)
+	if (!m_ReqID.empty())
 	{
-		hr = m_Enum->GetDevice(m_ReqID, &m_Dev);
-		if (hr != S_OK)
-		{
-			LogWarningF(this, L"Audio %s device '%s' not found (error 0x%08x).",
-				m_Port==PORT_OUTPUT ? L"output" : L"input", m_ReqID, hr);
-		}
+		hr = m_Enum->GetDevice(m_ReqID.c_str(), &m_Dev);
 	}
 	else
 	{
@@ -966,7 +936,7 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 
 		if (props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
 		{
-			_snwprintf_s(m_DevName, _TRUNCATE, L"%s", varName.pwszVal);
+			m_DevName = varName.pwszVal ? varName.pwszVal : L"";
 		}
 
 		PropVariantClear(&varName);
@@ -977,19 +947,15 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 #if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
 	// get an extra audio client for the dummy silent channel
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClBugAudio);
-	if (hr != S_OK)
+	if (m_Port == PORT_OUTPUT)
 	{
-		LogWarningF(this, L"Failed to create audio client for Windows bug workaround.");
+		// Only the loopback path below uses this client.
+		EXIT_ON_ERROR(hr);
 	}
 #endif
 
 	// get the main audio client
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClAudio);
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to create audio client.");
-	}
-
 	EXIT_ON_ERROR(hr);
 
 	// parse audio format - Note: not all formats are supported.
@@ -1042,7 +1008,7 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 		// calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
 		for (int iBin = 0; iBin < m_FFTSize; ++iBin)
 		{
-			m_FFTKWdw[iBin]	= (float)(0.5 * (1.0 - cos(TWOPI * iBin / (m_FFTSize - 1))));
+			m_FFTKWdw[iBin]	= (float)(0.5 * (1.0 - cos(2.0 * std::numbers::pi * iBin / (m_FFTSize - 1))));
 		}
 	}
 
@@ -1114,28 +1080,15 @@ HRESULT	MeasureAudioLevel::DeviceInit()
 
 		hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
 			hnsRequestedDuration, 0, m_Wfx, NULL);
-		if (hr != S_OK)
-		{
-			// stereo waveformat didnt work either, throw an error
-			LogWarningF(this, L"Failed to initialize audio client.");
-		}
 	}
 	EXIT_ON_ERROR(hr);
 
 	// initialize the audio capture client
 	hr = m_ClAudio->GetService(IID_IAudioCaptureClient, (void**)&m_ClCapture);
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to create audio capture client.");
-	}
 	EXIT_ON_ERROR(hr);
 
 	// start the stream
 	hr = m_ClAudio->Start();
-	if (hr != S_OK)
-	{
-		LogWarningF(this, L"Failed to start the stream.");
-	}
 	EXIT_ON_ERROR(hr);
 
 	// initialize the watchdog timer
@@ -1216,6 +1169,6 @@ void MeasureAudioLevel::DeviceRelease()
 		kiss_fft_cleanup();
 	}
 
-	m_DevName[0] = '\0';
+	m_DevName.clear();
 	m_Format = FMT_INVALID;
 }

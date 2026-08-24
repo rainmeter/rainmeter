@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterSvg.h"
@@ -12,6 +7,7 @@
 #include "Skin.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/Gfx/Svg.h"
+#include "../Common/StringParser.h"
 
 MeterSvg::MeterSvg(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_AspectRatioMode(AspectRatioMode::Stretch),
@@ -37,7 +33,7 @@ void MeterSvg::InvalidateDeviceResources()
 	m_LoadAttempted = false;
 }
 
-void MeterSvg::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterSvg::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
@@ -45,22 +41,61 @@ void MeterSvg::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	const bool sourceChanged = svgImage != m_SvgImage;
 	m_SvgImage = svgImage;
 
+	std::vector<SvgAttribute> svgAttributes;
+	for (size_t i = 1; ; ++i)
+	{
+		WCHAR option[64];
+		_snwprintf_s(option, _TRUNCATE, i == 1 ? L"Attribute" : L"Attribute%zu", i);
+		const std::wstring& value = parser.ReadString(section, option, L"");
+		if (value.empty()) break;
+
+		StringParser stringParser(value);
+		const std::wstring_view selector = stringParser.ConsumeUntil(L'|', StringParser::SkipWhitespace);
+		const std::wstring_view attribute = stringParser.ConsumeUntil(L'|', StringParser::SkipWhitespace);
+		const std::wstring_view attributeValue = stringParser.ConsumeRest(StringParser::SkipWhitespace);
+		if (selector.empty() || attribute.empty())
+		{
+			LogErrorF(this, L"Invalid parameters: %s", option);
+			continue;
+		}
+
+		svgAttributes.push_back({ std::wstring(selector), std::wstring(attribute), std::wstring(attributeValue) });
+	}
+
+	bool attributesRequireReload = m_SvgAttributes.size() > svgAttributes.size();
+	for (size_t i = 0; !attributesRequireReload && i < m_SvgAttributes.size(); ++i)
+	{
+		attributesRequireReload =
+			m_SvgAttributes[i].selector != svgAttributes[i].selector ||
+			m_SvgAttributes[i].attribute != svgAttributes[i].attribute;
+	}
+	m_SvgAttributes = std::move(svgAttributes);
+
 	m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt(section, L"PreserveAspectRatio", 0));
 
-	if (sourceChanged)
+	if (sourceChanged || attributesRequireReload)
 	{
 		m_Svg.reset();
 		m_LoadAttempted = false;
 	}
 
-	if (m_Initialized && (sourceChanged || !m_Svg || !m_Svg->HasDeviceResources()))
+	if (m_Initialized)
 	{
-		LoadSvg();
+		if (sourceChanged || attributesRequireReload || !m_Svg || !m_Svg->HasDeviceResources())
+		{
+			LoadSvg();
+		}
+		else
+		{
+			ApplySvgAttributes();
+			UpdateSize();
+		}
+
+		m_NeedsRedraw = true;
 	}
-	if (m_Initialized) m_NeedsRedraw = true;
 }
 
-void MeterSvg::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterSvg::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }
@@ -102,8 +137,23 @@ bool MeterSvg::LoadSvg()
 		return false;
 	}
 
+	ApplySvgAttributes();
+
 	UpdateSize();
 	return true;
+}
+
+void MeterSvg::ApplySvgAttributes()
+{
+	for (const auto& svgAttribute : m_SvgAttributes)
+	{
+		const HRESULT hr = m_Svg->SetAttribute(svgAttribute.selector, svgAttribute.attribute, svgAttribute.value);
+		if (FAILED(hr))
+		{
+			LogErrorF(this, L"Unable to apply Attribute for selector '%s', attribute '%s', error: %s (0x%08x)",
+				svgAttribute.selector.c_str(), svgAttribute.attribute.c_str(), _com_error(hr).ErrorMessage(), hr);
+		}
+	}
 }
 
 void MeterSvg::UpdateSize()

@@ -1,12 +1,6 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __GENERALIMAGE_H__
-#define __GENERALIMAGE_H__
+#pragma once
 
 #include "../Common/Gfx/Bitmap.h"
 #include "../Common/Gfx/Util/EffectStream.h"
@@ -65,11 +59,10 @@ public:
 	bool IsLoaded();
 	Gfx::Bitmap* GetImage();
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
+	void ReadOptions(ConfigParser& parser, std::wstring_view section, const WCHAR* imagePath = L"");
 	bool LoadImage(const std::wstring& imageName, bool createAlphaMask = false);
 
 private:
-
 	D2D1_SIZE_F ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const;
 	void ApplyTransforms();
 	bool HasActiveTransforms(Gfx::Bitmap* bitmap) const;
@@ -93,5 +86,3 @@ private:
 	static const D2D1_MATRIX_5X4_F c_IdentityMatrix;
 	static const WCHAR* c_DefaultOptionArray[OptionCount];
 };
-
-#endif

@@ -1,22 +1,16 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __RAINMETER_H__
-#define __RAINMETER_H__
+#pragma once
 
 #include <windows.h>
 #include <map>
 #include <vector>
 #include <list>
 #include <string>
+#include <string_view>
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "DialogManage.h"
-#include "Language.h"
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
@@ -83,8 +77,9 @@ public:
 	Skin* GetSkinByINI(const std::wstring& ini_searching);
 
 	Skin* GetSkin(HWND hwnd);
-	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group = std::wstring());
+	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group = {});
 	std::map<std::wstring, Skin*>& GetAllSkins() { return m_Skins; }
+	SkinRegistry& GetSkinRegistry() { return m_SkinRegistry; }
 
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
@@ -129,12 +124,6 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
-	const WCHAR* GetLanguageString(UINT id) const { return m_Language.GetString(id); }
-	bool LoadLanguage(const std::wstring& language) { return m_Language.Load(m_Path + L"Languages\\", language); }
-	unsigned short GetLanguageButtonWidth() const { return m_Language.GetButtonWidth(); }
-	unsigned short GetLanguageLabelWidth() const { return m_Language.GetLabelWidth(); }
-	bool IsLanguageRTL() const { return m_Language.IsRTL(); }
-	LCID GetResourceLCID() { return m_Language.GetLCID(); }
 
 	bool GetDebug() { return m_Debug; }
 
@@ -193,7 +182,7 @@ public:
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command, Skin* skin = nullptr);
 	void ExecuteActionCommand(const WCHAR* command, Section* section);
@@ -320,7 +309,6 @@ private:
 
 	HANDLE m_Mutex;
 	HINSTANCE m_Instance;
-	Language m_Language;
 
 	GlobalOptions m_GlobalOptions;
 
@@ -338,5 +326,3 @@ inline Rainmeter& GetRainmeter() { return Rainmeter::GetInstance(); }
 #endif
 
 EXPORT_PLUGIN int RainmeterMain(LPWSTR cmdLine);
-
-#endif

@@ -1,12 +1,9 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "Language.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/CrashDump.h"
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
@@ -26,7 +23,7 @@
 #include "MeasureActionTimer.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
-#include "MeterString.h"
+#include "MeterStringBase.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
 #include <bcrypt.h>
@@ -46,6 +43,9 @@ enum INTERVAL
 
 int RainmeterMain(LPWSTR cmdLine)
 {
+	BOOL supressExceptions = FALSE;
+	SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &supressExceptions, sizeof(supressExceptions));
+
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
@@ -121,7 +121,6 @@ Rainmeter::Rainmeter() :
 	m_Window(),
 	m_Mutex(),
 	m_Instance(),
-	m_Language(),
 	m_GlobalOptions(),
 	m_DefaultSelectedColor()
 {
@@ -211,6 +210,19 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		}
 	}
 
+	m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
+	CreateDirectory(m_SettingsPath.c_str(), nullptr);
+
+#ifdef COMMIT_HASH
+	m_BuildHash.assign(COMMIT_HASH, 8);
+#else
+	m_BuildHash = L"<local>";
+#endif
+
+	CrashDump::Initialize(
+		m_SettingsPath + L"Crashes\\",
+		fmt::format(L"v{}.{} (commit {})", APPVERSION, revision_number, m_BuildHash));
+
 	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
 
 	const auto deviceLostCallback = []() { GetRainmeter().ScheduleReattachGfxDevice(); };
@@ -278,8 +290,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Set file locations
 	{
-		m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
-
 		size_t len = m_IniFile.length();
 		if (len > 4 && _wcsicmp(iniFile + (len - 4), L".ini") == 0)
 		{
@@ -378,32 +388,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		logger.StartLogFile();
 	}
 
-	// Determine the language resource to load
-	buffer[0] = L'\0';
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
+	// Load the configured language, falling back to English.
+	if (!GetLanguage().LoadFromSettings(m_Path + L"Languages\\", iniFile))
 	{
-		// Use whatever the user selected for the installer
-		DWORD bufferSize = sizeof(buffer);
-		DWORD type = 0;
-		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &bufferSize) != ERROR_SUCCESS ||
-			type != REG_SZ)
-		{
-			buffer[0] = L'\0';
-		}
-	}
-	if (buffer[0] != L'\0')
-	{
-		// Try selected language
-		LoadLanguage(buffer);
-	}
-	if (!m_Language.IsLoaded())
-	{
-		// Try English
-		if (!LoadLanguage(L"1033"))
-		{
-			MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-			return 1;
-		}
+		MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		return 1;
 	}
 
 	// Get skin folder path
@@ -451,17 +440,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 #endif // BUILD_TIME
 
-#ifdef COMMIT_HASH
-	m_BuildHash = COMMIT_HASH;
-	m_BuildHash = m_BuildHash.substr(0, 7);  // Only use the short hash
-#else
-	m_BuildHash = L"<Local build>";
-#endif // COMMIT_HASH
-
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
-	GetLocaleInfo(GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
+	GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
 	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
-	LogNoticeF(L"Language: %s (%lu)", lang, GetResourceLCID());
+	LogNoticeF(L"Language: %s (%lu)", lang, GetLanguage().GetLCID());
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());
 
@@ -487,7 +469,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	System::Initialize(m_Instance);
 
 	MeasureCPU::InitializeStatic();
-	MeterString::InitializeStatic();
+	MeterStringBase::InitializeStatic();
 
 	// Tray must exist before skins are read
 	m_TrayIcon = new TrayIcon();
@@ -507,10 +489,16 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	// Rainmeter safe start
 	// Note: This copies the default illustro skins and layout (if needed) without overwriting any
 	//  changes the user has made to the skins or layout.
-	if (!iniFileCreated && IsCtrlKeyDown() && IsShiftKeyDown())
+	if (!iniFileCreated)
 	{
-		Sleep(1000);
-		if (IsCtrlKeyDown() && IsShiftKeyDown())
+		bool safeStart = CrashDump::DidFindRepeatedCrashes();
+		if (!safeStart && IsCtrlKeyDown() && IsShiftKeyDown())
+		{
+			Sleep(1000);
+			safeStart = IsCtrlKeyDown() && IsShiftKeyDown();
+		}
+
+		if (safeStart)
 		{
 			int result = MessageBox(
 				nullptr,
@@ -618,7 +606,7 @@ void Rainmeter::Finalize()
 
 	MeasureNet::FinalizeStatic();
 	MeasureCPU::FinalizeStatic();
-	MeterString::FinalizeStatic();
+	MeterStringBase::FinalizeStatic();
 
 	Gfx::Canvas::Finalize();
 
@@ -872,8 +860,6 @@ void Rainmeter::ScheduleUpdateCheck(UINT interval)
 
 void Rainmeter::CreateOptionsFile()
 {
-	CreateDirectory(m_SettingsPath.c_str(), nullptr);
-
 	std::wstring defaultIni = GetDefaultLayoutPath();
 	defaultIni += L"illustro default\\Rainmeter.ini";
 	System::CopyFiles(defaultIni, m_IniFile);
@@ -1219,14 +1205,13 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWarningF((*iter).second, L"!ActivateConfig: \"%s\" is already active", folderPath.c_str());
+				// Already active. Bring it to the front.
+				Skin* skin = (*iter).second;
+				skin->ChangeSingleZPos(skin->GetWindowZPosition());
 				return;
 			}
-			else
-			{
-				// Deactivate the existing skin
-				DeactivateSkin((*iter).second, folderIndex);
-			}
+
+			DeactivateSkin((*iter).second, folderIndex);
 		}
 
 		// Verify whether the ini-file exists
@@ -1500,7 +1485,7 @@ Skin* Rainmeter::GetSkin(HWND hwnd)
 	return nullptr;
 }
 
-void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group)
+void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group)
 {
 	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
@@ -1661,9 +1646,9 @@ void Rainmeter::ReadFavorites()
 	}
 }
 
-void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin)
+void Rainmeter::ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin, BangTarget target)
 {
-	m_CommandHandler.ExecuteBang(bang, args, skin);
+	m_CommandHandler.ExecuteBang(bang, args, skin, target);
 }
 
 void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
@@ -1676,9 +1661,8 @@ void Rainmeter::ExecuteActionCommand(const WCHAR* command, Section* section)
 	Skin* skin = nullptr;
 	if (section && (skin = section->GetSkin()))
 	{
-		skin->SetCurrentActionSection(section);
+		CurrentActionSectionScope scope(skin, section);
 		m_CommandHandler.ExecuteCommand(command, skin);
-		skin->ResetCurrentActionSection();
 		return;
 	}
 
@@ -1726,7 +1710,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::LightBlue));
 
-	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
+	parser.ReadString(m_SkinEditor, L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
@@ -1741,10 +1725,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogNoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
-	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
-	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", false);
-	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
-	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
+	parser.ReadString(m_TrayExecuteR, L"Rainmeter", L"TrayExecuteR", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteM, L"Rainmeter", L"TrayExecuteM", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteDR, L"Rainmeter", L"TrayExecuteDR", L"", { .sectionVariables = false });
+	parser.ReadString(m_TrayExecuteDM, L"Rainmeter", L"TrayExecuteDM", L"", { .sectionVariables = false });
 
 	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
@@ -1800,7 +1784,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_NormalStayDesktop = parser.ReadBool(L"Rainmeter", L"NormalStayDesktop", true);
 
 	bool hasActiveSkins = false;
-	for (auto iter = parser.GetSections().cbegin(); iter != parser.GetSections().end(); ++iter)
+	for (auto iter = parser.GetSectionNames().cbegin(); iter != parser.GetSectionNames().end(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
 
@@ -2264,7 +2248,7 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
 
-	if (IsLanguageRTL())
+	if (GetLanguage().IsRTL())
 	{
 		type |= MB_RTLREADING;
 	}

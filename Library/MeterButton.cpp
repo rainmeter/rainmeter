@@ -1,9 +1,4 @@
-/* Copyright (C) 2005 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterButton.h"
@@ -88,20 +83,20 @@ void MeterButton::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterButton::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
+	parser.ReadString(m_ImageName, section, L"ButtonImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 
-	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
+	parser.ReadString(m_Command, section, L"ButtonCommand", L"", { .sectionVariables = false });
 
 	if (m_Initialized)
 	{
@@ -136,7 +131,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterButton::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

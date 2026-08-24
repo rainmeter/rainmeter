@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterHistogram.h"
@@ -160,7 +155,7 @@ void MeterHistogram::InvalidateDeviceResources()
 	m_OverlapImage.InvalidateDeviceResources();
 }
 
-void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	int oldW = m_W;
@@ -173,21 +168,21 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", D2D1::ColorF(D2D1::ColorF::Red));
 	m_OverlapColor = parser.ReadColor(section, L"BothColor", D2D1::ColorF(D2D1::ColorF::Yellow));
 
-	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
+	parser.ReadString(m_PrimaryImageName, section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
 	{
 		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
 
-	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
+	parser.ReadString(m_SecondaryImageName, section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
 	{
 		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
 
-	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
+	parser.ReadString(m_OverlapImageName, section, L"BothImage", L"");
 	if (!m_OverlapImageName.empty())
 	{
 		// Read tinting options
@@ -197,33 +192,19 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
-	if (_wcsicmp(graph, L"RIGHT") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphStarts[] =
 	{
-		m_GraphStartLeft = false;
-	}
-	else if (_wcsicmp(graph, L"LEFT") ==  0)
-	{
-		m_GraphStartLeft = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphStart=%s is not valid", graph);
-	}
+		{ L"RIGHT", false },
+		{ L"LEFT", true },
+	};
+	m_GraphStartLeft = parser.ReadEnum(section, L"GraphStart", false, s_GraphStarts);
 
-	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(graph, L"VERTICAL") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
-		m_GraphHorizontalOrientation = false;
-	}
-	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
-	{
-		m_GraphHorizontalOrientation = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
-	}
+		{ L"VERTICAL", false },
+		{ L"HORIZONTAL", true },
+	};
+	m_GraphHorizontalOrientation = parser.ReadEnum(section, L"GraphOrientation", false, s_GraphOrientations);
 
 	if (m_Initialized)
 	{
@@ -540,7 +521,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{

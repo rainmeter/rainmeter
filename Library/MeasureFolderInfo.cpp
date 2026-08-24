@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureFolderInfo.h"
@@ -188,8 +183,6 @@ struct FolderInfoParentMeasure
 	UINT measureCount;
 };
 
-static std::vector<FolderInfoParentMeasure*> g_ParentMeasures;
-
 enum class MeasureFolderInfo::Type
 {
 	FileCount,
@@ -209,66 +202,53 @@ MeasureFolderInfo::~MeasureFolderInfo()
 	{
 		if (--m_Parent->measureCount == 0)
 		{
-			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
-			g_ParentMeasures.erase(iter);
-
 			delete m_Parent;
 			m_Parent = nullptr;
 		}
 	}
 }
 
-void MeasureFolderInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"InfoType", L"").c_str();
-	if (_wcsicmp(type, L"FolderSize") == 0 || _wcsicmp(type, L"FolderSizeStr") == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_InfoTypes[] =
 	{
-		m_Type = Type::FolderSize;
-	}
-	else if (_wcsicmp(type, L"FolderCount") == 0 || _wcsicmp(type, L"FolderCountStr") == 0)
-	{
-		m_Type = Type::FolderCount;
-	}
-	else if (_wcsicmp(type, L"FileCount") == 0 || _wcsicmp(type, L"FileCountStr") == 0 || !*type)
-	{
-		m_Type = Type::FileCount;
-	}
-	else
-	{
-		m_Type = Type::FileCount;
-		LogErrorF(this, L"Invalid InfoType=%s", type);
-	}
+		{ L"FolderSize", Type::FolderSize },
+		{ L"FolderSizeStr", Type::FolderSize },
+		{ L"FolderCount", Type::FolderCount },
+		{ L"FolderCountStr", Type::FolderCount },
+		{ L"FileCount", Type::FileCount },
+		{ L"FileCountStr", Type::FileCount },
+	};
+	m_Type = parser.ReadEnum(section, L"InfoType", Type::FileCount, s_InfoTypes);
 
-	const std::wstring& folder = parser.ReadString(section, L"Folder", L"", false);
-	const WCHAR* str = folder.c_str();
-	if (str[0] == L'[')
+	const std::wstring_view folder = parser.ReadString(section, L"Folder", L"", { .sectionVariables = false });
+	if (folder.starts_with(L'['))
 	{
 		if (m_Parent)
 		{
 			return;
 		}
 
-		++str;
-		size_t len = wcslen(str);
-		if (len > 0 && str[len - 1] == L']')
+		// Folder starts with [ so use the ParentMeasure of the referenced section
+		if (m_Skin && folder.length() >= 3 && folder.ends_with(L']'))
 		{
-			--len;
-
-			for (auto iter = g_ParentMeasures.begin(); iter != g_ParentMeasures.end(); ++iter)
+			const std::wstring_view name = folder.substr(1, folder.length() - 2);
+			Measure* measure = m_Skin->GetMeasure(name);
+			if (measure && measure->GetTypeID() == TypeID<MeasureFolderInfo>())
 			{
-				if (GetSkin() == (*iter)->owner->GetSkin() &&
-					_wcsnicmp(str, (*iter)->owner->GetName(), len) == 0)
+				auto* referenced = (MeasureFolderInfo*)measure;
+				if (referenced->m_Parent && referenced->m_Parent->owner == referenced)
 				{
-					m_Parent = (*iter);
+					m_Parent = referenced->m_Parent;
 					++m_Parent->measureCount;
 					return;
 				}
 			}
 		}
 
-		LogWarningF(this, L"Invalid Folder=%s", folder.c_str());
+		LogWarningF(this, L"Invalid Folder=%.*s", (int)folder.length(), folder.data());
 		return;
 	}
 
@@ -282,15 +262,14 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else
 	{
 		m_Parent = new FolderInfoParentMeasure(this);
-		g_ParentMeasures.push_back(m_Parent);
 	}
 
 	std::wstring path = parser.ReadString(section, L"Folder", L"");
 	GetSkin()->MakePathAbsolute(path);
 	m_Parent->folder.SetPath(path.c_str());
 
-	str = parser.ReadString(section, L"RegExpFilter", L"").c_str();
-	m_Parent->folder.SetRegExpFilter(str);
+	const WCHAR* filter = parser.ReadString(section, L"RegExpFilter", L"").c_str();
+	m_Parent->folder.SetRegExpFilter(filter);
 
 	m_Parent->folder.SetSubFolders(parser.ReadBool(section, L"IncludeSubFolders", false));
 	m_Parent->folder.SetHiddenFiles(parser.ReadBool(section, L"IncludeHiddenFiles", false));

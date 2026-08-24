@@ -1,9 +1,4 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "DpiUtil.h"
@@ -31,6 +26,7 @@ UINT GetWindowDpi(HWND window)
 
 HWND Dialog::c_ActiveDialogWindow = nullptr;
 HACCEL Dialog::c_Accelerator = nullptr;
+HHOOK Dialog::c_PopupMenuFilterHook = nullptr;
 
 //
 // BaseDialog
@@ -421,6 +417,53 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 	}
 
+	return result;
+}
+
+UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT extraFlags)
+{
+	assert(!c_PopupMenuFilterHook);
+
+	RECT rect;
+	GetWindowRect(button, &rect);
+
+	const auto rtl = (GetWindowLongPtr(window, GWL_EXSTYLE) & WS_EX_LAYOUTRTL);
+
+	const auto popupMenuFilter = [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT
+	{
+		const auto* msg = (const MSG*)lParam;
+		if (nCode == MSGF_MENU && msg->message == WM_LBUTTONDOWN)
+		{
+			const auto popupMenuClass = MAKEINTATOM(0x8000);
+			HWND menuWindow = nullptr;
+			while ((menuWindow = FindWindowEx(nullptr, menuWindow, popupMenuClass, nullptr)) != nullptr)
+			{
+				RECT rect;
+				if (GetWindowThreadProcessId(menuWindow, nullptr) == GetCurrentThreadId() &&
+					GetWindowRect(menuWindow, &rect) &&
+					PtInRect(&rect, msg->pt))
+				{
+					return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+				}
+			}
+
+			// Dismiss the popup and consume the outside click.
+			EndMenu();
+			return 1;
+		}
+
+		return CallNextHookEx(c_PopupMenuFilterHook, nCode, wParam, lParam);
+	};
+	c_PopupMenuFilterHook = SetWindowsHookEx(WH_MSGFILTER, popupMenuFilter, nullptr, GetCurrentThreadId());
+
+	const UINT flags = TPM_RIGHTBUTTON | TPM_LEFTALIGN | extraFlags;
+	const int x = rtl ? rect.right : rect.left;
+	const UINT result = ::TrackPopupMenu(menu, flags, x, --rect.bottom, 0, window, nullptr);
+	if (c_PopupMenuFilterHook)
+	{
+		UnhookWindowsHookEx(c_PopupMenuFilterHook);
+		c_PopupMenuFilterHook = nullptr;
+	}
 	return result;
 }
 

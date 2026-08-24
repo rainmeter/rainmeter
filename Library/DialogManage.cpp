@@ -1,13 +1,10 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/StringParser.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -74,7 +71,7 @@ void DialogManage::Open(int tab)
 		GetString(IDS_ManageRainmeter),
 		0, 0, 510, 322,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -217,7 +214,7 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -244,7 +241,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
 
 	AddTab(Id_Tab, m_TabSkins, GetString(IDS_Skins));
-	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Themes));
+	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Layouts));
 	AddTab(Id_Tab, m_TabGameMode, GetString(IDS_GameMode));
 	AddTab(Id_Tab, m_TabSettings, GetString(IDS_Settings));
 
@@ -358,7 +355,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -439,7 +436,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 		Control::ComboBox(Id_ZPositionDropDownList, 0,
 			175 + labelWidth, 182, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL | WS_DISABLED, 0),
-		Control::Label(-0, IDS_Zoom,
+		Control::Label(Id_ZoomLabel, IDS_Zoom,
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_ZoomEdit, 0,
@@ -485,6 +482,9 @@ void DialogManage::TabSkins::Create(HWND owner)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
+	std::wstring zoomLabel = GetString(IDS_Zoom);
+	zoomLabel += L':';
+	SetWindowText(GetControl(Id_ZoomLabel), zoomLabel.c_str());
 	SetWindowText(GetControl(Id_ZoomPercentLabel), L"%");
 
 	HWND zoomEdit = GetControl(Id_ZoomEdit);
@@ -1240,19 +1240,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			}
 
 			DestroyMenu(menu);
@@ -1382,21 +1370,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
-
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -1639,7 +1613,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -1727,7 +1700,7 @@ void DialogManage::TabLayouts::Create(HWND owner)
 
 	static const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, IDS_SavedThemes,
+		Control::GroupBox(-0, IDS_SavedLayouts,
 			0, 0, 235, 260,
 			WS_VISIBLE, 0),
 		Control::ListBox(Id_List, 0,
@@ -1743,13 +1716,13 @@ void DialogManage::TabLayouts::Create(HWND owner)
 			177, 52, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 
-		Control::GroupBox(-0, IDS_SaveNewTheme,
+		Control::GroupBox(-0, IDS_SaveNewLayout,
 			243, 0, 235, 150,
 			WS_VISIBLE, 0),
-		Control::Label(-0, IDS_ThemeDescription,
+		Control::Label(-0, IDS_LayoutDescription,
 			249, 16, 210, 44,
 			WS_VISIBLE, 0),
-		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyTheme,
+		Control::CheckBox(Id_SaveEmptyThemeCheckBox, IDS_SaveAsEmptyLayout,
 			249, 70, 225, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_ExcludeUnusedSkinsCheckBox, IDS_ExcludeUnusedSkins,
@@ -1876,7 +1849,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess_s(path.c_str(), 0) == 0);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(IDS_ThemeAlreadyExists, layout.c_str());
+				std::wstring text = GetFormattedString(IDS_LayoutAlreadyExists, layout.c_str());
 				if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1896,7 +1869,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (!System::CopyFiles(GetRainmeter().GetIniFile(), path))
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1909,10 +1882,10 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					parser.Initialize(path);
 
 					// Remove sections with Active=0
-					std::list<std::wstring>::const_iterator iter = parser.GetSections().begin();
-					for ( ; iter != parser.GetSections().end(); ++iter)
+					for (auto iter = parser.GetSectionNames().begin(); iter != parser.GetSectionNames().end(); ++iter)
 					{
-						if (parser.GetValue(*iter, L"Active", L"") == L"0")
+						const std::wstring* active = parser.GetValue(*iter, L"Active");
+						if (active && *active == L"0")
 						{
 							WritePrivateProfileString((*iter).c_str(), nullptr, nullptr, path.c_str());
 						}
@@ -1938,7 +1911,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (file == INVALID_HANDLE_VALUE)
 				{
-					std::wstring text = GetFormattedString(IDS_ThemeSaveFail, path.c_str());
+					std::wstring text = GetFormattedString(IDS_LayoutSaveFail, path.c_str());
 					GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -1984,7 +1957,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(GetRainmeter().GetAllLayouts());
 
-			std::wstring text = GetFormattedString(IDS_ThemeDelete, layouts[sel].c_str());
+			std::wstring text = GetFormattedString(IDS_LayoutDelete, layouts[sel].c_str());
 			if (GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
@@ -2041,7 +2014,7 @@ void DialogManage::TabGameMode::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short labelWidth = (short)GetRainmeter().GetLanguageLabelWidth();
+	short labelWidth = (short)GetLanguage().GetLabelWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2147,20 +2120,7 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 				ContextMenu::CreateGameModeOnStopMenu();
 			if (menu)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -2183,23 +2143,19 @@ INT_PTR DialogManage::TabGameMode::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[4096];
 			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
 			{
-				list = buffer;
-				std::vector<std::wstring> tokens = ConfigParser::Tokenize(list, L"\n");
-				list.clear();
-				for (auto& line : tokens)
+				StringParser::ForEachToken(buffer, L'\n', [&](std::wstring_view line)
 				{
 					// No self-references
-					if (_wcsicmp(line.c_str(), L"Rainmeter.exe") == 0)
-					{
-						continue;
-					}
+					StringParser process(line);
+					if (process.ConsumeRest(L"Rainmeter.exe")) return;
 
-					list += line;
-					if (line != tokens.back())
+					if (!list.empty())
 					{
 						list += L'|';
 					}
-				}
+
+					list += line;
+				});
 			}
 
 			if (oldList != list)
@@ -2270,7 +2226,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
 	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 
 	const Control s_Controls[] =
 	{
@@ -2368,7 +2324,7 @@ void DialogManage::TabSettings::Initialize()
 		std::wstring text = language.englishName + L" - " + language.nativeName;
 		int index = ComboBox_AddString(item, text.c_str());
 		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
-		if (language.lcid == GetRainmeter().GetResourceLCID())
+		if (language.lcid == GetLanguage().GetLCID())
 		{
 			ComboBox_SetCurSel(item, index);
 		}
@@ -2453,11 +2409,11 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
-			if (lcid != GetRainmeter().GetResourceLCID())
+			if (lcid != GetLanguage().GetLCID())
 			{
 				WCHAR buffer[16];
 				_ultow(lcid, buffer, 10);
-				if (!GetRainmeter().LoadLanguage(buffer)) break;
+				if (!GetLanguage().Load(GetRainmeter().GetPath() + L"Languages\\", buffer)) break;
 				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
 
 				if (DialogDebug::GetDialog())

@@ -1,15 +1,11 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRegistry.h"
 #include "Rainmeter.h"
 
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_OutputType(OutputType::Value),
 	m_RegKey(nullptr),
 	m_HKey(HKEY_CURRENT_USER)
@@ -127,7 +123,7 @@ void MeasureRegistry::UpdateValue()
 						{
 							// Use assign with length in case the data is not null-terminated.
 							m_StringValue.assign(rawStringData, rawStringLength);
-							m_Value = wcstod(m_StringValue.c_str(), nullptr);
+							m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 						}
 						else if (type == REG_MULTI_SZ)
 						{
@@ -144,7 +140,7 @@ void MeasureRegistry::UpdateValue()
 									if (!convertedToNumber)
 									{
 										// Convert the first string to a number.
-										m_Value = wcstod(m_StringValue.c_str(), nullptr);
+										m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 										convertedToNumber = true;
 									}
 
@@ -155,7 +151,7 @@ void MeasureRegistry::UpdateValue()
 
 							if (!convertedToNumber)
 							{
-								m_Value = wcstod(m_StringValue.c_str(), nullptr);
+								m_Value = LocaleUtil::StringToNumber(m_StringValue.c_str(), m_NumberFormat);
 							}
 						}
 					}
@@ -187,63 +183,36 @@ void MeasureRegistry::UpdateValue()
 	}
 }
 
-void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRegistry::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
-	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
-	{
-		m_HKey = HKEY_CURRENT_USER;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_LOCAL_MACHINE") == 0)
-	{
-		m_HKey = HKEY_LOCAL_MACHINE;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CLASSES_ROOT") == 0)
-	{
-		m_HKey = HKEY_CLASSES_ROOT;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CURRENT_CONFIG") == 0)
-	{
-		m_HKey = HKEY_CURRENT_CONFIG;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_PERFORMANCE_DATA") == 0)
-	{
-		m_HKey = HKEY_PERFORMANCE_DATA;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_DYN_DATA") == 0)
-	{
-		m_HKey = HKEY_DYN_DATA;
-	}
-	else
-	{
-		m_HKey = HKEY_CURRENT_USER; // Default
-		LogErrorF(this, L"RegHKey=%s is not valid", keyname);
-	}
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"OutputType", L"Value").c_str();
-	if (_wcsicmp(type, L"SubKeyList") == 0)
+	// Not constexpr: the HKEY_* macros cast an integer to a pointer.
+	static const ConfigParser::EnumOption<HKEY> s_HKeys[] =
 	{
-		m_OutputType = OutputType::SubKeyList;
-	}
-	else if (_wcsicmp(type, L"ValueList") == 0)
-	{
-		m_OutputType = OutputType::ValueList;
-	}
-	else
-	{
-		m_OutputType = OutputType::Value;
-		if (_wcsicmp(type, L"Value") != 0)
-		{
-			LogErrorF(this, L"OutputType=%s is not valid", type);
-		}
-	}
+		{ L"HKEY_CURRENT_USER", HKEY_CURRENT_USER },
+		{ L"HKEY_LOCAL_MACHINE", HKEY_LOCAL_MACHINE },
+		{ L"HKEY_CLASSES_ROOT", HKEY_CLASSES_ROOT },
+		{ L"HKEY_CURRENT_CONFIG", HKEY_CURRENT_CONFIG },
+		{ L"HKEY_PERFORMANCE_DATA", HKEY_PERFORMANCE_DATA },
+		{ L"HKEY_DYN_DATA", HKEY_DYN_DATA },
+	};
+	m_HKey = parser.ReadEnum(section, L"RegHKey", HKEY_CURRENT_USER, s_HKeys);
 
-	m_OutputDelimiter = parser.ReadString(section, L"OutputDelimiter", L"\n");
+	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
+	{
+		{ L"Value", OutputType::Value },
+		{ L"SubKeyList", OutputType::SubKeyList },
+		{ L"ValueList", OutputType::ValueList },
+	};
+	m_OutputType = parser.ReadEnum(section, L"OutputType", OutputType::Value, s_OutputTypes);
 
-	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");
-	m_RegValueName = parser.ReadString(section, L"RegValue", L"");
+	parser.ReadString(m_OutputDelimiter, section, L"OutputDelimiter", L"\n");
+
+	parser.ReadString(m_RegKeyName, section, L"RegKey", L"");
+	parser.ReadString(m_RegValueName, section, L"RegValue", L"");
 
 	if (m_MaxValue == 0.0)
 	{

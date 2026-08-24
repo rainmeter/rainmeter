@@ -1,12 +1,6 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_CONTEXTMENU_H
-#define RM_LIBRARY_CONTEXTMENU_H
+#pragma once
 
 #include <vector>
 #include <Windows.h>
@@ -30,13 +24,20 @@ public:
 
 	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
+	// Creates a standalone context menu for |skin|. If |allSkinsMenu| is null, the skin root
+	// submenu is omitted. The caller is responsible for destroying the returned menu and for
+	// dispatching the selected command with SendMenuCommand.
+	static HMENU CreateSkinMenu(Skin* skin, int index = 0, HMENU allSkinsMenu = nullptr);
+
+	// Sends |command| to |commandWindow| along with the checked state of the menu item.
+	static void SendMenuCommand(HMENU menu, UINT command, HWND commandWindow);
+
 	static HMENU CreateGameModeOnStartMenu();
 	static HMENU CreateGameModeOnStopMenu();
 
 private:
 	void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND commandWindow = nullptr);
 
-	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
 	static HMENU CreateSkinSettingsMenu(const std::vector<Skin*>& skins);
 	static HMENU CreateSkinSelectionMenu();
 	static void AppendSkinCustomMenu(
@@ -52,5 +53,3 @@ private:
 
 	HMENU m_ActiveMenu;
 };
-
-#endif

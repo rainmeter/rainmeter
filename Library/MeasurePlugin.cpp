@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
@@ -11,6 +6,8 @@
 #include "Skin.h"
 #include "Export.h"
 #include "System.h"
+#include "../Common/RawString.h"
+#include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
@@ -73,7 +70,7 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	static UINT id = 0;
 
@@ -182,7 +179,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_ID);
 		}
 	}
 
@@ -257,16 +254,14 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		return true;
 	}
 
-	WCHAR errMsg[MAX_LINE_LENGTH];
-
-	size_t sPos = command.find_first_of(L'(');
-	if (sPos != std::wstring::npos)
+	// A command is a function call, "Function(Arg1, Arg2)".
+	StringParser parser(command);
+	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
+	if (!funcName.empty() || !parser.IsConsumed())
 	{
-		size_t ePos = command.find_last_of(L')');
-		if (ePos == std::wstring::npos ||
-			sPos > ePos ||
-			command.size() < 3)
+		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
+			WCHAR errMsg[MAX_LINE_LENGTH];
 			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
 			if (delayedLogEntry)
 			{
@@ -291,7 +286,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		}
 
 		// Prevent calling known API functions
-		std::string function = StringUtil::Narrow(command.substr(0, sPos));
+		std::string function = StringUtil::Narrow(funcName.data(), (int)funcName.length());
 		if (function == "Initialize" ||
 			function == "Reload" ||
 			function == "Update" ||
@@ -303,24 +298,25 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			function == "GetPluginVersion")			// Old API
 			return false;
 
-		// Parse arguments
-		auto _args = ConfigParser::TokenizeWithPairedPunctuation(
-			command.substr(sPos + 1, ePos - sPos - 1),
-			L',',
-			PairedPunctuation::BothQuotes);
+		// Plugins expect an array of null terminated strings, so the arguments cannot be passed on as
+		// views into |command|. A RawString is a single pointer to such a string, which makes the
+		// vector itself the array the plugin expects.
+		static_assert(sizeof(RawString) == sizeof(WCHAR*), "RawString must be a single string pointer.");
 
-		// Convert strings in array to raw type
-		std::vector<LPCWSTR> args;
-		for (auto& str : _args)
+		std::vector<RawString> args;
+		parser.ConsumeWhitespace();
+		while (!parser.IsConsumed())
 		{
-			StringUtil::StripLeadingAndTrailingQuotes(str, true);
-			args.emplace_back(str.c_str());
+			const auto arg = parser.ConsumeUntilOrRest(
+				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted);
+			args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
+			parser.ConsumeWhitespace();
 		}
 
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			LPCWSTR result = ((CUSTOMFUNCTION)custom)(m_PluginData, (const int)args.size(), args.data());
+			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), reinterpret_cast<const WCHAR**>(args.data()));
 			if (result)
 			{
 				strValue = result;
@@ -328,12 +324,12 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid return type in function: %s", command.substr(0, sPos).c_str());
+				LogErrorF(this, L"Invalid return type in function: %s", std::wstring(funcName).c_str());
 			}
 		}
 		else
 		{
-			LogErrorF(this, L"Cannot find function: %s", command.substr(0, sPos).c_str());
+			LogErrorF(this, L"Cannot find function: %s", std::wstring(funcName).c_str());
 		}
 	}
 

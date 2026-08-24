@@ -1,12 +1,6 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_MEASUREAUDIOLEVEL_H_
-#define RM_LIBRARY_MEASUREAUDIOLEVEL_H_
+#pragma once
 
 #include "Measure.h"
 #include "../ThirdParty/kiss_fft130/kiss_fftr.h"
@@ -35,7 +29,7 @@ public:
 	const WCHAR* GetStringValue() override;
 
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
 
 private:
@@ -83,7 +77,7 @@ private:
 		NUM_FORMATS
 	};
 
-	void ResolveParent(ConfigParser& parser, const WCHAR* section);
+	void ResolveParent(ConfigParser& parser, std::wstring_view section);
 	void UpdateFilterConstants();
 	double UpdateAudioValue();
 	HRESULT DeviceInit();
@@ -117,8 +111,8 @@ private:
 	IAudioClient* m_ClBugAudio;
 	IAudioRenderClient* m_ClBugRender;
 #endif
-	WCHAR m_ReqID[64];
-	WCHAR m_DevName[64];
+	std::wstring m_ReqID;
+	std::wstring m_DevName;
 	float m_KRMS[2];
 	float m_KPeak[2];
 	float m_KFFT[2];
@@ -138,5 +132,3 @@ private:
 	float* m_BandFreq;
 	float* m_BandOut[MAX_CHANNELS];
 };
-
-#endif

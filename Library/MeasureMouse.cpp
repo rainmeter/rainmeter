@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureMouse.h"
@@ -218,7 +213,7 @@ MeasureMouse::~MeasureMouse()
 	}
 }
 
-void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureMouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	const bool wasCapturing = WantsCapture();
 
@@ -226,12 +221,12 @@ void MeasureMouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Mouse.ReadOptions(parser, section);
 
-	m_MouseMoveAction = parser.ReadString(section, L"MouseMoveAction", L"", false);
-	m_LeftDragAction = parser.ReadString(section, L"LeftMouseDragAction", L"", false);
-	m_MiddleDragAction = parser.ReadString(section, L"MiddleMouseDragAction", L"", false);
-	m_RightDragAction = parser.ReadString(section, L"RightMouseDragAction", L"", false);
-	m_X1DragAction = parser.ReadString(section, L"X1MouseDragAction", L"", false);
-	m_X2DragAction = parser.ReadString(section, L"X2MouseDragAction", L"", false);
+	parser.ReadString(m_MouseMoveAction, section, L"MouseMoveAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_LeftDragAction, section, L"LeftMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_MiddleDragAction, section, L"MiddleMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_RightDragAction, section, L"RightMouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_X1DragAction, section, L"X1MouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_X2DragAction, section, L"X2MouseDragAction", L"", { .sectionVariables = false });
 
 	m_RelativeToSkin = parser.ReadBool(section, L"RelativeToSkin", true);
 	m_RequireDragging = parser.ReadBool(section, L"RequireDragging", false);

@@ -1,12 +1,8 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __MOUSE_H__
-#define __MOUSE_H__
+#pragma once
+
+#include <string_view>
 
 enum MOUSEACTION : uint32_t
 {
@@ -85,7 +81,7 @@ public:
 	Mouse(const Mouse& other) = delete;
 	Mouse& operator=(Mouse other) = delete;
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section, bool isSkinLevel = false);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor(bool isButton = false) const;
@@ -100,6 +96,8 @@ public:
 
 	bool GetActionCommand(MOUSEACTION type, std::wstring& command) const;
 	const std::wstring& GetAction(MOUSEACTION action) const;
+
+	bool HasEnabledAction(MOUSEACTION types) const;
 
 	bool HasButtonAction() const
 	{
@@ -171,5 +169,3 @@ private:
 	Skin* m_Skin;
 	Meter* m_Meter;
 };
-
-#endif

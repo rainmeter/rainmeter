@@ -1,9 +1,4 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
@@ -11,6 +6,7 @@
 #include "Meter.h"
 #include "Logger.h"
 #include "Mouse.h"
+#include "../Common/StringParser.h"
 
 const struct { const WCHAR* name; MOUSEACTION type; } g_MouseActionTable[] =
 {
@@ -59,7 +55,7 @@ Mouse::~Mouse()
 	DestroyCustomCursor();
 }
 
-void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section, bool isSkinLevel)
 {
 	DestroyCustomCursor();
 
@@ -67,14 +63,14 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	for (auto& mouseAction : m_MouseActions)
 	{
 		m_MouseActionTypes |= mouseAction.type;
-		mouseAction.action = parser.ReadString(section, OptionNameForMouseActionType(mouseAction.type), L"", false);
+		parser.ReadString(mouseAction.action, section, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
 	}
 
 	for (auto& entry : g_MouseActionTable)
 	{
 		if (m_MouseActionTypes & entry.type) continue;
 
-		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", false);
+		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
 		if (parser.GetLastDefaultUsed()) continue;
 
 		m_MouseActionTypes |= entry.type;
@@ -88,10 +84,10 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Skin->SetHasMouseScrollAction();
 	}
 
-	const bool defaultState = (section == L"Rainmeter") ? true : m_Skin->GetMouse().GetCursorState();
+	const bool defaultState = isSkinLevel ? true : m_Skin->GetMouse().GetCursorState();
 	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
 
-	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
+	const WCHAR* defaultMouseCursor = isSkinLevel ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();
 
 	auto inheritSkinDefault = [&]()
@@ -402,6 +398,23 @@ bool Mouse::GetActionCommand(MOUSEACTION type, std::wstring& command) const
 	return false;
 }
 
+bool Mouse::HasEnabledAction(MOUSEACTION types) const
+{
+	if ((m_MouseActionTypes & types) == 0) return false;
+
+	for (const auto& mouseAction : m_MouseActions)
+	{
+		if ((types & mouseAction.type) != 0 &&
+			mouseAction.state == MOUSEACTION_ENABLED &&
+			!mouseAction.action.empty())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 const std::wstring& Mouse::GetAction(MOUSEACTION action) const
 {
 	static const std::wstring disabled = L"[]";
@@ -432,17 +445,17 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 {
 	if (options == L"*") return MOUSEACTION_ALL;
 
-	auto tokens = ConfigParser::Tokenize(options, L"|");
-	if (tokens.empty()) return MOUSEACTION_NONE;
-
 	uint32_t result = 0;
-	for (const auto& token : tokens)
+	bool invalid = false;
+	StringParser::ForEachToken(options, L'|', [&](std::wstring_view action)
 	{
+		if (invalid) return;
+
 		bool found = false;
-		const WCHAR* tok = token.c_str();
+		StringParser name(action);
 		for (auto& entry : g_MouseActionTable)
 		{
-			if (_wcsicmp(tok, entry.name) == 0)
+			if (name.ConsumeRest(entry.name, wcslen(entry.name)))
 			{
 				found = true;
 				result |= entry.type;
@@ -452,10 +465,10 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 
 		if (!found)
 		{
-			LogErrorF(m_Meter, L"Invalid action: %s", tok);
-			return MOUSEACTION_NONE;
+			LogErrorF(m_Meter, L"Invalid action: %.*s", (int)action.length(), action.data());
+			invalid = true;
 		}
-	}
+	});
 
-	return (MOUSEACTION)result;
+	return invalid ? MOUSEACTION_NONE : (MOUSEACTION)result;
 }

@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasurePing.h"
@@ -220,15 +215,15 @@ MeasurePing::~MeasurePing()
 	}
 }
 
-void MeasurePing::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePing::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Destination = parser.ReadString(section, L"DestAddress", L"");
+	parser.ReadString(m_Destination, section, L"DestAddress", L"");
 	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32);
 	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000);
 	m_TimeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
+	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
 }
 
 void MeasurePing::UpdateValue()
@@ -260,6 +255,17 @@ void MeasurePing::UpdateValue()
 	{
 		m_UpdateCounter = 0;
 	}
+}
+
+void MeasurePing::AdvanceUpdateCounter(UINT count)
+{
+	Measure::AdvanceUpdateCounter(count);
+
+	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
+	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
+
+	m_UpdateCounter += count;
+	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
 }
 
 namespace {

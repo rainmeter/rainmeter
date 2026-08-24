@@ -1,9 +1,4 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterImage.h"
@@ -100,12 +95,12 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterImage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"ImageName", L"");
-	m_MaskImageName = parser.ReadString(section, L"MaskImageName", L"");
+	parser.ReadString(m_ImageName, section, L"ImageName", L"");
+	parser.ReadString(m_MaskImageName, section, L"MaskImageName", L"");
 
 	m_Tile = parser.ReadBool(section, L"Tile", false);
 	if (!m_Tile)
@@ -330,7 +325,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterImage::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{

@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureResMon.h"
@@ -21,33 +16,20 @@ MeasureResMon::~MeasureResMon()
 {
 }
 
-void MeasureResMon::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"ResCountType", L"GDI").c_str();
-	if (_wcsicmp(L"GDI", type) == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
-		m_Type = Type::GDI;
-	}
-	else if (_wcsicmp(L"USER", type) == 0)
-	{
-		m_Type = Type::USER;
-	}
-	else if (_wcsicmp(L"HANDLE", type) == 0)
-	{
-		m_Type = Type::HANDLE;
-	}
-	else if (_wcsicmp(L"WINDOW", type) == 0)
-	{
-		m_Type = Type::WINDOW;
-	}
-	else
-	{
-		LogErrorF(this, L"ResMon: ResCountType=%s is not valid", type);
-	}
+		{ L"GDI", Type::GDI },
+		{ L"USER", Type::USER },
+		{ L"HANDLE", Type::HANDLE },
+		{ L"WINDOW", Type::WINDOW },
+	};
+	m_Type = parser.ReadEnum(section, L"ResCountType", Type::GDI, s_Types);
 
-	m_ProcessName = parser.ReadString(section, L"ProcessName", L"");
+	parser.ReadString(m_ProcessName, section, L"ProcessName", L"");
 }
 
 void MeasureResMon::UpdateValue()

@@ -1,23 +1,19 @@
-/* Copyright (C) 2017 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
 #include "../Common/MathParser.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "TrayIcon.h"
 #include "UpdateCheck.h"
 #include "Util.h"
 #include "../Version.h"
 
-#include "inipp/inipp.h"
+#include "../ThirdParty/inipp/inipp.h"
 
 #include <SoftPub.h>
 #include <bcrypt.h>
@@ -80,23 +76,25 @@ void Updater::CheckLanguageObsoleteStatus()
 	if (m_ObsoleteLanguages.empty()) return;
 
 	bool obsolete = false;
-	const auto lcid = (unsigned)GetRainmeter().GetResourceLCID();
+	const auto lcid = (unsigned)GetLanguage().GetLCID();
 	MathParser mathParser;
 
-	auto obsoleteLanguages = ParseUtil::Tokenize(StringUtil::Widen(m_ObsoleteLanguages), L",");
-	for (const auto& idString : obsoleteLanguages)
+	const std::wstring obsoleteLanguages = StringUtil::Widen(m_ObsoleteLanguages);
+	StringParser::ForEachToken(obsoleteLanguages, L',', [&](std::wstring_view idString)
 	{
-		if (ParseUtil::ParseUInt(idString.c_str(), UINT32_MAX, mathParser) == lcid)
+		if (obsolete) return;
+
+		StringParser id(idString);
+		if (id.ConsumeRestUIntOrFormula(mathParser) == lcid)
 		{
 			obsolete = true;
-			break;
 		}
-	}
+	});
 
 	if (GetRainmeter().GetDebug())
 	{
 		WCHAR language[LOCALE_NAME_MAX_LENGTH] = { 0 };
-		GetLocaleInfo(GetRainmeter().GetResourceLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
+		GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, language, _countof(language));
 		LogDebugF(L"Language status: %s (%s)", obsolete ? L"Obsolete" : L"Current", language);
 	}
 

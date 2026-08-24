@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureTime.h"
@@ -323,7 +318,7 @@ const WCHAR* MeasureTime::GetStringValue()
 	return CheckSubstitute(tmpSz);
 }
 
-void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureTime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void
 	{
@@ -333,7 +328,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Measure::ReadOptions(parser, section);
 
-	m_Format = parser.ReadString(section, L"Format", L"");
+	parser.ReadString(m_Format, section, L"Format", L"");
 
 	std::wstring timeStamp = parser.ReadString(section, L"TimeStamp", L"-1");
 	if (wcsncmp(timeStamp.c_str(), L"DSTStart", 8) == 0)

@@ -1,12 +1,8 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Util.h"
+#include "Language.h"
 #include "Rainmeter.h"
 #include "DialogDebug.h"
 #include "System.h"
@@ -21,7 +17,7 @@ const WCHAR* GetString(UINT id)
 {
 	switch (id)
 	{
-		case IDS_Ellipsis: return L"...";
+		case IDS_Ellipsis: return L"\u2026";
 		case IDS_AddResources: return L"@Resources";
 		case IDS_0Percent: return L"0%";
 		case IDS_10Percent: return L"10%";
@@ -42,7 +38,7 @@ const WCHAR* GetString(UINT id)
 		case IDS_150Percent: return L"150%";
 	}
 
-	return GetRainmeter().GetLanguageString(id);
+	return GetLanguage().GetString(id);
 }
 
 std::wstring GetFormattedString(UINT id, ...)

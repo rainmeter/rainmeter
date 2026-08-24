@@ -1,9 +1,4 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Bitmap.h"
@@ -91,6 +86,11 @@ bool Bitmap::HasFileChanged(const std::wstring& file)
 HRESULT Bitmap::Load(const Canvas& canvas)
 {
 	return Util::BitmapLoader::LoadBitmapFromFile(canvas, this);
+}
+
+HRESULT Bitmap::LoadFromIcon(const Canvas& canvas, HICON icon, float scale)
+{
+	return Util::BitmapLoader::LoadBitmapFromIcon(canvas, this, icon, scale);
 }
 
 Util::EffectStream* Bitmap::CreateEffectStream()

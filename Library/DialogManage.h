@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __DIALOGMANAGE_H__
-#define __DIALOGMANAGE_H__
+#pragma once
 
 #include "../Common/Dialog.h"
 #include "resource.h"
@@ -69,6 +63,7 @@ private:
 			Id_XPositionEdit,
 			Id_YPositionEdit,
 			Id_ZPositionDropDownList,
+			Id_ZoomLabel,
 			Id_ZoomEdit,
 			Id_ZoomSpinner,
 			Id_ZoomPercentLabel,
@@ -252,5 +247,3 @@ private:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogManage* c_Dialog;
 };
-
-#endif

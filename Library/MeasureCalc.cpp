@@ -1,9 +1,4 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureCalc.h"
@@ -51,7 +46,7 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -62,7 +57,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	bool oldUniqueRandom = m_UniqueRandom;
 
 	std::wstring oldFormula = m_Formula;
-	m_Formula = parser.ReadString(section, L"Formula", L"");
+	parser.ReadString(m_Formula, section, L"Formula", L"");
 
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);

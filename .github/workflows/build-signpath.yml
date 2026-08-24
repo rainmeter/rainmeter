@@ -34,6 +34,14 @@ jobs:
             !BuildOut/Release${{ matrix.arch }}/Obj
           if-no-files-found: error
 
+      - name: Upload 64-bit debug symbols
+        if: ${{ matrix.arch == 64 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: DebugSymbols-Release${{ matrix.arch }}
+          path: BuildOut/**/*.pdb
+          if-no-files-found: error
+
   installer:
     environment:
       name: signpath

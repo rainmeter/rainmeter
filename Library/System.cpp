@@ -1,13 +1,9 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "System.h"
 #include "DialogDebug.h"
+#include "LocaleUtil.h"
 #include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
@@ -650,6 +646,12 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		LogNotice(L"System: Display settings changed");
 		MonitorUtil::ClearMultiMonitorInfo();
 	case WM_SETTINGCHANGE:
+		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
+		{
+			LogNotice(L"System: Regional settings changed");
+			LocaleUtil::RefreshNumberFormat();
+		}
+
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
@@ -786,6 +788,30 @@ void System::SetClipboardText(const std::wstring& text)
 
 		CloseClipboard();
 	}
+}
+
+std::optional<std::wstring> System::GetClipboardText()
+{
+	if (!IsClipboardFormatAvailable(CF_UNICODETEXT) || !OpenClipboard(nullptr)) return std::nullopt;
+
+	std::optional<std::wstring> text;
+	HANDLE hMem = GetClipboardData(CF_UNICODETEXT);
+	if (hMem)
+	{
+		const WCHAR* data = (const WCHAR*)GlobalLock(hMem);
+		if (data)
+		{
+			// The block is not required to be null terminated within its allocated size, so the
+			// length is bounded by the block itself.
+			const size_t maxLen = GlobalSize(hMem) / sizeof(WCHAR);
+			text.emplace(data, wcsnlen(data, maxLen));
+
+			GlobalUnlock(hMem);
+		}
+	}
+
+	CloseClipboard();
+	return text;
 }
 
 void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)

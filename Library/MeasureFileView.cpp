@@ -1,9 +1,4 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureFileView.h"
@@ -13,37 +8,11 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "../Common/CriticalSection.h"
-#include "../Common/ParseUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
-#include <commoncontrols.h>
-#include <memory>
 #include <queue>
 
-#define INVALID_FILE L"/<>\\"
-
-#pragma pack(push, 2)
-typedef struct	// 16 bytes
-{
-	BYTE        bWidth;				// Width, in pixels, of the image
-	BYTE        bHeight;			// Height, in pixels, of the image
-	BYTE        bColorCount;		// Number of colors in image (0 if >=8bpp)
-	BYTE        bReserved;			// Reserved ( must be 0)
-	WORD        wPlanes;			// Color Planes
-	WORD        wBitCount;			// Bits per pixel
-	DWORD       dwBytesInRes;		// How many bytes in this resource?
-	DWORD       dwImageOffset;		// Where in the file is this image?
-} ICONDIRENTRY, *LPICONDIRENTRY;
-
-typedef struct	// 22 bytes
-{
-	WORD           idReserved;		// Reserved (must be 0)
-	WORD           idType;			// Resource Type (1 for icons)
-	WORD           idCount;			// How many images?
-	ICONDIRENTRY   idEntries[1];	// An entry for each image (idCount of 'em)
-} ICONDIR, *LPICONDIR;
-#pragma pack(pop)
-
-enum MeasureType
+enum MeasureFileView::MeasureType : BYTE
 {
 	TYPE_FOLDERPATH,
 	TYPE_FOLDERSIZE,
@@ -58,7 +27,7 @@ enum MeasureType
 	TYPE_ICON
 };
 
-enum DateType
+enum MeasureFileView::DateType : BYTE
 {
 	DTYPE_MODIFIED,
 	DTYPE_CREATED,
@@ -71,14 +40,6 @@ enum SortType
 	STYPE_SIZE,
 	STYPE_TYPE,
 	STYPE_DATE
-};
-
-enum IconSize
-{
-	IS_SMALL = 1,	// 16x16
-	IS_MEDIUM = 0,	// 32x32
-	IS_LARGE = 2,	// 48x48
-	IS_EXLARGE = 4	// 256x256
 };
 
 enum RecursiveType
@@ -104,22 +65,7 @@ struct FileInfo
 	FILETIME createdTime = {};
 	FILETIME modifiedTime = {};
 	FILETIME accessedTime = {};
-};
-
-struct FileViewParentData;
-
-struct FileViewChildData
-{
-	MeasureType type = TYPE_FOLDERPATH;
-	DateType date = DTYPE_MODIFIED;
-	IconSize iconSize = IS_LARGE;
-	std::wstring iconPath;
-	int index = 1;
-	bool ignoreCount = false;
-
-	std::wstring strValue;
-	FileViewParentData* parent = nullptr;
-	MeasureFileView* measure = nullptr;
+	int iconIndex = -1;
 };
 
 struct FileViewParentData
@@ -127,7 +73,7 @@ struct FileViewParentData
 	std::wstring path;
 	std::wstring wildcardSearch;
 	SortType sortType = STYPE_NAME;
-	DateType sortDateType = DTYPE_MODIFIED;
+	MeasureFileView::DateType sortDateType = MeasureFileView::DTYPE_MODIFIED;
 	int count = 0;
 	RecursiveType recursiveType = RECURSIVE_NONE;
 	bool sortAscending = true;
@@ -141,7 +87,7 @@ struct FileViewParentData
 	ExtensionsFilter extensionsFilter = ExtensionsFilter::Include;
 	std::wstring finishAction;
 
-	std::vector<FileViewChildData*> children;
+	std::vector<MeasureFileView*> children;
 	std::vector<FileInfo> files;
 	int fileCount = 0;
 	int folderCount = 0;
@@ -153,18 +99,12 @@ struct FileViewParentData
 
 	HWND hwnd = nullptr;
 	Skin* skin = nullptr;
-	LPCWSTR name = nullptr;
-	FileViewChildData* ownerChild = nullptr;
+	MeasureFileView* owner = nullptr;
 };
 
-void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
-bool SaveIcon(HICON hIcon, FILE* fp);
-
-static std::vector<FileViewParentData*> g_ParentMeasures;
 static CriticalSection g_CriticalSection;
-static std::wstring g_SysProperties;
 
-static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData* child)
+static void RemoveChildFromParent(FileViewParentData* parent, MeasureFileView* child)
 {
 	if (!parent) return;
 
@@ -175,20 +115,25 @@ static void RemoveChildFromParent(FileViewParentData* parent, FileViewChildData*
 	}
 }
 
-static void SetChildParent(FileViewChildData* child, FileViewParentData* parent)
+int MeasureFileView::GetTrueIndex(const FileViewParentData* parent) const
 {
-	if (child->parent != parent)
+	return m_IgnoreCount ? m_Index : ((m_Index % parent->count) + parent->indexOffset);
+}
+
+void MeasureFileView::SetParent(FileViewParentData* parent)
+{
+	if (m_Parent != parent)
 	{
-		RemoveChildFromParent(child->parent, child);
-		child->parent = parent;
+		RemoveChildFromParent(m_Parent, this);
+		m_Parent = parent;
 	}
 
 	if (parent)
 	{
-		auto iter = std::find(parent->children.begin(), parent->children.end(), child);
+		auto iter = std::find(parent->children.begin(), parent->children.end(), this);
 		if (iter == parent->children.end())
 		{
-			parent->children.push_back(child);
+			parent->children.push_back(this);
 		}
 	}
 }
@@ -235,10 +180,10 @@ private:
 
 			for (auto* child : parent->children)
 			{
-				if (child->type == TYPE_ICON)
+				if (child->m_Type == TYPE_ICON)
 				{
-					const int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-					m_IconRequests.emplace_back(child->iconPath, child->iconSize, trueIndex);
+					const int trueIndex = child->GetTrueIndex(parent);
+					m_IconRequests.push_back(trueIndex);
 				}
 			}
 		}
@@ -269,14 +214,7 @@ private:
 	bool m_NeedsUpdating = false;
 	bool m_NeedsIcons = false;
 
-	struct IconRequest
-	{
-		std::wstring path;
-		IconSize size;
-		int trueIndex;
-	};
-
-	std::vector<IconRequest> m_IconRequests;
+	std::vector<int> m_IconRequests;
 
 	bool m_TaskSuccessful = false;
 };
@@ -362,38 +300,25 @@ static bool ShowContextMenu(HWND hwnd, const std::wstring& path)
 }
 
 MeasureFileView::MeasureFileView(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_Child(new FileViewChildData)
+	m_Type(TYPE_FOLDERPATH),
+	m_DateType(DTYPE_MODIFIED),
+	m_IconSize(SHIL_EXTRALARGE),
+	m_Index(1),
+	m_IgnoreCount(false),
+	m_Parent(nullptr)
 {
-	m_Child->measure = this;
-
-	if (g_SysProperties.empty())
-	{
-		if (IsWindows10OrGreater())
-		{
-			g_SysProperties = L"ms-settings:about";
-		}
-		else
-		{
-			WCHAR buffer[MAX_PATH] = { 0 };
-			ExpandEnvironmentStrings(L"%WINDIR%", buffer, _countof(buffer));
-			g_SysProperties = buffer;
-			g_SysProperties += L"\\system32\\control.exe system";
-		}
-	}
 }
 
 MeasureFileView::~MeasureFileView()
 {
-	FileViewChildData* child = m_Child;
-
 	CriticalSectionLock lock(g_CriticalSection);
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (parent)
 	{
-		RemoveChildFromParent(parent, child);
+		RemoveChildFromParent(parent, this);
 	}
 
-	if (parent && parent->ownerChild == child)
+	if (parent && parent->owner == this)
 	{
 		if (parent->task)
 		{
@@ -401,268 +326,205 @@ MeasureFileView::~MeasureFileView()
 			parent->task = nullptr;
 		}
 
-		for (auto iter : parent->children)
+		for (auto* child : parent->children)
 		{
-			iter->parent = nullptr;
+			child->m_Parent = nullptr;
 		}
-
-		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
-		g_ParentMeasures.erase(iter);
 
 		delete parent;
 		parent = nullptr;
 	}
-
-	delete child;
-	child = nullptr;
 }
 
-void MeasureFileView::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	FileViewChildData* child = m_Child;
-
-	std::wstring path = parser.ReadString(section, L"Path", L"", false);
-	if (!path.empty() && path[0] == L'[' && path[path.size() - 1] == L']')
+	static constexpr ConfigParser::EnumOption<DateType> s_DateTypes[] =
 	{
-		path = path.substr(1, path.size() - 2);
+		{ L"MODIFIED", DTYPE_MODIFIED },
+		{ L"CREATED", DTYPE_CREATED },
+		{ L"ACCESSED", DTYPE_ACCESSED },
+	};
 
-		for (auto iter : g_ParentMeasures)
+	const std::wstring_view path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
+	if (path.starts_with(L'[') && path.ends_with(L']'))
+	{
+		// Path is a reference to another FileView measure, so share its parent data
+		Skin* skin = GetSkin();
+		if (skin && path.length() >= 3)
 		{
-			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == GetSkin())
+			const std::wstring_view name = path.substr(1, path.length() - 2);
+			Measure* measure = skin->GetMeasure(name);
+			if (measure && measure->GetTypeID() == TypeID<MeasureFileView>())
 			{
-				SetChildParent(child, iter);
-				break;
+				auto* referenced = (MeasureFileView*)measure;
+				FileViewParentData* parent = referenced->m_Parent;
+				if (parent && parent->owner == referenced)
+				{
+					SetParent(parent);
+				}
 			}
 		}
 
-		if (!child->parent)
+		if (!m_Parent)
 		{
-			LogErrorF(this, L"Invalid Path: \"%s\"", path.c_str());
+			LogErrorF(this, L"Invalid Path: \"%.*s\"", (int)path.length(), path.data());
 			return;
 		}
 	}
 	else
 	{
-		if (!child->parent)
+		if (!m_Parent)
 		{
-			child->parent = new FileViewParentData;
-			child->parent->skin = GetSkin();
-			child->parent->name = GetName();
-			child->parent->ownerChild = child;
-			child->parent->hwnd = GetSkin()->GetWindow();
-			g_ParentMeasures.push_back(child->parent);
+			m_Parent = new FileViewParentData;
+			m_Parent->skin = GetSkin();
+			m_Parent->owner = this;
+			m_Parent->hwnd = GetSkin()->GetWindow();
 		}
 
-		// Add trailing "\" if none exists
-		if (!path.empty() && path[path.size() - 1] != L'\\')
+		m_Parent->path = path;
+
+		if (!m_Parent->path.empty() && !m_Parent->path.ends_with(L'\\'))
 		{
-			path += L'\\';
+			m_Parent->path += L'\\';
 		}
 
-		child->parent->path = path;
+		static constexpr ConfigParser::EnumOption<SortType> s_SortTypes[] =
+		{
+			{ L"NAME", STYPE_NAME },
+			{ L"SIZE", STYPE_SIZE },
+			{ L"TYPE", STYPE_TYPE },
+			{ L"DATE", STYPE_DATE },
+		};
+		m_Parent->sortType = parser.ReadEnum(section, L"SortType", STYPE_NAME, s_SortTypes);
 
-		LPCWSTR sort = parser.ReadString(section, L"SortType", L"Name").c_str();
-		if (_wcsicmp(sort, L"NAME") == 0)
+		if (m_Parent->sortType == STYPE_DATE)
 		{
-			child->parent->sortType = STYPE_NAME;
-		}
-		else if (_wcsicmp(sort, L"SIZE") == 0)
-		{
-			child->parent->sortType = STYPE_SIZE;
-		}
-		else if (_wcsicmp(sort, L"TYPE") == 0)
-		{
-			child->parent->sortType = STYPE_TYPE;
-		}
-		else if (_wcsicmp(sort, L"DATE") == 0)
-		{
-			child->parent->sortType = STYPE_DATE;
-
-			LPCWSTR date = parser.ReadString(section, L"SortDateType", L"Modified").c_str();
-			if (_wcsicmp(date, L"MODIFIED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_MODIFIED;
-			}
-			else if (_wcsicmp(date, L"CREATED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_CREATED;
-			}
-			else if (_wcsicmp(date, L"ACCESSED") == 0)
-			{
-				child->parent->sortDateType = DTYPE_ACCESSED;
-			}
+			m_Parent->sortDateType = parser.ReadEnum(section, L"SortDateType", DTYPE_MODIFIED, s_DateTypes);
 		}
 
 		int count = parser.ReadInt(section, L"Count", 1);
-		child->parent->count = count > 0 ? count : 1;
+		m_Parent->count = count > 0 ? count : 1;
 
 		int recursive = parser.ReadInt(section, L"Recursive", 0);
 		switch (recursive)
 		{
 		default:
-			LogWarningF(child->parent->ownerChild->measure, L"Invalid Recursive type");
+			LogWarningF(m_Parent->owner, L"Invalid Recursive type");
 
 		case 0:
-			child->parent->recursiveType = RECURSIVE_NONE;
+			m_Parent->recursiveType = RECURSIVE_NONE;
 			break;
 
 		case 1:
-			child->parent->recursiveType = RECURSIVE_PARTIAL;
+			m_Parent->recursiveType = RECURSIVE_PARTIAL;
 			break;
 
 		case 2:
-			child->parent->recursiveType = RECURSIVE_FULL;
+			m_Parent->recursiveType = RECURSIVE_FULL;
 			break;
 		}
 
-		child->parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
-		child->parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
-		child->parent->showFile = parser.ReadBool(section, L"ShowFile", true);
-		child->parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
-		child->parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
-		child->parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
-		child->parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
-		child->parent->extensions = ParseUtil::Tokenize(parser.ReadString(section, L"Extensions", L""), L";");
-
-		LPCWSTR extensionsFilter = parser.ReadString(section, L"ExtensionsFilter", L"Include").c_str();
-		if (_wcsicmp(extensionsFilter, L"INCLUDE") == 0)
+		m_Parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
+		m_Parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
+		m_Parent->showFile = parser.ReadBool(section, L"ShowFile", true);
+		m_Parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
+		m_Parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
+		m_Parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
+		m_Parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
+		const std::wstring* extensions = &parser.ReadString(section, L"Extensions", L"");
+		if (!parser.GetLastDefaultUsed())
 		{
-			child->parent->extensionsFilter = ExtensionsFilter::Include;
-		}
-		else if (_wcsicmp(extensionsFilter, L"EXCLUDE") == 0)
-		{
-			child->parent->extensionsFilter = ExtensionsFilter::Exclude;
+			m_Parent->extensionsFilter = ExtensionsFilter::Include;
 		}
 		else
 		{
-			LogWarningF(child->parent->ownerChild->measure, L"Invalid ExtensionsFilter: %s", extensionsFilter);
-			child->parent->extensionsFilter = ExtensionsFilter::Include;
+			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
+			m_Parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
+		StringParser::Split(*extensions, L';', m_Parent->extensions);
 
-		child->parent->wildcardSearch = parser.ReadString(section, L"WildcardSearch", L"*");
+		extensions = nullptr;
 
-		child->parent->finishAction = parser.ReadString(section, L"FinishAction", L"", false);
+		parser.ReadString(m_Parent->wildcardSearch, section, L"WildcardSearch", L"*");
+
+		parser.ReadString(m_Parent->finishAction, section, L"FinishAction", L"", { .sectionVariables = false });
 	}
 
-	SetChildParent(child, child->parent);
+	SetParent(m_Parent);
 
 	int index = parser.ReadInt(section, L"Index", 1) - 1;
-	child->index = index >= 0 ? index : 1;
+	m_Index = index >= 0 ? index : 1;
 
-	child->ignoreCount = parser.ReadBool(section, L"IgnoreCount", false);
+	m_IgnoreCount = parser.ReadBool(section, L"IgnoreCount", false);
 
-	LPCWSTR type = parser.ReadString(section, L"Type", L"FOLDERPATH").c_str();
-	if (_wcsicmp(type, L"FOLDERPATH") == 0)
-	{
-		child->type = TYPE_FOLDERPATH;
-	}
-	else if (_wcsicmp(type, L"FOLDERSIZE") == 0)
-	{
-		child->type = TYPE_FOLDERSIZE;
-	}
-	else if (_wcsicmp(type, L"FILECOUNT") == 0)
-	{
-		child->type = TYPE_FILECOUNT;
-	}
-	else if (_wcsicmp(type, L"FOLDERCOUNT") == 0)
-	{
-		child->type = TYPE_FOLDERCOUNT;
-	}
-	else if (_wcsicmp(type, L"FILENAME") == 0)
-	{
-		child->type = TYPE_FILENAME;
-	}
-	else if (_wcsicmp(type, L"FILETYPE") == 0)
-	{
-		child->type = TYPE_FILETYPE;
-	}
-	else if (_wcsicmp(type, L"FILESIZE") == 0)
-	{
-		child->type = TYPE_FILESIZE;
-	}
-	else if (_wcsicmp(type, L"FILEDATE") == 0)
-	{
-		child->type = TYPE_FILEDATE;
+	const MeasureType previousType = m_Type;
 
-		LPCWSTR date = parser.ReadString(section, L"DateType", L"Modified").c_str();
-		if (_wcsicmp(date, L"MODIFIED") == 0)
-		{
-			child->date = DTYPE_MODIFIED;
-		}
-		else if (_wcsicmp(date, L"CREATED") == 0)
-		{
-			child->date = DTYPE_CREATED;
-		}
-		else if (_wcsicmp(date, L"ACCESSED") == 0)
-		{
-			child->date = DTYPE_ACCESSED;
-		}
-	}
-	else if (_wcsicmp(type, L"ICON") == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_Types[] =
 	{
-		child->type = TYPE_ICON;
+		{ L"FOLDERPATH", TYPE_FOLDERPATH },
+		{ L"FOLDERSIZE", TYPE_FOLDERSIZE },
+		{ L"FILECOUNT", TYPE_FILECOUNT },
+		{ L"FOLDERCOUNT", TYPE_FOLDERCOUNT },
+		{ L"FILENAME", TYPE_FILENAME },
+		{ L"FILETYPE", TYPE_FILETYPE },
+		{ L"FILESIZE", TYPE_FILESIZE },
+		{ L"FILEDATE", TYPE_FILEDATE },
+		{ L"FILEPATH", TYPE_FILEPATH },
+		{ L"PATHTOFILE", TYPE_PATHTOFILE },
+		{ L"ICON", TYPE_ICON },
+	};
+	m_Type = parser.ReadEnum(section, L"Type", TYPE_FOLDERPATH, s_Types);
 
-		std::wstring temp = L"icon";
-		WCHAR buffer[MAX_PATH] = { 0 };
-		_itow_s(child->index + 1, buffer, 10);
-		temp += buffer;
-		temp += L".ico";
-		child->iconPath = parser.ReadString(section, L"IconPath", temp.c_str());
-		GetSkin()->MakePathAbsolute(child->iconPath);
+	if (m_Type == TYPE_FILEDATE)
+	{
+		m_DateType = parser.ReadEnum(section, L"DateType", DTYPE_MODIFIED, s_DateTypes);
+	}
+	else if (m_Type == TYPE_ICON)
+	{
+		if (previousType != TYPE_ICON)
+		{
+			// Remove icons written by versions that predate SystemImage support.
+			const std::wstring defaultValue = fmt::format(L"icon{}.ico", m_Index + 1);
+			std::wstring iconPath = parser.ReadString(section, L"IconPath", defaultValue.c_str());
+			GetSkin()->MakePathAbsolute(iconPath);
+			DeleteFile(iconPath.c_str());
+		}
 
-		LPCWSTR size = parser.ReadString(section, L"IconSize", L"MEDIUM").c_str();
-		if (_wcsicmp(size, L"SMALL") == 0)
+		static constexpr ConfigParser::EnumOption<int> s_IconSizes[] =
 		{
-			child->iconSize = IS_SMALL;
-		}
-		else if (_wcsicmp(size, L"MEDIUM") == 0)
-		{
-			child->iconSize = IS_MEDIUM;
-		}
-		else if (_wcsicmp(size, L"LARGE") == 0)
-		{
-			child->iconSize = IS_LARGE;
-		}
-		else if (_wcsicmp(size, L"EXTRALARGE") == 0)
-		{
-			child->iconSize = IS_EXLARGE;
-		}
-	}
-	else if (_wcsicmp(type, L"FILEPATH") == 0)
-	{
-		child->type = TYPE_FILEPATH;
-	}
-	else if (_wcsicmp(type, L"PATHTOFILE") == 0)
-	{
-		child->type = TYPE_PATHTOFILE;
+			{ L"SMALL", SHIL_SMALL },
+			{ L"MEDIUM", SHIL_LARGE },
+			{ L"LARGE", SHIL_EXTRALARGE },
+			{ L"EXTRALARGE", SHIL_JUMBO },
+		};
+		m_IconSize = parser.ReadEnum(section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
 	}
 }
 
 void MeasureFileView::UpdateValue()
 {
-	FileViewChildData* child = m_Child;
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent)
 	{
 		m_Value = 0.0;
 		return;
 	}
 
-	if (!parent->task && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
+	if (!parent->task && parent->owner == this && (parent->needsUpdating || parent->needsIcons))
 	{
 		parent->task = UpdateTask::Create(this, parent);
 		parent->needsUpdating = false;
 		parent->needsIcons = false;
 	}
 
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	const int trueIndex = GetTrueIndex(parent);
 	double value = 0;
 
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
-		switch (child->type)
+		switch (m_Type)
 		{
 		case TYPE_FILESIZE:
 			value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
@@ -674,7 +536,7 @@ void MeasureFileView::UpdateValue()
 			SYSTEMTIME stUTC = { 0 }, stLOCAL = { 0 };
 			ULARGE_INTEGER time = { 0 };
 
-			switch (child->date)
+			switch (m_DateType)
 			{
 			default:
 			case DTYPE_MODIFIED:
@@ -703,7 +565,7 @@ void MeasureFileView::UpdateValue()
 		}
 	}
 
-	switch (child->type)
+	switch (m_Type)
 	{
 	case TYPE_FILECOUNT:
 		value = (double)parent->fileCount;
@@ -723,45 +585,35 @@ void MeasureFileView::UpdateValue()
 
 const WCHAR* MeasureFileView::GetStringValue()
 {
-	FileViewChildData* child = m_Child;
-
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent) return CheckSubstitute(L"");
 
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-	child->strValue = L"";
-
+	const int trueIndex = GetTrueIndex(parent);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
-		switch (child->type)
+		switch (m_Type)
 		{
 		case TYPE_FILESIZE:
-			if (!parent->files[trueIndex].isFolder)
-			{
-				return nullptr;	// Force a numeric return (see the Update function)
-			}
+			m_StrValue.clear();
+
+			// Force a numeric return (see the Update function)
+			if (!parent->files[trueIndex].isFolder) return nullptr;
 			break;
 
 		case TYPE_FILENAME:
-		{
-			std::wstring temp = parent->files[trueIndex].fileName;
+			m_StrValue = parent->files[trueIndex].fileName;
 			if (parent->hideExtension && !parent->files[trueIndex].isFolder)
 			{
-				size_t pos = temp.find_last_of(L".");
-				if (pos != temp.npos)
+				size_t pos = m_StrValue.find_last_of(L".");
+				if (pos != std::wstring::npos)
 				{
-					child->strValue = temp.substr(0, pos);
+					m_StrValue.resize(pos);
 				}
 			}
-			else
-			{
-				child->strValue = temp;
-			}
-		}
-		break;
+			break;
 
 		case TYPE_FILETYPE:
-			child->strValue = parent->files[trueIndex].ext;
+			m_StrValue = parent->files[trueIndex].ext;
 			break;
 
 		case TYPE_FILEDATE:
@@ -769,7 +621,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 			SYSTEMTIME stUTC, stLOCAL;
 			FILETIME fTime;
 
-			switch (child->date)
+			switch (m_DateType)
 			{
 			default:
 			case DTYPE_MODIFIED:
@@ -791,37 +643,48 @@ const WCHAR* MeasureFileView::GetStringValue()
 				FileTimeToSystemTime(&fTime, &stUTC);
 				SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
 				GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
-				child->strValue = temp;
-				child->strValue += L" ";
+				m_StrValue = temp;
+				m_StrValue += L" ";
 				GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, _countof(temp));
-				child->strValue += temp;
+				m_StrValue += temp;
 			}
 			else
 			{
-				child->strValue = L"";
+				m_StrValue.clear();
 			}
 		}
 		break;
 
 		case TYPE_ICON:
-			child->strValue = child->iconPath;
+			if (parent->files[trueIndex].iconIndex >= 0)
+			{
+				m_StrValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, m_IconSize);
+			}
+			else if (!parent->task)
+			{
+				m_StrValue.clear();
+			}
 			break;
 
 		case TYPE_FILEPATH:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+			m_StrValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
 				parent->path :
 				parent->files[trueIndex].path + parent->files[trueIndex].fileName;
 			break;
 
 		case TYPE_PATHTOFILE:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
+			m_StrValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ?
 				parent->path :
 				parent->files[trueIndex].path;
 			break;
 		}
 	}
+	else
+	{
+		m_StrValue.clear();
+	}
 
-	switch (child->type)
+	switch (m_Type)
 	{
 	case TYPE_FILECOUNT:
 	case TYPE_FOLDERCOUNT:
@@ -830,19 +693,18 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 
 	case TYPE_FOLDERPATH:
-		child->strValue = parent->path;
+		m_StrValue = parent->path;
 		break;
 	}
 
-	return CheckSubstitute(child->strValue.c_str());
+	return CheckSubstitute(m_StrValue.c_str());
 }
 
 void MeasureFileView::Command(const std::wstring& command)
 {
-	FileViewChildData* child = m_Child;
 	LPCWSTR args = command.c_str();
 
-	FileViewParentData* parent = child->parent;
+	FileViewParentData* parent = m_Parent;
 	if (!parent || parent->task) return;
 
 	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
@@ -861,7 +723,7 @@ void MeasureFileView::Command(const std::wstring& command)
 
 			if (cmd.empty())
 			{
-				si.lpFile = g_SysProperties.c_str();
+				si.lpFile = L"ms-settings:about";
 			}
 			else
 			{
@@ -873,7 +735,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	};
 
 	// Parent only commands
-	if (parent->ownerChild == child)
+	if (parent->owner == this)
 	{
 		if ((int)parent->files.size() > parent->count)
 		{
@@ -894,6 +756,7 @@ void MeasureFileView::Command(const std::wstring& command)
 					parent->indexOffset = 0;
 					parent->needsIcons = true;
 				}
+				return;
 			}
 			else if (_wcsicmp(args, L"PAGEDOWN") == 0)
 			{
@@ -907,12 +770,14 @@ void MeasureFileView::Command(const std::wstring& command)
 					parent->indexOffset = (int)parent->files.size() - parent->count;
 					parent->needsIcons = true;
 				}
+				return;
 			}
 			else if (_wcsnicmp(args, cmdIndexUp, lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
 			{
 				const int shift = (args[lenIndexUp] == L'\0') ? 1 : max(_wtoi(args + lenIndexUp + 1), 1);
 				parent->indexOffset = max(parent->indexOffset - shift, 0);
 				parent->needsIcons = true;
+				return;
 			}
 			else if (_wcsnicmp(args, cmdIndexDown, lenIndexDown) == 0 && (args[lenIndexDown] == L' ' || args[lenIndexDown] == L'\0'))
 			{
@@ -920,6 +785,7 @@ void MeasureFileView::Command(const std::wstring& command)
 				const int maxOffset = max((int)parent->files.size() - parent->count, 0);
 				parent->indexOffset = min(parent->indexOffset + shift, maxOffset);
 				parent->needsIcons = true;
+				return;
 			}
 		}
 
@@ -987,7 +853,7 @@ void MeasureFileView::Command(const std::wstring& command)
 	}
 
 	// Child only commands
-	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
+	const int trueIndex = GetTrueIndex(parent);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
@@ -1233,20 +1099,22 @@ void MeasureFileView::UpdateTask::StartWorkOnWorkerThread()
 		}
 	}
 
-	for (const auto& iconRequest : m_IconRequests)
+	for (const int trueIndex : m_IconRequests)
 	{
 		if (m_AbortRequested) break;
 
-		if (iconRequest.trueIndex >= 0 && iconRequest.trueIndex < (int)m_Files.size())
+		if (trueIndex >= 0 && trueIndex < (int)m_Files.size())
 		{
-			const auto& file = m_Files[iconRequest.trueIndex];
+			auto& file = m_Files[trueIndex];
+			file.iconIndex = -1;
 			std::wstring filePath = file.path;
 			filePath += (file.fileName == L"..") ? L"" : file.fileName;
-			GetIcon(filePath, iconRequest.path, iconRequest.size);
-		}
-		else
-		{
-			GetIcon(INVALID_FILE, iconRequest.path, iconRequest.size);
+
+			SHFILEINFO fileInfo = { 0 };
+			if (SHGetFileInfo(filePath.c_str(), 0, &fileInfo, sizeof(fileInfo), SHGFI_SYSICONINDEX))
+			{
+				file.iconIndex = fileInfo.iIcon;
+			}
 		}
 	}
 
@@ -1259,14 +1127,22 @@ void MeasureFileView::UpdateTask::FinishWorkOnMainThread()
 	if (m_AbortRequested) return;
 
 	auto* measure = (MeasureFileView*)m_Requestor;
-	auto* parent = measure->m_Child->parent;
+	auto* parent = measure->m_Parent;
 	if (parent->task == this)
 	{
 		parent->task = nullptr;
 
+		if (m_TaskSuccessful && (m_NeedsUpdating || m_NeedsIcons))
+		{
+			parent->files = std::move(m_Files);
+		}
+		else if (m_NeedsUpdating)
+		{
+			parent->files.clear();
+		}
+
 		if (m_NeedsUpdating)
 		{
-			parent->files = m_TaskSuccessful ? std::move(m_Files) : std::vector<FileInfo>();
 			parent->fileCount = m_TaskSuccessful ? m_FileCount : 0;
 			parent->folderCount = m_TaskSuccessful ? m_FolderCount : 0;
 			parent->folderSize = m_TaskSuccessful ? m_FolderSize : 0;
@@ -1374,137 +1250,4 @@ void MeasureFileView::UpdateTask::GetFolderInfo(std::queue<std::wstring>& folder
 		} while (FindNextFile(find, &fd) && !m_AbortRequested);
 		FindClose(find);
 	}
-}
-
-void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize)
-{
-	SHFILEINFO shFileInfo = { 0 };
-	HICON icon = nullptr;
-	HIMAGELIST* hImageList = nullptr;
-	FILE* fp = nullptr;
-
-	// Special case for .url files
-	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
-	{
-		WCHAR buffer[MAX_PATH] = { 0 };
-		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, _countof(buffer), filePath.c_str());
-		if (*buffer)
-		{
-			std::wstring file = buffer;
-			int iconIndex = 0;
-
-			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, _countof(buffer), filePath.c_str());
-			if (wcscmp(buffer, L"-1") != 0)
-			{
-				iconIndex = _wtoi(buffer);
-			}
-
-			int size = 16;
-			switch (iconSize)
-			{
-			case IS_EXLARGE: size = 256; break;
-			case IS_LARGE: size = 48; break;
-			case IS_MEDIUM: size = 32; break;
-			}
-
-			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
-		}
-	}
-
-	if (icon == nullptr)
-	{
-		SHGetFileInfo(filePath.c_str(), 0, &shFileInfo, sizeof(shFileInfo), SHGFI_SYSICONINDEX);
-		SHGetImageList(iconSize, IID_IImageList, (void**)&hImageList);
-		((IImageList*)hImageList)->GetIcon(shFileInfo.iIcon, ILD_TRANSPARENT, &icon);
-	}
-
-	errno_t error = _wfopen_s(&fp, iconPath.c_str(), L"wb");
-	if (filePath == INVALID_FILE || icon == nullptr || (error == 0 && !SaveIcon(icon, fp)))
-	{
-		if (fp)
-		{
-			fwrite(iconPath.c_str(), 1, 1, fp);		// Clears previous icon
-			fclose(fp);
-		}
-	}
-
-	DestroyIcon(icon);
-}
-
-bool SaveIcon(HICON hIcon, FILE* fp)
-{
-	ICONINFO iconInfo = { 0 };
-	BITMAP bmColor = { 0 };
-	BITMAP bmMask = { 0 };
-	if (!fp || nullptr == hIcon || !GetIconInfo(hIcon, &iconInfo) ||
-		!GetObject(iconInfo.hbmColor, sizeof(bmColor), &bmColor) ||
-		!GetObject(iconInfo.hbmMask,  sizeof(bmMask),  &bmMask))
-		return false;
-
-	// support only 16/32 bit icon now
-	if (bmColor.bmBitsPixel != 16 && bmColor.bmBitsPixel != 32)
-		return false;
-
-	HDC dc = GetDC(nullptr);
-	BYTE bmiBytes[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)] = { 0 };
-	BITMAPINFO* bmi = (BITMAPINFO*)bmiBytes;
-
-	// color bits
-	memset(bmi, 0, sizeof(BITMAPINFO));
-	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
-	int colorBytesCount = bmi->bmiHeader.biSizeImage;
-	BYTE* colorBits = new BYTE[colorBytesCount];
-	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, colorBits, bmi, DIB_RGB_COLORS);
-
-	// mask bits
-	memset(bmi, 0, sizeof(BITMAPINFO));
-	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
-	int maskBytesCount = bmi->bmiHeader.biSizeImage;
-	BYTE* maskBits = new BYTE[maskBytesCount];
-	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, maskBits, bmi, DIB_RGB_COLORS);
-
-	ReleaseDC(nullptr, dc);
-
-	// icon data
-	BITMAPINFOHEADER bmihIcon;
-	memset(&bmihIcon, 0, sizeof(bmihIcon));
-	bmihIcon.biSize      = sizeof(BITMAPINFOHEADER);
-	bmihIcon.biWidth     = bmColor.bmWidth;
-	bmihIcon.biHeight    = bmColor.bmHeight * 2;	// icXOR + icAND
-	bmihIcon.biPlanes    = bmColor.bmPlanes;
-	bmihIcon.biBitCount  = bmColor.bmBitsPixel;
-	bmihIcon.biSizeImage = colorBytesCount + maskBytesCount;
-
-	// icon header
-	ICONDIR dir = { 0 };
-	dir.idReserved = 0;		// must be 0
-	dir.idType = 1;			// 1 for icons
-	dir.idCount = 1;
-	dir.idEntries[0].bWidth        = (BYTE)bmColor.bmWidth;
-	dir.idEntries[0].bHeight       = (BYTE)bmColor.bmHeight;
-	dir.idEntries[0].bColorCount   = 0;		// 0 if >= 8bpp
-	dir.idEntries[0].bReserved     = 0;		// must be 0
-	dir.idEntries[0].wPlanes       = bmColor.bmPlanes;
-	dir.idEntries[0].wBitCount     = bmColor.bmBitsPixel;
-	dir.idEntries[0].dwBytesInRes  = sizeof(bmihIcon) + bmihIcon.biSizeImage;
-	dir.idEntries[0].dwImageOffset = sizeof(ICONDIR);
-
-	fwrite(&dir,      sizeof(dir),      1, fp);
-	fwrite(&bmihIcon, sizeof(bmihIcon), 1, fp);
-	fwrite(colorBits, colorBytesCount,  1, fp);
-	fwrite(maskBits,  maskBytesCount,   1, fp);
-
-	// Clean up
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
-	delete [] colorBits;
-	colorBits = nullptr;
-	delete [] maskBits;
-	maskBits = nullptr;
-
-	fclose(fp);
-
-	return true;
 }

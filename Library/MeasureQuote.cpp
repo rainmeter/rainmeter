@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureQuote.h"
@@ -33,11 +28,11 @@ MeasureQuote::~MeasureQuote()
 {
 }
 
-void MeasureQuote::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_PathName = parser.ReadString(section, L"PathName", L"");
+	parser.ReadString(m_PathName, section, L"PathName", L"");
 	m_Skin->MakePathAbsolute(m_PathName);
 
 	if (PathIsDirectory(m_PathName.c_str()))
@@ -68,7 +63,7 @@ void MeasureQuote::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_Separator = parser.ReadString(section, L"Separator", L"\n");
+		parser.ReadString(m_Separator, section, L"Separator", L"\n");
 		m_Files.clear();
 	}
 }

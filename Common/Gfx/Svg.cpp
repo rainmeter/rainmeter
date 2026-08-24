@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Svg.h"
@@ -11,6 +6,31 @@
 #include "StringUtil.h"
 
 #include <Shlwapi.h>
+
+namespace {
+
+// Applies |attribute| to |element| and all of its descendants. Failures are ignored since an
+// attribute is rarely valid for every element in the document.
+void SetAttributeRecursive(ID2D1SvgElement* element, const WCHAR* attribute, const WCHAR* value)
+{
+	if (!element->IsTextContent())
+	{
+		element->SetAttributeValue(attribute, D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value);
+	}
+
+	Microsoft::WRL::ComPtr<ID2D1SvgElement> child;
+	element->GetFirstChild(child.GetAddressOf());
+	while (child)
+	{
+		SetAttributeRecursive(child.Get(), attribute, value);
+
+		Microsoft::WRL::ComPtr<ID2D1SvgElement> next;
+		if (FAILED(element->GetNextChild(child.Get(), next.GetAddressOf()))) break;
+		child = std::move(next);
+	}
+}
+
+}  // namespace
 
 namespace Gfx {
 
@@ -58,6 +78,42 @@ HRESULT Svg::Load(const Canvas& canvas)
 		m_Size = D2D1::SizeF(0.0f, 0.0f);
 	}
 	return hr;
+}
+
+HRESULT Svg::SetAttribute(const std::wstring& selector, const std::wstring& attribute, const std::wstring& value)
+{
+	if (!m_Document || selector.empty() || attribute.empty()) return E_INVALIDARG;
+
+	Microsoft::WRL::ComPtr<ID2D1SvgElement> root;
+	m_Document->GetRoot(root.GetAddressOf());
+	if (!root) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+	if (selector == L"*")
+	{
+		SetAttributeRecursive(root.Get(), attribute.c_str(), value.c_str());
+	}
+	else
+	{
+		HRESULT hr = S_OK;
+		Microsoft::WRL::ComPtr<ID2D1SvgElement> element;
+		if (_wcsicmp(selector.c_str(), L"svg") == 0)
+		{
+			element = root;
+		}
+		else
+		{
+			hr = m_Document->FindElementById(selector.c_str(), element.GetAddressOf());
+		}
+		if (FAILED(hr)) return hr;
+		if (!element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+		hr = element->SetAttributeValue(attribute.c_str(), D2D1_SVG_ATTRIBUTE_STRING_TYPE_SVG, value.c_str());
+		if (FAILED(hr)) return hr;
+	}
+
+	// Root width, height, and viewBox overrides can change the meter's intrinsic size.
+	m_Size = GetIntrinsicSize();
+	return m_Document->SetViewportSize(m_Size);
 }
 
 D2D1_SIZE_F Svg::GetIntrinsicSize() const

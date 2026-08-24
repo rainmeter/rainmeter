@@ -1,15 +1,11 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #pragma once
 
 #include "Meter.h"
 #include "AspectRatioMode.h"
 #include <memory>
+#include <vector>
 
 namespace Gfx {
 class Svg;
@@ -32,18 +28,29 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
 	virtual bool IsFixedSize(bool overwrite = false)
 	{
 		return overwrite ? true : m_SvgImage.empty();
 	}
 
 private:
+	struct SvgAttribute
+	{
+		std::wstring selector;
+		std::wstring attribute;
+		std::wstring value;
+
+		bool operator==(const SvgAttribute&) const = default;
+	};
+
 	bool LoadSvg();
+	void ApplySvgAttributes();
 	void UpdateSize();
 
 	std::wstring m_SvgImage;
+	std::vector<SvgAttribute> m_SvgAttributes;
 	std::unique_ptr<Gfx::Svg> m_Svg;
 	AspectRatioMode m_AspectRatioMode;
 	bool m_LoadAttempted;

@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/CriticalSection.h"
@@ -109,19 +104,11 @@ void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-bool ReadInheritOptionIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
+// A plugin can read options from any section, so MeterStyle should only be inherited when the
+// section being read is actually a meter.
+bool AllowMeterStyleInheritance(MeasurePlugin* measure, LPCWSTR section)
 {
-	if (parser.ReadInheritOption(section))
-	{
-		return true;
-	}
-
-	if (measure->GetSkin()->GetMeter(section))
-	{
-		return parser.ReadInheritOption(section, true);
-	}
-
-	return false;
+	return measure->GetSkin()->GetMeter(section) != nullptr;
 }
 
 // Previously, a skin with W=100 was actually 100 pixels on the screen. After we implemented
@@ -171,7 +158,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 	}
 
 	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 	return result;
 }
@@ -187,11 +174,8 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	ReadInheritOptionIfNeeded(measure, parser, section);
-	LPCWSTR result = parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
-	parser.ClearInheritChain();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadString(section, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
@@ -228,11 +212,8 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	ReadInheritOptionIfNeeded(measure, parser, section);
-	const double result = parser.ReadFloat(section, option, defValue);
-	parser.ClearInheritChain();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadFloat(section, option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
@@ -404,7 +385,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	ConfigParser* parser = GetRainmeter().GetCurrentParser();
 	if (parser)
 	{
-		return parser->ReadString(section, option, defValue, false).c_str();
+		return parser->ReadString(section, option, defValue, { .sectionVariables = false }).c_str();
 	}
 
 	return defValue;

@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWindowMessage.h"
@@ -24,12 +19,12 @@ MeasureWindowMessage::~MeasureWindowMessage()
 {
 }
 
-void MeasureWindowMessage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_WindowName = parser.ReadString(section, L"WindowName", L"");
-	m_WindowClass = parser.ReadString(section, L"WindowClass", L"");
+	parser.ReadString(m_WindowName, section, L"WindowName", L"");
+	parser.ReadString(m_WindowClass, section, L"WindowClass", L"");
 
 	m_Message = 0;
 	m_WParam = 0;

@@ -1,18 +1,15 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_COMMANDHANDLER_H_
-#define RM_LIBRARY_COMMANDHANDLER_H_
+#pragma once
 
 #include <Windows.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class ConfigParser;
+class Measure;
+class Meter;
 class Skin;
 
 enum class Bang
@@ -59,7 +56,6 @@ enum class Bang
 	SetAnchor,
 	SetZoomFactor,
 	ZPos,
-	ChangeZPos,
 	ClickThrough,
 	Draggable,
 	SnapEdges,
@@ -126,39 +122,29 @@ enum class Bang
 	LsBoxHook
 };
 
+enum class BangTarget : BYTE
+{
+	Default,
+	Skin
+};
+
+using MeterBangFunc = void (*)(Meter* meter, std::vector<std::wstring>& args, Skin* skin);
+using MeasureBangFunc = void (*)(Measure* measure, std::vector<std::wstring>& args, Skin* skin);
+using SkinBangFunc = void (*)(std::vector<std::wstring>& args, Skin* skin);
+
 // Parses and executes commands and bangs.
 class CommandHandler
 {
 public:
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
-	void ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 
 	static void RunCommand(std::wstring command);
 	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
 
 	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
 
-	static void DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoToggleSkinBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoLoadLayoutBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoSetClipBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoAboutBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoDebugBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoManageBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoTrayMenuBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoResetStatsBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoLogBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoRefreshApp(std::vector<std::wstring>& args, Skin* skin);
-	static void DoQuitBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoEditSkinBang(std::vector<std::wstring>& args, Skin* skin);
-	static void DoSetWindowPositionBang(std::vector<std::wstring>& args, Skin* skin);
-
-	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
+	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
+	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
+	static void RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc);
 };
-
-#endif

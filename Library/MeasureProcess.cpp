@@ -1,9 +1,4 @@
-/* Copyright (C) 2020 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureProcess.h"
@@ -20,11 +15,11 @@ MeasureProcess::~MeasureProcess()
 {
 }
 
-void MeasureProcess::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureProcess::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_ProcessNameLowercase = parser.ReadString(section, L"ProcessName", L"");
+	parser.ReadString(m_ProcessNameLowercase, section, L"ProcessName", L"");
 	StringUtil::ToLowerCase(m_ProcessNameLowercase);
 }
 

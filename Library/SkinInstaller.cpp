@@ -1,25 +1,15 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
+#include "Language.h"
 #include "resource.h"
 #include "SkinInstaller.h"
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 GlobalData g_Data;
-
-OsNameVersion g_OsNameVersions[] =
-{
-	{ L"8", L"6.2" },
-	{ L"10", L"10.0" }
-};
 
 EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 {
@@ -103,6 +93,14 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 			MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 			return 1;
 		}
+	}
+
+	// Load the language before creating a dialog, since its controls use GetString().
+	const std::wstring languageDirectory = g_Data.programPath + L"Languages\\";
+	if (!GetLanguage().LoadFromSettings(languageDirectory, g_Data.iniFile))
+	{
+		MessageBox(nullptr, L"Unable to load language file", L"Rainmeter", MB_ERROR);
+		return 1;
 	}
 
 	std::wstring layoutsPath = g_Data.settingsPath + L"Layouts\\";

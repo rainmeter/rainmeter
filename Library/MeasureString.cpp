@@ -1,15 +1,11 @@
-/* Copyright (C) 2014 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureString.h"
 #include "Rainmeter.h"
 
 MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_String(),
 	m_StringValue()
 {
@@ -19,11 +15,13 @@ MeasureString::~MeasureString()
 {
 }
 
-void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureString::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_String = parser.ReadString(section, L"String", L"");
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
+
+	parser.ReadString(m_String, section, L"String", L"");
 
 	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{
@@ -37,7 +35,7 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void MeasureString::UpdateValue()
 {
 	m_StringValue = m_String;
-	m_Value = _wtof(m_String.c_str());
+	m_Value = LocaleUtil::StringToNumber(m_String.c_str(), m_NumberFormat);
 }
 
 const WCHAR* MeasureString::GetStringValue()

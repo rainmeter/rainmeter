@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureActionTimer.h"
@@ -11,6 +6,7 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
+#include "../Common/StringParser.h"
 
 class MeasureActionTimer::ActionTimerTask : public AsyncTask
 {
@@ -121,30 +117,36 @@ MeasureActionTimer::~MeasureActionTimer()
 	}
 }
 
-void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureActionTimer::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
 	size_t index = 1;
-	std::wstring action = parser.ReadString(section, L"ActionList1", L"", false);
+	std::wstring action = parser.ReadString(section, L"ActionList1", L"", { .sectionVariables = false });
 	while (!action.empty())
 	{
-		std::vector<std::wstring> tokens = ConfigParser::Tokenize(action, L"|");
+		std::vector<std::wstring> tokens;
+		StringParser::Split(action, L'|', tokens);
+
 		for (size_t i = 0; i < tokens.size(); ++i)
 		{
-			if (_wcsnicmp(tokens[i].c_str(), L"REPEAT ", 7) == 0)
+			StringParser token(tokens[i]);
+			if (token.Consume(L"REPEAT "))
 			{
-				std::vector<std::wstring> repeat = ConfigParser::Tokenize(tokens[i].substr(7), L",");
-				if (repeat.size() == 3)
+				// "REPEAT ActionName, WaitTime, Count"
+				std::wstring name(token.ConsumeUntil(L',', StringParser::SkipWhitespace));
+				std::wstring waitTime(token.ConsumeUntil(L',', StringParser::SkipWhitespace));
+				std::wstring count(token.ConsumeUntilOrRest(L',', StringParser::SkipWhitespace));
+				if (!name.empty() && !waitTime.empty() && !count.empty() && token.IsConsumed())
 				{
 					tokens.erase(tokens.begin() + i);
 
-					parser.ReplaceMeasures(repeat[1]);
-					parser.ReplaceMeasures(repeat[2]);
+					parser.ReplaceMeasures(waitTime);
+					parser.ReplaceMeasures(count);
 
-					const std::wstring repeatedAction = parser.ReadString(section, repeat[0].c_str(), L"[]", false);
-					const std::wstring wait = L"Wait " + repeat[1];
-					const int size = (_wtoi(repeat[2].c_str()) * 2) - 1;
+					const std::wstring repeatedAction = parser.ReadString(section, name.c_str(), L"[]", { .sectionVariables = false });
+					const std::wstring wait = L"Wait " + waitTime;
+					const int size = (_wtoi(count.c_str()) * 2) - 1;
 					if (size <= 0)
 					{
 						continue;
@@ -159,13 +161,13 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 					i += j - 1;
 				}
 			}
-			else if (_wcsnicmp(tokens[i].c_str(), L"WAIT ", 5) == 0)
+			else if (token.Consume(L"WAIT "))
 			{
 				parser.ReplaceMeasures(tokens[i]);
 			}
 			else
 			{
-				tokens[i] = parser.ReadString(section, tokens[i].c_str(), L"[]", false);
+				tokens[i] = parser.ReadString(section, tokens[i].c_str(), L"[]", { .sectionVariables = false });
 			}
 		}
 
@@ -183,7 +185,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"ActionList%zu", ++index);
-		action = parser.ReadString(section, buffer, L"", false);
+		parser.ReadString(action, section, buffer, L"", { .sectionVariables = false });
 	}
 
 	m_IgnoreWarnings = parser.ReadInt(section, L"IgnoreWarnings", 0) != 0;

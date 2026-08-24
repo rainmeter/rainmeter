@@ -24,6 +24,7 @@ $languages = [ordered]@{
 	'de'      = @{ nsis = 'German'; lcid = 1031 }
 	'el'      = @{ nsis = 'Greek'; lcid = 1032 }
 	'he'      = @{ nsis = 'Hebrew'; lcid = 1037 }
+	'hr'      = @{ nsis = 'Croatian'; lcid = 1050 }
 	'hu'      = @{ nsis = 'Hungarian'; lcid = 1038 }
 	'id'      = @{ nsis = 'Indonesian'; lcid = 1057 }
 	'it'      = @{ nsis = 'Italian'; lcid = 1040 }
@@ -77,6 +78,43 @@ function Get-ResourceIds {
 	}
 
 	return $ids
+}
+
+# Rainmeter strings use %1 and {0} style placeholders, while the NSIS installer strings use
+# $INSTDIR and ${VERSION_SHORT} style variables.
+$placeholderRegex = [regex]'%[0-9]|\{[0-9]+\}|\$\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9_]+'
+$argumentPlaceholderRegex = [regex]'^(%[0-9]|\{[0-9]+\})$'
+
+# Returns the distinct placeholders of a string.
+function Get-Placeholder {
+	param([string]$Value)
+
+	return @($placeholderRegex.Matches($Value) | ForEach-Object { $_.Value } | Sort-Object -Unique)
+}
+
+# A translation that drops or misspells a placeholder leaves the text with an unsubstituted
+# variable, and an argument placeholder that has no matching argument crashes Rainmeter when the
+# string is formatted. Additional NSIS variables are allowed since they always expand.
+function Assert-Placeholder {
+	param(
+		[string]$Key,
+		[string]$Value,
+		[string]$BaseValue,
+		[string]$Path
+	)
+
+	$expected = Get-Placeholder -Value $BaseValue
+	$actual = Get-Placeholder -Value $Value
+
+	$missing = @($expected | Where-Object { $actual -notcontains $_ })
+	if ($missing.Count -gt 0) {
+		throw "Missing placeholder $($missing -join ', ') for $Key in $Path"
+	}
+
+	$unexpected = @($actual | Where-Object { $expected -notcontains $_ -and $argumentPlaceholderRegex.IsMatch($_) })
+	if ($unexpected.Count -gt 0) {
+		throw "Unexpected placeholder $($unexpected -join ', ') for $Key in $Path"
+	}
 }
 
 function Read-LanguageFile {
@@ -152,6 +190,7 @@ function Read-LanguageFile {
 		$mergedInstallerStrings = New-Object System.Collections.Generic.List[object]
 		foreach ($string in $BaseLanguage.InstallerStrings) {
 			$value = if ($installerStrings.Contains($string.Key) -and $installerStrings[$string.Key].Length -gt 0) { $installerStrings[$string.Key] } else { $string.Value }
+			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
 			[void]$mergedInstallerStrings.Add([pscustomobject]@{ Key = $string.Key; Value = $value })
 			$installerStrings.Remove($string.Key)
 		}
@@ -162,6 +201,7 @@ function Read-LanguageFile {
 		$mergedRuntimeStrings = New-Object System.Collections.Generic.List[object]
 		foreach ($string in $BaseLanguage.RuntimeStrings) {
 			$value = if ($runtimeStrings.Contains($string.Key) -and $runtimeStrings[$string.Key].Value.Length -gt 0) { $runtimeStrings[$string.Key].Value } else { $string.Value }
+			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
 			[void]$mergedRuntimeStrings.Add([pscustomobject]@{ Key = $string.Key; Id = $string.Id; Value = $value })
 			$runtimeStrings.Remove($string.Key)
 		}

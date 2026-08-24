@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Measure.h"
@@ -33,19 +28,19 @@ IfActions::~IfActions()
 {
 }
 
-void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
+	parser.ReadString(m_AboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 
-	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
+	parser.ReadString(m_BelowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
 	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 
-	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
+	parser.ReadString(m_EqualAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
-void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// IfCondition options
 	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);
@@ -53,8 +48,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	if (!condition.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -77,9 +72,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 				if (condition.empty()) break;
 
 				key = L"IfTrueAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfFalseAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			}
 			while (!tAction.empty() || !fAction.empty());
 		}
@@ -99,8 +94,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
 	if (!match.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -123,9 +118,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 				if (match.empty()) break;
 
 				key = L"IfMatchAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfNotMatchAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			} while (!tAction.empty() || !fAction.empty());
 		}
 		else

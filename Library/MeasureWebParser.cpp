@@ -1,9 +1,4 @@
-/* Copyright (C) 2005 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWebParser.h"
@@ -11,8 +6,14 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/CharacterEntityReference.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
+#include <rapidjson/pointer.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* description);
 
@@ -173,8 +174,6 @@ CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
 UINT g_InstanceCount = 0;
 
-static std::vector<MeasureWebParser*> g_Measures;
-
 #define OVECCOUNT 300    // should be a multiple of 3
 
 void SetupGlobalProxySetting()
@@ -225,7 +224,23 @@ void ClearProxySetting(ProxySetting& setting)
 	setting.agent.clear();
 }
 
+namespace {
+
+void DoUpdateDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureWebParser*)measure)->ResetCounter();
+}
+
+void DoResetDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureWebParser*)measure)->ResetValue();
+}
+
+}  // namespace
+
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_NumberFormat(LocaleUtil::NumberFormat::Default),
+	m_ParseType(ParseType::RegExp),
 	m_Codepage(),
 	m_StringIndex(),
 	m_StringIndex2(),
@@ -241,7 +256,13 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_FetchTask(),
 	m_DownloadTask()
 {
-	g_Measures.push_back(this);
+	static const bool s_BangsRegistered = []()
+	{
+		const UINT typeId = TypeID<MeasureWebParser>();
+		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:UpdateData", 0, DoUpdateDataBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:ResetData", 0, DoResetDataBang);
+		return true;
+	} ();
 
 	if (g_InstanceCount == 0)
 	{
@@ -282,9 +303,6 @@ MeasureWebParser::~MeasureWebParser()
 
 	ClearProxySetting(m_Proxy);
 
-	auto iter = std::find(g_Measures.begin(), g_Measures.end(), this);
-	g_Measures.erase(iter);
-
 	--g_InstanceCount;
 	if (g_InstanceCount == 0)
 	{
@@ -293,11 +311,13 @@ MeasureWebParser::~MeasureWebParser()
 	}
 }
 
-void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWebParser::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	std::wstring url = parser.ReadString(section, L"Url", L"", false);
+	m_NumberFormat = ReadNumberFormatOption(parser, section);
+
+	std::wstring url = parser.ReadString(section, L"Url", L"", { .sectionVariables = false });
 
 	// Parse new-style variables without parsing old-style section variables
 	if (parser.ContainsKeyedSectionVariable(url))
@@ -323,12 +343,30 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
 	}
 
-	m_RegExp = parser.ReadString(section, L"RegExp", L"");
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
-	m_OnRegExpErrAction = parser.ReadString(section, L"OnRegExpErrorAction", L"", false);
-	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
-	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
-	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
+	parser.ReadString(m_Expression, section, L"RegExp", L"");
+	if (!parser.GetLastDefaultUsed())
+	{
+		m_ParseType = ParseType::RegExp;
+	}
+	else
+	{
+		parser.ReadString(m_Expression, section, L"JsonPointer", L"");
+		m_ParseType = parser.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
+
+		// |JsonPointer=1| enables JSON parsing without resolving a value for this measure.
+		// Only child measures will resolve values from the parsed document. Note that "1" is
+		// not a valid pointer expression (those must be empty or start with "/"), so there is
+		// no ambiguity here.
+		if (m_ParseType == ParseType::JsonPointer && m_Expression == L"1")
+		{
+			m_Expression.clear();
+		}
+	}
+	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnRegExpErrAction, section, L"OnRegExpErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnConnectErrAction, section, L"OnConnectErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OnDownloadErrAction, section, L"OnDownloadErrorAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_ErrorString, section, L"ErrorString", L"");
 	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
 
 	int index = parser.ReadInt(section, L"StringIndex", 0);
@@ -352,7 +390,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_DownloadFolder = L"DownloadFile\\";
 		GetSkin()->MakePathAbsolute(m_DownloadFolder);
-		m_DownloadFile = parser.ReadString(section, L"DownloadFile", L"");
+		parser.ReadString(m_DownloadFile, section, L"DownloadFile", L"");
 	}
 	else
 	{
@@ -363,7 +401,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (m_Debug == 2)
 	{
 		std::wstring oldDebugFileLocation = m_DebugFileLocation;
-		m_DebugFileLocation = parser.ReadString(section, L"Debug2File", L"WebParserDump.txt");
+		parser.ReadString(m_DebugFileLocation, section, L"Debug2File", L"WebParserDump.txt");
 		GetSkin()->MakePathAbsolute(m_DebugFileLocation);
 
 		if (_wcsicmp(oldDebugFileLocation.c_str(), m_DebugFileLocation.c_str()) != 0)
@@ -380,67 +418,66 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (!szFlags.empty())
 		{
 			// Flags: https://docs.microsoft.com/en-us/windows/win32/api/wininet/nf-wininet-internetopenurlw#parameters
-			std::vector<std::wstring> tokens = ConfigParser::Tokenize(szFlags, L"|");
-			for (const auto& token : tokens)
+			StringParser::ForEachToken(szFlags, L'|', [&](std::wstring_view token)
 			{
-				const WCHAR* flag = token.c_str();
-				if (_wcsicmp(flag, L"ForceReload") == 0)
+				StringParser flag(token);
+				if (flag.ConsumeRest(L"ForceReload"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_RELOAD;
 				}
-				else if (_wcsicmp(flag, L"Resync") == 0)
+				else if (flag.ConsumeRest(L"Resync"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_RESYNCHRONIZE;
 				}
-				else if (_wcsicmp(flag, L"NoCookies") == 0)
+				else if (flag.ConsumeRest(L"NoCookies"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_COOKIES;
 				}
-				else if (_wcsicmp(flag, L"Hyperlink") == 0)
+				else if (flag.ConsumeRest(L"Hyperlink"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_HYPERLINK;
 				}
-				else if (_wcsicmp(flag, L"TempFile") == 0)
+				else if (flag.ConsumeRest(L"TempFile"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NEED_FILE;
 				}
-				else if (_wcsicmp(flag, L"NoAuth") == 0)
+				else if (flag.ConsumeRest(L"NoAuth"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_AUTH;
 				}
-				else if (_wcsicmp(flag, L"NoCacheWrite") == 0)
+				else if (flag.ConsumeRest(L"NoCacheWrite"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_NO_CACHE_WRITE;
 				}
-				else if (_wcsicmp(flag, L"PragmaNoCache") == 0)
+				else if (flag.ConsumeRest(L"PragmaNoCache"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_PRAGMA_NOCACHE;
 				}
-				else if (_wcsicmp(flag, L"Secure") == 0)
+				else if (flag.ConsumeRest(L"Secure"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_SECURE;
 				}
-				else if (_wcsicmp(flag, L"IgnoreCertName") == 0)
+				else if (flag.ConsumeRest(L"IgnoreCertName"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_CN_INVALID;
 				}
-				else if (_wcsicmp(flag, L"IgnoreCertDate") == 0)
+				else if (flag.ConsumeRest(L"IgnoreCertDate"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_CERT_DATE_INVALID;
 				}
-				else if (_wcsicmp(flag, L"IgnoreHTTPRedirect") == 0)
+				else if (flag.ConsumeRest(L"IgnoreHTTPRedirect"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP;
 				}
-				else if (_wcsicmp(flag, L"IgnoreHTTPSRedirect") == 0)
+				else if (flag.ConsumeRest(L"IgnoreHTTPSRedirect"))
 				{
 					m_InternetOpenUrlFlags |= INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS;
 				}
 				else
 				{
-					LogErrorF(this, L"Invalid flag: %s", flag);
+					LogErrorF(this, L"Invalid flag: %.*s", (int)token.length(), token.data());
 				}
-			}
+			});
 		}
 	}
 }
@@ -449,7 +486,7 @@ void MeasureWebParser::UpdateValue()
 {
 	m_Value = 0.0;  // Default "number" value to 0
 
-	if (m_Download && m_RegExp.empty() && m_Url.find(L'[') == std::wstring::npos)
+	if (m_Download && m_ParseType == ParseType::RegExp && m_Expression.empty() && m_Url.find(L'[') == std::wstring::npos)
 	{
 		if (!m_DownloadTask)
 		{
@@ -469,7 +506,7 @@ void MeasureWebParser::UpdateValue()
 	{
 		if (!m_ResultString.empty())
 		{
-			m_Value = wcstod(m_ResultString.c_str(), nullptr);
+			m_Value = LocaleUtil::StringToNumber(m_ResultString.c_str(), m_NumberFormat);
 		}
 
 		if (m_Url.size() > 0 && m_Url.find(L'[') == std::wstring::npos)
@@ -502,6 +539,17 @@ void MeasureWebParser::UpdateValue()
 			}
 		}
 	}
+}
+
+void MeasureWebParser::AdvanceUpdateCounter(UINT count)
+{
+	Measure::AdvanceUpdateCounter(count);
+
+	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
+	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
+
+	m_UpdateCounter += count;
+	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
 }
 
 const WCHAR* MeasureWebParser::GetStringValue()
@@ -562,27 +610,45 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		utf16Data = true;
 	}
 
+	std::wstring buffer;
+	std::wstring_view data((const WCHAR*)rawData, rawSize / sizeof(WCHAR));
+	if (!utf16Data)
+	{
+		buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
+		data = buffer;
+	}
+
+	const bool doErrorAction = m_ParseType == ParseType::JsonPointer ? ParseJsonPointer(data) : ParseRegExp(data);
+
+	if (m_Download)
+	{
+		StartDownloadTask();
+	}
+
+	if (doErrorAction && !m_OnRegExpErrAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
+	}
+	else if (!m_Download && !m_FinishAction.empty())
+	{
+		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
+	}
+}
+
+bool MeasureWebParser::ParseRegExp(std::wstring_view input)
+{
 	const char* error = nullptr;
 	int ovector[OVECCOUNT] = { 0 };
 	int rc = 0;
 	bool doErrorAction = false;
+	const WCHAR* data = input.data();
 
 	// Compile the regular expression in the first argument
-	Pcre re(m_RegExp.c_str(), &error);
+	Pcre re(m_Expression.c_str(), &error);
 	if (re)
 	{
 		// Compilation succeeded: match the subject in the second argument
-		std::wstring buffer;
-		auto data = (const WCHAR*)rawData;
-		DWORD dataLength = rawSize / 2;
-		if (!utf16Data)
-		{
-			buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
-			data = buffer.c_str();
-			dataLength = (DWORD)buffer.length();
-		}
-
-		rc = re.Execute(std::wstring_view(data, dataLength), 0, ovector, OVECCOUNT);
+		rc = re.Execute(input, 0, ovector, OVECCOUNT);
 		if (rc >= 0)
 		{
 			if (rc == 0)
@@ -630,61 +696,55 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 				}
 
 				// Update the references
-				auto i = g_Measures.begin();
-				std::wstring compareStr = L"[";
-				compareStr += GetOriginalName();
-				compareStr += L']';
-				for ( ; i != g_Measures.end(); ++i)
+				for (auto* baseMeasure : GetSkin()->GetMeasures())
 				{
-					if (GetSkin() == (*i)->GetSkin() &&
-						StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos)
-					{
-						if ((*i)->m_StringIndex < rc)
-						{
-							const WCHAR* match = data + ovector[2 * (*i)->m_StringIndex];
-							int matchLen = ovector[2 * (*i)->m_StringIndex + 1] - ovector[2 * (*i)->m_StringIndex];
-							if (!(*i)->m_RegExp.empty())
-							{
-								// Change the index and parse the substring
-								int index = (*i)->m_StringIndex;
-								(*i)->m_StringIndex = (*i)->m_StringIndex2;
-								(*i)->ParseData((BYTE*)match, matchLen * 2, true);
-								(*i)->m_StringIndex = index;
-							}
-							else
-							{
-								// Substitude the [measure] with result
-								(*i)->m_ResultString = (*i)->m_Url;
-								(*i)->m_ResultString.replace(
-									StringUtil::CaseInsensitiveFind((*i)->m_ResultString, compareStr),
-									compareStr.size(), match, matchLen);
-								CharacterEntityReference::Decode((*i)->m_ResultString, (*i)->m_DecodeCharacterReference, (*i)->m_DecodeCodePoints);
+					auto [measure, measurePos, measureLength] = FindMeasureUrlReference(baseMeasure);
+					if (!measure) continue;
 
-								// Start download threads for the references
-								if ((*i)->m_Download)
-								{
-									(*i)->StartDownloadTask();
-								}
-							}
+					if (measure->m_StringIndex < rc)
+					{
+						const WCHAR* match = data + ovector[2 * measure->m_StringIndex];
+						int matchLen = ovector[2 * measure->m_StringIndex + 1] - ovector[2 * measure->m_StringIndex];
+						if (measure->m_ParseType == ParseType::JsonPointer || !measure->m_Expression.empty())
+						{
+							// Change the index and parse the substring
+							int index = measure->m_StringIndex;
+							measure->m_StringIndex = measure->m_StringIndex2;
+							measure->ParseData((BYTE*)match, matchLen * 2, true);
+							measure->m_StringIndex = index;
 						}
 						else
 						{
-							if (m_LogSubstringErrors) LogWarningF(*i, L"Not enough substrings");
+							// Substitude the [measure] with result
+							measure->m_ResultString = measure->m_Url;
+							measure->m_ResultString.replace(
+								measurePos, measureLength, match, matchLen);
+							CharacterEntityReference::Decode(measure->m_ResultString, measure->m_DecodeCharacterReference, measure->m_DecodeCodePoints);
 
-							// Clear the old result
-							(*i)->m_ResultString.clear();
-							if ((*i)->m_Download)
+							// Start download threads for the references
+							if (measure->m_Download)
 							{
-								if ((*i)->m_DownloadFile.empty())  // cache mode
-								{
-									if (!(*i)->m_DownloadedFile.empty())
-									{
-										// Delete old downloaded file
-										DeleteFile((*i)->m_DownloadedFile.c_str());
-									}
-								}
-								(*i)->m_DownloadedFile.clear();
+								measure->StartDownloadTask();
 							}
+						}
+					}
+					else
+					{
+						if (m_LogSubstringErrors) LogWarningF(measure, L"Not enough substrings");
+
+						// Clear the old result
+						measure->m_ResultString.clear();
+						if (measure->m_Download)
+						{
+							if (measure->m_DownloadFile.empty())  // cache mode
+							{
+								if (!measure->m_DownloadedFile.empty())
+								{
+									// Delete old downloaded file
+									DeleteFile(measure->m_DownloadedFile.c_str());
+								}
+							}
+							measure->m_DownloadedFile.clear();
 						}
 					}
 				}
@@ -699,17 +759,12 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 			m_ResultString = m_ErrorString;
 
 			// Update the references
-			auto i = g_Measures.begin();
-			std::wstring compareStr = L"[";
-			compareStr += GetOriginalName();
-			compareStr += L']';
-			for ( ; i != g_Measures.end(); ++i)
+			for (auto* baseMeasure : GetSkin()->GetMeasures())
 			{
-				if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-					(GetSkin() == (*i)->GetSkin()))
-				{
-					(*i)->m_ResultString = (*i)->m_ErrorString;
-				}
+				auto* measure = FindMeasureUrlReference(baseMeasure).measure;
+				if (!measure) continue;
+
+				measure->m_ResultString = measure->m_ErrorString;
 			}
 		}
 	}
@@ -720,19 +775,95 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		doErrorAction = true;
 	}
 
-	if (m_Download)
+	return doErrorAction;
+}
+
+bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
+{
+	using JsonEncoding = rapidjson::UTF16LE<wchar_t>;
+	using JsonDocument = rapidjson::GenericDocument<JsonEncoding>;
+	using JsonValue = rapidjson::GenericValue<JsonEncoding>;
+	using JsonPointer = rapidjson::GenericPointer<JsonValue>;
+	using JsonStringBuffer = rapidjson::GenericStringBuffer<JsonEncoding>;
+	using JsonWriter = rapidjson::Writer<JsonStringBuffer, JsonEncoding, JsonEncoding>;
+
+	JsonDocument json;
+	json.Parse(data.data(), data.length());
+	bool doErrorAction = false;
+	if (!json.HasParseError())
 	{
-		StartDownloadTask();
+		auto updateResult = [&json](MeasureWebParser* measure)
+		{
+			JsonPointer pointer(measure->m_Expression.data(), measure->m_Expression.length());
+			if (!pointer.IsValid())
+			{
+				LogErrorF(measure, L"JsonPointer error: %S", rapidjson::GetPointerParseError_En(pointer.GetParseErrorCode()));
+				measure->m_ResultString = measure->m_ErrorString;
+				return false;
+			}
+
+			const JsonValue* value = pointer.Get(json);
+			if (!value)
+			{
+				LogErrorF(measure, L"JsonPointer error: Value not found");
+				measure->m_ResultString = measure->m_ErrorString;
+				return false;
+			}
+
+			if (value->IsString())
+			{
+				measure->m_ResultString.assign(value->GetString(), value->GetStringLength());
+			}
+			else
+			{
+				JsonStringBuffer buffer;
+				JsonWriter writer(buffer);
+				if (!value->Accept(writer))
+				{
+					LogErrorF(measure, L"JSON value conversion error");
+					measure->m_ResultString = measure->m_ErrorString;
+					return false;
+				}
+				measure->m_ResultString.assign(buffer.GetString(), buffer.GetLength());
+			}
+
+			return true;
+		};
+
+		// An empty expression (|JsonPointer=1|) means the measure itself does not resolve
+		// a value from the document.
+		if (!m_Expression.empty())
+		{
+			doErrorAction = !updateResult(this);
+		}
+
+		for (auto* baseMeasure : GetSkin()->GetMeasures())
+		{
+			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
+			if (!measure || measure->m_Expression.empty()) continue;
+
+			if (updateResult(measure) && measure->m_Download)
+			{
+				measure->StartDownloadTask();
+			}
+		}
+	}
+	else
+	{
+		LogErrorF(this, L"JSON parse error: %S", rapidjson::GetParseError_En(json.GetParseError()));
+		m_ResultString = m_ErrorString;
+		doErrorAction = true;
+
+		for (auto* baseMeasure : GetSkin()->GetMeasures())
+		{
+			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
+			if (!measure) continue;
+
+			measure->m_ResultString = measure->m_ErrorString;
+		}
 	}
 
-	if (doErrorAction && !m_OnRegExpErrAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_OnRegExpErrAction.c_str(), GetSkin());
-	}
-	else if (!m_Download && !m_FinishAction.empty())
-	{
-		GetRainmeter().DelayedExecuteCommand(m_FinishAction.c_str(), GetSkin());
-	}
+	return doErrorAction;
 }
 
 void MeasureWebParser::StartDownloadTask()
@@ -742,7 +873,7 @@ void MeasureWebParser::StartDownloadTask()
 
 	std::wstring url;
 
-	if (m_RegExp.empty() && m_ResultString.empty())
+	if (m_ParseType == ParseType::RegExp && m_Expression.empty() && m_ResultString.empty())
 	{
 		if (!m_Url.empty() && m_Url[0] != L'[')
 		{
@@ -1099,45 +1230,71 @@ void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* de
 	}
 }
 
+void MeasureWebParser::ResetCounter()
+{
+	if (m_FetchTask)
+	{
+		m_FetchTask->AbortWhenPossible();
+		m_FetchTask = nullptr;
+	}
+
+	if (m_DownloadTask)
+	{
+		m_DownloadTask->AbortWhenPossible();
+		m_DownloadTask = nullptr;
+	}
+
+	m_UpdateCounter = 0;
+}
+
+void MeasureWebParser::ResetValue()
+{
+	m_ResultString.clear();
+	m_DownloadedFile.clear();
+
+	for (auto* baseMeasure : GetSkin()->GetMeasures())
+	{
+		auto* measure = FindMeasureUrlReference(baseMeasure).measure;
+		if (!measure) continue;
+
+		measure->m_ResultString.clear();
+		measure->m_DownloadedFile.clear();
+	}
+}
+
 void MeasureWebParser::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	// Kill the threads (if any) and reset the update counter
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
-		if (m_FetchTask)
-		{
-			m_FetchTask->AbortWhenPossible();
-			m_FetchTask = nullptr;
-		}
-
-		if (m_DownloadTask)
-		{
-			m_DownloadTask->AbortWhenPossible();
-			m_DownloadTask = nullptr;
-		}
-
-		m_UpdateCounter = 0;
+		ResetCounter();
 	}
 	else if (_wcsicmp(args, L"RESET") == 0)
 	{
-		m_ResultString.clear();
-		m_DownloadedFile.clear();
-
-		// Update the references
-		auto i = g_Measures.begin();
-		std::wstring compareStr = L"[";
-		compareStr += GetOriginalName();
-		compareStr += L']';
-		for (; i != g_Measures.end(); ++i)
-		{
-			if ((StringUtil::CaseInsensitiveFind((*i)->m_Url, compareStr) != std::wstring::npos) &&
-				(GetSkin() == (*i)->GetSkin()))
-			{
-				(*i)->m_ResultString.clear();
-				(*i)->m_DownloadedFile.clear();
-			}
-		}
+		ResetValue();
 	}
+}
+
+MeasureWebParser::ReferenceMatch MeasureWebParser::FindMeasureUrlReference(Measure* measure) const
+{
+	const std::wstring& measureName = GetOriginalName();
+	if (measure == this || measure->GetTypeID() != TypeID<MeasureWebParser>()) return {};
+
+	const std::wstring& url = ((MeasureWebParser*)measure)->m_Url;
+	size_t start = url.find(L'[');
+	while (start != std::wstring::npos)
+	{
+		const size_t end = start + measureName.size() + 1;
+		if (end < url.size() &&
+			_wcsnicmp(url.c_str() + start + 1, measureName.data(), measureName.size()) == 0 &&
+			url[end] == L']')
+		{
+			return { (MeasureWebParser*)measure, start, measureName.size() + 2 };
+		}
+
+		start = url.find(L'[', start + 1);
+	}
+
+	return {};
 }

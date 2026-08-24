@@ -1,12 +1,6 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_GFX_BITMAP_H_
-#define RM_GFX_BITMAP_H_
+#pragma once
 
 #include "Canvas.h"
 
@@ -83,6 +77,7 @@ public:
 	std::wstring& GetPath() { return m_Path; }
 
 	HRESULT Load(const Canvas& canvas);
+	HRESULT LoadFromIcon(const Canvas& canvas, HICON icon, float scale = 1.0f);
 
 	Util::EffectStream* CreateEffectStream();
 	bool GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color);
@@ -121,5 +116,3 @@ private:
 };
 
 }  // namespace Gfx
-
-#endif

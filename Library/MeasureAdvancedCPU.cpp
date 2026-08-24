@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureAdvancedCPU.h"
@@ -40,7 +35,7 @@ MeasureAdvancedCPU::~MeasureAdvancedCPU()
 	CPerfSnapshot::CleanUp();
 }
 
-void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -51,7 +46,7 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		ReadProcessList(value, m_Includes);
 	}
 
-	value = parser.ReadString(section, L"CPUExclude", L"");
+	parser.ReadString(value, section, L"CPUExclude", L"");
 	if (_wcsicmp(value.c_str(), m_ExcludesCache.c_str()) != 0)
 	{
 		m_ExcludesCache = value;
@@ -60,7 +55,7 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_TopProcess = parser.ReadInt(section, L"TopProcess", 0);
 
-	if (!m_MaxValueDefined)
+	if (!parser.IsValueDefined(section, L"MaxValue"))
 	{
 		m_MaxValue = 10000000.0;
 		m_LogMaxValue = false;

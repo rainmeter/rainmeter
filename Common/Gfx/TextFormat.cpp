@@ -1,51 +1,320 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "TextFormat.h"
 #include "Canvas.h"
 #include "Util/D2DUtil.h"
 #include "Util/DWriteHelpers.h"
-#include "TextInlineFormat/TextInlineFormatCase.h"
-#include "TextInlineFormat/TextInlineFormatCharacterSpacing.h"
-#include "TextInlineFormat/TextInlineFormatColor.h"
-#include "TextInlineFormat/TextInlineFormatFace.h"
-#include "TextInlineFormat/TextInlineFormatGradientColor.h"
-#include "TextInlineFormat/TextInlineFormatItalic.h"
-#include "TextInlineFormat/TextInlineFormatNone.h"
-#include "TextInlineFormat/TextInlineFormatOblique.h"
-#include "TextInlineFormat/TextInlineFormatShadow.h"
-#include "TextInlineFormat/TextInlineFormatSize.h"
-#include "TextInlineFormat/TextInlineFormatStretch.h"
-#include "TextInlineFormat/TextInlineFormatStrikethrough.h"
-#include "TextInlineFormat/TextInlineFormatTypography.h"
-#include "TextInlineFormat/TextInlineFormatUnderline.h"
-#include "TextInlineFormat/TextInlineFormatWeight.h"
-#include "../ParseUtil.h"
+#include "FontCollection.h"
+#include "../StringUtil.h"
 
 namespace {
 
-int Clamp(int value, int _min, int _max)
-{
-	if (value < _min || value > _max)
-	{
-		value = max(_min, value);
-		value = min(value, _max);
-	}
-
-	return value;
-}
+template<typename... Ts>
+struct Overloaded : Ts... { using Ts::operator()...; };
 
 }  // namespace
 
 namespace Gfx {
 
-TextFormat::TextFormat(const MathParser& mathParser) :
-	m_MathParser(mathParser),
+namespace {
+
+// The ranges an option applies to. Empty ranges are not applied to anything.
+template<typename Func>
+void ForEachRange(const std::vector<DWRITE_TEXT_RANGE>& ranges, Func&& func)
+{
+	for (const auto& range : ranges)
+	{
+		if (range.length <= 0) continue;
+
+		func(range);
+	}
+}
+
+// The device resources |state| draws with, built on first use.
+template<typename T>
+T& GetCache(TextInlineOptionState& state)
+{
+	if (!std::holds_alternative<T>(state.cache))
+	{
+		state.cache.emplace<T>();
+	}
+
+	return std::get<T>(state.cache);
+}
+
+HRESULT GetHitTestMetrics(IDWriteTextLayout* layout, std::vector<DWRITE_HIT_TEST_METRICS>& metrics,
+	const DWRITE_TEXT_RANGE& range)
+{
+	UINT32 count = 0;
+	HRESULT hr = layout->HitTestTextRange(range.startPosition, range.length, 0, 0, nullptr, 0, &count);
+	if (FAILED(hr))
+	{
+		// The first call fails to tell how many metrics there are to ask for.
+		if (count == 0) return hr;
+
+		metrics.resize(count);
+		hr = layout->HitTestTextRange(range.startPosition, range.length, 0, 0, &metrics[0],
+			(UINT32)metrics.size(), &count);
+	}
+
+	return hr;
+}
+
+void BuildInlineGradientBrushes(const InlineSetting::GradientColor& setting,
+	const std::vector<DWRITE_TEXT_RANGE>& ranges, InlineGradientCache& cache,
+	ID2D1DeviceContext* target, IDWriteTextLayout* layout)
+{
+	// The brushes belong to the layout they were built from, so they all go before new ones are
+	// built, rather than being kept for the ranges that happen to be unchanged.
+	cache.subs.clear();
+
+	if (!target || !layout || setting.stops.empty()) return;
+
+	cache.subs.resize(ranges.size());
+
+	for (size_t i = 0; i < ranges.size(); ++i)
+	{
+		if (ranges[i].length <= 0) continue;
+
+		std::vector<DWRITE_HIT_TEST_METRICS> metrics;
+		if (FAILED(GetHitTestMetrics(layout, metrics, ranges[i]))) continue;
+
+		auto& sub = cache.subs[i];
+		for (const auto& hit : metrics)
+		{
+			Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> collection;
+			HRESULT hr = target->CreateGradientStopCollection(
+				&setting.stops[0],
+				(UINT32)setting.stops.size(),
+				setting.altGamma ? D2D1_GAMMA_1_0 : D2D1_GAMMA_2_2,
+				D2D1_EXTEND_MODE_CLAMP,
+				collection.GetAddressOf());
+
+			if (FAILED(hr)) continue;
+
+			const D2D1_POINT_2F start = Util::FindEdgePoint(
+				setting.angle, hit.left, hit.top, hit.width + hit.left, hit.height + hit.top);
+			const D2D1_POINT_2F end = Util::FindEdgePoint(
+				setting.angle + 180.0f, hit.left, hit.top, hit.width + hit.left, hit.height + hit.top);
+
+			Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> gradientBrush;
+			hr = target->CreateLinearGradientBrush(
+				D2D1::LinearGradientBrushProperties(start, end),
+				collection.Get(),
+				gradientBrush.GetAddressOf());
+
+			if (FAILED(hr)) continue;
+
+			sub.innerRanges.push_back({ hit.textPosition, hit.length });
+			sub.brushes.push_back(gradientBrush);
+		}
+	}
+}
+
+void ApplyInlineGradient(InlineGradientCache& cache, IDWriteTextLayout* layout,
+	const D2D1_POINT_2F* point, bool beforeDrawing = true)
+{
+	if (!point || (beforeDrawing && !layout)) return;
+
+	// Because the gradient needs to know the drawing position, we need a way to set that position
+	// before drawing time, and then remove that same position after drawing time in case the
+	// position changes on the next iteration.
+	const FLOAT sign = beforeDrawing ? 1.0f : -1.0f;
+
+	for (auto& sub : cache.subs)
+	{
+		for (size_t i = 0; i < sub.brushes.size(); ++i)
+		{
+			const auto& brush = sub.brushes[i];
+			if (!brush) continue;
+
+			D2D1_POINT_2F start = brush->GetStartPoint();
+			D2D1_POINT_2F end = brush->GetEndPoint();
+
+			start.x += sign * point->x;
+			start.y += sign * point->y;
+			end.x += sign * point->x;
+			end.y += sign * point->y;
+
+			brush->SetStartPoint(start);
+			brush->SetEndPoint(end);
+
+			if (beforeDrawing)
+			{
+				layout->SetDrawingEffect(brush.Get(), sub.innerRanges[i]);
+			}
+		}
+	}
+}
+
+D2D1_VECTOR_4F ToVector4F(const D2D1_COLOR_F& color)
+{
+	return D2D1::Vector4F(color.r, color.g, color.b, color.a);
+}
+
+void DrawInlineShadow(const InlineSetting::Shadow& setting, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+	InlineShadowCache& cache, ID2D1DeviceContext* target, IDWriteTextLayout* layout,
+	ID2D1SolidColorBrush* solidBrush, const UINT32 strLen, const D2D1_RECT_F& drawRect)
+{
+	if (!target || !layout) return;
+
+	// In order to make a shadow effect using the built-in D2D effect, we first need to make
+	// certain parts of the string transparent. We then draw only the parts of the string we
+	// we want a shadow for onto a memory bitmap. From this bitmap we can create the shadow
+	// effect and draw it.
+
+	const D2D1_COLOR_F& color = Util::c_Transparent_Color_F;
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> transparent;
+	HRESULT hr = target->CreateSolidColorBrush(color, transparent.GetAddressOf());
+	if (FAILED(hr)) return;
+
+	// Only change characters outside of the range(s) transparent
+	for (UINT32 i = 0; i < strLen; ++i)
+	{
+		bool found = false;
+		for (const auto& range : ranges)
+		{
+			if (range.length <= 0) continue;
+
+			if (i >= range.startPosition && i < (range.startPosition + range.length))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			DWRITE_TEXT_RANGE temp = { i, 1 };
+			layout->SetDrawingEffect(transparent.Get(), temp);
+		}
+	}
+
+	const D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
+	const D2D1_SIZE_F drawSize = D2D1::SizeF(drawRect.right, drawRect.bottom);
+	FLOAT dpiX = 0.0f, dpiY = 0.0f;
+	target->GetDpi(&dpiX, &dpiY);
+
+	// Reset the shadow bitmap if the drawing position, size, or DPI of target has changed.
+	if (cache.bitmapTarget && (
+		drawRect.left != cache.previousPosition.left ||
+		drawRect.top != cache.previousPosition.top ||
+		drawRect.right != cache.previousPosition.right ||
+		drawRect.bottom != cache.previousPosition.bottom))
+	{
+		cache.bitmapTarget.Reset();
+	}
+	else if (cache.bitmapTarget)
+	{
+		FLOAT bitmapDpiX = 0.0f, bitmapDpiY = 0.0f;
+		cache.bitmapTarget->GetDpi(&bitmapDpiX, &bitmapDpiY);
+		if (dpiX != bitmapDpiX || dpiY != bitmapDpiY)
+		{
+			cache.bitmapTarget.Reset();
+		}
+	}
+
+	cache.bitmap.Reset();
+
+	if (!cache.bitmapTarget)
+	{
+		hr = target->CreateCompatibleRenderTarget(drawSize, cache.bitmapTarget.GetAddressOf());
+		if (FAILED(hr)) return;
+		cache.previousPosition = drawRect;
+	}
+
+	// Draw onto memory bitmap target
+	// Note: Hardware acceleration seems to keep the bitmap render target in memory
+	// even though it is cleared, so manually "Clear" with a transparent color.
+	cache.bitmapTarget->BeginDraw();
+	cache.bitmapTarget->Clear(color);
+	cache.bitmapTarget->DrawTextLayout(D2D1::Point2F(0.0f, 0.0f), layout, solidBrush);
+	cache.bitmapTarget->EndDraw();
+
+	hr = cache.bitmapTarget->GetBitmap(cache.bitmap.GetAddressOf());
+	if (FAILED(hr)) return;
+
+	// Create shadow effect
+	Microsoft::WRL::ComPtr<ID2D1Effect> shadow;
+	hr = target->CreateEffect(CLSID_D2D1Shadow, shadow.GetAddressOf());
+	if (FAILED(hr)) return;
+
+	// Load shadow options to effect
+	shadow->SetInput(0, cache.bitmap.Get());
+	shadow->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, setting.blur);
+	shadow->SetValue(D2D1_SHADOW_PROP_COLOR, ToVector4F(setting.color));
+	shadow->SetValue(D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_SPEED);
+
+	// Draw effect
+	target->DrawImage(shadow.Get(), Util::AddPoint2F(drawPosition, setting.offset));
+}
+
+void ApplyCharacterSpacing(IDWriteTextLayout* layout, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+	const InlineSetting::CharacterSpacing& setting)
+{
+	ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& range)
+	{
+		Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+		HRESULT hr = layout->QueryInterface(__uuidof(IDWriteTextLayout1), &textLayout1);
+		if (FAILED(hr)) return;
+
+		// Whatever the option leaves out stays at the value the layout already has.
+		FLOAT leading = FLT_MAX, trailing = FLT_MAX, advanceWidth = -1.0f;
+		hr = textLayout1->GetCharacterSpacing(range.startPosition, &leading, &trailing, &advanceWidth);
+		if (FAILED(hr)) return;
+
+		if (setting.leading != FLT_MAX) leading = setting.leading;
+		if (setting.trailing != FLT_MAX) trailing = setting.trailing;
+		if (setting.advanceWidth >= 0.0f) advanceWidth = setting.advanceWidth;
+
+		textLayout1->SetCharacterSpacing(leading * (4.0f / 3.0f), trailing * (4.0f / 3.0f),
+			advanceWidth * (4.0f / 3.0f), range);
+	});
+}
+
+void ApplyColor(ID2D1DeviceContext* target, IDWriteTextLayout* layout,
+	const std::vector<DWRITE_TEXT_RANGE>& ranges, const InlineSetting::Color& setting)
+{
+	if (!target || !layout) return;
+
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = target->CreateSolidColorBrush(setting.color, solidBrush.GetAddressOf());
+	if (FAILED(hr)) return;
+
+	ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& range)
+	{
+		layout->SetDrawingEffect(solidBrush.Get(), range);
+	});
+}
+
+void ApplyCase(std::wstring& str, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+	const InlineSetting::Case& setting)
+{
+	for (const auto& range : ranges)
+	{
+		// The ranges were found in the string as it was when the inline options were last updated,
+		// which is not necessarily the string being formatted here.
+		if (range.startPosition >= str.length()) continue;
+
+		const size_t count = min((size_t)range.length, str.length() - range.startPosition);
+		if (count == 0) continue;
+
+		WCHAR* text = &str[range.startPosition];
+		switch (setting.type)
+		{
+		case CaseType::Lower: StringUtil::ToLowerCase(text, count); break;
+		case CaseType::Upper: StringUtil::ToUpperCase(text, count); break;
+		case CaseType::Proper: StringUtil::ToProperCase(text, count); break;
+		case CaseType::Sentence: StringUtil::ToSentenceCase(text, count); break;
+		}
+	}
+}
+
+}  // namespace
+
+TextFormat::TextFormat() :
 	m_HorizontalAlignment(HorizontalAlignment::Left),
 	m_VerticalAlignment(VerticalAlignment::Top),
 	m_FontWeight(-1),
@@ -53,13 +322,15 @@ TextFormat::TextFormat(const MathParser& mathParser) :
 	m_ExtraHeight(),
 	m_LineGap(),
 	m_Trimming(),
-	m_HasInlineOptionsChanged(false)
+	m_WordWrap(),
+	m_HasInlineOptionsChanged(false),
+	m_FontCollection()
 {
 }
 
 TextFormat::~TextFormat()
 {
-	m_TextInlineFormat.clear();
+	m_InlineOptions.clear();
 }
 
 void TextFormat::Dispose()
@@ -67,6 +338,7 @@ void TextFormat::Dispose()
 	m_TextFormat.Reset();
 	m_TextLayout.Reset();
 	m_InlineEllipsis.Reset();
+	m_Font.Reset();
 
 	m_ExtraHeight = 0.0f;
 	m_LineGap = 0.0f;
@@ -78,9 +350,10 @@ void TextFormat::InvalidateDeviceResources()
 	m_LastString.clear();
 	m_HasInlineOptionsChanged = true;
 
-	for (const auto& fmt : m_TextInlineFormat)
+	// The brushes and bitmaps were built on the device that is going away.
+	for (auto& state : m_InlineOptions)
 	{
-		fmt->InvalidateDeviceResources();
+		state.cache = {};
 	}
 }
 
@@ -116,12 +389,12 @@ bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& sr
 	auto CreateGradientBrushes = [&]()
 	{
 		// Build gradient brushes (if any)
-		for (const auto& fmt : m_TextInlineFormat)
+		for (auto& state : m_InlineOptions)
 		{
-			if (fmt->GetType() == Gfx::InlineType::GradientColor)
+			if (const auto* setting = std::get_if<InlineSetting::GradientColor>(&state.option.setting))
 			{
-				auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-				option->BuildGradientBrushes(target, m_TextLayout.Get());
+				BuildInlineGradientBrushes(*setting, state.ranges, GetCache<InlineGradientCache>(state),
+					target, m_TextLayout.Get());
 			}
 		}
 
@@ -200,6 +473,40 @@ bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& sr
 	}
 
 	return true;
+}
+
+Microsoft::WRL::ComPtr<IDWriteFont> TextFormat::ResolveFont() const
+{
+	// There is no way from a format to the font it resolved to, so the family name it ended up
+	// with - not the one it was asked for - goes back through the collection it came from.
+	WCHAR familyName[LF_FACESIZE];
+	Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
+	Microsoft::WRL::ComPtr<IDWriteFontFamily> family;
+	Microsoft::WRL::ComPtr<IDWriteFont> font;
+	UINT32 familyIndex = 0U;
+	BOOL exists = FALSE;
+
+	if (SUCCEEDED(m_TextFormat->GetFontFamilyName(familyName, _countof(familyName))) &&
+		SUCCEEDED(m_TextFormat->GetFontCollection(collection.GetAddressOf())) &&
+		SUCCEEDED(collection->FindFamilyName(familyName, &familyIndex, &exists)) && exists &&
+		SUCCEEDED(collection->GetFontFamily(familyIndex, family.GetAddressOf())))
+	{
+		family->GetFirstMatchingFont(
+			m_TextFormat->GetFontWeight(),
+			m_TextFormat->GetFontStretch(),
+			m_TextFormat->GetFontStyle(),
+			font.GetAddressOf());
+	}
+
+	return font;
+}
+
+bool TextFormat::HasCharacter(UINT32 ch) const
+{
+	if (!m_Font) return false;
+
+	BOOL exists = FALSE;
+	return SUCCEEDED(m_Font->HasCharacter(ch, &exists)) && exists != FALSE;
 }
 
 void TextFormat::SetProperties(
@@ -281,31 +588,13 @@ void TextFormat::SetProperties(
 		SetHorizontalAlignment(GetHorizontalAlignment());
 		SetVerticalAlignment(GetVerticalAlignment());
 
-		// Get the family name to in case CreateTextFormat() fallbacked on some other family name.
-		hr = m_TextFormat->GetFontFamilyName(dwriteFamilyName, _countof(dwriteFamilyName));
-		if (FAILED(hr)) return;
-
-		Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
-		Microsoft::WRL::ComPtr<IDWriteFontFamily> fontFamily;
-		UINT32 familyNameIndex;
-		BOOL exists;
-		if (FAILED(m_TextFormat->GetFontCollection(collection.GetAddressOf())) ||
-			FAILED(collection->FindFamilyName(dwriteFamilyName, &familyNameIndex, &exists)) ||
-			FAILED(collection->GetFontFamily(familyNameIndex, fontFamily.GetAddressOf())))
-		{
-			return;
-		}
-
-		Microsoft::WRL::ComPtr<IDWriteFont> font;
-		hr = fontFamily->GetFirstMatchingFont(
-			m_TextFormat->GetFontWeight(),
-			m_TextFormat->GetFontStretch(),
-			m_TextFormat->GetFontStyle(),
-			font.GetAddressOf());
-		if (FAILED(hr)) return;
+		// Resolved from the format rather than from what was asked for, since CreateTextFormat()
+		// may have fallen back on some other family name.
+		m_Font = ResolveFont();
+		if (!m_Font) return;
 
 		DWRITE_FONT_METRICS fmetrics;
-		font->GetMetrics(&fmetrics);
+		m_Font->GetMetrics(&fmetrics);
 
 		// GDI+ compatibility: GDI+ adds extra padding below the string when |m_AccurateText| is
 		// |false|. The bottom padding seems to be based on the font metrics so we can calculate it
@@ -316,15 +605,8 @@ void TextFormat::SetProperties(
 			(((float)fmetrics.designUnitsPerEm / 8.0f) - fmetrics.lineGap) * pixelsPerDesignUnit;
 		m_LineGap = fmetrics.lineGap * pixelsPerDesignUnit;
 
-		// 'Face' inline objects need access to the font collection.
-		for (auto& fmt : m_TextInlineFormat)
-		{
-			if (fmt->GetType() == Gfx::InlineType::Face)
-			{
-				auto face = dynamic_cast<TextInlineFormat_Face*>(fmt.get());
-				face->SetFontCollection(fontCollection);
-			}
-		}
+		// The 'Face' option needs access to the font collection.
+		m_FontCollection = fontCollection;
 	}
 	else
 	{
@@ -342,29 +624,28 @@ void TextFormat::SetFontWeight(int weight)
 	m_HasWeightChanged = true;
 }
 
-DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
+float TextFormat::GetLineGapAdjustment(std::wstring_view str) const
 {
-	UINT32 strLen = (UINT32)srcStr.length();
-	const WCHAR* str = srcStr.c_str();
+	return str.find(L'\n') == std::wstring_view::npos ? m_LineGap : 0.0f;
+}
+
+DWRITE_TEXT_METRICS TextFormat::GetMetrics(std::wstring_view str, bool gdiEmulation, float maxWidth)
+{
+	const float lineGap = GetLineGapAdjustment(str);
 
 	// GDI+ compatibility: If the last character is a newline, GDI+ measurements seem to ignore it.
-	bool strippedLastNewLine = false;
-	if (strLen > 2 && str[strLen - 1] == L'\n')
+	if (str.length() > 2 && str.back() == L'\n')
 	{
-		strippedLastNewLine = true;
-		--strLen;
-
-		if (str[strLen - 1] == L'\r')
-		{
-			--strLen;
-		}
+		str.remove_suffix(1);
+		if (str.back() == L'\r') str.remove_suffix(1);
 	}
 
+	const DWRITE_TEXT_RANGE range = { 0, (UINT32)str.length() };
 	DWRITE_TEXT_METRICS metrics = { 0 };
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
 	HRESULT hr = Canvas::c_DWFactory->CreateTextLayout(
-		str,
-		strLen,
+		str.data(),
+		range.length,
 		m_TextFormat.Get(),
 		maxWidth,
 		10000.0f,
@@ -374,7 +655,6 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 		// Set the font weight if valid
 		if (m_FontWeight > 0 && m_FontWeight < 1000)
 		{
-			const DWRITE_TEXT_RANGE range = { 0, strLen };
 			textLayout->SetFontWeight((DWRITE_FONT_WEIGHT)m_FontWeight, range);
 		}
 
@@ -387,7 +667,6 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 			textLayout.As(&textLayout1);
 
 			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0, strLen};
 			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 
@@ -401,10 +680,7 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 
 				// GDI+ compatibility: If the string contains a newline (even if it is the
 				// stripped last character), GDI+ adds the line gap to the overall height.
-				if (strippedLastNewLine || wmemchr(str, L'\n', strLen) != nullptr)
-				{
-					metrics.height += m_LineGap;
-				}
+				metrics.height += m_LineGap - lineGap;
 			}
 			else
 			{
@@ -415,10 +691,7 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 
 				// GDI+ compatibility: With accurate metrics, the line gap needs to be subtracted
 				// from the overall height if the string does not contain newlines.
-				if (!strippedLastNewLine && wmemchr(str, L'\n', strLen) == nullptr)
-				{
-					metrics.height -= m_LineGap;
-				}
+				metrics.height -= lineGap;
 			}
 		}
 		else
@@ -432,12 +705,13 @@ DWRITE_TEXT_METRICS TextFormat::GetMetrics(const std::wstring& srcStr, bool gdiE
 	return metrics;
 }
 
-void TextFormat::SetTrimming(bool trim)
+void TextFormat::SetTrimming(bool trim, bool wrap)
 {
 	m_Trimming = trim;
+	m_WordWrap = wrap;
+
 	IDWriteInlineObject* inlineObject = nullptr;
 	DWRITE_TRIMMING trimming = {};
-	DWRITE_WORD_WRAPPING wordWrapping = DWRITE_WORD_WRAPPING_NO_WRAP;
 	if (trim)
 	{
 		if (!m_InlineEllipsis)
@@ -448,11 +722,10 @@ void TextFormat::SetTrimming(bool trim)
 
 		inlineObject = m_InlineEllipsis.Get();
 		trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
-		wordWrapping = DWRITE_WORD_WRAPPING_WRAP;
 	}
 
 	m_TextFormat->SetTrimming(&trimming, inlineObject);
-	m_TextFormat->SetWordWrapping(wordWrapping);
+	UpdateWordWrapping();
 }
 
 void TextFormat::SetHorizontalAlignment(HorizontalAlignment alignment)
@@ -464,8 +737,20 @@ void TextFormat::SetHorizontalAlignment(HorizontalAlignment alignment)
 		m_TextFormat->SetTextAlignment(
 			(alignment == HorizontalAlignment::Left) ? DWRITE_TEXT_ALIGNMENT_LEADING :
 			(alignment == HorizontalAlignment::Center) ? DWRITE_TEXT_ALIGNMENT_CENTER :
+			(alignment == HorizontalAlignment::Justify) ? DWRITE_TEXT_ALIGNMENT_JUSTIFIED :
 			DWRITE_TEXT_ALIGNMENT_TRAILING);
+
+		UpdateWordWrapping();
 	}
+}
+
+void TextFormat::UpdateWordWrapping()
+{
+	if (!m_TextFormat) return;
+
+	// Justified text has nothing to stretch unless lines are allowed to wrap.
+	const bool wrap = m_WordWrap || m_HorizontalAlignment == HorizontalAlignment::Justify;
+	m_TextFormat->SetWordWrapping(wrap ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
 }
 
 void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
@@ -481,641 +766,156 @@ void TextFormat::SetVerticalAlignment(VerticalAlignment alignment)
 	}
 }
 
-void TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
+bool TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 {
-	size_t i = 0;
-	for (; i < options.size(); ++i)
+	const bool isSame = m_InlineOptions.size() == options.size() &&
+		std::equal(options.begin(), options.end(), m_InlineOptions.begin(),
+			[](const TextInlineOption& option, const TextInlineOptionState& current)
+			{
+				return option == current.option;
+			});
+
+	if (isSame) return false;
+
+	// The device resources were built from the options that are being replaced, so they go with
+	// them. They are built again when the layout the options changed is recreated.
+	m_InlineOptions.clear();
+	m_InlineOptions.reserve(options.size());
+	for (const auto& option : options)
 	{
-		std::wstring pattern = options[i].pattern.empty() ? L".*" : options[i].pattern;
-		if (!CreateInlineOption(i, pattern, options[i].settings)) break;
+		m_InlineOptions.push_back({ option });
 	}
 
-	// Remove any previous options that do not exist anymore
-	if (i < m_TextInlineFormat.size())
-	{
-		m_HasInlineOptionsChanged = true;
-		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + i, m_TextInlineFormat.end());
-	}
-}
-
-std::vector<std::wstring> TextFormat::GetInlinePatterns()
-{
-	std::vector<std::wstring> patterns;
-	patterns.reserve(m_TextInlineFormat.size());
-	for (auto& fmt : m_TextInlineFormat)
-	{
-		patterns.push_back(fmt->GetPattern());
-	}
-
-	return patterns;
+	m_HasInlineOptionsChanged = true;
+	return true;
 }
 
 void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
 {
-	const size_t count = min(m_TextInlineFormat.size(), ranges.size());
+	const size_t count = min(m_InlineOptions.size(), ranges.size());
 	for (size_t i = 0; i < count; ++i)
 	{
-		std::vector<DWRITE_TEXT_RANGE> dwriteRanges;
-		dwriteRanges.reserve(ranges[i].size());
+		auto& state = m_InlineOptions[i];
+		state.ranges.clear();
+		state.ranges.reserve(ranges[i].size());
+
 		for (const auto& range : ranges[i])
 		{
-			DWRITE_TEXT_RANGE dwriteRange = { range.start, range.length };
-			dwriteRanges.push_back(dwriteRange);
+			state.ranges.push_back({ range.start, range.length });
 		}
+	}
+}
 
-		// Gradients are set up differently then other options because they require 'inner ranges'
-		// when text is split between multiple lines - otherwise set the range.
-		if (m_TextInlineFormat[i]->GetType() == InlineType::GradientColor)
+void TextFormat::ApplyInlineFace(IDWriteTextLayout* layout, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+	const InlineSetting::Face& setting) const
+{
+	ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& range)
+	{
+		// Search for the font family name in font collection. Since the font collection might not
+		// have been built yet, build it. If the font is not in the font collection, assume it is
+		// available to the system.
+		if (m_FontCollection && m_FontCollection->InitializeCollection())
 		{
-			auto linearGradient = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[i].get());
-			size_t index = 0;
-			for (const auto& range : dwriteRanges)
+			UINT32 index = UINT_MAX;
+			BOOL exists = FALSE;
+			HRESULT hr = m_FontCollection->m_Collection->FindFamilyName(setting.face.c_str(), &index, &exists);
+			if (SUCCEEDED(hr))
 			{
-				linearGradient->UpdateSubOptions(index, range);
-				++index;
+				// Use the custom font collection (LocalFont, @Resources\Fonts) when it has the font,
+				// and the system collection when it does not.
+				layout->SetFontCollection(exists ?
+					m_FontCollection->m_Collection : m_FontCollection->c_SystemCollection.Get(), range);
 			}
 		}
-		else
-		{
-			m_TextInlineFormat[i]->SetRanges(dwriteRanges);
-		}
-	}
+
+		layout->SetFontFamilyName(setting.face.c_str(), range);
+	});
 }
 
-bool TextFormat::CreateInlineOption(const size_t index, const std::wstring pattern, std::vector<std::wstring> options)
+void TextFormat::ApplyInlineTypography(IDWriteTextLayout* layout, const std::vector<DWRITE_TEXT_RANGE>& ranges,
+	const InlineSetting::Typography& setting) const
 {
-	if (options.empty()) return false;
+	ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& range)
+	{
+		Microsoft::WRL::ComPtr<IDWriteTypography> typography;
+		HRESULT hr = Canvas::c_DWFactory->CreateTypography(typography.GetAddressOf());
+		if (FAILED(hr)) return;
 
-	const size_t optSize = options.size();
-	const WCHAR* option = options[0].c_str();
-	if (_wcsnicmp(option, L"NONE", 4) == 0)
-	{
-		UpdateInlineNone(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"CASE") == 0)
-	{
-		if (optSize > 1)
-		{
-			const WCHAR* strCase = options[1].c_str();
-			CaseType type = CaseType::None;
+		DWRITE_FONT_FEATURE feature = { setting.tag, setting.parameter };
+		hr = typography->AddFontFeature(feature);
+		if (FAILED(hr)) return;
 
-			if (_wcsicmp(strCase, L"LOWER") == 0) type = Gfx::CaseType::Lower;
-			else if (_wcsicmp(strCase, L"UPPER") == 0) type = Gfx::CaseType::Upper;
-			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
-			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
-
-			// Only allow the above options.
-			if (type == Gfx::CaseType::None) return false;
-
-			UpdateInlineCase(index, pattern, type);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
-	{
-		if (optSize > 1)
-		{
-			const MathParser& mathParser = m_MathParser;
-			auto parseOptional = [&mathParser](const WCHAR* value) -> FLOAT
-			{
-				if (_wcsnicmp(value, L"*", 1) == 0) return FLT_MAX;
-				return (FLOAT)ParseUtil::ParseDouble(value, FLT_MAX, mathParser);
-			};
-
-			FLOAT leading = parseOptional(options[1].c_str());
-			FLOAT trailing = FLT_MAX;
-			FLOAT advanceWidth = -1.0f;
-
-			if (optSize > 2)
-			{
-				trailing = parseOptional(options[2].c_str());
-			}
-
-			if (optSize > 3)
-			{
-				advanceWidth = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), -1.0f, m_MathParser);
-			}
-
-			UpdateInlineCharacterSpacing(index, pattern, leading, trailing, advanceWidth);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"COLOR") == 0)
-	{
-		if (optSize > 1)
-		{
-			D2D1_COLOR_F newColor = ParseUtil::ParseColor(options[1].c_str(), m_MathParser);
-			UpdateInlineColor(index, pattern, newColor);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"FACE") == 0)
-	{
-		if (optSize > 1)
-		{
-			UpdateInlineFace(index, pattern, options[1].c_str());
-			return true;
-		}
-	}
-	else if (_wcsnicmp(option, L"GRADIENTCOLOR", 13) == 0)
-	{
-		if (optSize >= 3)
-		{
-			bool altGamma = ParseUtil::ParseInt(option + 13, 0, m_MathParser) != 0;
-			options.erase(options.begin());
-			UpdateInlineGradientColor(index, pattern, options, altGamma);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"ITALIC") == 0)
-	{
-		UpdateInlineItalic(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"OBLIQUE") == 0)
-	{
-		UpdateInlineOblique(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"SHADOW") == 0)
-	{
-		if (optSize >= 5)
-		{
-			D2D1_POINT_2F offset = {
-				(FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 1.0, m_MathParser),
-				(FLOAT)ParseUtil::ParseDouble(options[2].c_str(), 1.0, m_MathParser) };
-
-			FLOAT blur = (FLOAT)ParseUtil::ParseDouble(options[3].c_str(), 3.0, m_MathParser);
-			D2D1_COLOR_F color = ParseUtil::ParseColor(options[4].c_str(), m_MathParser);
-			UpdateInlineShadow(index, pattern, blur, offset, color);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"SIZE") == 0)
-	{
-		if (optSize > 1)
-		{
-			FLOAT size = (FLOAT)ParseUtil::ParseDouble(options[1].c_str(), 10.0, m_MathParser);
-			UpdateInlineSize(index, pattern, size);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"STRETCH") == 0)
-	{
-		if (optSize > 1)
-		{
-			// DirectWrite supports 9 different stretch properties.
-			DWRITE_FONT_STRETCH stretch = (DWRITE_FONT_STRETCH)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser),
-				(int)DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
-				(int)DWRITE_FONT_STRETCH_ULTRA_EXPANDED);
-			UpdateInlineStretch(index, pattern, stretch);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"STRIKETHROUGH") == 0)
-	{
-		UpdateInlineStrikethrough(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"TYPOGRAPHY") == 0)
-	{
-		// Typography 'tags' need to be extactly 4 characters.
-		if (optSize > 1 && options[1].size() == 4)
-		{
-			UINT32 parameter = 1;
-			DWRITE_FONT_FEATURE_TAG tag = (DWRITE_FONT_FEATURE_TAG)
-				DWRITE_MAKE_OPENTYPE_TAG(options[1][0], options[1][1], options[1][2], options[1][3]);
-
-			if (optSize > 2)
-			{
-				parameter = ParseUtil::ParseUInt(options[2].c_str(), 1u, m_MathParser);
-			}
-
-			UpdateInlineTypography(index, pattern, tag, parameter);
-			return true;
-		}
-	}
-	else if (_wcsicmp(option, L"UNDERLINE") == 0)
-	{
-		UpdateInlineUnderline(index, pattern);
-		return true;
-	}
-	else if (_wcsicmp(option, L"WEIGHT") == 0)
-	{
-		if (optSize > 1)
-		{
-			// DirectWrite supports weight from 1 to 999.
-			DWRITE_FONT_WEIGHT weight = (DWRITE_FONT_WEIGHT)
-				Clamp(ParseUtil::ParseInt(options[1].c_str(), -1, m_MathParser), 1, 999);
-			UpdateInlineWeight(index, pattern, weight);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void TextFormat::UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Case(pattern, type));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Case)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Case*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, type))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Case(pattern, type));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern,
-	const FLOAT leading, const FLOAT trailing, const FLOAT advanceWidth)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		// The |index| is larger than the number items in the array, so build a new
-		// 'CharacterSpacing' object (in place) at the end of the array.
-
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_CharacterSpacing(pattern, leading, trailing, advanceWidth));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::CharacterSpacing)
-	{
-		// |index| is within range, and the type of object is also a 'CharacterSpacing'
-		// object, so just update the object if needed.
-
-		auto option = dynamic_cast<TextInlineFormat_CharacterSpacing*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, leading, trailing, advanceWidth))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		// |index| is within range, but the types of objects do not match, thus destroy
-		// the previous object and replace it with a new 'CharacterSpacing' object.
-
-		m_TextInlineFormat[index].reset(new TextInlineFormat_CharacterSpacing(pattern, leading, trailing, advanceWidth));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineColor(const size_t& index, const std::wstring pattern, const D2D1_COLOR_F& color)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Color(pattern, color));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Color)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Color*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, color))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Color(pattern, color));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineFace(const size_t& index, const std::wstring pattern, const WCHAR* face)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Face(pattern, face));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Face)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Face*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, face))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Face(pattern, face));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
-	const std::vector<std::wstring> args, const bool altGamma)
-{
-	const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ParseUtil::ParseDouble(args[0].c_str(), 0.0, m_MathParser), 360.0)), 360.0);
-
-	std::vector<std::wstring> tokens;
-	std::vector<D2D1_GRADIENT_STOP> stops(args.size() - 1);
-	for (size_t i = 1; i < args.size(); ++i)
-	{
-		tokens = ParseUtil::TokenizeWithPairedPunctuation(args[i], L';', PairedPunctuation::Parentheses);
-		if (tokens.size() == 2)
-		{
-			stops[i - 1].color = ParseUtil::ParseColor(tokens[0].c_str(), m_MathParser);
-			stops[i - 1].position = (FLOAT)ParseUtil::ParseDouble(tokens[1].c_str(), 0.0, m_MathParser);
-		}
-	}
-
-	// If gradient only has 1 stop, add a transparent stop at appropriate place
-	if (stops.size() == 1)
-	{
-		D2D1::ColorF color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		D2D1_GRADIENT_STOP stop = { 0.0f, color };
-		if (stops[0].position < 0.5f)
-		{
-			stop.position = 1.0f;
-		}
-
-		stops.push_back(stop);
-	}
-
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_GradientColor(pattern, angle, stops, altGamma));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::GradientColor)
-	{
-		auto option = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, angle, stops, altGamma))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_GradientColor(pattern, angle, stops, altGamma));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineItalic(const size_t& index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Italic(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Italic)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Italic*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Italic(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineNone(const size_t & index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_None(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::None)
-	{
-		auto option = dynamic_cast<TextInlineFormat_None*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_None(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineOblique(const size_t& index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Oblique(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Oblique)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Oblique*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Oblique(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineShadow(const size_t& index, const std::wstring pattern,
-	const FLOAT blur, const D2D1_POINT_2F offset, const D2D1_COLOR_F& color)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Shadow(pattern, blur, offset, color));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Shadow)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Shadow*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, blur, offset, color))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Shadow(pattern, blur, offset, color));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Size(pattern, size));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Size)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Size*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, size))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Size(pattern, size));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Stretch(pattern, stretch));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Stretch)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Stretch*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, stretch))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Stretch(pattern, stretch));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineStrikethrough(const size_t& index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Strikethrough(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Strikethrough)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Strikethrough*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Strikethrough(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineTypography(const size_t& index, const std::wstring pattern,
-	const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Typography(pattern, tag, parameter));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Typography)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Typography*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, tag, parameter))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Typography(pattern, tag, parameter));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineUnderline(const size_t& index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Underline(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Underline)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Underline*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Underline(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormat::UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Weight(pattern, weight));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Weight)
-	{
-		auto option = dynamic_cast<TextInlineFormat_Weight*>(m_TextInlineFormat[index].get());
-		if (option->CompareAndUpdateProperties(pattern, weight))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		m_TextInlineFormat[index].reset(new TextInlineFormat_Weight(pattern, weight));
-		m_HasInlineOptionsChanged = true;
-	}
+		layout->SetTypography(typography.Get(), range);
+	});
 }
 
 void TextFormat::ApplyInlineFormatting(IDWriteTextLayout* layout)
 {
-	for (const auto& fmt : m_TextInlineFormat)
+	if (!layout) return;
+
+	for (const auto& state : m_InlineOptions)
 	{
-		Gfx::InlineType type = fmt->GetType();
-		if (type != Gfx::InlineType::Color &&
-			type != Gfx::InlineType::GradientColor &&
-			type != Gfx::InlineType::Case &&
-			type != Gfx::InlineType::Shadow)
-		{
-			fmt->ApplyInlineFormat(layout);
-		}
+		const auto& ranges = state.ranges;
+		std::visit(Overloaded{
+			[&](const InlineSetting::CharacterSpacing& s) { ApplyCharacterSpacing(layout, ranges, s); },
+			[&](const InlineSetting::Face& s) { ApplyInlineFace(layout, ranges, s); },
+			[&](const InlineSetting::Italic&)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetFontStyle(DWRITE_FONT_STYLE_ITALIC, r); });
+			},
+			[&](const InlineSetting::Oblique&)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetFontStyle(DWRITE_FONT_STYLE_OBLIQUE, r); });
+			},
+			[&](const InlineSetting::Size& s)
+			{
+				FLOAT size = s.size * (4.0f / 3.0f);
+				if (size <= 0.0f) size = 0.000001f;
+
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetFontSize(size, r); });
+			},
+			[&](const InlineSetting::Stretch& s)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetFontStretch(s.stretch, r); });
+			},
+			[&](const InlineSetting::Strikethrough&)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetStrikethrough(TRUE, r); });
+			},
+			[&](const InlineSetting::Typography& s) { ApplyInlineTypography(layout, ranges, s); },
+			[&](const InlineSetting::Underline&)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetUnderline(TRUE, r); });
+			},
+			[&](const InlineSetting::Weight& s)
+			{
+				ForEachRange(ranges, [&](const DWRITE_TEXT_RANGE& r) { layout->SetFontWeight(s.weight, r); });
+			},
+
+			// These are applied when the text is drawn, or to the text itself, rather than to the
+			// layout - see ApplyInlineColoring(), ApplyInlineShadow() and ApplyInlineCase().
+			[](const InlineSetting::Case&) {},
+			[](const InlineSetting::Color&) {},
+			[](const InlineSetting::GradientColor&) {},
+			[](const InlineSetting::Shadow&) {},
+
+			// Draws the text as it would be without any option at all.
+			[](const InlineSetting::None&) {}
+		}, state.option.setting);
 	}
 }
 
 void TextFormat::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POINT_2F* point)
 {
-	// Color option
-	for (const auto& fmt : m_TextInlineFormat)
+	for (auto& state : m_InlineOptions)
 	{
-		if (fmt->GetType() == Gfx::InlineType::Color)
+		if (const auto* setting = std::get_if<InlineSetting::Color>(&state.option.setting))
 		{
-			auto option = dynamic_cast<TextInlineFormat_Color*>(fmt.get());
-			option->ApplyInlineFormat(target, m_TextLayout.Get());
+			ApplyColor(target, m_TextLayout.Get(), state.ranges, *setting);
 		}
-		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
+		else if (std::holds_alternative<InlineSetting::GradientColor>(state.option.setting))
 		{
-			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-			option->ApplyInlineFormat(m_TextLayout.Get(), point);
+			ApplyInlineGradient(GetCache<InlineGradientCache>(state), m_TextLayout.Get(), point);
 		}
 	}
 
@@ -1125,47 +925,57 @@ void TextFormat::ApplyInlineColoring(ID2D1DeviceContext* target, const D2D1_POIN
 	m_HasInlineOptionsChanged = false;
 }
 
-void TextFormat::ApplyInlineCase(std::wstring& str)
+const std::wstring& TextFormat::ApplyInlineCase(const std::wstring& srcStr, std::wstring& buffer)
 {
-	for (const auto& fmt : m_TextInlineFormat)
+	// Most strings have no case option at all, so |buffer| is only filled (and |srcStr| only
+	// copied) once one is actually found.
+	const std::wstring* str = &srcStr;
+
+	for (const auto& state : m_InlineOptions)
 	{
-		if (fmt->GetType() == Gfx::InlineType::Case)
+		if (const auto* setting = std::get_if<InlineSetting::Case>(&state.option.setting))
 		{
-			auto option = dynamic_cast<TextInlineFormat_Case*>(fmt.get());
-			option->ApplyInlineFormat(str);
+			if (str != &buffer)
+			{
+				buffer.assign(srcStr);
+				str = &buffer;
+			}
+
+			ApplyCase(buffer, state.ranges, *setting);
 		}
 	}
+
+	return *str;
 }
 
 void TextFormat::ApplyInlineShadow(ID2D1DeviceContext* target, ID2D1SolidColorBrush* solidBrush,
 	const UINT32 strLen, const D2D1_RECT_F& drawRect)
 {
-	for (const auto& fmt : m_TextInlineFormat)
+	for (auto& state : m_InlineOptions)
 	{
-		if (fmt->GetType() == Gfx::InlineType::Shadow)
-		{
-			auto option = dynamic_cast<TextInlineFormat_Shadow*>(fmt.get());
-			option->ApplyInlineFormat(target, m_TextLayout.Get(), solidBrush, strLen, drawRect);
+		const auto* setting = std::get_if<InlineSetting::Shadow>(&state.option.setting);
+		if (!setting) continue;
 
-			// We need to reset the color options after the shadow effect because the shadow effect
-			// can turn some characters invisible.
-			D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
+		DrawInlineShadow(*setting, state.ranges, GetCache<InlineShadowCache>(state), target,
+			m_TextLayout.Get(), solidBrush, strLen, drawRect);
 
-			ResetInlineColoring(solidBrush, strLen);
-			ResetGradientPosition(&drawPosition);
-			ApplyInlineColoring(target, &drawPosition);
-		}
+		// We need to reset the color options after the shadow effect because the shadow effect
+		// can turn some characters invisible.
+		const D2D1_POINT_2F drawPosition = D2D1::Point2F(drawRect.left, drawRect.top);
+
+		ResetInlineColoring(solidBrush, strLen);
+		ResetGradientPosition(&drawPosition);
+		ApplyInlineColoring(target, &drawPosition);
 	}
 }
 
 void TextFormat::ResetGradientPosition(const D2D1_POINT_2F* point)
 {
-	for (const auto& fmt : m_TextInlineFormat)
+	for (auto& state : m_InlineOptions)
 	{
-		if (fmt->GetType() == Gfx::InlineType::GradientColor)
+		if (std::holds_alternative<InlineSetting::GradientColor>(state.option.setting))
 		{
-			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-			option->ApplyInlineFormat(nullptr, point, false);
+			ApplyInlineGradient(GetCache<InlineGradientCache>(state), nullptr, point, false);
 		}
 	}
 }

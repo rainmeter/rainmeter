@@ -1,12 +1,6 @@
-/* Copyright (C) 2005 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __METERBUTTON_H__
-#define __METERBUTTON_H__
+#pragma once
 
 #include "Meter.h"
 #include "GeneralImage.h"
@@ -37,9 +31,11 @@ public:
 
 	bool HitTest2(int px, int py);
 
+	bool HasCommand() const { return !m_Command.empty(); }
+
 protected:
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
@@ -53,5 +49,3 @@ private:
 	bool m_Clicked;
 	bool m_Focus;
 };
-
-#endif

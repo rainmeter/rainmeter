@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Platform.h"
@@ -72,6 +67,18 @@ void Platform::Initialize()
 		}
 		return false;
 	} ();
+
+#if defined(_M_ARM64) || defined(_M_ARM64EC)
+	m_IsEmulatedOnArm64 = false;
+#else
+	// This is an x86/x64 binary, so an ARM64 host machine means we are being emulated.
+	// Note that |processMachine| cannot be used here: x64 processes on ARM64 are not
+	// considered WOW64 (which is 32-bit on 64-bit) and report IMAGE_FILE_MACHINE_UNKNOWN.
+	USHORT processMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	USHORT nativeMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+	m_IsEmulatedOnArm64 = IsWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine) &&
+		nativeMachine == IMAGE_FILE_MACHINE_ARM64;
+#endif
 
 	const auto buildNumber = std::to_wstring(GetVersionInfo().dwBuildNumber);
 

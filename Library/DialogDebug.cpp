@@ -1,13 +1,10 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
+#include "ContextMenu.h"
+#include "Language.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
@@ -129,10 +126,10 @@ void DialogDebug::Open(int tab)
 	}
 
 	c_Dialog->ShowDialogWindow(
-		GetString(IDS_Debug),
+		GetString(IDS_DebugRainmeter),
 		0, 0, 600, 400,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -600,10 +597,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 			CheckMenuItem(menu, Id_DebugModeMenuItem,
 				MF_BYCOMMAND | (GetRainmeter().GetDebug() ? MF_CHECKED : MF_UNCHECKED));
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -655,10 +649,7 @@ INT_PTR DialogDebug::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 					MF_BYCOMMAND | MF_GRAYED);
 			}
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 			SetFocus(GetControl(Id_LogListView));
 		}
@@ -751,6 +742,7 @@ public:
 		Id_ExplanationLabel,
 		Id_Edit,
 		Id_Result,
+		Id_CopyButton,
 		Id_ExecuteButton,
 		Id_AddButton,
 		Id_CancelButton
@@ -763,7 +755,7 @@ public:
 		m_EditIndex = (size_t)-1;
 
 		ShowDialogWindow(
-			GetString(IDS_AddWatchTitle),
+			GetString(IDS_AddWatch),
 			0, 0, 400, 176,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
@@ -833,6 +825,7 @@ public:
 		SendMessage(resultItem, WM_SETREDRAW, TRUE, 0);
 		RedrawWindow(resultItem, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 
+		EnableWindow(GetControl(Id_CopyButton), !result.empty());
 		EnableWindow(GetControl(Id_ExecuteButton), m_Owner.m_SkinWindow && result.starts_with(L"[!"));
 	}
 
@@ -908,8 +901,11 @@ private:
 			Control::Edit(Id_Result, 0,
 				6, 96, 388, 50,
 				WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 0),
+			Control::Button(Id_CopyButton, IDS_Copy,
+				6, 156, 75, 14,
+				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(Id_ExecuteButton, IDS_Execute,
-				157, 156, 75, 14,
+				87, 156, 75, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(Id_AddButton, IDS_Add,
 				238, 156, 75, 14,
@@ -951,6 +947,21 @@ private:
 			{
 				UpdateLabel();
 				UpdateResult();
+			}
+			break;
+
+		case Id_CopyButton:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				HWND result = GetControl(Id_Result);
+				const int length = GetWindowTextLength(result);
+				if (length > 0)
+				{
+					std::wstring text(length + 1, L'\0');
+					GetWindowText(result, &text[0], length + 1);
+					text.resize(length);
+					System::SetClipboardText(text);
+				}
 			}
 			break;
 
@@ -1064,10 +1075,10 @@ void DialogDebug::TabSkins::Create(HWND owner)
 			415, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_BOTTOM_RIGHT),
-		Control::Button(Id_AddWatchButton, IDS_AddWatchEllipsis,
+		Control::Button(Id_AddWatchButton, IDS_AddWatch,
 			495, 320, 75, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
-			Control::ANCHOR_BOTTOM_RIGHT)
+			Control::ANCHOR_BOTTOM_RIGHT | Control::ELLIPSIS)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -1407,21 +1418,14 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		}
 
 		WCHAR buffer[256];
-		// Number value
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", (*j)->GetValue());
 		Measure::RemoveTrailingZero(buffer, bufferLen);
 		std::wstring numValue = buffer;
 
-		// String value
-		std::wstring strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-		if (strValue.length() > 259)
-		{
-			strValue.erase(256);
-			strValue += L"...";
-		}
-
+		auto* strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+		auto truncatedValue = StringUtil::TruncateWithEllipsis(strValue, 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)numValue.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)strValue.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)truncatedValue.c_str());
 		++lvi.iItem;
 	}
 
@@ -1444,14 +1448,6 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 
 		lvi.pszText = (WCHAR*)tmpStr->c_str();
 
-		// Truncate and add "..." if necessary
-		std::wstring valStr = (*iter).second;
-		if (valStr.length() > 259)
-		{
-			valStr.erase(256);
-			valStr += L"...";
-		}
-
 		if (lvi.iItem < count)
 		{
 			ListView_SetItem(item, &lvi);
@@ -1461,6 +1457,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
+		auto valStr = StringUtil::TruncateWithEllipsis((*iter).second, 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)valStr.c_str());
 		++lvi.iItem;
@@ -1483,13 +1480,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 			ListView_InsertItem(item, &lvi);
 		}
 
-		std::wstring result = m_PanelWatch->Evaluate(watch.text, watch.formula);
-		if (result.length() > 259)
-		{
-			result.erase(256);
-			result += L"...";
-		}
-
+		auto result = StringUtil::TruncateWithEllipsis(m_PanelWatch->Evaluate(watch.text, watch.formula), 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)L"");
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)result.c_str());
 		++lvi.iItem;
@@ -1588,10 +1579,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (index > 0)
 			{
-				RECT r;
-				GetWindowRect((HWND)lParam, &r);
-				TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left, --r.bottom, 0, m_Window, nullptr);
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			}
 
 			DestroyMenu(menu);
@@ -1630,11 +1618,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			AppendMenu(menu, MF_STRING | (groups[2] ? 0 : MF_GRAYED),
 				Id_JumpWatches, GetString(IDS_Watch));
 
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				GetRainmeter().IsLanguageRTL() ? r.right : r.left, r.bottom, 0, m_Window, nullptr);
-
+			Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 		}
 		break;
@@ -1642,9 +1626,18 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_SkinMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED && m_SkinWindow)
 		{
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-			GetRainmeter().ShowContextMenu({ r.left, r.bottom }, m_SkinWindow, GetParent(m_Window));
+			HMENU menu = ContextMenu::CreateSkinMenu(m_SkinWindow);
+			if (menu)
+			{
+				const UINT command = Dialog::ShowMenuButtonPopupMenu(
+					menu, (HWND)lParam, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
+				if (command)
+				{
+					ContextMenu::SendMenuCommand(menu, command, m_SkinWindow->GetWindow());
+				}
+
+				DestroyMenu(menu);
+			}
 		}
 		break;
 
@@ -1977,7 +1970,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				{
 					MENU_ITEM(IDM_ADD_WATCH, 0),
 					MENU_SEPARATOR(),
-					MENU_ITEM(IDM_COPY, IDS_CopyToClipboard)
+					MENU_ITEM(IDM_COPY, IDS_Copy)
 				};
 
 				static const MenuTemplate s_WatchMenu[] =
@@ -2008,9 +2001,9 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						auto setMenuItem = [&](const UINT id, const UINT cmd) -> void
 						{
-							std::wstring name = GetString(id);
+							std::wstring name = GetString(IDS_Copy);
 							name += L": ";
-							name += GetString(IDS_CopyToClipboard);
+							name += GetString(id);
 							ModifyMenu(menu, cmd, MF_BYCOMMAND, cmd, name.c_str());
 						};
 
@@ -2021,7 +2014,6 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 					POINT pt = System::GetCursorPosition();
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,

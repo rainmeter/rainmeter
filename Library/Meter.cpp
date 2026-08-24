@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Meter.h"
@@ -11,6 +6,7 @@
 #include "MeterBar.h"
 #include "MeterHistogram.h"
 #include "MeterString.h"
+#include "MeterTextEdit.h"
 #include "MeterImage.h"
 #include "MeterSvg.h"
 #include "MeterLine.h"
@@ -21,6 +17,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/StringUtil.h"
 
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
@@ -144,7 +141,6 @@ void Meter::SetX(int x)
 	m_X = x;
 	m_RelativeX = POSITION_ABSOLUTE;
 
-	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[16] = { 0 };
 	_itow_s(x, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
@@ -155,7 +151,6 @@ void Meter::SetY(int y)
 	m_Y = y;
 	m_RelativeY = POSITION_ABSOLUTE;
 
-	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[16] = { 0 };
 	_itow_s(y, buffer, 10);
 	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
@@ -166,6 +161,30 @@ RECT Meter::GetMeterRect()
 	int x = GetX();
 	int y = GetY();
 	return { x, y, x + m_W, y + m_H };
+}
+
+void Meter::SetW(int w)
+{
+	m_W = w;
+	m_WDefined = true;
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(w - GetWidthPadding(), buffer, 10);
+	m_Skin->GetParser().SetValue(m_Name, L"W", buffer);
+
+	m_Skin->RequestWindowSizeCheck();
+}
+
+void Meter::SetH(int h)
+{
+	m_H = h;
+	m_HDefined = true;
+
+	WCHAR buffer[16] = { 0 };
+	_itow_s(h - GetHeightPadding(), buffer, 10);
+	m_Skin->GetParser().SetValue(m_Name, L"H", buffer);
+
+	m_Skin->RequestWindowSizeCheck();
 }
 
 D2D1_RECT_F Meter::GetMeterRectPadding()
@@ -286,10 +305,8 @@ void Meter::Hide()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	parser.ReadInheritOption(section, true);
-
 	Section::ReadOptions(parser, section);
 
 	BindMeasures(parser, section);
@@ -350,32 +367,33 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
+	// m_W and m_H hold the size with the padding already added, so the padding that is in them is
+	// needed to get back to the base size below.
+	const int oldWidthPadding = GetWidthPadding();
+	const int oldHeightPadding = GetHeightPadding();
+
 	static const D2D1_RECT_F defPadding = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
-	const int oldW = m_W;
 	const bool oldWDefined = m_WDefined;
-	const int widthPadding = GetWidthPadding();
 
-	const int w = parser.ReadInt(section, L"W", m_W);
+	const int w = parser.ReadInt(section, L"W", m_W - oldWidthPadding);
 	m_WDefined = parser.GetLastValueDefined();
 
-	if (IsFixedSize(true)) m_W = w;
-	if (!m_Initialized || oldW != (m_W - widthPadding)) m_W += widthPadding;
+	// Meters that size themselves to their content add the padding when they do so, so only the
+	// size that comes from the option is padded here.
+	if (IsFixedSize(true)) m_W = w + GetWidthPadding();
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
 	}
 
-	const int oldH = m_H;
 	const bool oldHDefined = m_HDefined;
-	const int heightPadding = GetHeightPadding();
 
-	const int h = parser.ReadInt(section, L"H", m_H);
+	const int h = parser.ReadInt(section, L"H", m_H - oldHeightPadding);
 	m_HDefined = parser.GetLastValueDefined();
 
-	if (IsFixedSize(true)) m_H = h;
-	if (!m_Initialized || oldH != (m_H - heightPadding)) m_H += heightPadding;
+	if (IsFixedSize(true)) m_H = h + GetHeightPadding();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
@@ -399,9 +417,9 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Mouse.ReadOptions(parser, section);
 
-	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
-	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
-	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
+	parser.ReadString(m_ToolTipText, section, L"ToolTipText", L"");
+	parser.ReadString(m_ToolTipTitle, section, L"ToolTipTitle", L"");
+	parser.ReadString(m_ToolTipIcon, section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
 	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_Skin->GetMeterToolTipHidden());
@@ -422,12 +440,10 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	ReadContainerOptions(parser, section);
 }
 
-void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
+void Meter::ReadContainerOptions(ConfigParser& parser, std::wstring_view section)
 {
-	parser.ReadInheritOption(section, true);
-
 	const std::wstring& container = parser.ReadString(section, L"Container", L"");
-	if (_wcsicmp(section, container.c_str()) == 0)
+	if (StringUtil::EqualsIgnoreCase(section, container))
 	{
 		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
 		return;
@@ -467,19 +483,19 @@ void Meter::ReadContainerOptions(ConfigParser& parser, const WCHAR* section)
 
 void Meter::ReadOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
 	ReadOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 void Meter::ReadContainerOptions(ConfigParser& parser)
 {
+	ConfigParser::InheritChainScope inheritChain(parser, GetName(), true);
 	ReadContainerOptions(parser, GetName());
-	parser.ClearInheritChain();
 }
 
 // Binds this meter to the given measure. The same measure can be bound to
 // several meters but one meter and only be bound to one measure.
-void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void Meter::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, false);
 }
@@ -491,6 +507,10 @@ Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 	if (_wcsicmp(L"STRING", meter) == 0)
 	{
 		return new MeterString(skin, name);
+	}
+	else if (_wcsicmp(L"TEXTEDIT", meter) == 0)
+	{
+		return new MeterTextEdit(skin, name);
 	}
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
@@ -548,7 +568,7 @@ bool Meter::Update()
 
 // Reads and binds the primary MeasureName. This must always be called in overridden
 // BindMeasures() implementations.
-bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional)
+bool Meter::BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional)
 {
 	m_Measures.clear();
 
@@ -569,7 +589,7 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool 
 }
 
 // Reads and binds secondary measures (MeasureName2 - MeasureNameN).
-void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
+void Meter::BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (!m_Measures.empty())
 	{

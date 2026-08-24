@@ -1,9 +1,4 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRunCommand.h"
@@ -456,40 +451,31 @@ MeasureRunCommand::~MeasureRunCommand()
 	}
 }
 
-void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	m_Parameter = parser.ReadString(section, L"Parameter", L"");
-	m_FinishAction = parser.ReadString(section, L"FinishAction", L"", false);
-	m_OutputFile = parser.ReadString(section, L"OutputFile", L"");
+	parser.ReadString(m_Parameter, section, L"Parameter", L"");
+	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+	parser.ReadString(m_OutputFile, section, L"OutputFile", L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 
-	m_Folder = parser.ReadString(section, L"StartInFolder", L" ");	// Space is intentional!
+	parser.ReadString(m_Folder, section, L"StartInFolder", L" ");	// Space is intentional!
 	m_Skin->MakePathAbsolute(m_Folder);
 
 	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
 
-	const WCHAR* state = parser.ReadString(section, L"State", L"HIDE").c_str();
-	if (_wcsicmp(state, L"SHOW") == 0)
+	static constexpr ConfigParser::EnumOption<WORD> s_States[] =
 	{
-		m_State = SW_SHOW;
-	}
-	else if (_wcsicmp(state, L"MAXIMIZE") == 0)
-	{
-		m_State = SW_MAXIMIZE;
-	}
-	else if (_wcsicmp(state, L"MINIMIZE") == 0)
-	{
-		m_State = SW_MINIMIZE;
-	}
-	else
-	{
-		m_State = SW_HIDE;
-	}
+		{ L"HIDE", SW_HIDE },
+		{ L"SHOW", SW_SHOW },
+		{ L"MAXIMIZE", SW_MAXIMIZE },
+		{ L"MINIMIZE", SW_MINIMIZE },
+	};
+	m_State = parser.ReadEnum(section, L"State", (WORD)SW_HIDE, s_States);
 
 	// Grab "%COMSPEC% environment variable
-	m_Program = parser.ReadString(section, L"Program", L"\"%COMSPEC%\" /U /C");
+	parser.ReadString(m_Program, section, L"Program", L"\"%COMSPEC%\" /U /C");
 	PathUtil::ExpandEnvironmentVariables(m_Program);
 	if (m_Program.empty())
 	{
@@ -497,19 +483,13 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Program = L"cmd.exe /U /C";
 	}
 
-	const WCHAR* type = parser.ReadString(section, L"OutputType", L"UTF16").c_str();
-	if (_wcsicmp(type, L"ANSI") == 0)
+	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
-		m_OutputType = OUTPUTTYPE_ANSI;
-	}
-	else if (_wcsicmp(type, L"UTF8") == 0)
-	{
-		m_OutputType = OUTPUTTYPE_UTF8;
-	}
-	else
-	{
-		m_OutputType = OUTPUTTYPE_UTF16;
-	}
+		{ L"UTF16", OUTPUTTYPE_UTF16 },
+		{ L"ANSI", OUTPUTTYPE_ANSI },
+		{ L"UTF8", OUTPUTTYPE_UTF8 },
+	};
+	m_OutputType = parser.ReadEnum(section, L"OutputType", OUTPUTTYPE_UTF16, s_OutputTypes);
 }
 
 void MeasureRunCommand::UpdateValue()

@@ -1,12 +1,6 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_DIALOG_H_
-#define RM_COMMON_DIALOG_H_
+#pragma once
 
 #include <Windows.h>
 #include "ControlTemplate.h"
@@ -89,6 +83,7 @@ protected:
 	Tab& GetActiveTab();
 
 	static void SetMenuButton(HWND button);
+	static UINT ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT extraFlags = 0);
 
 private:
 	Dialog(const Dialog& r);
@@ -99,11 +94,10 @@ private:
 
 	static HWND c_ActiveDialogWindow;
 	static HACCEL c_Accelerator;
+	static HHOOK c_PopupMenuFilterHook;
 
 	WINDOWPLACEMENT* m_WindowPlacement;
 	HWND m_TabControl;
 	std::vector<Tab*> m_Pages;
 	std::vector<Tab*> m_Tabs;
 };
-
-#endif

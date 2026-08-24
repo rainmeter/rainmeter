@@ -1,9 +1,4 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 /*
 Rainmeter query interface based on Window Message
@@ -60,8 +55,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 -----
 */
 
-#ifndef __RAINMETER_QUERY_H__
-#define __RAINMETER_QUERY_H__
+#pragma once
 
 #include <tchar.h>
 
@@ -110,5 +104,3 @@ cds.cbData = (wcslen(SkinName) + 1) * 2;
 
 HWND hWndMeter = (HWND) SendMessage(hWndRainmeter, WM_COPYDATA, (WPARAM) hWndYourWindow, (LPARAM) &cds);
 */
-
-#endif

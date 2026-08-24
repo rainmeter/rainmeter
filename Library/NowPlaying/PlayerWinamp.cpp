@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include <cmath>
@@ -215,19 +210,21 @@ void PlayerWinamp::UpdateData()
 							}
 						}
 
-						if (CCover::GetLocal(file, trackFolder, m_CoverPath))
+						if (auto cover = CCover::GetLocal(file, trackFolder))
 						{
 							// %album% art file found
+							m_CoverPath = std::move(*cover);
 							return;
 						}
 					}
 
-					if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-						!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+					auto cover = CCover::GetLocal(L"cover", trackFolder);
+					if (!cover)
 					{
-						// Nothing found
-						m_CoverPath.clear();
+						cover = CCover::GetLocal(L"folder", trackFolder);
 					}
+
+					m_CoverPath = std::move(cover).value_or(std::wstring());
 				}
 
 				if (tag)

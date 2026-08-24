@@ -1,9 +1,4 @@
-/* Copyright (C) 2026 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasurePerfMon.h"
@@ -30,7 +25,7 @@ MeasurePerfMon::~MeasurePerfMon()
 	CPerfSnapshot::CleanUp();
 }
 
-void MeasurePerfMon::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasurePerfMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -43,14 +38,14 @@ void MeasurePerfMon::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		changed = true;
 	}
 
-	value = parser.ReadString(section, L"PerfMonCounter", L"");
+	parser.ReadString(value, section, L"PerfMonCounter", L"");
 	if (_wcsicmp(value.c_str(), m_CounterName.c_str()) != 0)
 	{
 		m_CounterName = value;
 		changed = true;
 	}
 
-	value = parser.ReadString(section, L"PerfMonInstance", L"");
+	parser.ReadString(value, section, L"PerfMonInstance", L"");
 	if (_wcsicmp(value.c_str(), m_InstanceName.c_str()) != 0)
 	{
 		m_InstanceName = value;

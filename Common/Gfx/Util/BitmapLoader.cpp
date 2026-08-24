@@ -1,9 +1,4 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Gfx/Canvas.h"
@@ -126,6 +121,60 @@ HRESULT BitmapLoader::LoadBitmapFromFile(const Canvas& canvas, Bitmap* bitmap)
 
 	bitmap->SetSize(width, height);
 	return cleanup(S_OK);
+}
+
+HRESULT BitmapLoader::LoadBitmapFromIcon(const Canvas& canvas, Bitmap* bitmap, HICON icon, float scale)
+{
+	if (!bitmap || !icon || scale <= 0.0f) return E_INVALIDARG;
+
+	Microsoft::WRL::ComPtr<IWICBitmap> source;
+	HRESULT hr = Canvas::c_WICFactory->CreateBitmapFromHICON(icon, source.GetAddressOf());
+	if (FAILED(hr)) return hr;
+
+	Microsoft::WRL::ComPtr<IWICBitmapSource> convertedSource;
+	hr = ConvertToD2DFormat(source.Get(), convertedSource);
+	if (FAILED(hr)) return hr;
+
+	UINT width = 0;
+	UINT height = 0;
+	hr = convertedSource->GetSize(&width, &height);
+	if (FAILED(hr)) return hr;
+
+	if (scale != 1.0f)
+	{
+		UINT scaledWidth = (UINT)roundf(width / scale);
+		UINT scaledHeight = (UINT)roundf(height / scale);
+		if (scaledWidth == 0) scaledWidth = 1;
+		if (scaledHeight == 0) scaledHeight = 1;
+
+		Microsoft::WRL::ComPtr<IWICBitmapScaler> scaler;
+		hr = Canvas::c_WICFactory->CreateBitmapScaler(scaler.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			const auto interpolationMode = WICBitmapInterpolationModeHighQualityCubic;
+			hr = scaler->Initialize(convertedSource.Get(), scaledWidth, scaledHeight, interpolationMode);
+		}
+		if (FAILED(hr)) return hr;
+
+		convertedSource = scaler;
+		width = scaledWidth;
+		height = scaledHeight;
+	}
+
+	if (bitmap->GetCreateAlphaMask())
+	{
+		std::vector<BYTE> alphaMask;
+		CreateAlphaMask(convertedSource.Get(), width, height, alphaMask);
+		bitmap->SetAlphaMask(alphaMask);
+	}
+
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> d2dbitmap;
+	hr = canvas.m_Target->CreateBitmapFromWicBitmap(convertedSource.Get(), nullptr, d2dbitmap.GetAddressOf());
+	if (FAILED(hr)) return hr;
+
+	bitmap->AddSegment(d2dbitmap, 0, 0, width, height);
+	bitmap->SetSize(width, height);
+	return S_OK;
 }
 
 bool BitmapLoader::HasFileChanged(Bitmap* bitmap, const std::wstring& file)

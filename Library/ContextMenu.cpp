@@ -1,16 +1,13 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
 #include "GameMode.h"
 #include "Meter.h"
+#include "Language.h"
 #include "Rainmeter.h"
 #include "Util.h"
 #include "Skin.h"
@@ -154,8 +151,8 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 			MENU_ITEM_GRAYED(0, IDS_NoSkins)),
 		MENU_SUBMENU(IDS_Favorites,
 			MENU_ITEM_GRAYED(0, IDS_NoFavorites)),
-		MENU_SUBMENU(IDS_Themes,
-			MENU_ITEM_GRAYED(0, IDS_NoThemes)),
+		MENU_SUBMENU(IDS_Layouts,
+			MENU_ITEM_GRAYED(0, IDS_NoLayouts)),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_EDITCONFIG, IDS_EditSettings),
 		MENU_ITEM(IDM_REFRESH, IDS_RefreshAll),
@@ -333,10 +330,9 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 	auto skin = GetRainmeter().GetSkin(commandWindow);
 	if (skin) for (const auto& meter : skin->GetMeters()) meter->DisableToolTip();
 
-	// Show context menu
 	UINT command = TrackPopupMenu(
 		menu,
-		TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetRainmeter().IsLanguageRTL() ? TPM_LAYOUTRTL : 0),
+		TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_LEFTALIGN | (GetLanguage().IsRTL() ? TPM_LAYOUTRTL : 0),
 		pos.x,
 		pos.y,
 		0,
@@ -353,12 +349,17 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow, HWND com
 
 	if (command)
 	{
-		// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
-		const LPARAM checked = IsMenuCommandChecked(menu, command) ? 1 : 0;
-		SendMessage(commandWindow, WM_COMMAND, command, checked);
+		SendMenuCommand(menu, command, commandWindow);
 	}
 
 	DestroyMenu(menu);
+}
+
+void ContextMenu::SendMenuCommand(HMENU menu, UINT command, HWND commandWindow)
+{
+	// WM_COMMAND doesn't use lParam for anything so repurpose it for the checked state.
+	const LPARAM checked = IsMenuCommandChecked(menu, command) ? 1 : 0;
+	SendMessage(commandWindow, WM_COMMAND, command, checked);
 }
 
 HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
@@ -721,18 +722,12 @@ void ContextMenu::AppendSkinCustomMenu(
 		(!contextAction.empty() || isTitleSeparator(contextTitle)) &&
 		(IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
 	{
-		// Trim long titles
-		if (contextTitle.size() > 30)
-		{
-			contextTitle.replace(27, contextTitle.size() - 27, L"...");
-		}
-
-		cTitles.push_back(contextTitle);
+		cTitles.push_back(StringUtil::TruncateWithEllipsis(contextTitle, 30));
 
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-		contextTitle = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextTitle, L"Rainmeter", buffer, L"");
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-		contextAction = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextAction, L"Rainmeter", buffer, L"");
 	}
 
 	// Build a sub-menu if more than three items
@@ -900,16 +895,7 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 		size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i);
 
 		std::wstring item(buffer, len);
-
-		if ((*iter).monitorName.size() > 32)
-		{
-			item.append((*iter).monitorName, 0, 32);
-			item += L"...";
-		}
-		else
-		{
-			item += (*iter).monitorName;
-		}
+		item += StringUtil::TruncateWithEllipsis((*iter).monitorName, 32);
 
 		const UINT flags =
 			MF_BYPOSITION |
@@ -1001,6 +987,7 @@ HMENU ContextMenu::CreateGameModeOnStartMenu()
 	return menu;
 }
 
+
 HMENU ContextMenu::CreateGameModeOnStopMenu()
 {
 	static const MenuTemplate s_Menu[] =
@@ -1039,4 +1026,3 @@ HMENU ContextMenu::CreateGameModeOnStopMenu()
 
 	return menu;
 }
-

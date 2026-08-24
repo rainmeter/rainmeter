@@ -1,14 +1,10 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/PathUtil.h"
 #include "Rainmeter.h"
+#include "Language.h"
 #include "System.h"
 #include "Util.h"
 #include "resource.h"
@@ -39,7 +35,7 @@ void DialogNewSkin::Open(int tab)
 		GetString(IDS_CreateNewSkin),
 		0, 0, 300, 250,
 		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
-		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetRainmeter().IsLanguageRTL() ? WS_EX_LAYOUTRTL : 0),
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | (GetLanguage().IsRTL() ? WS_EX_LAYOUTRTL : 0),
 		nullptr);
 
 	c_Dialog->SelectTab(tab);
@@ -334,7 +330,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	buttonWidth += 10;
 	short column1 = (268 - buttonWidth);
 
@@ -355,9 +351,10 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 		Control::Button(Id_AddSkinButton, IDS_AddSkin,
 			column1, 57, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
-		Control::Button(Id_TemplateDropDownList, IDS_TemplateEllipsis,
+		Control::Button(Id_TemplateDropDownList, IDS_Template,
 			column1, 76, buttonWidth, 14,
-			WS_VISIBLE | WS_TABSTOP, 0)
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ELLIPSIS)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -498,21 +495,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (menu)
 			{
 				TabTemplate::CreateTemplateMenu(menu, m_SelectedTemplate);
-
-				RECT r = { 0 };
-				GetWindowRect((HWND)lParam, &r);
-
-				// Show context menu
-				TrackPopupMenu(
-					menu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					GetRainmeter().IsLanguageRTL() ? r.right : r.left,
-					--r.bottom,
-					0,
-					m_Window,
-					nullptr
-				);
-
+				Dialog::ShowMenuButtonPopupMenu(menu, (HWND)lParam, m_Window);
 				DestroyMenu(menu);
 			}
 		}
@@ -815,7 +798,6 @@ INT_PTR DialogNewSkin::TabNew::OnNotify(WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					// Show context menu
 					TrackPopupMenu(
 						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
@@ -1603,7 +1585,7 @@ void DialogNewSkin::TabTemplate::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 270, 188, owner);
 
-	short buttonWidth = (short)GetRainmeter().GetLanguageButtonWidth();
+	short buttonWidth = (short)GetLanguage().GetButtonWidth();
 	short column1 = (268 - buttonWidth - 6);
 
 	static const Control s_Controls[] =
