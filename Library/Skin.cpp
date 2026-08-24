@@ -30,6 +30,7 @@
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/ScopedFunction.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/EffectStream.h"
 
@@ -2426,6 +2427,31 @@ void Skin::WriteDeferredOptions()
 	}
 }
 
+void Skin::ReadUpdateOption()
+{
+	const auto skipWS = StringParser::SkipWhitespace;
+	const MathParser& mathParser = m_Parser.GetMathParser();
+	const std::wstring& update = m_Parser.ReadString(L"Rainmeter", L"Update", L"");
+	StringParser updateParser(update);
+
+	m_WindowUpdate = updateParser.ConsumeIntOrFormula(mathParser, skipWS).value_or(INTERVAL_METER);
+	m_InvisibleUpdate = -1;
+
+	if (updateParser.IsConsumed()) return;
+
+	if (updateParser.Consume(L'|', skipWS) && updateParser.Consume(L"Invisible", skipWS))
+	{
+		const auto invisibleUpdate = updateParser.ConsumeRestIntOrFormula(mathParser, skipWS);
+		if (invisibleUpdate)
+		{
+			m_InvisibleUpdate = max(invisibleUpdate.value(), 0);
+			return;
+		}
+	}
+
+	LogErrorF(this, L"Invalid Update: %s", update.c_str());
+}
+
 bool Skin::ReadSkin()
 {
 	// If this is a refresh, we need to reset auto-sized window dimensions from the previous state.
@@ -2546,16 +2572,15 @@ bool Skin::ReadSkin()
 	m_Parser.ReadString(m_OnDisplayMetricsChangeAction, L"Rainmeter", L"OnDisplayMetricsChange", L"", { .sectionVariables = false });
 	m_Parser.ReadString(m_OnVisibilityChangeAction, L"Rainmeter", L"OnVisibilityChange", L"", { .sectionVariables = false });
 
-	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
+	ReadUpdateOption();
+
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	m_InvisibleUpdate = m_Parser.ReadInt(L"Rainmeter", L"InvisibleUpdate", -1);
-
 	if (m_Parser.IsKeyDefined(L"Rainmeter", L"UpdateMode"))
 	{
-		LogWarningF(this, L"UpdateMode is no longer supported, use InvisibleUpdate instead");
+		LogWarningF(this, L"UpdateMode is no longer supported, see pre-release notes");
 	}
 
 	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
@@ -3324,8 +3349,9 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 
 void Skin::Update(bool refresh)
 {
-	// While invisible, InvisibleUpdate determines whether the skin is updated normally (negative),
-	// never updated (zero), or updated at most once every |m_InvisibleUpdate| milliseconds.
+	// While invisible, the Invisible part of Update determines whether the skin is updated
+	// normally (negative), never updated (zero), or updated at most once every
+	// |m_InvisibleUpdate| milliseconds.
 	if (m_InvisibleUpdate >= 0 && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded &&
 		(m_InvisibleUpdate == 0 || (GetTickCount64() - m_LastUpdateTime) < (ULONGLONG)m_InvisibleUpdate))
 	{

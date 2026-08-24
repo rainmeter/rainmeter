@@ -370,6 +370,7 @@ private:
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
 	void WriteDeferredOptions();
+	void ReadUpdateOption();
 	bool ReadSkin();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
