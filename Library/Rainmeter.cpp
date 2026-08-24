@@ -23,6 +23,7 @@
 #include "MeasureActionTimer.h"
 #include "MeasureNet.h"
 #include "MeasureCPU.h"
+#include "MeasureUsageMonitor.h"
 #include "MeterStringBase.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
@@ -606,6 +607,7 @@ void Rainmeter::Finalize()
 
 	MeasureNet::FinalizeStatic();
 	MeasureCPU::FinalizeStatic();
+	MeasureUsageMonitor::FinalizeStatic();
 	MeterStringBase::FinalizeStatic();
 
 	Gfx::Canvas::Finalize();
@@ -2048,6 +2050,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"RunCommand",
 		L"SpeedFanPlugin",
 		L"SysInfo",
+		L"UsageMonitor",
 		L"WebParser",
 		L"WifiStatus",
 		L"Win7AudioPlugin",

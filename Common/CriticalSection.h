@@ -62,3 +62,29 @@ public:
 private:
 	CriticalSection& m_CriticalSection;
 };
+
+// Like CriticalSectionLock, but gives up rather than waiting. Contextually false when the lock was
+// already held elsewhere, which lets work that is not worth queueing up be skipped outright.
+class CriticalSectionTryLock
+{
+public:
+	CriticalSectionTryLock(CriticalSection& criticalSection) :
+		m_CriticalSection(criticalSection),
+		m_Entered(criticalSection.TryEnter())
+	{
+	}
+
+	~CriticalSectionTryLock()
+	{
+		if (m_Entered) m_CriticalSection.Leave();
+	}
+
+	explicit operator bool() const { return m_Entered; }
+
+	CriticalSectionTryLock(const CriticalSectionTryLock&) = delete;
+	CriticalSectionTryLock& operator=(const CriticalSectionTryLock&) = delete;
+
+private:
+	CriticalSection& m_CriticalSection;
+	bool m_Entered;
+};

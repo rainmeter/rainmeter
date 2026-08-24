@@ -120,6 +120,7 @@
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
+    <ClCompile Include="MeasureUsageMonitor.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
@@ -277,6 +278,7 @@
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
+    <ClInclude Include="MeasureUsageMonitor.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
