@@ -50,6 +50,16 @@ void LogFormulaKeyError(Skin* skin, const WCHAR* error, std::wstring_view sectio
 	LogErrorF(skin, L"Formula: %s in key \"%.*s\" in [%.*s]", error, (int)key.length(), key.data(), (int)section.length(), section.data());
 }
 
+std::optional<std::wstring> GetRectComponent(StringParser& strParser, const RECT& rect)
+{
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(rect.left);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(rect.top);
+	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(rect.right - rect.left);
+	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(rect.bottom - rect.top);
+
+	return std::nullopt;
+}
+
 }  // namespace
 
 ConfigParser::ConfigParser() :
@@ -543,7 +553,7 @@ std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_vie
 	return std::nullopt;
 }
 
-// Examples: [$DisplayDisplayName], [$DisplayX], [$DisplayWorkAreaPhysicalH], [$DisplayDevice1DpiScale]
+// Examples: [$DisplayDisplayName], [$DisplayX], [$DisplayWorkAreaPhysicalH], [$DisplayDevice1DpiFactor], [$DisplayVirtualScreenW]
 std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_view variableStr)
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
@@ -560,6 +570,13 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 	if (!index && strParser.ConsumeRest(L"Count"))
 	{
 		return fmt::to_wstring(device ? monitorsInfo.GetDeviceCount() : monitorsInfo.GetDisplayCount());
+	}
+
+	// The virtual screen spans every display, so it takes no index and has no work area.
+	if (!index && !device && strParser.Consume(L"VirtualScreen"))
+	{
+		const bool physical = strParser.Consume(L"Physical");
+		return GetRectComponent(strParser, physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen);
 	}
 
 	static MonitorInfo s_EmptyMonitor = {};
@@ -579,12 +596,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 		(physical ? monitor->work : monitor->logicalWork) :
 		(physical ? monitor->screen : monitor->logicalScreen);
 
-	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(rect.left);
-	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(rect.top);
-	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(rect.right - rect.left);
-	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(rect.bottom - rect.top);
-
-	return std::nullopt;
+	return GetRectComponent(strParser, rect);
 }
 
 std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view variableStr)
