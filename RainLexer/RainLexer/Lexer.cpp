@@ -41,6 +41,134 @@ constexpr bool IsReserved(int ch) {
         ch == '|' || ch == '?' || ch == '*');
 }
 
+namespace {
+
+// Consumes |part| from the front of |str| if it starts with it.
+bool Consume(std::string_view& str, std::string_view part)
+{
+    if (!str.starts_with(part))
+    {
+        return false;
+    }
+
+    str.remove_prefix(part.size());
+    return true;
+}
+
+// Consumes the digits at the front of |str|, if any.
+bool ConsumeDigits(std::string_view& str)
+{
+    const size_t end = str.find_first_not_of("0123456789");
+    if (str.empty() || end == 0)
+    {
+        return false;
+    }
+
+    str.remove_prefix((end == std::string_view::npos) ? str.size() : end);
+    return true;
+}
+
+// Returns true if what is left of |str| is one of |parts|.
+bool IsRest(std::string_view str, std::initializer_list<std::string_view> parts)
+{
+    for (const auto& part : parts)
+    {
+        if (str == part)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Skin variables, e.g. [$SkinW], [$SkinPhysicalH] and [$SkinZoomFactor]
+bool IsSkinVariable(std::string_view str)
+{
+    if (Consume(str, "physical"))
+    {
+        return IsRest(str, { "x", "y", "w", "h" });
+    }
+
+    if (Consume(str, "zoomed"))
+    {
+        return IsRest(str, { "w", "h" });
+    }
+
+    return IsRest(str, { "x", "y", "w", "h", "zpos", "dpifactor", "zoomfactor", "visible" });
+}
+
+// Display variables, e.g. [$DisplayW], [$Display2WorkAreaPhysicalH] and [$DisplayDevice1Name]
+bool IsDisplayVariable(std::string_view str)
+{
+    bool hasIndex = ConsumeDigits(str);
+
+    const bool isDevice = !hasIndex && Consume(str, "device");
+    if (isDevice)
+    {
+        hasIndex = ConsumeDigits(str);
+    }
+
+    if (!hasIndex)
+    {
+        if (str == "count")
+        {
+            return true;
+        }
+
+        // The virtual screen spans every display, so it takes no index and has no work area.
+        if (!isDevice && Consume(str, "virtualscreen"))
+        {
+            Consume(str, "physical");
+            return IsRest(str, { "x", "y", "w", "h" });
+        }
+    }
+
+    if (IsRest(str, { "name", "number", "dpifactor" }))
+    {
+        return true;
+    }
+
+    Consume(str, "workarea");
+    Consume(str, "physical");
+    return IsRest(str, { "x", "y", "w", "h" });
+}
+
+}  // namespace
+
+// |variable| is the lowercased name without the surrounding '[$' and ']'.
+bool RainLexer::IsDollarVariable(const char* variable)
+{
+    std::string_view str = variable;
+
+    if (Consume(str, "mouse"))
+    {
+        if (Consume(str, "x") || Consume(str, "y"))
+        {
+            return str.empty() || str == ":%";
+        }
+
+        return false;
+    }
+
+    if (str == "input")
+    {
+        return true;
+    }
+
+    if (Consume(str, "skin"))
+    {
+        return IsSkinVariable(str);
+    }
+
+    if (Consume(str, "display"))
+    {
+        return IsDisplayVariable(str);
+    }
+
+    return false;
+}
+
 ILexer5* RainLexer::LexerFactory()
 {
     return new RainLexer(nullptr, 0U);
@@ -1102,6 +1230,23 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\r':
             case '\n':
             {
+                // Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
+                if (!isNested && count > 0)
+                {
+                    if (isEOF && count < _countof(buffer))
+                    {
+                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+                    }
+
+                    buffer[count] = '\0';
+                    count = 0;
+
+                    if (IsDollarVariable(buffer))
+                    {
+                        styler.ColourTo(i - chEOL, TS_MOUSE_VARIABLE);
+                    }
+                }
+
                 state = TextState::TS_DEFAULT;
                 styler.ColourTo(i, TC_DEFAULT);
                 break;
@@ -1134,11 +1279,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count] = '\0';
 
-                    if (IsOptionInExtList(mouseVar, buffer))
+                    if (IsDollarVariable(buffer))
                     {
                         styler.ColourTo(i, TS_MOUSE_VARIABLE);
                     }
- 
+
                     count = 0;
                 }
 
@@ -1147,13 +1292,30 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             case '#':
             case '[':
-            {
-                --i;
-            }
-            [[fallthrough]];
-
             case ' ':
+            case '\t':
+            case '(':
+            case ')':
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case ',':
+            case ';':
             {
+                // The brackets can be omitted in formulas, e.g. Formula=(2 * $SkinW)
+                if (!isNested && count > 0)
+                {
+                    buffer[count] = '\0';
+                    count = 0;
+
+                    if (IsDollarVariable(buffer))
+                    {
+                        styler.ColourTo(i - 1, TS_MOUSE_VARIABLE);
+                    }
+                }
+
+                --i;
                 state = TextState::TS_VALUE;
                 break;
             }
