@@ -63,8 +63,7 @@ public:
 	static void HandleSkinScaleChange(Skin* skin);
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	void UpdateValue() override;
+	void UpdateValue() override {}
 	const WCHAR* GetStringValue() override;
 	void Command(const std::wstring& command) override;
 
