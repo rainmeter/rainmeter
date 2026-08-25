@@ -716,32 +716,6 @@ void MeasureInputText::CloseBox()
 	if (m_Data->window != nullptr) PostMessage(m_Data->window, WM_CLOSE, 0U, 0U);
 }
 
-void MeasureInputText::ReadOptions(ConfigParser& parser, std::wstring_view section)
-{
-	Measure::ReadOptions(parser, section);
-
-	// Back to the defaults first: an option the skin has stopped writing has to stop applying too.
-	m_Options = InputTextOptions();
-
-	for (const OptionName& entry : c_Options)
-	{
-		// An option that is not there leaves the default standing, which is what tells a box with
-		// no FontFace of its own from one asking for the empty string.
-		const std::wstring value = parser.ReadString(section, entry.name, L"");
-		if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
-	}
-
-	// Read without section variables resolved: the action is written to be run later, and later is
-	// when what it names should be looked up.
-	parser.ReadString(m_DismissAction, section, L"OnDismissAction", L"", { .sectionVariables = false });
-}
-
-void MeasureInputText::UpdateValue()
-{
-	// Nothing to update: what this measure holds is the text a box was last answered with, and
-	// that arrives when the box is answered rather than when the measure ticks.
-}
-
 const WCHAR* MeasureInputText::GetStringValue()
 {
 	return CheckSubstitute(m_Input.c_str());
@@ -755,6 +729,16 @@ void MeasureInputText::Command(const std::wstring& command)
 
 	m_Steps.clear();
 	m_StepIndex = 0U;
+
+	auto& parser = m_Skin->GetParser();
+	m_Options = InputTextOptions();
+	for (const OptionName& entry : c_Options)
+	{
+		const std::wstring value = parser.ReadString(GetName(), entry.name, L"");
+		if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
+	}
+
+	parser.ReadString(m_DismissAction, GetName(), L"OnDismissAction", L"", { .sectionVariables = false });
 
 	if (ReadSteps(command)) RunSteps();
 }
@@ -809,13 +793,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 	{
 		std::wstring name = L"Command";
 		name += std::to_wstring(i);
-
-		// Read with its section variables left alone: the line is a bang to be run later, and
-		// later is when what it names should be looked up.
-		const std::wstring line = parser.ReadString(section, name, L"", { .sectionVariables = false });
-
-		// The first line that is not there ends the batch, whatever the range said: All is a range
-		// with no end of its own.
+		const auto& line = parser.ReadString(section, name, L"", { .sectionVariables = false });
 		if (line.empty()) break;
 
 		Step& step = m_Steps.emplace_back();
@@ -840,8 +818,7 @@ void MeasureInputText::RunSteps()
 
 		if (step.prompts)
 		{
-			m_Task = PromptTask::Create(this, m_Data, step.options, m_Skin->GetWindow(),
-				m_Skin->GetScale());
+			m_Task = PromptTask::Create(this, m_Data, step.options, m_Skin->GetWindow(), m_Skin->GetScale());
 
 			// The rest of the run waits for HandleInput().
 			if (m_Task != nullptr) return;
