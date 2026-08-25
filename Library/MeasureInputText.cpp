@@ -49,21 +49,6 @@ std::wstring Trim(const std::wstring& text)
 	return text.substr(start, end - start);
 }
 
-// Case insensitive std::wstring::find. Everything parsed here - the settings written on a Command
-// line, the $UserInput$ token, the ExecuteBatch verb - is matched as the skin spelled it.
-size_t FindNoCase(const std::wstring& text, const WCHAR* find, size_t start = 0U)
-{
-	const size_t findLength = wcslen(find);
-	if (findLength == 0U || text.size() < findLength) return std::wstring::npos;
-
-	for (size_t i = start; i + findLength <= text.size(); ++i)
-	{
-		if (_wcsnicmp(text.c_str() + i, find, findLength) == 0) return i;
-	}
-
-	return std::wstring::npos;
-}
-
 // A skin unit in pixels. Rounded away from zero, so that a box a unit wide is never scaled away to
 // nothing.
 int ScaleCoordinate(int value, float scale)
@@ -249,7 +234,7 @@ size_t TagLoc(const std::wstring& line, const WCHAR* name)
 	needle += name;
 	needle += L'=';
 
-	const size_t loc = FindNoCase(line, needle.c_str());
+	const size_t loc = StringUtil::CaseInsensitiveFind(line, needle);
 	return (loc == std::wstring::npos) ? std::wstring::npos : loc + 1U;
 }
 
@@ -848,7 +833,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 		Step& step = m_Steps.emplace_back();
 		step.options = m_Options;
 		step.command = ScanOverrides(parser, line, step.options);
-		step.prompts = FindNoCase(step.command, c_UserInputToken) != std::wstring::npos;
+		step.prompts = StringUtil::CaseInsensitiveFind(step.command, c_UserInputToken) != std::wstring::npos;
 	}
 
 	return !m_Steps.empty();
@@ -883,7 +868,7 @@ void MeasureInputText::RunSteps()
 		const std::wstring command = step.command;
 		++m_StepIndex;
 
-		GetRainmeter().ExecuteCommand(command.c_str(), GetSkin());
+		GetRainmeter().ExecuteCommand(command.c_str(), m_Skin);
 		if (!data->active) return;
 	}
 
@@ -907,7 +892,8 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 	const Step& step = m_Steps[m_StepIndex];
 	++m_StepIndex;
 
-	std::wstring command;
+	std::shared_ptr<SharedData> data = m_Data;
+
 	if (!step.variable.empty())
 	{
 		// Set through a bang rather than written anywhere: only Rainmeter knows what is watching
@@ -919,13 +905,12 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 	}
 	else
 	{
-		// The first token only, as it always was: a line wanting two answers is written as two.
-		command = step.command;
-		command.replace(FindNoCase(command, c_UserInputToken), wcslen(c_UserInputToken), m_Input);
+		std::wstring command = step.command;
+		auto tokenPos = StringUtil::CaseInsensitiveFind(command, c_UserInputToken);
+		if (tokenPos != std::wstring::npos) command.replace(tokenPos, wcslen(c_UserInputToken), m_Input);
+		GetRainmeter().ExecuteCommand(command.c_str(), m_Skin);
 	}
 
-	std::shared_ptr<SharedData> data = m_Data;
-	GetRainmeter().ExecuteCommand(command.c_str(), GetSkin());
 	if (!data->active) return;
 
 	RunSteps();
@@ -939,6 +924,6 @@ void MeasureInputText::EndRun(bool dismissed)
 	// Last of all: the action may refresh the skin, which takes this measure with it.
 	if (dismissed && !m_DismissAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_DismissAction.c_str(), GetSkin());
+		GetRainmeter().ExecuteCommand(m_DismissAction.c_str(), m_Skin);
 	}
 }
