@@ -70,9 +70,19 @@ protected:
 	void UpdateValue() override;
 
 private:
+	// A collector has nothing to report until it has collected twice, which a measure with a high
+	// UpdateDivider would otherwise sit out
+	enum class State
+	{
+		Starting,
+		WaitingForInitialValue,
+		Normal
+	};
+
 	void RegisterMeasure();
 	void UnregisterMeasure();
 	void UpdatePidReference(bool needed);
+	bool HasCollectedData();
 
 	CounterOptions m_Options;
 	CounterInstance m_CurrentInstance;
@@ -84,6 +94,10 @@ private:
 	bool m_Percent;
 
 	bool m_Registered;
+
+	State m_State;
+	int m_OriginalUpdateDivider;
+
 	// Keep a measure that reads its options every update from spamming the log
 	bool m_RegisterFailed;
 	bool m_LoggedNoTotal;

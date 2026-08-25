@@ -171,6 +171,8 @@ public:
 	CounterInstance GetAverage(const CounterOptions& options);
 	CounterInstance GetCount(const CounterOptions& options);
 
+	bool HasCollected(const CounterOptions& options);
+
 private:
 	// Everything that changes the name an instance ends up under, and therefore which instances get
 	// merged together, has to pick a different set of instances
@@ -178,6 +180,10 @@ private:
 
 	struct CounterInfo
 	{
+		// False until the counter has been collected twice, since a counter that measures a rate
+		// has nothing but zeros to report before that
+		bool hasValues = false;
+
 		// Every instance of the counter by name, including the ones that the block list leaves out
 		ankerl::unordered_dense::map<std::wstring, CounterInstance> byName[4];
 		bool byNameValid[4] = { false, false, false, false };
@@ -365,6 +371,7 @@ bool Collector::BuildCounterInfo(const CounterQuery& counter, CounterInfo& info)
 	{
 		PdhUtil::MatchValues(rawItems, rawCount, (const PDH_FMT_COUNTERVALUE_ITEM*)m_FormattedBuffer.data(),
 			formattedCount, m_Values);
+		info.hasValues = true;
 	}
 	else
 	{
@@ -595,6 +602,14 @@ CounterInstance Collector::GetCount(const CounterOptions& options)
 	return instance;
 }
 
+bool Collector::HasCollected(const CounterOptions& options)
+{
+	CriticalSectionLock lock(m_DataLock);
+
+	const auto counter = m_Data.find(options.counter);
+	return counter != m_Data.end() && counter->second.hasValues;
+}
+
 // Every category being monitored, which is only ever touched on the main thread
 ankerl::unordered_dense::map<std::wstring, std::unique_ptr<Collector>>& GetCollectors()
 {
@@ -683,6 +698,8 @@ MeasureUsageMonitor::MeasureUsageMonitor(Skin* skin, const WCHAR* name) : Measur
 	m_RawValue(false),
 	m_Percent(false),
 	m_Registered(false),
+	m_State(State::Starting),
+	m_OriginalUpdateDivider(1),
 	m_RegisterFailed(false),
 	m_LoggedNoTotal(false),
 	m_PidReferenced(false)
@@ -879,6 +896,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		UnregisterMeasure();
 		m_RegisterFailed = false;
 		m_LoggedNoTotal = false;
+		m_State = State::Starting;
 	}
 
 	m_Options = std::move(options);
@@ -889,6 +907,15 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	}
 
 	UpdatePidReference(m_Registered && m_Options.pidToName);
+
+	if (m_State != State::Normal)
+	{
+		m_OriginalUpdateDivider = m_UpdateDivider;
+
+		const bool wait = m_Registered && m_UpdateDivider > 1 && !HasCollectedData();
+		m_State = wait ? State::WaitingForInitialValue : State::Starting;
+		if (wait) m_UpdateDivider = 1;
+	}
 
 	if (!parser.IsValueDefined(section, L"MaxValue"))
 	{
@@ -970,6 +997,14 @@ void MeasureUsageMonitor::UnregisterMeasure()
 	}
 }
 
+bool MeasureUsageMonitor::HasCollectedData()
+{
+	if (!m_Registered) return false;
+
+	Collector* collector = FindCollector(m_Options.category);
+	return collector != nullptr && collector->HasCollected(m_Options);
+}
+
 void MeasureUsageMonitor::UpdatePidReference(bool needed)
 {
 	if (needed == m_PidReferenced) return;
@@ -980,6 +1015,12 @@ void MeasureUsageMonitor::UpdatePidReference(bool needed)
 
 void MeasureUsageMonitor::UpdateValue()
 {
+	if (m_State == State::WaitingForInitialValue && HasCollectedData())
+	{
+		m_State = State::Normal;
+		m_UpdateDivider = m_OriginalUpdateDivider;
+	}
+
 	m_CurrentInstance = CounterInstance();
 
 	if (m_Options.category.empty() || m_Options.counter.empty())
