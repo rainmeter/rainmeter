@@ -167,24 +167,6 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc" />
@@ -303,13 +285,6 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="WindowOcclusionTracker.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
