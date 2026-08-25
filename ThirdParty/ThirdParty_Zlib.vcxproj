@@ -45,8 +45,10 @@
     <ClInclude Include="zlib\inffast.h" />
     <ClInclude Include="zlib\inflate.h" />
     <ClInclude Include="zlib\inftrees.h" />
+    <ClInclude Include="zlib\minizip\ints.h" />
     <ClInclude Include="zlib\minizip\ioapi.h" />
     <ClInclude Include="zlib\minizip\iowin32.h" />
+    <ClInclude Include="zlib\minizip\skipset.h" />
     <ClInclude Include="zlib\minizip\unzip.h" />
     <ClInclude Include="zlib\minizip\zip.h" />
     <ClInclude Include="zlib\zconf.h" />
