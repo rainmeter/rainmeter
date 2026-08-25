@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Measure.h"
-#include "../ThirdParty/kiss_fft130/kiss_fftr.h"
+#include "../ThirdParty/kiss_fft/kiss_fftr.h"
 
 #define MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND 1
 
