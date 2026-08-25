@@ -2036,6 +2036,7 @@ const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
 		L"Drag&Drop",
 		L"FileView",
 		L"FolderInfo",
+		L"InputText",
 		L"iTunesPlugin",
 		L"MediaKey",
 		L"Mouse",

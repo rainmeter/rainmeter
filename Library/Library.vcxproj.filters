@@ -90,6 +90,7 @@
     <ClCompile Include="MeasureDragDrop.cpp" />
     <ClCompile Include="MeasureFileView.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureInputText.cpp" />
     <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="MeasureDragDrop.h" />
     <ClInclude Include="MeasureFileView.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureInputText.h" />
     <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
