@@ -49,6 +49,7 @@
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="ParseUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
+    <ClCompile Include="PdhUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -85,6 +86,7 @@
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="ParseUtil.h" />
     <ClInclude Include="PathUtil.h" />
+    <ClInclude Include="PdhUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StdAfx.h" />
