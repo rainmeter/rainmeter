@@ -157,10 +157,10 @@
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="WindowOcclusionTracker.cpp" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fft.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fftr.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">

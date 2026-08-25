@@ -14,7 +14,7 @@
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{90a21e5f-7ab9-45d6-842c-d780a9e14c6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\kiss_fft130">
+    <Filter Include="ThirdParty\kiss_fft">
       <UniqueIdentifier>{d1bf569e-05e7-4d77-8408-c39c1f31df2a}</UniqueIdentifier>
     </Filter>
     <Filter Include="ThirdParty\luautf8">
@@ -159,11 +159,11 @@
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
-      <Filter>ThirdParty\kiss_fft130</Filter>
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fft.c">
+      <Filter>ThirdParty\kiss_fft</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
-      <Filter>ThirdParty\kiss_fft130</Filter>
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fftr.c">
+      <Filter>ThirdParty\kiss_fft</Filter>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
       <Filter>ThirdParty\luautf8</Filter>
