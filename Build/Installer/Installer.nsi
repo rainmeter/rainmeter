@@ -558,9 +558,6 @@ FunctionEnd
 	File "..\..\${OUTDIR}\Rainmeter.dll"
 	File "..\..\${OUTDIR}\RestartRainmeter.exe"
 	File "..\..\${OUTDIR}\SkinInstaller.exe"
-
-	SetOutPath "$INSTDIR\Plugins"
-	File /x *Example*.dll "..\..\${OUTDIR}\Plugins\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -857,6 +854,7 @@ Function HandlePlugins
 	${OrIf} $R7 == "CoreTemp.dll"
 	${OrIf} $R7 == "FileView.dll"
 	${OrIf} $R7 == "FolderInfo.dll"
+	${OrIf} $R7 == "InputText.dll"
 	${OrIf} $R7 == "iTunesPlugin.dll"
 	${OrIf} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
@@ -876,8 +874,7 @@ Function HandlePlugins
 	${OrIf} $R7 == "Win7AudioPlugin.dll"
 	${OrIf} $R7 == "WindowMessagePlugin.dll"
 		Delete "$R9"
-	${ElseIf} $R7 != "InputText.dll"
-	${AndIf} $R7 != "VirtualDesktops.dll"
+	${ElseIf} $R7 != "VirtualDesktops.dll"
 		CreateDirectory "$INSTDIR\Defaults\Plugins"
 		Delete "$INSTDIR\Defaults\Plugins\$R7"
 		Rename "$R9" "$INSTDIR\Defaults\Plugins\$R7"

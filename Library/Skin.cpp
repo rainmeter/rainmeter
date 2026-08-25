@@ -18,6 +18,7 @@
 #include "MeasureCalc.h"
 #include "MeasureMouse.h"
 #include "MeasureNet.h"
+#include "MeasureInputText.h"
 #include "MeasurePlugin.h"
 #include "MeasureProcess.h"
 #include "MeasureTime.h"
@@ -790,6 +791,7 @@ void Skin::UpdateWindowDpi(UINT dpi)
 	if (oldEffectiveScale != m_EffectiveScale)
 	{
 		MeasurePlugin::HandleSkinSettingChange(this, RmSkinSettingChange::Scale);
+		MeasureInputText::HandleSkinScaleChange(this);
 	}
 }
 
