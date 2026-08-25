@@ -3,22 +3,155 @@
 #include "StdAfx.h"
 #include "MeasureAdvancedCPU.h"
 #include "ConfigParser.h"
-#include "PerfCounter/Titledb.h"
-#include "PerfCounter/PerfSnap.h"
-#include "PerfCounter/PerfObj.h"
-#include "PerfCounter/PerfCntr.h"
-#include "PerfCounter/ObjList.h"
-#include "PerfCounter/ObjInst.h"
+#include "../Common/PdhUtil.h"
+#include <pdh.h>
 
-struct ProcessValues
+namespace {
+
+// Keeps the processor time of every process up to date, shared by the measures reading it
+class ProcessCollector
 {
-	std::wstring name;
-	LONGLONG oldValue;
-	LONGLONG newValue;
-	bool found;
+public:
+	struct Process
+	{
+		std::wstring name;
+		LONGLONG oldValue;
+		LONGLONG newValue;
+		bool found;
+	};
+
+	static ProcessCollector& GetInstance()
+	{
+		static ProcessCollector s_Collector;
+		return s_Collector;
+	}
+
+	ProcessCollector(const ProcessCollector&) = delete;
+	ProcessCollector& operator=(const ProcessCollector&) = delete;
+
+	void AddReference();
+	void ReleaseReference();
+
+	// Reads the category again if what it holds has gone stale, and returns what it has either way
+	const std::vector<Process>& UpdateProcesses();
+
+private:
+	ProcessCollector() = default;
+
+	void Collect();
+
+	PDH_HQUERY m_Query = nullptr;
+	PDH_HCOUNTER m_Counter = nullptr;
+	UINT m_References = 0;
+
+	std::vector<Process> m_Processes;
+
+	// Kept between collections so that reading the category does not have to go back to the heap for
+	// a buffer that settles at a stable size
+	std::vector<BYTE> m_Buffer;
+
+	ULONGLONG m_OldTime = 0;
 };
 
-static void UpdateProcesses(std::vector<ProcessValues>& processes);
+void ProcessCollector::AddReference()
+{
+	if (++m_References > 1) return;
+
+	if (PdhOpenQuery(nullptr, 0, &m_Query) != ERROR_SUCCESS)
+	{
+		m_Query = nullptr;
+		return;
+	}
+
+	// The English name is the only one the measure has ever accepted
+	if (!PdhUtil::AddEnglishCounter(m_Query, L"Process", L"% Processor Time", L"*", &m_Counter))
+	{
+		PdhCloseQuery(m_Query);
+		m_Query = nullptr;
+		m_Counter = nullptr;
+	}
+}
+
+void ProcessCollector::ReleaseReference()
+{
+	if (m_References == 0 || --m_References > 0) return;
+
+	if (m_Query)
+	{
+		PdhCloseQuery(m_Query);   // Also closes every counter that was added to the query
+		m_Query = nullptr;
+		m_Counter = nullptr;
+	}
+
+	// What was collected goes with the query rather than outliving it, so that a measure loaded
+	// later does not take a difference against values of unknown age
+	m_Processes.clear();
+	m_Processes.shrink_to_fit();
+	m_Buffer.clear();
+	m_Buffer.shrink_to_fit();
+	m_OldTime = 0;
+}
+
+const std::vector<ProcessCollector::Process>& ProcessCollector::UpdateProcesses()
+{
+	// The category is read no more often than this, however fast the measures using it update
+	const ULONGLONG updateRate = 500;
+
+	const ULONGLONG time = GetTickCount64();
+	if (m_OldTime == 0 || time - m_OldTime > updateRate)
+	{
+		Collect();
+		m_OldTime = time;
+	}
+
+	return m_Processes;
+}
+
+// Reads the processor time of every process, pairing each one with what it had read the last time
+// so that the measures can take the difference. A category that cannot be read leaves the list
+// empty, which reports zero rather than a difference against values of unknown age.
+void ProcessCollector::Collect()
+{
+	std::vector<Process> processes;
+
+	DWORD count = 0;
+	if (m_Query && PdhCollectQueryData(m_Query) == ERROR_SUCCESS &&
+		PdhUtil::GetRawArray(m_Counter, m_Buffer, count))
+	{
+		const auto items = (const PDH_RAW_COUNTER_ITEM*)m_Buffer.data();
+		processes.reserve(count);
+
+		for (DWORD i = 0; i < count; ++i)
+		{
+			if (_wcsicmp(items[i].szName, L"_Total") == 0) continue;
+			if (!PdhUtil::IsValidStatus(items[i].RawValue.CStatus)) continue;
+
+			Process process;
+			process.name = items[i].szName;
+			process.oldValue = 0;
+			process.newValue = items[i].RawValue.FirstValue;
+			process.found = false;
+
+			// Processes that share a name are told apart by a "#1" suffix, so a name matches at most
+			// one of the values collected before it
+			for (auto& previous : m_Processes)
+			{
+				if (!previous.found && _wcsicmp(previous.name.c_str(), process.name.c_str()) == 0)
+				{
+					process.oldValue = previous.newValue;
+					previous.found = true;
+					break;
+				}
+			}
+
+			processes.push_back(std::move(process));
+		}
+	}
+
+	m_Processes = std::move(processes);
+}
+
+}  // namespace
 
 MeasureAdvancedCPU::MeasureAdvancedCPU(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Includes(),
@@ -28,11 +161,12 @@ MeasureAdvancedCPU::MeasureAdvancedCPU(Skin* skin, const WCHAR* name) : Measure(
 	m_TopProcess(-1),
 	m_TopProcessName()
 {
+	ProcessCollector::GetInstance().AddReference();
 }
 
 MeasureAdvancedCPU::~MeasureAdvancedCPU()
 {
-	CPerfSnapshot::CleanUp();
+	ProcessCollector::GetInstance().ReleaseReference();
 }
 
 void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, std::wstring_view section)
@@ -64,19 +198,9 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser, std::wstring_view sec
 
 void MeasureAdvancedCPU::UpdateValue()
 {
-	static std::vector<ProcessValues> s_Processes;
-	static ULONGLONG s_OldTime = 0;
-
-	const ULONGLONG time = GetTickCount64();
-	if (s_OldTime == 0 || time - s_OldTime > 500)
-	{
-		UpdateProcesses(s_Processes);
-		s_OldTime = time;
-	}
-
 	LONGLONG newValue = 0;
 
-	for (const auto& process : s_Processes)
+	for (const auto& process : ProcessCollector::GetInstance().UpdateProcesses())
 	{
 		if (CheckProcess(process.name.c_str()) && process.oldValue != 0)
 		{
@@ -150,78 +274,4 @@ bool MeasureAdvancedCPU::CheckProcess(const WCHAR* name)
 	}
 
 	return false;
-}
-
-static void UpdateProcesses(std::vector<ProcessValues>& processes)
-{
-	static CPerfTitleDatabase s_CounterTitles(PERF_TITLE_COUNTER);
-	BYTE data[256] = { 0 };
-	WCHAR name[256] = { 0 };
-
-	std::vector<ProcessValues> newProcesses;
-	newProcesses.reserve(processes.size());
-
-	CPerfSnapshot snapshot(&s_CounterTitles);
-	CPerfObjectList objList(&snapshot, &s_CounterTitles);
-
-	if (snapshot.TakeSnapshot(L"Process"))
-	{
-		CPerfObject* pPerfObj = objList.GetPerfObject(L"Process");
-
-		if (pPerfObj)
-		{
-			for (CPerfObjectInstance* pObjInst = pPerfObj->GetFirstObjectInstance();
-				pObjInst != nullptr;
-				pObjInst = pPerfObj->GetNextObjectInstance())
-			{
-				if (pObjInst->GetObjectInstanceName(name, 256))
-				{
-					if (_wcsicmp(name, L"_Total") == 0)
-					{
-						delete pObjInst;
-						pObjInst = nullptr;
-						continue;
-					}
-
-					CPerfCounter* pPerfCntr = pObjInst->GetCounterByName(L"% Processor Time");
-					if (pPerfCntr != nullptr)
-					{
-						pPerfCntr->GetData(data, 256, nullptr);
-
-						if (pPerfCntr->GetSize() == 8)
-						{
-							ProcessValues values;
-							values.name = name;
-							values.oldValue = 0;
-							values.newValue = *(ULONGLONG*)data;
-							values.found = false;
-
-							for (auto& process : processes)
-							{
-								if (!process.found && _wcsicmp(process.name.c_str(), name) == 0)
-								{
-									values.oldValue = process.newValue;
-									process.found = true;
-									break;
-								}
-							}
-
-							newProcesses.push_back(std::move(values));
-						}
-
-						delete pPerfCntr;
-						pPerfCntr = nullptr;
-					}
-				}
-
-				delete pObjInst;
-				pObjInst = nullptr;
-			}
-
-			delete pPerfObj;
-			pPerfObj = nullptr;
-		}
-	}
-
-	processes = std::move(newProcesses);
 }
