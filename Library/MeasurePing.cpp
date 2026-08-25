@@ -261,6 +261,10 @@ void MeasurePing::AdvanceUpdateCounter(UINT count)
 {
 	Measure::AdvanceUpdateCounter(count);
 
+	// A counter of zero means the request is due on the next update. Advancing past it would
+	// swallow that request until the counter wraps around again, so it is left as it is.
+	if (m_UpdateCounter == 0) return;
+
 	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
 	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
 
