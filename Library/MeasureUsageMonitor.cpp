@@ -11,6 +11,7 @@
 namespace {
 
 using BlockType = MeasureUsageMonitor::BlockType;
+using IndexType = MeasureUsageMonitor::IndexType;
 using CounterInstance = MeasureUsageMonitor::CounterInstance;
 using CounterOptions = MeasureUsageMonitor::CounterOptions;
 
@@ -168,6 +169,7 @@ public:
 	CounterInstance GetInstance(const CounterOptions& options, const std::wstring& name);
 	CounterInstance GetSum(const CounterOptions& options);
 	CounterInstance GetAverage(const CounterOptions& options);
+	CounterInstance GetCount(const CounterOptions& options);
 
 private:
 	// Everything that changes the name an instance ends up under, and therefore which instances get
@@ -572,6 +574,27 @@ CounterInstance Collector::GetAverage(const CounterOptions& options)
 	return instance;
 }
 
+CounterInstance Collector::GetCount(const CounterOptions& options)
+{
+	CriticalSectionLock lock(m_DataLock);
+
+	CounterInstance instance;
+	instance.name = L"Count";
+
+	const auto counter = m_Data.find(options.counter);
+	if (counter != m_Data.end())
+	{
+		const auto byUsage = counter->second.byUsage.find(options.blockKey);
+		if (byUsage != counter->second.byUsage.end())
+		{
+			instance.value = (double)byUsage->second.size();
+			instance.rawValue = (LONGLONG)byUsage->second.size();
+		}
+	}
+
+	return instance;
+}
+
 // Every category being monitored, which is only ever touched on the main thread
 ankerl::unordered_dense::map<std::wstring, std::unique_ptr<Collector>>& GetCollectors()
 {
@@ -655,6 +678,7 @@ MeasureUsageMonitor::MeasureUsageMonitor(Skin* skin, const WCHAR* name) : Measur
 	m_Options(),
 	m_CurrentInstance(),
 	m_InstanceName(),
+	m_IndexType(IndexType::Sum),
 	m_Index(0),
 	m_RawValue(false),
 	m_Percent(false),
@@ -780,6 +804,33 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		options.counter = std::move(counter);
 	}
 
+	// Index= also accepts the names of the readings that are not about a single instance, on top of
+	// the numbers that have always meant the first two of them
+	m_IndexType = IndexType::Instance;
+	m_Index = 0;
+
+	const std::wstring& index = parser.ReadString(section, L"Index", L"");
+	if (_wcsicmp(index.c_str(), L"SUM") == 0)
+	{
+		m_IndexType = IndexType::Sum;
+	}
+	else if (_wcsicmp(index.c_str(), L"AVERAGE") == 0)
+	{
+		m_IndexType = IndexType::Average;
+	}
+	else if (_wcsicmp(index.c_str(), L"COUNT") == 0)
+	{
+		m_IndexType = IndexType::Count;
+	}
+	else
+	{
+		m_Index = parser.ParseInt(index, 0);
+		if (m_Index == 0) m_IndexType = IndexType::Sum;
+		else if (m_Index == -1) m_IndexType = IndexType::Average;
+	}
+
+	parser.ReadString(m_InstanceName, section, L"Name", L"");
+
 	m_RawValue = parser.ReadBool(section, L"RawValue", false);
 	options.rollup = parser.ReadBool(section, L"Rollup", true);
 
@@ -806,7 +857,14 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	}
 
 	m_Percent = parser.ReadBool(section, L"Percent", percent);
-	if (m_Percent)
+
+	if (m_IndexType == IndexType::Count && m_InstanceName.empty())
+	{
+		// A count is not a share of anything, and Percent is on by default for some of the aliases
+		m_Percent = false;
+		maxValue = 0.0;
+	}
+	else if (m_Percent)
 	{
 		maxValue = 100.0;
 	}
@@ -831,10 +889,6 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	}
 
 	UpdatePidReference(m_Registered && m_Options.pidToName);
-
-	// One of these is normally left alone
-	m_Index = parser.ReadInt(section, L"Index", 0);
-	parser.ReadString(m_InstanceName, section, L"Name", L"");
 
 	if (!parser.IsValueDefined(section, L"MaxValue"))
 	{
@@ -941,15 +995,20 @@ void MeasureUsageMonitor::UpdateValue()
 	}
 	else if (!m_InstanceName.empty())
 	{
+		// Naming an instance has always won over asking for one by index
 		m_CurrentInstance = collector->GetInstance(m_Options, m_InstanceName);
 	}
-	else if (m_Index == -1)
+	else if (m_IndexType == IndexType::Average)
 	{
 		m_CurrentInstance = collector->GetAverage(m_Options);
 	}
-	else if (m_Index == 0)
+	else if (m_IndexType == IndexType::Sum)
 	{
 		m_CurrentInstance = collector->GetSum(m_Options);
+	}
+	else if (m_IndexType == IndexType::Count)
+	{
+		m_CurrentInstance = collector->GetCount(m_Options);
 	}
 	else if (m_Index > 0)
 	{
@@ -997,7 +1056,10 @@ const WCHAR* MeasureUsageMonitor::GetStringValue()
 
 	// Without a name to look up, the instance was picked by usage, so there is no instance worth
 	// naming when nothing is being used
-	if (m_InstanceName.empty() && m_CurrentInstance.value == 0.0) return CheckSubstitute(L"");
+	if (m_IndexType != IndexType::Count && m_InstanceName.empty() && m_CurrentInstance.value == 0.0)
+	{
+		return CheckSubstitute(L"");
+	}
 
 	return CheckSubstitute(m_CurrentInstance.name.c_str());
 }

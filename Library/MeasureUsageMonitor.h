@@ -20,6 +20,16 @@ public:
 	// Stops the background collectors. Must be called before the library is unloaded.
 	static void FinalizeStatic();
 
+	// What Index= asks the measure for. Everything other than Instance is about the instance list
+	// as a whole rather than any one instance in it.
+	enum class IndexType
+	{
+		Instance,
+		Sum,
+		Average,
+		Count
+	};
+
 	enum class BlockType
 	{
 		None,
@@ -68,6 +78,7 @@ private:
 	CounterInstance m_CurrentInstance;
 
 	std::wstring m_InstanceName;   // Name=
+	IndexType m_IndexType;
 	int m_Index;
 	bool m_RawValue;
 	bool m_Percent;
