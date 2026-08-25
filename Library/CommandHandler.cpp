@@ -1165,6 +1165,7 @@ const BangInfo g_Bangs[] =
 	{ Bang::Redraw, L"Redraw", 0, DoBang },
 	{ Bang::Update, L"Update", 0, DoBang },
 	{ Bang::SetUpdate, L"SetUpdate", 1, DoBang },
+	{ Bang::ForceEnableVisibleMode, L"ForceEnableVisibleMode", 0, DoBang },
 	{ Bang::Hide, L"Hide", 0, DoBang },
 	{ Bang::Show, L"Show", 0, DoBang },
 	{ Bang::Toggle, L"Toggle", 0, DoBang },

@@ -222,9 +222,11 @@ public:
 	float GetDpiScale() const { return m_DpiScale; }
 	float GetZoomScale() const { return m_ZoomScale; }
 	bool HasZoom() const { return m_Zoom.has_value(); }
+
 	SkinWindowOcclusionState GetWindowOcclusionState() const { return m_WindowOcclusionState; }
-	void SetWindowOcclusionState(SkinWindowOcclusionState state);
 	bool IsWindowUnoccluded() const { return m_WindowOcclusionState == SkinWindowOcclusionState::Visible || m_WindowOcclusionState == SkinWindowOcclusionState::Unknown; }
+	void SetWindowOcclusionState(SkinWindowOcclusionState state);
+	void DisableOcclusionTracking();
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -556,6 +558,7 @@ private:
 
 	bool m_Hidden;
 	SkinWindowOcclusionState m_WindowOcclusionState;
+	bool m_OcclusionTrackingDisabled;
 	int m_InvisibleUpdate;
 	ULONGLONG m_LastUpdateTime;
 	UINT m_SkippedUpdateCount;

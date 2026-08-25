@@ -155,6 +155,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_State(STATE_INITIALIZING),
 	m_Hidden(false),
 	m_WindowOcclusionState(SkinWindowOcclusionState::Unknown),
+	m_OcclusionTrackingDisabled(false),
 	m_InvisibleUpdate(-1),
 	m_LastUpdateTime(),
 	m_SkippedUpdateCount(),
@@ -484,6 +485,12 @@ void Skin::Refresh(bool init, bool all)
 	if (!init)
 	{
 		Dispose(true);
+	}
+
+	if (m_OcclusionTrackingDisabled)
+	{
+		m_OcclusionTrackingDisabled = false;
+		WindowOcclusionTracker::TrackWindow(m_Window);
 	}
 
 	ZPOSITION oldZPos = m_WindowZPosition;
@@ -1112,6 +1119,10 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		{
 			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
 		}
+		break;
+
+	case Bang::ForceEnableVisibleMode:
+		DisableOcclusionTracking();
 		break;
 
 	case Bang::ShowBlur:
@@ -4319,6 +4330,17 @@ void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
 	{
 		GetRainmeter().ExecuteCommand(m_OnVisibilityChangeAction.c_str(), this);
 	}
+}
+
+void Skin::DisableOcclusionTracking()
+{
+	if (m_OcclusionTrackingDisabled) return;
+	m_OcclusionTrackingDisabled = true;
+
+	// Stop tracking the window and treat the skin as visible until the next refresh, which also
+	// flushes the update and the redraw that were skipped while it was occluded.
+	WindowOcclusionTracker::UntrackWindow(m_Window);
+	SetWindowOcclusionState(SkinWindowOcclusionState::Visible);
 }
 
 void Skin::SetWindowDraggable(bool b)
