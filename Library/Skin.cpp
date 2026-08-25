@@ -504,7 +504,7 @@ void Skin::Refresh(bool init, bool all)
 	m_Hidden = m_WindowStartHidden;
 	m_TransparencyValue = m_AlphaValue;
 
-	Update(true);
+	Update({ .refresh = true });
 
 	if (m_BlurMode == BLURMODE_NONE)
 	{
@@ -1092,7 +1092,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::Update:
 		KillTimer(m_Window, TIMER_METER);  // Kill timer temporarily
-		Update(false);
+		Update({ .force = true });
 		if (m_WindowUpdate >= 0)
 		{
 			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
@@ -3347,12 +3347,9 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 	return bUpdate;
 }
 
-void Skin::Update(bool refresh)
+void Skin::Update(UpdateOptions options)
 {
-	// While invisible, the Invisible part of Update determines whether the skin is updated
-	// normally (negative), never updated (zero), or updated at most once every
-	// |m_InvisibleUpdate| milliseconds.
-	if (m_InvisibleUpdate >= 0 && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded &&
+	if (!options.refresh && !options.force && m_InvisibleUpdate >= 0 && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded &&
 		(m_InvisibleUpdate == 0 || (GetTickCount64() - m_LastUpdateTime) < (ULONGLONG)m_InvisibleUpdate))
 	{
 		++m_SkippedUpdateCount;
@@ -3385,7 +3382,7 @@ void Skin::Update(bool refresh)
 		std::vector<Measure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
-			if (UpdateMeasure((*i), refresh))
+			if (UpdateMeasure((*i), options.refresh))
 			{
 				(*i)->DoUpdateAction();
 				(*i)->DoChangeAction();
@@ -3401,7 +3398,7 @@ void Skin::Update(bool refresh)
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (UpdateMeter((*j), bActiveTransition, refresh))
+		if (UpdateMeter((*j), bActiveTransition, options.refresh))
 		{
 			bUpdate = true;
 
@@ -3412,7 +3409,7 @@ void Skin::Update(bool refresh)
 	UpdateRelativeMeters();
 
 	// Redraw all meters
-	if (bUpdate || m_ResizeWindow || refresh)
+	if (bUpdate || m_ResizeWindow || options.refresh)
 	{
 		if (m_DynamicWindowSize)
 		{
@@ -3444,7 +3441,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case TIMER_METER:
-		Update(false);
+		Update();
 		break;
 
 	case TIMER_MOUSE:
@@ -4303,7 +4300,7 @@ void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
 	{
 		if (m_SkippedUpdateCount > 0)
 		{
-			Update(false);
+			Update();
 		}
 
 		if (m_HasPendingRedraw)
