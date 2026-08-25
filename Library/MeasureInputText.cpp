@@ -294,18 +294,6 @@ std::wstring ScanOverrides(ConfigParser& parser, std::wstring line, InputTextOpt
 	return line;
 }
 
-// The text as one bang argument. A quote of its own would end the argument early and swallow the
-// rest of the text, which is what the triple quoted form is for.
-std::wstring QuoteArgument(const std::wstring& text)
-{
-	const WCHAR* quote = (text.find(L'"') != std::wstring::npos) ? L"\"\"\"" : L"\"";
-
-	std::wstring result = quote;
-	result += text;
-	result += quote;
-	return result;
-}
-
 }  // namespace
 
 // The box itself: one window, open for as long as one prompt lasts. It belongs to the worker
@@ -896,12 +884,7 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 
 	if (!step.variable.empty())
 	{
-		// Set through a bang rather than written anywhere: only Rainmeter knows what is watching
-		// the variable. The skin still needs DynamicVariables=1 to see it change.
-		command = L"!SetVariable ";
-		command += step.variable;
-		command += L' ';
-		command += QuoteArgument(m_Input);
+		m_Skin->SetVariable(step.variable, m_Input);
 	}
 	else
 	{
