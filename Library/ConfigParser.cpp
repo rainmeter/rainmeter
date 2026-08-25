@@ -717,17 +717,17 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 		else if (!primary && m_Skin)
 		{
 			const bool horizontal = component == MonitorComponent::X || component == MonitorComponent::Width;
-			if (horizontal && m_Skin->GetPosition().GetX().monitor)
+			if (horizontal && m_Skin->GetPosition().GetX().GetMonitor())
 			{
-				const int i = *m_Skin->GetPosition().GetX().monitor;
+				const int i = *m_Skin->GetPosition().GetX().GetMonitor();
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;
 				}
 			}
-			else if (!horizontal && m_Skin->GetPosition().GetY().monitor)
+			else if (!horizontal && m_Skin->GetPosition().GetY().GetMonitor())
 			{
-				const int i = *m_Skin->GetPosition().GetY().monitor;
+				const int i = *m_Skin->GetPosition().GetY().GetMonitor();
 				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
 				{
 					screenIndex = i;

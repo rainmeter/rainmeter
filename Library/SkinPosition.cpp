@@ -166,3 +166,9 @@ void SkinPosition::SetVirtualized(POINT position)
 	ResetCache();
 	m_Space = SkinPositionSpace::Virtualized;
 }
+
+void SkinPosition::SetMonitor(std::optional<int> monitor)
+{
+	m_X.monitor = monitor;
+	m_Y.monitor = monitor;
+}
