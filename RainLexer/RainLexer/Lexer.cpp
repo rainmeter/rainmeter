@@ -248,7 +248,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     int count = 0;
     int digits = 0;
 
-    int skipRainmeterBang = 0;
+    int skipBangPrefix = 0;
     int beginValueIdx = 0; // For cases like PlayerName=[ParentMeasure]
 
     bool isNested = false;
@@ -903,17 +903,27 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 count = 0;
 
                 // Skip rainmeter before comparing the bang
-                skipRainmeterBang = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
-                if (bangs.InList(&buffer[skipRainmeterBang]))
+                skipBangPrefix = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
+
+                // A "Skin:" prefix aims another bang at the skin named by the first argument, e.g.
+                // [!Skin:Hide "ConfigName"], so the rest of the name decides whether it is valid.
+                // The bangs of the namespace itself, e.g. !Skin:Load, are matched before it.
+                if (!bangs.InList(&buffer[skipBangPrefix]) && !depBangs.InList(&buffer[skipBangPrefix]) &&
+                    strncmp(&buffer[skipBangPrefix], "skin:", 5) == 0)
+                {
+                    skipBangPrefix += 5;
+                }
+
+                if (bangs.InList(&buffer[skipBangPrefix]))
                 {
                     styler.ColourTo(i - chEOL, TC_BANG);
                 }
-                else if (depBangs.InList(&buffer[skipRainmeterBang]))
+                else if (depBangs.InList(&buffer[skipBangPrefix]))
                 {
                     styler.ColourTo(i - chEOL, TC_DEP_BANG);
                 }
 
-                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipRainmeterBang]))
+                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipBangPrefix]))
                 {
                     isPipeOpt = true;
                     isNotNumValOpt = false;
