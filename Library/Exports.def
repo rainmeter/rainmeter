@@ -1,8 +1,9 @@
 LIBRARY
 EXPORTS
-	; Note: If new functions are added, the Rainmeter.lib files in Plugins\API\{x32,x64} must be
-	; replaced by the corresponding file in {x32,x64}-Release\Obj\Library.
-	; Set '<ExcludeTests>true</ExcludeTests>' in Rainmeter.props first to minimize the .lib size.
+	; Note: If new functions are added, the Rainmeter.lib files in the rainmeter-plugin-sdk repo
+	; (rainmeter-plugin-sdk\API\{x32,x64}) must be replaced by the corresponding file in
+	; BuildOut\Release{32,64}\Obj\Library. Use Build.ps1 (which sets 'ExcludeTests') to minimize
+	; the .lib size.
 	RmReadString
 	RmReadFormula
 	RmReplaceVariables

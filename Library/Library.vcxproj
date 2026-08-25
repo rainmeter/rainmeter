@@ -276,6 +276,7 @@
     <ClInclude Include="SkinPosition.h" />
     <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="Export.h" />
+    <ClInclude Include="RainmeterAPI.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
