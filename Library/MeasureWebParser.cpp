@@ -249,7 +249,7 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	m_Debug(),
 	m_LogSubstringErrors(),
 	m_UpdateRate(),
-	m_UpdateCounter(),
+	m_UpdateRateCounter(),
 	m_Download(),
 	m_ForceReload(),
 	m_InternetOpenUrlFlags(INTERNET_FLAG_RESYNCHRONIZE),
@@ -490,15 +490,15 @@ void MeasureWebParser::UpdateValue()
 	{
 		if (!m_DownloadTask)
 		{
-			if (m_UpdateCounter == 0)
+			if (m_UpdateRateCounter == 0)
 			{
 				StartDownloadTask();
 			}
 
-			++m_UpdateCounter;
-			if (m_UpdateCounter >= m_UpdateRate)
+			++m_UpdateRateCounter;
+			if (m_UpdateRateCounter >= m_UpdateRate)
 			{
-				m_UpdateCounter = 0;
+				m_UpdateRateCounter = 0;
 			}
 		}
 	}
@@ -514,7 +514,7 @@ void MeasureWebParser::UpdateValue()
 			// This is not a reference; need to update.
 			if (!m_FetchTask && !m_DownloadTask)
 			{
-				if (m_UpdateCounter == 0)
+				if (m_UpdateRateCounter == 0)
 				{
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
@@ -531,10 +531,10 @@ void MeasureWebParser::UpdateValue()
 						});
 				}
 
-				++m_UpdateCounter;
-				if (m_UpdateCounter >= m_UpdateRate)
+				++m_UpdateRateCounter;
+				if (m_UpdateRateCounter >= m_UpdateRate)
 				{
-					m_UpdateCounter = 0;
+					m_UpdateRateCounter = 0;
 				}
 			}
 		}
@@ -547,13 +547,13 @@ void MeasureWebParser::AdvanceUpdateCounter(UINT count)
 
 	// A counter of zero means the request is due on the next update. Advancing past it would
 	// swallow that request until the counter wraps around again, so it is left as it is.
-	if (m_UpdateCounter == 0) return;
+	if (m_UpdateRateCounter == 0) return;
 
 	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
 	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
 
-	m_UpdateCounter += count;
-	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
+	m_UpdateRateCounter += count;
+	if (m_UpdateRateCounter >= m_UpdateRate) m_UpdateRateCounter = 0;
 }
 
 const WCHAR* MeasureWebParser::GetStringValue()
@@ -1248,7 +1248,7 @@ void MeasureWebParser::ResetCounter()
 		m_DownloadTask = nullptr;
 	}
 
-	m_UpdateCounter = 0;
+	m_UpdateRateCounter = 0;
 }
 
 void MeasureWebParser::ResetValue()
