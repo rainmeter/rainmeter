@@ -27,7 +27,7 @@ struct InputTextOptions
 	COLORREF backColor = GetSysColor(COLOR_WINDOW);
 
 	// SolidColor's alpha, which dims the whole box rather than only what is behind the text.
-	BYTE opacity = 255U;
+	BYTE opacity = 255;
 
 	int maxLength = 0;
 	bool numeric = false;
@@ -106,7 +106,7 @@ private:
 	std::wstring m_DismissAction;
 
 	std::vector<Step> m_Steps;
-	size_t m_StepIndex = 0U;
+	size_t m_StepIndex = 0;
 
 	// The measure's value: the text last typed into it.
 	std::wstring m_Input;
