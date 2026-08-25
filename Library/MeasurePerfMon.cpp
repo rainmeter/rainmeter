@@ -3,17 +3,16 @@
 #include "StdAfx.h"
 #include "MeasurePerfMon.h"
 #include "ConfigParser.h"
-#include "PerfCounter/Titledb.h"
-#include "PerfCounter/PerfSnap.h"
-#include "PerfCounter/PerfObj.h"
-#include "PerfCounter/PerfCntr.h"
-#include "PerfCounter/ObjList.h"
-#include "PerfCounter/ObjInst.h"
+#include "../Common/PdhUtil.h"
 
 MeasurePerfMon::MeasurePerfMon(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_ObjectName(),
 	m_CounterName(),
 	m_InstanceName(),
+	m_Query(nullptr),
+	m_Counter(nullptr),
+	m_FirstInstance(false),
+	m_Buffer(),
 	m_OldValue(),
 	m_Difference(false),
 	m_FirstTime(true)
@@ -22,7 +21,75 @@ MeasurePerfMon::MeasurePerfMon(Skin* skin, const WCHAR* name) : Measure(skin, na
 
 MeasurePerfMon::~MeasurePerfMon()
 {
-	CPerfSnapshot::CleanUp();
+	CloseQuery();
+}
+
+// Opens a query for the counter the measure was configured with. Whether an object has instances at
+// all only shows in whether the path resolves, so an object that was not given an instance is tried
+// both ways.
+bool MeasurePerfMon::OpenQuery()
+{
+	if (PdhOpenQuery(nullptr, 0, &m_Query) != ERROR_SUCCESS)
+	{
+		m_Query = nullptr;
+		return false;
+	}
+
+	if (m_InstanceName.empty())
+	{
+		if (PdhUtil::AddEnglishCounter(m_Query, m_ObjectName, m_CounterName, nullptr, &m_Counter)) return true;
+
+		// Reading the first instance is what the measure has always done when it was not told which
+		// one to read
+		if (PdhUtil::AddEnglishCounter(m_Query, m_ObjectName, m_CounterName, L"*", &m_Counter))
+		{
+			m_FirstInstance = true;
+			return true;
+		}
+	}
+	else if (PdhUtil::AddEnglishCounter(m_Query, m_ObjectName, m_CounterName, m_InstanceName.c_str(), &m_Counter))
+	{
+		return true;
+	}
+
+	CloseQuery();
+	return false;
+}
+
+void MeasurePerfMon::CloseQuery()
+{
+	if (m_Query)
+	{
+		PdhCloseQuery(m_Query);   // Also closes every counter that was added to the query
+		m_Query = nullptr;
+	}
+
+	m_Counter = nullptr;
+	m_FirstInstance = false;
+}
+
+bool MeasurePerfMon::GetRawValue(ULONGLONG& value)
+{
+	if (PdhCollectQueryData(m_Query) != ERROR_SUCCESS) return false;
+
+	if (m_FirstInstance)
+	{
+		DWORD count = 0;
+		if (!PdhUtil::GetRawArray(m_Counter, m_Buffer, count) || count == 0) return false;
+
+		const auto items = (const PDH_RAW_COUNTER_ITEM*)m_Buffer.data();
+		if (!PdhUtil::IsValidStatus(items[0].RawValue.CStatus)) return false;
+
+		value = (ULONGLONG)items[0].RawValue.FirstValue;
+		return true;
+	}
+
+	PDH_RAW_COUNTER raw = { 0 };
+	if (PdhGetRawCounterValue(m_Counter, nullptr, &raw) != ERROR_SUCCESS) return false;
+	if (!PdhUtil::IsValidStatus(raw.CStatus)) return false;
+
+	value = (ULONGLONG)raw.FirstValue;
+	return true;
 }
 
 void MeasurePerfMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
@@ -56,22 +123,30 @@ void MeasurePerfMon::ReadOptions(ConfigParser& parser, std::wstring_view section
 	if (difference != m_Difference)
 	{
 		m_Difference = difference;
-		changed = true;
-	}
-
-	if (changed)
-	{
 		m_OldValue = 0;
 		m_FirstTime = true;
 	}
+
+	if (!changed) return;
+
+	// Which counter is being read is what a query is built around, so it has to be built again
+	CloseQuery();
+	m_OldValue = 0;
+	m_FirstTime = true;
+
+	if (m_ObjectName.empty() || m_CounterName.empty()) return;
+
+	OpenQuery();
 }
 
 void MeasurePerfMon::UpdateValue()
 {
-	const ULONGLONG value = GetPerfData(
-		m_ObjectName.c_str(),
-		m_InstanceName.c_str(),
-		m_CounterName.c_str());
+	// A counter that cannot be read measures zero, as it always has
+	ULONGLONG value = 0;
+	if (m_Query && !GetRawValue(value))
+	{
+		value = 0;
+	}
 
 	if (m_Difference)
 	{
@@ -83,88 +158,4 @@ void MeasurePerfMon::UpdateValue()
 	{
 		m_Value = (double)value;
 	}
-}
-
-ULONGLONG MeasurePerfMon::GetPerfData(const WCHAR* objectName, const WCHAR* instanceName, const WCHAR* counterName)
-{
-	static CPerfTitleDatabase s_TitleCounter(PERF_TITLE_COUNTER);
-
-	BYTE data[256];
-	WCHAR name[256];
-	ULONGLONG value = 0;
-
-	CPerfSnapshot snapshot(&s_TitleCounter);
-	CPerfObjectList objList(&snapshot, &s_TitleCounter);
-
-	if (snapshot.TakeSnapshot(objectName))
-	{
-		CPerfObject* pPerfObj = objList.GetPerfObject(objectName);
-
-		if (pPerfObj)
-		{
-			for (CPerfObjectInstance* pObjInst = pPerfObj->GetFirstObjectInstance();
-				pObjInst != nullptr;
-				pObjInst = pPerfObj->GetNextObjectInstance())
-			{
-				if (*instanceName)
-				{
-					if (pObjInst->GetObjectInstanceName(name, 256))
-					{
-						if (_wcsicmp(instanceName, name) != 0)
-						{
-							delete pObjInst;
-							pObjInst = nullptr;
-							continue;
-						}
-					}
-					else
-					{
-						delete pObjInst;
-						pObjInst = nullptr;
-						continue;
-					}
-				}
-
-				CPerfCounter* pPerfCntr = pObjInst->GetCounterByName(counterName);
-				if (pPerfCntr != nullptr)
-				{
-					pPerfCntr->GetData(data, 256, nullptr);
-
-					if (pPerfCntr->GetSize() == 1)
-					{
-						value = *(BYTE*)data;
-					}
-					else if (pPerfCntr->GetSize() == 2)
-					{
-						value = *(WORD*)data;
-					}
-					else if (pPerfCntr->GetSize() == 4)
-					{
-						value = *(DWORD*)data;
-					}
-					else if (pPerfCntr->GetSize() == 8)
-					{
-						value = *(ULONGLONG*)data;
-					}
-
-					delete pPerfCntr;
-					pPerfCntr = nullptr;
-					delete pObjInst;
-					pObjInst = nullptr;
-					break;
-				}
-
-				if (pObjInst)
-				{
-					delete pObjInst;
-					pObjInst = nullptr;
-				}
-			}
-
-			delete pPerfObj;
-			pPerfObj = nullptr;
-		}
-	}
-
-	return value;
 }

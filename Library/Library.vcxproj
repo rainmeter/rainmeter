@@ -22,8 +22,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;Pdh.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;Pdh.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -99,6 +99,7 @@
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
+    <ClCompile Include="MeasureUsageMonitor.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
@@ -165,24 +166,6 @@
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -252,6 +235,7 @@
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
+    <ClInclude Include="MeasureUsageMonitor.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
@@ -301,13 +285,6 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="WindowOcclusionTracker.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
@@ -332,7 +309,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Library_PCRE.vcxproj">
+    <ProjectReference Include="..\ThirdParty\ThirdParty_PCRE.vcxproj">
       <Project>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</Project>
     </ProjectReference>
   </ItemGroup>
