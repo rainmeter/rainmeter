@@ -309,7 +309,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Library_PCRE.vcxproj">
+    <ProjectReference Include="..\ThirdParty\ThirdParty_PCRE.vcxproj">
       <Project>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</Project>
     </ProjectReference>
   </ItemGroup>
