@@ -211,6 +211,7 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />
     <ClInclude Include="Export.h" />
+    <ClInclude Include="RainmeterAPI.h" />
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />

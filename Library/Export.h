@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../Plugins/API/RainmeterAPI.h"
+#include "RainmeterAPI.h"
 
 /* DEPRECATED */ LIBRARY_EXPORT __declspec(deprecated) LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue);
 
