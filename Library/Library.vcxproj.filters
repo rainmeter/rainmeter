@@ -20,9 +20,6 @@
     <Filter Include="ThirdParty\luautf8">
       <UniqueIdentifier>{7c0e5f2a-3d19-4c86-9b4e-5a2f0d6c1b83}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\PerfCounter">
-      <UniqueIdentifier>{ebfa0cf5-2371-4459-a25d-e16109dd2142}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
@@ -171,24 +168,6 @@
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
       <Filter>ThirdParty\luautf8</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjInst.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\ObjList.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfCntr.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfObj.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\PerfSnap.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\PerfCounter\Titledb.cpp">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NowPlaying\Player.h">
@@ -322,27 +301,6 @@
     <ClInclude Include="GeneralImage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
-    <ClInclude Include="..\ThirdParty\PerfCounter\MakePtr.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjInst.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\ObjList.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfCntr.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfObj.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\PerfSnap.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\PerfCounter\Titledb.h">
-      <Filter>ThirdParty\PerfCounter</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">
