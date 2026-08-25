@@ -1,0 +1,33 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#pragma once
+
+#include <Windows.h>
+#include <pdh.h>
+#include <string>
+#include <vector>
+
+namespace PdhUtil {
+
+bool IsValidStatus(DWORD status);
+
+// Adds |counter| of |object| to |query|. |instance| is the instance to read, "*" for every instance
+// of the counter, or nullptr for an object such as "Memory" that has no instances at all. The
+// English name is tried first so that skins keep working on localized systems, and the name is then
+// tried as given for counters that only exist under a localized name.
+bool AddCounter(PDH_HQUERY query, const std::wstring& object, const std::wstring& counter,
+	const WCHAR* instance, PDH_HCOUNTER* handle);
+
+// Reads every instance of |counter| into |buffer|. The size of the result is not known in advance,
+// so it has to be sized by a first call that is expected to fail.
+bool GetRawArray(PDH_HCOUNTER counter, std::vector<BYTE>& buffer, DWORD& count);
+
+bool GetFormattedArray(PDH_HCOUNTER counter, std::vector<BYTE>& buffer, DWORD& count);
+
+// Lines the formatted values up with the raw instances, so that neither has to be looked up by
+// name. Both arrays are expanded from the same instance list, which is checked as they are walked;
+// only if they ever disagree is a lookup needed, and then only for what is left.
+void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount,
+	const PDH_FMT_COUNTERVALUE_ITEM* items, DWORD count, std::vector<double>& values);
+
+}  // namespace PdhUtil

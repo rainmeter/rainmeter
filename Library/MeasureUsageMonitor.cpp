@@ -5,8 +5,8 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "../Common/CriticalSection.h"
+#include "../Common/PdhUtil.h"
 #include <pdh.h>
-#include <pdhmsg.h>
 
 namespace {
 
@@ -17,102 +17,6 @@ using CounterOptions = MeasureUsageMonitor::CounterOptions;
 // Performance data is not refreshed any faster than this, so there is nothing to be gained from
 // collecting more often than PerfMon itself does.
 const DWORD c_UpdateRate = 1000;
-
-bool IsValidStatus(DWORD status)
-{
-	return status == PDH_CSTATUS_VALID_DATA || status == PDH_CSTATUS_NEW_DATA;
-}
-
-// Adds every instance of |counter| to |query|. The English name is tried first so that skins keep
-// working on localized systems, and the name is then tried as given for counters that only exist
-// under a localized name.
-bool AddCounter(PDH_HQUERY query, const std::wstring& category, const std::wstring& counter, PDH_HCOUNTER* handle)
-{
-	// PDH builds the "\Category(*)\Counter" path, which matters since category and counter names
-	// may contain the path separators themselves
-	PDH_COUNTER_PATH_ELEMENTS elements = { 0 };
-	elements.szObjectName = (LPWSTR)category.c_str();
-	elements.szInstanceName = (LPWSTR)L"*";
-	elements.szCounterName = (LPWSTR)counter.c_str();
-
-	WCHAR path[PDH_MAX_COUNTER_PATH] = { 0 };
-	DWORD size = _countof(path);
-	if (PdhMakeCounterPath(&elements, path, &size, 0) != ERROR_SUCCESS) return false;
-
-	if (PdhAddEnglishCounter(query, path, 0, handle) == ERROR_SUCCESS) return true;
-
-	return PdhAddCounter(query, path, 0, handle) == ERROR_SUCCESS;
-}
-
-// Reads every instance of |counter| into |buffer|. The size of the result is not known in advance,
-// so it has to be sized by a first call that is expected to fail.
-bool GetRawArray(PDH_HCOUNTER counter, std::vector<BYTE>& buffer, DWORD& count)
-{
-	DWORD size = 0;
-	count = 0;
-	if (PdhGetRawCounterArray(counter, &size, &count, nullptr) != PDH_MORE_DATA) return false;
-
-	buffer.resize(size);
-	return PdhGetRawCounterArray(counter, &size, &count, (PPDH_RAW_COUNTER_ITEM)buffer.data()) == ERROR_SUCCESS;
-}
-
-bool GetFormattedArray(PDH_HCOUNTER counter, std::vector<BYTE>& buffer, DWORD& count)
-{
-	// PDH_FMT_NOCAP100 keeps values such as the processor time of a process that is spread over
-	// several cores from being clamped to 100.
-	const DWORD format = PDH_FMT_DOUBLE | PDH_FMT_NOCAP100;
-
-	DWORD size = 0;
-	count = 0;
-	if (PdhGetFormattedCounterArray(counter, format, &size, &count, nullptr) != PDH_MORE_DATA) return false;
-
-	buffer.resize(size);
-	return PdhGetFormattedCounterArray(counter, format, &size, &count,
-		(PPDH_FMT_COUNTERVALUE_ITEM)buffer.data()) == ERROR_SUCCESS;
-}
-
-// Lines the formatted values up with the raw instances, so that neither has to be looked up by
-// name. Both arrays are expanded from the same instance list, which is checked as they are walked;
-// only if they ever disagree is a lookup needed, and then only for what is left.
-void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount,
-	const PDH_FMT_COUNTERVALUE_ITEM* items, DWORD count, std::vector<double>& values)
-{
-	values.assign(rawCount, 0.0);
-
-	DWORD i = 0;
-	for (const DWORD shared = min(rawCount, count); i < shared; ++i)
-	{
-		if (wcscmp(items[i].szName, rawItems[i].szName) != 0) break;
-
-		if (IsValidStatus(items[i].FmtValue.CStatus))
-		{
-			values[i] = items[i].FmtValue.doubleValue;
-		}
-	}
-
-	if (i == rawCount) return;
-
-	// The names point into the buffer the caller still owns, so nothing is copied here either
-	ankerl::unordered_dense::map<std::wstring_view, double> byName;
-	byName.reserve(count);
-
-	for (DWORD j = 0; j < count; ++j)
-	{
-		if (IsValidStatus(items[j].FmtValue.CStatus))
-		{
-			byName.insert_or_assign(std::wstring_view(items[j].szName), items[j].FmtValue.doubleValue);
-		}
-	}
-
-	for ( ; i < rawCount; ++i)
-	{
-		const auto found = byName.find(std::wstring_view(rawItems[i].szName));
-		if (found != byName.end())
-		{
-			values[i] = found->second;
-		}
-	}
-}
 
 // Translating the instance names of the GPU counters needs a process ID to name mapping, which is
 // itself read from the "Process" category. It is shared by every measure that asks for it.
@@ -136,7 +40,7 @@ void UpdatePids()
 	static std::vector<BYTE> s_Buffer;
 
 	DWORD count = 0;
-	if (!GetRawArray(g_PidCounter, s_Buffer, count)) return;
+	if (!PdhUtil::GetRawArray(g_PidCounter, s_Buffer, count)) return;
 
 	const auto items = (const PDH_RAW_COUNTER_ITEM*)s_Buffer.data();
 
@@ -146,7 +50,7 @@ void UpdatePids()
 	for (DWORD i = 0; i < count; ++i)
 	{
 		// Both "Idle" and "_Total" report a process ID of zero
-		if (!IsValidStatus(items[i].RawValue.CStatus) || items[i].RawValue.FirstValue == 0) continue;
+		if (!PdhUtil::IsValidStatus(items[i].RawValue.CStatus) || items[i].RawValue.FirstValue == 0) continue;
 
 		// The name is stored as PerfMon reports it, since rolling up similar names happens after
 		// the translation
@@ -194,7 +98,7 @@ void AddPidReference()
 		return;
 	}
 
-	if (!AddCounter(g_PidQuery, L"Process", L"ID Process", &g_PidCounter))
+	if (!PdhUtil::AddCounter(g_PidQuery, L"Process", L"ID Process", L"*", &g_PidCounter))
 	{
 		LogDebugF(L"UsageMonitor: Could not read the process IDs, so PIDToName will be ignored");
 		PdhCloseQuery(g_PidQuery);
@@ -361,7 +265,7 @@ bool Collector::AddMeasure(const CounterOptions& options)
 	if (counter == m_Counters.end())
 	{
 		CounterQuery added;
-		if (!AddCounter(m_Query, m_Category, options.counter, &added.handle)) return false;
+		if (!PdhUtil::AddCounter(m_Query, m_Category, options.counter, L"*", &added.handle)) return false;
 
 		counter = m_Counters.emplace(options.counter, std::move(added)).first;
 	}
@@ -448,16 +352,16 @@ void Collector::Collect()
 bool Collector::BuildCounterInfo(const CounterQuery& counter, CounterInfo& info)
 {
 	DWORD rawCount = 0;
-	if (!GetRawArray(counter.handle, m_RawBuffer, rawCount)) return false;
+	if (!PdhUtil::GetRawArray(counter.handle, m_RawBuffer, rawCount)) return false;
 
 	const auto rawItems = (const PDH_RAW_COUNTER_ITEM*)m_RawBuffer.data();
 
 	// Counters that measure a rate have nothing to report until they have been collected twice, in
 	// which case every instance is simply left at zero
 	DWORD formattedCount = 0;
-	if (GetFormattedArray(counter.handle, m_FormattedBuffer, formattedCount))
+	if (PdhUtil::GetFormattedArray(counter.handle, m_FormattedBuffer, formattedCount))
 	{
-		MatchValues(rawItems, rawCount, (const PDH_FMT_COUNTERVALUE_ITEM*)m_FormattedBuffer.data(),
+		PdhUtil::MatchValues(rawItems, rawCount, (const PDH_FMT_COUNTERVALUE_ITEM*)m_FormattedBuffer.data(),
 			formattedCount, m_Values);
 	}
 	else
@@ -508,7 +412,7 @@ void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER
 		}
 
 		const double value = values[i];
-		const LONGLONG rawValue = IsValidStatus(items[i].RawValue.CStatus) ? items[i].RawValue.FirstValue : 0;
+		const LONGLONG rawValue = PdhUtil::IsValidStatus(items[i].RawValue.CStatus) ? items[i].RawValue.FirstValue : 0;
 
 		// Instances that ended up under the same name are combined into one
 		const auto existing = byName.find(name);

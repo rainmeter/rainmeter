@@ -8,6 +8,7 @@
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
+    <ClCompile Include="PdhUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
@@ -64,6 +65,7 @@
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="PathUtil.h" />
+    <ClInclude Include="PdhUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StringUtil.h" />
