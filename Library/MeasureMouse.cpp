@@ -14,16 +14,18 @@ namespace {
 HHOOK g_MouseHook = nullptr;
 std::vector<MeasureMouse*> g_Measures;
 
+bool IsMeasureAlive(const MeasureMouse* measure)
+{
+	return std::find(g_Measures.begin(), g_Measures.end(), measure) != g_Measures.end();
+}
+
 template<typename Func>
 void ForEachMeasure(HWND window, Func&& func)
 {
 	const auto measuresCopy = g_Measures;
 	for (auto* measure : measuresCopy)
 	{
-		if (std::find(g_Measures.begin(), g_Measures.end(), measure) == g_Measures.end())
-		{
-			continue;
-		}
+		if (!IsMeasureAlive(measure)) continue;
 
 		Skin* skin = measure->GetSkin();
 		if (skin->GetWindow() == window && !skin->IsSelected())
@@ -316,38 +318,25 @@ void MeasureMouse::ExecuteMoveActions(POINT screenPos)
 		return;
 	}
 
-	auto execute = [&](const std::wstring& action)
+	// An action may destroy this measure (e.g. !Refresh), so stop as soon as that happens.
+	auto execute = [this, screenPos](const std::wstring& action) -> bool
 	{
-		if (!action.empty())
-		{
-			std::wstring command = action;
-			ReplaceMouseVariables(command, screenPos);
-			GetRainmeter().ExecuteActionCommand(command.c_str(), this);
-		}
+		if (action.empty()) return true;
+
+		std::wstring command = action;
+		ReplaceMouseVariables(command, screenPos);
+		GetRainmeter().ExecuteActionCommand(command.c_str(), this);
+
+		return IsMeasureAlive(this);
 	};
 
-	execute(m_MouseMoveAction);
+	if (!execute(m_MouseMoveAction)) return;
 
-	if (GetKeyState(VK_LBUTTON) < 0)
-	{
-		execute(m_LeftDragAction);
-	}
-	if (GetKeyState(VK_MBUTTON) < 0)
-	{
-		execute(m_MiddleDragAction);
-	}
-	if (GetKeyState(VK_RBUTTON) < 0)
-	{
-		execute(m_RightDragAction);
-	}
-	if (GetKeyState(VK_XBUTTON1) < 0)
-	{
-		execute(m_X1DragAction);
-	}
-	if (GetKeyState(VK_XBUTTON2) < 0)
-	{
-		execute(m_X2DragAction);
-	}
+	if (GetKeyState(VK_LBUTTON) < 0 && !execute(m_LeftDragAction)) return;
+	if (GetKeyState(VK_MBUTTON) < 0 && !execute(m_MiddleDragAction)) return;
+	if (GetKeyState(VK_RBUTTON) < 0 && !execute(m_RightDragAction)) return;
+	if (GetKeyState(VK_XBUTTON1) < 0 && !execute(m_X1DragAction)) return;
+	if (GetKeyState(VK_XBUTTON2) < 0 && !execute(m_X2DragAction)) return;
 }
 
 void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) const

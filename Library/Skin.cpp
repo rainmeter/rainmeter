@@ -219,6 +219,10 @@ void Skin::Dispose(bool refresh)
 	UnregisterMouseInput();
 	m_HasMouseScrollAction = false;
 
+	// Cleared before the measures are destroyed so that ~MeasureMouse does not have to update
+	// the capture state while |m_Measures| is being torn down.
+	ClearMouseMeasureCapture();
+
 	m_ActiveTransition = false;
 
 	// Cleared before the meters are destroyed so the focus pointer cannot dangle.
@@ -238,11 +242,13 @@ void Skin::Dispose(bool refresh)
 	}
 	m_Meters.clear();
 
-	for (auto i = m_Measures.begin(); i != m_Measures.end(); ++i)
+	// Detached before deleting so that a measure destructor cannot observe already deleted
+	// measures through |m_Measures|.
+	auto measures = std::exchange(m_Measures, {});
+	for (auto* measure : measures)
 	{
-		delete (*i);
+		delete measure;
 	}
-	m_Measures.clear();
 
 	delete m_Background;
 	m_Background = nullptr;
@@ -5139,7 +5145,7 @@ LRESULT Skin::OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if ((HWND)lParam != m_Window)
 	{
-		if (m_MouseMeasureCapture) ClearMouseMeasureCapture();
+		ClearMouseMeasureCapture();
 
 		// Losing the capture ends the drag; the selection stays where it got to.
 		m_InputDragging = false;
@@ -5390,6 +5396,8 @@ bool Skin::SetInputFocus(MeterTextEdit* meter, std::wstring* dismissCommand)
 
 void Skin::ClearMouseMeasureCapture()
 {
+	if (!m_MouseMeasureCapture) return;
+
 	for (auto* measure : m_Measures)
 	{
 		if (measure->GetTypeID() == TypeID<MeasureMouse>())
@@ -5398,7 +5406,8 @@ void Skin::ClearMouseMeasureCapture()
 		}
 	}
 
-	m_MouseMeasureCapture = false;
+	// No measure wants the capture now, so this drops it along with |m_MouseMeasureCapture|.
+	UpdateMouseMeasureCapture();
 }
 
 bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
