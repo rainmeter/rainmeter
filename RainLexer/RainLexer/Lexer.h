@@ -35,6 +35,19 @@ using namespace Scintilla;
 
 namespace RainLexer {
 
+// Allows looking an option up without building a std::string out of it first
+struct OptionHash
+{
+    using is_transparent = void;
+
+    size_t operator()(std::string_view option) const
+    {
+        return std::hash<std::string_view>{}(option);
+    }
+};
+
+using OptionSet = std::unordered_set<std::string, OptionHash, std::equal_to<>>;
+
 inline static char* LexerName();
 inline static TCHAR* LexerStatusText();
 
@@ -127,19 +140,19 @@ private:
     Lexilla::WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const std::set<std::string> pipeOpt = {
+    const OptionSet pipeOpt = {
         "@inherit", "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape",
         "update", "whitelist"
     };
 
     // Value and option bangs
-    const std::set<std::string> setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
+    const OptionSet setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
 
     // Options with values and subvalues on same line
-    const std::set<std::string> extKeywordsOpt = { "inlinesetting", "shape" };
+    const OptionSet extKeywordsOpt = { "inlinesetting", "shape" };
 
     // Valid values for extKeyWords
-    const std::set<std::string> extOpt = {
+    const OptionSet extOpt = {
         "inlinesetting=case", "inlinesetting=color", "inlinesetting=characterspacing", "inlinesetting=face", "inlinesetting=gradientcolor",
         "inlinesetting=italic", "inlinesetting=none", "inlinesetting=oblique", "inlinesetting=shadow", "inlinesetting=size",
         "inlinesetting=stretch", "inlinesetting=strikethrough", "inlinesetting=typography", "inlinesetting=underline", "inlinesetting=weight",
@@ -148,10 +161,10 @@ private:
     };
 
     // Format options
-    const std::set<std::string> formatOpt = { "format", "timestampformat" };
+    const OptionSet formatOpt = { "format", "timestampformat" };
 
     // Options not using numeric values, and are not type 2 keywords (options with valid values, e.g. StringAlign=RIGHT)
-    const std::set<std::string> nonNumValOpt = {
+    const OptionSet nonNumValOpt = {
         "@include", "@inherit",
         "action", "author",
         "background", "barimage", "bitmapimage", "blacklist", "bothimage", "bothimagepath", "bothimagepath", "buttoncommand", "buttonimage",

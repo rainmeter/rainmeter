@@ -235,9 +235,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     const Lexilla::WordList& depOptions = m_WordLists[7];
     const Lexilla::WordList& depBangs = m_WordLists[8];
 
-    auto IsOptionInExtList = [] (const std::set<std::string> option, char* optBuffer) -> bool
+    auto IsOptionInExtList = [] (const OptionSet& options, const char* optBuffer) -> bool
     {
-        return option.find(optBuffer) != option.end();
+        return options.contains(optBuffer);
     };
 
     length += startPos;
