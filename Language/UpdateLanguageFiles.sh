@@ -12,11 +12,35 @@ trap 'rm -f "$temp_file"' EXIT HUP INT TERM
 for language_file in "$script_dir"/*.ini; do
 	[ "$language_file" = "$template" ] && continue
 
-	awk '
+	awk -v language_name="$(basename "$language_file")" '
     function trim(value) {
       sub(/^[[:space:]]+/, "", value)
       sub(/[[:space:]]+$/, "", value)
       return value
+    }
+
+    function count(text, needle,   total, position) {
+      total = 0
+      while ((position = index(text, needle)) > 0) {
+        total++
+        text = substr(text, position + length(needle))
+      }
+      return total
+    }
+
+    # Verify that the translation uses the same amount of line breaks as the
+    # English string. "$\n" is used by the installer strings and "\n" elsewhere.
+    function check_line_breaks(key, translation, original,   installer, plain) {
+      if (translation == "") return
+
+      installer = count(original, "$\\n")
+      plain = count(original, "\\n") - installer
+      if (count(translation, "$\\n") != installer ||
+          count(translation, "\\n") - count(translation, "$\\n") != plain) {
+        printf "%s: %s has %d \"$\\n\" and %d \"\\n\" instead of %d and %d\n",
+          language_name, key, count(translation, "$\\n"),
+          count(translation, "\\n") - count(translation, "$\\n"), installer, plain > "/dev/stderr"
+      }
     }
 
     NR == FNR {
@@ -55,6 +79,7 @@ for language_file in "$script_dir"/*.ini; do
         } else {
           value = ""
         }
+        check_line_breaks(key, value, substr($0, equals + 1))
         print key "=" value
       } else {
         print
