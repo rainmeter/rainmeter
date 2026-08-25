@@ -29,7 +29,7 @@ private:
 	DWORD m_Timeout;
 	double m_TimeoutValue;
 	DWORD m_UpdateRate;
-	DWORD m_UpdateCounter;
+	DWORD m_UpdateRateCounter;
 	std::wstring m_FinishAction;
 	PingTask* m_Task;
 };

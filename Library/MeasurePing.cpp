@@ -200,7 +200,7 @@ MeasurePing::MeasurePing(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Timeout(30000),
 	m_TimeoutValue(30000.0),
 	m_UpdateRate(32),
-	m_UpdateCounter(0),
+	m_UpdateRateCounter(0),
 	m_FinishAction(),
 	m_Task(nullptr)
 {
@@ -230,7 +230,7 @@ void MeasurePing::UpdateValue()
 {
 	if (m_Task) return;
 
-	if (m_UpdateCounter == 0)
+	if (m_UpdateRateCounter == 0)
 	{
 		m_Task = PingTask::Create(
 			this, m_Destination, m_Timeout, m_TimeoutValue,
@@ -250,10 +250,10 @@ void MeasurePing::UpdateValue()
 			});
 	}
 
-	++m_UpdateCounter;
-	if (m_UpdateCounter >= m_UpdateRate)
+	++m_UpdateRateCounter;
+	if (m_UpdateRateCounter >= m_UpdateRate)
 	{
-		m_UpdateCounter = 0;
+		m_UpdateRateCounter = 0;
 	}
 }
 
@@ -261,11 +261,15 @@ void MeasurePing::AdvanceUpdateCounter(UINT count)
 {
 	Measure::AdvanceUpdateCounter(count);
 
+	// A counter of zero means the request is due on the next update. Advancing past it would
+	// swallow that request until the counter wraps around again, so it is left as it is.
+	if (m_UpdateRateCounter == 0) return;
+
 	// UpdateRate counts measure updates, which happen once every UpdateDivider skin updates.
 	if (m_UpdateDivider > 1) count /= (UINT)m_UpdateDivider;
 
-	m_UpdateCounter += count;
-	if (m_UpdateCounter >= m_UpdateRate) m_UpdateCounter = 0;
+	m_UpdateRateCounter += count;
+	if (m_UpdateRateCounter >= m_UpdateRate) m_UpdateRateCounter = 0;
 }
 
 namespace {
