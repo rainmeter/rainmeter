@@ -40,11 +40,11 @@ bool IsSpace(WCHAR ch)
 
 std::wstring Trim(const std::wstring& text)
 {
-	size_t start = 0U;
+	size_t start = 0;
 	while (start < text.size() && IsSpace(text[start])) ++start;
 
 	size_t end = text.size();
-	while (end > start && IsSpace(text[end - 1U])) --end;
+	while (end > start && IsSpace(text[end - 1])) --end;
 
 	return text.substr(start, end - start);
 }
@@ -235,7 +235,7 @@ size_t TagLoc(const std::wstring& line, const WCHAR* name)
 	needle += L'=';
 
 	const size_t loc = StringUtil::CaseInsensitiveFind(line, needle);
-	return (loc == std::wstring::npos) ? std::wstring::npos : loc + 1U;
+	return (loc == std::wstring::npos) ? std::wstring::npos : loc + 1;
 }
 
 // The value written at |loc|, which runs to the next space, or to the closing quote where it
@@ -243,7 +243,7 @@ size_t TagLoc(const std::wstring& line, const WCHAR* name)
 // took up in order to cut it back out.
 std::wstring TagData(const std::wstring& line, const WCHAR* name, size_t loc)
 {
-	size_t i = loc + wcslen(name) + 1U;
+	size_t i = loc + wcslen(name) + 1;
 
 	bool quoted = false;
 	if (i < line.size() && line[i] == L'"')
@@ -279,10 +279,10 @@ std::wstring ScanOverrides(ConfigParser& parser, std::wstring line, InputTextOpt
 
 		// Out goes " Name=Value", the space that found it included: what is left is the bang, and
 		// the settings are no part of what it does.
-		line.erase(loc - 1U, 1U + wcslen(entry.name) + 1U + tag.size());
+		line.erase(loc - 1, 1 + wcslen(entry.name) + 1 + tag.size());
 
 		std::wstring value = tag;
-		if (value.size() >= 2U && value.front() == L'"') value = value.substr(1U, value.size() - 2U);
+		if (value.size() >= 2 && value.front() == L'"') value = value.substr(1, value.size() - 2);
 
 		// The line itself is read with its section variables left alone, so that the bang keeps
 		// its own until it runs. A setting is read here and now, and wants them resolved.
@@ -414,10 +414,10 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 		SetFocus(m_Edit);
 
 		// Select all.
-		SendMessage(m_Edit, EM_SETSEL, 0U, (LPARAM)-1);
+		SendMessage(m_Edit, EM_SETSEL, 0, (LPARAM)-1);
 
 		MSG msg;
-		while (GetMessage(&msg, nullptr, 0U, 0U) > 0)
+		while (GetMessage(&msg, nullptr, 0, 0) > 0)
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -498,7 +498,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 			DWORD style = WS_CHILD | WS_VISIBLE | options.align;
 			style |= options.password ? (ES_PASSWORD | ES_AUTOHSCROLL) : ES_MULTILINE;
 
-			box->m_Edit = CreateWindowEx(0UL, WC_EDIT, options.text.c_str(), style,
+			box->m_Edit = CreateWindowEx(0L, WC_EDIT, options.text.c_str(), style,
 				0, 0, client.right, client.bottom, wnd, nullptr,
 				GetRainmeter().GetModuleInstance(), nullptr);
 			if (box->m_Edit == nullptr) return -1;
@@ -513,7 +513,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 				SendMessage(box->m_Edit, EM_SETPASSWORDCHAR, (WPARAM)L'*', 0);
 			}
 
-			SetWindowSubclass(box->m_Edit, EditProc, 0U, (DWORD_PTR)box);
+			SetWindowSubclass(box->m_Edit, EditProc, 0, (DWORD_PTR)box);
 		}
 		return 0;
 
@@ -616,9 +616,9 @@ bool MeasureInputText::InputBox::AcceptsChar(WCHAR ch) const
 	if (ch == L'-')
 	{
 		// A sign only where a sign can go.
-		DWORD start = 0UL;
+		DWORD start = 0L;
 		SendMessage(m_Edit, EM_GETSEL, (WPARAM)&start, 0);
-		if (start != 0UL) return false;
+		if (start != 0L) return false;
 	}
 
 	return true;
@@ -713,7 +713,7 @@ void MeasureInputText::CloseBox()
 	// Posted rather than sent: the window belongs to the worker thread, and a sent message would
 	// wait on a message loop that may be ending on its own.
 	CriticalSectionLock lock(m_Data->criticalSection);
-	if (m_Data->window != nullptr) PostMessage(m_Data->window, WM_CLOSE, 0U, 0U);
+	if (m_Data->window != nullptr) PostMessage(m_Data->window, WM_CLOSE, 0, 0);
 }
 
 const WCHAR* MeasureInputText::GetStringValue()
@@ -728,7 +728,7 @@ void MeasureInputText::Command(const std::wstring& command)
 	if (m_Task != nullptr) return;
 
 	m_Steps.clear();
-	m_StepIndex = 0U;
+	m_StepIndex = 0;
 
 	auto& parser = m_Skin->GetParser();
 	m_Options = InputTextOptions();
@@ -761,7 +761,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 		return true;
 	}
 
-	const std::wstring verb = args.substr(0U, space);
+	const std::wstring verb = args.substr(0, space);
 	if (_wcsicmp(verb.c_str(), L"ExecuteBatch") != 0)
 	{
 		LogWarningF(this, L"!CommandMeasure: Unknown command: %s", verb.c_str());
@@ -770,7 +770,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 
 	// ExecuteBatch [All|#|#-#]. A range that cannot be read is taken as All, which is what it has
 	// always fallen back to.
-	std::wstring range = args.substr(space + 1U);
+	std::wstring range = args.substr(space + 1);
 	const size_t rangeEnd = range.find(L' ');
 	if (rangeEnd != std::wstring::npos) range.erase(rangeEnd);
 	range = Trim(range);
@@ -780,8 +780,8 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 	if (!range.empty() && _wcsicmp(range.c_str(), L"All") != 0)
 	{
 		const size_t dash = range.find(L'-');
-		const int from = parser.ParseInt(range.substr(0U, dash), 0);
-		const int to = (dash == std::wstring::npos) ? from : parser.ParseInt(range.substr(dash + 1U), 0);
+		const int from = parser.ParseInt(range.substr(0, dash), 0);
+		const int to = (dash == std::wstring::npos) ? from : parser.ParseInt(range.substr(dash + 1), 0);
 		if (from > 0 && to > 0)
 		{
 			first = from;
@@ -879,7 +879,7 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 void MeasureInputText::EndRun(bool dismissed)
 {
 	m_Steps.clear();
-	m_StepIndex = 0U;
+	m_StepIndex = 0;
 
 	// Last of all: the action may refresh the skin, which takes this measure with it.
 	if (dismissed && !m_DismissAction.empty())
