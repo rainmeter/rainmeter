@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __EXPORT_H__
-#define __EXPORT_H__
+#pragma once
 
 #include "../Plugins/API/RainmeterAPI.h"
 
@@ -14,4 +8,6 @@
 
 /* DEPRECATED */ LIBRARY_EXPORT __declspec(deprecated) LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data);
 
+#ifdef LIBRARY_EXPORTS
+void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam);
 #endif

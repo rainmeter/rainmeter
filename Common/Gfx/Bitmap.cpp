@@ -1,0 +1,235 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#include "StdAfx.h"
+#include "Bitmap.h"
+#include "Util/BitmapLoader.h"
+#include "Util/EffectStream.h"
+
+namespace Gfx {
+
+BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap,
+	UINT x, UINT y, UINT width, UINT height) :
+	m_Bitmap(std::move(bitmap)),
+	m_X(x),
+	m_Y(y),
+	m_Width(width),
+	m_Height(height)
+{
+}
+
+BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect) :
+	m_Bitmap(std::move(bitmap)),
+	m_X(rect.left),
+	m_Y(rect.top),
+	m_Width(rect.right),
+	m_Height(rect.bottom)
+{
+}
+
+BitmapSegment::BitmapSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect) :
+	m_Bitmap(std::move(bitmap)),
+	m_X(rect.X),
+	m_Y(rect.Y),
+	m_Width(rect.Width),
+	m_Height(rect.Height)
+{
+}
+
+Bitmap::Bitmap(const std::wstring& path, int exifOrientation, bool createAlphaMask) :
+	m_Width(0),
+	m_Height(0),
+	m_ExifOrientation(exifOrientation),
+	m_Path(path),
+	m_FileSize(0),
+	m_FileTime(0),
+	m_AlphaMask(),
+	m_CreateAlphaMask(createAlphaMask)
+{
+}
+
+Bitmap::Bitmap() :
+	m_Width(0),
+	m_Height(0),
+	m_ExifOrientation(0),
+	m_Path(L""),
+	m_FileSize(0),
+	m_FileTime(0),
+	m_AlphaMask(),
+	m_CreateAlphaMask(false)
+{
+}
+
+Bitmap::~Bitmap()
+{
+}
+
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, UINT x, UINT y, UINT width, UINT height)
+{
+	m_Segments.emplace_back(bitmap, x, y, width, height);
+}
+
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, D2D1_RECT_U& rect)
+{
+	m_Segments.emplace_back(bitmap, rect);
+}
+
+void Bitmap::AddSegment(Microsoft::WRL::ComPtr<ID2D1Bitmap1>& bitmap, WICRect& rect)
+{
+	m_Segments.emplace_back(bitmap, rect);
+}
+
+bool Bitmap::HasFileChanged(const std::wstring& file)
+{
+	return Util::BitmapLoader::HasFileChanged(this, file);
+}
+
+HRESULT Bitmap::Load(const Canvas& canvas)
+{
+	return Util::BitmapLoader::LoadBitmapFromFile(canvas, this);
+}
+
+HRESULT Bitmap::LoadFromIcon(const Canvas& canvas, HICON icon, float scale)
+{
+	return Util::BitmapLoader::LoadBitmapFromIcon(canvas, this, icon, scale);
+}
+
+Util::EffectStream* Bitmap::CreateEffectStream()
+{
+	return new Util::EffectStream(this);
+}
+
+bool Bitmap::GetPixel(Canvas& canvas, int px, int py, D2D1_COLOR_F& color)
+{
+	// TODO: Create a duplicate bitmap for every one with CPU_READ instead of creating a small 1 px bitmap?
+	// Maybe have a 1px bitmap in Canvas since we won't ever check two different bitmaps at once and use that to fetch the pixel data?
+	// Creating a bitmap every time we have to check a pixel is bad though, so we should consider the above.
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
+	D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+	HRESULT hr = canvas.m_Target->CreateBitmap(
+		D2D1::SizeU(1, 1),
+		nullptr,
+		0,
+		bProps,
+		bitmap.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) return false;
+
+	// Verify that the pixel was actually set
+	bool found = false;
+	for (auto& it : m_Segments)
+	{
+		const auto rect = it.GetRect();
+		if (rect.left < px && rect.top < py && px <= rect.left + rect.right && py <= rect.top + rect.bottom)
+		{
+			const auto point = D2D1::Point2U(0, 0);
+			const auto srcRect = D2D1::RectU(
+				(UINT32)(px - rect.left),
+				(UINT32)(py - rect.top),
+				(UINT32)(px - rect.left + 1),
+				(UINT32)(py - rect.top + 1));
+			bitmap->CopyFromBitmap(&point, it.GetBitmap(), &srcRect);
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) return false;
+
+	D2D1_MAPPED_RECT data = { 0 };
+	hr = bitmap->Map(D2D1_MAP_OPTIONS_READ, &data);
+	if (FAILED(hr)) return false;
+
+	color.r = data.bits[0];
+	color.g = data.bits[1];
+	color.b = data.bits[2];
+	color.a = data.bits[3];
+
+	hr = bitmap->Unmap();
+	return SUCCEEDED(hr);
+}
+
+bool Bitmap::IsPixelOpaque(int px, int py) const
+{
+	if (px < 0 || py < 0 || px >= (int)m_Width || py >= (int)m_Height)
+	{
+		return true;
+	}
+
+	const size_t pixelCount = (size_t)m_Width * m_Height;
+	if (m_AlphaMask.size() != pixelCount)
+	{
+		return true;
+	}
+
+	const size_t index = (size_t)py * m_Width + px;
+	return m_AlphaMask[index] != 0;
+}
+
+bool Bitmap::BuildAlphaMask(Canvas& canvas)
+{
+	const UINT64 pixelCount64 = (UINT64)m_Width * m_Height;
+	const size_t pixelCount = (size_t)pixelCount64;
+	if ((UINT64)pixelCount != pixelCount64)
+	{
+		return false;
+	}
+
+	std::vector<BYTE> alphaMask(pixelCount);
+	for (auto& segment : m_Segments)
+	{
+		const UINT segmentW = segment.GetWidth();
+		const UINT segmentH = segment.GetHeight();
+		if (segmentW == 0 || segmentH == 0)
+		{
+			continue;
+		}
+		if (segment.GetX() > m_Width || segment.GetY() > m_Height ||
+			segmentW > m_Width - segment.GetX() || segmentH > m_Height - segment.GetY())
+		{
+			return false;
+		}
+
+		Microsoft::WRL::ComPtr<ID2D1Bitmap1> bitmap;
+		D2D1_BITMAP_PROPERTIES1 bProps = D2D1::BitmapProperties1(
+			D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+		HRESULT hr = canvas.m_Target->CreateBitmap(
+			D2D1::SizeU(segmentW, segmentH),
+			nullptr,
+			0,
+			bProps,
+			bitmap.ReleaseAndGetAddressOf());
+		if (FAILED(hr)) return false;
+
+		const auto point = D2D1::Point2U(0, 0);
+		hr = bitmap->CopyFromBitmap(&point, segment.GetBitmap(), nullptr);
+		if (FAILED(hr)) return false;
+
+		D2D1_MAPPED_RECT data = { 0 };
+		hr = bitmap->Map(D2D1_MAP_OPTIONS_READ, &data);
+		if (FAILED(hr)) return false;
+
+		for (UINT y = 0; y < segmentH; ++y)
+		{
+			const size_t dstRow = (size_t)(segment.GetY() + y) * m_Width + segment.GetX();
+			const size_t srcRow = (size_t)y * data.pitch;
+			for (UINT x = 0; x < segmentW; ++x)
+			{
+				alphaMask[dstRow + x] = data.bits[srcRow + (size_t)x * 4 + 3];
+			}
+		}
+
+		hr = bitmap->Unmap();
+		if (FAILED(hr)) return false;
+	}
+
+	m_AlphaMask.swap(alphaMask);
+	return true;
+}
+
+HRESULT Bitmap::GetFileInfo(const std::wstring& path, FileInfo* fileInfo)
+{
+	return Util::BitmapLoader::GetFileInfo(path, fileInfo);
+}
+}  // namespace Gfx

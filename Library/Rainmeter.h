@@ -1,18 +1,13 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __RAINMETER_H__
-#define __RAINMETER_H__
+#pragma once
 
 #include <windows.h>
 #include <map>
 #include <vector>
 #include <list>
 #include <string>
+#include <string_view>
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "DialogManage.h"
@@ -35,9 +30,17 @@
 #define RAINMETER_CLASS_NAME	L"DummyRainWClass"
 #define RAINMETER_WINDOW_NAME	L"Rainmeter control window"
 
-#define WM_RAINMETER_DELAYED_REFRESH_ALL WM_APP + 0
-#define WM_RAINMETER_DELAYED_EXECUTE     WM_APP + 1
-#define WM_RAINMETER_EXECUTE             WM_APP + 2
+enum
+{
+	WM_RAINMETER_DELAYED_REFRESH_ALL = WM_APP + 0,
+	WM_RAINMETER_DELAYED_EXECUTE = WM_APP + 1,
+	WM_RAINMETER_EXECUTE = WM_APP + 2,
+
+	// Internal messages that may change at any time.
+	WM_RAINMETER_HANDLE_ASYNC_TASK_RESULT = WM_APP + 100,
+	WM_RAINMETER_HANDLE_EXPORT_SYNC = WM_APP + 101,
+	WM_RAINMETER_HANDLE_ACTION_TIMER_EXECUTE = WM_APP + 102,
+};
 
 struct GlobalOptions
 {
@@ -53,7 +56,7 @@ class Rainmeter
 public:
 	static Rainmeter& GetInstance();
 
-	int Initialize(LPCWSTR iniPath, LPCWSTR layout, bool safeStart);
+	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	void Finalize();
 
 	void RestartRainmeter();
@@ -74,8 +77,9 @@ public:
 	Skin* GetSkinByINI(const std::wstring& ini_searching);
 
 	Skin* GetSkin(HWND hwnd);
-	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group = std::wstring());
+	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group = {});
 	std::map<std::wstring, Skin*>& GetAllSkins() { return m_Skins; }
+	SkinRegistry& GetSkinRegistry() { return m_SkinRegistry; }
 
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
@@ -120,8 +124,6 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetModuleInstance() { return m_Instance; }
-	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
-	LCID GetResourceLCID() { return m_ResourceLCID; }
 
 	bool GetDebug() { return m_Debug; }
 
@@ -136,6 +138,8 @@ public:
 	void ReadStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
+	bool ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement);
+	void SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& placement);
 
 	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
 	void SetDisableVersionCheck(bool check);
@@ -156,6 +160,12 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
+	int GetDefaultZoom() { return m_DefaultZoom; }
+	void SetDefaultZoom(int zoom);
+	bool GetForceDefaultZoom() { return m_ForceDefaultZoom; }
+	void SetForceDefaultZoom(bool force);
+	bool HasExeDpiOverride() { return m_HasExeDpiOverride; }
+
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
 
 	void SetDebug(bool debug);
@@ -163,15 +173,16 @@ public:
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
-	void ShowContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowMenu(pos, skin); }
+	void ShowContextMenu(POINT pos, Skin* skin, HWND parentWindow = nullptr) { return m_ContextMenu.ShowMenu(pos, skin, parentWindow); }
 	void ShowSkinCustomContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowSkinCustomMenu(pos, skin); }
+	void ShowSkinSelectionContextMenu(POINT pos, Skin* skin, HWND parentWindow) { return m_ContextMenu.ShowSkinSelectionMenu(pos, skin, parentWindow); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteBang(std::wstring_view bang, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command, Skin* skin = nullptr);
 	void ExecuteActionCommand(const WCHAR* command, Section* section);
@@ -187,6 +198,7 @@ public:
 	D2D1_COLOR_F& GetDefaultSelectionColor() { return m_DefaultSelectedColor; }
 
 	const std::wstring& GetBuildTime() { return m_BuildTime; }
+	const std::wstring& GetBuildHash() { return m_BuildHash; }
 
 	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
 
@@ -205,12 +217,16 @@ private:
 
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	void ScheduleReattachGfxDevice();
+	void ReattachGfxDevice();
+
 	void ActivateActiveSkins();
 	void CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings);
 	void DeleteAllSkins();
 	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
+	void RescanSkinsIfNeeded(const std::wstring& folderPath = L"");
 	void ScanForLayouts();
 	void ReadFavorites();
 	void ReadGeneralSettings(const std::wstring& iniFile);
@@ -218,9 +234,12 @@ private:
 	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
 
+	void ScheduleUpdateCheck(UINT interval);
+
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
+	void EnsureSkinInstallerAssociation();
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
 
@@ -259,6 +278,7 @@ private:
 	bool m_LanguageObsolete;
 
 	bool m_HardwareAccelerated;
+	bool m_ReattachGfxDeviceScheduled;
 
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;
@@ -270,6 +290,10 @@ private:
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
+
+	int m_DefaultZoom;
+	bool m_ForceDefaultZoom;
+	bool m_HasExeDpiOverride;
 
 	std::wstring m_SkinEditor;
 
@@ -285,14 +309,11 @@ private:
 
 	HANDLE m_Mutex;
 	HINSTANCE m_Instance;
-	HMODULE m_ResourceInstance;
-	LCID m_ResourceLCID;
-
-	ULONG_PTR m_GDIplusToken;
 
 	GlobalOptions m_GlobalOptions;
 
 	std::wstring m_BuildTime;
+	std::wstring m_BuildHash;
 };
 
 // Convenience function.
@@ -305,5 +326,3 @@ inline Rainmeter& GetRainmeter() { return Rainmeter::GetInstance(); }
 #endif
 
 EXPORT_PLUGIN int RainmeterMain(LPWSTR cmdLine);
-
-#endif

@@ -1,12 +1,6 @@
-/* Copyright (C) 2015 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_FILEUTIL_H_
-#define RM_COMMON_FILEUTIL_H_
+#pragma once
 
 #include <string>
 #include <memory>
@@ -24,8 +18,16 @@ Encoding GetEncoding(const BYTE* buffer, const size_t& size);
 
 std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size = nullptr);
 
+// Reads |path| as text. The BOM of the file determines the encoding, and a file without one is
+// read as UTF-8. Both functions below open the file in text mode, so a CRLF is read back as a
+// lone LF and an LF is written out as a CRLF.
+bool ReadTextFile(const std::wstring& path, std::wstring& text);
+
+// Writes |text| to |path| in |encoding|, prepending a BOM for the Unicode encodings.
+bool WriteTextFile(const std::wstring& path, const std::wstring& text, Encoding encoding);
+
 bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness);
 
-} // namespace FileUtil
+void SetFilePinnedAttribute(const WCHAR* path);
 
-#endif
+} // namespace FileUtil

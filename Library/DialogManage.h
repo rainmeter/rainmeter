@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __DIALOGMANAGE_H__
-#define __DIALOGMANAGE_H__
+#pragma once
 
 #include "../Common/Dialog.h"
 #include "resource.h"
@@ -43,8 +37,9 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -68,7 +63,10 @@ private:
 			Id_XPositionEdit,
 			Id_YPositionEdit,
 			Id_ZPositionDropDownList,
-			Id_LoadOrderEdit,
+			Id_ZoomLabel,
+			Id_ZoomEdit,
+			Id_ZoomSpinner,
+			Id_ZoomPercentLabel,
 			Id_OnHoverDropDownList,
 			Id_TransparencyDropDownList,
 			Id_DisplayMonitorButton,
@@ -89,6 +87,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		virtual void HandleDpiChange() override;
 
 		void UpdateSelected(Skin* skin);
 		void Update(Skin* skin, bool deleted);
@@ -106,10 +105,13 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 		void DestroyImageList();
+		void CreateImageList();
 
 		static LRESULT CALLBACK NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 		static LRESULT CALLBACK SkinsTreeViewSubclass(HWND hwnd, UINT msg, WPARAM wParam,
+			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
+		static LRESULT CALLBACK DescriptionEditSubclass(HWND hwnd, UINT msg, WPARAM wParam,
 			LPARAM lParam, UINT_PTR uId, DWORD_PTR data);
 
 		static std::wstring GetTreeSelectionPath(HWND tree);
@@ -203,6 +205,11 @@ private:
 			Id_LanguageUpdateLink,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
+			Id_DefaultZoomLabel,
+			Id_DefaultZoomEdit,
+			Id_DefaultZoomSpinner,
+			Id_DefaultZoomPercentLabel,
+			Id_ForceDefaultZoomCheckBox,
 			Id_ShowTrayIconCheckBox,
 			Id_UseHardwareAccelerationCheckBox
 		};
@@ -232,8 +239,6 @@ private:
 		Id_HelpButton
 	};
 
-	Tab& GetActiveTab();
-
 	TabSkins m_TabSkins;
 	TabLayouts m_TabLayouts;
 	TabGameMode m_TabGameMode;
@@ -242,5 +247,3 @@ private:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogManage* c_Dialog;
 };
-
-#endif

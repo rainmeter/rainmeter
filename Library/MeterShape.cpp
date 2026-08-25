@@ -1,9 +1,4 @@
-/* Copyright (C) 2016 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterShape.h"
@@ -11,33 +6,97 @@
 #include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 #include "../Common/Gfx/Shape.h"
-#include "../Common/Gfx/Shapes/Rectangle.h"
-#include "../Common/Gfx/Shapes/RoundedRectangle.h"
-#include "../Common/Gfx/Shapes/Ellipse.h"
-#include "../Common/Gfx/Shapes/Line.h"
-#include "../Common/Gfx/Shapes/Arc.h"
-#include "../Common/Gfx/Shapes/Curve.h"
-#include "../Common/Gfx/Shapes/QuadraticCurve.h"
-#include "../Common//Gfx/Shapes/Path.h"
 
 namespace {
 
-// Helpers to allow default values to be used instead of needing to be defined
-auto ParseNumber = [](auto var, const WCHAR* value, auto defValue, auto* func) -> decltype(var)
+// The parts of a shape option are separated by a delimiter, and may contain formulas with
+// delimiters of their own. Returns nullopt once every part has been consumed, treating a trailing
+// part that contains only whitespace as if it was not there.
+std::optional<std::wstring_view> ConsumeValue(StringParser& values, WCHAR delimiter = L',')
 {
-	if (_wcsnicmp(value, L"*", 1) == 0) return var;
-	return (decltype(var))func(value, defValue);
-};
+	values.ConsumeWhitespace();
+	if (values.IsConsumed()) return std::nullopt;
 
-auto ParseBool = [](auto& var, const WCHAR* value)
+	return values.ConsumeUntilOrRest(
+		delimiter, StringParser::SkipWhitespace | StringParser::SkipNestedParentheses);
+}
+
+// A shape option is a '|' separated list of a shape definition and its modifiers. Returns the next
+// non-empty option, or an empty view once consumed.
+std::wstring_view ConsumeOption(StringParser& options)
 {
-	if (_wcsnicmp(value, L"*", 1) != 0) var = (ConfigParser::ParseInt(value, 0) == 0);
-};
+	while (const auto option = ConsumeValue(options, L'|'))
+	{
+		if (!option->empty()) return *option;
+	}
+
+	return {};
+}
+
+// Reads the next value of a shape definition. Returns false if there is none, leaving |value|
+// unchanged.
+bool ReadValue(ConfigParser& parser, StringParser& values, FLOAT& value, double defValue = 0.0)
+{
+	const auto next = ConsumeValue(values);
+	if (!next) return false;
+
+	value = (FLOAT)parser.ParseDouble(*next, defValue);
+	return true;
+}
+
+// Reads a pair of values, such as a transform anchor. Both are left unchanged unless both are read.
+bool ReadValuePair(ConfigParser& parser, StringParser& values, FLOAT& x, FLOAT& y)
+{
+	FLOAT valueX = 0.0f;
+	FLOAT valueY = 0.0f;
+	if (!ReadValue(parser, values, valueX) || !ReadValue(parser, values, valueY)) return false;
+
+	x = valueX;
+	y = valueY;
+	return true;
+}
+
+// As ReadValue, but "*" also leaves |value| unchanged, which is how the default of a value derived
+// from the earlier ones is requested.
+bool ReadValueOrDefault(ConfigParser& parser, StringParser& values, FLOAT& value)
+{
+	const auto next = ConsumeValue(values);
+	if (!next) return false;
+
+	if (!next->starts_with(L'*')) value = (FLOAT)parser.ParseDouble(*next, 0.0);
+	return true;
+}
+
+bool ReadFlag(ConfigParser& parser, StringParser& values, bool& flag)
+{
+	const auto next = ConsumeValue(values);
+	if (!next) return false;
+
+	flag = parser.ParseInt(*next, 0) == 0;
+	return true;
+}
+
+bool ReadFlagOrDefault(ConfigParser& parser, StringParser& values, bool& flag)
+{
+	const auto next = ConsumeValue(values);
+	if (!next) return false;
+
+	if (!next->starts_with(L'*')) flag = parser.ParseInt(*next, 0) == 0;
+	return true;
+}
+
+// Reads the identifier of a "ShapeN" reference, which is one based.
+size_t ReadShapeId(StringParser& shape)
+{
+	const int id = shape.ConsumeInt(StringParser::SkipWhitespace).value_or(0) - 1;
+	return id < 0 ? (size_t)0 : (size_t)id;
+}
 
 }  // namespace
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
-	m_Shapes()
+	m_Shapes(),
+	m_ShapeOptions()
 {
 	Meter::Initialize();
 }
@@ -49,58 +108,66 @@ MeterShape::~MeterShape()
 
 void MeterShape::Dispose()
 {
-	for (auto& shape : m_Shapes)
-	{
-		delete shape;
-		shape = nullptr;
-	}
-
 	m_Shapes.clear();
 }
 
-void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterShape::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+
+	for (auto& shape : m_Shapes)
+	{
+		shape.InvalidateDeviceResources();
+	}
+}
+
+void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Meter::ReadOptions(parser, section);
 
-	// Clear any shapes
-	Dispose();
-
-	std::map<size_t, std::wstring> combinedShapes;
-
-	const WCHAR delimiter = L'|';
-	std::wstring shape = parser.ReadString(section, L"Shape", L"");
-
-	size_t i = 1;
-	while (!shape.empty())
+	bool shapeOptionsChanged = m_ShapeOptions.empty();
+	for (auto& option : m_ShapeOptions)
 	{
-		auto args = ConfigParser::Tokenize2(shape, delimiter, PairedPunctuation::Parentheses);
-
-		bool isCombined = false;
-		if (!CreateShape(args, parser, section, isCombined, i - 1)) break;
-
-		// If the shape is combined with another, save the shape definition and
-		// process later. Otherwise, parse any modifiers for the shape.
-		if (isCombined)
-		{
-			combinedShapes.emplace(i - 1, shape);
-		}
-		else
-		{
-			args.erase(args.begin());
-			ParseModifiers(args, parser, section);
-		}
-
-		// Check for Shape2 ... etc.
-		const std::wstring num = std::to_wstring(++i);
-		std::wstring key = L"Shape" + num;
-		shape = parser.ReadString(section, key.c_str(), L"");
+		const auto& value = parser.ReadString(section, option.first.c_str(), L"");
+		if (value != option.second) shapeOptionsChanged = true;
+		option.second = value;
 	}
 
-	// Process combined shapes
-	for (const auto& shape : combinedShapes)
+	if (shapeOptionsChanged)
 	{
-		auto args = ConfigParser::Tokenize2(shape.second, delimiter, PairedPunctuation::Parentheses);
-		if (!CreateCombinedShape(shape.first, args)) break;
+		Dispose();
+
+		std::map<size_t, std::wstring> combinedShapes;
+
+		WCHAR key[32] = L"Shape";
+		for (size_t i = 1; ; ++i)
+		{
+			if (i > 1) _snwprintf_s(key, _TRUNCATE, L"Shape%zu", i);
+			// Cache the first empty ShapeN option so newly added shapes are detected.
+			auto shape = ReadShapeOption(parser, section, key);
+			if (shape.empty()) break;
+
+			StringParser options(shape);
+			const auto definition = ConsumeOption(options);
+
+			bool isCombined = false;
+			if (!CreateShape(definition, parser, section, isCombined, i - 1)) break;
+
+			// If the shape is combined with another, process later once all shapes have been read.
+			if (isCombined)
+			{
+				combinedShapes.emplace(i - 1, std::move(shape));
+			}
+			else
+			{
+				ParseModifiers(m_Shapes[i - 1], options, parser, section);
+			}
+		}
+
+		for (auto& shape : combinedShapes)
+		{
+			if (!CreateCombinedShape(parser, shape.first, shape.second)) break;
+		}
 	}
 
 	// Adjust width/height if necessary
@@ -111,9 +178,9 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		for (const auto& shape : m_Shapes)
 		{
-			if (shape->IsCombined()) continue;
+			if (shape.IsCombined()) continue;
 
-			D2D1_RECT_F bounds = shape->GetBounds();
+			D2D1_RECT_F bounds = shape.GetBounds();
 			int shapeW = (int)ceil(bounds.right);  // Account for 'half-pixels'
 			int shapeH = (int)ceil(bounds.bottom);
 			if (newW < shapeW) newW = shapeW;
@@ -123,6 +190,18 @@ void MeterShape::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_W = newW + GetWidthPadding();
 		m_H = newH + GetHeightPadding();
 	}
+}
+
+std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, std::wstring_view section, std::wstring key)
+{
+	StringUtil::ToUpperCase(key);
+
+	auto iter = m_ShapeOptions.find(key);
+	if (iter != m_ShapeOptions.end()) return iter->second;
+
+	const auto& value = parser.ReadString(section, key.c_str(), L"");
+	m_ShapeOptions.emplace(std::move(key), value);
+	return value;
 }
 
 bool MeterShape::Update()
@@ -143,11 +222,11 @@ bool MeterShape::Draw(Gfx::Canvas& canvas)
 
 	canvas.SetAntiAliasing(true);  // Temporary
 
-	for (const auto& shape : m_Shapes)
+	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined())
+		if (!shape.IsCombined())
 		{
-			canvas.DrawGeometry(*shape, (int)padding.left, (int)padding.top);
+			canvas.DrawGeometry(shape, (int)padding.left, (int)padding.top);
 		}
 	}
 
@@ -162,11 +241,11 @@ bool MeterShape::HitTest(int x, int y)
 	}
 
 	const D2D1_MATRIX_3X2_F& matrix = GetTransformationMatrix();
-	
+
 	D2D1_POINT_2F point = D2D1::Point2F((FLOAT)(x - Meter::GetX()), (FLOAT)(y - Meter::GetY()));
 	for (auto& shape : m_Shapes)
 	{
-		if (!shape->IsCombined() && shape->ContainsPoint(point, matrix))
+		if (!shape.IsCombined() && shape.ContainsPoint(point, matrix))
 		{
 			return true;
 		}
@@ -175,7 +254,7 @@ bool MeterShape::HitTest(int x, int y)
 	return false;
 }
 
-void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterShape::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{
@@ -183,219 +262,158 @@ void MeterShape::BindMeasures(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& parser,
-	const WCHAR* section, bool& isCombined, size_t keyId)
+bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
+	std::wstring_view section, bool& isCombined, size_t keyId)
 {
-	auto createShape = [&](Gfx::Shape* shape) -> bool
+	auto addShape = [&](std::optional<Gfx::Shape> shape) -> bool
 	{
-		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
-		bool exists = shape->DoesShapeExist();
-		if (exists)
+		if (shape)
 		{
-			m_Shapes.push_back(shape);
-		}
-		else
-		{
-			LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
-			delete shape;
-			shape = nullptr;
+			m_Shapes.emplace_back(std::move(*shape));
+			return true;
 		}
 
-		return exists;
+		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
+		LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
+		return false;
 	};
 
-	const size_t argSize = args.size();
-	std::wstring shapeName = args[0];
-	if (StringUtil::CaseInsensitiveCompareN(shapeName, L"RECTANGLE"))
+	StringParser values(definition);
+	if (values.Consume(L"Rectangle"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
-		auto tokSize = tokens.size();
-
-		if (tokSize == 4)
-		{
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT w = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT h = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
-
-			if (!createShape(new Gfx::Rectangle(x, y, w, h)))
-			{
-				return false;
-			}
-
-			return true;
-		}
-		else if (tokSize > 4)
-		{
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT w = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT h = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
-			FLOAT xRadius = (FLOAT)ConfigParser::ParseDouble(tokens[4].c_str(), 0.0);
-			FLOAT yRadius = (tokSize > 5) ?
-				(FLOAT)ConfigParser::ParseDouble(tokens[5].c_str(), 0.0) :
-				xRadius;
-
-			if (!createShape(new Gfx::RoundedRectangle(x, y, w, h, xRadius, yRadius)))
-			{
-				return false;
-			}
-
-			return true;
-		}
-		else
+		FLOAT x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+		if (!ReadValue(parser, values, x) || !ReadValue(parser, values, y) ||
+			!ReadValue(parser, values, w) || !ReadValue(parser, values, h))
 		{
 			LogErrorF(this, L"Rectangle has too few parameters");
 			return false;
 		}
-	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ELLIPSE"))
-	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
-		auto tokSize = tokens.size();
 
-		if (tokSize > 2)
+		FLOAT xRadius = 0.0f;
+		if (!ReadValue(parser, values, xRadius))
 		{
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT xRadius = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT yRadius = (tokSize > 3) ? (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0) : xRadius;
-
-			if (!createShape(new Gfx::Ellipse(x, y, xRadius, yRadius)))
-			{
-				return false;
-			}
-
-			return true;
+			return addShape(Gfx::Shape::Rectangle(x, y, w, h));
 		}
-		else
+
+		FLOAT yRadius = xRadius;
+		ReadValue(parser, values, yRadius);
+
+		return addShape(Gfx::Shape::RoundedRectangle(x, y, w, h, xRadius, yRadius));
+	}
+	else if (values.Consume(L"Ellipse"))
+	{
+		FLOAT x = 0.0f, y = 0.0f, xRadius = 0.0f;
+		if (!ReadValue(parser, values, x) || !ReadValue(parser, values, y) ||
+			!ReadValue(parser, values, xRadius))
 		{
 			LogErrorF(this, L"Ellipse has too few parameters");
 			return false;
 		}
+
+		FLOAT yRadius = xRadius;
+		ReadValue(parser, values, yRadius);
+
+		return addShape(Gfx::Shape::Ellipse(x, y, xRadius, yRadius));
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"LINE"))
+	else if (values.Consume(L"Line"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
-		auto tokSize = tokens.size();
-
-		if (tokSize > 3)
-		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
-
-			if (!createShape(new Gfx::Line(x1, y1, x2, y2)))
-			{
-				return false;
-			}
-
-			return true;
-		}
-		else
+		FLOAT x1 = 0.0f, y1 = 0.0f, x2 = 0.0f, y2 = 0.0f;
+		if (!ReadValue(parser, values, x1) || !ReadValue(parser, values, y1) ||
+			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2))
 		{
 			LogErrorF(this, L"Line has too few parameters");
 			return false;
 		}
+
+		return addShape(Gfx::Shape::Line(x1, y1, x2, y2));
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"ARC"))
+	else if (values.Consume(L"Arc"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
-		auto tokSize = tokens.size();
-
-		if (tokSize > 3)
-		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
-			FLOAT dx = x2 - x1;
-			FLOAT dy = y2 - y1;
-			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
-			FLOAT angle = 0.0f;
-			bool sweep = true;
-			bool size = true;
-			bool open = true;
-
-			if (tokSize > 4) xRadius = ParseNumber(xRadius, tokens[4].c_str(), 0.0, ConfigParser::ParseDouble);
-
-			FLOAT yRadius = xRadius;
-			if (tokSize > 5) yRadius = ParseNumber(yRadius, tokens[5].c_str(), 0.0, ConfigParser::ParseDouble);
-			if (tokSize > 6) angle = ParseNumber(angle, tokens[6].c_str(), 0.0, ConfigParser::ParseDouble);
-			if (tokSize > 7) ParseBool(sweep, tokens[7].c_str());
-			if (tokSize > 8) ParseBool(size, tokens[8].c_str());
-			if (tokSize > 9) ParseBool(open, tokens[9].c_str());
-
-			if (!createShape(new Gfx::Arc(x1, y1, x2, y2, xRadius, yRadius, angle,
-				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE,
-				open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
-			{
-				return false;
-			}
-
-			// Set the 'Fill Color' to transparent for open shapes.
-			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
-			return true;
-		}
-		else
+		FLOAT x1 = 0.0f, y1 = 0.0f, x2 = 0.0f, y2 = 0.0f;
+		if (!ReadValue(parser, values, x1) || !ReadValue(parser, values, y1) ||
+			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2))
 		{
 			LogErrorF(this, L"Arc has too few parameters");
 			return false;
 		}
+
+		const FLOAT dx = x2 - x1;
+		const FLOAT dy = y2 - y1;
+		FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
+		FLOAT angle = 0.0f;
+		bool sweep = true;
+		bool size = true;
+		bool open = true;
+
+		ReadValueOrDefault(parser, values, xRadius);
+
+		FLOAT yRadius = xRadius;
+		ReadValueOrDefault(parser, values, yRadius);
+		ReadValueOrDefault(parser, values, angle);
+		ReadFlagOrDefault(parser, values, sweep);
+		ReadFlagOrDefault(parser, values, size);
+		ReadFlagOrDefault(parser, values, open);
+
+		const auto sweepDirection = sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE;
+		const auto arcSize = size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE;
+		const auto figureEnd = open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED;
+		auto shape = Gfx::Shape::Arc(x1, y1, x2, y2, xRadius, yRadius, angle, sweepDirection, arcSize, figureEnd);
+
+		// Set the 'Fill Color' to transparent for open shapes.
+		// This can be overridden if an actual 'Fill Color' is defined.
+		if (open && shape) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
+
+		return addShape(std::move(shape));
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"CURVE"))
+	else if (values.Consume(L"Curve"))
 	{
-		auto tokens = ConfigParser::Tokenize2(shapeName, L',', PairedPunctuation::Parentheses);
-		auto tokSize = tokens.size();
-
-		if (tokSize > 5)
+		FLOAT x1 = 0.0f, y1 = 0.0f, x2 = 0.0f, y2 = 0.0f, cx1 = 0.0f, cy1 = 0.0f;
+		if (!ReadValue(parser, values, x1) || !ReadValue(parser, values, y1) ||
+			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2) ||
+			!ReadValue(parser, values, cx1) || !ReadValue(parser, values, cy1))
 		{
-			FLOAT x1 = (FLOAT)ConfigParser::ParseDouble(tokens[0].c_str(), 0.0);
-			FLOAT y1 = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
-			FLOAT x2 = (FLOAT)ConfigParser::ParseDouble(tokens[2].c_str(), 0.0);
-			FLOAT y2 = (FLOAT)ConfigParser::ParseDouble(tokens[3].c_str(), 0.0);
-			FLOAT cx1 = (FLOAT)ConfigParser::ParseDouble(tokens[4].c_str(), 0.0);
-			FLOAT cy1 = (FLOAT)ConfigParser::ParseDouble(tokens[5].c_str(), 0.0);
-			bool open = true;
+			LogErrorF(this, L"Curve has too few parameters");
+			return false;
+		}
 
-			if (tokSize == 6 || tokSize == 7)
-			{
-				if (tokSize == 7) open = ConfigParser::ParseInt(tokens[6].c_str(), 0) == 0;
-				
-				if (!createShape(new Gfx::QuadraticCurve(x1, y1, x2, y2, cx1, cy1,
-					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
-				{
-					return false;
-				}
-			}
-			else if (tokSize > 7)
-			{
-				FLOAT cx2 = (FLOAT)ConfigParser::ParseDouble(tokens[6].c_str(), 0.0);
-				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(tokens[7].c_str(), 0.0);
+		bool open = true;
 
-				if (tokSize > 8) open = ConfigParser::ParseInt(tokens[8].c_str(), 0) == 0;
-	
-				if (!createShape(new Gfx::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2,
-					open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED)))
-				{
-					return false;
-				}
-			}
-
+		auto addCurve = [&](std::optional<Gfx::Shape> shape) -> bool
+		{
 			// Set the 'Fill Color' to transparent for open shapes.
 			// This can be overridden if an actual 'Fill Color' is defined.
-			if (open) m_Shapes.back()->SetFill(Gfx::Util::c_Transparent_Color_F);
+			if (open && shape) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
 
-			return true;
+			return addShape(std::move(shape));
+		};
+
+		// A 7th value is the figure end of a quadratic curve, unless an 8th follows it, in which
+		// case the two are the second control point of a cubic curve.
+		const auto controlPoint = ConsumeValue(values);
+		if (!controlPoint)
+		{
+			return addCurve(Gfx::Shape::QuadraticCurve(x1, y1, x2, y2, cx1, cy1, D2D1_FIGURE_END_OPEN));
 		}
+
+		FLOAT cy2 = 0.0f;
+		if (!ReadValue(parser, values, cy2))
+		{
+			open = parser.ParseInt(*controlPoint, 0) == 0;
+			return addCurve(Gfx::Shape::QuadraticCurve(x1, y1, x2, y2, cx1, cy1,
+				open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED));
+		}
+
+		const FLOAT cx2 = (FLOAT)parser.ParseDouble(*controlPoint, 0.0);
+		ReadFlag(parser, values, open);
+
+		return addCurve(Gfx::Shape::Curve(x1, y1, x2, y2, cx1, cy1, cx2, cy2,
+			open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED));
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH1"))
+	else if (values.Consume(L"Path1"))
 	{
-		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
-		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_WINDING))
+		values.ConsumeWhitespace();
+		auto opt = ReadShapeOption(parser, section, std::wstring(values.Remaining()));
+		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_WINDING))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
 			return false;
@@ -403,10 +421,11 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"PATH"))
+	else if (values.Consume(L"Path"))
 	{
-		auto opt = parser.ReadString(section, shapeName.c_str(), L"");
-		if (opt.empty() || !ParsePath(opt, D2D1_FILL_MODE_ALTERNATE))
+		values.ConsumeWhitespace();
+		auto opt = ReadShapeOption(parser, section, std::wstring(values.Remaining()));
+		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_ALTERNATE))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
 			return false;
@@ -414,46 +433,34 @@ bool MeterShape::CreateShape(std::vector<std::wstring>& args, ConfigParser& pars
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(shapeName, L"COMBINE"))
+	else if (values.Consume(L"Combine"))
 	{
-		// Because combined shapes need to be processed after the rest of the shapes
-		// are created, we attempt to insert a 'dummy' rectangle shape here to preserve
-		// the order in which the shapes are defined.
-
-		if (!createShape(new Gfx::Rectangle(0.0f, 0.0f, 0.0f, 0.0f)))
-		{
-			return false;
-		}
-
-		// Set the 'combined' flag on this dummy shape so it isn't drawn in cases
-		// where the combined shape is not valid (see CreateCombinedShapes)
-		m_Shapes.back()->SetCombined();
+		// Reserve this position until combined shapes are processed.
+		auto shape = Gfx::Shape::None();
+		shape.SetCombined();
 		isCombined = true;
-		return true;
+		return addShape(std::move(shape));
 	}
 
-	LogErrorF(this, L"Invalid shape: %s", shapeName.c_str());
+	LogErrorF(this, L"Invalid shape: %s", std::wstring(definition).c_str());
 	return false;
 }
 
-bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& args)
+bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::wstring& options)
 {
-	auto showError = [&shapeId, this](const WCHAR* description, const WCHAR* error) -> void
+	auto showError = [&shapeId, this](const WCHAR* description, std::wstring_view error) -> void
 	{
 		std::wstring key = L"Shape";
 		key += std::to_wstring(shapeId + 1);
-		LogErrorF(this, L"%s %s \"%s\"", key.c_str(), description, error);
+		LogErrorF(this, L"%s %s \"%s\"", key.c_str(), description, std::wstring(error).c_str());
 	};
 
-	auto getShapeId = [=](const WCHAR* shape) -> size_t
-	{
-		int id = _wtoi(shape) - 1;
-		return id < 0 ? (size_t)0 : (size_t)id;
-	};
+	StringParser combine(options);
+	StringParser parent(ConsumeOption(combine));
+	parent.Consume(L"Combine");  // Matched when the shape was created
 
-	size_t parentId = 0;
-
-	if (args[0].length() < 8)
+	parent.ConsumeWhitespace();
+	if (parent.IsConsumed())
 	{
 		std::wstring key = L"Shape";
 		key += std::to_wstring(shapeId + 1);
@@ -461,333 +468,293 @@ bool MeterShape::CreateCombinedShape(size_t shapeId, std::vector<std::wstring>& 
 		return false;
 	}
 
-	std::wstring parentName = args[0].substr(8);  // Remove 'Combine '
-	if (StringUtil::CaseInsensitiveCompareN(parentName, L"SHAPE"))
+	if (!parent.Consume(L"Shape"))
 	{
-		parentId = getShapeId(parentName.c_str());
-		if (parentId == shapeId)
-		{
-			// Cannot use myself as a parent shape
-			showError(L"cannot combine with: Shape", parentName.c_str());
-			return false;
-		}
-
-		if (parentId < m_Shapes.size())
-		{
-			Gfx::Shape* clonedShape = m_Shapes[parentId]->Clone();
-			if (clonedShape)
-			{
-				// Delete and remove the shape from |m_Shapes|, then
-				// insert the cloned shape into the position of the
-				// deleted shape.
-
-				delete m_Shapes[shapeId];
-				auto iter = m_Shapes.erase(m_Shapes.begin() + shapeId);
-				m_Shapes.insert(iter, clonedShape);
-
-				m_Shapes[parentId]->SetCombined();
-
-				// Combine with empty shape
-				m_Shapes[shapeId]->CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
-			}
-			else
-			{
-				// Shape could not be cloned
-				return false;
-			}
-		}
-		else
-		{
-			showError(L"definition contains invalid shape reference: Shape", parentName.c_str());
-			return false;
-		}
-	}
-	else
-	{
-		showError(L"defintion contains invalid shape identifier: ", parentName.c_str());
+		showError(L"defintion contains invalid shape identifier: ", parent.Remaining());
 		return false;
 	}
 
-	args.erase(args.begin());  // Remove Combine definition
-
-	for (auto& option : args)
+	parent.ConsumeWhitespace();
+	const std::wstring parentName(parent.Remaining());
+	const size_t parentId = ReadShapeId(parent);
+	if (parentId == shapeId)
 	{
+		// Cannot use myself as a parent shape
+		showError(L"cannot combine with: Shape", parentName);
+		return false;
+	}
+
+	if (parentId >= m_Shapes.size())
+	{
+		showError(L"definition contains invalid shape reference: Shape", parentName);
+		return false;
+	}
+
+	m_Shapes[shapeId] = Gfx::Shape(m_Shapes[parentId]);
+	m_Shapes[shapeId].SetCombined(false);
+
+	m_Shapes[parentId].SetCombined();
+
+	// Bake the parent shape's transform into the copied geometry.
+	m_Shapes[shapeId].CombineWith(nullptr, D2D1_COMBINE_MODE_UNION);
+
+	while (!combine.IsConsumed())
+	{
+		StringParser option(ConsumeOption(combine));
+		if (option.IsConsumed()) continue;
+
 		D2D1_COMBINE_MODE mode = D2D1_COMBINE_MODE_FORCE_DWORD;
-		if (StringUtil::CaseInsensitiveCompareN(option, L"UNION")) mode = D2D1_COMBINE_MODE_UNION;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"XOR")) mode = D2D1_COMBINE_MODE_XOR;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"INTERSECT")) mode = D2D1_COMBINE_MODE_INTERSECT;
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXCLUDE")) mode = D2D1_COMBINE_MODE_EXCLUDE;
-		else if (ParseTransformModifers(m_Shapes[shapeId], option)) continue;
+		if (option.Consume(L"Union")) mode = D2D1_COMBINE_MODE_UNION;
+		else if (option.Consume(L"Xor")) mode = D2D1_COMBINE_MODE_XOR;
+		else if (option.Consume(L"Intersect")) mode = D2D1_COMBINE_MODE_INTERSECT;
+		else if (option.Consume(L"Exclude")) mode = D2D1_COMBINE_MODE_EXCLUDE;
 		else
 		{
-			showError(L"definition contains invalid combine: ", option.c_str());
+			if (ParseTransformModifers(parser, m_Shapes[shapeId], option)) continue;
+
+			showError(L"definition contains invalid combine: ", option.Remaining());
 			return false;
 		}
 
-		option.erase(0, 5);  // Remove 'Shape'
-		size_t id = getShapeId(option.c_str());
+		option.Consume(L"Shape", StringParser::SkipWhitespace);
+		option.ConsumeWhitespace();
+
+		const std::wstring name(option.Remaining());
+		const size_t id = ReadShapeId(option);
 		if (id == shapeId)
 		{
 			// Cannot combine with myself
-			showError(L"cannot combine with: Shape", option.c_str());
+			showError(L"cannot combine with: Shape", name);
 			return false;
 		}
 
-		if (id < m_Shapes.size())
+		if (id >= m_Shapes.size())
 		{
-			m_Shapes[id]->SetCombined();
-
-			if (!m_Shapes[shapeId]->CombineWith(m_Shapes[id], mode))
-			{
-				showError(L"could not combine with: Shape", option.c_str());
-				return false;
-			}
+			showError(L"defintion contains invalid shape identifier: Shape", name);
+			return false;
 		}
-		else
+
+		m_Shapes[id].SetCombined();
+
+		if (!m_Shapes[shapeId].CombineWith(&m_Shapes[id], mode))
 		{
-			showError(L"defintion contains invalid shape identifier: Shape", option.c_str());
+			showError(L"could not combine with: Shape", name);
 			return false;
 		}
 	}
 
-	m_Shapes[shapeId]->ValidateTransforms();
+	m_Shapes[shapeId].ValidateTransforms();
 	return true;
 }
 
-void MeterShape::ParseModifiers(std::vector<std::wstring>& args, ConfigParser& parser, const WCHAR* section, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, std::wstring_view section, bool recursive)
 {
-	auto parseCap = [this](std::wstring& cap) -> D2D1_CAP_STYLE
+	auto parseCap = [this](StringParser& cap) -> D2D1_CAP_STYLE
 	{
-		if (StringUtil::CaseInsensitiveCompareN(cap, L"FLAT")) return D2D1_CAP_STYLE_FLAT;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"SQUARE")) return D2D1_CAP_STYLE_SQUARE;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"ROUND")) return D2D1_CAP_STYLE_ROUND;
-		else if (StringUtil::CaseInsensitiveCompareN(cap, L"TRIANGLE")) return D2D1_CAP_STYLE_TRIANGLE;
+		if (cap.Consume(L"Flat", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_FLAT;
+		else if (cap.Consume(L"Square", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_SQUARE;
+		else if (cap.Consume(L"Round", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_ROUND;
+		else if (cap.Consume(L"Triangle", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_TRIANGLE;
 		else
 		{
-			if (!cap.empty()) LogErrorF(this, L"Invalid cap style: %s", cap.c_str());
+			const std::wstring style(cap.ConsumeRest(StringParser::SkipWhitespace));
+			if (!style.empty()) LogErrorF(this, L"Invalid cap style: %s", style.c_str());
 			return D2D1_CAP_STYLE_FLAT;
 		}
 	};
 
-	auto& shape = m_Shapes.back();
-
-	for (auto& option : args)
+	// The rest of the modifier names the option holding the gradient.
+	auto parseGradient = [&](StringParser& option, Gfx::BrushType type, const WCHAR* name, bool altGamma, bool isStroke) -> void
 	{
-		if (StringUtil::CaseInsensitiveCompareN(option, L"FILL"))
+		auto opt = ReadShapeOption(parser, section, std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)));
+		if (opt.empty() || !ParseGradient(shape, parser, type, opt, altGamma, isStroke))
 		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			LogErrorF(this, L"%s has invalid parameters: %s", name, opt.c_str());
+		}
+	};
+
+	while (!modifiers.IsConsumed())
+	{
+		StringParser option(ConsumeOption(modifiers));
+		if (option.IsConsumed()) continue;
+
+		if (option.Consume(L"Fill"))
+		{
+			if (option.Consume(L"Color", StringParser::SkipWhitespace))
 			{
-				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetFill(color);
+				shape.SetFill(parser.ParseColor(option.ConsumeRest(StringParser::SkipWhitespace)));
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			else if (option.Consume(L"LinearGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, false))
-				{
-					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient1", true, false);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			else if (option.Consume(L"LinearGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, false))
-				{
-					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient", false, false);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			else if (option.Consume(L"RadialGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, false))
-				{
-					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient1", true, false);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			else if (option.Consume(L"RadialGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, false))
-				{
-					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient", false, false);
 			}
 			else
 			{
-				LogErrorF(this, L"Fill has invalid parameters: %s", option.c_str());
+				LogErrorF(this, L"Fill has invalid parameters: %s",
+					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEWIDTH"))
+		else if (option.Consume(L"StrokeWidth"))
 		{
-			FLOAT width = (FLOAT)ConfigParser::ParseDouble(option.c_str(), 0.0);
+			FLOAT width = 0.0f;
+			ReadValue(parser, option, width);
 			if (width < 0.0f)
 			{
 				LogWarningF(this, L"StrokeWidth must not be negative");
 				width = 0.0f;
 			}
 
-			shape->SetStrokeWidth(width);
+			shape.SetStrokeWidth(width);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKESTARTCAP"))
+		else if (option.Consume(L"StrokeStartCap"))
 		{
-			shape->SetStrokeStartCap(parseCap(option));
+			shape.GetStrokeProperties().startCap = parseCap(option);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEENDCAP"))
+		else if (option.Consume(L"StrokeEndCap"))
 		{
-			shape->SetStrokeEndCap(parseCap(option));
+			shape.GetStrokeProperties().endCap = parseCap(option);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHCAP"))
+		else if (option.Consume(L"StrokeDashCap"))
 		{
-			shape->SetStrokeDashCap(parseCap(option));
+			shape.GetStrokeProperties().dashCap = parseCap(option);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKELINEJOIN"))
+		else if (option.Consume(L"StrokeLineJoin"))
 		{
-			auto style = ConfigParser::Tokenize2(option, L',', PairedPunctuation::Parentheses);
-			size_t size = style.size();
-
-			if (size > 0)
-			{
-				const WCHAR* option = style[0].c_str();
-				D2D1_LINE_JOIN join = D2D1_LINE_JOIN_MITER;
-				FLOAT limit = 10.0f;
-
-				if (_wcsicmp(option, L"MITER") == 0) join = D2D1_LINE_JOIN_MITER;
-				else if (_wcsicmp(option, L"BEVEL") == 0) join = D2D1_LINE_JOIN_BEVEL;
-				else if (_wcsicmp(option, L"ROUND") == 0) join = D2D1_LINE_JOIN_ROUND;
-				else if (_wcsicmp(option, L"MITERORBEVEL") == 0) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
-				else
-				{
-					LogWarningF(this, L"Invalid line join style: %s", option);
-				}
-
-				if (size > 1)
-				{
-					limit = (FLOAT)ConfigParser::ParseDouble(style[1].c_str(), 10.0);
-					if (limit < 0.0f)
-					{
-						LogWarningF(this, L"Miter limit must be positive");
-						limit = 10.0f;
-					}
-				}
-
-				shape->SetStrokeLineJoin(join, limit);
-			}
-			else
+			const auto style = ConsumeValue(option);
+			if (!style)
 			{
 				LogWarningF(this, L"StrokeLineJoin has too few parameters");
-			}
-		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHES"))
-		{
-			std::vector<FLOAT> dashes;
-			auto definedDashes = ConfigParser::Tokenize2(option, L',', PairedPunctuation::Parentheses);
-			for (const auto& dash : definedDashes)
-			{
-				FLOAT value = (FLOAT)ConfigParser::ParseDouble(dash.c_str(), 0.0);
-				dashes.emplace_back(value);
+				continue;
 			}
 
-			shape->SetStrokeDashes(dashes);
+			D2D1_LINE_JOIN join = D2D1_LINE_JOIN_MITER;
+			StringParser joinStyle(*style);
+			if (joinStyle.ConsumeRest(L"Miter")) join = D2D1_LINE_JOIN_MITER;
+			else if (joinStyle.ConsumeRest(L"Bevel")) join = D2D1_LINE_JOIN_BEVEL;
+			else if (joinStyle.ConsumeRest(L"Round")) join = D2D1_LINE_JOIN_ROUND;
+			else if (joinStyle.ConsumeRest(L"MiterOrBevel")) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
+			else
+			{
+				LogWarningF(this, L"Invalid line join style: %s", std::wstring(*style).c_str());
+			}
+
+			FLOAT limit = 10.0f;
+			ReadValue(parser, option, limit, 10.0);
+			if (limit < 0.0f)
+			{
+				LogWarningF(this, L"Miter limit must be positive");
+				limit = 10.0f;
+			}
+
+			auto& properties = shape.GetStrokeProperties();
+			properties.lineJoin = join;
+			properties.miterLimit = limit;
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKEDASHOFFSET"))
+		else if (option.Consume(L"StrokeDashes"))
 		{
-			const WCHAR* modifier = option.c_str();
-			FLOAT dashOffset = (FLOAT)ConfigParser::ParseDouble(modifier, 0.0);
+			std::vector<FLOAT> dashes;
+			while (const auto dash = ConsumeValue(option))
+			{
+				dashes.emplace_back((FLOAT)parser.ParseDouble(*dash, 0.0));
+			}
+
+			shape.SetStrokeDashes(dashes);
+		}
+		else if (option.Consume(L"StrokeDashOffset"))
+		{
+			const std::wstring modifier(option.ConsumeRest(StringParser::SkipWhitespace));
+			FLOAT dashOffset = (FLOAT)parser.ParseDouble(modifier, 0.0);
 			if (dashOffset < 0.0f)
 			{
-				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier);
+				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier.c_str());
 				dashOffset = 0.0f;
 			}
 
-			shape->SetStrokeDashOffset(dashOffset);
+			shape.GetStrokeProperties().dashOffset = dashOffset;
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"STROKE"))
+		else if (option.Consume(L"Stroke"))
 		{
-			if (StringUtil::CaseInsensitiveCompareN(option, L"COLOR"))
+			if (option.Consume(L"Color", StringParser::SkipWhitespace))
 			{
-				auto color = ConfigParser::ParseColor(option.c_str());
-				shape->SetStrokeFill(color);
+				shape.SetStrokeFill(parser.ParseColor(option.ConsumeRest(StringParser::SkipWhitespace)));
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT1"))
+			else if (option.Consume(L"LinearGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"LinearGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient1", true, true);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"LINEARGRADIENT"))
+			else if (option.Consume(L"LinearGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::LinearGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"LinearGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::LinearGradient, L"LinearGradient", false, true);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT1"))
+			else if (option.Consume(L"RadialGradient1", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), true, true))
-				{
-					LogErrorF(this, L"RadialGradient1 has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient1", true, true);
 			}
-			else if (StringUtil::CaseInsensitiveCompareN(option, L"RADIALGRADIENT"))
+			else if (option.Consume(L"RadialGradient", StringParser::SkipWhitespace))
 			{
-				auto opt = parser.ReadString(section, option.c_str(), L"");
-				if (opt.empty() || !ParseGradient(Gfx::BrushType::RadialGradient, opt.c_str(), false, true))
-				{
-					LogErrorF(this, L"RadialGradient has invalid parameters: %s", opt.c_str());
-				}
+				parseGradient(option, Gfx::BrushType::RadialGradient, L"RadialGradient", false, true);
 			}
 			else
 			{
-				LogErrorF(this, L"Stroke has invalid parameters: %s", option.c_str());
+				LogErrorF(this, L"Stroke has invalid parameters: %s",
+					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(option, L"EXTEND"))
+		else if (option.Consume(L"Extend"))
 		{
-			if (!recursive)
-			{
-				std::vector<std::wstring> extendParameters = ConfigParser::Tokenize(option, L",");
-				for (auto& extend : extendParameters)
-				{
-					std::wstring key = parser.ReadString(section, extend.c_str(), L"");
-					if (!key.empty())
-					{
-						auto newArgs = ConfigParser::Tokenize2(key, L'|', PairedPunctuation::Parentheses);
-						ParseModifiers(newArgs, parser, section, true);
-					}
-				}
-			}
-			else
+			if (recursive)
 			{
 				LogNoticeF(this, L"Extend cannot be used recursively");
+				continue;
+			}
+
+			while (const auto extend = ConsumeValue(option))
+			{
+				if (extend->empty()) continue;
+
+				std::wstring key = ReadShapeOption(parser, section, std::wstring(*extend));
+				if (!key.empty())
+				{
+					StringParser extendedModifiers(key);
+					ParseModifiers(shape, extendedModifiers, parser, section, true);
+				}
 			}
 		}
-		else if (!ParseTransformModifers(shape, option))
+		else if (!ParseTransformModifers(parser, shape, option))
 		{
-			LogErrorF(this, L"Invalid shape modifier: %s", option.c_str());
+			LogErrorF(this, L"Invalid shape modifier: %s",
+				std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 		}
 	}
 
 	if (!recursive)
 	{
-		shape->CreateStrokeStyle();
-		shape->ValidateTransforms();
+		shape.CreateStrokeStyle();
+		shape.ValidateTransforms();
 	}
 }
 
-bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transform)
+bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform)
 {
-	if (StringUtil::CaseInsensitiveCompareN(transform, L"OFFSET"))
+	if (transform.Consume(L"Offset"))
 	{
-		auto offset = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
-		if (offset.size() >= 2)
+		FLOAT x = 0.0f;
+		FLOAT y = 0.0f;
+		if (ReadValue(parser, transform, x) && ReadValue(parser, transform, y))
 		{
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(offset[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(offset[1].c_str(), 0.0);
-			shape->SetOffset(x, y);
+			shape.SetOffset(x, y);
 		}
 		else
 		{
@@ -796,24 +763,16 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"ROTATE"))
+	else if (transform.Consume(L"Rotate"))
 	{
-		auto rotate = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = rotate.size();
-		if (size > 0)
+		FLOAT rotation = 0.0f;
+		if (ReadValue(parser, transform, rotation))
 		{
-			bool anchorDefined = false;
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			FLOAT rotation = (FLOAT)ConfigParser::ParseDouble(rotate[0].c_str(), 0.0);
-			if (size > 2)
-			{
-				anchorX = (FLOAT)ConfigParser::ParseDouble(rotate[1].c_str(), 0.0);
-				anchorY = (FLOAT)ConfigParser::ParseDouble(rotate[2].c_str(), 0.0);
-				anchorDefined = true;
-			}
+			const bool anchorDefined = ReadValuePair(parser, transform, anchorX, anchorY);
 
-			shape->SetRotation(rotation, anchorX, anchorY, anchorDefined);
+			shape.SetRotation(rotation, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -822,27 +781,17 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"SCALE"))
+	else if (transform.Consume(L"Scale"))
 	{
-		auto scale = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = scale.size();
-		if (size > 1)
+		FLOAT scaleX = 1.0f;
+		FLOAT scaleY = 1.0f;
+		if (ReadValue(parser, transform, scaleX, 1.0) && ReadValue(parser, transform, scaleY, 1.0))
 		{
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			bool anchorDefined = false;
+			const bool anchorDefined = ReadValuePair(parser, transform, anchorX, anchorY);
 
-			FLOAT scaleX = (FLOAT)ConfigParser::ParseDouble(scale[0].c_str(), 1.0);
-			FLOAT scaleY = (FLOAT)ConfigParser::ParseDouble(scale[1].c_str(), 1.0);
-
-			if (size > 3)
-			{
-				anchorX = (FLOAT)ConfigParser::ParseDouble(scale[2].c_str(), 0.0);
-				anchorY = (FLOAT)ConfigParser::ParseDouble(scale[3].c_str(), 0.0);
-				anchorDefined = true;
-			}
-
-			shape->SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
+			shape.SetScale(scaleX, scaleY, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -851,27 +800,17 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"SKEW"))
+	else if (transform.Consume(L"Skew"))
 	{
-		auto skew = ConfigParser::Tokenize2(transform, L',', PairedPunctuation::Parentheses);
-		size_t size = skew.size();
-		if (size > 1)
+		FLOAT skewX = 1.0f;
+		FLOAT skewY = 1.0f;
+		if (ReadValue(parser, transform, skewX, 1.0) && ReadValue(parser, transform, skewY, 1.0))
 		{
 			FLOAT anchorX = 0.0f;
 			FLOAT anchorY = 0.0f;
-			bool anchorDefined = false;
+			const bool anchorDefined = ReadValuePair(parser, transform, anchorX, anchorY);
 
-			FLOAT skewX = (FLOAT)ConfigParser::ParseDouble(skew[0].c_str(), 1.0);
-			FLOAT skewY = (FLOAT)ConfigParser::ParseDouble(skew[1].c_str(), 1.0);
-
-			if (size > 3)
-			{
-				anchorX = (FLOAT)ConfigParser::ParseDouble(skew[2].c_str(), 0.0);
-				anchorY = (FLOAT)ConfigParser::ParseDouble(skew[3].c_str(), 0.0);
-				anchorDefined = true;
-			}
-
-			shape->SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
+			shape.SetSkew(skewX, skewY, anchorX, anchorY, anchorDefined);
 		}
 		else
 		{
@@ -880,28 +819,34 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 
 		return true;
 	}
-	else if (StringUtil::CaseInsensitiveCompareN(transform, L"TRANSFORMORDER"))
+	else if (transform.Consume(L"TransformOrder"))
 	{
-		auto order = ConfigParser::Tokenize(transform, L",");
-		if (order.size() > 0)
-		{
-			shape->ResetTransformOrder();
-			Gfx::TransformType type = Gfx::TransformType::Invalid;
-			for (auto& t : order)
-			{
-				if (StringUtil::CaseInsensitiveCompareN(t, L"ROTATE")) type = Gfx::TransformType::Rotate;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"SCALE")) type = Gfx::TransformType::Scale;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"SKEW")) type = Gfx::TransformType::Skew;
-				else if (StringUtil::CaseInsensitiveCompareN(t, L"OFFSET")) type = Gfx::TransformType::Offset;
+		// Note that the type is deliberately not reset for each value, so an invalid type after a
+		// valid one repeats the previous type.
+		Gfx::TransformType type = Gfx::TransformType::Invalid;
+		bool ordered = false;
 
-				if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", t.c_str());
-				else if (!shape->AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
-			}
-		}
-		else
+		while (const auto value = ConsumeValue(transform))
 		{
-			LogWarningF(this, L"TransformOrder has too few parameters");
+			if (value->empty()) continue;
+
+			if (!ordered)
+			{
+				shape.ResetTransformOrder();
+				ordered = true;
+			}
+
+			StringParser transformType(*value);
+			if (transformType.Consume(L"Rotate")) type = Gfx::TransformType::Rotate;
+			else if (transformType.Consume(L"Scale")) type = Gfx::TransformType::Scale;
+			else if (transformType.Consume(L"Skew")) type = Gfx::TransformType::Skew;
+			else if (transformType.Consume(L"Offset")) type = Gfx::TransformType::Offset;
+
+			if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", std::wstring(*value).c_str());
+			else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
 		}
+
+		if (!ordered) LogWarningF(this, L"TransformOrder has too few parameters");
 
 		return true;
 	}
@@ -909,25 +854,31 @@ bool MeterShape::ParseTransformModifers(Gfx::Shape* shape, std::wstring& transfo
 	return false;
 }
 
-bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool altGamma, bool isStroke)
+bool MeterShape::ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, std::wstring_view options, bool altGamma, bool isStroke)
 {
-	auto& shape = m_Shapes.back();
+	StringParser params(options);
+	const auto descriptor = ConsumeValue(params, L'|');
+	if (!descriptor) return false;
 
-	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
-	size_t paramSize = params.size();
-	if (paramSize < 2) return false;
+	// The descriptor must be followed by at least one gradient stop.
+	params.ConsumeWhitespace();
+	if (params.IsConsumed()) return false;
 
-	std::vector<D2D1_GRADIENT_STOP> stops(paramSize - 1);
-	auto parseGradientStops = [&]() -> void
+	auto parseGradientStops = [&]() -> std::vector<D2D1_GRADIENT_STOP>
 	{
-		std::vector<std::wstring> tokens;
-		for (size_t i = 1; i < paramSize; ++i)
+		std::vector<D2D1_GRADIENT_STOP> stops;
+		while (const auto param = ConsumeValue(params, L'|'))
 		{
-			tokens = ConfigParser::Tokenize2(params[i], L';', PairedPunctuation::Parentheses);
-			if (tokens.size() == 2)
+			auto& stop = stops.emplace_back();
+
+			// A stop is a color and a position, anything else leaves it at its default.
+			StringParser values(*param);
+			const auto color = ConsumeValue(values, L';');
+			const auto position = ConsumeValue(values, L';');
+			if (color && position && !ConsumeValue(values, L';'))
 			{
-				stops[i - 1].color = ConfigParser::ParseColor(tokens[0].c_str());
-				stops[i - 1].position = (FLOAT)ConfigParser::ParseDouble(tokens[1].c_str(), 0.0);
+				stop.color = parser.ParseColor(*color);
+				stop.position = (FLOAT)parser.ParseDouble(*position, 0.0);
 			}
 		}
 
@@ -938,81 +889,71 @@ bool MeterShape::ParseGradient(Gfx::BrushType type, const WCHAR* options, bool a
 			if (stops[0].position < 0.5f) stop.position = 1.0f;
 			stops.push_back(stop);
 		}
+
+		return stops;
 	};
 
 	switch (type)
 	{
 	case Gfx::BrushType::LinearGradient:
 		{
-			const FLOAT angle = (FLOAT)fmod((360.0 + fmod(ConfigParser::ParseDouble(params[0].c_str(), 0.0), 360.0)), 360.0);
-			parseGradientStops();
+			const FLOAT angle = (FLOAT)fmod((360.0 + fmod(parser.ParseDouble(*descriptor, 0.0), 360.0)), 360.0);
+			auto stops = parseGradientStops();
 
 			if (isStroke)
 			{
-				shape->SetStrokeFill(angle, stops, altGamma);
+				shape.SetStrokeFill(angle, std::move(stops), altGamma);
 				return true;
 			}
 
-			shape->SetFill(angle, stops, altGamma);
+			shape.SetFill(angle, std::move(stops), altGamma);
 			return true;
 		}
 
 	case Gfx::BrushType::RadialGradient:
 		{
-			auto radial = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
-			size_t size = radial.size();
+			StringParser radial(*descriptor);
 
-			if (size > 1)
+			FLOAT centerX = 0.0f;
+			FLOAT centerY = 0.0f;
+			if (!ReadValuePair(parser, radial, centerX, centerY)) break;
+
+			FLOAT offsetX = FLT_MAX;
+			FLOAT offsetY = FLT_MAX;
+			FLOAT radiusX = FLT_MAX;
+			FLOAT radiusY = FLT_MAX;
+			ReadValuePair(parser, radial, offsetX, offsetY);
+			ReadValuePair(parser, radial, radiusX, radiusY);
+
+			auto stops = parseGradientStops();
+
+			if (isStroke)
 			{
-				FLOAT centerX = (FLOAT)ConfigParser::ParseDouble(radial[0].c_str(), 0.0);
-				FLOAT centerY = (FLOAT)ConfigParser::ParseDouble(radial[1].c_str(), 0.0);
-				FLOAT offsetX = FLT_MAX;
-				FLOAT offsetY = FLT_MAX;
-				FLOAT radiusX = FLT_MAX;
-				FLOAT radiusY = FLT_MAX;
-
-				if (size > 3)
-				{
-					offsetX = (FLOAT)ConfigParser::ParseDouble(radial[2].c_str(), 0.0);
-					offsetY = (FLOAT)ConfigParser::ParseDouble(radial[3].c_str(), 0.0);
-				}
-
-				if (size > 5)
-				{
-					radiusX = (FLOAT)ConfigParser::ParseDouble(radial[4].c_str(), 0.0);
-					radiusY = (FLOAT)ConfigParser::ParseDouble(radial[5].c_str(), 0.0);
-				}
-
-				parseGradientStops();
-
-				if (isStroke)
-				{
-					shape->SetStrokeFill(
-						D2D1::Point2F(offsetX, offsetY),
-						D2D1::Point2F(centerX, centerY),
-						D2D1::Point2F(radiusX, radiusY),
-						stops,
-						altGamma);
-
-					return true;
-				}
-
-				shape->SetFill(
+				shape.SetStrokeFill(
 					D2D1::Point2F(offsetX, offsetY),
 					D2D1::Point2F(centerX, centerY),
 					D2D1::Point2F(radiusX, radiusY),
-					stops,
+					std::move(stops),
 					altGamma);
 
 				return true;
 			}
+
+			shape.SetFill(
+				D2D1::Point2F(offsetX, offsetY),
+				D2D1::Point2F(centerX, centerY),
+				D2D1::Point2F(radiusX, radiusY),
+				std::move(stops),
+				altGamma);
+
+			return true;
 		}
 	}
 
 	return false;
 }
 
-bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
+bool MeterShape::ParsePath(ConfigParser& parser, std::wstring_view options, D2D1_FILL_MODE fillMode)
 {
 	auto createSegmentFlags = [](bool stroke, bool round) -> D2D1_PATH_SEGMENT
 	{
@@ -1022,18 +963,22 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 		return flags;
 	};
 
-	auto params = ConfigParser::Tokenize2(options, L'|', PairedPunctuation::Parentheses);
-	auto paramSize = params.size();
-	if (paramSize < 2) return false;  // Must have a starting point and at least 1 segment
+	StringParser params(options);
+	const auto start = ConsumeValue(params, L'|');
+	if (!start) return false;
+
+	// Must have a starting point and at least 1 segment
+	params.ConsumeWhitespace();
+	if (params.IsConsumed()) return false;
 
 	// Parse starting point of shape
-	auto stPoint = ConfigParser::Tokenize2(params[0], L',', PairedPunctuation::Parentheses);
-	if (stPoint.size() < 2) return false;  // Starting point must have a x and y
+	StringParser startPoint(*start);
+	FLOAT startX = 0.0f;
+	FLOAT startY = 0.0f;
+	if (!ReadValuePair(parser, startPoint, startX, startY)) return false;
 
-	FLOAT startX = (FLOAT)ConfigParser::ParseDouble(stPoint[0].c_str(), 0.0);
-	FLOAT startY = (FLOAT)ConfigParser::ParseDouble(stPoint[1].c_str(), 0.0);
-
-	Gfx::Path* shape = new Gfx::Path(startX, startY, fillMode);
+	auto shape = Gfx::Shape::Path(startX, startY, fillMode);
+	if (!shape) return false;
 
 	bool error = false;
 	bool open = true;
@@ -1041,111 +986,103 @@ bool MeterShape::ParsePath(std::wstring& options, D2D1_FILL_MODE fillMode)
 	bool setRoundJoin = false;
 	D2D1_POINT_2F currentPoint = D2D1::Point2F(startX, startY);
 
-	for (size_t i = 1; i < paramSize; ++i)
+	while (const auto param = ConsumeValue(params, L'|'))
 	{
-		auto& type = params[i];
-		if (StringUtil::CaseInsensitiveCompareN(type, L"LINETO"))
+		StringParser type(*param);
+		if (type.Consume(L"LineTo"))
 		{
-			auto lineTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
-			if (lineTo.size() < 2) { error = true; break; }
+			FLOAT x = 0.0f;
+			FLOAT y = 0.0f;
+			if (!ReadValuePair(parser, type, x, y)) { error = true; break; }
 
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(lineTo[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(lineTo[1].c_str(), 0.0);
-
-			shape->AddLine(x, y);
+			shape->AddPathLine(x, y);
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"ARCTO"))
+		else if (type.Consume(L"ArcTo"))
 		{
-			auto arcTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
-			auto arcSize = arcTo.size();
-			if (arcSize < 2) { error = true; break; }
+			FLOAT x = 0.0f;
+			FLOAT y = 0.0f;
+			if (!ReadValuePair(parser, type, x, y)) { error = true; break; }
 
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(arcTo[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(arcTo[1].c_str(), 0.0);
-			FLOAT dx = x - currentPoint.x;
-			FLOAT dy = y - currentPoint.y;
+			const FLOAT dx = x - currentPoint.x;
+			const FLOAT dy = y - currentPoint.y;
 			FLOAT xRadius = std::sqrtf(dx * dx + dy * dy) / 2.0f;
 			FLOAT angle = 0.0f;
 			bool sweep = true;
 			bool size = true;
 
-			if (arcSize > 2) xRadius = ParseNumber(xRadius, arcTo[2].c_str(), 0.0, ConfigParser::ParseDouble);
+			ReadValueOrDefault(parser, type, xRadius);
 
 			FLOAT yRadius = xRadius;
-			if (arcSize > 3) yRadius = ParseNumber(yRadius, arcTo[3].c_str(), 0.0, ConfigParser::ParseDouble);
-			if (arcSize > 4) angle = ParseNumber(angle, arcTo[4].c_str(), 0.0, ConfigParser::ParseDouble);
-			if (arcSize > 5) ParseBool(sweep, arcTo[5].c_str());
-			if (arcSize > 6) ParseBool(size, arcTo[6].c_str());
+			ReadValueOrDefault(parser, type, yRadius);
+			ReadValueOrDefault(parser, type, angle);
+			ReadFlagOrDefault(parser, type, sweep);
+			ReadFlagOrDefault(parser, type, size);
 
-			shape->AddArc(x, y, xRadius, yRadius, angle,
+			shape->AddPathArc(x, y, xRadius, yRadius, angle,
 				sweep ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
 				size ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE);
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"CURVETO"))
+		else if (type.Consume(L"CurveTo"))
 		{
-			auto curveTo = ConfigParser::Tokenize2(type, L',', PairedPunctuation::Parentheses);
-			auto curveSize = curveTo.size();
-			if (curveSize < 4) { error = true; break; }
-
-			FLOAT x = (FLOAT)ConfigParser::ParseDouble(curveTo[0].c_str(), 0.0);
-			FLOAT y = (FLOAT)ConfigParser::ParseDouble(curveTo[1].c_str(), 0.0);
-			FLOAT cx1 = (FLOAT)ConfigParser::ParseDouble(curveTo[2].c_str(), 0.0);
-			FLOAT cy1 = (FLOAT)ConfigParser::ParseDouble(curveTo[3].c_str(), 0.0);
-
-			if (curveSize < 6)
+			FLOAT x = 0.0f;
+			FLOAT y = 0.0f;
+			FLOAT cx1 = 0.0f;
+			FLOAT cy1 = 0.0f;
+			if (!ReadValuePair(parser, type, x, y) || !ReadValuePair(parser, type, cx1, cy1))
 			{
-				shape->AddQuadraticCurve(x, y, cx1, cy1);
+				error = true;
+				break;
+			}
+
+			// A second control point makes the curve cubic instead of quadratic.
+			FLOAT cx2 = 0.0f;
+			FLOAT cy2 = 0.0f;
+			if (ReadValuePair(parser, type, cx2, cy2))
+			{
+				shape->AddPathCubicCurve(x, y, cx1, cy1, cx2, cy2);
 			}
 			else
 			{
-				FLOAT cx2 = (FLOAT)ConfigParser::ParseDouble(curveTo[4].c_str(), 0.0);
-				FLOAT cy2 = (FLOAT)ConfigParser::ParseDouble(curveTo[5].c_str(), 0.0);
-				
-				shape->AddCubicCurve(x, y, cx1, cy1, cx2, cy2);
+				shape->AddPathQuadraticCurve(x, y, cx1, cy1);
 			}
 
 			currentPoint = D2D1::Point2F(x, y);
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETNOSTROKE"))
+		else if (type.Consume(L"SetNoStroke"))
 		{
-			setNoStroke = ConfigParser::ParseInt(type.c_str(), 0) != 0;
-			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			setNoStroke = parser.ParseInt(type.ConsumeRest(StringParser::SkipWhitespace), 0) != 0;
+			shape->SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"SETROUNDJOIN"))
+		else if (type.Consume(L"SetRoundJoin"))
 		{
-			setRoundJoin = ConfigParser::ParseInt(type.c_str(), 0) != 0;
-			shape->SetSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
+			setRoundJoin = parser.ParseInt(type.ConsumeRest(StringParser::SkipWhitespace), 0) != 0;
+			shape->SetPathSegmentFlags(createSegmentFlags(setNoStroke, setRoundJoin));
 		}
-		else if (StringUtil::CaseInsensitiveCompareN(type, L"CLOSEPATH"))
+		else if (type.Consume(L"ClosePath"))
 		{
-			open = ConfigParser::ParseInt(type.c_str(), 0) == 0;
+			open = parser.ParseInt(type.ConsumeRest(StringParser::SkipWhitespace), 0) == 0;
 		}
 		else
 		{
-			LogErrorF(this, L"Invalid Path type: %s", type.c_str());
+			LogErrorF(this, L"Invalid Path type: %s", std::wstring(*param).c_str());
 			error = true;
 			break;
 		}
 	}
 
-	if (error)
-	{
-		delete shape;
-		shape = nullptr;
-		return false;
-	}
+	if (error) return false;
 
-	shape->Close(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
+	shape->ClosePath(open ? D2D1_FIGURE_END_OPEN : D2D1_FIGURE_END_CLOSED);
 
 	// Set the 'Fill Color' to transparent for open shapes.
 	// This can be overridden if an actual 'Fill Color' is defined.
 	if (open) shape->SetFill(Gfx::Util::c_Transparent_Color_F);
 
-	m_Shapes.push_back(shape);
+	m_Shapes.emplace_back(std::move(*shape));
 
 	return true;
 }

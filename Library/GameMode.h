@@ -1,12 +1,6 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __RAINMETER_GAMEMODE_H__
-#define __RAINMETER_GAMEMODE_H__
+#pragma once
 
 class GameMode
 {
@@ -25,7 +19,7 @@ public:
 	std::wstring& GetOnStartAction() { return m_OnStartAction; }
 	void SetOnStartAction(const std::wstring& action);
 	void SetOnStartAction(UINT index);
-	
+
 	std::wstring& GetOnStopAction() { return m_OnStopAction; }
 	void SetOnStopAction(const std::wstring& action);
 	void SetOnStopAction(UINT index);
@@ -51,10 +45,10 @@ public:
 private:
 	enum class State : UINT
 	{
-		Disabled = 0U,
+		Disabled = 0,
 		Enabled,
 		LayoutEnabled,
-		ForcedExit = 999U
+		ForcedExit = 999
 	};
 
 	GameMode();
@@ -91,5 +85,3 @@ private:
 
 // Convenience function.
 inline GameMode& GetGameMode() { return GameMode::GetInstance(); }
-
-#endif

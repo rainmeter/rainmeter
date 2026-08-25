@@ -1,39 +1,52 @@
-/* Copyright (C) 2000 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Measure.h"
+#include "MeasureActionTimer.h"
+#include "MeasureAdvancedCPU.h"
+#include "MeasureAudioLevel.h"
 #include "MeasureCPU.h"
+#include "MeasureCoreTemp.h"
 #include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
+#include "MeasureMouse.h"
 #include "MeasurePhysicalMemory.h"
+#include "MeasurePerfMon.h"
+#include "MeasurePing.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
 #include "MeasureNetTotal.h"
 #include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
+#include "MeasureDragDrop.h"
+#include "MeasureFileView.h"
+#include "MeasureFolderInfo.h"
+#include "MeasureiTunes.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
+#include "MeasurePower.h"
 #include "MeasureProcess.h"
+#include "MeasureQuote.h"
 #include "MeasureRecycleManager.h"
 #include "MeasureRegistry.h"
+#include "MeasureResMon.h"
+#include "MeasureRunCommand.h"
 #include "MeasureString.h"
 #include "MeasureTime.h"
+#include "MeasureUsageMonitor.h"
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
+#include "MeasureSpeedFan.h"
 #include "MeasureSysInfo.h"
 #include "MeasureLoop.h"
 #include "MeasureWebParser.h"
 #include "MeasureWifiStatus.h"
+#include "MeasureAudio.h"
+#include "MeasureWindowMessage.h"
 #include "Rainmeter.h"
 #include "Util.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
+#include "Pcre.h"
 
 #define OVECCOUNT 300	// Should be a multiple of 3
 
@@ -66,8 +79,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_LogMaxValue(false),
 	m_MinValue(0.0),
 	m_MaxValue(1.0),
-	m_MinValueDefined(false),
-	m_MaxValueDefined(false),
 	m_RegExpSubstitute(false),
 	m_MedianPos(),
 	m_AveragePos(),
@@ -86,42 +97,14 @@ Measure::~Measure()
 	m_OldValue = nullptr;
 }
 
-/*
-** Initializes the measure.
-**
-*/
 void Measure::Initialize()
 {
 	m_Initialized = true;
-
-	if (GetRainmeter().GetDebug() && (m_MinValueDefined || m_MaxValueDefined))
-	{
-		if (m_MaxValue == m_MinValue)
-		{
-			WCHAR buffer[32] = { 0 };
-			_snwprintf_s(buffer, _TRUNCATE, L"%f", m_MaxValue);
-			RemoveTrailingZero(buffer, (int)wcslen(buffer));
-			LogWarningF(this, L"Warning: MaxValue = MinValue: %s", buffer);
-		}
-		else if (m_MaxValue < m_MinValue)
-		{
-			WCHAR maxValue[32] = { 0 };
-			WCHAR minValue[32] = { 0 };
-			_snwprintf_s(maxValue, _TRUNCATE, L"%f", m_MaxValue);
-			_snwprintf_s(minValue, _TRUNCATE, L"%f", m_MinValue);
-			RemoveTrailingZero(maxValue, (int)wcslen(maxValue));
-			RemoveTrailingZero(minValue, (int)wcslen(minValue));
-			LogWarningF(this, L"Warning: MaxValue is less than MinValue: MaxValue=%s MinValue=%s", maxValue, minValue);
-		}
-	}
 }
 
-/*
-** Read the common options specified in the ini file. The inherited classes must
-** call this base implementation if they overwrite this method.
-**
-*/
-void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
+// Read the common options specified in the ini file. The inherited classes must
+// call this base implementation if they overwrite this method.
+void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
@@ -139,10 +122,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Paused = parser.ReadBool(section, L"Paused", false);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
-
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
-	m_MaxValueDefined = parser.GetLastValueDefined();
 
 	m_IfActions.ReadOptions(parser, section);
 
@@ -153,9 +133,9 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_IfActions.ReadConditionOptions(parser, section);
 	}
 
-	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
+	parser.ReadString(m_OnChangeAction, section, L"OnChangeAction", L"", { .sectionVariables = false });
 
-	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0U);
+	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 
 	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
@@ -179,6 +159,28 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		DoChangeAction(false);
 	}
+}
+
+// "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
+// skin files.
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section)
+{
+	const std::wstring& option = parser.ReadString(section, L"NumberConversionFormat", L"");
+
+	if (_wcsicmp(option.c_str(), L"Locale") == 0) return LocaleUtil::NumberFormat::Locale;
+
+	if (!option.empty() && _wcsicmp(option.c_str(), L"Default") != 0)
+	{
+		LogErrorF(this, L"Measure: Invalid NumberConversionFormat=%s", option.c_str());
+	}
+
+	return LocaleUtil::NumberFormat::Default;
+}
+
+void Measure::ReadOptions(ConfigParser& parser)
+{
+	ConfigParser::InheritChainScope inheritChain(parser, GetName());
+	ReadOptions(parser, GetName());
 }
 
 void Measure::Disable()
@@ -213,9 +215,7 @@ void Measure::Unpause()
 	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"0");
 }
 
-/*
-** Substitues text using a straight find and replace method
-*/
+// Substitues text using a straight find and replace method
 bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 {
 	size_t start = 0, pos;
@@ -234,9 +234,7 @@ bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 	return true;
 }
 
-/*
-** Substitutes part of the text
-*/
+// Substitutes part of the text
 const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 {
 	static std::wstring str;
@@ -268,14 +266,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
 		{
 			const char* error;
-			int errorOffset;
-			int offset = 0;
-			pcre16* re = pcre16_compile(
-				(PCRE_SPTR16)m_Substitute[i].c_str(),
-				PCRE_UTF16,
-				&error,
-				&errorOffset,
-				nullptr);  // Use default character tables.
+			Pcre re(m_Substitute[i].c_str(), &error);
 			if (!re)
 			{
 				MakePlainSubstitute(str, i);
@@ -286,15 +277,8 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 				do
 				{
 					const int options = str.empty() ? 0 : PCRE_NOTEMPTY;
-					const int rc = pcre16_exec(
-						re,
-						nullptr,
-						(PCRE_SPTR16)str.c_str(),
-						(int)str.length(),
-						offset,
-						options,               // Empty string is not a valid match
-						ovector,
-						(int)_countof(ovector));
+					// Empty string is not a valid match.
+					const int rc = re.Execute(str, options, ovector, (int)_countof(ovector));
 					if (rc <= 0)
 					{
 						break;
@@ -331,11 +315,9 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 					const int start = ovector[0];
 					const int length = ovector[1] - ovector[0];
 					str.replace(start, length, result);
-					offset = start + (int)result.length();
+					re.SetOffset(start + (int)result.length());
 				}
 				while (true);
-
-				pcre16_free(re);
 			}
 		}
 	}
@@ -343,10 +325,8 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 	return str.c_str();
 }
 
-/*
-** Reads the buffer for "Name":"Value"-pairs separated with comma and
-** fills the map with the parsed data.
-*/
+// Reads the buffer for "Name":"Value"-pairs separated with comma and
+// fills the map with the parsed data.
 bool Measure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;
@@ -377,11 +357,9 @@ bool Measure::ParseSubstitute(std::wstring buffer)
 	return true;
 }
 
-/*
-** Returns the first word from the buffer. The word can be inside quotes.
-** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
-** and buffer _will_ be modified.
-*/
+// Returns the first word from the buffer. The word can be inside quotes.
+// If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
+// and buffer _will_ be modified.
 std::wstring Measure::ExtractWord(std::wstring& buffer)
 {
 	std::wstring::size_type end, len = buffer.size();
@@ -534,10 +512,6 @@ bool Measure::Update(bool rereadOptions)
 	}
 }
 
-/*
-** Returns the value of the measure.
-**
-*/
 double Measure::GetValue()
 {
 	// Invert if so requested
@@ -549,10 +523,6 @@ double Measure::GetValue()
 	return m_Value;
 }
 
-/*
-** Returns the relative value of the measure (0.0 - 1.0).
-**
-*/
 double Measure::GetRelativeValue()
 {
 	double range = GetValueRange();
@@ -572,44 +542,31 @@ double Measure::GetRelativeValue()
 	return 1.0;
 }
 
-/*
-** Returns the value range.
-**
-*/
 double Measure::GetValueRange()
 {
 	return m_MaxValue - m_MinValue;
 }
 
-/*
-** Base implementation. Derivied classes can provide an alternative implementation if they have a
-** string value that is not based on m_Value.
-**
-*/
+// Base implementation. Derivied classes can provide an alternative implementation if they have a
+// string value that is not based on m_Value.
 const WCHAR* Measure::GetStringValue()
 {
 	return nullptr;
 }
 
-/*
-** Returns the unformatted string value if the measure has one or a formatted value otherwise.
-**
-*/
 const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	const WCHAR* stringValue = GetStringValue();
 	return stringValue ? stringValue : GetFormattedValue(autoScale, scale, decimals, percentual);
 }
 
-/*
-** This method returns the value as text string. The actual value is
-** get with GetValue() so we don't have to worry about m_Invert.
-**
-** autoScale  If true, scale the value automatically to some sensible range.
-** scale      The scale to use if autoScale is false.
-** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
-** percentual Return the value as % from the maximum value.
-*/
+// This method returns the value as text string. The actual value is retrieved with GetValue() so
+// we don't have to worry about m_Invert here.
+//
+// autoScale  If true, scale the value automatically to some sensible range.
+// scale      The scale to use if autoScale is false.
+// decimals   Number of decimals used in the value. If -1, removes ".00000" for dynamic variables.
+// percentual Return the value as % from the maximum value.
 const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
@@ -711,11 +668,8 @@ void Measure::RemoveTrailingZero(WCHAR* str, int strLen)
 	}
 }
 
-/*
-** Executes OnChangeAction if action is set.
-** If execute parameter is set to false, only updates old value with current value.
-**
-*/
+// Executes OnChangeAction if action is set.
+// If execute parameter is set to false, only updates old value with current value.
 void Measure::DoChangeAction(bool execute)
 {
 	if (!m_OnChangeAction.empty() && m_ValueAssigned)
@@ -745,11 +699,8 @@ void Measure::DoChangeAction(bool execute)
 	}
 }
 
-/*
-** Creates the given measure. This is the factory method for the measures.
-** If new measures are implemented this method needs to be updated.
-**
-*/
+// Creates the given measure. This is the factory method for the measures.
+// If new measures are implemented this method needs to be updated.
 Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 {
 	// Comparison is caseinsensitive
@@ -758,6 +709,26 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasureCPU(skin, name);
 	}
+	else if (_wcsicmp(L"CoreTemp", measure) == 0)
+	{
+		return new MeasureCoreTemp(skin, name);
+	}
+	else if (_wcsicmp(L"ActionTimer", measure) == 0)
+	{
+		return new MeasureActionTimer(skin, name);
+	}
+	else if (_wcsicmp(L"AdvancedCPU", measure) == 0)
+	{
+		return new MeasureAdvancedCPU(skin, name);
+	}
+	else if (_wcsicmp(L"Audio", measure) == 0)
+	{
+		return new MeasureAudio(skin, name);
+	}
+	else if (_wcsicmp(L"AudioLevel", measure) == 0)
+	{
+		return new MeasureAudioLevel(skin, name);
+	}
 	else if (_wcsicmp(L"MediaKey", measure) == 0)
 	{
 		return new MeasureMediaKey(skin, name);
@@ -765,6 +736,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
 		return new MeasureMemory(skin, name);
+	}
+	else if (_wcsicmp(L"Mouse", measure) == 0)
+	{
+		return new MeasureMouse(skin, name);
 	}
 	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
@@ -786,6 +761,14 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasurePhysicalMemory(skin, name);
 	}
+	else if (_wcsicmp(L"PerfMon", measure) == 0)
+	{
+		return new MeasurePerfMon(skin, name);
+	}
+	else if (_wcsicmp(L"Ping", measure) == 0)
+	{
+		return new MeasurePing(skin, name);
+	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
 		return new MeasureVirtualMemory(skin, name);
@@ -793,6 +776,18 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
 		return new MeasureDiskSpace(skin, name);
+	}
+	else if (_wcsicmp(L"FolderInfo", measure) == 0)
+	{
+		return new MeasureFolderInfo(skin, name);
+	}
+	else if (_wcsicmp(L"FileView", measure) == 0)
+	{
+		return new MeasureFileView(skin, name);
+	}
+	else if (_wcsicmp(L"iTunes", measure) == 0)
+	{
+		return new MeasureiTunes(skin, name);
 	}
 	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
@@ -806,9 +801,17 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasurePlugin(skin, name);
 	}
+	else if (_wcsicmp(L"Power", measure) == 0)
+	{
+		return new MeasurePower(skin, name);
+	}
 	else if (_wcsicmp(L"Process", measure) == 0)
 	{
 		return new MeasureProcess(skin, name);
+	}
+	else if (_wcsicmp(L"Quote", measure) == 0)
+	{
+		return new MeasureQuote(skin, name);
 	}
 	else if (_wcsicmp(L"RecycleManager", measure) == 0)
 	{
@@ -817,6 +820,18 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
 		return new MeasureRegistry(skin, name);
+	}
+	else if (_wcsicmp(L"ResMon", measure) == 0)
+	{
+		return new MeasureResMon(skin, name);
+	}
+	else if (_wcsicmp(L"UsageMonitor", measure) == 0)
+	{
+		return new MeasureUsageMonitor(skin, name);
+	}
+	else if (_wcsicmp(L"RunCommand", measure) == 0)
+	{
+		return new MeasureRunCommand(skin, name);
 	}
 	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
@@ -829,6 +844,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"String", measure) == 0)
 	{
 		return new MeasureString(skin, name);
+	}
+	else if (_wcsicmp(L"SpeedFan", measure) == 0)
+	{
+		return new MeasureSpeedFan(skin, name);
 	}
 	else if (_wcsicmp(L"SysInfo", measure) == 0)
 	{
@@ -846,39 +865,22 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasureWifiStatus(skin, name);
 	}
+	else if (_wcsicmp(L"WindowMessage", measure) == 0)
+	{
+		return new MeasureWindowMessage(skin, name);
+	}
+	else if (_wcsicmp(L"DragDrop", measure) == 0)
+	{
+		return new MeasureDragDrop(skin, name);
+	}
 
 	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);
 
 	return nullptr;
 }
 
-/*
-** Executes a custom bang.
-**
-*/
 void Measure::Command(const std::wstring& command)
 {
 	LogWarningF(this, L"!CommandMeasure: Not supported");
 }
 
-/*
-** Returns the number value of a measure, used by IfCondition's.
-**
-*/
-bool Measure::GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context)
-{
-	auto measure = (Measure*)context;
-	const std::vector<Measure*>& measures = measure->m_Skin->GetMeasures();
-
-	for (const auto& iter : measures)
-	{
-		if (iter->GetOriginalName().length() == len &&
-			_wcsnicmp(str, iter->GetName(), len) == 0)
-		{
-			*value = iter->GetValue();
-			return true;
-		}
-	}
-
-	return false;
-}

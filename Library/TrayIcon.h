@@ -1,16 +1,9 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_TRAYICON_H_
-#define RM_LIBRARY_TRAYICON_H_
+#pragma once
 
 #include <windows.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <gdiplus.h>
+#include <memory>
 #include <vector>
 
 #define WM_TRAY_NOTIFYICON WM_USER + 101
@@ -50,6 +43,8 @@ protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	struct ImageData;
+
 	enum TRAY_NOTIFICATION
 	{
 		TRAY_NOTIFICATION_NONE,
@@ -73,9 +68,7 @@ private:
 	Measure* m_Measure;
 
 	TRAY_METER_TYPE m_MeterType;
-	Gdiplus::Color m_Color1;
-	Gdiplus::Color m_Color2;
-	Gdiplus::Bitmap* m_Bitmap;
+	std::unique_ptr<ImageData> m_ImageData;
 
 	std::vector<HICON> m_Icons;
 
@@ -88,5 +81,3 @@ private:
 
 	bool m_IconEnabled;
 };
-
-#endif

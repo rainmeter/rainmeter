@@ -156,7 +156,7 @@ namespace TagLib {
       /*!
        * A special value of containing the position of the packet to be
        * interpreted by the codec.  It is only supported here so that it may be
-       * coppied from one page to another.
+       * copied from one page to another.
        *
        * \see absoluteGranularPosition()
        */
@@ -169,7 +169,7 @@ namespace TagLib {
        *
        * \see setStreamSerialNumber()
        */
-      uint streamSerialNumber() const;
+      unsigned int streamSerialNumber() const;
 
       /*!
        * Every Ogg logical stream is given a random serial number which is common
@@ -179,7 +179,7 @@ namespace TagLib {
        *
        * \see streamSerialNumber()
        */
-      void setStreamSerialNumber(uint n);
+      void setStreamSerialNumber(unsigned int n);
 
       /*!
        * Returns the index of the page within the Ogg stream.  This helps make it
@@ -219,14 +219,14 @@ namespace TagLib {
       PageHeader(const PageHeader &);
       PageHeader &operator=(const PageHeader &);
 
-      void read();
+      void read(Ogg::File *file, long pageOffset);
       ByteVector lacingValues() const;
 
       class PageHeaderPrivate;
       PageHeaderPrivate *d;
     };
 
-  }
-}
+  }  // namespace Ogg
+}  // namespace TagLib
 
 #endif

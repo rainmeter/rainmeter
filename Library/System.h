@@ -1,36 +1,12 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __RAINMETER_SYSTEM_H__
-#define __RAINMETER_SYSTEM_H__
+#pragma once
 
 #include <windows.h>
+#include <optional>
 #include <queue>
+#include <string>
 #include <vector>
-
-struct MonitorInfo
-{
-	bool active;
-	HMONITOR handle;
-	RECT screen;
-	RECT work;
-	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
-	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
-};
-
-struct MultiMonitorInfo
-{
-	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;					// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							// Index of the primary monitor
-	std::vector<MonitorInfo> monitors;
-};
 
 class System
 {
@@ -41,8 +17,10 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static const MultiMonitorInfo& GetMultiMonitorInfo() { return c_Monitors; }
-	static size_t GetMonitorCount();
+	static UINT GetDpiForWindow(HWND window);
+	static UINT GetSystemDpi();
+	static POINT ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi = nullptr);
+	static POINT ConvertPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle);
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
@@ -58,9 +36,9 @@ public:
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = nullptr);
 	static void ResetWorkingDirectory();
-	static void InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 	static void SetClipboardText(const std::wstring& text);
+	static std::optional<std::wstring> GetClipboardText();
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
 
 	static bool CopyFiles(std::wstring from, std::wstring to, bool bMove = false);
@@ -77,10 +55,6 @@ private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	static void SetMultiMonitorInfo();
-	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
-	static void UpdateWorkareaInfo();
-
 	static HWND GetDefaultShellWindow();
 	static HWND GetDesktopIconsHostWindow();
 	static void ChangeZPosInOrder();
@@ -93,13 +67,9 @@ private:
 
 	static HWINEVENTHOOK c_WinEventHook;
 
-	static MultiMonitorInfo c_Monitors;
-
 	static bool c_ShowDesktop;
 
 	static std::wstring c_WorkingDirectory;
 
 	static std::vector<std::wstring> c_IniFileMappings;
 };
-
-#endif

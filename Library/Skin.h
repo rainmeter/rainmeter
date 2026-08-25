@@ -1,37 +1,26 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_SKIN_H_
-#define RM_LIBRARY_SKIN_H_
+#pragma once
 
-#include <windows.h>
-#include <dwmapi.h>
-#include <string>
-#include <list>
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Group.h"
 #include "Mouse.h"
+#include "SkinPosition.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/MathParser.h"
 
-#define BEGIN_MESSAGEPROC switch (uMsg) {
-#define MESSAGE(handler, msg) case msg: return skin->handler(uMsg, wParam, lParam);
+#define BEGIN_MESSAGEPROC if (instance) { switch (uMsg) {
+#define MESSAGE(handler, msg) case msg: return instance->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
-#define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define END_MESSAGEPROC } } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
 #define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
 
-#define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+#define METERWINDOW_CLASS_NAME L"RainmeterMeterWindow"
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
-
-typedef HPOWERNOTIFY(WINAPI * FPRSRN)(HANDLE, DWORD);
-typedef BOOL(WINAPI * FPUSRN)(HPOWERNOTIFY);
 
 enum BUTTONPROC
 {
@@ -73,7 +62,7 @@ enum HIDEMODE
 	HIDEMODE_FADEOUT
 };
 
-enum BEVELTYPE 
+enum BEVELTYPE
 {
 	BEVELTYPE_NONE,
 	BEVELTYPE_UP,
@@ -87,14 +76,24 @@ enum RESIZEMODE
 	RESIZEMODE_RESET
 };
 
+enum class SkinWindowOcclusionState : BYTE
+{
+	Unknown = 0,
+	Visible,
+	Occluded,
+	Hidden
+};
+
 class Rainmeter;
 class Measure;
 class Meter;
+class MeterTextEdit;
 class GeneralImage;
+class SkinSelectionOverlay;
+class SkinDropTarget;
 
 namespace Gfx {
 class FontCollection;
-class TextFormat;
 }
 
 class Skin : public Group
@@ -111,44 +110,42 @@ public:
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
 	void DoDelayedCommand(const WCHAR* command, UINT delay);
 
-	void HideMeter(const std::wstring& name, bool group = false);
-	void ShowMeter(const std::wstring& name, bool group = false);
-	void ToggleMeter(const std::wstring& name, bool group = false);
-	void MoveMeter(const std::wstring& name, int x, int y);
-	void UpdateMeter(const std::wstring& name, bool group = false);
-	void DisableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ClearMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void EnableMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void ToggleMouseAction(const std::wstring& name, const std::wstring& options, bool group = false);
-	void DisableMeasure(const std::wstring& name, bool group = false);
-	void EnableMeasure(const std::wstring& name, bool group = false);
-	void ToggleMeasure(const std::wstring& name, bool group = false);
-	void PauseMeasure(const std::wstring& name, bool group = false);
-	void UnpauseMeasure(const std::wstring& name, bool group = false);
-	void TogglePauseMeasure(const std::wstring& name, bool group = false);
-	void UpdateMeasure(const std::wstring& name, bool group = false);
+	void HideMeter(std::wstring_view name, bool group = false);
+	void ShowMeter(std::wstring_view name, bool group = false);
+	void ToggleMeter(std::wstring_view name, bool group = false);
+	void MoveMeter(std::wstring_view name, int x, int y);
+	void UpdateMeter(std::wstring_view name, bool group = false);
+	void DisableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ClearMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void EnableMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void ToggleMouseAction(std::wstring_view name, const std::wstring& options, bool group = false);
+	void DisableMeasure(std::wstring_view name, bool group = false);
+	void EnableMeasure(std::wstring_view name, bool group = false);
+	void ToggleMeasure(std::wstring_view name, bool group = false);
+	void PauseMeasure(std::wstring_view name, bool group = false);
+	void UnpauseMeasure(std::wstring_view name, bool group = false);
+	void TogglePauseMeasure(std::wstring_view name, bool group = false);
+	void UpdateMeasure(std::wstring_view name, bool group = false);
+	void CommandMeasure(std::wstring_view name, const std::wstring& command, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
-	void RedrawWindow() { UpdateWindow(m_TransparencyValue); }
+	void UpdateWindowContents();
+
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
-	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
+	void SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group);
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
-
-	void SetZPosVariable(ZPOSITION zPos);
 
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
 	Section* GetCurrentActionSection() { return m_CurrentActionSection; }
-	void SetCurrentActionSection(Section* section) { m_CurrentActionSection = section; }
-	void ResetCurrentActionSection() { SetCurrentActionSection(nullptr); }
 
-	void MoveWindow(int x, int y);
+	void MoveWindow(int x, int y, SkinPositionSpace posSpace);
 	void MoveSelectedWindow(int dx, int dy);
-	bool IsSelected() { return m_Selected; }
-	void SelectSkinsGroup(std::unordered_set<std::wstring> groups);
+	bool IsSelected() const { return m_SelectionOverlay != nullptr; }
+	void SelectSkinsGroup(const ankerl::unordered_dense::set<std::wstring>& groups);
 	void Select();
 	void Deselect();
 
@@ -163,38 +160,71 @@ public:
 	void SetBlur(bool b) { m_Blur = b; }
 
 	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
+	void RequestWindowSizeCheck() { if (m_DynamicWindowSize) SetResizeWindowMode(RESIZEMODE_CHECK); }
 
 	Gfx::Canvas& GetCanvas() { return m_Canvas; }
 	HWND GetWindow() { return m_Window; }
 
 	ConfigParser& GetParser() { return m_Parser; }
+	const MathParser& GetMathParser() const { return m_MathParser; }
 
 	const std::wstring& GetFolderPath() { return m_FolderPath; }
 	const std::wstring& GetFileName() { return m_FileName; }
 	std::wstring GetFilePath();
 	std::wstring GetRootName();
 	std::wstring GetRootPath();
-	std::wstring GetResourcesPath();
+	const std::wstring& GetResourcesPath() const { return m_ResourcesPath; }
 	std::wstring GetSkinPath();
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }
 
-	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
-	bool GetXPercentage() { return m_WindowXPercentage; }
-	bool GetYPercentage() { return m_WindowYPercentage; }
-	bool GetXFromRight() { return m_WindowXFromRight; }
-	bool GetYFromBottom() { return m_WindowYFromBottom; }
+	void UpdateMouseMeasureCapture();
 
+	// At most one meter per skin holds the caret. The setters return true if the focus changed,
+	// in which case the caller needs to redraw.
+	// Passing |dismissCommand| marks this as the user leaving the field: the outgoing meter fills
+	// it with OnDismissAction, which the caller must run last since it may destroy the skin.
+	// Without a sink the focus is dropped silently.
+	bool SetInputFocus(MeterTextEdit* meter, std::wstring* dismissCommand = nullptr);
+	bool ClearInputFocus() { return SetInputFocus(nullptr); }
+
+	// Drops the caret because the user moved away from the field: runs OnDismissAction.
+	// ClearInputFocus() drops it silently, for teardown and selection mode.
+	void DismissInputFocus();
+	bool ClearInputFocus(MeterTextEdit* meter) { return m_InputFocusMeter == meter ? SetInputFocus(nullptr) : false; }
+	MeterTextEdit* GetInputFocusMeter() { return m_InputFocusMeter; }
+	void EndInputDrag();
+
+	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	int GetW() { return m_WindowW; }
 	int GetH() { return m_WindowH; }
-	int GetX() { return m_ScreenX; }
-	int GetY() { return m_ScreenY; }
+	int GetCurrentConfigW() const { return m_WindowW > 0 ? m_WindowW : m_SkinW; }
+	int GetCurrentConfigH() const { return m_WindowH > 0 ? m_WindowH : m_SkinH; }
+	SkinPosition& GetPosition() { return m_Position; }
+	const SkinPosition& GetPosition() const { return m_Position; }
+	POINT GetPositionAsPhysical() const;
+	POINT GetPositionAsVirtualized() const;
 
-	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
-	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
-	int GetXScreen() { return m_WindowXScreen; }
-	int GetYScreen() { return m_WindowYScreen; }
+	SIZE GetZoomedWindowSize() const;
+	int GetZoomedWindowW() const;
+	int GetZoomedWindowH() const;
+	int GetPhysicalWindowW(UINT dpi = 0) const;
+	int GetPhysicalWindowH(UINT dpi = 0) const;
+	RECT GetPhysicalWindowBounds() const;
+	int LogicalToPhysical(int value) const;
+	RECT LogicalToPhysical(const RECT& rect) const;
+	POINT PhysicalToLogical(POINT point) const;
+	POINT PhysicalToRelativeLogical(POINT point) const;
+
+	HMONITOR GetWindowMonitor() const { return m_WindowMonitor; }
+	float GetScale() const { return m_EffectiveScale; }
+	float GetDpiScale() const { return m_DpiScale; }
+	float GetZoomScale() const { return m_ZoomScale; }
+	bool HasZoom() const { return m_Zoom.has_value(); }
+	SkinWindowOcclusionState GetWindowOcclusionState() const { return m_WindowOcclusionState; }
+	void SetWindowOcclusionState(SkinWindowOcclusionState state);
+	bool IsWindowUnoccluded() const { return m_WindowOcclusionState == SkinWindowOcclusionState::Visible || m_WindowOcclusionState == SkinWindowOcclusionState::Unknown; }
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -220,10 +250,21 @@ public:
 
 	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
-	Meter* GetMeter(const std::wstring& meterName);
-	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
+	Microsoft::WRL::ComPtr<SkinDropTarget> GetDropTarget();
+	void ClearDropTarget();
 
+	Section* GetSection(std::wstring_view sectionName) { return m_Parser.GetSection(sectionName); }
+	Meter* GetMeter(std::wstring_view meterName) { return m_Parser.GetMeter(meterName); }
+	Measure* GetMeasure(std::wstring_view measureName) { return m_Parser.GetMeasure(measureName); }
+
+	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
+
+	friend class CurrentActionSectionScope;
 	friend class DialogManage;
+	friend class Rainmeter;
+	friend class ContextMenu;
+	friend class SkinDropTarget;
+	friend class SkinSelectionOverlay;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -257,6 +298,7 @@ protected:
 	LRESULT OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCaptureChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -264,10 +306,13 @@ protected:
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDpiScaledSize(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDpiChanged(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -293,28 +338,53 @@ private:
 		OPTION_AUTOSELECTSCREEN = 0x00000200,
 		OPTION_ALWAYSONTOP      = 0x00000400,
 		OPTION_ANCHOR           = 0x00000800,
+		OPTION_ZOOM             = 0x00001000,
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
 
+	void InvalidateDeviceResources();
+	bool ReinitializeCanvasDeviceContext();
+
 	bool HitTest(int x, int y);
+	bool HitTestDevice(int x, int y);
 
 	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
-	void MapCoordsToScreen(int& x, int& y, int w, int h);
-	void WindowToScreen();
-	void ScreenToWindow();
+	void ClampPositionToScreenBounds(int& x, int& y, SkinPositionSpace posSpace, HMONITOR specificMonitor = nullptr);
+	POINT ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR specificMonitor = nullptr);
+
+	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
+	void UpdateWindowBounds(UINT flags);
+	bool UpdateWindowMonitor(std::optional<POINT> center = std::nullopt);
+	void NudgeWindowCenterFromMonitorBoundary();
+	void UpdateWindowDpi(UINT dpi = 0);
+	void UpdateWindowDpiAndBounds(UINT dpi = 0);
+	void ComputePositionFromOptions(bool inheritMonitorDpi = false);
+	void ComputeOptionValueFromPosition();
+
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
-	void Update(bool refresh);
-	void UpdateWindow(int alpha, bool canvasBeginDrawCalled = false);
+
+	struct UpdateOptions
+	{
+		bool refresh = false;
+		bool force = false;
+	};
+
+	void Update(UpdateOptions options = {});
+
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
+	void WriteDeferredOptions();
+	void ReadUpdateOption();
 	bool ReadSkin();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
+	void HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action);
+	void HandleButtonDoubleClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action, MOUSEACTION fallback);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
 	void SetAutoSelectScreen(bool b);
@@ -322,9 +392,15 @@ private:
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
+	void SetZoom(int zoom);
+	void ClearZoom();
+	void UpdateZoom();
+	void ApplyZoomScale(float zoomScale, bool writeOptions);
 	void UpdateFadeDuration();
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zPos);
+	void ClearMouseMeasureCapture();
+	MeterTextEdit* GetInputMeterAt(int x, int y, MOUSEACTION actions);
 	bool DoAction(int x, int y, MOUSEACTION action, bool test);
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
@@ -334,8 +410,6 @@ private:
 	void AddWindowExStyle(LONG_PTR flag);
 	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
-	void SetWindowPositionVariables(int x, int y);
-	void SetWindowSizeVariables(int w, int h);
 	void SetFavorite(bool favorite);
 	void DeselectSkinsIfAppropriate(HWND hwnd);
 	void UpdateRelativeMeters();
@@ -344,15 +418,14 @@ private:
 	void HideBlur();
 
 	void Dispose(bool refresh);
-	void CreateDoubleBuffer(int cx, int cy);
 
 	bool IsNetworkMeasure(Measure* measure);
 
 	bool m_IsFirstRun;  // Skin has no settings in Rainmeter.ini
 
 	Gfx::Canvas m_Canvas;
-
 	ConfigParser m_Parser;
+	MathParser m_MathParser;
 
 	bool m_ResetRelativeMeters;
 
@@ -360,6 +433,14 @@ private:
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;
+
+	std::unique_ptr<SkinSelectionOverlay> m_SelectionOverlay;
+	SkinDropTarget* m_DropTarget;
+
+	int m_PendingWriteOptions;
+	bool m_DeferWriteOptions;
+	bool m_WriteOptionsScheduled;
+
 	HPOWERNOTIFY m_SuspendResumeNotification;
 
 	Mouse m_Mouse;
@@ -373,37 +454,38 @@ private:
 	std::wstring m_OnUnfocusAction;
 	std::wstring m_OnUpdateAction;
 	std::wstring m_OnWakeAction;
+	std::wstring m_OnDisplayMetricsChangeAction;
+	std::wstring m_OnVisibilityChangeAction;
 
 	Section* m_CurrentActionSection;
 
 	std::wstring m_SkinGroup;
+	std::wstring m_ResourcesPath;
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
-	std::wstring m_WindowX;
-	std::wstring m_WindowY;
-	std::wstring m_AnchorX;
-	std::wstring m_AnchorY;
-	int m_WindowXScreen;
-	int m_WindowYScreen;
-	bool m_WindowXScreenDefined;
-	bool m_WindowYScreenDefined;
-	bool m_WindowXFromRight;
-	bool m_WindowYFromBottom;
-	bool m_WindowXPercentage;
-	bool m_WindowYPercentage;
+
+	SkinPosition m_Position;
+
 	int m_WindowW;
 	int m_WindowH;
-	int m_ScreenX;								// X-postion on the virtual screen 
-	int m_ScreenY;								// Y-postion on the virtual screen
 	int m_SkinW;								// User defined width of skin
 	int m_SkinH;								// User defined height of skin
-	bool m_AnchorXFromRight;
-	bool m_AnchorYFromBottom;
-	bool m_AnchorXPercentage;
-	bool m_AnchorYPercentage;
-	int m_AnchorScreenX;
-	int m_AnchorScreenY;
+
+	std::optional<int> m_Zoom;
+
+	// The monitor is selected from the window center. Keep a copy of its metrics so display
+	// changes can be handled without relying on WM_DPICHANGED.
+	HMONITOR m_WindowMonitor;
+	RECT m_WindowMonitorScreenBounds;
+	RECT m_WindowMonitorWorkBounds;
+	bool m_PreventWindowMove;
+
+	UINT m_WindowDpi;
+	float m_DpiScale;
+	float m_ZoomScale;
+	float m_EffectiveScale;
+
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;
@@ -411,6 +493,16 @@ private:
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;
+	bool m_HasInputMeters;
+	MeterTextEdit* m_InputFocusMeter;
+
+	// |true| while the left button is held after starting a selection drag in m_InputFocusMeter.
+	bool m_InputDragging;
+
+	// When and where the last double-click on a TextEdit meter landed. Windows has no
+	// triple-click message, so a third click is recognised by how soon and how near it follows.
+	ULONGLONG m_InputLastDoubleClickTime;
+	POINT m_InputLastDoubleClickPos;
 	HIDEMODE m_WindowHide;
 	bool m_WindowStartHidden;
 	bool m_SavePosition;
@@ -425,6 +517,13 @@ private:
 	bool m_AutoSelectScreen;
 	bool m_Dragging;
 	bool m_Dragged;
+	bool m_DragStartValid;
+	POINT m_DragStartCursor;
+	POINT m_DragStartWindowPos;
+	SIZE m_DragStartWindowSize;
+	POINT m_DragCursorOffset;
+	UINT m_DragCursorOffsetDpi;
+	bool m_MouseMeasureCapture;
 	BGMODE m_BackgroundMode;
 	D2D1_COLOR_F m_SolidColor;
 	D2D1_COLOR_F m_SolidColor2;
@@ -438,7 +537,6 @@ private:
 	bool m_OldKeepOnScreen;
 	bool m_OldClickThrough;
 
-	bool m_Selected;
 	D2D1_COLOR_F m_SelectedColor;
 
 	Group m_DragGroup;
@@ -457,9 +555,14 @@ private:
 	STATE m_State;
 
 	bool m_Hidden;
+	SkinWindowOcclusionState m_WindowOcclusionState;
+	int m_InvisibleUpdate;
+	ULONGLONG m_LastUpdateTime;
+	UINT m_SkippedUpdateCount;
+	bool m_HasPendingRedraw;
 	RESIZEMODE m_ResizeWindow;
 
-	std::unordered_map<UINT_PTR, std::wstring> m_DelayedCommands;
+	std::map<UINT_PTR, std::wstring> m_DelayedCommands;
 
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;
@@ -478,9 +581,27 @@ private:
 
 	static int c_InstanceCount;
 	static bool c_IsInSelectionMode;
-
-	static FPRSRN c_RegisterSuspendResumeNotification;
-	static FPUSRN c_UnregisterSuspendResumeNotification;
 };
 
-#endif
+// Sets the section running an action, and puts back the previous one when the action ends.
+// Actions can start other actions, so the outer action must keep its section for the bangs
+// that come after the inner one.
+class CurrentActionSectionScope
+{
+public:
+	CurrentActionSectionScope(Skin* skin, Section* section) :
+		m_Skin(skin),
+		m_Previous(skin->m_CurrentActionSection)
+	{
+		m_Skin->m_CurrentActionSection = section;
+	}
+
+	~CurrentActionSectionScope() { m_Skin->m_CurrentActionSection = m_Previous; }
+
+	CurrentActionSectionScope(const CurrentActionSectionScope& other) = delete;
+	CurrentActionSectionScope& operator=(CurrentActionSectionScope other) = delete;
+
+private:
+	Skin* m_Skin;
+	Section* m_Previous;
+};

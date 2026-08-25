@@ -1,0 +1,388 @@
+Rainmeter-specific LuaJIT changes
+
+The LuaJIT sources are based on upstream commit 1edc3e52 and are kept
+unmodified. The build copies them to its staging directory and applies this
+patch before invoking src/msvcbuild.bat.
+
+The patch:
+
+- Disables FFI consistently for C compilation and DynASM generation.
+- Omits collectgarbage, the built-in print, the package, bit, and jit libraries,
+  io.popen, and os.exit.
+- Creates closed default streams instead of exposing stdin, stdout, and stderr.
+- Makes os.setlocale() return nil without changing the process locale.
+- Protects Windows builds from invalid CRT parameters passed through strftime.
+- Increases the maximum number of pattern captures to 256.
+- Restores the Lua 5.1 LUA_COMPAT_VARARG behavior, i.e. the implicit 'arg'
+  table in vararg functions which do not use '...'.
+
+---
+
+diff --git a/src/lib_base.c b/src/lib_base.c
+--- a/src/lib_base.c
++++ b/src/lib_base.c
+@@ -468,7 +468,7 @@ LJLIB_CF(gcinfo)
+   return 1;
+ }
+ 
+-LJLIB_CF(collectgarbage)
++LJLIB_NOREG LJLIB_CF(collectgarbage)
+ {
+   int opt = lj_lib_checkopt(L, 1, LUA_GCCOLLECT,  /* ORDER LUA_GC* */
+     "\4stop\7restart\7collect\5count\1\377\4step\10setpause\12setstepmul\1\377\11isrunning");
+@@ -515,8 +515,7 @@ LJLIB_CF(newproxy)
+   return 1;
+ }
+ 
+-LJLIB_PUSH("tostring")
+-LJLIB_CF(print)
++LJLIB_NOREG LJLIB_CF(print)
+ {
+   ptrdiff_t i, nargs = L->top - L->base;
+   cTValue *tv = lj_tab_getstr(tabref(L->env), strV(lj_lib_upvalue(L, 1)));
+diff --git a/src/lib_init.c b/src/lib_init.c
+--- a/src/lib_init.c
++++ b/src/lib_init.c
+@@ -17,7 +17,6 @@
+ 
+ static const luaL_Reg lj_lib_load[] = {
+   { "",			luaopen_base },
+-  { LUA_LOADLIBNAME,	luaopen_package },
+   { LUA_TABLIBNAME,	luaopen_table },
+   { LUA_IOLIBNAME,	luaopen_io },
+   { LUA_OSLIBNAME,	luaopen_os },
+@@ -25,7 +24,5 @@ static const luaL_Reg lj_lib_load[] = {
+   { LUA_MATHLIBNAME,	luaopen_math },
+   { LUA_DBLIBNAME,	luaopen_debug },
+-  { LUA_BITLIBNAME,	luaopen_bit },
+-  { LUA_JITLIBNAME,	luaopen_jit },
+   { NULL,		NULL }
+ };
+ 
+diff --git a/src/lib_io.c b/src/lib_io.c
+--- a/src/lib_io.c
++++ b/src/lib_io.c
+@@ -419,7 +419,7 @@ LJLIB_CF(io_open)
+   return iof->fp != NULL ? 1 : luaL_fileresult(L, 0, fname);
+ }
+ 
+-LJLIB_CF(io_popen)
++LJLIB_NOREG LJLIB_CF(io_popen)
+ {
+ #if LJ_TARGET_POSIX || (LJ_TARGET_WINDOWS && !LJ_TARGET_XBOXONE && !LJ_TARGET_UWP)
+   const char *fname = strdata(lj_lib_checkstr(L, 1));
+@@ -536,7 +536,10 @@ static GCobj *io_std_new(lua_State *L, FILE *fp, const char *name)
+   setgcref(ud->metatable, gcV(L->top-3));
+   iof->fp = fp;
+   iof->type = IOFILE_TYPE_STDF;
+-  lua_setfield(L, -2, name);
++  if (name != NULL)
++    lua_setfield(L, -2, name);
++  else
++    lua_pop(L, 1);
+   return obj2gco(ud);
+ }
+ 
+@@ -546,8 +549,11 @@ LUALIB_API int luaopen_io(lua_State *L)
+   copyTV(L, L->top, L->top-1); L->top++;
+   lua_setfield(L, LUA_REGISTRYINDEX, LUA_FILEHANDLE);
+   LJ_LIB_REG(L, LUA_IOLIBNAME, io);
+-  setgcref(G(L)->gcroot[GCROOT_IO_INPUT], io_std_new(L, stdin, "stdin"));
+-  setgcref(G(L)->gcroot[GCROOT_IO_OUTPUT], io_std_new(L, stdout, "stdout"));
+-  io_std_new(L, stderr, "stderr");
++  /* Rainmeter does not expose the host process's standard streams. The
++  ** default input/output handles remain closed until io.input/io.output is
++  ** explicitly given a file by the script.
++  */
++  setgcref(G(L)->gcroot[GCROOT_IO_INPUT], io_std_new(L, NULL, NULL));
++  setgcref(G(L)->gcroot[GCROOT_IO_OUTPUT], io_std_new(L, NULL, NULL));
+   return 1;
+ }
+diff --git a/src/lib_os.c b/src/lib_os.c
+--- a/src/lib_os.c
++++ b/src/lib_os.c
+@@ -9,6 +9,10 @@
+ #include <errno.h>
+ #include <time.h>
+ 
++#if defined(_MSC_VER)
++#include <crtdbg.h>
++#endif
++
+ #define lib_os_c
+ #define LUA_LIB
+ 
+@@ -37,6 +41,16 @@
+ 
+ #define LJLIB_MODULE_os
+ 
++#if defined(_MSC_VER)
++static void null_invalid_parameter_handler(const wchar_t *expression,
++	const wchar_t *function, const wchar_t *file, unsigned int line,
++	uintptr_t reserved)
++{
++  UNUSED(expression); UNUSED(function); UNUSED(file); UNUSED(line);
++  UNUSED(reserved);
++}
++#endif
++
+ LJLIB_CF(os_execute)
+ {
+ #if LJ_NO_SYSTEM
+@@ -109,7 +123,7 @@ LJLIB_CF(os_getenv)
+   return 1;
+ }
+ 
+-LJLIB_CF(os_exit)
++LJLIB_NOREG LJLIB_CF(os_exit)
+ {
+   int status;
+   if (L->base < L->top && tvisbool(L->base))
+@@ -213,7 +227,25 @@ LJLIB_CF(os_date)
+     setsbufL(sb, L);
+     while (retry--) {  /* Limit growth for invalid format or empty result. */
+       char *buf = lj_buf_need(sb, sz);
+-      size_t len = strftime(buf, sbufsz(sb), s, stm);
++      size_t len;
++#if defined(_MSC_VER)
++      int old_report_mode = _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_REPORT_MODE);
++      _invalid_parameter_handler old_handler =
++	_set_thread_local_invalid_parameter_handler(null_invalid_parameter_handler);
++      int crt_error;
++      _CrtSetReportMode(_CRT_ASSERT, 0);
++      errno = 0;
++#endif
++      len = strftime(buf, sbufsz(sb), s, stm);
++#if defined(_MSC_VER)
++      crt_error = errno;
++      _CrtSetReportMode(_CRT_ASSERT, old_report_mode);
++      _set_thread_local_invalid_parameter_handler(old_handler);
++      if (crt_error == EINVAL) {
++	setstrV(L, L->top++, &G(L)->strempty);
++	break;
++      }
++#endif
+       if (len) {
+ 	setstrV(L, L->top++, lj_str_new(L, buf, len));
+ 	lj_gc_check(L);
+@@ -265,21 +297,7 @@ LJLIB_CF(os_difftime)
+ 
+ LJLIB_CF(os_setlocale)
+ {
+-#if LJ_TARGET_PSVITA
+-  lua_pushliteral(L, "C");
+-#else
+-  GCstr *s = lj_lib_optstr(L, 1);
+-  const char *str = s ? strdata(s) : NULL;
+-  int opt = lj_lib_checkopt(L, 2, 6,
+-    "\5ctype\7numeric\4time\7collate\10monetary\1\377\3all");
+-  if (opt == 0) opt = LC_CTYPE;
+-  else if (opt == 1) opt = LC_NUMERIC;
+-  else if (opt == 2) opt = LC_TIME;
+-  else if (opt == 3) opt = LC_COLLATE;
+-  else if (opt == 4) opt = LC_MONETARY;
+-  else if (opt == 6) opt = LC_ALL;
+-  lua_pushstring(L, setlocale(opt, str));
+-#endif
++  lua_pushnil(L);
+   return 1;
+ }
+
+diff --git a/src/lj_parse.c b/src/lj_parse.c
+--- a/src/lj_parse.c
++++ b/src/lj_parse.c
+@@ -147,6 +147,9 @@ typedef struct FuncState {
+   BCPos pc;			/* Next bytecode position. */
+   BCPos lasttarget;		/* Bytecode position of last jump target. */
+   BCPos jpc;			/* Pending jump list to next bytecode. */
++#if defined(LUAJIT_COMPAT_VARARG)
++  BCPos argpc;			/* Bytecode position of the 'arg' prologue. */
++#endif
+   BCReg freereg;		/* First free register. */
+   BCReg nactvar;		/* Number of active local variables. */
+   BCReg nkn, nkgc;		/* Number of lua_Number/GCobj constants */
+@@ -1755,6 +1758,9 @@ static void fs_init(LexState *ls, FuncState *fs)
+   fs->pc = 0;
+   fs->lasttarget = 0;
+   fs->jpc = NO_JMP;
++#if defined(LUAJIT_COMPAT_VARARG)
++  fs->argpc = 0;
++#endif
+   fs->freereg = 0;
+   fs->nkgc = 0;
+   fs->nkn = 0;
+@@ -1944,15 +1950,67 @@ static void expr_table(LexState *ls, ExpDesc *e)
+     if (needarr && t->asize < narr)
+       lj_tab_reasize(fs->L, t, narr-1);
+     lj_gc_check(fs->L);
++  }
++}
++
++#if defined(LUAJIT_COMPAT_VARARG)
++
++/* Number of bytecode instructions emitted by bcemit_argtab(). */
++#define ARGTAB_INS	5
++
++/* Emit prologue which fills the implicit 'arg' table of a vararg function.
++** This is the compile-time equivalent of what adjust_varargs() did at call
++** time in Lua 5.1, i.e. 'arg' becomes {..., n = <number of varargs>}. Note
++** that 'n' is derived with '#' rather than an exact count, so it differs from
++** Lua 5.1 if the varargs contain nils. That matches what unpack() and '#'
++** themselves see, which is all legacy code ever relies on.
++*/
++static void bcemit_argtab(FuncState *fs)
++{
++  BCReg reg = fs->numparams;  /* Register of the implicit 'arg' variable. */
++  ExpDesc e;
++  bcreg_reserve(fs, 1);  /* Scratch register for the vararg values. */
++  fs->argpc = fs->pc;
++  bcemit_AD(fs, BC_TNEW, reg, 3|(hsize2hbits(1)<<11));
++  bcemit_ABC(fs, BC_VARG, reg+1, 0, fs->numparams);
++  expr_init(&e, VKNUM, 0);
++  e.u.nval.u32.lo = 1;  /* First array index. */
++  e.u.nval.u32.hi = 0x43300000;  /* Biased integer to avoid denormals. */
++  bcemit_AD(fs, BC_TSETM, reg+1, const_num(fs, &e));
++  bcemit_AD(fs, BC_LEN, reg+1, reg);
++  expr_init(&e, VKSTR, 0);
++  e.u.sval = lj_parse_keepstr(fs->ls, "n", 1);
++  bcemit_ABC(fs, BC_TSETS, reg+1, reg, const_str(fs, &e));
++  lj_assertFS(fs->pc == fs->argpc + ARGTAB_INS, "bad 'arg' prologue");
++  fs->freereg--;  /* Free the scratch register again. */
++  fs->lasttarget = fs->pc;  /* Don't merge the body into the prologue. */
++}
++
++/* Replace the prologue emitted by bcemit_argtab() with 'arg = nil' plus a
++** branch around the remaining instructions. A function which uses '...' keeps
++** the 'arg' variable, but leaves it nil -- just like Lua 5.1 did by clearing
++** VARARG_NEEDSARG while retaining VARARG_HASARG. Note that the store is
++** required: unlike luaD_precall(), BC_FUNCV only nils out missing fixed
++** parameters, so the slot would otherwise hold a stale stack value.
++*/
++static void bcemit_argtab_kill(FuncState *fs)
++{
++  if (fs->argpc) {
++    BCInsLine *ilp = &fs->bcbase[fs->argpc];
++    ilp[0].ins = BCINS_AD(BC_KPRI, fs->numparams, VKNIL);
++    ilp[1].ins = BCINS_AJ(BC_JMP, fs->numparams+1, ARGTAB_INS-2);
++    fs->argpc = 0;
+   }
+ }
+ 
++#endif
++
+ /* Parse function parameters. */
+ static BCReg parse_params(LexState *ls, int needself,
+-			  LexToken before, LexToken after)
++			  LexToken before, LexToken after, int compat)
+ {
+   FuncState *fs = ls->fs;
+-  BCReg nparams = 0;
++  BCReg nparams = 0, nlocals;
+   lex_check(ls, before);
+   if (needself)
+     var_new_lit(ls, nparams++, "self");
+@@ -1969,9 +2027,19 @@ static BCReg parse_params(LexState *ls, int needself,
+       }
+     } while (lex_opt(ls, ','));
+   }
+-  var_add(ls, nparams);
+-  lj_assertFS(fs->nactvar == nparams, "bad regalloc");
+-  bcreg_reserve(fs, nparams);
++  nlocals = nparams;
++#if defined(LUAJIT_COMPAT_VARARG)
++  /* Lua 5.0 compatibility: declare the implicit 'arg' variable. It's not a
++  ** parameter, but occupies the register right after the last parameter.
++  */
++  if (compat && (fs->flags & PROTO_VARARG))
++    var_new_lit(ls, nlocals++, "arg");
++#else
++  UNUSED(compat);
++#endif
++  var_add(ls, nlocals);
++  lj_assertFS(fs->nactvar == nlocals, "bad regalloc");
++  bcreg_reserve(fs, nlocals);
+   lex_check(ls, after);
+   return nparams;
+ }
+@@ -2018,7 +2086,10 @@ static void parse_body(LexState *ls, ExpDesc *e, int n
+   FuncScope bl;
+   fs_init(ls, &fs);
+   fscope_begin(&fs, &bl, 0);
+-  proto_begin(&fs, line, parse_params(ls, needself, '(', ')'));
++  proto_begin(&fs, line, parse_params(ls, needself, '(', ')', 1));
++#if defined(LUAJIT_COMPAT_VARARG)
++  if ((fs.flags & PROTO_VARARG)) bcemit_argtab(&fs);
++#endif
+   parse_chunk(ls);
+   if (ls->tok != TK_end) lex_match(ls, TK_end, TK_function, line);
+   proto_finish(ls, e, oldbase);
+@@ -2041,7 +2112,7 @@ static void parse_shortfunc(LexState *ls, ExpDesc *e, 
+     var_add(ls, nparams);
+     bcreg_reserve(&fs, 1);
+   } else if (!lex_opt(ls, TK_or_)) {
+-    nparams = parse_params(ls, 0, '|', '|');
++    nparams = parse_params(ls, 0, '|', '|', 0);
+   }
+   lex_check(ls, TK_arrow);
+   proto_begin(&fs, line, nparams);
+@@ -2233,6 +2304,9 @@ static void expr_simple(LexState *ls, ExpDesc *v, int 
+     FuncState *fs = ls->fs;
+     BCReg base;
+     checkcond(ls, fs->flags & PROTO_VARARG, LJ_ERR_XDOTS);
++#if defined(LUAJIT_COMPAT_VARARG)
++    bcemit_argtab_kill(fs);  /* Lua 5.0 compat: '...' leaves 'arg' nil. */
++#endif
+     bcreg_reserve(fs, 1);
+     base = fs->freereg-1;
+     expr_init(v, VCALL, bcemit_ABC(fs, BC_VARG, base, 2, fs->numparams));
+
+diff --git a/src/luaconf.h b/src/luaconf.h
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -92,8 +92,16 @@
+ #define LUAI_MAXCSTACK	8000	/* Max. # of stack slots for a C func (<10K). */
+ #define LUAI_GCPAUSE	200	/* Pause GC until memory is at 200%. */
+ #define LUAI_GCMUL	200	/* Run GC at 200% of allocation speed. */
+-#define LUA_MAXCAPTURES	32	/* Max. pattern captures. */
++#define LUA_MAXCAPTURES	256	/* Max. pattern captures. */
+ 
++/*
++** LUAJIT_COMPAT_VARARG controls compatibility with the Lua 5.0 vararg feature,
++** i.e. the implicit 'arg' table in functions declared with '...'. This mirrors
++** LUA_COMPAT_VARARG from Lua 5.1, which LuaJIT dropped. Undefine it once no
++** skin accesses varargs through 'arg' instead of '...'.
++*/
++#define LUAJIT_COMPAT_VARARG
++
+ /* Configuration for the frontend (the luajit executable). */
+ #if defined(luajit_c)
+ #define LUA_PROGNAME	"luajit"  /* Fallback frontend name. */
+
+diff --git a/src/msvcbuild.bat b/src/msvcbuild.bat
+--- a/src/msvcbuild.bat
++++ b/src/msvcbuild.bat
+@@ -18,6 +18,9 @@
+ @rem Add more debug flags here, e.g. DEBUGCFLAGS=/DLUA_USE_ASSERT
+ @set DEBUGCFLAGS=
+ @set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
++@set DASMFFI=-D FFI
++@if defined LUAJIT_DISABLE_FFI set LJCOMPILE=%LJCOMPILE% /DLUAJIT_DISABLE_FFI
++@if defined LUAJIT_DISABLE_FFI set DASMFFI=
+ @set LJDYNBUILD=/DLUA_BUILD_AS_DLL /MD
+ @set LJDYNBUILD_DEBUG=/DLUA_BUILD_AS_DLL /MDd
+ @set LJCOMPILETARGET=/Zi
+@@ -44,12 +47,12 @@ if exist minilua.exe.manifest^
+   %LJMT% -manifest minilua.exe.manifest -outputresource:minilua.exe
+ @endlocal
+ 
+-@set DASMFLAGS=-D WIN -D JIT -D FFI -D ENDIAN_LE -D FPU -D P64
++@set DASMFLAGS=-D WIN -D JIT %DASMFFI% -D ENDIAN_LE -D FPU -D P64
+ @set LJARCH=x64
+ @minilua
+ @if errorlevel 8 goto :NO32
+ @set DASC=vm_x86.dasc
+-@set DASMFLAGS=-D WIN -D JIT -D FFI -D ENDIAN_LE -D FPU
++@set DASMFLAGS=-D WIN -D JIT %DASMFFI% -D ENDIAN_LE -D FPU
+ @set LJARCH=x86
+ @set LJCOMPILE=%LJCOMPILE% /arch:SSE2
+ @goto :DA

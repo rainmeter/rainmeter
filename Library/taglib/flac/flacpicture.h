@@ -33,9 +33,7 @@
 #include "flacmetadatablock.h"
 
 namespace TagLib {
-
   namespace FLAC {
-
     class TAGLIB_EXPORT Picture : public MetadataBlock
     {
     public:
@@ -200,9 +198,6 @@ namespace TagLib {
     };
 
     typedef List<Picture> PictureList;
-
-  }
-
-}
-
+  }  // namespace FLAC
+}  // namespace TagLib
 #endif

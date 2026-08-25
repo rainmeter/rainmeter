@@ -55,7 +55,7 @@ StringList StringList::split(const String &s, const String &pattern)
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-StringList::StringList() : List<String>()
+StringList::StringList()
 {
 
 }
@@ -65,12 +65,12 @@ StringList::StringList(const StringList &l) : List<String>(l)
 
 }
 
-StringList::StringList(const String &s) : List<String>()
+StringList::StringList(const String &s)
 {
   append(s);
 }
 
-StringList::StringList(const ByteVectorList &bl, String::Type t) : List<String>()
+StringList::StringList(const ByteVectorList &bl, String::Type t)
 {
   ByteVectorList::ConstIterator i = bl.begin();
   for(;i != bl.end(); i++) {

@@ -1,14 +1,9 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureNowPlaying.h"
 #include "Rainmeter.h"
-#include "NowPlaying/Internet.h"
+#include "../Common/StringUtil.h"
 #include "NowPlaying/PlayerAIMP.h"
 #include "NowPlaying/PlayerCAD.h"
 #include "NowPlaying/PlayerITunes.h"
@@ -36,19 +31,105 @@ struct ParentMeasure
 	bool disableLeadingZero;
 };
 
-static std::vector<ParentMeasure*> g_ParentMeasures;
-bool g_Initialized = false;
 HINSTANCE g_Instance = nullptr;
+
+namespace {
+
+void DoPlayBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Play();
+}
+
+void DoPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Pause();
+}
+
+void DoPlayPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->PlayPause();
+}
+
+void DoStopBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Stop();
+}
+
+void DoNextBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Next();
+}
+
+void DoPreviousBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->Previous();
+}
+
+void DoOpenPlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->OpenPlayer();
+}
+
+void DoClosePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->ClosePlayer();
+}
+
+void DoTogglePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->TogglePlayer();
+}
+
+void DoSetPositionBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetPosition(args[0].c_str());
+}
+
+void DoSetRatingBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetRating(args[0].c_str());
+}
+
+void DoSetVolumeBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetVolume(args[0].c_str());
+}
+
+void DoSetShuffleBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetShuffle(args[0].c_str());
+}
+
+void DoSetRepeatBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureNowPlaying*)measure)->SetRepeat(args[0].c_str());
+}
+
+}  // namespace
 
 MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MEASURE_NONE),
 	m_Parent()
 {
-	if (!g_Initialized)
+	static const bool s_BangsRegistered = []()
 	{
-		Internet::Initialize();
-		g_Initialized = true;
-	}
+		const UINT typeId = TypeID<MeasureNowPlaying>();
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Play", 0, DoPlayBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Pause", 0, DoPauseBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlay", 0, DoPlayPauseBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Stop", 0, DoStopBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Next", 0, DoNextBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Previous", 0, DoPreviousBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:OpenPlayer", 0, DoOpenPlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:ClosePlayer", 0, DoClosePlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlayer", 0, DoTogglePlayerBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetPosition", 1, DoSetPositionBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRating", 1, DoSetRatingBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetVolume", 1, DoSetVolumeBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetShuffle", 1, DoSetShuffleBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRepeat", 1, DoSetRepeatBang);
+		return true;
+	} ();
 }
 
 MeasureNowPlaying::~MeasureNowPlaying()
@@ -60,22 +141,13 @@ MeasureNowPlaying::~MeasureNowPlaying()
 		{
 			player->RemoveInstance();
 
-			auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), m_Parent);
-			g_ParentMeasures.erase(iter);
-
 			delete m_Parent;
 			m_Parent = nullptr;
-
-			if (g_ParentMeasures.empty())
-			{
-				Internet::Finalize();
-				g_Initialized = false;
-			}
 		}
 	}
 }
 
-void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -84,8 +156,8 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// referenced in PlayerName=[section].
 
 	// Read settings from the ini-file
-	LPCWSTR str = parser.ReadString(section, L"PlayerName", L"", false).c_str();
-	if (str[0] == L'[')
+	const std::wstring_view playerName = parser.ReadString(section, L"PlayerName", L"", { .sectionVariables = false });
+	if (playerName.starts_with(L'['))
 	{
 		if (m_Parent)
 		{
@@ -93,31 +165,25 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		else
 		{
-			// PlayerName starts with [ so use referenced section
-			++str;
-			size_t len = wcslen(str);
-			if (len > 0 && str[len - 1] == L']')
+			// PlayerName starts with [ so use the ParentMeasure of the referenced section
+			if (m_Skin && playerName.length() >= 3 && playerName.back() == L']')
 			{
-				--len;
-
-				std::vector<ParentMeasure*>::iterator iter = g_ParentMeasures.begin();
-				for ( ; iter != g_ParentMeasures.end(); ++iter)
+				const std::wstring_view name = playerName.substr(1, playerName.length() - 2);
+				Measure* measure = m_Skin->GetMeasure(name);
+				if (measure && measure->GetTypeID() == TypeID<MeasureNowPlaying>())
 				{
-					if (GetSkin() == (*iter)->owner->GetSkin() &&
-						_wcsnicmp(str, (*iter)->owner->GetName(), len) == 0)
+					auto* referenced = (MeasureNowPlaying*)measure;
+					if (referenced->m_Parent && referenced->m_Parent->owner == referenced)
 					{
-						// Use same ParentMeasure as referenced section
-						m_Parent = (*iter);
+						m_Parent = referenced->m_Parent;
 						++m_Parent->measureCount;
-
-						break;
 					}
 				}
 
 				if (!m_Parent)
 				{
-					// The referenced section doesn't exist
-					LogWarningF(this, L"Invalid PlayerName=%s", str - 1);
+					// The referenced section doesn't exist, or is not a player measure
+					LogWarningF(this, L"Invalid PlayerName=%.*s", (int)playerName.length(), playerName.data());
 					return;
 				}
 			}
@@ -140,19 +206,18 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		else
 		{
 			m_Parent = new ParentMeasure;
-			g_ParentMeasures.push_back(m_Parent);
 			m_Parent->owner = this;
 		}
 
-		if (_wcsicmp(L"AIMP", str) == 0)
+		if (StringUtil::EqualsIgnoreCase(playerName, L"AIMP"))
 		{
 			m_Parent->player = PlayerAIMP::Create();
 		}
-		else if (_wcsicmp(L"CAD", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"CAD"))
 		{
 			m_Parent->player = PlayerCAD::Create();
 		}
-		else if (_wcsicmp(L"foobar2000", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"foobar2000"))
 		{
 			HWND fooWindow = FindWindow(L"foo_rainmeter_class", nullptr);
 			if (fooWindow)
@@ -166,23 +231,23 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 			m_Parent->player = PlayerCAD::Create();
 		}
-		else if (_wcsicmp(L"iTunes", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"iTunes"))
 		{
 			m_Parent->player = PlayerITunes::Create();
 		}
-		else if (_wcsicmp(L"MediaMonkey", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"MediaMonkey"))
 		{
 			m_Parent->player = PlayerWinamp::Create(WA_MEDIAMONKEY);
 		}
-		else if (_wcsicmp(L"Spotify", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"Spotify"))
 		{
 			m_Parent->player = PlayerSpotify::Create();
 		}
-		else if (_wcsicmp(L"WinAmp", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"WinAmp"))
 		{
 			m_Parent->player = PlayerWinamp::Create(WA_WINAMP);
 		}
-		else if (_wcsicmp(L"WMP", str) == 0)
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"WMP"))
 		{
 			m_Parent->player = PlayerWMP::Create();
 		}
@@ -191,15 +256,15 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			// Default to WLM
 			m_Parent->player = PlayerWLM::Create();
 
-			if (_wcsicmp(L"WLM", str) != 0)
+			if (!StringUtil::EqualsIgnoreCase(playerName, L"WLM"))
 			{
-				LogErrorF(this, L"Invalid PlayerName=%s", str);
+				LogErrorF(this, L"Invalid PlayerName=%.*s", (int)playerName.length(), playerName.data());
 			}
 		}
 
 		m_Parent->player->AddInstance();
-		m_Parent->playerPath = parser.ReadString(section, L"PlayerPath", L"");
-		m_Parent->trackChangeAction = parser.ReadString(section, L"TrackChangeAction", L"", false);
+		parser.ReadString(m_Parent->playerPath, section, L"PlayerPath", L"");
+		parser.ReadString(m_Parent->trackChangeAction, section, L"TrackChangeAction", L"", { .sectionVariables = false });
 		m_Parent->disableLeadingZero = parser.ReadBool(section, L"DisableLeadingZero", false);
 
 		if (oldPlayer)
@@ -212,86 +277,36 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	str = parser.ReadString(section, L"PlayerType", L"").c_str();
-	if (_wcsicmp(L"ARTIST", str) == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_PlayerTypes[] =
 	{
-		m_Type = MEASURE_ARTIST;
-	}
-	else if (_wcsicmp(L"TITLE", str) == 0)
+		{ L"ARTIST", MEASURE_ARTIST },
+		{ L"TITLE", MEASURE_TITLE },
+		{ L"ALBUM", MEASURE_ALBUM },
+		{ L"COVER", MEASURE_COVER },
+		{ L"DURATION", MEASURE_DURATION },
+		{ L"POSITION", MEASURE_POSITION },
+		{ L"PROGRESS", MEASURE_PROGRESS },
+		{ L"RATING", MEASURE_RATING },
+		{ L"STATE", MEASURE_STATE },
+		{ L"STATUS", MEASURE_STATUS },
+		{ L"VOLUME", MEASURE_VOLUME },
+		{ L"SHUFFLE", MEASURE_SHUFFLE },
+		{ L"REPEAT", MEASURE_REPEAT },
+		{ L"LYRICS", MEASURE_LYRICS },
+		{ L"FILE", MEASURE_FILE },
+		{ L"NUMBER", MEASURE_NUMBER },
+		{ L"YEAR", MEASURE_YEAR },
+		{ L"GENRE", MEASURE_GENRE },
+	};
+	m_Type = parser.ReadEnum(section, L"PlayerType", MEASURE_NONE, s_PlayerTypes);
+
+	if (m_Type == MEASURE_PROGRESS || m_Type == MEASURE_VOLUME)
 	{
-		m_Type = MEASURE_TITLE;
-	}
-	else if (_wcsicmp(L"ALBUM", str) == 0)
-	{
-		m_Type = MEASURE_ALBUM;
-	}
-	else if (_wcsicmp(L"COVER", str) == 0)
-	{
-		m_Type = MEASURE_COVER;
-	}
-	else if (_wcsicmp(L"DURATION", str) == 0)
-	{
-		m_Type = MEASURE_DURATION;
-	}
-	else if (_wcsicmp(L"POSITION", str) == 0)
-	{
-		m_Type = MEASURE_POSITION;
-	}
-	else if (_wcsicmp(L"PROGRESS", str) == 0)
-	{
-		m_Type = MEASURE_PROGRESS;
 		m_MaxValue = 100.0;
 	}
-	else if (_wcsicmp(L"RATING", str) == 0)
+	else if (m_Type == MEASURE_RATING)
 	{
-		m_Type = MEASURE_RATING;
 		m_MaxValue = 5.0;
-	}
-	else if (_wcsicmp(L"STATE", str) == 0)
-	{
-		m_Type = MEASURE_STATE;
-	}
-	else if (_wcsicmp(L"STATUS", str) == 0)
-	{
-		m_Type = MEASURE_STATUS;
-	}
-	else if (_wcsicmp(L"VOLUME", str) == 0)
-	{
-		m_Type = MEASURE_VOLUME;
-		m_MaxValue = 100.0;
-	}
-	else if (_wcsicmp(L"SHUFFLE", str) == 0)
-	{
-		m_Type = MEASURE_SHUFFLE;
-	}
-	else if (_wcsicmp(L"REPEAT", str) == 0)
-	{
-		m_Type = MEASURE_REPEAT;
-	}
-	else if (_wcsicmp(L"LYRICS", str) == 0)
-	{
-		//LogWarningF(this, L"Using undocumented PlayerType=LYRICS!");
-		m_Type = MEASURE_LYRICS;
-	}
-	else if (_wcsicmp(L"FILE", str) == 0)
-	{
-		m_Type = MEASURE_FILE;
-	}
-	else if (_wcsicmp(L"NUMBER", str) == 0)
-	{
-		m_Type = MEASURE_NUMBER;
-	}
-	else if (_wcsicmp(L"YEAR", str) == 0)
-	{
-		m_Type = MEASURE_YEAR;
-	}
-	else if (_wcsicmp(L"GENRE", str) == 0)
-	{
-		m_Type = MEASURE_GENRE;
-	}
-	else
-	{
-		LogErrorF(this, L"Invalid PlayerType=%s", str);
 	}
 
 	m_Parent->player->AddMeasure(m_Type);
@@ -413,52 +428,186 @@ const WCHAR* MeasureNowPlaying::GetStringValue()
 	return str ? CheckSubstitute(str) : nullptr;
 }
 
+Player* MeasureNowPlaying::GetInitializedPlayer() const
+{
+	if (!m_Parent) return nullptr;
+
+	Player* player = m_Parent->player;
+	return player->IsInitialized() ? player : nullptr;
+}
+
+void MeasureNowPlaying::Play()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Play();
+}
+
+void MeasureNowPlaying::Pause()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Pause();
+}
+
+void MeasureNowPlaying::PlayPause()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) (player->GetState() != STATE_PLAYING) ? player->Play() : player->Pause();
+}
+
+void MeasureNowPlaying::Stop()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Stop();
+}
+
+void MeasureNowPlaying::Next()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Next();
+}
+
+void MeasureNowPlaying::Previous()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->Previous();
+}
+
+void MeasureNowPlaying::OpenPlayer()
+{
+	if (m_Parent) m_Parent->player->OpenPlayer(m_Parent->playerPath);
+}
+
+void MeasureNowPlaying::ClosePlayer()
+{
+	Player* player = GetInitializedPlayer();
+	if (player) player->ClosePlayer();
+}
+
+void MeasureNowPlaying::TogglePlayer()
+{
+	GetInitializedPlayer() ? ClosePlayer() : OpenPlayer();
+}
+
+void MeasureNowPlaying::SetPosition(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
+	if (arg[0] == L'+' || arg[0] == L'-')
+	{
+		position += player->GetPosition();
+	}
+
+	player->SetPosition(position);
+}
+
+void MeasureNowPlaying::SetRating(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int rating = _wtoi(arg);
+	if (rating >= 0 && rating <= 5)
+	{
+		player->SetRating(rating);
+	}
+}
+
+void MeasureNowPlaying::SetVolume(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int volume = _wtoi(arg);
+	if (arg[0] == L'+' || arg[0] == L'-')
+	{
+		// Relative to current volume
+		volume += player->GetVolume();
+	}
+
+	if (volume < 0)
+	{
+		volume = 0;
+	}
+	else if (volume > 100)
+	{
+		volume = 100;
+	}
+	player->SetVolume(volume);
+}
+
+void MeasureNowPlaying::SetShuffle(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int state = _wtoi(arg);
+	if (state == -1)
+	{
+		player->SetShuffle(!player->GetShuffle());
+	}
+	else if (state == 0 || state == 1)
+	{
+		player->SetShuffle(state != 0);
+	}
+}
+
+void MeasureNowPlaying::SetRepeat(const WCHAR* arg)
+{
+	Player* player = GetInitializedPlayer();
+	if (!player) return;
+
+	int state = _wtoi(arg);
+	if (state == -1)
+	{
+		player->SetRepeat(!player->GetRepeat());
+	}
+	else if (state == 0 || state == 1)
+	{
+		player->SetRepeat(state != 0);
+	}
+}
+
 void MeasureNowPlaying::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 
-	if (!m_Parent) return;
-
-	Player* player = m_Parent->player;
-
-	if (!player->IsInitialized())
+	if (_wcsicmp(args, L"Pause") == 0)
 	{
-		if (_wcsicmp(args, L"OpenPlayer") == 0 || _wcsicmp(args, L"TogglePlayer") == 0)
-		{
-			player->OpenPlayer(m_Parent->playerPath);
-		}
-	}
-	else if (_wcsicmp(args, L"Pause") == 0)
-	{
-		player->Pause();
+		Pause();
 	}
 	else if (_wcsicmp(args, L"Play") == 0)
 	{
-		player->Play();
+		Play();
 	}
 	else if (_wcsicmp(args, L"PlayPause") == 0)
 	{
-		(player->GetState() != STATE_PLAYING) ? player->Play() : player->Pause();
+		PlayPause();
 	}
 	else if (_wcsicmp(args, L"Next") == 0)
 	{
-		player->Next();
+		Next();
 	}
 	else if (_wcsicmp(args, L"Previous") == 0)
 	{
-		player->Previous();
+		Previous();
 	}
 	else if (_wcsicmp(args, L"Stop") == 0)
 	{
-		player->Stop();
+		Stop();
 	}
 	else if (_wcsicmp(args, L"OpenPlayer") == 0)
 	{
-		player->OpenPlayer(m_Parent->playerPath);
+		OpenPlayer();
 	}
-	else if (_wcsicmp(args, L"ClosePlayer") == 0 || _wcsicmp(args, L"TogglePlayer") == 0)
+	else if (_wcsicmp(args, L"ClosePlayer") == 0)
 	{
-		player->ClosePlayer();
+		ClosePlayer();
+	}
+	else if (_wcsicmp(args, L"TogglePlayer") == 0)
+	{
+		TogglePlayer();
 	}
 	else
 	{
@@ -470,64 +619,23 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 
 			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
-				int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
-				if (arg[0] == L'+' || arg[0] == L'-')
-				{
-					position += player->GetPosition();
-				}
-
-				player->SetPosition(position);
+				SetPosition(arg);
 			}
 			else if (_wcsnicmp(args, L"SetRating", 9) == 0)
 			{
-				int rating = _wtoi(arg);
-				if (rating >= 0 && rating <= 5)
-				{
-					player->SetRating(rating);
-				}
+				SetRating(arg);
 			}
 			else if (_wcsnicmp(args, L"SetVolume", 9) == 0)
 			{
-				int volume = _wtoi(arg);
-				if (arg[0] == L'+' || arg[0] == L'-')
-				{
-					// Relative to current volume
-					volume += player->GetVolume();
-				}
-					
-				if (volume < 0)
-				{
-					volume = 0;
-				}
-				else if (volume > 100)
-				{
-					volume = 100;
-				}
-				player->SetVolume(volume);;
+				SetVolume(arg);
 			}
 			else if (_wcsnicmp(args, L"SetShuffle", 9) == 0)
 			{
-				int state = _wtoi(arg);
-				if (state == -1)
-				{
-					player->SetShuffle(!player->GetShuffle());
-				}
-				else if (state == 0 || state == 1)
-				{
-					player->SetShuffle(state != 0);
-				}
+				SetShuffle(arg);
 			}
 			else if (_wcsnicmp(args, L"SetRepeat", 9) == 0)
 			{
-				int state = _wtoi(arg);
-				if (state == -1)
-				{
-					player->SetRepeat(!player->GetRepeat());
-				}
-				else if (state == 0 || state == 1)
-				{
-					player->SetRepeat(state != 0);
-				}
+				SetRepeat(arg);
 			}
 			else
 			{

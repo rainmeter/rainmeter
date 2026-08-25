@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
@@ -17,25 +17,28 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\;lua/include;lua/lua;.\NowPlaying\SDKs;./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;./taglib/mp4;zlib;zlib\minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TAGLIB_STATIC;ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)ThirdParty;$(SolutionDir)ThirdParty\luajit\src;.\NowPlaying\SDKs;./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;./taglib/mp4;$(SolutionDir)ThirdParty\zlib;$(SolutionDir)ThirdParty\zlib\minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TAGLIB_STATIC;ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;_USRDLL;LIBRARY_EXPORTS;FMT_UNICODE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;Wintrust.lib;comctl32.lib;dwmapi.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;ws2_32.lib;PowrProf.lib;netapi32.lib;Ntdll.lib;shlwapi.lib;d3d11.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;dxguid.lib;Rpcrt4.lib;wlanapi.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Iphlpapi.dll;Winmm.dll;Version.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;wlanapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;Pdh.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;Pdh.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AsyncTask.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="CoreTemp\CoreTempProxy.cpp" />
+    <ClCompile Include="CoreTemp\SharedMem.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogDebug.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
@@ -45,48 +48,81 @@
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="Language.cpp" />
+    <ClCompile Include="LocaleUtil.cpp" />
+    <ClCompile Include="Language_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="lua\LuaHelper.cpp" />
+    <ClCompile Include="LuaBindingGlobal.cpp" />
+    <ClCompile Include="LuaBindingMeasure.cpp" />
+    <ClCompile Include="LuaBindingMeter.cpp" />
+    <ClCompile Include="LuaBindingSkin.cpp" />
+    <ClCompile Include="LuaBindingSection.cpp" />
+    <ClCompile Include="LuaHelper.cpp" />
+    <ClCompile Include="LuaScript.cpp" />
     <ClCompile Include="Measure.cpp" />
+    <ClCompile Include="MeasureActionTimer.cpp" />
+    <ClCompile Include="MeasureAdvancedCPU.cpp" />
+    <ClCompile Include="MeasureAudioLevel.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
+    <ClCompile Include="MeasureCoreTemp.cpp" />
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureDragDrop.cpp" />
+    <ClCompile Include="MeasureFileView.cpp" />
+    <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
+    <ClCompile Include="MeasureMouse.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
     <ClCompile Include="MeasureNowPlaying.cpp" />
+    <ClCompile Include="MeasurePerfMon.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePing.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
+    <ClCompile Include="MeasurePower.cpp" />
     <ClCompile Include="MeasureProcess.cpp" />
+    <ClCompile Include="MeasureQuote.cpp" />
     <ClCompile Include="MeasureRecycleManager.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
+    <ClCompile Include="MeasureResMon.cpp" />
+    <ClCompile Include="MeasureRunCommand.cpp" />
     <ClCompile Include="MeasureScript.cpp" />
+    <ClCompile Include="MeasureSpeedFan.cpp" />
     <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureSysInfo.cpp" />
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
+    <ClCompile Include="MeasureUsageMonitor.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
     <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="MeasureWifiStatus.cpp" />
+    <ClCompile Include="MeasureAudio.cpp" />
+    <ClCompile Include="MeasureWindowMessage.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
     <ClCompile Include="MeterButton.cpp" />
     <ClCompile Include="MeterHistogram.cpp" />
     <ClCompile Include="MeterImage.cpp" />
+    <ClCompile Include="MeterSvg.cpp" />
     <ClCompile Include="MeterLine.cpp" />
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
     <ClCompile Include="MeterShape.cpp" />
+    <ClCompile Include="MeterStringBase.cpp" />
     <ClCompile Include="MeterString.cpp" />
+    <ClCompile Include="MeterTextEdit.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="MonitorUtil.cpp" />
+    <ClCompile Include="Net.cpp" />
     <ClCompile Include="NowPlaying\Cover.cpp" />
-    <ClCompile Include="NowPlaying\Internet.cpp" />
-    <ClCompile Include="NowPlaying\Lyrics.cpp" />
     <ClCompile Include="NowPlaying\Player.cpp" />
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp" />
     <ClCompile Include="NowPlaying\PlayerCAD.cpp" />
@@ -100,6 +136,12 @@
     </ClCompile>
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinDropTarget.cpp" />
+    <ClCompile Include="SkinPosition.cpp" />
+    <ClCompile Include="SkinSelectionOverlay.cpp" />
+    <ClCompile Include="SkinPosition_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
@@ -114,21 +156,31 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
-    <ClCompile Include="lua\LuaScript.cpp" />
-    <ClCompile Include="lua\glue\LuaMeasure.cpp" />
-    <ClCompile Include="lua\glue\LuaMeter.cpp" />
-    <ClCompile Include="lua\glue\LuaMeterWindow.cpp" />
-    <ClCompile Include="lua\glue\LuaGlobal.cpp" />
+    <ClCompile Include="WindowOcclusionTracker.cpp" />
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AspectRatioMode.h" />
+    <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
-    <ClInclude Include="Dialog.h" />
+    <ClInclude Include="CoreTemp\CoreTempProxy.h" />
+    <ClInclude Include="CoreTemp\SharedMem.h" />
     <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogDebug.h" />
     <ClInclude Include="DialogInstall.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="DialogPackage.h" />
@@ -139,48 +191,74 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="ImageCache.h" />
     <ClInclude Include="ImageOptions.h" />
+    <ClInclude Include="Language.h" />
+    <ClInclude Include="LocaleUtil.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="lua\LuaHelper.h" />
+    <ClInclude Include="LuaBindingSection.h" />
+    <ClInclude Include="LuaHelper.h" />
+    <ClInclude Include="LuaScript.h" />
     <ClInclude Include="Measure.h" />
+    <ClInclude Include="MeasureActionTimer.h" />
+    <ClInclude Include="MeasureAdvancedCPU.h" />
+    <ClInclude Include="MeasureAudioLevel.h" />
     <ClInclude Include="MeasureCalc.h" />
+    <ClInclude Include="MeasureCoreTemp.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureDragDrop.h" />
+    <ClInclude Include="MeasureFileView.h" />
+    <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
+    <ClInclude Include="MeasureMouse.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
     <ClInclude Include="MeasureNowPlaying.h" />
+    <ClInclude Include="MeasurePerfMon.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePing.h" />
     <ClInclude Include="MeasurePlugin.h" />
+    <ClInclude Include="MeasurePower.h" />
     <ClInclude Include="MeasureProcess.h" />
+    <ClInclude Include="MeasureQuote.h" />
     <ClInclude Include="MeasureRecycleManager.h" />
     <ClInclude Include="MeasureRegistry.h" />
+    <ClInclude Include="MeasureResMon.h" />
+    <ClInclude Include="MeasureRunCommand.h" />
     <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureSpeedFan.h" />
     <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureSysInfo.h" />
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
+    <ClInclude Include="MeasureUsageMonitor.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
     <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="MeasureWifiStatus.h" />
+    <ClInclude Include="MeasureAudio.h" />
+    <ClInclude Include="MeasureWindowMessage.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
     <ClInclude Include="MeterButton.h" />
     <ClInclude Include="MeterHistogram.h" />
     <ClInclude Include="MeterImage.h" />
+    <ClInclude Include="MeterSvg.h" />
     <ClInclude Include="MeterLine.h" />
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterShape.h" />
+    <ClInclude Include="MeterStringBase.h" />
     <ClInclude Include="MeterString.h" />
+    <ClInclude Include="MeterTextEdit.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="MonitorUtil.h" />
+    <ClInclude Include="Net.h" />
     <ClInclude Include="NowPlaying\Cover.h" />
-    <ClInclude Include="NowPlaying\Internet.h" />
-    <ClInclude Include="NowPlaying\Lyrics.h" />
     <ClInclude Include="NowPlaying\Player.h" />
     <ClInclude Include="NowPlaying\PlayerAIMP.h" />
     <ClInclude Include="NowPlaying\PlayerCAD.h" />
@@ -189,8 +267,12 @@
     <ClInclude Include="NowPlaying\PlayerWinamp.h" />
     <ClInclude Include="NowPlaying\PlayerWLM.h" />
     <ClInclude Include="NowPlaying\PlayerWMP.h" />
+    <ClInclude Include="Pcre.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinDropTarget.h" />
+    <ClInclude Include="SkinPosition.h" />
+    <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
@@ -202,7 +284,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="lua\LuaScript.h" />
+    <ClInclude Include="WindowOcclusionTracker.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
@@ -211,24 +293,30 @@
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{19312085-aa51-4bd6-be92-4b6098cca539}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\ThirdParty_Fmt.vcxproj">
+      <Project>{924A5B6A-6358-4FA8-A899-F7C4850606D5}</Project>
+    </ProjectReference>
     <ProjectReference Include="Library_Taglib.vcxproj">
       <Project>{0f414430-65c7-4a35-b878-7e6350d6d976}</Project>
     </ProjectReference>
-    <ProjectReference Include="Library_Zlib.vcxproj">
+    <ProjectReference Include="..\ThirdParty\ThirdParty_Zlib.vcxproj">
       <Project>{5d164f45-ceed-47a3-8a5d-b752d09b09db}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Library_Lua.vcxproj">
+    <ProjectReference Include="..\ThirdParty\ThirdParty_LuaJIT.vcxproj">
       <Project>{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Library_PCRE.vcxproj">
+    <ProjectReference Include="..\ThirdParty\ThirdParty_PCRE.vcxproj">
       <Project>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="GenerateEnglishLanguage" AfterTargets="Build" Inputs="$(SolutionDir)Language\en.ini;$(SolutionDir)Library\resource.h;$(SolutionDir)Build\GenerateLanguages.ps1" Outputs="$(OutDir)Languages\1033.rmlang">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)Build\GenerateLanguages.ps1&quot; -Locale en -OutputDirectory &quot;$(OutDir)Languages&quot; -RuntimeOnly" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

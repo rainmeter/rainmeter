@@ -1,0 +1,33 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#pragma once
+
+#include <Windows.h>
+#include <string>
+
+class DirectoryWatcher
+{
+public:
+	typedef void (*ChangeCallback)(const WCHAR* path, DWORD action, DWORD attributes, void* context);
+
+	DirectoryWatcher();
+	~DirectoryWatcher();
+	DirectoryWatcher(const DirectoryWatcher&) = delete;
+	DirectoryWatcher& operator=(const DirectoryWatcher&) = delete;
+
+	bool Start(const std::wstring& directory, bool recursive, ChangeCallback callback, void* context, DWORD notifyFilter = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
+	void Stop();
+	const std::wstring& GetPath() const { return m_Path; }
+
+private:
+	void Run();
+
+	HANDLE m_Directory;
+	HANDLE m_Thread;
+	HANDLE m_StopEvent;
+	std::wstring m_Path;
+	bool m_Recursive;
+	DWORD m_NotifyFilter;
+	ChangeCallback m_Callback;
+	void* m_Context;
+};

@@ -34,24 +34,18 @@ using namespace TagLib;
 class FLAC::Properties::PropertiesPrivate
 {
 public:
-  PropertiesPrivate(ByteVector d, long st, ReadStyle s) :
-    data(d),
-    streamLength(st),
-    style(s),
+  PropertiesPrivate() :
     length(0),
     bitrate(0),
     sampleRate(0),
-    sampleWidth(0),
+    bitsPerSample(0),
     channels(0),
     sampleFrames(0) {}
 
-  ByteVector data;
-  long streamLength;
-  ReadStyle style;
   int length;
   int bitrate;
   int sampleRate;
-  int sampleWidth;
+  int bitsPerSample;
   int channels;
   unsigned long long sampleFrames;
   ByteVector signature;
@@ -61,16 +55,18 @@ public:
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-FLAC::Properties::Properties(ByteVector data, long streamLength, ReadStyle style) : AudioProperties(style)
+FLAC::Properties::Properties(ByteVector data, long streamLength, ReadStyle style) :
+  AudioProperties(style),
+  d(new PropertiesPrivate())
 {
-  d = new PropertiesPrivate(data, streamLength, style);
-  read();
+  read(data, streamLength);
 }
 
-FLAC::Properties::Properties(File *file, ReadStyle style) : AudioProperties(style)
+FLAC::Properties::Properties(File *, ReadStyle style) :
+  AudioProperties(style),
+  d(new PropertiesPrivate())
 {
-  d = new PropertiesPrivate(file->streamInfoData(), file->streamLength(), style);
-  read();
+  debug("FLAC::Properties::Properties() - This constructor is no longer used.");
 }
 
 FLAC::Properties::~Properties()
@@ -79,6 +75,16 @@ FLAC::Properties::~Properties()
 }
 
 int FLAC::Properties::length() const
+{
+  return lengthInSeconds();
+}
+
+int FLAC::Properties::lengthInSeconds() const
+{
+  return d->length / 1000;
+}
+
+int FLAC::Properties::lengthInMilliseconds() const
 {
   return d->length;
 }
@@ -93,9 +99,14 @@ int FLAC::Properties::sampleRate() const
   return d->sampleRate;
 }
 
+int FLAC::Properties::bitsPerSample() const
+{
+  return d->bitsPerSample;
+}
+
 int FLAC::Properties::sampleWidth() const
 {
-  return d->sampleWidth;
+  return bitsPerSample();
 }
 
 int FLAC::Properties::channels() const
@@ -117,14 +128,14 @@ ByteVector FLAC::Properties::signature() const
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void FLAC::Properties::read()
+void FLAC::Properties::read(const ByteVector &data, long streamLength)
 {
-  if(d->data.size() < 18) {
+  if(data.size() < 18) {
     debug("FLAC::Properties::read() - FLAC properties must contain at least 18 bytes.");
     return;
   }
 
-  uint pos = 0;
+  unsigned int pos = 0;
 
   // Minimum block size (in samples)
   pos += 2;
@@ -138,32 +149,28 @@ void FLAC::Properties::read()
   // Maximum frame size (in bytes)
   pos += 3;
 
-  uint flags = d->data.toUInt(pos, true);
+  const unsigned int flags = data.toUInt(pos, true);
   pos += 4;
 
-  d->sampleRate = flags >> 12;
-  d->channels = ((flags >> 9) & 7) + 1;
-  d->sampleWidth = ((flags >> 4) & 31) + 1;
+  d->sampleRate    = flags >> 12;
+  d->channels      = ((flags >> 9) &  7) + 1;
+  d->bitsPerSample = ((flags >> 4) & 31) + 1;
 
   // The last 4 bits are the most significant 4 bits for the 36 bit
   // stream length in samples. (Audio files measured in days)
 
-  unsigned long long hi = flags & 0xf;
-  unsigned long long lo = d->data.toUInt(pos, true);
+  const unsigned long long hi = flags & 0xf;
+  const unsigned long long lo = data.toUInt(pos, true);
   pos += 4;
 
   d->sampleFrames = (hi << 32) | lo;
 
-  if(d->sampleRate > 0)
-    d->length = int(d->sampleFrames / d->sampleRate);
+  if(d->sampleFrames > 0 && d->sampleRate > 0) {
+    const double length = d->sampleFrames * 1000.0 / d->sampleRate;
+    d->length  = static_cast<int>(length + 0.5);
+    d->bitrate = static_cast<int>(streamLength * 8.0 / length + 0.5);
+  }
 
-  // Uncompressed bitrate:
-
-  //d->bitrate = ((d->sampleRate * d->channels) / 1000) * d->sampleWidth;
-
-  // Real bitrate:
-
-  d->bitrate = d->length > 0 ? ((d->streamLength * 8UL) / d->length) / 1000 : 0;
-
-  d->signature = d->data.mid(pos, 32);
+  if(data.size() >= pos + 16)
+    d->signature = data.mid(pos, 16);
 }

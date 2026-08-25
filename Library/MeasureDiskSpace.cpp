@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureDiskSpace.h"
@@ -38,10 +33,6 @@ MeasureDiskSpace::~MeasureDiskSpace()
 {
 }
 
-/*
-** Updates the current disk free space value.
-**
-*/
 void MeasureDiskSpace::UpdateValue()
 {
 	if (!m_Drive.empty())
@@ -142,26 +133,18 @@ void MeasureDiskSpace::UpdateValue()
 	}
 }
 
-/*
-** Returns the time as string.
-**
-*/
 const WCHAR* MeasureDiskSpace::GetStringValue()
 {
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureDiskSpace::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	double oldMaxValue = m_MaxValue;
 
 	Measure::ReadOptions(parser, section);
 
-	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
+	parser.ReadString(m_Drive, section, L"Drive", L"C:\\");
 	if (m_Drive.empty())
 	{
 		LogWarningF(this, L"FreeDiskSpace: Drive= empty");
@@ -181,7 +164,7 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Label = parser.ReadBool(section, L"Label", false);
 	m_IgnoreRemovable = parser.ReadBool(section, L"IgnoreRemovable", true);
 	m_DiskQuota = parser.ReadBool(section, L"DiskQuota", true);
-	
+
 	// Set the m_MaxValue
 	if (!m_Initialized)
 	{

@@ -1,9 +1,4 @@
-/* Copyright (C) 2005 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterButton.h"
@@ -31,10 +26,6 @@ MeterButton::~MeterButton()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterButton::Initialize()
 {
 	Meter::Initialize();
@@ -42,11 +33,11 @@ void MeterButton::Initialize()
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
 	{
-		m_Image.LoadImage(m_ImageName);
+		m_Image.LoadImage(m_ImageName, true);
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			int bitmapW = bitmap->GetWidth();
 			int bitmapH = bitmap->GetHeight();
@@ -86,24 +77,26 @@ void MeterButton::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterButton::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
+void MeterButton::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
+	parser.ReadString(m_ImageName, section, L"ButtonImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 
-	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
+	parser.ReadString(m_Command, section, L"ButtonCommand", L"", { .sectionVariables = false });
 
 	if (m_Initialized)
 	{
@@ -111,19 +104,11 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterButton::Update()
 {
 	return Meter::Update();
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -146,19 +131,11 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overridden method. The meters need not to be bound on anything
-**
-*/
-void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterButton::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }
 
-/*
-** Checks if the given point is inside the button.
-**
-*/
 bool MeterButton::HitTest2(int px, int py)
 {
 	if (!Meter::HitTestContainer(px, py))
@@ -205,9 +182,7 @@ bool MeterButton::HitTest2(int px, int py)
 					py -= (int)drawH * m_State;
 				}
 
-				D2D1_COLOR_F color;
-				const bool valid = bitmap->GetPixel(m_Skin->GetCanvas(), px, py, color);
-				return !valid || (color.a != 0.0f);
+				return bitmap->IsPixelOpaque(px, py);
 			}
 		}
 		else

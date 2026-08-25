@@ -1,17 +1,11 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "Measure.h"
 #include "IfActions.h"
 #include "Rainmeter.h"
 #include "../Common/MathParser.h"
-#include "pcre/config.h"
-#include "pcre/pcre.h"
+#include "Pcre.h"
 
 IfActions::IfActions() :
 	m_AboveValue(0.0),
@@ -34,19 +28,19 @@ IfActions::~IfActions()
 {
 }
 
-void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
+	parser.ReadString(m_AboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 
-	m_BelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
+	parser.ReadString(m_BelowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
 	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 
-	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
+	parser.ReadString(m_EqualAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
-void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
+void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// IfCondition options
 	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);
@@ -54,8 +48,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	if (!condition.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -78,9 +72,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 				if (condition.empty()) break;
 
 				key = L"IfTrueAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfFalseAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			}
 			while (!tAction.empty() || !fAction.empty());
 		}
@@ -100,8 +94,8 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
 	if (!match.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", false);
-		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", false);
+		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -124,9 +118,9 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 				if (match.empty()) break;
 
 				key = L"IfMatchAction" + num;
-				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				tAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 				key = L"IfNotMatchAction" + num;
-				fAction = parser.ReadString(section, key.c_str(), L"", false);
+				fAction = parser.ReadString(section, key.c_str(), L"", { .sectionVariables = false });
 			} while (!tAction.empty() || !fAction.empty());
 		}
 		else
@@ -201,8 +195,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			double result = 0.0;
-			const WCHAR* errMsg = MathParser::Parse(
-				item.value.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
+			const WCHAR* errMsg = measure.GetSkin()->GetMathParser().Parse(item.value.c_str(), &result);
 			if (errMsg != nullptr)
 			{
 				if (!item.parseError)
@@ -245,7 +238,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			}
 		}
 	}
-	
+
 	// IfMatch
 	i = 0;
 	for (auto& item : m_Matches)
@@ -254,15 +247,8 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			const char* error;
-			int errorOffset;
 
-			pcre16* re = pcre16_compile(
-				(PCRE_SPTR16)item.value.c_str(),
-				PCRE_UTF16,
-				&error,
-				&errorOffset,
-				nullptr);
-
+			Pcre re(item.value.c_str(), &error);
 			if (!re)
 			{
 				if (!item.parseError)
@@ -283,19 +269,10 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			{
 				item.parseError = false;
 
-				const WCHAR* str = measure.GetStringValue();
-				int strLen = str ? (int)wcslen(str) : 0;
+				const WCHAR* value = measure.GetStringValue();
+				std::wstring_view str = value ? value : L"";
 				int ovector[300];
-				int rc = pcre16_exec(
-					re,
-					nullptr,
-					(PCRE_SPTR16)str,
-					(int)strLen,
-					0,
-					0,
-					ovector,
-					(int)_countof(ovector));
-
+				int rc = re.Execute(str, 0, ovector, (int)_countof(ovector));
 				if (rc > 0)		// Match
 				{
 					item.fCommitted = false;
@@ -317,9 +294,6 @@ void IfActions::DoIfActions(Measure& measure, double value)
 					}
 				}
 			}
-
-			// Release memory used for the compiled pattern
-			pcre16_free(re);
 		}
 	}
 }

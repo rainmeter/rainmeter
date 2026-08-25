@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __DIALOGNEWSKIN_H__
-#define __DIALOGNEWSKIN_H__
+#pragma once
 
 #include "../Common/Dialog.h"
 #include "Logger.h"
@@ -27,13 +21,14 @@ public:
 	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
 	static void ShowNewSkinDialog();
-	
+
 	static void CloseDialog() { if (c_Dialog) c_Dialog->HandleMessage(WM_CLOSE, 0, 0); }
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
@@ -56,6 +51,7 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+		virtual void HandleDpiChange() override;
 
 		std::wstring& GetParentFolder() { return m_ParentFolder; }
 		void SetParentFolder(const WCHAR* folder);
@@ -79,6 +75,7 @@ private:
 		};
 
 		void DestroyImageList();
+		void CreateImageList();
 		void UpdateParentPathLabel();
 		void UpdateParentPathTT(bool update);
 		void AddTreeItem(bool isFolder);
@@ -145,8 +142,6 @@ private:
 		UINT skins;  // Not inc files
 	};
 
-	Tab& GetActiveTab();
-
 	static const std::wstring& GetTemplateFolder();
 	static void LoadTemplates();
 	static void ValidateSelectedTemplate();
@@ -159,5 +154,3 @@ private:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogNewSkin* c_Dialog;
 };
-
-#endif

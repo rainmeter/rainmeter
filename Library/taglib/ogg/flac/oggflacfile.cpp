@@ -27,6 +27,7 @@
 #include <tstring.h>
 #include <tdebug.h>
 #include <tpropertymap.h>
+#include <tagutils.h>
 
 #include <xiphcomment.h>
 #include "oggflacfile.h"
@@ -66,21 +67,35 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// static members
+////////////////////////////////////////////////////////////////////////////////
+
+bool Ogg::FLAC::File::isSupported(IOStream *stream)
+{
+  // An Ogg FLAC file has IDs "OggS" and "fLaC" somewhere.
+
+  const ByteVector buffer = Utils::readHeader(stream, bufferSize(), false);
+  return (buffer.find("OggS") >= 0 && buffer.find("fLaC") >= 0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
 Ogg::FLAC::File::File(FileName file, bool readProperties,
-                      Properties::ReadStyle propertiesStyle) : Ogg::File(file)
+                      Properties::ReadStyle propertiesStyle) :
+  Ogg::File(file),
+  d(new FilePrivate())
 {
-  d = new FilePrivate;
   if(isOpen())
     read(readProperties, propertiesStyle);
 }
 
 Ogg::FLAC::File::File(IOStream *stream, bool readProperties,
-                      Properties::ReadStyle propertiesStyle) : Ogg::File(stream)
+                      Properties::ReadStyle propertiesStyle) :
+  Ogg::File(stream),
+  d(new FilePrivate())
 {
-  d = new FilePrivate;
   if(isOpen())
     read(readProperties, propertiesStyle);
 }
@@ -103,7 +118,7 @@ PropertyMap Ogg::FLAC::File::properties() const
 PropertyMap Ogg::FLAC::File::setProperties(const PropertyMap &properties)
 {
   return d->comment->setProperties(properties);
-}  
+}
 
 Properties *Ogg::FLAC::File::audioProperties() const
 {
@@ -172,7 +187,7 @@ void Ogg::FLAC::File::read(bool readProperties, Properties::ReadStyle properties
   if(d->hasXiphComment)
     d->comment = new Ogg::XiphComment(xiphCommentData());
   else
-    d->comment = new Ogg::XiphComment;
+    d->comment = new Ogg::XiphComment();
 
 
   if(readProperties)
@@ -211,29 +226,40 @@ void Ogg::FLAC::File::scan()
   long overhead = 0;
 
   ByteVector metadataHeader = packet(ipacket);
-  if(metadataHeader.isNull())
+  if(metadataHeader.isEmpty())
     return;
 
-  ByteVector header;
-
-  if (!metadataHeader.startsWith("fLaC"))  {
+  if(!metadataHeader.startsWith("fLaC"))  {
     // FLAC 1.1.2+
-    if (metadataHeader.mid(1,4) != "FLAC") return;
+    // See https://xiph.org/flac/ogg_mapping.html for the header specification.
+    if(metadataHeader.size() < 13)
+      return;
 
-    if (metadataHeader[5] != 1) return; // not version 1
+    if(metadataHeader[0] != 0x7f)
+      return;
+
+    if(metadataHeader.mid(1, 4) != "FLAC")
+      return;
+
+    if(metadataHeader[5] != 1 && metadataHeader[6] != 0)
+      return; // not version 1.0
+
+    if(metadataHeader.mid(9, 4) != "fLaC")
+      return;
 
     metadataHeader = metadataHeader.mid(13);
   }
   else {
     // FLAC 1.1.0 & 1.1.1
     metadataHeader = packet(++ipacket);
-
-    if(metadataHeader.isNull())
-      return;
-
   }
 
-  header = metadataHeader.mid(0,4);
+  ByteVector header = metadataHeader.mid(0, 4);
+  if(header.size() != 4) {
+    debug("Ogg::FLAC::File::scan() -- Invalid Ogg/FLAC metadata header");
+    return;
+  }
+
   // Header format (from spec):
   // <1> Last-metadata-block flag
   // <7> BLOCK_TYPE
@@ -246,7 +272,7 @@ void Ogg::FLAC::File::scan()
 
   char blockType = header[0] & 0x7f;
   bool lastBlock = (header[0] & 0x80) != 0;
-  uint length = header.toUInt(1, 3, true);
+  unsigned int length = header.toUInt(1, 3, true);
   overhead += length;
 
   // Sanity: First block should be the stream_info metadata
@@ -262,11 +288,12 @@ void Ogg::FLAC::File::scan()
 
   while(!lastBlock) {
     metadataHeader = packet(++ipacket);
-
-    if(metadataHeader.isNull())
-      return;
-
     header = metadataHeader.mid(0, 4);
+    if(header.size() != 4) {
+      debug("Ogg::FLAC::File::scan() -- Invalid Ogg/FLAC metadata header");
+      return;
+    }
+
     blockType = header[0] & 0x7f;
     lastBlock = (header[0] & 0x80) != 0;
     length = header.toUInt(1, 3, true);

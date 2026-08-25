@@ -1,198 +1,220 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "../Common/MathParser.h"
+#include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
+#include "../Common/ScopedFunction.h"
+#include "../Common/StringParser.h"
+#include "../Common/StringUtil.h"
 #include "ConfigParser.h"
 #include "Util.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "System.h"
+#include "MonitorUtil.h"
 #include "Measure.h"
 #include "MeasurePlugin.h"
 #include "MeasureScript.h"
 #include "MeasureTime.h"
 #include "Meter.h"
+#include "MeterTextEdit.h"
 #include "resource.h"
 
 namespace {
 
-struct PairInfo
+enum class VariableType : BYTE
 {
-	const WCHAR begin;
-	const WCHAR end;
+	Ampersand,
+	Hash,
+	Dollar,
+	Backslash
 };
 
-const std::unordered_map<PairedPunctuation, PairInfo> s_PairedPunct =
+std::optional<VariableType> VariableTypeForKey(WCHAR key)
 {
-	{ PairedPunctuation::SingleQuote, { L'\'', L'\'' } },
-	{ PairedPunctuation::DoubleQuote, { L'"', L'"' } },
-	{ PairedPunctuation::BothQuotes,  { L'"', L'\'' } },
-	{ PairedPunctuation::Parentheses, { L'(', L')' } },
-	{ PairedPunctuation::Brackets,    { L'[', L']' } },
-	{ PairedPunctuation::Braces,      { L'{', L'}' } },
-	{ PairedPunctuation::Guillemet,   { L'<', L'>' } }
-};
+	if (key == L'&') return VariableType::Ampersand;
+	if (key == L'#') return VariableType::Hash;
+	if (key == L'$') return VariableType::Dollar;
+	if (key == L'\\') return VariableType::Backslash;
+	return std::nullopt;
+}
+
+void LogFormulaError(const WCHAR* error, const WCHAR* formula)
+{
+	LogErrorF(L"Formula: %s: %s", error, formula);
+}
+
+void LogFormulaKeyError(Skin* skin, const WCHAR* error, std::wstring_view section, std::wstring_view key)
+{
+	LogErrorF(skin, L"Formula: %s in key \"%.*s\" in [%.*s]", error, (int)key.length(), key.data(), (int)section.length(), section.data());
+}
+
+std::optional<std::wstring> GetRectComponent(StringParser& strParser, const RECT& rect)
+{
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(rect.left);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(rect.top);
+	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(rect.right - rect.left);
+	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(rect.bottom - rect.top);
+
+	return std::nullopt;
+}
 
 }  // namespace
-
-std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
-std::unordered_map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
 
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
+	m_MonitorVariableMode(MonitorVariableMode::DEFAULT_LOGICAL),
 	m_CurrentSection(),
 	m_Skin()
 {
-	if (c_VariableMap.empty())
-	{
-		c_VariableMap.emplace(VariableType::Section, L'&');
-		c_VariableMap.emplace(VariableType::Variable, L'#');
-		c_VariableMap.emplace(VariableType::Mouse, L'$');
-		c_VariableMap.emplace(VariableType::CharacterReference, L'\\');
-	}
 }
 
 ConfigParser::~ConfigParser()
 {
 }
 
-void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection, const std::wstring* resourcePath)
+ConfigParser::InheritChainScope::InheritChainScope(ConfigParser& parser, LPCTSTR section, bool allowMeterStyle) :
+	m_Parser(parser),
+	m_PreviousChain(parser.m_InheritChain)
+{
+	std::wstring_view inherit = parser.ReadString(section, L"@Inherit", L"");
+	if (inherit.empty() && allowMeterStyle)
+	{
+		inherit = parser.ReadString(section, L"MeterStyle", L"");
+	}
+
+	StringParser::Split(inherit, L'|', parser.m_InheritChain);
+}
+
+ConfigParser::InheritChainScope::~InheritChainScope()
+{
+	m_Parser.m_InheritChain = std::move(m_PreviousChain);
+}
+
+void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
 {
 	m_Skin = skin;
 
-	m_Measures.clear();
 	m_Sections.clear();
+	m_IniFiles.clear();
+	m_SectionNames.clear();
 	m_Values.clear();
-	m_BuiltInVariables.clear();
 	m_Variables.clear();
 	m_OriginalVariableNames.clear();
 
-	m_StyleTemplate.clear();
+	m_InheritChain.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
+	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
-	m_CurrentSection = nullptr;
-	m_SectionInsertPos = m_Sections.end();
-
-	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
-	SetBuiltInVariables(filename, resourcePath, skin);
-	ResetMonitorVariables(skin);
+	m_CurrentSection = {};
+	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
+	m_SectionNamesInsertPos = m_SectionNames.end();
 
 	System::UpdateIniFileMappingList();
 
-	ReadIniFile(filename, skinSection);
+	if (!filename.empty()) ReadIniFile(filename, skinSection);
+
 	ReadVariables();
 
 	// Clear and minimize
 	m_FoundSections.clear();
 	m_ListVariables.clear();
-	m_SectionInsertPos = m_Sections.end();
+	m_SectionNamesInsertPos = m_SectionNames.end();
 }
 
-void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin)
-{
-	auto insertVariable = [&](const WCHAR* name, std::wstring value)
-	{
-		return m_BuiltInVariables.emplace(name, value);
-	};
-
-	insertVariable(L"PROGRAMPATH", GetRainmeter().GetPath());
-	insertVariable(L"PROGRAMDRIVE", GetRainmeter().GetDrive());
-	insertVariable(L"SETTINGSPATH", GetRainmeter().GetSettingsPath());
-	insertVariable(L"SKINSPATH", GetRainmeter().GetSkinPath());
-	insertVariable(L"PLUGINSPATH", GetRainmeter().GetPluginPath());
-	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
-	insertVariable(L"ADDONSPATH", GetRainmeter().GetAddonPath());
-
-	insertVariable(L"CONFIGEDITOR", GetRainmeter().GetSkinEditor());
-
-	if (skin)
-	{
-		insertVariable(L"CURRENTFILE", skin->GetFileName());
-		insertVariable(L"CURRENTCONFIG", skin->GetFolderPath());
-		insertVariable(L"ROOTCONFIG", skin->GetRootName());
-		insertVariable(L"ROOTCONFIGPATH", skin->GetRootPath());
-	}
-
-	insertVariable(L"CRLF", L"\n");
-
-	m_CurrentSection = &(insertVariable(L"CURRENTSECTION", L"").first->second);	// shortcut
-
-	if (resourcePath)
-	{
-		SetVariable(L"@", *resourcePath);
-	}
-}
-
-/*
-** Sets all user-defined variables.
-**
-*/
 void ConfigParser::ReadVariables()
 {
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
-		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", false));
+		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", { .sectionVariables = false }));
 	}
 }
 
-void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
+void ConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
-	std::wstring original = strVariable;
-
-	StrToUpperC(strVariable);
-	m_Variables[strVariable] = strValue;
-
-	if (m_OriginalVariableNames.find(strVariable) == m_OriginalVariableNames.end())
+	const auto& [iter, inserted] = m_Variables.insert_or_assign(StrToUpper(strVariable), strValue);
+	if (inserted)
 	{
-		m_OriginalVariableNames[strVariable] = original;
+		m_OriginalVariableNames[iter->first] = strVariable;
 	}
 }
 
-void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue)
+bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle)
 {
-	m_BuiltInVariables[strVariable] = strValue;
-}
-
-/*
-** Gets a value for the variable. Returns nullptr if not found.
-**
-*/
-const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
-{
-	const std::wstring strTmp = StrToUpper(strVariable);
-
 	// #1: Built-in variables
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
-	if (iter != m_BuiltInVariables.end())
+	auto result = GetBuiltInVariable(strVariable);
+
+	// #2: Current config variables
+	if (!result) result = GetCurrentConfigVariable(strVariable);
+
+	// #3: Monitor variables
+	if (!result) result = GetMonitorVariable(strVariable);
+
+	if (result)
 	{
-		return &(*iter).second;
+		strValue.swap(*result);
+		return true;
 	}
 
-	// #2: Monitor variables
-	iter = c_MonitorVariables.find(strTmp);
-	if (iter != c_MonitorVariables.end())
-	{
-		return &(*iter).second;
-	}
-
-	// #3: User-defined variables
-	iter = m_Variables.find(strTmp);
+	// #4: User-defined variables
+	auto iter = m_Variables.find(StrToUpper(strVariable));
 	if (iter != m_Variables.end())
 	{
-		return &(*iter).second;
+		strValue = (*iter).second;
+		return true;
 	}
 
-	return nullptr;
+	return false;
+}
+
+std::optional<std::wstring> ConfigParser::GetDollarVariable(std::wstring_view variableStr)
+{
+	if (auto result = GetDollarSkinVariable(variableStr))
+	{
+		return result;
+	}
+
+	return GetDollarDisplayVariable(variableStr);
+}
+
+std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view variableStr)
+{
+	auto strParser = StringParser(variableStr);
+
+	if (strParser.ConsumeRest(L'@') && m_Skin) return m_Skin->GetResourcesPath();
+
+	if (strParser.ConsumeSuffix(L"Path"))
+	{
+		if (strParser.ConsumeRest(L"Program")) return GetRainmeter().GetPath();
+		if (strParser.ConsumeRest(L"Settings")) return GetRainmeter().GetSettingsPath();
+		if (strParser.ConsumeRest(L"Skins")) return GetRainmeter().GetSkinPath();
+		if (strParser.ConsumeRest(L"Plugins")) return GetRainmeter().GetPluginPath();
+		if (strParser.ConsumeRest(L"Current")) return m_CurrentPath;
+		if (strParser.ConsumeRest(L"Addons")) return GetRainmeter().GetAddonPath();
+		if (strParser.ConsumeRest(L"RootConfig") && m_Skin) return m_Skin->GetRootPath();
+		return std::nullopt;
+	}
+
+	if (strParser.Consume(L"Current"))
+	{
+		if (strParser.ConsumeRest(L"Section")) return std::wstring(m_CurrentSection);
+		if (strParser.ConsumeRest(L"File") && m_Skin) return m_Skin->GetFileName();
+		if (strParser.ConsumeRest(L"Config") && m_Skin) return m_Skin->GetFolderPath();
+		return std::nullopt;
+	}
+
+	if (strParser.ConsumeRest(L"ConfigEditor")) return GetRainmeter().GetSkinEditor();
+	if (strParser.ConsumeRest(L"CRLF")) return L"\n";
+	if (strParser.ConsumeRest(L"ProgramDrive")) return GetRainmeter().GetDrive();
+	if (strParser.ConsumeRest(L"RootConfig") && m_Skin) return m_Skin->GetRootName();
+
+	return std::nullopt;
 }
 
 const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& strVariable)
@@ -200,7 +222,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	const std::wstring strTmp = StrToUpper(strVariable);
 
 	// User-defined variables
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_OriginalVariableNames.find(strTmp);
+	auto iter = m_OriginalVariableNames.find(strTmp);
 	if (iter != m_OriginalVariableNames.end())
 	{
 		return &(*iter).second;
@@ -209,11 +231,8 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	return nullptr;
 }
 
-/*
-** Gets the value of a section variable. Returns true if strValue is set.
-** The selector is stripped from strVariable.
-**
-*/
+// Gets the value of a section variable. Returns true if strValue is set.
+// The selector is stripped from strVariable.
 bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
 {
 	if (!m_Skin) return false;
@@ -237,7 +256,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Meter* meter = m_Skin->GetMeter(strVariable);
 		if (meter)
 		{
-			WCHAR buffer[32] = { 0 };
+			WCHAR buffer[16] = { 0 };
 			if (_wcsicmp(selectorSz, L"X") == 0)
 			{
 				_itow_s(meter->GetX(), buffer, 10);
@@ -324,10 +343,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			Measure* measure = m_Skin->GetMeasure(strVariable);
 			if (!measure) return false;
 
-			// Lua (and possibly plugins) can reset the style template when
-			// reading values, so save the style template here and reset it
+			// Lua (and possibly plugins) can reset the inherit chain when
+			// reading values, so save the inherit chain here and reset it
 			// back after the lua/plugin has returned.
-			std::vector<std::wstring> meterStyle = m_StyleTemplate;
+			std::vector<std::wstring> inheritChain = m_InheritChain;
 
 			bool retValue = false;
 			const auto type = measure->GetTypeID();
@@ -344,7 +363,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
 			}
 
-			m_StyleTemplate = meterStyle;
+			m_InheritChain = std::move(inheritChain);
 			return retValue;
 		}
 
@@ -357,7 +376,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			do
 			{
-				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1ULL;
+				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1;
 
 				if (_wcsicmp(keySelectorSz, L"MaxValue") == 0)
 				{
@@ -399,7 +418,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		else if (measure->GetTypeID() == TypeID<MeasureTime>() && valueType == ValueType::TimeStamp)
 		{
 			MeasureTime* time = (MeasureTime*)measure;
-			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000LL);
+			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 			return true;
 		}
 
@@ -467,7 +486,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		WCHAR buffer[128] = { 0 };
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
-			
+
 		if (!decimalsSz)
 		{
 			// Remove trailing zeros if decimal count was not specified.
@@ -478,227 +497,293 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		strValue.assign(buffer, bufferLen);
 		return true;
 	}
-	
+
 	return false;
 }
 
-void ConfigParser::ResetMonitorVariables(Skin* skin)
+std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(std::wstring_view variableStr)
 {
-	// Set the SCREENAREA/WORKAREA variables
-	if (c_MonitorVariables.empty())
-	{
-		SetMultiMonitorVariables(true);
-	}
+	if (!m_Skin) return std::nullopt;
 
-	// Set the SCREENAREA/WORKAREA variables for present monitor
-	SetAutoSelectedMonitorVariables(skin);
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"CURRENTCONFIG")) return std::nullopt;
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().y);
+	if (strParser.ConsumeRest(L"WIDTH")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
+	if (strParser.ConsumeRest(L"HEIGHT")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
+	if (strParser.ConsumeRest(L"ZPOS")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
+
+	return std::nullopt;
 }
 
-/*
-** Sets new values for the SCREENAREA/WORKAREA variables.
-**
-*/
-void ConfigParser::SetMultiMonitorVariables(bool reset)
+// Examples: [$SkinX], [$SkinDpiScale]
+std::optional<std::wstring> ConfigParser::GetDollarSkinVariable(std::wstring_view variableStr)
 {
-	auto setMonitorVariable = [&](const WCHAR* variable, const WCHAR* value)
+	if (!m_Skin) return std::nullopt;
+
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"Skin")) return std::nullopt;
+
+	if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().x);
+	if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsVirtualized().y);
+	if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetCurrentConfigW());
+	if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetCurrentConfigH());
+
+	if (strParser.Consume(L"Physical"))
 	{
-		c_MonitorVariables[variable] = value;
+		if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(m_Skin->GetPositionAsPhysical().x);
+		if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(m_Skin->GetPositionAsPhysical().y);
+		if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetPhysicalWindowW());
+		if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetPhysicalWindowH());
+		return std::nullopt;
+	}
+
+	if (strParser.Consume(L"Zoomed"))
+	{
+		if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(m_Skin->GetZoomedWindowW());
+		if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(m_Skin->GetZoomedWindowH());
+		return std::nullopt;
+	}
+
+	if (strParser.ConsumeRest(L"ZPos")) return fmt::to_wstring((int)m_Skin->GetWindowZPosition());
+	if (strParser.ConsumeRest(L"DpiFactor")) return fmt::format(L"{0:.5g}", m_Skin->GetDpiScale());
+	if (strParser.ConsumeRest(L"ZoomFactor")) return fmt::format(L"{0:.5g}", m_Skin->GetZoomScale());
+	if (strParser.ConsumeRest(L"Visible")) return m_Skin->IsWindowUnoccluded() ? L"1" : L"0";
+
+	return std::nullopt;
+}
+
+// Examples: [$DisplayDisplayName], [$DisplayX], [$DisplayWorkAreaPhysicalH], [$DisplayDevice1DpiFactor], [$DisplayVirtualScreenW]
+std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_view variableStr)
+{
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const auto& monitors = monitorsInfo.monitors;
+	if (!m_Skin || monitors.empty()) return std::nullopt;
+
+	auto strParser = StringParser(variableStr);
+	if (!strParser.Consume(L"Display")) return std::nullopt;
+	auto index = strParser.ConsumeInt();
+
+	const bool device = !index && strParser.Consume(L"Device");
+	if (device) index = strParser.ConsumeInt();
+
+	if (!index && strParser.ConsumeRest(L"Count"))
+	{
+		return fmt::to_wstring(device ? monitorsInfo.GetDeviceCount() : monitorsInfo.GetDisplayCount());
+	}
+
+	// The virtual screen spans every display, so it takes no index and has no work area.
+	if (!index && !device && strParser.Consume(L"VirtualScreen"))
+	{
+		const bool physical = strParser.Consume(L"Physical");
+		return GetRectComponent(strParser, physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen);
+	}
+
+	static MonitorInfo s_EmptyMonitor = {};
+	const auto* monitor =
+		index ? (device ? monitorsInfo.GetByDeviceNumber(*index) : monitorsInfo.GetByDisplayNumber(*index)) :
+		monitorsInfo.GetForWindow(m_Skin->GetWindow());
+	if (!monitor) monitor = &s_EmptyMonitor;
+
+	if (strParser.ConsumeRest(L"Name")) return device ? monitor->deviceName : monitor->monitorName;
+	if (strParser.ConsumeRest(L"Number")) return fmt::to_wstring(device ? monitor->deviceNumber : monitor->displayNumber);
+	if (strParser.ConsumeRest(L"DpiFactor")) return fmt::format(L"{0:.5g}", (double)monitor->dpi / USER_DEFAULT_SCREEN_DPI);
+
+	const bool work = strParser.Consume(L"WorkArea");
+	const bool physical = strParser.Consume(L"Physical");
+	const auto& rect =
+		work ?
+		(physical ? monitor->work : monitor->logicalWork) :
+		(physical ? monitor->screen : monitor->logicalScreen);
+
+	return GetRectComponent(strParser, rect);
+}
+
+std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view variableStr)
+{
+	enum class MonitorArea
+	{
+		Screen,
+		Work,
+		VirtualScreen
 	};
 
-	if (!reset && c_MonitorVariables.empty())
+	enum class MonitorComponent
 	{
-		reset = true;  // Set all variables
-	}
+		X,
+		Y,
+		Width,
+		Height
+	};
 
-	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
-	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+	auto strParser = StringParser(variableStr);
+	bool physical = false;
+	bool primary = false;
+	int monitorNumber = -1;
+	MonitorArea area = MonitorArea::Screen;
+	MonitorComponent component = MonitorComponent::X;
 
-	WCHAR buffer[32] = { 0 };
-	const int monitorIndex = monitorsInfo.primary - 1;
-	const RECT workArea = monitors[monitorIndex].work;
-	const RECT scrArea = monitors[monitorIndex].screen;
-
-	_itow_s(workArea.left, buffer, 10);
-	setMonitorVariable(L"WORKAREAX", buffer);
-	setMonitorVariable(L"PWORKAREAX", buffer);
-	_itow_s(workArea.top, buffer, 10);
-	setMonitorVariable(L"WORKAREAY", buffer);
-	setMonitorVariable(L"PWORKAREAY", buffer);
-	_itow_s(workArea.right - workArea.left, buffer, 10);
-	setMonitorVariable(L"WORKAREAWIDTH", buffer);
-	setMonitorVariable(L"PWORKAREAWIDTH", buffer);
-	_itow_s(workArea.bottom - workArea.top, buffer, 10);
-	setMonitorVariable(L"WORKAREAHEIGHT", buffer);
-	setMonitorVariable(L"PWORKAREAHEIGHT", buffer);
-
-	if (reset)
+	if (strParser.Consume(L'P'))
 	{
-		_itow_s(scrArea.left, buffer, 10);
-		setMonitorVariable(L"SCREENAREAX", buffer);
-		setMonitorVariable(L"PSCREENAREAX", buffer);
-		_itow_s(scrArea.top, buffer, 10);
-		setMonitorVariable(L"SCREENAREAY", buffer);
-		setMonitorVariable(L"PSCREENAREAY", buffer);
-		_itow_s(scrArea.right - scrArea.left, buffer, 10);
-		setMonitorVariable(L"SCREENAREAWIDTH", buffer);
-		setMonitorVariable(L"PSCREENAREAWIDTH", buffer);
-		_itow_s(scrArea.bottom - scrArea.top, buffer, 10);
-		setMonitorVariable(L"SCREENAREAHEIGHT", buffer);
-		setMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
-
-		_itow_s(monitorsInfo.vsL, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAX", buffer);
-		_itow_s(monitorsInfo.vsT, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAY", buffer);
-		_itow_s(monitorsInfo.vsW, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAWIDTH", buffer);
-		_itow_s(monitorsInfo.vsH, buffer, 10);
-		setMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
-	}
-
-	int i = 1;
-	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
-	{
-		WCHAR buffer2[64] = { 0 };
-
-		const RECT work = ((*iter).active) ? (*iter).work : workArea;
-
-		_itow_s(work.left, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.top, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.right - work.left, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", i);
-		setMonitorVariable(buffer2, buffer);
-		_itow_s(work.bottom - work.top, buffer, 10);
-		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", i);
-		setMonitorVariable(buffer2, buffer);
-
-		if (reset)
+		if (strParser.Consume(L"WORKAREA"))
 		{
-			const RECT screen = ((*iter).active) ? (*iter).screen : scrArea;
-
-			_itow_s(screen.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.right - screen.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", i);
-			setMonitorVariable(buffer2, buffer);
-			_itow_s(screen.bottom - screen.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", i);
-			setMonitorVariable(buffer2, buffer);
+			primary = true;
+			area = MonitorArea::Work;
+		}
+		else if (strParser.Consume(L"SCREENAREA"))
+		{
+			primary = true;
+			area = MonitorArea::Screen;
+		}
+		else
+		{
+			return std::nullopt;
 		}
 	}
-}
-
-/*
-** Sets new SCREENAREA/WORKAREA variables for present monitor.
-**
-*/
-void ConfigParser::SetAutoSelectedMonitorVariables(Skin* skin)
-{
-	if (skin)
+	else if (strParser.Consume(L"VSCREENAREA"))
 	{
-		const int numOfMonitors = (int)System::GetMonitorCount();
-		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+		area = MonitorArea::VirtualScreen;
+	}
+	else if (strParser.Consume(L"WORKAREA"))
+	{
+		area = MonitorArea::Work;
+	}
+	else if (strParser.Consume(L"SCREENAREA"))
+	{
+		area = MonitorArea::Screen;
+	}
+	else
+	{
+		return std::nullopt;
+	}
 
-		WCHAR buffer[32] = { 0 };
-		int w1 = 0, w2 = 0, s1 = 0, s2 = 0;
-		int screenIndex = 0;
+	if (strParser.Consume(L"X"))
+	{
+		component = MonitorComponent::X;
+	}
+	else if (strParser.Consume(L"Y"))
+	{
+		component = MonitorComponent::Y;
+	}
+	else if (strParser.Consume(L"WIDTH"))
+	{
+		component = MonitorComponent::Width;
+	}
+	else if (strParser.Consume(L"HEIGHT"))
+	{
+		component = MonitorComponent::Height;
+	}
+	else
+	{
+		return std::nullopt;
+	}
 
-		// Set X / WIDTH
-		screenIndex = monitorsInfo.primary;
-		if (skin->GetXScreenDefined())
+	if (strParser.Consume(L'@'))
+	{
+		if (primary || area == MonitorArea::VirtualScreen) return std::nullopt;
+
+		const auto parsedMonitorNumber = strParser.ConsumeInt();
+		if (!parsedMonitorNumber || *parsedMonitorNumber <= 0) return std::nullopt;
+
+		monitorNumber = *parsedMonitorNumber;
+	}
+
+	if (!strParser.IsConsumed()) return std::nullopt;
+
+	if (m_MonitorVariableMode == MonitorVariableMode::FORCE_PHYSICAL)
+	{
+		physical = true;
+	}
+
+	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
+	const auto& monitors = monitorsInfo.monitors;
+	if (monitors.empty())
+	{
+		return std::nullopt;
+	}
+
+	RECT rect = {};
+	if (area == MonitorArea::VirtualScreen)
+	{
+		rect = physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen;
+	}
+	else
+	{
+		int screenIndex = monitorsInfo.primary;
+		if (monitorNumber > 0)
 		{
-			int i = skin->GetXScreen();
-			const int index = i - 1;
-			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[index].active))
+			screenIndex = monitorNumber;
+		}
+		else if (!primary && m_Skin)
+		{
+			const bool horizontal = component == MonitorComponent::X || component == MonitorComponent::Width;
+			if (horizontal && m_Skin->GetPosition().GetX().monitor)
 			{
-				screenIndex = i;
+				const int i = *m_Skin->GetPosition().GetX().monitor;
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
+				{
+					screenIndex = i;
+				}
+			}
+			else if (!horizontal && m_Skin->GetPosition().GetY().monitor)
+			{
+				const int i = *m_Skin->GetPosition().GetY().monitor;
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i - 1].active))
+				{
+					screenIndex = i;
+				}
 			}
 		}
 
 		if (screenIndex == 0)
 		{
-			s1 = w1 = monitorsInfo.vsL;
-			s2 = w2 = monitorsInfo.vsW;
+			rect = physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen;
 		}
 		else
 		{
-			const int monitorIndex = screenIndex - 1;
-			w1 = monitors[monitorIndex].work.left;
-			w2 = monitors[monitorIndex].work.right - monitors[monitorIndex].work.left;
-			s1 = monitors[monitorIndex].screen.left;
-			s2 = monitors[monitorIndex].screen.right - monitors[monitorIndex].screen.left;
-		}
-
-		_itow_s(w1, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAX", buffer);
-		_itow_s(w2, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-		_itow_s(s1, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAX", buffer);
-		_itow_s(s2, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
-
-		// Set Y / HEIGHT
-		screenIndex = monitorsInfo.primary;
-		if (skin->GetYScreenDefined())
-		{
-			const int i = skin->GetYScreen();
-			const int index = i - 1;
-			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[index].active))
+			int monitorIndex = screenIndex - 1;
+			const int primaryIndex = monitorsInfo.primary - 1;
+			if (monitorIndex < 0 || monitorIndex >= (int)monitors.size())
 			{
-				screenIndex = i;
+				return std::nullopt;
 			}
-		}
 
-		if (screenIndex == 0)
-		{
-			s1 = w1 = monitorsInfo.vsL;
-			s2 = w2 = monitorsInfo.vsW;
-		}
-		else
-		{
-			const int monitorIndex = screenIndex - 1;
-			w1 = monitors[monitorIndex].work.top;
-			w2 = monitors[monitorIndex].work.bottom - monitors[monitorIndex].work.top;
-			s1 = monitors[monitorIndex].screen.top;
-			s2 = monitors[monitorIndex].screen.bottom - monitors[monitorIndex].screen.top;
-		}
+			if (!monitors[monitorIndex].active)
+			{
+				if (primaryIndex < 0 || primaryIndex >= (int)monitors.size())
+				{
+					return std::nullopt;
+				}
 
-		_itow_s(w1, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAY", buffer);
-		_itow_s(w2, buffer, 10);
-		SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
-		_itow_s(s1, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAY", buffer);
-		_itow_s(s2, buffer, 10);
-		SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
+				monitorIndex = primaryIndex;
+			}
+
+			const auto& monitor = monitors[monitorIndex];
+			rect =
+				physical ?
+				((area == MonitorArea::Work) ? monitor.work : monitor.screen) :
+				((area == MonitorArea::Work) ? monitor.logicalWork : monitor.logicalScreen);
+		}
 	}
+
+	switch (component)
+	{
+	case MonitorComponent::X: return fmt::to_wstring(rect.left);
+	case MonitorComponent::Y: return fmt::to_wstring(rect.top);
+	case MonitorComponent::Width: return fmt::to_wstring(rect.right - rect.left);
+	case MonitorComponent::Height: return fmt::to_wstring(rect.bottom - rect.top);
+	}
+
+	return std::nullopt;
 }
 
-/*
-** Replaces environment and internal variables in the given string.
-**
-*/
 bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
 	bool replaced = false;
+	const size_t firstSpecialPos = result.find_first_of(L"[]%#");
+	if (firstSpecialPos == std::wstring::npos) return false;
 
-	PathUtil::ExpandEnvironmentVariables(result);
-
-	if (c_MonitorVariables.empty())
-	{
-		SetMultiMonitorVariables(true);
-	}
+	PathUtil::ExpandEnvironmentVariables(result, firstSpecialPos);
 
 	// Check for new-style variables ([#VAR])
 	// Note: Most new-style variables are parsed later (when section variables are parsed),
@@ -706,104 +791,75 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	//   section variables).
 	if (isNewStyle)
 	{
-		replaced = ParseVariables(result, VariableType::Variable);
+		replaced = ExpandSectionVariables(result, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
 	}
-	else
+	else if (!m_CurrentSection.empty())
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
-		size_t start = 0ULL;
-		bool loop = true;
+		size_t start = firstSpecialPos;
 		const std::wstring strVariable = L"[#CURRENTSECTION]";
 		const size_t length = strVariable.length();
-		do
+		while ((start = result.find(strVariable, start)) != std::wstring::npos)
 		{
-			start = result.find(strVariable, start);
-			if (start != std::wstring::npos)
-			{
-				const std::wstring* value = GetVariable(L"CURRENTSECTION");
-				if (value)
-				{
-					// Variable found, replace it with the value
-					result.replace(start, length, *value);
-					start += length;
-					replaced = true;
-				}
-			}
-			else
-			{
-				loop = false;
-			}
+			result.replace(start, length, m_CurrentSection);
+			start += m_CurrentSection.length();
+			replaced = true;
 		}
-		while (loop);
 	}
 
 	// Check for old-style variables (#VAR#)
-	size_t start = 0ULL, end = 0ULL;
-	bool loop = true;
-
-	do
+	size_t start = firstSpecialPos;
+	size_t end = 0;
+	while ((start = result.find(L'#', start)) != std::wstring::npos)
 	{
-		start = result.find(L'#', start);
-		if (start != std::wstring::npos)
+		size_t si = start + 1;
+		end = result.find(L'#', si);
+		if (end == std::wstring::npos) break;
+
+		size_t ei = end - 1;
+		if (si != ei && result[si] == L'*' && result[ei] == L'*')
 		{
-			size_t si = start + 1ULL;
-			end = result.find(L'#', si);
-			if (end != std::wstring::npos)
-			{
-				size_t ei = end - 1ULL;
-				if (si != ei && result[si] == L'*' && result[ei] == L'*')
-				{
-					result.erase(ei, 1ULL);
-					result.erase(si, 1ULL);
-					start = ei;
-				}
-				else
-				{
-					std::wstring strVariable = result.substr(si, end - si);
-					const std::wstring* value = GetVariable(strVariable);
-					if (value)
-					{
-						// Variable found, replace it with the value
-						result.replace(start, end - start + 1ULL, *value);
-						start += (*value).length();
-						replaced = true;
-					}
-					else
-					{
-						start = end;
-					}
-				}
-			}
-			else
-			{
-				loop = false;
-			}
+			result.erase(ei, 1);
+			result.erase(si, 1);
+			start = ei;
 		}
 		else
 		{
-			loop = false;
+			std::wstring value;
+			if (GetVariable(std::wstring_view(&result[si], end - si), value))
+			{
+				result.replace(start, end - start + 1, value);
+				start += value.length();
+				replaced = true;
+			}
+			else
+			{
+				start = end;
+			}
 		}
 	}
-	while (loop);
 
 	return replaced;
 }
 
-/*
-** Replaces measures in the given string.
-**
-*/
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
+	const size_t firstBracket = result.find_first_of(L"[]");
+	if (firstBracket == std::wstring::npos) return false;
+
 	// Check for new-style measures (and section variables) [&Measure], [&Meter]
 	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
-	bool replaced = ParseVariables(result, VariableType::Section);
+	bool replaced = false;
+	size_t start = result.find(L'[', firstBracket);
+	if (start != std::wstring::npos)
+	{
+		replaced = ExpandSectionVariables(result, VariableExpandMode::AllKeys, nullptr, 0, start);
+	}
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
-	size_t start = 0ULL;
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
-		size_t si = start + 1ULL;
+		size_t si = start + 1;
 		size_t end = result.find(L']', si);
 		if (end == std::wstring::npos)
 		{
@@ -813,18 +869,17 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 		size_t next = result.find(L'[', si);
 		if (next == std::wstring::npos || end < next)
 		{
-			size_t ei = end - 1ULL;
+			size_t ei = end - 1;
 			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
-				result.erase(ei, 1ULL);
-				result.erase(si, 1ULL);
+				result.erase(ei, 1);
+				result.erase(si, 1);
 				start = ei;
 			}
 			else
 			{
-				std::wstring var = result.substr(si, end - si);
-
-				Measure* measure = GetMeasure(var);
+				std::wstring section = result.substr(si, end - si);
+				Measure* measure = GetMeasure(section);
 				if (measure)
 				{
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
@@ -837,18 +892,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 				}
 				else
 				{
-					// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
-					// Copy the result here, and replace it before returning.
-					std::wstring str = result;
-
 					std::wstring value;
-					if (GetSectionVariable(var, value))
+					if (GetSectionVariable(section, value))
 					{
-						// Replace section variable with the value.
-						str.replace(start, end - start + 1, value);
+						result.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
-						result = str;
 					}
 					else
 					{
@@ -866,133 +915,94 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	return replaced;
 }
 
-/*
-** Replaces nested measure/section variables, regular variables, and mouse variables in the given string.
-**
-*/
-bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Meter* meter)
+bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
+	constexpr int maxRecursionDepth = 10;
+	if (depth > maxRecursionDepth) return false;
+
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
-	if (m_Skin && (m_CurrentSection->empty() || meter))
+	if (depth == 0 && m_Skin && (m_CurrentSection.empty() || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
 		{
-			m_CurrentSection->assign(meter ? meter->GetName() : section->GetName());
+			m_CurrentSection = meter ? meter->GetOriginalName() : section->GetOriginalName();
 			hasCurrentAction = true;
 		}
 	}
 
-	// It is possible for a variable to be reset when calling a custom function in a plugin or lua.
-	// Copy the result here, and replace it before returning.
-	std::wstring result = str;
 	bool replaced = false;
-
-	size_t previousStart = 0ULL;
-	std::wstring previousVariable;
 
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 
-	// Because each nested variable needs to be re-parsed from the beginning of the replaced string,
-	// self-references can be detected multiple times during the variable replacement process.
-	// In these cases, provide a warning to the user before returning.
-	std::wstring selfReferencedVariable;
-
-	// Max number of variable replacements for |str|
-	static const size_t maxReplacements = 1000ULL;
-
 	// Find the innermost section variable(s) first, then move outward (working left to right)
-	size_t end = 0ULL;
-	size_t counter = 0ULL;
-	while ((end = result.find(L']', end)) != std::wstring::npos)
+	size_t end = start;
+	while ((end = str.find(L']', end)) != std::wstring::npos)
 	{
-		// Restrict the number of variable replacements to a reseasonable amount
-		if (++counter >= maxReplacements)
-		{
-			LogErrorSF(m_Skin, m_CurrentSection->c_str(),
-				L"Parsing Error: Maximum number of variable replacements reached (%llu) in string: %s", maxReplacements, str.c_str());
-			if (GetRainmeter().GetDebug())
-			{
-				LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Parsing Error: Result: %s", result.c_str());
-			}
-			break;
-		}
-
 		bool found = false;
 
-		const size_t ei = end - 1ULL;
-		size_t start = ei;
-
-		while ((start = result.rfind(L'[', start)) != std::wstring::npos)
+		const size_t ei = end - 1;
+		size_t start = end;
+		while (start != 0 && (start = str.rfind(L'[', start - 1)) != std::wstring::npos)
 		{
 			found = false;
-			size_t si = start + 2ULL;  // Start index where escaped variable "should" be: [ *   *]
+			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
 
 			// Check for escaped variables first, if found, skip to the next variable
-			if (si != ei && result[si] == L'*' && result[ei] == L'*')
+			if (si != ei && str[si] == L'*' && str[ei] == L'*')
 			{
 				// Normally we remove the *'s for escaped variable names here, however mouse actions
-				// are parsed before being sent to the command handler where the rest of the variables
-				// are parsed. So we need to leave the escape *'s when called from the mouse parser.
-				if (type != VariableType::Mouse)
+				// are parsed before being sent to the command handler where the rest of the
+				// variables are parsed. So we need to leave the escape *'s when called from that
+				// parser.
+				if (expandMode != VariableExpandMode::DollarMouseOnly)
 				{
-					result.erase(ei, 1ULL);
-					result.erase(si, 1ULL);
+					str.erase(ei, 1);
+					str.erase(si, 1);
 				}
-				break;		// Break out of inner "start" loop and continue to the next nested variable
+				break;
 			}
 
 			--si;  // Move index to the "key" character (if it exists)
 
 			// Avoid empty commands
-			std::wstring original = result.substr(si, end - si);
-			if (original.empty())
-			{
-				break;		// Break out of inner "start" loop and continue to the next nested variable
-			}
+			if (end == si) break;
 
-			// Avoid self references
-			if (previousStart == start && _wcsicmp(original.c_str(), previousVariable.c_str()) == 0)
-			{
-				LogErrorSF(m_Skin, m_CurrentSection->c_str(),
-					L"Cannot replace variable with itself: \"%s\"", original.c_str());
-				break;		// Break out of inner "start" loop and continue to the next nested variable
-			}
+			const WCHAR key = str[si];
+			auto variable = std::wstring_view(str).substr(si + 1, end - si - 1);
+			if (variable.empty()) break;
 
-			previousVariable = original;
-			previousStart = start;
+			const auto keyType = VariableTypeForKey(key);
 
-			// Separate "key" character from variable
-			const WCHAR key = result.substr(si, 1ULL).c_str()[0];
-			std::wstring variable = result.substr(si + 1ULL, end - si - 1ULL);
-			if (variable.empty())
-			{
-				break; // Break out of inner "start" loop and continue to the next nested variable
-			}
+			// If we didn't find a variable key at this [, we keep searching for previous [. This is not
+			// ideal and we should figure out a way to avoid this in the future.
+			if (!keyType) continue;
 
-			// Find "type" of key
-			bool isValid = false;
-			VariableType kType = VariableType::Section;
-			for (const auto& t : c_VariableMap)
+			auto replaceFoundValue = [&](std::wstring value)
 			{
-				if (t.second == key)
+				if (keyType == VariableType::Ampersand || keyType == VariableType::Hash)
 				{
-					kType = t.first;
-					isValid = true;
-					break;
+					if (depth < maxRecursionDepth)
+					{
+						ExpandSectionVariables(value, expandMode, meter, depth + 1);
+					}
+					else if (ContainsKeyedSectionVariable(value))
+					{
+						const std::wstring currentSection(m_CurrentSection);
+						LogErrorSF(m_Skin, currentSection.c_str(),
+							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
+					}
 				}
-			}
 
-			// |key| is invalid or variable name is empty ([#], [&], [$], [\])
-			if (!isValid)
-			{
-				if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
+				str.replace(start, end - start + 1, value);
+				found = true;
+				replaced = true;
 
-				--start;		// Check for any "starting" brackets in string prior to the current starting position
-				continue;		// This is not a valid nested variable, check the next starting bracket
-			}
+				// Resume after the inserted value. Any replacement parsing was handled above.
+				end = start + value.length() - 1;
+			};
 
 			// Since regular variables are replaced just before section variables in most cases, we replace
 			// both types at the same time in case nesting of the different types occurs. The only side effect
@@ -1003,115 +1013,96 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 			//  Special case 2: Places where regular variables need to be parsed without any section variables
 			//    parsed afterward. One example is when "@Include" is parsed.
 			//  Special case 3: Always process escaped character references.
-
-			std::wstring foundValue;
-
-			if ((key == c_VariableMap.find(type)->second) ||										// Special cases 1, 2
-				(kType == VariableType::CharacterReference) ||										// Special case 3
-				(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
+			if (keyType == VariableType::Ampersand && expandMode == VariableExpandMode::AllKeys)
 			{
-				switch (kType)
+				Measure* measure = GetMeasure(variable);
+				if (measure)
 				{
-				case VariableType::Section:
-					{
-						Measure* measure = GetMeasure(variable);
-						if (measure)
-						{
-							const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-							foundValue.assign(value, wcslen(value));
-							found = true;
-							break;
-						}
-						found = GetSectionVariable(variable, foundValue, &delayedLogEntry);
-					}
+					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+					replaceFoundValue(value);
 					break;
-
-				case VariableType::Variable:
+				}
+				else
+				{
+					std::wstring foundValue;
+					std::wstring sectionVariable(variable);
+					if (GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry))
 					{
-						const std::wstring* value = GetVariable(variable);
-						if (value)
-						{
-							foundValue.assign(*value);
-							found = true;
-						}
+						replaceFoundValue(std::move(foundValue));
+						break;
 					}
-					break;
-
-				case VariableType::Mouse:
-					{
-						foundValue = GetMouseVariable(variable, meter);
-						found = !foundValue.empty();
-					}
-					break;
-
-				case VariableType::CharacterReference:
-					{
-						int base = 10;
-						if (variable[0] == L'x' || variable[0] == L'X')
-						{
-							base = 16;
-							variable.erase(0ULL, 1ULL);  // remove 'x' or 'X'
-
-							if (variable.empty())
-							{
-								break;  // Invalid escape sequence [\x]
-							}
-						}
-
-						WCHAR* pch = nullptr;
-						errno = 0;
-						long ch = wcstol(variable.c_str(), &pch, base);
-						if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
-						{
-							break;  // Invalid character
-						}
-
-						foundValue.assign(1ULL, (WCHAR)ch);
-						found = true;
-					}
+				}
+			}
+			else if (keyType == VariableType::Hash && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
+			{
+				std::wstring value;
+				if (GetVariable(variable, value, true))
+				{
+					replaceFoundValue(std::move(value));
 					break;
 				}
 			}
-
-			if (found)
+			else if (keyType == VariableType::Dollar)
 			{
-				// Look for any potential self-references in the "found" value
-				auto findVariable = [&](WCHAR postfix) -> void
+				if (expandMode == VariableExpandMode::DollarMouseOnly)
 				{
-					// Only check for self-references if none have been found
-					if (selfReferencedVariable.empty())
+					std::wstring foundValue = GetDollarMouseVariable(variable, meter);
+					if (!foundValue.empty())
 					{
-						const std::wstring var = L"[" + original + postfix;
-						if (StringUtil::CaseInsensitiveFind(foundValue, var) != -1)
-						{
-							selfReferencedVariable = original;  // Reports only the first self-reference
-						}
+						replaceFoundValue(std::move(foundValue));
+						break;
 					}
-				};
+				}
+				else if (expandMode == VariableExpandMode::AllKeys)
+				{
+					// [$Input] has no meter name to give, so it uses the section running the action.
+					Section* section = meter;
+					if (!section && m_Skin) section = m_Skin->GetCurrentActionSection();
 
-				findVariable(L']');  // Look for any nested variables.  ex. [#Variable]
-				findVariable(L':');  // Look for any section variables with parameters.  ex. [&Measure:
+					if (auto foundValue = GetDollarInputVariable(variable, section))
+					{
+						replaceFoundValue(std::move(*foundValue));
+						break;
+					}
 
-				result.replace(start, end - start + 1ULL, foundValue);
-				replaced = true;
-
-				end = start - 1ULL;
-				break;		// Break out of inner "start" loop and continue to the next nested variable
+					if (const auto result = GetDollarVariable(variable))
+					{
+						replaceFoundValue(std::move(*result));
+						break;
+					}
+				}
 			}
+			else if (keyType == VariableType::Backslash)
+			{
+				int base = 10;
+				if (variable[0] == L'x' || variable[0] == L'X')
+				{
+					base = 16;
+					variable.remove_prefix(1);
+					if (variable.empty()) break;
+				}
 
-			// No variable found
+				std::wstring variableStr(variable);
+				WCHAR* pch = nullptr;
+				errno = 0;
+				long ch = wcstol(variableStr.c_str(), &pch, base);
+				if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
+				{
+					// Invalid character
+					break;
+				}
 
-			if (start == 0ULL) break;	// Already at beginning of string, try next ending bracket
-
-			--start;		// Check for any "starting" brackets in string prior to the current starting position
+				replaceFoundValue(std::wstring(1, (WCHAR)ch));
+				break;
+			}
 		}
 
-		if (!delayedLogEntry.message.empty() && found && start == previousStart)
+		if (!delayedLogEntry.message.empty() && found)
 		{
 			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
 			// the nested variable parser can produce errors when determining function names. Reset any delayed
 			// messages if the variable at the starting position was found.
-			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" }; 
+			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
 		}
 
 		++end;	// Check for the next "end" bracket after the current ending bracket
@@ -1122,80 +1113,89 @@ bool ConfigParser::ParseVariables(std::wstring& str, const VariableType type, Me
 		GetLogger().Log(&delayedLogEntry);
 	}
 
-	// Log the self reference warning(s)
-	if (!selfReferencedVariable.empty())
-	{
-		LogWarningSF(m_Skin, m_CurrentSection->c_str(), L"Warning: Potential self-referenced variable: %s", selfReferencedVariable.c_str());
-		if (GetRainmeter().GetDebug())
-		{
-			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Original string: %s", str.c_str());
-			LogDebugSF(m_Skin, m_CurrentSection->c_str(), L"Replaced string: %s", result.c_str());
-		}
-	}
-
 	// Reset the current section
 	if (hasCurrentAction)
 	{
-		m_CurrentSection->clear();
+		m_CurrentSection = {};
 	}
 
-	str = result;
 	return replaced;
 }
 
-bool ConfigParser::ContainsNewStyleVariable(const std::wstring& str)
+bool ConfigParser::ContainsKeyedSectionVariable(const std::wstring& str)
 {
-	if (str.find(L'[') == std::wstring::npos) return false;
-
-	for (const auto& key : c_VariableMap)
+	size_t pos = 0;
+	while ((pos = str.find(L'[', pos)) != std::wstring::npos)
 	{
-		std::wstring var = L"[";
-		var += key.second;
+		++pos;
+		if (pos >= str.length()) break;
 
-		if (str.find(var) != std::wstring::npos) return true;
+		if (VariableTypeForKey(str[pos]).has_value()) return true;
 	}
 
 	return false;
 }
 
-std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter* meter)
+bool ConfigParser::IsSectionVariableKey(WCHAR key)
+{
+	return VariableTypeForKey(key).has_value();
+}
+
+std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_view variable, Section* section)
+{
+	// Only resolves in an action of the meter being typed into, since that is the only place the
+	// text it stands for exists.
+	if (!section || section->GetTypeID() != TypeID<MeterTextEdit>()) return std::nullopt;
+
+	StringParser strParser(variable);
+	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
+
+	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
+	// meter is exactly what the user typed.
+	return ((MeterTextEdit*)section)->GetText();
+}
+
+std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
 {
 	std::wstring result;
-	LPCWSTR var = variable.c_str();
-	WCHAR buffer[32] = { 0 };
+	StringParser strParser(variable);
+	if (!strParser.Consume(L"Mouse")) return result;
 
+	WCHAR buffer[16] = { 0 };
 	POINT pt = { 0 };
 	GetCursorPos(&pt);
-
-	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
+	if (m_Skin)
 	{
-		var += 6;
-		int xOffset = m_Skin->GetX() + (meter ? meter->GetX() : 0);
-		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
+		pt = m_Skin->PhysicalToRelativeLogical(pt);
+	}
+
+	if (strParser.Consume(L"X"))
+	{
+		int xOffset = meter ? meter->GetX() : 0;
+		if (strParser.ConsumeRest(L":%"))
 		{
 			double width = (meter ? meter->GetW() : m_Skin->GetW());
 			xOffset = (int)(((pt.x - xOffset + 1) / width) * 100.0);
 			_itow_s(xOffset, buffer, 10);
 			result = buffer;
 		}
-		else if (*var == L'\0')  // $MOUSEX$ or [$MOUSEX]
+		else if (strParser.IsConsumed())
 		{
 			_itow_s(pt.x - xOffset, buffer, 10);
 			result = buffer;
 		}
 	}
-	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
+	else if (strParser.Consume(L"Y"))
 	{
-		var += 6;
-		int yOffset = m_Skin->GetY() + (meter ? meter->GetY() : 0);
-		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
+		int yOffset = meter ? meter->GetY() : 0;
+		if (strParser.ConsumeRest(L":%"))
 		{
 			double width = (meter ? meter->GetH() : m_Skin->GetH());
 			yOffset = (int)(((pt.y - yOffset + 1) / width) * 100.0);
 			_itow_s(yOffset, buffer, 10);
 			result = buffer;
 		}
-		else if (*var == L'\0')  // $MOUSEY$ or [$MOUSEY]
+		else if (strParser.IsConsumed())
 		{
 			_itow_s(pt.y - yOffset, buffer, 10);
 			result = buffer;
@@ -1205,56 +1205,35 @@ std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter*
 	return result;
 }
 
-const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
+void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
 {
-	static std::wstring result;
-
 	// Clear last status
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
-	const std::wstring strSection = section;
-	const std::wstring strKey = key;
-	const std::wstring strDefault = defValue;
-
-	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
-	if (&strValue == &strDefault)
+	const std::wstring* value = GetValue(section, key);
+	if (!value)
 	{
-		bool foundStyleValue = false;
-
-		// If the template is defined read the value from there.
-		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
-		for ( ; iter != m_StyleTemplate.rend(); ++iter)
+		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
-
-			//LogDebugF(L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
-			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
-
-			if (&strStyleValue != &strDefault)
-			{
-				result = strStyleValue;
-				foundStyleValue = true;
-				break;
-			}
+			value = GetValue(*iter, key);
+			if (value) break;
 		}
 
-		if (!foundStyleValue)
+		if (!value)
 		{
-			result = strDefault;
+			result = defValue;
 			m_LastDefaultUsed = true;
-			return result;
+			return;
 		}
 	}
-	else
-	{
-		result = strValue;
-	}
+
+	result = *value;
 
 	if (!result.empty())
 	{
-		m_CurrentSection->assign(strSection);  // Set temporarily
+		m_CurrentSection = section;  // Set temporarily
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1262,7 +1241,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				bool runNewStyle = strSection == L"Variables" ? true : false;
+				bool runNewStyle = section == L"Variables" ? true : false;
 				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
@@ -1273,41 +1252,72 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 				PathUtil::ExpandEnvironmentVariables(result);
 			}
 
-			if (bReplaceMeasures && ReplaceMeasures(result))
+			if (options.sectionVariables && ReplaceMeasures(result))
 			{
 				m_LastReplaced = true;
 			}
 		}
-		m_CurrentSection->clear();  // Reset
+		m_CurrentSection = {};  // Reset
 	}
+}
 
+const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
+{
+	static size_t s_Depth = 0;
+	static std::deque<std::wstring> s_Results;
+
+	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
+	// working on an outer result, so each nested read needs its own buffer. A read into a caller's
+	// own string holds no buffer here, so it takes no depth.
+	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+	++s_Depth;
+	auto depthGuard = Scoped([&] { --s_Depth; });
+
+	ReadString(result, section, key, defValue, options);
 	return result;
 }
 
-bool ConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
+size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
 {
-	ReadString(section, key, L"", false);
+	const std::wstring& value = ReadString(section, key, L"");
+	if (value.empty()) return count;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		// |names| points at the first option's name, which EnumOption keeps at offset zero.
+		const WCHAR* name = *(const WCHAR* const*)((const BYTE*)names + i * stride);
+		if (_wcsicmp(value.c_str(), name) == 0) return i;
+	}
+
+	LogErrorF(GetSection(section), L"%.*s=%.*s is not valid",
+		(int)key.length(), key.data(), (int)value.length(), value.data());
+	return count;
+}
+
+bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)
+{
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return !m_LastDefaultUsed;
 }
 
-bool ConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", false);
+	ReadString(section, key, L"", { .sectionVariables = false });
 	return m_LastValueDefined;
 }
 
-void ConfigParser::AddMeasure(Measure* pMeasure)
+void ConfigParser::AddSection(Section* section)
 {
-	if (pMeasure)
+	if (section)
 	{
-		m_Measures[StrToUpper(pMeasure->GetOriginalName())] = pMeasure;
+		m_Sections[StrToUpper(section->GetOriginalName())] = section;
 	}
 }
 
-Measure* ConfigParser::GetMeasure(const std::wstring& name)
+Section* ConfigParser::GetSection(std::wstring_view name)
 {
-	std::unordered_map<std::wstring, Measure*>::const_iterator iter = m_Measures.find(StrToUpper(name));
-	if (iter != m_Measures.end())
+	auto iter = m_Sections.find(StrToUpper(name));
+	if (iter != m_Sections.end())
 	{
 		return (*iter).second;
 	}
@@ -1315,7 +1325,19 @@ Measure* ConfigParser::GetMeasure(const std::wstring& name)
 	return nullptr;
 }
 
-std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+Measure* ConfigParser::GetMeasure(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Measure>()) ? (Measure*)section : nullptr;
+}
+
+Meter* ConfigParser::GetMeter(std::wstring_view name)
+{
+	Section* section = GetSection(name);
+	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
+}
+
+std::vector<FLOAT> ConfigParser::ReadFloats(std::wstring_view section, std::wstring_view key)
 {
 	std::vector<FLOAT> result;
 	const std::wstring& str = ReadString(section, key, L"");
@@ -1323,13 +1345,13 @@ std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 	{
 		// Tokenize and parse the floats
 		const WCHAR delimiter = L';';
-		size_t lastPos = 0ULL, pos = 0ULL;
+		size_t lastPos = 0, pos = 0;
 		do
 		{
 			lastPos = str.find_first_not_of(delimiter, pos);
 			if (lastPos == std::wstring::npos) break;
 
-			pos = str.find_first_of(delimiter, lastPos + 1ULL);
+			pos = str.find_first_of(delimiter, lastPos + 1);
 
 			result.push_back((FLOAT)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
 			if (pos == std::wstring::npos) break;
@@ -1341,7 +1363,7 @@ std::vector<FLOAT> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 	return result;
 }
 
-int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
+int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1351,13 +1373,13 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (int)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1373,7 +1395,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return defValue;
 }
 
-uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
+uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1383,13 +1405,13 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint32_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1405,7 +1427,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 	return defValue;
 }
 
-uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
+uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1415,13 +1437,13 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 		if (*str == L'(')
 		{
 			double dblValue = 0.0;
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &dblValue);
 			if (!errMsg)
 			{
 				return (uint64_t)dblValue;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1437,7 +1459,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 	return defValue;
 }
 
-double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
+double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1447,13 +1469,13 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 		const WCHAR* str = result.c_str();
 		if (*str == L'(')
 		{
-			const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
+			const WCHAR* errMsg = GetMathParser().CheckedParse(str, &value);
 			if (!errMsg)
 			{
 				return value;
 			}
 
-			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogFormulaKeyError(m_Skin, errMsg, section, key);
 		}
 		else if (*str)
 		{
@@ -1473,10 +1495,10 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
-	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1ULL] == L')')
+	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
 	{
 		const WCHAR* str = formula.c_str();
-		const WCHAR* errMsg = MathParser::CheckedParse(str, resultValue);
+		const WCHAR* errMsg = GetMathParser().CheckedParse(str, resultValue);
 		if (errMsg != nullptr)
 		{
 			LogErrorF(m_Skin, L"Formula: %s: %s", errMsg, str);
@@ -1500,7 +1522,7 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	if (pos != std::wstring::npos)
 	{
 		modifiers = formula.substr(pos + 1);  // can be empty!
-		const std::wstring newFormula(formula, 0, pos + 1ULL);
+		const std::wstring newFormula(formula, 0, pos + 1);
 		if (ParseFormula(newFormula, &value))
 		{
 			WCHAR buffer[128] = { 0 };
@@ -1514,21 +1536,21 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	return formula;
 }
 
-D2D1_COLOR_F ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const D2D1_COLOR_F& defValue)
+D2D1_COLOR_F ConfigParser::ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
-D2D1_RECT_F ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const D2D1_RECT_F& defValue)
+D2D1_RECT_F ConfigParser::ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
 }
 
-RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
+RECT ConfigParser::ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1544,388 +1566,67 @@ RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 	return r;
 }
 
-/*
-** Splits the string from the delimiters.
-** Now trims empty element in vector and white-space in each string.
-**
-** Modified from http://www.digitalpeer.com/id/simple
-*/
-std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
+const MathParser& ConfigParser::GetMathParser() const
 {
-	std::vector<std::wstring> tokens;
-
-	size_t lastPos = 0ULL, pos = 0ULL;
-	do
-	{
-		lastPos = str.find_first_not_of(delimiters, pos);
-		if (lastPos == std::wstring::npos) break;
-
-		pos = str.find_first_of(delimiters, lastPos + 1);
-		std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
-
-		size_t pos2 = token.find_first_not_of(L" \t\r\n");
-		if (pos2 != std::wstring::npos)
-		{
-			size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
-			if (pos2 != 0 || lastPos2 != (token.size() - 1))
-			{
-				// Trim white-space
-				token.assign(token, pos2, lastPos2 - pos2 + 1);
-			}
-			tokens.push_back(token);
-		}
-
-		if (pos == std::wstring::npos) break;
-		++pos;
-	}
-	while (true);
-
-	return tokens;
+	static MathParser s_MathParser;
+	return m_Skin ? m_Skin->GetMathParser() : s_MathParser;
 }
 
-/*
-** Splits the string from a delimiter, but skips delimiters inside of the defined paired punctuation
-**
-*/
-std::vector<std::wstring> ConfigParser::Tokenize2(const std::wstring& str, const WCHAR delimiter, const PairedPunctuation punct)
-{
-	std::vector<std::wstring> tokens;
-	size_t start = 0ULL;
-	size_t end = 0ULL;
-
-	auto getToken = [&]() -> void
-	{
-		start = str.find_first_not_of(L" \t\r\n", start); // skip any leading whitespace
-		if (start <= end)
-		{
-			std::wstring temp = str.substr(start, end - start);
-			temp.erase(temp.find_last_not_of(L" \t\r\n") + 1); // remove any trailing whitespace
-			tokens.push_back(temp);
-		}
-	};
-
-	if (punct == PairedPunctuation::SingleQuote ||
-		punct == PairedPunctuation::DoubleQuote)
-	{
-		bool found = false;
-		for (auto& iter : str)
-		{
-			if (iter == s_PairedPunct.at(punct).begin) found = !found;
-			else if (iter == delimiter && !found)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-	else if (punct == PairedPunctuation::BothQuotes)
-	{
-		// Skip delimiters if inside either a pair of single quotes, or a pair of double quotes
-		bool found = false;
-		WCHAR current = L'\0';
-		for (auto& iter : str)
-		{
-			if (!current &&
-				(iter == s_PairedPunct.at(punct).begin ||	// single quote
-				 iter == s_PairedPunct.at(punct).end))		// double quote
-			{
-				current = iter;
-				found = true;
-			}
-			else if (iter == current)
-			{
-				current = L'\0';
-				found = false;
-			}
-			else if (iter == delimiter && !found)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-	else
-	{
-		int pairs = 0;
-		for (auto& iter : str)
-		{
-			if (iter == s_PairedPunct.at(punct).begin) ++pairs;
-			else if (iter == s_PairedPunct.at(punct).end) --pairs;
-			else if (iter == delimiter && pairs == 0)
-			{
-				getToken();
-				start = end + 1;  // skip delimiter
-			}
-			++end;
-		}
-	}
-
-	// Get last token
-	getToken();
-
-	return tokens;
-}
-
-/*
-** Helper method that parses the floating-point value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 double ConfigParser::ParseDouble(LPCTSTR str, double defValue)
 {
-	assert(str);
-
-	double value = 0.0;
-	if (*str == L'(')
-	{
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &value);
-		if (!errMsg)
-		{
-			return value;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		double value = wcstod(str, nullptr);
-		if (errno != ERANGE)
-		{
-			return value;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper method that parses the integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 int ConfigParser::ParseInt(LPCTSTR str, int defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (int)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		int intValue = wcstol(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return intValue;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper method that parses the unsigned integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
+double ConfigParser::ParseDouble(std::wstring_view str, double defValue)
+{
+	return ParseUtil::ParseDouble(str, defValue, GetMathParser(), LogFormulaError);
+}
+
+int ConfigParser::ParseInt(std::wstring_view str, int defValue)
+{
+	return ParseUtil::ParseInt(str, defValue, GetMathParser(), LogFormulaError);
+}
+
 uint32_t ConfigParser::ParseUInt(LPCTSTR str, uint32_t defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (uint32_t)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		uint32_t uintValue = wcstoul(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return uintValue;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseUInt(str, defValue, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper method that parses the 64bit unsigned integer value from the given string.
-** If the given string is invalid format or causes overflow/underflow, returns given default value.
-**
-*/
 uint64_t ConfigParser::ParseUInt64(LPCTSTR str, uint64_t defValue)
 {
-	assert(str);
-
-	if (*str == L'(')
-	{
-		double dblValue = 0.0;
-		const WCHAR* errMsg = MathParser::CheckedParse(str, &dblValue);
-		if (!errMsg)
-		{
-			return (uint64_t)dblValue;
-		}
-
-		LogErrorF(L"Formula: %s: %s", errMsg, str);
-	}
-	else if (*str)
-	{
-		errno = 0;
-		uint64_t uint64Value = _wcstoui64(str, nullptr, 10);
-		if (errno != ERANGE)
-		{
-			return uint64Value;
-		}
-	}
-
-	return defValue;
+	return ParseUtil::ParseUInt64(str, defValue, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper template that parses four comma separated values from the given string.
-**
-*/
-template <typename T>
-bool ParseInt4(LPCTSTR s, T& v1, T& v2, T& v3, T& v4)
-{
-	if (wcschr(s, L','))
-	{
-		std::wstring str = s;
-		std::vector<T> tokens;
-		size_t start = 0ULL;
-		size_t end = 0ULL;
-		int parens = 0;
-
-		auto getToken = [&]() -> void
-		{
-			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
-			if (start <= end)
-			{
-				tokens.push_back((T)ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
-			}
-		};
-
-		for (auto& iter : str)
-		{
-			switch (iter)
-			{
-			case '(': ++parens; break;
-			case ')': --parens; break;
-			case ',':
-				{
-					if (parens == 0)
-					{
-						getToken();
-						start = end + 1ULL; // skip comma
-						break;
-					}
-					//else multi arg function ?
-				}
-				break;
-			}
-			++end;
-		}
-
-		// read last token
-		getToken();
-
-		size_t size = tokens.size();
-		if (size > 0ULL) v1 = tokens[0];
-		if (size > 1ULL) v2 = tokens[1];
-		if (size > 2ULL) v3 = tokens[2];
-		if (size > 3ULL) v4 = tokens[3];
-
-		return true;
-	}
-
-	return false;
-}
-
-/*
-** Helper method that parses the color values from the given string.
-** The color can be supplied as three/four comma separated values or as one
-** hex-value.
-**
-*/
 D2D1_COLOR_F ConfigParser::ParseColor(LPCTSTR str)
 {
-	int R = 255, G = 255, B = 255, A = 255;
-
-	if (!ParseInt4(str, R, G, B, A))
-	{
-		if (wcsncmp(str, L"0x", 2ULL) == 0)
-		{
-			str += 2;  // skip prefix
-		}
-
-		size_t len = wcslen(str);
-		if (len >= 8 && !iswspace(str[6]))
-		{
-			swscanf_s(str, L"%02x%02x%02x%02x", &R, &G, &B, &A);
-		}
-		else if (len >= 6ULL)
-		{
-			swscanf_s(str, L"%02x%02x%02x", &R, &G, &B);
-		}
-	}
-
-	return D2D1::ColorF(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
+	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper method that parses the D2D1::RectF values from the given string.
-** The rect can be supplied as four comma separated values (X/Y/Width/Height).
-**
-*/
+D2D1_COLOR_F ConfigParser::ParseColor(std::wstring_view str)
+{
+	return ParseUtil::ParseColor(str, GetMathParser(), LogFormulaError);
+}
+
 D2D1_RECT_F ConfigParser::ParseRect(LPCTSTR str)
 {
-	D2D1_RECT_F r = D2D1::RectF();
-	ParseInt4(str, r.left, r.top, r.right, r.bottom);
-	r.right += r.left;
-	r.bottom += r.top;
-	return r;
+	return ParseUtil::ParseRect(str, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Helper method that parses the RECT values from the given string.
-** The rect can be supplied as four comma separated values (left/top/right/bottom).
-**
-*/
 RECT ConfigParser::ParseRECT(LPCTSTR str)
 {
-	RECT r = { 0 };
-	ParseInt4(str, r.left, r.top, r.right, r.bottom);
-	return r;
+	return ParseUtil::ParseRECT(str, GetMathParser(), LogFormulaError);
 }
 
-/*
-** Reads the given ini file and fills the m_Values and m_Keys maps.
-**
-*/
 void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		GetRainmeter().ShowMessage(nullptr, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
+		GetRainmeter().ShowMessage(nullptr, GetString(IDS_IncludeInfiniteLoop), MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -1934,6 +1635,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	{
 		LogErrorF(m_Skin, L"Unable to read file: %s", iniFile.c_str());
 		return;
+	}
+
+	if (std::find_if(m_IniFiles.begin(), m_IniFiles.end(), [&](const std::wstring& file)
+		{ return _wcsicmp(file.c_str(), iniFile.c_str()) == 0; }) == m_IniFiles.end())
+	{
+		m_IniFiles.push_back(iniFile);
 	}
 
 	// Avoid "IniFileMapping"
@@ -1952,13 +1659,12 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
-	std::unordered_set<std::wstring> unique;
-	std::wstring key, value;  // buffer
+	std::wstring optionUpperCase, value;  // buffer
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
 	WCHAR* items = new WCHAR[itemsSize];
 	WCHAR* pos = nullptr;
-	WCHAR* epos = nullptr;
+	WCHAR* endPos = nullptr;
 
 	if (skinSection == nullptr)
 	{
@@ -1976,30 +1682,31 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			}
 			if (res < itemsSize - 2)		// Fits in the buffer
 			{
-				epos = items + res;
+				endPos = items + res;
 				break;
 			}
 
 			delete [] items;
 			items = nullptr;
-			itemsSize *= 2UL;
+			itemsSize *= 2;
 			items = new WCHAR[itemsSize];
 		}
 		while (true);
 
 		// Read the sections
+		ankerl::unordered_dense::set<std::wstring> currentFileFoundSections;
 		pos = items;
-		while (pos < epos)
+		while (pos < endPos)
 		{
 			if (*pos)
 			{
 				value = pos;  // section name
-				StrToUpperC(key.assign(value));
-				if (unique.insert(key).second)
+				StrToUpperC(optionUpperCase.assign(value));
+				if (currentFileFoundSections.insert(optionUpperCase).second)
 				{
-					if (m_FoundSections.insert(key).second)
+					if (m_FoundSections.insert(optionUpperCase).second)
 					{
-						m_Sections.insert(m_SectionInsertPos, value);
+						m_SectionNames.insert(m_SectionNamesInsertPos, value);
 					}
 					sections.push_back(value);
 				}
@@ -2022,128 +1729,139 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 		if (depth == 0)  // Add once
 		{
-			m_Sections.push_back(strRainmeter);
-			m_Sections.push_back(strFolder);
+			m_SectionNames.push_back(strRainmeter);
+			m_SectionNames.push_back(strFolder);
 		}
 	}
 
 	// Read the keys and values
+	ankerl::unordered_dense::set<std::wstring> currentSectionOptions;
 	for (auto it = sections.cbegin(); it != sections.cend(); ++it)
 	{
-		unique.clear();
+		currentSectionOptions.clear();
 
-		const WCHAR* sectionName = (*it).c_str();
-		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
-		bool isMetadata = (skinSection == nullptr && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
+		const WCHAR* sectionOriginalCase = it->c_str();
+		const auto sectionLength = it->length();
+
+		WCHAR sectionUpperCase[512];
+		if (!StringUtil::ToUpperCase(*it, sectionUpperCase, _countof(sectionUpperCase))) continue;
+
+		bool isVariables = (wcscmp(sectionUpperCase, L"VARIABLES") == 0);
+		bool isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionUpperCase, L"METADATA") == 0);
 		bool resetInsertPos = true;
 
 		// Read all "key=value" from the section
 		do
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileSection(sectionName, items, itemsSize, iniRead.c_str());
-			if (res < itemsSize - 2UL)		// Fits in the buffer
+			DWORD res = GetPrivateProfileSection(sectionOriginalCase, items, itemsSize, iniRead.c_str());
+			if (res < itemsSize - 2)		// Fits in the buffer
 			{
-				epos = items + res;
+				endPos = items + res;
 				break;
 			}
 
 			delete [] items;
 			items = nullptr;
-			itemsSize *= 2UL;
+			itemsSize *= 2;
 			items = new WCHAR[itemsSize];
 		}
 		while (true);
 
 		pos = items;
-		while (pos < epos)
+		while (pos < endPos)
 		{
 			if (*pos)
 			{
-				size_t len = wcslen(pos);
-				WCHAR* sep = wmemchr(pos, L'=', len);
-				if (sep != nullptr && sep != pos)
+				size_t lineLength = wcslen(pos);
+				WCHAR* valuePos = wmemchr(pos, L'=', lineLength);
+				if (valuePos != nullptr && valuePos != pos)
 				{
-					size_t clen = sep - pos;  // key's length
+					size_t optionLength = valuePos - pos;
 
-					key.assign(pos, clen);
-					std::wstring original = key;
-					StrToUpperC(key);
-					if (unique.insert(key).second)
+					std::wstring_view optionOriginalCase(pos, optionLength);
+					optionUpperCase.assign(pos, optionLength);
+					StrToUpperC(optionUpperCase);
+
+					++valuePos;
+					auto valueLength = lineLength - (optionLength + 1);  // value's length
+
+					// Trim surrounded quotes from value
+					if (valueLength >= 2 && (valuePos[0] == L'"' || valuePos[0] == L'\'') && valuePos[valueLength - 1] == valuePos[0])
 					{
-						++sep;
-						clen = len - (clen + 1);  // value's length
+						valueLength -= 2;
+						++valuePos;
+					}
 
-						// Trim surrounded quotes from value
-						if (clen >= 2 && (sep[0] == L'"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
+					if (!currentSectionOptions.insert(optionUpperCase).second)
+					{
+						// Ignore duplicate options.
+					}
+					else if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
+					{
+						if (valueLength > 0)
 						{
-							clen -= 2;
-							++sep;
-						}
-
-						if (wcsncmp(key.c_str(), L"@INCLUDE", 8) == 0)
-						{
-							if (clen > 0)
+							value.assign(valuePos, valueLength);
+							ReadVariables();
+							ReplaceVariables(value, true);
+							if (!PathUtil::IsAbsolute(value))
 							{
-								value.assign(sep, clen);
-								ReadVariables();
-								ReplaceVariables(value, true);
-								if (!PathUtil::IsAbsolute(value))
-								{
-									// Relative to the ini folder
-									value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
-								}
+								// Relative to the ini folder
+								value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
+							}
 
-								if (resetInsertPos)
+							if (resetInsertPos)
+							{
+								std::list<std::wstring>::const_iterator jt = it;
+								if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 								{
-									std::list<std::wstring>::const_iterator jt = it;
-									if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
+									// Set the insertion place to the last
+									m_SectionNamesInsertPos = m_SectionNames.end();
+									resetInsertPos = false;
+								}
+								else
+								{
+									// Find the appropriate insertion place
+									for (jt = m_SectionNames.cbegin(); jt != m_SectionNames.cend(); ++jt)
 									{
-										// Set the insertion place to the last
-										m_SectionInsertPos = m_Sections.end();
-										resetInsertPos = false;
-									}
-									else
-									{
-										// Find the appropriate insertion place
-										for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
+										if (_wcsicmp((*jt).c_str(), sectionOriginalCase) == 0)
 										{
-											if (_wcsicmp((*jt).c_str(), sectionName) == 0)
-											{
-												m_SectionInsertPos = ++jt;
-												resetInsertPos = false;
-												break;
-											}
+											m_SectionNamesInsertPos = ++jt;
+											resetInsertPos = false;
+											break;
 										}
 									}
 								}
-
-								// Save the section insertion position in case the included file also uses an @Include
-								std::list<std::wstring>::const_iterator prevInsertPos = m_SectionInsertPos;
-
-								ReadIniFile(value, skinSection, depth + 1);
-
-								// Reset the section insertion position to previous position
-								m_SectionInsertPos = prevInsertPos;
 							}
+
+							// Save the section insertion position in case the included file also uses an @Include
+							auto prevInsertPos = m_SectionNamesInsertPos;
+
+							ReadIniFile(value, skinSection, depth + 1);
+
+							// Reset the section insertion position to previous position
+							m_SectionNamesInsertPos = prevInsertPos;
 						}
-						else
+					}
+					else if (!isMetadata)
+					{
+						// Construct the map key manually instead of using SetValue() in order to:
+						// - move the key into the map without copying
+						// - ensure that duplicate option values aren't inserted
+						// - avoid uppercasing the same strings multiple times
+						std::wstring mapKey;
+						mapKey.reserve(sectionLength + 1 + optionUpperCase.length());
+						mapKey.append(sectionUpperCase, sectionLength);
+						mapKey += L'~';
+						mapKey += optionUpperCase;
+						m_Values.insert_or_assign(std::move(mapKey), std::wstring(valuePos, valueLength));
+						if (isVariables)
 						{
-							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
-							{
-								value.assign(sep, clen);
-								SetValue((*it), key, value);
-
-								if (isVariables)
-								{
-									m_ListVariables.push_back(key);
-									m_OriginalVariableNames[key] = original;
-								}
-							}
+							m_ListVariables.emplace_back(optionOriginalCase);
 						}
 					}
 				}
-				pos += len + 1ULL;
+				pos += lineLength + 1;
 			}
 			else  // Empty string
 			{
@@ -2157,54 +1875,55 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	if (temporary) System::RemoveFile(iniRead);
 }
 
-/*
-** Sets the value for the key under the given section.
-**
-*/
-void ConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
+std::wstring_view BuildValuesMapKey(std::wstring_view section, std::wstring_view option, WCHAR* buffer, size_t bufferCount)
 {
-	// LogDebugF(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
+	auto bufferPos = buffer;
 
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1 + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
+	const auto keyLength = section.size() + 1 + option.size();
+	if (keyLength >= bufferCount) return {};
 
-	m_Values[StrToUpperC(strTmp)] = strValue;
+	StringUtil::ToUpperCase(section, bufferPos, bufferCount);
+	bufferPos += section.length();
+
+	*bufferPos = L'~';
+	bufferPos += 1;
+
+	StringUtil::ToUpperCase(option, bufferPos, bufferCount - (bufferPos - buffer));
+	return std::wstring_view(buffer, keyLength);
 }
 
-/*
-** Deletes the value for the key under the given section.
-**
-*/
-void ConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
+const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option)
 {
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1ULL + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
-
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
-	if (iter != m_Values.end())
+	WCHAR buffer[256];
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
 	{
-		m_Values.erase(iter);
+		auto iter = m_Values.find(key);
+		if (iter != m_Values.end()) return &iter->second;
+	}
+	return nullptr;
+}
+
+void ConfigParser::SetValue(std::wstring_view section, std::wstring_view option, std::wstring value)
+{
+	WCHAR buffer[256];
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
+	{
+		m_Values[key] = std::move(value);
 	}
 }
 
-/*
-** Returns the value for the key under the given section.
-**
-*/
-const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
+void ConfigParser::DeleteValue(std::wstring_view section, std::wstring_view option)
 {
-	std::wstring strTmp;
-	strTmp.reserve(strSection.size() + 1ULL + strKey.size());
-	strTmp = strSection;
-	strTmp += L'~';
-	strTmp += strKey;
-
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
-	return (iter != m_Values.end()) ? (*iter).second : strDefault;
+	WCHAR buffer[256];
+	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
+	if (!key.empty())
+	{
+		auto iter = m_Values.find(key);
+		if (iter != m_Values.end())
+		{
+			m_Values.erase(iter);
+		}
+	}
 }

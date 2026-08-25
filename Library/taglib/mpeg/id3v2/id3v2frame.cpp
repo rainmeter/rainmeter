@@ -23,22 +23,16 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#if HAVE_ZLIB
-#include <zlib.h>
-#endif
-
 #include <bitset>
 
 #include <tdebug.h>
 #include <tstringlist.h>
+#include <tzlib.h>
 
 #include "id3v2tag.h"
 #include "id3v2frame.h"
 #include "id3v2synchdata.h"
+
 #include "tpropertymap.h"
 #include "frames/textidentificationframe.h"
 #include "frames/urllinkframe.h"
@@ -46,6 +40,7 @@
 #include "frames/commentsframe.h"
 #include "frames/uniquefileidentifierframe.h"
 #include "frames/unknownframe.h"
+#include "frames/podcastframe.h"
 
 using namespace TagLib;
 using namespace ID3v2;
@@ -79,28 +74,27 @@ namespace
     }
     return true;
   }
-}
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 // static methods
 ////////////////////////////////////////////////////////////////////////////////
 
-TagLib::uint Frame::headerSize()
+unsigned int Frame::headerSize()
 {
   return Header::size();
 }
 
-TagLib::uint Frame::headerSize(uint version)
+unsigned int Frame::headerSize(unsigned int version)
 {
   return Header::size(version);
 }
 
 ByteVector Frame::textDelimiter(String::Type t)
 {
-  ByteVector d = char(0);
   if(t == String::UTF16 || t == String::UTF16BE || t == String::UTF16LE)
-    d.append(char(0));
-  return d;
+    return ByteVector(2, '\0');
+  return ByteVector(1, '\0');
 }
 
 const String Frame::instrumentPrefix("PERFORMER:");
@@ -116,15 +110,18 @@ Frame *Frame::createTextualFrame(const String &key, const StringList &values) //
 {
   // check if the key is contained in the key<=>frameID mapping
   ByteVector frameID = keyToFrameID(key);
-  if(!frameID.isNull()) {
-    if(frameID[0] == 'T'){ // text frame
+  if(!frameID.isEmpty()) {
+    // Apple proprietary WFED (Podcast URL), MVNM (Movement Name), MVIN (Movement Number), GRP1 (Grouping) are in fact text frames.
+    if(frameID[0] == 'T' || frameID == "WFED" || frameID == "MVNM" || frameID == "MVIN" || frameID == "GRP1"){ // text frame
       TextIdentificationFrame *frame = new TextIdentificationFrame(frameID, String::UTF8);
       frame->setText(values);
       return frame;
-    } else if((frameID[0] == 'W') && (values.size() == 1)){  // URL frame (not WXXX); support only one value
+    } if((frameID[0] == 'W') && (values.size() == 1)){  // URL frame (not WXXX); support only one value
         UrlLinkFrame* frame = new UrlLinkFrame(frameID);
         frame->setUrl(values.front());
         return frame;
+    } if(frameID == "PCST") {
+      return new PodcastFrame();
     }
   }
   if(key == "MUSICBRAINZ_TRACKID" && values.size() == 1) {
@@ -168,16 +165,14 @@ ByteVector Frame::frameID() const
 {
   if(d->header)
     return d->header->frameID();
-  else
-    return ByteVector::null;
+  return ByteVector();
 }
 
-TagLib::uint Frame::size() const
+unsigned int Frame::size() const
 {
   if(d->header)
     return d->header->frameSize();
-  else
-    return 0;
+  return 0;
 }
 
 void Frame::setData(const ByteVector &data)
@@ -203,15 +198,15 @@ ByteVector Frame::render() const
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(const ByteVector &data)
+Frame::Frame(const ByteVector &data) :
+  d(new FramePrivate())
 {
-  d = new FramePrivate;
   d->header = new Header(data);
 }
 
-Frame::Frame(Header *h)
+Frame::Frame(Header *h) :
+  d(new FramePrivate())
 {
-  d = new FramePrivate;
   d->header = h;
 }
 
@@ -240,31 +235,31 @@ void Frame::parse(const ByteVector &data)
 
 ByteVector Frame::fieldData(const ByteVector &frameData) const
 {
-  uint headerSize = Header::size(d->header->version());
+  unsigned int headerSize = Header::size(d->header->version());
 
-  uint frameDataOffset = headerSize;
-  uint frameDataLength = size();
+  unsigned int frameDataOffset = headerSize;
+  unsigned int frameDataLength = size();
 
   if(d->header->compression() || d->header->dataLengthIndicator()) {
     frameDataLength = SynchData::toUInt(frameData.mid(headerSize, 4));
     frameDataOffset += 4;
   }
 
-#if HAVE_ZLIB
-  if(d->header->compression() &&
-     !d->header->encryption())
-  {
-    ByteVector data(frameDataLength);
-    uLongf uLongTmp = frameDataLength;
-    ::uncompress((Bytef *) data.data(),
-                 (uLongf *) &uLongTmp,
-                 (Bytef *) frameData.data() + frameDataOffset,
-                 size());
-    return data;
+  if(zlib::isAvailable() && d->header->compression() && !d->header->encryption()) {
+    if(frameData.size() <= frameDataOffset) {
+      debug("Compressed frame doesn't have enough data to decode");
+      return ByteVector();
+    }
+
+    const ByteVector outData = zlib::decompress(frameData.mid(frameDataOffset));
+    if(!outData.isEmpty() && frameDataLength != outData.size()) {
+      debug("frameDataLength does not match the data length returned by zlib");
+    }
+
+    return outData;
   }
-  else
-#endif
-    return frameData.mid(frameDataOffset, frameDataLength);
+
+  return frameData.mid(frameDataOffset, frameDataLength);
 }
 
 String Frame::readStringField(const ByteVector &data, String::Type encoding, int *position)
@@ -279,7 +274,7 @@ String Frame::readStringField(const ByteVector &data, String::Type encoding, int
   int end = data.find(delimiter, *position, delimiter.size());
 
   if(end < *position)
-    return String::null;
+    return String();
 
   String str;
   if(encoding == String::Latin1)
@@ -297,7 +292,7 @@ String::Type Frame::checkEncoding(const StringList &fields, String::Type encodin
   return checkEncoding(fields, encoding, 4);
 }
 
-String::Type Frame::checkEncoding(const StringList &fields, String::Type encoding, uint version) // static
+String::Type Frame::checkEncoding(const StringList &fields, String::Type encoding, unsigned int version) // static
 {
   if((encoding == String::UTF8 || encoding == String::UTF16BE) && version != 4)
     return String::UTF16;
@@ -311,10 +306,8 @@ String::Type Frame::checkEncoding(const StringList &fields, String::Type encodin
         debug("Frame::checkEncoding() -- Rendering using UTF8.");
         return String::UTF8;
       }
-      else {
-        debug("Frame::checkEncoding() -- Rendering using UTF16.");
-        return String::UTF16;
-      }
+      debug("Frame::checkEncoding() -- Rendering using UTF16.");
+      return String::UTF16;
     }
   }
 
@@ -326,161 +319,155 @@ String::Type Frame::checkTextEncoding(const StringList &fields, String::Type enc
   return checkEncoding(fields, encoding, header()->version());
 }
 
-static const TagLib::uint frameTranslationSize = 51;
-static const char *frameTranslation[][2] = {
-  // Text information frames
-  { "TALB", "ALBUM"},
-  { "TBPM", "BPM" },
-  { "TCOM", "COMPOSER" },
-  { "TCON", "GENRE" },
-  { "TCOP", "COPYRIGHT" },
-  { "TDEN", "ENCODINGTIME" },
-  { "TDLY", "PLAYLISTDELAY" },
-  { "TDOR", "ORIGINALDATE" },
-  { "TDRC", "DATE" },
-  // { "TRDA", "DATE" }, // id3 v2.3, replaced by TDRC in v2.4
-  // { "TDAT", "DATE" }, // id3 v2.3, replaced by TDRC in v2.4
-  // { "TYER", "DATE" }, // id3 v2.3, replaced by TDRC in v2.4
-  // { "TIME", "DATE" }, // id3 v2.3, replaced by TDRC in v2.4
-  { "TDRL", "RELEASEDATE" },
-  { "TDTG", "TAGGINGDATE" },
-  { "TENC", "ENCODEDBY" },
-  { "TEXT", "LYRICIST" },
-  { "TFLT", "FILETYPE" },
-  //{ "TIPL", "INVOLVEDPEOPLE" }, handled separately
-  { "TIT1", "CONTENTGROUP" },
-  { "TIT2", "TITLE"},
-  { "TIT3", "SUBTITLE" },
-  { "TKEY", "INITIALKEY" },
-  { "TLAN", "LANGUAGE" },
-  { "TLEN", "LENGTH" },
-  //{ "TMCL", "MUSICIANCREDITS" }, handled separately
-  { "TMED", "MEDIA" },
-  { "TMOO", "MOOD" },
-  { "TOAL", "ORIGINALALBUM" },
-  { "TOFN", "ORIGINALFILENAME" },
-  { "TOLY", "ORIGINALLYRICIST" },
-  { "TOPE", "ORIGINALARTIST" },
-  { "TOWN", "OWNER" },
-  { "TPE1", "ARTIST"},
-  { "TPE2", "ALBUMARTIST" }, // id3's spec says 'PERFORMER', but most programs use 'ALBUMARTIST'
-  { "TPE3", "CONDUCTOR" },
-  { "TPE4", "REMIXER" }, // could also be ARRANGER
-  { "TPOS", "DISCNUMBER" },
-  { "TPRO", "PRODUCEDNOTICE" },
-  { "TPUB", "LABEL" },
-  { "TRCK", "TRACKNUMBER" },
-  { "TRSN", "RADIOSTATION" },
-  { "TRSO", "RADIOSTATIONOWNER" },
-  { "TSOA", "ALBUMSORT" },
-  { "TSOP", "ARTISTSORT" },
-  { "TSOT", "TITLESORT" },
-  { "TSO2", "ALBUMARTISTSORT" }, // non-standard, used by iTunes
-  { "TSRC", "ISRC" },
-  { "TSSE", "ENCODING" },
-  // URL frames
-  { "WCOP", "COPYRIGHTURL" },
-  { "WOAF", "FILEWEBPAGE" },
-  { "WOAR", "ARTISTWEBPAGE" },
-  { "WOAS", "AUDIOSOURCEWEBPAGE" },
-  { "WORS", "RADIOSTATIONWEBPAGE" },
-  { "WPAY", "PAYMENTWEBPAGE" },
-  { "WPUB", "PUBLISHERWEBPAGE" },
-  //{ "WXXX", "URL"}, handled specially
-  // Other frames
-  { "COMM", "COMMENT" },
-  //{ "USLT", "LYRICS" }, handled specially
-};
-
-static const TagLib::uint txxxFrameTranslationSize = 8;
-static const char *txxxFrameTranslation[][2] = {
-  { "MusicBrainz Album Id", "MUSICBRAINZ_ALBUMID" },
-  { "MusicBrainz Artist Id", "MUSICBRAINZ_ARTISTID" },
-  { "MusicBrainz Album Artist Id", "MUSICBRAINZ_ALBUMARTISTID" },
-  { "MusicBrainz Release Group Id", "MUSICBRAINZ_RELEASEGROUPID" },
-  { "MusicBrainz Work Id", "MUSICBRAINZ_WORKID" },
-  { "Acoustid Id", "ACOUSTID_ID" },
-  { "Acoustid Fingerprint", "ACOUSTID_FINGERPRINT" },
-  { "MusicIP PUID", "MUSICIP_PUID" },
-};
-
-Map<ByteVector, String> &idMap()
+namespace
 {
-  static Map<ByteVector, String> m;
-  if(m.isEmpty())
-    for(size_t i = 0; i < frameTranslationSize; ++i)
-      m[frameTranslation[i][0]] = frameTranslation[i][1];
-  return m;
-}
+  const std::pair<const char *, const char *> frameTranslation[] = {
+    // Text information frames
+    std::make_pair("TALB", "ALBUM"),
+    std::make_pair("TBPM", "BPM"),
+    std::make_pair("TCOM", "COMPOSER"),
+    std::make_pair("TCON", "GENRE"),
+    std::make_pair("TCOP", "COPYRIGHT"),
+    std::make_pair("TDEN", "ENCODINGTIME"),
+    std::make_pair("TDLY", "PLAYLISTDELAY"),
+    std::make_pair("TDOR", "ORIGINALDATE"),
+    std::make_pair("TDRC", "DATE"),
+    // std::make_pair("TRDA", "DATE"), // id3 v2.3, replaced by TDRC in v2.4
+    // std::make_pair("TDAT", "DATE"), // id3 v2.3, replaced by TDRC in v2.4
+    // std::make_pair("TYER", "DATE"), // id3 v2.3, replaced by TDRC in v2.4
+    // std::make_pair("TIME", "DATE"), // id3 v2.3, replaced by TDRC in v2.4
+    std::make_pair("TDRL", "RELEASEDATE"),
+    std::make_pair("TDTG", "TAGGINGDATE"),
+    std::make_pair("TENC", "ENCODEDBY"),
+    std::make_pair("TEXT", "LYRICIST"),
+    std::make_pair("TFLT", "FILETYPE"),
+    //std::make_pair("TIPL", "INVOLVEDPEOPLE"), handled separately
+    std::make_pair("TIT1", "WORK"), // 'Work' in iTunes
+    std::make_pair("TIT2", "TITLE"),
+    std::make_pair("TIT3", "SUBTITLE"),
+    std::make_pair("TKEY", "INITIALKEY"),
+    std::make_pair("TLAN", "LANGUAGE"),
+    std::make_pair("TLEN", "LENGTH"),
+    //std::make_pair("TMCL", "MUSICIANCREDITS"), handled separately
+    std::make_pair("TMED", "MEDIA"),
+    std::make_pair("TMOO", "MOOD"),
+    std::make_pair("TOAL", "ORIGINALALBUM"),
+    std::make_pair("TOFN", "ORIGINALFILENAME"),
+    std::make_pair("TOLY", "ORIGINALLYRICIST"),
+    std::make_pair("TOPE", "ORIGINALARTIST"),
+    std::make_pair("TOWN", "OWNER"),
+    std::make_pair("TPE1", "ARTIST"),
+    std::make_pair("TPE2", "ALBUMARTIST"), // id3's spec says 'PERFORMER', but most programs use 'ALBUMARTIST'
+    std::make_pair("TPE3", "CONDUCTOR"),
+    std::make_pair("TPE4", "REMIXER"), // could also be ARRANGER
+    std::make_pair("TPOS", "DISCNUMBER"),
+    std::make_pair("TPRO", "PRODUCEDNOTICE"),
+    std::make_pair("TPUB", "LABEL"),
+    std::make_pair("TRCK", "TRACKNUMBER"),
+    std::make_pair("TRSN", "RADIOSTATION"),
+    std::make_pair("TRSO", "RADIOSTATIONOWNER"),
+    std::make_pair("TSOA", "ALBUMSORT"),
+    std::make_pair("TSOC", "COMPOSERSORT"),
+    std::make_pair("TSOP", "ARTISTSORT"),
+    std::make_pair("TSOT", "TITLESORT"),
+    std::make_pair("TSO2", "ALBUMARTISTSORT"), // non-standard, used by iTunes
+    std::make_pair("TSRC", "ISRC"),
+    std::make_pair("TSSE", "ENCODING"),
+    std::make_pair("TSST", "DISCSUBTITLE"),
+    // URL frames
+    std::make_pair("WCOP", "COPYRIGHTURL"),
+    std::make_pair("WOAF", "FILEWEBPAGE"),
+    std::make_pair("WOAR", "ARTISTWEBPAGE"),
+    std::make_pair("WOAS", "AUDIOSOURCEWEBPAGE"),
+    std::make_pair("WORS", "RADIOSTATIONWEBPAGE"),
+    std::make_pair("WPAY", "PAYMENTWEBPAGE"),
+    std::make_pair("WPUB", "PUBLISHERWEBPAGE"),
+    //std::make_pair("WXXX", "URL"), handled specially
+    // Other frames
+    std::make_pair("COMM", "COMMENT"),
+    //std::make_pair("USLT", "LYRICS"), handled specially
+    // Apple iTunes proprietary frames
+    std::make_pair("PCST", "PODCAST"),
+    std::make_pair("TCAT", "PODCASTCATEGORY"),
+    std::make_pair("TDES", "PODCASTDESC"),
+    std::make_pair("TGID", "PODCASTID"),
+    std::make_pair("WFED", "PODCASTURL"),
+    std::make_pair("MVNM", "MOVEMENTNAME"),
+    std::make_pair("MVIN", "MOVEMENTNUMBER"),
+    std::make_pair("GRP1", "GROUPING"),
+    std::make_pair("TCMP", "COMPILATION"),
+  };
+  const size_t frameTranslationSize = sizeof(frameTranslation) / sizeof(frameTranslation[0]);
 
-Map<String, String> &txxxMap()
-{
-  static Map<String, String> m;
-  if(m.isEmpty()) {
-    for(size_t i = 0; i < txxxFrameTranslationSize; ++i) {
-      String key = String(txxxFrameTranslation[i][0]).upper();
-      m[key] = txxxFrameTranslation[i][1];
-    }
-  }
-  return m;
-}
+  const std::pair<const char *, const char *> txxxFrameTranslation[] = {
+    std::make_pair("MUSICBRAINZ ALBUM ID",         "MUSICBRAINZ_ALBUMID"),
+    std::make_pair("MUSICBRAINZ ARTIST ID",        "MUSICBRAINZ_ARTISTID"),
+    std::make_pair("MUSICBRAINZ ALBUM ARTIST ID",  "MUSICBRAINZ_ALBUMARTISTID"),
+    std::make_pair("MUSICBRAINZ ALBUM RELEASE COUNTRY", "RELEASECOUNTRY"),
+    std::make_pair("MUSICBRAINZ ALBUM STATUS",     "RELEASESTATUS"),
+    std::make_pair("MUSICBRAINZ ALBUM TYPE",       "RELEASETYPE"),
+    std::make_pair("MUSICBRAINZ RELEASE GROUP ID", "MUSICBRAINZ_RELEASEGROUPID"),
+    std::make_pair("MUSICBRAINZ RELEASE TRACK ID", "MUSICBRAINZ_RELEASETRACKID"),
+    std::make_pair("MUSICBRAINZ WORK ID",          "MUSICBRAINZ_WORKID"),
+    std::make_pair("ACOUSTID ID",                  "ACOUSTID_ID"),
+    std::make_pair("ACOUSTID FINGERPRINT",         "ACOUSTID_FINGERPRINT"),
+    std::make_pair("MUSICIP PUID",                 "MUSICIP_PUID"),
+  };
+  const size_t txxxFrameTranslationSize = sizeof(txxxFrameTranslation) / sizeof(txxxFrameTranslation[0]);
 
-// list of deprecated frames and their successors
-static const TagLib::uint deprecatedFramesSize = 4;
-static const char *deprecatedFrames[][2] = {
-  {"TRDA", "TDRC"}, // 2.3 -> 2.4 (http://en.wikipedia.org/wiki/ID3)
-  {"TDAT", "TDRC"}, // 2.3 -> 2.4
-  {"TYER", "TDRC"}, // 2.3 -> 2.4
-  {"TIME", "TDRC"}, // 2.3 -> 2.4
-};
-
-Map<ByteVector,ByteVector> &deprecationMap()
-{
-  static Map<ByteVector,ByteVector> depMap;
-  if(depMap.isEmpty())
-    for(TagLib::uint i = 0; i < deprecatedFramesSize; ++i)
-      depMap[deprecatedFrames[i][0]] = deprecatedFrames[i][1];
-  return depMap;
-}
+  // list of deprecated frames and their successors
+  const std::pair<const char *, const char *> deprecatedFrames[] = {
+    std::make_pair("TRDA", "TDRC"), // 2.3 -> 2.4 (http://en.wikipedia.org/wiki/ID3)
+    std::make_pair("TDAT", "TDRC"), // 2.3 -> 2.4
+    std::make_pair("TYER", "TDRC"), // 2.3 -> 2.4
+    std::make_pair("TIME", "TDRC"), // 2.3 -> 2.4
+  };
+  const size_t deprecatedFramesSize = sizeof(deprecatedFrames) / sizeof(deprecatedFrames[0]);
+}  // namespace
 
 String Frame::frameIDToKey(const ByteVector &id)
 {
-  Map<ByteVector, String> &m = idMap();
-  if(m.contains(id))
-    return m[id];
-  if(deprecationMap().contains(id))
-    return m[deprecationMap()[id]];
-  return String::null;
+  ByteVector id24 = id;
+  for(size_t i = 0; i < deprecatedFramesSize; ++i) {
+    if(id24 == deprecatedFrames[i].first) {
+      id24 = deprecatedFrames[i].second;
+      break;
+    }
+  }
+  for(size_t i = 0; i < frameTranslationSize; ++i) {
+    if(id24 == frameTranslation[i].first)
+      return frameTranslation[i].second;
+  }
+  return String();
 }
 
 ByteVector Frame::keyToFrameID(const String &s)
 {
-  static Map<String, ByteVector> m;
-  if(m.isEmpty())
-    for(size_t i = 0; i < frameTranslationSize; ++i)
-      m[frameTranslation[i][1]] = frameTranslation[i][0];
-  if(m.contains(s.upper()))
-    return m[s];
-  return ByteVector::null;
+  const String key = s.upper();
+  for(size_t i = 0; i < frameTranslationSize; ++i) {
+    if(key == frameTranslation[i].second)
+      return frameTranslation[i].first;
+  }
+  return ByteVector();
 }
 
 String Frame::txxxToKey(const String &description)
 {
-  Map<String, String> &m = txxxMap();
-  String d = description.upper();
-  if(m.contains(d))
-    return m[d];
+  const String d = description.upper();
+  for(size_t i = 0; i < txxxFrameTranslationSize; ++i) {
+    if(d == txxxFrameTranslation[i].first)
+      return txxxFrameTranslation[i].second;
+  }
   return d;
 }
 
 String Frame::keyToTXXX(const String &s)
 {
-  static Map<String, String> m;
-  if(m.isEmpty())
-    for(size_t i = 0; i < txxxFrameTranslationSize; ++i)
-      m[txxxFrameTranslation[i][1]] = txxxFrameTranslation[i][0];
-  if(m.contains(s.upper()))
-    return m[s];
+  const String key = s.upper();
+  for(size_t i = 0; i < txxxFrameTranslationSize; ++i) {
+    if(key == txxxFrameTranslation[i].second)
+      return txxxFrameTranslation[i].first;
+  }
   return s;
 }
 
@@ -495,18 +482,21 @@ PropertyMap Frame::asProperties() const
   // workaround until this function is virtual
   if(id == "TXXX")
     return dynamic_cast< const UserTextIdentificationFrame* >(this)->asProperties();
-  else if(id[0] == 'T')
+  // Apple proprietary WFED (Podcast URL), MVNM (Movement Name), MVIN (Movement Number), GRP1 (Grouping) are in fact text frames.
+  if(id[0] == 'T' || id == "WFED" || id == "MVNM" || id == "MVIN" || id == "GRP1")
     return dynamic_cast< const TextIdentificationFrame* >(this)->asProperties();
-  else if(id == "WXXX")
+  if(id == "WXXX")
     return dynamic_cast< const UserUrlLinkFrame* >(this)->asProperties();
-  else if(id[0] == 'W')
+  if(id[0] == 'W')
     return dynamic_cast< const UrlLinkFrame* >(this)->asProperties();
-  else if(id == "COMM")
+  if(id == "COMM")
     return dynamic_cast< const CommentsFrame* >(this)->asProperties();
-  else if(id == "USLT")
+  if(id == "USLT")
     return dynamic_cast< const UnsynchronizedLyricsFrame* >(this)->asProperties();
-  else if(id == "UFID")
+  if(id == "UFID")
     return dynamic_cast< const UniqueFileIdentifierFrame* >(this)->asProperties();
+  if(id == "PCST")
+    return dynamic_cast< const PodcastFrame* >(this)->asProperties();
   PropertyMap m;
   m.unsupportedData().append(id);
   return m;
@@ -515,7 +505,6 @@ PropertyMap Frame::asProperties() const
 void Frame::splitProperties(const PropertyMap &original, PropertyMap &singleFrameProperties,
           PropertyMap &tiplProperties, PropertyMap &tmclProperties)
 {
-
   singleFrameProperties.clear();
   tiplProperties.clear();
   tmclProperties.clear();
@@ -550,8 +539,8 @@ public:
     {}
 
   ByteVector frameID;
-  uint frameSize;
-  uint version;
+  unsigned int frameSize;
+  unsigned int version;
 
   // flags
 
@@ -569,12 +558,12 @@ public:
 // static members (Frame::Header)
 ////////////////////////////////////////////////////////////////////////////////
 
-TagLib::uint Frame::Header::size()
+unsigned int Frame::Header::size()
 {
   return size(4);
 }
 
-TagLib::uint Frame::Header::size(uint version)
+unsigned int Frame::Header::size(unsigned int version)
 {
   switch(version) {
   case 0:
@@ -592,15 +581,15 @@ TagLib::uint Frame::Header::size(uint version)
 // public members (Frame::Header)
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Header::Header(const ByteVector &data, bool synchSafeInts)
+Frame::Header::Header(const ByteVector &data, bool synchSafeInts) :
+  d(new HeaderPrivate())
 {
-  d = new HeaderPrivate;
   setData(data, synchSafeInts);
 }
 
-Frame::Header::Header(const ByteVector &data, uint version)
+Frame::Header::Header(const ByteVector &data, unsigned int version) :
+  d(new HeaderPrivate())
 {
-  d = new HeaderPrivate;
   setData(data, version);
 }
 
@@ -611,10 +600,10 @@ Frame::Header::~Header()
 
 void Frame::Header::setData(const ByteVector &data, bool synchSafeInts)
 {
-  setData(data, uint(synchSafeInts ? 4 : 3));
+  setData(data, static_cast<unsigned int>(synchSafeInts ? 4 : 3));
 }
 
-void Frame::Header::setData(const ByteVector &data, uint version)
+void Frame::Header::setData(const ByteVector &data, unsigned int version)
 {
   d->version = version;
 
@@ -755,22 +744,22 @@ void Frame::Header::setFrameID(const ByteVector &id)
   d->frameID = id.mid(0, 4);
 }
 
-TagLib::uint Frame::Header::frameSize() const
+unsigned int Frame::Header::frameSize() const
 {
   return d->frameSize;
 }
 
-void Frame::Header::setFrameSize(uint size)
+void Frame::Header::setFrameSize(unsigned int size)
 {
   d->frameSize = size;
 }
 
-TagLib::uint Frame::Header::version() const
+unsigned int Frame::Header::version() const
 {
   return d->version;
 }
 
-void Frame::Header::setVersion(TagLib::uint version)
+void Frame::Header::setVersion(unsigned int version)
 {
   d->version = version;
 }
@@ -827,7 +816,7 @@ bool Frame::Header::dataLengthIndicator() const
 
 ByteVector Frame::Header::render() const
 {
-  ByteVector flags(2, char(0)); // just blank for the moment
+  ByteVector flags(2, static_cast<char>(0)); // just blank for the moment
 
   ByteVector v = d->frameID +
     (d->version == 3

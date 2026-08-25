@@ -1,0 +1,521 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#include "StdAfx.h"
+#include "../Common/StringUtil.h"
+#include "../Common/FileUtil.h"
+#include "../Common/MathParser.h"
+#include "../Common/StringParser.h"
+#include "LuaScript.h"
+#include "LuaHelper.h"
+#include "Measure.h"
+
+EXTERN_C int luaopen_rainmeter_string_utf8(lua_State* L);
+
+LuaScript::LuaScript(const MathParser& mathParser) :
+	m_MathParser(mathParser),
+	m_Ref(LUA_NOREF),
+	m_State(nullptr),
+	m_Unicode(false)
+{
+}
+
+LuaScript::~LuaScript()
+{
+	Uninitialize();
+}
+
+bool LuaScript::Initialize(const std::wstring& scriptFile)
+{
+	assert(!IsInitialized());
+
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
+	if (!fileData)
+	{
+		return false;
+	}
+
+	// Treat the script as Unicode if it has a BOM. This is determined before the state is created
+	// so that the scope GetState() returns carries the encoding of the script.
+	const auto encoding = FileUtil::GetEncoding(fileData.get(), fileSize);
+	m_Unicode = encoding != FileUtil::Encoding::ANSI;
+
+	if (m_State == nullptr)
+	{
+		// Initialize Lua
+		m_State = luaL_newstate();
+
+		luaL_openlibs(m_State);
+
+		// Register custom types and functions
+		RegisterGlobal(m_State);
+		RegisterMeasure(m_State);
+		RegisterMeter(m_State);
+		RegisterSkin(m_State);
+	}
+
+	auto L = GetState();
+
+	if (m_Unicode)
+	{
+		// We integrate the lua-utf8 module by adding functions directly to the standard string
+		// library under a "uc" prefix. Several functions have also been left out to minimize
+		// binary size. These are only added for a Unicode script, whose strings are UTF-8. In
+		// an ANSI script they are in the active code page instead.
+
+		// Stack: [string]
+		luaopen_rainmeter_string_utf8(L);
+
+		// Stack: []
+		lua_pop(L, 1);
+	}
+
+	std::wstring tmp = std::wstring(scriptFile, scriptFile.find_last_of(L'\\') + 1);
+	std::string file = m_Unicode ? StringUtil::NarrowUTF8(tmp) : StringUtil::Narrow(tmp);
+	file.insert(0, "@");
+
+	// Stack: []
+	bool scriptLoaded = false;
+	if (encoding == FileUtil::Encoding::UTF16LE)
+	{
+		const auto utf8Data = StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (int)((fileSize - 2) / sizeof(WCHAR)));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), file.c_str()) == 0;
+	}
+	else
+	{
+		// A UTF-8 script is already in the encoding Lua reads, but its BOM is not part of the chunk.
+		const size_t offset = (encoding == FileUtil::Encoding::UTF8) ? 3 : 0;
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get() + offset, fileSize - offset, file.c_str()) == 0;
+	}
+
+	if (scriptLoaded)
+	{
+		// Stack: [script]
+		// Create the table this script will reside in
+		lua_newtable(L);
+
+		// Stack: [script, table]
+		// Create the metatable that will store the global table
+		lua_createtable(L, 0, 1);
+
+		// Stack: [script, table, metatable]
+		// Push the global table
+		lua_pushvalue(L, LUA_GLOBALSINDEX);
+
+		// Stack: [script, table, metatable, globalTable]
+		// Set the __index of the table to be the global table
+		lua_setfield(L, -2, "__index");
+
+		// Stack: [script, table, metatable]
+		// Set the metatable for the script's table
+		lua_setmetatable(L, -2);
+
+		// Stack: [script, table]
+		// Put the table into the global table
+		m_Ref = luaL_ref(L, LUA_GLOBALSINDEX);
+
+		// Stack: [script]
+		lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+		// Stack: [script, table]
+		// Set the environment for the function to be run in to be the table that
+		// has been created for the script
+		lua_setfenv(L, -2);
+
+		// Stack: [script]
+		// Execute the Lua script
+		int result = lua_pcall(L, 0, 0, 0);
+		if (result == 0)
+		{
+			// Stack: []
+			m_File = scriptFile;
+			return true;
+		}
+		else
+		{
+			// Stack: [error]
+			LuaHelper::LogAndPopError();
+			Uninitialize();
+		}
+	}
+	else
+	{
+		// Stack: [error]
+		LuaHelper::LogAndPopError();
+	}
+
+	return false;
+}
+
+void LuaScript::Uninitialize()
+{
+	if (m_State)
+	{
+		lua_close(m_State);
+		m_State = nullptr;
+		m_File.clear();
+	}
+}
+
+bool LuaScript::IsFunction(const char* funcName)
+{
+	if (!IsInitialized()) return false;
+
+	auto L = GetState();
+
+	// Stack: []
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
+	lua_getfield(L, -1, funcName);
+
+	// Stack: [table, function]
+	const bool result = lua_isfunction(L, -1);
+	lua_pop(L, 2);
+
+	return result;
+}
+
+LuaResult LuaScript::RunFunction(const char* funcName)
+{
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
+
+	auto L = GetState();
+
+	// Stack: []
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
+	lua_getfield(L, -1, funcName);
+
+	// Stack: [table, function]
+	if (lua_pcall(L, 0, 0, 0))
+	{
+		// Stack: [table, error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 2);
+		return LuaResult::Fail(std::move(error));
+	}
+	else
+	{
+		// Stack: [table]
+		lua_pop(L, 1);
+		return LuaResult::Success();
+	}
+}
+
+LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType, double& numValue, std::wstring& strValue)
+{
+	valueType = LUA_TNIL;
+
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
+
+	auto L = GetState();
+
+	// Stack: []
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
+	lua_getfield(L, -1, funcName);
+
+	// Stack: [table, function]
+	if (lua_pcall(L, 0, 2, 0))
+	{
+		// Stack: [table, error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 2);
+		return LuaResult::Fail(std::move(error));
+	}
+	else
+	{
+		bool hasNumberResult = false;
+		bool hasStringResult = false;
+
+		auto getReturnedValue = [&]() -> void
+		{
+			int type = lua_type(L, -1);
+			switch (type)
+			{
+				case LUA_TNUMBER:
+					numValue = lua_tonumber(L, -1);
+					hasNumberResult = true;
+					break;
+
+				case LUA_TSTRING:
+					if (!hasStringResult)
+					{
+						size_t strLen = 0;
+						const char* str = lua_tolstring(L, -1, &strLen);
+						strValue = m_Unicode ?
+							StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+
+						hasStringResult = true;
+						if (!hasNumberResult)
+						{
+							// Only convert the string value to number if number value has not been set
+							numValue = strtod(str, nullptr);
+							hasNumberResult = true;
+						}
+					}
+					break;
+			}
+
+			lua_pop(L, 1);
+		};
+
+		// Stack: [table, returnValue1, returnValue2]
+		getReturnedValue();
+		getReturnedValue();
+
+		// Stack: [table]
+		lua_pop(L, 1);
+
+		valueType =
+			hasStringResult ? LUA_TSTRING :
+			hasNumberResult ? LUA_TNUMBER :
+			LUA_TNIL;
+		return LuaResult::Success();
+	}
+}
+
+LuaResult LuaScript::RunString(const std::wstring& str)
+{
+	if (!IsInitialized()) return LuaResult::Fail(L"Not initialized");
+
+	auto L = GetState();
+
+	const std::string narrowStr = m_Unicode ?
+		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
+
+	// Load the string as a Lua chunk
+	if (luaL_loadstring(L, narrowStr.c_str()))
+	{
+		// Stack: [error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 1);
+		return LuaResult::Fail(std::move(error));
+	}
+
+	// Stack: [chunk]
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [chunk, table]
+	// Set the environment of the chunk to our table.
+	lua_setfenv(L, -2);
+
+	// Stack: [chunk]
+	if (lua_pcall(L, 0, 0, 0))
+	{
+		// Stack: [error]
+		auto error = LuaHelper::ToWide(-1);
+		lua_pop(L, 1);
+		return LuaResult::Fail(std::move(error));
+	}
+
+	return LuaResult::Success();
+}
+
+bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring_view>& args, std::wstring& strValue)
+{
+	if (!IsInitialized()) return false;
+
+	auto L = GetState();
+
+	const std::string nFuncName = m_Unicode ?
+		StringUtil::NarrowUTF8(funcName) : StringUtil::Narrow(funcName);
+	if (!IsFunction(nFuncName.c_str()))
+	{
+		strValue = L"Not a valid function name: \"" + funcName + L"\"";
+		return false;
+	}
+
+	if (lua_checkstack(L, (int)args.size() + 2) == FALSE)
+	{
+		strValue = L"Lua: Could not increase the stack size";
+		return false;
+	}
+
+	// Stack: []
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
+	lua_getfield(L, -1, nFuncName.c_str());
+
+	// Stack: [table, function]
+	int numArgs = 0;
+	for (const auto& arg : args)
+	{
+		StringParser value(arg);
+		if (arg.size() > 1 && (arg.front() == L'\"' || arg.front() == L'\''))
+		{
+			const auto str = StringUtil::StripLeadingAndTrailingQuotes(arg, true);
+			const std::string nArg = m_Unicode ?
+				StringUtil::NarrowUTF8(str.data(), (int)str.length()) :
+				StringUtil::Narrow(str.data(), (int)str.length());
+
+			lua_pushlstring(L, nArg.c_str(), nArg.size());
+		}
+		else if (value.ConsumeRest(L"true"))
+		{
+			lua_pushboolean(L, 1);
+		}
+		else if (value.ConsumeRest(L"false"))
+		{
+			lua_pushboolean(L, 0);
+		}
+		else if (value.ConsumeRest(L"nil"))
+		{
+			lua_pushnil(L);
+		}
+		else
+		{
+			double num = 0.0;
+			if (!arg.empty() && arg.front() == L'(')
+			{
+				// CheckedParse needs a null terminated formula.
+				const std::wstring formula(arg);
+				const WCHAR* errMsg = m_MathParser.CheckedParse(formula.c_str(), &num);
+				if (errMsg)
+				{
+					strValue = L"Formula: ";
+					strValue += errMsg;
+					strValue += L" in parameter: \"";
+					strValue.append(arg);
+					strValue += L'"';
+
+					// Stack: [table, function, args...]
+					lua_pop(L, 2 + numArgs);
+					return false;
+				}
+			}
+			else
+			{
+				num = value.ConsumeDouble().value_or(0.0);
+			}
+
+			lua_pushnumber(L, num);
+		}
+		++numArgs;
+	}
+
+	// Stack: [table, function, args...]
+	bool result = true;
+	if (lua_pcall(L, numArgs, 1, 0))
+	{
+		// Stack: [table, error]
+		LuaHelper::LogAndPopError();
+		strValue.clear();
+		result = false;
+	}
+	else
+	{
+		// Stack: [table, returnValue]
+		int type = lua_type(L, -1);
+		if (type == LUA_TNUMBER)
+		{
+			double val = lua_tonumber(L, -1);
+			WCHAR buffer[128];
+			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+			Measure::RemoveTrailingZero(buffer, bufferLen);
+			strValue = buffer;
+		}
+		else if (type == LUA_TBOOLEAN)
+		{
+			strValue = (lua_toboolean(L, -1) == 0) ? L"0" : L"1";
+		}
+		else if (type == LUA_TSTRING)
+		{
+			size_t strLen = 0;
+			const char* str = lua_tolstring(L, -1, &strLen);
+			strValue = m_Unicode ?
+				StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+		}
+		else if (type == LUA_TNONE || type == LUA_TNIL)
+		{
+			strValue = L"Return type in function \"";
+			strValue += funcName;
+			strValue += L"\" not found or is nil";
+			result = false;
+		}
+		else
+		{
+			const char* t = lua_typename(L, type);
+			strValue = L"Invalid return type in function \"";
+			strValue += funcName;
+			strValue += L"\" (";
+			strValue += m_Unicode ?
+				StringUtil::WidenUTF8(t) : StringUtil::Widen(t);
+			strValue += L")";
+			result = false;
+		}
+
+		// Stack: [table, returnValue]
+		lua_pop(L, 1);
+	}
+
+	// Stack: [table]
+	lua_pop(L, 1);
+
+	return result;
+}
+
+bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strValue)
+{
+	if (!IsInitialized()) return false;
+
+	auto L = GetState();
+
+	bool result = true;
+
+	const std::string nVarName = m_Unicode ?
+		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
+
+	// Stack: []
+	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);
+
+	// Stack: [table]
+	lua_getfield(L, -1, nVarName.c_str());
+
+	// Stack: [table, variable]
+	int type = lua_type(L, -1);
+	if (type == LUA_TNUMBER)
+	{
+		double val = lua_tonumber(L, -1);
+		WCHAR buffer[128];
+		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+		Measure::RemoveTrailingZero(buffer, bufferLen);
+		strValue = buffer;
+	}
+	else if (type == LUA_TBOOLEAN)
+	{
+		strValue = (lua_toboolean(L, -1) == 0) ? L"0" : L"1";
+	}
+	else if (type == LUA_TSTRING)
+	{
+		size_t strLen = 0;
+		const char* str = lua_tolstring(L, -1, &strLen);
+		strValue = m_Unicode ?
+			StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
+	}
+	else if (type == LUA_TNONE || type == LUA_TNIL)
+	{
+		strValue = L"Variable \"";
+		strValue += varName;
+		strValue += L"\" not found or is nil";
+		result = false;
+	}
+	else
+	{
+		const char* t = lua_typename(L, type);
+		strValue = L"Invalid variable type (";
+		strValue += m_Unicode ?
+			StringUtil::WidenUTF8(t) : StringUtil::Widen(t);
+		strValue += L")";
+		result = false;
+	}
+
+	// Stack: [table, variable]
+	lua_pop(L, 2);
+
+	return result;
+}

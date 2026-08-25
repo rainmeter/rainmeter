@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</ProjectGuid>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4334;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="pcre\pcre16_byte_order.c" />
+    <ClCompile Include="pcre\pcre16_chartables.c" />
+    <ClCompile Include="pcre\pcre16_compile.c" />
+    <ClCompile Include="pcre\pcre16_config.c" />
+    <ClCompile Include="pcre\pcre16_dfa_exec.c" />
+    <ClCompile Include="pcre\pcre16_exec.c" />
+    <ClCompile Include="pcre\pcre16_fullinfo.c" />
+    <ClCompile Include="pcre\pcre16_get.c" />
+    <ClCompile Include="pcre\pcre16_globals.c" />
+    <ClCompile Include="pcre\pcre16_maketables.c" />
+    <ClCompile Include="pcre\pcre16_newline.c" />
+    <ClCompile Include="pcre\pcre16_ord2utf16.c" />
+    <ClCompile Include="pcre\pcre16_printint.c" />
+    <ClCompile Include="pcre\pcre16_refcount.c" />
+    <ClCompile Include="pcre\pcre16_string_utils.c" />
+    <ClCompile Include="pcre\pcre16_study.c" />
+    <ClCompile Include="pcre\pcre16_tables.c" />
+    <ClCompile Include="pcre\pcre16_ucd.c" />
+    <ClCompile Include="pcre\pcre16_utf16_utils.c" />
+    <ClCompile Include="pcre\pcre16_valid_utf16.c" />
+    <ClCompile Include="pcre\pcre16_version.c" />
+    <ClCompile Include="pcre\pcre16_xclass.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pcre\config.h" />
+    <ClInclude Include="pcre\pcre.h" />
+    <ClInclude Include="pcre\pcre_internal.h" />
+    <ClInclude Include="pcre\ucp.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

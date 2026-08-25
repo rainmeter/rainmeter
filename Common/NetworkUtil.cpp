@@ -1,14 +1,9 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "NetworkUtil.h"
 
-ULONG NetworkUtil::s_InterfaceCount = 0UL;
+ULONG NetworkUtil::s_InterfaceCount = 0;
 MIB_IF_TABLE2* NetworkUtil::s_InterfaceTable = nullptr;
 
 void NetworkUtil::Initialize()
@@ -22,8 +17,8 @@ void NetworkUtil::Finalize()
 
 bool NetworkUtil::UpdateInterfaceTable()
 {
-	static ULONGLONG s_LastUpdateTickCount = 0ULL;
-	const ULONGLONG updateInterval = 250ULL; // ms
+	static ULONGLONG s_LastUpdateTickCount = 0;
+	const ULONGLONG updateInterval = 250; // ms
 
 	ULONGLONG tickCount = GetTickCount64();
 	if (tickCount >= (s_LastUpdateTickCount + updateInterval))
@@ -46,7 +41,7 @@ ULONG NetworkUtil::FindBestInterface(LPCWSTR interfaceName)
 	{
 		if (_wcsicmp(interfaceName, L"BEST") == 0)
 		{
-			DWORD dwBestIndex = 0UL;
+			DWORD dwBestIndex = 0;
 			if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
 			{
 				return dwBestIndex;
@@ -62,7 +57,7 @@ ULONG NetworkUtil::FindBestInterface(LPCWSTR interfaceName)
 				ULONG bestDisconnected = ULONG_MAX;
 				MIB_IF_ROW2* table = s_InterfaceTable->Table;
 
-				for (ULONG i = 0UL; i < s_InterfaceCount; ++i)
+				for (ULONG i = 0; i < s_InterfaceCount; ++i)
 				{
 					bool found = useAlias ?
 						(_wcsicmp(interfaceName, table[i].Alias) == 0) :
@@ -105,7 +100,7 @@ ULONG NetworkUtil::FindBestInterface(LPCWSTR interfaceName)
 			if (index != ULONG_MAX) return index;
 		}
 	}
-	return 0UL;
+	return 0;
 }
 
 ULONG NetworkUtil::GetIndexFromIfIndex(const ULONG ifIndex)
@@ -113,7 +108,7 @@ ULONG NetworkUtil::GetIndexFromIfIndex(const ULONG ifIndex)
 	if (s_InterfaceTable)
 	{
 		MIB_IF_ROW2* table = s_InterfaceTable->Table;
-		for (ULONG i = 0UL; i < s_InterfaceCount; ++i)
+		for (ULONG i = 0; i < s_InterfaceCount; ++i)
 		{
 			if (ifIndex == table[i].InterfaceIndex)
 			{
@@ -121,7 +116,7 @@ ULONG NetworkUtil::GetIndexFromIfIndex(const ULONG ifIndex)
 			}
 		}
 	}
-	return 0UL;
+	return 0;
 }
 
 LPCWSTR NetworkUtil::GetInterfaceTypeString(const ULONG ifIndex)
@@ -173,5 +168,5 @@ void NetworkUtil::DisposeInterfaceTable()
 		FreeMibTable(s_InterfaceTable);
 		s_InterfaceTable = nullptr;
 	}
-	s_InterfaceCount = 0UL;
+	s_InterfaceCount = 0;
 }

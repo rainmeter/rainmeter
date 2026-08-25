@@ -38,7 +38,7 @@ namespace TagLib {
 
     /*!
      * This class implements ID3v2 extended headers.  It attempts to follow,
-     * both  semantically and programatically, the structure specified in
+     * both semantically and programmatically, the structure specified in
      * the ID3v2 standard.  The API is based on the properties of ID3v2 extended
      * headers specified there.  If any of the terms used in this documentation
      * are unclear please check the specification in the linked section.
@@ -62,7 +62,7 @@ namespace TagLib {
        * Returns the size of the extended header.  This is variable for the
        * extended header.
        */
-      uint size() const;
+      unsigned int size() const;
 
       /*!
        * Sets the data that will be used as the extended header.  Since the
@@ -88,6 +88,6 @@ namespace TagLib {
       ExtendedHeaderPrivate *d;
     };
 
-  }
-}
+  }  // namespace ID3v2
+}  // namespace TagLib
 #endif

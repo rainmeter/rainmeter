@@ -1,9 +1,4 @@
-﻿/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 using System;
 using System.Drawing;
@@ -50,7 +45,7 @@ namespace InputText
         {
             if (_Numeric)
             {
-                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar)) 
+                if (!char.IsControl(e.KeyChar) && (!char.IsDigit(e.KeyChar))
                     && (e.KeyChar != '.') && (e.KeyChar != '-'))
                 {
                     e.Handled = true;
@@ -71,7 +66,7 @@ namespace InputText
         }
 
         // All exceptions are swallowed for the sake of this example.  Since the majority
-        // (if not all) of these are rather simple in nature, debugging without errors 
+        // (if not all) of these are rather simple in nature, debugging without errors
         // should be fairly simple anyway.
         //
         // However, if you wanted to log errors, a simple way would be to add something like

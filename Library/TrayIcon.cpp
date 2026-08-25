@@ -1,9 +1,4 @@
-/* Copyright (C) 2004 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "TrayIcon.h"
@@ -12,12 +7,14 @@
 #include "Util.h"
 #include "Rainmeter.h"
 #include "DialogAbout.h"
+#include "DialogDebug.h"
 #include "DialogManage.h"
-#include "GameMode.h"
 #include "System.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
 #include "../Version.h"
+#include <ole2.h>  // For Gdiplus.h.
+#include <gdiplus.h>
 
 #define RAINMETER_OFFICIAL		L"https://www.rainmeter.net"
 #define RAINMETER_HELP			L"https://docs.rainmeter.net"
@@ -38,16 +35,53 @@ enum INTERVAL
 
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
 
-using namespace Gdiplus;
+namespace {
+
+bool EnsureGdiplusInitialized()
+{
+	static bool s_Initialized = false;
+	if (s_Initialized) return true;
+
+	// We are never going to call GdiplusShutdown, but that should be OK!
+	Gdiplus::GdiplusStartupInput startupInput;
+	ULONG_PTR token;
+	s_Initialized = Gdiplus::GdiplusStartup(&token, &startupInput, nullptr) == Gdiplus::Ok;
+	return s_Initialized;
+}
+
+}  // namespace
+
+struct TrayIcon::ImageData
+{
+	ImageData() :
+		color1(0, 100, 0),
+		color2(0, 255, 0),
+		bitmap()
+	{
+	}
+
+	Gdiplus::Color color1;
+	Gdiplus::Color color2;
+	std::unique_ptr<Gdiplus::Bitmap> bitmap;
+};
+
+bool ConvertImageToBmpFile(const std::wstring& source, const std::wstring& target)
+{
+	if (!EnsureGdiplusInitialized()) return false;
+
+	Gdiplus::Bitmap bitmap(source.c_str());
+	if (bitmap.GetLastStatus() != Gdiplus::Ok) return false;
+
+	const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
+	return bitmap.Save(target.c_str(), &bmpClsid) == Gdiplus::Ok;
+}
 
 TrayIcon::TrayIcon() :
 	m_Window(nullptr),
 	m_Icon(),
 	m_Measure(),
 	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
-	m_Color1(0, 100, 0),
-	m_Color2(0, 255, 0),
-	m_Bitmap(),
+	m_ImageData(std::make_unique<ImageData>()),
 	m_Values(),
 	m_Pos(),
 	m_Notification(TRAY_NOTIFICATION_NONE),
@@ -62,8 +96,6 @@ TrayIcon::~TrayIcon()
 	KillTimer(m_Window, TIMER_TRAYMEASURE);
 	RemoveTrayIcon();
 
-	delete m_Bitmap;
-	m_Bitmap = nullptr;
 	delete m_Measure;
 	m_Measure = nullptr;
 
@@ -129,7 +161,7 @@ bool TrayIcon::IsTrayIconReady()
 
 	HRESULT hr = Shell_NotifyIconGetRect(&nii, &rect);
 	if (FAILED(hr)) return false;
-	
+
 	return true;
 }
 
@@ -204,14 +236,16 @@ HICON TrayIcon::CreateTrayIcon(double value)
 	{
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
 		{
+			if (!EnsureGdiplusInitialized()) return GetIcon(IDI_RAINMETER);
+
 			m_Values[m_Pos] = value;
 			m_Pos = (m_Pos + 1) % TRAYICON_SIZE;
 
-			Bitmap trayBitmap(TRAYICON_SIZE, TRAYICON_SIZE);
-			Graphics graphics(&trayBitmap);
-			graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+			Gdiplus::Bitmap trayBitmap(TRAYICON_SIZE, TRAYICON_SIZE);
+			Gdiplus::Graphics graphics(&trayBitmap);
+			graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-			Point points[TRAYICON_SIZE + 2];
+			Gdiplus::Point points[TRAYICON_SIZE + 2];
 			points[0].X = 0;
 			points[0].Y = TRAYICON_SIZE;
 			points[TRAYICON_SIZE + 1].X = TRAYICON_SIZE - 1;
@@ -223,17 +257,17 @@ HICON TrayIcon::CreateTrayIcon(double value)
 				points[i + 1].Y = (int)(TRAYICON_SIZE * (1.0 - m_Values[(m_Pos + i) % TRAYICON_SIZE]));
 			}
 
-			SolidBrush brush(m_Color1);
+			Gdiplus::SolidBrush brush(m_ImageData->color1);
 			graphics.FillRectangle(&brush, 0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
 
-			SolidBrush brush2(m_Color2);
+			Gdiplus::SolidBrush brush2(m_ImageData->color2);
 			graphics.FillPolygon(&brush2, points, TRAYICON_SIZE + 2);
 
 			HICON icon = nullptr;
 			trayBitmap.GetHICON(&icon);
 			return icon;
 		}
-		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_Bitmap || !m_Icons.empty()))
+		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_ImageData->bitmap || !m_Icons.empty()))
 		{
 			if (!m_Icons.empty())
 			{
@@ -248,24 +282,26 @@ HICON TrayIcon::CreateTrayIcon(double value)
 			}
 			else
 			{
+				if (!EnsureGdiplusInitialized()) return GetIcon(IDI_RAINMETER);
+
 				int frame = 0;
 				int frameCount = 0;
 				int newX, newY;
 
-				if (m_Bitmap->GetWidth() > m_Bitmap->GetHeight())
+				if (m_ImageData->bitmap->GetWidth() > m_ImageData->bitmap->GetHeight())
 				{
-					frameCount = m_Bitmap->GetWidth() / TRAYICON_SIZE;
+					frameCount = m_ImageData->bitmap->GetWidth() / TRAYICON_SIZE;
 				}
 				else
 				{
-					frameCount = m_Bitmap->GetHeight() / TRAYICON_SIZE;
+					frameCount = m_ImageData->bitmap->GetHeight() / TRAYICON_SIZE;
 				}
 
 				// Select the correct frame linearly
 				frame = (int)(value * frameCount);
 				frame = min((frameCount - 1), frame);
 
-				if (m_Bitmap->GetWidth() > m_Bitmap->GetHeight())
+				if (m_ImageData->bitmap->GetWidth() > m_ImageData->bitmap->GetHeight())
 				{
 					newX = frame * TRAYICON_SIZE;
 					newY = 0;
@@ -276,13 +312,13 @@ HICON TrayIcon::CreateTrayIcon(double value)
 					newY = frame * TRAYICON_SIZE;
 				}
 
-				Bitmap trayBitmap(TRAYICON_SIZE, TRAYICON_SIZE);
-				Graphics graphics(&trayBitmap);
-				graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+				Gdiplus::Bitmap trayBitmap(TRAYICON_SIZE, TRAYICON_SIZE);
+				Gdiplus::Graphics graphics(&trayBitmap);
+				graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
 				// Blit the image
-				Rect r(0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
-				graphics.DrawImage(m_Bitmap, r, newX, newY, TRAYICON_SIZE, TRAYICON_SIZE, UnitPixel);
+				Gdiplus::Rect r(0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
+				graphics.DrawImage(m_ImageData->bitmap.get(), r, newX, newY, TRAYICON_SIZE, TRAYICON_SIZE, Gdiplus::UnitPixel);
 
 				HICON icon = nullptr;
 				trayBitmap.GetHICON(&icon);
@@ -319,19 +355,19 @@ void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const 
 
 void TrayIcon::ShowWelcomeNotification()
 {
-	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
+	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(IDS_Welcome), GetString(IDS_ClickToManage));
 }
 
 void TrayIcon::ShowUpdateNotification(LPCWSTR newVersion)
 {
-	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
-	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
+	std::wstring text = GetFormattedString(IDS_ClickToDownload, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(IDS_UpdateAvailable), text.c_str());
 }
 
 void TrayIcon::ShowInstallUpdateNotification(LPCWSTR newVersion)
 {
-	std::wstring text = GetFormattedString(ID_STR_CLICK_TO_INSTALL, newVersion);
-	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(ID_STR_INSTALL_NEW_VERSION), text.c_str());
+	std::wstring text = GetFormattedString(IDS_ClickToInstall, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(IDS_InstallNewVersion), text.c_str());
 }
 
 void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)
@@ -359,8 +395,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 	delete m_Measure;
 	m_Measure = nullptr;
 
-	delete m_Bitmap;
-	m_Bitmap = nullptr;
+	m_ImageData->bitmap.reset();
 
 	std::vector<HICON>::const_iterator iter = m_Icons.begin();
 	for ( ; iter != m_Icons.end(); ++iter)
@@ -391,27 +426,27 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			GetRainmeter().SetCurrentParser(oldParser);
 		}
 
-		const WCHAR* type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE").c_str();
-		if (_wcsicmp(type, L"NONE") == 0)
+		static constexpr ConfigParser::EnumOption<TRAY_METER_TYPE> s_MeterTypes[] =
 		{
-			// Use main icon
-		}
-		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
-		{
-			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
+			{ L"NONE", TRAY_METER_TYPE_NONE },  // Use main icon
+			{ L"HISTOGRAM", TRAY_METER_TYPE_HISTOGRAM },
+			{ L"BITMAP", TRAY_METER_TYPE_BITMAP },
+		};
+		m_MeterType = parser.ReadEnum(L"TrayMeasure", L"TrayMeter",
+			m_Measure ? TRAY_METER_TYPE_HISTOGRAM : TRAY_METER_TYPE_NONE, s_MeterTypes);
 
+		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
+		{
 			auto toARGB = [](const D2D1_COLOR_F& color)
 			{
 				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
 			};
 
-			m_Color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
-			m_Color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
+			m_ImageData->color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
+			m_ImageData->color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
-		else if (_wcsicmp(type, L"BITMAP") == 0)
+		else if (m_MeterType == TRAY_METER_TYPE_BITMAP)
 		{
-			m_MeterType = TRAY_METER_TYPE_BITMAP;
-
 			std::wstring imageName = parser.ReadString(L"TrayMeasure", L"TrayBitmap", L"");
 
 			// Load the bitmaps if defined
@@ -440,21 +475,23 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 				if (m_Icons.empty())
 				{
 					// No icons found so load as bitmap
-					delete m_Bitmap;
-					m_Bitmap = new Bitmap(imagePath);
-					Status status = m_Bitmap->GetLastStatus();
-					if (Ok != status)
+					m_ImageData->bitmap.reset();
+					if (EnsureGdiplusInitialized())
 					{
-						delete m_Bitmap;
-						m_Bitmap = nullptr;
-						LogWarningF(L"Bitmap image not found: %s", imagePath);
+						m_ImageData->bitmap.reset(new Gdiplus::Bitmap(imagePath));
+						Gdiplus::Status status = m_ImageData->bitmap->GetLastStatus();
+						if (Gdiplus::Ok != status)
+						{
+							m_ImageData->bitmap.reset();
+							LogWarningF(L"Bitmap image not found: %s", imagePath);
+						}
+					}
+					else
+					{
+						LogWarningF(L"Failed to initialize image loader for: %s", imagePath);
 					}
 				}
 			}
-		}
-		else
-		{
-			LogErrorF(L"No such TrayMeter: %s", type);
 		}
 
 		TryAddTrayIcon();
@@ -473,49 +510,6 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrayIcon* tray = GetRainmeter().GetTrayIcon();
-
-	// When in non-layout enabled "Game mode", only process
-	// the toggling of game mode and exit.
-	if (GetGameMode().IsEnabled())
-	{
-		switch (uMsg)
-		{
-		case WM_COMMAND:
-			switch (wParam)
-			{
-			case IDM_GAMEMODE_STOP:
-				GetGameMode().ChangeStateManual(true);
-				break;
-
-			case IDM_QUIT:
-				PostQuitMessage(0);
-				break;
-			}
-			break;
-
-		case WM_TRAY_NOTIFYICON:
-			{
-				UINT uMouseMsg = (UINT)lParam;
-				switch (uMouseMsg)
-				{
-				case WM_RBUTTONDOWN:
-					tray->m_TrayContextMenuEnabled = true;
-					break;
-
-				case WM_RBUTTONUP:
-					if (tray->m_TrayContextMenuEnabled)
-					{
-						POINT pos = System::GetCursorPosition();
-						GetRainmeter().ShowContextMenu(pos, nullptr);
-					}
-					break;
-				}
-			}
-			break;
-		}
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
 	switch (uMsg)
 	{
 	case WM_COMMAND:
@@ -523,6 +517,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 		case IDM_MANAGE:
 			DialogManage::Open();
+			break;
+
+		case IDM_DEBUG:
+			DialogDebug::Open();
 			break;
 
 		case IDM_ABOUT:
@@ -549,26 +547,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			PostMessage(GetRainmeter().GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)nullptr, (LPARAM)nullptr);
 			break;
 
-		case IDM_SHOWLOGFILE:
-			GetRainmeter().ShowLogFile();
-			break;
-
-		case IDM_STARTLOG:
-			GetLogger().StartLogFile();
-			break;
-
-		case IDM_STOPLOG:
-			GetLogger().StopLogFile();
-			break;
-
-		case IDM_DELETELOGFILE:
-			GetLogger().DeleteLogFile();
-			break;
-
-		case IDM_DEBUGLOG:
-			GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
-			break;
-
 		case IDM_DISABLEDRAG:
 			GetRainmeter().SetDisableDragging(!GetRainmeter().GetDisableDragging());
 			break;
@@ -583,22 +561,6 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		case IDM_OPENSKINSFOLDER:
 			GetRainmeter().OpenSkinFolder();
-			break;
-
-		case IDM_GAMEMODE_START:
-			GetGameMode().ChangeStateManual(false);
-			break;
-
-		case IDM_GAMEMODE_STOP:
-			GetGameMode().ChangeStateManual(true);
-			break;
-
-		case IDM_GAMEMODE_FULLSCREEN:
-			GetGameMode().SetFullScreenMode(!GetGameMode().GetFullScreenMode());
-			break;
-
-		case IDM_GAMEMODE_PROCESSLIST:
-			GetGameMode().SetProcessListMode(!GetGameMode().GetProcessListMode());
 			break;
 
 		default:
@@ -619,32 +581,19 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				{
 					GetRainmeter().ToggleSkinWithID(mID);
 				}
-				else if (mID >= ID_GAMEMODE_ONSTART_FIRST && mID <= ID_GAMEMODE_ONSTART_LAST)
-				{
-					UINT index = mID - ID_GAMEMODE_ONSTART_FIRST;
-					GetGameMode().SetOnStartAction(index);
-				}
-				else if (mID >= ID_GAMEMODE_ONSTOP_FIRST && mID <= ID_GAMEMODE_ONSTOP_LAST)
-				{
-					UINT index = mID - ID_GAMEMODE_ONSTOP_FIRST;
-					GetGameMode().SetOnStopAction(index);
-				}
 				else
 				{
 					// Forward the message to correct window
 					int index = (int)(wParam >> 16);
-					const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
-
+					const auto& windows = GetRainmeter().GetAllSkins();
 					if (index < (int)windows.size())
 					{
-						std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
-						for ( ; iter != windows.end(); ++iter)
+						for (const auto& iter : windows)
 						{
 							--index;
 							if (index < 0)
 							{
-								Skin* skin = (*iter).second;
-								SendMessage(skin->GetWindow(), WM_COMMAND, mID, 0);
+								SendMessage(iter.second->GetWindow(), WM_COMMAND, mID, lParam);
 								break;
 							}
 						}
@@ -709,7 +658,14 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 			case WM_LBUTTONUP:
 			case WM_LBUTTONDBLCLK:
-				DialogManage::Open();
+				if (IsCtrlKeyDown())
+				{
+					DialogDebug::Open();
+				}
+				else
+				{
+					DialogManage::Open();
+				}
 				break;
 
 			case NIN_BALLOONUSERCLICK:

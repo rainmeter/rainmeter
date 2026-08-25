@@ -1,0 +1,6 @@
+# Normalize text files to LF by default.
+* text=auto eol=lf
+
+# These source directories intentionally use CRLF in working trees.
+Build/Skins/** text=auto eol=crlf
+Build/Layouts/** text=auto eol=crlf

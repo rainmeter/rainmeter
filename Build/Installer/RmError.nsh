@@ -1,9 +1,4 @@
-﻿/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+; Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 ; Error levels (for silent install)
 !define ERROR_UNSUPPORTED	3
@@ -52,7 +47,7 @@ Var LogFile
 			FileWriteUTF16LE $9 "Error (${ERROR})   : "
 			${Switch} ${ERROR}
 			${Case} ${ERROR_UNSUPPORTED}
-				FileWriteUTF16LE $9 "Rainmeter requires at least Windows 7 (SP1) with the Platform Update installed."
+				FileWriteUTF16LE $9 "Rainmeter requires Windows 10 version 1709 or later."
 				${Break}
 			${Case} ${ERROR_NOTADMIN}
 				FileWriteUTF16LE $9 "Adminstrative rights required."

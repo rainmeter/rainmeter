@@ -1,12 +1,8 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "DialogInstall.h"
+#include "../Common/Map.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Platform.h"
 #include "SkinInstaller.h"
@@ -32,13 +28,9 @@ inline bool IsWin32Build()
 #endif
 }
 
-/*
-** Constructor.
-**
-*/
-DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
-	m_TabInstall(wnd),
+DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 	m_HeaderBitmap(),
+	m_ScaledHeaderBitmap(),
 	m_InstallThread(),
 	m_PackageUnzFile(),
 	m_PackageFileName(file),
@@ -54,24 +46,26 @@ DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 1, settingsFile.c_str()) != 0;
 }
 
-/*
-** Destructor.
-**
-*/
 DialogInstall::~DialogInstall()
 {
+	if (m_Window)
+	{
+		SendMessage(GetControl(Id_HeaderBitmap), STM_SETIMAGE, IMAGE_BITMAP, 0);
+	}
+
+	if (m_ScaledHeaderBitmap) DeleteObject(m_ScaledHeaderBitmap);
+	if (m_HeaderBitmap) DeleteObject(m_HeaderBitmap);
+
 	if (m_PackageUnzFile)
 	{
 		unzClose(m_PackageUnzFile);
 	}
 }
 
-/*
-** Creates the dialog.
-**
-*/
 void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
+	(void)hInstance;
+
 	// Prompt to select .rmskin file if needed
 	if (!*lpCmdLine)
 	{
@@ -79,11 +73,13 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.lpstrFilter = L"Rainmeter skin file (.rmskin)\0*.rmskin;*.zip";
+		std::wstring filter = GetString(IDS_SkinFileRmskin);
+		filter.append(L"\0*.rmskin;*.zip", 15);
+		ofn.lpstrFilter = filter.c_str();
 		ofn.nFilterIndex = 1;
 		ofn.lpstrFile = buffer;
 		ofn.nMaxFile = _countof(buffer);
-		ofn.lpstrTitle = L"Select Rainmeter skin file";
+		ofn.lpstrTitle = GetString(IDS_SelectRainmeterSkinFile);
 		ofn.lpstrDefExt = L"rmskin";
 		ofn.Flags = OFN_FILEMUSTEXIST;
 
@@ -98,124 +94,150 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	HANDLE hMutex = nullptr;
 	if (IsRunning(L"Rainmeter Skin Installer", &hMutex))
 	{
-		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Installer");
+		HWND hwnd = FindWindow(L"#32770", GetString(IDS_RainmeterSkinInstaller));
 		SetForegroundWindow(hwnd);
 	}
 	else
 	{
-		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_INSTALL_DIALOG), nullptr, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+		DialogInstall dialog(lpCmdLine);
+		if (!dialog.ReadPackage())
+		{
+			if (dialog.m_ErrorMessage.empty())
+			{
+				dialog.m_ErrorMessage = GetFormattedString(IDS_InvalidPackage, PathFindFileName(dialog.m_PackageFileName.c_str()));
+				dialog.m_ErrorMessage += L"\n\n";
+				dialog.m_ErrorMessage += GetString(IDS_SkinPackagerRequired);
+			}
+
+			MessageBox(nullptr, dialog.m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
+		}
+		else
+		{
+			c_Dialog = &dialog;
+			dialog.ShowDialogWindow(
+				GetString(IDS_RainmeterSkinInstaller),
+				0, 0, 266, dialog.m_HeaderBitmap ? 250 : 213,
+				DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
+				WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
+				nullptr,
+				false);
+			c_Dialog = nullptr;
+		}
+
 		ReleaseMutex(hMutex);
 		hMutex = nullptr;
 	}
 }
 
-OldDialog::Tab& DialogInstall::GetActiveTab()
+INT_PTR DialogInstall::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	return m_TabInstall;
-}
+	const INT_PTR baseResult = Dialog::HandleMessage(uMsg, wParam, lParam);
 
-INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (!c_Dialog)
+	switch (uMsg)
 	{
-		if (uMsg == WM_INITDIALOG)
-		{
-			c_Dialog = new DialogInstall(hWnd, (const WCHAR*)lParam);
-			return c_Dialog->OnInitDialog(wParam, lParam);
-		}
-	}
-	else
-	{
-		switch (uMsg)
-		{
-		case WM_COMMAND:
-			return c_Dialog->OnCommand(wParam, lParam);
+	case WM_INITDIALOG:
+		return OnInitDialog(wParam, lParam);
 
-		case WM_CLOSE:
-			if (!c_Dialog->m_InstallThread)
-			{
-				EndDialog(hWnd, 0);
-			}
-			return TRUE;
+	case WM_COMMAND:
+		return OnCommand(wParam, lParam);
 
-		case WM_DESTROY:
-			delete c_Dialog;
-			c_Dialog = nullptr;
-			return FALSE;
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
+
+	case WM_CLOSE:
+		if (!m_InstallThread)
+		{
+			EndDialog(m_Window, 0);
 		}
+		return TRUE;
 	}
 
-	return FALSE;
+	return baseResult;
 }
 
 INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
+	const short yOffset = m_HeaderBitmap ? 0 : -37;
+	const Control controls[] =
+	{
+		Control::Bitmap(DialogInstall::Id_HeaderBitmap, 0,
+			0, 0, 266, 37,
+			m_HeaderBitmap ? WS_VISIBLE : 0, 0),
+		Control::Button(DialogInstall::Id_AdvancedButton, IDS_Advanced,
+			6, (short)(231 + yOffset), 70, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Button(DialogInstall::Id_InstallButton, IDS_Install,
+			155, (short)(231 + yOffset), 50, 14,
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
+		Control::Button(IDCANCEL, IDS_Cancel,
+			210, (short)(231 + yOffset), 50, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Tab(DialogInstall::Id_Tab, 0,
+			6, (short)(42 + yOffset), 254, 185,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	AddPage(m_TabInstall);
+
 	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
 	SendMessage(m_Window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);    // Taskbar icon:  32x32
 
-	SetDialogFont();
+	HWND item = GetControl(DialogInstall::Id_AdvancedButton);
+	Dialog::SetMenuButton(item);
 
-	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
-	OldDialog::SetMenuButton(item);
-
-	if (ReadPackage())
+	item = GetControl(DialogInstall::Id_HeaderBitmap);
+	if (m_HeaderBitmap)
 	{
-		item = GetDlgItem(m_Window, IDC_INSTALL_HEADER_BITMAP);
-		if (m_HeaderBitmap)
-		{
-			SendMessage(item, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_HeaderBitmap);
-		}
-		else
-		{
-			RECT r = { 0 };
-			GetClientRect(item, &r);
-			ShowWindow(item, SW_HIDE);
-			int yDiff = r.bottom;
-
-			// Move all controls on the main dialog up to "fill" header area.
-			int controlIds[] = { IDC_INSTALL_TAB, IDC_INSTALL_ADVANCED_BUTTON, IDC_INSTALL_INSTALL_BUTTON, IDCANCEL, 0 };
-			for (int i = 0; i < _countof(controlIds); ++i)
-			{
-				HWND control = controlIds[i] ? GetDlgItem(m_Window, controlIds[i]) : m_TabInstall.GetWindow();
-				GetWindowRect(control, &r);
-				MapWindowPoints(nullptr, m_Window, (POINT*)&r, sizeof(RECT) / sizeof(POINT));
-				MoveWindow(control, r.left, r.top - yDiff, r.right - r.left, r.bottom - r.top, TRUE);
-			}
-
-			// Remove blank area at the bottom of the dialog and center it.
-			GetWindowRect(m_Window, &r);
-			MoveWindow(m_Window, r.left, r.top + (yDiff / 2), r.right - r.left, r.bottom - r.top - yDiff, TRUE);
-		}
-
-		m_TabInstall.Activate();
-	}
-	else
-	{
-		if (m_ErrorMessage.empty())
-		{
-			m_ErrorMessage = L"Invalid package:\n";
-			m_ErrorMessage += PathFindFileName(m_PackageFileName.c_str());
-			m_ErrorMessage += L"\n\nThe Skin Packager tool must be used to create valid .rmskin packages.";
-		}
-
-		MessageBox(nullptr, m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
-		EndDialog(m_Window, 0);
+		UpdateHeaderBitmap();
 	}
 
-	return TRUE;
+	m_TabInstall.Activate();
+
+	return FALSE;
+}
+
+void DialogInstall::HandleDpiChange()
+{
+	UpdateHeaderBitmap();
+}
+
+void DialogInstall::UpdateHeaderBitmap()
+{
+	if (!m_HeaderBitmap) return;
+
+	HWND item = GetControl(Id_HeaderBitmap);
+	RECT rect = { 0 };
+	if (!item || !GetClientRect(item, &rect)) return;
+
+	const int width = rect.right - rect.left;
+	const int height = rect.bottom - rect.top;
+	if (width <= 0 || height <= 0) return;
+
+	HBITMAP bitmap = (HBITMAP)CopyImage(
+		m_HeaderBitmap,
+		IMAGE_BITMAP,
+		width,
+		height,
+		LR_CREATEDIBSECTION);
+	if (!bitmap) return;
+
+	SendMessage(item, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bitmap);
+	if (m_ScaledHeaderBitmap) DeleteObject(m_ScaledHeaderBitmap);
+	m_ScaledHeaderBitmap = bitmap;
 }
 
 INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_INSTALL_ADVANCED_BUTTON:
+	case DialogInstall::Id_AdvancedButton:
 		{
-			RECT r = { 0 };
-			GetWindowRect((HWND)lParam, &r);
 			HMENU menu = LoadMenu(GetInstanceHandle(), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
+			ModifyMenu(subMenu, IDM_INSTALL_BACKUPSKINS, MF_STRING | MF_BYCOMMAND, IDM_INSTALL_BACKUPSKINS, GetString(IDS_BackupSkins));
+			ModifyMenu(subMenu, IDM_INSTALL_SYSTEMFONTS, MF_STRING | MF_BYCOMMAND, IDM_INSTALL_SYSTEMFONTS, GetString(IDS_InstallFontsToSystem));
 
 			if (m_PackageSkins.empty() || m_MergeSkins || m_BackupPackage)
 			{
@@ -235,23 +257,15 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(subMenu, IDM_INSTALL_SYSTEMFONTS, (m_SystemFonts ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
 			}
 
-			const WCHAR* formatName = m_PackageFormat == PackageFormat::New ? L"New format" : L"Old format";
+			const WCHAR* formatName = GetString(m_PackageFormat == PackageFormat::New ? IDS_NewFormat : IDS_OldFormat);
 			ModifyMenu(subMenu, IDM_INSTALL_FORMAT, MF_STRING | MF_GRAYED | MF_BYCOMMAND, IDM_INSTALL_FORMAT, formatName);
 
-			TrackPopupMenu(
-				subMenu,
-				TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				r.left,
-				--r.bottom,
-				0,
-				m_Window,
-				nullptr);
-
+			Dialog::ShowMenuButtonPopupMenu(subMenu, (HWND)lParam, m_Window);
 			DestroyMenu(menu);
 		}
 		break;
 
-	case IDC_INSTALL_INSTALL_BUTTON:
+	case DialogInstall::Id_InstallButton:
 		BeginInstall();
 		break;
 
@@ -328,7 +342,7 @@ bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 	do
 	{
 		BYTE buffer[16384] = { 0 };
-		DWORD written = 0UL;
+		DWORD written = 0;
 		read = unzReadCurrentFile(m_PackageUnzFile, buffer, _countof(buffer));
 		if (read < 0 || !WriteFile(hFile, (LPCVOID)buffer, read, &written, nullptr) || read != written)
 		{
@@ -570,13 +584,11 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 	const bool newFormat = m_PackageFormat == PackageFormat::New;
 	const WCHAR* section = newFormat ? L"rmskin" : L"Rainstaller";
 
-	const HWND window = m_TabInstall.GetWindow();
-
 	if (GetPrivateProfileString(section, L"Name", L"", buffer, 64, file) == 0)
 	{
 		return false;
 	}
-	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_NAME_TEXT), buffer);
+	m_Name = buffer;
 
 	if (!newFormat)
 	{
@@ -587,13 +599,13 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 	}
 
 	GetPrivateProfileString(section, L"Author", L"", buffer, 64, file);
-	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_AUTHOR_TEXT), buffer);
+	m_Author = buffer;
 
 	GetPrivateProfileString(section, L"Version", L"", buffer, 64, file);
-	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_VERSION_TEXT), buffer);
+	m_Version = buffer;
 
 	m_MergeSkins = GetPrivateProfileInt(section, newFormat ? L"MergeSkins" : L"Merge", 0, file) != 0;
-	
+
 	GetPrivateProfileString(section, newFormat ? L"VariableFiles" : L"KeepVar", L"", buffer, MAX_LINE_LENGTH, file);
 	m_VariablesFiles = Tokenize(buffer, L"|");
 
@@ -603,10 +615,7 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 		std::wstring rainmeterVersion = GetFileVersionString(rainmeterDll.c_str());
 		if (CompareVersions(buffer, rainmeterVersion) == 1)
 		{
-			m_ErrorMessage = L"Rainmeter ";
-			m_ErrorMessage += buffer;
-			m_ErrorMessage += L" or higher is required to install this package.\n\n"
-				L"Get the latest version from rainmeter.net and try again.";
+			m_ErrorMessage = GetFormattedString(IDS_MinimumRainmeterRequired, buffer);
 			return false;
 		}
 	}
@@ -638,8 +647,7 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 		if (GetPrivateProfileString(section, L"MinimumWindows", L"", buffer, MAX_LINE_LENGTH, file) > 0 &&
 			CompareVersions(buffer, GetWindowsVersionString()) == 1)
 		{
-			m_ErrorMessage = L"Your version of Windows is not supported by this package.\n\n"
-				L"Contact the package author for more information.";
+			m_ErrorMessage = GetString(IDS_UnsupportedWindowsPackage);
 			return false;
 		}
 	}
@@ -689,8 +697,7 @@ bool DialogInstall::InstallPackage()
 
 				if (!System::CopyFiles(from, to, true))
 				{
-					m_ErrorMessage = L"Unable to move to:\n";
-					m_ErrorMessage += to;
+					m_ErrorMessage = GetFormattedString(IDS_UnableMoveTo, to.c_str());
 					return false;
 				}
 			}
@@ -722,7 +729,7 @@ bool DialogInstall::InstallPackage()
 	{
 		if (!getFileInfo())
 		{
-			m_ErrorMessage = L"Error retrieving file info.";
+			m_ErrorMessage = GetString(IDS_ErrorRetrievingFileInfo);
 			return false;
 		}
 
@@ -836,9 +843,9 @@ bool DialogInstall::InstallPackage()
 
 		if (error)
 		{
-			m_ErrorMessage = L"Unable to create file:\n";
-			m_ErrorMessage += targetPath;
-			m_ErrorMessage += L"\n\nSkin Installer will now quit.";
+			m_ErrorMessage = GetFormattedString(IDS_UnableCreateFile, targetPath.c_str());
+			m_ErrorMessage += L"\n\n";
+			m_ErrorMessage += GetString(IDS_SkinInstallerWillQuit);
 			return false;
 		}
 	}
@@ -854,16 +861,16 @@ bool DialogInstall::InstallPackage()
 
 void DialogInstall::BeginInstall()
 {
-	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
+	HWND item = GetDlgItem(m_Window, DialogInstall::Id_AdvancedButton);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, IDC_INSTALL_INSTALL_BUTTON);
+	item = GetDlgItem(m_Window, DialogInstall::Id_InstallButton);
 	EnableWindow(item, FALSE);
 
 	item = GetDlgItem(m_Window, IDCANCEL);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_THEME_CHECKBOX);
+	item = GetDlgItem(m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_ThemeCheckBox);
 	if (Button_GetCheck(item) == BST_UNCHECKED)
 	{
 		m_LoadLayout.clear();
@@ -871,7 +878,7 @@ void DialogInstall::BeginInstall()
 	}
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_COMPONENTS_LIST);
+	item = GetDlgItem(m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_ComponentsList);
 	{
 		// Remove unchecked items from the component sets
 		LVITEM lvi = { 0 };
@@ -905,7 +912,7 @@ void DialogInstall::BeginInstall()
 	m_InstallThread = (HANDLE)_beginthreadex(nullptr, 0, InstallThread, this, 0, nullptr);
 	if (!m_InstallThread)
 	{
-		MessageBox(m_Window, L"Unable to start install.", L"Rainmeter Skin Installer", MB_ERROR);
+		MessageBox(m_Window, GetString(IDS_UnableStartInstall), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 		EndDialog(m_Window, 0);
 	}
 }
@@ -916,14 +923,14 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 	if (!CloseRainmeterIfActive())
 	{
-		MessageBox(dialog->m_Window, L"Unable to close Rainmeter.", L"Rainmeter Skin Installer", MB_ERROR);
+		MessageBox(dialog->m_Window, GetString(IDS_UnableCloseRainmeter), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 	}
 	else
 	{
-		HWND progressText = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_INPROGRESS_TEXT);
+		HWND progressText = GetDlgItem(dialog->m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_InProgressText);
 		ShowWindow(progressText, SW_SHOWNORMAL);
 
-		HWND progressBar = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_PROGRESS);
+		HWND progressBar = GetDlgItem(dialog->m_TabInstall.GetWindow(), DialogInstall::TabInstall::Id_Progress);
 		ShowWindow(progressBar, SW_SHOWNORMAL);
 		SendMessage(progressBar, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
 
@@ -934,11 +941,12 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 			if (dialog->m_ErrorMessage.empty())
 			{
-				dialog->m_ErrorMessage = L"Unknown error.";
+				dialog->m_ErrorMessage = GetString(IDS_UnknownError);
 			}
-			dialog->m_ErrorMessage += L"\n\nClick OK to close Skin Installer.";
+			dialog->m_ErrorMessage += L"\n\n";
+			dialog->m_ErrorMessage += GetString(IDS_CloseInstallerMessage);
 
-			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 
 			dialog->m_LoadSkins.clear();
 			dialog->m_LoadLayout.clear();
@@ -953,7 +961,7 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 void DialogInstall::KeepVariables()
 {
-	auto getPairs = [](WCHAR* section, std::unordered_map<std::wstring, std::wstring>& var) -> void
+	auto getPairs = [](WCHAR* section, StringMap<std::wstring>& var) -> void
 	{
 		std::wstring str, key, value;
 		for (LPCWSTR ptr = section; *ptr; ptr += str.length() + 1)
@@ -978,21 +986,21 @@ void DialogInstall::KeepVariables()
 		fromPath.append(file);
 		std::wstring toPath = g_Data.skinsPath + file;
 
-		std::unordered_map<std::wstring, std::wstring> fromVariables;
-		std::unordered_map<std::wstring, std::wstring> toVariables;
+		StringMap<std::wstring> fromVariables;
+		StringMap<std::wstring> toVariables;
 
 		if (_waccess_s(fromPath.c_str(), 0) != 0 || _waccess_s(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1U) continue;	// No variables in existing file
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1) continue;	// No variables in existing file
 		getPairs(section, fromVariables);
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1U) continue;	// No variables in the file from rmskin
+		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1) continue;	// No variables in the file from rmskin
 		getPairs(section, toVariables);
 
 		for (const auto& var : fromVariables)
 		{
 			if (toVariables.find(var.first) == toVariables.end()) continue;
-			
+
 			WritePrivateProfileString(L"Variables", var.first.c_str(), var.second.c_str(), toPath.c_str());
 		}
 	}
@@ -1098,7 +1106,7 @@ void DialogInstall::LaunchRainmeter()
 
 	if (!m_LoadSkins.empty())
 	{
-		size_t pos = 0ULL;
+		size_t pos = 0;
 		std::wstring bang;
 
 		for (size_t i = 0, isize = m_LoadSkins.size(); i < isize; ++i)
@@ -1214,9 +1222,6 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 	return IsIgnoredName(name, s_Plugins, _countof(s_Plugins));
 }
 
-/*
-** Splits the string from the delimiters and trims whitespace.
-*/
 std::vector<std::wstring> DialogInstall::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	// Modified from http://www.digitalpeer.com/id/simple
@@ -1249,9 +1254,7 @@ std::vector<std::wstring> DialogInstall::Tokenize(const std::wstring& str, const
 	return tokens;
 }
 
-/*
-** Compares two version strings. Returns 0 if equal, 1 if A > B and -1 if A < B.
-*/
+// Compares two version strings. Returns 0 if equal, 1 if A > B and -1 if A < B.
 int DialogInstall::CompareVersions(const std::wstring& strA, const std::wstring& strB)
 {
 	if (strA.empty() && strB.empty()) return 0;
@@ -1311,7 +1314,7 @@ std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 	DWORD bufSize = GetFileVersionInfoSize(fileName, 0);
 	void* versionInfo = new WCHAR[bufSize];
 	void* fileVersion = nullptr;
-	UINT valueSize = 0U;
+	UINT valueSize = 0;
 	std::wstring result;
 
 	if (GetFileVersionInfo(fileName, 0, bufSize, versionInfo))
@@ -1423,17 +1426,57 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
-DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_INSTALL_TAB, DlgProc)
+void DialogInstall::TabInstall::Create(HWND owner)
 {
+	const short y = c_Dialog->m_HeaderBitmap ? 51 : 14;
+	Tab::CreateTabWindow(15, y, 236, 168, owner);
+
+	const Control controls[] =
+	{
+		Control::Label(Id_NameLabel, IDS_NameColon,
+			0, 0, 35, 13,
+			WS_VISIBLE, 0),
+		Control::Label(DialogInstall::TabInstall::Id_NameText, 0,
+			50, 0, 186, 13,
+			WS_VISIBLE | SS_NOPREFIX, 0),
+		Control::Label(Id_AuthorLabel, IDS_AuthorColon,
+			0, 13, 35, 13,
+			WS_VISIBLE, 0),
+		Control::Label(DialogInstall::TabInstall::Id_AuthorText, 0,
+			50, 13, 186, 13,
+			WS_VISIBLE | SS_NOPREFIX, 0),
+		Control::Label(Id_VersionLabel, IDS_VersionColon,
+			0, 26, 35, 13,
+			WS_VISIBLE, 0),
+		Control::Label(DialogInstall::TabInstall::Id_VersionText, 0,
+			50, 26, 186, 13,
+			WS_VISIBLE | SS_NOPREFIX, 0),
+		Control::Label(Id_ComponentsLabel, IDS_IncludedComponents,
+			0, 45, 80, 13,
+			WS_VISIBLE, 0),
+		Control::ListView(DialogInstall::TabInstall::Id_ComponentsList, 0,
+			0, 60, 234, 86,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOSORTHEADER, 0),
+		Control::CheckBox(DialogInstall::TabInstall::Id_ThemeCheckBox, IDS_ApplyIncludedLayout,
+			0, 155, 220, 13,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Label(DialogInstall::TabInstall::Id_InProgressText, IDS_Installing,
+			0, 0, 236, 60,
+			0, Control::ELLIPSIS),
+		Control::ProgressBar(DialogInstall::TabInstall::Id_Progress, 0,
+			0, 15, 236, 11,
+			PBS_MARQUEE | WS_BORDER, 0)
+	};
+
+	CreateControls(controls, _countof(controls), GetString);
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_NameText), c_Dialog->m_Name.c_str());
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_AuthorText), c_Dialog->m_Author.c_str());
+	SetWindowText(GetControl(DialogInstall::TabInstall::Id_VersionText), c_Dialog->m_Version.c_str());
 }
 
 void DialogInstall::TabInstall::Initialize()
 {
-	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_COMPONENTS_LIST);
+	HWND item = GetDlgItem(m_Window, DialogInstall::TabInstall::Id_ComponentsList);
 
 	DWORD extendedFlags =
 		LVS_EX_CHECKBOXES |
@@ -1450,11 +1493,11 @@ void DialogInstall::TabInstall::Initialize()
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = 180;
-	lvc.pszText = L"Name";
+	lvc.pszText = (LPWSTR)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 150;
-	lvc.pszText = L"Action";
+	lvc.pszText = (LPWSTR)GetString(IDS_Action);
 	ListView_InsertColumn(item, 1, &lvc);
 
 	// Add groups and items
@@ -1483,7 +1526,7 @@ void DialogInstall::TabInstall::Initialize()
 			ListView_SetCheckState(item, lvi.iItem, TRUE);
 
 			std::wstring itemPath = path + *iter;
-			WCHAR* text = L"Add";
+			const WCHAR* text = GetString(IDS_Add);
 			bool disablePlugin = false;
 			if (_waccess_s(itemPath.c_str(), 0) == 0)
 			{
@@ -1493,20 +1536,20 @@ void DialogInstall::TabInstall::Initialize()
 					if (isNewer >= 0)
 					{
 						disablePlugin = true;
-						text = isNewer > 0 ? L"Newer version installed" : L"Versions are the same";
+						text = GetString(isNewer > 0 ? IDS_NewerVersionInstalled : IDS_VersionsAreTheSame);
 					}
 					else
 					{
-						text = L"Replace";
+						text = GetString(IDS_Replace);
 					}
 				}
 				else
 				{
 					bool backup = groupId == 0 && c_Dialog->m_BackupSkins && !c_Dialog->m_BackupPackage;
-					text = backup ? L"Backup and replace" : L"Replace";
+					text = GetString(backup ? IDS_BackupAndReplace : IDS_Replace);
 				}
 			}
-			ListView_SetItemText(item, lvi.iItem, 1, text);
+			ListView_SetItemText(item, lvi.iItem, 1, (LPWSTR)text);
 
 			if (disablePlugin)
 			{
@@ -1517,19 +1560,19 @@ void DialogInstall::TabInstall::Initialize()
 		}
 	};
 
-	addComponent(L"Skins", c_Dialog->m_PackageSkins, g_Data.skinsPath, 0);
-	addComponent(L"Layouts", c_Dialog->m_PackageLayouts, g_Data.settingsPath + L"Layouts\\", 1);
-	addComponent(L"Addons", c_Dialog->m_PackageAddons, g_Data.settingsPath + L"Addons\\", 2);
-	addComponent(L"Plugins", c_Dialog->m_PackagePlugins, g_Data.settingsPath + L"Plugins\\", 3);
+	addComponent(GetString(IDS_Skins), c_Dialog->m_PackageSkins, g_Data.skinsPath, 0);
+	addComponent(GetString(IDS_Layouts), c_Dialog->m_PackageLayouts, g_Data.settingsPath + L"Layouts\\", 1);
+	addComponent(GetString(IDS_Addons), c_Dialog->m_PackageAddons, g_Data.settingsPath + L"Addons\\", 2);
+	addComponent(GetString(IDS_Plugins), c_Dialog->m_PackagePlugins, g_Data.settingsPath + L"Plugins\\", 3);
 
-	item = GetDlgItem(m_Window, IDC_INSTALLTAB_THEME_CHECKBOX);
+	item = GetDlgItem(m_Window, DialogInstall::TabInstall::Id_ThemeCheckBox);
 	if (!c_Dialog->m_LoadLayout.empty())
 	{
 		Button_SetCheck(item, BST_CHECKED);
 	}
 	else if (!c_Dialog->m_LoadSkins.empty())
 	{
-		SetWindowText(item, L"Load included skins");
+		SetWindowText(item, GetString(IDS_LoadIncludedSkins));
 		Button_SetCheck(item, BST_CHECKED);
 	}
 	else
@@ -1540,7 +1583,7 @@ void DialogInstall::TabInstall::Initialize()
 	m_Initialized = true;
 }
 
-INT_PTR CALLBACK DialogInstall::TabInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DialogInstall::TabInstall::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -1555,7 +1598,7 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_INSTALLTAB_COMPONENTS_LIST:
+	case DialogInstall::TabInstall::Id_ComponentsList:
 		{
 			LPNMLISTVIEW pnmlv = (LPNMLISTVIEW)lParam;
 
@@ -1569,10 +1612,10 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 				if (!isUnchecked && !isChecked) break;  // Disregard any listview "states" that are unrelated to the checkboxes "state"
 
 				HWND hwndFrom = pnmlv->hdr.hwndFrom;
-				HWND hwndDialogTab = c_Dialog->GetActiveTab().GetWindow();
-				HWND hwndListview = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_COMPONENTS_LIST);
-				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, IDC_INSTALLTAB_THEME_CHECKBOX);
-				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), IDC_INSTALL_INSTALL_BUTTON);
+				HWND hwndDialogTab = c_Dialog->m_TabInstall.GetWindow();
+				HWND hwndListview = GetDlgItem(hwndDialogTab, DialogInstall::TabInstall::Id_ComponentsList);
+				HWND hwndLayoutCheckbox = GetDlgItem(hwndDialogTab, DialogInstall::TabInstall::Id_ThemeCheckBox);
+				HWND hwndInstallButton = GetDlgItem(c_Dialog->GetWindow(), DialogInstall::Id_InstallButton);
 
 				// "Load included layout" / "Load included skins" checkbox: Remember the "last state"
 				// the user has clicked, since this will be unchecked when disabled.
@@ -1649,12 +1692,9 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 						ListView_GetItemText(hwndFrom, pnmlv->iItem, 1, text, 80);  // Get sub-item text
 
 						// Make sure we only display a message box if the plugin is older than the installed version
-						if (wcscmp(L"Newer version installed", text) == 0)
+						if (wcscmp(GetString(IDS_NewerVersionInstalled), text) == 0)
 						{
-							const WCHAR* message = L"There is already a newer version of this plugin installed " \
-								L"on your computer. Installing an older plugin is not recommended.\n\n" \
-								L"Proceed with caution.";
-							MessageBox(hwndFrom, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
+							MessageBox(hwndFrom, GetString(IDS_OlderPluginWarning), GetString(IDS_RainmeterSkinInstaller), MB_OK | MB_ICONEXCLAMATION);
 						}
 					}
 

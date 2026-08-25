@@ -1,9 +1,4 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
@@ -11,11 +6,47 @@
 #include "Meter.h"
 #include "Logger.h"
 #include "Mouse.h"
+#include "../Common/StringParser.h"
+
+const struct { const WCHAR* name; MOUSEACTION type; } g_MouseActionTable[] =
+{
+	{ L"LeftMouseUpAction", MOUSE_LMB_UP },
+	{ L"LeftMouseDownAction", MOUSE_LMB_DOWN },
+	{ L"LeftMouseDoubleClickAction", MOUSE_LMB_DBLCLK },
+	{ L"MiddleMouseUpAction", MOUSE_MMB_UP },
+	{ L"MiddleMouseDownAction", MOUSE_MMB_DOWN },
+	{ L"MiddleMouseDoubleClickAction", MOUSE_MMB_DBLCLK },
+	{ L"RightMouseUpAction", MOUSE_RMB_UP },
+	{ L"RightMouseDownAction", MOUSE_RMB_DOWN },
+	{ L"RightMouseDoubleClickAction", MOUSE_RMB_DBLCLK },
+	{ L"X1MouseUpAction", MOUSE_X1MB_UP },
+	{ L"X1MouseDownAction", MOUSE_X1MB_DOWN },
+	{ L"X1MouseDoubleClickAction", MOUSE_X1MB_DBLCLK },
+	{ L"X2MouseUpAction", MOUSE_X2MB_UP },
+	{ L"X2MouseDownAction", MOUSE_X2MB_DOWN },
+	{ L"X2MouseDoubleClickAction", MOUSE_X2MB_DBLCLK },
+	{ L"MouseScrollUpAction", MOUSE_MW_UP },
+	{ L"MouseScrollDownAction", MOUSE_MW_DOWN },
+	{ L"MouseScrollLeftAction", MOUSE_MW_LEFT },
+	{ L"MouseScrollRightAction", MOUSE_MW_RIGHT },
+	{ L"MouseOverAction", MOUSE_OVER },
+	{ L"MouseLeaveAction", MOUSE_LEAVE },
+};
+
+const WCHAR* OptionNameForMouseActionType(MOUSEACTION type)
+{
+	for (const auto& entry : g_MouseActionTable)
+	{
+		if (entry.type == type) return entry.name;
+	}
+	return nullptr;
+}
 
 Mouse::Mouse(Skin* skin, Meter* meter) : m_Skin(skin), m_Meter(meter),
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
-	m_CursorState(true)
+	m_CursorState(true),
+	m_MouseActionTypes(0)
 {
 }
 
@@ -24,43 +55,39 @@ Mouse::~Mouse()
 	DestroyCustomCursor();
 }
 
-void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void Mouse::ReadOptions(ConfigParser& parser, std::wstring_view section, bool isSkinLevel)
 {
 	DestroyCustomCursor();
 
-	m_MouseActions[MOUSE_LMB_UP].action      = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
-	m_MouseActions[MOUSE_LMB_DOWN].action    = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
-	m_MouseActions[MOUSE_LMB_DBLCLK].action  = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
-	m_MouseActions[MOUSE_MMB_UP].action      = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
-	m_MouseActions[MOUSE_MMB_DOWN].action    = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
-	m_MouseActions[MOUSE_MMB_DBLCLK].action  = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
-	m_MouseActions[MOUSE_RMB_UP].action      = parser.ReadString(section, L"RightMouseUpAction", L"", false);
-	m_MouseActions[MOUSE_RMB_DOWN].action    = parser.ReadString(section, L"RightMouseDownAction", L"", false);
-	m_MouseActions[MOUSE_RMB_DBLCLK].action  = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
-	m_MouseActions[MOUSE_X1MB_UP].action     = parser.ReadString(section, L"X1MouseUpAction", L"", false);
-	m_MouseActions[MOUSE_X1MB_DOWN].action   = parser.ReadString(section, L"X1MouseDownAction", L"", false);
-	m_MouseActions[MOUSE_X1MB_DBLCLK].action = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);
-	m_MouseActions[MOUSE_X2MB_UP].action     = parser.ReadString(section, L"X2MouseUpAction", L"", false);
-	m_MouseActions[MOUSE_X2MB_DOWN].action   = parser.ReadString(section, L"X2MouseDownAction", L"", false);
-	m_MouseActions[MOUSE_X2MB_DBLCLK].action = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
+	m_MouseActionTypes = 0;
+	for (auto& mouseAction : m_MouseActions)
+	{
+		m_MouseActionTypes |= mouseAction.type;
+		parser.ReadString(mouseAction.action, section, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
+	}
 
-	m_MouseActions[MOUSE_MW_UP].action       = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
-	m_MouseActions[MOUSE_MW_DOWN].action     = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
-	m_MouseActions[MOUSE_MW_LEFT].action     = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
-	m_MouseActions[MOUSE_MW_RIGHT].action    = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
+	for (auto& entry : g_MouseActionTable)
+	{
+		if (m_MouseActionTypes & entry.type) continue;
 
-	m_MouseActions[MOUSE_OVER].action        = parser.ReadString(section, L"MouseOverAction", L"", false);
-	m_MouseActions[MOUSE_LEAVE].action       = parser.ReadString(section, L"MouseLeaveAction", L"", false);
+		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
+		if (parser.GetLastDefaultUsed()) continue;
+
+		m_MouseActionTypes |= entry.type;
+		auto& mouseAction = m_MouseActions.emplace_back();
+		mouseAction.type = entry.type;
+		mouseAction.action = action;
+	}
 
 	if (HasScrollAction())
 	{
 		m_Skin->SetHasMouseScrollAction();
 	}
 
-	const bool defaultState = (section == L"Rainmeter") ? true : m_Skin->GetMouse().GetCursorState();
+	const bool defaultState = isSkinLevel ? true : m_Skin->GetMouse().GetCursorState();
 	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
 
-	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
+	const WCHAR* defaultMouseCursor = isSkinLevel ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();
 
 	auto inheritSkinDefault = [&]()
@@ -162,10 +189,12 @@ HCURSOR Mouse::GetCursor(bool isButton) const
 	{
 		// Disabled non-button mouse actions should use the default "arrow" pointer
 		bool getCursor = false;
-		for (size_t i = 0; i < (MOUSEACTION_COUNT - 6); ++i)	// Do not process mouse wheel and Over/Leave
+
+		for (const auto& mouseAction : m_MouseActions)
 		{
-			if (m_MouseActions[i].state == MOUSEACTION_ENABLED &&
-				!m_MouseActions[i].action.empty())
+			if ((mouseAction.type & MOUSEACTION_BUTTON) == 0) continue;
+
+			if (mouseAction.state == MOUSEACTION_ENABLED && !mouseAction.action.empty())
 			{
 				getCursor = true;
 				break;
@@ -250,16 +279,6 @@ HCURSOR Mouse::GetCursor(bool isButton) const
 	return LoadCursor(nullptr, name);
 }
 
-std::wstring Mouse::GetActionCommand(MOUSEACTION action) const
-{
-	std::wstring command = GetAction(action);
-	if (m_MouseActions[action].state == MOUSEACTION_ENABLED)
-	{
-		ReplaceMouseVariables(command);
-	}
-	return command;
-}
-
 void Mouse::DestroyCustomCursor()
 {
 	if (m_CustomCursor)
@@ -272,7 +291,7 @@ void Mouse::DestroyCustomCursor()
 void Mouse::ReplaceMouseVariables(std::wstring& result) const
 {
 	// Check for new-style variables: [$MOUSEX]
-	m_Skin->GetParser().ParseVariables(result, ConfigParser::VariableType::Mouse, m_Meter);
+	m_Skin->GetParser().ExpandSectionVariables(result, VariableExpandMode::DollarMouseOnly, m_Meter);
 
 	// Check for old-style variables: $MOUSEX$
 	size_t start = 0, end;
@@ -297,7 +316,7 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 				else
 				{
 					std::wstring strVariable = result.substr(si, end - si);
-					std::wstring value = m_Skin->GetParser().GetMouseVariable(strVariable, m_Meter);
+					std::wstring value = m_Skin->GetParser().GetDollarMouseVariable(strVariable, m_Meter);
 					if (!value.empty())
 					{
 						// Variable found, replace it with the value
@@ -325,43 +344,75 @@ void Mouse::ReplaceMouseVariables(std::wstring& result) const
 
 void Mouse::DisableMouseAction(const std::wstring& options)
 {
-	for (const auto& token : Translate(options))
+	const auto types = OptionStringToMouseActions(options);
+	for (auto& mouseAction : m_MouseActions)
 	{
-		m_MouseActions[token].previousState = MOUSEACTION_DISABLED;
-		m_MouseActions[token].state = MOUSEACTION_DISABLED;
+		if ((types & mouseAction.type) == 0) continue;
+		mouseAction.previousState = MOUSEACTION_DISABLED;
+		mouseAction.state = MOUSEACTION_DISABLED;
 	}
 }
 
 void Mouse::ClearMouseAction(const std::wstring& options)
 {
-	for (const auto& token : Translate(options))
+	const auto types = OptionStringToMouseActions(options);
+	for (auto& mouseAction : m_MouseActions)
 	{
-		m_MouseActions[token].previousState = MOUSEACTION_CLEARED;
-		m_MouseActions[token].state = MOUSEACTION_CLEARED;
+		if ((types & mouseAction.type) == 0) continue;
+		mouseAction.previousState = MOUSEACTION_CLEARED;
+		mouseAction.state = MOUSEACTION_CLEARED;
 	}
 }
 
 void Mouse::EnableMouseAction(const std::wstring& options)
 {
-	for (const auto& token : Translate(options))
+	const auto types = OptionStringToMouseActions(options);
+	for (auto& mouseAction : m_MouseActions)
 	{
-		m_MouseActions[token].state = MOUSEACTION_ENABLED;
+		if ((types & mouseAction.type) == 0) continue;
+		mouseAction.state = MOUSEACTION_ENABLED;
 	}
 }
 
 void Mouse::ToggleMouseAction(const std::wstring& options)
 {
-	for (const auto& token : Translate(options))
+	const auto types = OptionStringToMouseActions(options);
+	for (auto& mouseAction : m_MouseActions)
 	{
-		if (m_MouseActions[token].state == MOUSEACTION_ENABLED)
+		if ((types & mouseAction.type) == 0) continue;
+		const bool alreadyEnabled = mouseAction.state == MOUSEACTION_ENABLED;
+		mouseAction.state = alreadyEnabled ? mouseAction.previousState : MOUSEACTION_ENABLED;
+	}
+}
+
+bool Mouse::GetActionCommand(MOUSEACTION type, std::wstring& command) const
+{
+	const auto* mouseAction = GetMouseActionForType(type);
+	if (mouseAction && mouseAction->state == MOUSEACTION_ENABLED)
+	{
+		command = mouseAction->action;
+		ReplaceMouseVariables(command);
+		return true;
+	}
+
+	return false;
+}
+
+bool Mouse::HasEnabledAction(MOUSEACTION types) const
+{
+	if ((m_MouseActionTypes & types) == 0) return false;
+
+	for (const auto& mouseAction : m_MouseActions)
+	{
+		if ((types & mouseAction.type) != 0 &&
+			mouseAction.state == MOUSEACTION_ENABLED &&
+			!mouseAction.action.empty())
 		{
-			m_MouseActions[token].state = m_MouseActions[token].previousState;
-		}
-		else
-		{
-			m_MouseActions[token].state = MOUSEACTION_ENABLED;
+			return true;
 		}
 	}
+
+	return false;
 }
 
 const std::wstring& Mouse::GetAction(MOUSEACTION action) const
@@ -369,85 +420,55 @@ const std::wstring& Mouse::GetAction(MOUSEACTION action) const
 	static const std::wstring disabled = L"[]";
 	static const std::wstring empty = L"";
 
-	switch (m_MouseActions[action].state)
-	{
-	case MOUSEACTION_ENABLED: return m_MouseActions[action].action;
-	case MOUSEACTION_DISABLED: return disabled;
-	}
+	const auto* mouseAction = GetMouseActionForType(action);
+	if (!mouseAction) return empty;
 
-	return empty;
+	return
+		mouseAction->state == MOUSEACTION_ENABLED ? mouseAction->action :
+		mouseAction->state == MOUSEACTION_DISABLED ? disabled :
+		empty;
 }
 
-std::vector<MOUSEACTION> Mouse::Translate(const std::wstring& options) const
+const MouseAction* Mouse::GetMouseActionForType(MOUSEACTION type) const
 {
-	std::vector<MOUSEACTION> result;
+	if ((m_MouseActionTypes & type) == 0) return nullptr;
 
-	if (options.compare(L"*") == 0)
+	for (auto& mouseAction : m_MouseActions)
 	{
-		result.emplace_back(MOUSE_LMB_UP);
-		result.emplace_back(MOUSE_LMB_DOWN);
-		result.emplace_back(MOUSE_LMB_DBLCLK);
-		result.emplace_back(MOUSE_MMB_UP);
-		result.emplace_back(MOUSE_MMB_DOWN);
-		result.emplace_back(MOUSE_MMB_DBLCLK);
-		result.emplace_back(MOUSE_RMB_UP);
-		result.emplace_back(MOUSE_RMB_DOWN);
-		result.emplace_back(MOUSE_RMB_DBLCLK);
-		result.emplace_back(MOUSE_X1MB_UP);
-		result.emplace_back(MOUSE_X1MB_DOWN);
-		result.emplace_back(MOUSE_X1MB_DBLCLK);
-		result.emplace_back(MOUSE_X2MB_UP);
-		result.emplace_back(MOUSE_X2MB_DOWN);
-		result.emplace_back(MOUSE_X2MB_DBLCLK);
-		result.emplace_back(MOUSE_MW_UP);
-		result.emplace_back(MOUSE_MW_DOWN);
-		result.emplace_back(MOUSE_MW_LEFT);
-		result.emplace_back(MOUSE_MW_RIGHT);
-		result.emplace_back(MOUSE_OVER);
-		result.emplace_back(MOUSE_LEAVE);
+		if (mouseAction.type == type) return &mouseAction;
 	}
-	else
+
+	return nullptr;
+}
+
+MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
+{
+	if (options == L"*") return MOUSEACTION_ALL;
+
+	uint32_t result = 0;
+	bool invalid = false;
+	StringParser::ForEachToken(options, L'|', [&](std::wstring_view action)
 	{
-		auto tokens = ConfigParser::Tokenize(options, L"|");
-		if (!tokens.empty())
+		if (invalid) return;
+
+		bool found = false;
+		StringParser name(action);
+		for (auto& entry : g_MouseActionTable)
 		{
-			for (const auto token : tokens)
+			if (name.ConsumeRest(entry.name, wcslen(entry.name)))
 			{
-				const WCHAR* tok = token.c_str();
-
-				if (_wcsicmp(tok, L"LeftMouseUpAction") == 0)                 result.emplace_back(MOUSE_LMB_UP);
-				else if (_wcsicmp(tok, L"LeftMouseDownAction") == 0)          result.emplace_back(MOUSE_LMB_DOWN);
-				else if (_wcsicmp(tok, L"LeftMouseDoubleClickAction") == 0)   result.emplace_back(MOUSE_LMB_DBLCLK);
-				else if (_wcsicmp(tok, L"MiddleMouseUpAction") == 0)          result.emplace_back(MOUSE_MMB_UP);
-				else if (_wcsicmp(tok, L"MiddleMouseDownAction") == 0)        result.emplace_back(MOUSE_MMB_DOWN);
-				else if (_wcsicmp(tok, L"MiddleMouseDoubleClickAction") == 0) result.emplace_back(MOUSE_MMB_DBLCLK);
-				else if (_wcsicmp(tok, L"RightMouseUpAction") == 0)           result.emplace_back(MOUSE_RMB_UP);
-				else if (_wcsicmp(tok, L"RightMouseDownAction") == 0)         result.emplace_back(MOUSE_RMB_DOWN);
-				else if (_wcsicmp(tok, L"RightMouseDoubleClickAction") == 0)  result.emplace_back(MOUSE_RMB_DBLCLK);
-				else if (_wcsicmp(tok, L"X1MouseUpAction") == 0)              result.emplace_back(MOUSE_X1MB_UP);
-				else if (_wcsicmp(tok, L"X1MouseDownAction") == 0)            result.emplace_back(MOUSE_X1MB_DOWN);
-				else if (_wcsicmp(tok, L"X1MouseDoubleClickAction") == 0)     result.emplace_back(MOUSE_X1MB_DBLCLK);
-				else if (_wcsicmp(tok, L"X2MouseUpAction") == 0)              result.emplace_back(MOUSE_X2MB_UP);
-				else if (_wcsicmp(tok, L"X2MouseDownAction") == 0)            result.emplace_back(MOUSE_X2MB_DOWN);
-				else if (_wcsicmp(tok, L"X2MouseDoubleClickAction") == 0)     result.emplace_back(MOUSE_X2MB_DBLCLK);
-
-				else if (_wcsicmp(tok, L"MouseScrollUpAction") == 0)          result.emplace_back(MOUSE_MW_UP);
-				else if (_wcsicmp(tok, L"MouseScrollDownAction") == 0)        result.emplace_back(MOUSE_MW_DOWN);
-				else if (_wcsicmp(tok, L"MouseScrollLeftAction") == 0)        result.emplace_back(MOUSE_MW_LEFT);
-				else if (_wcsicmp(tok, L"MouseScrollRightAction") == 0)       result.emplace_back(MOUSE_MW_RIGHT);
-
-				else if (_wcsicmp(tok, L"MouseOverAction") == 0)              result.emplace_back(MOUSE_OVER);
-				else if (_wcsicmp(tok, L"MouseLeaveAction") == 0)             result.emplace_back(MOUSE_LEAVE);
-
-				else
-				{
-					LogErrorF(m_Meter, L"Invalid action: %s", tok);
-					result.clear();
-					break;
-				}
+				found = true;
+				result |= entry.type;
+				break;
 			}
 		}
-	}
 
-	return result;
+		if (!found)
+		{
+			LogErrorF(m_Meter, L"Invalid action: %.*s", (int)action.length(), action.data());
+			invalid = true;
+		}
+	});
+
+	return invalid ? MOUSEACTION_NONE : (MOUSEACTION)result;
 }

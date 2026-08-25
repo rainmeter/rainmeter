@@ -1,9 +1,4 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 /*
 Rainmeter query interface based on Window Message
@@ -42,7 +37,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COPYDATA:
 		{
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
-			
+
 			// Copy ID and string to local
 			DWORD id = cds->dwData;                       // contains QUERY ID (RAINMETER_QUERY_ID_XXXXX)
 			std::wstring string = (WCHAR*)cds->lpData;    // contains requested string in wide char
@@ -60,8 +55,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 -----
 */
 
-#ifndef __RAINMETER_QUERY_H__
-#define __RAINMETER_QUERY_H__
+#pragma once
 
 #include <tchar.h>
 
@@ -83,7 +77,7 @@ These Queries return a string in a wide char format
 #define RAINMETER_QUERY_ID_CONFIG_EDITOR		4106
 
 /*
-These Queries return a numerical value in a direct message, the data 
+These Queries return a numerical value in a direct message, the data
 is stored in the lParam of the message sent to your window, and the msg section
 will contain WM_QUERY_RAINMETER_RETURN
 */
@@ -91,7 +85,7 @@ will contain WM_QUERY_RAINMETER_RETURN
 
 /*QUERY IDs used with WM_COPYDATA
 Usage: Send a WM_COPYDATA message to rainmeter via SendMessage().
-Rainmeter will set the return value depending on the contents 
+Rainmeter will set the return value depending on the contents
 of the COPYDATASTRUCT.
 */
 #define RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE	5101
@@ -110,5 +104,3 @@ cds.cbData = (wcslen(SkinName) + 1) * 2;
 
 HWND hWndMeter = (HWND) SendMessage(hWndRainmeter, WM_COPYDATA, (WPARAM) hWndYourWindow, (LPARAM) &cds);
 */
-
-#endif

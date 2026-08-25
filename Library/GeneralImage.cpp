@@ -1,14 +1,97 @@
-/* Copyright (C) 2018 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "GeneralImage.h"
 #include "Logger.h"
+#include "System.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringParser.h"
+#include <commoncontrols.h>
+
+namespace {
+
+struct SystemImage
+{
+	int index;
+	int list;
+};
+
+std::optional<SystemImage> ParseSystemImage(const std::wstring& imageName)
+{
+	StringParser parser(imageName);
+	if (!parser.Consume(L"SystemImage:")) return std::nullopt;
+
+	const auto index = parser.ConsumeInt();
+	if (!index || *index < 0 || !parser.Consume(L',')) return std::nullopt;
+
+	const auto list = parser.ConsumeRestInt();
+	if (!list || *list < SHIL_LARGE || *list > SHIL_JUMBO) return std::nullopt;
+
+	return SystemImage{ *index, *list };
+}
+
+HRESULT LoadSystemImage(const SystemImage& systemImage, Gfx::Bitmap* bitmap, const Gfx::Canvas& canvas)
+{
+	// Windows returns SMALL, LARGE, and EXTRALARGE system image lists scaled to the system DPI.
+	// This is based on process DPI awareness, so a DPI-unaware thread context cannot disable it.
+	// Rainmeter treats an image's pixel dimensions as its logical meter size, then applies display
+	// scaling later. Using that icon directly could make the icon larger if an explicit W/H has not
+	// been set.
+	Microsoft::WRL::ComPtr<IImageList> imageList;
+	HRESULT hr = SHGetImageList(systemImage.list, IID_IImageList, (void**)imageList.GetAddressOf());
+	int targetWidth = 0;
+	int targetHeight = 0;
+	if (SUCCEEDED(hr)) hr = imageList->GetIconSize(&targetWidth, &targetHeight);
+
+	// Recover the requested list's logical size using the system DPI that the Shell used. JUMBO is
+	// always 256 pixels and must not be normalized.
+	if (SUCCEEDED(hr) && systemImage.list <= SHIL_EXTRALARGE)
+	{
+		const float dpiScale = (float)System::GetSystemDpi() / USER_DEFAULT_SCREEN_DPI;
+		targetWidth = (int)roundf(targetWidth / dpiScale);
+		targetHeight = (int)roundf(targetHeight / dpiScale);
+	}
+
+	// A different DPI-scaled system image list may already be closer to the logical target. For
+	// example, LARGE is 48 pixels at 150% DPI. Prefer that native icon and resample only the remaining
+	// difference. On a tie, prefer the larger source so the final conversion downsamples.
+	int imageWidth = targetWidth;
+	int bestDistance = INT_MAX;
+	for (int list = SHIL_LARGE; SUCCEEDED(hr) && list <= SHIL_JUMBO; ++list)
+	{
+		Microsoft::WRL::ComPtr<IImageList> candidate;
+		if (FAILED(SHGetImageList(list, IID_IImageList, (void**)candidate.GetAddressOf()))) continue;
+
+		int width = 0;
+		int height = 0;
+		if (FAILED(candidate->GetIconSize(&width, &height))) continue;
+
+		const int widthDelta = width > targetWidth ? width - targetWidth : targetWidth - width;
+		const int heightDelta = height > targetHeight ? height - targetHeight : targetHeight - height;
+		const int distance = widthDelta + heightDelta;
+		if (distance < bestDistance ||
+			(distance == bestDistance && width >= targetWidth && imageWidth < targetWidth))
+		{
+			imageList = std::move(candidate);
+			imageWidth = width;
+			bestDistance = distance;
+		}
+	}
+
+	HICON icon = nullptr;
+	if (SUCCEEDED(hr)) hr = imageList->GetIcon(systemImage.index, ILD_TRANSPARENT, &icon);
+	if (SUCCEEDED(hr))
+	{
+		// Convert the selected physical-sized icon to the requested logical size.
+		const float scale = targetWidth > 0 ? (float)imageWidth / targetWidth : 1.0f;
+		hr = bitmap->LoadFromIcon(canvas, icon, scale);
+	}
+
+	if (icon) DestroyIcon(icon);
+	return hr;
+}
+
+}  // namespace
 
 // GrayScale Matrix
 const D2D1_MATRIX_5X4_F GeneralImage::c_GreyScaleMatrix = {
@@ -33,7 +116,7 @@ GeneralImage::GeneralImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_Bitmap(nullptr),
 	m_BitmapProcessed(nullptr),
 	m_Skin(skin),
-	m_Name(name ? name : L"ImageName"), 
+	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_DisableTransform(disableTransform),
 	m_Options()
@@ -47,22 +130,46 @@ GeneralImage::~GeneralImage()
 
 void GeneralImage::DisposeImage()
 {
-	if (m_Bitmap)
+	m_Bitmap.reset();
+	m_BitmapProcessed.reset();
+}
+
+void GeneralImage::InvalidateDeviceResources()
+{
+	if (m_Bitmap && m_Bitmap->GetBitmap())
 	{
-		delete m_Bitmap;
-		m_Bitmap = nullptr;
+		m_Bitmap->GetBitmap()->InvalidateDeviceResources();
 	}
 
-	if (m_BitmapProcessed)
+	if (m_BitmapProcessed && m_BitmapProcessed->GetBitmap())
 	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
+		m_BitmapProcessed->GetBitmap()->InvalidateDeviceResources();
 	}
 }
 
-void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
+bool GeneralImage::IsLoaded()
 {
-	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
+	return GetImage() != nullptr;
+}
+
+Gfx::Bitmap* GeneralImage::GetImage()
+{
+	Gfx::Bitmap* bitmap = m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+	if (bitmap && bitmap->HasDeviceResources()) return bitmap;
+
+	if (m_ImageName.empty() || !LoadImage(m_ImageName, m_Options.m_CreateAlphaMask))
+	{
+		return nullptr;
+	}
+
+	return m_BitmapProcessed ? m_BitmapProcessed->GetBitmap() :
+		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
+}
+
+void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, const WCHAR* imagePath)
+{
+	parser.ReadString(m_Path, section, m_OptionArray[OptionIndexImagePath], imagePath);
 	PathUtil::AppendBackslashIfMissing(m_Path);
 
 	if (!m_DisableTransform)
@@ -73,29 +180,45 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
-			const auto tokens = ConfigParser::Tokenize2(crop, L',', PairedPunctuation::Parentheses);
-			const size_t tokSize = tokens.size();
-			if (tokSize > 3ULL)
-			{
-				m_Options.m_Crop.left   = (FLOAT)parser.ParseInt(tokens[0].c_str(), 0);
-				m_Options.m_Crop.top    = (FLOAT)parser.ParseInt(tokens[1].c_str(), 0);
-				m_Options.m_Crop.right  = (FLOAT)parser.ParseInt(tokens[2].c_str(), 0) + m_Options.m_Crop.left;
-				m_Options.m_Crop.bottom = (FLOAT)parser.ParseInt(tokens[3].c_str(), 0) + m_Options.m_Crop.top;
+			StringParser values(crop);
 
-				if (tokSize > 4ULL)
+			// Reads the next value of the crop, if there is one.
+			auto readValue = [&]() -> std::optional<int>
+			{
+				values.ConsumeWhitespace();
+				if (values.IsConsumed()) return std::nullopt;
+
+				return parser.ParseInt(values.ConsumeUntilOrRest(
+					L',', StringParser::SkipWhitespace | StringParser::SkipNestedParentheses), 0);
+			};
+
+			const auto x = readValue();
+			const auto y = readValue();
+			const auto width = readValue();
+			const auto height = readValue();
+			if (x && y && width && height)
+			{
+				m_Options.m_Crop.left   = (FLOAT)*x;
+				m_Options.m_Crop.top    = (FLOAT)*y;
+				m_Options.m_Crop.right  = (FLOAT)(*x + *width);
+				m_Options.m_Crop.bottom = (FLOAT)(*y + *height);
+
+				if (const auto mode = readValue())
 				{
-					m_Options.m_CropMode = (ImageOptions::CROPMODE)parser.ParseInt(tokens[4].c_str(), 0);
+					m_Options.m_CropMode = (ImageOptions::CROPMODE)*mode;
 				}
 			}
 			else
 			{
-				LogErrorF(m_Skin, L"%s=%s is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(), section);
+				LogErrorF(m_Skin, L"%s=%s is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
+					(int)section.length(), section.data());
 			}
 
 			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
 				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
-				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(), section);
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
+					(int)section.length(), section.data());
 			}
 		}
 	}
@@ -175,27 +298,14 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 		}
 	}
 
-	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
-	if (_wcsicmp(flip, L"NONE") == 0)
+	static constexpr ConfigParser::EnumOption<Gfx::Util::FlipType> s_Flips[] =
 	{
-		m_Options.m_Flip = Gfx::Util::FlipType::None;
-	}
-	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Horizontal;
-	}
-	else if (_wcsicmp(flip, L"VERTICAL") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Vertical;
-	}
-	else if (_wcsicmp(flip, L"BOTH") == 0)
-	{
-		m_Options.m_Flip = Gfx::Util::FlipType::Both;
-	}
-	else
-	{
-		LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]", m_OptionArray[OptionIndexImageFlip], flip, section);
-	}
+		{ L"NONE", Gfx::Util::FlipType::None },
+		{ L"HORIZONTAL", Gfx::Util::FlipType::Horizontal },
+		{ L"VERTICAL", Gfx::Util::FlipType::Vertical },
+		{ L"BOTH", Gfx::Util::FlipType::Both },
+	};
+	m_Options.m_Flip = parser.ReadEnum(section, m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
 
 	if (!m_DisableTransform)
 	{
@@ -205,12 +315,66 @@ void GeneralImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const
 	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
-bool GeneralImage::LoadImage(const std::wstring& imageName)
+bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)
 {
+	m_ImageName = imageName;
+
 	if (!m_Skin || imageName.empty())
 	{
 		DisposeImage();
 		return false;
+	}
+
+	const bool hasImage = m_Bitmap && m_Bitmap->GetBitmap()->HasDeviceResources() &&
+		m_Options.m_CreateAlphaMask == createAlphaMask;
+	auto loadImageIfNeeded = [&](const ImageOptions& info, auto&& loader)
+	{
+		auto handle = GetImageCache().Get(info);
+		if (!handle || !handle->GetBitmap()->HasDeviceResources())
+		{
+			auto bitmap = std::make_unique<Gfx::Bitmap>(info.m_Path, 0, info.m_CreateAlphaMask);
+			if (SUCCEEDED(loader(bitmap.get())))
+			{
+				GetImageCache().Put(info, bitmap.release());
+				handle = GetImageCache().Get(info);
+			}
+			else
+			{
+				handle.reset();
+			}
+		}
+
+		DisposeImage();
+		if (!handle) return false;
+
+		m_Bitmap = std::move(handle);
+		m_Options.m_Path = info.m_Path;
+		m_Options.m_FileSize = info.m_FileSize;
+		m_Options.m_FileTime = info.m_FileTime;
+		m_Options.m_CreateAlphaMask = info.m_CreateAlphaMask;
+		ApplyTransforms();
+		return true;
+	};
+
+	const auto systemImage = ParseSystemImage(imageName);
+	if (systemImage)
+	{
+		ImageOptions info;
+		info.m_Path = imageName;
+		info.m_FileSize = 1;
+		info.m_FileTime = 1;
+		info.m_CreateAlphaMask = createAlphaMask;
+
+		if (hasImage && m_Bitmap->GetKey() == info)
+		{
+			ApplyTransforms();
+			return true;
+		}
+
+		return loadImageIfNeeded(info, [&](Gfx::Bitmap* bitmap)
+		{
+			return LoadSystemImage(*systemImage, bitmap, m_Skin->GetCanvas());
+		});
 	}
 
 	std::wstring filename = m_Path + imageName;
@@ -223,60 +387,29 @@ bool GeneralImage::LoadImage(const std::wstring& imageName)
 		filename += L".png";
 	}
 
-	if (m_Bitmap && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
+	if (hasImage && !m_Bitmap->GetBitmap()->HasFileChanged(filename))
 	{
 		ApplyTransforms();
 		return true;
 	}
 
 	ImageOptions info;
-	Gfx::D2DBitmap::GetFileInfo(filename, &info);
-
+	Gfx::Bitmap::GetFileInfo(filename, &info);
+	info.m_CreateAlphaMask = createAlphaMask;
 	if (!info.isValid())
 	{
 		LogErrorF(m_Skin, L"%s: Unable to open: %s", m_Name, filename.c_str());
-
 		DisposeImage();
 		return false;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(info);
-	if (!handle)
+	return loadImageIfNeeded(info, [&](Gfx::Bitmap* bitmap)
 	{
-		auto bitmap = new Gfx::D2DBitmap(filename);
-
-		HRESULT hr = bitmap->Load(m_Skin->GetCanvas());
-		if (SUCCEEDED(hr))
-		{
-			GetImageCache().Put(info, bitmap);
-			handle = GetImageCache().Get(info);
-			if (!handle) return false;
-		}
-		else
-		{
-			delete bitmap;
-			bitmap = nullptr;
-		}
-	}
-
-	DisposeImage();
-
-	if (handle)
-	{
-		m_Bitmap = handle;
-
-		m_Options.m_Path = info.m_Path;
-		m_Options.m_FileSize = info.m_FileSize;
-		m_Options.m_FileTime = info.m_FileTime;
-
-		ApplyTransforms();
-		return true;
-	}
-
-	return false;
+		return bitmap->Load(m_Skin->GetCanvas());
+	});
 }
 
-D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2DBitmap* bitmap) const
+D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::EffectStream* stream, Gfx::Bitmap* bitmap) const
 {
 	const FLOAT imageW = (FLOAT)bitmap->GetWidth();
 	const FLOAT imageH = (FLOAT)bitmap->GetHeight();
@@ -343,18 +476,23 @@ D2D1_SIZE_F GeneralImage::ApplyCrop(Gfx::Util::D2DEffectStream* stream, Gfx::D2D
 
 void GeneralImage::ApplyTransforms()
 {
-	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options) return;
+	if (!m_Bitmap) return;
 
-	if (m_BitmapProcessed)
+	auto* bitmap = m_Bitmap->GetBitmap();
+	if (!HasActiveTransforms(bitmap))
 	{
-		delete m_BitmapProcessed;
-		m_BitmapProcessed = nullptr;
+		m_BitmapProcessed.reset();
+		return;
 	}
 
-	ImageCacheHandle* handle = GetImageCache().Get(m_Options);
-	if (!handle)
+	if (m_BitmapProcessed && m_BitmapProcessed->GetKey() == m_Options &&
+		m_BitmapProcessed->GetBitmap()->HasDeviceResources()) return;
+
+	m_BitmapProcessed.reset();
+
+	auto handle = GetImageCache().Get(m_Options);
+	if (!handle || !handle->GetBitmap()->HasDeviceResources())
 	{
-		auto* bitmap = m_Bitmap->GetBitmap();
 		auto& canvas = m_Skin->GetCanvas();
 		auto* stream = bitmap->CreateEffectStream();
 
@@ -410,8 +548,32 @@ void GeneralImage::ApplyTransforms()
 
 	if (handle)
 	{
-		m_BitmapProcessed = handle;
+		m_BitmapProcessed = std::move(handle);
 	}
+}
+
+bool GeneralImage::HasActiveTransforms(Gfx::Bitmap* bitmap) const
+{
+	if (m_Options.m_UseExifOrientation)
+	{
+		const int orientation = bitmap->GetOrientation();
+		if (orientation >= 2 && orientation <= 8)
+		{
+			return true;
+		}
+	}
+
+	const auto& crop = m_Options.m_Crop;
+	if ((crop.right != -1.0f || crop.left != -1.0f || crop.top != -1.0f || crop.bottom != -1.0f) &&
+		crop.right - crop.left >= 0.0f && crop.bottom - crop.top >= 0.0f)
+	{
+		return true;
+	}
+
+	return m_Options.m_GreyScale ||
+		!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix) ||
+		m_Options.m_Flip != Gfx::Util::FlipType::None ||
+		m_Options.m_Rotate != 0.0f;
 }
 
 bool GeneralImage::CompareColorMatrix(const D2D1_MATRIX_5X4_F& a, const D2D1_MATRIX_5X4_F& b)

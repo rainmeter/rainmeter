@@ -1,12 +1,6 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __COVER_H__
-#define __COVER_H__
+#pragma once
 
 // TagLib
 #include "fileref.h"
@@ -30,10 +24,7 @@
 class CCover
 {
 public:
-	static bool GetCached(std::wstring& path);
-	static bool GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target);
+	static std::optional<std::wstring> GetLocal(std::wstring_view filename, std::wstring_view folder);
 	static bool GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target);
 	static std::wstring GetFileFolder(const std::wstring& file);
 };
-
-#endif

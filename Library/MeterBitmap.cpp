@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterBitmap.h"
@@ -31,10 +26,6 @@ MeterBitmap::~MeterBitmap()
 {
 }
 
-/*
-** Load the image and get the dimensions of the meter from it.
-**
-*/
 void MeterBitmap::Initialize()
 {
 	Meter::Initialize();
@@ -46,7 +37,7 @@ void MeterBitmap::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
@@ -87,10 +78,12 @@ void MeterBitmap::Initialize()
 	}
 }
 
-/*
-** Checks if the given point is inside the meter.
-**
-*/
+void MeterBitmap::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
 bool MeterBitmap::HitTest(int x, int y)
 {
 	if (m_Extend)
@@ -162,18 +155,14 @@ bool MeterBitmap::HitTest(int x, int y)
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterBitmap::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
 	Meter::ReadOptions(parser, section);
 
-	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
+	parser.ReadString(m_ImageName, section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
@@ -189,23 +178,13 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
 
-	const WCHAR* align = parser.ReadString(section, L"BitmapAlign", L"LEFT").c_str();
-	if (_wcsicmp(align, L"LEFT") == 0)
+	static constexpr ConfigParser::EnumOption<METER_ALIGNMENT> s_Aligns[] =
 	{
-		m_Align = ALIGN_LEFT;
-	}
-	else if (_wcsicmp(align, L"RIGHT") == 0)
-	{
-		m_Align = ALIGN_RIGHT;
-	}
-	else if (_wcsicmp(align, L"CENTER") == 0)
-	{
-		m_Align = ALIGN_CENTER;
-	}
-	else
-	{
-		LogErrorF(this, L"BitmapAlign=%s is not valid", align);
-	}
+		{ L"LEFT", ALIGN_LEFT },
+		{ L"RIGHT", ALIGN_RIGHT },
+		{ L"CENTER", ALIGN_CENTER },
+	};
+	m_Align = parser.ReadEnum(section, L"BitmapAlign", ALIGN_LEFT, s_Aligns);
 
 	if (m_Initialized)
 	{
@@ -213,10 +192,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterBitmap::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -246,10 +221,6 @@ bool MeterBitmap::Update()
 	return false;
 }
 
-/*
-** Returns true if the meter has active transition animation.
-**
-*/
 bool MeterBitmap::HasActiveTransition()
 {
 	if (m_TransitionStartTicks > 0)
@@ -260,10 +231,6 @@ bool MeterBitmap::HasActiveTransition()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -273,7 +240,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
-	Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+	Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	FLOAT drawW = meterRect.right - meterRect.left;
@@ -308,10 +275,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
-		value = max(0LL, value);		// Only positive integers are supported
+		value = max(0, value);		// Only positive integers are supported
 
 		__int64 transitionValue = (__int64)m_TransitionStartValue;
-		transitionValue = max(0LL, transitionValue);		// Only positive integers are supported
+		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
 		int numOfNums = 0;
@@ -329,14 +296,14 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				++numOfNums;
 				if (m_FrameCount == 1)
 				{
-					tmpValue /= 2LL;
+					tmpValue /= 2;
 				}
 				else
 				{
 					tmpValue /= m_FrameCount;
 				}
 			}
-			while (tmpValue > 0LL);
+			while (tmpValue > 0);
 		}
 
 		// Blit the images
@@ -384,7 +351,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-			//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
+			//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -408,8 +375,8 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 			if (m_FrameCount == 1)
 			{
-				value /= 2LL;
-				transitionValue /= 2LL;
+				value /= 2;
+				transitionValue /= 2;
 			}
 			else
 			{
@@ -461,7 +428,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			}
 		}
 
-		//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0ULL ? L"true" : L"false");
+		//LogDebugF(L"[%llu] Value: %f Frame: %i (Transition = %s)", GetTickCount64(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{

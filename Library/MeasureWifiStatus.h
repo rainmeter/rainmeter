@@ -1,12 +1,6 @@
-/* Copyright (C) 2021 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_MEASUREWIFISTATUS_H_
-#define RM_LIBRARY_MEASUREWIFISTATUS_H_
+#pragma once
 
 #include "Measure.h"
 #include <wlanapi.h>
@@ -25,27 +19,31 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureWifiStatus>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
 
 private:
 	enum class MeasureType : UINT
 	{
-		UNINITIALIZED = 0U,
-		SSID = 100U,
+		UNINITIALIZED = 0,
+		SSID = 100,
 		ENCRYPTION,
 		AUTH,
 		LIST,
 		PHY,
 
-		QUALITY = 200U,
+		QUALITY = 200,
 		TXRATE,
 		RXRATE,
 
-		UNKNOWN = 9999U
+		UNKNOWN = 9999
 	};
 
 	void FinalizeHandle();
+	static void CALLBACK WlanNotificationCallback(PWLAN_NOTIFICATION_DATA data, PVOID context);
+	static void RefreshConnectionAttributes();
+	static void RefreshConnectionQualityAttributes();
+	static void FreeConnectionAttributes();
 
 	const WCHAR* GetCipherAlgorithmString(DOT11_CIPHER_ALGORITHM value);
 	const WCHAR* GetAuthAlgorithmString(DOT11_AUTH_ALGORITHM value);
@@ -63,6 +61,6 @@ private:
 	static HANDLE s_Client;
 	static PWLAN_INTERFACE_INFO s_Interface;
 	static PWLAN_INTERFACE_INFO_LIST s_InterfaceList;
+	static PWLAN_CONNECTION_ATTRIBUTES s_ConnectionAttributes;
+	static bool s_NotificationsRegistered;
 };
-
-#endif

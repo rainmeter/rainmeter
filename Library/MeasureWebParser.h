@@ -1,14 +1,9 @@
-/* Copyright (C) 2015 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_LIBRARY_MEASUREWEBPARSER_H_
-#define RM_LIBRARY_MEASUREWEBPARSER_H_
+#pragma once
 
 #include "Measure.h"
+#include "Net.h"
 
 struct ProxySetting
 {
@@ -32,18 +27,44 @@ public:
 
 	const WCHAR* GetStringValue() override;
 
+	void AdvanceUpdateCounter(UINT count) override;
+
+	void ResetCounter();
+	void ResetValue();
+
 protected:
-	void ReadOptions(ConfigParser& parser, const WCHAR* section) override;
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	void UpdateValue() override;
 	void Command(const std::wstring& command) override;
 
 private:
-	static unsigned __stdcall NetworkThreadProc(void* pParam);
-	static unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
-	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
+	enum class ParseType : BYTE
+	{
+		RegExp,
+		JsonPointer
+	};
 
+	void HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode);
+
+	void StartDownloadTask();
+	void HandleDownloadResult(const std::wstring&, HRESULT result);
+
+	void ParseData(const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
+	bool ParseRegExp(std::wstring_view data);
+	bool ParseJsonPointer(std::wstring_view data);
+
+	struct ReferenceMatch
+	{
+		MeasureWebParser* measure;
+		size_t position;
+		size_t length;
+	};
+
+	ReferenceMatch FindMeasureUrlReference(Measure* measure) const;
+
+	LocaleUtil::NumberFormat m_NumberFormat;
 	std::wstring m_Url;
-	std::wstring m_RegExp;
+	std::wstring m_Expression;
 	std::wstring m_ResultString;
 	std::wstring m_ErrorString;
 	std::wstring m_FinishAction;
@@ -56,8 +77,7 @@ private:
 	std::wstring m_DebugFileLocation;
 	std::wstring m_Headers;
 	ProxySetting m_Proxy;
-	HANDLE m_ThreadHandle;
-	HANDLE m_DlThreadHandle;
+	ParseType m_ParseType;
 	int m_Codepage;
 	int m_StringIndex;
 	int m_StringIndex2;
@@ -70,6 +90,6 @@ private:
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
 	DWORD m_InternetOpenUrlFlags;
+	Net::FetchTask* m_FetchTask;
+	Net::DownloadTask* m_DownloadTask;
 };
-
-#endif

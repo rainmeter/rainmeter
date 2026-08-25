@@ -1,0 +1,122 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#include "StdAfx.h"
+#include "MeasureWindowMessage.h"
+#include "ConfigParser.h"
+#include "Logger.h"
+
+MeasureWindowMessage::MeasureWindowMessage(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_WindowName(),
+	m_WindowClass(),
+	m_StringValue(),
+	m_WParam(0),
+	m_LParam(0),
+	m_Message(0)
+{
+}
+
+MeasureWindowMessage::~MeasureWindowMessage()
+{
+}
+
+void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view section)
+{
+	Measure::ReadOptions(parser, section);
+
+	parser.ReadString(m_WindowName, section, L"WindowName", L"");
+	parser.ReadString(m_WindowClass, section, L"WindowClass", L"");
+
+	m_Message = 0;
+	m_WParam = 0;
+	m_LParam = 0;
+
+	UINT message = 0;
+	UINT wParam = 0;
+	UINT lParam = 0;
+	const std::wstring& windowMessage = parser.ReadString(section, L"WindowMessage", L"");
+	if (swscanf_s(windowMessage.c_str(), L"%u %u %u", &message, &wParam, &lParam) == 3)
+	{
+		m_Message = message;
+		m_WParam = wParam;
+		m_LParam = lParam;
+	}
+}
+
+void MeasureWindowMessage::UpdateValue()
+{
+	m_Value = 0.0;
+
+	HWND hwnd = FindTargetWindow();
+	if (hwnd)
+	{
+		if (m_Message == 0)
+		{
+			WCHAR buffer[256] = { 0 };
+			GetWindowText(hwnd, buffer, _countof(buffer));
+			m_StringValue = buffer;
+		}
+		else
+		{
+			m_Value = (double)SendMessage(hwnd, m_Message, m_WParam, m_LParam);
+		}
+	}
+	else if (m_Message == 0)
+	{
+		m_StringValue.clear();
+	}
+}
+
+const WCHAR* MeasureWindowMessage::GetStringValue()
+{
+	if (m_Message == 0)
+	{
+		return CheckSubstitute(m_StringValue.c_str());
+	}
+
+	return nullptr;
+}
+
+void MeasureWindowMessage::Command(const std::wstring& command)
+{
+	const WCHAR* args = command.c_str();
+	const WCHAR* pos = wcschr(args, L' ');
+	if (pos)
+	{
+		const size_t len = pos - args;
+		if (_wcsnicmp(args, L"SendMessage", len) == 0)
+		{
+			++pos;
+
+			UINT message = 0;
+			UINT wParam = 0;
+			UINT lParam = 0;
+			if (swscanf_s(pos, L"%u %u %u", &message, &wParam, &lParam) == 3)
+			{
+				HWND hwnd = FindTargetWindow();
+				if (hwnd)
+				{
+					PostMessage(hwnd, message, wParam, lParam);
+				}
+				else
+				{
+					LogErrorF(this, L"Unable to find window");
+				}
+			}
+			else
+			{
+				LogWarningF(this, L"Incorrect number of arguments for bang");
+			}
+
+			return;
+		}
+	}
+
+	LogWarningF(this, L"Unknown bang");
+}
+
+HWND MeasureWindowMessage::FindTargetWindow() const
+{
+	return FindWindow(
+		m_WindowClass.empty() ? nullptr : m_WindowClass.c_str(),
+		m_WindowName.empty() ? nullptr : m_WindowName.c_str());
+}

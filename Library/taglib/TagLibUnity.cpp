@@ -1,9 +1,4 @@
-/* Copyright (C) 2014 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 // TagLib unity build: This file includes several TagLib source files. By compiling all of them
 // together, the build performance is greatly increased.
@@ -18,11 +13,12 @@
 #include "tag.cpp"
 #include "tagunion.cpp"
 #include "audioproperties.cpp"
+#include "tagutils.cpp"
 
 #include "mpc\mpcfile.cpp"
 #include "mpc\mpcproperties.cpp"
 
-// Included here due to mismatch with toolkit\tfilestream.cpp.
+// Included here due to mismatches.
 #include "toolkit\tfile.cpp"
 
 #pragma warning(pop)

@@ -1,12 +1,6 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef __MEASURENET_H__
-#define __MEASURENET_H__
+#pragma once
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -25,7 +19,6 @@ public:
 	static void ReadStats(const std::wstring& iniFile, std::wstring& statsDate);
 	static void WriteStats(const WCHAR* iniFile, const std::wstring& statsDate);
 
-	static void InitializeStatic();
 	static void FinalizeStatic();
 
 protected:
@@ -42,7 +35,7 @@ protected:
 	MeasureNet(const MeasureNet& other) = delete;
 	MeasureNet& operator=(MeasureNet other) = delete;
 
-	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	virtual void UpdateValue();
 
 private:
@@ -60,5 +53,3 @@ private:
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;
 };
-
-#endif

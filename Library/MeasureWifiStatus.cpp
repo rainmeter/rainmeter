@@ -1,29 +1,26 @@
-/* Copyright (C) 2020 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureWifiStatus.h"
 #include "Rainmeter.h"
 #include "../Common/StringUtil.h"
 
-UINT MeasureWifiStatus::s_Instances = 0U;
+UINT MeasureWifiStatus::s_Instances = 0;
 HANDLE MeasureWifiStatus::s_Client = nullptr;
 PWLAN_INTERFACE_INFO MeasureWifiStatus::s_Interface = nullptr;
 PWLAN_INTERFACE_INFO_LIST MeasureWifiStatus::s_InterfaceList = nullptr;
+PWLAN_CONNECTION_ATTRIBUTES MeasureWifiStatus::s_ConnectionAttributes = nullptr;
+bool MeasureWifiStatus::s_NotificationsRegistered = false;
 
 MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MeasureType::UNINITIALIZED),
-	m_ListStyle(0U),
-	m_ListMax(5U),
+	m_ListStyle(0),
+	m_ListMax(5),
 	m_StatusString()
 {
 	++s_Instances;
 
-	if (s_Instances == 1U)
+	if (s_Instances == 1)
 	{
 		// Temporarily load the "wlanapi.dll" library as a data file to test if it exists.
 		// Note: Freeing the temporary library should be okay since delay loading
@@ -40,7 +37,7 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 		// Create WINLAN API Handle
 		if (!s_Client)
 		{
-			DWORD dwNegotiatedVersion = 0UL;
+			DWORD dwNegotiatedVersion = 0;
 			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &s_Client);
 			if (ERROR_SUCCESS != dwErr)
 			{
@@ -49,6 +46,19 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 					L"WifiStatus: Unable to open WLAN API Handle. Error code (%u): %s",
 					dwErr, GetErrorString(dwErr));
 				return;
+			}
+
+			dwErr = WlanRegisterNotification(s_Client, WLAN_NOTIFICATION_SOURCE_ACM, TRUE,
+				WlanNotificationCallback, nullptr, nullptr, nullptr);
+			if (dwErr != ERROR_SUCCESS)
+			{
+				LogDebugF(this,
+					L"WifiStatus: Unable to register WLAN notifications. Error code (%u): %s",
+					dwErr, GetErrorString(dwErr));
+			}
+			else
+			{
+				s_NotificationsRegistered = true;
 			}
 		}
 
@@ -63,7 +73,7 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 					L"WifiStatus: Unable to find any WLAN interfaces/adapters. Error code %u", dwErr);
 				return;
 			}
-			else if (s_InterfaceList->dwNumberOfItems == 0UL)
+			else if (s_InterfaceList->dwNumberOfItems == 0)
 			{
 				FinalizeHandle();
 				LogDebugF(this,
@@ -76,18 +86,18 @@ MeasureWifiStatus::MeasureWifiStatus(Skin* skin, const WCHAR* name) : Measure(sk
 
 MeasureWifiStatus::~MeasureWifiStatus()
 {
-	if (s_Instances > 0U)
+	if (s_Instances > 0)
 	{
 		--s_Instances;
 
-		if (s_Instances == 0U)
+		if (s_Instances == 0)
 		{
 			FinalizeHandle();
 		}
 	}
 }
 
-void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureWifiStatus::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
@@ -95,13 +105,23 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	bool changed = false;
 
+	WLAN_INTERFACE_INFO* newInterface = nullptr;
 	int value = parser.ReadInt(section, L"WifiIntfID", 0);
 	if (value >= (int)s_InterfaceList->dwNumberOfItems)
 	{
 		LogErrorF(this, L"WifiStatus: WifiIntfID=%i is not valid", value);
 		value = 0;
 	}
-	s_Interface = &s_InterfaceList->InterfaceInfo[value];
+	else
+	{
+		newInterface = &s_InterfaceList->InterfaceInfo[value];
+	}
+
+	if (newInterface != s_Interface)
+	{
+		s_Interface = newInterface;
+		RefreshConnectionAttributes();
+	}
 
 	value = parser.ReadInt(section, L"WifiListStyle", 0);
 	if (value < 0 || value > 7)
@@ -119,44 +139,18 @@ void MeasureWifiStatus::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	m_ListMax = value;
 
-	MeasureType infoType = MeasureType::UNKNOWN;
-	LPCWSTR type = parser.ReadString(section, L"WifiInfoType", L"").c_str();
-	if (_wcsicmp(L"SSID", type) == 0)
+	static constexpr ConfigParser::EnumOption<MeasureType> s_InfoTypes[] =
 	{
-		infoType = MeasureType::SSID;
-	}
-	else if (_wcsicmp(L"ENCRYPTION", type) == 0)
-	{
-		infoType = MeasureType::ENCRYPTION;
-	}
-	else if (_wcsicmp(L"AUTH", type) == 0)
-	{
-		infoType = MeasureType::AUTH;
-	}
-	else if (_wcsicmp(L"LIST", type) == 0)
-	{
-		infoType = MeasureType::LIST;
-	}
-	else if (_wcsicmp(L"PHY", type) == 0)
-	{
-		infoType = MeasureType::PHY;
-	}
-	else if (_wcsicmp(L"QUALITY", type) == 0)
-	{
-		infoType = MeasureType::QUALITY;
-	}
-	else if (_wcsicmp(L"TXRATE", type) == 0)
-	{
-		infoType = MeasureType::TXRATE;
-	}
-	else if (_wcsicmp(L"RXRATE", type) == 0)
-	{
-		infoType = MeasureType::RXRATE;
-	}
-	else
-	{
-		LogErrorF(this, L"WifiStatus: WifiInfoType=%s not valid", type);
-	}
+		{ L"SSID", MeasureType::SSID },
+		{ L"ENCRYPTION", MeasureType::ENCRYPTION },
+		{ L"AUTH", MeasureType::AUTH },
+		{ L"LIST", MeasureType::LIST },
+		{ L"PHY", MeasureType::PHY },
+		{ L"QUALITY", MeasureType::QUALITY },
+		{ L"TXRATE", MeasureType::TXRATE },
+		{ L"RXRATE", MeasureType::RXRATE },
+	};
+	const MeasureType infoType = parser.ReadEnum(section, L"WifiInfoType", MeasureType::UNKNOWN, s_InfoTypes);
 
 	if (infoType != m_Type)
 	{
@@ -194,7 +188,7 @@ void MeasureWifiStatus::UpdateValue()
 	{
 		PWLAN_AVAILABLE_NETWORK_LIST pwnl = nullptr;
 		DWORD dwErr =
-			WlanGetAvailableNetworkList(s_Client, &s_Interface->InterfaceGuid, 0UL, nullptr, &pwnl);
+			WlanGetAvailableNetworkList(s_Client, &s_Interface->InterfaceGuid, 0, nullptr, &pwnl);
 
 		if (ERROR_SUCCESS != dwErr)
 		{
@@ -204,12 +198,12 @@ void MeasureWifiStatus::UpdateValue()
 		{
 			// Size of network name can be up to 64 chars, set to 80 to add room for delimiters
 			m_StatusString.clear();
-			m_StatusString.reserve((size_t)m_ListMax * 80ULL);
+			m_StatusString.reserve((size_t)m_ListMax * 80);
 
-			UINT printed = 0U;  // count of how many networks have been printed already
+			UINT printed = 0;  // count of how many networks have been printed already
 
 			// Check all items in WLAN NETWORK LIST
-			for (size_t i = 0ULL; i < pwnl->dwNumberOfItems ; ++i)
+			for (size_t i = 0; i < pwnl->dwNumberOfItems ; ++i)
 			{
 				if (printed == m_ListMax) break;
 
@@ -222,15 +216,15 @@ void MeasureWifiStatus::UpdateValue()
 				{
 					++printed;
 					m_StatusString += ssid;
-					if (m_ListStyle > 0U)
+					if (m_ListStyle > 0)
 					{
-						if (m_ListStyle == 1U || m_ListStyle == 3U || m_ListStyle == 5U || m_ListStyle == 7U)
+						if (m_ListStyle == 1 || m_ListStyle == 3 || m_ListStyle == 5 || m_ListStyle == 7)
 						{
 							// ADD PHY type
 							m_StatusString += L" @";
 							m_StatusString += GetPHYString(pwnl->Network[i].dot11PhyTypes[0]);
 						}
-						if (m_ListStyle == 2U || m_ListStyle == 3U || m_ListStyle == 6U || m_ListStyle == 7U)
+						if (m_ListStyle == 2 || m_ListStyle == 3 || m_ListStyle == 6 || m_ListStyle == 7)
 						{
 							// ADD cipher and authentication
 							m_StatusString += L" (";
@@ -239,7 +233,7 @@ void MeasureWifiStatus::UpdateValue()
 							m_StatusString += GetAuthAlgorithmString(pwnl->Network[i].dot11DefaultAuthAlgorithm);
 							m_StatusString += L')';
 						}
-						if (m_ListStyle == 4U || m_ListStyle == 5U || m_ListStyle == 6U || m_ListStyle == 7U)
+						if (m_ListStyle == 4 || m_ListStyle == 5 || m_ListStyle == 6 || m_ListStyle == 7)
 						{
 							// ADD signal quality
 							WCHAR buffer[32] = { 0 };
@@ -259,12 +253,12 @@ void MeasureWifiStatus::UpdateValue()
 	}
 	else
 	{
-		ULONG outsize = 0UL;
-		PWLAN_CONNECTION_ATTRIBUTES wlan_cattr = nullptr;
-		DWORD dwErr = WlanQueryInterface(s_Client,
-			&s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection, nullptr, &outsize, (PVOID*)&wlan_cattr, nullptr);
+		if (m_Type == MeasureType::PHY || m_Type == MeasureType::QUALITY || m_Type == MeasureType::TXRATE || m_Type == MeasureType::RXRATE)
+		{
+			RefreshConnectionQualityAttributes();
+		}
 
-		if (ERROR_SUCCESS != dwErr)
+		if (!s_ConnectionAttributes)
 		{
 			switch (m_Type)
 			{
@@ -274,6 +268,7 @@ void MeasureWifiStatus::UpdateValue()
 			case MeasureType::AUTH:
 				m_StatusString = L"-1";
 				break;
+
 			case MeasureType::QUALITY:
 			case MeasureType::TXRATE:
 			case MeasureType::RXRATE:
@@ -286,45 +281,42 @@ void MeasureWifiStatus::UpdateValue()
 			switch (m_Type)
 			{
 			case MeasureType::SSID:
-				// Need to convert ucSSID to wchar from uchar
 				m_StatusString = StringUtil::Widen(
-					(LPCSTR)wlan_cattr->wlanAssociationAttributes.dot11Ssid.ucSSID,
-					(int)wlan_cattr->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
+					(LPCSTR)s_ConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID,
+					(int)s_ConnectionAttributes->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
 
 				// If not connected yet add current status
-				m_StatusString += GetInterfaceStateString(wlan_cattr->isState);
+				m_StatusString += GetInterfaceStateString(s_ConnectionAttributes->isState);
 				break;
 
 			case MeasureType::PHY:
-				m_StatusString = GetPHYString(wlan_cattr->wlanAssociationAttributes.dot11PhyType);
+				m_StatusString = GetPHYString(s_ConnectionAttributes->wlanAssociationAttributes.dot11PhyType);
 				break;
 
 			case MeasureType::ENCRYPTION:
-				m_StatusString = GetCipherAlgorithmString(wlan_cattr->wlanSecurityAttributes.dot11CipherAlgorithm);
+				m_StatusString = GetCipherAlgorithmString(s_ConnectionAttributes->wlanSecurityAttributes.dot11CipherAlgorithm);
 				break;
 
 			case MeasureType::AUTH:
-				m_StatusString = GetAuthAlgorithmString(wlan_cattr->wlanSecurityAttributes.dot11AuthAlgorithm);
+				m_StatusString = GetAuthAlgorithmString(s_ConnectionAttributes->wlanSecurityAttributes.dot11AuthAlgorithm);
 				break;
 
 			case MeasureType::QUALITY:
-				m_Value = (double)wlan_cattr->wlanAssociationAttributes.wlanSignalQuality;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality;
 				break;
 
 			case MeasureType::TXRATE:
-				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.ulTxRate * 1000.0;
 				break;
 
 			case MeasureType::RXRATE:
-				m_Value = wlan_cattr->wlanAssociationAttributes.ulRxRate * 1000.0;
+				m_Value = s_ConnectionAttributes->wlanAssociationAttributes.ulRxRate * 1000.0;
 				break;
 
 			default:  // Invalid type
 				m_StatusString.clear();
 				break;
 			}
-
-			WlanFreeMemory(wlan_cattr);
 		}
 	}
 }
@@ -349,7 +341,16 @@ const WCHAR* MeasureWifiStatus::GetStringValue()
 
 void MeasureWifiStatus::FinalizeHandle()
 {
+	if (s_Client && s_NotificationsRegistered)
+	{
+		WlanRegisterNotification(s_Client, WLAN_NOTIFICATION_SOURCE_NONE, FALSE,
+			nullptr, nullptr, nullptr, nullptr);
+		s_NotificationsRegistered = false;
+	}
+
 	s_Interface = nullptr;
+
+	FreeConnectionAttributes();
 
 	if (s_InterfaceList)
 	{
@@ -361,6 +362,82 @@ void MeasureWifiStatus::FinalizeHandle()
 	{
 		WlanCloseHandle(s_Client, nullptr);
 		s_Client = nullptr;
+	}
+}
+
+void CALLBACK MeasureWifiStatus::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA data, PVOID context)
+{
+	if (!data || data->NotificationSource != WLAN_NOTIFICATION_SOURCE_ACM) return;
+
+	if (
+		data->NotificationCode != wlan_notification_acm_connection_complete &&
+		data->NotificationCode != wlan_notification_acm_connection_attempt_fail &&
+		data->NotificationCode != wlan_notification_acm_disconnected)
+	{
+		return;
+	}
+
+	if (!s_Interface || !IsEqualGUID(data->InterfaceGuid, s_Interface->InterfaceGuid)) return;
+
+	RefreshConnectionAttributes();
+}
+
+void MeasureWifiStatus::RefreshConnectionAttributes()
+{
+	FreeConnectionAttributes();
+
+	if (!s_Client || !s_Interface) return;
+
+	ULONG outSize = 0;
+	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_current_connection,
+		nullptr, &outSize, (void**)&s_ConnectionAttributes, nullptr);
+	if (result != ERROR_SUCCESS)
+	{
+		FreeConnectionAttributes();
+	}
+}
+
+void MeasureWifiStatus::RefreshConnectionQualityAttributes()
+{
+	if (!s_Client || !s_Interface) return;
+
+	static ULONGLONG s_LastRefreshTickCount = 0;
+	const ULONGLONG tickCount = GetTickCount64();
+	const ULONGLONG refreshInterval = 1000; // ms
+	if (tickCount < (s_LastRefreshTickCount + refreshInterval)) return;
+	s_LastRefreshTickCount = tickCount;
+
+	// On Windows 11 24H2+, using wlan_intf_opcode_current_connection triggers an entry in
+	// the CapabilityAccessManager.db-wal database. See:
+	// https://learn.microsoft.com/en-au/answers/questions/5856859/why-is-capability-access-manager-growing-1-9gb-day
+	//
+	// We try to use wlan_intf_opcode_realtime_connection_quality first in order to avoid
+	// that issue.
+	ULONG outSize = 0;
+	WLAN_REALTIME_CONNECTION_QUALITY* connectionQuality = nullptr;
+	DWORD result = WlanQueryInterface(s_Client, &s_Interface->InterfaceGuid, wlan_intf_opcode_realtime_connection_quality,
+		nullptr, &outSize, (void**)&connectionQuality, nullptr);
+	if (result == ERROR_SUCCESS && s_ConnectionAttributes)
+	{
+		s_ConnectionAttributes->wlanAssociationAttributes.dot11PhyType = connectionQuality->dot11PhyType;
+		s_ConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality = connectionQuality->ulLinkQuality;
+		s_ConnectionAttributes->wlanAssociationAttributes.ulTxRate = connectionQuality->ulTxRate;
+		s_ConnectionAttributes->wlanAssociationAttributes.ulRxRate = connectionQuality->ulRxRate;
+		WlanFreeMemory(connectionQuality);
+		connectionQuality = nullptr;
+	}
+	else
+	{
+		RefreshConnectionAttributes();
+	}
+}
+
+void MeasureWifiStatus::FreeConnectionAttributes()
+{
+	if (s_ConnectionAttributes)
+	{
+		WlanFreeMemory(s_ConnectionAttributes);
+		s_ConnectionAttributes = nullptr;
 	}
 }
 

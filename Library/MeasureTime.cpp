@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureTime.h"
@@ -95,11 +90,8 @@ void MeasureTime::FreeLocale()
 	}
 }
 
-/*
-** Converts given time to string.
-** This function is a wrapper function for _wcsftime_l.
-**
-*/
+// Converts given time to string.
+// This function is a wrapper function for _wcsftime_l.
 void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
 {
 	if (bufLen > 0)
@@ -222,10 +214,6 @@ void MeasureTime::FillCurrentTime()
 	}
 }
 
-/*
-** Updates the current time
-**
-*/
 void MeasureTime::UpdateValue()
 {
 	FillCurrentTime();
@@ -281,10 +269,6 @@ void MeasureTime::UpdateValue()
 }
 
 
-/*
-** Returns the time as string.
-**
-*/
 const WCHAR* MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
@@ -334,11 +318,7 @@ const WCHAR* MeasureTime::GetStringValue()
 	return CheckSubstitute(tmpSz);
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureTime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void
 	{
@@ -348,7 +328,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Measure::ReadOptions(parser, section);
 
-	m_Format = parser.ReadString(section, L"Format", L"");
+	parser.ReadString(m_Format, section, L"Format", L"");
 
 	std::wstring timeStamp = parser.ReadString(section, L"TimeStamp", L"-1");
 	if (wcsncmp(timeStamp.c_str(), L"DSTStart", 8) == 0)
@@ -520,7 +500,7 @@ void MeasureTime::UpdateDelta()
 	}
 	else
 	{
-		time_t now = 0LL;
+		time_t now = 0;
 		time(&now);
 		tm* today = localtime(&now);
 		if (m_DaylightSavingTime && today->tm_isdst)

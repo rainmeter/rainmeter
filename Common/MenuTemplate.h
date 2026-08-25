@@ -1,12 +1,6 @@
-/* Copyright (C) 2012 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_MENUTEMPLATE_H_
-#define RM_COMMON_MENUTEMPLATE_H_
+#pragma once
 
 #include <Windows.h>
 
@@ -16,7 +10,7 @@ struct MenuTemplate
 	WORD id;
 	WORD idText;
 
-	typedef WCHAR* (*GetStringFunc)(UINT id);
+	typedef const WCHAR* (*GetStringFunc)(UINT id);
 
 	static HMENU CreateMenu(const MenuTemplate* items, UINT itemCount, GetStringFunc getString);
 
@@ -37,5 +31,3 @@ enum MenuTemplateItem
 #define MENU_ITEM_GRAYED(...) { MenuItem_ItemGrayed, __VA_ARGS__ }
 #define MENU_SEPARATOR() { MenuItem_Separator }
 #define MENU_SUBMENU(idText, ...) { MenuItem_SubMenuBegin, 0, idText }, __VA_ARGS__, { MenuItem_SubMenuEnd }
-
-#endif

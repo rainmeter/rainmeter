@@ -1,9 +1,4 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "PlayerWLM.h"
@@ -14,10 +9,6 @@ extern HINSTANCE g_Instance;
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
 // supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
 
-/*
-** Constructor.
-**
-*/
 PlayerWLM::PlayerWLM() : Player(),
 	m_Window(nullptr)
 {
@@ -44,10 +35,6 @@ PlayerWLM::PlayerWLM() : Player(),
 	m_Initialized = true;
 }
 
-/*
-** Destructor.
-**
-*/
 PlayerWLM::~PlayerWLM()
 {
 	c_Player = nullptr;
@@ -56,10 +43,6 @@ PlayerWLM::~PlayerWLM()
 	UnregisterClass(L"MsnMsgrUIManager", g_Instance);
 }
 
-/*
-** Creates a shared class object.
-**
-*/
 Player* PlayerWLM::Create()
 {
 	if (!c_Player)
@@ -93,7 +76,7 @@ LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
 			// Some players include player name in the beginning. Skip that.
 			std::wstring::size_type len = data.find(L"\\0Music\\0");
-			len += 9ULL;
+			len += 9;
 			data.erase(0, len); // Get rid of \0Music\0
 
 			bool playing = (data[0] == L'1');
@@ -102,25 +85,25 @@ LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			{
 				++player->m_TrackCount;
 				player->m_State = STATE_PLAYING;
-				data.erase(0ULL, 3ULL);	// Get rid of the status
+				data.erase(0, 3);	// Get rid of the status
 
 				// TODO: Handle invalid
 				len = data.find_first_of(L'\\');
-				len += 2ULL;
-				data.erase(0ULL, len); // Get rid of the format
+				len += 2;
+				data.erase(0, len); // Get rid of the format
 
 				len = data.find_first_of(L'\\');
-				player->m_Title.assign(data, 0ULL, len);
-				len += 2ULL;
-				data.erase(0ULL, len);
+				player->m_Title.assign(data, 0, len);
+				len += 2;
+				data.erase(0, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Artist.assign(data, 0ULL, len);
-				len += 2ULL;
-				data.erase(0ULL, len);
+				player->m_Artist.assign(data, 0, len);
+				len += 2;
+				data.erase(0, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Album.assign(data, 0ULL, len);
+				player->m_Album.assign(data, 0, len);
 
 				if (player->m_Measures & MEASURE_LYRICS)
 				{
@@ -149,49 +132,29 @@ void PlayerWLM::SendKeyInput(WORD key)
 	input.type = INPUT_KEYBOARD;
 	input.ki = kbi;
 
-	SendInput(1U, &input, sizeof(INPUT));
+	SendInput(1, &input, sizeof(INPUT));
 }
 
-/*
-** Called during each update of the main measure.
-**
-*/
 void PlayerWLM::UpdateData()
 {
 }
 
-/*
-** Handles the Play bang.
-**
-*/
 void PlayerWLM::Play()
 {
 	SendKeyInput(VK_MEDIA_PLAY_PAUSE);
 }
 
-/*
-** Handles the Stop bang.
-**
-*/
-void PlayerWLM::Stop() 
+void PlayerWLM::Stop()
 {
 	SendKeyInput(VK_MEDIA_STOP);
 }
 
-/*
-** Handles the Next bang.
-**
-*/
-void PlayerWLM::Next() 
+void PlayerWLM::Next()
 {
 	SendKeyInput(VK_MEDIA_NEXT_TRACK);
 }
 
-/*
-** Handles the Previous bang.
-**
-*/
-void PlayerWLM::Previous() 
+void PlayerWLM::Previous()
 {
 	SendKeyInput(VK_MEDIA_PREV_TRACK);
 }

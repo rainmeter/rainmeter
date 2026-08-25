@@ -1,11 +1,7 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/CriticalSection.h"
 #include "Rainmeter.h"
 #include "Export.h"
 #include "Skin.h"
@@ -14,32 +10,163 @@
 
 #define NULLCHECK(str) { if ((str) == nullptr) { (str) = L""; } }
 
-static std::wstring g_Buffer;
+static CriticalSection g_ThreadBuffersLock;
+static std::map<DWORD, std::wstring> g_ThreadBuffers;
 
-bool SetStyleTemplateIfNeeded(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR section)
+const DWORD g_MainThreadId = GetCurrentThreadId();
+const WCHAR* g_NonMainThreadError = L"ERROR: This function can only be called on the main thread";
+
+bool IsMainThread()
 {
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty() && measure->GetSkin()->GetMeter(section))
+	return GetCurrentThreadId() == g_MainThreadId;
+}
+
+std::wstring& GetThreadLocalBufferAsString()
+{
+	const auto threadId = GetCurrentThreadId();
+	if (threadId == g_MainThreadId)
 	{
-		parser.SetStyleTemplate(style);
-		return true;
+		static std::wstring s_MainThreadBuffer;
+		return s_MainThreadBuffer;
+	}
+
+	std::wstring* threadBuffer = nullptr;
+	{
+		CriticalSectionLock lock(g_ThreadBuffersLock);
+		threadBuffer = &g_ThreadBuffers[threadId];
+	}
+
+	return *threadBuffer;
+}
+
+float* GetThreadLocalBufferAsFloat()
+{
+	auto& threadBuffer = GetThreadLocalBufferAsString();
+	threadBuffer.resize(sizeof(float) / sizeof(WCHAR));
+	return (float*)&threadBuffer[0];
+}
+
+enum RmExportType
+{
+	EXPORT_REPLACE_VARIABLES,
+	EXPORT_PATH_TO_ABSOLUTE,
+	EXPORT_GET
+};
+
+struct RmReplaceVariablesMessageParams
+{
+	void* rm;
+	LPCWSTR str;
+	std::wstring* resultBuffer;
+};
+
+struct RmPathToAbsoluteMessageParams
+{
+	void* rm;
+	LPCWSTR relativePath;
+	std::wstring* resultBuffer;
+};
+
+struct RmGetMessageParams
+{
+	void* rm;
+	int type;
+	void* result;
+};
+
+// Some plugin exports are called from worker threads even though the documentation says that
+// it's not allowed... To avoid memory corruption, use SendMessage to obtain the relevant info
+// from the main thread in a thread-safe manner. Note that this will now block until the main
+// thread has a chance to respond.
+template<typename Params>
+LRESULT SendExportSyncMessage(RmExportType message, Params* params)
+{
+	return SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_HANDLE_EXPORT_SYNC, (WPARAM)message, (LPARAM)params);
+}
+
+void HandleExportSyncMessage(WPARAM wParam, LPARAM lParam)
+{
+	const auto message = (RmExportType)wParam;
+	if (message == EXPORT_REPLACE_VARIABLES)
+	{
+		auto params = ((RmReplaceVariablesMessageParams*)lParam);
+		*params->resultBuffer = RmReplaceVariables(params->rm, params->str);
+	}
+	else if (message == EXPORT_PATH_TO_ABSOLUTE)
+	{
+		auto params = (RmPathToAbsoluteMessageParams*)lParam;
+		*params->resultBuffer = RmPathToAbsolute(params->rm, params->relativePath);
+	}
+	else if (message == EXPORT_GET)
+	{
+		auto params = (RmGetMessageParams*)lParam;
+		params->result = RmGet(params->rm, params->type);
+	}
+}
+
+// A plugin can read options from any section, so MeterStyle should only be inherited when the
+// section being read is actually a meter.
+bool AllowMeterStyleInheritance(MeasurePlugin* measure, LPCWSTR section)
+{
+	return measure->GetSkin()->GetMeter(section) != nullptr;
+}
+
+// Previously, a skin with W=100 was actually 100 pixels on the screen. After we implemented
+// support for high DPI, the actual width on the screen will be larger when using a non-100%
+// scaling factor. Old plugins such as InputTextX, BlurInput, and WebView2 are unaware of this
+// change and are still expecting the options to be in screen pixels. Lets give them what they
+// are expecting in such cases in order to avoid breaking backwards compatibility.
+bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
+{
+	if (plugin->IsDpiAware()) return false;
+
+	const WCHAR* sizeOptions[] = { L"X", L"Y", L"W", L"H", L"FontSize" };
+	for (auto* sizeOption : sizeOptions)
+	{
+		if (_wcsicmp(sizeOption, option) == 0) return true;
 	}
 
 	return false;
 }
 
+int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR option, int defValue)
+{
+	const int value = parser.ReadInt(measure->GetName(), option, defValue);
+	return measure->GetSkin()->LogicalToPhysical(value);
+}
+
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(option);
 	NULLCHECK(defValue);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
-	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
+	if (ShouldScalePluginCoordinateOption(measure, option))
+	{
+		static WCHAR buffer[32] = { 0 };
+		buffer[0] = L'\0';
+
+		const auto defValueInt = parser.ParseInt(defValue, 0);
+		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
+		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+		_itow_s(result, buffer, 10);
+		return buffer;
+	}
+
+	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
+	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+	return result;
 }
 
 LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 	NULLCHECK(defValue);
@@ -47,93 +174,149 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	SetStyleTemplateIfNeeded(measure, parser, section);
-	LPCWSTR result = parser.ReadString(section, option, defValue, replaceMeasures != FALSE).c_str();
-	parser.ClearStyleTemplate();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadString(section, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 {
+	if (!IsMainThread()) return 0.0;
+
 	NULLCHECK(option);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
-	return parser.ReadFloat(measure->GetName(), option, defValue);
+
+	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+	double result;
+	if (ShouldScalePluginCoordinateOption(measure, option))
+	{
+		result = ReadScaledPluginCoordinateOption(measure, parser, option, (int)defValue);
+	}
+	else
+	{
+		result = parser.ReadFloat(measure->GetName(), option, defValue);
+	}
+	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+
+	return result;
 }
 
 double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
 {
+	if (!IsMainThread()) return 0.0;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 
-	SetStyleTemplateIfNeeded(measure, parser, section);
-	const double result = parser.ReadFloat(section, option, defValue);
-	parser.ClearStyleTemplate();
-
-	return result;
+	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadFloat(section, option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 {
+	if (!IsMainThread())
+	{
+		RmReplaceVariablesMessageParams params = { rm, str, &GetThreadLocalBufferAsString() };
+		SendExportSyncMessage(EXPORT_REPLACE_VARIABLES, &params);
+		return params.resultBuffer->c_str();
+	}
+
 	NULLCHECK(str);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
-	g_Buffer = str;
-	parser.ReplaceVariables(g_Buffer);
-	parser.ReplaceMeasures(g_Buffer);
-	return g_Buffer.c_str();
+	auto& threadBuffer = GetThreadLocalBufferAsString();
+	threadBuffer = str;
+	parser.ReplaceVariables(threadBuffer);
+	parser.ReplaceMeasures(threadBuffer);
+	return threadBuffer.c_str();
 }
 
 LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
+	if (!IsMainThread())
+	{
+		RmPathToAbsoluteMessageParams params = { rm, relativePath, &GetThreadLocalBufferAsString() };
+		SendExportSyncMessage(EXPORT_PATH_TO_ABSOLUTE, &params);
+		return params.resultBuffer->c_str();
+	}
+
 	NULLCHECK(relativePath);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	g_Buffer = relativePath;
-	measure->GetSkin()->MakePathAbsolute(g_Buffer);
-	return g_Buffer.c_str();
+	auto& threadBuffer = GetThreadLocalBufferAsString();
+	threadBuffer = relativePath;
+	measure->GetSkin()->MakePathAbsolute(threadBuffer);
+	return threadBuffer.c_str();
 }
 
 void* __stdcall RmGet(void* rm, int type)
 {
-	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	if (!IsMainThread())
+	{
+		RmGetMessageParams params = { rm, type, nullptr };
+		SendExportSyncMessage(EXPORT_GET, &params);
+		return params.result;
+	}
 
+
+	// Most of the info returned here shouldn't change while the plugin measure is loaded so
+	// hopefully we can get away with just returning the actual data and not a thread-specific
+	// copy.
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	switch (type)
 	{
 	case RMG_MEASURENAME:
-		{
 			return (void*)measure->GetName();
-		}
 
 	case RMG_SKIN:
-		{
 			return (void*)measure->GetSkin();
-		}
 
 	case RMG_SETTINGSFILE:
-		{
 			return (void*)GetRainmeter().GetDataFile().c_str();
-		}
 
 	case RMG_SKINNAME:
-		{
-			Skin* window = measure->GetSkin();
-			if (!window) break;
-			return (void*)window->GetFolderPath().c_str();
-		}
+			return (void*)measure->GetSkin()->GetFolderPath().c_str();
 
 	case RMG_SKINWINDOWHANDLE:
+			return (void*)measure->GetSkin()->GetWindow();
+
+	case RMG_SKINSCALE:
 		{
-			Skin* window = measure->GetSkin();
-			if (!window) break;
-			return (void*)window->GetWindow();
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetScale();
+			return buffer;
 		}
+
+	case RMG_SKINDPISCALE:
+		{
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetDpiScale();
+			return buffer;
+		}
+
+	case RMG_SKINZOOMSCALE:
+		{
+			auto* buffer = GetThreadLocalBufferAsFloat();
+			*buffer = measure->GetSkin()->GetZoomScale();
+			return buffer;
+		}
+
+	case RMG_SKINTRANSPARENCY:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetAlphaValue());
+
+	case RMG_SKINCLICKTHROUGH:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetClickThrough() ? 1 : 0);
+
+	case RMG_SKINDRAGGABLE:
+		return (void*)(INT_PTR)(measure->GetSkin()->GetWindowDraggable() ? 1 : 0);
+
+	case RMG_APIVERSION:
+		return (void*)(INT_PTR)2;
 	}
 
 	return nullptr;
@@ -193,6 +376,8 @@ void RmLogF(void* rm, int level, LPCWSTR format, ...)
 // Deprecated!
 LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	NULLCHECK(section);
 	NULLCHECK(option);
 	NULLCHECK(defValue);
@@ -200,7 +385,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	ConfigParser* parser = GetRainmeter().GetCurrentParser();
 	if (parser)
 	{
-		return parser->ReadString(section, option, defValue, false).c_str();
+		return parser->ReadString(section, option, defValue, { .sectionVariables = false }).c_str();
 	}
 
 	return defValue;
@@ -209,6 +394,8 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 // Deprecated!
 LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 {
+	if (!IsMainThread()) return g_NonMainThreadError;
+
 	if (command == nullptr || *command == L'\0')
 	{
 		return L"noop";
@@ -216,15 +403,17 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	NULLCHECK(data);
 
+	auto& threadBuffer = GetThreadLocalBufferAsString();
+
 	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
 		Skin* skin = GetRainmeter().GetSkinByINI(data);
 		if (skin)
 		{
-			g_Buffer = L"\"";
-			g_Buffer += skin->GetFolderPath();
-			g_Buffer += L"\"";
-			return g_Buffer.c_str();
+			threadBuffer = L"\"";
+			threadBuffer += skin->GetFolderPath();
+			threadBuffer += L"\"";
+			return threadBuffer.c_str();
 		}
 
 		return L"";
@@ -233,17 +422,18 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() >= 1ULL)
+		if (subStrings.size() >= 1)
 		{
 			std::wstring& config = subStrings[0];
 
 			Skin* skin = GetRainmeter().GetSkin(config);
 			if (skin)
 			{
+				auto& threadBuffer = GetThreadLocalBufferAsString();
 				WCHAR buf1[64] = { 0 };
 				_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(skin->GetWindow()));
-				g_Buffer = buf1;
-				return g_Buffer.c_str();
+				threadBuffer = buf1;
+				return threadBuffer.c_str();
 			}
 		}
 
@@ -253,7 +443,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() >= 2ULL)
+		if (subStrings.size() >= 2)
 		{
 			std::wstring& config = subStrings[0];
 			Skin* skin = GetRainmeter().GetSkin(config);
@@ -261,10 +451,10 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 			{
 				const std::wstring& variable = subStrings[1];
 
-				const std::wstring* value = skin->GetParser().GetVariable(variable);
-				if (value)
+				auto& threadBuffer = GetThreadLocalBufferAsString();
+				if (skin->GetParser().GetVariable(variable, threadBuffer))
 				{
-					return (*value).c_str();
+					return threadBuffer.c_str();
 				}
 			}
 		}
@@ -275,7 +465,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	{
 		std::vector<std::wstring> subStrings = CommandHandler::ParseString(data);
 
-		if (subStrings.size() == 3ULL)
+		if (subStrings.size() == 3)
 		{
 			Skin* skin = GetRainmeter().GetSkin(subStrings[0]);
 			if (skin)

@@ -1,0 +1,45 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#pragma once
+
+#include <functional>
+
+class MeasureDragDrop;
+class Skin;
+
+class SkinDropTarget : public IDropTarget
+{
+public:
+	explicit SkinDropTarget(Skin* skin);
+	virtual ~SkinDropTarget();
+
+	SkinDropTarget(const SkinDropTarget& other) = delete;
+	SkinDropTarget& operator=(SkinDropTarget other) = delete;
+
+	ULONG STDMETHODCALLTYPE AddRef() override;
+	ULONG STDMETHODCALLTYPE Release() override;
+
+private:
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) override;
+	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject* dataObject, DWORD keyState, POINTL point, DWORD* effect) override;
+	HRESULT STDMETHODCALLTYPE DragOver(DWORD keyState, POINTL point, DWORD* effect) override;
+	HRESULT STDMETHODCALLTYPE DragLeave() override;
+	HRESULT STDMETHODCALLTYPE Drop(IDataObject* dataObject, DWORD keyState, POINTL point, DWORD* effect) override;
+	static bool HasDropFiles(IDataObject* dataObject);
+	static std::vector<std::wstring> GetDroppedFiles(IDataObject* dataObject);
+
+	bool ShouldCallDropHelperForEnterAndOver() const;
+	DWORD GetEffectForPoint(const POINTL& point) const;
+	void ForEachDragDropMeasure(const std::function<void(MeasureDragDrop*)>& action) const;
+
+	Skin* m_Skin;
+	LONG m_RefCount;
+
+	bool m_OleInitialized;
+	bool m_Registered;
+	bool m_HasDropFiles;
+
+	Microsoft::WRL::ComPtr<IDropTargetHelper> m_DropHelper;
+	Microsoft::WRL::ComPtr<IDataObject> m_DataObject;
+	std::vector<std::wstring> m_Files;
+};

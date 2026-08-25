@@ -1,0 +1,32 @@
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
+
+#include "StdAfx.h"
+#include "Language.h"
+#include "resource.h"
+#include "../Common/UnitTest.h"
+
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+
+TEST_CLASS(Library_Language_Test)
+{
+public:
+	TEST_METHOD(TestEnglishLanguageLoads)
+	{
+		WCHAR modulePath[MAX_PATH];
+		const DWORD length = GetModuleFileNameW((HMODULE)&__ImageBase, modulePath, _countof(modulePath));
+		Assert::IsTrue(length > 0 && length < _countof(modulePath));
+
+		std::wstring languageDirectory(modulePath, length);
+		languageDirectory.resize(languageDirectory.find_last_of(L"\\/") + 1);
+		languageDirectory += L"Languages\\";
+
+		auto& language = GetLanguage();
+		Assert::IsTrue(language.Load(languageDirectory, L"1033"));
+		Assert::IsTrue(language.IsLoaded());
+		Assert::AreEqual((LCID)1033, language.GetLCID());
+		Assert::AreEqual((unsigned short)60, language.GetButtonWidth());
+		Assert::AreEqual((unsigned short)65, language.GetLabelWidth());
+		Assert::IsFalse(language.IsRTL());
+		Assert::AreEqual(L"About", language.GetString(IDS_About));
+	}
+};

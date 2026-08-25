@@ -1,26 +1,18 @@
-/* Copyright (C) 2016 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeasureRecycleManager.h"
 #include "ConfigParser.h"
 #include "Logger.h"
-#include "System.h"
 
 namespace {
 
-bool g_Thread = false;
-
-double g_BinCount = 0.0;
-double g_BinSize = 0.0;
+std::atomic<bool> g_Thread = false;
+std::atomic<double> g_BinCount = 0.0;
+std::atomic<double> g_BinSize = 0.0;
 
 int g_UpdateCount = 0;
 int g_InstanceCount = 0;
-CRITICAL_SECTION g_CriticalSection;
 
 DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 {
@@ -29,18 +21,18 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	SHQUERYRBINFO rbi = { 0 };
 	rbi.cbSize = sizeof(SHQUERYRBINFO);
 	SHQueryRecycleBin(nullptr, &rbi);
+
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
-
 	g_Thread = false;
 
-	return 0UL;
+	return 0;
 }
 
 bool HasRecycleBinChanged()
 {
-	static DWORD s_LastVolumeCount = 0UL;
-	static ULONGLONG s_LastWriteTime = 0ULL;
+	static DWORD s_LastVolumeCount = 0;
+	static ULONGLONG s_LastWriteTime = 0;
 
 	bool changed = false;
 
@@ -50,7 +42,7 @@ bool HasRecycleBinChanged()
 	LSTATUS ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &volumeKey);
 	if (ls == ERROR_SUCCESS)
 	{
-		DWORD volumeCount = 0UL;
+		DWORD volumeCount = 0;
 		RegQueryInfoKey(volumeKey, nullptr, nullptr, nullptr, &volumeCount, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 		if (volumeCount != s_LastVolumeCount)
 		{
@@ -60,7 +52,7 @@ bool HasRecycleBinChanged()
 
 		WCHAR buffer[64] = { 0 };
 		DWORD bufferSize = _countof(buffer);
-		DWORD index = 0UL;
+		DWORD index = 0;
 
 		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, nullptr, nullptr, nullptr, nullptr)) == ERROR_SUCCESS)
 		{
@@ -68,7 +60,7 @@ bool HasRecycleBinChanged()
 			ls = RegOpenKeyEx(volumeKey, buffer, 0, KEY_QUERY_VALUE, &volumeSubKey);
 			if (ls == ERROR_SUCCESS)
 			{
-				ULONGLONG lastWriteTime = 0ULL;
+				ULONGLONG lastWriteTime = 0;
 				ls = RegQueryInfoKey(volumeSubKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 				if (ls == ERROR_SUCCESS)
 				{
@@ -99,7 +91,7 @@ bool HasRecycleBinChanged()
 		ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE, &iconKey);
 		if (ls == ERROR_SUCCESS)
 		{
-			ULONGLONG lastWriteTime = 0ULL;
+			ULONGLONG lastWriteTime = 0;
 			ls = RegQueryInfoKey(iconKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 			if (ls == ERROR_SUCCESS)
 			{
@@ -130,74 +122,48 @@ enum class MeasureRecycleManager::Type
 MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(Type::None)
 {
-	if (g_InstanceCount <= 0)
-	{
-		System::InitializeCriticalSection(&g_CriticalSection);
-	}
-
 	++g_InstanceCount;
 }
 
 MeasureRecycleManager::~MeasureRecycleManager()
 {
 	--g_InstanceCount;
-
-	if (g_InstanceCount <= 0)
-	{
-		DeleteCriticalSection(&g_CriticalSection);
-	}
 }
 
-void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	Measure::ReadOptions(parser, section);
 
-	const WCHAR* type = parser.ReadString(section, L"RecycleType", L"COUNT").c_str();
-	if (_wcsicmp(L"COUNT", type) == 0)
+	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
-		m_Type = Type::Count;
-	}
-	else if (_wcsicmp(L"SIZE", type) == 0)
-	{
-		m_Type = Type::Size;
-	}
-	else
-	{
-		m_Type = Type::None;
-		LogErrorF(this, L"Invalid RecycleType=%s");
-	}
+		{ L"COUNT", Type::Count },
+		{ L"SIZE", Type::Size },
+	};
+	m_Type = parser.ReadEnum(section, L"RecycleType", Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()
 {
-	if (TryEnterCriticalSection(&g_CriticalSection))
+	if (!g_Thread)
 	{
-		if (!g_Thread)
+		++g_UpdateCount;
+		if (g_UpdateCount > g_InstanceCount)
 		{
-			++g_UpdateCount;
-			if (g_UpdateCount > g_InstanceCount)
+			if (HasRecycleBinChanged())
 			{
-				if (HasRecycleBinChanged())
-				{
-					// Delay next check.
-					g_UpdateCount = g_InstanceCount * -2;
+				// Delay next check.
+				g_UpdateCount = g_InstanceCount * -2;
 
-					DWORD id = 0UL;
-					HANDLE thread = CreateThread(nullptr, 0ULL, QueryRecycleBinThreadProc, nullptr, 0UL, &id);
-					if (thread)
-					{
-						CloseHandle(thread);
-						g_Thread = true;
-					}
-				}
-				else
+				if (QueueUserWorkItem(QueryRecycleBinThreadProc, nullptr, 0))
 				{
-					g_UpdateCount = 0;
+					g_Thread = true;
 				}
 			}
+			else
+			{
+				g_UpdateCount = 0;
+			}
 		}
-
-		LeaveCriticalSection(&g_CriticalSection);
 	}
 
 	switch (m_Type)

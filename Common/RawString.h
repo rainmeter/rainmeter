@@ -1,51 +1,81 @@
-/* Copyright (C) 2011 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_COMMON_RAWSTRING_H_
-#define RM_COMMON_RAWSTRING_H_
+#pragma once
 
 #include <malloc.h>
+#include <string>
+#include <string.h>
+#include <string_view>
 
 class RawString
 {
 public:
-	RawString() :
-		m_String()
-	{
-	}
+	RawString() {}
 
 	RawString(const wchar_t* str) :
 		m_String(str_alloc(str))
 	{
 	}
 
-	RawString(const RawString& rhs) :
-		m_String(str_alloc(rhs.c_str()))
+	RawString(std::wstring_view str) :
+		m_String(str_alloc(str.data(), str.size()))
 	{
+	}
+
+	RawString(const std::wstring& str) :
+		RawString(std::wstring_view(str))
+	{
+	}
+
+	RawString(const RawString& rhs) :
+		m_String(str_alloc(rhs.m_String))
+	{
+	}
+
+	RawString(RawString&& rhs) noexcept :
+		m_String(rhs.m_String)
+	{
+		rhs.m_String = nullptr;
 	}
 
 	~RawString()
 	{
 		clear();
 	}
-	
+
 	RawString& operator=(const wchar_t* rhs)
 	{
-		clear();
-		m_String = str_alloc(rhs);
+		assign(rhs);
 		return *this;
+	}
+
+	RawString& operator=(std::wstring_view rhs)
+	{
+		assign(rhs.data(), rhs.size());
+		return *this;
+	}
+
+	RawString& operator=(const std::wstring& rhs)
+	{
+		return operator=(std::wstring_view(rhs));
 	}
 
 	RawString& operator=(const RawString& rhs)
 	{
 		if (&rhs != this)
 		{
+			assign(rhs.m_String);
+		}
+		return *this;
+	}
+
+	RawString& operator=(RawString&& rhs) noexcept
+	{
+		if (&rhs != this)
+		{
 			clear();
-			m_String = str_alloc(rhs.m_String);
+			m_String = rhs.m_String;
+			rhs.m_String = nullptr;
 		}
 		return *this;
 	}
@@ -72,10 +102,56 @@ public:
 private:
 	wchar_t* str_alloc(const wchar_t* str)
 	{
-		return str ? _wcsdup(str) : nullptr;
+		if (!str) return nullptr;
+
+		wchar_t* buffer = (wchar_t*)malloc((wcslen(str) + 1) * sizeof(wchar_t));
+		if (buffer) wcscpy(buffer, str);
+		return buffer;
 	}
 
-	wchar_t* m_String;
-};
+	wchar_t* str_alloc(const wchar_t* str, size_t length)
+	{
+		wchar_t* buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+		if (buffer)
+		{
+			if (length) wmemcpy(buffer, str, length);
+			buffer[length] = L'\0';
+		}
+		return buffer;
+	}
 
-#endif
+	void assign(const wchar_t* str)
+	{
+		if (str == m_String) return;
+
+		if (!str)
+		{
+			clear();
+			return;
+		}
+
+		const size_t size = (wcslen(str) + 1) * sizeof(wchar_t);
+		wchar_t* buffer = (wchar_t*)realloc(m_String, size);
+		if (buffer)
+		{
+			m_String = buffer;
+			wcscpy(m_String, str);
+		}
+	}
+
+	void assign(const wchar_t* str, size_t length)
+	{
+		if (m_String && str == m_String && length == wcslen(m_String)) return;
+
+		const size_t size = (length + 1) * sizeof(wchar_t);
+		wchar_t* buffer = (wchar_t*)realloc(m_String, size);
+		if (buffer)
+		{
+			m_String = buffer;
+			if (length) wmemcpy(m_String, str, length);
+			m_String[length] = L'\0';
+		}
+	}
+
+	wchar_t* m_String = nullptr;
+};

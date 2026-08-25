@@ -1,32 +1,46 @@
-/* Copyright (C) 2013 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
-#ifndef RM_GFX_FONTCOLLECTION_H_
-#define RM_GFX_FONTCOLLECTION_H_
+#pragma once
 
 #include <Windows.h>
+#include <vector>
+#include <dwrite_1.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
-// Interface for a collection of fonts that may or may not be installed on the system.
-class __declspec(novtable) FontCollection
+// Wraps the DirectWrite IDWriteFontCollection for use with Canvas.
+class FontCollection final
 {
 public:
-	virtual ~FontCollection();
+	~FontCollection();
 
 	FontCollection(const FontCollection& other) = delete;
+	FontCollection& operator=(FontCollection other) = delete;
 
-	// Adds a file to the collection. Returns true if the file was successfully added.
-	virtual bool AddFile(const WCHAR* file) = 0;
+	bool AddFile(const WCHAR* file);
+
+	bool InitializeCollection();
+
+	bool GetSystemFontFamilies(UINT32& familyCount, std::wstring& families);
+	bool GetFontFamilies(UINT32& familyCount, std::wstring& families);
 
 protected:
 	FontCollection();
+
+private:
+	friend class Canvas;
+	friend class TextFormat;
+
+	void Dispose();
+
+	bool GetFontFamiliesFromCollection(IDWriteFontCollection* collection, UINT32& familyCount,
+		std::wstring & families, bool isSystemCollection);
+
+	std::vector<IDWriteFontFile*> m_FileReferences;
+	IDWriteFontCollection* m_Collection;
+
+	static Microsoft::WRL::ComPtr<IDWriteFontCollection> c_SystemCollection;
 };
 
 }  // namespace Gfx
-
-#endif

@@ -1,9 +1,4 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterBar.h"
@@ -26,11 +21,8 @@ MeterBar::~MeterBar()
 {
 }
 
-/*
-** Load the image or create the brush. If image is used get the dimensions
-** of the meter from it.
-**
-*/
+// Load the image or create the brush. If image is used get the dimensions
+// of the meter from it.
 void MeterBar::Initialize()
 {
 	Meter::Initialize();
@@ -42,7 +34,7 @@ void MeterBar::Initialize()
 
 		if (m_Image.IsLoaded())
 		{
-			Gfx::D2DBitmap* bitmap = m_Image.GetImage();
+			Gfx::Bitmap* bitmap = m_Image.GetImage();
 
 			m_W = bitmap->GetWidth() + GetWidthPadding();
 			m_H = bitmap->GetHeight() + GetHeightPadding();
@@ -54,11 +46,13 @@ void MeterBar::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterBar::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_Image.InvalidateDeviceResources();
+}
+
+void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -67,7 +61,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Color = parser.ReadColor(section, L"BarColor", D2D1::ColorF(D2D1::ColorF::Green));
 
-	m_ImageName = parser.ReadString(section, L"BarImage", L"");
+	parser.ReadString(m_ImageName, section, L"BarImage", L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
@@ -78,19 +72,12 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(L"VERTICAL", orientation) == 0)
+	static constexpr ConfigParser::EnumOption<ORIENTATION> s_Orientations[] =
 	{
-		m_Orientation = VERTICAL;
-	}
-	else if (_wcsicmp(L"HORIZONTAL", orientation) == 0)
-	{
-		m_Orientation = HORIZONTAL;
-	}
-	else
-	{
-		LogErrorF(this, L"BarOrientation=%s is not valid", orientation);
-	}
+		{ L"VERTICAL", VERTICAL },
+		{ L"HORIZONTAL", HORIZONTAL },
+	};
+	m_Orientation = parser.ReadEnum(section, L"BarOrientation", VERTICAL, s_Orientations);
 
 	if (m_Initialized)
 	{
@@ -98,10 +85,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterBar::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -112,10 +95,6 @@ bool MeterBar::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterBar::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
@@ -125,7 +104,7 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 	const FLOAT height = rect.bottom - rect.top;
 	const FLOAT border = (FLOAT)m_Border;
 
-	Gfx::D2DBitmap* drawBitmap = m_Image.GetImage();
+	Gfx::Bitmap* drawBitmap = m_Image.GetImage();
 
 	if (m_Orientation == VERTICAL)
 	{

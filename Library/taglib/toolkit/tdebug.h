@@ -32,10 +32,11 @@ namespace TagLib {
   class ByteVector;
 
 #ifndef DO_NOT_DOCUMENT
+#if !defined(NDEBUG) || defined(TRACE_IN_RELEASE)
 
   /*!
-   * A simple function that outputs the debug messages to the listener. 
-   * The default listener redirects the messages to \a stderr when NDEBUG is 
+   * A simple function that outputs the debug messages to the listener.
+   * The default listener redirects the messages to \a stderr when NDEBUG is
    * not defined.
    *
    * \warning Do not use this outside of TagLib, it could lead to undefined
@@ -45,7 +46,7 @@ namespace TagLib {
    * \internal
    */
   void debug(const String &s);
-  
+
   /*!
    * For debugging binary data.
    *
@@ -56,7 +57,14 @@ namespace TagLib {
    * \internal
    */
   void debugData(const ByteVector &v);
-}
+
+#else
+
+  #define debug(x)      ((void)0)
+  #define debugData(x)  ((void)0)
+
+#endif
+}  // namespace TagLib
 
 #endif
 #endif

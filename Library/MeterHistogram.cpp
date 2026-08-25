@@ -1,16 +1,10 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+// Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
 #include "MeterHistogram.h"
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
-#include "../Common/Gfx/Shapes/Rectangle.h"
 
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
 GeneralImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
@@ -43,10 +37,6 @@ MeterHistogram::~MeterHistogram()
 	DisposeBuffer();
 }
 
-/*
-** Disposes the buffers.
-**
-*/
 void MeterHistogram::DisposeBuffer()
 {
 	// Reset current position
@@ -60,10 +50,6 @@ void MeterHistogram::DisposeBuffer()
 	m_SecondaryValues = nullptr;
 }
 
-/*
-** Creates the buffers.
-**
-*/
 void MeterHistogram::CreateBuffer()
 {
 	DisposeBuffer();
@@ -80,11 +66,8 @@ void MeterHistogram::CreateBuffer()
 	}
 }
 
-/*
-** Load the images and calculate the dimensions of the meter from them.
-** Or create the brushes if solid color histogram is used.
-**
-*/
+// Load the images and calculate the dimensions of the meter from them.
+// Or create the brushes if solid color histogram is used.
 void MeterHistogram::Initialize()
 {
 	Meter::Initialize();
@@ -111,7 +94,7 @@ void MeterHistogram::Initialize()
 			{
 				int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-				Gfx::D2DBitmap* bitmap = m_PrimaryImage.GetImage();
+				Gfx::Bitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
@@ -164,11 +147,15 @@ void MeterHistogram::Initialize()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
-void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::InvalidateDeviceResources()
+{
+	Meter::InvalidateDeviceResources();
+	m_PrimaryImage.InvalidateDeviceResources();
+	m_SecondaryImage.InvalidateDeviceResources();
+	m_OverlapImage.InvalidateDeviceResources();
+}
+
+void MeterHistogram::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
 	// Store the current values so we know if the image needs to be updated
 	int oldW = m_W;
@@ -181,21 +168,21 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", D2D1::ColorF(D2D1::ColorF::Red));
 	m_OverlapColor = parser.ReadColor(section, L"BothColor", D2D1::ColorF(D2D1::ColorF::Yellow));
 
-	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
+	parser.ReadString(m_PrimaryImageName, section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
 	{
 		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
 
-	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
+	parser.ReadString(m_SecondaryImageName, section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
 	{
 		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
 
-	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
+	parser.ReadString(m_OverlapImageName, section, L"BothImage", L"");
 	if (!m_OverlapImageName.empty())
 	{
 		// Read tinting options
@@ -205,33 +192,19 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 
-	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
-	if (_wcsicmp(graph, L"RIGHT") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphStarts[] =
 	{
-		m_GraphStartLeft = false;
-	}
-	else if (_wcsicmp(graph, L"LEFT") ==  0)
-	{
-		m_GraphStartLeft = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphStart=%s is not valid", graph);
-	}
+		{ L"RIGHT", false },
+		{ L"LEFT", true },
+	};
+	m_GraphStartLeft = parser.ReadEnum(section, L"GraphStart", false, s_GraphStarts);
 
-	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
-	if (_wcsicmp(graph, L"VERTICAL") == 0)
+	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
-		m_GraphHorizontalOrientation = false;
-	}
-	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
-	{
-		m_GraphHorizontalOrientation = true;
-	}
-	else
-	{
-		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
-	}
+		{ L"VERTICAL", false },
+		{ L"HORIZONTAL", true },
+	};
+	m_GraphHorizontalOrientation = parser.ReadEnum(section, L"GraphOrientation", false, s_GraphOrientations);
 
 	if (m_Initialized)
 	{
@@ -254,7 +227,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
 
 			Initialize();  // Reload the image
-			
+
 			if (m_SizeChanged)
 			{
 				CreateBuffer();
@@ -263,10 +236,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the value(s) from the measures.
-**
-*/
 bool MeterHistogram::Update()
 {
 	if (Meter::Update() && !m_Measures.empty())
@@ -351,10 +320,6 @@ bool MeterHistogram::Update()
 	return false;
 }
 
-/*
-** Draws the meter on the double buffer
-**
-*/
 bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas) ||
@@ -363,9 +328,9 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
-	Gfx::D2DBitmap* primaryBitmap = m_PrimaryImage.GetImage();
-	Gfx::D2DBitmap* secondaryBitmap = m_SecondaryImage.GetImage();
-	Gfx::D2DBitmap* bothBitmap = m_OverlapImage.GetImage();
+	Gfx::Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
+	Gfx::Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
+	Gfx::Bitmap* bothBitmap = m_OverlapImage.GetImage();
 
 	D2D1_RECT_F meterRect = GetMeterRectPadding();
 	int displayW = (int)(meterRect.right - meterRect.left);
@@ -405,7 +370,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	auto draw = [&](Gfx::D2DBitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
+	auto draw = [&](Gfx::Bitmap* bitmap, const D2D1_COLOR_F& color, const D2D1_RECT_F& dst) -> void
 	{
 		if (!bitmap)
 		{
@@ -556,11 +521,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-/*
-** Overwritten method to handle the secondary measure binding.
-**
-*/
-void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
+void MeterHistogram::BindMeasures(ConfigParser& parser, std::wstring_view section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{
