@@ -4,11 +4,36 @@
 
 #include "MonitorUtil.h"
 
-class Skin;
-
-struct SkinPositionOption
+class SkinPositionOption
 {
+public:
 	explicit SkinPositionOption(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
+
+	const std::wstring& GetWindowOption() const { return windowOption; }
+	const std::wstring& GetAnchorOption() const { return anchorOption; }
+	int GetAnchorPos() const { return anchorPos; }
+
+	const std::optional<int>& GetMonitor() const { return monitor; }
+	bool IsFromOpposite() const { return fromOpposite; }
+	bool IsPercentage() const { return percentage; }
+
+	void SetWindowOption(std::wstring option) { windowOption = std::move(option); }
+	void SetAnchorOption(std::wstring option) { anchorOption = std::move(option); }
+
+	// Changes how the position is expressed. Both modifiers become part of the window option.
+	void SetFromOpposite(bool b) { fromOpposite = b; }
+	void SetPercentage(bool b) { percentage = b; }
+
+	// Rewrites the window option to express |logicalPos| with the current modifiers.
+	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
+
+private:
+	friend class SkinPosition;
+	friend class Library_SkinPosition_Test;
+
+	void ParseAnchorOption(int windowSize, float zoom);
+	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
+	int ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent);
 
 	// Logical (96 DPI)
 	std::wstring windowOption = L"0";
@@ -20,16 +45,6 @@ struct SkinPositionOption
 	bool percentage = false;
 	bool anchorFromOpposite = false;
 	bool anchorPercentage = false;
-
-private:
-	friend class Skin;
-	friend class SkinPosition;
-	friend class Library_SkinPosition_Test;
-
-	void ParseAnchorOption(int windowSize, float zoom);
-	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
-	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
-	int ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent);
 
 	const WCHAR oppositeChar;
 };
@@ -66,6 +81,8 @@ public:
 	SkinPositionSpace GetSpace() const { return m_Space; }
 
 	void ResetCache() { m_ConvertedPos.reset(); }
+
+	void SetMonitor(std::optional<int> monitor);
 
 	SkinPositionOption& GetX() { return m_X; }
 	const SkinPositionOption& GetX() const { return m_X; }

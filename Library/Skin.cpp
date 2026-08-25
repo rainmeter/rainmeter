@@ -1328,21 +1328,21 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::Move:
-		m_Position.GetX().windowOption = std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_Position.GetX().anchorPos);
-		m_Position.GetY().windowOption = std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Position.GetY().anchorPos);
+		m_Position.GetX().SetWindowOption(std::to_wstring(m_Parser.ParseInt(args[0].c_str(), 0) + m_Position.GetX().GetAnchorPos()));
+		m_Position.GetY().SetWindowOption(std::to_wstring(m_Parser.ParseInt(args[1].c_str(), 0) + m_Position.GetY().GetAnchorPos()));
 		ComputePositionFromOptions();
 		UpdateWindowBounds(SWP_NOSIZE);
 		SavePositionIfAppropriate();
 		break;
 
 	case Bang::SetWindowPosition:
-		m_Position.GetX().windowOption = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_Position.GetY().windowOption = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_Position.GetX().SetWindowOption(m_Parser.ParseFormulaWithModifiers(args[0]));
+		m_Position.GetY().SetWindowOption(m_Parser.ParseFormulaWithModifiers(args[1]));
 
 		if (args.size() == 4)
 		{
-			m_Position.GetX().anchorOption = m_Parser.ParseFormulaWithModifiers(args[2]);
-			m_Position.GetY().anchorOption = m_Parser.ParseFormulaWithModifiers(args[3]);
+			m_Position.GetX().SetAnchorOption(m_Parser.ParseFormulaWithModifiers(args[2]));
+			m_Position.GetY().SetAnchorOption(m_Parser.ParseFormulaWithModifiers(args[3]));
 			WriteOptions(OPTION_ANCHOR);
 		}
 
@@ -1352,8 +1352,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::SetAnchor:
-		m_Position.GetX().anchorOption = m_Parser.ParseFormulaWithModifiers(args[0]);
-		m_Position.GetY().anchorOption = m_Parser.ParseFormulaWithModifiers(args[1]);
+		m_Position.GetX().SetAnchorOption(m_Parser.ParseFormulaWithModifiers(args[0]));
+		m_Position.GetY().SetAnchorOption(m_Parser.ParseFormulaWithModifiers(args[1]));
 		WriteOptions(OPTION_ANCHOR);
 		ComputePositionFromOptions();
 		UpdateWindowBounds(SWP_NOSIZE);
@@ -2158,7 +2158,7 @@ void Skin::ComputeOptionValueFromPosition()
 			{
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					m_Position.GetX().monitor = m_Position.GetY().monitor = screenIndex;
+					m_Position.SetMonitor(screenIndex);
 					break;
 				}
 			}
@@ -2167,11 +2167,11 @@ void Skin::ComputeOptionValueFromPosition()
 
 	const POINT pos = GetPositionAsVirtualized();
 
-	const int monitorX = m_Position.GetX().monitor.value_or(monitorsInfo.primary);
+	const int monitorX = m_Position.GetX().GetMonitor().value_or(monitorsInfo.primary);
 	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
 	m_Position.GetX().UpdateOptionValue(pos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
-	const int monitorY = m_Position.GetY().monitor.value_or(monitorsInfo.primary);
+	const int monitorY = m_Position.GetY().GetMonitor().value_or(monitorsInfo.primary);
 	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
 	m_Position.GetY().UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 }
@@ -2216,21 +2216,25 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	};
 
 	// Check if the window position should be read as a formula
-	parser.ReadString(m_Position.GetX().windowOption, section, makeKey(L"WindowX"), L"0");
-	isDefault ? writeDefaultString(L"WindowX", m_Position.GetX().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_Position.GetX().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetX().windowOption);
+	std::wstring windowX;
+	parser.ReadString(windowX, section, makeKey(L"WindowX"), L"0");
+	isDefault ? writeDefaultString(L"WindowX", windowX.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_Position.GetX().SetWindowOption(parser.ParseFormulaWithModifiers(windowX));
 
-	parser.ReadString(m_Position.GetY().windowOption, section, makeKey(L"WindowY"), L"0");
-	isDefault ? writeDefaultString(L"WindowY", m_Position.GetY().windowOption.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_Position.GetY().windowOption = parser.ParseFormulaWithModifiers(m_Position.GetY().windowOption);
+	std::wstring windowY;
+	parser.ReadString(windowY, section, makeKey(L"WindowY"), L"0");
+	isDefault ? writeDefaultString(L"WindowY", windowY.c_str()) : addWriteFlag(OPTION_POSITION);
+	m_Position.GetY().SetWindowOption(parser.ParseFormulaWithModifiers(windowY));
 
-	parser.ReadString(m_Position.GetX().anchorOption, section, makeKey(L"AnchorX"), L"0");
-	if (isDefault) writeDefaultString(L"AnchorX", m_Position.GetX().anchorOption.c_str());
-	m_Position.GetX().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetX().anchorOption);
+	std::wstring anchorX;
+	parser.ReadString(anchorX, section, makeKey(L"AnchorX"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorX", anchorX.c_str());
+	m_Position.GetX().SetAnchorOption(parser.ParseFormulaWithModifiers(anchorX));
 
-	parser.ReadString(m_Position.GetY().anchorOption, section, makeKey(L"AnchorY"), L"0");
-	if (isDefault) writeDefaultString(L"AnchorY", m_Position.GetY().anchorOption.c_str());
-	m_Position.GetY().anchorOption = parser.ParseFormulaWithModifiers(m_Position.GetY().anchorOption);
+	std::wstring anchorY;
+	parser.ReadString(anchorY, section, makeKey(L"AnchorY"), L"0");
+	if (isDefault) writeDefaultString(L"AnchorY", anchorY.c_str());
+	m_Position.GetY().SetAnchorOption(parser.ParseFormulaWithModifiers(anchorY));
 
 	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
@@ -2345,16 +2349,16 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ANCHOR)
 		{
-			WritePrivateProfileString(section, L"AnchorX", m_Position.GetX().anchorOption.c_str(), iniFile);
-			WritePrivateProfileString(section, L"AnchorY", m_Position.GetY().anchorOption.c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorX", m_Position.GetX().GetAnchorOption().c_str(), iniFile);
+			WritePrivateProfileString(section, L"AnchorY", m_Position.GetY().GetAnchorOption().c_str(), iniFile);
 		}
 
 		if (setting & OPTION_POSITION)
 		{
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().windowOption.c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().windowOption.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().GetWindowOption().c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().GetWindowOption().c_str(), iniFile);
 			}
 
 			if (setting == OPTION_POSITION) return;
@@ -4133,22 +4137,22 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_FROMRIGHT:
-		m_Position.GetX().fromOpposite = enable;
+		m_Position.GetX().SetFromOpposite(enable);
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_FROMBOTTOM:
-		m_Position.GetY().fromOpposite = enable;
+		m_Position.GetY().SetFromOpposite(enable);
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_XPERCENTAGE:
-		m_Position.GetX().percentage = enable;
+		m_Position.GetX().SetPercentage(enable);
 		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_YPERCENTAGE:
-		m_Position.GetY().percentage = enable;
+		m_Position.GetY().SetPercentage(enable);
 		SavePositionIfAppropriate();
 		break;
 
@@ -4206,7 +4210,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (monitor >= 0 && (monitor == 0 || monitor <= (int)monitors.size() && monitors[monitorIndex].active))
 			{
 				m_AutoSelectScreen = false;
-				m_Position.GetX().monitor = m_Position.GetY().monitor = monitorDefined ? std::optional<int>{ monitor } : std::nullopt;
+				m_Position.SetMonitor(monitorDefined ? std::optional<int>{ monitor } : std::nullopt);
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}
