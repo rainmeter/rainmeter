@@ -11,21 +11,36 @@ bool IsValidStatus(DWORD status)
 	return status == PDH_CSTATUS_VALID_DATA || status == PDH_CSTATUS_NEW_DATA;
 }
 
-bool AddCounter(PDH_HQUERY query, const std::wstring& object, const std::wstring& counter,
-	const WCHAR* instance, PDH_HCOUNTER* handle)
+// Lets PDH build the "\Object(Instance)\Counter" path, which matters since object and counter
+// names may contain the path separators themselves
+static bool MakePath(const std::wstring& object, const std::wstring& counter, const WCHAR* instance,
+	WCHAR (&path)[PDH_MAX_COUNTER_PATH])
 {
-	// PDH builds the "\Object(Instance)\Counter" path, which matters since object and counter names
-	// may contain the path separators themselves
 	PDH_COUNTER_PATH_ELEMENTS elements = { 0 };
 	elements.szObjectName = (LPWSTR)object.c_str();
 	elements.szInstanceName = (LPWSTR)instance;
 	elements.szCounterName = (LPWSTR)counter.c_str();
 
-	WCHAR path[PDH_MAX_COUNTER_PATH] = { 0 };
 	DWORD size = _countof(path);
-	if (PdhMakeCounterPath(&elements, path, &size, 0) != ERROR_SUCCESS) return false;
+	return PdhMakeCounterPath(&elements, path, &size, 0) == ERROR_SUCCESS;
+}
 
-	if (PdhAddEnglishCounter(query, path, 0, handle) == ERROR_SUCCESS) return true;
+bool AddEnglishCounter(PDH_HQUERY query, const std::wstring& object, const std::wstring& counter,
+	const WCHAR* instance, PDH_HCOUNTER* handle)
+{
+	WCHAR path[PDH_MAX_COUNTER_PATH] = { 0 };
+	if (!MakePath(object, counter, instance, path)) return false;
+
+	return PdhAddEnglishCounter(query, path, 0, handle) == ERROR_SUCCESS;
+}
+
+bool AddCounter(PDH_HQUERY query, const std::wstring& object, const std::wstring& counter,
+	const WCHAR* instance, PDH_HCOUNTER* handle)
+{
+	if (AddEnglishCounter(query, object, counter, instance, handle)) return true;
+
+	WCHAR path[PDH_MAX_COUNTER_PATH] = { 0 };
+	if (!MakePath(object, counter, instance, path)) return false;
 
 	return PdhAddCounter(query, path, 0, handle) == ERROR_SUCCESS;
 }
