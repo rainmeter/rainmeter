@@ -4,8 +4,8 @@
 
 #include <string_view>
 
-#include "pcre/config.h"
-#include "pcre/pcre.h"
+#include "../ThirdParty/pcre/config.h"
+#include "../ThirdParty/pcre/pcre.h"
 
 class Pcre
 {
