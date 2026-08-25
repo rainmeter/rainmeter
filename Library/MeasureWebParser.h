@@ -85,7 +85,7 @@ private:
 	bool m_DecodeCodePoints;
 	int m_Debug;
 	UINT m_UpdateRate;
-	UINT m_UpdateCounter;
+	UINT m_UpdateRateCounter;
 	bool m_Download;
 	bool m_ForceReload;
 	bool m_LogSubstringErrors;
