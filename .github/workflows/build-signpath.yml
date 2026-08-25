@@ -32,7 +32,6 @@ jobs:
           path: |
             BuildOut/Release${{ matrix.arch }}
             !BuildOut/Release${{ matrix.arch }}/Obj
-            BuildOut/Release${{ matrix.arch }}/Obj/Library/Rainmeter.lib
           if-no-files-found: error
 
       - name: Upload 64-bit debug symbols
@@ -65,29 +64,12 @@ jobs:
           name: BuildOut-Release64
           path: BuildOut/Release64
 
-      - name: Stage plugin API
-        run: |
-          mkdir -p PluginAPI/API/x32 PluginAPI/API/x64
-          cp BuildOut/Release32/Obj/Library/Rainmeter.lib PluginAPI/API/x32/
-          cp BuildOut/Release64/Obj/Library/Rainmeter.lib PluginAPI/API/x64/
-          cp Library/RainmeterAPI.h Library/RainmeterAPI.cs PluginAPI/API/
-        shell: bash
-
-      - name: Upload plugin API
-        uses: actions/upload-artifact@v7
-        with:
-          name: PluginAPI
-          path: PluginAPI
-          if-no-files-found: error
-
       - name: Upload combined build
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
           name: RainmeterBuild-${{ github.ref_name }}
-          path: |
-            BuildOut
-            !BuildOut/*/Obj
+          path: BuildOut
           if-no-files-found: error
 
       - name: Remove build directories

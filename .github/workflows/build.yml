@@ -41,6 +41,19 @@ jobs:
         run: .\Build\Build.ps1 test-64
         shell: pwsh
 
+      - name: Build plugin API
+        if: ${{ matrix.arch == 64 }}
+        run: .\Build\Build.ps1 plugin-api
+        shell: pwsh
+
+      - name: Upload plugin API
+        if: ${{ matrix.arch == 64 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: PluginAPI
+          path: BuildOut/PluginAPI
+          if-no-files-found: error
+
       - name: Upload ${{ matrix.arch }}-bit build
         uses: actions/upload-artifact@v7
         with:
