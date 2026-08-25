@@ -365,7 +365,15 @@ private:
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
-	void Update(bool refresh);
+
+	struct UpdateOptions
+	{
+		bool refresh = false;
+		bool force = false;
+	};
+
+	void Update(UpdateOptions options = {});
+
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
