@@ -748,7 +748,7 @@ void Skin::UpdateWindowBounds(UINT flags)
 		flags | SWP_NOZORDER | SWP_NOACTIVATE);
 	if (restoreVirtualized)
 	{
-		m_Position.SetVirtualized(restorePos);
+		m_Position.SetVirtualized(restorePos, SkinPositionOrigin::Options);
 	}
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
@@ -881,11 +881,11 @@ POINT Skin::ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR spe
 	{
 		if (physical)
 		{
-			m_Position.SetPhysical(clampedPosition);
+			m_Position.SetPhysical(clampedPosition, SkinPositionOrigin::Options);
 		}
 		else
 		{
-			m_Position.SetVirtualized(clampedPosition);
+			m_Position.SetVirtualized(clampedPosition, SkinPositionOrigin::Options);
 		}
 	}
 	return clampedPosition;
@@ -1336,8 +1336,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::SetWindowPosition:
-		m_Position.GetX().SetWindowOption(m_Parser.ParseFormulaWithModifiers(args[0]));
-		m_Position.GetY().SetWindowOption(m_Parser.ParseFormulaWithModifiers(args[1]));
+		m_Position.GetX().SetAuthoredWindowOption(m_Parser.ParseFormulaWithModifiers(args[0]));
+		m_Position.GetY().SetAuthoredWindowOption(m_Parser.ParseFormulaWithModifiers(args[1]));
 
 		if (args.size() == 4)
 		{
@@ -2127,7 +2127,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
 	const auto virtualizedPos = m_Position.ResolveVirtualizedPosition(m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
-	m_Position.SetVirtualized(virtualizedPos);
+	m_Position.SetVirtualized(virtualizedPos, SkinPositionOrigin::Options);
 
 	if (inheritMonitorDpi)
 	{
@@ -2158,7 +2158,7 @@ void Skin::ComputeOptionValueFromPosition()
 			{
 				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					m_Position.SetMonitor(screenIndex);
+					m_Position.SetMonitor(screenIndex, SkinPositionOrigin::Options);
 					break;
 				}
 			}
@@ -2219,12 +2219,12 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	std::wstring windowX;
 	parser.ReadString(windowX, section, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", windowX.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_Position.GetX().SetWindowOption(parser.ParseFormulaWithModifiers(windowX));
+	m_Position.GetX().SetAuthoredWindowOption(parser.ParseFormulaWithModifiers(windowX));
 
 	std::wstring windowY;
 	parser.ReadString(windowY, section, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", windowY.c_str()) : addWriteFlag(OPTION_POSITION);
-	m_Position.GetY().SetWindowOption(parser.ParseFormulaWithModifiers(windowY));
+	m_Position.GetY().SetAuthoredWindowOption(parser.ParseFormulaWithModifiers(windowY));
 
 	std::wstring anchorX;
 	parser.ReadString(anchorX, section, makeKey(L"AnchorX"), L"0");
@@ -2357,8 +2357,8 @@ void Skin::WriteOptions(INT setting)
 		{
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().GetWindowOption().c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().GetWindowOption().c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().GetWindowOptionToSave().c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().GetWindowOptionToSave().c_str(), iniFile);
 			}
 
 			if (setting == OPTION_POSITION) return;
@@ -5608,7 +5608,10 @@ LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const POINT oldPos = GetPositionAsPhysical();
-	m_Position.SetPhysical({ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) });
+	// Moves other than a drag are ones we initiated after resolving the position options.
+	m_Position.SetPhysical(
+		{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) },
+		m_Dragging ? SkinPositionOrigin::Move : SkinPositionOrigin::Options);
 
 	if (m_State == STATE_RUNNING)
 	{
@@ -5901,6 +5904,11 @@ LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (UpdateWindowMonitor())
 	{
+		// Use the options as authored instead of any value that was rewritten from a position
+		// that had been clamped or resolved against another monitor while the intended monitor
+		// was unavailable.
+		m_Position.RestoreAuthoredWindowOptions();
+
 		// Resolve the configured logical position against the new monitor metrics, then resize
 		// and reposition the window ourselves.
 		ComputePositionFromOptions(true);
