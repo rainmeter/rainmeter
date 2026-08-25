@@ -1,0 +1,63 @@
+name: build-rainlexer
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'RainLexer/**'
+      - '.github/workflows/*rainlexer*'
+
+env:
+  BUILD_VERSION: "${{ github.run_number }}"
+
+jobs:
+  rainlexer:
+    if: "!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip')"
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Build RainLexer
+        run: .\RainLexer\Build\Build.ps1 rainlexer "$(Get-Date -Format 'yyyy.M').$env:BUILD_VERSION"
+        shell: pwsh
+
+      - name: Upload RainLexer build
+        uses: actions/upload-artifact@v7
+        with:
+          name: RainLexerBuild
+          path: |
+            RainLexer/x32-Release
+            !RainLexer/x32-Release/Obj
+            RainLexer/x64-Release
+            !RainLexer/x64-Release/Obj
+          if-no-files-found: error
+
+  installer:
+    needs: rainlexer
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Download RainLexer build
+        uses: actions/download-artifact@v8
+        with:
+          name: RainLexerBuild
+          path: RainLexer
+
+      - name: Install NSIS
+        uses: ./.github/actions/install-nsis
+
+      - name: Build installer
+        run: .\RainLexer\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M').$env:BUILD_VERSION"
+        shell: pwsh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        id: upload-installer
+        with:
+          path: RainLexer/Build/RainLexer-*.exe
+          archive: false
+          if-no-files-found: error
