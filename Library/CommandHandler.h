@@ -19,6 +19,7 @@ enum class Bang
 	Redraw,
 	Update,
 	SetUpdate,
+	ForceEnableVisibleMode,
 	Hide,
 	Show,
 	Toggle,
