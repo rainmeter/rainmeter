@@ -176,20 +176,6 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 	}
 
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
-
-	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.cs') @(
-		'namespace Rainmeter',
-		'{',
-		'    public class Version',
-		'    {',
-		'#if X64',
-		"        public const string Informational = `"$versionFull (64-bit)`";",
-		'#else',
-		"        public const string Informational = `"$versionFull (32-bit)`";",
-		'#endif',
-		'    }',
-		'}'
-	)
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
