@@ -72,6 +72,7 @@
     <ClCompile Include="MeasureDragDrop.cpp" />
     <ClCompile Include="MeasureFileView.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureInputText.cpp" />
     <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
@@ -157,10 +158,10 @@
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="WindowOcclusionTracker.cpp" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fft.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fftr.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
@@ -208,6 +209,7 @@
     <ClInclude Include="MeasureDragDrop.h" />
     <ClInclude Include="MeasureFileView.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureInputText.h" />
     <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
@@ -274,6 +276,7 @@
     <ClInclude Include="SkinPosition.h" />
     <ClInclude Include="SkinSelectionOverlay.h" />
     <ClInclude Include="Export.h" />
+    <ClInclude Include="RainmeterAPI.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />

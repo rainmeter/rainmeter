@@ -4,11 +4,46 @@
 
 #include "MonitorUtil.h"
 
-class Skin;
-
-struct SkinPositionOption
+class SkinPositionOption
 {
+public:
 	explicit SkinPositionOption(WCHAR oppositeChar) : oppositeChar(oppositeChar) {}
+
+	// The window option to save. The authored option takes precedence over the value derived from
+	// the actual position, so that a position we were forced into, such as one clamped or resolved
+	// against another monitor while the intended monitor was unavailable, is not written over it.
+	const std::wstring& GetWindowOptionToSave() const { return authoredWindowOption ? *authoredWindowOption : windowOption; }
+
+	const std::wstring& GetAnchorOption() const { return anchorOption; }
+	int GetAnchorPos() const { return anchorPos; }
+
+	const std::optional<int>& GetMonitor() const { return monitor; }
+	bool IsFromOpposite() const { return fromOpposite; }
+	bool IsPercentage() const { return percentage; }
+
+	// Sets the option as authored by a skin option, or by a bang that takes the same syntax.
+	void SetAuthoredWindowOption(std::wstring option);
+
+	// Sets the option to an explicit position, superseding any authored option.
+	void SetWindowOption(std::wstring option) { windowOption = std::move(option); authoredWindowOption.reset(); }
+
+	void SetAnchorOption(std::wstring option) { anchorOption = std::move(option); }
+
+	// Changes how the position is expressed. Both modifiers become part of the window option, so
+	// the authored option no longer applies once either of them is changed.
+	void SetFromOpposite(bool b) { fromOpposite = b; authoredWindowOption.reset(); }
+	void SetPercentage(bool b) { percentage = b; authoredWindowOption.reset(); }
+
+	// Rewrites the window option to express |logicalPos| with the current modifiers.
+	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
+
+private:
+	friend class SkinPosition;
+	friend class Library_SkinPosition_Test;
+
+	void ParseAnchorOption(int windowSize, float zoom);
+	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
+	int ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent);
 
 	// Logical (96 DPI)
 	std::wstring windowOption = L"0";
@@ -21,15 +56,12 @@ struct SkinPositionOption
 	bool anchorFromOpposite = false;
 	bool anchorPercentage = false;
 
-private:
-	friend class Skin;
-	friend class SkinPosition;
-	friend class Library_SkinPosition_Test;
-
-	void ParseAnchorOption(int windowSize, float zoom);
-	float ParseWindowOption(const std::vector<MonitorInfo>& monitors);
-	void UpdateOptionValue(int logicalPos, int referenceOrigin, int referenceExtent);
-	int ResolveLogicalPosition(float parsedValue, int referenceOrigin, int referenceExtent);
+	// The window option as authored by a skin option or a bang, kept for as long as the position
+	// is derived from it (see SkinPositionOrigin). |windowOption| is rewritten from the actual
+	// position whenever the position is saved, which loses the authored value if the position was
+	// clamped or resolved against another monitor while the intended monitor was unavailable.
+	// Keeping the authored value around allows restoring it once the display topology changes.
+	std::optional<std::wstring> authoredWindowOption;
 
 	const WCHAR oppositeChar;
 };
@@ -52,6 +84,15 @@ enum class SkinPositionSpace : BYTE
 	Virtualized
 };
 
+// Whether a position supersedes the authored WindowX/WindowY options or is merely derived from
+// them. Resolving the options and fitting the result within the screen area keep the authored
+// options intact, while a move that puts the skin somewhere else replaces them.
+enum class SkinPositionOrigin : BYTE
+{
+	Move,
+	Options
+};
+
 class SkinPosition
 {
 public:
@@ -59,13 +100,17 @@ public:
 
 	POINT AsPhysical(SIZE windowSize) const;
 	POINT AsVirtualized(HMONITOR monitor) const;
-	void SetPhysical(POINT position);
-	void SetVirtualized(POINT position);
+	void SetPhysical(POINT position, SkinPositionOrigin origin = SkinPositionOrigin::Move);
+	void SetVirtualized(POINT position, SkinPositionOrigin origin = SkinPositionOrigin::Move);
 
 	bool IsVirtualized() const { return m_Space == SkinPositionSpace::Virtualized; }
 	SkinPositionSpace GetSpace() const { return m_Space; }
 
 	void ResetCache() { m_ConvertedPos.reset(); }
+
+	void SetMonitor(std::optional<int> monitor, SkinPositionOrigin origin = SkinPositionOrigin::Move);
+
+	void RestoreAuthoredWindowOptions();
 
 	SkinPositionOption& GetX() { return m_X; }
 	const SkinPositionOption& GetX() const { return m_X; }
@@ -76,6 +121,8 @@ public:
 	POINT ResolveVirtualizedPosition(int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
 
 private:
+	void ClearAuthoredWindowOptions();
+
 	SkinPositionOption m_X;
 	SkinPositionOption m_Y;
 	POINT m_Pos = {};

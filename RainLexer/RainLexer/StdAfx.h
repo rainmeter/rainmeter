@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <set>
 #include <string>
+#include <string_view>
+#include <unordered_set>
 
 #include "resource.h"

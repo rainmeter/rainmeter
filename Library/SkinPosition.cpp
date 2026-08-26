@@ -18,6 +18,12 @@ void SkinPositionOption::ParseAnchorOption(int windowSize, float zoom)
 	anchorPos = (int)anchorNumber;
 }
 
+void SkinPositionOption::SetAuthoredWindowOption(std::wstring option)
+{
+	windowOption = std::move(option);
+	authoredWindowOption = windowOption;
+}
+
 float SkinPositionOption::ParseWindowOption(const std::vector<MonitorInfo>& monitors)
 {
 	monitor.reset();
@@ -153,16 +159,40 @@ POINT SkinPosition::AsVirtualized(HMONITOR monitor) const
 	return *m_ConvertedPos;
 }
 
-void SkinPosition::SetPhysical(POINT position)
+void SkinPosition::SetPhysical(POINT position, SkinPositionOrigin origin)
 {
+	if (origin == SkinPositionOrigin::Move) ClearAuthoredWindowOptions();
+
 	m_Pos = position;
 	ResetCache();
 	m_Space = SkinPositionSpace::Physical;
 }
 
-void SkinPosition::SetVirtualized(POINT position)
+void SkinPosition::SetVirtualized(POINT position, SkinPositionOrigin origin)
 {
+	if (origin == SkinPositionOrigin::Move) ClearAuthoredWindowOptions();
+
 	m_Pos = position;
 	ResetCache();
 	m_Space = SkinPositionSpace::Virtualized;
+}
+
+void SkinPosition::SetMonitor(std::optional<int> monitor, SkinPositionOrigin origin)
+{
+	if (origin == SkinPositionOrigin::Move) ClearAuthoredWindowOptions();
+
+	m_X.monitor = monitor;
+	m_Y.monitor = monitor;
+}
+
+void SkinPosition::RestoreAuthoredWindowOptions()
+{
+	if (m_X.authoredWindowOption) m_X.windowOption = *m_X.authoredWindowOption;
+	if (m_Y.authoredWindowOption) m_Y.windowOption = *m_Y.authoredWindowOption;
+}
+
+void SkinPosition::ClearAuthoredWindowOptions()
+{
+	m_X.authoredWindowOption.reset();
+	m_Y.authoredWindowOption.reset();
 }

@@ -3,7 +3,7 @@
 Builds Rainmeter release artifacts.
 
 .PARAMETER BuildType
-The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, and installer.
+The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer.
 
 .PARAMETER Version
 The release version in major.minor.subminor.revision format. Required for all build types except test-64.
@@ -123,11 +123,12 @@ switch ($BuildType) {
 	'rainmeter-64' {}
 	'test-64' {}
 	'languages' { $Version = '0.0.0.0' }
+	'plugin-api' {}
 	'installer' {}
 	default { Write-UsageError 'Unknown build type' }
 }
 
-if ($BuildType -ne 'test-64') {
+if ($BuildType -ne 'test-64' -and $BuildType -ne 'plugin-api') {
 	if ([string]::IsNullOrWhiteSpace($Version)) {
 		Write-UsageError 'Invalid version'
 	}
@@ -176,20 +177,6 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 	}
 
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
-
-	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.cs') @(
-		'namespace Rainmeter',
-		'{',
-		'    public class Version',
-		'    {',
-		'#if X64',
-		"        public const string Informational = `"$versionFull (64-bit)`";",
-		'#else',
-		"        public const string Informational = `"$versionFull (32-bit)`";",
-		'#endif',
-		'    }',
-		'}'
-	)
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
@@ -205,6 +192,20 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
 if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {
 	Write-Host '* Testing 64-bit projects'
 	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64')
+}
+
+if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
+	Write-Host '* Building plugin API'
+
+	$pluginApiDir = Join-Path $PSScriptRoot '..\BuildOut\PluginAPI\API'
+	foreach ($arch in ([ordered]@{ x32 = 'x86'; x64 = 'x64' }).GetEnumerator()) {
+		$libPath = Join-Path $pluginApiDir "$($arch.Key)\Rainmeter.lib"
+		New-Item -ItemType Directory -Path (Split-Path $libPath) -Force | Out-Null
+		Invoke-NativeCommand 'lib.exe' @('/nologo', '/def:..\Library\Exports.def', "/machine:$($arch.Value)", '/name:Rainmeter.dll', "/out:$libPath")
+		Remove-Item ([System.IO.Path]::ChangeExtension($libPath, 'exp'))
+	}
+
+	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {

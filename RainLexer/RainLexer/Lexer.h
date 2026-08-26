@@ -35,6 +35,19 @@ using namespace Scintilla;
 
 namespace RainLexer {
 
+// Allows looking an option up without building a std::string out of it first
+struct OptionHash
+{
+    using is_transparent = void;
+
+    size_t operator()(std::string_view option) const
+    {
+        return std::hash<std::string_view>{}(option);
+    }
+};
+
+using OptionSet = std::unordered_set<std::string, OptionHash, std::equal_to<>>;
+
 inline static char* LexerName();
 inline static TCHAR* LexerStatusText();
 
@@ -127,16 +140,19 @@ private:
     Lexilla::WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const std::set<std::string> pipeOpt = { "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape", "whitelist" };
+    const OptionSet pipeOpt = {
+        "@inherit", "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape",
+        "update", "whitelist"
+    };
 
     // Value and option bangs
-    const std::set<std::string> setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
+    const OptionSet setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
 
     // Options with values and subvalues on same line
-    const std::set<std::string> extKeywordsOpt = { "inlinesetting", "shape" };
+    const OptionSet extKeywordsOpt = { "inlinesetting", "shape" };
 
     // Valid values for extKeyWords
-    const std::set<std::string> extOpt = {
+    const OptionSet extOpt = {
         "inlinesetting=case", "inlinesetting=color", "inlinesetting=characterspacing", "inlinesetting=face", "inlinesetting=gradientcolor",
         "inlinesetting=italic", "inlinesetting=none", "inlinesetting=oblique", "inlinesetting=shadow", "inlinesetting=size",
         "inlinesetting=stretch", "inlinesetting=strikethrough", "inlinesetting=typography", "inlinesetting=underline", "inlinesetting=weight",
@@ -145,48 +161,53 @@ private:
     };
 
     // Format options
-    const std::set<std::string> formatOpt = { "format", "timestampformat" };
+    const OptionSet formatOpt = { "format", "timestampformat" };
 
     // Options not using numeric values, and are not type 2 keywords (options with valid values, e.g. StringAlign=RIGHT)
-    const std::set<std::string> nonNumValOpt = {
-        "@include",
-        "author",
+    const OptionSet nonNumValOpt = {
+        "@include", "@inherit",
+        "action", "author",
         "background", "barimage", "bitmapimage", "blacklist", "bothimage", "bothimagepath", "bothimagepath", "buttoncommand", "buttonimage",
         "category", "configeditor", "container", "contextaction", "contexttitle", "counter", "cpuexclude", "cpuinclude",
         "debug2file", "defaultartwork", "defaultvalue", "description", "downloadfile", "draggroup", "drive",
-        "errorstring", "extensions",
+        "errorstring", "excludeextensions", "extensions",
         "filefilter", "finishaction", "folder", "fontface", "formatlocale",
         "group",
         "header",
         "iconpath", "id", "ifaboveaction", "ifbelowaction", "ifequalaction", "iffalseaction", "ifmatch", "ifmatchaction", "ifnotmatchaction",
-        "iftrueaction", "imagepath", "information", "inlinepattern", "instructions",
+        "iftrueaction", "imagepath", "information", "initialtext", "inlinepattern", "inputregexp", "instructions",
 
-        "leftmousedoubleclickaction", "leftmousedownaction", "leftmouseupaction", "localfont",
-        "maskimagename", "maskimagepath", "measure", "measurename", "meterstyle", "middlemousedoubleclickaction", "middlemousedownaction",
-        "middlemouseupaction", "mouseactioncursorname", "mouseleaveaction", "mouseoveraction", "mousescrolldownaction", "mousescrollleftaction",
-        "mousescrollrightaction", "mousescrollupaction",
+        "jsonpointer",
 
-        "name",
-        "onchangeaction", "oncloseaction", "onconnecterroraction", "ondownloaderroraction", "onfocusaction", "onrefreshaction", "onregexperroraction",
-        "onunfocusaction", "onupdateaction", "onwakeaction", "outputfile",
+        "leftmousedoubleclickaction", "leftmousedownaction", "leftmousedragaction", "leftmouseupaction", "localfont",
+        "maskimagename", "maskimagepath", "measure", "measurename", "measurename2", "meterstyle", "middlemousedoubleclickaction",
+        "middlemousedownaction", "middlemousedragaction", "middlemouseupaction", "mouseactioncursorname", "mouseleaveaction", "mousemoveaction",
+        "mouseoveraction", "mousescrolldownaction", "mousescrollleftaction", "mousescrollrightaction", "mousescrollupaction",
 
-        "parameter", "parent", "path", "pathname", "perfmoncounter", "perfmoninstance", "perfmonobject", "playerpath", "plugin", "postfix", "prefix",
-        "primaryimage", "primaryimagepath", "primaryimagepath", "processname", "program",
+        "name", "numberconversionformat",
+        "onchangeaction", "oncloseaction", "onconnecterroraction", "ondismissaction", "ondisplaymetricschange", "ondownloaderroraction",
+        "ondropaction", "ondroppedaction", "onenteraction", "onfocusaction", "onleaveaction", "onoveraction", "onrefreshaction",
+        "onregexperroraction", "onsubmitaction", "onunfocusaction", "onupdateaction", "onvisibilitychange", "onwakeaction", "outputfile",
 
-        "regexp", "regexpfilter", "regkey", "regvalue", "rightmousedoubleclickaction", "rightmousedownaction", "rightmouseupaction",
+        "parameter", "parent", "path", "pathname", "perfmoncounter", "perfmoninstance", "perfmonobject", "placeholderfontface", "placeholdertext",
+        "playerpath", "plugin", "postfix", "prefix", "primaryimage", "primaryimagepath", "primaryimagepath", "processname", "program",
+
+        "regexp", "regexpfilter", "regkey", "regvalue", "rightmousedoubleclickaction", "rightmousedownaction", "rightmousedragaction",
+        "rightmouseupaction",
         "scriptfile", "secondaryimage", "secondaryimage", "secondaryimagepath", "secondaryimagepath", "secondarymeasurename", "secondsvalue",
-        "separator", "skinpath", "startinfolder", "string", "substitute", "sysinfodata",
+        "separator", "skinpath", "startinfolder", "string", "substitute", "svgimage", "sysinfodata",
 
         "timestampformat", "timestamplocale", "tooltipicon", "tooltiptitle", "trackchangeaction", "traybitmap", "trayexecutedm", "trayexecutedr",
         "trayexecutem", "trayexecuter",
 
         "url",
         "whitelist", "wifiinfotype", "wildcardsearch", "windowclass", "windowmessage", "windowname",
-        "x1mousedoubleclickaction", "x1mousedownaction", "x1mouseupaction", "x2mousedoubleclickaction", "x2mousedownaction", "x2mouseupaction"
+        "x1mousedoubleclickaction", "x1mousedownaction", "x1mousedragaction", "x1mouseupaction",
+        "x2mousedoubleclickaction", "x2mousedownaction", "x2mousedragaction", "x2mouseupaction"
     };
 
-    // Mouse variables
-    const std::set<std::string> mouseVar = { "mousex", "mousex:%", "mousey", "mousey:%" };
+    // Variables using '$' as prefix, e.g. [$MouseX], [$SkinW] and [$DisplayDpiFactor]
+    static bool IsDollarVariable(const char* variable);
 };
 
 }// namespace RainLexer

@@ -41,6 +41,134 @@ constexpr bool IsReserved(int ch) {
         ch == '|' || ch == '?' || ch == '*');
 }
 
+namespace {
+
+// Consumes |part| from the front of |str| if it starts with it.
+bool Consume(std::string_view& str, std::string_view part)
+{
+    if (!str.starts_with(part))
+    {
+        return false;
+    }
+
+    str.remove_prefix(part.size());
+    return true;
+}
+
+// Consumes the digits at the front of |str|, if any.
+bool ConsumeDigits(std::string_view& str)
+{
+    const size_t end = str.find_first_not_of("0123456789");
+    if (str.empty() || end == 0)
+    {
+        return false;
+    }
+
+    str.remove_prefix((end == std::string_view::npos) ? str.size() : end);
+    return true;
+}
+
+// Returns true if what is left of |str| is one of |parts|.
+bool IsRest(std::string_view str, std::initializer_list<std::string_view> parts)
+{
+    for (const auto& part : parts)
+    {
+        if (str == part)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Skin variables, e.g. [$SkinW], [$SkinPhysicalH] and [$SkinZoomFactor]
+bool IsSkinVariable(std::string_view str)
+{
+    if (Consume(str, "physical"))
+    {
+        return IsRest(str, { "x", "y", "w", "h" });
+    }
+
+    if (Consume(str, "zoomed"))
+    {
+        return IsRest(str, { "w", "h" });
+    }
+
+    return IsRest(str, { "x", "y", "w", "h", "zpos", "dpifactor", "zoomfactor", "visible" });
+}
+
+// Display variables, e.g. [$DisplayW], [$Display2WorkAreaPhysicalH] and [$DisplayDevice1Name]
+bool IsDisplayVariable(std::string_view str)
+{
+    bool hasIndex = ConsumeDigits(str);
+
+    const bool isDevice = !hasIndex && Consume(str, "device");
+    if (isDevice)
+    {
+        hasIndex = ConsumeDigits(str);
+    }
+
+    if (!hasIndex)
+    {
+        if (str == "count")
+        {
+            return true;
+        }
+
+        // The virtual screen spans every display, so it takes no index and has no work area.
+        if (!isDevice && Consume(str, "virtualscreen"))
+        {
+            Consume(str, "physical");
+            return IsRest(str, { "x", "y", "w", "h" });
+        }
+    }
+
+    if (IsRest(str, { "name", "number", "dpifactor" }))
+    {
+        return true;
+    }
+
+    Consume(str, "workarea");
+    Consume(str, "physical");
+    return IsRest(str, { "x", "y", "w", "h" });
+}
+
+}  // namespace
+
+// |variable| is the lowercased name without the surrounding '[$' and ']'.
+bool RainLexer::IsDollarVariable(const char* variable)
+{
+    std::string_view str = variable;
+
+    if (Consume(str, "mouse"))
+    {
+        if (Consume(str, "x") || Consume(str, "y"))
+        {
+            return str.empty() || str == ":%";
+        }
+
+        return false;
+    }
+
+    if (str == "input")
+    {
+        return true;
+    }
+
+    if (Consume(str, "skin"))
+    {
+        return IsSkinVariable(str);
+    }
+
+    if (Consume(str, "display"))
+    {
+        return IsDisplayVariable(str);
+    }
+
+    return false;
+}
+
 ILexer5* RainLexer::LexerFactory()
 {
     return new RainLexer(nullptr, 0U);
@@ -107,9 +235,9 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     const Lexilla::WordList& depOptions = m_WordLists[7];
     const Lexilla::WordList& depBangs = m_WordLists[8];
 
-    auto IsOptionInExtList = [] (const std::set<std::string> option, char* optBuffer) -> bool
+    auto IsOptionInExtList = [] (const OptionSet& options, const char* optBuffer) -> bool
     {
-        return option.find(optBuffer) != option.end();
+        return options.contains(optBuffer);
     };
 
     length += startPos;
@@ -120,7 +248,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     int count = 0;
     int digits = 0;
 
-    int skipRainmeterBang = 0;
+    int skipBangPrefix = 0;
     int beginValueIdx = 0; // For cases like PlayerName=[ParentMeasure]
 
     bool isNested = false;
@@ -775,17 +903,27 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 count = 0;
 
                 // Skip rainmeter before comparing the bang
-                skipRainmeterBang = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
-                if (bangs.InList(&buffer[skipRainmeterBang]))
+                skipBangPrefix = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
+
+                // A "Skin:" prefix aims another bang at the skin named by the first argument, e.g.
+                // [!Skin:Hide "ConfigName"], so the rest of the name decides whether it is valid.
+                // The bangs of the namespace itself, e.g. !Skin:Load, are matched before it.
+                if (!bangs.InList(&buffer[skipBangPrefix]) && !depBangs.InList(&buffer[skipBangPrefix]) &&
+                    strncmp(&buffer[skipBangPrefix], "skin:", 5) == 0)
+                {
+                    skipBangPrefix += 5;
+                }
+
+                if (bangs.InList(&buffer[skipBangPrefix]))
                 {
                     styler.ColourTo(i - chEOL, TC_BANG);
                 }
-                else if (depBangs.InList(&buffer[skipRainmeterBang]))
+                else if (depBangs.InList(&buffer[skipBangPrefix]))
                 {
                     styler.ColourTo(i - chEOL, TC_DEP_BANG);
                 }
 
-                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipRainmeterBang]))
+                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipBangPrefix]))
                 {
                     isPipeOpt = true;
                     isNotNumValOpt = false;
@@ -1102,6 +1240,23 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\r':
             case '\n':
             {
+                // Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
+                if (!isNested && count > 0)
+                {
+                    if (isEOF && count < _countof(buffer))
+                    {
+                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+                    }
+
+                    buffer[count] = '\0';
+                    count = 0;
+
+                    if (IsDollarVariable(buffer))
+                    {
+                        styler.ColourTo(i - chEOL, TS_MOUSE_VARIABLE);
+                    }
+                }
+
                 state = TextState::TS_DEFAULT;
                 styler.ColourTo(i, TC_DEFAULT);
                 break;
@@ -1134,11 +1289,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count] = '\0';
 
-                    if (IsOptionInExtList(mouseVar, buffer))
+                    if (IsDollarVariable(buffer))
                     {
                         styler.ColourTo(i, TS_MOUSE_VARIABLE);
                     }
- 
+
                     count = 0;
                 }
 
@@ -1147,13 +1302,30 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             case '#':
             case '[':
-            {
-                --i;
-            }
-            [[fallthrough]];
-
             case ' ':
+            case '\t':
+            case '(':
+            case ')':
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case ',':
+            case ';':
             {
+                // The brackets can be omitted in formulas, e.g. Formula=(2 * $SkinW)
+                if (!isNested && count > 0)
+                {
+                    buffer[count] = '\0';
+                    count = 0;
+
+                    if (IsDollarVariable(buffer))
+                    {
+                        styler.ColourTo(i - 1, TS_MOUSE_VARIABLE);
+                    }
+                }
+
+                --i;
                 state = TextState::TS_VALUE;
                 break;
             }

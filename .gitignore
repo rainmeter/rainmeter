@@ -8,7 +8,6 @@ bin
 obj
 
 /BuildOut
-/Version.cs
 /Version.h
 
 /Build/Installer/Languages.nsh

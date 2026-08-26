@@ -14,7 +14,7 @@
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{90a21e5f-7ab9-45d6-842c-d780a9e14c6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\kiss_fft130">
+    <Filter Include="ThirdParty\kiss_fft">
       <UniqueIdentifier>{d1bf569e-05e7-4d77-8408-c39c1f31df2a}</UniqueIdentifier>
     </Filter>
     <Filter Include="ThirdParty\luautf8">
@@ -90,6 +90,7 @@
     <ClCompile Include="MeasureDragDrop.cpp" />
     <ClCompile Include="MeasureFileView.cpp" />
     <ClCompile Include="MeasureFolderInfo.cpp" />
+    <ClCompile Include="MeasureInputText.cpp" />
     <ClCompile Include="MeasureiTunes.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
     <ClCompile Include="MeasureMediaKey.cpp" />
@@ -159,11 +160,11 @@
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
     <ClCompile Include="ImageCache.cpp" />
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fft.c">
-      <Filter>ThirdParty\kiss_fft130</Filter>
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fft.c">
+      <Filter>ThirdParty\kiss_fft</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\kiss_fft130\kiss_fftr.c">
-      <Filter>ThirdParty\kiss_fft130</Filter>
+    <ClCompile Include="..\ThirdParty\kiss_fft\kiss_fftr.c">
+      <Filter>ThirdParty\kiss_fft</Filter>
     </ClCompile>
     <ClCompile Include="..\ThirdParty\luautf8\lutf8lib.c">
       <Filter>ThirdParty\luautf8</Filter>
@@ -210,6 +211,7 @@
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="DialogPackage.h" />
     <ClInclude Include="Export.h" />
+    <ClInclude Include="RainmeterAPI.h" />
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
@@ -230,6 +232,7 @@
     <ClInclude Include="MeasureDragDrop.h" />
     <ClInclude Include="MeasureFileView.h" />
     <ClInclude Include="MeasureFolderInfo.h" />
+    <ClInclude Include="MeasureInputText.h" />
     <ClInclude Include="MeasureiTunes.h" />
     <ClInclude Include="MeasureLoop.h" />
     <ClInclude Include="MeasureMediaKey.h" />
