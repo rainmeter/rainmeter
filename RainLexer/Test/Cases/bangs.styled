@@ -1,0 +1,22 @@
+{2}[MeterButton]{0}\r\n
+{3}LeftMouseUpAction{4}={0}[{7}!Refresh{0}]\r\n
+{3}MiddleMouseUpAction{4}={0}[{7}!SetOption{0} MeterName FontSize {10}20{0}]\r\n
+{3}RightMouseUpAction{4}={0}[{7}!RainmeterRefresh{0}]\r\n
+{3}X1MouseUpAction{4}={0}[{7}!Skin:Hide{0}]\r\n
+{3}X2MouseUpAction{4}={0}[{7}!SetVariable{0} MyVar "{10}10{0}"]\r\n
+{3}OnRefreshAction{4}={0}[{13}!Execute{0} [{7}!Refresh{0}]]\r\n
+{3}MouseOverAction{4}={0}[!NotARealBang]\r\n
+{3}OnUpdateAction{4}={0}[{7}!SetOptionGroup{0} Group FontSize {10}8{0}]\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x0401
+7: 0x0401
+8: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

@@ -1,0 +1,34 @@
+{2}[Rainmeter]{0}\r\n
+{3}Update{4}={10}1000{0}\r\n
+{1}; A comment about the skin{0}\r\n
+{3}BackgroundMode{4}={10}2{0}\r\n
+{0}\r\n
+{2}[Variables]{0}\r\n
+{0}MyVar{4}={10}42{0}\r\n
+{0}Colour{4}={10}255{0},{10}128{0},{10}0{0}\r\n
+{0}\r\n
+{2}[MeterText]{0}\r\n
+{3}Meter{4}={6}String{0}\r\n
+{3}StringAlign{4}={6}Right{0}\r\n
+{3}FontSize{4}={10}12{0}\r\n
+{3}Text{4}={0}Hello world\r\n
+{0}NotAKeyword{4}={0}some value\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x2400 header
+6: 0x0401
+7: 0x0401
+8: 0x0401
+9: 0x2400 header
+10: 0x0401
+11: 0x0401
+12: 0x0401
+13: 0x0401
+14: 0x0401
+--- out of range ---
+styles: 0
+levels: 0
