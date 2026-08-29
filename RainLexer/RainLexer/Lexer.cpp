@@ -523,7 +523,6 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					{
 						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
 					}
-					++i;
 				}
 			}
 			[[fallthrough]];
