@@ -31,6 +31,8 @@ namespace {
 const WCHAR* c_ClassName = L"RainmeterInputText";
 const WCHAR* c_UserInputToken = L"$UserInput$";
 
+constexpr UINT WM_INPUTTEXT_SETTLE = WM_APP + 0;
+
 // Whitespace as a skin file can write it. Nothing here parses prose, so the Unicode spaces are not
 // worth the call it would take to recognise them.
 bool IsSpace(WCHAR ch)
@@ -325,6 +327,7 @@ private:
 	const InputTextOptions* m_Options = nullptr;
 	HWND m_Window = nullptr;
 	HWND m_Edit = nullptr;
+	HWND m_Owner = nullptr;
 	HFONT m_Font = nullptr;
 	HBRUSH m_BackBrush = nullptr;
 	bool m_Submitted = false;
@@ -332,6 +335,10 @@ private:
 	// Set for as long as one Close() is on its way through DestroyWindow, since tearing the window
 	// down deactivates it, and being deactivated is itself one of the ways out of the box.
 	bool m_Closing = false;
+
+	// False until the box has finished coming up. Losing activation before that is the skin behind
+	// the box taking it, not the user clicking away.
+	bool m_Settled = false;
 
 	// What Close() lifted out of the edit control, since the control is gone by the time Show()
 	// has anything to return.
@@ -362,6 +369,7 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 	}
 
 	m_Options = &options;
+	m_Owner = skinWindow;
 
 	// The scale is applied here rather than where the options were read, so that a box opening now
 	// opens at the scale the skin is at now.
@@ -415,6 +423,8 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 
 		// Select all.
 		SendMessage(m_Edit, EM_SETSEL, 0, (LPARAM)-1);
+
+		PostMessage(m_Window, WM_INPUTTEXT_SETTLE, 0, 0);
 
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0) > 0)
@@ -530,11 +540,32 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		SetBkColor((HDC)wParam, box->m_Options->backColor);
 		return (LRESULT)box->m_BackBrush;
 
+	case WM_INPUTTEXT_SETTLE:
+		box->m_Settled = true;
+
+		// The skin may have taken the focus back while the box was coming up.
+		if (GetFocus() != box->m_Edit) SetFocus(box->m_Edit);
+		return 0;
+
 	case WM_ACTIVATE:
 		// Clicking away from the box is the usual way out of it, and the only one a skin that
 		// draws no buttons of its own has.
 		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss)
 		{
+			// Except while the box is still coming up. The click that opens a box also activates
+			// the skin the box is drawn over, and where that skin was not already active, its
+			// activation arrives after the box has taken the foreground - dismissing the box
+			// before it was ever seen. So a deactivation this early that hands activation to the
+			// skin the box belongs to is answered by taking the foreground back, once. Anything
+			// else, and anything after the settle message, is the user clicking away.
+			if (!box->m_Settled && !box->m_Closing && (HWND)lParam == box->m_Owner)
+			{
+				box->m_Settled = true;
+				SetForegroundWindow(wnd);
+				SetFocus(box->m_Edit);
+				return 0;
+			}
+
 			box->Close(false);
 		}
 		return 0;
@@ -551,6 +582,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 
 		box->m_Window = nullptr;
 		box->m_Edit = nullptr;
+		box->m_Owner = nullptr;
 		PostQuitMessage(0);
 		return 0;
 	}
