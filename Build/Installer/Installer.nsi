@@ -765,6 +765,7 @@ SkipIniMove:
 		WriteRegStr HKCR ".rmskin" "" "Rainmeter.SkinInstaller"
 		DeleteRegKey HKCR "Rainmeter skin"	; Old key
 		WriteRegStr HKCR "Rainmeter.SkinInstaller" "" "Rainmeter Skin Installer"
+		WriteRegStr HKCR "Rainmeter.SkinInstaller" "FriendlyTypeName" "Rainmeter Skin Package"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell" "" "open"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\DefaultIcon" "" "$INSTDIR\SkinInstaller.exe,0"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\open\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
