@@ -272,13 +272,11 @@ bool MeasureDragDrop::ResolveBounds(RECT& bounds) const
 
 	if (m_UsingFixedBounds)
 	{
-		std::array<double, 4> values = { 0.0, 0.0, 0.0, 0.0 };
+		ConfigParser& parser = m_Skin->GetParser();
+		std::array<int, 4> values = { 0, 0, 0, 0 };
 		for (size_t i = 0; i < m_BoundsFormulas.size(); ++i)
 		{
-			if (!m_Skin->GetParser().ParseFormula(m_BoundsFormulas[i], &values[i]))
-			{
-				return false;
-			}
+			values[i] = parser.ParseInt(m_BoundsFormulas[i], 0);
 		}
 
 		bounds.left = (LONG)values[0];
