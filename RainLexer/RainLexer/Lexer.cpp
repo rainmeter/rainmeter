@@ -267,9 +267,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     bool isNotNumValOpt = false;
     bool isExtOption = false;
 
+    const auto docLength = static_cast<Sci_PositionU>(styler.Length());
     for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
     {
-        bool isEOF = (i == static_cast<Sci_PositionU>(length) - 1);
+        bool isEOF = (i + 1 == docLength);
 
         // Make ch 0 if at EOF.
         char ch = isEOF ? '\0' : styler.SafeGetCharAt(i, '\0');
