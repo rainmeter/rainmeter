@@ -219,7 +219,7 @@ Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
 
 void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Lexilla::Accessor styler(pAccess, nullptr);
+    Lexilla::LexAccessor styler(pAccess);
 
     char buffer[128]{};
 
@@ -1410,7 +1410,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
 void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Lexilla::Accessor styler(pAccess, nullptr);
+    Lexilla::LexAccessor styler(pAccess);
 
     length += startPos;
     int line = styler.GetLine(startPos);
