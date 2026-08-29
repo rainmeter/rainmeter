@@ -721,6 +721,8 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                 case '\\':
                 {
+                    // buffer[0] records the radix for the rest of the escape: '0' starts the
+                    // "0x" prefix of a hexadecimal one, a space pads a decimal one.
                     count = 1;
                     if (Lexilla::MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
                     {
@@ -1139,7 +1141,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count++] = 'x';
                 }
-                else if (count < 6 && Lexilla::IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < maxBufferLen)
+                else if (count < 6 && Lexilla::IsADigit(ch, buffer[0] == '0' ? 16 : 10) && count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
