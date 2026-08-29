@@ -1,0 +1,22 @@
+{2}[MeterText]{0}\r\n
+{0}Hex{4}={14}[\x41]{0}\r\n
+{0}Adjacent{4}={14}[\x41]{0}[\a5]\r\n
+{0}AfterHex{4}={0}[\a5]\r\n
+{0}Decimal{4}={14}[\65]{0}\r\n
+{0}Large{4}={0}[\x1F600]\r\n
+{0}Unterminated{4}={0}[\x41\r\n
+{0}Bare{4}={0}[\]\r\n
+{3}Text{4}={0}A{14}[\x2019]{0}B\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x0401
+7: 0x0401
+8: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

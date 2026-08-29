@@ -1,0 +1,32 @@
+{2}[Variables]{0}\r\n
+{0}Width{4}={10}100{0}\r\n
+{0}Height{4}={10}50.5{0}\r\n
+{0}Negative{4}={0}-{10}25{0}\r\n
+{0}Mixed{4}={10}10{0}abc20\r\n
+{0}\r\n
+{2}[MeterBar]{0}\r\n
+{3}Meter{4}={6}Bar{0}\r\n
+{11}MeterStyle{4}={0}StyleOne{15}|{0}StyleTwo\r\n
+{3}BarColor{4}={10}255{0},{10}0{0},{10}0{0},{10}255{0}\r\n
+{3}X{4}={0}({10}100{0} + {10}50{0})\r\n
+{3}W{4}={9}#Width#{0}\r\n
+{3}Formula{4}={0}({10}2{0} * {9}#Height#{0} + {10}4{0})\r\n
+{3}Group{4}={0}First{15}|{0}Second{15}|{0}Third\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x2400 header
+7: 0x0401
+8: 0x0401
+9: 0x0401
+10: 0x0401
+11: 0x0401
+12: 0x0401
+13: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

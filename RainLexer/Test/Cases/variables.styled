@@ -1,0 +1,32 @@
+{2}[MeterText]{0}\r\n
+{3}Text{4}={9}#MyVar#{0}\r\n
+{0}Text2{4}={0}[{9}#MyVar#{0}]\r\n
+{0}Text3{4}={16}[&SomeMeasure]{0}\r\n
+{0}Text4{4}={0}[*NotAVariable*]\r\n
+{3}X{4}={17}[$SkinW]{0}\r\n
+{3}Y{4}={17}$SkinH{0}\r\n
+{0}Nested{4}={0}[{9}#MyVar#{10}10{0}]\r\n
+{0}MouseX{4}={17}[$MouseX]{0}\r\n
+{0}MousePercent{4}={17}[$MouseY:%]{0}\r\n
+{0}Display{4}={17}[$Display2WorkAreaPhysicalH]{0}\r\n
+{0}Internal{4}={8}#CURRENTCONFIG#{0}\r\n
+{0}Unknown{4}={9}#SomeUserVariable#{0}\r\n
+{3}Formula{4}={0}({10}2{0} * {17}$SkinW{0})\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x0401
+7: 0x0401
+8: 0x0401
+9: 0x0401
+10: 0x0401
+11: 0x0401
+12: 0x0401
+13: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

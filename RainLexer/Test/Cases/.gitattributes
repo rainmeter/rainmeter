@@ -1,0 +1,3 @@
+# Line endings are part of what these cases cover, so keep the bytes exactly as
+# committed instead of normalising them on checkout.
+* -text
