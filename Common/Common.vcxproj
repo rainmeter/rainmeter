@@ -45,6 +45,7 @@
     <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp" />
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp" />
     <ClCompile Include="MathParser.cpp" />
+    <ClCompile Include="MenuModifier.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="ParseUtil.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="Map.h" />
+    <ClInclude Include="MenuModifier.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="ParseUtil.h" />

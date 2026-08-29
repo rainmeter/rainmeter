@@ -4242,7 +4242,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Forward to tray window, which handles all the other commands
 			HWND tray = GetRainmeter().GetTrayIcon()->GetWindow();
 
-			if (wParam == IDM_QUIT)
+			if (wParam == IDM_QUIT || wParam == IDM_RESTART)
 			{
 				PostMessage(tray, WM_COMMAND, wParam, lParam);
 			}

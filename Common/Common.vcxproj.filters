@@ -5,6 +5,7 @@
     <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
+    <ClCompile Include="MenuModifier.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />
     <ClCompile Include="PathUtil.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DpiUtil.h" />
     <ClInclude Include="CriticalSection.h" />
+    <ClInclude Include="MenuModifier.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="NetworkUtil.h" />
     <ClInclude Include="PathUtil.h" />

@@ -559,6 +559,10 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			PostQuitMessage(0);
 			break;
 
+		case IDM_RESTART:
+			GetRainmeter().RestartRainmeter();
+			break;
+
 		case IDM_OPENSKINSFOLDER:
 			GetRainmeter().OpenSkinFolder();
 			break;

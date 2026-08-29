@@ -31,6 +31,7 @@
 #define IDS_DeleteLogFile                           2017
 #define IDS_DebugMode                               2018
 #define IDS_Exit                                    2019
+#define IDS_Restart                                 2234
 #define IDS_Variants                                2020
 #define IDS_Settings                                2021
 #define IDS_Position                                2022
@@ -352,6 +353,7 @@
 #define IDS_OlderPluginWarning                      3114
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
+#define IDM_RESTART                                  4095
 #define IDM_DISABLEDRAG                              4003
 #define IDM_MANAGE                                   4004
 #define IDM_ABOUT                                    4005
