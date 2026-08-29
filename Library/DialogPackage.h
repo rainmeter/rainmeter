@@ -23,7 +23,8 @@ private:
 		Id_Tab = 1000,
 		Id_NextButton,
 		Id_BackButton,
-		Id_CreatePackageButton
+		Id_CreatePackageButton,
+		Id_CancelButton
 	};
 
 	class TabInfo : public Tab
