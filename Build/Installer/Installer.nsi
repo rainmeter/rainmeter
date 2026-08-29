@@ -556,8 +556,10 @@ FunctionEnd
 	SetOutPath "$INSTDIR"
 	File "..\..\${OUTDIR}\Rainmeter.exe"
 	File "..\..\${OUTDIR}\Rainmeter.dll"
-	File "..\..\${OUTDIR}\RestartRainmeter.exe"
 	File "..\..\${OUTDIR}\SkinInstaller.exe"
+
+	; Obsolete, restarting is now handled by "Rainmeter.exe /Restart"
+	Delete "$INSTDIR\RestartRainmeter.exe"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH

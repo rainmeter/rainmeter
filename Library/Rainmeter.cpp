@@ -7,6 +7,7 @@
 #include "../Common/FileUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
+#include "../Common/ScopedFunction.h"
 #include "AsyncTask.h"
 #include "Rainmeter.h"
 #include "Export.h"
@@ -27,6 +28,7 @@
 #include "MeterStringBase.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
+#include "resource.h"
 #include <bcrypt.h>
 
 enum TIMER
@@ -42,6 +44,8 @@ enum INTERVAL
 	INTERVAL_UPDATECHECK_DAILY = 24 * 60 * 60 * 1000
 };
 
+LPWSTR g_CmdLine = nullptr;
+
 int RainmeterMain(LPWSTR cmdLine)
 {
 	BOOL supressExceptions = FALSE;
@@ -51,6 +55,21 @@ int RainmeterMain(LPWSTR cmdLine)
 	SetDllDirectory(L"");
 
 	const WCHAR* layout = nullptr;
+
+	if (_wcsnicmp(cmdLine, L"/Restart ", 9) == 0)
+	{
+		// Wait for the instance being restarted to quit (see Rainmeter::RestartRainmeter), then
+		// start up normally with its command line, which follows the inherited process handle.
+		cmdLine += 9;
+		HANDLE process = (HANDLE)(ULONG_PTR)_wcstoui64(cmdLine, &cmdLine, 10);
+		if (!process) return 1;
+
+		const DWORD result = WaitForSingleObject(process, 10000);
+		CloseHandle(process);
+		if (result != WAIT_OBJECT_0) return 1;
+
+		while (*cmdLine == L' ') ++cmdLine;
+	}
 
 	if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 	{
@@ -86,6 +105,8 @@ int RainmeterMain(LPWSTR cmdLine)
 			*pos = L'\0';
 		}
 	}
+
+	g_CmdLine = cmdLine;
 
 	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
 
@@ -635,10 +656,38 @@ void Rainmeter::Finalize()
 
 void Rainmeter::RestartRainmeter()
 {
-	// Make sure to call this function after m_Path is initialized in Rainmeter::Initialize
-	std::wstring restart = m_Path;
-	restart += L"RestartRainmeter.exe";
-	CommandHandler::RunFile(restart.c_str());
+	// A second instance does the restarting: it inherits a handle to this process and waits for
+	// it to close before starting up normally (see RainmeterMain). This instance then quits.
+	HANDLE current = GetCurrentProcess();
+	HANDLE process = nullptr;
+	if (!DuplicateHandle(current, current, current, &process, SYNCHRONIZE, TRUE, 0)) return;
+	auto scopedProcess = Scoped([&]() { CloseHandle(process); });
+
+	// Inherit |process| only, so that no other handle is kept alive by the second instance.
+	SIZE_T size = 0;
+	InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+	std::vector<BYTE> attributes(size);
+
+	STARTUPINFOEX si = { sizeof(si) };
+	si.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)attributes.data();
+	if (!InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size)) return;
+	auto scopedAttributes = Scoped([&]() { DeleteProcThreadAttributeList(si.lpAttributeList); });
+
+	if (!UpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, &process, sizeof(process), nullptr, nullptr)) return;
+
+	WCHAR exe[MAX_PATH];
+	GetModuleFileName(nullptr, exe, _countof(exe));
+
+	std::wstring commandLine = fmt::format(L"\"{}\" /Restart {}", exe, (ULONG_PTR)process);
+	if (g_CmdLine && *g_CmdLine) commandLine += fmt::format(L" {}", g_CmdLine);
+
+	PROCESS_INFORMATION pi = { 0 };
+	if (!CreateProcess(exe, &commandLine[0], nullptr, nullptr, TRUE, EXTENDED_STARTUPINFO_PRESENT, nullptr, m_Path.c_str(), &si.StartupInfo, &pi)) return;
+
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+	PostMessage(m_TrayIcon->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
 }
 
 bool Rainmeter::IsAlreadyRunning()
