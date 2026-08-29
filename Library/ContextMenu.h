@@ -5,6 +5,7 @@
 #include <vector>
 #include <Windows.h>
 
+class MenuModifier;
 class Skin;
 
 // Handles the creation and display of Rainmeter and skin context menus.
@@ -27,7 +28,7 @@ public:
 	// Creates a standalone context menu for |skin|. If |allSkinsMenu| is null, the skin root
 	// submenu is omitted. The caller is responsible for destroying the returned menu and for
 	// dispatching the selected command with SendMenuCommand.
-	static HMENU CreateSkinMenu(Skin* skin, int index = 0, HMENU allSkinsMenu = nullptr);
+	static HMENU CreateSkinMenu(Skin* skin, int index = 0, HMENU allSkinsMenu = nullptr, MenuModifier* modifier = nullptr);
 
 	// Sends |command| to |commandWindow| along with the checked state of the menu item.
 	static void SendMenuCommand(HMENU menu, UINT command, HWND commandWindow);

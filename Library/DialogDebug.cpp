@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/MenuModifier.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
 #include "ContextMenu.h"
@@ -1626,11 +1627,15 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_SkinMenuButton:
 		if (HIWORD(wParam) == BN_CLICKED && m_SkinWindow)
 		{
-			HMENU menu = ContextMenu::CreateSkinMenu(m_SkinWindow);
+			MenuModifier modifier;
+			HMENU menu = ContextMenu::CreateSkinMenu(m_SkinWindow, 0, nullptr, &modifier);
 			if (menu)
 			{
+				modifier.Start();
 				const UINT command = Dialog::ShowMenuButtonPopupMenu(
 					menu, (HWND)lParam, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
+				modifier.Stop();
+
 				if (command)
 				{
 					ContextMenu::SendMenuCommand(menu, command, m_SkinWindow->GetWindow());

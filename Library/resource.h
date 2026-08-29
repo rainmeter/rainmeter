@@ -32,6 +32,7 @@
 #define IDS_DebugMode                               2018
 #define IDS_Exit                                    2019
 #define IDS_Restart                                 2234
+#define IDS_FocusSkin                               2235
 #define IDS_Variants                                2020
 #define IDS_Settings                                2021
 #define IDS_Position                                2022
@@ -382,6 +383,7 @@
 #define IDM_SKIN_SNAPTOEDGES                         4028
 #define IDM_SKIN_CLICKTHROUGH                        4029
 #define IDM_SKIN_EDITSKIN                            4030
+#define IDM_SKIN_FOCUS                               4031
 #define IDM_SHOW_HELP                                4034
 #define IDM_SKIN_TRANSPARENCY_FADEIN                 4037
 #define IDM_SKIN_TRANSPARENCY_FADEOUT                4038
