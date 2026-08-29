@@ -1018,13 +1018,13 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					break;
 
 				case TextState::TS_MEASURE_VARIABLE:
-					styler.ColourTo(pos, isEscaped ? TC_DEFAULT : TS_MEASURE_VARIABLE);
+					styler.ColourTo(pos, isEscaped ? TC_DEFAULT : TC_MEASURE_VARIABLE);
 					break;
 
 				default:
 					if (IsDollarVariable(buffer))
 					{
-						styler.ColourTo(pos, TS_MOUSE_VARIABLE);
+						styler.ColourTo(pos, TC_MOUSE_VARIABLE);
 					}
 					break;
 				}
