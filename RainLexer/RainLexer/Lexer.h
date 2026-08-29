@@ -140,19 +140,19 @@ private:
     Lexilla::WordList m_WordLists[9];
 
     // Options using '|' as delimiter
-    const OptionSet pipeOpt = {
+    static inline const OptionSet pipeOpt = {
         "@inherit", "actionlist", "blacklist", "flags", "group", "information", "inlinesetting", "meterstyle", "shape",
         "update", "whitelist"
     };
 
     // Value and option bangs
-    const OptionSet setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
+    static inline const OptionSet setterBangWordsOpt = { "setoption", "setoptiongroup", "setvariable", "setvariablegroup", "setwindowposition", "writekeyvalue" };
 
     // Options with values and subvalues on same line
-    const OptionSet extKeywordsOpt = { "inlinesetting", "shape" };
+    static inline const OptionSet extKeywordsOpt = { "inlinesetting", "shape" };
 
     // Valid values for extKeyWords
-    const OptionSet extOpt = {
+    static inline const OptionSet extOpt = {
         "inlinesetting=case", "inlinesetting=color", "inlinesetting=characterspacing", "inlinesetting=face", "inlinesetting=gradientcolor",
         "inlinesetting=italic", "inlinesetting=none", "inlinesetting=oblique", "inlinesetting=shadow", "inlinesetting=size",
         "inlinesetting=stretch", "inlinesetting=strikethrough", "inlinesetting=typography", "inlinesetting=underline", "inlinesetting=weight",
@@ -161,10 +161,10 @@ private:
     };
 
     // Format options
-    const OptionSet formatOpt = { "format", "timestampformat" };
+    static inline const OptionSet formatOpt = { "format", "timestampformat" };
 
     // Options not using numeric values, and are not type 2 keywords (options with valid values, e.g. StringAlign=RIGHT)
-    const OptionSet nonNumValOpt = {
+    static inline const OptionSet nonNumValOpt = {
         "@include", "@inherit",
         "action", "author",
         "background", "barimage", "bitmapimage", "blacklist", "bothimage", "bothimagepath", "bothimagepath", "buttoncommand", "buttonimage",
