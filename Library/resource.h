@@ -294,6 +294,7 @@
 #define IDS_SelectPluginFile                        3046
 #define IDS_PluginsSameName                         3047
 #define IDS_InvalidPlugin                           3048
+#define IDS_PackageInfoDescription                  3049
 #define IDS_Information                             3050
 #define IDS_Components                              3054
 #define IDS_AddLayout                               3056
