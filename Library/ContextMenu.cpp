@@ -100,6 +100,13 @@ void CheckMenuItemIfMatch(HMENU menu, UINT id, const std::vector<Skin*>& skins, 
 	}
 }
 
+// The skin menus are all built from the same template, so the index of the skin is carried in the
+// high word of the command to tell the items of one skin apart from those of another.
+UINT MakeSkinMenuCommand(UINT command, int index)
+{
+	return command | ((UINT)index << 16);
+}
+
 bool IsMenuCommandChecked(HMENU menu, UINT command)
 {
 	if (!menu) return false;
@@ -234,7 +241,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 	if (skin)
 	{
 		HMENU rainmeterMenu = menu;
-		menu = CreateSkinMenu(skin, 0, allSkinsMenu);
+		menu = CreateSkinMenu(skin, 0, allSkinsMenu, &modifier);
 
 		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
 		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
@@ -252,7 +259,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 			}
 
 			Skin* skin = ((*iter).second);
-			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
+			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu, &modifier);
 			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
 			++index;
 		}
@@ -602,7 +609,7 @@ HMENU ContextMenu::CreateSkinSelectionMenu()
 	return menu;
 }
 
-HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
+HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu, MenuModifier* modifier)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -641,6 +648,13 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 
 	// Give the menuitem the unique id that depends on the skin
 	ChangeSkinIndex(skinMenu, index);
+
+	if (modifier)
+	{
+		const auto refreshCommand = MakeSkinMenuCommand(IDM_SKIN_REFRESH, index);
+		const auto focusCommand = MakeSkinMenuCommand(IDM_SKIN_FOCUS, index);
+		modifier->AddItem(skinMenu, VK_SHIFT, refreshCommand, focusCommand, GetString(IDS_FocusSkin));
+	}
 
 	// Add the variants menu
 	if (variantsMenu)
@@ -945,7 +959,7 @@ void ContextMenu::ChangeSkinIndex(HMENU menu, int index)
 				GetMenuItemInfo(menu, i, TRUE, &mii);
 				if ((mii.fType & MFT_SEPARATOR) == 0)
 				{
-					mii.wID |= (index << 16);
+					mii.wID = MakeSkinMenuCommand(mii.wID, index);
 					mii.fMask = MIIM_ID;
 					SetMenuItemInfo(menu, i, TRUE, &mii);
 				}

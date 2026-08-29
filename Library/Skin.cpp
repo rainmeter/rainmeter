@@ -4021,6 +4021,10 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		Refresh(false);
 		break;
 
+	case IDM_SKIN_FOCUS:
+		ChangeSingleZPos(m_WindowZPosition);
+		break;
+
 	case IDM_SKIN_OPENSKINSFOLDER:
 		GetRainmeter().OpenSkinFolder(m_FolderPath);
 		break;
