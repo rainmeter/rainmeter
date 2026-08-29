@@ -207,15 +207,12 @@ const char* SCI_METHOD RainLexer::DescribeWordListSets() {
 }
 
 Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
-    if (n < _countof(m_WordLists))
+    // WordList::Set parses, sorts and compares against the current contents itself, and
+    // reports whether anything changed, so a throwaway list to compare against is not
+    // needed. Returning 0 asks Scintilla to restyle from the start of the document.
+    if (n >= 0 && static_cast<size_t>(n) < _countof(m_WordLists) && m_WordLists[n].Set(wl))
     {
-        Lexilla::WordList wlNew(false);
-        wlNew.Set(wl);
-        if (m_WordLists[n] != wlNew)
-        {
-            m_WordLists[n].Set(wl);
-            return 0;
-        }
+        return 0;
     }
     return -1;
 }
