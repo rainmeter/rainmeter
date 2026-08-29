@@ -1462,7 +1462,8 @@ void DialogInstall::TabInstall::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Label(DialogInstall::TabInstall::Id_InProgressText, IDS_Installing,
 			0, 0, 236, 60,
-			0, Control::ELLIPSIS),
+			0, 0,
+			Control::ELLIPSIS),
 		Control::ProgressBar(DialogInstall::TabInstall::Id_Progress, 0,
 			0, 15, 236, 11,
 			PBS_MARQUEE | WS_BORDER, 0)
