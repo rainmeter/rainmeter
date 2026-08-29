@@ -1413,7 +1413,11 @@ void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int
     {
         if ((styler[i] == '\n') || (i == uLength - 1))
         {
-            int level = (styler.StyleAt(i - 2) == static_cast<int>(TextState::TS_SECTION))
+            // Step back over the line ending to reach the closing bracket of a section
+            // header. Anything shorter than "[x]" plus its line ending cannot be one.
+            const bool isSectionHeader = (i >= 2) && (styler.StyleAt(i - 2) == TC_SECTION);
+
+            int level = isSectionHeader
                 ? SC_FOLDLEVELBASE | SC_FOLDLEVELHEADERFLAG
                 : SC_FOLDLEVELBASE + 1;
 
