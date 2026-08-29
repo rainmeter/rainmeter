@@ -559,8 +559,8 @@ public:
 		ShowDialogWindow(
 			GetString(IDS_Add),
 			0, 0, 200, 100,
-			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
-			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
+			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent,
 			false);
 		return m_Accepted ? m_Result : std::wstring();
@@ -744,8 +744,8 @@ public:
 		ShowDialogWindow(
 			GetString(IDS_Add),
 			0, 0, 200, 100,
-			DS_CENTER | WS_POPUP | WS_TILEDWINDOW,
-			WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
+			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
+			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent,
 			false);
 		return m_Accepted ? m_Plugins : std::pair<std::wstring, std::wstring>();
