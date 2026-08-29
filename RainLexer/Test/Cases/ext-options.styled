@@ -1,0 +1,32 @@
+{2}[MeterText]{0}\r\n
+{3}Meter{4}={6}String{0}\r\n
+{3}InlineSetting{4}={6}Color{0} {15}|{0} {10}255{0},{10}0{0},{10}0{0}\r\n
+{3}InlineSetting{4}={6}Face{0} {15}|{0} Arial\r\n
+{3}InlineSetting{4}={6}Size{0} {15}|{0} {10}12{0}\r\n
+{3}InlineSetting{4}={6}None{0}\r\n
+{3}InlineSetting{4}={5}NotAValidSetting{0} | 1\r\n
+{3}InlineSetting{4}={5}Weight|700{0}\r\n
+{3}Shape{4}={6}Rectangle{0} {10}0{0},{10}0{0},{10}10{0},{10}10{0} {15}|{0} Fill Color {10}255{0},{10}0{0},{10}0{0} {15}|{0} StrokeWidth {10}2{0}\r\n
+{3}Shape2{4}={6}Ellipse{0} {10}10{0},{10}10{0},{10}20{0},{10}20{0}\r\n
+{3}Shape{4}={5}NotAShape{0} 1,2\r\n
+{3}Group{4}={0}A{15}|{0}B{15}|{0}C\r\n
+{0}ActionList{4}={0}One {15}|{0} Two\r\n
+{11}MeterStyle{4}={0}StyleOne{15}|{0}StyleTwo{15}|{0}StyleThree\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x0401
+7: 0x0401
+8: 0x0401
+9: 0x0401
+10: 0x0401
+11: 0x0401
+12: 0x0401
+13: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

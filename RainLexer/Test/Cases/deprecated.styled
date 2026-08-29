@@ -1,0 +1,44 @@
+{2}[MeasureCPU]{0}\r\n
+{3}Measure{4}={6}CPU{0}\r\n
+{11}CpuInclude{4}={0}1\r\n
+{11}NetInSpeed{4}={10}1024{0}\r\n
+{11}PerfMonObject{4}={0}Processor\r\n
+{11}MeterStyle{4}={0}StyleOne\r\n
+{11}Description{4}={0}Old skin\r\n
+{11}LocalFont{4}={0}Some.ttf\r\n
+{11}TopProcess{4}={10}1{0}\r\n
+{0}\r\n
+{2}[MeasurePlayer]{0}\r\n
+{11}Command{4}={12}GetCurrentTrackAlbum{0}\r\n
+{11}Command{4}={5}NotADeprecatedValue{0}\r\n
+{3}PlayerName{4}={6}AIMP{0}\r\n
+{0}\r\n
+{2}[MeterButton]{0}\r\n
+{3}LeftMouseUpAction{4}={0}[{13}!Execute{0} [{7}!Refresh{0}]]\r\n
+{3}MiddleMouseUpAction{4}={0}[{13}!PluginBang{0} "Cmd"]\r\n
+{3}RightMouseUpAction{4}={0}[{13}!RainmeterExecute{0} [{7}!Refresh{0}]]\r\n
+{3}OnUpdateAction{4}={0}[{13}!RainmeterPluginBang{0} "Cmd"]\r\n
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+2: 0x0401
+3: 0x0401
+4: 0x0401
+5: 0x0401
+6: 0x0401
+7: 0x0401
+8: 0x0401
+9: 0x0401
+10: 0x2400 header
+11: 0x0401
+12: 0x0401
+13: 0x0401
+14: 0x0401
+15: 0x2400 header
+16: 0x0401
+17: 0x0401
+18: 0x0401
+19: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

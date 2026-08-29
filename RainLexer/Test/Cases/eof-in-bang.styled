@@ -1,0 +1,8 @@
+{2}[MeterButton]{0}\r\n
+{3}LeftMouseUpAction{4}={0}[{7}!Refresh
+--- folds ---
+0: 0x2400 header
+1: 0x0401
+--- out of range ---
+styles: 0
+levels: 0

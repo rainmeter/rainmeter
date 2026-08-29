@@ -824,13 +824,18 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			{
 				if (isEOF)
 				{
-					if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
+					const char chEnd = styler.SafeGetCharAt(i, '\0');
+					const bool isDigit = Lexilla::IsADigit(chEnd);
+
+					if (isDigit || (chEnd == '|' && isPipeOpt && countParentheses == 0))
 					{
-						styler.ColourTo(i, TC_DIGITS);
-					}
-					else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
-					{
-						styler.ColourTo(i, TC_PIPE);
+						// The last character of the document belongs to the run, so close the
+						// segment on it and stop. Falling through would style back to i - 1,
+						// which is behind the segment that was just closed.
+						styler.ColourTo(i, isDigit ? TC_DIGITS : TC_PIPE);
+						onlyDigits = false;
+						state = TextState::TS_DEFAULT;
+						break;
 					}
 				}
 			}
@@ -892,7 +897,6 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					{
 						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
 					}
-					++i;
 				}
 			}
 			[[fallthrough]];
