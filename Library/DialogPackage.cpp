@@ -94,7 +94,7 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		Control::Button(DialogPackage::Id_CreatePackageButton, IDS_CreatePackage,
 			158, 264, 80, 14,
 			WS_TABSTOP, 0),
-		Control::Button(IDCANCEL, IDS_Cancel,
+		Control::Button(DialogPackage::Id_CancelButton, IDS_Cancel,
 			243, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Tab(DialogPackage::Id_Tab, 0,
@@ -175,7 +175,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			item = GetDlgItem(m_Window, DialogPackage::Id_BackButton);
 			EnableWindow(item, FALSE);
 
-			item = GetDlgItem(m_Window, IDCANCEL);
+			item = GetDlgItem(m_Window, DialogPackage::Id_CancelButton);
 			EnableWindow(item, FALSE);
 
 			SelectTab(0);
@@ -200,7 +200,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDCANCEL:
+	case DialogPackage::Id_CancelButton:
 		if (!m_PackagerThread)
 		{
 			EndDialog(m_Window, 0);
