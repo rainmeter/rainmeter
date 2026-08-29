@@ -19,6 +19,10 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
+      - name: Test RainLexer
+        run: .\RainLexer\Build\Build.ps1 test "$(Get-Date -Format 'yyyy.M').$env:BUILD_VERSION"
+        shell: pwsh
+
       - name: Build RainLexer
         run: .\RainLexer\Build\Build.ps1 rainlexer "$(Get-Date -Format 'yyyy.M').$env:BUILD_VERSION"
         shell: pwsh

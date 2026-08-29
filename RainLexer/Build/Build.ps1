@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
 Builds RainLexer release artifacts.
 
 .PARAMETER BuildType
-The build target to run. Valid values are full, rainlexer, rainlexer-32, rainlexer-64, and installer.
+The build target to run. Valid values are full, test, rainlexer, rainlexer-32, rainlexer-64, and installer.
 
 .PARAMETER Version
 The RainLexer version in major.minor.patch format.
@@ -17,11 +17,16 @@ Builds both RainLexer DLLs and the installer.
 .\Build.ps1 installer 2.22.0
 
 Builds only the RainLexer installer using the existing signed DLL outputs.
+
+.EXAMPLE
+.\Build.ps1 test 2.22.0
+
+Builds and runs the lexer tests without producing any release artifacts.
 #>
 [CmdletBinding()]
 param(
 	[Parameter(Position = 0)]
-	[ValidateSet('full', 'rainlexer', 'rainlexer-32', 'rainlexer-64', 'installer')]
+	[ValidateSet('full', 'test', 'rainlexer', 'rainlexer-32', 'rainlexer-64', 'installer')]
 	[string]$BuildType,
 
 	[Parameter(Position = 1)]
@@ -138,6 +143,58 @@ $msBuildArgs = @(
 	'/p:Configuration=Release',
 	'/v:q'
 )
+
+if ($BuildType -eq 'full' -or $BuildType -eq 'test') {
+	Write-Host '* Building lexer tests'
+
+	$testOutDir = Join-Path $PSScriptRoot '..\x64-Test'
+	New-Item -ItemType Directory -Force -Path $testOutDir | Out-Null
+
+	# Compiled straight with cl.exe rather than through a project of its own: the test
+	# harness is three translation units and needs none of the DLL's link settings.
+	# Asserts are deliberately left enabled, because Scintilla's LexAccessor checks its
+	# own preconditions with them and those have caught real lexer faults.
+	Invoke-NativeCommand 'cl.exe' @(
+		'/nologo',
+		'/std:c++20',
+		'/permissive-',
+		'/W4',
+		'/O2',
+		'/MT',
+		'/EHsc',
+		'/DUNICODE',
+		'/D_UNICODE',
+		'/DWIN32_LEAN_AND_MEAN',
+		'/D_CRT_SECURE_NO_WARNINGS',
+		'/I..\ThirdParty\Scintilla\include',
+		'/I..\ThirdParty\lexilla\include',
+		'/I..\ThirdParty\lexilla\lexlib',
+		'/I..\RainLexer',
+		'/I..\Test',
+		'..\Test\TestRunner.cpp',
+		'..\RainLexer\Lexer.cpp',
+		'..\ThirdParty\lexilla\lexlib\WordList.cxx',
+		'/Fo..\x64-Test\',
+		'/Fe..\x64-Test\Test.exe'
+	)
+
+	Write-Host '* Running lexer tests'
+
+	# Wrapped in @() so that a single case still comes back as an array.
+	$cases = @(
+		Get-ChildItem -Path (Join-Path $PSScriptRoot '..\Test\Cases') -Filter '*.ini' |
+			Sort-Object -Property Name |
+			ForEach-Object { $_.FullName }
+	)
+	if ($cases.Count -eq 0) {
+		Write-Error 'ERROR: No lexer test cases found'
+		exit 1
+	}
+
+	Invoke-NativeCommand '..\x64-Test\Test.exe' (
+		@('..\Config\Default\RainLexer.xml') + $cases
+	)
+}
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainlexer' -or $BuildType -eq 'rainlexer-32') {
 	Write-Host '* Building 32-bit RainLexer'
