@@ -508,8 +508,29 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 			DWORD style = WS_CHILD | WS_VISIBLE | options.align;
 			style |= options.password ? (ES_PASSWORD | ES_AUTOHSCROLL) : ES_MULTILINE;
 
+			// A multiline edit control draws no line it cannot draw in full, so a box shorter than
+			// one line of the font it was given comes up empty rather than cropped - and how tall
+			// a line is depends on the face, which is what makes one face work where another does
+			// not. The control is given the height a line needs and the box crops it, which is
+			// what a box too short for its font ought to look like.
+			int editHeight = client.bottom;
+			if (!options.password)
+			{
+				HDC dc = GetDC(wnd);
+				HFONT oldFont = (HFONT)SelectObject(dc, box->m_Font);
+
+				TEXTMETRIC metrics = { 0 };
+				if (GetTextMetrics(dc, &metrics) && metrics.tmHeight > editHeight)
+				{
+					editHeight = metrics.tmHeight;
+				}
+
+				SelectObject(dc, oldFont);
+				ReleaseDC(wnd, dc);
+			}
+
 			box->m_Edit = CreateWindowEx(0L, WC_EDIT, options.text.c_str(), style,
-				0, 0, client.right, client.bottom, wnd, nullptr,
+				0, 0, client.right, editHeight, wnd, nullptr,
 				GetRainmeter().GetModuleInstance(), nullptr);
 			if (box->m_Edit == nullptr) return -1;
 
