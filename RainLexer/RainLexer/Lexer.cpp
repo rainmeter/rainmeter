@@ -571,7 +571,8 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             case '\n':
                 if (!isExtOption || isEOF)
                 {
-                    while (Lexilla::IsASpaceOrTab(buffer[count - 1]))
+                    // Ignore trailing whitespace
+                    while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
                     {
                         --count;
                     }
