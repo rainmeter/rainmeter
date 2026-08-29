@@ -1,0 +1,22 @@
+    <LexerStyles>
+        <LexerType name="Rainmeter" desc="Rainmeter" ext="" excluded="no">
+            <WordsStyle name="DEFAULT" styleID="0" fgColor="DCDCCC" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="COMMENT" styleID="1" fgColor="7F9F7F" bgColor="3F3F3F" fontName="" fontStyle="3" fontSize="" />
+            <WordsStyle name="SECTION" styleID="2" fgColor="8CD0D3" bgColor="3F3F3F" fontName="" fontStyle="1" fontSize="" />
+            <WordsStyle name="OPTION" styleID="3" fgColor="E3CEAB" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" keywordClass="0" />
+            <WordsStyle name="EQUALS" styleID="4" fgColor="8F8F8F" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" keywordClass="1" />
+            <WordsStyle name="INVALID VALUE" styleID="5" fgColor="ECBCBC" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" keywordClass="2" />
+            <WordsStyle name="VALUE" styleID="6" fgColor="E3CEAB" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" keywordClass="3" />
+            <WordsStyle name="BANG" styleID="7" fgColor="9F9D6D" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" keywordClass="4" />
+            <WordsStyle name="VARIABLE" styleID="8" fgColor="93B3A3" bgColor="3F3F3F" fontName="" fontStyle="1" fontSize="" keywordClass="5" />
+            <WordsStyle name="USER VARIABLE" styleID="9" fgColor="93B3A3" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="DEPRECATED OPTION" styleID="11" fgColor="E3CEAB" bgColor="3F3F3F" fontName="" fontStyle="2" fontSize="" keywordClass="6" />
+            <WordsStyle name="DEPRECATED VALUE" styleID="12" fgColor="E3CEAB" bgColor="3F3F3F" fontName="" fontStyle="2" fontSize="" keywordClass="7" />
+            <WordsStyle name="DEPRECATED BANG" styleID="13" fgColor="9F9D6D" bgColor="3F3F3F" fontName="" fontStyle="2" fontSize="" keywordClass="8" />
+            <WordsStyle name="DIGITS" styleID="10" fgColor="FF8409" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="CHAR VARIABLE" styleID="14" fgColor="66B3B3" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PIPE" styleID="15" fgColor="00AAAA" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="MEASURE VARIABLE" styleID="16" fgColor="00AAAA" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="MOUSE VARIABLE" styleID="17" fgColor="00AAAA" bgColor="3F3F3F" fontName="" fontStyle="0" fontSize="" />
+        </LexerType>
+    </LexerStyles>
