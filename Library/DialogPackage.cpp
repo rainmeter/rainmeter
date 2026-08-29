@@ -48,7 +48,7 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 		c_Dialog = &dialog;
 		dialog.ShowDialogWindow(
 			GetString(IDS_RainmeterSkinPackager),
-			0, 0, 300, 283,
+			0, 0, 320, 283,
 			DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
 			WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
 			nullptr,
@@ -86,19 +86,19 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	const Control controls[] =
 	{
 		Control::Button(DialogPackage::Id_BackButton, IDS_Back,
-			103, 264, 50, 14,
+			123, 264, 50, 14,
 			WS_TABSTOP, 0),
 		Control::Button(DialogPackage::Id_NextButton, IDS_Next,
-			188, 264, 50, 14,
+			208, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0),
 		Control::Button(DialogPackage::Id_CreatePackageButton, IDS_CreatePackage,
-			158, 264, 80, 14,
+			178, 264, 80, 14,
 			WS_TABSTOP, 0),
 		Control::Button(DialogPackage::Id_CancelButton, IDS_Cancel,
-			243, 264, 50, 14,
+			263, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Tab(DialogPackage::Id_Tab, 0,
-			6, 6, 288, 254,
+			6, 6, 308, 254,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)
 	};
 
@@ -885,27 +885,27 @@ std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
 
 void DialogPackage::TabInfo::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 15, 270, 238, owner);
+	Tab::CreateTabWindow(15, 15, 290, 238, owner);
 
 	const Control controls[] =
 	{
 		Control::Label(Id_DescriptionLabel, IDS_Description,
-			0, 0, 264, 26,
+			0, 0, 284, 26,
 			WS_VISIBLE, 0),
 		Control::GroupBox(Id_InformationGroup, IDS_Information,
-			0, 35, 270, 73,
+			0, 35, 290, 73,
 			WS_VISIBLE, 0),
 		Control::Label(Id_NameLabel, IDS_NameColon,
 			6, 51, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabInfo::Id_NameEdit, 0,
-			56, 50, 208, 14,
+			56, 50, 228, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::Label(Id_AuthorLabel, IDS_AuthorColon,
 			6, 69, 35, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabInfo::Id_AuthorEdit, 0,
-			56, 68, 208, 14,
+			56, 68, 228, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::Label(Id_VersionLabel, IDS_VersionColon,
 			6, 87, 35, 13,
@@ -914,28 +914,28 @@ void DialogPackage::TabInfo::Create(HWND owner)
 			56, 86, 140, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::GroupBox(Id_ComponentsGroup, IDS_Components,
-			0, 113, 270, 108,
+			0, 113, 290, 108,
 			WS_VISIBLE, 0),
 		Control::ListView(DialogPackage::TabInfo::Id_ComponentsList, 0,
-			6, 128, 182, 86,
+			6, 128, 192, 86,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
 		Control::Button(DialogPackage::TabInfo::Id_AddSkinButton, IDS_AddSkin,
-			194, 128, 70, 14,
+			204, 128, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ELLIPSIS),
 		Control::Button(DialogPackage::TabInfo::Id_AddLayoutButton, IDS_AddLayout,
-			194, 147, 70, 14,
+			204, 147, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ELLIPSIS),
 		Control::Button(DialogPackage::TabInfo::Id_AddPluginButton, IDS_AddPlugin,
-			194, 165, 70, 14,
+			204, 165, 80, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ELLIPSIS),
 		Control::Button(DialogPackage::TabInfo::Id_RemoveButton, IDS_Remove,
-			194, 200, 70, 14,
+			204, 200, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		Control::LinkLabel(DialogPackage::TabInfo::Id_WhatIsLink, IDS_WhatIsRmskinPackageLink,
-			0, 227, 264, 13,
+			0, 227, 284, 13,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -967,7 +967,7 @@ void DialogPackage::TabInfo::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = 252;
+	lvc.cx = 266;
 	lvc.pszText = (WCHAR*)GetString(IDS_Name);
 	ListView_InsertColumn(item, 0, &lvc);
 
@@ -1184,21 +1184,21 @@ INT_PTR DialogPackage::TabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 
 void DialogPackage::TabOptions::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 270, 220, owner);
+	Tab::CreateTabWindow(15, 30, 290, 220, owner);
 
 	const Control controls[] =
 	{
 		Control::Label(Id_SaveLabel, IDS_SavePackageTo,
-			0, 0, 264, 13,
+			0, 0, 284, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_FileEdit, 0,
-			0, 17, 240, 14,
+			0, 17, 260, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 		Control::Button(DialogPackage::TabOptions::Id_FileBrowseButton, IDS_Ellipsis,
-			245, 17, 25, 14,
+			265, 17, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::GroupBox(Id_AfterInstallGroup, IDS_AfterInstallation,
-			0, 119, 270, 58,
+			0, 119, 290, 58,
 			WS_VISIBLE, 0),
 		Control::RadioButton(DialogPackage::TabOptions::Id_DoNothingRadio, IDS_DoNothing,
 			6, 134, 85, 13,
@@ -1207,19 +1207,19 @@ void DialogPackage::TabOptions::Create(HWND owner)
 			6, 147, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Edit(DialogPackage::TabOptions::Id_LoadSkinEdit, 0,
-			96, 144, 138, 14,
+			96, 144, 158, 14,
 			WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 		Control::Button(DialogPackage::TabOptions::Id_LoadSkinBrowseButton, IDS_Ellipsis,
-			239, 144, 25, 14,
+			259, 144, 25, 14,
 			WS_TABSTOP, 0),
 		Control::RadioButton(DialogPackage::TabOptions::Id_LoadLayoutRadio, IDS_LoadLayout,
 			6, 160, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::ComboBox(DialogPackage::TabOptions::Id_LoadLayoutCombo, 0,
-			96, 157, 168, 14,
+			96, 157, 188, 14,
 			WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
 		Control::GroupBox(Id_RequirementsGroup, IDS_MinimumRequirements,
-			0, 182, 270, 35,
+			0, 182, 290, 35,
 			WS_VISIBLE | WS_GROUP, 0),
 		Control::Label(Id_RainmeterVersionLabel, IDS_RainmeterVersion,
 			6, 198, 85, 13,
@@ -1228,10 +1228,10 @@ void DialogPackage::TabOptions::Create(HWND owner)
 			96, 195, 80, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::Label(DialogPackage::TabOptions::Id_CreatingText, IDS_Creating,
-			0, 0, 270, 100,
+			0, 0, 290, 100,
 			0, 0),
 		Control::ProgressBar(DialogPackage::TabOptions::Id_CreatingBar, 0,
-			0, 15, 270, 11,
+			0, 15, 290, 11,
 			PBS_MARQUEE | WS_BORDER, 0)
 	};
 
@@ -1476,7 +1476,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void DialogPackage::TabAdvanced::Create(HWND owner)
 {
-	Tab::CreateTabWindow(15, 30, 270, 220, owner);
+	Tab::CreateTabWindow(15, 30, 290, 220, owner);
 
 	const Control controls[] =
 	{
@@ -1484,22 +1484,22 @@ void DialogPackage::TabAdvanced::Create(HWND owner)
 			0, 3, 85, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabAdvanced::Id_HeaderEdit, 0,
-			90, 0, 150, 14,
+			90, 0, 170, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 		Control::Button(DialogPackage::TabAdvanced::Id_HeaderBrowseButton, IDS_Ellipsis,
-			245, 0, 25, 14,
+			265, 0, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Label(Id_VariablesLabel, IDS_VariableFiles,
 			0, 24, 85, 13,
 			WS_VISIBLE, 0),
 		Control::Edit(DialogPackage::TabAdvanced::Id_VariableFilesEdit, 0,
-			90, 21, 180, 14,
+			90, 21, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::CheckBox(DialogPackage::TabAdvanced::Id_MergeSkinsCheck, IDS_MergeSkins,
 			0, 42, 85, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::LinkLabel(DialogPackage::TabAdvanced::Id_HelpLink, IDS_HelpLink,
-			0, 210, 264, 13,
+			0, 210, 284, 13,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
