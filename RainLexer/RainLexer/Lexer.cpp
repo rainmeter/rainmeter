@@ -275,7 +275,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
         char ch = isEOF ? '\0' : styler.SafeGetCharAt(i, '\0');
 
         // Amount of EOL chars is 2 (\r\n) with the Windows format and 1 (\n) with Unix format.
-        int chEOL = (styler[i] == '\n' && styler[i - 1] == '\r') ? 2 : (isEOF ? 0 : 1);
+        int chEOL = (styler[i] == '\n' && i > 0 && styler[i - 1] == '\r') ? 2 : (isEOF ? 0 : 1);
 
         switch (state)
         {
