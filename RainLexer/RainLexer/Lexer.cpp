@@ -23,22 +23,22 @@ static const char styleSubable[] = { 0 };
 namespace RainLexer {
 
 static char* LexerName() {
-    return const_cast<char*>(LEXER_NAME);
+	return const_cast<char*>(LEXER_NAME);
 }
 
 static TCHAR* LexerStatusText() {
-    return const_cast<TCHAR*>(LEXER_STATUS_TEXT);
+	return const_cast<TCHAR*>(LEXER_STATUS_TEXT);
 }
 
 constexpr bool IsReserved(int ch) {
-    if (Lexilla::IsAlphaNumeric(ch))
-    {
-        return false;
-    }
+	if (Lexilla::IsAlphaNumeric(ch))
+	{
+		return false;
+	}
 
-    return (ch == '<' || ch == '>' || ch == ':' ||
-        ch == '"' || ch == '/' || ch == '\\' ||
-        ch == '|' || ch == '?' || ch == '*');
+	return (ch == '<' || ch == '>' || ch == ':' ||
+		ch == '"' || ch == '/' || ch == '\\' ||
+		ch == '|' || ch == '?' || ch == '*');
 }
 
 namespace {
@@ -46,92 +46,92 @@ namespace {
 // Consumes |part| from the front of |str| if it starts with it.
 bool Consume(std::string_view& str, std::string_view part)
 {
-    if (!str.starts_with(part))
-    {
-        return false;
-    }
+	if (!str.starts_with(part))
+	{
+		return false;
+	}
 
-    str.remove_prefix(part.size());
-    return true;
+	str.remove_prefix(part.size());
+	return true;
 }
 
 // Consumes the digits at the front of |str|, if any.
 bool ConsumeDigits(std::string_view& str)
 {
-    const size_t end = str.find_first_not_of("0123456789");
-    if (str.empty() || end == 0)
-    {
-        return false;
-    }
+	const size_t end = str.find_first_not_of("0123456789");
+	if (str.empty() || end == 0)
+	{
+		return false;
+	}
 
-    str.remove_prefix((end == std::string_view::npos) ? str.size() : end);
-    return true;
+	str.remove_prefix((end == std::string_view::npos) ? str.size() : end);
+	return true;
 }
 
 // Returns true if what is left of |str| is one of |parts|.
 bool IsRest(std::string_view str, std::initializer_list<std::string_view> parts)
 {
-    for (const auto& part : parts)
-    {
-        if (str == part)
-        {
-            return true;
-        }
-    }
+	for (const auto& part : parts)
+	{
+		if (str == part)
+		{
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 // Skin variables, e.g. [$SkinW], [$SkinPhysicalH] and [$SkinZoomFactor]
 bool IsSkinVariable(std::string_view str)
 {
-    if (Consume(str, "physical"))
-    {
-        return IsRest(str, { "x", "y", "w", "h" });
-    }
+	if (Consume(str, "physical"))
+	{
+		return IsRest(str, { "x", "y", "w", "h" });
+	}
 
-    if (Consume(str, "zoomed"))
-    {
-        return IsRest(str, { "w", "h" });
-    }
+	if (Consume(str, "zoomed"))
+	{
+		return IsRest(str, { "w", "h" });
+	}
 
-    return IsRest(str, { "x", "y", "w", "h", "zpos", "dpifactor", "zoomfactor", "visible" });
+	return IsRest(str, { "x", "y", "w", "h", "zpos", "dpifactor", "zoomfactor", "visible" });
 }
 
 // Display variables, e.g. [$DisplayW], [$Display2WorkAreaPhysicalH] and [$DisplayDevice1Name]
 bool IsDisplayVariable(std::string_view str)
 {
-    bool hasIndex = ConsumeDigits(str);
+	bool hasIndex = ConsumeDigits(str);
 
-    const bool isDevice = !hasIndex && Consume(str, "device");
-    if (isDevice)
-    {
-        hasIndex = ConsumeDigits(str);
-    }
+	const bool isDevice = !hasIndex && Consume(str, "device");
+	if (isDevice)
+	{
+		hasIndex = ConsumeDigits(str);
+	}
 
-    if (!hasIndex)
-    {
-        if (str == "count")
-        {
-            return true;
-        }
+	if (!hasIndex)
+	{
+		if (str == "count")
+		{
+			return true;
+		}
 
-        // The virtual screen spans every display, so it takes no index and has no work area.
-        if (!isDevice && Consume(str, "virtualscreen"))
-        {
-            Consume(str, "physical");
-            return IsRest(str, { "x", "y", "w", "h" });
-        }
-    }
+		// The virtual screen spans every display, so it takes no index and has no work area.
+		if (!isDevice && Consume(str, "virtualscreen"))
+		{
+			Consume(str, "physical");
+			return IsRest(str, { "x", "y", "w", "h" });
+		}
+	}
 
-    if (IsRest(str, { "name", "number", "dpifactor" }))
-    {
-        return true;
-    }
+	if (IsRest(str, { "name", "number", "dpifactor" }))
+	{
+		return true;
+	}
 
-    Consume(str, "workarea");
-    Consume(str, "physical");
-    return IsRest(str, { "x", "y", "w", "h" });
+	Consume(str, "workarea");
+	Consume(str, "physical");
+	return IsRest(str, { "x", "y", "w", "h" });
 }
 
 }  // namespace
@@ -139,39 +139,39 @@ bool IsDisplayVariable(std::string_view str)
 // |variable| is the lowercased name without the surrounding '[$' and ']'.
 bool RainLexer::IsDollarVariable(const char* variable)
 {
-    std::string_view str = variable;
+	std::string_view str = variable;
 
-    if (Consume(str, "mouse"))
-    {
-        if (Consume(str, "x") || Consume(str, "y"))
-        {
-            return str.empty() || str == ":%";
-        }
+	if (Consume(str, "mouse"))
+	{
+		if (Consume(str, "x") || Consume(str, "y"))
+		{
+			return str.empty() || str == ":%";
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    if (str == "input")
-    {
-        return true;
-    }
+	if (str == "input")
+	{
+		return true;
+	}
 
-    if (Consume(str, "skin"))
-    {
-        return IsSkinVariable(str);
-    }
+	if (Consume(str, "skin"))
+	{
+		return IsSkinVariable(str);
+	}
 
-    if (Consume(str, "display"))
-    {
-        return IsDisplayVariable(str);
-    }
+	if (Consume(str, "display"))
+	{
+		return IsDisplayVariable(str);
+	}
 
-    return false;
+	return false;
 }
 
 ILexer5* RainLexer::LexerFactory()
 {
-    return new RainLexer(nullptr, 0U);
+	return new RainLexer(nullptr, 0U);
 }
 
 //
@@ -179,1292 +179,1292 @@ ILexer5* RainLexer::LexerFactory()
 //
 
 void SCI_METHOD RainLexer::Release() {
-    delete this;
+	delete this;
 }
 
 int SCI_METHOD RainLexer::Version() const {
-    return Scintilla::lvRelease5;
+	return Scintilla::lvRelease5;
 }
 
 const char* SCI_METHOD RainLexer::PropertyNames() {
-    return "";
+	return "";
 }
 
 int SCI_METHOD RainLexer::PropertyType(const char* /*name*/) {
-    return SC_TYPE_BOOLEAN;
+	return SC_TYPE_BOOLEAN;
 }
 
 const char* SCI_METHOD RainLexer::DescribeProperty(const char* /*name*/) {
-    return "";
+	return "";
 }
 
 Sci_Position SCI_METHOD RainLexer::PropertySet(const char* /*key*/, const char* /*val*/) {
-    return -1;
+	return -1;
 }
 
 const char* SCI_METHOD RainLexer::DescribeWordListSets() {
-    return "";
+	return "";
 }
 
 Sci_Position SCI_METHOD RainLexer::WordListSet(int n, const char* wl) {
-    // WordList::Set parses, sorts and compares against the current contents itself, and
-    // reports whether anything changed, so a throwaway list to compare against is not
-    // needed. Returning 0 asks Scintilla to restyle from the start of the document.
-    if (n >= 0 && static_cast<size_t>(n) < _countof(m_WordLists) && m_WordLists[n].Set(wl))
-    {
-        return 0;
-    }
-    return -1;
+	// WordList::Set parses, sorts and compares against the current contents itself, and
+	// reports whether anything changed, so a throwaway list to compare against is not
+	// needed. Returning 0 asks Scintilla to restyle from the start of the document.
+	if (n >= 0 && static_cast<size_t>(n) < _countof(m_WordLists) && m_WordLists[n].Set(wl))
+	{
+		return 0;
+	}
+	return -1;
 }
 
 void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Lexilla::LexAccessor styler(pAccess);
-
-    char buffer[128]{};
-
-    // Longest token that fits in |buffer|, leaving room for the terminator that is
-    // appended before the buffer is compared against the word lists.
-    constexpr int maxBufferLen = static_cast<int>(_countof(buffer)) - 1;
-    const Lexilla::WordList& keywords = m_WordLists[0];
-    const Lexilla::WordList& numwords = m_WordLists[1];
-    const Lexilla::WordList& optwords = m_WordLists[2];
-    const Lexilla::WordList& options = m_WordLists[3];
-    const Lexilla::WordList& bangs = m_WordLists[4];
-    const Lexilla::WordList& variables = m_WordLists[5];
-    const Lexilla::WordList& depKeywords = m_WordLists[6];
-    const Lexilla::WordList& depOptions = m_WordLists[7];
-    const Lexilla::WordList& depBangs = m_WordLists[8];
-
-    auto IsOptionInExtList = [] (const OptionSet& options, const char* optBuffer) -> bool
-    {
-        return options.contains(optBuffer);
-    };
-
-    length += startPos;
-    styler.StartAt(startPos);
-    styler.StartSegment(startPos);
-
-    auto state = TextState::TS_DEFAULT;
-    int count = 0;
-    int digits = 0;
-
-    int skipBangPrefix = 0;
-    int beginValueIdx = 0; // For cases like PlayerName=[ParentMeasure]
-
-    bool isNested = false;
-    auto nestVarIdx = startPos; // For cases like [#myVar#10]
-
-    bool onlyDigits = true;
-    bool isPipeOpt = false;
-    int countParentheses = 0;
-
-    bool isSubsOpt = false;
-    bool isFormatOpt = false;
-    bool isNotNumValOpt = false;
-    bool isExtOption = false;
-
-    const auto docLength = static_cast<Sci_PositionU>(styler.Length());
-    for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
-    {
-        bool isEOF = (i + 1 == docLength);
-
-        // Make ch 0 if at EOF.
-        char ch = isEOF ? '\0' : styler.SafeGetCharAt(i, '\0');
-
-        // Amount of EOL chars is 2 (\r\n) with the Windows format and 1 (\n) with Unix format.
-        int chEOL = (styler[i] == '\n' && i > 0 && styler[i - 1] == '\r') ? 2 : (isEOF ? 0 : 1);
-
-        switch (state)
-        {
-        case TextState::TS_DEFAULT:
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case '[':
-                state = TextState::TS_SECTION;
-                break;
-
-            case ';':
-                state = TextState::TS_COMMENT;
-                break;
-
-            case '\t':
-            case ' ':
-                break;
-
-            default:
-                if (Lexilla::IsUpperOrLowerCase(ch) || ch == '@')
-                {
-                    count = 0;
-                    digits = 0;
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-
-                    isExtOption = false;
-                    isSubsOpt = false;
-                    isFormatOpt = false;
-                    isNotNumValOpt = false;
-                    isPipeOpt = false;
-
-                    state = TextState::TS_KEYWORD;
-                }
-                else if (Lexilla::IsADigit(ch))
-                {
-                    state = TextState::TS_NOT_KEYWORD;
-                }
-                else
-                {
-                    state = TextState::TS_LINEEND;
-                }
-            }
-            break;
-
-        case TextState::TS_COMMENT:
-            // Style as comment when EOL (or EOF) is reached
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i - chEOL, TC_COMMENT);
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            default:
-                styler.ColourTo(i, TC_COMMENT);
-            }
-            break;
-
-        case TextState::TS_SECTION:
-            // Style as section when EOL (or EOF) is reached unless section name has a space
-            switch (ch)
-            {
-            case '\0':
-            {
-                if (styler.SafeGetCharAt(i, '\0') == ']')
-                {
-                    styler.ColourTo(i, TC_SECTION);
-                }
-            }
-            [[fallthrough]];
-
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case ']':
-                styler.ColourTo(i, TC_SECTION);
-                state = TextState::TS_LINEEND;
-                break;
-
-            default:
-                break;
-            }
-            break;
-
-        case TextState::TS_KEYWORD:
-            // Read max. 32 chars into buffer until the equals sign (or EOF/EOL) is met.
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case '=':
-                // Ignore trailing whitespace
-                while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
-                {
-                    --count;
-                }
-
-                buffer[count] = '\0';
-
-                isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
-                countParentheses = 0;
-                onlyDigits = true;
-
-                if (keywords.InList(buffer) || strncmp(buffer, "@include", 8) == 0)
-                {
-                    isSubsOpt = strcmp(buffer, "substitute") == 0;
-                    isFormatOpt = IsOptionInExtList(formatOpt, buffer);
-                    isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
-
-                    state = TextState::TS_VALUE;
-                    styler.ColourTo(i - 1, TC_KEYWORD);
-                    styler.ColourTo(i, TC_EQUALS);
-                }
-                else if (optwords.InList(buffer))
-                {
-                    state = TextState::TS_OPTION;
-                    isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
-
-                    if (depKeywords.InList(buffer))
-                    {
-                        styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                    }
-                    else
-                    {
-                        styler.ColourTo(i - 1, TC_KEYWORD);
-                    }
-
-                    if (count < maxBufferLen)
-                    {
-                        buffer[count++] = '=';
-                    }
-                    beginValueIdx = count;
-                    styler.ColourTo(i, TC_EQUALS);
-
-                    // Ignore leading whitepsace
-                    while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
-                    {
-                        ++i;
-                    }
-                }
-                else if (digits > 0)
-                {
-                    // For cases with number in middle word or defined number at end, like UseD2D
-                    if (depKeywords.InList(buffer))
-                    {
-                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
-                        state = TextState::TS_VALUE;
-                        styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                        styler.ColourTo(i, TC_EQUALS);
-                        break;
-                    }
-
-                    // Try removing chars from the end to check for words like ScaleN
-                    count -= digits;
-                    buffer[count] = '\0';
-                    digits = 0;
-
-                    isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
-                    isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
-                    state = isExtOption ? TextState::TS_OPTION : TextState::TS_VALUE;
-
-                    // Special case for option Command from iTunes plugin, and similar Command1, Command2, ... options from InputText plugin
-                    if (numwords.InList(buffer))
-                    {
-                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
-                        if (depKeywords.InList(buffer) && strcmp(buffer, "command") != 0)
-                        {
-                            styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                        }
-                        else
-                        {
-                            styler.ColourTo(i - 1, TC_KEYWORD);
-                        }
-
-                        if (isExtOption)
-                        {
-                            if (count < maxBufferLen)
-                            {
-                                buffer[count++] = '=';
-                            }
-                            beginValueIdx = count;
-                            while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
-                            {
-                                ++i;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        isPipeOpt = true;
-                        styler.ColourTo(i - 1, TC_DEFAULT);
-                    }
-                    styler.ColourTo(i, TC_EQUALS);
-                }
-                else
-                {
-                    if (depKeywords.InList(buffer))
-                    {
-                        styler.ColourTo(i - 1, TC_DEP_KEYWORD);
-                        isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
-                    }
-                    else
-                    {
-                        styler.ColourTo(i - 1, TC_DEFAULT);
-                        isPipeOpt = true;
-                    }
-
-                    styler.ColourTo(i, TC_EQUALS);
-                    state = TextState::TS_VALUE;
-                }
-                break;
-
-            default:
-                if (count < maxBufferLen)
-                {
-                    if (isdigit(ch) > 0)
-                    {
-                        ++digits;
-                    }
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_LINEEND;
-                }
-            }
-            break;
-
-        case TextState::TS_OPTION:
-            // Read value into buffer and check if it's valid for cases like StringAlign=RIGHT
-            switch (ch)
-            {
-            case '#':
-                count = 0;
-                styler.ColourTo(i - 1, TC_DEFAULT);
-                state = TextState::TS_VARIABLE;
-                break;
-
-            case '\0':
-            {
-                // Read the last character if at EOF
-                if (isEOF)
-                {
-                    if (count < maxBufferLen)
-                    {
-                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
-                    }
-                    ++i;
-                }
-            }
-            [[fallthrough]];
-
-            case '\t':
-            case ' ':
-            {
-                if (isExtOption)
-                {
-                    isPipeOpt = true;
-                }
-                else if (!isEOF)
-                {
-                    if (count < maxBufferLen)
-                    {
-                        buffer[count++] = Lexilla::MakeLowerCase(ch);
-                    }
-                    else
-                    {
-                        state = TextState::TS_LINEEND;
-                    }
-                    break;
-                }
-            }
-            [[fallthrough]];
-
-            case '\r':
-            case '\n':
-                if (!isExtOption || isEOF)
-                {
-                    // Ignore trailing whitespace
-                    while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
-                    {
-                        --count;
-                    }
-                }
-
-                buffer[count] = '\0';
-
-                state = isExtOption ? TextState::TS_VALUE : TextState::TS_DEFAULT;
-
-                if (options.InList(buffer) || IsOptionInExtList(extOpt, buffer))
-                {
-                    styler.ColourTo(i - chEOL, TC_VALID);
-                }
-                else if (depOptions.InList(buffer))
-                {
-                    styler.ColourTo(i - chEOL, TC_DEP_VALID);
-                }
-                else if (buffer[beginValueIdx] == '[' && buffer[count - 1] == ']')
-                {
-                    styler.ColourTo(i - chEOL, TC_DEFAULT);
-                }
-                else
-                {
-                    styler.ColourTo(i - chEOL, TC_INVALID);
-                    state = TextState::TS_LINEEND;
-                }
-                styler.ColourTo(i, TC_DEFAULT);
-                beginValueIdx = 0;
-                count = 0;
-                break;
-
-            case '[':
-            {
-                if (styler.SafeGetCharAt(i + 1, '\0') == '#')
-                {
-                    isNested = true;
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    nestVarIdx = i++;
-                    state = TextState::TS_VARIABLE;
-                    break;
-                }
-            }
-            [[fallthrough]];
-
-            default:
-                if (count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_LINEEND;
-                }
-            }
-            break;
-
-        case TextState::TS_NOT_KEYWORD:
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case '=':
-            {
-                onlyDigits = true;
-                state = TextState::TS_VALUE;
-                styler.ColourTo(i - 1, TC_DEFAULT);
-                styler.ColourTo(i, TC_EQUALS);
-                break;
-            }
-
-            default:
-                break;
-            }
-            break;
-
-        case TextState::TS_VALUE:
-            // Read values to highlight variables and bangs
-            isNested = false;
-
-            switch (ch)
-            {
-            case '#':
-            {
-                onlyDigits = !isNotNumValOpt;
-                if (isFormatOpt && styler.SafeGetCharAt(i - 1, '\0') == '%')
-                {
-                    styler.ColourTo(i, TC_DEFAULT);
-                }
-                else
-                {
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    state = TextState::TS_VARIABLE;
-                }
-                break;
-            }
-
-            case '$':
-            {
-                onlyDigits = !isNotNumValOpt;
-                count = 0;
-                styler.ColourTo(i - 1, TC_DEFAULT);
-                state = TextState::TS_MOUSE_VARIABLE;
-                break;
-            }
-
-            case '[':
-            {
-                onlyDigits = !isNotNumValOpt;
-                switch (styler.SafeGetCharAt(i + 1, '\0'))
-                {
-                case '#':
-                {
-                    isNested = true;
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    nestVarIdx = i++;
-                    state = TextState::TS_VARIABLE;
-                    break;
-                }
-
-
-                case '$':
-                {
-                    isNested = true;
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    nestVarIdx = i++;
-                    state = TextState::TS_MOUSE_VARIABLE;
-                    break;
-                }
-
-                case '&':
-                {
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    i++;
-                    state = TextState::TS_MEASURE_VARIABLE;
-                    break;
-                }
-
-                case '\\':
-                {
-                    // buffer[0] records the radix for the rest of the escape: '0' starts the
-                    // "0x" prefix of a hexadecimal one, a space pads a decimal one.
-                    count = 1;
-                    if (Lexilla::MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
-                    {
-                        buffer[0] = '0';
-                    }
-                    else
-                    {
-                        buffer[0] = ' ';
-                    }
-
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    state = TextState::TS_CHAR_VARIABLE;
-                    ++i;
-                    break;
-                }
-
-                default:
-                    break;
-                }
-                break;
-            }
-
-            case '!':
-                if (!Lexilla::IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
-                {
-                    styler.ColourTo(i, TC_DEFAULT);
-                }
-                else
-                {
-                    count = 0;
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    state = TextState::TS_BANG;
-                }
-                break;
-
-            case '\0':
-            {
-                if (isEOF)
-                {
-                    if (onlyDigits && !isNotNumValOpt && Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
-                    {
-                        styler.ColourTo(i, TC_DIGITS);
-                    }
-                    else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
-                    {
-                        styler.ColourTo(i, TC_PIPE);
-                    }
-                }
-            }
-            [[fallthrough]];
-
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case '|':
-                onlyDigits = !isNotNumValOpt;
-                if (isPipeOpt && countParentheses == 0)
-                {
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    styler.ColourTo(i, TC_PIPE);
-                }
-                break;
-
-            case '(':
-                ++countParentheses;
-                onlyDigits = !isNotNumValOpt;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case ')':
-            {
-                --countParentheses;
-            }
-            [[fallthrough]];
-
-            default:
-                if (isNotNumValOpt)
-                {
-                    styler.ColourTo(i, TC_DEFAULT);
-                    break;
-                }
-
-                char prevCh = styler.SafeGetCharAt(i - 1, '\0');
-                if (onlyDigits && Lexilla::IsADigit(ch) && !Lexilla::IsUpperOrLowerCase(prevCh) && Lexilla::IsASCII(prevCh))
-                {
-                    styler.ColourTo(i - 1, TC_DEFAULT);
-                    styler.ColourTo(i, TC_DIGITS);
-                    state = TextState::TS_DIGITS;
-                    break;
-                }
-
-                if (Lexilla::IsUpperOrLowerCase(ch))
-                {
-                    onlyDigits = false;
-                }
-                else if (Lexilla::IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
-                    ch == '=' || ch == '%' || ch == '$' || ch == '(' || ch == '+' || ch == '-')
-                {
-                    onlyDigits = true;
-                }
-
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-            }
-            break;
-
-        case TextState::TS_DIGITS:
-            // Highlight digits
-            switch (ch)
-            {
-            case '\0':
-            {
-                if (isEOF)
-                {
-                    if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
-                    {
-                        styler.ColourTo(i, TC_DIGITS);
-                    }
-                    else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
-                    {
-                        styler.ColourTo(i, TC_PIPE);
-                    }
-                }
-            }
-            [[fallthrough]];
-
-            case '\r':
-            case '\n':
-                onlyDigits = false;
-                styler.ColourTo(i - 1, TC_DIGITS);
-                styler.ColourTo(i, TC_DEFAULT);
-                state = TextState::TS_DEFAULT;
-                break;
-
-            case '#':
-            case '[':
-            case '|':
-            case '(':
-            case ')':
-                state = TextState::TS_VALUE;
-                styler.ColourTo(i - 1, TC_DIGITS);
-                --i;
-                break;
-
-            case '.':
-                if (!Lexilla::IsADigit(styler.SafeGetCharAt(i + 1, '\0')))
-                {
-                    styler.ColourTo(i - 1, TC_DIGITS);
-                    styler.ColourTo(i, TC_DEFAULT);
-                    state = TextState::TS_VALUE;
-                }
-                break;
-                
-            default:
-                if (Lexilla::IsUpperOrLowerCase(ch) || !Lexilla::IsASCII(ch))
-                {
-                    onlyDigits = false;
-                }
-                else if (Lexilla::IsADigit(ch))
-                {
-                    styler.ColourTo(i, TC_DIGITS);
-                    break;
-                }
-
-                styler.ColourTo(i - 1, TC_DIGITS);
-                state = TextState::TS_VALUE;
-                break;
-            }
-            break;
-
-        case TextState::TS_BANG:
-            // Highlight bangs
-            switch (ch)
-            {
-            case '\0':
-            {
-                if (isEOF)
-                {
-                    if (count < maxBufferLen)
-                    {
-                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
-                    }
-                    ++i;
-                }
-            }
-            [[fallthrough]];
-
-            case '\r':
-            case '\n':
-            case '\t':
-            case ' ':
-            case '[':
-            case ']':
-                buffer[count] = '\0';
-                count = 0;
-
-                // Skip rainmeter before comparing the bang
-                skipBangPrefix = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
-
-                // A "Skin:" prefix aims another bang at the skin named by the first argument, e.g.
-                // [!Skin:Hide "ConfigName"], so the rest of the name decides whether it is valid.
-                // The bangs of the namespace itself, e.g. !Skin:Load, are matched before it.
-                if (!bangs.InList(&buffer[skipBangPrefix]) && !depBangs.InList(&buffer[skipBangPrefix]) &&
-                    strncmp(&buffer[skipBangPrefix], "skin:", 5) == 0)
-                {
-                    skipBangPrefix += 5;
-                }
-
-                if (bangs.InList(&buffer[skipBangPrefix]))
-                {
-                    styler.ColourTo(i - chEOL, TC_BANG);
-                }
-                else if (depBangs.InList(&buffer[skipBangPrefix]))
-                {
-                    styler.ColourTo(i - chEOL, TC_DEP_BANG);
-                }
-
-                if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipBangPrefix]))
-                {
-                    isPipeOpt = true;
-                    isNotNumValOpt = false;
-                }
-                else
-                {
-                    isPipeOpt = false;
-                    isNotNumValOpt = true;
-                }
-
-                state = (ch == '\r' || ch == '\n') ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case '#':
-                count = 0;
-                styler.ColourTo(i - 1, TC_DEFAULT);
-                state = TextState::TS_VARIABLE;
-                break;
-
-            default:
-                if (count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
-            }
-            break;
-
-        case TextState::TS_VARIABLE:
-        {
-            // Highlight variables
-            if (isEOF)
-            {
-                if (styler.SafeGetCharAt(i, '\0') == '#')
-                {
-                    ch = '#';
-                }
-                else if (styler.SafeGetCharAt(i, '\0') == ']')
-                {
-                    ch = ']';
-                }
-            }
-
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-            {
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-            }
-
-            case '#':
-            {
-                if (isNested)
-                {
-                    if (styler.SafeGetCharAt(i - 1, '\0') == '[')
-                    {
-                        --i;
-                        state = TextState::TS_VALUE;
-                        break;
-                    }
-                    styler.ColourTo(nestVarIdx, TC_DEFAULT);
-                    isNested = false;
-                }
-            }
-            [[fallthrough]];
-
-            case ']':
-            {
-                if (!isNested && ch == ']')
-                {
-                    state = TextState::TS_VALUE;
-                    break;
-                }
-
-                if (count > 0)
-                {
-                    buffer[count] = '\0';
-
-                    if (variables.InList(buffer))
-                    {
-                        styler.ColourTo(i, TC_INTVARIABLE);
-                    }
-                    else
-                    {
-                        if (buffer[0] == '*' && buffer[count - 1] == '*')
-                        {
-                            // Escaped variable, don't highlight
-                            styler.ColourTo(i, TC_DEFAULT);
-                        }
-                        else
-                        {
-                            styler.ColourTo(i, TC_EXTVARIABLE);
-                        }
-                    }
-
-                    count = 0;
-                }
-
-                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-                break;
-            }
-
-            case '$':
-            case '[':
-            {
-                --i;
-            }
-            [[fallthrough]];
-
-            case ' ':
-            {
-                state = TextState::TS_VALUE;
-                break;
-            }
-
-            case '\'':
-            case '"':
-            {
-                if (isSubsOpt)
-                {
-                    state = TextState::TS_VALUE;
-                    break;
-                }
-            }
-            [[fallthrough]];
-
-            default:
-            {
-                if (count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
-                break;
-            }
-            }
-            break;
-        }
-
-        case TextState::TS_CHAR_VARIABLE:
-        {
-            // Highlight variables
-            if (isEOF && styler.SafeGetCharAt(i, '\0') == ']')
-            {
-                ch = ']';
-            }
-
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-
-            case ']':
-                if (count > 2 || (count == 2 && buffer[0] == ' '))
-                {
-                    buffer[count] = '\0';
-
-                    // buffer[0] holds the radix marker written on entry, followed by the
-                    // "x" of a hexadecimal escape. The digits start after it.
-                    const bool isHex = buffer[0] == '0';
-                    const char* const first = &buffer[isHex ? 2 : 1];
-                    const char* const last = &buffer[count];
-
-                    unsigned long charNumber = 0;
-                    const auto [ptr, ec] = std::from_chars(first, last, charNumber, isHex ? 16 : 10);
-
-                    if (ec == std::errc{} && ptr == last && charNumber < 0xFFFF)
-                    {
-                        styler.ColourTo(i, TC_CHAR_VARIABLE);
-                    }
-                    else
-                    {
-                        styler.ColourTo(i, TC_DEFAULT);
-                    }
-                    count = 0;
-                }
-
-                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-                break;
-
-            case '[':
-                --i;
-                state = TextState::TS_VALUE;
-                break;
-
-            default:
-                if (count == 1 && buffer[0] == '0')
-                {
-                    buffer[count++] = 'x';
-                }
-                else if (count < 6 && Lexilla::IsADigit(ch, buffer[0] == '0' ? 16 : 10) && count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
-            }
-            break;
-        }
-
-        case TextState::TS_MEASURE_VARIABLE:
-        {
-            // Highlight variables
-            if (isEOF)
-            {
-                if (styler.SafeGetCharAt(i, '\0') == ']')
-                {
-                    ch = ']';
-                }
-            }
-
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-            {
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-            }
-
-            case ']':
-            {
-                if (count > 0)
-                {
-                    buffer[count] = '\0';
-
-                    if (buffer[0] == '*' && buffer[count - 1] == '*')
-                    {
-                        // Escaped variable, don't highlight
-                        styler.ColourTo(i, TC_DEFAULT);
-                    }
-                    else
-                    {
-                        styler.ColourTo(i, TS_MEASURE_VARIABLE);
-                    }
-
-                    count = 0;
-                }
-
-                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-                break;
-            }
-
-            case '#':
-            case '$':
-            case '[':
-            {
-                --i;
-            }
-            [[fallthrough]];
-
-            case ' ':
-            {
-                state = TextState::TS_VALUE;
-                break;
-            }
-
-            case '\'':
-            case '"':
-            {
-                if (isSubsOpt)
-                {
-                    state = TextState::TS_VALUE;
-                    break;
-                }
-            }
-            [[fallthrough]];
-
-            default:
-            {
-                if (count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
-                break;
-            }
-            }
-            break;
-        }
-
-        case TextState::TS_MOUSE_VARIABLE:
-        {
-            // Highlight variables
-            if (isEOF)
-            {
-                if (styler.SafeGetCharAt(i, '\0') == '$')
-                {
-                    ch = '$';
-                }
-                else if (styler.SafeGetCharAt(i, '\0') == ']')
-                {
-                    ch = ']';
-                }
-            }
-
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-            {
-                // Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
-                if (!isNested && count > 0)
-                {
-                    if (isEOF && count < maxBufferLen)
-                    {
-                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
-                    }
-
-                    buffer[count] = '\0';
-                    count = 0;
-
-                    if (IsDollarVariable(buffer))
-                    {
-                        styler.ColourTo(i - chEOL, TS_MOUSE_VARIABLE);
-                    }
-                }
-
-                state = TextState::TS_DEFAULT;
-                styler.ColourTo(i, TC_DEFAULT);
-                break;
-            }
-
-            case '$':
-            {
-                if (isNested)
-                {
-                    if (styler.SafeGetCharAt(i - 1, '\0') == '[')
-                    {
-                        --i;
-                        state = TextState::TS_VALUE;
-                        break;
-                    }
-                    styler.ColourTo(nestVarIdx, TC_DEFAULT);
-                    isNested = false;
-                }
-            }
-            [[fallthrough]];
-
-            case ']':
-                if (!isNested && ch == ']')
-                {
-                    state = TextState::TS_VALUE;
-                    break;
-                }
-
-                if (count > 0)
-                {
-                    buffer[count] = '\0';
-
-                    if (IsDollarVariable(buffer))
-                    {
-                        styler.ColourTo(i, TS_MOUSE_VARIABLE);
-                    }
-
-                    count = 0;
-                }
-
-                state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-                break;
-
-            case '#':
-            case '[':
-            case ' ':
-            case '\t':
-            case '(':
-            case ')':
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case ',':
-            case ';':
-            {
-                // The brackets can be omitted in formulas, e.g. Formula=(2 * $SkinW)
-                if (!isNested && count > 0)
-                {
-                    buffer[count] = '\0';
-                    count = 0;
-
-                    if (IsDollarVariable(buffer))
-                    {
-                        styler.ColourTo(i - 1, TS_MOUSE_VARIABLE);
-                    }
-                }
-
-                --i;
-                state = TextState::TS_VALUE;
-                break;
-            }
-
-            case '\'':
-            case '"':
-            {
-                if (isSubsOpt)
-                {
-                    state = TextState::TS_VALUE;
-                    break;
-                }
-            }
-            [[fallthrough]];
-
-            default:
-            {
-                if (count < maxBufferLen)
-                {
-                    buffer[count++] = Lexilla::MakeLowerCase(ch);
-                }
-                else
-                {
-                    state = TextState::TS_VALUE;
-                }
-                break;
-            }
-            }
-            break;
-        }
-
-
-        default:
-        case TextState::TS_LINEEND:
-            // Apply default style when EOL (or EOF) is reached
-            switch (ch)
-            {
-            case '\0':
-            case '\r':
-            case '\n':
-            {
-                state = TextState::TS_DEFAULT;
-            }
-            [[fallthrough]];
-
-            default:
-                styler.ColourTo(i, TC_DEFAULT);
-            }
-            break;
-        }
-    }
-
-    styler.Flush();
+	Lexilla::LexAccessor styler(pAccess);
+
+	char buffer[128]{};
+
+	// Longest token that fits in |buffer|, leaving room for the terminator that is
+	// appended before the buffer is compared against the word lists.
+	constexpr int maxBufferLen = static_cast<int>(_countof(buffer)) - 1;
+	const Lexilla::WordList& keywords = m_WordLists[0];
+	const Lexilla::WordList& numwords = m_WordLists[1];
+	const Lexilla::WordList& optwords = m_WordLists[2];
+	const Lexilla::WordList& options = m_WordLists[3];
+	const Lexilla::WordList& bangs = m_WordLists[4];
+	const Lexilla::WordList& variables = m_WordLists[5];
+	const Lexilla::WordList& depKeywords = m_WordLists[6];
+	const Lexilla::WordList& depOptions = m_WordLists[7];
+	const Lexilla::WordList& depBangs = m_WordLists[8];
+
+	auto IsOptionInExtList = [] (const OptionSet& options, const char* optBuffer) -> bool
+	{
+		return options.contains(optBuffer);
+	};
+
+	length += startPos;
+	styler.StartAt(startPos);
+	styler.StartSegment(startPos);
+
+	auto state = TextState::TS_DEFAULT;
+	int count = 0;
+	int digits = 0;
+
+	int skipBangPrefix = 0;
+	int beginValueIdx = 0; // For cases like PlayerName=[ParentMeasure]
+
+	bool isNested = false;
+	auto nestVarIdx = startPos; // For cases like [#myVar#10]
+
+	bool onlyDigits = true;
+	bool isPipeOpt = false;
+	int countParentheses = 0;
+
+	bool isSubsOpt = false;
+	bool isFormatOpt = false;
+	bool isNotNumValOpt = false;
+	bool isExtOption = false;
+
+	const auto docLength = static_cast<Sci_PositionU>(styler.Length());
+	for (auto i = startPos; i < static_cast<Sci_PositionU>(length); ++i)
+	{
+		bool isEOF = (i + 1 == docLength);
+
+		// Make ch 0 if at EOF.
+		char ch = isEOF ? '\0' : styler.SafeGetCharAt(i, '\0');
+
+		// Amount of EOL chars is 2 (\r\n) with the Windows format and 1 (\n) with Unix format.
+		int chEOL = (styler[i] == '\n' && i > 0 && styler[i - 1] == '\r') ? 2 : (isEOF ? 0 : 1);
+
+		switch (state)
+		{
+		case TextState::TS_DEFAULT:
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case '[':
+				state = TextState::TS_SECTION;
+				break;
+
+			case ';':
+				state = TextState::TS_COMMENT;
+				break;
+
+			case '\t':
+			case ' ':
+				break;
+
+			default:
+				if (Lexilla::IsUpperOrLowerCase(ch) || ch == '@')
+				{
+					count = 0;
+					digits = 0;
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+
+					isExtOption = false;
+					isSubsOpt = false;
+					isFormatOpt = false;
+					isNotNumValOpt = false;
+					isPipeOpt = false;
+
+					state = TextState::TS_KEYWORD;
+				}
+				else if (Lexilla::IsADigit(ch))
+				{
+					state = TextState::TS_NOT_KEYWORD;
+				}
+				else
+				{
+					state = TextState::TS_LINEEND;
+				}
+			}
+			break;
+
+		case TextState::TS_COMMENT:
+			// Style as comment when EOL (or EOF) is reached
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i - chEOL, TC_COMMENT);
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			default:
+				styler.ColourTo(i, TC_COMMENT);
+			}
+			break;
+
+		case TextState::TS_SECTION:
+			// Style as section when EOL (or EOF) is reached unless section name has a space
+			switch (ch)
+			{
+			case '\0':
+			{
+				if (styler.SafeGetCharAt(i, '\0') == ']')
+				{
+					styler.ColourTo(i, TC_SECTION);
+				}
+			}
+			[[fallthrough]];
+
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case ']':
+				styler.ColourTo(i, TC_SECTION);
+				state = TextState::TS_LINEEND;
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		case TextState::TS_KEYWORD:
+			// Read max. 32 chars into buffer until the equals sign (or EOF/EOL) is met.
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case '=':
+				// Ignore trailing whitespace
+				while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
+				{
+					--count;
+				}
+
+				buffer[count] = '\0';
+
+				isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
+				countParentheses = 0;
+				onlyDigits = true;
+
+				if (keywords.InList(buffer) || strncmp(buffer, "@include", 8) == 0)
+				{
+					isSubsOpt = strcmp(buffer, "substitute") == 0;
+					isFormatOpt = IsOptionInExtList(formatOpt, buffer);
+					isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
+
+					state = TextState::TS_VALUE;
+					styler.ColourTo(i - 1, TC_KEYWORD);
+					styler.ColourTo(i, TC_EQUALS);
+				}
+				else if (optwords.InList(buffer))
+				{
+					state = TextState::TS_OPTION;
+					isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
+
+					if (depKeywords.InList(buffer))
+					{
+						styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+					}
+					else
+					{
+						styler.ColourTo(i - 1, TC_KEYWORD);
+					}
+
+					if (count < maxBufferLen)
+					{
+						buffer[count++] = '=';
+					}
+					beginValueIdx = count;
+					styler.ColourTo(i, TC_EQUALS);
+
+					// Ignore leading whitepsace
+					while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
+					{
+						++i;
+					}
+				}
+				else if (digits > 0)
+				{
+					// For cases with number in middle word or defined number at end, like UseD2D
+					if (depKeywords.InList(buffer))
+					{
+						isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
+						state = TextState::TS_VALUE;
+						styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+						styler.ColourTo(i, TC_EQUALS);
+						break;
+					}
+
+					// Try removing chars from the end to check for words like ScaleN
+					count -= digits;
+					buffer[count] = '\0';
+					digits = 0;
+
+					isExtOption = IsOptionInExtList(extKeywordsOpt, buffer);
+					isPipeOpt = IsOptionInExtList(pipeOpt, buffer);
+					state = isExtOption ? TextState::TS_OPTION : TextState::TS_VALUE;
+
+					// Special case for option Command from iTunes plugin, and similar Command1, Command2, ... options from InputText plugin
+					if (numwords.InList(buffer))
+					{
+						isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
+						if (depKeywords.InList(buffer) && strcmp(buffer, "command") != 0)
+						{
+							styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+						}
+						else
+						{
+							styler.ColourTo(i - 1, TC_KEYWORD);
+						}
+
+						if (isExtOption)
+						{
+							if (count < maxBufferLen)
+							{
+								buffer[count++] = '=';
+							}
+							beginValueIdx = count;
+							while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
+							{
+								++i;
+							}
+						}
+					}
+					else
+					{
+						isPipeOpt = true;
+						styler.ColourTo(i - 1, TC_DEFAULT);
+					}
+					styler.ColourTo(i, TC_EQUALS);
+				}
+				else
+				{
+					if (depKeywords.InList(buffer))
+					{
+						styler.ColourTo(i - 1, TC_DEP_KEYWORD);
+						isNotNumValOpt = IsOptionInExtList(nonNumValOpt, buffer);
+					}
+					else
+					{
+						styler.ColourTo(i - 1, TC_DEFAULT);
+						isPipeOpt = true;
+					}
+
+					styler.ColourTo(i, TC_EQUALS);
+					state = TextState::TS_VALUE;
+				}
+				break;
+
+			default:
+				if (count < maxBufferLen)
+				{
+					if (isdigit(ch) > 0)
+					{
+						++digits;
+					}
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_LINEEND;
+				}
+			}
+			break;
+
+		case TextState::TS_OPTION:
+			// Read value into buffer and check if it's valid for cases like StringAlign=RIGHT
+			switch (ch)
+			{
+			case '#':
+				count = 0;
+				styler.ColourTo(i - 1, TC_DEFAULT);
+				state = TextState::TS_VARIABLE;
+				break;
+
+			case '\0':
+			{
+				// Read the last character if at EOF
+				if (isEOF)
+				{
+					if (count < maxBufferLen)
+					{
+						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+					}
+					++i;
+				}
+			}
+			[[fallthrough]];
+
+			case '\t':
+			case ' ':
+			{
+				if (isExtOption)
+				{
+					isPipeOpt = true;
+				}
+				else if (!isEOF)
+				{
+					if (count < maxBufferLen)
+					{
+						buffer[count++] = Lexilla::MakeLowerCase(ch);
+					}
+					else
+					{
+						state = TextState::TS_LINEEND;
+					}
+					break;
+				}
+			}
+			[[fallthrough]];
+
+			case '\r':
+			case '\n':
+				if (!isExtOption || isEOF)
+				{
+					// Ignore trailing whitespace
+					while (count > 0 && Lexilla::IsASpaceOrTab(buffer[count - 1]))
+					{
+						--count;
+					}
+				}
+
+				buffer[count] = '\0';
+
+				state = isExtOption ? TextState::TS_VALUE : TextState::TS_DEFAULT;
+
+				if (options.InList(buffer) || IsOptionInExtList(extOpt, buffer))
+				{
+					styler.ColourTo(i - chEOL, TC_VALID);
+				}
+				else if (depOptions.InList(buffer))
+				{
+					styler.ColourTo(i - chEOL, TC_DEP_VALID);
+				}
+				else if (buffer[beginValueIdx] == '[' && buffer[count - 1] == ']')
+				{
+					styler.ColourTo(i - chEOL, TC_DEFAULT);
+				}
+				else
+				{
+					styler.ColourTo(i - chEOL, TC_INVALID);
+					state = TextState::TS_LINEEND;
+				}
+				styler.ColourTo(i, TC_DEFAULT);
+				beginValueIdx = 0;
+				count = 0;
+				break;
+
+			case '[':
+			{
+				if (styler.SafeGetCharAt(i + 1, '\0') == '#')
+				{
+					isNested = true;
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					nestVarIdx = i++;
+					state = TextState::TS_VARIABLE;
+					break;
+				}
+			}
+			[[fallthrough]];
+
+			default:
+				if (count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_LINEEND;
+				}
+			}
+			break;
+
+		case TextState::TS_NOT_KEYWORD:
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case '=':
+			{
+				onlyDigits = true;
+				state = TextState::TS_VALUE;
+				styler.ColourTo(i - 1, TC_DEFAULT);
+				styler.ColourTo(i, TC_EQUALS);
+				break;
+			}
+
+			default:
+				break;
+			}
+			break;
+
+		case TextState::TS_VALUE:
+			// Read values to highlight variables and bangs
+			isNested = false;
+
+			switch (ch)
+			{
+			case '#':
+			{
+				onlyDigits = !isNotNumValOpt;
+				if (isFormatOpt && styler.SafeGetCharAt(i - 1, '\0') == '%')
+				{
+					styler.ColourTo(i, TC_DEFAULT);
+				}
+				else
+				{
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					state = TextState::TS_VARIABLE;
+				}
+				break;
+			}
+
+			case '$':
+			{
+				onlyDigits = !isNotNumValOpt;
+				count = 0;
+				styler.ColourTo(i - 1, TC_DEFAULT);
+				state = TextState::TS_MOUSE_VARIABLE;
+				break;
+			}
+
+			case '[':
+			{
+				onlyDigits = !isNotNumValOpt;
+				switch (styler.SafeGetCharAt(i + 1, '\0'))
+				{
+				case '#':
+				{
+					isNested = true;
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					nestVarIdx = i++;
+					state = TextState::TS_VARIABLE;
+					break;
+				}
+
+
+				case '$':
+				{
+					isNested = true;
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					nestVarIdx = i++;
+					state = TextState::TS_MOUSE_VARIABLE;
+					break;
+				}
+
+				case '&':
+				{
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					i++;
+					state = TextState::TS_MEASURE_VARIABLE;
+					break;
+				}
+
+				case '\\':
+				{
+					// buffer[0] records the radix for the rest of the escape: '0' starts the
+					// "0x" prefix of a hexadecimal one, a space pads a decimal one.
+					count = 1;
+					if (Lexilla::MakeLowerCase(styler.SafeGetCharAt(i + 2, '\0')) == 'x')
+					{
+						buffer[0] = '0';
+					}
+					else
+					{
+						buffer[0] = ' ';
+					}
+
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					state = TextState::TS_CHAR_VARIABLE;
+					++i;
+					break;
+				}
+
+				default:
+					break;
+				}
+				break;
+			}
+
+			case '!':
+				if (!Lexilla::IsUpperOrLowerCase(styler.SafeGetCharAt(i + 1, '\0')) || isFormatOpt)
+				{
+					styler.ColourTo(i, TC_DEFAULT);
+				}
+				else
+				{
+					count = 0;
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					state = TextState::TS_BANG;
+				}
+				break;
+
+			case '\0':
+			{
+				if (isEOF)
+				{
+					if (onlyDigits && !isNotNumValOpt && Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
+					{
+						styler.ColourTo(i, TC_DIGITS);
+					}
+					else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
+					{
+						styler.ColourTo(i, TC_PIPE);
+					}
+				}
+			}
+			[[fallthrough]];
+
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case '|':
+				onlyDigits = !isNotNumValOpt;
+				if (isPipeOpt && countParentheses == 0)
+				{
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					styler.ColourTo(i, TC_PIPE);
+				}
+				break;
+
+			case '(':
+				++countParentheses;
+				onlyDigits = !isNotNumValOpt;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case ')':
+			{
+				--countParentheses;
+			}
+			[[fallthrough]];
+
+			default:
+				if (isNotNumValOpt)
+				{
+					styler.ColourTo(i, TC_DEFAULT);
+					break;
+				}
+
+				char prevCh = styler.SafeGetCharAt(i - 1, '\0');
+				if (onlyDigits && Lexilla::IsADigit(ch) && !Lexilla::IsUpperOrLowerCase(prevCh) && Lexilla::IsASCII(prevCh))
+				{
+					styler.ColourTo(i - 1, TC_DEFAULT);
+					styler.ColourTo(i, TC_DIGITS);
+					state = TextState::TS_DIGITS;
+					break;
+				}
+
+				if (Lexilla::IsUpperOrLowerCase(ch))
+				{
+					onlyDigits = false;
+				}
+				else if (Lexilla::IsASpaceOrTab(ch) || IsReserved(ch) || ch == ']' ||
+					ch == '=' || ch == '%' || ch == '$' || ch == '(' || ch == '+' || ch == '-')
+				{
+					onlyDigits = true;
+				}
+
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+			}
+			break;
+
+		case TextState::TS_DIGITS:
+			// Highlight digits
+			switch (ch)
+			{
+			case '\0':
+			{
+				if (isEOF)
+				{
+					if (Lexilla::IsADigit(styler.SafeGetCharAt(i, '\0')))
+					{
+						styler.ColourTo(i, TC_DIGITS);
+					}
+					else if (styler.SafeGetCharAt(i, '\0') == '|' && isPipeOpt && countParentheses == 0)
+					{
+						styler.ColourTo(i, TC_PIPE);
+					}
+				}
+			}
+			[[fallthrough]];
+
+			case '\r':
+			case '\n':
+				onlyDigits = false;
+				styler.ColourTo(i - 1, TC_DIGITS);
+				styler.ColourTo(i, TC_DEFAULT);
+				state = TextState::TS_DEFAULT;
+				break;
+
+			case '#':
+			case '[':
+			case '|':
+			case '(':
+			case ')':
+				state = TextState::TS_VALUE;
+				styler.ColourTo(i - 1, TC_DIGITS);
+				--i;
+				break;
+
+			case '.':
+				if (!Lexilla::IsADigit(styler.SafeGetCharAt(i + 1, '\0')))
+				{
+					styler.ColourTo(i - 1, TC_DIGITS);
+					styler.ColourTo(i, TC_DEFAULT);
+					state = TextState::TS_VALUE;
+				}
+				break;
+				
+			default:
+				if (Lexilla::IsUpperOrLowerCase(ch) || !Lexilla::IsASCII(ch))
+				{
+					onlyDigits = false;
+				}
+				else if (Lexilla::IsADigit(ch))
+				{
+					styler.ColourTo(i, TC_DIGITS);
+					break;
+				}
+
+				styler.ColourTo(i - 1, TC_DIGITS);
+				state = TextState::TS_VALUE;
+				break;
+			}
+			break;
+
+		case TextState::TS_BANG:
+			// Highlight bangs
+			switch (ch)
+			{
+			case '\0':
+			{
+				if (isEOF)
+				{
+					if (count < maxBufferLen)
+					{
+						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+					}
+					++i;
+				}
+			}
+			[[fallthrough]];
+
+			case '\r':
+			case '\n':
+			case '\t':
+			case ' ':
+			case '[':
+			case ']':
+				buffer[count] = '\0';
+				count = 0;
+
+				// Skip rainmeter before comparing the bang
+				skipBangPrefix = (strncmp(buffer, "rainmeter", 9) == 0) ? 9 : 0;
+
+				// A "Skin:" prefix aims another bang at the skin named by the first argument, e.g.
+				// [!Skin:Hide "ConfigName"], so the rest of the name decides whether it is valid.
+				// The bangs of the namespace itself, e.g. !Skin:Load, are matched before it.
+				if (!bangs.InList(&buffer[skipBangPrefix]) && !depBangs.InList(&buffer[skipBangPrefix]) &&
+					strncmp(&buffer[skipBangPrefix], "skin:", 5) == 0)
+				{
+					skipBangPrefix += 5;
+				}
+
+				if (bangs.InList(&buffer[skipBangPrefix]))
+				{
+					styler.ColourTo(i - chEOL, TC_BANG);
+				}
+				else if (depBangs.InList(&buffer[skipBangPrefix]))
+				{
+					styler.ColourTo(i - chEOL, TC_DEP_BANG);
+				}
+
+				if (IsOptionInExtList(setterBangWordsOpt, &buffer[skipBangPrefix]))
+				{
+					isPipeOpt = true;
+					isNotNumValOpt = false;
+				}
+				else
+				{
+					isPipeOpt = false;
+					isNotNumValOpt = true;
+				}
+
+				state = (ch == '\r' || ch == '\n') ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case '#':
+				count = 0;
+				styler.ColourTo(i - 1, TC_DEFAULT);
+				state = TextState::TS_VARIABLE;
+				break;
+
+			default:
+				if (count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_VALUE;
+				}
+			}
+			break;
+
+		case TextState::TS_VARIABLE:
+		{
+			// Highlight variables
+			if (isEOF)
+			{
+				if (styler.SafeGetCharAt(i, '\0') == '#')
+				{
+					ch = '#';
+				}
+				else if (styler.SafeGetCharAt(i, '\0') == ']')
+				{
+					ch = ']';
+				}
+			}
+
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+			{
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+			}
+
+			case '#':
+			{
+				if (isNested)
+				{
+					if (styler.SafeGetCharAt(i - 1, '\0') == '[')
+					{
+						--i;
+						state = TextState::TS_VALUE;
+						break;
+					}
+					styler.ColourTo(nestVarIdx, TC_DEFAULT);
+					isNested = false;
+				}
+			}
+			[[fallthrough]];
+
+			case ']':
+			{
+				if (!isNested && ch == ']')
+				{
+					state = TextState::TS_VALUE;
+					break;
+				}
+
+				if (count > 0)
+				{
+					buffer[count] = '\0';
+
+					if (variables.InList(buffer))
+					{
+						styler.ColourTo(i, TC_INTVARIABLE);
+					}
+					else
+					{
+						if (buffer[0] == '*' && buffer[count - 1] == '*')
+						{
+							// Escaped variable, don't highlight
+							styler.ColourTo(i, TC_DEFAULT);
+						}
+						else
+						{
+							styler.ColourTo(i, TC_EXTVARIABLE);
+						}
+					}
+
+					count = 0;
+				}
+
+				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+				break;
+			}
+
+			case '$':
+			case '[':
+			{
+				--i;
+			}
+			[[fallthrough]];
+
+			case ' ':
+			{
+				state = TextState::TS_VALUE;
+				break;
+			}
+
+			case '\'':
+			case '"':
+			{
+				if (isSubsOpt)
+				{
+					state = TextState::TS_VALUE;
+					break;
+				}
+			}
+			[[fallthrough]];
+
+			default:
+			{
+				if (count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_VALUE;
+				}
+				break;
+			}
+			}
+			break;
+		}
+
+		case TextState::TS_CHAR_VARIABLE:
+		{
+			// Highlight variables
+			if (isEOF && styler.SafeGetCharAt(i, '\0') == ']')
+			{
+				ch = ']';
+			}
+
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+
+			case ']':
+				if (count > 2 || (count == 2 && buffer[0] == ' '))
+				{
+					buffer[count] = '\0';
+
+					// buffer[0] holds the radix marker written on entry, followed by the
+					// "x" of a hexadecimal escape. The digits start after it.
+					const bool isHex = buffer[0] == '0';
+					const char* const first = &buffer[isHex ? 2 : 1];
+					const char* const last = &buffer[count];
+
+					unsigned long charNumber = 0;
+					const auto [ptr, ec] = std::from_chars(first, last, charNumber, isHex ? 16 : 10);
+
+					if (ec == std::errc{} && ptr == last && charNumber < 0xFFFF)
+					{
+						styler.ColourTo(i, TC_CHAR_VARIABLE);
+					}
+					else
+					{
+						styler.ColourTo(i, TC_DEFAULT);
+					}
+					count = 0;
+				}
+
+				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+				break;
+
+			case '[':
+				--i;
+				state = TextState::TS_VALUE;
+				break;
+
+			default:
+				if (count == 1 && buffer[0] == '0')
+				{
+					buffer[count++] = 'x';
+				}
+				else if (count < 6 && Lexilla::IsADigit(ch, buffer[0] == '0' ? 16 : 10) && count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_VALUE;
+				}
+			}
+			break;
+		}
+
+		case TextState::TS_MEASURE_VARIABLE:
+		{
+			// Highlight variables
+			if (isEOF)
+			{
+				if (styler.SafeGetCharAt(i, '\0') == ']')
+				{
+					ch = ']';
+				}
+			}
+
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+			{
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+			}
+
+			case ']':
+			{
+				if (count > 0)
+				{
+					buffer[count] = '\0';
+
+					if (buffer[0] == '*' && buffer[count - 1] == '*')
+					{
+						// Escaped variable, don't highlight
+						styler.ColourTo(i, TC_DEFAULT);
+					}
+					else
+					{
+						styler.ColourTo(i, TS_MEASURE_VARIABLE);
+					}
+
+					count = 0;
+				}
+
+				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+				break;
+			}
+
+			case '#':
+			case '$':
+			case '[':
+			{
+				--i;
+			}
+			[[fallthrough]];
+
+			case ' ':
+			{
+				state = TextState::TS_VALUE;
+				break;
+			}
+
+			case '\'':
+			case '"':
+			{
+				if (isSubsOpt)
+				{
+					state = TextState::TS_VALUE;
+					break;
+				}
+			}
+			[[fallthrough]];
+
+			default:
+			{
+				if (count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_VALUE;
+				}
+				break;
+			}
+			}
+			break;
+		}
+
+		case TextState::TS_MOUSE_VARIABLE:
+		{
+			// Highlight variables
+			if (isEOF)
+			{
+				if (styler.SafeGetCharAt(i, '\0') == '$')
+				{
+					ch = '$';
+				}
+				else if (styler.SafeGetCharAt(i, '\0') == ']')
+				{
+					ch = ']';
+				}
+			}
+
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+			{
+				// Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
+				if (!isNested && count > 0)
+				{
+					if (isEOF && count < maxBufferLen)
+					{
+						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+					}
+
+					buffer[count] = '\0';
+					count = 0;
+
+					if (IsDollarVariable(buffer))
+					{
+						styler.ColourTo(i - chEOL, TS_MOUSE_VARIABLE);
+					}
+				}
+
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+				break;
+			}
+
+			case '$':
+			{
+				if (isNested)
+				{
+					if (styler.SafeGetCharAt(i - 1, '\0') == '[')
+					{
+						--i;
+						state = TextState::TS_VALUE;
+						break;
+					}
+					styler.ColourTo(nestVarIdx, TC_DEFAULT);
+					isNested = false;
+				}
+			}
+			[[fallthrough]];
+
+			case ']':
+				if (!isNested && ch == ']')
+				{
+					state = TextState::TS_VALUE;
+					break;
+				}
+
+				if (count > 0)
+				{
+					buffer[count] = '\0';
+
+					if (IsDollarVariable(buffer))
+					{
+						styler.ColourTo(i, TS_MOUSE_VARIABLE);
+					}
+
+					count = 0;
+				}
+
+				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
+				break;
+
+			case '#':
+			case '[':
+			case ' ':
+			case '\t':
+			case '(':
+			case ')':
+			case '+':
+			case '-':
+			case '*':
+			case '/':
+			case ',':
+			case ';':
+			{
+				// The brackets can be omitted in formulas, e.g. Formula=(2 * $SkinW)
+				if (!isNested && count > 0)
+				{
+					buffer[count] = '\0';
+					count = 0;
+
+					if (IsDollarVariable(buffer))
+					{
+						styler.ColourTo(i - 1, TS_MOUSE_VARIABLE);
+					}
+				}
+
+				--i;
+				state = TextState::TS_VALUE;
+				break;
+			}
+
+			case '\'':
+			case '"':
+			{
+				if (isSubsOpt)
+				{
+					state = TextState::TS_VALUE;
+					break;
+				}
+			}
+			[[fallthrough]];
+
+			default:
+			{
+				if (count < maxBufferLen)
+				{
+					buffer[count++] = Lexilla::MakeLowerCase(ch);
+				}
+				else
+				{
+					state = TextState::TS_VALUE;
+				}
+				break;
+			}
+			}
+			break;
+		}
+
+
+		default:
+		case TextState::TS_LINEEND:
+			// Apply default style when EOL (or EOF) is reached
+			switch (ch)
+			{
+			case '\0':
+			case '\r':
+			case '\n':
+			{
+				state = TextState::TS_DEFAULT;
+			}
+			[[fallthrough]];
+
+			default:
+				styler.ColourTo(i, TC_DEFAULT);
+			}
+			break;
+		}
+	}
+
+	styler.Flush();
 }
 
 void SCI_METHOD RainLexer::Fold(Sci_PositionU startPos, Sci_Position length, int /*initStyle*/, IDocument* pAccess)
 {
-    Lexilla::LexAccessor styler(pAccess);
+	Lexilla::LexAccessor styler(pAccess);
 
-    length += startPos;
-    int line = styler.GetLine(startPos);
-    auto uLength = static_cast<Sci_PositionU>(length);
-    for (auto i = startPos; i < uLength; ++i)
-    {
-        if ((styler[i] == '\n') || (i == uLength - 1))
-        {
-            // Step back over the line ending to reach the closing bracket of a section
-            // header. Anything shorter than "[x]" plus its line ending cannot be one.
-            const bool isSectionHeader = (i >= 2) && (styler.StyleAt(i - 2) == TC_SECTION);
+	length += startPos;
+	int line = styler.GetLine(startPos);
+	auto uLength = static_cast<Sci_PositionU>(length);
+	for (auto i = startPos; i < uLength; ++i)
+	{
+		if ((styler[i] == '\n') || (i == uLength - 1))
+		{
+			// Step back over the line ending to reach the closing bracket of a section
+			// header. Anything shorter than "[x]" plus its line ending cannot be one.
+			const bool isSectionHeader = (i >= 2) && (styler.StyleAt(i - 2) == TC_SECTION);
 
-            int level = isSectionHeader
-                ? SC_FOLDLEVELBASE | SC_FOLDLEVELHEADERFLAG
-                : SC_FOLDLEVELBASE + 1;
+			int level = isSectionHeader
+				? SC_FOLDLEVELBASE | SC_FOLDLEVELHEADERFLAG
+				: SC_FOLDLEVELBASE + 1;
 
-            if (level != styler.LevelAt(line))
-            {
-                styler.SetLevel(line, level);
-            }
+			if (level != styler.LevelAt(line))
+			{
+				styler.SetLevel(line, level);
+			}
 
-            ++line;
-        }
-    }
+			++line;
+		}
+	}
 
-    styler.Flush();
+	styler.Flush();
 }
 
 void* SCI_METHOD RainLexer::PrivateCall(int /*operation*/, void* /*pointer*/) {
-    return nullptr;
+	return nullptr;
 }
 
 int SCI_METHOD RainLexer::LineEndTypesSupported() {
-    return SC_LINE_END_TYPE_DEFAULT;
+	return SC_LINE_END_TYPE_DEFAULT;
 }
 
 int SCI_METHOD RainLexer::AllocateSubStyles(int /*styleBase*/, int /*numberStyles*/) {
-    return -1;
+	return -1;
 }
 
 int SCI_METHOD RainLexer::SubStylesStart(int /*styleBase*/) {
-    return -1;
+	return -1;
 }
 
 int SCI_METHOD RainLexer::SubStylesLength(int /*styleBase*/) {
-    return 0;
+	return 0;
 }
 
 int SCI_METHOD RainLexer::StyleFromSubStyle(int subStyle) {
-    return subStyle;
+	return subStyle;
 }
 
 int SCI_METHOD RainLexer::PrimaryStyleFromStyle(int style) {
-    return style;
+	return style;
 }
 
 void SCI_METHOD RainLexer::FreeSubStyles() {
@@ -1474,39 +1474,39 @@ void SCI_METHOD RainLexer::SetIdentifiers(int /*style*/, const char* /*identifie
 }
 
 int SCI_METHOD RainLexer::DistanceToSecondaryStyles() {
-    return 0;
+	return 0;
 }
 
 const char* SCI_METHOD RainLexer::GetSubStyleBases() {
-    return styleSubable;
+	return styleSubable;
 }
 
 int SCI_METHOD RainLexer::NamedStyles() {
-    return static_cast<int>(nClasses);
+	return static_cast<int>(nClasses);
 }
 
 const char* SCI_METHOD RainLexer::NameOfStyle(int style) {
-    return (style < NamedStyles()) ? lexClasses[style].name : "";
+	return (style < NamedStyles()) ? lexClasses[style].name : "";
 }
 
 const char* SCI_METHOD RainLexer::TagsOfStyle(int style) {
-    return (style < NamedStyles()) ? lexClasses[style].tags : "";
+	return (style < NamedStyles()) ? lexClasses[style].tags : "";
 }
 
 const char* SCI_METHOD RainLexer::DescriptionOfStyle(int style) {
-    return (style < NamedStyles()) ? lexClasses[style].description : "";
+	return (style < NamedStyles()) ? lexClasses[style].description : "";
 }
 
 const char* SCI_METHOD RainLexer::GetName() {
-    return LexerName();
+	return LexerName();
 }
 
 int SCI_METHOD RainLexer::GetIdentifier() {
-    return SCLEX_AUTOMATIC;
+	return SCLEX_AUTOMATIC;
 }
 
 const char* SCI_METHOD RainLexer::PropertyGet(const char* /*key*/) {
-    return "";
+	return "";
 }
 
 //
@@ -1515,29 +1515,29 @@ const char* SCI_METHOD RainLexer::PropertyGet(const char* /*key*/) {
 
 int SCI_METHOD GetLexerCount()
 {
-    return 1;
+	return 1;
 }
 
 void SCI_METHOD GetLexerName(unsigned int /*index*/, char* name, int buflength)
 {
-    strncpy(name, LexerName(), buflength);
-    name[buflength - 1] = '\0';
+	strncpy(name, LexerName(), buflength);
+	name[buflength - 1] = '\0';
 }
 
 void SCI_METHOD GetLexerStatusText(unsigned int /*index*/, WCHAR* desc, int buflength)
 {
-    wcsncpy(desc, LexerStatusText(), buflength);
-    desc[buflength - 1] = L'\0';
+	wcsncpy(desc, LexerStatusText(), buflength);
+	desc[buflength - 1] = L'\0';
 }
 
 Lexilla::LexerFactoryFunction SCI_METHOD GetLexerFactory(unsigned int index)
 {
-    return (index == 0) ? RainLexer::LexerFactory : nullptr;
+	return (index == 0) ? RainLexer::LexerFactory : nullptr;
 }
 
 ILexer5* SCI_METHOD CreateLexer(const char* name)
 {
-    return (strcmp(name, LexerName()) == 0) ? RainLexer::LexerFactory() : nullptr;
+	return (strcmp(name, LexerName()) == 0) ? RainLexer::LexerFactory() : nullptr;
 }
 
 }	// namespace RainLexer
