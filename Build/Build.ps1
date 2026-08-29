@@ -169,7 +169,7 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 		"#define APPVERSION L`"$versionShort`"",
 		"#define RAINMETER_VERSION (($versionMajor * 1000000) + ($versionMinor * 1000) + $versionSubminor)",
 		"#define BUILD_TIME L`"$buildTime`"",
-		"#define STRCOPYRIGHT `"$buildYear Rainmeter Team`"",
+		"#define STRCOPYRIGHT `"\u00A9 $buildYear Rainmeter Team`"",
 		"const int revision_number = $versionRevision;"
 	)
 	if ($env:GITHUB_SHA) {
