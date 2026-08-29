@@ -225,6 +225,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
     Lexilla::Accessor styler(pAccess, nullptr);
 
     char buffer[128]{};
+
+    // Longest token that fits in |buffer|, leaving room for the terminator that is
+    // appended before the buffer is compared against the word lists.
+    constexpr int maxBufferLen = static_cast<int>(_countof(buffer)) - 1;
     const Lexilla::WordList& keywords = m_WordLists[0];
     const Lexilla::WordList& numwords = m_WordLists[1];
     const Lexilla::WordList& optwords = m_WordLists[2];
@@ -416,7 +420,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                         styler.ColourTo(i - 1, TC_KEYWORD);
                     }
 
-                    buffer[count++] = '=';
+                    if (count < maxBufferLen)
+                    {
+                        buffer[count++] = '=';
+                    }
                     beginValueIdx = count;
                     styler.ColourTo(i, TC_EQUALS);
 
@@ -462,7 +469,10 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
                         if (isExtOption)
                         {
-                            buffer[count++] = '=';
+                            if (count < maxBufferLen)
+                            {
+                                buffer[count++] = '=';
+                            }
                             beginValueIdx = count;
                             while (Lexilla::IsASpaceOrTab(styler.SafeGetCharAt(i + 1, '\0')))
                             {
@@ -496,7 +506,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             default:
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     if (isdigit(ch) > 0)
                     {
@@ -526,7 +536,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 // Read the last character if at EOF
                 if (isEOF)
                 {
-                    buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
+                    if (count < maxBufferLen)
+                    {
+                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+                    }
+                    ++i;
                 }
             }
             [[fallthrough]];
@@ -540,7 +554,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 }
                 else if (!isEOF)
                 {
-                    if (count < _countof(buffer))
+                    if (count < maxBufferLen)
                     {
                         buffer[count++] = Lexilla::MakeLowerCase(ch);
                     }
@@ -604,7 +618,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             [[fallthrough]];
 
             default:
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
@@ -888,7 +902,11 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
             {
                 if (isEOF)
                 {
-                    buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i++, '\0'));
+                    if (count < maxBufferLen)
+                    {
+                        buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+                    }
+                    ++i;
                 }
             }
             [[fallthrough]];
@@ -945,7 +963,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 break;
 
             default:
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
@@ -1060,7 +1078,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             default:
             {
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
@@ -1121,7 +1139,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count++] = 'x';
                 }
-                else if (count < 6 && Lexilla::IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < _countof(buffer))
+                else if (count < 6 && Lexilla::IsADigit(ch, buffer[1] == 'x' ? 16 : 10) && count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
@@ -1205,7 +1223,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             default:
             {
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
@@ -1243,7 +1261,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 // Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
                 if (!isNested && count > 0)
                 {
-                    if (isEOF && count < _countof(buffer))
+                    if (isEOF && count < maxBufferLen)
                     {
                         buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
                     }
@@ -1343,7 +1361,7 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 
             default:
             {
-                if (count < _countof(buffer))
+                if (count < maxBufferLen)
                 {
                     buffer[count++] = Lexilla::MakeLowerCase(ch);
                 }
