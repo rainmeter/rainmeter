@@ -404,16 +404,21 @@ void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER
 {
 	byName.reserve(count);
 
+	// Instances of the same name are told apart by a "#1" suffix in every category but "Process V2",
+	// which names them "exename:pid" instead. Colons are common in the names of other categories
+	// (e.g. LogicalDisk and PhysicalDisk), so only "Process V2" is rolled up at one.
+	const WCHAR rollupSeparator = _wcsicmp(options.category.c_str(), L"Process V2") == 0 ? L':' : L'#';
+
 	for (DWORD i = 0; i < count; ++i)
 	{
 		std::wstring name = items[i].szName;
 
 		if (options.pidToName && !TranslatePid(name)) continue;
 
-		// Roll up similar names by taking everything before the last number in the name
+		// Roll up similar names by taking everything before the part that tells the instances apart
 		if (options.rollup)
 		{
-			const size_t position = name.rfind(L'#');
+			const size_t position = name.rfind(rollupSeparator);
 			if (position != std::wstring::npos && position > 0)
 			{
 				name.resize(position);
