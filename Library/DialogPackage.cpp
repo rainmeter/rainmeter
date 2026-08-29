@@ -889,7 +889,7 @@ void DialogPackage::TabInfo::Create(HWND owner)
 
 	const Control controls[] =
 	{
-		Control::Label(Id_DescriptionLabel, IDS_Description,
+		Control::Label(Id_DescriptionLabel, IDS_PackageInfoDescription,
 			0, 0, 284, 26,
 			WS_VISIBLE, 0),
 		Control::GroupBox(Id_InformationGroup, IDS_Information,
