@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/MenuModifier.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Gfx/Canvas.h"
@@ -189,6 +190,9 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 		DisplayMenu(pos, menu, parentWindow, skin ? skin->GetWindow() : nullptr);
 	};
 
+	MenuModifier modifier;
+	modifier.AddItem(menu, VK_SHIFT, IDM_QUIT, IDM_RESTART, GetString(IDS_Restart));
+
 	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
 	HMENU allSkinsMenu = GetSubMenu(menu, 5);
@@ -281,7 +285,9 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin, HWND parentWindow)
 		}
 	}
 
+	modifier.Start();
 	displayMenu();
+	modifier.Stop();
 }
 
 void ContextMenu::ShowSkinCustomMenu(POINT pos, Skin* skin)
