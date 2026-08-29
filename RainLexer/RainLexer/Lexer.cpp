@@ -976,119 +976,140 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 			break;
 
 		case TextState::TS_VARIABLE:
+		case TextState::TS_MEASURE_VARIABLE:
+		case TextState::TS_MOUSE_VARIABLE:
 		{
-			// Highlight variables
-			if (isEOF)
-			{
-				if (styler.SafeGetCharAt(i, '\0') == '#')
-				{
-					ch = '#';
-				}
-				else if (styler.SafeGetCharAt(i, '\0') == ']')
-				{
-					ch = ']';
-				}
-			}
+			// Highlight variables. The three states are parsed the same way and differ only in
+			// the character that closes them, the characters that abandon them, and how a
+			// complete name is validated and coloured.
+			const char chVarEnd =
+				state == TextState::TS_VARIABLE ? '#' :
+				state == TextState::TS_MOUSE_VARIABLE ? '$' : '\0';
 
-			switch (ch)
-			{
-			case '\0':
-			case '\r':
-			case '\n':
-			{
-				state = TextState::TS_DEFAULT;
-				styler.ColourTo(i, TC_DEFAULT);
-				break;
-			}
+			// Only #Var# and $MouseVar$ can be nested, e.g. [#myVar#10]
+			const bool isNestable = chVarEnd != '\0';
 
-			case '#':
+			// The brackets of a $Variable can be omitted, e.g. X=$SkinW or Formula=(2 * $SkinW)
+			const bool canOmitBrackets = state == TextState::TS_MOUSE_VARIABLE;
+
+			// Characters that end the name and hand the rest of the value back to TS_VALUE
+			const std::string_view breakChars =
+				state == TextState::TS_VARIABLE ? "$[" :
+				state == TextState::TS_MOUSE_VARIABLE ? "#[ \t()+-*/,;" : "#$[";
+
+			const auto colourVariable = [&](Sci_PositionU pos)
 			{
-				if (isNested)
+				buffer[count] = '\0';
+				const bool isEscaped = buffer[0] == '*' && buffer[count - 1] == '*';
+				count = 0;
+
+				switch (state)
 				{
-					if (styler.SafeGetCharAt(i - 1, '\0') == '[')
-					{
-						--i;
-						state = TextState::TS_VALUE;
-						break;
-					}
-					styler.ColourTo(nestVarIdx, TC_DEFAULT);
-					isNested = false;
-				}
-			}
-			[[fallthrough]];
-
-			case ']':
-			{
-				if (!isNested && ch == ']')
-				{
-					state = TextState::TS_VALUE;
-					break;
-				}
-
-				if (count > 0)
-				{
-					buffer[count] = '\0';
-
+				case TextState::TS_VARIABLE:
 					if (variables.InList(buffer))
 					{
-						styler.ColourTo(i, TC_INTVARIABLE);
+						styler.ColourTo(pos, TC_INTVARIABLE);
 					}
 					else
 					{
-						if (buffer[0] == '*' && buffer[count - 1] == '*')
-						{
-							// Escaped variable, don't highlight
-							styler.ColourTo(i, TC_DEFAULT);
-						}
-						else
-						{
-							styler.ColourTo(i, TC_EXTVARIABLE);
-						}
+						// Escaped variables aren't highlighted
+						styler.ColourTo(pos, isEscaped ? TC_DEFAULT : TC_EXTVARIABLE);
 					}
+					break;
 
-					count = 0;
-				}
+				case TextState::TS_MEASURE_VARIABLE:
+					styler.ColourTo(pos, isEscaped ? TC_DEFAULT : TS_MEASURE_VARIABLE);
+					break;
 
-				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-				break;
-			}
-
-			case '$':
-			case '[':
-			{
-				--i;
-			}
-			[[fallthrough]];
-
-			case ' ':
-			{
-				state = TextState::TS_VALUE;
-				break;
-			}
-
-			case '\'':
-			case '"':
-			{
-				if (isSubsOpt)
-				{
-					state = TextState::TS_VALUE;
+				default:
+					if (IsDollarVariable(buffer))
+					{
+						styler.ColourTo(pos, TS_MOUSE_VARIABLE);
+					}
 					break;
 				}
-			}
-			[[fallthrough]];
+			};
 
-			default:
+			if (isEOF)
 			{
-				if (count < maxBufferLen)
+				const char chEnd = styler.SafeGetCharAt(i, '\0');
+				if (chEnd == ']' || (isNestable && chEnd == chVarEnd))
 				{
-					buffer[count++] = Lexilla::MakeLowerCase(ch);
+					ch = chEnd;
+				}
+			}
+
+			if (ch == '\0' || ch == '\r' || ch == '\n')
+			{
+				// Unterminated variables can still be valid when brackets are omitted
+				if (canOmitBrackets && !isNested && count > 0)
+				{
+					if (isEOF && count < maxBufferLen)
+					{
+						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
+					}
+
+					colourVariable(i - chEOL);
+				}
+
+				state = TextState::TS_DEFAULT;
+				styler.ColourTo(i, TC_DEFAULT);
+			}
+			else if (ch == chVarEnd || ch == ']')
+			{
+				const bool isNestStart =
+					ch == chVarEnd && isNested && styler.SafeGetCharAt(i - 1, '\0') == '[';
+
+				if (isNestStart || (ch == ']' && isNestable && !isNested))
+				{
+					if (isNestStart)
+					{
+						--i;
+					}
+
+					state = TextState::TS_VALUE;
 				}
 				else
 				{
-					state = TextState::TS_VALUE;
+					if (ch == chVarEnd && isNested)
+					{
+						styler.ColourTo(nestVarIdx, TC_DEFAULT);
+						isNested = false;
+					}
+
+					if (count > 0)
+					{
+						colourVariable(i);
+					}
+
+					state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
 				}
-				break;
 			}
+			else if (breakChars.find(ch) != std::string_view::npos)
+			{
+				if (canOmitBrackets && !isNested && count > 0)
+				{
+					colourVariable(i - 1);
+				}
+
+				--i;
+				state = TextState::TS_VALUE;
+			}
+			else if (ch == ' ')
+			{
+				state = TextState::TS_VALUE;
+			}
+			else if ((ch == '\'' || ch == '"') && isSubsOpt)
+			{
+				state = TextState::TS_VALUE;
+			}
+			else if (count < maxBufferLen)
+			{
+				buffer[count++] = Lexilla::MakeLowerCase(ch);
+			}
+			else
+			{
+				state = TextState::TS_VALUE;
 			}
 			break;
 		}
@@ -1156,230 +1177,6 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				{
 					state = TextState::TS_VALUE;
 				}
-			}
-			break;
-		}
-
-		case TextState::TS_MEASURE_VARIABLE:
-		{
-			// Highlight variables
-			if (isEOF)
-			{
-				if (styler.SafeGetCharAt(i, '\0') == ']')
-				{
-					ch = ']';
-				}
-			}
-
-			switch (ch)
-			{
-			case '\0':
-			case '\r':
-			case '\n':
-			{
-				state = TextState::TS_DEFAULT;
-				styler.ColourTo(i, TC_DEFAULT);
-				break;
-			}
-
-			case ']':
-			{
-				if (count > 0)
-				{
-					buffer[count] = '\0';
-
-					if (buffer[0] == '*' && buffer[count - 1] == '*')
-					{
-						// Escaped variable, don't highlight
-						styler.ColourTo(i, TC_DEFAULT);
-					}
-					else
-					{
-						styler.ColourTo(i, TS_MEASURE_VARIABLE);
-					}
-
-					count = 0;
-				}
-
-				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-				break;
-			}
-
-			case '#':
-			case '$':
-			case '[':
-			{
-				--i;
-			}
-			[[fallthrough]];
-
-			case ' ':
-			{
-				state = TextState::TS_VALUE;
-				break;
-			}
-
-			case '\'':
-			case '"':
-			{
-				if (isSubsOpt)
-				{
-					state = TextState::TS_VALUE;
-					break;
-				}
-			}
-			[[fallthrough]];
-
-			default:
-			{
-				if (count < maxBufferLen)
-				{
-					buffer[count++] = Lexilla::MakeLowerCase(ch);
-				}
-				else
-				{
-					state = TextState::TS_VALUE;
-				}
-				break;
-			}
-			}
-			break;
-		}
-
-		case TextState::TS_MOUSE_VARIABLE:
-		{
-			// Highlight variables
-			if (isEOF)
-			{
-				if (styler.SafeGetCharAt(i, '\0') == '$')
-				{
-					ch = '$';
-				}
-				else if (styler.SafeGetCharAt(i, '\0') == ']')
-				{
-					ch = ']';
-				}
-			}
-
-			switch (ch)
-			{
-			case '\0':
-			case '\r':
-			case '\n':
-			{
-				// Unterminated variables can still be valid when brackets are omitted, e.g. X=$SkinW
-				if (!isNested && count > 0)
-				{
-					if (isEOF && count < maxBufferLen)
-					{
-						buffer[count++] = Lexilla::MakeLowerCase(styler.SafeGetCharAt(i, '\0'));
-					}
-
-					buffer[count] = '\0';
-					count = 0;
-
-					if (IsDollarVariable(buffer))
-					{
-						styler.ColourTo(i - chEOL, TS_MOUSE_VARIABLE);
-					}
-				}
-
-				state = TextState::TS_DEFAULT;
-				styler.ColourTo(i, TC_DEFAULT);
-				break;
-			}
-
-			case '$':
-			{
-				if (isNested)
-				{
-					if (styler.SafeGetCharAt(i - 1, '\0') == '[')
-					{
-						--i;
-						state = TextState::TS_VALUE;
-						break;
-					}
-					styler.ColourTo(nestVarIdx, TC_DEFAULT);
-					isNested = false;
-				}
-			}
-			[[fallthrough]];
-
-			case ']':
-				if (!isNested && ch == ']')
-				{
-					state = TextState::TS_VALUE;
-					break;
-				}
-
-				if (count > 0)
-				{
-					buffer[count] = '\0';
-
-					if (IsDollarVariable(buffer))
-					{
-						styler.ColourTo(i, TS_MOUSE_VARIABLE);
-					}
-
-					count = 0;
-				}
-
-				state = isEOF ? TextState::TS_DEFAULT : TextState::TS_VALUE;
-				break;
-
-			case '#':
-			case '[':
-			case ' ':
-			case '\t':
-			case '(':
-			case ')':
-			case '+':
-			case '-':
-			case '*':
-			case '/':
-			case ',':
-			case ';':
-			{
-				// The brackets can be omitted in formulas, e.g. Formula=(2 * $SkinW)
-				if (!isNested && count > 0)
-				{
-					buffer[count] = '\0';
-					count = 0;
-
-					if (IsDollarVariable(buffer))
-					{
-						styler.ColourTo(i - 1, TS_MOUSE_VARIABLE);
-					}
-				}
-
-				--i;
-				state = TextState::TS_VALUE;
-				break;
-			}
-
-			case '\'':
-			case '"':
-			{
-				if (isSubsOpt)
-				{
-					state = TextState::TS_VALUE;
-					break;
-				}
-			}
-			[[fallthrough]];
-
-			default:
-			{
-				if (count < maxBufferLen)
-				{
-					buffer[count++] = Lexilla::MakeLowerCase(ch);
-				}
-				else
-				{
-					state = TextState::TS_VALUE;
-				}
-				break;
-			}
 			}
 			break;
 		}
