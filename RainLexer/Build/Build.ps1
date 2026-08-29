@@ -93,12 +93,45 @@ function Add-VisualStudioBuildToolsToPath {
 function Write-Utf8File {
 	param(
 		[string]$Path,
-		[string[]]$Lines
+		[string[]]$Lines,
+		[string]$NewLine = "`r`n"
 	)
 
 	$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-	$content = [string]::Join("`r`n", $Lines) + "`r`n"
+	$content = [string]::Join($NewLine, $Lines) + $NewLine
 	[System.IO.File]::WriteAllText($Path, $content, $utf8NoBom)
+}
+
+function Write-LexerConfigs {
+	$configRoot = Join-Path $PSScriptRoot '..\Config'
+	$languages = Get-Content -LiteralPath (Join-Path $configRoot 'Languages.xml')
+
+	# The keyword lists are the same for every theme, so each
+	# Config\Generated\<Theme>\RainLexer.xml is stitched together from the shared
+	# Languages.xml and the theme's own styles.
+	$styleFiles = @(
+		Get-ChildItem -Path $configRoot -Filter 'LexerStyles-*.xml' |
+			Sort-Object -Property Name
+	)
+	if ($styleFiles.Count -eq 0) {
+		Write-Error 'ERROR: No lexer config themes found'
+		exit 1
+	}
+
+	foreach ($styleFile in $styleFiles) {
+		$styles = Get-Content -LiteralPath $styleFile.FullName
+
+		$themeName = $styleFile.BaseName.Substring('LexerStyles-'.Length)
+		$themeDir = Join-Path (Join-Path $configRoot 'Generated') $themeName
+		New-Item -ItemType Directory -Force -Path $themeDir | Out-Null
+
+		Write-Utf8File (Join-Path $themeDir 'RainLexer.xml') (
+			@('<?xml version="1.0" encoding="utf-8" ?>', '<NotepadPlus>') +
+			$languages +
+			$styles +
+			@('</NotepadPlus>')
+		) -NewLine "`n"
+	}
 }
 
 function Write-VersionHeader {
@@ -134,6 +167,7 @@ $versionString = "$($parsedVersion.Major).$($parsedVersion.Minor).$($parsedVersi
 
 Add-VisualStudioBuildToolsToPath
 Write-VersionHeader $parsedVersion
+Write-LexerConfigs
 
 $msBuildArgs = @(
 	'..\RainLexer.sln',
@@ -192,7 +226,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'test') {
 	}
 
 	Invoke-NativeCommand '..\x64-Test\Test.exe' (
-		@('..\Config\Default\RainLexer.xml') + $cases
+		@('..\Config\Languages.xml') + $cases
 	)
 }
 
