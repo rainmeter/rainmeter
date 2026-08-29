@@ -1117,8 +1117,16 @@ void SCI_METHOD RainLexer::Lex(Sci_PositionU startPos, Sci_Position length, int 
                 {
                     buffer[count] = '\0';
 
-                    std::string charNumber = buffer;
-                    if (std::stol(charNumber, nullptr, 0) < 0xFFFF)
+                    // buffer[0] holds the radix marker written on entry, followed by the
+                    // "x" of a hexadecimal escape. The digits start after it.
+                    const bool isHex = buffer[0] == '0';
+                    const char* const first = &buffer[isHex ? 2 : 1];
+                    const char* const last = &buffer[count];
+
+                    unsigned long charNumber = 0;
+                    const auto [ptr, ec] = std::from_chars(first, last, charNumber, isHex ? 16 : 10);
+
+                    if (ec == std::errc{} && ptr == last && charNumber < 0xFFFF)
                     {
                         styler.ColourTo(i, TC_CHAR_VARIABLE);
                     }
