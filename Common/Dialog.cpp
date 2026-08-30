@@ -158,28 +158,37 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 		int showCmd = SW_SHOWNORMAL;
 		if (m_WindowPlacement && m_WindowPlacement->length > 0)
 		{
-			DpiUtil::DpiUnawareScope dpiUnaware;
-
-			auto& wp = *m_WindowPlacement;
+			WINDOWPLACEMENT wp = *m_WindowPlacement;
 			if (wp.showCmd == SW_SHOWMINIMIZED)
 			{
 				wp.showCmd = SW_SHOWNORMAL;
 			}
+			showCmd = (int)wp.showCmd;
 
-			// If the window can't be maximized, only restore the position and keep the existing size.
-			if ((style & WS_MAXIMIZEBOX) == 0)
+			// Position the window before sizing it, so that the DPI of the monitor it lands on is
+			// known. It stays hidden until both have been applied.
+			wp.showCmd = SW_HIDE;
+			SetWindowPlacement(m_Window, &wp);
+
+			const UINT dpi = GetDpiForWindow(m_Window);
+			if (dpi != m_Dpi)
 			{
-				RECT windowRect;
-				GetWindowRect(m_Window, &windowRect);
-
-				const int windowW = windowRect.right - windowRect.left;
-				const int windowH = windowRect.bottom - windowRect.top;
-				wp.rcNormalPosition.right = wp.rcNormalPosition.left + windowW;
-				wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + windowH;
+				m_Dpi = dpi;
+				Relayout();
 			}
 
+			// Only a dialog the user can resize has a size worth restoring, and the stored one is at
+			// 96 DPI. The rest follow their design.
+			SIZE size = GetDesignWindowSize();
+			if (IsResizable(m_Window))
+			{
+				size.cx = MulDiv(wp.rcNormalPosition.right - wp.rcNormalPosition.left, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
+				size.cy = MulDiv(wp.rcNormalPosition.bottom - wp.rcNormalPosition.top, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
+			}
+
+			wp.rcNormalPosition.right = wp.rcNormalPosition.left + size.cx;
+			wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + size.cy;
 			SetWindowPlacement(m_Window, &wp);
-			showCmd = wp.showCmd;
 		}
 
 		ShowWindow(m_Window, showCmd);
@@ -228,9 +237,14 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 		if (m_WindowPlacement)
 		{
-			DpiUtil::DpiUnawareScope dpiUnaware;
 			m_WindowPlacement->length = sizeof(WINDOWPLACEMENT);
 			GetWindowPlacement(m_Window, m_WindowPlacement);
+
+			// Store the size at 96 DPI so that it can be restored onto a monitor with a different
+			// one. The position is a screen location and is kept as it is.
+			RECT& rect = m_WindowPlacement->rcNormalPosition;
+			rect.right = rect.left + MulDiv(rect.right - rect.left, USER_DEFAULT_SCREEN_DPI, (int)m_Dpi);
+			rect.bottom = rect.top + MulDiv(rect.bottom - rect.top, USER_DEFAULT_SCREEN_DPI, (int)m_Dpi);
 		}
 		break;
 	}
@@ -332,7 +346,7 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 	else
 	{
 		// The suggested rect is a plain scale of the old window rect, which drifts from the size the
-		// contents need once the non-client area and the font metrics are rounded to the new DPI.
+		// contents need once the non-client area and the font metrics round to the new DPI.
 		ResizeToDesignSize(*suggested);
 	}
 
@@ -349,26 +363,30 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-bool Dialog::ResizeToDesignSize(const RECT& bounds)
+SIZE Dialog::GetDesignWindowSize() const
 {
 	const SIZE client = DpiUtil::MapDialogUnits(m_DesignSize, m_Dpi);
 	RECT rect = { 0, 0, client.cx, client.cy };
 	const DWORD style = (DWORD)GetWindowLongPtr(m_Window, GWL_STYLE);
 	const DWORD exStyle = (DWORD)GetWindowLongPtr(m_Window, GWL_EXSTYLE);
 	AdjustWindowRectExForDpi(&rect, style, FALSE, exStyle, m_Dpi);
+	return { rect.right - rect.left, rect.bottom - rect.top };
+}
+
+bool Dialog::ResizeToDesignSize(const RECT& bounds)
+{
+	const SIZE size = GetDesignWindowSize();
 
 	// Stay centered within the given bounds so that DS_CENTER and the position suggested on a DPI
 	// change are both preserved.
-	const int w = rect.right - rect.left;
-	const int h = rect.bottom - rect.top;
-	const int x = bounds.left + ((bounds.right - bounds.left) - w) / 2;
-	const int y = bounds.top + ((bounds.bottom - bounds.top) - h) / 2;
+	const int x = bounds.left + ((bounds.right - bounds.left) - size.cx) / 2;
+	const int y = bounds.top + ((bounds.bottom - bounds.top) - size.cy) / 2;
 
 	RECT current;
 	GetWindowRect(m_Window, &current);
-	if (x == current.left && y == current.top && w == current.right - current.left && h == current.bottom - current.top) return false;
+	if (x == current.left && y == current.top && size.cx == current.right - current.left && size.cy == current.bottom - current.top) return false;
 
-	SetWindowPos(m_Window, nullptr, x, y, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+	SetWindowPos(m_Window, nullptr, x, y, size.cx, size.cy, SWP_NOACTIVATE | SWP_NOZORDER);
 	return true;
 }
 

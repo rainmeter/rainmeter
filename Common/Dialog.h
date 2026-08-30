@@ -97,6 +97,7 @@ private:
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
+	SIZE GetDesignWindowSize() const;
 	bool ResizeToDesignSize(const RECT& bounds);
 
 	static HWND c_ActiveDialogWindow;
