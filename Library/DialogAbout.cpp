@@ -193,7 +193,7 @@ INT_PTR DialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 		if (nm->idFrom == Id_BuildLink)
 		{
 			std::wstring hashLink = L"https://github.com/rainmeter/rainmeter/commit/" + GetRainmeter().GetBuildHash();
-			CommandHandler::RunFile(hashLink.c_str());
+			CommandHandler::RunFile(hashLink);
 		}
 		else if (nm->idFrom == Id_HomeLink)
 		{
@@ -205,19 +205,19 @@ INT_PTR DialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 		}
 		else if (nm->idFrom == Id_PathLink)
 		{
-			CommandHandler::RunFile(GetRainmeter().GetPath().c_str());
+			CommandHandler::RunFile(GetRainmeter().GetPath());
 		}
 		else if (nm->idFrom == Id_SkinPathLink)
 		{
-			CommandHandler::RunFile(GetRainmeter().GetSkinPath().c_str());
+			CommandHandler::RunFile(GetRainmeter().GetSkinPath());
 		}
 		else if (nm->idFrom == Id_SettingsPathLink)
 		{
-			CommandHandler::RunFile(GetRainmeter().GetSettingsPath().c_str());
+			CommandHandler::RunFile(GetRainmeter().GetSettingsPath());
 		}
 		else if (nm->idFrom == Id_IniFileLink)
 		{
-			CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), GetRainmeter().GetIniFile().c_str());
+			CommandHandler::RunFile(GetRainmeter().GetSkinEditor(), GetRainmeter().GetIniFile());
 		}
 		return TRUE;
 	}
