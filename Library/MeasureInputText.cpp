@@ -502,32 +502,49 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 			RECT client = { 0 };
 			GetClientRect(wnd, &client);
 
-			// A password field is the one that cannot wrap: a multiline edit control ignores the
-			// mask and draws the text as it was typed, which is how Password=1 came to do nothing
-			// at all in the WinForms box this grew out of.
-			DWORD style = WS_CHILD | WS_VISIBLE | options.align;
-			style |= options.password ? (ES_PASSWORD | ES_AUTOHSCROLL) : ES_MULTILINE;
-
-			// A multiline edit control draws no line it cannot draw in full, so a box shorter than
-			// one line of the font it was given comes up empty rather than cropped - and how tall
-			// a line is depends on the face, which is what makes one face work where another does
-			// not. The control is given the height a line needs and the box crops it, which is
-			// what a box too short for its font ought to look like.
-			int editHeight = client.bottom;
+			// How tall a line of the box's font is, which decides both the height the control is
+			// given and whether the box has room to wrap onto a line below. Zero where it could
+			// not be measured, and where the field is a password one and never wraps anyway.
+			int lineHeight = 0;
 			if (!options.password)
 			{
 				HDC dc = GetDC(wnd);
 				HFONT oldFont = (HFONT)SelectObject(dc, box->m_Font);
 
 				TEXTMETRIC metrics = { 0 };
-				if (GetTextMetrics(dc, &metrics) && metrics.tmHeight > editHeight)
-				{
-					editHeight = metrics.tmHeight;
-				}
+				if (GetTextMetrics(dc, &metrics)) lineHeight = metrics.tmHeight;
 
 				SelectObject(dc, oldFont);
 				ReleaseDC(wnd, dc);
 			}
+
+			// A password field is the one that cannot be multiline: a multiline edit control
+			// ignores the mask and draws the text as it was typed, which is how Password=1 came to
+			// do nothing at all in the WinForms box this grew out of.
+			DWORD style = WS_CHILD | WS_VISIBLE | options.align;
+			if (options.password)
+			{
+				style |= ES_PASSWORD | ES_AUTOHSCROLL;
+			}
+			else
+			{
+				// A box with room for one line has nowhere to put a wrapped line, so it is made
+				// not to wrap: ES_AUTOHSCROLL keeps a long line on the one line there is and
+				// scrolls it sideways under the caret, the way a single line field does.
+				//
+				// A taller box wraps, since the lines it wraps onto are lines it can draw, and
+				// ES_AUTOVSCROLL scrolls to the ones past the last of them. Either way the text
+				// stays reachable with the arrow keys rather than running off out of sight.
+				const bool wraps = lineHeight > 0 && client.bottom >= lineHeight * 2;
+				style |= ES_MULTILINE | (wraps ? ES_AUTOVSCROLL : ES_AUTOHSCROLL);
+			}
+
+			// A multiline edit control draws no line it cannot draw in full, so a box shorter than
+			// one line of the font it was given comes up empty rather than cropped - and how tall
+			// a line is depends on the face, which is what makes one face work where another does
+			// not. The control is given the height a line needs and the box crops it, which is
+			// what a box too short for its font ought to look like.
+			const int editHeight = max(client.bottom, (LONG)lineHeight);
 
 			box->m_Edit = CreateWindowEx(0L, WC_EDIT, options.text.c_str(), style,
 				0, 0, client.right, editHeight, wnd, nullptr,
