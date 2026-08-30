@@ -19,7 +19,7 @@ static int Bang(lua_State* L)
 	DECLARE_SELF(L)
 	ConfigParser& parser = self->GetParser();
 
-	std::wstring bang = LuaHelper::ToWide(2);
+	std::wstring bang = LuaHelper::ToWideString(2);
 
 	int top = lua_gettop(L);
 	if (top == 2)	// 1 argument
@@ -36,7 +36,7 @@ static int Bang(lua_State* L)
 			std::vector<std::wstring> args;
 			for (int i = 3; i <= top; ++i)
 			{
-				std::wstring tmpSz = LuaHelper::ToWide(i);
+				std::wstring tmpSz = LuaHelper::ToWideString(i);
 				parser.ReplaceVariables(tmpSz);
 				args.push_back(tmpSz);
 			}
@@ -51,7 +51,7 @@ static int Bang(lua_State* L)
 static int GetMeter(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring meterName = LuaHelper::ToWide(2);
+	const auto meterName = LuaHelper::ToWide(2);
 
 	Meter* meter = self->GetMeter(meterName);
 	if (meter)
@@ -71,7 +71,7 @@ static int GetMeter(lua_State* L)
 static int GetMeasure(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring measureName = LuaHelper::ToWide(2);
+	const auto measureName = LuaHelper::ToWide(2);
 
 	Measure* measure = self->GetMeasure(measureName);
 	if (measure)
@@ -91,14 +91,14 @@ static int GetMeasure(lua_State* L)
 static int SetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring section = LuaHelper::ToWide(2);
+	const auto section = LuaHelper::ToWide(2);
 	return LuaSection::SetOption(L, self, section.c_str(), 3);
 }
 
 static int SetOptionGroup(lua_State* L)
 {
 	DECLARE_SELF(L)
-	const std::wstring group = LuaHelper::ToWide(2);
+	const auto group = LuaHelper::ToWide(2);
 	return LuaSection::SetOption(L, self, group.c_str(), 3, true);
 }
 
@@ -106,7 +106,7 @@ static int GetVariable(lua_State* L)
 {
 	DECLARE_SELF(L)
 
-	const std::wstring name = LuaHelper::ToWide(2);
+	const auto name = LuaHelper::ToWide(2);
 	std::wstring value;
 	if (self->GetParser().GetVariable(name, value))
 	{
@@ -141,8 +141,8 @@ static int SetVariable(lua_State* L)
 			lua_rawgeti(L, i, 2);
 			if (lua_type(L, -2) == LUA_TSTRING && lua_isstring(L, -1))
 			{
-				const std::wstring value = LuaHelper::ToWide(-1);
-				const std::wstring name = LuaHelper::ToWide(-2);
+				const std::wstring value = LuaHelper::ToWideString(-1);
+				const std::wstring name = LuaHelper::ToWideString(-2);
 				self->SetVariable(name, value);
 			}
 
@@ -151,8 +151,8 @@ static int SetVariable(lua_State* L)
 	}
 	else if (lua_isstring(L, 2) && lua_isstring(L, 3))
 	{
-		const std::wstring name = LuaHelper::ToWide(2);
-		const std::wstring value = LuaHelper::ToWide(3);
+		const std::wstring name = LuaHelper::ToWideString(2);
+		const std::wstring value = LuaHelper::ToWideString(3);
 		self->SetVariable(name, value);
 	}
 
@@ -162,7 +162,7 @@ static int SetVariable(lua_State* L)
 static int ReplaceVariables(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring strTmp = LuaHelper::ToWide(2);
+	std::wstring strTmp = LuaHelper::ToWideString(2);
 
 	self->GetParser().ReplaceVariables(strTmp);
 	self->GetParser().ReplaceMeasures(strTmp);
@@ -174,7 +174,7 @@ static int ReplaceVariables(lua_State* L)
 static int ParseFormula(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring strTmp = LuaHelper::ToWide(2);
+	std::wstring strTmp = LuaHelper::ToWideString(2);
 
 	double result;
 	if (!self->GetParser().ParseFormula(strTmp, &result))
@@ -242,7 +242,7 @@ static int GetY(lua_State* L)
 static int MakePathAbsolute(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring path = LuaHelper::ToWide(2);
+	std::wstring path = LuaHelper::ToWideString(2);
 	self->MakePathAbsolute(path);
 	LuaHelper::PushWide(path);
 
@@ -252,7 +252,7 @@ static int MakePathAbsolute(lua_State* L)
 static int ReadTextFile(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring path = LuaHelper::ToWide(2);
+	std::wstring path = LuaHelper::ToWideString(2);
 	self->MakePathAbsolute(path);
 
 	std::wstring text;
@@ -271,15 +271,15 @@ static int ReadTextFile(lua_State* L)
 static int WriteTextFile(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring path = LuaHelper::ToWide(2);
+	std::wstring path = LuaHelper::ToWideString(2);
 	self->MakePathAbsolute(path);
 
-	const std::wstring text = LuaHelper::ToWide(3);
+	const std::wstring text = LuaHelper::ToWideString(3);
 
 	auto encoding = FileUtil::Encoding::UTF16LE;
 	if (lua_isstring(L, 4))
 	{
-		const std::wstring name = LuaHelper::ToWide(4);
+		const auto name = LuaHelper::ToWide(4);
 		if (_wcsicmp(name.c_str(), L"ANSI") == 0)
 		{
 			encoding = FileUtil::Encoding::ANSI;
@@ -291,7 +291,7 @@ static int WriteTextFile(lua_State* L)
 		else if (_wcsicmp(name.c_str(), L"UTF-16") != 0)
 		{
 			lua_pushboolean(L, 0);
-			LuaHelper::PushWide(L"Unknown encoding: " + name);
+			LuaHelper::PushWide(fmt::format(L"Unknown encoding: {}", std::wstring_view(name)));
 			return 2;
 		}
 	}

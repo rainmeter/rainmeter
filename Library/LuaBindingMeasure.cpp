@@ -38,7 +38,7 @@ static int GetNumberOption(lua_State* L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
 	const WCHAR* section = self->GetName();
-	const std::wstring key = LuaHelper::ToWide(2);
+	const auto key = LuaHelper::ToWide(2);
 
 	ConfigParser::InheritChainScope inheritChain(parser, section);
 	const double value = parser.ReadFloat(section, key.c_str(), lua_tonumber(L, 3));

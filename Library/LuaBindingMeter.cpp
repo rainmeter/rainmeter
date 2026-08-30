@@ -137,7 +137,7 @@ static int SetText(lua_State* L)
 	if (self->GetTypeID() == TypeID<MeterString>() || self->GetTypeID() == TypeID<MeterTextEdit>())
 	{
 		MeterStringBase* text = (MeterStringBase*)self;
-		std::wstring str = LuaHelper::ToWide(2);
+		const auto str = LuaHelper::ToWide(2);
 		text->SetText(str);
 	}
 

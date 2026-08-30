@@ -13,8 +13,8 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 	Skin* skin = section->GetSkin();
 	ConfigParser& parser = skin->GetParser();
 	const WCHAR* sectionName = section->GetName();
-	const std::wstring key = LuaHelper::ToWide(2);
-	const std::wstring defValue = LuaHelper::ToWide(3);
+	const auto key = LuaHelper::ToWide(2);
+	const auto defValue = LuaHelper::ToWide(3);
 
 	ConfigParser::ReadOptions options;
 	if (lua_gettop(L) > 3)
@@ -51,8 +51,8 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 			lua_rawgeti(L, i, 2);
 			if (lua_type(L, -2) == LUA_TSTRING && lua_isstring(L, -1))
 			{
-				const std::wstring value = LuaHelper::ToWide(-1);
-				const std::wstring option = LuaHelper::ToWide(-2);
+				const std::wstring value = LuaHelper::ToWideString(-1);
+				const std::wstring option = LuaHelper::ToWideString(-2);
 				skin->SetOption(sectionName, option, value, group);
 			}
 
@@ -61,8 +61,8 @@ int SetOption(lua_State* L, Skin* skin, const wchar_t* sectionName, int optionIn
 	}
 	else if (lua_isstring(L, optionIndex) && lua_isstring(L, optionIndex + 1))
 	{
-		const std::wstring option = LuaHelper::ToWide(optionIndex);
-		const std::wstring value = LuaHelper::ToWide(optionIndex + 1);
+		const std::wstring option = LuaHelper::ToWideString(optionIndex);
+		const std::wstring value = LuaHelper::ToWideString(optionIndex + 1);
 		skin->SetOption(sectionName, option, value, group);
 	}
 
