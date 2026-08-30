@@ -95,6 +95,7 @@
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="StringParser.h" />
+    <ClInclude Include="StringBuffer.h" />
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />

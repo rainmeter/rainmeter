@@ -192,7 +192,7 @@ LuaResult LuaScript::RunFunction(const char* funcName)
 	if (lua_pcall(L, 0, 0, 0))
 	{
 		// Stack: [table, error]
-		auto error = LuaHelper::ToWide(-1);
+		auto error = LuaHelper::ToWideString(-1);
 		lua_pop(L, 2);
 		return LuaResult::Fail(std::move(error));
 	}
@@ -222,7 +222,7 @@ LuaResult LuaScript::RunFunctionWithReturn(const char* funcName, int& valueType,
 	if (lua_pcall(L, 0, 2, 0))
 	{
 		// Stack: [table, error]
-		auto error = LuaHelper::ToWide(-1);
+		auto error = LuaHelper::ToWideString(-1);
 		lua_pop(L, 2);
 		return LuaResult::Fail(std::move(error));
 	}
@@ -291,7 +291,7 @@ LuaResult LuaScript::RunString(const std::wstring& str)
 	if (luaL_loadstring(L, narrowStr.c_str()))
 	{
 		// Stack: [error]
-		auto error = LuaHelper::ToWide(-1);
+		auto error = LuaHelper::ToWideString(-1);
 		lua_pop(L, 1);
 		return LuaResult::Fail(std::move(error));
 	}
@@ -307,7 +307,7 @@ LuaResult LuaScript::RunString(const std::wstring& str)
 	if (lua_pcall(L, 0, 0, 0))
 	{
 		// Stack: [error]
-		auto error = LuaHelper::ToWide(-1);
+		auto error = LuaHelper::ToWideString(-1);
 		lua_pop(L, 1);
 		return LuaResult::Fail(std::move(error));
 	}
