@@ -24,7 +24,7 @@ std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size = nu
 bool ReadTextFile(const std::wstring& path, std::wstring& text);
 
 // Writes |text| to |path| in |encoding|, prepending a BOM for the Unicode encodings.
-bool WriteTextFile(const std::wstring& path, const std::wstring& text, Encoding encoding);
+bool WriteTextFile(const std::wstring& path, std::wstring_view text, Encoding encoding);
 
 bool GetBinaryFileBitness(const WCHAR* path, WORD& bitness);
 

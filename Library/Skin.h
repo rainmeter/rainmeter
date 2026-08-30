@@ -132,8 +132,8 @@ public:
 	void Redraw();
 	void UpdateWindowContents();
 
-	void SetVariable(const std::wstring& variable, const std::wstring& value);
-	void SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group);
+	void SetVariable(std::wstring_view variable, std::wstring_view value);
+	void SetOption(std::wstring_view section, std::wstring_view option, std::wstring_view value, bool group);
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
 
