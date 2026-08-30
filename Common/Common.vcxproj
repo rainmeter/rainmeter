@@ -30,6 +30,7 @@
     <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
+    <ClCompile Include="DpiUtil.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\Bitmap.cpp" />

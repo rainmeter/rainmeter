@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "DpiUtil.h"
 #include "ControlTemplate.h"
 
 namespace {
@@ -33,8 +34,7 @@ BOOL GetNonClientMetricsForDpi(NONCLIENTMETRICS& metrics, UINT dpi)
 
 ControlTemplate::ControlTemplate() :
 	m_Parent(),
-	m_InitialParentSize(),
-	m_InitialDpi(),
+	m_DesignSize(),
 	m_CurrentDpi(),
 	m_Font(),
 	m_FontBold()
@@ -72,20 +72,16 @@ void ControlTemplate::UpdateFonts(UINT dpi)
 	if (oldFontBold) DeleteObject(oldFontBold);
 }
 
-void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, UINT dpi, GetStringFunc getString)
+void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, SIZE designSize, UINT dpi, GetStringFunc getString)
 {
 	assert(!m_Parent);
 	if (m_Parent) return;
 
 	m_Parent = parent;
-	m_InitialDpi = dpi;
+	m_DesignSize = designSize;
 	m_CurrentDpi = dpi;
 	UpdateFonts(dpi);
 
-	RECT parentRect;
-	GetClientRect(parent, &parentRect);
-	m_InitialParentSize.cx = parentRect.right;
-	m_InitialParentSize.cy = parentRect.bottom;
 	m_Controls.reserve(ctCount);
 
 	WCHAR buffer[512];
@@ -99,9 +95,7 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 			text = buffer;
 		}
 
-		RECT r = { ct.x, ct.y, ct.w, ct.h };
-		MapDialogRect(parent, &r);
-
+		const RECT r = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.w, ct.h }, dpi);
 		HWND wnd = CreateWindowEx(
 			ct.exStyle,
 			ct.name,
@@ -116,13 +110,13 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 		HFONT font = (ct.options & Control::BOLD_FONT) ? m_FontBold : m_Font;
 		SendMessage(wnd, WM_SETFONT, (WPARAM)font, FALSE);
 
-		m_Controls.push_back({ ct, wnd, r });
+		m_Controls.push_back({ ct, wnd });
 	}
 }
 
 void ControlTemplate::Relayout(UINT dpi)
 {
-	if (m_Controls.empty() || !m_InitialDpi) return;
+	if (m_Controls.empty()) return;
 
 	if (dpi != m_CurrentDpi)
 	{
@@ -133,22 +127,15 @@ void ControlTemplate::Relayout(UINT dpi)
 	RECT clientRect;
 	GetClientRect(m_Parent, &clientRect);
 
-	const int scaledDesignWidth = MulDiv(m_InitialParentSize.cx, (int)dpi, (int)m_InitialDpi);
-	const int scaledDesignHeight = MulDiv(m_InitialParentSize.cy, (int)dpi, (int)m_InitialDpi);
-	const int deltaX = clientRect.right - scaledDesignWidth;
-	const int deltaY = clientRect.bottom - scaledDesignHeight;
+	const SIZE designSize = DpiUtil::MapDialogUnits(m_DesignSize, dpi);
+	const int deltaX = clientRect.right - designSize.cx;
+	const int deltaY = clientRect.bottom - designSize.cy;
 
 	HDWP dwp = BeginDeferWindowPos((int)m_Controls.size());
 	for (const auto& createdControl : m_Controls)
 	{
 		const Control& ct = createdControl.control;
-		RECT rect =
-		{
-			MulDiv(createdControl.initialRect.left, (int)dpi, (int)m_InitialDpi),
-			MulDiv(createdControl.initialRect.top, (int)dpi, (int)m_InitialDpi),
-			MulDiv(createdControl.initialRect.right, (int)dpi, (int)m_InitialDpi),
-			MulDiv(createdControl.initialRect.bottom, (int)dpi, (int)m_InitialDpi)
-		};
+		RECT rect = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.w, ct.h }, dpi);
 
 		const bool left = (ct.options & Control::ANCHOR_LEFT) != 0;
 		const bool top = (ct.options & Control::ANCHOR_TOP) != 0;

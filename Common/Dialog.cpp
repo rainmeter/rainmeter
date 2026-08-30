@@ -6,20 +6,9 @@
 
 namespace {
 
-UINT GetWindowDpi(HWND window)
+bool IsResizable(HWND window)
 {
-	typedef UINT (WINAPI* GetDpiForWindowProc)(HWND);
-	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
-	if (s_GetDpiForWindow)
-	{
-		const UINT dpi = s_GetDpiForWindow(window);
-		if (dpi) return dpi;
-	}
-
-	HDC dc = GetDC(window);
-	const UINT dpi = dc ? (UINT)GetDeviceCaps(dc, LOGPIXELSX) : 96;
-	if (dc) ReleaseDC(window, dc);
-	return dpi ? dpi : 96;
+	return (GetWindowLongPtr(window, GWL_STYLE) & WS_THICKFRAME) != 0;
 }
 
 }  // namespace
@@ -34,7 +23,8 @@ HHOOK Dialog::c_PopupMenuFilterHook = nullptr;
 
 BaseDialog::BaseDialog() :
 	m_Window(),
-	m_Dpi(USER_DEFAULT_SCREEN_DPI)
+	m_Dpi(USER_DEFAULT_SCREEN_DPI),
+	m_DesignSize()
 {
 }
 
@@ -46,6 +36,8 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 		SetForegroundWindow(m_Window);
 		return;
 	}
+
+	m_DesignSize = { w, h };
 
 	const WCHAR* font = L"MS Shell Dlg 2";
 	const size_t titleSize = (wcslen(title) + 1) * sizeof(WCHAR);
@@ -103,7 +95,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 
 void BaseDialog::CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString)
 {
-	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_Dpi, getString);
+	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_DesignSize, m_Dpi, getString);
 }
 
 void BaseDialog::RelayoutControls()
@@ -119,7 +111,10 @@ INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 		dialog->m_Window = hWnd;
 		SetWindowLongPtr(hWnd, DWLP_USER, (LONG_PTR)dialog);
 		SetWindowLongPtr(hWnd, DWLP_DLGPROC, (LONG_PTR)MainDlgProc);
-		return dialog->HandleMessage(uMsg, wParam, lParam);
+
+		const INT_PTR result = dialog->HandleMessage(uMsg, wParam, lParam);
+		dialog->HandleInitDialog();
+		return result;
 	}
 
 	return FALSE;
@@ -208,7 +203,7 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				s_SetDialogDpiChangeBehavior(m_Window, DDC_DISABLE_ALL, DDC_DISABLE_ALL);
 			}
 
-			m_Dpi = GetWindowDpi(m_Window);
+			m_Dpi = GetDpiForWindow(m_Window);
 		}
 		break;
 
@@ -243,6 +238,15 @@ INT_PTR Dialog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+void Dialog::HandleInitDialog()
+{
+	// The dialog manager sized the window with the base units of the DPI it was created at, which is
+	// not necessarily the DPI of the monitor it ended up on.
+	RECT windowRect;
+	GetWindowRect(m_Window, &windowRect);
+	if (ResizeToDesignSize(windowRect)) Relayout();
+}
+
 void Dialog::AddTab(WORD controlId, Tab& tab, const WCHAR* text)
 {
 	HWND tabControl = GetControl(controlId);
@@ -266,6 +270,7 @@ void Dialog::AddTab(WORD controlId, Tab& tab, const WCHAR* text)
 
 void Dialog::AddPage(Tab& tab)
 {
+	tab.SetParentDesignSize(m_DesignSize);
 	tab.Create(m_Window);
 	m_Pages.push_back(&tab);
 }
@@ -317,9 +322,19 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 	m_Dpi = LOWORD(wParam);
 
 	const RECT* suggested = (const RECT*)lParam;
-	auto w = suggested->right - suggested->left;
-	auto h = suggested->bottom - suggested->top;
-	SetWindowPos(m_Window, nullptr, suggested->left, suggested->top, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (IsResizable(m_Window) || IsZoomed(m_Window))
+	{
+		// Keep whatever size the window has and let the contents stretch to it.
+		const int w = suggested->right - suggested->left;
+		const int h = suggested->bottom - suggested->top;
+		SetWindowPos(m_Window, nullptr, suggested->left, suggested->top, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+	}
+	else
+	{
+		// The suggested rect is a plain scale of the old window rect, which drifts from the size the
+		// contents need once the non-client area and the font metrics are rounded to the new DPI.
+		ResizeToDesignSize(*suggested);
+	}
 
 	Relayout();
 
@@ -332,6 +347,29 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 
 	RedrawWindow(m_Window, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 	return TRUE;
+}
+
+bool Dialog::ResizeToDesignSize(const RECT& bounds)
+{
+	const SIZE client = DpiUtil::MapDialogUnits(m_DesignSize, m_Dpi);
+	RECT rect = { 0, 0, client.cx, client.cy };
+	const DWORD style = (DWORD)GetWindowLongPtr(m_Window, GWL_STYLE);
+	const DWORD exStyle = (DWORD)GetWindowLongPtr(m_Window, GWL_EXSTYLE);
+	AdjustWindowRectExForDpi(&rect, style, FALSE, exStyle, m_Dpi);
+
+	// Stay centered within the given bounds so that DS_CENTER and the position suggested on a DPI
+	// change are both preserved.
+	const int w = rect.right - rect.left;
+	const int h = rect.bottom - rect.top;
+	const int x = bounds.left + ((bounds.right - bounds.left) - w) / 2;
+	const int y = bounds.top + ((bounds.bottom - bounds.top) - h) / 2;
+
+	RECT current;
+	GetWindowRect(m_Window, &current);
+	if (x == current.left && y == current.top && w == current.right - current.left && h == current.bottom - current.top) return false;
+
+	SetWindowPos(m_Window, nullptr, x, y, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+	return true;
 }
 
 bool Dialog::HandleMessage(MSG& msg)
@@ -381,7 +419,7 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			// Draw arrow on top of the button
 			RECT buttonRect;
 			GetClientRect(hWnd, &buttonRect);
-			const UINT dpi = GetWindowDpi(hWnd);
+			const UINT dpi = GetDpiForWindow(hWnd);
 			const int arrowOffset = MulDiv(18, (int)dpi, 96);
 			const int arrowTop = MulDiv(4, (int)dpi, 96);
 			const int arrowSize = MulDiv(14, (int)dpi, 96);
@@ -473,42 +511,42 @@ UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT 
 
 Dialog::Tab::Tab() : BaseDialog(),
 	m_Initialized(false),
-	m_InitialMargin(),
-	m_InitialDpi()
+	m_DesignMargin(),
+	m_ParentDesignSize()
 {
 }
 
 void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND parent)
 {
+	m_Dpi = GetDpiForWindow(parent);
+
 	const DWORD style = DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
 	const DWORD exStyle = WS_EX_CONTROLPARENT;
 	Show(L"", x, y, w, h, style, exStyle, parent, true);
+	if (!m_Window) return;
 
-	RECT rect;
-	GetWindowRect(m_Window, &rect);
-	MapWindowPoints(nullptr, parent, (POINT*)&rect, 2);
+	m_DesignMargin.left = x;
+	m_DesignMargin.top = y;
+	m_DesignMargin.right = m_ParentDesignSize.cx - (x + w);
+	m_DesignMargin.bottom = m_ParentDesignSize.cy - (y + h);
 
-	RECT parentRect;
-	GetClientRect(parent, &parentRect);
-
-	m_InitialMargin.left = rect.left;
-	m_InitialMargin.top = rect.top;
-	m_InitialMargin.right = parentRect.right - rect.right;
-	m_InitialMargin.bottom = parentRect.bottom - rect.bottom;
-	m_Dpi = m_InitialDpi = GetWindowDpi(parent);
+	const RECT r = GetLayoutRect(m_Dpi);
+	SetWindowPos(m_Window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOACTIVATE | SWP_NOZORDER);
 
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }
 
 RECT Dialog::Tab::GetLayoutRect(UINT dpi)
 {
-	HWND parent = GetParent(m_Window);
+	// The tab keeps its design margins to the parent client area so that it grows with the parent.
+	const RECT margin = DpiUtil::MapDialogUnits(m_DesignMargin, dpi);
+
 	RECT rect;
-	GetClientRect(parent, &rect);
-	rect.left = MulDiv(m_InitialMargin.left, (int)dpi, (int)m_InitialDpi);
-	rect.top = MulDiv(m_InitialMargin.top, (int)dpi, (int)m_InitialDpi);
-	rect.right -= MulDiv(m_InitialMargin.right, (int)dpi, (int)m_InitialDpi);
-	rect.bottom -= MulDiv(m_InitialMargin.bottom, (int)dpi, (int)m_InitialDpi);
+	GetClientRect(GetParent(m_Window), &rect);
+	rect.left = margin.left;
+	rect.top = margin.top;
+	rect.right -= margin.right;
+	rect.bottom -= margin.bottom;
 	return rect;
 }
 

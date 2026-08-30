@@ -22,8 +22,12 @@ protected:
 
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) { return FALSE; }
 
+	// Called once the derived dialog has handled WM_INITDIALOG and created its controls.
+	virtual void HandleInitDialog() {}
+
 	HWND m_Window;
 	UINT m_Dpi;
+	SIZE m_DesignSize;  // Client area in dialog units.
 	ControlTemplate m_ControlTemplate;
 
 private:
@@ -50,6 +54,7 @@ protected:
 		virtual void Create(HWND owner) = 0;
 		void Activate();
 		void UpdateDpi(UINT dpi) { m_Dpi = dpi; }
+		void SetParentDesignSize(const SIZE& size) { m_ParentDesignSize = size; }
 		RECT GetLayoutRect(UINT dpi);
 
 		virtual void Initialize() {}
@@ -63,8 +68,8 @@ protected:
 		void CreateTabWindow(short x, short y, short w, short h, HWND parent);
 
 		bool m_Initialized;
-		RECT m_InitialMargin;
-		UINT m_InitialDpi;
+		RECT m_DesignMargin;  // Margin to the parent client area in dialog units.
+		SIZE m_ParentDesignSize;
 	};
 
 	Dialog();
@@ -74,6 +79,7 @@ protected:
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual void HandleInitDialog();
 	virtual void Relayout();
 	virtual void HandleDpiChange() {}
 
@@ -91,6 +97,7 @@ private:
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	INT_PTR HandleDpiChanged(WPARAM wParam, LPARAM lParam);
+	bool ResizeToDesignSize(const RECT& bounds);
 
 	static HWND c_ActiveDialogWindow;
 	static HACCEL c_Accelerator;
