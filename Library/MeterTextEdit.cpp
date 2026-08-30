@@ -1044,6 +1044,31 @@ bool MeterTextEdit::IsFull() const
 	return m_MaxLength > 0 && m_String.length() >= (size_t)m_MaxLength;
 }
 
+std::wstring MeterTextEdit::GetInputValue(int group)
+{
+	if (group <= 0) return m_Text;
+
+	const int maxGroup = 10;
+
+	// Usually already compiled, since a field has to be focused before it can be typed into, but a
+	// skin can also submit one that was never focused.
+	CompileInputRegExp();
+	if (!m_RegExp || group > maxGroup) return {};
+
+	int ovector[(maxGroup + 1) * 3] = { 0 };
+	const int rc = m_RegExp->Execute(m_Text, PCRE_ANCHORED, ovector, (int)_countof(ovector));
+
+	// The filter accepts a partial match so that the field can be typed into one character at a
+	// time, but the groups of one are unset or hold only the part typed so far.
+	if (rc <= group || ovector[1] != (int)m_Text.length()) return {};
+
+	// PCRE reports -1 for a group that did not participate in the match.
+	const int start = ovector[group * 2];
+	if (start < 0) return {};
+
+	return m_Text.substr(start, (size_t)(ovector[group * 2 + 1] - start));
+}
+
 void MeterTextEdit::SetInputRegExp(const std::wstring& pattern)
 {
 	// A dynamic InputRegExp is re-read on every update, so an unchanged pattern must keep whatever

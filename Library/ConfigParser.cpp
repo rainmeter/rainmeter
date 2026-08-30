@@ -1148,11 +1148,23 @@ std::optional<std::wstring> ConfigParser::GetDollarInputVariable(std::wstring_vi
 	if (!section || section->GetTypeID() != TypeID<MeterTextEdit>()) return std::nullopt;
 
 	StringParser strParser(variable);
-	if (!strParser.Consume(L"Input") || !strParser.IsConsumed()) return std::nullopt;
+	if (!strParser.Consume(L"Input")) return std::nullopt;
+
+	// An optional ":MatchN" selects a group of the InputFilter pattern.
+	int group = 0;
+	if (!strParser.IsConsumed())
+	{
+		if (!strParser.Consume(L':') || !strParser.Consume(L"Match")) return std::nullopt;
+
+		const auto index = strParser.ConsumeRestInt();
+		if (!index.has_value() || *index < 0) return std::nullopt;
+
+		group = *index;
+	}
 
 	// The meter's text before Prefix, Postfix and StringCase are applied, which for an editable
 	// meter is exactly what the user typed.
-	return ((MeterTextEdit*)section)->GetText();
+	return ((MeterTextEdit*)section)->GetInputValue(group);
 }
 
 std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Meter* meter)
