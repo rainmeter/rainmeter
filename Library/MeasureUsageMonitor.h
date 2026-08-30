@@ -71,7 +71,7 @@ protected:
 
 private:
 	// A collector has nothing to report until it has collected twice, which a measure with a high
-	// UpdateDivider would otherwise sit out
+	// or negative UpdateDivider would otherwise sit out
 	enum class State
 	{
 		Starting,

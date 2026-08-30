@@ -917,7 +917,10 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	{
 		m_OriginalUpdateDivider = m_UpdateDivider;
 
-		const bool wait = m_Registered && m_UpdateDivider > 1 && !HasCollectedData();
+		// A divider below zero means the measure only updates when a bang asks it to, which would
+		// otherwise leave it reporting nothing until the second such bang
+		const bool divided = m_UpdateDivider > 1 || m_UpdateDivider < 0;
+		const bool wait = m_Registered && divided && !HasCollectedData();
 		m_State = wait ? State::WaitingForInitialValue : State::Starting;
 		if (wait) m_UpdateDivider = 1;
 	}
