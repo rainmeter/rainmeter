@@ -853,10 +853,10 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, SkinPositionSpace posSpac
 			const RECT& r = physical ? monitor.screen : monitor.logicalScreen;
 			if (pt.x >= r.left && pt.x < r.right && pt.y >= r.top && pt.y < r.bottom)
 			{
-				x = min(x, r.right - w);
-				x = max(x, r.left);
-				y = min(y, r.bottom - h);
-				y = max(y, r.top);
+				x = std::min(x, (int)r.right - w);
+				x = std::max(x, (int)r.left);
+				y = std::min(y, (int)r.bottom - h);
+				y = std::max(y, (int)r.top);
 				return;
 			}
 		}
@@ -865,10 +865,10 @@ void Skin::ClampPositionToScreenBounds(int& x, int& y, SkinPositionSpace posSpac
 	// No monitor found for the window -> Use the default work area
 	const int index = MonitorUtil::GetMultiMonitorInfo().primary - 1;
 	const RECT& r = physical ? monitors[index].work : monitors[index].logicalWork;
-	x = min(x, r.right - w);
-	x = max(x, r.left);
-	y = min(y, r.bottom - h);
-	y = max(y, r.top);
+	x = std::min(x, (int)r.right - w);
+	x = std::max(x, (int)r.left);
+	y = std::min(y, (int)r.bottom - h);
+	y = std::max(y, (int)r.top);
 }
 
 POINT Skin::ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR specificMonitor)
@@ -1116,7 +1116,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::SetUpdate:
 		KillTimer(m_Window, TIMER_METER);
-		m_WindowUpdate = max(m_Parser.ParseInt(args[0].c_str(), INTERVAL_METER), -1);
+		m_WindowUpdate = std::max(m_Parser.ParseInt(args[0].c_str(), INTERVAL_METER), -1);
 		if (m_WindowUpdate >= 0)
 		{
 			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
@@ -1325,7 +1325,7 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::FadeDuration:
 		{
 			int duration = m_Parser.ParseInt(args[0].c_str(), 0);
-			m_NewFadeDuration = max(duration, 0);
+			m_NewFadeDuration = std::max(duration, 0);
 		}
 		break;
 
@@ -1416,8 +1416,8 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		{
 			const std::wstring& arg = args[0];
 			m_AlphaValue = m_Parser.ParseInt(arg.c_str(), 255);
-			m_AlphaValue = max(m_AlphaValue, 0);
-			m_AlphaValue = min(m_AlphaValue, 255);
+			m_AlphaValue = std::max(m_AlphaValue, 0);
+			m_AlphaValue = std::min(m_AlphaValue, 255);
 			UpdateWindowTransparency(m_AlphaValue);
 		}
 		break;
@@ -2280,12 +2280,12 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	}
 
 	m_AlphaValue = parser.ReadInt(section, makeKey(L"AlphaValue"), 255);
-	m_AlphaValue = max(m_AlphaValue, 0);
-	m_AlphaValue = min(m_AlphaValue, 255);
+	m_AlphaValue = std::max(m_AlphaValue, 0);
+	m_AlphaValue = std::min(m_AlphaValue, 255);
 	if (isDefault) writeDefaultInt(L"AlphaValue", m_AlphaValue);
 
 	m_FadeDuration = parser.ReadInt(section, makeKey(L"FadeDuration"), 250);
-	m_FadeDuration = max(m_FadeDuration, 0);
+	m_FadeDuration = std::max(m_FadeDuration, 0);
 	if (isDefault) writeDefaultInt(L"FadeDuration", m_FadeDuration);
 
 	if (!isDefault)
@@ -2467,7 +2467,7 @@ void Skin::ReadUpdateOption()
 		const auto invisibleUpdate = updateParser.ConsumeRestIntOrFormula(mathParser, skipWS);
 		if (invisibleUpdate)
 		{
-			m_InvisibleUpdate = max(invisibleUpdate.value(), 0);
+			m_InvisibleUpdate = std::max(invisibleUpdate.value(), 0);
 			return;
 		}
 	}
@@ -2902,16 +2902,16 @@ bool Skin::ResizeWindow(bool reset)
 	{
 		if ((*j)->IsContained()) continue;
 		int mr = (*j)->GetX() + (*j)->GetW();
-		w = max(w, mr);
+		w = std::max(w, mr);
 		int mb = (*j)->GetY() + (*j)->GetH();
-		h = max(h, mb);
+		h = std::max(h, mb);
 	}
 
 	w += m_BackgroundMargins.right;
 	h += m_BackgroundMargins.bottom;
 
-	w = max(w, m_BackgroundSize.cx);
-	h = max(h, m_BackgroundSize.cy);
+	w = std::max(w, (int)m_BackgroundSize.cx);
+	h = std::max(h, (int)m_BackgroundSize.cy);
 
 	if (!reset && m_WindowW == w && m_WindowH == h)
 	{
@@ -2954,8 +2954,8 @@ bool Skin::ResizeWindow(bool reset)
 			}
 			else
 			{
-				w = max(w, m_BackgroundSize.cx);
-				h = max(h, m_BackgroundSize.cy);
+				w = std::max(w, (int)m_BackgroundSize.cx);
+				h = std::max(h, (int)m_BackgroundSize.cy);
 			}
 
 			// Get the size form the background bitmap
@@ -3577,8 +3577,8 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				value /= (double)m_FadeDuration;
 				value *= (double)(m_FadeEndValue - m_FadeStartValue);
 				value += (double)m_FadeStartValue;
-				value = min(value, 255.0);
-				value = max(value, 0.0);
+				value = std::min(value, 255.0);
+				value = std::max(value, 0.0);
 
 				UpdateWindowTransparency((int)value);
 			}
@@ -4421,7 +4421,7 @@ void Skin::UpdateZoom()
 
 void Skin::ApplyZoomScale(float zoom, bool writeOptions)
 {
-	zoom = max(zoom, 0.1f);
+	zoom = std::max(zoom, 0.1f);
 	if (zoom == m_ZoomScale && writeOptions) return;
 
 	m_ZoomScale = zoom;
@@ -5415,7 +5415,7 @@ bool Skin::SetInputFocus(MeterTextEdit* meter, std::wstring* dismissCommand)
 		const UINT blinkTime = GetCaretBlinkTime();
 		if (blinkTime != 0U && blinkTime != INFINITE)
 		{
-			SetTimer(m_Window, TIMER_CARET, max(blinkTime / 4U, 25U), nullptr);
+			SetTimer(m_Window, TIMER_CARET, std::max(blinkTime / 4U, 25U), nullptr);
 		}
 	}
 	else

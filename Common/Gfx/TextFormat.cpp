@@ -298,7 +298,7 @@ void ApplyCase(std::wstring& str, const std::vector<DWRITE_TEXT_RANGE>& ranges,
 		// which is not necessarily the string being formatted here.
 		if (range.startPosition >= str.length()) continue;
 
-		const size_t count = min((size_t)range.length, str.length() - range.startPosition);
+		const size_t count = std::min((size_t)range.length, str.length() - range.startPosition);
 		if (count == 0) continue;
 
 		WCHAR* text = &str[range.startPosition];
@@ -371,8 +371,8 @@ bool TextFormat::CreateLayout(ID2D1DeviceContext* target, const std::wstring& sr
 	}
 
 	// The width and height of a DirectWrite layout must be non-negative.
-	maxW = max(0.0f, maxW);
-	maxH = max(0.0f, maxH);
+	maxW = std::max(0.0f, maxW);
+	maxH = std::max(0.0f, maxH);
 
 	if (m_Trimming)
 	{
@@ -792,7 +792,7 @@ bool TextFormat::SetInlineOptions(const std::vector<TextInlineOption>& options)
 
 void TextFormat::SetInlineRanges(const std::vector<std::vector<TextInlineRange>>& ranges)
 {
-	const size_t count = min(m_InlineOptions.size(), ranges.size());
+	const size_t count = std::min(m_InlineOptions.size(), ranges.size());
 	for (size_t i = 0; i < count; ++i)
 	{
 		auto& state = m_InlineOptions[i];

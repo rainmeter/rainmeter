@@ -275,7 +275,7 @@ bool MeterHistogram::Update()
 				double newValue = 0.0;
 				for (int i = 0; i < maxSize; ++i)
 				{
-					newValue = max(newValue, m_PrimaryValues[i]);
+					newValue = std::max(newValue, m_PrimaryValues[i]);
 				}
 
 				// Scale the value up to nearest power of 2
@@ -296,7 +296,7 @@ bool MeterHistogram::Update()
 				{
 					for (int i = 0; i < maxSize; ++i)
 					{
-						newValue = max(newValue, m_SecondaryValues[i]);
+						newValue = std::max(newValue, m_SecondaryValues[i]);
 					}
 
 					// Scale the value up to nearest power of 2
@@ -402,8 +402,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				(m_PrimaryValues[(i + m_MeterPos) % displayH] - m_MinPrimaryValue) / range;
 
 			int primaryBarHeight = (int)(displayW * value);
-			primaryBarHeight = min(displayW, primaryBarHeight);
-			primaryBarHeight = max(0, primaryBarHeight);
+			primaryBarHeight = std::min(displayW, primaryBarHeight);
+			primaryBarHeight = std::max(0, primaryBarHeight);
 
 			const FLOAT primaryBarHeightF = (FLOAT)primaryBarHeight;
 
@@ -414,11 +414,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					(m_SecondaryValues[(i + m_MeterPos) % displayH] - m_MinSecondaryValue) / range;
 
 				int secondaryBarHeight = (int)(displayW * value);
-				secondaryBarHeight = min(displayW, secondaryBarHeight);
-				secondaryBarHeight = max(0, secondaryBarHeight);
+				secondaryBarHeight = std::min(displayW, secondaryBarHeight);
+				secondaryBarHeight = std::max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
-				const FLOAT bothBarHeight = (FLOAT)min(primaryBarHeight, secondaryBarHeight);
+				const FLOAT bothBarHeight = (FLOAT)std::min(primaryBarHeight, secondaryBarHeight);
 				const FLOAT secondaryBarHeightF = (FLOAT)secondaryBarHeight;
 
 				// Draw image/color rectangle for both lines
@@ -465,8 +465,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				(m_PrimaryValues[((i + m_MeterPos) % displayW)] - m_MinPrimaryValue) / range;
 
 			int primaryBarHeight = (int)(displayH * value);
-			primaryBarHeight = min(displayH, primaryBarHeight);
-			primaryBarHeight = max(0, primaryBarHeight);
+			primaryBarHeight = std::min(displayH, primaryBarHeight);
+			primaryBarHeight = std::max(0, primaryBarHeight);
 
 			const FLOAT primaryBarHeightF = (FLOAT)primaryBarHeight;
 
@@ -477,11 +477,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 					(m_SecondaryValues[(i + m_MeterPos) % displayW] - m_MinSecondaryValue) / range;
 
 				int secondaryBarHeight = (int)(displayH * value);
-				secondaryBarHeight = min(displayH, secondaryBarHeight);
-				secondaryBarHeight = max(0, secondaryBarHeight);
+				secondaryBarHeight = std::min(displayH, secondaryBarHeight);
+				secondaryBarHeight = std::max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
-				const FLOAT bothBarHeight = (FLOAT)min(primaryBarHeight, secondaryBarHeight);
+				const FLOAT bothBarHeight = (FLOAT)std::min(primaryBarHeight, secondaryBarHeight);
 				const FLOAT secondaryBarHeightF = (FLOAT)secondaryBarHeight;
 
 				// Draw image/color rectangle for both lines

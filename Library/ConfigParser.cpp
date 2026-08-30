@@ -473,8 +473,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			if (*decimalsSz)
 			{
 				decimals = _wtoi(decimalsSz);
-				decimals = max(0, decimals);
-				decimals = min(32, decimals);
+				decimals = std::max(0, decimals);
+				decimals = std::min(32, decimals);
 			}
 			else
 			{

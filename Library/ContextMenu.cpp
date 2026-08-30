@@ -25,8 +25,8 @@ HBITMAP GetPartialMatchMenuBitmap()
 	{
 		const int width = GetSystemMetrics(SM_CXMENUCHECK);
 		const int height = GetSystemMetrics(SM_CYMENUCHECK);
-		const int dashWidth = max(6, width / 2);
-		const int dashHeight = max(2, height / 8);
+		const int dashWidth = std::max(6, width / 2);
+		const int dashHeight = std::max(2, height / 8);
 		const int dashLeft = (width - dashWidth) / 2;
 		const int dashTop = (height - dashHeight) / 2;
 
@@ -533,7 +533,7 @@ HMENU ContextMenu::CreateSkinSettingsMenu(const std::vector<Skin*>& skins)
 	{
 		if (const auto alpha = GetMatchingSkinValue(skins, [](Skin* skin) { return skin->GetAlphaValue(); }))
 		{
-			UINT checkPos = *alpha <= 1 ? 10 : (UINT)max(0, min(9, (int)(10 - *alpha / 25.5)));
+			UINT checkPos = *alpha <= 1 ? 10 : (UINT)std::max(0, std::min(9, (int)(10 - *alpha / 25.5)));
 			CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 		}
 	}

@@ -64,12 +64,12 @@ static int HitTestZoomDragRect(const RECT& rect, POINT screenPos)
 {
 	if (!PtInRect(&rect, screenPos)) return HTCLIENT;
 
-	const auto w = rect.right - rect.left;
-	const auto h = rect.bottom - rect.top;
-	const int edgeX = min(g_ZoomDragEdgeSize, max(1, w / 2));
-	const int edgeY = min(g_ZoomDragEdgeSize, max(1, h / 2));
-	const int cornerX = min(g_ZoomDragCornerSize, max(1, w / 2));
-	const int cornerY = min(g_ZoomDragCornerSize, max(1, h / 2));
+	const int w = (int)(rect.right - rect.left);
+	const int h = (int)(rect.bottom - rect.top);
+	const int edgeX = std::min(g_ZoomDragEdgeSize, std::max(1, w / 2));
+	const int edgeY = std::min(g_ZoomDragEdgeSize, std::max(1, h / 2));
+	const int cornerX = std::min(g_ZoomDragCornerSize, std::max(1, w / 2));
+	const int cornerY = std::min(g_ZoomDragCornerSize, std::max(1, h / 2));
 	const int leftDistance = screenPos.x - rect.left;
 	const int rightDistance = rect.right - screenPos.x - 1;
 	const int topDistance = screenPos.y - rect.top;
@@ -124,7 +124,7 @@ static int HitTestZoomDragRect(const RECT& rect, POINT screenPos)
 
 static BYTE ColorToByte(float value)
 {
-	return (BYTE)max(0, min(255, (int)roundf(value * 255.0f)));
+	return (BYTE)std::max(0, std::min(255, (int)roundf(value * 255.0f)));
 }
 
 static DWORD MakePixel(const D2D1_COLOR_F& color, BYTE alpha)
@@ -141,9 +141,9 @@ static void DrawHorizontalDash(DWORD* pixels, int width, int height, int y, DWOR
 	for (int x = 0, dash = 0; x < width; x += g_DashLength, ++dash)
 	{
 		const DWORD dashColor = (dash % 2 == 0) ? color : alternateColor;
-		for (int dashX = x; dashX < min(width, x + g_DashLength); ++dashX)
+		for (int dashX = x; dashX < std::min(width, x + g_DashLength); ++dashX)
 		{
-			for (int offset = 0; offset < min(g_DashThickness, height); ++offset)
+			for (int offset = 0; offset < std::min(g_DashThickness, height); ++offset)
 			{
 				pixels[(y + offset) * width + dashX] = dashColor;
 			}
@@ -156,9 +156,9 @@ static void DrawVerticalDash(DWORD* pixels, int width, int height, int x, DWORD 
 	for (int y = 0, dash = 0; y < height; y += g_DashLength, ++dash)
 	{
 		const DWORD dashColor = (dash % 2 == 0) ? color : alternateColor;
-		for (int dashY = y; dashY < min(height, y + g_DashLength); ++dashY)
+		for (int dashY = y; dashY < std::min(height, y + g_DashLength); ++dashY)
 		{
-			for (int offset = 0; offset < min(g_DashThickness, width); ++offset)
+			for (int offset = 0; offset < std::min(g_DashThickness, width); ++offset)
 			{
 				pixels[dashY * width + x + offset] = dashColor;
 			}
@@ -268,9 +268,9 @@ void SkinSelectionOverlay::Update()
 	const DWORD dashColor = MakePixel(m_Skin->m_SelectedColor, 240);
 	const DWORD alternateDashColor = MakePixel(D2D1::ColorF(D2D1::ColorF::Black), 240);
 	DrawHorizontalDash(pixels, width, height, 0, dashColor, alternateDashColor);
-	DrawHorizontalDash(pixels, width, height, max(0, height - g_DashThickness), dashColor, alternateDashColor);
+	DrawHorizontalDash(pixels, width, height, std::max(0, height - g_DashThickness), dashColor, alternateDashColor);
 	DrawVerticalDash(pixels, width, height, 0, dashColor, alternateDashColor);
-	DrawVerticalDash(pixels, width, height, max(0, width - g_DashThickness), dashColor, alternateDashColor);
+	DrawVerticalDash(pixels, width, height, std::max(0, width - g_DashThickness), dashColor, alternateDashColor);
 
 	POINT dst = { 0 };
 	POINT src = { 0 };
@@ -320,8 +320,8 @@ void SkinSelectionOverlay::BeginZoomDrag(int hit, POINT screenPos)
 
 SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT screenPos, int windowW, int windowH, float dpiScale, float currentZoom, POINT currentPos)
 {
-	const int startW = max(1, m_ZoomDrag->startRect.right - m_ZoomDrag->startRect.left);
-	const int startH = max(1, m_ZoomDrag->startRect.bottom - m_ZoomDrag->startRect.top);
+	const int startW = std::max(1, (int)(m_ZoomDrag->startRect.right - m_ZoomDrag->startRect.left));
+	const int startH = std::max(1, (int)(m_ZoomDrag->startRect.bottom - m_ZoomDrag->startRect.top));
 	const bool horizontal = IsLeftHit(m_ZoomDrag->initialHit) || IsRightHit(m_ZoomDrag->initialHit);
 	const bool vertical = IsTopHit(m_ZoomDrag->initialHit) || IsBottomHit(m_ZoomDrag->initialHit);
 
@@ -368,8 +368,8 @@ SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT 
 		draggedH = startH + dy;
 	}
 
-	draggedW = max(1, draggedW);
-	draggedH = max(1, draggedH);
+	draggedW = std::max(1, draggedW);
+	draggedH = std::max(1, draggedH);
 
 	float zoom = m_ZoomDrag->startZoom;
 	if (horizontal && vertical)
@@ -392,7 +392,7 @@ SkinSelectionOverlay::ZoomDragResult SkinSelectionOverlay::UpdateZoomDrag(POINT 
 		zoom *= (float)draggedH / (float)startH;
 	}
 
-	zoom = max((float)g_ZoomDragMinPercent / 100.0f, min((float)g_ZoomDragMaxPercent / 100.0f, zoom));
+	zoom = std::max((float)g_ZoomDragMinPercent / 100.0f, std::min((float)g_ZoomDragMaxPercent / 100.0f, zoom));
 	zoom = floorf(zoom * 100.0f + 0.5f) / 100.0f;
 
 	int x = m_ZoomDrag->startRect.left;

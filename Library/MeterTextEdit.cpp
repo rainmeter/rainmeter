@@ -472,8 +472,8 @@ bool MeterTextEdit::Update()
 		SyncDrawnString();
 
 		const UINT32 len = (UINT32)m_String.length();
-		m_CaretPos = min(m_CaretPos, len);
-		m_SelectionAnchor = min(m_SelectionAnchor, len);
+		m_CaretPos = std::min(m_CaretPos, len);
+		m_SelectionAnchor = std::min(m_SelectionAnchor, len);
 
 		UpdateAutoSizeForText();
 
@@ -595,8 +595,8 @@ void MeterTextEdit::EnsureCaretVisible()
 void MeterTextEdit::ClampTextOffset()
 {
 	// Never scroll past the start; there is nothing to reveal before it.
-	m_TextOffset.x = max(m_TextOffset.x, 0.0f);
-	m_TextOffset.y = max(m_TextOffset.y, 0.0f);
+	m_TextOffset.x = std::max(m_TextOffset.x, 0.0f);
+	m_TextOffset.y = std::max(m_TextOffset.y, 0.0f);
 
 	if (m_TextOffset.x == 0.0f && m_TextOffset.y == 0.0f) return;
 
@@ -612,12 +612,12 @@ void MeterTextEdit::ClampTextOffset()
 
 	if (endCaret.right < box.right)
 	{
-		m_TextOffset.x = max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
+		m_TextOffset.x = std::max(m_TextOffset.x - (box.right - endCaret.right), 0.0f);
 	}
 
 	if (endCaret.bottom < box.bottom)
 	{
-		m_TextOffset.y = max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
+		m_TextOffset.y = std::max(m_TextOffset.y - (box.bottom - endCaret.bottom), 0.0f);
 	}
 }
 
@@ -637,7 +637,7 @@ FLOAT MeterTextEdit::GetLineHeight()
 		return 0.0f;
 	}
 
-	return max(caret.bottom - caret.top, 0.0f);
+	return std::max(caret.bottom - caret.top, 0.0f);
 }
 
 void MeterTextEdit::ScrollByLine(int lines)
@@ -670,7 +670,7 @@ void MeterTextEdit::DrawFocusBorder(Gfx::Canvas& canvas)
 
 	// Inset, so the border frames the meter rather than bleeding onto its neighbours. A border
 	// thicker than the meter collapses to a filled rect rather than drawing the edges twice.
-	const FLOAT w = min(m_FocusBorderWidth, min((right - left) / 2.0f, (bottom - top) / 2.0f));
+	const FLOAT w = std::min(m_FocusBorderWidth, std::min((right - left) / 2.0f, (bottom - top) / 2.0f));
 	if (w <= 0.0f) return;
 
 	// Drawn as four strips that meet rather than overlap at the corners, so a semi-transparent
@@ -809,7 +809,7 @@ void MeterTextEdit::Reset()
 
 void MeterTextEdit::MoveCaretTo(UINT32 pos, bool extend, bool trailing)
 {
-	m_CaretPos = min(pos, (UINT32)m_String.length());
+	m_CaretPos = std::min(pos, (UINT32)m_String.length());
 	m_CaretTrailing = trailing;
 	if (!extend)
 	{
@@ -855,9 +855,9 @@ void MeterTextEdit::ApplySnapshot(const EditSnapshot& snapshot)
 	SyncDrawnString();
 
 	const UINT32 len = (UINT32)m_String.length();
-	m_CaretPos = min(snapshot.caret, len);
+	m_CaretPos = std::min(snapshot.caret, len);
 	m_CaretTrailing = snapshot.trailing;
-	m_SelectionAnchor = min(snapshot.anchor, len);
+	m_SelectionAnchor = std::min(snapshot.anchor, len);
 	m_CaretBlinkStart = GetTickCount64();
 	m_Submitted = false;
 
@@ -926,10 +926,10 @@ void MeterTextEdit::SelectAll()
 void MeterTextEdit::SelectRange(int start, int length)
 {
 	const UINT32 textLength = (UINT32)m_String.length();
-	const UINT32 from = min((UINT32)max(start, 0), textLength);
+	const UINT32 from = std::min((UINT32)std::max(start, 0), textLength);
 
 	m_SelectionAnchor = from;
-	m_CaretPos = length < 0 ? textLength : min(from + (UINT32)length, textLength);
+	m_CaretPos = length < 0 ? textLength : std::min(from + (UINT32)length, textLength);
 	m_CaretTrailing = true;
 	m_CaretBlinkStart = GetTickCount64();
 	m_LastEditKind = EditKind::None;
@@ -965,7 +965,7 @@ bool MeterTextEdit::SelectWordAtCaret()
 	if (!m_AcceptsInput || m_String.empty()) return false;
 
 	const UINT32 len = (UINT32)m_String.length();
-	const UINT32 pos = min(m_CaretPos, len);
+	const UINT32 pos = std::min(m_CaretPos, len);
 
 	// Double-clicking past the end of a word should still select that word, so start from the
 	// character to the left when the caret sits on a boundary.
@@ -1016,7 +1016,7 @@ bool MeterTextEdit::GetAdjacentCaretIndex(UINT32 pos, bool forward, UINT32& adja
 UINT32 MeterTextEdit::FindWordBoundary(UINT32 pos, bool forward) const
 {
 	const UINT32 len = (UINT32)m_String.length();
-	pos = min(pos, len);
+	pos = std::min(pos, len);
 
 	if (forward)
 	{

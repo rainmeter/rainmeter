@@ -750,8 +750,8 @@ void DialogManage::TabSkins::SetControls()
 		else
 		{
 			int value = (int)(10 - alpha / 25.5);
-			value = min(9, value);
-			value = max(0, value);
+			value = std::min(9, value);
+			value = std::max(0, value);
 			ComboBox_SetCurSel(item, value);
 		}
 

@@ -1255,7 +1255,7 @@ int DialogInstall::CompareVersions(const std::wstring& strA, const std::wstring&
 	std::vector<std::wstring> arrayA = Tokenize(strA, L".");
 	std::vector<std::wstring> arrayB = Tokenize(strB, L".");
 
-	size_t len = max(arrayA.size(), arrayB.size());
+	size_t len = std::max(arrayA.size(), arrayB.size());
 	for (size_t i = 0; i < len; ++i)
 	{
 		int a = 0;

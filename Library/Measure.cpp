@@ -482,8 +482,8 @@ bool Measure::Update(bool rereadOptions)
 			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
 
 			double medianValue = medianArray[MEDIAN_SIZE / 2];
-			m_MaxValue = max(m_MaxValue, medianValue);
-			m_MinValue = min(m_MinValue, medianValue);
+			m_MaxValue = std::max(m_MaxValue, medianValue);
+			m_MinValue = std::min(m_MinValue, medianValue);
 		}
 
 		m_ValueAssigned = true;
@@ -532,8 +532,8 @@ double Measure::GetRelativeValue()
 	{
 		double value = GetValue();
 
-		value = min(m_MaxValue, value);
-		value = max(m_MinValue, value);
+		value = std::min(m_MaxValue, value);
+		value = std::max(m_MinValue, value);
 
 		value -= m_MinValue;
 

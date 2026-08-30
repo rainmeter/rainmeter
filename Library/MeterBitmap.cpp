@@ -43,9 +43,9 @@ void MeterBitmap::Initialize()
 			m_H = bitmap->GetHeight();
 
 			int extraSpace = (m_Digits - 1) * m_Separation;
-			extraSpace = max(0, extraSpace);
+			extraSpace = std::max(0, extraSpace);
 
-			int digits = max(1, m_Digits);
+			int digits = std::max(1, m_Digits);
 
 			if (m_H > m_W)
 			{
@@ -103,7 +103,7 @@ bool MeterBitmap::HitTest(int x, int y)
 		else
 		{
 			int tmpValue = (int)m_Value;
-			tmpValue = max(0, tmpValue);		// Only positive integers are supported
+			tmpValue = std::max(0, tmpValue);		// Only positive integers are supported
 
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			do
@@ -252,9 +252,9 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		// of digits and separation. We need to subtract that amount here so that the meter
 		// will draw in the correct place.
 		int extraSpace = (m_Digits - 1) * m_Separation;
-		extraSpace = max(0, extraSpace);
+		extraSpace = std::max(0, extraSpace);
 
-		int digits = max(1, m_Digits);
+		int digits = std::max(1, m_Digits);
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
@@ -275,10 +275,10 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		FLOAT height = meterRect.bottom - meterRect.top;
 
 		__int64 value = (__int64)m_Value;
-		value = max(0, value);		// Only positive integers are supported
+		value = std::max(0LL, value);		// Only positive integers are supported
 
 		__int64 transitionValue = (__int64)m_TransitionStartValue;
-		transitionValue = max(0, transitionValue);		// Only positive integers are supported
+		transitionValue = std::max(0LL, transitionValue);		// Only positive integers are supported
 
 		// Calc the number of numbers
 		int numOfNums = 0;
@@ -424,7 +424,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				frame = (int)(m_TransitionStartValue * realFrames) * (m_TransitionFrameCount + 1);
 				frame += (int)frameAdjustment;
 				frame %= m_FrameCount;
-				frame = max(0, frame);
+				frame = std::max(0, frame);
 			}
 		}
 

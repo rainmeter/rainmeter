@@ -143,8 +143,8 @@ private:
 	// to draw, and only when the font changes, since nothing else can change the answer.
 	void UpdatePasswordChar();
 
-	UINT32 GetSelectionStart() const { return min(m_CaretPos, m_SelectionAnchor); }
-	UINT32 GetSelectionEnd() const { return max(m_CaretPos, m_SelectionAnchor); }
+	UINT32 GetSelectionStart() const { return std::min(m_CaretPos, m_SelectionAnchor); }
+	UINT32 GetSelectionEnd() const { return std::max(m_CaretPos, m_SelectionAnchor); }
 	bool HasSelection() const { return m_CaretPos != m_SelectionAnchor; }
 
 	// Moves the caret, collapsing the selection onto it unless |extend| is set. |trailing| says
