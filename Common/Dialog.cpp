@@ -179,7 +179,7 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 
 			// Only a dialog the user can resize has a size worth restoring, and the stored one is at
 			// 96 DPI. The rest follow their design.
-			SIZE size = GetDesignWindowSize();
+			SIZE size = GetWindowSizeForDesignSize(m_DesignSize);
 			if (IsResizable(m_Window))
 			{
 				size.cx = MulDiv(wp.rcNormalPosition.right - wp.rcNormalPosition.left, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
@@ -363,10 +363,10 @@ INT_PTR Dialog::HandleDpiChanged(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-SIZE Dialog::GetDesignWindowSize() const
+SIZE Dialog::GetWindowSizeForDesignSize(const SIZE& designSize) const
 {
-	const SIZE client = DpiUtil::MapDialogUnits(m_DesignSize, m_Dpi);
-	RECT rect = { 0, 0, client.cx, client.cy };
+	const SIZE size = DpiUtil::MapDialogUnits(designSize, m_Dpi);
+	RECT rect = { 0, 0, size.cx, size.cy };
 	const DWORD style = (DWORD)GetWindowLongPtr(m_Window, GWL_STYLE);
 	const DWORD exStyle = (DWORD)GetWindowLongPtr(m_Window, GWL_EXSTYLE);
 	AdjustWindowRectExForDpi(&rect, style, FALSE, exStyle, m_Dpi);
@@ -375,7 +375,7 @@ SIZE Dialog::GetDesignWindowSize() const
 
 bool Dialog::ResizeToDesignSize(const RECT& bounds)
 {
-	const SIZE size = GetDesignWindowSize();
+	const SIZE size = GetWindowSizeForDesignSize(m_DesignSize);
 
 	// Stay centered within the given bounds so that DS_CENTER and the position suggested on a DPI
 	// change are both preserved.
