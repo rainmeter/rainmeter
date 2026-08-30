@@ -81,7 +81,6 @@ private:
 
 	void RegisterMeasure();
 	void UnregisterMeasure();
-	void UpdatePidReference(bool needed);
 	bool HasCollectedData();
 
 	CounterOptions m_Options;
@@ -101,5 +100,4 @@ private:
 	// Keep a measure that reads its options every update from spamming the log
 	bool m_RegisterFailed;
 	bool m_LoggedNoTotal;
-	bool m_PidReferenced;
 };

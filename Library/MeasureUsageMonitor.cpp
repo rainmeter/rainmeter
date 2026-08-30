@@ -19,107 +19,53 @@ using CounterOptions = MeasureUsageMonitor::CounterOptions;
 // collecting more often than PerfMon itself does.
 const DWORD c_UpdateRate = 1000;
 
-// Translating the instance names of the GPU counters needs a process ID to name mapping, which is
-// itself read from the "Process" category. It is shared by every measure that asks for it.
-CriticalSection g_PidLock;         // Guards the mapping
-CriticalSection g_PidUpdateLock;   // Keeps collections from overlapping
-ankerl::unordered_dense::map<DWORD, std::wstring> g_Pids;
-PDH_HQUERY g_PidQuery = nullptr;
-PDH_HCOUNTER g_PidCounter = nullptr;
-HANDLE g_PidTimer = nullptr;
-UINT g_PidReferences = 0;
-
-void UpdatePids()
+std::wstring GetProcessName(DWORD pid)
 {
-	CriticalSectionTryLock lock(g_PidUpdateLock);
-	if (!lock) return;
+	typedef LONG (WINAPI *FPNtQuerySystemInformation)(UINT, PVOID, ULONG, PULONG);
+	static const auto ntQuerySystemInformation =
+		(FPNtQuerySystemInformation)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
 
-	// The query is only ever touched here, and the timer is always torn down before it is closed
-	if (PdhCollectQueryData(g_PidQuery) != ERROR_SUCCESS) return;
+	// Undocumented, but the only way to name a process without opening it. OpenProcess is no good
+	// because PROCESS_QUERY_LIMITED_INFORMATION is still denied for the SYSTEM and window manager
+	// processes an unelevated Rainmeter has to name, dwm.exe among them.
+	const UINT SystemProcessIdInformation = 88;
 
-	// Kept between collections for the same reason the collectors keep theirs
-	static std::vector<BYTE> s_Buffer;
-
-	DWORD count = 0;
-	if (!PdhUtil::GetRawArray(g_PidCounter, s_Buffer, count)) return;
-
-	const auto items = (const PDH_RAW_COUNTER_ITEM*)s_Buffer.data();
-
-	ankerl::unordered_dense::map<DWORD, std::wstring> pids;
-	pids.reserve(count);
-
-	for (DWORD i = 0; i < count; ++i)
+	struct SYSTEM_PROCESS_ID_INFORMATION
 	{
-		// Both "Idle" and "_Total" report a process ID of zero
-		if (!PdhUtil::IsValidStatus(items[i].RawValue.CStatus) || items[i].RawValue.FirstValue == 0) continue;
+		HANDLE ProcessId;
+		struct
+		{
+			USHORT Length;
+			USHORT MaximumLength;
+			WCHAR* Buffer;
+		} ImageName;
+	};
 
-		// The name is stored as PerfMon reports it, since rolling up similar names happens after
-		// the translation
-		pids.insert_or_assign((DWORD)items[i].RawValue.FirstValue, items[i].szName);
-	}
+	WCHAR buffer[1024];
+	SYSTEM_PROCESS_ID_INFORMATION info = {};
+	info.ProcessId = (HANDLE)(ULONG_PTR)pid;
+	info.ImageName.MaximumLength = (USHORT)sizeof(buffer);
+	info.ImageName.Buffer = buffer;
+	if (ntQuerySystemInformation(SystemProcessIdInformation, &info, sizeof(info), nullptr) < 0) return {};
 
-	CriticalSectionLock dataLock(g_PidLock);
-	g_Pids = std::move(pids);
+	// Note that this is a kernel path (e.g. "\Device\HarddiskVolume3\Windows\explorer.exe")
+	std::wstring_view name(info.ImageName.Buffer, info.ImageName.Length / sizeof(WCHAR));
+
+	const size_t separator = name.rfind(L'\\');
+	if (separator != std::wstring_view::npos) name = name.substr(separator + 1);
+
+	// PerfMon leaves the extension off its instance names, and the block lists and Substitute
+	// options of skins are written against that spelling
+	const size_t dot = name.rfind(L'.');
+	if (dot != std::wstring_view::npos && dot > 0) name = name.substr(0, dot);
+
+	return std::wstring(name);
 }
 
-void CALLBACK PidTimerProc(void* context, BOOLEAN timerOrWaitFired)
-{
-	UpdatePids();
-}
-
-void StopPidCollector()
-{
-	g_PidReferences = 0;
-
-	if (g_PidTimer)
-	{
-		// Waits for a collection that is already running to finish
-		DeleteTimerQueueTimer(nullptr, g_PidTimer, INVALID_HANDLE_VALUE);
-		g_PidTimer = nullptr;
-	}
-
-	if (g_PidQuery)
-	{
-		PdhCloseQuery(g_PidQuery);   // Also closes every counter that was added to the query
-		g_PidQuery = nullptr;
-		g_PidCounter = nullptr;
-	}
-
-	CriticalSectionLock lock(g_PidLock);
-	g_Pids.clear();
-}
-
-void AddPidReference()
-{
-	if (++g_PidReferences > 1) return;
-
-	if (PdhOpenQuery(nullptr, 0, &g_PidQuery) != ERROR_SUCCESS)
-	{
-		g_PidQuery = nullptr;
-		return;
-	}
-
-	if (!PdhUtil::AddCounter(g_PidQuery, L"Process", L"ID Process", L"*", &g_PidCounter))
-	{
-		LogDebugF(L"UsageMonitor: Could not read the process IDs, so PIDToName will be ignored");
-		PdhCloseQuery(g_PidQuery);
-		g_PidQuery = nullptr;
-		return;
-	}
-
-	CreateTimerQueueTimer(&g_PidTimer, nullptr, PidTimerProc, nullptr, 0, c_UpdateRate, WT_EXECUTEDEFAULT);
-}
-
-void ReleasePidReference()
-{
-	if (g_PidReferences == 0 || --g_PidReferences > 0) return;
-
-	StopPidCollector();
-}
-
-// Replaces a "pid_1234_..." instance name with the name of the process that owns it. Returns false
-// when the instance should be dropped because the process is not one we know about.
-bool TranslatePid(std::wstring& name)
+// Replaces a "pid_1234_..." instance name with the name of the process that owns it, using and
+// filling in the names already looked up for this build. Returns false when the instance should be
+// dropped because its process no longer exists.
+bool TranslatePid(std::wstring& name, ankerl::unordered_dense::map<DWORD, std::wstring>& pidNames)
 {
 	const size_t position = name.find(L"pid_");
 	if (position == std::wstring::npos) return true;
@@ -133,13 +79,16 @@ bool TranslatePid(std::wstring& name)
 	const DWORD pid = wcstoul(number.c_str(), &stop, 10);
 	if (stop == nullptr || *stop != L'\0') return true;
 
-	CriticalSectionLock lock(g_PidLock);
+	// A process gets an instance per GPU engine it uses, and every one of them carries the same
+	// process ID, so the name is only looked up for the first of them. Looking up a process that
+	// has already exited gives an empty name, which is remembered just the same.
+	auto found = pidNames.find(pid);
+	if (found == pidNames.end())
+	{
+		found = pidNames.insert({ pid, GetProcessName(pid) }).first;
+	}
 
-	// Leave the name alone until there is something to translate it with
-	if (g_Pids.empty()) return true;
-
-	const auto found = g_Pids.find(pid);
-	if (found == g_Pids.end()) return false;
+	if (found->second.empty()) return false;
 
 	name = found->second;
 	return true;
@@ -404,6 +353,10 @@ void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER
 {
 	byName.reserve(count);
 
+	// The names are only reused within this one build, so a process ID that has been handed to a
+	// new process since the last one is never named after the process that used to own it
+	ankerl::unordered_dense::map<DWORD, std::wstring> pidNames;
+
 	// Instances of the same name are told apart by a "#1" suffix in every category but "Process V2",
 	// which names them "exename:pid" instead. Colons are common in the names of other categories
 	// (e.g. LogicalDisk and PhysicalDisk), so only "Process V2" is rolled up at one.
@@ -413,7 +366,7 @@ void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER
 	{
 		std::wstring name = items[i].szName;
 
-		if (options.pidToName && !TranslatePid(name)) continue;
+		if (options.pidToName && !TranslatePid(name, pidNames)) continue;
 
 		// Roll up similar names by taking everything before the part that tells the instances apart
 		if (options.rollup)
@@ -706,21 +659,18 @@ MeasureUsageMonitor::MeasureUsageMonitor(Skin* skin, const WCHAR* name) : Measur
 	m_State(State::Starting),
 	m_OriginalUpdateDivider(1),
 	m_RegisterFailed(false),
-	m_LoggedNoTotal(false),
-	m_PidReferenced(false)
+	m_LoggedNoTotal(false)
 {
 }
 
 MeasureUsageMonitor::~MeasureUsageMonitor()
 {
 	UnregisterMeasure();
-	UpdatePidReference(false);
 }
 
 void MeasureUsageMonitor::FinalizeStatic()
 {
 	GetCollectors().clear();
-	StopPidCollector();
 }
 
 void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view section)
@@ -911,8 +861,6 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		RegisterMeasure();
 	}
 
-	UpdatePidReference(m_Registered && m_Options.pidToName);
-
 	if (m_State != State::Normal)
 	{
 		m_OriginalUpdateDivider = m_UpdateDivider;
@@ -1011,14 +959,6 @@ bool MeasureUsageMonitor::HasCollectedData()
 
 	Collector* collector = FindCollector(m_Options.category);
 	return collector != nullptr && collector->HasCollected(m_Options);
-}
-
-void MeasureUsageMonitor::UpdatePidReference(bool needed)
-{
-	if (needed == m_PidReferenced) return;
-
-	m_PidReferenced = needed;
-	needed ? AddPidReference() : ReleasePidReference();
 }
 
 void MeasureUsageMonitor::UpdateValue()
