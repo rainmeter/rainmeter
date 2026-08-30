@@ -5,6 +5,7 @@
     <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
+    <ClCompile Include="DpiUtil.cpp" />
     <ClCompile Include="MenuModifier.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="NetworkUtil.cpp" />

@@ -72,7 +72,7 @@ public:
 	~ControlTemplate();
 
 	typedef const WCHAR* (*GetStringFunc)(UINT id);
-	void Initialize(const Control* cts, UINT ctCount, HWND parent, UINT dpi, GetStringFunc getString);
+	void Initialize(const Control* cts, UINT ctCount, HWND parent, SIZE designSize, UINT dpi, GetStringFunc getString);
 	void Relayout(UINT dpi);
 
 	UINT ScaleDialogUnits(int value) const;
@@ -82,7 +82,6 @@ private:
 	{
 		Control control;
 		HWND window;
-		RECT initialRect;
 	};
 
 	ControlTemplate(const ControlTemplate& controlTemplate) = delete;
@@ -91,8 +90,7 @@ private:
 	void UpdateFonts(UINT dpi);
 
 	HWND m_Parent;
-	SIZE m_InitialParentSize;
-	UINT m_InitialDpi;
+	SIZE m_DesignSize;
 	UINT m_CurrentDpi;
 	HFONT m_Font;
 	HFONT m_FontBold;
