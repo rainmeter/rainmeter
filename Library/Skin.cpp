@@ -2030,7 +2030,7 @@ void Skin::CommandMeasure(std::wstring_view name, const std::wstring& command, b
 	if (!group) LogWarningF(this, L"!CommandMeasure: [%.*s] not found", (int)name.length(), name.data());
 }
 
-void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
+void Skin::SetVariable(std::wstring_view variable, std::wstring_view value)
 {
 	double result = 0.0;
 	if (m_Parser.ParseFormula(value, &result))
@@ -2039,8 +2039,7 @@ void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 		int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", result);
 		Measure::RemoveTrailingZero(buffer, len);
 
-		const std::wstring& resultString = buffer;
-		m_Parser.SetVariable(variable, resultString);
+		m_Parser.SetVariable(variable, buffer);
 	}
 	else
 	{
@@ -2048,11 +2047,11 @@ void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 	}
 }
 
-void Skin::SetOption(std::wstring_view section, const std::wstring& option, const std::wstring& value, bool group)
+void Skin::SetOption(std::wstring_view section, std::wstring_view option, std::wstring_view value, bool group)
 {
 	if (ConsumeGroupSelector(section)) group = true;
 
-	auto setValue = [&](Section* section, const std::wstring& option, const std::wstring& value)
+	auto setValue = [&](Section* section, std::wstring_view option, std::wstring_view value)
 	{
 		// Force DynamicVariables temporarily (until next ReadOptions()).
 		section->SetDynamicVariables(true);
@@ -2063,7 +2062,7 @@ void Skin::SetOption(std::wstring_view section, const std::wstring& option, cons
 		}
 		else
 		{
-			m_Parser.SetValue(section->GetOriginalName(), option, value);
+			m_Parser.SetValue(section->GetOriginalName(), option, std::wstring(value));
 		}
 	};
 
@@ -2103,7 +2102,7 @@ void Skin::SetOption(std::wstring_view section, const std::wstring& option, cons
 
 		// ContextTitle and ContextAction in [Rainmeter] are dynamic
 		if (StringUtil::EqualsIgnoreCase(section, L"Rainmeter") &&
-			_wcsnicmp(option.c_str(), L"Context", 7) == 0)
+			StringUtil::EqualsIgnoreCase(option.substr(0, 7), L"Context"))
 		{
 			if (value.empty())
 			{
@@ -2111,7 +2110,7 @@ void Skin::SetOption(std::wstring_view section, const std::wstring& option, cons
 			}
 			else
 			{
-				m_Parser.SetValue(section, option, value);
+				m_Parser.SetValue(section, option, std::wstring(value));
 			}
 		}
 

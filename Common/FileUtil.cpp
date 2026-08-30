@@ -73,7 +73,7 @@ bool ReadTextFile(const std::wstring& path, std::wstring& text)
 
 // A text mode stream turns an LF into a CRLF, which would leave a CR of its own in front of any
 // CRLF the text already has. Reduce the line endings to LF so that each ends up as one CRLF.
-static std::wstring ToLineFeeds(const std::wstring& text)
+static std::wstring ToLineFeeds(std::wstring_view text)
 {
 	std::wstring result;
 	result.reserve(text.length());
@@ -88,7 +88,7 @@ static std::wstring ToLineFeeds(const std::wstring& text)
 	return result;
 }
 
-bool WriteTextFile(const std::wstring& path, const std::wstring& text, Encoding encoding)
+bool WriteTextFile(const std::wstring& path, std::wstring_view text, Encoding encoding)
 {
 	std::wstring mode = L"w";
 	switch (encoding)

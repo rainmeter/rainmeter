@@ -70,7 +70,7 @@ public:
 
 	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle = false);
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
-	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
+	void SetVariable(std::wstring_view strVariable, std::wstring_view strValue);
 	const StringMap<std::wstring>& GetVariables() { return m_Variables; }
 	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
@@ -123,7 +123,7 @@ public:
 	RECT ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue);
 	std::vector<FLOAT> ReadFloats(std::wstring_view section, std::wstring_view key);
 
-	bool ParseFormula(const std::wstring& formula, double* resultValue);
+	bool ParseFormula(std::wstring_view formula, double* resultValue);
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);
 
 	const std::vector<std::wstring>& GetIniFiles() const { return m_IniFiles; }

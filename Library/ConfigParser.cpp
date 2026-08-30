@@ -136,9 +136,9 @@ void ConfigParser::ReadVariables()
 	}
 }
 
-void ConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
+void ConfigParser::SetVariable(std::wstring_view strVariable, std::wstring_view strValue)
 {
-	const auto& [iter, inserted] = m_Variables.insert_or_assign(StrToUpper(strVariable), strValue);
+	const auto& [iter, inserted] = m_Variables.insert_or_assign(StrToUpper(strVariable), std::wstring(strValue));
 	if (inserted)
 	{
 		m_OriginalVariableNames[iter->first] = strVariable;
@@ -1492,16 +1492,15 @@ double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key,
 }
 
 // Returns true if the formula was read successfully, false for failure.
-bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
+bool ConfigParser::ParseFormula(std::wstring_view formula, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
-	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
+	if (!formula.empty() && formula.front() == L'(' && formula.back() == L')')
 	{
-		const WCHAR* str = formula.c_str();
-		const WCHAR* errMsg = GetMathParser().CheckedParse(str, resultValue);
+		const WCHAR* errMsg = GetMathParser().CheckedParse(formula, resultValue);
 		if (errMsg != nullptr)
 		{
-			LogErrorF(m_Skin, L"Formula: %s: %s", errMsg, str);
+			LogErrorF(m_Skin, L"Formula: %s: %.*s", errMsg, (int)formula.length(), formula.data());
 			return false;
 		}
 
