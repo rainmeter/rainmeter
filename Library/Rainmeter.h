@@ -59,7 +59,7 @@ public:
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	void Finalize();
 
-	void RestartRainmeter();
+	void RestartApp();
 
 	bool IsAlreadyRunning();
 	int MessagePump();

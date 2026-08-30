@@ -119,6 +119,7 @@ enum class Bang
 	ResetStats,
 	Log,
 	Quit,
+	Restart,
 	EditSkin,
 	LsBoxHook
 };

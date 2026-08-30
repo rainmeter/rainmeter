@@ -536,7 +536,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 
 		case IDM_INSTALL_NEW_VERSION:
-			GetRainmeter().RestartRainmeter();
+			GetRainmeter().RestartApp();
 			break;
 
 		case IDM_LANGUAGEOBSOLETE:
@@ -560,7 +560,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 
 		case IDM_RESTART:
-			GetRainmeter().RestartRainmeter();
+			GetRainmeter().RestartApp();
 			break;
 
 		case IDM_OPENSKINSFOLDER:
@@ -683,7 +683,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				}
 				else if (tray->m_Notification == TRAY_NOTIFICATION_INSTALL_UPDATE)
 				{
-					GetRainmeter().RestartRainmeter();
+					GetRainmeter().RestartApp();
 				}
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 				break;
