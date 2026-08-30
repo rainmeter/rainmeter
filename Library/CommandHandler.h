@@ -141,7 +141,7 @@ public:
 	void ExecuteBang(std::wstring_view name, std::vector<std::wstring>& args, Skin* skin, BangTarget target = BangTarget::Default);
 
 	static void RunCommand(std::wstring command);
-	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
+	static void RunFile(const std::wstring& file, const std::wstring& args = {});
 
 	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
 

@@ -538,15 +538,24 @@ void CommandHandler::RunCommand(std::wstring command)
 
 	if (!command.empty())
 	{
-		RunFile(command.c_str(), args.c_str());
+		RunFile(command, args);
 	}
 }
 
-void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
+void CommandHandler::RunFile(const std::wstring& file, const std::wstring& args)
 {
+	// RestartRainmeter.exe is no longer shipped, but skins may still try to run it.
+	const auto separatorPos = file.find_last_of(L"\\/");
+	const auto name = std::wstring_view(file).substr(separatorPos == std::wstring::npos ? 0 : separatorPos + 1);
+	if (name == L"RestartRainmeter.exe")
+	{
+		GetRainmeter().RestartApp();
+		return;
+	}
+
 	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
 	si.lpVerb = L"open";
-	si.lpFile = file;
+	si.lpFile = file.c_str();
 	si.nShow = SW_SHOWNORMAL;
 
 	DWORD type = GetFileAttributes(si.lpFile);
@@ -558,7 +567,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	{
 		std::wstring dir = PathUtil::GetFolderFromFilePath(file);
 		si.lpDirectory = dir.c_str();
-		si.lpParameters = args;
+		si.lpParameters = args.empty() ? nullptr : args.c_str();
 		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
 		ShellExecuteEx(&si);
 	}

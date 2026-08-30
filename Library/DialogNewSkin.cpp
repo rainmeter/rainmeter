@@ -514,7 +514,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND tree = GetControl(Id_ItemsTreeView);
 			std::wstring folder = m_ParentFolder + GetTreeSelectionPath(tree, false);
 			PathUtil::AppendBackslashIfMissing(folder);
-			CommandHandler::RunFile(folder.c_str());
+			CommandHandler::RunFile(folder);
 		}
 		break;
 
@@ -615,7 +615,7 @@ INT_PTR DialogNewSkin::TabNew::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND tree = GetControl(Id_ItemsTreeView);
 			const std::wstring file = m_ParentFolder + GetTreeSelectionPath(tree, true);
-			CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), file.c_str());
+			CommandHandler::RunFile(GetRainmeter().GetSkinEditor(), file);
 		}
 		break;
 
@@ -1733,7 +1733,7 @@ INT_PTR DialogNewSkin::TabTemplate::OnCommand(WPARAM wParam, LPARAM lParam)
 				std::wstring args = L"\"" + GetTemplateFolder();
 				args += buffer;
 				args += L".template\"";
-				CommandHandler::RunFile(GetRainmeter().GetSkinEditor().c_str(), args.c_str());
+				CommandHandler::RunFile(GetRainmeter().GetSkinEditor(), args);
 			}
 		}
 		break;

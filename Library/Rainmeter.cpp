@@ -376,7 +376,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			const std::wstring isPortable = _wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) == 0 ? L"1" : L"0";
 			const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
 			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION=" + is64Bit + L" /D=" + m_Path.c_str();
-			CommandHandler::RunFile(fullPath.c_str(), args.c_str());
+			CommandHandler::RunFile(fullPath, args);
 			return -1;
 		}
 	}
@@ -1103,7 +1103,7 @@ void Rainmeter::EditSettings()
 {
 	std::wstring file = L'"' + m_IniFile;
 	file += L'"';
-	CommandHandler::RunFile(m_SkinEditor.c_str(), file.c_str());
+	CommandHandler::RunFile(m_SkinEditor, file);
 }
 
 void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
@@ -1113,13 +1113,13 @@ void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFi
 	args += L'\\';
 	args += iniFile;
 	args += L'"';
-	CommandHandler::RunFile(m_SkinEditor.c_str(), args.c_str());
+	CommandHandler::RunFile(m_SkinEditor, args);
 }
 
 void Rainmeter::OpenSkinFolder(const std::wstring& name)
 {
 	std::wstring folderPath = m_SkinPath + name;
-	CommandHandler::RunFile(folderPath.c_str());
+	CommandHandler::RunFile(folderPath);
 }
 
 bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
@@ -2314,7 +2314,7 @@ void Rainmeter::ShowLogFile()
 	std::wstring logFile = L'"' + GetLogger().GetLogFilePath();
 	logFile += L'"';
 
-	CommandHandler::RunFile(m_SkinEditor.c_str(), logFile.c_str());
+	CommandHandler::RunFile(m_SkinEditor, logFile);
 }
 
 void Rainmeter::SetDebug(bool debug)
