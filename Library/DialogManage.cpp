@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/ShellDialog.h"
 #include "../Common/StringParser.h"
 #include "Rainmeter.h"
 #include "Language.h"
@@ -16,7 +17,6 @@
 #include "GameMode.h"
 #include "UpdateCheck.h"
 #include "../Version.h"
-#include <Commdlg.h>
 
 #define RAINMETER_LANGUAGE L"https://www.rainmeter.net/localization"
 
@@ -2528,29 +2528,17 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_EditorBrowseButton:
 		{
-			WCHAR buffer[MAX_PATH] = { 0 };
-			buffer[0] = L'\0';
+			const COMDLG_FILTERSPEC filters[] = { { L"Executable File (.exe)", L"*.exe" } };
+			const auto path = ShellDialog::SelectFile({
+				.parent = c_Dialog->GetWindow(),
+				.title = L"Select executable file",
+				.filters = filters,
+				.defaultExtension = L"exe",
+				.initialPath = GetRainmeter().GetSkinEditor().c_str()
+			});
+			if (!path) break;
 
-			std::wstring editor = GetRainmeter().GetSkinEditor();
-			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str();
-
-			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			ofn.lpstrFilter = L"Executable File (.exe)\0*.exe";
-			ofn.lpstrTitle = L"Select executable file";
-			ofn.lpstrDefExt = L"exe";
-			ofn.lpstrInitialDir = editor.c_str();
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = buffer;
-			ofn.nMaxFile = _countof(buffer);
-			ofn.hwndOwner = c_Dialog->GetWindow();
-
-			if (!GetOpenFileName(&ofn))
-			{
-				break;
-			}
-
-			Edit_SetText(GetControl(Id_EditorEdit), buffer);
+			Edit_SetText(GetControl(Id_EditorEdit), path->c_str());
 		}
 		break;
 
