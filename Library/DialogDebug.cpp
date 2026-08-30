@@ -237,9 +237,10 @@ INT_PTR DialogDebug::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_GETMINMAXINFO:
 		{
+			const SIZE minSize = GetWindowSizeForDesignSize({ 520, 215 });
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = MulDiv(800, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
-			mmi->ptMinTrackSize.y = MulDiv(390, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI);
+			mmi->ptMinTrackSize.x = minSize.cx;
+			mmi->ptMinTrackSize.y = minSize.cy;
 		}
 		return FALSE;
 
