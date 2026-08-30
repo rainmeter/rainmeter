@@ -1081,6 +1081,12 @@ void DoQuitBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin*
 	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
 }
 
+void DoRestartBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
+{
+	// Restart needs to be delayed since it crashes if done during Update().
+	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_RESTART, 0), 0);
+}
+
 void DoEditSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argSize = args.size();
@@ -1280,6 +1286,7 @@ const BangInfo g_Bangs[] =
 	{ Bang::Log, L"Log", 0, DoLogBang },
 	{ Bang::RefreshApp, L"RefreshApp", 0, DoRefreshApp },
 	{ Bang::Quit, L"Quit", 0, DoQuitBang },
+	{ Bang::Restart, L"Restart", 0, DoRestartBang },
 	{ Bang::EditSkin, L"EditSkin", 0, DoEditSkinBang },
 	{ Bang::LsBoxHook, L"LsBoxHook", 0, DoLsBoxHookBang },
 	{ Bang::SetWindowPosition, L"SetWindowPosition", 0, DoSetWindowPositionBang },

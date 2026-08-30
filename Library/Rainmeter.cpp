@@ -58,7 +58,7 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	if (_wcsnicmp(cmdLine, L"/Restart ", 9) == 0)
 	{
-		// Wait for the instance being restarted to quit (see Rainmeter::RestartRainmeter), then
+		// Wait for the instance being restarted to quit (see Rainmeter::RestartApp), then
 		// start up normally with its command line, which follows the inherited process handle.
 		cmdLine += 9;
 		HANDLE process = (HANDLE)(ULONG_PTR)_wcstoui64(cmdLine, &cmdLine, 10);
@@ -654,7 +654,7 @@ void Rainmeter::Finalize()
 	UnregisterClass(RAINMETER_CLASS_NAME, m_Instance);
 }
 
-void Rainmeter::RestartRainmeter()
+void Rainmeter::RestartApp()
 {
 	// A second instance does the restarting: it inherits a handle to this process and waits for
 	// it to close before starting up normally (see RainmeterMain). This instance then quits.

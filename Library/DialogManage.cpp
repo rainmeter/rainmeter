@@ -2579,7 +2579,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				MB_ICONQUESTION | MB_OKCANCEL | MB_DEFBUTTON1 | MB_TOPMOST);
 			if (result == IDOK)
 			{
-				GetRainmeter().RestartRainmeter();
+				GetRainmeter().RestartApp();
 			}
 			else
 			{
