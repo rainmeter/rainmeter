@@ -53,11 +53,14 @@ HRESULT Svg::Load(const Canvas& canvas)
 	Microsoft::WRL::ComPtr<IStream> stream;
 	if (m_InlineData)
 	{
-		const std::string data = StringUtil::NarrowUTF8(m_Source);
+		// The stream takes a copy of the data, so the conversion only needs to outlive this scope.
+		// Inline SVG data is almost always well under 32K, which keeps it off the heap.
+		StringBuffer<char, 32 * 1024> data;
+		StringUtil::NarrowUTF8(m_Source.c_str(), (int)m_Source.length(), data);
 		if (data.empty()) return E_INVALIDARG;
 
 		stream.Attach(SHCreateMemStream(
-			reinterpret_cast<const BYTE*>(data.data()), static_cast<UINT>(data.size())));
+			reinterpret_cast<const BYTE*>(data.data()), static_cast<UINT>(data.length())));
 		if (!stream) return E_OUTOFMEMORY;
 	}
 	else
