@@ -74,6 +74,12 @@ public:
 
 	virtual void SetText(std::wstring_view text) override;
 
+	// The value of [$Input:Match|group|]. Group 0 is the whole text; a higher group is what that
+	// group of the InputFilter pattern captured, so "$50" can reach an action as "50". Empty if
+	// the text does not match the pattern in full, if the group did not participate in the match,
+	// or if the pattern has no such group.
+	std::wstring GetInputValue(int group);
+
 	void ScrollByLine(int lines);
 	void ResetScroll();
 
