@@ -7,6 +7,7 @@
 #include "resource.h"
 #include "Util.h"
 #include "../Common/FileUtil.h"
+#include "../Common/ShellDialog.h"
 #include "../Common/StringUtil.h"
 #include "../Version.h"
 
@@ -677,19 +678,10 @@ private:
 
 		case SelectFolderDialog::Id_CustomBrowseButton:
 			{
-				WCHAR buffer[MAX_PATH] = { 0 };
-				BROWSEINFO bi = { 0 };
-				bi.hwndOwner = m_Window;
-				bi.ulFlags = BIF_USENEWUI | BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS;
-
-				PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
-				if (pidl)
+				const auto path = ShellDialog::SelectFolder({ .parent = m_Window });
+				if (path)
 				{
-					if (SHGetPathFromIDList(pidl, buffer))
-					{
-						SetWindowText(GetControl(SelectFolderDialog::Id_CustomEdit), buffer);
-					}
-					CoTaskMemFree(pidl);
+					SetWindowText(GetControl(SelectFolderDialog::Id_CustomEdit), path->c_str());
 				}
 			}
 			break;
@@ -808,35 +800,29 @@ private:
 		case SelectPluginDialog::Id_32BitBrowseButton:
 		case SelectPluginDialog::Id_64BitBrowseButton:
 			{
-				WCHAR buffer[MAX_PATH] = { 0 };
-				OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-				ofn.Flags = OFN_FILEMUSTEXIST;
-				std::wstring filter = GetString(IDS_PluginsDll);
-				filter.append(L"\0*.dll", 7);
-				ofn.lpstrFilter = filter.c_str();
-				ofn.lpstrTitle = GetString(IDS_SelectPluginFile);
-				ofn.lpstrDefExt = L"dll";
-				ofn.nFilterIndex = 0;
-				ofn.lpstrFile = buffer;
-				ofn.nMaxFile = _countof(buffer);
-				ofn.hwndOwner = m_Window;
-
-				if (!GetOpenFileName(&ofn)) break;
+				const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_PluginsDll), L"*.dll" } };
+				const auto path = ShellDialog::SelectFile({
+					.parent = m_Window,
+					.title = GetString(IDS_SelectPluginFile),
+					.filters = filters,
+					.defaultExtension = L"dll"
+				});
+				if (!path) break;
 
 				const bool x32 = LOWORD(wParam) == SelectPluginDialog::Id_32BitBrowseButton;
 				WORD machine = 0;
-				if (FileUtil::GetBinaryFileBitness(buffer, machine) &&
+				if (FileUtil::GetBinaryFileBitness(path->c_str(), machine) &&
 					((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64)))
 				{
 					const WCHAR* otherName = PathFindFileName(x32 ? m_Plugins.second.c_str() : m_Plugins.first.c_str());
-					if (*otherName && _wcsicmp(otherName, PathFindFileName(buffer)) != 0)
+					if (*otherName && _wcsicmp(otherName, PathFindFileName(path->c_str())) != 0)
 					{
 						MessageBox(m_Window, GetString(IDS_PluginsSameName), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
 						break;
 					}
 
-					PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_32BitEdit : SelectPluginDialog::Id_64BitEdit, buffer);
-					(x32 ? m_Plugins.first : m_Plugins.second) = buffer;
+					PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_32BitEdit : SelectPluginDialog::Id_64BitEdit, path->c_str());
+					(x32 ? m_Plugins.first : m_Plugins.second) = *path;
 					EnableWindow(GetControl(IDOK), !m_Plugins.first.empty() && !m_Plugins.second.empty());
 					break;
 				}
@@ -1321,20 +1307,18 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_FileEdit);
 			GetWindowText(item, buffer, _countof(buffer));
 
-			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			std::wstring filter = GetString(IDS_SkinPackageRmskin);
-			filter.append(L"\0*.rmskin", 10);
-			ofn.lpstrFilter = filter.c_str();
-			ofn.lpstrTitle = GetString(IDS_SelectSkinPackage);
-			ofn.lpstrDefExt = L"dll";
-			ofn.lpstrFile = buffer;
-			ofn.nMaxFile = _countof(buffer);
-			ofn.hwndOwner = c_Dialog->GetWindow();
-
-			if (GetOpenFileName(&ofn))
+			const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_SkinPackageRmskin), L"*.rmskin" } };
+			const auto path = ShellDialog::SaveFile({
+				.parent = c_Dialog->GetWindow(),
+				.title = GetString(IDS_SelectSkinPackage),
+				.filters = filters,
+				.defaultExtension = L"rmskin",
+				.initialPath = buffer
+			});
+			if (path)
 			{
-				c_Dialog->m_TargetFile = buffer;
-				SetWindowText(item, buffer);
+				c_Dialog->m_TargetFile = *path;
+				SetWindowText(item, path->c_str());
 			}
 		}
 		break;
@@ -1398,30 +1382,24 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case DialogPackage::TabOptions::Id_LoadSkinBrowseButton:
 		{
-			WCHAR buffer[MAX_PATH] = { 0 };
 			HWND item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinEdit);
-			GetWindowText(item, buffer, _countof(buffer));
 
-			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			ofn.FlagsEx = OFN_EX_NOPLACESBAR;
-			std::wstring filter = GetString(IDS_SkinFiles);
-			filter.append(L"\0*.ini", 7);
-			ofn.lpstrFilter = filter.c_str();
-			ofn.lpstrTitle = GetString(IDS_SelectSkinFile);
-			ofn.lpstrDefExt = L"ini";
-			ofn.lpstrFile = buffer;
-			ofn.nMaxFile = _countof(buffer);
-			ofn.lpstrInitialDir = c_Dialog->m_SkinFolder.second.c_str();
-			ofn.hwndOwner = c_Dialog->GetWindow();
-
-			if (GetOpenFileName(&ofn))
+			const std::wstring& skinFolder = c_Dialog->m_SkinFolder.second;
+			const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_SkinFiles), L"*.ini" } };
+			const auto path = ShellDialog::SelectFile({
+				.parent = c_Dialog->GetWindow(),
+				.title = GetString(IDS_SelectSkinFile),
+				.filters = filters,
+				.defaultExtension = L"ini",
+				.initialPath = skinFolder.c_str()
+			});
+			if (path)
 			{
 				// Make sure user didn't browse to some random folder
-				if (_wcsnicmp(ofn.lpstrInitialDir, buffer, c_Dialog->m_SkinFolder.second.length()) == 0)
+				if (_wcsnicmp(skinFolder.c_str(), path->c_str(), skinFolder.length()) == 0)
 				{
 					// Skip everything before actual skin folder
-					const WCHAR* folderPath = buffer + c_Dialog->m_SkinFolder.second.length() - c_Dialog->m_SkinFolder.first.length() - 1;
+					const WCHAR* folderPath = path->c_str() + skinFolder.length() - c_Dialog->m_SkinFolder.first.length() - 1;
 					SetWindowText(item, folderPath);
 					c_Dialog->m_Load = folderPath;
 				}
@@ -1535,40 +1513,37 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND item = GetDlgItem(m_Window, DialogPackage::TabAdvanced::Id_HeaderEdit);
 			GetWindowText(item, buffer, _countof(buffer));
 
-			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			std::wstring filter = GetString(IDS_BitmapFiles);
-			filter.append(L"\0*.bmp", 7);
-			ofn.lpstrFilter = filter.c_str();
-			ofn.lpstrTitle = GetString(IDS_SelectHeaderImage);
-			ofn.lpstrDefExt = L"bmp";
-			ofn.lpstrFile = buffer;
-			ofn.nMaxFile = _countof(buffer);
-			ofn.hwndOwner = c_Dialog->GetWindow();
-
-			if (GetOpenFileName(&ofn))
+			const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_BitmapFiles), L"*.bmp" } };
+			const auto path = ShellDialog::SelectFile({
+				.parent = c_Dialog->GetWindow(),
+				.title = GetString(IDS_SelectHeaderImage),
+				.filters = filters,
+				.defaultExtension = L"bmp",
+				.initialPath = buffer
+			});
+			if (path)
 			{
 				// Validate bitmap and make sure size is 400x60
 				std::wstring error;
-				HBITMAP bitmap = (HBITMAP)LoadImage(nullptr, buffer, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+				HBITMAP bitmap = (HBITMAP)LoadImage(nullptr, path->c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 				if (bitmap)
 				{
 					BITMAP bm = { 0 };
 					GetObject(bitmap, sizeof(bm), &bm);
 					if (bm.bmWidth == 400 && bm.bmHeight == 60)
 					{
-						c_Dialog->m_HeaderFile = buffer;
-						SetWindowText(item, buffer);
+						c_Dialog->m_HeaderFile = *path;
+						SetWindowText(item, path->c_str());
 						break;
 					}
 					else
 					{
-						error = GetFormattedString(IDS_InvalidImageSize, buffer);
+						error = GetFormattedString(IDS_InvalidImageSize, path->c_str());
 					}
 				}
 				else
 				{
-					error = GetFormattedString(IDS_InvalidBitmap, buffer);
+					error = GetFormattedString(IDS_InvalidBitmap, path->c_str());
 				}
 
 				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);

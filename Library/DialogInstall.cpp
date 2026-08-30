@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "DialogInstall.h"
 #include "../Common/Map.h"
+#include "../Common/ShellDialog.h"
 #include "../Common/StringUtil.h"
 #include "../Common/Platform.h"
 #include "SkinInstaller.h"
@@ -67,28 +68,18 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	(void)hInstance;
 
 	// Prompt to select .rmskin file if needed
+	std::optional<std::wstring> selectedFile;
 	if (!*lpCmdLine)
 	{
-		WCHAR buffer[MAX_PATH] = { 0 };
+		const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_SkinFileRmskin), L"*.rmskin;*.zip" } };
+		selectedFile = ShellDialog::SelectFile({
+			.title = GetString(IDS_SelectRainmeterSkinFile),
+			.filters = filters,
+			.defaultExtension = L"rmskin"
+		});
+		if (!selectedFile) return;
 
-		OPENFILENAME ofn = { 0 };
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		std::wstring filter = GetString(IDS_SkinFileRmskin);
-		filter.append(L"\0*.rmskin;*.zip", 15);
-		ofn.lpstrFilter = filter.c_str();
-		ofn.nFilterIndex = 1;
-		ofn.lpstrFile = buffer;
-		ofn.nMaxFile = _countof(buffer);
-		ofn.lpstrTitle = GetString(IDS_SelectRainmeterSkinFile);
-		ofn.lpstrDefExt = L"rmskin";
-		ofn.Flags = OFN_FILEMUSTEXIST;
-
-		if (!GetOpenFileName(&ofn))
-		{
-			return;
-		}
-
-		lpCmdLine = buffer;
+		lpCmdLine = selectedFile->data();
 	}
 
 	HANDLE hMutex = nullptr;
