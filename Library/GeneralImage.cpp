@@ -227,8 +227,8 @@ void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, 
 
 	D2D1_COLOR_F tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
-	alpha = min(255, alpha);
-	alpha = max(0, alpha);
+	alpha = std::min(255, alpha);
+	alpha = std::max(0, alpha);
 
 	m_Options.m_ColorMatrix = c_IdentityMatrix;
 

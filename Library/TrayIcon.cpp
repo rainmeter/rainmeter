@@ -14,6 +14,11 @@
 #include "resource.h"
 #include "../Version.h"
 #include <ole2.h>  // For Gdiplus.h.
+
+// Gdiplus.h calls min() and max() unqualified, which NOMINMAX removes along with the rest
+// of the Windows macros, so the std versions are pulled in for it here.
+using std::min;
+using std::max;
 #include <gdiplus.h>
 
 #define RAINMETER_OFFICIAL		L"https://www.rainmeter.net"
@@ -276,7 +281,7 @@ HICON TrayIcon::CreateTrayIcon(double value)
 
 				// Select the correct frame linearly
 				frame = (size_t)(value * frameCount);
-				frame = min((frameCount - 1), frame);
+				frame = std::min((frameCount - 1), frame);
 
 				return CopyIcon(m_Icons[frame]);
 			}
@@ -299,7 +304,7 @@ HICON TrayIcon::CreateTrayIcon(double value)
 
 				// Select the correct frame linearly
 				frame = (int)(value * frameCount);
-				frame = min((frameCount - 1), frame);
+				frame = std::min((frameCount - 1), frame);
 
 				if (m_ImageData->bitmap->GetWidth() > m_ImageData->bitmap->GetHeight())
 				{

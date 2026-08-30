@@ -271,8 +271,8 @@ bool Canvas::Resize(int w, int h)
 
 	// Truncate the size of the skin if it's too big.
 	m_MaxBitmapSize = m_Target->GetMaximumBitmapSize();
-	m_W = min(w, (int)m_MaxBitmapSize);
-	m_H = min(h, (int)m_MaxBitmapSize);
+	m_W = std::min(w, (int)m_MaxBitmapSize);
+	m_H = std::min(h, (int)m_MaxBitmapSize);
 
 	m_Target->SetTarget(nullptr);
 	m_TargetBitmap.Reset();
@@ -597,7 +597,7 @@ bool Canvas::HitTestTextPoint(const std::wstring& srcStr, TextFormat& format,
 	// the caret from landing inside a surrogate pair or between a base character and its
 	// combining marks.
 	caretIndex = isTrailingHit ? metrics.textPosition + metrics.length : metrics.textPosition;
-	caretIndex = min(caretIndex, strLen);
+	caretIndex = std::min(caretIndex, strLen);
 	isTrailing = isTrailingHit != FALSE;
 	return true;
 }
@@ -609,7 +609,7 @@ bool Canvas::GetCaretRect(const std::wstring& srcStr, TextFormat& format, const 
 	UINT32 strLen = 0U;
 	if (!PrepareTextLayout(srcStr, format, rect, drawPosition, strLen)) return false;
 
-	UINT32 position = min(caretIndex, strLen);
+	UINT32 position = std::min(caretIndex, strLen);
 	BOOL isTrailingHit = FALSE;
 
 	// A caret just after a hard line break belongs to the start of the next line, with no affinity
@@ -701,7 +701,7 @@ bool Canvas::GetAdjacentCaretIndex(const std::wstring& srcStr, TextFormat& forma
 		adjacentIndex = forward ? caretIndex + 1U : caretIndex - 1U;
 	}
 
-	adjacentIndex = min(adjacentIndex, strLen);
+	adjacentIndex = std::min(adjacentIndex, strLen);
 	return true;
 }
 
@@ -722,7 +722,7 @@ bool Canvas::GetLineRange(const std::wstring& srcStr, TextFormat& format, const 
 	const HRESULT hr = format.m_TextLayout->GetLineMetrics(lines.data(), lineCount, &lineCount);
 	if (FAILED(hr)) return false;
 
-	caretIndex = min(caretIndex, strLen);
+	caretIndex = std::min(caretIndex, strLen);
 
 	UINT32 start = 0U;
 	for (const auto& line : lines)
@@ -867,10 +867,10 @@ void Canvas::DrawBitmap(Bitmap* bitmap, const D2D1_RECT_F& dstRect, const D2D1_R
 		const auto& rSeg = segment.GetRect();
 		D2D1_RECT_F rSrc = (rSeg.left < rSeg.right && rSeg.top < rSeg.bottom) ?
 			D2D1::RectF(
-				max(rSeg.left, srcRect.left),
-				max(rSeg.top, srcRect.top),
-				min(rSeg.right + rSeg.left, srcRect.right),
-				min(rSeg.bottom + rSeg.top, srcRect.bottom)) :
+				std::max(rSeg.left, srcRect.left),
+				std::max(rSeg.top, srcRect.top),
+				std::min(rSeg.right + rSeg.left, srcRect.right),
+				std::min(rSeg.bottom + rSeg.top, srcRect.bottom)) :
 			D2D1::RectF();
 		if (rSrc.left == rSrc.right || rSrc.top == rSrc.bottom) continue;
 

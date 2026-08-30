@@ -76,7 +76,7 @@ void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount,
 	values.assign(rawCount, 0.0);
 
 	DWORD i = 0;
-	for (const DWORD shared = min(rawCount, count); i < shared; ++i)
+	for (const DWORD shared = std::min(rawCount, count); i < shared; ++i)
 	{
 		if (wcscmp(items[i].szName, rawItems[i].szName) != 0) break;
 

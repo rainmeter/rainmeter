@@ -114,7 +114,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	m_Flip = parser.ReadBool(section, L"Flip", false);
 	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
-	m_LineWidth = max(1.0, m_LineWidth);
+	m_LineWidth = std::max(1.0, m_LineWidth);
 	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
 
 	D2D1_COLOR_F color = parser.ReadColor(section, L"HorizontalColor", D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
@@ -225,7 +225,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			for (auto j = (*i).cbegin(); j != (*i).cend(); ++j)
 			{
 				double val = (*j) * scale;
-				newValue = max(newValue, val);
+				newValue = std::max(newValue, val);
 			}
 			++counter;
 		}
@@ -247,7 +247,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 		{
 			double val = (*i)->GetMinValue();
-			minValue = min(minValue, val);
+			minValue = std::min(minValue, val);
 		}
 	}
 	else
@@ -255,10 +255,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 		{
 			double val = (*i)->GetMaxValue();
-			maxValue = max(maxValue, val);
+			maxValue = std::max(maxValue, val);
 
 			val = (*i)->GetMinValue();
-			minValue = min(minValue, val);
+			minValue = std::min(minValue, val);
 		}
 	}
 
@@ -337,8 +337,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				else
 				{
 					_x = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
-					_x = min(_x, W + offset);
-					_x = max(_x, offset);
+					_x = std::min(_x, W + offset);
+					_x = std::max(_x, offset);
 				}
 				_x = meterRect.left + (m_GraphStartLeft ? _x : W - _x + 1.0f);
 			};
@@ -407,8 +407,8 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				else
 				{
 					_y = ((FLOAT)(((*i)[pos] - minValue) * scale) + offset);
-					_y = min(_y, H + offset);
-					_y = max(_y, offset);
+					_y = std::min(_y, H + offset);
+					_y = std::max(_y, offset);
 				}
 				_y = meterRect.top + (m_Flip ? _y : H - _y + 1.0f);
 			};

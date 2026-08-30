@@ -316,8 +316,8 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 			m_NBands = 0;
 		}
 
-		m_FreqMin = max(0.0, parser.ReadFloat(section, L"FreqMin", m_FreqMin));
-		m_FreqMax = max(0.0, parser.ReadFloat(section, L"FreqMax", m_FreqMax));
+		m_FreqMin = std::max(0.0, parser.ReadFloat(section, L"FreqMin", m_FreqMin));
+		m_FreqMax = std::max(0.0, parser.ReadFloat(section, L"FreqMax", m_FreqMax));
 
 		// Initialize the watchdog timer.
 		QueryPerformanceCounter(&m_PcPoll);
@@ -394,17 +394,17 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	if (!m_Parent)
 	{
 		// (re)parse envelope values
-		m_EnvRMS[0] = max(0, parser.ReadInt(section, L"RMSAttack", m_EnvRMS[0]));
-		m_EnvRMS[1] = max(0, parser.ReadInt(section, L"RMSDecay", m_EnvRMS[1]));
-		m_EnvPeak[0] = max(0, parser.ReadInt(section, L"PeakAttack", m_EnvPeak[0]));
-		m_EnvPeak[1] = max(0, parser.ReadInt(section, L"PeakDecay", m_EnvPeak[1]));
-		m_EnvFFT[0] = max(0, parser.ReadInt(section, L"FFTAttack", m_EnvFFT[0]));
-		m_EnvFFT[1] = max(0, parser.ReadInt(section, L"FFTDecay", m_EnvFFT[1]));
+		m_EnvRMS[0] = std::max(0, parser.ReadInt(section, L"RMSAttack", m_EnvRMS[0]));
+		m_EnvRMS[1] = std::max(0, parser.ReadInt(section, L"RMSDecay", m_EnvRMS[1]));
+		m_EnvPeak[0] = std::max(0, parser.ReadInt(section, L"PeakAttack", m_EnvPeak[0]));
+		m_EnvPeak[1] = std::max(0, parser.ReadInt(section, L"PeakDecay", m_EnvPeak[1]));
+		m_EnvFFT[0] = std::max(0, parser.ReadInt(section, L"FFTAttack", m_EnvFFT[0]));
+		m_EnvFFT[1] = std::max(0, parser.ReadInt(section, L"FFTDecay", m_EnvFFT[1]));
 
 		// (re)parse gain constants
-		m_GainRMS = max(0.0, parser.ReadFloat(section, L"RMSGain", m_GainRMS));
-		m_GainPeak = max(0.0, parser.ReadFloat(section, L"PeakGain", m_GainPeak));
-		m_Sensitivity = max(1.0, parser.ReadFloat(section, L"Sensitivity", m_Sensitivity));
+		m_GainRMS = std::max(0.0, parser.ReadFloat(section, L"RMSGain", m_GainRMS));
+		m_GainPeak = std::max(0.0, parser.ReadFloat(section, L"PeakGain", m_GainPeak));
+		m_Sensitivity = std::max(1.0, parser.ReadFloat(section, L"Sensitivity", m_Sensitivity));
 
 		UpdateFilterConstants();
 	}
@@ -752,7 +752,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 			}
 
 			x = std::clamp(x, 0.0, 1.0);
-			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
+			x = std::max(0.0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
 		break;
@@ -779,7 +779,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 			}
 
 			x = std::clamp(x, 0.0, 1.0);
-			x = max(0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
+			x = std::max(0.0, 10.0 / parent->m_Sensitivity * log10(x) + 1.0);
 			return x;
 		}
 		break;

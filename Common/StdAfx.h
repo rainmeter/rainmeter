@@ -23,6 +23,7 @@
 #include <math.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <string>
 
 #include "ankerl/unordered_dense.h"

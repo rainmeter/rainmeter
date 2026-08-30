@@ -38,7 +38,7 @@ void Section::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 void Section::AdvanceUpdateCounter(UINT count)
 {
-	if (m_UpdateDivider > 0) m_UpdateCounter = min(m_UpdateCounter + (int)count, m_UpdateDivider);
+	if (m_UpdateDivider > 0) m_UpdateCounter = std::min(m_UpdateCounter + (int)count, m_UpdateDivider);
 }
 
 bool Section::UpdateCounter()

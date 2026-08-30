@@ -774,16 +774,16 @@ void MeasureFileView::Command(const std::wstring& command)
 			}
 			else if (_wcsnicmp(args, cmdIndexUp, lenIndexUp) == 0 && (args[lenIndexUp] == L' ' || args[lenIndexUp] == L'\0'))
 			{
-				const int shift = (args[lenIndexUp] == L'\0') ? 1 : max(_wtoi(args + lenIndexUp + 1), 1);
-				parent->indexOffset = max(parent->indexOffset - shift, 0);
+				const int shift = (args[lenIndexUp] == L'\0') ? 1 : std::max(_wtoi(args + lenIndexUp + 1), 1);
+				parent->indexOffset = std::max(parent->indexOffset - shift, 0);
 				parent->needsIcons = true;
 				return;
 			}
 			else if (_wcsnicmp(args, cmdIndexDown, lenIndexDown) == 0 && (args[lenIndexDown] == L' ' || args[lenIndexDown] == L'\0'))
 			{
-				const int shift = (args[lenIndexDown] == L'\0') ? 1 : max(_wtoi(args + lenIndexDown + 1), 1);
-				const int maxOffset = max((int)parent->files.size() - parent->count, 0);
-				parent->indexOffset = min(parent->indexOffset + shift, maxOffset);
+				const int shift = (args[lenIndexDown] == L'\0') ? 1 : std::max(_wtoi(args + lenIndexDown + 1), 1);
+				const int maxOffset = std::max((int)parent->files.size() - parent->count, 0);
+				parent->indexOffset = std::min(parent->indexOffset + shift, maxOffset);
 				parent->needsIcons = true;
 				return;
 			}

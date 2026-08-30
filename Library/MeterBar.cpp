@@ -110,8 +110,8 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 	{
 		const FLOAT barSize = height - 2.0f * border;
 		FLOAT size = barSize * (FLOAT)m_Value;
-		size = min(barSize, size);
-		size = max(0.0f, size);
+		size = std::min(barSize, size);
+		size = std::max(0.0f, size);
 
 		if (drawBitmap)
 		{
@@ -168,8 +168,8 @@ bool MeterBar::Draw(Gfx::Canvas& canvas)
 	{
 		const FLOAT barSize = width - 2.0f * border;
 		FLOAT size = barSize * (FLOAT)m_Value;
-		size = min(barSize, size);
-		size = max(0.0f, size);
+		size = std::min(barSize, size);
+		size = std::max(0.0f, size);
 
 		if (drawBitmap)
 		{

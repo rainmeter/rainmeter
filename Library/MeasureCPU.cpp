@@ -164,8 +164,8 @@ void MeasureCPU::CalcUsage(double idleTime, double systemTime)
 	// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
 	double dbCpuUsage = 100.0 - ((idleTime - m_OldTime[0]) / (systemTime - m_OldTime[1])) * 100.0;
 
-	dbCpuUsage = min(dbCpuUsage, 100.0);
-	m_Value    = max(dbCpuUsage, 0.0);
+	dbCpuUsage = std::min(dbCpuUsage, 100.0);
+	m_Value    = std::max(dbCpuUsage, 0.0);
 
 	// store new CPU's idle and system time
 	m_OldTime[0] = idleTime;

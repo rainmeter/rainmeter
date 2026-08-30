@@ -669,7 +669,7 @@ bool MeasureWebParser::ParseRegExp(std::wstring_view input)
 						for (int i = 0; i < rc; ++i)
 						{
 							const WCHAR* match = data + ovector[2 * i];
-							const int matchLen = min(ovector[2 * i + 1] - ovector[2 * i], 256);
+							const int matchLen = std::min(ovector[2 * i + 1] - ovector[2 * i], 256);
 							LogDebugF(this, L"Index %2d: %.*s", i, matchLen, match);
 						}
 					}

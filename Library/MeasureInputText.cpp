@@ -544,7 +544,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 			// a line is depends on the face, which is what makes one face work where another does
 			// not. The control is given the height a line needs and the box crops it, which is
 			// what a box too short for its font ought to look like.
-			const int editHeight = max(client.bottom, (LONG)lineHeight);
+			const int editHeight = std::max(client.bottom, (LONG)lineHeight);
 
 			box->m_Edit = CreateWindowEx(0L, WC_EDIT, options.text.c_str(), style,
 				0, 0, client.right, editHeight, wnd, nullptr,
