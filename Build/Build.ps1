@@ -198,11 +198,17 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	Write-Host '* Building plugin API'
 
 	$pluginApiDir = Join-Path $PSScriptRoot '..\BuildOut\PluginAPI\API'
-	foreach ($arch in ([ordered]@{ x32 = 'x86'; x64 = 'x64' }).GetEnumerator()) {
-		$libPath = Join-Path $pluginApiDir "$($arch.Key)\Rainmeter.lib"
-		New-Item -ItemType Directory -Path (Split-Path $libPath) -Force | Out-Null
-		Invoke-NativeCommand 'lib.exe' @('/nologo', '/def:..\Library\Exports.def', "/machine:$($arch.Value)", '/name:Rainmeter.dll', "/out:$libPath")
-		Remove-Item ([System.IO.Path]::ChangeExtension($libPath, 'exp'))
+	$solutionDir = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path + '\'
+
+	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
+	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
+	foreach ($arch in ([ordered]@{ x32 = 'Win32'; x64 = 'x64' }).GetEnumerator()) {
+		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj'))
+
+		$libDir = Join-Path $pluginApiDir $arch.Key
+		New-Item -ItemType Directory -Path $libDir -Force | Out-Null
+		$outDirRoot = if ($arch.Value -eq 'Win32') { 'Release32' } else { 'Release64' }
+		Copy-Item (Join-Path $solutionDir "BuildOut\$outDirRoot\Obj\PluginAPI\Rainmeter.lib") $libDir
 	}
 
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir

@@ -1,8 +1,8 @@
 LIBRARY
 EXPORTS
-	; Note: If new functions are added, the API\{x32,x64}\Rainmeter.lib files in the
-	; rainmeter-plugin-sdk repo must be replaced by the ones in the PluginAPI artifact of the
-	; build-signpath workflow run for the release.
+	; Note: If new functions are added, they must also be defined in PluginAPI\PluginAPI.cpp,
+	; and the API\{x32,x64}\Rainmeter.lib files in the rainmeter-plugin-sdk repo must be
+	; replaced by the ones in the PluginAPI artifact of the build-pluginapi workflow.
 	RmReadString
 	RmReadFormula
 	RmReplaceVariables

@@ -1,0 +1,32 @@
+name: build-pluginapi
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'PluginAPI/**'
+      - 'Library/Exports.def'
+      - 'Library/RainmeterAPI.*'
+      - 'Build/Build.ps1'
+      - 'Build/VS/**'
+      - '.github/workflows/*pluginapi*'
+
+jobs:
+  pluginapi:
+    if: "!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip')"
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v5
+
+      - name: Build plugin API
+        run: .\Build\Build.ps1 plugin-api
+        shell: pwsh
+
+      - name: Upload plugin API
+        uses: actions/upload-artifact@v7
+        with:
+          name: PluginAPI
+          path: BuildOut/PluginAPI
+          if-no-files-found: error
