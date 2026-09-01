@@ -122,11 +122,18 @@ private:
 	DialogPackage();
 	virtual ~DialogPackage();
 
+	struct Profile
+	{
+		std::wstring name;
+		std::wstring skinFolder;
+		std::wstring timestamp;
+	};
+
 	void SetNextButtonState();
 	void SetLoadPreviousButtonState();
 	void UpdateTabs();
 
-	static std::vector<std::pair<std::wstring, std::wstring>> GetProfileNames();
+	static std::vector<Profile> GetProfiles();
 
 	void ShowLoadPreviousMenu(HWND button);
 	void SetSkinFolder(const std::wstring& skinFolder);

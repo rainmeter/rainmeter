@@ -88,6 +88,17 @@ static std::pair<std::wstring, std::wstring> GetPluginPaths(const std::wstring& 
 	return paths;
 }
 
+static std::wstring GetLocalTimeString()
+{
+	SYSTEMTIME time = { 0 };
+	GetLocalTime(&time);
+
+	WCHAR buffer[32] = { 0 };
+	_snwprintf_s(buffer, _TRUNCATE, L"%04u-%02u-%02u %02u:%02u",
+		(UINT)time.wYear, (UINT)time.wMonth, (UINT)time.wDay, (UINT)time.wHour, (UINT)time.wMinute);
+	return buffer;
+}
+
 static std::wstring GetCurrentRainmeterVersion()
 {
 	WCHAR buffer[32] = { 0 };
@@ -306,10 +317,10 @@ void DialogPackage::SetNextButtonState()
 
 void DialogPackage::SetLoadPreviousButtonState()
 {
-	EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton), !GetProfileNames().empty());
+	EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton), !GetProfiles().empty());
 }
 
-std::vector<std::pair<std::wstring, std::wstring>> DialogPackage::GetProfileNames()
+std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 {
 	const std::wstring file = GetProfileFile();
 
@@ -317,16 +328,19 @@ std::vector<std::pair<std::wstring, std::wstring>> DialogPackage::GetProfileName
 	const DWORD length = GetPrivateProfileSectionNames(buffer.data(), (DWORD)buffer.size(), file.c_str());
 
 	// The section names come back null separated.
-	std::vector<std::pair<std::wstring, std::wstring>> profiles;
+	std::vector<Profile> profiles;
 	StringParser::ForEachToken(std::wstring_view(buffer.data(), length), L'\0', [&](std::wstring_view token)
 	{
 		const std::wstring section(token);
-		profiles.emplace_back(section, ReadProfileString(section.c_str(), L"SkinFolder", file));
+		profiles.emplace_back(Profile{
+			section,
+			ReadProfileString(section.c_str(), L"SkinFolder", file),
+			ReadProfileString(section.c_str(), L"Timestamp", file) });
 	}, StringParser::None);
 
-	std::sort(profiles.begin(), profiles.end(), [](const auto& lhs, const auto& rhs)
+	std::sort(profiles.begin(), profiles.end(), [](const Profile& lhs, const Profile& rhs)
 	{
-		return _wcsicmp(lhs.first.c_str(), rhs.first.c_str()) < 0;
+		return _wcsicmp(lhs.name.c_str(), rhs.name.c_str()) < 0;
 	});
 
 	return profiles;
@@ -334,14 +348,22 @@ std::vector<std::pair<std::wstring, std::wstring>> DialogPackage::GetProfileName
 
 void DialogPackage::ShowLoadPreviousMenu(HWND button)
 {
-	const auto profiles = GetProfileNames();
+	const auto profiles = GetProfiles();
 
 	HMENU menu = CreatePopupMenu();
 	for (size_t i = 0; i < profiles.size(); ++i)
 	{
+		// A tab puts the date where a menu would put the accelerator, which right aligns it.
+		std::wstring text = profiles[i].name;
+		if (!profiles[i].timestamp.empty())
+		{
+			text += L'\t';
+			text += profiles[i].timestamp;
+		}
+
 		// The skin folder may have been moved or deleted since the package was created.
-		const UINT flags = MF_STRING | (FolderExists(profiles[i].second) ? 0 : MF_GRAYED);
-		AppendMenu(menu, flags, (UINT_PTR)i + 1, profiles[i].first.c_str());
+		const UINT flags = MF_STRING | (FolderExists(profiles[i].skinFolder) ? 0 : MF_GRAYED);
+		AppendMenu(menu, flags, (UINT_PTR)i + 1, text.c_str());
 	}
 
 	const UINT command = Dialog::ShowMenuButtonPopupMenu(menu, button, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
@@ -349,7 +371,7 @@ void DialogPackage::ShowLoadPreviousMenu(HWND button)
 
 	if (command >= 1 && command <= profiles.size())
 	{
-		LoadProfile(profiles[command - 1].second);
+		LoadProfile(profiles[command - 1].skinFolder);
 	}
 }
 
@@ -451,6 +473,7 @@ void DialogPackage::SaveProfile()
 	// Rewrite the whole section so that removed layouts and plugins do not linger.
 	WritePrivateProfileString(section, nullptr, nullptr, file.c_str());
 
+	WriteProfileString(section, L"Timestamp", GetLocalTimeString(), file);
 	WriteProfileString(section, L"Name", m_Name, file);
 	WriteProfileString(section, L"Author", m_Author, file);
 	WriteProfileString(section, L"Version", m_Version, file);
