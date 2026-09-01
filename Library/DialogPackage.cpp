@@ -874,7 +874,7 @@ public:
 	{
 		ShowDialogWindow(
 			GetString(IDS_Add),
-			0, 0, 200, 100,
+			0, 0, 260, 100,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent,
@@ -905,22 +905,22 @@ private:
 		const Control controls[] =
 		{
 			Control::RadioButton(SelectFolderDialog::Id_ExistingRadio, 0,
-				6, 6, 188, 13,
+				6, 6, 248, 13,
 				WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0),
 			Control::ComboBox(SelectFolderDialog::Id_ExistingCombo, 0,
-				17, 21, 176, 14,
+				17, 21, 236, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST, 0),
 			Control::RadioButton(SelectFolderDialog::Id_CustomRadio, IDS_AddCustomFolder,
-				6, 44, 188, 13,
+				6, 44, 248, 13,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Edit(SelectFolderDialog::Id_CustomEdit, 0,
-				17, 59, 146, 14,
+				17, 59, 206, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_DISABLED | ES_AUTOHSCROLL, 0),
 			Control::Button(SelectFolderDialog::Id_CustomBrowseButton, IDS_Ellipsis,
-				168, 59, 25, 14,
+				228, 59, 25, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 			Control::Button(IDOK, IDS_Add,
-				146, 82, 50, 14,
+				206, 82, 50, 14,
 				WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
 		};
 
@@ -1096,7 +1096,7 @@ public:
 	{
 		ShowDialogWindow(
 			GetString(IDS_Add),
-			0, 0, 200, 100,
+			0, 0, 260, 100,
 			DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT,
 			parent,
@@ -1127,25 +1127,25 @@ private:
 		const Control controls[] =
 		{
 			Control::Label(Id_32BitLabel, IDS_Bit32Dll,
-				6, 6, 188, 13,
+				6, 6, 248, 13,
 				WS_VISIBLE, 0),
 			Control::Edit(SelectPluginDialog::Id_32BitEdit, 0,
-				6, 20, 157, 14,
+				6, 20, 217, 14,
 				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 			Control::Button(SelectPluginDialog::Id_32BitBrowseButton, IDS_Ellipsis,
-				168, 20, 25, 14,
+				228, 20, 25, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Label(Id_64BitLabel, IDS_Bit64Dll,
-				6, 42, 188, 13,
+				6, 42, 248, 13,
 				WS_VISIBLE, 0),
 			Control::Edit(SelectPluginDialog::Id_64BitEdit, 0,
-				6, 55, 157, 14,
+				6, 55, 217, 14,
 				WS_VISIBLE | WS_BORDER | ES_READONLY | ES_AUTOHSCROLL, 0),
 			Control::Button(SelectPluginDialog::Id_64BitBrowseButton, IDS_Ellipsis,
-				168, 55, 25, 14,
+				228, 55, 25, 14,
 				WS_VISIBLE | WS_TABSTOP, 0),
 			Control::Button(IDOK, IDS_Add,
-				146, 82, 50, 14,
+				206, 82, 50, 14,
 				WS_VISIBLE | WS_TABSTOP | WS_DISABLED | BS_DEFPUSHBUTTON, 0)
 		};
 
