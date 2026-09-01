@@ -1083,6 +1083,15 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 	else
 	{
 		ChangeZPos(zPos, all);
+
+		// ChangeZPos() only makes sure the window is in the right z-order band. Since
+		// HWND_NOTOPMOST/HWND_TOPMOST do not move a window that is already in that band,
+		// raise the window explicitly. Bottom-most windows are left alone as they are meant
+		// to stay below everything else.
+		if (zPos == ZPOSITION_NORMAL || zPos == ZPOSITION_ONTOP || zPos == ZPOSITION_ONTOPMOST)
+		{
+			BringWindowToTop(m_Window);
+		}
 	}
 }
 
