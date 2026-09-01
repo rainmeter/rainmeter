@@ -1029,6 +1029,52 @@ private:
 	bool m_Accepted;
 };
 
+// The two architectures of a plugin are usually built into sibling folders whose names differ only
+// in the architecture, like "x32" and "x64", or "Release32" and "Release64".
+static const WCHAR* const s_ArchitectureNames[][2] =
+{
+	{ L"32", L"64" },
+	{ L"86", L"64" }
+};
+
+// Looks for the counterpart of |path| in the sibling folder of the other architecture.
+static std::wstring FindOtherArchitecture(const std::wstring& path, bool is32bit)
+{
+	const WCHAR* fileName = PathFindFileName(path.c_str());
+	if (fileName == path.c_str()) return std::wstring();
+
+	const std::wstring folder(path.c_str(), fileName - path.c_str() - 1);  // Without the slash
+	const WCHAR* folderName = PathFindFileName(folder.c_str());
+	if (folderName == folder.c_str()) return std::wstring();
+
+	const std::wstring parent(folder.c_str(), folderName - folder.c_str());
+	const std::wstring name = folderName;
+	const WORD wanted = is32bit ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
+
+	for (const auto& architecture : s_ArchitectureNames)
+	{
+		const std::wstring from = architecture[is32bit ? 0 : 1];
+		const WCHAR* to = architecture[is32bit ? 1 : 0];
+
+		const size_t pos = StringUtil::CaseInsensitiveFind(name, from);
+		if (pos == std::wstring::npos) continue;
+
+		std::wstring candidate = parent;
+		candidate += name;
+		candidate.replace(parent.length() + pos, from.length(), to);
+		candidate += L'\\';
+		candidate += fileName;
+
+		WORD machine = 0;
+		if (FileUtil::GetBinaryFileBitness(candidate.c_str(), machine) && machine == wanted)
+		{
+			return candidate;
+		}
+	}
+
+	return std::wstring();
+}
+
 class DialogPackage::SelectPluginDialog : public Dialog
 {
 public:
@@ -1138,6 +1184,17 @@ private:
 
 					PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_32BitEdit : SelectPluginDialog::Id_64BitEdit, path->c_str());
 					(x32 ? m_Plugins.first : m_Plugins.second) = *path;
+
+					std::wstring& other = x32 ? m_Plugins.second : m_Plugins.first;
+					if (other.empty())
+					{
+						other = FindOtherArchitecture(*path, x32);
+						if (!other.empty())
+						{
+							PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_64BitEdit : SelectPluginDialog::Id_32BitEdit, other.c_str());
+						}
+					}
+
 					EnableWindow(GetControl(IDOK), !m_Plugins.first.empty() && !m_Plugins.second.empty());
 					break;
 				}
