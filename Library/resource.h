@@ -352,6 +352,7 @@
 #define IDS_Addons                                  3112
 #define IDS_LoadIncludedSkins                       3113
 #define IDS_OlderPluginWarning                      3114
+#define IDS_LoadPrevious                            3115
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
 #define IDM_RESTART                                  4095

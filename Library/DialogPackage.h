@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "zip.h"
 #include "../Common/Dialog.h"
 
@@ -24,7 +25,8 @@ private:
 		Id_NextButton,
 		Id_BackButton,
 		Id_CreatePackageButton,
-		Id_CancelButton
+		Id_CancelButton,
+		Id_LoadPreviousButton
 	};
 
 	class TabInfo : public Tab
@@ -56,6 +58,8 @@ private:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
+		void Update();
 	};
 
 	class TabOptions : public Tab
@@ -86,6 +90,8 @@ private:
 
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+
+		void Update();
 	};
 
 	class TabAdvanced : public Tab
@@ -109,12 +115,23 @@ private:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+
+		void Update();
 	};
 
 	DialogPackage();
 	virtual ~DialogPackage();
 
 	void SetNextButtonState();
+	void SetLoadPreviousButtonState();
+	void UpdateTabs();
+
+	static std::vector<std::pair<std::wstring, std::wstring>> GetProfileNames();
+
+	void ShowLoadPreviousMenu(HWND button);
+	void SetSkinFolder(const std::wstring& skinFolder);
+	void LoadProfile(const std::wstring& skinFolder);
+	void SaveProfile();
 
 	bool CreatePackage();
 	static unsigned __stdcall PackagerThreadProc(void* pParam);
@@ -147,6 +164,7 @@ private:
 
 	// Options tab
 	std::wstring m_TargetFile;
+	std::wstring m_OutputFolder;
 	std::wstring m_MinimumRainmeter;
 	bool m_LoadLayout;
 	std::wstring m_Load;
@@ -156,6 +174,7 @@ private:
 	std::wstring m_VariableFiles;
 	bool m_MergeSkins;
 
+	bool m_ProfileLoaded;
 	bool m_OptionsCreated;
 	HANDLE m_PackagerThread;
 	zipFile m_ZipFile;
