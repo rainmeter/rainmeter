@@ -8,6 +8,7 @@
 #include "Util.h"
 #include "../Common/FileUtil.h"
 #include "../Common/ShellDialog.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "../Version.h"
 
@@ -21,6 +22,7 @@ DialogPackage* DialogPackage::c_Dialog = nullptr;
 DialogPackage::DialogPackage() : Dialog(),
 	m_LoadLayout(false),
 	m_MergeSkins(false),
+	m_ProfileLoaded(false),
 	m_OptionsCreated(false),
 	m_PackagerThread(),
 	m_ZipFile(),
@@ -30,6 +32,78 @@ DialogPackage::DialogPackage() : Dialog(),
 
 DialogPackage::~DialogPackage()
 {
+}
+
+// The options of previously created packages are remembered so that publishing a new version of a
+// skin does not require selecting everything again. Each skin folder gets a section of its own.
+static std::wstring GetProfileFile()
+{
+	return g_Data.settingsPath + L"SkinPackager.ini";
+}
+
+static std::wstring ReadProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& file)
+{
+	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
+	GetPrivateProfileString(section, key, L"", buffer, _countof(buffer), file.c_str());
+	return buffer;
+}
+
+static void WriteProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& value, const std::wstring& file)
+{
+	if (value.empty()) return;
+
+	WritePrivateProfileString(section, key, value.c_str(), file.c_str());
+}
+
+static bool FolderExists(const std::wstring& path)
+{
+	const DWORD attributes = GetFileAttributes(path.c_str());
+	return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+static bool FileExists(const std::wstring& path)
+{
+	const DWORD attributes = GetFileAttributes(path.c_str());
+	return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+// Plugins are stored on one line as "x32 <path> | x64 <path>".
+static std::pair<std::wstring, std::wstring> GetPluginPaths(const std::wstring& value)
+{
+	std::pair<std::wstring, std::wstring> paths;
+
+	StringParser::ForEachToken(value, L'|', [&](std::wstring_view token)
+	{
+		StringParser plugin(token);
+		if (plugin.Consume(L"x32", StringParser::SkipWhitespace))
+		{
+			paths.first = plugin.ConsumeRest();
+		}
+		else if (plugin.Consume(L"x64", StringParser::SkipWhitespace))
+		{
+			paths.second = plugin.ConsumeRest();
+		}
+	});
+
+	return paths;
+}
+
+static std::wstring GetLocalTimeString()
+{
+	SYSTEMTIME time = { 0 };
+	GetLocalTime(&time);
+
+	WCHAR buffer[32] = { 0 };
+	_snwprintf_s(buffer, _TRUNCATE, L"%04u-%02u-%02u %02u:%02u",
+		(UINT)time.wYear, (UINT)time.wMonth, (UINT)time.wDay, (UINT)time.wHour, (UINT)time.wMinute);
+	return buffer;
+}
+
+static std::wstring GetCurrentRainmeterVersion()
+{
+	WCHAR buffer[32] = { 0 };
+	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", APPVERSION, revision_number);
+	return buffer;
 }
 
 void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
@@ -98,12 +172,19 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		Control::Button(DialogPackage::Id_CancelButton, IDS_Cancel,
 			263, 264, 50, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Button(DialogPackage::Id_LoadPreviousButton, IDS_LoadPrevious,
+			6, 264, 100, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Tab(DialogPackage::Id_Tab, 0,
 			6, 6, 308, 254,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)
 	};
 
 	CreateControls(controls, _countof(controls), GetString);
+
+	Dialog::SetMenuButton(GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton));
+	SetLoadPreviousButtonState();
+
 	AddPage(m_TabInfo);
 
 	HICON hIcon = GetIcon(IDI_SKININSTALLER, true);
@@ -129,6 +210,9 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 
 			HWND item = GetDlgItem(m_Window, DialogPackage::Id_NextButton);
+			ShowWindow(item, SW_HIDE);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton);
 			ShowWindow(item, SW_HIDE);
 
 			item = GetDlgItem(m_Window, DialogPackage::Id_BackButton);
@@ -157,6 +241,9 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			item = GetDlgItem(m_Window, DialogPackage::Id_NextButton);
 			ShowWindow(item, SW_SHOWNORMAL);
 			SendMessage(m_Window, DM_SETDEFID, DialogPackage::Id_NextButton, 0);
+
+			item = GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton);
+			ShowWindow(item, SW_SHOWNORMAL);
 
 			HWND tab = GetDlgItem(m_Window, DialogPackage::Id_Tab);
 			EnableWindow(tab, FALSE);
@@ -201,6 +288,13 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case DialogPackage::Id_LoadPreviousButton:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			ShowLoadPreviousMenu((HWND)lParam);
+		}
+		break;
+
 	case DialogPackage::Id_CancelButton:
 		if (!m_PackagerThread)
 		{
@@ -219,6 +313,225 @@ void DialogPackage::SetNextButtonState()
 {
 	BOOL state = !(m_Name.empty() || m_Author.empty() || m_SkinFolder.second.empty());
 	EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_NextButton), state);
+}
+
+void DialogPackage::SetLoadPreviousButtonState()
+{
+	EnableWindow(GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton), !GetProfiles().empty());
+}
+
+std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
+{
+	const std::wstring file = GetProfileFile();
+
+	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
+	const DWORD length = GetPrivateProfileSectionNames(buffer, _countof(buffer), file.c_str());
+
+	// The section names come back null separated.
+	std::vector<Profile> profiles;
+	StringParser::ForEachToken(std::wstring_view(buffer, length), L'\0', [&](std::wstring_view token)
+	{
+		const std::wstring section(token);
+		profiles.emplace_back(Profile{
+			section,
+			ReadProfileString(section.c_str(), L"SkinFolder", file),
+			ReadProfileString(section.c_str(), L"Timestamp", file) });
+	}, StringParser::None);
+
+	std::sort(profiles.begin(), profiles.end(), [](const Profile& lhs, const Profile& rhs)
+	{
+		return _wcsicmp(lhs.name.c_str(), rhs.name.c_str()) < 0;
+	});
+
+	return profiles;
+}
+
+void DialogPackage::ShowLoadPreviousMenu(HWND button)
+{
+	const auto profiles = GetProfiles();
+
+	HMENU menu = CreatePopupMenu();
+	for (size_t i = 0; i < profiles.size(); ++i)
+	{
+		// A tab puts the date where a menu would put the accelerator, which right aligns it.
+		std::wstring text = profiles[i].name;
+		if (!profiles[i].timestamp.empty())
+		{
+			text += L'\t';
+			text += profiles[i].timestamp;
+		}
+
+		// The skin folder may have been moved or deleted since the package was created.
+		const UINT flags = MF_STRING | (FolderExists(profiles[i].skinFolder) ? 0 : MF_GRAYED);
+		AppendMenu(menu, flags, (UINT_PTR)i + 1, text.c_str());
+	}
+
+	const UINT command = Dialog::ShowMenuButtonPopupMenu(menu, button, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
+	DestroyMenu(menu);
+
+	if (command >= 1 && command <= profiles.size())
+	{
+		LoadProfile(profiles[command - 1].skinFolder);
+	}
+}
+
+void DialogPackage::SetSkinFolder(const std::wstring& skinFolder)
+{
+	m_SkinFolder.second = skinFolder;
+
+	// The file can be edited by hand, so the trailing slash cannot be taken for granted.
+	if (m_SkinFolder.second.back() != L'\\') m_SkinFolder.second += L'\\';
+
+	m_SkinFolder.first = PathFindFileName(m_SkinFolder.second.c_str());
+	m_SkinFolder.first.pop_back();	// Remove slash
+}
+
+void DialogPackage::LoadProfile(const std::wstring& skinFolder)
+{
+	if (skinFolder.empty()) return;
+
+	SetSkinFolder(skinFolder);
+
+	const std::wstring file = GetProfileFile();
+	const WCHAR* section = m_SkinFolder.first.c_str();
+
+	// Every package has a name, so its absence means that this skin has not been packaged before.
+	// Whatever has already been entered is then left as is.
+	std::wstring name = ReadProfileString(section, L"Name", file);
+	if (!name.empty())
+	{
+		m_ProfileLoaded = true;
+
+		m_Name = std::move(name);
+		m_Author = ReadProfileString(section, L"Author", file);
+		m_Version = ReadProfileString(section, L"Version", file);
+		m_MinimumRainmeter = ReadProfileString(section, L"MinimumRainmeter", file);
+		m_VariableFiles = ReadProfileString(section, L"VariableFiles", file);
+		m_MergeSkins = GetPrivateProfileInt(section, L"MergeSkins", 0, file.c_str()) != 0;
+		m_LoadLayout = _wcsicmp(ReadProfileString(section, L"LoadType", file).c_str(), L"Layout") == 0;
+		m_Load = ReadProfileString(section, L"Load", file);
+
+		m_OutputFolder = ReadProfileString(section, L"OutputFolder", file);
+		if (!FolderExists(m_OutputFolder)) m_OutputFolder.clear();
+
+		m_HeaderFile = ReadProfileString(section, L"HeaderImage", file);
+		if (!FileExists(m_HeaderFile)) m_HeaderFile.clear();
+
+		WCHAR key[32] = { 0 };
+
+		m_LayoutFolders.clear();
+		for (int i = 1; ; ++i)
+		{
+			_snwprintf_s(key, _TRUNCATE, L"Layout%i", i);
+			std::wstring folder = ReadProfileString(section, key, file);
+			if (folder.empty()) break;
+			if (!FolderExists(folder)) continue;
+
+			std::wstring layoutName = PathFindFileName(folder.c_str());
+			layoutName.pop_back();	// Remove slash
+			m_LayoutFolders.emplace(layoutName, folder);
+		}
+
+		m_PluginFolders.clear();
+		for (int i = 1; ; ++i)
+		{
+			_snwprintf_s(key, _TRUNCATE, L"Plugin%i", i);
+			const std::wstring value = ReadProfileString(section, key, file);
+			if (value.empty()) break;
+
+			// A package needs both architectures, so one without them is of no use here.
+			auto paths = GetPluginPaths(value);
+			if (!FileExists(paths.first) || !FileExists(paths.second)) continue;
+
+			const std::wstring name = PathFindFileName(paths.first.c_str());
+			m_PluginFolders.emplace(name, std::move(paths));
+		}
+
+		// The skin to load after installation is stored relative to the skins folder, so the skin
+		// folder in front of it has to be swapped for the real one.
+		if (!m_LoadLayout && !m_Load.empty())
+		{
+			StringParser load(m_Load);
+			const bool hasSkinFolder = !load.ConsumeUntil(L'\\').empty();
+
+			std::wstring path = m_SkinFolder.second;
+			path += load.ConsumeRest();
+
+			if (!hasSkinFolder || !FileExists(path)) m_Load.clear();
+		}
+	}
+
+	UpdateTabs();
+	SetNextButtonState();
+}
+
+void DialogPackage::SaveProfile()
+{
+	const std::wstring file = GetProfileFile();
+	const WCHAR* section = m_SkinFolder.first.c_str();
+
+	// Rewrite the whole section so that removed layouts and plugins do not linger.
+	WritePrivateProfileString(section, nullptr, nullptr, file.c_str());
+
+	WriteProfileString(section, L"Timestamp", GetLocalTimeString(), file);
+	WriteProfileString(section, L"Name", m_Name, file);
+	WriteProfileString(section, L"Author", m_Author, file);
+	WriteProfileString(section, L"Version", m_Version, file);
+	WriteProfileString(section, L"SkinFolder", m_SkinFolder.second, file);
+
+	int index = 1;
+	WCHAR key[32] = { 0 };
+	for (const auto& layout : m_LayoutFolders)
+	{
+		_snwprintf_s(key, _TRUNCATE, L"Layout%i", index++);
+		WriteProfileString(section, key, layout.second, file);
+	}
+
+	index = 1;
+	for (const auto& plugin : m_PluginFolders)
+	{
+		std::wstring value = L"x32 ";
+		value += plugin.second.first;
+		value += L" | x64 ";
+		value += plugin.second.second;
+
+		_snwprintf_s(key, _TRUNCATE, L"Plugin%i", index++);
+		WriteProfileString(section, key, value, file);
+	}
+
+	std::wstring outputFolder = m_TargetFile;
+	outputFolder.resize(PathFindFileName(outputFolder.c_str()) - outputFolder.c_str());
+	WriteProfileString(section, L"OutputFolder", outputFolder, file);
+
+	if (!m_Load.empty())
+	{
+		WriteProfileString(section, L"LoadType", m_LoadLayout ? L"Layout" : L"Skin", file);
+		WriteProfileString(section, L"Load", m_Load, file);
+	}
+
+	// The minimum version follows the installed Rainmeter unless it has been set to something else.
+	if (m_MinimumRainmeter != GetCurrentRainmeterVersion())
+	{
+		WriteProfileString(section, L"MinimumRainmeter", m_MinimumRainmeter, file);
+	}
+
+	WriteProfileString(section, L"HeaderImage", m_HeaderFile, file);
+
+	if (m_MergeSkins)
+	{
+		WriteProfileString(section, L"MergeSkins", L"1", file);
+	}
+	else
+	{
+		WriteProfileString(section, L"VariableFiles", m_VariableFiles, file);
+	}
+}
+
+void DialogPackage::UpdateTabs()
+{
+	if (m_TabInfo.IsInitialized()) m_TabInfo.Update();
+	if (m_TabOptions.IsInitialized()) m_TabOptions.Update();
+	if (m_TabAdvanced.IsInitialized()) m_TabAdvanced.Update();
 }
 
 bool DialogPackage::CreatePackage()
@@ -334,6 +647,8 @@ bool DialogPackage::CreatePackage()
 		DialogInstall::PackageFooter footer = { _ftelli64(file), 0, "RMSKIN" };
 		fwrite(&footer, sizeof(footer), 1, file);
 		fclose(file);
+
+		SaveProfile();
 	}
 	else
 	{
@@ -973,6 +1288,52 @@ void DialogPackage::TabInfo::Initialize()
 	ListView_InsertGroup(item, -1, &lvg);
 }
 
+void DialogPackage::TabInfo::Update()
+{
+	// The edits write back to the members when their text changes, so the values must be copied
+	// before they are set.
+	const std::wstring name = c_Dialog->m_Name;
+	const std::wstring author = c_Dialog->m_Author;
+	const std::wstring version = c_Dialog->m_Version;
+	SetDlgItemText(m_Window, DialogPackage::TabInfo::Id_NameEdit, name.c_str());
+	SetDlgItemText(m_Window, DialogPackage::TabInfo::Id_AuthorEdit, author.c_str());
+	SetDlgItemText(m_Window, DialogPackage::TabInfo::Id_VersionEdit, version.c_str());
+
+	HWND item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
+	ListView_DeleteAllItems(item);
+
+	LVITEM lvi = { 0 };
+	lvi.mask = LVIF_TEXT | LVIF_GROUPID;
+	lvi.iSubItem = 0;
+
+	if (!c_Dialog->m_SkinFolder.first.empty())
+	{
+		lvi.iGroupId = 0;
+		lvi.pszText = (WCHAR*)c_Dialog->m_SkinFolder.first.c_str();
+		ListView_InsertItem(item, &lvi);
+		++lvi.iItem;
+	}
+
+	for (const auto& layout : c_Dialog->m_LayoutFolders)
+	{
+		lvi.iGroupId = 1;
+		lvi.pszText = (WCHAR*)layout.first.c_str();
+		ListView_InsertItem(item, &lvi);
+		++lvi.iItem;
+	}
+
+	for (const auto& plugin : c_Dialog->m_PluginFolders)
+	{
+		lvi.iGroupId = 2;
+		lvi.pszText = (WCHAR*)plugin.first.c_str();
+		ListView_InsertItem(item, &lvi);
+		++lvi.iItem;
+	}
+
+	item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_AddSkinButton);
+	EnableWindow(item, c_Dialog->m_SkinFolder.first.empty());
+}
+
 INT_PTR DialogPackage::TabInfo::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -993,22 +1354,11 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case DialogPackage::TabInfo::Id_AddSkinButton:
 		{
-			c_Dialog->m_SkinFolder.second = SelectFolder(m_Window, g_Data.skinsPath);
-			if (!c_Dialog->m_SkinFolder.second.empty())
+			const std::wstring folder = SelectFolder(m_Window, g_Data.skinsPath);
+			if (!folder.empty())
 			{
-				c_Dialog->m_SkinFolder.first = PathFindFileName(c_Dialog->m_SkinFolder.second.c_str());
-				c_Dialog->m_SkinFolder.first.pop_back();	// Remove slash
-
-				HWND item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
-				LVITEM lvi = { 0 };
-				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-				lvi.iItem = 1;
-				lvi.iSubItem = 0;
-				lvi.iGroupId = 0;
-				lvi.pszText = (WCHAR*)c_Dialog->m_SkinFolder.first.c_str();
-				ListView_InsertItem(item, &lvi);
-
-				EnableWindow((HWND)lParam, FALSE);
+				c_Dialog->SetSkinFolder(folder);
+				c_Dialog->UpdateTabs();
 				c_Dialog->SetNextButtonState();
 			}
 		}
@@ -1024,14 +1374,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 
 				if (c_Dialog->m_LayoutFolders.emplace(name, folder).second)
 				{
-					HWND item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
-					LVITEM lvi = { 0 };
-					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-					lvi.iItem = (int)c_Dialog->m_LayoutFolders.size() + 1;
-					lvi.iSubItem = 0;
-					lvi.iGroupId = 1;
-					lvi.pszText = (WCHAR*)name.c_str();
-					ListView_InsertItem(item, &lvi);
+					c_Dialog->UpdateTabs();
 				}
 			}
 		}
@@ -1043,14 +1386,7 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring name = PathFindFileName(plugins.first.c_str());
 			if (!name.empty() && c_Dialog->m_PluginFolders.emplace(name, plugins).second)
 			{
-				HWND item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
-				LVITEM lvi = { 0 };
-				lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-				lvi.iItem = (int)c_Dialog->m_PluginFolders.size() + 1;
-				lvi.iSubItem = 0;
-				lvi.iGroupId = 2;
-				lvi.pszText = (WCHAR*)name.c_str();
-				ListView_InsertItem(item, &lvi);
+				c_Dialog->UpdateTabs();
 			}
 		}
 		break;
@@ -1072,27 +1408,25 @@ INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 				lvi.cchTextMax = _countof(buffer);
 				ListView_GetItem(item, &lvi);
 
-				ListView_DeleteItem(item, sel);
-
 				const std::wstring name = buffer;
 				switch (lvi.iGroupId)
 				{
 				case 0:
-					item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_AddSkinButton);
-					EnableWindow(item, TRUE);
 					c_Dialog->m_SkinFolder.first.clear();
 					c_Dialog->m_SkinFolder.second.clear();
-					c_Dialog->SetNextButtonState();
 					break;
 
 				case 1:
-					c_Dialog->m_LayoutFolders.erase(c_Dialog->m_LayoutFolders.find(name));
+					c_Dialog->m_LayoutFolders.erase(name);
 					break;
 
 				case 2:
-					c_Dialog->m_PluginFolders.erase(c_Dialog->m_PluginFolders.find(name));
+					c_Dialog->m_PluginFolders.erase(name);
 					break;
 				}
+
+				c_Dialog->UpdateTabs();
+				c_Dialog->SetNextButtonState();
 			}
 		}
 		break;
@@ -1228,62 +1562,93 @@ void DialogPackage::TabOptions::Initialize()
 {
 	m_Initialized = true;
 
-	WCHAR buffer[MAX_PATH] = { 0 };
-	SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, SHGFP_TYPE_CURRENT, buffer);
-
-	c_Dialog->m_TargetFile = buffer;
-	c_Dialog->m_TargetFile += L'\\';
-	int pos = (int)c_Dialog->m_TargetFile.length() + 1;
-	c_Dialog->m_TargetFile += c_Dialog->m_Name;
-	c_Dialog->m_TargetFile += L'_';
-	c_Dialog->m_TargetFile += c_Dialog->m_Version;
-
-	// Escape reserved chars
-	for (int i = pos, isize = (int)c_Dialog->m_TargetFile.length(); i < isize; ++i)
-	{
-		if (wcschr(L"\\/:*?\"<>|", c_Dialog->m_TargetFile[i]))
-		{
-			c_Dialog->m_TargetFile[i] = L'_';
-		}
-	}
-
-	c_Dialog->m_TargetFile += L".rmskin";
-
-	HWND item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_FileEdit);
-	SetWindowText(item,c_Dialog->m_TargetFile.c_str());
-
-	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadLayoutRadio);
-	if (c_Dialog->m_LayoutFolders.empty())
-	{
-		EnableWindow(item, FALSE);
-
-		item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_DoNothingRadio);
-		Button_SetCheck(item, BST_CHECKED);
-	}
-	else
-	{
-		c_Dialog->m_LoadLayout = true;
-		c_Dialog->m_Load = (*c_Dialog->m_LayoutFolders.cbegin()).first;
-
-		Button_SetCheck(item, BST_CHECKED);
-
-		item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadLayoutCombo);
-		ShowWindow(item, SW_SHOWNORMAL);
-
-		for (auto iter = c_Dialog->m_LayoutFolders.cbegin(); iter != c_Dialog->m_LayoutFolders.cend(); ++iter)
-		{
-			ComboBox_AddString(item, (*iter).first.c_str());
-		}
-		ComboBox_SetCurSel(item, 0);
-	}
-
-	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinEdit);
+	HWND item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinEdit);
 	Edit_SetCueBannerText(item, GetString(IDS_SelectSkin));
 
-	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_RainmeterVersionEdit);
-	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", APPVERSION, revision_number);
-	SetWindowText(item, buffer);
-	c_Dialog->m_MinimumRainmeter = buffer;
+	Update();
+}
+
+void DialogPackage::TabOptions::Update()
+{
+	if (c_Dialog->m_OutputFolder.empty())
+	{
+		WCHAR buffer[MAX_PATH] = { 0 };
+		SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, SHGFP_TYPE_CURRENT, buffer);
+		c_Dialog->m_OutputFolder = buffer;
+		c_Dialog->m_OutputFolder += L'\\';
+	}
+
+	std::wstring fileName = c_Dialog->m_Name;
+	fileName += L'_';
+	fileName += c_Dialog->m_Version;
+
+	// Escape reserved chars
+	for (auto& ch : fileName)
+	{
+		if (wcschr(L"\\/:*?\"<>|", ch))
+		{
+			ch = L'_';
+		}
+	}
+
+	c_Dialog->m_TargetFile = c_Dialog->m_OutputFolder + fileName;
+	c_Dialog->m_TargetFile += L".rmskin";
+	SetDlgItemText(m_Window, DialogPackage::TabOptions::Id_FileEdit, c_Dialog->m_TargetFile.c_str());
+
+	HWND combo = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadLayoutCombo);
+	ComboBox_ResetContent(combo);
+	for (const auto& layout : c_Dialog->m_LayoutFolders)
+	{
+		ComboBox_AddString(combo, layout.first.c_str());
+	}
+
+	const bool hasLayouts = !c_Dialog->m_LayoutFolders.empty();
+	EnableWindow(GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadLayoutRadio), hasLayouts);
+
+	if (c_Dialog->m_LoadLayout && !c_Dialog->m_Load.empty())
+	{
+		// Fall back to the first layout if the selected one is no longer included.
+		if (c_Dialog->m_LayoutFolders.find(c_Dialog->m_Load) == c_Dialog->m_LayoutFolders.cend())
+		{
+			c_Dialog->m_LoadLayout = hasLayouts;
+			c_Dialog->m_Load = hasLayouts ? (*c_Dialog->m_LayoutFolders.cbegin()).first : std::wstring();
+		}
+	}
+	else if (!c_Dialog->m_ProfileLoaded && c_Dialog->m_Load.empty() && hasLayouts)
+	{
+		// A package that comes with a layout loads it by default.
+		c_Dialog->m_LoadLayout = true;
+		c_Dialog->m_Load = (*c_Dialog->m_LayoutFolders.cbegin()).first;
+	}
+
+	const bool loadSkin = !c_Dialog->m_LoadLayout && !c_Dialog->m_Load.empty();
+	const bool loadLayout = c_Dialog->m_LoadLayout && !c_Dialog->m_Load.empty();
+
+	Button_SetCheck(GetDlgItem(m_Window, DialogPackage::TabOptions::Id_DoNothingRadio),
+		(!loadSkin && !loadLayout) ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinRadio),
+		loadSkin ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadLayoutRadio),
+		loadLayout ? BST_CHECKED : BST_UNCHECKED);
+
+	HWND item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinEdit);
+	ShowWindow(item, loadSkin ? SW_SHOWNORMAL : SW_HIDE);
+	if (loadSkin) SetWindowText(item, c_Dialog->m_Load.c_str());
+
+	item = GetDlgItem(m_Window, DialogPackage::TabOptions::Id_LoadSkinBrowseButton);
+	ShowWindow(item, loadSkin ? SW_SHOWNORMAL : SW_HIDE);
+
+	ShowWindow(combo, loadLayout ? SW_SHOWNORMAL : SW_HIDE);
+	if (loadLayout) ComboBox_SelectString(combo, -1, c_Dialog->m_Load.c_str());
+
+	if (c_Dialog->m_MinimumRainmeter.empty())
+	{
+		c_Dialog->m_MinimumRainmeter = GetCurrentRainmeterVersion();
+	}
+
+	// The edit writes back to the member when its text changes, so the value must be copied first.
+	const std::wstring minimumRainmeter = c_Dialog->m_MinimumRainmeter;
+	SetDlgItemText(m_Window, DialogPackage::TabOptions::Id_RainmeterVersionEdit, minimumRainmeter.c_str());
 }
 
 INT_PTR DialogPackage::TabOptions::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1318,6 +1683,8 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (path)
 			{
 				c_Dialog->m_TargetFile = *path;
+				c_Dialog->m_OutputFolder = *path;
+				c_Dialog->m_OutputFolder.resize(PathFindFileName(path->c_str()) - path->c_str());
 				SetWindowText(item, path->c_str());
 			}
 		}
@@ -1487,6 +1854,22 @@ void DialogPackage::TabAdvanced::Create(HWND owner)
 void DialogPackage::TabAdvanced::Initialize()
 {
 	m_Initialized = true;
+
+	Update();
+}
+
+void DialogPackage::TabAdvanced::Update()
+{
+	SetDlgItemText(m_Window, DialogPackage::TabAdvanced::Id_HeaderEdit, c_Dialog->m_HeaderFile.c_str());
+
+	Button_SetCheck(GetDlgItem(m_Window, DialogPackage::TabAdvanced::Id_MergeSkinsCheck),
+		c_Dialog->m_MergeSkins ? BST_CHECKED : BST_UNCHECKED);
+
+	// The edit writes back to the member when its text changes, so the value must be copied first.
+	const std::wstring variableFiles = c_Dialog->m_VariableFiles;
+	HWND item = GetDlgItem(m_Window, DialogPackage::TabAdvanced::Id_VariableFilesEdit);
+	SetWindowText(item, variableFiles.c_str());
+	Edit_Enable(item, !c_Dialog->m_MergeSkins);
 }
 
 INT_PTR DialogPackage::TabAdvanced::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
