@@ -170,7 +170,7 @@ void ApplyOption(InputTextOptions& options, ConfigParser& parser, Option option,
 		{
 			// The alpha of a font color has nowhere to go: the text is drawn at whatever opacity
 			// the box as a whole is drawn at.
-			BYTE ignored = 255U;
+			BYTE ignored = 255;
 			SplitColor(parser.ParseColor(value), options.fontColor, ignored);
 		}
 		break;
@@ -306,10 +306,11 @@ class MeasureInputText::InputBox
 public:
 	explicit InputBox(const std::shared_ptr<SharedData>& data) : m_Data(data) {}
 
-	// Opens the box over |skinWindow| and pumps messages until it is answered. Returns the text on
+	// Opens the box over |skinWindow| and pumps messages until it is answered. |skinActive| is
+	// whether that skin already held the foreground when the box was asked for. Returns the text on
 	// submit, and nothing when it was dismissed - by Escape, by losing focus, or by the measure
 	// closing it from the main thread.
-	std::optional<std::wstring> Show(const InputTextOptions& options, HWND skinWindow, float scale);
+	std::optional<std::wstring> Show(const InputTextOptions& options, HWND skinWindow, float scale, bool skinActive);
 
 private:
 	static LRESULT CALLBACK WndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -320,6 +321,10 @@ private:
 
 	// |false| for a character the InputNumber filter refuses.
 	bool AcceptsChar(WCHAR ch) const;
+
+	// |true| where a deactivation of the box is the skin it belongs to being activated by the click
+	// that asked for the box, rather than the user clicking away from it.
+	bool IsSkinActivationFromOpeningClick(HWND activated) const;
 
 	void Close(bool submitted);
 
@@ -336,16 +341,18 @@ private:
 	// down deactivates it, and being deactivated is itself one of the ways out of the box.
 	bool m_Closing = false;
 
-	// False until the box has finished coming up. Losing activation before that is the skin behind
-	// the box taking it, not the user clicking away.
-	bool m_Settled = false;
+	// Until when a deactivation may still be the skin behind the box coming forward, and whether
+	// that has already been answered. Zero where the skin was up before the box was, and so has
+	// no activation left to arrive.
+	ULONGLONG m_SettleUntil = 0;
+	bool m_Reclaimed = false;
 
 	// What Close() lifted out of the edit control, since the control is gone by the time Show()
 	// has anything to return.
 	std::wstring m_Text;
 };
 
-std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOptions& options, HWND skinWindow, float scale)
+std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOptions& options, HWND skinWindow, float scale, bool skinActive)
 {
 	// Positions are relative to the skin, which is where the skin wrote them: the box is drawn
 	// over the skin rather than in it, but a skin author places it against what they can see.
@@ -386,7 +393,7 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 
 	DWORD exStyle = WS_EX_TOOLWINDOW;
 	if (topMost) exStyle |= WS_EX_TOPMOST;
-	if (options.opacity < 255U) exStyle |= WS_EX_LAYERED;
+	if (options.opacity < 255) exStyle |= WS_EX_LAYERED;
 
 	// Created and published to the measure under the one lock, and the measure having gone is read
 	// back under it too: a box the measure asked to close in the middle of this is either found by
@@ -406,7 +413,7 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 
 	if (m_Window != nullptr && active)
 	{
-		if (options.opacity < 255U)
+		if (options.opacity < 255)
 		{
 			SetLayeredWindowAttributes(m_Window, 0, options.opacity, LWA_ALPHA);
 		}
@@ -416,6 +423,13 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 		// would let a click land on whatever is under a box that is still waiting to be answered.
 		const bool disableSkin = !options.focusDismiss && IsWindowEnabled(skinWindow);
 		if (disableSkin) EnableWindow(skinWindow, FALSE);
+
+		// The click that opens a box also activates the skin the box is drawn over. Where that skin
+		// already held the foreground, nothing of the sort is on its way and every deactivation
+		// from here is the user leaving. Where it did not, its activation is still coming, and the
+		// box has to sit through it: long enough for a busy skin to get around to activating
+		// itself, short enough that a click the user meant as a dismissal is past it.
+		if (!skinActive) m_SettleUntil = GetTickCount64() + 500;
 
 		ShowWindow(m_Window, SW_SHOW);
 		SetForegroundWindow(m_Window);
@@ -569,8 +583,6 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		return (LRESULT)box->m_BackBrush;
 
 	case WM_INPUTTEXT_SETTLE:
-		box->m_Settled = true;
-
 		// The skin may have taken the focus back while the box was coming up.
 		if (GetFocus() != box->m_Edit) SetFocus(box->m_Edit);
 		return 0;
@@ -580,15 +592,13 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		// draws no buttons of its own has.
 		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss)
 		{
-			// Except while the box is still coming up. The click that opens a box also activates
-			// the skin the box is drawn over, and where that skin was not already active, its
-			// activation arrives after the box has taken the foreground - dismissing the box
-			// before it was ever seen. So a deactivation this early that hands activation to the
-			// skin the box belongs to is answered by taking the foreground back, once. Anything
-			// else, and anything after the settle message, is the user clicking away.
-			if (!box->m_Settled && !box->m_Closing && (HWND)lParam == box->m_Owner)
+			// Except where it is the skin coming up behind the box instead, which would otherwise
+			// dismiss the box before it was ever seen. That is answered by taking the foreground
+			// back, and only ever once, so that a skin which reacts to losing it by activating
+			// something of its own cannot be traded with.
+			if (!box->m_Closing && !box->m_Reclaimed && box->IsSkinActivationFromOpeningClick((HWND)lParam))
 			{
-				box->m_Settled = true;
+				box->m_Reclaimed = true;
 				SetForegroundWindow(wnd);
 				SetFocus(box->m_Edit);
 				return 0;
@@ -684,6 +694,21 @@ bool MeasureInputText::InputBox::AcceptsChar(WCHAR ch) const
 	return true;
 }
 
+bool MeasureInputText::InputBox::IsSkinActivationFromOpeningClick(HWND activated) const
+{
+	// Timed rather than answered by the settle message the box posts itself: that message is on
+	// the queue of the box and orders against nothing the skin does, so a skin slow enough to
+	// activate itself after the box has taken the foreground is also slow enough to do it after
+	// the box has read the settle message. Which is how the box came to be dismissed on the first
+	// click of a heavy skin, and only sometimes.
+	if (GetTickCount64() >= m_SettleUntil) return false;
+
+	// WM_ACTIVATE is not obliged to name the window taking over, and by the time it arrives the
+	// foreground is that window anyway.
+	if (activated == nullptr) activated = GetForegroundWindow();
+	return activated == m_Owner;
+}
+
 // One prompt, and the worker thread it is opened on. The box runs a message loop of its own, and
 // running that on the main thread would stop every skin drawing until it was answered.
 class MeasureInputText::PromptTask : public AsyncTask
@@ -697,6 +722,10 @@ public:
 		task->m_Options = options;
 		task->m_SkinWindow = skinWindow;
 		task->m_Scale = scale;
+
+		// Read here rather than on the worker thread, where the skin may have come up in the
+		// meantime and the box would take a late activation of it for the user clicking away.
+		task->m_SkinActive = GetForegroundWindow() == skinWindow;
 
 		if (!task->Start())
 		{
@@ -715,7 +744,7 @@ private:
 		if (m_AbortRequested || !m_Data->active) return;
 
 		InputBox box(m_Data);
-		m_Input = box.Show(m_Options, m_SkinWindow, m_Scale);
+		m_Input = box.Show(m_Options, m_SkinWindow, m_Scale, m_SkinActive);
 	}
 
 	void FinishWorkOnMainThread() override
@@ -734,6 +763,7 @@ private:
 	InputTextOptions m_Options;
 	HWND m_SkinWindow = nullptr;
 	float m_Scale = 1.0f;
+	bool m_SkinActive = false;
 	std::optional<std::wstring> m_Input;
 };
 
