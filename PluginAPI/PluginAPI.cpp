@@ -36,14 +36,8 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue) { re
 
 LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data) { return nullptr; }
 
-// Exports.def also lists these, and the linker needs something to attach them to. Plugins never
-// call them, so only the names matter.
+// Exports.def lists these as well, and the linker needs something to attach them to, even though
+// plugins never call them.
 EXTERN_C int RainmeterMain(LPWSTR cmdLine) { return 0; }
 
 EXTERN_C int SkinInstallerMain(LPWSTR cmdLine) { return 0; }
-
-EXTERN_C void pcre16_compile() {}
-
-EXTERN_C void pcre16_exec() {}
-
-EXTERN_C void pcre16_study() {}
