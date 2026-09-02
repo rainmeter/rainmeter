@@ -404,6 +404,7 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
+	m_Transformation = D2D1::Matrix3x2F::Identity();
 	const std::wstring& transformation = parser.ReadString(section, L"TransformationMatrix", L"");
 	if (!transformation.empty())
 	{
@@ -427,7 +428,6 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		}
 		else
 		{
-			m_Transformation = D2D1::Matrix3x2F::Identity();
 			LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", transformation.c_str());
 		}
 	}
