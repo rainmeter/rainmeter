@@ -989,6 +989,8 @@ void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 	HWND winPos = HWND_NOTOPMOST;
 	m_WindowZPosition = zPos;
 
+	if (zPos == ZPOSITION_ONTOPMOST) System::StartMouseTimer();
+
 	switch (zPos)
 	{
 	case ZPOSITION_ONTOPMOST:
@@ -3446,39 +3448,44 @@ void Skin::Update(UpdateOptions options)
 	}
 }
 
-void Skin::UpdateMouseState()
+// Returns whether the skin still needs to be polled on the next tick.
+bool Skin::UpdateMouseState()
 {
-	if (m_State != STATE_RUNNING || m_Dragging) return;
+	if (m_State != STATE_RUNNING) return false;
+	if (m_Dragging) return true;
 
-	ShowWindowIfAppropriate();
+	const bool inside = ShowWindowIfAppropriate();
 
 	if (m_WindowZPosition == ZPOSITION_ONTOPMOST)
 	{
 		ChangeZPos(ZPOSITION_ONTOPMOST);
 	}
 
-	if (!m_MouseOver) return;
-
-	POINT pos = System::GetCursorPosition();
-	if (!m_ClickThrough)
+	if (m_MouseOver)
 	{
-		if (WindowFromPoint(pos) == m_Window)
+		POINT pos = System::GetCursorPosition();
+		if (!m_ClickThrough)
 		{
-			SetMouseLeaveEvent(false);
+			if (WindowFromPoint(pos) == m_Window)
+			{
+				SetMouseLeaveEvent(false);
+			}
+			else
+			{
+				OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+			}
 		}
 		else
 		{
-			OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+			bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
+			if (!keyDown || GetWindowFromPoint(pos) != m_Window)
+			{
+				OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+			}
 		}
 	}
-	else
-	{
-		bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
-		if (!keyDown || GetWindowFromPoint(pos) != m_Window)
-		{
-			OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
-		}
-	}
+
+	return inside || m_MouseOver || m_WindowZPosition == ZPOSITION_ONTOPMOST;
 }
 
 // Handles the timers. The METERTIMER updates all the measures
@@ -3655,7 +3662,8 @@ void Skin::ShowFade()
 	}
 }
 
-void Skin::ShowWindowIfAppropriate()
+// Returns whether the cursor is over the skin.
+bool Skin::ShowWindowIfAppropriate()
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
@@ -3720,6 +3728,8 @@ void Skin::ShowWindowIfAppropriate()
 			}
 		}
 	}
+
+	return inside;
 }
 
 HWND Skin::GetWindowFromPoint(POINT pos)
@@ -3856,6 +3866,10 @@ LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Any mouse contact with the skin may need follow-up polling: to detect the leave, to restore
+	// a window hidden by OnHover, or to drop the transparent flag when a modifier key is held.
+	System::StartMouseTimer();
+
 	// A selection drag owns the mouse until the button comes back up. Checked before anything else
 	// so that dragging out of the window extends the selection instead of hiding the skin. Only
 	// WM_MOUSEMOVE carries the key flags in wParam; WM_NCMOUSEMOVE puts a hit-test code there.
