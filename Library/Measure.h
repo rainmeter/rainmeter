@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include "IfActions.h"
 #include "LocaleUtil.h"
 #include "Util.h"
@@ -104,9 +105,14 @@ protected:
 	std::vector<std::wstring> m_Substitute;
 	bool m_RegExpSubstitute;
 
-	std::vector<double> m_AverageValues;
-	UINT m_AveragePos;
-	UINT m_AverageSize;
+	struct AverageData
+	{
+		std::vector<double> values;
+		UINT pos = 0;
+		UINT size = 0;
+	};
+
+	std::unique_ptr<AverageData> m_Average;
 
 	IfActions m_IfActions;
 
