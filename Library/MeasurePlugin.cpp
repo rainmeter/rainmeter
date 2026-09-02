@@ -190,7 +190,6 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{
 			m_MaxValue = 1.0;
 			m_LogMaxValue = true;
-			m_MedianValues.clear();
 		}
 		else
 		{
