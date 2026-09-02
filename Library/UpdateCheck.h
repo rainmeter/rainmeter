@@ -35,7 +35,7 @@ private:
 	std::wstring m_InstallerPath;
 	std::wstring m_InstallerFile;
 	std::wstring m_InstallerHash;
-	std::string m_ObsoleteLanguages;
+	std::wstring m_ObsoleteLanguages;
 	VersionHelper::Version m_AvailableVersion;
 
 	bool m_DownloadInstaller;
