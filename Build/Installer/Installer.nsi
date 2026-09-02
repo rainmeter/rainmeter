@@ -129,6 +129,24 @@ UAC_TryAgain:
 SetShellVarContext all
 !macroend
 
+; Creates a custom page dialog, aborting the whole installer if it cannot be created. A missing
+; dialog used to go unnoticed: nsDialogs::Show returns right away, so every page silently fell
+; through to the install itself with none of its variables ever set. The sentinel catches the
+; nsDialogs plugin failing to load at all, in which case nothing is pushed onto the stack.
+!macro CreatePageDialog RESOURCE
+	Push "!"
+	nsDialogs::Create ${RESOURCE}
+	Pop $0
+	${If} $0 == "!"
+	${OrIf} $0 == "error"
+	${OrIf} $0 == ""
+		MessageBox MB_OK|MB_ICONSTOP "$(SetupError)" /SD IDOK
+		Quit
+	${EndIf}
+	Pop $1
+!macroend
+!define CreatePageDialog "!insertmacro CreatePageDialog"
+
 ; Install
 ; --------------------------------------
 Function .onInit
@@ -316,8 +334,7 @@ Function PageWelcome
 	${EndIf}
 
 	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(^ComponentsSubText1)"
-	nsDialogs::Create 1044
-	Pop $0
+	${CreatePageDialog} 1044
 	nsDialogs::SetRTL $(^RTL)
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
@@ -389,7 +406,7 @@ Function PageOptions
 	${EndIf}
 
 	!insertmacro MUI_HEADER_TEXT "$(InstallOptions)" "$(InstallOptionsDescription)"
-	nsDialogs::Create 1018
+	${CreatePageDialog} 1018
 	nsDialogs::SetRTL $(^RTL)
 
 	${NSD_CreateGroupBox} 0 0u -1u 36u "$(^DirSubText)"
@@ -578,6 +595,11 @@ FunctionEnd
 !macroend
 
 Section
+	${If} $INSTDIR == ""
+		MessageBox MB_OK|MB_ICONSTOP "$(SetupError)" /SD IDOK
+		Quit
+	${EndIf}
+
 	${If} $InstallPortable <> 1
 		${IfNot} ${UAC_IsAdmin}
 			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
@@ -597,6 +619,7 @@ Section
 
 	${If} ${Errors}
 		RMDir "$INSTDIR"
+		StrCpy $0 $INSTDIR	; WriteError names the directory through $0
 		MessageBox MB_OK|MB_ICONEXCLAMATION "$(WriteError)" /SD IDOK
 		!insertmacro LOG_ERROR ${ERROR_WRITEFAIL}
 		Quit
@@ -918,7 +941,7 @@ FunctionEnd
 
 Function un.PageOptions
 	!insertmacro MUI_HEADER_TEXT "$(UninstallOptions)" "$(UninstallOptionsDescription)"
-	nsDialogs::Create 1018
+	${CreatePageDialog} 1018
 	nsDialogs::SetRTL $(^RTL)
 
 	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UninstallRainmeter)"
