@@ -29,11 +29,7 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_HDefined(false),
 	m_RelativeMeter(),
 	m_Transformation(D2D1::Matrix3x2F::Identity()),
-	m_ToolTipWidth(),
-	m_ToolTipType(false),
-	m_ToolTipHidden(skin->GetMeterToolTipHidden()),
 	m_ToolTipDisabled(false),
-	m_ToolTipHandle(),
 	m_Mouse(skin, this),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
@@ -56,11 +52,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 
 Meter::~Meter()
 {
-	if (m_ToolTipHandle)
-	{
-		DestroyWindow(m_ToolTipHandle);
-	}
-
 	if (m_ContainerContentTexture)
 	{
 		delete m_ContainerContentTexture;
@@ -281,12 +272,10 @@ void Meter::Show()
 	// Change the option as well to avoid reset in ReadOptions().
 	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"0");
 
-	if (m_ToolTipHandle != nullptr)
+	HWND tooltip = GetToolTipWindow();
+	if (tooltip && !m_ToolTip->hidden)
 	{
-		if (!m_ToolTipHidden)
-		{
-			SendMessage(m_ToolTipHandle, TTM_ACTIVATE, TRUE, 0);
-		}
+		SendMessage(tooltip, TTM_ACTIVATE, TRUE, 0);
 	}
 }
 
@@ -297,9 +286,10 @@ void Meter::Hide()
 	// Change the option as well to avoid reset in ReadOptions().
 	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"1");
 
-	if (m_ToolTipHandle != nullptr)
+	HWND tooltip = GetToolTipWindow();
+	if (tooltip)
 	{
-		SendMessage(m_ToolTipHandle, TTM_ACTIVATE, FALSE, 0);
+		SendMessage(tooltip, TTM_ACTIVATE, FALSE, 0);
 	}
 }
 
@@ -417,12 +407,23 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_Mouse.ReadOptions(parser, section);
 
-	parser.ReadString(m_ToolTipText, section, L"ToolTipText", L"");
-	parser.ReadString(m_ToolTipTitle, section, L"ToolTipTitle", L"");
-	parser.ReadString(m_ToolTipIcon, section, L"ToolTipIcon", L"");
-	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
-	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
-	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_Skin->GetMeterToolTipHidden());
+	std::wstring toolTipText;
+	parser.ReadString(toolTipText, section, L"ToolTipText", L"");
+	if (toolTipText.empty())
+	{
+		m_ToolTip.reset();
+	}
+	else
+	{
+		if (!m_ToolTip) m_ToolTip = std::make_unique<ToolTipData>();
+
+		m_ToolTip->text = std::move(toolTipText);
+		parser.ReadString(m_ToolTip->title, section, L"ToolTipTitle", L"");
+		parser.ReadString(m_ToolTip->icon, section, L"ToolTipIcon", L"");
+		m_ToolTip->width = parser.ReadInt(section, L"ToolTipWidth", 1000);
+		m_ToolTip->type = parser.ReadBool(section, L"ToolTipType", false);
+		m_ToolTip->hidden = parser.ReadBool(section, L"ToolTipHidden", m_Skin->GetMeterToolTipHidden());
+	}
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
@@ -655,13 +656,13 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 	return replaced;
 }
 
-void Meter::CreateToolTip(Skin* skin)
+void Meter::CreateToolTip()
 {
 	HWND hSkin = m_Skin->GetWindow();
 	HINSTANCE hInstance = GetRainmeter().GetModuleInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
-	if (m_ToolTipType)
+	if (m_ToolTip->type)
 	{
 		style |= TTS_BALLOON;
 	}
@@ -691,29 +692,36 @@ void Meter::CreateToolTip(Skin* skin)
 
 		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
-		m_ToolTipHandle = hwndTT;
+		m_ToolTip->handle = hwndTT;
 		UpdateToolTip();
 	}
 }
 
 void Meter::UpdateToolTip()
 {
-	HWND hwndTT = m_ToolTipHandle;
+	if (!m_ToolTip) return;
+
+	HWND hwndTT = m_ToolTip->handle;
+	if (!hwndTT)
+	{
+		CreateToolTip();  // Creates the window and calls back here once it exists.
+		return;
+	}
 
 	TOOLINFO ti = {sizeof(TOOLINFO)};
 	ti.hwnd = m_Skin->GetWindow();
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, 0, (LPARAM)&ti);
 
-	std::wstring text = m_ToolTipTitle;
+	std::wstring text = m_ToolTip->title;
 	if (!text.empty())
 	{
 		HICON hIcon = nullptr;
 		bool destroy = false;
 
-		if (!m_ToolTipIcon.empty())
+		if (!m_ToolTip->icon.empty())
 		{
-			const WCHAR* tipIcon = m_ToolTipIcon.c_str();
+			const WCHAR* tipIcon = m_ToolTip->icon.c_str();
 			if (_wcsicmp(tipIcon, L"INFO") == 0)
 			{
 				hIcon = (HICON)TTI_INFO;
@@ -736,7 +744,7 @@ void Meter::UpdateToolTip()
 			}
 			else
 			{
-				std::wstring iconPath = m_ToolTipIcon;
+				std::wstring iconPath = m_ToolTip->icon;
 				m_Skin->MakePathAbsolute(iconPath);
 				hIcon = (HICON)LoadImage(nullptr, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
@@ -756,7 +764,7 @@ void Meter::UpdateToolTip()
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM)nullptr, (LPARAM)L"");
 	}
 
-	text = m_ToolTipText;
+	text = m_ToolTip->text;
 	ReplaceMeasures(text);
 	ti.lpszText = (LPTSTR)text.c_str();
 
@@ -764,9 +772,9 @@ void Meter::UpdateToolTip()
 	ti.rect = m_Skin->LogicalToPhysical(ti.rect);
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_Skin->LogicalToPhysical((int)m_ToolTipWidth));
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_Skin->LogicalToPhysical((int)m_ToolTip->width));
 
-	if (m_ToolTipHidden || m_ToolTipDisabled || !isVisible)
+	if (m_ToolTip->hidden || m_ToolTipDisabled || !isVisible)
 	{
 		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, 0);
 	}

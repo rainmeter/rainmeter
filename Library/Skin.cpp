@@ -3354,19 +3354,7 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		bUpdate = meter->Update();
 	}
 
-	// Update tooltips
-	if (!meter->HasToolTip())
-	{
-		if (!meter->GetToolTipText().empty())
-		{
-			meter->CreateToolTip(this);
-		}
-	}
-	else
-	{
-		meter->UpdateToolTip();
-	}
-
+	meter->UpdateToolTip();
 	meter->ResizeContainerTextures();
 
 	// Check for transitions

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include "ConfigParser.h"
 #include "Skin.h"
 #include "Section.h"
@@ -67,10 +68,6 @@ public:
 	void EnableMouseAction(const std::wstring& options) { m_Mouse.EnableMouseAction(options); }
 	void ToggleMouseAction(const std::wstring& options) { m_Mouse.ToggleMouseAction(options); }
 
-	const std::wstring& GetToolTipText() { return m_ToolTipText; }
-	bool HasToolTip() { return m_ToolTipHandle != nullptr; }
-
-	void CreateToolTip(Skin* skin);
 	void UpdateToolTip();
 	void DisableToolTip() { m_ToolTipDisabled = true; UpdateToolTip(); }
 	void ResetToolTip() { m_ToolTipDisabled = false; UpdateToolTip(); }
@@ -112,6 +109,19 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
+	struct ToolTipData
+	{
+		std::wstring text;
+		std::wstring title;
+		std::wstring icon;
+		unsigned int width = 0;
+		bool type = false;
+		bool hidden = false;
+		HWND handle = nullptr;
+
+		~ToolTipData() { if (handle) DestroyWindow(handle); }
+	};
+
 	Meter(Skin* skin, const WCHAR* name);
 
 	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
@@ -123,6 +133,9 @@ protected:
 
 	bool BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional);
 	void BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section);
+
+	HWND GetToolTipWindow() { return m_ToolTip ? m_ToolTip->handle : nullptr; }
+	void CreateToolTip();
 
 	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 
@@ -138,14 +151,8 @@ protected:
 
 	D2D1_MATRIX_3X2_F m_Transformation;
 
-	std::wstring m_ToolTipText;
-	std::wstring m_ToolTipTitle;
-	std::wstring m_ToolTipIcon;
-	unsigned int m_ToolTipWidth;
-	bool m_ToolTipType;
-	bool m_ToolTipHidden;
+	std::unique_ptr<ToolTipData> m_ToolTip;
 	bool m_ToolTipDisabled;  // Selected skins disable all tooltips
-	HWND m_ToolTipHandle;
 
 	Mouse m_Mouse;
 	bool m_MouseOver;
