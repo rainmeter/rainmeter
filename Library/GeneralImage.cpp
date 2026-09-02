@@ -237,66 +237,31 @@ void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, 
 	// at one time. The parser does it fine, but after putting the returned values
 	// into the Color Matrix the next time the parser is used it crashes.
 	// Note: is this still relevant? Kept for BWC
-	std::vector<FLOAT> matrix1 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix1]);
-	if (matrix1.size() == 5)
+	auto readMatrixRow = [&](size_t optionIndex, int row) -> bool
 	{
-		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		StringParser values(parser.ReadString(section, m_OptionArray[optionIndex], L""));
+		FLOAT parsed[5] = { 0 };
+		for (auto& value : parsed)
 		{
-			m_Options.m_ColorMatrix.m[0][i] = matrix1[i];
-		}
-	}
-	else
-	{
-		m_Options.m_ColorMatrix.m[0][0] = tint.r;
-	}
+			if (values.IsConsumed()) return false;
 
-	std::vector<FLOAT> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
-	if (matrix2.size() == 5)
-	{
-		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
-		{
-			m_Options.m_ColorMatrix.m[1][i] = matrix2[i];
+			value = (FLOAT)parser.ParseDouble(values.ConsumeUntilOrRest(L';', StringParser::SkipWhitespace), 0.0);
 		}
-	}
-	else
-	{
-		m_Options.m_ColorMatrix.m[1][1] = tint.g;
-	}
 
-	std::vector<FLOAT> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
-	if (matrix3.size() == 5)
-	{
-		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
-		{
-			m_Options.m_ColorMatrix.m[2][i] = matrix3[i];
-		}
-	}
-	else
-	{
-		m_Options.m_ColorMatrix.m[2][2] = tint.b;
-	}
+		if (!values.IsConsumed()) return false;
 
-	std::vector<FLOAT> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
-	if (matrix4.size() == 5)
-	{
-		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		for (int i = 0; i < 4; ++i)  // The fifth column is fixed.
 		{
-			m_Options.m_ColorMatrix.m[3][i] = matrix4[i];
+			m_Options.m_ColorMatrix.m[row][i] = parsed[i];
 		}
-	}
-	else
-	{
-		m_Options.m_ColorMatrix.m[3][3] = alpha / 255.0f;
-	}
+		return true;
+	};
 
-	std::vector<FLOAT> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
-	if (matrix5.size() == 5)
-	{
-		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
-		{
-			m_Options.m_ColorMatrix.m[4][i] = matrix5[i];
-		}
-	}
+	if (!readMatrixRow(OptionIndexColorMatrix1, 0)) m_Options.m_ColorMatrix.m[0][0] = tint.r;
+	if (!readMatrixRow(OptionIndexColorMatrix2, 1)) m_Options.m_ColorMatrix.m[1][1] = tint.g;
+	if (!readMatrixRow(OptionIndexColorMatrix3, 2)) m_Options.m_ColorMatrix.m[2][2] = tint.b;
+	if (!readMatrixRow(OptionIndexColorMatrix4, 3)) m_Options.m_ColorMatrix.m[3][3] = alpha / 255.0f;
+	readMatrixRow(OptionIndexColorMatrix5, 4);
 
 	static constexpr ConfigParser::EnumOption<Gfx::Util::FlipType> s_Flips[] =
 	{
