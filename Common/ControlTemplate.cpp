@@ -30,6 +30,15 @@ BOOL GetNonClientMetricsForDpi(NONCLIENTMETRICS& metrics, UINT dpi)
 	return TRUE;
 }
 
+// Mapping the position and the size separately lets their rounding drift apart, so two controls that
+// share a design edge can end up a pixel or two apart, and one at the edge of the dialog can end up
+// past it. Map the edges and derive the size from them instead.
+RECT MapControlRect(const Control& ct, UINT dpi)
+{
+	const RECT edges = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.x + ct.w, ct.y + ct.h }, dpi);
+	return { edges.left, edges.top, edges.right - edges.left, edges.bottom - edges.top };
+}
+
 }  // namespace
 
 ControlTemplate::ControlTemplate() :
@@ -95,7 +104,7 @@ void ControlTemplate::Initialize(const Control* cts, UINT ctCount, HWND parent, 
 			text = buffer;
 		}
 
-		const RECT r = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.w, ct.h }, dpi);
+		const RECT r = MapControlRect(ct, dpi);
 		HWND wnd = CreateWindowEx(
 			ct.exStyle,
 			ct.name,
@@ -135,7 +144,7 @@ void ControlTemplate::Relayout(UINT dpi)
 	for (const auto& createdControl : m_Controls)
 	{
 		const Control& ct = createdControl.control;
-		RECT rect = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.w, ct.h }, dpi);
+		RECT rect = MapControlRect(ct, dpi);
 
 		const bool left = (ct.options & Control::ANCHOR_LEFT) != 0;
 		const bool top = (ct.options & Control::ANCHOR_TOP) != 0;
