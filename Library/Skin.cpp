@@ -1084,9 +1084,13 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 		// HWND_NOTOPMOST/HWND_TOPMOST do not move a window that is already in that band,
 		// raise the window explicitly. Bottom-most windows are left alone as they are meant
 		// to stay below everything else.
+		//
+		// Raised without being activated, which BringWindowToTop() would also do: a skin that
+		// comes up on its own - one following the pointer, say - would take the keyboard from
+		// whatever the user was typing into, an input box among it.
 		if (zPos == ZPOSITION_NORMAL || zPos == ZPOSITION_ONTOP || zPos == ZPOSITION_ONTOPMOST)
 		{
-			BringWindowToTop(m_Window);
+			SetWindowPos(m_Window, HWND_TOP, 0, 0, 0, 0, ZPOS_FLAGS);
 		}
 	}
 }
