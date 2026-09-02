@@ -184,6 +184,7 @@ private:
 
 	bool m_ProfileLoaded;
 	bool m_OptionsCreated;
+	DWORD m_TabItemSize;
 	HANDLE m_PackagerThread;
 	zipFile m_ZipFile;
 	bool m_AllowNonAsciiFilenames;
