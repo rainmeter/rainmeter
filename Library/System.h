@@ -17,6 +17,8 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
+	static void StartMouseTimer();
+
 	static UINT GetDpiForWindow(HWND window);
 	static UINT GetSystemDpi();
 	static POINT ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi = nullptr);
@@ -68,6 +70,7 @@ private:
 	static HWINEVENTHOOK c_WinEventHook;
 
 	static bool c_ShowDesktop;
+	static bool c_MouseTimerActive;
 
 	static std::wstring c_WorkingDirectory;
 

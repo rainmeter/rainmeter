@@ -246,7 +246,7 @@ public:
 
 	bool IsClosing() { return m_State == STATE_CLOSING; }
 
-	void UpdateMouseState();
+	bool UpdateMouseState();
 
 	const Mouse& GetMouse() { return m_Mouse; }
 
@@ -384,7 +384,7 @@ private:
 	void WriteDeferredOptions();
 	void ReadUpdateOption();
 	bool ReadSkin();
-	void ShowWindowIfAppropriate();
+	bool ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
 	void HandleButtonClickMessage(UINT uMsg, LPARAM lParam, BUTTONPROC buttonProc, MOUSEACTION action);

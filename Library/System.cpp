@@ -42,6 +42,7 @@ HWND System::c_HelperWindow = nullptr;
 HWINEVENTHOOK System::c_WinEventHook = nullptr;
 
 bool System::c_ShowDesktop = false;
+bool System::c_MouseTimerActive = false;
 
 std::wstring System::c_WorkingDirectory;
 
@@ -113,7 +114,6 @@ void System::Initialize(HINSTANCE instance)
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
-	SetTimer(c_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
 }
 
 void System::Finalize()
@@ -121,6 +121,7 @@ void System::Finalize()
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
 	KillTimer(c_Window, TIMER_RESUME);
 	KillTimer(c_Window, TIMER_MOUSE);
+	c_MouseTimerActive = false;
 
 	if (c_WinEventHook)
 	{
@@ -142,6 +143,14 @@ void System::Finalize()
 		DestroyWindow(c_Window);
 		c_Window = nullptr;
 	}
+}
+
+void System::StartMouseTimer()
+{
+	if (c_MouseTimerActive) return;
+
+	SetTimer(c_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
+	c_MouseTimerActive = true;
 }
 
 UINT System::GetSystemDpi()
@@ -647,9 +656,25 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case TIMER_MOUSE:
 			if (!GetRainmeter().IsMenuActive())
 			{
+				// Cleared so that a StartMouseTimer() from within the loop (e.g. a mouse leave
+				// action making a skin topmost) is not swallowed by the guard in it.
+				c_MouseTimerActive = false;
+
+				bool needed = false;
 				for (const auto& skin : GetRainmeter().GetAllSkins())
 				{
-					skin.second->UpdateMouseState();
+					needed |= skin.second->UpdateMouseState();
+				}
+
+				if (needed)
+				{
+					StartMouseTimer();
+				}
+				else if (!c_MouseTimerActive)
+				{
+					// Nothing left to poll for. StartMouseTimer() brings the timer back once a
+					// skin needs it again.
+					KillTimer(hWnd, TIMER_MOUSE);
 				}
 			}
 			break;
