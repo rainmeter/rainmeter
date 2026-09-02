@@ -7,6 +7,7 @@
 #include "resource.h"
 #include "Util.h"
 #include "../Common/FileUtil.h"
+#include "../Common/MenuModifier.h"
 #include "../Common/ShellDialog.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
@@ -332,10 +333,20 @@ std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 	StringParser::ForEachToken(std::wstring_view(buffer, length), L'\0', [&](std::wstring_view token)
 	{
 		const std::wstring section(token);
-		profiles.emplace_back(Profile{
+		Profile profile{
 			section,
 			ReadProfileString(section.c_str(), L"SkinFolder", file),
-			ReadProfileString(section.c_str(), L"Timestamp", file) });
+			ReadProfileString(section.c_str(), L"Timestamp", file) };
+
+		// The options are of no use once the skin folder has been moved or deleted, so they are
+		// forgotten instead of being offered as something that cannot be loaded.
+		if (!FolderExists(profile.skinFolder))
+		{
+			WritePrivateProfileString(section.c_str(), nullptr, nullptr, file.c_str());
+			return;
+		}
+
+		profiles.emplace_back(std::move(profile));
 	}, StringParser::None);
 
 	std::sort(profiles.begin(), profiles.end(), [](const Profile& lhs, const Profile& rhs)
@@ -350,29 +361,48 @@ void DialogPackage::ShowLoadPreviousMenu(HWND button)
 {
 	const auto profiles = GetProfiles();
 
+	MenuModifier modifier;
 	HMENU menu = CreatePopupMenu();
 	for (size_t i = 0; i < profiles.size(); ++i)
 	{
 		// A tab puts the date where a menu would put the accelerator, which right aligns it.
-		std::wstring text = profiles[i].name;
+		std::wstring suffix;
 		if (!profiles[i].timestamp.empty())
 		{
-			text += L'\t';
-			text += profiles[i].timestamp;
+			suffix += L'\t';
+			suffix += profiles[i].timestamp;
 		}
 
-		// The skin folder may have been moved or deleted since the package was created.
-		const UINT flags = MF_STRING | (FolderExists(profiles[i].skinFolder) ? 0 : MF_GRAYED);
-		AppendMenu(menu, flags, (UINT_PTR)i + 1, text.c_str());
+		const UINT command = (UINT)i + 1;
+		AppendMenu(menu, MF_STRING, command, (profiles[i].name + suffix).c_str());
+
+		// Holding shift deletes the entry instead of loading it.
+		std::wstring deleteText = GetString(IDS_Delete);
+		deleteText += L": ";
+		deleteText += profiles[i].name;
+		deleteText += suffix;
+		modifier.AddItem(menu, VK_SHIFT, command, command + (UINT)profiles.size(), deleteText.c_str());
 	}
 
+	modifier.Start();
 	const UINT command = Dialog::ShowMenuButtonPopupMenu(menu, button, m_Window, TPM_RETURNCMD | TPM_NONOTIFY);
+	modifier.Stop();
 	DestroyMenu(menu);
 
 	if (command >= 1 && command <= profiles.size())
 	{
 		LoadProfile(profiles[command - 1].skinFolder);
 	}
+	else if (command > profiles.size() && command <= profiles.size() * 2)
+	{
+		DeleteProfile(profiles[command - profiles.size() - 1].name);
+	}
+}
+
+void DialogPackage::DeleteProfile(const std::wstring& section)
+{
+	WritePrivateProfileString(section.c_str(), nullptr, nullptr, GetProfileFile().c_str());
+	SetLoadPreviousButtonState();
 }
 
 void DialogPackage::SetSkinFolder(const std::wstring& skinFolder)

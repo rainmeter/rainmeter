@@ -139,6 +139,7 @@ private:
 	void SetSkinFolder(const std::wstring& skinFolder);
 	void LoadProfile(const std::wstring& skinFolder);
 	void SaveProfile();
+	void DeleteProfile(const std::wstring& section);
 
 	bool CreatePackage();
 	static unsigned __stdcall PackagerThreadProc(void* pParam);
