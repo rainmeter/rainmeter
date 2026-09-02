@@ -2982,7 +2982,7 @@ bool Skin::ResizeWindow(bool reset)
 
 void Skin::Redraw()
 {
-	if (m_WindowOcclusionState == SkinWindowOcclusionState::Occluded)
+	if (IsSkinWindowInvisible(m_WindowOcclusionState))
 	{
 		m_HasPendingRedraw = true;
 		return;
@@ -3363,7 +3363,7 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 
 void Skin::Update(UpdateOptions options)
 {
-	if (!options.refresh && !options.force && m_InvisibleUpdate >= 0 && m_WindowOcclusionState == SkinWindowOcclusionState::Occluded &&
+	if (!options.refresh && !options.force && m_InvisibleUpdate >= 0 && IsSkinWindowInvisible(m_WindowOcclusionState) &&
 		(m_InvisibleUpdate == 0 || (GetTickCount64() - m_LastUpdateTime) < (ULONGLONG)m_InvisibleUpdate))
 	{
 		++m_SkippedUpdateCount;
@@ -4321,7 +4321,7 @@ void Skin::SetWindowOcclusionState(SkinWindowOcclusionState state)
 	const SkinWindowOcclusionState previousState = m_WindowOcclusionState;
 	m_WindowOcclusionState = state;
 
-	if (previousState == SkinWindowOcclusionState::Occluded && state == SkinWindowOcclusionState::Visible && GetRainmeter().IsRedrawable())
+	if (IsSkinWindowInvisible(previousState) && state == SkinWindowOcclusionState::Visible && GetRainmeter().IsRedrawable())
 	{
 		if (m_SkippedUpdateCount > 0)
 		{

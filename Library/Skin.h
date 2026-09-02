@@ -84,6 +84,9 @@ enum class SkinWindowOcclusionState : BYTE
 	Hidden
 };
 
+// Both states mean the skin is not visible on screen, so updates and redraws can be skipped.
+inline bool IsSkinWindowInvisible(SkinWindowOcclusionState state) { return state == SkinWindowOcclusionState::Occluded || state == SkinWindowOcclusionState::Hidden; }
+
 class Rainmeter;
 class Measure;
 class Meter;
@@ -224,7 +227,7 @@ public:
 	bool HasZoom() const { return m_Zoom.has_value(); }
 
 	SkinWindowOcclusionState GetWindowOcclusionState() const { return m_WindowOcclusionState; }
-	bool IsWindowUnoccluded() const { return m_WindowOcclusionState == SkinWindowOcclusionState::Visible || m_WindowOcclusionState == SkinWindowOcclusionState::Unknown; }
+	bool IsWindowUnoccluded() const { return !IsSkinWindowInvisible(m_WindowOcclusionState); }
 	void SetWindowOcclusionState(SkinWindowOcclusionState state);
 	void DisableOcclusionTracking();
 
