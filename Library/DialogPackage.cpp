@@ -252,6 +252,10 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
 			ShowWindow(m_TabInfo.GetWindow(), SW_SHOWNORMAL);
 			m_TabInfo.Activate();
+
+			// The controls repaint themselves, but the page does not always erase its background
+			// when it comes back, which leaves the dialog showing through instead of the tab texture.
+			RedrawWindow(m_TabInfo.GetWindow(), nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 		}
 		break;
 
